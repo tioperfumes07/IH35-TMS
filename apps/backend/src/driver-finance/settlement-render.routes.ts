@@ -36,7 +36,13 @@ async function enqueueSettlementHtmlOutbox(client: { query: (sql: string, values
 }
 
 export async function registerDriverFinanceSettlementHtmlRoutes(app: FastifyInstance) {
-  app.get("/api/v1/driver-finance/settlements/:settlementId.html", async (req: FastifyRequest, reply: FastifyReply) => {
+  // FAIL-SET3 follow-on: this route authorizes but carried no rateLimit, which CodeQL flags as
+  // js/missing-rate-limiting. It renders a driver's settlement — pay, deductions, CDL details — so an
+  // unthrottled authenticated endpoint is a real enumeration surface, not a lint nit. Caught by
+  // `money-pr-local-gate` (verify-new-auth-routes-rate-limited) once the gate was actually run.
+  app.get("/api/v1/driver-finance/settlements/:settlementId.html", {
+    config: { rateLimit: { max: 60, timeWindow: "1 minute" } },
+  }, async (req: FastifyRequest, reply: FastifyReply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
 
@@ -54,9 +60,22 @@ export async function registerDriverFinanceSettlementHtmlRoutes(app: FastifyInst
             s.*,
             concat_ws(' ', d.first_name, d.last_name) AS driver_full_name,
             d.cdl_state,
-            d.cdl_expiration_date,
+            -- FAIL-SET3: this SELECT named TWO columns that do not exist on mdata.drivers, so the
+            -- settlement render/print route 500'd on every settlement, always. Live prove on prod:
+            -- GET /api/v1/driver-finance/settlements/<id>.html → 500 code 42703
+            -- "column d.cdl_expiration_date does not exist". Postgres reports only the FIRST bad
+            -- identifier, which is why the display_id half stayed hidden behind it.
+            --   cdl_expiration_date → the real column is cdl_expires_at
+            --   display_id          → mdata.drivers has NO display_id under any spelling; the
+            --                         nearest real column is employee_id_display (nullable, and
+            --                         currently NULL for all 190 drivers — the "DRV" fallback below
+            --                         already handles that, so this stays honest rather than
+            --                         inventing an identifier).
+            -- Both are aliased back to the names the renderer already reads, so nothing downstream
+            -- of this query changes.
+            d.cdl_expires_at AS cdl_expiration_date,
             d.identity_user_id,
-            d.display_id AS driver_display_id
+            d.employee_id_display AS driver_display_id
           FROM driver_finance.driver_settlements s
           JOIN mdata.drivers d ON d.id = s.driver_id
           WHERE s.id = $1
