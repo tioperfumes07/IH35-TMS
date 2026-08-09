@@ -9,6 +9,11 @@
     "purpose": "verify-driver-active-30d-activity",
     "claimed_at": "2026-08-09"
   },
+  "2916": {
+    "claimed_by": "cursor",
+    "purpose": "verify-load-detail-driver-pay-bills",
+    "claimed_at": "2026-08-09"
+  },
   "2945": {
     "claimed_by": "cc-1",
     "purpose": "verify-zero-rate-refusal-never-blocks-booking",
