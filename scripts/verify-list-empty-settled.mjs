@@ -111,6 +111,18 @@ const MIGRATED = [
     file: "apps/frontend/src/pages/maintenance/components/WorkOrdersTable.tsx",
     empties: ["No work orders found — none open for this entity yet (or no rows match the current filter)."],
   },
+  // MAINT-S03 — Arriving Soon settled empty (ParityTable loading= + honest emptyText).
+  {
+    file: "apps/frontend/src/pages/maintenance/ArrivingSoonPage.tsx",
+    empties: [
+      "No units arriving with open issues for this entity — arrivals with shop-prep issues populate this queue as loads approach the yard.",
+    ],
+  },
+  // MAINT-S07 — DVIR defects inbox settled empty.
+  {
+    file: "apps/frontend/src/pages/maintenance/DefectsInboxPage.tsx",
+    empties: ["No DVIR defects in this queue."],
+  },
   { file: "apps/frontend/src/pages/maintenance/WarrantyClaimsPage.tsx", empties: ["No warranty claims yet."] },
   { file: "apps/frontend/src/pages/work-orders/WorkOrdersConsoleListPage.tsx", empties: ["No work orders match the current filters."] },
   { file: "apps/frontend/src/pages/safety/AccidentsPage.tsx", empties: ["No accident reports found."] },
