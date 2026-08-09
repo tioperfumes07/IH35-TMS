@@ -1,0 +1,262 @@
+{
+  "module": "insurance",
+  "entity_default": "USMCA",
+  "source": {
+    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md — Insurance (under Safety nav)",
+    "nav": "apps/frontend/src/pages/safety/tabs/InsuranceTab.tsx",
+    "routes": "/safety/insurance/*"
+  },
+  "columns": [
+    {
+      "id": "driver",
+      "group": "linkage",
+      "label": "Driver"
+    },
+    {
+      "id": "customer",
+      "group": "linkage",
+      "label": "Customer"
+    },
+    {
+      "id": "vendor",
+      "group": "linkage",
+      "label": "Vendor"
+    },
+    {
+      "id": "unit",
+      "group": "linkage",
+      "label": "Unit"
+    },
+    {
+      "id": "trailer",
+      "group": "linkage",
+      "label": "Trailer"
+    },
+    {
+      "id": "load",
+      "group": "linkage",
+      "label": "Load"
+    },
+    {
+      "id": "ap_bill",
+      "group": "money",
+      "label": "AP / Bill"
+    },
+    {
+      "id": "expense",
+      "group": "money",
+      "label": "Expense"
+    },
+    {
+      "id": "gl_je",
+      "group": "money",
+      "label": "GL / JE"
+    },
+    {
+      "id": "liability",
+      "group": "money",
+      "label": "Liability / Escrow"
+    },
+    {
+      "id": "picker_law",
+      "group": "chrome",
+      "label": "Picker +Add new"
+    },
+    {
+      "id": "qbo_chrome",
+      "group": "chrome",
+      "label": "QBO chrome"
+    },
+    {
+      "id": "connectivity",
+      "group": "wiring",
+      "label": "Connectivity"
+    },
+    {
+      "id": "reverse_link",
+      "group": "wiring",
+      "label": "Reverse link"
+    },
+    {
+      "id": "scenario.insurance",
+      "group": "process",
+      "label": "Insurance claim"
+    }
+  ],
+  "leaves": [
+    {
+      "id": "landing",
+      "tab": "Landing",
+      "sub": "Insurance home",
+      "route_hint": "/safety/insurance",
+      "required": [
+        "connectivity",
+        "scenario.insurance"
+      ]
+    },
+    {
+      "id": "policies.list",
+      "tab": "Policies",
+      "sub": "Policies list",
+      "route_hint": "/safety/insurance/policies",
+      "required": [
+        "vendor",
+        "unit",
+        "trailer",
+        "driver",
+        "connectivity",
+        "reverse_link",
+        "picker_law",
+        "scenario.insurance"
+      ]
+    },
+    {
+      "id": "policies.create",
+      "tab": "Policies",
+      "sub": "+ Create Policy",
+      "route_hint": "/safety/insurance/policies",
+      "required": [
+        "vendor",
+        "unit",
+        "trailer",
+        "driver",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "liability",
+        "scenario.insurance",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "policies.detail",
+      "tab": "Policies",
+      "sub": "Policy detail",
+      "route_hint": "/safety/insurance/policies/:id",
+      "required": [
+        "vendor",
+        "unit",
+        "trailer",
+        "driver",
+        "ap_bill",
+        "connectivity",
+        "reverse_link",
+        "scenario.insurance"
+      ]
+    },
+    {
+      "id": "type_catalog.list",
+      "tab": "Type Catalog",
+      "sub": "Coverage types",
+      "route_hint": "/safety/insurance/type-catalog",
+      "required": [
+        "connectivity",
+        "picker_law",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "type_catalog.create",
+      "tab": "Type Catalog",
+      "sub": "+ Create Type",
+      "route_hint": "/safety/insurance/type-catalog",
+      "required": [
+        "connectivity",
+        "picker_law",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "coverage_gaps",
+      "tab": "Coverage Gaps",
+      "sub": "Gap dashboard",
+      "route_hint": "/safety/insurance/coverage-gaps",
+      "required": [
+        "unit",
+        "trailer",
+        "driver",
+        "connectivity",
+        "reverse_link",
+        "scenario.insurance"
+      ]
+    },
+    {
+      "id": "claims.list",
+      "tab": "Claims",
+      "sub": "Claims list",
+      "route_hint": "/safety/insurance/claims",
+      "required": [
+        "driver",
+        "unit",
+        "trailer",
+        "load",
+        "customer",
+        "connectivity",
+        "reverse_link",
+        "picker_law",
+        "scenario.insurance"
+      ]
+    },
+    {
+      "id": "claims.create",
+      "tab": "Claims",
+      "sub": "+ Create Claim",
+      "route_hint": "/safety/insurance/claims",
+      "required": [
+        "driver",
+        "unit",
+        "trailer",
+        "load",
+        "customer",
+        "vendor",
+        "liability",
+        "expense",
+        "gl_je",
+        "ap_bill",
+        "scenario.insurance",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "lawsuits.list",
+      "tab": "Lawsuits",
+      "sub": "Lawsuits list",
+      "route_hint": "/safety/insurance/lawsuits",
+      "required": [
+        "driver",
+        "customer",
+        "vendor",
+        "connectivity",
+        "reverse_link",
+        "picker_law",
+        "scenario.insurance"
+      ]
+    },
+    {
+      "id": "lawsuits.create",
+      "tab": "Lawsuits",
+      "sub": "+ Create Lawsuit",
+      "route_hint": "/safety/insurance/lawsuits",
+      "required": [
+        "driver",
+        "customer",
+        "vendor",
+        "liability",
+        "expense",
+        "gl_je",
+        "ap_bill",
+        "scenario.insurance",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    }
+  ]
+}
