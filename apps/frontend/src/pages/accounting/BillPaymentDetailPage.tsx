@@ -87,7 +87,15 @@ export function BillPaymentDetailPage() {
         {payment.journal_entry_id ? (
           <DataPanelRow>
             <span className="text-xs font-semibold text-gray-600">Journal entry</span>
-            <EntityLink kind="journal_entry" id={payment.journal_entry_id} label={payment.journal_entry_id.slice(0, 8)} />
+            <EntityLink
+              kind="journal_entry"
+              id={payment.journal_entry_id}
+              label={
+                payment.journal_entry_date
+                  ? `${formatDateUS(payment.journal_entry_date)}${payment.journal_entry_memo ? ` — ${payment.journal_entry_memo}` : ""}`
+                  : payment.journal_entry_id.slice(0, 8)
+              }
+            />
           </DataPanelRow>
         ) : null}
         {payment.matched_bank_transaction_id ? (
@@ -96,7 +104,19 @@ export function BillPaymentDetailPage() {
             <EntityLink
               kind="bank_transaction"
               id={payment.matched_bank_transaction_id}
-              label={payment.matched_bank_transaction_id.slice(0, 8)}
+              label={
+                payment.matched_bank_transaction_date
+                  ? `${formatDateUS(payment.matched_bank_transaction_date)}${
+                      payment.matched_bank_transaction_description
+                        ? ` — ${payment.matched_bank_transaction_description}`
+                        : ""
+                    }${
+                      payment.matched_bank_transaction_amount_cents
+                        ? ` (${money(Number(payment.matched_bank_transaction_amount_cents))})`
+                        : ""
+                    }`
+                  : payment.matched_bank_transaction_id.slice(0, 8)
+              }
             />
           </DataPanelRow>
         ) : null}
