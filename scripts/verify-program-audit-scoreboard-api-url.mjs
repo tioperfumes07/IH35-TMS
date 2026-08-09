@@ -177,10 +177,11 @@ export function assertScoreboardContract(sources) {
       !/settlements\.required\.json/.test(matrixPage) ||
       !/lists\.required\.json/.test(matrixPage) ||
       !/factoring\.required\.json/.test(matrixPage) ||
-      !/reports\.required\.json/.test(matrixPage)
+      !/reports\.required\.json/.test(matrixPage) ||
+      !/inventory\.required\.json/.test(matrixPage)
     ) {
       problems.push(
-        `${matrixPageRel}: must import all live Required maps through fleet/customers/vendors/lists/factoring/reports/settlements`,
+        `${matrixPageRel}: must import all live Required maps through fleet/customers/vendors/lists/factoring/reports/inventory/settlements`,
       );
     }
     if (
@@ -216,6 +217,7 @@ export function assertScoreboardContract(sources) {
     "lists",
     "factoring",
     "reports",
+    "inventory",
   ]) {
     const mapRel = `docs/specs/scoreboard/modules/${mod}.required.json`;
     const mapPath = path.join(ROOT, mapRel);
@@ -449,6 +451,39 @@ export function assertScoreboardContract(sources) {
           }
         }
       }
+
+      // MATRIX-REQ-INVENTORY — stub map is FAIL. Must mirror /inventory parts · assignments · purchases.
+      if (mod === "inventory") {
+        const leafIds = new Set((map.leaves ?? []).map((l) => l.id));
+        if ((map.leaves ?? []).length < 20) {
+          problems.push(
+            `${mapRel}: Inventory Required map must have ≥20 leaves (module tabs + parts/create/edit + assignments trail + purchases honest empty) — got ${(map.leaves ?? []).length}`,
+          );
+        }
+        for (const need of [
+          "nav.parts_tab",
+          "nav.assignments_tab",
+          "nav.purchases_tab",
+          "parts.roster",
+          "parts.create",
+          "parts.create.vendor_picker",
+          "parts.edit",
+          "parts.column.vendor_link",
+          "assignments.trail",
+          "assignments.wo_link",
+          "assignments.unit_link",
+          "assignments.vendor_link",
+          "assignments.honest_empty",
+          "purchases.honest_empty",
+          "purchases.crosslink_parts",
+          "purchases.crosslink_assignments",
+        ]) {
+          if (!leafIds.has(need)) {
+            problems.push(`${mapRel}: missing Inventory leaf ${need} (InventoryModuleTabs / manifest /inventory*)`);
+          }
+        }
+      }
+
     } catch (e) {
       problems.push(`${mapRel}: invalid JSON (${e instanceof Error ? e.message : e})`);
     }
@@ -480,12 +515,12 @@ export function assertScoreboardContract(sources) {
 
   if (
     route &&
-    !/module=maintenance\|safety\|insurance\|legal\|accounting\|banking\|dispatch\|settlements\|fuel\|drivers\|fleet\|customers\|vendors\|lists\|factoring\|reports|SUPPORTED.*customers|SUPPORTED.*vendors|SUPPORTED.*fleet|SUPPORTED.*lists|SUPPORTED.*factoring|SUPPORTED.*reports|dispatch/.test(
+    !/module=maintenance\|safety\|insurance\|legal\|accounting\|banking\|dispatch\|settlements\|fuel\|drivers\|fleet\|customers\|vendors\|lists\|factoring\|reports\|inventory|SUPPORTED.*customers|SUPPORTED.*vendors|SUPPORTED.*fleet|SUPPORTED.*lists|SUPPORTED.*factoring|SUPPORTED.*reports|SUPPORTED.*inventory|dispatch/.test(
       route,
     )
   ) {
     problems.push(
-      `${routeRel}: module-matrix route must allow module=maintenance|safety|insurance|legal|accounting|banking|dispatch|settlements|fuel|drivers|fleet|customers|vendors|lists|factoring|reports`,
+      `${routeRel}: module-matrix route must allow module=maintenance|safety|insurance|legal|accounting|banking|dispatch|settlements|fuel|drivers|fleet|customers|vendors|lists|factoring|reports|inventory`,
     );
   }
 

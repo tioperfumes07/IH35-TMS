@@ -1,0 +1,376 @@
+{
+  "module": "inventory",
+  "entity_default": "USMCA",
+  "source": {
+    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md — INVENTORY sidebar (Parts & Stock · Assignments · Purchase History)",
+    "nav": "apps/frontend/src/pages/inventory/InventoryModuleTabs.tsx",
+    "parts": "apps/frontend/src/pages/inventory/InventoryPartsStockPage.tsx + PartCreateDrawer + PartEditDrawer",
+    "assignments": "apps/frontend/src/pages/inventory/InventoryAssignmentsPage.tsx",
+    "purchases": "apps/frontend/src/pages/inventory/InventoryPurchasesPage.tsx",
+    "routes": "apps/frontend/src/routes/manifest.tsx /inventory, /inventory/assignments, /inventory/purchases",
+    "canonical": "maintenance.parts_inventory (stock) · maintenance.parts_invoice_links (assignments)"
+  },
+  "columns": [
+    {
+      "id": "vendor",
+      "group": "linkage",
+      "label": "Vendor"
+    },
+    {
+      "id": "unit",
+      "group": "linkage",
+      "label": "Unit"
+    },
+    {
+      "id": "load",
+      "group": "linkage",
+      "label": "Load"
+    },
+    {
+      "id": "ap_bill",
+      "group": "money",
+      "label": "AP / Bill"
+    },
+    {
+      "id": "expense",
+      "group": "money",
+      "label": "Expense"
+    },
+    {
+      "id": "gl_je",
+      "group": "money",
+      "label": "GL / JE"
+    },
+    {
+      "id": "inventory",
+      "group": "money",
+      "label": "Parts inventory"
+    },
+    {
+      "id": "scenario.maintenance",
+      "group": "process",
+      "label": "Maint WO"
+    },
+    {
+      "id": "picker_law",
+      "group": "chrome",
+      "label": "Picker +Add new"
+    },
+    {
+      "id": "qbo_chrome",
+      "group": "chrome",
+      "label": "QBO chrome"
+    },
+    {
+      "id": "connectivity",
+      "group": "wiring",
+      "label": "Connectivity"
+    },
+    {
+      "id": "reverse_link",
+      "group": "wiring",
+      "label": "Reverse link"
+    }
+  ],
+  "leaves": [
+    {
+      "id": "nav.parts_tab",
+      "tab": "Module nav",
+      "sub": "Parts & Stock tab",
+      "route_hint": "/inventory",
+      "required": [
+        "inventory",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "nav.assignments_tab",
+      "tab": "Module nav",
+      "sub": "Assignments tab",
+      "route_hint": "/inventory/assignments",
+      "required": [
+        "scenario.maintenance",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "nav.purchases_tab",
+      "tab": "Module nav",
+      "sub": "Purchase History tab",
+      "route_hint": "/inventory/purchases",
+      "required": [
+        "expense",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "parts.roster",
+      "tab": "Parts & Stock",
+      "sub": "Roster · ParityTable from maintenance.parts_inventory",
+      "route_hint": "/inventory",
+      "required": [
+        "vendor",
+        "inventory",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "parts.column.vendor_link",
+      "tab": "Parts & Stock",
+      "sub": "Vendor EntityLink column",
+      "route_hint": "/inventory",
+      "required": [
+        "vendor",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "parts.column.category",
+      "tab": "Parts & Stock",
+      "sub": "Category column · N/A honest for legacy blank",
+      "route_hint": "/inventory",
+      "required": [
+        "inventory",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "parts.column.low_stock",
+      "tab": "Parts & Stock",
+      "sub": "Low stock / REORDER badge",
+      "route_hint": "/inventory",
+      "required": [
+        "inventory",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "parts.create",
+      "tab": "Parts & Stock",
+      "sub": "+ Create part drawer",
+      "route_hint": "/inventory",
+      "required": [
+        "vendor",
+        "inventory",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "parts.create.category",
+      "tab": "Parts & Stock",
+      "sub": "Create · category SelectCombobox (PART_INVENTORY_CATEGORIES)",
+      "route_hint": "/inventory",
+      "required": [
+        "inventory",
+        "picker_law",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "parts.create.vendor_picker",
+      "tab": "Parts & Stock",
+      "sub": "Create · preferred vendor ReferenceSelect (+Add new)",
+      "route_hint": "/inventory",
+      "required": [
+        "vendor",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "parts.create.money",
+      "tab": "Parts & Stock",
+      "sub": "Create · unit cost MoneyInput",
+      "route_hint": "/inventory",
+      "required": [
+        "expense",
+        "gl_je",
+        "inventory",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "parts.edit",
+      "tab": "Parts & Stock",
+      "sub": "Row Edit · PartEditDrawer",
+      "route_hint": "/inventory",
+      "required": [
+        "vendor",
+        "inventory",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "parts.edit.vendor_picker",
+      "tab": "Parts & Stock",
+      "sub": "Edit · preferred vendor ReferenceSelect",
+      "route_hint": "/inventory",
+      "required": [
+        "vendor",
+        "picker_law",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "assignments.banner",
+      "tab": "Assignments",
+      "sub": "Honest SoR banner (parts_invoice_links)",
+      "route_hint": "/inventory/assignments",
+      "required": [
+        "scenario.maintenance",
+        "inventory",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "assignments.trail",
+      "tab": "Assignments",
+      "sub": "Assignment trail ParityTable",
+      "route_hint": "/inventory/assignments",
+      "required": [
+        "vendor",
+        "unit",
+        "scenario.maintenance",
+        "inventory",
+        "expense",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "assignments.search",
+      "tab": "Assignments",
+      "sub": "Search part / WO / unit / vendor / invoice",
+      "route_hint": "/inventory/assignments",
+      "required": [
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "assignments.wo_link",
+      "tab": "Assignments",
+      "sub": "Work order EntityLink",
+      "route_hint": "/inventory/assignments",
+      "required": [
+        "scenario.maintenance",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "assignments.unit_link",
+      "tab": "Assignments",
+      "sub": "Unit EntityLink",
+      "route_hint": "/inventory/assignments",
+      "required": [
+        "unit",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "assignments.vendor_link",
+      "tab": "Assignments",
+      "sub": "Vendor EntityLink + invoice amount",
+      "route_hint": "/inventory/assignments",
+      "required": [
+        "vendor",
+        "ap_bill",
+        "expense",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "assignments.crosslink_parts",
+      "tab": "Assignments",
+      "sub": "Cross-link → Parts & Stock",
+      "route_hint": "/inventory/assignments",
+      "required": [
+        "inventory",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "assignments.crosslink_purchases",
+      "tab": "Assignments",
+      "sub": "Cross-link → Purchase History",
+      "route_hint": "/inventory/assignments",
+      "required": [
+        "expense",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "assignments.honest_empty",
+      "tab": "Assignments",
+      "sub": "Honest empty when no WO part links",
+      "route_hint": "/inventory/assignments",
+      "required": [
+        "scenario.maintenance",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "purchases.honest_empty",
+      "tab": "Purchase History",
+      "sub": "Honest empty · purchase SoR not built (HOLD)",
+      "route_hint": "/inventory/purchases",
+      "required": [
+        "expense",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "purchases.crosslink_parts",
+      "tab": "Purchase History",
+      "sub": "Cross-link → Parts & Stock",
+      "route_hint": "/inventory/purchases",
+      "required": [
+        "inventory",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "purchases.crosslink_assignments",
+      "tab": "Purchase History",
+      "sub": "Cross-link → Assignments",
+      "route_hint": "/inventory/purchases",
+      "required": [
+        "scenario.maintenance",
+        "connectivity",
+        "reverse_link"
+      ]
+    }
+  ]
+}
