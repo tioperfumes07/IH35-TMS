@@ -1,6 +1,7 @@
 import { entityLabel } from "../../lib/entity-label";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getPreSettlementForDriver, settleAndPay } from "../../api/driverFinance";
+import { formatDateUS } from "../../lib/formatDate";
 import { useToast } from "../Toast";
 import { Button } from "../Button";
 import { EntityLink } from "../shared/EntityLink";
@@ -74,7 +75,7 @@ export function PreSettlementPanel({ driverId, operatingCompanyId, onSettled }: 
             <EntityLink kind="settlement" id={settlement.id} label={entityLabel(settlement.display_id, settlement.id, "Record")} />
           </div>
           <div className="mt-0.5 text-[11px] text-gray-500">
-            {settlement.period_start ? new Date(settlement.period_start).toLocaleDateString() : "—"}
+            {settlement.period_start ? formatDateUS(settlement.period_start) : "—"}
           </div>
         </div>
         <span
@@ -193,24 +194,17 @@ export function PreSettlementPanel({ driverId, operatingCompanyId, onSettled }: 
 
       {/* Settle & Pay guard message */}
       {!isSettleEnabled ? (
-        <div className="rounded-sm border border-slate-200 bg-slate-100 px-3 py-2 text-xs text-slate-700">
-          <strong>Settle &amp; Pay</strong> enables once the driver returns and the SB load is delivered
-          (status → delivered/pending docs).
+        <div className="rounded-sm border border-dashed border-gray-200 p-3 text-xs text-gray-500">
+          Settle & Pay is enabled once the return (SB) load is delivered.
         </div>
       ) : null}
 
-      {/* Settle & Pay action */}
       <Button
-        type="button"
-        size="sm"
+        variant="primary"
         disabled={!isSettleEnabled || settleMutation.isPending}
-        loading={settleMutation.isPending}
-        onClick={() => {
-          if (!isSettleEnabled) return;
-          settleMutation.mutate({ settlementId: settlement.id });
-        }}
+        onClick={() => settleMutation.mutate({ settlementId: settlement.id })}
       >
-        Settle &amp; Pay
+        {settleMutation.isPending ? "Settling…" : "Settle & Pay"}
       </Button>
     </div>
   );
