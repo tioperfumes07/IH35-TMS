@@ -42,22 +42,38 @@ const MANIFEST = "apps/frontend/src/routes/manifest.tsx";
  */
 const SURFACES = [
   {
-    route: "/program/scenario-tracker",
-    what: "live 24-slice Scenario Tracker board (canonical — lives in PROGRAM beside the Scoreboard)",
+    route: "/program",
+    what: "Program home — Scenario Tracker only (owner 2026-08-08; blocks/tabs certification chrome removed)",
     requireDoor: true,
-    // OWNER DECISION 2026-08-05: the tracker lives ONLY on Program. The Home panel that used to
-    // host the second door was removed (it became an orphan component), so Program's tab row is the
-    // door — and the board is now also mounted inline on /program itself.
-    linkSources: ["apps/frontend/src/pages/program/AuditScoreboardPage.tsx"],
+    linkSources: [
+      "apps/frontend/src/pages/program/LegacyAuditScoreboardPage.tsx",
+      "apps/frontend/src/pages/program/ModuleMatrixPreviewPage.tsx",
+      "apps/frontend/src/pages/program/scenario-tracker/ScenarioTrackerHome.tsx",
+    ],
+  },
+  {
+    // Former dedicated URL — kept as redirect to /program (additive-only).
+    route: "/program/scenario-tracker",
+    what: "legacy dedicated tracker URL — must remain routed as a redirect to /program",
+    requireDoor: false,
+    linkSources: [],
   },
   {
     // Owner moved the board to PROGRAM on 2026-08-05. The old path stays routed as a redirect —
     // additive-only law: never delete a route, and bookmarks/links to it must keep resolving.
-    // No door is required for a redirect; only that it still exists.
     route: "/home/scenario-tracker",
-    what: "legacy path — must remain routed as a redirect to the canonical PROGRAM route",
+    what: "legacy path — must remain routed as a redirect to /program",
     requireDoor: false,
     linkSources: [],
+  },
+  {
+    route: "/program/matrix",
+    what: "Module matrix scoreboard (owner-approved layout; sample until live R/M/D)",
+    requireDoor: true,
+    linkSources: [
+      "apps/frontend/src/pages/program/scenario-tracker/ScenarioTrackerHome.tsx",
+      "apps/frontend/src/pages/program/LegacyAuditScoreboardPage.tsx",
+    ],
   },
 ];
 

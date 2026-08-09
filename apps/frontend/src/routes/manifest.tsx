@@ -19,6 +19,12 @@ const ModuleCompletionPage = React.lazy(() => import("../pages/program/ModuleCom
 const AuditScoreboardPage = React.lazy(() =>
   import("../pages/program/AuditScoreboardPage").then((m) => ({ default: m.AuditScoreboardPage }))
 );
+const LegacyAuditScoreboardPage = React.lazy(() =>
+  import("../pages/program/LegacyAuditScoreboardPage").then((m) => ({ default: m.LegacyAuditScoreboardPage }))
+);
+const ModuleMatrixPreviewPage = React.lazy(() =>
+  import("../pages/program/ModuleMatrixPreviewPage").then((m) => ({ default: m.ModuleMatrixPreviewPage }))
+);
 const SystemModulePage = React.lazy(() => import("../pages/system/SystemModulePage").then((m) => ({ default: m.SystemModulePage })));
 const DomainCatalogHubPage = React.lazy(() => import("../pages/lists/DomainCatalogHubPage").then((m) => ({ default: m.DomainCatalogHubPage })));
 // CATALOG-2 — factory-backed generic catalog CRUD (registry-driven, additive to the hand-rolled
@@ -173,9 +179,6 @@ const NotificationCenterPage = React.lazy(() => import("../pages/notifications/N
 const EquipmentTypesPage = React.lazy(() => import("../pages/EquipmentTypesPage").then((m) => ({ default: m.EquipmentTypesPage })));
 const HomePage = React.lazy(() => import("../pages/Home").then((m) => ({ default: m.HomePage })));
 const OwnerHome = React.lazy(() => import("../pages/home/OwnerHome").then((m) => ({ default: m.OwnerHome })));
-const ScenarioTrackerHome = React.lazy(() =>
-  import("../pages/program/scenario-tracker/ScenarioTrackerHome").then((m) => ({ default: m.ScenarioTrackerHome })),
-);
 // QBO-style home stays mounted at /app/homepage (bookmarks + never-delete). Sidebar HOME → /home.
 const QboStyleHomePage = React.lazy(() => import("../pages/home/QboStyleHomePage").then((m) => ({ default: m.QboStyleHomePage })));
 const LoginPage = React.lazy(() => import("../pages/Login").then((m) => ({ default: m.LoginPage })));
@@ -781,12 +784,10 @@ export const ROUTES = React.Children.toArray(
             </ProtectedRoute>
           }
         />
-        {/* PROG-NAV-01 (owner 2026-08-05): the Scenario Tracker belongs in PROGRAM, next to the
-            Scoreboard — not under /home. Canonical route is now /program/scenario-tracker (below).
-            This legacy path is KEPT and redirected (additive-only: never delete a route; same
-            pattern as the retained /safety/vehicle-inspections redirect) so existing links and
-            bookmarks keep working. */}
-        <Route path="/home/scenario-tracker" element={<Navigate to="/program/scenario-tracker" replace />} />
+        {/* PROG-NAV-01 (owner 2026-08-05 → 2026-08-08): Scenario Tracker is Program home.
+            /program mounts ScenarioTrackerHome only (no blocks/tabs chrome). Legacy path
+            /home/scenario-tracker redirects to /program. */}
+        <Route path="/home/scenario-tracker" element={<Navigate to="/program" replace />} />
         {/* Additive: role dashboards also kept at /home/ops (never-delete). */}
         <Route
           path="/home/ops"
@@ -796,7 +797,7 @@ export const ROUTES = React.Children.toArray(
             </ProtectedRoute>
           }
         />
-        {/* Program Audit Scoreboard is the main /program page (owner 2026-08). Tracker kept at /program/tracker. */}
+        {/* Program home = Scenario Tracker only (owner 2026-08-08). */}
         <Route
           path="/program"
           element={
@@ -816,13 +817,23 @@ export const ROUTES = React.Children.toArray(
             </ProtectedRoute>
           }
         />
-        {/* Scenario Tracker — CANONICAL home (owner 2026-08-05): it lives in PROGRAM alongside the
-            Scoreboard, both fed live from prod. /home/scenario-tracker redirects here. */}
+        {/* Former dedicated tracker URL — redirect to Program home (same surface). */}
+        <Route path="/program/scenario-tracker" element={<Navigate to="/program" replace />} />
+        {/* Owner-approved module matrix scoreboard (preview / sample until live R/M/D). */}
         <Route
-          path="/program/scenario-tracker"
+          path="/program/matrix"
           element={
             <ProtectedRoute>
-              <ScenarioTrackerHome />
+              <ModuleMatrixPreviewPage />
+            </ProtectedRoute>
+          }
+        />
+        {/* Archived 13-gate / blocks certification board — reachable until matrix is live-sourced. */}
+        <Route
+          path="/program/legacy-scoreboard"
+          element={
+            <ProtectedRoute>
+              <LegacyAuditScoreboardPage />
             </ProtectedRoute>
           }
         />

@@ -18,7 +18,7 @@ const LABEL = "verify-program-scoreboard-13gate-prodread";
 const SELFTEST = process.argv.includes("--selftest");
 
 const ROUTES = "apps/backend/src/program/audit-scoreboard.routes.ts";
-const PAGE = "apps/frontend/src/pages/program/AuditScoreboardPage.tsx";
+const PAGE = "apps/frontend/src/pages/program/LegacyAuditScoreboardPage.tsx";
 const SCRIPT = "scripts/audit-coverage-scoreboard.mjs";
 const GEN = "scripts/gen-program-scoreboard.mjs";
 

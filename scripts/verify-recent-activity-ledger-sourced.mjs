@@ -18,7 +18,7 @@
  * runtime GitHub path from being the source at all.
  *
  * CHECKED:
- *   1. AuditScoreboardPage assigns recentActivity from PROGRAM_SCOREBOARD (the generated ledger data).
+ *   1. LegacyAuditScoreboardPage assigns recentActivity from PROGRAM_SCOREBOARD (ledger data).
  *   2. It never assigns recentActivity from the live API payload (`live.recentActivity`) — not even as
  *      a fallback, because a fallback reintroduces the silent-empty state.
  *   3. The generator emits at least one ledger row, so the pipeline is actually producing data.

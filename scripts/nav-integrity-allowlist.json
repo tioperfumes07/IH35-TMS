@@ -581,6 +581,10 @@
       "reason": "Parked Scenario Tracker FE until GUARD verifies live GET /api/v1/home/scenario-tracker; not sidebar until /home switch."
     },
     {
+      "path": "/program/scenario-tracker",
+      "reason": "Redirect-only to /program (Scenario Tracker home). Door is /program; path kept additive-only."
+    },
+    {
       "path": "/finance/ar-ap-aging",
       "reason": "FIN-20 read-only Finance-Hub page, behind OFF flag AR_AP_AGING_UI_ENABLED; subnav wiring deferred until flag ON"
     },

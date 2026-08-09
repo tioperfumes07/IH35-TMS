@@ -23,6 +23,8 @@ export interface GuardItem { badge: string; tone: "ver" | "pend" | "flag" | "fai
 export interface ProgramScoreboard {
   meta: { generatedAt: string; sourceSha: string; deployedSha: string; prodReadAt: string; ledgerRows: number; failOpen: number; defects: number; };
   modules: ModuleRow[]; prod: ProdMetric[]; chain: ChainNode[]; chainMoney: string; chainReverse: string; guard: GuardItem[];
+  /** Live scenario-slice probe (scripts/scoreboard-from-live.mjs) — TMS-native only. */
+  live_scenario_probe?: Record<string, unknown>;
 }
 
 export const PROGRAM_SCOREBOARD: ProgramScoreboard = {

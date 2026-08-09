@@ -87,6 +87,7 @@ export interface GuardItem { badge: string; tone: "ver" | "pend" | "flag" | "fai
 export interface ProgramScoreboard {
   meta: { generatedAt: string; sourceSha: string; deployedSha: string; prodReadAt: string; ledgerRows: number; failOpen: number; defects: number; };
   modules: ModuleRow[]; prod: ProdMetric[]; chain: ChainNode[]; chainMoney: string; chainReverse: string; guard: GuardItem[];
+  live_scenario_probe?: Record<string, unknown>;
 }
 
 export const PROGRAM_SCOREBOARD: ProgramScoreboard = ${JSON.stringify(seedData, null, 2)};

@@ -11,7 +11,7 @@ import { join } from "node:path";
 
 const ROOT = process.cwd();
 const BACKEND = "apps/backend/src/program/audit-scoreboard.routes.ts";
-const PAGE = "apps/frontend/src/pages/program/AuditScoreboardPage.tsx";
+const PAGE = "apps/frontend/src/pages/program/LegacyAuditScoreboardPage.tsx";
 const LABEL = "verify-class-scoreboard-individual-columns";
 
 function maskComments(src) {

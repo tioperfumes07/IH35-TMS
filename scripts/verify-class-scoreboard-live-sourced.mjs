@@ -36,7 +36,7 @@ import { join } from "node:path";
 
 const ROOT = process.cwd();
 const BACKEND = "apps/backend/src/program/audit-scoreboard.routes.ts";
-const PAGE = "apps/frontend/src/pages/program/AuditScoreboardPage.tsx";
+const PAGE = "apps/frontend/src/pages/program/LegacyAuditScoreboardPage.tsx";
 const GEN = "scripts/gen-class-scoreboard.mjs";
 const LABEL = "verify-class-scoreboard-live-sourced";
 
@@ -96,11 +96,13 @@ export function auditPage(raw) {
   if (!/\bclassScoreboard\b/.test(src)) {
     problems.push(`${PAGE}: never reads classScoreboard from the live payload.`);
   }
-  // The grid must map over the RESOLVED board, not the imported const.
+  // The grid must map over the RESOLVED board (rows) or the live module×CLS matrix — not the imported const.
   if (/CLASS_SCOREBOARD\.rows\.map\s*\(/.test(src)) {
     problems.push(`${PAGE}: the grid maps CLASS_SCOREBOARD.rows directly — that is the build-time module, so the cells cannot change without a frontend redeploy.`);
   }
-  if (!/classBoard\.rows\.map\s*\(/.test(src)) {
+  const rendersResolved =
+    /classBoard\.rows\.map\s*\(/.test(src) || /classMatrix\.modules\.map\s*\(/.test(src);
+  if (!rendersResolved) {
     problems.push(`${PAGE}: the grid does not render from the resolved classBoard (live payload, falling back to the generated module).`);
   }
   // A fallback the viewer cannot see is indistinguishable from live data — the exact failure mode of
@@ -143,6 +145,7 @@ if (process.argv.includes("--selftest")) {
     ["backend: declaration alone does not count", `function readClassScoreboardFromQueue(){} const P="docs/audit/wave-queue.json"; reply.send({classScoreboard: null});`, (s) => auditBackend(s), 1],
     ["backend: not wired at all", `reply.send({ modules });`, (s) => auditBackend(s), 1],
     ["page: renders from resolved board with a fallback notice", `const b = sb.classScoreboard ?? CLASS_SCOREBOARD; classBoard.rows.map(r => r); "class-scoreboard-fallback-warning";`, (s) => auditPage(s), 0],
+    ["page: renders from live module×CLS matrix", `const classMatrix = sb.classScoreboard.matrix; classMatrix.modules.map(m => m); "class-scoreboard-fallback-warning"; classScoreboard;`, (s) => auditPage(s), 0],
     ["page: still maps the build-time const", `const x = sb.classScoreboard; CLASS_SCOREBOARD.rows.map(r => r); classBoard.rows.map(r => r); "class-scoreboard-fallback-warning";`, (s) => auditPage(s), 1],
     ["page: silent fallback is forbidden", `const b = sb.classScoreboard ?? CLASS_SCOREBOARD; classBoard.rows.map(r => r);`, (s) => auditPage(s), 1],
     ["page: a COMMENT mentioning the testid does not satisfy it", `/* class-scoreboard-fallback-warning */ const b = sb.classScoreboard; classBoard.rows.map(r => r);`, (s) => auditPage(s), 1],

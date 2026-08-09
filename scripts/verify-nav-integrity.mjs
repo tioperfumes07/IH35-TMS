@@ -200,12 +200,11 @@ const subnavPaths = new Set([
   ...extractQuotedPaths(read("apps/frontend/src/components/safety/SAFETY_TABS_CONFIG.ts"), ["route"]),
   ...extractQuotedPaths(read("apps/frontend/src/components/layout/sidebar-config.ts"), ["to"]),
   ...extractQuotedPaths(read("apps/frontend/src/pages/program/ProgramBoardPage.tsx"), ["href"]),
-  // PROG-NAV-01: AuditScoreboardPage IS the Program module's rendered top-bar tab row (it is the
-  // /program index). It was not counted as a nav source, so every tab it hosts looked like an
-  // orphan route and had to be allowlisted instead of given a door — the exact inversion this
-  // guard exists to prevent. Counting it means a real tab satisfies the guard and a missing one
-  // still fails.
-  ...extractJsxAttrPaths(read("apps/frontend/src/pages/program/AuditScoreboardPage.tsx"), ["to"]),
+  // PROG-NAV-01: LegacyAuditScoreboardPage keeps archive tab links (tracker/modules/…).
+  // Program home (/program) is Scenario Tracker only — no tab row there.
+  ...extractJsxAttrPaths(read("apps/frontend/src/pages/program/LegacyAuditScoreboardPage.tsx"), ["to"]),
+  ...extractJsxAttrPaths(read("apps/frontend/src/pages/program/ModuleMatrixPreviewPage.tsx"), ["to"]),
+  ...extractJsxAttrPaths(read("apps/frontend/src/pages/program/scenario-tracker/ScenarioTrackerHome.tsx"), ["to"]),
 ]);
 
 const driversNavMatch = read("apps/frontend/src/components/drivers/DRIVERS_TABS_CONFIG.ts").match(
