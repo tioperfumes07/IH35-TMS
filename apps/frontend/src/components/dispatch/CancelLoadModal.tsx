@@ -5,34 +5,12 @@ import { useAuth } from "../../auth/useAuth";
 import { Button } from "../Button";
 import { Modal } from "../Modal";
 import { MoneyInput } from "../forms/MoneyInput";
-import { ApiError } from "../../api/client";
 import { ReferenceSelect } from "../parity/ReferenceSelect";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 /** Pull a human message out of a cancel API failure (validation_error details, field message, or text). */
 function extractCancelError(err: unknown): string {
-  if (err instanceof ApiError) {
-    const data = (err.data as Record<string, unknown>) ?? {};
-    const details = data.details as Record<string, unknown> | undefined;
-    if (details) {
-      if (typeof details.message === "string") return details.message;
-      // zod flatten shape: { fieldErrors: { field: [msg] }, formErrors: [...] }
-      const fieldErrors = details.fieldErrors as Record<string, string[]> | undefined;
-      const firstField = fieldErrors ? Object.values(fieldErrors).flat()[0] : undefined;
-      if (firstField) return firstField;
-    }
-    if (typeof data.message === "string" && data.message.trim()) return data.message;
-    if (typeof data.blocker === "string" && data.blocker.trim()) return data.blocker;
-    // CU-09 / C-08 class: never surface a bare E_* machine code as the operator toast.
-    if (typeof data.error === "string" && data.error.trim()) {
-      const code = data.error.trim();
-      if (/^E_[A-Z0-9_]+$/.test(code)) {
-        return `Cancel failed: ${code.replace(/^E_/, "").replace(/_/g, " ").toLowerCase()}`;
-      }
-      return `Cancel failed: ${code}`;
-    }
-    return `Cancel failed (HTTP ${err.status}).`;
-  }
-  return err instanceof Error ? err.message : "Cancel failed. Please try again.";
+  return userFacingApiError(err, "Cancel failed");
 }
 
 type Props = {

@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { ApiError } from "../../../api/client";
+import { userFacingApiError } from "../../../lib/api-error-message";
 import { getPlaidCompanyTransactions } from "../../../api/banking";
 import {
   contestSafetyFine,
@@ -39,15 +39,7 @@ const FINE_MUTATE_ROLES = ["Owner", "Administrator", "Safety"];
 
 /** Surface the server's own error/message body (409 fine_already_converted_to_liability, etc.). */
 function apiErrorText(error: unknown): string {
-  if (error instanceof ApiError) {
-    const data = error.data as { error?: string; message?: string } | null | undefined;
-    if (data && typeof data === "object") {
-      if (typeof data.message === "string" && data.message.trim()) return data.message;
-      if (typeof data.error === "string" && data.error.trim()) return data.error;
-    }
-    return error.message;
-  }
-  return (error as Error)?.message ?? "Request failed.";
+  return userFacingApiError(error, "Request failed");
 }
 
 export function FineLifecycleActions({ fine, operatingCompanyId, onUpdated }: Props) {

@@ -78,7 +78,7 @@ import { UnitsWithoutLoadTable } from "./components/UnitsWithoutLoadTable";
 import { QuickAssignModal } from "./components/QuickAssignModal";
 import { TableHeaderCell, useTablePref } from "../../components/table";
 import { useUrlSort } from "../../hooks/useUrlSort";
-import { ApiError } from "../../api/client";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 export type DispatchBoardProps = Omit<DispatchListProps, "showEtaColumn"> & {
   operatingCompanyId?: string;
@@ -1320,19 +1320,8 @@ export function DispatchBoard({
               await queryClient.invalidateQueries({ queryKey: ["dispatch", "loads"] });
               onBulkComplete?.();
             } catch (error) {
-              if (error instanceof ApiError) {
-                // FAIL-U1: `blocker` carries the readable interlock sentence (E_DRIVER_REPAIR_BLOCK
-                // ships it). Read it before falling back to `error`, which is a machine code — the
-                // toast used to read the literal `E_DRIVER_REPAIR_BLOCK` at the dispatcher.
-                const data =
-                  (error.data as { error?: string; message?: string; blocker?: string } | undefined) ?? {};
-                pushToast(
-                  String(data.message ?? data.blocker ?? data.error ?? `Quick assign failed (${error.status})`),
-                  "error"
-                );
-              } else {
-                pushToast(error instanceof Error ? error.message : "Quick assign failed", "error");
-              }
+              // CU-09 / FAIL-U1: prefer message/blocker; never toast a bare E_* machine code.
+              pushToast(userFacingApiError(error, "Quick assign failed"), "error");
             }
           }}
         />
