@@ -14,6 +14,7 @@ import maintRequired from "@scoreboard/modules/maintenance.required.json";
 import safetyRequired from "@scoreboard/modules/safety.required.json";
 import insuranceRequired from "@scoreboard/modules/insurance.required.json";
 import legalRequired from "@scoreboard/modules/legal.required.json";
+import accountingRequired from "@scoreboard/modules/accounting.required.json";
 import { ProgramModuleNav } from "./ProgramModuleNav";
 
 type Tri = "done" | "audited" | "unaudited" | "na";
@@ -63,16 +64,17 @@ type LiveMatrix = {
   meta?: { honesty?: string; prodReadAt?: string };
 };
 
-type MatrixModuleId = "maintenance" | "safety" | "insurance" | "legal";
+type MatrixModuleId = "maintenance" | "safety" | "insurance" | "legal" | "accounting";
 
 const REQUIRED_BY_MODULE: Record<MatrixModuleId, RequiredMap> = {
   maintenance: maintRequired as RequiredMap,
   safety: safetyRequired as RequiredMap,
   insurance: insuranceRequired as RequiredMap,
   legal: legalRequired as RequiredMap,
+  accounting: accountingRequired as RequiredMap,
 };
 
-const LIVE_MODULES: MatrixModuleId[] = ["maintenance", "safety", "insurance", "legal"];
+const LIVE_MODULES: MatrixModuleId[] = ["maintenance", "safety", "insurance", "legal", "accounting"];
 
 const MODULES = [
   "Home", "Dispatch", "Drivers", "Fleet", "Trailers", "Maintenance", "Safety", "Insurance",
@@ -152,6 +154,20 @@ function leafPct(cells: Tri[]): number {
 }
 
 function sectionForLeaf(moduleId: MatrixModuleId, leaf: RequiredLeaf): string {
+  if (moduleId === "accounting") {
+    if (leaf.id === "home") return "Accounting home";
+    if (leaf.id.startsWith("bills.")) return "Bills";
+    if (leaf.id.startsWith("expenses.")) return "Expenses";
+    if (leaf.id.startsWith("bill_payments.") || leaf.id.startsWith("ap.")) return "Bill Payment / AP";
+    if (leaf.id === "vendors" || leaf.id === "customers") return "Parties";
+    if (leaf.id.startsWith("invoices.") || leaf.id.startsWith("payments.") || leaf.id === "collections") return "AR";
+    if (leaf.id.startsWith("factoring.") || leaf.id === "escrow" || leaf.id === "pre_settlements") return "Factoring / settlements";
+    if (leaf.id.startsWith("je.") || leaf.id === "register" || leaf.id === "transactions") return "Ledger";
+    if (leaf.id.startsWith("coa") || leaf.id.includes("close") || leaf.id === "audit_trail" || leaf.id === "reports") {
+      return "Period / CoA / Reports";
+    }
+    return "Accounting";
+  }
   if (moduleId === "legal") {
     if (leaf.id === "landing") return "Legal home";
     if (leaf.id.startsWith("contracts.")) return "Contracts";
@@ -285,6 +301,7 @@ function parseModule(raw: string | null): MatrixModuleId {
   if (raw === "safety") return "safety";
   if (raw === "insurance") return "insurance";
   if (raw === "legal") return "legal";
+  if (raw === "accounting") return "accounting";
   return "maintenance";
 }
 
@@ -292,6 +309,7 @@ function titleCase(id: MatrixModuleId): string {
   if (id === "safety") return "Safety";
   if (id === "insurance") return "Insurance";
   if (id === "legal") return "Legal";
+  if (id === "accounting") return "Accounting";
   return "Maintenance";
 }
 
