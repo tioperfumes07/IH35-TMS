@@ -20,6 +20,7 @@ import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -72,7 +73,7 @@ export function SalesTaxPage() {
       await queryClient.invalidateQueries({ queryKey: ["sales-tax", "agencies", companyId] });
       pushToast("Sales tax agency created", "success");
     },
-    onError: (error) => pushToast(String((error as Error).message ?? "Failed to create agency"), "error"),
+    onError: (error) => pushToast(userFacingApiError(error, "Failed to create agency"), "error"),
   });
 
   const prepareReturnMutation = useMutation({
@@ -87,7 +88,7 @@ export function SalesTaxPage() {
       await queryClient.invalidateQueries({ queryKey: ["sales-tax", "returns", companyId] });
       pushToast("Sales tax return prepared", "success");
     },
-    onError: (error) => pushToast(String((error as Error).message ?? "Failed to prepare return"), "error"),
+    onError: (error) => pushToast(userFacingApiError(error, "Failed to prepare return"), "error"),
   });
 
   const agencyVendorById = useMemo(() => {
@@ -178,7 +179,7 @@ export function SalesTaxPage() {
                     await queryClient.invalidateQueries({ queryKey: ["sales-tax", "returns", companyId] });
                     pushToast("Return marked filed", "success");
                   })
-                  .catch((error) => pushToast(String((error as Error).message ?? "Failed to mark filed"), "error"));
+                  .catch((error) => pushToast(userFacingApiError(error, "Failed to mark filed"), "error"));
               }}
             >
               Mark filed
@@ -192,7 +193,7 @@ export function SalesTaxPage() {
                     await queryClient.invalidateQueries({ queryKey: ["sales-tax", "returns", companyId] });
                     pushToast("Return marked paid", "success");
                   })
-                  .catch((error) => pushToast(String((error as Error).message ?? "Failed to mark paid"), "error"));
+                  .catch((error) => pushToast(userFacingApiError(error, "Failed to mark paid"), "error"));
               }}
             >
               Mark paid

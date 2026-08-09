@@ -63,6 +63,7 @@ import {
 } from "./drivers/driversExtendedSubtabs";
 import { DRIVERS_SUBTAB_PATH, driversSubtabFromPath } from "../router/route-manifest";
 import type { Driver } from "../types/api";
+import { userFacingApiError } from "../lib/api-error-message";
 
 export { DRIVERS_MODULE_NAV_PATHS };
 
@@ -300,7 +301,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
       });
       await queryClient.invalidateQueries({ queryKey: ["driver-teams"] });
     },
-    onError: (error) => pushToast(String((error as Error).message || error), "error"),
+    onError: (error) => pushToast(userFacingApiError(error, "Request failed"), "error"),
   });
 
   const updateTeamMutation = useMutation({
@@ -319,7 +320,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
       await queryClient.invalidateQueries({ queryKey: ["driver-teams"] });
       await queryClient.invalidateQueries({ queryKey: ["driver-team"] });
     },
-    onError: (error) => pushToast(String((error as Error).message || error), "error"),
+    onError: (error) => pushToast(userFacingApiError(error, "Request failed"), "error"),
   });
 
   const deactivateTeamMutation = useMutation({
@@ -330,7 +331,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
       await queryClient.invalidateQueries({ queryKey: ["driver-teams"] });
       await queryClient.invalidateQueries({ queryKey: ["driver-team"] });
     },
-    onError: (error) => pushToast(String((error as Error).message || error), "error"),
+    onError: (error) => pushToast(userFacingApiError(error, "Request failed"), "error"),
   });
 
   const allDrivers = useMemo(() => driversQuery.data ?? [], [driversQuery.data]);

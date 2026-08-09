@@ -27,6 +27,7 @@ import {
   matterRowToFormState,
   type LegalMatterFormState,
 } from "./LegalMatterFormFields";
+import { userFacingApiError } from "../../../lib/api-error-message";
 
 type Tab = "overview" | "timeline" | "documents" | "deadlines" | "notes";
 const LEGAL_MATTER_TAB_IDS = new Set<string>(["overview", "timeline", "documents", "deadlines", "notes"]);
@@ -143,7 +144,7 @@ export function LegalMatterDetailPage() {
       pushToast("Matter updated", "success");
     },
     onError: (error) => {
-      pushToast(String((error as Error).message || "Could not update matter"), "error");
+      pushToast(userFacingApiError(error, "Could not update matter"), "error");
     },
   });
 

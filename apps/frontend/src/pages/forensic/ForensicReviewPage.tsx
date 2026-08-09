@@ -22,6 +22,7 @@ import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 function severityClass(severity: string) {
   if (severity === "critical") return "bg-red-100 text-red-700";
@@ -176,7 +177,7 @@ export function ForensicReviewPage() {
                   pushToast(`Import batch started: ${res.batch_id}`, "success");
                   void queryClient.invalidateQueries({ queryKey: ["forensic", "batches"] });
                 })
-                .catch((error) => pushToast(String((error as Error).message || "Failed to start import"), "error"));
+                .catch((error) => pushToast(userFacingApiError(error, "Failed to start import"), "error"));
             }}
           >
             Start Import Batch
@@ -259,7 +260,7 @@ export function ForensicReviewPage() {
                             pushToast(`Disconnected QBO for ${company.short_name ?? company.legal_name}`, "success");
                             void queryClient.invalidateQueries({ queryKey: ["forensic", "qbo-status"] });
                           })
-                          .catch((error) => pushToast(String((error as Error).message || "Failed to disconnect QBO"), "error"))
+                          .catch((error) => pushToast(userFacingApiError(error, "Failed to disconnect QBO"), "error"))
                           .finally(() => setDisconnectingCompanyId(null));
                       }}
                     >
@@ -338,7 +339,7 @@ export function ForensicReviewPage() {
                         .then((res) => {
                           pushToast(`Report generated: ${res.filename}`, "success");
                         })
-                        .catch((error) => pushToast(String((error as Error).message || "Report generation failed"), "error"))
+                        .catch((error) => pushToast(userFacingApiError(error, "Report generation failed"), "error"))
                         .finally(() => setReportLoadingBatchId(null));
                     }}
                   >
@@ -431,7 +432,7 @@ export function ForensicReviewPage() {
                       pushToast("Anomaly review updated", "success");
                       void queryClient.invalidateQueries({ queryKey: ["forensic", "anomalies"] });
                     })
-                    .catch((error) => pushToast(String((error as Error).message || "Failed to review anomaly"), "error"));
+                    .catch((error) => pushToast(userFacingApiError(error, "Failed to review anomaly"), "error"));
                 }}
               >
                 Save Review

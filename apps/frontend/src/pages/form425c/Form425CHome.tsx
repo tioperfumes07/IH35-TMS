@@ -27,6 +27,7 @@ import { HistoryTab } from "./tabs/HistoryTab";
 import { MergeExportTab } from "./tabs/MergeExportTab";
 import { ProfilesTab } from "./tabs/ProfilesTab";
 import { QBImportTab } from "./tabs/QBImportTab";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 type TabId = "profile" | "qb" | "form" | "merge" | "history";
 const FORM425C_TAB_IDS = new Set<string>(["profile", "qb", "form", "merge", "history"]);
@@ -222,7 +223,7 @@ export function Form425CHome() {
       pushToast("Profile defaults saved", "success");
       await queryClient.invalidateQueries({ queryKey: ["form-425c", "profiles", companyId] });
     },
-    onError: (error) => pushToast(String((error as Error).message || "Failed to save profile"), "error"),
+    onError: (error) => pushToast(userFacingApiError(error, "Failed to save profile"), "error"),
   });
 
   const createMutation = useMutation({
@@ -240,7 +241,7 @@ export function Form425CHome() {
       await queryClient.invalidateQueries({ queryKey: ["form-425c", "reports", companyId] });
       pushToast("Report created", "success");
     },
-    onError: (error) => pushToast(String((error as Error).message || "Create report failed"), "error"),
+    onError: (error) => pushToast(userFacingApiError(error, "Create report failed"), "error"),
   });
 
   const saveMutation = useMutation({
@@ -271,7 +272,7 @@ export function Form425CHome() {
       await queryClient.invalidateQueries({ queryKey: ["form-425c", "detail", companyId, form.reportId ?? ""] });
       await queryClient.invalidateQueries({ queryKey: ["form-425c", "reports", companyId] });
     },
-    onError: (error) => pushToast(String((error as Error).message || "Save failed"), "error"),
+    onError: (error) => pushToast(userFacingApiError(error, "Save failed"), "error"),
   });
 
   const importMutation = useMutation({
@@ -280,7 +281,7 @@ export function Form425CHome() {
       await queryClient.invalidateQueries({ queryKey: ["form-425c", "detail", companyId, form.reportId ?? ""] });
       pushToast("Lines 19-23 imported from Banking", "success");
     },
-    onError: (error) => pushToast(String((error as Error).message || "Banking import failed"), "error"),
+    onError: (error) => pushToast(userFacingApiError(error, "Banking import failed"), "error"),
   });
 
   const generateMutation = useMutation({
@@ -295,7 +296,7 @@ export function Form425CHome() {
       pushToast(`Ready to print: ${res.suggested_filename || suggestedFilename(profiles[activeCompany].name, month, year)}`, "success");
       await queryClient.invalidateQueries({ queryKey: ["form-425c"] });
     },
-    onError: (error) => pushToast(String((error as Error).message || "PDF generation failed"), "error"),
+    onError: (error) => pushToast(userFacingApiError(error, "PDF generation failed"), "error"),
   });
 
   const markFiledMutation = useMutation({
@@ -304,7 +305,7 @@ export function Form425CHome() {
       pushToast("Report marked filed", "success");
       await queryClient.invalidateQueries({ queryKey: ["form-425c"] });
     },
-    onError: (error) => pushToast(String((error as Error).message || "Mark filed failed"), "error"),
+    onError: (error) => pushToast(userFacingApiError(error, "Mark filed failed"), "error"),
   });
 
   const amendMutation = useMutation({
@@ -313,7 +314,7 @@ export function Form425CHome() {
       pushToast("Amendment draft created", "success");
       await queryClient.invalidateQueries({ queryKey: ["form-425c"] });
     },
-    onError: (error) => pushToast(String((error as Error).message || "Amend failed"), "error"),
+    onError: (error) => pushToast(userFacingApiError(error, "Amend failed"), "error"),
   });
 
   useEffect(() => {

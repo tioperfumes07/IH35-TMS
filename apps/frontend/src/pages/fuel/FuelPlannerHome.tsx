@@ -37,6 +37,7 @@ import { UploadLovesPricesModal } from "./components/UploadLovesPricesModal";
 import { FuelHomePage } from "./FuelHome";
 import { FuelTransactionsTable } from "./FuelTransactionsTable";
 import { ExpensiveStatesMultiselect } from "./components/ExpensiveStatesMultiselect";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 export type { FuelTabId } from "./FUEL_TABS_CONFIG";
 
@@ -148,7 +149,7 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
                         pushToast("Recommendation sent to driver app", "success");
                         void queryClient.invalidateQueries({ queryKey: ["fuel", "planner"] });
                       })
-                      .catch((error) => pushToast(String((error as Error).message || "Send failed"), "error"));
+                      .catch((error) => pushToast(userFacingApiError(error, "Send failed"), "error"));
                   }}
                 >
                   Send to driver app
