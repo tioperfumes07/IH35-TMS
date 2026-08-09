@@ -49,11 +49,20 @@ export function check(sources) {
 
   if (!loadHistory) failures.push(`${FILES.loadHistory}: missing`);
   else {
+    if (!/listDriverAssignedLoads/.test(loadHistory)) {
+      failures.push(`${FILES.loadHistory}: must call listDriverAssignedLoads (canonical assigned-loads reverse)`);
+    }
     if (!/EntityLink/.test(loadHistory) || !/kind\s*=\s*["']load["']/.test(loadHistory)) {
       failures.push(`${FILES.loadHistory}: must render EntityLink kind="load"`);
     }
     if (!/kind\s*=\s*["']driver["']/.test(loadHistory)) {
       failures.push(`${FILES.loadHistory}: must render EntityLink kind="driver"`);
+    }
+    if (!/kind\s*=\s*["']customer["']/.test(loadHistory)) {
+      failures.push(`${FILES.loadHistory}: assigned loads must EntityLink kind="customer"`);
+    }
+    if (!/kind\s*=\s*["']unit["']/.test(loadHistory)) {
+      failures.push(`${FILES.loadHistory}: assigned loads must EntityLink kind="unit"`);
     }
     if (!/previous_driver_id/.test(loadHistory) || !/new_driver_id/.test(loadHistory)) {
       failures.push(`${FILES.loadHistory}: must wire previous_driver_id + new_driver_id into EntityLink`);
@@ -104,11 +113,14 @@ function selftest() {
     loadHistory: `
       import { ListErrorState } from "../ListErrorState";
       import { EntityLink } from "../shared/EntityLink";
+      import { listDriverAssignedLoads } from "../../api/mdata";
       {historyQ.isError ? <ListErrorState title="x" status={0} onRetry={() => {}} /> : null}
       {!historyQ.isLoading && !historyQ.isError && rows.length === 0 ? <p>empty</p> : null}
       <EntityLink kind="load" id={row.load_id} />
       <EntityLink kind="driver" id={row.previous_driver_id} />
       <EntityLink kind="driver" id={row.new_driver_id} />
+      <EntityLink kind="customer" id={row.customer_id} />
+      <EntityLink kind="unit" id={row.assigned_unit_id} />
     `,
     assignmentHistory: `
       import { ListErrorState } from "../../components/ListErrorState";
