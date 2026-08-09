@@ -173,10 +173,11 @@ export function assertScoreboardContract(sources) {
       !/drivers\.required\.json/.test(matrixPage) ||
       !/fleet\.required\.json/.test(matrixPage) ||
       !/customers\.required\.json/.test(matrixPage) ||
+      !/vendors\.required\.json/.test(matrixPage) ||
       !/settlements\.required\.json/.test(matrixPage)
     ) {
       problems.push(
-        `${matrixPageRel}: must import all live Required maps through fleet/customers/settlements`,
+        `${matrixPageRel}: must import all live Required maps through fleet/customers/vendors/settlements`,
       );
     }
     if (
@@ -208,6 +209,7 @@ export function assertScoreboardContract(sources) {
     "drivers",
     "fleet",
     "customers",
+    "vendors",
   ]) {
     const mapRel = `docs/specs/scoreboard/modules/${mod}.required.json`;
     const mapPath = path.join(ROOT, mapRel);
@@ -318,6 +320,39 @@ export function assertScoreboardContract(sources) {
           }
         }
       }
+      // MATRIX-REQ-VENDORS — stub map is FAIL. Must mirror Vendors list + VendorDetail tabs/create surfaces.
+      if (mod === "vendors") {
+        const leafIds = new Set((map.leaves ?? []).map((l) => l.id));
+        if ((map.leaves ?? []).length < 30) {
+          problems.push(
+            `${mapRel}: Vendors Required map must have ≥30 leaves (list segments + master-detail tabs + /vendors/:id detail) — got ${(map.leaves ?? []).length}`,
+          );
+        }
+        for (const need of [
+          "home.roster",
+          "list.create",
+          "list.segment.by_category",
+          "list.sync",
+          "md.transaction_list",
+          "md.header.new_transaction",
+          "detail.profile",
+          "detail.profile.vendor_type_picker",
+          "detail.profile.default_expense_account",
+          "detail.ap",
+          "detail.ap.record_bill_payment",
+          "detail.ap.bills",
+          "detail.ap.expenses",
+          "detail.safer_verify",
+          "detail.w9_1099",
+          "detail.documents",
+          "detail.tasks",
+          "detail.inactivate",
+        ]) {
+          if (!leafIds.has(need)) {
+            problems.push(`${mapRel}: missing Vendors leaf ${need} (Vendors.tsx / VendorDetail.tsx)`);
+          }
+        }
+      }
     } catch (e) {
       problems.push(`${mapRel}: invalid JSON (${e instanceof Error ? e.message : e})`);
     }
@@ -349,12 +384,12 @@ export function assertScoreboardContract(sources) {
 
   if (
     route &&
-    !/module=maintenance\|safety\|insurance\|legal\|accounting\|banking\|dispatch\|settlements\|fuel\|drivers\|fleet\|customers|SUPPORTED.*customers|SUPPORTED.*fleet|dispatch/.test(
+    !/module=maintenance\|safety\|insurance\|legal\|accounting\|banking\|dispatch\|settlements\|fuel\|drivers\|fleet\|customers\|vendors|SUPPORTED.*customers|SUPPORTED.*vendors|SUPPORTED.*fleet|dispatch/.test(
       route,
     )
   ) {
     problems.push(
-      `${routeRel}: module-matrix route must allow module=maintenance|safety|insurance|legal|accounting|banking|dispatch|settlements|fuel|drivers|fleet|customers`,
+      `${routeRel}: module-matrix route must allow module=maintenance|safety|insurance|legal|accounting|banking|dispatch|settlements|fuel|drivers|fleet|customers|vendors`,
     );
   }
 
