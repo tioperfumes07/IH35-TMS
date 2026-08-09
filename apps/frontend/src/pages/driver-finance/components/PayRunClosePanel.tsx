@@ -10,6 +10,7 @@ import {
 import { Button } from "../../../components/Button";
 import { PaymentMethodPicker } from "../../../components/driver-finance/PaymentMethodPicker";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { entityLabel } from "../../../lib/entity-label";
 import { useToast } from "../../../components/Toast";
 
 const COA_ROLES_HREF = "/accounting/settings/coa-roles";
@@ -261,7 +262,7 @@ export function PayRunClosePanel({ settlementId, companyId, userRole, settlement
                 <EntityLink
                   kind="journal_entry"
                   id={result.journal_entry_id}
-                  label={`JE ${result.journal_entry_id.slice(0, 8)}`}
+                  label={entityLabel(null, result.journal_entry_id, "Journal entry")}
                   data-testid="payrun-je-link"
                 />
               </span>
@@ -283,7 +284,7 @@ export function PayRunClosePanel({ settlementId, companyId, userRole, settlement
                   <tr key={`${leg.account_id}-${idx}`} className="border-b border-gray-50">
                     <td className="py-1 pr-2 font-semibold uppercase">{leg.debit_or_credit}</td>
                     <td className="py-1 pr-2 tabular-nums">{formatCents(leg.amount_cents)}</td>
-                    <td className="py-1 pr-2 font-mono text-[10px]">{leg.account_id.slice(0, 8)}</td>
+                    <td className="py-1 pr-2 text-[10px]">{entityLabel(null, leg.account_id, "Account")}</td>
                     <td className="py-1 text-gray-700">{leg.description}</td>
                   </tr>
                 ))}

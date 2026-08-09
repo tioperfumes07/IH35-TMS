@@ -63,7 +63,7 @@ export function SettlementCloseArrivalPage() {
   const openOptions = useMemo(
     () =>
       (openQuery.data?.pre_settlements ?? []).map((row) => {
-        const name = (row.driver_name ?? "").trim() || row.driver_id.slice(0, 8);
+        const name = entityLabel((row.driver_name ?? "").trim() || null, row.driver_id, "Driver");
         return {
           value: row.driver_id,
           label: `${name} — ${entityLabel(row.settlement_number, row.settlement_id, "Settlement")}`,
@@ -185,7 +185,7 @@ export function SettlementCloseArrivalPage() {
                 <div>
                   <div className="text-sm font-semibold text-gray-900">
                     {(openQuery.data?.pre_settlements ?? []).find((r) => r.driver_id === settlement.driver_id)?.driver_name?.trim() ||
-                      settlement.driver_id.slice(0, 8)}{" "}
+                      entityLabel(null, settlement.driver_id, "Driver")}{" "}
                     — {entityLabel(settlement.display_id, settlement.id, "Record")}
                   </div>
                   <div className="text-xs text-gray-600">

@@ -4,6 +4,7 @@ import { resolveApiUrl } from "../../api/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ListErrorState } from "../../components/ListErrorState";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
 interface LayoverRow {
@@ -64,13 +65,13 @@ export function DriverLayoverHistory({ driverUuid, operatingCompanyId }: Props) 
         key: "previous_load_uuid",
         label: "Previous load",
         sortable: true,
-        render: (row) => <EntityLink kind="load" id={row.previous_load_uuid} label={row.previous_load_uuid?.slice(0, 8)} />,
+        render: (row) => <EntityLink kind="load" id={row.previous_load_uuid} label={entityLabel(null, row.previous_load_uuid, "Load")} />,
       },
       {
         key: "next_load_uuid",
         label: "Next load",
         sortable: true,
-        render: (row) => <EntityLink kind="load" id={row.next_load_uuid} label={row.next_load_uuid?.slice(0, 8) ?? "—"} />,
+        render: (row) => <EntityLink kind="load" id={row.next_load_uuid} label={row.next_load_uuid ? entityLabel(null, row.next_load_uuid, "Load") : "—"} />,
       },
       {
         key: "layover_started_at",

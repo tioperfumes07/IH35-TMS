@@ -2,6 +2,7 @@ import { reverseCashAdvance } from "../../../api/cashAdvances";
 import { Button } from "../../../components/Button";
 import { useToast } from "../../../components/Toast";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { entityLabel } from "../../../lib/entity-label";
 
 type Props = {
   open: boolean;
@@ -53,7 +54,7 @@ export function AdvanceDetailDrawer({ open, operatingCompanyId, advance, onClose
           <div>
             Liability ID:{" "}
             {advance.liability_id ? (
-              <EntityLink kind="liability" id={String(advance.liability_id)} label={String(advance.liability_id).slice(0, 8)} />
+              <EntityLink kind="liability" id={String(advance.liability_id)} label={entityLabel(null, String(advance.liability_id), "Liability")} />
             ) : (
               "—"
             )}
@@ -88,7 +89,7 @@ export function AdvanceDetailDrawer({ open, operatingCompanyId, advance, onClose
         <div className="mt-2 rounded-sm border border-gray-200 p-2">
           <div className="font-semibold">Linked Bank Transaction</div>
           {advance.linked_bank_txn_id ? (
-            <EntityLink kind="bank_transaction" id={String(advance.linked_bank_txn_id)} label={String(advance.linked_bank_txn_id).slice(0, 8)} />
+            <EntityLink kind="bank_transaction" id={String(advance.linked_bank_txn_id)} label={entityLabel(null, String(advance.linked_bank_txn_id), "Bank transaction")} />
           ) : (
             <div className="text-gray-500">No bank transaction linked yet.</div>
           )}

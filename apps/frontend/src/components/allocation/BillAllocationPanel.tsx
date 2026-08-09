@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { entityLabel } from "../../lib/entity-label";
 import { resolveApiUrl } from "../../api/client";
 import { OFFLINE_PREVIEW_BANNER } from "../../lib/prodEmptyStateCopy";
 import { AllocationMethodPicker } from "./AllocationMethodPicker";
@@ -160,7 +161,7 @@ export function BillAllocationPanel({ companyId, billId, billLabel, billAmountCe
       setPreviewRows(
         response.rows.map((row) => ({
           ...row,
-          unit_code: byId.get(row.asset_id) ?? row.asset_id.slice(0, 8),
+          unit_code: entityLabel(byId.get(row.asset_id), row.asset_id, "Unit"),
         }))
       );
       setSourceMode("live");

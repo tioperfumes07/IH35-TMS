@@ -1,4 +1,5 @@
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { entityLabel } from "../../../lib/entity-label";
 
 type Props = {
   rows: Array<Record<string, unknown>>;
@@ -46,7 +47,7 @@ export function CashAdvancesTable({ rows, onOpenDetail, onMarkDisbursed, isLoadi
               const status = String(row.disbursement_status ?? "pending_approval");
               return (
                 <tr key={String(row.id)} className="border-t border-gray-100">
-                  <td className="px-2 py-1 font-medium">{String(row.display_id ?? String(row.id).slice(0, 8))}</td>
+                  <td className="px-2 py-1 font-medium">{entityLabel(row.display_id != null ? String(row.display_id) : null, String(row.id), "Advance")}</td>
                   <td className="px-2 py-1">
                     <EntityLink
                       kind="driver"
