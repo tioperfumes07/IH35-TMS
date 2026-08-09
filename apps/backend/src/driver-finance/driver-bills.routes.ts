@@ -8,6 +8,12 @@ const querySchema = companyQuerySchema.extend({
   load_id: z.string().uuid(),
 });
 
+const openBillsQuerySchema = companyQuerySchema.extend({
+  driver_id: z.string().uuid().optional(),
+  limit: z.coerce.number().int().min(1).max(500).default(200),
+  offset: z.coerce.number().int().min(0).default(0),
+});
+
 export async function registerDriverFinanceDriverBillsRoutes(app: FastifyInstance) {
   // Rate-limited (CodeQL js/missing-rate-limiting). Pre-existing; the plugin is global:false so an
   // un-configured route has NO limit at all. Surfaced because this PR touched the file.
@@ -92,5 +98,81 @@ export async function registerDriverFinanceDriverBillsRoutes(app: FastifyInstanc
     if (payload.kind === "forbidden") return reply.code(403).send({ error: "forbidden" });
 
     return { driver_bills: payload.bills };
+  });
+
+  /**
+   * GET /api/v1/driver-finance/driver-bills/open
+   * Returns all open (unsettled) driver bills for the company, optionally filtered by driver.
+   * Powers the Settlements page KPI + list/detail "open driver bills" bands so unsettled driver
+   * pay is visible instead of appearing stuck at $0.
+   */
+  app.get("/api/v1/driver-finance/driver-bills/open", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+
+    const parsed = openBillsQuerySchema.safeParse(req.query ?? {});
+    if (!parsed.success) return validationError(reply, parsed.error);
+
+    const payload = await withCompanyScope(user.uuid, parsed.data.operating_company_id, async (client) => {
+      const reg = await client.query(`SELECT to_regclass('driver_finance.driver_bills') IS NOT NULL AS ok`);
+      if (!Boolean(reg.rows[0]?.ok)) return { kind: "unavailable" as const };
+
+      const driverFilter = parsed.data.driver_id ? "AND db.driver_id = $2" : "";
+      const countValues: unknown[] = [parsed.data.operating_company_id];
+      const queryValues: unknown[] = [parsed.data.operating_company_id];
+      if (parsed.data.driver_id) {
+        countValues.push(parsed.data.driver_id);
+        queryValues.push(parsed.data.driver_id);
+      }
+      queryValues.push(parsed.data.limit, parsed.data.offset);
+
+      const countRes = await client.query(
+        `SELECT count(*)::int AS cnt, COALESCE(SUM(db.gross_amount_cents), 0)::bigint AS total_gross_cents
+         FROM driver_finance.driver_bills db
+         WHERE db.operating_company_id = $1 AND db.status = 'open' ${driverFilter}`,
+        countValues
+      );
+
+      const billsRes = await client.query(
+        `
+          SELECT
+            db.id,
+            db.load_id,
+            db.load_number,
+            db.bill_number,
+            db.driver_id,
+            db.gross_amount_cents,
+            db.miles_basis,
+            db.miles_basis_type,
+            db.rate_per_mile_cents,
+            db.created_at,
+            concat_ws(' ', d.first_name, d.last_name) AS driver_name
+          FROM driver_finance.driver_bills db
+          LEFT JOIN mdata.drivers d ON d.id = db.driver_id AND d.operating_company_id = db.operating_company_id
+          WHERE db.operating_company_id = $1 AND db.status = 'open' ${driverFilter}
+          ORDER BY db.created_at DESC
+          LIMIT $${queryValues.length - 1} OFFSET $${queryValues.length}
+        `,
+        queryValues
+      );
+
+      return {
+        kind: "ok" as const,
+        total_count: Number(countRes.rows[0]?.cnt ?? 0),
+        total_gross_cents: Number(countRes.rows[0]?.total_gross_cents ?? 0),
+        bills: billsRes.rows,
+      };
+    });
+
+    if (!payload) return reply.code(500).send({ error: "driver_bills_failed" });
+    if (payload.kind === "unavailable") return reply.code(501).send({ error: "driver_finance_schema_not_available" });
+
+    return {
+      open_driver_bills: {
+        total_count: payload.total_count,
+        total_gross_cents: payload.total_gross_cents,
+        items: payload.bills,
+      },
+    };
   });
 }

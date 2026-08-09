@@ -70,6 +70,66 @@ describe("updateDispatchLoad — money/evidence guards", () => {
   });
 });
 
+describe("updateDispatchLoad — rate re-sync", () => {
+  it("re-syncs unsent draft+proforma from-load invoices when rate_total_cents changes", async () => {
+    const { client, sqls } = makeClient([
+      { match: /SELECT \* FROM mdata\.loads WHERE id/, rows: [{ id: LOAD_ID, rate_total_cents: 100000 }] },
+      { match: /FROM driver_finance\.driver_settlements/, rows: [] as Row[] },
+      { match: /FROM accounting\.invoices/, rows: [] as Row[] },
+      { match: /FROM driver_finance\.driver_bills/, rows: [] as Row[] },
+      { match: /UPDATE mdata\.loads SET/, rows: [] as Row[] },
+      { match: /SELECT \* FROM mdata\.loads WHERE id/, rows: [{ id: LOAD_ID, rate_total_cents: 120000 }] },
+      { match: /UPDATE accounting\.invoice_lines/, rows: [{ invoice_id: "inv1" }] },
+      { match: /SELECT.*FROM accounting\.invoice_lines/, rows: [] as Row[] },
+      { match: /UPDATE accounting\.invoices SET/, rows: [] as Row[] },
+      { match: /SELECT id::text, sequence_number FROM mdata\.load_stops/, rows: [] as Row[] },
+      { match: /SELECT id::text FROM mdata\.load_stops WHERE load_id/, rows: [] as Row[] },
+      { match: /SELECT \* FROM mdata\.load_stops WHERE load_id/, rows: [] as Row[] },
+    ]);
+
+    await updateDispatchLoad(client, {
+      loadId: LOAD_ID,
+      operatingCompanyId: OCI,
+      requestingUserUuid: USER,
+      fields: { notes: "rate changed" },
+      charges: [{ code: "LINEHAUL", amount_cents: 120000 }],
+    });
+
+    const joined = sqls.join("\n");
+    expect(joined).toMatch(/UPDATE accounting\.invoice_lines[\s\S]*unit_amount_cents[\s\S]*line_total_cents/);
+    expect(joined).toMatch(/i\.status\s+IN\s*\(\s*['"]draft['"]\s*,\s*['"]proforma['"]\s*\)/i);
+    expect(joined).toMatch(/FROM accounting\.invoices i/);
+  });
+
+  it("does not re-sync sent invoices when rate_total_cents changes", async () => {
+    const { client, sqls } = makeClient([
+      { match: /SELECT \* FROM mdata\.loads WHERE id/, rows: [{ id: LOAD_ID, rate_total_cents: 100000 }] },
+      { match: /FROM driver_finance\.driver_settlements/, rows: [] as Row[] },
+      { match: /FROM accounting\.invoices/, rows: [] as Row[] },
+      { match: /FROM driver_finance\.driver_bills/, rows: [] as Row[] },
+      { match: /UPDATE mdata\.loads SET/, rows: [] as Row[] },
+      { match: /SELECT \* FROM mdata\.loads WHERE id/, rows: [{ id: LOAD_ID, rate_total_cents: 120000 }] },
+      { match: /SELECT id::text, sequence_number FROM mdata\.load_stops/, rows: [] as Row[] },
+      { match: /SELECT id::text FROM mdata\.load_stops WHERE load_id/, rows: [] as Row[] },
+      { match: /SELECT \* FROM mdata\.load_stops WHERE load_id/, rows: [] as Row[] },
+    ]);
+
+    await updateDispatchLoad(client, {
+      loadId: LOAD_ID,
+      operatingCompanyId: OCI,
+      requestingUserUuid: USER,
+      fields: { notes: "rate changed" },
+      charges: [{ code: "LINEHAUL", amount_cents: 120000 }],
+    });
+
+    const joined = sqls.join("\n");
+    const resyncBlock = joined.match(/UPDATE accounting\.invoice_lines[\s\S]*?RETURNING i\.id::text AS invoice_id/);
+    expect(resyncBlock).toBeTruthy();
+    expect(resyncBlock![0]).toMatch(/i\.status\s+IN\s*\(\s*['"]draft['"]\s*,\s*['"]proforma['"]\s*\)/i);
+    expect(resyncBlock![0]).not.toMatch(/['"]sent['"]|['"]partial['"]|['"]paid['"]|['"]factored['"]/i);
+  });
+});
+
 describe("updateDispatchLoad — evidence-safe stops replace", () => {
   it("NEVER issues a DELETE against load_stops; archives removed stops via status='cancelled'", async () => {
     // Existing load has 3 stops; the edit submits 2 → stop #3 must be ARCHIVED, never deleted.

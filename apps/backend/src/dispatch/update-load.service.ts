@@ -460,6 +460,11 @@ export async function updateDispatchLoad(
   // move underneath them — that is why ACCT-F267 refuses CREATION at $0 rather than mutating later,
   // and the same principle draws the line here.
   //
+  // UNSENT = draft + proforma. A proforma is an explicitly non-posting projection, and a draft has not
+  // been issued to the customer. Either may be re-synced from the load rate. The moment an invoice is
+  // `sent`/`partial`/`paid`/`factored` it is a document someone has acted on, and its amount must NOT
+  // move underneath them — that is why ACCT-F267 refuses CREATION at $0 rather than mutating later,
+  // and the same principle draws the line here.
   // A VOIDED invoice is likewise never revived: `voided_at IS NULL` keeps a dead document dead.
   // recomputeInvoiceTotals is the existing shared helper — no new money math is introduced.
   if (rateChanged) {
@@ -474,7 +479,7 @@ export async function updateDispatchLoad(
            WHERE l.invoice_id = i.id
              AND i.source_load_id = $1::uuid
              AND i.operating_company_id = $2::uuid
-             AND i.status = 'proforma'
+             AND i.status IN ('draft', 'proforma')
              AND i.voided_at IS NULL
              AND l.line_type = 'linehaul'
           RETURNING i.id::text AS invoice_id
