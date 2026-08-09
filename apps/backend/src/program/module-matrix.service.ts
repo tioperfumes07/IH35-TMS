@@ -83,6 +83,11 @@ const COLUMN_KEYWORDS: Record<string, RegExp> = {
   expense: /\bexpenses?\b/i,
   gl_je: /\bgl\b|\bjes?\b|journal|posting|coa_roles/i,
   inventory: /\binventory\b|\bparts\b/i,
+  liability: /\bliabilit|\bescrow\b|\bfine\b|\bdeduction\b/i,
+  picker_law: /\bpicker\b|\bentitypicker\b|\+\s*add\s*new\b|combobox|creator\s*law|v2\b/i,
+  qbo_chrome: /\bqbo\b|paritydrawer|box[\s_-]?in[\s_-]?box|calendar|due\s*auto|\+\s*create\b|v1\b/i,
+  connectivity: /\bconnectivit|\bwiring\b|\bnav→|\broute\b|\bcanonical\b|v3\b|dead[\s_-]?click/i,
+  reverse_link: /\breverse\b|\bboth[\s_-]?way\b|\blinkage\b|entitylink|v4\b|graph\b/i,
   "scenario.maintenance": /scenario\.maintenance|\bwork[\s_-]?orders?\b|\bwos?\b|\bmaint\b/i,
   "scenario.insurance": /scenario\.insurance|\binsurance\b|\bclaims?\b/i,
 };
@@ -147,8 +152,16 @@ function moduleHay(row: LedgerRow): string {
   return `${row.module} ${row.verdict} ${row.evidence} ${row.status}`;
 }
 
-function isMaintenanceTouch(text: string): boolean {
-  return /maintenance|\bwork[\s_-]?order|\bwos?\b|\bmaint\b/i.test(text);
+function moduleTouchRe(moduleId: string): RegExp {
+  if (moduleId === "safety") {
+    return /\bsafety\b|\baccident|\bdvir\b|\bhos\b|\bfine\b|\bescrow\b|\bcargo[\s_-]?claim|\bdamage[\s_-]?report/i;
+  }
+  // maintenance (default)
+  return /maintenance|\bwork[\s_-]?order|\bwos?\b|\bmaint\b/i;
+}
+
+function rowTouchesModule(row: LedgerRow, moduleId: string): boolean {
+  return new RegExp(`^${moduleId}\\b`, "i").test(row.module.trim());
 }
 
 function columnTouches(colId: string, text: string): boolean {
@@ -175,13 +188,14 @@ async function loadLedgerRows(): Promise<LedgerRow[]> {
   }
 }
 
-function loadGuardHits(): string[] {
+function loadGuardHits(moduleId: string): string[] {
   try {
     const md = readFileSync(GUARD_MD, "utf8");
+    const touch = moduleTouchRe(moduleId);
     const hits: string[] = [];
     for (const line of md.split("\n")) {
       if (!/\bOPEN\b/i.test(line) && !/\bFIXED\b/i.test(line)) continue;
-      if (!isMaintenanceTouch(line)) continue;
+      if (!touch.test(line)) continue;
       hits.push(line);
     }
     return hits;
@@ -190,15 +204,17 @@ function loadGuardHits(): string[] {
   }
 }
 
-function loadWaveHits(): string[] {
+function loadWaveHits(moduleId: string): string[] {
   try {
     const parsed = JSON.parse(readFileSync(WAVE_QUEUE_JSON, "utf8")) as {
       waves?: Array<Record<string, unknown>>;
     };
+    const modRe =
+      moduleId === "safety" ? /safety/i : moduleId === "maintenance" ? /maint/i : new RegExp(moduleId, "i");
     const hits: string[] = [];
     for (const w of parsed.waves ?? []) {
       const modules = Array.isArray(w.modules) ? w.modules.map((m) => String(m)) : [];
-      if (!modules.some((m) => /maint/i.test(m))) continue;
+      if (!modules.some((m) => modRe.test(m))) continue;
       hits.push(`${w.id ?? ""} ${w.status ?? ""} ${modules.join(" ")} ${JSON.stringify(w.instances ?? [])}`);
     }
     return hits;
@@ -265,6 +281,15 @@ function leafMatchesItem(leaf: RequiredLeaf, item: CompletionItem): boolean {
   if (leaf.id.includes("in_transit") && /in[\s_-]?transit/i.test(title)) return true;
   if (leaf.id.includes("arriving") && /arriving/i.test(title)) return true;
   if (leaf.id.includes("severe") && /severe/i.test(title)) return true;
+  // Safety leaves
+  if (leaf.id.startsWith("accidents.") && /accident/i.test(title)) return true;
+  if (leaf.id.includes("hos") && /\bhos\b/i.test(title)) return true;
+  if (leaf.id.includes("fine") && /fine/i.test(title)) return true;
+  if (leaf.id.includes("escrow") && /escrow/i.test(title)) return true;
+  if (leaf.id.includes("cargo") && /cargo|claim/i.test(title)) return true;
+  if (leaf.id.includes("damage") && /damage/i.test(title)) return true;
+  if (leaf.id.includes("meeting") && /meeting|train/i.test(title)) return true;
+  if (leaf.id.includes("driver_files") && /driver[\s_-]?file|dq\b/i.test(title)) return true;
   return false;
 }
 
@@ -274,42 +299,36 @@ function itemIsAuditedStatus(status: string): boolean {
   return /\b(PASS|FIXED|CODE-VERIFIED|HOLD)\b/i.test(s);
 }
 
-function rowTouchesMaintenance(row: LedgerRow): boolean {
-  // Strict: Module column must be maintenance (optional · subtag). Do not treat
-  // accounting/fleet rows that merely mention "maintenance" in Evidence as matrix audit fuel.
-  return /^maintenance\b/i.test(row.module.trim());
-}
-
 function buildColumnAuditIndex(
+  moduleId: string,
   ledger: LedgerRow[],
   guardHits: string[],
   waveHits: string[],
 ): Map<string, string> {
   const reasons = new Map<string, string>();
+  const scenarioKey = `scenario.${moduleId === "safety" ? "insurance" : "maintenance"}`;
   for (const colId of Object.keys(COLUMN_KEYWORDS)) {
     for (const row of ledger) {
-      if (!rowTouchesMaintenance(row)) continue;
+      if (!rowTouchesModule(row, moduleId)) continue;
       if (!isAuditSignalVerdict(row.verdict, row.status)) continue;
       const hay = moduleHay(row);
-      const isMaintModule = /^maintenance\b/i.test(row.module.trim());
+      const isMod = rowTouchesModule(row, moduleId);
       const matches =
-        colId === "scenario.maintenance"
-          ? isMaintModule || columnTouches(colId, hay)
-          : columnTouches(colId, hay);
+        colId === scenarioKey ? isMod || columnTouches(colId, hay) : columnTouches(colId, hay);
       if (!matches) continue;
       if (!reasons.has(colId)) {
         reasons.set(colId, `ledger #${row.num} ${row.verdict.slice(0, 80)}`);
       }
     }
     for (const line of guardHits) {
-      const matches = colId === "scenario.maintenance" ? true : columnTouches(colId, line);
+      const matches = colId === scenarioKey ? true : columnTouches(colId, line);
       if (!matches) continue;
       if (!reasons.has(colId)) reasons.set(colId, "GUARD-WORKORDERS hit");
     }
     for (const line of waveHits) {
-      const matches = colId === "scenario.maintenance" ? true : columnTouches(colId, line);
+      const matches = colId === scenarioKey ? true : columnTouches(colId, line);
       if (!matches) continue;
-      if (!reasons.has(colId)) reasons.set(colId, "wave-queue maintenance class");
+      if (!reasons.has(colId)) reasons.set(colId, `wave-queue ${moduleId} class`);
     }
   }
   return reasons;
@@ -330,13 +349,13 @@ export async function buildModuleMatrix(moduleId: string): Promise<ModuleMatrixP
   const required = loadRequiredMap(moduleId);
   const [ledger, guardHits, waveHits, completion, probes] = await Promise.all([
     loadLedgerRows(),
-    Promise.resolve(loadGuardHits()),
-    Promise.resolve(loadWaveHits()),
+    Promise.resolve(loadGuardHits(moduleId)),
+    Promise.resolve(loadWaveHits(moduleId)),
     Promise.resolve(loadCompletion(moduleId)),
     Promise.resolve(loadProbeHolds()),
   ]);
 
-  const columnAudit = buildColumnAuditIndex(ledger, guardHits, waveHits);
+  const columnAudit = buildColumnAuditIndex(moduleId, ledger, guardHits, waveHits);
 
   let requiredCells = 0;
   let doneCells = 0;

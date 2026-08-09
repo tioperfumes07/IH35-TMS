@@ -1,0 +1,619 @@
+{
+  "module": "safety",
+  "entity_default": "USMCA",
+  "source": {
+    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md — Safety module",
+    "nav": "apps/frontend/src/components/safety/SAFETY_TABS_CONFIG.ts",
+    "routes": "apps/frontend/src/routes/manifest.tsx /safety/*"
+  },
+  "columns": [
+    {
+      "id": "driver",
+      "group": "linkage",
+      "label": "Driver"
+    },
+    {
+      "id": "customer",
+      "group": "linkage",
+      "label": "Customer"
+    },
+    {
+      "id": "vendor",
+      "group": "linkage",
+      "label": "Vendor"
+    },
+    {
+      "id": "unit",
+      "group": "linkage",
+      "label": "Unit"
+    },
+    {
+      "id": "trailer",
+      "group": "linkage",
+      "label": "Trailer"
+    },
+    {
+      "id": "load",
+      "group": "linkage",
+      "label": "Load"
+    },
+    {
+      "id": "ap_bill",
+      "group": "money",
+      "label": "AP / Bill"
+    },
+    {
+      "id": "expense",
+      "group": "money",
+      "label": "Expense"
+    },
+    {
+      "id": "gl_je",
+      "group": "money",
+      "label": "GL / JE"
+    },
+    {
+      "id": "liability",
+      "group": "money",
+      "label": "Liability / Escrow"
+    },
+    {
+      "id": "picker_law",
+      "group": "chrome",
+      "label": "Picker +Add new"
+    },
+    {
+      "id": "qbo_chrome",
+      "group": "chrome",
+      "label": "QBO chrome"
+    },
+    {
+      "id": "connectivity",
+      "group": "wiring",
+      "label": "Connectivity"
+    },
+    {
+      "id": "reverse_link",
+      "group": "wiring",
+      "label": "Reverse link"
+    },
+    {
+      "id": "scenario.insurance",
+      "group": "process",
+      "label": "Insurance claim"
+    }
+  ],
+  "leaves": [
+    {
+      "id": "driver_files.list",
+      "tab": "Driver Files",
+      "sub": "Roster / DQ file",
+      "route_hint": "/safety/driver-files",
+      "required": [
+        "driver",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ]
+    },
+    {
+      "id": "drug_alcohol.list",
+      "tab": "Drug & Alcohol",
+      "sub": "Tests & results",
+      "route_hint": "/safety/drug-alcohol",
+      "required": [
+        "driver",
+        "connectivity",
+        "picker_law",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "safety_meetings.list",
+      "tab": "Safety Meetings",
+      "sub": "Meetings list",
+      "route_hint": "/safety/safety-meetings",
+      "required": [
+        "driver",
+        "connectivity",
+        "picker_law"
+      ]
+    },
+    {
+      "id": "safety_meetings.create",
+      "tab": "Safety Meetings",
+      "sub": "+ Create Meeting",
+      "route_hint": "/safety/safety-meetings",
+      "required": [
+        "driver",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "training_programs.list",
+      "tab": "Training Programs",
+      "sub": "Programs",
+      "route_hint": "/safety/training/programs",
+      "required": [
+        "connectivity",
+        "picker_law"
+      ]
+    },
+    {
+      "id": "training_records.list",
+      "tab": "Training Records",
+      "sub": "Records",
+      "route_hint": "/safety/training/records",
+      "required": [
+        "driver",
+        "connectivity",
+        "picker_law",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "hos.list",
+      "tab": "Hours of Service",
+      "sub": "HOS status",
+      "route_hint": "/safety/hos",
+      "required": [
+        "driver",
+        "unit",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "hos_violations.list",
+      "tab": "HOS Violations",
+      "sub": "Violations",
+      "route_hint": "/safety/hos-violations",
+      "required": [
+        "driver",
+        "unit",
+        "load",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ]
+    },
+    {
+      "id": "eld_audit.list",
+      "tab": "ELD Audit Trail",
+      "sub": "Audit trail",
+      "route_hint": "/safety/eld/audit-trail",
+      "required": [
+        "driver",
+        "connectivity"
+      ]
+    },
+    {
+      "id": "idvr.list",
+      "tab": "Vehicle Inspections-IDVR",
+      "sub": "IDVR list",
+      "route_hint": "/safety/idvr",
+      "required": [
+        "driver",
+        "unit",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ]
+    },
+    {
+      "id": "dot_inspections.list",
+      "tab": "DOT Inspections",
+      "sub": "Inspections",
+      "route_hint": "/safety/dot-inspections",
+      "required": [
+        "driver",
+        "unit",
+        "connectivity",
+        "picker_law",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "driver_scoring.list",
+      "tab": "Driver Scoring",
+      "sub": "Scores",
+      "route_hint": "/safety/driver-scoring",
+      "required": [
+        "driver",
+        "connectivity"
+      ]
+    },
+    {
+      "id": "csa_score.list",
+      "tab": "CSA Score",
+      "sub": "CSA",
+      "route_hint": "/safety/csa-score",
+      "required": [
+        "connectivity"
+      ]
+    },
+    {
+      "id": "dot_compliance.list",
+      "tab": "DOT Compliance",
+      "sub": "Compliance",
+      "route_hint": "/safety/dot-compliance",
+      "required": [
+        "driver",
+        "unit",
+        "connectivity",
+        "picker_law"
+      ]
+    },
+    {
+      "id": "cert_expiry.list",
+      "tab": "Cert Expiry",
+      "sub": "Expiry dashboard",
+      "route_hint": "/safety/cert-expiry",
+      "required": [
+        "driver",
+        "unit",
+        "connectivity",
+        "picker_law"
+      ]
+    },
+    {
+      "id": "safety_events.list",
+      "tab": "Safety Events",
+      "sub": "Events",
+      "route_hint": "/safety/safety-events",
+      "required": [
+        "driver",
+        "unit",
+        "load",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ]
+    },
+    {
+      "id": "accidents.list",
+      "tab": "Accidents & Incidents",
+      "sub": "List",
+      "route_hint": "/safety/accidents",
+      "required": [
+        "driver",
+        "unit",
+        "trailer",
+        "load",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ]
+    },
+    {
+      "id": "accidents.create",
+      "tab": "Accidents & Incidents",
+      "sub": "+ Create Accident",
+      "route_hint": "/safety/accidents",
+      "required": [
+        "driver",
+        "unit",
+        "trailer",
+        "load",
+        "customer",
+        "vendor",
+        "liability",
+        "expense",
+        "gl_je",
+        "scenario.insurance",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "damage_reports.list",
+      "tab": "Damage Reports",
+      "sub": "List",
+      "route_hint": "/safety/damage-reports",
+      "required": [
+        "driver",
+        "unit",
+        "trailer",
+        "load",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ]
+    },
+    {
+      "id": "damage_reports.create",
+      "tab": "Damage Reports",
+      "sub": "+ Create Damage Report",
+      "route_hint": "/safety/damage-reports",
+      "required": [
+        "driver",
+        "unit",
+        "trailer",
+        "load",
+        "liability",
+        "expense",
+        "gl_je",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "trailer_interchanges.list",
+      "tab": "Trailer Interchanges",
+      "sub": "List",
+      "route_hint": "/safety/trailer-interchanges",
+      "required": [
+        "trailer",
+        "customer",
+        "driver",
+        "connectivity",
+        "picker_law",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "cargo_claims.list",
+      "tab": "Cargo Claims",
+      "sub": "List",
+      "route_hint": "/safety/cargo-claims",
+      "required": [
+        "customer",
+        "load",
+        "driver",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ]
+    },
+    {
+      "id": "cargo_claims.create",
+      "tab": "Cargo Claims",
+      "sub": "+ Create Cargo Claim",
+      "route_hint": "/safety/cargo-claims",
+      "required": [
+        "customer",
+        "load",
+        "driver",
+        "vendor",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "scenario.insurance",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "photo_comparison.list",
+      "tab": "Photo Comparison",
+      "sub": "Compare",
+      "route_hint": "/safety/photo-comparison",
+      "required": [
+        "unit",
+        "trailer",
+        "connectivity"
+      ]
+    },
+    {
+      "id": "internal_fines.list",
+      "tab": "Internal Fines",
+      "sub": "List",
+      "route_hint": "/safety/internal-fines",
+      "required": [
+        "driver",
+        "liability",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ]
+    },
+    {
+      "id": "internal_fines.create",
+      "tab": "Internal Fines",
+      "sub": "+ Create Fine",
+      "route_hint": "/safety/internal-fines",
+      "required": [
+        "driver",
+        "load",
+        "unit",
+        "liability",
+        "gl_je",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "external_fines.list",
+      "tab": "External Fines",
+      "sub": "List",
+      "route_hint": "/safety/external-fines",
+      "required": [
+        "driver",
+        "unit",
+        "vendor",
+        "ap_bill",
+        "expense",
+        "connectivity",
+        "picker_law"
+      ]
+    },
+    {
+      "id": "external_fines.create",
+      "tab": "External Fines",
+      "sub": "+ Create External Fine",
+      "route_hint": "/safety/external-fines",
+      "required": [
+        "driver",
+        "unit",
+        "vendor",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "complaints.list",
+      "tab": "Complaints",
+      "sub": "List",
+      "route_hint": "/safety/complaints",
+      "required": [
+        "driver",
+        "customer",
+        "connectivity",
+        "picker_law"
+      ]
+    },
+    {
+      "id": "escrow_record.list",
+      "tab": "Escrow Record",
+      "sub": "Balances",
+      "route_hint": "/safety/escrow-record",
+      "required": [
+        "driver",
+        "liability",
+        "gl_je",
+        "connectivity",
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "geofence_alerts.list",
+      "tab": "Geofence Alerts",
+      "sub": "Alerts",
+      "route_hint": "/safety/geofence-alerts",
+      "required": [
+        "driver",
+        "unit",
+        "load",
+        "connectivity"
+      ]
+    },
+    {
+      "id": "insurance_tab.list",
+      "tab": "Insurance",
+      "sub": "Safety insurance leaf",
+      "route_hint": "/safety/insurance",
+      "required": [
+        "driver",
+        "unit",
+        "scenario.insurance",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ]
+    },
+    {
+      "id": "permits.list",
+      "tab": "Permits",
+      "sub": "List",
+      "route_hint": "/safety/permits",
+      "required": [
+        "unit",
+        "trailer",
+        "vendor",
+        "ap_bill",
+        "connectivity",
+        "picker_law",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "integrity_reports.list",
+      "tab": "Integrity Reports",
+      "sub": "Reports",
+      "route_hint": "/safety/integrity-reports",
+      "required": [
+        "connectivity"
+      ]
+    },
+    {
+      "id": "position_history.list",
+      "tab": "Position History",
+      "sub": "History",
+      "route_hint": "/safety/position-history",
+      "required": [
+        "unit",
+        "driver",
+        "connectivity"
+      ]
+    },
+    {
+      "id": "audit_425c.list",
+      "tab": "425C Audit Trail",
+      "sub": "425C",
+      "route_hint": "/safety/audit-425c",
+      "required": [
+        "connectivity",
+        "gl_je"
+      ]
+    },
+    {
+      "id": "safety_reports.list",
+      "tab": "Safety Reports",
+      "sub": "Reports",
+      "route_hint": "/safety/reports",
+      "required": [
+        "connectivity"
+      ]
+    },
+    {
+      "id": "driver_scheduler.list",
+      "tab": "Driver Scheduler",
+      "sub": "Schedule",
+      "route_hint": "/safety/driver-scheduler",
+      "required": [
+        "driver",
+        "connectivity",
+        "picker_law"
+      ]
+    },
+    {
+      "id": "leave_requests.list",
+      "tab": "Leave Requests",
+      "sub": "Pending",
+      "route_hint": "/safety/scheduler/pending-requests",
+      "required": [
+        "driver",
+        "connectivity",
+        "picker_law",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "leave_balances.list",
+      "tab": "Leave Balances",
+      "sub": "Balances",
+      "route_hint": "/safety/leave-balances",
+      "required": [
+        "driver",
+        "connectivity"
+      ]
+    },
+    {
+      "id": "settings.list",
+      "tab": "Settings",
+      "sub": "Safety settings",
+      "route_hint": "/safety/settings",
+      "required": [
+        "connectivity"
+      ]
+    }
+  ]
+}
