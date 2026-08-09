@@ -76,10 +76,16 @@ requireAll(tabPath, tab, [
   { pattern: /driver_id/, label: "uses accidents driver_id (existing id)" },
   { pattern: /unit_id/, label: "uses accidents unit_id (existing id)" },
   { pattern: /to="\/safety\/[a-z-]+"/, label: "KPI tile deep-links to a scoped safety surface" },
-  // Company Violations KPI must drill to External Fines (company-violation filter lives there).
+  // Company Violations KPI must drill to External Fines WITH the company-violation filter (C-06).
   {
-    pattern: /label="Open Company Violations"[\s\S]*?to="\/safety\/external-fines"/,
-    label: "Open Company Violations KPI links to /safety/external-fines",
+    pattern:
+      /label="Open Company Violations"[\s\S]*?to="\/safety\/external-fines\?record_type=company-violation"/,
+    label: "Open Company Violations KPI links to /safety/external-fines?record_type=company-violation",
+  },
+  // Drivers with Open Fines must match SafetyKpiRow (internal-fines), not external-fines default.
+  {
+    pattern: /label="Drivers with Open Fines"[\s\S]*?to="\/safety\/internal-fines"/,
+    label: "Drivers with Open Fines KPI links to /safety/internal-fines",
   },
   // Events-log DOES support status — open filter must remain.
   {
@@ -108,6 +114,15 @@ forbid(tabPath, tab, [
     pattern: /row\.status/,
     label: "phantom row.status read on accidents (column does not exist on prod)",
   },
+]);
+
+
+// C-06 — External Fines honors ?record_type= so Home company-violations tile is not a facade.
+const finesPath = "apps/frontend/src/pages/safety/FinesPage.tsx";
+const fines = read(finesPath);
+requireAll(finesPath, fines, [
+  { pattern: /searchParams\.get\("record_type"\)/, label: "reads ?record_type= from URL" },
+  { pattern: /company-violation/, label: "recognizes company-violation record type" },
 ]);
 
 // ── Layer 2 — Safety Officer alerts service ─────────────────────────────────

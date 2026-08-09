@@ -241,14 +241,17 @@ export function SafetyHomeTab() {
           value={Number((kpisQuery.data as Record<string, unknown> | undefined)?.open_company_violations ?? 0)}
           isError={kpisQuery.isError}
           isLoading={kpisQuery.isPending}
-          to="/safety/external-fines"
+          // C-06: land on company-violation filter (merged into External Fines) — bare /external-fines
+          // defaulted to driver-fine and looked like a dead/wrong tile.
+          to="/safety/external-fines?record_type=company-violation"
         />
         <KpiTile
           label="Drivers with Open Fines"
           value={Number((kpisQuery.data as Record<string, unknown> | undefined)?.drivers_with_open_fines ?? 0)}
           isError={kpisQuery.isError}
           isLoading={kpisQuery.isPending}
-          to="/safety/external-fines"
+          // Align with SafetyKpiRow — internal fines surface (not external-fines default).
+          to="/safety/internal-fines"
         />
         <KpiTile
           label="Critical Integrity Alerts"
