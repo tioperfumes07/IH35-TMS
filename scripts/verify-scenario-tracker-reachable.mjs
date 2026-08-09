@@ -43,9 +43,10 @@ const MANIFEST = "apps/frontend/src/routes/manifest.tsx";
 const SURFACES = [
   {
     route: "/program",
-    what: "Program home — Scenario Tracker only (owner 2026-08-08; blocks/tabs certification chrome removed)",
+    what: "Program home — Scenario Tracker (owner 2026-08-08) with shared Program top-bar tabs",
     requireDoor: true,
     linkSources: [
+      "apps/frontend/src/pages/program/ProgramModuleNav.tsx",
       "apps/frontend/src/pages/program/LegacyAuditScoreboardPage.tsx",
       "apps/frontend/src/pages/program/ModuleMatrixPreviewPage.tsx",
       "apps/frontend/src/pages/program/scenario-tracker/ScenarioTrackerHome.tsx",
@@ -68,14 +69,31 @@ const SURFACES = [
   },
   {
     route: "/program/matrix",
-    what: "Module matrix scoreboard (Required JSON + live Audited/Done via /api/v1/program/module-matrix)",
+    what: "Module matrix scoreboard — must be a Program top-bar tab (PROG-NAV-01), not URL-only",
     requireDoor: true,
     linkSources: [
+      "apps/frontend/src/pages/program/ProgramModuleNav.tsx",
       "apps/frontend/src/pages/program/scenario-tracker/ScenarioTrackerHome.tsx",
-      "apps/frontend/src/pages/program/LegacyAuditScoreboardPage.tsx",
     ],
   },
 ];
+
+/** PROG-NAV-01 ratchet: Scenario Tracker mounts the shared Program top-bar with Module matrix. */
+export function auditProgramModuleNav(homeSrc, navSrc) {
+  const problems = [];
+  if (!/ProgramModuleNav/.test(homeSrc) || !/<ProgramModuleNav\s+active=["']scenario["']/.test(homeSrc)) {
+    problems.push(
+      "ScenarioTrackerHome.tsx: must render <ProgramModuleNav active=\"scenario\" /> so Module matrix is a visible Program tab.",
+    );
+  }
+  if (!/data-testid=["']program-module-nav["']/.test(navSrc)) {
+    problems.push("ProgramModuleNav.tsx: missing data-testid=program-module-nav");
+  }
+  if (!/to=["']\/program\/matrix["']/.test(navSrc) || !/Module matrix/.test(navSrc)) {
+    problems.push("ProgramModuleNav.tsx: must link to=/program/matrix labelled Module matrix");
+  }
+  return problems;
+}
 
 /**
  * Escape EVERY regex metacharacter, not just `/` and `-`.
@@ -146,6 +164,18 @@ function auditTree() {
       })
     );
   }
+
+  const homeRel = "apps/frontend/src/pages/program/scenario-tracker/ScenarioTrackerHome.tsx";
+  const navRel = "apps/frontend/src/pages/program/ProgramModuleNav.tsx";
+  const homeAbs = join(ROOT, homeRel);
+  const navAbs = join(ROOT, navRel);
+  if (!existsSync(homeAbs) || !existsSync(navAbs)) {
+    problems.push("Program module nav files missing — cannot assert Module matrix tab.");
+  } else {
+    problems.push(
+      ...auditProgramModuleNav(readFileSync(homeAbs, "utf8"), readFileSync(navAbs, "utf8")),
+    );
+  }
   return problems;
 }
 
@@ -194,6 +224,19 @@ function selftest() {
   if (auditSurface({ manifestSrc: '<Route path="/aXb" />', route: "/a.b", what: "t", sources: [`to="/a.b"`] }).length === 0)
     failures.push("case11 FAIL — '.' in a route matched a different path (unescaped metacharacter)");
 
+  // PROG-NAV-01 — Scenario Tracker without ProgramModuleNav must fail (URL-only matrix).
+  if (
+    auditProgramModuleNav("<div>no program nav</div>", 'to="/program/matrix">Module matrix</a>').length === 0
+  )
+    failures.push("case12 FAIL — ScenarioTrackerHome without ProgramModuleNav was NOT caught");
+  if (
+    auditProgramModuleNav(
+      '<ProgramModuleNav active="scenario" />',
+      'data-testid="program-module-nav" to="/program/matrix">Module matrix',
+    ).length !== 0
+  )
+    failures.push("case13 FAIL — correct ProgramModuleNav wiring was flagged");
+
   // The real tree must be clean.
   const tree = auditTree();
   if (tree.length !== 0) failures.push(`case9 FAIL — real source flagged: ${tree.join(" | ")}`);
@@ -204,7 +247,7 @@ function selftest() {
   }
   console.log(
     `${LABEL}: selftest PASS — pre-fix no-door state caught, dead-end route caught, near-miss rejected, ` +
-      `to=/href= doors accepted, real tree clean`
+      `to=/href= doors accepted, ProgramModuleNav tab ratchet, real tree clean`
   );
 }
 

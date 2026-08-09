@@ -1,0 +1,30 @@
+/* Program module sub-nav — §7 slate tokens only */
+.program-module-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 8px 12px;
+  border-bottom: 1px solid #e2e8f0;
+  background: #f8fafc;
+}
+.program-module-nav__tab {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 2px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: #334155;
+  text-decoration: none;
+  border: 1px solid transparent;
+}
+.program-module-nav__tab:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+.program-module-nav__tab.is-active {
+  background: #1f2a44;
+  color: #f8fafc;
+  border-color: #1f2a44;
+}
