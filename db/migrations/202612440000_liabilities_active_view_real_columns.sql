@@ -20,17 +20,20 @@
 -- REAL view. It is invisible because the real view was never installed, not because of anything about
 -- the row. The same is true of the $250 advance liability. This is not a one-row defect.
 --
--- FIX: build the view from the columns prod ACTUALLY has. Verified present:
+-- FIX: build the view from the columns prod ACTUALLY has. Verified present (Neon 2026-08-08):
 --   id, operating_company_id, driver_id, type, source_description, original_amount, paid_to_date,
---   current_balance, requires_acknowledgment, status, created_at, created_by_user_id
+--   current_balance, requires_acknowledgment, origin, origin_id, reference_doc_id, status,
+--   created_at, updated_at
+-- NOT present: created_by_user_id (header of #5022 wrongly listed it — preDeploy failed on
+--   `l.created_by_user_id` and blocked the entire main deploy pipeline past 02bab31).
 --
 -- WHAT IS DELIBERATELY NOT SYNTHESISED. The original view computed display_status = 'pending_ack' from
 -- `requires_acknowledgment = true AND acknowledgment_uuid IS NULL`. acknowledgment_uuid DOES NOT EXIST
 -- on prod, so acknowledgement state is not merely unknown — it is unrecorded. Emitting 'pending_ack'
 -- from requires_acknowledgment alone would assert that nobody has acknowledged, which the database
 -- cannot support. The columns are exposed as NULL and display_status omits that state rather than
--- inventing it. Same for forfeiture_clause_active / forfeiture_clause_signed_at / spawned_from_event_id:
--- surfaced as NULL so the shape the FE expects is intact and no value is fabricated.
+-- inventing it. Same for forfeiture_clause_active / forfeiture_clause_signed_at / spawned_from_event_id /
+-- created_by_user_id: surfaced as NULL so the shape the FE expects is intact and no value is fabricated.
 --
 -- held state likewise: deduction_schedule.held_until_period does not exist on prod either, so is_held is
 -- NULL rather than false — "we do not track this" is not the same claim as "it is not held".
@@ -63,7 +66,7 @@ BEGIN
       NULL::boolean     AS forfeiture_clause_active,
       NULL::timestamptz AS forfeiture_clause_signed_at,
       l.created_at,
-      l.created_by_user_id,
+      NULL::uuid        AS created_by_user_id,
       NULL::uuid        AS spawned_from_event_id,
       CONCAT_WS(' ', d.first_name, d.last_name) AS driver_full_name,
       d.id::text        AS driver_display_id,
