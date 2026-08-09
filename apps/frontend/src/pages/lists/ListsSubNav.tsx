@@ -15,30 +15,33 @@ const DOMAIN_LABELS: Record<(typeof DOMAIN_ORDER)[number], string> = {
   names_master: "Names master",
 };
 
-/** Live Safety catalogs from DOMAIN_CONFIG — hub + subnav must not diverge (C-10 / LST-F100). */
-function safetyCatalogNavChildren(): NavItem[] {
-  const safety = DOMAIN_CONFIG.find((d) => d.key === "safety");
-  if (!safety) return [];
+/** Live catalogs for a domain from DOMAIN_CONFIG — hub + subnav must not diverge (LST-F100/F101). */
+function domainCatalogNavChildren(domainKey: string): NavItem[] {
+  const domain = DOMAIN_CONFIG.find((d) => d.key === domainKey);
+  if (!domain) return [];
   const seen = new Set<string>();
   const children: NavItem[] = [];
-  for (const catalog of safety.catalogs) {
+  for (const catalog of domain.catalogs) {
     if (!catalog.live || !catalog.catalogKey) continue;
     if (seen.has(catalog.catalogKey)) continue;
     seen.add(catalog.catalogKey);
     children.push({
       label: catalog.name,
-      href: buildCatalogPath("safety", catalog.catalogKey),
+      href: buildCatalogPath(domainKey, catalog.catalogKey),
     });
   }
   return children;
 }
 
-const SAFETY_CATALOG_CHILDREN = safetyCatalogNavChildren();
+const SAFETY_CATALOG_CHILDREN = domainCatalogNavChildren("safety");
 const SAFETY_CATALOG_HREF =
   SAFETY_CATALOG_CHILDREN[0]?.href ?? "/lists/safety/internal-fine-reasons";
 
+const FLEET_CATALOG_CHILDREN = domainCatalogNavChildren("fleet");
+const FLEET_CATALOG_HREF = FLEET_CATALOG_CHILDREN[0]?.href ?? "/lists/fleet";
+
 /**
- * /lists module top sub-nav (invariant #20). Domain + safety catalog links mirror
+ * /lists module top sub-nav (invariant #20). Domain + safety/fleet catalog links mirror
  * DomainRibbon / hub destinations; nothing removed from existing list UX.
  */
 export const LISTS_SUB_NAV_ITEMS: NavItem[] = [
@@ -59,6 +62,11 @@ export const LISTS_SUB_NAV_ITEMS: NavItem[] = [
     children: SAFETY_CATALOG_CHILDREN,
   },
   {
+    label: "Fleet catalogs",
+    href: FLEET_CATALOG_HREF,
+    children: FLEET_CATALOG_CHILDREN,
+  },
+  {
     label: "Maintenance catalogs",
     href: "/lists/maintenance/parts-catalog",
     children: [
@@ -73,7 +81,7 @@ export function listsSubNavActiveHref(pathname: string): string {
   if (norm.startsWith("/lists/names")) return "/lists/names";
   if (norm.startsWith("/lists/catalogs")) return "/lists/catalogs";
   if (norm.startsWith("/lists/maintenance/parts-catalog")) return "/lists/maintenance/parts-catalog";
-  for (const child of SAFETY_CATALOG_CHILDREN) {
+  for (const child of [...SAFETY_CATALOG_CHILDREN, ...FLEET_CATALOG_CHILDREN]) {
     if (norm === child.href || norm.startsWith(`${child.href}/`)) return child.href;
   }
   for (const domain of DOMAIN_ORDER) {
