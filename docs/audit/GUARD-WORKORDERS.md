@@ -1308,3 +1308,32 @@ path proves itself and the signal clears — **but note this generates a real FM
 DOT test obligations, so it is a compliance decision for the safety lane, not a mechanical one.** Alternative:
 have the never-succeeded test exempt a job whose fix post-dates its last scheduled run.
 **CC-3 verifies; CC-3 does not run it.**
+
+## OPEN · REF/CC-1 · P1 · PARTIAL-DEPLOY-SCHEMA-AHEAD-OF-CODE — prod DB migrated, prod bundle not shipped
+**Found by CC-3 on prod, 2026-08-08 ~19:0x CDT.**
+
+```
+prod /healthz/shallow            = 02bab31   (pre-money-tier bundle)
+202612430000_worm_... (#5012)    = APPLIED 2026-08-08T23:58:53Z
+202612440000_liabilities_... (#5022) = NOT in _system._schema_migrations
+```
+`preDeployCommand` = `db:migrate && db:verify:critical-runtime && ci:boot-api-smoke && ci:boot-aggregate-smoke`.
+Migrations run FIRST, so a failure in any later stage leaves **the database migrated and the code not deployed**.
+Prod is in that state now: WORM triggers from #5012 are live against the OLD application bundle.
+
+**WHY P1:** (a) every lane's "is it live?" check is `/healthz/shallow` SHA ancestry, which reports NOT-LIVE and is
+read as "nothing changed" — false here; (b) new DB constraints are enforcing against code that predates them,
+which is the direction most likely to surface as unexplained runtime errors; (c) the deploy failure itself is
+unexamined — nobody has read why the post-migrate stage failed.
+
+**ASK (REF):** pull the Render deploy log for the run that applied `202612430000` and report which preDeploy stage
+failed. **ASK (whoever owns the pipeline):** consider whether `db:migrate` should run after the smokes, or the
+deploy be re-driven, so the two cannot separate.
+
+## OPEN · CC-1 · P2 · WORM-REVOKE-MISSING — #5012 shipped the trigger but not the REVOKE
+`has_table_privilege('ih35_app', <tbl>, 'DELETE')` = **true on all six** of `driver_finance.driver_bills`,
+`driver_advances`, `driver_liabilities`, `driver_deduction_bucket_events`, `driver_settlement_gl_bills`,
+`banking.bank_transaction_splits` — verified on prod after `202612430000` applied.
+ACCT-F269's body states *"the trigger and the REVOKE are installed together."* **Only the trigger is installed.**
+The trigger does block (`RAISE EXCEPTION ... ERRCODE restrict_violation`), so this is defence-in-depth, not an
+open hole — but the card reads as if both landed and it should not.
