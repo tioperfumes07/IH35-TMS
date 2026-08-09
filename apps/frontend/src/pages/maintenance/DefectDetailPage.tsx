@@ -64,7 +64,9 @@ export function DefectDetailPage() {
 
       {q.isLoading ? <p className="text-sm text-gray-500">Loading defect…</p> : null}
       {q.isError || (!q.isLoading && !defect) ? (
-        <p className="text-sm text-red-600">Defect not found.</p>
+        <p className="text-sm text-slate-700" data-testid="maint-dvir-defect-empty">
+          Defect not found for this entity — it may be missing, voided, or outside the active operating company.
+        </p>
       ) : null}
 
       {defect ? (

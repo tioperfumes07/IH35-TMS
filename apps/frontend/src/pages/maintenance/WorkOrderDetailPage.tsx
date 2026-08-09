@@ -850,6 +850,7 @@ export function WorkOrderDetailPage() {
                   columns={POSTING_PREVIEW_COLUMNS}
                   rows={postingPreviewRows}
                   rowKey={(row) => row.row_key}
+                  loading={previewQ.isLoading}
                   emptyText="No posting preview lines."
                   initialPageSize={25}
                   pageSizeOptions={[10, 25, 50]}
@@ -906,39 +907,31 @@ export function WorkOrderDetailPage() {
             Linked-financials lookup unavailable in this backend build.
           </div>
         ) : null}
-        {linkedFinancialsQ.data ? (
-          linkedFinancialsQ.data.bills.length === 0 && linkedFinancialsQ.data.expenses.length === 0 ? (
-            <div className="border-t border-slate-100 px-3 py-2 text-xs text-slate-500">
-              No bills or expenses are linked to this work order yet.
-            </div>
-          ) : (
-            <>
-              {linkedFinancialsQ.data.bills.length > 0 ? (
-                <ParityTable
-                  storageKey="wo-detail-linked-bills"
-                  tableTestId="wo-detail-linked-bills-parity"
-                  columns={LINKED_BILL_COLUMNS}
-                  rows={linkedFinancialsQ.data.bills}
-                  rowKey={(row) => row.id}
-                  emptyText="No bills are linked to this work order yet."
-                  initialPageSize={25}
-                  pageSizeOptions={[10, 25, 50]}
-                />
-              ) : null}
-              {linkedExpenseRows.length > 0 ? (
-                <ParityTable
-                  storageKey="wo-detail-linked-expenses"
-                  tableTestId="wo-detail-linked-expenses-parity"
-                  columns={LINKED_EXPENSE_COLUMNS}
-                  rows={linkedExpenseRows}
-                  rowKey={(row) => row.id}
-                  emptyText="No expenses are linked to this work order yet."
-                  initialPageSize={25}
-                  pageSizeOptions={[10, 25, 50]}
-                />
-              ) : null}
-            </>
-          )
+        {!linkedFinancialsQ.isError ? (
+          <>
+            <ParityTable
+              storageKey="wo-detail-linked-bills"
+              tableTestId="wo-detail-linked-bills-parity"
+              columns={LINKED_BILL_COLUMNS}
+              rows={linkedFinancialsQ.data?.bills ?? []}
+              rowKey={(row) => row.id}
+              loading={linkedFinancialsQ.isLoading}
+              emptyText="No bills are linked to this work order yet."
+              initialPageSize={25}
+              pageSizeOptions={[10, 25, 50]}
+            />
+            <ParityTable
+              storageKey="wo-detail-linked-expenses"
+              tableTestId="wo-detail-linked-expenses-parity"
+              columns={LINKED_EXPENSE_COLUMNS}
+              rows={linkedExpenseRows}
+              rowKey={(row) => row.id}
+              loading={linkedFinancialsQ.isLoading}
+              emptyText="No expenses are linked to this work order yet."
+              initialPageSize={25}
+              pageSizeOptions={[10, 25, 50]}
+            />
+          </>
         ) : null}
       </section>
 
