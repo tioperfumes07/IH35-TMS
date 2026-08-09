@@ -4,6 +4,7 @@ import { getFactoringBatchDetail, getReserveMovements, type FactoringReserveMove
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { titleize } from "../../lib/titleize";
+import { formatDateUS } from "../../lib/formatDate";
 
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
 
@@ -34,7 +35,7 @@ const RESERVE_COLUMNS: Array<ParityColumn<ReserveMovementRow>> = [
     key: "created_at",
     label: "Created At",
     sortable: true,
-    render: (row) => new Date(row.created_at).toLocaleString(),
+    render: (row) => formatDateUS(row.created_at),
   },
   {
     key: "reason",

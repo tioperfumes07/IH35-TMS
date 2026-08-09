@@ -23,6 +23,7 @@ import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { formatDateUS } from "../../lib/formatDate";
 import { useListState } from "../../components/list-state";
 import { companyToday } from "../../lib/businessDate";
 
@@ -52,7 +53,7 @@ const FACTOR_COLUMNS: Array<ParityColumn<Factor>> = [
     key: "updated_at",
     label: "Updated",
     sortable: true,
-    render: (factor) => new Date(factor.updated_at).toLocaleDateString(),
+    render: (factor) => formatDateUS(factor.updated_at),
     sortValue: (factor) => factor.updated_at,
   },
 ];
@@ -75,7 +76,7 @@ const BATCH_COLUMNS: Array<ParityColumn<FactorBatchHistoryRow>> = [
     key: "submitted_at",
     label: "Submitted",
     sortable: true,
-    render: (row) => (row.submitted_at ? new Date(row.submitted_at).toLocaleDateString() : "-"),
+    render: (row) => (row.submitted_at ? formatDateUS(row.submitted_at) : "-"),
     sortValue: (row) => row.submitted_at ?? null,
   },
 ];

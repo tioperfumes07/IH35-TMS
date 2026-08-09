@@ -13,6 +13,7 @@
  * All data from existing reserve/factoring APIs — no new financial code.
  */
 import { entityLabel } from "../../lib/entity-label";
+import { formatDateUS } from "../../lib/formatDate";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -38,16 +39,8 @@ import { NOT_AVAILABLE_YET } from "../../lib/prodEmptyStateCopy";
 
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
 const fmtM = (cents: number) => money.format((Number(cents) || 0) / 100);
-const fmtD = (v: string | null | undefined) => {
-  if (!v) return "—";
-  const d = new Date(v);
-  return Number.isNaN(d.getTime()) ? "—" : d.toLocaleDateString();
-};
-const fmtDt = (v: string | null | undefined) => {
-  if (!v) return "—";
-  const d = new Date(v);
-  return Number.isNaN(d.getTime()) ? "—" : d.toLocaleString();
-};
+const fmtD = (v: string | null | undefined) => formatDateUS(v);
+const fmtDt = (v: string | null | undefined) => formatDateUS(v);
 
 function KpiCard({
   label,
