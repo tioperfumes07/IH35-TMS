@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import type { SettlementListRow } from "../../../api/driverFinance";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { formatDateUS } from "../../../lib/formatDate";
 import { useUrlSort } from "../../../hooks/useUrlSort";
 
 type Props = {
@@ -30,13 +31,17 @@ export function SettlementsTable({ rows, onOpen }: Props) {
         label: "Driver",
         sortable: true,
         sortValue: (row) => row.driver_full_name ?? null,
+        // FAIL-SET2: this cell printed the driver's raw UUID as a second line, under the name. The
+        // cause is not a missing label — `views.driver_settlement_with_debt` defines the field as
+        // `d.id::text AS driver_display_id`, so the API asserts that the driver's display id IS the
+        // uuid, and every consumer of that view is handed one. Prod PROVE: `mdata.drivers` has no
+        // `display_id` column at all, and `employee_id_display` is NULL for all 190 drivers — there
+        // is no human driver identifier to show. So the honest cell is the name, linked. Drilling is
+        // preserved (the link moved onto the name); nothing is lost but the uuid.
         render: (row) => (
-          <>
-            <div className="font-semibold">{row.driver_full_name}</div>
-            <div className="text-[10px] text-gray-500">
-              <EntityLink kind="driver" id={row.driver_id} label={row.driver_display_id} />
-            </div>
-          </>
+          <div className="font-semibold">
+            <EntityLink kind="driver" id={row.driver_id} label={row.driver_full_name} />
+          </div>
         ),
       },
       {
@@ -44,9 +49,14 @@ export function SettlementsTable({ rows, onOpen }: Props) {
         label: "Period",
         sortable: true,
         sortValue: (row) => row.period_start ?? null,
+        // FAIL-SET1: these were rendered raw, so a settlement period read
+        // "2026-08-08T00:00:00.000Z → 2026-08-08T00:00:00.000Z" across three wrapped lines. The DB is
+        // correct — prod PROVE: `pg_typeof(period_start)` is `date`; the serializer widens it to a
+        // timestamp and the cell printed that. `formatDateUS` is the one display formatter and reads
+        // the calendar parts, so no timezone shift moves a settlement period across a day boundary.
         render: (row) => (
           <>
-            {row.period_start} → {row.period_end}
+            {formatDateUS(row.period_start)} → {formatDateUS(row.period_end)}
           </>
         ),
       },
