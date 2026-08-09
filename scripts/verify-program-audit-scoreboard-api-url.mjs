@@ -174,10 +174,11 @@ export function assertScoreboardContract(sources) {
       !/fleet\.required\.json/.test(matrixPage) ||
       !/customers\.required\.json/.test(matrixPage) ||
       !/vendors\.required\.json/.test(matrixPage) ||
-      !/settlements\.required\.json/.test(matrixPage)
+      !/settlements\.required\.json/.test(matrixPage) ||
+      !/lists\.required\.json/.test(matrixPage)
     ) {
       problems.push(
-        `${matrixPageRel}: must import all live Required maps through fleet/customers/vendors/settlements`,
+        `${matrixPageRel}: must import all live Required maps through fleet/customers/vendors/lists/settlements`,
       );
     }
     if (
@@ -210,6 +211,7 @@ export function assertScoreboardContract(sources) {
     "fleet",
     "customers",
     "vendors",
+    "lists",
   ]) {
     const mapRel = `docs/specs/scoreboard/modules/${mod}.required.json`;
     const mapPath = path.join(ROOT, mapRel);
@@ -353,6 +355,33 @@ export function assertScoreboardContract(sources) {
           }
         }
       }
+      // MATRIX-REQ-LISTS — stub map is FAIL. Must mirror DOMAIN_CONFIG live catalogs + hub surfaces.
+      if (mod === "lists") {
+        const leafIds = new Set((map.leaves ?? []).map((l) => l.id));
+        if ((map.leaves ?? []).length < 40) {
+          problems.push(
+            `${mapRel}: Lists Required map must have ≥40 leaves (hub + domain hubs + catalog list/create surfaces) — got ${(map.leaves ?? []).length}`,
+          );
+        }
+        for (const need of [
+          "hub.home",
+          "hub.names_search",
+          "hub.domain.accounting",
+          "hub.domain.dispatch",
+          "hub.domain.drivers",
+          "catalog.accounting.chart_of_accounts.list",
+          "catalog.accounting.chart_of_accounts.create",
+          "catalog.dispatch.load_types.list",
+          "catalog.drivers.pay_rate_templates.create",
+          "catalog.maintenance.parts.list",
+          "catalog.safety.internal_fine_reasons.list",
+          "catalog.reference.us_states.list",
+        ]) {
+          if (!leafIds.has(need)) {
+            problems.push(`${mapRel}: missing Lists leaf ${need} (AllCatalogsMap / manifest /lists/*)`);
+          }
+        }
+      }
     } catch (e) {
       problems.push(`${mapRel}: invalid JSON (${e instanceof Error ? e.message : e})`);
     }
@@ -384,12 +413,12 @@ export function assertScoreboardContract(sources) {
 
   if (
     route &&
-    !/module=maintenance\|safety\|insurance\|legal\|accounting\|banking\|dispatch\|settlements\|fuel\|drivers\|fleet\|customers\|vendors|SUPPORTED.*customers|SUPPORTED.*vendors|SUPPORTED.*fleet|dispatch/.test(
+    !/module=maintenance\|safety\|insurance\|legal\|accounting\|banking\|dispatch\|settlements\|fuel\|drivers\|fleet\|customers\|vendors\|lists|SUPPORTED.*customers|SUPPORTED.*vendors|SUPPORTED.*fleet|SUPPORTED.*lists|dispatch/.test(
       route,
     )
   ) {
     problems.push(
-      `${routeRel}: module-matrix route must allow module=maintenance|safety|insurance|legal|accounting|banking|dispatch|settlements|fuel|drivers|fleet|customers|vendors`,
+      `${routeRel}: module-matrix route must allow module=maintenance|safety|insurance|legal|accounting|banking|dispatch|settlements|fuel|drivers|fleet|customers|vendors|lists`,
     );
   }
 
