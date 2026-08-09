@@ -69,7 +69,7 @@ export function MaintenanceSettingsPage({ operatingCompanyId }: Props) {
         </p>
       ) : null}
       {!settingsQuery.isLoading && !settingsQuery.isError && !settings ? (
-        <p className="rounded-sm border border-slate-200 bg-white p-3 text-xs text-slate-500">
+        <p className="text-xs text-slate-500">
           No maintenance settings row yet for this entity — save defaults below to create one.
         </p>
       ) : null}
