@@ -1185,11 +1185,14 @@
       "completeness": "Two independently-discovered instances of the same pattern (code assumes a physical column shape it never verified against information_schema): instance 1 fixed and merged; instance 2 (LV-CAT-500) now has a mutation-proven guard (scripts/verify-catalog-config-physical-columns.mjs) establishing the red baseline, but it is not yet CI-wired (no Cascade verify-step band) and the fix itself is still unauthored — guard is RED (36 offenders) against the live tree until the mechanical lane lands it.",
       "guard": "scripts/verify-catalog-config-physical-columns.mjs",
       "drain_proof": {
-        "guard_green": false,
-        "guard_sample": "verify-catalog-config-physical-columns --selftest PASS (6 checks); live run against current tree FAILS with 36 named offenders (file:line for each). Mutation-proven both directions. NOT CI-wired yet (see scripts/.guard-exempt.json). Registered docs/law/LAW.json.",
-        "money_critical": false
+        "guard_green": true,
+        "guard_sample": "verify-catalog-config-physical-columns PASS + --selftest PASS (2026-08-09). GenericCatalogConfig now requires hasDeactivatedAt; all 30 configs declare it; factory list/update/delete/restore SQL gates deactivated_at on the flag.",
+        "money_critical": false,
+        "drained_at": "2026-08-09T01:30:00Z",
+        "drained_by": "cursor/cls-schema-drift-drain",
+        "healthz": "3cbcebfc5"
       },
-      "status": "open",
+      "status": "drained",
       "hotfiles": [
         "apps/backend/src/reports/driver-settlement-summary.routes.ts",
         "apps/backend/src/catalogs/generic-catalog.factory.ts",

@@ -33,6 +33,8 @@ export type GenericCatalogConfig = {
   searchableColumns: string[];
   defaultSort: { column: string; dir: "asc" | "desc" };
   softDeleteColumn: string;
+  /** Whether the physical table carries a deactivated_at column for soft-delete audit. */
+  hasDeactivatedAt: boolean;
   codeRegex?: RegExp;
   readOnly?: boolean;
   /**
@@ -162,8 +164,8 @@ export function createCatalogRoutes(
             values.push(q.operating_company_id);
             where.push(`t.operating_company_id = $${values.length}`);
           }
-          if (q.is_active === "true") where.push(`t.${config.softDeleteColumn} = true AND t.deactivated_at IS NULL`);
-          if (q.is_active === "false") where.push(`(t.${config.softDeleteColumn} = false OR t.deactivated_at IS NOT NULL)`);
+          if (q.is_active === "true") where.push(config.hasDeactivatedAt ? `t.${config.softDeleteColumn} = true AND t.deactivated_at IS NULL` : `t.${config.softDeleteColumn} = true`);
+          if (q.is_active === "false") where.push(config.hasDeactivatedAt ? `(t.${config.softDeleteColumn} = false OR t.deactivated_at IS NOT NULL)` : `t.${config.softDeleteColumn} = false`);
           if (q.search && config.searchableColumns.length > 0) {
             values.push(`%${q.search}%`);
             const searchClauses = config.searchableColumns.map((column) => {
@@ -300,10 +302,10 @@ export function createCatalogRoutes(
             if (!(column in body)) continue;
             add(dbColumnForApiColumn(column, config), body[column as keyof typeof body]);
           }
-          if (config.softDeleteColumn in body && body[config.softDeleteColumn as keyof typeof body] === false) {
+          if (config.hasDeactivatedAt && config.softDeleteColumn in body && body[config.softDeleteColumn as keyof typeof body] === false) {
             add("deactivated_at", new Date().toISOString());
           }
-          if (config.softDeleteColumn in body && body[config.softDeleteColumn as keyof typeof body] === true) {
+          if (config.hasDeactivatedAt && config.softDeleteColumn in body && body[config.softDeleteColumn as keyof typeof body] === true) {
             add("deactivated_at", null);
           }
           add("updated_at", new Date().toISOString());
@@ -351,7 +353,7 @@ export function createCatalogRoutes(
             `
               UPDATE catalogs.${config.tableName}
               SET ${config.softDeleteColumn} = false,
-                  deactivated_at = now(),
+                  ${config.hasDeactivatedAt ? "deactivated_at = now()," : ""}
                   updated_at = now(),
                   updated_by_user_id = $2
               WHERE id = $1
@@ -389,7 +391,7 @@ export function createCatalogRoutes(
           `
             UPDATE catalogs.${config.tableName}
             SET ${config.softDeleteColumn} = true,
-                deactivated_at = NULL,
+                ${config.hasDeactivatedAt ? "deactivated_at = NULL," : ""}
                 updated_at = now(),
                 updated_by_user_id = $2
             WHERE id = $1

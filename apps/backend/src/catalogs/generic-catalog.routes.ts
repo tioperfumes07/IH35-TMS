@@ -26,6 +26,7 @@ export const fleetEquipmentTypesCatalogConfig: GenericCatalogConfig = {
   searchableColumns: ["code", "display_name", "description"],
   defaultSort: { column: "sort_order", dir: "asc" },
   softDeleteColumn: "is_active",
+  hasDeactivatedAt: false,
 };
 
 
@@ -104,6 +105,7 @@ export const dispatchErrorReasonsCatalogConfig: GenericCatalogConfig = {
   searchableColumns: ["code", "label", "description"],
   defaultSort: { column: "code", dir: "asc" },
   softDeleteColumn: "is_active",
+  hasDeactivatedAt: false,
 };
 
 export const customerQualityEventReasonsCatalogConfig: GenericCatalogConfig = {
@@ -139,6 +141,7 @@ export const customerQualityEventReasonsCatalogConfig: GenericCatalogConfig = {
   searchableColumns: ["code", "label", "description"],
   defaultSort: { column: "code", dir: "asc" },
   softDeleteColumn: "is_active",
+  hasDeactivatedAt: false,
 };
 
 /**
@@ -172,6 +175,7 @@ export const dispatchLumperProvidersCatalogConfig: GenericCatalogConfig = {
   searchableColumns: ["code", "display_name", "description"],
   defaultSort: { column: "sort_order", dir: "asc" },
   softDeleteColumn: "is_active",
+  hasDeactivatedAt: false,
 };
 
 /**
@@ -205,6 +209,7 @@ export const accidentTypesCatalogConfig: GenericCatalogConfig = {
   searchableColumns: ["code", "display_name", "description"],
   defaultSort: { column: "sort_order", dir: "asc" },
   softDeleteColumn: "is_active",
+  hasDeactivatedAt: false,
 };
 
 export const workplaceIncidentTypesCatalogConfig: GenericCatalogConfig = {
@@ -225,6 +230,7 @@ export const workplaceIncidentTypesCatalogConfig: GenericCatalogConfig = {
   searchableColumns: ["code", "display_name", "description"],
   defaultSort: { column: "sort_order", dir: "asc" },
   softDeleteColumn: "is_active",
+  hasDeactivatedAt: false,
 };
 
 export const leaveTypesCatalogConfig: GenericCatalogConfig = {
@@ -245,6 +251,7 @@ export const leaveTypesCatalogConfig: GenericCatalogConfig = {
   searchableColumns: ["code", "display_name", "description"],
   defaultSort: { column: "sort_order", dir: "asc" },
   softDeleteColumn: "is_active",
+  hasDeactivatedAt: false,
 };
 
 export const cashAdvanceTypesCatalogConfig: GenericCatalogConfig = {
@@ -265,6 +272,7 @@ export const cashAdvanceTypesCatalogConfig: GenericCatalogConfig = {
   searchableColumns: ["code", "display_name", "description"],
   defaultSort: { column: "sort_order", dir: "asc" },
   softDeleteColumn: "is_active",
+  hasDeactivatedAt: false,
 };
 
 export const pmIntervalsCatalogConfig: GenericCatalogConfig = {
@@ -285,6 +293,7 @@ export const pmIntervalsCatalogConfig: GenericCatalogConfig = {
   searchableColumns: ["code", "display_name", "description"],
   defaultSort: { column: "sort_order", dir: "asc" },
   softDeleteColumn: "is_active",
+  hasDeactivatedAt: false,
 };
 
 export const repairLocationsCatalogConfig: GenericCatalogConfig = {
@@ -305,6 +314,7 @@ export const repairLocationsCatalogConfig: GenericCatalogConfig = {
   searchableColumns: ["code", "display_name", "description"],
   defaultSort: { column: "sort_order", dir: "asc" },
   softDeleteColumn: "is_active",
+  hasDeactivatedAt: false,
 };
 
 export const workOrderTemplatesCatalogConfig: GenericCatalogConfig = {
@@ -325,6 +335,7 @@ export const workOrderTemplatesCatalogConfig: GenericCatalogConfig = {
   searchableColumns: ["code", "display_name", "description"],
   defaultSort: { column: "sort_order", dir: "asc" },
   softDeleteColumn: "is_active",
+  hasDeactivatedAt: false,
 };
 
 export const airBagCatalogCatalogConfig: GenericCatalogConfig = {
@@ -345,6 +356,7 @@ export const airBagCatalogCatalogConfig: GenericCatalogConfig = {
   searchableColumns: ["code", "display_name", "description"],
   defaultSort: { column: "sort_order", dir: "asc" },
   softDeleteColumn: "is_active",
+  hasDeactivatedAt: false,
 };
 
 export const batteryCatalogCatalogConfig: GenericCatalogConfig = {
@@ -365,6 +377,7 @@ export const batteryCatalogCatalogConfig: GenericCatalogConfig = {
   searchableColumns: ["code", "display_name", "description"],
   defaultSort: { column: "sort_order", dir: "asc" },
   softDeleteColumn: "is_active",
+  hasDeactivatedAt: false,
 };
 
 export const tireCatalogCatalogConfig: GenericCatalogConfig = {
@@ -385,6 +398,7 @@ export const tireCatalogCatalogConfig: GenericCatalogConfig = {
   searchableColumns: ["code", "display_name", "description"],
   defaultSort: { column: "sort_order", dir: "asc" },
   softDeleteColumn: "is_active",
+  hasDeactivatedAt: false,
 };
 
 export const trailerPartsCatalogConfig: GenericCatalogConfig = {
@@ -405,6 +419,7 @@ export const trailerPartsCatalogConfig: GenericCatalogConfig = {
   searchableColumns: ["code", "display_name", "description"],
   defaultSort: { column: "sort_order", dir: "asc" },
   softDeleteColumn: "is_active",
+  hasDeactivatedAt: false,
 };
 
 export const truckPartsCatalogConfig: GenericCatalogConfig = {
@@ -425,6 +440,7 @@ export const truckPartsCatalogConfig: GenericCatalogConfig = {
   searchableColumns: ["code", "display_name", "description"],
   defaultSort: { column: "sort_order", dir: "asc" },
   softDeleteColumn: "is_active",
+  hasDeactivatedAt: false,
 };
 
 export const defStationsCatalogConfig: GenericCatalogConfig = {
@@ -445,6 +461,7 @@ export const defStationsCatalogConfig: GenericCatalogConfig = {
   searchableColumns: ["code", "display_name", "description"],
   defaultSort: { column: "sort_order", dir: "asc" },
   softDeleteColumn: "is_active",
+  hasDeactivatedAt: false,
 };
 
 export const fuelStationsCatalogConfig: GenericCatalogConfig = {
@@ -465,6 +482,7 @@ export const fuelStationsCatalogConfig: GenericCatalogConfig = {
   searchableColumns: ["code", "display_name", "description"],
   defaultSort: { column: "sort_order", dir: "asc" },
   softDeleteColumn: "is_active",
+  hasDeactivatedAt: false,
 };
 
 export const relayAccountsCatalogConfig: GenericCatalogConfig = {
@@ -485,6 +503,7 @@ export const relayAccountsCatalogConfig: GenericCatalogConfig = {
   searchableColumns: ["code", "display_name", "description"],
   defaultSort: { column: "sort_order", dir: "asc" },
   softDeleteColumn: "is_active",
+  hasDeactivatedAt: false,
 };
 
 export const tollProvidersCatalogConfig: GenericCatalogConfig = {
@@ -505,6 +524,7 @@ export const tollProvidersCatalogConfig: GenericCatalogConfig = {
   searchableColumns: ["code", "display_name", "description"],
   defaultSort: { column: "sort_order", dir: "asc" },
   softDeleteColumn: "is_active",
+  hasDeactivatedAt: false,
 };
 
 export const loadTrailerEquipmentCatalogConfig: GenericCatalogConfig = {
@@ -525,6 +545,7 @@ export const loadTrailerEquipmentCatalogConfig: GenericCatalogConfig = {
   searchableColumns: ["code", "display_name", "description"],
   defaultSort: { column: "sort_order", dir: "asc" },
   softDeleteColumn: "is_active",
+  hasDeactivatedAt: false,
 };
 
 export const mxCustomsBrokersCatalogConfig: GenericCatalogConfig = {
@@ -545,6 +566,7 @@ export const mxCustomsBrokersCatalogConfig: GenericCatalogConfig = {
   searchableColumns: ["code", "display_name", "description"],
   defaultSort: { column: "sort_order", dir: "asc" },
   softDeleteColumn: "is_active",
+  hasDeactivatedAt: false,
 };
 
 export const vendorTypesCatalogConfig: GenericCatalogConfig = {
@@ -565,6 +587,7 @@ export const vendorTypesCatalogConfig: GenericCatalogConfig = {
   searchableColumns: ["code", "display_name", "description"],
   defaultSort: { column: "sort_order", dir: "asc" },
   softDeleteColumn: "is_active",
+  hasDeactivatedAt: false,
 };
 
 /**
@@ -598,6 +621,7 @@ export const laborRatesCatalogConfig: GenericCatalogConfig = {
   searchableColumns: ["rate_code", "rate_name"],
   defaultSort: { column: "code", dir: "asc" },
   softDeleteColumn: "is_active",
+  hasDeactivatedAt: false,
 };
 
 export const maintenancePartLocationsCatalogConfig: GenericCatalogConfig = {
@@ -618,6 +642,7 @@ export const maintenancePartLocationsCatalogConfig: GenericCatalogConfig = {
   searchableColumns: ["location_code", "location_name"],
   defaultSort: { column: "code", dir: "asc" },
   softDeleteColumn: "is_active",
+  hasDeactivatedAt: false,
 };
 
 /** LST-WIRE-08 — driver termination reasons: `label` shape (no display_name/sort_order), served via alias. */
@@ -639,6 +664,7 @@ export const driverTerminationReasonsCatalogConfig: GenericCatalogConfig = {
   searchableColumns: ["code", "label", "description"],
   defaultSort: { column: "code", dir: "asc" },
   softDeleteColumn: "is_active",
+  hasDeactivatedAt: false,
 };
 
 /** LST-WIRE-07 — customer types (QuickBooks Customer Type), canonical shape from creation. */
@@ -660,6 +686,7 @@ export const customerTypesCatalogConfig: GenericCatalogConfig = {
   searchableColumns: ["code", "display_name", "description"],
   defaultSort: { column: "sort_order", dir: "asc" },
   softDeleteColumn: "is_active",
+  hasDeactivatedAt: false,
 };
 
 /** LST-WIRE-09 — global CoA account-type lookup (no operating_company_id; `name` shape). */
@@ -681,6 +708,7 @@ export const accountTypesCatalogConfig: GenericCatalogConfig = {
   searchableColumns: ["code", "name"],
   defaultSort: { column: "sort_order", dir: "asc" },
   softDeleteColumn: "is_active",
+  hasDeactivatedAt: false,
 };
 
 /** LST-WIRE-09 — CoA detail types (entity-scoped, `name` shape). */
@@ -702,6 +730,7 @@ export const detailTypesCatalogConfig: GenericCatalogConfig = {
   searchableColumns: ["code", "name"],
   defaultSort: { column: "sort_order", dir: "asc" },
   softDeleteColumn: "is_active",
+  hasDeactivatedAt: false,
 };
 
 /**
@@ -738,6 +767,7 @@ export const auditEventTypesCatalogConfig: GenericCatalogConfig = {
   searchableColumns: ["code", "description"],
   defaultSort: { column: "code", dir: "asc" },
   softDeleteColumn: "code",
+  hasDeactivatedAt: false,
 };
 
 export async function registerGenericCatalogRoutes(app: FastifyInstance) {
