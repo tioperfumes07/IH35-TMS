@@ -119,6 +119,21 @@ function checkDisputesTab() {
   }
 }
 
+function checkDisputeList() {
+  const TARGET = "apps/frontend/src/pages/drivers/SettlementDisputeList.tsx";
+  const src = readFileSync(join(repoRoot, TARGET), "utf8");
+  const code = stripComments(src);
+  if (/label=\{row\.driver_name\s*\?\?\s*row\.driver_id\}/.test(code)) {
+    failures.push(`${TARGET}: driver EntityLink must not fall back to raw driver_id — use entityLabel`);
+  }
+  if (/label=\{row\.settlement_display_id\s*\?\?\s*row\.settlement_id\}/.test(code)) {
+    failures.push(`${TARGET}: settlement EntityLink must not fall back to raw settlement_id — use entityLabel`);
+  }
+  if (!/entityLabel\s*\(\s*row\.driver_name/.test(code) || !/entityLabel\s*\(\s*row\.settlement_display_id/.test(code)) {
+    failures.push(`${TARGET}: driver + settlement EntityLinks must use entityLabel`);
+  }
+}
+
 checkTable();
 checkHeader();
 checkDetail();
@@ -126,6 +141,7 @@ checkPreSettlements();
 checkEarningsTab();
 checkAccountingHub();
 checkDisputesTab();
+checkDisputeList();
 
 if (failures.length > 0) {
   console.error("FAIL verify-settlements-grid-honest-labels");

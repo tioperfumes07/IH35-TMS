@@ -4,6 +4,7 @@ import { DataTable } from "../../components/DataTable";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { StatusBadge } from "../../components/StatusBadge";
 import { CollapsedListFilters } from "../../components/table";
+import { entityLabel } from "../../lib/entity-label";
 import { useSettlementDisputes, type SettlementDisputeStatus } from "../../hooks/useSettlementDisputes";
 import { SettlementDisputeModal } from "./SettlementDisputeModal";
 
@@ -66,13 +67,23 @@ export function SettlementDisputeList() {
           {
             key: "driver_name",
             label: "Driver",
-            render: (row) => <EntityLink kind="driver" id={row.driver_id} label={row.driver_name ?? row.driver_id} />,
+            render: (row) => (
+              <EntityLink
+                kind="driver"
+                id={row.driver_id}
+                label={entityLabel(row.driver_name, row.driver_id, "Driver")}
+              />
+            ),
           },
           {
             key: "settlement_display_id",
             label: "Settlement",
             render: (row) => (
-              <EntityLink kind="settlement" id={row.settlement_id} label={row.settlement_display_id ?? row.settlement_id} />
+              <EntityLink
+                kind="settlement"
+                id={row.settlement_id}
+                label={entityLabel(row.settlement_display_id, row.settlement_id, "Settlement")}
+              />
             ),
           },
           { key: "dispute_type", label: "Type" },
