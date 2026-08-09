@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
+import { ProgramModuleNav } from "../ProgramModuleNav";
 import { fetchScenarioTracker } from "./api";
 import { HOP_IDENTITY, SCENARIO_IDENTITY, mergeLiveItem } from "./registry";
 import { ScenarioPipeline } from "./ScenarioPipeline";
@@ -104,6 +105,8 @@ export function ScenarioTrackerHome() {
 
   return (
     <div className="st-wrap" data-testid="scenario-tracker-home">
+      {/* PROG-NAV-01: Module matrix must be a top-bar tab, not a buried footer link. */}
+      <ProgramModuleNav active="scenario" />
       <header className="st-header">
         <h1>IH35-TMS — End-to-End Scenario Tracker</h1>
         <p>Every business process as a vertical slice — and the full lifecycle each one travels, start to certified.</p>
@@ -131,10 +134,6 @@ export function ScenarioTrackerHome() {
           <Link to="/home/ops">Role ops dashboard</Link>
           {" · "}
           <Link to="/app/homepage">QBO-style home</Link>
-          {" · "}
-          <Link to="/program/matrix">Module matrix</Link>
-          {" · "}
-          <Link to="/program/legacy-scoreboard">Legacy certification board</Link>
         </div>
       </header>
 

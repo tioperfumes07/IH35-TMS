@@ -10,6 +10,7 @@ import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { resolveApiUrl } from "../../api/client";
 import maintRequired from "@scoreboard/modules/maintenance.required.json";
+import { ProgramModuleNav } from "./ProgramModuleNav";
 
 type Tri = "done" | "audited" | "unaudited" | "na";
 
@@ -279,11 +280,7 @@ export function ModuleMatrixPreviewPage() {
         </div>
       )}
 
-      <nav className="tabs">
-        <Link className="tab" to="/program">Scenario tracker</Link>
-        <span className="tab active">Module matrix</span>
-        <Link className="tab" to="/program/legacy-scoreboard">Legacy certification board</Link>
-      </nav>
+      <ProgramModuleNav active="matrix" />
 
       <header className="hd">
         <div className="t">Program — Module matrix scoreboards</div>

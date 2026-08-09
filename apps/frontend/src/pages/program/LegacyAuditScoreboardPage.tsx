@@ -8,7 +8,6 @@
 // Palette-locked, no emojis. Additive — does not remove Tracker/Modules routes.
 
 import { Fragment, useMemo, type ReactNode } from "react";
-import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { CLASS_SCOREBOARD, type ClassScoreboard } from "./classScoreboard.data";
 import { resolveApiUrl } from "../../api/client";
@@ -17,6 +16,7 @@ import {
   type ProgramScoreboard,
   type GateState,
 } from "./programScoreboard.data";
+import { ProgramModuleNav } from "./ProgramModuleNav";
 
 type ClassModuleMatrix = {
   modules: string[];
@@ -257,15 +257,8 @@ export function LegacyAuditScoreboardPage() {
     <div className="ih35sb">
       <style>{CSS}</style>
 
-      {/* Legacy archive nav — primary Program surface is Scenario Tracker at /program */}
-      <nav className="tabs">
-        <Link className="tab" to="/program">Scenario tracker</Link>
-        <Link className="tab" to="/program/matrix">Module matrix</Link>
-        <span className="tab active">Legacy certification board</span>
-        <Link className="tab" to="/program/tracker">Tracker</Link>
-        <Link className="tab" to="/program/modules">Module completion</Link>
-        <Link className="tab" to="/program/final-additions">Final additions</Link>
-      </nav>
+      {/* Shared Program top-bar — Module matrix is a first-class tab, not URL-only */}
+      <ProgramModuleNav active="legacy" />
 
       <header className="hd" data-testid="program-scoreboard-header">
         <div className="t">Deep-Linkage Certification Scoreboard</div>
