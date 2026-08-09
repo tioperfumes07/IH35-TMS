@@ -327,7 +327,7 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
                     key={b.id}
                     kind="bill"
                     id={b.id}
-                    label={b.bill_number ?? `Bill ${b.id.slice(0, 8)}`}
+                    label={entityLabel(b.bill_number, b.id, "Bill")}
                     className="mr-2 text-slate-700 underline"
                     data-testid={`claim-reverse-bill-${b.id}`}
                   />
@@ -351,7 +351,7 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
                     key={wo.id}
                     kind="work_order"
                     id={wo.id}
-                    label={wo.display_id ?? `WO ${wo.id.slice(0, 8)}`}
+                    label={entityLabel(wo.display_id, wo.id, "Work order")}
                     className="mr-2 text-slate-700 underline"
                     data-testid={`claim-reverse-wo-${wo.id}`}
                   />
