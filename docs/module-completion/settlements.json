@@ -2,7 +2,7 @@
   "module": "settlements",
   "title": "Settlements / Driver Finance",
   "complete": false,
-  "as_of": "2026-08-09T01:14:57.562Z",
+  "as_of": "2026-08-09T01:17:03.722Z",
   "live_sha": "eb762a5",
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/AUDITOR-RUN-2026-07-31/modules/settlements-deep-2026-08-01.md",
   "spec_sources": [
@@ -88,10 +88,10 @@
         "DOD-D"
       ],
       "spec": "ENUM-DISPUTE-TYPES-MODAL/DETAIL · SCHEMA-FINDINGS sibling sweep",
-      "status": "OPEN",
-      "evidence": "scaffold — FAIL: SettlementDisputeModal vs SettlementDetailPage code drift",
+      "status": "PASS",
+      "evidence": "PASS 2026-08-09 — SettlementDisputeModal + SettlementDetailPage both import SETTLEMENT_DISPUTE_CATEGORY_OPTIONS (matches Neon CHECK dispute_category). Modal writes openSettlementDispute → POST /driver-finance/settlement-disputes (same as detail), not legacy /settlements/:id/disputes dispute_type. Guard verify-settlement-dispute-driver-picker extended (step 2152).",
       "pr": null,
-      "prod_verified": false
+      "prod_verified": true
     },
     {
       "id": "SETL-ECON-01",
@@ -141,6 +141,6 @@
   ],
   "pass_count": 1,
   "total_count": 9,
-  "progress": "3 of 9",
-  "note": " | 2026-08-09: SETL-PICK-02 + SETL-ECON-01 PASS (catalog picker + USMCA density=7). complete:false while CLS-MONEY-HOLD lists settlements."
+  "progress": "4 of 9",
+  "note": " | 2026-08-09: SETL-PICK-02 + SETL-ECON-01 PASS (catalog picker + USMCA density=7). complete:false while CLS-MONEY-HOLD lists settlements. | SETL-PICK-03 PASS 2026-08-09"
 }
