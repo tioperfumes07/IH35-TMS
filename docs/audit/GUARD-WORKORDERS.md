@@ -1338,7 +1338,7 @@ ACCT-F269's body states *"the trigger and the REVOKE are installed together."* *
 The trigger does block (`RAISE EXCEPTION ... ERRCODE restrict_violation`), so this is defence-in-depth, not an
 open hole — but the card reads as if both landed and it should not.
 
-## ★★ FIXED (PR pending) · CC-1 lane · Cursor shipped · **P0 · DEPLOY-BLOCKER-ROOT-CAUSE** — #5022's migration cannot run: `driver_liabilities.created_by_user_id` DOES NOT EXIST
+## ★★ FIXED (PR #5030) · CC-1 lane · Cursor shipped · **P0 · DEPLOY-BLOCKER-ROOT-CAUSE** — #5022's migration cannot run: `driver_liabilities.created_by_user_id` DOES NOT EXIST
 **Found by CC-3 on prod `br-fancy-credit-akjnd07a`, 2026-08-08 ~19:1x CDT. This is why prod stopped taking deploys.**
 **Status: FIXED (Cursor PR — in-place `NULL::uuid AS created_by_user_id` on unapplied `202612440000`). CC-3 verifies healthz past `02bab31`.**
 
