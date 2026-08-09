@@ -10,6 +10,7 @@ import { ToastProvider } from "../../../components/Toast";
 import { SafetyMeetingsPage } from "../SafetyMeetingsPage";
 import { TrainingProgramsPage } from "../TrainingProgramsPage";
 import { TrainingRecordsPage } from "../TrainingRecordsPage";
+import { pickCombo } from "../../../test-utils/pickCombo";
 
 const companyId = "91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071";
 
@@ -157,7 +158,11 @@ describe("TrainingRecordsPage", () => {
     // match, no matter what the page rendered. Query the attribute the component actually emits.
     const driverPicker = document.querySelector('[data-field="training-record-driver"]');
     if (!driverPicker) throw new Error("training-record-driver picker not rendered");
-    fireEvent.change(driverPicker, { target: { value: "driver-1" } });
+    // A `change` on the Combobox input only sets the QUERY TEXT — it does not commit a value. The picker
+    // commits on the option's click, so firing change left driver_id "" and the create payload went out
+    // without a driver while the test read as "wrong arguments". Drive it the way a user does: focus to
+    // open, then click the option by its VISIBLE label (a listbox option is addressed by text, not by id).
+    pickCombo(driverPicker as HTMLElement, /Alex Driver/);
     await user.type(screen.getByTestId("training-record-name"), "Cargo securement");
     await user.click(screen.getByTestId("training-record-submit"));
     await waitFor(() => {
