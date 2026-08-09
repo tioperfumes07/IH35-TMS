@@ -1,3 +1,30 @@
+
+/** FAIL-K2/K3 — prefer server message/error over bare "status 400". */
+function messageFromApiPayload(status: number, data: unknown): string {
+  if (status === 429) {
+    return ""; // constructor handles 429 separately
+  }
+  if (typeof data === "string" && data.trim()) return data.trim().slice(0, 500);
+  if (data && typeof data === "object") {
+    const o = data as Record<string, unknown>;
+    for (const key of ["message", "error_description", "detail"] as const) {
+      const v = o[key];
+      if (typeof v === "string" && v.trim()) return v.trim().slice(0, 500);
+    }
+    const err = o.error;
+    if (typeof err === "string" && err.trim()) {
+      // Prefer human message when paired; else machine code beats bare HTTP status.
+      return err.trim().slice(0, 500);
+    }
+    const blockers = o.blockers;
+    if (Array.isArray(blockers) && blockers[0] && typeof blockers[0] === "object") {
+      const m = (blockers[0] as { message?: unknown }).message;
+      if (typeof m === "string" && m.trim()) return m.trim().slice(0, 500);
+    }
+  }
+  return `API request failed with status ${status}`;
+}
+
 export class ApiError extends Error {
   status: number;
   data: unknown;
@@ -7,7 +34,7 @@ export class ApiError extends Error {
     super(
       status === 429
         ? `Too many requests — please wait ${retryAfter ?? "a few"} second${retryAfter === 1 ? "" : "s"} and try again.`
-        : `API request failed with status ${status}`
+        : messageFromApiPayload(status, data)
     );
     this.status = status;
     this.data = data;

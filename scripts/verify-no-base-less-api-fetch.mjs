@@ -145,3 +145,15 @@ if (problems.length) {
   process.exit(1);
 }
 console.log(`${LABEL} OK — every frontend API fetch resolves the base URL`);
+
+
+// FAIL-K2/K3 — ApiError must surface response body, not bare "status 400".
+{
+  const clientPath = path.join(ROOT, "apps/frontend/src/api/client.ts");
+  const src = fs.readFileSync(clientPath, "utf8");
+  if (!src.includes("function messageFromApiPayload") || !src.includes("messageFromApiPayload(status, data)")) {
+    console.error("FAIL-K2: apps/frontend/src/api/client.ts must derive ApiError.message from response body (messageFromApiPayload)");
+    process.exit(1);
+  }
+}
+
