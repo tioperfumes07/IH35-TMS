@@ -5,6 +5,9 @@
  * Asserts ClaimsTab reverse-graph renderer maps accidents + incidents into
  * visible links (same contract as lawsuits/matters), not only empty-state length checks.
  *
+ * C-01 / FAIL-CLAIM-ACCIDENT-DEEPLINK (2026-08-09): bare `/safety/accidents` is NOT enough —
+ * AccidentsPage only opens the drawer when `?accident_id=` is present (EntityLink kind=accident).
+ *
  * Self-test: node scripts/verify-insurance-claims-reverse-accident-incident.mjs --selftest
  */
 import fs from "node:fs";
@@ -43,8 +46,17 @@ export function computeFailures(source) {
   if (!/graph\.reverse\.incidents\.map\s*\(/.test(source)) {
     errors.push("ClaimsTab must .map() graph.reverse.incidents into visible reverse-drill links");
   }
-  if (!/to=["']\/safety\/accidents["']/.test(source)) {
-    errors.push("accident reverse links must navigate to /safety/accidents");
+  // Deep link into AccidentsPage drawer — bare /safety/accidents is a dead hop.
+  const accidentDeep =
+    /kind=["']accident["']/.test(source) ||
+    /to=\{?[`'"]\/safety\/accidents\?accident_id=/.test(source);
+  if (!accidentDeep) {
+    errors.push(
+      "accident links must deep-link via EntityLink kind=\"accident\" or /safety/accidents?accident_id= (drawer open)",
+    );
+  }
+  if (/to=["']\/safety\/accidents["']/.test(source)) {
+    errors.push("bare to=\"/safety/accidents\" is forbidden — AccidentsPage needs ?accident_id=");
   }
   if (!/claim-reverse-accident-/.test(source)) {
     errors.push("accident reverse links must expose data-testid claim-reverse-accident-*");
@@ -61,9 +73,7 @@ function selftest() {
     {graph.reverse.lawsuits.map((l) => <span key={l.id}>Lawsuit {l.case_number}</span>)}
     {graph.reverse.matters.map((m) => <EntityLink key={m.id} kind="matter" id={m.id} />)}
     {graph.reverse.accidents.map((a) => (
-      <Link key={a.id} to="/safety/accidents" data-testid={\`claim-reverse-accident-\${a.id}\`}>
-        Accident {a.id.slice(0, 8)}
-      </Link>
+      <EntityLink key={a.id} kind="accident" id={a.id} data-testid={\`claim-reverse-accident-\${a.id}\`} />
     ))}
     {graph.reverse.incidents.map((i) => (
       <Link key={i.id} to="/safety/damage-reports" data-testid={\`claim-reverse-incident-\${i.id}\`}>
@@ -76,6 +86,21 @@ function selftest() {
     graph.reverse.incidents.length === 0
       ? "none linked yet"
       : null}
+  `;
+
+  const badBare = `
+    {graph.reverse.lawsuits.map((l) => <span key={l.id}>Lawsuit {l.case_number}</span>)}
+    {graph.reverse.matters.map((m) => <EntityLink key={m.id} kind="matter" id={m.id} />)}
+    {graph.reverse.accidents.map((a) => (
+      <Link key={a.id} to="/safety/accidents" data-testid={\`claim-reverse-accident-\${a.id}\`}>
+        Accident {a.id.slice(0, 8)}
+      </Link>
+    ))}
+    {graph.reverse.incidents.map((i) => (
+      <Link key={i.id} to="/safety/damage-reports" data-testid={\`claim-reverse-incident-\${i.id}\`}>
+        Incident {i.id.slice(0, 8)}
+      </Link>
+    ))}
   `;
 
   const bad = `
@@ -92,6 +117,11 @@ function selftest() {
   const goodFails = computeFailures(good);
   if (goodFails.length > 0) {
     console.error(`${LABEL} --selftest FAIL: good corpus rejected: ${goodFails.join("; ")}`);
+    process.exit(1);
+  }
+  const bareFails = computeFailures(badBare);
+  if (bareFails.length === 0) {
+    console.error(`${LABEL} --selftest FAIL: bare /safety/accidents unexpectedly passed`);
     process.exit(1);
   }
   const badFails = computeFailures(bad);

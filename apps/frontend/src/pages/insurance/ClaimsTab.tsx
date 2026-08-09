@@ -259,9 +259,13 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
                 {graph.claim.accident_report_id ? (
                   <>
                     {" · "}
-                    <Link className="text-slate-700 underline" to={`/safety/accidents`}>
-                      Accident {graph.claim.accident_report_id.slice(0, 8)}
-                    </Link>
+                    <EntityLink
+                      kind="accident"
+                      id={graph.claim.accident_report_id}
+                      label={`Accident ${graph.claim.accident_report_id.slice(0, 8)}`}
+                      className="text-slate-700 underline"
+                      data-testid={`claim-forward-accident-${graph.claim.accident_report_id}`}
+                    />
                   </>
                 ) : null}
               </div>
@@ -276,14 +280,14 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
                   <EntityLink key={m.id} kind="matter" id={m.id} label={m.matter_number} className="mr-2 text-slate-700 underline" />
                 ))}
                 {graph.reverse.accidents.map((a) => (
-                  <Link
+                  <EntityLink
                     key={a.id}
+                    kind="accident"
+                    id={a.id}
+                    label={`Accident ${a.id.slice(0, 8)}`}
                     className="mr-2 text-slate-700 underline"
-                    to="/safety/accidents"
                     data-testid={`claim-reverse-accident-${a.id}`}
-                  >
-                    Accident {a.id.slice(0, 8)}
-                  </Link>
+                  />
                 ))}
                 {graph.reverse.incidents.map((i) => (
                   <Link
