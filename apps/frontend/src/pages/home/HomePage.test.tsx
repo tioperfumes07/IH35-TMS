@@ -108,7 +108,12 @@ describe("HomePage (T11.19)", () => {
 
   it("renders 6 KPI labels, chart headings, attention section, and four quick actions", async () => {
     render(
-      wrap(<HomePage auth={{ uuid: "u1", email: "t@test.com", role: "Dispatcher" }} />)
+      // HomePage is a thin ROLE ROUTER now (#642): role "Dispatcher" renders DispatcherHome, which does not
+      // carry these KPI/chart/quick-action controls — they live in DefaultHome (and Owner/Accounting). This
+      // case describes DefaultHome's content, so route to it via a role with no dedicated home ("Mechanic"
+      // has no branch in the switch). Print was
+      // never removed; it moved with the split.
+      wrap(<HomePage auth={{ uuid: "u1", email: "t@test.com", role: "Mechanic" }} />)
     );
 
     expect(screen.getByRole("button", { name: "Print this page" })).toBeTruthy();
