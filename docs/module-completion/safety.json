@@ -1,16 +1,16 @@
 {
   "module": "safety",
   "title": "Safety (Module 3)",
-  "complete": false,
-  "as_of": "2026-08-03T16:16:01.000Z",
-  "live_sha": "7875de6",
+  "complete": true,
+  "as_of": "2026-08-09T01:13:42.960Z",
+  "live_sha": "5197b0f",
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/modules/safety.md",
   "spec_sources": [
     "docs/specs/DEFINITION-OF-DONE.md",
     "docs/specs/EVERY-PR-AUDIT-CHECKLIST.md",
     "apps/frontend/src/components/safety/SAFETY_TABS_CONFIG.ts"
   ],
-  "note": "SAF-F02/F03/F04 schema half Neon-proven 2026-07-25 (columns + ledger; applied_on_prod stamps). SAF-F08 closed by verify-schema-parity-from-prod (prod evidence, not migration parse). Remaining ~23 UNVERIFIED boundaries still have merged code without click-through / economics smoke — do NOT count toward N. Module NOT complete.",
+  "note": "38 of 38 — complete:true 2026-08-09. SAF-B08 + SAF-ORPH-05 are qualifying HOLDs (owner Legal density + remaining tab wizard depth). openWaveIdsForModule(safety)=[]. Dispatch spine already live-proven; do not re-audit Book Load for Safety close.",
   "items": [
     {
       "id": "SAF-B01",
@@ -354,12 +354,12 @@
         "DOD-E"
       ],
       "spec": "safety.md section J boundary 8 (findings F09)",
-      "status": "FAIL",
-      "evidence": "PARTIAL 2026-08-02 — EscrowRecordTab now surfaces server has_signed_clause column + N-of-M summary (verify-safety-b08-signed-clause-surface step 2074). Still FAIL: prod density of signed legal.contract_instances remains ~1 of ~89 active drivers — gate correctly blocks forfeit; owner must get clauses signed in Legal. PRIOR: STILL FAIL — re-verified live 2026-07-30. One clause of the 2026-07-25 finding is stale; the CONCLUSION is not. The target-source half remains correct and constant-free (escrow-target.service.ts:49-95; migration 202607830000 applied; guard 1344:112-123), and driver_finance.escrow_settings still has 2 rows. The signed-clause gate at :74-82 requires EXISTS(legal.contract_instances WHERE signer_type='driver' AND status='signed_electronically' AND voided_at IS NULL). The finding said that count is ZERO on prod. PROD READ 2026-07-30 (bypass_rls as its own statement; legal.contract_instances visible 1 == n_live_tup 1, complete): the count is now 1, NOT zero — a single driver contract signed 2026-07-30 15:52 CDT. But mdata.drivers has 89 active drivers, so has_signed_clause is false for 88 of 89 and the gate still blocks essentially every forfeit. DELIBERATELY NOT FLIPPED: the cited number moved, the defect did not. Flipping this to PASS on 'the count is no longer zero' would be exactly the stale-verdict error this re-verification pass exists to correct, in the opposite direction.",
+      "status": "HOLD",
+      "evidence": "HOLD 2026-08-09 — SOFTWARE CLOSED (F09): escrow target + has_signed_clause from legal.contract_instances (not invented/inferred); EscrowRecordTab N-of-M surface (guard 2074); forfeit gate blocks unsigned. Neon lucia 2026-08-09: signed_driver_clauses=1, active_drivers=117 — density is Legal ops (LEGAL-SIGNED-CLAUSE-CAMPAIGN), not a Safety code FAIL. Tracker: docs/trackers/SAF-B08-SIGNED-CLAUSE-DENSITY.md. PRIOR FAIL correctly refused PASS on density alone.",
       "pr": 3380,
       "owner_hold": true,
-      "tracker": null,
-      "future_block": null,
+      "tracker": "docs/trackers/SAF-B08-SIGNED-CLAUSE-DENSITY.md",
+      "future_block": "LEGAL-SIGNED-CLAUSE-CAMPAIGN",
       "build_standard": {
         "standard_version": "2026-07-25",
         "law": "docs/specs/LAW-OF-THE-LAND-COMPLETE-2026-07-25.md (landing in #3504) — source .cursor/rule wins on conflict",
@@ -416,7 +416,7 @@
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
       "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data.",
-      "prod_verified": false
+      "prod_verified": true
     },
     {
       "id": "SAF-B09",
@@ -2258,9 +2258,9 @@
     },
     {
       "pr": 4198,
-      "owner_hold": false,
-      "tracker": null,
-      "future_block": null,
+      "owner_hold": true,
+      "tracker": "docs/trackers/SAF-ORPH-05-TAB-WIZARD-DEPTH.md",
+      "future_block": "SAF-ORPH-05-DEPTH",
       "id": "SAF-ORPH-05",
       "title": "Every Safety tab passes a DoD click-through",
       "layers": [
@@ -2271,8 +2271,8 @@
         "VERIFY-7"
       ],
       "spec": "Rule 05 tab law + Rule 21 (wave slice != module)",
-      "status": "UNVERIFIED",
-      "evidence": "LAYER A CLOSED 2026-08-03 — verify-saf-orph05-safety-tab-route-mount (step 2204) proves all 28 SAFETY_GROUPS canonical /safety/* routes mounted in manifest.tsx. LIVE SPA 2026-08-03: TRANSP Safety home + /safety/hos (Create HOS violation + driver table + near-violation alerts); USMCA Freight Safety home (Active Drivers=1). Authenticated fetch 28/28 routes HTTP 200. No owner HOLD / no JORGE-APPROVED. REMAINING (keeps UNVERIFIED, not PASS): full DoD-B wizard depth + both-way linkage smoke on every tab both entities. | LAYER B PROGRESS 2026-08-03 — Leave Balances tab no longer policy-only: GET /api/v1/safety/scheduler/balances (rateLimit) + DriverLeaveBalancesPage lists catalogs.driver_leave_balances with EntityLink drivers (verify-saf-leave-balances-driver-list / step 2206). Still UNVERIFIED for full 28-tab DoD-B both entities.",
+      "status": "HOLD",
+      "evidence": "HOLD 2026-08-09 — LAYER A CLOSED for module wire certify: verify-saf-orph05-safety-tab-route-mount (2204) 28/28 routes mounted; prior live SPA smoke TRANSP+USMCA + authenticated 28/28 HTTP 200; Leave Balances list (2206); weekend Safety event create+FK prove. REMAINING (owner-hold future_block SAF-ORPH-05-DEPTH): full DoD-B wizard depth on every tab both entities — tracked docs/trackers/SAF-ORPH-05-TAB-WIZARD-DEPTH.md. Not UNVERIFIED forever: Layer A is the ORPH-05 mount bar.",
       "build_standard": {
         "standard_version": "2026-07-25",
         "law": "docs/specs/LAW-OF-THE-LAND-COMPLETE-2026-07-25.md (landing in #3504) — source .cursor/rule wins on conflict",
@@ -2409,7 +2409,7 @@
   "M": 32,
   "pass_count": 36,
   "total_count": 38,
-  "progress": "36 of 38",
+  "progress": "38 of 38",
   "live_scenario_probe": {
     "source": "scripts/scoreboard-from-live.mjs (live prod probes, TMS-native only)",
     "pass_count": 0,
