@@ -39,6 +39,7 @@ import { listClassesForJe } from "../api/accounting";
 import { legalMattersApi } from "../api/legal-matters";
 import { InsuranceClaimsReverseSection } from "../components/insurance/InsuranceClaimsReverseSection";
 import { DriverSafetyReverseSection } from "../components/safety/DriverSafetyReverseSection";
+import { DriverWorkOrdersReverseSection } from "../components/maintenance/DriverWorkOrdersReverseSection";
 import { Button } from "../components/Button";
 import { ListErrorState } from "../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../components/parity/ParityTable";
@@ -1483,6 +1484,13 @@ export function DriverDetailPage() {
                   operatingCompanyId={String(driver.operating_company_id)}
                   driverId={id}
                   data-testid="driver-detail-safety-reverse"
+                />
+              ) : null}
+              {driver?.operating_company_id ? (
+                <DriverWorkOrdersReverseSection
+                  operatingCompanyId={String(driver.operating_company_id)}
+                  driverId={id}
+                  data-testid="driver-detail-work-orders-reverse"
                 />
               ) : null}
             </>

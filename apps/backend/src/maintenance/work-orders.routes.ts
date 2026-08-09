@@ -39,6 +39,9 @@ const listQuerySchema = z.object({
   // diesel/roadside expense to FK a load) but nothing could ASK for a load's work orders, so the
   // dispatch drawer had no way to show them and a trip with two repairs on it looked clean.
   load_id: z.string().uuid().optional(),
+  // DRV-LINK-WO-REVERSE: work_orders.driver_id is written on create; list must accept driver_id
+  // so DriverDetail can reverse-drill (same pattern as load_id).
+  driver_id: z.string().uuid().optional(),
 });
 
 const listByBucketQuerySchema = z.object({
@@ -433,10 +436,9 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
         values.push(q.status);
         where.push(`w.status = $${values.length}`);
         where.push("w.voided_at IS NULL");
-      } else if (q.equipment_id || q.load_id) {
-        // LOAD-WO-REVERSE: a load-scoped read is caller-controlled scope, same as equipment_id — a
-        // COMPLETED repair still belongs to that trip's history, so the open-only default would hide
-        // exactly the records the drawer exists to show. Voided stay hidden (void-not-delete).
+      } else if (q.equipment_id || q.load_id || q.driver_id) {
+        // LOAD-WO-REVERSE / DRV-LINK-WO-REVERSE: caller-controlled scope — include completed history;
+        // voided stay hidden (void-not-delete).
         where.push("w.voided_at IS NULL");
       } else {
         where.push(openWorkOrderPredicate("w"));
@@ -444,6 +446,10 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
       if (q.load_id) {
         values.push(q.load_id);
         where.push(`w.load_id = $${values.length}`);
+      }
+      if (q.driver_id) {
+        values.push(q.driver_id);
+        where.push(`w.driver_id = $${values.length}`);
       }
       if (q.wo_type) {
         values.push(q.wo_type);
