@@ -105,14 +105,24 @@ requireAll(tabPath, tab, [
     pattern: /[Rr]ecent accidents \(30d\)/,
     label: "panel title/subtitle discloses recent accidents (30d)",
   },
+  // C-13 / LST-F104 — accident drill Open record must deep-link (not detailTo: null).
+  {
+    pattern: /accident_id=\$\{/,
+    label: "accident drill detailTo uses ?accident_id= deeplink",
+  },
 ]);
 // A KPI/drill link must never be a bare `/safety` (no trailing segment).
 // Accidents must never read a phantom row.status (defaults to "open" = no-op fake filter).
+// C-13: accident map must not leave detailTo: null (dead Open record).
 forbid(tabPath, tab, [
   { pattern: /to="\/safety"/, label: 'bare `to="/safety"` link (must be a scoped surface)' },
   {
     pattern: /row\.status/,
     label: "phantom row.status read on accidents (column does not exist on prod)",
+  },
+  {
+    pattern: /\/\/ No per-id accident detail route exists/,
+    label: "stale comment claiming no accident deeplink (C-13 closed)",
   },
 ]);
 

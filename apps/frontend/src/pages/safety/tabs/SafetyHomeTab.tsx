@@ -164,9 +164,9 @@ export function SafetyHomeTab() {
           label: `Accident${row.location ? ` · ${String(row.location)}` : ""}`,
           driverId: (row.driver_id as string | null) ?? null,
           unitId: (row.unit_id as string | null) ?? null,
-          // No per-id accident detail route exists (drawer-based list); driver/unit deep-links carry
-          // the record forward, and the list is one click away via the "Accidents on File" tile.
-          detailTo: null,
+          // C-13 / LST-F104: AccidentsPage already honors ?accident_id= (opens drawer). Leaving
+          // detailTo null was a dead "Open record" affordance — driver/unit links alone are not enough.
+          detailTo: id ? `/safety/accidents?accident_id=${encodeURIComponent(id)}` : null,
         };
       });
 
