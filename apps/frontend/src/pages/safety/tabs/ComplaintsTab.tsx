@@ -211,7 +211,17 @@ export function ComplaintsTab() {
           label={row.complainant_driver_name ? String(row.complainant_driver_name) : "Driver"}
         />
       );
-    if (row.complainant_customer_id) return <EntityLink kind="customer" id={String(row.complainant_customer_id)} />;
+    // FAIL-CP1 residual: this was the one EntityLink still handed no label, nine lines under the
+    // comment saying an unlabelled EntityLink prints the raw uuid. A complaint filed BY a customer
+    // is precisely the row where "who complained" is the content.
+    if (row.complainant_customer_id)
+      return (
+        <EntityLink
+          kind="customer"
+          id={String(row.complainant_customer_id)}
+          label={row.complainant_customer_name ? String(row.complainant_customer_name) : "Customer"}
+        />
+      );
     if (row.complainant_user_id) {
       const employeeLabel = resolveUserLabel(String(row.complainant_user_id));
       return <span>{employeeLabel}</span>;

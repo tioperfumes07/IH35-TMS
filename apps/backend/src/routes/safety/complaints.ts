@@ -121,13 +121,18 @@ export async function registerSafetyComplaintsRoutes(app: FastifyInstance) {
       // EntityLink falls back to printing `id` when given no label. On a privacy-gated discipline
       // record, "who complained about whom" is the entire content of the row — so resolve both
       // names server-side rather than making every consumer re-join.
+      // FAIL-CP1 RESIDUAL: the first pass resolved only the DRIVER names, so a complaint filed by a
+      // CUSTOMER still rendered a raw uuid — the tab's own comment ("Without a label EntityLink
+      // prints the raw uuid") sat nine lines above the one EntityLink that was still given no label.
       const res = await client.query(
         `SELECT c.*,
                 TRIM(CONCAT(cd.first_name, ' ', cd.last_name)) AS complainant_driver_name,
-                TRIM(CONCAT(rd.first_name, ' ', rd.last_name)) AS respondent_driver_name
+                TRIM(CONCAT(rd.first_name, ' ', rd.last_name)) AS respondent_driver_name,
+                cc.customer_name AS complainant_customer_name
          FROM safety.complaints c
          LEFT JOIN mdata.drivers cd ON cd.id = c.complainant_driver_id
          LEFT JOIN mdata.drivers rd ON rd.id = c.respondent_driver_id
+         LEFT JOIN mdata.customers cc ON cc.id = c.complainant_customer_id
          WHERE c.operating_company_id = $1
          ${driverFilter.replace(/complainant_driver_id/g, "c.complainant_driver_id").replace(/respondent_driver_id/g, "c.respondent_driver_id")}
          ORDER BY c.filed_at DESC LIMIT 500`,
