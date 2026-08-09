@@ -7,6 +7,8 @@ type Queryable = {
 export type DriverAssignmentAvailability = {
   ok: boolean;
   blocker?: string;
+  /** When set, callers can map to a stable error code (e.g. E_DRIVER_HOS_VIOLATION). */
+  code?: "E_DRIVER_HOS_VIOLATION" | "E_DRIVER_REPAIR_BLOCK";
   work_order_id?: string;
   asset_id?: string | null;
   /** FAIL-U1: operator-facing labels. The ids above stay for programmatic callers; these are what
@@ -21,6 +23,34 @@ export async function canAssignLoadToDriver(
   queryable?: Queryable
 ): Promise<DriverAssignmentAvailability> {
   const run = async (db: Queryable): Promise<DriverAssignmentAvailability> => {
+    // HOS first — same gate Book uses. Quick-assign previously only checked repair WO and could
+    // seat an HOS violator from the board while Book correctly refused.
+    const hosRes = await db.query<{
+      full_name: string | null;
+      display_id: string | null;
+      is_in_violation: boolean;
+    }>(
+      `
+        SELECT full_name::text AS full_name,
+               display_id::text AS display_id,
+               COALESCE(is_in_violation, false) AS is_in_violation
+        FROM views.drivers_with_hos_status
+        WHERE id = $1
+          AND operating_company_id = $2
+        LIMIT 1
+      `,
+      [driverId, tenantId]
+    );
+    const hos = hosRes.rows[0];
+    if (hos?.is_in_violation) {
+      const who = hos.full_name || hos.display_id || "Driver";
+      return {
+        ok: false,
+        code: "E_DRIVER_HOS_VIOLATION",
+        blocker: `${who} is in HOS violation`,
+      };
+    }
+
     const woRes = await db.query<{
       id: string;
       asset_id: string | null;
@@ -59,6 +89,7 @@ export async function canAssignLoadToDriver(
 
     return {
       ok: false,
+      code: "E_DRIVER_REPAIR_BLOCK",
       blocker: `Driver's truck is in repair (WO ${woLabel})`,
       work_order_id: activeWo.id,
       asset_id: activeWo.asset_id ?? null,

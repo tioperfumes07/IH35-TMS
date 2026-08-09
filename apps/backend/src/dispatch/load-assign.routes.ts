@@ -34,7 +34,17 @@ export async function registerDispatchLoadAssignRoutes(app: FastifyInstance) {
     }
 
     const availability = await canAssignLoadToDriver(driverId, tenantId);
-    if (!availability.ok && !overrideRepairBlock) {
+    if (!availability.ok) {
+      if (availability.code === "E_DRIVER_HOS_VIOLATION") {
+        // HOS cannot be cleared with override_repair_block — that flag is repair-only.
+        const message = availability.blocker ?? "Driver is in HOS violation";
+        return reply.code(422).send({
+          error: "E_DRIVER_HOS_VIOLATION",
+          message,
+          blocker: availability.blocker,
+        });
+      }
+      if (!overrideRepairBlock) {
       // FAIL-U1 (second surface). The pre-check panel in LoadCreateModal reads
       // `work_order_display_id` / `asset_label` and shows a dispatcher which work order and which
       // truck. This 409 — the SAME interlock, reached from the board's Quick Assign instead of the
@@ -55,6 +65,7 @@ export async function registerDispatchLoadAssignRoutes(app: FastifyInstance) {
         work_order_display_id: availability.work_order_display_id ?? null,
         asset_label: availability.asset_label ?? null,
       });
+      }
     }
   });
 
