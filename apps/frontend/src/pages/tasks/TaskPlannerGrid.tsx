@@ -35,12 +35,35 @@ const PRIORITY_DOT: Record<number, string> = {
   2: "bg-red-600",
 };
 
+/** Normalize API/PG date values to YYYY-MM-DD for day-cell matching (FAIL-TSK1).
+ * node-pg DATE columns often JSON as `YYYY-MM-DDT00:00:00.000Z`; strict === vs column keys blanks the grid. */
+export function toYmd(value: string | Date | null | undefined): string {
+  if (value == null) return "";
+  if (value instanceof Date) {
+    if (Number.isNaN(value.getTime())) return "";
+    // PG DATE → UTC midnight; use ISO calendar day, not local getters (CT would shift back a day).
+    return value.toISOString().slice(0, 10);
+  }
+  const s = String(value).trim();
+  if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0, 10);
+  const parsed = new Date(s);
+  if (Number.isNaN(parsed.getTime())) return "";
+  return toYmd(parsed);
+}
+
+function localYmd(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
 function buildDateRange(from: string, to: string): string[] {
   const dates: string[] = [];
-  const cur = new Date(from);
-  const end = new Date(to);
+  const cur = new Date(`${toYmd(from)}T12:00:00`);
+  const end = new Date(`${toYmd(to)}T12:00:00`);
   while (cur <= end) {
-    dates.push(cur.toISOString().split("T")[0]);
+    dates.push(localYmd(cur));
     cur.setDate(cur.getDate() + 1);
   }
   return dates;
@@ -137,8 +160,7 @@ function getThisWeek(): { from: string; to: string } {
   start.setDate(today.getDate() - today.getDay());
   const end = new Date(start);
   end.setDate(start.getDate() + 6);
-  const fmt = (d: Date) => d.toISOString().split("T")[0];
-  return { from: fmt(start), to: fmt(end) };
+  return { from: localYmd(start), to: localYmd(end) };
 }
 
 export function TaskPlannerGrid() {
@@ -216,7 +238,7 @@ export function TaskPlannerGrid() {
                   />
                 </th>
                 {dates.map((d) => {
-                  const isToday = d === new Date().toISOString().split("T")[0];
+                  const isToday = d === localYmd(new Date());
                   return (
                     <th
                       key={d}
@@ -243,7 +265,8 @@ export function TaskPlannerGrid() {
                   </td>
                   {dates.map((d) => {
                     const cellTasks = (query.data?.by_employee[uid] ?? []) as Task[];
-                    const dayTasks = cellTasks.filter((t) => t.scheduled_date === d);
+                    // FAIL-TSK1: API may return ISO timestamps; never strict-eq raw scheduled_date to col YMD.
+                    const dayTasks = cellTasks.filter((t) => toYmd(t.scheduled_date) === d);
                     return (
                       <td key={d} className="border border-gray-200 px-0.5 py-0.5 align-top bg-white">
                         {dayTasks.map((t) => (

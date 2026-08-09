@@ -64,6 +64,18 @@ else pass("TaskPlannerGrid.tsx has resizable employee column");
 if (!grid.includes("drawer") && !grid.includes("TaskDrawer")) fail("TaskPlannerGrid.tsx missing detail drawer");
 else pass("TaskPlannerGrid.tsx has detail drawer");
 
+// FAIL-TSK1 — day cells must normalize scheduled_date (ISO/Date) before === day column YMD
+if (!grid.includes("toYmd") || !/toYmd\s*\(\s*t\.scheduled_date\s*\)\s*===\s*d/.test(grid)) {
+  fail("TaskPlannerGrid.tsx must filter day cells via toYmd(t.scheduled_date) === d (FAIL-TSK1)");
+} else {
+  pass("TaskPlannerGrid.tsx normalizes scheduled_date for day-cell match (FAIL-TSK1)");
+}
+if (/t\.scheduled_date\s*===\s*d/.test(grid)) {
+  fail("TaskPlannerGrid.tsx still strict-eq raw scheduled_date to day column (FAIL-TSK1 regression)");
+} else {
+  pass("TaskPlannerGrid.tsx has no raw scheduled_date === d");
+}
+
 // TaskBoardPage wired
 const boardPage = read("apps/frontend/src/pages/tasks/TaskBoardPage.tsx");
 if (!boardPage.includes("TaskPlannerGrid")) fail("TaskBoardPage.tsx not wired to TaskPlannerGrid");
@@ -71,3 +83,31 @@ else pass("TaskBoardPage.tsx uses TaskPlannerGrid");
 
 if (failed) { console.error("\n[verify-tasks-v3] FAILED"); process.exit(1); }
 console.log("\n[verify-tasks-v3] ALL CHECKS PASSED");
+
+if (process.argv.includes("--selftest")) {
+  const abs = path.join(ROOT, "apps/frontend/src/pages/tasks/TaskPlannerGrid.tsx");
+  const orig = fs.readFileSync(abs, "utf8");
+  const broken = orig.replace(
+    /toYmd\s*\(\s*t\.scheduled_date\s*\)\s*===\s*d/,
+    "t.scheduled_date === d /* selftest-break */",
+  );
+  if (broken === orig) {
+    console.error("[verify-tasks-v3] --selftest could not plant FAIL-TSK1 regression");
+    process.exit(1);
+  }
+  fs.writeFileSync(abs, broken);
+  try {
+    const { spawnSync } = await import("node:child_process");
+    const r = spawnSync(process.execPath, [path.join(ROOT, "scripts/verify-tasks-planner-v3.mjs")], {
+      cwd: ROOT,
+      encoding: "utf8",
+    });
+    if (r.status === 0) {
+      console.error("[verify-tasks-v3] --selftest FAIL: planted raw scheduled_date === d still passed");
+      process.exit(1);
+    }
+    console.log("[verify-tasks-v3] --selftest PASS: planted regression failed closed");
+  } finally {
+    fs.writeFileSync(abs, orig);
+  }
+}
