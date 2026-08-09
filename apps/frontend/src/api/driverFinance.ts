@@ -46,6 +46,28 @@ export type SettlementPaymentEvent = {
   created_at: string;
 };
 
+export type OpenDriverBill = {
+  id: string;
+  load_id: string | null;
+  load_number: string | null;
+  bill_number: string | null;
+  driver_id: string;
+  driver_name: string | null;
+  gross_amount_cents: number;
+  miles_basis: number | null;
+  miles_basis_type: string | null;
+  rate_per_mile_cents: number | null;
+  created_at: string;
+};
+
+export type OpenDriverBillsResponse = {
+  open_driver_bills: {
+    total_count: number;
+    total_gross_cents: number;
+    items: OpenDriverBill[];
+  };
+};
+
 export type EscrowPendingDeduction = {
   id: string;
   driver_id: string;
@@ -177,6 +199,12 @@ export function getSettlementPaymentEvents(id: string, companyId: string) {
 
 export function getDebtSummary(driverId: string, companyId: string) {
   return apiRequest<DebtSummary>(`/api/v1/driver-finance/drivers/${driverId}/debt-summary?${q(companyId)}`);
+}
+
+export function getOpenDriverBills(companyId: string, driverId?: string) {
+  const params = new URLSearchParams({ operating_company_id: companyId });
+  if (driverId) params.set("driver_id", driverId);
+  return apiRequest<OpenDriverBillsResponse>(`/api/v1/driver-finance/driver-bills/open?${params.toString()}`);
 }
 
 export function holdDeduction(

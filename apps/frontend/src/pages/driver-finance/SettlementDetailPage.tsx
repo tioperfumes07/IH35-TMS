@@ -7,14 +7,18 @@ import {
   openSettlementDispute,
   getSettlementPaymentEvents,
   getSettlement,
+  getOpenDriverBills,
   markSettlementBounced,
   markSettlementCleared,
   markSettlementPaidManually,
   markSettlementSent,
   queueSettlementPayment,
   type SettlementDisputeCategory,
+  type OpenDriverBill,
 } from "../../api/driverFinance";
 import { resolveApiUrl } from "../../api/client";
+import { formatUsdCents } from "../../lib/money";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { Button } from "../../components/Button";
@@ -100,6 +104,11 @@ export function SettlementDetailPage() {
   }
 
   const driverId = settlement.driver_id ? String(settlement.driver_id) : null;
+  const openBillsQuery = useQuery({
+    queryKey: ["driver-finance", "open-driver-bills", companyId, driverId],
+    queryFn: () => getOpenDriverBills(companyId, driverId ?? undefined),
+    enabled: Boolean(companyId && driverId),
+  });
   const debt = useLiveDebt(driverId, companyId || null);
   const lines = (settlement.lines as Array<Record<string, unknown>> | undefined) ?? [];
   const hasEngineTeamSplitLines = useMemo(
@@ -331,6 +340,13 @@ export function SettlementDetailPage() {
           <ExtraPaySection lines={extra} />
           <ReimbursementsSection lines={reimbursements} />
           <DeductionsSection rows={deductions} onHold={(row) => setHoldTarget(row)} />
+          <OpenDriverBillsSection
+            loading={openBillsQuery.isPending}
+            driverId={driverId}
+            items={(openBillsQuery.data?.open_driver_bills?.items ?? []) as OpenDriverBill[]}
+            totalCount={openBillsQuery.data?.open_driver_bills?.total_count ?? 0}
+            totalGrossCents={openBillsQuery.data?.open_driver_bills?.total_gross_cents ?? 0}
+          />
         </div>
         <div className="space-y-2">
           <NetPaySummary
@@ -616,5 +632,48 @@ export function SettlementDetailPage() {
         }}
       />
     </div>
+  );
+}
+
+function OpenDriverBillsSection({
+  loading,
+  driverId,
+  items,
+  totalCount,
+  totalGrossCents,
+}: {
+  loading: boolean;
+  driverId: string | null;
+  items: OpenDriverBill[];
+  totalCount: number;
+  totalGrossCents: number;
+}) {
+  if (!driverId) return null;
+  if (loading) {
+    return (
+      <section className="rounded-sm border border-slate-200 bg-slate-50 p-2">
+        <h3 className="mb-1 text-xs font-semibold uppercase text-slate-800">Open Driver Bills</h3>
+        <p className="text-xs text-gray-500">Loading open driver bills…</p>
+      </section>
+    );
+  }
+  return (
+    <section className="rounded-sm border border-slate-200 bg-slate-50 p-2">
+      <h3 className="mb-1 text-xs font-semibold uppercase text-slate-800">
+        Open Driver Bills · {totalCount} · {formatUsdCents(totalGrossCents)}
+      </h3>
+      {items.length === 0 ? (
+        <p className="text-xs text-gray-500">No open driver bills for this driver — all pay is either settled or not yet booked.</p>
+      ) : (
+        <div className="space-y-1">
+          {items.map((bill) => (
+            <div key={bill.id} className="flex items-center justify-between text-sm">
+              <EntityLink kind="load" id={bill.load_id ?? ""} label={bill.load_number ?? bill.load_id ?? "—"} />
+              <span className="font-semibold">{formatUsdCents(bill.gross_amount_cents)}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
   );
 }

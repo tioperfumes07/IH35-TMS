@@ -2,13 +2,16 @@ import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useSearchParams } from "react-router-dom";
 import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
-import { listSettlements } from "../../api/driverFinance";
+import { listSettlements, getOpenDriverBills, type OpenDriverBill } from "../../api/driverFinance";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { SettlementDetailPage } from "./SettlementDetailPage";
 import { SettlementDisputesTab } from "./components/SettlementDisputesTab";
 import { SettlementsTable } from "./components/SettlementsTable";
+import { DataPanel } from "../../components/layout/DataPanel";
+import { formatUsdCents } from "../../lib/money";
+import { EntityLink } from "../../components/shared/EntityLink";
 
 type FocusFilter = "debt" | "pending_acks" | "held" | null;
 
@@ -41,10 +44,16 @@ export function SettlementsPage() {
     queryFn: () => listSettlements(companyId, { payment_state: selectedPaymentState ?? undefined }),
     enabled: Boolean(companyId),
   });
+  const openBillsQuery = useQuery({
+    queryKey: ["driver-finance", "open-driver-bills", companyId],
+    queryFn: () => getOpenDriverBills(companyId),
+    enabled: Boolean(companyId),
+  });
 
   const settlements = (listQuery.data?.settlements ?? []).filter((s) =>
     filterDriverId ? s.driver_id === filterDriverId : true,
   );
+  const openBillsSummary = openBillsQuery.data?.open_driver_bills ?? { total_count: 0, total_gross_cents: 0, items: [] as OpenDriverBill[] };
   const now = new Date();
   const ytdYear = now.getFullYear();
   const periodStartOfWeek = (() => {
@@ -69,6 +78,7 @@ export function SettlementsPage() {
     pending_acks: settlements.filter((s) => s.has_pending_acks).length,
     held_deductions: settlements.filter((s) => s.status === "held").length,
     ytd_settlements: settlements.filter(isYtd).length,
+    open_driver_bills: openBillsSummary.total_count,
   };
   const focusedSettlements = useMemo(() => {
     if (focusFilter === "debt") {
@@ -169,8 +179,10 @@ export function SettlementsPage() {
       {activeTab === "settlements" ? (
         <>
       {/* B-A3: Total Unpaid / This Period / YTD → payment_state routes; Debt / Pending Acks / Held →
-          ?focus= predicates matching the KPI counts on this same list (real data, not guess-routes). */}
-      <div className="grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-6">
+          ?focus= predicates matching the KPI counts on this same list (real data, not guess-routes).
+          SETL-OPEN-BILLS: Open Driver Bills is a distinct KPI — unsettled driver pay that is not yet
+          represented in any settlement, surfaced so the page never looks "stuck at $0". */}
+      <div className="grid grid-cols-2 gap-2 md:grid-cols-4 lg:grid-cols-7">
         <KpiCard label="Total Unpaid" value={kpis.total_unpaid} to="/driver-finance/settlements?payment_state=unpaid" />
         <KpiCard label="This Period" value={kpis.this_period} to="/driver-finance/settlements" />
         <KpiCard
@@ -192,6 +204,7 @@ export function SettlementsPage() {
           onClick={() => setFocus(focusFilter === "held" ? null : "held")}
         />
         <KpiCard label="YTD Settlements" value={kpis.ytd_settlements} to="/driver-finance/settlements" />
+        <KpiCard label="Open Driver Bills" value={kpis.open_driver_bills} disabled disabledReason="Use the open-bills panel below to drill into unsettled driver pay" />
       </div>
       <div className="rounded-sm border border-gray-200 bg-white p-2">
         <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Payment Pipeline</p>
@@ -225,6 +238,13 @@ export function SettlementsPage() {
         </div>
       </div>
 
+      <OpenDriverBillsPanel
+        loading={openBillsQuery.isPending}
+        totalCount={openBillsSummary.total_count}
+        totalGrossCents={openBillsSummary.total_gross_cents}
+        items={openBillsSummary.items}
+      />
+
       <SettlementsTable
         rows={focusedSettlements}
         loading={listQuery.isPending || (listQuery.isFetching && focusedSettlements.length === 0)}
@@ -239,6 +259,47 @@ export function SettlementsPage() {
         <SettlementDisputesTab companyId={companyId} />
       )}
     </div>
+  );
+}
+
+function OpenDriverBillsPanel({
+  loading,
+  totalCount,
+  totalGrossCents,
+  items,
+}: {
+  loading: boolean;
+  totalCount: number;
+  totalGrossCents: number;
+  items: OpenDriverBill[];
+}) {
+  if (loading) {
+    return (
+      <DataPanel title={`Open Driver Bills · loading…`} accentColor="#64748b">
+        <p className="text-xs text-gray-500">Loading open driver bills…</p>
+      </DataPanel>
+    );
+  }
+  return (
+    <DataPanel title={`Open Driver Bills · ${totalCount} · ${formatUsdCents(totalGrossCents)}`} accentColor="#64748b">
+      {items.length === 0 ? (
+        <p className="text-xs text-gray-500">No open driver bills — all driver pay is either settled or not yet booked.</p>
+      ) : (
+        <div className="space-y-1">
+          {items.map((bill) => (
+            <div key={bill.id} className="flex items-center justify-between text-sm">
+              <span className="flex flex-wrap items-center gap-1">
+                <EntityLink kind="driver" id={bill.driver_id} label={bill.driver_name ?? bill.driver_id} />
+                <span className="text-gray-400">·</span>
+                <EntityLink kind="load" id={bill.load_id ?? ""} label={bill.load_number ?? bill.load_id ?? "—"} />
+                {bill.bill_number ? <span className="text-[10px] text-gray-400">({bill.bill_number})</span> : null}
+              </span>
+              <span className="font-semibold">{formatUsdCents(bill.gross_amount_cents)}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </DataPanel>
   );
 }
 
