@@ -28,6 +28,7 @@ import {
 import { useToast } from "../../Toast";
 import { ReferenceSelect } from "../ReferenceSelect";
 import type { InlineCreateResult } from "../InlineCreateDrawer";
+import { userFacingApiError } from "../../../lib/api-error-message";
 
 const ACCOUNT_CREATE_GATED = false; // Owner GO 2026-07-22 — all companies
 
@@ -176,7 +177,7 @@ export function NewAccountDrawerForm({ operatingCompanyId, onCreated, onClose }:
       pushToast("Account created", "success");
       onClose();
     } catch (err) {
-      pushToast(String((err as Error).message ?? "Create failed"), "error");
+      pushToast(userFacingApiError(err, "Create failed"), "error");
     } finally {
       setSaving(false);
     }

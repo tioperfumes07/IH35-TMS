@@ -16,6 +16,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatUsdCents } from "../../lib/money";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 function formatMoney(cents: number) {
   return formatUsdCents(cents);
@@ -75,7 +76,7 @@ export function EscrowDeductionsPendingTab() {
       await queryClient.invalidateQueries({ queryKey: ["driver-finance", "escrow-pending", companyId] });
     },
     onError: (err) => {
-      const message = err instanceof ApiError ? `${err.status}: ${err.message}` : String((err as Error).message ?? err);
+      const message = userFacingApiError(err, "Request failed");
       setErrorMessage(message);
     },
   });
@@ -96,7 +97,7 @@ export function EscrowDeductionsPendingTab() {
       await queryClient.invalidateQueries({ queryKey: ["driver-finance", "escrow-pending", companyId] });
     },
     onError: (err) => {
-      const message = err instanceof ApiError ? `${err.status}: ${err.message}` : String((err as Error).message ?? err);
+      const message = userFacingApiError(err, "Request failed");
       setErrorMessage(message);
     },
   });

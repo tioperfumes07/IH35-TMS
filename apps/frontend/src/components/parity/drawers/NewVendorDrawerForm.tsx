@@ -9,6 +9,7 @@ import { useCatalogQuery } from "../../../hooks/useCatalogQuery";
 import { ReferenceSelect } from "../ReferenceSelect";
 import { useToast } from "../../Toast";
 import type { InlineCreateResult } from "../InlineCreateDrawer";
+import { userFacingApiError } from "../../../lib/api-error-message";
 
 type Props = {
   operatingCompanyId: string;
@@ -95,7 +96,7 @@ export function NewVendorDrawerForm({ operatingCompanyId, onCreated, onClose }: 
       pushToast("Vendor created", "success");
       onClose();
     } catch (err) {
-      pushToast(String((err as Error).message ?? "Create failed"), "error");
+      pushToast(userFacingApiError(err, "Create failed"), "error");
     } finally {
       setSaving(false);
     }

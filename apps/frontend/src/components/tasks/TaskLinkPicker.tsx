@@ -4,6 +4,7 @@ import { Modal } from "../Modal";
 import { useToast } from "../Toast";
 import { createTaskLink, fetchTasks, type Task, type TaskTargetType } from "../../api/tasks";
 import { formatDateUS } from "../../lib/formatDate";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 type Props = {
   operatingCompanyId: string;
@@ -48,7 +49,7 @@ export function TaskLinkPicker({ operatingCompanyId, targetType, targetId, label
       onLinked?.();
       setOpen(false);
     },
-    onError: (err) => pushToast(String((err as Error).message || "Could not link task"), "error"),
+    onError: (err) => pushToast(userFacingApiError(err, "Could not link task"), "error"),
   });
 
   return (

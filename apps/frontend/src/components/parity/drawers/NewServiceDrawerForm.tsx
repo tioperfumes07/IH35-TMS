@@ -28,6 +28,7 @@ import { useToast } from "../../Toast";
 import type { InlineCreateResult } from "../InlineCreateDrawer";
 import { ReferenceSelect } from "../ReferenceSelect";
 import type { ReferenceOption } from "../ReferenceSelect";
+import { userFacingApiError } from "../../../lib/api-error-message";
 
 // FIX-03: mirror ItemEditorModal's account-type filters + carrier default so the two Product/Service
 // creators behave identically (QBO parity: an item's income account is a referenced record, not text).
@@ -231,7 +232,7 @@ export function NewServiceDrawerForm({ operatingCompanyId, onCreated, onClose }:
       pushToast("Item created", "success");
       onClose();
     } catch (err) {
-      pushToast(String((err as Error).message ?? "Create failed"), "error");
+      pushToast(userFacingApiError(err, "Create failed"), "error");
     } finally {
       setSaving(false);
     }

@@ -8,6 +8,7 @@ import { createCustomer, listCustomers } from "../../../api/mdata";
 import { useToast } from "../../Toast";
 import type { InlineCreateResult } from "../InlineCreateDrawer";
 import { ReferenceSelect } from "../ReferenceSelect";
+import { userFacingApiError } from "../../../lib/api-error-message";
 
 type Props = {
   operatingCompanyId: string;
@@ -122,7 +123,7 @@ export function NewCustomerDrawerForm({ operatingCompanyId, onCreated, onClose }
       pushToast("Customer created", "success");
       onClose();
     } catch (err) {
-      pushToast(String((err as Error).message ?? "Create failed"), "error");
+      pushToast(userFacingApiError(err, "Create failed"), "error");
     } finally {
       setSaving(false);
     }
