@@ -345,11 +345,18 @@ export async function registerSafetyV5Routes(app: FastifyInstance) {
         values.push(query.data.driver_id);
         driverFilter = `AND f.driver_id = $${values.length}`;
       }
+      // CLS-UUID-LABEL: no driver join — InternalFinesPage's EntityLink rendered f.driver_id as a
+      // raw full uuid with no label (same class as CLS-DOT-INSPECTIONS-UUID-LABEL). Mirrors the
+      // safety.accident_reports/safety.dot_inspections driver join.
       const res = await client.query(
         `
-          SELECT f.*, r.reason_code, r.reason_name
+          SELECT f.*, r.reason_code, r.reason_name,
+                 NULLIF(TRIM(COALESCE(d.first_name, '') || ' ' || COALESCE(d.last_name, '')), '') AS driver_name
           FROM safety.internal_fines f
           LEFT JOIN catalogs.internal_fine_reasons r ON r.id = f.reason_id
+          LEFT JOIN mdata.drivers d
+            ON d.id = f.driver_id
+           AND d.operating_company_id = f.operating_company_id
           WHERE f.operating_company_id = $1
           ${driverFilter}
           ORDER BY f.imposed_date DESC, f.created_at DESC
