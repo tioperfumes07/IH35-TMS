@@ -112,6 +112,16 @@ export function WorkOrdersTable({
       render: (row) => <EntityLink kind="unit" id={row.unit_id} label={row.unit_number ?? undefined} />,
     },
     {
+      key: "load_id",
+      label: "Load",
+      render: (row) =>
+        row.load_id ? (
+          <EntityLink kind="load" id={row.load_id} label={row.linked_load_number ?? undefined} />
+        ) : (
+          "—"
+        ),
+    },
+    {
       key: "driver_id",
       label: "Driver",
       render: (row) => <EntityLink kind="driver" id={row.driver_id ?? undefined} label={row.driver_id ? row.driver_id.slice(0, 8) : undefined} />,

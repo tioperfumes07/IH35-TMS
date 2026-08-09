@@ -26,6 +26,9 @@ const ROUTE = "apps/backend/src/maintenance/work-orders.routes.ts";
 const CLIENT = "apps/frontend/src/api/maintenance.ts";
 const SECTION = "apps/frontend/src/components/dispatch/LoadWorkOrdersReverseSection.tsx";
 const DRAWER = "apps/frontend/src/components/dispatch/LoadDetailDrawer.tsx";
+const WO_DETAIL = "apps/frontend/src/pages/maintenance/WorkOrderDetailPage.tsx";
+const WO_TABLE = "apps/frontend/src/pages/maintenance/components/WorkOrdersTable.tsx";
+const WO_MODAL = "apps/frontend/src/components/maintenance/WorkOrderDetailModal.tsx";
 
 const stripComments = (text) =>
   text
@@ -72,10 +75,32 @@ if (!/import\s*\{\s*LoadWorkOrdersReverseSection\s*\}/.test(drawer)) {
   failures.push(`${DRAWER}: does not import LoadWorkOrdersReverseSection.`);
 }
 
+// Forward half of the same hop — WO detail / list / modal must drill TO the load (and unit/vendor).
+const woDetail = read(WO_DETAIL);
+if (!/wo-detail-linkage-section/.test(woDetail)) {
+  failures.push(`${WO_DETAIL}: missing data-testid=wo-detail-linkage-section — WO→load/unit/vendor forward links not addressable.`);
+}
+if (!/kind=\"load\"/.test(woDetail) || !/kind=\"unit\"/.test(woDetail) || !/kind=\"vendor\"/.test(woDetail)) {
+  failures.push(`${WO_DETAIL}: linkage section must EntityLink kind=load + unit + vendor (forward from WO).`);
+}
+if (!/kind=\"claim\"/.test(woDetail)) {
+  failures.push(`${WO_DETAIL}: must EntityLink insurance_claim_id as kind=claim when present.`);
+}
+
+const woTable = read(WO_TABLE);
+if (!/key:\s*[\"']load_id[\"']/.test(woTable) || !/kind=\"load\"/.test(woTable)) {
+  failures.push(`${WO_TABLE}: Active WOs table must show a Load column with EntityLink kind=load.`);
+}
+
+const woModal = read(WO_MODAL);
+if (!/kind=\"load\"/.test(woModal) || !/kind=\"unit\"/.test(woModal)) {
+  failures.push(`${WO_MODAL}: detail modal must EntityLink unit + load (not raw UUIDs).`);
+}
+
 if (failures.length > 0) {
   console.error("FAIL verify-load-reverse-work-orders");
   for (const f of failures) console.error(`  - ${f}`);
   process.exit(1);
 }
 
-console.log("PASS verify-load-reverse-work-orders — load drawer lists this load's work orders, filtered server-side, closed ones included");
+console.log("PASS verify-load-reverse-work-orders — load↔WO both ways: drawer lists WOs; WO detail/table/modal EntityLink load/unit/vendor/claim");
