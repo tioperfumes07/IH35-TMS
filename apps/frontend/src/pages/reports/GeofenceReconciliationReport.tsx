@@ -6,6 +6,7 @@ import { ReportsSubNav } from "./ReportsSubNav";
 import { formatDateTimeUS } from "../../lib/formatDate";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { resolveApiUrl } from "../../api/client";
 
@@ -71,7 +72,7 @@ export function GeofenceReconciliationReport() {
 
   const findingColumns = useMemo<ParityColumn<Finding>[]>(
     () => [
-      { key: "unit_id", label: "Unit", render: (f) => <EntityLink kind="unit" id={f.unit_id ?? undefined} label={f.unit_id?.slice(0, 8) ?? "—"} /> },
+      { key: "unit_id", label: "Unit", render: (f) => <EntityLink kind="unit" id={f.unit_id ?? undefined} label={f.unit_id ? entityLabel(null, f.unit_id, "Unit") : "—"} /> },
       { key: "geofence_id", label: "Geofence", render: (f) => f.geofence_id ?? "—" },
       { key: "occurred_at", label: "Time", sortable: true, render: (f) => (f.occurred_at ? `${formatDateTimeUS(f.occurred_at)} CT` : "—") },
       {

@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { entityLabel } from "../../lib/entity-label";
 import { useQuery } from "@tanstack/react-query";
 import { listAuditEvents, type AuditEventListItem } from "../../api/audit";
 import { useAuth } from "../../auth/useAuth";
@@ -10,7 +11,7 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 
 function bulkCallPreview(id: string | null | undefined): string {
   if (!id) return "—";
-  return id.length <= 8 ? id : `${id.slice(0, 8)}…`;
+  return entityLabel(null, id, "Record");
 }
 
 export { bulkCallPreview };

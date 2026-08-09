@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { listSpineEvents, type SpineEvent } from "../../api/audit";
+import { entityLabel } from "../../lib/entity-label";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { DateTimePicker } from "../../components/forms/DateTimePicker";
@@ -75,7 +76,7 @@ const COLUMNS: Array<ParityColumn<SpineEvent>> = [
     sortValue: (row) => row.actor_email ?? row.actor_user_id ?? "",
     render: (row) => (
       <span className="text-gray-600">
-        {row.actor_email ?? (row.actor_user_id ? `uid:${row.actor_user_id.slice(0, 8)}…` : "—")}
+        {row.actor_email ?? (row.actor_user_id ? entityLabel(null, row.actor_user_id, "User") : "—")}
       </span>
     ),
   },
@@ -87,7 +88,7 @@ const COLUMNS: Array<ParityColumn<SpineEvent>> = [
     render: (row) => (
       <span className="text-gray-600">
         {row.subject_type ?? "—"}
-        {row.subject_id ? <span className="ml-1 font-mono text-gray-400">{row.subject_id.slice(0, 8)}…</span> : null}
+        {row.subject_id ? <span className="ml-1 text-gray-400">{entityLabel(null, row.subject_id, "Subject")}</span> : null}
       </span>
     ),
   },

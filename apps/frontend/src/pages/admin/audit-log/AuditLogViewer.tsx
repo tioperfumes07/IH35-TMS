@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { entityLabel } from "../../../lib/entity-label";
 import { useQuery } from "@tanstack/react-query";
 import { listAuditViewerEvents, type AuditViewerEvent } from "../../../api/audit";
 import { useAuth } from "../../../auth/useAuth";
@@ -60,7 +61,7 @@ const COLUMNS: Array<ParityColumn<AuditViewerEvent>> = [
     sortValue: (row) => row.actor_email ?? row.actor_user_id ?? "",
     render: (row) => (
       <span className="text-gray-600">
-        {row.actor_email ?? (row.actor_user_id ? `uid:${row.actor_user_id.slice(0, 8)}…` : "—")}
+        {row.actor_email ?? (row.actor_user_id ? entityLabel(null, row.actor_user_id, "User") : "—")}
       </span>
     ),
   },
