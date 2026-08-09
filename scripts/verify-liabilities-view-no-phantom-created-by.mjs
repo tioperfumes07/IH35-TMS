@@ -2,10 +2,11 @@
 /**
  * verify-liabilities-view-no-phantom-created-by.mjs
  *
- * ACCT-F272-DEPLOY-BLOCKER — migration 202612440000 must not SELECT
- * driver_liabilities.created_by_user_id (column does not exist on prod). That
- * phantom reference failed CREATE OR REPLACE VIEW, aborted Render preDeploy,
- * and froze prod at healthz 02bab31.
+ * ACCT-F272-DEPLOY-BLOCKER — migration 202612440000 must:
+ *   1) not SELECT driver_liabilities.created_by_user_id (absent on prod)
+ *   2) DROP VIEW then CREATE VIEW (not CREATE OR REPLACE) — stub typed
+ *      amounts as unconstrained numeric; table is numeric(10,2); OR REPLACE
+ *      fails with "cannot change data type of view column"
  *
  * Usage:
  *   node scripts/verify-liabilities-view-no-phantom-created-by.mjs
@@ -44,8 +45,18 @@ export function check({ migSrc }) {
       `${MIG}: must emit NULL::uuid AS created_by_user_id (preserve view shape)`
     );
   }
-  if (!/CREATE\s+OR\s+REPLACE\s+VIEW\s+views\.liabilities_active_with_context/i.test(migSrc)) {
-    f.push(`${MIG}: must CREATE OR REPLACE VIEW views.liabilities_active_with_context`);
+  if (!/DROP\s+VIEW\s+IF\s+EXISTS\s+views\.liabilities_active_with_context/i.test(body)) {
+    f.push(
+      `${MIG}: must DROP VIEW IF EXISTS views.liabilities_active_with_context (numeric→numeric(10,2) needs DROP+CREATE)`
+    );
+  }
+  if (/CREATE\s+OR\s+REPLACE\s+VIEW\s+views\.liabilities_active_with_context/i.test(body)) {
+    f.push(
+      `${MIG}: must not CREATE OR REPLACE VIEW (use DROP + CREATE — type change fails OR REPLACE)`
+    );
+  }
+  if (!/CREATE\s+VIEW\s+views\.liabilities_active_with_context/i.test(body)) {
+    f.push(`${MIG}: must CREATE VIEW views.liabilities_active_with_context`);
   }
   return f;
 }
@@ -59,28 +70,39 @@ export function run() {
 function selftest() {
   const good = {
     migSrc: `
-CREATE OR REPLACE VIEW views.liabilities_active_with_context AS
+DROP VIEW IF EXISTS views.liabilities_active_with_context;
+CREATE VIEW views.liabilities_active_with_context AS
 SELECT l.id, NULL::uuid AS created_by_user_id FROM driver_finance.driver_liabilities l;
 `,
   };
   const badCol = {
     migSrc: `
-CREATE OR REPLACE VIEW views.liabilities_active_with_context AS
+DROP VIEW IF EXISTS views.liabilities_active_with_context;
+CREATE VIEW views.liabilities_active_with_context AS
 SELECT l.id, l.created_by_user_id FROM driver_finance.driver_liabilities l;
 `,
   };
   const badMissingNull = {
     migSrc: `
-CREATE OR REPLACE VIEW views.liabilities_active_with_context AS
+DROP VIEW IF EXISTS views.liabilities_active_with_context;
+CREATE VIEW views.liabilities_active_with_context AS
 SELECT l.id FROM driver_finance.driver_liabilities l;
+`,
+  };
+  const badOrReplace = {
+    migSrc: `
+CREATE OR REPLACE VIEW views.liabilities_active_with_context AS
+SELECT l.id, NULL::uuid AS created_by_user_id FROM driver_finance.driver_liabilities l;
 `,
   };
   const g = check(good);
   const b1 = check(badCol);
   const b2 = check(badMissingNull);
+  const b3 = check(badOrReplace);
   if (g.length) throw new Error(`${LABEL} --selftest good failed: ${g.join("; ")}`);
   if (!b1.length) throw new Error(`${LABEL} --selftest badCol should fail`);
   if (!b2.length) throw new Error(`${LABEL} --selftest badMissingNull should fail`);
+  if (!b3.length) throw new Error(`${LABEL} --selftest badOrReplace should fail`);
   console.log(`${LABEL} --selftest PASS`);
 }
 

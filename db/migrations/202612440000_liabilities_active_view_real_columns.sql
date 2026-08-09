@@ -39,8 +39,13 @@
 -- NULL rather than false — "we do not track this" is not the same claim as "it is not held".
 --
 -- security_invoker = true preserved so RLS is enforced as the calling user, not the view owner.
--- CREATE OR REPLACE VIEW is append-only-safe here: the real view was never installed, so there is no
--- consumer depending on a column this drops.
+--
+-- WHY DROP + CREATE (not CREATE OR REPLACE): the stub view typed amount columns as unconstrained
+-- `numeric`; the base table is `numeric(10,2)`. Postgres refuses CREATE OR REPLACE when a column's
+-- type would change (`cannot change data type of view column "original_amount" from numeric to
+-- numeric(10,2)` — measured on Render preDeploy 2026-08-09 after #5030 cleared the phantom-column
+-- failure). Same pattern as 202608082248_restore_driver_settlement_with_debt_view. No dependents
+-- on this view (pg_depend empty on prod). Migration still unapplied — in-place fix is legal.
 
 DO $$
 BEGIN
@@ -49,8 +54,10 @@ BEGIN
     RETURN;
   END IF;
 
+  EXECUTE 'DROP VIEW IF EXISTS views.liabilities_active_with_context';
+
   EXECUTE $VIEW$
-    CREATE OR REPLACE VIEW views.liabilities_active_with_context
+    CREATE VIEW views.liabilities_active_with_context
     WITH (security_invoker = true) AS
     SELECT
       l.id,
