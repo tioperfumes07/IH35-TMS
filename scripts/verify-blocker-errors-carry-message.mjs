@@ -54,7 +54,7 @@ const KNOWN_GAPS = new Map([
   ["apps/backend/src/maintenance/work-orders.routes.ts", 1],
   ["apps/backend/src/maintenance/parts-invoice-links.routes.ts", 1],
   ["apps/backend/src/dispatch/quicksave.routes.ts", 1],
-  ["apps/backend/src/accounting/lease-asc842/lease-posting.routes.ts", 1],
+  ["apps/backend/src/accounting/lease-asc842/lease-posting.routes.ts", 0],
 ]);
 
 const strip = (s) => s.replace(/\/\/[^\n]*/g, "").replace(/\/\*[\s\S]*?\*\//g, "");

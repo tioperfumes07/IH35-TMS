@@ -37,7 +37,18 @@ function ensureFinanceUser(req: Parameters<typeof currentAuthUser>[0], reply: Pa
   const user = currentAuthUser(req, reply);
   if (!user) return null;
   if (!financeRoles.has(String(user.role ?? ""))) {
-    reply.code(403).send({ error: "forbidden" });
+    // CLS-BARE-ERROR-CODE-REPLIES — this helper gates EVERY lease-posting route, so the one bare
+    // "forbidden" it sent was the message for all of them. The sentence names the reason the gate
+    // exists (these routes write journal entries) and the roles that satisfy it, so the caller can
+    // act instead of guessing, and echoes the caller's own role rather than a uuid.
+    reply.code(403).send({
+      error: "forbidden",
+      message:
+        `Lease posting is limited to ${[...financeRoles].join(", ")} because these routes write ` +
+        `journal entries to the general ledger. Your role is ${String(user.role ?? "unknown")}.`,
+      your_role: String(user.role ?? "unknown"),
+      allowed_roles: [...financeRoles],
+    });
     return null;
   }
   return user as { uuid: string; role: string };
@@ -263,7 +274,16 @@ export async function registerLeasePostingRoutes(app: FastifyInstance) {
       );
       return { contract: contract.rows[0], assets: assets.rows, schedule: schedule.rows };
     });
-    if (!detail) return reply.code(404).send({ error: "LEASE_NOT_FOUND" });
+    if (!detail)
+      return reply.code(404).send({
+        error: "LEASE_NOT_FOUND",
+        // Both reasons are named because RLS makes them indistinguishable to the caller by design;
+        // asserting only "no such lease" would be a guess about which one applies.
+        message:
+          "That lease contract was not found. It may be archived, or it belongs to a different " +
+          "operating company than the one selected.",
+        lease_id: params.data.lease_id,
+      });
     return reply.code(200).send(detail);
   });
 
