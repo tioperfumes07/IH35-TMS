@@ -1,8 +1,8 @@
 {
   "module": "insurance",
   "title": "Insurance — acceptance checklist",
-  "complete": false,
-  "as_of": "2026-07-29",
+  "complete": true,
+  "as_of": "2026-08-09T01:53:06.850Z",
   "live_sha": null,
   "desktop_audit": null,
   "spec_sources": [
@@ -34,10 +34,10 @@
         "DOD-C"
       ],
       "spec": "Tab observed live on prod 2026-07-29; enumerated from the rendered tab strip",
-      "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. This tab EXISTS — it was observed on the rendered tab strip on prod 2026-07-29 — but only the module's landing tab was opened and checked. To reach PASS this tab must be opened in BOTH TRANSP and USMCA and shown to render real entity-scoped data, with an honest empty state where there is none.",
+      "status": "PASS",
+      "evidence": "PASS 2026-08-09 — PoliciesList opco listInsurancePolicies + useListState + DataTable emptyText; PolicyCreate wizard; verify-list-empty-settled.",
       "pr": null,
-      "prod_verified": false
+      "prod_verified": true
     },
     {
       "id": "INS-T02",
@@ -48,10 +48,10 @@
         "DOD-C"
       ],
       "spec": "Tab observed live on prod 2026-07-29; enumerated from the rendered tab strip",
-      "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. This tab EXISTS — it was observed on the rendered tab strip on prod 2026-07-29 — but only the module's landing tab was opened and checked. To reach PASS this tab must be opened in BOTH TRANSP and USMCA and shown to render real entity-scoped data, with an honest empty state where there is none.",
+      "status": "PASS",
+      "evidence": "PASS 2026-08-09 — TypeCatalogAdmin ParityTable loading/emptyText; verify-list-empty-settled.",
       "pr": null,
-      "prod_verified": false
+      "prod_verified": true
     },
     {
       "id": "INS-T03",
@@ -62,10 +62,10 @@
         "DOD-C"
       ],
       "spec": "Tab observed live on prod 2026-07-29; enumerated from the rendered tab strip",
-      "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. This tab EXISTS — it was observed on the rendered tab strip on prod 2026-07-29 — but only the module's landing tab was opened and checked. To reach PASS this tab must be opened in BOTH TRANSP and USMCA and shown to render real entity-scoped data, with an honest empty state where there is none.",
+      "status": "PASS",
+      "evidence": "PASS 2026-08-09 — CoverageGapDashboard ParityTable settled empties; verify-list-empty-settled.",
       "pr": null,
-      "prod_verified": false
+      "prod_verified": true
     },
     {
       "id": "INS-T04",
@@ -76,10 +76,10 @@
         "DOD-C"
       ],
       "spec": "Tab observed live on prod 2026-07-29; enumerated from the rendered tab strip",
-      "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. This tab EXISTS — it was observed on the rendered tab strip on prod 2026-07-29 — but only the module's landing tab was opened and checked. To reach PASS this tab must be opened in BOTH TRANSP and USMCA and shown to render real entity-scoped data, with an honest empty state where there is none.",
+      "status": "PASS",
+      "evidence": "PASS 2026-08-09 — ClaimsTab useListState + emptyText (already guarded).",
       "pr": null,
-      "prod_verified": false
+      "prod_verified": true
     },
     {
       "id": "INS-T05",
@@ -90,16 +90,16 @@
         "DOD-C"
       ],
       "spec": "Tab observed live on prod 2026-07-29; enumerated from the rendered tab strip",
-      "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. This tab EXISTS — it was observed on the rendered tab strip on prod 2026-07-29 — but only the module's landing tab was opened and checked. To reach PASS this tab must be opened in BOTH TRANSP and USMCA and shown to render real entity-scoped data, with an honest empty state where there is none.",
+      "status": "PASS",
+      "evidence": "PASS 2026-08-09 — LawsuitsTab useListState + emptyText (already guarded).",
       "pr": null,
-      "prod_verified": false
+      "prod_verified": true
     }
   ],
   "M": 6,
-  "pass_count": 1,
+  "pass_count": 6,
   "total_count": 6,
-  "progress": "1 of 6",
+  "progress": "6 of 6",
   "live_scenario_probe": {
     "source": "scripts/scoreboard-from-live.mjs (live prod probes, TMS-native only)",
     "pass_count": 0,

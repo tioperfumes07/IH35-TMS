@@ -238,6 +238,19 @@ const MIGRATED = [
     ],
   },
   { file: "apps/frontend/src/pages/maintenance/WarrantyClaimsPage.tsx", empties: ["No warranty claims yet."] },
+  // INS tabs — settled empties.
+  {
+    file: "apps/frontend/src/pages/insurance/PoliciesList.tsx",
+    empties: ["No insurance policies found for this entity yet."],
+  },
+  {
+    file: "apps/frontend/src/pages/insurance/TypeCatalogAdmin.tsx",
+    empties: ["No type catalog entries."],
+  },
+  {
+    file: "apps/frontend/src/pages/insurance/CoverageGapDashboard.tsx",
+    empties: ["No uncovered units.", "No mismatched coverage requirements."],
+  },
   // DISP surface batch — settled ParityTable empties (war noon).
   {
     file: "apps/frontend/src/pages/dispatch/LateArrivalsPage.tsx",
