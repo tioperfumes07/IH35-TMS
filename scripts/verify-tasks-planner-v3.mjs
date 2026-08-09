@@ -64,16 +64,33 @@ else pass("TaskPlannerGrid.tsx has resizable employee column");
 if (!grid.includes("drawer") && !grid.includes("TaskDrawer")) fail("TaskPlannerGrid.tsx missing detail drawer");
 else pass("TaskPlannerGrid.tsx has detail drawer");
 
-// FAIL-TSK1 — day cells must normalize scheduled_date (ISO/Date) before === day column YMD
-if (!grid.includes("toYmd") || !/toYmd\s*\(\s*t\.scheduled_date\s*\)\s*===\s*d/.test(grid)) {
-  fail("TaskPlannerGrid.tsx must filter day cells via toYmd(t.scheduled_date) === d (FAIL-TSK1)");
+// FAIL-TSK1 — day cells normalize + overdue open tasks roll onto visible day
+if (!grid.includes("toYmd")) {
+  fail("TaskPlannerGrid.tsx missing toYmd (FAIL-TSK1)");
 } else {
-  pass("TaskPlannerGrid.tsx normalizes scheduled_date for day-cell match (FAIL-TSK1)");
+  pass("TaskPlannerGrid.tsx has toYmd");
+}
+if (!grid.includes("taskBelongsOnDay") || !/taskBelongsOnDay\s*\(/.test(grid)) {
+  fail("TaskPlannerGrid.tsx must place day cells via taskBelongsOnDay (FAIL-TSK1 overdue-rollover)");
+} else {
+  pass("TaskPlannerGrid.tsx uses taskBelongsOnDay for day cells (FAIL-TSK1)");
+}
+if (!grid.includes("overdueRolloverDay")) {
+  fail("TaskPlannerGrid.tsx missing overdueRolloverDay (FAIL-TSK1 overdue-rollover)");
+} else {
+  pass("TaskPlannerGrid.tsx has overdueRolloverDay");
 }
 if (/t\.scheduled_date\s*===\s*d/.test(grid)) {
   fail("TaskPlannerGrid.tsx still strict-eq raw scheduled_date to day column (FAIL-TSK1 regression)");
 } else {
   pass("TaskPlannerGrid.tsx has no raw scheduled_date === d");
+}
+
+// FAIL-TSK1 overdue-rollover — planner API must include open tasks before date_from
+if (!routes.includes("scheduled_date < $2") || !routes.includes("completed") || !routes.includes("cancelled")) {
+  fail("task.routes.ts planner must OR-include open overdue tasks (scheduled_date < date_from)");
+} else {
+  pass("task.routes.ts planner includes open overdue tasks (FAIL-TSK1)");
 }
 
 // TaskBoardPage wired
@@ -87,10 +104,7 @@ console.log("\n[verify-tasks-v3] ALL CHECKS PASSED");
 if (process.argv.includes("--selftest")) {
   const abs = path.join(ROOT, "apps/frontend/src/pages/tasks/TaskPlannerGrid.tsx");
   const orig = fs.readFileSync(abs, "utf8");
-  const broken = orig.replace(
-    /toYmd\s*\(\s*t\.scheduled_date\s*\)\s*===\s*d/,
-    "t.scheduled_date === d /* selftest-break */",
-  );
+  const broken = orig.replace(/taskBelongsOnDay/g, "taskBelongsOnDayREMOVED");
   if (broken === orig) {
     console.error("[verify-tasks-v3] --selftest could not plant FAIL-TSK1 regression");
     process.exit(1);
@@ -103,7 +117,7 @@ if (process.argv.includes("--selftest")) {
       encoding: "utf8",
     });
     if (r.status === 0) {
-      console.error("[verify-tasks-v3] --selftest FAIL: planted raw scheduled_date === d still passed");
+      console.error("[verify-tasks-v3] --selftest FAIL: planted missing taskBelongsOnDay still passed");
       process.exit(1);
     }
     console.log("[verify-tasks-v3] --selftest PASS: planted regression failed closed");
