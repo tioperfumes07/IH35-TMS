@@ -3,6 +3,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { entityLabel } from "../../lib/entity-label";
 import { formatDateUS } from "../../lib/formatDate";
 import { formatUsdCents } from "../../lib/money";
 import { getMaintenanceShopHub, type MaintenanceShopHubRow } from "../../api/maintenance-shop";
@@ -61,7 +62,7 @@ export function MaintenanceShopHubPage() {
           <EntityLink
             kind="work_order"
             id={row.work_order_id}
-            label={row.work_order_display_id ?? row.work_order_id.slice(0, 8)}
+            label={entityLabel(row.work_order_display_id, row.work_order_id, "Work order")}
           />
         ),
       },
@@ -70,7 +71,7 @@ export function MaintenanceShopHubPage() {
         label: "Unit",
         sortable: true,
         render: (row) =>
-          row.unit_id ? <EntityLink kind="unit" id={row.unit_id} label={row.unit_code ?? row.unit_id.slice(0, 8)} /> : "—",
+          row.unit_id ? <EntityLink kind="unit" id={row.unit_id} label={entityLabel(row.unit_code, row.unit_id, "Unit")} /> : "—",
       },
       {
         key: "kind",
@@ -91,10 +92,10 @@ export function MaintenanceShopHubPage() {
             <EntityLink
               kind="bill"
               id={row.financial_id}
-              label={row.financial_label ?? row.financial_id.slice(0, 8)}
+              label={entityLabel(row.financial_label, row.financial_id, "Record")}
             />
           ) : (
-            <EntityLink kind="expense" id={row.financial_id} label={row.financial_id.slice(0, 8)} />
+            <EntityLink kind="expense" id={row.financial_id} label={entityLabel(null, row.financial_id, "Expense")} />
           ),
       },
       {

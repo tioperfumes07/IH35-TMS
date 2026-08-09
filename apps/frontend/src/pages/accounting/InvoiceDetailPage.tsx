@@ -1,3 +1,4 @@
+import { entityLabel } from "../../lib/entity-label";
 import { formatDateUS } from "../../lib/formatDate";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { EntityLink } from "../../components/shared/EntityLink";
@@ -178,7 +179,7 @@ export function InvoiceDetailPage() {
         const label =
           line.income_account_number && line.income_account_name
             ? `${line.income_account_number} - ${line.income_account_name}`
-            : line.income_account_name ?? line.account_id.slice(0, 8);
+            : entityLabel(line.income_account_name, line.account_id, "Account");
         return (
           <Link
             to={`/accounting/chart-of-accounts/register/${line.account_id}`}
@@ -337,7 +338,7 @@ export function InvoiceDetailPage() {
                 id={invoice.source_load_id ?? undefined}
                 label={
                   invoice.source_load_id
-                    ? invoice.source_load_number ?? invoice.source_load_id.slice(0, 8)
+                    ? entityLabel(invoice.source_load_number, invoice.source_load_id, "Load")
                     : "-"
                 }
               />
@@ -353,7 +354,7 @@ export function InvoiceDetailPage() {
               ) : (
                 <span className="inline-flex flex-wrap gap-2">
                   {journalEntryIds.map((jeId) => (
-                    <EntityLink key={jeId} kind="journal_entry" id={jeId} label={jeId.slice(0, 8)} />
+                    <EntityLink key={jeId} kind="journal_entry" id={jeId} label={entityLabel(null, jeId, "Journal entry")} />
                   ))}
                 </span>
               )}
@@ -418,7 +419,7 @@ export function InvoiceDetailPage() {
                   <span className="mr-2 font-semibold uppercase tracking-wide text-gray-500">
                     {je.source_transaction_type ?? "source"}
                   </span>
-                  <EntityLink kind="journal_entry" id={je.journal_entry_id} label={je.journal_entry_id.slice(0, 8)} />
+                  <EntityLink kind="journal_entry" id={je.journal_entry_id} label={entityLabel(null, je.journal_entry_id, "Journal entry")} />
                 </span>
                 <span className="text-sm text-gray-900">
                   {je.entry_date ? formatDateUS(je.entry_date) : "—"}
@@ -511,7 +512,7 @@ export function InvoiceDetailPage() {
           <div className="space-y-2">
             {(invoice.payment_applications ?? []).map((application) => (
               <DataPanelRow key={application.id}>
-                <span className="text-xs text-gray-600"><EntityLink kind="payment" id={application.payment_id ?? undefined} label={application.payment_display_id ?? application.payment_id?.slice(0, 8)} /></span>
+                <span className="text-xs text-gray-600"><EntityLink kind="payment" id={application.payment_id ?? undefined} label={entityLabel(application.payment_display_id, application.payment_id, "Payment")} /></span>
                 <span className="text-sm text-gray-900">
                   {money(application.amount_cents)} · {new Date(application.applied_at).toLocaleString()}
                 </span>
