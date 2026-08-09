@@ -40,8 +40,11 @@ const SAFETY_CATALOG_HREF =
 const FLEET_CATALOG_CHILDREN = domainCatalogNavChildren("fleet");
 const FLEET_CATALOG_HREF = FLEET_CATALOG_CHILDREN[0]?.href ?? "/lists/fleet";
 
+const DISPATCH_CATALOG_CHILDREN = domainCatalogNavChildren("dispatch");
+const DISPATCH_CATALOG_HREF = DISPATCH_CATALOG_CHILDREN[0]?.href ?? "/lists/dispatch";
+
 /**
- * /lists module top sub-nav (invariant #20). Domain + safety/fleet catalog links mirror
+ * /lists module top sub-nav (invariant #20). Domain + safety/fleet/dispatch catalog links mirror
  * DomainRibbon / hub destinations; nothing removed from existing list UX.
  */
 export const LISTS_SUB_NAV_ITEMS: NavItem[] = [
@@ -67,6 +70,11 @@ export const LISTS_SUB_NAV_ITEMS: NavItem[] = [
     children: FLEET_CATALOG_CHILDREN,
   },
   {
+    label: "Dispatch catalogs",
+    href: DISPATCH_CATALOG_HREF,
+    children: DISPATCH_CATALOG_CHILDREN,
+  },
+  {
     label: "Maintenance catalogs",
     href: "/lists/maintenance/parts-catalog",
     children: [
@@ -81,7 +89,7 @@ export function listsSubNavActiveHref(pathname: string): string {
   if (norm.startsWith("/lists/names")) return "/lists/names";
   if (norm.startsWith("/lists/catalogs")) return "/lists/catalogs";
   if (norm.startsWith("/lists/maintenance/parts-catalog")) return "/lists/maintenance/parts-catalog";
-  for (const child of [...SAFETY_CATALOG_CHILDREN, ...FLEET_CATALOG_CHILDREN]) {
+  for (const child of [...SAFETY_CATALOG_CHILDREN, ...FLEET_CATALOG_CHILDREN, ...DISPATCH_CATALOG_CHILDREN]) {
     if (norm === child.href || norm.startsWith(`${child.href}/`)) return child.href;
   }
   for (const domain of DOMAIN_ORDER) {
