@@ -24,6 +24,11 @@
     "purpose": "verify-settlement-load-count-counts-both-paths",
     "claimed_at": "2026-08-09"
   },
+  "2957": {
+    "claimed_by": "cc-1",
+    "purpose": "verify-deductions-list-endpoint-entity-scoped",
+    "claimed_at": "2026-08-09"
+  },
   "claimed": {
     "10": "10-backend-vitest.mjs",
     "11": "11-frontend-vitest.mjs",
