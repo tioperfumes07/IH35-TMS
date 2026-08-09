@@ -229,6 +229,10 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
     );
   }
 
+  const highlightedClaim = rows.find((r) => r.id === highlightedClaimId) ?? null;
+  const forwardAccidentAt =
+    graph?.reverse.accidents.find((a) => a.id === graph.claim.accident_report_id)?.accident_at ?? null;
+
   return (
     <DataPanel title="Claims">
       <div className="mb-3 flex items-center justify-between gap-2">
@@ -243,8 +247,11 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
       {highlightedClaimId ? (
         <div className="mb-3 space-y-2 rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
           <p>
-            Claim graph <span className="font-mono font-semibold">{highlightedClaimId.slice(0, 8)}</span>
-            {rows.some((r) => r.id === highlightedClaimId) ? " — highlighted below." : " — not in current list."}
+            Claim graph{" "}
+            <span className="font-semibold">
+              {entityLabel(highlightedClaim?.claim_number, highlightedClaimId, "Claim")}
+            </span>
+            {highlightedClaim ? " — highlighted below." : " — not in current list."}
           </p>
           {graphQuery.isLoading ? <p>Loading reverse links…</p> : null}
           {graph ? (
@@ -262,7 +269,11 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
                     <EntityLink
                       kind="accident"
                       id={graph.claim.accident_report_id}
-                      label={`Accident ${graph.claim.accident_report_id.slice(0, 8)}`}
+                      label={entityLabel(
+                        forwardAccidentAt ? `Accident · ${formatDateUS(forwardAccidentAt)}` : null,
+                        graph.claim.accident_report_id,
+                        "Accident",
+                      )}
                       className="text-slate-700 underline"
                       data-testid={`claim-forward-accident-${graph.claim.accident_report_id}`}
                     />
@@ -284,7 +295,11 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
                     key={a.id}
                     kind="accident"
                     id={a.id}
-                    label={`Accident ${a.id.slice(0, 8)}`}
+                    label={entityLabel(
+                      a.accident_at ? `Accident · ${formatDateUS(a.accident_at)}` : null,
+                      a.id,
+                      "Accident",
+                    )}
                     className="mr-2 text-slate-700 underline"
                     data-testid={`claim-reverse-accident-${a.id}`}
                   />
@@ -322,7 +337,11 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
                     key={e.id}
                     kind="expense"
                     id={e.id}
-                    label={`Expense ${e.id.slice(0, 8)}`}
+                    label={entityLabel(
+                      e.transaction_date ? `Expense · ${formatDateUS(e.transaction_date)}` : null,
+                      e.id,
+                      "Expense",
+                    )}
                     className="mr-2 text-slate-700 underline"
                     data-testid={`claim-reverse-expense-${e.id}`}
                   />
