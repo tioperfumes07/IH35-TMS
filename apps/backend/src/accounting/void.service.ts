@@ -35,6 +35,11 @@ type QueryableClient = {
 };
 
 type GlPostingRow = {
+  /**
+   * ACCT-F295 — the ORIGINAL posting's id, so the reversal line can point back at it structurally.
+   * Absent before F295, which is precisely why a void reversal was findable only by memo text.
+   */
+  id: string | null;
   account_id: string;
   class_id: string | null;
   entity_uuid: string | null;
@@ -81,6 +86,8 @@ export function isClosedPeriodReversal(originalDate: string, reversalDate: strin
 /** Flip every posting to the opposite side, preserving account/class/entity/amount. Balanced original -> balanced reversal. */
 export function flipPostingsForReversal(rows: GlPostingRow[]): Array<Omit<GlPostingRow, "line_sequence">> {
   return rows.map((row) => ({
+    // ACCT-F295 — preserved so the inserted reversal line can set reversal_of_line_id.
+    id: row.id,
     account_id: row.account_id,
     class_id: row.class_id,
     entity_uuid: row.entity_uuid,
@@ -137,7 +144,7 @@ async function readOriginalGlPostings(
   if (entityType === "journal_entry") {
     const res = await client.query<GlPostingRow>(
       `
-        SELECT account_id::text, class_id::text, entity_uuid::text,
+        SELECT id::text, account_id::text, class_id::text, entity_uuid::text,
                debit_or_credit, amount_cents::bigint AS amount_cents, description, line_sequence
         FROM accounting.journal_entry_postings
         WHERE operating_company_id = $1::uuid AND journal_entry_uuid = $2::uuid
@@ -151,7 +158,7 @@ async function readOriginalGlPostings(
   // journal_entry_postings (source_transaction_type matches the posting-engine source type).
   const res = await client.query<GlPostingRow>(
     `
-      SELECT account_id::text, class_id::text, entity_uuid::text,
+      SELECT id::text, account_id::text, class_id::text, entity_uuid::text,
              debit_or_credit, amount_cents::bigint AS amount_cents, description, line_sequence
       FROM accounting.journal_entry_postings
       WHERE operating_company_id = $1::uuid
@@ -279,8 +286,8 @@ export async function postVoidReversal(
     const lineRes = await client.query<{ id: string }>(
       `
         INSERT INTO accounting.journal_entry_postings
-          (operating_company_id, journal_entry_uuid, line_sequence, account_id, class_id, entity_uuid, debit_or_credit, amount_cents, description, idempotency_key)
-        VALUES ($1::uuid, $2::uuid, $3, $4::uuid, $5::uuid, $6, $7, $8::bigint, $9, $10)
+          (operating_company_id, journal_entry_uuid, line_sequence, account_id, class_id, entity_uuid, debit_or_credit, amount_cents, description, idempotency_key, reversal_of_line_id)
+        VALUES ($1::uuid, $2::uuid, $3, $4::uuid, $5::uuid, $6, $7, $8::bigint, $9, $10, $11::uuid)
         ON CONFLICT (operating_company_id, idempotency_key, line_sequence)
           WHERE idempotency_key IS NOT NULL DO NOTHING
         RETURNING id::text
@@ -298,6 +305,14 @@ export async function postVoidReversal(
         // BLOCK 2: deterministic key per voided entity so a second void of the same entity cannot
         // double-post a reversing JE (uq_jep_company_idempotency_line). Shared across reversal lines.
         `void:${params.entityType}:${params.entityId}`,
+        // ACCT-F295 — THE STRUCTURAL LINK. Without this the reversal is discoverable only by parsing
+        // the JE memo for a uuid, which is invisible to every structured query: an auditor joining
+        // journal_entry_postings on source columns sees the original debit with no offset and
+        // concludes money is missing. That is not hypothetical — it produced a false "$2,207.57 of
+        // voided A/R never reversed" P0 in one session, and a hand-posted correction on that report
+        // would have DOUBLE-CREDITED A/R. NULL is tolerated (older rows predate this and legitimately
+        // have none); what is fixed is that NEW reversals are findable without reading prose.
+        line.id,
       ]
     );
     // CODER-12 audit-spine: link each reversal posting line back to the ORIGINAL entity
