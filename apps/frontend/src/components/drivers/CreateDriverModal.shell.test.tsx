@@ -63,8 +63,11 @@ describe("CreateDriverModal shell chrome (CHROME-11)", () => {
   it("shell='modal' (default) renders the shared Modal — as the C7 create drawer, not ParityDrawer", async () => {
     render(wrap(<CreateDriverModal open companyId="91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071" onClose={() => {}} />));
     await screen.findByRole("heading", { name: /create driver/i });
-    // The shared Modal's own z-50 overlay (ParityDrawer's is z-40).
-    expect(document.querySelector(".fixed.inset-0.z-50")).toBeTruthy();
+    // Identify the shared Modal by its OWN discriminator, not by a z-index literal: the overlay moved
+    // z-50 -> z-[70] (Modal.tsx:176) and this selector silently stopped matching. `data-modal-variant` is
+    // emitted only by the shared Modal — ParityDrawer never does — which this file already calls the exact
+    // discriminator a few lines up. A class-literal proxy re-breaks on every restack.
+    expect(document.querySelector("[data-modal-variant]")).toBeTruthy();
     // Only the shared Modal emits data-modal-variant — ParityDrawer never does.
     const panel = screen.getByRole("dialog", { name: /create driver/i });
     expect(panel.dataset.modalVariant).toBe("drawer");
@@ -84,6 +87,8 @@ describe("CreateDriverModal shell chrome (CHROME-11)", () => {
     // ParityDrawer, not the shared Modal: it never emits data-modal-variant.
     expect(panel.dataset.modalVariant).toBeUndefined();
     // Must NOT stack the shared Modal's z-50 overlay on top of the caller's already-open drawer.
-    expect(document.querySelector(".fixed.inset-0.z-50")).toBeNull();
+    // Same discriminator, negated: the nested path must NOT stack a shared-Modal overlay over the
+    // caller's already-open money drawer.
+    expect(document.querySelector("[data-modal-variant]")).toBeNull();
   });
 });
