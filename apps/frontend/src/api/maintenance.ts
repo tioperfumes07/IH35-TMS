@@ -537,6 +537,8 @@ export function listWorkOrdersFiltered(
     bucket?: string;
     /** LOAD-WO-REVERSE: server-side load scoping for the dispatch drawer's work-orders block. */
     load_id?: string;
+    /** DRV-LINK-WO-REVERSE: server-side driver scoping for DriverDetail reverse section. */
+    driver_id?: string;
   } = {}
 ) {
   const qs = new URLSearchParams({ operating_company_id: companyId });
@@ -546,6 +548,7 @@ export function listWorkOrdersFiltered(
   if (params.location) qs.set("location", params.location);
   if (params.bucket) qs.set("bucket", params.bucket);
   if (params.load_id) qs.set("load_id", params.load_id);
+  if (params.driver_id) qs.set("driver_id", params.driver_id);
   return apiRequest<{ work_orders: WorkOrder[]; total_count: number }>(`/api/v1/maintenance/work-orders?${qs.toString()}`);
 }
 

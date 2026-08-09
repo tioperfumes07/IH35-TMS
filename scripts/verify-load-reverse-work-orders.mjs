@@ -46,15 +46,42 @@ if (!/load_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)/.test(route)) {
 if (!/where\.push\(`w\.load_id = \$\$\{values\.length\}`\)/.test(route)) {
   failures.push(`${ROUTE}: \`load_id\` is accepted but never filtered on — the route would return every work order in the company.`);
 }
-if (!/q\.equipment_id \|\| q\.load_id/.test(route)) {
+if (!/q\.equipment_id \|\| q\.load_id(?:\s*\|\|\s*q\.driver_id)?/.test(route)) {
   failures.push(
     `${ROUTE}: a load-scoped read must bypass the open-only default (join \`q.load_id\` to the caller-controlled-scope branch) — otherwise completed repairs disappear from the load's history.`
   );
+}
+// DRV-LINK-WO-REVERSE — same list route must accept + filter driver_id for DriverDetail reverse.
+if (!/driver_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)/.test(route)) {
+  failures.push(`${ROUTE}: listQuerySchema must accept an optional \`driver_id\` uuid (driver→WO reverse).`);
+}
+if (!/where\.push\(`w\.driver_id = \$\$\{values\.length\}`\)/.test(route)) {
+  failures.push(`${ROUTE}: \`driver_id\` is accepted but never filtered on.`);
+}
+if (!/q\.driver_id/.test(route)) {
+  failures.push(`${ROUTE}: driver-scoped reads must join the caller-controlled-scope (non-open-only) branch.`);
 }
 
 const client = read(CLIENT);
 if (!/load_id\?:\s*string/.test(client) || !/qs\.set\(\s*["']load_id["']/.test(client)) {
   failures.push(`${CLIENT}: listWorkOrdersFiltered must accept \`load_id\` AND put it on the query string.`);
+}
+if (!/driver_id\?:\s*string/.test(client) || !/qs\.set\(\s*["']driver_id["']/.test(client)) {
+  failures.push(`${CLIENT}: listWorkOrdersFiltered must accept \`driver_id\` AND put it on the query string.`);
+}
+
+const driverWoSection = "apps/frontend/src/components/maintenance/DriverWorkOrdersReverseSection.tsx";
+const driverDetail = "apps/frontend/src/pages/DriverDetail.tsx";
+const drvSection = read(driverWoSection);
+if (!/listWorkOrdersFiltered\s*\(/.test(drvSection) || !/driver_id:\s*driverId/.test(drvSection)) {
+  failures.push(`${driverWoSection}: must call listWorkOrdersFiltered with \`driver_id: driverId\`.`);
+}
+if (!/kind=["']work_order["']/.test(drvSection)) {
+  failures.push(`${driverWoSection}: must EntityLink kind="work_order".`);
+}
+const drvDetail = read(driverDetail);
+if (!/<DriverWorkOrdersReverseSection(?![A-Za-z0-9_])/.test(drvDetail)) {
+  failures.push(`${driverDetail}: must mount <DriverWorkOrdersReverseSection …/>.`);
 }
 
 const section = read(SECTION);
