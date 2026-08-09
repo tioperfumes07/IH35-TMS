@@ -2,6 +2,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { EntityLink, type EntityKind } from "../../components/shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 import { listEscrowAccounts, listEscrowPostings, type EscrowAccount, type EscrowPosting } from "../../api/accounting";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ListErrorState } from "../../components/ListErrorState";
@@ -36,20 +37,34 @@ function escrowSourceEntityKind(sourceType: EscrowPosting["source_type"]): Entit
   }
 }
 
+function escrowSourceNoun(sourceType: EscrowPosting["source_type"]): string {
+  switch (sourceType) {
+    case "driver_settlement":
+      return "Settlement";
+    case "factoring_advance":
+      return "Factoring advance";
+    case "vendor_bill":
+      return "Bill";
+    default:
+      return "Source";
+  }
+}
+
 function EscrowPostingSourceLink({ row }: { row: EscrowPosting }) {
   const kind = escrowSourceEntityKind(row.source_type);
+  const noun = escrowSourceNoun(row.source_type);
   if (!kind || !row.source_id) {
     return (
       <>
         {row.source_type}
-        {row.source_id ? ` / ${row.source_id.slice(0, 8)}` : ""}
+        {row.source_id ? ` / ${entityLabel(null, row.source_id, noun)}` : ""}
       </>
     );
   }
   return (
     <>
       {row.source_type}{" "}
-      <EntityLink kind={kind} id={row.source_id} label={row.source_id.slice(0, 8)} />
+      <EntityLink kind={kind} id={row.source_id} label={entityLabel(null, row.source_id, noun)} />
     </>
   );
 }
@@ -150,7 +165,13 @@ export function EscrowPage() {
         key: "linked_journal_entry_id",
         label: "Journal entry",
         sortable: true,
-        render: (row) => <EntityLink kind="journal_entry" id={row.linked_journal_entry_id ?? undefined} label={row.linked_journal_entry_id ? row.linked_journal_entry_id.slice(0, 8) : "—"} />,
+        render: (row) => (
+          <EntityLink
+            kind="journal_entry"
+            id={row.linked_journal_entry_id ?? undefined}
+            label={row.linked_journal_entry_id ? entityLabel(null, row.linked_journal_entry_id, "Journal entry") : "—"}
+          />
+        ),
       },
     ],
     [],

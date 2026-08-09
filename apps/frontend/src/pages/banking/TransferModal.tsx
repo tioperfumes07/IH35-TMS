@@ -15,6 +15,7 @@ import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { companyToday } from "../../lib/businessDate";
+import { entityLabel } from "../../lib/entity-label";
 import { formatBankAccountPickerLabel, type BankAccountPickerRow } from "./transferAccountPicker";
 
 type Props = {
@@ -242,7 +243,7 @@ export function TransferModal({ open, operatingCompanyId, onClose, onSaved, pref
               <option value="">Select counterparty</option>
               {(pairsQuery.data?.pairs ?? []).map((pair) => (
                 <option key={pair.id} value={pair.counterparty_company_id}>
-                  {pair.counterparty_code || pair.counterparty_company_id.slice(0, 8)}
+                  {entityLabel(pair.counterparty_code, pair.counterparty_company_id, "Entity")}
                   {pair.account_number ? ` · IC ${pair.account_number}` : ""}
                 </option>
               ))}
