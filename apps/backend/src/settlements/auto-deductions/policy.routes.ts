@@ -55,13 +55,19 @@ export async function registerAutoDeductionPolicyRoutes(app: FastifyInstance) {
         `
           SELECT
             p.*,
-            NULLIF(TRIM(CONCAT_WS(' ', d.first_name, d.last_name)), '') AS driver_name
+            NULLIF(TRIM(CONCAT_WS(' ', d.first_name, d.last_name)), '') AS driver_name,
+            ddt.default_recovery_rail,
+            ddt.may_draw_escrow,
+            ddt.survives_separation
           FROM driver_finance.auto_deduction_policies p
           LEFT JOIN mdata.drivers d
             ON d.id = p.driver_id
            AND d.operating_company_id = p.operating_company_id
            AND d.deactivated_at IS NULL
            AND d.archived_at IS NULL
+          LEFT JOIN catalogs.driver_deduction_types ddt
+            ON ddt.operating_company_id = p.operating_company_id
+           AND ddt.code = p.deduction_type
           WHERE ${filters.join(" AND ")}
           ORDER BY p.created_at DESC
         `,

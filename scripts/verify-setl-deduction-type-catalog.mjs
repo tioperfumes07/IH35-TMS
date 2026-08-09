@@ -122,6 +122,12 @@ export function collectProblems(sources = {
       } else if (pick01.status !== "PASS") {
         problems.push(`${MODULE_JSON}: SETL-PICK-01 must be PASS (found ${pick01.status})`);
       }
+      const link01 = (mod.items ?? []).find((i) => i.id === "SETL-LINK-01");
+      if (!link01) {
+        problems.push(`${MODULE_JSON}: missing SETL-LINK-01 checklist item`);
+      } else if (link01.status !== "PASS") {
+        problems.push(`${MODULE_JSON}: SETL-LINK-01 must be PASS when recovery rails honor catalog (found ${link01.status})`);
+      }
     } catch {
       problems.push(`${MODULE_JSON}: invalid JSON`);
     }

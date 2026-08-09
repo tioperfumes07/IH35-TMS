@@ -75,6 +75,26 @@ export function collectProblems(
     problems.push(`${MIGRATION}: must add auto_deduction_policies_deduction_type_catalog_fkey`);
   }
 
+  // SETL-LINK-01 — catalog recovery metadata must not be dead weight on the create/list surfaces.
+  if (!/default_recovery_rail/.test(sources.panel) || !/may_draw_escrow/.test(sources.panel)) {
+    problems.push(
+      `${PANEL}: SETL-LINK-01 — must consume default_recovery_rail + may_draw_escrow from catalogs.driver_deduction_types`
+    );
+  }
+  if (!/auto-deduction-recovery-rail-field/.test(sources.panel) && !/Recovery rail/.test(sources.panel)) {
+    problems.push(`${PANEL}: SETL-LINK-01 — must render the mandatory recovery-rail ask pre-selected from catalog`);
+  }
+  if (!/recoveryMetaByCode|buildDriverDeductionTypeRecoveryMetaMap|recoveryRailOptionsForMeta/.test(readSurface)) {
+    problems.push(
+      `${HOOK}: SETL-LINK-01 — hook must expose recovery metadata map / rail option filter for catalog rows`
+    );
+  }
+  if (!/LEFT JOIN catalogs\.driver_deduction_types/.test(routes) || !/ddt\.default_recovery_rail/.test(routes)) {
+    problems.push(
+      `${ROUTES}: SETL-LINK-01 — list policies must JOIN catalogs.driver_deduction_types for default_recovery_rail`
+    );
+  }
+
   return problems;
 }
 
