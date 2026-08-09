@@ -204,10 +204,18 @@ export default async function taskRoutes(fastify: FastifyInstance) {
         LEFT JOIN identity.users u ON u.id = t.assigned_to_user_id
         LEFT JOIN tasks.task_type tt ON tt.id = t.task_type_id
         WHERE t.operating_company_id = $1 AND t.is_active = true
-          AND t.scheduled_date BETWEEN $2 AND $3
+          AND (
+            t.scheduled_date BETWEEN $2 AND $3
+            OR (
+              t.scheduled_date < $2
+              AND t.status::text NOT IN ('completed', 'cancelled')
+            )
+          )
           ${query.assigned_to ? "AND t.assigned_to_user_id = $4" : ""}
         ORDER BY t.scheduled_date ASC, t.priority DESC, t.created_at ASC
       `;
+      // Overdue open tasks (scheduled before date_from) are included so the planner default
+      // "This Week" does not hide work that is still open — Cascade FAIL-TSK1 overdue-rollover.
       const params: string[] = [query.operating_company_id, query.date_from, query.date_to];
       if (query.assigned_to) params.push(query.assigned_to);
 

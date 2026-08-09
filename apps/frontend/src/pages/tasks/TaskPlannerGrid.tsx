@@ -19,6 +19,7 @@ import {
 import { UniversalFilterBar, type FilterState } from "../../components/planner/UniversalFilterBar";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateUS } from "../../lib/formatDate";
+import { isOpenTaskStatus } from "./taskDisplay";
 
 const STATUS_COLORS: Record<TaskStatus, string> = {
   pending:     "bg-gray-100 text-gray-700 border-gray-300",
@@ -49,6 +50,22 @@ export function toYmd(value: string | Date | null | undefined): string {
   const parsed = new Date(s);
   if (Number.isNaN(parsed.getTime())) return "";
   return toYmd(parsed);
+}
+
+/** Day column where open overdue tasks (scheduled before the filter range) appear. */
+export function overdueRolloverDay(dates: string[], rangeFrom: string): string {
+  const today = localYmd(new Date());
+  if (dates.includes(today)) return today;
+  return dates[0] ?? rangeFrom;
+}
+
+/** Whether a task belongs in day column `d` for the current filter window. */
+export function taskBelongsOnDay(task: Task, d: string, rangeFrom: string, rolloverDay: string): boolean {
+  const ymd = toYmd(task.scheduled_date);
+  if (ymd === d) return true;
+  // FAIL-TSK1 overdue-rollover: open tasks before the window stay visible on This Week (etc.).
+  if (ymd < rangeFrom && isOpenTaskStatus(task.status) && d === rolloverDay) return true;
+  return false;
 }
 
 function localYmd(d: Date): string {
@@ -133,9 +150,9 @@ function TaskDrawer({ task, onClose }: DrawerProps) {
   );
 }
 
-type TaskBlockProps = { task: Task; onClick: () => void };
+type TaskBlockProps = { task: Task; onClick: () => void; overdueRolled?: boolean };
 
-function TaskBlock({ task, onClick }: TaskBlockProps) {
+function TaskBlock({ task, onClick, overdueRolled }: TaskBlockProps) {
   return (
     <div
       role="button"
@@ -144,10 +161,14 @@ function TaskBlock({ task, onClick }: TaskBlockProps) {
       onKeyDown={(e) => e.key === "Enter" && onClick()}
       className={`group cursor-pointer rounded-sm border px-1.5 py-0.5 text-[10px] leading-tight mb-0.5 ${STATUS_COLORS[task.status]}`}
       style={{ minHeight: 27 }}
+      title={overdueRolled ? `Overdue · scheduled ${formatDateUS(task.scheduled_date)}` : undefined}
     >
       <div className="flex items-start gap-1">
         <span className={`mt-0.5 h-1.5 w-1.5 shrink-0 rounded-full ${PRIORITY_DOT[task.priority] ?? PRIORITY_DOT[0]}`} />
-        <span className="flex-1 truncate font-medium">{task.title}</span>
+        <span className="flex-1 truncate font-medium">
+          {overdueRolled ? <span className="mr-0.5 font-semibold text-red-700">Overdue</span> : null}
+          {task.title}
+        </span>
       </div>
       <ProgressBar pct={task.progress_pct} />
     </div>
@@ -202,6 +223,7 @@ export function TaskPlannerGrid() {
   });
 
   const dates = buildDateRange(filter.from, filter.to);
+  const rolloverDay = overdueRolloverDay(dates, filter.from);
   const employees = query.data
     ? [...new Map(query.data.tasks.map((t) => [t.assigned_to_user_id, t.assigned_to_name ?? t.assigned_to_email ?? t.assigned_to_user_id])).entries()]
     : [];
@@ -265,12 +287,17 @@ export function TaskPlannerGrid() {
                   </td>
                   {dates.map((d) => {
                     const cellTasks = (query.data?.by_employee[uid] ?? []) as Task[];
-                    // FAIL-TSK1: API may return ISO timestamps; never strict-eq raw scheduled_date to col YMD.
-                    const dayTasks = cellTasks.filter((t) => toYmd(t.scheduled_date) === d);
+                    // FAIL-TSK1: normalize YMD; overdue open tasks roll onto today (or week start).
+                    const dayTasks = cellTasks.filter((t) => taskBelongsOnDay(t, d, filter.from, rolloverDay));
                     return (
                       <td key={d} className="border border-gray-200 px-0.5 py-0.5 align-top bg-white">
                         {dayTasks.map((t) => (
-                          <TaskBlock key={t.task_id} task={t} onClick={() => setSelectedTask(t)} />
+                          <TaskBlock
+                            key={t.task_id}
+                            task={t}
+                            overdueRolled={toYmd(t.scheduled_date) < filter.from && isOpenTaskStatus(t.status)}
+                            onClick={() => setSelectedTask(t)}
+                          />
                         ))}
                       </td>
                     );
