@@ -19,6 +19,15 @@ if (!/rateCents\s*<=\s*0/.test(fromLoad) || !/load_has_no_rate/.test(fromLoad)) 
 if (!/rate_total_cents\s*\?\?\s*0/.test(fromLoad) || !/line_total_cents/.test(fromLoad)) {
   errors.push("from-load.ts does not derive the invoice line from load.rate_total_cents");
 }
+if (!/source_load_id/.test(fromLoad)) {
+  errors.push("from-load.ts does not stamp source_load_id on the invoice");
+}
+if (!/initialStatus\s*=\s*input\.asProforma\s*\?\s*["']proforma["']\s*:\s*["']draft["']/.test(fromLoad)) {
+  errors.push("from-load.ts does not create unsent draft/proforma invoices");
+}
+if (!/asProforma\?:\s*boolean/.test(fromLoad) || !/initialStatus/.test(fromLoad)) {
+  errors.push("from-load.ts does not support asProforma input");
+}
 
 if (!/i\.status\s*IN\s*\(\s*['"]draft['"]\s*,\s*['"]proforma['"]\s*\)/.test(updateLoad) &&
     !/i\.status\s*IN\s*\(\s*['"]proforma['"]\s*,\s*['"]draft['"]\s*\)/.test(updateLoad)) {
