@@ -42,6 +42,7 @@ export default defineConfig({
   resolve: {
     alias: {
       "@legal": path.resolve(appDir, "../../docs/legal"),
+      "@scoreboard": path.resolve(appDir, "../../docs/specs/scoreboard"),
     },
   },
   server: {
