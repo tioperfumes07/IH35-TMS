@@ -71,9 +71,22 @@ function checkDetail() {
   }
 }
 
+function checkPreSettlements() {
+  const TARGET = "apps/frontend/src/components/driver-finance/PreSettlementsPanel.tsx";
+  const src = readFileSync(join(repoRoot, TARGET), "utf8");
+  const code = stripComments(src);
+  if (/driver_display_id/.test(code)) {
+    failures.push(`${TARGET}: must not use driver_display_id (UUID-as-label)`);
+  }
+  if (!/formatDateUS\s*\(\s*settlement\.period_start/.test(code) || !/formatDateUS\s*\(\s*settlement\.period_end/.test(code)) {
+    failures.push(`${TARGET}: period labels must use formatDateUS`);
+  }
+}
+
 checkTable();
 checkHeader();
 checkDetail();
+checkPreSettlements();
 
 if (failures.length > 0) {
   console.error("FAIL verify-settlements-grid-honest-labels");
@@ -82,5 +95,5 @@ if (failures.length > 0) {
 }
 
 console.log(
-  "PASS verify-settlements-grid-honest-labels — list+header period formatted, no uuid-as-display-id",
+  "PASS verify-settlements-grid-honest-labels — list+header+presettlements period formatted, no uuid-as-display-id",
 );
