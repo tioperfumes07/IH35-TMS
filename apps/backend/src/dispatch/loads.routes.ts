@@ -43,7 +43,10 @@ import { convertProformaToOfficial } from "../accounting/proforma-convert.servic
 import { sendDraftInvoice } from "../accounting/invoice-send.service.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { latchOnDeliveryEvidence } from "./delivery-evidence-latch.js";
-import { ensureDriverBillArtifactsForLoad } from "./book-load.service.js";
+import {
+  ensureDriverBillArtifactsForLoad,
+  type DriverBillMintOutcome,
+} from "./book-load.service.js";
 
 // Book Load §C relocates several stop fields to hidden, react-hook-form-registered <input>s
 // (BookLoadStopsSection.tsx). RHF reads a hidden input's value as a STRING ("" when empty), so
@@ -1262,6 +1265,8 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
     if (!operatingCompanyId) return reply.code(400).send({ error: "operating_company_id_required" });
 
     const result = await withCompanyScope(authUser.uuid, operatingCompanyId, async (client) => {
+      // MILES-ON-BOOK — set on delivery mint; returned so the board can toast a skip.
+      let driverBillOutcome: DriverBillMintOutcome | null = null;
       const currentRes = await client.query<{ status: string }>(
         `
           SELECT status
@@ -1336,7 +1341,12 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
         // cost record. Re-enter the canonical idempotent pay path: an existing Book bill is a no-op;
         // a secondary-created load mints from configured pay inputs or records the honest
         // skipped_no_pay_rate audit. Missing mileage is never converted into a $0 payable.
-        await ensureDriverBillArtifactsForLoad(client, {
+        // MILES-ON-BOOK: capture the OUTCOME. The refusal to price a per-mile driver with no
+        // shortest miles is correct, but until now it was written only to audit.audit_events, which
+        // no dispatcher reads — so delivery succeeded and the missing driver bill was silent.
+        // Measured on prod 2026-08-09: 24 of 25 USMCA loads have no miles_shortest, 18 skip events,
+        // 2 driver bills. The warning below is how that stops being invisible.
+        driverBillOutcome = await ensureDriverBillArtifactsForLoad(client, {
           loadId: params.data.id,
           operatingCompanyId,
           actorUserId: authUser.uuid,
@@ -1411,7 +1421,11 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
         load_id: params.data.id,
         payload: { from_status: currentStatus, to_status: targetStatus },
       });
-      return { ok: true as const, status: targetStatus };
+      return {
+        ok: true as const,
+        status: targetStatus,
+        driver_bill_mint: driverBillOutcome,
+      };
     });
 
     if ("error" in result) {

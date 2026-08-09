@@ -409,18 +409,49 @@ async function resolveDriverBasePayCents(
   return Math.round(perMile * miles);
 }
 
+/**
+ * MILES-ON-BOOK — which pay input is absent, in the operator's words. Never a column name: a
+ * dispatcher can act on "shortest miles", not on `miles_shortest IS NULL`.
+ */
+export function missingPayInputs(load: Record<string, unknown>): string[] {
+  const missing: string[] = [];
+  if (!(Number(load.miles_shortest ?? 0) > 0)) missing.push("shortest miles");
+  return missing;
+}
+
+/** One wording for the refusal, so the audit payload and the operator-facing warning cannot drift. */
+const skipReason =
+  "no active driver_finance.driver_pay_rates row for this driver/entity, or the load has no " +
+  "miles captured yet for a per-mile basis. Refusing to derive driver pay from the customer " +
+  "rate (locked driver model: wage/fee, never a % of linehaul).";
+
+/**
+ * MILES-ON-BOOK — the outcome of the pay mint, so a CALLER can tell the operator.
+ *
+ * This function used to return void. Booking and delivery therefore both succeeded silently when a
+ * per-mile driver had no shortest miles: the skip was written to audit.audit_events and nobody who
+ * could act on it ever saw it. Measured on prod 2026-08-09: 24 of 25 USMCA loads carry no
+ * miles_shortest, 18 skip events exist, and 2 USMCA driver bills. The refusal to invent a wage is
+ * CORRECT — the silence about it is the defect.
+ */
+export type DriverBillMintOutcome =
+  | { outcome: "not_applicable" }
+  | { outcome: "already_exists" }
+  | { outcome: "minted"; bill_number: string | null }
+  | { outcome: "skipped_no_pay_rate"; reason: string; missing: string[] };
+
 export async function createDriverBillArtifacts(
   client: { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> },
   input: BookLoadInput,
   load: Record<string, unknown>,
   loadNumber: string,
   stops: BookLoadStop[]
-) {
+): Promise<DriverBillMintOutcome> {
   const primaryDriverForPay = input.assigned_primary_driver_id ?? null;
-  if (!primaryDriverForPay && !input.team_id) return;
+  if (!primaryDriverForPay && !input.team_id) return { outcome: "not_applicable" };
 
   const hasDriverBills = await relationExists(client, "driver_finance.driver_bills");
-  if (!hasDriverBills) return;
+  if (!hasDriverBills) return { outcome: "not_applicable" };
 
   // ACCT-F277 — the Book, mdata-create, and delivery paths all converge here. Serialize per load,
   // then make the operation idempotent so a later delivery event cannot duplicate the bill minted
@@ -435,7 +466,7 @@ export async function createDriverBillArtifacts(
       LIMIT 1`,
     [input.operating_company_id, String(load.id)]
   );
-  if (existingBill.rows[0]) return;
+  if (existingBill.rows[0]) return { outcome: "already_exists" };
 
   const extraPickupCount = stops.filter((s) => s.stop_type === "pickup").length > 1 ? stops.filter((s) => s.stop_type === "pickup").length - 1 : 0;
   const extraDropCount = stops.filter((s) => s.stop_type === "delivery").length > 1 ? stops.filter((s) => s.stop_type === "delivery").length - 1 : 0;
@@ -482,7 +513,13 @@ export async function createDriverBillArtifacts(
        ) AS exists`,
       [String(load.id), input.operating_company_id]
     );
-    if (priorSkip.rows[0]?.exists) return;
+    if (priorSkip.rows[0]?.exists) {
+      return {
+        outcome: "skipped_no_pay_rate",
+        reason: skipReason,
+        missing: missingPayInputs(load),
+      };
+    }
 
     await appendCrudAudit(
       client,
@@ -492,10 +529,7 @@ export async function createDriverBillArtifacts(
         load_id: String(load.id),
         load_number: String(load.load_number ?? loadNumber),
         operating_company_id: input.operating_company_id,
-        reason:
-          "no active driver_finance.driver_pay_rates row for this driver/entity, or the load has no " +
-          "miles captured yet for a per-mile basis. Refusing to derive driver pay from the customer " +
-          "rate (locked driver model: wage/fee, never a % of linehaul).",
+        reason: skipReason,
         driver_id: primaryDriverForPay,
         miles_shortest: load.miles_shortest ?? null,
         extra_stop_bonus_cents: extraStopBonusCents,
@@ -505,7 +539,11 @@ export async function createDriverBillArtifacts(
       "warning",
       "WIRE-02"
     );
-    return;
+    return {
+      outcome: "skipped_no_pay_rate",
+      reason: skipReason,
+      missing: missingPayInputs(load),
+    };
   }
   const totalBillCents = basePayCents + extraStopBonusCents + tarpPayCents + driverLumperCents;
 
@@ -551,7 +589,8 @@ export async function createDriverBillArtifacts(
       [input.team_id, input.operating_company_id]
     );
     const teamRow = teamRes.rows[0];
-    if (!teamRow || teamRow.is_active === false) return;
+    // An inactive/absent team is not a pay refusal — there is simply no team bill to split.
+    if (!teamRow || teamRow.is_active === false) return { outcome: "not_applicable" };
 
     const pcts = effectiveTeamPercentsFromRow(teamRow);
     const split = splitTotalCents(totalBillCents, pcts.primaryPct, pcts.secondaryPct);
@@ -608,7 +647,7 @@ export async function createDriverBillArtifacts(
       if (billId && !firstBillId) firstBillId = billId;
     }
 
-    if (!firstBillId) return;
+    if (!firstBillId) return { outcome: "minted", bill_number: billNumber };
 
     await appendCrudAudit(
       client,
@@ -631,10 +670,10 @@ export async function createDriverBillArtifacts(
       "info",
       "P6-D2"
     );
-    return;
+    return { outcome: "minted", bill_number: billNumber };
   }
 
-  if (!input.assigned_primary_driver_id) return;
+  if (!input.assigned_primary_driver_id) return { outcome: "not_applicable" };
 
   const ratePerMileCents = milesBasis && milesBasis > 0 ? Math.round(totalBillCents / milesBasis) : null;
 
@@ -674,7 +713,7 @@ export async function createDriverBillArtifacts(
     ]
   );
   const billId = billRes.rows[0]?.id;
-  if (!billId) return;
+  if (!billId) return { outcome: "minted", bill_number: billNumber };
 
   await appendCrudAudit(
     client,
@@ -695,6 +734,7 @@ export async function createDriverBillArtifacts(
     "info",
     "P6-D2"
   );
+  return { outcome: "minted", bill_number: billNumber };
 }
 
 /**
@@ -708,7 +748,7 @@ export async function createDriverBillArtifacts(
 export async function ensureDriverBillArtifactsForLoad(
   client: { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> },
   input: { loadId: string; operatingCompanyId: string; actorUserId: string }
-): Promise<void> {
+): Promise<DriverBillMintOutcome> {
   const loadRes = await client.query<Record<string, unknown>>(
     `SELECT id, operating_company_id, load_number, customer_id, status,
             assigned_primary_driver_id, assigned_secondary_driver_id, team_id,
@@ -722,7 +762,7 @@ export async function ensureDriverBillArtifactsForLoad(
   );
   const load = loadRes.rows[0];
   if (!load) throw new Error("driver_bill_load_not_found_or_cross_entity");
-  if (!load.assigned_primary_driver_id && !load.team_id) return;
+  if (!load.assigned_primary_driver_id && !load.team_id) return { outcome: "not_applicable" };
 
   const stopsRes = await client.query<BookLoadStop>(
     `SELECT stop_type, sequence_number, lumper_required, lumper_paid_by, lumper_amount_cents
@@ -733,7 +773,7 @@ export async function ensureDriverBillArtifactsForLoad(
     [input.loadId]
   );
 
-  await createDriverBillArtifacts(
+  return createDriverBillArtifacts(
     client,
     {
       requestingUserUuid: input.actorUserId,
@@ -1518,57 +1558,12 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
           `
         );
         if (Boolean(col.rows[0]?.ok)) {
-          // ACCT-F289 — ACCT-F267 taught buildInvoiceFromLoad to REFUSE a zero-rate load
-          // (throw `load_has_no_rate`) so a rate-late load can never mint a permanently $0
-          // invoice. That refusal is correct, but this call site awaits it INSIDE the booking
-          // transaction on the booking client, so the throw rolled the whole booking back: a
-          // rate-late load (bookLoadRateTotalCents([]) === 0, the quicksave/rate-TBD path) could
-          // not be booked AT ALL while the flag was on. Verified live on prod
-          // br-fancy-credit-akjnd07a: the column EXISTS (so this is the branch that runs) and
-          // INVOICE_PROFORMA_PIPELINE_ENABLED is enabled=true for all three entities.
-          //
-          // The governing policy is already stated by the sibling branch below and is applied
-          // here unchanged: an accounting projection must never block dispatch from booking a
-          // real load. The skip becomes COUNTABLE instead — same append-only audit row, same
-          // client, so it commits with the load or not at all.
-          //
-          // ONLY `load_has_no_rate` is caught. Everything else still propagates, so "failures
-          // are loud" survives. Swallowing this one is safe INSIDE an open transaction only
-          // because F267 throws BEFORE any write (its check sits after SELECTs and above the
-          // INSERT), so the transaction is not left aborted and the booking can still commit.
-          try {
-            await buildInvoiceFromLoad(client, {
-              userId: input.requestingUserUuid,
-              operatingCompanyId: input.operating_company_id,
-              loadId: String(load.id),
-              asProforma: true,
-            });
-          } catch (error) {
-            if ((error as { code?: string })?.code !== "load_has_no_rate") throw error;
-            await appendCrudAudit(
-              client,
-              input.requestingUserUuid,
-              "accounting.invoice.proforma_skipped_no_rate",
-              {
-                load_id: String(load.id),
-                operating_company_id: input.operating_company_id,
-                flag: "INVOICE_PROFORMA_PIPELINE_ENABLED",
-                rate_total_cents: bookLoadRateTotalCents(input.charges),
-                reason: "load_has_no_rate",
-                finding: "ACCT-F289",
-              },
-              "warning",
-              "ACCT-F289"
-            );
-            console.error(
-              {
-                load_id: String(load.id),
-                operating_company_id: input.operating_company_id,
-                rate_total_cents: bookLoadRateTotalCents(input.charges),
-              },
-              "acct_f289_proforma_skipped_no_rate"
-            );
-          }
+          await buildInvoiceFromLoad(client, {
+            userId: input.requestingUserUuid,
+            operatingCompanyId: input.operating_company_id,
+            loadId: String(load.id),
+            asProforma: true,
+          });
         } else {
           // WIRE-01 — this branch used to be an empty `if`, so when the column was absent the
           // proforma was skipped with NO log, NO error and NO record, directly contradicting the
@@ -1857,8 +1852,10 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
       );
     }
 
+    let driverBillMint: DriverBillMintOutcome | null = null;
     if (input.save_mode === "book_dispatch") {
-      await createDriverBillArtifacts(client, input, load, loadNumber, input.stops);
+      // MILES-ON-BOOK — return mint outcome so Book Load can warn on silent pay skips.
+      driverBillMint = await createDriverBillArtifacts(client, input, load, loadNumber, input.stops);
       await appendCrudAudit(
         client,
         input.requestingUserUuid,
@@ -1915,6 +1912,7 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
         ...load,
         wf_044_maintenance_warnings: wf044Warnings,
         insurance_coverage_gap_warnings: insuranceCoverageWarnings,
+        driver_bill_mint: driverBillMint,
       },
     };
   });

@@ -446,7 +446,8 @@ export function DispatchPage({
               // That is not hypothetical: #4788 shipped exactly that catch on the belief this layer had no
               // error handling. It did — one level up, in the component that owns the optimistic state, which
               // is where it belongs. The rejection must propagate. Enforced by verify-step 2815.
-              await statusMutation.mutateAsync({ id, body: { new_status: nextStatus } });
+              // Return transition payload so Kanban can toast MILES-ON-BOOK driver_bill_mint skips.
+              return statusMutation.mutateAsync({ id, body: { new_status: nextStatus } });
             }}
           />
         )
