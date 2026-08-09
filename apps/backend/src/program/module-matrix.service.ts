@@ -306,6 +306,9 @@ function moduleTouchRe(moduleId: string): RegExp {
   if (moduleId === "fleet") {
     return /\bfleet\b|\bunits?\b|\btrailers?\b|\bequipment\b|\bvehicle\b|\btruck\b|\bsamsara\b/i;
   }
+  if (moduleId === "customers") {
+    return /\bcustomers?\b|\bbroker\b|\bshipper\b|\bfmcsa\b|\bcredit[\s_-]?limit|\bfactoring[\s_-]?config|\bar[\s_-]?aging|\bportal[\s_-]?user/i;
+  }
   return /maintenance|\bwork[\s_-]?order|\bwos?\b|\bmaint\b/i;
 }
 
@@ -420,6 +423,7 @@ function loadModuleProbes(moduleId: string): { slices: ModuleProbe[]; progress: 
     fuel: ["fuel"],
     safety: ["safety"],
     legal: ["legal"],
+    customers: ["customers"],
   };
   const keys = alias[moduleId] ?? [moduleId];
   for (const k of keys) {
