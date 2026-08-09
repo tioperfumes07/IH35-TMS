@@ -10,6 +10,7 @@ import { MoneyInput } from "../../components/forms/MoneyInput";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -52,7 +53,7 @@ export function CashForecastPage() {
       await queryClient.invalidateQueries({ queryKey: ["accounting", "cash-forecast", companyId] });
     },
     onError: (error) => {
-      pushToast(String((error as Error).message ?? "Failed to save settings"), "error");
+      pushToast(userFacingApiError(error, "Failed to save settings"), "error");
     },
   });
 

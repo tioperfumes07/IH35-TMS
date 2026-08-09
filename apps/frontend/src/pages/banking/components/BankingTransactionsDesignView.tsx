@@ -53,6 +53,7 @@ import {
   type BankTxnGroupMode,
   type BankTxnSort,
 } from "./bankTxnSortGroup";
+import { userFacingApiError } from "../../../lib/api-error-message";
 
 // BLOCK-6b — recoverable-expense bucket types a bank-categorized driver expense can charge (a fine/toll
 // the company paid on the driver's behalf → recovered from settlement). Mirrors the backend allow-list.
@@ -831,7 +832,7 @@ export function BankingTransactionsDesignView({
       pushToast("Transaction posted", "success");
       onDataChanged();
     } catch (error) {
-      pushToast(String((error as Error).message || "Post failed"), "error");
+      pushToast(userFacingApiError(error, "Post failed"), "error");
     } finally {
       setPostingTxId(null);
     }
@@ -844,7 +845,7 @@ export function BankingTransactionsDesignView({
       pushToast("Transaction excluded", "success");
       onDataChanged();
     } catch (error) {
-      pushToast(String((error as Error).message || "Exclude failed"), "error");
+      pushToast(userFacingApiError(error, "Exclude failed"), "error");
     } finally {
       setExcludingTxId(null);
     }
@@ -963,7 +964,7 @@ export function BankingTransactionsDesignView({
       bulkSelection.clearSelection();
       onDataChanged();
     } catch (error) {
-      pushToast(String((error as Error).message || "Bulk categorize failed"), "error");
+      pushToast(userFacingApiError(error, "Bulk categorize failed"), "error");
     } finally {
       setBulkCategorizeBusy(false);
     }
@@ -2137,7 +2138,7 @@ export function BankingTransactionsDesignView({
                         pushToast("Transaction matched", "success");
                         onDataChanged();
                       })
-                      .catch((error) => pushToast(String((error as Error).message || "Match failed"), "error"));
+                      .catch((error) => pushToast(userFacingApiError(error, "Match failed"), "error"));
                   }}
                 >
                   {String(suggestion.category ?? suggestion.kind ?? "candidate")} · {String(suggestion.id ?? "")}
@@ -2316,7 +2317,7 @@ export function BankingTransactionsDesignView({
                   pushToast("Statement uploaded", "success");
                   onDataChanged();
                 })
-                .catch((error) => pushToast(String((error as Error).message || "Upload failed"), "error"));
+                .catch((error) => pushToast(userFacingApiError(error, "Upload failed"), "error"));
             }}
           />
         </div>

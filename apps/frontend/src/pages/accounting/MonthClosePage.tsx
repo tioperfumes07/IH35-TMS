@@ -7,6 +7,7 @@ import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 function currentPeriodIso() {
   const now = new Date();
@@ -51,7 +52,7 @@ export function MonthClosePage() {
       pushToast("Period locked successfully", "success");
     },
     onError: (error) => {
-      const message = String((error as Error).message ?? "Failed to close period");
+      const message = userFacingApiError(error, "Failed to close period");
       if (message.includes("checklist_incomplete")) {
         pushToast("Checklist must be complete before lock.", "info");
         return;
@@ -68,7 +69,7 @@ export function MonthClosePage() {
       pushToast("Review acknowledged for this period", "success");
     },
     onError: (error) => {
-      pushToast(String((error as Error).message ?? "Failed to acknowledge review"), "error");
+      pushToast(userFacingApiError(error, "Failed to acknowledge review"), "error");
     },
   });
 

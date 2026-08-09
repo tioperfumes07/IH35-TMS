@@ -1,6 +1,7 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { bankMatch, getReconcileSuggestions, type ObligationType, type ReconcileSuggestion } from "../../api/banking";
 import { useToast } from "../../components/Toast";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 export function ReconMatchSuggestions(props: {
   companyId: string;
@@ -23,7 +24,7 @@ export function ReconMatchSuggestions(props: {
       props.onFactoringApplied();
     },
     onError: (error) => {
-      pushToast(String((error as Error).message ?? "Failed to apply factoring match"), "error");
+      pushToast(userFacingApiError(error, "Failed to apply factoring match"), "error");
     },
   });
 

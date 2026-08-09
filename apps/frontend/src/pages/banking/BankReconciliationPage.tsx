@@ -24,6 +24,7 @@ import { coaAccountReferenceOption } from "../../components/parity/referenceOpti
 import { DatePicker } from "../../components/forms/DatePicker";
 import { StatementUpload } from "../../components/banking/StatementUpload";
 import { useToast } from "../../components/Toast";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -145,7 +146,7 @@ export function BankReconciliationPage() {
         queryKey: ["bank-recon", "worklist", selectedCompanyId, accountId, periodStart, periodEnd],
       });
     } catch (error) {
-      pushToast(String((error as Error).message ?? "Action failed"), "error");
+      pushToast(userFacingApiError(error, "Action failed"), "error");
     }
   };
 
@@ -331,7 +332,7 @@ export function BankReconciliationPage() {
                       void acceptMutation
                         .mutateAsync()
                         .then(() => pushToast("Match accepted", "success"))
-                        .catch((error) => pushToast(String((error as Error).message), "error"));
+                        .catch((error) => pushToast(userFacingApiError(error, "Request failed"), "error"));
                     }}
                   >
                     Accept

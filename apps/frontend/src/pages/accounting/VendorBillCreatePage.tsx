@@ -7,6 +7,7 @@ import { TaskLinkPicker } from "../../components/tasks/TaskLinkPicker";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 /**
  * Create vendor bill route (`/accounting/bills/vendor`).
@@ -53,7 +54,7 @@ export function VendorBillCreatePage() {
                   pushToast("Vendor bill created", "success");
                   setLastBillId(res?.bill?.id ?? null);
                 } catch (error) {
-                  pushToast(String((error as Error).message || "Failed to create bill"), "error");
+                  pushToast(userFacingApiError(error, "Failed to create bill"), "error");
                 } finally {
                   setSubmitting(false);
                 }

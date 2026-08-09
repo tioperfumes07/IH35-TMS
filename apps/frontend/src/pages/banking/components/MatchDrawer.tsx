@@ -16,6 +16,7 @@ import { vendorReferenceOption } from "../../../components/parity/referenceOptio
 import { useToast } from "../../../components/Toast";
 import { useListState } from "../../../components/list-state";
 import { formatUsdCents } from "../../../lib/money";
+import { userFacingApiError } from "../../../lib/api-error-message";
 
 // BANKREC-CONFIRM-01 (Tier 2): Confirm is enabled ONLY for an exact-amount match (amount_gap_cents
 // === 0) on a persistable non-bill kind. gap=0 = pure link-and-clear (review_state='matched' +
@@ -108,7 +109,7 @@ export function MatchDrawer({ open, bankTransactionId, operatingCompanyId, onClo
       onAccepted?.();
     },
     onError: (error) => {
-      pushToast(String((error as Error).message ?? "Confirm match failed"), "error");
+      pushToast(userFacingApiError(error, "Confirm match failed"), "error");
     },
     onSettled: () => setConfirmingId(null),
   });
@@ -128,7 +129,7 @@ export function MatchDrawer({ open, bankTransactionId, operatingCompanyId, onClo
       onClose();
     },
     onError: (error) => {
-      pushToast(String((error as Error).message ?? "Categorize failed"), "error");
+      pushToast(userFacingApiError(error, "Categorize failed"), "error");
     },
   });
 

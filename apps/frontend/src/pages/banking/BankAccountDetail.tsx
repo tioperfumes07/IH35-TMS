@@ -23,6 +23,7 @@ import type { PlaidBankTransaction } from "../../api/banking";
 import { formatUsdCents } from "../../lib/money";
 import { BankingTransactionsDesignView, spentReceived } from "./components/BankingTransactionsDesignView";
 import { TransferModal } from "./TransferModal";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 const PAGE_SIZE = 50;
 
@@ -113,7 +114,7 @@ export function BankAccountDetailPage() {
                         queryClient.invalidateQueries({ queryKey: ["banking"] }),
                       ]);
                     })
-                    .catch((error) => pushToast(String((error as Error).message || "Sync failed"), "error"))
+                    .catch((error) => pushToast(userFacingApiError(error, "Sync failed"), "error"))
                     .finally(() => setSyncing(false));
                 }}
               >
@@ -132,7 +133,7 @@ export function BankAccountDetailPage() {
                       pushToast("Bank account disconnected", "success");
                       navigate("/banking");
                     })
-                    .catch((error) => pushToast(String((error as Error).message || "Disconnect failed"), "error"))
+                    .catch((error) => pushToast(userFacingApiError(error, "Disconnect failed"), "error"))
                     .finally(() => setDisconnecting(false));
                 }}
               >

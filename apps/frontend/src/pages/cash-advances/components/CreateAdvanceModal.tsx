@@ -22,6 +22,7 @@ import {
   formatBankAccountPickerLabel,
   type BankAccountPickerRow,
 } from "../../banking/transferAccountPicker";
+import { userFacingApiError } from "../../../lib/api-error-message";
 
 type Props = {
   open: boolean;
@@ -236,7 +237,7 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
       onCreated();
     },
     onError: (error) => {
-      const message = String((error as Error).message ?? "Failed to create advance");
+      const message = userFacingApiError(error, "Failed to create advance");
       if (message.includes("above_policy_owner_approval_required") || message.includes("403")) {
         setAbovePolicyWarn(PHASE4_APPROVAL_MESSAGE);
         pushToast(PHASE4_APPROVAL_MESSAGE, "error");
