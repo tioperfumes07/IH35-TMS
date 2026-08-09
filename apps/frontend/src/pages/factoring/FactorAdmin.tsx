@@ -20,6 +20,7 @@ import { Button } from "../../components/Button";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ListErrorState } from "../../components/ListErrorState";
+import { Combobox } from "../../components/Combobox";
 import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useToast } from "../../components/Toast";
@@ -259,6 +260,14 @@ export function FactorAdmin() {
         type: customer.customer_code ?? undefined,
       })),
     [customersQuery.data]
+  );
+
+  const assignFactorOptions = useMemo(
+    () =>
+      (factorsQuery.data ?? [])
+        .filter((factor) => factor.active)
+        .map((factor) => ({ value: factor.id, label: factor.name })),
+    [factorsQuery.data],
   );
 
   const factorRows = factorsQuery.data ?? [];
@@ -545,22 +554,20 @@ export function FactorAdmin() {
                   onSearch={setCustomerSearch}
                 />
               </label>
-              <label className="block">
+              <label className="block" data-testid="factor-admin-assign-factor-picker">
                 <div className="mb-1">Factor</div>
-                <select
-                  value={assignFactorId}
-                  onChange={(event) => setAssignFactorId(event.target.value)}
-                  className="w-full rounded-sm border border-gray-300 px-2 py-1"
-                >
-                  <option value="">Select factor</option>
-                  {(factorsQuery.data ?? [])
-                    .filter((factor) => factor.active)
-                    .map((factor) => (
-                      <option key={factor.id} value={factor.id}>
-                        {factor.name}
-                      </option>
-                    ))}
-                </select>
+                {/* LST-F149: bare <select> had no + Add new — operators left the assign flow to create a factor. */}
+                <Combobox
+                  options={assignFactorOptions}
+                  value={assignFactorId || null}
+                  onChange={(next) => setAssignFactorId(next ?? "")}
+                  placeholder="Select factor"
+                  loading={factorsQuery.isLoading}
+                  allowAddNew={{
+                    label: "+ Add new factor",
+                    onAdd: () => setShowAddFactorModal(true),
+                  }}
+                />
               </label>
               <label className="block">
                 <div className="mb-1">Effective date</div>
