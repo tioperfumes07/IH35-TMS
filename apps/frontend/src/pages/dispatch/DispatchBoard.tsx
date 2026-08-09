@@ -1321,9 +1321,13 @@ export function DispatchBoard({
               onBulkComplete?.();
             } catch (error) {
               if (error instanceof ApiError) {
-                const data = (error.data as { error?: string; message?: string } | undefined) ?? {};
+                // FAIL-U1: `blocker` carries the readable interlock sentence (E_DRIVER_REPAIR_BLOCK
+                // ships it). Read it before falling back to `error`, which is a machine code — the
+                // toast used to read the literal `E_DRIVER_REPAIR_BLOCK` at the dispatcher.
+                const data =
+                  (error.data as { error?: string; message?: string; blocker?: string } | undefined) ?? {};
                 pushToast(
-                  String(data.message ?? data.error ?? `Quick assign failed (${error.status})`),
+                  String(data.message ?? data.blocker ?? data.error ?? `Quick assign failed (${error.status})`),
                   "error"
                 );
               } else {
