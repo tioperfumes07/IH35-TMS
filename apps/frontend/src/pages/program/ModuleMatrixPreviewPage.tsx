@@ -16,6 +16,7 @@ import insuranceRequired from "@scoreboard/modules/insurance.required.json";
 import legalRequired from "@scoreboard/modules/legal.required.json";
 import accountingRequired from "@scoreboard/modules/accounting.required.json";
 import bankingRequired from "@scoreboard/modules/banking.required.json";
+import dispatchRequired from "@scoreboard/modules/dispatch.required.json";
 import { ProgramModuleNav } from "./ProgramModuleNav";
 
 type Tri = "done" | "audited" | "unaudited" | "na";
@@ -65,7 +66,7 @@ type LiveMatrix = {
   meta?: { honesty?: string; prodReadAt?: string };
 };
 
-type MatrixModuleId = "maintenance" | "safety" | "insurance" | "legal" | "accounting" | "banking";
+type MatrixModuleId = "maintenance" | "safety" | "insurance" | "legal" | "accounting" | "banking" | "dispatch";
 
 const REQUIRED_BY_MODULE: Record<MatrixModuleId, RequiredMap> = {
   maintenance: maintRequired as RequiredMap,
@@ -74,6 +75,7 @@ const REQUIRED_BY_MODULE: Record<MatrixModuleId, RequiredMap> = {
   legal: legalRequired as RequiredMap,
   accounting: accountingRequired as RequiredMap,
   banking: bankingRequired as RequiredMap,
+  dispatch: dispatchRequired as RequiredMap,
 };
 
 const LIVE_MODULES: MatrixModuleId[] = [
@@ -83,6 +85,7 @@ const LIVE_MODULES: MatrixModuleId[] = [
   "legal",
   "accounting",
   "banking",
+  "dispatch",
 ];
 
 const MODULES = [
@@ -163,6 +166,13 @@ function leafPct(cells: Tri[]): number {
 }
 
 function sectionForLeaf(moduleId: MatrixModuleId, leaf: RequiredLeaf): string {
+  if (moduleId === "dispatch") {
+    if (leaf.id === "load_board" || leaf.id === "load.detail") return "Load board";
+    if (leaf.id === "book_load") return "Book load";
+    if (leaf.id === "assignments") return "Assignments";
+    if (leaf.id === "settlements" || leaf.id === "pre_settlements") return "Settlements";
+    return "Dispatch";
+  }
   if (moduleId === "banking") {
     if (leaf.id === "accounts") return "Accounts";
     if (leaf.id.startsWith("transactions.")) return "Transactions";
@@ -323,6 +333,7 @@ function parseModule(raw: string | null): MatrixModuleId {
   if (raw === "legal") return "legal";
   if (raw === "accounting") return "accounting";
   if (raw === "banking") return "banking";
+  if (raw === "dispatch") return "dispatch";
   return "maintenance";
 }
 
@@ -332,6 +343,7 @@ function titleCase(id: MatrixModuleId): string {
   if (id === "legal") return "Legal";
   if (id === "accounting") return "Accounting";
   if (id === "banking") return "Banking";
+  if (id === "dispatch") return "Dispatch";
   return "Maintenance";
 }
 

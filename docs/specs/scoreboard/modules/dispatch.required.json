@@ -1,0 +1,183 @@
+{
+  "module": "dispatch",
+  "entity_default": "USMCA",
+  "source": {
+    "arch_design": "IH35_ARCHITECTURAL_DESIGN — Dispatch",
+    "nav": "apps/frontend/src/pages/Dispatch.tsx DISPATCH_SUB_TABS",
+    "routes": "/dispatch/*"
+  },
+  "columns": [
+    {
+      "id": "driver",
+      "group": "linkage",
+      "label": "Driver"
+    },
+    {
+      "id": "customer",
+      "group": "linkage",
+      "label": "Customer"
+    },
+    {
+      "id": "vendor",
+      "group": "linkage",
+      "label": "Vendor"
+    },
+    {
+      "id": "unit",
+      "group": "linkage",
+      "label": "Unit"
+    },
+    {
+      "id": "trailer",
+      "group": "linkage",
+      "label": "Trailer"
+    },
+    {
+      "id": "load",
+      "group": "linkage",
+      "label": "Load"
+    },
+    {
+      "id": "ap_bill",
+      "group": "money",
+      "label": "AP / Bill"
+    },
+    {
+      "id": "expense",
+      "group": "money",
+      "label": "Expense"
+    },
+    {
+      "id": "gl_je",
+      "group": "money",
+      "label": "GL / JE"
+    },
+    {
+      "id": "liability",
+      "group": "money",
+      "label": "Liability / Escrow"
+    },
+    {
+      "id": "picker_law",
+      "group": "chrome",
+      "label": "Picker +Add new"
+    },
+    {
+      "id": "qbo_chrome",
+      "group": "chrome",
+      "label": "QBO chrome"
+    },
+    {
+      "id": "connectivity",
+      "group": "wiring",
+      "label": "Connectivity"
+    },
+    {
+      "id": "reverse_link",
+      "group": "wiring",
+      "label": "Reverse link"
+    },
+    {
+      "id": "scenario.maintenance",
+      "group": "process",
+      "label": "Maint WO"
+    }
+  ],
+  "leaves": [
+    {
+      "id": "load_board",
+      "tab": "Load board",
+      "sub": "Dispatch board",
+      "route_hint": "/dispatch",
+      "required": [
+        "driver",
+        "customer",
+        "unit",
+        "trailer",
+        "load",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ]
+    },
+    {
+      "id": "book_load",
+      "tab": "Book load",
+      "sub": "+ Book Load wizard",
+      "route_hint": "/dispatch/book-load",
+      "required": [
+        "driver",
+        "customer",
+        "unit",
+        "trailer",
+        "load",
+        "gl_je",
+        "ap_bill",
+        "scenario.maintenance",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "assignments",
+      "tab": "Assignments",
+      "sub": "Driver assignments",
+      "route_hint": "/dispatch/assignments",
+      "required": [
+        "driver",
+        "unit",
+        "trailer",
+        "load",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ]
+    },
+    {
+      "id": "settlements",
+      "tab": "Settlements",
+      "sub": "Dispatch settlements hop",
+      "route_hint": "/dispatch/settlements",
+      "required": [
+        "driver",
+        "load",
+        "liability",
+        "gl_je",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "pre_settlements",
+      "tab": "Pre-settlements",
+      "sub": "Pre-settlements",
+      "route_hint": "/dispatch/pre-settlements",
+      "required": [
+        "driver",
+        "load",
+        "liability",
+        "connectivity"
+      ]
+    },
+    {
+      "id": "load.detail",
+      "tab": "Load board",
+      "sub": "Load detail / assign",
+      "route_hint": "/dispatch",
+      "required": [
+        "driver",
+        "customer",
+        "unit",
+        "trailer",
+        "load",
+        "gl_je",
+        "connectivity",
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome"
+      ]
+    }
+  ]
+}
