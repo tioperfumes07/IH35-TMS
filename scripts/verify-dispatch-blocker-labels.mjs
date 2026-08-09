@@ -24,6 +24,14 @@ if (!/work_order_display_id:/.test(svc)) fail.push(`${SVC}: response omits work_
 if (!/asset_label:/.test(svc)) fail.push(`${SVC}: response omits asset_label`);
 if (/blocker:\s*`Driver's truck is in repair \(WO \$\{activeWo\.id\}\)`/.test(svc))
   fail.push(`${SVC}: blocker text still interpolates the raw uuid instead of the display id`);
+// Quick-assign HOS parity with Book — canAssignLoadToDriver must refuse HOS violators, not only repair WO.
+if (!/is_in_violation/.test(svc) || !/E_DRIVER_HOS_VIOLATION/.test(svc)) {
+  fail.push(`${SVC}: must check drivers_with_hos_status.is_in_violation and return E_DRIVER_HOS_VIOLATION`);
+}
+const route = readFileSync("apps/backend/src/dispatch/load-assign.routes.ts", "utf8");
+if (!/E_DRIVER_HOS_VIOLATION/.test(route)) {
+  fail.push("apps/backend/src/dispatch/load-assign.routes.ts: quick-assign must surface E_DRIVER_HOS_VIOLATION with message");
+}
 
 const ui = readFileSync(UI, "utf8");
 if (!/work_order_display_id\s*\?\?/.test(ui)) fail.push(`${UI}: panel does not prefer work_order_display_id`);
