@@ -1,0 +1,220 @@
+{
+  "module": "tasks",
+  "entity_default": "USMCA",
+  "source": {
+    "pages": "apps/frontend/src/pages/tasks/*",
+    "tabs": "TasksModuleTabs.tsx"
+  },
+  "columns": [
+    {
+      "id": "customer",
+      "group": "linkage",
+      "label": "Customer"
+    },
+    {
+      "id": "driver",
+      "group": "linkage",
+      "label": "Driver"
+    },
+    {
+      "id": "vendor",
+      "group": "linkage",
+      "label": "Vendor"
+    },
+    {
+      "id": "unit",
+      "group": "linkage",
+      "label": "Unit"
+    },
+    {
+      "id": "load",
+      "group": "linkage",
+      "label": "Load"
+    },
+    {
+      "id": "ap_bill",
+      "group": "money",
+      "label": "AP / Bill"
+    },
+    {
+      "id": "expense",
+      "group": "money",
+      "label": "Expense"
+    },
+    {
+      "id": "gl_je",
+      "group": "money",
+      "label": "GL / JE"
+    },
+    {
+      "id": "liability",
+      "group": "money",
+      "label": "Liability / Escrow"
+    },
+    {
+      "id": "picker_law",
+      "group": "chrome",
+      "label": "Picker +Add new"
+    },
+    {
+      "id": "qbo_chrome",
+      "group": "chrome",
+      "label": "QBO chrome"
+    },
+    {
+      "id": "connectivity",
+      "group": "wiring",
+      "label": "Connectivity"
+    },
+    {
+      "id": "reverse_link",
+      "group": "wiring",
+      "label": "Reverse link"
+    }
+  ],
+  "leaves": [
+    {
+      "id": "nav.board",
+      "tab": "Board",
+      "sub": "Task board",
+      "route_hint": "/tasks",
+      "required": [
+        "driver",
+        "load",
+        "unit",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ]
+    },
+    {
+      "id": "nav.mine",
+      "tab": "Mine",
+      "sub": "My tasks",
+      "route_hint": "/tasks/mine",
+      "required": [
+        "driver",
+        "load",
+        "unit",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ]
+    },
+    {
+      "id": "nav.calendar",
+      "tab": "Calendar",
+      "sub": "Tasks calendar",
+      "route_hint": "/tasks/calendar",
+      "required": [
+        "driver",
+        "load",
+        "unit",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ]
+    },
+    {
+      "id": "nav.chat",
+      "tab": "Chat",
+      "sub": "Tasks chat",
+      "route_hint": "/tasks/chat",
+      "required": [
+        "connectivity",
+        "picker_law"
+      ]
+    },
+    {
+      "id": "nav.report",
+      "tab": "Report",
+      "sub": "Tasks report",
+      "route_hint": "/tasks/report",
+      "required": [
+        "driver",
+        "load",
+        "unit",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ]
+    },
+    {
+      "id": "board.planner_grid",
+      "tab": "Board",
+      "sub": "Task planner grid",
+      "route_hint": "/tasks",
+      "required": [
+        "driver",
+        "load",
+        "unit",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ]
+    },
+    {
+      "id": "board.create",
+      "tab": "Board",
+      "sub": "+ Create task",
+      "route_hint": "/tasks",
+      "required": [
+        "driver",
+        "load",
+        "unit",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ]
+    },
+    {
+      "id": "mine.list",
+      "tab": "Mine",
+      "sub": "Assigned-to-me list",
+      "route_hint": "/tasks/mine",
+      "required": [
+        "driver",
+        "load",
+        "unit",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ]
+    },
+    {
+      "id": "chat.mentions",
+      "tab": "Chat",
+      "sub": "@mentions",
+      "route_hint": "/tasks/chat",
+      "required": [
+        "connectivity",
+        "picker_law"
+      ]
+    },
+    {
+      "id": "hop.daily_tasks",
+      "tab": "Daily Tasks hop",
+      "sub": "Daily tasks page",
+      "route_hint": "/daily-tasks",
+      "required": [
+        "driver",
+        "load",
+        "unit",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ]
+    },
+    {
+      "id": "hop.lists.service_tasks",
+      "tab": "Lists hop",
+      "sub": "Maintenance service tasks catalog",
+      "route_hint": "/lists",
+      "required": [
+        "picker_law",
+        "connectivity",
+        "reverse_link"
+      ]
+    }
+  ]
+}
