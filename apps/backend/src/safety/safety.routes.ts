@@ -407,7 +407,10 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
     return { tests: rows };
   });
 
-  app.get("/api/v1/safety/accidents", async (req, reply) => {
+  app.get(
+    "/api/v1/safety/accidents",
+    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
+    async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     // SAF-F17: optional unit scoping for the unit profile's reverse safety section. Filtered in SQL
@@ -438,7 +441,9 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
                  NULLIF(TRIM(COALESCE(d.first_name, '') || ' ' || COALESCE(d.last_name, '')), '') AS driver_name,
                  u.unit_number AS unit_number,
                  l.load_number AS load_number,
-                 v.vendor_name AS vendor_name
+                 v.vendor_name AS vendor_name,
+                 claim.claim_id,
+                 claim.claim_number
           FROM safety.accident_reports ar
           LEFT JOIN mdata.drivers d
             ON d.id = ar.driver_id
@@ -461,6 +466,15 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
           LEFT JOIN mdata.vendors v
             ON v.id = ar.vendor_id
            AND v.operating_company_id = ar.operating_company_id
+          -- C-02: reverse of ClaimsTab forward accident link
+          LEFT JOIN LATERAL (
+            SELECT c.id AS claim_id, c.claim_number AS claim_number
+            FROM insurance.claim c
+            WHERE c.accident_report_id = ar.id
+              AND c.operating_company_id = ar.operating_company_id
+            ORDER BY c.created_at DESC
+            LIMIT 1
+          ) claim ON true
           WHERE ar.operating_company_id = $1
           ${scopeFilters.join("\n          ")}
           ORDER BY ar.accident_at DESC
