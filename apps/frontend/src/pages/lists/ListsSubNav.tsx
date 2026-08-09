@@ -1,5 +1,6 @@
 import { useLocation } from "react-router-dom";
 import { HoverDropdownNav, type NavItem } from "../../components/forms/shared/HoverDropdownNav";
+import { buildCatalogPath, DOMAIN_CONFIG } from "./components/AllCatalogsMap";
 
 const DOMAIN_ORDER = ["safety", "maintenance", "dispatch", "fuel", "drivers", "fleet", "accounting", "names_master"] as const;
 
@@ -13,6 +14,28 @@ const DOMAIN_LABELS: Record<(typeof DOMAIN_ORDER)[number], string> = {
   accounting: "Accounting",
   names_master: "Names master",
 };
+
+/** Live Safety catalogs from DOMAIN_CONFIG — hub + subnav must not diverge (C-10 / LST-F100). */
+function safetyCatalogNavChildren(): NavItem[] {
+  const safety = DOMAIN_CONFIG.find((d) => d.key === "safety");
+  if (!safety) return [];
+  const seen = new Set<string>();
+  const children: NavItem[] = [];
+  for (const catalog of safety.catalogs) {
+    if (!catalog.live || !catalog.catalogKey) continue;
+    if (seen.has(catalog.catalogKey)) continue;
+    seen.add(catalog.catalogKey);
+    children.push({
+      label: catalog.name,
+      href: buildCatalogPath("safety", catalog.catalogKey),
+    });
+  }
+  return children;
+}
+
+const SAFETY_CATALOG_CHILDREN = safetyCatalogNavChildren();
+const SAFETY_CATALOG_HREF =
+  SAFETY_CATALOG_CHILDREN[0]?.href ?? "/lists/safety/internal-fine-reasons";
 
 /**
  * /lists module top sub-nav (invariant #20). Domain + safety catalog links mirror
@@ -32,12 +55,8 @@ export const LISTS_SUB_NAV_ITEMS: NavItem[] = [
   },
   {
     label: "Safety catalogs",
-    href: "/lists/safety/internal-fine-reasons",
-    children: [
-      { label: "Internal Fine Reasons", href: "/lists/safety/internal-fine-reasons" },
-      { label: "Civil Fine Types", href: "/lists/safety/civil-fine-types" },
-      { label: "Company Violation Types", href: "/lists/safety/company-violation-types" },
-    ],
+    href: SAFETY_CATALOG_HREF,
+    children: SAFETY_CATALOG_CHILDREN,
   },
   {
     label: "Maintenance catalogs",
@@ -54,9 +73,9 @@ export function listsSubNavActiveHref(pathname: string): string {
   if (norm.startsWith("/lists/names")) return "/lists/names";
   if (norm.startsWith("/lists/catalogs")) return "/lists/catalogs";
   if (norm.startsWith("/lists/maintenance/parts-catalog")) return "/lists/maintenance/parts-catalog";
-  if (norm.startsWith("/lists/safety/internal-fine-reasons")) return "/lists/safety/internal-fine-reasons";
-  if (norm.startsWith("/lists/safety/civil-fine-types")) return "/lists/safety/civil-fine-types";
-  if (norm.startsWith("/lists/safety/company-violation-types")) return "/lists/safety/company-violation-types";
+  for (const child of SAFETY_CATALOG_CHILDREN) {
+    if (norm === child.href || norm.startsWith(`${child.href}/`)) return child.href;
+  }
   for (const domain of DOMAIN_ORDER) {
     const prefix = `/lists/${domain}`;
     if (norm === prefix || norm.startsWith(`${prefix}/`)) return prefix;
