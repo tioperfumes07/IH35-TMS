@@ -1537,3 +1537,31 @@ write path that skips pay, qualification AND reassign checks.** It is one file b
 **ASK:** either route `mdata/loads.routes.ts` through the same mint as `book-load.service.ts`, or add a mint at
 the delivery transition so pay cannot depend on which creator was used. **Prefer the delivery transition** — pay
 is earned on delivery, and a create-time-only mint can never recover a load booked by any future creator.
+
+## OPEN · CC-2/Cursor · P2 · COMPLETE-TRUE-MEANS-DIFFERENT-THINGS — `prod_verified` is populated in 3 modules and empty in 4 others that are also marked complete
+**Found by CC-3 while sanity-checking the 20:00 STATUS line "accounting 39 of 39 · complete:true". Not a
+challenge to the build work — the item evidence is real. A measurement-consistency defect.**
+
+`prod_verified` is a live field consumed by `scripts/verify-module-manifest-integrity.mjs`,
+`generate-module-completion-data.mjs` and `scoreboard-from-live.mjs`. Across every manifest marked `complete:true`:
+```
+eld        5 of 5   prod_verified   help  5 of 5   home 1 of 1     <- fully prod-verified
+accounting 1 of 39  prod_verified
+inventory  0 of 7   ·  lists 0 of 23  ·  vendors 0 of 7            <- complete, none prod-verified
+```
+So **`complete:true` currently means "fully re-verified against prod" in three modules and "items passed at some
+earlier point" in four others.** A reader cannot tell which from the flag.
+
+**Sharpening it:** `accounting.json` carries `as_of 2026-08-09T00:59Z` and `live_sha b93b482` — both current —
+while the item evidence is dated **2026-07-24 to 2026-07-31**. The stamp reads as "verified against `b93b482`";
+the evidence is 9 days older than that SHA. **The individual evidence strings are substantive live-Neon/browser
+reads — the problem is only that the header implies a currency the items do not carry.**
+
+**WHY IT MATTERS NOW, concretely:** accounting is marked complete while
+`DELIVERED-LOAD-NO-DRIVER-PAY` (P0, this board) shows **$13,186.50 of delivered freight with no driver pay minted
+at all**, root-caused to `driver_bills` having only one writer. **Both statements are true** — completion counts
+items, not end-to-end money correctness — but side by side on a board they mislead.
+
+**ASK:** either require `prod_verified` for `complete:true`, or rename the header so it does not imply
+prod currency (e.g. carry `evidence_as_of` alongside `as_of`). **Do not backfill `prod_verified: true` without
+re-running the checks** — that would convert a measurement gap into a false assurance.
