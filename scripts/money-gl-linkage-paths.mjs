@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * ACCT-F294 — THE COMPLETE SET OF WAYS A JOURNAL ENTRY LINKS BACK TO ITS SOURCE.
+ * ACCT-F294 — THE COMPLETE SET OF WAYS A JOURNAL ENTRY LINKS BACK TO ITS SOURCE (SIX, not four).
  *
  * WHY THIS EXISTS: in ONE session auditing the USMCA money chain I raised THREE separate false
  * alarms — "$16,220 of A/R off the books", "the gl_post_failed rows cannot be joined to an invoice",
@@ -47,20 +47,40 @@ const PATHS = [
   },
   {
     n: 4,
-    name: "STRUCTURAL REVERSAL LINK",
+    name: "STRUCTURAL REVERSAL LINK (LINE LEVEL)",
     how: "accounting.journal_entry_postings.reversal_of_line_id / .reversed_by_line_id",
-    covers: "reversals that DO carry the structural link",
+    covers: "reversals written by the posting engine (bidirectional), and void-service reversals from ACCT-F295 onward (reversal_of_line_id only)",
     trap:
-      "Populated on only some reversal paths. A NULL here does NOT mean 'not reversed' — check path 3 " +
-      "before concluding anything.",
+      "Populated on only SOME reversal paths and only from certain dates. A NULL here does NOT mean " +
+      "'not reversed' — check paths 3, 5 and 6 before concluding anything.",
+  },
+  {
+    n: 5,
+    name: "TRANSACTION SOURCE LINKS",
+    how: "accounting.transaction_source_links (journal_entry_posting_id, linked_object_type, linked_object_id, relationship_role)",
+    covers: "posting-engine writes, including relationship_role='reversal'",
+    trap:
+      "A SEPARATE LINK TABLE entirely — invisible to anyone querying only journal_entry_postings. " +
+      "I missed it in the first version of this very file, which is the point: the linkage surface is " +
+      "wider than any one person remembers.",
+  },
+  {
+    n: 6,
+    name: "JOURNAL-ENTRY LEVEL REVERSAL LINK",
+    how: "accounting.journal_entries.reverses_je_id / .reversed_by_je_id",
+    covers: "JE-to-JE reversal pairing (LV-INVOICE-VOID-REVERSAL-HAS-NO-JE-LINKAGE)",
+    trap:
+      "Paths 4 and 5 are LINE level; this is ENTRY level. A reversal can be linked at one level and " +
+      "not the other. Measured on prod 2026-08-08: 26 JEs carried a 'Reversal of …' memo but only 24 " +
+      "carried the FK — so even this path has known holes.",
   },
 ];
 
 const RULE = [
   "THE RULE THIS FILE ENCODES:",
-  "  A ZERO FROM ONE LINKAGE PATH IS NOT A VERDICT. Check all four before reporting missing money.",
+  "  A ZERO FROM ONE LINKAGE PATH IS NOT A VERDICT. Check ALL SIX before reporting missing money.",
   "  If you are about to report that a transaction did not post, you must be able to say which of the",
-  "  four paths you checked. 'I queried source_transaction_id and got 0' is not evidence.",
+  "  six paths you checked. 'I queried source_transaction_id and got 0' is not evidence.",
 ];
 
 function auditSql(table, uuid) {
@@ -110,7 +130,7 @@ if (args[0] === "--sql" && args[1] && args[2]) {
   process.exit(0);
 }
 
-console.log("ACCT-F294 — GL LINKAGE PATHS (there are FOUR, not one)\n");
+console.log("ACCT-F294 — GL LINKAGE PATHS (there are SIX, not one)\n");
 for (const p of PATHS) {
   console.log(`[PATH ${p.n}] ${p.name}`);
   console.log(`  HOW    : ${p.how}`);
