@@ -10,6 +10,7 @@ import {
 import { useAuth } from "../../auth/useAuth";
 import { Button } from "../../components/Button";
 import { DataTable } from "../../components/DataTable";
+import { useListState } from "../../components/list-state";
 import { PolicyCreateModal } from "../../components/insurance/PolicyCreateModal";
 import { PolicyCreateWizard } from "../../components/insurance/PolicyCreateWizard";
 import { TaskLinkPicker } from "../../components/tasks/TaskLinkPicker";
@@ -77,6 +78,8 @@ export function PoliciesList() {
       return remaining >= 0 && remaining <= 30;
     });
   }, [expiringSoonOnly, policiesQuery.data]);
+
+  const listState = useListState(policiesQuery, rows.length === 0);
 
   // TBL-STANDARD: shared DataTable columns (alignment per GLOBAL-SORT-RULE — text centers, money/dates right).
   const columns = [
@@ -180,7 +183,8 @@ export function PoliciesList() {
         rows={rows}
         rowKey={(policy) => policy.id}
         onRowClick={(policy) => navigate(`/safety/insurance/policies/${policy.id}`)}
-        loading={policiesQuery.isLoading}
+        loading={listState.isLoading}
+        emptyText="No insurance policies found for this entity yet."
         tableKey="insurance-policies"
         errorState={
           policiesQuery.isError

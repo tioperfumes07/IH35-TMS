@@ -542,7 +542,7 @@
     {
       "tier": "2",
       "module": "insurance",
-      "build": "1/6",
+      "build": "6/6",
       "cells": [
         "AUDIT",
         "AUDIT",
@@ -2121,6 +2121,15 @@
   },
   "recentActivity": [
     {
+      "number": 5068,
+      "title": "FINDING: DISP-SURFACE-SETTLED-BATCH",
+      "state": "merged",
+      "mergedAtCt": "08/08/2026, 08:52 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/5068",
+      "sha": "78cb34c1b",
+      "committedAtIso": "2026-08-08T20:52:16-05:00"
+    },
+    {
       "number": 5067,
       "title": "FINDING: MAINT-REMAIN-17-SETTLED",
       "state": "merged",
@@ -2200,15 +2209,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/5060",
       "sha": "15472407b",
       "committedAtIso": "2026-08-08T20:26:36-05:00"
-    },
-    {
-      "number": 0,
-      "title": "FINDING: FAIL-S1-REVERSE — the load↔safety-event link existed in the database and appeared on no screen",
-      "state": "merged",
-      "mergedAtCt": "08/08/2026, 08:23 PM CT",
-      "url": "",
-      "sha": "88fa3e575",
-      "committedAtIso": "2026-08-08T20:23:36-05:00"
     }
   ]
 }
