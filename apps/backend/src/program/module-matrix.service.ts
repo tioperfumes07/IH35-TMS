@@ -357,6 +357,9 @@ function moduleTouchRe(moduleId: string): RegExp {
   if (moduleId === "help") {
     return /\bhelp\b|\brunbooks?\b|\bguides?\b/i;
   }
+  if (moduleId === "driver-hub") {
+    return /\bdriver[\s_-]?hub\b|\bdriver[\s_-]?scheduler|\bleave[\s_-]?requests?/i;
+  }
   return /maintenance|\bwork[\s_-]?order|\bwos?\b|\bmaint\b/i;
 }
 

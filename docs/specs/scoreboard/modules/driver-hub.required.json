@@ -1,0 +1,188 @@
+{
+  "module": "driver-hub",
+  "entity_default": "USMCA",
+  "source": {
+    "pages": "apps/frontend/src/pages/home/DriverHubPage.tsx"
+  },
+  "columns": [
+    {
+      "id": "customer",
+      "group": "linkage",
+      "label": "Customer"
+    },
+    {
+      "id": "driver",
+      "group": "linkage",
+      "label": "Driver"
+    },
+    {
+      "id": "vendor",
+      "group": "linkage",
+      "label": "Vendor"
+    },
+    {
+      "id": "unit",
+      "group": "linkage",
+      "label": "Unit"
+    },
+    {
+      "id": "load",
+      "group": "linkage",
+      "label": "Load"
+    },
+    {
+      "id": "ap_bill",
+      "group": "money",
+      "label": "AP / Bill"
+    },
+    {
+      "id": "expense",
+      "group": "money",
+      "label": "Expense"
+    },
+    {
+      "id": "gl_je",
+      "group": "money",
+      "label": "GL / JE"
+    },
+    {
+      "id": "liability",
+      "group": "money",
+      "label": "Liability / Escrow"
+    },
+    {
+      "id": "picker_law",
+      "group": "chrome",
+      "label": "Picker +Add new"
+    },
+    {
+      "id": "qbo_chrome",
+      "group": "chrome",
+      "label": "QBO chrome"
+    },
+    {
+      "id": "connectivity",
+      "group": "wiring",
+      "label": "Connectivity"
+    },
+    {
+      "id": "reverse_link",
+      "group": "wiring",
+      "label": "Reverse link"
+    }
+  ],
+  "leaves": [
+    {
+      "id": "home",
+      "tab": "Overview",
+      "sub": "Driver hub home",
+      "route_hint": "/driver-hub",
+      "required": [
+        "driver",
+        "unit",
+        "load",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ]
+    },
+    {
+      "id": "tab.overview",
+      "tab": "Overview",
+      "sub": "Overview + inbox",
+      "route_hint": "/driver-hub",
+      "required": [
+        "driver",
+        "unit",
+        "load",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ]
+    },
+    {
+      "id": "tab.scheduler",
+      "tab": "Driver Scheduler",
+      "sub": "Scheduler grid",
+      "route_hint": "/driver-hub?tab=scheduler",
+      "required": [
+        "driver",
+        "unit",
+        "load",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ]
+    },
+    {
+      "id": "tab.leave_requests",
+      "tab": "Leave Requests",
+      "sub": "Leave request inbox",
+      "route_hint": "/driver-hub?tab=leave_requests",
+      "required": [
+        "driver",
+        "unit",
+        "load",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ]
+    },
+    {
+      "id": "reporting",
+      "tab": "Reporting",
+      "sub": "Driver hub reporting",
+      "route_hint": "/driver-hub/reporting",
+      "required": [
+        "driver",
+        "unit",
+        "load",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ]
+    },
+    {
+      "id": "inbox",
+      "tab": "Overview",
+      "sub": "Driver inbox",
+      "route_hint": "/driver-hub",
+      "required": [
+        "driver",
+        "unit",
+        "load",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ]
+    },
+    {
+      "id": "hop.drivers",
+      "tab": "Drivers hop",
+      "sub": "Drivers module",
+      "route_hint": "/drivers",
+      "required": [
+        "driver",
+        "unit",
+        "load",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ]
+    },
+    {
+      "id": "hop.safety_scheduler",
+      "tab": "Safety hop",
+      "sub": "Safety driver scheduler",
+      "route_hint": "/safety",
+      "required": [
+        "driver",
+        "unit",
+        "load",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ]
+    }
+  ]
+}
