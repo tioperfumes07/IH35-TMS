@@ -146,6 +146,13 @@ function contractErrors(src) {
   if (!src.settlementsPage.includes("listSettlements")) {
     errors.push("VERIFY-3: SettlementsPage must load via listSettlements API");
   }
+  // FAIL-SETL-KPI-PERIOD — This Period / YTD must not both equal settlements.length (list-length theater).
+  if (/this_period:\s*settlements\.length/.test(src.settlementsPage) || /ytd_settlements:\s*settlements\.length/.test(src.settlementsPage)) {
+    errors.push("VERIFY-1: SettlementsPage This Period / YTD KPIs must not equal raw settlements.length");
+  }
+  if (!src.settlementsPage.includes("getFullYear") && !src.settlementsPage.includes("ytdYear")) {
+    errors.push("VERIFY-1: SettlementsPage YTD KPI must filter by calendar year (period_end)");
+  }
 
   if (!src.hubPage.includes("/accounting/factoring") || !src.hubPage.includes("/driver-finance/settlements")) {
     errors.push("VERIFY-4: AccountingHubPage must cross-link factoring + settlements from Accounting home");
@@ -215,7 +222,7 @@ function selftest() {
     ].join("\n"),
     factoringList: 'EntityLink kind="factoring_advance"\nAccountingSubNavWrapper',
     escrowPage: 'EntityLink kind={kind}\n"driver_settlement"\n"factoring_advance"',
-    settlementsPage: 'to: "/accounting/escrow"\nlistSettlements',
+    settlementsPage: 'to: "/accounting/escrow"\nlistSettlements\nytdYear\ngetFullYear\nthis_period: settlements.filter(isInThisPeriod).length\nytd_settlements: settlements.filter(isYtd).length',
     hubPage: '/accounting/factoring\n/driver-finance/settlements',
     accountRegister: "/driver-finance/settlements",
     factoringApi: "listFactoringAdvances /api/v1/accounting/factoring-advances\nlistEscrowAccounts /api/v1/accounting/escrow/accounts",
@@ -237,6 +244,15 @@ function selftest() {
   const noSubnav = { ...good, subnav: "" };
   if (!contractErrors(noSubnav).some((e) => e.includes("NEVER-DELETE") || e.includes("subnav"))) {
     console.error(`${LABEL} --selftest FAIL subnav drop not caught`);
+    process.exit(1);
+  }
+  const kpiTheater = {
+    ...good,
+    settlementsPage:
+      'to: "/accounting/escrow"\nlistSettlements\nthis_period: settlements.length\nytd_settlements: settlements.length',
+  };
+  if (!contractErrors(kpiTheater).some((e) => e.includes("This Period") || e.includes("YTD"))) {
+    console.error(`${LABEL} --selftest FAIL KPI period theater not caught`);
     process.exit(1);
   }
   console.log(`${LABEL}: selftest PASS`);
