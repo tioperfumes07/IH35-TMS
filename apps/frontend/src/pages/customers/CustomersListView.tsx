@@ -12,6 +12,7 @@ import { formatUsdCents } from "../../lib/money";
 import { CollapsedListFilters, TableSearch } from "../../components/table";
 import { CustomerDrillModal } from "../../components/customers/CustomerDrillModal";
 import { useUrlSort } from "../../hooks/useUrlSort";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 function fmtMoney(cents: number) {
   return formatUsdCents(cents);
@@ -134,7 +135,7 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
       setTableResetKey((k) => k + 1);
       pushToast(`${result.succeeded.length} customer(s) updated (${vars.action}).`, "success");
     },
-    onError: (error) => pushToast(String((error as Error).message || "Bulk update failed"), "error"),
+    onError: (error) => pushToast(userFacingApiError(error, "Bulk update failed"), "error"),
   });
 
   // Export Selected → real client-side CSV download of the chosen customer rows

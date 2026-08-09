@@ -41,6 +41,7 @@ import {
 } from "../lib/vendorProfileMeta";
 import { useUrlSort } from "../hooks/useUrlSort";
 import { formatDateUS } from "../lib/formatDate";
+import { userFacingApiError } from "../lib/api-error-message";
 
 type SaferEntityStatus = {
   id: string;
@@ -384,7 +385,7 @@ export function VendorDetailPage() {
       setProfileEditMode(false);
       await queryClient.invalidateQueries({ queryKey: ["vendor", id] });
     },
-    onError: (error) => pushToast(String((error as Error).message ?? "Failed to save vendor profile"), "error"),
+    onError: (error) => pushToast(userFacingApiError(error, "Failed to save vendor profile"), "error"),
   });
 
   // Soft-delete (Inactivate / Reactivate) — never hard-delete a master record.

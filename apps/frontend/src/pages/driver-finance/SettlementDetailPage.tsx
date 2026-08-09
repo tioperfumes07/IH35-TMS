@@ -44,6 +44,7 @@ import { SettlementHeader } from "./components/SettlementHeader";
 import { useLiveDebt } from "./hooks/useLiveDebt";
 import { PayRunClosePanel } from "./components/PayRunClosePanel";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 function toDeductionRows(lines: Array<Record<string, unknown>>): DeductionRow[] {
   return lines
@@ -288,7 +289,7 @@ export function SettlementDetailPage() {
                     setDisputeDescription("");
                     setDisputeAmount("");
                   })
-                  .catch((error) => pushToast(String((error as Error).message || error), "error"));
+                  .catch((error) => pushToast(userFacingApiError(error, "Request failed"), "error"));
               }}
             >
               Open Dispute
@@ -385,7 +386,7 @@ export function SettlementDetailPage() {
                   pushToast("Settlement finalized", "success");
                   void refreshSettlementViews();
                 })
-                .catch((error) => pushToast(`Finalize blocked: ${String((error as Error).message || error)}`, "error"));
+                .catch((error) => pushToast(userFacingApiError(error, "Finalize blocked"), "error"));
             }}
           />
           {companyId ? (
@@ -430,7 +431,7 @@ export function SettlementDetailPage() {
                             pushToast("Settlement payment queued", "success");
                             void refreshSettlementViews();
                           })
-                          .catch((error) => pushToast(String((error as Error).message || "Queue failed"), "error"))
+                          .catch((error) => pushToast(userFacingApiError(error, "Queue failed"), "error"))
                       }
                     >
                       Queue Payment
@@ -447,7 +448,7 @@ export function SettlementDetailPage() {
                             pushToast("Marked paid manually", "success");
                             void refreshSettlementViews();
                           })
-                          .catch((error) => pushToast(String((error as Error).message || "Mark manual failed"), "error"))
+                          .catch((error) => pushToast(userFacingApiError(error, "Mark manual failed"), "error"))
                       }
                     >
                       Mark Paid Manually
@@ -473,7 +474,7 @@ export function SettlementDetailPage() {
                             pushToast("Marked sent to bank", "success");
                             void refreshSettlementViews();
                           })
-                          .catch((error) => pushToast(String((error as Error).message || "Mark sent failed"), "error"))
+                          .catch((error) => pushToast(userFacingApiError(error, "Mark sent failed"), "error"))
                       }
                     >
                       Mark Sent to Bank
@@ -493,7 +494,7 @@ export function SettlementDetailPage() {
                               pushToast("Marked cleared", "success");
                               void refreshSettlementViews();
                             })
-                            .catch((error) => pushToast(String((error as Error).message || "Mark cleared failed"), "error"))
+                            .catch((error) => pushToast(userFacingApiError(error, "Mark cleared failed"), "error"))
                         }
                       >
                         Mark Cleared
@@ -514,7 +515,7 @@ export function SettlementDetailPage() {
                             pushToast("Marked bounced", "success");
                             void refreshSettlementViews();
                           })
-                          .catch((error) => pushToast(String((error as Error).message || "Mark bounced failed"), "error"))
+                          .catch((error) => pushToast(userFacingApiError(error, "Mark bounced failed"), "error"))
                       }
                     >
                       Mark Bounced
@@ -548,7 +549,7 @@ export function SettlementDetailPage() {
                             pushToast("Retry queued", "success");
                             void refreshSettlementViews();
                           })
-                          .catch((error) => pushToast(String((error as Error).message || "Retry failed"), "error"))
+                          .catch((error) => pushToast(userFacingApiError(error, "Retry failed"), "error"))
                       }
                     >
                       Retry
@@ -565,7 +566,7 @@ export function SettlementDetailPage() {
                             pushToast("Marked paid manually", "success");
                             void refreshSettlementViews();
                           })
-                          .catch((error) => pushToast(String((error as Error).message || "Mark manual failed"), "error"))
+                          .catch((error) => pushToast(userFacingApiError(error, "Mark manual failed"), "error"))
                       }
                     >
                       Mark Paid Manually
