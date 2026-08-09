@@ -61,6 +61,13 @@ function checkHeader() {
   if (/\{periodStart\}\s*[—\-]\s*\{periodEnd\}/.test(code)) {
     failures.push(`${HEADER}: raw periodStart/periodEnd interpolated into JSX`);
   }
+  // LST-F113 — load hops must not use UUID slice when number is missing.
+  if (/load\.id\.slice\(0,\s*8\)/.test(code) || /load\.number\s*\?\?\s*load\.id\.slice/.test(code)) {
+    failures.push(`${HEADER}: load label must not use load.id.slice(0, 8) — use entityLabel(number, id, Load)`);
+  }
+  if (!/entityLabel\s*\(\s*load\.number/.test(code)) {
+    failures.push(`${HEADER}: load hops must use entityLabel(load.number, load.id, "Load")`);
+  }
 }
 
 function checkDetail() {

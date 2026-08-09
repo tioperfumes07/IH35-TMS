@@ -1,4 +1,5 @@
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { entityLabel } from "../../../lib/entity-label";
 import { formatDateUS } from "../../../lib/formatDate";
 
 type Props = {
@@ -46,9 +47,15 @@ export function SettlementHeader({
             "—"
           ) : (
             <div className="flex flex-wrap gap-1">
-              {/* SETTLEMENT-DETAIL-SHOWS-RAW-UUID: show load number; truncated id only when number missing. */}
+              {/* LST-F113 / SETTLEMENT-DETAIL-SHOWS-RAW-UUID: load number or honest "Load — not visible" — never UUID slice. */}
               {loads.map((load) => (
-                <EntityLink key={load.id} kind="load" id={load.id} label={load.number ?? load.id.slice(0, 8)} className="text-slate-700 hover:underline" />
+                <EntityLink
+                  key={load.id}
+                  kind="load"
+                  id={load.id}
+                  label={entityLabel(load.number, load.id, "Load")}
+                  className="text-slate-700 hover:underline"
+                />
               ))}
             </div>
           )}
