@@ -121,6 +121,8 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
               className="h-7 w-full text-xs"
               placeholder="Select driver"
               dataField="assigned_primary_driver_id"
+              // FAIL-CA1: driver create defaults to Probation — Active-only hid SAMPLE Cascade-1612 class.
+              driverRoster="active_or_probation"
               // BookLoadModalV4 is a centered portal modal (not ParityDrawer) → default shell="modal".
             />
           }
@@ -135,6 +137,7 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
               className="h-7 w-full text-xs"
               placeholder="Solo load (optional)"
               dataField="assigned_secondary_driver_id"
+              driverRoster="active_or_probation"
             />
           }
         />
