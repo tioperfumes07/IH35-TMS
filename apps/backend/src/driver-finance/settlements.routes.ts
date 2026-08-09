@@ -284,7 +284,26 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
       const row = res.rows[0];
       if (!row) return null;
       const linesRes = await client.query(
-        `SELECT * FROM driver_finance.settlement_lines WHERE settlement_id = $1 ORDER BY created_at ASC`,
+        // ACCT-F284 / SETTLEMENT-DETAIL-SHOWS-RAW-UUID (second half) — carry the load NUMBER, not just
+        // the id. The earnings table already asks for it: EarningsSection.tsx:38 renders
+        // `entityLabel(line.load_number, line.load_id, "Load")`, so with no `load_number` in the payload
+        // it falls back to the placeholder and the cell reads "Load — not visible" while that row's own
+        // description contains the load number. `SELECT *` returns every column of settlement_lines,
+        // and load_number is not one of them — it lives on mdata.loads, so it needs the join.
+        //
+        // LEFT JOIN, not INNER: a settlement line legitimately has no load (deductions, reimbursements,
+        // escrow, team splits). An inner join would silently drop every non-earnings line from the
+        // detail screen — a far worse defect than the placeholder it replaces.
+        //
+        // Entity-scoped on the join: mdata.loads is RLS-scoped and a line must never resolve a load
+        // number from another company's load.
+        `SELECT sl.*, l.load_number
+           FROM driver_finance.settlement_lines sl
+           LEFT JOIN mdata.loads l
+             ON l.id = sl.load_id
+            AND l.operating_company_id = sl.operating_company_id
+          WHERE sl.settlement_id = $1
+          ORDER BY sl.created_at ASC`,
         [params.data.id]
       );
       const debt = await recomputeDebtSync(client, String(row.driver_id));
