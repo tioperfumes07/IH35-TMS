@@ -309,6 +309,9 @@ function moduleTouchRe(moduleId: string): RegExp {
   if (moduleId === "customers") {
     return /\bcustomers?\b|\bbroker\b|\bshipper\b|\bfmcsa\b|\bcredit[\s_-]?limit|\bfactoring[\s_-]?config|\bar[\s_-]?aging|\bportal[\s_-]?user/i;
   }
+  if (moduleId === "vendors") {
+    return /\bvendors?\b|\b1099\b|\bw-9\b|\bbill[\s_-]?pay|\bap\b|\baccounts?\s*payable|\bsafer\b|\bvendor[\s_-]?credit|\bvendor[\s_-]?type/i;
+  }
   return /maintenance|\bwork[\s_-]?order|\bwos?\b|\bmaint\b/i;
 }
 
@@ -424,6 +427,7 @@ function loadModuleProbes(moduleId: string): { slices: ModuleProbe[]; progress: 
     safety: ["safety"],
     legal: ["legal"],
     customers: ["customers"],
+    vendors: ["vendors"],
   };
   const keys = alias[moduleId] ?? [moduleId];
   for (const k of keys) {

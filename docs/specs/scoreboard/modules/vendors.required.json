@@ -1,0 +1,574 @@
+{
+  "module": "vendors",
+  "entity_default": "USMCA",
+  "source": {
+    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md — Module 10 VENDORS (KPI/filters; live UI uses list segments)",
+    "list": "apps/frontend/src/pages/Vendors.tsx — VENDOR_LIST_TAB_IDS + VENDOR_TABS + VendorCreateModal",
+    "list_view": "apps/frontend/src/pages/vendors/VendorsListView.tsx",
+    "detail": "apps/frontend/src/pages/VendorDetail.tsx tabs Profile · A/P · Documents · Audit History · Tasks · W-9/1099",
+    "routes": "apps/frontend/src/routes/manifest.tsx /vendors, /vendors/:id"
+  },
+  "columns": [
+    {
+      "id": "vendor",
+      "group": "linkage",
+      "label": "Vendor"
+    },
+    {
+      "id": "customer",
+      "group": "linkage",
+      "label": "Customer"
+    },
+    {
+      "id": "driver",
+      "group": "linkage",
+      "label": "Driver (A/P payee)"
+    },
+    {
+      "id": "unit",
+      "group": "linkage",
+      "label": "Unit / WO"
+    },
+    {
+      "id": "load",
+      "group": "linkage",
+      "label": "Load"
+    },
+    {
+      "id": "ap_bill",
+      "group": "money",
+      "label": "AP / Bill"
+    },
+    {
+      "id": "expense",
+      "group": "money",
+      "label": "Expense"
+    },
+    {
+      "id": "gl_je",
+      "group": "money",
+      "label": "GL / JE"
+    },
+    {
+      "id": "liability",
+      "group": "money",
+      "label": "Liability / Credit"
+    },
+    {
+      "id": "picker_law",
+      "group": "chrome",
+      "label": "Picker +Add new"
+    },
+    {
+      "id": "qbo_chrome",
+      "group": "chrome",
+      "label": "QBO chrome"
+    },
+    {
+      "id": "connectivity",
+      "group": "wiring",
+      "label": "Connectivity"
+    },
+    {
+      "id": "reverse_link",
+      "group": "wiring",
+      "label": "Reverse link"
+    },
+    {
+      "id": "scenario.ap",
+      "group": "process",
+      "label": "Bill payment hop"
+    }
+  ],
+  "leaves": [
+    {
+      "id": "home.roster",
+      "tab": "All Vendors",
+      "sub": "Master-detail roster home",
+      "route_hint": "/vendors",
+      "required": [
+        "vendor",
+        "ap_bill",
+        "gl_je",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ]
+    },
+    {
+      "id": "list.view_list",
+      "tab": "All Vendors",
+      "sub": "List view mode",
+      "route_hint": "/vendors",
+      "required": [
+        "vendor",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "list.view_master_detail",
+      "tab": "All Vendors",
+      "sub": "Master-detail view mode",
+      "route_hint": "/vendors",
+      "required": [
+        "vendor",
+        "connectivity",
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "list.segment.all",
+      "tab": "All Vendors",
+      "sub": "Segment · All",
+      "route_hint": "/vendors?listTab=all",
+      "required": [
+        "vendor",
+        "connectivity"
+      ]
+    },
+    {
+      "id": "list.segment.active",
+      "tab": "All Vendors",
+      "sub": "Segment · Active (default)",
+      "route_hint": "/vendors",
+      "required": [
+        "vendor",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "list.segment.inactive",
+      "tab": "All Vendors",
+      "sub": "Segment · Inactive",
+      "route_hint": "/vendors?listTab=inactive",
+      "required": [
+        "vendor",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "list.segment.by_category",
+      "tab": "By Category",
+      "sub": "Segment · vendor_type filter",
+      "route_hint": "/vendors?listTab=by-category",
+      "required": [
+        "vendor",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ]
+    },
+    {
+      "id": "list.filters",
+      "tab": "All Vendors",
+      "sub": "Roster collapsed filters (status · category)",
+      "route_hint": "/vendors",
+      "required": [
+        "vendor",
+        "connectivity",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "list.filter_chips",
+      "tab": "All Vendors",
+      "sub": "List view filter chips (Active · 1099 · With open)",
+      "route_hint": "/vendors",
+      "required": [
+        "vendor",
+        "ap_bill",
+        "connectivity",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "list.create",
+      "tab": "All Vendors",
+      "sub": "+ Create Vendor",
+      "route_hint": "/vendors",
+      "required": [
+        "vendor",
+        "driver",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "list.sync",
+      "tab": "All Vendors",
+      "sub": "QBO vendor clone/reconcile panel",
+      "route_hint": "/vendors",
+      "required": [
+        "vendor",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "list.bulk",
+      "tab": "All Vendors",
+      "sub": "List view bulk update selection",
+      "route_hint": "/vendors",
+      "required": [
+        "vendor",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "list.export_csv",
+      "tab": "All Vendors",
+      "sub": "List view CSV export",
+      "route_hint": "/vendors",
+      "required": [
+        "vendor",
+        "ap_bill",
+        "connectivity"
+      ]
+    },
+    {
+      "id": "md.transaction_list",
+      "tab": "Vendor Detail",
+      "sub": "Transaction List tab (master-detail)",
+      "route_hint": "/vendors?tab=transaction_list",
+      "required": [
+        "vendor",
+        "ap_bill",
+        "load",
+        "gl_je",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "md.vendor_details",
+      "tab": "Vendor Detail",
+      "sub": "Vendor Details tab",
+      "route_hint": "/vendors?tab=vendor_details",
+      "required": [
+        "vendor",
+        "driver",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "md.notes",
+      "tab": "Vendor Detail",
+      "sub": "Notes tab",
+      "route_hint": "/vendors?tab=notes",
+      "required": [
+        "vendor",
+        "connectivity"
+      ]
+    },
+    {
+      "id": "md.header.edit",
+      "tab": "Vendor Detail",
+      "sub": "Edit → /vendors/:id full profile",
+      "route_hint": "/vendors/:id",
+      "required": [
+        "vendor",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "md.header.new_transaction",
+      "tab": "Vendor Detail",
+      "sub": "New transaction (bill create hop)",
+      "route_hint": "/accounting/bills?vendor_id=",
+      "required": [
+        "vendor",
+        "ap_bill",
+        "gl_je",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome",
+        "scenario.ap"
+      ]
+    },
+    {
+      "id": "md.txn.filters",
+      "tab": "Vendor Detail",
+      "sub": "Transaction list filters (status · date · category)",
+      "route_hint": "/vendors?tab=transaction_list",
+      "required": [
+        "vendor",
+        "ap_bill",
+        "connectivity",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "detail.profile",
+      "tab": "Profile",
+      "sub": "Vendor profile tab (/vendors/:id)",
+      "route_hint": "/vendors/:id",
+      "required": [
+        "vendor",
+        "driver",
+        "unit",
+        "connectivity",
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "detail.profile.edit",
+      "tab": "Profile",
+      "sub": "Profile Edit / Save",
+      "route_hint": "/vendors/:id",
+      "required": [
+        "vendor",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "detail.profile.driver_link",
+      "tab": "Profile",
+      "sub": "Linked driver (A/P payee) reverse drill",
+      "route_hint": "/vendors/:id",
+      "required": [
+        "vendor",
+        "driver",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "detail.profile.vendor_type_picker",
+      "tab": "Profile",
+      "sub": "+ Add new vendor type (catalogs.vendor_types)",
+      "route_hint": "/vendors/:id",
+      "required": [
+        "vendor",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "detail.profile.default_expense_account",
+      "tab": "Profile",
+      "sub": "Default expense account (+ Create account)",
+      "route_hint": "/vendors/:id",
+      "required": [
+        "vendor",
+        "expense",
+        "gl_je",
+        "picker_law",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "detail.profile.payment_terms",
+      "tab": "Profile",
+      "sub": "Payment terms picker",
+      "route_hint": "/vendors/:id",
+      "required": [
+        "vendor",
+        "ap_bill",
+        "picker_law",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "detail.profile.category_save",
+      "tab": "Profile",
+      "sub": "Accounting category chip + lock",
+      "route_hint": "/vendors/:id",
+      "required": [
+        "vendor",
+        "expense",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "detail.inactivate",
+      "tab": "Profile",
+      "sub": "Inactivate vendor (deactivated_at)",
+      "route_hint": "/vendors/:id",
+      "required": [
+        "vendor",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "detail.reactivate",
+      "tab": "Profile",
+      "sub": "Reactivate vendor",
+      "route_hint": "/vendors/:id",
+      "required": [
+        "vendor",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "detail.safer_verify",
+      "tab": "Profile",
+      "sub": "Verify SAFER (FMCSA carrier lookup)",
+      "route_hint": "/vendors/:id",
+      "required": [
+        "vendor",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "detail.ap",
+      "tab": "A/P",
+      "sub": "Accounts payable tab",
+      "route_hint": "/vendors/:id?tab=ap",
+      "required": [
+        "vendor",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "liability",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "detail.ap.record_bill_payment",
+      "tab": "A/P",
+      "sub": "Record Bill Payment panel",
+      "route_hint": "/vendors/:id?tab=ap",
+      "required": [
+        "vendor",
+        "ap_bill",
+        "gl_je",
+        "liability",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link",
+        "scenario.ap"
+      ]
+    },
+    {
+      "id": "detail.ap.bills",
+      "tab": "A/P",
+      "sub": "Open bills table (EntityLink drill)",
+      "route_hint": "/vendors/:id?tab=ap",
+      "required": [
+        "vendor",
+        "ap_bill",
+        "load",
+        "gl_je",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "detail.ap.expenses",
+      "tab": "A/P",
+      "sub": "Vendor expenses table",
+      "route_hint": "/vendors/:id?tab=ap",
+      "required": [
+        "vendor",
+        "expense",
+        "gl_je",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "detail.ap.vendor_credits",
+      "tab": "A/P",
+      "sub": "Vendor credits + view-all hop",
+      "route_hint": "/vendors/:id?tab=ap",
+      "required": [
+        "vendor",
+        "liability",
+        "ap_bill",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "detail.ap.bill_payments",
+      "tab": "A/P",
+      "sub": "Recent bill payments history",
+      "route_hint": "/vendors/:id?tab=ap",
+      "required": [
+        "vendor",
+        "ap_bill",
+        "gl_je",
+        "connectivity",
+        "reverse_link",
+        "scenario.ap"
+      ]
+    },
+    {
+      "id": "detail.documents",
+      "tab": "Documents",
+      "sub": "Vendor documents (W-9 attach)",
+      "route_hint": "/vendors/:id",
+      "required": [
+        "vendor",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "detail.audit_history",
+      "tab": "Audit History",
+      "sub": "Entity audit trail",
+      "route_hint": "/vendors/:id",
+      "required": [
+        "vendor",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "detail.tasks",
+      "tab": "Tasks",
+      "sub": "Vendor tasks tab",
+      "route_hint": "/vendors/:id",
+      "required": [
+        "vendor",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "detail.w9_1099",
+      "tab": "W-9 / 1099",
+      "sub": "1099 eligibility + W-9 drill-through",
+      "route_hint": "/vendors/:id",
+      "required": [
+        "vendor",
+        "ap_bill",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    }
+  ]
+}

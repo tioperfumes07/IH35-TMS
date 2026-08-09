@@ -730,11 +730,12 @@ export async function registerAuditScoreboardRoutes(app: FastifyInstance) {
         "drivers",
         "fleet",
         "customers",
+        "vendors",
       ]);
       if (!SUPPORTED.has(moduleId)) {
         return reply.code(400).send({
           error: "unsupported_module",
-          message: `module-matrix supports module=maintenance|safety|insurance|legal|accounting|banking|dispatch|settlements|fuel|drivers|fleet|customers`,
+          message: `module-matrix supports module=maintenance|safety|insurance|legal|accounting|banking|dispatch|settlements|fuel|drivers|fleet|customers|vendors`,
         });
       }
       try {
