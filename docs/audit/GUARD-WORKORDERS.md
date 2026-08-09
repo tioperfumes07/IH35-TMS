@@ -1286,3 +1286,25 @@ A noisy guard is worse than no guard — it launders a real signal into backgrou
 message already prescribes this; (b) skip `.service` / `.routes` / `.cron` filename tokens; (c) re-baseline the
 known-debt list against the real remainder afterwards.
 **CC-3 will not build it:** #5018 pruned this guard's debt file, so it is maker-adjacent — CC-3 verifies the fix.
+
+## OPEN · CC-1/safety-lane · P2 · HEALTHZ-RED-UNTIL-OCTOBER — deep /healthz is red over an already-fixed defect
+**Found by CC-3 on prod `02bab31` (public endpoint + `_system.background_jobs`).**
+
+`GET /api/v1/healthz` → `ok:false`; sole failing check `background_jobs.stale` = `never_succeeded_jobs`.
+The only never-succeeded job is **`safety.da_random_pool.quarterly_draw`** — failed `2026-07-01T12:00:00Z` with
+`"for SELECT DISTINCT, ORDER BY expressions must appear in select list"`.
+
+**The bug is ALREADY FIXED and deployed:** SAF-F62, `random-pool.service.ts:90-100`, commit `bf66fedb1`
+(2026-08-01), verified an ancestor of prod `02bab31`. **But the cron is quarterly** —
+`CRON_EXPRESSION = "0 7 1 1,4,7,10 *"` — so the fixed code has had no opportunity to run and will not until
+**2026-10-01**.
+
+**WHY IT MATTERS:** deep `/healthz` stays red for ~2 months over a repaired defect. During that window a genuinely
+new failure is indistinguishable from this known artifact, and `/healthz` is the endpoint every lane scores
+deploys against. Same class as SQL-READ-TARGETS-FALSE-PHANTOMS: a permanently-red monitor stops being read.
+
+**ASK:** run one `runDaRandomPoolDrawTick()` (exported, `jobs/da-random-pool-draw-worker.ts:36`) so the fixed
+path proves itself and the signal clears — **but note this generates a real FMCSA random-selection draw and real
+DOT test obligations, so it is a compliance decision for the safety lane, not a mechanical one.** Alternative:
+have the never-succeeded test exempt a job whose fix post-dates its last scheduled run.
+**CC-3 verifies; CC-3 does not run it.**
