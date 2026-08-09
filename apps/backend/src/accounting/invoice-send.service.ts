@@ -273,19 +273,51 @@ export async function sendDraftInvoice(
     userId: input.userId,
   });
   if (!invoiceGl.posted && invoiceGl.reason === "post_failed") {
+    // ACCT-F293 — a DESIGNED STAND-DOWN IS NOT A FAILURE, and filing it as one manufactures false
+    // alarms.
+    //
+    // INVOICE_REVREC_LATCH_OWNS_LOAD is the ACCT-F205 interlock WORKING: the two-event delivery latch
+    // has already posted DR A/R / CR Unbilled for this load, so posting the invoice would recognize
+    // A/R and revenue a SECOND time for the same freight (previously measured at $1,875.50 on load
+    // L-20260806-0008). Suppressing that duplicate is the correct outcome — the invoice remains a
+    // valid customer document, only its redundant GL leg is skipped.
+    //
+    // It nonetheless arrived here as `post_failed` at severity "warning", because the posting engine
+    // signals the interlock by THROWING a PostingEngineError. On prod all four
+    // INVOICE_REVREC_LATCH_OWNS_LOAD rows sit under accounting.invoice.gl_post_failed alongside a
+    // genuine INVOICE_LINE_REVENUE_UNRESOLVED failure, indistinguishable to any reader. That reads as
+    // "four invoices failed to post" when the truth is "four invoices correctly declined to
+    // double-post", and a reader who trusts the event name will go looking for missing money that is
+    // already on the books.
+    //
+    // ADDITIVE, NOT A RENAME: accounting.invoice.gl_post_failed keeps its exact meaning for real
+    // failures and existing consumers are untouched. The by-design case gets its OWN class at
+    // severity "info". Both still carry resource_id, so both remain joinable to the invoice.
+    const isDesignedStandDown = invoiceGl.code === "INVOICE_REVREC_LATCH_OWNS_LOAD";
     await appendCrudAudit(
       client,
       input.userId,
-      "accounting.invoice.gl_post_failed",
+      isDesignedStandDown
+        ? "accounting.invoice.gl_post_skipped_by_design"
+        : "accounting.invoice.gl_post_failed",
       {
         resource_type: "accounting.invoices",
         resource_id: input.invoiceId,
         operating_company_id: input.operatingCompanyId,
         code: invoiceGl.code,
         message: invoiceGl.message,
+        ...(isDesignedStandDown
+          ? {
+              by_design: true,
+              interlock: "ACCT-F205",
+              effect:
+                "the delivery latch already posted A/R and revenue for this load; the invoice's GL " +
+                "leg is intentionally suppressed to prevent double-recognition. No money is missing.",
+            }
+          : {}),
       },
-      "warning",
-      "ACCT-F100-INVOICE-AR-GL"
+      isDesignedStandDown ? "info" : "warning",
+      isDesignedStandDown ? "ACCT-F293" : "ACCT-F100-INVOICE-AR-GL"
     );
   }
 
