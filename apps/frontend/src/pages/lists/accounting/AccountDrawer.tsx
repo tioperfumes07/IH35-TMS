@@ -1,3 +1,4 @@
+import { userFacingApiError } from "../../../lib/api-error-message";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { DatePicker } from "../../../components/forms/DatePicker";
@@ -269,13 +270,13 @@ export function AccountDrawer({ open, mode, account, operatingCompanyId, onClose
       onClose();
     } catch (err) {
       const data = (err as { data?: Record<string, unknown> }).data ?? {};
-      const errCode = String(data.error ?? (err as Error).message ?? "save_failed");
+      const errCode = String(data.error ?? "");
       if (errCode === "account_is_locked") {
         setSubmitError("This account is locked and cannot be edited.");
       } else if (errCode === "catalog_account_conflict_account_number") {
         setErrors((prev) => ({ ...prev, account_number: "Account number already in use." }));
       } else {
-        setSubmitError(`Failed to save account: ${errCode}`);
+        setSubmitError(userFacingApiError(err, "Failed to save account"));
       }
     } finally {
       setIsSaving(false);
@@ -296,11 +297,11 @@ export function AccountDrawer({ open, mode, account, operatingCompanyId, onClose
       onClose();
     } catch (err) {
       const data = (err as { data?: Record<string, unknown> }).data ?? {};
-      const errCode = String(data.error ?? (err as Error).message ?? "archive_failed");
+      const errCode = String(data.error ?? "");
       if (errCode === "account_is_locked") {
         setSubmitError("This account is locked and cannot be archived.");
       } else {
-        setSubmitError(`Failed to archive account: ${errCode}`);
+        setSubmitError(userFacingApiError(err, "Failed to archive account"));
       }
     } finally {
       setIsSaving(false);

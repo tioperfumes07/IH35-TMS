@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { entityLabel } from "../../lib/entity-label";
 import { patchAssignUnit } from "../../api/dispatch";
-import { ApiError } from "../../api/client";
+import { userFacingApiError } from "../../lib/api-error-message";
 import { EntityPicker } from "../parity/EntityPicker";
 import { optimisticPatch } from "../../lib/optimisticPatch";
 
@@ -79,9 +79,5 @@ export function InlineUnitPicker({ loadId, operatingCompanyId, unitId, displayLa
 }
 
 function assignUnitErrorMessage(error: unknown): string {
-  if (error instanceof ApiError) {
-    const data = (error.data as { error?: string; message?: string } | undefined) ?? {};
-    return String(data.message ?? data.error ?? `Assign failed (${error.status})`);
-  }
-  return error instanceof Error ? error.message : "Update failed";
+  return userFacingApiError(error, "Assign failed");
 }

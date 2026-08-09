@@ -24,6 +24,7 @@ import {
   type WorkOrderType,
 } from "../../../api/maintenance";
 import { ApiError } from "../../../api/client";
+import { userFacingApiError } from "../../../lib/api-error-message";
 import { listVendors } from "../../../api/mdata";
 import { companyToday } from "../../../lib/businessDate";
 import { BILL_TERMS_OPTIONS } from "../../../lib/billTermsLabel";
@@ -693,7 +694,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
           return;
         }
       }
-      pushToast(`Failed to create work order: ${String((error as Error).message || error)}`, "error");
+      pushToast(userFacingApiError(error, "Failed to create work order"), "error");
     }
   };
 
@@ -793,7 +794,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
           return;
         }
       }
-      pushToast(`Failed to update work order: ${String((error as Error).message || error)}`, "error");
+      pushToast(userFacingApiError(error, "Failed to update work order"), "error");
     }
     setSavingEdit(false);
   };
