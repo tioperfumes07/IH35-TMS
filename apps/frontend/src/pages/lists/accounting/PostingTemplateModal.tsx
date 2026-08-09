@@ -1,3 +1,4 @@
+import { userFacingApiError } from "../../../lib/api-error-message";
 /**
  * ACCT-LINK-05 — Posting Templates create/edit (posting-engine consumers / blueprint 3.18.5.4).
  *
@@ -168,7 +169,7 @@ export function PostingTemplateModal({ open, mode, row, operatingCompanyId, clie
     } catch (error) {
       if (error instanceof ApiError) {
         const data = (error.data as Record<string, unknown>) ?? {};
-        setSubmitError(String(data.error ?? data.message ?? error.message));
+        setSubmitError(userFacingApiError(error, "Save failed"));
       } else {
         setSubmitError("Failed to save posting template.");
       }
