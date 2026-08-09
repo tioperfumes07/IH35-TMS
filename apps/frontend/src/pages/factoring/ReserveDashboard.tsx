@@ -13,6 +13,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useListState } from "../../components/list-state";
+import { formatDateUS } from "../../lib/formatDate";
 
 const LOOKAHEAD_WINDOWS = [7, 14, 30, 60] as const;
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
@@ -22,17 +23,11 @@ function asMoney(cents: number) {
 }
 
 function asDateTime(value: string | null | undefined) {
-  if (!value) return "-";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "-";
-  return date.toLocaleString();
+  return formatDateUS(value);
 }
 
 function asDate(value: string | null | undefined) {
-  if (!value) return "-";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "-";
-  return date.toLocaleDateString();
+  return formatDateUS(value);
 }
 
 // Display-only ParityTable columns — 1:1 with the former hand-rolled tables

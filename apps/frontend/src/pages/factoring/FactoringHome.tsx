@@ -33,6 +33,7 @@ import { Button } from "../../components/Button";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { formatQueryErrorDetail } from "../../lib/tableError";
+import { formatDateUS } from "../../lib/formatDate";
 import { Modal } from "../../components/Modal";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { DatePicker } from "../../components/forms/DatePicker";
@@ -77,9 +78,7 @@ function fmtCurrency(value: unknown) {
 
 function fmtDate(value: unknown) {
   if (!value) return "—";
-  const date = new Date(String(value));
-  if (Number.isNaN(date.getTime())) return "—";
-  return date.toLocaleDateString();
+  return formatDateUS(value);
 }
 
 // ParityTable migration (display-only): column order, labels, and cell formatting
