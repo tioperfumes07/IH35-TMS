@@ -4,6 +4,7 @@ import { formatUsdCents } from "../../lib/money";
 import { useQuery } from "@tanstack/react-query";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { EntityLink, type EntityKind } from "../../components/shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { getIntegrationTransactions, type IntegrationTxnItem } from "../../api/integration-transactions";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
@@ -101,13 +102,13 @@ export function IntegrationTransactionsPage() {
       render: (row) => {
         const kind = integrationEntityKind(row.entity_type);
         if (!kind || !row.entity_id) {
-          return <span className="font-mono text-xs text-gray-500">{row.entity_id ? `${row.entity_id.slice(0, 8)}…` : "—"}</span>;
+          return <span className="text-xs text-gray-500">{row.entity_id ? entityLabel(null, row.entity_id, "Entity") : "—"}</span>;
         }
         return (
           <EntityLink
             kind={kind}
             id={row.entity_id}
-            label={`${row.entity_id.slice(0, 8)}…`}
+            label={entityLabel(null, row.entity_id, "Entity")}
           />
         );
       },
