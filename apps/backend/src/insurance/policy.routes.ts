@@ -265,6 +265,7 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
         `
           INSERT INTO insurance.policy (
             tenant_id,
+            operating_company_id,
             insurer_name,
             policy_number,
             coverage_type,
@@ -282,7 +283,7 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
             status
           )
           VALUES (
-            $1::uuid, $2, $3, $4, $5::uuid, $6::date, $7::date, $8, $9, $10, $11, $12, $13, $14, $15, $16
+            $1::uuid, $1::uuid, $2, $3, $4, $5::uuid, $6::date, $7::date, $8, $9, $10, $11, $12, $13, $14, $15, $16
           )
           RETURNING ${policySelectColumns()}
         `,
