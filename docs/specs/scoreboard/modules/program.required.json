@@ -1,0 +1,209 @@
+{
+  "module": "program",
+  "entity_default": "USMCA",
+  "source": {
+    "pages": "apps/frontend/src/pages/program/*",
+    "nav": "ProgramModuleNav.tsx"
+  },
+  "columns": [
+    {
+      "id": "customer",
+      "group": "linkage",
+      "label": "Customer"
+    },
+    {
+      "id": "driver",
+      "group": "linkage",
+      "label": "Driver"
+    },
+    {
+      "id": "vendor",
+      "group": "linkage",
+      "label": "Vendor"
+    },
+    {
+      "id": "unit",
+      "group": "linkage",
+      "label": "Unit"
+    },
+    {
+      "id": "load",
+      "group": "linkage",
+      "label": "Load"
+    },
+    {
+      "id": "ap_bill",
+      "group": "money",
+      "label": "AP / Bill"
+    },
+    {
+      "id": "expense",
+      "group": "money",
+      "label": "Expense"
+    },
+    {
+      "id": "gl_je",
+      "group": "money",
+      "label": "GL / JE"
+    },
+    {
+      "id": "liability",
+      "group": "money",
+      "label": "Liability / Escrow"
+    },
+    {
+      "id": "picker_law",
+      "group": "chrome",
+      "label": "Picker +Add new"
+    },
+    {
+      "id": "qbo_chrome",
+      "group": "chrome",
+      "label": "QBO chrome"
+    },
+    {
+      "id": "connectivity",
+      "group": "wiring",
+      "label": "Connectivity"
+    },
+    {
+      "id": "reverse_link",
+      "group": "wiring",
+      "label": "Reverse link"
+    }
+  ],
+  "leaves": [
+    {
+      "id": "nav.scenario",
+      "tab": "Scenario tracker",
+      "sub": "Program landing / scenario tracker",
+      "route_hint": "/program",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "nav.matrix",
+      "tab": "Module matrix",
+      "sub": "Module matrix board",
+      "route_hint": "/program/matrix",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "nav.legacy",
+      "tab": "Legacy certification",
+      "sub": "Legacy audit scoreboard",
+      "route_hint": "/program/legacy-scoreboard",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "nav.tracker",
+      "tab": "Build progress",
+      "sub": "Program tracker / board",
+      "route_hint": "/program/tracker",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "nav.modules",
+      "tab": "Module completion",
+      "sub": "Module completion N of M",
+      "route_hint": "/program/modules",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "nav.final",
+      "tab": "Final additions",
+      "sub": "Final additions page",
+      "route_hint": "/program/final-additions",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "matrix.module_pill",
+      "tab": "Module matrix",
+      "sub": "Module pill switcher",
+      "route_hint": "/program/matrix",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "matrix.request_time_feed",
+      "tab": "Module matrix",
+      "sub": "REQUEST-TIME FEED banner",
+      "route_hint": "/program/matrix",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "matrix.live_api",
+      "tab": "Module matrix",
+      "sub": "GET module-matrix API wire",
+      "route_hint": "/program/matrix",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "legacy.board",
+      "tab": "Legacy",
+      "sub": "Legacy board page",
+      "route_hint": "/program/legacy-board",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "scenario.redirect",
+      "tab": "Scenario tracker",
+      "sub": "/home/scenario-tracker → /program",
+      "route_hint": "/home/scenario-tracker",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "hop.audit_coverage",
+      "tab": "Docs hop",
+      "sub": "AUDIT-COVERAGE-LIVE ledger",
+      "route_hint": "/program",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    }
+  ]
+}

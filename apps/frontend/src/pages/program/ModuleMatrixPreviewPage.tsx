@@ -30,6 +30,7 @@ import inventoryRequired from "@scoreboard/modules/inventory.required.json";
 import complianceRequired from "@scoreboard/modules/compliance.required.json";
 import cashFlowRequired from "@scoreboard/modules/cash-flow.required.json";
 import homeRequired from "@scoreboard/modules/home.required.json";
+import programRequired from "@scoreboard/modules/program.required.json";
 import { ProgramModuleNav } from "./ProgramModuleNav";
 
 type Tri = "done" | "audited" | "unaudited" | "na";
@@ -106,7 +107,8 @@ type MatrixModuleId =
   | "inventory"
   | "compliance"
   | "cash-flow"
-  | "home";
+  | "home"
+  | "program";
 
 const REQUIRED_BY_MODULE: Record<MatrixModuleId, RequiredMap> = {
   maintenance: maintRequired as RequiredMap,
@@ -129,6 +131,7 @@ const REQUIRED_BY_MODULE: Record<MatrixModuleId, RequiredMap> = {
   compliance: complianceRequired as RequiredMap,
   "cash-flow": cashFlowRequired as RequiredMap,
   home: homeRequired as RequiredMap,
+  program: programRequired as RequiredMap,
 };
 
 const LIVE_MODULES: MatrixModuleId[] = [
@@ -152,6 +155,7 @@ const LIVE_MODULES: MatrixModuleId[] = [
   "compliance",
   "cash-flow",
   "home",
+  "program",
 ];
 
 const MODULES = [
@@ -453,6 +457,7 @@ function parseModule(raw: string | null): MatrixModuleId {
   if (raw === "compliance") return "compliance";
   if (raw === "cash-flow" || raw === "cash_flow" || raw === "cashflow") return "cash-flow";
   if (raw === "home") return "home";
+  if (raw === "program") return "program";
   return "maintenance";
 }
 

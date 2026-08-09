@@ -333,6 +333,9 @@ function moduleTouchRe(moduleId: string): RegExp {
   if (moduleId === "home") {
     return /\bhome\b|\bowner[\s_-]?home|\bquick[\s_-]?jump|\bkpi\b|\battention[\s_-]?list/i;
   }
+  if (moduleId === "program") {
+    return /\bprogram\b|\bmodule[\s_-]?matrix|\bscenario[\s_-]?tracker|\baudit[\s_-]?scoreboard/i;
+  }
   return /maintenance|\bwork[\s_-]?order|\bwos?\b|\bmaint\b/i;
 }
 
