@@ -1,0 +1,3582 @@
+{
+  "module": "lists",
+  "entity_default": "USMCA",
+  "source": {
+    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md — Module 12 LISTS / CATALOGS",
+    "hub": "apps/frontend/src/pages/lists/components/AllCatalogsMap.tsx DOMAIN_CONFIG",
+    "hub_page": "apps/frontend/src/pages/lists/ListsHubPage.tsx",
+    "routes": "apps/frontend/src/routes/manifest.tsx /lists/*",
+    "count_spec": "apps/backend/src/lists/lists-module-count-spec.ts"
+  },
+  "columns": [
+    {
+      "id": "driver",
+      "group": "linkage",
+      "label": "Driver"
+    },
+    {
+      "id": "customer",
+      "group": "linkage",
+      "label": "Customer"
+    },
+    {
+      "id": "vendor",
+      "group": "linkage",
+      "label": "Vendor"
+    },
+    {
+      "id": "unit",
+      "group": "linkage",
+      "label": "Unit"
+    },
+    {
+      "id": "trailer",
+      "group": "linkage",
+      "label": "Trailer"
+    },
+    {
+      "id": "load",
+      "group": "linkage",
+      "label": "Load"
+    },
+    {
+      "id": "ap_bill",
+      "group": "money",
+      "label": "AP / Bill"
+    },
+    {
+      "id": "expense",
+      "group": "money",
+      "label": "Expense"
+    },
+    {
+      "id": "gl_je",
+      "group": "money",
+      "label": "GL / JE"
+    },
+    {
+      "id": "liability",
+      "group": "money",
+      "label": "Liability / Escrow"
+    },
+    {
+      "id": "picker_law",
+      "group": "chrome",
+      "label": "Picker +Add new"
+    },
+    {
+      "id": "qbo_chrome",
+      "group": "chrome",
+      "label": "QBO chrome"
+    },
+    {
+      "id": "connectivity",
+      "group": "wiring",
+      "label": "Connectivity"
+    },
+    {
+      "id": "reverse_link",
+      "group": "wiring",
+      "label": "Reverse link"
+    }
+  ],
+  "leaves": [
+    {
+      "id": "hub.home",
+      "tab": "Lists hub",
+      "sub": "All catalogs domain map",
+      "route_hint": "/lists",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "hub.names_search",
+      "tab": "Names master",
+      "sub": "Cross-module name search",
+      "route_hint": "/lists/names",
+      "required": [
+        "customer",
+        "vendor",
+        "driver",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "hub.catalog_index",
+      "tab": "Catalog factory",
+      "sub": "Generic catalog index",
+      "route_hint": "/lists/catalogs",
+      "required": [
+        "connectivity"
+      ]
+    },
+    {
+      "id": "hub.domain.safety",
+      "tab": "Safety",
+      "sub": "Safety domain hub",
+      "route_hint": "/lists/hub/safety",
+      "required": [
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "hub.domain.dispatch",
+      "tab": "Dispatch",
+      "sub": "Dispatch domain hub",
+      "route_hint": "/lists/hub/dispatch",
+      "required": [
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "hub.domain.drivers",
+      "tab": "Drivers",
+      "sub": "Drivers domain hub",
+      "route_hint": "/lists/hub/drivers",
+      "required": [
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "hub.domain.maintenance",
+      "tab": "Maintenance",
+      "sub": "Maintenance domain hub",
+      "route_hint": "/lists/hub/maintenance",
+      "required": [
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "hub.domain.fuel",
+      "tab": "Fuel",
+      "sub": "Fuel domain hub",
+      "route_hint": "/lists/hub/fuel",
+      "required": [
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "hub.domain.fleet",
+      "tab": "Fleet",
+      "sub": "Fleet domain hub",
+      "route_hint": "/lists/hub/fleet",
+      "required": [
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "hub.domain.accounting",
+      "tab": "Accounting",
+      "sub": "Accounting domain hub",
+      "route_hint": "/lists/hub/accounting",
+      "required": [
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "hub.domain.customers",
+      "tab": "Customers",
+      "sub": "Customers domain hub",
+      "route_hint": "/lists/hub/customers",
+      "required": [
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "hub.domain.vendors",
+      "tab": "Vendors",
+      "sub": "Vendors domain hub",
+      "route_hint": "/lists/hub/vendors",
+      "required": [
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "hub.domain.names_master",
+      "tab": "Names master",
+      "sub": "Names master domain hub",
+      "route_hint": "/lists/hub/names_master",
+      "required": [
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "hub.domain.reference",
+      "tab": "Reference",
+      "sub": "Reference domain hub",
+      "route_hint": "/lists/hub/reference",
+      "required": [
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.safety.accident_types.list",
+      "tab": "Safety",
+      "sub": "Accident Types",
+      "route_hint": "/lists/safety/accident-types",
+      "required": [
+        "driver",
+        "load",
+        "unit",
+        "liability",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.safety.accident_types.create",
+      "tab": "Safety",
+      "sub": "+ Create — Accident Types",
+      "route_hint": "/lists/safety/accident-types",
+      "required": [
+        "driver",
+        "load",
+        "unit",
+        "liability",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.safety.workplace_incident_types.list",
+      "tab": "Safety",
+      "sub": "Accident Types",
+      "route_hint": "/lists/safety/workplace-incident-types",
+      "required": [
+        "driver",
+        "load",
+        "unit",
+        "liability",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.safety.workplace_incident_types.create",
+      "tab": "Safety",
+      "sub": "+ Create — Accident Types",
+      "route_hint": "/lists/safety/workplace-incident-types",
+      "required": [
+        "driver",
+        "load",
+        "unit",
+        "liability",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.safety.internal_fine_reasons.list",
+      "tab": "Safety",
+      "sub": "Accident Types",
+      "route_hint": "/lists/safety/internal-fine-reasons",
+      "required": [
+        "driver",
+        "load",
+        "unit",
+        "liability",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.safety.internal_fine_reasons.create",
+      "tab": "Safety",
+      "sub": "+ Create — Accident Types",
+      "route_hint": "/lists/safety/internal-fine-reasons",
+      "required": [
+        "driver",
+        "load",
+        "unit",
+        "liability",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.safety.civil_fine_types.list",
+      "tab": "Safety",
+      "sub": "Accident Types",
+      "route_hint": "/lists/safety/civil-fine-types",
+      "required": [
+        "driver",
+        "load",
+        "unit",
+        "liability",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.safety.civil_fine_types.create",
+      "tab": "Safety",
+      "sub": "+ Create — Accident Types",
+      "route_hint": "/lists/safety/civil-fine-types",
+      "required": [
+        "driver",
+        "load",
+        "unit",
+        "liability",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.safety.company_violation_types.list",
+      "tab": "Safety",
+      "sub": "Workplace Incident Types",
+      "route_hint": "/lists/safety/company-violation-types",
+      "required": [
+        "driver",
+        "load",
+        "unit",
+        "liability",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.safety.company_violation_types.create",
+      "tab": "Safety",
+      "sub": "+ Create — Workplace Incident Types",
+      "route_hint": "/lists/safety/company-violation-types",
+      "required": [
+        "driver",
+        "load",
+        "unit",
+        "liability",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.safety.complaint_types.list",
+      "tab": "Safety",
+      "sub": "Internal Fine Reasons",
+      "route_hint": "/lists/safety/complaint-types",
+      "required": [
+        "driver",
+        "load",
+        "unit",
+        "liability",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.safety.complaint_types.create",
+      "tab": "Safety",
+      "sub": "+ Create — Internal Fine Reasons",
+      "route_hint": "/lists/safety/complaint-types",
+      "required": [
+        "driver",
+        "load",
+        "unit",
+        "liability",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.safety.dot_violation_types.list",
+      "tab": "Safety",
+      "sub": "Civil Fine Types",
+      "route_hint": "/lists/safety/dot-violation-types",
+      "required": [
+        "driver",
+        "load",
+        "unit",
+        "liability",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.safety.dot_violation_types.create",
+      "tab": "Safety",
+      "sub": "+ Create — Civil Fine Types",
+      "route_hint": "/lists/safety/dot-violation-types",
+      "required": [
+        "driver",
+        "load",
+        "unit",
+        "liability",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.safety.cargo_claim_reasons.list",
+      "tab": "Safety",
+      "sub": "Company Violation Types",
+      "route_hint": "/lists/safety/cargo-claim-reasons",
+      "required": [
+        "driver",
+        "load",
+        "unit",
+        "liability",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.safety.cargo_claim_reasons.create",
+      "tab": "Safety",
+      "sub": "+ Create — Company Violation Types",
+      "route_hint": "/lists/safety/cargo-claim-reasons",
+      "required": [
+        "driver",
+        "load",
+        "unit",
+        "liability",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.dispatch.dispatch_flag_colors.list",
+      "tab": "Dispatch",
+      "sub": "Dispatch Flag Colors",
+      "route_hint": "/lists/dispatch/dispatch-flag-colors",
+      "required": [
+        "load",
+        "customer",
+        "driver",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.dispatch.dispatch_flag_colors.create",
+      "tab": "Dispatch",
+      "sub": "+ Create — Dispatch Flag Colors",
+      "route_hint": "/lists/dispatch/dispatch-flag-colors",
+      "required": [
+        "load",
+        "customer",
+        "driver",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.dispatch.load_trailer_equipment.list",
+      "tab": "Dispatch",
+      "sub": "Dispatch Flag Colors",
+      "route_hint": "/lists/dispatch/load-trailer-equipment",
+      "required": [
+        "load",
+        "customer",
+        "driver",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.dispatch.load_trailer_equipment.create",
+      "tab": "Dispatch",
+      "sub": "+ Create — Dispatch Flag Colors",
+      "route_hint": "/lists/dispatch/load-trailer-equipment",
+      "required": [
+        "load",
+        "customer",
+        "driver",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.dispatch.load_types.list",
+      "tab": "Dispatch",
+      "sub": "Dispatch Flag Colors",
+      "route_hint": "/lists/dispatch/load-types",
+      "required": [
+        "load",
+        "customer",
+        "driver",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.dispatch.load_types.create",
+      "tab": "Dispatch",
+      "sub": "+ Create — Dispatch Flag Colors",
+      "route_hint": "/lists/dispatch/load-types",
+      "required": [
+        "load",
+        "customer",
+        "driver",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.dispatch.detention_reasons.list",
+      "tab": "Dispatch",
+      "sub": "Dispatch Flag Colors",
+      "route_hint": "/lists/dispatch/detention-reasons",
+      "required": [
+        "load",
+        "customer",
+        "driver",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.dispatch.detention_reasons.create",
+      "tab": "Dispatch",
+      "sub": "+ Create — Dispatch Flag Colors",
+      "route_hint": "/lists/dispatch/detention-reasons",
+      "required": [
+        "load",
+        "customer",
+        "driver",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.dispatch.pickup_time_types.list",
+      "tab": "Dispatch",
+      "sub": "Load Trailer Equipment",
+      "route_hint": "/lists/dispatch/pickup-time-types",
+      "required": [
+        "load",
+        "customer",
+        "driver",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.dispatch.pickup_time_types.create",
+      "tab": "Dispatch",
+      "sub": "+ Create — Load Trailer Equipment",
+      "route_hint": "/lists/dispatch/pickup-time-types",
+      "required": [
+        "load",
+        "customer",
+        "driver",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.dispatch.additional_charges.list",
+      "tab": "Dispatch",
+      "sub": "Load Types",
+      "route_hint": "/lists/dispatch/additional-charges",
+      "required": [
+        "load",
+        "customer",
+        "driver",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.dispatch.additional_charges.create",
+      "tab": "Dispatch",
+      "sub": "+ Create — Load Types",
+      "route_hint": "/lists/dispatch/additional-charges",
+      "required": [
+        "load",
+        "customer",
+        "driver",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.dispatch.load_cancellation_reasons.list",
+      "tab": "Dispatch",
+      "sub": "Detention Reasons",
+      "route_hint": "/lists/dispatch/load-cancellation-reasons",
+      "required": [
+        "load",
+        "customer",
+        "driver",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.dispatch.load_cancellation_reasons.create",
+      "tab": "Dispatch",
+      "sub": "+ Create — Detention Reasons",
+      "route_hint": "/lists/dispatch/load-cancellation-reasons",
+      "required": [
+        "load",
+        "customer",
+        "driver",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.dispatch.dispatcher_error_reasons.list",
+      "tab": "Dispatch",
+      "sub": "Load Cancellation Reasons",
+      "route_hint": "/lists/dispatch/dispatcher-error-reasons",
+      "required": [
+        "load",
+        "customer",
+        "driver",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.dispatch.dispatcher_error_reasons.create",
+      "tab": "Dispatch",
+      "sub": "+ Create — Load Cancellation Reasons",
+      "route_hint": "/lists/dispatch/dispatcher-error-reasons",
+      "required": [
+        "load",
+        "customer",
+        "driver",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.dispatch.lumper_providers.list",
+      "tab": "Dispatch",
+      "sub": "Dispatcher Error Reasons",
+      "route_hint": "/lists/dispatch/lumper-providers",
+      "required": [
+        "load",
+        "customer",
+        "driver",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.dispatch.lumper_providers.create",
+      "tab": "Dispatch",
+      "sub": "+ Create — Dispatcher Error Reasons",
+      "route_hint": "/lists/dispatch/lumper-providers",
+      "required": [
+        "load",
+        "customer",
+        "driver",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.drivers.termination_reasons.list",
+      "tab": "Drivers",
+      "sub": "Termination Reasons",
+      "route_hint": "/lists/drivers/termination-reasons",
+      "required": [
+        "driver",
+        "load",
+        "gl_je",
+        "liability",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.drivers.termination_reasons.create",
+      "tab": "Drivers",
+      "sub": "+ Create — Termination Reasons",
+      "route_hint": "/lists/drivers/termination-reasons",
+      "required": [
+        "driver",
+        "load",
+        "gl_je",
+        "liability",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.drivers.cash_advance_types.list",
+      "tab": "Drivers",
+      "sub": "Termination Reasons",
+      "route_hint": "/lists/driver/cash-advance-types",
+      "required": [
+        "driver",
+        "load",
+        "gl_je",
+        "liability",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.drivers.cash_advance_types.create",
+      "tab": "Drivers",
+      "sub": "+ Create — Termination Reasons",
+      "route_hint": "/lists/driver/cash-advance-types",
+      "required": [
+        "driver",
+        "load",
+        "gl_je",
+        "liability",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.drivers.endorsements.list",
+      "tab": "Drivers",
+      "sub": "Termination Reasons",
+      "route_hint": "/lists/drivers/endorsements",
+      "required": [
+        "driver",
+        "load",
+        "gl_je",
+        "liability",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.drivers.endorsements.create",
+      "tab": "Drivers",
+      "sub": "+ Create — Termination Reasons",
+      "route_hint": "/lists/drivers/endorsements",
+      "required": [
+        "driver",
+        "load",
+        "gl_je",
+        "liability",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.drivers.restrictions.list",
+      "tab": "Drivers",
+      "sub": "Termination Reasons",
+      "route_hint": "/lists/drivers/restrictions",
+      "required": [
+        "driver",
+        "load",
+        "gl_je",
+        "liability",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.drivers.restrictions.create",
+      "tab": "Drivers",
+      "sub": "+ Create — Termination Reasons",
+      "route_hint": "/lists/drivers/restrictions",
+      "required": [
+        "driver",
+        "load",
+        "gl_je",
+        "liability",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.drivers.employment_status.list",
+      "tab": "Drivers",
+      "sub": "Cash Advance Types",
+      "route_hint": "/lists/drivers/employment-status",
+      "required": [
+        "driver",
+        "load",
+        "gl_je",
+        "liability",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.drivers.employment_status.create",
+      "tab": "Drivers",
+      "sub": "+ Create — Cash Advance Types",
+      "route_hint": "/lists/drivers/employment-status",
+      "required": [
+        "driver",
+        "load",
+        "gl_je",
+        "liability",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.drivers.leave_types.list",
+      "tab": "Drivers",
+      "sub": "CDL Endorsements",
+      "route_hint": "/lists/driver/leave-types",
+      "required": [
+        "driver",
+        "load",
+        "gl_je",
+        "liability",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.drivers.leave_types.create",
+      "tab": "Drivers",
+      "sub": "+ Create — CDL Endorsements",
+      "route_hint": "/lists/driver/leave-types",
+      "required": [
+        "driver",
+        "load",
+        "gl_je",
+        "liability",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.drivers.medical_card_status.list",
+      "tab": "Drivers",
+      "sub": "CDL Restrictions",
+      "route_hint": "/lists/drivers/medical-card-status",
+      "required": [
+        "driver",
+        "load",
+        "gl_je",
+        "liability",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.drivers.medical_card_status.create",
+      "tab": "Drivers",
+      "sub": "+ Create — CDL Restrictions",
+      "route_hint": "/lists/drivers/medical-card-status",
+      "required": [
+        "driver",
+        "load",
+        "gl_je",
+        "liability",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.drivers.pay_rate_templates.list",
+      "tab": "Drivers",
+      "sub": "Employment Statuses",
+      "route_hint": "/lists/driver/pay-rate-templates",
+      "required": [
+        "driver",
+        "load",
+        "gl_je",
+        "liability",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.drivers.pay_rate_templates.create",
+      "tab": "Drivers",
+      "sub": "+ Create — Employment Statuses",
+      "route_hint": "/lists/driver/pay-rate-templates",
+      "required": [
+        "driver",
+        "load",
+        "gl_je",
+        "liability",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.drivers.deduction_types.list",
+      "tab": "Drivers",
+      "sub": "Leave Types",
+      "route_hint": "/lists/driver/deduction-types",
+      "required": [
+        "driver",
+        "load",
+        "gl_je",
+        "liability",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.drivers.deduction_types.create",
+      "tab": "Drivers",
+      "sub": "+ Create — Leave Types",
+      "route_hint": "/lists/driver/deduction-types",
+      "required": [
+        "driver",
+        "load",
+        "gl_je",
+        "liability",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.drivers.pay_types.list",
+      "tab": "Drivers",
+      "sub": "Medical Card Statuses",
+      "route_hint": "/lists/driver/pay-types",
+      "required": [
+        "driver",
+        "load",
+        "gl_je",
+        "liability",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.drivers.pay_types.create",
+      "tab": "Drivers",
+      "sub": "+ Create — Medical Card Statuses",
+      "route_hint": "/lists/driver/pay-types",
+      "required": [
+        "driver",
+        "load",
+        "gl_je",
+        "liability",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.drivers.escrow_types.list",
+      "tab": "Drivers",
+      "sub": "Pay Rate Templates",
+      "route_hint": "/lists/driver/escrow-types",
+      "required": [
+        "driver",
+        "load",
+        "gl_je",
+        "liability",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.drivers.escrow_types.create",
+      "tab": "Drivers",
+      "sub": "+ Create — Pay Rate Templates",
+      "route_hint": "/lists/driver/escrow-types",
+      "required": [
+        "driver",
+        "load",
+        "gl_je",
+        "liability",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.drivers.license_classes.list",
+      "tab": "Drivers",
+      "sub": "Driver Deduction Types",
+      "route_hint": "/lists/drivers/license-classes",
+      "required": [
+        "driver",
+        "load",
+        "gl_je",
+        "liability",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.drivers.license_classes.create",
+      "tab": "Drivers",
+      "sub": "+ Create — Driver Deduction Types",
+      "route_hint": "/lists/drivers/license-classes",
+      "required": [
+        "driver",
+        "load",
+        "gl_je",
+        "liability",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.drivers.driver_load_statuses.list",
+      "tab": "Drivers",
+      "sub": "Medical Card Status",
+      "route_hint": "/lists/drivers/driver-load-statuses",
+      "required": [
+        "driver",
+        "load",
+        "gl_je",
+        "liability",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.drivers.driver_load_statuses.create",
+      "tab": "Drivers",
+      "sub": "+ Create — Medical Card Status",
+      "route_hint": "/lists/drivers/driver-load-statuses",
+      "required": [
+        "driver",
+        "load",
+        "gl_je",
+        "liability",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.drivers.teams.list",
+      "tab": "Drivers",
+      "sub": "Termination Reasons",
+      "route_hint": "/lists/driver/teams",
+      "required": [
+        "driver",
+        "load",
+        "gl_je",
+        "liability",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.drivers.teams.create",
+      "tab": "Drivers",
+      "sub": "+ Create — Termination Reasons",
+      "route_hint": "/lists/driver/teams",
+      "required": [
+        "driver",
+        "load",
+        "gl_je",
+        "liability",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.maintenance.labor_rates.list",
+      "tab": "Maintenance",
+      "sub": "Labor Rates",
+      "route_hint": "/lists/maintenance/labor-rates",
+      "required": [
+        "unit",
+        "vendor",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.maintenance.labor_rates.create",
+      "tab": "Maintenance",
+      "sub": "+ Create — Labor Rates",
+      "route_hint": "/lists/maintenance/labor-rates",
+      "required": [
+        "unit",
+        "vendor",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.maintenance.part_locations.list",
+      "tab": "Maintenance",
+      "sub": "Labor Rates",
+      "route_hint": "/lists/maintenance/part-locations",
+      "required": [
+        "unit",
+        "vendor",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.maintenance.part_locations.create",
+      "tab": "Maintenance",
+      "sub": "+ Create — Labor Rates",
+      "route_hint": "/lists/maintenance/part-locations",
+      "required": [
+        "unit",
+        "vendor",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.maintenance.air_bag_catalog.list",
+      "tab": "Maintenance",
+      "sub": "Labor Rates",
+      "route_hint": "/lists/maintenance/air-bag-catalog",
+      "required": [
+        "unit",
+        "vendor",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.maintenance.air_bag_catalog.create",
+      "tab": "Maintenance",
+      "sub": "+ Create — Labor Rates",
+      "route_hint": "/lists/maintenance/air-bag-catalog",
+      "required": [
+        "unit",
+        "vendor",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.maintenance.battery_catalog.list",
+      "tab": "Maintenance",
+      "sub": "Labor Rates",
+      "route_hint": "/lists/maintenance/battery-catalog",
+      "required": [
+        "unit",
+        "vendor",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.maintenance.battery_catalog.create",
+      "tab": "Maintenance",
+      "sub": "+ Create — Labor Rates",
+      "route_hint": "/lists/maintenance/battery-catalog",
+      "required": [
+        "unit",
+        "vendor",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.maintenance.pm_intervals.list",
+      "tab": "Maintenance",
+      "sub": "Part Locations",
+      "route_hint": "/lists/maintenance/pm-intervals",
+      "required": [
+        "unit",
+        "vendor",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.maintenance.pm_intervals.create",
+      "tab": "Maintenance",
+      "sub": "+ Create — Part Locations",
+      "route_hint": "/lists/maintenance/pm-intervals",
+      "required": [
+        "unit",
+        "vendor",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.maintenance.repair_locations.list",
+      "tab": "Maintenance",
+      "sub": "Air Bag Catalog",
+      "route_hint": "/lists/maintenance/repair-locations",
+      "required": [
+        "unit",
+        "vendor",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.maintenance.repair_locations.create",
+      "tab": "Maintenance",
+      "sub": "+ Create — Air Bag Catalog",
+      "route_hint": "/lists/maintenance/repair-locations",
+      "required": [
+        "unit",
+        "vendor",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.maintenance.tire_catalog.list",
+      "tab": "Maintenance",
+      "sub": "Battery Catalog",
+      "route_hint": "/lists/maintenance/tire-catalog",
+      "required": [
+        "unit",
+        "vendor",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.maintenance.tire_catalog.create",
+      "tab": "Maintenance",
+      "sub": "+ Create — Battery Catalog",
+      "route_hint": "/lists/maintenance/tire-catalog",
+      "required": [
+        "unit",
+        "vendor",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.maintenance.trailer_parts.list",
+      "tab": "Maintenance",
+      "sub": "PM Intervals",
+      "route_hint": "/lists/maintenance/trailer-parts",
+      "required": [
+        "unit",
+        "vendor",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.maintenance.trailer_parts.create",
+      "tab": "Maintenance",
+      "sub": "+ Create — PM Intervals",
+      "route_hint": "/lists/maintenance/trailer-parts",
+      "required": [
+        "unit",
+        "vendor",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.maintenance.truck_parts.list",
+      "tab": "Maintenance",
+      "sub": "Repair Locations",
+      "route_hint": "/lists/maintenance/truck-parts",
+      "required": [
+        "unit",
+        "vendor",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.maintenance.truck_parts.create",
+      "tab": "Maintenance",
+      "sub": "+ Create — Repair Locations",
+      "route_hint": "/lists/maintenance/truck-parts",
+      "required": [
+        "unit",
+        "vendor",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.maintenance.work_order_templates.list",
+      "tab": "Maintenance",
+      "sub": "Tire Catalog",
+      "route_hint": "/lists/maintenance/work-order-templates",
+      "required": [
+        "unit",
+        "vendor",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.maintenance.work_order_templates.create",
+      "tab": "Maintenance",
+      "sub": "+ Create — Tire Catalog",
+      "route_hint": "/lists/maintenance/work-order-templates",
+      "required": [
+        "unit",
+        "vendor",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.maintenance.failure_codes.list",
+      "tab": "Maintenance",
+      "sub": "Trailer Parts",
+      "route_hint": "/lists/maintenance/failure-codes",
+      "required": [
+        "unit",
+        "vendor",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.maintenance.failure_codes.create",
+      "tab": "Maintenance",
+      "sub": "+ Create — Trailer Parts",
+      "route_hint": "/lists/maintenance/failure-codes",
+      "required": [
+        "unit",
+        "vendor",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.maintenance.labor_codes.list",
+      "tab": "Maintenance",
+      "sub": "Truck Parts",
+      "route_hint": "/lists/maintenance/labor-codes",
+      "required": [
+        "unit",
+        "vendor",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.maintenance.labor_codes.create",
+      "tab": "Maintenance",
+      "sub": "+ Create — Truck Parts",
+      "route_hint": "/lists/maintenance/labor-codes",
+      "required": [
+        "unit",
+        "vendor",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.maintenance.parts.list",
+      "tab": "Maintenance",
+      "sub": "Work Order Templates",
+      "route_hint": "/lists/maintenance/parts",
+      "required": [
+        "unit",
+        "vendor",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.maintenance.parts.create",
+      "tab": "Maintenance",
+      "sub": "+ Create — Work Order Templates",
+      "route_hint": "/lists/maintenance/parts",
+      "required": [
+        "unit",
+        "vendor",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.maintenance.parts_catalog.list",
+      "tab": "Maintenance",
+      "sub": "Maintenance Parts",
+      "route_hint": "/lists/maintenance/parts-catalog",
+      "required": [
+        "unit",
+        "vendor",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.maintenance.parts_catalog.create",
+      "tab": "Maintenance",
+      "sub": "+ Create — Maintenance Parts",
+      "route_hint": "/lists/maintenance/parts-catalog",
+      "required": [
+        "unit",
+        "vendor",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.maintenance.oem_parts_reference.list",
+      "tab": "Maintenance",
+      "sub": "Parts Catalog",
+      "route_hint": "/lists/maintenance/oem-parts-reference",
+      "required": [
+        "unit",
+        "vendor",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.maintenance.oem_parts_reference.create",
+      "tab": "Maintenance",
+      "sub": "+ Create — Parts Catalog",
+      "route_hint": "/lists/maintenance/oem-parts-reference",
+      "required": [
+        "unit",
+        "vendor",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.maintenance.priority_levels.list",
+      "tab": "Maintenance",
+      "sub": "Parts Catalog",
+      "route_hint": "/lists/maintenance/priority-levels",
+      "required": [
+        "unit",
+        "vendor",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.maintenance.priority_levels.create",
+      "tab": "Maintenance",
+      "sub": "+ Create — Parts Catalog",
+      "route_hint": "/lists/maintenance/priority-levels",
+      "required": [
+        "unit",
+        "vendor",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.maintenance.service_tasks.list",
+      "tab": "Maintenance",
+      "sub": "Parts Catalog",
+      "route_hint": "/lists/maintenance/service-tasks",
+      "required": [
+        "unit",
+        "vendor",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.maintenance.service_tasks.create",
+      "tab": "Maintenance",
+      "sub": "+ Create — Parts Catalog",
+      "route_hint": "/lists/maintenance/service-tasks",
+      "required": [
+        "unit",
+        "vendor",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.maintenance.services_catalog.list",
+      "tab": "Maintenance",
+      "sub": "OEM Parts Reference",
+      "route_hint": "/lists/maintenance/services-catalog",
+      "required": [
+        "unit",
+        "vendor",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.maintenance.services_catalog.create",
+      "tab": "Maintenance",
+      "sub": "+ Create — OEM Parts Reference",
+      "route_hint": "/lists/maintenance/services-catalog",
+      "required": [
+        "unit",
+        "vendor",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.maintenance.shop_locations.list",
+      "tab": "Maintenance",
+      "sub": "Maintenance Priority Levels",
+      "route_hint": "/lists/maintenance/shop-locations",
+      "required": [
+        "unit",
+        "vendor",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.maintenance.shop_locations.create",
+      "tab": "Maintenance",
+      "sub": "+ Create — Maintenance Priority Levels",
+      "route_hint": "/lists/maintenance/shop-locations",
+      "required": [
+        "unit",
+        "vendor",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.maintenance.vendors.list",
+      "tab": "Maintenance",
+      "sub": "Maintenance Service Tasks",
+      "route_hint": "/lists/maintenance/vendors",
+      "required": [
+        "unit",
+        "vendor",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.maintenance.vendors.create",
+      "tab": "Maintenance",
+      "sub": "+ Create — Maintenance Service Tasks",
+      "route_hint": "/lists/maintenance/vendors",
+      "required": [
+        "unit",
+        "vendor",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.maintenance.work_order_statuses.list",
+      "tab": "Maintenance",
+      "sub": "Maintenance Services Catalog",
+      "route_hint": "/lists/maintenance/work-order-statuses",
+      "required": [
+        "unit",
+        "vendor",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.maintenance.work_order_statuses.create",
+      "tab": "Maintenance",
+      "sub": "+ Create — Maintenance Services Catalog",
+      "route_hint": "/lists/maintenance/work-order-statuses",
+      "required": [
+        "unit",
+        "vendor",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.fuel.def_stations.list",
+      "tab": "Fuel",
+      "sub": "DEF Stations",
+      "route_hint": "/lists/fuel/def-stations",
+      "required": [
+        "driver",
+        "unit",
+        "load",
+        "expense",
+        "vendor",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.fuel.def_stations.create",
+      "tab": "Fuel",
+      "sub": "+ Create — DEF Stations",
+      "route_hint": "/lists/fuel/def-stations",
+      "required": [
+        "driver",
+        "unit",
+        "load",
+        "expense",
+        "vendor",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.fuel.fuel_stations.list",
+      "tab": "Fuel",
+      "sub": "DEF Stations",
+      "route_hint": "/lists/fuel/fuel-stations",
+      "required": [
+        "driver",
+        "unit",
+        "load",
+        "expense",
+        "vendor",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.fuel.fuel_stations.create",
+      "tab": "Fuel",
+      "sub": "+ Create — DEF Stations",
+      "route_hint": "/lists/fuel/fuel-stations",
+      "required": [
+        "driver",
+        "unit",
+        "load",
+        "expense",
+        "vendor",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.fuel.relay_accounts.list",
+      "tab": "Fuel",
+      "sub": "DEF Stations",
+      "route_hint": "/lists/fuel/relay-accounts",
+      "required": [
+        "driver",
+        "unit",
+        "load",
+        "expense",
+        "vendor",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.fuel.relay_accounts.create",
+      "tab": "Fuel",
+      "sub": "+ Create — DEF Stations",
+      "route_hint": "/lists/fuel/relay-accounts",
+      "required": [
+        "driver",
+        "unit",
+        "load",
+        "expense",
+        "vendor",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.fuel.toll_providers.list",
+      "tab": "Fuel",
+      "sub": "DEF Stations",
+      "route_hint": "/lists/fuel/toll-providers",
+      "required": [
+        "driver",
+        "unit",
+        "load",
+        "expense",
+        "vendor",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.fuel.toll_providers.create",
+      "tab": "Fuel",
+      "sub": "+ Create — DEF Stations",
+      "route_hint": "/lists/fuel/toll-providers",
+      "required": [
+        "driver",
+        "unit",
+        "load",
+        "expense",
+        "vendor",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.fuel.card_types.list",
+      "tab": "Fuel",
+      "sub": "Fuel Stations",
+      "route_hint": "/lists/fuel/card-types",
+      "required": [
+        "driver",
+        "unit",
+        "load",
+        "expense",
+        "vendor",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.fuel.card_types.create",
+      "tab": "Fuel",
+      "sub": "+ Create — Fuel Stations",
+      "route_hint": "/lists/fuel/card-types",
+      "required": [
+        "driver",
+        "unit",
+        "load",
+        "expense",
+        "vendor",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.fuel.exception_types.list",
+      "tab": "Fuel",
+      "sub": "Relay Accounts",
+      "route_hint": "/lists/fuel/exception-types",
+      "required": [
+        "driver",
+        "unit",
+        "load",
+        "expense",
+        "vendor",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.fuel.exception_types.create",
+      "tab": "Fuel",
+      "sub": "+ Create — Relay Accounts",
+      "route_hint": "/lists/fuel/exception-types",
+      "required": [
+        "driver",
+        "unit",
+        "load",
+        "expense",
+        "vendor",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.fuel.station_brands.list",
+      "tab": "Fuel",
+      "sub": "Toll Providers",
+      "route_hint": "/lists/fuel/station-brands",
+      "required": [
+        "driver",
+        "unit",
+        "load",
+        "expense",
+        "vendor",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.fuel.station_brands.create",
+      "tab": "Fuel",
+      "sub": "+ Create — Toll Providers",
+      "route_hint": "/lists/fuel/station-brands",
+      "required": [
+        "driver",
+        "unit",
+        "load",
+        "expense",
+        "vendor",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.fuel.stop_reason_codes.list",
+      "tab": "Fuel",
+      "sub": "Fuel Card Types",
+      "route_hint": "/lists/fuel/stop-reason-codes",
+      "required": [
+        "driver",
+        "unit",
+        "load",
+        "expense",
+        "vendor",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.fuel.stop_reason_codes.create",
+      "tab": "Fuel",
+      "sub": "+ Create — Fuel Card Types",
+      "route_hint": "/lists/fuel/stop-reason-codes",
+      "required": [
+        "driver",
+        "unit",
+        "load",
+        "expense",
+        "vendor",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.fuel.mpg_bands.list",
+      "tab": "Fuel",
+      "sub": "Fuel Exception Types",
+      "route_hint": "/lists/fuel/mpg-bands",
+      "required": [
+        "driver",
+        "unit",
+        "load",
+        "expense",
+        "vendor",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.fuel.mpg_bands.create",
+      "tab": "Fuel",
+      "sub": "+ Create — Fuel Exception Types",
+      "route_hint": "/lists/fuel/mpg-bands",
+      "required": [
+        "driver",
+        "unit",
+        "load",
+        "expense",
+        "vendor",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.fuel.expensive_states.list",
+      "tab": "Fuel",
+      "sub": "Fuel Station Brands",
+      "route_hint": "/lists/fuel/expensive-states",
+      "required": [
+        "driver",
+        "unit",
+        "load",
+        "expense",
+        "vendor",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.fuel.expensive_states.create",
+      "tab": "Fuel",
+      "sub": "+ Create — Fuel Station Brands",
+      "route_hint": "/lists/fuel/expensive-states",
+      "required": [
+        "driver",
+        "unit",
+        "load",
+        "expense",
+        "vendor",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.fuel.tax_jurisdictions.list",
+      "tab": "Fuel",
+      "sub": "Fuel Stop Reason Codes",
+      "route_hint": "/lists/fuel/tax-jurisdictions",
+      "required": [
+        "driver",
+        "unit",
+        "load",
+        "expense",
+        "vendor",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.fuel.tax_jurisdictions.create",
+      "tab": "Fuel",
+      "sub": "+ Create — Fuel Stop Reason Codes",
+      "route_hint": "/lists/fuel/tax-jurisdictions",
+      "required": [
+        "driver",
+        "unit",
+        "load",
+        "expense",
+        "vendor",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.fuel.brands.list",
+      "tab": "Fuel",
+      "sub": "MPG Bands",
+      "route_hint": "/lists/fuel/brands",
+      "required": [
+        "driver",
+        "unit",
+        "load",
+        "expense",
+        "vendor",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.fuel.brands.create",
+      "tab": "Fuel",
+      "sub": "+ Create — MPG Bands",
+      "route_hint": "/lists/fuel/brands",
+      "required": [
+        "driver",
+        "unit",
+        "load",
+        "expense",
+        "vendor",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.fuel.station_states.list",
+      "tab": "Fuel",
+      "sub": "Expensive States",
+      "route_hint": "/lists/fuel/station-states",
+      "required": [
+        "driver",
+        "unit",
+        "load",
+        "expense",
+        "vendor",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.fuel.station_states.create",
+      "tab": "Fuel",
+      "sub": "+ Create — Expensive States",
+      "route_hint": "/lists/fuel/station-states",
+      "required": [
+        "driver",
+        "unit",
+        "load",
+        "expense",
+        "vendor",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.fuel.pump_types.list",
+      "tab": "Fuel",
+      "sub": "Fuel Tax Jurisdictions",
+      "route_hint": "/lists/fuel/pump-types",
+      "required": [
+        "driver",
+        "unit",
+        "load",
+        "expense",
+        "vendor",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.fuel.pump_types.create",
+      "tab": "Fuel",
+      "sub": "+ Create — Fuel Tax Jurisdictions",
+      "route_hint": "/lists/fuel/pump-types",
+      "required": [
+        "driver",
+        "unit",
+        "load",
+        "expense",
+        "vendor",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.fuel.grades.list",
+      "tab": "Fuel",
+      "sub": "Fuel Brands",
+      "route_hint": "/lists/fuel/grades",
+      "required": [
+        "driver",
+        "unit",
+        "load",
+        "expense",
+        "vendor",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.fuel.grades.create",
+      "tab": "Fuel",
+      "sub": "+ Create — Fuel Brands",
+      "route_hint": "/lists/fuel/grades",
+      "required": [
+        "driver",
+        "unit",
+        "load",
+        "expense",
+        "vendor",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.fuel.dispatch_routes.list",
+      "tab": "Fuel",
+      "sub": "Fuel Station States",
+      "route_hint": "/lists/fuel/dispatch-routes",
+      "required": [
+        "driver",
+        "unit",
+        "load",
+        "expense",
+        "vendor",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.fuel.dispatch_routes.create",
+      "tab": "Fuel",
+      "sub": "+ Create — Fuel Station States",
+      "route_hint": "/lists/fuel/dispatch-routes",
+      "required": [
+        "driver",
+        "unit",
+        "load",
+        "expense",
+        "vendor",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.fleet.tractor_statuses.list",
+      "tab": "Fleet",
+      "sub": "Tractor Statuses",
+      "route_hint": "/lists/fleet/tractor-statuses",
+      "required": [
+        "unit",
+        "trailer",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.fleet.tractor_statuses.create",
+      "tab": "Fleet",
+      "sub": "+ Create — Tractor Statuses",
+      "route_hint": "/lists/fleet/tractor-statuses",
+      "required": [
+        "unit",
+        "trailer",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.fleet.trailer_statuses.list",
+      "tab": "Fleet",
+      "sub": "Tractor Statuses",
+      "route_hint": "/lists/fleet/trailer-statuses",
+      "required": [
+        "unit",
+        "trailer",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.fleet.trailer_statuses.create",
+      "tab": "Fleet",
+      "sub": "+ Create — Tractor Statuses",
+      "route_hint": "/lists/fleet/trailer-statuses",
+      "required": [
+        "unit",
+        "trailer",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.fleet.condition_codes.list",
+      "tab": "Fleet",
+      "sub": "Tractor Statuses",
+      "route_hint": "/lists/fleet/condition-codes",
+      "required": [
+        "unit",
+        "trailer",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.fleet.condition_codes.create",
+      "tab": "Fleet",
+      "sub": "+ Create — Tractor Statuses",
+      "route_hint": "/lists/fleet/condition-codes",
+      "required": [
+        "unit",
+        "trailer",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.fleet.equipment_types.list",
+      "tab": "Fleet",
+      "sub": "Tractor Statuses",
+      "route_hint": "/lists/fleet/equipment-types",
+      "required": [
+        "unit",
+        "trailer",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.fleet.equipment_types.create",
+      "tab": "Fleet",
+      "sub": "+ Create — Tractor Statuses",
+      "route_hint": "/lists/fleet/equipment-types",
+      "required": [
+        "unit",
+        "trailer",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.fleet.tire_positions.list",
+      "tab": "Fleet",
+      "sub": "Trailer Statuses",
+      "route_hint": "/lists/fleet/tire-positions",
+      "required": [
+        "unit",
+        "trailer",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.fleet.tire_positions.create",
+      "tab": "Fleet",
+      "sub": "+ Create — Trailer Statuses",
+      "route_hint": "/lists/fleet/tire-positions",
+      "required": [
+        "unit",
+        "trailer",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.fleet.ownership_types.list",
+      "tab": "Fleet",
+      "sub": "Condition Codes",
+      "route_hint": "/lists/fleet/ownership-types",
+      "required": [
+        "unit",
+        "trailer",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.fleet.ownership_types.create",
+      "tab": "Fleet",
+      "sub": "+ Create — Condition Codes",
+      "route_hint": "/lists/fleet/ownership-types",
+      "required": [
+        "unit",
+        "trailer",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.fleet.trailer_types.list",
+      "tab": "Fleet",
+      "sub": "Equipment Types",
+      "route_hint": "/lists/fleet/trailer-types",
+      "required": [
+        "unit",
+        "trailer",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.fleet.trailer_types.create",
+      "tab": "Fleet",
+      "sub": "+ Create — Equipment Types",
+      "route_hint": "/lists/fleet/trailer-types",
+      "required": [
+        "unit",
+        "trailer",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.fleet.lease_terms.list",
+      "tab": "Fleet",
+      "sub": "Tire Positions",
+      "route_hint": "/lists/fleet/lease-terms",
+      "required": [
+        "unit",
+        "trailer",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.fleet.lease_terms.create",
+      "tab": "Fleet",
+      "sub": "+ Create — Tire Positions",
+      "route_hint": "/lists/fleet/lease-terms",
+      "required": [
+        "unit",
+        "trailer",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.fleet.asset_statuses.list",
+      "tab": "Fleet",
+      "sub": "Ownership Types",
+      "route_hint": "/lists/fleet/asset-statuses",
+      "required": [
+        "unit",
+        "trailer",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.fleet.asset_statuses.create",
+      "tab": "Fleet",
+      "sub": "+ Create — Ownership Types",
+      "route_hint": "/lists/fleet/asset-statuses",
+      "required": [
+        "unit",
+        "trailer",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.fleet.asset_locations.list",
+      "tab": "Fleet",
+      "sub": "Trailer Types",
+      "route_hint": "/lists/fleet/asset-locations",
+      "required": [
+        "unit",
+        "trailer",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.fleet.asset_locations.create",
+      "tab": "Fleet",
+      "sub": "+ Create — Trailer Types",
+      "route_hint": "/lists/fleet/asset-locations",
+      "required": [
+        "unit",
+        "trailer",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.accounting.account_types_lookup.list",
+      "tab": "Accounting",
+      "sub": "Account Types",
+      "route_hint": "/lists/accounting/account-types-lookup",
+      "required": [
+        "customer",
+        "vendor",
+        "gl_je",
+        "ap_bill",
+        "expense",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.accounting.account_types_lookup.create",
+      "tab": "Accounting",
+      "sub": "+ Create — Account Types",
+      "route_hint": "/lists/accounting/account-types-lookup",
+      "required": [
+        "customer",
+        "vendor",
+        "gl_je",
+        "ap_bill",
+        "expense",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.accounting.detail_types_lookup.list",
+      "tab": "Accounting",
+      "sub": "Account Types",
+      "route_hint": "/lists/accounting/detail-types-lookup",
+      "required": [
+        "customer",
+        "vendor",
+        "gl_je",
+        "ap_bill",
+        "expense",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.accounting.detail_types_lookup.create",
+      "tab": "Accounting",
+      "sub": "+ Create — Account Types",
+      "route_hint": "/lists/accounting/detail-types-lookup",
+      "required": [
+        "customer",
+        "vendor",
+        "gl_je",
+        "ap_bill",
+        "expense",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.accounting.audit_event_types.list",
+      "tab": "Accounting",
+      "sub": "Account Types",
+      "route_hint": "/lists/accounting/audit-event-types",
+      "required": [
+        "customer",
+        "vendor",
+        "gl_je",
+        "ap_bill",
+        "expense",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.accounting.audit_event_types.create",
+      "tab": "Accounting",
+      "sub": "+ Create — Account Types",
+      "route_hint": "/lists/accounting/audit-event-types",
+      "required": [
+        "customer",
+        "vendor",
+        "gl_je",
+        "ap_bill",
+        "expense",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.accounting.chart_of_accounts.list",
+      "tab": "Accounting",
+      "sub": "Account Types",
+      "route_hint": "/lists/accounting/chart-of-accounts",
+      "required": [
+        "customer",
+        "vendor",
+        "gl_je",
+        "ap_bill",
+        "expense",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.accounting.chart_of_accounts.create",
+      "tab": "Accounting",
+      "sub": "+ Create — Account Types",
+      "route_hint": "/lists/accounting/chart-of-accounts",
+      "required": [
+        "customer",
+        "vendor",
+        "gl_je",
+        "ap_bill",
+        "expense",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.accounting.account_types.list",
+      "tab": "Accounting",
+      "sub": "Detail Types",
+      "route_hint": "/lists/accounting/account-types",
+      "required": [
+        "customer",
+        "vendor",
+        "gl_je",
+        "ap_bill",
+        "expense",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.accounting.account_types.create",
+      "tab": "Accounting",
+      "sub": "+ Create — Detail Types",
+      "route_hint": "/lists/accounting/account-types",
+      "required": [
+        "customer",
+        "vendor",
+        "gl_je",
+        "ap_bill",
+        "expense",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.accounting.detail_types.list",
+      "tab": "Accounting",
+      "sub": "Audit Event Types",
+      "route_hint": "/lists/accounting/detail-types",
+      "required": [
+        "customer",
+        "vendor",
+        "gl_je",
+        "ap_bill",
+        "expense",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.accounting.detail_types.create",
+      "tab": "Accounting",
+      "sub": "+ Create — Audit Event Types",
+      "route_hint": "/lists/accounting/detail-types",
+      "required": [
+        "customer",
+        "vendor",
+        "gl_je",
+        "ap_bill",
+        "expense",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.accounting.classes.list",
+      "tab": "Accounting",
+      "sub": "Chart of Accounts",
+      "route_hint": "/lists/accounting/classes",
+      "required": [
+        "customer",
+        "vendor",
+        "gl_je",
+        "ap_bill",
+        "expense",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.accounting.classes.create",
+      "tab": "Accounting",
+      "sub": "+ Create — Chart of Accounts",
+      "route_hint": "/lists/accounting/classes",
+      "required": [
+        "customer",
+        "vendor",
+        "gl_je",
+        "ap_bill",
+        "expense",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.accounting.payment_terms.list",
+      "tab": "Accounting",
+      "sub": "Account Type",
+      "route_hint": "/lists/accounting/payment-terms",
+      "required": [
+        "customer",
+        "vendor",
+        "gl_je",
+        "ap_bill",
+        "expense",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.accounting.payment_terms.create",
+      "tab": "Accounting",
+      "sub": "+ Create — Account Type",
+      "route_hint": "/lists/accounting/payment-terms",
+      "required": [
+        "customer",
+        "vendor",
+        "gl_je",
+        "ap_bill",
+        "expense",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.accounting.posting_templates.list",
+      "tab": "Accounting",
+      "sub": "Detail Type",
+      "route_hint": "/lists/accounting/posting-templates",
+      "required": [
+        "customer",
+        "vendor",
+        "gl_je",
+        "ap_bill",
+        "expense",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.accounting.posting_templates.create",
+      "tab": "Accounting",
+      "sub": "+ Create — Detail Type",
+      "route_hint": "/lists/accounting/posting-templates",
+      "required": [
+        "customer",
+        "vendor",
+        "gl_je",
+        "ap_bill",
+        "expense",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.accounting.journal_entry_types.list",
+      "tab": "Accounting",
+      "sub": "Classes",
+      "route_hint": "/lists/accounting/journal-entry-types",
+      "required": [
+        "customer",
+        "vendor",
+        "gl_je",
+        "ap_bill",
+        "expense",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.accounting.journal_entry_types.create",
+      "tab": "Accounting",
+      "sub": "+ Create — Classes",
+      "route_hint": "/lists/accounting/journal-entry-types",
+      "required": [
+        "customer",
+        "vendor",
+        "gl_je",
+        "ap_bill",
+        "expense",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.accounting.qbo_bulk_link.list",
+      "tab": "Accounting",
+      "sub": "Payment Terms",
+      "route_hint": "/lists/accounting/qbo-bulk-link",
+      "required": [
+        "customer",
+        "vendor",
+        "gl_je",
+        "ap_bill",
+        "expense",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.accounting.qbo_bulk_link.create",
+      "tab": "Accounting",
+      "sub": "+ Create — Payment Terms",
+      "route_hint": "/lists/accounting/qbo-bulk-link",
+      "required": [
+        "customer",
+        "vendor",
+        "gl_je",
+        "ap_bill",
+        "expense",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.accounting.qbo_categories.list",
+      "tab": "Accounting",
+      "sub": "Posting Templates",
+      "route_hint": "/lists/accounting/qbo-categories",
+      "required": [
+        "customer",
+        "vendor",
+        "gl_je",
+        "ap_bill",
+        "expense",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.accounting.qbo_categories.create",
+      "tab": "Accounting",
+      "sub": "+ Create — Posting Templates",
+      "route_hint": "/lists/accounting/qbo-categories",
+      "required": [
+        "customer",
+        "vendor",
+        "gl_je",
+        "ap_bill",
+        "expense",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.accounting.items.list",
+      "tab": "Accounting",
+      "sub": "Journal Entry Types",
+      "route_hint": "/lists/accounting/items",
+      "required": [
+        "customer",
+        "vendor",
+        "gl_je",
+        "ap_bill",
+        "expense",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.accounting.items.create",
+      "tab": "Accounting",
+      "sub": "+ Create — Journal Entry Types",
+      "route_hint": "/lists/accounting/items",
+      "required": [
+        "customer",
+        "vendor",
+        "gl_je",
+        "ap_bill",
+        "expense",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.accounting.account_role_bindings.list",
+      "tab": "Accounting",
+      "sub": "QBO bulk-link",
+      "route_hint": "/lists/accounting/account-role-bindings",
+      "required": [
+        "customer",
+        "vendor",
+        "gl_je",
+        "ap_bill",
+        "expense",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.accounting.account_role_bindings.create",
+      "tab": "Accounting",
+      "sub": "+ Create — QBO bulk-link",
+      "route_hint": "/lists/accounting/account-role-bindings",
+      "required": [
+        "customer",
+        "vendor",
+        "gl_je",
+        "ap_bill",
+        "expense",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.accounting.chart_of_accounts_seeds.list",
+      "tab": "Accounting",
+      "sub": "Product & Service Categories",
+      "route_hint": "/lists/accounting/chart-of-accounts-seeds",
+      "required": [
+        "customer",
+        "vendor",
+        "gl_je",
+        "ap_bill",
+        "expense",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.accounting.chart_of_accounts_seeds.create",
+      "tab": "Accounting",
+      "sub": "+ Create — Product & Service Categories",
+      "route_hint": "/lists/accounting/chart-of-accounts-seeds",
+      "required": [
+        "customer",
+        "vendor",
+        "gl_je",
+        "ap_bill",
+        "expense",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.accounting.expense_categories.list",
+      "tab": "Accounting",
+      "sub": "Items",
+      "route_hint": "/lists/accounting/expense-categories",
+      "required": [
+        "customer",
+        "vendor",
+        "gl_je",
+        "ap_bill",
+        "expense",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.accounting.expense_categories.create",
+      "tab": "Accounting",
+      "sub": "+ Create — Items",
+      "route_hint": "/lists/accounting/expense-categories",
+      "required": [
+        "customer",
+        "vendor",
+        "gl_je",
+        "ap_bill",
+        "expense",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.accounting.payment_methods.list",
+      "tab": "Accounting",
+      "sub": "Account Role Bindings",
+      "route_hint": "/lists/accounting/payment-methods",
+      "required": [
+        "customer",
+        "vendor",
+        "gl_je",
+        "ap_bill",
+        "expense",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.accounting.payment_methods.create",
+      "tab": "Accounting",
+      "sub": "+ Create — Account Role Bindings",
+      "route_hint": "/lists/accounting/payment-methods",
+      "required": [
+        "customer",
+        "vendor",
+        "gl_je",
+        "ap_bill",
+        "expense",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.accounting.tax_codes.list",
+      "tab": "Accounting",
+      "sub": "Chart of Accounts Seeds",
+      "route_hint": "/lists/accounting/tax-codes",
+      "required": [
+        "customer",
+        "vendor",
+        "gl_je",
+        "ap_bill",
+        "expense",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.accounting.tax_codes.create",
+      "tab": "Accounting",
+      "sub": "+ Create — Chart of Accounts Seeds",
+      "route_hint": "/lists/accounting/tax-codes",
+      "required": [
+        "customer",
+        "vendor",
+        "gl_je",
+        "ap_bill",
+        "expense",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.accounting.currency_codes.list",
+      "tab": "Accounting",
+      "sub": "Expense Categories",
+      "route_hint": "/lists/accounting/currency-codes",
+      "required": [
+        "customer",
+        "vendor",
+        "gl_je",
+        "ap_bill",
+        "expense",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.accounting.currency_codes.create",
+      "tab": "Accounting",
+      "sub": "+ Create — Expense Categories",
+      "route_hint": "/lists/accounting/currency-codes",
+      "required": [
+        "customer",
+        "vendor",
+        "gl_je",
+        "ap_bill",
+        "expense",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.accounting.void_cancel_reasons.list",
+      "tab": "Accounting",
+      "sub": "Payment Methods",
+      "route_hint": "/lists/accounting/void-cancel-reasons",
+      "required": [
+        "customer",
+        "vendor",
+        "gl_je",
+        "ap_bill",
+        "expense",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.accounting.void_cancel_reasons.create",
+      "tab": "Accounting",
+      "sub": "+ Create — Payment Methods",
+      "route_hint": "/lists/accounting/void-cancel-reasons",
+      "required": [
+        "customer",
+        "vendor",
+        "gl_je",
+        "ap_bill",
+        "expense",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.accounting.abandonment_defaults.list",
+      "tab": "Accounting",
+      "sub": "Currency Codes",
+      "route_hint": "/lists/accounting/abandonment-defaults",
+      "required": [
+        "customer",
+        "vendor",
+        "gl_je",
+        "ap_bill",
+        "expense",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.accounting.abandonment_defaults.create",
+      "tab": "Accounting",
+      "sub": "+ Create — Currency Codes",
+      "route_hint": "/lists/accounting/abandonment-defaults",
+      "required": [
+        "customer",
+        "vendor",
+        "gl_je",
+        "ap_bill",
+        "expense",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.customers.customer_types.list",
+      "tab": "Customers",
+      "sub": "Customer Types",
+      "route_hint": "/lists/customers/customer-types",
+      "required": [
+        "customer",
+        "load",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.customers.customer_types.create",
+      "tab": "Customers",
+      "sub": "+ Create — Customer Types",
+      "route_hint": "/lists/customers/customer-types",
+      "required": [
+        "customer",
+        "load",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.customers.customer_quality_event_reasons.list",
+      "tab": "Customers",
+      "sub": "Customer Types",
+      "route_hint": "/lists/customers/customer-quality-event-reasons",
+      "required": [
+        "customer",
+        "load",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.customers.customer_quality_event_reasons.create",
+      "tab": "Customers",
+      "sub": "+ Create — Customer Types",
+      "route_hint": "/lists/customers/customer-quality-event-reasons",
+      "required": [
+        "customer",
+        "load",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.vendors.vendor_types.list",
+      "tab": "Vendors",
+      "sub": "Vendor Types",
+      "route_hint": "/lists/vendors/vendor-types",
+      "required": [
+        "vendor",
+        "ap_bill",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.vendors.vendor_types.create",
+      "tab": "Vendors",
+      "sub": "+ Create — Vendor Types",
+      "route_hint": "/lists/vendors/vendor-types",
+      "required": [
+        "vendor",
+        "ap_bill",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.names_master.brokers.list",
+      "tab": "Names master",
+      "sub": "Shippers",
+      "route_hint": "/lists/names/brokers",
+      "required": [
+        "customer",
+        "vendor",
+        "driver",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.names_master.brokers.create",
+      "tab": "Names master",
+      "sub": "+ Create — Shippers",
+      "route_hint": "/lists/names/brokers",
+      "required": [
+        "customer",
+        "vendor",
+        "driver",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "catalog.reference.us_states.list",
+      "tab": "Reference",
+      "sub": "US States",
+      "route_hint": "/lists/reference/us-states",
+      "required": [
+        "connectivity"
+      ]
+    },
+    {
+      "id": "catalog.reference.mexico_states.list",
+      "tab": "Reference",
+      "sub": "US States",
+      "route_hint": "/lists/reference/mexico-states",
+      "required": [
+        "connectivity"
+      ]
+    }
+  ]
+}

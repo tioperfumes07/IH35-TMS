@@ -23,6 +23,7 @@ import driversRequired from "@scoreboard/modules/drivers.required.json";
 import fleetRequired from "@scoreboard/modules/fleet.required.json";
 import customersRequired from "@scoreboard/modules/customers.required.json";
 import vendorsRequired from "@scoreboard/modules/vendors.required.json";
+import listsRequired from "@scoreboard/modules/lists.required.json";
 import { ProgramModuleNav } from "./ProgramModuleNav";
 
 type Tri = "done" | "audited" | "unaudited" | "na";
@@ -92,7 +93,8 @@ type MatrixModuleId =
   | "drivers"
   | "fleet"
   | "customers"
-  | "vendors";
+  | "vendors"
+  | "lists";
 
 const REQUIRED_BY_MODULE: Record<MatrixModuleId, RequiredMap> = {
   maintenance: maintRequired as RequiredMap,
@@ -108,6 +110,7 @@ const REQUIRED_BY_MODULE: Record<MatrixModuleId, RequiredMap> = {
   fleet: fleetRequired as RequiredMap,
   customers: customersRequired as RequiredMap,
   vendors: vendorsRequired as RequiredMap,
+  lists: listsRequired as RequiredMap,
 };
 
 const LIVE_MODULES: MatrixModuleId[] = [
@@ -124,6 +127,7 @@ const LIVE_MODULES: MatrixModuleId[] = [
   "fleet",
   "customers",
   "vendors",
+  "lists",
 ];
 
 const MODULES = [
@@ -218,6 +222,10 @@ function sectionForLeaf(moduleId: MatrixModuleId, leaf: RequiredLeaf): string {
   }
   if (moduleId === "fuel") {
     return leaf.tab || "Fuel";
+  }
+  if (moduleId === "lists") {
+    if (leaf.id.startsWith("hub.")) return "Lists hub";
+    return leaf.tab || "Catalogs";
   }
   if (moduleId === "dispatch") {
     if (leaf.id === "load_board" || leaf.id === "load.detail") return "Load board";
@@ -400,6 +408,10 @@ function parseModule(raw: string | null): MatrixModuleId {
   if (raw === "settlements") return "settlements";
   if (raw === "fuel") return "fuel";
   if (raw === "drivers") return "drivers";
+  if (raw === "fleet") return "fleet";
+  if (raw === "customers") return "customers";
+  if (raw === "vendors") return "vendors";
+  if (raw === "lists") return "lists";
   return "maintenance";
 }
 
@@ -413,6 +425,10 @@ function titleCase(id: MatrixModuleId): string {
   if (id === "settlements") return "Settlements";
   if (id === "fuel") return "Fuel";
   if (id === "drivers") return "Drivers";
+  if (id === "fleet") return "Fleet";
+  if (id === "customers") return "Customers";
+  if (id === "vendors") return "Vendors";
+  if (id === "lists") return "Lists";
   return "Maintenance";
 }
 

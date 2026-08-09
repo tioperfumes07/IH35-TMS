@@ -312,6 +312,9 @@ function moduleTouchRe(moduleId: string): RegExp {
   if (moduleId === "vendors") {
     return /\bvendors?\b|\b1099\b|\bw-9\b|\bbill[\s_-]?pay|\bap\b|\baccounts?\s*payable|\bsafer\b|\bvendor[\s_-]?credit|\bvendor[\s_-]?type/i;
   }
+  if (moduleId === "lists") {
+    return /\blists?\b|\bcatalogs?\b|\bcatalog[\s_-]?hub|\breference[\s_-]?catalog|\boem[\s_-]?parts|\bnames[\s_-]?master|\bchart[\s_-]?of[\s_-]?accounts|\bposting[\s_-]?template|\bdispatch[\s_-]?flag|\bvoid[\s_-]?cancel/i;
+  }
   return /maintenance|\bwork[\s_-]?order|\bwos?\b|\bmaint\b/i;
 }
 
