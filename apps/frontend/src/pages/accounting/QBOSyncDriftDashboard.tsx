@@ -7,6 +7,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { EntityLink, type EntityKind } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 type EntitySummary = {
   entity_type: string;
@@ -103,7 +104,7 @@ export function QBOSyncDriftDashboard() {
     mutationFn: (input: { id: string; action: "accept_local" | "accept_qbo" | "manual_merge_recorded" }) =>
       resolveDrift(input.id, companyId, input.action),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["qbo-sync-drift-dashboard", companyId] }),
-    onError: (error) => pushToast(String((error as Error)?.message ?? "Failed to resolve drift"), "error"),
+    onError: (error) => pushToast(userFacingApiError(error, "Failed to resolve drift"), "error"),
   });
 
   const data = dashboardQuery.data;

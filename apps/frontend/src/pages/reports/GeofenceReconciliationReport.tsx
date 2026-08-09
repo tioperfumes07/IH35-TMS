@@ -9,6 +9,7 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { resolveApiUrl } from "../../api/client";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 interface Finding {
   uuid: string;
@@ -108,7 +109,7 @@ export function GeofenceReconciliationReport() {
         <ListErrorState
           title="Couldn't load reconciliation"
           status={0}
-          message={(error as Error)?.message}
+          message={userFacingApiError(error, "Request failed")}
           onRetry={() => void refetch()}
         />
       )}

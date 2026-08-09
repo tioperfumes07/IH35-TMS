@@ -1006,7 +1006,7 @@ export function BankingTransactionsDesignView({
                         void transactionsQuery.refetch();
                       })
                       .catch((error: unknown) => {
-                        pushToast(String((error as Error)?.message ?? "Could not update date"), "error");
+                        pushToast(userFacingApiError(error, "Could not update date"), "error");
                       });
                   }}
                 />

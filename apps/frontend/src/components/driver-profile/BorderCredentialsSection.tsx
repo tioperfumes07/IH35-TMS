@@ -3,6 +3,7 @@ import { updateDriver } from "../../api/mdata";
 import { Button } from "../Button";
 import { Modal } from "../Modal";
 import { DatePicker } from "../forms/DatePicker";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 function expClass(dateStr: string | null | undefined) {
   if (!dateStr) return "text-gray-600";
@@ -102,7 +103,7 @@ export function BorderCredentialsSection({
       await onSaved();
       setEditOpen(false);
     } catch (err) {
-      setError(String((err as Error)?.message ?? "Could not save border credentials"));
+      setError(userFacingApiError(err, "Could not save border credentials"));
     } finally {
       setPending(false);
     }

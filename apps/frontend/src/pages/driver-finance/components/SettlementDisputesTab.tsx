@@ -18,6 +18,7 @@ import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { useToast } from "../../../components/Toast";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { useListState } from "../../../components/list-state";
+import { userFacingApiError } from "../../../lib/api-error-message";
 
 function money(cents: number | null | undefined) {
   return `$${((Number(cents ?? 0) || 0) / 100).toFixed(2)}`;
@@ -59,7 +60,7 @@ export function SettlementDisputesTab({ companyId }: { companyId: string }) {
       pushToast("Dispute marked under review", "success");
       await queryClient.invalidateQueries({ queryKey: ["driver-finance", "settlement-disputes"] });
     },
-    onError: (error) => pushToast(String((error as Error)?.message || error), "error"),
+    onError: (error) => pushToast(userFacingApiError(error, error), "error"),
   });
 
   const resolveMutation = useMutation({
@@ -79,7 +80,7 @@ export function SettlementDisputesTab({ companyId }: { companyId: string }) {
       setResolutionAmount("");
       await queryClient.invalidateQueries({ queryKey: ["driver-finance", "settlement-disputes"] });
     },
-    onError: (error) => pushToast(String((error as Error)?.message || error), "error"),
+    onError: (error) => pushToast(userFacingApiError(error, error), "error"),
   });
 
   const rows = disputesQuery.data?.disputes ?? [];

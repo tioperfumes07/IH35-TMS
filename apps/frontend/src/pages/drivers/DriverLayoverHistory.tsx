@@ -6,6 +6,7 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 interface LayoverRow {
   uuid: string;
@@ -134,7 +135,7 @@ export function DriverLayoverHistory({ driverUuid, operatingCompanyId }: Props) 
         <ListErrorState
           title="Couldn't load driver layovers"
           status={0}
-          message={(error as Error)?.message}
+          message={userFacingApiError(error, "Request failed")}
           onRetry={() => void refetch()}
         />
       )}

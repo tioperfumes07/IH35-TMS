@@ -2,6 +2,7 @@ import { useCallback, useState } from "react";
 import { requestUploadUrl, confirmUpload } from "../../../../api/docs";
 import { extractRateCon, type RateConExtractResponse } from "../../../../api/ratecon";
 import { rateConExtractionToPrefill, type RateConPrefill } from "./rateConPrefill";
+import { userFacingApiError } from "../../../../lib/api-error-message";
 
 // RATECON-2 — the ONE rate-con intake code path. Both the "Upload Rate Con" panel and the drag-drop
 // zone consume this hook, so the upload→extract→prefill logic (and its error copy) lives exactly once.
@@ -35,7 +36,7 @@ async function step<T>(label: string, fn: () => Promise<T>): Promise<T> {
  * ("turned off for this company") is always a real message, never a fake progress state.
  */
 export function rateConErrorMessage(err: unknown): string {
-  const code = String((err as Error)?.message ?? "");
+  const code = userFacingApiError(err, "");
   if (code.includes("409") || code.includes("ratecon_extract_disabled")) {
     return "Rate-con extraction is turned off for this company.";
   }

@@ -34,6 +34,7 @@ import { CustomersSyncPanel } from "./customers/CustomersSyncPanel";
 import { useViewModePref } from "../hooks/useViewModePref";
 import { useUrlSort } from "../hooks/useUrlSort";
 import { formatDateUS } from "../lib/formatDate";
+import { userFacingApiError } from "../lib/api-error-message";
 
 type CustomerTabId =
   | "transaction_list"
@@ -286,7 +287,7 @@ export function CustomersPage() {
         return;
       }
       setCreateFormError("Could not save customer.");
-      pushToast(String((error as Error)?.message || "Could not save customer."), "error");
+      pushToast(userFacingApiError(error, "Could not save customer."), "error");
     },
   });
 

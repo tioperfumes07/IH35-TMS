@@ -16,6 +16,7 @@ import {
 import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
 import { useToast } from "../../../components/Toast";
+import { userFacingApiError } from "../../../lib/api-error-message";
 
 type Props = {
   operatingCompanyId: string;
@@ -80,7 +81,7 @@ export function SevereRepairOosTab({ operatingCompanyId }: Props) {
       pushToast("Estimate refreshed", "success");
       await refreshAll();
     },
-    onError: (error) => pushToast(String((error as Error)?.message ?? "Failed to refresh estimate"), "error"),
+    onError: (error) => pushToast(userFacingApiError(error, "Failed to refresh estimate"), "error"),
   });
 
   const completeMutation = useMutation({
@@ -92,7 +93,7 @@ export function SevereRepairOosTab({ operatingCompanyId }: Props) {
       pushToast("Linked work order marked complete", "success");
       await refreshAll();
     },
-    onError: (error) => pushToast(String((error as Error)?.message ?? "Failed to complete work order"), "error"),
+    onError: (error) => pushToast(userFacingApiError(error, "Failed to complete work order"), "error"),
   });
 
   const markOosMutation = useMutation({
@@ -110,7 +111,7 @@ export function SevereRepairOosTab({ operatingCompanyId }: Props) {
       setOosLocation("");
       await refreshAll();
     },
-    onError: (error) => pushToast(String((error as Error)?.message ?? "Failed to mark unit OOS"), "error"),
+    onError: (error) => pushToast(userFacingApiError(error, "Failed to mark unit OOS"), "error"),
   });
 
   const returnMutation = useMutation({
@@ -128,7 +129,7 @@ export function SevereRepairOosTab({ operatingCompanyId }: Props) {
       setReturnEstimate(null);
       await refreshAll();
     },
-    onError: (error) => pushToast(String((error as Error)?.message ?? "Failed to return unit to service"), "error"),
+    onError: (error) => pushToast(userFacingApiError(error, "Failed to return unit to service"), "error"),
   });
 
   const estimates = estimatesQuery.data?.data ?? [];

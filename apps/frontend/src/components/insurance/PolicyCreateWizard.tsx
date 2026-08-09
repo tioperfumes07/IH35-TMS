@@ -19,6 +19,7 @@ import { useToast } from "../Toast";
 import { formatQueryErrorDetail } from "../../lib/tableError";
 import { useCostPerVehicle } from "./useCostPerVehicle";
 import { formatUsdCents } from "../../lib/money";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 /** Map with-bills 409s Cascade hit live (insurance_vendor_not_found on free-text insurer). */
 export function mapPolicyWithBillsError(err: unknown): string {
@@ -44,7 +45,7 @@ export function mapPolicyWithBillsError(err: unknown): string {
     }
     return `Unable to create policy (HTTP ${err.status}).`;
   }
-  return String((err as Error)?.message ?? "Unexpected error creating policy.");
+  return userFacingApiError(err, "Unexpected error creating policy.");
 }
 
 type Props = {

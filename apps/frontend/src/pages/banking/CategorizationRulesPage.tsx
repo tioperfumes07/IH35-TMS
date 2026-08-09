@@ -17,6 +17,7 @@ import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 function canAccess(role?: string) {
   return role === "Owner" || role === "Administrator" || role === "Accountant";
@@ -108,7 +109,7 @@ export function CategorizationRulesPage() {
       await refresh();
       pushToast(selectedRule ? "Rule updated" : "Rule created", "success");
     } catch (error) {
-      pushToast(String((error as Error)?.message ?? "Save failed"), "error");
+      pushToast(userFacingApiError(error, "Save failed"), "error");
     } finally {
       setSaving(false);
     }
@@ -125,7 +126,7 @@ export function CategorizationRulesPage() {
       pushToast(`Historical apply matched ${result.matched} transactions`, "success");
       await refresh();
     } catch (error) {
-      pushToast(String((error as Error)?.message ?? "Apply historical failed"), "error");
+      pushToast(userFacingApiError(error, "Apply historical failed"), "error");
     } finally {
       setSaving(false);
     }
@@ -139,7 +140,7 @@ export function CategorizationRulesPage() {
       await refresh();
       pushToast("Rule deactivated", "success");
     } catch (error) {
-      pushToast(String((error as Error)?.message ?? "Deactivate failed"), "error");
+      pushToast(userFacingApiError(error, "Deactivate failed"), "error");
     } finally {
       setSaving(false);
     }
@@ -165,7 +166,7 @@ export function CategorizationRulesPage() {
       await refresh();
       pushToast("Rule priorities updated", "success");
     } catch (error) {
-      pushToast(String((error as Error)?.message ?? "Reorder failed"), "error");
+      pushToast(userFacingApiError(error, "Reorder failed"), "error");
     } finally {
       setSaving(false);
       setDragRuleId(null);

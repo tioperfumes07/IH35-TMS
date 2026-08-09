@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import {
+import { userFacingApiError } from "../lib/api-error-message";
   getCachedFeatureFlag,
   refreshFeatureFlag,
   startFeatureFlagRefresh,
@@ -24,7 +25,7 @@ export function useFeatureFlag(flagKey: string, operatingCompanyId?: string | nu
       })
       .catch((err: unknown) => {
         if (!cancelled) {
-          setError(String((err as Error)?.message ?? err));
+          setError(userFacingApiError(err, err));
           setLoading(false);
         }
       });

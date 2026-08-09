@@ -32,6 +32,7 @@ import { useAuth } from "../../auth/useAuth";
 import { useToast } from "../../components/Toast";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { formatDateUS } from "../../lib/formatDate";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
 /** Matches apps/backend/src/maintenance/wo-oos-estimator.ts DEFAULT_DAILY_LOSS_CENTS */
@@ -311,7 +312,7 @@ export function WorkOrderDetailPage() {
       setCancelNotes("");
       invalidateWo();
     },
-    onError: (error: unknown) => pushToast(String((error as Error)?.message ?? "Cancel failed"), "error"),
+    onError: (error: unknown) => pushToast(userFacingApiError(error, "Cancel failed"), "error"),
   });
   const voidMut = useMutation({
     mutationFn: (reason: string) => voidWorkOrderConsole(String(id), companyId, reason),
@@ -321,7 +322,7 @@ export function WorkOrderDetailPage() {
       setReasonText("");
       invalidateWo();
     },
-    onError: (error: unknown) => pushToast(String((error as Error)?.message ?? "Void failed"), "error"),
+    onError: (error: unknown) => pushToast(userFacingApiError(error, "Void failed"), "error"),
   });
   const cancelValid = Boolean(cancelReasonCode);
   const voidValid = reasonText.trim().length >= 3;

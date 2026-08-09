@@ -12,6 +12,7 @@ import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { companyToday } from "../../lib/businessDate";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 type Props = {
   open: boolean;
@@ -164,7 +165,7 @@ export function RecordCCPaymentModal({
       onSaved();
       onClose();
     } catch (error) {
-      pushToast(String((error as Error)?.message ?? "Failed to record payment"), "error");
+      pushToast(userFacingApiError(error, "Failed to record payment"), "error");
     } finally {
       setSaving(false);
     }

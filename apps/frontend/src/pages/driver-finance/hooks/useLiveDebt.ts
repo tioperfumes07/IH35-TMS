@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getDebtSummary, type DebtSummary } from "../../../api/driverFinance";
+import { userFacingApiError } from "../../../lib/api-error-message";
 
 type State = {
   debt: DebtSummary | null;
@@ -27,7 +28,7 @@ export function useLiveDebt(driverId: string | null, operatingCompanyId: string 
       setState((current) => ({
         ...current,
         loading: false,
-        error: String((error as Error)?.message || error),
+        error: userFacingApiError(error, error),
       }));
     }
   }, [driverId, operatingCompanyId]);

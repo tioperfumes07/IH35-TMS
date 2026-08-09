@@ -28,6 +28,7 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useUrlSort } from "../../hooks/useUrlSort";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -110,7 +111,7 @@ export function FactoringDetailPage() {
       void queryClient.invalidateQueries({ queryKey: ["accounting", "factoring-advance", selectedCompanyId, id] });
       void queryClient.invalidateQueries({ queryKey: ["accounting", "factoring-advances"] });
     },
-    onError: (error) => pushToast(String((error as Error)?.message ?? "Failed to update factoring batch"), "error"),
+    onError: (error) => pushToast(userFacingApiError(error, "Failed to update factoring batch"), "error"),
   });
 
   const detail = query.data;

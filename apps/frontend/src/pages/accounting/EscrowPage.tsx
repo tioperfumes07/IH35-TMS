@@ -12,6 +12,7 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { useUrlSort } from "../../hooks/useUrlSort";
 import { EscrowDeductionsPendingTab } from "../driver-finance/EscrowDeductionsPendingTab";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 type EscrowViewTab = "accounts" | "pending";
 
@@ -96,7 +97,7 @@ export function EscrowPage() {
   const postingsQuery = useMutation({
     mutationFn: (escrowAccountId: string) => listEscrowPostings(companyId, escrowAccountId, 300),
     onError: (error) =>
-      pushToast(String((error as Error)?.message ?? "Failed to load escrow postings"), "error"),
+      pushToast(userFacingApiError(error, "Failed to load escrow postings"), "error"),
   });
 
   const accountRows = useMemo(

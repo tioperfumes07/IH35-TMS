@@ -19,6 +19,7 @@ import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useUrlSort } from "../../hooks/useUrlSort";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -76,7 +77,7 @@ export function InvoiceDetailPage() {
       void queryClient.invalidateQueries({ queryKey: ["accounting", "invoice", selectedCompanyId, id] });
       void queryClient.invalidateQueries({ queryKey: ["accounting", "invoices"] });
     },
-    onError: (error) => pushToast(String((error as Error)?.message ?? "Failed to send invoice"), "error"),
+    onError: (error) => pushToast(userFacingApiError(error, "Failed to send invoice"), "error"),
   });
 
   const voidMutation = useMutation({
@@ -85,7 +86,7 @@ export function InvoiceDetailPage() {
       void queryClient.invalidateQueries({ queryKey: ["accounting", "invoice", selectedCompanyId, id] });
       void queryClient.invalidateQueries({ queryKey: ["accounting", "invoices"] });
     },
-    onError: (error) => pushToast(String((error as Error)?.message ?? "Failed to void invoice"), "error"),
+    onError: (error) => pushToast(userFacingApiError(error, "Failed to void invoice"), "error"),
   });
 
   const [voidOpen, setVoidOpen] = useState(false);
@@ -102,7 +103,7 @@ export function InvoiceDetailPage() {
       void queryClient.invalidateQueries({ queryKey: ["accounting", "invoice", selectedCompanyId, id] });
       void queryClient.invalidateQueries({ queryKey: ["accounting", "invoices"] });
     },
-    onError: (error) => pushToast(String((error as Error)?.message ?? "Failed to add invoice line"), "error"),
+    onError: (error) => pushToast(userFacingApiError(error, "Failed to add invoice line"), "error"),
   });
 
   const patchLineMutation = useMutation({
@@ -112,7 +113,7 @@ export function InvoiceDetailPage() {
       void queryClient.invalidateQueries({ queryKey: ["accounting", "invoice", selectedCompanyId, id] });
       void queryClient.invalidateQueries({ queryKey: ["accounting", "invoices"] });
     },
-    onError: (error) => pushToast(String((error as Error)?.message ?? "Failed to update invoice line"), "error"),
+    onError: (error) => pushToast(userFacingApiError(error, "Failed to update invoice line"), "error"),
   });
 
   const deleteLineMutation = useMutation({
@@ -121,7 +122,7 @@ export function InvoiceDetailPage() {
       void queryClient.invalidateQueries({ queryKey: ["accounting", "invoice", selectedCompanyId, id] });
       void queryClient.invalidateQueries({ queryKey: ["accounting", "invoices"] });
     },
-    onError: (error) => pushToast(String((error as Error)?.message ?? "Failed to delete invoice line"), "error"),
+    onError: (error) => pushToast(userFacingApiError(error, "Failed to delete invoice line"), "error"),
   });
 
   const invoice = detailQuery.data;

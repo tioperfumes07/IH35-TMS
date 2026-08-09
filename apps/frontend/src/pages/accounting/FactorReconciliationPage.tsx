@@ -19,6 +19,7 @@ import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -58,7 +59,7 @@ export function FactorReconciliationPage() {
       await queryClient.invalidateQueries({ queryKey: ["accounting", "factor-reconciliation-runs", selectedCompanyId] });
       await queryClient.invalidateQueries({ queryKey: ["accounting", "factor-reconciliation-import-candidates", selectedCompanyId] });
     },
-    onError: (error) => pushToast(String((error as Error)?.message ?? "Failed to import reconciliation run"), "error"),
+    onError: (error) => pushToast(userFacingApiError(error, "Failed to import reconciliation run"), "error"),
   });
 
   const selectedRun = useMemo(

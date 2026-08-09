@@ -3,6 +3,7 @@ import { uploadLovesPrices } from "../../../api/fuelPlanner";
 import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
 import { useToast } from "../../../components/Toast";
+import { userFacingApiError } from "../../../lib/api-error-message";
 
 type Props = {
   open: boolean;
@@ -30,7 +31,7 @@ export function UploadLovesPricesModal({ open, operatingCompanyId, onClose, onUp
       onUploaded();
       onClose();
     } catch (error) {
-      pushToast(String((error as Error)?.message || "Upload failed"), "error");
+      pushToast(userFacingApiError(error, "Upload failed"), "error");
     } finally {
       setLoading(false);
     }

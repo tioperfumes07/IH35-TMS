@@ -21,6 +21,7 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { CollapsedListFilters } from "../../components/table";
 import { useUrlSort } from "../../hooks/useUrlSort";
 import { EntityPicker } from "../../components/parity/EntityPicker";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 // BANKREC-LISTSTATUS-01: read-only badge derived from bank.reconciliation_matches (server-side).
 // matched = green check, unmatched = neutral. Additive column only.
@@ -119,7 +120,7 @@ export function BillPaymentsListPage() {
       void queryClient.invalidateQueries({ queryKey: ["accounting", "vendor-balances", companyId] });
       void queryClient.invalidateQueries({ queryKey: ["accounting", "bills-has-balance", companyId] });
     },
-    onError: (error) => pushToast(String((error as Error)?.message ?? "Void failed"), "error"),
+    onError: (error) => pushToast(userFacingApiError(error, "Void failed"), "error"),
   });
 
   const [voidTarget, setVoidTarget] = useState<string | null>(null);

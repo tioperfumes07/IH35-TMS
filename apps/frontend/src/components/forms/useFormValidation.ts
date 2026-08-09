@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from "react";
 import type { ZodIssue, ZodSchema } from "zod";
 import { ApiError } from "../../api/client";
+import { userFacingApiError } from "../../lib/api-error-message";
 import { useToast } from "../Toast";
 
 export function flattenZodFieldErrors(fieldErrors: Record<string, string[] | undefined>): Record<string, string> {
@@ -132,7 +133,7 @@ export function useFormValidation<TFormShape>(opts: UseFormValidationOpts<TFormS
           }
           return;
         }
-        const msg = String((error as Error).message ?? "Request failed");
+        const msg = userFacingApiError(error, "Request failed");
         setApiError(msg);
         pushToast(msg, "error");
       }

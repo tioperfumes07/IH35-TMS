@@ -21,6 +21,7 @@ import { useToast } from "../../components/Toast";
 import { useAuth } from "../../auth/useAuth";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { WOTimeTrackingPanel } from "./WOTimeTrackingPanel";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 export function WorkOrdersConsoleDetailPage() {
   const { id } = useParams();
@@ -48,7 +49,7 @@ export function WorkOrdersConsoleDetailPage() {
       pushToast("Work order approved", "success");
       invalidate();
     },
-    onError: (error: unknown) => pushToast(String((error as Error)?.message ?? "Approve failed"), "error"),
+    onError: (error: unknown) => pushToast(userFacingApiError(error, "Approve failed"), "error"),
   });
 
   const startMut = useMutation({
@@ -57,7 +58,7 @@ export function WorkOrdersConsoleDetailPage() {
       pushToast("Work marked in progress", "success");
       invalidate();
     },
-    onError: (error: unknown) => pushToast(String((error as Error)?.message ?? "Start failed"), "error"),
+    onError: (error: unknown) => pushToast(userFacingApiError(error, "Start failed"), "error"),
   });
 
   const completeMut = useMutation({
@@ -66,7 +67,7 @@ export function WorkOrdersConsoleDetailPage() {
       pushToast("Work order completed", "success");
       invalidate();
     },
-    onError: (error: unknown) => pushToast(String((error as Error)?.message ?? "Complete failed"), "error"),
+    onError: (error: unknown) => pushToast(userFacingApiError(error, "Complete failed"), "error"),
   });
 
   // Cancel/Void = Owner/Administrator ONLY, reason REQUIRED, soft (never deletes). A reason modal
@@ -103,7 +104,7 @@ export function WorkOrdersConsoleDetailPage() {
       setCancelNotes("");
       invalidate();
     },
-    onError: (error: unknown) => pushToast(String((error as Error)?.message ?? "Cancel failed"), "error"),
+    onError: (error: unknown) => pushToast(userFacingApiError(error, "Cancel failed"), "error"),
   });
 
   const voidMut = useMutation({
@@ -114,7 +115,7 @@ export function WorkOrdersConsoleDetailPage() {
       setReasonText("");
       invalidate();
     },
-    onError: (error: unknown) => pushToast(String((error as Error)?.message ?? "Void failed"), "error"),
+    onError: (error: unknown) => pushToast(userFacingApiError(error, "Void failed"), "error"),
   });
 
   const cancelValid = Boolean(cancelReasonCode);
@@ -148,7 +149,7 @@ export function WorkOrdersConsoleDetailPage() {
       pushToast("Photo attached", "success");
       invalidate();
     } catch (error) {
-      pushToast(String((error as Error)?.message ?? "Photo upload failed"), "error");
+      pushToast(userFacingApiError(error, "Photo upload failed"), "error");
     }
   };
 

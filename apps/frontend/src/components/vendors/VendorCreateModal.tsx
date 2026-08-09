@@ -12,6 +12,7 @@ import { useCatalogQuery } from "../../hooks/useCatalogQuery";
 import { useToast } from "../Toast";
 import { emptyVendorProfileMeta, serializeVendorNotes, type VendorProfileMeta } from "../../lib/vendorProfileMeta";
 import { isTestVendorFixtureName } from "../../lib/testVendorFixtureName";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 // V4/V5 — full QuickBooks-style vendor creator (QBO parity spec §1B: Name and contact / Address / Notes),
 // extended with the trucking classification fields (vendor type / tax ID / vendor code) the profile edits.
@@ -256,7 +257,7 @@ export function VendorCreateModal({ open, onClose, operatingCompanyId }: Props) 
         return;
       }
       setFormError("Could not save vendor.");
-      pushToast(String((error as Error)?.message || "Could not save vendor."), "error");
+      pushToast(userFacingApiError(error, "Could not save vendor."), "error");
     },
   });
 
