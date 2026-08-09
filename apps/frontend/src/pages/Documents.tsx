@@ -13,6 +13,7 @@ import { PageHeader } from "../components/layout/PageHeader";
 import { useToast } from "../components/Toast";
 import { dataTableErrorState } from "../lib/tableError";
 import { formatDateUS } from "../lib/formatDate";
+import { entityLabel } from "../lib/entity-label";
 import { DatePicker } from "../components/forms/DatePicker";
 
 const ENTITY_TYPE_OPTIONS = [
@@ -31,7 +32,7 @@ const ENTITY_TYPE_OPTIONS = [
 function entityLabel(file: DocsFile) {
   const firstLink = file.links?.[0];
   if (!firstLink) return "Standalone";
-  return `${firstLink.entity_type[0].toUpperCase()}${firstLink.entity_type.slice(1)}: ${firstLink.entity_id.slice(0, 8)}...`;
+  return `${firstLink.entity_type[0].toUpperCase()}${firstLink.entity_type.slice(1)}: ${entityLabel(null, firstLink.entity_id, "Record")}`;
 }
 
 export function DocumentsPage() {

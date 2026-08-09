@@ -8,6 +8,7 @@
  */
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { entityLabel } from "../../../lib/entity-label";
 
 type LiabilityRow = Record<string, unknown>;
 
@@ -37,7 +38,7 @@ export function LiabilitiesTable({ rows, onOpenDetail, onSendAck }: Props) {
     {
       key: "id",
       label: "Display ID",
-      render: (row) => <>{String(row.id).slice(0, 8)}</>,
+      render: (row) => <>{entityLabel(null, row.id, "Liability")}</>,
     },
     {
       key: "driver_full_name",

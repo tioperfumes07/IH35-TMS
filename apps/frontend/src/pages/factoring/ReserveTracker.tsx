@@ -417,7 +417,7 @@ export function ReserveTracker() {
               onClick={() => setSelectedFactorId(bal.factor_id)}
             >
               <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">
-                {factorNameById.get(bal.factor_id) ?? bal.factor_id.slice(0, 8)}
+                {entityLabel(factorNameById.get(bal.factor_id), bal.factor_id, "Factor")}
               </div>
               <div className="mt-1 text-xl font-bold text-gray-900">{fmtM(bal.balance_cents)}</div>
               <div className="mt-1 text-[11px] text-gray-500">
@@ -435,7 +435,7 @@ export function ReserveTracker() {
       {selectedFactorId ? (
         <div className="rounded-sm border border-gray-200 bg-white p-3">
           <div className="mb-2 text-sm font-semibold text-gray-800">
-            Reserve Movement History — {factorNameById.get(selectedFactorId) ?? selectedFactorId.slice(0, 8)}
+            Reserve Movement History — {entityLabel(factorNameById.get(selectedFactorId), selectedFactorId, "Factor")}
           </div>
           {historyQ.isError ? (
             <ListErrorState
