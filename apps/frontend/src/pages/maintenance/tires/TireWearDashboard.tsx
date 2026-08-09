@@ -124,7 +124,7 @@ export function TireWearDashboard() {
             rowKey={(row) => `${row.unit_uuid}-${row.tire_position}`}
             loading={atRiskQ.isLoading}
             storageKey="maintenance-tire-wear-at-risk"
-            emptyText={`No tires projected for replacement within ${withinDays} days.`}
+            emptyText="No tires projected for replacement within 30 days."
             exportFilename="tire-wear-at-risk"
           />
         </div>

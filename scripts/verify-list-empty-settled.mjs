@@ -197,6 +197,46 @@ const MIGRATED = [
     file: "apps/frontend/src/pages/maintenance/reports/MaintenanceReportsPage.tsx",
     empties: ["No rows for this report."],
   },
+  {
+    file: "apps/frontend/src/pages/maintenance/tires/TireWearDashboard.tsx",
+    empties: ["No tires projected for replacement within 30 days."],
+  },
+  {
+    file: "apps/frontend/src/pages/maintenance/TireProgramPage.tsx",
+    empties: ["No tire events yet for this unit."],
+  },
+  {
+    file: "apps/frontend/src/pages/maintenance/RoadServiceList.tsx",
+    empties: ["No roadside tickets found."],
+  },
+  {
+    file: "apps/frontend/src/pages/maintenance/ServiceLocationPage.tsx",
+    empties: ["No active work orders. Open work orders are grouped here by service location."],
+  },
+  {
+    file: "apps/frontend/src/pages/maintenance/components/SevereRepairOosTab.tsx",
+    empties: ["No severe repairs or OOS units"],
+  },
+  {
+    file: "apps/frontend/src/pages/maintenance/vehicles/VehiclesMasterDataPage.tsx",
+    empties: ["No vehicles found."],
+  },
+  {
+    file: "apps/frontend/src/pages/maintenance/vendors/VendorsPage.tsx",
+    empties: ["No vendors available."],
+  },
+  {
+    file: "apps/frontend/src/pages/maintenance/VendorDetailPage.tsx",
+    empties: ["No linked work orders yet.", "No vendor invoices recorded."],
+  },
+  {
+    file: "apps/frontend/src/pages/maintenance/WorkOrderDetailPage.tsx",
+    empties: [
+      "No posting preview lines.",
+      "No bills are linked to this work order yet.",
+      "No expenses are linked to this work order yet.",
+    ],
+  },
   { file: "apps/frontend/src/pages/maintenance/WarrantyClaimsPage.tsx", empties: ["No warranty claims yet."] },
   { file: "apps/frontend/src/pages/work-orders/WorkOrdersConsoleListPage.tsx", empties: ["No work orders match the current filters."] },
   { file: "apps/frontend/src/pages/safety/AccidentsPage.tsx", empties: ["No accident reports found."] },

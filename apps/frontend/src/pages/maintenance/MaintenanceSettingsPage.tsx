@@ -58,6 +58,21 @@ export function MaintenanceSettingsPage({ operatingCompanyId }: Props) {
         saveMutation.mutate();
       }}
     >
+      {settingsQuery.isLoading ? (
+        <p className="text-xs text-slate-500" data-testid="maintenance-settings-loading">
+          Loading maintenance settings…
+        </p>
+      ) : null}
+      {settingsQuery.isError ? (
+        <p className="rounded-sm border border-slate-300 bg-slate-50 p-3 text-xs text-slate-700" role="alert">
+          Maintenance settings failed to load for this entity — this is not an empty configuration.
+        </p>
+      ) : null}
+      {!settingsQuery.isLoading && !settingsQuery.isError && !settings ? (
+        <p className="rounded-sm border border-slate-200 bg-white p-3 text-xs text-slate-500">
+          No maintenance settings row yet for this entity — save defaults below to create one.
+        </p>
+      ) : null}
       <section className="overflow-hidden rounded-sm border border-slate-300 bg-white">
         <div className="border-b border-slate-200 bg-slate-50 px-3 py-2">
           <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-700">Maintenance settings</h2>

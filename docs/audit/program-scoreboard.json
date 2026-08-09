@@ -277,7 +277,7 @@
     {
       "tier": "1",
       "module": "maintenance",
-      "build": "22/39",
+      "build": "39/39",
       "cells": [
         "AUDIT",
         "AUDIT",
@@ -2121,6 +2121,15 @@
   },
   "recentActivity": [
     {
+      "number": 5066,
+      "title": "FINDING: MAINT-SURFACE-BATCH-SETTLED",
+      "state": "merged",
+      "mergedAtCt": "08/08/2026, 08:49 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/5066",
+      "sha": "a676e9952",
+      "committedAtIso": "2026-08-08T20:49:09-05:00"
+    },
+    {
       "number": 5065,
       "title": "FINDING: MAINT-S03",
       "state": "merged",
@@ -2200,15 +2209,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/5059",
       "sha": "f6f0364c3",
       "committedAtIso": "2026-08-08T20:22:43-05:00"
-    },
-    {
-      "number": 5058,
-      "title": "FINDING: SETL-S01 + SETL-S02 + SETL-S03",
-      "state": "merged",
-      "mergedAtCt": "08/08/2026, 08:22 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/5058",
-      "sha": "47aaf3682",
-      "committedAtIso": "2026-08-08T20:22:34-05:00"
     }
   ]
 }
