@@ -91,7 +91,7 @@ export function VendorsPage() {
   const [statusFilter, setStatusFilter] = useState("");
   // §7 list segments are URL-addressable via `listTab` — NOT `tab`, which belongs to the vendor DETAIL tabs
   // (:74) and whose existing deep-links must keep working (CURSOR-RULING-PARAM-LIST-TAB, locked 2026-08-08).
-  const listStatus = parseVendorListTab(searchParams.get("listTab"));
+  const listStatus = parseVendorListTab(searchParams.get("listTab") ?? "active");
   const categoryFilter = searchParams.get("category") ?? "";
   const setListStatus = (next: VendorListTabId) => {
     const params = new URLSearchParams(searchParams);
