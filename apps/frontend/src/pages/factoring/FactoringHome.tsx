@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   deactivateFactoring,
@@ -139,7 +140,7 @@ const VENDOR_MERGE_COLUMNS: Array<ParityColumn<DriverVendorMergeRow>> = [
     key: "driver_id",
     label: "Driver",
     sortable: true,
-    render: (row) => <EntityLink kind="driver" id={row.driver_id} label={row.driver_id?.slice(0, 8)} />,
+    render: (row) => <EntityLink kind="driver" id={row.driver_id} label={entityLabel(null, row.driver_id, "Driver")} />,
   },
   { key: "from_qbo_vendor_id", label: "From", sortable: true },
   { key: "to_qbo_vendor_id", label: "To", sortable: true },
