@@ -56,7 +56,15 @@ export function SelectCombobox({
   const [internalValue, setInternalValue] = useState<string | null>(() => normalizeValue(defaultValue));
   const options = useMemo(() => flattenOptions(children), [children]);
   const selected = controlled ? normalizeValue(value) : internalValue;
-  const placeholder = options.find((opt) => opt.disabled && opt.value === "")?.label || "Select...";
+  // A native <select> treats `<option value="">Select X…</option>` as its placeholder row whether or not it
+  // is disabled — SelectCombobox exists to be a drop-in for exactly that markup. Requiring `disabled` meant
+  // the authored label was silently DROPPED and the generic "Select..." rendered instead, on 80 such options
+  // across 47 files. Prefer a disabled empty option (the explicit form), then fall back to any empty-value
+  // option, then the generic default.
+  const placeholder =
+    options.find((opt) => opt.disabled && opt.value === "")?.label ||
+    options.find((opt) => opt.value === "")?.label ||
+    "Select...";
 
   return (
     <div
