@@ -124,7 +124,14 @@ export async function registerSettlementDisputeRoutes(app: FastifyInstance) {
         operating_company_id: query.data.operating_company_id,
         dispute_id: params.data.id,
       });
-      if (!dispute) return reply.code(404).send({ error: "E_NOT_FOUND" });
+      if (!dispute)
+        return reply.code(404).send({
+          error: "E_NOT_FOUND",
+          message:
+            "That settlement dispute was not found. It may have been withdrawn, or it belongs to a " +
+            "different operating company than the one selected.",
+          dispute_id: params.data.id,
+        });
       return { dispute };
     } catch (error) {
       const mapped = mapKnownError(error);
@@ -135,7 +142,12 @@ export async function registerSettlementDisputeRoutes(app: FastifyInstance) {
   app.post("/api/v1/driver-finance/settlement-disputes/:id/review", async (req, reply) => {
     const user = auth(req, reply);
     if (!user) return;
-    if (!isOwnerOrAdmin(user.role)) return reply.code(403).send({ error: "E_OWNER_OR_ADMIN_ONLY" });
+    if (!isOwnerOrAdmin(user.role))
+      return reply.code(403).send({
+        error: "E_OWNER_OR_ADMIN_ONLY",
+        message: `Only an Owner or Admin can move a settlement dispute to under-review. Your role is ${user.role}.`,
+        your_role: user.role,
+      });
     const params = idParamsSchema.safeParse(req.params ?? {});
     if (!params.success) return sendValidationError(reply, params.error);
     const body = operatingCompanyBodySchema.safeParse(req.body ?? {});
@@ -155,7 +167,12 @@ export async function registerSettlementDisputeRoutes(app: FastifyInstance) {
   app.post("/api/v1/driver-finance/settlement-disputes/:id/resolve", async (req, reply) => {
     const user = auth(req, reply);
     if (!user) return;
-    if (!isOwnerOrAdmin(user.role)) return reply.code(403).send({ error: "E_OWNER_OR_ADMIN_ONLY" });
+    if (!isOwnerOrAdmin(user.role))
+      return reply.code(403).send({
+        error: "E_OWNER_OR_ADMIN_ONLY",
+        message: `Only an Owner or Admin can resolve a settlement dispute, because resolving one can change what the driver is paid. Your role is ${user.role}.`,
+        your_role: user.role,
+      });
     const params = idParamsSchema.safeParse(req.params ?? {});
     if (!params.success) return sendValidationError(reply, params.error);
     const body = resolveBodySchema.safeParse(req.body ?? {});
@@ -182,10 +199,21 @@ export async function registerSettlementDisputeRoutes(app: FastifyInstance) {
     if (!params.success) return sendValidationError(reply, params.error);
     const body = operatingCompanyBodySchema.safeParse(req.body ?? {});
     if (!body.success) return sendValidationError(reply, body.error);
-    if (user.role !== "Driver") return reply.code(403).send({ error: "E_DRIVER_ONLY_WITHDRAW" });
+    if (user.role !== "Driver")
+      return reply.code(403).send({
+        error: "E_DRIVER_ONLY_WITHDRAW",
+        message: `Only the driver who filed a settlement dispute can withdraw it. Your role is ${user.role}. An Owner or Admin resolves a dispute instead of withdrawing it.`,
+        your_role: user.role,
+      });
     try {
       const driverId = await resolveDriverIdForUser(user.uuid);
-      if (!driverId) return reply.code(404).send({ error: "E_DRIVER_PROFILE_NOT_FOUND" });
+      if (!driverId)
+        return reply.code(404).send({
+          error: "E_DRIVER_PROFILE_NOT_FOUND",
+          message:
+            "Your user account has the Driver role but is not linked to a driver profile, so there is " +
+            "no dispute to withdraw. Ask dispatch to link your profile.",
+        });
       const data = await withdrawDispute(user.uuid, {
         operating_company_id: body.data.operating_company_id,
         dispute_id: params.data.id,
@@ -201,7 +229,12 @@ export async function registerSettlementDisputeRoutes(app: FastifyInstance) {
   app.get("/api/v1/driver-pwa/my-disputes", async (req, reply) => {
     const user = auth(req, reply);
     if (!user) return;
-    if (user.role !== "Driver") return reply.code(403).send({ error: "drivers_only" });
+    if (user.role !== "Driver")
+      return reply.code(403).send({
+        error: "drivers_only",
+        message: `This dispute inbox shows only the signed-in driver\u2019s own disputes. Your role is ${user.role}; use the settlement-disputes list instead.`,
+        your_role: user.role,
+      });
     try {
       const data = await listMyDisputes(user.uuid);
       return data;
