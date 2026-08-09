@@ -35,11 +35,25 @@ export async function registerDispatchLoadAssignRoutes(app: FastifyInstance) {
 
     const availability = await canAssignLoadToDriver(driverId, tenantId);
     if (!availability.ok && !overrideRepairBlock) {
+      // FAIL-U1 (second surface). The pre-check panel in LoadCreateModal reads
+      // `work_order_display_id` / `asset_label` and shows a dispatcher which work order and which
+      // truck. This 409 — the SAME interlock, reached from the board's Quick Assign instead of the
+      // create modal — hand-built a subset of the availability object and dropped exactly those two
+      // human labels, keeping only the uuids.
+      //
+      // It also carried no `message`. DispatchBoard's catch toasts `data.message ?? data.error`, so
+      // the dispatcher's red toast read the literal string `E_DRIVER_REPAIR_BLOCK` while the
+      // readable sentence sat unused in `blocker` one field away.
+      const assetSuffix = availability.asset_label ? ` · Unit ${availability.asset_label}` : "";
+      const message = `${availability.blocker ?? "Driver has an active repair work order"}${assetSuffix}. Re-submit with Override repair block to continue.`;
       return reply.code(409).send({
         error: "E_DRIVER_REPAIR_BLOCK",
+        message,
         blocker: availability.blocker,
         work_order_id: availability.work_order_id ?? null,
         asset_id: availability.asset_id ?? null,
+        work_order_display_id: availability.work_order_display_id ?? null,
+        asset_label: availability.asset_label ?? null,
       });
     }
   });
