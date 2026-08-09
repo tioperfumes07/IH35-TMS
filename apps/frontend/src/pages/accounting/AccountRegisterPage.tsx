@@ -13,6 +13,7 @@ import { listCoaAccountsForJe, listAccountingAuditTrail, type AccountingAuditTra
 import { getAllAccounts } from "../../api/banking";
 import { getAccountRegister, type AccountRegisterReport, type AccountRegisterRow } from "../../api/account-register";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useUrlSort } from "../../hooks/useUrlSort";
 import { companyToday, monthBoundsIso } from "../../lib/businessDate";
@@ -347,7 +348,7 @@ export function AccountRegisterPage() {
     {
       key: "journal_entry_id",
       label: "Journal entry",
-      render: (e) => <EntityLink kind="journal_entry" id={e.journal_entry_id} label={e.journal_entry_id.slice(0, 8)} />,
+      render: (e) => <EntityLink kind="journal_entry" id={e.journal_entry_id} label={entityLabel(null, e.journal_entry_id, "Journal entry")} />,
     },
     { key: "debit_or_credit", label: "Dr/Cr", render: (e) => e.debit_or_credit },
     {
