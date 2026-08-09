@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { formatDateUS } from "../../lib/formatDate";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -8,6 +8,7 @@ import {
   syncSafetyMeetingAttendance,
   type SafetyMeetingRow,
 } from "../../api/safety";
+import { listDrivers } from "../../api/mdata";
 import { Button } from "../../components/Button";
 import { Modal } from "../../components/Modal";
 import { EntityPicker } from "../../components/parity/EntityPicker";
@@ -33,6 +34,23 @@ export function SafetyMeetingsPage({ operatingCompanyId }: Props) {
     queryFn: () => listSafetyMeetings(operatingCompanyId),
     enabled: Boolean(operatingCompanyId),
   });
+
+  // SAF-B24-residual: required_attendees / attendance keys are bare driver uuids (no name column —
+  // they live in an event_log description JSON blob, not a joined table). Without this lookup every
+  // EntityLink below rendered the raw uuid as its own label.
+  const driversQuery = useQuery({
+    queryKey: ["mdata", "drivers", "all", operatingCompanyId],
+    queryFn: () => listDrivers({ operating_company_id: operatingCompanyId, include_system: true, limit: 500 }),
+    enabled: Boolean(operatingCompanyId),
+  });
+  const driverNameById = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const driver of driversQuery.data?.drivers ?? []) {
+      const name = [driver.first_name, driver.last_name].filter(Boolean).join(" ").trim();
+      if (name) map.set(driver.id, name);
+    }
+    return map;
+  }, [driversQuery.data]);
 
   const createMutation = useMutation({
     mutationFn: () =>
@@ -153,7 +171,7 @@ export function SafetyMeetingsPage({ operatingCompanyId }: Props) {
                           });
                         }}
                       />
-                      <EntityLink kind="driver" id={driverId} />
+                      <EntityLink kind="driver" id={driverId} label={driverNameById.get(driverId)} />
                     </label>
                   ))}
                   {attendeeIds.length === 0 ? (
@@ -218,7 +236,7 @@ export function SafetyMeetingsPage({ operatingCompanyId }: Props) {
                     className="flex items-center justify-between gap-2 text-xs text-slate-700"
                     data-testid={`safety-meeting-required-${driverId}`}
                   >
-                    <EntityLink kind="driver" id={driverId} />
+                    <EntityLink kind="driver" id={driverId} label={driverNameById.get(driverId)} />
                     <button
                       type="button"
                       className="text-slate-600 underline"
