@@ -28,6 +28,25 @@ function humanMemo(memo: string | null | undefined): string {
   return memo.replace(UUID_RE, (uuid) => uuid.slice(0, 8));
 }
 
+/** LST-F105: page chrome must not lead with a bare UUID fragment as the JE identity. */
+function journalEntryChromeLabel(entry: {
+  entry_date: string;
+  journal_entry_type_code?: string | null;
+  journal_entry_type_name?: string | null;
+  source?: string | null;
+  memo?: string | null;
+}): string {
+  const date = formatDateUS(entry.entry_date);
+  const type =
+    entry.journal_entry_type_code?.trim() ||
+    entry.journal_entry_type_name?.trim() ||
+    entry.source?.trim() ||
+    "Journal entry";
+  const memo = entry.memo?.trim() ? humanMemo(entry.memo) : "";
+  const memoBit = memo && memo !== "—" ? ` · ${memo.length > 48 ? `${memo.slice(0, 48)}…` : memo}` : "";
+  return `${date} · ${type}${memoBit}`;
+}
+
 function postingEntityKind(type: string | null | undefined): EntityKind | null {
   switch ((type ?? "").toLowerCase()) {
     case "invoice":
@@ -225,16 +244,17 @@ export function JournalEntryDetailPage() {
   const entry = detailQuery.data;
   const postings = entry.postings ?? [];
   const sourceRows = uniqueSourceRows(sourceLinksQuery.data?.source_links ?? []);
+  const chromeLabel = journalEntryChromeLabel(entry);
 
   return (
     <AccountingSubNavWrapper>
       <PageHeader
-        title={`Journal Entry ${entry.id.slice(0, 8)}`}
+        title={chromeLabel}
         backHref="/accounting/journal-entries"
         breadcrumb={[
           { label: "Accounting", href: "/accounting" },
           { label: "Journal Entries", href: "/accounting/journal-entries" },
-          { label: entry.id.slice(0, 8) },
+          { label: chromeLabel },
         ]}
         actions={
           <Button type="button" variant="secondary" onClick={() => navigate("/accounting/journal-entries")}>
