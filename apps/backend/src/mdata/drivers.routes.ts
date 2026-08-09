@@ -1,4 +1,5 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import { ensureDriverVendor } from "./ensure-driver-vendor.shared.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { randomBytes } from "crypto";
 import { z } from "zod";
@@ -749,8 +750,10 @@ export async function createDriverCanonical(
       }
 
       // DRIVER ENTITY DEFAULT (business rule): a driver must never be entity-less. TRANSP
-      // (IH 35 Transportation) is the only driver-bearing entity (TRK is asset-holder, USMCA
-      // inactive). When the caller did not supply an operating company, default to TRANSP by its
+      // (IH 35 Transportation) is the DEFAULT driver-bearing entity (TRK is asset-holder). The
+      // note here used to say "USMCA inactive" — that is stale: USMCA is active and carries 16
+      // active drivers on prod today. The default is unchanged, but it is a default, not the only
+      // possibility. When the caller did not supply an operating company, default to TRANSP by its
       // stable code (never a hardcoded uuid). The mdata.drivers.operating_company_id NOT NULL
       // constraint is the hard backstop if even this resolves null.
       if (!resolvedOperatingCompanyId) {
@@ -890,6 +893,42 @@ export async function createDriverCanonical(
             { resource_type: "mdata.drivers", resource_id: String(row.id), error: String((err as Error)?.message ?? err) },
             "warning",
             "DRIVER-SUBACCOUNT-AUTO-PROVISION"
+          ).catch(() => undefined);
+        }
+      }
+
+      // DRIVER→VENDOR (measured on prod 2026-08-09): USMCA had 16 active drivers, 13 with a payee —
+      // and all 3 without were the operator-created ones. The 13 came from seeders that mint a
+      // vendor; the only other minter was the on-demand POST /mdata/vendors/ensure-drivers route.
+      // Nothing minted a payee on HIRE, so a driver created through this endpoint could not be
+      // billed or paid: drivers are 1099 contractors and A/P reaches them only through mdata.vendors.
+      //
+      // Best-effort and idempotent, exactly like the sub-account provisioning above: a payee problem
+      // must never fail the hire, but it must never be silent either — the failure is audited.
+      if (resolvedOperatingCompanyId) {
+        try {
+          await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [resolvedOperatingCompanyId]);
+          await ensureDriverVendor(client, {
+            operatingCompanyId: resolvedOperatingCompanyId,
+            driverId: String(row.id),
+            displayName: `${row.first_name ?? ""} ${row.last_name ?? ""}`.trim(),
+            phone: (row.phone as string | null) ?? null,
+            email: (row.email as string | null) ?? null,
+            actorUserId: authUser.uuid,
+          });
+        } catch (err) {
+          await appendCrudAudit(
+            client,
+            authUser.uuid,
+            "mdata.vendors.driver_payee_provision_failed",
+            {
+              resource_type: "mdata.drivers",
+              resource_id: String(row.id),
+              operating_company_id: resolvedOperatingCompanyId,
+              error: String((err as Error)?.message ?? err),
+            },
+            "warning",
+            "DRIVER-VENDOR-ON-HIRE"
           ).catch(() => undefined);
         }
       }
