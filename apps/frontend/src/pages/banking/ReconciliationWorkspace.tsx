@@ -26,6 +26,7 @@ import { MoneyInput } from "../../components/forms/MoneyInput";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { PrintOrientationDialog, applyPrintOrientationStyles } from "./components/PrintOrientationDialog";
 import { ChevronDown, ChevronUp } from "lucide-react";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 type CandidateEvent = { id: string; event_date: string; event_type: "load" | "bill" | "settlement" };
 
@@ -383,7 +384,7 @@ export function ReconciliationWorkspacePage() {
                     pushToast("Reconciliation session started", "success");
                     void queryClient.invalidateQueries({ queryKey: ["banking", "reconciliation-sessions"] });
                   })
-                  .catch((error) => pushToast(String((error as Error).message || "Failed to start reconciliation"), "error"))
+                  .catch((error) => pushToast(userFacingApiError(error, "Failed to start reconciliation"), "error"))
                   .finally(() => setStartLoading(false));
               }}
             >
@@ -537,7 +538,7 @@ export function ReconciliationWorkspacePage() {
                       void workspaceQuery.refetch();
                       pushToast("Transaction matched", "success");
                     })
-                    .catch((error) => pushToast(String((error as Error).message || "Match failed"), "error"));
+                    .catch((error) => pushToast(userFacingApiError(error, "Match failed"), "error"));
                 }}
               >
                 Match selected
@@ -558,7 +559,7 @@ export function ReconciliationWorkspacePage() {
                       void workspaceQuery.refetch();
                       pushToast("Transaction unmatched", "success");
                     })
-                    .catch((error) => pushToast(String((error as Error).message || "Unmatch failed"), "error"));
+                    .catch((error) => pushToast(userFacingApiError(error, "Unmatch failed"), "error"));
                 }}
               >
                 Unmatch selected
@@ -601,7 +602,7 @@ export function ReconciliationWorkspacePage() {
                       void queryClient.invalidateQueries({ queryKey: ["banking", "reconciliation-sessions"] });
                       navigate("/banking");
                     })
-                    .catch((error) => pushToast(String((error as Error).message || "Failed to complete reconciliation"), "error"))
+                    .catch((error) => pushToast(userFacingApiError(error, "Failed to complete reconciliation"), "error"))
                     .finally(() => setCompleting(false));
                 }}
               >

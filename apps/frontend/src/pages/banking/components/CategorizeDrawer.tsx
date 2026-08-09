@@ -12,6 +12,7 @@ import { FactoringAdvanceForm } from "./forms/FactoringAdvanceForm";
 import { ManualJEForm } from "./forms/ManualJEForm";
 import { SplitTransactionModal } from "./forms/SplitTransactionModal";
 import { TransferForm } from "./forms/TransferForm";
+import { userFacingApiError } from "../../../lib/api-error-message";
 
 const ACTIONS = [
   ["create_expense", "Create Expense"],
@@ -99,7 +100,7 @@ export function CategorizeDrawer({ open, transaction, operatingCompanyId, onClos
                         onSaved();
                         onClose();
                       })
-                      .catch((error) => pushToast(String((error as Error).message || "Failed"), "error"));
+                      .catch((error) => pushToast(userFacingApiError(error, "Failed"), "error"));
                   }}
                 >
                   Apply
@@ -144,7 +145,7 @@ export function CategorizeDrawer({ open, transaction, operatingCompanyId, onClos
                   onSaved();
                   onClose();
                 })
-                .catch((error) => pushToast(String((error as Error).message || "Failed"), "error"));
+                .catch((error) => pushToast(userFacingApiError(error, "Failed"), "error"));
             }}
           >
             Save & Post to QBO
@@ -164,7 +165,7 @@ export function CategorizeDrawer({ open, transaction, operatingCompanyId, onClos
               onSaved();
               onClose();
             })
-            .catch((error) => pushToast(String((error as Error).message || "Split failed"), "error"));
+            .catch((error) => pushToast(userFacingApiError(error, "Split failed"), "error"));
         }}
       />
     </>

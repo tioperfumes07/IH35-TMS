@@ -3,6 +3,7 @@ import { Button } from "../../../components/Button";
 import { useToast } from "../../../components/Toast";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
+import { userFacingApiError } from "../../../lib/api-error-message";
 
 type Props = {
   open: boolean;
@@ -146,7 +147,7 @@ export function AdvanceDetailDrawer({ open, operatingCompanyId, advance, onClose
                   pushToast("Advance reversed", "success");
                   onUpdated();
                 })
-                .catch((error) => pushToast(String((error as Error).message || "Failed"), "error"))
+                .catch((error) => pushToast(userFacingApiError(error, "Failed"), "error"))
             }
           >
             Reverse

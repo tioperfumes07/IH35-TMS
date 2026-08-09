@@ -5,6 +5,7 @@ import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
 import { useToast } from "../../../components/Toast";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { userFacingApiError } from "../../../lib/api-error-message";
 
 type AccountRow = {
   id: string;
@@ -121,7 +122,7 @@ export function ManageAccountsModal({ open, operatingCompanyId, accounts, onClos
                 onSaved();
                 onClose();
               })
-              .catch((error) => pushToast(String((error as Error).message || "Failed"), "error"));
+              .catch((error) => pushToast(userFacingApiError(error, "Failed"), "error"));
           }}
         >
           Save

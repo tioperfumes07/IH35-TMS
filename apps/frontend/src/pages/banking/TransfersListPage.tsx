@@ -19,6 +19,7 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { formatDateUS } from "../../lib/formatDate";
 import { TransferModal } from "./TransferModal";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 const PAGE_SIZE = 50;
 
@@ -182,7 +183,7 @@ export function TransfersListPage() {
                       .join("\n");
                     window.alert(`Intercompany group ${detail.group_id}\n${lines || "(no legs)"}`);
                   })
-                  .catch((error) => pushToast(String((error as Error).message || "Failed to load intercompany legs"), "error"));
+                  .catch((error) => pushToast(userFacingApiError(error, "Failed to load intercompany legs"), "error"));
               }}
             >
               {row.intercompany_leg ?? "group"} · {entityLabel(null, row.intercompany_transfer_group_id, "Intercompany group")}
@@ -224,7 +225,7 @@ export function TransfersListPage() {
                       }\nBank txn: ${detail.transfer.matched_bank_transaction_id || "none"}\nQBO JE: ${detail.transfer.qbo_journal_entry_id || "pending"}`
                     );
                   })
-                  .catch((error) => pushToast(String((error as Error).message || "Failed to load transfer detail"), "error"));
+                  .catch((error) => pushToast(userFacingApiError(error, "Failed to load transfer detail"), "error"));
               }}
             >
               View
@@ -246,7 +247,7 @@ export function TransfersListPage() {
                         queryClient.invalidateQueries({ queryKey: ["banking", "plaid-accounts"] }),
                       ]);
                     })
-                    .catch((error) => pushToast(String((error as Error).message || "Failed to revoke transfer"), "error"))
+                    .catch((error) => pushToast(userFacingApiError(error, "Failed to revoke transfer"), "error"))
                     .finally(() => setRevokingId(""));
                 }}
               >

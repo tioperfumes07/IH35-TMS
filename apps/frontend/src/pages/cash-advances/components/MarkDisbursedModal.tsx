@@ -6,6 +6,7 @@ import { ModalCloseButton } from "../../../components/ModalCloseButton";
 import { useEscapeKey } from "../../../hooks/useEscapeKey";
 import { useToast } from "../../../components/Toast";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { userFacingApiError } from "../../../lib/api-error-message";
 
 type Props = {
   open: boolean;
@@ -36,7 +37,7 @@ export function MarkDisbursedModal({ open, operatingCompanyId, advanceId, onClos
       pushToast("Advance marked disbursed", "success");
       onDone();
     },
-    onError: (error) => pushToast(String((error as Error).message || "Failed"), "error"),
+    onError: (error) => pushToast(userFacingApiError(error, "Failed"), "error"),
   });
 
   useEscapeKey(onClose, open);

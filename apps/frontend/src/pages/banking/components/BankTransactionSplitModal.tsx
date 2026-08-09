@@ -41,6 +41,7 @@ import {
 } from "../../../api/banking";
 import { formatUsdCents } from "../../../lib/money";
 import { ApiError } from "../../../api/client";
+import { userFacingApiError } from "../../../lib/api-error-message";
 
 type LineDraft = BankTransactionSplitLine & { _key: string; _driverName?: string; _unitName?: string; _trailerName?: string; _loadName?: string };
 
@@ -202,7 +203,7 @@ export function BankTransactionSplitModal({ open, companyId, transaction, onClos
       if (error instanceof ApiError && error.status === 409) {
         pushToast("Split transactions are not enabled for this company yet (BANK_TX_SPLIT_ENABLED is OFF).", "error");
       } else {
-        pushToast(String((error as Error).message ?? "Could not save split"), "error");
+        pushToast(userFacingApiError(error, "Could not save split"), "error");
       }
     } finally {
       setSaving(false);
@@ -224,7 +225,7 @@ export function BankTransactionSplitModal({ open, companyId, transaction, onClos
       );
       onSaved();
     } catch (error) {
-      pushToast(String((error as Error).message ?? "Could not commit split"), "error");
+      pushToast(userFacingApiError(error, "Could not commit split"), "error");
     } finally {
       setCommitting(false);
     }
@@ -238,7 +239,7 @@ export function BankTransactionSplitModal({ open, companyId, transaction, onClos
       onSaved();
       onClose();
     } catch (error) {
-      pushToast(String((error as Error).message ?? "Could not void split"), "error");
+      pushToast(userFacingApiError(error, "Could not void split"), "error");
     }
   }
 

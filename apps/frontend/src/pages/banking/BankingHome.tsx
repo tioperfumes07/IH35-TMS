@@ -43,6 +43,7 @@ import { StatementUpload } from "../../components/banking/StatementUpload";
 import { BANKING_TAB_PATH, bankingTabFromPath } from "../../router/route-manifest";
 import { BANKING_MODULE_TABS, type BankingModuleTabId } from "./BANKING_NAV_CONFIG";
 import { formatUsd } from "../../lib/money";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 const BANKING_TABS = BANKING_MODULE_TABS;
 
@@ -1160,7 +1161,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
                       void queryClient.invalidateQueries({ queryKey: ["banking", "reconciliation-sessions", companyId] });
                       navigate(`/banking/reconciliation-workspace?session_id=${res.session_id}&bank_account_hint=${reconAccountId}`);
                     })
-                    .catch((error) => pushToast(String((error as Error).message || "Failed to start reconciliation"), "error"))
+                    .catch((error) => pushToast(userFacingApiError(error, "Failed to start reconciliation"), "error"))
                     .finally(() => setStartingRecon(false));
                 }}
               >

@@ -8,6 +8,7 @@ import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { useToast } from "../../../components/Toast";
 import { JournalEntryTypePicker } from "../../../components/accounting/JournalEntryTypePicker";
+import { userFacingApiError } from "../../../lib/api-error-message";
 
 type Props = {
   open: boolean;
@@ -141,7 +142,7 @@ export function ManualJEModal({ open, operatingCompanyId, onClose, onSaved, pref
       reset();
       onClose();
     } catch (error) {
-      pushToast(String((error as Error).message || "Failed"), "error");
+      pushToast(userFacingApiError(error, "Failed"), "error");
     } finally {
       setLoading(false);
     }

@@ -6,6 +6,7 @@ import { useToast } from "../../components/Toast";
 import { useInvoiceCreateFromLoad, type LoadStatusFilter } from "../../hooks/useInvoiceCreateFromLoad";
 import { InvoiceCreateBlankPage } from "./InvoiceCreateBlankPage";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 type Step = "choose" | "from_load" | "blank";
 
@@ -141,7 +142,7 @@ export function InvoiceCreateModal({ open, operatingCompanyId, onClose }: Props)
                               handleCreated(result.invoice.id);
                               pushToast("Invoice created from load.", "success");
                             } catch (error) {
-                              pushToast(String((error as Error).message || "Could not create invoice from load."), "error");
+                              pushToast(userFacingApiError(error, "Could not create invoice from load."), "error");
                             }
                           }}
                         >

@@ -10,6 +10,7 @@ import { DomainRibbon } from "./components/DomainRibbon";
 import { ListsSubNav } from "./ListsSubNav";
 import { QboSyncHealthCard } from "./components/QboSyncHealthCard";
 import { RecentActivityCard } from "./components/RecentActivityCard";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 // Pure scroll-position helpers (per pathname) so browser-back to the Lists hub restores where you
 // were instead of snapping to the top of the mega-list. Storage-injected for unit testing.
@@ -59,7 +60,7 @@ export function ListsHubPage() {
   const forceSyncMutation = useMutation({
     mutationFn: () => postForceListsQboSync(companyId),
     onSuccess: () => pushToast("QBO full-sync trigger queued", "success"),
-    onError: (error) => pushToast(String((error as Error).message || "Failed to start force sync"), "error"),
+    onError: (error) => pushToast(userFacingApiError(error, "Failed to start force sync"), "error"),
   });
 
   // On mount / navigation: deep-link ?domain=<key> wins and scrolls to that section; otherwise
