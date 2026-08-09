@@ -564,7 +564,7 @@ export function BillsPage() {
           className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700"
           data-testid="bills-deeplink-banner"
         >
-          Deep-link bill <span className="font-mono font-semibold">{highlightedBillId.slice(0, 8)}</span>
+          Deep-link bill <span className="font-mono font-semibold">{entityLabel(rows.find((r) => r.id === highlightedBillId)?.bill_number, highlightedBillId, "Bill")}</span>
           {rows.some((bill) => bill.id === highlightedBillId)
             ? " — highlighted and selected for allocation below."
             : " — not in the current filter window (widen status/vendor/dates or confirm company)."}
