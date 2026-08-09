@@ -28,16 +28,27 @@ export function BorderCrossingHistoryPage() {
   const [rows, setRows] = useState<CrossingRow[]>([]);
   const [selected, setSelected] = useState<CrossingRow | null>(null);
   const [loading, setLoading] = useState(false);
+  // C-07: never swallow fetch failures into an empty table (looks like "no crossings").
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!selectedCompanyId) return;
     setLoading(true);
+    setLoadError(null);
     void fetch(resolveApiUrl(`/api/v1/border-crossing/history?operating_company_id=${encodeURIComponent(selectedCompanyId)}`),
       { credentials: "include" }
     )
-      .then((res) => res.json())
-      .then((data: { crossings?: CrossingRow[] }) => setRows(data.crossings ?? []))
-      .catch(() => setRows([]))
+      .then(async (res) => {
+        if (!res.ok) {
+          throw new Error(`Border crossing history failed (${res.status})`);
+        }
+        return res.json() as Promise<{ crossings?: CrossingRow[] }>;
+      })
+      .then((data) => setRows(data.crossings ?? []))
+      .catch((err: unknown) => {
+        setRows([]);
+        setLoadError(err instanceof Error ? err.message : "Failed to load border crossing history");
+      })
       .finally(() => setLoading(false));
   }, [selectedCompanyId]);
 
@@ -85,6 +96,15 @@ export function BorderCrossingHistoryPage() {
       />
 
       <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
+        {loadError ? (
+          <div
+            className="rounded-sm border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
+            data-testid="border-crossing-history-error"
+            role="alert"
+          >
+            {loadError}
+          </div>
+        ) : (
         <ParityTable<CrossingRow>
           columns={columns}
           rows={rows}
@@ -95,6 +115,7 @@ export function BorderCrossingHistoryPage() {
           storageKey="dispatch-border-crossing-history"
           exportFilename="border-crossing-history"
         />
+        )}
 
         <aside className="rounded-sm border bg-white p-4 text-sm">
           {!selected ? (
