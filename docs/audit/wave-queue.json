@@ -533,9 +533,9 @@
       ],
       "instances": [
         {
-          "path": "/settlements pay-run: driver_settlements = 0, flags ON but no posting output (HOLD-001)",
+          "path": "/settlements pay-run: USMCA driver_settlements=7 live; GL bills/runs still owner/flag hold (HOLD-001)",
           "entity": "ALL",
-          "note": "driver_settlement_gl_bills = 0, driver_settlement_gl_runs = 0. AUD-F006."
+          "note": "STALE DENSITY 2026-08-09 — USMCA driver_settlements=7 (lucia). HOLD remains for settlement GL pay-run output (driver_settlement_gl_bills/runs) + factoring/insurance empties — not for row density. SETL-ECON-01 closed on density."
         },
         {
           "path": "/factoring: factor agreement exists, 0 reserve movement / invoice factoring (HOLD-002)",
