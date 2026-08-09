@@ -180,7 +180,10 @@ export function SafetyHomeTab() {
         label: row.title || `${row.event_type} (${row.severity})`,
         driverId: row.subject_driver_id ?? null,
         unitId: row.subject_unit_id ?? null,
-        detailTo: null,
+        // C-13 / LST-F106: SafetyEventsPage honors ?event_id= (opens detail panel).
+        detailTo: row.id
+          ? `/safety/safety-events?event_id=${encodeURIComponent(row.id)}`
+          : null,
       }));
 
     return [...eventRecords, ...accidentRecords];
