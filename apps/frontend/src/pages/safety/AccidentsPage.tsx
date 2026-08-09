@@ -136,6 +136,23 @@ export function AccidentsPage({ operatingCompanyId }: Props) {
         <EntityLink kind="vendor" id={row.vendor_id as string | undefined} label={(row.vendor_name as string | undefined)?.trim() || "Vendor"} />
       ),
     },
+    // C-02: reverse hop to the insurance claim this accident produced (insurance.claim.accident_report_id
+    // → this row, joined server-side). No claim id → honest "—", never a fabricated link.
+    {
+      key: "claim_id",
+      label: "Claim",
+      render: (row) =>
+        row.claim_id ? (
+          <EntityLink
+            kind="claim"
+            id={row.claim_id as string}
+            label={(row.claim_number as string | undefined)?.trim() || "Claim"}
+            data-testid={`accident-row-claim-${String(row.id)}`}
+          />
+        ) : (
+          "—"
+        ),
+    },
     { key: "location", label: "Location", render: (row) => String(row.location ?? row.description ?? "—") },
     { key: "at_fault", label: "At Fault", cellClass: "capitalize", render: (row) => formatAtFault(row.at_fault) },
     { key: "preventable", label: "Preventable", render: (row) => formatPreventable(row.preventable) },

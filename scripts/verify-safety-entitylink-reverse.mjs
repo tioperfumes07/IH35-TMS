@@ -103,6 +103,17 @@ export function assertSafetyEntityLink(sources) {
     }
   }
 
+  // C-02 — accidents list must expose the reverse claim hop (insurance.claim ← accident_report_id).
+  const accidentsList = stripComments(sources?.[ACCIDENTS] ?? read(ACCIDENTS));
+  if (!/kind=["']claim["']/.test(accidentsList) || !/claim_id/.test(accidentsList)) {
+    problems.push(`${ACCIDENTS}: must render EntityLink kind="claim" from row.claim_id (C-02 reverse hop)`);
+  }
+  const routesRel = "apps/backend/src/safety/safety.routes.ts";
+  const routesSrc = stripComments(fs.readFileSync(path.join(ROOT, routesRel), "utf8"));
+  if (!/accident_report_id\s*=\s*ar\.id/.test(routesSrc) || !/LEFT JOIN LATERAL/.test(routesSrc)) {
+    problems.push(`${routesRel}: accidents list query must LATERAL-join insurance.claim on accident_report_id`);
+  }
+
   return problems;
 }
 
