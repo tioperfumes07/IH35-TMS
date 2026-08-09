@@ -1,3 +1,4 @@
+import { entityLabel } from "../../lib/entity-label";
 import { formatDateUS } from "../../lib/formatDate";
 import { Link, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -27,8 +28,7 @@ function statusVariant(status: string): "positive" | "neutral" | "crit" | "warn"
 }
 
 function accountLabel(_number: string | null | undefined, name: string | null | undefined, id: string) {
-  if (name) return name;
-  return id.slice(0, 8);
+  return entityLabel(name, id, "Account");
 }
 
 export function ExpenseDetailPage() {
@@ -69,7 +69,7 @@ export function ExpenseDetailPage() {
   const lines = detailQuery.data?.lines ?? [];
   if (!expense) return <div className="p-4 text-sm text-red-600">Expense not found.</div>;
 
-  const displayId = expense.expense_number ?? expense.id.slice(0, 8);
+  const displayId = entityLabel(expense.expense_number, expense.id, "Expense");
 
   const lineColumns: Array<ParityColumn<ExpenseDetailLine>> = [
     { key: "line_sequence", label: "Line", sortable: true, render: (line) => line.line_sequence },
@@ -153,7 +153,11 @@ export function ExpenseDetailPage() {
         {expense.vendor_uuid ? (
           <DataPanelRow>
             <span className="text-xs font-semibold text-gray-600">Vendor</span>
-            <EntityLink kind="vendor" id={expense.vendor_uuid} label={expense.vendor_name ?? expense.vendor_uuid.slice(0, 8)} />
+            <EntityLink
+              kind="vendor"
+              id={expense.vendor_uuid}
+              label={entityLabel(expense.vendor_name, expense.vendor_uuid, "Vendor")}
+            />
           </DataPanelRow>
         ) : null}
         <DataPanelRow>
@@ -181,7 +185,7 @@ export function ExpenseDetailPage() {
               label={
                 expense.journal_entry_date
                   ? `${formatDateUS(expense.journal_entry_date)}${expense.journal_entry_memo ? ` — ${expense.journal_entry_memo}` : ""}`
-                  : expense.journal_entry_id.slice(0, 8)
+                  : entityLabel(null, expense.journal_entry_id, "Journal entry")
               }
             />
           </DataPanelRow>
@@ -203,7 +207,7 @@ export function ExpenseDetailPage() {
                         ? ` (${money(expense.matched_bank_transaction_amount_cents)})`
                         : ""
                     }`
-                  : expense.matched_bank_transaction_id.slice(0, 8)
+                  : entityLabel(null, expense.matched_bank_transaction_id, "Bank transaction")
               }
             />
           </DataPanelRow>
@@ -222,13 +226,21 @@ export function ExpenseDetailPage() {
         {expense.load_id ? (
           <DataPanelRow>
             <span className="text-xs font-semibold text-gray-600">Load</span>
-            <EntityLink kind="load" id={expense.load_id} label={expense.load_number ?? expense.load_id.slice(0, 8)} />
+            <EntityLink
+              kind="load"
+              id={expense.load_id}
+              label={entityLabel(expense.load_number, expense.load_id, "Load")}
+            />
           </DataPanelRow>
         ) : null}
         {expense.unit_id ? (
           <DataPanelRow>
             <span className="text-xs font-semibold text-gray-600">Unit</span>
-            <EntityLink kind="unit" id={expense.unit_id} label={expense.unit_display_id ?? expense.unit_id.slice(0, 8)} />
+            <EntityLink
+              kind="unit"
+              id={expense.unit_id}
+              label={entityLabel(expense.unit_display_id, expense.unit_id, "Unit")}
+            />
           </DataPanelRow>
         ) : null}
         {expense.linked_work_order_uuid ? (
@@ -237,7 +249,7 @@ export function ExpenseDetailPage() {
             <EntityLink
               kind="work_order"
               id={expense.linked_work_order_uuid}
-              label={expense.work_order_display_id ?? expense.linked_work_order_uuid.slice(0, 8)}
+              label={entityLabel(expense.work_order_display_id, expense.linked_work_order_uuid, "Work order")}
             />
           </DataPanelRow>
         ) : null}
@@ -247,10 +259,11 @@ export function ExpenseDetailPage() {
             <EntityLink
               kind="driver"
               id={expense.driver_uuid}
-              label={
-                `${expense.driver_first_name ?? ""} ${expense.driver_last_name ?? ""}`.trim() ||
-                expense.driver_uuid.slice(0, 8)
-              }
+              label={entityLabel(
+                `${expense.driver_first_name ?? ""} ${expense.driver_last_name ?? ""}`.trim() || null,
+                expense.driver_uuid,
+                "Driver",
+              )}
             />
           </DataPanelRow>
         ) : null}

@@ -17,6 +17,7 @@ import { RecordExpenseModal } from "../../components/expenses/RecordExpenseModal
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
+import { entityLabel } from "../../lib/entity-label";
 import { formatDateUS } from "../../lib/formatDate";
 import { CollapsedListFilters } from "../../components/table";
 import { useUrlSort } from "../../hooks/useUrlSort";
@@ -126,7 +127,7 @@ export function ExpensesListPage() {
       key: "expense_number",
       label: "Expense #",
       sortable: true,
-      render: (r) => <EntityLink kind="expense" id={r.id} label={r.expense_number || r.id.slice(0, 8)} />,
+      render: (r) => <EntityLink kind="expense" id={r.id} label={entityLabel(r.expense_number, r.id, "Expense")} />,
     },
     { key: "transaction_date", label: "Date", sortable: true, render: (r) => <span className="text-gray-700">{formatDateUS(r.transaction_date)}</span> },
     {
@@ -137,7 +138,7 @@ export function ExpensesListPage() {
       sortValue: (r) => payeeOf(r),
       render: (r) =>
         r.vendor_uuid ? (
-          <EntityLink kind="vendor" id={r.vendor_uuid} label={r.vendor_name ?? r.vendor_uuid.slice(0, 8)} />
+          <EntityLink kind="vendor" id={r.vendor_uuid} label={entityLabel(r.vendor_name, r.vendor_uuid, "Vendor")} />
         ) : (
           <span className="font-medium text-gray-900">{payeeOf(r)}</span>
         ),
@@ -153,7 +154,7 @@ export function ExpensesListPage() {
       key: "load_number",
       label: "Load",
       sortable: true,
-      render: (r) => <EntityLink kind="load" id={r.load_id} label={r.load_number ?? (r.load_id ? r.load_id.slice(0, 8) : undefined)} />,
+      render: (r) => <EntityLink kind="load" id={r.load_id} label={entityLabel(r.load_number, r.load_id, "Load")} />,
     },
     {
       key: "linked_work_order_uuid",
@@ -164,7 +165,7 @@ export function ExpensesListPage() {
         <EntityLink
           kind="work_order"
           id={r.linked_work_order_uuid ?? undefined}
-          label={r.work_order_display_id ?? (r.linked_work_order_uuid ? r.linked_work_order_uuid.slice(0, 8) : undefined)}
+          label={entityLabel(r.work_order_display_id, r.linked_work_order_uuid, "Work order")}
         />
       ),
     },
@@ -177,7 +178,7 @@ export function ExpensesListPage() {
         <EntityLink
           kind="vendor"
           id={r.vendor_uuid ?? undefined}
-          label={r.vendor_name ?? (r.vendor_uuid ? r.vendor_uuid.slice(0, 8) : undefined)}
+          label={entityLabel(r.vendor_name, r.vendor_uuid, "Vendor")}
         />
       ),
     },
@@ -189,7 +190,7 @@ export function ExpensesListPage() {
         <EntityLink
           kind="journal_entry"
           id={r.journal_entry_id ?? undefined}
-          label={r.journal_entry_id ? r.journal_entry_id.slice(0, 8) : undefined}
+          label={r.journal_entry_id ? entityLabel(null, r.journal_entry_id, "Journal entry") : undefined}
         />
       ),
     },
@@ -203,7 +204,7 @@ export function ExpensesListPage() {
           <EntityLink
             kind="bank_transaction"
             id={r.matched_bank_transaction_id}
-            label={r.matched_bank_transaction_id.slice(0, 8)}
+            label={entityLabel(null, r.matched_bank_transaction_id, "Bank transaction")}
           />
         ) : (
           <span className="text-gray-400">—</span>
@@ -241,7 +242,7 @@ export function ExpensesListPage() {
           }`}
           onClick={(event) => {
             event.stopPropagation();
-            setVoidTarget({ id: r.id, displayId: r.expense_number ?? r.id.slice(0, 8) });
+            setVoidTarget({ id: r.id, displayId: entityLabel(r.expense_number, r.id, "Expense") });
             setVoidOpen(true);
           }}
         >
@@ -347,7 +348,7 @@ export function ExpensesListPage() {
             <ul className="max-h-40 space-y-1 overflow-y-auto">
               {dupQuery.data.groups.slice(0, 8).map((g) => (
                 <li key={`${g.vendor_uuid}-${g.transaction_date}-${g.total_amount_cents}`}>
-                  <span className="font-medium">{g.vendor_name ?? g.vendor_uuid.slice(0, 8)}</span>
+                  <span className="font-medium">{entityLabel(g.vendor_name, g.vendor_uuid, "Vendor")}</span>
                   {" · "}
                   {formatDateUS(g.transaction_date) || g.transaction_date}
                   {" · "}
@@ -356,7 +357,7 @@ export function ExpensesListPage() {
                   {g.count}×
                   {g.members.slice(0, 3).map((m) => (
                     <span key={m.id} className="ml-2 inline-block">
-                      <EntityLink kind="expense" id={m.id} label={m.expense_number ?? m.id.slice(0, 8)} />
+                      <EntityLink kind="expense" id={m.id} label={entityLabel(m.expense_number, m.id, "Expense")} />
                     </span>
                   ))}
                 </li>
@@ -366,7 +367,14 @@ export function ExpensesListPage() {
         ) : null}
         {highlightedExpenseId ? (
           <p className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
-            Deep-link expense <span className="font-mono font-semibold">{highlightedExpenseId.slice(0, 8)}</span>
+            Deep-link expense{" "}
+            <span className="font-semibold">
+              {entityLabel(
+                rows.find((r) => r.id === highlightedExpenseId)?.expense_number,
+                highlightedExpenseId,
+                "Expense",
+              )}
+            </span>
             {rows.some((r) => r.id === highlightedExpenseId)
               ? " — highlighted in the list below."
               : " — not in the current filter window (widen dates/status or confirm company)."}
