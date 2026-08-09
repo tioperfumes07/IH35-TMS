@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getCashAdvanceDetail, getCashAdvancesKpis, listCashAdvances } from "../../api/cashAdvances";
 import { Button } from "../../components/Button";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { useListState } from "../../components/list-state";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AdvanceDetailDrawer } from "./components/AdvanceDetailDrawer";
 import { CashAdvancesKpiRow } from "./components/CashAdvancesKpiRow";
@@ -72,6 +73,8 @@ export function CashAdvancesHomePage() {
   });
 
   const rows = useMemo(() => listQuery.data?.advances ?? [], [listQuery.data?.advances]);
+  // SETL-S02 — settled-only empty (LIST-EMPTY-1); never flash "No cash advances" mid-fetch.
+  const listState = useListState(listQuery, rows.length === 0);
 
   return (
     <div className="space-y-3">
@@ -119,17 +122,27 @@ export function CashAdvancesHomePage() {
 
       <CashAdvancesKpiRow kpis={kpisQuery.data} />
 
-      <CashAdvancesTable
-        rows={rows}
-        onOpenDetail={(row) => {
-          setSelectedId(String(row.id));
-          setDetailOpen(true);
-        }}
-        onMarkDisbursed={(row) => {
-          setSelectedId(String(row.id));
-          setMarkDisbursedOpen(true);
-        }}
-      />
+      {listState.isEmpty ? (
+        <p
+          className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-3 text-center text-xs text-slate-600"
+          data-testid="cash-advances-empty"
+        >
+          No cash advances found — none created for this entity yet (or no rows match the current filter).
+        </p>
+      ) : (
+        <CashAdvancesTable
+          rows={rows}
+          isLoading={listState.isLoading}
+          onOpenDetail={(row) => {
+            setSelectedId(String(row.id));
+            setDetailOpen(true);
+          }}
+          onMarkDisbursed={(row) => {
+            setSelectedId(String(row.id));
+            setMarkDisbursedOpen(true);
+          }}
+        />
+      )}
 
       <CreateAdvanceModal
         open={createOpen}

@@ -89,6 +89,15 @@ const MIGRATED = [
   { file: "apps/frontend/src/pages/factoring/FactorAdmin.tsx", empties: ["No factors configured yet.", "No assignments found for this factor/customer.", "No batch history for this customer."] },
   { file: "apps/frontend/src/pages/factoring/ReserveDashboard.tsx", empties: ["No reserve balances found.", "No reserve movements found for the selected factor.", "No recent movements for this factor.", "No projected reserve releases in the selected window."] },
   { file: "apps/frontend/src/pages/driver-finance/components/SettlementDisputesTab.tsx", empties: ["No disputes found for current filter."] },
+  // SETL-S01 / SETL-S02 — settlements + cash advances honest empty (settled-only).
+  {
+    file: "apps/frontend/src/pages/driver-finance/components/SettlementsTable.tsx",
+    empties: ["No settlements found — none created for this entity yet (or no rows match the current filter)."],
+  },
+  {
+    file: "apps/frontend/src/pages/cash-advances/CashAdvancesHome.tsx",
+    empties: ["No cash advances found — none created for this entity yet (or no rows match the current filter)."],
+  },
   { file: "apps/frontend/src/pages/insurance/ClaimsTab.tsx", empties: ["No claims found."] },
   { file: "apps/frontend/src/pages/insurance/LawsuitsTab.tsx", empties: ["No lawsuits found."] },
   { file: "apps/frontend/src/pages/insurance/PaymentScheduleTab.tsx", empties: ["No payment schedule records found."] },
