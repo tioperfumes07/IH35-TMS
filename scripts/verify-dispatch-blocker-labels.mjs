@@ -37,6 +37,15 @@ const ui = readFileSync(UI, "utf8");
 if (!/work_order_display_id\s*\?\?/.test(ui)) fail.push(`${UI}: panel does not prefer work_order_display_id`);
 if (!/asset_label\s*\?\?/.test(ui)) fail.push(`${UI}: panel does not prefer asset_label`);
 
+const board = readFileSync("apps/frontend/src/pages/dispatch/DispatchBoard.tsx", "utf8");
+// C-08: quick-assign toast must prefer human message/blocker over bare E_* code.
+if (!/data\.message\s*\?\?\s*data\.blocker\s*\?\?\s*data\.error/.test(board)) {
+  fail.push("apps/frontend/src/pages/dispatch/DispatchBoard.tsx: quick-assign toast must prefer message ?? blocker ?? error (C-08 HOS human)");
+}
+if (/pushToast\(\s*String\(\s*data\.error/.test(board)) {
+  fail.push("apps/frontend/src/pages/dispatch/DispatchBoard.tsx: must not toast data.error first");
+}
+
 if (fail.length) {
   console.error("FAIL verify-dispatch-blocker-labels:");
   for (const f of fail) console.error("  - " + f);
