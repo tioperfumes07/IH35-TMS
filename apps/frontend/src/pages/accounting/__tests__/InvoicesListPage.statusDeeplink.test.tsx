@@ -136,6 +136,12 @@ describe("InvoicesListPage has_balance deep-link + URL sync (A/R aging contract)
     } as never);
   });
 
+  async function openFilters() {
+    const user = userEvent.setup();
+    await user.click(screen.getByTestId("invoices-filters-toggle"));
+    return user;
+  }
+
   it("honors ?customer_id=&has_balance=true via server filter (not client with_balance page slice)", async () => {
     render(
       wrap(
@@ -155,6 +161,7 @@ describe("InvoicesListPage has_balance deep-link + URL sync (A/R aging contract)
       );
     });
 
+    await openFilters();
     expect(await screen.findByDisplayValue("With balance")).toBeInTheDocument();
     await waitFor(() => expect(screen.getByText("INV-1")).toBeInTheDocument());
     expect(screen.getByText(/Rows: 2 of 2/)).toBeInTheDocument();
@@ -185,10 +192,10 @@ describe("InvoicesListPage has_balance deep-link + URL sync (A/R aging contract)
   });
 
   it("writes status/has_balance/customer_id bidirectionally into searchParams on filter change", async () => {
-    const user = userEvent.setup();
     render(wrap(<InvoicesListPage />, `/accounting/invoices?customer_id=${CUSTOMER_ID}&has_balance=true`));
 
     await waitFor(() => expect(accountingApi.listInvoices).toHaveBeenCalled());
+    const user = await openFilters();
     const statusSelect = await screen.findByDisplayValue("With balance");
     await user.selectOptions(statusSelect, "sent");
 
@@ -254,6 +261,7 @@ describe("InvoicesListPage has_balance deep-link + URL sync (A/R aging contract)
         })
       );
     });
+    const user = await openFilters();
     expect(await screen.findByDisplayValue("Partial")).toBeInTheDocument();
     expect(screen.getByTestId("location-search").textContent).toContain("status=partial");
   });
