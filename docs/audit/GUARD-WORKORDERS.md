@@ -1402,3 +1402,27 @@ it covers; today it says "none".
 **ASK:** make `load_count` count the union — `COALESCE(sl.load_id, db.load_id)` — or state which linkage is
 canonical and backfill the other. **Do not "fix" it by inventing `source_driver_bill_id` values.**
 **CC-3 verifies after deploy; CC-3 does not build it.**
+
+## OPEN · CC-1/FE · P2 · SETTLEMENT-DETAIL-SHOWS-RAW-UUID — "LOADS IN CYCLE" prints a UUID when the load number is in the same row
+**Found by CC-3 during the ACCT-F271 UI prove, prod `d236753`, settlement `S-20260808-0085`.**
+
+Settlement detail renders:
+```
+LOADS IN CYCLE     13548dbd
+```
+`13548dbd…` is `driver_settlements.first_load_id`. **The human-readable value is already on the same record:**
+```
+first_load_id     13548dbd-3506-42b7-924f-3cc64470b047
+first_load_number L-20260808-0085      <-- populated, correct, and NOT displayed
+```
+So the screen shows an opaque UUID fragment where `L-20260808-0085` was available with no extra query. This is a
+raw-uuid surface of exactly the kind the click-prove sweep targets.
+
+**SECOND DEFECT ON THE SAME SCREEN:** the EARNINGS table's `LOAD` column renders the literal text
+**"Load — not visible"**, while that row's own description contains `L-20260808-0085`. The line carries
+`settlement_lines.load_id` on prod, so the data is present and the cell still refuses to resolve it. Same root
+family as SETTLEMENT-LOAD-COUNT-IGNORES-DIRECT-LINK (`768b4b8e0`): **the direct `settlement_lines.load_id`
+linkage is not being read by the surfaces that need it.**
+
+**ASK:** render `first_load_number` / `last_load_number` (falling back to a resolved lookup only if NULL), and
+resolve the earnings `LOAD` cell from `settlement_lines.load_id`. **Do not display a bare UUID to a user.**
