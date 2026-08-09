@@ -385,6 +385,7 @@ export function LegalTemplateDetailPage() {
               columns={VERSION_COLUMNS}
               rowKey={(row) => row.id}
               storageKey="legal-template-version-history"
+              loading={query.isLoading}
               emptyText="No prior versions."
               initialPageSize={15}
             />
@@ -445,6 +446,7 @@ export function LegalTemplateDetailPage() {
             columns={AUDIT_LOG_COLUMNS}
             rowKey={(row) => String(row.id)}
             storageKey="legal-template-audit-log"
+            loading={query.isLoading}
             emptyText="No audit events recorded."
             initialPageSize={15}
             renderExpanded={(row) => (

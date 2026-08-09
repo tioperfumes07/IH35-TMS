@@ -238,6 +238,19 @@ const MIGRATED = [
     ],
   },
   { file: "apps/frontend/src/pages/maintenance/WarrantyClaimsPage.tsx", empties: ["No warranty claims yet."] },
+  // LEGAL surfaces.
+  {
+    file: "apps/frontend/src/pages/legal/LegalAttorneyReviewPage.tsx",
+    empties: ["No templates currently pending attorney review."],
+  },
+  {
+    file: "apps/frontend/src/pages/legal/templates/LegalTemplatesListPage.tsx",
+    empties: ["No legal templates found for current filters."],
+  },
+  {
+    file: "apps/frontend/src/pages/legal/templates/LegalTemplateDetailPage.tsx",
+    empties: ["No prior versions.", "No audit events recorded."],
+  },
   // INS tabs — settled empties.
   {
     file: "apps/frontend/src/pages/insurance/PoliciesList.tsx",

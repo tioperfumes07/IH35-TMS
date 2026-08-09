@@ -648,7 +648,7 @@
     {
       "tier": "2",
       "module": "legal",
-      "build": "0/12",
+      "build": "12/12",
       "cells": [
         "AUDIT",
         "AUDIT",
@@ -2121,6 +2121,15 @@
   },
   "recentActivity": [
     {
+      "number": 5069,
+      "title": "FINDING: INS-TABS-SETTLED",
+      "state": "merged",
+      "mergedAtCt": "08/08/2026, 08:53 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/5069",
+      "sha": "3a629423c",
+      "committedAtIso": "2026-08-08T20:53:25-05:00"
+    },
+    {
       "number": 5068,
       "title": "FINDING: DISP-SURFACE-SETTLED-BATCH",
       "state": "merged",
@@ -2200,15 +2209,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/5061",
       "sha": "bc75b91c2",
       "committedAtIso": "2026-08-08T20:27:58-05:00"
-    },
-    {
-      "number": 5060,
-      "title": "FINDING: SETL-LINK-01",
-      "state": "merged",
-      "mergedAtCt": "08/08/2026, 08:26 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/5060",
-      "sha": "15472407b",
-      "committedAtIso": "2026-08-08T20:26:36-05:00"
     }
   ]
 }

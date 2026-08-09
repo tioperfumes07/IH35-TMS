@@ -675,7 +675,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
     {
       "tier": "2",
       "module": "legal",
-      "build": "0/12",
+      "build": "12/12",
       "cells": [
         "AUDIT",
         "AUDIT",
