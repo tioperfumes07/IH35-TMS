@@ -177,12 +177,16 @@ export function OnboardingWizardPage() {
   }
 
   const completed = session.status === "completed";
+  const stepLabel = ONBOARDING_STEP_LABELS[activeStep] ?? `Step ${activeStep + 1}`;
+  const statusLabel =
+    session.status === "in_progress" ? "In progress" : session.status === "completed" ? "Completed" : "Cancelled";
+  const driverBit = session.driver_id ? "Driver linked" : "Driver unassigned";
 
   return (
     <div data-testid="onboarding-wizard-page" className="mx-auto max-w-4xl space-y-4">
       <PageHeader
         title="Driver Onboarding Wizard"
-        subtitle={`Session ${session.id.slice(0, 8)}… · save + resume · docs module uploads`}
+        subtitle={`${statusLabel} · ${stepLabel} · ${driverBit} · save + resume · docs module uploads`}
         actions={
           driverId ? (
             <Link to={`/drivers/${driverId}`} className="rounded-sm border px-3 py-1.5 text-sm">
