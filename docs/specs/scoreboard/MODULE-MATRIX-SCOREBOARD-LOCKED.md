@@ -58,7 +58,7 @@ Legend for the matrix build: **HAVE** · **YELLOW** (have source, not yet wired 
 
 | Box | Do we have the data? | What exists today | Gap |
 |---|---|---|---|
-| **1 Required** | **HAVE** (10 modules through Drivers) | `docs/specs/scoreboard/modules/{maintenance,safety,insurance,legal,accounting,banking,dispatch,settlements,fuel,drivers}.required.json` | Remaining ~16 |
+| **1 Required** | **HAVE** (10 modules through Drivers) | Same paths — **Dispatch depth (2026-08-09):** ≥40 leaves from DispatchSubnav + home Overview/Kanban/List/Round Trips + planners + queues + load-drawer tabs (not a 6-leaf stub) | Remaining ~16 |
 
 ### Column groups (every module board may subset)
 
@@ -69,7 +69,7 @@ Legend for the matrix build: **HAVE** · **YELLOW** (have source, not yet wired 
 | **chrome** | **Picker +Add new** · **QBO chrome** (ParityDrawer, calendar, Due, +Create, no box-in-box) | Live V1/V2 click-through |
 | **wiring** | **Connectivity** (nav→route→API→canonical) · **Reverse link** | Live V3/V4 |
 | **process** | `scenario.*` slices | `live_scenario_probe` holds |
-| **2 Audited** | **HAVE (projected)** | `GET /api/v1/program/module-matrix` ← ledger + GUARD + wave-queue + module-completion | Leaf×column precision still coarse (keyword + surface PASS) |
-| **3 Done** | **HAVE (strict)** | Same API ← `live_scenario_probe` holds only (`scenario.maintenance` today) | Linkage/money columns have **no** per-column live probe yet — stay red Done until Neon/scenario proof exists |
+| **2 Audited** | **HAVE (projected)** | Same API ← ledger + GUARD + wave + module-completion **leaf×column only** (no module-wide keyword flood) | Yellow ≠ live verify |
+| **3 Done** | **HAVE (strict)** | Same API ← `live_scenario_probe` hops via `PROBE_DONE_MAP` + PROD-VERIFIED ledger + Neon completion PASS; meta carries git tip + recon as-of | Money/linkage Done still needs leaf-scoped live proof where no hop exists |
 
 **Bottom line:** Maintenance matrix is live (not SAMPLE). Done green is rare and honest. Other modules still need Required maps + the same projector.

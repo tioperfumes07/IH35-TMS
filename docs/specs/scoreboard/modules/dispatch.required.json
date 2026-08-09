@@ -2,9 +2,12 @@
   "module": "dispatch",
   "entity_default": "USMCA",
   "source": {
-    "arch_design": "IH35_ARCHITECTURAL_DESIGN — Dispatch",
-    "nav": "apps/frontend/src/pages/Dispatch.tsx DISPATCH_SUB_TABS",
-    "routes": "/dispatch/*"
+    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md — Module 9 DISPATCH + Dispatch (2026-06-08 update)",
+    "nav": "apps/frontend/src/components/dispatch/DispatchSubnav.tsx DISPATCH_NAV_ITEMS",
+    "home_views": "apps/frontend/src/pages/Dispatch.tsx view=overview|kanban|list|units (Round Trips)",
+    "secondary": "DISPATCH_SUB_TABS Load board · Book load · Assignments · Settlements · Pre-settlements",
+    "drawer": "apps/frontend/src/components/dispatch/LoadDetailDrawer.tsx tabs",
+    "routes": "apps/frontend/src/routes/manifest.tsx /dispatch/*"
   },
   "columns": [
     {
@@ -85,10 +88,10 @@
   ],
   "leaves": [
     {
-      "id": "load_board",
-      "tab": "Load board",
-      "sub": "Dispatch board",
-      "route_hint": "/dispatch",
+      "id": "home.overview",
+      "tab": "Home",
+      "sub": "Overview command center",
+      "route_hint": "/dispatch?view=overview",
       "required": [
         "driver",
         "customer",
@@ -101,7 +104,54 @@
       ]
     },
     {
-      "id": "book_load",
+      "id": "home.kanban",
+      "tab": "Home",
+      "sub": "Load Board · Kanban (7-state)",
+      "route_hint": "/dispatch?view=kanban",
+      "required": [
+        "driver",
+        "customer",
+        "unit",
+        "trailer",
+        "load",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ]
+    },
+    {
+      "id": "home.list",
+      "tab": "Home",
+      "sub": "Load Board · List / Table",
+      "route_hint": "/dispatch?view=list",
+      "required": [
+        "driver",
+        "customer",
+        "unit",
+        "trailer",
+        "load",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ]
+    },
+    {
+      "id": "home.round_trips",
+      "tab": "Home",
+      "sub": "Round Trips (was Units)",
+      "route_hint": "/dispatch?view=units",
+      "required": [
+        "driver",
+        "unit",
+        "trailer",
+        "load",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ]
+    },
+    {
+      "id": "secondary.book_load",
       "tab": "Book load",
       "sub": "+ Book Load wizard",
       "route_hint": "/dispatch/book-load",
@@ -113,6 +163,7 @@
         "load",
         "gl_je",
         "ap_bill",
+        "expense",
         "scenario.maintenance",
         "picker_law",
         "qbo_chrome",
@@ -121,10 +172,10 @@
       ]
     },
     {
-      "id": "assignments",
+      "id": "secondary.assignments",
       "tab": "Assignments",
-      "sub": "Driver assignments",
-      "route_hint": "/dispatch/assignments",
+      "sub": "Assignment history / audit",
+      "route_hint": "/dispatch/assignment-history",
       "required": [
         "driver",
         "unit",
@@ -136,10 +187,542 @@
       ]
     },
     {
-      "id": "settlements",
+      "id": "secondary.settlements",
       "tab": "Settlements",
-      "sub": "Dispatch settlements hop",
-      "route_hint": "/dispatch/settlements",
+      "sub": "Hop → driver-finance settlements",
+      "route_hint": "/driver-finance/settlements",
+      "required": [
+        "driver",
+        "load",
+        "customer",
+        "liability",
+        "gl_je",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "secondary.pre_settlements",
+      "tab": "Pre-settlements",
+      "sub": "Hop → accounting pre-settlements",
+      "route_hint": "/accounting/pre-settlements",
+      "required": [
+        "driver",
+        "load",
+        "customer",
+        "liability",
+        "gl_je",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "queues.at_risk",
+      "tab": "Queues",
+      "sub": "At-Risk loads",
+      "route_hint": "/dispatch/at-risk",
+      "required": [
+        "driver",
+        "customer",
+        "unit",
+        "load",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ]
+    },
+    {
+      "id": "queues.detention",
+      "tab": "Queues",
+      "sub": "Detention board",
+      "route_hint": "/dispatch/detention",
+      "required": [
+        "driver",
+        "customer",
+        "unit",
+        "load",
+        "expense",
+        "gl_je",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ]
+    },
+    {
+      "id": "queues.border",
+      "tab": "Queues",
+      "sub": "Border Crossing wizard",
+      "route_hint": "/dispatch/border-crossing",
+      "required": [
+        "driver",
+        "customer",
+        "unit",
+        "trailer",
+        "load",
+        "vendor",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ]
+    },
+    {
+      "id": "queues.border_history",
+      "tab": "Queues",
+      "sub": "Border Crossing history",
+      "route_hint": "/dispatch/border-crossing/history",
+      "required": [
+        "driver",
+        "customer",
+        "unit",
+        "trailer",
+        "load",
+        "vendor",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ]
+    },
+    {
+      "id": "queues.late",
+      "tab": "Queues",
+      "sub": "Late arrivals",
+      "route_hint": "/dispatch/alerts/late-arrivals",
+      "required": [
+        "driver",
+        "customer",
+        "unit",
+        "load",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ]
+    },
+    {
+      "id": "queues.alerts",
+      "tab": "Queues",
+      "sub": "Dispatch alerts",
+      "route_hint": "/dispatch/alerts",
+      "required": [
+        "driver",
+        "customer",
+        "unit",
+        "load",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ]
+    },
+    {
+      "id": "queues.live_map",
+      "tab": "Queues",
+      "sub": "Live Map / Geofencing",
+      "route_hint": "/dispatch/geofencing",
+      "required": [
+        "driver",
+        "unit",
+        "trailer",
+        "load",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "queues.map",
+      "tab": "Queues",
+      "sub": "Map view",
+      "route_hint": "/dispatch/map",
+      "required": [
+        "driver",
+        "unit",
+        "load",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "queues.trip_pairing",
+      "tab": "Queues",
+      "sub": "Trip Pairing board",
+      "route_hint": "/dispatch/trip-pairing",
+      "required": [
+        "driver",
+        "unit",
+        "trailer",
+        "load",
+        "customer",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ]
+    },
+    {
+      "id": "queues.in_transit",
+      "tab": "Queues",
+      "sub": "In-Transit Issues",
+      "route_hint": "/dispatch/in-transit-issues",
+      "required": [
+        "driver",
+        "unit",
+        "load",
+        "scenario.maintenance",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ]
+    },
+    {
+      "id": "queues.factoring",
+      "tab": "Queues",
+      "sub": "Factoring (accounting hop)",
+      "route_hint": "/accounting/factoring",
+      "required": [
+        "customer",
+        "load",
+        "liability",
+        "gl_je",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "queues.factoring_queue",
+      "tab": "Queues",
+      "sub": "Factoring queue (dispatch)",
+      "route_hint": "/dispatch/factoring-queue",
+      "required": [
+        "customer",
+        "load",
+        "liability",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "planning.timeline",
+      "tab": "Planning",
+      "sub": "Unified timeline planner",
+      "route_hint": "/dispatch/planners/timeline",
+      "required": [
+        "driver",
+        "unit",
+        "trailer",
+        "load",
+        "customer",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ]
+    },
+    {
+      "id": "planning.driver",
+      "tab": "Planning",
+      "sub": "Driver Planner",
+      "route_hint": "/dispatch/planners/driver",
+      "required": [
+        "driver",
+        "unit",
+        "trailer",
+        "load",
+        "customer",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ]
+    },
+    {
+      "id": "planning.truck",
+      "tab": "Planning",
+      "sub": "Truck Planner",
+      "route_hint": "/dispatch/planners/truck",
+      "required": [
+        "driver",
+        "unit",
+        "trailer",
+        "load",
+        "customer",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ]
+    },
+    {
+      "id": "planning.loads",
+      "tab": "Planning",
+      "sub": "Loads Planner",
+      "route_hint": "/dispatch/planners/loads",
+      "required": [
+        "driver",
+        "unit",
+        "trailer",
+        "load",
+        "customer",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ]
+    },
+    {
+      "id": "planning.calendar",
+      "tab": "Planning",
+      "sub": "Planner Calendar (week)",
+      "route_hint": "/dispatch/planner",
+      "required": [
+        "driver",
+        "unit",
+        "trailer",
+        "load",
+        "customer",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ]
+    },
+    {
+      "id": "planning.templates",
+      "tab": "Planning",
+      "sub": "Load Templates",
+      "route_hint": "/dispatch/planner?panel=templates",
+      "required": [
+        "customer",
+        "load",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "planning.unassigned",
+      "tab": "Planning",
+      "sub": "Unassigned Units",
+      "route_hint": "/dispatch?view=overview&panel=unassigned",
+      "required": [
+        "unit",
+        "trailer",
+        "driver",
+        "load",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ]
+    },
+    {
+      "id": "planning.reserve",
+      "tab": "Planning",
+      "sub": "Reserve a Load",
+      "route_hint": "/dispatch/book-load?book_load=1",
+      "required": [
+        "driver",
+        "customer",
+        "unit",
+        "trailer",
+        "load",
+        "gl_je",
+        "ap_bill",
+        "expense",
+        "scenario.maintenance",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "docs.pod",
+      "tab": "Documents",
+      "sub": "POD Review + BOL",
+      "route_hint": "/dispatch/pod-review",
+      "required": [
+        "driver",
+        "customer",
+        "load",
+        "unit",
+        "connectivity",
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "docs.ocr",
+      "tab": "Documents",
+      "sub": "OCR Queue → Book Load",
+      "route_hint": "/dispatch/ocr-queue",
+      "required": [
+        "driver",
+        "customer",
+        "unit",
+        "trailer",
+        "load",
+        "gl_je",
+        "ap_bill",
+        "expense",
+        "scenario.maintenance",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "docs.equipment_transfers",
+      "tab": "Documents",
+      "sub": "Equipment transfers",
+      "route_hint": "/dispatch/equipment-transfers",
+      "required": [
+        "unit",
+        "trailer",
+        "driver",
+        "load",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ]
+    },
+    {
+      "id": "settings.dispatch",
+      "tab": "Settings",
+      "sub": "Dispatch Settings",
+      "route_hint": "/dispatch/settings",
+      "required": [
+        "connectivity",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "settings.notify",
+      "tab": "Settings",
+      "sub": "Customer ETA Notify preferences",
+      "route_hint": "/dispatch/notify-preferences",
+      "required": [
+        "customer",
+        "load",
+        "connectivity",
+        "picker_law",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "misc.trip_profit",
+      "tab": "Misc",
+      "sub": "Trip Profitability",
+      "route_hint": "/dispatch/trip-profitability",
+      "required": [
+        "load",
+        "customer",
+        "driver",
+        "gl_je",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "misc.geofence_history",
+      "tab": "Misc",
+      "sub": "Border geofence history",
+      "route_hint": "/dispatch/borders/geofence-history",
+      "required": [
+        "driver",
+        "unit",
+        "load",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "misc.chat",
+      "tab": "Misc",
+      "sub": "Dispatch chat",
+      "route_hint": "/dispatch/chat",
+      "required": [
+        "driver",
+        "load",
+        "connectivity"
+      ]
+    },
+    {
+      "id": "misc.layover",
+      "tab": "Misc",
+      "sub": "Driver layover",
+      "route_hint": "/dispatch/layovers/driver/:driverId",
+      "required": [
+        "driver",
+        "load",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "load.detail",
+      "tab": "Load detail",
+      "sub": "Canonical load detail",
+      "route_hint": "/dispatch/loads/:id",
+      "required": [
+        "driver",
+        "customer",
+        "unit",
+        "trailer",
+        "load",
+        "gl_je",
+        "liability",
+        "connectivity",
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "load.banking",
+      "tab": "Load detail",
+      "sub": "Load ↔ Banking linkage",
+      "route_hint": "/dispatch/loads/:id/banking",
+      "required": [
+        "load",
+        "customer",
+        "gl_je",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "load.drawer.overview",
+      "tab": "Load detail",
+      "sub": "Drawer · Overview",
+      "route_hint": "/dispatch/loads/:id?tab=Overview",
+      "required": [
+        "driver",
+        "customer",
+        "unit",
+        "trailer",
+        "load",
+        "gl_je",
+        "liability",
+        "connectivity",
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "load.drawer.stops",
+      "tab": "Load detail",
+      "sub": "Drawer · Stops",
+      "route_hint": "/dispatch/loads/:id?tab=Stops",
+      "required": [
+        "load",
+        "customer",
+        "driver",
+        "unit",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ]
+    },
+    {
+      "id": "load.drawer.driver_pay",
+      "tab": "Load detail",
+      "sub": "Drawer · Driver Pay",
+      "route_hint": "/dispatch/loads/:id?tab=Driver%20Pay",
       "required": [
         "driver",
         "load",
@@ -150,33 +733,129 @@
       ]
     },
     {
-      "id": "pre_settlements",
-      "tab": "Pre-settlements",
-      "sub": "Pre-settlements",
-      "route_hint": "/dispatch/pre-settlements",
+      "id": "load.drawer.documents",
+      "tab": "Load detail",
+      "sub": "Drawer · Documents",
+      "route_hint": "/dispatch/loads/:id?tab=Documents",
       "required": [
         "driver",
+        "customer",
         "load",
-        "liability",
-        "connectivity"
+        "unit",
+        "connectivity",
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome"
       ]
     },
     {
-      "id": "load.detail",
-      "tab": "Load board",
-      "sub": "Load detail / assign",
-      "route_hint": "/dispatch",
+      "id": "load.drawer.factoring",
+      "tab": "Load detail",
+      "sub": "Drawer · Factoring",
+      "route_hint": "/dispatch/loads/:id?tab=Factoring",
+      "required": [
+        "customer",
+        "load",
+        "liability",
+        "gl_je",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "load.drawer.customs",
+      "tab": "Load detail",
+      "sub": "Drawer · Customs",
+      "route_hint": "/dispatch/loads/:id?tab=Customs",
       "required": [
         "driver",
         "customer",
         "unit",
         "trailer",
         "load",
-        "gl_je",
+        "vendor",
         "connectivity",
         "reverse_link",
-        "picker_law",
-        "qbo_chrome"
+        "picker_law"
+      ]
+    },
+    {
+      "id": "load.drawer.cargo",
+      "tab": "Load detail",
+      "sub": "Drawer · Cargo Sensors",
+      "route_hint": "/dispatch/loads/:id?tab=Cargo%20Sensors",
+      "required": [
+        "load",
+        "unit",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "load.drawer.settlement",
+      "tab": "Load detail",
+      "sub": "Drawer · Settlement profitability",
+      "route_hint": "/dispatch/loads/:id?tab=Settlement",
+      "required": [
+        "driver",
+        "load",
+        "customer",
+        "liability",
+        "gl_je",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "load.drawer.geofence",
+      "tab": "Load detail",
+      "sub": "Drawer · Geofence Timeline",
+      "route_hint": "/dispatch/loads/:id?tab=Geofence%20Timeline",
+      "required": [
+        "load",
+        "unit",
+        "driver",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "load.drawer.assignment_history",
+      "tab": "Load detail",
+      "sub": "Drawer · Assignment History",
+      "route_hint": "/dispatch/loads/:id?tab=Assignment%20History",
+      "required": [
+        "driver",
+        "unit",
+        "load",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "load.drawer.audit",
+      "tab": "Load detail",
+      "sub": "Drawer · Audit",
+      "route_hint": "/dispatch/loads/:id?tab=Audit",
+      "required": [
+        "load",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "load.drawer.pre_settlement",
+      "tab": "Load detail",
+      "sub": "Drawer · Pre-Settlement",
+      "route_hint": "/dispatch/loads/:id?tab=Pre-Settlement",
+      "required": [
+        "driver",
+        "load",
+        "customer",
+        "liability",
+        "gl_je",
+        "connectivity",
+        "reverse_link"
       ]
     }
   ]

@@ -211,9 +211,66 @@ export function assertScoreboardContract(sources) {
       if (!Array.isArray(map.leaves) || map.leaves.length < 1) {
         problems.push(`${mapRel}: must list leaves`);
       }
+      // MATRIX-REQ-DISPATCH-DEPTH — stub 6-leaf map is mediocre / FAIL. Must mirror real nav.
+      if (mod === "dispatch") {
+        const leafIds = new Set((map.leaves ?? []).map((l) => l.id));
+        if ((map.leaves ?? []).length < 40) {
+          problems.push(
+            `${mapRel}: Dispatch Required map must have ≥40 leaves (home views + queues + planners + drawer tabs) — got ${(map.leaves ?? []).length}`,
+          );
+        }
+        for (const need of [
+          "home.overview",
+          "home.kanban",
+          "home.list",
+          "home.round_trips",
+          "secondary.book_load",
+          "queues.at_risk",
+          "queues.detention",
+          "queues.border",
+          "queues.trip_pairing",
+          "planning.driver",
+          "planning.truck",
+          "planning.loads",
+          "planning.calendar",
+          "docs.pod",
+          "docs.ocr",
+          "load.detail",
+          "load.drawer.factoring",
+          "load.drawer.settlement",
+        ]) {
+          if (!leafIds.has(need)) {
+            problems.push(`${mapRel}: missing Dispatch leaf ${need} (DispatchSubnav / home views / drawer)`);
+          }
+        }
+      }
     } catch (e) {
       problems.push(`${mapRel}: invalid JSON (${e instanceof Error ? e.message : e})`);
     }
+  }
+
+  const matrixSvcRel = "apps/backend/src/program/module-matrix.service.ts";
+  const matrixSvc =
+    sources?.[matrixSvcRel] ?? (fs.existsSync(path.join(ROOT, matrixSvcRel)) ? read(matrixSvcRel) : "");
+  if (matrixSvc) {
+    if (!/PROBE_DONE_MAP/.test(matrixSvc) || !/hop\.invoice/.test(matrixSvc) || !/scenario\.ap/.test(matrixSvc)) {
+      problems.push(
+        `${matrixSvcRel}: MATRIX-WIRE — Done must map live_scenario_probe hops (hop.invoice / scenario.ap) via PROBE_DONE_MAP`,
+      );
+    }
+    if (/buildColumnAuditIndex/.test(matrixSvc)) {
+      problems.push(
+        `${matrixSvcRel}: forbidden module-wide keyword Audited flood (buildColumnAuditIndex) — use leaf×column only`,
+      );
+    }
+    if (!/block-reconciliation-data\.json/.test(matrixSvc) || !/tipSha|rev-parse/.test(matrixSvc)) {
+      problems.push(`${matrixSvcRel}: must surface git tip + recon as-of in matrix meta`);
+    }
+  }
+  if (matrixPage && !/REQUEST-TIME FEED|Audited ≠|leaf×column/.test(matrixPage) && !/REQUEST-TIME FEED/.test(matrixPage)) {
+    problems.push(
+      `${matrixPageRel}: banner must not overclaim LIVE verify — use REQUEST-TIME FEED honesty`,
+    );
   }
 
   if (

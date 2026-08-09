@@ -65,8 +65,15 @@ type LiveMatrix = {
     unauditedCells: number;
     buildQueue: number;
     modulePct: number;
+    auditedPct?: number;
   };
-  meta?: { honesty?: string; prodReadAt?: string };
+  meta?: {
+    honesty?: string;
+    tipSha?: string;
+    probeProgress?: number | null;
+    reconAsOf?: string | null;
+    feedNote?: string;
+  };
 };
 
 type MatrixModuleId = "maintenance" | "safety" | "insurance" | "legal" | "accounting" | "banking" | "dispatch" | "settlements" | "fuel" | "drivers";
@@ -321,15 +328,18 @@ function boardMetrics(map: RequiredMap, rows: Row[], live: LiveMatrix | null) {
   if (live?.metrics) {
     return {
       modulePct: live.metrics.modulePct,
+      auditedPct: live.metrics.auditedPct ?? 0,
       leafCount: live.metrics.leafCount || map.leaves.length,
       colCount: live.metrics.colCount || map.columns.length,
       requiredCells: live.metrics.requiredCells,
       doneCells: live.metrics.doneCells,
+      auditedCells: live.metrics.auditedCells ?? 0,
       buildQueue: live.metrics.buildQueue,
     };
   }
   let requiredCells = 0;
   let doneCells = 0;
+  let auditedCells = 0;
   let buildQueue = 0;
   for (const row of rows) {
     if (row.kind !== "leaf") continue;
@@ -337,16 +347,23 @@ function boardMetrics(map: RequiredMap, rows: Row[], live: LiveMatrix | null) {
       if (st === "na") continue;
       requiredCells += 1;
       if (st === "done") doneCells += 1;
-      else buildQueue += 1;
+      else if (st === "audited") {
+        auditedCells += 1;
+        buildQueue += 1;
+      } else buildQueue += 1;
     }
   }
   const modulePct = requiredCells === 0 ? 0 : Math.round((doneCells / requiredCells) * 100);
+  const auditedPct =
+    requiredCells === 0 ? 0 : Math.round(((doneCells + auditedCells) / requiredCells) * 100);
   return {
     modulePct,
+    auditedPct,
     leafCount: map.leaves.length,
     colCount: map.columns.length,
     requiredCells,
     doneCells,
+    auditedCells,
     buildQueue,
   };
 }
@@ -459,9 +476,14 @@ export function ModuleMatrixPreviewPage() {
         </div>
       ) : liveOk ? (
         <div className="banner live" data-testid="module-matrix-live-banner">
-          <b>LIVE.</b> Required from committed map · Audited from ledger / GUARD / wave-queue /
-          module-completion · Done only when <code>live_scenario_probe</code> holds
-          {live?.meta?.prodReadAt ? <> · prod read {live.meta.prodReadAt}</> : null}.
+          <b>REQUEST-TIME FEED.</b> Required = committed map · Audited = leaf×column ledger / GUARD /
+          wave / module-completion (not live verify) · Done = <code>live_scenario_probe</code> hops +
+          PROD-VERIFIED + Neon completion PASS
+          {live?.meta?.tipSha ? <> · tip <code>{live.meta.tipSha}</code></> : null}
+          {typeof live?.meta?.probeProgress === "number" ? (
+            <> · probe {live.meta.probeProgress}%</>
+          ) : null}
+          {live?.meta?.reconAsOf ? <> · recon {live.meta.reconAsOf}</> : null}.
         </div>
       ) : (
         <div className="banner" data-testid="module-matrix-loading-banner">
@@ -520,16 +542,20 @@ export function ModuleMatrixPreviewPage() {
           <div className="l">
             {titleCase(moduleId)} module %
             <br />
-            (done ÷ required{liveOk ? "" : " · pending live"})
+            (done ÷ required{liveOk ? "" : " · pending feed"})
+          </div>
+        </div>
+        <div className="metric amb">
+          <div className="n">{metrics.auditedPct ?? 0}%</div>
+          <div className="l">
+            Audited coverage
+            <br />
+            ((done+audited) ÷ required)
           </div>
         </div>
         <div className="metric">
           <div className="n">{metrics.leafCount}</div>
           <div className="l">Leaves on this board<br />(from required JSON)</div>
-        </div>
-        <div className="metric">
-          <div className="n">{metrics.colCount}</div>
-          <div className="l">Scoped columns<br />(incl. chrome + wiring)</div>
         </div>
         <div className="metric">
           <div className="n">{metrics.requiredCells}</div>
