@@ -4,6 +4,11 @@
     "purpose": "verify-settlement-debt-view-not-stub",
     "claimed_at": "2026-08-08"
   },
+  "2914": {
+    "claimed_by": "cursor",
+    "purpose": "verify-driver-active-30d-activity",
+    "claimed_at": "2026-08-09"
+  },
   "claimed": {
     "10": "10-backend-vitest.mjs",
     "11": "11-frontend-vitest.mjs",
@@ -1407,6 +1412,7 @@
     "2911": "CC-2 FAIL-BM1 verify-match-candidate-row-selects",
     "2912": "2912-verify-settlement-debt-view-not-stub.mjs",
     "2913": "CC-2 verify-no-zero-rate-invoice-create (#4989; package.json wiring was forbidden per DoD §4)",
+    "2914": "2914-verify-driver-active-30d-activity.mjs",
     "2915": "CC-2 verify-parity-table-sort-toggle-contract (re-land: package.json wiring forbidden per DoD §4)",
     "2917": "CC-2 verify-combobox-id-label-binding (re-land: package.json wiring forbidden per DoD §4)",
     "2919": "CC-2 verify-book-load-sample-data-wiring (re-land: package.json wiring forbidden per DoD §4)",
@@ -1434,8 +1440,8 @@
   "_note": "CLAIMED verify-step numbers. Every PR adding a verify-step MUST add its number here IN THE SAME COMMIT. Two agents claiming the same number then CONFLICT IN GIT instead of silently agreeing and reddening main afterwards.",
   "_why": "Six collisions on 2026-07-26 alone. Convention-based allocation cannot see a concurrent claimant on another branch: the clash only appears at merge, AFTER both PRs went green, and then reds every branch cut from main. A registry converts an invisible race into a merge conflict, which is where it belongs.",
   "_how_to_claim": "MOD-4 BANDS + CLAIM-BEFORE-WRITE (owner-locked 2026-08-04; credit CC-2): Cursor = EVEN; CC-1 = ≡1 (mod 4) via claude|/cc-1|/cc1; CC-2 = ≡3 (mod 4) via cc-2|/cc2. Reserve first: merge a claim-only PR (chore/claim-reserve* or chore/claimed-regen* with CLAIM-RESERVE/CLAIMED-REGEN) that adds only the number here; THEN author scripts/verify-steps/NNNN-*.mjs on a feature PR. CI fails if a new step file is not already claimed on origin/main (except one-time 2400 self-bootstrap). Never claim another lane's residue. Never renumber after collisions.",
-  "generated_at": "2026-08-08T21:38:14.466Z",
-  "total_claimed": 1107,
+  "generated_at": "2026-08-09T02:10:17.093Z",
+  "total_claimed": 1108,
   "known_duplicates_frozen": {
     "15": [
       "15-verify-accounting-autoload-coverage.mjs",
