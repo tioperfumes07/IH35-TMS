@@ -275,7 +275,7 @@ export function AccountingHubPage() {
     .slice(0, 5)
     .map((row) => ({
       key: row.id,
-      left: row.driver_full_name || row.driver_display_id || "Settlement",
+      left: row.driver_full_name || "Settlement",
       right: money.format(Number(row.net_pay ?? 0) / 100),
       muted: row.status,
     }));

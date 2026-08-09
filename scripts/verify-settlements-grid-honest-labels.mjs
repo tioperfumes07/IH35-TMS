@@ -95,11 +95,21 @@ function checkEarningsTab() {
   }
 }
 
+function checkAccountingHub() {
+  const TARGET = "apps/frontend/src/pages/accounting/AccountingHubPage.tsx";
+  const src = readFileSync(join(repoRoot, TARGET), "utf8");
+  const code = stripComments(src);
+  if (/driver_display_id/.test(code)) {
+    failures.push(`${TARGET}: must not fall back to driver_display_id (UUID-as-label) on settlement rows`);
+  }
+}
+
 checkTable();
 checkHeader();
 checkDetail();
 checkPreSettlements();
 checkEarningsTab();
+checkAccountingHub();
 
 if (failures.length > 0) {
   console.error("FAIL verify-settlements-grid-honest-labels");
@@ -108,5 +118,5 @@ if (failures.length > 0) {
 }
 
 console.log(
-  "PASS verify-settlements-grid-honest-labels — list+header+presettle+earnings period formatted, no uuid-as-display-id",
+  "PASS verify-settlements-grid-honest-labels — settlements chrome: no uuid-as-display-id; periods formatted",
 );
