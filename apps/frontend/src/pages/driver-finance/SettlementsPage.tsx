@@ -45,13 +45,30 @@ export function SettlementsPage() {
   const settlements = (listQuery.data?.settlements ?? []).filter((s) =>
     filterDriverId ? s.driver_id === filterDriverId : true,
   );
+  const now = new Date();
+  const ytdYear = now.getFullYear();
+  const periodStartOfWeek = (() => {
+    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    d.setDate(d.getDate() - d.getDay()); // Sunday start — matches Tasks planner This Week
+    d.setHours(0, 0, 0, 0);
+    return d;
+  })();
+  const isInThisPeriod = (s: (typeof settlements)[number]) => {
+    const end = new Date(s.period_end);
+    if (Number.isNaN(end.getTime())) return false;
+    return end.getTime() >= periodStartOfWeek.getTime();
+  };
+  const isYtd = (s: (typeof settlements)[number]) => {
+    const end = new Date(s.period_end);
+    return !Number.isNaN(end.getTime()) && end.getFullYear() === ytdYear;
+  };
   const kpis = {
     total_unpaid: settlements.filter((s) => s.status !== "paid").length,
-    this_period: settlements.length,
+    this_period: settlements.filter(isInThisPeriod).length,
     drivers_with_debt: settlements.filter((s) => typeof s.live_debt_flag === "number" && s.live_debt_flag > 0).length,
     pending_acks: settlements.filter((s) => s.has_pending_acks).length,
     held_deductions: settlements.filter((s) => s.status === "held").length,
-    ytd_settlements: settlements.length,
+    ytd_settlements: settlements.filter(isYtd).length,
   };
   const focusedSettlements = useMemo(() => {
     if (focusFilter === "debt") {
