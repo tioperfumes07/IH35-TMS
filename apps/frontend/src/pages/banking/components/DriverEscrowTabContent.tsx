@@ -11,6 +11,7 @@ import { ParityTable, type ParityColumn } from "../../../components/parity/Parit
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { entityLabel } from "../../../lib/entity-label";
 import { formatDateUS } from "../../../lib/formatDate";
 import { RegisterToolbar } from "./RegisterToolbar";
 import { useListState } from "../../../components/list-state";
@@ -130,7 +131,7 @@ export function DriverEscrowTabContent({ operatingCompanyId, driverEscrowBalance
             <EntityLink
               kind="settlement"
               id={sid}
-              label={sid.slice(0, 8)}
+              label={entityLabel(null, sid, "Settlement")}
               data-testid="banking-escrow-settlement-link"
             />
           );

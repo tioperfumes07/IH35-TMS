@@ -18,6 +18,7 @@ import { derivePlaidConnectionBadgeLabel } from "./plaid-item-display";
 import { ActionButton } from "../../../components/shared/ActionButton";
 import { useToast } from "../../../components/Toast";
 import { filterPlaidBankAccountsForCompany } from "../../../lib/banking-company-filter";
+import { entityLabel } from "../../../lib/entity-label";
 import { Link } from "react-router-dom";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { useListState } from "../../../components/list-state";
@@ -49,9 +50,11 @@ function categoryLabel(t: PlaidBankTransaction) {
 }
 
 function matchedLabel(t: PlaidBankTransaction) {
-  if (t.matched_kind === "load" && t.matched_load_id) return `Load ${t.matched_load_id.slice(0, 8)}…`;
-  if (t.matched_kind === "settlement" && t.matched_settlement_id) return `Settlement ${t.matched_settlement_id.slice(0, 8)}…`;
-  if (t.matched_kind === "bill" && t.matched_bill_id) return `Bill ${t.matched_bill_id.slice(0, 8)}…`;
+  if (t.matched_kind === "load" && t.matched_load_id) return entityLabel(null, t.matched_load_id, "Load");
+  if (t.matched_kind === "settlement" && t.matched_settlement_id) {
+    return entityLabel(null, t.matched_settlement_id, "Settlement");
+  }
+  if (t.matched_kind === "bill" && t.matched_bill_id) return entityLabel(null, t.matched_bill_id, "Bill");
   return "Unmatched";
 }
 
