@@ -17,6 +17,12 @@ function assert(src) {
   if (/Expense \$\{[^}]*\.id\.slice\(0,\s*8\)\}/.test(src) || /Expense \$\{e\.id\.slice/.test(src)) {
     problems.push(`${FILE}: expense link still uses UUID slice label`);
   }
+  if (/Bill \$\{[^}]*\.id\.slice\(0,\s*8\)\}/.test(src) || /b\.bill_number \?\? `Bill \$\{b\.id\.slice/.test(src)) {
+    problems.push(`${FILE}: bill link still uses UUID slice label`);
+  }
+  if (/WO \$\{[^}]*\.id\.slice\(0,\s*8\)\}/.test(src) || /wo\.display_id \?\? `WO \$\{wo\.id\.slice/.test(src)) {
+    problems.push(`${FILE}: work order link still uses UUID slice label`);
+  }
   if (/highlightedClaimId\.slice\(0,\s*8\)/.test(src)) {
     problems.push(`${FILE}: claim graph header still uses highlightedClaimId.slice`);
   }
