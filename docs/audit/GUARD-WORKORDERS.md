@@ -1508,3 +1508,32 @@ proof — but no counter-example exists in the population.
 
 **ASK:** identify what is supposed to invoke the mint at the delivery transition and confirm whether it is wired
 at all. **Do not hand-create bills or lines to clear the table** — that is what already obscured the picture here.
+
+## ROOT CAUSE (CC-3, prod `1be9c64`) for DELIVERED-LOAD-NO-DRIVER-PAY — **driver pay is CREATE-TIME-ONLY, and only from one creator**
+**Traced in source, verified against the whole write-path population. This makes the P0 actionable.**
+
+**1. There are exactly TWO writers of `driver_finance.driver_bills` in the entire backend, and they are the same
+file:** `dispatch/book-load.service.ts:543` and `:612`. Nothing else inserts a driver bill —
+`grep "INSERT INTO driver_finance.driver_bills"` across `apps/backend/src` (tests excluded) returns those two.
+
+**2. No lifecycle transition mints pay.** `dispatch/update-load.service.ts` touches `driver_bills` at **`:238`
+only to READ it for the edit lock** (`driver_bill_locked`). Assign, dispatch, in-transit, delivered,
+`delivered_pending_docs` and `completed_docs_received` mint nothing.
+
+**3. The other load creator never mints.** `mdata/loads.routes.ts` creates loads **with** a driver and neither
+mints pay nor audits a skip — this is already the standing OPEN P1 `KNOWN GAP` in
+`scripts/verify-load-creators-mint-or-audit-driver-pay.mjs` (guard currently `ok`, gap still listed).
+
+**⇒ CONCLUSION: driver pay exists only if the load was booked through `book-load.service.ts`. A load created by
+any other path is PERMANENTLY unpaid — there is no later transition that can rescue it, because delivery does not
+mint.** That fully explains $13,186.50 of delivered freight with no pay artifact, and it explains why a pay rate
+on file predicts nothing.
+
+**This also raises the stakes on three guards that all name the same file** — `verify-load-creators-mint-or-audit-driver-pay`
+(pay), `verify-load-write-paths-run-driver-qualification` (#4988, qualification),
+`verify-driver-reassign-runs-qualification` (#5009, reassign). **`mdata/loads.routes.ts` is a driver-seating
+write path that skips pay, qualification AND reassign checks.** It is one file behind three separate P1s.
+
+**ASK:** either route `mdata/loads.routes.ts` through the same mint as `book-load.service.ts`, or add a mint at
+the delivery transition so pay cannot depend on which creator was used. **Prefer the delivery transition** — pay
+is earned on delivery, and a create-time-only mint can never recover a load booked by any future creator.
