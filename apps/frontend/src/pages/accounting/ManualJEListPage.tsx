@@ -24,6 +24,25 @@ function humanMemo(memo: string | null | undefined): string {
   return memo.replace(UUID_RE, (uuid) => uuid.slice(0, 8));
 }
 
+/** LST-F107: JE column must not lead with a bare UUID fragment (date column already exists). */
+function journalEntryListLabel(entry: {
+  journal_entry_type_code?: string | null;
+  journal_entry_type_name?: string | null;
+  source?: string | null;
+  memo?: string | null;
+}): string {
+  const type =
+    entry.journal_entry_type_code?.trim() ||
+    entry.journal_entry_type_name?.trim() ||
+    entry.source?.trim() ||
+    "JE";
+  const memo = entry.memo?.trim() ? humanMemo(entry.memo) : "";
+  if (memo && memo !== "—") {
+    return `${type} · ${memo.length > 36 ? `${memo.slice(0, 36)}…` : memo}`;
+  }
+  return type;
+}
+
 export function ManualJEListPage() {
   const navigate = useNavigate();
   const { selectedCompanyId } = useCompanyContext();
@@ -86,7 +105,7 @@ export function ManualJEListPage() {
           <EntityLink
             kind="journal_entry"
             id={entry.id}
-            label={entry.id.slice(0, 8)}
+            label={journalEntryListLabel(entry)}
             onClick={(e) => e.stopPropagation()}
           />
         ),
