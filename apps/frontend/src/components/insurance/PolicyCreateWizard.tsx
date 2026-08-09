@@ -2,13 +2,14 @@ import { entityLabel } from "../../lib/entity-label";
 import { useEffect, useMemo, useState } from "react";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ApiError } from "../../api/client";
 import {
   createPolicyWithBills,
   listInsuranceTypeCatalog,
   type AllocationMethod,
   type InsuranceCoverageType,
 } from "../../api/insurance";
-import { listUnits } from "../../api/mdata";
+import { listUnits, listVendors } from "../../api/mdata";
 import { ListErrorState } from "../ListErrorState";
 import { ParityDrawer } from "../parity/ParityDrawer";
 import { ReferenceSelect } from "../parity/ReferenceSelect";
@@ -18,6 +19,33 @@ import { useToast } from "../Toast";
 import { formatQueryErrorDetail } from "../../lib/tableError";
 import { useCostPerVehicle } from "./useCostPerVehicle";
 import { formatUsdCents } from "../../lib/money";
+
+/** Map with-bills 409s Cascade hit live (insurance_vendor_not_found on free-text insurer). */
+export function mapPolicyWithBillsError(err: unknown): string {
+  if (err instanceof ApiError) {
+    const payload = (err.data ?? {}) as { error?: string; detail?: string; message?: string };
+    if (payload.error === "insurance_vendor_not_found") {
+      return "No vendor matches this insurer name. Pick an existing vendor or use + Add new in the Insurer dropdown (writes mdata.vendors — same table premium bills use).";
+    }
+    if (payload.error === "insurance_seed_bank_account_not_found") {
+      return "No active bank account for this company to seed premium bills.";
+    }
+    if (payload.error === "asset_not_found") {
+      return payload.detail
+        ? `Covered unit not found: ${payload.detail}`
+        : "A selected covered unit could not be resolved for this company.";
+    }
+    if (payload.error === "coverage_type_not_found") {
+      return "Selected coverage type is not active for this company.";
+    }
+    if (typeof payload.message === "string" && payload.message.trim()) return payload.message;
+    if (typeof payload.error === "string" && payload.error.trim()) {
+      return payload.error.replaceAll("_", " ");
+    }
+    return `Unable to create policy (HTTP ${err.status}).`;
+  }
+  return String((err as Error)?.message ?? "Unexpected error creating policy.");
+}
 
 type Props = {
   open: boolean;
@@ -37,6 +65,9 @@ type UnitRow = {
 };
 
 type Step1 = {
+  /** Canonical mdata.vendors id — picker value (R=W with premium-bill vendor lookup). */
+  insurer_vendor_id: string;
+  /** Resolved vendor_name submitted as insurer_name (atomic writer matches lower(trim(vendor_name))). */
   insurer_name: string;
   policy_number: string;
   coverage_type: string;
@@ -93,6 +124,7 @@ function parsePremiumCents(raw: string): number | null {
 }
 
 const INITIAL_STEP1: Step1 = {
+  insurer_vendor_id: "",
   insurer_name: "",
   policy_number: "",
   coverage_type: "",
@@ -140,12 +172,34 @@ export function PolicyCreateWizard({ open, operatingCompanyId, onClose, onCreate
   const [step3, setStep3] = useState<Step3>(INITIAL_STEP3);
   const [step3Errors, setStep3Errors] = useState<Partial<Record<keyof Step3, string>>>({});
   const [serverError, setServerError] = useState("");
+  const [vendorSearch, setVendorSearch] = useState("");
 
   const typesQuery = useQuery({
     queryKey: ["insurance", "type-catalog", operatingCompanyId],
     enabled: open && Boolean(operatingCompanyId),
     queryFn: () => listInsuranceTypeCatalog({ operating_company_id: operatingCompanyId }).then((r) => r.types),
   });
+
+  // FAIL-INS-VENDOR-UX: free-text insurer never matched mdata.vendors → 409 insurance_vendor_not_found.
+  // Vendor picker + inline create writes the same table the atomic bill seeder reads.
+  const vendorsQuery = useQuery({
+    queryKey: ["insurance", "wizard", "vendors", operatingCompanyId, vendorSearch],
+    enabled: open && Boolean(operatingCompanyId),
+    queryFn: () =>
+      listVendors({
+        operating_company_id: operatingCompanyId,
+        limit: 200,
+        search: vendorSearch.trim() || undefined,
+      }).then((r) => r.vendors),
+  });
+
+  const vendorOptions = useMemo(
+    () =>
+      (vendorsQuery.data ?? [])
+        .filter((v) => Boolean(v.id) && Boolean(v.name?.trim()))
+        .map((v) => ({ value: v.id, label: v.name.trim() })),
+    [vendorsQuery.data]
+  );
 
   const unitsQuery = useQuery({
     queryKey: ["insurance", "wizard", "units", operatingCompanyId, unitSearchQuery],
@@ -177,6 +231,7 @@ export function PolicyCreateWizard({ open, operatingCompanyId, onClose, onCreate
     setStep3(INITIAL_STEP3);
     setStep3Errors({});
     setServerError("");
+    setVendorSearch("");
   }, [open]);
 
   const premiumCents = useMemo(() => parsePremiumCents(step3.total_premium) ?? 0, [step3.total_premium]);
@@ -242,7 +297,9 @@ export function PolicyCreateWizard({ open, operatingCompanyId, onClose, onCreate
 
   const validateStep1 = () => {
     const errors: Partial<Record<keyof Step1, string>> = {};
-    if (!step1.insurer_name.trim()) errors.insurer_name = "Insurer name is required.";
+    if (!step1.insurer_vendor_id.trim() || !step1.insurer_name.trim()) {
+      errors.insurer_name = "Select an insurer vendor (or + Add new).";
+    }
     if (!step1.policy_number.trim()) errors.policy_number = "Policy number is required.";
     if (!step1.coverage_type) errors.coverage_type = "Coverage type is required.";
     if (!step1.effective_date) errors.effective_date = "Effective date is required.";
@@ -293,7 +350,7 @@ export function PolicyCreateWizard({ open, operatingCompanyId, onClose, onCreate
       onCreated(result.policyId);
     },
     onError: (err) => {
-      setServerError(String((err as Error)?.message ?? "Unexpected error creating policy."));
+      setServerError(mapPolicyWithBillsError(err));
     },
   });
 
@@ -317,12 +374,46 @@ export function PolicyCreateWizard({ open, operatingCompanyId, onClose, onCreate
 
         {step === 1 && (
           <div className="grid gap-3 md:grid-cols-2">
-            <Field label="Insurer Name *" error={step1Errors.insurer_name}>
-              <input
-                className="w-full rounded-sm border border-gray-300 px-2 py-1"
-                value={step1.insurer_name}
-                onChange={(e) => setStep1((s) => ({ ...s, insurer_name: e.target.value }))}
-              />
+            <Field label="Insurer (vendor) *" error={step1Errors.insurer_name}>
+              {vendorsQuery.isError ? (
+                <ListErrorState
+                  title="Couldn't load vendors"
+                  {...formatQueryErrorDetail(vendorsQuery.error)}
+                  onRetry={() => void vendorsQuery.refetch()}
+                  className="py-4"
+                />
+              ) : (
+                // FAIL-INS-VENDOR-UX: ReferenceSelect createKind=vendor → mdata.vendors (atomic bill vendor match).
+                <ReferenceSelect
+                  value={step1.insurer_vendor_id || null}
+                  onChange={(next) => {
+                    const id = next ?? "";
+                    const label = vendorOptions.find((o) => o.value === id)?.label ?? "";
+                    setStep1((s) => ({
+                      ...s,
+                      insurer_vendor_id: id,
+                      insurer_name: label || (id ? s.insurer_name : ""),
+                    }));
+                    setStep1Errors((e) => ({ ...e, insurer_name: undefined }));
+                    setServerError("");
+                  }}
+                  options={vendorOptions}
+                  createKind="vendor"
+                  operatingCompanyId={operatingCompanyId}
+                  placeholder="Select insurer vendor"
+                  onSearch={setVendorSearch}
+                  onOptionCreated={async (opt) => {
+                    setStep1((s) => ({
+                      ...s,
+                      insurer_vendor_id: opt.value,
+                      insurer_name: opt.label,
+                    }));
+                    await queryClient.invalidateQueries({
+                      queryKey: ["insurance", "wizard", "vendors", operatingCompanyId],
+                    });
+                  }}
+                />
+              )}
             </Field>
             <Field label="Policy Number *" error={step1Errors.policy_number}>
               <input
