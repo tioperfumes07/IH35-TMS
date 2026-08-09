@@ -699,12 +699,17 @@ export async function createDriverCanonical(
           linkedUserEventType = "existing_user";
         } else {
           const userRes = await client.query<{ id: string }>(
+            // ACCT-F286 — this created a role='Driver' identity user with NO default_company_id, while the
+            // sibling path 80 lines above (:622) sets it from the same in-scope resolvedOperatingCompanyId.
+            // A Driver user without a default company is an UNSCOPED IDENTITY in a multi-entity system: the
+            // driver-app resolves its company from this column, so the two creation paths disagreed about
+            // whether a driver belongs anywhere.
             `
-                INSERT INTO identity.users (email, role, phone)
-                VALUES ($1, 'Driver', $2)
+                INSERT INTO identity.users (email, role, phone, default_company_id)
+                VALUES ($1, 'Driver', $2, $3)
                 RETURNING id
               `,
-            [normalizedEmail, b.phone]
+            [normalizedEmail, b.phone, resolvedOperatingCompanyId]
           );
           identityUserId = userRes.rows[0]?.id ?? null;
           linkedUserEventType = "new_user_created";
@@ -2236,9 +2241,11 @@ export async function registerDriverRoutes(app: FastifyInstance) {
 
     try {
       const updated = await withCurrentUser(authUser.uuid, async (client) => {
-        const driverRes = await client.query<{ id: string; phone: string; email: string | null; identity_user_id: string | null }>(
+        const driverRes = await client.query<{ id: string; phone: string; email: string | null; identity_user_id: string | null; operating_company_id: string | null }>(
+          // ACCT-F286 — operating_company_id added: the identity user created below needs it for
+          // default_company_id, and this SELECT was the only source of driver context in scope.
           `
-            SELECT id, phone, email, identity_user_id
+            SELECT id, phone, email, identity_user_id, operating_company_id
             FROM mdata.drivers
             WHERE id = $1
             LIMIT 1
@@ -2250,12 +2257,15 @@ export async function registerDriverRoutes(app: FastifyInstance) {
         if (driver.identity_user_id) return { error: "driver_phone_login_already_enabled" as const };
 
         const userRes = await client.query<{ id: string }>(
+          // ACCT-F286 — same defect as :703: a Driver identity user created with no default_company_id.
+          // Sourced from the driver's own operating_company_id so the identity cannot be scoped to a
+          // different entity than the driver record it is being attached to.
           `
-            INSERT INTO identity.users (email, role, phone)
-            VALUES ($1, 'Driver', $2)
+            INSERT INTO identity.users (email, role, phone, default_company_id)
+            VALUES ($1, 'Driver', $2, $3)
             RETURNING id
           `,
-          [driver.email ? driver.email.toLowerCase() : null, driver.phone]
+          [driver.email ? driver.email.toLowerCase() : null, driver.phone, driver.operating_company_id]
         );
         const identityUserId = userRes.rows[0]?.id;
         if (!identityUserId) return { error: "identity_user_create_failed" as const };
