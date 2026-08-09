@@ -62,17 +62,13 @@ function buildColumns(
     },
     { key: "sort_order", label: "Order", sortable: true },
   ];
+  // The enum loop used to be NESTED inside the boolean loop with an inner `field` SHADOWING the outer one,
+  // so every enum column was appended once PER boolean field. With 2 booleans and 1 enum,
+  // `default_recovery_rail` was pushed TWICE — duplicate columns and a duplicate React key
+  // ("Encountered two children with the same key, default_recovery_rail"), which React warns can duplicate
+  // or OMIT children. Two sibling loops, one column each.
   for (const field of optionalBooleans) {
-    for (const field of optionalEnums) {
     cols.push({
-      key: field.key,
-      label: field.label,
-      sortable: true,
-      sortValue: (row) => row[field.key] ?? "",
-      render: (row) => <>{row[field.key] || "—"}</>,
-    });
-  }
-  cols.push({
       key: field.key,
       label: field.label,
       sortable: true,
@@ -80,6 +76,15 @@ function buildColumns(
       render: (row) => (
         <span className={statusPillClass(Boolean(row[field.key]))}>{row[field.key] ? "Yes" : "No"}</span>
       ),
+    });
+  }
+  for (const field of optionalEnums) {
+    cols.push({
+      key: field.key,
+      label: field.label,
+      sortable: true,
+      sortValue: (row) => row[field.key] ?? "",
+      render: (row) => <>{row[field.key] || "—"}</>,
     });
   }
   cols.push({
