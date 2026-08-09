@@ -13,8 +13,12 @@ function messageFromApiPayload(status: number, data: unknown): string {
     }
     const err = o.error;
     if (typeof err === "string" && err.trim()) {
-      // Prefer human message when paired; else machine code beats bare HTTP status.
-      return err.trim().slice(0, 500);
+      // CU-09: never leave a bare E_* code as ApiError.message (toasts use err.message widely).
+      const code = err.trim();
+      if (/^E_[A-Z0-9_]+$/.test(code)) {
+        return code.replace(/^E_/, "").replace(/_/g, " ").toLowerCase().slice(0, 500);
+      }
+      return code.slice(0, 500);
     }
     const blockers = o.blockers;
     if (Array.isArray(blockers) && blockers[0] && typeof blockers[0] === "object") {

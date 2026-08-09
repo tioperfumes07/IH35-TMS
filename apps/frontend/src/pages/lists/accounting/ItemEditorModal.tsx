@@ -1,3 +1,4 @@
+import { userFacingApiError } from "../../../lib/api-error-message";
 /**
  * ITEM1 / AF-2c — Products & Services editor with REAL referential links (QBO / NetSuite parity).
  *
@@ -242,7 +243,7 @@ export function ItemEditorModal({ open, mode, row, operatingCompanyId, client, o
     } catch (err) {
       if (err instanceof ApiError) {
         const data = (err.data as Record<string, unknown>) ?? {};
-        setSubmitError(String(data.error ?? data.message ?? err.message));
+        setSubmitError(userFacingApiError(err, "Save failed"));
       } else {
         setSubmitError("Failed to save item.");
       }
@@ -261,7 +262,7 @@ export function ItemEditorModal({ open, mode, row, operatingCompanyId, client, o
     } catch (err) {
       if (err instanceof ApiError) {
         const data = (err.data as Record<string, unknown>) ?? {};
-        setSubmitError(String(data.error ?? data.message ?? err.message));
+        setSubmitError(userFacingApiError(err, "Save failed"));
       } else {
         setSubmitError("Failed to deactivate item.");
       }
