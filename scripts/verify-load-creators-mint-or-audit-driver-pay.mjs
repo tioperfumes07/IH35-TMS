@@ -48,14 +48,9 @@ const PAY_REFS = ["resolveDriverBasePayCents", "driver_bills"];
 const SKIP_AUDIT = "skipped_no_pay_rate";
 
 const KNOWN_GAPS = new Map([
-  [
-    "apps/backend/src/mdata/loads.routes.ts",
-    "OPEN P1: creates loads WITH a driver, never mints pay and never audits a skip. Owner: dispatch write-path.",
-  ],
-  // NOT listed: integrations/edi/.../inbound-204.handler.ts. The board card names it as driver-pay
-  // blind and that is true, but it never writes `assigned_primary_driver_id` — it creates loads with
-  // NO driver, so there is no driver to pay and nothing to skip-audit. Listing it would have been a
-  // false exemption implying a gap that does not exist. Caught by this guard's own stale-entry arm.
+  // ACCT-F277 closed the mdata create + delivery path via ensureDriverBillArtifactsForLoad — do not
+  // re-list apps/backend/src/mdata/loads.routes.ts. NOT listed: integrations/edi/.../inbound-204 —
+  // it never writes assigned_primary_driver_id (no driver to pay / skip-audit).
   [
     "apps/backend/src/seed/csv-seed-import.ts",
     "Bulk seed importer, not an operator surface - imported rows are exempt by the row-origin ruling.",
@@ -88,8 +83,10 @@ export function collectProblems(files) {
     const code = strip(src);
     if (!/INSERT\s+INTO\s+mdata\.loads/i.test(code)) continue;
     if (!/assigned_primary_driver_id/.test(code)) continue;
+    // Direct mint/skip OR the ACCT-F277 canonical re-entry (delivery + secondary creators).
     const keepsPromise =
-      PAY_REFS.some((r) => code.includes(r)) && code.includes(SKIP_AUDIT);
+      (PAY_REFS.some((r) => code.includes(r)) && code.includes(SKIP_AUDIT)) ||
+      code.includes("ensureDriverBillArtifactsForLoad");
     inScope.push({ rel, keepsPromise });
   }
 
@@ -113,6 +110,42 @@ export function collectProblems(files) {
     if (!inScope.some((f) => f.rel === rel)) {
       problems.push(`${rel}: listed in KNOWN_GAPS but no longer creates loads with a driver — delete the entry.`);
     }
+  }
+  return problems;
+}
+
+/**
+ * ACCT-F277 — delivery must re-enter the same idempotent mint. Create-time-only pay left every
+ * secondary-created load permanently unpaid once it reached delivered*.
+ */
+export function collectDeliveryBackstopProblems(files) {
+  const problems = [];
+  const required = [
+    "apps/backend/src/dispatch/loads.routes.ts",
+    "apps/backend/src/mdata/loads.routes.ts",
+  ];
+  const byRel = new Map(files.map((f) => [f.rel, strip(f.src)]));
+  for (const rel of required) {
+    const code = byRel.get(rel) ?? "";
+    if (!code.includes("ensureDriverBillArtifactsForLoad")) {
+      problems.push(
+        `${rel}: delivery/status path missing ensureDriverBillArtifactsForLoad — driver pay cannot ` +
+          `recover after a secondary create (ACCT-F277 / DELIVERED-LOAD-NO-DRIVER-PAY).`
+      );
+    }
+    if (!code.includes("loadStatusRequiresDeliveryDepartureStamp")) {
+      problems.push(
+        `${rel}: missing loadStatusRequiresDeliveryDepartureStamp — cannot prove pay is latched on delivery.`
+      );
+    }
+  }
+  if (!((byRel.get("apps/backend/src/dispatch/book-load.service.ts") ?? "").includes(
+    "export async function ensureDriverBillArtifactsForLoad"
+  ))) {
+    problems.push(
+      "apps/backend/src/dispatch/book-load.service.ts: ensureDriverBillArtifactsForLoad export missing — " +
+        "delivery/mdata re-entry has no canonical mint."
+    );
   }
   return problems;
 }
@@ -160,13 +193,25 @@ function selftest() {
     const files = c.files ?? readTree();
     const problems = c.files
       ? collectProblems(files).filter((p) => !p.includes("no longer creates loads"))
-      : collectProblems(files);
+      : [...collectProblems(files), ...collectDeliveryBackstopProblems(files)];
     const ok = c.expect === 0 ? problems.length === 0 : problems.length >= (c.expectAtLeast ?? 1);
     if (ok) pass += 1;
     else console.error(`  selftest FAIL: ${c.name} -> ${JSON.stringify(problems)}`);
   }
-  console.log(`${LABEL} selftest ${pass}/${cases.length}`);
-  return pass === cases.length ? 0 : 1;
+  // ACCT-F277 delivery ratchet — empty stubs must fail.
+  {
+    const bad = collectDeliveryBackstopProblems([
+      { rel: "apps/backend/src/dispatch/loads.routes.ts", src: "export const x = 1" },
+      { rel: "apps/backend/src/mdata/loads.routes.ts", src: "export const y = 1" },
+      { rel: "apps/backend/src/dispatch/book-load.service.ts", src: "export async function createDriverBillArtifacts() {}" },
+    ]);
+    if (bad.length >= 1) pass += 1;
+    else console.error("  selftest FAIL: delivery backstop empty stubs");
+  }
+  const deliveryCases = pass; // pass already counts prior cases; add one more to denominator below
+  const total = cases.length + 1;
+  console.log(`${LABEL} selftest ${pass}/${total}`);
+  return pass === total ? 0 : 1;
 }
 
 function main() {
@@ -175,7 +220,8 @@ function main() {
     console.error(`${LABEL}: FAIL — ${SRC_DIR} not found`);
     return 1;
   }
-  const problems = collectProblems(readTree());
+  const tree = readTree();
+  const problems = [...collectProblems(tree), ...collectDeliveryBackstopProblems(tree)];
   if (problems.length) {
     console.error(`${LABEL}: FAIL`);
     for (const p of problems) console.error(`  - ${p}`);
