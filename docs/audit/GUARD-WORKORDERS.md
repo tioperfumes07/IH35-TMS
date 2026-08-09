@@ -1309,7 +1309,11 @@ DOT test obligations, so it is a compliance decision for the safety lane, not a 
 have the never-succeeded test exempt a job whose fix post-dates its last scheduled run.
 **CC-3 verifies; CC-3 does not run it.**
 
-## OPEN · REF/CC-1 · P1 · PARTIAL-DEPLOY-SCHEMA-AHEAD-OF-CODE — prod DB migrated, prod bundle not shipped
+## RESOLVED (CC-3 re-verified 2026-08-08 20:0x, prod `b93b482`) · REF/CC-1 · P1 · PARTIAL-DEPLOY-SCHEMA-AHEAD-OF-CODE — prod DB migrated, prod bundle not shipped
+**CLOSED BY CC-3 — the condition no longer holds.** `202612440000` applied and the bundle shipped; prod has rolled
+repeatedly since (`2afda38 → 0d55436 → d236753 → 768b4b8 → 31b163c → b93b482`) and all four money SHAs are
+ancestors. Schema and code are back in step. **Closing my own row rather than leaving a resolved P1 open** — a
+stale OPEN row costs the next reader the same investigation I already did.
 **Found by CC-3 on prod, 2026-08-08 ~19:0x CDT.**
 
 ```
@@ -1427,3 +1431,18 @@ linkage is not being read by the surfaces that need it.**
 **ASK:** render `first_load_number` / `last_load_number` (falling back to a resolved lookup only if NULL), and
 resolve the earnings `LOAD` cell from `settlement_lines.load_id`. **Do not display a bare UUID to a user.**
 | **★ OPEN (P2 · FE · dead conditional, needs an owner ruling not a patch) CC-2** `LV-FLEETTABLE-IDENTICAL-TERNARY-BRANCHES` — **`showMaintenanceColumns` no longer controls the Unit cell: both branches of the ternary are byte-identical, so the documented base-mode behaviour is gone** | — | C | **FE / product owner — CC-2 did NOT silently restore it** | **FOUND WHILE FIXING A TEST, verified in source.** `apps/frontend/src/components/FleetTable.tsx:550-561` renders `{showMaintenanceColumns ? (<td …><Link …>{unit}</Link></td>) : (<td …><Link …>{unit}</Link></td>)}` — **the two branches are identical**, so the flag is dead for this cell. The component's OWN comment at `:44-48` documents the intended split: *"When true, render the 3 maintenance columns …, the Unit `<Link>`, and the CSV export. /fleet (FleetHomePage) does NOT pass this → it renders IDENTICALLY to before (8 registry cols + Edit, **Unit plain text, row-click**)."* Base mode is no longer plain text. Nobody writes an if/else with identical branches on purpose — this reads as a copy-paste that silently erased the distinction. **★ WHY I DID NOT 'FIX' IT:** restoring plain text would DELETE a working drill-through (cmd-click / open-in-new-tab) that users may already rely on — a removal, which §7 additive-only forbids without an owner say-so. Making the Unit a link everywhere may well be the BETTER product (it matches §10 total connectivity); if so the stale comment should be corrected instead. **Either way the identical ternary should not survive** — it is either a lost feature flag or dead code pretending to be a conditional. **WHAT I DID:** updated `FleetTable.test.tsx` to assert what the component actually guarantees — the Unit cell IS a link, and it navigates BY KIND (`/fleet/units/:id` vs `/fleet/trailers/:id`) — asserted on the link's `href`, since the cell stops propagation so the old `navigate()` spy no longer fires. The real invariants (no maintenance columns in base mode; kind-correct destination) are still enforced. **NOT CLAIMED:** which behaviour is intended. That is the ruling I am asking for. | — | **OPEN — owner: is base-mode Unit a link (fix the comment) or plain text (fix the code)?** |
+
+## RE-VERIFIED STILL OPEN (CC-3, 2026-08-08 20:0x, prod `b93b482`) · CC-1 · P2 · WORM-REVOKE-MISSING
+Re-ran the check rather than assume the earlier reading still held. **Unchanged: `has_table_privilege('ih35_app',
+<tbl>, 'DELETE')` = `true` on all six** — `driver_finance.driver_bills`, `driver_advances`, `driver_liabilities`,
+`driver_deduction_bucket_events`, `driver_settlement_gl_bills`, `banking.bank_transaction_splits`.
+The `refuse_financial_row_delete` trigger IS present on 6 of 6 and does block, so this stays **P2 defence-in-depth,
+not an open hole** — but ACCT-F269's body still reads as if the REVOKE shipped with it, and it did not.
+
+## RE-VERIFIED STILL OPEN (CC-3, 2026-08-08 20:0x) · Cascade/CC-1 · P1 · FAIL-SET3 settlement render 500
+**`gh pr view 5043` → `OPEN`, no merge commit**, and `settlement-render.routes.ts` on `main` still selects
+`d.cdl_expiration_date` (`:57`) and `d.display_id` (`:59`). Both confirmed absent on prod (`information_schema`
+= 0 / 0); real names are `cdl_expires_at` and `employee_id_display`. **Settlement render/print still 500s.**
+Use **`employee_id_display`** — `search/universal/indexer.service.ts:89-93` already chose it deliberately over
+`cdl_number`/`visa_number`/`passport_number`/`ine_number` to keep government ID numbers out of a broadly readable
+surface. **A settlement PDF is a distributed document; that reasoning is stronger here, not weaker.**
