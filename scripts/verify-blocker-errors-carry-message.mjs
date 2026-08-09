@@ -43,7 +43,7 @@ const HUMAN_FIELDS = ["message", "blocker", "reason", "detail", "details", "hint
  * Counts may only SHRINK. Lowering a number is the unit of progress; raising one is a visible edit.
  */
 const KNOWN_GAPS = new Map([
-  ["apps/backend/src/settlements/team-splits/team-splits.routes.ts", 8],
+  ["apps/backend/src/settlements/team-splits/team-splits.routes.ts", 0],
   ["apps/backend/src/driver-finance/settlement-dispute.routes.ts", 5],
   ["apps/backend/src/dispatch/dispatch-refinements.routes.ts", 5],
   ["apps/backend/src/routes/safety/complaints.ts", 3],

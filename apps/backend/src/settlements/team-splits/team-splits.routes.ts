@@ -140,16 +140,56 @@ function splitMethodFromRequest(splitType: string, primaryRatio: number, seconda
   return "custom";
 }
 
+// CLS-BARE-ERROR-CODE-REPLIES — every branch of this mapper answered with a bare machine code, and
+// because it is the SHARED mapper for all team-split routes, that one gap was the message for every
+// one of them. The FE toasts `data.message ?? data.error`, so a dispatcher setting up a team saw the
+// literal string "E_SPLIT_PERCENTAGES_MUST_EQUAL_100".
+//
+// These are MONEY messages, not cosmetics: a team split decides how one load's driver pay is divided
+// between two drivers, so the sentence has to say what the system will and will not do to the pay.
+// Each is judged for its own condition — the two percentage errors are NOT the same condition (one is
+// a sum that misses 100, the other is a value outside 0-100) and a single swept sentence would have
+// described the wrong one. The 409s state what to do INSTEAD, because a conflict is recoverable and a
+// user told only "conflict" cannot act.
+const TEAM_SPLIT_ERROR_MESSAGES: Record<string, string> = {
+  E_TEAM_NOT_FOUND:
+    "That team configuration was not found. It may have been ended, or it belongs to a different operating company than the one selected.",
+  E_DRIVER_ALREADY_IN_ACTIVE_TEAM:
+    "That driver is already on another active team. A driver can only be on one active team at a time — end or pause the other team first, then add them here.",
+  E_TEAM_HAS_IN_PROGRESS_LOADS:
+    "This team still has loads in progress. Changing the team now would change how pay is split on freight that is already moving. Wait until those loads deliver, or reassign them first.",
+  E_DRIVER_NOT_IN_COMPANY:
+    "That driver is not active in the selected operating company, so they cannot be placed on this team.",
+  E_SPLIT_PERCENTAGES_MUST_EQUAL_100:
+    "The primary and secondary split percentages must add up to exactly 100, so every dollar of the load's driver pay is assigned to one of the two drivers.",
+  E_INVALID_SPLIT_PERCENTAGES:
+    "Each split percentage must be a number between 0 and 100.",
+  E_SETTLEMENT_POSTED_SPLIT_IMMUTABLE:
+    "This split is locked because its settlement has already POSTED to the general ledger. A posted settlement is never edited in place — reverse or adjust the settlement instead, so the ledger keeps a complete history.",
+  E_LOAD_NOT_FOUND:
+    "That load was not found. It may be soft-deleted, or it belongs to a different operating company than the one selected.",
+};
+
 function mapServiceError(reply: FastifyReply, error: unknown) {
   const msg = String((error as Error)?.message ?? "team_split_operation_failed");
-  if (msg.includes("E_TEAM_NOT_FOUND")) return reply.code(404).send({ error: "config_not_found" });
-  if (msg.includes("E_DRIVER_ALREADY_IN_ACTIVE_TEAM")) return reply.code(409).send({ error: "E_DRIVER_ALREADY_IN_ACTIVE_TEAM" });
-  if (msg.includes("E_TEAM_HAS_IN_PROGRESS_LOADS")) return reply.code(409).send({ error: "E_TEAM_HAS_IN_PROGRESS_LOADS" });
-  if (msg.includes("E_DRIVER_NOT_IN_COMPANY")) return reply.code(400).send({ error: "E_DRIVER_NOT_IN_COMPANY" });
-  if (msg.includes("E_SPLIT_PERCENTAGES_MUST_EQUAL_100")) return reply.code(400).send({ error: "E_SPLIT_PERCENTAGES_MUST_EQUAL_100" });
-  if (msg.includes("E_INVALID_SPLIT_PERCENTAGES")) return reply.code(400).send({ error: "E_INVALID_SPLIT_PERCENTAGES" });
-  if (msg.includes("E_SETTLEMENT_POSTED_SPLIT_IMMUTABLE")) return reply.code(409).send({ error: "E_SETTLEMENT_POSTED_SPLIT_IMMUTABLE" });
-  if (msg.includes("E_LOAD_NOT_FOUND")) return reply.code(404).send({ error: "E_LOAD_NOT_FOUND" });
+  // Codes are matched in a fixed order so behaviour is identical to the original if/else chain; only
+  // the SENTENCE is added. The wire `error` value is preserved EXACTLY, including the deliberate
+  // E_TEAM_NOT_FOUND -> "config_not_found" rename, because FE code and tests may branch on it.
+  const codes: Array<[string, number, string]> = [
+    ["E_TEAM_NOT_FOUND", 404, "config_not_found"],
+    ["E_DRIVER_ALREADY_IN_ACTIVE_TEAM", 409, "E_DRIVER_ALREADY_IN_ACTIVE_TEAM"],
+    ["E_TEAM_HAS_IN_PROGRESS_LOADS", 409, "E_TEAM_HAS_IN_PROGRESS_LOADS"],
+    ["E_DRIVER_NOT_IN_COMPANY", 400, "E_DRIVER_NOT_IN_COMPANY"],
+    ["E_SPLIT_PERCENTAGES_MUST_EQUAL_100", 400, "E_SPLIT_PERCENTAGES_MUST_EQUAL_100"],
+    ["E_INVALID_SPLIT_PERCENTAGES", 400, "E_INVALID_SPLIT_PERCENTAGES"],
+    ["E_SETTLEMENT_POSTED_SPLIT_IMMUTABLE", 409, "E_SETTLEMENT_POSTED_SPLIT_IMMUTABLE"],
+    ["E_LOAD_NOT_FOUND", 404, "E_LOAD_NOT_FOUND"],
+  ];
+  for (const [needle, status, wireError] of codes) {
+    if (msg.includes(needle)) {
+      return reply.code(status).send({ error: wireError, message: TEAM_SPLIT_ERROR_MESSAGES[needle] });
+    }
+  }
   return reply.code(500).send({ error: "team_split_operation_failed", message: msg });
 }
 
@@ -201,7 +241,12 @@ export async function registerTeamSplitRoutes(app: FastifyInstance) {
   app.post("/api/v1/team-splits/configs", async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
-    if (!ensureOfficeRole((user as { role?: unknown }).role)) return reply.code(403).send({ error: "forbidden" });
+    if (!ensureOfficeRole((user as { role?: unknown }).role))
+      return reply.code(403).send({
+        error: "forbidden",
+        message: `Team splits decide how a load's driver pay is divided, so only office roles can change them. Your role is ${String((user as { role?: unknown }).role ?? "unknown")}.`,
+        your_role: String((user as { role?: unknown }).role ?? "unknown"),
+      });
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
     const body = createConfigSchema.safeParse(req.body ?? {});
@@ -227,7 +272,12 @@ export async function registerTeamSplitRoutes(app: FastifyInstance) {
         secondary: byId[body.data.secondary_driver_id] ?? null,
       };
     });
-    if (!names.primary || !names.secondary) return reply.code(400).send({ error: "E_DRIVER_NOT_IN_COMPANY" });
+    if (!names.primary || !names.secondary)
+      return reply.code(400).send({
+        error: "E_DRIVER_NOT_IN_COMPANY",
+        // Says WHICH driver failed rather than making the user re-check both.
+        message: `${!names.primary ? "The primary driver" : "The secondary driver"} is not active in the selected operating company, so this team cannot be created.`,
+      });
 
     const splitMethod = splitMethodFromRequest(body.data.split_type, body.data.primary_ratio, body.data.secondary_ratio);
     try {
@@ -276,7 +326,12 @@ export async function registerTeamSplitRoutes(app: FastifyInstance) {
   app.delete("/api/v1/team-splits/configs/:id", async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
-    if (!ensureOfficeRole((user as { role?: unknown }).role)) return reply.code(403).send({ error: "forbidden" });
+    if (!ensureOfficeRole((user as { role?: unknown }).role))
+      return reply.code(403).send({
+        error: "forbidden",
+        message: `Team splits decide how a load's driver pay is divided, so only office roles can change them. Your role is ${String((user as { role?: unknown }).role ?? "unknown")}.`,
+        your_role: String((user as { role?: unknown }).role ?? "unknown"),
+      });
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
     const params = idParamsSchema.safeParse(req.params ?? {});
@@ -297,7 +352,12 @@ export async function registerTeamSplitRoutes(app: FastifyInstance) {
   app.post("/api/v1/loads/:id/team-split", async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
-    if (!ensureOfficeRole((user as { role?: unknown }).role)) return reply.code(403).send({ error: "forbidden" });
+    if (!ensureOfficeRole((user as { role?: unknown }).role))
+      return reply.code(403).send({
+        error: "forbidden",
+        message: `Team splits decide how a load's driver pay is divided, so only office roles can change them. Your role is ${String((user as { role?: unknown }).role ?? "unknown")}.`,
+        your_role: String((user as { role?: unknown }).role ?? "unknown"),
+      });
     const params = loadIdParamsSchema.safeParse(req.params ?? {});
     if (!params.success) return validationError(reply, params.error);
     const body = loadOverrideSchema.safeParse(req.body ?? {});
