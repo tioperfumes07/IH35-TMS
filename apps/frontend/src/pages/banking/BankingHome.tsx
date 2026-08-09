@@ -14,6 +14,7 @@ import {
   startReconciliationSession,
 } from "../../api/banking";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { EntityEmptyState } from "../../components/shared/EntityEmptyState";
@@ -851,7 +852,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
                           <EntityLink
                             kind="factoring_advance"
                             id={row.id}
-                            label={row.display_id || row.id.slice(0, 8)}
+                            label={entityLabel(row.display_id, row.id, "Factoring advance")}
                             data-testid={`banking-factoring-advance-link-${row.id}`}
                           />
                           <span className="ml-2 text-[11px] uppercase text-gray-500">{row.status}</span>

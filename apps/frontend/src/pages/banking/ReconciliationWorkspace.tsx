@@ -3,6 +3,7 @@ import { formatDateUS } from "../../lib/formatDate";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 import {
   completeReconciliationSession,
   getReconciliationSessions,
@@ -249,7 +250,7 @@ export function ReconciliationWorkspacePage() {
       <PageHeader
         backHref="/banking"
         title="Reconciliation Workspace"
-        subtitle={effectiveBankAccountId ? `Account ${effectiveBankAccountId.slice(0, 8)}...` : ""}
+        subtitle={effectiveBankAccountId ? entityLabel(null, effectiveBankAccountId, "Bank account") : ""}
         actions={
           <div className="flex items-center gap-2">
             <ActionButton
@@ -451,16 +452,16 @@ export function ReconciliationWorkspacePage() {
                     {matched ? (
                       <div className="mt-1 flex flex-wrap gap-2 text-xs">
                         {tx.matched_load_id ? (
-                          <EntityLink kind="load" id={tx.matched_load_id} label={`Load ${tx.matched_load_id.slice(0, 8)}`} />
+                          <EntityLink kind="load" id={tx.matched_load_id} label={entityLabel(null, tx.matched_load_id, "Load")} />
                         ) : null}
                         {tx.matched_bill_id ? (
-                          <EntityLink kind="bill" id={tx.matched_bill_id} label={`Bill ${tx.matched_bill_id.slice(0, 8)}`} />
+                          <EntityLink kind="bill" id={tx.matched_bill_id} label={entityLabel(null, tx.matched_bill_id, "Bill")} />
                         ) : null}
                         {tx.matched_settlement_id ? (
                           <EntityLink
                             kind="settlement"
                             id={tx.matched_settlement_id}
-                            label={`Settlement ${tx.matched_settlement_id.slice(0, 8)}`}
+                            label={entityLabel(null, tx.matched_settlement_id, "Settlement")}
                           />
                         ) : null}
                       </div>
@@ -500,7 +501,7 @@ export function ReconciliationWorkspacePage() {
                     <EntityLink
                       kind={candidateEntityKind(event.event_type)}
                       id={event.id}
-                      label={event.id.slice(0, 8)}
+                      label={entityLabel(null, event.id, event.event_type === "load" ? "Load" : event.event_type === "bill" ? "Bill" : "Settlement")}
                     />
                   </div>
                   <div className="text-xs text-gray-600">{formatDateUS(event.event_date)}</div>
