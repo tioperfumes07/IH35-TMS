@@ -18,6 +18,7 @@ import { requireAuth } from "../auth/session-middleware.js";
 import { withCurrentUser } from "../auth/db.js";
 import { resolveMonorepoRoot } from "../lib/monorepo-root.js";
 import { formatCt } from "./program-board.service.js";
+import { buildModuleMatrix } from "./module-matrix.service.js";
 import { existsSync, readFileSync } from "node:fs";
 
 const REPO_ROOT = (() => {
@@ -704,6 +705,43 @@ export async function registerAuditScoreboardRoutes(app: FastifyInstance) {
         label: "CT",
         source: recent.source,
       });
+    },
+  );
+
+  // MATRIX-LIVE-RAD — Audited/Done projection for /program/matrix (not SAMPLE).
+  app.get(
+    "/api/v1/program/module-matrix",
+    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
+    async (req, reply) => {
+      if (!requireAuth(req, reply)) return;
+      const q = (req.query ?? {}) as { module?: unknown };
+      const moduleId =
+        typeof q.module === "string" && q.module.trim() ? q.module.trim().toLowerCase() : "maintenance";
+      if (moduleId !== "maintenance") {
+        return reply.code(400).send({
+          error: "unsupported_module",
+          message: `module-matrix currently supports module=maintenance only (got ${moduleId})`,
+        });
+      }
+      try {
+        const payload = await buildModuleMatrix(moduleId);
+        const { prodReadAt, prodReadSource } = await stampProdReadAt(req);
+        reply.header("cache-control", "no-store");
+        return reply.send({
+          ...payload,
+          meta: {
+            ...payload.meta,
+            prodReadAt,
+            prodReadSource,
+          },
+        });
+      } catch (err) {
+        req.log?.error?.({ err }, "[program] module-matrix projection failed");
+        return reply.code(503).send({
+          error: "module_matrix_unavailable",
+          message: "Could not project live Audited/Done — frontend must keep SAMPLE banner",
+        });
+      }
     },
   );
 }
