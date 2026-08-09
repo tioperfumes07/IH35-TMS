@@ -351,6 +351,12 @@ function moduleTouchRe(moduleId: string): RegExp {
   if (moduleId === "system") {
     return /\bsystem\b|\bqbo[\s_-]?recon|\bqbo[\s_-]?sync|\bclaude[\s_-]?coder/i;
   }
+  if (moduleId === "users") {
+    return /\busers?\b|\binvite\b|\brole[\s_-]?change|\bidentity\b/i;
+  }
+  if (moduleId === "help") {
+    return /\bhelp\b|\brunbooks?\b|\bguides?\b/i;
+  }
   return /maintenance|\bwork[\s_-]?order|\bwos?\b|\bmaint\b/i;
 }
 
