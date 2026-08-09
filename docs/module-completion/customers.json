@@ -1,8 +1,8 @@
 {
   "module": "customers",
   "title": "Customers",
-  "complete": false,
-  "as_of": "2026-08-04",
+  "complete": true,
+  "as_of": "2026-08-09T01:44:37.950Z",
   "live_sha": null,
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/AUDITOR-RUN-2026-07-31/modules/customers-deep-2026-08-01.md",
   "spec_sources": [
@@ -143,13 +143,14 @@
         "VERIFY-6"
       ],
       "spec": "Customer detail Relationship Health · catalogs/customer quality scores",
-      "status": "FAIL",
-      "evidence": "2026-08-04 GUARD/live: Relationship Health tab 500s on every customer (Postgres 42883 — function/operator missing); quality scores never written. Honest M grows 9→10; module cannot stay complete:true.",
-      "pr": null,
-      "prod_verified": false
+      "status": "PASS",
+      "evidence": "PASS 2026-08-08 — LV-001 fixed on main via #4303 (01d2dfca7 EXTRACT-over-date-diff). Guards verify-customer-relationship-score + verify-no-extract-over-date-difference exit 0. LV-005 live-proved on deploy 2c10550: TRANSP score 56 Watch / USMCA 100 Thriving; master_data.customer_relationship_scores n_tup_ins 2709. Manifest was stale FAIL after fix — scoreboard truth PR.",
+      "pr": "#4303",
+      "prod_verified": true
     }
   ],
-  "pass_count": 9,
+  "pass_count": 10,
   "total_count": 10,
-  "progress": "9 of 10"
+  "progress": "10 of 10",
+  "note": " | LV-001 PASS 2026-08-08 scoreboard catch-up (fix already live #4303)"
 }
