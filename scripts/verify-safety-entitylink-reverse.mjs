@@ -140,6 +140,15 @@ export function assertSafetyEntityLink(sources) {
     );
   }
 
+  // C-04 — AccidentReportDrawer must drill to linked claim_id when present (free-text field stays).
+  const drawerRel = "apps/frontend/src/components/safety/AccidentReportDrawer.tsx";
+  const drawer = stripComments(sources?.[drawerRel] ?? read(drawerRel));
+  if (!/accident-linked-claim/.test(drawer) || !/kind=["']claim["']/.test(drawer) || !/claim_id/.test(drawer)) {
+    problems.push(
+      `${drawerRel}: must EntityLink kind=claim from accident.claim_id (data-testid accident-linked-claim) — C-04`
+    );
+  }
+
   return problems;
 }
 
@@ -200,6 +209,16 @@ if (SELFTEST) {
       expectCaught("claims-incident-bare-link", { ...live, [CLAIMS_TAB]: planted }, "C-03");
     }
   }
+  // 5. C-04 — AccidentReportDrawer drops linked-claim hop.
+  {
+    const DRAWER = "apps/frontend/src/components/safety/AccidentReportDrawer.tsx";
+    const drawerSrc = read(DRAWER);
+    expectCaught(
+      "accident-drawer-no-claim-link",
+      { ...live, [DRAWER]: drawerSrc.replace(/accident-linked-claim/g, "accident-no-claim").replace(/kind=["']claim["']/g, 'kind="driver"') },
+      "C-04",
+    );
+  }
 
   const liveProblems = assertSafetyEntityLink(live);
   if (liveProblems.length) failures.push(`live sources FAIL: ${liveProblems.join(" | ")}`);
@@ -209,7 +228,7 @@ if (SELFTEST) {
     for (const f of failures) console.error(`  ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — 4 planted defects caught, live sources clean`);
+  console.log(`${LABEL} SELFTEST PASS — 5 planted defects caught, live sources clean`);
   process.exit(0);
 }
 
