@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { entityLabel } from "../../../lib/entity-label";
 import { useMemo, useState } from "react";
 import { useAuth } from "../../../auth/useAuth";
 import { PageHeader } from "../../../components/layout/PageHeader";
@@ -186,8 +187,8 @@ export function FeatureFlagsManager() {
               <li key={override.uuid} className="flex items-center gap-2">
                 <span>
                   {override.user_uuid
-                    ? `user ${override.user_uuid.slice(0, 8)}…`
-                    : `tenant ${override.operating_company_id?.slice(0, 8)}…`}
+                    ? entityLabel(null, override.user_uuid, "User")
+                    : entityLabel(null, override.operating_company_id, "Tenant")}
                   {" → "}
                   {override.enabled ? "on" : "off"}
                 </span>

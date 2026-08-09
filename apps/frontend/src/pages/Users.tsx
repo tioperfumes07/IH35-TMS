@@ -32,6 +32,7 @@ import { useUnsavedChanges } from "../hooks/useUnsavedChanges";
 import { evaluatePasswordStrength, OFFICE_PASSWORD_HINT } from "../auth/office-password-ui";
 import { parseApiErrorPayload } from "../components/forms/useFormValidation";
 import { formatDateTimeUS } from "../lib/formatDate";
+import { entityLabel } from "../lib/entity-label";
 import { formatLastLoginAt } from "../lib/formatLastLoginAt";
 import { colors } from "../design/tokens";
 import type { IdentityUser, UserRole } from "../types/api";
@@ -799,7 +800,7 @@ export function UsersPage() {
               </p>
               {probeJobId && probeJobQuery.data ? (
                 <p className="mt-1 text-xs text-slate-500">
-                  Job {probeJobId.slice(0, 8)}&hellip;{" "}
+                  Job {entityLabel(null, probeJobId, "Job")}{" "}
                   <span
                     className={
                       probeJobQuery.data.status === "completed"
