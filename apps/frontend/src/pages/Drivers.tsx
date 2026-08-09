@@ -678,6 +678,9 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
               { id: "terminated", label: `Terminated (${driverListTabCounts.terminated})` },
             ]}
           />
+          <p className="text-[12px] text-slate-600 px-1">
+            Active = load or driving activity in the last 30 days (or hired within 30 days). All others stay Inactive; use Reactivate to return a driver to Active.
+          </p>
           {subnavTab === "drivers" ? (
             <>
               <div className="flex flex-wrap gap-2">

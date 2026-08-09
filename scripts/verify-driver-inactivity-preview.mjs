@@ -1,9 +1,8 @@
 #!/usr/bin/env node
 /**
- * Driver-inactivity guard: the 21-day inactivity sweep block is READ/PREVIEW ONLY.
- * Deactivating drivers (status='Inactive' + deactivated_at) is a Tier-1 mass status write that STOPS for Jorge —
- * so this block must NEVER write. Fails CI if the preview service/route contains any mutation or sets
- * status/deactivated_at.
+ * Driver-inactivity guard: the preview block is READ/PREVIEW ONLY.
+ * Mass Inactive writes live in DRV-ACTIVE-30D (migration + driver-active-30d.service) — NOT here.
+ * Fails CI if the preview service/route contains any mutation or sets status/deactivated_at.
  */
 import fs from "node:fs";
 import path from "node:path";
