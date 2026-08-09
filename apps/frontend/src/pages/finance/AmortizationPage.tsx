@@ -35,13 +35,21 @@ export function AmortizationPage() {
   const [schedule, setSchedule] = useState<AmortRow[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // LST-F103: never swallow list/schedule failures into empty UI (looks like "no loans").
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [form, setForm] = useState({ name: "", lender: "", principal: "", ratePct: "", termMonths: "60", firstPaymentDate: "" });
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) => setForm((f) => ({ ...f, [k]: e.target.value }));
 
   useEffect(() => {
     if (!enabled || !companyId) return;
-    listLoans(companyId).then((r) => setLoans(r.loans)).catch(() => setLoans([]));
+    setLoadError(null);
+    listLoans(companyId)
+      .then((r) => setLoans(r.loans))
+      .catch((err: unknown) => {
+        setLoans([]);
+        setLoadError(err instanceof Error ? err.message : "Failed to load loans");
+      });
   }, [enabled, companyId]);
 
   async function onCreate() {
@@ -66,7 +74,13 @@ export function AmortizationPage() {
 
   async function openSchedule(id: string) {
     setSelected(id);
-    try { setSchedule((await getLoanSchedule(id, companyId)).schedule); } catch { setSchedule([]); }
+    setLoadError(null);
+    try {
+      setSchedule((await getLoanSchedule(id, companyId)).schedule);
+    } catch (err: unknown) {
+      setSchedule([]);
+      setLoadError(err instanceof Error ? err.message : "Failed to load amortization schedule");
+    }
   }
 
   const header = (
@@ -116,7 +130,11 @@ export function AmortizationPage() {
           <div className="min-w-0 border-t border-slate-100 lg:border-t-0">
             <div className="border-b border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700">Loans</div>
             <div className="px-4 py-3">
-              {loans.length === 0 ? <p className="text-sm text-slate-500">No loans yet.</p> : (
+              {loadError ? (
+                <p className="text-sm text-red-600" data-testid="amortization-load-error">{loadError}</p>
+              ) : null}
+              {!loadError && loans.length === 0 ? <p className="text-sm text-slate-500">No loans yet.</p> : null}
+              {!loadError && loans.length > 0 ? (
                 <ul className="space-y-1 text-sm">
                   {loans.map((l) => (
                     <li key={l.id}>
@@ -127,7 +145,7 @@ export function AmortizationPage() {
                     </li>
                   ))}
                 </ul>
-              )}
+              ) : null}
             </div>
           </div>
 
