@@ -17,6 +17,8 @@ import legalRequired from "@scoreboard/modules/legal.required.json";
 import accountingRequired from "@scoreboard/modules/accounting.required.json";
 import bankingRequired from "@scoreboard/modules/banking.required.json";
 import dispatchRequired from "@scoreboard/modules/dispatch.required.json";
+import settlementsRequired from "@scoreboard/modules/settlements.required.json";
+import fuelRequired from "@scoreboard/modules/fuel.required.json";
 import { ProgramModuleNav } from "./ProgramModuleNav";
 
 type Tri = "done" | "audited" | "unaudited" | "na";
@@ -66,7 +68,7 @@ type LiveMatrix = {
   meta?: { honesty?: string; prodReadAt?: string };
 };
 
-type MatrixModuleId = "maintenance" | "safety" | "insurance" | "legal" | "accounting" | "banking" | "dispatch";
+type MatrixModuleId = "maintenance" | "safety" | "insurance" | "legal" | "accounting" | "banking" | "dispatch" | "settlements" | "fuel";
 
 const REQUIRED_BY_MODULE: Record<MatrixModuleId, RequiredMap> = {
   maintenance: maintRequired as RequiredMap,
@@ -76,6 +78,8 @@ const REQUIRED_BY_MODULE: Record<MatrixModuleId, RequiredMap> = {
   accounting: accountingRequired as RequiredMap,
   banking: bankingRequired as RequiredMap,
   dispatch: dispatchRequired as RequiredMap,
+  settlements: settlementsRequired as RequiredMap,
+  fuel: fuelRequired as RequiredMap,
 };
 
 const LIVE_MODULES: MatrixModuleId[] = [
@@ -86,6 +90,8 @@ const LIVE_MODULES: MatrixModuleId[] = [
   "accounting",
   "banking",
   "dispatch",
+  "settlements",
+  "fuel",
 ];
 
 const MODULES = [
@@ -166,6 +172,16 @@ function leafPct(cells: Tri[]): number {
 }
 
 function sectionForLeaf(moduleId: MatrixModuleId, leaf: RequiredLeaf): string {
+  if (moduleId === "settlements") {
+    if (leaf.id.startsWith("settlements.")) return "Settlements";
+    if (leaf.id === "settlement_close") return "Settlement Close";
+    if (leaf.id === "cash_advances") return "Cash Advances";
+    if (leaf.id === "pre_settlements") return "Pre-Settlements";
+    return "Settlements";
+  }
+  if (moduleId === "fuel") {
+    return leaf.tab || "Fuel";
+  }
   if (moduleId === "dispatch") {
     if (leaf.id === "load_board" || leaf.id === "load.detail") return "Load board";
     if (leaf.id === "book_load") return "Book load";
@@ -334,6 +350,8 @@ function parseModule(raw: string | null): MatrixModuleId {
   if (raw === "accounting") return "accounting";
   if (raw === "banking") return "banking";
   if (raw === "dispatch") return "dispatch";
+  if (raw === "settlements") return "settlements";
+  if (raw === "fuel") return "fuel";
   return "maintenance";
 }
 
@@ -344,6 +362,8 @@ function titleCase(id: MatrixModuleId): string {
   if (id === "accounting") return "Accounting";
   if (id === "banking") return "Banking";
   if (id === "dispatch") return "Dispatch";
+  if (id === "settlements") return "Settlements";
+  if (id === "fuel") return "Fuel";
   return "Maintenance";
 }
 

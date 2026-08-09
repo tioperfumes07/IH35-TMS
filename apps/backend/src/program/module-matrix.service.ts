@@ -171,6 +171,12 @@ function moduleTouchRe(moduleId: string): RegExp {
   if (moduleId === "dispatch") {
     return /\bdispatch\b|\bloads?\b|\bbook[\s_-]?load|\bassignments?\b/i;
   }
+  if (moduleId === "settlements") {
+    return /\bsettlements?\b|\bdriver[\s_-]?finance\b|\bcash[\s_-]?advance|\bescrow\b/i;
+  }
+  if (moduleId === "fuel") {
+    return /\bfuel\b|\brelay\b|\bloves\b|\bexpense[\s_-]?mapping/i;
+  }
   // maintenance (default)
   return /maintenance|\bwork[\s_-]?order|\bwos?\b|\bmaint\b/i;
 }

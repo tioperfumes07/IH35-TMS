@@ -58,7 +58,7 @@ Legend for the matrix build: **HAVE** · **YELLOW** (have source, not yet wired 
 
 | Box | Do we have the data? | What exists today | Gap |
 |---|---|---|---|
-| **1 Required** | **HAVE** (Maint + Safety + Insurance + Legal + Accounting + Banking + Dispatch) | `docs/specs/scoreboard/modules/{maintenance,safety,insurance,legal,accounting,banking,dispatch}.required.json` + shared vocabulary `columns.shared.json` (includes **picker_law / qbo_chrome / connectivity / reverse_link**) | Remaining ~19 module boards still need Required maps |
+| **1 Required** | **HAVE** (9 modules through Fuel/Settlements) | `docs/specs/scoreboard/modules/{maintenance,safety,insurance,legal,accounting,banking,dispatch,settlements,fuel}.required.json` + shared vocabulary | Remaining ~17 module boards |
 
 ### Column groups (every module board may subset)
 
