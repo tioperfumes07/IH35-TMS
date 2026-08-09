@@ -24,6 +24,7 @@ import { formatUsdCents } from "../../lib/money";
 import { PaymentScheduleTab } from "./PaymentScheduleTab";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 
 function formatMoney(cents: number) {
   return formatUsdCents(cents);
@@ -107,7 +108,7 @@ export function PolicyDetail() {
             <EntityLink
               kind="unit"
               id={unitId}
-              label={unitId.slice(0, 8)}
+              label={entityLabel(null, unitId, "Unit")}
             />
           );
         },

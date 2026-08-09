@@ -3,6 +3,7 @@ import { DatePicker } from "../components/forms/DatePicker";
 import { ParityTable, type ParityColumn } from "../components/parity/ParityTable";
 import { ListErrorState } from "../components/ListErrorState";
 import { EntityLink } from "../components/shared/EntityLink";
+import { entityLabel } from "../lib/entity-label";
 import { customerQualityKind, customerQualityClass } from "../lib/quality-badge";
 import { formatUsdCents } from "../lib/money";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -447,7 +448,7 @@ export function CustomersPage() {
         // dead click. Same canonical drill as every other load reference.
         render: (r) =>
           r.source_load_id ? (
-            <EntityLink kind="load" id={r.source_load_id} label={r.source_load_id.slice(0, 8)} />
+            <EntityLink kind="load" id={r.source_load_id} label={entityLabel(null, r.source_load_id, "Load")} />
           ) : (
             "—"
           ),

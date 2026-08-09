@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import { listInsuranceLawsuits, type InsuranceLawsuit, type InsuranceLawsuitStatus } from "../../api/insurance";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 import { Button } from "../../components/Button";
 import { LawsuitCreateModal } from "../../components/insurance/LawsuitCreateModal";
 import { DataPanel } from "../../components/layout/DataPanel";
@@ -108,7 +109,7 @@ export function LawsuitsTab({ operatingCompanyId, claimId }: Props) {
         label: "Claim",
         render: (lawsuit) =>
           lawsuit.claim_id ? (
-            <EntityLink kind="claim" id={lawsuit.claim_id} label={lawsuit.claim_id.slice(0, 8)} />
+            <EntityLink kind="claim" id={lawsuit.claim_id} label={entityLabel(null, lawsuit.claim_id, "Claim")} />
           ) : (
             "-"
           ),
