@@ -1370,3 +1370,35 @@ information_schema."* Fifteen of sixteen were. **This one was not, and it cost t
 `created_by_user_id` appears in the OLD stub view's output, which is likely where it was read from — the stub
 emitted it as a literal `NULL::uuid`, so it was never a base-table column at all.
 **CC-3 does not build the fix. CC-3 will verify prod advances past `02bab31` once it lands.**
+
+## OPEN · CC-1 · P1 · SETTLEMENT-LOAD-COUNT-IGNORES-DIRECT-LINK — "Loads" reads 0 on every settlement that has one
+**Found by CC-3, UI prove of ACCT-F271 on prod `d236753`, then traced to source and confirmed on Neon.**
+
+**UI:** `/driver-finance/settlements` shows `Loads = 0` for **all 7** settlements, including two that demonstrably
+cover a load: `S-20260808-0085` (Jorge Pablo Guadalupe Muñoz Gonzalez, $935.10) and `S-20260808-0090`
+(Rafael Rogelio Rivero Reynoso, $410.00).
+
+**ROOT CAUSE — two different load linkages, and the list reads only one.**
+`settlements.routes.ts:145-152` computes:
+```sql
+SELECT COUNT(DISTINCT db.load_id) FROM driver_finance.settlement_lines sl
+JOIN driver_finance.driver_bills db ON db.id = sl.source_driver_bill_id
+WHERE sl.settlement_id = s.id AND db.load_id IS NOT NULL
+```
+It reaches the load **only through `source_driver_bill_id → driver_bills.load_id`** and **ignores
+`settlement_lines.load_id` entirely.** Measured on prod for both settlements above:
+```
+lines = 1 · lines_direct_load_id = 1 · lines_with_src_bill = 0 · bills_with_load = 0
+```
+So the line **does** carry a direct `load_id`, has **no** source driver bill, and the count is structurally 0.
+`SettlementsTable.tsx:54-59` renders `Number(row.load_count ?? 0)`, so the miss displays as a confident `0`.
+
+**WHY IT MATTERS / RELATION TO ACCT-F271:** #5017 fills the bookends from the settlement's own lines. **The list
+column does not read the bookends and does not read `settlement_lines.load_id`** — so #5017 can work perfectly
+and this column will still show `0`. Two linkages that must agree currently disagree, and the surface a user
+actually looks at reports the wrong one. Under the connectivity law a settlement must be able to say which loads
+it covers; today it says "none".
+
+**ASK:** make `load_count` count the union — `COALESCE(sl.load_id, db.load_id)` — or state which linkage is
+canonical and backfill the other. **Do not "fix" it by inventing `source_driver_bill_id` values.**
+**CC-3 verifies after deploy; CC-3 does not build it.**
