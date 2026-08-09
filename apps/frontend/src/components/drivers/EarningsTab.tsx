@@ -12,6 +12,7 @@ import { EntityLink } from "../shared/EntityLink";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 import { useLiveDebt } from "../../pages/driver-finance/hooks/useLiveDebt";
 import { listAutoDeductionPolicies } from "../../hooks/useAutoDeductionPolicies";
+import { formatDateUS } from "../../lib/formatDate";
 
 type Props = {
   driverId: string;
@@ -59,7 +60,11 @@ const SETTLEMENT_COLUMNS: Array<ParityColumn<SettlementListRow>> = [
     sortable: true,
     sortValue: (row) => row.period_end,
     render: (row) => (
-      <EntityLink kind="settlement" id={row.id} label={`${row.period_start} → ${row.period_end}`} />
+      <EntityLink
+        kind="settlement"
+        id={row.id}
+        label={`${formatDateUS(row.period_start)} → ${formatDateUS(row.period_end)}`}
+      />
     ),
   },
   {
