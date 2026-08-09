@@ -27,6 +27,7 @@ import listsRequired from "@scoreboard/modules/lists.required.json";
 import factoringRequired from "@scoreboard/modules/factoring.required.json";
 import reportsRequired from "@scoreboard/modules/reports.required.json";
 import inventoryRequired from "@scoreboard/modules/inventory.required.json";
+import complianceRequired from "@scoreboard/modules/compliance.required.json";
 import { ProgramModuleNav } from "./ProgramModuleNav";
 
 type Tri = "done" | "audited" | "unaudited" | "na";
@@ -100,7 +101,8 @@ type MatrixModuleId =
   | "lists"
   | "factoring"
   | "reports"
-  | "inventory";
+  | "inventory"
+  | "compliance";
 
 const REQUIRED_BY_MODULE: Record<MatrixModuleId, RequiredMap> = {
   maintenance: maintRequired as RequiredMap,
@@ -120,6 +122,7 @@ const REQUIRED_BY_MODULE: Record<MatrixModuleId, RequiredMap> = {
   factoring: factoringRequired as RequiredMap,
   reports: reportsRequired as RequiredMap,
   inventory: inventoryRequired as RequiredMap,
+  compliance: complianceRequired as RequiredMap,
 };
 
 const LIVE_MODULES: MatrixModuleId[] = [
@@ -140,6 +143,7 @@ const LIVE_MODULES: MatrixModuleId[] = [
   "factoring",
   "reports",
   "inventory",
+  "compliance",
 ];
 
 const MODULES = [
@@ -438,6 +442,7 @@ function parseModule(raw: string | null): MatrixModuleId {
   if (raw === "factoring") return "factoring";
   if (raw === "reports") return "reports";
   if (raw === "inventory") return "inventory";
+  if (raw === "compliance") return "compliance";
   return "maintenance";
 }
 
@@ -458,6 +463,7 @@ function titleCase(id: MatrixModuleId): string {
   if (id === "factoring") return "Factoring";
   if (id === "reports") return "Reports";
   if (id === "inventory") return "Inventory";
+  if (id === "compliance") return "Compliance";
   return "Maintenance";
 }
 

@@ -324,6 +324,9 @@ function moduleTouchRe(moduleId: string): RegExp {
   if (moduleId === "inventory") {
     return /\binventory\b|\bparts?[\s_-]?stock|\bpurchases?\b|\bassignments?\b/i;
   }
+  if (moduleId === "compliance") {
+    return /\bcompliance\b|\bhos\b|\b2290\b|\bproperty[\s_-]?tax|\bfilings?\b/i;
+  }
   return /maintenance|\bwork[\s_-]?order|\bwos?\b|\bmaint\b/i;
 }
 

@@ -1,0 +1,344 @@
+{
+  "module": "compliance",
+  "entity_default": "USMCA",
+  "source": {
+    "arch_design": "Compliance module",
+    "pages": "apps/frontend/src/pages/compliance/*",
+    "tabs": "ComplianceDashboardPage COMPLIANCE_TABS"
+  },
+  "columns": [
+    {
+      "id": "customer",
+      "group": "linkage",
+      "label": "Customer"
+    },
+    {
+      "id": "driver",
+      "group": "linkage",
+      "label": "Driver"
+    },
+    {
+      "id": "vendor",
+      "group": "linkage",
+      "label": "Vendor"
+    },
+    {
+      "id": "unit",
+      "group": "linkage",
+      "label": "Unit"
+    },
+    {
+      "id": "load",
+      "group": "linkage",
+      "label": "Load"
+    },
+    {
+      "id": "ap_bill",
+      "group": "money",
+      "label": "AP / Bill"
+    },
+    {
+      "id": "expense",
+      "group": "money",
+      "label": "Expense"
+    },
+    {
+      "id": "gl_je",
+      "group": "money",
+      "label": "GL / JE"
+    },
+    {
+      "id": "liability",
+      "group": "money",
+      "label": "Liability / Escrow"
+    },
+    {
+      "id": "picker_law",
+      "group": "chrome",
+      "label": "Picker +Add new"
+    },
+    {
+      "id": "qbo_chrome",
+      "group": "chrome",
+      "label": "QBO chrome"
+    },
+    {
+      "id": "connectivity",
+      "group": "wiring",
+      "label": "Connectivity"
+    },
+    {
+      "id": "reverse_link",
+      "group": "wiring",
+      "label": "Reverse link"
+    }
+  ],
+  "leaves": [
+    {
+      "id": "tab.filings",
+      "tab": "Filings & Compliance Due",
+      "sub": "Filings rollup tab",
+      "route_hint": "/compliance",
+      "required": [
+        "driver",
+        "unit",
+        "vendor",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "tab.overview",
+      "tab": "Overview",
+      "sub": "Overview / credentials dashboard",
+      "route_hint": "/compliance?tab=overview",
+      "required": [
+        "driver",
+        "unit",
+        "picker_law",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "tab.hos_tracker",
+      "tab": "HOS Tracker",
+      "sub": "HOS Tracker tab",
+      "route_hint": "/compliance?tab=hos_tracker",
+      "required": [
+        "driver",
+        "unit",
+        "load",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "tab.hos_viewer",
+      "tab": "HOS Viewer",
+      "sub": "HOS Viewer tab",
+      "route_hint": "/compliance?tab=hos_viewer",
+      "required": [
+        "driver",
+        "unit",
+        "load",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "tab.violations",
+      "tab": "Violations",
+      "sub": "HOS Violations (shared Safety tab)",
+      "route_hint": "/compliance?tab=violations",
+      "required": [
+        "driver",
+        "unit",
+        "load",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "tab.hos_history",
+      "tab": "HOS History",
+      "sub": "HOS History tab",
+      "route_hint": "/compliance?tab=hos_history",
+      "required": [
+        "driver",
+        "unit",
+        "load",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "tab.required_docs",
+      "tab": "Required Documents",
+      "sub": "Required Documents tab",
+      "route_hint": "/compliance?tab=required_docs",
+      "required": [
+        "driver",
+        "unit",
+        "picker_law",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "overview.summary_cards",
+      "tab": "Overview",
+      "sub": "Summary cards",
+      "route_hint": "/compliance?tab=overview",
+      "required": [
+        "driver",
+        "unit",
+        "picker_law",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "overview.credentials_table",
+      "tab": "Overview",
+      "sub": "Credentials table + CSV export",
+      "route_hint": "/compliance?tab=overview",
+      "required": [
+        "driver",
+        "unit",
+        "picker_law",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "overview.notification_rules",
+      "tab": "Overview",
+      "sub": "Notification rules panel",
+      "route_hint": "/compliance?tab=overview",
+      "required": [
+        "connectivity",
+        "picker_law"
+      ]
+    },
+    {
+      "id": "overview.notification_log",
+      "tab": "Overview",
+      "sub": "Notification log panel",
+      "route_hint": "/compliance?tab=overview",
+      "required": [
+        "connectivity"
+      ]
+    },
+    {
+      "id": "fleet.hos_board",
+      "tab": "HOS Tracker",
+      "sub": "Fleet HOS board section",
+      "route_hint": "/compliance?tab=hos_tracker",
+      "required": [
+        "driver",
+        "unit",
+        "load",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "property_tax.list",
+      "tab": "Property Tax",
+      "sub": "Property tax renditions list",
+      "route_hint": "/compliance/property-tax",
+      "required": [
+        "unit",
+        "vendor",
+        "expense",
+        "ap_bill",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ]
+    },
+    {
+      "id": "property_tax.detail",
+      "tab": "Property Tax",
+      "sub": "Property tax rendition detail",
+      "route_hint": "/compliance/property-tax/:id",
+      "required": [
+        "unit",
+        "vendor",
+        "expense",
+        "ap_bill",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "form2290",
+      "tab": "Filings",
+      "sub": "Form 2290 filings",
+      "route_hint": "/compliance",
+      "required": [
+        "unit",
+        "expense",
+        "ap_bill",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "hop.safety_hos",
+      "tab": "Safety hop",
+      "sub": "Safety HOS / violations reverse",
+      "route_hint": "/safety/hos",
+      "required": [
+        "driver",
+        "unit",
+        "load",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "hop.safety_dot",
+      "tab": "Safety hop",
+      "sub": "DOT compliance reverse",
+      "route_hint": "/safety/dot-compliance",
+      "required": [
+        "driver",
+        "unit",
+        "picker_law",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "hop.form425c",
+      "tab": "425C hop",
+      "sub": "Form 425C exhibits",
+      "route_hint": "/425c",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "hop.maint_compliance",
+      "tab": "Maintenance hop",
+      "sub": "Maintenance compliance 425C",
+      "route_hint": "/maintenance/compliance",
+      "required": [
+        "unit",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "hop.fuel_compliance",
+      "tab": "Fuel hop",
+      "sub": "Fuel compliance panel",
+      "route_hint": "/fuel/compliance",
+      "required": [
+        "unit",
+        "load",
+        "expense",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "hop.reports_ifta",
+      "tab": "Reports hop",
+      "sub": "IFTA preparer",
+      "route_hint": "/reports/ifta-preparer",
+      "required": [
+        "unit",
+        "load",
+        "connectivity",
+        "reverse_link"
+      ]
+    }
+  ]
+}
