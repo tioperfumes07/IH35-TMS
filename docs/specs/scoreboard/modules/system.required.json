@@ -1,0 +1,187 @@
+{
+  "module": "system",
+  "entity_default": "USMCA",
+  "source": {
+    "pages": "apps/frontend/src/pages/system/SystemModulePage.tsx",
+    "tabs": "SYSTEM_TABS"
+  },
+  "columns": [
+    {
+      "id": "customer",
+      "group": "linkage",
+      "label": "Customer"
+    },
+    {
+      "id": "driver",
+      "group": "linkage",
+      "label": "Driver"
+    },
+    {
+      "id": "vendor",
+      "group": "linkage",
+      "label": "Vendor"
+    },
+    {
+      "id": "unit",
+      "group": "linkage",
+      "label": "Unit"
+    },
+    {
+      "id": "load",
+      "group": "linkage",
+      "label": "Load"
+    },
+    {
+      "id": "ap_bill",
+      "group": "money",
+      "label": "AP / Bill"
+    },
+    {
+      "id": "expense",
+      "group": "money",
+      "label": "Expense"
+    },
+    {
+      "id": "gl_je",
+      "group": "money",
+      "label": "GL / JE"
+    },
+    {
+      "id": "liability",
+      "group": "money",
+      "label": "Liability / Escrow"
+    },
+    {
+      "id": "picker_law",
+      "group": "chrome",
+      "label": "Picker +Add new"
+    },
+    {
+      "id": "qbo_chrome",
+      "group": "chrome",
+      "label": "QBO chrome"
+    },
+    {
+      "id": "connectivity",
+      "group": "wiring",
+      "label": "Connectivity"
+    },
+    {
+      "id": "reverse_link",
+      "group": "wiring",
+      "label": "Reverse link"
+    }
+  ],
+  "leaves": [
+    {
+      "id": "home",
+      "tab": "Home",
+      "sub": "System module home",
+      "route_hint": "/system",
+      "required": [
+        "gl_je",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "tab.overview",
+      "tab": "Overview",
+      "sub": "Overview tab",
+      "route_hint": "/system",
+      "required": [
+        "gl_je",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "tab.qbo_recon",
+      "tab": "QuickBooks Reconciliation",
+      "sub": "TMS↔QBO tie-out (not bank recon)",
+      "route_hint": "/system?tab=qbo-recon",
+      "required": [
+        "gl_je",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "tab.qbo_sync",
+      "tab": "QuickBooks Sync",
+      "sub": "QBO sync health",
+      "route_hint": "/system?tab=qbo-sync",
+      "required": [
+        "gl_je",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "tab.program",
+      "tab": "Program Tracker",
+      "sub": "Program tracker tab",
+      "route_hint": "/system?tab=program",
+      "required": [
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "tab.software",
+      "tab": "Software / Build",
+      "sub": "Software/build health",
+      "route_hint": "/system?tab=software",
+      "required": [
+        "connectivity"
+      ]
+    },
+    {
+      "id": "tab.claude_coder",
+      "tab": "Claude Coder",
+      "sub": "Read-only launcher (no exec)",
+      "route_hint": "/system?tab=claude-coder",
+      "required": [
+        "connectivity"
+      ]
+    },
+    {
+      "id": "hop.banking_recon",
+      "tab": "Banking hop",
+      "sub": "Bank statement recon stays in Banking",
+      "route_hint": "/banking",
+      "required": [
+        "gl_je",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "hop.program_matrix",
+      "tab": "Program hop",
+      "sub": "Module matrix",
+      "route_hint": "/program/matrix",
+      "required": [
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "law.no_tms_qbo_writeback",
+      "tab": "Law",
+      "sub": "No TMS→QBO write-back",
+      "route_hint": "/system?tab=qbo-sync",
+      "required": [
+        "gl_je",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    }
+  ]
+}

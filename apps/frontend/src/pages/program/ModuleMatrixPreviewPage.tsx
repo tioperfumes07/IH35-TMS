@@ -35,6 +35,7 @@ import tasksRequired from "@scoreboard/modules/tasks.required.json";
 import form425Required from "@scoreboard/modules/form_425.required.json";
 import financeRequired from "@scoreboard/modules/finance.required.json";
 import docsRequired from "@scoreboard/modules/docs.required.json";
+import systemRequired from "@scoreboard/modules/system.required.json";
 import { ProgramModuleNav } from "./ProgramModuleNav";
 
 type Tri = "done" | "audited" | "unaudited" | "na";
@@ -116,7 +117,8 @@ type MatrixModuleId =
   | "tasks"
   | "form_425"
   | "finance"
-  | "docs";
+  | "docs"
+  | "system";
 
 const REQUIRED_BY_MODULE: Record<MatrixModuleId, RequiredMap> = {
   maintenance: maintRequired as RequiredMap,
@@ -144,6 +146,7 @@ const REQUIRED_BY_MODULE: Record<MatrixModuleId, RequiredMap> = {
   form_425: form425Required as RequiredMap,
   finance: financeRequired as RequiredMap,
   docs: docsRequired as RequiredMap,
+  system: systemRequired as RequiredMap,
 };
 
 const LIVE_MODULES: MatrixModuleId[] = [
@@ -172,6 +175,7 @@ const LIVE_MODULES: MatrixModuleId[] = [
   "form_425",
   "finance",
   "docs",
+  "system",
 ];
 
 const MODULES = [
@@ -478,6 +482,7 @@ function parseModule(raw: string | null): MatrixModuleId {
   if (raw === "form_425" || raw === "form425c" || raw === "425c") return "form_425";
   if (raw === "finance" || raw === "finance-hub" || raw === "finance_hub") return "finance";
   if (raw === "docs") return "docs";
+  if (raw === "system") return "system";
   return "maintenance";
 }
 
