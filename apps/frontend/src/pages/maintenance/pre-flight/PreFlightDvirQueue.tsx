@@ -161,7 +161,13 @@ export function PreFlightDvirQueue() {
         rowKey={(row) => row.id}
         loading={q.isPending}
         storageKey="maintenance-pre-flight-dvir"
-        emptyText={`No ${tab} DVIR defects in this queue.`}
+        emptyText={
+          tab === "minor"
+            ? "No minor DVIR defects in this queue."
+            : tab === "observation"
+              ? "No observation DVIR defects in this queue."
+              : "No major DVIR defects in this queue."
+        }
         exportFilename="pre-flight-dvir-queue"
         tableTestId="pre-flight-dvir-table"
         rowTestId={(row) => `dvir-queue-row-${row.id}`}

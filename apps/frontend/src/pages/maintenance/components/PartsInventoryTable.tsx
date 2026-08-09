@@ -20,6 +20,8 @@ const VENDOR_PICKER_CAP = 200;
 type Props = {
   companyId: string;
   rows: PartsInventoryRow[];
+  /** MAINT-S19 — ParityTable emptyText only when settled. */
+  loading?: boolean;
 };
 
 type PurchaseForm = {
@@ -40,7 +42,7 @@ const EMPTY_PURCHASE: PurchaseForm = {
   location: "",
 };
 
-export function PartsInventoryTable({ companyId, rows }: Props) {
+export function PartsInventoryTable({ companyId, rows, loading = false }: Props) {
   const queryClient = useQueryClient();
   const [openPurchase, setOpenPurchase] = useState(false);
   const [search, setSearch] = useState("");
@@ -162,6 +164,7 @@ export function PartsInventoryTable({ companyId, rows }: Props) {
         columns={columns}
         rows={filteredRows}
         rowKey={(row) => row.id}
+        loading={loading}
         emptyText="No parts on hand. Click + Record Purchase to track daily purchases. Anti-theft pattern: minimal stock kept on hand."
         storageKey="maint-parts-inventory"
         exportFilename="parts-inventory"

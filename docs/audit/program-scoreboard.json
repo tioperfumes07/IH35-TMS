@@ -277,7 +277,7 @@
     {
       "tier": "1",
       "module": "maintenance",
-      "build": "4/39",
+      "build": "22/39",
       "cells": [
         "AUDIT",
         "AUDIT",
@@ -2121,6 +2121,15 @@
   },
   "recentActivity": [
     {
+      "number": 5065,
+      "title": "FINDING: MAINT-S03",
+      "state": "merged",
+      "mergedAtCt": "08/08/2026, 08:47 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/5065",
+      "sha": "19ab7ff63",
+      "committedAtIso": "2026-08-08T20:47:30-05:00"
+    },
+    {
       "number": 5064,
       "title": "FINDING: PROG-SCOREBOARD-STALE-BUILDS",
       "state": "merged",
@@ -2200,15 +2209,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/5058",
       "sha": "47aaf3682",
       "committedAtIso": "2026-08-08T20:22:34-05:00"
-    },
-    {
-      "number": 0,
-      "title": "FINDING: LOAD-WO-REVERSE — a load carrying two repairs showed no maintenance at all, because nothing could ask for a load's work orders",
-      "state": "merged",
-      "mergedAtCt": "08/08/2026, 08:20 PM CT",
-      "url": "",
-      "sha": "a623133e1",
-      "committedAtIso": "2026-08-08T20:20:39-05:00"
     }
   ]
 }

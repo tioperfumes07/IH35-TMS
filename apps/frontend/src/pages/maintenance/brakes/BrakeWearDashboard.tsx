@@ -126,7 +126,7 @@ export function BrakeWearDashboard() {
           rowKey={(row) => `${row.unit_uuid}-${row.brake_position}`}
           loading={atRiskQ.isLoading}
           storageKey="maintenance-brake-wear-at-risk"
-          emptyText={`No brake positions projected for service within ${withinDays} days.`}
+          emptyText="No brake positions projected for service within 30 days."
           exportFilename="brake-wear-at-risk"
         />
       </section>
