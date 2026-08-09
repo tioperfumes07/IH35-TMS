@@ -9,6 +9,7 @@ import { ApiError } from "../../api/client";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 import { CollapsedListFilters } from "../../components/table";
 import {
   getRevenueContracts, getRevenueContractDetail, getRevenueLeakage,
@@ -146,7 +147,7 @@ function LeakagePanel({ operatingCompanyId }: { operatingCompanyId: string }) {
         sortable: true,
         sortValue: (row) => row.load_number ?? row.load_id,
         render: (row) => (
-          <EntityLink kind="load" id={row.load_id} label={row.load_number ?? row.load_id.slice(0, 8)} />
+          <EntityLink kind="load" id={row.load_id} label={entityLabel(row.load_number, row.load_id, "Load")} />
         ),
       },
       {

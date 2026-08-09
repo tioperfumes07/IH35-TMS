@@ -18,6 +18,7 @@ import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 
 function money(cents: number) {
@@ -156,7 +157,7 @@ export function SalesTaxPage() {
         sortable: true,
         render: (row) =>
           row.paid_bill_id ? (
-            <EntityLink kind="bill" id={row.paid_bill_id} label={row.paid_bill_id.slice(0, 8)} />
+            <EntityLink kind="bill" id={row.paid_bill_id} label={entityLabel(null, row.paid_bill_id, "Bill")} />
           ) : (
             "—"
           ),

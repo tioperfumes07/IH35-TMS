@@ -17,6 +17,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useToast } from "../../components/Toast";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 
 function money(cents: number) {
@@ -88,7 +89,7 @@ export function FactorReconciliationPage() {
           <EntityLink
             kind="invoice"
             id={item.invoice_id ?? undefined}
-            label={item.invoice_id ? item.invoice_id.slice(0, 8) : "-"}
+            label={item.invoice_id ? entityLabel(null, item.invoice_id, "Invoice") : "-"}
           />
         ),
       },

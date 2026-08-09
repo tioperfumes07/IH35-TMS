@@ -4,6 +4,7 @@ import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 import { ArrowRightCircle } from "lucide-react";
 import { listInvoices, type Invoice, type InvoiceStatus } from "../../api/accounting";
 import { listCustomers } from "../../api/mdata";
@@ -275,7 +276,7 @@ export function InvoicesListPage() {
         sortable: true,
         sortValue: (row) => row.source_load_id ?? "",
         render: (row) =>
-          row.source_load_id ? <EntityLink kind="load" id={row.source_load_id} label={row.source_load_id.slice(0, 8)} /> : "—",
+          row.source_load_id ? <EntityLink kind="load" id={row.source_load_id} label={entityLabel(null, row.source_load_id, "Load")} /> : "—",
       },
       {
         key: "memo",
