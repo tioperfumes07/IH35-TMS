@@ -143,11 +143,23 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
             s.payment_bounced_reason,
             s.payment_method,
             (
-              SELECT COUNT(DISTINCT db.load_id)::int
+              -- ACCT-F275: a settlement line reaches its load by TWO paths and this counted only one,
+              -- under a join that requires it. CANONICAL is driver_bills.load_id -- the driver bill is
+              -- the per-load obligation document (created from the load, carrying the FK and the amount
+              -- that becomes the line, and the thing the settlement discharges). settlement_lines.load_id
+              -- is a denormalized copy one hop downstream, so the bill wins when they disagree: hence
+              -- COALESCE bill-first, never line-first.
+              -- The LEFT JOIN is load-bearing, not stylistic. Measured on prod br-fancy-credit-akjnd07a
+              -- 2026-08-08 (bypass_rls in the SAME txn; COMPLETE: visible 4 == n_live_tup 4, n_tup_del 0):
+              -- source_driver_bill_id is set on 0 of 4 settlement_lines while 6 of 6 driver_bills carry
+              -- load_id. Under the previous INNER JOIN every row was dropped, so this rendered
+              -- "Loads = 0" for EVERY settlement unconditionally -- and a COALESCE alone would still
+              -- have counted 0 while looking like a fix.
+              SELECT COUNT(DISTINCT COALESCE(db.load_id, sl.load_id))::int
               FROM driver_finance.settlement_lines sl
-              JOIN driver_finance.driver_bills db ON db.id = sl.source_driver_bill_id
+              LEFT JOIN driver_finance.driver_bills db ON db.id = sl.source_driver_bill_id
               WHERE sl.settlement_id = s.id
-                AND db.load_id IS NOT NULL
+                AND COALESCE(db.load_id, sl.load_id) IS NOT NULL
             ) AS load_count
           FROM views.driver_settlement_with_debt v
           JOIN driver_finance.driver_settlements s ON s.id = v.id
@@ -223,11 +235,23 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
             s.payment_bounced_reason,
             s.payment_method,
             (
-              SELECT COUNT(DISTINCT db.load_id)::int
+              -- ACCT-F275: a settlement line reaches its load by TWO paths and this counted only one,
+              -- under a join that requires it. CANONICAL is driver_bills.load_id -- the driver bill is
+              -- the per-load obligation document (created from the load, carrying the FK and the amount
+              -- that becomes the line, and the thing the settlement discharges). settlement_lines.load_id
+              -- is a denormalized copy one hop downstream, so the bill wins when they disagree: hence
+              -- COALESCE bill-first, never line-first.
+              -- The LEFT JOIN is load-bearing, not stylistic. Measured on prod br-fancy-credit-akjnd07a
+              -- 2026-08-08 (bypass_rls in the SAME txn; COMPLETE: visible 4 == n_live_tup 4, n_tup_del 0):
+              -- source_driver_bill_id is set on 0 of 4 settlement_lines while 6 of 6 driver_bills carry
+              -- load_id. Under the previous INNER JOIN every row was dropped, so this rendered
+              -- "Loads = 0" for EVERY settlement unconditionally -- and a COALESCE alone would still
+              -- have counted 0 while looking like a fix.
+              SELECT COUNT(DISTINCT COALESCE(db.load_id, sl.load_id))::int
               FROM driver_finance.settlement_lines sl
-              JOIN driver_finance.driver_bills db ON db.id = sl.source_driver_bill_id
+              LEFT JOIN driver_finance.driver_bills db ON db.id = sl.source_driver_bill_id
               WHERE sl.settlement_id = s.id
-                AND db.load_id IS NOT NULL
+                AND COALESCE(db.load_id, sl.load_id) IS NOT NULL
             ) AS load_count
           FROM views.driver_settlement_with_debt v
           JOIN driver_finance.driver_settlements s ON s.id = v.id
