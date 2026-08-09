@@ -55,6 +55,21 @@ vi.mock("../api/fmcsa", () => ({
   listFmcsaLookups: vi.fn().mockResolvedValue({ lookups: [] }),
 }));
 
+// CustomerDetail reads useCompanyContext, which THROWS outside CompanyProvider
+// ("useCompanyContext must be used within CompanyProvider") — the render died before any assertion, so both
+// cases failed as missing UI rather than as a missing provider. Same shape/values as the established mock in
+// WorkOrderDetailPage.test.tsx.
+vi.mock("./../contexts/CompanyContext", () => ({
+  useCompanyContext: () => ({
+    selectedCompanyId: "test-operating-co",
+    companies: [],
+    selectedCompany: null,
+    isLoading: false,
+    setSelectedCompany: vi.fn(),
+    setDefaultCompanyForUser: vi.fn(async () => {}),
+  }),
+}));
+
 function wrap(ui: ReactElement) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return (
