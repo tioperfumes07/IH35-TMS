@@ -107,6 +107,10 @@ const MIGRATED = [
   { file: "apps/frontend/src/pages/legal/matters/LegalMattersListPage.tsx", empties: ["No matters match filters."] },
   { file: "apps/frontend/src/pages/maintenance/FleetTablePage.tsx", empties: ["No fleet rows match this filter", "No fleet rows yet"] },
   { file: "apps/frontend/src/pages/maintenance/MaintenanceHome.tsx", empties: ["No parts inventory rows found."] },
+  {
+    file: "apps/frontend/src/pages/maintenance/components/WorkOrdersTable.tsx",
+    empties: ["No work orders found — none open for this entity yet (or no rows match the current filter)."],
+  },
   { file: "apps/frontend/src/pages/maintenance/WarrantyClaimsPage.tsx", empties: ["No warranty claims yet."] },
   { file: "apps/frontend/src/pages/work-orders/WorkOrdersConsoleListPage.tsx", empties: ["No work orders match the current filters."] },
   { file: "apps/frontend/src/pages/safety/AccidentsPage.tsx", empties: ["No accident reports found."] },

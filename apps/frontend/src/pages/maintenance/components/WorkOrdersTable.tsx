@@ -9,6 +9,8 @@ import { useToast } from "../../../components/Toast";
 
 type Props = {
   rows: WorkOrder[];
+  /** MAINT-S02 — ParityTable emptyText only when settled (never mid-fetch false-empty). */
+  loading?: boolean;
   sourceTypeFilter: string;
   externalVendorFilter: string;
   onSourceTypeChange: (value: string) => void;
@@ -74,6 +76,7 @@ function exportSelectedCsv(selected: WorkOrder[]) {
 
 export function WorkOrdersTable({
   rows,
+  loading = false,
   sourceTypeFilter,
   externalVendorFilter,
   onSourceTypeChange,
@@ -125,7 +128,8 @@ export function WorkOrdersTable({
         columns={columns}
         rows={filteredRows}
         rowKey={(row) => row.id}
-        emptyText="No work orders found."
+        loading={loading}
+        emptyText="No work orders found — none open for this entity yet (or no rows match the current filter)."
         storageKey="maint-active-wos"
         exportFilename="active-work-orders"
         selectable
