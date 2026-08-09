@@ -16,6 +16,7 @@ import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { useListState } from "../../components/list-state";
 import { formatUsdCents } from "../../lib/money";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 import { formatDateUS } from "../../lib/formatDate";
 import { TransferModal } from "./TransferModal";
 
@@ -137,7 +138,7 @@ export function TransfersListPage() {
         label: "TMS JE",
         render: (row) =>
           row.journal_entry_id ? (
-            <EntityLink kind="journal_entry" id={row.journal_entry_id} label={row.journal_entry_id.slice(0, 8)} />
+            <EntityLink kind="journal_entry" id={row.journal_entry_id} label={entityLabel(null, row.journal_entry_id, "Journal entry")} />
           ) : (
             <span className="text-xs text-slate-500">—</span>
           ),
@@ -150,7 +151,7 @@ export function TransfersListPage() {
             <EntityLink
               kind="bank_transaction"
               id={row.matched_bank_transaction_id}
-              label={row.matched_bank_transaction_id.slice(0, 8)}
+              label={entityLabel(null, row.matched_bank_transaction_id, "Bank transaction")}
             />
           ) : (
             <span className="text-xs text-slate-500">—</span>
@@ -172,9 +173,11 @@ export function TransfersListPage() {
                     const lines = detail.legs
                       .map(
                         (leg) =>
-                          `${leg.intercompany_leg ?? "leg"} · ${(leg as { entity_code?: string }).entity_code ?? leg.operating_company_id.slice(0, 8)} · ${formatMoney(
-                            Number(leg.amount_cents)
-                          )} · ${leg.id.slice(0, 8)}`
+                          `${leg.intercompany_leg ?? "leg"} · ${entityLabel(
+                            (leg as { entity_code?: string }).entity_code,
+                            leg.operating_company_id,
+                            "Entity",
+                          )} · ${formatMoney(Number(leg.amount_cents))} · ${entityLabel(null, leg.id, "Leg")}`
                       )
                       .join("\n");
                     window.alert(`Intercompany group ${detail.group_id}\n${lines || "(no legs)"}`);
@@ -182,7 +185,7 @@ export function TransfersListPage() {
                   .catch((error) => pushToast(String((error as Error).message || "Failed to load intercompany legs"), "error"));
               }}
             >
-              {row.intercompany_leg ?? "group"} · {row.intercompany_transfer_group_id.slice(0, 8)}
+              {row.intercompany_leg ?? "group"} · {entityLabel(null, row.intercompany_transfer_group_id, "Intercompany group")}
             </button>
           ) : (
             <span className="text-xs text-slate-500">—</span>
