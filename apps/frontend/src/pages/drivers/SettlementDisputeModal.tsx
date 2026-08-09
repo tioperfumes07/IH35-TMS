@@ -7,6 +7,7 @@ import { Modal } from "../../components/Modal";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { Button } from "../../components/Button";
 import { useToast } from "../../components/Toast";
+import { userFacingApiError } from "../../lib/api-error-message";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import {
   SETTLEMENT_DISPUTE_CATEGORY_OPTIONS,
@@ -90,7 +91,7 @@ export function SettlementDisputeModal({ open, onClose }: SettlementDisputeModal
       set_dispute_category("missing_pay");
       onClose();
     } catch (error) {
-      pushToast(String((error as Error).message ?? "submit_failed"), "error");
+      pushToast(userFacingApiError(error, "Could not submit dispute"), "error");
     } finally {
       setSubmitting(false);
     }

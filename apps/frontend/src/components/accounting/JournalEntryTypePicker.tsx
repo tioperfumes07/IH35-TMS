@@ -5,6 +5,7 @@ import { Button } from "../Button";
 import { Combobox } from "../Combobox";
 import { ParityDrawer } from "../parity/ParityDrawer";
 import { useToast } from "../Toast";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 type Props = {
   operatingCompanyId: string;
@@ -61,7 +62,7 @@ export function JournalEntryTypePicker({ operatingCompanyId, value, onChange, di
       void typesQuery.refetch();
       pushToast("Journal entry type created", "success");
     } catch (error) {
-      pushToast(String((error as Error).message || "Create failed"), "error");
+      pushToast(userFacingApiError(error, "Create failed"), "error");
     } finally {
       setSaving(false);
     }
