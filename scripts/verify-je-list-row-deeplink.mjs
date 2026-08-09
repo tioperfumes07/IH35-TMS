@@ -44,6 +44,13 @@ export function check({ jeList, entityLink, manifest }) {
     if (!/useNavigate/.test(jeList)) {
       f.push(`${JE_LIST}: must import/use useNavigate for row deep-link`);
     }
+    // LST-F107 — JE column chrome must not be a bare UUID fragment.
+    if (/label=\{entry\.id\.slice\(0,\s*8\)\}/.test(jeList)) {
+      f.push(`${JE_LIST}: EntityLink label must not be entry.id.slice(0, 8) (use journalEntryListLabel)`);
+    }
+    if (!/journalEntryListLabel/.test(jeList)) {
+      f.push(`${JE_LIST}: missing journalEntryListLabel helper for JE column`);
+    }
   }
 
   if (!entityLink) {
@@ -82,7 +89,8 @@ if (process.argv.includes("--selftest")) {
   const goodList = `
     import { useNavigate } from "react-router-dom";
     import { EntityLink } from "../../components/shared/EntityLink";
-    <EntityLink kind="journal_entry" id={entry.id} label={entry.id.slice(0, 8)} />
+    function journalEntryListLabel(entry) { return entry.source || "JE"; }
+    <EntityLink kind="journal_entry" id={entry.id} label={journalEntryListLabel(entry)} />
     onRowClick={(entry) => navigate(\`/accounting/journal-entries/\${entry.id}\`)}
   `;
   const goodEntity = `
@@ -124,6 +132,19 @@ if (process.argv.includes("--selftest")) {
         entityLink: goodEntity,
         manifest: `path="/accounting/journal-entries"`,
       }).some((x) => x.includes("/accounting/journal-entries/:id")),
+    ],
+    [
+      "UUID JE label caught",
+      check({
+        jeList: `
+    import { useNavigate } from "react-router-dom";
+    import { EntityLink } from "../../components/shared/EntityLink";
+    <EntityLink kind="journal_entry" id={entry.id} label={entry.id.slice(0, 8)} />
+    onRowClick={(entry) => navigate(\`/accounting/journal-entries/\${entry.id}\`)}
+  `,
+        entityLink: goodEntity,
+        manifest: goodManifest,
+      }).some((x) => x.includes("entry.id.slice") || x.includes("journalEntryListLabel")),
     ],
   ];
 
