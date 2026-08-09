@@ -1,3 +1,4 @@
+import { entityLabel } from "../../lib/entity-label";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useToast } from "../../components/Toast";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -275,7 +276,7 @@ export function EditVehicleModal({ open, unitId, operatingCompanyId, rowPreview,
       const selected = String(value ?? "");
       const options =
         selected && !companyOptions.some((o) => o.value === selected)
-          ? [...companyOptions, { value: selected, label: `Unknown company (${selected.slice(0, 8)}…)` }]
+          ? [...companyOptions, { value: selected, label: entityLabel(null, selected, "Company") }]
           : companyOptions;
       return (
         <div data-testid={`edit-vehicle-${def.key}`}>

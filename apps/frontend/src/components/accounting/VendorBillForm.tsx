@@ -14,6 +14,7 @@ import { EntityPicker } from "../parity/EntityPicker";
 import { vendorReferenceOption } from "../parity/referenceOptionLabels";
 import { UploadZone } from "../UploadZone";
 import { EntityLink } from "../shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 import { companyToday } from "../../lib/businessDate";
 import {
   buildVendorBillLinePayloads,
@@ -330,7 +331,7 @@ export function VendorBillForm({
           className="rounded-sm border border-slate-200 bg-slate-100 px-2 py-1 text-xs text-slate-700"
           data-testid="vendor-bill-linked-claim"
         >
-          Linked claim — <EntityLink kind="claim" id={linkedClaimId} label={linkedClaimId.slice(0, 8)} />
+          Linked claim — <EntityLink kind="claim" id={linkedClaimId} label={entityLabel(null, linkedClaimId, "Claim")} />
         </div>
       ) : null}
       <TypeTabBar

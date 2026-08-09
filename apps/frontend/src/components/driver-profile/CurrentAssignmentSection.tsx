@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { EntityLink } from "../shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 
 export function CurrentAssignmentSection({
   assignment,
@@ -62,7 +63,7 @@ export function CurrentAssignmentSection({
       </div>
       {onSetDefault ? (
         <p className="mt-2 text-xs text-slate-500">
-          Set default truck from fleet unit profile or POST default-truck for driver {driverId.slice(0, 8)}…
+          Set default truck from fleet unit profile or POST default-truck for driver {entityLabel(null, driverId, "Driver")}
         </p>
       ) : null}
     </section>

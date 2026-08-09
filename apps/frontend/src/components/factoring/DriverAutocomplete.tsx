@@ -1,4 +1,5 @@
 import { useCallback } from "react";
+import { entityLabel } from "../../lib/entity-label";
 import { getDriver } from "../../api/mdata";
 import { EntityPicker } from "../parity/EntityPicker";
 
@@ -42,7 +43,7 @@ export function DriverAutocomplete({
         const name = [driver.first_name, driver.last_name].filter(Boolean).join(" ").trim() || next;
         onChange(next, name, { default_expense_account_id: driver.default_expense_account_id ?? null });
       } catch {
-        onChange(next, next.slice(0, 8), { default_expense_account_id: null });
+        onChange(next, entityLabel(null, next, "Driver"), { default_expense_account_id: null });
       }
     },
     [companyId, onChange]

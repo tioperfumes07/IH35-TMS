@@ -9,6 +9,7 @@ import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { vendorReferenceOption } from "../../../components/parity/referenceOptionLabels";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { entityLabel } from "../../../lib/entity-label";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { capNotice, listCapInfo } from "../../../lib/list-cap";
 
@@ -136,7 +137,7 @@ export function PartsInventoryTable({ companyId, rows, loading = false }: Props)
       sortable: true,
       render: (row) =>
         row.vendor_id ? (
-          <EntityLink kind="vendor" id={row.vendor_id} label={vendorNameById.get(row.vendor_id) ?? row.vendor_id.slice(0, 8)} />
+          <EntityLink kind="vendor" id={row.vendor_id} label={entityLabel(vendorNameById.get(row.vendor_id), row.vendor_id, "Vendor")} />
         ) : (
           "—"
         ),
