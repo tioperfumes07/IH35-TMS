@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { listPayments, type Payment, type PaymentMethod } from "../../api/accounting";
 import { Button } from "../../components/Button";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 import { StatusBadge } from "../../components/layout/StatusBadge";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -119,7 +120,7 @@ export function PaymentsListPage() {
         sortable: true,
         sortValue: (row) => row.customer_name ?? "",
         render: (row) => (
-          <EntityLink kind="customer" id={row.customer_id} label={row.customer_name ?? row.customer_id?.slice(0, 8)} />
+          <EntityLink kind="customer" id={row.customer_id} label={entityLabel(row.customer_name, row.customer_id, "Customer")} />
         ),
       },
       { key: "payment_date", label: "Date", sortable: true, render: (row) => formatDateUS(row.payment_date) },
@@ -151,7 +152,7 @@ export function PaymentsListPage() {
             <EntityLink
               kind="bank_transaction"
               id={row.matched_bank_transaction_id}
-              label={row.matched_bank_transaction_id.slice(0, 8)}
+              label={entityLabel(null, row.matched_bank_transaction_id, "Bank transaction")}
             />
           ) : (
             "-"

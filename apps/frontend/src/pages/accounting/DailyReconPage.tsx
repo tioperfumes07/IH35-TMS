@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { entityLabel } from "../../lib/entity-label";
 import { formatDateUS } from "../../lib/formatDate";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -58,10 +59,10 @@ const RECON_COLUMNS: Array<ParityColumn<DailyReconRow>> = [
     render: (row) =>
       row.tms_detail_path ? (
         <Link to={row.tms_detail_path} className="font-mono text-[10px] text-slate-600 hover:underline">
-          {row.entity_id.slice(0, 8)}…
+          {entityLabel(null, row.entity_id, "Entity")}
         </Link>
       ) : (
-        <span className="font-mono text-[10px] text-gray-500">{row.entity_id.slice(0, 8)}…</span>
+        <span className="font-mono text-[10px] text-gray-500">{entityLabel(null, row.entity_id, "Entity")}</span>
       ),
   },
   { key: "tms_amount_cents", label: "TMS Amount", render: (row) => <span className="text-gray-700">{formatCents(row.tms_amount_cents)}</span> },
