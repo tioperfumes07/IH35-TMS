@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { entityLabel } from "../../lib/entity-label";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
@@ -165,7 +166,7 @@ export function PaymentMethodsCatalogPage() {
                 <td className="px-3 py-2 text-xs text-gray-600">{row.sort_order}</td>
                 <td className="px-3 py-2 font-medium text-gray-900">{row.name}</td>
                 <td className="px-3 py-2 text-xs text-gray-600">
-                  {row.gl_account_id ? (accountNameById.get(row.gl_account_id) ?? row.gl_account_id.slice(0, 8)) : "Unassigned"}
+                  {row.gl_account_id ? entityLabel(accountNameById.get(row.gl_account_id), row.gl_account_id, "Account") : "Unassigned"}
                 </td>
                 <td className="px-3 py-2">
                   {row.is_active ? (

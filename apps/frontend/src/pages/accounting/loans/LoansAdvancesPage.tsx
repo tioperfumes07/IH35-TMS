@@ -24,6 +24,7 @@ import { PageHeader } from "../../../components/layout/PageHeader";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { entityLabel } from "../../../lib/entity-label";
 import { formatDateUS } from "../../../lib/formatDate";
 import { FORM_SELECT_CLASS } from "../../../components/forms/inputClass";
 import { LoanApplicationWizard } from "./LoanApplicationWizard";
@@ -198,7 +199,7 @@ export function LoansAdvancesPage() {
                   <td className="px-3 py-2 text-right">{money(r.principal_cents ?? r.amount_cents)}</td>
                   <td className="px-3 py-2">{r.status ?? "—"}</td>
                   <td className="px-3 py-2">
-                    {r.je_id ? <EntityLink kind="journal_entry" id={r.je_id} label={r.je_id.slice(0, 8)} /> : "—"}
+                    {r.je_id ? <EntityLink kind="journal_entry" id={r.je_id} label={entityLabel(null, r.je_id, "Journal entry")} /> : "—"}
                   </td>
                 </tr>
               ))}

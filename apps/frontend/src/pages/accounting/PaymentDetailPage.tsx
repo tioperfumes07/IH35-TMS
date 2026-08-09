@@ -15,6 +15,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { PaymentApplyModal } from "./PaymentApplyModal";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useToast } from "../../components/Toast";
 
@@ -26,7 +27,7 @@ function accountLabel(name: string | null | undefined, number: string | null | u
   if (name && number) return `${number} — ${name}`;
   if (name) return name;
   if (number) return number;
-  return id.slice(0, 8);
+  return entityLabel(null, id, "Record");
 }
 
 export function PaymentDetailPage() {
@@ -103,7 +104,7 @@ export function PaymentDetailPage() {
       sortable: true,
       render: (app) => (
         <span className="text-gray-900">
-          <EntityLink kind="invoice" id={app.invoice_id ?? undefined} label={app.invoice_display_id ?? app.invoice_id?.slice(0, 8)} />
+          <EntityLink kind="invoice" id={app.invoice_id ?? undefined} label={entityLabel(app.invoice_display_id, app.invoice_id, "Invoice")} />
         </span>
       ),
     },
@@ -193,7 +194,7 @@ export function PaymentDetailPage() {
         <DataPanelRow>
           <span className="text-xs font-semibold text-gray-600">Customer</span>
           <span className="text-sm text-gray-900">
-            <EntityLink kind="customer" id={payment.customer_id} label={payment.customer_name ?? payment.customer_id?.slice(0, 8)} />
+            <EntityLink kind="customer" id={payment.customer_id} label={entityLabel(payment.customer_name, payment.customer_id, "Customer")} />
           </span>
         </DataPanelRow>
         <DataPanelRow>
@@ -256,7 +257,7 @@ export function PaymentDetailPage() {
                           ? ` (${money(Number(payment.matched_bank_transaction_amount_cents))})`
                           : ""
                       }`
-                    : payment.matched_bank_transaction_id.slice(0, 8)
+                    : entityLabel(null, payment.matched_bank_transaction_id, "Bank transaction")
                 }
               />
             </span>

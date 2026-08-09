@@ -6,6 +6,7 @@ import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { EntityLink, type EntityKind } from "../../components/shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 
 type EntitySummary = {
   entity_type: string;
@@ -124,9 +125,9 @@ export function QBOSyncDriftDashboard() {
       render: (row) => {
         const kind = driftEntityKind(row.entity_type);
         if (!kind || !row.entity_id) {
-          return <span className="font-mono text-xs text-muted-foreground">{row.entity_id ? `${row.entity_id.slice(0, 8)}…` : "—"}</span>;
+          return <span className="text-xs text-muted-foreground">{row.entity_id ? entityLabel(null, row.entity_id, "Entity") : "—"}</span>;
         }
-        return <EntityLink kind={kind} id={row.entity_id} label={`${row.entity_id.slice(0, 8)}…`} />;
+        return <EntityLink kind={kind} id={row.entity_id} label={entityLabel(null, row.entity_id, "Entity")} />;
       },
     },
     {

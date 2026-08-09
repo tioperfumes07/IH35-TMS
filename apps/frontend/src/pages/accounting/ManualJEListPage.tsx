@@ -17,11 +17,12 @@ import { CollapsedListFilters } from "../../components/table";
 import { useUrlSort } from "../../hooks/useUrlSort";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 
 const UUID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi;
 function humanMemo(memo: string | null | undefined): string {
   if (!memo) return "—";
-  return memo.replace(UUID_RE, (uuid) => uuid.slice(0, 8));
+  return memo.replace(UUID_RE, (uuid) => entityLabel(null, uuid, "Record"));
 }
 
 /** LST-F107: JE column must not lead with a bare UUID fragment (date column already exists). */
@@ -126,7 +127,7 @@ export function ManualJEListPage() {
             <EntityLink
               kind="bank_transaction"
               id={entry.matched_bank_transaction_id}
-              label={entry.matched_bank_transaction_id.slice(0, 8)}
+              label={entityLabel(null, entry.matched_bank_transaction_id, "Bank transaction")}
               onClick={(e) => e.stopPropagation()}
             />
           ) : (
@@ -139,7 +140,7 @@ export function ManualJEListPage() {
         alwaysVisible: true,
         render: (entry) =>
           entry.reversed_by_je_id ? (
-            <span className="text-xs text-gray-500" title={`Reversed by JE ${entry.reversed_by_je_id.slice(0, 8)}`}>
+            <span className="text-xs text-gray-500" title={`Reversed by ${entityLabel(null, entry.reversed_by_je_id, "Journal entry")}`}>
               Reversed
             </span>
           ) : user?.role === "Owner" && entry.status === "posted" ? (
