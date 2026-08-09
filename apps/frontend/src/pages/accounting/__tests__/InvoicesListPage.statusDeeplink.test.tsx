@@ -261,7 +261,7 @@ describe("InvoicesListPage has_balance deep-link + URL sync (A/R aging contract)
         })
       );
     });
-    const user = await openFilters();
+    await openFilters();
     expect(await screen.findByDisplayValue("Partial")).toBeInTheDocument();
     expect(screen.getByTestId("location-search").textContent).toContain("status=partial");
   });
