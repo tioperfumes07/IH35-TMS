@@ -1019,11 +1019,12 @@ export async function listBillPayments(
 export async function getBillDetail(userId: string, operatingCompanyId: string, billId: string) {
   return withCurrentUser(userId, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
-    const billRes = await client.query<BillRow & { vendor_name?: string | null; unit_id?: string | null; linked_work_order_uuid?: string | null }>(
+    const billRes = await client.query<BillRow & { vendor_name?: string | null; unit_id?: string | null; unit_display_id?: string | null; linked_work_order_uuid?: string | null }>(
       `
         SELECT
           b.*,
           v.vendor_name,
+          u.unit_number AS unit_display_id,
           (
             SELECT jep.journal_entry_uuid::text
             FROM accounting.journal_entry_postings jep
@@ -1035,6 +1036,8 @@ export async function getBillDetail(userId: string, operatingCompanyId: string, 
           ) AS journal_entry_id
         FROM accounting.bills b
         ${BILL_VENDOR_RESOLVE_JOIN_SQL}
+        LEFT JOIN mdata.units u
+          ON u.id = b.unit_id
         WHERE b.id = $1
           AND b.operating_company_id = $2
         LIMIT 1
@@ -1140,6 +1143,7 @@ export async function getBillDetail(userId: string, operatingCompanyId: string, 
         vendor_name: bill.vendor_name ?? null,
         journal_entry_id: (bill as { journal_entry_id?: string | null }).journal_entry_id ?? null,
         unit_id: bill.unit_id ?? null,
+        unit_display_id: bill.unit_display_id ?? null,
         linked_work_order_uuid: bill.linked_work_order_uuid ?? null,
       },
       lines: linesRes.rows.map((row) => ({

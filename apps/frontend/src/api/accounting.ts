@@ -252,6 +252,7 @@ export type VendorBill = {
   /** Law §9 — resolved from journal_entry_postings (bills have no journal_entry_id column). */
   journal_entry_id?: string | null;
   unit_id?: string | null;
+  unit_display_id?: string | null;
   linked_work_order_uuid?: string | null;
   /** ACCT-F04 reverse drill — present when accounting.bills.insurance_claim_id column exists. */
   insurance_claim_id?: string | null;

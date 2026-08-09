@@ -288,7 +288,7 @@ export function BillDetailPage() {
         {bill.unit_id ? (
           <DataPanelRow>
             <span className="text-xs font-semibold text-gray-600">Unit</span>
-            <EntityLink kind="unit" id={bill.unit_id} label={bill.unit_id.slice(0, 8)} />
+            <EntityLink kind="unit" id={bill.unit_id} label={bill.unit_display_id ?? bill.unit_id.slice(0, 8)} />
           </DataPanelRow>
         ) : null}
         {bill.linked_work_order_uuid ? (
