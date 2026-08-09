@@ -15,6 +15,7 @@ import { useForm, type FieldErrors, type UseFormSetValue } from "react-hook-form
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createDispatchLoad } from "../../../api/dispatch";
 import { ApiError } from "../../../api/client";
+import { userFacingApiError } from "../../../lib/api-error-message";
 import { getLoad, updateDispatchLoadFull, type LoadDetail } from "../../../api/loads";
 import { buildEditPrefill, buildEditPatchBody } from "./book-load-v4/editLoadMapping";
 import { bookLoadToastMessage, bookLoadToastTone, serverStatusOf } from "./book-load-toast";
@@ -901,7 +902,7 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
           return;
         }
       }
-      pushToast("Failed to book load", "error");
+      pushToast(userFacingApiError(error, "Failed to book load"), "error");
     }
   }
 
