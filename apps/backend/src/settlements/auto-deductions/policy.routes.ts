@@ -59,6 +59,7 @@ export async function registerAutoDeductionPolicyRoutes(app: FastifyInstance) {
           FROM driver_finance.auto_deduction_policies p
           LEFT JOIN mdata.drivers d
             ON d.id = p.driver_id
+           AND d.operating_company_id = p.operating_company_id
            AND d.deactivated_at IS NULL
            AND d.archived_at IS NULL
           WHERE ${filters.join(" AND ")}

@@ -25,6 +25,10 @@ export function mapExpenseCatalogCodeToBillCategory(
     .toUpperCase();
   if (code === "FUEL") return { category_kind: "fuel", category_code: "fuel" };
   if (code === "REPAIR") return { category_kind: "maintenance", category_code: "maintenance" };
+  // ECON-012 / CLS-ECON-EMPTY — PERMIT is a live catalogs.expense_categories code with a
+  // real expense_category_account_map row (kind/code = permit). Without this translation the
+  // bill line kept expense_category_uuid only and the poster fell through to uncategorized.
+  if (code === "PERMIT") return { category_kind: "permit", category_code: "permit" };
   return null;
 }
 

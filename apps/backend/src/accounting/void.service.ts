@@ -205,6 +205,7 @@ async function readOriginalIsSampleData(
       SELECT bool_or(COALESCE(je.is_sample_data, false)) AS any_sample
       FROM accounting.journal_entry_postings p
       JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid
+       AND je.operating_company_id = p.operating_company_id
       WHERE p.operating_company_id = $1::uuid
         AND p.source_transaction_type = $3
         AND p.source_transaction_id = $2

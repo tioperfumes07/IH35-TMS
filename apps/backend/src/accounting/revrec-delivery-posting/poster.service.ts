@@ -191,6 +191,7 @@ async function loadHasStandingInvoiceGl(
          AND l.linked_object_type = 'invoice'
         JOIN accounting.journal_entry_postings p ON p.id = l.journal_entry_posting_id
         JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid
+         AND je.operating_company_id = i.operating_company_id
        WHERE i.source_load_id = $1::uuid
          AND i.operating_company_id = $2::uuid
          AND i.voided_at IS NULL

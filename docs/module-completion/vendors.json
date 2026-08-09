@@ -1,9 +1,9 @@
 {
   "module": "vendors",
   "title": "Vendors",
-  "complete": false,
-  "as_of": "2026-08-04",
-  "live_sha": null,
+  "complete": true,
+  "as_of": "2026-08-09T00:59:06.244Z",
+  "live_sha": "b93b482",
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/AUDITOR-RUN-2026-07-31/modules/factoring-deep-2026-08-01.md",
   "spec_sources": [
     "docs/specs/DEFINITION-OF-DONE.md",

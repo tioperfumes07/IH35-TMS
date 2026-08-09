@@ -1,6 +1,6 @@
 {
   "note": "CLS-JOIN-ENTITY-UNSCOPED ratchet — JOINs to entity-scoped tables with no scope predicate. An INVENTORY of existing debt, NOT an approval of these joins. May only SHRINK.",
-  "scanned": 1583,
+  "scanned": 1585,
   "offenders": [
     "apps/backend/src/accounting/allocations.service.ts|JOIN|accounting.bills|b",
     "apps/backend/src/accounting/allocations.service.ts|JOIN|catalogs.accounts|coa",
@@ -55,7 +55,6 @@
     "apps/backend/src/accounting/payments/apply.service.ts|FROM|accounting.payments|-",
     "apps/backend/src/accounting/period-close-retained-earnings.service.ts|FROM|catalogs.accounts|a",
     "apps/backend/src/accounting/period-close-retained-earnings.service.ts|JOIN|catalogs.accounts|a",
-    "apps/backend/src/accounting/posting-engine.service.ts|FROM|accounting.journal_entries|je",
     "apps/backend/src/accounting/profit-loss.service.ts|JOIN|catalogs.accounts|a",
     "apps/backend/src/accounting/receipts.routes.ts|JOIN|accounting.bills|b",
     "apps/backend/src/accounting/receipts.routes.ts|JOIN|accounting.payments|p",
@@ -66,7 +65,6 @@
     "apps/backend/src/accounting/transaction-register.routes.ts|JOIN|mdata.vendors|v",
     "apps/backend/src/accounting/trial-balance.service.ts|JOIN|catalogs.accounts|a",
     "apps/backend/src/accounting/vendor-bill-payments.routes.ts|FROM|accounting.bill_payments|bp",
-    "apps/backend/src/accounting/vendor-bill-payments.routes.ts|JOIN|accounting.bills|b",
     "apps/backend/src/audit/driver-events.service.ts|JOIN|mdata.drivers|d",
     "apps/backend/src/auth/email-routes.ts|FROM|mdata.drivers|-",
     "apps/backend/src/banking/account-balance.routes.ts|FROM|catalogs.accounts|-",
