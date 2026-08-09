@@ -14,9 +14,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLoad } from "../../../api/loads";
 import { listInvoices, listFactoringCandidateInvoices } from "../../../api/accounting";
 import { listFiles } from "../../../api/docs";
-import { listFactors } from "../../../api/factoring";
+import { createFactor, listFactors } from "../../../api/factoring";
 import { apiRequest } from "../../../api/client";
 import { Button } from "../../Button";
+import { Combobox } from "../../Combobox";
 import { useToast } from "../../Toast";
 import { userFacingApiError } from "../../../lib/api-error-message";
 
@@ -149,6 +150,14 @@ export function FactoringTab({ loadId, operatingCompanyId, canEdit, onPacketUpda
   const queryClient = useQueryClient();
   const [submitOpen, setSubmitOpen] = useState(false);
   const [selectedFactorId, setSelectedFactorId] = useState("");
+  const [showAddFactorModal, setShowAddFactorModal] = useState(false);
+  const [addForm, setAddForm] = useState({
+    name: "",
+    advance_rate: "0.95",
+    fee_rate: "0.025",
+    reserve_rate: "0.10",
+    recourse_days: "90",
+  });
 
   // load (shared React Query key — deduped with drawer)
   const loadQ = useLoad(loadId);
@@ -185,6 +194,14 @@ export function FactoringTab({ loadId, operatingCompanyId, canEdit, onPacketUpda
     queryFn: () => listFactors(operatingCompanyId, { active_only: true }).then((r) => r.factors),
     enabled: Boolean(operatingCompanyId),
   });
+  const factorOptions = useMemo(
+    () =>
+      (factorsQ.data ?? []).map((f) => ({
+        value: f.id,
+        label: `${f.name} (adv ${f.advance_rate}% · res ${f.reserve_rate}% · fee ${f.fee_rate}%)`,
+      })),
+    [factorsQ.data],
+  );
 
   // candidate invoices (confirms this invoice is submittable)
   const candidateQ = useQuery({
@@ -218,6 +235,26 @@ export function FactoringTab({ loadId, operatingCompanyId, canEdit, onPacketUpda
   const isFactorIdSet = selectedFactorId !== "";
 
   // ── mutations ──────────────────────────────────────────────────────────────
+
+  const addFactorMutation = useMutation({
+    mutationFn: async () =>
+      createFactor(operatingCompanyId, {
+        name: addForm.name.trim(),
+        advance_rate: Number(addForm.advance_rate),
+        fee_rate: Number(addForm.fee_rate),
+        reserve_rate: Number(addForm.reserve_rate),
+        recourse_days: Number(addForm.recourse_days),
+      }),
+    onSuccess: async (created) => {
+      setShowAddFactorModal(false);
+      setAddForm({ name: "", advance_rate: "0.95", fee_rate: "0.025", reserve_rate: "0.10", recourse_days: "90" });
+      if (created?.id) setSelectedFactorId(created.id);
+      pushToast("Factor created", "success");
+      await queryClient.invalidateQueries({ queryKey: ["factoring", "factors", "active", operatingCompanyId] });
+      await queryClient.invalidateQueries({ queryKey: ["factoring", "factors", operatingCompanyId] });
+    },
+    onError: (error) => pushToast(userFacingApiError(error, "Failed to create factor"), "error"),
+  });
 
   const markReadyMutation = useMutation({
     mutationFn: async () => {
@@ -458,18 +495,20 @@ export function FactoringTab({ loadId, operatingCompanyId, canEdit, onPacketUpda
           {submitOpen && (
             <div className="rounded-sm border border-gray-200 p-3">
               <div className="mb-2 text-xs font-semibold text-gray-700">Select FARO factor account</div>
-              <select
-                className="mb-2 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
-                value={selectedFactorId}
-                onChange={(e) => setSelectedFactorId(e.target.value)}
-              >
-                <option value="">— choose factor —</option>
-                {(factorsQ.data ?? []).map((f) => (
-                  <option key={f.id} value={f.id}>
-                    {f.name} (adv {f.advance_rate}% · res {f.reserve_rate}% · fee {f.fee_rate}%)
-                  </option>
-                ))}
-              </select>
+              {/* LST-F153: bare <select> had no + Add new — operators left load factoring to create a factor. */}
+              <div className="mb-2" data-testid="factoring-tab-submit-factor-picker">
+                <Combobox
+                  options={factorOptions}
+                  value={selectedFactorId || null}
+                  onChange={(next) => setSelectedFactorId(next ?? "")}
+                  placeholder="— choose factor —"
+                  loading={factorsQ.isLoading}
+                  allowAddNew={{
+                    label: "+ Add new factor",
+                    onAdd: () => setShowAddFactorModal(true),
+                  }}
+                />
+              </div>
               <div className="flex gap-2">
                 <Button
                   size="sm"
@@ -485,6 +524,74 @@ export function FactoringTab({ loadId, operatingCompanyId, canEdit, onPacketUpda
               </div>
             </div>
           )}
+        </div>
+      ) : null}
+
+      {showAddFactorModal ? (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-3">
+          <div className="w-full max-w-md rounded-sm border border-gray-200 bg-white p-4 shadow-xl">
+            <div className="mb-3 text-sm font-semibold text-gray-900">Add Factor</div>
+            <div className="space-y-2 text-xs">
+              <label className="block">
+                <div className="mb-1">Name</div>
+                <input
+                  value={addForm.name}
+                  onChange={(event) => setAddForm((current) => ({ ...current, name: event.target.value }))}
+                  className="w-full rounded-sm border border-gray-300 px-2 py-1"
+                />
+              </label>
+              <label className="block">
+                <div className="mb-1">Advance Rate (0-1)</div>
+                <input
+                  value={addForm.advance_rate}
+                  onChange={(event) => setAddForm((current) => ({ ...current, advance_rate: event.target.value }))}
+                  className="w-full rounded-sm border border-gray-300 px-2 py-1"
+                />
+              </label>
+              <label className="block">
+                <div className="mb-1">Fee Rate (0-1)</div>
+                <input
+                  value={addForm.fee_rate}
+                  onChange={(event) => setAddForm((current) => ({ ...current, fee_rate: event.target.value }))}
+                  className="w-full rounded-sm border border-gray-300 px-2 py-1"
+                />
+              </label>
+              <label className="block">
+                <div className="mb-1">Reserve Rate (0-1)</div>
+                <input
+                  value={addForm.reserve_rate}
+                  onChange={(event) => setAddForm((current) => ({ ...current, reserve_rate: event.target.value }))}
+                  className="w-full rounded-sm border border-gray-300 px-2 py-1"
+                />
+              </label>
+              <label className="block">
+                <div className="mb-1">Recourse Days</div>
+                <input
+                  value={addForm.recourse_days}
+                  onChange={(event) => setAddForm((current) => ({ ...current, recourse_days: event.target.value }))}
+                  className="w-full rounded-sm border border-gray-300 px-2 py-1"
+                />
+              </label>
+            </div>
+            <div className="mt-4 flex justify-end gap-2">
+              <Button size="sm" variant="secondary" onClick={() => setShowAddFactorModal(false)}>
+                Cancel
+              </Button>
+              <Button
+                size="sm"
+                loading={addFactorMutation.isPending}
+                onClick={() => {
+                  if (!addForm.name.trim()) {
+                    pushToast("Factor name is required", "error");
+                    return;
+                  }
+                  void addFactorMutation.mutateAsync();
+                }}
+              >
+                Save
+              </Button>
+            </div>
+          </div>
         </div>
       ) : null}
 
