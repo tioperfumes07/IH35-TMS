@@ -1475,3 +1475,36 @@ this period", and there is no open artifact left to signal the miss.
 `completed_docs_received`, and determine why no pay was minted despite an active rate. **Do not backfill the
 settlement by hand** — the wiring is the deliverable; a hand-written line would hide it.
 **CC-3 verifies on re-run; CC-3 does not build it.**
+
+## OPEN · CC-1 · **P0 escalation of DELIVERED-LOAD-NO-DRIVER-PAY** — the mint path appears never to have fired for ANY USMCA load
+**CC-3 widened the single-load finding to the whole population. Prod `b93b482`, USMCA `5c854333…`.**
+Every seated load that reached `delivered` / `delivered_pending_docs` / `completed_docs_received` (8 total):
+
+| load | status | rate | driver_bill | settlement_line | driver pay rates |
+|---|---|---|---|---|---|
+| L-20260802-0258 | delivered | $1.00 | **true** | false | 1 |
+| LUSMCAFREIGHT-20260806-0001 | delivered_pending_docs | $1.00 | false | false | 1 |
+| L-20260806-0008 | completed_docs_received | **$1,875.50** | false | false | 1 |
+| L-20260808-0069 | delivered_pending_docs | **$4,900.00** | false | false | 1 |
+| L-20260808-0074 | delivered_pending_docs | **$3,200.00** | false | false | 1 |
+| L-20260808-0085 | completed_docs_received | $4,910.00 | false | **true** | **0** |
+| L-20260808-0087 | completed_docs_received | **$3,210.00** | false | false | 1 |
+| L-20260808-0090 | completed_docs_received | $0.00 | false | **true** | 1 |
+
+**$13,186.50 of delivered freight across 5 loads has NO driver pay artifact of any kind** (0069, 0074, 0087,
+0008, LUSMCAFREIGHT-0001) — every one with an active driver **and a pay rate on file**.
+
+**THE DISCRIMINATOR INVERTS THE EXPECTED RULE, which is why this is P0 and not a backlog item:**
+having a pay rate does **not** predict whether pay was minted. **`L-20260808-0085` minted a settlement line while
+carrying ZERO pay rates**, and five loads **with** a rate minted nothing. Pay is therefore not being keyed off the
+rate at all. CC-3 read `L-20260808-0085`'s line directly in the UI: its description is
+`SAMPLE_BREAKDOWN_RESCUE_5753_MIRROR … OWNER 2026-08-08: -$10 rule applied` — **a hand-written rescue line, not a
+minted one.** `L-20260808-0090` carries a `$0.00` rate.
+
+**⇒ Reading the evidence conservatively: every driver-pay artifact in USMCA is explicable as manual rescue work,
+and there is NO load for which the automated delivery → `driver_bills` → `settlement_lines` mint demonstrably
+fired.** That is a claim about absence, so it is stated as the strongest reading of the evidence rather than as
+proof — but no counter-example exists in the population.
+
+**ASK:** identify what is supposed to invoke the mint at the delivery transition and confirm whether it is wired
+at all. **Do not hand-create bills or lines to clear the table** — that is what already obscured the picture here.
