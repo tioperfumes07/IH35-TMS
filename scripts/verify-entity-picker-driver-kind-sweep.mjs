@@ -31,6 +31,9 @@ const ALLOWLIST = new Set([
   "apps/frontend/src/pages/safety/tabs/DrugAlcoholTab.tsx",
   // Maintenance master-data admin table — not a driver FK picker.
   "apps/frontend/src/pages/maintenance/drivers/DriversMasterDataPage.tsx",
+  // Load-assignment picker: uses dispatch-specific available-drivers endpoint with HOS/distance,
+  // not the generic listDrivers roster. Approved wrapper would lose load-aware HOS/distance sorting.
+  "apps/frontend/src/pages/dispatch/AssignDriverDropdown.tsx",
 ]);
 
 function stripComments(src) {
