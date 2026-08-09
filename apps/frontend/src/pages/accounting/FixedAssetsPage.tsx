@@ -12,6 +12,7 @@ import { ApiError } from "../../api/client";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 import { CollapsedListFilters } from "../../components/table";
 import {
   getFixedAssets, getFixedAssetDetail, registerTrkOwnedUnits,
@@ -220,7 +221,7 @@ function DetailPanel({ detail, onClose }: { detail: FixedAssetDetail; onClose: (
             )}
             {detail.unit_uuid ? (
               <p className="text-xs text-slate-600 mt-0.5">
-                Unit: <EntityLink kind="unit" id={detail.unit_uuid} label={detail.vin_serial ?? detail.unit_uuid.slice(0, 8)} />
+                Unit: <EntityLink kind="unit" id={detail.unit_uuid} label={entityLabel(detail.vin_serial, detail.unit_uuid, "Unit")} />
               </p>
             ) : null}
           </div>

@@ -9,6 +9,7 @@ import { billVendorDrillId } from "../../api/accounting";
 import { getAllocations, type AllocationListItem } from "../../api/allocations";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 import { CollapsedListFilters } from "../../components/table";
 import { useUrlSort } from "../../hooks/useUrlSort";
 import { BillAllocationPanel } from "../../components/allocation/BillAllocationPanel";
@@ -119,7 +120,7 @@ export function AllocationsPage() {
         key: "bill_number",
         label: "Bill",
         sortable: true,
-        render: (row) => <EntityLink kind="bill" id={row.bill_id} label={row.bill_number ?? row.bill_id.slice(0, 8) + "…"} />,
+        render: (row) => <EntityLink kind="bill" id={row.bill_id} label={entityLabel(row.bill_number, row.bill_id, "Bill")} />,
       },
       { key: "bill_date", label: "Bill Date", sortable: true, cellClass: "whitespace-nowrap", render: (row) => fmtDate(row.bill_date) },
       {
