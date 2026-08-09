@@ -156,6 +156,9 @@ function moduleTouchRe(moduleId: string): RegExp {
   if (moduleId === "safety") {
     return /\bsafety\b|\baccident|\bdvir\b|\bhos\b|\bfine\b|\bescrow\b|\bcargo[\s_-]?claim|\bdamage[\s_-]?report/i;
   }
+  if (moduleId === "insurance") {
+    return /\binsurance\b|\bpolic(y|ies)\b|\bclaims?\b|\blawsuits?\b|\bcoverage[\s_-]?gap/i;
+  }
   // maintenance (default)
   return /maintenance|\bwork[\s_-]?order|\bwos?\b|\bmaint\b/i;
 }

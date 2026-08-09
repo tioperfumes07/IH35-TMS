@@ -12,6 +12,7 @@ import { useQuery } from "@tanstack/react-query";
 import { resolveApiUrl } from "../../api/client";
 import maintRequired from "@scoreboard/modules/maintenance.required.json";
 import safetyRequired from "@scoreboard/modules/safety.required.json";
+import insuranceRequired from "@scoreboard/modules/insurance.required.json";
 import { ProgramModuleNav } from "./ProgramModuleNav";
 
 type Tri = "done" | "audited" | "unaudited" | "na";
@@ -61,14 +62,15 @@ type LiveMatrix = {
   meta?: { honesty?: string; prodReadAt?: string };
 };
 
-type MatrixModuleId = "maintenance" | "safety";
+type MatrixModuleId = "maintenance" | "safety" | "insurance";
 
 const REQUIRED_BY_MODULE: Record<MatrixModuleId, RequiredMap> = {
   maintenance: maintRequired as RequiredMap,
   safety: safetyRequired as RequiredMap,
+  insurance: insuranceRequired as RequiredMap,
 };
 
-const LIVE_MODULES: MatrixModuleId[] = ["maintenance", "safety"];
+const LIVE_MODULES: MatrixModuleId[] = ["maintenance", "safety", "insurance"];
 
 const MODULES = [
   "Home", "Dispatch", "Drivers", "Fleet", "Trailers", "Maintenance", "Safety", "Insurance",
@@ -148,6 +150,15 @@ function leafPct(cells: Tri[]): number {
 }
 
 function sectionForLeaf(moduleId: MatrixModuleId, leaf: RequiredLeaf): string {
+  if (moduleId === "insurance") {
+    if (leaf.id === "landing") return "Insurance home";
+    if (leaf.id.startsWith("policies.")) return "Policies";
+    if (leaf.id.startsWith("type_catalog.")) return "Type Catalog";
+    if (leaf.id.startsWith("coverage_gaps")) return "Coverage Gaps";
+    if (leaf.id.startsWith("claims.")) return "Claims";
+    if (leaf.id.startsWith("lawsuits.")) return "Lawsuits";
+    return "Insurance";
+  }
   if (moduleId === "safety") {
     if (leaf.id.startsWith("driver_files") || leaf.id.startsWith("drug") || leaf.id.startsWith("safety_meet") || leaf.id.startsWith("training")) {
       return "Driver Files & Training";
@@ -260,11 +271,14 @@ function boardMetrics(map: RequiredMap, rows: Row[], live: LiveMatrix | null) {
 
 function parseModule(raw: string | null): MatrixModuleId {
   if (raw === "safety") return "safety";
+  if (raw === "insurance") return "insurance";
   return "maintenance";
 }
 
 function titleCase(id: MatrixModuleId): string {
-  return id === "safety" ? "Safety" : "Maintenance";
+  if (id === "safety") return "Safety";
+  if (id === "insurance") return "Insurance";
+  return "Maintenance";
 }
 
 async function fetchModuleMatrix(moduleId: MatrixModuleId): Promise<LiveMatrix | null> {

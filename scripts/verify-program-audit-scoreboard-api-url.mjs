@@ -161,17 +161,22 @@ export function assertScoreboardContract(sources) {
     if (!/module-matrix-sample-banner/.test(matrixPage)) {
       problems.push(`${matrixPageRel}: must keep SAMPLE/unavailable banner when API fails`);
     }
-    if (!/safety\.required\.json/.test(matrixPage) || !/maintenance\.required\.json/.test(matrixPage)) {
+    if (
+      !/safety\.required\.json/.test(matrixPage) ||
+      !/maintenance\.required\.json/.test(matrixPage) ||
+      !/insurance\.required\.json/.test(matrixPage)
+    ) {
       problems.push(
-        `${matrixPageRel}: must import maintenance + safety Required maps (module-by-module board)`,
+        `${matrixPageRel}: must import maintenance + safety + insurance Required maps (module-by-module board)`,
       );
     }
     if (
       !/module-matrix-module-rail/.test(matrixPage) ||
-      (!/module-matrix-pill-safety/.test(matrixPage) && !/module-matrix-pill-\$\{id\}/.test(matrixPage))
+      (!/module-matrix-pill-safety/.test(matrixPage) && !/module-matrix-pill-\$\{id\}/.test(matrixPage)) ||
+      (!/module-matrix-pill-insurance/.test(matrixPage) && !/LIVE_MODULES/.test(matrixPage))
     ) {
       problems.push(
-        `${matrixPageRel}: must expose clickable Safety pill on module rail (MATRIX-REQ-SAFETY)`,
+        `${matrixPageRel}: must expose clickable Safety + Insurance pills on module rail (MATRIX-REQ-SAFETY / MATRIX-REQ-INSURANCE)`,
       );
     }
     if (!/picker_law|qbo_chrome|connectivity|reverse_link/.test(matrixPage)) {
@@ -181,7 +186,7 @@ export function assertScoreboardContract(sources) {
     }
   }
 
-  for (const mod of ["maintenance", "safety"]) {
+  for (const mod of ["maintenance", "safety", "insurance"]) {
     const mapRel = `docs/specs/scoreboard/modules/${mod}.required.json`;
     const mapPath = path.join(ROOT, mapRel);
     if (!fs.existsSync(mapPath)) {
@@ -204,9 +209,9 @@ export function assertScoreboardContract(sources) {
     }
   }
 
-  if (route && !/module=maintenance\|safety|SUPPORTED|safety/.test(route)) {
+  if (route && !/module=maintenance\|safety\|insurance|SUPPORTED.*insurance|insurance/.test(route)) {
     problems.push(
-      `${routeRel}: module-matrix route must allow module=maintenance|safety (not maintenance-only)`,
+      `${routeRel}: module-matrix route must allow module=maintenance|safety|insurance`,
     );
   }
 
