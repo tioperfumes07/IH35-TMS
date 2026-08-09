@@ -171,10 +171,11 @@ export function assertScoreboardContract(sources) {
       !/dispatch\.required\.json/.test(matrixPage) ||
       !/fuel\.required\.json/.test(matrixPage) ||
       !/drivers\.required\.json/.test(matrixPage) ||
+      !/fleet\.required\.json/.test(matrixPage) ||
       !/settlements\.required\.json/.test(matrixPage)
     ) {
       problems.push(
-        `${matrixPageRel}: must import all live Required maps through fuel/settlements`,
+        `${matrixPageRel}: must import all live Required maps through fleet/settlements`,
       );
     }
     if (
@@ -193,7 +194,19 @@ export function assertScoreboardContract(sources) {
     }
   }
 
-  for (const mod of ["maintenance", "safety", "insurance", "legal", "accounting", "banking", "dispatch", "settlements", "fuel", "drivers"]) {
+  for (const mod of [
+    "maintenance",
+    "safety",
+    "insurance",
+    "legal",
+    "accounting",
+    "banking",
+    "dispatch",
+    "settlements",
+    "fuel",
+    "drivers",
+    "fleet",
+  ]) {
     const mapRel = `docs/specs/scoreboard/modules/${mod}.required.json`;
     const mapPath = path.join(ROOT, mapRel);
     if (!fs.existsSync(mapPath)) {
@@ -244,6 +257,35 @@ export function assertScoreboardContract(sources) {
           }
         }
       }
+      // MATRIX-REQ-FLEET — stub map is FAIL. Must mirror /fleet roster + profiles + modals.
+      if (mod === "fleet") {
+        const leafIds = new Set((map.leaves ?? []).map((l) => l.id));
+        if ((map.leaves ?? []).length < 55) {
+          problems.push(
+            `${mapRel}: Fleet Required map must have ≥55 leaves (roster + unit/trailer profiles + edit modals + unit detail) — got ${(map.leaves ?? []).length}`,
+          );
+        }
+        for (const need of [
+          "home.roster",
+          "home.create_unit",
+          "home.create_trailer",
+          "roster.bulk.status",
+          "unit.profile.identity",
+          "unit.profile.driver_assign",
+          "unit.profile.financial_pl",
+          "unit.edit.identity",
+          "unit.detail.finance_linkage",
+          "trailer.profile.identity",
+          "trailer.status_change",
+          "trailer.edit",
+          "transfers.in_progress",
+          "map.redirect",
+        ]) {
+          if (!leafIds.has(need)) {
+            problems.push(`${mapRel}: missing Fleet leaf ${need} (FleetHomePage / profiles / modals)`);
+          }
+        }
+      }
     } catch (e) {
       problems.push(`${mapRel}: invalid JSON (${e instanceof Error ? e.message : e})`);
     }
@@ -275,10 +317,12 @@ export function assertScoreboardContract(sources) {
 
   if (
     route &&
-    !/module=maintenance\|safety\|insurance\|legal\|accounting\|banking\|dispatch|SUPPORTED.*dispatch|dispatch/.test(route)
+    !/module=maintenance\|safety\|insurance\|legal\|accounting\|banking\|dispatch\|settlements\|fuel\|drivers\|fleet|SUPPORTED.*fleet|dispatch/.test(
+      route,
+    )
   ) {
     problems.push(
-      `${routeRel}: module-matrix route must allow module=maintenance|safety|insurance|legal|accounting|banking|dispatch`,
+      `${routeRel}: module-matrix route must allow module=maintenance|safety|insurance|legal|accounting|banking|dispatch|settlements|fuel|drivers|fleet`,
     );
   }
 

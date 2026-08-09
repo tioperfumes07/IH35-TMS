@@ -303,6 +303,9 @@ function moduleTouchRe(moduleId: string): RegExp {
   if (moduleId === "drivers") {
     return /\bdrivers?\b|\bcdl\b|\bpay[\s_-]?rate|\bdeductions?\b|\bapplicants?\b/i;
   }
+  if (moduleId === "fleet") {
+    return /\bfleet\b|\bunits?\b|\btrailers?\b|\bequipment\b|\bvehicle\b|\btruck\b|\bsamsara\b/i;
+  }
   return /maintenance|\bwork[\s_-]?order|\bwos?\b|\bmaint\b/i;
 }
 
