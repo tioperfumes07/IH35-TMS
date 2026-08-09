@@ -1,12 +1,39 @@
 #!/usr/bin/env node
 import fs from "node:fs";
+import path from "node:path";
 
-function read(path) {
-  return fs.readFileSync(path, "utf8");
+function read(filePath) {
+  return fs.readFileSync(filePath, "utf8");
 }
 
 function assertIncludes(source, needle, message) {
   if (!source.includes(needle)) throw new Error(message);
+}
+
+function stripComments(src) {
+  return src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
+}
+
+function walkTsx(dir, out = []) {
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      if (entry.name === "__tests__") continue;
+      walkTsx(full, out);
+      continue;
+    }
+    if (!/\.tsx$/.test(entry.name)) continue;
+    if (/\.test\.tsx$/.test(entry.name)) continue;
+    out.push(full);
+  }
+  return out;
+}
+
+function hasRawOperatingCompanyId(src) {
+  // A report page must never display a raw operating_company_id UUID to the operator.
+  // API params use the bare key (operating_company_id: ...); only display sites use the dotted accessor.
+  const code = stripComments(src);
+  return /\.operating_company_id\b/.test(code);
 }
 
 try {
@@ -79,6 +106,14 @@ try {
   }
   assertIncludes(arAging, "exportArAging(", "AR aging page must call exportArAging");
   assertIncludes(apAging, "exportApAging(", "AP aging page must call exportApAging");
+
+  const reportsDir = "apps/frontend/src/pages/reports";
+  for (const file of walkTsx(reportsDir)) {
+    const rel = path.relative(process.cwd(), file).replace(/\\/g, "/");
+    if (hasRawOperatingCompanyId(read(file))) {
+      throw new Error(`${rel}: raw operating_company_id UUID visible to operator — use a human label or EntityLink`);
+    }
+  }
 
   assertIncludes(pkg, '"verify:accounting-reports-ui-contract"', "Missing npm script: verify:accounting-reports-ui-contract");
   assertIncludes(pkg, "npm run verify:accounting-reports-ui-contract", "verify:arch-design must run accounting reports UI contract guard");
