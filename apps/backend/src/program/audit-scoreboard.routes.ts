@@ -717,11 +717,11 @@ export async function registerAuditScoreboardRoutes(app: FastifyInstance) {
       const q = (req.query ?? {}) as { module?: unknown };
       const moduleId =
         typeof q.module === "string" && q.module.trim() ? q.module.trim().toLowerCase() : "maintenance";
-      const SUPPORTED = new Set(["maintenance", "safety", "insurance", "legal", "accounting"]);
+      const SUPPORTED = new Set(["maintenance", "safety", "insurance", "legal", "accounting", "banking"]);
       if (!SUPPORTED.has(moduleId)) {
         return reply.code(400).send({
           error: "unsupported_module",
-          message: `module-matrix supports module=maintenance|safety|insurance|legal|accounting (got ${moduleId}); other boards land as Required maps ship`,
+          message: `module-matrix supports module=maintenance|safety|insurance|legal|accounting|banking (got ${moduleId}); other boards land as Required maps ship`,
         });
       }
       try {
