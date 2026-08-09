@@ -35,6 +35,10 @@ const listQuerySchema = z.object({
   // row → /maintenance/active-wos?location=…&bucket=… resolves to real rows (no dead link).
   location: z.string().trim().max(200).optional(),
   bucket: z.enum(["in_house", "external", "roadside"]).optional(),
+  // LOAD-WO-REVERSE: `maintenance.work_orders.load_id` has always been written (G18 requires every
+  // diesel/roadside expense to FK a load) but nothing could ASK for a load's work orders, so the
+  // dispatch drawer had no way to show them and a trip with two repairs on it looked clean.
+  load_id: z.string().uuid().optional(),
 });
 
 const listByBucketQuerySchema = z.object({
@@ -429,10 +433,17 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
         values.push(q.status);
         where.push(`w.status = $${values.length}`);
         where.push("w.voided_at IS NULL");
-      } else if (q.equipment_id) {
+      } else if (q.equipment_id || q.load_id) {
+        // LOAD-WO-REVERSE: a load-scoped read is caller-controlled scope, same as equipment_id — a
+        // COMPLETED repair still belongs to that trip's history, so the open-only default would hide
+        // exactly the records the drawer exists to show. Voided stay hidden (void-not-delete).
         where.push("w.voided_at IS NULL");
       } else {
         where.push(openWorkOrderPredicate("w"));
+      }
+      if (q.load_id) {
+        values.push(q.load_id);
+        where.push(`w.load_id = $${values.length}`);
       }
       if (q.wo_type) {
         values.push(q.wo_type);
