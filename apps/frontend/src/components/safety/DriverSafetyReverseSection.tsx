@@ -10,6 +10,7 @@ import { useAuth } from "../../auth/useAuth";
 import { formatDateUS } from "../../lib/formatDate";
 import { formatUsd, formatUsdCents } from "../../lib/money";
 import { EntityLink } from "../shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 
 /**
  * SAF-F16 — the REVERSE half of the driver↔safety link.
@@ -161,7 +162,7 @@ export function DriverSafetyReverseSection({
             <EntityLink
               kind="safety_fine"
               id={s(fine.id) || null}
-              label={s(fine.violation_description) || s(fine.issued_by_authority) || s(fine.id).slice(0, 8)}
+              label={entityLabel(s(fine.violation_description) || s(fine.issued_by_authority) || null, s(fine.id), "Fine")}
               className="font-semibold text-slate-700"
             />
             <span className="ml-2 text-gray-600">{s(fine.status) || "open"}</span>
@@ -201,7 +202,7 @@ export function DriverSafetyReverseSection({
                 <EntityLink
                   kind="liability"
                   id={s(fine.driver_liability_id) || null}
-                  label={s(fine.driver_liability_id).slice(0, 8)}
+                  label={entityLabel(null, s(fine.driver_liability_id), "Liability")}
                   className="font-semibold text-slate-700"
                 />
               </div>

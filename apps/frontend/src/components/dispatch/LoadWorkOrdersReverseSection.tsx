@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { listWorkOrdersFiltered } from "../../api/maintenance";
 import { formatDateUS } from "../../lib/formatDate";
 import { EntityLink } from "../shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 
 /**
  * LOAD-WO-REVERSE — the load↔work-order link existed in the database and appeared on no screen.
@@ -63,7 +64,7 @@ export function LoadWorkOrdersReverseSection({
               <li key={row.id} className="text-sm text-slate-700" data-testid={`load-work-order-${row.id}`}>
                 {/* The WO display_id is the human label (WO-{UNIT}-{TYPE}-{DATE}-{NNNN}-{V5}); fall
                     back to a short id only when a row genuinely has none, never to the raw uuid. */}
-                <EntityLink kind="work_order" id={row.id} label={row.display_id || `WO ${row.id.slice(0, 8)}`} />
+                <EntityLink kind="work_order" id={row.id} label={entityLabel(row.display_id || null, row.id, "Work order")} />
                 <span className="ml-2 text-xs text-gray-500">
                   {row.opened_at ? formatDateUS(String(row.opened_at).slice(0, 10)) : "—"}
                   {` · ${row.status}`}

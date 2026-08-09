@@ -130,7 +130,7 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
         .map((row) => {
           const rec = row as { id?: unknown; display_id?: unknown };
           const id = typeof rec.id === "string" ? rec.id : "";
-          const display_id = typeof rec.display_id === "string" ? rec.display_id : id.slice(0, 8);
+          const display_id = entityLabel(typeof rec.display_id === "string" ? rec.display_id : null, id, "Record");
           return id ? { id, display_id } : null;
         })
         .filter((r): r is { id: string; display_id: string } => r != null)
@@ -144,7 +144,7 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
   });
 
   const vendorOptions: ReferenceOption[] = useMemo(
-    () => (vendorsQuery.data?.vendors ?? []).map((row) => ({ value: String(row.id), label: row.name || String(row.id).slice(0, 8) })),
+    () => (vendorsQuery.data?.vendors ?? []).map((row) => ({ value: String(row.id), label: entityLabel(row.name, String(row.id), "Vendor") })),
     [vendorsQuery.data?.vendors]
   );
 
@@ -513,7 +513,7 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
                     ? (payload.spawned_work_orders as Array<{ id?: unknown; display_id?: unknown }>)
                         .map((row) => {
                           const rid = typeof row.id === "string" ? row.id : "";
-                          const d = typeof row.display_id === "string" ? row.display_id : rid.slice(0, 8);
+                          const d = entityLabel(typeof row.display_id === "string" ? row.display_id : null, rid, "Record");
                           return rid ? { id: rid, display_id: d } : null;
                         })
                         .filter((r): r is { id: string; display_id: string } => r != null)

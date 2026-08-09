@@ -8,6 +8,7 @@ import {
 } from "../../api/safety";
 import { formatDateUS } from "../../lib/formatDate";
 import { EntityLink } from "../shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 
 /**
  * SAF-C01 — REVERSE load↔safety. Accident reports and incidents already store load_id;
@@ -72,7 +73,7 @@ export function LoadSafetyReverseSection({
               const when = row.accident_at ?? row.report_date;
               return (
                 <li key={id} className="text-sm text-slate-700" data-testid={`load-safety-accident-${id}`}>
-                  <EntityLink kind="accident" id={id} label={s(row.description) || `Accident ${id.slice(0, 8)}`} />
+                  <EntityLink kind="accident" id={id} label={entityLabel(s(row.description) || null, id, "Accident")} />
                   <span className="ml-2 text-xs text-gray-500">
                     {when ? formatDateUS(String(when).slice(0, 10)) : "—"}
                     {row.driver_name ? ` · ${s(row.driver_name)}` : ""}
@@ -140,7 +141,7 @@ function LoadSafetyEventsBlock({ companyId, loadId }: { companyId: string; loadI
                   EntityLink's contract is that every declared kind resolves to a real route, so the
                   honest render is the title plus the list link in this block's header. The missing
                   deep-link is filed rather than faked. */}
-              <span className="font-medium text-slate-900">{row.title || `Safety event ${row.id.slice(0, 8)}`}</span>
+              <span className="font-medium text-slate-900">{entityLabel(row.title || null, row.id, "Safety event")}</span>
               <span className="ml-2 text-xs text-gray-500">
                 {row.occurred_at ? formatDateUS(String(row.occurred_at).slice(0, 10)) : "—"}
                 {` · ${row.severity} · ${row.status}`}
@@ -199,7 +200,7 @@ function LoadIncidentBlock({
                 <EntityLink
                   kind={kind.type}
                   id={id}
-                  label={s(row.description) || s(row.location) || id.slice(0, 8)}
+                  label={entityLabel(s(row.description) || s(row.location) || null, id, "Event")}
                 />
                 <span className="ml-2 text-xs text-gray-500">
                   {row.incident_at ? formatDateUS(String(row.incident_at).slice(0, 10)) : "—"}
