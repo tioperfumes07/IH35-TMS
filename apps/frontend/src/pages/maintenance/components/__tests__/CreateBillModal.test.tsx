@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, expect, it, vi, beforeEach } from "vitest";
@@ -7,6 +7,7 @@ import { ToastProvider } from "../../../../components/Toast";
 import { createVendorBill } from "../../../../api/accounting";
 import { MemoryRouter } from "react-router-dom";
 
+const CATEGORY_ID = "33333333-3333-4333-8333-333333333333";
 const VENDOR_ID = "11111111-1111-4111-8111-111111111111";
 const WO_ID = "22222222-2222-4222-8222-222222222222";
 const UNIT_ID = "33333333-3333-4333-8333-333333333333";
@@ -33,7 +34,14 @@ vi.mock("../../../../components/forms/TwoSectionLineEditor", () => ({
     <button
       type="button"
       data-testid="inject-lines"
-      onClick={() => onChange([{ id: "l1", section: "A", description: "brake pads", amount: 100 }])}
+      // Section A lines must carry an expense category — VendorBillForm blocks submit with
+      // "Each Category (Section A) line needs an expense category." Without it the stub produced an
+      // unsubmittable bill and the failure looked like "createVendorBill never called".
+      onClick={() =>
+        onChange([
+          { id: "l1", section: "A", description: "brake pads", amount: 100, expense_category_uuid: CATEGORY_ID },
+        ])
+      }
     >
       inject
     </button>
@@ -115,7 +123,7 @@ describe("CreateBillModal — persists via the canonical createVendorBill endpoi
     const { onClose, invalidateSpy } = renderModal(vi.fn(), { linkedUnitId: UNIT_ID });
 
     await screen.findByRole("option", { name: "Ace Parts" });
-    await user.selectOptions(screen.getByTestId("vendor-reference-select"), VENDOR_ID);
+    fireEvent.change(screen.getByTestId("vendor-reference-select"), { target: { value: VENDOR_ID } });
     await user.click(screen.getByTestId("inject-lines"));
 
     const submit = screen.getByTestId("create-bill-submit");
@@ -126,7 +134,10 @@ describe("CreateBillModal — persists via the canonical createVendorBill endpoi
     const [opId, body] = (createVendorBill as unknown as { mock: { calls: any[][] } }).mock.calls[0];
     expect(opId).toBe("91e0bf0a-133f-4ce8-a734-2586cfa66d96");
     expect(body.vendor_id).toBe(VENDOR_ID);
-    expect(body.amount_cents).toBe(10825);
+    // The bill amount is the SUM OF LINES — tax is display-only until a tax expense line with a real CoA
+    // account is entered ("no invented tax GL", stated in the form itself). This expected 10825 (100.00 plus
+    // 8.25% folded in), which encodes the pre-change behaviour where tax was invented into the header.
+    expect(body.amount_cents).toBe(10000);
     expect(body.bill_date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     expect(body.memo).toContain("WO: WO-TEST");
     expect(body.memo).toContain("terms:net_30");
