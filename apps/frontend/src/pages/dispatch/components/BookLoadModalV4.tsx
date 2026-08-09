@@ -11,7 +11,7 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { useForm, type UseFormSetValue } from "react-hook-form";
+import { useForm, type FieldErrors, type UseFormSetValue } from "react-hook-form";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createDispatchLoad } from "../../../api/dispatch";
 import { ApiError } from "../../../api/client";
@@ -61,6 +61,27 @@ import {
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
+
+/**
+ * FAIL-D2 — human labels for the fields a blocked submit names back to the dispatcher. Only the
+ * fields that can realistically fail validation need an entry; anything unmapped falls back to the
+ * de-underscored key, which is still an honest answer and never a silent one.
+ */
+const FIELD_LABELS: Record<string, string> = {
+  customer_id: "Customer",
+  trip_type: "Trip Type",
+  rate_total_cents: "Rate",
+  stops: "Stops",
+  team_id: "Team",
+  assigned_unit_id: "Truck",
+  assigned_trailer_unit_id: "Trailer",
+  assigned_primary_driver_id: "Driver",
+  commodity: "Commodity",
+  weight_lbs: "Weight",
+  trailer_type: "Trailer type",
+  reefer_setpoint: "Reefer setpoint",
+  detention_reason_code: "Detention reason",
+};
 
 type FormValues = BookLoadFormValues & {
   load_type: "broker" | "direct";
@@ -549,6 +570,28 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
   // point every one of them funnels through, and the button disable below is the visible affordance.
   const submitInFlightRef = useRef(false);
 
+  // FAIL-D2 — silent Save. `form.handleSubmit(onValid)` aborts WITHOUT a sound when validation fails:
+  // no toast, no banner, no console line, and `submitLoad` never runs. In EDIT mode that is invisible
+  // by construction — most sections render `isEditMode ? null : …`, so an invalid field's inline error
+  // has nowhere on screen to appear and "Save changes" reads as a dead button. The same five controls
+  // that funnel into `submitLoad` must funnel into ONE invalid handler too, or the next one added
+  // re-opens the hole. Never fail silently: name the fields that blocked the write.
+  const onInvalidSubmit = useCallback(
+    (errors: FieldErrors<FormValues>) => {
+      const names = Object.keys(errors ?? {});
+      const shown = names.slice(0, 6).map((name) => FIELD_LABELS[name] ?? name.replace(/_/g, " "));
+      const more = names.length > shown.length ? ` (+${names.length - shown.length} more)` : "";
+      setGateBanner(null);
+      setSubmitErrorMessage(
+        shown.length > 0
+          ? `Not saved — these fields blocked it: ${shown.join(", ")}${more}. Nothing was written.`
+          : "Not saved — the form did not pass validation. Nothing was written."
+      );
+      pushToast(isEditMode ? "Not saved — fix the flagged fields" : "Not booked — fix the flagged fields", "error");
+    },
+    [isEditMode, pushToast]
+  );
+
   async function submitLoad(values: FormValues, saveMode: "book_dispatch" | "draft", opts?: { override?: boolean }) {
     if (submitInFlightRef.current) return;
     submitInFlightRef.current = true;
@@ -874,7 +917,7 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
           className="flex flex-1 flex-col overflow-y-auto"
           onSubmit={form.handleSubmit(async (values) => {
             await submitLoad(values, "book_dispatch");
-          })}
+          }, onInvalidSubmit)}
         >
           {submitErrorMessage ? (
             <div className="mx-3 mt-2 rounded-sm border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-900">{submitErrorMessage}</div>
@@ -991,7 +1034,7 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
                             return;
                           }
                           await submitLoad(values, "book_dispatch", { override: true });
-                        })}
+                        }, onInvalidSubmit)}
                       >
                         Override (Owner only)
                       </Button>
@@ -1007,7 +1050,7 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
                             return;
                           }
                           await submitLoad(values, "book_dispatch", { override: true });
-                        })}
+                        }, onInvalidSubmit)}
                       >
                         Override
                       </Button>
@@ -1449,7 +1492,7 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
                         return;
                       }
                       await submitLoad(values, "book_dispatch", { override: true });
-                    })();
+                    }, onInvalidSubmit)();
                   }}
                 />
                 {/* GAP-47 — dispatch authorization gates (workflow-level, e.g. active-driver / DVIR-major /
@@ -1533,7 +1576,7 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
                   variant="secondary"
                   onClick={form.handleSubmit(async (values) => {
                     await submitLoad(values, "draft");
-                  })}
+                  }, onInvalidSubmit)}
                 >
                   Save draft
                 </Button>
