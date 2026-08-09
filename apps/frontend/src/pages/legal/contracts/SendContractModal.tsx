@@ -6,6 +6,7 @@ import { Button } from "../../../components/Button";
 import { ParityDrawer } from "../../../components/parity/ParityDrawer";
 import { useToast } from "../../../components/Toast";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { userFacingApiError } from "../../../lib/api-error-message";
 
 type Props = {
   open: boolean;
@@ -112,7 +113,7 @@ export function SendContractModal({ open, operatingCompanyId, onClose, onSent }:
       setVerifyChannel("none");
     },
     onError: (error) => {
-      pushToast(String((error as Error).message || "Failed to send contract"), "error");
+      pushToast(userFacingApiError(error, "Failed to send contract"), "error");
     },
   });
 

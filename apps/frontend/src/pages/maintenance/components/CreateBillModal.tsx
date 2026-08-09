@@ -9,6 +9,7 @@ import { EntityPicker } from "../../../components/parity/EntityPicker";
 import { ParityDrawer } from "../../../components/parity/ParityDrawer";
 import { useToast } from "../../../components/Toast";
 import type { BillTypeId } from "../../../components/forms/shared/TypeTabBar";
+import { userFacingApiError } from "../../../lib/api-error-message";
 
 type Props = {
   open: boolean;
@@ -78,7 +79,7 @@ export function CreateBillModal({
       onClose();
     },
     onError: (error) => {
-      pushToast(String((error as Error).message || "Failed to create bill"), "error");
+      pushToast(userFacingApiError(error, "Failed to create bill"), "error");
     },
   });
 

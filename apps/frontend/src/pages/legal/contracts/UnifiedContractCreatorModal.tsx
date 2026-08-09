@@ -11,6 +11,7 @@ import { getDriver, listCustomers } from "../../../api/mdata";
 import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { useListState } from "../../../components/list-state";
+import { userFacingApiError } from "../../../lib/api-error-message";
 
 // Unified bilingual contract creator (Lease / NDA / Policy / any active category).
 // Flow: doc category -> template+version (active) -> EN/ES -> fill from variable_schema
@@ -81,7 +82,7 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
       pushToast(`Standard library ready — ${res.inserted} added, ${res.already_present} already present.`, "success");
       await templatesQuery.refetch();
     },
-    onError: (error) => pushToast(String((error as Error).message || "Seed failed"), "error"),
+    onError: (error) => pushToast(userFacingApiError(error, "Seed failed"), "error"),
   });
   const noActiveTemplates =
     Boolean(operatingCompanyId) && !templatesQuery.isLoading && !templatesQuery.isError && activeTemplates.length === 0;
@@ -175,7 +176,7 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
         pushToast("Allow pop-ups to preview the draft.", "info");
       }
     },
-    onError: (error) => pushToast(String((error as Error).message || "Preview failed"), "error"),
+    onError: (error) => pushToast(userFacingApiError(error, "Preview failed"), "error"),
   });
 
   const createMutation = useMutation({
@@ -204,7 +205,7 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
       await onSaved();
       onClose();
     },
-    onError: (error) => pushToast(String((error as Error).message || "Create failed"), "error"),
+    onError: (error) => pushToast(userFacingApiError(error, "Create failed"), "error"),
   });
 
   if (!open) return null;

@@ -5,6 +5,7 @@ import { truckLeaseApi } from "../../../api/truck-lease";
 import { Button } from "../../../components/Button";
 import { ParityDrawer } from "../../../components/parity/ParityDrawer";
 import { useToast } from "../../../components/Toast";
+import { userFacingApiError } from "../../../lib/api-error-message";
 
 type Props = {
   open: boolean;
@@ -112,7 +113,7 @@ export function TruckLeaseCreatorModal({ open, operatingCompanyId, onClose, onSa
       onSaved();
       onClose();
     },
-    onError: (error) => pushToast(String((error as Error).message ?? "Failed to create lease"), "error"),
+    onError: (error) => pushToast(userFacingApiError(error, "Failed to create lease"), "error"),
   });
 
   if (!open) return null;
