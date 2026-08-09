@@ -1,3 +1,4 @@
+import { entityLabel } from "../../lib/entity-label";
 import { formatDateUS } from "../../lib/formatDate";
 import { useEffect, useMemo, useState } from "react";
 import { DatePicker } from "../../components/forms/DatePicker";
@@ -136,7 +137,11 @@ const BILL_PAYMENT_COLUMNS: ParityColumn<BillPayment>[] = [
     sortable: true,
     cellClass: "font-mono text-[10px]",
     render: (p) => (
-      <EntityLink kind="bank_account" id={p.from_bank_account_id ?? undefined} label={p.from_bank_account_id ? p.from_bank_account_id.slice(0, 8) : undefined} />
+      <EntityLink
+        kind="bank_account"
+        id={p.from_bank_account_id ?? undefined}
+        label={p.from_bank_account_id ? entityLabel(null, p.from_bank_account_id, "Bank account") : undefined}
+      />
     ),
   },
   { key: "memo", label: "Memo", sortable: true, cellClass: "text-gray-700", render: (p) => p.memo || p.reference_number || "—" },
@@ -353,7 +358,14 @@ export function BillsPage() {
   const columns = useMemo<ParityColumn<VendorBill>[]>(
     () => [
       { key: "vendor_name", label: "Vendor", sortable: true, render: (bill) => <EntityLink kind="vendor" id={billVendorDrillId(bill)} label={bill.vendor_name || bill.vendor_id} /> },
-      { key: "bill_number", label: "Bill #", sortable: true, render: (bill) => <EntityLink kind="bill" id={bill.id} label={bill.bill_number || bill.id.slice(0, 8)} /> },
+      {
+        key: "bill_number",
+        label: "Bill #",
+        sortable: true,
+        render: (bill) => (
+          <EntityLink kind="bill" id={bill.id} label={entityLabel(bill.bill_number, bill.id, "Bill")} />
+        ),
+      },
       { key: "bill_date", label: "Date", sortable: true, render: (bill) => formatDateUS(bill.bill_date) },
       { key: "amount_cents", label: "Original", sortable: true, className: "text-right", cellClass: "text-right", render: (bill) => money(bill.amount_cents) },
       { key: "paid_cents", label: "Paid", sortable: true, className: "text-right", cellClass: "text-right", render: (bill) => money(bill.paid_cents) },
@@ -598,7 +610,12 @@ export function BillsPage() {
         renderExpanded={(bill) => (
           <div className="space-y-3">
             {bill.status === "partial" ? <BillPaymentsSubTable billId={bill.id} companyId={companyId} /> : null}
-            <TasksTab operatingCompanyId={companyId} targetType="bill" targetId={bill.id} targetLabel={bill.bill_number || bill.id.slice(0, 8)} />
+            <TasksTab
+              operatingCompanyId={companyId}
+              targetType="bill"
+              targetId={bill.id}
+              targetLabel={entityLabel(bill.bill_number, bill.id, "Bill")}
+            />
           </div>
         )}
         emptyText="No bills found."
@@ -638,7 +655,7 @@ export function BillsPage() {
         <BillAllocationPanel
           companyId={companyId}
           billId={allocationBill.id}
-          billLabel={`${allocationBill.vendor_name || allocationBill.vendor_id || "Vendor"} · ${allocationBill.bill_number || allocationBill.id.slice(0, 8)}`}
+          billLabel={`${entityLabel(allocationBill.vendor_name, allocationBill.vendor_id, "Vendor")} · ${entityLabel(allocationBill.bill_number, allocationBill.id, "Bill")}`}
           billAmountCents={allocationBill.amount_cents}
         />
       ) : null}
