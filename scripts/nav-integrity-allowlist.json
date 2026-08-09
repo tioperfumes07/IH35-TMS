@@ -99,6 +99,10 @@
     {
       "path": "/program/legacy-board",
       "reason": "Old Audit-Truth Program board ARCHIVED (FIX-10) \u2014 /program now defaults to the clean Program Tracker; legacy board kept reachable, linked from the tracker header (non-sidebar)"
+    },
+    {
+      "path": "/program/matrix",
+      "reason": "Module Matrix preview page; reachable via the ProgramModuleNav tab row inside /program/* (non-sidebar)"
     }
   ],
   "BLOCK_43_TODO": [
