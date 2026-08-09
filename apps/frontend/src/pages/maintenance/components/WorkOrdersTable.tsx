@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import type { WorkOrder } from "../../../api/maintenance";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { entityLabel } from "../../../lib/entity-label";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { Button } from "../../../components/Button";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
@@ -124,9 +125,28 @@ export function WorkOrdersTable({
     {
       key: "driver_id",
       label: "Driver",
-      render: (row) => <EntityLink kind="driver" id={row.driver_id ?? undefined} label={row.driver_id ? row.driver_id.slice(0, 8) : undefined} />,
+      render: (row) => (
+        <EntityLink
+          kind="driver"
+          id={row.driver_id ?? undefined}
+          label={row.driver_id ? entityLabel(null, row.driver_id, "Driver") : undefined}
+        />
+      ),
     },
-    { key: "external_vendor_id", label: "Vendor", render: (row) => row.external_vendor_id ? <EntityLink kind="vendor" id={row.external_vendor_id} label={row.external_vendor_id.slice(0, 8)} /> : "—" },
+    {
+      key: "external_vendor_id",
+      label: "Vendor",
+      render: (row) =>
+        row.external_vendor_id ? (
+          <EntityLink
+            kind="vendor"
+            id={row.external_vendor_id}
+            label={entityLabel(null, row.external_vendor_id, "Vendor")}
+          />
+        ) : (
+          "—"
+        ),
+    },
     { key: "status", label: "Status", sortable: true },
     { key: "total_actual_cost", label: "Cost", sortable: true, render: (row) => money((row as Record<string, unknown>).total_actual_cost) },
     { key: "timing", label: "Timing", render: (row) => renderDuration(row) },

@@ -2,6 +2,7 @@ import { useMemo, useState, type ReactNode } from "react";
 import { useInfiniteQuery, useMutation } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import { EntityLink, type EntityKind } from "../../components/shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 import {
   getAccountingSourceLineage,
   listAccountingAuditTrail,
@@ -91,7 +92,7 @@ function PostingEntityLink({
   if (!kind || !id) {
     return <>{label ?? id ?? ""}</>;
   }
-  return <EntityLink kind={kind} id={id} label={label ?? id.slice(0, 8)} />;
+  return <EntityLink kind={kind} id={id} label={label ?? entityLabel(null, id, "Record")} />;
 }
 
 export function AccountingAuditTrailPage() {
@@ -172,7 +173,7 @@ export function AccountingAuditTrailPage() {
                 <PostingEntityLink
                   type={row.source_transaction_type}
                   id={row.source_transaction_id}
-                  label={row.source_transaction_id.slice(0, 8)}
+                  label={entityLabel(null, row.source_transaction_id, "Source transaction")}
                 />
               </>
             ) : null}
@@ -229,7 +230,7 @@ export function AccountingAuditTrailPage() {
   const lineageColumns = useMemo<ParityColumn<AccountingSourceLineageRow>[]>(
     () => [
       { key: "occurred_at", label: "Occurred", sortable: true, render: (row) => fmtDate(row.occurred_at) },
-      { key: "journal_entry_id", label: "JE", sortable: true, render: (row) => <EntityLink kind="journal_entry" id={row.journal_entry_id} label={row.journal_entry_id?.slice(0, 8)} /> },
+      { key: "journal_entry_id", label: "JE", sortable: true, render: (row) => <EntityLink kind="journal_entry" id={row.journal_entry_id} label={row.journal_entry_id ? entityLabel(null, row.journal_entry_id, "Journal entry") : undefined} /> },
       {
         key: "account_number",
         label: "Account",
@@ -254,7 +255,7 @@ export function AccountingAuditTrailPage() {
                 <PostingEntityLink
                   type={row.linked_object_type}
                   id={row.linked_object_id}
-                  label={row.linked_object_id.slice(0, 8)}
+                  label={entityLabel(null, row.linked_object_id, "Linked object")}
                 />
               </>
             ) : null}
@@ -372,7 +373,7 @@ export function AccountingAuditTrailPage() {
             <PostingEntityLink
               type={lineageKey.source_transaction_type}
               id={lineageKey.source_transaction_id}
-              label={lineageKey.source_transaction_id.slice(0, 8)}
+              label={entityLabel(null, lineageKey.source_transaction_id, "Source transaction")}
             />
           </div>
           {lineageMut.isPending ? <div className="text-xs text-slate-500">Loading lineage…</div> : null}

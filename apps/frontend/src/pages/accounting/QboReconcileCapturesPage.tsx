@@ -7,6 +7,7 @@ import { useState, type ReactNode } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { EntityLink, type EntityKind } from "../../components/shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useFeatureFlag } from "../../hooks/useFeatureFlag";
@@ -91,7 +92,7 @@ function TmsEntityLink({
   if (!kind || !entityId) {
     return <>{label ?? entityId ?? "—"}</>;
   }
-  return <EntityLink kind={kind} id={entityId} label={label ?? entityId.slice(0, 8)} />;
+  return <EntityLink kind={kind} id={entityId} label={label ?? entityLabel(null, entityId, "Record")} />;
 }
 
 type Tab = "overview" | "captures" | "conflicts" | "runs" | "exceptions";
@@ -251,7 +252,7 @@ const CAPTURE_COLUMNS: Array<ParityColumn<QboModifyCapture>> = [
               <TmsEntityLink
                 entityType={row.applied_to_tms_entity_table ?? row.qbo_entity_type}
                 entityId={row.applied_to_tms_entity_id}
-                label={row.applied_to_tms_entity_id.slice(0, 8)}
+                label={entityLabel(null, row.applied_to_tms_entity_id, "TMS entity")}
               />
             </span>
           ) : row.applied_to_tms_entity_table ? (
@@ -462,7 +463,7 @@ function ConflictsTab({ companyId }: { companyId: string }) {
                       <TmsEntityLink
                         entityType={conflict.entity_type}
                         entityId={conflict.entity_id}
-                        label={conflict.entity_id.slice(0, 8)}
+                        label={entityLabel(null, conflict.entity_id, "Entity")}
                       />
                     </span>
                     {conflict.qbo_id ? (
