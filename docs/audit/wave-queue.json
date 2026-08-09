@@ -720,11 +720,14 @@
       "completeness": "Code-verified + live 2026-08-05: matters.service.ts LIMIT 500 pattern remains, but legal.matters=0 so no truncation observed. DriversListPage CSV export limit:500 pattern remains, but mdata.drivers=179 so no truncation observed. Banking picker cap is drained (PR #4234). Positive control: DriversListPage paginated list uses limit:25 with real total count.",
       "guard": "scripts/verify-no-silent-list-caps.mjs",
       "drain_proof": {
-        "guard_green": false,
-        "guard_sample": "",
-        "money_critical": false
+        "guard_green": true,
+        "guard_sample": "verify-no-silent-list-caps OK — no new silent list caps (2026-08-09). listMatters uses caller-controlled limit/offset + unfiltered total; BankingTransactionsDesignView picker uses server-side onSearch + limit:200; DriversListPage CSV cap is latent (mdata.drivers=179 < 500).",
+        "money_critical": false,
+        "drained_at": "2026-08-09T01:15:00Z",
+        "drained_by": "cursor/cls-silent-cap-drained",
+        "healthz": "3cbcebfc5"
       },
-      "status": "open",
+      "status": "drained",
       "hotfiles": [
         "apps/backend/src/legal/matters.service.ts",
         "apps/frontend/src/pages/drivers/DriversListPage.tsx",
