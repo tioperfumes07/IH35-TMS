@@ -162,6 +162,9 @@ function moduleTouchRe(moduleId: string): RegExp {
   if (moduleId === "legal") {
     return /\blegal\b|\bmatters?\b|\bcontracts?\b|\battorney|\btemplates?\b/i;
   }
+  if (moduleId === "accounting") {
+    return /\baccounting\b|\bbills?\b|\bexpenses?\b|\binvoices?\b|\bjournal|\bcoa\b|\bgl\b|\bfactoring\b|\bescrow\b/i;
+  }
   // maintenance (default)
   return /maintenance|\bwork[\s_-]?order|\bwos?\b|\bmaint\b/i;
 }

@@ -1,0 +1,550 @@
+{
+  "module": "accounting",
+  "entity_default": "USMCA",
+  "source": {
+    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md — Accounting grouped sub-nav",
+    "nav": "apps/frontend/src/pages/accounting/subnav-manifest.ts",
+    "routes": "/accounting/*"
+  },
+  "columns": [
+    {
+      "id": "driver",
+      "group": "linkage",
+      "label": "Driver"
+    },
+    {
+      "id": "customer",
+      "group": "linkage",
+      "label": "Customer"
+    },
+    {
+      "id": "vendor",
+      "group": "linkage",
+      "label": "Vendor"
+    },
+    {
+      "id": "unit",
+      "group": "linkage",
+      "label": "Unit"
+    },
+    {
+      "id": "trailer",
+      "group": "linkage",
+      "label": "Trailer"
+    },
+    {
+      "id": "load",
+      "group": "linkage",
+      "label": "Load"
+    },
+    {
+      "id": "ap_bill",
+      "group": "money",
+      "label": "AP / Bill"
+    },
+    {
+      "id": "expense",
+      "group": "money",
+      "label": "Expense"
+    },
+    {
+      "id": "gl_je",
+      "group": "money",
+      "label": "GL / JE"
+    },
+    {
+      "id": "inventory",
+      "group": "money",
+      "label": "Inventory"
+    },
+    {
+      "id": "liability",
+      "group": "money",
+      "label": "Liability / Escrow"
+    },
+    {
+      "id": "picker_law",
+      "group": "chrome",
+      "label": "Picker +Add new"
+    },
+    {
+      "id": "qbo_chrome",
+      "group": "chrome",
+      "label": "QBO chrome"
+    },
+    {
+      "id": "connectivity",
+      "group": "wiring",
+      "label": "Connectivity"
+    },
+    {
+      "id": "reverse_link",
+      "group": "wiring",
+      "label": "Reverse link"
+    },
+    {
+      "id": "scenario.maintenance",
+      "group": "process",
+      "label": "Maint WO"
+    }
+  ],
+  "leaves": [
+    {
+      "id": "home",
+      "tab": "Accounting",
+      "sub": "Hub / KPIs",
+      "route_hint": "/accounting",
+      "required": [
+        "connectivity",
+        "gl_je",
+        "ap_bill",
+        "expense"
+      ]
+    },
+    {
+      "id": "bills.list",
+      "tab": "Bills",
+      "sub": "Bills list",
+      "route_hint": "/accounting/bills",
+      "required": [
+        "vendor",
+        "load",
+        "unit",
+        "driver",
+        "ap_bill",
+        "gl_je",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "bills.create.vendor",
+      "tab": "Bills",
+      "sub": "+ Create Vendor Bill",
+      "route_hint": "/accounting/bills/vendor",
+      "required": [
+        "vendor",
+        "load",
+        "unit",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "bills.create.maintenance",
+      "tab": "Bills",
+      "sub": "+ Maintenance Bill",
+      "route_hint": "/accounting/bills/maintenance",
+      "required": [
+        "vendor",
+        "unit",
+        "driver",
+        "ap_bill",
+        "gl_je",
+        "inventory",
+        "scenario.maintenance",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "bills.create.fuel",
+      "tab": "Bills",
+      "sub": "+ Fuel Bill",
+      "route_hint": "/accounting/bills/fuel",
+      "required": [
+        "vendor",
+        "unit",
+        "driver",
+        "load",
+        "ap_bill",
+        "gl_je",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "bills.create.driver",
+      "tab": "Bills",
+      "sub": "+ Driver Bill",
+      "route_hint": "/accounting/bills/driver",
+      "required": [
+        "driver",
+        "load",
+        "unit",
+        "ap_bill",
+        "gl_je",
+        "liability",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "bills.multiple",
+      "tab": "Bills",
+      "sub": "Create Multiple Bills",
+      "route_hint": "/accounting/bills/multiple",
+      "required": [
+        "vendor",
+        "ap_bill",
+        "gl_je",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "bills.recurring",
+      "tab": "Bills",
+      "sub": "Recurring Bills",
+      "route_hint": "/accounting/bills/recurring",
+      "required": [
+        "vendor",
+        "ap_bill",
+        "connectivity",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "bills.detail",
+      "tab": "Bills",
+      "sub": "Bill detail",
+      "route_hint": "/accounting/bills/:id",
+      "required": [
+        "vendor",
+        "ap_bill",
+        "gl_je",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "expenses.list",
+      "tab": "Expenses",
+      "sub": "Expenses list",
+      "route_hint": "/accounting/expenses/list",
+      "required": [
+        "vendor",
+        "expense",
+        "gl_je",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "expenses.create",
+      "tab": "Expenses",
+      "sub": "+ Create Expense",
+      "route_hint": "/accounting/expenses",
+      "required": [
+        "vendor",
+        "customer",
+        "unit",
+        "driver",
+        "load",
+        "expense",
+        "gl_je",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "expenses.detail",
+      "tab": "Expenses",
+      "sub": "Expense detail",
+      "route_hint": "/accounting/expenses/:id",
+      "required": [
+        "vendor",
+        "expense",
+        "gl_je",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "bill_payments.list",
+      "tab": "Bill Payment",
+      "sub": "Bill payments list",
+      "route_hint": "/accounting/bill-payments",
+      "required": [
+        "vendor",
+        "ap_bill",
+        "gl_je",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "bill_payments.create",
+      "tab": "Bill Payment",
+      "sub": "+ Create Bill Payment",
+      "route_hint": "/accounting/bill-payments",
+      "required": [
+        "vendor",
+        "ap_bill",
+        "gl_je",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "ap.aging",
+      "tab": "Bill Payment",
+      "sub": "AP Aging",
+      "route_hint": "/accounting/accounts-payable",
+      "required": [
+        "vendor",
+        "ap_bill",
+        "connectivity"
+      ]
+    },
+    {
+      "id": "vendors",
+      "tab": "Vendors",
+      "sub": "Vendors list / create",
+      "route_hint": "/accounting/vendors",
+      "required": [
+        "vendor",
+        "connectivity",
+        "picker_law",
+        "qbo_chrome",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "customers",
+      "tab": "Customers",
+      "sub": "Customers list / create",
+      "route_hint": "/accounting/customers",
+      "required": [
+        "customer",
+        "connectivity",
+        "picker_law",
+        "qbo_chrome",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "invoices.list",
+      "tab": "Invoices",
+      "sub": "Invoices list",
+      "route_hint": "/accounting/invoices",
+      "required": [
+        "customer",
+        "load",
+        "gl_je",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ]
+    },
+    {
+      "id": "invoices.create",
+      "tab": "Invoices",
+      "sub": "+ Create Invoice",
+      "route_hint": "/accounting/invoices",
+      "required": [
+        "customer",
+        "load",
+        "driver",
+        "unit",
+        "gl_je",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "payments.receive",
+      "tab": "Receive Payment",
+      "sub": "+ Receive Payment",
+      "route_hint": "/accounting/payments",
+      "required": [
+        "customer",
+        "gl_je",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "collections",
+      "tab": "Collections",
+      "sub": "Collections",
+      "route_hint": "/accounting/collections",
+      "required": [
+        "customer",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "factoring.list",
+      "tab": "Factoring",
+      "sub": "Factoring list",
+      "route_hint": "/accounting/factoring",
+      "required": [
+        "customer",
+        "load",
+        "gl_je",
+        "liability",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "escrow",
+      "tab": "Escrow",
+      "sub": "Driver escrow",
+      "route_hint": "/accounting/escrow",
+      "required": [
+        "driver",
+        "liability",
+        "gl_je",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "pre_settlements",
+      "tab": "Pre-settlements",
+      "sub": "Pre-settlements",
+      "route_hint": "/accounting/pre-settlements",
+      "required": [
+        "driver",
+        "load",
+        "liability",
+        "connectivity"
+      ]
+    },
+    {
+      "id": "je.list",
+      "tab": "Journal Entries",
+      "sub": "JE list",
+      "route_hint": "/accounting/journal-entries",
+      "required": [
+        "gl_je",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "je.create",
+      "tab": "Journal Entries",
+      "sub": "+ Create Manual JE",
+      "route_hint": "/accounting/journal-entries",
+      "required": [
+        "gl_je",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "register",
+      "tab": "Account Register",
+      "sub": "Account register",
+      "route_hint": "/accounting/account-register",
+      "required": [
+        "gl_je",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "transactions",
+      "tab": "All Transactions",
+      "sub": "Find transactions",
+      "route_hint": "/accounting/transactions",
+      "required": [
+        "gl_je",
+        "connectivity",
+        "picker_law"
+      ]
+    },
+    {
+      "id": "coa",
+      "tab": "Chart of Accounts",
+      "sub": "CoA",
+      "route_hint": "/accounting/chart-of-accounts",
+      "required": [
+        "gl_je",
+        "connectivity",
+        "picker_law",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "coa_roles",
+      "tab": "CoA Roles",
+      "sub": "CoA role bindings",
+      "route_hint": "/accounting/coa-roles",
+      "required": [
+        "gl_je",
+        "connectivity"
+      ]
+    },
+    {
+      "id": "period_close",
+      "tab": "Period Close",
+      "sub": "Period close",
+      "route_hint": "/accounting/period-close",
+      "required": [
+        "gl_je",
+        "connectivity",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "month_close",
+      "tab": "Month Close",
+      "sub": "Month close",
+      "route_hint": "/accounting/month-close",
+      "required": [
+        "gl_je",
+        "connectivity"
+      ]
+    },
+    {
+      "id": "audit_trail",
+      "tab": "Audit Trail",
+      "sub": "Accounting audit trail",
+      "route_hint": "/accounting/audit-trail",
+      "required": [
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "reports",
+      "tab": "Reports",
+      "sub": "Accounting reports hub",
+      "route_hint": "/accounting/reports",
+      "required": [
+        "gl_je",
+        "ap_bill",
+        "expense",
+        "connectivity"
+      ]
+    }
+  ]
+}
