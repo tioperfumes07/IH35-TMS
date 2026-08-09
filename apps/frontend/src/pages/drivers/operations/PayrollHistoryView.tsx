@@ -11,7 +11,7 @@ export function PayrollHistoryView({ driverId, operatingCompanyId }: Props) {
       title="Payroll History"
       description="Settlement runs that paid this driver."
       columns={[
-        { key: "period_start", label: "Period Start" },
+        { key: "period_start", label: "Period Start", entityKind: "settlement", idKey: "uuid" },
         { key: "period_end", label: "Period End" },
         { key: "gross_pay", label: "Gross" },
         { key: "net_pay", label: "Net" },

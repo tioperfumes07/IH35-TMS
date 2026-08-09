@@ -83,6 +83,20 @@ for (const subView of SUB_VIEWS) {
   read(`${PAGE_DIR}/${subView.page}`);
 }
 
+// DRV-LINK-OPS-FR — ratchet both-way EntityLinks on ops history leaves that already return FKs.
+const payrollPage = read(`${PAGE_DIR}/PayrollHistoryView.tsx`);
+contains(`${PAGE_DIR}/PayrollHistoryView.tsx`, payrollPage, [
+  { pattern: /entityKind:\s*"settlement"/, label: "payroll → settlement EntityLink" },
+  { pattern: /idKey:\s*"uuid"/, label: "payroll settlement idKey=uuid" },
+]);
+const accidentPage = read(`${PAGE_DIR}/AccidentHistoryView.tsx`);
+contains(`${PAGE_DIR}/AccidentHistoryView.tsx`, accidentPage, [
+  { pattern: /entityKind:\s*"accident"/, label: "accident → accident EntityLink" },
+  { pattern: /entityKind:\s*"vendor"/, label: "accident → vendor EntityLink" },
+  { pattern: /entityKind:\s*"unit"/, label: "accident → unit EntityLink" },
+  { pattern: /entityKind:\s*"load"/, label: "accident → load EntityLink" },
+]);
+
 // OperationsDepthNav lists all 12 sub-views
 const nav = read("apps/frontend/src/components/drivers/OperationsDepthNav.tsx");
 for (const subView of SUB_VIEWS) {
