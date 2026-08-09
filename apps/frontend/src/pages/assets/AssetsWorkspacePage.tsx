@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ListErrorState } from "../../components/ListErrorState";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { entityLabel } from "../../lib/entity-label";
 import { AssetFiltersBar } from "../../components/assets/AssetFiltersBar";
 import { AssetListTable } from "../../components/assets/AssetListTable";
 import { AssetSummaryCards } from "../../components/assets/AssetSummaryCards";
@@ -41,7 +42,7 @@ function mapLifecycle(status: string | null | undefined): AssetLifecycle {
 function mapBackendAsset(row: BackendAsset): AssetRow {
   return {
     id: row.id,
-    unit_number: row.unit_code?.trim() || row.id.slice(0, 8),
+    unit_number: entityLabel(row.unit_code, row.id, "Unit"),
     vin: row.vin ?? null,
     kind: mapKind(row.asset_type),
     lifecycle: mapLifecycle(row.status),
