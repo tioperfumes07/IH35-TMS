@@ -327,6 +327,9 @@ function moduleTouchRe(moduleId: string): RegExp {
   if (moduleId === "compliance") {
     return /\bcompliance\b|\bhos\b|\b2290\b|\bproperty[\s_-]?tax|\bfilings?\b/i;
   }
+  if (moduleId === "cash-flow") {
+    return /\bcash[\s_-]?flow\b|\bforecast\b|\bprojected\b|\bdaily[\s_-]?prediction/i;
+  }
   return /maintenance|\bwork[\s_-]?order|\bwos?\b|\bmaint\b/i;
 }
 
