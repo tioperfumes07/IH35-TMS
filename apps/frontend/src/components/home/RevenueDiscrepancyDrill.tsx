@@ -82,7 +82,7 @@ export function RevenueDiscrepancyDrill({
               className="inline-flex min-h-[28px] items-center gap-1 rounded-sm px-1 py-0.5 font-medium text-[#1F2A44] underline-offset-2 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1F2A44]"
               data-testid={`revenue-drill-je-${je.journal_entry_id}`}
             >
-              <span className="font-mono">JE {je.journal_entry_id.slice(0, 8)}</span>
+              <span>{entityLabel(null, je.journal_entry_id, "Journal entry")}</span>
               <span aria-hidden="true">·</span>
               <span>{reasonLabel(je.reason)}</span>
               <span className="sr-only">

@@ -1,6 +1,7 @@
 import { Link, useParams } from "react-router-dom";
 import { LinkedBankTransactionsPanel } from "../../components/banking/LinkedBankTransactionsPanel";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 
@@ -31,7 +32,7 @@ export function LoadBankingLinkagePage() {
     <div className="space-y-4 p-4" data-testid="load-banking-linkage-page">
       <PageHeader
         title="Load · bank feed linkage"
-        breadcrumb={["Dispatch", "Loads", id.slice(0, 8), "Banking"]}
+        breadcrumb={["Dispatch", "Loads", entityLabel(null, id, "Load"), "Banking"]}
         actions={
           <EntityLink
             kind="load"
