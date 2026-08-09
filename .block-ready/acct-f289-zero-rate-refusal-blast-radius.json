@@ -1,0 +1,28 @@
+{
+  "block_id": "acct-f289-zero-rate-refusal-blast-radius",
+  "status": "BUILD",
+  "classification": "FINANCIAL",
+  "phase": "FINISH-DISPATCH-SAFETY-SETTLEMENTS",
+  "task": "ACCT-F289 (completes FAIL-I1): ACCT-F267 taught accounting/from-load.ts to REFUSE a zero-rate load (throw load_has_no_rate) rather than mint a permanently $0 invoice. The refusal is correct; its blast radius was never scoped. (1) dispatch/book-load.service.ts awaits buildInvoiceFromLoad INSIDE the booking transaction on the booking client, so the throw ROLLED THE WHOLE BOOKING BACK - a rate-late load (bookLoadRateTotalCents([]) === 0, the quicksave/rate-TBD path) could not be booked at all. Verified live on prod br-fancy-credit-akjnd07a: broker_advance_applied_cents EXISTS (so the throwing branch is the one that runs) and INVOICE_PROFORMA_PIPELINE_ENABLED is enabled=true on all three entities, expires_at NULL. (2) accounting/invoices.routes.ts translated only load_not_found, so the user's own create-invoice-from-load action answered with an opaque 500. Fix applies the policy the sibling branch already states ten lines below - an accounting projection must never block dispatch from booking a real load - by making the skip COUNTABLE (same append-only audit row, same client) and mapping the route to 422. Catch is NARROW: everything that is not load_has_no_rate still propagates. NO posting-math change, NO migration, additive only.",
+  "branch": "claude/acct-f289-zero-rate-refusal-blast-radius",
+  "lane": "CC-1",
+  "allowed_files": [
+    "apps/backend/src/dispatch/book-load.service.ts",
+    "apps/backend/src/accounting/invoices.routes.ts",
+    "scripts/verify-zero-rate-refusal-never-blocks-booking.mjs",
+    "scripts/verify-steps/2945-verify-zero-rate-refusal-never-blocks-booking.mjs",
+    ".block-ready/acct-f289-zero-rate-refusal-blast-radius.json"
+  ],
+  "acceptance": [
+    { "kind": "guard", "script": "scripts/verify-zero-rate-refusal-never-blocks-booking.mjs", "wired_into": "scripts/verify-steps/2945 (CC-1 band is n≡1 mod 4, not merely ODD — 2943 was CC-2's slot; 2945 verified free on origin/main and absent from CLAIMED-NUMBERS.json)" },
+    { "kind": "live", "assert": "guard exits 0 with 3 mutation probes proven non-inert; each probe asserts the mutation APPLIED before reading the verdict. Probe 2 (broad catch) is the load-bearing one: a bare catch would satisfy a naive is-it-caught test while swallowing every other booking failure." },
+    { "kind": "live", "assert": "prod br-fancy-credit-akjnd07a, bypass_rls in the SAME txn: 4 zero-rate loads, COMPLETE (visible 30 == n_live_tup 30, n_tup_del 0); INVOICE_PROFORMA_PIPELINE_ENABLED enabled=true x3 entities; broker_advance_applied_cents col_exists=true" },
+    { "kind": "route", "value": "POST /api/v1/accounting/invoices/from-load", "note": "load_has_no_rate now answers 422 with the load_id and the remedy, not a 500" },
+    { "kind": "design", "spec": "docs/audit/GUARD-WORKORDERS.md", "sections": ["FAIL-I1 $0 proforma"] }
+  ],
+  "linkage": "mdata.loads.rate_total_cents -> accounting.invoices (source_load_id) -> accounting.invoice_lines; booking skip -> append-only CRUD audit (accounting.invoice.proforma_skipped_no_rate) on the booking client, so it commits with the load or not at all. Reverse: the audit row carries load_id + operating_company_id + rate_total_cents, so a skipped proforma is queryable back to its load.",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [],
+  "hold": "none - coders merge on green per OWNER LAW 2026-08-03; CC-1 never merges its own money PR (Cascade merges as non-author)."
+}
