@@ -1,0 +1,369 @@
+{
+  "module": "factoring",
+  "entity_default": "USMCA",
+  "source": {
+    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md — Banking Factoring (Faro) + Accounting More Factoring/settlements + Dispatch packets/queue",
+    "nav": "apps/frontend/src/pages/factoring/FactoringHome.tsx SUBNAV + sidebar-config FACT/flyouts",
+    "routes": "/factoring* · /accounting/factoring* · /banking/factoring · /dispatch/factoring-queue"
+  },
+  "columns": [
+    {
+      "id": "driver",
+      "group": "linkage",
+      "label": "Driver"
+    },
+    {
+      "id": "customer",
+      "group": "linkage",
+      "label": "Customer"
+    },
+    {
+      "id": "vendor",
+      "group": "linkage",
+      "label": "Vendor / Factor"
+    },
+    {
+      "id": "unit",
+      "group": "linkage",
+      "label": "Unit"
+    },
+    {
+      "id": "load",
+      "group": "linkage",
+      "label": "Load"
+    },
+    {
+      "id": "ap_bill",
+      "group": "money",
+      "label": "AP / Bill"
+    },
+    {
+      "id": "expense",
+      "group": "money",
+      "label": "Expense"
+    },
+    {
+      "id": "gl_je",
+      "group": "money",
+      "label": "GL / JE"
+    },
+    {
+      "id": "liability",
+      "group": "money",
+      "label": "Liability / Reserve"
+    },
+    {
+      "id": "picker_law",
+      "group": "chrome",
+      "label": "Picker +Add new"
+    },
+    {
+      "id": "qbo_chrome",
+      "group": "chrome",
+      "label": "QBO chrome"
+    },
+    {
+      "id": "connectivity",
+      "group": "wiring",
+      "label": "Connectivity"
+    },
+    {
+      "id": "reverse_link",
+      "group": "wiring",
+      "label": "Reverse link"
+    }
+  ],
+  "leaves": [
+    {
+      "id": "home.summary",
+      "tab": "Factoring home",
+      "sub": "KPI strip + sub-nav hub",
+      "route_hint": "/factoring",
+      "required": [
+        "customer",
+        "load",
+        "gl_je",
+        "liability",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "home.reserve_tracker",
+      "tab": "Reserve Tracker",
+      "sub": "Reserve balance movements",
+      "route_hint": "/factoring/reserve-tracker",
+      "required": [
+        "customer",
+        "load",
+        "liability",
+        "gl_je",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "home.recourse_pipeline",
+      "tab": "Recourse Pipeline",
+      "sub": "Recourse returns queue",
+      "route_hint": "/factoring/recourse-pipeline",
+      "required": [
+        "customer",
+        "load",
+        "gl_je",
+        "liability",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "home.chargebacks_fees",
+      "tab": "Chargebacks & Fees",
+      "sub": "Monthly chargebacks and factor fees",
+      "route_hint": "/factoring/chargebacks-fees",
+      "required": [
+        "customer",
+        "gl_je",
+        "liability",
+        "expense",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "home.statements_settings",
+      "tab": "Statements & Settings",
+      "sub": "Factor profile + statement history",
+      "route_hint": "/factoring/statements-settings",
+      "required": [
+        "vendor",
+        "customer",
+        "gl_je",
+        "liability",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "home.faro_imports",
+      "tab": "Faro Daily Imports",
+      "sub": "Faro CSV daily import grid",
+      "route_hint": "/factoring/faro-imports",
+      "required": [
+        "customer",
+        "gl_je",
+        "liability",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "home.equipment_loans",
+      "tab": "Equipment Loans (CCG)",
+      "sub": "CCG equipment loan ledger",
+      "route_hint": "/factoring/equipment-loans",
+      "required": [
+        "vendor",
+        "unit",
+        "gl_je",
+        "liability",
+        "ap_bill",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "home.vendor_merges",
+      "tab": "Driver Vendor Merges",
+      "sub": "QBO vendor merge audit",
+      "route_hint": "/factoring/vendor-merges",
+      "required": [
+        "driver",
+        "vendor",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ]
+    },
+    {
+      "id": "submit.queue",
+      "tab": "Submission queue",
+      "sub": "Eligible invoice batch submit",
+      "route_hint": "/factoring/submit",
+      "required": [
+        "customer",
+        "load",
+        "gl_je",
+        "liability",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "batches.create",
+      "tab": "Batch wizard",
+      "sub": "Create factoring batch",
+      "route_hint": "/factoring/batches/new",
+      "required": [
+        "customer",
+        "load",
+        "gl_je",
+        "liability",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "batches.detail",
+      "tab": "Batch detail",
+      "sub": "Submitted batch drill-down",
+      "route_hint": "/factoring/batches/:id",
+      "required": [
+        "customer",
+        "load",
+        "gl_je",
+        "liability",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "factors.admin",
+      "tab": "Factor admin",
+      "sub": "Factors + customer assignment + LOR",
+      "route_hint": "/factoring/factors",
+      "required": [
+        "vendor",
+        "customer",
+        "liability",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "reserves.dashboard",
+      "tab": "Reserves dashboard",
+      "sub": "Reserve dashboard summary",
+      "route_hint": "/factoring/reserves",
+      "required": [
+        "customer",
+        "liability",
+        "gl_je",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "faro.import",
+      "tab": "Faro import",
+      "sub": "Legacy Faro import page",
+      "route_hint": "/factoring/faro-import",
+      "required": [
+        "customer",
+        "gl_je",
+        "liability",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "accounting.list",
+      "tab": "Accounting advances",
+      "sub": "Factoring advances list",
+      "route_hint": "/accounting/factoring",
+      "required": [
+        "customer",
+        "load",
+        "gl_je",
+        "liability",
+        "connectivity",
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "accounting.submit",
+      "tab": "Accounting advances",
+      "sub": "Submit factoring modal",
+      "route_hint": "/accounting/factoring",
+      "required": [
+        "customer",
+        "load",
+        "gl_je",
+        "liability",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "accounting.detail",
+      "tab": "Advance detail",
+      "sub": "Advance lifecycle + packet",
+      "route_hint": "/accounting/factoring/:id",
+      "required": [
+        "customer",
+        "load",
+        "gl_je",
+        "liability",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "accounting.factor_recon",
+      "tab": "Factor reconciliation",
+      "sub": "Factor recon workspace",
+      "route_hint": "/accounting/factor-reconciliation",
+      "required": [
+        "customer",
+        "vendor",
+        "gl_je",
+        "liability",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "banking.entry",
+      "tab": "Banking (Faro)",
+      "sub": "Banking virtual factoring entry",
+      "route_hint": "/banking/factoring",
+      "required": [
+        "customer",
+        "load",
+        "gl_je",
+        "liability",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "dispatch.queue",
+      "tab": "Dispatch queue",
+      "sub": "Factoring packet queue by load",
+      "route_hint": "/dispatch/factoring-queue",
+      "required": [
+        "customer",
+        "load",
+        "liability",
+        "connectivity",
+        "reverse_link"
+      ]
+    }
+  ]
+}

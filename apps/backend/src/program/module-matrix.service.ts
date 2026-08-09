@@ -315,6 +315,9 @@ function moduleTouchRe(moduleId: string): RegExp {
   if (moduleId === "lists") {
     return /\blists?\b|\bcatalogs?\b|\bcatalog[\s_-]?hub|\breference[\s_-]?catalog|\boem[\s_-]?parts|\bnames[\s_-]?master|\bchart[\s_-]?of[\s_-]?accounts|\bposting[\s_-]?template|\bdispatch[\s_-]?flag|\bvoid[\s_-]?cancel/i;
   }
+  if (moduleId === "factoring") {
+    return /\bfactoring\b|\bfaro\b|\bfactor[\s_-]?recon|\brecourse\b|\bchargeback|\breserve[\s_-]?movement|\badvance|\bbatch\b|\bpacket|\bletter[\s_-]?of[\s_-]?release/i;
+  }
   return /maintenance|\bwork[\s_-]?order|\bwos?\b|\bmaint\b/i;
 }
 
@@ -491,6 +494,19 @@ function leafMatchesItem(leaf: RequiredLeaf, item: CompletionItem): boolean {
   if (id === "customers") return /\bcustomers?\b/i.test(title);
   if (id === "escrow" || id === "factoring.list" || id === "pre_settlements") {
     return /\bescrow\b|\bfactoring\b|pre[\s_-]?settlement/i.test(title);
+  }
+  if (
+    id.startsWith("home.") ||
+    id.startsWith("batches.") ||
+    id.startsWith("factors.") ||
+    id.startsWith("accounting.") ||
+    id === "submit.queue" ||
+    id === "banking.entry" ||
+    id === "dispatch.queue" ||
+    id === "reserves.dashboard" ||
+    id === "faro.import"
+  ) {
+    return /\bfactoring\b|\bfaro\b|\bfactor|\brecourse|\breserve|\badvance|\bbatch|\bpacket/i.test(title);
   }
   if (id === "period_close" || id === "month_close") return /\bperiod|month[\s_-]?close|close\b/i.test(title);
   if (id === "reports") return /\breports?\b|p&l|balance\s*sheet|trial\s*balance/i.test(title);

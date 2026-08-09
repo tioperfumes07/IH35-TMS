@@ -175,10 +175,11 @@ export function assertScoreboardContract(sources) {
       !/customers\.required\.json/.test(matrixPage) ||
       !/vendors\.required\.json/.test(matrixPage) ||
       !/settlements\.required\.json/.test(matrixPage) ||
-      !/lists\.required\.json/.test(matrixPage)
+      !/lists\.required\.json/.test(matrixPage) ||
+      !/factoring\.required\.json/.test(matrixPage)
     ) {
       problems.push(
-        `${matrixPageRel}: must import all live Required maps through fleet/customers/vendors/lists/settlements`,
+        `${matrixPageRel}: must import all live Required maps through fleet/customers/vendors/lists/factoring/settlements`,
       );
     }
     if (
@@ -212,6 +213,7 @@ export function assertScoreboardContract(sources) {
     "customers",
     "vendors",
     "lists",
+    "factoring",
   ]) {
     const mapRel = `docs/specs/scoreboard/modules/${mod}.required.json`;
     const mapPath = path.join(ROOT, mapRel);
@@ -382,6 +384,35 @@ export function assertScoreboardContract(sources) {
           }
         }
       }
+      // MATRIX-REQ-FACTORING — stub map is FAIL. Must mirror real /factoring + cross-module hops.
+      if (mod === "factoring") {
+        const leafIds = new Set((map.leaves ?? []).map((l) => l.id));
+        if ((map.leaves ?? []).length < 12) {
+          problems.push(
+            `${mapRel}: Factoring Required map must have ≥12 leaves (home tabs + batches + accounting/banking/dispatch hops) — got ${(map.leaves ?? []).length}`,
+          );
+        }
+        for (const need of [
+          "home.summary",
+          "home.reserve_tracker",
+          "home.recourse_pipeline",
+          "home.chargebacks_fees",
+          "home.statements_settings",
+          "home.faro_imports",
+          "accounting.list",
+          "accounting.detail",
+          "accounting.factor_recon",
+          "dispatch.queue",
+          "submit.queue",
+          "batches.create",
+          "banking.entry",
+          "factors.admin",
+        ]) {
+          if (!leafIds.has(need)) {
+            problems.push(`${mapRel}: missing Factoring leaf ${need} (FactoringHome / manifest / sidebar flyouts)`);
+          }
+        }
+      }
     } catch (e) {
       problems.push(`${mapRel}: invalid JSON (${e instanceof Error ? e.message : e})`);
     }
@@ -413,12 +444,12 @@ export function assertScoreboardContract(sources) {
 
   if (
     route &&
-    !/module=maintenance\|safety\|insurance\|legal\|accounting\|banking\|dispatch\|settlements\|fuel\|drivers\|fleet\|customers\|vendors\|lists|SUPPORTED.*customers|SUPPORTED.*vendors|SUPPORTED.*fleet|SUPPORTED.*lists|dispatch/.test(
+    !/module=maintenance\|safety\|insurance\|legal\|accounting\|banking\|dispatch\|settlements\|fuel\|drivers\|fleet\|customers\|vendors\|lists\|factoring|SUPPORTED.*customers|SUPPORTED.*vendors|SUPPORTED.*fleet|SUPPORTED.*lists|SUPPORTED.*factoring|dispatch/.test(
       route,
     )
   ) {
     problems.push(
-      `${routeRel}: module-matrix route must allow module=maintenance|safety|insurance|legal|accounting|banking|dispatch|settlements|fuel|drivers|fleet|customers|vendors|lists`,
+      `${routeRel}: module-matrix route must allow module=maintenance|safety|insurance|legal|accounting|banking|dispatch|settlements|fuel|drivers|fleet|customers|vendors|lists|factoring`,
     );
   }
 
