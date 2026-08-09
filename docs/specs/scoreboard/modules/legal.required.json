@@ -1,0 +1,234 @@
+{
+  "module": "legal",
+  "entity_default": "USMCA",
+  "source": {
+    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md — Legal module",
+    "nav": "apps/frontend/src/pages/legal/LegalModuleTabs.tsx",
+    "routes": "/legal/*"
+  },
+  "columns": [
+    {
+      "id": "driver",
+      "group": "linkage",
+      "label": "Driver"
+    },
+    {
+      "id": "customer",
+      "group": "linkage",
+      "label": "Customer"
+    },
+    {
+      "id": "vendor",
+      "group": "linkage",
+      "label": "Vendor"
+    },
+    {
+      "id": "unit",
+      "group": "linkage",
+      "label": "Unit"
+    },
+    {
+      "id": "trailer",
+      "group": "linkage",
+      "label": "Trailer"
+    },
+    {
+      "id": "load",
+      "group": "linkage",
+      "label": "Load"
+    },
+    {
+      "id": "ap_bill",
+      "group": "money",
+      "label": "AP / Bill"
+    },
+    {
+      "id": "expense",
+      "group": "money",
+      "label": "Expense"
+    },
+    {
+      "id": "gl_je",
+      "group": "money",
+      "label": "GL / JE"
+    },
+    {
+      "id": "liability",
+      "group": "money",
+      "label": "Liability / Escrow"
+    },
+    {
+      "id": "picker_law",
+      "group": "chrome",
+      "label": "Picker +Add new"
+    },
+    {
+      "id": "qbo_chrome",
+      "group": "chrome",
+      "label": "QBO chrome"
+    },
+    {
+      "id": "connectivity",
+      "group": "wiring",
+      "label": "Connectivity"
+    },
+    {
+      "id": "reverse_link",
+      "group": "wiring",
+      "label": "Reverse link"
+    },
+    {
+      "id": "scenario.insurance",
+      "group": "process",
+      "label": "Insurance claim"
+    }
+  ],
+  "leaves": [
+    {
+      "id": "landing",
+      "tab": "Landing",
+      "sub": "Legal home",
+      "route_hint": "/legal",
+      "required": [
+        "connectivity"
+      ]
+    },
+    {
+      "id": "contracts.list",
+      "tab": "Contracts",
+      "sub": "Contract instances",
+      "route_hint": "/legal/contracts",
+      "required": [
+        "customer",
+        "vendor",
+        "driver",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ]
+    },
+    {
+      "id": "contracts.create",
+      "tab": "Contracts",
+      "sub": "+ Create Contract",
+      "route_hint": "/legal/contracts",
+      "required": [
+        "customer",
+        "vendor",
+        "driver",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "templates.list",
+      "tab": "Templates",
+      "sub": "Templates list",
+      "route_hint": "/legal/templates",
+      "required": [
+        "connectivity",
+        "picker_law",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "templates.detail",
+      "tab": "Templates",
+      "sub": "Template detail",
+      "route_hint": "/legal/templates/:id",
+      "required": [
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "policies",
+      "tab": "Policies",
+      "sub": "Legal policies",
+      "route_hint": "/legal/policies",
+      "required": [
+        "connectivity",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "attorney_review",
+      "tab": "Attorney Review",
+      "sub": "Attorney review queue",
+      "route_hint": "/legal/attorney-review",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ]
+    },
+    {
+      "id": "matters.list",
+      "tab": "Matters",
+      "sub": "Matters list",
+      "route_hint": "/legal/matters",
+      "required": [
+        "driver",
+        "customer",
+        "vendor",
+        "unit",
+        "load",
+        "connectivity",
+        "reverse_link",
+        "picker_law",
+        "scenario.insurance"
+      ]
+    },
+    {
+      "id": "matters.create",
+      "tab": "Matters",
+      "sub": "+ Create Matter",
+      "route_hint": "/legal/matters/new",
+      "required": [
+        "driver",
+        "customer",
+        "vendor",
+        "unit",
+        "load",
+        "liability",
+        "expense",
+        "gl_je",
+        "ap_bill",
+        "scenario.insurance",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "matters.detail",
+      "tab": "Matters",
+      "sub": "Matter detail",
+      "route_hint": "/legal/matters/:id",
+      "required": [
+        "driver",
+        "customer",
+        "vendor",
+        "unit",
+        "load",
+        "liability",
+        "connectivity",
+        "reverse_link",
+        "scenario.insurance"
+      ]
+    },
+    {
+      "id": "reports",
+      "tab": "Reports",
+      "sub": "Legal reports",
+      "route_hint": "/legal/reports",
+      "required": [
+        "connectivity",
+        "liability"
+      ]
+    }
+  ]
+}
