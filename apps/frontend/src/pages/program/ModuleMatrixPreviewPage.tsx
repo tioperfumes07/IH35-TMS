@@ -38,6 +38,7 @@ import docsRequired from "@scoreboard/modules/docs.required.json";
 import systemRequired from "@scoreboard/modules/system.required.json";
 import usersRequired from "@scoreboard/modules/users.required.json";
 import helpRequired from "@scoreboard/modules/help.required.json";
+import driverHubRequired from "@scoreboard/modules/driver-hub.required.json";
 import { ProgramModuleNav } from "./ProgramModuleNav";
 
 type Tri = "done" | "audited" | "unaudited" | "na";
@@ -122,7 +123,8 @@ type MatrixModuleId =
   | "docs"
   | "system"
   | "users"
-  | "help";
+  | "help"
+  | "driver-hub";
 
 const REQUIRED_BY_MODULE: Record<MatrixModuleId, RequiredMap> = {
   maintenance: maintRequired as RequiredMap,
@@ -153,6 +155,7 @@ const REQUIRED_BY_MODULE: Record<MatrixModuleId, RequiredMap> = {
   system: systemRequired as RequiredMap,
   users: usersRequired as RequiredMap,
   help: helpRequired as RequiredMap,
+  "driver-hub": driverHubRequired as RequiredMap,
 };
 
 const LIVE_MODULES: MatrixModuleId[] = [
@@ -184,6 +187,7 @@ const LIVE_MODULES: MatrixModuleId[] = [
   "system",
   "users",
   "help",
+  "driver-hub",
 ];
 
 const MODULES = [
@@ -493,6 +497,7 @@ function parseModule(raw: string | null): MatrixModuleId {
   if (raw === "system") return "system";
   if (raw === "users") return "users";
   if (raw === "help") return "help";
+  if (raw === "driver-hub" || raw === "driver_hub" || raw === "driverhub") return "driver-hub";
   return "maintenance";
 }
 
