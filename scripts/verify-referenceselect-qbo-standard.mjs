@@ -120,9 +120,12 @@ const drawerFiles = [
 ];
 for (const f of drawerFiles) {
   try {
-    const content = readFile(f);
+    // Strip block + line comments so historical "Previously used createQbo*" notes do not false-WARN.
+    const content = readFile(f)
+      .replace(/\/\*[\s\S]*?\*\//g, "")
+      .replace(/(^|[^:])\/\/.*$/gm, "$1");
     for (const fn of mirrorFns) {
-      if (content.includes(fn)) {
+      if (new RegExp(`\\b${fn}\\b`).test(content)) {
         console.warn(`[WARN] ${f} still uses ${fn} — separate block (not PAR-FIX-1+2 scope), but should be fixed.`);
       }
     }
