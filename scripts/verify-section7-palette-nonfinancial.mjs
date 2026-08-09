@@ -40,7 +40,7 @@ const FINANCIAL_SEGMENTS = [
 const OFF_PALETTE = /\b(bg|text|border|ring|from|to|via|divide|ring-offset|outline|decoration|placeholder|accent|fill|stroke)-(amber|emerald|green|yellow)-\d{2,3}\b/g;
 
 // Frozen count of pre-existing (grandfathered) off-palette status classes in the non-financial tree.
-const BASELINE = 474; // honest ratchet 2026-08-04 — CC-2 measured 474 on main tip post-#4344 (parent clean; zero new off-palette classes this PR)
+const BASELINE = 468; // honest ratchet 2026-08-08 — WO detail/modal dropped amber/emerald status classes (MAINT forward-links PR)
 
 function walk(dir) {
   let out = [];

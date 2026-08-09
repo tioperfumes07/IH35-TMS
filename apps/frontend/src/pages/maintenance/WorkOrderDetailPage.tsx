@@ -491,7 +491,7 @@ export function WorkOrderDetailPage() {
   }
 
   if (!companyId) {
-    return <div className="p-4 text-sm text-amber-800">Select an operating company.</div>;
+    return <div className="p-4 text-sm text-slate-700">Select an operating company.</div>;
   }
 
   if (woQ.isLoading) {
@@ -691,6 +691,75 @@ export function WorkOrderDetailPage() {
 
       <div className="grid grid-cols-1 gap-3 xl:grid-cols-[2fr_1fr]">
         <div className="space-y-3">
+          <div
+            className="rounded-sm border border-gray-200 bg-white p-4 text-sm text-gray-700"
+            data-testid="wo-detail-linkage-section"
+          >
+            <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-gray-500">Linkage (forward)</div>
+            <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+              <div>
+                <div className="text-[11px] text-gray-500">Unit</div>
+                <p>
+                  {wo.unit_id ? (
+                    <EntityLink kind="unit" id={String(wo.unit_id)} label={wo.unit_number ?? undefined} />
+                  ) : (
+                    "—"
+                  )}
+                </p>
+              </div>
+              <div>
+                <div className="text-[11px] text-gray-500">Load</div>
+                <p>
+                  {wo.load_id ? (
+                    <EntityLink
+                      kind="load"
+                      id={String(wo.load_id)}
+                      label={wo.linked_load_number ?? undefined}
+                    />
+                  ) : (
+                    "—"
+                  )}
+                </p>
+              </div>
+              <div>
+                <div className="text-[11px] text-gray-500">Roadside breakdown load</div>
+                <p>
+                  {wo.roadside_breakdown_load_id ? (
+                    <EntityLink kind="load" id={String(wo.roadside_breakdown_load_id)} />
+                  ) : (
+                    "—"
+                  )}
+                </p>
+              </div>
+              <div>
+                <div className="text-[11px] text-gray-500">Driver</div>
+                <p>
+                  {wo.driver_id ? <EntityLink kind="driver" id={String(wo.driver_id)} /> : "—"}
+                </p>
+              </div>
+              <div>
+                <div className="text-[11px] text-gray-500">Vendor</div>
+                <p>
+                  {wo.external_vendor_id ? (
+                    <EntityLink kind="vendor" id={String(wo.external_vendor_id)} />
+                  ) : (
+                    "—"
+                  )}
+                </p>
+              </div>
+              <div>
+                <div className="text-[11px] text-gray-500">Insurance claim</div>
+                <p>
+                  {wo.insurance_claim_id ? (
+                    <EntityLink kind="claim" id={String(wo.insurance_claim_id)} />
+                  ) : (
+                    "—"
+                  )}
+                </p>
+              </div>
+            </div>
+          </div>
+
           <div className="rounded-sm border border-gray-200 bg-white p-4 text-sm text-gray-700">
             <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
               <div>
@@ -717,8 +786,9 @@ export function WorkOrderDetailPage() {
                 </SelectCombobox>
               </div>
             </div>
-            <div className="mt-3 rounded-sm border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-900">
-              Asset + line save wiring will call MAINT-11 mutation contract once backend PR is merged.
+            <div className="mt-3 rounded-sm border border-slate-200 bg-slate-50 px-2 py-1 text-xs text-slate-700">
+              Use Edit to PATCH header fields (unit, load, vendor, complaint). Line persist uses POST
+              /work-orders/:id/line-items — save from Edit when changing parts/labor.
             </div>
           </div>
 
@@ -734,7 +804,10 @@ export function WorkOrderDetailPage() {
               onChange={setLineDraft}
               partsLaborMode="parts-and-labor"
             />
-            <div className="mt-2 text-xs text-gray-500">Line updates are local preview until MAINT-11 save endpoint is available.</div>
+            <div className="mt-2 text-xs text-slate-600">
+              Preview drafts locally until you save via Edit (line-items endpoint). Linked bills/expenses
+              on the right are live reverse drills.
+            </div>
           </div>
 
           {id && companyId ? <LaborTracker workOrderId={id} operatingCompanyId={companyId} /> : null}

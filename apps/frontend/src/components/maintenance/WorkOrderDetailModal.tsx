@@ -48,9 +48,9 @@ export function WorkOrderDetailModal({ open, workOrder, canRefreshDisplayId, onR
     roadsideResponse <= 0
       ? "text-gray-700"
       : roadsideResponse < 60
-        ? "text-emerald-700"
+        ? "text-slate-700"
         : roadsideResponse <= 120
-          ? "text-amber-700"
+          ? "text-slate-600"
           : "text-red-700";
 
   const displayId = String(workOrder.display_id ?? "—");
@@ -65,6 +65,30 @@ export function WorkOrderDetailModal({ open, workOrder, canRefreshDisplayId, onR
             Source Type: <span className="rounded-sm bg-gray-200 px-1 py-0.5">{sourceType}</span>
           </div>
           <div>Status: {status}</div>
+          <div>
+            Unit:{" "}
+            {workOrder.unit_id ? (
+              <EntityLink kind="unit" id={String(workOrder.unit_id)} label={String(workOrder.unit_number ?? "") || undefined} />
+            ) : (
+              "—"
+            )}
+          </div>
+          <div>
+            Load:{" "}
+            {workOrder.load_id ? (
+              <EntityLink
+                kind="load"
+                id={String(workOrder.load_id)}
+                label={String(workOrder.linked_load_number ?? "") || undefined}
+              />
+            ) : (
+              "—"
+            )}
+          </div>
+          <div>
+            Driver:{" "}
+            {workOrder.driver_id ? <EntityLink kind="driver" id={String(workOrder.driver_id)} /> : "—"}
+          </div>
           <div>Opened: {formatDateTime(workOrder.opened_at)}</div>
           <div>Closed: {formatDateTime(workOrder.closed_at)}</div>
           <div>Duration: {formatDuration(workOrder.duration_seconds)}</div>
@@ -76,7 +100,14 @@ export function WorkOrderDetailModal({ open, workOrder, canRefreshDisplayId, onR
 
         {isExternal ? (
           <ModalSection title="External Vendor Invoice">
-            <div>Vendor: {String(workOrder.external_vendor_id ?? "—")}</div>
+            <div>
+              Vendor:{" "}
+              {workOrder.external_vendor_id ? (
+                <EntityLink kind="vendor" id={String(workOrder.external_vendor_id)} />
+              ) : (
+                "—"
+              )}
+            </div>
             <div>WO #: {String(workOrder.external_vendor_wo_number ?? "—")}</div>
             <div>Invoice #: {String(workOrder.external_vendor_invoice_number ?? "—")}</div>
             <div>Invoice Amount: {String(workOrder.external_vendor_invoice_amount ?? "—")}</div>

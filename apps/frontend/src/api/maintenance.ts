@@ -54,6 +54,9 @@ export type WorkOrder = {
   unit_number?: string | null;
   driver_id?: string | null;
   load_id?: string | null;
+  /** Snapshot string written at link time — EntityLink prefers load_id FK. */
+  linked_load_number?: string | null;
+  insurance_claim_id?: string | null;
   repair_location?: string | null;
   bucket?: "in_house" | "external" | "roadside" | null;
   description?: string | null;
