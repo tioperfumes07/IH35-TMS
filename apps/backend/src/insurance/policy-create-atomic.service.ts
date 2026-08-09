@@ -248,13 +248,13 @@ export async function createInsurancePolicyWithBills(
 
     const policyRes = await client.query<{ id: string }>(
       `INSERT INTO insurance.policy (
-         tenant_id, insurer_name, policy_number, coverage_type, coverage_type_id,
+         tenant_id, operating_company_id, insurer_name, policy_number, coverage_type, coverage_type_id,
          effective_date, expiry_date, total_premium_cents, down_payment_cents,
          installment_count, due_day, pay_day, late_fee_pct,
          insurer_email, agent_contact, status, allocation_method
        )
        VALUES (
-         $1::uuid,$2,$3,$4,$5::uuid,
+         $1::uuid,$1::uuid,$2,$3,$4,$5::uuid,
          $6::date,$7::date,$8,$9,
          $10,$11,$12,$13,$14,$15,$16,$17
        )
