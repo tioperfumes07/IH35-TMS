@@ -172,10 +172,11 @@ export function assertScoreboardContract(sources) {
       !/fuel\.required\.json/.test(matrixPage) ||
       !/drivers\.required\.json/.test(matrixPage) ||
       !/fleet\.required\.json/.test(matrixPage) ||
+      !/customers\.required\.json/.test(matrixPage) ||
       !/settlements\.required\.json/.test(matrixPage)
     ) {
       problems.push(
-        `${matrixPageRel}: must import all live Required maps through fleet/settlements`,
+        `${matrixPageRel}: must import all live Required maps through fleet/customers/settlements`,
       );
     }
     if (
@@ -206,6 +207,7 @@ export function assertScoreboardContract(sources) {
     "fuel",
     "drivers",
     "fleet",
+    "customers",
   ]) {
     const mapRel = `docs/specs/scoreboard/modules/${mod}.required.json`;
     const mapPath = path.join(ROOT, mapRel);
@@ -286,6 +288,36 @@ export function assertScoreboardContract(sources) {
           }
         }
       }
+      // MATRIX-REQ-CUSTOMERS — stub map is FAIL. Must mirror Customers list + detail tabs + create surfaces.
+      if (mod === "customers") {
+        const leafIds = new Set((map.leaves ?? []).map((l) => l.id));
+        if ((map.leaves ?? []).length < 18) {
+          problems.push(
+            `${mapRel}: Customers Required map must have ≥18 leaves (list segments + master-detail tabs + /customers/:id detail) — got ${(map.leaves ?? []).length}`,
+          );
+        }
+        for (const need of [
+          "home.roster",
+          "list.create",
+          "list.segment.preferred",
+          "list.segment.factored",
+          "md.transaction_list",
+          "md.coi_requests",
+          "detail.profile",
+          "detail.billing",
+          "detail.billing.record_payment",
+          "detail.loads",
+          "detail.contacts.create",
+          "detail.lanes.create",
+          "detail.portal_users",
+          "detail.contracts",
+          "detail.fmcsa_verify",
+        ]) {
+          if (!leafIds.has(need)) {
+            problems.push(`${mapRel}: missing Customers leaf ${need} (Customers.tsx / CustomerDetail.tsx)`);
+          }
+        }
+      }
     } catch (e) {
       problems.push(`${mapRel}: invalid JSON (${e instanceof Error ? e.message : e})`);
     }
@@ -317,12 +349,12 @@ export function assertScoreboardContract(sources) {
 
   if (
     route &&
-    !/module=maintenance\|safety\|insurance\|legal\|accounting\|banking\|dispatch\|settlements\|fuel\|drivers\|fleet|SUPPORTED.*fleet|dispatch/.test(
+    !/module=maintenance\|safety\|insurance\|legal\|accounting\|banking\|dispatch\|settlements\|fuel\|drivers\|fleet\|customers|SUPPORTED.*customers|SUPPORTED.*fleet|dispatch/.test(
       route,
     )
   ) {
     problems.push(
-      `${routeRel}: module-matrix route must allow module=maintenance|safety|insurance|legal|accounting|banking|dispatch|settlements|fuel|drivers|fleet`,
+      `${routeRel}: module-matrix route must allow module=maintenance|safety|insurance|legal|accounting|banking|dispatch|settlements|fuel|drivers|fleet|customers`,
     );
   }
 

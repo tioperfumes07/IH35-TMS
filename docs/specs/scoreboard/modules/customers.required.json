@@ -1,0 +1,618 @@
+{
+  "module": "customers",
+  "entity_default": "USMCA",
+  "source": {
+    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md — Module 8 CUSTOMERS",
+    "nav": "apps/frontend/src/pages/Customers.tsx list segments + CUSTOMER_TABS",
+    "detail": "apps/frontend/src/pages/CustomerDetail.tsx tabs",
+    "routes": "apps/frontend/src/routes/manifest.tsx /customers, /customers/:id"
+  },
+  "columns": [
+    {
+      "id": "customer",
+      "group": "linkage",
+      "label": "Customer"
+    },
+    {
+      "id": "driver",
+      "group": "linkage",
+      "label": "Driver"
+    },
+    {
+      "id": "vendor",
+      "group": "linkage",
+      "label": "Vendor"
+    },
+    {
+      "id": "unit",
+      "group": "linkage",
+      "label": "Unit"
+    },
+    {
+      "id": "trailer",
+      "group": "linkage",
+      "label": "Trailer"
+    },
+    {
+      "id": "load",
+      "group": "linkage",
+      "label": "Load"
+    },
+    {
+      "id": "ap_bill",
+      "group": "money",
+      "label": "AP / Bill"
+    },
+    {
+      "id": "expense",
+      "group": "money",
+      "label": "Expense"
+    },
+    {
+      "id": "gl_je",
+      "group": "money",
+      "label": "GL / JE"
+    },
+    {
+      "id": "liability",
+      "group": "money",
+      "label": "Liability / Escrow"
+    },
+    {
+      "id": "picker_law",
+      "group": "chrome",
+      "label": "Picker +Add new"
+    },
+    {
+      "id": "qbo_chrome",
+      "group": "chrome",
+      "label": "QBO chrome"
+    },
+    {
+      "id": "connectivity",
+      "group": "wiring",
+      "label": "Connectivity"
+    },
+    {
+      "id": "reverse_link",
+      "group": "wiring",
+      "label": "Reverse link"
+    },
+    {
+      "id": "scenario.dispatch",
+      "group": "process",
+      "label": "Dispatch load"
+    }
+  ],
+  "leaves": [
+    {
+      "id": "home.roster",
+      "tab": "All Customers",
+      "sub": "Customer roster home",
+      "route_hint": "/customers",
+      "required": [
+        "customer",
+        "load",
+        "gl_je",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ]
+    },
+    {
+      "id": "list.view_list",
+      "tab": "All Customers",
+      "sub": "List view mode",
+      "route_hint": "/customers",
+      "required": [
+        "customer",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "list.view_master_detail",
+      "tab": "All Customers",
+      "sub": "Master-detail view mode",
+      "route_hint": "/customers",
+      "required": [
+        "customer",
+        "connectivity",
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "list.segment.all",
+      "tab": "All Customers",
+      "sub": "Segment · All",
+      "route_hint": "/customers?listTab=all",
+      "required": [
+        "customer",
+        "connectivity"
+      ]
+    },
+    {
+      "id": "list.segment.preferred",
+      "tab": "By Quality Flag",
+      "sub": "Segment · Preferred",
+      "route_hint": "/customers?listTab=preferred",
+      "required": [
+        "customer",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "list.segment.watch",
+      "tab": "By Quality Flag",
+      "sub": "Segment · Watch",
+      "route_hint": "/customers?listTab=watch",
+      "required": [
+        "customer",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "list.segment.active",
+      "tab": "All Customers",
+      "sub": "Segment · Active",
+      "route_hint": "/customers?listTab=active",
+      "required": [
+        "customer",
+        "connectivity"
+      ]
+    },
+    {
+      "id": "list.segment.inactive",
+      "tab": "All Customers",
+      "sub": "Segment · Inactive",
+      "route_hint": "/customers?listTab=inactive",
+      "required": [
+        "customer",
+        "connectivity"
+      ]
+    },
+    {
+      "id": "list.segment.factored",
+      "tab": "Factoring Config",
+      "sub": "Segment · Factored",
+      "route_hint": "/customers?listTab=factored",
+      "required": [
+        "customer",
+        "vendor",
+        "gl_je",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "list.create",
+      "tab": "All Customers",
+      "sub": "+ Create Customer",
+      "route_hint": "/customers",
+      "required": [
+        "customer",
+        "vendor",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "list.sync",
+      "tab": "All Customers",
+      "sub": "QBO customer sync panel",
+      "route_hint": "/customers",
+      "required": [
+        "customer",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "list.filters",
+      "tab": "All Customers",
+      "sub": "Roster filters (type · credit status)",
+      "route_hint": "/customers",
+      "required": [
+        "customer",
+        "connectivity",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "md.transaction_list",
+      "tab": "Customer Detail",
+      "sub": "Transaction List tab",
+      "route_hint": "/customers?tab=transaction_list",
+      "required": [
+        "customer",
+        "load",
+        "gl_je",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "md.customer_details",
+      "tab": "Customer Detail",
+      "sub": "Customer Details tab",
+      "route_hint": "/customers?tab=customer_details",
+      "required": [
+        "customer",
+        "vendor",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "md.coi_requests",
+      "tab": "Customer Detail",
+      "sub": "COI Requests tab",
+      "route_hint": "/customers?tab=coi_requests",
+      "required": [
+        "customer",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "md.new_transaction",
+      "tab": "Customer Detail",
+      "sub": "New transaction (invoice hop)",
+      "route_hint": "/accounting/invoices?customer_id=",
+      "required": [
+        "customer",
+        "load",
+        "gl_je",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "md.activity_feed",
+      "tab": "Customer Detail",
+      "sub": "Activity Feed tab",
+      "route_hint": "/customers?tab=activity_feed",
+      "required": [
+        "customer",
+        "connectivity"
+      ]
+    },
+    {
+      "id": "md.statements",
+      "tab": "Customer Detail",
+      "sub": "Statements tab",
+      "route_hint": "/customers?tab=statements",
+      "required": [
+        "customer",
+        "gl_je",
+        "connectivity"
+      ]
+    },
+    {
+      "id": "md.recurring_transactions",
+      "tab": "Customer Detail",
+      "sub": "Recurring Transactions tab",
+      "route_hint": "/customers?tab=recurring_transactions",
+      "required": [
+        "customer",
+        "gl_je",
+        "connectivity"
+      ]
+    },
+    {
+      "id": "md.projects",
+      "tab": "Customer Detail",
+      "sub": "Projects tab",
+      "route_hint": "/customers?tab=projects",
+      "required": [
+        "customer",
+        "load",
+        "connectivity"
+      ]
+    },
+    {
+      "id": "md.late_fees",
+      "tab": "Customer Detail",
+      "sub": "Late Fees tab",
+      "route_hint": "/customers?tab=late_fees",
+      "required": [
+        "customer",
+        "gl_je",
+        "connectivity"
+      ]
+    },
+    {
+      "id": "md.notes",
+      "tab": "Customer Detail",
+      "sub": "Notes tab",
+      "route_hint": "/customers?tab=notes",
+      "required": [
+        "customer",
+        "connectivity"
+      ]
+    },
+    {
+      "id": "md.tasks",
+      "tab": "Customer Detail",
+      "sub": "Tasks tab",
+      "route_hint": "/customers?tab=tasks",
+      "required": [
+        "customer",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "md.opportunities",
+      "tab": "Customer Detail",
+      "sub": "Opportunities tab",
+      "route_hint": "/customers?tab=opportunities",
+      "required": [
+        "customer",
+        "connectivity"
+      ]
+    },
+    {
+      "id": "md.conversations",
+      "tab": "Customer Detail",
+      "sub": "Conversations tab",
+      "route_hint": "/customers?tab=conversations",
+      "required": [
+        "customer",
+        "connectivity"
+      ]
+    },
+    {
+      "id": "detail.profile",
+      "tab": "Customer Detail",
+      "sub": "Profile tab (/customers/:id)",
+      "route_hint": "/customers/:id",
+      "required": [
+        "customer",
+        "vendor",
+        "load",
+        "connectivity",
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "detail.contacts",
+      "tab": "Customer Detail",
+      "sub": "Contacts tab",
+      "route_hint": "/customers/:id?tab=contacts",
+      "required": [
+        "customer",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ]
+    },
+    {
+      "id": "detail.contacts.create",
+      "tab": "Customer Detail",
+      "sub": "+ Create Contact",
+      "route_hint": "/customers/:id",
+      "required": [
+        "customer",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "detail.billing",
+      "tab": "Billing & Receivables",
+      "sub": "AR aging · invoices · payments",
+      "route_hint": "/customers/:id?tab=billing",
+      "required": [
+        "customer",
+        "load",
+        "gl_je",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "detail.billing.record_payment",
+      "tab": "Billing & Receivables",
+      "sub": "Record customer payment",
+      "route_hint": "/customers/:id",
+      "required": [
+        "customer",
+        "gl_je",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "detail.quality",
+      "tab": "Quality & History",
+      "sub": "Scoring · quality events",
+      "route_hint": "/customers/:id?tab=quality",
+      "required": [
+        "customer",
+        "load",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "detail.quality.create_event",
+      "tab": "Quality & History",
+      "sub": "+ Create Event",
+      "route_hint": "/customers/:id",
+      "required": [
+        "customer",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "detail.lanes",
+      "tab": "Lanes & Pricing",
+      "sub": "Customer lanes",
+      "route_hint": "/customers/:id?tab=lanes",
+      "required": [
+        "customer",
+        "load",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ]
+    },
+    {
+      "id": "detail.lanes.create",
+      "tab": "Lanes & Pricing",
+      "sub": "+ Create Lane",
+      "route_hint": "/customers/:id",
+      "required": [
+        "customer",
+        "load",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "detail.documents",
+      "tab": "Documents",
+      "sub": "Customer documents",
+      "route_hint": "/customers/:id?tab=documents",
+      "required": [
+        "customer",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "detail.coi",
+      "tab": "COI",
+      "sub": "Certificate of insurance",
+      "route_hint": "/customers/:id?tab=coi",
+      "required": [
+        "customer",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "detail.contracts",
+      "tab": "Contracts",
+      "sub": "Customer contracts",
+      "route_hint": "/customers/:id?tab=contracts",
+      "required": [
+        "customer",
+        "load",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ]
+    },
+    {
+      "id": "detail.portal_users",
+      "tab": "Portal Users",
+      "sub": "Shipper portal logins",
+      "route_hint": "/customers/:id?tab=portal",
+      "required": [
+        "customer",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "detail.tasks",
+      "tab": "Tasks",
+      "sub": "Customer tasks",
+      "route_hint": "/customers/:id?tab=tasks",
+      "required": [
+        "customer",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "detail.loads",
+      "tab": "Loads",
+      "sub": "Customer loads list",
+      "route_hint": "/customers/:id?tab=loads",
+      "required": [
+        "customer",
+        "load",
+        "driver",
+        "unit",
+        "connectivity",
+        "reverse_link",
+        "scenario.dispatch"
+      ]
+    },
+    {
+      "id": "detail.pnl",
+      "tab": "Per-Customer P&L",
+      "sub": "Profitability report hop",
+      "route_hint": "/customers/:id?tab=pnl",
+      "required": [
+        "customer",
+        "load",
+        "gl_je",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "detail.audit",
+      "tab": "Audit History",
+      "sub": "Entity audit trail",
+      "route_hint": "/customers/:id?tab=audit",
+      "required": [
+        "customer",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "detail.edit",
+      "tab": "Customer Detail",
+      "sub": "Full Edit modal",
+      "route_hint": "/customers/:id",
+      "required": [
+        "customer",
+        "vendor",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "detail.fmcsa_verify",
+      "tab": "Pending FMCSA Auth Verification",
+      "sub": "FMCSA verification modal",
+      "route_hint": "/customers/:id",
+      "required": [
+        "customer",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
+    }
+  ]
+}
