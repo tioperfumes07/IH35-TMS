@@ -3,9 +3,11 @@ import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
 import { getTrainingCompletions } from "../../api/safety";
 import { Button } from "../Button";
+import { Combobox } from "../Combobox";
 import { Modal } from "../Modal";
 import { DatePicker } from "../forms/DatePicker";
 import { companyToday } from "../../lib/businessDate";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 type Props = {
   open: boolean;
@@ -62,6 +64,11 @@ export function AddTrainingModal({ open, driverId, companyId, driverName, onClos
     [programsQuery.data?.training_completions]
   );
 
+  const programOptions = useMemo(
+    () => programNames.map((name) => ({ value: name, label: name })),
+    [programNames],
+  );
+
   const resolvedTrainingName = trainingName === "__custom__" ? customName.trim() : trainingName.trim();
 
   const resetForm = () => {
@@ -94,8 +101,8 @@ export function AddTrainingModal({ open, driverId, companyId, driverName, onClos
       resetForm();
       onCreated?.();
       onClose();
-    } catch {
-      setError("Failed to create training record.");
+    } catch (err) {
+      setError(userFacingApiError(err, "Failed to create training record."));
     } finally {
       setPending(false);
     }
@@ -111,23 +118,26 @@ export function AddTrainingModal({ open, driverId, companyId, driverName, onClos
           void submit();
         }}
       >
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col gap-1" data-testid="add-training-program">
           <label className="text-xs font-semibold text-gray-600">Training program</label>
-          <select
-            value={trainingName}
-            onChange={(event) => setTrainingName(event.target.value)}
-            className="rounded-sm border border-gray-300 h-9 px-2 text-[13px]"
-            data-testid="add-training-program"
-            required
-          >
-            <option value="">Select program</option>
-            {programNames.map((name) => (
-              <option key={name} value={name}>
-                {name}
-              </option>
-            ))}
-            <option value="__custom__">Other (type name)</option>
-          </select>
+          {/* LST-F156: bare <select> buried "Other" at the bottom — picker law wants + Add new first. */}
+          <Combobox
+            options={programOptions}
+            value={trainingName === "__custom__" ? null : trainingName || null}
+            onChange={(next) => {
+              setTrainingName(next ?? "");
+              if (next) setCustomName("");
+            }}
+            placeholder="Select program"
+            loading={programsQuery.isLoading}
+            allowAddNew={{
+              label: "+ Add new program",
+              onAdd: () => {
+                setTrainingName("__custom__");
+                setCustomName("");
+              },
+            }}
+          />
         </div>
         {trainingName === "__custom__" ? (
           <div className="flex flex-col gap-1">
@@ -138,6 +148,7 @@ export function AddTrainingModal({ open, driverId, companyId, driverName, onClos
               className="rounded-sm border border-gray-300 h-9 px-2 text-[13px]"
               data-testid="add-training-custom-name"
               required
+              autoFocus
             />
           </div>
         ) : null}
