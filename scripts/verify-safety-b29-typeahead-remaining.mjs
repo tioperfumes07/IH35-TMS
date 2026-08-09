@@ -31,7 +31,7 @@ const CHECKS = [
   {
     file: "apps/frontend/src/pages/safety/tabs/ComplaintsTab.tsx",
     describe: "complaints respondent column uses EntityLink",
-    test: (s) => /<EntityLink kind="driver"/.test(s),
+    test: (s) => /<EntityLink\s+kind=["']driver["']/.test(s),
   },
   {
     file: "apps/frontend/src/pages/safety/TrainingProgramsPage.tsx",
@@ -67,7 +67,7 @@ const CHECKS = [
   {
     file: "apps/frontend/src/pages/safety/TrainingRecordsPage.tsx",
     describe: "training records driver column uses EntityLink",
-    test: (s) => /<EntityLink kind="driver"/.test(s),
+    test: (s) => /<EntityLink\s+kind=["']driver["']/.test(s),
   },
   {
     file: "apps/frontend/src/pages/safety/HoursOfServicePage.tsx",
@@ -100,7 +100,7 @@ const CHECKS = [
   {
     file: "apps/frontend/src/pages/safety/tabs/DrugAlcoholTab.tsx",
     describe: "drug/alcohol selected driver uses EntityLink",
-    test: (s) => /<EntityLink kind="driver"/.test(s),
+    test: (s) => /<EntityLink\s+kind=["']driver["']/.test(s),
   },
 ];
 
