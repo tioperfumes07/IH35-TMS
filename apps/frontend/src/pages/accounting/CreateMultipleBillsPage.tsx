@@ -16,6 +16,7 @@ import { coaAccountReferenceOption, vendorReferenceOption } from "../../componen
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { dueDateFromBillTerms } from "../../components/accounting/vendorBillDueDate";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 type SeedDraft = {
   bank_transaction_id?: string;
@@ -222,7 +223,7 @@ export function CreateMultipleBillsPage() {
           });
           ok += 1;
         } catch (error) {
-          failed.push({ rowId: row.id, reason: String((error as Error)?.message ?? "Failed to create bill") });
+          failed.push({ rowId: row.id, reason: userFacingApiError(error, "Failed to create bill") });
         }
       }
 
@@ -235,7 +236,7 @@ export function CreateMultipleBillsPage() {
       if (result.ok > 0) pushToast(`Created ${result.ok} bill(s)`, "success");
       if (result.failed.length > 0) pushToast(`${result.failed.length} row(s) failed`, "error");
     },
-    onError: (error) => pushToast(String((error as Error)?.message ?? "Failed to create bills"), "error"),
+    onError: (error) => pushToast(userFacingApiError(error, "Failed to create bills"), "error"),
   });
 
   const totalUsd = useMemo(

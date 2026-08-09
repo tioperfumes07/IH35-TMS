@@ -13,6 +13,7 @@ import { useEffect, useState } from "react";
 import { ParityDrawer } from "./ParityDrawer";
 import { useToast } from "../Toast";
 import type { CatalogCreateResult, CatalogPickerConfig } from "./catalogPickerRegistry";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 type Props = {
   open: boolean;
@@ -93,7 +94,7 @@ export function CatalogQuickCreateDrawer({
       onClose();
     } catch (error) {
       // No silent retry: surface the real server message so a 400 on the code format is diagnosable.
-      pushToast(String((error as Error)?.message ?? "Create failed"), "error");
+      pushToast(userFacingApiError(error, "Create failed"), "error");
     } finally {
       setSaving(false);
     }

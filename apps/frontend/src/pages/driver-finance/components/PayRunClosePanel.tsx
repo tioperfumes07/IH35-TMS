@@ -11,6 +11,7 @@ import { Button } from "../../../components/Button";
 import { PaymentMethodPicker } from "../../../components/driver-finance/PaymentMethodPicker";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
+import { userFacingApiError } from "../../../lib/api-error-message";
 import { useToast } from "../../../components/Toast";
 
 const COA_ROLES_HREF = "/accounting/settings/coa-roles";
@@ -37,7 +38,7 @@ function extractPayRunError(error: unknown): { code: string; message: string } {
       message: String(data.message ?? error.message),
     };
   }
-  return { code: "UNKNOWN", message: String((error as Error)?.message ?? error) };
+  return { code: "UNKNOWN", message: userFacingApiError(error, "Pay run failed") };
 }
 
 function isCoaDesignationError(code: string): boolean {

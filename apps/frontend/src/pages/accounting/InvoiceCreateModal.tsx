@@ -86,7 +86,7 @@ export function InvoiceCreateModal({ open, operatingCompanyId, onClose }: Props)
           <div className="space-y-3">
             {isError ? (
               <ListErrorBanner
-                message={`Failed to load invoiceable loads: ${(error as Error)?.message ?? "Request failed"}`}
+                message={`Failed to load invoiceable loads: ${userFacingApiError(error, "Request failed")}`}
                 onRetry={() => void refetchLoads()}
               />
             ) : null}

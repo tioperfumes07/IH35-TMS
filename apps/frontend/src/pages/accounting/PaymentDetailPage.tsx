@@ -18,6 +18,7 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useToast } from "../../components/Toast";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -70,7 +71,7 @@ export function PaymentDetailPage() {
       void queryClient.invalidateQueries({ queryKey: ["accounting", "invoice"] });
       setApplyOpen(false);
     },
-    onError: (error) => pushToast(String((error as Error)?.message ?? "Failed to apply payment"), "error"),
+    onError: (error) => pushToast(userFacingApiError(error, "Failed to apply payment"), "error"),
   });
 
   const unapplyMutation = useMutation({
@@ -80,7 +81,7 @@ export function PaymentDetailPage() {
       void queryClient.invalidateQueries({ queryKey: ["accounting", "payments"] });
       void queryClient.invalidateQueries({ queryKey: ["accounting", "invoice"] });
     },
-    onError: (error) => pushToast(String((error as Error)?.message ?? "Failed to unapply payment"), "error"),
+    onError: (error) => pushToast(userFacingApiError(error, "Failed to unapply payment"), "error"),
   });
 
   const voidMutation = useMutation({
@@ -90,7 +91,7 @@ export function PaymentDetailPage() {
       void queryClient.invalidateQueries({ queryKey: ["accounting", "payments"] });
       void queryClient.invalidateQueries({ queryKey: ["accounting", "invoice"] });
     },
-    onError: (error) => pushToast(String((error as Error)?.message ?? "Failed to void payment"), "error"),
+    onError: (error) => pushToast(userFacingApiError(error, "Failed to void payment"), "error"),
   });
 
   const [voidOpen, setVoidOpen] = useState(false);

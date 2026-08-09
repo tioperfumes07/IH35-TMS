@@ -17,6 +17,7 @@ import { DatePicker } from "../../components/forms/DatePicker";
 import { companyToday } from "../../lib/businessDate";
 import { entityLabel } from "../../lib/entity-label";
 import { formatBankAccountPickerLabel, type BankAccountPickerRow } from "./transferAccountPicker";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 type Props = {
   open: boolean;
@@ -187,7 +188,7 @@ export function TransferModal({ open, operatingCompanyId, onClose, onSaved, pref
       onSaved();
       onClose();
     } catch (error) {
-      pushToast(String((error as Error)?.message ?? "Failed to record transfer"), "error");
+      pushToast(userFacingApiError(error, "Failed to record transfer"), "error");
     } finally {
       setSaving(false);
     }

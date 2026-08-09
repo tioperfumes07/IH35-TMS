@@ -7,6 +7,7 @@ import { ActionButton } from "../../components/shared/ActionButton";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 export function EmailQueuePage() {
   const auth = useAuth();
@@ -32,7 +33,7 @@ export function EmailQueuePage() {
       pushToast("Email queued for retry", "success");
       await refresh();
     } catch (error) {
-      pushToast(String((error as Error)?.message ?? "Retry failed"), "error");
+      pushToast(userFacingApiError(error, "Retry failed"), "error");
     } finally {
       setProcessingId(null);
     }

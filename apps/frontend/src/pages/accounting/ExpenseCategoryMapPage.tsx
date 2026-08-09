@@ -20,6 +20,7 @@ import { useListState } from "../../components/list-state";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 const KIND_OPTIONS: ExpenseCategoryMapKind[] = [
   "fuel",
@@ -97,7 +98,7 @@ export function ExpenseCategoryMapPage() {
       await queryClient.invalidateQueries({ queryKey: ["expense-category-map", companyId] });
     },
     onError: (error) => {
-      pushToast(String((error as Error)?.message ?? "Unable to create mapping"), "error");
+      pushToast(userFacingApiError(error, "Unable to create mapping"), "error");
     },
   });
 
@@ -108,7 +109,7 @@ export function ExpenseCategoryMapPage() {
       await queryClient.invalidateQueries({ queryKey: ["expense-category-map", companyId] });
     },
     onError: (error) => {
-      pushToast(String((error as Error)?.message ?? "Unable to deactivate mapping"), "error");
+      pushToast(userFacingApiError(error, "Unable to deactivate mapping"), "error");
     },
   });
 

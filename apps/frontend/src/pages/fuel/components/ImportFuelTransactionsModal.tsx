@@ -3,6 +3,7 @@ import { importFuelTransactions } from "../../../api/fuelPlanner";
 import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
 import { useToast } from "../../../components/Toast";
+import { userFacingApiError } from "../../../lib/api-error-message";
 
 type Props = {
   open: boolean;
@@ -35,7 +36,7 @@ export function ImportFuelTransactionsModal({ open, operatingCompanyId, onClose,
       onClose();
       setFile(null);
     } catch (error) {
-      pushToast(String((error as Error)?.message || "Import failed"), "error");
+      pushToast(userFacingApiError(error, "Import failed"), "error");
     } finally {
       setLoading(false);
     }

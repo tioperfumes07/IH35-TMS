@@ -18,6 +18,7 @@ import { useUrlSort } from "../../hooks/useUrlSort";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 const UUID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi;
 function humanMemo(memo: string | null | undefined): string {
@@ -92,7 +93,7 @@ export function ManualJEListPage() {
       pushToast("Journal entry voided", "success");
       void queryClient.invalidateQueries({ queryKey: ["journal-entries", companyId] });
     },
-    onError: (error) => pushToast(String((error as Error)?.message ?? "Void failed"), "error"),
+    onError: (error) => pushToast(userFacingApiError(error, "Void failed"), "error"),
   });
 
   const columns = useMemo<ParityColumn<JournalEntry>[]>(

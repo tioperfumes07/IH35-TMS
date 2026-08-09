@@ -13,6 +13,7 @@ import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useAuth } from "../../auth/useAuth";
 import { useFeatureFlag } from "../../hooks/useFeatureFlag";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 // [HOLD-FOR-JORGE — TIER 1] Per-entity bank-account HIDE/EXCLUDE (build-and-hold, flag OFF by default).
 //
@@ -56,7 +57,7 @@ export function BankAccountVisibilityPage() {
       pushToast("Bank account hidden for this company", "success");
       void qc.invalidateQueries({ queryKey: ["banking", "accounts-all", companyId, "include-hidden"] });
     },
-    onError: (error) => pushToast(String((error as Error)?.message ?? "Hide failed"), "error"),
+    onError: (error) => pushToast(userFacingApiError(error, "Hide failed"), "error"),
     onSettled: () => setBusyId(null),
   });
 
@@ -66,7 +67,7 @@ export function BankAccountVisibilityPage() {
       pushToast("Bank account unhidden for this company", "success");
       void qc.invalidateQueries({ queryKey: ["banking", "accounts-all", companyId, "include-hidden"] });
     },
-    onError: (error) => pushToast(String((error as Error)?.message ?? "Unhide failed"), "error"),
+    onError: (error) => pushToast(userFacingApiError(error, "Unhide failed"), "error"),
     onSettled: () => setBusyId(null),
   });
 

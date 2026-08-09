@@ -13,6 +13,7 @@ import { ActionButton } from "../../components/shared/ActionButton";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 export function QboSyncQueuePage() {
   const auth = useAuth();
@@ -48,7 +49,7 @@ export function QboSyncQueuePage() {
       pushToast("Queue item moved back to pending", "success");
       await refresh();
     } catch (error) {
-      pushToast(String((error as Error)?.message ?? "Retry failed"), "error");
+      pushToast(userFacingApiError(error, "Retry failed"), "error");
     } finally {
       setProcessingId(null);
     }
@@ -62,7 +63,7 @@ export function QboSyncQueuePage() {
       pushToast("Queue item marked blocked", "success");
       await refresh();
     } catch (error) {
-      pushToast(String((error as Error)?.message ?? "Skip failed"), "error");
+      pushToast(userFacingApiError(error, "Skip failed"), "error");
     } finally {
       setProcessingId(null);
     }

@@ -17,6 +17,7 @@ import { MoneyInput } from "../../components/forms/MoneyInput";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { companyToday } from "../../lib/businessDate";
 import {
+import { userFacingApiError } from "../../lib/api-error-message";
   buildBankTransferPickerOptions,
   formatBankAccountPickerLabel,
   type BankAccountPickerRow,
@@ -248,7 +249,7 @@ export function RecordTransferModal({
       onSaved();
       onClose();
     } catch (error) {
-      pushToast(String((error as Error)?.message ?? "Failed to record transfer"), "error");
+      pushToast(userFacingApiError(error, "Failed to record transfer"), "error");
     } finally {
       setSaving(false);
     }

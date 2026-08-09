@@ -10,6 +10,7 @@ import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { coaAccountReferenceOption } from "../../components/parity/referenceOptionLabels";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 const ROLE_LABELS: Record<CoaRole, string> = {
   ar_control: "AR control",
@@ -97,7 +98,7 @@ export function CoaRolesPage() {
       await queryClient.invalidateQueries({ queryKey: ["coa-roles", "validate", companyId] });
       pushToast("CoA role mapping saved", "success");
     },
-    onError: (error) => pushToast(String((error as Error)?.message ?? "Failed to save role mapping"), "error"),
+    onError: (error) => pushToast(userFacingApiError(error, "Failed to save role mapping"), "error"),
   });
 
   const roleRows = useMemo<CoaRoleRow[]>(() => {

@@ -6,6 +6,7 @@ import { Breadcrumb } from "../../components/shared/Breadcrumb";
 import { Button } from "../../components/Button";
 import { useToast } from "../../components/Toast";
 import {
+import { userFacingApiError } from "../../lib/api-error-message";
   getProgramBoard,
   postProgramBoardNote,
   type BoardDeltas,
@@ -598,7 +599,7 @@ export function ProgramBoardPage() {
 
       {isLoading ? <div className="py-8 text-center text-sm text-slate-500">Loading board…</div> : null}
       {isError ? (
-        <div className="py-8 text-center text-sm text-red-600">Failed to load: {String((error as Error)?.message ?? "error")}</div>
+        <div className="py-8 text-center text-sm text-red-600">Failed to load: {userFacingApiError(error, "error")}</div>
       ) : null}
 
       {/* TABLE tabs */}

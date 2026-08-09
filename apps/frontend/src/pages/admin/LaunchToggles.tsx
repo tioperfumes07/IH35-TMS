@@ -6,6 +6,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 type LaunchToggle = {
   operating_company_id: string;
@@ -67,7 +68,7 @@ export function LaunchTogglesPage() {
       await queryClient.invalidateQueries({ queryKey: ["admin-launch-toggles"] });
       await queryClient.invalidateQueries({ queryKey: ["org", "my-companies"] });
     },
-    onError: (err) => setError(String((err as Error)?.message ?? err)),
+    onError: (err) => setError(userFacingApiError(err, err)),
   });
 
   const rows = togglesQuery.data?.toggles ?? [];

@@ -5,6 +5,7 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { resolveApiUrl } from "../../api/client";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 interface DispatcherStats {
   dispatcher_id: string | null;
@@ -137,7 +138,7 @@ export function BookingGapReport() {
         <ListErrorState
           title="Couldn't load booking gap report"
           status={0}
-          message={(error as Error)?.message}
+          message={userFacingApiError(error, "Request failed")}
           onRetry={() => void refetch()}
         />
       )}

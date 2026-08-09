@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { Breadcrumb } from "../../components/shared/Breadcrumb";
 import { getProgramBoard, type ProgramBoard, type ReconBlock } from "../../api/program";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 // Final Additions — the launch punch-list. Shows every remaining block that still has to be built,
 // and flips each to DONE as it ships. Completed blocks are NEVER removed — they stay, labelled DONE,
@@ -150,7 +151,7 @@ export function FinalAdditionsPage() {
 
       {isLoading ? <div className="py-8 text-center text-sm text-slate-500">Loading punch-list…</div> : null}
       {isError ? (
-        <div className="py-8 text-center text-sm text-red-600">Failed to load: {String((error as Error)?.message ?? "error")}</div>
+        <div className="py-8 text-center text-sm text-red-600">Failed to load: {userFacingApiError(error, "error")}</div>
       ) : null}
 
       {data ? (

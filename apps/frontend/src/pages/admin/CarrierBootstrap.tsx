@@ -3,6 +3,7 @@ import { resolveApiUrl } from "../../api/client";
 import { useState } from "react";
 import { useAuth } from "../../auth/useAuth";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 type HiddenCarrier = {
   id: string;
@@ -59,7 +60,7 @@ export function CarrierBootstrapPage() {
       setLastResult(data);
       setError(null);
     },
-    onError: (err) => setError(String((err as Error)?.message ?? err)),
+    onError: (err) => setError(userFacingApiError(err, err)),
   });
 
   if (!allowed) {
