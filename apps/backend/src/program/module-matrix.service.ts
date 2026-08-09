@@ -1,13 +1,14 @@
 /**
  * MATRIX-LIVE-RAD — project Required / Audited / Done for /program/matrix.
  *
- * Required: docs/specs/scoreboard/modules/<module>.required.json (committed applicability).
- * Audited: AUDIT-COVERAGE-LIVE + GUARD-WORKORDERS + wave-queue + module-completion (honest heuristics).
- * Done: live_scenario_probe / scenario registry holds only — never invent green.
+ * Required: docs/specs/scoreboard/modules/<module>.required.json
+ * Audited: leaf-scoped ledger / GUARD / wave-queue / module-completion (NOT module-wide keyword flood)
+ * Done: live_scenario_probe (module-scoped hops) + PROD-VERIFIED ledger + Neon-backed completion PASS
  *
- * If unsure → unaudited (red). Never fake Done.
+ * % = done ÷ required. Unsure → unaudited. Never invent Done.
  */
 
+import { execSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
@@ -26,6 +27,7 @@ const PROGRAM_SCOREBOARD_JSON = path.join(REPO_ROOT, "docs/audit/program-scorebo
 const LEDGER_MD = path.join(REPO_ROOT, "docs/audit/AUDIT-COVERAGE-LIVE.md");
 const GUARD_MD = path.join(REPO_ROOT, "docs/audit/GUARD-WORKORDERS.md");
 const WAVE_QUEUE_JSON = path.join(REPO_ROOT, "docs/audit/wave-queue.json");
+const RECON_JSON = path.join(REPO_ROOT, "docs/trackers/block-reconciliation-data.json");
 const MATRIX_CACHE_MS = 60_000;
 
 export type MatrixCellState = "done" | "audited" | "unaudited" | "na";
@@ -68,6 +70,8 @@ type CompletionItem = {
   title?: string;
   status?: string;
   evidence?: string;
+  layers?: string[];
+  prod_verified?: boolean;
 };
 
 type ProbeSlice = { key: string; holds: boolean; evidence?: string };
@@ -79,21 +83,118 @@ const COLUMN_KEYWORDS: Record<string, RegExp> = {
   unit: /\bunits?\b|\bvehicle\b|\btruck\b/i,
   trailer: /\btrailers?\b/i,
   load: /\bloads?\b/i,
-  ap_bill: /\bbills?\b|\bap\b|accounts?\s*payable|linked_work_order/i,
-  expense: /\bexpenses?\b/i,
-  gl_je: /\bgl\b|\bjes?\b|journal|posting|coa_roles/i,
+  ap_bill: /\bbills?\b|\bap\b|accounts?\s*payable|linked_work_order|bill_payments?/i,
+  expense: /\bexpenses?\b|purchase/i,
+  gl_je: /\bgl\b|\bjes?\b|journal|posting|coa_roles|chart\s*of\s*accounts|\bcoa\b/i,
   inventory: /\binventory\b|\bparts\b/i,
-  liability: /\bliabilit|\bescrow\b|\bfine\b|\bdeduction\b/i,
-  picker_law: /\bpicker\b|\bentitypicker\b|\+\s*add\s*new\b|combobox|creator\s*law|v2\b/i,
-  qbo_chrome: /\bqbo\b|paritydrawer|box[\s_-]?in[\s_-]?box|calendar|due\s*auto|\+\s*create\b|v1\b/i,
-  connectivity: /\bconnectivit|\bwiring\b|\bnav→|\broute\b|\bcanonical\b|v3\b|dead[\s_-]?click/i,
-  reverse_link: /\breverse\b|\bboth[\s_-]?way\b|\blinkage\b|entitylink|v4\b|graph\b/i,
+  liability: /\bliabilit|\bescrow\b|\bfine\b|\bdeduction\b|factoring/i,
+  picker_law: /\bpicker\b|\bentitypicker\b|\+\s*add\s*new\b|combobox|creator\s*law|v2\b|VERIFY-2/i,
+  qbo_chrome: /\bqbo\b|paritydrawer|box[\s_-]?in[\s_-]?box|calendar|due\s*auto|\+\s*create\b|v1\b|VERIFY-1/i,
+  connectivity: /\bconnectivit|\bwiring\b|\bnav→|\broute\b|\bcanonical\b|v3\b|dead[\s_-]?click|VERIFY-3|sync_runs|inbound_mirror/i,
+  reverse_link: /\breverse\b|\bboth[\s_-]?way\b|\blinkage\b|entitylink|v4\b|graph\b|VERIFY-4|DOD-C/i,
   "scenario.maintenance": /scenario\.maintenance|\bwork[\s_-]?orders?\b|\bwos?\b|\bmaint\b/i,
   "scenario.insurance": /scenario\.insurance|\binsurance\b|\bclaims?\b/i,
 };
 
-/** Columns that can turn Done green from live_scenario_probe slices (same keys). */
-const DONE_PROBE_COLUMNS = new Set(["scenario.maintenance", "scenario.insurance"]);
+/**
+ * live_scenario_probe keys → which leaves/columns they prove Done for.
+ * MATRIX-WIRE-LIVE-PROBES — accounting/banking/dispatch probes were ignored when only
+ * scenario.maintenance|insurance could green Box 3 (all boards stuck at 0%).
+ */
+const PROBE_DONE_MAP: Record<
+  string,
+  Array<{ modules: string[]; leafRe: RegExp; cols: string[] }>
+> = {
+  "scenario.maintenance": [
+    { modules: ["maintenance"], leafRe: /./, cols: ["scenario.maintenance"] },
+  ],
+  "scenario.insurance": [
+    { modules: ["insurance"], leafRe: /./, cols: ["scenario.insurance"] },
+  ],
+  "hop.invoice": [
+    {
+      modules: ["accounting"],
+      leafRe: /^invoices\.|^payments\.|^collections|^customers/,
+      cols: ["connectivity", "customer", "gl_je", "qbo_chrome"],
+    },
+  ],
+  "hop.gl": [
+    {
+      modules: ["accounting"],
+      leafRe: /^(je\.|register|transactions|coa|coa_roles|audit_trail|home)/,
+      cols: ["gl_je", "connectivity"],
+    },
+  ],
+  "scenario.coa": [
+    {
+      modules: ["accounting"],
+      leafRe: /^coa/,
+      cols: ["gl_je", "connectivity", "picker_law"],
+    },
+  ],
+  "scenario.ap": [
+    {
+      modules: ["accounting"],
+      leafRe: /^(bills\.|ap\.|bill_payments|vendors|expenses\.)/,
+      cols: ["ap_bill", "vendor", "expense", "connectivity"],
+    },
+  ],
+  "hop.revenue": [
+    {
+      modules: ["accounting"],
+      leafRe: /^(invoices\.|payments\.|factoring)/,
+      cols: ["gl_je", "customer", "connectivity"],
+    },
+  ],
+  "scenario.banking": [
+    {
+      modules: ["banking"],
+      leafRe: /./,
+      cols: ["connectivity", "gl_je", "expense"],
+    },
+  ],
+  "hop.bank": [
+    {
+      modules: ["banking"],
+      leafRe: /./,
+      cols: ["connectivity", "customer"],
+    },
+  ],
+  "hop.book": [
+    {
+      modules: ["dispatch"],
+      leafRe: /book_load|reserve|docs\.ocr|planning\.reserve/,
+      cols: ["load", "customer", "connectivity", "picker_law", "qbo_chrome"],
+    },
+  ],
+  "hop.dispatch": [
+    {
+      modules: ["dispatch"],
+      leafRe: /^(home\.|queues\.|planning\.|secondary\.assignments|load\.)/,
+      cols: ["load", "driver", "unit", "connectivity", "reverse_link"],
+    },
+  ],
+  "scenario.settlement": [
+    {
+      modules: ["settlements"],
+      leafRe: /./,
+      cols: ["driver", "liability", "gl_je", "connectivity"],
+    },
+  ],
+  "scenario.escrow": [
+    {
+      modules: ["settlements", "accounting", "drivers"],
+      leafRe: /escrow/,
+      cols: ["liability", "driver", "connectivity"],
+    },
+  ],
+  "scenario.driver_onboarding": [
+    { modules: ["drivers"], leafRe: /./, cols: ["driver", "connectivity", "picker_law"] },
+  ],
+  "scenario.customer": [
+    { modules: ["accounting", "dispatch"], leafRe: /customer/, cols: ["customer", "connectivity"] },
+  ],
+};
 
 let cache: { atMs: number; module: string; payload: ModuleMatrixPayload } | null = null;
 
@@ -107,6 +208,10 @@ export type ModuleMatrixPayload = {
     auditedSources: string[];
     doneSources: string[];
     honesty: string;
+    tipSha?: string;
+    probeProgress?: number | null;
+    reconAsOf?: string | null;
+    feedNote?: string;
   };
   columns: RequiredColumn[];
   leaves: Array<{
@@ -126,6 +231,7 @@ export type ModuleMatrixPayload = {
     unauditedCells: number;
     buildQueue: number;
     modulePct: number;
+    auditedPct: number;
   };
 };
 
@@ -146,6 +252,23 @@ function loadRequiredMap(moduleId: string): RequiredMap {
     throw new Error(`Missing or invalid required map: ${rel}`);
   }
   return map;
+}
+
+function tipSha(): string | undefined {
+  try {
+    return execSync("git rev-parse --short HEAD", {
+      cwd: REPO_ROOT,
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"],
+    }).trim();
+  } catch {
+    return undefined;
+  }
+}
+
+function reconAsOf(): string | null {
+  const j = readJson<{ generated_at?: string; as_of?: string; snapshot_at?: string }>(RECON_JSON);
+  return j?.generated_at ?? j?.as_of ?? j?.snapshot_at ?? null;
 }
 
 function moduleHay(row: LedgerRow): string {
@@ -180,7 +303,6 @@ function moduleTouchRe(moduleId: string): RegExp {
   if (moduleId === "drivers") {
     return /\bdrivers?\b|\bcdl\b|\bpay[\s_-]?rate|\bdeductions?\b|\bapplicants?\b/i;
   }
-  // maintenance (default)
   return /maintenance|\bwork[\s_-]?order|\bwos?\b|\bmaint\b/i;
 }
 
@@ -197,7 +319,21 @@ function columnTouches(colId: string, text: string): boolean {
 function isAuditSignalVerdict(verdict: string, status: string): boolean {
   const blob = `${verdict} ${status}`.replace(/\*\*/g, "");
   if (/^SUPERSEDED\b/i.test(status) || /^SUPERSEDED\b/i.test(verdict)) return false;
-  return /\b(FAIL|OPEN|FIXED|CODE-VERIFIED|PASS|UNVERIFIED|UNVERIFIABLE)\b/i.test(blob);
+  return /\b(FAIL|OPEN|FIXED|CODE-VERIFIED|PASS|UNVERIFIED|UNVERIFIABLE|PROD-VERIFIED)\b/i.test(blob);
+}
+
+function isProdVerifiedBlob(text: string): boolean {
+  return /\bPROD-VERIFIED\b/i.test(text) || /\bprod_verified\s*[:=]\s*true\b/i.test(text);
+}
+
+function evidenceIsLiveNeon(text: string): boolean {
+  return (
+    /\bNeon\b/i.test(text) ||
+    /\blucia\b/i.test(text) ||
+    /\bLIVE\s+PROOF\b/i.test(text) ||
+    /\bLIVE\s+20\d{2}/i.test(text) ||
+    /\bhealthz\b/i.test(text)
+  );
 }
 
 async function loadLedgerRows(): Promise<LedgerRow[]> {
@@ -218,7 +354,7 @@ function loadGuardHits(moduleId: string): string[] {
     const touch = moduleTouchRe(moduleId);
     const hits: string[] = [];
     for (const line of md.split("\n")) {
-      if (!/\bOPEN\b/i.test(line) && !/\bFIXED\b/i.test(line)) continue;
+      if (!/\bOPEN\b/i.test(line) && !/\bFIXED\b/i.test(line) && !/\bDONE\b/i.test(line)) continue;
       if (!touch.test(line)) continue;
       hits.push(line);
     }
@@ -233,8 +369,7 @@ function loadWaveHits(moduleId: string): string[] {
     const parsed = JSON.parse(readFileSync(WAVE_QUEUE_JSON, "utf8")) as {
       waves?: Array<Record<string, unknown>>;
     };
-    const modRe =
-      moduleId === "safety" ? /safety/i : moduleId === "maintenance" ? /maint/i : new RegExp(moduleId, "i");
+    const modRe = new RegExp(moduleId === "maintenance" ? "maint|maintenance" : moduleId, "i");
     const hits: string[] = [];
     for (const w of parsed.waves ?? []) {
       const modules = Array.isArray(w.modules) ? w.modules.map((m) => String(m)) : [];
@@ -253,67 +388,123 @@ function loadCompletion(moduleId: string): { items: CompletionItem[]; complete: 
   return { items: Array.isArray(j?.items) ? j!.items! : [], complete: Boolean(j?.complete) };
 }
 
-function loadProbeHolds(): Map<string, { holds: boolean; evidence: string; source: string }> {
-  const out = new Map<string, { holds: boolean; evidence: string; source: string }>();
+type ModuleProbe = {
+  key: string;
+  holds: boolean;
+  evidence: string;
+  source: string;
+  progress: number | null;
+};
+
+function loadModuleProbes(moduleId: string): { slices: ModuleProbe[]; progress: number | null } {
+  const out: ModuleProbe[] = [];
+  let progress: number | null = null;
   const board = readJson<{
-    live_scenario_probe?: { modules?: Record<string, { slices?: ProbeSlice[] }> };
+    live_scenario_probe?: {
+      modules?: Record<string, { slices?: ProbeSlice[]; progress?: number }>;
+    };
   }>(PROGRAM_SCOREBOARD_JSON);
   const modules = board?.live_scenario_probe?.modules ?? {};
-  for (const [mod, block] of Object.entries(modules)) {
+
+  const alias: Record<string, string[]> = {
+    accounting: ["accounting"],
+    banking: ["banking"],
+    dispatch: ["dispatch"],
+    settlements: ["driver-finance", "settlements"],
+    drivers: ["drivers"],
+    maintenance: ["maintenance"],
+    insurance: ["insurance"],
+    fuel: ["fuel"],
+    safety: ["safety"],
+    legal: ["legal"],
+  };
+  const keys = alias[moduleId] ?? [moduleId];
+  for (const k of keys) {
+    const block = modules[k];
+    if (!block) continue;
+    if (typeof block.progress === "number") progress = block.progress;
     for (const slice of block.slices ?? []) {
       if (!slice?.key) continue;
-      out.set(slice.key, {
+      out.push({
+        key: slice.key,
         holds: Boolean(slice.holds),
         evidence: String(slice.evidence ?? ""),
-        source: `program-scoreboard live_scenario_probe.modules.${mod}`,
+        source: `program-scoreboard live_scenario_probe.modules.${k}`,
+        progress,
       });
     }
   }
-  for (const mod of ["maintenance", "insurance"]) {
-    const j = readJson<{ live_scenario_probe?: { slices?: ProbeSlice[]; source?: string } }>(
+
+  for (const mod of ["maintenance", "insurance", moduleId]) {
+    const j = readJson<{ live_scenario_probe?: { slices?: ProbeSlice[] } }>(
       path.join(REPO_ROOT, `docs/module-completion/${mod}.json`),
     );
     for (const slice of j?.live_scenario_probe?.slices ?? []) {
       if (!slice?.key) continue;
-      out.set(slice.key, {
+      if (out.some((s) => s.key === slice.key && s.holds === Boolean(slice.holds))) continue;
+      out.push({
+        key: slice.key,
         holds: Boolean(slice.holds),
         evidence: String(slice.evidence ?? ""),
         source: `docs/module-completion/${mod}.json live_scenario_probe`,
+        progress,
       });
     }
   }
-  return out;
+  return { slices: out, progress };
 }
 
+/** Leaf ↔ module-completion item — must hit accounting bills/expenses/JE, not only maint/safety. */
 function leafMatchesItem(leaf: RequiredLeaf, item: CompletionItem): boolean {
-  const title = String(item.title ?? "");
+  const title = `${item.id ?? ""} ${item.title ?? ""} ${item.evidence ?? ""}`;
   const route = leaf.route_hint.replace(/\/$/, "") || "/";
   if (route !== "/" && title.includes(route)) return true;
-  if (leaf.id.startsWith("wo.") && /work-?orders?/i.test(title)) return true;
-  if (leaf.id.startsWith("pm.") && /pm[\s_-]?schedule|pm[\s_-]?auto/i.test(title)) return true;
-  if (leaf.id.includes("parts") && /parts/i.test(title)) return true;
-  if (leaf.id.includes("vendor") && /vendors?/i.test(title)) return true;
-  if (leaf.id.includes("tire") && /tire/i.test(title)) return true;
-  if (leaf.id.includes("defect") && /defect/i.test(title)) return true;
-  if (leaf.id.includes("dvir") && /dvir/i.test(title)) return true;
-  if (leaf.id.includes("inspection") && /inspection/i.test(title)) return true;
-  if (leaf.id.includes("warranty") && /warranty/i.test(title)) return true;
-  if (leaf.id.includes("fault") && /fault/i.test(title)) return true;
-  if (leaf.id.includes("damage") && /damage/i.test(title)) return true;
-  if (leaf.id.includes("driver_reports") && /driver-?reports?/i.test(title)) return true;
-  if (leaf.id.includes("road_service") && /road[\s_-]?service/i.test(title)) return true;
-  if (leaf.id.includes("in_transit") && /in[\s_-]?transit/i.test(title)) return true;
-  if (leaf.id.includes("arriving") && /arriving/i.test(title)) return true;
-  if (leaf.id.includes("severe") && /severe/i.test(title)) return true;
-  // Safety leaves
-  if (leaf.id.startsWith("accidents.") && /accident/i.test(title)) return true;
-  if (leaf.id.includes("hos") && /\bhos\b/i.test(title)) return true;
-  if (leaf.id.includes("fine") && /fine/i.test(title)) return true;
-  if (leaf.id.includes("escrow") && /escrow/i.test(title)) return true;
-  if (leaf.id.includes("cargo") && /cargo|claim/i.test(title)) return true;
-  if (leaf.id.includes("damage") && /damage/i.test(title)) return true;
-  if (leaf.id.includes("meeting") && /meeting|train/i.test(title)) return true;
-  if (leaf.id.includes("driver_files") && /driver[\s_-]?file|dq\b/i.test(title)) return true;
+  if (leaf.id && title.toLowerCase().includes(leaf.id.toLowerCase())) return true;
+
+  const id = leaf.id;
+  if (id.startsWith("bills.") || id.startsWith("ap.") || id.startsWith("bill_payments")) {
+    return /\bbills?\b|\bap\b|bill_payment|accounts?\s*payable/i.test(title);
+  }
+  if (id.startsWith("expenses.")) return /\bexpenses?\b|purchase/i.test(title);
+  if (id.startsWith("invoices.") || id === "payments.receive" || id === "collections") {
+    return /\binvoices?\b|\bar\b|receive\s*payment|collections?/i.test(title);
+  }
+  if (id.startsWith("je.") || id === "register" || id === "transactions" || id === "audit_trail") {
+    return /\bjournal|\bjes?\b|\bgl\b|register|posting/i.test(title);
+  }
+  if (id.startsWith("coa")) return /\bcoa\b|chart\s*of\s*accounts|account\s*role/i.test(title);
+  if (id === "vendors") return /\bvendors?\b/i.test(title);
+  if (id === "customers") return /\bcustomers?\b/i.test(title);
+  if (id === "escrow" || id === "factoring.list" || id === "pre_settlements") {
+    return /\bescrow\b|\bfactoring\b|pre[\s_-]?settlement/i.test(title);
+  }
+  if (id === "period_close" || id === "month_close") return /\bperiod|month[\s_-]?close|close\b/i.test(title);
+  if (id === "reports") return /\breports?\b|p&l|balance\s*sheet|trial\s*balance/i.test(title);
+  if (id === "home") return /\baccounting\b|home|surf|structural/i.test(title);
+
+  // maintenance / safety / others (existing)
+  if (id.startsWith("wo.") && /work-?orders?/i.test(title)) return true;
+  if (id.startsWith("pm.") && /pm[\s_-]?schedule|pm[\s_-]?auto/i.test(title)) return true;
+  if (id.includes("parts") && /parts/i.test(title)) return true;
+  if (id.includes("vendor") && /vendors?/i.test(title)) return true;
+  if (id.includes("tire") && /tire/i.test(title)) return true;
+  if (id.includes("defect") && /defect/i.test(title)) return true;
+  if (id.includes("dvir") && /dvir/i.test(title)) return true;
+  if (id.includes("inspection") && /inspection/i.test(title)) return true;
+  if (id.includes("warranty") && /warranty/i.test(title)) return true;
+  if (id.includes("fault") && /fault/i.test(title)) return true;
+  if (id.startsWith("accidents.") && /accident/i.test(title)) return true;
+  if (id.includes("hos") && /\bhos\b/i.test(title)) return true;
+  if (id.includes("fine") && /fine/i.test(title)) return true;
+  if (id.includes("meeting") && /meeting|train/i.test(title)) return true;
+  if (id.includes("driver_files") && /driver[\s_-]?file|dq\b/i.test(title)) return true;
+
+  // banking / dispatch / fuel / drivers / insurance / legal stems
+  const stem = id.split(".")[0];
+  if (stem && stem.length >= 3) {
+    const stemRe = new RegExp(`\\b${stem.replace(/_/g, "[\\\\s_-]?")}\\b`, "i");
+    if (stemRe.test(title)) return true;
+  }
   return false;
 }
 
@@ -323,45 +514,151 @@ function itemIsAuditedStatus(status: string): boolean {
   return /\b(PASS|FIXED|CODE-VERIFIED|HOLD)\b/i.test(s);
 }
 
-function buildColumnAuditIndex(
-  moduleId: string,
-  ledger: LedgerRow[],
-  guardHits: string[],
-  waveHits: string[],
-): Map<string, string> {
-  const reasons = new Map<string, string>();
-  const scenarioKey = `scenario.${moduleId === "safety" ? "insurance" : "maintenance"}`;
-  for (const colId of Object.keys(COLUMN_KEYWORDS)) {
-    for (const row of ledger) {
-      if (!rowTouchesModule(row, moduleId)) continue;
-      if (!isAuditSignalVerdict(row.verdict, row.status)) continue;
-      const hay = moduleHay(row);
-      const isMod = rowTouchesModule(row, moduleId);
-      const matches =
-        colId === scenarioKey ? isMod || columnTouches(colId, hay) : columnTouches(colId, hay);
-      if (!matches) continue;
-      if (!reasons.has(colId)) {
-        reasons.set(colId, `ledger #${row.num} ${row.verdict.slice(0, 80)}`);
-      }
-    }
-    for (const line of guardHits) {
-      const matches = colId === scenarioKey ? true : columnTouches(colId, line);
-      if (!matches) continue;
-      if (!reasons.has(colId)) reasons.set(colId, "GUARD-WORKORDERS hit");
-    }
-    for (const line of waveHits) {
-      const matches = colId === scenarioKey ? true : columnTouches(colId, line);
-      if (!matches) continue;
-      if (!reasons.has(colId)) reasons.set(colId, `wave-queue ${moduleId} class`);
-    }
+function columnsFromCompletionItem(item: CompletionItem): Set<string> {
+  const cols = new Set<string>();
+  const blob = `${item.id ?? ""} ${item.title ?? ""} ${item.evidence ?? ""} ${(item.layers ?? []).join(" ")}`;
+  const layers = (item.layers ?? []).map((l) => l.toUpperCase());
+  if (layers.includes("VERIFY-1") || /VERIFY-1/.test(blob)) cols.add("qbo_chrome");
+  if (layers.includes("VERIFY-2") || /VERIFY-2/.test(blob)) cols.add("picker_law");
+  if (layers.includes("VERIFY-3") || /VERIFY-3/.test(blob)) cols.add("connectivity");
+  if (layers.includes("VERIFY-4") || /VERIFY-4|DOD-C/.test(blob)) cols.add("reverse_link");
+  if (layers.includes("VERIFY-6") || /VERIFY-6|DOD-D/.test(blob)) {
+    if (/\bbills?\b|\bap\b|bill_payment/i.test(blob)) cols.add("ap_bill");
+    if (/\bexpenses?\b|purchase/i.test(blob)) cols.add("expense");
+    if (/\bjournal|\bjes?\b|\bgl\b|posting|coa/i.test(blob)) cols.add("gl_je");
+    if (/\bescrow\b|\bliabilit|factor/i.test(blob)) cols.add("liability");
+    if (/\binventory\b|\bparts\b/i.test(blob)) cols.add("inventory");
   }
-  return reasons;
+  for (const colId of Object.keys(COLUMN_KEYWORDS)) {
+    if (columnTouches(colId, blob)) cols.add(colId);
+  }
+  return cols;
+}
+
+function leafTouchesText(leaf: RequiredLeaf, text: string): boolean {
+  const hay = text.toLowerCase();
+  if (leaf.id && hay.includes(leaf.id.toLowerCase())) return true;
+  const route = leaf.route_hint.replace(/\/:[^/]+/g, "").replace(/\/$/, "");
+  if (route && route !== "/" && hay.includes(route.toLowerCase())) return true;
+  const routeTail = route.split("/").filter(Boolean).slice(-2).join("/");
+  if (routeTail && hay.includes(routeTail.toLowerCase())) return true;
+  if (leaf.sub) {
+    const sub = leaf.sub.toLowerCase().replace(/^\+\s*/, "");
+    if (sub.length >= 4 && hay.includes(sub)) return true;
+  }
+  const stem = leaf.id.split(".")[0];
+  if (stem && stem.length >= 4 && new RegExp(`\\b${stem.replace(/_/g, "[\\\\s_-]?")}\\b`, "i").test(text)) {
+    return true;
+  }
+  return false;
 }
 
 function cellState(audited: boolean, done: boolean): MatrixCellState {
   if (done) return "done";
   if (audited) return "audited";
   return "unaudited";
+}
+
+function probeDoneReason(
+  moduleId: string,
+  leaf: RequiredLeaf,
+  colId: string,
+  probes: ModuleProbe[],
+): string | undefined {
+  for (const slice of probes) {
+    if (!slice.holds) continue;
+    const rules = PROBE_DONE_MAP[slice.key];
+    if (!rules) {
+      // Exact column key match (scenario.maintenance on that column)
+      if (slice.key === colId) {
+        return `${slice.source}: ${slice.evidence || slice.key}`;
+      }
+      continue;
+    }
+    for (const rule of rules) {
+      if (!rule.modules.includes(moduleId)) continue;
+      if (!rule.leafRe.test(leaf.id)) continue;
+      if (!rule.cols.includes(colId)) continue;
+      return `${slice.source} ${slice.key}: ${slice.evidence || "holds"}`;
+    }
+  }
+  return undefined;
+}
+
+function leafColumnAuditedReason(
+  leaf: RequiredLeaf,
+  colId: string,
+  moduleId: string,
+  ledger: LedgerRow[],
+  leafItems: CompletionItem[],
+  guardHits: string[],
+  waveHits: string[],
+): string | undefined {
+  for (const row of ledger) {
+    if (!rowTouchesModule(row, moduleId)) continue;
+    if (!isAuditSignalVerdict(row.verdict, row.status)) continue;
+    const hay = moduleHay(row);
+    if (!leafTouchesText(leaf, hay)) continue;
+    if (!columnTouches(colId, hay) && !/\bPROD-VERIFIED\b|\bFIXED\b|\bCODE-VERIFIED\b/i.test(hay)) {
+      continue;
+    }
+    if (!columnTouches(colId, hay)) continue;
+    return `ledger #${row.num} leaf-scoped ${row.verdict.slice(0, 60)}`;
+  }
+
+  for (const item of leafItems) {
+    if (!itemIsAuditedStatus(String(item.status ?? ""))) continue;
+    const cols = columnsFromCompletionItem(item);
+    if (!cols.has(colId)) continue;
+    return `module-completion ${item.id ?? "item"} leaf+column`;
+  }
+
+  for (const line of guardHits) {
+    if (!leafTouchesText(leaf, line)) continue;
+    if (!columnTouches(colId, line)) continue;
+    return "GUARD-WORKORDERS leaf+column hit";
+  }
+
+  for (const line of waveHits) {
+    if (!leafTouchesText(leaf, line)) continue;
+    if (!columnTouches(colId, line)) continue;
+    return `wave-queue leaf+column ${moduleId}`;
+  }
+
+  return undefined;
+}
+
+function leafColumnDoneReason(
+  leaf: RequiredLeaf,
+  colId: string,
+  moduleId: string,
+  ledger: LedgerRow[],
+  leafItems: CompletionItem[],
+  probes: ModuleProbe[],
+): string | undefined {
+  const fromProbe = probeDoneReason(moduleId, leaf, colId, probes);
+  if (fromProbe) return fromProbe;
+
+  for (const row of ledger) {
+    if (!rowTouchesModule(row, moduleId)) continue;
+    const hay = moduleHay(row);
+    if (!isProdVerifiedBlob(hay)) continue;
+    if (!leafTouchesText(leaf, hay)) continue;
+    if (!columnTouches(colId, hay)) continue;
+    return `ledger #${row.num} PROD-VERIFIED`;
+  }
+
+  for (const item of leafItems) {
+    if (!itemIsAuditedStatus(String(item.status ?? ""))) continue;
+    const blob = `${item.evidence ?? ""} ${item.status ?? ""}`;
+    const live = Boolean(item.prod_verified) || evidenceIsLiveNeon(blob);
+    if (!live) continue;
+    const cols = columnsFromCompletionItem(item);
+    if (!cols.has(colId)) continue;
+    return `module-completion ${item.id} Neon/live evidence`;
+  }
+
+  return undefined;
 }
 
 export async function buildModuleMatrix(moduleId: string): Promise<ModuleMatrixPayload> {
@@ -371,15 +668,13 @@ export async function buildModuleMatrix(moduleId: string): Promise<ModuleMatrixP
   }
 
   const required = loadRequiredMap(moduleId);
-  const [ledger, guardHits, waveHits, completion, probes] = await Promise.all([
+  const [ledger, completion, probePack, guardHits, waveHits] = await Promise.all([
     loadLedgerRows(),
+    Promise.resolve(loadCompletion(moduleId)),
+    Promise.resolve(loadModuleProbes(moduleId)),
     Promise.resolve(loadGuardHits(moduleId)),
     Promise.resolve(loadWaveHits(moduleId)),
-    Promise.resolve(loadCompletion(moduleId)),
-    Promise.resolve(loadProbeHolds()),
   ]);
-
-  const columnAudit = buildColumnAuditIndex(moduleId, ledger, guardHits, waveHits);
 
   let requiredCells = 0;
   let doneCells = 0;
@@ -389,9 +684,6 @@ export async function buildModuleMatrix(moduleId: string): Promise<ModuleMatrixP
   const leaves = required.leaves.map((leaf) => {
     const req = new Set(leaf.required);
     const leafItems = completion.items.filter((it) => leafMatchesItem(leaf, it));
-    const leafAuditedByCompletion = leafItems.some((it) => itemIsAuditedStatus(String(it.status ?? "")));
-    const leafOpenOnly =
-      leafItems.length > 0 && leafItems.every((it) => /^OPEN\b/i.test(String(it.status ?? "").trim()));
 
     const cells: Record<string, MatrixCell> = {};
     for (const col of required.columns) {
@@ -401,27 +693,29 @@ export async function buildModuleMatrix(moduleId: string): Promise<ModuleMatrixP
       }
       requiredCells += 1;
 
-      let done = false;
-      let doneReason: string | undefined;
-      if (DONE_PROBE_COLUMNS.has(col.id)) {
-        const probe = probes.get(col.id);
-        if (probe?.holds) {
-          done = true;
-          doneReason = `${probe.source}: ${probe.evidence || "holds"}`;
-        }
-      }
+      const doneReason = leafColumnDoneReason(
+        leaf,
+        col.id,
+        moduleId,
+        ledger,
+        leafItems,
+        probePack.slices,
+      );
+      const done = Boolean(doneReason);
 
       let audited = done;
       let auditedReason: string | undefined = done ? doneReason : undefined;
-
-      if (!audited && columnAudit.has(col.id)) {
-        audited = true;
-        auditedReason = columnAudit.get(col.id);
-      }
-
-      if (!audited && leafAuditedByCompletion && !leafOpenOnly) {
-        audited = true;
-        auditedReason = "module-completion PASS for leaf surface";
+      if (!audited) {
+        auditedReason = leafColumnAuditedReason(
+          leaf,
+          col.id,
+          moduleId,
+          ledger,
+          leafItems,
+          guardHits,
+          waveHits,
+        );
+        audited = Boolean(auditedReason);
       }
 
       const state = cellState(audited, done);
@@ -450,6 +744,10 @@ export async function buildModuleMatrix(moduleId: string): Promise<ModuleMatrixP
 
   const buildQueue = requiredCells - doneCells;
   const modulePct = requiredCells === 0 ? 0 : Math.round((doneCells / requiredCells) * 100);
+  const auditedPct =
+    requiredCells === 0 ? 0 : Math.round(((doneCells + auditedCells) / requiredCells) * 100);
+  const sha = tipSha();
+  const recon = reconAsOf();
 
   const payload: ModuleMatrixPayload = {
     module: required.module,
@@ -459,17 +757,23 @@ export async function buildModuleMatrix(moduleId: string): Promise<ModuleMatrixP
     meta: {
       requiredSource: `docs/specs/scoreboard/modules/${moduleId}.required.json`,
       auditedSources: [
-        "docs/audit/AUDIT-COVERAGE-LIVE.md",
-        "docs/audit/GUARD-WORKORDERS.md",
-        "docs/audit/wave-queue.json",
-        `docs/module-completion/${moduleId}.json`,
+        "docs/audit/AUDIT-COVERAGE-LIVE.md (leaf×column)",
+        "docs/audit/GUARD-WORKORDERS.md (leaf×column)",
+        "docs/audit/wave-queue.json (leaf×column)",
+        `docs/module-completion/${moduleId}.json (leaf×column via layers/evidence)`,
       ],
       doneSources: [
-        "docs/audit/program-scoreboard.json#live_scenario_probe",
-        "docs/module-completion/*/live_scenario_probe",
+        "docs/audit/program-scoreboard.json#live_scenario_probe (module hops → leaf/cols via PROBE_DONE_MAP)",
+        "AUDIT-COVERAGE-LIVE PROD-VERIFIED (leaf×column)",
+        `docs/module-completion/${moduleId}.json Neon/LIVE PASS (leaf×column)`,
+        "docs/trackers/block-reconciliation-data.json (as-of stamp only)",
       ],
       honesty:
-        "Done green only when a live_scenario_probe slice holds for that column key. Unsure → unaudited red. Never fake Done.",
+        "Audited ≠ live verify. Done green only from live_scenario_probe holds (mapped to leaves), PROD-VERIFIED ledger, or Neon-backed module-completion PASS. No module-wide keyword yellow flood. % = done÷required.",
+      tipSha: sha,
+      probeProgress: probePack.progress,
+      reconAsOf: recon,
+      feedNote: `git tip ${sha ?? "n/a"} · probe progress ${probePack.progress ?? "n/a"}% · recon as-of ${recon ?? "n/a"} · completion items ${completion.items.length}`,
     },
     columns: required.columns,
     leaves,
@@ -482,6 +786,7 @@ export async function buildModuleMatrix(moduleId: string): Promise<ModuleMatrixP
       unauditedCells,
       buildQueue,
       modulePct,
+      auditedPct,
     },
   };
 
