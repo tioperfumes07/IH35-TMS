@@ -1,3 +1,4 @@
+import { entityLabel } from "../../lib/entity-label";
 import { formatDateUS } from "../../lib/formatDate";
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
@@ -61,8 +62,7 @@ function statusVariant(status: string): "positive" | "neutral" | "crit" | "warn"
 }
 
 function accountLabel(_number: string | null | undefined, name: string | null | undefined, id: string) {
-  if (name) return name;
-  return id.slice(0, 8);
+  return entityLabel(name, id, "Account");
 }
 
 export function BillDetailPage() {
@@ -112,7 +112,7 @@ export function BillDetailPage() {
 
   if (!bill) return <div className="p-4 text-sm text-red-600">Bill not found.</div>;
 
-  const displayId = bill.bill_number ?? bill.id.slice(0, 8);
+  const displayId = entityLabel(bill.bill_number, bill.id, "Bill");
   const balance = Number(bill.amount_cents ?? 0) - Number(bill.paid_cents ?? 0);
   const isVoided = bill.status === "voided";
   // Mirrors backend bill_has_payments_cannot_void: a bill with any active payment must have the
@@ -157,7 +157,7 @@ export function BillDetailPage() {
       sortValue: (line) => line.load_number ?? line.load_id ?? "",
       render: (line) =>
         line.load_id ? (
-          <EntityLink kind="load" id={line.load_id} label={line.load_number ?? line.load_id.slice(0, 8)} />
+          <EntityLink kind="load" id={line.load_id} label={entityLabel(line.load_number, line.load_id, "Load")} />
         ) : (
           "—"
         ),
@@ -250,7 +250,7 @@ export function BillDetailPage() {
         {billVendorDrillId(bill) || bill.vendor_id ? (
           <DataPanelRow>
             <span className="text-xs font-semibold text-gray-600">Vendor</span>
-            <EntityLink kind="vendor" id={billVendorDrillId(bill)} label={bill.vendor_name ?? bill.vendor_id?.slice(0, 8)} />
+            <EntityLink kind="vendor" id={billVendorDrillId(bill)} label={entityLabel(bill.vendor_name, bill.vendor_id, "Vendor")} />
           </DataPanelRow>
         ) : null}
         <DataPanelRow>
@@ -282,25 +282,25 @@ export function BillDetailPage() {
         {bill.journal_entry_id ? (
           <DataPanelRow>
             <span className="text-xs font-semibold text-gray-600">Journal entry</span>
-            <EntityLink kind="journal_entry" id={bill.journal_entry_id} label={bill.journal_entry_id.slice(0, 8)} />
+            <EntityLink kind="journal_entry" id={bill.journal_entry_id} label={entityLabel(null, bill.journal_entry_id, "Journal entry")} />
           </DataPanelRow>
         ) : null}
         {bill.unit_id ? (
           <DataPanelRow>
             <span className="text-xs font-semibold text-gray-600">Unit</span>
-            <EntityLink kind="unit" id={bill.unit_id} label={bill.unit_display_id ?? bill.unit_id.slice(0, 8)} />
+            <EntityLink kind="unit" id={bill.unit_id} label={entityLabel(bill.unit_display_id, bill.unit_id, "Unit")} />
           </DataPanelRow>
         ) : null}
         {bill.linked_work_order_uuid ? (
           <DataPanelRow>
             <span className="text-xs font-semibold text-gray-600">Work order</span>
-            <EntityLink kind="work_order" id={bill.linked_work_order_uuid} label={bill.linked_work_order_uuid.slice(0, 8)} />
+            <EntityLink kind="work_order" id={bill.linked_work_order_uuid} label={entityLabel(null, bill.linked_work_order_uuid, "Work order")} />
           </DataPanelRow>
         ) : null}
         {bill.insurance_claim_id ? (
           <DataPanelRow>
             <span className="text-xs font-semibold text-gray-600">Insurance claim</span>
-            <EntityLink kind="claim" id={bill.insurance_claim_id} label={bill.insurance_claim_id.slice(0, 8)} />
+            <EntityLink kind="claim" id={bill.insurance_claim_id} label={entityLabel(null, bill.insurance_claim_id, "Claim")} />
           </DataPanelRow>
         ) : null}
         {/*

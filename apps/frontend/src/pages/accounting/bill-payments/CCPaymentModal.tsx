@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { entityLabel } from "../../../lib/entity-label";
 import { useQuery } from "@tanstack/react-query";
 import { listCatalogAccounts } from "../../../api/catalog-accounts";
 import type { VendorBill } from "../../../api/accounting";
@@ -173,7 +174,7 @@ export function CCPaymentModal({ open, operatingCompanyId, bill, onClose, onSave
             <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
               Bill #
               <input
-                value={bill.bill_number || bill.id.slice(0, 8)}
+                value={entityLabel(bill.bill_number, bill.id, "Bill")}
                 readOnly
                 className="h-9 rounded-sm border border-gray-300 bg-gray-100 px-2 text-[13px]"
               />

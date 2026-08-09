@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { entityLabel } from "../../lib/entity-label";
 import { useQuery } from "@tanstack/react-query";
 import { payVendorBill, type BillPaymentMethod, type VendorBill } from "../../api/accounting";
 import { getAllAccounts } from "../../api/banking";
@@ -185,7 +186,7 @@ export function PayBillModal({ open, operatingCompanyId, vendorName, bill, onClo
               <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
                 Bill #
                 <input
-                  value={bill.bill_number || bill.id.slice(0, 8)}
+                  value={entityLabel(bill.bill_number, bill.id, "Bill")}
                   readOnly
                   className="h-9 rounded-sm border border-gray-300 bg-gray-100 px-2 text-[13px]"
                 />
@@ -281,7 +282,7 @@ export function PayBillModal({ open, operatingCompanyId, vendorName, bill, onClo
                 </thead>
                 <tbody>
                   <tr className="border-t border-gray-100">
-                    <td className="px-2 py-1.5">{bill.bill_number || bill.id.slice(0, 8)}</td>
+                    <td className="px-2 py-1.5">{entityLabel(bill.bill_number, bill.id, "Bill")}</td>
                     <td className="px-2 py-1.5">{money(bill.amount_cents)}</td>
                     <td className="px-2 py-1.5">{money(bill.paid_cents)}</td>
                     <td className="px-2 py-1.5 font-semibold text-red-700">{money(remainingCents)}</td>
