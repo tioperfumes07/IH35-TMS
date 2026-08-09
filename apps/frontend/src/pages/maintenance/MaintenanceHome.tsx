@@ -379,7 +379,14 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
             </div>
             )
           : (
-            <InTransitIssuesTable issues={triageQuery.data?.issues ?? []} onTriage={(issue) => setTriageIssue(issue)} />
+            <InTransitIssuesTable
+              issues={triageQuery.data?.issues ?? []}
+              loading={
+                triageQuery.isPending ||
+                (triageQuery.isFetching && (triageQuery.data?.issues?.length ?? 0) === 0)
+              }
+              onTriage={(issue) => setTriageIssue(issue)}
+            />
             )
         : null}
 
@@ -417,7 +424,14 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
               </div>
             </div>
           </div>
-          <PartsInventoryTable companyId={companyId} rows={partsInventoryRowsQuery.data ?? []} />
+          <PartsInventoryTable
+            companyId={companyId}
+            rows={partsInventoryRowsQuery.data ?? []}
+            loading={
+              partsInventoryRowsQuery.isPending ||
+              (partsInventoryRowsQuery.isFetching && (partsInventoryRowsQuery.data?.length ?? 0) === 0)
+            }
+          />
           <div className="rounded-sm border border-gray-200 bg-white p-3">
             <div className="mb-2 flex items-center justify-between">
               <h3 className="text-sm font-semibold">Parts Inventory Reorder Flags</h3>

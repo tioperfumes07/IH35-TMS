@@ -123,6 +123,80 @@ const MIGRATED = [
     file: "apps/frontend/src/pages/maintenance/DefectsInboxPage.tsx",
     empties: ["No DVIR defects in this queue."],
   },
+  // MAINT surface batch — settled ParityTable / list-state empties.
+  {
+    file: "apps/frontend/src/pages/maintenance/brakes/BrakeWearDashboard.tsx",
+    empties: ["No brake positions projected for service within 30 days."],
+  },
+  {
+    file: "apps/frontend/src/pages/maintenance/compliance/Compliance425CPage.tsx",
+    empties: ["No 425C-linked events found."],
+  },
+  {
+    file: "apps/frontend/src/pages/maintenance/components/MaintenanceDamageRegisterTab.tsx",
+    empties: ["No damage reports on the formal register"],
+  },
+  {
+    file: "apps/frontend/src/pages/maintenance/DriverReportsQueuePage.tsx",
+    empties: ["No driver reports found."],
+  },
+  {
+    file: "apps/frontend/src/pages/maintenance/components/InTransitIssuesTable.tsx",
+    empties: ["No in-transit issues in queue."],
+  },
+  {
+    file: "apps/frontend/src/pages/maintenance/drivers/DriversMasterDataPage.tsx",
+    empties: ["No drivers found."],
+  },
+  {
+    file: "apps/frontend/src/pages/maintenance/FaultDraftsPage.tsx",
+    empties: [
+      "No fault-driven drafts for this unit.",
+      "No fault-driven draft work orders pending review.",
+    ],
+  },
+  {
+    file: "apps/frontend/src/pages/maintenance/FaultRulesPage.tsx",
+    empties: ["No fault rules configured yet."],
+  },
+  {
+    file: "apps/frontend/src/pages/maintenance/inspections/InspectionsPage.tsx",
+    empties: ["No inspections logged yet."],
+  },
+  {
+    file: "apps/frontend/src/pages/maintenance/MaintKpiDashboardPage.tsx",
+    empties: ["No drill-down rows for this filter window."],
+  },
+  {
+    file: "apps/frontend/src/pages/maintenance/parts/PartsMasterDataPage.tsx",
+    empties: ["No parts found."],
+  },
+  {
+    file: "apps/frontend/src/pages/maintenance/components/PartsInventoryTable.tsx",
+    empties: [
+      "No parts on hand. Click + Record Purchase to track daily purchases. Anti-theft pattern: minimal stock kept on hand.",
+    ],
+  },
+  {
+    file: "apps/frontend/src/pages/maintenance/PmAutoEnginePage.tsx",
+    empties: ["No engine runs recorded yet."],
+  },
+  {
+    file: "apps/frontend/src/pages/maintenance/pm-schedule/PmSchedulePage.tsx",
+    empties: ["No PM schedules yet."],
+  },
+  {
+    file: "apps/frontend/src/pages/maintenance/pre-flight/PreFlightDvirQueue.tsx",
+    empties: [
+      "No major DVIR defects in this queue.",
+      "No minor DVIR defects in this queue.",
+      "No observation DVIR defects in this queue.",
+    ],
+  },
+  {
+    file: "apps/frontend/src/pages/maintenance/reports/MaintenanceReportsPage.tsx",
+    empties: ["No rows for this report."],
+  },
   { file: "apps/frontend/src/pages/maintenance/WarrantyClaimsPage.tsx", empties: ["No warranty claims yet."] },
   { file: "apps/frontend/src/pages/work-orders/WorkOrdersConsoleListPage.tsx", empties: ["No work orders match the current filters."] },
   { file: "apps/frontend/src/pages/safety/AccidentsPage.tsx", empties: ["No accident reports found."] },
