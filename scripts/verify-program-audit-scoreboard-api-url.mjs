@@ -164,10 +164,11 @@ export function assertScoreboardContract(sources) {
     if (
       !/safety\.required\.json/.test(matrixPage) ||
       !/maintenance\.required\.json/.test(matrixPage) ||
-      !/insurance\.required\.json/.test(matrixPage)
+      !/insurance\.required\.json/.test(matrixPage) ||
+      !/legal\.required\.json/.test(matrixPage)
     ) {
       problems.push(
-        `${matrixPageRel}: must import maintenance + safety + insurance Required maps (module-by-module board)`,
+        `${matrixPageRel}: must import maintenance + safety + insurance + legal Required maps (module-by-module board)`,
       );
     }
     if (
@@ -186,7 +187,7 @@ export function assertScoreboardContract(sources) {
     }
   }
 
-  for (const mod of ["maintenance", "safety", "insurance"]) {
+  for (const mod of ["maintenance", "safety", "insurance", "legal"]) {
     const mapRel = `docs/specs/scoreboard/modules/${mod}.required.json`;
     const mapPath = path.join(ROOT, mapRel);
     if (!fs.existsSync(mapPath)) {
@@ -209,9 +210,9 @@ export function assertScoreboardContract(sources) {
     }
   }
 
-  if (route && !/module=maintenance\|safety\|insurance|SUPPORTED.*insurance|insurance/.test(route)) {
+  if (route && !/module=maintenance\|safety\|insurance\|legal|SUPPORTED.*legal|legal/.test(route)) {
     problems.push(
-      `${routeRel}: module-matrix route must allow module=maintenance|safety|insurance`,
+      `${routeRel}: module-matrix route must allow module=maintenance|safety|insurance|legal`,
     );
   }
 
