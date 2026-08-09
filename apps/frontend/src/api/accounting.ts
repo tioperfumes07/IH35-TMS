@@ -712,6 +712,8 @@ export type ExpenseDetail = {
   driver_first_name: string | null;
   driver_last_name: string | null;
   journal_entry_id: string | null;
+  journal_entry_date?: string | null;
+  journal_entry_memo?: string | null;
   reversed_by_je_id: string | null;
   posted_at: string | null;
   created_at: string;
@@ -724,6 +726,9 @@ export type ExpenseDetail = {
   work_order_display_id: string | null;
   /** ACCT-F17 — reverse bank hop when matched_expense_id is stamped. */
   matched_bank_transaction_id?: string | null;
+  matched_bank_transaction_date?: string | null;
+  matched_bank_transaction_description?: string | null;
+  matched_bank_transaction_amount_cents?: number | string | null;
 };
 
 export function getExpense(id: string, operatingCompanyId: string) {
