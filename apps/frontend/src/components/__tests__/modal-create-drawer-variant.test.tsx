@@ -23,6 +23,10 @@ function panel(name: string) {
   return screen.getByRole("dialog", { name });
 }
 
+// ParityDrawer's panel z-index, read from components/parity/ParityDrawer.tsx (z-[60]). Kept as a named
+// constant so a restack shows up as one obvious edit rather than a scattered literal.
+const PARITY_DRAWER_PANEL_Z = 60;
+
 describe("Modal variant=\"drawer\" (C7 create surface chrome)", () => {
   it("defaults to the centered card, so every untouched non-create modal keeps its shape", () => {
     render(wrap(<Modal open onClose={() => {}} title="Void this row?">body</Modal>));
@@ -47,12 +51,16 @@ describe("Modal variant=\"drawer\" (C7 create surface chrome)", () => {
     expect(el.parentElement?.className).not.toContain("items-center");
   });
 
-  it("stacks above the ParityDrawer money panel (z-50 over z-40) and portals to document.body", () => {
+  it("stacks ABOVE the ParityDrawer money panel and portals to document.body", () => {
     const { container } = render(
       wrap(<Modal open onClose={() => {}} title="Create Thing" variant="drawer">body</Modal>),
     );
     const overlay = panel("Create Thing").parentElement!;
-    expect(overlay.className).toContain("z-50");
+    // Assert the RELATIONSHIP, not a literal. This pinned "z-50" and the overlay is now z-[70]; the
+    // invariant that actually matters is unchanged — the create drawer must sit ABOVE ParityDrawer's
+    // panel — and a hardcoded class fails on any restack even when the ordering is still correct.
+    const zOf = (cls: string) => Number(/z-\[?(\d+)\]?/.exec(cls)?.[1] ?? "0");
+    expect(zOf(overlay.className)).toBeGreaterThan(PARITY_DRAWER_PANEL_Z);
     // portalled: the overlay is NOT inside the component's own container subtree, so a create
     // drawer opened from inside a money panel cannot be trapped in that panel's stacking context.
     expect(container.contains(overlay)).toBe(false);
