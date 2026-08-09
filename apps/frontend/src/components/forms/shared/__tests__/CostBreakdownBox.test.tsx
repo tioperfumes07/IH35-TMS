@@ -2,6 +2,9 @@ import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { CostBreakdownBox, type CategoryLine, type ItemLine } from "../CostBreakdownBox";
+import { pickCombo } from "../../../../test-utils/pickCombo";
+import { ToastProvider } from "../../../Toast";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 function makeCategory(overrides: Partial<CategoryLine> = {}): CategoryLine {
   return {
@@ -115,7 +118,10 @@ describe("CostBreakdownBox", () => {
     );
 
     const productServiceInput = screen.getAllByPlaceholderText(/product\/service/i)[0];
-    const lineCard = productServiceInput.closest("div.rounded.border.border-gray-200.bg-white.p-2");
+    // The row wrapper's classes changed (it is `border-b border-gray-100 bg-white p-2 last:border-b-0`
+    // now, CostBreakdownBox.tsx:328), so the old class chain matched nothing and closest() returned null.
+    // Walk up to the row that CONTAINS this picker instead of pinning a class list that restyling breaks.
+    const lineCard = productServiceInput.closest("div.bg-white.p-2");
     const removeButton = within(lineCard as HTMLElement).getByRole("button", { name: "x" });
     fireEvent.click(removeButton);
     const next = onSectionBChange.mock.lastCall?.[0] as ItemLine[];
@@ -274,9 +280,11 @@ describe("CostBreakdownBox", () => {
     expect(rowGrid?.children.length).toBe(7);
     expect(screen.getByPlaceholderText(/product\/service/i)).toBeInTheDocument();
     expect(screen.getByPlaceholderText("Description")).toBeInTheDocument();
-    expect(screen.getByPlaceholderText("Location")).toBeInTheDocument();
+    // Same upgrade as above: Location is an options-backed picker now, not a free-text input.
+    expect(screen.getAllByPlaceholderText(/select location/i)[0]).toBeInTheDocument();
     expect(screen.getByPlaceholderText("Qty")).toBeInTheDocument();
-    expect(screen.getByPlaceholderText("Cost")).toBeInTheDocument();
+    // Cost is a MoneyInput now; it renders the numeric placeholder "0.00", not the word "Cost".
+    expect(screen.getAllByPlaceholderText("0.00")[0]).toBeInTheDocument();
     expect(screen.queryByPlaceholderText("MPG")).not.toBeInTheDocument();
     expect(screen.queryByPlaceholderText("ODO Fill At")).not.toBeInTheDocument();
     expect(screen.queryByText("MPG")).not.toBeInTheDocument();
@@ -286,16 +294,30 @@ describe("CostBreakdownBox", () => {
     const line = makeCategory({ quantity: 1, unit_cost: 10, amount: 10 });
     const onSectionAChange = vi.fn();
     render(
+      // ReferenceSelect (the operatingCompanyId branch) raises toasts AND runs queries, so it needs both
+      // providers — without them the render throws before any assertion and reads as missing UI.
+      <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+      <ToastProvider>
       <CostBreakdownBox
         sectionA={{ lines: [line] }}
         sectionB={{ lines: [] }}
         partsLaborMode="none"
+        expenseCategoryOptions={[
+          { id: "cat-1", label: "Fuel" },
+          { id: "cat-2", label: "Tires" },
+        ]}
+        operatingCompanyId="co-1"
         onSectionAChange={onSectionAChange}
         onSectionBChange={vi.fn()}
       />
+      </ToastProvider>
+      </QueryClientProvider>
     );
 
-    fireEvent.change(screen.getByDisplayValue("cat-1"), { target: { value: "cat-2" } });
+    // The category picker is a Combobox now: its input shows the option LABEL (not the uuid), and a
+    // `change` sets the QUERY TEXT rather than committing — so getByDisplayValue("cat-1") could never match
+    // and setting .value committed nothing. Supply real options and pick the second one by its visible text.
+    pickCombo(screen.getAllByPlaceholderText(/select category/i)[0], "Tires");
     expect((onSectionAChange.mock.lastCall?.[0] as CategoryLine[])[0].expense_category_uuid).toBe("cat-2");
 
     fireEvent.change(screen.getByDisplayValue("Category"), { target: { value: "Updated desc" } });
@@ -304,7 +326,9 @@ describe("CostBreakdownBox", () => {
     fireEvent.change(screen.getByDisplayValue("1"), { target: { value: "3" } });
     expect((onSectionAChange.mock.lastCall?.[0] as CategoryLine[])[0].amount).toBe(30);
 
-    fireEvent.change(screen.getByDisplayValue("10"), { target: { value: "5" } });
+    // Cost is a MoneyInput: it FORMATS the value, so 10 displays as "10.00" and getByDisplayValue("10")
+    // matches nothing.
+    fireEvent.change(screen.getByDisplayValue("10.00"), { target: { value: "5" } });
     expect((onSectionAChange.mock.lastCall?.[0] as CategoryLine[])[0].amount).toBe(5);
   });
 
@@ -312,28 +336,43 @@ describe("CostBreakdownBox", () => {
     const line = makeItem({ quantity: 2, unit_cost: 10, amount: 20 });
     const onSectionBChange = vi.fn();
     render(
+      // ReferenceSelect (the operatingCompanyId branch) raises toasts AND runs queries, so it needs both
+      // providers — without them the render throws before any assertion and reads as missing UI.
+      <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+      <ToastProvider>
       <CostBreakdownBox
         sectionA={{ lines: [] }}
         sectionB={{ lines: [line] }}
         partsLaborMode="none"
+        itemOptions={[
+          { id: "svc-1", label: "Inspection" },
+          { id: "svc-2", label: "Engine Service" },
+        ]}
+        operatingCompanyId="co-1"
+        locationOptions={[{ id: "STEER-L", label: "STEER-L" }]}
         onSectionAChange={vi.fn()}
         onSectionBChange={onSectionBChange}
       />
+      </ToastProvider>
+      </QueryClientProvider>
     );
 
-    fireEvent.change(screen.getByDisplayValue("svc-1"), { target: { value: "svc-2" } });
+    pickCombo(screen.getAllByPlaceholderText(/product\/service/i)[0], "Engine Service");
     expect((onSectionBChange.mock.lastCall?.[0] as ItemLine[])[0].service_item_uuid).toBe("svc-2");
 
     fireEvent.change(screen.getByDisplayValue("Item"), { target: { value: "Engine Service" } });
     expect((onSectionBChange.mock.lastCall?.[0] as ItemLine[])[0].description).toBe("Engine Service");
 
-    fireEvent.change(screen.getByPlaceholderText("Location"), { target: { value: "STEER-L" } });
+    // The free-text `<input placeholder="Location">` became an options-backed picker in 0721b8044
+    // ("Select location..." + locationOptions) — an upgrade, not a §7 removal. Its placeholder only became
+    // visible after #5042 stopped SelectCombobox discarding non-disabled empty-option labels.
+    pickCombo(screen.getAllByPlaceholderText(/select location/i)[0], "STEER-L");
     expect((onSectionBChange.mock.lastCall?.[0] as ItemLine[])[0].location_label).toBe("STEER-L");
 
     fireEvent.change(screen.getByDisplayValue("2"), { target: { value: "4" } });
     expect((onSectionBChange.mock.lastCall?.[0] as ItemLine[])[0].amount).toBe(40);
 
-    fireEvent.change(screen.getByDisplayValue("10"), { target: { value: "8" } });
+    fireEvent.change(screen.getByDisplayValue("10.00"), { target: { value: "8" } });
     expect((onSectionBChange.mock.lastCall?.[0] as ItemLine[])[0].amount).toBe(16);
   });
 
