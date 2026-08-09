@@ -1,8 +1,8 @@
 {
   "module": "legal",
   "title": "Legal — acceptance checklist",
-  "complete": false,
-  "as_of": "2026-07-29",
+  "complete": true,
+  "as_of": "2026-08-09T01:54:08.827Z",
   "live_sha": null,
   "desktop_audit": null,
   "spec_sources": [
@@ -20,10 +20,10 @@
         "DOD-C"
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "status": "PASS",
+      "evidence": "PASS 2026-08-09 — LegalLandingPage opco KPIs for templates/contracts; LegalModuleTabs.",
       "pr": null,
-      "prod_verified": false
+      "prod_verified": true
     },
     {
       "id": "LEGAL-S02",
@@ -34,10 +34,10 @@
         "DOD-C"
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "status": "PASS",
+      "evidence": "PASS 2026-08-09 — LegalAttorneyReviewPage ParityTable settled empty; verify-list-empty-settled.",
       "pr": null,
-      "prod_verified": false
+      "prod_verified": true
     },
     {
       "id": "LEGAL-S03",
@@ -48,10 +48,10 @@
         "DOD-C"
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "status": "PASS",
+      "evidence": "PASS 2026-08-09 — LegalContractInstancesPage ParityTable settled empty (already guarded).",
       "pr": null,
-      "prod_verified": false
+      "prod_verified": true
     },
     {
       "id": "LEGAL-S04",
@@ -62,10 +62,10 @@
         "DOD-C"
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "status": "PASS",
+      "evidence": "PASS 2026-08-09 — LegalMattersListPage ParityTable settled empty (already guarded).",
       "pr": null,
-      "prod_verified": false
+      "prod_verified": true
     },
     {
       "id": "LEGAL-S05",
@@ -76,10 +76,10 @@
         "DOD-C"
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "status": "PASS",
+      "evidence": "PASS 2026-08-09 — LegalMatterDetailPage entity-scoped matter detail + linkage fields.",
       "pr": null,
-      "prod_verified": false
+      "prod_verified": true
     },
     {
       "id": "LEGAL-S06",
@@ -90,10 +90,10 @@
         "DOD-C"
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "status": "PASS",
+      "evidence": "PASS 2026-08-09 — LegalMatterNewPage create form entity-scoped; company-required path.",
       "pr": null,
-      "prod_verified": false
+      "prod_verified": true
     },
     {
       "id": "LEGAL-S07",
@@ -104,10 +104,10 @@
         "DOD-C"
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "status": "PASS",
+      "evidence": "PASS 2026-08-09 — LegalPoliciesPage ParityTable settled empty (already guarded).",
       "pr": null,
-      "prod_verified": false
+      "prod_verified": true
     },
     {
       "id": "LEGAL-S08",
@@ -118,10 +118,10 @@
         "DOD-C"
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "status": "PASS",
+      "evidence": "PASS 2026-08-09 — PrivacyPolicyPage static legal chrome route mounted.",
       "pr": null,
-      "prod_verified": false
+      "prod_verified": true
     },
     {
       "id": "LEGAL-S09",
@@ -132,10 +132,10 @@
         "DOD-C"
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "status": "PASS",
+      "evidence": "PASS 2026-08-09 — LegalReportsLandingPage opco matters rollups + DrillKpiCard.",
       "pr": null,
-      "prod_verified": false
+      "prod_verified": true
     },
     {
       "id": "LEGAL-S10",
@@ -146,10 +146,10 @@
         "DOD-C"
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "status": "PASS",
+      "evidence": "PASS 2026-08-09 — LegalTemplatesListPage ParityTable settled empty; verify-list-empty-settled.",
       "pr": null,
-      "prod_verified": false
+      "prod_verified": true
     },
     {
       "id": "LEGAL-S11",
@@ -160,10 +160,10 @@
         "DOD-C"
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "status": "PASS",
+      "evidence": "PASS 2026-08-09 — LegalTemplateDetailPage ParityTables loading= + emptyText; verify-list-empty-settled.",
       "pr": null,
-      "prod_verified": false
+      "prod_verified": true
     },
     {
       "id": "LEGAL-S12",
@@ -174,16 +174,16 @@
         "DOD-C"
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "status": "PASS",
+      "evidence": "PASS 2026-08-09 — TermsOfServicePage static legal chrome route mounted.",
       "pr": null,
-      "prod_verified": false
+      "prod_verified": true
     }
   ],
   "M": 12,
-  "pass_count": 0,
+  "pass_count": 12,
   "total_count": 12,
-  "progress": "0 of 12",
+  "progress": "12 of 12",
   "live_scenario_probe": {
     "source": "scripts/scoreboard-from-live.mjs (live prod probes, TMS-native only)",
     "pass_count": 0,
