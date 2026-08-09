@@ -164,7 +164,7 @@ async function listAccidentSpawnedWorkOrders(
 }
 
 export async function registerSafetyRoutes(app: FastifyInstance) {
-  app.get("/api/v1/safety/dashboard/kpis", async (req, reply) => {
+  app.get("/api/v1/safety/dashboard/kpis", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -333,7 +333,7 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
     return payload;
   });
 
-  app.get("/api/v1/safety/events/:id", async (req, reply) => {
+  app.get("/api/v1/safety/events/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const params = idParamsSchema.safeParse(req.params ?? {});
@@ -360,19 +360,25 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
     return row;
   });
 
-  app.get("/api/v1/safety/training/completions", async (req, reply) => {
+  app.get("/api/v1/safety/training/completions", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return sendValidationError(reply, query.error);
     const rows = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
+      // CLS-UUID-LABEL: no driver join — TrainingRecordsPage's EntityLink rendered tr.driver_id
+      // as a raw full uuid with no label (same class fixed on accidents/dot_inspections/internal_fines).
       const res = await client
         .query(
           `
-            SELECT *
-            FROM safety.training_records
-            WHERE operating_company_id = $1
-            ORDER BY completed_at DESC
+            SELECT tr.*,
+                   NULLIF(TRIM(COALESCE(d.first_name, '') || ' ' || COALESCE(d.last_name, '')), '') AS driver_name
+            FROM safety.training_records tr
+            LEFT JOIN mdata.drivers d
+              ON d.id = tr.driver_id
+             AND d.operating_company_id = tr.operating_company_id
+            WHERE tr.operating_company_id = $1
+            ORDER BY tr.completed_at DESC
             LIMIT 500
           `,
           [query.data.operating_company_id]

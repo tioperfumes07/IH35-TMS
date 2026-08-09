@@ -71,7 +71,8 @@ export function TrainingRecordsPage({ operatingCompanyId }: Props) {
       render: (row) => {
         const id = String(row.driver_id ?? "").trim();
         if (!id) return "—";
-        return <EntityLink kind="driver" id={id} />;
+        const driverName = String(row.driver_name ?? "").trim();
+        return <EntityLink kind="driver" id={id} label={driverName || "Driver"} />;
       },
     },
     {
