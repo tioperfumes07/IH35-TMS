@@ -1,13 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { EntityLink } from "../../components/shared/EntityLink";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   listExpenses,
   listExpenseDuplicates,
+  voidExpense,
   type ExpenseListRow,
   type ExpenseListStatus,
 } from "../../api/accounting";
+import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
@@ -58,6 +60,7 @@ function MatchPill({ matched }: { matched: boolean }) {
 
 export function ExpensesListPage() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [searchParams] = useSearchParams();
@@ -69,7 +72,19 @@ export function ExpensesListPage() {
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
+  const [voidOpen, setVoidOpen] = useState(false);
+  const [voidTarget, setVoidTarget] = useState<{ id: string; displayId: string } | null>(null);
   const [highlightedExpenseId, setHighlightedExpenseId] = useState<string | null>(deepLinkExpenseId);
+
+  const voidMutation = useMutation({
+    mutationFn: (reason: string) => {
+      if (!voidTarget || !selectedCompanyId) return Promise.reject(new Error("Missing void target"));
+      return voidExpense(voidTarget.id, selectedCompanyId, reason);
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["accounting", "expenses", selectedCompanyId] });
+    },
+  });
 
   useEffect(() => {
     if (deepLinkExpenseId) setHighlightedExpenseId(deepLinkExpenseId);
@@ -210,6 +225,30 @@ export function ExpensesListPage() {
       render: (r) => <span className="text-[11px] capitalize text-gray-600">{r.posting_status}</span>,
     },
     { key: "is_reconciled", label: "Bank Match", sortable: true, render: (r) => <MatchPill matched={r.is_reconciled} /> },
+    {
+      key: "actions",
+      label: "Actions",
+      sortable: false,
+      className: "text-right",
+      render: (r) => (
+        <button
+          type="button"
+          disabled={r.status === "void"}
+          className={`rounded-sm border px-2 py-0.5 text-[11px] font-medium ${
+            r.status === "void"
+              ? "border-gray-200 bg-gray-50 text-gray-400"
+              : "border-red-200 bg-red-50 text-red-700 hover:bg-red-100"
+          }`}
+          onClick={(event) => {
+            event.stopPropagation();
+            setVoidTarget({ id: r.id, displayId: r.expense_number ?? r.id.slice(0, 8) });
+            setVoidOpen(true);
+          }}
+        >
+          {r.status === "void" ? "Voided" : "Void"}
+        </button>
+      ),
+    },
   ];
 
   const expensesActiveFilterCount = (status ? 1 : 0) + (fromDate || toDate ? 1 : 0);
@@ -276,6 +315,22 @@ export function ExpensesListPage() {
         operatingCompanyId={companyId}
         onClose={() => setCreateOpen(false)}
         onCreated={() => void query.refetch()}
+      />
+      <VoidReasonModal
+        open={voidOpen}
+        title="Void Expense"
+        entityRef={voidTarget?.displayId ?? ""}
+        minLength={1}
+        postsReversingEntry
+        onClose={() => {
+          setVoidOpen(false);
+          setVoidTarget(null);
+        }}
+        onSubmit={async (reason) => {
+          await voidMutation.mutateAsync(reason);
+          setVoidOpen(false);
+          setVoidTarget(null);
+        }}
       />
       <div className="space-y-3">
         {!companyId ? <p className="text-sm text-red-600">Select an operating company.</p> : null}
