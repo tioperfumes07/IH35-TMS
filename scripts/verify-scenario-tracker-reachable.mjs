@@ -68,7 +68,7 @@ const SURFACES = [
   },
   {
     route: "/program/matrix",
-    what: "Module matrix scoreboard (owner-approved layout; sample until live R/M/D)",
+    what: "Module matrix scoreboard (Required JSON + live Audited/Done via /api/v1/program/module-matrix)",
     requireDoor: true,
     linkSources: [
       "apps/frontend/src/pages/program/scenario-tracker/ScenarioTrackerHome.tsx",

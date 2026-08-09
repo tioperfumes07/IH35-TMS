@@ -140,6 +140,28 @@ export function assertScoreboardContract(sources) {
   if (route && !/rateLimit\s*:\s*\{\s*max\s*:/.test(route)) {
     problems.push(`${routeRel}: GET audit-scoreboard must set config.rateLimit (CodeQL missing-rate-limiting)`);
   }
+  if (route && !/\/api\/v1\/program\/module-matrix/.test(route)) {
+    problems.push(`${routeRel}: MATRIX-LIVE-RAD must register GET /api/v1/program/module-matrix`);
+  }
+  if (route && /\/api\/v1\/program\/module-matrix/.test(route) && !/buildModuleMatrix/.test(route)) {
+    problems.push(`${routeRel}: module-matrix route must call buildModuleMatrix`);
+  }
+
+  const matrixPageRel = "apps/frontend/src/pages/program/ModuleMatrixPreviewPage.tsx";
+  const matrixPage = sources?.[matrixPageRel] ?? (fs.existsSync(path.join(ROOT, matrixPageRel)) ? read(matrixPageRel) : "");
+  if (matrixPage) {
+    if (!/resolveApiUrl\(\s*["']\/api\/v1\/program\/module-matrix/.test(matrixPage)) {
+      problems.push(
+        `${matrixPageRel}: must fetch live Audited/Done via resolveApiUrl("/api/v1/program/module-matrix…")`,
+      );
+    }
+    if (/const\s+SAMPLE_AD\b/.test(matrixPage)) {
+      problems.push(`${matrixPageRel}: SAMPLE_AD theater is forbidden once MATRIX-LIVE-RAD ships`);
+    }
+    if (!/module-matrix-sample-banner/.test(matrixPage)) {
+      problems.push(`${matrixPageRel}: must keep SAMPLE/unavailable banner when API fails`);
+    }
+  }
 
   const emitRel = "scripts/audit-coverage-scoreboard.mjs";
   const emit = sources?.[emitRel] ?? read(emitRel);
