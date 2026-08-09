@@ -14,6 +14,7 @@ import {
 } from "../../api/prepaid-expenses";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 import { CollapsedListFilters } from "../../components/table";
 import { useUrlSort } from "../../hooks/useUrlSort";
 
@@ -49,7 +50,7 @@ const SCHEDULE_COLUMNS: ParityColumn<PrepaidAmortRow>[] = [
     sortable: true,
     cellClass: "font-mono text-gray-400",
     render: (row) => (
-      <EntityLink kind="journal_entry" id={row.posted_journal_entry_id} label={row.posted_journal_entry_id ? row.posted_journal_entry_id.slice(0, 8) + "…" : undefined} />
+      <EntityLink kind="journal_entry" id={row.posted_journal_entry_id} label={row.posted_journal_entry_id ? entityLabel(null, row.posted_journal_entry_id, "Journal entry") : undefined} />
     ),
   },
 ];
@@ -85,7 +86,7 @@ function SchedulePanel({ detail, onClose }: { detail: PrepaidAssetDetail; onClos
           {detail.purchase_je_id ? (
             <p>
               Purchase JE:{" "}
-              <EntityLink kind="journal_entry" id={detail.purchase_je_id} label={detail.purchase_je_id.slice(0, 8)} />
+              <EntityLink kind="journal_entry" id={detail.purchase_je_id} label={entityLabel(null, detail.purchase_je_id, "Journal entry")} />
             </p>
           ) : null}
           {detail.asset_account_id ? (

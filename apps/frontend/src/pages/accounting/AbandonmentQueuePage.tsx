@@ -8,6 +8,7 @@ import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { CollapsedListFilters } from "../../components/table";
 
@@ -44,7 +45,7 @@ export function AbandonmentQueuePage() {
         label: "Load",
         render: (row) => {
           const loadId = String(row.load_id ?? "");
-          return <EntityLink kind="load" id={row.load_id as string | undefined} label={loadId ? `${loadId.slice(0, 8)}…` : undefined} />;
+          return <EntityLink kind="load" id={row.load_id as string | undefined} label={loadId ? entityLabel(null, loadId, "Load") : undefined} />;
         },
       },
       {
@@ -52,7 +53,7 @@ export function AbandonmentQueuePage() {
         label: "Driver",
         render: (row) => {
           const driverId = String(row.driver_id ?? "");
-          return <EntityLink kind="driver" id={row.driver_id as string | undefined} label={driverId ? `${driverId.slice(0, 8)}…` : undefined} />;
+          return <EntityLink kind="driver" id={row.driver_id as string | undefined} label={driverId ? entityLabel(null, driverId, "Driver") : undefined} />;
         },
       },
       {
@@ -64,7 +65,7 @@ export function AbandonmentQueuePage() {
             <EntityLink
               kind="settlement"
               id={settlementId}
-              label={settlementId ? `${settlementId.slice(0, 8)}…` : undefined}
+              label={settlementId ? entityLabel(null, settlementId, "Settlement") : undefined}
             />
           );
         },

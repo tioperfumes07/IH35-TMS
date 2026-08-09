@@ -1,6 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
 import { useMemo, useState, type ReactNode } from "react";
 import { EntityLink, type EntityKind } from "../../components/shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 import { getAccountingSourceLineage, type AccountingSourceLineageRow } from "../../api/accounting";
 import { Button } from "../../components/Button";
 import { useToast } from "../../components/Toast";
@@ -83,7 +84,7 @@ function PostingEntityLink({
   if (!kind || !id) {
     return <>{label ?? id ?? ""}</>;
   }
-  return <EntityLink kind={kind} id={id} label={label ?? id.slice(0, 8)} />;
+  return <EntityLink kind={kind} id={id} label={label ?? entityLabel(null, id, "Record")} />;
 }
 
 export function PostingLineagePage() {
@@ -134,7 +135,7 @@ export function PostingLineagePage() {
         label: "JE",
         sortable: true,
         render: (row) => (
-          <EntityLink kind="journal_entry" id={row.journal_entry_id} label={row.journal_entry_id?.slice(0, 8)} />
+          <EntityLink kind="journal_entry" id={row.journal_entry_id} label={row.journal_entry_id ? entityLabel(null, row.journal_entry_id, "Journal entry") : undefined} />
         ),
       },
       {
@@ -181,7 +182,7 @@ export function PostingLineagePage() {
                 <PostingEntityLink
                   type={row.linked_object_type}
                   id={row.linked_object_id}
-                  label={row.linked_object_id.slice(0, 8)}
+                  label={entityLabel(null, row.linked_object_id, "Linked object")}
                 />
               </>
             ) : null}
@@ -256,7 +257,7 @@ export function PostingLineagePage() {
             <PostingEntityLink
               type={submitted.sourceType}
               id={submitted.sourceId}
-              label={submitted.sourceId.slice(0, 8)}
+              label={entityLabel(null, submitted.sourceId, "Source")}
             />
           </div>
           <div className="mt-1 text-xs text-slate-600">

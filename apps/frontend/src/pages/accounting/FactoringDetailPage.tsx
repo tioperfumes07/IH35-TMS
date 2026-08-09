@@ -25,6 +25,7 @@ import { useToast } from "../../components/Toast";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { FactorReserveCard } from "./FactorReserveCard";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useUrlSort } from "../../hooks/useUrlSort";
 
@@ -291,7 +292,7 @@ export function FactoringDetailPage() {
                       <span>{money(Number(row.amount_cents ?? 0))}</span>
                       <span className="text-slate-500">{row.movement_date ? formatDateUS(String(row.movement_date)) : "—"}</span>
                       {row.journal_entry_id ? (
-                        <EntityLink kind="journal_entry" id={row.journal_entry_id} label={`JE ${row.journal_entry_id.slice(0, 8)}`} />
+                        <EntityLink kind="journal_entry" id={row.journal_entry_id} label={entityLabel(null, row.journal_entry_id, "Journal entry")} />
                       ) : (
                         <span className="text-slate-400">JE —</span>
                       )}
@@ -311,7 +312,7 @@ export function FactoringDetailPage() {
                       <span>{row.accrual_date ? formatDateUS(String(row.accrual_date)) : "—"}</span>
                       <span>{money(Number(row.interest_cents ?? 0))}</span>
                       {row.journal_entry_id ? (
-                        <EntityLink kind="journal_entry" id={row.journal_entry_id} label={`JE ${row.journal_entry_id.slice(0, 8)}`} />
+                        <EntityLink kind="journal_entry" id={row.journal_entry_id} label={entityLabel(null, row.journal_entry_id, "Journal entry")} />
                       ) : (
                         <span className="text-slate-400">JE —</span>
                       )}
