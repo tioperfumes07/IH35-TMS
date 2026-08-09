@@ -401,11 +401,18 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
             ${hasWorkOrderId ? "wo.display_id" : "NULL::text"} AS work_order_display_id,
             pay_acct.account_number                      AS payment_account_number,
             pay_acct.account_name                        AS payment_account_name,
-            ${EXPENSE_MATCHED_BANK_TRANSACTION_ID_SQL}   AS matched_bank_transaction_id
+            ${EXPENSE_MATCHED_BANK_TRANSACTION_ID_SQL}   AS matched_bank_transaction_id,
+            je.entry_date                                  AS journal_entry_date,
+            je.memo                                        AS journal_entry_memo,
+            bt.transaction_date                            AS matched_bank_transaction_date,
+            bt.description                                 AS matched_bank_transaction_description,
+            bt.amount_cents::text                          AS matched_bank_transaction_amount_cents
           FROM accounting.expenses e
           LEFT JOIN mdata.vendors v ON v.id = e.vendor_uuid
           LEFT JOIN mdata.drivers dr ON dr.id = e.driver_uuid
           LEFT JOIN mdata.loads l ON l.id = e.load_id
+          LEFT JOIN accounting.journal_entries je ON je.id = e.journal_entry_id AND je.operating_company_id = e.operating_company_id
+          LEFT JOIN banking.bank_transactions bt ON bt.matched_expense_id = e.id AND bt.operating_company_id = e.operating_company_id
           ${hasUnitId ? "LEFT JOIN mdata.units u ON u.id = e.unit_id" : ""}
           ${hasWorkOrderId ? "LEFT JOIN maintenance.work_orders wo ON wo.id = e.linked_work_order_uuid" : ""}
           ${hasPaymentAccount ? "LEFT JOIN catalogs.accounts pay_acct ON pay_acct.id = e.payment_account_uuid" : "LEFT JOIN catalogs.accounts pay_acct ON false"}

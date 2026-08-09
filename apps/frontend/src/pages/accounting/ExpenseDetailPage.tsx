@@ -175,7 +175,15 @@ export function ExpenseDetailPage() {
         {expense.journal_entry_id ? (
           <DataPanelRow>
             <span className="text-xs font-semibold text-gray-600">Journal entry</span>
-            <EntityLink kind="journal_entry" id={expense.journal_entry_id} label={expense.journal_entry_id.slice(0, 8)} />
+            <EntityLink
+              kind="journal_entry"
+              id={expense.journal_entry_id}
+              label={
+                expense.journal_entry_date
+                  ? `${formatDateUS(expense.journal_entry_date)}${expense.journal_entry_memo ? ` — ${expense.journal_entry_memo}` : ""}`
+                  : expense.journal_entry_id.slice(0, 8)
+              }
+            />
           </DataPanelRow>
         ) : null}
         {expense.matched_bank_transaction_id ? (
@@ -184,7 +192,19 @@ export function ExpenseDetailPage() {
             <EntityLink
               kind="bank_transaction"
               id={expense.matched_bank_transaction_id}
-              label={expense.matched_bank_transaction_id.slice(0, 8)}
+              label={
+                expense.matched_bank_transaction_date
+                  ? `${formatDateUS(expense.matched_bank_transaction_date)}${
+                      expense.matched_bank_transaction_description
+                        ? ` — ${expense.matched_bank_transaction_description}`
+                        : ""
+                    }${
+                      expense.matched_bank_transaction_amount_cents
+                        ? ` (${money(expense.matched_bank_transaction_amount_cents)})`
+                        : ""
+                    }`
+                  : expense.matched_bank_transaction_id.slice(0, 8)
+              }
             />
           </DataPanelRow>
         ) : null}
