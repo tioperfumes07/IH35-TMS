@@ -20,6 +20,10 @@ export type TransferRequestRow = {
   inbound_confirmed_at?: string | null;
   inbound_evidence_uuid?: string | null;
   created_at: string;
+  /** Human driver names, joined for display. NULL only when the driver row is gone —
+   *  the FE falls back to a truncated uuid ONLY then, so a uuid on screen means MISSING DATA. */
+  from_driver_name?: string | null;
+  to_driver_name?: string | null;
 };
 
 const BLOCK_ID = "GAP-37-EQUIPMENT-DUAL-CONFIRM";
@@ -144,16 +148,22 @@ export async function listPendingForDriver(
   const driverCol = dir === "outbound" ? "from_driver_uuid" : "to_driver_uuid";
   const res = await client.query(
     `
-      SELECT uuid::text, operating_company_id::text, equipment_uuid::text, equipment_kind,
-             from_driver_uuid::text, to_driver_uuid::text, status, transfer_location,
-             outbound_confirmed_at::text, outbound_evidence_uuid::text,
-             inbound_confirmed_at::text, inbound_evidence_uuid::text,
-             created_at::text
-      FROM dispatch.equipment_transfer_requests
-      WHERE operating_company_id = $1::uuid
-        AND ${driverCol} = $2::uuid
-        AND status = $3
-      ORDER BY created_at DESC
+      SELECT r.uuid::text, r.operating_company_id::text, r.equipment_uuid::text, r.equipment_kind,
+             r.from_driver_uuid::text, r.to_driver_uuid::text, r.status, r.transfer_location,
+             r.outbound_confirmed_at::text, r.outbound_evidence_uuid::text,
+             r.inbound_confirmed_at::text, r.inbound_evidence_uuid::text,
+             r.created_at::text,
+             -- Raw-uuid display class: this list rendered from_driver_uuid.slice(0,8) — an opaque hex
+             -- fragment where the driver's NAME was one LEFT JOIN away.
+             NULLIF(TRIM(CONCAT_WS(' ', fd.first_name, fd.last_name)), '') AS from_driver_name,
+             NULLIF(TRIM(CONCAT_WS(' ', td.first_name, td.last_name)), '') AS to_driver_name
+      FROM dispatch.equipment_transfer_requests r
+      LEFT JOIN mdata.drivers fd ON fd.id = r.from_driver_uuid
+      LEFT JOIN mdata.drivers td ON td.id = r.to_driver_uuid
+      WHERE r.operating_company_id = $1::uuid
+        AND r.${driverCol} = $2::uuid
+        AND r.status = $3
+      ORDER BY r.created_at DESC
     `,
     [operatingCompanyId, driverUuid, status]
   );
@@ -211,15 +221,21 @@ export async function listInProgress(
 ): Promise<TransferRequestRow[]> {
   const res = await client.query(
     `
-      SELECT uuid::text, operating_company_id::text, equipment_uuid::text, equipment_kind,
-             from_driver_uuid::text, to_driver_uuid::text, status, transfer_location,
-             outbound_confirmed_at::text, outbound_evidence_uuid::text,
-             inbound_confirmed_at::text, inbound_evidence_uuid::text,
-             created_at::text
-      FROM dispatch.equipment_transfer_requests
-      WHERE operating_company_id = $1::uuid
-        AND status NOT IN ('completed', 'cancelled')
-      ORDER BY created_at DESC
+      SELECT r.uuid::text, r.operating_company_id::text, r.equipment_uuid::text, r.equipment_kind,
+             r.from_driver_uuid::text, r.to_driver_uuid::text, r.status, r.transfer_location,
+             r.outbound_confirmed_at::text, r.outbound_evidence_uuid::text,
+             r.inbound_confirmed_at::text, r.inbound_evidence_uuid::text,
+             r.created_at::text,
+             -- Raw-uuid display class: this list rendered from_driver_uuid.slice(0,8) — an opaque hex
+             -- fragment where the driver's NAME was one LEFT JOIN away.
+             NULLIF(TRIM(CONCAT_WS(' ', fd.first_name, fd.last_name)), '') AS from_driver_name,
+             NULLIF(TRIM(CONCAT_WS(' ', td.first_name, td.last_name)), '') AS to_driver_name
+      FROM dispatch.equipment_transfer_requests r
+      LEFT JOIN mdata.drivers fd ON fd.id = r.from_driver_uuid
+      LEFT JOIN mdata.drivers td ON td.id = r.to_driver_uuid
+      WHERE r.operating_company_id = $1::uuid
+        AND r.status NOT IN ('completed', 'cancelled')
+      ORDER BY r.created_at DESC
     `,
     [operatingCompanyId]
   );
