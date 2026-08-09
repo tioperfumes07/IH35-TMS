@@ -1,11 +1,97 @@
 /**
  * Module matrix scoreboard — owner-approved layout preview (2026-08-08).
- * SAMPLE DATA only until leaf inventory + live R/M/D are wired.
+ * Box 1 (Required) is sourced from docs/specs/scoreboard/modules/maintenance.required.json.
+ * Audited / Done remain SAMPLE until live R/M/D wiring.
  * Design lock: docs/specs/scoreboard/MODULE-MATRIX-SCOREBOARD-LOCKED.md
  */
 import { Link } from "react-router-dom";
+import maintRequired from "@scoreboard/modules/maintenance.required.json";
 
 type Tri = "done" | "audited" | "unaudited" | "na";
+type AdSample = "done" | "audited" | "unaudited";
+
+type RequiredColumn = {
+  id: string;
+  group: string;
+  label: string;
+};
+
+type RequiredLeaf = {
+  id: string;
+  tab: string;
+  sub?: string;
+  route_hint: string;
+  required: string[];
+};
+
+type RequiredMap = {
+  module: string;
+  entity_default: string;
+  columns: RequiredColumn[];
+  leaves: RequiredLeaf[];
+};
+
+const REQUIRED_MAP = maintRequired as RequiredMap;
+const COLS = REQUIRED_MAP.columns;
+
+/** SAMPLE Audited/Done only — keyed by leaf id × column id. Missing → unaudited. */
+const SAMPLE_AD: Record<string, Partial<Record<string, AdSample>>> = {
+  "wo.create": {
+    driver: "audited",
+    customer: "unaudited",
+    vendor: "done",
+    unit: "done",
+    trailer: "audited",
+    load: "unaudited",
+    ap_bill: "audited",
+    expense: "audited",
+    gl_je: "audited",
+    inventory: "done",
+    "scenario.maintenance": "done",
+  },
+  "wo.source.is": {
+    driver: "done",
+    vendor: "done",
+    unit: "done",
+    ap_bill: "audited",
+    expense: "audited",
+    gl_je: "audited",
+    inventory: "done",
+    "scenario.maintenance": "done",
+  },
+  "wo.source.es": {
+    driver: "audited",
+    vendor: "done",
+    unit: "done",
+    ap_bill: "unaudited",
+    expense: "unaudited",
+    gl_je: "unaudited",
+    "scenario.maintenance": "done",
+  },
+  "wo.source.ac": {
+    driver: "audited",
+    vendor: "done",
+    unit: "done",
+    trailer: "unaudited",
+    load: "unaudited",
+    ap_bill: "unaudited",
+    expense: "unaudited",
+    gl_je: "unaudited",
+    inventory: "audited",
+    "scenario.maintenance": "done",
+    "scenario.insurance": "audited",
+  },
+  "pm.schedule.create": {
+    unit: "done",
+    "scenario.maintenance": "done",
+  },
+  "defects.convert_to_wo": {
+    driver: "done",
+    unit: "done",
+    trailer: "unaudited",
+    "scenario.maintenance": "audited",
+  },
+};
 
 function Cell({ state }: { state: Tri }) {
   if (state === "na") {
@@ -26,7 +112,6 @@ function Cell({ state }: { state: Tri }) {
       </div>
     );
   }
-  // Required + audited / in progress → box 2 yellow, box 3 red
   if (state === "audited") {
     return (
       <div className="cell3" aria-label="Required audited not done">
@@ -36,7 +121,6 @@ function Cell({ state }: { state: Tri }) {
       </div>
     );
   }
-  // Required + not audited → box 2 red, box 3 red
   return (
     <div className="cell3" aria-label="Required not audited">
       <span className="bx req-y">✓</span>
@@ -53,65 +137,71 @@ const MODULES = [
   "Notifications", "System", "Program",
 ] as const;
 
-type Row = {
-  section?: string;
-  indent?: 1 | 2;
-  tab: string;
-  sub?: string;
-  pct: number;
-  cells: Tri[];
-};
+type Row =
+  | { kind: "section"; label: string }
+  | {
+      kind: "leaf";
+      leaf: RequiredLeaf;
+      indent: 1 | 2;
+      pct: number;
+      cells: Tri[];
+    };
 
-/** SAMPLE — Maintenance board illustration only. */
-const ROWS: Row[] = [
-  { section: "Work Orders", tab: "", cells: [] },
-  {
-    indent: 1,
-    tab: "Work Orders",
-    sub: "+ Create WO",
-    pct: 42,
-    cells: ["audited", "unaudited", "done", "done", "audited", "unaudited", "audited", "audited", "audited", "done", "done", "na"],
-  },
-  {
-    indent: 2,
-    tab: "Internal shop",
-    sub: "IS",
-    pct: 55,
-    cells: ["done", "na", "done", "done", "na", "na", "audited", "audited", "audited", "done", "done", "na"],
-  },
-  {
-    indent: 2,
-    tab: "External shop",
-    sub: "ES",
-    pct: 33,
-    cells: ["audited", "na", "done", "done", "na", "na", "unaudited", "unaudited", "unaudited", "na", "done", "na"],
-  },
-  {
-    indent: 2,
-    tab: "Accident repair",
-    sub: "AC",
-    pct: 25,
-    cells: ["audited", "na", "done", "done", "unaudited", "unaudited", "unaudited", "unaudited", "unaudited", "audited", "done", "audited"],
-  },
-  { section: "Preventive / other", tab: "", cells: [] },
-  {
-    indent: 1,
-    tab: "PM schedules",
-    pct: 100,
-    cells: ["na", "na", "na", "done", "na", "na", "na", "na", "na", "na", "done", "na"],
-  },
-  {
-    indent: 1,
-    tab: "DVIR defects",
-    pct: 50,
-    cells: ["done", "na", "na", "done", "unaudited", "na", "na", "na", "na", "na", "audited", "na"],
-  },
-];
+function cellState(leafId: string, colId: string, required: Set<string>): Tri {
+  if (!required.has(colId)) return "na";
+  return SAMPLE_AD[leafId]?.[colId] ?? "unaudited";
+}
 
-const COLS = [
-  "Driver", "Customer", "Vendor", "Unit", "Trailer", "Load",
-  "AP / Bill", "Expense", "GL / JE", "Inventory", "Maint WO", "Insurance claim",
-] as const;
+function leafPct(cells: Tri[]): number {
+  const owed = cells.filter((c) => c !== "na");
+  if (owed.length === 0) return 0;
+  const done = owed.filter((c) => c === "done").length;
+  return Math.round((done / owed.length) * 100);
+}
+
+function sectionForLeaf(leaf: RequiredLeaf): string {
+  if (leaf.id.startsWith("wo.")) return "Work Orders";
+  if (leaf.id.startsWith("pm.")) return "Preventive";
+  if (
+    leaf.id.startsWith("in_transit.") ||
+    leaf.id.startsWith("arriving_soon.") ||
+    leaf.id.startsWith("damage_") ||
+    leaf.id.startsWith("driver_reports.") ||
+    leaf.id.startsWith("severe_") ||
+    leaf.id.startsWith("road_service.") ||
+    leaf.id.startsWith("defects.") ||
+    leaf.id.startsWith("pre_flight_")
+  ) {
+    return "Operational queues";
+  }
+  if (leaf.id.startsWith("parts_inventory.")) return "Parts Inventory";
+  return "Master data / programs";
+}
+
+function buildRows(): Row[] {
+  const rows: Row[] = [];
+  let lastSection = "";
+  for (const leaf of REQUIRED_MAP.leaves) {
+    const section = sectionForLeaf(leaf);
+    if (section !== lastSection) {
+      rows.push({ kind: "section", label: section });
+      lastSection = section;
+    }
+    const req = new Set(leaf.required);
+    const cells = COLS.map((c) => cellState(leaf.id, c.id, req));
+    const indent: 1 | 2 = leaf.id.startsWith("wo.source.") ? 2 : 1;
+    rows.push({
+      kind: "leaf",
+      leaf,
+      indent,
+      pct: leafPct(cells),
+      cells,
+    });
+  }
+  return rows;
+}
+
+const ROWS = buildRows();
 
 function pctClass(n: number) {
   if (n >= 80) return "hi";
@@ -119,13 +209,41 @@ function pctClass(n: number) {
   return "lo";
 }
 
+function boardMetrics() {
+  let requiredCells = 0;
+  let doneCells = 0;
+  let buildQueue = 0;
+  for (const row of ROWS) {
+    if (row.kind !== "leaf") continue;
+    for (const st of row.cells) {
+      if (st === "na") continue;
+      requiredCells += 1;
+      if (st === "done") doneCells += 1;
+      else buildQueue += 1;
+    }
+  }
+  const modulePct = requiredCells === 0 ? 0 : Math.round((doneCells / requiredCells) * 100);
+  return {
+    modulePct,
+    leafCount: REQUIRED_MAP.leaves.length,
+    colCount: COLS.length,
+    requiredCells,
+    doneCells,
+    buildQueue,
+  };
+}
+
+const METRICS = boardMetrics();
+
 export function ModuleMatrixPreviewPage() {
   return (
     <div className="ih35mm" data-testid="module-matrix-preview">
       <style>{CSS}</style>
 
       <div className="banner">
-        <b>PREVIEW — SAMPLE DATA.</b> Owner-approved layout (2026-08-08). Numbers are illustrative until live R/M/D wiring.
+        <b>PREVIEW.</b> Box 1 Required is live from{" "}
+        <code>docs/specs/scoreboard/modules/maintenance.required.json</code>
+        {" "}({METRICS.leafCount} leaves). Audited / Done are still SAMPLE until live R/M/D wiring.
       </div>
 
       <nav className="tabs">
@@ -141,8 +259,8 @@ export function ModuleMatrixPreviewPage() {
           Cell = <b>Required</b> · <b>Audited</b> · <b>Done</b>. Tab % and module % roll up from required cells only.
         </div>
         <div className="synced">
-          Active board: <b>Maintenance</b> · Entity: <b>USMCA</b> ·{" "}
-          <span className="synced-note">Preview mock · not live-sourced</span>
+          Active board: <b>Maintenance</b> · Entity: <b>{REQUIRED_MAP.entity_default}</b> ·{" "}
+          <span className="synced-note">Required map imported · Audited/Done sample</span>
         </div>
       </header>
 
@@ -156,12 +274,30 @@ export function ModuleMatrixPreviewPage() {
       </div>
 
       <div className="metrics">
-        <div className="metric amb"><div className="n">41%</div><div className="l">Maintenance module %<br />(done ÷ required)</div></div>
-        <div className="metric"><div className="n">8</div><div className="l">Leaves on this board<br />(tabs + sub-tabs)</div></div>
-        <div className="metric"><div className="n">12</div><div className="l">Scoped columns<br />(not all system cards)</div></div>
-        <div className="metric"><div className="n">54</div><div className="l">Required cells<br />(box 1 green)</div></div>
-        <div className="metric good"><div className="n">22</div><div className="l">Done cells<br />(all 3 green)</div></div>
-        <div className="metric big"><div className="n">18</div><div className="l">Build queue<br />(required, not done)</div></div>
+        <div className="metric amb">
+          <div className="n">{METRICS.modulePct}%</div>
+          <div className="l">Maintenance module %<br />(done ÷ required · sample A/D)</div>
+        </div>
+        <div className="metric">
+          <div className="n">{METRICS.leafCount}</div>
+          <div className="l">Leaves on this board<br />(from required JSON)</div>
+        </div>
+        <div className="metric">
+          <div className="n">{METRICS.colCount}</div>
+          <div className="l">Scoped columns<br />(not all system cards)</div>
+        </div>
+        <div className="metric">
+          <div className="n">{METRICS.requiredCells}</div>
+          <div className="l">Required cells<br />(box 1 green)</div>
+        </div>
+        <div className="metric good">
+          <div className="n">{METRICS.doneCells}</div>
+          <div className="l">Done cells<br />(sample all 3 green)</div>
+        </div>
+        <div className="metric big">
+          <div className="n">{METRICS.buildQueue}</div>
+          <div className="l">Build queue<br />(required, not done · sample)</div>
+        </div>
       </div>
 
       <h2>
@@ -195,28 +331,28 @@ export function ModuleMatrixPreviewPage() {
             </tr>
             <tr>
               {COLS.map((c) => (
-                <th key={c} className="col">{c}</th>
+                <th key={c.id} className="col">{c.label}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {ROWS.map((row, i) => {
-              if (row.section) {
+              if (row.kind === "section") {
                 return (
                   <tr key={`s-${i}`} className="section">
-                    <td colSpan={1 + COLS.length}>{row.section}</td>
+                    <td colSpan={1 + COLS.length}>{row.label}</td>
                   </tr>
                 );
               }
               return (
-                <tr key={`r-${i}`}>
-                  <td className={`leaf-cell indent-${row.indent ?? 1}`}>
-                    <span className="tab-name">{row.tab}</span>
-                    {row.sub ? <span className="sub">{row.sub}</span> : null}
+                <tr key={row.leaf.id}>
+                  <td className={`leaf-cell indent-${row.indent}`}>
+                    <span className="tab-name">{row.leaf.tab}</span>
+                    {row.leaf.sub ? <span className="sub">{row.leaf.sub}</span> : null}
                     <span className={`pct ${pctClass(row.pct)}`}>{row.pct}%</span>
                   </td>
                   {row.cells.map((st, j) => (
-                    <td key={j} className="gc">
+                    <td key={COLS[j].id} className="gc">
                       <Cell state={st} />
                     </td>
                   ))}
@@ -229,11 +365,14 @@ export function ModuleMatrixPreviewPage() {
 
       <div className="note">
         <b>Cell law:</b> Required + not audited → ✓ ✕ ✕ (both 2 and 3 red). Required + audited/in progress → ✓ ● ✕
-        (box 2 yellow, box 3 red). Complete → ✓ ✓ ✓. Insurance claim is N/A on normal Create WO — required on Accident repair.
+        (box 2 yellow, box 3 red). Complete → ✓ ✓ ✓. Insurance claim is N/A on normal Create WO — required on
+        Accident repair / damage accident path only. PM Schedule requires unit + Maint WO only.
       </div>
 
       <div className="foot">
         Design lock: <code>docs/specs/scoreboard/MODULE-MATRIX-SCOREBOARD-LOCKED.md</code>
+        {" · "}
+        Required map: <code>docs/specs/scoreboard/modules/maintenance.required.json</code>
         {" · "}
         <Link to="/program">Scenario tracker</Link>
         {" · "}

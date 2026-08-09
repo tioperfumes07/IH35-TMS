@@ -1,0 +1,322 @@
+{
+  "module": "maintenance",
+  "entity_default": "USMCA",
+  "source": {
+    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md §Module 2 — MAINTENANCE",
+    "nav": "apps/frontend/src/components/maintenance/MAINTENANCE_NAV_CONFIG.ts",
+    "home_tabs": "apps/frontend/src/pages/maintenance/MaintenanceHome.tsx SUBNAV",
+    "routes": "apps/frontend/src/routes/manifest.tsx /maintenance/*"
+  },
+  "columns": [
+    { "id": "driver", "group": "linkage", "label": "Driver" },
+    { "id": "customer", "group": "linkage", "label": "Customer" },
+    { "id": "vendor", "group": "linkage", "label": "Vendor" },
+    { "id": "unit", "group": "linkage", "label": "Unit" },
+    { "id": "trailer", "group": "linkage", "label": "Trailer" },
+    { "id": "load", "group": "linkage", "label": "Load" },
+    { "id": "ap_bill", "group": "money", "label": "AP / Bill" },
+    { "id": "expense", "group": "money", "label": "Expense" },
+    { "id": "gl_je", "group": "money", "label": "GL / JE" },
+    { "id": "inventory", "group": "money", "label": "Inventory" },
+    { "id": "scenario.maintenance", "group": "process", "label": "Maint WO" },
+    { "id": "scenario.insurance", "group": "process", "label": "Insurance claim" }
+  ],
+  "leaves": [
+    {
+      "id": "wo.create",
+      "tab": "Work Orders",
+      "sub": "+ Create Work Order",
+      "route_hint": "/maintenance",
+      "required": [
+        "driver",
+        "customer",
+        "vendor",
+        "unit",
+        "trailer",
+        "load",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "inventory",
+        "scenario.maintenance"
+      ]
+    },
+    {
+      "id": "wo.source.is",
+      "tab": "Work Orders",
+      "sub": "IS — Internal shop",
+      "route_hint": "/maintenance",
+      "required": [
+        "driver",
+        "vendor",
+        "unit",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "inventory",
+        "scenario.maintenance"
+      ]
+    },
+    {
+      "id": "wo.source.es",
+      "tab": "Work Orders",
+      "sub": "ES — External shop",
+      "route_hint": "/maintenance",
+      "required": [
+        "driver",
+        "vendor",
+        "unit",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "scenario.maintenance"
+      ]
+    },
+    {
+      "id": "wo.source.ac",
+      "tab": "Work Orders",
+      "sub": "AC — Accident repair",
+      "route_hint": "/maintenance",
+      "required": [
+        "driver",
+        "vendor",
+        "unit",
+        "trailer",
+        "load",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "inventory",
+        "scenario.maintenance",
+        "scenario.insurance"
+      ]
+    },
+    {
+      "id": "wo.source.et",
+      "tab": "Work Orders",
+      "sub": "ET — External tires",
+      "route_hint": "/maintenance",
+      "required": [
+        "driver",
+        "vendor",
+        "unit",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "inventory",
+        "scenario.maintenance"
+      ]
+    },
+    {
+      "id": "wo.source.rt",
+      "tab": "Work Orders",
+      "sub": "RT — Roadside tires",
+      "route_hint": "/maintenance",
+      "required": [
+        "driver",
+        "vendor",
+        "unit",
+        "load",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "inventory",
+        "scenario.maintenance"
+      ]
+    },
+    {
+      "id": "wo.source.it",
+      "tab": "Work Orders",
+      "sub": "IT — Internal tires",
+      "route_hint": "/maintenance",
+      "required": [
+        "driver",
+        "vendor",
+        "unit",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "inventory",
+        "scenario.maintenance"
+      ]
+    },
+    {
+      "id": "wo.source.rs",
+      "tab": "Work Orders",
+      "sub": "RS — Roadside service",
+      "route_hint": "/maintenance/road-service",
+      "required": [
+        "driver",
+        "vendor",
+        "unit",
+        "load",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "scenario.maintenance"
+      ]
+    },
+    {
+      "id": "wo.create_bill",
+      "tab": "Work Orders",
+      "sub": "+ Create Bill",
+      "route_hint": "/maintenance",
+      "required": ["vendor", "unit", "ap_bill", "gl_je", "scenario.maintenance"]
+    },
+    {
+      "id": "wo.create_expense",
+      "tab": "Work Orders",
+      "sub": "+ Create Expense",
+      "route_hint": "/maintenance",
+      "required": ["vendor", "unit", "expense", "gl_je", "scenario.maintenance"]
+    },
+    {
+      "id": "in_transit.promote_to_wo",
+      "tab": "In-Transit Issues",
+      "sub": "Promote to WO",
+      "route_hint": "/maintenance/in-transit-issues",
+      "required": ["driver", "unit", "load", "scenario.maintenance"]
+    },
+    {
+      "id": "arriving_soon.convert_to_wo",
+      "tab": "Arriving Soon",
+      "sub": "Convert to WO",
+      "route_hint": "/maintenance/arriving-soon",
+      "required": ["unit", "scenario.maintenance"]
+    },
+    {
+      "id": "damage_reports.intake",
+      "tab": "Damage Reports",
+      "sub": "Damage intake / spawn WO",
+      "route_hint": "/maintenance/damage-reports",
+      "required": [
+        "driver",
+        "unit",
+        "trailer",
+        "scenario.maintenance",
+        "scenario.insurance"
+      ]
+    },
+    {
+      "id": "driver_reports.queue",
+      "tab": "Driver Reports",
+      "sub": "Driver-reported issues",
+      "route_hint": "/maintenance/driver-reports",
+      "required": ["driver", "unit", "scenario.maintenance"]
+    },
+    {
+      "id": "severe_repairs.convert_to_wo",
+      "tab": "Severe Repairs",
+      "sub": "Convert to WO",
+      "route_hint": "/maintenance/severe-repairs",
+      "required": ["unit", "scenario.maintenance"]
+    },
+    {
+      "id": "road_service.active",
+      "tab": "Road Service",
+      "sub": "Active roadside",
+      "route_hint": "/maintenance/road-service",
+      "required": [
+        "driver",
+        "vendor",
+        "unit",
+        "load",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "scenario.maintenance"
+      ]
+    },
+    {
+      "id": "defects.convert_to_wo",
+      "tab": "DVIR defects",
+      "sub": "Convert to WO",
+      "route_hint": "/maintenance/defects",
+      "required": ["driver", "unit", "trailer", "scenario.maintenance"]
+    },
+    {
+      "id": "pre_flight_dvir.queue",
+      "tab": "Pre-Flight DVIR",
+      "sub": "Defect queue",
+      "route_hint": "/maintenance/pre-flight-dvir",
+      "required": ["driver", "unit", "scenario.maintenance"]
+    },
+    {
+      "id": "parts_inventory.record_purchase",
+      "tab": "Parts Inventory",
+      "sub": "+ Record Purchase / + Create Part",
+      "route_hint": "/maintenance/parts-inventory",
+      "required": ["vendor", "inventory", "ap_bill", "expense", "gl_je"]
+    },
+    {
+      "id": "pm.schedule.create",
+      "tab": "PM Schedule",
+      "sub": "+ Create",
+      "route_hint": "/maintenance/pm-schedule",
+      "required": ["unit", "scenario.maintenance"]
+    },
+    {
+      "id": "pm.auto_engine.run",
+      "tab": "PM Auto Engine",
+      "sub": "Auto-WO runs",
+      "route_hint": "/maintenance/pm-auto-engine",
+      "required": ["unit", "scenario.maintenance"]
+    },
+    {
+      "id": "inspections.create",
+      "tab": "Inspections",
+      "sub": "+ Create Inspection",
+      "route_hint": "/maintenance/inspections",
+      "required": ["driver", "unit", "scenario.maintenance"]
+    },
+    {
+      "id": "parts.create",
+      "tab": "Parts",
+      "sub": "+ Create Part",
+      "route_hint": "/maintenance/parts",
+      "required": ["vendor", "inventory"]
+    },
+    {
+      "id": "vendors.create",
+      "tab": "Vendors",
+      "sub": "+ Create Vendor",
+      "route_hint": "/maintenance/vendors",
+      "required": ["vendor"]
+    },
+    {
+      "id": "fault_rules.create",
+      "tab": "Fault Rules",
+      "sub": "+ Create Rule",
+      "route_hint": "/maintenance/fault-rules",
+      "required": ["scenario.maintenance"]
+    },
+    {
+      "id": "fault_drafts.review",
+      "tab": "Fault Drafts",
+      "sub": "Review draft WO",
+      "route_hint": "/maintenance/fault-drafts",
+      "required": ["unit", "scenario.maintenance"]
+    },
+    {
+      "id": "tires.create_record",
+      "tab": "Tire Program",
+      "sub": "+ Create Tire Record",
+      "route_hint": "/maintenance/tires",
+      "required": ["unit", "trailer", "inventory", "scenario.maintenance"]
+    },
+    {
+      "id": "tires.create_brand",
+      "tab": "Tire Program",
+      "sub": "+ Create Brand",
+      "route_hint": "/maintenance/tires",
+      "required": ["inventory"]
+    },
+    {
+      "id": "warranty.create_claim",
+      "tab": "Warranty Claims",
+      "sub": "+ Create Claim",
+      "route_hint": "/maintenance/warranty-claims",
+      "required": ["vendor", "unit", "ap_bill", "scenario.maintenance"]
+    }
+  ]
+}

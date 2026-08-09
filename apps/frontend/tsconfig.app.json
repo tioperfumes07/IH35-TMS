@@ -15,7 +15,8 @@
     "paths": {
       "@ih35/shared-types": ["../../packages/shared-types/src/index.ts"],
       "@ih35/shared-types/*": ["../../packages/shared-types/src/*"],
-      "@legal/*": ["../../docs/legal/*"]
+      "@legal/*": ["../../docs/legal/*"],
+      "@scoreboard/*": ["../../docs/specs/scoreboard/*"]
     },
     "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": true,
