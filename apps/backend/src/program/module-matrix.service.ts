@@ -336,6 +336,9 @@ function moduleTouchRe(moduleId: string): RegExp {
   if (moduleId === "program") {
     return /\bprogram\b|\bmodule[\s_-]?matrix|\bscenario[\s_-]?tracker|\baudit[\s_-]?scoreboard/i;
   }
+  if (moduleId === "tasks") {
+    return /\btasks?\b|\btask[\s_-]?board|\bdaily[\s_-]?tasks?/i;
+  }
   return /maintenance|\bwork[\s_-]?order|\bwos?\b|\bmaint\b/i;
 }
 
