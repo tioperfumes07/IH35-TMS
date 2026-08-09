@@ -6,6 +6,7 @@ import { listBills } from "../../../../api/accounting";
 import { getAllAccounts } from "../../../../api/banking";
 import { DatePicker } from "../../../../components/forms/DatePicker";
 import { SelectCombobox } from "../../../../components/shared/SelectCombobox";
+import { entityLabel } from "../../../../lib/entity-label";
 
 type Props = {
   value: Record<string, unknown>;
@@ -112,7 +113,9 @@ export function BillPaymentForm({ value, onChange, operatingCompanyId }: Props) 
             <option value="">Select unpaid bill...</option>
             {(billsQuery.data?.rows ?? []).map((bill) => (
               <option key={bill.id} value={bill.id}>
-                {(bill.bill_number ?? bill.id.slice(0, 8)) + " · " + String(bill.vendor_name ?? bill.vendor_id ?? "Vendor")}
+                {entityLabel(bill.bill_number, bill.id, "Bill") +
+                  " · " +
+                  entityLabel(bill.vendor_name, bill.vendor_id, "Vendor")}
               </option>
             ))}
           </SelectCombobox>
@@ -130,7 +133,7 @@ export function BillPaymentForm({ value, onChange, operatingCompanyId }: Props) 
             <tbody>
               {selectedBill ? (
                 <tr className="border-t border-gray-100">
-                  <td className="px-2 py-1">{selectedBill.bill_number ?? selectedBill.id.slice(0, 8)}</td>
+                  <td className="px-2 py-1">{entityLabel(selectedBill.bill_number, selectedBill.id, "Bill")}</td>
                   <td className="px-2 py-1">${(Number(selectedBill.amount_cents ?? 0) / 100).toFixed(2)}</td>
                   <td className="px-2 py-1 text-red-700">${(openBalanceCents / 100).toFixed(2)}</td>
                   <td className="px-2 py-1">
