@@ -131,6 +131,10 @@ export function ScenarioTrackerHome() {
           <Link to="/home/ops">Role ops dashboard</Link>
           {" · "}
           <Link to="/app/homepage">QBO-style home</Link>
+          {" · "}
+          <Link to="/program/matrix">Module matrix</Link>
+          {" · "}
+          <Link to="/program/legacy-scoreboard">Legacy certification board</Link>
         </div>
       </header>
 

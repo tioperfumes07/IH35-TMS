@@ -80,6 +80,9 @@ is no "in progress" state, because a half-fix in production is indistinguishable
 
 | ☐ | Finding ID | Sev | Owning lane | Coder | PR | Date | Live proof of fix | Guard (file + step #) | CC-3 VERIFIED |
 |---|---|---|---|---|---|---|---|---|---|
+| ☐ | `MATRIX-REQ-MAINT` | P0 | Cursor (FE/program) | — | — | — | — | — | — |
+| ☐ | `MATRIX-LIVE-RAD` | P0 | Cursor (FE) + API | — | — | — | — | — | — |
+| ☐ | `MATRIX-DONE-GUARD` | P1 | CC-2 (GUARD) | — | — | — | — | — | — |
 | ☐ | `LV-TXN-002` | — | CC-2 / mechanical+routes+FE | CC-2 | #4627 (route) · #4770 (claim) · #4771 (guard wiring) | 2026-08-08 | **PARTIAL — NOT TICKED.** Route fix live: `45171bad7` is an ancestor of prod `a11f6c7`. Guard chain re-proved on merged main `e6a6f1dde`: guard exit 0 · selftest 8/8 · `verify-guard-wired` exit 0 / 0 unaccounted with the exemption DELETED · the wired step itself throws on a mutated join (CI would go RED). **MISSING for a tick: payload-level live proof** — `GET /api/v1/dispatch/loads/:id` returns **401** unauthenticated, so `'assigned_primary_driver_name' in payload` is **UNVERIFIED by CC-2**. Needs an authed CC-3 read. | `scripts/verify-load-detail-resolves-names.mjs` + step **2811** | ☐ awaiting CC-3 payload proof |
 | ☐ | `LV-TXN-004` | P0 | CC-1 (money) | — | — | — | — | — | — |
 | ☐ | `LV-TXN-005` | — | CC-2 / mechanical+FE+route contract | — | — | — | — | — | — |

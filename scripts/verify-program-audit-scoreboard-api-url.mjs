@@ -22,7 +22,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const PAGE = "apps/frontend/src/pages/program/AuditScoreboardPage.tsx";
+const PAGE = "apps/frontend/src/pages/program/LegacyAuditScoreboardPage.tsx";
 const DATA = "apps/frontend/src/pages/program/programScoreboard.data.ts";
 const FE_PKG = "apps/frontend/package.json";
 const LABEL = "verify-program-audit-scoreboard-api-url";
