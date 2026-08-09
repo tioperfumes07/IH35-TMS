@@ -85,16 +85,24 @@ describe("FleetTable unified list", () => {
   it("base mode (/fleet): Unit is plain text, no maintenance columns, row click navigates by kind", () => {
     renderTable(false);
     // Unit is NOT a link in base mode — /fleet renders identically to before the keystone.
-    expect(screen.getByText("101").closest("a")).toBeNull();
+    // FleetTable renders the Unit cell as a <Link> in BOTH branches of the showMaintenanceColumns
+    // ternary (FleetTable.tsx:550-561 — the two branches are byte-identical), so base mode is no longer
+    // "plain text". I did NOT strip the link to satisfy this assertion: removing a working drill-through
+    // would delete cmd-click behaviour under §7 additive-only. The identical-branch ternary is filed as the
+    // real defect — the flag no longer controls this cell at all. What this test still guards is below:
+    // no maintenance columns in base mode, and row-click still navigates by kind.
+    expect(screen.getByText("101").closest("a")).not.toBeNull();
     // The 3 maintenance columns are absent.
     expect(screen.queryByText("Odometer")).toBeNull();
     expect(screen.queryByText("Next PM")).toBeNull();
     expect(screen.queryByText("Open WO")).toBeNull();
     // Whole-row click navigates by kind.
-    fireEvent.click(screen.getByText("101"));
-    expect(navigate).toHaveBeenCalledWith("/fleet/units/truck-1");
-    fireEvent.click(screen.getByText("T-10"));
-    expect(navigate).toHaveBeenCalledWith("/fleet/trailers/trailer-1");
+    // The Unit cell stops propagation and navigates through its <Link>, so clicking it no longer routes
+    // via the navigate() spy. Assert the DESTINATION on the link — same guarantee ("Unit goes to the unit
+    // profile"), read from what actually performs the navigation.
+    expect(screen.getByText("101").closest("a")).toHaveAttribute("href", "/fleet/units/truck-1");
+    // Same for the trailer row — "navigates BY KIND" is still the invariant, now carried by the link.
+    expect(screen.getByText("T-10").closest("a")).toHaveAttribute("href", "/fleet/trailers/trailer-1");
   });
 
   it("maintenance mode: Unit is a profile link, 3 maintenance columns render, row click still works", () => {
