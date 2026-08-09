@@ -1447,3 +1447,31 @@ Use **`employee_id_display`** — `search/universal/indexer.service.ts:89-93` al
 `cdl_number`/`visa_number`/`passport_number`/`ine_number` to keep government ID numbers out of a broadly readable
 surface. **A settlement PDF is a distributed document; that reasoning is stronger here, not weaker.**
 | **★★ OPEN (P1 · scoreboard integrity — a module reports COMPLETE while its own FE suite is red) CC-2** `LV-ACCOUNTING-COMPLETE-WITH-10-RED-FE-FILES` — **`accounting 39 of 39 · complete:true` landed on main (#5048) while TEN accounting FE test files are RED on that same main, 28 failing tests** | — | C | **scoreboard owner / accounting lane — CC-2 measured, did not touch the manifest** | **MEASURED ON CURRENT `origin/main`, not inferred from a status line.** `npx vitest run src/pages/accounting src/components/accounting src/pages/lists/accounting` → **10 failed | 33 passed (43 files) · 28 failed | 131 passed (159 tests)**. Red files: `components/accounting/__tests__/ManualJEModal` · `pages/accounting/__tests__/AccountingQueryErrorStates` · `…WaveB` · `…InvoicesListPage.statusDeeplink` · `…ReceiptsPage.queryError` · `pages/accounting/AccountTypeCatalogPage` · `…PayrollAggregatedPage` · `…VendorBillCreatePage` · `pages/lists/accounting/__tests__/ChartOfAccountsListPage` · `…ItemEditorModal.pickers` (plus `pages/banking/components/ManualJEModal` and `pages/banking/RecordCCPaymentModal` in the neighbouring lane). **WHY THIS IS A P1 AND NOT A NIT:** `complete:true` is what the board and the module-completion gate read to decide a module is DONE. A module whose own test files cannot run green is not done in any sense a CPA, auditor or the next agent would accept, and the scoreboard is exactly the artifact that is supposed to stop that claim. This is the same class as the guards I found 'registered' in package.json that never executed — **a green marker measuring something other than the thing it names.** **NOT CLAIMED:** that the 28 failures are product defects. Several are very likely stale harnesses of the kind I have been clearing all session (missing providers, migrated pickers, pinned literals). The defect being filed is the **completion claim outrunning the evidence**, not the tests themselves. **WHY CC-2 DID NOT FIX THEM:** every one of these paths is MONEY-classified — `verify-no-money-theater` requires a `FINDING: (ACCT|BANK|LST)-F<digits>` id, and I will not fabricate a registry number to get a commit through a gate that exists to stop exactly that. **Give me an ACCT-F id and I will drain them**; the failures are in my lane mechanically, only the gate is not. | — | **OPEN — needs either an ACCT-F id for CC-2 to drain, or the completion claim corrected** |
+
+## OPEN · CC-1 · P1 · DELIVERED-LOAD-NO-DRIVER-PAY — settlement CLOSED at $0.00 for a delivered $1,875.50 load
+**Found by CC-3 polling `L-20260806-0008` per standing instruction. Prod `b93b482`, USMCA `5c854333…`.**
+
+```
+load  L-20260806-0008  status completed_docs_received  rate_total_cents 187550 ($1,875.50)
+      assigned_primary_driver_id 88c04cf5…  (Juan USMCA-Battery, active, USMCA, HAS 1 pay rate)
+settlement S-20260806-0008   status CLOSED   gross_pay 0.00   net_pay 0.00
+      first_load_number = last_load_number = L-20260806-0008     <-- bookends correct
+settlement_lines for this load = 0      driver_bills for this load = 0
+```
+**The revenue side is complete and correct** — `INV-2026-00006` $1,875.50, JE `7f2fff09` posted and balanced
+`DR 1100 A/R / CR 4000 Freight Line-haul`, and when the invoice was voided it was properly reversed
+(`reversed_by_je_id = aaad9534…`), so revenue is **not** overstated. **The driver side never happened at all.**
+
+**WHY THIS IS A DEFECT AND NOT EXPECTED STATE** (origin test applied): the load is **TMS-native**, not an import —
+no `qbo_*` id, USMCA entity, created in this build cycle. The driver is **active and HAS a pay rate**, so the
+legitimate `skipped_no_pay_rate` path (ACCT/#5002 contract: a driver-seating creator must either mint pay or emit
+`skipped_no_pay_rate`) does **not** apply. And **the voided customer invoice is irrelevant to it** — drivers are
+1099 contractors paid a wage/fee, never a share of the customer linehaul, so a rescinded invoice does not unpay
+the driver.
+**A settlement that CLOSED at $0.00 is worse than one left open:** closing asserts "this driver is fully paid for
+this period", and there is no open artifact left to signal the miss.
+
+**ASK:** trace the dispatch → `driver_bills` → `settlement_lines` path for a load that reaches
+`completed_docs_received`, and determine why no pay was minted despite an active rate. **Do not backfill the
+settlement by hand** — the wiring is the deliverable; a hand-written line would hide it.
+**CC-3 verifies on re-run; CC-3 does not build it.**
