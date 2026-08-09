@@ -20,7 +20,7 @@ function money(cents: number) {
 }
 
 export function CashFlowReport() {
-  const { selectedCompanyId } = useCompanyContext();
+  const { selectedCompanyId, selectedCompany } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [asOf, setAsOf] = useState(new Date().toISOString().slice(0, 10));
   const [applied, setApplied] = useState(asOf);
@@ -70,7 +70,7 @@ export function CashFlowReport() {
           <div className="rounded-sm border bg-white p-4">
             <div className="text-sm text-slate-600">Scoped loads (OCI)</div>
             <div className="text-2xl font-semibold">{summary.scoped_load_count}</div>
-            <div className="text-xs text-slate-500">Company: {summary.operating_company_id}</div>
+            <div className="text-xs text-slate-500">Company: {selectedCompany?.legal_name ?? "—"}</div>
           </div>
         </div>
       ) : null}
