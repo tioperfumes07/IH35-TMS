@@ -1,0 +1,26 @@
+{
+  "block_id": "acct-f290-bookend-canonical-bill-path",
+  "status": "BUILD",
+  "classification": "FINANCIAL",
+  "phase": "FINISH-DISPATCH-SAFETY-SETTLEMENTS",
+  "task": "ACCT-F290 (FAIL-W7a): the settlement->load BOOKEND backfill resolved the covered load only through settlement_lines.load_id, the DENORMALIZED copy. ACCT-F275 ruled driver_bills.load_id canonical and ACCT-F288 (PR #5129) made weekly-close stamp source_driver_bill_id, so a line whose load is reachable only through its driver bill contributed nothing and the settlement reported 'covers no load' while covering one. CTE now resolves COALESCE(db.load_id, sl.load_id) over a LEFT JOIN (LEFT, not INNER: an inner join would DROP every line with no bill and shrink coverage rather than widen it), and the COALESCE also gates the IS NOT NULL filter so bill-only lines are not discarded before they can bookend. The UPDATE keeps its COALESCE guard so a backfill never overwrites the authoritative value written at settlement creation. NO posting-math change, NO migration, additive only.",
+  "branch": "claude/acct-f290-bookend-covers-canonical-bill-path",
+  "lane": "CC-1",
+  "allowed_files": [
+    "apps/backend/src/driver-finance/settlements-load-bookended.service.ts",
+    "scripts/verify-settlement-bookends-resolve-canonical-bill-path.mjs",
+    "scripts/verify-steps/2949-verify-settlement-bookends-resolve-canonical-bill-path.mjs",
+    ".block-ready/acct-f290-bookend-canonical-bill-path.json"
+  ],
+  "acceptance": [
+    { "kind": "guard", "script": "scripts/verify-settlement-bookends-resolve-canonical-bill-path.mjs", "wired_into": "scripts/verify-steps/2949 (CC-1 band n=1 mod 4; reserved on main by the claim PR before this guard was authored, per Rule 25)" },
+    { "kind": "live", "assert": "guard exits 0 with 3 mutation probes proven non-inert (COALESCE reverted; LEFT JOIN downgraded to INNER; UPDATE COALESCE-guard stripped) — each asserts the mutation APPLIED before reading the verdict" },
+    { "kind": "live", "assert": "prod br-fancy-credit-akjnd07a, bypass_rls in the SAME txn: 7 settlements COMPLETE (visible 7 == n_live_tup 7). count(db.load_id) = 0 on EVERY settlement today, so this change alters NO existing row and is not claimed to — it is going-forward correctness for lines minted after #5129." },
+    { "kind": "design", "spec": "docs/audit/GUARD-WORKORDERS.md", "sections": ["FAIL-W7a settlement bookends"] }
+  ],
+  "linkage": "driver_finance.settlement_lines.source_driver_bill_id -> driver_finance.driver_bills.load_id -> mdata.loads (canonical, ACCT-F275) with settlement_lines.load_id as the denormalized fallback; feeds driver_settlements.first_load_id/last_load_id, which dispatch/load-settlement-summary.routes.ts and load-profitability.service.ts read for the REVERSE drill (load -> which settlement paid it).",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [],
+  "hold": "none - CC-1 never merges its own money PR (Cascade merges as non-author). BLOCKED until the claim-reserve PR reserving 2949 merges."
+}

@@ -286,12 +286,30 @@ export async function aggregateSettlementTotals(
   await client.query(
     `
       WITH covered AS (
-        SELECT sl.load_id, l.load_number, l.created_at
+        -- ACCT-F290 — resolve the covered load through the CANONICAL path FIRST.
+        --
+        -- ACCT-F275 ruled driver_bills.load_id canonical and settlement_lines.load_id a denormalized
+        -- copy, and ACCT-F288 (PR #5129) made weekly-close stamp source_driver_bill_id so the link
+        -- exists at all. This CTE predates both and reads ONLY sl.load_id, so a line whose load is
+        -- reachable only through its driver bill contributes nothing and the settlement reports
+        -- "covers no load" while plainly covering one.
+        --
+        -- HONEST SCOPE: this changes NOTHING on today's data and is not claimed to. Verified live on
+        -- prod br-fancy-credit-akjnd07a: across all 7 settlements the bill path resolves 0 loads
+        -- (count(db.load_id) = 0 everywhere) because no settlement_line carried a bill link until
+        -- #5129 merged today. It is the going-forward correctness fix that keeps the bookends
+        -- accurate for every line minted from now on.
+        --
+        -- ACCT-F275's own COALESCE fix is NOT on main (settlements.routes.ts still counts sl.load_id
+        -- alone — verified: 0 occurrences on origin/main), so its load_count undercounts by the same
+        -- mechanism. That is a separate open row, not silently folded in here.
+        SELECT COALESCE(db.load_id, sl.load_id) AS load_id, l.load_number, l.created_at
           FROM driver_finance.settlement_lines sl
-          JOIN mdata.loads l ON l.id = sl.load_id
+          LEFT JOIN driver_finance.driver_bills db ON db.id = sl.source_driver_bill_id
+          JOIN mdata.loads l ON l.id = COALESCE(db.load_id, sl.load_id)
          WHERE sl.settlement_id = $1::uuid
            AND sl.is_active = true
-           AND sl.load_id IS NOT NULL
+           AND COALESCE(db.load_id, sl.load_id) IS NOT NULL
       ),
       bounds AS (
         SELECT
