@@ -382,6 +382,25 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
                 value={insuranceClaimNumber}
                 onChange={(e) => setInsuranceClaimNumber(e.target.value)}
               />
+              {/* C-04: this input is free text (accountingTextField on the API) — a dispatcher can
+                  type ANY string here, so it can never be trusted as a resolvable id and must never
+                  be turned into a fabricated link. When a real insurance.claim row IS linked to this
+                  accident (accident_report_id FK, joined server-side into claim_id/claim_number by
+                  C-02's LATERAL join on GET /api/v1/safety/accidents), show the honest drill-through
+                  to it alongside the free-text field rather than replacing it — the number recorded
+                  here may predate or differ from the linked claim's own number. No claim_id → render
+                  nothing extra; the free-text field alone stays exactly as honest as it always was. */}
+              {typeof accident?.claim_id === "string" && accident.claim_id ? (
+                <p className="mt-1 text-[11px] text-slate-500">
+                  Linked claim:{" "}
+                  <EntityLink
+                    kind="claim"
+                    id={accident.claim_id}
+                    label={typeof accident.claim_number === "string" && accident.claim_number.trim() ? accident.claim_number : "Claim"}
+                    data-testid="accident-linked-claim"
+                  />
+                </p>
+              ) : null}
             </Field>
 
             <Field label="Bill or Expense Number (if applicable)">
