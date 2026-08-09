@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useSearchParams } from "react-router-dom";
 import { apiRequest } from "../../api/client";
+import { entityLabel } from "../../lib/entity-label";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -115,7 +116,7 @@ export function FaultDraftsPage() {
 
       {deepLinkUnitId ? (
         <p className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
-          Filtered to unit <span className="font-mono font-semibold">{deepLinkUnitId.slice(0, 8)}</span>
+          Filtered to unit <span className="font-semibold">{entityLabel(null, deepLinkUnitId, "Unit")}</span>
           {" — "}
           <Link to="/maintenance/fault-drafts" className="underline">
             clear filter

@@ -6,6 +6,7 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { EquipmentTransferModal } from "../../components/dispatch/EquipmentTransferModal";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 
 type TransferRow = {
   uuid: string;
@@ -44,20 +45,20 @@ export function EquipmentTransferRequests() {
         label: "From → To",
         render: (row) => (
           <>
-            {/* Raw-uuid display class: this printed `from_driver_uuid.slice(0, 8)` — an opaque hex fragment —
+            {/* Raw-uuid display class: this used to print a truncated driver uuid — an opaque hex fragment —
                 while the driver's NAME was one LEFT JOIN away in the list query. Show the name; fall back to the
                 truncated id ONLY when the payload carried none, so a uuid here means MISSING DATA rather than
                 normal rendering. */}
             <EntityLink
               kind="driver"
               id={row.from_driver_uuid}
-              label={row.from_driver_name ?? row.from_driver_uuid?.slice(0, 8)}
+              label={entityLabel(row.from_driver_name, row.from_driver_uuid, "Driver")}
             />{" "}
             →{" "}
             <EntityLink
               kind="driver"
               id={row.to_driver_uuid}
-              label={row.to_driver_name ?? row.to_driver_uuid?.slice(0, 8)}
+              label={entityLabel(row.to_driver_name, row.to_driver_uuid, "Driver")}
             />
           </>
         ),

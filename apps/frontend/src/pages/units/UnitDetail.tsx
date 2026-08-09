@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { entityLabel } from "../../lib/entity-label";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { UnitPermitsTab } from "./UnitPermitsTab";
 import { UnitTollTagsTab } from "./UnitTollTagsTab";
@@ -34,7 +35,7 @@ export function UnitDetail() {
 
   return (
     <div className="space-y-3 p-4" data-testid="unit-detail-page">
-      <PageHeader title={`Unit ${id.slice(0, 8)}`} subtitle="Permits, toll tags, and finance linkage" />
+      <PageHeader title={entityLabel(null, id, "Unit")} subtitle="Permits, toll tags, and finance linkage" />
       {!companyId ? <p className="text-sm text-red-600">Select operating company.</p> : null}
       <div className="flex flex-wrap gap-1 rounded-sm border border-gray-200 bg-white p-1">
         {(["permits", "toll-tags", "tasks", "brakes", "tires", "finance"] as const).map((tab) => (
@@ -63,7 +64,7 @@ export function UnitDetail() {
       {activeTab === "permits" ? <UnitPermitsTab unitId={id} companyId={companyId} /> : null}
       {activeTab === "toll-tags" ? <UnitTollTagsTab unitId={id} companyId={companyId} /> : null}
       {activeTab === "tasks" ? (
-        <TasksTab operatingCompanyId={companyId} targetType="unit" targetId={id} targetLabel={`Unit ${id.slice(0, 8)}`} />
+        <TasksTab operatingCompanyId={companyId} targetType="unit" targetId={id} targetLabel={entityLabel(null, id, "Unit")} />
       ) : null}
       {activeTab === "brakes" ? <UnitBrakesTab unitId={id} companyId={companyId} /> : null}
       {activeTab === "tires" ? <UnitTiresTab unitId={id} companyId={companyId} /> : null}
