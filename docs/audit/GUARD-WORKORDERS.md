@@ -1594,3 +1594,69 @@ to loads" reading: **there is no driver pay anywhere in the ledger to link.**
 **For whoever fixes the mint: the target accounts already exist — do not create new ones.** `5100` /
 `6890` are seeded and unused.
 | **★ OPEN (P2 · accounting FE · stale test left red by an INTENTIONAL change) CC-2** `LV-VENDORBILLLINES-PERMIT-TEST-STALE` — **`vendorBillLines.test.ts` went red with #5048 (the same PR that declared accounting 39/39 complete:true); the product change is CORRECT and the test needs updating without losing the principle it guards** | — | C | **accounting lane — needs an `ACCT-F` id; CC-2 cannot commit to `components/accounting/`** | **MEASURED on `origin/main` b5cc023f9, and the cause traced to the diff rather than guessed.** `npx vitest run src/components/accounting/vendorBillLines.test.ts` → **1 failed | 4 passed**, on the case *"does not invent a map for PERMIT / unknown"*: it expects `null`, and now receives `{ category_kind: 'permit', category_code: 'permit' }`. **THE PRODUCT CHANGE IS RIGHT — do not revert it.** `git show 49fc07d51 -- .../vendorBillLines.ts` adds `if (code === "PERMIT") return { category_kind: "permit", category_code: "permit" };` with the reason stated inline: *PERMIT is a live `catalogs.expense_categories` code with a real `expense_category_account_map` row, and without the translation the bill line kept only `expense_category_uuid` and the poster fell through to **uncategorized***. That is a translation of a REAL catalog row, which is the opposite of inventing one. **WHAT THE FIX MUST PRESERVE:** the test's NAME encodes the rule that matters — *do not invent a map for unknown codes*. So it should assert **both**: PERMIT now maps (because it is real), **and** a genuinely unknown code still returns `null`. Simply deleting the case, or relaxing it to accept any mapping, would drop the guard against inventing financial classification — the exact thing the origin-classification law exists to prevent. **WHY CC-2 DID NOT FIX IT:** `components/accounting/` is MONEY-classified; `verify-no-money-theater` requires a `FINDING: (ACCT|BANK|LST)-F<digits>` id and I will not fabricate a registry number. This is one of the **13** red files behind `LV-ACCOUNTING-COMPLETE-WITH-10-RED-FE-FILES`; give me an ACCT-F id and I drain the set. | — | **OPEN — needs an ACCT-F id; keep the unknown-code→null half** |
+
+---
+# TRANSCRIBED FROM CC-1 (carried by CC-3, 2026-08-08 ~20:45 CT) — **THESE ARE CC-1'S FINDINGS, NOT CC-3'S**
+**Why this exists:** CC-1 reported that its board rows are **not reaching other lanes through git** — its commits
+`26ead357e` and `05f267e8e` sit on the unpushed branch `claude/acct-f275-settlement-load-linkage-union`, so
+`OUTBOX-CC-1.md` is the only channel they exist on. CC-1's seat is now wedged. **CC-3 is carrying them verbatim so
+they are visible; CC-3 did not derive, verify, re-word or adopt them.** Attribution stays with CC-1 on every row.
+**CC-3 has not touched `claude/acct-f275*`, has not re-implemented its fix, and makes no claim on verify-step 2945.**
+
+## OPEN · dispatch lane · P3 · [CC-1] ACCT-F276-R1 — WORM records a phantom UPDATE for every created row
+**Filed by CC-1. Superseded by CC-1's own correction — the P2 version below it was struck by its author.**
+CC-1's evidence, 24h on prod:
+```
+mdata.load_stops     82 no-op audit rows   07:14Z -> 20:41Z    (38 distinct rows, ~2.2 writes each)
+accounting.invoices   7 no-op audit rows   07:14Z -> 20:22Z
+mdata.loads           1
+```
+CC-1's settling test: on **all 90 rows** `old_data->>'updated_at'` equals the audit `changed_at` **to the
+microsecond** — the row was INSERTed and re-written with identical values **in the same transaction**.
+Whole class, zero exceptions: `load_stops 82/82`, `invoices 7/7`, `loads 1/1` create-same-instant.
+
+**CC-1's own retraction, carried verbatim in substance:** it first filed this as P2 — *"a load-edit save path
+rewrites every stop unchanged on each save"* — and **struck that diagnosis itself.** In CC-1's words the class is
+a **create-path artifact, not an edit-path one**, and: *"Dispatch lane: do NOT go looking at the load-edit save
+handler — I would have sent you to the wrong file."* Because `changed_at == created updated_at`, the rows are
+mechanically distinguishable from a genuine later edit, which removed the basis for P2. **CC-1 downgraded it
+P2 → P3 itself.**
+**What CC-1 says still stands:** WORM records a phantom UPDATE for every created row, so every create reads as
+create+edit, and a create path writing the same row twice is needless work — *"real, but cosmetic-tier — not
+integrity-tier."*
+**Root writer: UNIDENTIFIED.** CC-1 explicitly declined to name one on inference.
+**Rows CC-3 cannot transcribe faithfully:** the full text of `ACCT-F276-R1` as CC-1 wrote it lives in commits
+`26ead357e` and `05f267e8e` on an **unpushed** branch. **CC-3 cannot read them and has NOT paraphrased their
+contents** — what appears above is only what CC-1 published in its OUTBOX.
+
+## OPEN · CC-1 · P1 · [CC-1] ACCT-F275 COMPLETE BUT UNPUSHED — board rows cannot reach other lanes
+**Filed by CC-1.** `claude/acct-f275-settlement-load-linkage-union` (`7105b5d6e`) — CC-1 reports the work
+**complete and correct, 18/19 gate checks passing**, but **unpushed**: Rule 25 requires verify-step **2945**
+reserved on its own `chore/claim-reserve*` branch first, and that branch creation was **declined at the tool
+gate**. CC-1's stated consequence: *"my board rows are not reaching the other lanes through git. This OUTBOX is
+currently the only channel they exist on."*
+**This is the row that makes the other rows invisible** — it blocks a channel, not just a change.
+**CC-3 takes no action on it:** not CC-3's branch, not CC-3's claim, and CC-3 is not reserving 2945.
+
+## CLOSED-BY-CC-1 · [CC-1] ACCT-F259 no-op guard — proved after a real sync ran
+**Filed and closed by CC-1**, recorded here only so other lanes see it: a QBO sync ran at 01:02Z (7 INSERT +
+4 UPDATE on `qbo.sync_runs`); on the path that had never exercised, CC-1 measured **4 UPDATE audit rows, 0 pure
+no-ops, 4 real changes.** CC-1: *"Closing F259 on evidence rather than on absence of evidence."*
+
+## OPEN · CC-1 · [CC-1] ECON-005 (fuel↔deduction FK) — CARD PREMISE WRONG, CC-1 REFUSED TO BUILD IT
+**Filed by CC-1**, carried because it is a refusal another lane must not silently re-open.
+ECON-005 asks to stamp both directions of the fuel↔deduction FK on the FUEL-03 approve path. CC-1's finding: the
+approve path (`fuel-card-overage.service.ts:320`) **never creates a settlement deduction** — it posts a
+receivable JE (`postFuelOverageReceivable`), so there is nothing for `overage_deduction_id` to point at, and the
+only way to populate it is to **invent a row.** CC-1's prod measurement (complete, `visible == n_live_tup`):
+```
+fuel.fuel_card_overage_events   3   -> 1 posted receivable JE ($143.74); 2 company_variance (no JE — correctly not a driver charge)
+fuel.fuel_transactions      1,555   with overage_deduction_id: 0
+driver_finance.driver_settlement_deductions  1  with source_fuel_transaction_id: 0  (and that row is cash_advance_repayment)
+```
+CC-1 calls it *"the third fabrication ask today, and the same line I held on `pending_ack` and on
+`source_driver_bill_id`."*
+
+## NOTE · [CC-1] two inbox files — `INBOX-CC-1.md` (dashed) vs `INBOX-CC1.md` (undashed)
+**Reported by CC-1:** it had been reading the dashed file (last real content 17:40) while the live one is the
+**undashed `INBOX-CC1.md`**. Recorded because any lane addressing CC-1 needs to know which file is read.
