@@ -720,6 +720,17 @@ export function contractErrors(src) {
 function selftest() {
   const failures = [];
 
+  // Archived-superseded selftest fixture: the two archived mutation cases below need a live entry
+  // of this category to exercise. Restore the real exemption list at the end of selftest.
+  const originalExemptions = EXEMPTIONS.slice();
+  EXEMPTIONS.push({
+    file: `${SRC}/pages/safety/ComplaintsPage.tsx`,
+    field: "respondent_uuid",
+    category: "archived-superseded",
+    successor: `${SRC}/pages/safety/tabs/ComplaintsTab.tsx`,
+    reason: "selftest fixture for archived-superseded mutation checks",
+  });
+
   const goodPicker = [
     'import { Combobox } from "../Combobox";',
     'import { getEntityPickerConfig } from "./entityPickerRegistry";',
@@ -1126,7 +1137,7 @@ function selftest() {
     }
   }
   EXEMPTIONS.length = 0;
-  EXEMPTIONS.push(...original);
+  EXEMPTIONS.push(...originalExemptions);
 
   // The no-enforced-FK findings table has its own rules; same technique, restored afterwards.
   const originalFk = NO_ENFORCED_FK.slice();
