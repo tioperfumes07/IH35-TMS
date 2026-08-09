@@ -342,6 +342,9 @@ function moduleTouchRe(moduleId: string): RegExp {
   if (moduleId === "form_425") {
     return /\b425c\b|\bform[\s_-]?425|\bexhibits?\b|\bdip\b/i;
   }
+  if (moduleId === "finance") {
+    return /\bfinance\b|\bamortization\b|\bbreak[\s_-]?even|\bloan[\s_-]?wizard|\bprojections?\b/i;
+  }
   return /maintenance|\bwork[\s_-]?order|\bwos?\b|\bmaint\b/i;
 }
 
