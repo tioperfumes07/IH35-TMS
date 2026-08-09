@@ -26,6 +26,7 @@ import { CollapsedListFilters } from "../../components/table";
 import { useToast } from "../../components/Toast";
 import { useAuth } from "../../auth/useAuth";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { entityLabel } from "../../lib/entity-label";
 import { formatDateUS } from "../../lib/formatDate";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 
@@ -202,7 +203,7 @@ export function VendorCreditsPage() {
       </CollapsedListFilters>
       {vendorFilter ? (
         <span className="text-xs text-gray-600">
-          Filtered to vendor <EntityLink kind="vendor" id={vendorFilter} label={vendorFilter.slice(0, 8)} />
+          Filtered to vendor <EntityLink kind="vendor" id={vendorFilter} label={entityLabel(null, vendorFilter, "Vendor")} />
         </span>
       ) : null}
     </div>
@@ -422,7 +423,7 @@ export function VendorCreditsPage() {
                 <option value="">Select an open bill</option>
                 {(vendorBillsQuery.data?.rows ?? []).map((bill: VendorBill) => (
                   <option key={bill.id} value={bill.id}>
-                    {bill.bill_number ?? bill.id.slice(0, 8)} — {money(Math.max(0, Number(bill.amount_cents) - Number(bill.paid_cents)))}
+                    {entityLabel(bill.bill_number, bill.id, "Bill")} — {money(Math.max(0, Number(bill.amount_cents) - Number(bill.paid_cents)))}
                   </option>
                 ))}
               </SelectCombobox>
@@ -463,7 +464,7 @@ function VendorCreditApplications({ applications }: { applications: VendorCredit
     <div className="mt-2 space-y-2">
       {applications.map((application) => (
         <div key={application.id} className="flex items-center justify-between gap-3 rounded-sm border border-slate-200 px-3 py-2">
-          <EntityLink kind="bill" id={application.bill_id} label={application.bill_number ?? application.bill_id.slice(0, 8)} />
+          <EntityLink kind="bill" id={application.bill_id} label={entityLabel(application.bill_number, application.bill_id, "Bill")} />
           <div className="text-right text-xs text-slate-600">
             <div className="font-semibold text-slate-900">{money(application.applied_cents)}</div>
             <div>{application.voided_at ? "Voided application" : `Applied ${formatDateUS(application.applied_at)}`}</div>

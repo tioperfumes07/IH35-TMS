@@ -1,3 +1,4 @@
+import { entityLabel } from "../../lib/entity-label";
 import { formatDateUS } from "../../lib/formatDate";
 import { titleize } from "../../lib/titleize";
 import { useMemo, useState } from "react";
@@ -129,7 +130,7 @@ export function VendorBalancesPage() {
                 <div key={bill.id} className={`border-b border-gray-100 px-3 py-2 ${selectedBillId === bill.id ? "bg-slate-100" : ""}`}>
                   <button type="button" className="w-full text-left" onClick={() => setSelectedBillId(bill.id)}>
                     <div className="flex items-center justify-between gap-2">
-                      <div className="text-sm font-semibold text-gray-900">{bill.bill_number || bill.id.slice(0, 8)}</div>
+                      <div className="text-sm font-semibold text-gray-900">{entityLabel(bill.bill_number, bill.id, "Bill")}</div>
                       <div className="text-xs font-semibold text-red-700">{money(remaining)}</div>
                     </div>
                     <div className="mt-0.5 text-xs text-gray-600">
@@ -171,7 +172,7 @@ export function VendorBalancesPage() {
                 </div>
                 <div className="text-gray-600">{payment.payment_method} · {payment.reference_number || payment.check_number || "-"}</div>
                 <div className="mt-1 flex items-center justify-between">
-                  <span className="text-[11px] text-gray-500">By {payment.created_by_user_id ? payment.created_by_user_id.slice(0, 8) : "system"}</span>
+                  <span className="text-[11px] text-gray-500">By {payment.created_by_user_id ? entityLabel(null, payment.created_by_user_id, "User") : "system"}</span>
                   {ownerOnly ? (
                     <Button size="sm" variant="secondary" onClick={() => setVoidTarget(payment.id)}>
                       Void
