@@ -1337,3 +1337,35 @@ deploy be re-driven, so the two cannot separate.
 ACCT-F269's body states *"the trigger and the REVOKE are installed together."* **Only the trigger is installed.**
 The trigger does block (`RAISE EXCEPTION ... ERRCODE restrict_violation`), so this is defence-in-depth, not an
 open hole — but the card reads as if both landed and it should not.
+
+## ★★ OPEN · CC-1 · **P0 · DEPLOY-BLOCKER-ROOT-CAUSE** — #5022's migration cannot run: `driver_liabilities.created_by_user_id` DOES NOT EXIST
+**Found by CC-3 on prod `br-fancy-credit-akjnd07a`, 2026-08-08 ~19:1x CDT. This is why prod stopped taking deploys.**
+
+`db/migrations/202612440000_liabilities_active_view_real_columns.sql:67` selects **`l.created_by_user_id`** from
+`driver_finance.driver_liabilities`. **That column does not exist on prod.** The table's full column list is:
+```
+id, operating_company_id, driver_id, type, source_description, original_amount, current_balance,
+paid_to_date, requires_acknowledgment, origin, origin_id, reference_doc_id, status, created_at, updated_at
+```
+So `CREATE OR REPLACE VIEW` fails, `npm run db:migrate` exits non-zero, and **`preDeployCommand` aborts before the
+new bundle ships.**
+
+**THIS EXPLAINS THE WHOLE PICTURE, and it is not a platform problem:**
+- `202612430000` (#5012) **applied** 23:58:53Z; `202612440000` (#5022) **absent from the ledger** — the runner
+  stopped exactly between them.
+- Prod frozen at `02bab31` since ~19:00 while main advanced 13+ commits.
+- **The gap grows with every merge and will never close on its own:** each deploy re-attempts `202612440000`,
+  fails identically, and aborts. **It is a permanent blocker, not a build queue backlog.** Every lane's merged
+  work is stuck behind this one line.
+
+**FIX (one line, CC-1's to make):** `NULL::uuid AS created_by_user_id` — the same treatment the migration already
+gives `acknowledgment_uuid`, `forfeiture_clause_active`, `forfeiture_clause_signed_at` and `spawned_from_event_id`,
+and it preserves the column so `CREATE OR REPLACE VIEW` stays append-safe against the existing 20-column view.
+**Everything else in that migration checks out** — I verified all 20 output columns match the live view by name,
+order and type, and `deduction_schedule.amount_per_period` / `mdata.drivers` join keys all exist.
+
+**NOTE FOR THE RECORD, not a reprimand:** the PR body states the column list was *"verified via
+information_schema."* Fifteen of sixteen were. **This one was not, and it cost the whole pipeline its deploys.**
+`created_by_user_id` appears in the OLD stub view's output, which is likely where it was read from — the stub
+emitted it as a literal `NULL::uuid`, so it was never a base-table column at all.
+**CC-3 does not build the fix. CC-3 will verify prod advances past `02bab31` once it lands.**
