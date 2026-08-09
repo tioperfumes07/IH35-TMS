@@ -436,7 +436,7 @@
     {
       "tier": "2",
       "module": "dispatch",
-      "build": "0/37",
+      "build": "21/37",
       "cells": [
         "AUDIT",
         "AUDIT",
@@ -2121,6 +2121,15 @@
   },
   "recentActivity": [
     {
+      "number": 5067,
+      "title": "FINDING: MAINT-REMAIN-17-SETTLED",
+      "state": "merged",
+      "mergedAtCt": "08/08/2026, 08:51 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/5067",
+      "sha": "8a269d214",
+      "committedAtIso": "2026-08-08T20:51:04-05:00"
+    },
+    {
       "number": 5066,
       "title": "FINDING: MAINT-SURFACE-BATCH-SETTLED",
       "state": "merged",
@@ -2200,15 +2209,6 @@
       "url": "",
       "sha": "88fa3e575",
       "committedAtIso": "2026-08-08T20:23:36-05:00"
-    },
-    {
-      "number": 5059,
-      "title": "CC-2 FINDING: LV-VENDORBILLLINES-PERMIT-TEST-STALE — #5048's PERMIT mapping is correct (real catalog row, prevents uncategorized posting); the test is stale and its fix must keep the unknown-code-to-null half",
-      "state": "merged",
-      "mergedAtCt": "08/08/2026, 08:22 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/5059",
-      "sha": "f6f0364c3",
-      "committedAtIso": "2026-08-08T20:22:43-05:00"
     }
   ]
 }

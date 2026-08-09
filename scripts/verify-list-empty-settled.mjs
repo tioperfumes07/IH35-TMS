@@ -238,6 +238,55 @@ const MIGRATED = [
     ],
   },
   { file: "apps/frontend/src/pages/maintenance/WarrantyClaimsPage.tsx", empties: ["No warranty claims yet."] },
+  // DISP surface batch — settled ParityTable empties (war noon).
+  {
+    file: "apps/frontend/src/pages/dispatch/LateArrivalsPage.tsx",
+    empties: ["No late arrivals right now."],
+  },
+  {
+    file: "apps/frontend/src/pages/dispatch/AssignmentHistoryPage.tsx",
+    empties: ["No assignment history for current filters."],
+  },
+  {
+    file: "apps/frontend/src/pages/dispatch/AtRiskQueuePage.tsx",
+    empties: ["No at-risk loads right now."],
+  },
+  {
+    file: "apps/frontend/src/pages/dispatch/BorderCrossingHistoryPage.tsx",
+    empties: ["No completed crossings yet."],
+  },
+  {
+    file: "apps/frontend/src/pages/dispatch/borders/BorderCrossingHistory.tsx",
+    empties: ["No border crossing events found for this period."],
+  },
+  {
+    file: "apps/frontend/src/pages/dispatch/DetentionBoardPage.tsx",
+    empties: ["No active detention accrual. Confirmed stop arrivals will appear after sync."],
+  },
+  {
+    file: "apps/frontend/src/pages/dispatch/EquipmentTransferRequests.tsx",
+    empties: ["No pending equipment transfer requests."],
+  },
+  {
+    file: "apps/frontend/src/pages/operations/GeofencesPage.tsx",
+    empties: ["No geofences configured yet. Use the form above to create one."],
+  },
+  {
+    file: "apps/frontend/src/pages/dispatch/InTransitIssuesPage.tsx",
+    empties: ["No in-transit issues."],
+  },
+  {
+    file: "apps/frontend/src/pages/dispatch/NotifyPreferencesPage.tsx",
+    empties: ["No delivery confirmations logged yet."],
+  },
+  {
+    file: "apps/frontend/src/pages/dispatch/OcrQueuePage.tsx",
+    empties: ["No pending OCR items. Forward a rate confirmation PDF to the intake webhook to enqueue."],
+  },
+  {
+    file: "apps/frontend/src/pages/dispatch/TripProfitability.tsx",
+    empties: ["No trips closed in this period."],
+  },
   { file: "apps/frontend/src/pages/work-orders/WorkOrdersConsoleListPage.tsx", empties: ["No work orders match the current filters."] },
   { file: "apps/frontend/src/pages/safety/AccidentsPage.tsx", empties: ["No accident reports found."] },
   { file: "apps/frontend/src/pages/safety/FinesPage.tsx", empties: ["No fines found."] },
