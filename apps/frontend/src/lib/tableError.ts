@@ -1,4 +1,5 @@
 import { ApiError } from "../api/client";
+import { userFacingApiError } from "./api-error-message";
 
 const DEFAULT_TRUNC = 200;
 
@@ -15,22 +16,17 @@ export type DataTableErrorState = {
 };
 
 export function formatQueryErrorDetail(error: unknown): { status: number; message: string } {
+  // CU-09 / LST-F148: prefer message/blocker via userFacingApiError — never surface bare E_* from data.error first.
   if (error instanceof ApiError) {
-    const data = error.data;
-    let body = "";
-    if (typeof data === "string") {
-      body = data;
-    } else if (data && typeof data === "object") {
-      const rec = data as Record<string, unknown>;
-      const err = rec.error ?? rec.message;
-      body = typeof err === "string" ? err : JSON.stringify(data);
-    }
-    return { status: error.status, message: truncateErrorDetail(body || error.message) };
+    return {
+      status: error.status,
+      message: truncateErrorDetail(userFacingApiError(error, "Request failed")),
+    };
   }
   if (error instanceof Error) {
-    return { status: 0, message: truncateErrorDetail(error.message) };
+    return { status: 0, message: truncateErrorDetail(userFacingApiError(error, "Request failed")) };
   }
-  return { status: 0, message: truncateErrorDetail(String(error)) };
+  return { status: 0, message: truncateErrorDetail(userFacingApiError(error, "Request failed")) };
 }
 
 export function dataTableErrorState(error: unknown, onRetry: () => void): DataTableErrorState | undefined {
