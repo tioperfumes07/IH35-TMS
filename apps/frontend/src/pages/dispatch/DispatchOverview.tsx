@@ -1,4 +1,5 @@
 import { useMemo, type CSSProperties } from "react";
+import { entityLabel } from "../../lib/entity-label";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
@@ -47,7 +48,7 @@ const CROSSING_LABELS: Record<string, string> = {
 
 function shortId(value: string | null | undefined): string {
   if (!value) return "—";
-  return value.length > 8 ? `${value.slice(0, 8)}…` : value;
+  return entityLabel(null, value, "Record");
 }
 
 function KpiCard({
