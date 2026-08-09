@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { resolveApiUrl } from "../../../api/client";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+import { useToast } from "../../../components/Toast";
 
 type FindingRow = { driver_uuid: string; severity: string; drift_reason: string; _rowId: string };
 
@@ -27,6 +28,7 @@ export function DriverVendorMappingTab() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const queryClient = useQueryClient();
+  const { pushToast } = useToast();
 
   const query = useQuery({
     queryKey: ["integrity", "driver-vendor-mapping"],
@@ -55,14 +57,30 @@ export function DriverVendorMappingTab() {
       {
         key: "action",
         label: "Action",
+        // C-13: this button had NO onClick at all — a pure dead click. There is no ack endpoint
+        // (registerDriverVendorMappingIntegrityRoutes exposes only GET snapshot + POST scan), so
+        // wiring a real handler here would mean inventing backend persistence for this column.
+        // Same honest-disabled pattern as SafetyEventsTable's "Bulk archive" — disabled + tooltip
+        // + info toast, never a silent no-op.
         render: () => (
-          <button type="button" className="underline text-[#1f2a44]">
+          <button
+            type="button"
+            className="underline text-[#1f2a44] disabled:opacity-50 disabled:no-underline"
+            disabled
+            title="Acknowledging findings is not available yet — no backend endpoint. Re-run the scan once the mapping is fixed."
+            onClick={() =>
+              pushToast(
+                "Acknowledging findings is not available yet — no backend endpoint. Re-run the scan once the mapping is fixed.",
+                "info"
+              )
+            }
+          >
             Ack
           </button>
         ),
       },
     ],
-    [],
+    [pushToast],
   );
 
   return (
