@@ -1565,3 +1565,31 @@ items, not end-to-end money correctness — but side by side on a board they mis
 **ASK:** either require `prod_verified` for `complete:true`, or rename the header so it does not imply
 prod currency (e.g. carry `evidence_as_of` alongside `as_of`). **Do not backfill `prod_verified: true` without
 re-running the checks** — that would convert a measurement gap into a false assurance.
+
+## GL CORROBORATION (CC-3, prod `05c9cdb`) for the driver-pay P0 — **every driver-pay account in USMCA has ZERO postings**
+**Independent second proof, from the ledger side rather than the settlement side. Different query, different
+tables, same conclusion.**
+
+Every driver-related account in `catalogs.accounts` for USMCA `5c854333…`, with its posting count:
+```
+5100 Driver Pay / Settlements              0 postings
+6890 Cost of Labor–Mexico Drivers          0 postings      (migration 202607790000 seeded it)
+2200 Driver Settlements Payable            0
+2170 Driver Net-Pay Clearing               0
+2100 Driver Escrow - Held in Trust         0
+1250 Driver Fuel-Overage Receivable        0
+6175 Driver Accident Damages & Repairs     0
+```
+The **only** driver account with any activity is `DRIVERCASHAD896665 Driver Cash Advance` (2 postings) — cash
+advances, not pay for freight hauled.
+
+**Meanwhile the revenue side is fully posted:** `4000 Freight / Line-haul Income` carries **16 postings, CR
+$21,546.49**, and `1150 Unbilled Revenue` carries **9 postings** — so **DISP-01's two-event latch IS firing.**
+
+**⇒ USMCA's books currently show $21,546.49 of freight revenue against $0.00 of driver labour cost.** The accounts
+exist, are correctly named and were seeded by migration — **they have simply never been posted to.** This is the
+same defect as `DELIVERED-LOAD-NO-DRIVER-PAY` seen from the GL, and it rules out the "pay exists but is not linked
+to loads" reading: **there is no driver pay anywhere in the ledger to link.**
+
+**For whoever fixes the mint: the target accounts already exist — do not create new ones.** `5100` /
+`6890` are seeded and unused.
