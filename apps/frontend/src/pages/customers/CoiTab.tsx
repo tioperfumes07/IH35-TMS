@@ -18,6 +18,7 @@ import { ParityTable } from "../../components/parity/ParityTable";
 import { useToast } from "../../components/Toast";
 import { formatDateTimeUS } from "../../lib/formatDate";
 import { EntityPicker } from "../../components/parity/EntityPicker";
+import { entityLabel } from "../../lib/entity-label";
 
 export type CoiTabVariant = "list-preview" | "full-page";
 
@@ -306,12 +307,12 @@ export function CoiTab({ customerId, customerName, operatingCompanyId, variant }
                 {
                   key: "requested_by",
                   label: "Requester User",
-                  render: (request) => request.requested_by || "-",
+                  render: (request) => entityLabel(null, request.requested_by, "User"),
                 },
                 {
                   key: "policy_id",
                   label: "Policy Reference",
-                  render: (request) => request.policy_id || "-",
+                  render: (request) => entityLabel(null, request.policy_id, "Policy"),
                 },
                 {
                   key: "insurer_email",

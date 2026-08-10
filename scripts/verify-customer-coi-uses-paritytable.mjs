@@ -62,6 +62,12 @@ function assertMigrated(src) {
   if (src.includes("Failed to load COI requests.")) {
     errors.push(`${PAGE}: must not use bare red outage banner (use ListErrorState)`);
   }
+  if (!/key:\s*"requested_by"[\s\S]{0,180}?render:\s*\(request\)\s*=>\s*entityLabel\(null,\s*request\.requested_by,\s*"User"\)/.test(src)) {
+    errors.push(`${PAGE}: requester column must suppress raw user ids with entityLabel`);
+  }
+  if (!/key:\s*"policy_id"[\s\S]{0,180}?render:\s*\(request\)\s*=>\s*entityLabel\(null,\s*request\.policy_id,\s*"Policy"\)/.test(src)) {
+    errors.push(`${PAGE}: policy column must suppress raw policy ids with entityLabel`);
+  }
   return errors;
 }
 
@@ -78,8 +84,8 @@ function selftest() {
         { key: "requested_at", label: "Requested" },
         { key: "status", label: "Status" },
         { key: "requested_at", label: "Date" },
-        { key: "requested_by", label: "Requester User" },
-        { key: "policy_id", label: "Policy Reference" },
+        { key: "requested_by", label: "Requester User", render: (request) => entityLabel(null, request.requested_by, "User") },
+        { key: "policy_id", label: "Policy Reference", render: (request) => entityLabel(null, request.policy_id, "Policy") },
       ]}
     />
     + Create COI
@@ -96,12 +102,28 @@ function selftest() {
   `;
   const goodErrors = assertMigrated(good);
   const badErrors = assertMigrated(bad);
+  const rawRequesterErrors = assertMigrated(good.replace(
+    'render: (request) => entityLabel(null, request.requested_by, "User")',
+    'render: (request) => request.requested_by || "-"'
+  ));
+  const rawPolicyErrors = assertMigrated(good.replace(
+    'render: (request) => entityLabel(null, request.policy_id, "Policy")',
+    'render: (request) => request.policy_id || "-"'
+  ));
   if (goodErrors.length) {
     console.error(`${LABEL} --selftest FAIL good fixture:`, goodErrors);
     process.exit(1);
   }
   if (badErrors.length < 3) {
     console.error(`${LABEL} --selftest FAIL bad fixture should fail hard:`, badErrors);
+    process.exit(1);
+  }
+  if (!rawRequesterErrors.some((error) => error.includes("requester column"))) {
+    console.error(`${LABEL} --selftest FAIL raw requester mutation survived`);
+    process.exit(1);
+  }
+  if (!rawPolicyErrors.some((error) => error.includes("policy column"))) {
+    console.error(`${LABEL} --selftest FAIL raw policy mutation survived`);
     process.exit(1);
   }
   console.log(`${LABEL} --selftest PASS`);
