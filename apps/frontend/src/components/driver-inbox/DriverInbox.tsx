@@ -6,6 +6,7 @@ import {
   type CashAdvanceRequestRow,
 } from "../../api/cashAdvanceRequests";
 import { EntityLink } from "../shared/EntityLink";
+import { ListErrorBanner } from "../shared/ListErrorBanner";
 
 // B6 — Driver Inbox (inside Driver Hub Home). Built to APPROVED-PREVIEW-driver-inbox.html.
 // Locked tokens: navy banner #1A1F36, white active-tab underline; cards #fff / #e5e7eb 4px;
@@ -137,7 +138,11 @@ export function DriverInbox({ companyId, canReview }: { companyId: string; canRe
         {pendingQuery.isLoading ? (
           <p className="text-[12px] text-[#8A92AB]">Loading…</p>
         ) : pendingQuery.isError ? (
-          <p className="text-[12px] text-red-600">Could not load requests.</p>
+          <ListErrorBanner
+            message="Could not load cash-advance requests for this operating company."
+            onRetry={() => void pendingQuery.refetch()}
+            data-testid="driver-inbox-list-error"
+          />
         ) : showCash && cashRows.length > 0 ? (
           cashRows.map((row) => {
             const id = String(row.id ?? "");
