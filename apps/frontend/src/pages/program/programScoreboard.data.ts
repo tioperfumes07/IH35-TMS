@@ -23,18 +23,17 @@ export interface GuardItem { badge: string; tone: "ver" | "pend" | "flag" | "fai
 export interface ProgramScoreboard {
   meta: { generatedAt: string; sourceSha: string; deployedSha: string; prodReadAt: string; ledgerRows: number; failOpen: number; defects: number; };
   modules: ModuleRow[]; prod: ProdMetric[]; chain: ChainNode[]; chainMoney: string; chainReverse: string; guard: GuardItem[];
-  /** Live scenario-slice probe (scripts/scoreboard-from-live.mjs) — TMS-native only. */
   live_scenario_probe?: Record<string, unknown>;
 }
 
 export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
   "meta": {
-    "generatedAt": "2026-08-06T06:02:16Z",
-    "sourceSha": "cf9a739ee",
+    "generatedAt": "2026-08-10T00:09:55-05:00",
+    "sourceSha": "693fc8f12",
     "deployedSha": "308bc66",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 691,
-    "failOpen": 15,
+    "failOpen": 14,
     "defects": 15
   },
   "modules": [
@@ -205,7 +204,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
         "FAIL",
         "AUDIT",
         "FAIL",
-        "FAIL",
+        "FIX",
         "AUDIT",
         "AUDIT",
         "AUDIT",
@@ -222,7 +221,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
           "FAIL",
           "AUDIT",
           "FAIL",
-          "FAIL",
+          "FIX",
           "AUDIT",
           "AUDIT",
           "AUDIT",
@@ -359,7 +358,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
     {
       "tier": "1",
       "module": "settlements",
-      "build": "8/9",
+      "build": "9/9",
       "cells": [
         "AUDIT",
         "FAIL",
@@ -412,7 +411,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
     {
       "tier": "1",
       "module": "fuel",
-      "build": "0/9",
+      "build": "9/9",
       "cells": [
         "AUDIT",
         "FAIL",
@@ -465,7 +464,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
     {
       "tier": "2",
       "module": "dispatch",
-      "build": "21/37",
+      "build": "37/37",
       "cells": [
         "AUDIT",
         "AUDIT",
@@ -518,7 +517,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
     {
       "tier": "2",
       "module": "drivers",
-      "build": "0/20",
+      "build": "20/20",
       "cells": [
         "AUDIT",
         "FAIL",
@@ -730,7 +729,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
     {
       "tier": "2",
       "module": "compliance",
-      "build": "1/9",
+      "build": "9/9",
       "cells": [
         "AUDIT",
         "AUDIT",
@@ -783,7 +782,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
     {
       "tier": "2",
       "module": "system",
-      "build": "0/6",
+      "build": "6/6",
       "cells": [
         "AUDIT",
         "FAIL",
@@ -889,7 +888,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
     {
       "tier": "3",
       "module": "fleet",
-      "build": "0/7",
+      "build": "7/7",
       "cells": [
         "FIX",
         "AUDIT",
@@ -995,7 +994,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
     {
       "tier": "3",
       "module": "factoring",
-      "build": "0/10",
+      "build": "10/10",
       "cells": [
         "AUDIT",
         "AUDIT",
@@ -1048,7 +1047,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
     {
       "tier": "3",
       "module": "finance",
-      "build": "0/9",
+      "build": "9/9",
       "cells": [
         "AUDIT",
         "AUDIT",
@@ -1101,7 +1100,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
     {
       "tier": "3",
       "module": "reports",
-      "build": "0/8",
+      "build": "7/8",
       "cells": [
         "AUDIT",
         "AUDIT",
@@ -1154,7 +1153,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
     {
       "tier": "3",
       "module": "form_425",
-      "build": "0/5",
+      "build": "4/5",
       "cells": [
         "AUDIT",
         "AUDIT",
@@ -1207,7 +1206,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
     {
       "tier": "3",
       "module": "cash-flow",
-      "build": "1/3",
+      "build": "3/3",
       "cells": [
         "AUDIT",
         "AUDIT",
@@ -1313,7 +1312,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
     {
       "tier": "3",
       "module": "tasks",
-      "build": "0/5",
+      "build": "5/5",
       "cells": [
         "AUDIT",
         "AUDIT",
@@ -1366,7 +1365,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
     {
       "tier": "3",
       "module": "users",
-      "build": "0/6",
+      "build": "6/6",
       "cells": [
         "AUDIT",
         "AUDIT",
@@ -1419,7 +1418,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
     {
       "tier": "3",
       "module": "program",
-      "build": "0/6",
+      "build": "7/7",
       "cells": [
         "AUDIT",
         "AUDIT",
@@ -1472,7 +1471,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
     {
       "tier": "3",
       "module": "driver-hub",
-      "build": "0/2",
+      "build": "7/7",
       "cells": [
         "AUDIT",
         "AUDIT",
@@ -1525,7 +1524,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
     {
       "tier": "3",
       "module": "docs",
-      "build": "1/5",
+      "build": "6/7",
       "cells": [
         "AUDIT",
         "AUDIT",
@@ -1785,56 +1784,56 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
     "note": "DERIVED, never hand-edited. Counts are TMS-NATIVE only — QuickBooks-imported rows are excluded so an import can never make a TMS flow look proven.",
     "modules": {
       "dispatch": {
-        "pass_count": 2,
+        "pass_count": 4,
         "total_count": 4,
         "slices": [
           {
             "key": "hop.book",
             "holds": true,
-            "evidence": "3 load(s) booked with a customer and a rate"
+            "evidence": "28 load(s) booked with a customer and a rate"
           },
           {
             "key": "hop.dispatch",
             "holds": true,
-            "evidence": "1 load(s) dispatched or beyond"
+            "evidence": "19 load(s) dispatched or beyond"
           },
           {
             "key": "hop.deliver",
-            "holds": false,
-            "evidence": "0 delivery stop(s) with a captured departure"
+            "holds": true,
+            "evidence": "8 delivery stop(s) with a captured departure"
           },
           {
             "key": "hop.pod_bol",
-            "holds": false,
-            "evidence": "0 POD/BOL document(s) linked to a load"
+            "holds": true,
+            "evidence": "3 POD/BOL document(s) linked to a load"
           }
         ],
-        "progress": 50,
-        "prod_verified": false
+        "progress": 100,
+        "prod_verified": true
       },
       "driver-finance": {
-        "pass_count": 1,
+        "pass_count": 3,
         "total_count": 5,
         "slices": [
           {
             "key": "hop.assign",
-            "holds": true,
-            "evidence": "3 driver bill(s) priced from the rate card, not the customer rate"
+            "holds": false,
+            "evidence": "0 driver bill(s) priced from the rate card, not the customer rate"
           },
           {
             "key": "scenario.settlement",
-            "holds": false,
-            "evidence": "0 settlement(s) created"
+            "holds": true,
+            "evidence": "8 settlement(s) created"
           },
           {
             "key": "scenario.advance",
-            "holds": false,
-            "evidence": "0 driver advance(s) recorded"
+            "holds": true,
+            "evidence": "2 driver advance(s) recorded"
           },
           {
             "key": "scenario.deductions",
-            "holds": false,
-            "evidence": "0 settlement deduction(s) applied"
+            "holds": true,
+            "evidence": "1 settlement deduction(s) applied"
           },
           {
             "key": "scenario.escrow",
@@ -1842,7 +1841,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
             "evidence": "0 escrow ledger entr(ies)"
           }
         ],
-        "progress": 20,
+        "progress": 60,
         "prod_verified": false
       },
       "accounting": {
@@ -1857,22 +1856,22 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
           {
             "key": "hop.invoice",
             "holds": true,
-            "evidence": "5 live invoice(s) sent or paid"
+            "evidence": "11 live invoice(s) sent or paid"
           },
           {
             "key": "hop.gl",
             "holds": true,
-            "evidence": "1765 live journal entr(ies)"
+            "evidence": "1833 live journal entr(ies)"
           },
           {
             "key": "scenario.coa",
             "holds": true,
-            "evidence": "149 account(s) in the chart"
+            "evidence": "158 account(s) in the chart"
           },
           {
             "key": "scenario.ap",
             "holds": true,
-            "evidence": "5 open (non-voided) bill(s)"
+            "evidence": "43 open (non-voided) bill(s)"
           }
         ],
         "progress": 80,
@@ -1890,7 +1889,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
           {
             "key": "scenario.banking",
             "holds": true,
-            "evidence": "170 categorized bank transaction(s)"
+            "evidence": "198 categorized bank transaction(s)"
           }
         ],
         "progress": 50,
@@ -1903,7 +1902,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
           {
             "key": "scenario.customer",
             "holds": true,
-            "evidence": "7 customer(s) on file"
+            "evidence": "16 customer(s) on file"
           }
         ],
         "progress": 100,
@@ -1916,7 +1915,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
           {
             "key": "scenario.driver_onboarding",
             "holds": true,
-            "evidence": "179 driver(s) on file"
+            "evidence": "190 driver(s) on file"
           }
         ],
         "progress": 100,
@@ -1942,50 +1941,50 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
           {
             "key": "scenario.maintenance",
             "holds": true,
-            "evidence": "1 work order(s)"
+            "evidence": "4 work order(s)"
           }
         ],
         "progress": 100,
         "prod_verified": true
       },
       "safety": {
-        "pass_count": 0,
+        "pass_count": 1,
         "total_count": 1,
         "slices": [
           {
             "key": "scenario.accident",
-            "holds": false,
-            "evidence": "0 accident(s) recorded"
+            "holds": true,
+            "evidence": "1 accident(s) recorded"
           }
         ],
-        "progress": 0,
-        "prod_verified": false
+        "progress": 100,
+        "prod_verified": true
       },
       "insurance": {
-        "pass_count": 0,
+        "pass_count": 1,
         "total_count": 1,
         "slices": [
           {
             "key": "scenario.insurance",
-            "holds": false,
-            "evidence": "0 insurance claim(s)"
+            "holds": true,
+            "evidence": "2 insurance claim(s)"
           }
         ],
-        "progress": 0,
-        "prod_verified": false
+        "progress": 100,
+        "prod_verified": true
       },
       "legal": {
-        "pass_count": 0,
+        "pass_count": 1,
         "total_count": 1,
         "slices": [
           {
             "key": "scenario.legal",
-            "holds": false,
-            "evidence": "0 legal matter(s)"
+            "holds": true,
+            "evidence": "3 legal matter(s)"
           }
         ],
-        "progress": 0,
-        "prod_verified": false
+        "progress": 100,
+        "prod_verified": true
       },
       "factoring": {
         "pass_count": 0,
@@ -2006,31 +2005,31 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
         "key": "hop.book",
         "module": "dispatch",
         "holds": true,
-        "evidence": "3 load(s) booked with a customer and a rate"
+        "evidence": "28 load(s) booked with a customer and a rate"
       },
       {
         "key": "hop.assign",
         "module": "driver-finance",
-        "holds": true,
-        "evidence": "3 driver bill(s) priced from the rate card, not the customer rate"
+        "holds": false,
+        "evidence": "0 driver bill(s) priced from the rate card, not the customer rate"
       },
       {
         "key": "hop.dispatch",
         "module": "dispatch",
         "holds": true,
-        "evidence": "1 load(s) dispatched or beyond"
+        "evidence": "19 load(s) dispatched or beyond"
       },
       {
         "key": "hop.deliver",
         "module": "dispatch",
-        "holds": false,
-        "evidence": "0 delivery stop(s) with a captured departure"
+        "holds": true,
+        "evidence": "8 delivery stop(s) with a captured departure"
       },
       {
         "key": "hop.pod_bol",
         "module": "dispatch",
-        "holds": false,
-        "evidence": "0 POD/BOL document(s) linked to a load"
+        "holds": true,
+        "evidence": "3 POD/BOL document(s) linked to a load"
       },
       {
         "key": "hop.revenue",
@@ -2042,13 +2041,13 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
         "key": "hop.invoice",
         "module": "accounting",
         "holds": true,
-        "evidence": "5 live invoice(s) sent or paid"
+        "evidence": "11 live invoice(s) sent or paid"
       },
       {
         "key": "hop.gl",
         "module": "accounting",
         "holds": true,
-        "evidence": "1765 live journal entr(ies)"
+        "evidence": "1833 live journal entr(ies)"
       },
       {
         "key": "hop.bank",
@@ -2060,37 +2059,37 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
         "key": "scenario.customer",
         "module": "lists",
         "holds": true,
-        "evidence": "7 customer(s) on file"
+        "evidence": "16 customer(s) on file"
       },
       {
         "key": "scenario.driver_onboarding",
         "module": "drivers",
         "holds": true,
-        "evidence": "179 driver(s) on file"
+        "evidence": "190 driver(s) on file"
       },
       {
         "key": "scenario.coa",
         "module": "accounting",
         "holds": true,
-        "evidence": "149 account(s) in the chart"
+        "evidence": "158 account(s) in the chart"
       },
       {
         "key": "scenario.settlement",
         "module": "driver-finance",
-        "holds": false,
-        "evidence": "0 settlement(s) created"
+        "holds": true,
+        "evidence": "8 settlement(s) created"
       },
       {
         "key": "scenario.advance",
         "module": "driver-finance",
-        "holds": false,
-        "evidence": "0 driver advance(s) recorded"
+        "holds": true,
+        "evidence": "2 driver advance(s) recorded"
       },
       {
         "key": "scenario.deductions",
         "module": "driver-finance",
-        "holds": false,
-        "evidence": "0 settlement deduction(s) applied"
+        "holds": true,
+        "evidence": "1 settlement deduction(s) applied"
       },
       {
         "key": "scenario.escrow",
@@ -2102,7 +2101,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
         "key": "scenario.ap",
         "module": "accounting",
         "holds": true,
-        "evidence": "5 open (non-voided) bill(s)"
+        "evidence": "43 open (non-voided) bill(s)"
       },
       {
         "key": "scenario.fuel",
@@ -2114,25 +2113,25 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
         "key": "scenario.maintenance",
         "module": "maintenance",
         "holds": true,
-        "evidence": "1 work order(s)"
+        "evidence": "4 work order(s)"
       },
       {
         "key": "scenario.accident",
         "module": "safety",
-        "holds": false,
-        "evidence": "0 accident(s) recorded"
+        "holds": true,
+        "evidence": "1 accident(s) recorded"
       },
       {
         "key": "scenario.insurance",
         "module": "insurance",
-        "holds": false,
-        "evidence": "0 insurance claim(s)"
+        "holds": true,
+        "evidence": "2 insurance claim(s)"
       },
       {
         "key": "scenario.legal",
         "module": "legal",
-        "holds": false,
-        "evidence": "0 legal matter(s)"
+        "holds": true,
+        "evidence": "3 legal matter(s)"
       },
       {
         "key": "scenario.factoring",
@@ -2144,7 +2143,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
         "key": "scenario.banking",
         "module": "banking",
         "holds": true,
-        "evidence": "170 categorized bank transaction(s)"
+        "evidence": "198 categorized bank transaction(s)"
       }
     ]
   }

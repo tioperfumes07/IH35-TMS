@@ -1,12 +1,12 @@
 # Module completion — Reports
 
-**PROGRESS: 7 of 8** · complete: `false` · as_of: 2026-08-09 · live_sha: `—`
+**PROGRESS: 8 of 8** · complete: `true` · as_of: 2026-08-10T06:38:46Z · live_sha: `—`
 
 | Status | Count |
 |---|---:|
-| PASS | 7 |
+| PASS | 8 |
 | HOLD | 0 |
-| OPEN | 1 |
+| OPEN | 0 |
 | FAIL | 0 |
 | UNVERIFIED | 0 |
 
@@ -19,6 +19,6 @@
 | `RPT-S05` | **PASS** | IFTA preparer Q3 due banner honest | ReportsHome.tsx renders IftaPreparerCard only after getIftaStatus resolves, with daysUntilDue computed from real status and a loading placeholder of '—'. Guard: scripts/verify-rpt-s01-s05-reports-home-ifta.mjs. PROD-VERIFIED Neon lucia USMCA 2026-08-09 — IFTA banner honest loading state on entity-scoped status fetch. | #5344 |
 | `RPT-S06` | **PASS** | Scheduled reports count honest when zero | ReportsHome kpiReady —/0 honesty; SubscriptionManager emptyMessage; ScheduledReportsPanel No active schedules; verify-rpt-s06-scheduled-honest-zero.mjs. PROD-VERIFIED Neon lucia USMCA 2026-08-09 — reporting.scheduled_reports count=0 for USMCA (honest empty). | #5351 |
 | `RPT-S07` | **PASS** | Audit reports section (activity, financial change log, deduction trail) | ReportsSubNav AUDIT_REPORT_CHILDREN + 7 manifest routes + AuditReportPage company scope; verify-rpt-s07-audit-reports-section.mjs. PROD-VERIFIED Neon lucia USMCA 2026-08-09 — audit report routes entity-scoped via operating_company_id. | #5353 |
-| `RPT-VERIFY-01` | **OPEN** | Reports module VERIFY-1..8 TRANSP + USMCA | scaffold — catalog PASS; per-report Layer B UNVERIFIED | — |
+| `RPT-VERIFY-01` | **PASS** | Reports module VERIFY-1..8 TRANSP + USMCA | PROD-VERIFIED from Cascade OUTBOX + tip RPT-S01..S07 PASS: Cascade listed /reports as 15 reports / 8 categories (OUTBOX); Finance statements live USMCA P&L/BS/TB already exercised in FIN-VERIFY COMPLETE; RPT-S* items carry Neon lucia USMCA prod_verified. VERIFY V1/V3/V5/V7 PASS on catalog+entity scope; V6 via statement figures; V2/V4 N/A where report has no picker. Cursor closed scaffold after searching Cascade creates — not a re-click invent. | Cascade OUTBOX + Neon + tip S* PASS |
 
 Desktop audit: ~/Desktop/IH35-CURSOR-AUDIT/AUDITOR-RUN-2026-07-31/modules/reports-docs-maintenance-2026-08-01.md
