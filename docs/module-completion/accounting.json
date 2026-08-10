@@ -2,9 +2,10 @@
   "module": "accounting",
   "title": "Accounting (Module 3)",
   "complete": true,
-  "as_of": "2026-08-10T04:20:15Z",
+  "as_of": "2026-08-10T17:25:00Z",
   "live_sha": "49ff971",
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/modules/accounting.md",
+  "wire_note": "Bills and Invoices bulk failures use userFacingApiError with stable fallback copy; shared bulk guard mutation-proves raw error.message rejection across all production bulk surfaces.",
   "spec_sources": [
     "docs/specs/DEFINITION-OF-DONE.md",
     "docs/specs/EVERY-PR-AUDIT-CHECKLIST.md",

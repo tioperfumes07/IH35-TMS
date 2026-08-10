@@ -637,7 +637,7 @@ export function DispatchBoard({
         }
       );
     } catch (error) {
-      pushToast(error instanceof Error ? error.message : "Bulk load update failed", "error");
+      pushToast(userFacingApiError(error, "Bulk load update failed"), "error");
     }
   };
 

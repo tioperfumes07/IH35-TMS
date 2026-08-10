@@ -23,6 +23,7 @@ import { CollapsedListFilters } from "../../components/table";
 import { useUrlSort } from "../../hooks/useUrlSort";
 import { CreateBillModal } from "../maintenance/components/CreateBillModal";
 import { companyToday, addDaysIso, monthBoundsIso } from "../../lib/businessDate";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 export const BILL_LIST_CATEGORIES = ["maintenance", "repair", "fuel", "driver"] as const;
 export type BillListCategory = (typeof BILL_LIST_CATEGORIES)[number];
@@ -325,7 +326,7 @@ export function BillsPage() {
         }
       );
     } catch (error) {
-      pushToast(error instanceof Error ? error.message : "Bulk bill update failed", "error");
+      pushToast(userFacingApiError(error, "Bulk bill update failed"), "error");
     }
   };
 

@@ -2,9 +2,10 @@
   "module": "dispatch",
   "title": "Dispatch — acceptance checklist",
   "complete": true,
-  "as_of": "2026-08-10T04:25:42.000Z",
+  "as_of": "2026-08-10T17:25:00.000Z",
   "live_sha": "1fe7c3b",
   "desktop_audit": null,
+  "wire_note": "Dispatch bulk status failures use userFacingApiError with stable fallback copy; shared bulk guard mutation-proves raw error.message rejection across Dispatch, Bills, and Invoices.",
   "spec_sources": [
     "apps/frontend/src/routes/manifest.tsx",
     "apps/frontend/src/components/layout/sidebar-config.ts"

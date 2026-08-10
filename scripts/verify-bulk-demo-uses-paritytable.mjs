@@ -14,6 +14,11 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-bulk-demo-uses-paritytable";
 const PAGE = "apps/frontend/src/pages/dev/BulkDemoPage.tsx";
+const BULK_SURFACES = [
+  ["apps/frontend/src/pages/dispatch/DispatchBoard.tsx", "Bulk load update failed"],
+  ["apps/frontend/src/pages/accounting/BillsPage.tsx", "Bulk bill update failed"],
+  ["apps/frontend/src/pages/accounting/InvoicesListPage.tsx", "Bulk invoice update failed"],
+];
 
 const REQUIRED_LABELS = ["Name", "Status"];
 
@@ -69,6 +74,17 @@ function assertMigrated(src) {
   return errors;
 }
 
+function assertBulkErrorFormatting(src, rel, fallback) {
+  const errors = [];
+  if (!src.includes(`userFacingApiError(error, "${fallback}")`)) {
+    errors.push(`${rel}: bulk failure must use userFacingApiError with its stable fallback`);
+  }
+  if (src.includes(`error instanceof Error ? error.message : "${fallback}"`)) {
+    errors.push(`${rel}: bulk failure must not toast raw error.message`);
+  }
+  return errors;
+}
+
 function selftest() {
   const good = `
     import { BulkActionModal, BulkProgressDialog } from "../../components/bulk";
@@ -111,6 +127,16 @@ function selftest() {
     console.error(`${LABEL} --selftest FAIL bad fixture should fail hard:`, badErrors);
     process.exit(1);
   }
+  const formatterGood = 'pushToast(userFacingApiError(error, "Bulk invoice update failed"), "error");';
+  const formatterBad = 'pushToast(error instanceof Error ? error.message : "Bulk invoice update failed", "error");';
+  if (assertBulkErrorFormatting(formatterGood, "fixture", "Bulk invoice update failed").length) {
+    console.error(`${LABEL} --selftest FAIL formatted bulk error fixture should pass`);
+    process.exit(1);
+  }
+  if (assertBulkErrorFormatting(formatterBad, "fixture", "Bulk invoice update failed").length < 2) {
+    console.error(`${LABEL} --selftest FAIL raw bulk error fixture should fail both assertions`);
+    process.exit(1);
+  }
   console.log(`${LABEL} --selftest PASS`);
 }
 
@@ -121,6 +147,11 @@ function main() {
   }
   const src = fs.readFileSync(path.join(ROOT, PAGE), "utf8");
   const errors = assertMigrated(src);
+  for (const [rel, fallback] of BULK_SURFACES) {
+    errors.push(
+      ...assertBulkErrorFormatting(fs.readFileSync(path.join(ROOT, rel), "utf8"), rel, fallback),
+    );
+  }
   if (errors.length) {
     console.error(`FAIL ${LABEL}:`);
     for (const e of errors) console.error(`  - ${e}`);
