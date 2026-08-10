@@ -473,7 +473,10 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
         part_location_codes: row.part_location_codes ?? [],
       })),
     }))
-    .filter((line) => line.service_item_uuid);
+    // A catalog outage must not erase a real, described Section-B cost line from validation or the
+    // request. The backend stores service_item_uuid as nullable; retain the line and disclose the
+    // missing catalog link instead of falsely claiming there are no costs.
+    .filter((line) => line.description || line.sub_rows.length > 0);
 
   // Backend sectionALineSchema requires description.min(1). A blank "Part # / Task" used to reach
   // POST and 400 with a misleading header-level Zod dump. Gate it here with a named check.
@@ -494,6 +497,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
     {
       label: "Vendor invoice # or vendor WO # required",
       ok:
+        paymentTiming !== "vendor_invoice" ||
         Boolean(String(form.watch("vendor_invoice_number") ?? "").trim()) ||
         Boolean(String(form.watch("external_vendor_invoice_number") ?? "").trim()) ||
         Boolean(String(form.watch("external_vendor_wo_number") ?? "").trim()),
