@@ -1,6 +1,7 @@
 import type { PortOfEntry, WizardFormState } from "./borderCrossingApi";
 import { DateTimePicker } from "../forms/DateTimePicker";
 import { CbpWaitTimesWidget } from "./CbpWaitTimesWidget";
+import { Combobox } from "../Combobox";
 
 type Props = {
   form: WizardFormState;
@@ -10,26 +11,27 @@ type Props = {
 
 export function WizardStep2({ form, ports, onChange }: Props) {
   const selected = ports.find((p) => p.id === form.portOfEntryId);
+  const portOptions = ports.map((port) => ({
+    value: port.id,
+    label: `${port.short_name ?? port.name} (${port.country})`,
+  }));
 
   return (
     <section data-testid="border-wizard-step-2" className="grid gap-4 lg:grid-cols-[1fr_260px]">
       <div className="space-y-3">
         <h3 className="text-sm font-semibold">Step 2 — Port & planned date</h3>
-        <label className="block text-sm">
-          Port of entry *
-          <select
-            className="mt-1 w-full rounded-sm border px-2 py-1.5"
-            value={form.portOfEntryId}
-            onChange={(e) => onChange({ portOfEntryId: e.target.value })}
-          >
-            <option value="">Select port…</option>
-            {ports.map((port) => (
-              <option key={port.id} value={port.id}>
-                {port.short_name ?? port.name} ({port.country})
-              </option>
-            ))}
-          </select>
-        </label>
+        <div className="block text-sm">
+          <label htmlFor="border-crossing-port-picker">Port of entry *</label>
+          <Combobox
+            id="border-crossing-port-picker"
+            className="mt-1"
+            options={portOptions}
+            value={form.portOfEntryId || null}
+            onChange={(next) => onChange({ portOfEntryId: next ?? "" })}
+            placeholder="Select port…"
+            allowClear
+          />
+        </div>
         <label className="block text-sm">
           Planned crossing date *
           <DateTimePicker
