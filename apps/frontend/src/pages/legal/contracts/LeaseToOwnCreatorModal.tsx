@@ -12,6 +12,7 @@ import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { useToast } from "../../../components/Toast";
+import { entityLabel } from "../../../lib/entity-label";
 
 type Props = {
   open: boolean;
@@ -80,7 +81,7 @@ export function LeaseToOwnCreatorModal({ open, operatingCompanyId, onClose, onSa
   const units: LeaseToOwnFleetUnit[] = fleetQuery.data?.units ?? [];
   const ownerOptions = useMemo(() => {
     const m = new Map<string, string>();
-    for (const u of units) if (u.owner_company_id) m.set(u.owner_company_id, u.owner_label ?? u.owner_company_id);
+    for (const u of units) if (u.owner_company_id) m.set(u.owner_company_id, entityLabel(u.owner_label, u.owner_company_id, "Owner"));
     if (seller?.id) m.set(seller.id, seller.short_name ?? seller.legal_name);
     return Array.from(m.entries());
   }, [units, seller]);
