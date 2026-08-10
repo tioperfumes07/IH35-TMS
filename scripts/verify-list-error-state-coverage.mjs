@@ -66,6 +66,9 @@ const REQUIRED_ERROR_STATE = [
   "apps/frontend/src/pages/reports/DeadheadReportPage.tsx",
   "apps/frontend/src/pages/reports/DispatchMarginPage.tsx",
   "apps/frontend/src/pages/reports/CancellationsReportPage.tsx",
+  // Safety driver scheduler — honest isError -> ListErrorState (INBOX-312).
+  "apps/frontend/src/pages/safety/driver-scheduler/DriverSchedulerGridPage.tsx",
+  "apps/frontend/src/pages/safety/driver-scheduler/DriverSchedulerRequestInboxPage.tsx",
 ];
 
 function stripComments(src) {

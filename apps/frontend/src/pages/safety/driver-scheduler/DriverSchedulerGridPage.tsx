@@ -6,6 +6,8 @@ import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { companyToday } from "../../../lib/businessDate";
+import { ListErrorState } from "../../../components/ListErrorState";
+import { formatQueryErrorDetail } from "../../../lib/tableError";
 
 function addDaysIso(iso: string, days: number): string {
   const [y, m, d] = iso.split("-").map(Number);
@@ -74,7 +76,13 @@ export function DriverSchedulerGridPage() {
       </div>
 
       {query.isLoading ? <div className="text-sm text-gray-500">Loading grid…</div> : null}
-      {query.isError ? <div className="text-sm text-red-700">Failed to load scheduler grid.</div> : null}
+      {query.isError ? (
+        <ListErrorState
+          title="Couldn't load scheduler grid"
+          {...formatQueryErrorDetail(query.error)}
+          onRetry={() => void query.refetch()}
+        />
+      ) : null}
 
       {query.data ? (
         <div className="max-w-[calc(100vw-48px)] overflow-auto rounded-sm border border-gray-200 bg-white">

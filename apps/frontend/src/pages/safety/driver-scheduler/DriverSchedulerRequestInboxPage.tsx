@@ -9,6 +9,8 @@ import { Button } from "../../../components/Button";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
+import { ListErrorState } from "../../../components/ListErrorState";
+import { formatQueryErrorDetail } from "../../../lib/tableError";
 
 type PendingRequestRow = Record<string, unknown>;
 
@@ -63,8 +65,15 @@ export function DriverSchedulerRequestInboxPage() {
         </Link>
       </div>
 
-      {query.isError ? <div className="text-sm text-red-700">Could not load pending requests.</div> : null}
+      {query.isError ? (
+        <ListErrorState
+          title="Couldn't load pending leave requests"
+          {...formatQueryErrorDetail(query.error)}
+          onRetry={() => void query.refetch()}
+        />
+      ) : null}
 
+      {!query.isError ? (
       <ParityTable<PendingRequestRow>
         columns={columns}
         rows={rows}
@@ -74,6 +83,7 @@ export function DriverSchedulerRequestInboxPage() {
         storageKey="safety-driver-scheduler-pending"
         exportFilename="driver-scheduler-pending-requests"
       />
+      ) : null}
     </div>
   );
 }
