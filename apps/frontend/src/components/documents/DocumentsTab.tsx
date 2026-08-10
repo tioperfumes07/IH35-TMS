@@ -15,6 +15,7 @@ import { Combobox } from "../Combobox";
 import { DataTable } from "../DataTable";
 import { useToast } from "../Toast";
 import { formatDateUS } from "../../lib/formatDate";
+import { entityLabel } from "../../lib/entity-label";
 import { EditMetadataModal } from "./EditMetadataModal";
 import { PreviewModal } from "./PreviewModal";
 import { SoftDeleteModal } from "./SoftDeleteModal";
@@ -207,7 +208,7 @@ export function DocumentsTab({ entityType, entityId, entityName, operatingCompan
           { key: "category_label", label: "Category", render: (row) => row.category_label ?? "-" },
           { key: "document_date", label: "Doc Date", render: (row) => formatDate(row.document_date) },
           { key: "expiration_date", label: "Expires", render: (row) => formatDate(row.expiration_date) },
-          { key: "uploader_email", label: "Uploader", render: (row) => row.uploader_email ?? row.uploader_user_id },
+          { key: "uploader_email", label: "Uploader", render: (row) => entityLabel(row.uploader_email, row.uploader_user_id, "User") },
           { key: "version_number", label: "Version", render: (row) => `v${row.version_number}` },
           {
             key: "actions",

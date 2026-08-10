@@ -10,6 +10,7 @@ import { Button } from "../Button";
 import { ListErrorState } from "../ListErrorState";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 import { EntityLink } from "../shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 
 type Props = {
   driverId: string;
@@ -22,7 +23,7 @@ const ASSIGNED_COLUMNS: Array<ParityColumn<DriverAssignedLoad>> = [
     label: "Load #",
     sortable: true,
     render: (row) => (
-      <EntityLink kind="load" id={row.id} label={row.load_number ?? row.id} data-testid={`driver-assigned-load-${row.id}`} />
+      <EntityLink kind="load" id={row.id} label={entityLabel(row.load_number, row.id, "Load")} data-testid={`driver-assigned-load-${row.id}`} />
     ),
   },
   { key: "status", label: "Status", sortable: true },
@@ -57,7 +58,7 @@ const HISTORY_COLUMNS: Array<ParityColumn<DispatchAssignmentHistoryRow>> = [
       <EntityLink
         kind="load"
         id={row.load_id}
-        label={row.load_number ?? row.load_id}
+        label={entityLabel(row.load_number, row.load_id, "Load")}
         data-testid={`driver-load-history-load-${row.id}`}
       />
     ),

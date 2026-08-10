@@ -3,6 +3,7 @@ import { DatePicker } from "../../components/forms/DatePicker";
 import { useMemo, useState } from "react";
 import { listDriverAuditEvents, type DriverAuditEvent } from "../../api/audit";
 import { Button } from "../Button";
+import { entityLabel } from "../../lib/entity-label";
 import { ListErrorState } from "../ListErrorState";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 import { Download, AlertTriangle } from "lucide-react";
@@ -99,7 +100,7 @@ export function AuditHistoryTab({ driverId, operatingCompanyId }: Props) {
     if (!events.length) return;
     const rows = events.map((e: DriverAuditEvent) => ({
       Date: e.created_at,
-      Actor: e.actor_email || e.actor_user_id || "—",
+      Actor: entityLabel(e.actor_email, e.actor_user_id, "User") ?? "—",
       Type: e.event_type,
       Summary: e.summary,
       Source: e.source || "—",
@@ -135,7 +136,7 @@ export function AuditHistoryTab({ driverId, operatingCompanyId }: Props) {
         label: "Actor",
         sortable: true,
         sortValue: (row) => row.actor_email ?? row.actor_user_id ?? "",
-        render: (row) => <span className="text-gray-800">{row.actor_email ?? row.actor_user_id ?? "—"}</span>,
+        render: (row) => <span className="text-gray-800">{entityLabel(row.actor_email, row.actor_user_id, "User") ?? "—"}</span>,
       },
       {
         key: "event_type",

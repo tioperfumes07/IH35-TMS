@@ -4,6 +4,7 @@ import type { AccountingHomeData } from "../../api/accountingHome";
 import { fetchPendingApprovalsGl } from "../../api/accountingHome";
 import { formatShortDate, formatUsdFromCents } from "../../pages/home/HomeKpiCard";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { entityLabel } from "../../lib/entity-label";
 
 type Props = {
   data: AccountingHomeData | undefined;
@@ -100,7 +101,7 @@ export function AccountingPendingApprovalsPanel({ data, isLoading }: Props) {
           <ul className="divide-y divide-slate-100">
             {items.map((item) => {
               const key = item.journal_entry_id ?? item.forward_drill.href ?? "item";
-              const title = item.journal_display_id ?? item.journal_entry_id ?? "Journal entry";
+              const title = item.journal_display_id ?? entityLabel(null, item.journal_entry_id, "Journal entry") ?? "Journal entry";
               const accountSummary = item.governed_accounts
                 .slice(0, 3)
                 .map((a) => accountLabel(a))
@@ -138,7 +139,7 @@ export function AccountingPendingApprovalsPanel({ data, isLoading }: Props) {
                         {item.creator?.role ? `Creator role: ${item.creator.role}` : "Creator: —"}
                         {" · "}
                         {item.required_approver?.user_id || item.required_approver?.role
-                          ? `Required approver: ${item.required_approver.role ?? item.required_approver.user_id}`
+                          ? `Required approver: ${item.required_approver.role ?? entityLabel(null, item.required_approver.user_id, "User")}`
                           : "Required approver: unresolved"}
                       </div>
                     </div>
