@@ -56,6 +56,12 @@ function assertMigrated(source) {
   if (!source.includes('emptyText="Select vehicles in step 2 first."')) {
     errors.push(`${PAGE}: must retain the per-truck terms empty state`);
   }
+  if (!/<Combobox[\s\S]*?id="lease-to-own-owner-picker"/.test(source)) {
+    errors.push(`${PAGE}: truck owner must use the searchable Combobox`);
+  }
+  if (/<select[\s\S]*?value=\{ownerCompanyId\}/.test(source)) {
+    errors.push(`${PAGE}: truck owner must not regress to a native company-ID select`);
+  }
   return errors;
 }
 
@@ -63,6 +69,7 @@ function selftest() {
   const good = `
     import { ParityTable } from "../../../components/parity/ParityTable";
     import { ListErrorState } from "../../../components/ListErrorState";
+    const Combobox = () => <input />;
     const columns = [
       { key: "select", label: "Select" }, { key: "unit", label: "Unit" },
       { key: "vin", label: "VIN" }, { key: "model", label: "Make/Model/Yr" },
@@ -71,7 +78,7 @@ function selftest() {
       { key: "lease", label: "Monthly lease" }, { key: "due", label: "Due date" },
     ];
     export function LeaseToOwnCreatorModal() {
-      return <><ListErrorState /><ParityTable storageKey="legal-lease-to-own-fleet-picker" emptyText="No eligible fleet units found for this owner." /><ParityTable storageKey="legal-lease-to-own-per-truck-terms" emptyText="Select vehicles in step 2 first." /></>;
+      return <><Combobox id="lease-to-own-owner-picker" /><ListErrorState /><ParityTable storageKey="legal-lease-to-own-fleet-picker" emptyText="No eligible fleet units found for this owner." /><ParityTable storageKey="legal-lease-to-own-per-truck-terms" emptyText="Select vehicles in step 2 first." /></>;
     }
   `;
   const bad = `
