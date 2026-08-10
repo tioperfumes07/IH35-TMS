@@ -89,6 +89,18 @@ export async function manualReassignLoad(userId: string, input: ReassignBody) {
       if (!load) throw new Error("E_LOAD_NOT_FOUND");
 
       if (input.new_driver_id !== load.assigned_primary_driver_id) {
+        const driverRes = await client.query(
+          `
+            SELECT 1
+            FROM mdata.drivers
+            WHERE id = $1
+              AND operating_company_id = $2
+            LIMIT 1
+          `,
+          [input.new_driver_id, input.operating_company_id]
+        );
+        if (!driverRes.rows[0]) throw new Error("E_DRIVER_NOT_FOUND");
+
         const block = await assertDriverQualifiedForLoad(client, {
           driverId: input.new_driver_id,
           operatingCompanyId: input.operating_company_id,
