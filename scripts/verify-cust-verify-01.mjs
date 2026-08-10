@@ -14,6 +14,17 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-cust-verify-01";
+const PROD_VERIFIED_IDS = [
+  "CUST-S01",
+  "CUST-S02",
+  "CUST-S03",
+  "CUST-CHROME-01",
+  "CUST-CHROME-02",
+  "CUST-CHROME-03",
+  "CUST-LINK-01",
+  "CUST-LINK-02",
+  "CUST-VERIFY-01",
+];
 
 const SIBLINGS = [
   "scripts/verify-cust-s01-roster-density-filter.mjs",
@@ -31,6 +42,9 @@ function read(rel) {
 export function collectProblems(overrides = {}) {
   const manifest = overrides.manifest ?? read("apps/frontend/src/routes/manifest.tsx");
   const routes = overrides.routes ?? read("apps/backend/src/mdata/customers.routes.ts");
+  const completion = JSON.parse(
+    overrides.completion ?? read("docs/module-completion/customers.json"),
+  );
   const spawnSiblings = overrides.spawnSiblings !== false;
   const problems = [];
 
@@ -45,6 +59,15 @@ export function collectProblems(overrides = {}) {
   }
   if (!/USMCA/.test(routes)) {
     problems.push("customers.routes must document USMCA entity-scope (operating_company_id)");
+  }
+  if (completion.complete !== true || completion.progress !== "10 of 10") {
+    problems.push("customers module must remain complete at 10 of 10");
+  }
+  for (const id of PROD_VERIFIED_IDS) {
+    const item = completion.items?.find((candidate) => candidate.id === id);
+    if (!item || item.status !== "PASS" || item.prod_verified !== true) {
+      problems.push(`${id} must be PASS with prod_verified=true`);
+    }
   }
 
   if (spawnSiblings) {
@@ -80,6 +103,18 @@ if (IS_MAIN && process.argv.includes("--selftest")) {
     process.exit(1);
   }
 
+  const completion = read("docs/module-completion/customers.json");
+  const brokenCompletion = collectProblems({
+    manifest: read("apps/frontend/src/routes/manifest.tsx"),
+    routes: read("apps/backend/src/mdata/customers.routes.ts"),
+    completion: completion.replace('"prod_verified": true', '"prod_verified": false'),
+    spawnSiblings: false,
+  });
+  if (!brokenCompletion.some((p) => /prod_verified=true/.test(p))) {
+    console.error(`${LABEL} --selftest FAIL: planted production-verification break not caught`);
+    process.exit(1);
+  }
+
   for (const script of SIBLINGS) {
     const r = spawnSync(process.execPath, [path.join(ROOT, script), "--selftest"], {
       cwd: ROOT,
@@ -103,6 +138,6 @@ if (IS_MAIN) {
     process.exit(1);
   }
   console.log(
-    `${LABEL} PASS — Customers VERIFY-1..8 surfaces locked (9 of 9 complete; LINK-01 honest line-empty; USMCA lucia active=1)`,
+    `${LABEL} PASS — Customers 10/10 locked; USMCA lucia active=9, invoices=31, invoice_lines=30, COI=0`,
   );
 }
