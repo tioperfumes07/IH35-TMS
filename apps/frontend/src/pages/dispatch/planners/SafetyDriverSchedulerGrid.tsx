@@ -5,6 +5,8 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { driverSchedulerOfficeApi } from "../../../api/driver-scheduler";
+import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
+import { userFacingApiError } from "../../../lib/api-error-message";
 import type { PlannerRange } from "./planner-range";
 import { listPlannerDays } from "./planner-range";
 
@@ -41,8 +43,17 @@ export function SafetyDriverSchedulerGrid({ operatingCompanyId, range, testId = 
   }, [query.data?.leave_day_cells]);
 
   if (query.isLoading) return <div className="text-sm text-gray-500">Loading grid…</div>;
-  if (query.isError) return <div className="text-sm text-red-700">Failed to load scheduler grid.</div>;
+  if (query.isError) {
+    return (
+      <ListErrorBanner
+        message={userFacingApiError(query.error, "Could not load driver scheduler grid")}
+        onRetry={() => void query.refetch()}
+      />
+    );
+  }
   if (!query.data) return null;
+
+  const drivers = query.data.drivers ?? [];
 
   return (
     <div data-testid={testId} className="space-y-2">
@@ -60,7 +71,19 @@ export function SafetyDriverSchedulerGrid({ operatingCompanyId, range, testId = 
             </tr>
           </thead>
           <tbody>
-            {(query.data.drivers ?? []).map((dr) => {
+            {drivers.length === 0 ? (
+              <tr>
+                <td
+                  colSpan={2 + days.length}
+                  data-testid="dispatch-driver-planner-honest-empty"
+                  className="px-3 py-4 text-center text-sm text-gray-500"
+                >
+                  No drivers in this company for the selected range. Add drivers under Drivers / Lists — leave cells
+                  appear here once scheduler leave rows exist for those drivers.
+                </td>
+              </tr>
+            ) : null}
+            {drivers.map((dr) => {
               const driverId = String(dr.driver_id);
               const name = String(dr.driver_name ?? "");
               const unit = dr.unit_number ? String(dr.unit_number) : "—";

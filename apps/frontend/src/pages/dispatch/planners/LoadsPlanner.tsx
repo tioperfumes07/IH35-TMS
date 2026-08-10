@@ -2,7 +2,9 @@ import { useMemo, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { getDispatchPlannerWeek, type PlannerLoadEvent } from "../../../api/dispatch";
+import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
+import { userFacingApiError } from "../../../lib/api-error-message";
 import { addDaysIso } from "./planner-range";
 import { usePlannerRange } from "./PlannerRangeContext";
 
@@ -68,10 +70,26 @@ export function LoadsPlanner() {
     navigate(`/dispatch/loads/${encodeURIComponent(loadId)}`);
   };
 
+  if (!operatingCompanyId) {
+    return (
+      <div
+        data-testid="dispatch-loads-planner-need-company"
+        className="rounded-sm border bg-white p-4 text-sm text-slate-600"
+      >
+        Select an operating company to load the loads planner.
+      </div>
+    );
+  }
+
   return (
     <div data-testid="dispatch-loads-planner-page" className="space-y-2">
       {loadsQuery.isLoading ? <div className="text-sm text-gray-500">Loading loads timeline…</div> : null}
-      {loadsQuery.isError ? <div className="text-sm text-red-700">Failed to load loads planner.</div> : null}
+      {loadsQuery.isError ? (
+        <ListErrorBanner
+          message={userFacingApiError(loadsQuery.error, "Could not load loads planner")}
+          onRetry={() => void loadsQuery.refetch()}
+        />
+      ) : null}
 
       {!loadsQuery.isLoading && !loadsQuery.isError ? (
           <div className="max-w-[calc(100vw-48px)] overflow-x-auto rounded-sm border border-gray-200 bg-white">
@@ -90,8 +108,13 @@ export function LoadsPlanner() {
             <tbody>
               {rows.length === 0 ? (
                 <tr>
-                  <td colSpan={2 + days.length} className="px-3 py-4 text-center text-sm text-gray-500">
-                    No loads in this range.
+                  <td
+                    colSpan={2 + days.length}
+                    data-testid="dispatch-loads-planner-honest-empty"
+                    className="px-3 py-4 text-center text-sm text-gray-500"
+                  >
+                    No loads with a start_at in this range for this company. Book or schedule loads under Dispatch —
+                    bars appear here once planner week feed returns load events.
                   </td>
                 </tr>
               ) : (
