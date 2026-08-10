@@ -13,6 +13,7 @@ import { getCoaAccounts } from "../../../api/banking";
 import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
 import { Button } from "../../../components/Button";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { CollapsedListFilters } from "../../../components/table";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { useUrlSort } from "../../../hooks/useUrlSort";
@@ -182,7 +183,10 @@ export function ItemsListPage() {
       {!companyId ? (
         <div className="rounded-sm border border-gray-200 bg-white px-3 py-6 text-sm text-slate-600">Select a company to view products &amp; services.</div>
       ) : query.isError ? (
-        <div className="rounded-sm border border-gray-200 bg-white px-3 py-6 text-sm text-red-600">Failed to load products &amp; services.</div>
+        <ListErrorBanner
+          message="Failed to load products & services."
+          onRetry={() => void query.refetch()}
+        />
       ) : groupByCategory ? (
         <div className="space-y-3">
           <div>{filterBar}</div>

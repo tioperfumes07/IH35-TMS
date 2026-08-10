@@ -74,6 +74,12 @@ export function itemsListUrlSortErrors({ hookSrc, pageSrc }) {
   }
   if (!/from ["'].*useUrlSort["']/.test(pageSrc)) failures.push(`${PAGE_FILE} — must import useUrlSort`);
   if (!/useUrlSort\s*\(/.test(pageSrc)) failures.push(`${PAGE_FILE} — must call useUrlSort()`);
+  if (!/query\.isError\s*\?\s*\(\s*<ListErrorBanner/.test(pageSrc)) {
+    failures.push(`${PAGE_FILE} — query failure must render ListErrorBanner`);
+  }
+  if (!/onRetry=\{\(\) => void query\.refetch\(\)\}/.test(pageSrc)) {
+    failures.push(`${PAGE_FILE} — ListErrorBanner must retry the items query`);
+  }
   const sortedTables = countParityTablesWithControlledSort(pageSrc);
   // Grouped + flat list modes each render a ParityTable; both must be URL-controlled.
   if (sortedTables < 2) {
@@ -124,10 +130,16 @@ function selftest() {
     { key: "status", label: "Status", sortable: true }
     <ParityTable sortKey={sortKey} sortDirection={sortDirection} onSortChange={onSortChange} />
     <ParityTable sortKey={sortKey} sortDirection={sortDirection} onSortChange={onSortChange} />
+    {query.isError ? (<ListErrorBanner onRetry={() => void query.refetch()} />) : null}
   `;
   const good = { hookSrc: goodHook, pageSrc: goodPage };
   const planted = [
     ["no useUrlSort", { ...good, pageSrc: goodPage.replace("useUrlSort()", "noop()") }, "must call useUrlSort()"],
+    [
+      "missing list error retry",
+      { ...good, pageSrc: goodPage.replace("query.refetch()", "noop()") },
+      "must retry the items query",
+    ],
     [
       "missing sortable Name",
       { ...good, pageSrc: goodPage.replace('"Name", sortable: true', '"Name"') },
