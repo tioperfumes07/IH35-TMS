@@ -67,6 +67,9 @@ function main() {
   if (!page.includes("createMaintenancePmSchedule")) {
     failures.push("PmSchedulePage must call createMaintenancePmSchedule");
   }
+  if (!/listQ\.isError[\s\S]*?<ListErrorState[\s\S]*?listQ\.refetch\(\)/.test(page)) {
+    failures.push("PmSchedulePage must expose a retryable list failure before empty copy");
+  }
   if (!/setFormError\(userFacingApiError\(err,\s*"Failed to create PM schedule"\)\)/.test(page)) {
     failures.push("PmSchedulePage create failures must use userFacingApiError instead of raw error.message");
   }
