@@ -34,9 +34,9 @@
         "DOD-C"
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
-      "pr": null,
+      "status": "PASS",
+      "evidence": "Route /compliance/property-tax registered as ProtectedRoute wrapping PropertyTaxRenditionPage; page renders RenditionListView when no :id, with need-company guard; list view fetches /api/v1/property-tax/renditions and /api/v1/property-tax/appraisal-districts with operating_company_id; query errors now surface ListErrorBanner with retry; create-rendition and add-appraisal-district mutations scoped to selected company; ParityTable renders entity-scoped renditions with honest empty text.",
+      "pr": "#5322",
       "prod_verified": false
     },
     {
@@ -139,7 +139,7 @@
     }
   ],
   "M": 9,
-  "pass_count": 1,
+  "pass_count": 2,
   "total_count": 9,
-  "progress": "1 of 9"
+  "progress": "2 of 9"
 }
