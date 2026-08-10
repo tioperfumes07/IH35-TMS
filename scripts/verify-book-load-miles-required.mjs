@@ -39,6 +39,21 @@ export function run() {
     "BookLoadModalV4 must render MilesStrip with practicalRequired and explain the rule",
     errors
   );
+  assert(
+    strip.includes("shortestRequired?: boolean") && strip.includes("shortestRequired = false,") && strip.includes("Shortest{shortestRequired ? \" *\" : \"\"}"),
+    "MilesStrip must support a shortestRequired prop and show an asterisk",
+    errors
+  );
+  assert(
+    strip.includes("required={shortestRequired}") && strip.includes("border-slate-400") && strip.includes("text-slate-900"),
+    "MilesStrip shortest input must use required styling when required",
+    errors
+  );
+  assert(
+    modal.includes("shortestRequired={Boolean(assignedPrimaryDriverId)}") && modal.includes("Enter shortest miles before booking with a driver"),
+    "BookLoadModalV4 must render MilesStrip with shortestRequired tied to seated driver and validate shortest miles > 0",
+    errors
+  );
 
   return errors;
 }
@@ -55,6 +70,9 @@ function selftest() {
     const planted = run();
     if (!planted.some((e) => e.includes("practical miles"))) {
       throw new Error("planted practical miles validation removal not detected");
+    }
+    if (!planted.some((e) => e.includes("shortestRequired") || e.includes("shortest miles"))) {
+      throw new Error("planted shortest miles validation removal not detected");
     }
     console.log(`[verify-book-load-miles-required] SELFTEST PASS (${planted.length} planted failures detected)`);
   } finally {
