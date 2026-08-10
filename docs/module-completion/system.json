@@ -18,9 +18,9 @@
         "DOD-B"
       ],
       "spec": "SystemModulePage · program-system-help SYSTEM section",
-      "status": "OPEN",
-      "evidence": "scaffold — auditor PASS: 17 unresolved recon alerts, QBO CONNECTED pull-only honest",
-      "pr": null,
+      "status": "PASS",
+      "evidence": "SystemModulePage.tsx mounts overview/qbo-recon/qbo-sync/program/software/claude-coder tabs and renders live QBO reconciliation (getQboReconciliation) + sync status (getQboSyncHealth), including unresolved alerts and connection pills. Guard: scripts/verify-system-module-surfaces-s01-s04.mjs selftests.",
+      "pr": "#5343",
       "prod_verified": false
     },
     {
@@ -31,9 +31,9 @@
         "VERIFY-6"
       ],
       "spec": "System health DEGRADED when background_jobs.stale DOWN",
-      "status": "OPEN",
-      "evidence": "scaffold — auditor PASS honesty: DEGRADED due to background_jobs.stale DOWN Aug 1",
-      "pr": null,
+      "status": "PASS",
+      "evidence": "Software/Build card fetches live /api/v1/healthz via fetchHealth, displays DEGRADED when ok=false, and lists individual service checks with OK/DOWN pills. Guard: scripts/verify-system-module-surfaces-s01-s04.mjs selftests.",
+      "pr": "#5343",
       "prod_verified": false
     },
     {
@@ -43,9 +43,9 @@
         "DOD-C"
       ],
       "spec": "System page Program Tracker subsection",
-      "status": "OPEN",
-      "evidence": "scaffold — auditor PASS: 1029/497/266 consistent with Program module",
-      "pr": null,
+      "status": "PASS",
+      "evidence": "Program Tracker card fetches getProgramTracker, mirrors registered_total / view_counts, and links to the canonical /program board. Guard: scripts/verify-system-module-surfaces-s01-s04.mjs selftests.",
+      "pr": "#5343",
       "prod_verified": false
     },
     {
@@ -56,9 +56,9 @@
         "VERIFY-1"
       ],
       "spec": "Health & Deploys detail panel",
-      "status": "OPEN",
-      "evidence": "scaffold — auditor: postgres/redis OK; background_jobs.stale DOWN named",
-      "pr": null,
+      "status": "PASS",
+      "evidence": "Health & Deploys / Service checks drill-in maps over health.data.checks and renders each check name, tier, and OK/DOWN status. Guard: scripts/verify-system-module-surfaces-s01-s04.mjs selftests.",
+      "pr": "#5343",
       "prod_verified": false
     },
     {
@@ -93,7 +93,7 @@
       "prod_verified": false
     }
   ],
-  "pass_count": 1,
+  "pass_count": 5,
   "total_count": 6,
-  "progress": "1 of 6"
+  "progress": "5 of 6"
 }
