@@ -141,6 +141,7 @@ describe("DriversPage list status tabs", () => {
       drivers: [
         makeDriver({ id: "1", first_name: "Ann", last_name: "ActiveOnly", status: "Active" }),
         makeDriver({ id: "2", first_name: "Ike", last_name: "InactiveOnly", status: "Inactive" }),
+        makeDriver({ id: "3", first_name: "Pete", last_name: "ProbationOnly", status: "Probation" }),
       ],
     });
   });
@@ -153,11 +154,21 @@ describe("DriversPage list status tabs", () => {
     expect(screen.queryByText(/Ike InactiveOnly/)).toBeNull();
   });
 
-  it("?status=all shows every row (active + inactive)", async () => {
+  it("?status=all shows every row (active + inactive + probation)", async () => {
     renderDriversAt("/drivers?status=all");
     expect(await screen.findByText(/Ann ActiveOnly/)).toBeInTheDocument();
     expect(screen.getByText(/Ike InactiveOnly/)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /all \(2\)/i })).toBeInTheDocument();
+    expect(screen.getByText(/Pete ProbationOnly/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /all \(3\)/i })).toBeInTheDocument();
+  });
+
+  it("?status=probation shows only probation drivers", async () => {
+    renderDriversAt("/drivers?status=probation");
+    await waitFor(() => expect(listDriversMock).toHaveBeenCalledWith(expect.objectContaining({ status: "All" })));
+    expect(screen.queryByText(/Ann ActiveOnly/)).toBeNull();
+    expect(screen.queryByText(/Ike InactiveOnly/)).toBeNull();
+    expect(screen.getByText(/Pete ProbationOnly/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^probation \(1\)$/i })).toBeInTheDocument();
   });
 
   it("clicking Active from All filters to active and clears the status param (active is the default)", async () => {

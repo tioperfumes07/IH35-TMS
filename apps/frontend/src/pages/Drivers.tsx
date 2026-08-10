@@ -91,6 +91,7 @@ function DriversCashAdvanceRequestsLink() {
 function driverMatchesListSegment(status: string, segment: DriversListStatusId): boolean {
   if (segment === "all") return true;
   if (segment === "active") return status === "Active";
+  if (segment === "probation") return status === "Probation";
   if (segment === "inactive") return status === "Inactive";
   if (segment === "on_leave") return status === "OnLeave";
   if (segment === "terminated") return status === "Terminated";
@@ -343,6 +344,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
     return {
       all: allDrivers.length,
       active: allDrivers.filter((d) => d.status === "Active").length,
+      probation: allDrivers.filter((d) => d.status === "Probation").length,
       inactive: allDrivers.filter((d) => d.status === "Inactive").length,
       on_leave: allDrivers.filter((d) => d.status === "OnLeave").length,
       terminated: allDrivers.filter((d) => d.status === "Terminated").length,
@@ -681,13 +683,10 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
             onChange={(id) => {
               if ((DRIVER_LIST_STATUS_IDS as readonly string[]).includes(id)) setDriverListStatus(id as DriversListStatusId);
             }}
-            tabs={[
-              { id: "all", label: `All (${driverListTabCounts.all})` },
-              { id: "active", label: `Active (${driverListTabCounts.active})` },
-              { id: "inactive", label: `Inactive (${driverListTabCounts.inactive})` },
-              { id: "on_leave", label: `On Leave (${driverListTabCounts.on_leave})` },
-              { id: "terminated", label: `Terminated (${driverListTabCounts.terminated})` },
-            ]}
+            tabs={DRIVERS_LIST_STATUS_TABS.map((tab) => ({
+              id: tab.id,
+              label: `${tab.label} (${driverListTabCounts[tab.id] ?? 0})`,
+            }))}
           />
           <p className="text-[12px] text-slate-600 px-1">
             Active = load or driving activity in the last 30 days (or hired within 30 days). All others stay Inactive; use Reactivate to return a driver to Active.

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Block A24-2: Drivers module count + nav integrity (canonical 9 subtabs / 5 list filters / 7 KPIs).
+ * Block A24-2: Drivers module count + nav integrity (canonical 9 subtabs / 6 list filters / 7 KPIs).
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -8,7 +8,7 @@ import process from "node:process";
 
 const ROOT = process.cwd();
 const EXPECTED_SUBNAV_COUNT = 9;
-const EXPECTED_LIST_STATUS_COUNT = 5;
+const EXPECTED_LIST_STATUS_COUNT = 6;
 const EXPECTED_KPI_COUNT = 7;
 const EXPECTED_MODULE_NAV_COUNT = 2;
 
@@ -52,7 +52,7 @@ function main() {
     failures.push(`DRIVERS_SUBNAV must have ${EXPECTED_SUBNAV_COUNT} entries (found ${subnavCount})`);
   }
   if (!tabsConfig.includes(`DRIVERS_CANONICAL_LIST_STATUS_TAB_COUNT = ${EXPECTED_LIST_STATUS_COUNT}`)) {
-    failures.push("DRIVERS_CANONICAL_LIST_STATUS_TAB_COUNT must be 5");
+    failures.push("DRIVERS_CANONICAL_LIST_STATUS_TAB_COUNT must be 6");
   }
   if (!tabsConfig.includes(`DRIVERS_CANONICAL_KPI_COUNT = ${EXPECTED_KPI_COUNT}`)) {
     failures.push("DRIVERS_CANONICAL_KPI_COUNT must be 7");

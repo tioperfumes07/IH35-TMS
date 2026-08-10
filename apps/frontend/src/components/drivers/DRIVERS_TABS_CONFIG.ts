@@ -17,6 +17,7 @@ export type DriversSubnavId = (typeof DRIVERS_SUBNAV)[number]["id"];
 export const DRIVERS_LIST_STATUS_TABS = [
   { id: "all", label: "All" },
   { id: "active", label: "Active" },
+  { id: "probation", label: "Probation" },
   { id: "inactive", label: "Inactive" },
   { id: "on_leave", label: "On Leave" },
   { id: "terminated", label: "Terminated" },
@@ -40,7 +41,7 @@ export const DRIVERS_KPI_STRIP = [
 
 /** Canonical inventory for count/nav integrity guards (Block A24-2). */
 export const DRIVERS_CANONICAL_SUBNAV_COUNT = 9;
-export const DRIVERS_CANONICAL_LIST_STATUS_TAB_COUNT = 5;
+export const DRIVERS_CANONICAL_LIST_STATUS_TAB_COUNT = 6;
 export const DRIVERS_CANONICAL_KPI_COUNT = 7;
 export const DRIVERS_CANONICAL_MODULE_NAV_COUNT = 2;
 
