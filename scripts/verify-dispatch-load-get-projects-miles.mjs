@@ -22,20 +22,36 @@ const TARGET = "apps/backend/src/dispatch/loads.routes.ts";
 
 function check(src) {
   const problems = [];
-  if (!/ml\.miles_shortest\s+AS\s+miles_shortest/.test(src)) {
-    problems.push(`${TARGET}: GET detail SQL must project ml.miles_shortest AS miles_shortest`);
-  }
-  if (!/ml\.miles_practical\s+AS\s+miles_practical/.test(src)) {
-    problems.push(`${TARGET}: GET detail SQL must project ml.miles_practical AS miles_practical`);
-  }
-  if (!/ml\.loaded_miles\s+AS\s+loaded_miles/.test(src)) {
-    problems.push(`${TARGET}: GET detail SQL must project ml.loaded_miles AS loaded_miles`);
-  }
-  // Must be the detail SELECT that joins ml (trip_type pattern), not a random miles mention.
+  // Detail GET (:id) — trip_type pattern
   if (!/ml\.trip_type\s+AS\s+trip_type[\s\S]{0,800}?ml\.miles_shortest\s+AS\s+miles_shortest/.test(src)) {
     problems.push(
-      `${TARGET}: miles_* projections must sit next to ml.trip_type on the GET detail SELECT (ml join path)`,
+      `${TARGET}: GET detail must project ml.miles_shortest next to ml.trip_type (ml join path)`,
     );
+  }
+  if (!/ml\.trip_type\s+AS\s+trip_type[\s\S]{0,900}?ml\.miles_practical\s+AS\s+miles_practical/.test(src)) {
+    problems.push(`${TARGET}: GET detail must project ml.miles_practical AS miles_practical`);
+  }
+  if (!/ml\.trip_type\s+AS\s+trip_type[\s\S]{0,1000}?ml\.loaded_miles\s+AS\s+loaded_miles/.test(src)) {
+    problems.push(`${TARGET}: GET detail must project ml.loaded_miles AS loaded_miles`);
+  }
+  // List GET — board SELECT uses l.*; must also join ml + project miles
+  if (!/invoice_amount_open_cents[\s\S]{0,200}?ml\.miles_shortest\s+AS\s+miles_shortest/.test(src)) {
+    problems.push(
+      `${TARGET}: LIST GET must project ml.miles_shortest after invoice enrichment (view has no mile cols)`,
+    );
+  }
+  if (
+    !/LEFT JOIN mdata\.loads ml ON ml\.id = l\.id[\s\S]{0,120}?ml\.operating_company_id = l\.operating_company_id[\s\S]{0,400}?invoice_amount_open_cents/.test(
+      src,
+    ) &&
+    !/invoice_amount_open_cents[\s\S]{0,400}?LEFT JOIN mdata\.loads ml ON ml\.id = l\.id/.test(src)
+  ) {
+    // Accept either join-before or join-after invoice lateral; require the list join exists near list SELECT.
+    if ((src.match(/LEFT JOIN mdata\.loads ml ON ml\.id = l\.id/g) || []).length < 2) {
+      problems.push(
+        `${TARGET}: LIST GET must LEFT JOIN mdata.loads ml (in addition to detail GET join)`,
+      );
+    }
   }
   return problems;
 }
@@ -46,9 +62,9 @@ function main() {
     const dir = mkdtempSync(path.join(tmpdir(), "miles-get-"));
     try {
       const broken = src
-        .replace(/ml\.miles_shortest\s+AS\s+miles_shortest,\s*/g, "")
-        .replace(/ml\.miles_practical\s+AS\s+miles_practical,\s*/g, "")
-        .replace(/ml\.loaded_miles\s+AS\s+loaded_miles,\s*/g, "");
+        .replace(/ml\.miles_shortest\s+AS\s+miles_shortest,?\s*/g, "")
+        .replace(/ml\.miles_practical\s+AS\s+miles_practical,?\s*/g, "")
+        .replace(/ml\.loaded_miles\s+AS\s+loaded_miles,?\s*/g, "");
       const problems = check(broken);
       if (problems.length === 0) {
         console.error(`${LABEL}: --selftest FAIL — mutation not detected`);
@@ -67,7 +83,7 @@ function main() {
     for (const p of problems) console.error(`  - ${p}`);
     process.exit(1);
   }
-  console.log(`${LABEL}: PASS — GET detail projects miles_shortest/practical/loaded_miles via ml`);
+  console.log(`${LABEL}: PASS — GET list+detail project miles_shortest/practical/loaded_miles via ml`);
   process.exit(0);
 }
 

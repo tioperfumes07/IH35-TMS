@@ -605,7 +605,11 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
             -- already read in this file (credit-limit block), so grants/RLS are established here.
             inv.invoice_display_id,
             inv.invoice_status,
-            inv.invoice_amount_open_cents
+            inv.invoice_amount_open_cents,
+            -- DISPATCH-MILES-LIST: view has no mile cols; project from mdata.loads (same as GET :id).
+            ml.miles_shortest AS miles_shortest,
+            ml.miles_practical AS miles_practical,
+            ml.loaded_miles AS loaded_miles
           FROM views.dispatch_load_with_driver_status l
           JOIN mdata.customers c ON c.id = l.customer_id
                                 AND c.operating_company_id = l.operating_company_id
@@ -628,6 +632,8 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
                                    AND d.operating_company_id = l.operating_company_id
           LEFT JOIN views.units_with_dispatch_status uds ON uds.id = l.assigned_unit_id
           LEFT JOIN views.drivers_with_hos_status dhs ON dhs.id = l.assigned_primary_driver_id
+          LEFT JOIN mdata.loads ml ON ml.id = l.id
+                                  AND ml.operating_company_id = l.operating_company_id
           LEFT JOIN LATERAL (
             SELECT city, state, scheduled_arrival_at
             FROM mdata.load_stops
