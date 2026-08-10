@@ -15,18 +15,18 @@ async function hasActiveCompanyMembership(
   const access = await client.query(
     `
       SELECT 1
-      FROM org.user_company_access uca
-      JOIN org.companies c
-        ON c.id = uca.company_id
-       -- NOTE: do NOT gate on c.is_active here. is_active is a UI-visibility flag
-       -- ("not selectable in UI even if user has access" — 0013_org_companies.sql),
-       -- NOT an authorization signal. Pre-launch entities (USMCA, is_active=false
-       -- until July 2026) are TMS-authoritative and must remain reachable via the API
-       -- for setup/sync. Only true deactivation (deactivated_at) revokes access.
-       AND c.deactivated_at IS NULL
-      WHERE uca.user_id = $1::uuid
-        AND uca.company_id = $2::uuid
-        AND uca.deactivated_at IS NULL
+      FROM org.companies c
+      WHERE c.id = $2::uuid
+        -- NOTE: do NOT gate on c.is_active here. is_active is a UI-visibility flag
+        -- ("not selectable in UI even if user has access" — 0013_org_companies.sql),
+        -- NOT an authorization signal. Pre-launch entities (USMCA, is_active=false
+        -- until July 2026) are TMS-authoritative and must remain reachable via the API
+        -- for setup/sync. Only true deactivation (deactivated_at) revokes access.
+        AND c.deactivated_at IS NULL
+        -- DISP-API-RLS / SETL-UI-API — must match org.user_accessible_company_ids(), NOT a
+        -- raw org.user_company_access probe. Owner role elevation returns every active
+        -- company even when uca rows are absent (live: jpm@ / laura.m@ Owner, uca_count=0).
+        AND c.id IN (SELECT org.user_accessible_company_ids())
       LIMIT 1
     `,
     [userId, operatingCompanyId]

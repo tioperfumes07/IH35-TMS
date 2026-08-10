@@ -88,6 +88,9 @@ async function hasSettlementSchema(client: any) {
 }
 
 async function recomputeDebtSync(client: any, driverId: string) {
+  // SAVEPOINT: missing/broken recompute_driver_debt must NOT abort the outer withCompany
+  // transaction (Postgres 25P02). JS try/catch alone cannot recover an aborted txn.
+  await client.query("SAVEPOINT recompute_debt_sync");
   try {
     const res = await client.query(
       `
@@ -96,8 +99,14 @@ async function recomputeDebtSync(client: any, driverId: string) {
       `,
       [driverId]
     );
+    await client.query("RELEASE SAVEPOINT recompute_debt_sync");
     return res.rows[0] ?? null;
   } catch {
+    try {
+      await client.query("ROLLBACK TO SAVEPOINT recompute_debt_sync");
+    } catch {
+      /* ignore nested rollback failures */
+    }
     return null;
   }
 }

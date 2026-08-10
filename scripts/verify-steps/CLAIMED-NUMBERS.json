@@ -49,6 +49,11 @@
     "purpose": "verify-usmca-compliance-neon-pv",
     "claimed_at": "2026-08-10"
   },
+  "2966": {
+    "claimed_by": "cursor",
+    "purpose": "verify-usmca-app-path-list-apis",
+    "claimed_at": "2026-08-09"
+  },
   "claimed": {
     "10": "10-backend-vitest.mjs",
     "11": "11-frontend-vitest.mjs",
@@ -1476,6 +1481,7 @@
     },
     "2962": "2962-verify-usmca-fleet-fuel-tasks-neon-pv.mjs",
     "2964": "2964-verify-usmca-compliance-neon-pv.mjs",
+    "2966": "2966-verify-usmca-app-path-list-apis.mjs",
     "01": "01-ensure-database-url.mjs",
     "02": "02-db-reset.mjs",
     "03": "03-build-backend-emit.mjs",
