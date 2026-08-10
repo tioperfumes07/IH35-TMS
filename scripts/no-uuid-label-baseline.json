@@ -1,7 +1,5 @@
 {
   "note": "CLS-UUID-LABEL ratchet — may only SHRINK. Regenerate after draining a file.",
-  "offenders": [
-    "apps/frontend/src/pages/safety/tabs/SafetyHomeTab.tsx|row.subject_unit_id"
-  ],
+  "offenders": [],
   "raw_offenders": []
 }

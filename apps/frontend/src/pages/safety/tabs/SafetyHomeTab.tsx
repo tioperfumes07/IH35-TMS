@@ -153,10 +153,11 @@ export function SafetyHomeTab() {
     const accidents = (accidentsQuery.data?.accidents ?? []) as Array<Record<string, unknown>>;
     // safety.accident_reports has no status column (Neon prod verified). Filter by accident_at
     // recent window so the panel shows recent accidents, not a phantom open-status triage.
-    const accidentRecords: DrillRecord[] = accidents
-      .filter((row) => isRecentAccident(row.accident_at) && (row.driver_id || row.unit_id))
-      .slice(0, 5)
-      .map((row) => {
+    const recentAccidents = accidents.filter(
+      (row) => isRecentAccident(row.accident_at) && (row.driver_id || row.unit_id)
+    );
+    const topAccidents = recentAccidents.slice(0, 5);
+    const accidentRecords: DrillRecord[] = topAccidents.map((row) => {
         const id = String(row.id ?? "");
         return {
           key: `accident-${id}`,
@@ -171,20 +172,17 @@ export function SafetyHomeTab() {
       });
 
     const events = (openEventsQuery.data ?? []) as SafetyEventLogRow[];
-    const eventRecords: DrillRecord[] = events
-      .filter((row) => row.subject_driver_id || row.subject_unit_id)
-      .slice(0, 5)
-      .map((row) => ({
-        key: `event-${row.id}`,
-        when: formatDateUS(row.occurred_at),
-        label: row.title || `${row.event_type} (${row.severity})`,
-        driverId: row.subject_driver_id ?? null,
-        unitId: row.subject_unit_id ?? null,
-        // C-13 / LST-F106: SafetyEventsPage honors ?event_id= (opens detail panel).
-        detailTo: row.id
-          ? `/safety/safety-events?event_id=${encodeURIComponent(row.id)}`
-          : null,
-      }));
+    const openEvents = events.filter((row) => row.subject_driver_id || row.subject_unit_id);
+    const topEvents = openEvents.slice(0, 5);
+    const eventRecords: DrillRecord[] = topEvents.map((row) => ({
+      key: `event-${row.id}`,
+      when: formatDateUS(row.occurred_at),
+      label: row.title || `${row.event_type} (${row.severity})`,
+      driverId: row.subject_driver_id ?? null,
+      unitId: row.subject_unit_id ?? null,
+      // C-13 / LST-F106: SafetyEventsPage honors ?event_id= (opens detail panel).
+      detailTo: row.id ? `/safety/safety-events?event_id=${encodeURIComponent(row.id)}` : null,
+    }));
 
     return [...eventRecords, ...accidentRecords];
   }, [accidentsQuery.data?.accidents, openEventsQuery.data]);
