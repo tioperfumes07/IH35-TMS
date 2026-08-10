@@ -73,8 +73,8 @@
         "DOD-C"
       ],
       "spec": "Route manifest /factoring/submit",
-      "status": "OPEN",
-      "evidence": "scaffold \u2014 not proven",
+      "status": "PASS",
+      "evidence": "SubmissionQueue need-company + ListErrorBanner + honest empty; verify-fact-s02-submit-surface.mjs",
       "pr": null,
       "prod_verified": false
     },
@@ -150,9 +150,9 @@
       "prod_verified": false
     }
   ],
-  "pass_count": 2,
+  "pass_count": 3,
   "total_count": 10,
-  "progress": "2 of 10",
+  "progress": "3 of 10",
   "live_scenario_probe": {
     "source": "scripts/scoreboard-from-live.mjs (live prod probes, TMS-native only)",
     "pass_count": 0,
