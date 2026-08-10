@@ -11,6 +11,7 @@ import {
 } from "../../api/safety";
 import { IntegrityAlertDetailDrawer } from "./components/IntegrityAlertDetailDrawer";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
 type Props = {
@@ -23,7 +24,7 @@ type IntegrityAlertRuleRow = Record<string, unknown>;
 type PageTab = "inbox" | "rules";
 const INTEGRITY_TAB_IDS = new Set<string>(["inbox", "rules"]);
 
-export function parseIntegrityAlertsTab(raw: string | null): PageTab {
+function parseIntegrityAlertsTab(raw: string | null): PageTab {
   if (raw && INTEGRITY_TAB_IDS.has(raw)) return raw as PageTab;
   return "inbox";
 }
@@ -197,6 +198,13 @@ export function IntegrityAlertsPage({ operatingCompanyId }: Props) {
           </button>
         )}
       </div>
+
+      {pageTab === "inbox" && alertsQuery.isError ? (
+        <ListErrorBanner message="Integrity alerts could not be loaded." onRetry={() => void alertsQuery.refetch()} />
+      ) : null}
+      {pageTab === "rules" && rulesQuery.isError ? (
+        <ListErrorBanner message="Integrity alert rules could not be loaded." onRetry={() => void rulesQuery.refetch()} />
+      ) : null}
 
       {pageTab === "inbox" ? (
         <ParityTable<IntegrityAlertRow>
