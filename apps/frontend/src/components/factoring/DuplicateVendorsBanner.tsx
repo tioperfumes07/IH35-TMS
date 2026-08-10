@@ -44,16 +44,20 @@ export function DuplicateVendorsBanner({ companyId }: DuplicateVendorsBannerProp
     staleTime: 60_000,
   });
 
+  const isSelfPair = (p: { from_vendor_id: string; from_vendor_name: string; to_vendor_id: string; to_vendor_name: string }) =>
+    p.from_vendor_id === p.to_vendor_id ||
+    p.from_vendor_name.trim().toLowerCase() === p.to_vendor_name.trim().toLowerCase();
+
   const topPairs = useMemo(
     () =>
       (scanQuery.data?.pairs ?? [])
-        .filter((p) => p.from_vendor_id !== p.to_vendor_id)
+        .filter((p) => !isSelfPair(p))
         .slice(0, 3),
     [scanQuery.data?.pairs]
   );
 
   const visiblePairCount = useMemo(
-    () => (scanQuery.data?.pairs ?? []).filter((p) => p.from_vendor_id !== p.to_vendor_id).length,
+    () => (scanQuery.data?.pairs ?? []).filter((p) => !isSelfPair(p)).length,
     [scanQuery.data?.pairs]
   );
 

@@ -19,7 +19,7 @@
         "DOD-B",
         "VERIFY-6"
       ],
-      "spec": "FactoringHome summary \u00b7 Neon factoring.factor",
+      "spec": "FactoringHome summary · Neon factoring.factor",
       "status": "PASS",
       "evidence": "getFactoringSummary KPI row + need-company + ListErrorBanner; guard verify-fact-s01-home-surface.mjs",
       "pr": null,
@@ -32,7 +32,7 @@
         "DOD-C",
         "VERIFY-4"
       ],
-      "spec": "DUAL-FACTOR-HOME-NOTES \u00b7 CLS-DUAL-PATH",
+      "spec": "DUAL-FACTOR-HOME-NOTES · CLS-DUAL-PATH",
       "status": "PASS",
       "evidence": "listFactors/updateFactor + no vendor-notes; verify-factoring-home-canonical-factor-profile + verify-fact-s01-home-surface",
       "pr": null,
@@ -45,9 +45,9 @@
         "DOD-D",
         "VERIFY-2"
       ],
-      "spec": "DUAL-FACTOR-SUBMIT-NOTES \u00b7 SCHEMA-FINDINGS sibling sweep",
+      "spec": "DUAL-FACTOR-SUBMIT-NOTES · SCHEMA-FINDINGS sibling sweep",
       "status": "OPEN",
-      "evidence": "scaffold \u2014 FAIL retained from cascade sibling sweep",
+      "evidence": "scaffold — FAIL retained from cascade sibling sweep",
       "pr": null,
       "prod_verified": false
     },
@@ -60,7 +60,7 @@
       ],
       "spec": "DUAL-FACTOR-RESOLVE-MDATA",
       "status": "OPEN",
-      "evidence": "scaffold \u2014 FAIL: factoring.routes.ts:39-60 mdata path",
+      "evidence": "scaffold — FAIL: factoring.routes.ts:39-60 mdata path",
       "pr": null,
       "prod_verified": false
     },
@@ -86,7 +86,7 @@
         "DOD-C",
         "VERIFY-3"
       ],
-      "spec": "BatchWizard \u00b7 BatchDetail routes",
+      "spec": "BatchWizard · BatchDetail routes",
       "status": "PASS",
       "evidence": "BatchWizard need-company + ListErrorBanner + honest empty; BatchDetail company-gated; verify-fact-s03-batches-surface.mjs",
       "pr": null,
@@ -99,7 +99,7 @@
         "DOD-D",
         "VERIFY-6"
       ],
-      "spec": "ReserveDashboard \u00b7 FACT-kpi-vs-profile",
+      "spec": "ReserveDashboard · FACT-kpi-vs-profile",
       "status": "PASS",
       "evidence": "ReserveDashboard need-company + ListErrorBanner + honest empty; verify-fact-s04-reserves-surface.mjs; Rule 19 no CoA reserve mutations",
       "pr": null,
@@ -112,9 +112,9 @@
         "DOD-B"
       ],
       "spec": "factoring-deep-2026-08-01 secondary finding",
-      "status": "OPEN",
-      "evidence": "scaffold \u2014 live proof: Faro Factoring \u2194 Faro Factoring 100% similar false positive",
-      "pr": null,
+      "status": "PASS",
+      "evidence": "DuplicateVendorsBanner now excludes self-pairs: backend scan-duplicate-vendors.routes.ts excludes identical normalized vendor names (lower(a.vendor_name) <> lower(b.vendor_name)); frontend DuplicateVendorsBanner filters pairs where IDs or normalized names match; guard verify-fact-fix1-duplicate-vendors-banner updated with selftest.",
+      "pr": "#5336",
       "prod_verified": false
     },
     {
@@ -124,9 +124,9 @@
         "DOD-B",
         "VERIFY-6"
       ],
-      "spec": "UNIT-BANK-FACTOR-REGISTER \u00b7 CLS-UNIT-SCALE sibling",
+      "spec": "UNIT-BANK-FACTOR-REGISTER · CLS-UNIT-SCALE sibling",
       "status": "OPEN",
-      "evidence": "scaffold \u2014 FAIL: banking.routes.ts:308 advance_amount_cents without /100",
+      "evidence": "scaffold — FAIL: banking.routes.ts:308 advance_amount_cents without /100",
       "pr": null,
       "prod_verified": false
     },
@@ -145,14 +145,14 @@
       ],
       "spec": "EVERY-PR-AUDIT-CHECKLIST.md",
       "status": "OPEN",
-      "evidence": "scaffold \u2014 not proven",
+      "evidence": "scaffold — not proven",
       "pr": null,
       "prod_verified": false
     }
   ],
-  "pass_count": 5,
+  "pass_count": 6,
   "total_count": 10,
-  "progress": "5 of 10",
+  "progress": "6 of 10",
   "live_scenario_probe": {
     "source": "scripts/scoreboard-from-live.mjs (live prod probes, TMS-native only)",
     "pass_count": 0,

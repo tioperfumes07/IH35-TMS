@@ -68,6 +68,18 @@ export function run() {
     fail(`${HOME}: must mount DuplicateVendorsBanner`);
   }
 
+  // FACT-S05: self-pair exclusion — the scanner must not surface a vendor matched against itself.
+  // Root-cause fix is in the backend self-join; frontend also filters as defense in depth.
+  const backendExcludesSelfByName = /lower\(a\.vendor_name\)\s*<>\s*lower\(b\.vendor_name\)/.test(routesSrc);
+  const frontendExcludesSelfByName = /toLowerCase\(\)\s*!==?\s*.*toLowerCase\(\)/.test(bannerSrc) ||
+    /from_vendor_name.*toLowerCase\(\).*to_vendor_name.*toLowerCase\(\)/.test(bannerSrc);
+  if (!backendExcludesSelfByName) {
+    fail(`${ROUTES}: backend duplicate-vendor scan must exclude identical normalized vendor names (self-pairs)`);
+  }
+  if (!frontendExcludesSelfByName) {
+    fail(`${BANNER}: frontend DuplicateVendorsBanner must filter out identical normalized vendor names (self-pairs)`);
+  }
+
   return failures;
 }
 

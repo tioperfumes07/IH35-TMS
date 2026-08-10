@@ -47,6 +47,7 @@ export async function registerScanDuplicateVendorRoutes(app: FastifyInstance) {
             ON b.operating_company_id = a.operating_company_id
            AND a.id < b.id
            AND similarity(a.vendor_name, b.vendor_name) > 0.55
+           AND lower(a.vendor_name) <> lower(b.vendor_name)
           WHERE a.operating_company_id = $1
             AND a.deactivated_at IS NULL
             AND b.deactivated_at IS NULL
