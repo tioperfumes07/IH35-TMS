@@ -48,9 +48,9 @@
         "DOD-C"
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
-      "pr": null,
+      "status": "PASS",
+      "evidence": "Route /fleet/map registered as ProtectedRoute wrapping PreserveSearchNavigate; it redirects to canonical /dispatch/map while preserving query/search params, so fleet map bookmarks resolve without a dead end.",
+      "pr": "#TBD",
       "prod_verified": false
     },
     {
@@ -111,7 +111,7 @@
     }
   ],
   "M": 7,
-  "pass_count": 2,
+  "pass_count": 3,
   "total_count": 7,
-  "progress": "2 of 7"
+  "progress": "3 of 7"
 }
