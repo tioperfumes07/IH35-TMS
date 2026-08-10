@@ -13,6 +13,7 @@ import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+import { userFacingApiError } from "../../../lib/api-error-message";
 
 const NIL_UUID = "00000000-0000-0000-0000-000000000000";
 
@@ -76,8 +77,8 @@ export function PmSchedulePage() {
       setFormError(null);
       await qc.invalidateQueries({ queryKey: ["maintenance", "pm-schedule", companyId] });
     },
-    onError: (err: Error) => {
-      setFormError(err.message || "Failed to create PM schedule");
+    onError: (err: unknown) => {
+      setFormError(userFacingApiError(err, "Failed to create PM schedule"));
     },
   });
 
