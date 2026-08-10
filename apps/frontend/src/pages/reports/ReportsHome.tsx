@@ -83,13 +83,26 @@ export function ReportsHomePage() {
     return [...apiRows, ...extra];
   }, [frequentQuery.data]);
 
-  // RPT-2: never fabricate a compliance countdown while loading. Until the KPI resolves, the IFTA card
-  // renders "—" (no quarter, no 0d, no "TBD" that reads as due-today); real values appear once loaded.
+  // RPT-2 / RPT-S06: never fabricate counts while loading. Until KPI resolves, show "—" (not a fake 0
+  // that reads as “proven empty”). Real 0 is fine once the query succeeds.
   const ifta = kpiQuery.data?.ifta_status;
+  const kpiReady = kpiQuery.isSuccess && kpiQuery.data != null;
   const reportsKpis: ReportsKpi[] = [
-    { label: "Available reports", value: String(kpiQuery.data?.available_reports ?? 8), meta: "8 categories" },
-    { label: "Scheduled", value: String(kpiQuery.data?.scheduled ?? 0), meta: "auto-emailed" },
-    { label: "Run last 7 days", value: String(kpiQuery.data?.run_last_7d ?? 0), meta: "across all users" },
+    {
+      label: "Available reports",
+      value: kpiReady ? String(kpiQuery.data?.available_reports ?? 0) : "—",
+      meta: kpiReady ? "categories live" : "Loading…",
+    },
+    {
+      label: "Scheduled",
+      value: kpiReady ? String(kpiQuery.data?.scheduled ?? 0) : "—",
+      meta: kpiReady ? "auto-emailed" : "Loading…",
+    },
+    {
+      label: "Run last 7 days",
+      value: kpiReady ? String(kpiQuery.data?.run_last_7d ?? 0) : "—",
+      meta: kpiReady ? "across all users" : "Loading…",
+    },
     ifta
       ? { label: `IFTA ${ifta.quarter} due`, value: `${ifta.daysUntilDue}d`, meta: `${formatDateUS(ifta.dueAt)} — file before`, warn: true }
       : { label: "IFTA due", value: "—", meta: "Loading…", warn: false },
