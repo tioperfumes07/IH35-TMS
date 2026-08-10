@@ -278,6 +278,20 @@ function RenditionDetailView({ companyId, renditionId }: { companyId: string; re
     },
   });
 
+  if (detailQ.isError || assetsQ.isError) {
+    return (
+      <div className="space-y-4" data-testid="property-tax-detail">
+        <PageHeader backHref="/compliance/property-tax" breadcrumb={BREADCRUMB} title="Rendition" />
+        <ListErrorBanner
+          onRetry={() => {
+            void detailQ.refetch();
+            void assetsQ.refetch();
+          }}
+        />
+      </div>
+    );
+  }
+
   if (detailQ.isLoading) return <div className="p-4 text-sm text-slate-500">Loading…</div>;
   const detail = detailQ.data;
   if (!detail) return <div className="p-4 text-sm">Rendition not found.</div>;
