@@ -9,6 +9,7 @@ import { ListErrorState } from "../../components/ListErrorState";
 
 type RetentionRow = {
   driver_uuid: string;
+  driver_name?: string | null;
   retention_risk_score: number;
   retention_tier: string;
   contributing_factors: Record<string, number | null>;
@@ -51,7 +52,7 @@ export function RetentionDashboard() {
             <Link key={row.driver_uuid} to={`/drivers/${row.driver_uuid}`}>
               <AtRiskDriverCard
                 driverUuid={row.driver_uuid}
-                driverName={entityLabel(null, row.driver_uuid, "Driver")}
+                driverName={entityLabel(row.driver_name, row.driver_uuid, "Driver")}
                 operatingCompanyId={companyId}
                 riskScore={row.retention_risk_score}
                 tier={row.retention_tier}

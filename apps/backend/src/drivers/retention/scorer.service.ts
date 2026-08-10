@@ -97,17 +97,24 @@ export async function listRetentionScores(
 ) {
   const values: unknown[] = [operatingCompanyId];
   let sql = `
-    SELECT DISTINCT ON (driver_uuid)
-      driver_uuid::text, retention_risk_score::float8, retention_tier,
-      contributing_factors, computed_at::text
-    FROM drivers.retention_scores
-    WHERE operating_company_id = $1::uuid
+    SELECT DISTINCT ON (r.driver_uuid)
+      r.driver_uuid::text,
+      d.first_name || ' ' || d.last_name AS driver_name,
+      r.retention_risk_score::float8,
+      r.retention_tier,
+      r.contributing_factors,
+      r.computed_at::text
+    FROM drivers.retention_scores r
+    LEFT JOIN mdata.drivers d
+      ON d.id = r.driver_uuid
+     AND d.operating_company_id = r.operating_company_id
+    WHERE r.operating_company_id = $1::uuid
   `;
   if (tier) {
     values.push(tier);
-    sql += ` AND retention_tier = $${values.length}`;
+    sql += ` AND r.retention_tier = $${values.length}`;
   }
-  sql += ` ORDER BY driver_uuid, computed_at DESC`;
+  sql += ` ORDER BY r.driver_uuid, r.computed_at DESC`;
   const res = await client.query(sql, values);
   return res.rows;
 }

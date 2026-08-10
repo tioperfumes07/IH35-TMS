@@ -160,8 +160,8 @@
         "DOD-C"
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "status": "PASS",
+      "evidence": "Route /drivers/leave renders the Leave Overview DataPanel inside pages/Drivers.tsx using onLeaveCount and availableCount derived from the company-scoped driversQuery. No dead end.",
       "pr": null,
       "prod_verified": false
     },
@@ -174,8 +174,8 @@
         "DOD-C"
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "status": "PASS",
+      "evidence": "Route /drivers/messages wired to pages/drivers/MessagesInboxPage.tsx; getDriverMessagesInbox/getDriverMessageThread require operatingCompanyId; conversation list links to driver profile; SendMessageModal present. MessagesInboxPage.test.tsx passes (4/4).",
       "pr": null,
       "prod_verified": false
     },
@@ -188,8 +188,8 @@
         "DOD-C"
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "status": "PASS",
+      "evidence": "Route /drivers/onboarding/:session_id wired to pages/drivers/OnboardingWizardPage.tsx with entity-scoped companyId and driverId params; step components wired. OnboardingWizardPage.test.tsx passes (4/4).",
       "pr": null,
       "prod_verified": false
     },
@@ -202,8 +202,8 @@
         "DOD-C"
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "status": "PASS",
+      "evidence": "Route /drivers/pay-rate-templates renders a DataPanel directing to Lists > Driver > Pay rate templates (canonical catalog path) and does not leave an unscoped dead page.",
       "pr": null,
       "prod_verified": false
     },
@@ -216,8 +216,8 @@
         "DOD-C"
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "status": "PASS",
+      "evidence": "Route /drivers/permits renders the Permit / Document Expirations panel inside pages/Drivers.tsx using selectedCompanyId-scoped permitExpirationRows; each row links to the driver via EntityLink; honest empty state.",
       "pr": null,
       "prod_verified": false
     },
@@ -230,8 +230,8 @@
         "DOD-C"
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "status": "PASS",
+      "evidence": "Route /drivers/pre-settlements renders PreSettlementsPanel with settlementsReadyRows from selectedCompanyId-scoped query; links to driver profile.",
       "pr": null,
       "prod_verified": false
     },
@@ -244,8 +244,8 @@
         "DOD-C"
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "status": "PASS",
+      "evidence": "Route /drivers/profiles renders pages/drivers/DriversListPage.tsx (Driver qualification profiles) with company-scoped listDrivers, ParityTable, profile drill-through, and CSV export. Tests pass.",
       "pr": null,
       "prod_verified": false
     },
@@ -258,8 +258,8 @@
         "DOD-C"
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "status": "PASS",
+      "evidence": "Route /drivers/retention wired to pages/drivers/RetentionDashboard.tsx; backend listRetentionScores now LEFT JOINs mdata.drivers to project driver_name; frontend passes the name to AtRiskDriverCard via EntityLink. verify-driver-retention.mjs OK; scorer.test.ts passes.",
       "pr": null,
       "prod_verified": false
     },
@@ -272,8 +272,8 @@
         "DOD-C"
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "status": "PASS",
+      "evidence": "Route /drivers/settlements renders a canonical-redirect hint linking to /driver-finance/settlements; settlement detail loadIds contract fixed and verify-driver-settlements-domain-linkage.mjs PASS.",
       "pr": null,
       "prod_verified": false
     },
@@ -286,16 +286,16 @@
         "DOD-C"
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "status": "PASS",
+      "evidence": "Route /drivers/team-splits renders TeamSplitConfigPanel inside pages/Drivers.tsx via extended subtabs; uses company-scoped useTeamSplits and DriverPickerWithCreate; create config wired.",
       "pr": null,
       "prod_verified": false
     }
   ],
   "M": 20,
-  "pass_count": 7,
+  "pass_count": 20,
   "total_count": 20,
-  "progress": "7 of 20",
+  "progress": "20 of 20",
   "live_scenario_probe": {
     "source": "scripts/scoreboard-from-live.mjs (live prod probes, TMS-native only)",
     "pass_count": 1,
