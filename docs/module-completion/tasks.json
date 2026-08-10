@@ -1,6 +1,6 @@
 {
   "module": "tasks",
-  "title": "Tasks — acceptance checklist",
+  "title": "Tasks \u2014 acceptance checklist",
   "complete": true,
   "as_of": "2026-08-10",
   "live_sha": null,
@@ -9,7 +9,7 @@
     "apps/frontend/src/routes/manifest.tsx",
     "apps/frontend/src/components/layout/sidebar-config.ts"
   ],
-  "note": "BASELINE created 2026-07-29. Until now this module had NO acceptance list, so \"completely built\" had no definition and no honest percentage could be shown. Every item starts OPEN because none has been verified — this is a scope statement, not a claim of failure. M grows when new surfaces or defects appear (Rule 21).",
+  "note": "BASELINE created 2026-07-29. Until now this module had NO acceptance list, so \"completely built\" had no definition and no honest percentage could be shown. Every item starts OPEN because none has been verified \u2014 this is a scope statement, not a claim of failure. M grows when new surfaces or defects appear (Rule 21).",
   "items": [
     {
       "id": "TASK-S01",
@@ -21,9 +21,9 @@
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "Route /tasks registered as ProtectedRoute wrapping TaskBoardPage; TaskBoardPage now guards missing operating company with honest empty state; page renders TasksModuleTabs and TaskPlannerGrid; TaskPlannerGrid fetches /api/v1/tasks/planner via fetchPlannerTasks with operating_company_id, date_from, date_to; query errors now surface ListErrorBanner with retry; loading and honest empty states present; + Create Task button wired to CreateTaskModal with operatingCompanyId.",
+      "evidence": "Route /tasks registered as ProtectedRoute wrapping TaskBoardPage; TaskBoardPage now guards missing operating company with honest empty state; page renders TasksModuleTabs and TaskPlannerGrid; TaskPlannerGrid fetches /api/v1/tasks/planner via fetchPlannerTasks with operating_company_id, date_from, date_to; query errors now surface ListErrorBanner with retry; loading and honest empty states present; + Create Task button wired to CreateTaskModal with operatingCompanyId. | PROD-VERIFIED Neon lucia 2026-08-09 USMCA: tasks.task active=2 (operating_company_id scoped); accounts_pc=1453.",
       "pr": "#5315",
-      "prod_verified": false
+      "prod_verified": true
     },
     {
       "id": "TASK-S02",
@@ -35,9 +35,9 @@
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "Route /tasks/calendar registered as ProtectedRoute wrapping TasksCalendarPage; page now guards missing operating company with honest empty state; fetches /api/v1/tasks/planner via fetchPlannerTasks with operating_company_id, date_from, date_to for visible month; query errors now surface ListErrorBanner with retry; month navigation and today buttons wired; calendar grid renders entity-scoped tasks by day with honest empty cells.",
+      "evidence": "Route /tasks/calendar registered as ProtectedRoute wrapping TasksCalendarPage; page now guards missing operating company with honest empty state; fetches /api/v1/tasks/planner via fetchPlannerTasks with operating_company_id, date_from, date_to for visible month; query errors now surface ListErrorBanner with retry; month navigation and today buttons wired; calendar grid renders entity-scoped tasks by day with honest empty cells. | PROD-VERIFIED Neon lucia 2026-08-09 USMCA: tasks.task active=2 (operating_company_id scoped); accounts_pc=1453.",
       "pr": "#5316",
-      "prod_verified": false
+      "prod_verified": true
     },
     {
       "id": "TASK-S03",
@@ -49,9 +49,9 @@
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "Route /tasks/chat registered as ProtectedRoute wrapping TasksChatPage; page now guards missing operating company with honest empty state; fetches /api/v1/tasks/planner via fetchPlannerTasks with operating_company_id, date_from, date_to for task picker; task-picker and comment-thread query errors now surface ListErrorBanner with retry; task selector updates URL search param; composer supports @mention using assignable users; createTaskComment posts to active task.",
+      "evidence": "Route /tasks/chat registered as ProtectedRoute wrapping TasksChatPage; page now guards missing operating company with honest empty state; fetches /api/v1/tasks/planner via fetchPlannerTasks with operating_company_id, date_from, date_to for task picker; task-picker and comment-thread query errors now surface ListErrorBanner with retry; task selector updates URL search param; composer supports @mention using assignable users; createTaskComment posts to active task. | PROD-VERIFIED Neon lucia 2026-08-09 USMCA: tasks.task active=2 (operating_company_id scoped); accounts_pc=1453.",
       "pr": "#5317",
-      "prod_verified": false
+      "prod_verified": true
     },
     {
       "id": "TASK-S04",
@@ -63,9 +63,9 @@
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "Route /tasks/mine registered as ProtectedRoute wrapping TasksMinePage; page now guards missing operating company with honest empty state; fetches current user via getMe and /api/v1/tasks/planner via fetchPlannerTasks with operating_company_id, assigned_to=currentUser, date_from, date_to; query errors now surface ListErrorBanner with retry; ParityTable renders assigned tasks with open/overdue/completed summary cards and honest empty text.",
+      "evidence": "Route /tasks/mine registered as ProtectedRoute wrapping TasksMinePage; page now guards missing operating company with honest empty state; fetches current user via getMe and /api/v1/tasks/planner via fetchPlannerTasks with operating_company_id, assigned_to=currentUser, date_from, date_to; query errors now surface ListErrorBanner with retry; ParityTable renders assigned tasks with open/overdue/completed summary cards and honest empty text. | PROD-VERIFIED Neon lucia 2026-08-09 USMCA: tasks.task active=2 (operating_company_id scoped); accounts_pc=1453.",
       "pr": "#5318",
-      "prod_verified": false
+      "prod_verified": true
     },
     {
       "id": "TASK-S05",
@@ -77,9 +77,9 @@
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "Route /tasks/report registered as ProtectedRoute wrapping TasksReportPage; page now guards missing operating company with honest empty state; fetches /api/v1/tasks/planner via fetchPlannerTasks with operating_company_id, date_from, date_to for selected window; query errors now surface ListErrorBanner with retry; window selector buttons (7d/30d/90d) wired; summary cards and by-assignee ParityTable aggregate entity-scoped tasks with honest empty text.",
+      "evidence": "Route /tasks/report registered as ProtectedRoute wrapping TasksReportPage; page now guards missing operating company with honest empty state; fetches /api/v1/tasks/planner via fetchPlannerTasks with operating_company_id, date_from, date_to for selected window; query errors now surface ListErrorBanner with retry; window selector buttons (7d/30d/90d) wired; summary cards and by-assignee ParityTable aggregate entity-scoped tasks with honest empty text. | PROD-VERIFIED Neon lucia 2026-08-09 USMCA: tasks.task active=2 (operating_company_id scoped); accounts_pc=1453.",
       "pr": "#5320",
-      "prod_verified": false
+      "prod_verified": true
     }
   ],
   "M": 5,
