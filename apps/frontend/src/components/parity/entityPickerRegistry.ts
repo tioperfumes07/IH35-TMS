@@ -37,7 +37,7 @@
 import { listDrivers, listEquipment, listUnits, listVendors } from "../../api/mdata";
 import { listLoads } from "../../api/loads";
 import { listWorkOrders } from "../../api/maintenance";
-import { listInsurancePolicies } from "../../api/insurance";
+import { listInsuranceClaims, listInsuranceLawsuits, listInsurancePolicies } from "../../api/insurance";
 import { listFactoringAdvances } from "../../api/accounting";
 
 export type EntityPickerKind =
@@ -48,6 +48,8 @@ export type EntityPickerKind =
   | "vendor"
   | "work_order"
   | "insurance_policy"
+  | "insurance_claim"
+  | "insurance_lawsuit"
   | "factoring_advance";
 
 export type EntityPickerOption = {
@@ -321,6 +323,54 @@ const ENTITY_PICKERS: Record<EntityPickerKind, EntityPickerConfig> = {
         value: p.id,
         label: p.policy_number,
         sublabel: p.insurer_name,
+      }));
+    },
+  },
+
+  insurance_claim: {
+    kind: "insurance_claim",
+    label: "insurance claim",
+    readTable: "insurance.claims",
+    writeTable: "insurance.claims",
+    readEndpoint: "GET /api/v1/insurance/claims",
+    writeEndpoint: "POST /api/v1/insurance/claims",
+    entityScoped: true,
+    evidence: "apps/backend/src/insurance/claim.routes.ts (company-scoped SELECT / INSERT)",
+    inlineCreate: {
+      available: false,
+      reason: "An insurance claim is an audited transaction with policy, loss, reserve and recovery fields; create it in Insurance, then link it here.",
+    },
+    serverSearch: false,
+    async list(operatingCompanyId) {
+      const res = await listInsuranceClaims({ operating_company_id: operatingCompanyId });
+      return (res.claims ?? []).map((claim) => ({
+        value: claim.id,
+        label: claim.claim_number,
+        sublabel: claim.status,
+      }));
+    },
+  },
+
+  insurance_lawsuit: {
+    kind: "insurance_lawsuit",
+    label: "insurance lawsuit",
+    readTable: "insurance.lawsuits",
+    writeTable: "insurance.lawsuits",
+    readEndpoint: "GET /api/v1/insurance/lawsuits",
+    writeEndpoint: "POST /api/v1/insurance/lawsuits",
+    entityScoped: true,
+    evidence: "apps/backend/src/insurance/lawsuit.routes.ts (company-scoped SELECT / INSERT)",
+    inlineCreate: {
+      available: false,
+      reason: "A lawsuit is an audited legal transaction with parties, court, demand and settlement fields; create it in Insurance, then link it here.",
+    },
+    serverSearch: false,
+    async list(operatingCompanyId) {
+      const res = await listInsuranceLawsuits({ operating_company_id: operatingCompanyId });
+      return (res.lawsuits ?? []).map((lawsuit) => ({
+        value: lawsuit.id,
+        label: lawsuit.case_number,
+        sublabel: lawsuit.status,
       }));
     },
   },

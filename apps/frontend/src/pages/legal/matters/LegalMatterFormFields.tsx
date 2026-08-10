@@ -1,6 +1,4 @@
 import type { Dispatch, SetStateAction } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { listInsuranceClaims, listInsuranceLawsuits } from "../../../api/insurance";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
@@ -168,17 +166,6 @@ type Props = {
 };
 
 export function LegalMatterFormFields({ form, setForm, mode, operatingCompanyId }: Props) {
-  const claimsQuery = useQuery({
-    queryKey: ["legal-matter-form", "claims", operatingCompanyId],
-    enabled: Boolean(operatingCompanyId),
-    queryFn: () => listInsuranceClaims({ operating_company_id: operatingCompanyId }).then((r) => r.claims),
-  });
-  const lawsuitsQuery = useQuery({
-    queryKey: ["legal-matter-form", "lawsuits", operatingCompanyId],
-    enabled: Boolean(operatingCompanyId),
-    queryFn: () => listInsuranceLawsuits({ operating_company_id: operatingCompanyId }).then((r) => r.lawsuits),
-  });
-
   return (
     <div className="grid gap-2 md:grid-cols-2" data-testid="legal-matter-form-fields">
       {mode === "create" ? (
@@ -285,33 +272,33 @@ export function LegalMatterFormFields({ form, setForm, mode, operatingCompanyId 
 
       <label className="text-xs text-gray-600" data-testid="legal-matter-insurance-claim-picker">
         Insurance claim
-        <SelectCombobox
-          className="mt-1 w-full rounded-sm border border-gray-200 px-2 py-1 text-sm"
-          value={form.insurance_claim_id}
-          onChange={(e) => setForm((f) => ({ ...f, insurance_claim_id: e.target.value }))}
-        >
-          <option value="">None</option>
-          {(claimsQuery.data ?? []).map((claim) => (
-            <option key={claim.id} value={claim.id}>
-              {claim.claim_number} — {claim.status}
-            </option>
-          ))}
-        </SelectCombobox>
+        <div className="mt-1">
+          <EntityPicker
+            kind="insurance_claim"
+            operatingCompanyId={operatingCompanyId}
+            value={form.insurance_claim_id || null}
+            onChange={(next) => setForm((f) => ({ ...f, insurance_claim_id: next ?? "" }))}
+            allowCreate={false}
+            placeholder="None"
+            className="w-full"
+            dataField="legal-matter-insurance-claim"
+          />
+        </div>
       </label>
       <label className="text-xs text-gray-600" data-testid="legal-matter-insurance-lawsuit-picker">
         Insurance lawsuit
-        <SelectCombobox
-          className="mt-1 w-full rounded-sm border border-gray-200 px-2 py-1 text-sm"
-          value={form.insurance_lawsuit_id}
-          onChange={(e) => setForm((f) => ({ ...f, insurance_lawsuit_id: e.target.value }))}
-        >
-          <option value="">None</option>
-          {(lawsuitsQuery.data ?? []).map((lawsuit) => (
-            <option key={lawsuit.id} value={lawsuit.id}>
-              {lawsuit.case_number} — {lawsuit.status}
-            </option>
-          ))}
-        </SelectCombobox>
+        <div className="mt-1">
+          <EntityPicker
+            kind="insurance_lawsuit"
+            operatingCompanyId={operatingCompanyId}
+            value={form.insurance_lawsuit_id || null}
+            onChange={(next) => setForm((f) => ({ ...f, insurance_lawsuit_id: next ?? "" }))}
+            allowCreate={false}
+            placeholder="None"
+            className="w-full"
+            dataField="legal-matter-insurance-lawsuit"
+          />
+        </div>
       </label>
       <label className="text-xs text-gray-600" data-testid="legal-matter-related-driver-picker">
         Related driver

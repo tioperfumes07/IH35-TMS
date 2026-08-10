@@ -55,6 +55,18 @@ export function computeFailures(sources) {
       errors.push(`LegalMatterFormFields missing ${testId}`);
     }
   }
+  for (const [testId, kind] of [
+    ["legal-matter-insurance-claim-picker", "insurance_claim"],
+    ["legal-matter-insurance-lawsuit-picker", "insurance_lawsuit"],
+  ]) {
+    const field = legalForm.match(new RegExp(`data-testid=["']${testId}["'][\\s\\S]{0,700}?(?=</label>)`))?.[0] ?? "";
+    if (!field.includes(`<EntityPicker`) || !field.includes(`kind="${kind}"`)) {
+      errors.push(`LegalMatterFormFields ${testId} must use EntityPicker kind=${kind}`);
+    }
+    if (field.includes("<SelectCombobox")) {
+      errors.push(`LegalMatterFormFields ${testId} must not use capped SelectCombobox options`);
+    }
+  }
   for (const field of ["insurance_claim_id", "insurance_lawsuit_id", "related_driver_id", "unit_id"]) {
     if (!new RegExp(`${field}:\\s*optionalUuidOrNull\\(form\\.${field}\\)`).test(legalForm)) {
       errors.push(`formStateToUpdatePayload must include ${field}`);
@@ -114,7 +126,11 @@ function selftest() {
     `,
     legalForm: `
       data-testid="legal-matter-insurance-claim-picker"
+      <EntityPicker kind="insurance_claim" />
+      </label>
       data-testid="legal-matter-insurance-lawsuit-picker"
+      <EntityPicker kind="insurance_lawsuit" />
+      </label>
       data-testid="legal-matter-related-driver-picker"
       data-testid="legal-matter-unit-picker"
       insurance_claim_id: optionalUuidOrNull(form.insurance_claim_id),
@@ -153,6 +169,14 @@ function selftest() {
   }
   if (badFails.length === 0) {
     console.error(`${LABEL} selftest FAIL: bad fixture passed`);
+    process.exit(1);
+  }
+  const cappedPicker = {
+    ...good,
+    legalForm: good.legalForm.replace('<EntityPicker kind="insurance_claim" />', '<SelectCombobox />'),
+  };
+  if (!computeFailures(cappedPicker).some((failure) => failure.includes("insurance-claim-picker"))) {
+    console.error(`${LABEL} selftest FAIL: capped claim selector mutation passed`);
     process.exit(1);
   }
   console.log(`✓ ${LABEL} selftest PASS`);
