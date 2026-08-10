@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { TasksModuleTabs } from "./TasksModuleTabs";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { fetchPlannerTasks, type Task } from "../../api/tasks";
@@ -53,12 +54,24 @@ export function TasksCalendarPage() {
 
   const shiftMonth = (dir: number) => setAnchor((cur) => addDaysIso(monthBoundsIso(cur).start, dir > 0 ? 32 : -1));
 
+  if (!companyId) {
+    return (
+      <div className="space-y-4 p-4">
+        <PageHeader title="Calendar" subtitle="Scheduled tasks by day" />
+        <TasksModuleTabs />
+        <div className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-sm text-gray-700">
+          Select an operating company to view the task calendar.
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       <PageHeader title="Calendar" subtitle="Scheduled tasks by day" />
       <TasksModuleTabs />
 
-      {query.isError ? <div className="text-xs text-red-700">Couldn't load the calendar.</div> : null}
+      {query.isError ? <ListErrorBanner onRetry={() => void query.refetch()} /> : null}
 
       {/* Single section frame — month nav is a flat border-b row (no sibling bordered card). */}
       <section

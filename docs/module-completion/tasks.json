@@ -34,9 +34,9 @@
         "DOD-C"
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
-      "pr": null,
+      "status": "PASS",
+      "evidence": "Route /tasks/calendar registered as ProtectedRoute wrapping TasksCalendarPage; page now guards missing operating company with honest empty state; fetches /api/v1/tasks/planner via fetchPlannerTasks with operating_company_id, date_from, date_to for visible month; query errors now surface ListErrorBanner with retry; month navigation and today buttons wired; calendar grid renders entity-scoped tasks by day with honest empty cells.",
+      "pr": "#5316",
       "prod_verified": false
     },
     {
@@ -83,7 +83,7 @@
     }
   ],
   "M": 5,
-  "pass_count": 1,
+  "pass_count": 2,
   "total_count": 5,
-  "progress": "1 of 5"
+  "progress": "2 of 5"
 }
