@@ -21,7 +21,8 @@ const HELD = "db/migrations/.held-migrations.json";
 const INDEX = "apps/backend/src/catalogs/fleet/index.ts";
 const LEGACY = "apps/backend/src/catalogs/equipment-types.routes.ts";
 const SPEC = "apps/backend/src/lists/lists-module-count-spec.ts";
-const FILES = [MIG, HELD, INDEX, LEGACY, SPEC];
+const PAGE = "apps/frontend/src/pages/EquipmentTypesPage.tsx";
+const FILES = [MIG, HELD, INDEX, LEGACY, SPEC, PAGE];
 
 const readDisk = (rel) => fs.readFileSync(path.join(ROOT, rel), "utf8");
 
@@ -68,6 +69,13 @@ export function assertEquipmentTypesPerEntity(sources) {
   if (!/INSERT INTO catalogs\.equipment_line_item_templates \(\s*operating_company_id,/.test(legacy)) errs.push("legacy route template INSERT must write operating_company_id");
   if (!/SELECT id FROM catalogs\.equipment_types WHERE id = \$1/.test(legacy)) errs.push("legacy add-line-item must verify the parent equipment_type is the caller's entity (RLS-scoped SELECT)");
 
+  const page = get(PAGE);
+  if (!/equipmentTypesQuery\.isError[\s\S]{0,220}<ListErrorBanner[\s\S]{0,220}equipmentTypesQuery\.refetch\(\)/.test(page)) {
+    errs.push("EquipmentTypesPage list failure must render retryable ListErrorBanner");
+  }
+  if (!/aria-label=\{`Edit \$\{item\.name\}`\}/.test(page)) errs.push("EquipmentTypesPage line-item edit button needs an accessible name");
+  if ((page.match(/<Modal variant="drawer"/g) ?? []).length < 4) errs.push("EquipmentTypesPage create/edit surfaces must all use drawer chrome");
+
   return errs;
 }
 
@@ -88,6 +96,7 @@ if (SELFTEST) {
   expectCaught("legacy-parent-check-removed", { ...live, [LEGACY]: live[LEGACY].replace(/SELECT id FROM catalogs\.equipment_types WHERE id = \$1/g, "SELECT 1 WHERE true") }, "verify the parent equipment_type");
   expectCaught("mig-remap-removed", { ...live, [MIG]: live[MIG].replace(/JOIN catalogs\.equipment_types et_seed[\s\S]*?et_seed\.code = et_pri\.code/g, "CROSS JOIN (SELECT 1) et_seed_x") }, "remap equipment_type_id");
   expectCaught("mig-one-force-rls", { ...live, [MIG]: live[MIG].replace(/FORCE ROW LEVEL SECURITY/, "no rls once") }, "FORCE RLS on BOTH");
+  expectCaught("page-list-retry-removed", { ...live, [PAGE]: live[PAGE].replace("equipmentTypesQuery.refetch()", "noop()") }, "retryable ListErrorBanner");
 
   const liveProblems = assertEquipmentTypesPerEntity(live);
   if (liveProblems.length) failures.push(`live FAIL: ${liveProblems.join(" | ")}`);
@@ -97,7 +106,7 @@ if (SELFTEST) {
     for (const f of failures) console.error(`  ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — 5 planted defects caught, live sources clean`);
+  console.log(`${LABEL} SELFTEST PASS — 6 planted defects caught, live sources clean`);
   process.exit(0);
 }
 
