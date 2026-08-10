@@ -44,6 +44,12 @@ export function collectProblems(root = ROOT) {
   if (/limit:\s*500/.test(code)) {
     problems.push(`${FILE}: must not fetch silent limit:500 fleet/load pages`);
   }
+  if (!/<Combobox[\s\S]*?id=["']claim-create-accident-picker["']/.test(code)) {
+    problems.push(`${FILE}: accident report must use the searchable Combobox`);
+  }
+  if (/<select[\s\S]*?value=\{form\.accident_report_id\}/.test(code)) {
+    problems.push(`${FILE}: accident report must not regress to a native UUID-valued select`);
+  }
   return problems;
 }
 
