@@ -344,7 +344,7 @@ export function QuickCreateEntityModal({
 
   // CHROME-11: nest create in a right ParityDrawer — never a centered Modal stacked on money drawers.
   return (
-    <ParityDrawer open={open} onClose={onClose} title={titleFor(kind)} stackAboveModal>
+    <ParityDrawer open={open} onClose={onClose} onBack={onClose} title={titleFor(kind)} stackAboveModal>
       <form className="space-y-3 text-sm" onSubmit={submit} data-testid="quick-create-entity-drawer">
         <label className="block">
           <span className="text-xs font-medium text-gray-600">{kind === "vendor" || kind === "customer" ? "Display name *" : "Name *"}</span>

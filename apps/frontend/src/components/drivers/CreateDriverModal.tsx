@@ -932,7 +932,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
   if (shell === "drawer") {
     return (
       <>
-        <ParityDrawer open={open} onClose={onClose} title="Create Driver" size="wide">
+        <ParityDrawer open={open} onClose={onClose} onBack={onClose} title="Create Driver" size="wide">
           {driverCreateForm}
         </ParityDrawer>
         <ParityDrawer open={Boolean(createSummary)} onClose={() => setCreateSummary(null)} title="Driver created successfully">

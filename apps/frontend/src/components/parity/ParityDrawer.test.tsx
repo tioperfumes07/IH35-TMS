@@ -40,4 +40,15 @@ describe("ParityDrawer (A3)", () => {
     fireEvent.click(screen.getByLabelText("Close"));
     expect(onClose).toHaveBeenCalledTimes(1);
   });
+
+  it("renders and wires a back affordance for nested create drawers", () => {
+    const onBack = vi.fn();
+    render(
+      <ParityDrawer open title="Nested create" onClose={() => {}} onBack={onBack}>
+        body
+      </ParityDrawer>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Back to previous surface" }));
+    expect(onBack).toHaveBeenCalledTimes(1);
+  });
 });
