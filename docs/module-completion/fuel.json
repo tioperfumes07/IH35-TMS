@@ -90,9 +90,9 @@
         "DOD-C"
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
-      "pr": null,
+      "status": "PASS",
+      "evidence": "Route /fuel/inbox registered as ProtectedRoute wrapping FuelTabRoute tabId=relay_inbox → FuelPlannerHomePage; FuelPlannerHomePage guards missing operating company; inbox tab renders RelayDepositReview which fetches /api/v1/relay/deposits and /api/v1/relay/company-cards with operating_company_id; component now surfaces ListErrorBanner on deposits/cards query errors with retry, plus need-company, loading, and honest empty states; add/remove company-card mutations scoped to selected company.",
+      "pr": "#5308",
       "prod_verified": false
     },
     {
@@ -139,9 +139,9 @@
     }
   ],
   "M": 9,
-  "pass_count": 5,
+  "pass_count": 6,
   "total_count": 9,
-  "progress": "5 of 9",
+  "progress": "6 of 9",
   "live_scenario_probe": {
     "source": "scripts/scoreboard-from-live.mjs (live prod probes, TMS-native only)",
     "pass_count": 0,

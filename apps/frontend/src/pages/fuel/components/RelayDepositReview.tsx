@@ -7,6 +7,7 @@ import {
   type RelayDepositByCardRow,
   type RelayDepositClassification,
 } from "../../../api/relayDeposits";
+import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { useToast } from "../../../components/Toast";
 
 const usd = (cents: number) => `$${(cents / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -72,6 +73,16 @@ export function RelayDepositReview({ companyId }: { companyId: string }) {
   }
   if (depositsQuery.isLoading) {
     return <section className="rounded-sm border border-gray-200 bg-white p-4 text-xs text-gray-500">Loading Relay deposits…</section>;
+  }
+  if (depositsQuery.isError || cardsQuery.isError) {
+    return (
+      <section className="rounded-sm border border-gray-200 bg-white p-4">
+        <ListErrorBanner onRetry={() => {
+          void depositsQuery.refetch();
+          void cardsQuery.refetch();
+        }} />
+      </section>
+    );
   }
 
   const unclassifiedCards = byCard.filter((c) => c.classification === "unclassified");
