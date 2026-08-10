@@ -1,4 +1,5 @@
 import type { WorkOrder } from "../../../api/maintenance";
+import { entityLabel } from "../../../lib/entity-label";
 
 type Props = {
   roadside: WorkOrder[];
@@ -38,7 +39,7 @@ export function RoadServiceActivePanel({ roadside, onOpen }: Props) {
                       className="text-[11px] font-semibold"
                       style={{ color: isOos ? "#A32D2D" : "#1F2A44" }}
                     >
-                      {wo.unit_number ?? wo.display_id ?? wo.unit_id}
+                      {entityLabel(wo.unit_number ?? wo.display_id, wo.unit_id, "Unit")}
                     </span>
                     {isOos ? (
                       <span className="text-[9px] font-bold tracking-wide" style={{ color: "#A32D2D" }}>
