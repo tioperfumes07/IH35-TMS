@@ -15,6 +15,15 @@ import {
   assertDriverQualifiedForLoad,
   DriverNotQualifiedError,
 } from "./driver-qualification.service.js";
+// DRV-BILL-SKIP-PATHS — Edit Load is the ONLY writer of miles_shortest/miles_practical/miles_deadhead
+// on mdata/loads.routes.ts's generic PATCH surface (that schema has no miles fields at all — see
+// createLoadBodySchema/updateLoadBodySchema), and it can also change assigned_primary_driver_id /
+// team_id. Both are exactly the two inputs resolveDriverBasePayCents needs. Before this fix, editing
+// a load's miles or driver AFTER creation never re-entered the driver-pay mint/skip path — only a
+// later delivery-adjacent status transition did, so a load edited post-delivery (a real workflow: POD
+// arrives, dispatcher fills in actual miles) could never mint or re-record its driver bill. Converge
+// on the SAME canonical re-entrant idempotent path book-load / mdata create / delivery already use.
+import { ensureDriverBillArtifactsForLoad, type DriverBillMintOutcome } from "./book-load.service.js";
 
 type DbClient = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }>;
@@ -382,6 +391,8 @@ async function replaceStops(
 export type UpdateDispatchLoadResult = {
   load: Record<string, unknown>;
   stops: Record<string, unknown>[];
+  /** DRV-BILL-SKIP-PATHS — null when the load carries no driver/team (mint/skip not applicable). */
+  driver_bill_mint: DriverBillMintOutcome | null;
 };
 
 export async function updateDispatchLoad(
@@ -534,5 +545,18 @@ export async function updateDispatchLoad(
     "P6-BLOCK06-LOAD-PATCH"
   );
 
-  return { load: updatedLoadRes.rows[0] ?? old, stops: updatedStopsRes.rows };
+  // DRV-BILL-SKIP-PATHS — re-enter the canonical idempotent driver-pay path on every edit that could
+  // seat a driver or supply the pay inputs (miles_shortest/miles_practical/driver_pay_rate_per_mile,
+  // assigned_primary_driver_id/team_id). ensureDriverBillArtifactsForLoad re-reads the load fresh, so
+  // it is safe and cheap to call unconditionally: not_applicable when no driver is seated, a no-op
+  // when a bill already exists, a fresh mint the instant pay inputs first become complete, or a
+  // durable skipped_no_pay_rate audit when they still are not — never silence either way. This is the
+  // Edit Load equivalent of the mdata-create / delivery-transition re-entry points (ACCT-F277).
+  const driverBillMint = await ensureDriverBillArtifactsForLoad(client, {
+    loadId,
+    operatingCompanyId,
+    actorUserId: requestingUserUuid,
+  });
+
+  return { load: updatedLoadRes.rows[0] ?? old, stops: updatedStopsRes.rows, driver_bill_mint: driverBillMint };
 }
