@@ -14,6 +14,7 @@ import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { userFacingApiError } from "../../../lib/api-error-message";
+import { ListErrorState } from "../../../components/ListErrorState";
 
 const NIL_UUID = "00000000-0000-0000-0000-000000000000";
 
@@ -170,14 +171,23 @@ export function PmSchedulePage() {
       </div>
       <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm">
         <div className="mb-2 text-xs text-gray-500">Due-soon threshold is company-configurable (days/miles/hours).</div>
-        <ParityTable
-          rows={rows}
-          columns={columns}
-          rowKey={(row) => row.id}
-          loading={listQ.isLoading}
-          storageKey="maintenance-pm-schedule"
-          emptyText="No PM schedules yet."
-        />
+        {listQ.isError ? (
+          <ListErrorState
+            title="Couldn't load PM schedules"
+            status={0}
+            message={(listQ.error as Error)?.message}
+            onRetry={() => void listQ.refetch()}
+          />
+        ) : (
+          <ParityTable
+            rows={rows}
+            columns={columns}
+            rowKey={(row) => row.id}
+            loading={listQ.isLoading}
+            storageKey="maintenance-pm-schedule"
+            emptyText="No PM schedules yet."
+          />
+        )}
       </div>
 
       <Modal
