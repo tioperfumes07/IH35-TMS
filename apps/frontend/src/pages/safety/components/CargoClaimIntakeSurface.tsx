@@ -303,7 +303,7 @@ export function CargoClaimIntakeSurface({
       refresh();
       void detailQuery.refetch();
     } catch (err) {
-      setEditError(err instanceof Error ? err.message : "Could not save changes.");
+      setEditError(userFacingApiError(err, "Could not save changes."));
     } finally {
       setEditSaving(false);
     }
@@ -884,7 +884,7 @@ export function CargoClaimIntakeSurface({
                                 refresh();
                               })
                               .catch((err: unknown) => {
-                                setVoidError(err instanceof Error ? err.message : "Void failed.");
+                                setVoidError(userFacingApiError(err, "Could not void the cargo claim."));
                               });
                           }}
                         >
