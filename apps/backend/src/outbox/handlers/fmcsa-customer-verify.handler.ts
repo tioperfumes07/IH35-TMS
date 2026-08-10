@@ -34,6 +34,10 @@ export class FmcsaCustomerVerifyHandler implements OutboxEventHandler {
       throw new PermanentDeliveryError("fmcsa_event_type_mismatch");
     }
 
+    // Outbox handlers run outside a user session; RLS policies on mdata.* consult either a
+    // lucia bypass or the user identity, not app.operating_company_id alone. Establish both
+    // tenant and bypass context so the scoped customer read actually sees the row.
+    await ctx.client.query(`SELECT set_config('app.bypass_rls', 'lucia', true)`);
     await ctx.client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
 
     const scoped = await ctx.client.query<{ id: string }>(

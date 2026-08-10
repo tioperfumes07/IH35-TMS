@@ -44,6 +44,11 @@ export class DispatchDistributionFailureHandler implements OutboxEventHandler {
     const reason = asText(payload.reason) ?? "(no reason recorded)";
     const attempts = Number.isFinite(Number(payload.attempts)) ? Number(payload.attempts) : null;
 
+    // Outbox handlers run outside a user session; mdata RLS policies need a bypass or user identity,
+    // not app.operating_company_id alone. Establish tenant + bypass context before any scoped read.
+    await ctx.client.query(`SELECT set_config('app.bypass_rls', 'lucia', true)`);
+    await ctx.client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
+
     // Resolve the load number so the alert names the load a human recognises, not a UUID. Best-effort:
     // a failure to read it must not suppress the alarm itself.
     const loadRes = await ctx.client
