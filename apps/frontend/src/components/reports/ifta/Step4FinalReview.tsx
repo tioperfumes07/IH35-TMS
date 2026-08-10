@@ -129,7 +129,7 @@ export function Step4FinalReview({ filing, isOwner, onOwnerApprove, onMarkFiled,
         ) : null}
       </div>
 
-      <Modal open={confirmOpen} onClose={() => setConfirmOpen(false)} title="⚡ Owner approve IFTA filing">
+      <Modal open={confirmOpen} onClose={() => setConfirmOpen(false)} title="Owner approve IFTA filing">
         <div className="space-y-3 text-sm" data-ifta-wf064-confirm-modal="true">
           <p className="text-gray-700">
             Two-step confirmation: type APPROVE and hold the confirm button for 5 seconds. This records owner approval
