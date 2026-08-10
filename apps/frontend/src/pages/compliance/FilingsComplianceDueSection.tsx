@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { fetchFilingsDashboard, type FilingItem, type FilingStatus } from "../../api/compliance";
 import { formatDateUS } from "../../lib/formatDate";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { ListErrorState } from "../../components/ListErrorState";
 
 type Props = {
   operatingCompanyId: string;
@@ -115,6 +116,15 @@ export function FilingsComplianceDueSection({ operatingCompanyId }: Props) {
 
   return (
     <div className="space-y-4" data-testid="compliance-filings-dashboard">
+      {dashboardQ.isError ? (
+        <ListErrorState
+          title="Couldn't load filings and compliance due"
+          status={0}
+          message={(dashboardQ.error as Error)?.message}
+          onRetry={() => void dashboardQ.refetch()}
+        />
+      ) : (
+      <>
       <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
         {STATUS_TILES.map(({ key, label }) => (
           <button
@@ -170,6 +180,8 @@ export function FilingsComplianceDueSection({ operatingCompanyId }: Props) {
           </div>
         }
       />
+      </>
+      )}
     </div>
   );
 }
