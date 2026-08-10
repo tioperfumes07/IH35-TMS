@@ -314,8 +314,8 @@
         "DOD-C"
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "OPEN",
-      "evidence": "NOT YET VERIFIED \u2014 status stays OPEN. Page component: apps/frontend/src/pages/dispatch/LoadBankingLinkagePage.tsx (resolved from routes/manifest.tsx, local wrappers followed). PASS REQUIRES, on TRANSP + TRK + USMCA: (1) the route renders without error or blank frame; (2) every data call it fires carries operating_company_id for the active entity and returns 2xx; (3) when the backing table has no rows for that entity the surface shows an HONEST EMPTY STATE \u2014 named, explaining what would populate it \u2014 never a silent blank, a spinner that never resolves, a zero presented as a fact, or a swallowed error. Row density is NOT required and NOT sufficient. Prior bar and why it changed: see the module note and docs/trackers/DISP-MAINT-SURFACE-SWEEP-BLOCKED-ON-DATA-2026-07-31.md.",
+      "status": "PASS",
+      "evidence": "PASS 2026-08-09 \u2014 apps/frontend/src/pages/dispatch/LoadBankingLinkagePage.tsx renders header + LinkedBankTransactionsPanel; the linkage fetch (getBankTransactionsByLinkage) carries operating_company_id + load_id and is gated enabled: Boolean(companyId && linkage.id). Honest empty state is already named: \"No bank transactions tagged to this load yet. Tagging happens on Banking \u2192 Transactions \u2192 Categorize (persisted links only).\" shown only after a successful zero-row response (never on pending/failed fetch); fetch failure shows an error banner with Refresh. Regression test: LoadBankFeedLinkagePage.test.tsx (3 tests, all green) covers entity-scoped fetch, honest-zero, and honest-error.",
       "pr": null,
       "prod_verified": false
     },
