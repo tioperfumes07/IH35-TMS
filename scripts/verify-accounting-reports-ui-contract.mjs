@@ -47,6 +47,7 @@ try {
   const apAgingPath = "apps/frontend/src/pages/reports/APAgingPage.tsx";
   const scheduleModalPath = "apps/frontend/src/pages/reports/ScheduleReportModal.tsx";
   const geofenceReportPath = "apps/frontend/src/pages/reports/GeofenceReconciliationReport.tsx";
+  const iftaPreparerPath = "apps/frontend/src/pages/reports/tax-regulatory/IftaPreparer.tsx";
   const packagePath = "package.json";
 
   const app = `${read(appPath)}\n${fs.existsSync("apps/frontend/src/routes/manifest.tsx") ? read("apps/frontend/src/routes/manifest.tsx") : ""}`;
@@ -59,6 +60,7 @@ try {
   const apAging = read(apAgingPath);
   const scheduleModal = read(scheduleModalPath);
   const geofenceReport = read(geofenceReportPath);
+  const iftaPreparer = read(iftaPreparerPath);
   const pkg = read(packagePath);
 
   const routePaths = [
@@ -113,6 +115,7 @@ try {
   assertIncludes(scheduleModal, "option.name", "ScheduleReportModal must render report name, not raw id");
   assertIncludes(scheduleModal, "selectedReportName", "ScheduleReportModal must submit a human-readable report name");
   assertIncludes(geofenceReport, "entityLabel(null, f.geofence_id", "GeofenceReconciliationReport must label geofence_id, not render raw UUID");
+  assertIncludes(iftaPreparer, "STATUS_LABELS[row.status]", "IftaPreparer must map filing status to a human label");
 
   const reportsDir = "apps/frontend/src/pages/reports";
   for (const file of walkTsx(reportsDir)) {
