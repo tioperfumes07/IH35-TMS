@@ -3,7 +3,7 @@
  * Box 1 Required: docs/specs/scoreboard/modules/<module>.required.json
  * Boxes 2–3 Audited/Done: GET /api/v1/program/module-matrix (MATRIX-LIVE-RAD)
  * Chrome/picker/wiring columns are Required law (owner 2026-08-08) — part of full linkage.
- * SAMPLE banner only when the live API is unavailable.
+ * Explicit unavailable banner only when the live API is unavailable; never sample cells.
  * Design lock: docs/specs/scoreboard/MODULE-MATRIX-SCOREBOARD-LOCKED.md
  */
 import { useMemo } from "react";
@@ -550,7 +550,7 @@ export function ModuleMatrixPreviewPage() {
   });
 
   const liveOk = Boolean(live && live.sample === false);
-  const showSampleBanner = isFetched && (!liveOk || isError);
+  const showUnavailableBanner = isFetched && (!liveOk || isError);
 
   const liveByLeaf = useMemo(() => {
     if (!liveOk || !live) return null;
@@ -596,8 +596,8 @@ export function ModuleMatrixPreviewPage() {
     <div className="ih35mm" data-testid="module-matrix-preview" data-module={moduleId}>
       <style>{CSS}</style>
 
-      {showSampleBanner ? (
-        <div className="banner" data-testid="module-matrix-sample-banner">
+      {showUnavailableBanner ? (
+        <div className="banner" data-testid="module-matrix-unavailable-banner">
           <b>LIVE FEED UNAVAILABLE.</b> Box 1 Required is still from{" "}
           <code>docs/specs/scoreboard/modules/{moduleId}.required.json</code>
           {" "}({requiredMap.leaves.length} leaves). Audited / Done cannot be projected — showing
