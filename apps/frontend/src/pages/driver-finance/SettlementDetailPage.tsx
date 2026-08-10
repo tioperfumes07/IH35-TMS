@@ -20,7 +20,6 @@ import {
 import { resolveApiUrl } from "../../api/client";
 import { formatUsdCents } from "../../lib/money";
 import { EntityLink } from "../../components/shared/EntityLink";
-import { entityLabel } from "../../lib/entity-label";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { Button } from "../../components/Button";

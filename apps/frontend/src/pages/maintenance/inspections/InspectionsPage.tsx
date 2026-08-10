@@ -2,7 +2,6 @@ import { entityLabel } from "../../../lib/entity-label";
 import { humanizeEnumLabel } from "../../../lib/humanizeEnumLabel";
 import { useMemo, useState } from "react";
 import { EntityLink } from "../../../components/shared/EntityLink";
-import { entityLabel } from "../../../lib/entity-label";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { confirmUpload, requestUploadUrl } from "../../../api/docs";

@@ -21,7 +21,6 @@ import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useListState } from "../../components/list-state";
 import { formatDateUS } from "../../lib/formatDate";
-import { entityLabel } from "../../lib/entity-label";
 
 const LOOKAHEAD_WINDOWS = [7, 14, 30, 60] as const;
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });

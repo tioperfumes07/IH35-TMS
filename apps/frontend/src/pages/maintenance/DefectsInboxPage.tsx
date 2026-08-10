@@ -16,7 +16,6 @@ import { PageHeader } from "../../components/forms/shared/PageHeader";
 import { entityLabel } from "../../lib/entity-label";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { CollapsedListFilters } from "../../components/table";
-import { entityLabel } from "../../lib/entity-label";
 
 export function DefectsInboxPage() {
   const { selectedCompanyId, companies } = useCompanyContext();

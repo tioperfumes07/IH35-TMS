@@ -5,7 +5,6 @@ import { fetchPendingApprovalsGl } from "../../api/accountingHome";
 import { entityLabel } from "../../lib/entity-label";
 import { formatShortDate, formatUsdFromCents } from "../../pages/home/HomeKpiCard";
 import { useCompanyContext } from "../../contexts/CompanyContext";
-import { entityLabel } from "../../lib/entity-label";
 
 type Props = {
   data: AccountingHomeData | undefined;

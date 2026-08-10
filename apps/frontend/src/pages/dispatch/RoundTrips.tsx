@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { DispatchLoadRow } from "../../api/loads";
 import { listOpenPreSettlements } from "../../api/driverFinance";
-import { listUnitsWithoutLoad } from "../../api/dispatch";
+import { listUnitsWithoutLoad, type UnitsWithoutLoad } from "../../api/dispatch";
 import { flagDotColor, flagDotLabel, flagDotTag, hasVisibleFlag, STATUS_LABEL, formatMoneyCents, toRouteSummary } from "../../components/dispatch/constants";
 import { Button } from "../../components/Button";
 import { ListErrorState } from "../../components/ListErrorState";
@@ -107,7 +107,7 @@ function buildUnitPairs(
     first_load_id: string | null;
     last_load_id: string | null;
   }>,
-  idleUnits: Array<{ id: string; unit_number: string; driver_name: string | null; last_drop_at: string | null }>
+  idleUnits: UnitsWithoutLoad[]
 ): UnitPair[] {
   const loadById = new Map(loads.map((load) => [load.id, load]));
   const loadsByUnit = new Map<string, DispatchLoadRow[]>();

@@ -1,5 +1,5 @@
 import { EntityLink } from "../shared/EntityLink";
-import { entityLabel } from "../lib/entity-label";
+import { entityLabel } from "../../lib/entity-label";
 
 export type DispatcherActiveLoadRow = {
   id: string;
