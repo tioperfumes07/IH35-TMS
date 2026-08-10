@@ -204,6 +204,12 @@ export function RecordCCPaymentModal({
               loading={vendorsQuery.isFetching}
               disabled={!operatingCompanyId}
             />
+            <CappedListNotice
+              shown={vendorOptions.length}
+              limit={200}
+              hint="Vendor search returns at most 200 matches — refine your search if the card vendor is missing."
+              className="mt-1 text-[11px] text-slate-600"
+            />
           </div>
         </label>
         <label className="block text-xs font-semibold text-gray-700">
