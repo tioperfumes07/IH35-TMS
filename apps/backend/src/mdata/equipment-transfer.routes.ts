@@ -259,7 +259,12 @@ export async function registerEquipmentTransferRoutes(app: FastifyInstance) {
     if (!body.success) return reply.code(400).send({ error: "validation_error", details: body.error.flatten() });
     const driverId = await resolveDriverIdForUser(user.uuid);
     if (!driverId) return reply.code(404).send({ error: "driver_not_found_for_user" });
-    if (!body.data.rejection_reason) return reply.code(400).send({ error: "E_REJECTION_REASON_MIN_10" });
+    if (!body.data.rejection_reason) {
+      return reply.code(400).send({
+        error: "E_REJECTION_REASON_MIN_10",
+        message: "Rejection reason is required (at least 10 characters).",
+      });
+    }
     const operatingCompanyId = body.data.operating_company_id ?? (await resolveOperatingCompanyForUser(user.uuid));
     if (!operatingCompanyId) return reply.code(400).send({ error: "operating_company_id_required" });
     try {

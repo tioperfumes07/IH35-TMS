@@ -45,13 +45,8 @@ const HUMAN_FIELDS = ["message", "blocker", "reason", "detail", "details", "hint
 const KNOWN_GAPS = new Map([
   ["apps/backend/src/settlements/team-splits/team-splits.routes.ts", 8],
   ["apps/backend/src/driver-finance/settlement-dispute.routes.ts", 5],
-  // dispatch-refinements.routes.ts drained 2026-08-10 (Cursor CLS-BARE-ERROR-CODE) — was 5
-  ["apps/backend/src/mdata/units.routes.ts", 1],
-  ["apps/backend/src/mdata/equipment-transfer.routes.ts", 1],
-  ["apps/backend/src/mdata/driver-team-split.routes.ts", 1],
-  ["apps/backend/src/maintenance/work-orders.routes.ts", 1],
-  ["apps/backend/src/maintenance/parts-invoice-links.routes.ts", 1],
-  ["apps/backend/src/dispatch/quicksave.routes.ts", 1],
+  // Cursor drained 2026-08-10: dispatch-refinements + units + equipment-transfer +
+  // driver-team-split + work-orders + parts-invoice-links + quicksave
   ["apps/backend/src/accounting/lease-asc842/lease-posting.routes.ts", 1],
 ]);
 
@@ -181,22 +176,22 @@ function selftest() {
     },
     {
       name: "a ratcheted file at its ceiling passes",
-      files: [mk("apps/backend/src/mdata/units.routes.ts", `reply.code(409).send({ error: "E_UNIT_HAS_OPEN_WO", id });`)],
+      files: [mk("apps/backend/src/accounting/lease-asc842/lease-posting.routes.ts", `reply.code(409).send({ error: "E_LEASE_POSTING_BLOCKED", id });`)],
       expect: 0,
     },
     {
       name: "a ratcheted file ABOVE its ceiling is caught",
       files: [
         mk(
-          "apps/backend/src/mdata/units.routes.ts",
-          `reply.code(409).send({ error: "E_UNIT_HAS_OPEN_WO", id }); reply.code(400).send({ error: "E_OTHER_THING", id });`
+          "apps/backend/src/accounting/lease-asc842/lease-posting.routes.ts",
+          `reply.code(409).send({ error: "E_LEASE_POSTING_BLOCKED", id }); reply.code(400).send({ error: "E_OTHER_THING", id });`
         ),
       ],
       expectAtLeast: 1,
     },
     {
       name: "a ratcheted file that got FIXED must lower its number",
-      files: [mk("apps/backend/src/mdata/units.routes.ts", `reply.code(409).send({ error: "E_UNIT_HAS_OPEN_WO", message: m });`)],
+      files: [mk("apps/backend/src/accounting/lease-asc842/lease-posting.routes.ts", `reply.code(409).send({ error: "E_LEASE_POSTING_BLOCKED", message: m });`)],
       expectAtLeast: 1,
     },
     {
