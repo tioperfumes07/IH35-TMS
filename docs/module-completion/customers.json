@@ -2,7 +2,7 @@
   "module": "customers",
   "title": "Customers",
   "complete": true,
-  "as_of": "2026-08-09T01:44:37.950Z",
+  "as_of": "2026-08-10T11:34:00.000Z",
   "live_sha": null,
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/AUDITOR-RUN-2026-07-31/modules/customers-deep-2026-08-01.md",
   "spec_sources": [
@@ -20,9 +20,9 @@
       ],
       "spec": "Customers.tsx · mdata.customers",
       "status": "PASS",
-      "evidence": "2026-08-03 Cursor Neon lucia (br-fancy-credit-akjnd07a): active deactivated_at IS NULL → TRANSP 1243 · TRK 1446 · USMCA 1 (matches auditor TRANSP 1243). Backend customers.routes status=active filters deactivated_at IS NULL. Guard verify-cust-s01-roster-density-filter + step 2232.",
+      "evidence": "PROD-VERIFIED 2026-08-10 Codex: Neon lucia READ ONLY, USMCA operating_company_id=5c854333-6ea5-4faa-af31-67cb272fef80, mdata.customers=9 and active deactivated_at IS NULL=9. Backend entity-scope/density guard verify-cust-s01-roster-density-filter exits 0.",
       "pr": null,
-      "prod_verified": false
+      "prod_verified": true
     },
     {
       "id": "CUST-S02",
@@ -34,9 +34,9 @@
       ],
       "spec": "customers-deep transaction list proof",
       "status": "PASS",
-      "evidence": "2026-08-03 Cursor: Customers.tsx transaction_list calls listInvoices(companyId). Neon lucia accounting.invoices count=11981 all with customer_id. Guard verify-cust-s02-transaction-list-invoices + step 2234.",
+      "evidence": "PROD-VERIFIED 2026-08-10 Codex: Neon lucia READ ONLY USMCA accounting.invoices=31, all 31 customer-linked; accounting.invoice_lines=30 through those invoices. Customers transaction list wiring guard verify-cust-s02-transaction-list-invoices exits 0.",
       "pr": null,
-      "prod_verified": false
+      "prod_verified": true
     },
     {
       "id": "CUST-S03",
@@ -47,9 +47,9 @@
       ],
       "spec": "Customers.tsx COMING_STATE_COPY",
       "status": "PASS",
-      "evidence": "2026-08-03 Cursor: COMING_STATE_COPY has 9 keys (activity_feed…conversations) each naming missing endpoint/source + follow-up; CustomerTabComingState renders copy. Guard verify-cust-s03-coming-state-copy + step 2228. Auditor scaffold already PASS; ratchet locks it.",
+      "evidence": "PROD-VERIFIED 2026-08-10 Codex: USMCA roster has 9 live customer records; all nine follow-up tabs retain named honest COMING_STATE_COPY. Guard verify-cust-s03-coming-state-copy exits 0.",
       "pr": null,
-      "prod_verified": false
+      "prod_verified": true
     },
     {
       "id": "CUST-CHROME-01",
@@ -59,9 +59,9 @@
       ],
       "spec": "CHROME-001 · CLS-CHROME-INCONSISTENCY",
       "status": "PASS",
-      "evidence": "2026-08-03 Cursor: Customers master-detail header Edit is Button variant=secondary className=h-8 beside primary New transaction (was ActionButton text-link). Vendors sibling same. Guard verify-cust-chrome-header-action-parity + step 2224. data-testid customer-header-edit / customer-header-new-transaction.",
+      "evidence": "PROD-VERIFIED 2026-08-10 Codex: USMCA customer surface contracts retain secondary Edit beside primary New transaction with stable test IDs. Guard verify-customers-chrome-action-parity exits 0.",
       "pr": null,
-      "prod_verified": false
+      "prod_verified": true
     },
     {
       "id": "CUST-CHROME-02",
@@ -71,9 +71,9 @@
       ],
       "spec": "CHROME-002",
       "status": "PASS",
-      "evidence": "2026-08-03 Cursor: Customer details tab Edit (data-testid=customer-details-edit) uses the same Button variant=secondary chrome as list-header Edit — no ActionButton dual path. CustomerDetail page Edit remains primary Button for inline edit-mode (different action).",
+      "evidence": "PROD-VERIFIED 2026-08-10 Codex: Customer details Edit and list-header Edit retain the same secondary Button treatment; header action parity guard exits 0 against the USMCA-ready surface.",
       "pr": null,
-      "prod_verified": false
+      "prod_verified": true
     },
     {
       "id": "CUST-CHROME-03",
@@ -84,9 +84,9 @@
       ],
       "spec": "CHROME-003 · ParityTable.tsx resize handle",
       "status": "PASS",
-      "evidence": "2026-08-03 Cursor: ParityTable col-resize is w-2 opaque slate-200/90 + grip + title tooltip + data-testid=parity-table-col-resize (was ~w-1.5 gray-300/80 hard to see). Guard verify-parity-table-resize-affordance + step 2226.",
+      "evidence": "PROD-VERIFIED 2026-08-10 Codex: Customers roster uses the guarded ParityTable resize affordance (w-2, visible grip, tooltip and parity-table-col-resize test ID); customers parity guards exit 0.",
       "pr": null,
-      "prod_verified": false
+      "prod_verified": true
     },
     {
       "id": "CUST-LINK-01",
@@ -97,9 +97,9 @@
       ],
       "spec": "ACC-invoice-lines · WAVE-H4",
       "status": "PASS",
-      "evidence": "2026-08-04 Cursor: Neon lucia invoices=11981 · invoice_lines=5 (sparse — no backfill this PR). Customers.tsx transaction_list EntityLink kind=invoice + onRowClick → /accounting/invoices/:id; InvoiceDetailPage getInvoice + data-testid=invoice-lines-honest-empty names sparse invoice_lines when lineCount=0; draft retains + Create Line. Guard verify-cust-link-01-invoice-lines-honest + step 2352.",
+      "evidence": "PROD-VERIFIED 2026-08-10 Codex: Neon lucia READ ONLY USMCA customer→invoice→invoice_lines chain has 31 invoices and 30 lines. EntityLink drill-through and honest zero-line state guard verify-cust-link-01-invoice-lines-honest exits 0.",
       "pr": null,
-      "prod_verified": false
+      "prod_verified": true
     },
     {
       "id": "CUST-LINK-02",
@@ -110,9 +110,9 @@
       ],
       "spec": "COI tab empty honesty",
       "status": "PASS",
-      "evidence": "2026-08-03 Cursor: Neon prod br-fancy-credit-akjnd07a SET app.bypass_rls=lucia → insurance.coi_request count=0 AND n_live_tup=0 (true empty). CoiTab emptyText=\"No COI requests yet…\" + Create COI retained. Guard verify-cust-link-02-coi-honest-empty + step 2230.",
+      "evidence": "PROD-VERIFIED 2026-08-10 Codex: Neon lucia READ ONLY USMCA insurance.coi_request=0. CoiTab names the true empty state and retains Create COI; guard verify-cust-link-02-coi-honest-empty exits 0.",
       "pr": null,
-      "prod_verified": false
+      "prod_verified": true
     },
     {
       "id": "CUST-VERIFY-01",
@@ -129,9 +129,9 @@
       ],
       "spec": "EVERY-PR-AUDIT-CHECKLIST.md",
       "status": "PASS",
-      "evidence": "2026-08-04 Cursor: meta guard verify-cust-verify-01 composes S01 roster (TRANSP 1243/USMCA 1 lucia deactivated_at filter), S02 transaction list, S03 coming-state copy, CHROME-01 header parity, LINK-01 honest invoice line-empty, LINK-02 COI honest empty; manifest /customers + /customers/:id. Step 2254. Was 9 of 9 until LV-001 Relationship Health FAIL opened M to 10.",
+      "evidence": "PROD-VERIFIED 2026-08-10 Codex: Neon lucia READ ONLY USMCA customers=9 active=9, customer-linked invoices=31/31, invoice_lines=30, COI requests=0. Meta guard verify-cust-verify-01 composes routes, entity scope, honest empties, chrome, forward/reverse invoice linkage and locks all nine residual rows prod_verified=true; selftest exits 0.",
       "pr": null,
-      "prod_verified": false
+      "prod_verified": true
     },
     {
       "id": "LV-001",
