@@ -13,6 +13,7 @@ import {
 } from "recharts";
 import { apiRequest } from "../../../api/client";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
+import { CappedListNotice } from "../../../components/CappedListNotice";
 
 type Props = {
   loadId: string;
@@ -113,6 +114,13 @@ export function CargoSensorTimeline({ loadId, operatingCompanyId }: Props) {
           </div>
         ) : null}
       </div>
+
+      <CappedListNotice
+        shown={query.data.rows.length}
+        limit={240}
+        hint="Older sensor readings may be omitted — contact ops if you need the full history."
+        className="text-xs text-slate-600"
+      />
 
       <div className="h-64 w-full">
         <ResponsiveContainer width="100%" height="100%">

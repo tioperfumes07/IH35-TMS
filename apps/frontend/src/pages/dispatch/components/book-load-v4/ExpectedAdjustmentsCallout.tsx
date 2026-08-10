@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { UseFormRegister, UseFormSetValue, UseFormWatch } from "react-hook-form";
 import { detentionReasonsCatalogClient } from "../../../../api/catalogs-dispatch";
 import { ReferenceSelect } from "../../../../components/parity/ReferenceSelect";
+import { CappedListNotice } from "../../../../components/CappedListNotice";
 
 type Props = {
   register: UseFormRegister<Record<string, unknown>>;
@@ -82,6 +83,13 @@ export function ExpectedAdjustmentsCallout({ register, operatingCompanyId, watch
                   void detentionReasonsQuery.refetch();
                   void queryClient.invalidateQueries({ queryKey: ["book-load", "detention-reasons", operatingCompanyId] });
                 }}
+              />
+              <CappedListNotice
+                shown={detentionReasonOptions.length}
+                limit={200}
+                total={detentionReasonsQuery.data?.total}
+                hint="Type to search the full detention-reason catalog."
+                className="text-[10px] text-slate-600"
               />
             </div>
           ) : null}

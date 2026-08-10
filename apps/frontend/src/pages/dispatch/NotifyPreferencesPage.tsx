@@ -17,6 +17,7 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { useToast } from "../../components/Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { CappedListNotice } from "../../components/CappedListNotice";
 
 function PrefToggle({
   label,
@@ -182,6 +183,13 @@ export function NotifyPreferencesPage() {
               disabled={!companyId}
               loading={customersQuery.isLoading}
               onSearch={setCustomerSearch}
+            />
+            <CappedListNotice
+              shown={customerOptions.length}
+              limit={5000}
+              total={customersQuery.data?.total}
+              hint="Type to search the full customer catalog."
+              className="mt-1 text-xs text-slate-600"
             />
           </div>
         </label>

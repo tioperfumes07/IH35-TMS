@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { UseFormGetValues, UseFormRegister, UseFormSetValue, UseFormWatch } from "react-hook-form";
 import { listCustomers } from "../../../api/mdata";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
+import { CappedListNotice } from "../../../components/CappedListNotice";
 
 export type BookLoadFormValues = {
   customer_id: string;
@@ -42,7 +43,7 @@ export function BookLoadCustomerSection({
   showOptionalFields = true,
 }: Props) {
   const queryClient = useQueryClient();
-  // SAF-B29 / LST-PICKER-01: prod ~2.7k customers — silent limit:5000 without search still truncates
+  // SAF-B29 / LST-PICKER-01: prod ~2.7k customers — silent page cap without search still truncates
   // and freezes the drawer; type-ahead re-queries so customers past page 1 stay selectable.
   const [customerSearch, setCustomerSearch] = useState("");
   const dollarsToCents = (value: unknown) => {
@@ -97,6 +98,13 @@ export function BookLoadCustomerSection({
                 setValue("customer_id", opt.value, { shouldDirty: true, shouldValidate: true });
                 setValue("customer_name", opt.label, { shouldDirty: true, shouldValidate: false });
               }}
+            />
+            <CappedListNotice
+              shown={customerOptions.length}
+              limit={customerSearch ? 200 : 500}
+              total={customersQuery.data?.total}
+              hint="Type to search the full customer catalog."
+              className="mt-1 text-xs text-slate-600"
             />
           ) : (
             <div className="rounded-sm border border-slate-200 bg-white px-2 py-2 text-xs text-slate-700">Company context required for customer lookup.</div>
