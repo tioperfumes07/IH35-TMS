@@ -44,7 +44,15 @@ export function newStepNumbers(baseRef = "origin/main", cwd = ROOT) {
 
 export function claimedNumbersFromJson(text) {
   const reg = JSON.parse(text);
-  return new Set(Object.keys(reg.claimed ?? {}));
+  // Nested `claimed` is the historical registry (keys "01"…"999"). Recent claim-reserve
+  // PRs write top-level numeric keys ("2912", "2974", …) because json-union / sort_keys
+  // landed them at the root. Rule 37 claim-before-write must see BOTH shapes — otherwise
+  // every EVEN claim ≥1000 looks "unclaimed" and blocks the feature PR that follows.
+  const keys = new Set(Object.keys(reg.claimed ?? {}));
+  for (const k of Object.keys(reg)) {
+    if (/^\d+$/.test(k)) keys.add(k);
+  }
+  return keys;
 }
 
 export function claimedNumbersOnRef(baseRef = "origin/main", cwd = ROOT) {
@@ -227,6 +235,13 @@ function selftest() {
   );
   const parsed = claimedNumbersFromJson(JSON.stringify({ claimed: { "10": "10-x.mjs" } }));
   t("parse claimed", parsed.has("10") && parsed.size === 1);
+  const dual = claimedNumbersFromJson(
+    JSON.stringify({
+      claimed: { "10": "10-x.mjs" },
+      "2976": { claimed_by: "cursor", purpose: "x" },
+    }),
+  );
+  t("parse top-level numeric claim keys", dual.has("2976") && dual.has("10") && dual.size === 2);
   return bad;
 }
 
