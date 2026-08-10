@@ -63,6 +63,9 @@ function assertMigrated(src) {
   if (!src.includes("No OEM part templates found.")) {
     errors.push(`${PAGE}: must keep emptyText for empty catalog`);
   }
+  if (!/setError\(userFacingApiError\(err,\s*"Failed to create OEM part template"\)\)/.test(src)) {
+    errors.push(`${PAGE}: create failures must use userFacingApiError instead of raw error.message`);
+  }
   return errors;
 }
 
@@ -79,6 +82,7 @@ function selftest() {
       { key: "unit_cost_usd_typical", label: "Typical Cost", render: (row) => formatCost(row.unit_cost_usd_typical) },
     ];
     <ListErrorBanner onRetry={() => {}} />
+    setError(userFacingApiError(err, "Failed to create OEM part template"));
     <ParityTable
       storageKey="lists-oem-parts-catalog"
       tableTestId="oem-parts-catalog-table"
