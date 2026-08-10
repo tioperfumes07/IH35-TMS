@@ -71,6 +71,7 @@ function assertMigrated(src) {
   if (src.includes("TableSelection") || src.includes("BulkActionBar")) {
     errors.push(`${PAGE}: must not use legacy TableSelection/BulkActionBar (ParityTable owns selection chrome)`);
   }
+  errors.push(...assertBulkErrorFormatting(src, PAGE, "Bulk update failed"));
   return errors;
 }
 
@@ -90,11 +91,13 @@ function selftest() {
     import { BulkActionModal, BulkProgressDialog } from "../../components/bulk";
     import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
     import { bulkUpdate } from "../../api/bulk";
+    import { userFacingApiError } from "../../lib/api-error-message";
     const COLUMNS = [
       { key: "name", label: "Name" },
       { key: "status", label: "Status" },
     ];
     await bulkUpdate({ domain: "demo", resource: "items", ids, action: "set_status" });
+    const message = userFacingApiError(error, "Bulk update failed");
     <ParityTable
       storageKey="dev-bulk-demo"
       selectable
@@ -119,12 +122,20 @@ function selftest() {
   `;
   const goodErrors = assertMigrated(good);
   const badErrors = assertMigrated(bad);
+  const rawDemoErrors = assertMigrated(good.replace(
+    'userFacingApiError(error, "Bulk update failed")',
+    'error instanceof Error ? error.message : "Bulk update failed"'
+  ));
   if (goodErrors.length) {
     console.error(`${LABEL} --selftest FAIL good fixture:`, goodErrors);
     process.exit(1);
   }
   if (badErrors.length < 3) {
     console.error(`${LABEL} --selftest FAIL bad fixture should fail hard:`, badErrors);
+    process.exit(1);
+  }
+  if (!rawDemoErrors.some((error) => error.includes("bulk failure"))) {
+    console.error(`${LABEL} --selftest FAIL raw demo bulk error mutation survived`);
     process.exit(1);
   }
   const formatterGood = 'pushToast(userFacingApiError(error, "Bulk invoice update failed"), "error");';
