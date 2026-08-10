@@ -57,7 +57,7 @@ const PARTS_HISTORY_COLUMNS: Array<ParityColumn<PartsAssignmentRow>> = [
     key: "vendor_name",
     label: "Vendor",
     sortable: true,
-    sortValue: (row) => row.vendor_name ?? row.vendor_id,
+    sortValue: (row) => entityLabel(row.vendor_name, row.vendor_id, "Vendor"),
     render: (row) =>
       row.vendor_id ? (
         <EntityLink kind="vendor" id={row.vendor_id} label={entityLabel(row.vendor_name, row.vendor_id, "Vendor")} />

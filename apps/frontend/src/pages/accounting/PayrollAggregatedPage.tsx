@@ -11,6 +11,7 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useToast } from "../../components/Toast";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
+import { entityLabel } from "../../lib/entity-label";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -41,7 +42,7 @@ const W2_RUN_COLUMNS: Array<ParityColumn<AggregatedQboW2Run>> = [
   {
     key: "qbo_payroll_run_name",
     label: "Run",
-    render: (row) => row.qbo_payroll_run_name ?? row.qbo_payroll_run_id,
+    render: (row) => entityLabel(row.qbo_payroll_run_name, row.qbo_payroll_run_id, "Payroll run"),
   },
   {
     key: "employee_count",

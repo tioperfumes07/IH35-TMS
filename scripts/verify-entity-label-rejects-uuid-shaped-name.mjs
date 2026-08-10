@@ -120,6 +120,16 @@ const SIBLINGS = [
     bad: /row\.ps_category_name\s*\|\|\s*row\.ps_category_id|row\.ps_item_name\s*\|\|\s*row\.ps_item_id/,
     good: /entityLabel\(\s*row\.ps_category_name\s*,\s*row\.ps_category_id\s*,\s*"Category"\s*\)/,
   },
+  {
+    rel: "apps/frontend/src/pages/legal/templates/LegalTemplateDetailPage.tsx",
+    bad: /row\.actor_name\s*\?\?\s*row\.actor_user_id/,
+    good: /entityLabel\(\s*row\.actor_name\s*,\s*row\.actor_user_id\s*,\s*"User"\s*\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/accounting/PayrollAggregatedPage.tsx",
+    bad: /row\.qbo_payroll_run_name\s*\?\?\s*row\.qbo_payroll_run_id/,
+    good: /entityLabel\(\s*row\.qbo_payroll_run_name\s*,\s*row\.qbo_payroll_run_id\s*,\s*"Payroll run"\s*\)/,
+  },
 ];
 
 export function auditEntityLabel(src) {

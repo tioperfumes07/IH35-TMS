@@ -10,6 +10,13 @@ import { ParityTable, type ParityColumn } from "../../../components/parity/Parit
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { LegalModuleTabs } from "../LegalModuleTabs";
 import { formatDateTimeUS } from "../../../lib/formatDate";
+import { entityLabel } from "../../../lib/entity-label";
+
+function auditActorLabel(row: TemplateAuditEvent): string {
+  if (row.actor_user_id) return entityLabel(row.actor_name, row.actor_user_id, "User");
+  const name = row.actor_name != null ? String(row.actor_name).trim() : "";
+  return name !== "" ? name : "system";
+}
 
 type TemplateVersion = NonNullable<LegalTemplateDetail["versions"]>[number];
 type TemplateAuditEvent = NonNullable<LegalTemplateDetail["audit_log"]>[number];
@@ -48,8 +55,8 @@ const AUDIT_LOG_COLUMNS: Array<ParityColumn<TemplateAuditEvent>> = [
     key: "actor_name",
     label: "Actor",
     sortable: true,
-    sortValue: (row) => row.actor_name ?? row.actor_user_id ?? "system",
-    render: (row) => row.actor_name ?? row.actor_user_id ?? "system",
+    sortValue: (row) => auditActorLabel(row),
+    render: (row) => auditActorLabel(row),
   },
 ];
 
