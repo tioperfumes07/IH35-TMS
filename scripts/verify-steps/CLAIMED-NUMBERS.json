@@ -84,6 +84,11 @@
     "claimed_by": "cursor",
     "purpose": "verify-entity-label-rejects-uuid-shaped-name"
   },
+  "2980": {
+    "claimed_at": "2026-08-10",
+    "claimed_by": "cursor",
+    "purpose": "verify-load-reassign-driver-exists"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
@@ -1282,6 +1287,11 @@
       "claimed_at": "2026-08-10",
       "claimed_by": "cursor",
       "purpose": "verify-entity-label-rejects-uuid-shaped-name"
+    },
+    "2980": {
+      "claimed_at": "2026-08-10",
+      "claimed_by": "cursor",
+      "purpose": "verify-load-reassign-driver-exists"
     },
     "30": [
       "30-verify-no-orphan-route-aliases.mjs",
