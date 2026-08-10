@@ -1,10 +1,10 @@
 # Module completion — Program Tracker
 
-**PROGRESS: 5 of 6** · complete: `false` · as_of: 2026-08-10 · live_sha: `a1a7b50`
+**PROGRESS: 6 of 7** · complete: `false` · as_of: 2026-08-10 · live_sha: `1b3a44d`
 
 | Status | Count |
 |---|---:|
-| PASS | 5 |
+| PASS | 6 |
 | HOLD | 0 |
 | OPEN | 1 |
 | FAIL | 0 |
@@ -17,6 +17,7 @@
 | `PROG-S03` | **PASS** | /program/modules N-of-M manifests visible | Route /program/modules -> ModuleCompletionPage; imports generated MODULE_COMPLETION and renders N-of-M progress for every manifest. Guard: scripts/verify-program-surfaces-s01-s05.mjs. / PROD-VERIFIED 2026-08-10: manifest route + ModuleCompletionPage prod_verified/code_verified badges wired; verify-module-completion.mjs --write-md exit 0; healthz=a1a7b50. | #TBD |
 | `PROG-S04` | **PASS** | Per-block table shows honest status (not fake-green from title-match PRs) | Route /program/tracker -> ProgramTrackerPage; fetches /api/v1/program/tracker and renders per-block status/PR/completeness; verify-program-tracker-r2-live.mjs + verify-program-tracker-tabs-url-sync.mjs PASS. Guard: scripts/verify-program-surfaces-s01-s05.mjs. / PROD-VERIFIED 2026-08-10: verify-program-tracker-r2-live.mjs exit 0 (R2 CI-refreshed spine + committed fallback); verify-program-tracker-tabs-url-sync.mjs exit 0; healthz=a1a7b50. | #TBD |
 | `PROG-S05` | **PASS** | Merged PR spine tab mirrors reconcile merged_prs slice | ProgramBoardPage includes merged tab and renders merged_pr_total / recent_merged slices; verify-program-board-tab-render-parity.mjs + verify-program-board-tabs-url-sync.mjs PASS. Guard: scripts/verify-program-surfaces-s01-s05.mjs. / PROD-VERIFIED 2026-08-10: verify-program-board-tab-render-parity.mjs exit 0; verify-program-board-tabs-url-sync.mjs exit 0; healthz=a1a7b50. | #TBD |
+| `PROG-S06` | **PASS** | Program board + tracker API errors show ListErrorBanner with retry | ProgramBoardPage + ProgramTrackerPage replace silent/red-only errors with ListErrorBanner + refetch on getProgramBoard/getProgramTracker failure. Guard: verify-program-api-error-banner.mjs exit 0. / PROD-VERIFIED 2026-08-10 entity=USMCA (Owner chrome): healthz=1b3a44d; guards exit 0. | — |
 | `PROG-VERIFY-01` | **OPEN** | Program module VERIFY-1..8 (Owner/Admin) | scaffold — Layer A PASS; individual block drill UNVERIFIED | — |
 
 Desktop audit: ~/Desktop/IH35-CURSOR-AUDIT/AUDITOR-RUN-2026-07-31/modules/program-system-help-2026-08-01.md

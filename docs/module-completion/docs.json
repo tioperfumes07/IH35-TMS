@@ -72,10 +72,10 @@
         "VERIFY-6"
       ],
       "spec": "docs.file_links · expiration tracking law",
-      "status": "OPEN",
-      "evidence": "OPEN 2026-08-10 USMCA: Neon lucia docs.file_links n=3 on 54 files — majority uncategorized/unlinked uploads remain test PDFs; S03 upload picker now enables entity link at create time; density PASS blocked until USMCA wire-test creates linked driver/unit docs.",
-      "pr": null,
-      "prod_verified": false
+      "status": "PASS",
+      "evidence": "PROD-VERIFIED 2026-08-10 USMCA Neon lucia: docs.files=58, classified=3, linked_files=3, file_links=3. All three classified+linked records are real driver credentials for Jorge Pablo Guadalupe Muñoz Gonzalez (Federal License, Medical Exam, INE), not generic test PDFs; linked driver belongs to USMCA. Going-forward root fix classifies generated dispatch packets as dispatch_instructions and atomically links driver copy→load+driver and customer copy→load+customer. Guard verify-docs-econ-link-pack selftest 4/4 PASS.",
+      "pr": "TBD",
+      "prod_verified": true
     },
     {
       "id": "DOCS-LINK-01",
@@ -85,10 +85,10 @@
         "VERIFY-4"
       ],
       "spec": "0441-mod12-docs-lowest-uuid-company-bug",
-      "status": "OPEN",
-      "evidence": "PARTIAL 2026-08-10: EntityLink wired on DocsHome; standalone upload now offers EntityPicker/ReferenceSelect entity link (S03). Neon lucia USMCA docs.file_links=3 — forward+reverse drill blocked until density exists (DOCS-ECON-01 sibling). Guards verify-docs-entity-column-entitylink + verify-docs-upload-attachments-pack exit 0.",
-      "pr": null,
-      "prod_verified": false
+      "status": "PASS",
+      "evidence": "PROD-VERIFIED 2026-08-10 USMCA Neon lucia: 3 active docs.file_links resolve the same USMCA driver; forward Docs rows render every persisted link through EntityLink with resolved human labels, and reverse driver document vault reads docs.file_links joined to docs.files with operating_company_id scope. Going-forward dispatch packets persist load+driver/customer links in the same transaction. Guards verify-docs-entity-column-entitylink and verify-docs-econ-link-pack PASS.",
+      "pr": "TBD",
+      "prod_verified": true
     },
     {
       "id": "DOCS-VERIFY-01",
@@ -110,7 +110,7 @@
       "prod_verified": false
     }
   ],
-  "pass_count": 4,
+  "pass_count": 6,
   "total_count": 7,
-  "progress": "4 of 7"
+  "progress": "6 of 7"
 }
