@@ -122,7 +122,7 @@ export function DispatchChatPage() {
           <aside className="flex w-72 flex-col overflow-y-auto rounded-sm border border-slate-200">
             {threadsQuery.isLoading ? (
               <p className="p-3 text-sm text-slate-500">Loading…</p>
-            ) : threads.length === 0 ? (
+            ) : threads.length === 0 && !threadsQuery.isError ? (
               <p className="p-3 text-sm text-slate-700" data-testid="dispatch-chat-threads-honest-empty">
                 No chats for this company yet. Threads appear when you message a load&apos;s driver from dispatch (or a
                 driver opens a direct thread). Empty is expected until the first thread is created.
@@ -161,6 +161,12 @@ export function DispatchChatPage() {
                 <div className="border-b border-slate-200 px-4 py-2 text-sm font-semibold text-[#1f2a44]">{threadLabel(activeThread)}</div>
                 {archived ? (
                   <div className="bg-slate-50 px-4 py-1 text-xs text-slate-500">Archived — load closed, read-only</div>
+                ) : null}
+                {messagesQuery.isError ? (
+                  <ListErrorBanner
+                    message={userFacingApiError(messagesQuery.error, "Failed to load chat messages")}
+                    onRetry={() => void messagesQuery.refetch()}
+                  />
                 ) : null}
                 <div className="flex-1 space-y-2 overflow-y-auto p-4">
                   {messages.map((m) => {
@@ -203,7 +209,7 @@ export function DispatchChatPage() {
                       </div>
                     );
                   })}
-                  {messages.length === 0 ? <p className="text-sm text-slate-400">No messages yet.</p> : null}
+                  {messages.length === 0 && !messagesQuery.isError ? <p className="text-sm text-slate-400">No messages yet.</p> : null}
                 </div>
                 <div className="flex gap-2 border-t border-slate-200 p-3">
                   <textarea
