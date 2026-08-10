@@ -166,6 +166,14 @@ for (const [rel, marker] of [
   }
 }
 
+const workOrdersTable = read("apps/frontend/src/pages/maintenance/components/WorkOrdersTable.tsx");
+if (!workOrdersTable.includes('<EntityPicker') || !workOrdersTable.includes('kind="vendor"')) {
+  failures.push("WorkOrdersTable: external vendor filter must use the company-scoped vendor picker");
+}
+if (workOrdersTable.includes('placeholder="External vendor id…"')) {
+  failures.push("WorkOrdersTable: external vendor filter must not require a typed vendor id");
+}
+
 // CHROME-06 — FleetTable (shared component) TableControls children collapse behind CollapsedListFilters
 {
   const fleetTable = read("apps/frontend/src/components/FleetTable.tsx");
