@@ -1133,7 +1133,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
     return result.row;
   });
 
-  app.patch("/api/v1/mdata/loads/:id", async (req, reply) => {
+  app.patch("/api/v1/mdata/loads/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isOfficeWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
