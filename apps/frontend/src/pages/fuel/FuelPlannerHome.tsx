@@ -246,15 +246,19 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
       ) : null}
 
       {tab === "loves_prices" ? (
-        <section className="rounded-sm border border-gray-200 bg-white p-4 text-sm text-gray-700">
-          <h3 className="text-sm font-semibold text-gray-900">Loves daily prices</h3>
-          <p className="mt-2 text-xs text-gray-600">
-            Last sync: {lovesSyncQuery.data?.last_synced_at ? new Date(String(lovesSyncQuery.data.last_synced_at)).toLocaleString() : "n/a"}
-          </p>
-          <ActionButton className="mt-3" onClick={() => setUploadOpen(true)}>
-            Upload Loves prices
-          </ActionButton>
-        </section>
+        lovesSyncQuery.isError ? (
+          <ListErrorBanner onRetry={() => void lovesSyncQuery.refetch()} />
+        ) : (
+          <section className="rounded-sm border border-gray-200 bg-white p-4 text-sm text-gray-700">
+            <h3 className="text-sm font-semibold text-gray-900">Loves daily prices</h3>
+            <p className="mt-2 text-xs text-gray-600">
+              Last sync: {lovesSyncQuery.data?.last_synced_at ? new Date(String(lovesSyncQuery.data.last_synced_at)).toLocaleString() : "n/a"}
+            </p>
+            <ActionButton className="mt-3" onClick={() => setUploadOpen(true)}>
+              Upload Loves prices
+            </ActionButton>
+          </section>
+        )
       ) : null}
 
       {tab === "compliance" ? (
