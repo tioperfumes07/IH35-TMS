@@ -33,7 +33,7 @@ const RATCHETED_FILES = [
 
 const RAW_PATTERNS = [
   /setUploadError\([^)]*(?:error|err)\.message[^)]*\)/,
-  /setError\([^)]*(?:error|err)\.message[^)]*\)/,
+  /set[A-Za-z]*Error\([^)]*(?:error|err)(?: instanceof Error \? [^:]*\.message|\.message)[^)]*\)/,
   /pushToast\([^)]*error\.(message|toString\(\))[^)]*\)/,
   /pushToast\([^)]*err\.(message|toString\(\))[^)]*\)/,
   /pushToast\([^)]*firstError\.(message|toString\(\))[^)]*\)/,
