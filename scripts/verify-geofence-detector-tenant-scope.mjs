@@ -36,4 +36,12 @@ if (!fs.existsSync(reportPath)) {
 const report = fs.readFileSync(reportPath, "utf8");
 mustInclude(report, "ev.operating_company_id = $1::uuid", "report tenant filter");
 
+const reportPagePath = "apps/frontend/src/pages/reports/GeofenceDwellReport.tsx";
+const reportPage = fs.readFileSync(reportPagePath, "utf8");
+mustInclude(reportPage, '<Combobox', "searchable geofence filter");
+mustInclude(reportPage, 'id="geofence-dwell-filter"', "labelled geofence filter");
+if (/<select[\s\S]*?value=\{geofenceId\}/.test(reportPage)) {
+  throw new Error("Geofence dwell filter must not regress to a native UUID-valued select");
+}
+
 console.log("verify-geofence-detector-tenant-scope: ok");

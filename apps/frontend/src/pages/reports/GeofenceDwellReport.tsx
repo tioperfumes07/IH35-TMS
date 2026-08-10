@@ -10,6 +10,7 @@ import { formatDateTimeUS } from "../../lib/formatDate";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { Combobox } from "../../components/Combobox";
 
 function minutesToClock(value: number | null) {
   if (value == null) return "In yard";
@@ -46,6 +47,11 @@ export function GeofenceDwellReport() {
     queryFn: () => listGeofences(operatingCompanyId),
     enabled: Boolean(operatingCompanyId),
   });
+
+  const geofenceOptions = useMemo(
+    () => (geofenceQuery.data?.geofences ?? []).map((geofence) => ({ value: geofence.id, label: geofence.label })),
+    [geofenceQuery.data?.geofences],
+  );
 
   const reportQuery = useQuery({
     queryKey: ["reports", "geofence-dwell", operatingCompanyId, applied.periodStart, applied.periodEnd, applied.geofenceId, applied.locationKind],
@@ -143,21 +149,19 @@ export function GeofenceDwellReport() {
               onChange={(next) => setPeriodEnd(next)}
             />
           </label>
-          <label className="text-xs text-slate-700">
-            Geofence
-            <select
-              className="mt-1 block h-9 w-full rounded-sm border border-slate-300 px-2 text-sm"
-              value={geofenceId}
-              onChange={(event) => setGeofenceId(event.target.value)}
-            >
-              <option value="">All geofences</option>
-              {(geofenceQuery.data?.geofences ?? []).map((geofence) => (
-                <option key={geofence.id} value={geofence.id}>
-                  {geofence.label}
-                </option>
-              ))}
-            </select>
-          </label>
+          <div className="text-xs text-slate-700">
+            <label htmlFor="geofence-dwell-filter">Geofence</label>
+            <Combobox
+              id="geofence-dwell-filter"
+              className="mt-1"
+              options={geofenceOptions}
+              value={geofenceId || null}
+              onChange={(next) => setGeofenceId(next ?? "")}
+              placeholder="All geofences"
+              loading={geofenceQuery.isLoading}
+              error={geofenceQuery.isError ? "Couldn't load geofences" : undefined}
+            />
+          </div>
           <label className="text-xs text-slate-700">
             Kind
             <select
