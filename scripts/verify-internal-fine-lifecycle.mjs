@@ -108,6 +108,9 @@ export function assertInternalFineLifecycle(sources) {
   if (!src[PAGE].includes("VoidReasonModal")) {
     problems.push(`${PAGE}: lifecycle actions do not use the reason-required shell — a reasonless void.`);
   }
+  if (!/query\.isError[\s\S]*?<ListErrorBanner[\s\S]*?query\.refetch\(\)/.test(src[PAGE])) {
+    problems.push(`${PAGE}: query failure must render retryable ListErrorBanner before empty copy.`);
+  }
 
   return problems;
 }
