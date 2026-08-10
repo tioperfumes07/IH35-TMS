@@ -126,7 +126,7 @@ export default function PositionHistoryPage() {
         key: "actor_id",
         label: "Actor",
         sortable: true,
-        sortValue: (row) => row.actor_name ?? row.actor_id,
+        sortValue: (row) => entityLabel(row.actor_name, row.actor_id, "User"),
         render: (row) =>
           row.actor_name ? (
             <span className="text-gray-900">{row.actor_name}</span>
