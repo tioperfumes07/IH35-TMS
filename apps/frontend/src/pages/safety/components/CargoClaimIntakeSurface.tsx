@@ -24,6 +24,7 @@ import { formatUsdCents } from "../../../lib/money";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
+import { CappedListNotice } from "../../../components/CappedListNotice";
 
 type Props = {
   operatingCompanyId: string;
@@ -451,6 +452,13 @@ export function CargoClaimIntakeSurface({
                   disabled={!operatingCompanyId || customersQuery.isLoading}
                   onSearch={setCustomerSearch}
                 />
+                <CappedListNotice
+                  shown={customerOptions.length}
+                  limit={PICKER_LIMIT}
+                  total={customersQuery.data?.total}
+                  hint="Type to search the full customer catalog."
+                  className="mt-1 text-xs text-slate-600"
+                />
               </div>
             </label>
             <label className="block">
@@ -476,6 +484,13 @@ export function CargoClaimIntakeSurface({
                       queryKey: ["catalogs", "cargo-claim-reasons", operatingCompanyId],
                     });
                   }}
+                />
+                <CappedListNotice
+                  shown={reasonOptions.length}
+                  limit={PICKER_LIMIT}
+                  total={reasonsQuery.data?.total}
+                  hint="Type to search the full cargo-claim-reason catalog."
+                  className="mt-1 text-xs text-slate-600"
                 />
               </div>
             </label>

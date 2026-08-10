@@ -9,6 +9,7 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { HosViolationCreateModal } from "./components/HosViolationCreateModal";
 import { formatDateUS } from "../../lib/formatDate";
+import { CappedListNotice } from "../../components/CappedListNotice";
 
 const ON_DUTY_STATUSES = new Set(["driving", "on_duty_not_driving", "yard_moves"]);
 const NEAR_CAP_MINUTES = 30;
@@ -64,14 +65,17 @@ export function computeHosDashboardMetrics(rows: FleetHosDriverRow[]) {
   return { onDuty, offDuty, approachingCap, nearViolations };
 }
 
-async function loadFleetHosRows(operatingCompanyId: string, fleetSearch: string): Promise<FleetHosDriverRow[]> {
-  const { drivers } = await listDrivers({
+async function loadFleetHosRows(
+  operatingCompanyId: string,
+  fleetSearch: string
+): Promise<{ rows: FleetHosDriverRow[]; total?: number }> {
+  const { drivers, total } = await listDrivers({
     operating_company_id: operatingCompanyId,
     status: "Active",
     limit: 200,
     search: fleetSearch || undefined,
   });
-  return Promise.all(
+  const rows = await Promise.all(
     drivers.map(async (driver) => {
       const base: FleetHosDriverRow = {
         driverId: driver.id,
@@ -94,6 +98,7 @@ async function loadFleetHosRows(operatingCompanyId: string, fleetSearch: string)
       }
     })
   );
+  return { rows, total };
 }
 
 type Props = {
@@ -118,7 +123,8 @@ export function HoursOfServicePage({ operatingCompanyId }: Props) {
     enabled: Boolean(operatingCompanyId),
   });
 
-  const rows = fleetQuery.data ?? [];
+  const rows = fleetQuery.data?.rows ?? [];
+  const fleetTotal = fleetQuery.data?.total;
   const metrics = useMemo(() => computeHosDashboardMetrics(rows), [rows]);
   const violations = (violationsQuery.data?.hos_violations ?? []).filter((row) => !row.voided_at);
 
@@ -249,6 +255,13 @@ export function HoursOfServicePage({ operatingCompanyId }: Props) {
             exportFilename="hos-fleet-status"
             tableTestId="safety-hos-fleet-table"
             rowTestId={(row) => `safety-hos-row-${row.driverId}`}
+          />
+          <CappedListNotice
+            shown={rows.length}
+            limit={200}
+            total={fleetTotal}
+            hint="Refine the search to see drivers beyond the first page."
+            className="mt-1 text-xs text-slate-600"
           />
         </section>
 

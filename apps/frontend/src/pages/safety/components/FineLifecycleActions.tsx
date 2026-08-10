@@ -14,6 +14,7 @@ import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { Combobox } from "../../../components/shared/Combobox";
 import { companyToday } from "../../../lib/businessDate";
 import { formatDateUS } from "../../../lib/formatDate";
+import { CappedListNotice } from "../../../components/CappedListNotice";
 
 // ── SAF-B12 ──────────────────────────────────────────────────────────────────────────────────────
 // Four external-fine lifecycle routes on safety.civil_fines were fully built and audited in
@@ -298,6 +299,12 @@ export function FineLifecycleActions({ fine, operatingCompanyId, onUpdated }: Pr
                 placeholder={bankTxQuery.isLoading ? "Loading bank transactions…" : "Search by description or merchant…"}
               />
             </div>
+            <CappedListNotice
+              shown={bankOptions.length}
+              limit={100}
+              hint="Type to search bank transactions beyond the first page."
+              className="mt-1 text-xs text-slate-600"
+            />
           </label>
           <label className="text-xs font-medium text-slate-700">
             Paid Date

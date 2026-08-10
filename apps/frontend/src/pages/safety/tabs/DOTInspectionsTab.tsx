@@ -174,7 +174,7 @@ export function DOTInspectionsTab() {
   });
 
   // SAF-F14 / S-A10: driver uses DriverPickerWithCreate; unit uses EntityPicker kind="unit" with
-  // inline "+ Create unit" via EntityPicker allowCreate (server search — no silent limit:200 roster).
+  // inline "+ Create unit" via EntityPicker allowCreate (server search — no silent roster page cap).
 
   return (
     <div className="space-y-3">
