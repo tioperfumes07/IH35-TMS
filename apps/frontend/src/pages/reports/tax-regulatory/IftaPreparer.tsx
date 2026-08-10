@@ -14,6 +14,12 @@ import { PageHeader } from "../../../components/layout/PageHeader";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { filingQuarterLabel, recentQuarterOptions, toQuarterLabel } from "../ifta/quarter";
 
+const STATUS_LABELS: Record<string, string> = {
+  draft: "Draft",
+  review: "Under review",
+  filed: "Filed",
+};
+
 export function IftaPreparer() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
@@ -133,7 +139,7 @@ export function IftaPreparer() {
                   className="text-left text-slate-700 underline"
                   onClick={() => setFilingUuid(row.uuid)}
                 >
-                  {row.quarter} · {row.status}
+                  {row.quarter} · {STATUS_LABELS[row.status] ?? row.status}
                 </button>
               </li>
             ))}
