@@ -47,7 +47,7 @@ function money(cents: number) {
 function displayBillLabel(bill: VendorBill) {
   const remaining = Math.max(0, Number(bill.amount_cents ?? 0) - Number(bill.paid_cents ?? 0));
   const billRef = entityLabel(bill.bill_number, bill.id, "Bill");
-  const vendor = bill.vendor_name || bill.vendor_id || "Vendor";
+  const vendor = entityLabel(bill.vendor_name, bill.vendor_id, "Vendor");
   return `${vendor} · ${billRef} · Due ${bill.due_date || "-"} · ${money(remaining)}`;
 }
 

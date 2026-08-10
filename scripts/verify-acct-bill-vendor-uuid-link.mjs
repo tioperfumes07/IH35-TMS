@@ -108,7 +108,7 @@ function selftest() {
 
   const goodBillPage = `
     import { billVendorDrillId } from "../../api/accounting";
-    <EntityLink kind="vendor" id={billVendorDrillId(bill)} label={bill.vendor_name || bill.vendor_id} />
+    <EntityLink kind="vendor" id={billVendorDrillId(bill)} label={entityLabel(bill.vendor_name, bill.vendor_id, "Vendor")} />
   `;
   if (auditSurface("good.tsx", goodBillPage).length !== 0) {
     failures.push("selftest: canonical billVendorDrillId form was flagged");

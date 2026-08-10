@@ -121,7 +121,7 @@ function selftest() {
 
   // case3 — the FIX must pass, including when the LABEL still shows the legacy id. A guard that
   // flagged the label would make the correct code unwritable and get itself disabled.
-  const fixed = `<EntityLink kind="vendor" id={bill.mdata_vendor_id} label={bill.vendor_name || bill.vendor_id} />`;
+  const fixed = `<EntityLink kind="vendor" id={bill.mdata_vendor_id} label={entityLabel(bill.vendor_name, bill.vendor_id, "Vendor")} />`;
   if (auditSurface("x.tsx", fixed).length !== 0)
     failures.push("case3 FAIL — the canonical form with a legacy-id LABEL was wrongly flagged");
 

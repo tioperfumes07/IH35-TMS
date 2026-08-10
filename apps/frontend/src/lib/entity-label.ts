@@ -14,9 +14,15 @@
  *                                                    nothing — a real signal, deliberately not disguised)
  *   · neither           → "Unassigned"
  *
+ * A uuid-shaped "name" (including when a list API falls back to `vendor_name: vendor_id`) is NOT a
+ * name — treat it as missing so the Bills Vendor column cannot paint a raw UUID as if it resolved.
+ *
  * `noun` should name the thing, so the fallback reads as English. Callers that genuinely have nothing
  * better can omit it and get "Record".
  */
+const UUID_SHAPE_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export function entityLabel(
   name: unknown,
   id?: unknown,
@@ -24,7 +30,7 @@ export function entityLabel(
 ): string {
   if (name != null) {
     const s = String(name).trim();
-    if (s !== "") return s;
+    if (s !== "" && !UUID_SHAPE_RE.test(s)) return s;
   }
   if (id != null && String(id).trim() !== "") return `${noun} — not visible`;
   return "Unassigned";
