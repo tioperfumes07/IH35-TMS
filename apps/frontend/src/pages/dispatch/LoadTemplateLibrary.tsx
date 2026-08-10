@@ -43,6 +43,7 @@ export type MinimalBookForm = {
   miles_shortest: number;
   miles_deadhead: number;
   notes: string;
+  is_sample_data: boolean;
   stops: BookStop[];
 };
 
@@ -84,6 +85,7 @@ export function templateJsonFromLoadDetail(load: {
     miles_practical: 0,
     miles_deadhead: 0,
     notes: load.notes ?? "",
+    is_sample_data: Boolean((load as { is_sample_data?: boolean | null }).is_sample_data),
     stops,
   };
 }
@@ -177,6 +179,7 @@ export function applyLoadTemplateToBookForm(setValue: UseFormSetValue<MinimalBoo
   if (typeof json.miles_shortest === "number") setValue("miles_shortest", json.miles_shortest, { shouldDirty: true });
   if (typeof json.miles_deadhead === "number") setValue("miles_deadhead", json.miles_deadhead, { shouldDirty: true });
   if (typeof json.notes === "string") setValue("notes", json.notes, { shouldDirty: true });
+  if (typeof json.is_sample_data === "boolean") setValue("is_sample_data", json.is_sample_data, { shouldDirty: true });
   const stops = normalizeTemplateStops(json.stops);
   setValue("stops", stops, { shouldDirty: true });
 }
