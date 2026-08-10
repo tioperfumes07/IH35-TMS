@@ -24,6 +24,7 @@ const reassignBody = z.object({
   new_driver_id: z.string().uuid(),
   reason_code: z.string().trim().min(2).max(80),
   notes: z.string().trim().max(2000).optional(),
+  override_reason: z.string().trim().min(10).max(2000).optional(),
 });
 
 const stopBodyItem = z.object({
@@ -165,9 +166,19 @@ export async function registerDispatchRefinementsRoutes(app: FastifyInstance) {
         new_driver_id: body.data.new_driver_id,
         reason_code: body.data.reason_code,
         notes: body.data.notes,
+        requesting_user_role: user.role,
+        override_reason: body.data.override_reason,
       });
     } catch (e) {
-      if (String((e as Error).message) === "E_LOAD_NOT_FOUND") return reply.code(404).send({ error: "E_LOAD_NOT_FOUND" });
+      const msg = String((e as Error).message);
+      if (msg === "E_LOAD_NOT_FOUND") return reply.code(404).send({ error: "E_LOAD_NOT_FOUND" });
+      if (msg === "E_DRIVER_NOT_QUALIFIED") {
+        return reply.code(422).send({
+          error: "E_DRIVER_NOT_QUALIFIED",
+          reasons: ((e as Error & { reasons?: string[] }).reasons) ?? [],
+          message: "Selected driver does not meet DOT qualification requirements for this load.",
+        });
+      }
       throw e;
     }
   });

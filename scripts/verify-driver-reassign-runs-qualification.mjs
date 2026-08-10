@@ -39,12 +39,6 @@ const GATE = "assertDriverQualifiedForLoad";
 
 const KNOWN_GAPS = new Map([
   [
-    "apps/backend/src/dispatch/dispatch-refinements.service.ts",
-    "OPEN P1 (FAIL-D1): `UPDATE mdata.loads SET assigned_primary_driver_id = $2` with no gate call. " +
-      "Produced L-20260808-0099 — qualified driver at dispatch, unqualified driver swapped in while in_transit. " +
-      "Owner: dispatch write-path.",
-  ],
-  [
     "apps/backend/src/mdata/driver-team.service.ts",
     "OPEN P1 (FAIL-D1, SAME CLASS — found by this guard, not by the card): team assignment reassigns the " +
       "primary driver on a load with no gate call. Owner: dispatch write-path.",
