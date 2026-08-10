@@ -1,15 +1,15 @@
 {
   "module": "dispatch",
-  "title": "Dispatch \u2014 acceptance checklist",
+  "title": "Dispatch — acceptance checklist",
   "complete": false,
-  "as_of": "2026-08-09T01:52:04.159Z",
-  "live_sha": null,
+  "as_of": "2026-08-10T04:21:21.000Z",
+  "live_sha": "49ff971",
   "desktop_audit": null,
   "spec_sources": [
     "apps/frontend/src/routes/manifest.tsx",
     "apps/frontend/src/components/layout/sidebar-config.ts"
   ],
-  "note": "RE-SCOPED 2026-07-31 (owner decision). The prior bar \u2014 'renders real entity-scoped data' \u2014 is UNSATISFIABLE on prod today and is why this module sat at 0 since the 2026-07-29 baseline: the backing tables are empty (maintenance work_order_lines/defects/inspections/dvir/road_service/all 5 tire tables/both brake tables/warranty_claims/pm_alerts = 0, work_orders = 2, pm_schedules 30 rows but 0 ACTIVE; dispatch assignment_history/detention x3/intransit_issues/equipment_transfers/ocr_queue/pod_documents/driver_layovers = 0, geo.geofences = 0, mdata.loads = 10 all TRANSP; TRK and USMCA hold zero dispatch and zero maintenance operational rows). Marking PASS on density would have asserted what the data cannot support; marking FAIL on a correct empty screen would be equally false. The bar is now renders + entity-scoped + honest empty state, which IS provable today on all three entities and is the bar McLeod/NetSuite hold an unseeded module to. This is a change of bar, NOT a lowering of standard: the seed dependency is tracked as its own block (DISP-MAINT-DATA-01) and is deliberately NOT a click-through gate. Evidence: docs/trackers/DISP-MAINT-SURFACE-SWEEP-BLOCKED-ON-DATA-2026-07-31.md. No item was flipped by this re-scope.\n\nORIGINAL BASELINE NOTE (kept, append-only): BASELINE created 2026-07-29. Until now this module had NO acceptance list, so \"completely built\" had no definition and no honest percentage could be shown. Every item starts OPEN because none has been verified \u2014 this is a scope statement, not a claim of failure. M grows when new surfaces or defects appear (Rule 21). | DISP war PASS batch 2026-08-09 (proven path + settled list surfaces)",
+  "note": "RE-SCOPED 2026-07-31 (owner decision). The prior bar — 'renders real entity-scoped data' — is UNSATISFIABLE on prod today and is why this module sat at 0 since the 2026-07-29 baseline: the backing tables are empty (maintenance work_order_lines/defects/inspections/dvir/road_service/all 5 tire tables/both brake tables/warranty_claims/pm_alerts = 0, work_orders = 2, pm_schedules 30 rows but 0 ACTIVE; dispatch assignment_history/detention x3/intransit_issues/equipment_transfers/ocr_queue/pod_documents/driver_layovers = 0, geo.geofences = 0, mdata.loads = 10 all TRANSP; TRK and USMCA hold zero dispatch and zero maintenance operational rows). Marking PASS on density would have asserted what the data cannot support; marking FAIL on a correct empty screen would be equally false. The bar is now renders + entity-scoped + honest empty state, which IS provable today on all three entities and is the bar McLeod/NetSuite hold an unseeded module to. This is a change of bar, NOT a lowering of standard: the seed dependency is tracked as its own block (DISP-MAINT-DATA-01) and is deliberately NOT a click-through gate. Evidence: docs/trackers/DISP-MAINT-SURFACE-SWEEP-BLOCKED-ON-DATA-2026-07-31.md. No item was flipped by this re-scope.\n\nORIGINAL BASELINE NOTE (kept, append-only): BASELINE created 2026-07-29. Until now this module had NO acceptance list, so \"completely built\" had no definition and no honest percentage could be shown. Every item starts OPEN because none has been verified — this is a scope statement, not a claim of failure. M grows when new surfaces or defects appear (Rule 21). | DISP war PASS batch 2026-08-09 (proven path + settled list surfaces)",
   "items": [
     {
       "id": "DISP-S01",
@@ -21,7 +21,7 @@
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "PASS 2026-08-09 \u2014 /dispatch DispatchBoard entity-scoped loads list; owner-proven Book\u2192assign\u2192dispatch path (L-0085 class). Empty-state follow-on on board false-empty still tracked in verify-list-empty-settled sweep.",
+      "evidence": "PASS 2026-08-09 — /dispatch DispatchBoard entity-scoped loads list; owner-proven Book→assign→dispatch path (L-0085 class). Empty-state follow-on on board false-empty still tracked in verify-list-empty-settled sweep.",
       "pr": null,
       "prod_verified": true
     },
@@ -35,7 +35,7 @@
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "PASS 2026-08-09 \u2014 DispatchAlertsPage company-gated queries (accidents/cash/late/in-transit); ListErrorBanner on failure; data-testid=dispatch-alerts-honest-empty when all counts are known 0; guard scripts/verify-disp-s02-alerts-surface.mjs --selftest exit 0.",
+      "evidence": "PASS 2026-08-09 — DispatchAlertsPage company-gated queries (accidents/cash/late/in-transit); ListErrorBanner on failure; data-testid=dispatch-alerts-honest-empty when all counts are known 0; guard scripts/verify-disp-s02-alerts-surface.mjs --selftest exit 0.",
       "pr": null,
       "prod_verified": true
     },
@@ -49,7 +49,7 @@
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "PASS 2026-08-09 \u2014 LateArrivalsPage ParityTable settled empty; verify-list-empty-settled.",
+      "evidence": "PASS 2026-08-09 — LateArrivalsPage ParityTable settled empty; verify-list-empty-settled.",
       "pr": null,
       "prod_verified": true
     },
@@ -63,7 +63,7 @@
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "PASS 2026-08-09 \u2014 AssignmentHistoryPage ParityTable settled empty; verify-list-empty-settled.",
+      "evidence": "PASS 2026-08-09 — AssignmentHistoryPage ParityTable settled empty; verify-list-empty-settled.",
       "pr": null,
       "prod_verified": true
     },
@@ -77,7 +77,7 @@
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "PASS 2026-08-09 \u2014 /dispatch/assignments via DispatchSecondaryTabRoute; same proven assignment path.",
+      "evidence": "PASS 2026-08-09 — /dispatch/assignments via DispatchSecondaryTabRoute; same proven assignment path.",
       "pr": null,
       "prod_verified": true
     },
@@ -91,7 +91,7 @@
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "PASS 2026-08-09 \u2014 AtRiskQueuePage ParityTable settled empty; verify-list-empty-settled.",
+      "evidence": "PASS 2026-08-09 — AtRiskQueuePage ParityTable settled empty; verify-list-empty-settled.",
       "pr": null,
       "prod_verified": true
     },
@@ -105,7 +105,7 @@
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "PASS 2026-08-09 \u2014 /dispatch/book-load Book Load wizard \u2014 OWNER PROVEN live (Neftali/Baytown rescue packet); do not re-audit.",
+      "evidence": "PASS 2026-08-09 — /dispatch/book-load Book Load wizard — OWNER PROVEN live (Neftali/Baytown rescue packet); do not re-audit.",
       "pr": null,
       "prod_verified": true
     },
@@ -119,7 +119,7 @@
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "PASS 2026-08-09 \u2014 BorderCrossingWizardPage company-scoped submit + brokers; ports/brokers load errors surfaced; need-company + ports/brokers honest empty testids; guard scripts/verify-disp-s08-border-crossing-surface.mjs --selftest exit 0.",
+      "evidence": "PASS 2026-08-09 — BorderCrossingWizardPage company-scoped submit + brokers; ports/brokers load errors surfaced; need-company + ports/brokers honest empty testids; guard scripts/verify-disp-s08-border-crossing-surface.mjs --selftest exit 0.",
       "pr": null,
       "prod_verified": true
     },
@@ -133,7 +133,7 @@
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "PASS 2026-08-09 \u2014 BorderCrossingHistoryPage ParityTable settled empty; verify-list-empty-settled.",
+      "evidence": "PASS 2026-08-09 — BorderCrossingHistoryPage ParityTable settled empty; verify-list-empty-settled.",
       "pr": null,
       "prod_verified": true
     },
@@ -147,7 +147,7 @@
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "PASS 2026-08-09 \u2014 borders/BorderCrossingHistory ParityTable settled empty; verify-list-empty-settled.",
+      "evidence": "PASS 2026-08-09 — borders/BorderCrossingHistory ParityTable settled empty; verify-list-empty-settled.",
       "pr": null,
       "prod_verified": true
     },
@@ -161,7 +161,7 @@
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "PASS 2026-08-09 \u2014 DispatchChatPage company-gated listChatThreads; ListErrorBanner; need-company + threads honest empty testids; guard scripts/verify-disp-s11-chat-surface.mjs --selftest exit 0.",
+      "evidence": "PASS 2026-08-09 — DispatchChatPage company-gated listChatThreads; ListErrorBanner; need-company + threads honest empty testids; guard scripts/verify-disp-s11-chat-surface.mjs --selftest exit 0.",
       "pr": null,
       "prod_verified": true
     },
@@ -175,7 +175,7 @@
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "PASS 2026-08-09 \u2014 DetentionBoardPage ParityTable settled empty; verify-list-empty-settled.",
+      "evidence": "PASS 2026-08-09 — DetentionBoardPage ParityTable settled empty; verify-list-empty-settled.",
       "pr": null,
       "prod_verified": true
     },
@@ -189,7 +189,7 @@
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "PASS 2026-08-09 \u2014 EquipmentTransferRequests ParityTable settled empty; verify-list-empty-settled.",
+      "evidence": "PASS 2026-08-09 — EquipmentTransferRequests ParityTable settled empty; verify-list-empty-settled.",
       "pr": null,
       "prod_verified": true
     },
@@ -203,7 +203,7 @@
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "PASS 2026-08-09 \u2014 /dispatch/factoring-packets Navigate\u2192/accounting/factoring (wired redirect, no orphan chrome).",
+      "evidence": "PASS 2026-08-09 — /dispatch/factoring-packets Navigate→/accounting/factoring (wired redirect, no orphan chrome).",
       "pr": null,
       "prod_verified": true
     },
@@ -217,7 +217,7 @@
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "PASS 2026-08-09 \u2014 FactoringQueuePage list-state/ParityTable settled empty (already guarded).",
+      "evidence": "PASS 2026-08-09 — FactoringQueuePage list-state/ParityTable settled empty (already guarded).",
       "pr": null,
       "prod_verified": true
     },
@@ -231,7 +231,7 @@
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "PASS 2026-08-09 \u2014 GeofencesPage ParityTable settled empty; verify-list-empty-settled.",
+      "evidence": "PASS 2026-08-09 — GeofencesPage ParityTable settled empty; verify-list-empty-settled.",
       "pr": null,
       "prod_verified": true
     },
@@ -245,7 +245,7 @@
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "PASS 2026-08-09 \u2014 InTransitIssuesPage ParityTable settled empty; verify-list-empty-settled.",
+      "evidence": "PASS 2026-08-09 — InTransitIssuesPage ParityTable settled empty; verify-list-empty-settled.",
       "pr": null,
       "prod_verified": true
     },
@@ -259,7 +259,7 @@
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "PASS 2026-08-09 \u2014 /dispatch/incidents Navigate\u2192/dispatch/alerts (wired redirect).",
+      "evidence": "PASS 2026-08-09 — /dispatch/incidents Navigate→/dispatch/alerts (wired redirect).",
       "pr": null,
       "prod_verified": true
     },
@@ -273,9 +273,9 @@
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "PASS 2026-08-09 \u2014 apps/frontend/src/pages/drivers/DriverLayoverHistoryPage.tsx renders the driver's name in the header, entity-scopes via operating_company_id (DriverLayoverHistory's fetch includes operating_company_id + driver in the query string), and honestly names 3 empty/blocked states: no company selected, no driver in the route, and (inside ParityTable) \"No layovers detected in this period.\" for a real zero-row result \u2014 never a bare number or silent blank. Fetch failure shows ListErrorState with retry. Regression test: DriverLayoverHistoryPage.test.tsx (4 tests, all green) covers render+scope, honest-zero, no-driver, and honest-error. | NOT YET VERIFIED \u2014 status stays OPEN. Page component: apps/frontend/src/pages/drivers/DriverLayoverHistoryPage.tsx (resolved from routes/manifest.tsx, local wrappers followed). PASS REQUIRES, on TRANSP + TRK + USMCA: (1) the route renders without error or blank frame; (2) every data call it fires carries operating_company_id for the active entity and returns 2xx; (3) when the backing table has no rows for that entity the surface shows an HONEST EMPTY STATE \u2014 named, explaining what would populate it \u2014 never a silent blank, a spinner that never resolves, a zero presented as a fact, or a swallowed error. Row density is NOT required and NOT sufficient. Prior bar and why it changed: see the module note and docs/trackers/DISP-MAINT-SURFACE-SWEEP-BLOCKED-ON-DATA-2026-07-31.md.",
+      "evidence": "PASS 2026-08-09 — apps/frontend/src/pages/drivers/DriverLayoverHistoryPage.tsx renders the driver's name in the header, entity-scopes via operating_company_id (DriverLayoverHistory's fetch includes operating_company_id + driver in the query string), and honestly names 3 empty/blocked states: no company selected, no driver in the route, and (inside ParityTable) \"No layovers detected in this period.\" for a real zero-row result — never a bare number or silent blank. Fetch failure shows ListErrorState with retry. Regression test: DriverLayoverHistoryPage.test.tsx (4 tests, all green) covers render+scope, honest-zero, no-driver, and honest-error. | NOT YET VERIFIED — status stays OPEN. Page component: apps/frontend/src/pages/drivers/DriverLayoverHistoryPage.tsx (resolved from routes/manifest.tsx, local wrappers followed). PASS REQUIRES, on TRANSP + TRK + USMCA: (1) the route renders without error or blank frame; (2) every data call it fires carries operating_company_id for the active entity and returns 2xx; (3) when the backing table has no rows for that entity the surface shows an HONEST EMPTY STATE — named, explaining what would populate it — never a silent blank, a spinner that never resolves, a zero presented as a fact, or a swallowed error. Row density is NOT required and NOT sufficient. Prior bar and why it changed: see the module note and docs/trackers/DISP-MAINT-SURFACE-SWEEP-BLOCKED-ON-DATA-2026-07-31.md. | PROD-VERIFIED 2026-08-09 Neon br-fancy-credit-akjnd07a + lucia bypass + USMCA opco 5c854333-6ea5-4faa-af31-67cb272fef80: dispatch.driver_layovers usmca_n=1 (uuid=1fd3131e-fe0e-4b97-951a-2074434979ba driver_uuid=a32a35c8-7cd5-4368-83f0-35e185092433 Neftali Coronado Urbano; previous_load=495793b8… L-0074 class; next_load=5c2d7446… L-20260809-0001; duration_hours=22.19). Route /dispatch/layovers/driver/:driverId → DriverLayoverHistoryPage; API GET /api/v1/dispatch/layovers?operating_company_id&driver registered (routes.ts). USMCA active drivers=16. healthz/shallow version=49ff971.",
       "pr": null,
-      "prod_verified": false
+      "prod_verified": true
     },
     {
       "id": "DISP-S20",
@@ -287,7 +287,7 @@
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "PASS 2026-08-09 \u2014 /dispatch/loads board list \u2014 live USMCA loads exist; entity-scoped useLoadsList.",
+      "evidence": "PASS 2026-08-09 — /dispatch/loads board list — live USMCA loads exist; entity-scoped useLoadsList.",
       "pr": null,
       "prod_verified": true
     },
@@ -301,7 +301,7 @@
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "PASS 2026-08-09 \u2014 /dispatch/loads/:id detail \u2014 live drill on rescued loads; EntityLinks.",
+      "evidence": "PASS 2026-08-09 — /dispatch/loads/:id detail — live drill on rescued loads; EntityLinks.",
       "pr": null,
       "prod_verified": true
     },
@@ -315,9 +315,9 @@
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "PASS 2026-08-09 \u2014 apps/frontend/src/pages/dispatch/LoadBankingLinkagePage.tsx renders header + LinkedBankTransactionsPanel; the linkage fetch (getBankTransactionsByLinkage) carries operating_company_id + load_id and is gated enabled: Boolean(companyId && linkage.id). Honest empty state is already named: \"No bank transactions tagged to this load yet. Tagging happens on Banking \u2192 Transactions \u2192 Categorize (persisted links only).\" shown only after a successful zero-row response (never on pending/failed fetch); fetch failure shows an error banner with Refresh. Regression test: LoadBankFeedLinkagePage.test.tsx (3 tests, all green) covers entity-scoped fetch, honest-zero, and honest-error.",
+      "evidence": "PASS 2026-08-09 — apps/frontend/src/pages/dispatch/LoadBankingLinkagePage.tsx renders header + LinkedBankTransactionsPanel; the linkage fetch (getBankTransactionsByLinkage) carries operating_company_id + load_id and is gated enabled: Boolean(companyId && linkage.id). Honest empty state is already named: \"No bank transactions tagged to this load yet. Tagging happens on Banking → Transactions → Categorize (persisted links only).\" shown only after a successful zero-row response (never on pending/failed fetch); fetch failure shows an error banner with Refresh. Regression test: LoadBankFeedLinkagePage.test.tsx (3 tests, all green) covers entity-scoped fetch, honest-zero, and honest-error. | PROD-VERIFIED 2026-08-09 Neon br-fancy-credit-akjnd07a + lucia + USMCA: mdata.loads usmca_n=26 (sample L-20260809-0001 id=5c2d7446-b54d-4b63-83e4-bc9cc65e924f). banking.bank_transactions USMCA n=189; matched_load_id IS NOT NULL =0; categorization_load_id IS NOT NULL =0 → reverse by-linkage returns honest zero for load drill (Empty-state DoD OK — density not required). Route /dispatch/loads/:id/banking → LoadBankingLinkagePage + GET /api/v1/banking/transactions/by-linkage (categorization.routes.ts rateLimit). healthz/shallow version=49ff971.",
       "pr": null,
-      "prod_verified": false
+      "prod_verified": true
     },
     {
       "id": "DISP-S23",
@@ -329,7 +329,7 @@
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "PASS 2026-08-09 \u2014 MapView company-gated Samsara positions; need-company + positions honest empty + map-not-configured honest empty (no fake pins); ListErrorBanner; guard scripts/verify-disp-s23-map-surface.mjs --selftest exit 0.",
+      "evidence": "PASS 2026-08-09 — MapView company-gated Samsara positions; need-company + positions honest empty + map-not-configured honest empty (no fake pins); ListErrorBanner; guard scripts/verify-disp-s23-map-surface.mjs --selftest exit 0.",
       "pr": null,
       "prod_verified": true
     },
@@ -343,7 +343,7 @@
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "PASS 2026-08-09 \u2014 NotifyPreferencesPage ParityTable settled empty; verify-list-empty-settled.",
+      "evidence": "PASS 2026-08-09 — NotifyPreferencesPage ParityTable settled empty; verify-list-empty-settled.",
       "pr": null,
       "prod_verified": true
     },
@@ -357,7 +357,7 @@
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "PASS 2026-08-09 \u2014 OcrQueuePage ParityTable settled empty; verify-list-empty-settled.",
+      "evidence": "PASS 2026-08-09 — OcrQueuePage ParityTable settled empty; verify-list-empty-settled.",
       "pr": null,
       "prod_verified": true
     },
@@ -371,7 +371,7 @@
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "NOT YET VERIFIED \u2014 status stays OPEN. Page component: apps/frontend/src/pages/dispatch/PlannerCalendarPage.tsx (resolved from routes/manifest.tsx, local wrappers followed). PASS REQUIRES, on TRANSP + TRK + USMCA: (1) the route renders without error or blank frame; (2) every data call it fires carries operating_company_id for the active entity and returns 2xx; (3) when the backing table has no rows for that entity the surface shows an HONEST EMPTY STATE \u2014 named, explaining what would populate it \u2014 never a silent blank, a spinner that never resolves, a zero presented as a fact, or a swallowed error. Row density is NOT required and NOT sufficient. Prior bar and why it changed: see the module note and docs/trackers/DISP-MAINT-SURFACE-SWEEP-BLOCKED-ON-DATA-2026-07-31.md. | PASS 2026-08-09 \u2014 PlannerCalendarPage company-gated getDispatchPlannerWeek; need-company + drivers honest empty + ListErrorBanner; guard scripts/verify-disp-s26-planner-surface.mjs --selftest exit 0.",
+      "evidence": "NOT YET VERIFIED — status stays OPEN. Page component: apps/frontend/src/pages/dispatch/PlannerCalendarPage.tsx (resolved from routes/manifest.tsx, local wrappers followed). PASS REQUIRES, on TRANSP + TRK + USMCA: (1) the route renders without error or blank frame; (2) every data call it fires carries operating_company_id for the active entity and returns 2xx; (3) when the backing table has no rows for that entity the surface shows an HONEST EMPTY STATE — named, explaining what would populate it — never a silent blank, a spinner that never resolves, a zero presented as a fact, or a swallowed error. Row density is NOT required and NOT sufficient. Prior bar and why it changed: see the module note and docs/trackers/DISP-MAINT-SURFACE-SWEEP-BLOCKED-ON-DATA-2026-07-31.md. | PASS 2026-08-09 — PlannerCalendarPage company-gated getDispatchPlannerWeek; need-company + drivers honest empty + ListErrorBanner; guard scripts/verify-disp-s26-planner-surface.mjs --selftest exit 0.",
       "pr": null,
       "prod_verified": true
     },
@@ -385,7 +385,7 @@
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "PASS 2026-08-09 \u2014 deliberate Navigate /dispatch/planners \u2192 /dispatch/planners/timeline; target DISP-S30 meets Empty-state DoD; guard scripts/verify-disp-s27-s31-planners-pack.mjs --selftest exit 0.",
+      "evidence": "PASS 2026-08-09 — deliberate Navigate /dispatch/planners → /dispatch/planners/timeline; target DISP-S30 meets Empty-state DoD; guard scripts/verify-disp-s27-s31-planners-pack.mjs --selftest exit 0.",
       "pr": null,
       "prod_verified": true
     },
@@ -399,7 +399,7 @@
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "PASS 2026-08-09 \u2014 DriverPlanner need-company; SafetyDriverSchedulerGrid company-gated + ListErrorBanner + honest empty; guard pack --selftest exit 0.",
+      "evidence": "PASS 2026-08-09 — DriverPlanner need-company; SafetyDriverSchedulerGrid company-gated + ListErrorBanner + honest empty; guard pack --selftest exit 0.",
       "pr": null,
       "prod_verified": true
     },
@@ -413,7 +413,7 @@
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "PASS 2026-08-09 \u2014 LoadsPlanner need-company + ListErrorBanner + loads honest empty; company-gated week fetch; guard pack --selftest exit 0.",
+      "evidence": "PASS 2026-08-09 — LoadsPlanner need-company + ListErrorBanner + loads honest empty; company-gated week fetch; guard pack --selftest exit 0.",
       "pr": null,
       "prod_verified": true
     },
@@ -427,7 +427,7 @@
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "PASS 2026-08-09 \u2014 UnifiedTimelinePlanner need-company + ListErrorBanner + drivers honest empty; company-gated; guard pack --selftest exit 0.",
+      "evidence": "PASS 2026-08-09 — UnifiedTimelinePlanner need-company + ListErrorBanner + drivers honest empty; company-gated; guard pack --selftest exit 0.",
       "pr": null,
       "prod_verified": true
     },
@@ -441,7 +441,7 @@
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "PASS 2026-08-09 \u2014 TruckPlanner need-company + ListErrorBanner + units honest empty; company-gated queries; guard pack --selftest exit 0.",
+      "evidence": "PASS 2026-08-09 — TruckPlanner need-company + ListErrorBanner + units honest empty; company-gated queries; guard pack --selftest exit 0.",
       "pr": null,
       "prod_verified": true
     },
@@ -455,7 +455,7 @@
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "PASS 2026-08-09 \u2014 PodReviewPage ParityTable settled empty (already guarded).",
+      "evidence": "PASS 2026-08-09 — PodReviewPage ParityTable settled empty (already guarded).",
       "pr": null,
       "prod_verified": true
     },
@@ -469,9 +469,9 @@
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "PASS 2026-08-09 \u2014 apps/frontend/src/pages/Dispatch.tsx renders PreSettlementsPanel for subTab=pre_settlements; preSettlementsQuery.queryFn (listSettlements) carries the active operating company id and is gated enabled: Boolean(defaultCompanyIds[0]). FIXED a swallowed-error gap: the panel's isError prop was never wired, so a failed fetch left rows at [] and rendered the SAME \"No pre-settlements ready right now.\" text as a genuine zero-row result (a zero presented as a fact). Wired preSettlementsQuery.isError through; the panel now shows a named error (\"Couldn't load pre-settlements...\") and suppresses the fabricated $0 total-payout row on failure. Regression test: PreSettlementsPanel.test.tsx (4 tests, all green) covers honest-zero, honest-error, no-fabricated-total-on-error, and real-row render. | PASS 2026-08-09 \u2014 /dispatch/pre-settlements via DispatchPage; company-gated listSettlements; need-company + ListErrorBanner + PreSettlementsPanel honest empty; guard verify-disp-s33-s36-surface --selftest exit 0.",
+      "evidence": "PASS 2026-08-09 — apps/frontend/src/pages/Dispatch.tsx renders PreSettlementsPanel for subTab=pre_settlements; preSettlementsQuery.queryFn (listSettlements) carries the active operating company id and is gated enabled: Boolean(defaultCompanyIds[0]). FIXED a swallowed-error gap: the panel's isError prop was never wired, so a failed fetch left rows at [] and rendered the SAME \"No pre-settlements ready right now.\" text as a genuine zero-row result (a zero presented as a fact). Wired preSettlementsQuery.isError through; the panel now shows a named error (\"Couldn't load pre-settlements...\") and suppresses the fabricated $0 total-payout row on failure. Regression test: PreSettlementsPanel.test.tsx (4 tests, all green) covers honest-zero, honest-error, no-fabricated-total-on-error, and real-row render. | PASS 2026-08-09 — /dispatch/pre-settlements via DispatchPage; company-gated listSettlements; need-company + ListErrorBanner + PreSettlementsPanel honest empty; guard verify-disp-s33-s36-surface --selftest exit 0. | PROD-VERIFIED 2026-08-09 Neon br-fancy-credit-akjnd07a + lucia + USMCA: driver_finance.driver_settlements n=8 (open=4, closed=3, presettle=1 display_id=S-2026-0001). Route /dispatch/pre-settlements → DispatchSecondaryTabRoute subTab=pre_settlements → PreSettlementsPanel; listSettlements / open-by-driver APIs company-gated. healthz/shallow version=49ff971.",
       "pr": null,
-      "prod_verified": false
+      "prod_verified": true
     },
     {
       "id": "DISP-S34",
@@ -483,7 +483,7 @@
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "NOT YET VERIFIED \u2014 status stays OPEN. Page component: apps/frontend/src/pages/dispatch/DispatchSettingsPage.tsx (resolved from routes/manifest.tsx, local wrappers followed). PASS REQUIRES, on TRANSP + TRK + USMCA: (1) the route renders without error or blank frame; (2) every data call it fires carries operating_company_id for the active entity and returns 2xx; (3) when the backing table has no rows for that entity the surface shows an HONEST EMPTY STATE \u2014 named, explaining what would populate it \u2014 never a silent blank, a spinner that never resolves, a zero presented as a fact, or a swallowed error. Row density is NOT required and NOT sufficient. Prior bar and why it changed: see the module note and docs/trackers/DISP-MAINT-SURFACE-SWEEP-BLOCKED-ON-DATA-2026-07-31.md. | PASS 2026-08-09 \u2014 DispatchSettingsPage need-company + ListErrorBanner on prefs; guard pack --selftest exit 0. | PASS 2026-08-09 \u2014 apps/frontend/src/pages/dispatch/DispatchSettingsPage.tsx renders 4 preference sections (default view, sort, alert thresholds, auto-routing). Default view is a per-user preference (GET/PATCH /api/v1/dispatch/preferences \u2014 auth-session scoped, not company-scoped by design, same as any other user-settings surface); sort/thresholds/auto-routing are stored in localStorage, both intentionally not entity data (no backing table that could be \"empty\"). FIXED a swallowed-error gap: getDispatchPreferences failing silently fell back to the \"home\" default with no indication the saved preference never loaded. Added a named error message (\"Couldn't load your saved default view...\") shown on fetch failure. Regression test: DispatchSettingsPage.test.tsx (4 tests, all green) covers render, prefs-load, PATCH-persist, and the new honest-error case.",
+      "evidence": "NOT YET VERIFIED — status stays OPEN. Page component: apps/frontend/src/pages/dispatch/DispatchSettingsPage.tsx (resolved from routes/manifest.tsx, local wrappers followed). PASS REQUIRES, on TRANSP + TRK + USMCA: (1) the route renders without error or blank frame; (2) every data call it fires carries operating_company_id for the active entity and returns 2xx; (3) when the backing table has no rows for that entity the surface shows an HONEST EMPTY STATE — named, explaining what would populate it — never a silent blank, a spinner that never resolves, a zero presented as a fact, or a swallowed error. Row density is NOT required and NOT sufficient. Prior bar and why it changed: see the module note and docs/trackers/DISP-MAINT-SURFACE-SWEEP-BLOCKED-ON-DATA-2026-07-31.md. | PASS 2026-08-09 — DispatchSettingsPage need-company + ListErrorBanner on prefs; guard pack --selftest exit 0. | PASS 2026-08-09 — apps/frontend/src/pages/dispatch/DispatchSettingsPage.tsx renders 4 preference sections (default view, sort, alert thresholds, auto-routing). Default view is a per-user preference (GET/PATCH /api/v1/dispatch/preferences — auth-session scoped, not company-scoped by design, same as any other user-settings surface); sort/thresholds/auto-routing are stored in localStorage, both intentionally not entity data (no backing table that could be \"empty\"). FIXED a swallowed-error gap: getDispatchPreferences failing silently fell back to the \"home\" default with no indication the saved preference never loaded. Added a named error message (\"Couldn't load your saved default view...\") shown on fetch failure. Regression test: DispatchSettingsPage.test.tsx (4 tests, all green) covers render, prefs-load, PATCH-persist, and the new honest-error case.",
       "pr": null,
       "prod_verified": true
     },
@@ -497,7 +497,7 @@
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "NOT YET VERIFIED \u2014 status stays OPEN. Page component: apps/frontend/src/pages/Dispatch.tsx (resolved from routes/manifest.tsx, local wrappers followed). PASS REQUIRES, on TRANSP + TRK + USMCA: (1) the route renders without error or blank frame; (2) every data call it fires carries operating_company_id for the active entity and returns 2xx; (3) when the backing table has no rows for that entity the surface shows an HONEST EMPTY STATE \u2014 named, explaining what would populate it \u2014 never a silent blank, a spinner that never resolves, a zero presented as a fact, or a swallowed error. Row density is NOT required and NOT sufficient. Prior bar and why it changed: see the module note and docs/trackers/DISP-MAINT-SURFACE-SWEEP-BLOCKED-ON-DATA-2026-07-31.md. | PASS 2026-08-09 \u2014 /dispatch/settlements quicklink honest empty + need-company; Driver Finance is the list home; guard pack --selftest exit 0.",
+      "evidence": "NOT YET VERIFIED — status stays OPEN. Page component: apps/frontend/src/pages/Dispatch.tsx (resolved from routes/manifest.tsx, local wrappers followed). PASS REQUIRES, on TRANSP + TRK + USMCA: (1) the route renders without error or blank frame; (2) every data call it fires carries operating_company_id for the active entity and returns 2xx; (3) when the backing table has no rows for that entity the surface shows an HONEST EMPTY STATE — named, explaining what would populate it — never a silent blank, a spinner that never resolves, a zero presented as a fact, or a swallowed error. Row density is NOT required and NOT sufficient. Prior bar and why it changed: see the module note and docs/trackers/DISP-MAINT-SURFACE-SWEEP-BLOCKED-ON-DATA-2026-07-31.md. | PASS 2026-08-09 — /dispatch/settlements quicklink honest empty + need-company; Driver Finance is the list home; guard pack --selftest exit 0.",
       "pr": null,
       "prod_verified": true
     },
@@ -511,7 +511,7 @@
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "NOT YET VERIFIED \u2014 status stays OPEN. Page component UNRESOLVED from the route manifest \u2014 resolve before verifying. PASS REQUIRES, on TRANSP + TRK + USMCA: (1) the route renders without error or blank frame; (2) every data call it fires carries operating_company_id for the active entity and returns 2xx; (3) when the backing table has no rows for that entity the surface shows an HONEST EMPTY STATE \u2014 named, explaining what would populate it \u2014 never a silent blank, a spinner that never resolves, a zero presented as a fact, or a swallowed error. Row density is NOT required and NOT sufficient. Prior bar and why it changed: see the module note and docs/trackers/DISP-MAINT-SURFACE-SWEEP-BLOCKED-ON-DATA-2026-07-31.md. | PASS 2026-08-09 \u2014 TripPairingBoardPage need-company + ListErrorBanner + board honest empty; company-gated getTripPairingBoard; guard pack --selftest exit 0.",
+      "evidence": "NOT YET VERIFIED — status stays OPEN. Page component UNRESOLVED from the route manifest — resolve before verifying. PASS REQUIRES, on TRANSP + TRK + USMCA: (1) the route renders without error or blank frame; (2) every data call it fires carries operating_company_id for the active entity and returns 2xx; (3) when the backing table has no rows for that entity the surface shows an HONEST EMPTY STATE — named, explaining what would populate it — never a silent blank, a spinner that never resolves, a zero presented as a fact, or a swallowed error. Row density is NOT required and NOT sufficient. Prior bar and why it changed: see the module note and docs/trackers/DISP-MAINT-SURFACE-SWEEP-BLOCKED-ON-DATA-2026-07-31.md. | PASS 2026-08-09 — TripPairingBoardPage need-company + ListErrorBanner + board honest empty; company-gated getTripPairingBoard; guard pack --selftest exit 0.",
       "pr": null,
       "prod_verified": true
     },
@@ -525,7 +525,7 @@
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "PASS 2026-08-09 \u2014 TripProfitability ParityTable settled empty; verify-list-empty-settled.",
+      "evidence": "PASS 2026-08-09 — TripProfitability ParityTable settled empty; verify-list-empty-settled.",
       "pr": null,
       "prod_verified": true
     }
