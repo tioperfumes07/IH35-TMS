@@ -50,7 +50,7 @@
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
       "evidence": "Route /fleet/map registered as ProtectedRoute wrapping PreserveSearchNavigate; it redirects to canonical /dispatch/map while preserving query/search params, so fleet map bookmarks resolve without a dead end.",
-      "pr": "#TBD",
+      "pr": "#5291",
       "prod_verified": false
     },
     {
