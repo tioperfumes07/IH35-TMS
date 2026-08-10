@@ -56,7 +56,7 @@ export async function listMaintenanceShopHub(
   options: ListMaintenanceShopHubOptions
 ): Promise<{ total: number; items: MaintenanceShopHubRow[] }> {
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
 
     const hasBillLink = await columnExists(client, "accounting", "bills", "linked_work_order_uuid");
     const hasExpenseLink = await columnExists(client, "accounting", "expenses", "linked_work_order_uuid");

@@ -83,7 +83,7 @@ export async function registerEquipmentLogRoutes(app: FastifyInstance) {
       // equipment history never leaks (mirrors mdata/equipment.routes.ts).
       const scopedCompanyId = await resolveOperatingCompanyId(client, authUser.uuid, operating_company_id);
       if (!scopedCompanyId) return [];
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [scopedCompanyId]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [scopedCompanyId]);
       values.push(scopedCompanyId);
       const ownerLeasedIdx = values.length;
       filters.push(
@@ -223,7 +223,7 @@ export async function registerEquipmentLogRoutes(app: FastifyInstance) {
       // endpoint above); resolve the company from the caller's context.
       const scopedCompanyId = await resolveOperatingCompanyId(client, authUser.uuid);
       if (!scopedCompanyId) return null;
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [scopedCompanyId]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [scopedCompanyId]);
       const res = await client.query(
         `
           SELECT

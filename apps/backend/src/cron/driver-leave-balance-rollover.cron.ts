@@ -35,7 +35,7 @@ export async function runDriverLeaveBalanceRolloverTick(targetYear = new Date().
 
     for (const company of companies.rows) {
       assertTenantContext(String(company.id ?? ""), CRON_NAME);
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [company.id]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [company.id]);
 
       // A company with no policy row cannot allocate — skip it (nothing to roll into).
       const policyRes = await client.query<{ ok: boolean }>(

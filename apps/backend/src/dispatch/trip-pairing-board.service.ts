@@ -49,7 +49,7 @@ export type TripPairingBoard = {
 };
 
 export async function getTripPairingBoard(client: DbClient, operatingCompanyId: string, asOf: Date): Promise<TripPairingBoard> {
-  await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+  await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
 
   // Active trucks (entity-scoped). REAL active fleet only = status 'InService' — the same universe the
   // fleet/maintenance KPI uses (dashboard-kpis.routes.ts: active_units = FILTER status='InService').

@@ -48,7 +48,7 @@ export async function registerMdataAccountsRoutes(app: FastifyInstance) {
     const rows = await withCurrentUser(authUser.uuid, async (client) => {
       const resolvedOperatingCompanyId = await resolveOperatingCompanyId(client, authUser.uuid, operating_company_id);
       if (!resolvedOperatingCompanyId) return null;
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [resolvedOperatingCompanyId]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [resolvedOperatingCompanyId]);
 
       const values: unknown[] = [resolvedOperatingCompanyId];
       const filters = ["operating_company_id = $1::uuid"];
@@ -92,7 +92,7 @@ export async function registerMdataAccountsRoutes(app: FastifyInstance) {
     const row = await withCurrentUser(authUser.uuid, async (client) => {
       const resolvedOperatingCompanyId = await resolveOperatingCompanyId(client, authUser.uuid, parsedQuery.data.operating_company_id);
       if (!resolvedOperatingCompanyId) return null;
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [resolvedOperatingCompanyId]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [resolvedOperatingCompanyId]);
       const res = await client.query(
         `
           SELECT id, operating_company_id, qbo_id, name, full_qualified_name, account_type, account_sub_type, active, mirrored_at, created_at, updated_at
@@ -139,7 +139,7 @@ export async function registerMdataAccountsRoutes(app: FastifyInstance) {
     const updated = await withCurrentUser(authUser.uuid, async (client) => {
       const resolvedOperatingCompanyId = await resolveOperatingCompanyId(client, authUser.uuid, parsedQuery.data.operating_company_id);
       if (!resolvedOperatingCompanyId) return null;
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [resolvedOperatingCompanyId]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [resolvedOperatingCompanyId]);
       values.push(parsedParams.data.id, resolvedOperatingCompanyId);
       const res = await client.query(
         `

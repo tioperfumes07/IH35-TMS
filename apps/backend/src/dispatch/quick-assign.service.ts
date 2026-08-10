@@ -28,7 +28,7 @@ export async function quickAssignLoad(userId: string, role: string, input: Quick
     // passes the request body straight through — and it both SETS the RLS scope and drives every
     // predicate below, so without this the caller chooses the scope RLS enforces. Assert first.
     await assertCompanyMembership(client, userId, input.operating_company_id);
-    await client.query("SELECT set_config('app.operating_company_id', $1, true)", [input.operating_company_id]);
+    await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [input.operating_company_id]);
     await client.query("BEGIN");
     try {
       const loadRes = await client.query(
@@ -284,7 +284,7 @@ export async function completeQuicksaveDraft(
   return withCurrentUser(userId, async (client) => {
     // ENTITY GATE (MDATA-F09 class) — input.operating_company_id is caller-supplied and sets the RLS scope.
     await assertCompanyMembership(client, userId, input.operating_company_id);
-    await client.query("SELECT set_config('app.operating_company_id', $1, true)", [input.operating_company_id]);
+    await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [input.operating_company_id]);
     const patch = input.fields ?? {};
     const unitId = typeof patch.assigned_unit_id === "string" ? patch.assigned_unit_id : null;
     const trailerId = typeof patch.assigned_secondary_driver_id === "string" ? patch.assigned_secondary_driver_id : null;
@@ -371,7 +371,7 @@ export async function listQuicksaveDrafts(userId: string, operatingCompanyId: st
   return withCurrentUser(userId, async (client) => {
     // ENTITY GATE (MDATA-F09 class) — operatingCompanyId is caller-supplied and sets the RLS scope.
     await assertCompanyMembership(client, userId, operatingCompanyId);
-    await client.query("SELECT set_config('app.operating_company_id', $1, true)", [operatingCompanyId]);
+    await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [operatingCompanyId]);
     const rows = await client.query(
       `
         SELECT id, load_number, assigned_primary_driver_id, assigned_unit_id, quicksave_pending_fields, updated_at
@@ -395,7 +395,7 @@ export async function getAssignmentHistory(userId: string, operatingCompanyId: s
     // enforces and RLS authorizes nothing. Same class as MDATA-F09; this one sits in a *.service.ts,
     // where the caller-scoped-GUC guard was not looking.
     await assertCompanyMembership(client, userId, operatingCompanyId);
-    await client.query("SELECT set_config('app.operating_company_id', $1, true)", [operatingCompanyId]);
+    await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [operatingCompanyId]);
 
     // Resolve DISPLAY NAMES here rather than shipping raw uuids to the client. `SELECT *` returned
     // previous_driver_id / new_driver_id as bare uuids, so LoadDetailDrawer rendered

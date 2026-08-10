@@ -22,7 +22,7 @@ async function persistJournalFailureAlert(operatingCompanyId: string, journalEnt
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     const existsRes = await client.query(`SELECT to_regclass('qbo.sync_alerts') IS NOT NULL AS ok`);
     if (existsRes.rows[0]?.ok) {
       await client.query(
@@ -74,7 +74,7 @@ async function persistImportRefusalAlert(operatingCompanyId: string, journalEntr
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     const existsRes = await client.query(`SELECT to_regclass('qbo.sync_alerts') IS NOT NULL AS ok`);
     if (existsRes.rows[0]?.ok) {
       await client.query(
@@ -114,7 +114,7 @@ async function persistImportRefusalAlert(operatingCompanyId: string, journalEntr
 async function writePushSkippedBreadcrumb(operatingCompanyId: string, journalEntryId: string) {
   try {
     await withLuciaBypass(async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
       await appendCrudAudit(
         client,
         P0_SYSTEM_ACTOR,
@@ -140,7 +140,7 @@ async function emitJournalOutbox(operatingCompanyId: string, journalEntryId: str
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     await client.query(`INSERT INTO outbox.events (event_type, payload, next_retry_at) VALUES ($1, $2::jsonb, now())`, [
       "accounting.journal_entry_pushed_to_qbo",
       JSON.stringify({
@@ -160,7 +160,7 @@ async function emitJournalOutbox(operatingCompanyId: string, journalEntryId: str
 export async function pushJournalEntryToQuickBooksFromQueue(job: { operating_company_id: string; entity_id: string }) {
   const oc = job.operating_company_id;
   const headerProbe = await withLuciaBypass(async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [oc]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [oc]);
     return client.query<{
       qbo_journal_entry_id: string | null;
       qbo_sync_pending: boolean;
@@ -182,7 +182,7 @@ export async function pushJournalEntryToQuickBooksFromQueue(job: { operating_com
   // ── LAYER 1 + LAYER 2 via the SHARED gate — evaluated BEFORE getValidAccessToken so a disabled/refused
   // entity fetches no token and makes ZERO HTTP. source_system comes from the probe (no extra query). ────
   const gate = await withLuciaBypass(async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [oc]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [oc]);
     return evaluateJeQboPushGate(client, oc, job.entity_id, { sourceSystem: probe?.source_system ?? "tms" });
   });
   // LAYER 2 — structural refusal (independent of the flag): a QBO-origin / imported JE must NEVER
@@ -208,7 +208,7 @@ export async function pushJournalEntryToQuickBooksFromQueue(job: { operating_com
 
   if (ctx.header.status === "voided") {
     await withLuciaBypass(async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [oc]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [oc]);
       await client.query(
         `
           UPDATE accounting.journal_entries

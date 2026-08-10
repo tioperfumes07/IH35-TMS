@@ -100,7 +100,7 @@ export async function createSubscription(data: CreateSubscriptionInput, userId: 
   });
 
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [data.operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [data.operatingCompanyId]);
     const res = await client.query<{ uuid: string }>(
       `
         INSERT INTO reports.scheduled_subscriptions (
@@ -281,7 +281,7 @@ export async function markSubscriptionSent(
 ): Promise<void> {
   const nextAt = computeNextScheduledAt(cadence, sentAt);
   await withLuciaBypass(async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     await client.query(
       `
         UPDATE reports.scheduled_subscriptions
@@ -303,7 +303,7 @@ export async function appendDeliveryLog(input: {
   recipients: string[];
 }): Promise<void> {
   await withLuciaBypass(async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [input.operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operatingCompanyId]);
     await client.query(
       `
         INSERT INTO reports.scheduled_delivery_log (subscription_uuid, status, error_message, recipients)

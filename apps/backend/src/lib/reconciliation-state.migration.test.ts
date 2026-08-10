@@ -43,7 +43,7 @@ describeIntegration("reconciliation state migration", () => {
 
   it("allows tenant-scoped insert and enforces non-negative failure streak", async () => {
     const key = await withCurrentUser(TEST_OWNER_USER_ID, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
       await client.query(
         `
           INSERT INTO _system.reconciliation_state (

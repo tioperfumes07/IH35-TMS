@@ -167,7 +167,7 @@ export async function registerDriverReturningDetectionRoutes(app: FastifyInstanc
       // wrong) for cross-entity ones. The safety signal — that the person was terminated, and the
       // severity — lives on the event row itself (e.severity), so it is preserved regardless.
       const opco = await resolveOperatingCompanyId(client, authUser.uuid, null);
-      if (opco) await client.query("SELECT set_config('app.operating_company_id', $1, true)", [opco]);
+      if (opco) await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [opco]);
       const detection = await findReturningDriverMatches(client, parsedBody.data);
       if (detection.returning_driver) {
         await appendCrudAudit(

@@ -6,7 +6,7 @@ type SqlClient = {
 };
 
 async function setCompanyScope(client: SqlClient, operatingCompanyId: string) {
-  await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+  await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
 }
 
 async function ensureQboVendorExists(client: SqlClient, operatingCompanyId: string, vendorId: string) {

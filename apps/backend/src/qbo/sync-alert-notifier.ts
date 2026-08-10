@@ -16,7 +16,7 @@ export async function notifyQboSyncDeadLetter(input: DeadLetterNotifyInput): Pro
   const alertDay = new Date().toISOString().slice(0, 10);
 
   return withLuciaBypass(async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [input.operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operatingCompanyId]);
 
     const throttleReg = await client.query(`SELECT to_regclass('qbo.sync_dead_letter_email_throttle') IS NOT NULL AS ok`);
     if (!throttleReg.rows[0]?.ok) {

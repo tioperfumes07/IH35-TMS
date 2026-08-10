@@ -64,7 +64,7 @@ describeIntegration("qbo sync-health latest_run reflects the master-data (CDC) s
     const { companyId: opco } = await ensureSecondEntityLoad();
 
     await withLuciaBypass(async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [opco]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [opco]);
       // No push-sync run should exist for this fresh entity.
       const pushRuns = await client.query<{ c: string }>(
         `SELECT COUNT(*)::text AS c FROM qbo.sync_runs WHERE operating_company_id = $1::uuid`,

@@ -11,7 +11,7 @@ let initialized = false;
 
 export async function runComplianceReminderTick(operatingCompanyId: string) {
   await withLuciaBypass(async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     const rulesRes = await client.query<{
       id: string;
       credential_type: string;

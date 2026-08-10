@@ -33,8 +33,8 @@ describeIntegration("FIN-21 prepaid purchase GL posting (real Postgres)", () => 
     await db.query("BEGIN");
     await db.query("SET LOCAL app.bypass_rls = 'lucia'");
     if (companyId) {
-      await db.query("SELECT set_config('app.operating_company_id', $1, true)", [companyId]);
-      await db.query("SELECT set_config('app.current_operating_company_id', $1, true)", [companyId]);
+      await db.query("SELECT set_config('app.operating_company_id', $1::text, true)", [companyId]);
+      await db.query("SELECT set_config('app.current_operating_company_id', $1::text, true)", [companyId]);
     }
     try { const out = await fn(db); await db.query("COMMIT"); return out; }
     catch (e) { await db.query("ROLLBACK").catch(() => {}); throw e; }

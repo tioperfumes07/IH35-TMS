@@ -167,7 +167,7 @@ export async function runQboCdcIngest(params: {
   let httpStatus = 200;
 
   await withLuciaBypass(async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [params.operating_company_id]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [params.operating_company_id]);
 
     const changedSince =
       params.changed_since_override_iso?.trim() ||

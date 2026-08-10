@@ -138,7 +138,7 @@ export async function registerDriverTeamRoutes(app: FastifyInstance) {
       // rosters never blend across operating companies. Resolve from the param or user context.
       const scopedCompanyId = await resolveOperatingCompanyId(client, user.uuid, parsedQuery.data.operating_company_id);
       if (!scopedCompanyId) return [];
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [scopedCompanyId]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [scopedCompanyId]);
       values.push(scopedCompanyId);
       filters.push(`t.operating_company_id = $${values.length}`);
       const whereClause = filters.length > 0 ? `WHERE ${filters.join(" AND ")}` : "";
@@ -189,7 +189,7 @@ export async function registerDriverTeamRoutes(app: FastifyInstance) {
       // companies. Scope to the user's current company.
       const scopedCompanyId = await resolveOperatingCompanyId(client, user.uuid);
       if (!scopedCompanyId) return null;
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [scopedCompanyId]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [scopedCompanyId]);
       const res = await client.query(
         `
           SELECT
@@ -340,7 +340,7 @@ export async function registerDriverTeamRoutes(app: FastifyInstance) {
       // another entity's team by id. Bind operating_company_id from the caller's company context.
       const scopedCompanyId = await resolveOperatingCompanyId(client, user.uuid);
       if (!scopedCompanyId) return null;
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [scopedCompanyId]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [scopedCompanyId]);
       const oldRes = await client.query(
         `SELECT * FROM mdata.driver_teams WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
         [parsedParams.data.id, scopedCompanyId]
@@ -396,7 +396,7 @@ export async function registerDriverTeamRoutes(app: FastifyInstance) {
       // company so an Owner can't deactivate another entity's team by id (RLS is role-scoped).
       const scopedCompanyId = await resolveOperatingCompanyId(client, user.uuid);
       if (!scopedCompanyId) return null;
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [scopedCompanyId]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [scopedCompanyId]);
       const res = await client.query(
         `
           UPDATE mdata.driver_teams
@@ -445,7 +445,7 @@ export async function registerDriverTeamRoutes(app: FastifyInstance) {
         // (RLS on mdata.driver_teams is role-scoped, not entity-scoped).
         const scopedCompanyId = await resolveOperatingCompanyId(client, user.uuid);
         if (!scopedCompanyId) return { error: "mdata_driver_team_not_found" as const };
-        await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [scopedCompanyId]);
+        await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [scopedCompanyId]);
         const teamRes = await client.query(
           `SELECT * FROM mdata.driver_teams WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
           [parsedParams.data.id, scopedCompanyId]

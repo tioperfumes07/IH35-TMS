@@ -133,7 +133,7 @@ function validationError(reply: FastifyReply, err: z.ZodError) {
 async function withCompany<T>(userId: string, companyId: string, fn: (client: DbClient) => Promise<T>) {
   await assertCompanyMembership(userId, companyId);
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [companyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [companyId]);
     return fn(client as DbClient);
   });
 }

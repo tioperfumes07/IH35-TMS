@@ -67,7 +67,7 @@ export async function sendReminders(tenantId: string, today: string) {
   const limitDate = toDateOnlyString(addDays(parseDateOnly(today), 7));
 
   await withLuciaBypass(async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [tenantId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [tenantId]);
     const rows = await client.query<ReminderCandidate>(
       `
         SELECT id::text, due_date::text

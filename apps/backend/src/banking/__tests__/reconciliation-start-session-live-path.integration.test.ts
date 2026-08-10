@@ -41,7 +41,7 @@ describeIntegration("BANK-ECON-04 reconciliation start-session live path (real P
   async function bypass<T>(fn: () => Promise<T>): Promise<T> {
     await db.query("BEGIN");
     await db.query("SET LOCAL app.bypass_rls = 'lucia'");
-    await db.query("SELECT set_config('app.operating_company_id', $1, true)", [companyId]);
+    await db.query("SELECT set_config('app.operating_company_id', $1::text, true)", [companyId]);
     try {
       const result = await fn();
       await db.query("COMMIT");

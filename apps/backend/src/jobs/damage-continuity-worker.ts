@@ -112,7 +112,7 @@ export async function runDamageContinuityTick(app: FastifyInstance): Promise<Dam
       const operatingCompanyId = String(companyRow.operating_company_id ?? "");
       if (!operatingCompanyId) continue;
       assertTenantContext(operatingCompanyId, "safety.damage_continuity_worker");
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
       const result = await processCompanyDamageContinuity(client as Queryable, operatingCompanyId);
       summary.companiesProcessed += 1;
       summary.chainsStarted += result.chainsStarted;

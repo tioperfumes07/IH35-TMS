@@ -504,7 +504,7 @@ export async function registerDispatchViewRoutes(app: FastifyInstance) {
       // 42P01'd → a raw 500 to the driver's phone, blocking POD/BOL evidence linking. RLS on
       // damage_photo_evidence keys on app.operating_company_id (no lucia bypass), so set it from the
       // stop's load before the read and scope the lookup to that entity.
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [stop.operating_company_id]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [stop.operating_company_id]);
       const evidenceRes = await client.query<{ id: string }>(
         `
           SELECT id

@@ -181,7 +181,7 @@ export async function collectSamsaraRemoteCounts(
   const collectionRunId = options?.collectionRunId ?? randomUUID();
 
   return withLuciaBypass(async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
 
     const config = await getSamsaraConfigForCompany(client, operatingCompanyId);
     if (!config || !Boolean(config.is_enabled)) {

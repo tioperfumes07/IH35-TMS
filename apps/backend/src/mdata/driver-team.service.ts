@@ -103,7 +103,7 @@ async function getTeam(client: Queryable, teamId: string, operatingCompanyId: st
 
 export async function listDriverTeams(userId: string, operatingCompanyId: string) {
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     const res = await client.query(
       `
         SELECT
@@ -126,7 +126,7 @@ export async function listDriverTeams(userId: string, operatingCompanyId: string
 
 export async function getDriverTeam(userId: string, operatingCompanyId: string, teamId: string) {
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     const teamRes = await client.query(
       `
         SELECT
@@ -177,7 +177,7 @@ export async function createTeam(
   if (input.primary_driver_id === input.co_driver_id) throw new Error("E_PRIMARY_AND_CO_MUST_DIFFER");
   const shares = normalizeShares(input.split_method, input.primary_share_pct, input.co_share_pct);
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [input.operating_company_id]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
     await assertDriverCompany(client, input.primary_driver_id, input.operating_company_id);
     await assertDriverCompany(client, input.co_driver_id, input.operating_company_id);
     await assertNotInOtherActiveTeam(client, input.primary_driver_id);
@@ -242,7 +242,7 @@ export async function updateTeamSplit(
 ) {
   const shares = normalizeShares(input.split_method, input.primary_share_pct, input.co_share_pct);
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [input.operating_company_id]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
     const current = await getTeam(client, input.team_id, input.operating_company_id);
     const inProgressRes = await client.query(
       `
@@ -320,7 +320,7 @@ export async function deactivateTeam(
 ) {
   if (!input.reason?.trim()) throw new Error("E_REASON_REQUIRED");
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [input.operating_company_id]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
     await getTeam(client, input.team_id, input.operating_company_id);
     const inProgressRes = await client.query(
       `
@@ -371,7 +371,7 @@ export async function assignTeamToLoad(
   input: { operating_company_id: string; load_id: string; team_id: string }
 ) {
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [input.operating_company_id]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
     const team = await getTeam(client, input.team_id, input.operating_company_id);
     if (!team.is_active) throw new Error("E_TEAM_NOT_ACTIVE");
 
@@ -423,7 +423,7 @@ export async function assignTeamToLoad(
 
 export async function computeTeamLoadSplit(userId: string, input: { operating_company_id: string; load_id: string }) {
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [input.operating_company_id]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
     const loadRes = await client.query(
       `
         SELECT id, operating_company_id, team_id, assigned_primary_driver_id, rate_total_cents

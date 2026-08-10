@@ -29,7 +29,7 @@ export async function maybeFireDriftAlert(input: DriftAlertInput): Promise<{ sen
   const alertDay = new Date().toISOString().slice(0, 10);
 
   return withLuciaBypass(async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [input.operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operatingCompanyId]);
 
     const throttleExists = await client.query(`SELECT to_regclass('qbo_sync.drift_alert_throttle') IS NOT NULL AS ok`);
     if (!throttleExists.rows[0]?.ok) {

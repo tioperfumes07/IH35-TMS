@@ -109,7 +109,7 @@ export async function registerPreSettlementsRoutes(app: FastifyInstance) {
 
     return withCurrentUser(req.user!.uuid, async (client) => {
       await assertCompanyMembership(req.user!.uuid, p.operating_company_id);
-      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [p.operating_company_id]);
+      await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [p.operating_company_id]);
       const res = await client.query(sql, [p.operating_company_id, p.driver_id, p.limit, p.offset]);
       return { pending_deductions: res.rows, limit: p.limit, offset: p.offset };
     });

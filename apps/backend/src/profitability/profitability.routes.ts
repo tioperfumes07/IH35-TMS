@@ -48,7 +48,7 @@ export default async function profitabilityRoutes(fastify: FastifyInstance) {
 
     await assertCompanyMembership(user.uuid, f.operating_company_id);
     return withCurrentUser(user.uuid, async (client) => {
-      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [f.operating_company_id]);
+      await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [f.operating_company_id]);
 
       let where = `operating_company_id = $1 AND pickup_date BETWEEN $2 AND $3`;
       const params: (string | number)[] = [f.operating_company_id, f.date_from, f.date_to];
@@ -89,7 +89,7 @@ export default async function profitabilityRoutes(fastify: FastifyInstance) {
 
     await assertCompanyMembership(user.uuid, f.operating_company_id);
     return withCurrentUser(user.uuid, async (client) => {
-      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [f.operating_company_id]);
+      await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [f.operating_company_id]);
 
       const sql = `
         SELECT 
@@ -133,7 +133,7 @@ export default async function profitabilityRoutes(fastify: FastifyInstance) {
 
     await assertCompanyMembership(user.uuid, f.operating_company_id);
     return withCurrentUser(user.uuid, async (client) => {
-      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [f.operating_company_id]);
+      await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [f.operating_company_id]);
 
       const sql = `
         SELECT 
@@ -173,7 +173,7 @@ export default async function profitabilityRoutes(fastify: FastifyInstance) {
 
     await assertCompanyMembership(user.uuid, f.operating_company_id);
     return withCurrentUser(user.uuid, async (client) => {
-      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [f.operating_company_id]);
+      await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [f.operating_company_id]);
 
       const sql = `
         SELECT 
@@ -214,7 +214,7 @@ export default async function profitabilityRoutes(fastify: FastifyInstance) {
 
     await assertCompanyMembership(user.uuid, f.operating_company_id);
     return withCurrentUser(user.uuid, async (client) => {
-      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [f.operating_company_id]);
+      await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [f.operating_company_id]);
 
       let where = `operating_company_id = $1 AND pickup_date BETWEEN $2 AND $3`;
       const params: (string | number)[] = [f.operating_company_id, f.date_from, f.date_to];
@@ -267,7 +267,7 @@ export default async function profitabilityRoutes(fastify: FastifyInstance) {
 
     await assertCompanyMembership(user.uuid, operating_company_id);
     return withCurrentUser(user.uuid, async (client) => {
-      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [operating_company_id]);
+      await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [operating_company_id]);
 
       const sql = `
         SELECT 

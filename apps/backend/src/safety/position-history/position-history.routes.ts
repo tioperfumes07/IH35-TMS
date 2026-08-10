@@ -18,7 +18,7 @@ function authUser(req: FastifyRequest, reply: FastifyReply) {
 async function withCompany<T>(userId: string, companyId: string, fn: (client: { query: <R = Record<string, unknown>>(sql: string, vals?: unknown[]) => Promise<{ rows: R[] }> }) => Promise<T>) {
   await assertCompanyMembership(userId, companyId);
   return withCurrentUser(userId, async (client) => {
-    await client.query("SELECT set_config('app.operating_company_id', $1, true)", [companyId]);
+    await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [companyId]);
     return fn(client as Parameters<typeof fn>[0]);
   });
 }

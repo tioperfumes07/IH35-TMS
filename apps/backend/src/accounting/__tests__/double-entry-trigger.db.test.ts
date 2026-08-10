@@ -70,7 +70,7 @@ describeIntegration("double-entry balance trigger (real Postgres)", () => {
 
     await db.query("BEGIN");
     await db.query("SET LOCAL app.bypass_rls = 'lucia'");
-    await db.query("SELECT set_config('app.operating_company_id', $1, true)", [companyId]);
+    await db.query("SELECT set_config('app.operating_company_id', $1::text, true)", [companyId]);
 
     await db.query(
       `
@@ -110,7 +110,7 @@ describeIntegration("double-entry balance trigger (real Postgres)", () => {
 
     await db.query("BEGIN");
     await db.query("SET LOCAL app.bypass_rls = 'lucia'");
-    await db.query("SELECT set_config('app.operating_company_id', $1, true)", [companyId]);
+    await db.query("SELECT set_config('app.operating_company_id', $1::text, true)", [companyId]);
 
     await db.query(
       `

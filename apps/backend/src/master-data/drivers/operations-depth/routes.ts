@@ -63,7 +63,7 @@ export async function registerDriverOperationsDepthRoutes(app: FastifyInstance) 
       }
 
       const result = await withCurrentUser(user.uuid, async (client) => {
-        await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [
+        await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [
           query.data.operating_company_id,
         ]);
         const driverId = await assertDriverScope(client, params.data.uuid, query.data.operating_company_id);

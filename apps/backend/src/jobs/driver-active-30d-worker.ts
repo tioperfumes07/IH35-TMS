@@ -31,7 +31,7 @@ async function tick(app: FastifyInstance) {
       if (!ociId) continue;
       try {
         assertTenantContext(ociId, WORKER_NAME);
-        await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [ociId]);
+        await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [ociId]);
         const result = await applyDriverActive30dRule(client, ociId);
         if (result.deactivated > 0 || result.reactivated > 0) {
           app.log.info(

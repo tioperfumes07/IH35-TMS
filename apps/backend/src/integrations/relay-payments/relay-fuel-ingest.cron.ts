@@ -114,7 +114,7 @@ async function ingestForCompany(
   opts?: { preloaded?: RelayFuelTransaction[] }
 ): Promise<{ pulled: number; upserted: number; skipped: number; gl_post_candidates: FuelTxnGlPostCandidate[] }> {
   assertTenantContext(operatingCompanyId, "relay_payments.fuel_ingest_cron");
-  await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+  await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
 
   // Network I/O must stay OUTSIDE withLuciaBypass — callers pass `preloaded` for backfill, or we filter a
   // single in-memory snapshot (daily cron fetches once per company before opening the DB txn).

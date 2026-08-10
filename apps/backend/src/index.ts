@@ -1447,7 +1447,7 @@ async function main() {
             `SELECT id::text AS id FROM org.companies WHERE is_active = true AND deactivated_at IS NULL ORDER BY id`
           );
           for (const company of companies.rows) {
-            await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [company.id]);
+            await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [company.id]);
             const result = await runAnomalyDetectionForTenant(client, company.id);
             app.log.info(
               { operating_company_id: company.id, scanned: result.scanned, inserted: result.inserted },

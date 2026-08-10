@@ -21,7 +21,7 @@ export async function runSearchIndexerIncrementalTick() {
       const operatingCompanyId = String(row.operating_company_id ?? "");
       if (!operatingCompanyId) continue;
       assertTenantContext(operatingCompanyId, "search.indexer_incremental");
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
       await indexLoadsForCompany(client, operatingCompanyId);
       await indexDriversForCompany(client, operatingCompanyId);
     }

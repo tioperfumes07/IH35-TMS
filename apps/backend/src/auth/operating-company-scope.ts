@@ -51,7 +51,7 @@ export async function setOperatingCompanyScope(client: Queryable, operatingCompa
   if (!isValidOperatingCompanyUuid(operatingCompanyId)) {
     throw new OperatingCompanyScopeError("Invalid operating_company_id UUID");
   }
-  await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+  await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
 }
 
 export type ScopedQueryClient = {

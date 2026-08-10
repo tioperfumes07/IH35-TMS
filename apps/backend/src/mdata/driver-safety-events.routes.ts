@@ -15,7 +15,7 @@ type ScopeClient = { query: <T = Record<string, unknown>>(sql: string, values?: 
 async function scopeToCallerCompany(client: ScopeClient, userId: string, requested?: string | null): Promise<string | null> {
   const operatingCompanyId = await resolveOperatingCompanyId(client, userId, requested ?? null);
   if (!operatingCompanyId) return null;
-  await client.query("SELECT set_config('app.operating_company_id', $1, true)", [operatingCompanyId]);
+  await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [operatingCompanyId]);
   return operatingCompanyId;
 }
 
@@ -23,7 +23,7 @@ async function scopeToDriverCompany(client: ScopeClient, driverId: string): Prom
   const res = await client.query(`SELECT operating_company_id FROM mdata.drivers WHERE id = $1 LIMIT 1`, [driverId]);
   const opco = res.rows[0]?.operating_company_id as string | undefined;
   if (!opco) return null;
-  await client.query("SELECT set_config('app.operating_company_id', $1, true)", [opco]);
+  await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [opco]);
   return opco;
 }
 

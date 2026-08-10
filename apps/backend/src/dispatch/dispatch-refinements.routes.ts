@@ -112,7 +112,7 @@ export async function registerDispatchRefinementsRoutes(app: FastifyInstance) {
     await assertCompanyMembership(user.uuid, q.data.operating_company_id);
 
     return withCurrentUser(user.uuid, async (client) => {
-      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [
+      await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [
         q.data.operating_company_id,
       ]);
       const res = await client.query(

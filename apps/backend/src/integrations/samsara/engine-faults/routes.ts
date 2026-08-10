@@ -43,7 +43,7 @@ async function handleEngineFaultWebhookPost(req: FastifyRequest, reply: FastifyR
 
   if (!verify.ok) {
     await withLuciaBypass(async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
       await client.query(`SELECT audit.append_event($1, $2, $3::jsonb, NULL, $4)`, [
         "integrations.engine_fault_signature_invalid",
         "warning",

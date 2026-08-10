@@ -27,7 +27,7 @@ export async function registerFilingsAggregateRoutes(app: FastifyInstance) {
 
     await assertCompanyMembership(user.uuid, query.data.operating_company_id);
     const payload = await withCurrentUser(user.uuid, async (client) => {
-      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [query.data.operating_company_id]);
+      await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [query.data.operating_company_id]);
       return buildFilingsDashboard(client, query.data.operating_company_id);
     });
     return reply.send(payload);

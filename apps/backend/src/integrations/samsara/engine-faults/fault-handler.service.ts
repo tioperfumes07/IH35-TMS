@@ -156,7 +156,7 @@ export async function handleEngineFaultEvent(
   operatingCompanyId: string,
   parsed: ParsedEngineFaultEvent
 ): Promise<HandleEngineFaultResult> {
-  await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+  await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
 
   const insertRes = await client.query<{ uuid: string }>(
     `

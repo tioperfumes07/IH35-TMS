@@ -197,7 +197,7 @@ export async function generateExcelReport(actorUserId: string, batchId: string) 
   const companyCode = companyCodeFromRealmId(batch.qbo_realm_id);
 
   const data = await withCurrentUser(actorUserId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [batch.operating_company_id]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [batch.operating_company_id]);
 
     const entitySummary = await client.query(
       `
@@ -362,7 +362,7 @@ export async function generateExcelReport(actorUserId: string, batchId: string) 
   );
 
   await withCurrentUser(actorUserId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [batch.operating_company_id]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [batch.operating_company_id]);
     const auditPayload: Record<string, unknown> = {
       batch_id: batch.id,
       company_code: companyCode,

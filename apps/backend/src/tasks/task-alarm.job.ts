@@ -15,7 +15,7 @@ let initialized = false;
 // Set BOTH GUCs: tasks.task RLS gates on app.current_operating_company_id, createNotification uses
 // app.operating_company_id. (Same dual-scope the tasks routes set.)
 const SET_TASK_SCOPE_SQL =
-  `SELECT set_config('app.operating_company_id', $1, true), set_config('app.current_operating_company_id', $1, true)`;
+  `SELECT set_config('app.operating_company_id', $1::text, true), set_config('app.current_operating_company_id', $1::text, true)`;
 
 export async function runTaskAlarmTick(operatingCompanyId: string): Promise<number> {
   return withLuciaBypass(async (client) => {

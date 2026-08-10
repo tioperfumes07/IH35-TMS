@@ -400,7 +400,7 @@ export async function registerLocationRoutes(app: FastifyInstance) {
       // entity's location by id. Bind operating_company_id from the caller's company context.
       const scopedCompanyId = await resolveOperatingCompanyId(client, authUser.uuid);
       if (!scopedCompanyId) return null;
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [scopedCompanyId]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [scopedCompanyId]);
       const res = await client.query(`${locationSelectSql()} WHERE id = $1 AND operating_company_id = $2 LIMIT 1`, [
         parsedParams.data.id,
         scopedCompanyId,

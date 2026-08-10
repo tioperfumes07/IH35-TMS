@@ -44,7 +44,7 @@ export function bankingRuleMatches(rule: BankingRuleRow, txn: BankTxnProbe): boo
 }
 
 export async function applyBankingRulesForTransaction(client: PoolClient, txnId: string, operatingCompanyId: string): Promise<boolean> {
-  await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+  await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
 
   const txnRes = await client.query<{ description: string | null; amount_cents: number; bank_account_id: string }>(
     `

@@ -87,7 +87,7 @@ export async function dispatchAccountingOutboxOnce(log?: FastifyInstance["log"])
         source_event_type: row.event_type,
       };
 
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [row.operating_company_id]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [row.operating_company_id]);
 
       await client.query(
         `

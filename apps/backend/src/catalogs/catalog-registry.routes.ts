@@ -243,7 +243,7 @@ export async function registerCatalogRegistryRoutes(app: FastifyInstance) {
       // items, and now driver_load_statuses). Set the caller's company GUC so those reads return the
       // entity's rows instead of a false 0; still-global catalogs are unaffected.
       const operatingCompanyId = await resolveOperatingCompanyId(client, user.uuid, null);
-      if (operatingCompanyId) await client.query("SELECT set_config('app.operating_company_id', $1, true)", [operatingCompanyId]);
+      if (operatingCompanyId) await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [operatingCompanyId]);
 
       const registryRes = await client.query(
         `
@@ -294,7 +294,7 @@ export async function registerCatalogRegistryRoutes(app: FastifyInstance) {
       // Same entity GUC as the registry index — per-entity catalog previews (e.g. driver_load_statuses)
       // return the caller's rows under FORCE RLS instead of a false-empty preview.
       const operatingCompanyId = await resolveOperatingCompanyId(client, user.uuid, null);
-      if (operatingCompanyId) await client.query("SELECT set_config('app.operating_company_id', $1, true)", [operatingCompanyId]);
+      if (operatingCompanyId) await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [operatingCompanyId]);
 
       const registryRes = await client.query(
         `

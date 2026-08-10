@@ -96,7 +96,7 @@ export async function processInboundSyncBatch(limit = 25): Promise<{ processed: 
         const rootKey = Object.keys(payload).find((k) => k !== "time" && typeof payload[k] === "object" && payload[k] !== null);
         const entityPayload = (rootKey ? (payload[rootKey] as Record<string, unknown>) : {}) ?? {};
 
-        await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [row.operating_company_id]);
+        await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [row.operating_company_id]);
         const inboundConflict = await evaluateInboundVersusTms({
           client,
           operating_company_id: row.operating_company_id,

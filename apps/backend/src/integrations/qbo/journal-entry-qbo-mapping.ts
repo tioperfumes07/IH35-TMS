@@ -20,7 +20,7 @@ export type JournalEntrySyncLine = {
 
 export async function loadJournalEntryForSync(operatingCompanyId: string, journalEntryId: string) {
   return withLuciaBypass(async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     const headerRes = await client.query<JournalEntrySyncHeader>(
       `
         SELECT id, entry_date::text, memo, status

@@ -16,7 +16,7 @@ type Health = { local: number; pending: number };
 // mdata.qbo_* + outbox.queue subqueries run under THIS scope.
 async function readVendorsHealth(opco: string): Promise<Health> {
   return withCurrentUser(TEST_OWNER_USER_ID, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [opco]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [opco]);
     const res = await client.query<{ local_count: number; pending_count: number }>(
       `SELECT local_count, pending_count FROM views.qbo_sync_health WHERE entity = 'vendors'`
     );

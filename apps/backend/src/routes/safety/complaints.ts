@@ -83,7 +83,7 @@ function ensureComplaintReadRole(user: { role: string }, reply: FastifyReply) {
 async function withCompany<T>(userId: string, role: string, companyId: string, fn: (client: any) => Promise<T>) {
   await assertCompanyMembership(userId, companyId);
   return withCurrentUser(userId, async (client) => {
-    await client.query("SELECT set_config('app.operating_company_id', $1, true)", [companyId]);
+    await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [companyId]);
     await client.query(`SELECT set_config('app.user_role', $1, true)`, [role]);
     return fn(client);
   });

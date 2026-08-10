@@ -311,7 +311,7 @@ export async function registerVendorRoutes(app: FastifyInstance) {
     // vendor created via the canonical writer is immediately selectable in bill/expense editors.
     if (autocomplete) {
       const results = await withCurrentUser(authUser.uuid, async (client) => {
-        await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [resolvedOperatingCompanyId]);
+        await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [resolvedOperatingCompanyId]);
         return searchVendorsForAutocomplete(client, {
           operating_company_id: resolvedOperatingCompanyId,
           term: q ?? search ?? "",
@@ -322,7 +322,7 @@ export async function registerVendorRoutes(app: FastifyInstance) {
     }
 
     const result = await withCurrentUser(authUser.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [resolvedOperatingCompanyId]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [resolvedOperatingCompanyId]);
       const values: unknown[] = [];
       const filters: string[] = [];
       if (status === "active") filters.push("deactivated_at IS NULL");
@@ -391,7 +391,7 @@ export async function registerVendorRoutes(app: FastifyInstance) {
     if (!scopedCompanyId) return reply.code(400).send({ error: "operating_company_id_required" });
 
     const result = await withCurrentUser(authUser.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [scopedCompanyId]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [scopedCompanyId]);
       const drivers = await client.query<{
         id: string;
         display_name: string;
@@ -580,7 +580,7 @@ export async function registerVendorRoutes(app: FastifyInstance) {
     }
 
     const row = await withCurrentUser(authUser.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [resolvedOperatingCompanyId]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [resolvedOperatingCompanyId]);
       const res = await client.query(
         `
           SELECT ${VENDOR_SELECT_COLUMNS}
@@ -781,7 +781,7 @@ export async function registerVendorRoutes(app: FastifyInstance) {
         parsedQuery.data.operating_company_id
       );
       if (!operatingCompanyId) return null;
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
       const vendorRes = await client.query(
         `SELECT id FROM mdata.vendors WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
         [parsedParams.data.id, operatingCompanyId]

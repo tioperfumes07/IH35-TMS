@@ -33,7 +33,7 @@ export async function createNotification(
   client?: DbClient
 ): Promise<{ id: string } | null> {
   const run = async (c: DbClient) => {
-    await c.query(`SELECT set_config('app.operating_company_id', $1, true)`, [input.operating_company_id]);
+    await c.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
     const res = await c.query<{ id: string }>(
       `
         INSERT INTO notifications.user_notifications (

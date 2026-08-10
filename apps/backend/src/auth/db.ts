@@ -202,7 +202,7 @@ export async function withLuciaBypass<T>(
       "SELECT set_config('app.active_company_id', $1, true)", [LUCIA_BYPASS_SENTINEL_COMPANY_ID]
     );
     await client.query(
-      "SELECT set_config('app.operating_company_id', $1, true)", [LUCIA_BYPASS_SENTINEL_COMPANY_ID]
+      "SELECT set_config('app.operating_company_id', $1::text, true)", [LUCIA_BYPASS_SENTINEL_COMPANY_ID]
     );
     // FAIL-A1 — attribute the write when the caller knows who is acting. Set with the same
     // `set_config(..., true)` (transaction-local) form used above, so it cannot leak to the next

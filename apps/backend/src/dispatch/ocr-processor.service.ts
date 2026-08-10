@@ -100,7 +100,7 @@ export async function createOcrIntakeFromEmail(
   await putObjectBytes(r2Key, buffer, "application/pdf");
 
   return withLuciaBypass(async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     const res = await client.query(
       `
         INSERT INTO dispatch.ocr_intake_queue (
@@ -139,7 +139,7 @@ export function scheduleOcrIntakeProcessing(itemId: string, operatingCompanyId: 
 
 export async function processOcrIntakeQueueItem(itemId: string, operatingCompanyId: string) {
   return withLuciaBypass(async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     const existing = await client.query(
       `SELECT * FROM dispatch.ocr_intake_queue WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
       [itemId, operatingCompanyId]

@@ -47,7 +47,7 @@ export type RecurringBillTemplate = {
 
 export async function createTemplate(data: CreateTemplateInput, userId: string): Promise<string> {
   const result = await withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [data.operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [data.operatingCompanyId]);
     const res = await client.query<{ uuid: string }>(
       `
         INSERT INTO accounting.recurring_bill_templates (
@@ -157,7 +157,7 @@ export async function deactivateTemplate(uuid: string, userId: string): Promise<
 
 export async function getTemplate(uuid: string, operatingCompanyId: string, userId: string): Promise<RecurringBillTemplate> {
   const result = await withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     const res = await client.query<RecurringBillTemplate>(
       `SELECT * FROM accounting.recurring_bill_templates WHERE uuid = $1::uuid AND operating_company_id = $2`,
       [uuid, operatingCompanyId]
@@ -188,7 +188,7 @@ export async function listTemplates(
   }
 
   const result = await withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     const res = await client.query<RecurringBillTemplate>(
       `SELECT * FROM accounting.recurring_bill_templates WHERE ${conditions.join(" AND ")} ORDER BY next_generation_date ASC`,
       values

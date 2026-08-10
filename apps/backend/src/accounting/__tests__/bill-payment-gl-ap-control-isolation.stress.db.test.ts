@@ -54,7 +54,7 @@ describeIntegration("ap_control isolation stress — concurrent cash/CC bill-pay
   async function bypass(client: pg.Client, companyId: string, fn: () => Promise<void>) {
     await client.query("BEGIN");
     await client.query("SET LOCAL app.bypass_rls = 'lucia'");
-    await client.query("SELECT set_config('app.operating_company_id', $1, true)", [companyId]);
+    await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [companyId]);
     try {
       await fn();
       await client.query("COMMIT");
@@ -67,7 +67,7 @@ describeIntegration("ap_control isolation stress — concurrent cash/CC bill-pay
   async function scopedRead<T>(client: pg.Client, companyId: string, sql: string, params: unknown[]): Promise<T[]> {
     await client.query("BEGIN");
     await client.query("SET LOCAL app.bypass_rls = 'lucia'");
-    await client.query("SELECT set_config('app.operating_company_id', $1, true)", [companyId]);
+    await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [companyId]);
     try {
       const r = await client.query(sql, params);
       await client.query("COMMIT");

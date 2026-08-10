@@ -34,7 +34,7 @@ export async function registerCustomerListRoutes(app: FastifyInstance) {
     const result = await withCurrentUser(authUser.uuid, async (client) => {
       const companyId = await resolveOperatingCompanyId(client, authUser.uuid, operating_company_id);
       if (!companyId) return null;
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [companyId]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [companyId]);
 
       const values: unknown[] = [companyId];
       const filters = [EXCLUDE_ARCHIVED_MDATA_CUSTOMERS_SQL, "deactivated_at IS NULL", `operating_company_id = $1`];

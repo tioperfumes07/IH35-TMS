@@ -29,7 +29,7 @@ export async function registerUniversalSearchRoutes(app: FastifyInstance) {
       : null;
 
     const results = await withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [
         parsed.data.operating_company_id,
       ]);
       return universalSearch(client, parsed.data.operating_company_id, parsed.data.q, {

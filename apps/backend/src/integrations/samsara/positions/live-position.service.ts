@@ -38,7 +38,7 @@ export async function getLivePositionsForActiveLoads(
   const cached = cacheGet<LivePositionRow[]>(cacheKey);
   if (cached) return cached;
 
-  await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+  await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
 
   const res = await client.query<{
     load_uuid: string;
@@ -88,7 +88,7 @@ export async function getPositionForUnit(
   const cached = cacheGet<LivePositionRow>(cacheKey);
   if (cached) return cached;
 
-  await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+  await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
   const res = await client.query<{
     unit_uuid: string;
     lat: string;

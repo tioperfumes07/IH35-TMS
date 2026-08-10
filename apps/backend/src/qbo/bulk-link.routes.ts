@@ -49,7 +49,7 @@ export async function registerQboBulkLinkRoutes(app: FastifyInstance) {
 
     const runBatch = async () => {
       await withCurrentUser(user.uuid, async (client) => {
-        await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [parsed.data.operating_company_id]);
+        await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [parsed.data.operating_company_id]);
 
         const applyAudit = async (payload: Record<string, unknown>) => {
           await appendCrudAudit(client, user.uuid, "qbo.entity_linked", payload, "info", "P6-T11196");

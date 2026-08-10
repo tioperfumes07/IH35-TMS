@@ -131,7 +131,7 @@ export async function runDriverLeaveAdvanceReminderTick(): Promise<number> {
     // Append the audit event — records the mutation AND arms the per-threshold idempotency marker.
     assertTenantContext(row.operating_company_id, CRON_NAME);
     await withLuciaBypass(async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [row.operating_company_id]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [row.operating_company_id]);
       await client.query(
         `
           INSERT INTO safety.driver_leave_audit_log (

@@ -58,7 +58,7 @@ describeIntegration("CHAIN-04 bill -> bill_payment -> bank_transaction tie-out p
   async function bypass<T>(fn: () => Promise<T>): Promise<T> {
     await db.query("BEGIN");
     await db.query("SET LOCAL app.bypass_rls = 'lucia'");
-    if (companyId) await db.query("SELECT set_config('app.operating_company_id', $1, true)", [companyId]);
+    if (companyId) await db.query("SELECT set_config('app.operating_company_id', $1::text, true)", [companyId]);
     try {
       const out = await fn();
       await db.query("COMMIT");

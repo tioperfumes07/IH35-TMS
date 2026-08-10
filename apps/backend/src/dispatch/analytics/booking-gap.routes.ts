@@ -28,7 +28,7 @@ export async function registerBookingGapRoutes(app: FastifyInstance) {
 
     const result = await withCurrentUser(user.uuid, async (client) => {
       await assertCompanyMembership(user.uuid, q.data.operating_company_id);
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [q.data.operating_company_id]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [q.data.operating_company_id]);
       return aggregateForPeriod(client, q.data.operating_company_id, q.data.from, q.data.to);
     });
 

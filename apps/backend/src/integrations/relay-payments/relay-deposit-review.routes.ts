@@ -35,7 +35,7 @@ export async function registerRelayDepositReviewRoutes(app: FastifyInstance) {
     const classFilter = q.classification && ["company", "unclassified", "canceled"].includes(q.classification) ? q.classification : null;
 
     return withLuciaBypass(async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [opco]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [opco]);
       const rows = (await client.query(
         `SELECT id::text, deposit_id, relay_created_at, status, total_amount_cents,
                 funding_card_last4, note_raw, classification, matched_bank_transaction_id::text
@@ -79,7 +79,7 @@ export async function registerRelayDepositReviewRoutes(app: FastifyInstance) {
     const opco = String(((req.query ?? {}) as { operating_company_id?: string }).operating_company_id ?? "");
     if (!UUID_RE.test(opco)) return reply.code(400).send({ error: "operating_company_id query param required (uuid)" });
     return withLuciaBypass(async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [opco]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [opco]);
       const rows = (await client.query(
         // CONN-3 Part D drill-through: surface WHICH account each card actually draws on, and the GL
         // account that funding would credit. A card with funding_bank_account_id NULL is reported
@@ -117,7 +117,7 @@ export async function registerRelayDepositReviewRoutes(app: FastifyInstance) {
     const isActive = body.is_active !== false;
 
     return withLuciaBypass(async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [opco]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [opco]);
       await client.query(
         `INSERT INTO integrations.relay_company_cards (operating_company_id, card_last4, label, source_hint, is_active, voided_at)
          VALUES ($1::uuid, $2, $3, $4, $5, NULL)

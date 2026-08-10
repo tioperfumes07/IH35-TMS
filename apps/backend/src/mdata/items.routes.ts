@@ -48,7 +48,7 @@ export async function registerMdataItemsRoutes(app: FastifyInstance) {
     const rows = await withCurrentUser(authUser.uuid, async (client) => {
       const resolvedOperatingCompanyId = await resolveOperatingCompanyId(client, authUser.uuid, operating_company_id);
       if (!resolvedOperatingCompanyId) return null;
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [resolvedOperatingCompanyId]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [resolvedOperatingCompanyId]);
 
       const values: unknown[] = [resolvedOperatingCompanyId];
       const filters = ["operating_company_id = $1::uuid"];
@@ -92,7 +92,7 @@ export async function registerMdataItemsRoutes(app: FastifyInstance) {
     const row = await withCurrentUser(authUser.uuid, async (client) => {
       const resolvedOperatingCompanyId = await resolveOperatingCompanyId(client, authUser.uuid, parsedQuery.data.operating_company_id);
       if (!resolvedOperatingCompanyId) return null;
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [resolvedOperatingCompanyId]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [resolvedOperatingCompanyId]);
       const res = await client.query(
         `
           SELECT id, operating_company_id, qbo_id, name, sku, item_type, unit_price_cents, active, mirrored_at, created_at, updated_at
@@ -139,7 +139,7 @@ export async function registerMdataItemsRoutes(app: FastifyInstance) {
     const updated = await withCurrentUser(authUser.uuid, async (client) => {
       const resolvedOperatingCompanyId = await resolveOperatingCompanyId(client, authUser.uuid, parsedQuery.data.operating_company_id);
       if (!resolvedOperatingCompanyId) return null;
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [resolvedOperatingCompanyId]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [resolvedOperatingCompanyId]);
       values.push(parsedParams.data.id, resolvedOperatingCompanyId);
       const res = await client.query(
         `

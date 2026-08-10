@@ -67,7 +67,7 @@ export async function registerDriverEscrowForfeitRoutes(app: FastifyInstance) {
       // never disagree.
       const gate = await withCurrentUser(user.uuid, async (client) => {
         await assertCompanyMembership(client, user.uuid, body.data.operating_company_id);
-        await client.query("SELECT set_config('app.operating_company_id', $1, true)", [
+        await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [
           body.data.operating_company_id,
         ]);
         const clause = await resolveDriverEscrowTarget(client, {

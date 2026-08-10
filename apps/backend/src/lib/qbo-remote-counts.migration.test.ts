@@ -22,7 +22,7 @@ describeIntegration("qbo remote counts canonical migration", () => {
     const operatingCompanyId = getOperatingCompanyId();
 
     await withCurrentUser(TEST_OWNER_USER_ID, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
       await client.query(
         `
           INSERT INTO accounting.qbo_remote_counts (

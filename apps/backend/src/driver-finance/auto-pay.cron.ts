@@ -23,7 +23,7 @@ type AutoPayCandidate = {
 async function listAutoPayCandidatesForCompany(operatingCompanyId: string): Promise<AutoPayCandidate[]> {
   assertTenantContext(operatingCompanyId, DRIVER_SETTLEMENT_AUTO_PAY_JOB);
   return withLuciaBypass(async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     const res = await client.query<AutoPayCandidate>(
       `
         SELECT s.id AS settlement_id, s.operating_company_id, s.driver_id

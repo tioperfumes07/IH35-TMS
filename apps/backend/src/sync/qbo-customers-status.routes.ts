@@ -32,7 +32,7 @@ export async function fetchQboCustomersPushStatus(
 ): Promise<QboCustomersPushStatus> {
   return withLuciaBypass(async (client) => {
     await assertCompanyMembership(client, userId, operatingCompanyId);
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
 
     const exists = await client.query(`SELECT to_regclass('mdata.qbo_customers') IS NOT NULL AS ok`);
     if (!exists.rows[0]?.ok) {

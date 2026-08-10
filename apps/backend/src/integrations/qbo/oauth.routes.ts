@@ -37,7 +37,7 @@ function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
 
 async function loadConnectionId(operatingCompanyId: string) {
   return withLuciaBypass(async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     const res = await client.query<{ id: string }>(
       `
         SELECT id

@@ -71,7 +71,7 @@ export function mapBankTxnToBill(input: BankTxnInput) {
 
 export async function extractVendorIdFromForensic(operatingCompanyId: string, vendorName: string) {
   return withLuciaBypass(async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     const res = await client.query<{ qbo_entity_id: string }>(
       `
         SELECT qbo_entity_id

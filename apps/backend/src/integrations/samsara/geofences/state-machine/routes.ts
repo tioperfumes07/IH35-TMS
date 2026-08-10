@@ -45,7 +45,7 @@ async function withCompanyScope<T>(
   await assertCompanyMembership(userId, operatingCompanyId);
   return withCurrentUser(userId, async (client) => {
     assertTenantContext(operatingCompanyId, source);
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     return fn(client as QueryClient);
   });
 }

@@ -69,7 +69,7 @@ async function withPortalScope<T>(
   }) => Promise<T>
 ): Promise<T> {
   return withLuciaBypass(async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [portalUser.operating_company_id]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [portalUser.operating_company_id]);
     return fn(client);
   });
 }

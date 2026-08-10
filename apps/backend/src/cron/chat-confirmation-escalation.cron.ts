@@ -115,7 +115,7 @@ async function escalateOne(row: PendingRow, attemptNumber: number): Promise<void
   assertTenantContext(row.operating_company_id, CRON_NAME);
   try {
     await withLuciaBypass(async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [row.operating_company_id]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [row.operating_company_id]);
       await client.query(
         `SELECT events.log_event($1, $2, $3, $4, $5, $6, $7::jsonb, $8) AS log_event`,
         [

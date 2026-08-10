@@ -65,7 +65,7 @@ export async function getFleetLocationHosRows(
   operatingCompanyId: string,
   asOf: Date
 ): Promise<FleetLocationHosRow[]> {
-  await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+  await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
 
   // 1. Row set = EVERY active truck (Jorge's rule), not only the ones Samsara has a position/driver for.
   //    Start FROM mdata.units (active InService, entity-scoped, not Sold/retired/demo) and LEFT JOIN the

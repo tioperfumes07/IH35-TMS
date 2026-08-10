@@ -110,7 +110,7 @@ export async function registerDispatchPodBolRoutes(app: FastifyInstance) {
         if (!stop) return { error: "forbidden" as const };
         if (!isDeliveryStop(stop.stop_type)) return { error: "delivery_stop_required" as const };
 
-        await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [stop.operating_company_id]);
+        await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [stop.operating_company_id]);
 
         const photoKey = body.data.photo_base64
           ? await uploadPodAsset(stop.operating_company_id, params.data.loadId, params.data.stopId, "photo", body.data.photo_base64)

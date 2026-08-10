@@ -58,7 +58,7 @@ function validationError(reply: FastifyReply, err: z.ZodError) {
 async function withCompany<T>(userId: string, companyId: string, fn: (client: DbClient) => Promise<T>) {
   return withCurrentUser(userId, async (client) => {
     await assertCompanyMembership(client, userId, companyId);
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [companyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [companyId]);
     return fn(client as DbClient);
   });
 }
@@ -485,7 +485,7 @@ export async function runPmAutoEngineCronTick(): Promise<void> {
     for (const company of companies.rows) {
       assertTenantContext(String(company.id ?? ""), "maintenance.pm_auto_engine_cron");
       // membership-scope-exempt: internally-iterated-active-company
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [company.id]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [company.id]);
       await runPmAutoEngineForTenant(client as DbClient, company.id, { trigger_source: "cron" });
     }
   });

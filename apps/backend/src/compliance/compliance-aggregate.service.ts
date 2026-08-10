@@ -224,7 +224,7 @@ export async function buildComplianceCredentials(
   operatingCompanyId: string,
   filters?: { severity?: ComplianceSeverity; type?: string; owner_type?: string }
 ): Promise<ComplianceCredential[]> {
-  await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+  await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
   const res = await client.query<Record<string, unknown>>(AGGREGATE_SQL, [operatingCompanyId]);
   let rows = res.rows.map(mapRow);
   if (filters?.severity) rows = rows.filter((r) => r.severity === filters.severity);

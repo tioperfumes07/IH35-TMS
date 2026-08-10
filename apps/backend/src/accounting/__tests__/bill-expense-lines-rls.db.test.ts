@@ -60,7 +60,7 @@ describeIntegration("bill_lines / expense_lines RLS tenant isolation (real Postg
     await db.query("BEGIN");
     try {
       // Scoped session: company set, NO bypass — policies must apply.
-      await db.query("SELECT set_config('app.operating_company_id', $1, true)", [companyId]);
+      await db.query("SELECT set_config('app.operating_company_id', $1::text, true)", [companyId]);
       const out = await fn();
       await db.query("COMMIT");
       return out;

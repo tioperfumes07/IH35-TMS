@@ -102,7 +102,7 @@ export async function runFuelFraudDetectorTick(): Promise<FuelFraudDetectorTickS
 
     for (const company of companies.rows) {
       assertTenantContext(company.id, CRON_NAME);
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [company.id]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [company.id]);
       const result = await processCompanyFuelFraudDetection(client, company.id);
       summary.companies_processed += 1;
       summary.transactions_scanned += result.transactions_scanned;

@@ -218,7 +218,7 @@ export async function createJournalEntryOnClient(
     throw new Error("journal_entry_not_balanced");
   }
 
-  await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [input.operating_company_id]);
+  await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
   const typeColPresent = await hasJournalEntryTypeColumn(client);
   const typeId = typeColPresent
     ? await resolveJournalEntryTypeId(client, {
@@ -607,7 +607,7 @@ export async function voidJournalEntry(
   actor: { userId: string; role: string }
 ) {
   const result = await withCurrentUser(actor.userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
 
     // AF-7 money-control gate (per-entity, default OFF): refuse the void action unless the owner has
     // enabled it for THIS entity. Resolved before any read/write so an OFF entity can never mutate a JE.
@@ -698,7 +698,7 @@ export async function listJournalEntries(input: {
   offset: number;
 }) {
   return withCurrentUser(input.userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [input.operating_company_id]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
     const values: unknown[] = [input.operating_company_id];
     const filters: string[] = ["je.operating_company_id = $1"];
     if (input.source) {
@@ -780,7 +780,7 @@ export async function listJournalEntries(input: {
  */
 export async function getJournalEntrySourceLinks(userId: string, operatingCompanyId: string, journalEntryId: string) {
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     const headerRes = await client.query(
       `SELECT id FROM accounting.journal_entries WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
       [journalEntryId, operatingCompanyId]
@@ -815,7 +815,7 @@ export async function getJournalEntrySourceLinks(userId: string, operatingCompan
 
 export async function getJournalEntryDetail(userId: string, operatingCompanyId: string, journalEntryId: string) {
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     const typeColPresent = await hasJournalEntryTypeColumn(client);
     const typeSelect = typeColPresent
       ? `je.journal_entry_type_id::text,

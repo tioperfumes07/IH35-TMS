@@ -59,7 +59,7 @@ export async function runCap12TireTreadWorkerTick(deps?: {
       const operatingCompanyId = String(row.operating_company_id ?? "");
       if (!operatingCompanyId) continue;
       assertTenantContext(operatingCompanyId, CRON_NAME);
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
 
       const unitIds = await listActiveUnitIds(client, operatingCompanyId);
       for (const unitUuid of unitIds) {

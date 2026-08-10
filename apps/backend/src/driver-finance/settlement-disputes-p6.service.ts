@@ -153,7 +153,7 @@ export async function submitSettlementDisputeP6(
   if (!input.reason_text || input.reason_text.trim().length < 10) throw new Error("E_REASON_TEXT_REQUIRED");
 
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [input.operating_company_id]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
     await assertDriverOwnsSettlement(client, { settlementId: input.settlement_id, driverId: input.driver_id });
 
     const category = mapReasonToCategory(input.reason_code);
@@ -226,7 +226,7 @@ export async function listSettlementDisputesForSettlementDriverP6(
   input: { operating_company_id: string; settlement_id: string; driver_id: string }
 ) {
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [input.operating_company_id]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
     await assertDriverOwnsSettlement(client, { settlementId: input.settlement_id, driverId: input.driver_id });
 
     const res = await client.query(
@@ -249,7 +249,7 @@ export async function withdrawSettlementDisputeP6(
   input: { operating_company_id: string; dispute_id: string; driver_id: string }
 ) {
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [input.operating_company_id]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
 
     const updated = await client.query(
       `
@@ -289,7 +289,7 @@ export async function listSettlementDisputesForSettlementOfficeP6(
   input: { operating_company_id: string; settlement_id: string }
 ) {
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [input.operating_company_id]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
     const res = await client.query(
       `
         SELECT ${P6_WIRE_SELECT},
@@ -319,7 +319,7 @@ export async function listSettlementDisputeQueueP6(
   }
 ) {
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [input.operating_company_id]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
 
     const values: unknown[] = [input.operating_company_id];
     const where: string[] = [`d.operating_company_id = $1`];
@@ -376,7 +376,7 @@ export async function listSettlementDisputeQueueP6(
 
 export async function startSettlementDisputeReviewP6(userId: string, input: { operating_company_id: string; dispute_id: string }) {
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [input.operating_company_id]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
 
     const updated = await client.query(
       `
@@ -425,7 +425,7 @@ export async function decideSettlementDisputeP6(
   if (!input.resolution_text || input.resolution_text.trim().length < 10) throw new Error("E_RESOLUTION_TEXT_REQUIRED");
 
   const result = await withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [input.operating_company_id]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
 
     const disputeRes = await client.query<{
       id: string;

@@ -133,7 +133,7 @@ export async function runLoanPaymentReminderTick(app: FastifyInstance): Promise<
       const operatingCompanyId = String(row.operating_company_id ?? "");
       if (!operatingCompanyId) continue;
       assertTenantContext(operatingCompanyId, "accounting.loan_payment_reminder");
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
 
       const due = await findSchedulesDueSoon(client, operatingCompanyId, REMINDER_LEAD_DAYS);
       for (const s of due) {

@@ -138,7 +138,7 @@ async function fetchLoadContext(
   operatingCompanyId: string,
   loadUuid: string
 ): Promise<LoadContextRow | null> {
-  await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+  await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
 
   const res = await client.query<LoadContextRow>(
     `
@@ -255,7 +255,7 @@ export async function computeTriSignalsForActiveLoads(
   client: PoolClient,
   operatingCompanyId: string
 ): Promise<TriSignalResult[]> {
-  await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+  await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
 
   const loads = await client.query<{ load_uuid: string }>(
     `

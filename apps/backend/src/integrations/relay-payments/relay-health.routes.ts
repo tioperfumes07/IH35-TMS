@@ -49,7 +49,7 @@ export async function registerRelayHealthRoutes(app: FastifyInstance) {
     const oc = parsed.data.operating_company_id;
     try {
       const health = await withCurrentUser(user.uuid, async (client): Promise<RelayPublicHealth> => {
-        await client.query("SELECT set_config('app.operating_company_id', $1, true)", [oc]);
+        await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [oc]);
         await client.query("SELECT set_config('app.active_company_id', $1, true)", [oc]);
 
         const company = await client.query<{ code: string | null }>(
@@ -178,7 +178,7 @@ export async function registerRelayHealthRoutes(app: FastifyInstance) {
       const oc = parsed.data.operating_company_id;
 
       const control = await withCurrentUser(user.uuid, async (client) => {
-        await client.query("SELECT set_config('app.operating_company_id', $1, true)", [oc]);
+        await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [oc]);
         return computeRelayWalletBalanceControl(client, oc);
       });
       return reply.code(200).send(control);

@@ -55,7 +55,7 @@ async function tick(app: FastifyInstance) {
   await withLuciaBypass(async (client) => {
     const companies = await fetchCompanies(client as DbClient);
     for (const companyId of companies) {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [companyId]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [companyId]);
       const geofences = await fetchActiveGeofences(client as DbClient, companyId);
       const positions = await fetchLatestPositions(client as DbClient, companyId);
       if (geofences.length === 0 || positions.length === 0) continue;

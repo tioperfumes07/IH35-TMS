@@ -71,7 +71,7 @@ describeIntegration("BANKING-GL-COMPLETION post-as-bill paid-in-full end-to-end 
   async function bypass(fn: () => Promise<void>) {
     await db.query("BEGIN");
     await db.query("SET LOCAL app.bypass_rls = 'lucia'");
-    if (companyId) await db.query("SELECT set_config('app.operating_company_id', $1, true)", [companyId]);
+    if (companyId) await db.query("SELECT set_config('app.operating_company_id', $1::text, true)", [companyId]);
     try {
       await fn();
       await db.query("COMMIT");
@@ -84,7 +84,7 @@ describeIntegration("BANKING-GL-COMPLETION post-as-bill paid-in-full end-to-end 
   async function scopedRead<T = Record<string, unknown>>(sql: string, params: unknown[]): Promise<T[]> {
     await db.query("BEGIN");
     await db.query("SET LOCAL app.bypass_rls = 'lucia'");
-    await db.query("SELECT set_config('app.operating_company_id', $1, true)", [companyId]);
+    await db.query("SELECT set_config('app.operating_company_id', $1::text, true)", [companyId]);
     try {
       const r = await db.query(sql, params);
       await db.query("COMMIT");

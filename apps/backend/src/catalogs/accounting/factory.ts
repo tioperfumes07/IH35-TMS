@@ -100,7 +100,7 @@ export function registerLegacyAccountingCatalogRoutes(app: FastifyInstance, conf
     const payload = await withCurrentUser(authUser.uuid, async (client) => {
       if (config.entityScoped && q.operating_company_id) {
         await assertCompanyMembership(authUser.uuid, q.operating_company_id);
-        await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [q.operating_company_id]);
+        await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [q.operating_company_id]);
       }
       const values: unknown[] = [q.is_active];
       let entityClause = "";
@@ -164,7 +164,7 @@ export function registerLegacyAccountingCatalogRoutes(app: FastifyInstance, conf
     const row = await withCurrentUser(authUser.uuid, async (client) => {
       if (config.entityScoped && oc) {
         await assertCompanyMembership(authUser.uuid, oc);
-        await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [oc]);
+        await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [oc]);
       }
       const values: unknown[] = [parsedParams.data.id];
       let entityClause = "";
@@ -280,7 +280,7 @@ export function registerLegacyAccountingCatalogRoutes(app: FastifyInstance, conf
     const result = await withCurrentUser(authUser.uuid, async (client) => {
       if (config.entityScoped && oc) {
         await assertCompanyMembership(authUser.uuid, oc);
-        await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [oc]);
+        await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [oc]);
       }
       if (config.validate && oc) {
         const err = await config.validate(client, extra, oc);
@@ -350,7 +350,7 @@ export function registerLegacyAccountingCatalogRoutes(app: FastifyInstance, conf
     const result = await withCurrentUser(authUser.uuid, async (client) => {
       if (config.entityScoped && oc) {
         await assertCompanyMembership(authUser.uuid, oc);
-        await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [oc]);
+        await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [oc]);
       }
       if (config.validate && oc && Object.keys(mappedExtra).length > 0) {
         const err = await config.validate(client, mappedExtra, oc);
@@ -388,7 +388,7 @@ export function registerLegacyAccountingCatalogRoutes(app: FastifyInstance, conf
     const updated = await withCurrentUser(authUser.uuid, async (client) => {
       if (config.entityScoped && oc) {
         await assertCompanyMembership(authUser.uuid, oc);
-        await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [oc]);
+        await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [oc]);
       }
       const values: unknown[] = [parsedParams.data.id];
       let entityClause = "";

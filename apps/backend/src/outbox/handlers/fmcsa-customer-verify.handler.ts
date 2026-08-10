@@ -34,7 +34,7 @@ export class FmcsaCustomerVerifyHandler implements OutboxEventHandler {
       throw new PermanentDeliveryError("fmcsa_event_type_mismatch");
     }
 
-    await ctx.client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await ctx.client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
 
     const scoped = await ctx.client.query<{ id: string }>(
       `

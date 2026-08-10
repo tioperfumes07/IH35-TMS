@@ -38,7 +38,7 @@ export async function buildDriverAggregate(
   driverId: string,
   operatingCompanyId: string
 ): Promise<Record<string, unknown> | null> {
-  await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+  await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
 
   const driverRes = await client.query(
     `

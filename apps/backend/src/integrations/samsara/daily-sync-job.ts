@@ -21,7 +21,7 @@ export function initializeDataSovereigntyDailySync(app: FastifyInstance) {
     await withLuciaBypass(async (client) => {
       const companies = await client.query<{ id: string }>(`SELECT id::text AS id FROM org.companies WHERE is_active = true LIMIT 50`);
       for (const { id } of companies.rows) {
-        await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [id]);
+        await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [id]);
         await importSamsaraVehicles(client, id);
         await importSamsaraDrivers(client, id);
         await runDailyReconciliation(client, id);

@@ -145,7 +145,7 @@ async function appendSystemAudit(eventClass: string, payload: Record<string, unk
 
 async function getActiveConnectionByCompany(operatingCompanyId: string) {
   return withLuciaBypass(async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     const res = await client.query<QboConnectionRow>(
       `
         SELECT *
@@ -169,7 +169,7 @@ export async function findActiveRealmLinks(realmId: string): Promise<RealmLinkSu
 
     const links: RealmLinkSummary[] = [];
     for (const company of companiesRes.rows) {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [company.id]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [company.id]);
       const latestRes = await client.query<
         RealmLinkSummary & {
           realm_id: string;
@@ -213,7 +213,7 @@ export async function findActiveRealmLinks(realmId: string): Promise<RealmLinkSu
 async function getConnectionById(connectionId: string, operatingCompanyId?: string) {
   return withLuciaBypass(async (client) => {
     if (operatingCompanyId) {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     }
     const res = await client.query<QboConnectionRow>(
       `
@@ -457,7 +457,7 @@ async function stampRefreshFailure(
   ).slice(0, 500);
   try {
     await withLuciaBypass(async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
       await client.query(
         `
           UPDATE integrations.qbo_connections
@@ -513,7 +513,7 @@ export async function refreshAccessToken(connectionId: string, operatingCompanyI
   const refreshTokenExpiresAt = expiryFromNow(Number(payload.x_refresh_token_expires_in ?? 8_640_000));
 
   await withLuciaBypass(async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     await client.query(
       `
         UPDATE integrations.qbo_connections
@@ -569,7 +569,7 @@ export async function getValidAccessToken(operatingCompanyId: string) {
   const next = needsRefresh ? await refreshAccessToken(connection.id, operatingCompanyId) : connection;
 
   await withLuciaBypass(async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     await client.query(
       `UPDATE integrations.qbo_connections SET last_used_at = now(), updated_at = now() WHERE id = $1 AND operating_company_id = $2`,
       [next.id, operatingCompanyId]
@@ -603,7 +603,7 @@ export async function revokeConnection(connectionId: string, operatingCompanyId:
   });
 
   await withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [connection.operating_company_id]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [connection.operating_company_id]);
     await client.query(`UPDATE integrations.qbo_connections SET revoked_at = now(), updated_at = now() WHERE id = $1`, [connectionId]);
     await appendCrudAudit(
       client,
@@ -623,7 +623,7 @@ export async function revokeConnection(connectionId: string, operatingCompanyId:
  *  operating_company_id-scoped (NOT lucia-bypassable), so we must set the GUC per company. */
 export async function companyHasQboConnectionRecord(operatingCompanyId: string): Promise<boolean> {
   return withLuciaBypass(async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     const res = await client.query(
       `SELECT 1 FROM integrations.qbo_connections WHERE operating_company_id = $1 LIMIT 1`,
       [operatingCompanyId]
@@ -687,7 +687,7 @@ export async function getConnectionsExpiringWithin(secondsAhead: number) {
     }> = [];
 
     for (const company of companies.rows) {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [company.id]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [company.id]);
       const res = await client.query<{
         id: string;
         operating_company_id: string;
@@ -743,7 +743,7 @@ export async function getConnectionsWithAccessTokenExpiringWithin(secondsAhead: 
     }> = [];
 
     for (const company of companies.rows) {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [company.id]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [company.id]);
       const res = await client.query<{
         id: string;
         operating_company_id: string;

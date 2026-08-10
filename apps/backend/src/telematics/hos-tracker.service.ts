@@ -71,7 +71,7 @@ export async function getHosDaily(
   dateStr: string,
   now: Date
 ): Promise<HosDaily> {
-  await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+  await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
 
   const { start: dayStart, end: dayEnd } = homeDayWindowUtc(dateStr);
   const asOf = now < dayEnd ? now : dayEnd; // for a past day, evaluate clocks at end-of-day
@@ -186,7 +186,7 @@ export async function getHosDailyRoster(
   dateStr: string,
   now: Date
 ): Promise<HosRoster> {
-  await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+  await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
   // Active board drivers = drivers with an OPEN vehicle assignment (the same set the fleet board + HOS pull use).
   const active = await client.query<{ driver_id: string; driver_name: string | null; unit_number: string | null }>(
     `SELECT DISTINCT ON (a.driver_id)
@@ -238,7 +238,7 @@ export async function getHosEvents(
   fromUtc: Date,
   toUtc: Date
 ): Promise<HosEvent[]> {
-  await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+  await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
   const rows = await fetchEvents(client, operatingCompanyId, driverId, fromUtc, toUtc);
   return rows.map((r) => ({
     driver_id: driverId,

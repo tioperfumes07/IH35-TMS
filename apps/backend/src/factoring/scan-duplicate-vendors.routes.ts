@@ -27,7 +27,7 @@ export async function registerScanDuplicateVendorRoutes(app: FastifyInstance) {
 
     await assertCompanyMembership(user.uuid, parsed.data.operating_company_id);
     const pairs = await withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [parsed.data.operating_company_id]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [parsed.data.operating_company_id]);
       const res = await client.query<{
         from_vendor_id: string;
         from_vendor_name: string;

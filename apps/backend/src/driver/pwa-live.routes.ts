@@ -46,7 +46,7 @@ export async function registerDriverPwaLiveRoutes(app: FastifyInstance) {
     const snapshot = await withCurrentUser(req.user.uuid, async (client) => {
       const operatingCompanyId = await resolveDriverCompany(client, driver.id);
       if (!operatingCompanyId) return null;
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
 
       const clocks = await getCurrentClocks(client, operatingCompanyId, driver.id);
       const latestEventRes = await client.query<{ duty_status: string | null }>(
@@ -117,7 +117,7 @@ export async function registerDriverPwaLiveRoutes(app: FastifyInstance) {
     const rows = await withCurrentUser(req.user.uuid, async (client) => {
       const operatingCompanyId = await resolveDriverCompany(client, driver.id);
       if (!operatingCompanyId) return [];
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
 
       const res = await client.query<{
         id: string;
@@ -170,7 +170,7 @@ export async function registerDriverPwaLiveRoutes(app: FastifyInstance) {
     const payload = await withCurrentUser(req.user.uuid, async (client) => {
       const operatingCompanyId = await resolveDriverCompany(client, driver.id);
       if (!operatingCompanyId) return null;
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
 
       const truckRes = await client.query<{
         unit_id: string;

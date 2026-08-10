@@ -57,7 +57,7 @@ export async function registerLoadStopExtraRateRoutes(app: FastifyInstance) {
 
     const created = await withCurrentUser(user.uuid, async (client) => {
       await assertCompanyMembership(user.uuid, body.data.operating_company_id);
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [body.data.operating_company_id]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [body.data.operating_company_id]);
       return addStopExtra(client, {
         operating_company_id: body.data.operating_company_id,
         load_uuid: params.data.load_uuid,
@@ -85,7 +85,7 @@ export async function registerLoadStopExtraRateRoutes(app: FastifyInstance) {
 
     const payload = await withCurrentUser(user.uuid, async (client) => {
       await assertCompanyMembership(user.uuid, query.data.operating_company_id);
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [query.data.operating_company_id]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [query.data.operating_company_id]);
       const [items, total_cents] = await Promise.all([
         listForLoad(client, {
           operating_company_id: query.data.operating_company_id,
@@ -118,7 +118,7 @@ export async function registerLoadStopExtraRateRoutes(app: FastifyInstance) {
 
       const deleted = await withCurrentUser(user.uuid, async (client) => {
         await assertCompanyMembership(user.uuid, query.data.operating_company_id);
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [query.data.operating_company_id]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [query.data.operating_company_id]);
         return softDelete(client, {
           operating_company_id: query.data.operating_company_id,
           load_uuid: params.data.load_uuid,

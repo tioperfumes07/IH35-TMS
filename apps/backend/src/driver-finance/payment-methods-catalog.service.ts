@@ -56,7 +56,7 @@ async function deriveUniqueCode(client: QueryableClient, operatingCompanyId: str
 }
 
 async function setScope(client: QueryableClient, operatingCompanyId: string) {
-  await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+  await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
 }
 
 /** List the catalog for an entity. Active-only by default (void-not-delete → voided rows excluded). */

@@ -52,7 +52,7 @@ describeIntegration("reconciliation findings migration", () => {
   it("rejects invalid enum values for integration, finding_type, and status", async () => {
     await expect(
       withCurrentUser(TEST_OWNER_USER_ID, async (client) => {
-        await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+        await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
         await client.query(
           `
             INSERT INTO _system.reconciliation_findings (
@@ -89,7 +89,7 @@ describeIntegration("reconciliation findings migration", () => {
 
   it("allows scoped insert under matching tenant context", async () => {
     const id = await withCurrentUser(TEST_OWNER_USER_ID, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
       const res = await client.query<{ id: string }>(
         `
           INSERT INTO _system.reconciliation_findings (
@@ -128,7 +128,7 @@ describeIntegration("reconciliation findings migration", () => {
   it("rejects insert when row company does not match tenant context", async () => {
     await expect(
       withCurrentUser(TEST_OWNER_USER_ID, async (client) => {
-        await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+        await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
         await client.query(
           `
             INSERT INTO _system.reconciliation_findings (
@@ -163,7 +163,7 @@ describeIntegration("reconciliation findings migration", () => {
 
   it("defaults status to open on insert", async () => {
     const row = await withCurrentUser(TEST_OWNER_USER_ID, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
       const res = await client.query<{ id: string; status: string }>(
         `
           INSERT INTO _system.reconciliation_findings (

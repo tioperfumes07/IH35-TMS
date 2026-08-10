@@ -37,7 +37,7 @@ export async function registerLoadGeofenceTimelineRoutes(app: FastifyInstance) {
 
     await assertCompanyMembership(user.uuid, operating_company_id);
     const result = await withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operating_company_id]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operating_company_id]);
 
       const loadRes = await client.query<{ id: string }>(
         `SELECT id FROM mdata.loads

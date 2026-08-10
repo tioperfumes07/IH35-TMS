@@ -106,7 +106,7 @@ async function appendAdminJobAudit(
   actorUserId?: string | null
 ) {
   await withLuciaBypass(async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     await client.query(`SELECT audit.append_event($1, $2, $3::jsonb, $4::uuid, $5)`, [
       eventClass,
       severity,
@@ -456,7 +456,7 @@ async function runOperation(job: AdminJobRecord): Promise<Record<string, unknown
 
   if (job.operation === "samsara.config.health_check") {
     await withLuciaBypass(async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [job.operating_company_id]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [job.operating_company_id]);
       await runSamsaraHealthCheckForRow(client, job.operating_company_id);
     });
     return { ok: true };
@@ -467,7 +467,7 @@ async function runOperation(job: AdminJobRecord): Promise<Record<string, unknown
     // Void-never-delete: sets deactivated_at, appends audit row, returns affected ids.
     // DO NOT auto-run; owner triggers via admin panel after reviewing affected ids.
     const affected = await withLuciaBypass(async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [job.operating_company_id]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [job.operating_company_id]);
       const res = await client.query<{ id: string; vendor_name: string }>(
         `
           UPDATE mdata.vendors

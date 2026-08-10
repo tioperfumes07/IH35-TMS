@@ -50,7 +50,7 @@ export async function findActiveCarriersMissingRefundRoles(client: GuardClient):
 
   const gaps: CarrierCoaGap[] = [];
   for (const carrier of carriersRes.rows) {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [carrier.id]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [carrier.id]);
     const rolesRes = await client.query<{ role: string }>(
       `
         SELECT role

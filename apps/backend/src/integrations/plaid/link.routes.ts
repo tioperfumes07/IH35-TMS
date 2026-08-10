@@ -97,7 +97,7 @@ function ensureRole(reply: FastifyReply, role: string, allowedRoles: Set<string>
 async function withCompanyScope<T>(userId: string, operatingCompanyId: string, fn: (client: { query: <R>(sql: string, values?: unknown[]) => Promise<{ rows: R[]; rowCount?: number }> }) => Promise<T>) {
   await assertCompanyMembership(userId, operatingCompanyId);
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     return fn(client);
   });
 }

@@ -175,7 +175,7 @@ describe("RLS isolation marker", () => {
         return { rows: [] };
       },
     };
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, ["co-tenant-a"]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, ["co-tenant-a"]);
     await client.query(
       `
         SELECT uuid FROM fuel.fraud_alerts

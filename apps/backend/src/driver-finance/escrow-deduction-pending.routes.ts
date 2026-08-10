@@ -48,7 +48,7 @@ export function registerEscrowDeductionPendingRoutes(app: FastifyInstance) {
     await assertCompanyMembership(user.uuid, query.data.operating_company_id);
     const client = await pool.connect();
     try {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [query.data.operating_company_id]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [query.data.operating_company_id]);
       await processEscrowPendingExpiryReminders(client, user.uuid, query.data.operating_company_id);
       const rows = await listPendingDeductions(client, query.data.operating_company_id);
       return reply.send({ data: rows });
@@ -116,7 +116,7 @@ export function registerEscrowDeductionPendingRoutes(app: FastifyInstance) {
     await assertCompanyMembership(user.uuid, query.data.operating_company_id);
     const client = await pool.connect();
     try {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [query.data.operating_company_id]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [query.data.operating_company_id]);
       const rows = await listLoadAbandonments(client, query.data.operating_company_id, query.data.since_date);
       return reply.send({ data: rows });
     } finally {

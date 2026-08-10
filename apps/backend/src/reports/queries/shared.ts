@@ -28,7 +28,7 @@ export async function runReportQuery<T>(
     await assertCompanyMembership(context.actorUserId, context.operatingCompanyId);
   }
   return withLuciaBypass(async (client) => {
-    await client.query("SELECT set_config('app.operating_company_id', $1, true)", [context.operatingCompanyId]);
+    await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [context.operatingCompanyId]);
     return fn(client);
   });
 }

@@ -29,7 +29,7 @@ export async function getActiveDrivers(
   max_age_minutes: number = DEFAULT_MAX_AGE_MINUTES
 ): Promise<ActiveDriversResult> {
   await client.query(
-    `SELECT set_config('app.operating_company_id', $1, true)`,
+    `SELECT set_config('app.operating_company_id', $1::text, true)`,
     [operating_company_id]
   );
 

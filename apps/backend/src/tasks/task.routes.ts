@@ -19,7 +19,7 @@ type Queryable = {
 // because the GUC the policy reads is empty. (Follow-up: a gated migration could standardize the
 // tasks.task policy onto `app.operating_company_id`; until then we set both here.)
 const SET_TASK_SCOPE_SQL =
-  `SELECT set_config('app.operating_company_id', $1, true), set_config('app.current_operating_company_id', $1, true)`;
+  `SELECT set_config('app.operating_company_id', $1::text, true), set_config('app.current_operating_company_id', $1::text, true)`;
 
 // TASKS-PLANNER-V2-CONNECTIVITY — polymorphic record link kinds (mirror tasks.task_link CHECK).
 const TARGET_TYPES = [

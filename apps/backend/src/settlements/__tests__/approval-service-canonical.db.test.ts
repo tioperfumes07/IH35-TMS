@@ -41,7 +41,7 @@ describeIntegration("settlement approval.service canonical repoint (real Postgre
   async function bypass(fn: () => Promise<void>) {
     await db.query("BEGIN");
     await db.query("SET LOCAL app.bypass_rls = 'lucia'");
-    await db.query("SELECT set_config('app.operating_company_id', $1, true)", [companyId]);
+    await db.query("SELECT set_config('app.operating_company_id', $1::text, true)", [companyId]);
     try {
       await fn();
       await db.query("COMMIT");

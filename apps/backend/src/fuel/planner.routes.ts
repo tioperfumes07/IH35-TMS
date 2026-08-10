@@ -41,13 +41,13 @@ async function withCompanyScope<T>(
 ) {
   await assertCompanyMembership(userId, operatingCompanyId);
   return withCurrentUser(userId, async (client) => {
-    await client.query("SELECT set_config('app.operating_company_id', $1, true)", [operatingCompanyId]);
+    await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [operatingCompanyId]);
     return fn(client);
   });
 }
 
 async function hasRelation(client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: Array<{ ok: boolean }> }> }, name: string) {
-  const res = await client.query(`SELECT to_regclass($1) IS NOT NULL AS ok`, [name]);
+  const res = await client.query(`SELECT to_regclass($1::text) IS NOT NULL AS ok`, [name]);
   return Boolean(res.rows[0]?.ok);
 }
 
