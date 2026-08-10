@@ -79,6 +79,12 @@ function buildUrl(path: string): string {
   if (/^https?:\/\//i.test(path)) return path;
   if (API_BASE_URL) return `${API_BASE_URL.replace(/\/$/, "")}${path}`;
 
+  // Production is split-hosted. If the build-time VITE value is absent, never POST API paths to the
+  // static SPA host (which answers index.html with HTTP 200 and can masquerade as a successful save).
+  if (typeof window !== "undefined" && window.location?.hostname === "app.ih35dispatch.com") {
+    return `https://api.ih35dispatch.com${path}`;
+  }
+
   // In jsdom/unit tests, fetch requires an absolute URL.
   if (typeof window !== "undefined" && window.location?.origin) {
     return new URL(path, window.location.origin).toString();
@@ -126,6 +132,12 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
 
   const isJson = response.headers.get("content-type")?.includes("application/json");
   const payload = isJson ? await response.json() : await response.text();
+
+  // A successful mutation must return an API JSON response. Static hosting fallbacks commonly return
+  // index.html with 200; treating that as success loses the operator's expense while showing a toast.
+  if (response.ok && MUTATING_METHODS.has(method) && !isJson) {
+    throw new ApiError(502, { message: "API returned a non-JSON response; the record was not confirmed saved." });
+  }
 
   if (!response.ok) {
     throw new ApiError(response.status, payload, retryAfterSeconds(response));
