@@ -18,6 +18,7 @@ import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { useListState } from "../../../components/list-state";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+import { CappedListNotice } from "../../../components/CappedListNotice";
 
 function isPrivacyGateError(error: unknown) {
   if (!(error instanceof ApiError)) return false;
@@ -366,19 +367,28 @@ export function ComplaintsTab() {
                 ))}
               </SelectCombobox>
             ) : form.complainant_type === "customer" ? (
-              <ReferenceSelect
-                value={form.complainant_customer_id || null}
-                onChange={(next) => setForm((v) => ({ ...v, complainant_customer_id: next ?? "" }))}
-                options={customerOptions}
-                createKind="customer"
-                operatingCompanyId={companyId}
-                placeholder={customersQuery.isLoading ? "Loading customers…" : "Complainant customer"}
-                loading={customersQuery.isLoading}
-                onSearch={setCustomerSearch}
-                onOptionCreated={() => {
-                  void queryClient.invalidateQueries({ queryKey: ["safety-v64", "complaints-customers", companyId] });
-                }}
-              />
+              <>
+                <ReferenceSelect
+                  value={form.complainant_customer_id || null}
+                  onChange={(next) => setForm((v) => ({ ...v, complainant_customer_id: next ?? "" }))}
+                  options={customerOptions}
+                  createKind="customer"
+                  operatingCompanyId={companyId}
+                  placeholder={customersQuery.isLoading ? "Loading customers…" : "Complainant customer"}
+                  loading={customersQuery.isLoading}
+                  onSearch={setCustomerSearch}
+                  onOptionCreated={() => {
+                    void queryClient.invalidateQueries({ queryKey: ["safety-v64", "complaints-customers", companyId] });
+                  }}
+                />
+                <CappedListNotice
+                  shown={customerOptions.length}
+                  limit={customerSearch ? 200 : 500}
+                  total={customersQuery.data?.total}
+                  hint="Type to search the full customer catalog."
+                  className="text-xs text-slate-600"
+                />
+              </>
             ) : (
               <input
                 className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
@@ -440,6 +450,13 @@ export function ComplaintsTab() {
               onOptionCreated={() => {
                 void queryClient.invalidateQueries({ queryKey: ["safety-v64", "complaint-types", companyId] });
               }}
+            />
+            <CappedListNotice
+              shown={complaintTypeOptions.length}
+              limit={200}
+              total={complaintTypesQuery.data?.total}
+              hint="Type to search the full complaint-type catalog."
+              className="text-xs text-slate-600"
             />
             <input
               className="rounded-sm border border-gray-300 px-2 py-1 text-xs"

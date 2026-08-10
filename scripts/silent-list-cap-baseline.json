@@ -47,13 +47,11 @@
     "apps/frontend/src/pages/operations/GeofencesPage.tsx",
     "apps/frontend/src/pages/qbo/QBOSyncStatusDashboardPage.tsx",
     "apps/frontend/src/pages/safety/HoursOfServicePage.tsx",
-    "apps/frontend/src/pages/safety/InternalFinesPage.tsx",
     "apps/frontend/src/pages/safety/components/CargoClaimIntakeSurface.tsx",
     "apps/frontend/src/pages/safety/components/CompanyViolationCreateModal.tsx",
     "apps/frontend/src/pages/safety/components/FineCreateModal.tsx",
     "apps/frontend/src/pages/safety/components/FineLifecycleActions.tsx",
     "apps/frontend/src/pages/safety/components/SafetyIncidentsClusterSurface.tsx",
-    "apps/frontend/src/pages/safety/tabs/ComplaintsTab.tsx",
     "apps/frontend/src/pages/safety/tabs/DOTInspectionsTab.tsx"
   ]
 }

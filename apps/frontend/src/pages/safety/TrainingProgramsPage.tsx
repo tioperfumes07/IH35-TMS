@@ -14,6 +14,7 @@ import { EntityPicker } from "../../components/parity/EntityPicker";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
+import { CappedListNotice } from "../../components/CappedListNotice";
 
 type Props = {
   operatingCompanyId: string;
@@ -312,6 +313,13 @@ export function TrainingProgramsPage({ operatingCompanyId }: Props) {
               dataTestId="training-program-driver-picker"
             />
           </div>
+          <CappedListNotice
+            shown={(driversQuery.data?.drivers ?? []).length}
+            limit={500}
+            total={driversQuery.data?.total}
+            hint="Assigned-driver name lookup may be incomplete — use the picker search for drivers beyond the first page."
+            className="text-xs text-slate-600"
+          />
           {assignDriverIds.length > 0 ? (
             <ul className="max-h-48 space-y-1 overflow-y-auto rounded-sm border border-gray-200 p-2">
               {assignDriverIds.map((driverId) => (
