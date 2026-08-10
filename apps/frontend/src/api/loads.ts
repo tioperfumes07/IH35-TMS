@@ -256,7 +256,12 @@ export function updateLoad(id: string, body: Record<string, unknown>) {
  * archive-not-delete). Body must be a PARTIAL update — only fields present are touched.
  */
 export function updateDispatchLoadFull(id: string, body: Record<string, unknown>) {
-  return apiRequest<LoadDetail>(`/api/v1/dispatch/loads/${id}`, { method: "PATCH", body });
+  // PATCH returns { load, stops, driver_bill_mint } from updateDispatchLoad (#5408 mint on edit).
+  return apiRequest<{
+    load: LoadDetail;
+    stops?: unknown[];
+    driver_bill_mint?: { outcome?: string; missing?: string[]; reason?: string } | null;
+  }>(`/api/v1/dispatch/loads/${id}`, { method: "PATCH", body });
 }
 
 /**

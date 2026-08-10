@@ -639,8 +639,21 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
           form.formState.dirtyFields as unknown as Record<string, unknown>,
           operatingCompanyId
         );
-        await updateDispatchLoadFull(editLoadId, body);
+        // DRV-BILL-SKIP-PATHS — Edit Load calls ensureDriverBillArtifactsForLoad (#5408); surface mint skips
+        // the same way Book does (LV-DISPATCH-TOAST-LIES companion: report server outcome, never invent pay).
+        const patchResult = await updateDispatchLoadFull(editLoadId, body);
         pushToast("Load updated", "success");
+        const mint = (
+          patchResult as { driver_bill_mint?: { outcome?: string; missing?: string[] } | null }
+        ).driver_bill_mint;
+        if (mint?.outcome === "skipped_no_pay_rate") {
+          const missing =
+            Array.isArray(mint.missing) && mint.missing.length > 0 ? mint.missing.join(", ") : "pay inputs";
+          pushToast(
+            `Load updated, but driver pay was NOT minted — missing ${missing}. Enter shortest miles before delivery so the driver bill can be created.`,
+            "info"
+          );
+        }
         onCreated();
         onClose();
       } catch (error) {
