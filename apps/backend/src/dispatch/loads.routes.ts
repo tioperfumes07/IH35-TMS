@@ -715,6 +715,14 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
                  -- rendered "-" for a load that has one. Read from mdata.loads, entity-scoped like the
                  -- joins above; NOT added to the view, which would widen it unscoped for every consumer.
                  ml.trip_type AS trip_type,
+                 -- DISPATCH-MILES-GET (Cascade create-depth 2026-08-10): Book POST accepts
+                 -- miles_shortest/miles_practical and Neon stores them (e.g. L-20260809-0007 = 420/445),
+                 -- but views.dispatch_load_with_driver_status has ZERO mile columns (information_schema
+                 -- lucia 2026-08-10) so SELECT l.* omitted them and GET /dispatch/loads/:id could not
+                 -- round-trip miles. Same fix shape as trip_type — project from mdata.loads via ml.
+                 ml.miles_shortest AS miles_shortest,
+                 ml.miles_practical AS miles_practical,
+                 ml.loaded_miles AS loaded_miles,
                  NULL::text AS trailer_equipment_type,
                  NULL::text AS trailer_number,
                  rc.file_id AS ratecon_file_id,
