@@ -8,6 +8,7 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { EntityPicker } from "../../components/parity/EntityPicker";
 
@@ -47,7 +48,7 @@ export function AssignmentHistoryPage() {
       label: "Load",
       sortable: true,
       render: (row) => (
-        <EntityLink kind="load" id={row.load_id} label={row.load_number ?? row.load_id} />
+        <EntityLink kind="load" id={row.load_id} label={entityLabel(row.load_number, row.load_id, "Load")} />
       ),
     },
     { key: "assignment_method", label: "Method", sortable: true },

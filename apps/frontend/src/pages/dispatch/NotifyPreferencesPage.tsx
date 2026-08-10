@@ -14,6 +14,7 @@ import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 import { useToast } from "../../components/Toast";
 
 function PrefToggle({
@@ -42,7 +43,7 @@ const LOG_COLUMNS: Array<ParityColumn<CustomerNotifyLogEntry>> = [
     key: "load_number",
     label: "Load",
     sortable: true,
-    render: (entry) => <EntityLink kind="load" id={entry.load_id} label={entry.load_number ?? entry.load_id} />,
+    render: (entry) => <EntityLink kind="load" id={entry.load_id} label={entityLabel(entry.load_number, entry.load_id, "Load")} />,
   },
   {
     key: "customer_name",

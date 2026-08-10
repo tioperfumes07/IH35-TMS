@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { entityLabel } from "../../lib/entity-label";
 import {
   createDispatchIntransitIssue,
   listDispatchIntransitIssues,
@@ -75,7 +76,7 @@ export function InTransitIssuesPage() {
         sortable: true,
         render: (issue) =>
           issue.load_id ? (
-            <EntityLink kind="load" id={issue.load_id} label={issue.load_number ?? issue.load_id} />
+            <EntityLink kind="load" id={issue.load_id} label={entityLabel(issue.load_number, issue.load_id, "Load")} />
           ) : (
             issue.load_number ?? "—"
           ),
