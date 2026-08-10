@@ -21,6 +21,7 @@ import { Combobox } from "../components/Combobox";
 import { PageHeader } from "../components/layout/PageHeader";
 import { Modal } from "../components/Modal";
 import { ActionButton } from "../components/shared/ActionButton";
+import { ListErrorBanner } from "../components/shared/ListErrorBanner";
 import { useToast } from "../components/Toast";
 
 const lineItemUnitOptions: Array<{ value: LineItemUnit; label: string }> = [
@@ -258,6 +259,8 @@ export function EquipmentTypesPage() {
 
       {equipmentTypesQuery.isLoading ? (
         <div className="rounded-sm border border-gray-200 bg-white p-3 text-[13px] text-gray-500">Loading equipment types...</div>
+      ) : equipmentTypesQuery.isError ? (
+        <ListErrorBanner message="Failed to load equipment types." onRetry={() => void equipmentTypesQuery.refetch()} />
       ) : (
         <div className="space-y-2">
           {rows.map((typeRow) => {
@@ -354,6 +357,7 @@ export function EquipmentTypesPage() {
                             <Button
                               variant="secondary"
                               size="sm"
+                              aria-label={`Edit ${item.name}`}
                               onClick={() => {
                                 setEditingLineItem(item);
                                 setEditingLineItemForm({
@@ -592,7 +596,7 @@ export function EquipmentTypesPage() {
         </form>
       </Modal>
 
-      <Modal open={editingEquipment !== null} onClose={() => setEditingEquipment(null)} title="Edit Equipment Type">
+      <Modal variant="drawer" open={editingEquipment !== null} onClose={() => setEditingEquipment(null)} title="Edit Equipment Type">
         <form
           className="space-y-3"
           onSubmit={async (event) => {
@@ -758,7 +762,7 @@ export function EquipmentTypesPage() {
         </form>
       </Modal>
 
-      <Modal open={editingLineItem !== null} onClose={() => setEditingLineItem(null)} title="Edit Line Item Template">
+      <Modal variant="drawer" open={editingLineItem !== null} onClose={() => setEditingLineItem(null)} title="Edit Line Item Template">
         <form
           className="space-y-3"
           onSubmit={async (event) => {
