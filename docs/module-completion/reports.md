@@ -1,12 +1,12 @@
 # Module completion — Reports
 
-**PROGRESS: 4 of 8** · complete: `false` · as_of: 2026-08-09 · live_sha: `—`
+**PROGRESS: 5 of 8** · complete: `false` · as_of: 2026-08-09 · live_sha: `—`
 
 | Status | Count |
 |---|---:|
-| PASS | 4 |
+| PASS | 5 |
 | HOLD | 0 |
-| OPEN | 4 |
+| OPEN | 3 |
 | FAIL | 0 |
 | UNVERIFIED | 0 |
 
@@ -18,7 +18,7 @@
 | `RPT-S04` | **OPEN** | Fuel Reconciliation report ties fuel.fuel_transactions | scaffold — not proven | — |
 | `RPT-S05` | **PASS** | IFTA preparer Q3 due banner honest | ReportsHome.tsx renders IftaPreparerCard only after getIftaStatus resolves, with daysUntilDue computed from real status and a loading placeholder of '—'. Guard: scripts/verify-rpt-s01-s05-reports-home-ifta.mjs. | #5344 |
 | `RPT-S06` | **PASS** | Scheduled reports count honest when zero | ReportsHome kpiReady —/0 honesty; SubscriptionManager emptyMessage; ScheduledReportsPanel No active schedules; verify-rpt-s06-scheduled-honest-zero.mjs | PENDING |
-| `RPT-S07` | **OPEN** | Audit reports section (activity, financial change log, deduction trail) | scaffold — routes exist; output UNVERIFIED | — |
+| `RPT-S07` | **PASS** | Audit reports section (activity, financial change log, deduction trail) | Routes /reports/audit/* registered in manifest.tsx for activity-by-user, activity-by-module, financial-change-log, maintenance-decision-log, deduction-trail, void-reversal, period-close-history, all mounting AuditXxxPage wrappers. ReportsSubNav lists Audit dropdown with exact hrefs. AuditReportPage reads selectedCompanyId, passes operating_company_id to fetchAuditReport, and renders ParityTable with loading, empty text, and error state. Backend audit-reports.routes.ts validates operating_company_id and filters every endpoint with el.operating_company_id = $1::uuid. Guard: scripts/verify-rpt-s07-audit-reports-section.mjs. | #TBD |
 | `RPT-VERIFY-01` | **OPEN** | Reports module VERIFY-1..8 TRANSP + USMCA | scaffold — catalog PASS; per-report Layer B UNVERIFIED | — |
 
 Desktop audit: ~/Desktop/IH35-CURSOR-AUDIT/AUDITOR-RUN-2026-07-31/modules/reports-docs-maintenance-2026-08-01.md
