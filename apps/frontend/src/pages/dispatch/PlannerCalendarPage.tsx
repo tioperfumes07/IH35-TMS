@@ -9,8 +9,10 @@ import {
   type PlannerLoadEvent,
 } from "../../api/dispatch";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { userFacingApiError } from "../../lib/api-error-message";
 import { LoadTemplateLibrary } from "./LoadTemplateLibrary";
 
 function dayKey(date: Date): string {
@@ -186,7 +188,14 @@ export function PlannerCalendarPage() {
   };
 
   if (!companyId) {
-    return <div className="rounded-sm border bg-white p-4 text-sm text-slate-600">Select an operating company.</div>;
+    return (
+      <div
+        data-testid="dispatch-planner-need-company"
+        className="rounded-sm border bg-white p-4 text-sm text-slate-600"
+      >
+        Select an operating company to load the planner calendar.
+      </div>
+    );
   }
 
   const drivers = weekQ.data?.drivers ?? [];
@@ -236,10 +245,17 @@ export function PlannerCalendarPage() {
 
       <LoadTemplateLibrary open={templatesOpen} onClose={closeTemplates} operatingCompanyId={companyId} />
 
+      {weekQ.isError ? (
+        <ListErrorBanner
+          message={userFacingApiError(weekQ.error, "Could not load planner week")}
+          onRetry={() => void weekQ.refetch()}
+        />
+      ) : null}
+
       <section className="overflow-x-auto rounded-sm border bg-white">
         {weekQ.isLoading ? (
           <div className="p-6 text-center text-sm text-slate-500">Loading planner week…</div>
-        ) : (
+        ) : weekQ.isError ? null : (
           <DndContext onDragEnd={handleDragEnd}>
             <table className="min-w-full text-sm">
               <thead className="border-b bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
@@ -255,8 +271,13 @@ export function PlannerCalendarPage() {
               <tbody>
                 {drivers.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="px-3 py-6 text-center text-slate-500">
-                      No active drivers for this company.
+                    <td
+                      colSpan={8}
+                      data-testid="dispatch-planner-honest-empty"
+                      className="px-3 py-6 text-center text-slate-500"
+                    >
+                      No active drivers for this company this week. Assign drivers under Drivers / Lists, then
+                      return here — load chips appear once loads have a start_at on a driver row.
                     </td>
                   </tr>
                 ) : (
