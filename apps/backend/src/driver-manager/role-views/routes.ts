@@ -45,7 +45,7 @@ export async function registerDriverManagerRoleHomeRoutes(app: FastifyInstance) 
 
     return withCurrentUser(user.uuid, async (client) => {
       await setScopedCompanyContext(client, user.uuid, operating_company_id);
-      await client.query(`SELECT set_config('app.user_role', $1, true)`, [user.role]);
+      await client.query(`SELECT set_config('app.user_role', $1::text, true)`, [user.role]);
 
       const data = await getDriverManagerHomeData(client, operating_company_id);
       return reply.send(data);

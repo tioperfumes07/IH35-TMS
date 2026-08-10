@@ -57,7 +57,7 @@ export async function registerTelematicsHosRoutes(app: FastifyInstance) {
 
     const payload = await withCurrentUser(user.uuid, async (client) => {
       await setScopedCompanyContext(client, user.uuid, query.data.operating_company_id);
-      await client.query(`SELECT set_config('app.user_role', $1, true)`, [user.role]);
+      await client.query(`SELECT set_config('app.user_role', $1::text, true)`, [user.role]);
 
       const driverRes = await client.query<{ id: string }>(
         `
@@ -175,7 +175,7 @@ export async function registerTelematicsHosRoutes(app: FastifyInstance) {
 
     const payload = await withCurrentUser(user.uuid, async (client) => {
       await setScopedCompanyContext(client, user.uuid, query.data.operating_company_id);
-      await client.query(`SELECT set_config('app.user_role', $1, true)`, [user.role]);
+      await client.query(`SELECT set_config('app.user_role', $1::text, true)`, [user.role]);
 
       // Confine to drivers that actually belong to this operating company.
       const driverRes = await client.query<{ id: string }>(
@@ -214,7 +214,7 @@ export async function registerTelematicsHosRoutes(app: FastifyInstance) {
 
     const payload = await withCurrentUser(user.uuid, async (client) => {
       await setScopedCompanyContext(client, user.uuid, query.data.operating_company_id);
-      await client.query(`SELECT set_config('app.user_role', $1, true)`, [user.role]);
+      await client.query(`SELECT set_config('app.user_role', $1::text, true)`, [user.role]);
 
       // Latest position per load via its assigned unit. Confined to this entity's loads + positions.
       const res = await client.query<{

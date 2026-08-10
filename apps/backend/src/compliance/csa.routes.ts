@@ -109,7 +109,7 @@ async function withCompanyScope<T>(userId: string, role: string, companyId: stri
   await assertCompanyMembership(userId, companyId);
   return withCurrentUser(userId, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [companyId]);
-    await client.query(`SELECT set_config('app.user_role', $1, true)`, [role]);
+    await client.query(`SELECT set_config('app.user_role', $1::text, true)`, [role]);
     return fn(client as DbClient);
   });
 }

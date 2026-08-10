@@ -50,7 +50,7 @@ export async function registerRelayHealthRoutes(app: FastifyInstance) {
     try {
       const health = await withCurrentUser(user.uuid, async (client): Promise<RelayPublicHealth> => {
         await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [oc]);
-        await client.query("SELECT set_config('app.active_company_id', $1, true)", [oc]);
+        await client.query("SELECT set_config('app.active_company_id', $1::text, true)", [oc]);
 
         const company = await client.query<{ code: string | null }>(
           `SELECT code FROM org.companies WHERE id = $1::uuid LIMIT 1`,

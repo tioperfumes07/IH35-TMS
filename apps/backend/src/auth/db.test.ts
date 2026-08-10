@@ -47,7 +47,7 @@ describe("withLuciaBypass session context", () => {
       "SET LOCAL app.bypass_rls = 'lucia'",
       // SQLi→RLS-bypass hardening: sentinel company GUCs are now PARAMETERIZED via set_config
       // (bound value), never string-interpolated into the SQL text.
-      "SELECT set_config('app.active_company_id', $1, true)",
+      "SELECT set_config('app.active_company_id', $1::text, true)",
       "SELECT set_config('app.operating_company_id', $1::text, true)",
       "COMMIT",
     ]);
