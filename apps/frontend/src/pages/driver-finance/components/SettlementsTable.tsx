@@ -47,6 +47,15 @@ export function SettlementsTable({ rows, onOpen, loading = false }: Props) {
         ),
       },
       {
+        key: "settlement_display_id",
+        label: "Settlement #",
+        sortable: true,
+        sortValue: (row) => row.display_id ?? null,
+        render: (row) => (
+          <EntityLink kind="settlement" id={row.id} label={row.display_id ?? "—"} />
+        ),
+      },
+      {
         key: "period",
         label: "Period",
         sortable: true,

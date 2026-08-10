@@ -5,6 +5,7 @@ export type { SettlementStatus } from "@ih35/shared-types";
 
 export type SettlementListRow = {
   id: string;
+  display_id: string | null;
   driver_id: string;
   driver_full_name: string;
   driver_display_id: string;
