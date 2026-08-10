@@ -12,6 +12,7 @@ import {
 } from "../../api/document-alerts";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { Button } from "../../components/Button";
+import { ListErrorState } from "../../components/ListErrorState";
 
 function severityClass(severity: string, days: number) {
   if (days <= 0 || severity === "critical") return "text-red-700 bg-red-50";
@@ -214,8 +215,16 @@ export function DocumentAlertsPage() {
 
       {tab === "inbox" ? (
         <section>
+          {inboxQuery.isError ? (
+            <ListErrorState
+              title="Couldn't load document alerts"
+              status={0}
+              message={(inboxQuery.error as Error)?.message}
+              onRetry={() => void inboxQuery.refetch()}
+            />
+          ) : null}
           {inboxQuery.isLoading ? <p className="text-sm text-gray-500">Loading alerts…</p> : null}
-          {sortedEvents.length === 0 && !inboxQuery.isLoading ? (
+          {sortedEvents.length === 0 && !inboxQuery.isLoading && !inboxQuery.isError ? (
             <p className="text-sm text-gray-500" data-testid="alerts-empty">
               No pending document expiry alerts.
             </p>
@@ -235,6 +244,16 @@ export function DocumentAlertsPage() {
         </section>
       ) : (
         <section className="grid gap-3 md:grid-cols-2">
+          {rulesQuery.isError ? (
+            <div className="md:col-span-2">
+              <ListErrorState
+                title="Couldn't load document alert rules"
+                status={0}
+                message={(rulesQuery.error as Error)?.message}
+                onRetry={() => void rulesQuery.refetch()}
+              />
+            </div>
+          ) : null}
           {rules.map((rule) => (
             <RuleEditor
               key={rule.id}
