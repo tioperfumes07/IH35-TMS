@@ -10,6 +10,8 @@ import { useToast } from "../../components/Toast";
 import { formatDateTimeUS } from "../../lib/formatDate";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { ListErrorState } from "../../components/ListErrorState";
+import { formatQueryErrorDetail } from "../../lib/tableError";
 
 type FaultDraft = {
   id: string;
@@ -112,7 +114,13 @@ export function FaultDraftsPage() {
         </Link>
       </div>
 
-      {draftsQuery.isError ? <p className="text-sm text-red-600">Failed to load fault-driven drafts.</p> : null}
+      {draftsQuery.isError ? (
+        <ListErrorState
+          title="Couldn't load fault-driven drafts"
+          {...formatQueryErrorDetail(draftsQuery.error)}
+          onRetry={() => void draftsQuery.refetch()}
+        />
+      ) : null}
 
       {deepLinkUnitId ? (
         <p className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
