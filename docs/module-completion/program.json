@@ -2,7 +2,7 @@
   "module": "program",
   "title": "Program Tracker",
   "complete": true,
-  "as_of": "2026-08-10T06:32:27Z",
+  "as_of": "2026-08-10T17:05:00Z",
   "live_sha": "50ce01b",
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/AUDITOR-RUN-2026-07-31/modules/program-system-help-2026-08-01.md",
   "spec_sources": [
@@ -111,5 +111,5 @@
   "pass_count": 7,
   "total_count": 7,
   "progress": "7 of 7",
-  "note": "2026-08-10 PROG-CERTIFIED-NEON: PROG-S01..S05 evidence upgraded with reconcile artifact + API/code proof (#5373); PROG-S06 unchanged (Codex). PROG-VERIFY-01 stays OPEN. healthz=50ce01b at prove; main tip d7de2fabb. | 2026-08-10 Cursor CLOSED PROG-VERIFY-01 from Cascade OUTBOX PROD-VERIFIED + Neon Neftali/5743/5753 + audit.scenario_status (searched trackers, not memory)."
+  "note": "2026-08-10 Module matrix API failure is labeled unavailable, never SAMPLE; required cells remain committed-map facts and Audited/Done stay unprojected until the request-time feed responds. Mutation guard verify-program-audit-scoreboard-api-url protects the distinction."
 }

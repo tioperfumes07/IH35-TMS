@@ -158,8 +158,11 @@ export function assertScoreboardContract(sources) {
     if (/const\s+SAMPLE_AD\b/.test(matrixPage)) {
       problems.push(`${matrixPageRel}: SAMPLE_AD theater is forbidden once MATRIX-LIVE-RAD ships`);
     }
-    if (!/module-matrix-sample-banner/.test(matrixPage)) {
-      problems.push(`${matrixPageRel}: must keep SAMPLE/unavailable banner when API fails`);
+    if (!/module-matrix-unavailable-banner/.test(matrixPage)) {
+      problems.push(`${matrixPageRel}: must keep the explicit unavailable banner when API fails`);
+    }
+    if (/showSampleBanner|module-matrix-sample-banner|SAMPLE banner/.test(matrixPage)) {
+      problems.push(`${matrixPageRel}: unavailable feed state must not be labeled SAMPLE`);
     }
     if (
       !/safety\.required\.json/.test(matrixPage) ||
@@ -824,7 +827,13 @@ export function assertScoreboardContract(sources) {
 }
 
 if (SELFTEST) {
-  const live = { [PAGE]: read(PAGE), [DATA]: read(DATA), [FE_PKG]: read(FE_PKG) };
+  const matrixPageRel = "apps/frontend/src/pages/program/ModuleMatrixPreviewPage.tsx";
+  const live = {
+    [PAGE]: read(PAGE),
+    [DATA]: read(DATA),
+    [FE_PKG]: read(FE_PKG),
+    [matrixPageRel]: read(matrixPageRel),
+  };
   const failures = [];
   const expect = (name, mutated, needle) => {
     const problems = assertScoreboardContract(mutated);
@@ -861,6 +870,17 @@ if (SELFTEST) {
       ),
     },
     "must not run gen:program-scoreboard"
+  );
+  expect(
+    "sample-labeled-unavailable",
+    {
+      ...live,
+      [matrixPageRel]: live[matrixPageRel].replace(
+        "module-matrix-unavailable-banner",
+        "module-matrix-sample-banner",
+      ),
+    },
+    "must not be labeled SAMPLE",
   );
   const liveProblems = assertScoreboardContract(live);
   if (liveProblems.length) failures.push(`live FAIL: ${liveProblems.join(" | ")}`);
