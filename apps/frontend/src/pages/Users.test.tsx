@@ -326,7 +326,8 @@ describe("UsersPage — Change role ceremony", () => {
     expect(submit).not.toBeDisabled();
     await user.click(submit);
     await waitFor(() => expect(createIdentityWorkflowMock).toHaveBeenCalledOnce());
-    expect(createIdentityWorkflowMock).toHaveBeenCalledWith(
+    const [workflowBody] = createIdentityWorkflowMock.mock.calls[0]!;
+    expect(workflowBody).toEqual(
       expect.objectContaining({
         action_code: "WF-064-IDENT-002",
         target_user: "u4",
