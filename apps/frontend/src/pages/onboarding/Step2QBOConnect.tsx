@@ -44,7 +44,7 @@ export function Step2QBOConnect({ companyId, value, disabled, onChange }: Props)
           <span className="font-medium text-gray-900">{connected ? "Connected" : "Not connected"}</span>
         </div>
         {statusQuery.data?.realm_id ? (
-          <div className="mt-1 text-xs text-gray-600">Realm: {statusQuery.data.realm_id}</div>
+          <div className="mt-1 text-xs text-gray-600">QuickBooks company authorized</div>
         ) : null}
       </div>
 

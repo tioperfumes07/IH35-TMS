@@ -30,6 +30,14 @@ for (const rel of requiredFiles) {
   if (!fs.existsSync(path.join(ROOT, rel))) fail(`missing required file: ${rel}`);
 }
 
+const qboStep = fs.readFileSync(path.join(ROOT, "apps/frontend/src/pages/onboarding/Step2QBOConnect.tsx"), "utf8");
+if (/Realm:\s*\{statusQuery\.data\.realm_id\}/.test(qboStep)) {
+  fail("Step2QBOConnect must not expose the raw QuickBooks Realm identifier");
+}
+if (!qboStep.includes("QuickBooks company authorized")) {
+  fail("Step2QBOConnect must show human-readable authorization copy");
+}
+
 // 2. Wizard wires all six step components + completion handler.
 const wizard = fs.readFileSync(
   path.join(ROOT, "apps/frontend/src/pages/onboarding/OnboardingWizard.tsx"),
