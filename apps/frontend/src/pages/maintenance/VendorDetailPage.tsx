@@ -6,6 +6,7 @@ import { BackArrowHeader } from "../../components/layout/BackArrowHeader";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { entityLabel } from "../../lib/entity-label";
 
 type VendorHistoryRow = Record<string, unknown>;
 
@@ -26,7 +27,7 @@ export function VendorDetailPage() {
 
   const woColumns = useMemo<ParityColumn<VendorHistoryRow>[]>(
     () => [
-      { key: "display_id", label: "WO", sortable: true, render: (row) => String(row.display_id ?? row.id ?? "—") },
+      { key: "display_id", label: "WO", sortable: true, render: (row) => entityLabel(row.display_id, row.id, "Work order") },
       { key: "wo_type", label: "Type", sortable: true, render: (row) => String(row.wo_type ?? "—") },
       { key: "status", label: "Status", sortable: true, render: (row) => String(row.status ?? "—") },
       { key: "repair_location", label: "Location", render: (row) => String(row.repair_location ?? "—") },
@@ -38,7 +39,7 @@ export function VendorDetailPage() {
   const invoiceColumns = useMemo<ParityColumn<VendorHistoryRow>[]>(
     () => [
       { key: "invoice_number", label: "Invoice #", sortable: true, render: (row) => String(row.invoice_number ?? "—") },
-      { key: "display_id", label: "WO", render: (row) => String(row.display_id ?? row.work_order_id ?? "—") },
+      { key: "display_id", label: "WO", render: (row) => entityLabel(row.display_id, row.work_order_id, "Work order") },
       {
         key: "invoice_amount",
         label: "Amount",

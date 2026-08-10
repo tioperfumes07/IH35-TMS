@@ -6,6 +6,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { Button } from "../../components/Button";
 import { useToast } from "../../components/Toast";
 import { CreateWorkOrderModal } from "./components/CreateWorkOrderModal";
+import { entityLabel } from "../../lib/entity-label";
 
 export function DefectDetailPage() {
   const { defectId = "" } = useParams();
@@ -76,7 +77,7 @@ export function DefectDetailPage() {
               {defect.item_key} · {defect.severity}
             </h1>
             <p className="mt-1 text-sm text-gray-600">
-              Unit {defect.unit_number ?? defect.unit_id} · Driver {defect.driver_name ?? "—"} ·{" "}
+              Unit {entityLabel(defect.unit_number, defect.unit_id, "Unit")} · Driver {defect.driver_name ?? "—"} ·{" "}
               {defect.submitted_at ? new Date(defect.submitted_at).toLocaleString() : "—"}
             </p>
             <p className="mt-2 whitespace-pre-wrap text-sm text-gray-800">{defect.notes || "No driver notes."}</p>

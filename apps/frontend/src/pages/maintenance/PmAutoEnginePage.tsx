@@ -11,6 +11,7 @@ import { Button } from "../../components/Button";
 import { useToast } from "../../components/Toast";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { formatDateTimeUS } from "../../lib/formatDate";
+import { entityLabel } from "../../lib/entity-label";
 
 export function PmAutoEnginePage() {
   const { selectedCompanyId } = useCompanyContext();
@@ -102,7 +103,7 @@ export function PmAutoEnginePage() {
         <ul className="space-y-1 text-xs">
           {(dashboardQ.data?.recent_log ?? []).map((entry) => (
             <li key={entry.id} className="border-t border-gray-100 pt-1 first:border-0 first:pt-0">
-              <span className="font-medium">{entry.action}</span> — {entry.schedule_label ?? entry.pm_schedule_id}{" "}
+              <span className="font-medium">{entry.action}</span> — {entityLabel(entry.schedule_label, entry.pm_schedule_id, "Schedule")}{" "}
               {entry.unit_number ? `(${entry.unit_number})` : ""}
               {entry.work_order_id ? ` · WO ${entry.work_order_id}` : ""}
             </li>
