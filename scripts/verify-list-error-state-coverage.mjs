@@ -46,6 +46,7 @@ const REQUIRED_ERROR_STATE = [
   "apps/frontend/src/pages/reports/BookingGapReport.tsx",
   "apps/frontend/src/pages/reports/GeofenceReconciliationReport.tsx",
   "apps/frontend/src/pages/reports/CashFlowReport.tsx",
+  "apps/frontend/src/pages/fleet/TransfersInProgressPage.tsx",
 ];
 
 function stripComments(src) {
