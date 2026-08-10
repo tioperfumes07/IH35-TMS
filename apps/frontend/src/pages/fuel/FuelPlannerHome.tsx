@@ -126,6 +126,17 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
     if (target) navigate(target);
   };
 
+  if (!companyId) {
+    return (
+      <div className="space-y-3 p-4">
+        <PageHeader title="Fuel" subtitle="Overview" />
+        <div className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-sm text-gray-700">
+          Select an operating company to view fuel.
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-3">
       <PageHeader

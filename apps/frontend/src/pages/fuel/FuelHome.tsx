@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
 import { getFuelDashboard, getLovesSyncStatus } from "../../api/fuelPlanner";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { FuelFraudBadge } from "../../components/fuel/FuelFraudBadge";
 import { FuelKpiRow } from "./components/FuelKpiRow";
 import { RelayHistoryImport } from "./components/RelayHistoryImport";
@@ -118,13 +119,19 @@ export function FuelHomePage() {
     refetchInterval: 60_000,
   });
 
+  if (!companyId) {
+    return (
+      <div className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-sm text-gray-700" data-testid="fuel-home-page">
+        Select an operating company to view the fuel dashboard.
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-3" data-testid="fuel-home-page">
       <FuelKpiRow dashboard={dashboardQuery.data} lovesSyncStatus={lovesSyncQuery.data} />
       {dashboardQuery.isError ? (
-        <p className="rounded-sm border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800" role="alert">
-          Could not load fuel dashboard KPIs. Retry or check fuel planner permissions.
-        </p>
+        <ListErrorBanner onRetry={() => void dashboardQuery.refetch()} />
       ) : null}
       <div className="grid max-w-2xl grid-cols-1 gap-2 sm:grid-cols-2">
         <FuelFraudAlertsKpiCard />

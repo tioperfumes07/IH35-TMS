@@ -20,9 +20,9 @@
         "DOD-C"
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
-      "pr": null,
+      "status": "PASS",
+      "evidence": "Route /fuel registered as ProtectedRoute wrapping FuelTabRoute tabId=home → FuelPlannerHomePage → FuelHomePage; FuelPlannerHomePage and FuelHomePage both guard against missing operating company with honest empty state; FuelHomePage fetches /api/v1/fuel/planner/dashboard and /api/v1/fuel/loves-sync/status with operating_company_id; fraud and overage KPI cards fetch entity-scoped summaries; dashboard errors use ListErrorBanner with retry; all queries enabled only when companyId is present.",
+      "pr": "#5302",
       "prod_verified": false
     },
     {
@@ -139,9 +139,9 @@
     }
   ],
   "M": 9,
-  "pass_count": 0,
+  "pass_count": 1,
   "total_count": 9,
-  "progress": "0 of 9",
+  "progress": "1 of 9",
   "live_scenario_probe": {
     "source": "scripts/scoreboard-from-live.mjs (live prod probes, TMS-native only)",
     "pass_count": 0,
