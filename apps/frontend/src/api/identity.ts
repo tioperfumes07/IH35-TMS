@@ -120,6 +120,7 @@ export function createUser(body: {
   name: string;
   email: string;
   role: UserRole;
+  operating_company_id?: string;
   initial_password?: string;
   send_password_setup_invite?: boolean;
   override_returning_warning?: boolean;
@@ -127,13 +128,15 @@ export function createUser(body: {
   return apiRequest<IdentityUser>("/api/v1/identity/users", { method: "POST", body });
 }
 
-export function updateUser(id: string, body: { role: UserRole }) {
-  return apiRequest<IdentityUser>(`/api/v1/identity/users/${id}`, { method: "PATCH", body });
+export function updateUser(id: string, body: { role: UserRole }, operatingCompanyId?: string | null) {
+  const q = operatingCompanyId ? `?operating_company_id=${encodeURIComponent(operatingCompanyId)}` : "";
+  return apiRequest<IdentityUser>(`/api/v1/identity/users/${id}${q}`, { method: "PATCH", body });
 }
 
-export function deactivateUser(id: string) {
+export function deactivateUser(id: string, operatingCompanyId?: string | null) {
+  const q = operatingCompanyId ? `?operating_company_id=${encodeURIComponent(operatingCompanyId)}` : "";
   return apiRequest<{ id: string; deactivated_at: string | null; was_already_deactivated: boolean }>(
-    `/api/v1/identity/users/${id}/deactivate`,
+    `/api/v1/identity/users/${id}/deactivate${q}`,
     { method: "POST" }
   );
 }

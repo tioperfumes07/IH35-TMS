@@ -73,9 +73,9 @@
         "VERIFY-5"
       ],
       "spec": "ITEM-14-TXN-COMPANY-ISOLATION-GUARD pattern",
-      "status": "OPEN",
-      "evidence": "scaffold \u2014 not proven for users module specifically",
-      "pr": null,
+      "status": "PASS",
+      "evidence": "identity.users RLS is role-only (Owner/Administrator UPDATE any row). PATCH /users/:id + POST /users/:id/deactivate now apply TARGET_USER_IN_ACTOR_COMPANY_SCOPE_SQL (user_accessible_company_ids + user_company_access) matching GET detail, plus optional operating_company_id via tenantQuerySchema. POST /users create validates resolved operating_company_id (body or creator default) is in actor accessible set (operating_company_required / operating_company_forbidden). Guard: scripts/verify-user-s05-admin-mutation-opco.mjs (ITEM-14 pattern; no verify-steps/CLAIMED).",
+      "pr": "PENDING",
       "prod_verified": false
     },
     {
@@ -98,7 +98,7 @@
       "prod_verified": false
     }
   ],
-  "pass_count": 4,
+  "pass_count": 5,
   "total_count": 6,
-  "progress": "4 of 6"
+  "progress": "5 of 6"
 }

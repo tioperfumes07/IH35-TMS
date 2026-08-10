@@ -29,6 +29,14 @@ vi.mock("../auth/useAuth", () => ({
   }),
 }));
 
+vi.mock("../contexts/CompanyContext", () => ({
+  useCompanyContext: () => ({
+    selectedCompanyId: "91e0bf0a-133f-4ce8-a734-2586cfa66d96",
+    companies: [],
+    setSelectedCompanyId: vi.fn(),
+  }),
+}));
+
 vi.mock("../api/identity", async () => {
   const actual = await vi.importActual<typeof import("../api/identity")>("../api/identity");
   return {

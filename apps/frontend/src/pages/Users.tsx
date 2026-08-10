@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { ApiError } from "../api/client";
 import { useAuth } from "../auth/useAuth";
+import { useCompanyContext } from "../contexts/CompanyContext";
 import {
   checkReturningDispatcher,
   createIdentityWorkflow,
@@ -159,6 +160,7 @@ export function UsersPage() {
   const [roleBaseline, setRoleBaseline] = useState({ roleChangeRole: "Manager" as UserRole, roleReason: "" });
   const returningWarningRef = useRef<HTMLDivElement | null>(null);
   const { pushToast } = useToast();
+  const { selectedCompanyId } = useCompanyContext();
   const userBulk = useBulkSelection({ cap: 200, onCapExceeded: (error) => pushToast(error.message, "error") });
   const paritySelectedKeys = useMemo(() => [...userBulk.selectedIds], [userBulk.selectedIds]);
   const { sortKey, sortDirection, onSortChange } = useUrlSort();
@@ -229,7 +231,7 @@ export function UsersPage() {
   });
 
   const deactivateMutation = useMutation({
-    mutationFn: deactivateUser,
+    mutationFn: (id: string) => deactivateUser(id, selectedCompanyId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users"] });
       pushToast("User deactivated", "info");
@@ -469,6 +471,7 @@ export function UsersPage() {
         name: inviteName.trim(),
         email: inviteEmail.trim().toLowerCase(),
         role: inviteRole,
+        operating_company_id: selectedCompanyId ?? undefined,
         initial_password: provisionMode === "set_password" ? inviteInitialPassword : undefined,
         send_password_setup_invite: provisionMode === "send_invite",
         override_returning_warning: overrideReturningWarning,

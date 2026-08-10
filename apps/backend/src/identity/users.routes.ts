@@ -40,6 +40,31 @@ const tenantQuerySchema = z.object({
   operating_company_id: z.string().uuid().optional(),
 });
 
+
+/** Application-layer company isolation for identity users (RLS alone is role-only).
+ * Same predicate as GET list/detail — mutations MUST reuse it or admins can cross-tenant mutate. */
+const TARGET_USER_IN_ACTOR_COMPANY_SCOPE_SQL = `(default_company_id IN (SELECT org.user_accessible_company_ids()) OR EXISTS (
+            SELECT 1
+            FROM org.user_company_access uca
+            WHERE uca.user_id = identity.users.id
+              AND uca.company_id IN (SELECT org.user_accessible_company_ids())
+          ))`;
+
+function activeCompanyFilterSql(values: unknown[], operatingCompanyId: string | undefined): string | null {
+  if (!operatingCompanyId) return null;
+  values.push(operatingCompanyId);
+  const idx = values.length;
+  return `(
+          default_company_id = $${idx}::uuid
+          OR EXISTS (
+            SELECT 1
+            FROM org.user_company_access uca
+            WHERE uca.user_id = identity.users.id
+              AND uca.company_id = $${idx}::uuid
+          )
+        )`;
+}
+
 const patchUserBodySchema = z.object({
   role: roleSchema,
 });
@@ -55,6 +80,7 @@ const createUserBodySchema = z.object({
   name: z.string().trim().min(1).max(160),
   email: z.string().email().transform((email) => email.toLowerCase()),
   role: roleSchema,
+  operating_company_id: z.string().uuid().optional(),
   override_returning_warning: z.boolean().optional().default(false),
   initial_password: z.string().optional(),
   send_password_setup_invite: z.boolean().optional().default(false),
@@ -168,7 +194,10 @@ function frontendResetConfirmUrl(token: string): string {
 }
 
 export async function registerIdentityRoutes(app: FastifyInstance) {
-  app.get("/api/v1/identity/me", async (req, reply) => {
+  const RL_READ = { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } } as const;
+  const RL_MUTATE = { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } } as const;
+
+  app.get("/api/v1/identity/me", RL_READ, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) {
       return;
@@ -194,7 +223,7 @@ export async function registerIdentityRoutes(app: FastifyInstance) {
     return mapIdentityUser(row);
   });
 
-  app.patch("/api/v1/identity/me/onboarding", async (req, reply) => {
+  app.patch("/api/v1/identity/me/onboarding", RL_MUTATE, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const parsed = onboardingPatchSchema.safeParse(req.body ?? {});
@@ -224,7 +253,7 @@ export async function registerIdentityRoutes(app: FastifyInstance) {
     return mapIdentityUser(row);
   });
 
-  app.get("/api/v1/identity/users", async (req, reply) => {
+  app.get("/api/v1/identity/users", RL_READ, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) {
       return;
@@ -297,7 +326,7 @@ export async function registerIdentityRoutes(app: FastifyInstance) {
   // USERS-2 minimal directory for assignee pickers. Every office role may read it (never Driver), but it
   // returns names + role only — no email auth method, no last-login. Active users only, no pagination
   // knob, capped, so it can never be turned into a full-directory dump by a low-privilege caller.
-  app.get("/api/v1/identity/users/assignable", async (req, reply) => {
+  app.get("/api/v1/identity/users/assignable", RL_READ, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) {
       return;
@@ -351,7 +380,7 @@ export async function registerIdentityRoutes(app: FastifyInstance) {
     return { users };
   });
 
-  app.get("/api/v1/identity/users/:id", async (req, reply) => {
+  app.get("/api/v1/identity/users/:id", RL_READ, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) {
       return;
@@ -407,7 +436,7 @@ export async function registerIdentityRoutes(app: FastifyInstance) {
     return mapIdentityUser(row);
   });
 
-  app.get("/api/v1/identity/users/:id/detail", async (req, reply) => {
+  app.get("/api/v1/identity/users/:id/detail", RL_READ, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const parsedParams = userIdParamSchema.safeParse(req.params ?? {});
@@ -493,7 +522,7 @@ export async function registerIdentityRoutes(app: FastifyInstance) {
     return detail;
   });
 
-  app.patch("/api/v1/identity/users/:id", async (req, reply) => {
+  app.patch("/api/v1/identity/users/:id", RL_MUTATE, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) {
       return;
@@ -506,20 +535,30 @@ export async function registerIdentityRoutes(app: FastifyInstance) {
     if (!parsedParams.success) {
       return sendValidationError(reply, parsedParams.error);
     }
+    const parsedQuery = tenantQuerySchema.safeParse(req.query ?? {});
+    if (!parsedQuery.success) {
+      return sendValidationError(reply, parsedQuery.error);
+    }
     const parsedBody = patchUserBodySchema.safeParse(req.body ?? {});
     if (!parsedBody.success) {
       return sendValidationError(reply, parsedBody.error);
     }
 
     const updated = await withCurrentUser(authUser.uuid, async (client) => {
+      // USER-S05: mutations must use the same company-scope predicate as GET detail — RLS alone is role-only.
+      const values: unknown[] = [parsedParams.data.id];
+      const filters = ["id = $1", TARGET_USER_IN_ACTOR_COMPANY_SCOPE_SQL];
+      const activeFilter = activeCompanyFilterSql(values, parsedQuery.data.operating_company_id);
+      if (activeFilter) filters.push(activeFilter);
+
       const oldRes = await client.query<IdentityUserRow>(
         `
           SELECT id, email, role, first_name, last_name, google_user_id, password_hash, default_company_id, created_at, deactivated_at
           FROM identity.users
-          WHERE id = $1
+          WHERE ${filters.join(" AND ")}
           LIMIT 1
         `,
-        [parsedParams.data.id]
+        values
       );
       const oldRow = oldRes.rows[0];
       if (!oldRow) return null;
@@ -546,14 +585,19 @@ export async function registerIdentityRoutes(app: FastifyInstance) {
         }
       }
 
+      const updateValues: unknown[] = [parsedBody.data.role, parsedParams.data.id];
+      const updateFilters = ["id = $2", TARGET_USER_IN_ACTOR_COMPANY_SCOPE_SQL];
+      const updateActive = activeCompanyFilterSql(updateValues, parsedQuery.data.operating_company_id);
+      if (updateActive) updateFilters.push(updateActive);
+
       const res = await client.query<IdentityUserRow>(
         `
           UPDATE identity.users
           SET role = $1
-          WHERE id = $2
+          WHERE ${updateFilters.join(" AND ")}
           RETURNING id, email, role, first_name, last_name, google_user_id, password_hash, default_company_id, created_at, deactivated_at
         `,
-        [parsedBody.data.role, parsedParams.data.id]
+        updateValues
       );
       const updatedRow = res.rows[0] ?? null;
       if (!updatedRow) return null;
@@ -595,7 +639,7 @@ export async function registerIdentityRoutes(app: FastifyInstance) {
     return mapIdentityUser(updated);
   });
 
-  app.post("/api/v1/identity/users", async (req, reply) => {
+  app.post("/api/v1/identity/users", RL_MUTATE, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) {
       return;
@@ -643,7 +687,19 @@ export async function registerIdentityRoutes(app: FastifyInstance) {
           `SELECT default_company_id FROM identity.users WHERE id = $1 LIMIT 1`,
           [authUser.uuid]
         );
-        const inheritedCompanyId = creatorRes.rows[0]?.default_company_id ?? null;
+        const requestedCompanyId = parsedBody.data.operating_company_id ?? creatorRes.rows[0]?.default_company_id ?? null;
+        // USER-S05: never mint a user into a company the actor cannot access (RLS insert is role-only).
+        if (!requestedCompanyId) {
+          return { error: "operating_company_required" as const };
+        }
+        const accessRes = await client.query<{ ok: boolean }>(
+          `SELECT ($1::uuid IN (SELECT org.user_accessible_company_ids())) AS ok`,
+          [requestedCompanyId]
+        );
+        if (!accessRes.rows[0]?.ok) {
+          return { error: "operating_company_forbidden" as const };
+        }
+        const inheritedCompanyId = requestedCompanyId;
 
         const res = await client.query<IdentityUserRow>(
           `
@@ -699,6 +755,12 @@ export async function registerIdentityRoutes(app: FastifyInstance) {
           ...created.detection,
         });
       }
+      if (created && typeof created === "object" && "error" in created && created.error === "operating_company_required") {
+        return reply.code(400).send({ error: "operating_company_required" });
+      }
+      if (created && typeof created === "object" && "error" in created && created.error === "operating_company_forbidden") {
+        return reply.code(403).send({ error: "operating_company_forbidden" });
+      }
 
       const createdResult = created as { row: IdentityUserRow; setupToken: string | null };
       if (createdResult.setupToken) {
@@ -737,7 +799,7 @@ export async function registerIdentityRoutes(app: FastifyInstance) {
     }
   });
 
-  app.post("/api/v1/identity/users/:id/deactivate", async (req, reply) => {
+  app.post("/api/v1/identity/users/:id/deactivate", RL_MUTATE, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) {
       return;
@@ -750,17 +812,27 @@ export async function registerIdentityRoutes(app: FastifyInstance) {
     if (!parsedParams.success) {
       return sendValidationError(reply, parsedParams.error);
     }
+    const parsedQuery = tenantQuerySchema.safeParse(req.query ?? {});
+    if (!parsedQuery.success) {
+      return sendValidationError(reply, parsedQuery.error);
+    }
 
     try {
       const updated = await withCurrentUser(authUser.uuid, async (client) => {
+        // USER-S05: same company-scope as GET — prevent cross-tenant deactivate by UUID.
+        const values: unknown[] = [parsedParams.data.id];
+        const filters = ["id = $1", TARGET_USER_IN_ACTOR_COMPANY_SCOPE_SQL];
+        const activeFilter = activeCompanyFilterSql(values, parsedQuery.data.operating_company_id);
+        if (activeFilter) filters.push(activeFilter);
+
         const oldRes = await client.query<{ id: string; deactivated_at: string | null }>(
           `
             SELECT id, deactivated_at
             FROM identity.users
-            WHERE id = $1
+            WHERE ${filters.join(" AND ")}
             LIMIT 1
           `,
-          [parsedParams.data.id]
+          values
         );
         const oldRow = oldRes.rows[0];
         if (!oldRow) return null;
@@ -768,15 +840,18 @@ export async function registerIdentityRoutes(app: FastifyInstance) {
         let deactivatedAt = oldRow.deactivated_at;
         let wasAlreadyDeactivated = oldRow.deactivated_at !== null;
         if (!wasAlreadyDeactivated) {
+          const updateValues: unknown[] = [parsedParams.data.id];
+          const updateFilters = ["id = $1", "deactivated_at IS NULL", TARGET_USER_IN_ACTOR_COMPANY_SCOPE_SQL];
+          const updateActive = activeCompanyFilterSql(updateValues, parsedQuery.data.operating_company_id);
+          if (updateActive) updateFilters.push(updateActive);
           const res = await client.query<{ id: string; deactivated_at: string }>(
             `
               UPDATE identity.users
               SET deactivated_at = now()
-              WHERE id = $1
-                AND deactivated_at IS NULL
+              WHERE ${updateFilters.join(" AND ")}
               RETURNING id, deactivated_at
             `,
-            [parsedParams.data.id]
+            updateValues
           );
           deactivatedAt = res.rows[0]?.deactivated_at ?? oldRow.deactivated_at;
           wasAlreadyDeactivated = false;
