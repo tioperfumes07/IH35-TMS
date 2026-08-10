@@ -6,6 +6,7 @@ import { Modal } from "../Modal";
 import { Button } from "../Button";
 import { FormField } from "../forms/FormField";
 import { FieldSet } from "../forms/FieldSet";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 type Props = {
   open: boolean;
@@ -66,7 +67,7 @@ export function CreateUnitModal({ open, operatingCompanyId, onClose, onCreated }
       onCreated?.(String(created.id));
       resetAndClose();
     },
-    onError: (e) => pushToast(e instanceof Error ? e.message : "Failed to create unit", "error"),
+    onError: (error) => pushToast(userFacingApiError(error, "Failed to create unit"), "error"),
   });
 
   const canSubmit = Boolean(draft.unit_number.trim() && draft.vin.trim()) && !createMutation.isPending;
