@@ -374,6 +374,7 @@ export function CreateTaskModal({ open, operatingCompanyId, defaultDate, presetL
                   </select>
                 ) : entityKind === "customer" ? (
                   <ReferenceSelect
+                    id="create-task-entity-id"
                     value={entityId || null}
                     onChange={(next) => setEntityId(next ?? "")}
                     options={customerOptions}
