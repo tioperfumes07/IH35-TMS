@@ -136,7 +136,7 @@ export function BankAccountVisibilityPage() {
       ) : null}
       {query.isError ? <ListErrorBanner onRetry={() => void query.refetch()} /> : null}
 
-      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
+      {!query.isError ? <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
         <table className="min-w-full text-sm">
           <thead className="bg-gray-50 text-xs uppercase tracking-wide text-gray-600">
             <tr>
@@ -192,10 +192,10 @@ export function BankAccountVisibilityPage() {
         </table>
         {query.isLoading ? (
           <div className="px-3 py-6 text-sm text-gray-500">Loading bank accounts…</div>
-        ) : accounts.length === 0 ? (
+        ) : accounts.length === 0 && !query.isError ? (
           <div className="px-3 py-6 text-sm text-gray-500">No bank accounts for this company.</div>
         ) : null}
-      </div>
+      </div> : null}
     </div>
   );
 }
