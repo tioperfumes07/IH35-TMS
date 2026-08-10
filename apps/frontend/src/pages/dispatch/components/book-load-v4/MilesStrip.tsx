@@ -50,7 +50,9 @@ export function MilesStrip({
               min={0}
               step={1}
               required={practicalRequired}
-              className="mt-1 w-full max-w-[7rem] rounded-sm border border-slate-400 px-1.5 py-1 font-mono text-sm text-slate-900"
+              className={`mt-1 w-full max-w-[7rem] rounded-sm border px-1.5 py-1 font-mono text-sm ${
+                practicalRequired ? "border-slate-400 text-slate-900" : "border-gray-300 text-gray-900"
+              }`}
               value={Number.isFinite(practical) ? practical : 0}
               onChange={(e) => onPracticalChange?.(numFromInput(e.target.value))}
             />
