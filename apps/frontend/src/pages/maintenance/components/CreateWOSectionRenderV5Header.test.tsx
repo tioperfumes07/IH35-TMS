@@ -2,13 +2,14 @@ import { render, screen } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { describe, expect, it, vi } from "vitest";
+import userEvent from "@testing-library/user-event";
 import { CreateWOSectionRenderV5Header } from "./CreateWOSectionRenderV5Header";
 import type { CreateWOFormValues } from "./CreateWorkOrderModal";
 
 // Avoid a real network call for the Authorized-by user list; the labels must render regardless of data.
 vi.mock("../../../api/identity", () => ({
   listUsers: () => Promise.resolve({ users: [] }),
-  listAssignableUsers: () => Promise.resolve({ users: [] }),
+  listAssignableUsers: () => Promise.resolve({ users: [{ id: "user-1", name: "Alex Mechanic", email: "alex@example.com" }] }),
 }));
 
 // GUARD render-guard (false-DONE lesson): prove the render-v5 header fields reach the DOM, not just the
@@ -39,5 +40,20 @@ describe("CreateWOSectionRenderV5Header — render-v5 header fields render", () 
       expect(screen.getByText(label)).toBeInTheDocument();
     }
     expect(screen.getByTestId("wo-renderv5-header")).toBeInTheDocument();
+  });
+
+  it("renders Authorized by as a searchable employee picker", async () => {
+    const user = userEvent.setup();
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <QueryClientProvider client={client}>
+        <Harness />
+      </QueryClientProvider>
+    );
+
+    const authorizedBy = screen.getByRole("combobox", { name: "Authorized by employees" });
+    expect(authorizedBy).toHaveAttribute("aria-autocomplete", "list");
+    await user.click(authorizedBy);
+    expect(await screen.findByText("Alex Mechanic")).toBeInTheDocument();
   });
 });

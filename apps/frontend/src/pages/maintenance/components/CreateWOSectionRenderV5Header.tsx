@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import type { UseFormRegister, UseFormSetValue, UseFormWatch } from "react-hook-form";
 import { listAssignableUsers } from "../../../api/identity";
 import { DatePicker } from "../../../components/forms/DatePicker";
+import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import type { CreateWOFormValues } from "./CreateWorkOrderModal";
 
 // render-v5 §header (maintenance-create-wo-render-v5.html) — the WO header fields that persist to LIVE
@@ -75,14 +76,14 @@ export function CreateWOSectionRenderV5Header({
           <input type="time" {...register("close_time")} className={INPUT} />
         </Cell>
         <Cell label="Authorized by employees">
-          <select {...register("authorized_by_user_id")} className={INPUT}>
+          <SelectCombobox {...register("authorized_by_user_id")} className={INPUT}>
             <option value="">— select —</option>
             {users.map((u) => (
               <option key={u.id} value={u.id}>
                 {userLabel(u)}
               </option>
             ))}
-          </select>
+          </SelectCombobox>
         </Cell>
         <Cell label="Repaired by">
           <select {...register("repaired_by")} className={INPUT}>
