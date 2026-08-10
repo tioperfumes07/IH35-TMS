@@ -10,6 +10,7 @@ import { apiRequest } from "../../../api/client";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { formatDateUS } from "../../../lib/formatDate";
+import { ListErrorState } from "../../../components/ListErrorState";
 
 type AxleGroup = "all" | "steer" | "drive";
 
@@ -120,15 +121,24 @@ export function BrakeWearDashboard() {
           <h2 className="text-sm font-semibold text-gray-900">At-risk units (&lt;{withinDays} days)</h2>
           <p className="text-xs text-gray-500">{rows.length} brake positions projected for service</p>
         </div>
-        <ParityTable
-          rows={rows}
-          columns={columns}
-          rowKey={(row) => `${row.unit_uuid}-${row.brake_position}`}
-          loading={atRiskQ.isLoading}
-          storageKey="maintenance-brake-wear-at-risk"
-          emptyText="No brake positions projected for service within 30 days."
-          exportFilename="brake-wear-at-risk"
-        />
+        {atRiskQ.isError ? (
+          <ListErrorState
+            title="Couldn't load brake-wear projections"
+            status={0}
+            message={(atRiskQ.error as Error)?.message}
+            onRetry={() => void atRiskQ.refetch()}
+          />
+        ) : (
+          <ParityTable
+            rows={rows}
+            columns={columns}
+            rowKey={(row) => `${row.unit_uuid}-${row.brake_position}`}
+            loading={atRiskQ.isLoading}
+            storageKey="maintenance-brake-wear-at-risk"
+            emptyText="No brake positions projected for service within 30 days."
+            exportFilename="brake-wear-at-risk"
+          />
+        )}
       </section>
     </div>
   );
