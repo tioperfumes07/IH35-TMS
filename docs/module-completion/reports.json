@@ -2,7 +2,7 @@
   "module": "reports",
   "title": "Reports",
   "complete": true,
-  "as_of": "2026-08-10T06:38:46Z",
+  "as_of": "2026-08-10T16:50:00Z",
   "live_sha": null,
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/AUDITOR-RUN-2026-07-31/modules/reports-docs-maintenance-2026-08-01.md",
   "spec_sources": [
@@ -124,5 +124,5 @@
   "pass_count": 8,
   "total_count": 8,
   "progress": "8 of 8",
-  "note": " | 2026-08-10T06:38:46Z CLOSED RPT-VERIFY-01 after searching Cascade OUTBOX + Neon density (owner order)."
+  "note": " | 2026-08-10T16:50:00Z Profitability placeholder tables explicitly name their disconnected feed instead of presenting a successful zero-row result; mutation guard covers all four views."
 }

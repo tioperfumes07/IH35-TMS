@@ -46,7 +46,7 @@ export function ByLoadView({ filters }: ByLoadViewProps) {
         rowKey={(row) => row.load_id}
         storageKey="profitability-by-load"
         tableTestId="profitability-by-load-table"
-        emptyText="No data loaded"
+        emptyText="Profitability feed is not connected; no figures are available for this view."
       />
     </div>
   );

@@ -6,7 +6,8 @@
  * shared ParityTable grammar (sort/resize/gear), not a hand-rolled <table>. Static
  * display-only stub (no query wired yet → no ListErrorState path). Columns Lane /
  * Loads / Miles / Rev/Mi / Cost/Mi / Margin/Mi / Total Margin preserved in order;
- * "No data loaded" empty copy preserved. No posting/mutation logic may appear.
+ * The empty copy must state that the feed is not connected, never imply a successful zero-row
+ * query. No posting/mutation logic may appear.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -15,6 +16,12 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-profitability-by-lane-uses-paritytable";
 const PAGE = "apps/frontend/src/pages/profitability/ByLaneView.tsx";
+const SIBLING_VIEWS = [
+  "apps/frontend/src/pages/profitability/ByTypeView.tsx",
+  "apps/frontend/src/pages/profitability/ByCustomerView.tsx",
+  "apps/frontend/src/pages/profitability/ByLoadView.tsx",
+];
+const HONEST_EMPTY = 'emptyText="Profitability feed is not connected; no figures are available for this view."';
 
 const REQUIRED_LABELS = ["Lane", "Loads", "Miles", "Rev/Mi", "Cost/Mi", "Margin/Mi", "Total Margin"];
 
@@ -46,8 +53,11 @@ function assertMigrated(src) {
   if (!src.includes('tableTestId="profitability-by-lane-table"')) {
     errors.push(`${PAGE}: must set tableTestId="profitability-by-lane-table"`);
   }
-  if (!src.includes('emptyText="No data loaded"')) {
-    errors.push(`${PAGE}: must keep emptyText "No data loaded"`);
+  if (!src.includes(HONEST_EMPTY)) {
+    errors.push(`${PAGE}: must name the disconnected profitability feed in emptyText`);
+  }
+  if (src.includes('emptyText="No data loaded"')) {
+    errors.push(`${PAGE}: must not present the unwired feed as a successful empty query`);
   }
   // Display-only financial surface: no mutation/posting logic may creep in.
   if (/useMutation|axios\.(post|put|patch|delete)|api\.(post|put|patch|delete)/.test(src)) {
@@ -71,7 +81,7 @@ function selftest() {
     <ParityTable
       storageKey="profitability-by-lane"
       tableTestId="profitability-by-lane-table"
-      emptyText="No data loaded"
+      emptyText="Profitability feed is not connected; no figures are available for this view."
     />
   `;
   const bad = `
@@ -103,6 +113,15 @@ function main() {
   }
   const src = fs.readFileSync(path.join(ROOT, PAGE), "utf8");
   const errors = assertMigrated(src);
+  for (const sibling of SIBLING_VIEWS) {
+    const siblingSrc = fs.readFileSync(path.join(ROOT, sibling), "utf8");
+    if (!siblingSrc.includes(HONEST_EMPTY)) {
+      errors.push(`${sibling}: must name the disconnected profitability feed in emptyText`);
+    }
+    if (siblingSrc.includes('emptyText="No data loaded"')) {
+      errors.push(`${sibling}: must not present the unwired feed as a successful empty query`);
+    }
+  }
   if (errors.length) {
     console.error(`FAIL ${LABEL}:`);
     for (const e of errors) console.error(`  - ${e}`);
