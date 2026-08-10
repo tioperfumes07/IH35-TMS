@@ -13,6 +13,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityPicker } from "../../components/parity/EntityPicker";
 import { CollapsedListFilters } from "../../components/table";
+import { ListErrorState } from "../../components/ListErrorState";
 
 type KpiTileId = MaintKpiDrilldownKind | "pm_compliance";
 type DrillRow = Record<string, unknown>;
@@ -270,15 +271,24 @@ export function MaintKpiDashboardPage() {
         <div className="border-b border-gray-100 px-3 py-2 text-xs font-semibold text-slate-800">
           Drill-down — {activeKpi.replace(/_/g, " ")}
         </div>
-        <ParityTable
-          rows={drillRows}
-          columns={drillColumns}
-          rowKey={(row) => String(row.__row_key)}
-          loading={drilldownQ.isLoading}
-          storageKey={`maintenance-kpi-drilldown-${activeKpi}`}
-          emptyText="No drill-down rows for this filter window."
-          exportFilename={`maint-kpi-drilldown-${activeKpi}`}
-        />
+        {drilldownQ.isError ? (
+          <ListErrorState
+            title="Couldn't load maintenance KPI details"
+            status={0}
+            message={(drilldownQ.error as Error)?.message}
+            onRetry={() => void drilldownQ.refetch()}
+          />
+        ) : (
+          <ParityTable
+            rows={drillRows}
+            columns={drillColumns}
+            rowKey={(row) => String(row.__row_key)}
+            loading={drilldownQ.isLoading}
+            storageKey={`maintenance-kpi-drilldown-${activeKpi}`}
+            emptyText="No drill-down rows for this filter window."
+            exportFilename={`maint-kpi-drilldown-${activeKpi}`}
+          />
+        )}
       </section>
     </div>
   );

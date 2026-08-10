@@ -32,6 +32,7 @@ const checks = [
   ["searchable unit picker", /<EntityPicker[\s\S]*?kind="unit"[\s\S]*?allowCreate=\{false\}[\s\S]*?dataTestId="maint-kpi-filter-unit"/.test(dashboard)],
   ["no native UUID unit select", !/<select[\s\S]*?value=\{unitId\}/.test(dashboard)],
   ["pm hub", dashboard.includes("maint-kpi-pm-hub")],
+  ["retryable drilldown error", /drilldownQ\.isError[\s\S]*?<ListErrorState[\s\S]*?drilldownQ\.refetch\(\)/.test(dashboard)],
   ["3 frontend tests", (read("apps/frontend/src/pages/maintenance/__tests__/MaintKpiDashboardPage.test.tsx").match(/\bit\(/g) ?? []).length >= 3],
   ["manifest route", read("apps/frontend/src/routes/manifest.tsx").includes('path="/maintenance/kpi-dashboard"')],
   ["api helpers", read("apps/frontend/src/api/maintenance.ts").includes("getMaintenanceKpiSummary")],
