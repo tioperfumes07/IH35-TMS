@@ -30,8 +30,7 @@ function IntegrityEntityCell({ row }: { row: IntegrityRow }) {
   if (unitId) links.push(<EntityLink key="u" kind="unit" id={unitId} label={entityLabel(null, unitId, "Unit")} />);
   if (vendorId) links.push(<EntityLink key="v" kind="vendor" id={vendorId} label={entityLabel(null, vendorId, "Vendor")} />);
   if (!links.length) {
-    const fallback = String(row.subject_id ?? "").trim();
-    return <>{fallback || "—"}</>;
+    return <>{entityLabel(null, row.subject_id, "Record") ?? "—"}</>;
   }
   return <span className="inline-flex flex-wrap items-center gap-2">{links}</span>;
 }
