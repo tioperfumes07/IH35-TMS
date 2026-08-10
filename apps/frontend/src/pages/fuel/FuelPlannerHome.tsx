@@ -424,7 +424,7 @@ function PlannerSettingsForm({ companyId, settings }: { companyId: string; setti
       pushToast("Planner settings saved", "success");
       void queryClient.invalidateQueries({ queryKey: ["fuel", "planner", "settings", companyId] });
     },
-    onError: (err) => pushToast(err instanceof Error ? err.message : "Failed to save settings", "error"),
+    onError: (err: unknown) => pushToast(userFacingApiError(err, "Failed to save settings"), "error"),
   });
 
   const numbers: Array<[string, string, (v: string) => void]> = [
