@@ -64,7 +64,9 @@ describe("DispatchAlertsPage (B21-D6)", () => {
   it("surfaces query failures via ListErrorBanner and Error card labels (not —)", async () => {
     vi.spyOn(dispatchApi, "listLateArrivalDispatchLoads").mockRejectedValue(new Error("boom"));
     wrap(<DispatchAlertsPage />);
-    expect(await screen.findByText("Failed to load one or more dispatch alert counts.")).toBeTruthy();
+    expect(
+      await screen.findByText(/Failed to load one or more dispatch alert counts\./)
+    ).toBeTruthy();
     expect(screen.getAllByText("Error").length).toBeGreaterThan(0);
     expect(screen.getByRole("button", { name: /Refresh/i })).toBeTruthy();
   });

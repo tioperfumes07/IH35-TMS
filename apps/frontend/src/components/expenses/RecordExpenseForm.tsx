@@ -8,6 +8,7 @@ import { listCatalogAccounts } from "../../api/catalog-accounts";
 // for the live evidence (Accumulated Depreciation / Trucks / Prepaid / A/R are all account_type Asset).
 import { isExpenseAccount, isPaymentAccount } from "../../lib/account-picker-scope";
 import { Button } from "../Button";
+import { CappedListNotice } from "../CappedListNotice";
 import { DatePicker } from "../forms/DatePicker";
 import { MoneyInput } from "../forms/MoneyInput";
 import { EntityPicker } from "../parity/EntityPicker";
@@ -23,6 +24,9 @@ import {
   submitRecordExpense,
   type RecordExpenseFormValues,
 } from "./recordExpenseSubmit";
+
+/** Vendor roster cap for the payee picker — must match listVendors limit below. */
+const RECORD_EXPENSE_VENDOR_LIST_CAP = 5000;
 
 type Props = {
   operatingCompanyId: string;
@@ -85,7 +89,11 @@ export function RecordExpenseForm({
       } catch {
         // Read path still works if ensure is forbidden for the role — picker shows existing vendors.
       }
-      return listVendors({ operating_company_id: operatingCompanyId, limit: 5000, status: "active" });
+      return listVendors({
+        operating_company_id: operatingCompanyId,
+        limit: RECORD_EXPENSE_VENDOR_LIST_CAP,
+        status: "active",
+      });
     },
     enabled: Boolean(operatingCompanyId),
     staleTime: 60_000,
@@ -214,6 +222,13 @@ export function RecordExpenseForm({
               setValues((prev) => ({ ...prev, vendorUuid: opt.value, vendorId: null, vendorDisplay: opt.label }));
               void vendorsQuery.refetch();
             }}
+          />
+          <CappedListNotice
+            shown={vendorOptions.length}
+            limit={RECORD_EXPENSE_VENDOR_LIST_CAP}
+            total={vendorsQuery.data?.total ?? null}
+            hint="Type in the vendor field to search, or narrow with filters on the Vendors list."
+            className="mt-1 text-[11px] text-slate-600"
           />
         </div>
       </label>

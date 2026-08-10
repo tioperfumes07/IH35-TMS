@@ -33,6 +33,7 @@
  */
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { CappedListNotice } from "../CappedListNotice";
 import { Combobox } from "../Combobox";
 import { CreateDriverModal } from "../drivers/CreateDriverModal";
 import { CreateTrailerModal } from "../fleet/CreateTrailerModal";
@@ -40,6 +41,7 @@ import { CreateUnitModal } from "../fleet/CreateUnitModal";
 import { PolicyCreateModal } from "../insurance/PolicyCreateModal";
 import {
   entityAddNewLabel,
+  entityPickerListLimit,
   getEntityPickerConfig,
   type EntityPickerKind,
   type EntityPickerOption,
@@ -103,8 +105,8 @@ export function EntityPicker({
   const config = getEntityPickerConfig(kind);
   const [createOpen, setCreateOpen] = useState(false);
   const [created, setCreated] = useState<EntityPickerOption[]>([]);
-  // SAF-B29: without this, EntityPicker fetched limit:200 once and Combobox only filtered that page
-  // — drivers/units/loads past page 1 were unselectable on every Safety (and product-wide) call site.
+  // SAF-B29: without server search, EntityPicker fetched a 200-row page once and Combobox only filtered
+  // that page — drivers/units/loads past page 1 were unselectable on every Safety call site.
   const [rosterSearch, setRosterSearch] = useState("");
 
   const queryEnabled = enabled && Boolean(operatingCompanyId);
@@ -139,6 +141,11 @@ export function EntityPicker({
 
   // A kind may refuse inline create for a stated reason (transactions and money documents do).
   const createOffered = allowCreate && config.inlineCreate.available;
+  const rosterShown = (rosterQuery.data ?? []).length + created.length;
+  const rosterLimit = entityPickerListLimit(kind, {
+    search: rosterSearch,
+    driverRoster: kind === "driver" ? driverRoster : undefined,
+  });
 
   function handleCreated(id: string, label?: string) {
     const option: EntityPickerOption = { value: id, label: label ?? id };
@@ -151,21 +158,31 @@ export function EntityPicker({
 
   return (
     <>
-      <Combobox
-        className={className}
-        dataField={dataField}
-        dataTestId={dataTestId}
-        options={options}
-        value={value}
-        onChange={onChange}
-        onSearch={config.serverSearch ? setRosterSearch : undefined}
-        placeholder={placeholder ?? `Select ${config.label}`}
-        loading={rosterQuery.isLoading}
-        error={rosterQuery.isError ? `Couldn't load ${config.label} list` : undefined}
-        disabled={disabled || !operatingCompanyId}
-        allowClear={allowClear}
-        allowAddNew={createOffered ? { label: entityAddNewLabel(kind), onAdd: () => setCreateOpen(true) } : undefined}
-      />
+      <div className="space-y-1">
+        {config.serverSearch ? (
+          <CappedListNotice
+            shown={rosterShown}
+            limit={rosterLimit}
+            hint={`Type to search for a ${config.label} that is not listed.`}
+            className="text-[11px] text-slate-600"
+          />
+        ) : null}
+        <Combobox
+          className={className}
+          dataField={dataField}
+          dataTestId={dataTestId}
+          options={options}
+          value={value}
+          onChange={onChange}
+          onSearch={config.serverSearch ? setRosterSearch : undefined}
+          placeholder={placeholder ?? `Select ${config.label}`}
+          loading={rosterQuery.isLoading}
+          error={rosterQuery.isError ? `Couldn't load ${config.label} list` : undefined}
+          disabled={disabled || !operatingCompanyId}
+          allowClear={allowClear}
+          allowAddNew={createOffered ? { label: entityAddNewLabel(kind), onAdd: () => setCreateOpen(true) } : undefined}
+        />
+      </div>
 
       {/* The inline create opens the entity's REAL create surface — the same one the module's own
           "+ Create" button opens — so the row it writes is the canonical row, not a shadow record.

@@ -144,7 +144,8 @@ export function LegalMatterDetailPage() {
       pushToast("Matter updated", "success");
     },
     onError: (error) => {
-      pushToast(userFacingApiError(error, "Could not update matter"), "error");
+      const message = userFacingApiError(error, "Could not update matter");
+      pushToast(message, "error");
     },
   });
 

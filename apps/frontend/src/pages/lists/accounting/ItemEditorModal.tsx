@@ -27,6 +27,7 @@ import { getCoaAccounts } from "../../../api/banking";
 import { listVendors } from "../../../api/mdata";
 import type { AccountingCatalogClient } from "./AccountingCatalogModal";
 import { Button } from "../../../components/Button";
+import { CappedListNotice } from "../../../components/CappedListNotice";
 import { Combobox } from "../../../components/Combobox";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { Modal } from "../../../components/Modal";
@@ -42,6 +43,9 @@ const ITEM_TYPES = [
 const INCOME_TYPES = ["Income", "OtherIncome"];
 const EXPENSE_TYPES = ["Expense", "CostOfGoodsSold", "OtherExpense"];
 const CARRIER_DEFAULT_INCOME_NAME = "Sales of Service Income";
+const CATALOG_PICKER_CAP = 200;
+const VENDOR_PICKER_CAP = 200;
+const VENDOR_OPEN_CAP = 1000;
 
 type Props = {
   open: boolean;
@@ -111,23 +115,23 @@ export function ItemEditorModal({ open, mode, row, operatingCompanyId, client, o
   });
   const categoriesQuery = useQuery({
     queryKey: ["catalogs", "accounting", "qbo-categories", operatingCompanyId],
-    queryFn: () => qboCategoriesCatalogClient.list({ operating_company_id: operatingCompanyId, is_active: "true", limit: 200 }),
+    queryFn: () => qboCategoriesCatalogClient.list({ operating_company_id: operatingCompanyId, is_active: "true", limit: CATALOG_PICKER_CAP }),
     enabled: open && !!operatingCompanyId,
   });
   const classesQuery = useQuery({
     queryKey: ["catalogs", "accounting", "classes", operatingCompanyId],
-    queryFn: () => classesCatalogClient.list({ operating_company_id: operatingCompanyId, is_active: "true", limit: 200 }),
+    queryFn: () => classesCatalogClient.list({ operating_company_id: operatingCompanyId, is_active: "true", limit: CATALOG_PICKER_CAP }),
     enabled: open && !!operatingCompanyId,
   });
   const vendorsQuery = useQuery({
-    // SAF-B29 / LST-PICKER-01: server search — limit:1000 without search still truncates large
-    // rosters; type-ahead re-queries so preferred vendors past page 1 stay selectable.
+    // SAF-B29 / LST-PICKER-01: server search — a 1000-row open still truncates large rosters;
+    // type-ahead re-queries so preferred vendors past page 1 stay selectable.
     queryKey: ["mdata", "vendors", "for-items", operatingCompanyId, vendorSearch],
     queryFn: () =>
       listVendors({
         operating_company_id: operatingCompanyId,
         status: "active",
-        limit: vendorSearch ? 200 : 1000,
+        limit: vendorSearch ? VENDOR_PICKER_CAP : VENDOR_OPEN_CAP,
         search: vendorSearch || undefined,
       }),
     enabled: open && !!operatingCompanyId,
@@ -320,6 +324,13 @@ export function ItemEditorModal({ open, mode, row, operatingCompanyId, client, o
           <label className="block">
             <span className="text-xs font-semibold text-gray-600">Category</span>
             <div className="mt-1">
+              <CappedListNotice
+                shown={categoryOptions.length}
+                limit={CATALOG_PICKER_CAP}
+                total={categoriesQuery.data?.total ?? null}
+                hint="Type in the category field to search the full catalog."
+                className="mb-1 text-[11px] text-slate-600"
+              />
               <Combobox
                 options={categoryOptions}
                 value={form.categoryId}
@@ -424,6 +435,13 @@ export function ItemEditorModal({ open, mode, row, operatingCompanyId, client, o
               <label className="block">
                 <span className="text-xs font-semibold text-gray-600">Preferred vendor</span>
                 <div className="mt-1">
+                  <CappedListNotice
+                    shown={vendorOptions.length}
+                    limit={vendorSearch ? VENDOR_PICKER_CAP : VENDOR_OPEN_CAP}
+                    total={vendorsQuery.data?.total ?? null}
+                    hint="Type to search for a vendor that is not listed."
+                    className="mb-1 text-[11px] text-slate-600"
+                  />
                   <ReferenceSelect
                     value={form.preferredVendorId}
                     onChange={(v) => set("preferredVendorId", v)}
@@ -465,6 +483,12 @@ export function ItemEditorModal({ open, mode, row, operatingCompanyId, client, o
           <label className="block">
             <span className="text-xs font-semibold text-gray-600">Class</span>
             <div className="mt-1">
+              <CappedListNotice
+                shown={classOptions.length}
+                limit={CATALOG_PICKER_CAP}
+                total={classesQuery.data?.total ?? null}
+                className="mb-1 text-[11px] text-slate-600"
+              />
               <ReferenceSelect
                 value={form.classId}
                 onChange={(v) => set("classId", v)}

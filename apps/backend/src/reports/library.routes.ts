@@ -302,7 +302,7 @@ export async function registerReportsLibraryRoutes(app: FastifyInstance) {
     }
   });
 
-  app.get("/api/v1/reports/home-attention-list", async (req, reply) => {
+  app.get("/api/v1/reports/home-attention-list", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = homeAttentionListQuerySchema.safeParse(req.query ?? {});
@@ -316,7 +316,7 @@ export async function registerReportsLibraryRoutes(app: FastifyInstance) {
       const items = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
         await client.query(`SET LOCAL statement_timeout = '5000ms'`);
         const companyId = query.data.operating_company_id;
-        await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [companyId]);
+        await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [companyId]);
 
         const tenantSettingExpr = `current_setting('app.operating_company_id', true)::uuid`;
         const items: Array<{
@@ -498,7 +498,7 @@ export async function registerReportsLibraryRoutes(app: FastifyInstance) {
     }
   });
 
-  app.get("/api/v1/reports/home-fleet-snapshot", async (req, reply) => {
+  app.get("/api/v1/reports/home-fleet-snapshot", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = homeFleetSnapshotQuerySchema.safeParse(req.query ?? {});
@@ -512,7 +512,7 @@ export async function registerReportsLibraryRoutes(app: FastifyInstance) {
       const snapshot = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
         await client.query(`SET LOCAL statement_timeout = '5000ms'`);
         const companyId = query.data.operating_company_id;
-        await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [companyId]);
+        await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [companyId]);
 
       let trucks = 0;
       let flatbeds = 0;

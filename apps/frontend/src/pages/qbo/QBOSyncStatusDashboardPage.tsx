@@ -13,6 +13,7 @@ import {
   type QboSyncRunRow,
   type QboSyncRunStatus,
 } from "../../api/qbo-integration";
+import { CappedListNotice } from "../../components/CappedListNotice";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { Button } from "../../components/Button";
@@ -340,6 +341,13 @@ export function QBOSyncStatusDashboardPage() {
               </pre>
             </div>
           )}
+        />
+
+        <CappedListNotice
+          shown={runs.length}
+          limit={200}
+          hint="Narrow filters or search for older QBO sync runs."
+          className="text-[11px] text-slate-600"
         />
 
         <div className="space-y-2 rounded-sm border border-gray-200 bg-white p-3">

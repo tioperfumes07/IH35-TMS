@@ -42,12 +42,22 @@ function read(rel) {
 
 const failures = [];
 const src = read(SURFACE);
+// Strip comments so SAF-B29 migration notes do not satisfy roster checks.
+const code = src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
 
-// (1) Pickers wired from the company-scoped roster APIs.
-if (!/\blistDrivers\b/.test(src)) failures.push("surface must import/use listDrivers (driver picker).");
-if (!/\blistUnits\b/.test(src)) failures.push("surface must import/use listUnits (unit + trailer pickers).");
-// limit:200 avoids the driver-picker 50-cap truncation.
-if (!/limit:\s*200/.test(src)) failures.push("pickers must pass limit:200 (avoid the 50-cap truncation).");
+// (1) Pickers wired via server-search controls (SAF-B29 supersedes bulk listDrivers/listUnits limit:200).
+if (!/DriverPickerWithCreate/.test(code)) {
+  failures.push("surface must use DriverPickerWithCreate (driver picker server search).");
+}
+if (!/EntityPicker/.test(code) || !/kind=["']unit["']/.test(code)) {
+  failures.push("surface must use EntityPicker kind=unit (server search; no bulk listUnits roster).");
+}
+if (/listDrivers\s*\(/.test(code)) {
+  failures.push("surface must not bulk listDrivers (SAF-B29 — use DriverPickerWithCreate).");
+}
+if (/listUnits\s*\(/.test(code)) {
+  failures.push("surface must not bulk listUnits (SAF-B29 — use EntityPicker kind=unit).");
+}
 
 // (2) saveCreate must send the linked identifiers, not regress to location+description-only.
 const saveIdx = src.indexOf("const saveCreate");

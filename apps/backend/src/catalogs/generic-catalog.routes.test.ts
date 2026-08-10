@@ -83,11 +83,11 @@ const queryMock = vi.fn(async (sql: string, values?: unknown[]) => {
     return { rows: [] };
   }
 
-  if (sql.includes("UPDATE catalogs.equipment_types") && sql.includes("deactivated_at = now()")) {
+  if (sql.includes("UPDATE catalogs.equipment_types") && sql.includes("is_active = false")) {
     return { rows: [{ id: values?.[0], code: "TEST_TYPE" }] };
   }
 
-  if (sql.includes("UPDATE catalogs.equipment_types") && sql.includes("deactivated_at = NULL")) {
+  if (sql.includes("UPDATE catalogs.equipment_types") && sql.includes("is_active = true")) {
     return {
       rows: [
         {

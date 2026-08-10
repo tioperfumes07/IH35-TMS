@@ -126,10 +126,7 @@ export async function registerCashForecastRoutes(app: FastifyInstance) {
   // ACCT-F183: rate limit added because touching this file brought it into
   // verify-new-auth-routes-rate-limited's scope — an authorizing read with no limit trips CodeQL
   // js/missing-rate-limiting. 60/min matches the read-route convention (writes use 30/min).
-  app.get(
-    "/api/v1/accounting/cash-forecast",
-    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
-    async (req, reply) => {
+  app.get("/api/v1/accounting/cash-forecast", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canAccessForecast(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });

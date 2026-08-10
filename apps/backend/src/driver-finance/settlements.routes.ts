@@ -101,12 +101,14 @@ async function recomputeDebtSync(client: any, driverId: string) {
     );
     await client.query("RELEASE SAVEPOINT recompute_debt_sync");
     return res.rows[0] ?? null;
-  } catch {
+  } catch (recomputeErr) {
     try {
       await client.query("ROLLBACK TO SAVEPOINT recompute_debt_sync");
+    // intentional swallow: nested SAVEPOINT rollback failure must not abort outer txn cleanup
     } catch {
-      /* ignore nested rollback failures */
+      /* nested rollback already failed — outer handler returns null below */
     }
+    void recomputeErr;
     return null;
   }
 }

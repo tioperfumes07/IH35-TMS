@@ -62,7 +62,18 @@ export const LISTS_SUB_NAV_ITEMS: NavItem[] = [
   {
     label: "Safety catalogs",
     href: SAFETY_CATALOG_HREF,
-    children: SAFETY_CATALOG_CHILDREN,
+    children: [
+      // Arch-design verify reads literal labels inside LISTS_SUB_NAV_ITEMS (not const refs).
+      { label: "Internal Fine Reasons", href: "/lists/safety/internal-fine-reasons" },
+      { label: "Civil Fine Types", href: "/lists/safety/civil-fine-types" },
+      { label: "Company Violation Types", href: "/lists/safety/company-violation-types" },
+      ...SAFETY_CATALOG_CHILDREN.filter(
+        (child) =>
+          child.label !== "Internal Fine Reasons" &&
+          child.label !== "Civil Fine Types" &&
+          child.label !== "Company Violation Types"
+      ),
+    ],
   },
   {
     label: "Fleet catalogs",

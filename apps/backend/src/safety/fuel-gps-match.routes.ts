@@ -26,12 +26,19 @@ export async function registerFuelGpsMatchRoutes(app: FastifyInstance) {
     const query = querySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
 
-    const ok = await withCurrentUser(user.uuid, async (client) => {
-      await assertCompanyMembership(client, user.uuid, query.data.operating_company_id);
-      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [query.data.operating_company_id]);
-      return runFuelGpsRematchForTransaction(client, query.data.operating_company_id, params.data.transaction_id);
-    });
-    if (!ok) return reply.code(404).send({ error: "transaction_not_found" });
-    return { ok: true };
+    try {
+      const ok = await withCurrentUser(user.uuid, async (client) => {
+        await assertCompanyMembership(client, user.uuid, query.data.operating_company_id);
+        await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [query.data.operating_company_id]);
+        return runFuelGpsRematchForTransaction(client, query.data.operating_company_id, params.data.transaction_id);
+      });
+      if (!ok) return reply.code(404).send({ error: "transaction_not_found" });
+      return { ok: true };
+    } catch (err: unknown) {
+      if (err instanceof Error && err.message === "forbidden_company_membership") {
+        return reply.code(403).send({ error: "forbidden_company_membership" });
+      }
+      throw err;
+    }
   });
 }

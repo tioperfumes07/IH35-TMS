@@ -13,6 +13,7 @@ import { CollapsedListFilters, TableSearch } from "../../components/table";
 import { CustomerDrillModal } from "../../components/customers/CustomerDrillModal";
 import { useUrlSort } from "../../hooks/useUrlSort";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { CappedListNotice } from "../../components/CappedListNotice";
 
 function fmtMoney(cents: number) {
   return formatUsdCents(cents);
@@ -240,6 +241,13 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
                   </button>
                 ))}
               </div>
+              <CappedListNotice
+                shown={atRiskQuery.data?.customers?.length ?? 0}
+                limit={250}
+                total={atRiskQuery.data?.count}
+                hint="At-risk relationship scores load one page — open customer detail for the full score."
+                className="text-xs text-slate-600"
+              />
             </div>
           </CollapsedListFilters>
         }

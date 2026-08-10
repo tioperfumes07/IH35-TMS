@@ -331,6 +331,7 @@ export async function registerDocsFilesRoutes(app: FastifyInstance) {
       if ((error as Error).message.startsWith("r2_not_configured")) return reply.code(503).send({ error: "r2_not_configured" });
       throw error;
     }
+  },
   });
 
   app.post("/api/v1/docs/files/:file_id/upload-complete", async (req, reply) => {

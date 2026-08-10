@@ -15,6 +15,7 @@ import { classesCatalogClient } from "../../../api/catalogs-accounting";
 import { listCatalogAccounts } from "../../../api/catalog-accounts";
 import type { AccountingCatalogClient } from "./AccountingCatalogModal";
 import { Button } from "../../../components/Button";
+import { CappedListNotice } from "../../../components/CappedListNotice";
 import { Modal } from "../../../components/Modal";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
@@ -33,6 +34,8 @@ export const POSTING_TEMPLATE_SOURCE_CODES = [
   { value: "transfer", label: "transfer — inter-account transfer" },
   { value: "fuel_event", label: "fuel_event — fuel expense poster" },
 ] as const;
+
+const CLASS_PICKER_CAP = 200;
 
 type Props = {
   open: boolean;
@@ -88,7 +91,7 @@ export function PostingTemplateModal({ open, mode, row, operatingCompanyId, clie
   });
   const classesQuery = useQuery({
     queryKey: ["catalogs", "accounting", "classes", operatingCompanyId],
-    queryFn: () => classesCatalogClient.list({ operating_company_id: operatingCompanyId, is_active: "true", limit: 200 }),
+    queryFn: () => classesCatalogClient.list({ operating_company_id: operatingCompanyId, is_active: "true", limit: CLASS_PICKER_CAP }),
     enabled: open && Boolean(operatingCompanyId),
   });
 
@@ -260,6 +263,12 @@ export function PostingTemplateModal({ open, mode, row, operatingCompanyId, clie
             +Create — operators left for Lists → Classes. Debit/credit already use createKind=account.
           */}
           <div className="mt-1">
+            <CappedListNotice
+              shown={classOptions.length}
+              limit={CLASS_PICKER_CAP}
+              total={classesQuery.data?.total ?? null}
+              className="mb-1 text-[11px] text-slate-600"
+            />
             <ReferenceSelect
               createKind="class"
               operatingCompanyId={operatingCompanyId}

@@ -10,6 +10,7 @@ import { legalTemplatesApi, type LegalTemplateSummary } from "../../../api/legal
 import { getDriver, listCustomers } from "../../../api/mdata";
 import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
+import { CappedListNotice } from "../../../components/CappedListNotice";
 import { useListState } from "../../../components/list-state";
 import { userFacingApiError } from "../../../lib/api-error-message";
 
@@ -516,6 +517,15 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
                     loading={customersQuery.isLoading}
                   />
                 )}
+                {signerType === "customer" ? (
+                  <CappedListNotice
+                    shown={customerPartyOptions.length}
+                    limit={customerSearch ? 200 : 500}
+                    total={customersQuery.data?.total ?? null}
+                    hint="Type to search for a customer not listed."
+                    className="text-[11px] text-slate-600"
+                  />
+                ) : null}
               </label>
             )}
 

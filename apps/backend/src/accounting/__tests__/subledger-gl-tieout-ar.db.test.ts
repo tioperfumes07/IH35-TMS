@@ -206,9 +206,9 @@ describeIntegration("CLS-SUBLEDGER-GL-DARK-TIEOUT — A/R subledger ties to the 
     // is a real zero; with the role unbound it is a lookup failure, and those are now distinguished
     // rather than conflated. CI taught me this — my first version threw on NULL and failed case 1.
     return {
-      control: row.control ?? 0,
-      subledger: row.subledger,
-      variance: row.variance,
+      control: row.control_balance_cents ?? 0,
+      subledger: row.subledger_balance_cents,
+      variance: row.variance_cents,
       status: row.status,
     };
   }

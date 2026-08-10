@@ -18,6 +18,7 @@ import {
   type ItemLine,
   type ItemSubRow,
 } from "./shared/CostBreakdownBox";
+import { CappedListNotice } from "../CappedListNotice";
 import { PartLocationMapDialog } from "./PartLocationMapDialog";
 import { QuickCreateEntityModal, type QuickCreateKind } from "./shared/QuickCreateEntityModal";
 
@@ -256,6 +257,9 @@ export function TwoSectionLineEditor({
     updateLines([...sectionA.map((line) => ({ ...line, section: "A" as const })), ...nextSectionB.map((line) => ({ ...line, section: "B" as const }))]);
   };
 
+  const expenseCategoryRows = expenseCategoriesQuery.data?.rows ?? [];
+  const tirePositionRows = tirePositionsQuery.data?.rows ?? [];
+
   return (
     <div className="space-y-4">
       <CostBreakdownBox
@@ -323,6 +327,22 @@ export function TwoSectionLineEditor({
           }}
         />
       ) : null}
+      {mode === "bill" ? (
+        <CappedListNotice
+          shown={expenseCategoryRows.length}
+          limit={200}
+          total={expenseCategoriesQuery.data?.total ?? null}
+          hint="Type to search for an expense category not listed."
+          className="text-[11px] text-slate-600"
+        />
+      ) : null}
+      <CappedListNotice
+        shown={tirePositionRows.length}
+        limit={500}
+        total={tirePositionsQuery.data?.total ?? null}
+        hint="Type to search for a tire position not listed."
+        className="text-[11px] text-slate-600"
+      />
       <PartLocationMapDialog
         open={Boolean(locationTarget)}
         selectedCodes={selectedLocationCodes}

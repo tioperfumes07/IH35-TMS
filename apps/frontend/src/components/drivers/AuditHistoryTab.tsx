@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { listDriverAuditEvents, type DriverAuditEvent } from "../../api/audit";
 import { Button } from "../Button";
 import { entityLabel } from "../../lib/entity-label";
+import { CappedListNotice } from "../CappedListNotice";
 import { ListErrorState } from "../ListErrorState";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 import { Download, AlertTriangle } from "lucide-react";
@@ -320,6 +321,13 @@ export function AuditHistoryTab({ driverId, operatingCompanyId }: Props) {
               )}
             />
           )}
+          <CappedListNotice
+            shown={events.length}
+            limit={200}
+            total={auditQuery.data?.total_count ?? null}
+            hint="Narrow filters or export CSV for older audit events."
+            className="mt-2 text-[11px] text-slate-600"
+          />
         </div>
       )}
     </div>

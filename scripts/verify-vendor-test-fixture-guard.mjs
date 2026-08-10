@@ -45,8 +45,8 @@ function assertGuard(patternSrc, routeSrc) {
   }
 
   // Create path: guard appears before vendorNameConflictExists on POST handler.
-  const postIdx = routeSrc.indexOf('app.post("/api/v1/mdata/vendors"');
-  const patchIdx = routeSrc.indexOf('app.patch("/api/v1/mdata/vendors/:id"');
+  const postIdx = routeSrc.search(/app\.post\(\s*["']\/api\/v1\/mdata\/vendors["']/);
+  const patchIdx = routeSrc.search(/app\.patch\(\s*["']\/api\/v1\/mdata\/vendors\/:id["']/);
   if (postIdx === -1 || patchIdx === -1) {
     failures.push(`${VENDORS_ROUTE}: expected POST and PATCH vendor routes`);
   } else {

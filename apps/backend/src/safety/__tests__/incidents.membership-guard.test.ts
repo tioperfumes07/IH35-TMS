@@ -10,10 +10,6 @@ import { registerSafetyIncidentsRoutes } from "../incidents.routes.js";
  *  - a caller who IS a member of the requested operating_company_id proceeds (not 403);
  *  - a caller who is NOT a member is rejected 403 forbidden_company_membership,
  *    even though the operating_company_id is a syntactically-valid UUID.
- *
- * Unlike the other incidents unit tests, this file does NOT mock the guard helper —
- * it drives the genuine assert by making the mocked withCurrentUser answer the
- * org.user_company_access lookup based on the company the caller belongs to.
  */
 
 const AUTH_USER = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
@@ -25,14 +21,12 @@ const { mockWithCurrentUser } = vi.hoisted(() => {
     async (_userId: string, fn: (client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: unknown[]; rowCount: number }> }) => Promise<unknown>) =>
       fn({
         query: async (sql: string, values?: unknown[]) => {
-          // assertCompanyMembership: membership row exists ONLY for MEMBER_COMPANY.
-          if (sql.includes("user_company_access")) {
-            const companyId = String(values?.[1] ?? "");
+          if (sql.includes("org.companies") && sql.includes("user_accessible_company_ids")) {
+            const companyId = String(values?.[0] ?? "");
             return companyId === MEMBER_COMPANY
               ? { rows: [{ ok: 1 }], rowCount: 1 }
               : { rows: [], rowCount: 0 };
           }
-          // GUC set + any incidents list query: return empty result set.
           return { rows: [], rowCount: 0 };
         },
       })
@@ -60,6 +54,12 @@ describe("safety incidents routes — cross-tenant membership guard", () => {
     app.decorateRequest("user", null);
     app.addHook("preHandler", async (req) => {
       req.user = { uuid: AUTH_USER, role: "Safety", email: "safety@ih35.local" };
+    });
+    app.setErrorHandler((error, _req, reply) => {
+      if (error instanceof Error && error.message === "forbidden_company_membership") {
+        return reply.code(403).send({ error: "forbidden_company_membership" });
+      }
+      return reply.code(500).send({ error: "internal_error" });
     });
     await registerSafetyIncidentsRoutes(app);
     await app.ready();

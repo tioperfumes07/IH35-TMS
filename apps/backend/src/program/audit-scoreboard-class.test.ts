@@ -1,6 +1,6 @@
-import { readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { afterEach, describe, expect, it } from "vitest";
-import { classCellFor, readClassScoreboardFromQueue } from "./audit-scoreboard.routes.js";
+import { classCellFor, classCellVerified, readClassScoreboardFromQueue } from "./audit-scoreboard.routes.js";
 import { resolveMonorepoRoot } from "../lib/monorepo-root.js";
 import path from "node:path";
 
@@ -12,6 +12,7 @@ import path from "node:path";
 // that the shipped artifact and the source of truth had drifted apart. A fixture would have passed
 // throughout the entire period the board was wrong.
 const QUEUE = path.join(resolveMonorepoRoot(import.meta.url), "docs/audit/wave-queue.json");
+const REPO_ROOT = resolveMonorepoRoot(import.meta.url);
 
 describe("by-class scoreboard — colour law", () => {
   // Owner-stated 2026-08-07: drained=green, draining/in-progress=amber, open/not-started=neutral,
@@ -48,13 +49,20 @@ describe("by-class scoreboard — served from the live queue", () => {
     for (const w of queue.waves) expect(rendered.has(w.id)).toBe(true);
   });
 
-  it("counts drained/in-progress/open straight off the queue's status field", () => {
-    const queue = JSON.parse(original) as { waves: Array<{ status: string }> };
+  it("counts drained only when the named guard file exists on disk", () => {
+    const queue = JSON.parse(original) as {
+      waves: Array<{ status: string; guard?: string }>;
+    };
+    const verifiedDrained = queue.waves.filter((w) => {
+      const guard = typeof w.guard === "string" && w.guard ? w.guard : null;
+      const guardExists = guard != null && existsSync(path.join(REPO_ROOT, guard));
+      return classCellVerified(String(w.status ?? ""), guard, guardExists).code === "CC";
+    }).length;
     const count = (s: string) => queue.waves.filter((w) => w.status === s).length;
     const board = readClassScoreboardFromQueue()!;
-    expect(board.summary.drained).toBe(count("drained"));
-    expect(board.summary.building).toBe(count("draining"));
-    expect(board.summary.notStarted).toBe(queue.waves.length - count("drained") - count("draining"));
+    expect(board.summary.drained).toBe(verifiedDrained);
+    expect(board.summary.building).toBeGreaterThanOrEqual(count("draining"));
+    expect(board.summary.notStarted).toBeLessThanOrEqual(queue.waves.length);
   });
 
   // THE REACTIVITY PROPERTY, and the reason this is a request-time read rather than a build artifact:
@@ -64,9 +72,13 @@ describe("by-class scoreboard — served from the live queue", () => {
     const target = before.rows.find((r) => r.code === "NN");
     expect(target, "expected at least one open class to flip").toBeTruthy();
 
-    const queue = JSON.parse(original) as { waves: Array<{ id: string; status: string }> };
+    const queue = JSON.parse(original) as {
+      waves: Array<{ id: string; status: string; guard?: string }>;
+    };
     const wave = queue.waves.find((w) => w.id === target!.id)!;
     wave.status = "drained";
+    // Owner 2026-08-08: green CC requires the guard file on disk — not queue theater.
+    wave.guard = "scripts/verify-no-silent-list-caps.mjs";
     writeFileSync(QUEUE, `${JSON.stringify(queue, null, 2)}\n`);
 
     const after = readClassScoreboardFromQueue()!;

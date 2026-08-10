@@ -1,6 +1,7 @@
 /**
  * SETL-PICK-01 / PICK-006 — entity-scoped catalogs.driver_deduction_types for settlement auto-deduction
  * Type pickers. Read path matches write path (ReferenceSelect createKind=driver_deduction_type).
+ * CLS-SILENT-CAP: render CappedListNotice (limit 200, total from query) wherever options are shown.
  */
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";

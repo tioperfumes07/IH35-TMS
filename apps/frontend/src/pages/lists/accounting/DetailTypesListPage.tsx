@@ -5,6 +5,7 @@ import { ApiError } from "../../../api/client";
 import { getAccountTypeCatalog } from "../../../api/account-type-catalog";
 import { detailTypesCatalogClient, type DetailTypeRow } from "../../../api/detail-types-catalog";
 import { Button } from "../../../components/Button";
+import { CappedListNotice } from "../../../components/CappedListNotice";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { Modal } from "../../../components/Modal";
 import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
@@ -17,6 +18,7 @@ type StatusFilter = "true" | "false" | "all";
 type FormState = { account_type_id: string; name: string; code: string; description: string; sort_order: number };
 
 const EMPTY: FormState = { account_type_id: "", name: "", code: "", description: "", sort_order: 100 };
+const DETAIL_TYPES_LIST_CAP = 500;
 
 // Detail Type catalog (Block 4). Account Type is the fixed global taxonomy (read-only); detail types
 // are canonical system rows (immutable, shared) + this entity's custom rows. Create/edit writes only
@@ -42,7 +44,7 @@ export function DetailTypesListPage() {
 
   const listQuery = useQuery({
     queryKey: ["detail-types", companyId, typeFilter, status],
-    queryFn: () => detailTypesCatalogClient.list({ operating_company_id: companyId, account_type_id: typeFilter || undefined, is_active: status, limit: 500 }),
+    queryFn: () => detailTypesCatalogClient.list({ operating_company_id: companyId, account_type_id: typeFilter || undefined, is_active: status, limit: DETAIL_TYPES_LIST_CAP }),
     enabled: Boolean(companyId),
   });
   const rows = listQuery.data?.rows ?? [];
@@ -173,7 +175,15 @@ export function DetailTypesListPage() {
           className="rounded-sm border border-gray-200 bg-white"
         />
       ) : (
-        <ParityTable
+        <>
+          <CappedListNotice
+            shown={rows.length}
+            limit={DETAIL_TYPES_LIST_CAP}
+            total={listQuery.data?.total ?? null}
+            hint="Refine the account type or status filters to see the rest."
+            className="text-[11px] text-slate-600"
+          />
+          <ParityTable
           columns={columns}
           rows={rows}
           rowKey={(row) => row.id}
@@ -184,6 +194,7 @@ export function DetailTypesListPage() {
           onRowClick={(row) => { if (row.is_system) return; setSubmitError(""); setActiveRow(row); setModalMode("edit"); }}
           rowClassName={(row) => (row.is_system ? "cursor-default" : "")}
         />
+        </>
       )}
 
       <DetailTypeModal

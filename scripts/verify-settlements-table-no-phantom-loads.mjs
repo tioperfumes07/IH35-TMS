@@ -44,8 +44,13 @@ export function check({ tableSrc, apiSrc, routesSrc }) {
   if (!/settlement_lines/.test(routesSrc) || !/driver_bills/.test(routesSrc)) {
     f.push(`${ROUTES}: load_count must aggregate via settlement_lines → driver_bills`);
   }
-  if (!/COUNT\s*\(\s*DISTINCT\s+db\.load_id\s*\)/i.test(routesSrc)) {
-    f.push(`${ROUTES}: load_count must COUNT(DISTINCT db.load_id)`);
+  // ACCT-F275 — COALESCE + LEFT JOIN (sibling: verify-settlement-load-count-counts-both-paths.mjs).
+  // COUNT(DISTINCT db.load_id) alone over INNER join dropped bill-less lines while looking "wired".
+  if (!/COUNT\s*\(\s*DISTINCT\s+COALESCE\(\s*db\.load_id\s*,\s*sl\.load_id\s*\)\s*\)/i.test(routesSrc)) {
+    f.push(`${ROUTES}: load_count must COUNT(DISTINCT COALESCE(db.load_id, sl.load_id))`);
+  }
+  if (!/LEFT JOIN\s+driver_finance\.driver_bills\s+db/i.test(routesSrc)) {
+    f.push(`${ROUTES}: load_count must LEFT JOIN driver_bills (INNER join drops bill-less lines)`);
   }
   return f;
 }
@@ -64,10 +69,11 @@ function selftest() {
     apiSrc: `load_count: number;`,
     routesSrc: `
       (
-        SELECT COUNT(DISTINCT db.load_id)::int
+        SELECT COUNT(DISTINCT COALESCE(db.load_id, sl.load_id))::int
         FROM driver_finance.settlement_lines sl
-        JOIN driver_finance.driver_bills db ON db.id = sl.source_driver_bill_id
+        LEFT JOIN driver_finance.driver_bills db ON db.id = sl.source_driver_bill_id
         WHERE sl.settlement_id = s.id
+          AND COALESCE(db.load_id, sl.load_id) IS NOT NULL
       ) AS load_count
     `,
   };
