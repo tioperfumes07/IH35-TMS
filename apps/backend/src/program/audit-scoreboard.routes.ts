@@ -18,7 +18,7 @@ import { requireAuth } from "../auth/session-middleware.js";
 import { withCurrentUser } from "../auth/db.js";
 import { resolveMonorepoRoot } from "../lib/monorepo-root.js";
 import { formatCt } from "./program-board.service.js";
-import { buildModuleMatrix } from "./module-matrix.service.js";
+import { buildModuleMatrix, buildSystemModuleMatrix } from "./module-matrix.service.js";
 import { existsSync, readFileSync } from "node:fs";
 
 const REPO_ROOT = (() => {
@@ -714,7 +714,29 @@ export async function registerAuditScoreboardRoutes(app: FastifyInstance) {
     { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
     async (req, reply) => {
       if (!requireAuth(req, reply)) return;
-      const q = (req.query ?? {}) as { module?: unknown };
+      const q = (req.query ?? {}) as { module?: unknown; scope?: unknown };
+      const scope = typeof q.scope === "string" ? q.scope.trim().toLowerCase() : "";
+      if (scope === "system" || scope === "all") {
+        try {
+          const payload = await buildSystemModuleMatrix(req.user?.uuid);
+          const { prodReadAt, prodReadSource } = await stampProdReadAt(req);
+          reply.header("cache-control", "no-store");
+          return reply.send({
+            ...payload,
+            meta: {
+              ...payload.meta,
+              prodReadAt,
+              prodReadSource,
+            },
+          });
+        } catch (err) {
+          req.log?.error?.({ err }, "[program] module-matrix system rollup failed");
+          return reply.code(503).send({
+            error: "module_matrix_system_unavailable",
+            message: "Could not project system-wide matrix rollup",
+          });
+        }
+      }
       const moduleId =
         typeof q.module === "string" && q.module.trim() ? q.module.trim().toLowerCase() : "maintenance";
       const SUPPORTED = new Set([

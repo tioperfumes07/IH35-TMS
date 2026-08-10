@@ -4,7 +4,7 @@
  * Sidebar PROGRAM lands on /program (Scenario Tracker). Without this row, Module matrix
  * (/program/matrix) is URL-only — the exact defect the owner hit 2026-08-08.
  *
- * Links use literal `to="/…"` (not `to={var}`) so verify-scenario-tracker-reachable can
+ * Links use literal string paths in `to="..."` (not `to={var}`) so verify-scenario-tracker-reachable can
  * prove the door exists with a static regex — same pattern as PROG-NAV-01's original fix.
  */
 import { Link } from "react-router-dom";

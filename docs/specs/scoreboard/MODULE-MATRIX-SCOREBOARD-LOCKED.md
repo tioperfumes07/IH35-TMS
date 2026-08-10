@@ -8,28 +8,33 @@
 
 1. **One Program shell · ~26 module boards** (open one module at a time).
 2. **Per module:** left = that module’s tree (tabs → sub-tabs → create surfaces). Top = **only** columns that module can need — **linkage atoms + money/econ + chrome (pickers / QBO style) + wiring (connectivity / reverse link) + process cards** — not the full system wall. Owner 2026-08-08: pickers, QBO chrome, and small wiring details are **part of** full linkage / connectivity / wiring, not optional polish after the matrix.
-3. **Each cell = 3 boxes:** Required · Audited · Done — owner state law (2026-08-08):
+3. **Each cell = 4 boxes:** Required · Audited · Built · Live — owner state law (**2026-08-10 lock** supersedes 2026-08-08 3-box):
 
-| State | Box 1 Required | Box 2 Audited | Box 3 Done | Meaning |
-|---|---|---|---|---|
-| N/A | blank | blank | blank | Column does not apply — not in % |
-| Required, **not audited** | **✓ green** | **✕ red** | **✕ red** | Owes the wire; never audited / not built |
-| Required, **audited / in progress** | **✓ green** | **● yellow** | **✕ red** | Audited or mapped, waiting build / live proof |
-| Required, **complete** | **✓ green** | **✓ green** | **✓ green** | Live-proven — only this counts as Done for % |
+| State | Box 1 Required | Box 2 Audited | Box 3 Built | Box 4 Live | Meaning |
+|---|---|---|---|---|---|
+| N/A | · | · | · | · | Column does not apply — not in % |
+| Required, **not audited** | **✓** | **✕** | **✕** | **✕** | Owes the wire; never audited |
+| Required, **audited / in progress** | **✓** | **●** | **✕** | **✕** | Audit/mapping exists; not built |
+| Required, **built / wired** | **✓** | **✓** | **✓** | **✕** | Neon probe / FK / guard / route — not click-proven |
+| Required, **live verified** | **✓** | **✓** | **✓** | **✓** | PROD-VERIFIED ledger leaf×column (V2/V3/V4 exercised) |
 
-- Box 2 **yellow** = have audit / mapping evidence, not finished.
-- Box 2 **red** = required but no audit yet → Box 3 is also red (cannot be Done).
-- Done (box 3 green) only when live-proven; never from “page exists.”
-4. **% math:** leaf = done÷required on that row; module = done÷required on that board; system = sum of module boards.
-5. **Build queue** = required cells where box 3 is not green (red or yellow on the path).
+- Box 2 **yellow (●)** = audit/mapping evidence only (ledger FAIL/FIXED, GUARD, wave, checklist item) — **not** live verify.
+- Box 3 **Built** = request-time `live_scenario_probe` hold and/or wired Neon density — **never** from checklist N/M PASS alone.
+- Box 4 **Live** = `AUDIT-COVERAGE-LIVE` **PROD-VERIFIED** on that leaf×column only — visual/app click-through tier.
+- **Module certification %** = Box 4 Live ÷ Required (honest bar). **Built %** = (Box 3 + Box 4) ÷ Required. **Build queue** = Required − Live.
+- A cell may show **✓ ✓ ✓ ✕** (coded/wired/Neon-proven but not yet live-click verified) — that is honest, not a defect.
+4. **Module rail order** = sidebar order in `docs/specs/scoreboard/matrix-module-order.json` (Home → Tasks → Fuel → Dispatch → … → System). First pill = **All modules** (system rollup).
+5. **System board** = `/program/matrix?scope=system` · `GET /api/v1/program/module-matrix?scope=system` — all module boards in one wide page with **summed** Required / Audited / Built / Live cells and per-module rows. Wide horizontal scroll is expected.
+6. **% math:** leaf row % = Live ÷ required on that row; module = Live ÷ required on that board; **system** = sum(Live cells) ÷ sum(Required cells) across all modules with required maps.
 
 ## Live feed contract (what moves each box)
 
 | Box | Meaning | Source of truth (existing) | When it moves |
 |---|---|---|---|
 | **1 Required** | This column applies to this leaf | Committed **applicability matrix** (authored once from arch design + routes; Cascade FAIL rows can *propose* Required) | Rarely — only when product surface/law changes |
-| **2 Audited** | Cascade/repo audit exists (FAIL/OPEN/FIXED, wave-queue, guard named) — yellow until Done | Repo + ledger + GUARD-WORKORDERS + wave-queue | On **PR merge** / audit append |
-| **3 Done** | Live-proven both-way + economics where owed | **Neon** + `audit.scenario_status` + PROD-VERIFIED ledger + recon | On **certify cron / request-time probe / deploy** |
+| **2 Audited** | Cascade/repo audit exists (FAIL/OPEN/FIXED, wave-queue, guard named) — yellow until Built | Repo + ledger + GUARD-WORKORDERS + wave-queue | On **PR merge** / audit append |
+| **3 Built** | Wired + Neon probe hold (FK/route/guard/TMS-native density) | `live_scenario_probe` request-time Neon + probe map | On **probe refresh / deploy** |
+| **4 Live** | PROD-VERIFIED leaf×column (click-through tier) | `AUDIT-COVERAGE-LIVE` PROD-VERIFIED only | On **GUARD live verify / ledger tier upgrade** |
 
 ### Already-built pipes to reuse (do not invent a parallel truth)
 

@@ -306,7 +306,7 @@ function liveStateChip(state: string | undefined): { bg: string; fg: string; lab
 }
 
 // In-module nav for PROGRAM. Declared as data (not inline JSX) because verify-nav-integrity reads
-// `href: "…"` entries to prove every route has a real door — a route reachable only by typing its URL
+// PROGRAM_MODULE_NAV literal href strings prove every route has a real door — a route reachable only by typing its URL
 // is a dead page, and an allowlist entry would assert reachability without providing it.
 const PROGRAM_MODULE_NAV: ReadonlyArray<{ href: string; label: string }> = [
   { href: "/program/modules", label: "Module Completion" },
