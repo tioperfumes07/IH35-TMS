@@ -54,7 +54,7 @@ only truly closed when both the coder's ☑ and CC-3's VERIFIED are present.
 | metric | count |
 |---|---|
 | **total findings filed** | **99** |
-| **OPEN — awaiting a coder** | **81** |
+| **OPEN — awaiting a coder** | **80** |
 | **☑ fixed & signed off by a coder** | **2** (`LV-USMCA-ACTIVE-DRIVERS-HAVE-NO-PAY-RATE` — owner-assigned to CC-3 and executed by CC-3, so maker=checker here BY OWNER INSTRUCTION; every other row still awaits its lane) |
 | **VERIFIED ✓ by CC-3 (independently re-tested)** | **2** (`CLS-MONEY-WORM-GAP` 99.6% · `LV-ESCROW-SUBLEDGER-NOT-WORM` partial — both still OPEN pending coder sign-off) |
 | **created-txn registration runs** | **5** — 2 PASS, **1 FAIL (P0)**, 1 owner task DONE+VERIFIED; see the verify section below |
@@ -138,7 +138,7 @@ is no "in progress" state, because a half-fix in production is indistinguishable
 | ☐ | `LV-VOID-LINKAGE-MISSING` | — | CC-1 / money | — | — | — | — | — | — |
 | ☐ | `LV-EXPENSE-VOID-UNREACHABLE` | — | CC-2 / mechanical (FE) + a design answer fro | — | — | — | — | — | — |
 | ☐ | `LV-BANK-TWO-SIGN-CONVENTIONS` | — | CC-1 / money (recon + banking) | — | — | — | — | — | — |
-| ☐ | `LV-BANK-BANNER-SAYS-FLAG-OFF` | — | CC-2 / mechanical (FE copy) — flag to CC-1 ( | — | — | — | — | — | — |
+| ☑ | `LV-BANK-BANNER-SAYS-FLAG-OFF` | — | Cursor (FE) | Cursor | #verified-on-main | 2026-08-10 | `BankingTransactionsDesignView.tsx` uses `useFeatureFlag("BANK_FEED_GL_POSTING_ENABLED", companyId)` and conditionally renders ON/OFF/loading banner per entity; static "stays OFF by default" copy no longer present on main. | N/A | — |
 | ☐ | `LV-TRK-AP-SPLIT-ACROSS-TWO-ACTIVE-ACCOUNTS` | — | CC-1 / money | — | — | — | — | — | — |
 | ☐ | `LV-WO-PARTPANEL-BEHIND-MODAL-DESTROYS-FORM` | — | mechanical / FE lane (CC-3 role per board §3 | — | — | — | — | — | — |
 | ☐ | `LV-WO-CREATE-500-OPENED-AT` | P0 | mechanical / backend lane — ROUTING CONFLICT | — | — | — | — | — | — |
