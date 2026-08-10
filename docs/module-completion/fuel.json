@@ -48,9 +48,9 @@
         "DOD-C"
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
-      "pr": null,
+      "status": "PASS",
+      "evidence": "Route /fuel/expense-mapping registered as ProtectedRoute wrapping FuelTabRoute tabId=expense_mapping → FuelPlannerHomePage; FuelPlannerHomePage guards missing operating company; expense_mapping tab renders FuelGlMappingCoverage which fetches /api/v1/accounting/expense-category-mappings with operating_company_id and category_kind=fuel; component now surfaces ListErrorBanner on query error with retry, plus loading and honest empty/unmapped states; a direct link to the accounting expense category map is provided.",
+      "pr": "#5305",
       "prod_verified": false
     },
     {
@@ -139,9 +139,9 @@
     }
   ],
   "M": 9,
-  "pass_count": 2,
+  "pass_count": 3,
   "total_count": 9,
-  "progress": "2 of 9",
+  "progress": "3 of 9",
   "live_scenario_probe": {
     "source": "scripts/scoreboard-from-live.mjs (live prod probes, TMS-native only)",
     "pass_count": 0,

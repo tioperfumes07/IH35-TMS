@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { listExpenseCategoryMappings } from "../../../api/accounting";
 
 // FUEL-2 (verify-only, NON-posting): confirm every fuel transaction category maps to a real
@@ -71,9 +72,9 @@ export function FuelGlMappingCoverage({ companyId }: { companyId: string }) {
       {mappingsQuery.isLoading ? (
         <p className="mt-3 text-xs text-gray-500">Loading fuel GL mappings…</p>
       ) : mappingsQuery.isError ? (
-        <p className="mt-3 text-xs text-red-700" data-testid="fuel-gl-mapping-error">
-          Could not load fuel GL mappings for this company.
-        </p>
+        <div className="mt-3">
+          <ListErrorBanner onRetry={() => void mappingsQuery.refetch()} />
+        </div>
       ) : (
         <>
           <div className="mt-3 flex flex-wrap gap-2">
