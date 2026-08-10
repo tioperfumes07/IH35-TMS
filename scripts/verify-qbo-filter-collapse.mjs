@@ -175,6 +175,14 @@ const manualJeList = read("apps/frontend/src/pages/accounting/ManualJEListPage.t
 if (!manualJeList.includes("listCoaAccountsForJe") || !manualJeList.includes("<ReferenceSelect")) {
   failures.push("ManualJEListPage: account filter must use the entity-scoped chart picker");
 }
+
+const accountRegister = read("apps/frontend/src/pages/accounting/AccountRegisterPage.tsx");
+if (!accountRegister.includes("accountOptions") || !accountRegister.includes("<ReferenceSelect")) {
+  failures.push("AccountRegisterPage: account control must use the standard catalog selector");
+}
+if (/SelectCombobox\s+value=\{accountId\}/.test(accountRegister)) {
+  failures.push("AccountRegisterPage: account control must not regress to a native select");
+}
 if (manualJeList.includes('placeholder="Account ID (optional)"')) {
   failures.push("ManualJEListPage: account filter must not require a typed account id");
 }

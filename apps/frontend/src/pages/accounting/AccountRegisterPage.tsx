@@ -17,6 +17,8 @@ import { entityLabel } from "../../lib/entity-label";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useUrlSort } from "../../hooks/useUrlSort";
 import { companyToday, monthBoundsIso } from "../../lib/businessDate";
+import { ReferenceSelect, type ReferenceOption } from "../../components/parity/ReferenceSelect";
+import { coaAccountReferenceOption } from "../../components/parity/referenceOptionLabels";
 
 const fmtCents = (cents: number) => formatUsdCents(cents);
 
@@ -278,6 +280,17 @@ export function AccountRegisterPage() {
     () => accounts.filter((a) => !bankLedgerIds.has(String(a.id))),
     [accounts, bankLedgerIds]
   );
+  const accountOptions = useMemo<ReferenceOption[]>(
+    () => [
+      ...bankPickerRows.map((account) => ({
+        value: String(account.ledger_account_id),
+        label: bankPickerLabel(account),
+        type: "Bank",
+      })),
+      ...coaPickerAccounts.map(coaAccountReferenceOption),
+    ],
+    [bankPickerRows, coaPickerAccounts],
+  );
   const normalLabel = report ? (report.account.normal_balance === "debit" ? "Dr" : "Cr") : "";
   const normal: "debit" | "credit" = report?.account.normal_balance ?? "debit";
 
@@ -375,28 +388,20 @@ export function AccountRegisterPage() {
     <AccountingSubNavWrapper title="Account Register" subtitle="Running-balance ledger over the chart of accounts" kpiStrip={kpiStrip}>
       {/* Primary controls + on-demand filter (collapsed by default) */}
       <div className="mb-3 flex flex-wrap items-end gap-2">
-        <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
-          Account
-          <SelectCombobox value={accountId} onChange={(e) => setAccountId(e.target.value)} className={`${inputCls} min-w-[16rem]`}>
-            <option value="">Select an account…</option>
-            {bankPickerRows.length > 0 ? (
-              <optgroup label="Bank accounts">
-                {bankPickerRows.map((a) => (
-                  <option key={`bank-${a.id}`} value={String(a.ledger_account_id)}>
-                    {bankPickerLabel(a)}
-                  </option>
-                ))}
-              </optgroup>
-            ) : null}
-            <optgroup label="Chart of accounts">
-              {coaPickerAccounts.map((a) => (
-                <option key={a.id} value={a.id}>
-                  {a.account_name}
-                </option>
-              ))}
-            </optgroup>
-          </SelectCombobox>
-        </label>
+        <div className="flex min-w-[16rem] flex-col gap-1 text-xs font-semibold text-gray-600">
+          <span>Account</span>
+          <ReferenceSelect
+            value={accountId || null}
+            onChange={(next) => setAccountId(next ?? "")}
+            options={accountOptions}
+            createKind="account"
+            operatingCompanyId={companyId}
+            placeholder="Select an account…"
+            disabled={!companyId}
+            loading={accountsQuery.isLoading || bankAccountsQuery.isLoading}
+            onOptionCreated={() => void accountsQuery.refetch()}
+          />
+        </div>
         <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
           Period
           <SelectCombobox value={preset} onChange={(e) => onPreset(e.target.value)} className={inputCls}>
