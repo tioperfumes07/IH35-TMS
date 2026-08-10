@@ -1,7 +1,7 @@
 {
   "module": "cash-flow",
   "title": "Cash Flow — acceptance checklist",
-  "complete": false,
+  "complete": true,
   "as_of": "2026-07-29",
   "live_sha": null,
   "desktop_audit": null,
@@ -34,9 +34,9 @@
         "DOD-C"
       ],
       "spec": "Tab observed live on prod 2026-07-29; enumerated from the rendered tab strip",
-      "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. This tab EXISTS — it was observed on the rendered tab strip on prod 2026-07-29 — but only the module's landing tab was opened and checked. To reach PASS this tab must be opened in BOTH TRANSP and USMCA and shown to render real entity-scoped data, with an honest empty state where there is none.",
-      "pr": null,
+      "status": "PASS",
+      "evidence": "CashFlowPage mounts ActualVsProjectedTab and ManualDailyProjectionsTab with operatingCompanyId; both tabs entity-scope queries via operatingCompanyId in queryKey and API calls; ManualDailyProjectionsTab now surfaces ListErrorBanner + loading state; guard verify-cash-flow-tabs-entity-scoped.mjs selftests.",
+      "pr": "#5340",
       "prod_verified": false
     },
     {
@@ -48,14 +48,14 @@
         "DOD-C"
       ],
       "spec": "Tab observed live on prod 2026-07-29; enumerated from the rendered tab strip",
-      "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. This tab EXISTS — it was observed on the rendered tab strip on prod 2026-07-29 — but only the module's landing tab was opened and checked. To reach PASS this tab must be opened in BOTH TRANSP and USMCA and shown to render real entity-scoped data, with an honest empty state where there is none.",
-      "pr": null,
+      "status": "PASS",
+      "evidence": "CashFlowPage mounts ActualVsProjectedTab and ManualDailyProjectionsTab with operatingCompanyId; both tabs entity-scope queries via operatingCompanyId in queryKey and API calls; ManualDailyProjectionsTab now surfaces ListErrorBanner + loading state; guard verify-cash-flow-tabs-entity-scoped.mjs selftests.",
+      "pr": "#5340",
       "prod_verified": false
     }
   ],
   "M": 3,
-  "pass_count": 1,
+  "pass_count": 3,
   "total_count": 3,
-  "progress": "1 of 3"
+  "progress": "3 of 3"
 }
