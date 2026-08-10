@@ -31,6 +31,9 @@ export function check(src) {
   if (!/kind="settlement"/.test(src) || !/applied_to_settlement_id/.test(src)) {
     errors.push(`${PAGE}: must EntityLink kind=settlement on applied_to_settlement_id`);
   }
+  if (!/onError:\s*\(e: unknown\) => pushToast\(userFacingApiError\(e, "Could not approve chargeback"\)/.test(src)) {
+    errors.push(`${PAGE}: approval failure must use shared human-facing API error copy`);
+  }
   return errors;
 }
 
@@ -38,6 +41,7 @@ function selftest() {
   const good = `
     { key: "applied_to_settlement_id", label: "Settlement",
       render: (row) => <EntityLink kind="settlement" id={row.applied_to_settlement_id} /> }
+    onError: (e: unknown) => pushToast(userFacingApiError(e, "Could not approve chargeback"), "error")
   `;
   if (check(good).length) {
     console.error(`${LABEL} SELFTEST FAILED on good fixture`);
