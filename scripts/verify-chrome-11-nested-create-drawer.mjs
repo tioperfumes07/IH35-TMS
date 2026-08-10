@@ -24,6 +24,8 @@ const LABEL = "verify-chrome-11-nested-create-drawer";
 const FILES = {
   referenceSelect: "apps/frontend/src/components/parity/ReferenceSelect.tsx",
   quickCreate: "apps/frontend/src/components/forms/shared/QuickCreateEntityModal.tsx",
+  inlineCreate: "apps/frontend/src/components/parity/InlineCreateDrawer.tsx",
+  catalogQuickCreate: "apps/frontend/src/components/parity/CatalogQuickCreateDrawer.tsx",
   createDriverModal: "apps/frontend/src/components/drivers/CreateDriverModal.tsx",
   vendorBillForm: "apps/frontend/src/components/accounting/VendorBillForm.tsx",
 };
@@ -33,10 +35,17 @@ function read(relPath) {
 }
 
 /**
- * All CHROME-11 assertions, as a pure function of the four sources.
+ * All CHROME-11 assertions, as a pure function of the shared nested-create sources.
  * Kept byte-identical in meaning to the original inline checks — only made testable.
  */
-export function checkChrome11({ referenceSelect, quickCreate, createDriverModal, vendorBillForm }) {
+export function checkChrome11({
+  referenceSelect,
+  quickCreate,
+  inlineCreate,
+  catalogQuickCreate,
+  createDriverModal,
+  vendorBillForm,
+}) {
   const failures = [];
 
   // 1) ReferenceSelect (A2) must keep routing every createKind through InlineCreateDrawer or
@@ -52,6 +61,20 @@ export function checkChrome11({ referenceSelect, quickCreate, createDriverModal,
   }
   if (!/onBack=\{onClose\}/.test(quickCreate)) {
     failures.push("QuickCreateEntityModal.tsx must expose a back affordance to its parent surface");
+  }
+
+  // Every shared nested-create drawer must both return to its parent and stack above the parent
+  // modal. Protect the full shared family, not only QuickCreateEntityModal.
+  for (const [name, source] of [
+    ["InlineCreateDrawer.tsx", inlineCreate],
+    ["CatalogQuickCreateDrawer.tsx", catalogQuickCreate],
+  ]) {
+    if (!/onBack=\{onClose\}/.test(source)) {
+      failures.push(`${name} must expose a back affordance to its parent surface`);
+    }
+    if (!/stackAboveModal/.test(source)) {
+      failures.push(`${name} must stack above its parent modal`);
+    }
   }
 
   // 2) QuickCreateEntityModal's own outer shell must stay ParityDrawer (fixed by PR #3200) — never
@@ -96,6 +119,8 @@ function goodFixture() {
 import { QuickCreateEntityModal } from "../forms/shared/QuickCreateEntityModal";`,
     quickCreate: `import { ParityDrawer } from "../../parity/ParityDrawer";
 export function QuickCreateEntityModal({ onClose }) { return <ParityDrawer onBack={onClose} />; }`,
+    inlineCreate: `export function InlineCreateDrawer({ onClose }) { return <ParityDrawer onBack={onClose} stackAboveModal />; }`,
+    catalogQuickCreate: `export function CatalogQuickCreateDrawer({ onClose }) { return <ParityDrawer onBack={onClose} stackAboveModal />; }`,
     createDriverModal: `import { ParityDrawer } from "../parity/ParityDrawer";
 type Props = { shell?: "modal" | "drawer" };
 export function CreateDriverModal({ shell = "modal" }: Props) {
@@ -123,6 +148,10 @@ function selftest() {
     ["quickCreate", (f) => { f.quickCreate = f.quickCreate.replace(/ParityDrawer/g, "Modal"); }, "no longer shells with ParityDrawer"],
     ["quickCreate", (f) => { f.quickCreate += "\n<Modal />"; }, "renders a centered <Modal>"],
     ["quickCreate", (f) => { f.quickCreate = f.quickCreate.replace("onBack={onClose}", ""); }, "back affordance"],
+    ["inlineCreate", (f) => { f.inlineCreate = f.inlineCreate.replace("onBack={onClose}", ""); }, "InlineCreateDrawer.tsx must expose a back affordance"],
+    ["inlineCreate", (f) => { f.inlineCreate = f.inlineCreate.replace("stackAboveModal", ""); }, "InlineCreateDrawer.tsx must stack above"],
+    ["catalogQuickCreate", (f) => { f.catalogQuickCreate = f.catalogQuickCreate.replace("onBack={onClose}", ""); }, "CatalogQuickCreateDrawer.tsx must expose a back affordance"],
+    ["catalogQuickCreate", (f) => { f.catalogQuickCreate = f.catalogQuickCreate.replace("stackAboveModal", ""); }, "CatalogQuickCreateDrawer.tsx must stack above"],
     ["createDriverModal", (f) => { f.createDriverModal = f.createDriverModal.replace('shell?: "modal" | "drawer"', "shell?: string"); }, "missing shell"],
     ["createDriverModal", (f) => { f.createDriverModal = f.createDriverModal.replace('shell === "drawer"', 'shell === "sheet"'); }, "no longer branches"],
     ["vendorBillForm", (f) => { f.vendorBillForm = `<CreateDriverModal open={x} onClose={y} />`; }, "Modal-on-drawer regression on Bill create"],

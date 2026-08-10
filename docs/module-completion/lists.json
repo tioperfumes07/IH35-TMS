@@ -2,10 +2,11 @@
   "module": "lists",
   "title": "Lists / Catalogs (Module 12)",
   "complete": true,
-  "as_of": "2026-08-04T12:15:49.424Z",
+  "as_of": "2026-08-10T16:15:00.000Z",
   "live_sha": "7875de6",
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/modules/lists.md",
   "prod_settlement": "~/Desktop/IH35-CURSOR-AUDIT/modules/lists-PROD-SETTLEMENT-2026-07-24.md",
+  "note": "23 of 23 — complete:true. Shared nested-create paths retain visible Back affordances and stack above their parent modal; verify-chrome-11-nested-create-drawer mutation-proves QuickCreate, InlineCreate, CatalogQuickCreate, and driver-create coverage.",
   "spec_sources": [
     "docs/specs/DEFINITION-OF-DONE.md",
     "docs/specs/EVERY-PR-AUDIT-CHECKLIST.md",
