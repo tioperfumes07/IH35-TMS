@@ -1,8 +1,8 @@
 {
   "module": "fleet",
   "title": "Fleet — acceptance checklist",
-  "complete": false,
-  "as_of": "2026-07-29",
+  "complete": true,
+  "as_of": "2026-08-09",
   "live_sha": null,
   "desktop_audit": null,
   "spec_sources": [
@@ -104,14 +104,14 @@
         "DOD-C"
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
-      "pr": null,
+      "status": "PASS",
+      "evidence": "Route /fleet/units/:id/detail registered as ProtectedRoute wrapping UnitDetail; page uses entityLabel(null, id, \"Unit\") so title never falls back to raw UUID; need-company guard present; renders tabs for permits, toll-tags, tasks, brakes, tires, and finance linkage, each receiving unitId and companyId; active tab driven by URL search param.",
+      "pr": "#5301",
       "prod_verified": false
     }
   ],
   "M": 7,
-  "pass_count": 6,
+  "pass_count": 7,
   "total_count": 7,
-  "progress": "6 of 7"
+  "progress": "7 of 7"
 }

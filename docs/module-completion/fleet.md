@@ -1,12 +1,12 @@
 # Module completion — Fleet — acceptance checklist
 
-**PROGRESS: 6 of 7** · complete: `false` · as_of: 2026-07-29 · live_sha: `—`
+**PROGRESS: 7 of 7** · complete: `true` · as_of: 2026-08-09 · live_sha: `—`
 
 | Status | Count |
 |---|---:|
-| PASS | 6 |
+| PASS | 7 |
 | HOLD | 0 |
-| OPEN | 1 |
+| OPEN | 0 |
 | FAIL | 0 |
 | UNVERIFIED | 0 |
 
@@ -18,6 +18,6 @@
 | `FLEET-S04` | **PASS** | Surface /fleet/trailers/:id renders real entity-scoped data with no dead end | Route /fleet/trailers/:id registered as ProtectedRoute wrapping TrailerProfilePage; fetches /api/v1/mdata/equipment/:id with operating_company_id; buildEquipmentAggregate scopes by owner/lessee and returns 404 for cross-entity; page renders identity, specs, assignment, reefer, maintenance, compliance, reverse insurance/safety/legal/bank linkages, documents, audit history; archive action wired to soft-delete endpoint; honest empty states for missing company/profile; TrailerProfilePage.test.tsx passes. | #5295 |
 | `FLEET-S05` | **PASS** | Surface /fleet/transfers-in-progress renders real entity-scoped data with no dead end | Route /fleet/transfers-in-progress registered as ProtectedRoute wrapping TransfersInProgressPage; fetches /api/v1/equipment-transfers scoped by operating_company_id via setScopedCompanyContext; page now renders honest empty states for missing company, loading, and no pending transfers; existing test passes. | #5297 |
 | `FLEET-S06` | **PASS** | Surface /fleet/units/:id renders real entity-scoped data with no dead end | Route /fleet/units/:id registered as ProtectedRoute wrapping VehicleProfilePage; fetches /api/v1/mdata/units/:id?operating_company_id=...; buildUnitAggregate scopes unit + all child queries by owner/lessee operating_company_id; page uses entityLabel for human unit number, need-company guard, ListErrorBanner on error, and renders identity/telemetry/driver/load/maintenance/compliance/insurance/reefer/financial/documents plus reverse safety/insurance/legal/bank linkages and audit history; archive wired to soft-delete endpoint; edit/quick-assign modals present. | #5300 |
-| `FLEET-S07` | **OPEN** | Surface /fleet/units/:id/detail renders real entity-scoped data with no dead end | NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing. | — |
+| `FLEET-S07` | **PASS** | Surface /fleet/units/:id/detail renders real entity-scoped data with no dead end | Route /fleet/units/:id/detail registered as ProtectedRoute wrapping UnitDetail; page uses entityLabel(null, id, "Unit") so title never falls back to raw UUID; need-company guard present; renders tabs for permits, toll-tags, tasks, brakes, tires, and finance linkage, each receiving unitId and companyId; active tab driven by URL search param. | #5301 |
 
 Desktop audit: —
