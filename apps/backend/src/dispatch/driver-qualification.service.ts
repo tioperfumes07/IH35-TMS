@@ -1,4 +1,3 @@
-import type { PoolClient } from "pg";
 
 // SHARED DRIVER-QUALIFICATION GATE (G9-C1 + D3-1).
 //
@@ -134,7 +133,7 @@ export type DrugAlcoholViolation = {
  * written explicitly so the query is correct even if the GUC is ever lost.
  */
 export async function fetchUnresolvedDrugAlcoholViolation(
-  client: PoolClient,
+  client: QueryableClient,
   args: { driverId: string; operatingCompanyId: string }
 ): Promise<DrugAlcoholViolation | null> {
   const res = await client.query<{
@@ -228,7 +227,7 @@ export async function fetchUnresolvedDrugAlcoholViolation(
  * Returns the `queried_at` of the unresolved `record_found` result, or null when not prohibited.
  */
 export async function fetchClearinghouseProhibition(
-  client: PoolClient,
+  client: QueryableClient,
   args: { driverId: string; operatingCompanyId: string }
 ): Promise<{ prohibited_since: string | null } | null> {
   const res = await client.query<{ prohibited_since: string | null }>(
@@ -274,7 +273,7 @@ export type DriverDrugAlcoholStatus = {
  * are computed from the same rows by the same code.
  */
 export async function evaluateDriverDrugAlcoholStatus(
-  client: PoolClient,
+  client: QueryableClient,
   args: { driverId: string; operatingCompanyId: string }
 ): Promise<DriverDrugAlcoholStatus> {
   const violation = await fetchUnresolvedDrugAlcoholViolation(client, args);
@@ -301,8 +300,12 @@ export async function evaluateDriverDrugAlcoholStatus(
  *
  * `app.operating_company_id` must already be set by the caller (RLS scoping).
  */
+type QueryableClient = {
+  query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }>;
+};
+
 export async function assertDriverQualifiedForLoad(
-  client: PoolClient,
+  client: QueryableClient,
   args: { driverId: string; operatingCompanyId: string; isHazmat: boolean }
 ): Promise<DriverQualificationBlock | null> {
   const { driverId, operatingCompanyId, isHazmat } = args;
