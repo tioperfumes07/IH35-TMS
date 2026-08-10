@@ -17,12 +17,15 @@ import {
 } from "../../api/forensic";
 import { useAuth } from "../../auth/useAuth";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { CappedListNotice } from "../../components/CappedListNotice";
 import { ActionButton } from "../../components/shared/ActionButton";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { userFacingApiError } from "../../lib/api-error-message";
+
+const FORENSIC_AUDIT_LOG_PAGE = 100;
 
 function severityClass(severity: string) {
   if (severity === "critical") return "bg-red-100 text-red-700";
@@ -97,7 +100,7 @@ export function ForensicReviewPage() {
   });
   const auditLogQuery = useQuery({
     queryKey: ["forensic", "audit-log", expandedAuditBatchId],
-    queryFn: () => listForensicAuditLog(expandedAuditBatchId ?? "", 100),
+    queryFn: () => listForensicAuditLog(expandedAuditBatchId ?? "", FORENSIC_AUDIT_LOG_PAGE),
     enabled: Boolean(expandedAuditBatchId),
   });
 
@@ -353,6 +356,12 @@ export function ForensicReviewPage() {
                 </div>
                 {expandedAuditBatchId === batch.id ? (
                   <div className="mt-2 max-h-40 overflow-auto rounded-sm border border-gray-100 bg-gray-50 p-2">
+                    <CappedListNotice
+                      shown={(auditLogQuery.data?.rows ?? []).length}
+                      limit={FORENSIC_AUDIT_LOG_PAGE}
+                      hint="Expand again later for older audit rows (cursor paging not yet wired)."
+                      className="mb-1 text-[11px] text-gray-600"
+                    />
                     {(auditLogQuery.data?.rows ?? []).length === 0 ? (
                       <p className="text-[11px] text-gray-500">No audit rows yet.</p>
                     ) : (

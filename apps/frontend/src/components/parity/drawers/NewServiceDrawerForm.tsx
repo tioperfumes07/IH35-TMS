@@ -23,6 +23,7 @@ import { classesCatalogClient, itemsCatalogClient, qboCategoriesCatalogClient } 
 import { getCoaAccounts } from "../../../api/banking";
 import { listVendors } from "../../../api/mdata";
 import { Combobox } from "../../Combobox";
+import { CappedListNotice } from "../../CappedListNotice";
 import { MoneyInput } from "../../forms/MoneyInput";
 import { useToast } from "../../Toast";
 import type { InlineCreateResult } from "../InlineCreateDrawer";
@@ -35,6 +36,9 @@ import { userFacingApiError } from "../../../lib/api-error-message";
 const INCOME_TYPES = ["Income", "OtherIncome"];
 const EXPENSE_TYPES = ["Expense", "CostOfGoodsSold", "OtherExpense"];
 const CARRIER_DEFAULT_INCOME_NAME = "Sales of Service Income";
+const CATALOG_PICKER_CAP = 200;
+const VENDOR_PICKER_CAP = 200;
+const VENDOR_OPEN_CAP = 1000;
 
 type Props = {
   operatingCompanyId: string;
@@ -101,19 +105,19 @@ export function NewServiceDrawerForm({ operatingCompanyId, onCreated, onClose }:
       listVendors({
         operating_company_id: operatingCompanyId,
         status: "active",
-        limit: vendorSearch ? 200 : 1000,
+        limit: vendorSearch ? VENDOR_PICKER_CAP : VENDOR_OPEN_CAP,
         search: vendorSearch || undefined,
       }),
     enabled: !!operatingCompanyId && form.buyEnabled,
   });
   const categoriesQuery = useQuery({
     queryKey: ["catalogs", "accounting", "qbo-categories", operatingCompanyId],
-    queryFn: () => qboCategoriesCatalogClient.list({ operating_company_id: operatingCompanyId, is_active: "true", limit: 200 }),
+    queryFn: () => qboCategoriesCatalogClient.list({ operating_company_id: operatingCompanyId, is_active: "true", limit: CATALOG_PICKER_CAP }),
     enabled: !!operatingCompanyId,
   });
   const classesQuery = useQuery({
     queryKey: ["catalogs", "accounting", "classes", operatingCompanyId],
-    queryFn: () => classesCatalogClient.list({ operating_company_id: operatingCompanyId, is_active: "true", limit: 200 }),
+    queryFn: () => classesCatalogClient.list({ operating_company_id: operatingCompanyId, is_active: "true", limit: CATALOG_PICKER_CAP }),
     enabled: !!operatingCompanyId,
   });
   const accounts = accountsQuery.data?.accounts ?? [];
@@ -279,6 +283,12 @@ export function NewServiceDrawerForm({ operatingCompanyId, onCreated, onClose }:
           <span className="text-xs font-medium text-gray-700">Category</span>
           <div className="mt-1">
             {/* LST-PICKER-01 (1876): Product & Service Categories (qbo_categories), NOT createKind=category (CoA). */}
+            <CappedListNotice
+              shown={categoryOptions.length}
+              limit={CATALOG_PICKER_CAP}
+              total={categoriesQuery.data?.total ?? null}
+              className="mb-1 text-[11px] text-slate-600"
+            />
             <Combobox
               options={categoryOptions}
               value={form.categoryId}
@@ -293,6 +303,12 @@ export function NewServiceDrawerForm({ operatingCompanyId, onCreated, onClose }:
         <label className="block" data-testid="service-class-select">
           <span className="text-xs font-medium text-gray-700">Class</span>
           <div className="mt-1">
+            <CappedListNotice
+              shown={classOptions.length}
+              limit={CATALOG_PICKER_CAP}
+              total={classesQuery.data?.total ?? null}
+              className="mb-1 text-[11px] text-slate-600"
+            />
             <ReferenceSelect
               options={classOptions}
               value={form.classId}
@@ -400,6 +416,13 @@ export function NewServiceDrawerForm({ operatingCompanyId, onCreated, onClose }:
               <span className="text-xs font-medium text-gray-700">Preferred vendor</span>
               <div className="mt-1">
                 {/* LST-PICKER-01 (guard 1874): free-text → ReferenceSelect createKind=vendor + persist preferred_vendor_id */}
+                <CappedListNotice
+                  shown={vendorOptions.length}
+                  limit={vendorSearch ? VENDOR_PICKER_CAP : VENDOR_OPEN_CAP}
+                  total={vendorsQuery.data?.total ?? null}
+                  hint="Type to search for a vendor that is not listed."
+                  className="mb-1 text-[11px] text-slate-600"
+                />
                 <ReferenceSelect
                   options={vendorOptions}
                   value={form.preferredVendorId}

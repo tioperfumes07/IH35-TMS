@@ -7,9 +7,17 @@ import { dirname, join } from "node:path";
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const fail = (m) => { console.error(`FAIL verify-dispatch-card-unit-first: ${m}`); process.exit(1); };
 const src = readFileSync(join(root, "apps/frontend/src/components/dispatch/DispatchKanban.tsx"), "utf8");
-if (!/function cardPrimaryLabel\([^)]*\)[^{]*{\s*return load\.assigned_unit_number \|\| load\.load_number;/.test(src))
-  fail("cardPrimaryLabel must return unit number first, load # fallback");
-if (!/function cardSecondaryLoadNumber\([^)]*\)[^{]*{\s*[\s\S]*?return load\.assigned_unit_number \? load\.load_number : null;/.test(src))
+if (
+  !/function cardPrimaryLabel\([^)]*\)[^{]*{[\s\S]*?if\s*\(\s*load\.assigned_unit_number\s*\)[\s\S]*?return entityLabel\(load\.assigned_unit_number[\s\S]*?return entityLabel\(load\.load_number/.test(
+    src,
+  )
+)
+  fail("cardPrimaryLabel must return unit number first (entityLabel), load # fallback");
+if (
+  !/function cardSecondaryLoadNumber\([^)]*\)[^{]*{[\s\S]*?return load\.assigned_unit_number \? entityLabel\(load\.load_number/.test(
+    src,
+  )
+)
   fail("cardSecondaryLoadNumber must surface load # only when a unit occupies the primary line");
 if ((src.match(/data-kanban-card-primary="unit"/g) || []).length < 2)
   fail('both Standard and Detailed cards must mark the primary line data-kanban-card-primary="unit"');

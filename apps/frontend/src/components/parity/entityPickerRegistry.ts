@@ -33,6 +33,9 @@
  *
  * ADDITIVE: this file adds a mechanism beside catalogPickerRegistry; it replaces nothing. Catalog
  * reference lists keep going through ReferenceSelect exactly as before.
+ *
+ * CLS-SILENT-CAP: roster page sizes below are surfaced by CappedListNotice in EntityPicker.tsx via
+ * entityPickerListLimit() — never a silent truncate on server-searched kinds.
  */
 import { listDrivers, listEquipment, listUnits, listVendors } from "../../api/mdata";
 import { listLoads } from "../../api/loads";
@@ -403,6 +406,27 @@ const ENTITY_PICKERS: Record<EntityPickerKind, EntityPickerConfig> = {
     },
   },
 };
+
+/** Hard roster page size for one open (CLS-SILENT-CAP — EntityPicker renders CappedListNotice). */
+export function entityPickerListLimit(
+  kind: EntityPickerKind,
+  opts?: { search?: string; driverRoster?: "active_only" | "active_or_probation" }
+): number {
+  switch (kind) {
+    case "driver":
+      return opts?.driverRoster === "active_or_probation" ? 400 : 200;
+    case "unit":
+      return 500;
+    case "vendor":
+      return opts?.search ? 200 : 1000;
+    case "trailer":
+    case "load":
+    case "factoring_advance":
+      return 200;
+    default:
+      return Number.MAX_SAFE_INTEGER;
+  }
+}
 
 export function getEntityPickerConfig(kind: EntityPickerKind): EntityPickerConfig {
   const config = ENTITY_PICKERS[kind];

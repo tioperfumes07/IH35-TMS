@@ -5,6 +5,7 @@ import { useToast } from "../Toast";
 import { createTaskLink, fetchTasks, type Task, type TaskTargetType } from "../../api/tasks";
 import { formatDateUS } from "../../lib/formatDate";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { CappedListNotice } from "../CappedListNotice";
 
 type Props = {
   operatingCompanyId: string;
@@ -108,6 +109,13 @@ export function TaskLinkPicker({ operatingCompanyId, targetType, targetId, label
             </table>
             </div>
           )}
+          <CappedListNotice
+            shown={(tasksQuery.data?.tasks ?? []).length}
+            limit={200}
+            total={tasksQuery.data?.total_count}
+            hint="Only the first page of tasks is listed — narrow with filters on the Tasks module if needed."
+            className="text-xs text-slate-600"
+          />
         </div>
       </Modal>
     </>

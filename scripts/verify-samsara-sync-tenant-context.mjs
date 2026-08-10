@@ -3,6 +3,15 @@ import fs from "node:fs";
 import path from "node:path";
 
 const ROOT = process.cwd();
+const OPERATING_COMPANY_GUC_FRAGMENTS = [
+  "SELECT set_config('app.operating_company_id', $1, true)",
+  "SELECT set_config('app.operating_company_id', $1::text, true)",
+];
+
+function hasOperatingCompanyGuc(text) {
+  return OPERATING_COMPANY_GUC_FRAGMENTS.some((fragment) => text.includes(fragment));
+}
+
 const checks = [
   {
     file: "apps/backend/src/integrations/samsara/samsara-master-sync.routes.ts",
@@ -16,19 +25,19 @@ const checks = [
   {
     file: "apps/backend/src/cron/samsara-master-sync.cron.ts",
     required: [
-      "SELECT set_config('app.operating_company_id', $1, true)",
       "syncSamsaraDriversMaster(client, operatingCompanyId)",
       "syncSamsaraVehiclesMaster(client, operatingCompanyId)",
     ],
+    requireOperatingCompanyGuc: true,
     reason: "cron-triggered master sync must set tenant context before writes",
   },
   {
     file: "scripts/seed-samsara-transp.mjs",
     required: [
-      "SELECT set_config('app.operating_company_id', $1, true)",
       'upsertProjectionRows(client, "integrations.samsara_drivers"',
       'upsertProjectionRows(client, "integrations.samsara_vehicles"',
     ],
+    requireOperatingCompanyGuc: true,
     reason: "one-shot seed+sync script must set tenant context before mirror inserts",
   },
 ];
@@ -44,6 +53,11 @@ for (const check of checks) {
     fail(`missing required file: ${check.file}`);
   }
   const text = fs.readFileSync(abs, "utf8");
+  if (check.requireOperatingCompanyGuc && !hasOperatingCompanyGuc(text)) {
+    fail(
+      `${check.file} missing operating_company_id set_config GUC (${check.reason}); expected one of: ${OPERATING_COMPANY_GUC_FRAGMENTS.join(" | ")}`,
+    );
+  }
   for (const requiredFragment of check.required) {
     if (!text.includes(requiredFragment)) {
       fail(`${check.file} missing "${requiredFragment}" (${check.reason})`);

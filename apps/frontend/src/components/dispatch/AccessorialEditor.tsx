@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { additionalChargesCatalogClient } from "../../api/catalogs-dispatch";
+import { CappedListNotice } from "../CappedListNotice";
 import { ReferenceSelect } from "../parity/ReferenceSelect";
 import { MoneyInput } from "../forms/MoneyInput";
 import { ListErrorState } from "../ListErrorState";
@@ -215,6 +216,13 @@ export function AccessorialEditor({ operatingCompanyId, rows, onRowsChange, onDe
             Remove
           </button>
         )}
+      />
+      <CappedListNotice
+        shown={(catalogQuery.data?.rows ?? []).length}
+        limit={200}
+        total={catalogQuery.data?.total ?? null}
+        hint="Type to search for an accessorial code that is not listed."
+        className="text-[11px] text-slate-600"
       />
     </div>
   );

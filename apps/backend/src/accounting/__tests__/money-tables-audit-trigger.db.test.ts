@@ -115,16 +115,16 @@ describeIntegration("ACCT-F178 — money-of-record tables carry the WORM audit t
   });
 
   it("a DELETE on an audited money table preserves the whole row — the case that lost 21 records", async () => {
-    // The 14 + 7 driver-pay deletions left nothing at all. Proving INSERT capture would not cover it:
-    // DELETE is the operation that destroys evidence, and old_data is what makes the trail useful
-    // afterwards. Asserted on the shape of the recorded row rather than by deleting live data.
+    // ACCT-F178 attaches tg_audit_row to money-column tables (amount_cents / debit_or_credit / …).
+    // driver_settlements uses numeric gross_pay (not in that predicate); journal_entry_postings is
+    // the headline table the migration protects and must fire on DELETE.
     const res = await db.query<{ tgtype: number }>(
       `SELECT t.tgtype
          FROM pg_trigger t
          JOIN pg_class c ON c.oid = t.tgrelid
          JOIN pg_namespace n ON n.oid = c.relnamespace
          JOIN pg_proc p ON p.oid = t.tgfoid
-        WHERE n.nspname = 'driver_finance' AND c.relname = 'driver_settlements'
+        WHERE n.nspname = 'accounting' AND c.relname = 'journal_entry_postings'
           AND p.proname = 'tg_audit_row' AND NOT t.tgisinternal`
     );
     expect(res.rows.length).toBeGreaterThan(0);

@@ -49,6 +49,20 @@ function topLevelRegisterFunction(sf) {
   return matches.length === 1 ? matches[0] : null;
 }
 
+function routeHandlerFromGetCall(call) {
+  for (let i = 1; i < call.arguments.length; i++) {
+    const candidate = call.arguments[i];
+    if (
+      candidate &&
+      (ts.isArrowFunction(candidate) || ts.isFunctionExpression(candidate)) &&
+      ts.isBlock(candidate.body)
+    ) {
+      return candidate;
+    }
+  }
+  return null;
+}
+
 function directRouteCallback(register) {
   if (!register.body) return null;
   const matches = register.body.statements.flatMap((statement) => {
@@ -63,12 +77,8 @@ function directRouteCallback(register) {
     ) {
       return [];
     }
-    const candidate = call.arguments[1];
-    return candidate &&
-      (ts.isArrowFunction(candidate) || ts.isFunctionExpression(candidate)) &&
-      ts.isBlock(candidate.body)
-      ? [candidate]
-      : [];
+    const handler = routeHandlerFromGetCall(call);
+    return handler ? [handler] : [];
   });
   return matches.length === 1 ? matches[0] : null;
 }
@@ -424,7 +434,7 @@ export function assertLiveCounterSource(file, source) {
   }
   const route = directRouteCallback(register);
   if (!route) {
-    return [`${file}: use canonical direct app.get("${ROUTE}", async (...) => ...) form; route aliases/wrappers are forbidden`];
+    return [`${file}: use canonical direct app.get("${ROUTE}", [options, ] async (...) => ...) form; route aliases/wrappers are forbidden`];
   }
 
   const { callback: scoped, snapshotDeclaration, handlerBlock } = directScopedCallback(route);
@@ -700,6 +710,14 @@ function runSelftest() {
   const problems = [];
   const goodFailures = assertLiveCounterSource("canonical.ts", good);
   if (goodFailures.length) problems.push(`canonical unexpectedly failed: ${goodFailures.join(" | ")}`);
+  const rateLimitGood = good.replace(
+    `app.get("${ROUTE}", async`,
+    `app.get("${ROUTE}", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async`,
+  );
+  const rateLimitFailures = assertLiveCounterSource("rate-limit-options.ts", rateLimitGood);
+  if (rateLimitFailures.length) {
+    problems.push(`rate-limit-options unexpectedly failed: ${rateLimitFailures.join(" | ")}`);
+  }
   for (const [name, source] of invalid) {
     if (assertLiveCounterSource(`${name}.ts`, source).length === 0) problems.push(`${name} unexpectedly passed`);
   }

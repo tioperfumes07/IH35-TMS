@@ -14,6 +14,7 @@ import { PartEditDrawer } from "./PartEditDrawer";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { partNeedsReorder } from "../maintenance/parts-low-stock";
 import { displayPartInventoryCategory } from "./partInventoryCategories";
+import { CappedListNotice } from "../../components/CappedListNotice";
 
 // ParityColumn only honors key/label/render/className/sortable — the earlier align/format/badge keys
 // were silently ignored (columns is a variable, so no excess-property check), so unit-cost formatting
@@ -181,6 +182,13 @@ export function InventoryPartsStockPage() {
       <InventoryModuleTabs />
       {/* ParityTable is already a self-contained card (own rounded/border/bg-white wrapper) — the extra
           wrapper div here produced a box-in-box double border. Render it directly. */}
+      <CappedListNotice
+        shown={vendorsQuery.data?.vendors?.length ?? 0}
+        limit={1000}
+        total={vendorsQuery.data?.total}
+        hint="Vendor names on this grid are enriched from the first page of active vendors only."
+        className="mb-2 text-xs text-slate-600"
+      />
       <ParityTable
         columns={columns}
         rows={rows}

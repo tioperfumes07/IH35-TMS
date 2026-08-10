@@ -44,6 +44,7 @@ describe("canAssignLoadToDriver", () => {
 
     expect(result).toEqual({
       ok: false,
+      code: "E_DRIVER_REPAIR_BLOCK",
       // FAIL-U1: names the work order a dispatcher can look up, not its uuid.
       blocker: "Driver's truck is in repair (WO WO-T120-RS-08-08-2026-0002-PEND0)",
       work_order_id: "WO-123",

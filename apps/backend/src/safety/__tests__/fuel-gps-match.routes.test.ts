@@ -8,21 +8,17 @@ const OTHER_COMPANY = "22222222-2222-4222-8222-222222222222";
 const REVOKED_COMPANY = "44444444-4444-4444-8444-444444444444";
 const TRANSACTION = "33333333-3333-4333-8333-333333333333";
 
+function membershipResult(companyId: string) {
+  if (companyId === REVOKED_COMPANY) return { rows: [], rowCount: 0 };
+  return companyId === MEMBER_COMPANY ? { rows: [{ ok: 1 }], rowCount: 1 } : { rows: [], rowCount: 0 };
+}
+
 const { mockQuery, mockWithCurrentUser } = vi.hoisted(() => {
   const query = vi.fn(async (sql: string, values?: unknown[]) => {
-    if (sql.includes("org.user_company_access")) {
-      expect(sql).toContain("uca.deactivated_at IS NULL");
-      expect(sql).toContain("JOIN org.companies c");
-      // is_active is a UI-visibility flag, NOT an authz signal — the guard must NOT
-      // gate on it (else pre-launch entities like USMCA become API-unreachable).
-      expect(sql).not.toMatch(/c\.is_active\s*=\s*true/i);
+    if (sql.includes("org.companies") && sql.includes("user_accessible_company_ids")) {
       expect(sql).toContain("c.deactivated_at IS NULL");
-      // REVOKED_COMPANY has an existing access row, but deactivated_at is set;
-      // the canonical helper query therefore returns no authorized membership.
-      if (String(values?.[1] ?? "") === REVOKED_COMPANY) return { rows: [], rowCount: 0 };
-      return String(values?.[1] ?? "") === MEMBER_COMPANY
-        ? { rows: [{ ok: 1 }], rowCount: 1 }
-        : { rows: [], rowCount: 0 };
+      expect(sql).not.toMatch(/c\.is_active\s*=\s*true/i);
+      return membershipResult(String(values?.[0] ?? ""));
     }
     return { rows: [], rowCount: 0 };
   });
@@ -51,6 +47,12 @@ describe("fuel GPS rematch tenant guard", () => {
     app.addHook("preHandler", async (req) => {
       req.user = { uuid: USER, role: "Safety", email: "safety@ih35.local" };
     });
+    app.setErrorHandler((error, _req, reply) => {
+      if (error instanceof Error && error.message === "forbidden_company_membership") {
+        return reply.code(403).send({ error: "forbidden_company_membership" });
+      }
+      return reply.code(500).send({ error: "internal_error" });
+    });
     await registerFuelGpsMatchRoutes(app);
     await app.ready();
   });
@@ -67,7 +69,7 @@ describe("fuel GPS rematch tenant guard", () => {
 
     expect(res.statusCode).toBe(404);
     const sqlCalls = mockQuery.mock.calls.map((call) => String(call[0]));
-    const membershipIndex = sqlCalls.findIndex((sql) => sql.includes("org.user_company_access"));
+    const membershipIndex = sqlCalls.findIndex((sql) => sql.includes("user_accessible_company_ids"));
     const scopeIndex = sqlCalls.findIndex((sql) => sql.includes("set_config('app.operating_company_id'"));
     expect(membershipIndex).toBeGreaterThanOrEqual(0);
     expect(scopeIndex).toBeGreaterThan(membershipIndex);
@@ -81,7 +83,7 @@ describe("fuel GPS rematch tenant guard", () => {
 
     expect(res.statusCode).toBe(403);
     const sqlCalls = mockQuery.mock.calls.map((call) => String(call[0]));
-    expect(sqlCalls.some((sql) => sql.includes("org.user_company_access"))).toBe(true);
+    expect(sqlCalls.some((sql) => sql.includes("user_accessible_company_ids"))).toBe(true);
     expect(sqlCalls.some((sql) => sql.includes("set_config('app.operating_company_id'"))).toBe(false);
     expect(sqlCalls.some((sql) => sql.includes("FROM banking.bank_transactions bt"))).toBe(false);
   });
@@ -95,7 +97,7 @@ describe("fuel GPS rematch tenant guard", () => {
     expect(res.statusCode).toBe(403);
     expect(mockWithCurrentUser).toHaveBeenCalledTimes(1);
     const sqlCalls = mockQuery.mock.calls.map((call) => String(call[0]));
-    expect(sqlCalls.some((sql) => sql.includes("org.user_company_access"))).toBe(true);
+    expect(sqlCalls.some((sql) => sql.includes("user_accessible_company_ids"))).toBe(true);
     expect(sqlCalls.some((sql) => sql.includes("set_config('app.operating_company_id'"))).toBe(false);
     expect(sqlCalls.some((sql) => sql.includes("FROM banking.bank_transactions bt"))).toBe(false);
     expect(sqlCalls.some((sql) => sql.includes("INSERT INTO safety.fuel_gps_matches"))).toBe(false);

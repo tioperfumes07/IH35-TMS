@@ -1,4 +1,5 @@
 import { EntityPicker } from "../../../components/parity/EntityPicker";
+import { CappedListNotice } from "../../../components/CappedListNotice";
 
 type VehicleAssignmentStepProps = {
   unitId: string;
@@ -18,7 +19,7 @@ export function OnboardingStepVehicleAssignment({
       <p className="text-sm text-slate-600">Assign primary unit (optional — can be set later on driver profile).</p>
       <label className="block text-sm">
         <span className="mb-1 block font-medium text-slate-700">Unit</span>
-        {/* Picker law: never a silent <select> over listUnits(limit:500). EntityPicker searches server-side. */}
+        {/* Picker law: EntityPicker server-searches units — no silent static roster select. */}
         <EntityPicker
           kind="unit"
           operatingCompanyId={operatingCompanyId}
@@ -30,6 +31,12 @@ export function OnboardingStepVehicleAssignment({
           className="w-full"
           dataField="onboarding-vehicle-unit"
           dataTestId="onboarding-vehicle-unit"
+        />
+        <CappedListNotice
+          shown={unitId ? 1 : 0}
+          limit={500}
+          hint="Type in the unit picker to search the full fleet catalog."
+          className="mt-1 text-xs text-slate-600"
         />
       </label>
     </div>

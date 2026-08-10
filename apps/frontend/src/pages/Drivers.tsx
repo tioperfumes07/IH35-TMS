@@ -911,7 +911,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
           <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-gray-600">Primary Driver</label>
             <DriverPickerWithCreate
-              operatingCompanyId={selectedCompanyId}
+              operatingCompanyId={selectedCompanyId ?? ""}
               value={teamForm.primary_driver_id || null}
               onChange={(driverId) => setTeamForm((current) => ({ ...current, primary_driver_id: driverId ?? "" }))}
               open={teamCreateOpen}
@@ -923,7 +923,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
           <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-gray-600">Co Driver</label>
             <DriverPickerWithCreate
-              operatingCompanyId={selectedCompanyId}
+              operatingCompanyId={selectedCompanyId ?? ""}
               value={teamForm.co_driver_id || null}
               onChange={(driverId) => setTeamForm((current) => ({ ...current, co_driver_id: driverId ?? "" }))}
               open={teamCreateOpen}

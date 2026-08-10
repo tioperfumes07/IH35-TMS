@@ -117,9 +117,9 @@ export function listForensicAnomalies() {
   return apiRequest<{ anomalies: ForensicAnomaly[] }>("/api/v1/admin/qbo-forensic/anomalies");
 }
 
-export function listForensicAuditLog(batchId: string, limit = 100, before?: string) {
+export function listForensicAuditLog(batchId: string, pageSize = 100, before?: string) {
   const search = new URLSearchParams();
-  search.set("limit", String(limit));
+  search.set("limit", String(pageSize));
   if (before) search.set("before", before);
   return apiRequest<{ rows: ForensicAuditLogRow[] }>(`/api/v1/admin/qbo-forensic/batches/${batchId}/audit-log?${search.toString()}`);
 }

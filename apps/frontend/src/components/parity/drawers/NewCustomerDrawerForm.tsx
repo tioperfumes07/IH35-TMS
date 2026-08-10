@@ -5,6 +5,7 @@
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createCustomer, listCustomers } from "../../../api/mdata";
+import { CappedListNotice } from "../../CappedListNotice";
 import { useToast } from "../../Toast";
 import type { InlineCreateResult } from "../InlineCreateDrawer";
 import { ReferenceSelect } from "../ReferenceSelect";
@@ -15,6 +16,8 @@ type Props = {
   onCreated: (result: InlineCreateResult) => void;
   onClose: () => void;
 };
+
+const PARENT_CUSTOMER_CAP = 5000;
 
 type FormState = {
   displayName: string;
@@ -58,13 +61,13 @@ export function NewCustomerDrawerForm({ operatingCompanyId, onCreated, onClose }
   // the "is a sub-customer" box is checked.
   const parentQuery = useQuery({
     queryKey: ["customer-parent-options", operatingCompanyId],
-    queryFn: () => listCustomers({ operating_company_id: operatingCompanyId, limit: 5000 }).then((r) => r.customers),
+    queryFn: () => listCustomers({ operating_company_id: operatingCompanyId, limit: PARENT_CUSTOMER_CAP }),
     enabled: Boolean(operatingCompanyId) && form.isSubCustomer,
     staleTime: 60_000,
   });
   const parentOptions = useMemo(
     () =>
-      (parentQuery.data ?? [])
+      (parentQuery.data?.customers ?? [])
         .filter((c) => !c.parent_customer_id && c.status !== "inactive")
         .map((c) => ({
           value: c.id,
@@ -199,6 +202,13 @@ export function NewCustomerDrawerForm({ operatingCompanyId, onCreated, onClose }
           <span className="text-xs font-medium text-gray-700">Parent customer *</span>
           {/* LST-PICKER-01: bare <select> → ReferenceSelect createKind=customer (mdata.customers). */}
           <div className="mt-1">
+            <CappedListNotice
+              shown={parentOptions.length}
+              limit={PARENT_CUSTOMER_CAP}
+              total={parentQuery.data?.total ?? null}
+              hint="Only top-level active customers are listed as parent candidates."
+              className="mb-1 text-[11px] text-slate-600"
+            />
             <ReferenceSelect
               value={form.parentCustomerId || null}
               onChange={(next) => set("parentCustomerId", next ?? "")}
