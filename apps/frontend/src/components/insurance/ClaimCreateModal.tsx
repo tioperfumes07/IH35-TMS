@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-import { entityLabel } from "../../lib/entity-label";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { ApiError } from "../../api/client";
@@ -16,6 +15,7 @@ import { EntityPicker } from "../parity/EntityPicker";
 import { ParityDrawer } from "../parity/ParityDrawer";
 import { MoneyInput } from "../forms/MoneyInput";
 import { useToast } from "../Toast";
+import { Combobox } from "../Combobox";
 
 /** Tri-state driver_responsible: "" = not yet determined (NULL), "true" / "false" = decided. */
 type DriverResponsibleOption = "" | "true" | "false";
@@ -129,7 +129,15 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
   });
 
 
-  const accidents = useMemo(() => accidentsQuery.data ?? [], [accidentsQuery.data]);
+  const accidentOptions = useMemo(
+    () =>
+      (accidentsQuery.data ?? []).map((accident) => {
+        const value = String(accident.id ?? "");
+        const when = accident.accident_at ? String(accident.accident_at).slice(0, 10) : "Date unavailable";
+        return { value, label: `Accident — ${when}` };
+      }).filter((option) => option.value),
+    [accidentsQuery.data],
+  );
 
   useEffect(() => {
     if (!open) return;
@@ -328,25 +336,18 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
             />
           </label>
 
-          <label className="space-y-1" data-testid="claim-create-accident-field">
-            <span className="text-xs font-semibold text-slate-700">Accident report</span>
-            <select
-              className="w-full rounded-sm border border-gray-300 px-2 py-1"
-              value={form.accident_report_id}
-              onChange={(event) => updateField("accident_report_id", event.target.value)}
-            >
-              <option value="">Unassigned</option>
-              {accidents.map((accident) => {
-                const id = String(accident.id ?? "");
-                const when = accident.accident_at ? String(accident.accident_at).slice(0, 10) : "no date";
-                return (
-                  <option key={id} value={id}>
-                    {entityLabel(null, id, "Accident")} — {when}
-                  </option>
-                );
-              })}
-            </select>
-          </label>
+          <div className="space-y-1" data-testid="claim-create-accident-field">
+            <label htmlFor="claim-create-accident-picker" className="text-xs font-semibold text-slate-700">Accident report</label>
+            <Combobox
+              id="claim-create-accident-picker"
+              options={accidentOptions}
+              value={form.accident_report_id || null}
+              onChange={(next) => updateField("accident_report_id", next ?? "")}
+              placeholder="Unassigned"
+              loading={accidentsQuery.isLoading}
+              error={accidentsQuery.isError ? "Couldn't load accident reports" : undefined}
+            />
+          </div>
 
           <label className="space-y-1">
             <span className="text-xs font-semibold text-slate-700">Status</span>
