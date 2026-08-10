@@ -49,7 +49,13 @@ export async function registerDispatchPlannerRoutes(app: FastifyInstance) {
       if (result.error === "load_not_found") return reply.code(404).send({ error: result.error });
       if (result.error === "conflict") return reply.code(409).send({ error: result.error, details: result.details });
       if (result.error === "hos_blocked") return reply.code(422).send({ error: result.error, details: result.details });
-      if (result.error === "driver_not_qualified") return reply.code(422).send({ error: "E_DRIVER_NOT_QUALIFIED", details: result.details });
+      if (result.error === "driver_not_qualified") {
+        return reply.code(422).send({
+          error: "E_DRIVER_NOT_QUALIFIED",
+          message: "Selected driver does not meet dispatch qualification requirements for this load.",
+          details: result.details,
+        });
+      }
       return reply.code(400).send({ error: result.error, details: result.details });
     }
     return result.load;
