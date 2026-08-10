@@ -17,6 +17,7 @@ import {
   LoadEditLockedError,
   type UpdateDispatchLoadFields,
 } from "./update-load.service.js";
+import { DriverNotQualifiedError } from "./driver-qualification.service.js";
 import { distributeLoadInstructions } from "./load-distribution.service.js";
 import { cancelLoadIdReservation, reserveNextLoadId } from "./load-id-reservation.service.js";
 import { emitAutoProposedEscrowEvents } from "../driver-finance/escrow-deduction-pending.service.js";
@@ -1157,7 +1158,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
   // Block 06 (Inc 2) — FULL load edit. Money/evidence-guarded: a load behind an open settlement, an
   // issued invoice, or a non-open driver bill is LOCKED (409). Stops are replaced evidence-safely
   // (archive-not-delete). GATED PR — financial-adjacent (edits rate_total_cents). Jorge merges.
-  app.patch("/api/v1/dispatch/loads/:id", async (req, reply) => {
+  app.patch("/api/v1/dispatch/loads/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!["Owner", "Administrator", "Manager", "Dispatcher"].includes(authUser.role)) {
@@ -1185,6 +1186,19 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
       if (error instanceof LoadNotFoundError) return reply.code(404).send({ error: "load_not_found" });
       if (error instanceof LoadEditLockedError) {
         return reply.code(409).send({ error: "load_edit_locked", lock: error.lock });
+      }
+      if (error instanceof DriverNotQualifiedError) {
+        return reply.code(422).send({
+          error: error.code,
+          message: error.message,
+          details: {
+            driver_id: error.block.driverId,
+            reasons: error.block.reasons,
+            cdl_expires_at: error.block.cdlExpiresAt,
+            medical_expiry_date: error.block.medicalExpiryDate,
+            hazmat_endorsement_expires_at: error.block.hazmatEndorsementExpiresAt,
+          },
+        });
       }
       const code = (error as { code?: string }).code;
       if (code === "23503") return reply.code(400).send({ error: "invalid_foreign_key" });

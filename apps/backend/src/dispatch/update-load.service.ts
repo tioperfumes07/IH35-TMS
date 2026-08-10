@@ -11,6 +11,10 @@
 import { resyncProformaInvoiceFromLoadRate } from "../accounting/resync-proforma-from-load-rate.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { bookLoadRateTotalCents } from "./book-load-accessorial.js";
+import {
+  assertDriverQualifiedForLoad,
+  DriverNotQualifiedError,
+} from "./driver-qualification.service.js";
 
 type DbClient = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }>;
@@ -400,6 +404,43 @@ export async function updateDispatchLoad(
 
   // 3) Scalar fields — build the SET clause from present keys only (lockstep values/placeholders).
   const fields = input.fields ?? {};
+
+  // FAIL-D1 — Edit Load must run the same shared driver-qualification gate as book-load and quicksave
+  // when assigned_primary_driver_id (or secondary) changes. Without this, a load that passed the gate
+  // at dispatch can be handed to an unqualified driver via PATCH /dispatch/loads/:id.
+  const primaryDriverId =
+    "assigned_primary_driver_id" in fields ? (fields.assigned_primary_driver_id ?? null) : undefined;
+  const secondaryDriverId =
+    "assigned_secondary_driver_id" in fields ? (fields.assigned_secondary_driver_id ?? null) : undefined;
+  const primaryChanged =
+    primaryDriverId !== undefined &&
+    String(primaryDriverId ?? "") !== String(old.assigned_primary_driver_id ?? "");
+  const secondaryChanged =
+    secondaryDriverId !== undefined &&
+    String(secondaryDriverId ?? "") !== String(old.assigned_secondary_driver_id ?? "");
+  if (primaryChanged || secondaryChanged) {
+    const hazmatRes = await client.query<{ is_hazmat: boolean }>(
+      `
+        SELECT COALESCE((quicksave_pending_fields->>'hazmat')::boolean, false) AS is_hazmat
+        FROM mdata.loads
+        WHERE id = $1::uuid AND operating_company_id = $2::uuid
+        LIMIT 1
+      `,
+      [loadId, operatingCompanyId]
+    );
+    const isHazmat = Boolean(hazmatRes.rows[0]?.is_hazmat);
+    const driverIdsToGate: string[] = [];
+    if (primaryChanged && primaryDriverId) driverIdsToGate.push(String(primaryDriverId));
+    if (secondaryChanged && secondaryDriverId) driverIdsToGate.push(String(secondaryDriverId));
+    for (const driverId of driverIdsToGate) {
+      const block = await assertDriverQualifiedForLoad(client, {
+        driverId,
+        operatingCompanyId,
+        isHazmat,
+      });
+      if (block) throw new DriverNotQualifiedError(block);
+    }
+  }
   const setParts: string[] = [];
   const values: unknown[] = [];
   const add = (column: string, value: unknown, cast = "") => {
