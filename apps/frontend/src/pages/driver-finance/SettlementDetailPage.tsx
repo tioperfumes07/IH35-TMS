@@ -127,7 +127,7 @@ export function SettlementDetailPage() {
   // header's single settlementLoadId (a settlement may cover multiple loads for a driver's period).
   // SETTLEMENT-DETAIL-SHOWS-RAW-UUID: carry the load NUMBER alongside the id. The line already has it
   // (`line.load_number`), so the header no longer has to print a uuid fragment for a load it can name.
-  const settlementLoads = useMemo(() => {
+  const settlementLoadIds = useMemo(() => {
     const byId = new Map<string, string | null>();
     for (const line of lines) {
       const loadId = (line as Record<string, unknown>).load_id;
@@ -238,7 +238,7 @@ export function SettlementDetailPage() {
         periodEnd={String(settlement.period_end ?? "-")}
         status={String(settlement.status ?? "-")}
         computedAt={debt.computedAt}
-        loads={settlementLoads}
+        loadIds={settlementLoadIds}
         onRefresh={() => void debt.refresh()}
       />
       {canOpenDispute ? (
