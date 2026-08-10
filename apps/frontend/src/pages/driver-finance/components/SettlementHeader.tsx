@@ -12,7 +12,7 @@ type Props = {
   /** Loads this settlement covers. `number` is the human load number; `id` is only the drill target.
    *  A null `number` means the payload genuinely did not carry one — it is NOT a licence to print a uuid
    *  by default (SETTLEMENT-DETAIL-SHOWS-RAW-UUID). */
-  loads: { id: string; number: string | null }[];
+  loadIds: { id: string; number: string | null }[];
   onRefresh: () => void;
 };
 
@@ -23,7 +23,7 @@ export function SettlementHeader({
   periodEnd,
   status,
   computedAt,
-  loads,
+  loadIds,
   onRefresh,
 }: Props) {
   return (
@@ -43,12 +43,12 @@ export function SettlementHeader({
       <div>
         <div className="text-[10px] uppercase text-gray-500">Loads in cycle</div>
         <div className="text-sm">
-          {loads.length === 0 ? (
+          {loadIds.length === 0 ? (
             "—"
           ) : (
             <div className="flex flex-wrap gap-1">
               {/* LST-F113 / SETTLEMENT-DETAIL-SHOWS-RAW-UUID: load number or honest "Load — not visible" — never UUID slice. */}
-              {loads.map((load) => (
+              {loadIds.map((load) => (
                 <EntityLink
                   key={load.id}
                   kind="load"
