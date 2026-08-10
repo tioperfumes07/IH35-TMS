@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { listMexicoStates, listUsStates } from "../../api/catalogs";
 import { ApiError } from "../../api/client";
+import { userFacingApiError } from "../../lib/api-error-message";
 import {
   checkReturningDriver,
   createDriver,
@@ -877,7 +878,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
               setInviteSent(true);
               pushToast(`Invite sent to ${createSummary.phone}`, "success");
             } catch (error) {
-              pushToast(error instanceof Error ? error.message : "Could not send invite", "error");
+              pushToast(userFacingApiError(error, "Could not send invite"), "error");
             } finally {
               setInvitePending(false);
             }

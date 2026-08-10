@@ -581,7 +581,7 @@ export function DispatchBoard({
       void queryClient.invalidateQueries({ queryKey: ["pre-settlements-open"] });
     },
     onError: (err) => {
-      pushToast(err instanceof Error ? err.message : "Failed to link load to pre-settlement", "error");
+      pushToast(userFacingApiError(err, "Failed to link load to pre-settlement"), "error");
     },
   });
 

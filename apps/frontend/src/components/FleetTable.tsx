@@ -1,5 +1,6 @@
 import { humanizeEnumLabel } from "../lib/humanizeEnumLabel";
 import { entityLabel } from "../lib/entity-label";
+import { userFacingApiError } from "../lib/api-error-message";
 import { useCallback, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -257,12 +258,12 @@ export function FleetTable({
     },
     onSuccess: ({ ok, failed, firstError }) => {
       if (ok > 0) pushToast(`${ok} unit(s) inactivated${failed ? ` · ${failed} failed` : ""}`, failed ? "error" : "success");
-      else pushToast(`Inactivate failed: ${firstError instanceof Error ? firstError.message : "server error"}`, "error");
+      else pushToast(userFacingApiError(firstError, "Inactivate failed"), "error");
       selection.clear();
       void queryClient.invalidateQueries({ queryKey: ["maintenance", "fleet-table"] });
     },
     // allSettled never rejects, but keep onError as a backstop so a thrown error can't hang the UI.
-    onError: (error) => pushToast(error instanceof Error ? error.message : "Bulk inactivate failed", "error"),
+    onError: (error) => pushToast(userFacingApiError(error, "Bulk inactivate failed"), "error"),
   });
 
   // BULK REACTIVATE = clear deactivated_at via the existing PATCH endpoints (units +
@@ -282,11 +283,11 @@ export function FleetTable({
     },
     onSuccess: ({ ok, failed, firstError }) => {
       if (ok > 0) pushToast(`${ok} unit(s) reactivated${failed ? ` · ${failed} failed` : ""}`, failed ? "error" : "success");
-      else pushToast(`Reactivate failed: ${firstError instanceof Error ? firstError.message : "server error"}`, "error");
+      else pushToast(userFacingApiError(firstError, "Reactivate failed"), "error");
       selection.clear();
       void queryClient.invalidateQueries({ queryKey: ["maintenance", "fleet-table"] });
     },
-    onError: (error) => pushToast(error instanceof Error ? error.message : "Bulk reactivate failed", "error"),
+    onError: (error) => pushToast(userFacingApiError(error, "Bulk reactivate failed"), "error"),
   });
 
   const bulkApplying =
@@ -343,7 +344,7 @@ export function FleetTable({
       selection.clear();
       void queryClient.invalidateQueries({ queryKey: ["maintenance", "fleet-table"] });
     } catch (error) {
-      pushToast(error instanceof Error ? error.message : "Bulk update failed", "error");
+      pushToast(userFacingApiError(error, "Bulk update failed"), "error");
     }
   };
 
