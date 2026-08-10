@@ -34,6 +34,15 @@ export function audit(src) {
   if (/<SelectCombobox[\s\S]{0,400}teamForm\.(?:primary_driver_id|co_driver_id)/.test(createTeamBlock)) {
     problems.push(`${TARGET}: Create Team still contains a bare driver SelectCombobox`);
   }
+  if (!/<Modal variant="drawer" open=\{teamDetailOpen\}/.test(src)) {
+    problems.push(`${TARGET}: Team Detail must use drawer chrome`);
+  }
+  if (!/teamDetailQuery\.isError[\s\S]{0,220}<ListErrorBanner[\s\S]{0,220}teamDetailQuery\.refetch\(\)/.test(src)) {
+    problems.push(`${TARGET}: Team Detail failure must render retryable ListErrorBanner`);
+  }
+  if (/label=\{String\(\(row as Record<string, unknown>\)\.(?:load_id|driver_id)/.test(src)) {
+    problems.push(`${TARGET}: Team Detail settlement history must not paint raw UUID labels`);
+  }
   return problems;
 }
 
@@ -42,6 +51,10 @@ function selftest() {
     <Modal variant="drawer" open={teamCreateOpen}>
       <DriverPickerWithCreate operatingCompanyId={selectedCompanyId} value={teamForm.primary_driver_id} open={teamCreateOpen} shell="drawer" />
       <DriverPickerWithCreate operatingCompanyId={selectedCompanyId} value={teamForm.co_driver_id} open={teamCreateOpen} shell="drawer" />
+    </Modal>
+    <Modal variant="drawer" open={teamDetailOpen}>
+      {teamDetailQuery.isError ? <ListErrorBanner onRetry={() => void teamDetailQuery.refetch()} /> : null}
+      <EntityLink label={entityLabel(null, row.load_id, "Load")} />
     </Modal>`;
   const bad = `
     <Modal variant="drawer" open={teamCreateOpen}>
