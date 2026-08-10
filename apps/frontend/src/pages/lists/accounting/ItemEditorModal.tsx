@@ -435,13 +435,6 @@ export function ItemEditorModal({ open, mode, row, operatingCompanyId, client, o
               <label className="block">
                 <span className="text-xs font-semibold text-gray-600">Preferred vendor</span>
                 <div className="mt-1">
-                  <CappedListNotice
-                    shown={vendorOptions.length}
-                    limit={vendorSearch ? VENDOR_PICKER_CAP : VENDOR_OPEN_CAP}
-                    total={vendorsQuery.data?.total ?? null}
-                    hint="Type to search for a vendor that is not listed."
-                    className="mb-1 text-[11px] text-slate-600"
-                  />
                   <ReferenceSelect
                     value={form.preferredVendorId}
                     onChange={(v) => set("preferredVendorId", v)}
@@ -454,6 +447,13 @@ export function ItemEditorModal({ open, mode, row, operatingCompanyId, client, o
                     onOptionCreated={() =>
                       void queryClient.invalidateQueries({ queryKey: ["mdata", "vendors", "for-items", operatingCompanyId] })
                     }
+                  />
+                  <CappedListNotice
+                    shown={vendorOptions.length}
+                    limit={vendorSearch ? VENDOR_PICKER_CAP : VENDOR_OPEN_CAP}
+                    total={vendorsQuery.data?.total ?? null}
+                    hint="Type to search for a vendor that is not listed."
+                    className="mt-1 text-[11px] text-slate-600"
                   />
                 </div>
               </label>
