@@ -3,6 +3,7 @@ import { useExcelUploadJobQuery } from "../../hooks/useCatalogQuery";
 import { Button } from "../Button";
 import { Modal } from "../Modal";
 import { useToast } from "../Toast";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 type Props = {
   open: boolean;
@@ -75,7 +76,7 @@ export function CatalogExcelUploadModal({ open, catalogName, displayName, onClos
       setJobId(result.job_id);
       pushToast("Upload queued — tracking import job", "success");
     } catch (error) {
-      setUploadError(error instanceof Error ? error.message : "Upload failed");
+      setUploadError(userFacingApiError(error, "Upload failed"));
       pushToast("Catalog import upload failed", "error");
     } finally {
       setUploading(false);
