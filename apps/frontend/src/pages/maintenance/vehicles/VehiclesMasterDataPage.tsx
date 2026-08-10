@@ -10,6 +10,7 @@ import {
   voidMaintenanceVehicle,
 } from "../../../api/maintenance";
 import { Button } from "../../../components/Button";
+import { ListErrorState } from "../../../components/ListErrorState";
 import { Modal } from "../../../components/Modal";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { useToast } from "../../../components/Toast";
@@ -212,16 +213,25 @@ export function VehiclesMasterDataPage() {
           </Button>
           {!csvEnabled ? <span className="text-[11px] text-amber-700">CSV fallback disabled for projected entity</span> : null}
         </div>
-        <ParityTable<MaintenanceVehicleRow>
-          columns={columns}
-          rows={rows}
-          rowKey={(row) => row.id}
-          loading={vehiclesQuery.isLoading}
-          emptyText="No vehicles found."
-          storageKey="maint-master-data-vehicles"
-          exportFilename="maintenance-vehicles"
-          rowActions={rowActions}
-        />
+        {vehiclesQuery.isError ? (
+          <ListErrorState
+            title="Couldn't load maintenance vehicles"
+            status={0}
+            message={(vehiclesQuery.error as Error)?.message}
+            onRetry={() => void vehiclesQuery.refetch()}
+          />
+        ) : (
+          <ParityTable<MaintenanceVehicleRow>
+            columns={columns}
+            rows={rows}
+            rowKey={(row) => row.id}
+            loading={vehiclesQuery.isLoading}
+            emptyText="No vehicles found."
+            storageKey="maint-master-data-vehicles"
+            exportFilename="maintenance-vehicles"
+            rowActions={rowActions}
+          />
+        )}
       </div>
 
       <Modal variant="drawer" open={createOpen} onClose={() => setCreateOpen(false)} title="Create Vehicle">
