@@ -163,7 +163,7 @@
       {
         "key": "scenario.factoring",
         "holds": false,
-        "evidence": "0 factoring advance(s) — Neon lucia accounting.factoring_advances visible=0 == n_live_tup=0 (n_tup_ins=0); CLS-MONEY-HOLD HOLD-002"
+        "evidence": "0 factoring advance(s)"
       }
     ]
   },

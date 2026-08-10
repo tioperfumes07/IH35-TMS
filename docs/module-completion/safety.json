@@ -2412,15 +2412,15 @@
   "progress": "38 of 38",
   "live_scenario_probe": {
     "source": "scripts/scoreboard-from-live.mjs (live prod probes, TMS-native only)",
-    "pass_count": 0,
+    "pass_count": 1,
     "total_count": 1,
-    "progress": 0,
-    "prod_verified": false,
+    "progress": 100,
+    "prod_verified": true,
     "slices": [
       {
         "key": "scenario.accident",
-        "holds": false,
-        "evidence": "0 accident(s) recorded"
+        "holds": true,
+        "evidence": "1 accident(s) recorded"
       }
     ]
   }

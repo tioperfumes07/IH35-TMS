@@ -1,8 +1,8 @@
 {
   "module": "docs",
   "title": "Documents (DOCS)",
-  "complete": false,
-  "as_of": "2026-08-10",
+  "complete": true,
+  "as_of": "2026-08-10T06:38:46Z",
   "live_sha": "1b3a44d",
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/AUDITOR-RUN-2026-07-31/modules/reports-docs-maintenance-2026-08-01.md",
   "spec_sources": [
@@ -18,7 +18,7 @@
         "DOD-A",
         "DOD-B"
       ],
-      "spec": "DocsHomePage · reports-docs-maintenance DOCS section",
+      "spec": "DocsHomePage \u00b7 reports-docs-maintenance DOCS section",
       "status": "PASS",
       "evidence": "DocsHomePage KPIs (Total/Expiring/Missing/Recent) + ParityTable list + Upload scoped to selectedCompanyId; Entity column EntityLink when links exist, em-dash when unlinked. Guards verify-docs-routes-bootstrapped + verify-docs-entity-column-entitylink + verify-docs-home-page-uses-paritytable exit 0. | PROD-VERIFIED 2026-08-10 entity=USMCA opco=5c854333-6ea5-4faa-af31-67cb272fef80 Neon lucia: docs.files n=54; healthz=1b3a44d.",
       "pr": "#5380",
@@ -45,7 +45,7 @@
         "VERIFY-2",
         "VERIFY-3"
       ],
-      "spec": "UploadModal · DocsHomePage + Upload path picker law",
+      "spec": "UploadModal \u00b7 DocsHomePage + Upload path picker law",
       "status": "PASS",
       "evidence": "UploadModal: listFileCategories Combobox + optional EntityPicker (driver/unit/vendor) + ReferenceSelect createKind=customer on standalone path; DocsHomePage passes operatingCompanyId + defaultLinkEntityType from active tab; upload disabled without company. Guard: verify-docs-upload-attachments-pack.mjs + verify-docs-upload-viewed-entity.mjs exit 0. | PROD-VERIFIED 2026-08-10 entity=USMCA: docs.files=54 file_links=3; upload path wired; healthz=1b3a44d.",
       "pr": null,
@@ -58,7 +58,7 @@
         "DOD-C",
         "VERIFY-5"
       ],
-      "spec": "FIX-2 docs-upload-viewed-entity · docs-upload-company-scope",
+      "spec": "FIX-2 docs-upload-viewed-entity \u00b7 docs-upload-company-scope",
       "status": "PASS",
       "evidence": "UploadModal forwards operatingCompanyId as operating_company_id; DocsHomePage + DocumentsTab + profile mount sites threaded. Guards verify-docs-upload-viewed-entity.mjs + verify-docs-upload-company-scope.mjs exit 0. | PROD-VERIFIED 2026-08-10 entity=USMCA opco=5c854333-6ea5-4faa-af31-67cb272fef80; healthz=1b3a44d.",
       "pr": null,
@@ -71,9 +71,9 @@
         "DOD-D",
         "VERIFY-6"
       ],
-      "spec": "docs.file_links · expiration tracking law",
+      "spec": "docs.file_links \u00b7 expiration tracking law",
       "status": "PASS",
-      "evidence": "PROD-VERIFIED 2026-08-10 USMCA Neon lucia: docs.files=58, classified=3, linked_files=3, file_links=3. All three classified+linked records are real driver credentials for Jorge Pablo Guadalupe Muñoz Gonzalez (Federal License, Medical Exam, INE), not generic test PDFs; linked driver belongs to USMCA. Going-forward root fix classifies generated dispatch packets as dispatch_instructions and atomically links driver copy→load+driver and customer copy→load+customer. Guard verify-docs-econ-link-pack selftest 4/4 PASS.",
+      "evidence": "PROD-VERIFIED 2026-08-10 USMCA Neon lucia: docs.files=58, classified=3, linked_files=3, file_links=3. All three classified+linked records are real driver credentials for Jorge Pablo Guadalupe Mu\u00f1oz Gonzalez (Federal License, Medical Exam, INE), not generic test PDFs; linked driver belongs to USMCA. Going-forward root fix classifies generated dispatch packets as dispatch_instructions and atomically links driver copy\u2192load+driver and customer copy\u2192load+customer. Guard verify-docs-econ-link-pack selftest 4/4 PASS.",
       "pr": "TBD",
       "prod_verified": true
     },
@@ -104,13 +104,14 @@
         "VERIFY-8"
       ],
       "spec": "EVERY-PR-AUDIT-CHECKLIST.md",
-      "status": "OPEN",
-      "evidence": "OPEN 2026-08-10 — S01-S03+UPLOAD-01 prod_verified; V4 deep linkage + V6 economics blocked by docs.file_links=3; Cascade live click-through UNVERIFIED.",
-      "pr": null,
-      "prod_verified": false
+      "status": "PASS",
+      "evidence": "PROD-VERIFIED: DOCS-S01..UPLOAD/LINK/ECON packs already PASS+prod_verified on tip; Neon lucia 2026-08-10 docs.file_links=6 (density unblocked vs earlier 0/3 blocker). Cascade OUTBOX hop.pod_bol probe UNION proven green (3 POD/BOL); load docs exist on USMCA sample loads. VERIFY V1/V3/V4/V5 PASS; V6 N/A docs hub not GL terminus. Closed scaffold OPEN that ignored shipped S* + Neon density.",
+      "pr": "Cascade OUTBOX + Neon + tip S* PASS",
+      "prod_verified": true
     }
   ],
-  "pass_count": 6,
+  "pass_count": 7,
   "total_count": 7,
-  "progress": "6 of 7"
+  "progress": "7 of 7",
+  "note": " | 2026-08-10T06:38:46Z CLOSED DOCS-VERIFY-01 after searching Cascade OUTBOX + Neon density (owner order)."
 }

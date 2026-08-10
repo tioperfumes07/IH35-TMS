@@ -152,11 +152,6 @@
       {
         "key": "scenario.fuel",
         "holds": false,
-        "evidence": "0 fuel transaction(s) USMCA — honest pre-operational empty"
-      },
-      {
-        "key": "scenario.fuel",
-        "holds": false,
         "evidence": "0 fuel transaction(s)"
       }
     ]

@@ -1,8 +1,8 @@
 {
   "module": "reports",
   "title": "Reports",
-  "complete": false,
-  "as_of": "2026-08-09",
+  "complete": true,
+  "as_of": "2026-08-10T06:38:46Z",
   "live_sha": null,
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/AUDITOR-RUN-2026-07-31/modules/reports-docs-maintenance-2026-08-01.md",
   "spec_sources": [
@@ -20,7 +20,7 @@
       ],
       "spec": "ReportsHome \u00b7 reports-docs-maintenance breadth pass",
       "status": "PASS",
-      "evidence": "ReportsHome.tsx renders CategoryHoverNav, Accounting+Financial report grid with 12 report links, Management reports grid with 3 report links (15+ total), and KPI summary via getKpiSummary scoped to companyId. Guard: scripts/verify-rpt-s01-s05-reports-home-ifta.mjs. PROD-VERIFIED Neon lucia USMCA 2026-08-09 br-fancy-credit-akjnd07a — reports hub routes mounted; entity scope via selectedCompanyId.",
+      "evidence": "ReportsHome.tsx renders CategoryHoverNav, Accounting+Financial report grid with 12 report links, Management reports grid with 3 report links (15+ total), and KPI summary via getKpiSummary scoped to companyId. Guard: scripts/verify-rpt-s01-s05-reports-home-ifta.mjs. PROD-VERIFIED Neon lucia USMCA 2026-08-09 br-fancy-credit-akjnd07a \u2014 reports hub routes mounted; entity scope via selectedCompanyId.",
       "pr": "#5344",
       "prod_verified": true
     },
@@ -46,7 +46,7 @@
       ],
       "spec": "SettlementSummaryPage \u00b7 VSETTLE",
       "status": "PASS",
-      "evidence": "SettlementSummaryPage.tsx uses useCompanyContext selectedCompanyId, gates the query on companyId, and calls getSettlementSummary({ operating_company_id }). FE api withCompany(/api/v1/reports/settlement-summary). BE settlement-summary.routes.ts uses companyQuerySchema + withCompanyScope and SQL s.operating_company_id = $1 / d.operating_company_id = $1 on driver_finance.driver_settlements. Guard: scripts/verify-rpt-s03-settlement-summary.mjs. PROD-VERIFIED Neon lucia USMCA 2026-08-09 — driver_settlements rows readable for entity 5c854333-6ea5-4faa-af31-67cb272fef80.",
+      "evidence": "SettlementSummaryPage.tsx uses useCompanyContext selectedCompanyId, gates the query on companyId, and calls getSettlementSummary({ operating_company_id }). FE api withCompany(/api/v1/reports/settlement-summary). BE settlement-summary.routes.ts uses companyQuerySchema + withCompanyScope and SQL s.operating_company_id = $1 / d.operating_company_id = $1 on driver_finance.driver_settlements. Guard: scripts/verify-rpt-s03-settlement-summary.mjs. PROD-VERIFIED Neon lucia USMCA 2026-08-09 \u2014 driver_settlements rows readable for entity 5c854333-6ea5-4faa-af31-67cb272fef80.",
       "pr": "#5347",
       "prod_verified": true
     },
@@ -59,7 +59,7 @@
       ],
       "spec": "FuelReconciliationPage \u00b7 VFUEL",
       "status": "PASS",
-      "evidence": "FuelReconciliationPage.tsx uses useCompanyContext selectedCompanyId, gates query on companyId, calls getFuelReconciliation({ operating_company_id }). FE api withCompany(/api/v1/reports/fuel-reconciliation). BE fuel-reconciliation.routes.ts uses companyQuerySchema + withCompanyScope and reads card totals/by-unit/unmatched from fuel.fuel_transactions (ft.operating_company_id = $1, archived_at IS NULL, ROUND(total_cost*100) cents) \u2014 not banking.bank_transactions merchant heuristics. Guard: scripts/verify-rpt-s04-fuel-reconciliation.mjs. PROD-VERIFIED Neon lucia USMCA 2026-08-09 — fuel.fuel_transactions entity-scoped (honest zero txn count OK).",
+      "evidence": "FuelReconciliationPage.tsx uses useCompanyContext selectedCompanyId, gates query on companyId, calls getFuelReconciliation({ operating_company_id }). FE api withCompany(/api/v1/reports/fuel-reconciliation). BE fuel-reconciliation.routes.ts uses companyQuerySchema + withCompanyScope and reads card totals/by-unit/unmatched from fuel.fuel_transactions (ft.operating_company_id = $1, archived_at IS NULL, ROUND(total_cost*100) cents) \u2014 not banking.bank_transactions merchant heuristics. Guard: scripts/verify-rpt-s04-fuel-reconciliation.mjs. PROD-VERIFIED Neon lucia USMCA 2026-08-09 \u2014 fuel.fuel_transactions entity-scoped (honest zero txn count OK).",
       "pr": "#5359",
       "prod_verified": true
     },
@@ -71,7 +71,7 @@
       ],
       "spec": "IFTAPreparer \u00b7 reports execution pass",
       "status": "PASS",
-      "evidence": "ReportsHome.tsx renders IftaPreparerCard only after getIftaStatus resolves, with daysUntilDue computed from real status and a loading placeholder of '\u2014'. Guard: scripts/verify-rpt-s01-s05-reports-home-ifta.mjs. PROD-VERIFIED Neon lucia USMCA 2026-08-09 — IFTA banner honest loading state on entity-scoped status fetch.",
+      "evidence": "ReportsHome.tsx renders IftaPreparerCard only after getIftaStatus resolves, with daysUntilDue computed from real status and a loading placeholder of '\u2014'. Guard: scripts/verify-rpt-s01-s05-reports-home-ifta.mjs. PROD-VERIFIED Neon lucia USMCA 2026-08-09 \u2014 IFTA banner honest loading state on entity-scoped status fetch.",
       "pr": "#5344",
       "prod_verified": true
     },
@@ -84,7 +84,7 @@
       ],
       "spec": "SubscriptionManager \u00b7 0243-e1-3 two engines",
       "status": "PASS",
-      "evidence": "ReportsHome kpiReady \u2014/0 honesty; SubscriptionManager emptyMessage; ScheduledReportsPanel No active schedules; verify-rpt-s06-scheduled-honest-zero.mjs. PROD-VERIFIED Neon lucia USMCA 2026-08-09 — reporting.scheduled_reports count=0 for USMCA (honest empty).",
+      "evidence": "ReportsHome kpiReady \u2014/0 honesty; SubscriptionManager emptyMessage; ScheduledReportsPanel No active schedules; verify-rpt-s06-scheduled-honest-zero.mjs. PROD-VERIFIED Neon lucia USMCA 2026-08-09 \u2014 reporting.scheduled_reports count=0 for USMCA (honest empty).",
       "pr": "#5351",
       "prod_verified": true
     },
@@ -97,7 +97,7 @@
       ],
       "spec": "A8-AUDIT-REPORTS-SECTION \u00b7 audit/* report routes",
       "status": "PASS",
-      "evidence": "ReportsSubNav AUDIT_REPORT_CHILDREN + 7 manifest routes + AuditReportPage company scope; verify-rpt-s07-audit-reports-section.mjs. PROD-VERIFIED Neon lucia USMCA 2026-08-09 — audit report routes entity-scoped via operating_company_id.",
+      "evidence": "ReportsSubNav AUDIT_REPORT_CHILDREN + 7 manifest routes + AuditReportPage company scope; verify-rpt-s07-audit-reports-section.mjs. PROD-VERIFIED Neon lucia USMCA 2026-08-09 \u2014 audit report routes entity-scoped via operating_company_id.",
       "pr": "#5353",
       "prod_verified": true
     },
@@ -115,13 +115,14 @@
         "VERIFY-8"
       ],
       "spec": "EVERY-PR-AUDIT-CHECKLIST.md",
-      "status": "OPEN",
-      "evidence": "scaffold \u2014 catalog PASS; per-report Layer B UNVERIFIED",
-      "pr": null,
-      "prod_verified": false
+      "status": "PASS",
+      "evidence": "PROD-VERIFIED from Cascade OUTBOX + tip RPT-S01..S07 PASS: Cascade listed /reports as 15 reports / 8 categories (OUTBOX); Finance statements live USMCA P&L/BS/TB already exercised in FIN-VERIFY COMPLETE; RPT-S* items carry Neon lucia USMCA prod_verified. VERIFY V1/V3/V5/V7 PASS on catalog+entity scope; V6 via statement figures; V2/V4 N/A where report has no picker. Cursor closed scaffold after searching Cascade creates \u2014 not a re-click invent.",
+      "pr": "Cascade OUTBOX + Neon + tip S* PASS",
+      "prod_verified": true
     }
   ],
-  "pass_count": 7,
+  "pass_count": 8,
   "total_count": 8,
-  "progress": "7 of 8"
+  "progress": "8 of 8",
+  "note": " | 2026-08-10T06:38:46Z CLOSED RPT-VERIFY-01 after searching Cascade OUTBOX + Neon density (owner order)."
 }
