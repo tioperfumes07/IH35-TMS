@@ -76,7 +76,7 @@ export function VendorDetailPage() {
                 <dd className="inline">
                   {vendor.mdata_vendor_id ? (
                     <Link className="text-slate-600 underline" to={`/vendors/${vendor.mdata_vendor_id}`}>
-                      {vendor.mdata_vendor_id}
+                      {entityLabel(null, vendor.mdata_vendor_id, "Vendor")}
                     </Link>
                   ) : (
                     "—"
