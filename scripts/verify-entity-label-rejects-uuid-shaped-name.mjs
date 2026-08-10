@@ -1142,8 +1142,8 @@ const SIBLINGS = [
   },
   {
     rel: "apps/frontend/src/pages/maintenance/MaintKpiDashboardPage.tsx",
-    bad: /\{row\.unit_number\}\s*<\/option>/,
-    good: /entityLabel\(\s*row\.unit_number\s*,\s*row\.id\s*,\s*"Unit"\s*\)/,
+    bad: /<select[\s\S]*?value=\{unitId\}/,
+    good: /<EntityPicker[\s\S]*?kind="unit"[\s\S]*?allowCreate=\{false\}/,
   },
   {
     rel: "apps/frontend/src/pages/reports/APAgingPage.tsx",

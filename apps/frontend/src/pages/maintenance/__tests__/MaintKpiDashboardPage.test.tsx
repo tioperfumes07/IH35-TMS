@@ -9,7 +9,6 @@ import { pickDate } from "../../../test-utils/pickDate";
 const getMaintenanceKpiSummary = vi.fn();
 const getMaintenanceKpiDrilldown = vi.fn();
 const getMaintenanceKpiPmCompliance = vi.fn();
-const apiRequest = vi.fn();
 
 vi.mock("../../../api/maintenance", () => ({
   getMaintenanceKpiSummary: (...args: unknown[]) => getMaintenanceKpiSummary(...args),
@@ -17,8 +16,8 @@ vi.mock("../../../api/maintenance", () => ({
   getMaintenanceKpiPmCompliance: (...args: unknown[]) => getMaintenanceKpiPmCompliance(...args),
 }));
 
-vi.mock("../../../api/client", () => ({
-  apiRequest: (...args: unknown[]) => apiRequest(...args),
+vi.mock("../../../components/parity/EntityPicker", () => ({
+  EntityPicker: ({ dataTestId }: { dataTestId?: string }) => <input data-testid={dataTestId} role="combobox" />,
 }));
 
 vi.mock("../../../contexts/CompanyContext", () => ({
@@ -61,7 +60,6 @@ describe("MaintKpiDashboardPage (B35)", () => {
     getMaintenanceKpiSummary.mockReset();
     getMaintenanceKpiDrilldown.mockReset();
     getMaintenanceKpiPmCompliance.mockReset();
-    apiRequest.mockReset();
     getMaintenanceKpiSummary.mockResolvedValue(summaryFixture);
     getMaintenanceKpiDrilldown.mockResolvedValue({
       kind: "downtime",
@@ -71,7 +69,6 @@ describe("MaintKpiDashboardPage (B35)", () => {
       rows: [{ schedule_label: "Oil", unit_number: "T-101", compliance_status: "compliant" }],
       hub_links: { pm_auto_engine: "/maintenance/pm-auto-engine", pm_schedule: "/maintenance/pm-schedule" },
     });
-    apiRequest.mockResolvedValue({ rows: [{ id: "unit-1", unit_number: "T-101" }] });
   });
 
   it("renders maintenance KPI dashboard shell", async () => {
@@ -103,5 +100,12 @@ describe("MaintKpiDashboardPage (B35)", () => {
     pickDate(screen.getByTestId("maint-kpi-filter-start"));
     expect(screen.getByTestId("maint-kpi-link-pm-engine")).toHaveAttribute("href", "/maintenance/pm-auto-engine");
     expect(screen.getByTestId("maint-kpi-link-pm-schedule")).toHaveAttribute("href", "/maintenance/pm-schedule");
+  });
+
+  it("uses the searchable unit picker for fleet filtering", async () => {
+    const user = userEvent.setup();
+    renderPage();
+    await user.click(await screen.findByTestId("maint-kpi-filters-toggle"));
+    expect(screen.getByTestId("maint-kpi-filter-unit")).toHaveAttribute("role", "combobox");
   });
 });
