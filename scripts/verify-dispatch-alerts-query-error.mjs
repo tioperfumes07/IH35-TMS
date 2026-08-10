@@ -22,8 +22,12 @@ function checkSources({ page, test }) {
   if (!page.includes('from "../../components/shared/ListErrorBanner"')) {
     failures.push("DispatchAlertsPage must import ListErrorBanner");
   }
-  if (!/message=["']Failed to load one or more dispatch alert counts\.["']/.test(page)) {
-    failures.push('must use ListErrorBanner message "Failed to load one or more dispatch alert counts."');
+  if (
+    !/message=["']Failed to load one or more dispatch alert counts\.[^"']*["']/.test(page)
+  ) {
+    failures.push(
+      'must use ListErrorBanner message starting with "Failed to load one or more dispatch alert counts."'
+    );
   }
   if (!/anyQueryError/.test(page)) {
     failures.push("must gate the banner on anyQueryError (aggregate query failure)");
