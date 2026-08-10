@@ -11,6 +11,7 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { CollapsedListFilters } from "../../components/table";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 export function AbandonmentQueuePage() {
   const { selectedCompanyId } = useCompanyContext();
@@ -31,7 +32,7 @@ export function AbandonmentQueuePage() {
       pushToast("Chargeback approved", "success");
       void queryClient.invalidateQueries({ queryKey: ["abandonment-chargebacks"] });
     },
-    onError: (e: unknown) => pushToast(String((e as Error)?.message ?? "Approve failed"), "error"),
+    onError: (e: unknown) => pushToast(userFacingApiError(e, "Could not approve chargeback"), "error"),
   });
 
   const rows = listQuery.data?.abandonment_chargebacks ?? [];
