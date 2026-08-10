@@ -6,6 +6,7 @@ import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateUS } from "../../lib/formatDate";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { Combobox } from "../../components/Combobox";
 import {
   addRenditionLine,
   createAppraisalDistrict,
@@ -76,6 +77,10 @@ function RenditionListView({ companyId }: { companyId: string }) {
 
   const renditions = renditionsQ.data?.renditions ?? [];
   const districts = districtsQ.data?.districts ?? [];
+  const districtOptions = districts.map((district) => ({
+    value: district.id,
+    label: `${district.county} — ${district.cad_name}`,
+  }));
 
   if (renditionsQ.isError || districtsQ.isError) {
     return (
@@ -148,28 +153,19 @@ function RenditionListView({ companyId }: { companyId: string }) {
               className="ml-1 w-24 rounded-sm border px-2 py-1"
             />
           </label>
-          <label className="text-sm">
-            Appraisal District
-            <select
-              value={districtId}
-              onChange={(e) => {
-                if (e.target.value === "__add__") {
-                  setShowAddDistrict(true);
-                  return;
-                }
-                setDistrictId(e.target.value);
-              }}
-              className="ml-1 rounded-sm border px-2 py-1"
-            >
-              <option value="">Select…</option>
-              {districts.map((d) => (
-                <option key={d.id} value={d.id}>
-                  {d.county} — {d.cad_name}
-                </option>
-              ))}
-              <option value="__add__">+ Add new appraisal district…</option>
-            </select>
-          </label>
+          <div className="min-w-64 text-sm">
+            <label htmlFor="property-tax-district-picker">Appraisal District</label>
+            <Combobox
+              id="property-tax-district-picker"
+              className="mt-1"
+              options={districtOptions}
+              value={districtId || null}
+              onChange={(next) => setDistrictId(next ?? "")}
+              placeholder="Select…"
+              loading={districtsQ.isLoading}
+              allowAddNew={{ label: "+ Add new appraisal district", onAdd: () => setShowAddDistrict(true) }}
+            />
+          </div>
           <button
             type="button"
             disabled={!districtId || createM.isPending}
