@@ -39,6 +39,11 @@
     "purpose": "verify-driver-finance-money-tables-row-audited",
     "claimed_at": "2026-08-09"
   },
+  "2962": {
+    "claimed_by": "devin",
+    "purpose": "verify-usmca-fleet-fuel-tasks-neon-pv",
+    "claimed_at": "2026-08-10"
+  },
   "claimed": {
     "10": "10-backend-vitest.mjs",
     "11": "11-frontend-vitest.mjs",
@@ -1443,8 +1448,8 @@
     "2912": "2912-verify-settlement-debt-view-not-stub.mjs",
     "2913": "CC-2 verify-no-zero-rate-invoice-create (#4989; package.json wiring was forbidden per DoD §4)",
     "2914": "2914-verify-driver-active-30d-activity.mjs",
-    "2916": "2916-verify-load-detail-driver-pay-bills.mjs",
     "2915": "CC-2 verify-parity-table-sort-toggle-contract (re-land: package.json wiring forbidden per DoD §4)",
+    "2916": "2916-verify-load-detail-driver-pay-bills.mjs",
     "2917": "CC-2 verify-combobox-id-label-binding (re-land: package.json wiring forbidden per DoD §4)",
     "2919": "CC-2 verify-book-load-sample-data-wiring (re-land: package.json wiring forbidden per DoD §4)",
     "2921": "CC-2 verify-complaint-create-contract (re-land: package.json wiring forbidden per DoD §4)",
@@ -1458,6 +1463,12 @@
     "2937": "CC-2 verify-money-creates-supply-sample-flag",
     "2939": "CC-2 verify-settle-due-kpi-fails-open (NO-WINDOW FAIL-S2)",
     "2941": "CC-2 verify-deduction-total-counts-pending-ack (DD2 NO-WINDOW)",
+    "2960": {
+      "file": "2960-verify-fail-dd2-pending-deduction-surfaces.mjs",
+      "claimed_by": "cursor",
+      "purpose": "FAIL-DD2 pending cash-advance deduction visible on Deductions + Cash advances",
+      "claimed_at": "2026-08-10"
+    },
     "01": "01-ensure-database-url.mjs",
     "02": "02-db-reset.mjs",
     "03": "03-build-backend-emit.mjs",
@@ -1466,13 +1477,7 @@
     "06": "06-verify-scheduler-tenant-context.mjs",
     "07": "07-verify-canonical-schema-names.mjs",
     "08": "08-verify-outbox-handler-parity.mjs",
-    "09": "09-verify-migration-application-consistency.mjs",
-    "2960": {
-      "file": "2960-verify-fail-dd2-pending-deduction-surfaces.mjs",
-      "claimed_by": "cursor",
-      "purpose": "FAIL-DD2 pending cash-advance deduction visible on Deductions + Cash advances",
-      "claimed_at": "2026-08-10"
-    }
+    "09": "09-verify-migration-application-consistency.mjs"
   },
   "_note": "CLAIMED verify-step numbers. Every PR adding a verify-step MUST add its number here IN THE SAME COMMIT. Two agents claiming the same number then CONFLICT IN GIT instead of silently agreeing and reddening main afterwards.",
   "_why": "Six collisions on 2026-07-26 alone. Convention-based allocation cannot see a concurrent claimant on another branch: the clash only appears at merge, AFTER both PRs went green, and then reds every branch cut from main. A registry converts an invisible race into a merge conflict, which is where it belongs.",
