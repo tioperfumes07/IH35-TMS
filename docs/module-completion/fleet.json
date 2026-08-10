@@ -36,7 +36,7 @@
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
       "evidence": "Route /fleet/:id registered as a ProtectedRoute wrapping FleetUnitLegacyRedirect; it redirects legacy unit bookmarks to canonical /fleet/units/:id and avoids collision with fleet leaf segments (/fleet/map, /fleet/transfers-in-progress, /fleet/units, /fleet/trailers); no dead end.",
-      "pr": "#TBD",
+      "pr": "#5290",
       "prod_verified": false
     },
     {
