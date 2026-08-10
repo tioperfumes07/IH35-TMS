@@ -105,3 +105,4 @@ apps/frontend/src/generated/module-completion.ts
 # process.exit); ignored as belt-and-braces so a crashed run can never dirty another lane's tree.
 .tmp-selftest-*.ts
 .verify-wo-cancel-selftest-*/
+.vscode/
