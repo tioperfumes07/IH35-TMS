@@ -106,3 +106,4 @@ apps/frontend/src/generated/module-completion.ts
 .tmp-selftest-*.ts
 .verify-wo-cancel-selftest-*/
 .vscode/
+CLAUDE.md
