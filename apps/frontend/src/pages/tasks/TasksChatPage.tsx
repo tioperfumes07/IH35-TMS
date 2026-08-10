@@ -2,6 +2,7 @@ import { useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { TasksModuleTabs } from "./TasksModuleTabs";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { listAssignableUsers } from "../../api/identity";
@@ -170,6 +171,18 @@ export function TasksChatPage() {
 
   const canPost = Boolean(activeTaskId) && draft.trim().length > 0 && !createMutation.isPending;
 
+  if (!companyId) {
+    return (
+      <div className="space-y-4 p-4" data-testid="tasks-chat-page">
+        <PageHeader title="Team Chat" subtitle="Task-scoped comments, @mentions, and activity" />
+        <TasksModuleTabs />
+        <div className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-sm text-gray-700">
+          Select an operating company to view team chat.
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4" data-testid="tasks-chat-page">
       <PageHeader title="Team Chat" subtitle="Task-scoped comments, @mentions, and activity" />
@@ -179,7 +192,11 @@ export function TasksChatPage() {
         {/* Task picker */}
         <div className="rounded-sm border border-slate-200 bg-white" data-testid="tasks-chat-picker">
           <div className="border-b border-slate-200 px-3 py-2 text-xs font-semibold text-slate-500">Tasks</div>
-          {tasksQuery.isLoading ? (
+          {tasksQuery.isError ? (
+            <div className="p-4">
+              <ListErrorBanner onRetry={() => void tasksQuery.refetch()} />
+            </div>
+          ) : tasksQuery.isLoading ? (
             <div className="p-4 text-xs text-slate-500">Loading tasks…</div>
           ) : tasks.length === 0 ? (
             <div className="p-4 text-xs text-slate-500">No tasks in this window.</div>
@@ -233,7 +250,7 @@ export function TasksChatPage() {
                   {commentsQuery.isLoading ? (
                     <div className="text-xs text-slate-500">Loading comments…</div>
                   ) : commentsQuery.isError ? (
-                    <div className="text-xs text-red-700">Couldn't load comments.</div>
+                    <ListErrorBanner onRetry={() => void commentsQuery.refetch()} />
                   ) : (commentsQuery.data?.comments?.length ?? 0) === 0 ? (
                     <div className="text-xs text-slate-500">No comments yet. Start the conversation.</div>
                   ) : (
