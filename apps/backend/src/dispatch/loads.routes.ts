@@ -201,7 +201,8 @@ const createDispatchLoadBodySchema = z.object({
   trip_type: z.enum(["NB", "TR", "SB"]).optional(),
   tour_id: z.string().uuid().optional(),
   assigned_unit_id: z.string().uuid().optional(),
-  assigned_trailer_unit_id: z.string().uuid().optional(), // W-FIX-3b: persisted to mdata.loads.trailer_id
+  // W-FIX-3b: persisted after load creation to dispatch.load_assignment_history.new_trailer_id.
+  assigned_trailer_unit_id: z.string().uuid().optional(),
   temperature_type: z.enum(["frozen", "fresh"]).optional(), // W-FIX-1: reefer Frozen/Fresh → loads.temperature_type
   assigned_primary_driver_id: z.string().uuid().optional(),
   assigned_secondary_driver_id: z.string().uuid().optional(),
@@ -692,10 +693,10 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
 
     const detail = await withCompanyScope(authUser.uuid, operatingCompanyId, async (client) => {
       // BUGFIX (Block 1, 2026-06-24): the prior W-FIX-3a join `LEFT JOIN mdata.equipment te ON te.id =
-      // l.trailer_id` referenced a column that DOES NOT EXIST. mdata.loads (and the dispatch view) have NO
-      // trailer_id and NO trailer_type column — verified against the full migration set; the only equipment
-      // column on a load is assigned_unit_id (the truck). That non-existent column 500'd every load-detail
-      // fetch (42703), which in turn broke the cancel flow (overview 500 → load never leaves the board) and
+      // l.trailer_id` referenced a column that DOES NOT EXIST. mdata.loads (and the dispatch view) have no
+      // trailer_id; its nullable trailer_type is descriptive text, not an equipment FK. The only equipment
+      // column stored directly on a load is assigned_unit_id (the truck). That non-existent column 500'd
+      // every load-detail fetch (42703), which in turn broke the cancel flow (overview 500 → load never leaves the board) and
       // left the Cancelled Kanban column counted-but-empty. There is no persisted trailer↔load link to read,
       // so the trailer fields are honestly NULL ("—"); the response SHAPE is unchanged (both keys present).
       // A real trailer-on-load link (persist a trailer unit/type) is a separate additive feature — flagged.
