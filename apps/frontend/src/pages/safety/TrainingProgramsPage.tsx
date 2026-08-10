@@ -7,6 +7,7 @@ import {
   type TrainingProgramCategory,
   type TrainingProgramFrequency,
 } from "../../api/safety";
+import { listDrivers } from "../../api/mdata";
 import { Button } from "../../components/Button";
 import { Modal } from "../../components/Modal";
 import { EntityPicker } from "../../components/parity/EntityPicker";
@@ -60,6 +61,23 @@ export function TrainingProgramsPage({ operatingCompanyId }: Props) {
     queryFn: () => getTrainingCompletions(operatingCompanyId),
     enabled: Boolean(operatingCompanyId),
   });
+
+  // SAF-B24-residual: assignDriverIds is bare uuids from EntityPicker's onChange (id only, no
+  // label), so the "Assign Drivers" chip list rendered an unlabeled EntityLink — the raw uuid was
+  // the visible link text. Same fix as SafetyMeetingsPage's required-attendees chip list.
+  const driversQuery = useQuery({
+    queryKey: ["mdata", "drivers", "all", operatingCompanyId],
+    queryFn: () => listDrivers({ operating_company_id: operatingCompanyId, include_system: true, limit: 500 }),
+    enabled: Boolean(operatingCompanyId),
+  });
+  const driverNameById = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const driver of driversQuery.data?.drivers ?? []) {
+      const name = [driver.first_name, driver.last_name].filter(Boolean).join(" ").trim();
+      if (name) map.set(driver.id, name);
+    }
+    return map;
+  }, [driversQuery.data]);
 
   const addAssignDriver = (driverId: string | null) => {
     if (!driverId) {
@@ -301,7 +319,7 @@ export function TrainingProgramsPage({ operatingCompanyId }: Props) {
                   className="flex items-center justify-between gap-2 text-xs text-slate-700"
                   data-testid={`training-program-assign-driver-${driverId}`}
                 >
-                  <EntityLink kind="driver" id={driverId} />
+                  <EntityLink kind="driver" id={driverId} label={driverNameById.get(driverId)} />
                   <button
                     type="button"
                     className="text-slate-600 underline"
