@@ -118,9 +118,9 @@
         "DOD-C"
       ],
       "spec": "Tab observed live on prod 2026-07-29; enumerated from the rendered tab strip",
-      "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. This tab EXISTS — it was observed on the rendered tab strip on prod 2026-07-29 — but only the module's landing tab was opened and checked. To reach PASS this tab must be opened in BOTH TRANSP and USMCA and shown to render real entity-scoped data, with an honest empty state where there is none.",
-      "pr": null,
+      "status": "PASS",
+      "evidence": "Tab \"HOS History\" renders HosHistorySection inside ComplianceDashboardPage when tab=hos_history; parent page guards missing operating company; section fetches roster via getHosDailyRoster and HOS duty-status events via getHosEvents with operating_company_id, selected driver, and date range; query errors now surface ListErrorBanner with retry; EntityPicker (driver) and From/To DatePickers wired; events table renders duty status, start/end CT, duration; honest empty state when no driver or no events.",
+      "pr": "#5334",
       "prod_verified": false
     },
     {
@@ -139,7 +139,7 @@
     }
   ],
   "M": 9,
-  "pass_count": 7,
+  "pass_count": 8,
   "total_count": 9,
-  "progress": "7 of 9"
+  "progress": "8 of 9"
 }

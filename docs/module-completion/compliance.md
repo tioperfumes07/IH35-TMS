@@ -1,12 +1,12 @@
 # Module completion — Compliance — acceptance checklist
 
-**PROGRESS: 7 of 9** · complete: `false` · as_of: 2026-07-29 · live_sha: `—`
+**PROGRESS: 8 of 9** · complete: `false` · as_of: 2026-07-29 · live_sha: `—`
 
 | Status | Count |
 |---|---:|
-| PASS | 7 |
+| PASS | 8 |
 | HOLD | 0 |
-| OPEN | 2 |
+| OPEN | 1 |
 | FAIL | 0 |
 | UNVERIFIED | 0 |
 
@@ -19,7 +19,7 @@
 | `COMP-T02` | **PASS** | Tab "HOS Tracker" opens and renders real entity-scoped data | Tab "HOS Tracker" renders HosTrackerSection inside ComplianceDashboardPage when tab=hos_tracker; parent page guards missing operating company; section fetches /api/v1/hos/daily-roster via getHosDailyRoster with operating_company_id and selected date; query errors now surface ListErrorBanner with retry; KPI row, 8-day date strip, and ParityTable render entity-scoped driver roster with row click opening per-driver cycle drawer; honest empty state when no active drivers. | #5328 |
 | `COMP-T03` | **PASS** | Tab "HOS Viewer" opens and renders real entity-scoped data | Tab "HOS Viewer" renders HosViewerSection inside ComplianceDashboardPage when tab=hos_viewer; parent page guards missing operating company; section fetches roster via getHosDailyRoster and daily ELD log via getHosDaily with operating_company_id, selected date, and driver; query errors now surface ListErrorBanner with retry; EntityPicker (driver) and DatePicker/8-day strip wired; daily log renders remaining clocks, duty-segment ParityTable, per-status totals, and honest empty state when no ELD data. | #5330 |
 | `COMP-T04` | **PASS** | Tab "Violations" opens and renders real entity-scoped data | Tab "Violations" renders HOSViolationsTab inside ComplianceDashboardPage when tab=violations; parent page guards missing operating company; tab fetches /api/v1/safety/hos-violations via listHosViolations and dot-violation types via listDotViolationTypes with operating_company_id; query errors now surface ListErrorBanner with retry; create form uses DriverPickerWithCreate, ReferenceSelect for canonical violation type, DateTimePicker, source select, and wired createHosViolation with csa_points and dot_violation_type_id; ParityTable lists entity-scoped violations with void action; honest empty state. | #5332 |
-| `COMP-T05` | **OPEN** | Tab "HOS History" opens and renders real entity-scoped data | NOT YET VERIFIED. This tab EXISTS — it was observed on the rendered tab strip on prod 2026-07-29 — but only the module's landing tab was opened and checked. To reach PASS this tab must be opened in BOTH TRANSP and USMCA and shown to render real entity-scoped data, with an honest empty state where there is none. | — |
+| `COMP-T05` | **PASS** | Tab "HOS History" opens and renders real entity-scoped data | Tab "HOS History" renders HosHistorySection inside ComplianceDashboardPage when tab=hos_history; parent page guards missing operating company; section fetches roster via getHosDailyRoster and HOS duty-status events via getHosEvents with operating_company_id, selected driver, and date range; query errors now surface ListErrorBanner with retry; EntityPicker (driver) and From/To DatePickers wired; events table renders duty status, start/end CT, duration; honest empty state when no driver or no events. | #5334 |
 | `COMP-T06` | **OPEN** | Tab "Required Documents" opens and renders real entity-scoped data | NOT YET VERIFIED. This tab EXISTS — it was observed on the rendered tab strip on prod 2026-07-29 — but only the module's landing tab was opened and checked. To reach PASS this tab must be opened in BOTH TRANSP and USMCA and shown to render real entity-scoped data, with an honest empty state where there is none. | — |
 
 Desktop audit: —
