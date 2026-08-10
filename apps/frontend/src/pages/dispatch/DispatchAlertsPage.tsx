@@ -70,6 +70,16 @@ export function DispatchAlertsPage() {
   const intransitCount =
     !companyId || intransitQ.isLoading || intransitQ.isError ? null : (intransitQ.data?.issues?.length ?? null);
 
+  const anyLoading = Boolean(companyId) && [accidentsQ, cashQ, lateQ, intransitQ].some((q) => q.isLoading);
+  const allCountsKnownZero =
+    Boolean(companyId) &&
+    !anyLoading &&
+    !anyQueryError &&
+    accidentCount === 0 &&
+    cashCount === 0 &&
+    lateCount === 0 &&
+    intransitCount === 0;
+
   const cards = [
     {
       title: "Accidents (open)",
@@ -107,7 +117,7 @@ export function DispatchAlertsPage() {
       {!companyId ? <p className="text-sm text-slate-700">Select an operating company to load counts.</p> : null}
       {anyQueryError ? (
         <ListErrorBanner
-          message="Failed to load one or more dispatch alert counts."
+          message="Failed to load one or more dispatch alert counts. Retry or switch operating company."
           onRetry={() => {
             void accidentsQ.refetch();
             void cashQ.refetch();
@@ -115,6 +125,12 @@ export function DispatchAlertsPage() {
             void intransitQ.refetch();
           }}
         />
+      ) : null}
+      {allCountsKnownZero ? (
+        <p className="rounded-sm border border-dashed border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-700" data-testid="dispatch-alerts-honest-empty">
+          No open dispatch alerts for this company. Cards stay at 0 until open accidents, pending cash-advance
+          requests, late arrivals, or in-transit triage issues exist for the active entity.
+        </p>
       ) : null}
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {cards.map((c) => (

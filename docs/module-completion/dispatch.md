@@ -1,19 +1,19 @@
 # Module completion — Dispatch — acceptance checklist
 
-**PROGRESS: 21 of 37** · complete: `false` · as_of: 2026-08-09T01:52:04.159Z · live_sha: `—`
+**PROGRESS: 22 of 37** · complete: `false` · as_of: 2026-08-09T01:52:04.159Z · live_sha: `—`
 
 | Status | Count |
 |---|---:|
-| PASS | 21 |
+| PASS | 22 |
 | HOLD | 0 |
-| OPEN | 16 |
+| OPEN | 15 |
 | FAIL | 0 |
 | UNVERIFIED | 0 |
 
 | ID | Status | Title | Evidence | PR |
 |---|---|---|---|---|
 | `DISP-S01` | **PASS** | Surface /dispatch renders, is entity-scoped, and shows an honest empty state | PASS 2026-08-09 — /dispatch DispatchBoard entity-scoped loads list; owner-proven Book→assign→dispatch path (L-0085 class). Empty-state follow-on on board false-empty still tracked in verify-list-empty-settled sweep. | — |
-| `DISP-S02` | **OPEN** | Surface /dispatch/alerts renders, is entity-scoped, and shows an honest empty state | NOT YET VERIFIED — status stays OPEN. Page component: apps/frontend/src/pages/dispatch/DispatchAlertsPage.tsx (resolved from routes/manifest.tsx, local wrappers followed). PASS REQUIRES, on TRANSP + TRK + USMCA: (1) the route renders without error or blank frame; (2) every data call it fires carries operating_company_id for the active entity and returns 2xx; (3) when the backing table has no rows for that entity the surface shows an HONEST EMPTY STATE — named, explaining what would populate it — never a silent blank, a spinner that never resolves, a zero presented as a fact, or a swallowed error. Row density is NOT required and NOT sufficient. Prior bar and why it changed: see the module note and docs/trackers/DISP-MAINT-SURFACE-SWEEP-BLOCKED-ON-DATA-2026-07-31.md. | — |
+| `DISP-S02` | **PASS** | Surface /dispatch/alerts renders, is entity-scoped, and shows an honest empty state | PASS 2026-08-09 — DispatchAlertsPage company-gated queries (accidents/cash/late/in-transit); ListErrorBanner on failure; data-testid=dispatch-alerts-honest-empty when all counts are known 0; guard scripts/verify-disp-s02-alerts-surface.mjs --selftest exit 0. | — |
 | `DISP-S03` | **PASS** | Surface /dispatch/alerts/late-arrivals renders, is entity-scoped, and shows an honest empty state | PASS 2026-08-09 — LateArrivalsPage ParityTable settled empty; verify-list-empty-settled. | — |
 | `DISP-S04` | **PASS** | Surface /dispatch/assignment-history renders, is entity-scoped, and shows an honest empty state | PASS 2026-08-09 — AssignmentHistoryPage ParityTable settled empty; verify-list-empty-settled. | — |
 | `DISP-S05` | **PASS** | Surface /dispatch/assignments renders, is entity-scoped, and shows an honest empty state | PASS 2026-08-09 — /dispatch/assignments via DispatchSecondaryTabRoute; same proven assignment path. | — |
