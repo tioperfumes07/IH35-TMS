@@ -47,7 +47,6 @@ const KNOWN_GAPS = new Map([
   ["apps/backend/src/driver-finance/settlement-dispute.routes.ts", 5],
   ["apps/backend/src/dispatch/dispatch-refinements.routes.ts", 5],
   ["apps/backend/src/routes/safety/complaints.ts", 3],
-  ["apps/backend/src/safety/company-violations.routes.ts", 1],
   ["apps/backend/src/mdata/units.routes.ts", 1],
   ["apps/backend/src/mdata/equipment-transfer.routes.ts", 1],
   ["apps/backend/src/mdata/driver-team-split.routes.ts", 1],
