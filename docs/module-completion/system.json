@@ -68,9 +68,9 @@
         "DOD-B"
       ],
       "spec": "Architecture docs · QBO pull-only law",
-      "status": "OPEN",
-      "evidence": "scaffold — auditor PASS: matches architecture",
-      "pr": null,
+      "status": "PASS",
+      "evidence": "SystemModulePage.tsx calls getQboSyncHealth, surfaces a QBO write-back row, labels it 'OFF (by design)', and includes explanatory pull-only / no write-back text; guard verify-sys-s05-qbo-sync-writeback-off.mjs selftests.",
+      "pr": "#5341",
       "prod_verified": false
     },
     {
@@ -93,7 +93,7 @@
       "prod_verified": false
     }
   ],
-  "pass_count": 0,
+  "pass_count": 1,
   "total_count": 6,
-  "progress": "0 of 6"
+  "progress": "1 of 6"
 }
