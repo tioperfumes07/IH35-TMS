@@ -34,13 +34,26 @@ if (!/E_DRIVER_HOS_VIOLATION/.test(route)) {
 }
 
 const ui = readFileSync(UI, "utf8");
-if (!/work_order_display_id\s*\?\?/.test(ui)) fail.push(`${UI}: panel does not prefer work_order_display_id`);
-if (!/asset_label\s*\?\?/.test(ui)) fail.push(`${UI}: panel does not prefer asset_label`);
+if (!/entityLabel\(availabilityQuery\.data\?\.work_order_display_id, availabilityQuery\.data\?\.work_order_id, "Work order"\)/.test(ui)) {
+  fail.push(`${UI}: panel must suppress raw work-order ids with entityLabel`);
+}
+if (!/entityLabel\(availabilityQuery\.data\?\.asset_label, availabilityQuery\.data\?\.asset_id, "Asset"\)/.test(ui)) {
+  fail.push(`${UI}: panel must suppress raw asset ids with entityLabel`);
+}
+if (!/submitBlocked\s*=\s*availabilityQuery\.isError\s*\|\|/.test(ui)) {
+  fail.push(`${UI}: availability query failure must block submit`);
+}
+if (!/userFacingApiError\(availabilityQuery\.error, "Could not verify driver repair availability"\)/.test(ui)) {
+  fail.push(`${UI}: availability query failure must use operator-safe copy`);
+}
+if (!/onRetry=\{\(\) => void availabilityQuery\.refetch\(\)\}/.test(ui)) {
+  fail.push(`${UI}: availability query failure must be retryable`);
+}
 
 const board = readFileSync("apps/frontend/src/pages/dispatch/DispatchBoard.tsx", "utf8");
 // C-08: quick-assign toast must prefer human message/blocker over bare E_* code.
-if (!/data\.message\s*\?\?\s*data\.blocker\s*\?\?\s*data\.error/.test(board)) {
-  fail.push("apps/frontend/src/pages/dispatch/DispatchBoard.tsx: quick-assign toast must prefer message ?? blocker ?? error (C-08 HOS human)");
+if (!/userFacingApiError\(error, "Quick assign failed"\)/.test(board)) {
+  fail.push("apps/frontend/src/pages/dispatch/DispatchBoard.tsx: quick-assign toast must use operator-safe API error formatting");
 }
 if (/pushToast\(\s*String\(\s*data\.error/.test(board)) {
   fail.push("apps/frontend/src/pages/dispatch/DispatchBoard.tsx: must not toast data.error first");
