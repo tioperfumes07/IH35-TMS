@@ -7,7 +7,6 @@ import {
   getWoCostContext,
   getWorkOrder,
   getWorkOrderPostingPreview,
-  listMaintenanceVehicles,
   listSevereRepairEstimates,
   type WorkOrderPostingPreviewLine,
 } from "../../api/maintenance";
@@ -265,7 +264,6 @@ export function WorkOrderDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
-  const [selectedAssetId, setSelectedAssetId] = useState("");
   const [lineDraft, setLineDraft] = useState<TwoSectionLine[]>([]);
   const [editing, setEditing] = useState(false);
 
@@ -360,12 +358,6 @@ export function WorkOrderDetailPage() {
     enabled: Boolean(id && companyId),
     retry: false,
   });
-  const vehiclesQ = useQuery({
-    queryKey: ["maintenance", "master-data", "vehicles", companyId, "wo-detail"],
-    queryFn: () => listMaintenanceVehicles(companyId),
-    enabled: Boolean(companyId),
-    staleTime: 60_000,
-  });
   const severeEstimatesQ = useQuery({
     queryKey: ["maintenance", "severe-estimates", companyId, "wo-detail"],
     queryFn: () => listSevereRepairEstimates(companyId),
@@ -433,14 +425,6 @@ export function WorkOrderDetailPage() {
   }, [wo, id, severeEstimatesQ.data]);
 
   const woNumber = String(entityLabel(wo?.display_id, id, "Record") ?? "—");
-  const assetOptions = useMemo(
-    () =>
-      (vehiclesQ.data?.rows ?? [])
-        .map((row) => ({ id: row.id, label: row.unit_display_id || row.vin || row.id }))
-        .sort((a, b) => a.label.localeCompare(b.label)),
-    [vehiclesQ.data?.rows]
-  );
-
   // Edit target — map the loaded WO detail into the modal's edit shape (header + persisted cost lines).
   const editTarget = useMemo<EditWorkOrderTarget | null>(() => {
     if (!wo || !id) return null;
@@ -829,19 +813,21 @@ export function WorkOrderDetailPage() {
                 <p>{String(wo.source_type ?? "—")}</p>
               </div>
               <div>
-                <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Asset Selector</div>
-                <SelectCombobox
-                  className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2 text-sm"
-                  value={selectedAssetId}
-                  onChange={(event) => setSelectedAssetId(event.target.value)}
-                >
-                  <option value="">Select asset</option>
-                  {assetOptions.map((asset) => (
-                    <option key={asset.id} value={asset.id}>
-                      {asset.label}
-                    </option>
-                  ))}
-                </SelectCombobox>
+                <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Asset</div>
+                <div className="mt-1 flex items-center gap-2">
+                  {wo.unit_id ? (
+                    <EntityLink
+                      kind="unit"
+                      id={String(wo.unit_id)}
+                      label={entityLabel(wo.unit_number ?? wo.unit_display_id, wo.unit_id, "Unit")}
+                    />
+                  ) : (
+                    <span>Unassigned</span>
+                  )}
+                  <Button type="button" size="sm" variant="secondary" disabled={!editTarget} onClick={() => setEditing(true)}>
+                    Change in Edit
+                  </Button>
+                </div>
               </div>
             </div>
             <div className="mt-3 rounded-sm border border-slate-200 bg-slate-50 px-2 py-1 text-xs text-slate-700">
