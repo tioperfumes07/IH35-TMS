@@ -5,6 +5,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { Breadcrumb } from "../../components/shared/Breadcrumb";
 import { Button } from "../../components/Button";
 import { useToast } from "../../components/Toast";
+import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { userFacingApiError } from "../../lib/api-error-message";
 import {
   getProgramBoard,
@@ -334,7 +335,7 @@ export function ProgramBoardPage() {
   const [expanded, setExpanded] = useState<string | null>(null);
   const [deltasOpen, setDeltasOpen] = useState(false);
 
-  const { data, isLoading, isError, error, isFetching } = useQuery<ProgramBoard>({
+  const { data, isLoading, isError, error, isFetching, refetch } = useQuery<ProgramBoard>({
     queryKey: ["program-board"],
     queryFn: getProgramBoard,
     refetchInterval: AUTO_REFRESH_MS, // re-poll every 60s so the live-metrics timestamp stays current
@@ -599,7 +600,10 @@ export function ProgramBoardPage() {
 
       {isLoading ? <div className="py-8 text-center text-sm text-slate-500">Loading board…</div> : null}
       {isError ? (
-        <div className="py-8 text-center text-sm text-red-600">Failed to load: {userFacingApiError(error, "error")}</div>
+        <ListErrorBanner
+          message={`Failed to load program board: ${userFacingApiError(error, "error")}`}
+          onRetry={() => void refetch()}
+        />
       ) : null}
 
       {/* TABLE tabs */}

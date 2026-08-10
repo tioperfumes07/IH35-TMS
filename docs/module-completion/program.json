@@ -3,7 +3,7 @@
   "title": "Program Tracker",
   "complete": false,
   "as_of": "2026-08-10",
-  "live_sha": "a1a7b50",
+  "live_sha": "1b3a44d",
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/AUDITOR-RUN-2026-07-31/modules/program-system-help-2026-08-01.md",
   "spec_sources": [
     "docs/specs/DEFINITION-OF-DONE.md",
@@ -76,6 +76,19 @@
       "prod_verified": true
     },
     {
+      "id": "PROG-S06",
+      "title": "Program board + tracker API errors show ListErrorBanner with retry",
+      "layers": [
+        "DOD-B",
+        "VERIFY-1"
+      ],
+      "spec": "INBOX-CODEX task 14 · program API client error banner",
+      "status": "PASS",
+      "evidence": "ProgramBoardPage + ProgramTrackerPage replace silent/red-only errors with ListErrorBanner + refetch on getProgramBoard/getProgramTracker failure. Guard: verify-program-api-error-banner.mjs exit 0. | PROD-VERIFIED 2026-08-10 entity=USMCA (Owner chrome): healthz=1b3a44d; guards exit 0.",
+      "pr": null,
+      "prod_verified": true
+    },
+    {
       "id": "PROG-VERIFY-01",
       "title": "Program module VERIFY-1..8 (Owner/Admin)",
       "layers": [
@@ -95,7 +108,7 @@
       "prod_verified": false
     }
   ],
-  "pass_count": 5,
-  "total_count": 6,
-  "progress": "5 of 6"
+  "pass_count": 6,
+  "total_count": 7,
+  "progress": "6 of 7"
 }

@@ -3,7 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { Breadcrumb } from "../../components/shared/Breadcrumb";
-import { ListErrorState } from "../../components/ListErrorState";
+import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
+import { userFacingApiError } from "../../lib/api-error-message";
 import { getProgramTracker, type ProgramTracker, type TrackerPhase, type TrackerBlockRow, type Tab } from "../../api/program-tracker";
 
 const CT = "America/Chicago";
@@ -378,7 +379,10 @@ export function ProgramTrackerPage() {
       {query.isLoading ? (
         <p className="text-sm text-slate-500">Loading live tracker…</p>
       ) : query.isError ? (
-        <ListErrorState title="Couldn't load the tracker" status={0} message={(query.error as Error)?.message} onRetry={() => void query.refetch()} />
+        <ListErrorBanner
+          message={`Couldn't load the tracker: ${userFacingApiError(query.error, "error")}`}
+          onRetry={() => void query.refetch()}
+        />
       ) : query.data ? (
         <TrackerBody data={query.data} moved={moved} />
       ) : null}
