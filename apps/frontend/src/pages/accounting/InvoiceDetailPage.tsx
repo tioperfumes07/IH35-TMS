@@ -316,7 +316,11 @@ export function InvoiceDetailPage() {
           <DataPanelRow>
             <span className="text-xs text-gray-600">Customer</span>
             <span className="text-sm text-gray-900">
-              <EntityLink kind="customer" id={invoice.customer_id} label={invoice.customer_name ?? invoice.customer_id} />
+              <EntityLink
+                kind="customer"
+                id={invoice.customer_id}
+                label={entityLabel(invoice.customer_name, invoice.customer_id, "Customer")}
+              />
             </span>
           </DataPanelRow>
           <DataPanelRow>

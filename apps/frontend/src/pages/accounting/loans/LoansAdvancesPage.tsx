@@ -187,14 +187,14 @@ export function LoansAdvancesPage() {
                       (verify:no-native-datetime-input C3). */}
                   <td className="px-3 py-2">{formatDateUS(r.entry_date)}</td>
                   <td className="px-3 py-2">{r.direction === "in" ? "To company" : "From company"}</td>
-                  <td className="px-3 py-2">{r.counterparty_name ?? r.counterparty_id ?? "—"}</td>
+                  <td className="px-3 py-2">{entityLabel(r.counterparty_name, r.counterparty_id, "Counterparty")}</td>
                   <td className="px-3 py-2">{r.relationship}</td>
                   <td className="px-3 py-2">{r.target_type}</td>
                   <td className="px-3 py-2">
                     {/* Linkage law §10: an account reference drills through to the account, never a
                         raw uuid printed as text. Same for the JE below — the loan and its journal
                         entry must be walkable in both directions from this register. */}
-                    <EntityLink kind="account" id={r.account_id} label={r.account_name ?? r.account_id} />
+                    <EntityLink kind="account" id={r.account_id} label={entityLabel(r.account_name, r.account_id, "Account")} />
                   </td>
                   <td className="px-3 py-2 text-right">{money(r.principal_cents ?? r.amount_cents)}</td>
                   <td className="px-3 py-2">{r.status ?? "—"}</td>
