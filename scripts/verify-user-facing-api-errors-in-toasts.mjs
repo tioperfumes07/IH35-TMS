@@ -31,6 +31,7 @@ const RATCHETED_FILES = [
   "apps/frontend/src/pages/reports/FuelReconciliationPage.tsx",
   "apps/frontend/src/pages/fuel/card-overage/CardOverageQueuePage.tsx",
   "apps/frontend/src/pages/fuel/FuelPlannerHome.tsx",
+  "apps/frontend/src/pages/factoring/FaroImportPage.tsx",
 ];
 
 const RAW_PATTERNS = [
