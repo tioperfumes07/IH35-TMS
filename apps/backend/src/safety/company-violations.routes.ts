@@ -461,7 +461,10 @@ export async function registerSafetyCompanyViolationsRoutes(app: FastifyInstance
     return updated;
   });
 
-  app.post("/api/v1/safety/company-violations/:id/escalate", async (req, reply) => {
+  app.post(
+    "/api/v1/safety/company-violations/:id/escalate",
+    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
+    async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canMutate(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -489,12 +492,21 @@ export async function registerSafetyCompanyViolationsRoutes(app: FastifyInstance
     });
     if (!updated) return reply.code(404).send({ error: "company_violation_not_found" });
     return updated;
-  });
+    }
+  );
 
-  app.patch("/api/v1/safety/company-violations/:id/resolve", async (req, reply) => {
+  app.patch(
+    "/api/v1/safety/company-violations/:id/resolve",
+    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
+    async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
-    if (!canResolve(user.role)) return reply.code(403).send({ error: "E_PERMISSION_DENIED" });
+    if (!canResolve(user.role)) {
+      return reply.code(403).send({
+        error: "E_PERMISSION_DENIED",
+        message: "You do not have permission to resolve company violations.",
+      });
+    }
 
     const params = idParamsSchema.safeParse(req.params ?? {});
     if (!params.success) return sendValidationError(reply, params.error);
@@ -530,5 +542,6 @@ export async function registerSafetyCompanyViolationsRoutes(app: FastifyInstance
       }
       throw error;
     }
-  });
+    }
+  );
 }
