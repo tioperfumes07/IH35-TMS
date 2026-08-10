@@ -9,6 +9,7 @@ import { vendorReferenceOption } from "../../components/parity/referenceOptionLa
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { useRoadServiceTickets, type RoadServiceType } from "../../hooks/useRoadServiceTickets";
 import { capNotice, listCapInfo } from "../../lib/list-cap";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 // CLS-SILENT-CAP: named so the fetch and the truncation check read the SAME number.
 // 2,836 vendors exist on prod, so an unsearched 200-row fetch hides 2,636 of them.
@@ -91,7 +92,7 @@ export function RoadServiceTicketModal({ open, onClose, operatingCompanyId }: Pr
       setLocationAddress("");
       setInitialComplaint("");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create ticket");
+      setError(userFacingApiError(err, "Failed to create road service ticket"));
     }
   }
 
