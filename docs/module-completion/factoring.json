@@ -21,7 +21,7 @@
       ],
       "spec": "FactoringHome summary · Neon factoring.factor",
       "status": "PASS",
-      "evidence": "getFactoringSummary KPI row + need-company + ListErrorBanner; guard verify-fact-s01-home-surface.mjs",
+      "evidence": "getFactoringSummary KPI row + need-company + ListErrorBanner; guard verify-fact-s01-home-surface.mjs. Additional regression coverage: FactoringHome.kpi-error.test.tsx (2 tests, all green) covers the successful KPI render and the ListErrorBanner honest-error state.",
       "pr": null,
       "prod_verified": false
     },
