@@ -71,7 +71,10 @@ function normalizeRole(role: string) {
 function ensureComplaintReadRole(user: { role: string }, reply: FastifyReply) {
   const role = normalizeRole(user.role);
   if (!["owner", "admin", "safety"].includes(role)) {
-    reply.code(403).send({ error: "E_COMPLAINT_PRIVACY_GATED" });
+    reply.code(403).send({
+      error: "E_COMPLAINT_PRIVACY_GATED",
+      message: "Complaints are restricted to Owner, Administrator, and Safety roles.",
+    });
     return null;
   }
   return role;
@@ -245,7 +248,12 @@ export async function registerSafetyComplaintsRoutes(app: FastifyInstance) {
     if (!user) return;
     const appRole = ensureComplaintReadRole(user, reply);
     if (!appRole) return;
-    if (appRole !== "owner") return reply.code(403).send({ error: "E_COMPLAINT_PRIVACY_GATED" });
+    if (appRole !== "owner") {
+      return reply.code(403).send({
+        error: "E_COMPLAINT_PRIVACY_GATED",
+        message: "Only an Owner can update a complaint.",
+      });
+    }
     const params = idParamsSchema.safeParse(req.params ?? {});
     if (!params.success) return validationError(reply, params.error);
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -284,7 +292,12 @@ export async function registerSafetyComplaintsRoutes(app: FastifyInstance) {
     if (!user) return;
     const appRole = ensureComplaintReadRole(user, reply);
     if (!appRole) return;
-    if (appRole !== "owner") return reply.code(403).send({ error: "E_COMPLAINT_PRIVACY_GATED" });
+    if (appRole !== "owner") {
+      return reply.code(403).send({
+        error: "E_COMPLAINT_PRIVACY_GATED",
+        message: "Only an Owner can void a complaint.",
+      });
+    }
     const params = idParamsSchema.safeParse(req.params ?? {});
     if (!params.success) return validationError(reply, params.error);
     const query = companyQuerySchema.safeParse(req.query ?? {});
