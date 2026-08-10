@@ -25,6 +25,7 @@ const RATCHETED_FILES = [
   "apps/frontend/src/pages/dispatch/NotifyPreferencesPage.tsx",
   "apps/frontend/src/pages/safety/eld/EldAuditTrailViewer.tsx",
   "apps/frontend/src/pages/reports/FuelReconciliationPage.tsx",
+  "apps/frontend/src/pages/fuel/card-overage/CardOverageQueuePage.tsx",
 ];
 
 const RAW_PATTERNS = [
