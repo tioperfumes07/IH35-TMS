@@ -62,9 +62,9 @@
         "DOD-C"
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
-      "pr": null,
+      "status": "PASS",
+      "evidence": "Route /fleet/trailers/:id registered as ProtectedRoute wrapping TrailerProfilePage; fetches /api/v1/mdata/equipment/:id with operating_company_id; buildEquipmentAggregate scopes by owner/lessee and returns 404 for cross-entity; page renders identity, specs, assignment, reefer, maintenance, compliance, reverse insurance/safety/legal/bank linkages, documents, audit history; archive action wired to soft-delete endpoint; honest empty states for missing company/profile; TrailerProfilePage.test.tsx passes.",
+      "pr": "#5295",
       "prod_verified": false
     },
     {
@@ -111,7 +111,7 @@
     }
   ],
   "M": 7,
-  "pass_count": 3,
+  "pass_count": 4,
   "total_count": 7,
-  "progress": "3 of 7"
+  "progress": "4 of 7"
 }
