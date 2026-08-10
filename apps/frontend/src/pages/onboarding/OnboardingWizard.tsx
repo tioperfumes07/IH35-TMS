@@ -9,6 +9,7 @@ import { Step3SamsaraConnect, type SamsaraStepData } from "./Step3SamsaraConnect
 import { Step4PlaidConnect, type PlaidStepData } from "./Step4PlaidConnect";
 import { Step5InviteTeam, type TeamStepData } from "./Step5InviteTeam";
 import { Step6SampleData, type SampleStepData, type SampleSeedSummary } from "./Step6SampleData";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 export type OnboardingStep = "company" | "qbo" | "samsara" | "plaid" | "team" | "samples" | "complete";
 
@@ -106,7 +107,7 @@ export function OnboardingWizard() {
         prev ? { ...prev, state: data.state } : prev
       );
     },
-    onError: (err: Error) => setError(err.message),
+    onError: (err: unknown) => setError(userFacingApiError(err, "Could not save onboarding progress")),
   });
 
   const seedMut = useMutation({
@@ -115,7 +116,7 @@ export function OnboardingWizard() {
       setError(null);
       void stateQuery.refetch();
     },
-    onError: (err: Error) => setError(err.message),
+    onError: (err: unknown) => setError(userFacingApiError(err, "Could not create sample data")),
   });
 
   const activeStep = ONBOARDING_STEP_ORDER[activeIndex];
