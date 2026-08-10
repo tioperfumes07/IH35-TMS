@@ -88,19 +88,22 @@ export async function manualReassignLoad(userId: string, input: ReassignBody) {
         | undefined;
       if (!load) throw new Error("E_LOAD_NOT_FOUND");
 
-      if (input.new_driver_id !== load.assigned_primary_driver_id) {
-        const driverRes = await client.query(
-          `
-            SELECT 1
-            FROM mdata.drivers
-            WHERE id = $1
-              AND operating_company_id = $2
-            LIMIT 1
-          `,
-          [input.new_driver_id, input.operating_company_id]
-        );
-        if (!driverRes.rows[0]) throw new Error("E_DRIVER_NOT_FOUND");
+      // DISP-REASSIGN-DRIVER-EXISTS — assertDriverQualifiedForLoad returns null when the driver
+      // row is missing (no credentials to evaluate). Without this check the UPDATE below hits
+      // loads_assigned_primary_driver_id_fkey and leaks a Postgres 23503 to the operator.
+      const driverExists = await client.query<{ id: string }>(
+        `
+          SELECT d.id::text AS id
+          FROM mdata.drivers d
+          WHERE d.id = $1::uuid
+            AND d.operating_company_id = $2::uuid
+          LIMIT 1
+        `,
+        [input.new_driver_id, input.operating_company_id]
+      );
+      if (!driverExists.rows[0]) throw new Error("E_DRIVER_NOT_FOUND");
 
+      if (input.new_driver_id !== load.assigned_primary_driver_id) {
         const block = await assertDriverQualifiedForLoad(client, {
           driverId: input.new_driver_id,
           operatingCompanyId: input.operating_company_id,
