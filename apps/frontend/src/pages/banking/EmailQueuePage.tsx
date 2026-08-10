@@ -2,6 +2,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { adminRetryEmailQueueItem, listEmailQueue, type EmailQueueRow } from "../../api/email-queue";
 import { useAuth } from "../../auth/useAuth";
+import { CappedListNotice } from "../../components/CappedListNotice";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ActionButton } from "../../components/shared/ActionButton";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
@@ -91,6 +92,12 @@ export function EmailQueuePage() {
             <p className="text-sm text-gray-500">No email queue rows returned for this company.</p>
           ) : null}
         </div>
+        <CappedListNotice
+          shown={queueQuery.data?.items.length ?? 0}
+          limit={100}
+          hint="Only the newest jobs are shown; older queue entries are not included in this view."
+          className="mt-3 text-xs text-slate-700"
+        />
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
 {
   "note": "CLS-SILENT-CAP (frontend) ratchet — screens that fetch a hard cap and never surface it. This is an inventory of EXISTING debt, not an approval of these screens. May only SHRINK.",
-  "scanned": 1525,
+  "scanned": 1527,
   "offenders": [
     "apps/frontend/src/pages/accounting/AccountRegisterPage.tsx",
     "apps/frontend/src/pages/accounting/BillsPage.tsx",
@@ -13,7 +13,6 @@
     "apps/frontend/src/pages/accounting/bills/RecurringBillCreate.tsx",
     "apps/frontend/src/pages/accounting/loans/LoansAdvancesPage.tsx",
     "apps/frontend/src/pages/accounting/modals/InvoiceTypeModalBase.tsx",
-    "apps/frontend/src/pages/banking/EmailQueuePage.tsx",
     "apps/frontend/src/pages/banking/QboSyncQueuePage.tsx",
     "apps/frontend/src/pages/banking/RecordCCPaymentModal.tsx"
   ]
