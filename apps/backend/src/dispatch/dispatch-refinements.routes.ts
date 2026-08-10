@@ -171,7 +171,12 @@ export async function registerDispatchRefinementsRoutes(app: FastifyInstance) {
       });
     } catch (e) {
       const msg = String((e as Error).message);
-      if (msg === "E_LOAD_NOT_FOUND") return reply.code(404).send({ error: "E_LOAD_NOT_FOUND" });
+      if (msg === "E_LOAD_NOT_FOUND") {
+        return reply.code(404).send({
+          error: "E_LOAD_NOT_FOUND",
+          message: "Load not found for this operating company.",
+        });
+      }
       if (msg === "E_DRIVER_NOT_QUALIFIED") {
         return reply.code(422).send({
           error: "E_DRIVER_NOT_QUALIFIED",
@@ -193,7 +198,10 @@ export async function registerDispatchRefinementsRoutes(app: FastifyInstance) {
     try {
       return await listLoadStopsRefined(user.uuid, q.data.operating_company_id, params.data.loadId);
     } catch {
-      return reply.code(500).send({ error: "server_error" });
+      return reply.code(500).send({
+        error: "server_error",
+        message: "Could not load stops for this load. Try again or contact support.",
+      });
     }
   });
 
@@ -210,7 +218,12 @@ export async function registerDispatchRefinementsRoutes(app: FastifyInstance) {
     try {
       return await replaceLoadStopsRefined(user.uuid, body.data.operating_company_id, params.data.loadId, body.data.stops as LoadStopInput[]);
     } catch (e) {
-      if (String((e as Error).message) === "E_LOAD_NOT_FOUND") return reply.code(404).send({ error: "E_LOAD_NOT_FOUND" });
+      if (String((e as Error).message) === "E_LOAD_NOT_FOUND") {
+        return reply.code(404).send({
+          error: "E_LOAD_NOT_FOUND",
+          message: "Load not found for this operating company.",
+        });
+      }
       throw e;
     }
   });
@@ -241,7 +254,12 @@ export async function registerDispatchRefinementsRoutes(app: FastifyInstance) {
         preview_trailer_type: q.data.preview_trailer_type,
       });
     } catch (e) {
-      if (String((e as Error).message) === "E_LOAD_NOT_FOUND") return reply.code(404).send({ error: "E_LOAD_NOT_FOUND" });
+      if (String((e as Error).message) === "E_LOAD_NOT_FOUND") {
+        return reply.code(404).send({
+          error: "E_LOAD_NOT_FOUND",
+          message: "Load not found for this operating company.",
+        });
+      }
       throw e;
     }
   });
@@ -257,8 +275,18 @@ export async function registerDispatchRefinementsRoutes(app: FastifyInstance) {
       return await getDispatchLoadEta(user.uuid, q.data.operating_company_id, params.data.loadId);
     } catch (e) {
       const msg = String((e as Error).message ?? "");
-      if (msg === "E_LOAD_NOT_FOUND") return reply.code(404).send({ error: "E_LOAD_NOT_FOUND" });
-      if (msg === "E_ETA_NOT_IN_TRANSIT") return reply.code(409).send({ error: "E_ETA_NOT_IN_TRANSIT" });
+      if (msg === "E_LOAD_NOT_FOUND") {
+        return reply.code(404).send({
+          error: "E_LOAD_NOT_FOUND",
+          message: "Load not found for this operating company.",
+        });
+      }
+      if (msg === "E_ETA_NOT_IN_TRANSIT") {
+        return reply.code(409).send({
+          error: "E_ETA_NOT_IN_TRANSIT",
+          message: "ETA is only available while the load is in transit.",
+        });
+      }
       throw e;
     }
   });
