@@ -20,7 +20,7 @@
         "DOD-B",
         "VERIFY-5"
       ],
-      "spec": "Users page · visibleRoles Owner/Admin/SuperAdmin",
+      "spec": "Users page \u00b7 visibleRoles Owner/Admin/SuperAdmin",
       "status": "PASS",
       "evidence": "Users.tsx ParityTable roster + SecondaryNavTabs (all/active/pending/deactivated); listUsers(isOwnerOrAdmin) Owner/Admin gate; Users.test.tsx Add User + Deactivate suites render roster rows and action controls.",
       "pr": "PENDING",
@@ -48,7 +48,7 @@
       ],
       "spec": "sidebar users flyout admin routes",
       "status": "PASS",
-      "evidence": "sidebar-config users flyout: Owner||SuperAdmin → Activity log /admin/activity + Audit log /admin/audit-log; manifest OwnerSuperAdminRoute mounts ActivityLogPage + AuditLogViewer (not ComingSoon); ActivityLogPage→fetchAdminActivity; AuditLogViewer→listAuditViewerEvents. Guard: scripts/verify-user-s03-admin-activity-audit.mjs.",
+      "evidence": "sidebar-config users flyout: Owner||SuperAdmin \u2192 Activity log /admin/activity + Audit log /admin/audit-log; manifest OwnerSuperAdminRoute mounts ActivityLogPage + AuditLogViewer (not ComingSoon); ActivityLogPage\u2192fetchAdminActivity; AuditLogViewer\u2192listAuditViewerEvents. Guard: scripts/verify-user-s03-admin-activity-audit.mjs.",
       "pr": "PENDING",
       "prod_verified": false
     },
@@ -60,9 +60,9 @@
         "DOD-C"
       ],
       "spec": "sidebar flyout Operator Onboarding",
-      "status": "OPEN",
-      "evidence": "scaffold — not proven",
-      "pr": null,
+      "status": "PASS",
+      "evidence": "sidebar users flyout: Operator Onboarding \u2192 /onboarding; manifest ProtectedRoute mounts OnboardingWizard; wizard uses selectedCompanyId + operating_company_id on GET/PATCH/seed; empty company gate; backend state.routes assertCompanyMembership + withCompanyScope + app.operating_company_id GUC; onboarding.onboarding_state keyed by company_id. Guard: scripts/verify-user-s04-onboarding-entity-scope.mjs.",
+      "pr": "PENDING",
       "prod_verified": false
     },
     {
@@ -74,7 +74,7 @@
       ],
       "spec": "ITEM-14-TXN-COMPANY-ISOLATION-GUARD pattern",
       "status": "OPEN",
-      "evidence": "scaffold — not proven for users module specifically",
+      "evidence": "scaffold \u2014 not proven for users module specifically",
       "pr": null,
       "prod_verified": false
     },
@@ -93,12 +93,12 @@
       ],
       "spec": "EVERY-PR-AUDIT-CHECKLIST.md",
       "status": "OPEN",
-      "evidence": "scaffold — July-31 stub only",
+      "evidence": "scaffold \u2014 July-31 stub only",
       "pr": null,
       "prod_verified": false
     }
   ],
-  "pass_count": 3,
+  "pass_count": 4,
   "total_count": 6,
-  "progress": "3 of 6"
+  "progress": "4 of 6"
 }
