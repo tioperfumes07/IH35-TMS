@@ -3,9 +3,11 @@ import { Link, useParams } from "react-router-dom";
 import { getDriverHosDetail } from "../../api/hos";
 import { getDriver } from "../../api/mdata";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { ListErrorState } from "../../components/ListErrorState";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateTimeUS } from "../../lib/formatDate";
 import { titleize } from "../../lib/titleize";
+import { formatQueryErrorDetail } from "../../lib/tableError";
 
 function minutesToLabel(minutes: number) {
   const safe = Math.max(0, Math.floor(minutes));
@@ -133,7 +135,13 @@ export function DriverHosDetailPage() {
       ) : null}
 
       {hosQuery.isLoading ? <div className="text-sm text-gray-500">Loading HOS details...</div> : null}
-      {hosQuery.isError ? <div className="text-sm text-red-600">Failed to load HOS details.</div> : null}
+      {hosQuery.isError ? (
+        <ListErrorState
+          title="Couldn't load HOS details"
+          {...formatQueryErrorDetail(hosQuery.error)}
+          onRetry={() => void hosQuery.refetch()}
+        />
+      ) : null}
     </div>
   );
 }
