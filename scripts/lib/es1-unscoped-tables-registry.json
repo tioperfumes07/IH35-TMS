@@ -364,7 +364,7 @@
       "forceRlsStatus": "deferred",
       "disposition": "inherit_via_parent",
       "parentIdCol": "task_id",
-      "parent": "tasks.tasks",
+      "parent": "tasks.task",
       "fkStatus": "deferred",
       "parentIsolationStatus": "enforced"
     },
@@ -373,7 +373,7 @@
       "forceRlsStatus": "deferred",
       "disposition": "inherit_via_parent",
       "parentIdCol": "task_id",
-      "parent": "tasks.tasks",
+      "parent": "tasks.task",
       "fkStatus": "deferred",
       "parentIsolationStatus": "enforced"
     },
