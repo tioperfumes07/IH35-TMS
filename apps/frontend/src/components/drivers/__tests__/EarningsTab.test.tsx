@@ -54,6 +54,7 @@ describe("EarningsTab", () => {
       settlements: [
         {
           id: "set-1",
+          display_id: "S-2026-0001",
           driver_id: driverId,
           driver_full_name: "Alex Driver",
           driver_display_id: "DRV-1",
@@ -70,6 +71,7 @@ describe("EarningsTab", () => {
         },
         {
           id: "set-2",
+          display_id: "S-2026-0002",
           driver_id: driverId,
           driver_full_name: "Alex Driver",
           driver_display_id: "DRV-1",

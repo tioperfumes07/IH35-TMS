@@ -28,6 +28,7 @@ const LABEL = "verify-docs-upload-company-scope";
 const DOCUMENTS_PAGE = "apps/frontend/src/pages/Documents.tsx";
 const VERSION_HISTORY_MODAL = "apps/frontend/src/components/documents/VersionHistoryModal.tsx";
 const DOCUMENTS_TAB = "apps/frontend/src/components/documents/DocumentsTab.tsx";
+const UPLOAD_MODAL = "apps/frontend/src/components/documents/UploadModal.tsx";
 
 function stripComments(text) {
   return text
@@ -41,14 +42,16 @@ function stripComments(text) {
  *   documentsPage: string,
  *   versionHistoryModal: string,
  *   documentsTab: string,
+ *   uploadModal?: string,
  * }} args
  * @returns {string[]} errors
  */
-export function assertGuard({ documentsPage, versionHistoryModal, documentsTab }) {
+export function assertGuard({ documentsPage, versionHistoryModal, documentsTab, uploadModal }) {
   const errors = [];
   const dp = stripComments(documentsPage);
   const vhm = stripComments(versionHistoryModal);
   const dt = stripComments(documentsTab);
+  const um = uploadModal != null ? stripComments(uploadModal) : "";
 
   if (!/useCompanyContext/.test(dp)) {
     errors.push(`${DOCUMENTS_PAGE}: must call useCompanyContext() to read the viewed company`);
@@ -71,6 +74,18 @@ export function assertGuard({ documentsPage, versionHistoryModal, documentsTab }
 
   if (!/<VersionHistoryModal[\s\S]{0,600}?operatingCompanyId=\{operatingCompanyId\}/.test(dt)) {
     errors.push(`${DOCUMENTS_TAB}: <VersionHistoryModal> caller must pass operatingCompanyId={operatingCompanyId}`);
+  }
+
+  // FE Render build unblock: Customer type uses `name` / `customer_code`, not customer_name/display_id.
+  if (um) {
+    if (/customer\.customer_name/.test(um) || /customer\.display_id/.test(um)) {
+      errors.push(
+        `${UPLOAD_MODAL}: customer option label must use Customer.name / customer_code (not customer_name/display_id) — tsc exit 2 on Render otherwise`
+      );
+    }
+    if (!/customer\.name/.test(um)) {
+      errors.push(`${UPLOAD_MODAL}: customer option label must read customer.name`);
+    }
   }
 
   return errors;
@@ -156,6 +171,26 @@ function selftest() {
       },
       wantMin: 1,
     },
+    {
+      name: "UploadModal uses phantom customer_name → FAIL",
+      in: {
+        documentsPage: goodDocumentsPage,
+        versionHistoryModal: goodVersionHistoryModal,
+        documentsTab: goodDocumentsTab,
+        uploadModal: `label: customer.customer_name ?? customer.display_id ?? customer.id,`,
+      },
+      wantMin: 1,
+    },
+    {
+      name: "UploadModal uses Customer.name → PASS",
+      in: {
+        documentsPage: goodDocumentsPage,
+        versionHistoryModal: goodVersionHistoryModal,
+        documentsTab: goodDocumentsTab,
+        uploadModal: `label: customer.name ?? customer.customer_code ?? customer.id,`,
+      },
+      want: 0,
+    },
   ];
 
   let failed = 0;
@@ -181,6 +216,7 @@ if (process.argv.includes("--selftest")) {
 const documentsPage = readReal(DOCUMENTS_PAGE);
 const versionHistoryModal = readReal(VERSION_HISTORY_MODAL);
 const documentsTab = readReal(DOCUMENTS_TAB);
+const uploadModal = readReal(UPLOAD_MODAL);
 if (documentsPage === null) {
   console.error(`[${LABEL}] FAILED — missing file ${DOCUMENTS_PAGE}`);
   process.exit(1);
@@ -193,8 +229,12 @@ if (documentsTab === null) {
   console.error(`[${LABEL}] FAILED — missing file ${DOCUMENTS_TAB}`);
   process.exit(1);
 }
+if (uploadModal === null) {
+  console.error(`[${LABEL}] FAILED — missing file ${UPLOAD_MODAL}`);
+  process.exit(1);
+}
 
-const errors = assertGuard({ documentsPage, versionHistoryModal, documentsTab });
+const errors = assertGuard({ documentsPage, versionHistoryModal, documentsTab, uploadModal });
 if (errors.length) {
   console.error(`[${LABEL}] FAILED — ${errors.length} issue(s):`);
   for (const e of errors) console.error(`  ✗ ${e}`);
