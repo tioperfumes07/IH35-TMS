@@ -4,6 +4,7 @@ import { acknowledgeBreach, listGeofenceBreaches, type GeofenceBreachFilter } fr
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { formatDateTimeUS } from "../../../lib/formatDate";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { entityLabel } from "../../../lib/entity-label";
 
 const FILTERS: GeofenceBreachFilter[] = ["active", "acknowledged", "all"];
 
@@ -66,7 +67,7 @@ export function GeofenceBreachesTab() {
               <span className="text-xs text-slate-500">{formatDateTimeUS(event.event_at)} CT</span>
             </div>
             <div className="mt-1 text-xs text-slate-600">
-              Geofence: {event.geofence_label ?? event.geofence_id} · Customer:{" "}
+              Geofence: {entityLabel(event.geofence_label, event.geofence_id, "Geofence")} · Customer:{" "}
               {event.customer_id ? (
                 <EntityLink kind="customer" id={event.customer_id} label={event.customer_name ?? undefined} />
               ) : (
