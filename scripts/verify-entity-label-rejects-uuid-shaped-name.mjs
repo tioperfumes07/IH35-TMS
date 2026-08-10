@@ -36,6 +36,11 @@ const SIBLINGS = [
     good: /entityLabel\(\s*row\.lender_vendor_name\s*,\s*row\.lender_vendor_id\s*,\s*"Vendor"\s*\)/,
   },
   {
+    rel: "apps/frontend/src/pages/factoring/FactoringHome.tsx",
+    bad: /selectedEquipmentLoan\?\.equipment_number\s*\|\|\s*selectedEquipmentLoan\?\.equipment_id/,
+    good: /entityLabel\(\s*selectedEquipmentLoan\?\.equipment_number\s*,\s*selectedEquipmentLoan\?\.equipment_id\s*,\s*"Equipment"\s*\)/,
+  },
+  {
     rel: "apps/frontend/src/pages/driver-finance/components/SettlementDisputesTab.tsx",
     bad: /detail\.driver_name\s*\?\?\s*detail\.driver_id|row\.driver_name\s*\?\?\s*row\.driver_id/,
     good: /entityLabel\(\s*(?:detail|row)\.driver_name\s*,\s*(?:detail|row)\.driver_id\s*,\s*"Driver"\s*\)/,
@@ -1211,6 +1216,21 @@ function selftest() {
     )
   ) {
     failures.push("selftest: sibling bad pattern NOT detected");
+  }
+  const selectedEquipmentSibling = SIBLINGS.find(
+    (entry) => entry.rel.endsWith("FactoringHome.tsx") && entry.bad.test("selectedEquipmentLoan?.equipment_number || selectedEquipmentLoan?.equipment_id")
+  );
+  if (!selectedEquipmentSibling) {
+    failures.push("selftest: selected equipment loan sibling guard missing");
+  } else {
+    const badSelectedEquipment = "selectedEquipmentLoan?.equipment_number || selectedEquipmentLoan?.equipment_id";
+    const goodSelectedEquipment = 'entityLabel(selectedEquipmentLoan?.equipment_number, selectedEquipmentLoan?.equipment_id, "Equipment")';
+    if (!auditSibling(selectedEquipmentSibling.rel, badSelectedEquipment, selectedEquipmentSibling.bad, selectedEquipmentSibling.good).length) {
+      failures.push("selftest: selected equipment loan raw fallback NOT detected");
+    }
+    if (auditSibling(selectedEquipmentSibling.rel, goodSelectedEquipment, selectedEquipmentSibling.bad, selectedEquipmentSibling.good).length) {
+      failures.push("selftest: selected equipment loan entityLabel fixture flagged");
+    }
   }
 
   const real = auditTree();

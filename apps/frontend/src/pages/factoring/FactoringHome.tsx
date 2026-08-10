@@ -263,6 +263,9 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
     queryFn: () => getEquipmentLoanLedger(selectedLoanId, companyId),
     enabled: Boolean(companyId && selectedLoanId),
   });
+  const selectedEquipmentLoan = (equipmentLoansQuery.data?.rows ?? []).find(
+    (row) => String(row.id) === selectedLoanId
+  );
   const invoices = recourseQuery.data?.invoices ?? [];
   const recourseTotals = useMemo(() => {
     return invoices.reduce(
@@ -867,11 +870,11 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
             <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs">
               <div className="mb-2 font-medium text-gray-900">
                 Selected loan ledger:{" "}
-                {(equipmentLoansQuery.data?.rows ?? []).find((row) => String(row.id) === selectedLoanId)
-                  ?.equipment_number ||
-                  (equipmentLoansQuery.data?.rows ?? []).find((row) => String(row.id) === selectedLoanId)
-                    ?.equipment_id ||
-                  "loan"}
+                {entityLabel(
+                  selectedEquipmentLoan?.equipment_number,
+                  selectedEquipmentLoan?.equipment_id,
+                  "Equipment"
+                )}
               </div>
               <p>Attributions: {(selectedLoanLedgerQuery.data?.attributions ?? []).length}</p>
               <p>Payments: {(selectedLoanLedgerQuery.data?.payments ?? []).length}</p>
