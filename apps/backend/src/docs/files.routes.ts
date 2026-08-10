@@ -20,7 +20,18 @@ const DEFAULT_DOWNLOAD_EXPIRES_SECONDS = 300;
 // DOCS-1: `load` was omitted here (though present in the zod enum + the docs.file_links
 // CHECK constraint), so the Load Documents tab could never link/upload a document and
 // rendered empty. mdata.loads is a non-financial master-data table; adding it here is safe.
-const SUPPORTED_LINK_ENTITY_TYPES = ["driver", "customer", "vendor", "unit", "equipment", "load"] as const;
+// LV-FILE-LINK-ENTITY-TYPE-3WAY-MISMATCH: `invoice` and `settlement` are also listed in the
+// zod enum and the FE FileEntityType union; they map to real tables and must be supported.
+const SUPPORTED_LINK_ENTITY_TYPES = [
+  "driver",
+  "customer",
+  "vendor",
+  "unit",
+  "equipment",
+  "load",
+  "invoice",
+  "settlement",
+] as const;
 
 const idParamSchema = z.object({ file_id: z.string().uuid() });
 const linkParamSchema = z.object({ file_id: z.string().uuid(), link_id: z.string().uuid() });
@@ -173,11 +184,27 @@ async function ensureLinkEntityExists(
     const res = await client.query("SELECT id FROM mdata.loads WHERE id = $1 AND soft_deleted_at IS NULL LIMIT 1", [entityId]);
     return res.rows.length > 0;
   }
+  if (entityType === "invoice") {
+    const res = await client.query(
+      "SELECT id FROM accounting.invoices WHERE id = $1 AND voided_at IS NULL LIMIT 1",
+      [entityId]
+    );
+    return res.rows.length > 0;
+  }
+  if (entityType === "settlement") {
+    const res = await client.query(
+      "SELECT id FROM driver_finance.driver_settlements WHERE id = $1 LIMIT 1",
+      [entityId]
+    );
+    return res.rows.length > 0;
+  }
   return false;
 }
 
 export async function registerDocsFilesRoutes(app: FastifyInstance) {
-  app.post("/api/v1/docs/files/upload-url", async (req, reply) => {
+  app.post("/api/v1/docs/files/upload-url", {
+    config: { rateLimit: { max: 60, timeWindow: "1 minute" } },
+    handler: async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const parsedBody = uploadUrlBodySchema.safeParse(req.body ?? {});
@@ -205,6 +232,18 @@ export async function registerDocsFilesRoutes(app: FastifyInstance) {
         if (body.category_id) {
           const exists = await ensureCategoryExists(client, body.category_id);
           if (!exists) throw new Error("invalid_category_id");
+        }
+
+        // LV-FILE-LINK-ENTITY-TYPE-3WAY-MISMATCH: validate links BEFORE inserting the file row so a
+        // bad link rolls back only the request, not an otherwise valid upload.
+        if (body.entity_links && body.entity_links.length > 0) {
+          for (const link of body.entity_links) {
+            if (!SUPPORTED_LINK_ENTITY_TYPES.includes(link.entity_type as (typeof SUPPORTED_LINK_ENTITY_TYPES)[number])) {
+              throw new Error("entity_type_not_supported_yet");
+            }
+            const exists = await ensureLinkEntityExists(client, link.entity_type, link.entity_id);
+            if (!exists) throw new Error(`entity_not_found:${link.entity_type}`);
+          }
         }
 
         const fileRes = await client.query(
@@ -258,11 +297,7 @@ export async function registerDocsFilesRoutes(app: FastifyInstance) {
 
         if (body.entity_links && body.entity_links.length > 0) {
           for (const link of body.entity_links) {
-            if (!SUPPORTED_LINK_ENTITY_TYPES.includes(link.entity_type as (typeof SUPPORTED_LINK_ENTITY_TYPES)[number])) {
-              throw new Error("entity_type_not_supported_yet");
-            }
-            const exists = await ensureLinkEntityExists(client, link.entity_type, link.entity_id);
-            if (!exists) throw new Error(`entity_not_found:${link.entity_type}`);
+            // Existence/type validated before the file row was inserted; insert only here.
             await client.query(
               `
                 INSERT INTO docs.file_links (file_id, entity_type, entity_id, created_by_user_id)
