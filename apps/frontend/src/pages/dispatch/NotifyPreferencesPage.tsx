@@ -16,6 +16,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { useToast } from "../../components/Toast";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 function PrefToggle({
   label,
@@ -133,7 +134,7 @@ export function NotifyPreferencesPage() {
     onError: (error) => {
       // Previously silent: a failed toggle looked like it saved. Surface the error and refetch so the
       // toggle reverts to the true persisted state.
-      pushToast(error instanceof Error ? error.message : "Could not save notification preference", "error");
+      pushToast(userFacingApiError(error, "Could not save notification preference"), "error");
       queryClient.invalidateQueries({ queryKey: ["customer-notify-prefs", companyId, customerId] });
     },
   });
@@ -144,7 +145,7 @@ export function NotifyPreferencesPage() {
       queryClient.invalidateQueries({ queryKey: ["customer-notify-log", companyId] });
     },
     onError: (error) => {
-      pushToast(error instanceof Error ? error.message : "Notification sync failed", "error");
+      pushToast(userFacingApiError(error, "Notification sync failed"), "error");
     },
   });
 
