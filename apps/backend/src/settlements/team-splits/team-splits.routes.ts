@@ -142,14 +142,51 @@ function splitMethodFromRequest(splitType: string, primaryRatio: number, seconda
 
 function mapServiceError(reply: FastifyReply, error: unknown) {
   const msg = String((error as Error)?.message ?? "team_split_operation_failed");
-  if (msg.includes("E_TEAM_NOT_FOUND")) return reply.code(404).send({ error: "config_not_found" });
-  if (msg.includes("E_DRIVER_ALREADY_IN_ACTIVE_TEAM")) return reply.code(409).send({ error: "E_DRIVER_ALREADY_IN_ACTIVE_TEAM" });
-  if (msg.includes("E_TEAM_HAS_IN_PROGRESS_LOADS")) return reply.code(409).send({ error: "E_TEAM_HAS_IN_PROGRESS_LOADS" });
-  if (msg.includes("E_DRIVER_NOT_IN_COMPANY")) return reply.code(400).send({ error: "E_DRIVER_NOT_IN_COMPANY" });
-  if (msg.includes("E_SPLIT_PERCENTAGES_MUST_EQUAL_100")) return reply.code(400).send({ error: "E_SPLIT_PERCENTAGES_MUST_EQUAL_100" });
-  if (msg.includes("E_INVALID_SPLIT_PERCENTAGES")) return reply.code(400).send({ error: "E_INVALID_SPLIT_PERCENTAGES" });
-  if (msg.includes("E_SETTLEMENT_POSTED_SPLIT_IMMUTABLE")) return reply.code(409).send({ error: "E_SETTLEMENT_POSTED_SPLIT_IMMUTABLE" });
-  if (msg.includes("E_LOAD_NOT_FOUND")) return reply.code(404).send({ error: "E_LOAD_NOT_FOUND" });
+  if (msg.includes("E_TEAM_NOT_FOUND")) {
+    return reply.code(404).send({ error: "config_not_found", message: "Team-split configuration not found." });
+  }
+  if (msg.includes("E_DRIVER_ALREADY_IN_ACTIVE_TEAM")) {
+    return reply.code(409).send({
+      error: "E_DRIVER_ALREADY_IN_ACTIVE_TEAM",
+      message: "That driver is already on an active team split.",
+    });
+  }
+  if (msg.includes("E_TEAM_HAS_IN_PROGRESS_LOADS")) {
+    return reply.code(409).send({
+      error: "E_TEAM_HAS_IN_PROGRESS_LOADS",
+      message: "Cannot change this team while it has loads in progress.",
+    });
+  }
+  if (msg.includes("E_DRIVER_NOT_IN_COMPANY")) {
+    return reply.code(400).send({
+      error: "E_DRIVER_NOT_IN_COMPANY",
+      message: "Driver is not in this operating company.",
+    });
+  }
+  if (msg.includes("E_SPLIT_PERCENTAGES_MUST_EQUAL_100")) {
+    return reply.code(400).send({
+      error: "E_SPLIT_PERCENTAGES_MUST_EQUAL_100",
+      message: "Team-split percentages must add up to 100%.",
+    });
+  }
+  if (msg.includes("E_INVALID_SPLIT_PERCENTAGES")) {
+    return reply.code(400).send({
+      error: "E_INVALID_SPLIT_PERCENTAGES",
+      message: "Team-split percentages are invalid.",
+    });
+  }
+  if (msg.includes("E_SETTLEMENT_POSTED_SPLIT_IMMUTABLE")) {
+    return reply.code(409).send({
+      error: "E_SETTLEMENT_POSTED_SPLIT_IMMUTABLE",
+      message: "Cannot change the split after the settlement has posted.",
+    });
+  }
+  if (msg.includes("E_LOAD_NOT_FOUND")) {
+    return reply.code(404).send({
+      error: "E_LOAD_NOT_FOUND",
+      message: "Load not found for this operating company.",
+    });
+  }
   return reply.code(500).send({ error: "team_split_operation_failed", message: msg });
 }
 
@@ -227,7 +264,12 @@ export async function registerTeamSplitRoutes(app: FastifyInstance) {
         secondary: byId[body.data.secondary_driver_id] ?? null,
       };
     });
-    if (!names.primary || !names.secondary) return reply.code(400).send({ error: "E_DRIVER_NOT_IN_COMPANY" });
+    if (!names.primary || !names.secondary) {
+      return reply.code(400).send({
+        error: "E_DRIVER_NOT_IN_COMPANY",
+        message: "Primary or secondary driver is not in this operating company.",
+      });
+    }
 
     const splitMethod = splitMethodFromRequest(body.data.split_type, body.data.primary_ratio, body.data.secondary_ratio);
     try {
