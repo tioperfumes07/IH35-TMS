@@ -3,7 +3,9 @@ import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { getDispatchPlannerWeek, type PlannerDriverRow, type PlannerLoadEvent } from "../../../api/dispatch";
 import { driverSchedulerOfficeApi } from "../../../api/driver-scheduler";
+import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
+import { userFacingApiError } from "../../../lib/api-error-message";
 import { addDaysIso } from "./planner-range";
 import { usePlannerRange } from "./PlannerRangeContext";
 import { BookLoadModalV4 } from "../components/BookLoadModalV4";
@@ -137,8 +139,26 @@ export function UnifiedTimelinePlanner() {
     return "Available";
   };
 
+  if (!operatingCompanyId) {
+    return (
+      <div
+        data-testid="dispatch-timeline-need-company"
+        className="rounded-sm border bg-white p-4 text-sm text-slate-600"
+      >
+        Select an operating company to load the unified timeline planner.
+      </div>
+    );
+  }
+
   if (timelineQuery.isLoading) return <div className="text-sm text-gray-500">Loading timeline…</div>;
-  if (timelineQuery.isError) return <div className="text-sm text-red-700">Failed to load planner timeline.</div>;
+  if (timelineQuery.isError) {
+    return (
+      <ListErrorBanner
+        message={userFacingApiError(timelineQuery.error, "Could not load planner timeline")}
+        onRetry={() => void timelineQuery.refetch()}
+      />
+    );
+  }
 
   return (
     <div data-testid="dispatch-unified-timeline-page" className="space-y-2">
@@ -158,8 +178,13 @@ export function UnifiedTimelinePlanner() {
           <tbody>
             {drivers.length === 0 ? (
               <tr>
-                <td colSpan={2 + days.length} className="px-3 py-4 text-center text-sm text-gray-500">
-                  No drivers in this range.
+                <td
+                  colSpan={2 + days.length}
+                  data-testid="dispatch-timeline-honest-empty"
+                  className="px-3 py-4 text-center text-sm text-gray-500"
+                >
+                  No drivers in this range for this company. Active drivers from the dispatch planner week feed
+                  appear as rows; book loads or assign drivers to populate the timeline.
                 </td>
               </tr>
             ) : (
