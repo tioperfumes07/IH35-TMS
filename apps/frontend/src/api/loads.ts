@@ -296,18 +296,23 @@ function toDispatchTransitionStatus(status: LoadStatus): DispatchStatus | null {
 }
 
 /**
- * Office status writer. When operatingCompanyId is set AND the target maps to a dispatch
- * transition status, call PATCH /api/v1/dispatch/loads/:id/transition (runs postLoadRevenueLatch +
- * pingSettlementOnLoadEvent). Otherwise fall back to PATCH /api/v1/mdata/loads/:id/status.
- * FINDING: LV-TXN-004 (FE half — Cursor BUILD-STATUS).
+ * Office status writer. When the target maps to a dispatch transition status, call
+ * PATCH /api/v1/dispatch/loads/:id/transition (runs postLoadRevenueLatch + pingSettlementOnLoadEvent).
+ * LV-TXN-004 / USMCA-WIRE-GATES: never silently fall back to mdata for post-dispatch transitions —
+ * that path skips departure evidence and settlement hooks (dispatched→in_transit proved broken on prod).
  */
 export function updateLoadStatus(
   id: string,
   body: { new_status: LoadStatus; cancellation_reason_code?: string; cancellation_notes?: string },
   operatingCompanyId?: string | null
 ) {
-  const dispatchStatus = operatingCompanyId ? toDispatchTransitionStatus(body.new_status) : null;
-  if (operatingCompanyId && dispatchStatus) {
+  const dispatchStatus = toDispatchTransitionStatus(body.new_status);
+  if (dispatchStatus) {
+    if (!operatingCompanyId) {
+      return Promise.reject(
+        new Error("operating_company_id is required for dispatch load status transitions")
+      );
+    }
     return transitionDispatchLoad(id, operatingCompanyId, {
       new_status: dispatchStatus,
       cancellation_reason_code: body.cancellation_reason_code,
@@ -319,12 +324,21 @@ export function updateLoadStatus(
   });
 }
 
-export function cancelLoad(id: string, cancellationReasonCode: string, cancellationNotes?: string) {
-  return updateLoadStatus(id, {
-    new_status: "cancelled",
-    cancellation_reason_code: cancellationReasonCode,
-    cancellation_notes: cancellationNotes,
-  });
+export function cancelLoad(
+  id: string,
+  cancellationReasonCode: string,
+  operatingCompanyId: string,
+  cancellationNotes?: string
+) {
+  return updateLoadStatus(
+    id,
+    {
+      new_status: "cancelled",
+      cancellation_reason_code: cancellationReasonCode,
+      cancellation_notes: cancellationNotes,
+    },
+    operatingCompanyId
+  );
 }
 
 export function useLoadsList(filters: LoadsListFilters) {
@@ -398,10 +412,15 @@ export function useUpdateLoadStatus(operatingCompanyId?: string | null) {
   });
 }
 
-export function useCancelLoad() {
+export function useCancelLoad(operatingCompanyId?: string | null) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, reasonCode, notes }: { id: string; reasonCode: string; notes?: string }) => cancelLoad(id, reasonCode, notes),
+    mutationFn: ({ id, reasonCode, notes }: { id: string; reasonCode: string; notes?: string }) => {
+      if (!operatingCompanyId) {
+        return Promise.reject(new Error("operating_company_id is required to cancel a load"));
+      }
+      return cancelLoad(id, reasonCode, operatingCompanyId, notes);
+    },
     onSuccess: (_data, vars) => {
       void queryClient.invalidateQueries({ queryKey: ["loads", "list"] });
       void queryClient.invalidateQueries({ queryKey: ["loads", "detail", vars.id] });
