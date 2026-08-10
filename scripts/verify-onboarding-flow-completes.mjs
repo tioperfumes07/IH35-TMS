@@ -47,6 +47,12 @@ const wizard = fs.readFileSync(
   path.join(ROOT, "apps/frontend/src/pages/onboarding/OnboardingWizard.tsx"),
   "utf8"
 );
+if (!/userFacingApiError\(err,\s*"Could not save onboarding progress"\)/.test(wizard)) {
+  fail("OnboardingWizard must humanize progress-save failures");
+}
+if (!/userFacingApiError\(err,\s*"Could not create sample data"\)/.test(wizard)) {
+  fail("OnboardingWizard must humanize sample-data failures");
+}
 for (const comp of [
   "Step1Company",
   "Step2QBOConnect",
