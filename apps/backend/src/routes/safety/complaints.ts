@@ -54,7 +54,11 @@ function currentUser(req: FastifyRequest, reply: FastifyReply) {
 }
 
 function validationError(reply: FastifyReply, error: z.ZodError) {
-  return reply.code(400).send({ error: "validation_error", details: error.flatten() });
+  return reply.code(400).send({
+    error: "validation_error",
+    message: "Check the complaint details and try again.",
+    details: error.flatten(),
+  });
 }
 
 function normalizeRole(role: string) {
@@ -164,7 +168,12 @@ export async function registerSafetyComplaintsRoutes(app: FastifyInstance) {
       );
       return res.rows[0] ?? null;
     });
-    if (!row) return reply.code(404).send({ error: "complaint_not_found" });
+    if (!row) {
+      return reply.code(404).send({
+        error: "complaint_not_found",
+        message: "The complaint could not be found.",
+      });
+    }
     return row;
   });
 
@@ -177,7 +186,12 @@ export async function registerSafetyComplaintsRoutes(app: FastifyInstance) {
     if (!query.success) return validationError(reply, query.error);
     const body = complaintSchema.safeParse(req.body ?? {});
     if (!body.success) return validationError(reply, body.error);
-    if (!validateConsistency(body.data)) return reply.code(400).send({ error: "complaint_consistency_failed" });
+    if (!validateConsistency(body.data)) {
+      return reply.code(400).send({
+        error: "complaint_consistency_failed",
+        message: "Select the matching complainant and respondent details, then try again.",
+      });
+    }
 
     const created = await withCompany(user.uuid, appRole, query.data.operating_company_id, async (client) => {
       const res = await client.query(
@@ -283,7 +297,12 @@ export async function registerSafetyComplaintsRoutes(app: FastifyInstance) {
       }
       return row;
     });
-    if (!updated) return reply.code(404).send({ error: "complaint_not_found" });
+    if (!updated) {
+      return reply.code(404).send({
+        error: "complaint_not_found",
+        message: "The complaint could not be found.",
+      });
+    }
     return { complaint: updated };
   });
 
@@ -329,7 +348,12 @@ export async function registerSafetyComplaintsRoutes(app: FastifyInstance) {
       );
       return row;
     });
-    if (!voided) return reply.code(404).send({ error: "complaint_not_found" });
+    if (!voided) {
+      return reply.code(404).send({
+        error: "complaint_not_found",
+        message: "The complaint could not be found or was already voided.",
+      });
+    }
     return { complaint: voided };
   });
 }
