@@ -90,6 +90,9 @@ function main() {
   if (!modal.includes("road-service-ticket-modal")) {
     fail("RoadServiceTicketModal must render quick-entry form");
   }
+  if (!/setError\(userFacingApiError\(err,\s*"Failed to create road service ticket"\)\)/.test(modal)) {
+    fail("RoadServiceTicketModal must humanize create failures instead of exposing raw API messages");
+  }
 
   console.log("verify:road-service-ticket-creates-wo OK");
 }
