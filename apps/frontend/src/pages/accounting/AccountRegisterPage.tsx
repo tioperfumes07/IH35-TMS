@@ -492,10 +492,12 @@ export function AccountRegisterPage() {
       ) : view === "register" && registerQuery.isError ? (
         /* CHAIN-02: a rejected register request (e.g. 400/404) must not leave the table silently blank —
            surface it so the user can correct the account or date range instead of seeing an empty grid. */
-        <p className="rounded-sm border border-red-200 bg-red-50 px-3 py-6 text-center text-sm text-red-700">
-          Couldn't load the register for this account and date range. Check the selected account and the
-          From/To dates, then try again.
-        </p>
+        <ListErrorState
+          title="Couldn't load the register for this account and date range"
+          status={0}
+          message="Check the selected account and the From/To dates, then try again."
+          onRetry={() => void registerQuery.refetch()}
+        />
       ) : view === "register" ? (
         <>
         {/* C/R (cleared/reconciled) is a bank-reconciliation concept; the GL posting model carries no
