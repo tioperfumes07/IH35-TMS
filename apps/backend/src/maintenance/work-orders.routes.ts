@@ -121,7 +121,9 @@ const sectionBLineSchema = z.object({
   quantity: z.number().min(0).default(1),
   unit_cost: z.number().min(0),
   amount: z.number().min(0),
-  service_item_uuid: z.string().uuid(),
+  // Nullable by schema: permit an honestly described cost line when the service-item catalog is
+  // degraded. The linkage can be completed later without losing the operational WO/cost record.
+  service_item_uuid: z.string().uuid().optional().nullable(),
   sub_rows: z.array(sectionBSubRowSchema).default([]),
 });
 

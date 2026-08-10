@@ -296,7 +296,7 @@ export type CreateWorkOrderTwoSectionPayload = {
     quantity: number;
     unit_cost: number;
     amount: number;
-    service_item_uuid: string;
+    service_item_uuid?: string;
     sub_rows: Array<{
       line_type: "parts" | "labor";
       description: string;
