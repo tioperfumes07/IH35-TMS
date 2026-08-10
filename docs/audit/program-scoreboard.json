@@ -1,18 +1,18 @@
 {
   "meta": {
-    "generatedAt": "2026-08-10T00:09:55-05:00",
-    "sourceSha": "693fc8f12",
+    "generatedAt": "2026-08-10T11:58:53-05:00",
+    "sourceSha": "f67752ea9",
     "deployedSha": "308bc66",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 691,
-    "failOpen": 14,
+    "failOpen": 13,
     "defects": 15
   },
   "modules": [
     {
       "tier": "0",
       "module": "banking",
-      "build": "18/19",
+      "build": "19/19",
       "cells": [
         "AUDIT",
         "AUDIT",
@@ -282,7 +282,7 @@
         "AUDIT",
         "AUDIT",
         "FIX",
-        "FAIL",
+        "FIX",
         "FIX",
         "AUDIT",
         "FAIL",
@@ -299,7 +299,7 @@
           "AUDIT",
           "AUDIT",
           "FIX",
-          "FAIL",
+          "FIX",
           "AUDIT",
           "AUDIT",
           "FAIL",
@@ -1072,7 +1072,7 @@
     {
       "tier": "3",
       "module": "reports",
-      "build": "7/8",
+      "build": "8/8",
       "cells": [
         "AUDIT",
         "AUDIT",
@@ -1125,7 +1125,7 @@
     {
       "tier": "3",
       "module": "form_425",
-      "build": "4/5",
+      "build": "5/5",
       "cells": [
         "AUDIT",
         "AUDIT",
@@ -1496,7 +1496,7 @@
     {
       "tier": "3",
       "module": "docs",
-      "build": "6/7",
+      "build": "7/7",
       "cells": [
         "AUDIT",
         "AUDIT",
@@ -2121,94 +2121,94 @@
   },
   "recentActivity": [
     {
-      "number": 0,
-      "title": "Cursor- chore(module-completion): VERIFY-CLOSE-SCENARIO-NEON — close FIN/SYS/PROG VERIFY from Cascade+Neon",
+      "number": 5651,
+      "title": "FINDING: DOCS-BOARD-MERGE-BATCH",
       "state": "merged",
-      "mergedAtCt": "08/10/2026, 01:32 AM CT",
-      "url": "",
-      "sha": "ac64ae43a",
-      "committedAtIso": "2026-08-10T01:32:59-05:00"
+      "mergedAtCt": "08/10/2026, 11:58 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/5651",
+      "sha": "f67752ea9",
+      "committedAtIso": "2026-08-10T11:58:53-05:00"
     },
     {
-      "number": 5436,
-      "title": "FINDING: MODULE-COMPLETE-FLAG-HYGIENE",
+      "number": 5649,
+      "title": "Cursor- fix(infra): LST-F388 — war CI unblock consolidated (tsc + CLS-SILENT-CAP + guard orphans)",
       "state": "merged",
-      "mergedAtCt": "08/10/2026, 01:27 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/5436",
-      "sha": "8190eaab3",
-      "committedAtIso": "2026-08-10T01:27:04-05:00"
+      "mergedAtCt": "08/10/2026, 11:57 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/5649",
+      "sha": "d40598087",
+      "committedAtIso": "2026-08-10T16:57:18Z"
     },
     {
-      "number": 5435,
-      "title": "Cursor- fix USMCA invoice-line PATCH 42P18",
+      "number": 5650,
+      "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
       "state": "merged",
-      "mergedAtCt": "08/10/2026, 01:23 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/5435",
-      "sha": "8d156a57a",
-      "committedAtIso": "2026-08-10T01:23:16-05:00"
-    },
-    {
-      "number": 0,
-      "title": "Cursor- guard(dispatch): ratchet CLS-DISP-WIRE-07 delivery-stamp now() fallback",
-      "state": "merged",
-      "mergedAtCt": "08/10/2026, 01:21 AM CT",
-      "url": "",
-      "sha": "4660e6c2f",
-      "committedAtIso": "2026-08-10T01:21:31-05:00"
+      "mergedAtCt": "08/10/2026, 11:56 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/5650",
+      "sha": "377054c65",
+      "committedAtIso": "2026-08-10T11:56:30-05:00"
     },
     {
       "number": 0,
-      "title": "Cursor- guard(dispatch): selftest for driver-qualification shared gate",
+      "title": "Cursor- fix(dispatch): CLS-SILENT-CAP batch3 — surface capped lists in 4 pages",
       "state": "merged",
-      "mergedAtCt": "08/10/2026, 01:20 AM CT",
+      "mergedAtCt": "08/10/2026, 08:17 AM CT",
       "url": "",
-      "sha": "69586cd06",
-      "committedAtIso": "2026-08-10T01:20:31-05:00"
+      "sha": "44e22f121",
+      "committedAtIso": "2026-08-10T08:17:49-05:00"
     },
     {
-      "number": 0,
-      "title": "Cursor- guard(dispatch): ratchet driver-qual hazmat gate on real columns, not comments",
+      "number": 5642,
+      "title": "Cursor- fix(reports): LST-F385 searchable subscription report picker",
       "state": "merged",
-      "mergedAtCt": "08/10/2026, 01:19 AM CT",
-      "url": "",
-      "sha": "fe31e42f0",
-      "committedAtIso": "2026-08-10T01:19:33-05:00"
+      "mergedAtCt": "08/10/2026, 08:11 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/5642",
+      "sha": "fefe46fa3",
+      "committedAtIso": "2026-08-10T08:11:03-05:00"
     },
     {
-      "number": 5431,
-      "title": "Cursor- certify customers USMCA production FAT",
+      "number": 5641,
+      "title": "Cursor- fix(driver-hub): LST-F384 searchable pay-from account picker",
       "state": "merged",
-      "mergedAtCt": "08/10/2026, 01:12 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/5431",
-      "sha": "828aaa119",
-      "committedAtIso": "2026-08-10T01:12:45-05:00"
+      "mergedAtCt": "08/10/2026, 05:57 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/5641",
+      "sha": "de9c4d721",
+      "committedAtIso": "2026-08-10T05:57:07-05:00"
     },
     {
-      "number": 0,
-      "title": "Cursor- guard(dispatch): load templates preserve is_sample_data",
+      "number": 5640,
+      "title": "Cursor- fix(accounting): LST-F383 searchable sales-tax agency picker",
       "state": "merged",
-      "mergedAtCt": "08/10/2026, 01:10 AM CT",
-      "url": "",
-      "sha": "1482b05a6",
-      "committedAtIso": "2026-08-10T01:10:01-05:00"
+      "mergedAtCt": "08/10/2026, 05:54 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/5640",
+      "sha": "7e8bd70fc",
+      "committedAtIso": "2026-08-10T05:54:46-05:00"
     },
     {
-      "number": 0,
-      "title": "Cursor- guard(dispatch): ratchet Book Load shortest-miles driver-pay gate",
+      "number": 5639,
+      "title": "Cursor- fix(accounting): LST-F382 searchable audit account filter",
       "state": "merged",
-      "mergedAtCt": "08/10/2026, 01:08 AM CT",
-      "url": "",
-      "sha": "b76ebab68",
-      "committedAtIso": "2026-08-10T01:08:31-05:00"
+      "mergedAtCt": "08/10/2026, 05:52 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/5639",
+      "sha": "771309134",
+      "committedAtIso": "2026-08-10T05:52:31-05:00"
     },
     {
-      "number": 5428,
-      "title": "FINDING: FUEL-PLANNER-DEGRADED-HONESTY",
+      "number": 5638,
+      "title": "Cursor- fix(legal): LST-F381 searchable lease owner picker",
       "state": "merged",
-      "mergedAtCt": "08/10/2026, 01:08 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/5428",
-      "sha": "27363200e",
-      "committedAtIso": "2026-08-10T01:08:04-05:00"
+      "mergedAtCt": "08/10/2026, 05:50 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/5638",
+      "sha": "34425d641",
+      "committedAtIso": "2026-08-10T05:50:44-05:00"
+    },
+    {
+      "number": 5637,
+      "title": "Cursor- fix(settlements): LST-F380 searchable dispute settlement picker",
+      "state": "merged",
+      "mergedAtCt": "08/10/2026, 05:48 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/5637",
+      "sha": "0d21f4169",
+      "committedAtIso": "2026-08-10T05:48:54-05:00"
     }
   ]
 }

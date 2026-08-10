@@ -28,19 +28,19 @@ export interface ProgramScoreboard {
 
 export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
   "meta": {
-    "generatedAt": "2026-08-10T00:09:55-05:00",
-    "sourceSha": "693fc8f12",
+    "generatedAt": "2026-08-10T11:58:53-05:00",
+    "sourceSha": "f67752ea9",
     "deployedSha": "308bc66",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 691,
-    "failOpen": 14,
+    "failOpen": 13,
     "defects": 15
   },
   "modules": [
     {
       "tier": "0",
       "module": "banking",
-      "build": "18/19",
+      "build": "19/19",
       "cells": [
         "AUDIT",
         "AUDIT",
@@ -310,7 +310,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
         "AUDIT",
         "AUDIT",
         "FIX",
-        "FAIL",
+        "FIX",
         "FIX",
         "AUDIT",
         "FAIL",
@@ -327,7 +327,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
           "AUDIT",
           "AUDIT",
           "FIX",
-          "FAIL",
+          "FIX",
           "AUDIT",
           "AUDIT",
           "FAIL",
@@ -1100,7 +1100,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
     {
       "tier": "3",
       "module": "reports",
-      "build": "7/8",
+      "build": "8/8",
       "cells": [
         "AUDIT",
         "AUDIT",
@@ -1153,7 +1153,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
     {
       "tier": "3",
       "module": "form_425",
-      "build": "4/5",
+      "build": "5/5",
       "cells": [
         "AUDIT",
         "AUDIT",
@@ -1524,7 +1524,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
     {
       "tier": "3",
       "module": "docs",
-      "build": "6/7",
+      "build": "7/7",
       "cells": [
         "AUDIT",
         "AUDIT",
