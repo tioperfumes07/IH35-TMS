@@ -169,7 +169,7 @@ function DropdownColumn({
           aria-label={hasDefaultHref ? `${item.label} submenu` : undefined}
           className={!hasDefaultHref && parentActive ? "active" : undefined}
           id={`${menuId}-trigger`}
-          onClick={isClick ? () => setOpen((o) => !o) : undefined}
+          onClick={() => setOpen((o) => !o)}
           onKeyDown={onButtonKeyDown}
         >
           {hasDefaultHref ? null : item.label}

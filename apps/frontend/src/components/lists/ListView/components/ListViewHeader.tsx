@@ -181,6 +181,7 @@ function ResizableTh({
         <button
           type="button"
           onClick={hasSort ? onSort : undefined}
+          disabled={!hasSort}
           className={`flex items-center gap-1 truncate ${hasSort ? "cursor-pointer hover:text-gray-800" : "cursor-default"}`}
         >
           <span className="truncate">{children}</span>
