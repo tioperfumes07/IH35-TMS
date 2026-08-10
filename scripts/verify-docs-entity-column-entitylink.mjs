@@ -20,8 +20,8 @@ export function collectProblems(src = read(PAGE)) {
   if (!/import\s*\{\s*EntityLink/.test(src)) {
     problems.push(`${PAGE}: must import EntityLink`);
   }
-  if (!/<EntityLink[\s\S]*kind=\{kind\}[\s\S]*id=\{firstLink\.entity_id\}/.test(src)) {
-    problems.push(`${PAGE}: Entity column must render <EntityLink kind id={firstLink.entity_id}>`);
+  if (!/links\.map\(\(link\)[\s\S]*<EntityLink[\s\S]*kind=\{kind\}[\s\S]*id=\{link\.entity_id\}/.test(src)) {
+    problems.push(`${PAGE}: Entity column must render every persisted link with <EntityLink kind id={link.entity_id}>`);
   }
   if (/entity_id\.slice\(0,\s*8\)/.test(src)) {
     problems.push(`${PAGE}: must not display raw UUID prefix (entity_id.slice)`);
@@ -38,7 +38,7 @@ if (IS_MAIN && process.argv.includes("--selftest")) {
   const real = read(PAGE);
   const broken = real
     .replace(/import \{ EntityLink[\s\S]*?;\n/, "")
-    .replace(/<EntityLink[\s\S]*?\/>/, `<span>{firstLink.entity_type}:{firstLink.entity_id.slice(0, 8)}</span>`);
+    .replace(/<EntityLink[\s\S]*?\/>/, `<span>{link.entity_type}:{link.entity_id.slice(0, 8)}</span>`);
   if (collectProblems(broken).length === 0) {
     console.error(`${LABEL} --selftest FAIL: broken fixture not flagged`);
     process.exit(1);

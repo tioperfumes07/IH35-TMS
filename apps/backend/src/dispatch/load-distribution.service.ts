@@ -26,6 +26,7 @@ export async function distributeLoadInstructions(input: DistributionInput) {
       id: string;
       load_number: string;
       operating_company_id: string;
+      customer_id: string | null;
       customer_name: string | null;
       customer_email: string | null;
       notes: string | null;
@@ -39,6 +40,7 @@ export async function distributeLoadInstructions(input: DistributionInput) {
           l.id,
           l.load_number,
           l.operating_company_id,
+          l.customer_id::text,
           c.customer_name,
           c.ar_email AS customer_email,
           l.notes,
@@ -157,9 +159,14 @@ export async function distributeLoadInstructions(input: DistributionInput) {
       `
         INSERT INTO docs.files (
           operating_company_id, original_filename, mime_type, size_bytes, r2_key,
-          upload_completed_at, uploader_user_id, description, dispatch_load_id, dispatch_document_channel, dispatch_delivery_status, dispatch_generated_at
+          upload_completed_at, uploader_user_id, description, category_id,
+          dispatch_load_id, dispatch_document_channel, dispatch_delivery_status, dispatch_generated_at
         )
-        VALUES ($1, $2, $3, $4, $5, now(), $6, $7, $8, 'portal', 'sent', now())
+        VALUES (
+          $1, $2, $3, $4, $5, now(), $6, $7,
+          (SELECT id FROM catalogs.file_categories WHERE code = 'dispatch_instructions' AND is_active = true LIMIT 1),
+          $8, 'portal', 'sent', now()
+        )
         RETURNING id
       `,
       [
@@ -178,9 +185,14 @@ export async function distributeLoadInstructions(input: DistributionInput) {
       `
         INSERT INTO docs.files (
           operating_company_id, original_filename, mime_type, size_bytes, r2_key,
-          upload_completed_at, uploader_user_id, description, dispatch_load_id, dispatch_document_channel, dispatch_delivery_status, dispatch_generated_at
+          upload_completed_at, uploader_user_id, description, category_id,
+          dispatch_load_id, dispatch_document_channel, dispatch_delivery_status, dispatch_generated_at
         )
-        VALUES ($1, $2, $3, $4, $5, now(), $6, $7, $8, 'email', 'sent', now())
+        VALUES (
+          $1, $2, $3, $4, $5, now(), $6, $7,
+          (SELECT id FROM catalogs.file_categories WHERE code = 'dispatch_instructions' AND is_active = true LIMIT 1),
+          $8, 'email', 'sent', now()
+        )
         RETURNING id
       `,
       [
@@ -195,6 +207,24 @@ export async function distributeLoadInstructions(input: DistributionInput) {
       ]
     );
     const customerFileId = customerFile.rows[0].id;
+
+    // DOCS-ECON-01 / DOCS-LINK-01: generated dispatch packets are operational documents, not
+    // generic uploads. Persist the forward links at creation time so Docs, Load, Driver, and
+    // Customer reverse surfaces all resolve the same files without filename inference.
+    const fileLinks: Array<[string, string, string]> = [
+      [fileId, "load", load.id],
+      [customerFileId, "load", load.id],
+    ];
+    if (load.assigned_primary_driver_id) fileLinks.push([fileId, "driver", load.assigned_primary_driver_id]);
+    if (load.customer_id) fileLinks.push([customerFileId, "customer", load.customer_id]);
+    for (const [linkedFileId, entityType, entityId] of fileLinks) {
+      await client.query(
+        `INSERT INTO docs.file_links (file_id, entity_type, entity_id, created_by_user_id)
+         VALUES ($1, $2, $3, $4)
+         ON CONFLICT (file_id, entity_type, entity_id) WHERE deleted_at IS NULL DO NOTHING`,
+        [linkedFileId, entityType, entityId, input.requested_by_user_id]
+      );
+    }
 
     await client.query(
       `

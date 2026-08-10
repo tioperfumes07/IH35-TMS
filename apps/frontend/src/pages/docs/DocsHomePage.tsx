@@ -72,35 +72,41 @@ function docsColumns(onPreview: (id: string) => void): Array<ParityColumn<DocsFo
     label: "Entity",
     sortable: true,
     sortValue: (row) => {
-      const firstLink = row.links?.[0];
-      return firstLink ? `${firstLink.entity_type}:${firstLink.entity_id}` : "";
+      return (row.links ?? []).map((link) => `${link.entity_type}:${link.entity_id}`).join("|");
     },
     render: (row) => {
-      const firstLink = row.links?.[0];
-      if (!firstLink) {
+      const links = row.links ?? [];
+      if (links.length === 0) {
         return (
           <span className="truncate text-gray-400" data-testid="docs-entity-unlinked">
             —
           </span>
         );
       }
-      const kind = docsLinkToEntityKind(firstLink.entity_type);
-      if (!kind) {
-        return (
-          <span className="truncate" data-testid="docs-entity-plain">
-            {firstLink.entity_type}
-          </span>
-        );
-      }
-      // DOCS-LINK-01: never show a raw UUID prefix — EntityLink drills both ways when links exist.
       return (
-        <EntityLink
-          kind={kind}
-          id={firstLink.entity_id}
-          label={`${firstLink.entity_type}`}
-          className="truncate"
-          data-testid="docs-entity-link"
-        />
+        <span className="flex min-w-0 flex-wrap gap-x-2 gap-y-1">
+          {links.map((link) => {
+            const kind = docsLinkToEntityKind(link.entity_type);
+            if (!kind) {
+              return (
+                <span key={`${link.entity_type}:${link.entity_id}`} className="truncate" data-testid="docs-entity-plain">
+                  {link.entity_type}
+                </span>
+              );
+            }
+            // DOCS-LINK-01: resolve the real human label; an explicit `entity_type` label would
+            // suppress EntityLink's resolver and make every row read only "load"/"driver".
+            return (
+              <EntityLink
+                key={`${link.entity_type}:${link.entity_id}`}
+                kind={kind}
+                id={link.entity_id}
+                className="truncate"
+                data-testid="docs-entity-link"
+              />
+            );
+          })}
+        </span>
       );
     },
   },
