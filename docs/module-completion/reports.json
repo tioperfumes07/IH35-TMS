@@ -84,8 +84,8 @@
       ],
       "spec": "SubscriptionManager \u00b7 0243-e1-3 two engines",
       "status": "PASS",
-      "evidence": "ScheduledReportsPanel.tsx fetches /api/v1/reports/scoped by company, defaults rows to [], explicitly handles rows.length === 0 with 'No active schedules' message, and does not hardcode a non-zero count. Guard: scripts/verify-rpt-s06-scheduled-count-honest.mjs.",
-      "pr": "#5345",
+      "evidence": "ReportsHome kpiReady \u2014/0 honesty; SubscriptionManager emptyMessage; ScheduledReportsPanel No active schedules; verify-rpt-s06-scheduled-honest-zero.mjs",
+      "pr": "PENDING",
       "prod_verified": false
     },
     {
