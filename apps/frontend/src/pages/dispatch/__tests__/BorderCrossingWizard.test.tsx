@@ -6,6 +6,7 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import userEvent from "@testing-library/user-event";
 import { BorderCrossingWizardPage } from "../BorderCrossingWizardPage";
 import { WizardStep2 } from "../../../components/border-crossing/WizardStep2";
+import { WizardStep4 } from "../../../components/border-crossing/WizardStep4";
 
 vi.mock("../../../contexts/CompanyContext", () => ({
   useCompanyContext: () => ({ selectedCompanyId: "00000000-0000-4000-8000-000000000001" }),
@@ -68,5 +69,21 @@ describe("BorderCrossingWizardPage", () => {
     expect(picker).toHaveAttribute("aria-autocomplete", "list");
     await user.click(picker);
     expect(await screen.findByText("WTB (US)")).toBeInTheDocument();
+  });
+
+  it("uses a searchable customs-broker picker", async () => {
+    const user = userEvent.setup();
+    render(
+      <WizardStep4
+        form={{ customsBrokerId: "", bondNumber: "" } as never}
+        brokers={[{ id: "broker-1", name: "Rio Customs Brokerage" }]}
+        onChange={vi.fn()}
+      />
+    );
+
+    const picker = screen.getByRole("combobox", { name: "Customs broker" });
+    expect(picker).toHaveAttribute("aria-autocomplete", "list");
+    await user.click(picker);
+    expect(await screen.findByText("Rio Customs Brokerage")).toBeInTheDocument();
   });
 });
