@@ -12,11 +12,13 @@ async function hasActiveCompanyMembership(
   userId: string,
   operatingCompanyId: string
 ): Promise<boolean> {
+  void userId; // opco + user_accessible_company_ids() (GUC from withCurrentUser)
+  // Bind only $1 — a dead $1/$2 split left an unused parameter that can 42P18 under prepared stmts.
   const access = await client.query(
     `
       SELECT 1
       FROM org.companies c
-      WHERE c.id = $2::uuid
+      WHERE c.id = $1::uuid
         -- NOTE: do NOT gate on c.is_active here. is_active is a UI-visibility flag
         -- ("not selectable in UI even if user has access" — 0013_org_companies.sql),
         -- NOT an authorization signal. Pre-launch entities (USMCA, is_active=false
@@ -29,7 +31,7 @@ async function hasActiveCompanyMembership(
         AND c.id IN (SELECT org.user_accessible_company_ids())
       LIMIT 1
     `,
-    [userId, operatingCompanyId]
+    [operatingCompanyId]
   );
   return (access.rowCount ?? 0) > 0;
 }

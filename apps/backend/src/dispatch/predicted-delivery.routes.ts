@@ -52,7 +52,7 @@ export async function registerPredictedDeliveryRoutes(app: FastifyInstance) {
       if (!enabled) return { kind: "disabled" as const };
 
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [body.data.operating_company_id]);
-      await client.query(`SELECT set_config('app.user_role', $1, true)`, [user.role]);
+      await client.query(`SELECT set_config('app.user_role', $1::text, true)`, [user.role]);
 
       const cur = await client.query<{ predicted_delivery_date: string | null }>(
         `SELECT predicted_delivery_date::text AS predicted_delivery_date

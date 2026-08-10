@@ -1,7 +1,11 @@
 #!/usr/bin/env node
 /**
- * SYSTEMIC-42P18 — set_config('app.operating_company_id', $1, true) without ::text
- * causes Postgres 42P18 under prepared-statement / pool reuse (fuel planner, legal, categories).
+ * SYSTEMIC-42P18 — any set_config('app.*', $N, true|false) without ::text
+ * causes Postgres 42P18 under prepared-statement / pool reuse.
+ *
+ * #5412 cast operating_company_id + true only. Residuals (user_role, active_company_id,
+ * operating_company_id + false) kept whole-app GETs failing after that deploy — this guard
+ * ratchets the FULL class.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -10,13 +14,17 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const SRC = path.join(ROOT, "apps/backend/src");
 const LABEL = "verify-systemic-42p18-set-config-text";
-const BAD = /set_config\(\s*['"]app\.operating_company_id['"]\s*,\s*\$1\s*,\s*true\s*\)/;
+const BAD = /set_config\(\s*['"][^'"]+['"]\s*,\s*\$\d+(?!::)\s*,\s*(?:true|false)\s*\)/;
 
 function walk(dir, out = []) {
   for (const ent of fs.readdirSync(dir, { withFileTypes: true })) {
     const p = path.join(dir, ent.name);
-    if (ent.isDirectory()) walk(p, out);
-    else if (ent.name.endsWith(".ts") && !ent.name.endsWith(".d.ts")) out.push(p);
+    if (ent.isDirectory()) {
+      if (ent.name === "__tests__" || ent.name === "node_modules") continue;
+      walk(p, out);
+    } else if (ent.name.endsWith(".ts") && !ent.name.endsWith(".d.ts") && !ent.name.endsWith(".test.ts")) {
+      out.push(p);
+    }
   }
   return out;
 }
@@ -58,8 +66,8 @@ if (args.includes("--selftest")) selftest();
 else {
   const problems = audit();
   if (problems.length) {
-    console.error(`[${LABEL}] FAIL ${problems.length} file(s) still use uncast $1:`);
-    for (const p of problems.slice(0, 30)) console.error(" ", p);
+    console.error(`[${LABEL}] FAIL ${problems.length} file(s) still use uncast $N in set_config:`);
+    for (const p of problems.slice(0, 40)) console.error(" ", p);
     process.exit(1);
   }
   console.log(`[${LABEL}] PASS`);

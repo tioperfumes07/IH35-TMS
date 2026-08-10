@@ -336,7 +336,7 @@ export async function exchangeAuthCodeForTokens(
   const refreshTokenExpiresAt = expiryFromNow(Number(payload.x_refresh_token_expires_in ?? 8_640_000));
 
   const saved = await withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, false)`, [operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, false)`, [operatingCompanyId]);
     const upsert = await client.query<QboConnectionRow>(
       `
         INSERT INTO integrations.qbo_connections (
