@@ -15,7 +15,7 @@ function sendValidationError(reply: FastifyReply, error: z.ZodError) {
 }
 
 export async function registerInviteAuthRoutes(app: FastifyInstance) {
-  app.post("/api/v1/auth/invite/redeem", async (req, reply) => {
+  app.post("/api/v1/auth/invite/redeem", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const parsed = redeemInviteBodySchema.safeParse(req.body ?? {});
     if (!parsed.success) return sendValidationError(reply, parsed.error);
 
