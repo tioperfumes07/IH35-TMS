@@ -243,7 +243,7 @@ export function DocumentsPage() {
           { key: "original_filename", label: "Filename" },
           { key: "category_label", label: "Category", render: (row) => row.category_label ?? "-" },
           { key: "entity", label: "Entity", render: (row) => docsFileEntityLabel(row) },
-          { key: "uploader_email", label: "Uploader", render: (row) => row.uploader_email ?? row.uploader_user_id },
+          { key: "uploader_email", label: "Uploader", render: (row) => formatEntityLabel(row.uploader_email, row.uploader_user_id, "User") },
           { key: "document_date", label: "Doc Date", render: (row) => formatDateUS(row.document_date) || "-" },
           { key: "expiration_date", label: "Expires", render: (row) => formatDateUS(row.expiration_date) || "-" },
           { key: "version_number", label: "Version", cellClass: "code-cell", render: (row) => `v${row.version_number}` },

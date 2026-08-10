@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { entityLabel } from "../../lib/entity-label";
 import { Button } from "../Button";
 
 const OPEN_WO_STATUSES = new Set(["open", "in_progress", "awaiting_parts", "awaiting_approval", "scheduled"]);
@@ -37,7 +38,7 @@ export function MaintenanceSnapshotSection({
           {openWorkOrders.map((wo) => (
             <li key={String(wo.wo_id)} className="text-xs">
               <Link to={`/maintenance/work-orders/${String(wo.wo_id)}`} className="text-slate-700 hover:underline">
-                {String(wo.display_id ?? wo.wo_id)}
+                {entityLabel(wo.display_id, wo.wo_id, "Work order")}
               </Link>
               <span className="text-gray-500"> · {String(wo.status ?? "open")}</span>
             </li>

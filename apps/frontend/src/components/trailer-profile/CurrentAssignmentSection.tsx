@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { entityLabel } from "../../lib/entity-label";
 
 const LINK = "text-slate-700 hover:underline";
 
@@ -12,7 +13,7 @@ export function CurrentAssignmentSection({ assignment }: { assignment: Record<st
         Attached truck:{" "}
         {unit?.unit_id ? (
           <Link to={`/fleet/units/${String(unit.unit_id)}`} className={LINK}>
-            {String(unit.unit_number ?? unit.unit_id)}
+            {entityLabel(unit.unit_number, unit.unit_id, "Unit")}
           </Link>
         ) : (
           "None"
@@ -22,7 +23,7 @@ export function CurrentAssignmentSection({ assignment }: { assignment: Record<st
         Current load:{" "}
         {load?.load_id ? (
           <Link to={`/dispatch/loads/${String(load.load_id)}`} className={LINK}>
-            {String(load.load_number ?? load.load_id)} ({String(load.status ?? "—")})
+            {entityLabel(load.load_number, load.load_id, "Load")} ({String(load.status ?? "—")})
           </Link>
         ) : (
           "None"

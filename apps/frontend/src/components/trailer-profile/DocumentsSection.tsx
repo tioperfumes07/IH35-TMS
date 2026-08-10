@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { entityLabel } from "../../lib/entity-label";
 import { UploadModal } from "../documents/UploadModal";
 
 export function DocumentsSection({
@@ -58,7 +59,7 @@ export function DocumentsSection({
         ) : (
           documents.map((d) => (
             <li key={String(d.file_id)}>
-              {String(d.name ?? d.file_id)}
+              {entityLabel(d.name, d.file_id, "Document")}
               {d.category ? ` · ${String(d.category)}` : ""}
               {d.expiration_date ? ` · exp ${String(d.expiration_date)}` : ""}
             </li>
