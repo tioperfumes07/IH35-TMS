@@ -9,6 +9,7 @@ import { useAuth } from "../auth/useAuth";
 import { useCompanyContext } from "../contexts/CompanyContext";
 import { Shell } from "../components/Shell";
 import { resolveListsDomainHubKey } from "../pages/lists/components/AllCatalogsMap";
+import { catalogKeyToCatalogName } from "../hooks/useCatalogQuery";
 const CustomersPage = React.lazy(() => import("../pages/Customers").then((m) => ({ default: m.CustomersPage })));
 const CustomerDetailPage = React.lazy(() => import("../pages/CustomerDetail").then((m) => ({ default: m.CustomerDetailPage })));
 const ListsHubPage = React.lazy(() => import("../pages/lists/ListsHubPage").then((m) => ({ default: m.ListsHubPage })));
@@ -741,6 +742,19 @@ function ListsCatalogKeyRoute() {
     const redirectPath = resolveUnderscoreRedirectPath(`/lists/${domain}/${catalogKey}`);
     if (redirectPath) {
       return <Navigate to={`${redirectPath}${location.search}${location.hash}`} replace />;
+    }
+    // LST-F324 — hub cards use the stable /lists/:domain/:catalogKey namespace. Bespoke routes
+    // declared above this catch-all keep winning normally; only an otherwise-unmatched,
+    // registry-backed catalog reaches here. Send that card to its real GenericCatalogPage instead
+    // of the Coming Soon fallback. Drivers is the one hub/API domain alias.
+    const registryDomain = domain === "drivers" ? "driver" : domain;
+    if (catalogKeyToCatalogName(registryDomain, catalogKey)) {
+      return (
+        <Navigate
+          to={`/lists/catalogs/${registryDomain}/${catalogKey}${location.search}${location.hash}`}
+          replace
+        />
+      );
     }
   }
   return <ComingSoonPage />;

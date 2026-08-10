@@ -37,6 +37,7 @@ const LABEL = "verify-converted-catalog-reachable-from-hub";
 
 const FE_REGISTRY = "apps/frontend/src/hooks/useCatalogQuery.ts";
 const HUB = "apps/frontend/src/pages/lists/components/AllCatalogsMap.tsx";
+const MANIFEST = "apps/frontend/src/routes/manifest.tsx";
 const BE_ROUTES = "apps/backend/src/catalogs/generic-catalog.routes.ts";
 
 const read = (rel) => readFileSync(resolve(ROOT, rel), "utf8");
@@ -159,9 +160,29 @@ export function chainProblems({ registry, hub, backend }) {
   return problems;
 }
 
+export function fallbackProblems(manifest) {
+  const problems = [];
+  if (!/import \{ catalogKeyToCatalogName \} from "\.\.\/hooks\/useCatalogQuery"/.test(manifest)) {
+    problems.push("manifest must use the generic catalog registry for unmatched Lists hub cards");
+  }
+  if (!/catalogKeyToCatalogName\(registryDomain, catalogKey\)/.test(manifest)) {
+    problems.push("ListsCatalogKeyRoute must verify the domain/key against the generic catalog registry");
+  }
+  if (!/\/lists\/catalogs\/\$\{registryDomain\}\/\$\{catalogKey\}/.test(manifest)) {
+    problems.push("ListsCatalogKeyRoute must redirect registered fallback cards to GenericCatalogPage");
+  }
+  if (!/domain === "drivers" \? "driver" : domain/.test(manifest)) {
+    problems.push("ListsCatalogKeyRoute must preserve the drivers hub to driver registry alias");
+  }
+  return problems;
+}
+
 function run() {
   const registry = read(FE_REGISTRY);
-  const problems = chainProblems({ registry, hub: read(HUB), backend: readAllBackendCatalogSources() });
+  const problems = [
+    ...chainProblems({ registry, hub: read(HUB), backend: readAllBackendCatalogSources() }),
+    ...fallbackProblems(read(MANIFEST)),
+  ];
   if (problems.length) {
     console.error(`[${LABEL}] FAILED — ${problems.length} issue(s):`);
     for (const p of problems) console.error(`  ✗ ${p}`);
@@ -183,6 +204,7 @@ function selftest() {
   const registry = read(FE_REGISTRY);
   const hub = read(HUB);
   const backend = readAllBackendCatalogSources();
+  const manifest = read(MANIFEST);
 
   const cases = [
     [
@@ -216,6 +238,16 @@ function selftest() {
     } else {
       console.log(`SELFTEST: '${name}' -> caught as expected`);
     }
+  }
+
+  const brokenFallback = fallbackProblems(
+    manifest.replace("catalogKeyToCatalogName(registryDomain, catalogKey)", "false")
+  );
+  if (!brokenFallback.some((problem) => problem.includes("verify the domain/key"))) {
+    console.error("SELFTEST FAIL: removed generic Lists fallback was not caught");
+    ok = false;
+  } else {
+    console.log("SELFTEST: 'generic Lists fallback removed -> dead card caught' -> caught as expected");
   }
 
   if (!ok) process.exit(1);
