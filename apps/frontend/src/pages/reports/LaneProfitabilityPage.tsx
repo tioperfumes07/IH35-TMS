@@ -23,6 +23,8 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { LaneDetailModal } from "../../components/reports/LaneDetailModal";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { ListErrorState } from "../../components/ListErrorState";
+import { formatQueryErrorDetail } from "../../lib/tableError";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -232,7 +234,13 @@ export function LaneProfitabilityPage() {
         </Button>
       </div>
 
-      {query.isError ? <p className="text-sm text-red-600">Failed to load lane profitability.</p> : null}
+      {query.isError ? (
+        <ListErrorState
+          title="Couldn't load lane profitability"
+          {...formatQueryErrorDetail(query.error)}
+          onRetry={() => void query.refetch()}
+        />
+      ) : null}
 
       {query.data ? (
         <>
