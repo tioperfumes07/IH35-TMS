@@ -668,15 +668,25 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
       pushToast("Select a Trip Type before booking", "error");
       return;
     }
-    // Manual miles (no PC*MILER): per-mile pay reads miles_shortest — refuse silent 0 when a driver is seated.
+    // Manual miles (no PC*MILER): refuse silent 0 for both shortest (driver pay) and practical (fuel/ETA).
     const seatedDriver = Boolean(values.assigned_primary_driver_id?.trim?.() || values.assigned_primary_driver_id);
-    if (saveMode === "book_dispatch" && seatedDriver && !(Number(values.miles_shortest) > 0)) {
-      form.setError("miles_shortest", {
-        type: "required",
-        message: "Enter shortest miles (driver pay). PC*MILER is not connected — type them manually.",
-      });
-      pushToast("Enter shortest miles before booking with a driver", "error");
-      return;
+    if (saveMode === "book_dispatch") {
+      if (!(Number(values.miles_practical) > 0)) {
+        form.setError("miles_practical", {
+          type: "required",
+          message: "Enter practical miles (fuel + ETA). PC*MILER is not connected — type them manually.",
+        });
+        pushToast("Enter practical miles before booking", "error");
+        return;
+      }
+      if (seatedDriver && !(Number(values.miles_shortest) > 0)) {
+        form.setError("miles_shortest", {
+          type: "required",
+          message: "Enter shortest miles (driver pay). PC*MILER is not connected — type them manually.",
+        });
+        pushToast("Enter shortest miles before booking with a driver", "error");
+        return;
+      }
     }
     const token = opts?.override ? overrideToken ?? crypto.randomUUID() : undefined;
     if (opts?.override && !overrideToken) setOverrideToken(token ?? null);
@@ -1488,13 +1498,14 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
                   deadhead={milesDeadhead}
                   ratePerMile={ratePerMile}
                   shortestRequired={Boolean(assignedPrimaryDriverId)}
+                  practicalRequired
                   onPracticalChange={(n) => form.setValue("miles_practical", n, { shouldDirty: true, shouldValidate: true })}
                   onShortestChange={(n) => form.setValue("miles_shortest", n, { shouldDirty: true, shouldValidate: true })}
                   onDeadheadChange={(n) => form.setValue("miles_deadhead", n, { shouldDirty: true, shouldValidate: true })}
                 />
                 <p className="blw-note">
                   Enter Shortest (driver pay) and Practical/long (fuel + ETA) by hand — PC*MILER is not connected yet.
-                  With a driver seated, Shortest must be greater than 0 or Book is refused.
+                  Practical must be greater than 0; with a driver seated, Shortest must also be greater than 0 or Book is refused.
                 </p>
                 {/* border_routing stays form-backed but not operator-facing here */}
                 <div className="hidden">
