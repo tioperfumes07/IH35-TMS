@@ -1,4 +1,4 @@
-import { run } from "../../verify-usmca-active-not-hidden-skills.mjs";
+import { run } from "../verify-usmca-active-not-hidden-skills.mjs";
 
 export default {
   name: "verify-usmca-active-not-hidden-skills",

@@ -1,4 +1,4 @@
-import { run } from "../../verify-no-mdata-drivers-active-phantom.mjs";
+import { run } from "../verify-no-mdata-drivers-active-phantom.mjs";
 
 export default {
   name: "verify-no-mdata-drivers-active-phantom",
