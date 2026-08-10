@@ -20,6 +20,7 @@ import { UniversalFilterBar, type FilterState } from "../../components/planner/U
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateUS } from "../../lib/formatDate";
+import { entityLabel } from "../../lib/entity-label";
 import { isOpenTaskStatus } from "./taskDisplay";
 
 const STATUS_COLORS: Record<TaskStatus, string> = {
@@ -226,7 +227,7 @@ export function TaskPlannerGrid() {
   const dates = buildDateRange(filter.from, filter.to);
   const rolloverDay = overdueRolloverDay(dates, filter.from);
   const employees = query.data
-    ? [...new Map(query.data.tasks.map((t) => [t.assigned_to_user_id, t.assigned_to_name ?? t.assigned_to_email ?? t.assigned_to_user_id])).entries()]
+    ? [...new Map(query.data.tasks.map((t) => [t.assigned_to_user_id, entityLabel(t.assigned_to_name, t.assigned_to_user_id, "User") ?? t.assigned_to_email ?? "—"])).entries()]
     : [];
 
   const dayColPct = dates.length > 0 ? Math.floor(80 / dates.length) : 9;

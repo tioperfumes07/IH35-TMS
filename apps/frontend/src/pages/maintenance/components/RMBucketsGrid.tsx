@@ -52,7 +52,7 @@ function KanbanCard({
   onAdvanceStatus?: (id: string, nextStatus: "in_progress" | "waiting_parts" | "complete") => void;
 }) {
   const age = ageDays(row.opened_at);
-  const meta = [row.unit_number ?? row.unit_id, row.driver_id ? "driver" : null, row.description ?? row.wo_type].filter(Boolean).join(" · ");
+  const meta = [entityLabel(row.unit_number, row.unit_id, "Unit"), row.driver_id ? "driver" : null, row.description ?? row.wo_type].filter(Boolean).join(" · ");
   return (
     <div className="rounded-sm border border-gray-200 bg-white" style={{ borderLeft: `3px solid ${accent}` }}>
       <button type="button" onClick={() => onOpen(row.id)} className="block w-full px-2 py-1.5 text-left hover:bg-gray-50">

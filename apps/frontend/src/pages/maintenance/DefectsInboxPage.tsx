@@ -15,6 +15,7 @@ import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { PageHeader } from "../../components/forms/shared/PageHeader";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { CollapsedListFilters } from "../../components/table";
+import { entityLabel } from "../../lib/entity-label";
 
 export function DefectsInboxPage() {
   const { selectedCompanyId, companies } = useCompanyContext();
@@ -42,7 +43,7 @@ export function DefectsInboxPage() {
       }),
     onSuccess: async (result) => {
       if (result.work_order_id) {
-        pushToast(`Work order ${result.display_id ?? result.work_order_id} created`, "success");
+        pushToast(`Work order ${entityLabel(result.display_id, result.work_order_id, "Work order")} created`, "success");
       } else {
         pushToast("Defect triage updated", "success");
       }

@@ -18,6 +18,7 @@ import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { useToast } from "../../../components/Toast";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { capNotice, listCapInfo } from "../../../lib/list-cap";
+import { entityLabel } from "../../../lib/entity-label";
 
 // Named so the fetch and the CLS-SILENT-CAP truncation check read the SAME numbers and cannot drift.
 // Browse cap is the route max; the search cap is deliberately smaller because a search should narrow.
@@ -84,7 +85,7 @@ export function VendorsPage() {
   const apVendorOptions = useMemo(
     () =>
       (apVendorsQ.data?.vendors ?? [])
-        .map((vendor) => ({ value: vendor.id, label: vendor.name || vendor.id }))
+        .map((vendor) => ({ value: vendor.id, label: entityLabel(vendor.name, vendor.id, "Vendor") }))
         .sort((a, b) => a.label.localeCompare(b.label)),
     [apVendorsQ.data?.vendors]
   );
@@ -108,7 +109,7 @@ export function VendorsPage() {
   const apVendorLabelById = useMemo(() => {
     const map = new Map<string, string>();
     for (const vendor of apVendorsQ.data?.vendors ?? []) {
-      map.set(vendor.id, vendor.name || vendor.id);
+      map.set(vendor.id, entityLabel(vendor.name, vendor.id, "Vendor"));
     }
     return map;
   }, [apVendorsQ.data?.vendors]);
@@ -200,7 +201,7 @@ export function VendorsPage() {
       render: (row) =>
         row.mdata_vendor_id ? (
           <Link to={`/vendors/${row.mdata_vendor_id}`} className="text-slate-600 underline">
-            {apVendorLabelById.get(row.mdata_vendor_id) ?? row.mdata_vendor_id}
+            {entityLabel(apVendorLabelById.get(row.mdata_vendor_id), row.mdata_vendor_id, "Vendor")}
           </Link>
         ) : (
           "—"
