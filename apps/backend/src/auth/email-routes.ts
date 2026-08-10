@@ -39,7 +39,7 @@ function generateCode() {
 }
 
 export async function registerEmailAuthRoutes(app: FastifyInstance) {
-  app.post("/api/v1/auth/email/start", async (req, reply) => {
+  app.post("/api/v1/auth/email/start", { config: { rateLimit: { max: 5, timeWindow: "1 minute" } } }, async (req, reply) => {
     const parsed = startBodySchema.safeParse(req.body ?? {});
     if (!parsed.success) return sendValidationError(reply, parsed.error);
     const email = normalizeEmail(parsed.data.email);
