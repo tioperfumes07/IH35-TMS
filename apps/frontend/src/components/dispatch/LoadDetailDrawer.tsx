@@ -336,6 +336,9 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
                       { label: "Pickup #", value: load.pickup_number ?? "—" },
                       { label: "Total customer invoice", value: formatMoneyCents(load.rate_total_cents, load.currency_code) },
                       { label: "Created", value: new Date(load.created_at).toLocaleString() },
+                      { label: "Miles (practical)", value: load.miles_practical != null ? load.miles_practical.toLocaleString() : "—" },
+                      { label: "Miles (shortest)", value: load.miles_shortest != null ? load.miles_shortest.toLocaleString() : "—" },
+                      { label: "Deadhead miles", value: load.miles_deadhead != null ? load.miles_deadhead.toLocaleString() : "—" },
                     ]}
                   />
                   <p className="mt-1 text-[10px] text-gray-400">Single customer total. Linehaul / fuel / accessorial breakdown arrives with the charge line-items block.</p>
