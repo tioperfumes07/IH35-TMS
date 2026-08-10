@@ -24,6 +24,10 @@ function assertAll(srcs) {
     if (!/userFacingApiError\(/.test(src)) problems.push(`${file}: missing userFacingApiError`);
     if (/String\(\(error as Error\)\.message/.test(src)) problems.push(`${file}: still stringifies Error.message`);
   }
+  const contracts = srcs["apps/frontend/src/pages/legal/contracts/LegalContractInstancesPage.tsx"];
+  if (!/listQuery\.isError[\s\S]*?<ListErrorState[\s\S]*?listQuery\.refetch\(\)/.test(contracts)) {
+    problems.push("LegalContractInstancesPage: list failure must render retryable ListErrorState before empty copy");
+  }
   return problems;
 }
 
