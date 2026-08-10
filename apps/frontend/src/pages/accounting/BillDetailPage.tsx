@@ -130,7 +130,7 @@ export function BillDetailPage() {
       key: "account_id",
       label: "GL account",
       sortable: true,
-      sortValue: (line) => line.account_name ?? line.account_id ?? "",
+      sortValue: (line) => accountLabel(line.account_number, line.account_name, line.account_id ?? ""),
       render: (line) =>
         line.account_id ? (
           <Link
