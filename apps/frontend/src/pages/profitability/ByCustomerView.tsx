@@ -29,8 +29,8 @@ const COLUMNS: Array<ParityColumn<CustomerProfitabilityRow>> = [
 ];
 
 // Stub view — no data source is wired yet (module unrouted; see stub-inventory recon).
-// The former hand-rolled table rendered a single hardcoded "No data loaded" placeholder
-// row, which is expressed here as the ParityTable empty state. No amounts are computed.
+// The table states that its feed is unavailable instead of implying a successful zero-row query.
+// No amounts are computed.
 const ROWS: CustomerProfitabilityRow[] = [];
 
 export function ByCustomerView({ filters }: ByCustomerViewProps) {
@@ -47,7 +47,7 @@ export function ByCustomerView({ filters }: ByCustomerViewProps) {
           rowKey={(row) => row.customer}
           storageKey="profitability-by-customer"
           tableTestId="profitability-by-customer-table"
-          emptyText="No data loaded"
+          emptyText="Profitability feed is not connected; no figures are available for this view."
         />
       </div>
     </div>

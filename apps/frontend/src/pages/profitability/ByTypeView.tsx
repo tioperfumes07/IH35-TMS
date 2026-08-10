@@ -10,7 +10,7 @@ interface ByTypeViewProps {
 
 // Static placeholder rows (no query wired yet) — the ParityTable renders the
 // same 7-column grammar the former hand-rolled markup carried, with the empty
-// state preserving the former "No data loaded" copy.
+// state explicitly naming the unavailable feed rather than implying a successful empty query.
 type ByTypeRow = {
   id: string;
   equipment_type: string;
@@ -46,7 +46,7 @@ export function ByTypeView({ filters }: ByTypeViewProps) {
         rowKey={(row) => row.id}
         storageKey="profitability-by-type"
         tableTestId="profitability-by-type-table"
-        emptyText="No data loaded"
+        emptyText="Profitability feed is not connected; no figures are available for this view."
       />
     </div>
   );

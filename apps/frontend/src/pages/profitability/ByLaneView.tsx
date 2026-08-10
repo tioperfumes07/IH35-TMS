@@ -46,7 +46,7 @@ export function ByLaneView({ filters }: ByLaneViewProps) {
         rowKey={(row) => row.lane}
         storageKey="profitability-by-lane"
         tableTestId="profitability-by-lane-table"
-        emptyText="No data loaded"
+        emptyText="Profitability feed is not connected; no figures are available for this view."
       />
     </div>
   );
