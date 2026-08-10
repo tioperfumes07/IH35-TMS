@@ -20,6 +20,7 @@ const LABEL = "verify-user-facing-api-errors-in-toasts";
 // exact; add a file only after every API error toast in it uses the helper.
 const RATCHETED_FILES = [
   "apps/frontend/src/components/catalogs/CatalogExcelUploadModal.tsx",
+  "apps/frontend/src/components/catalogs/CatalogEditModal.tsx",
   "apps/frontend/src/components/FleetTable.tsx",
   "apps/frontend/src/components/drivers/CreateDriverModal.tsx",
   "apps/frontend/src/pages/dispatch/DispatchBoard.tsx",
