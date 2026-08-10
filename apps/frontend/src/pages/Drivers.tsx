@@ -707,6 +707,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
                   rowKey={(row) => row.id}
                   onRowClick={(row) => navigate(`/drivers/${row.id}`)}
                   columns={driversRosterColumns}
+                  emptyText="No drivers found."
                 />
               )}
             </>
