@@ -25,6 +25,7 @@ import { ParityTable, type ParityColumn } from "../../../components/parity/Parit
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
 import { CappedListNotice } from "../../../components/CappedListNotice";
+import { userFacingApiError } from "../../../lib/api-error-message";
 
 type Props = {
   operatingCompanyId: string;
@@ -364,7 +365,7 @@ export function CargoClaimIntakeSurface({
       refresh();
       if (newId) setSelectedId(newId); // open detail so the office can attach photos immediately
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not create the cargo claim.");
+      setError(userFacingApiError(err, "Could not create the cargo claim."));
     } finally {
       setSaving(false);
     }
