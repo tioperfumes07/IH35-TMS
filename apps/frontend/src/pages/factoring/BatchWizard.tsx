@@ -12,6 +12,7 @@ import { ApiError } from "../../api/client";
 import { BatchDetail } from "./BatchDetail";
 import { Button } from "../../components/Button";
 import { ListErrorState } from "../../components/ListErrorState";
+import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useToast } from "../../components/Toast";
@@ -132,6 +133,25 @@ export function BatchWizard() {
     setStep(4);
   };
 
+  if (!companyId) {
+    return (
+      <div className="space-y-3">
+        <PageHeader
+          backHref="/factoring"
+          breadcrumb={["Factoring", "Batch Wizard"]}
+          title="Factoring Batch Wizard"
+          subtitle="Assemble paid-ready invoices into a factoring batch"
+        />
+        <div
+          className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-sm text-gray-700"
+          data-testid="factoring-batches-need-company"
+        >
+          Select an operating company to assemble a factoring batch.
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-3">
       <PageHeader
@@ -140,6 +160,7 @@ export function BatchWizard() {
         title="Factoring Batch Wizard"
         subtitle="Assemble paid-ready invoices into a factoring batch"
       />
+      {candidatesQuery.isError ? <ListErrorBanner onRetry={() => void candidatesQuery.refetch()} /> : null}
       <div className="space-y-3 rounded-sm border border-gray-200 bg-white p-4">
       <div className="flex flex-wrap items-center gap-2 text-xs">
         {[
@@ -170,6 +191,13 @@ export function BatchWizard() {
               message={(candidatesQuery.error as Error)?.message}
               onRetry={() => void candidatesQuery.refetch()}
             />
+          ) : !candidatesQuery.isLoading && (candidatesQuery.data ?? []).length === 0 ? (
+            <div
+              className="rounded-sm border border-slate-200 bg-white px-4 py-10 text-center text-xs text-slate-400"
+              data-testid="factoring-batches-honest-empty"
+            >
+              No paid-ready invoices available for a new batch.
+            </div>
           ) : (
             <ParityTable<FactoringBatchInvoice>
               columns={candidateColumns}

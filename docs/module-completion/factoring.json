@@ -87,8 +87,8 @@
         "VERIFY-3"
       ],
       "spec": "BatchWizard \u00b7 BatchDetail routes",
-      "status": "OPEN",
-      "evidence": "scaffold \u2014 not proven",
+      "status": "PASS",
+      "evidence": "BatchWizard need-company + ListErrorBanner + honest empty; BatchDetail company-gated; verify-fact-s03-batches-surface.mjs",
       "pr": null,
       "prod_verified": false
     },
@@ -150,9 +150,9 @@
       "prod_verified": false
     }
   ],
-  "pass_count": 3,
+  "pass_count": 4,
   "total_count": 10,
-  "progress": "3 of 10",
+  "progress": "4 of 10",
   "live_scenario_probe": {
     "source": "scripts/scoreboard-from-live.mjs (live prod probes, TMS-native only)",
     "pass_count": 0,
