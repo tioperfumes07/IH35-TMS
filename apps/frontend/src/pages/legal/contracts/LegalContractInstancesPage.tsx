@@ -17,6 +17,7 @@ import { useFeatureFlag } from "../../../hooks/useFeatureFlag";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { CollapsedListFilters, TableSearch } from "../../../components/table";
 import { userFacingApiError } from "../../../lib/api-error-message";
+import { ListErrorState } from "../../../components/ListErrorState";
 
 const STATUS_OPTIONS: Array<{ value: "all" | LegalContractStatus; label: string }> = [
   { value: "all", label: "All statuses" },
@@ -81,7 +82,7 @@ export function LegalContractInstancesPage() {
     queryFn: () => legalContractsApi.get(String(activeDetailId), operatingCompanyId),
   });
 
-  const rows = listQuery.data?.contracts ?? [];
+  const rows = useMemo(() => listQuery.data?.contracts ?? [], [listQuery.data?.contracts]);
   const filteredRows = useMemo(() => {
     return rows.filter((row) => {
       if (templateFilter && row.template_code !== templateFilter) return false;
@@ -196,6 +197,14 @@ export function LegalContractInstancesPage() {
 
       <LegalModuleTabs activeTabId="contracts" />
 
+      {listQuery.isError ? (
+        <ListErrorState
+          title="Couldn't load contract instances"
+          status={0}
+          message={(listQuery.error as Error)?.message}
+          onRetry={() => void listQuery.refetch()}
+        />
+      ) : (
       <ParityTable
         rows={filteredRows}
         columns={columns}
@@ -319,6 +328,7 @@ export function LegalContractInstancesPage() {
           </CollapsedListFilters>
         }
       />
+      )}
 
       {activeDetailId ? (
         <div className="rounded-sm border border-gray-200 bg-white p-3">
