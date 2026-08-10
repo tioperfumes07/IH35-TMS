@@ -68,7 +68,7 @@ export function AuditEventsList() {
         key: "actor_email",
         label: "Actor",
         sortable: true,
-        sortValue: (row) => row.actor_email ?? row.actor_user_id ?? "",
+        sortValue: (row) => entityLabel(row.actor_email, row.actor_user_id, "User") ?? "",
         render: (row) => entityLabel(row.actor_email, row.actor_user_id, "User") ?? "—",
       },
       {
