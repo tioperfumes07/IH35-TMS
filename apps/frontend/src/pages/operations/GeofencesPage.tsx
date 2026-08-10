@@ -5,6 +5,7 @@ import { Button } from "../../components/Button";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
+import { Combobox } from "../../components/Combobox";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -95,9 +96,10 @@ export function GeofencesPage() {
       return (yardsQuery.data?.locations ?? [])
         .filter((loc) => String((loc as { location_type?: string }).location_type ?? "") === "yard")
         .map((loc) => ({
-          id: String((loc as { id?: string }).id ?? ""),
+          value: String((loc as { id?: string }).id ?? ""),
           label: String((loc as { name?: string }).name ?? "Yard"),
-        }));
+        }))
+        .filter((option) => option.value);
     }
     return [];
   }, [locationKind, yardsQuery.data?.locations]);
@@ -270,18 +272,16 @@ export function GeofencesPage() {
                 />
               </div>
             ) : locationKind === "yard" ? (
-              <select
-                className="mt-1 block h-9 w-full rounded-sm border border-slate-300 px-2 text-sm"
-                value={locationRefId}
-                onChange={(event) => setLocationRefId(event.target.value)}
-              >
-                <option value="">None</option>
-                {locationOptions.map((option) => (
-                  <option key={option.id} value={option.id}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
+              <Combobox
+                className="mt-1"
+                dataTestId="geofence-yard-location-picker"
+                options={locationOptions}
+                value={locationRefId || null}
+                onChange={(next) => setLocationRefId(next ?? "")}
+                placeholder="None"
+                loading={yardsQuery.isLoading}
+                error={yardsQuery.isError ? "Couldn't load yard locations" : undefined}
+              />
             ) : (
               <p className="mt-1 text-xs text-slate-500">No linked entity for custom geofences.</p>
             )}

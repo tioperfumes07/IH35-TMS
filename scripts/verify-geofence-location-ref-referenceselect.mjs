@@ -23,6 +23,12 @@ export function collectProblems(root = ROOT) {
   if (/locationKind === "vendor_site"[\s\S]{0,400}<select/.test(code)) {
     problems.push(`${PAGE}: vendor_site must not use plain <select> for location ref`);
   }
+  if (!/locationKind === "yard"[\s\S]{0,400}<Combobox/.test(code)) {
+    problems.push(`${PAGE}: yard location ref must use searchable Combobox`);
+  }
+  if (/locationKind === "yard"[\s\S]{0,400}<select/.test(code)) {
+    problems.push(`${PAGE}: yard must not use plain <select> for location ref`);
+  }
   return problems;
 }
 
