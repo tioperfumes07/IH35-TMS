@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { formatDateUS } from "../../lib/formatDate";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { listJournalEntries, voidJournalEntry, type JournalEntry, type JournalEntrySource, type JournalEntryStatus } from "../../api/accounting";
+import { listCoaAccountsForJe, listJournalEntries, voidJournalEntry, type JournalEntry, type JournalEntrySource, type JournalEntryStatus } from "../../api/accounting";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useAuth } from "../../auth/useAuth";
 import { Button } from "../../components/Button";
@@ -19,6 +19,8 @@ import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
+import { coaAccountReferenceOption } from "../../components/parity/referenceOptionLabels";
 
 const UUID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi;
 function humanMemo(memo: string | null | undefined): string {
@@ -59,6 +61,16 @@ export function ManualJEListPage() {
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [accountId, setAccountId] = useState("");
+  const accountsQuery = useQuery({
+    queryKey: ["manual-je-list", "accounts", companyId],
+    queryFn: () => listCoaAccountsForJe(companyId, { postableOnly: true }),
+    enabled: Boolean(companyId),
+    staleTime: 60_000,
+  });
+  const accountOptions = useMemo(
+    () => (accountsQuery.data?.accounts ?? []).map(coaAccountReferenceOption),
+    [accountsQuery.data?.accounts],
+  );
   const [createOpen, setCreateOpen] = useState(false);
   const [voidTarget, setVoidTarget] = useState<JournalEntry | null>(null);
   const [page, setPage] = useState(0);
@@ -185,11 +197,16 @@ export function ManualJEListPage() {
         </SelectCombobox>
         <DatePicker className="h-8 rounded-sm border border-gray-300 px-2" value={fromDate} onChange={(next) => setFromDate(next)} />
         <DatePicker className="h-8 rounded-sm border border-gray-300 px-2" value={toDate} onChange={(next) => setToDate(next)} />
-        <input
-          className="h-8 rounded-sm border border-gray-300 px-2"
-          placeholder="Account ID (optional)"
-          value={accountId}
-          onChange={(e) => setAccountId(e.target.value)}
+        <ReferenceSelect
+          value={accountId || null}
+          onChange={(next) => setAccountId(next ?? "")}
+          options={accountOptions}
+          createKind="account"
+          operatingCompanyId={companyId}
+          placeholder="All accounts"
+          disabled={!companyId}
+          loading={accountsQuery.isLoading}
+          onOptionCreated={() => void accountsQuery.refetch()}
         />
       </div>
     </CollapsedListFilters>

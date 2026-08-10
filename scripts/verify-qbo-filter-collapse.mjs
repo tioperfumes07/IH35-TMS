@@ -170,6 +170,14 @@ const workOrdersTable = read("apps/frontend/src/pages/maintenance/components/Wor
 if (!workOrdersTable.includes('<EntityPicker') || !workOrdersTable.includes('kind="vendor"')) {
   failures.push("WorkOrdersTable: external vendor filter must use the company-scoped vendor picker");
 }
+
+const manualJeList = read("apps/frontend/src/pages/accounting/ManualJEListPage.tsx");
+if (!manualJeList.includes("listCoaAccountsForJe") || !manualJeList.includes("<ReferenceSelect")) {
+  failures.push("ManualJEListPage: account filter must use the entity-scoped chart picker");
+}
+if (manualJeList.includes('placeholder="Account ID (optional)"')) {
+  failures.push("ManualJEListPage: account filter must not require a typed account id");
+}
 if (workOrdersTable.includes('placeholder="External vendor id…"')) {
   failures.push("WorkOrdersTable: external vendor filter must not require a typed vendor id");
 }
