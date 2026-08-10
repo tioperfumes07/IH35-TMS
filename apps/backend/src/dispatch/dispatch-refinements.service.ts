@@ -3,6 +3,11 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { notifyLoadAssigned, notifyLoadReassignedAway } from "../services/push-notification.service.js";
 import { enqueueOutboxEvent } from "../outbox/enqueue-outbox-event.js";
+import { enqueueOverrideNotice } from "../outbox/enqueue-override-notice.js";
+import {
+  assertDriverQualifiedForLoad,
+  type DriverQualificationBlock,
+} from "./driver-qualification.service.js";
 
 export type ReassignBody = {
   operating_company_id: string;
@@ -10,6 +15,8 @@ export type ReassignBody = {
   new_driver_id: string;
   reason_code: string;
   notes?: string | null;
+  requesting_user_role: string;
+  override_reason?: string | null;
 };
 
 function normalizeStopType(raw: string): "pickup" | "delivery" | "fuel" | "rest" | "border" {
@@ -18,6 +25,13 @@ function normalizeStopType(raw: string): "pickup" | "delivery" | "fuel" | "rest"
   if (v === "customs") return "border";
   if (v === "pickup" || v === "delivery" || v === "fuel" || v === "rest" || v === "border") return v;
   return "rest";
+}
+
+// OWNER-ONLY override for the DRIVER-QUALIFICATION gate (CDL / DOT medical / hazmat endorsement).
+// Kept separate from generic canOverride* helpers so a future widening of a less-critical override
+// cannot silently put a non-Owner past a federal DOT hard-stop.
+function canOwnerOverrideQualification(role: string) {
+  return role === "Owner";
 }
 
 export type LoadStopInput = {
@@ -51,7 +65,8 @@ export async function manualReassignLoad(userId: string, input: ReassignBody) {
     try {
       const loadRes = await client.query(
         `
-          SELECT id, operating_company_id, assigned_primary_driver_id, assigned_unit_id, assigned_secondary_driver_id, load_number
+          SELECT id, operating_company_id, assigned_primary_driver_id, assigned_unit_id, assigned_secondary_driver_id, load_number,
+                 COALESCE((quicksave_pending_fields->>'hazmat')::boolean, false) AS is_hazmat
           FROM mdata.loads
           WHERE id = $1
             AND operating_company_id = $2
@@ -68,9 +83,86 @@ export async function manualReassignLoad(userId: string, input: ReassignBody) {
             assigned_unit_id: string | null;
             assigned_secondary_driver_id: string | null;
             load_number: string | null;
+            is_hazmat: boolean;
           }
         | undefined;
       if (!load) throw new Error("E_LOAD_NOT_FOUND");
+
+      if (input.new_driver_id !== load.assigned_primary_driver_id) {
+        const block = await assertDriverQualifiedForLoad(client, {
+          driverId: input.new_driver_id,
+          operatingCompanyId: input.operating_company_id,
+          isHazmat: load.is_hazmat,
+        });
+
+        if (block) {
+          const ownerOverridingQualification =
+            canOwnerOverrideQualification(input.requesting_user_role) &&
+            typeof input.override_reason === "string" &&
+            input.override_reason.trim().length >= 10;
+
+          if (ownerOverridingQualification) {
+            await appendCrudAudit(
+              client,
+              userId,
+              "dispatch.driver_qualification_overridden_by_owner",
+              {
+                operating_company_id: input.operating_company_id,
+                load_id: input.load_id,
+                load_number: load.load_number,
+                driver_id: block.driverId,
+                driver_name: block.driverName,
+                block_code: "E_DRIVER_NOT_QUALIFIED",
+                overridden_reasons: block.reasons,
+                cdl_expires_at: block.cdlExpiresAt,
+                medical_expiry_date: block.medicalExpiryDate,
+                hazmat_endorsement_expires_at: block.hazmatEndorsementExpiresAt,
+                override_reason: input.override_reason,
+                role: input.requesting_user_role,
+                override_class: "DOT_QUALIFICATION",
+                attestation_scope: "single_dispatch",
+                severity_label: "critical",
+              },
+              "warning",
+              "BT-3-DISPATCH-AUTH-GATES"
+            );
+            await enqueueOverrideNotice(client, block.driverId, {
+              override_type: "driver_qualification",
+              notify_channels: ["email", "sms"],
+              operating_company_id: input.operating_company_id,
+              overridden_reasons: block.reasons,
+              override_reason: input.override_reason,
+              override_by_user_id: userId,
+              override_class: "DOT_QUALIFICATION",
+            });
+          } else {
+            await appendCrudAudit(
+              client,
+              userId,
+              "dispatch.load.reassign_blocked_by_driver_qualification",
+              {
+                operating_company_id: input.operating_company_id,
+                load_id: input.load_id,
+                load_number: load.load_number,
+                driver_id: block.driverId,
+                driver_name: block.driverName,
+                block_code: "E_DRIVER_NOT_QUALIFIED",
+                reasons: block.reasons,
+                cdl_expires_at: block.cdlExpiresAt,
+                medical_expiry_date: block.medicalExpiryDate,
+                hazmat_endorsement_expires_at: block.hazmatEndorsementExpiresAt,
+                override_available_to: "Owner",
+                override_attempted: Boolean(input.override_reason),
+              },
+              "warning",
+              "BT-3-DISPATCH-AUTH-GATES"
+            );
+            const err = new Error("E_DRIVER_NOT_QUALIFIED");
+            (err as Error & { reasons: string[] }).reasons = block.reasons;
+            throw err;
+          }
+        }
+      }
 
       await client.query(
         `
