@@ -1,9 +1,9 @@
 {
   "block_id": "FEAT-HIDE-STUB-NAV-PAGES",
-  "status": "BUILD",
+  "status": "MERGED",
   "classification": "FEATURE",
   "phase": "SAFE-ADDITIVE-QUEUE",
-  "task": "Safe-additive Block 8 — hide stub/placeholder pages from nav (frontend-only, reversible, no code deleted). Per GUARD answer sheet #27-30: remove 'eld' + 'finance' (Overview/Projections/Scenarios) from the rendered sidebar order (SIDEBAR_DEFAULT_ORDER now filters NAV_HIDDEN_STUB_IDS — item configs + routes KEPT), and remove the '/admin/integrity' (Integrity checks) flyout link (endpoint unshipped). /banking/uncategorized was already not nav-linked (no change). Reversible by removing ids from the filter / restoring the link. No backend, no migration, no money path. STACKED on Block 1 (feat/dispatch-planners-split-nav); Block 1 files whitelisted since the gate compares origin/main..HEAD.",
+  "task": "Safe-additive Block 8 \u2014 hide stub/placeholder pages from nav (frontend-only, reversible, no code deleted). Per GUARD answer sheet #27-30: remove 'eld' + 'finance' (Overview/Projections/Scenarios) from the rendered sidebar order (SIDEBAR_DEFAULT_ORDER now filters NAV_HIDDEN_STUB_IDS \u2014 item configs + routes KEPT), and remove the '/admin/integrity' (Integrity checks) flyout link (endpoint unshipped). /banking/uncategorized was already not nav-linked (no change). Reversible by removing ids from the filter / restoring the link. No backend, no migration, no money path. STACKED on Block 1 (feat/dispatch-planners-split-nav); Block 1 files whitelisted since the gate compares origin/main..HEAD.",
   "branch": "feat/hide-stub-nav-pages",
   "lane": "A",
   "allowed_files": [
@@ -18,5 +18,8 @@
   "runtime_path": "src",
   "db_required": false,
   "guard_required": false,
-  "extra_gates": []
+  "extra_gates": [],
+  "details": [
+    "sidebar-config.ts already hides only \"eld\"; Finance Hub is surfaced per comment."
+  ]
 }
