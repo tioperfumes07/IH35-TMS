@@ -114,6 +114,7 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
   const stops = detail?.stops ?? [];
   const hosAware = detail?.hos_aware_recommendations ?? [];
   const expensiveStates = settingsQuery.data?.expensive_states ?? ["NY", "PA", "NJ", "CA", "IL", "OR", "WA", "HI"];
+  const plannerError = dashboardQuery.error ?? activeRoutesQuery.error ?? settingsQuery.error ?? detailQuery.error;
 
   const driverPct = useMemo(() => {
     const firstDriver = complianceQuery.data?.per_driver?.[0];
@@ -284,6 +285,7 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
       {tab === "planner" ? (
         dashboardQuery.isError || activeRoutesQuery.isError || settingsQuery.isError || detailQuery.isError ? (
           <ListErrorBanner
+            message={`${userFacingApiError(plannerError, "Fuel planner APIs are unavailable.")} Planner values are unavailable — they are not zero.`}
             onRetry={() => {
               void dashboardQuery.refetch();
               void activeRoutesQuery.refetch();
