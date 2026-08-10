@@ -35,14 +35,34 @@ export function run() {
   assert(header.includes("settlementDisplayId"), "SettlementHeader must render settlement display_id", errors);
   assert(detail.includes("showManualPaidDraftBanner"), "SettlementDetailPage must surface manual_paid draft honesty banner", errors);
 
+  // FE Render build unblock (ih35-tms-web exit 2): Manual Paid chip must type-check through setFilter.
+  const settlementsPage = read("apps/frontend/src/pages/driver-finance/SettlementsPage.tsx");
+  const setFilterSig =
+    settlementsPage.match(/function setFilter\(\s*state:\s*([\s\S]*?),\s*\n\s*searchParams:/)?.[1] ?? "";
+  assert(
+    /"manual_paid"/.test(setFilterSig),
+    "SettlementsPage setFilter must accept payment_state 'manual_paid' (tsc exit 2 otherwise)",
+    errors
+  );
+
+  // SettlementListRow.display_id is required — EarningsTab fixtures must include it or tsc -b fails.
+  const earningsTest = read("apps/frontend/src/components/drivers/__tests__/EarningsTab.test.tsx");
+  assert(
+    /display_id:\s*"S-/.test(earningsTest),
+    "EarningsTab.test.tsx settlement fixtures must include display_id (SettlementListRow required field)",
+    errors
+  );
+
   return errors;
 }
 
 function selftest() {
   const apiPath = path.join(ROOT, "apps/frontend/src/api/driverFinance.ts");
-  const backup = fs.readFileSync(apiPath, "utf8");
+  const pagePath = path.join(ROOT, "apps/frontend/src/pages/driver-finance/SettlementsPage.tsx");
+  const apiBackup = fs.readFileSync(apiPath, "utf8");
+  const pageBackup = fs.readFileSync(pagePath, "utf8");
   try {
-    const patched = backup.replace(
+    const patched = apiBackup.replace(
       /(export type SettlementListRow = \{[\s\S]*?)(\n  display_id: string \| null;)/,
       "$1"
     );
@@ -51,9 +71,24 @@ function selftest() {
     if (!planted.some((e) => e.includes("SettlementListRow"))) {
       throw new Error("planted type removal not detected");
     }
-    console.log(`[verify-settlement-list-display-id] SELFTEST PASS (${planted.length} planted failures detected)`);
+
+    // Plant: drop manual_paid from setFilter's state union only — must FAIL.
+    const pagePlanted = pageBackup.replace(
+      /(function setFilter\(\s*state:\s*[\s\S]*?)\| "manual_paid"/,
+      "$1"
+    );
+    fs.writeFileSync(pagePath, pagePlanted, "utf8");
+    // Restore API so this plant is isolated to the setFilter check.
+    fs.writeFileSync(apiPath, apiBackup, "utf8");
+    const plantedPage = run();
+    if (!plantedPage.some((e) => e.includes("manual_paid"))) {
+      throw new Error("planted setFilter manual_paid removal not detected");
+    }
+
+    console.log(`[verify-settlement-list-display-id] SELFTEST PASS (${planted.length}+${plantedPage.length} planted failures detected)`);
   } finally {
-    fs.writeFileSync(apiPath, backup, "utf8");
+    fs.writeFileSync(apiPath, apiBackup, "utf8");
+    fs.writeFileSync(pagePath, pageBackup, "utf8");
   }
 }
 

@@ -1,4 +1,4 @@
-import { EntityLink } from "../parity/EntityLink";
+import { EntityLink } from "../shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 
 export function CurrentLoadSection({

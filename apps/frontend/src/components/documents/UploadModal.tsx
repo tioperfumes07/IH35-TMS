@@ -138,7 +138,7 @@ export function UploadModal({
     () =>
       (customersQuery.data?.customers ?? []).map((customer) => ({
         value: customer.id,
-        label: customer.customer_name ?? customer.display_id ?? customer.id,
+        label: customer.name ?? customer.customer_code ?? customer.id,
       })),
     [customersQuery.data]
   );

@@ -318,7 +318,7 @@ function OpenDriverBillsPanel({
 }
 
 function setFilter(
-  state: "unpaid" | "queued" | "sent_to_bank" | "cleared" | "bounced",
+  state: "unpaid" | "queued" | "sent_to_bank" | "cleared" | "bounced" | "manual_paid",
   searchParams: URLSearchParams,
   setSearchParams: (nextInit: URLSearchParams) => void
 ) {
