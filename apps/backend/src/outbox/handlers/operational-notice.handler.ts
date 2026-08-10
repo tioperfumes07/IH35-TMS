@@ -85,6 +85,11 @@ export function createOperationalNoticeHandler(route: NoticeRoute): OutboxEventH
         throw new Error(`${route.eventType}_missing_operating_company_id`);
       }
 
+      // Outbox handlers run outside a user session; mdata RLS policies need a bypass or user identity,
+      // not app.operating_company_id alone. Establish tenant + bypass context before any scoped read.
+      await ctx.client.query(`SELECT set_config('app.bypass_rls', 'lucia', true)`);
+      await ctx.client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
+
       const { userIds, driverUnreachable } = await resolveRecipients(route, p, ctx);
       if (userIds.length === 0) {
         throw new Error(`${route.eventType}_no_recipient_resolved`);
