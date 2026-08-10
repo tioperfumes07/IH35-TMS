@@ -124,7 +124,12 @@ export async function registerSettlementDisputeRoutes(app: FastifyInstance) {
         operating_company_id: query.data.operating_company_id,
         dispute_id: params.data.id,
       });
-      if (!dispute) return reply.code(404).send({ error: "E_NOT_FOUND" });
+      if (!dispute) {
+        return reply.code(404).send({
+          error: "E_NOT_FOUND",
+          message: "Settlement dispute not found.",
+        });
+      }
       return { dispute };
     } catch (error) {
       const mapped = mapKnownError(error);
@@ -135,7 +140,12 @@ export async function registerSettlementDisputeRoutes(app: FastifyInstance) {
   app.post("/api/v1/driver-finance/settlement-disputes/:id/review", async (req, reply) => {
     const user = auth(req, reply);
     if (!user) return;
-    if (!isOwnerOrAdmin(user.role)) return reply.code(403).send({ error: "E_OWNER_OR_ADMIN_ONLY" });
+    if (!isOwnerOrAdmin(user.role)) {
+      return reply.code(403).send({
+        error: "E_OWNER_OR_ADMIN_ONLY",
+        message: "Only Owner or Administrator can perform this dispute action.",
+      });
+    }
     const params = idParamsSchema.safeParse(req.params ?? {});
     if (!params.success) return sendValidationError(reply, params.error);
     const body = operatingCompanyBodySchema.safeParse(req.body ?? {});
@@ -155,7 +165,12 @@ export async function registerSettlementDisputeRoutes(app: FastifyInstance) {
   app.post("/api/v1/driver-finance/settlement-disputes/:id/resolve", async (req, reply) => {
     const user = auth(req, reply);
     if (!user) return;
-    if (!isOwnerOrAdmin(user.role)) return reply.code(403).send({ error: "E_OWNER_OR_ADMIN_ONLY" });
+    if (!isOwnerOrAdmin(user.role)) {
+      return reply.code(403).send({
+        error: "E_OWNER_OR_ADMIN_ONLY",
+        message: "Only Owner or Administrator can perform this dispute action.",
+      });
+    }
     const params = idParamsSchema.safeParse(req.params ?? {});
     if (!params.success) return sendValidationError(reply, params.error);
     const body = resolveBodySchema.safeParse(req.body ?? {});
@@ -182,10 +197,20 @@ export async function registerSettlementDisputeRoutes(app: FastifyInstance) {
     if (!params.success) return sendValidationError(reply, params.error);
     const body = operatingCompanyBodySchema.safeParse(req.body ?? {});
     if (!body.success) return sendValidationError(reply, body.error);
-    if (user.role !== "Driver") return reply.code(403).send({ error: "E_DRIVER_ONLY_WITHDRAW" });
+    if (user.role !== "Driver") {
+      return reply.code(403).send({
+        error: "E_DRIVER_ONLY_WITHDRAW",
+        message: "Only the driver can withdraw this dispute.",
+      });
+    }
     try {
       const driverId = await resolveDriverIdForUser(user.uuid);
-      if (!driverId) return reply.code(404).send({ error: "E_DRIVER_PROFILE_NOT_FOUND" });
+      if (!driverId) {
+        return reply.code(404).send({
+          error: "E_DRIVER_PROFILE_NOT_FOUND",
+          message: "No driver profile is linked to this user.",
+        });
+      }
       const data = await withdrawDispute(user.uuid, {
         operating_company_id: body.data.operating_company_id,
         dispute_id: params.data.id,

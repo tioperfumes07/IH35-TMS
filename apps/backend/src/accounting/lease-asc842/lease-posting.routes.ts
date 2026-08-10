@@ -263,7 +263,12 @@ export async function registerLeasePostingRoutes(app: FastifyInstance) {
       );
       return { contract: contract.rows[0], assets: assets.rows, schedule: schedule.rows };
     });
-    if (!detail) return reply.code(404).send({ error: "LEASE_NOT_FOUND" });
+    if (!detail) {
+      return reply.code(404).send({
+        error: "LEASE_NOT_FOUND",
+        message: "Lease not found for this operating company.",
+      });
+    }
     return reply.code(200).send(detail);
   });
 

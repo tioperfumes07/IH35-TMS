@@ -42,12 +42,14 @@ const HUMAN_FIELDS = ["message", "blocker", "reason", "detail", "details", "hint
  *
  * Counts may only SHRINK. Lowering a number is the unit of progress; raising one is a visible edit.
  */
+/**
+ * RATCHET — pre-existing bare machine-code replies. Counts may only SHRINK.
+ * Cursor drained dispatch/mdata/maint + money team-splits/dispute/lease 2026-08-10.
+ * Sentinel path is NOT walked on disk — used only by --selftest synthetic cases so the
+ * ratchet machinery stays mutation-proven after the class is empty on the real tree.
+ */
 const KNOWN_GAPS = new Map([
-  ["apps/backend/src/settlements/team-splits/team-splits.routes.ts", 8],
-  ["apps/backend/src/driver-finance/settlement-dispute.routes.ts", 5],
-  // Cursor drained 2026-08-10: dispatch-refinements + units + equipment-transfer +
-  // driver-team-split + work-orders + parts-invoice-links + quicksave
-  ["apps/backend/src/accounting/lease-asc842/lease-posting.routes.ts", 1],
+  ["apps/backend/src/_bare_error_ratchet_sentinel.ts", 1],
 ]);
 
 const strip = (s) => s.replace(/\/\/[^\n]*/g, "").replace(/\/\*[\s\S]*?\*\//g, "");
@@ -176,22 +178,22 @@ function selftest() {
     },
     {
       name: "a ratcheted file at its ceiling passes",
-      files: [mk("apps/backend/src/accounting/lease-asc842/lease-posting.routes.ts", `reply.code(409).send({ error: "E_LEASE_POSTING_BLOCKED", id });`)],
+      files: [mk("apps/backend/src/_bare_error_ratchet_sentinel.ts", `reply.code(409).send({ error: "E_SENTINEL_ONE", id });`)],
       expect: 0,
     },
     {
       name: "a ratcheted file ABOVE its ceiling is caught",
       files: [
         mk(
-          "apps/backend/src/accounting/lease-asc842/lease-posting.routes.ts",
-          `reply.code(409).send({ error: "E_LEASE_POSTING_BLOCKED", id }); reply.code(400).send({ error: "E_OTHER_THING", id });`
+          "apps/backend/src/_bare_error_ratchet_sentinel.ts",
+          `reply.code(409).send({ error: "E_SENTINEL_ONE", id }); reply.code(400).send({ error: "E_OTHER_THING", id });`
         ),
       ],
       expectAtLeast: 1,
     },
     {
       name: "a ratcheted file that got FIXED must lower its number",
-      files: [mk("apps/backend/src/accounting/lease-asc842/lease-posting.routes.ts", `reply.code(409).send({ error: "E_LEASE_POSTING_BLOCKED", message: m });`)],
+      files: [mk("apps/backend/src/_bare_error_ratchet_sentinel.ts", `reply.code(409).send({ error: "E_SENTINEL_ONE", message: m });`)],
       expectAtLeast: 1,
     },
     {
