@@ -14,8 +14,11 @@ describe("mapExpenseCatalogCodeToBillCategory", () => {
     });
   });
 
-  it("does not invent a map for PERMIT / unknown", () => {
-    expect(mapExpenseCatalogCodeToBillCategory("PERMIT")).toBeNull();
+  it("maps PERMIT to the permit category_kind/code and does not invent maps for unknown codes", () => {
+    expect(mapExpenseCatalogCodeToBillCategory("PERMIT")).toEqual({
+      category_kind: "permit",
+      category_code: "permit",
+    });
     expect(mapExpenseCatalogCodeToBillCategory("")).toBeNull();
   });
 });
