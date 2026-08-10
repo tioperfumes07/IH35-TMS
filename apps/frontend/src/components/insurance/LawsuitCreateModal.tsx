@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 import { DatePicker } from "../../components/forms/DatePicker";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { ApiError } from "../../api/client";
 import {
   insuranceLawsuitsApi,
-  listInsuranceClaims,
   type InsuranceLawsuitStatus,
 } from "../../api/insurance";
 import { ParityDrawer } from "../parity/ParityDrawer";
+import { EntityPicker } from "../parity/EntityPicker";
 import { MoneyInput } from "../forms/MoneyInput";
 import { useToast } from "../Toast";
 
@@ -87,12 +87,6 @@ export function LawsuitCreateModal({ open, operatingCompanyId, onClose, onCreate
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof FormState, string>>>({});
   const [formError, setFormError] = useState("");
   const [serverError, setServerError] = useState("");
-
-  const claimsQuery = useQuery({
-    queryKey: ["insurance", "lawsuit-create", "claims", operatingCompanyId],
-    enabled: open && Boolean(operatingCompanyId),
-    queryFn: () => listInsuranceClaims({ operating_company_id: operatingCompanyId }).then((result) => result.claims),
-  });
 
   useEffect(() => {
     if (!open) return;
@@ -260,21 +254,19 @@ export function LawsuitCreateModal({ open, operatingCompanyId, onClose, onCreate
             {fieldErrors.filed_date ? <span className="text-xs text-red-700">{fieldErrors.filed_date}</span> : null}
           </label>
 
-          <label className="space-y-1">
+          <div className="space-y-1" data-testid="lawsuit-create-claim-field">
             <span className="text-xs font-semibold text-slate-700">Linked Claim</span>
-            <select
-              className="w-full rounded-sm border border-gray-300 px-2 py-1"
-              value={form.claim_id}
-              onChange={(event) => updateField("claim_id", event.target.value)}
-            >
-              <option value="">Unlinked</option>
-              {(claimsQuery.data ?? []).map((claim) => (
-                <option key={claim.id} value={claim.id}>
-                  {claim.claim_number}
-                </option>
-              ))}
-            </select>
-          </label>
+            <EntityPicker
+              kind="insurance_claim"
+              operatingCompanyId={operatingCompanyId}
+              value={form.claim_id || null}
+              onChange={(next) => updateField("claim_id", next ?? "")}
+              enabled={open}
+              allowCreate={false}
+              placeholder="Unlinked"
+              dataTestId="lawsuit-create-claim-picker"
+            />
+          </div>
 
           <label className="space-y-1">
             <span className="text-xs font-semibold text-slate-700">Demand (USD)</span>
