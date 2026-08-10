@@ -8,6 +8,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { fetchPlannerTasks, type Task, type TaskStatus } from "../../api/tasks";
 import { addDaysIso, companyToday } from "../../lib/businessDate";
 import { isOpenTaskStatus } from "./taskDisplay";
+import { entityLabel } from "../../lib/entity-label";
 
 const WINDOWS: Array<[string, number]> = [
   ["7d", 7],
@@ -53,7 +54,7 @@ export function TasksReportPage() {
   const byAssignee = useMemo<AssigneeRow[]>(() => {
     const groups = new Map<string, Task[]>();
     for (const t of tasks) {
-      const name = t.assigned_to_name ?? t.assigned_to_email ?? t.assigned_to_user_id;
+      const name = entityLabel(t.assigned_to_name, t.assigned_to_user_id, "User") ?? t.assigned_to_email ?? "—";
       const list = groups.get(name) ?? [];
       list.push(t);
       groups.set(name, list);

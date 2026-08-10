@@ -33,6 +33,7 @@ import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+import { entityLabel } from "../../../lib/entity-label";
 
 /** ILIKE fragment matched against audit.audit_events.event_class by the reader. */
 const FORM_425C_EVENT_FILTER = "form_425c";
@@ -109,7 +110,7 @@ function EventDetail({ row }: { row: AuditEventListItem }) {
     ["Exhibit line", payload.line_number == null ? "-" : String(payload.line_number)],
     ["Attachment line", payload.attachment_line == null ? "-" : String(payload.attachment_line)],
     ["Fields changed", payload.updated_fields?.length ? payload.updated_fields.join(", ") : "-"],
-    ["Actor", row.actor_email ?? row.actor_user_id ?? "-"],
+    ["Actor", entityLabel(row.actor_email, row.actor_user_id, "User") ?? "-"],
     ["Emitted by", row.source ?? "-"],
   ];
   return (
@@ -226,7 +227,7 @@ export default function Audit425cPage() {
         key: "actor_email",
         label: "Actor",
         sortable: true,
-        render: (row) => <span className="text-slate-600">{row.actor_email ?? row.actor_user_id ?? "-"}</span>,
+        render: (row) => <span className="text-slate-600">{entityLabel(row.actor_email, row.actor_user_id, "User") ?? "-"}</span>,
       },
       {
         key: "source_record",
