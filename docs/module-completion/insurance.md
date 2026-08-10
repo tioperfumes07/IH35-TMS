@@ -1,6 +1,6 @@
 # Module completion — Insurance — acceptance checklist
 
-**PROGRESS: 6 of 6** · complete: `false` · as_of: 2026-08-09T02:00:00.000Z · live_sha: `5164640be`
+**PROGRESS: 6 of 6** · complete: `true` · as_of: 2026-08-10T06:26:05.363Z · live_sha: `5164640be`
 
 | Status | Count |
 |---|---:|

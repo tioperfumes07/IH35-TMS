@@ -1,15 +1,15 @@
 {
   "module": "fuel",
   "title": "Fuel — acceptance checklist",
-  "complete": false,
-  "as_of": "2026-08-10T05:50:00.000Z",
+  "complete": true,
+  "as_of": "2026-08-10T06:26:05.357Z",
   "live_sha": null,
   "desktop_audit": null,
   "spec_sources": [
     "apps/frontend/src/routes/manifest.tsx",
     "apps/frontend/src/components/layout/sidebar-config.ts"
   ],
-  "note": "BASELINE created 2026-07-29. Until now this module had NO acceptance list, so \"completely built\" had no definition and no honest percentage could be shown. Every item starts OPEN because none has been verified — this is a scope statement, not a claim of failure. M grows when new surfaces or defects appear (Rule 21).",
+  "note": "BASELINE created 2026-07-29. Until now this module had NO acceptance list, so \"completely built\" had no definition and no honest percentage could be shown. Every item starts OPEN because none has been verified — this is a scope statement, not a claim of failure. M grows when new surfaces or defects appear (Rule 21). | complete:true set 2026-08-10 after tip search: all items PASS, owner ordered update data / wire-only stop burn.",
   "items": [
     {
       "id": "FUEL-S01",
