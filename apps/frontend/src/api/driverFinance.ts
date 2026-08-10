@@ -404,6 +404,36 @@ export function listPendingEscrowDeductions(companyId: string) {
   );
 }
 
+/** FAIL-DD2 — pending settlement deductions (cash-advance recovery, etc.). */
+export type SettlementDeductionListRow = {
+  id: string;
+  driver_id: string;
+  driver_name: string;
+  deduction_type: string;
+  status: string;
+  amount_cents: number;
+  remaining_balance_cents: number;
+  reason: string | null;
+  load_id: string | null;
+  load_number: string | null;
+  applied_to_settlement_id: string | null;
+  applied_to_settlement_display_id: string | null;
+  created_at: string;
+};
+
+export function listSettlementDeductions(
+  companyId: string,
+  filters?: { driver_id?: string; status?: string; limit?: number }
+) {
+  const params = new URLSearchParams({ operating_company_id: companyId });
+  if (filters?.driver_id) params.set("driver_id", filters.driver_id);
+  if (filters?.status) params.set("status", filters.status);
+  if (filters?.limit != null) params.set("limit", String(filters.limit));
+  return apiRequest<{ deductions: SettlementDeductionListRow[] }>(
+    `/api/v1/driver-finance/deductions?${params.toString()}`
+  );
+}
+
 export function approvePendingEscrowDeduction(
   id: string,
   payload: { operating_company_id: string; override_amount_cents?: number; review_notes?: string }
