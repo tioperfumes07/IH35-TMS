@@ -6,6 +6,7 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { CollapsedListFilters } from "../../components/table";
 import { useRoadServiceTickets, type RoadServiceStatus, type RoadServiceTicket } from "../../hooks/useRoadServiceTickets";
 import { RoadServiceTicketModal } from "./RoadServiceTicketModal";
+import { entityLabel } from "../../lib/entity-label";
 
 const STATUS_FILTERS: Array<{ id: RoadServiceStatus | "all"; label: string }> = [
   { id: "all", label: "All" },
@@ -83,7 +84,7 @@ export function RoadServiceList({ operatingCompanyId }: Props) {
       render: (row) =>
         row.driver_id ? (
           <Link to={`/drivers/${row.driver_id}`} className={LINK}>
-            {row.driver_name ?? row.driver_id}
+            {entityLabel(row.driver_name, row.driver_id, "Driver")}
           </Link>
         ) : (
           "—"

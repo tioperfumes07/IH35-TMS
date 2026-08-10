@@ -9,6 +9,7 @@ import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { CollapsedListFilters } from "../../components/table";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 
 const LINK = "text-slate-700 hover:underline";
 
@@ -72,7 +73,7 @@ export function DriverReportsQueuePage() {
       render: (row) =>
         row.driver_id ? (
           <Link to={`/drivers/${row.driver_id}`} className={LINK}>
-            {row.driver_name ?? row.driver_id}
+            {entityLabel(row.driver_name, row.driver_id, "Driver")}
           </Link>
         ) : (
           "—"

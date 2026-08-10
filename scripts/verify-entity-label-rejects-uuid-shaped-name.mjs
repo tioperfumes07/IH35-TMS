@@ -90,6 +90,26 @@ const SIBLINGS = [
     bad: /row\.vendor_name\s*\?\?\s*row\.vendor_id/,
     good: /entityLabel\(\s*row\.vendor_name\s*,\s*row\.vendor_id\s*,\s*"Vendor"\s*\)/,
   },
+  {
+    rel: "apps/frontend/src/pages/maintenance/DriverReportsQueuePage.tsx",
+    bad: /row\.driver_name\s*\?\?\s*row\.driver_id/,
+    good: /entityLabel\(\s*row\.driver_name\s*,\s*row\.driver_id\s*,\s*"Driver"\s*\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/maintenance/RoadServiceList.tsx",
+    bad: /row\.driver_name\s*\?\?\s*row\.driver_id/,
+    good: /entityLabel\(\s*row\.driver_name\s*,\s*row\.driver_id\s*,\s*"Driver"\s*\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/accounting/SalesTaxPage.tsx",
+    bad: /row\.agency_name\s*\?\?\s*row\.agency_id/,
+    good: /entityLabel\(\s*row\.agency_name\s*,\s*row\.agency_id\s*,\s*"Agency"\s*\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/accounting/bill-payments/CCPaymentModal.tsx",
+    bad: /bill\.vendor_name\s*\?\?\s*bill\.vendor_id/,
+    good: /entityLabel\(\s*bill\.vendor_name\s*,\s*bill\.vendor_id\s*,\s*"Vendor"\s*\)/,
+  },
 ];
 
 export function auditEntityLabel(src) {
