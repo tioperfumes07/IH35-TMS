@@ -11,6 +11,8 @@ import { LegalModuleTabs } from "../LegalModuleTabs";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { CollapsedListFilters } from "../../../components/table";
 import { formatDateUS } from "../../../lib/formatDate";
+import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
+import { userFacingApiError } from "../../../lib/api-error-message";
 
 const MATTER_ID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -120,7 +122,10 @@ export function LegalMattersListPage() {
       {!companyId ? (
         <p className="text-sm text-gray-600">Select an operating company.</p>
       ) : listQuery.isError ? (
-        <p className="text-sm text-red-600">Could not load matters.</p>
+        <ListErrorBanner
+          message={userFacingApiError(listQuery.error, "Could not load legal matters. No empty result was assumed.")}
+          onRetry={() => void listQuery.refetch()}
+        />
       ) : (
         <>
         {/* CLS-SILENT-CAP — honest range + pager. The server's own `total` is authoritative; the
