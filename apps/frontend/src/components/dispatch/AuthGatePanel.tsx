@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 export type AuthGatePanelProps = {
   operatingCompanyId: string;
@@ -32,10 +33,22 @@ export function AuthGatePanel(props: AuthGatePanelProps) {
   const blockers = q.data?.blockers ?? [];
   const warnings = q.data?.warnings ?? [];
   const info = q.data?.info ?? [];
-  props.onBlockersChange?.(blockers.length > 0);
-  if (!q.data && !q.isLoading) return null;
+  props.onBlockersChange?.(q.isError || blockers.length > 0);
+  if (!q.data && !q.isLoading && !q.isError) return null;
   return (
     <div className="space-y-2 rounded-sm border border-gray-200 p-3" data-testid="auth-gate-panel">
+      {q.isError ? (
+        <div className="rounded-sm border border-red-200 bg-red-50 px-2 py-2 text-sm text-red-800" role="alert">
+          <p>{userFacingApiError(q.error, "Could not verify dispatch authorization")}</p>
+          <button
+            type="button"
+            className="mt-2 rounded-sm border border-red-300 bg-white px-2 py-1 text-xs font-semibold"
+            onClick={() => void q.refetch()}
+          >
+            Retry authorization check
+          </button>
+        </div>
+      ) : null}
       {blockers.map((b, i) => (
         <div key={`b-${i}`} className="rounded-sm bg-red-50 px-2 py-1 text-sm text-red-800">{b.workflow}: {b.message}</div>
       ))}
