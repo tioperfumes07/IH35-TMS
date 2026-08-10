@@ -3,7 +3,7 @@
   "title": "Documents (DOCS)",
   "complete": false,
   "as_of": "2026-08-10",
-  "live_sha": "a1a7b50",
+  "live_sha": "1b3a44d",
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/AUDITOR-RUN-2026-07-31/modules/reports-docs-maintenance-2026-08-01.md",
   "spec_sources": [
     "docs/specs/DEFINITION-OF-DONE.md",
@@ -20,8 +20,48 @@
       ],
       "spec": "DocsHomePage · reports-docs-maintenance DOCS section",
       "status": "PASS",
-      "evidence": "DocsHomePage KPIs (Total/Expiring/Missing/Recent) + ParityTable list + Upload scoped to selectedCompanyId; Entity column EntityLink when links exist, em-dash when unlinked. Guards verify-docs-routes-bootstrapped + verify-docs-entity-column-entitylink + verify-docs-home-page-uses-paritytable exit 0. | PROD-VERIFIED 2026-08-10 entity=USMCA opco=5c854333-6ea5-4faa-af31-67cb272fef80 Neon lucia br-fancy-credit-akjnd07a: docs.files n=54 (deleted_at IS NULL); app.ih35dispatch.com/docs HTTP 200; healthz=a1a7b50.",
-      "pr": "#TBD",
+      "evidence": "DocsHomePage KPIs (Total/Expiring/Missing/Recent) + ParityTable list + Upload scoped to selectedCompanyId; Entity column EntityLink when links exist, em-dash when unlinked. Guards verify-docs-routes-bootstrapped + verify-docs-entity-column-entitylink + verify-docs-home-page-uses-paritytable exit 0. | PROD-VERIFIED 2026-08-10 entity=USMCA opco=5c854333-6ea5-4faa-af31-67cb272fef80 Neon lucia: docs.files n=54; healthz=1b3a44d.",
+      "pr": "#5380",
+      "prod_verified": true
+    },
+    {
+      "id": "DOCS-S02",
+      "title": "Required document types catalog populated per opco",
+      "layers": [
+        "VERIFY-2",
+        "VERIFY-6"
+      ],
+      "spec": "Missing Required KPI honesty",
+      "status": "PASS",
+      "evidence": "compliance.required_document_types seeded per opco; Missing Required KPI uses server predicate lockstep with /docs/kpis. | PROD-VERIFIED 2026-08-10 entity=USMCA: required_document_types n=18; healthz=1b3a44d.",
+      "pr": "#5380",
+      "prod_verified": true
+    },
+    {
+      "id": "DOCS-S03",
+      "title": "Standalone upload uses category catalog + optional EntityPicker entity link",
+      "layers": [
+        "DOD-B",
+        "VERIFY-2",
+        "VERIFY-3"
+      ],
+      "spec": "UploadModal · DocsHomePage + Upload path picker law",
+      "status": "PASS",
+      "evidence": "UploadModal: listFileCategories Combobox + optional EntityPicker (driver/unit/vendor) + ReferenceSelect createKind=customer on standalone path; DocsHomePage passes operatingCompanyId + defaultLinkEntityType from active tab; upload disabled without company. Guard: verify-docs-upload-attachments-pack.mjs + verify-docs-upload-viewed-entity.mjs exit 0. | PROD-VERIFIED 2026-08-10 entity=USMCA: docs.files=54 file_links=3; upload path wired; healthz=1b3a44d.",
+      "pr": null,
+      "prod_verified": true
+    },
+    {
+      "id": "DOCS-UPLOAD-01",
+      "title": "Upload files under viewed operating_company_id (not uploader default)",
+      "layers": [
+        "DOD-C",
+        "VERIFY-5"
+      ],
+      "spec": "FIX-2 docs-upload-viewed-entity · docs-upload-company-scope",
+      "status": "PASS",
+      "evidence": "UploadModal forwards operatingCompanyId as operating_company_id; DocsHomePage + DocumentsTab + profile mount sites threaded. Guards verify-docs-upload-viewed-entity.mjs + verify-docs-upload-company-scope.mjs exit 0. | PROD-VERIFIED 2026-08-10 entity=USMCA opco=5c854333-6ea5-4faa-af31-67cb272fef80; healthz=1b3a44d.",
+      "pr": null,
       "prod_verified": true
     },
     {
@@ -33,7 +73,7 @@
       ],
       "spec": "docs.file_links · expiration tracking law",
       "status": "OPEN",
-      "evidence": "OPEN 2026-08-10 USMCA: Neon lucia docs.file_links n=3 on 54 files — majority uncategorized/unlinked uploads remain test PDFs; classified entity-linked density blocks economics PASS until USMCA wire-test creates linked driver/unit docs.",
+      "evidence": "OPEN 2026-08-10 USMCA: Neon lucia docs.file_links n=3 on 54 files — majority uncategorized/unlinked uploads remain test PDFs; S03 upload picker now enables entity link at create time; density PASS blocked until USMCA wire-test creates linked driver/unit docs.",
       "pr": null,
       "prod_verified": false
     },
@@ -46,22 +86,9 @@
       ],
       "spec": "0441-mod12-docs-lowest-uuid-company-bug",
       "status": "OPEN",
-      "evidence": "PARTIAL 2026-08-10: EntityLink wired on DocsHome (no UUID slice; em-dash when unlinked). Neon lucia USMCA docs.file_links=3 — forward+reverse drill blocked until density exists (DOCS-ECON-01 sibling). Guards verify-docs-entity-column-entitylink exit 0.",
+      "evidence": "PARTIAL 2026-08-10: EntityLink wired on DocsHome; standalone upload now offers EntityPicker/ReferenceSelect entity link (S03). Neon lucia USMCA docs.file_links=3 — forward+reverse drill blocked until density exists (DOCS-ECON-01 sibling). Guards verify-docs-entity-column-entitylink + verify-docs-upload-attachments-pack exit 0.",
       "pr": null,
       "prod_verified": false
-    },
-    {
-      "id": "DOCS-S02",
-      "title": "Required document types catalog populated per opco",
-      "layers": [
-        "VERIFY-2",
-        "VERIFY-6"
-      ],
-      "spec": "Missing Required KPI honesty",
-      "status": "PASS",
-      "evidence": "compliance.required_document_types seeded per opco; Missing Required KPI uses server predicate lockstep with /docs/kpis. | PROD-VERIFIED 2026-08-10 entity=USMCA: Neon lucia compliance.required_document_types n=18 for opco 5c854333-6ea5-4faa-af31-67cb272fef80; KPI missing_required reflects honest gap vs catalog (not fabricated zero); healthz=a1a7b50.",
-      "pr": "#TBD",
-      "prod_verified": true
     },
     {
       "id": "DOCS-VERIFY-01",
@@ -78,12 +105,12 @@
       ],
       "spec": "EVERY-PR-AUDIT-CHECKLIST.md",
       "status": "OPEN",
-      "evidence": "OPEN 2026-08-10 — S01+S02 prod_verified; V4 deep linkage + V6 economics blocked by docs.file_links=3 / uncategorized cohort; Cascade live click-through UNVERIFIED.",
+      "evidence": "OPEN 2026-08-10 — S01-S03+UPLOAD-01 prod_verified; V4 deep linkage + V6 economics blocked by docs.file_links=3; Cascade live click-through UNVERIFIED.",
       "pr": null,
       "prod_verified": false
     }
   ],
-  "pass_count": 2,
-  "total_count": 5,
-  "progress": "2 of 5"
+  "pass_count": 4,
+  "total_count": 7,
+  "progress": "4 of 7"
 }
