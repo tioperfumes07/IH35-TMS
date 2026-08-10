@@ -37,7 +37,11 @@ const CHECKS = [
   },
   {
     file: "apps/frontend/src/pages/compliance/PropertyTaxRenditionPage.tsx",
-    tests: [(s) => /PropertyTaxRenditionPage/.test(s) && /RenditionListView/.test(s) || "property-tax page"],
+    tests: [
+      (s) => /PropertyTaxRenditionPage/.test(s) && /RenditionListView/.test(s) || "property-tax page",
+      (s) => /<Combobox[\s\S]*id="property-tax-district-picker"[\s\S]*allowAddNew=/.test(s) || "searchable appraisal-district picker with inline create",
+      (s) => !/<select[\s\S]*value=\{districtId\}/.test(s) || "appraisal district must not use a native ID-valued select",
+    ],
   },
   {
     file: "apps/frontend/src/components/vehicle-profile/CurrentLoadSection.tsx",
