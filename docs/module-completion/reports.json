@@ -2,7 +2,7 @@
   "module": "reports",
   "title": "Reports",
   "complete": false,
-  "as_of": "2026-08-02",
+  "as_of": "2026-08-09",
   "live_sha": null,
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/AUDITOR-RUN-2026-07-31/modules/reports-docs-maintenance-2026-08-01.md",
   "spec_sources": [
@@ -18,7 +18,7 @@
         "DOD-A",
         "DOD-B"
       ],
-      "spec": "ReportsHome · reports-docs-maintenance breadth pass",
+      "spec": "ReportsHome \u00b7 reports-docs-maintenance breadth pass",
       "status": "PASS",
       "evidence": "ReportsHome.tsx renders CategoryHoverNav, Accounting+Financial report grid with 12 report links, Management reports grid with 3 report links (15+ total), and KPI summary via getKpiSummary scoped to companyId. Guard: scripts/verify-rpt-s01-s05-reports-home-ifta.mjs.",
       "pr": "#5344",
@@ -31,9 +31,9 @@
         "DOD-D",
         "VERIFY-6"
       ],
-      "spec": "Financial report runner · VERIFY-6 economics",
+      "spec": "Financial report runner \u00b7 VERIFY-6 economics",
       "status": "OPEN",
-      "evidence": "scaffold — individual reports UNVERIFIED (not run to Neon tie-out)",
+      "evidence": "scaffold \u2014 individual reports UNVERIFIED (not run to Neon tie-out)",
       "pr": null,
       "prod_verified": false
     },
@@ -44,9 +44,9 @@
         "DOD-C",
         "VERIFY-6"
       ],
-      "spec": "SettlementSummaryPage · VSETTLE",
-      "status": "OPEN",
-      "evidence": "scaffold — not proven",
+      "spec": "SettlementSummaryPage \u00b7 VSETTLE",
+      "status": "PASS",
+      "evidence": "SettlementSummaryPage.tsx uses useCompanyContext selectedCompanyId, gates the query on companyId, and calls getSettlementSummary({ operating_company_id }). FE api withCompany(/api/v1/reports/settlement-summary). BE settlement-summary.routes.ts uses companyQuerySchema + withCompanyScope and SQL s.operating_company_id = $1 / d.operating_company_id = $1 on driver_finance.driver_settlements. Guard: scripts/verify-rpt-s03-settlement-summary.mjs.",
       "pr": null,
       "prod_verified": false
     },
@@ -57,9 +57,9 @@
         "DOD-D",
         "VERIFY-6"
       ],
-      "spec": "FuelReconciliationPage · VFUEL",
+      "spec": "FuelReconciliationPage \u00b7 VFUEL",
       "status": "OPEN",
-      "evidence": "scaffold — not proven",
+      "evidence": "scaffold \u2014 not proven",
       "pr": null,
       "prod_verified": false
     },
@@ -69,9 +69,9 @@
       "layers": [
         "DOD-B"
       ],
-      "spec": "IFTAPreparer · reports execution pass",
+      "spec": "IFTAPreparer \u00b7 reports execution pass",
       "status": "PASS",
-      "evidence": "ReportsHome.tsx renders IftaPreparerCard only after getIftaStatus resolves, with daysUntilDue computed from real status and a loading placeholder of '—'. Guard: scripts/verify-rpt-s01-s05-reports-home-ifta.mjs.",
+      "evidence": "ReportsHome.tsx renders IftaPreparerCard only after getIftaStatus resolves, with daysUntilDue computed from real status and a loading placeholder of '\u2014'. Guard: scripts/verify-rpt-s01-s05-reports-home-ifta.mjs.",
       "pr": "#5344",
       "prod_verified": false
     },
@@ -82,7 +82,7 @@
         "DOD-B",
         "VERIFY-6"
       ],
-      "spec": "SubscriptionManager · 0243-e1-3 two engines",
+      "spec": "SubscriptionManager \u00b7 0243-e1-3 two engines",
       "status": "PASS",
       "evidence": "ScheduledReportsPanel.tsx fetches /api/v1/reports/scoped by company, defaults rows to [], explicitly handles rows.length === 0 with 'No active schedules' message, and does not hardcode a non-zero count. Guard: scripts/verify-rpt-s06-scheduled-count-honest.mjs.",
       "pr": "#5345",
@@ -95,9 +95,9 @@
         "DOD-A",
         "DOD-C"
       ],
-      "spec": "A8-AUDIT-REPORTS-SECTION · audit/* report routes",
+      "spec": "A8-AUDIT-REPORTS-SECTION \u00b7 audit/* report routes",
       "status": "OPEN",
-      "evidence": "scaffold — routes exist; output UNVERIFIED",
+      "evidence": "scaffold \u2014 routes exist; output UNVERIFIED",
       "pr": null,
       "prod_verified": false
     },
@@ -116,12 +116,12 @@
       ],
       "spec": "EVERY-PR-AUDIT-CHECKLIST.md",
       "status": "OPEN",
-      "evidence": "scaffold — catalog PASS; per-report Layer B UNVERIFIED",
+      "evidence": "scaffold \u2014 catalog PASS; per-report Layer B UNVERIFIED",
       "pr": null,
       "prod_verified": false
     }
   ],
-  "pass_count": 3,
+  "pass_count": 4,
   "total_count": 8,
-  "progress": "3 of 8"
+  "progress": "4 of 8"
 }
