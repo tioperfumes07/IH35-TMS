@@ -196,7 +196,12 @@ export function HosTrackerSection({ operatingCompanyId }: { operatingCompanyId: 
         </div>
 
         {rosterQ.isError ? (
-          <ListErrorState title="Couldn't load HOS roster" onRetry={() => void rosterQ.refetch()} />
+          <ListErrorState
+            title="Couldn't load HOS roster"
+            status={0}
+            message={(rosterQ.error as Error)?.message}
+            onRetry={() => void rosterQ.refetch()}
+          />
         ) : (
           <ParityTable
             rows={roster?.drivers ?? []}
