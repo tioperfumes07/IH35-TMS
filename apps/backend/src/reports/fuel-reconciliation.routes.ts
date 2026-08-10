@@ -25,22 +25,11 @@ function num(v: unknown): number {
   return Number.isFinite(n) ? n : 0;
 }
 
-function fuelTxnSql(alias: string) {
-  return `
-    ${alias}.pending = false
-    AND ${alias}.transaction_date BETWEEN $2::date AND $3::date
-    AND (
-      EXISTS (
-        SELECT 1
-        FROM unnest(${alias}.plaid_category) AS c(cat)
-        WHERE lower(cat::text) LIKE '%fuel%'
-      )
-      OR lower(coalesce(${alias}.merchant_name, '')) ~ '(fuel|diesel|def|loves|pilot|flying\\s*j|ta\\s+travel)'
-      OR lower(coalesce(${alias}.description, '')) ~ '(fuel|diesel|def)'
-    )
-  `;
-}
-
+/**
+ * RPT-S04 — Fuel Reconciliation card side reads canonical fuel.fuel_transactions
+ * (NOT banking.bank_transactions + merchant heuristics). total_cost is dollars → cents.
+ * Unit attribution prefers ft.unit_id, else load.assigned_unit_id.
+ */
 export async function registerFuelReconciliationRoutes(app: FastifyInstance) {
   app.get("/api/v1/reports/fuel-reconciliation", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
@@ -80,14 +69,13 @@ export async function registerFuelReconciliationRoutes(app: FastifyInstance) {
     if (hit) return hit;
 
     const payload = await withCompanyScope(user.uuid, operatingCompanyId, async (client: PoolClient) => {
-      const btFuel = fuelTxnSql("bt");
-
       const cardTotals = await client.query(
         `
-          SELECT COALESCE(SUM(ABS(bt.amount_cents)), 0)::text AS fuel_card_amount_cents
-          FROM banking.bank_transactions bt
-          WHERE bt.operating_company_id = $1
-            AND ${btFuel}
+          SELECT COALESCE(SUM(ROUND(ft.total_cost::numeric * 100)), 0)::text AS fuel_card_amount_cents
+          FROM fuel.fuel_transactions ft
+          WHERE ft.operating_company_id = $1
+            AND ft.archived_at IS NULL
+            AND ft.transaction_at::date BETWEEN $2::date AND $3::date
         `,
         [operatingCompanyId, startDay, endDay]
       );
@@ -97,17 +85,19 @@ export async function registerFuelReconciliationRoutes(app: FastifyInstance) {
           SELECT
             u.id::text AS unit_id,
             u.unit_number::text AS unit_number,
-            COALESCE(SUM(ABS(bt.amount_cents)), 0)::text AS cents
-          FROM banking.bank_transactions bt
-          JOIN mdata.loads l ON l.id = bt.matched_load_id
-                            AND l.operating_company_id = bt.operating_company_id
-          JOIN mdata.units u ON u.id = l.assigned_unit_id
-                            AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = l.operating_company_id
-          WHERE bt.operating_company_id = $1
-            AND l.soft_deleted_at IS NULL
-            AND l.assigned_unit_id IS NOT NULL
-            AND l.operating_company_id = $1
-            AND ${btFuel}
+            COALESCE(SUM(ROUND(ft.total_cost::numeric * 100)), 0)::text AS cents
+          FROM fuel.fuel_transactions ft
+          LEFT JOIN mdata.loads l
+            ON l.id = ft.load_id
+           AND l.operating_company_id = ft.operating_company_id
+           AND l.soft_deleted_at IS NULL
+          JOIN mdata.units u
+            ON u.id = COALESCE(ft.unit_id, l.assigned_unit_id)
+           AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = ft.operating_company_id
+          WHERE ft.operating_company_id = $1
+            AND ft.archived_at IS NULL
+            AND ft.transaction_at::date BETWEEN $2::date AND $3::date
+            AND COALESCE(ft.unit_id, l.assigned_unit_id) IS NOT NULL
             AND u.deactivated_at IS NULL
           GROUP BY u.id, u.unit_number
         `,
@@ -132,32 +122,36 @@ export async function registerFuelReconciliationRoutes(app: FastifyInstance) {
         [operatingCompanyId, startDay, endDay]
       );
 
+      // GPS match table FKs banking.bank_transactions — not fuel.fuel_transactions.
+      // Do not fake a join; gps_match_confidence stays null on the canonical fuel path.
       const unmatchedCards = await client.query(
         `
           SELECT
-            bt.id::text AS transaction_id,
-            bt.transaction_date::text AS transaction_date,
-            ABS(bt.amount_cents)::text AS amount_cents,
-            bt.merchant_name,
-            bt.description,
-            gm.confidence AS gps_match_confidence
-          FROM banking.bank_transactions bt
-          LEFT JOIN safety.fuel_gps_matches gm
-            ON gm.operating_company_id = bt.operating_company_id
-           AND gm.fuel_txn_id = bt.id
-          WHERE bt.operating_company_id = $1
-            AND ${btFuel}
-            AND (
-              bt.matched_load_id IS NULL
-              OR NOT EXISTS (
-                SELECT 1
-                FROM mdata.loads l
-                WHERE l.id = bt.matched_load_id
-                  AND l.soft_deleted_at IS NULL
-                  AND l.assigned_unit_id IS NOT NULL
-              )
-            )
-          ORDER BY ABS(bt.amount_cents) DESC
+            ft.id::text AS transaction_id,
+            ft.transaction_at::date::text AS transaction_date,
+            ROUND(ft.total_cost::numeric * 100)::text AS amount_cents,
+            NULLIF(
+              trim(
+                CONCAT_WS(
+                  ' · ',
+                  NULLIF(trim(CONCAT_WS(', ', ft.location_city, ft.location_state)), ''),
+                  NULLIF(ft.source, '')
+                )
+              ),
+              ''
+            ) AS merchant_name,
+            COALESCE(ft.notes, ft.transaction_reference) AS description,
+            NULL::text AS gps_match_confidence
+          FROM fuel.fuel_transactions ft
+          LEFT JOIN mdata.loads l
+            ON l.id = ft.load_id
+           AND l.operating_company_id = ft.operating_company_id
+           AND l.soft_deleted_at IS NULL
+          WHERE ft.operating_company_id = $1
+            AND ft.archived_at IS NULL
+            AND ft.transaction_at::date BETWEEN $2::date AND $3::date
+            AND COALESCE(ft.unit_id, l.assigned_unit_id) IS NULL
+          ORDER BY ROUND(ft.total_cost::numeric * 100) DESC
           LIMIT 20
         `,
         [operatingCompanyId, startDay, endDay]
@@ -179,13 +173,15 @@ export async function registerFuelReconciliationRoutes(app: FastifyInstance) {
             AND COALESCE(wo.updated_at, wo.opened_at)::date BETWEEN $2::date AND $3::date
             AND NOT EXISTS (
               SELECT 1
-              FROM banking.bank_transactions bt2
-              JOIN mdata.loads l ON l.id = bt2.matched_load_id
-                                 AND l.operating_company_id = $1::uuid
-              WHERE bt2.operating_company_id = $1
-                AND l.soft_deleted_at IS NULL
-                AND l.assigned_unit_id = wo.unit_id
-                AND ${fuelTxnSql("bt2")}
+              FROM fuel.fuel_transactions ft2
+              LEFT JOIN mdata.loads l
+                ON l.id = ft2.load_id
+               AND l.operating_company_id = ft2.operating_company_id
+               AND l.soft_deleted_at IS NULL
+              WHERE ft2.operating_company_id = $1
+                AND ft2.archived_at IS NULL
+                AND ft2.transaction_at::date BETWEEN $2::date AND $3::date
+                AND COALESCE(ft2.unit_id, l.assigned_unit_id) = wo.unit_id
             )
           ORDER BY wo.fuel_cost_cents DESC
           LIMIT 20
@@ -248,19 +244,15 @@ export async function registerFuelReconciliationRoutes(app: FastifyInstance) {
       const unmatched_full_card_res = await client.query<{ c: string }>(
         `
           SELECT COUNT(*)::text AS c
-          FROM banking.bank_transactions bt
-          WHERE bt.operating_company_id = $1
-            AND ${btFuel}
-            AND (
-              bt.matched_load_id IS NULL
-              OR NOT EXISTS (
-                SELECT 1
-                FROM mdata.loads l
-                WHERE l.id = bt.matched_load_id
-                  AND l.soft_deleted_at IS NULL
-                  AND l.assigned_unit_id IS NOT NULL
-              )
-            )
+          FROM fuel.fuel_transactions ft
+          LEFT JOIN mdata.loads l
+            ON l.id = ft.load_id
+           AND l.operating_company_id = ft.operating_company_id
+           AND l.soft_deleted_at IS NULL
+          WHERE ft.operating_company_id = $1
+            AND ft.archived_at IS NULL
+            AND ft.transaction_at::date BETWEEN $2::date AND $3::date
+            AND COALESCE(ft.unit_id, l.assigned_unit_id) IS NULL
         `,
         [operatingCompanyId, startDay, endDay]
       );
@@ -275,13 +267,15 @@ export async function registerFuelReconciliationRoutes(app: FastifyInstance) {
             AND COALESCE(wo.updated_at, wo.opened_at)::date BETWEEN $2::date AND $3::date
             AND NOT EXISTS (
               SELECT 1
-              FROM banking.bank_transactions bt2
-              JOIN mdata.loads l ON l.id = bt2.matched_load_id
-                                 AND l.operating_company_id = $1::uuid
-              WHERE bt2.operating_company_id = $1
-                AND l.soft_deleted_at IS NULL
-                AND l.assigned_unit_id = wo.unit_id
-                AND ${fuelTxnSql("bt2")}
+              FROM fuel.fuel_transactions ft2
+              LEFT JOIN mdata.loads l
+                ON l.id = ft2.load_id
+               AND l.operating_company_id = ft2.operating_company_id
+               AND l.soft_deleted_at IS NULL
+              WHERE ft2.operating_company_id = $1
+                AND ft2.archived_at IS NULL
+                AND ft2.transaction_at::date BETWEEN $2::date AND $3::date
+                AND COALESCE(ft2.unit_id, l.assigned_unit_id) = wo.unit_id
             )
         `,
         [operatingCompanyId, startDay, endDay]
@@ -289,21 +283,7 @@ export async function registerFuelReconciliationRoutes(app: FastifyInstance) {
 
       return {
         period: { start: startDay, end: endDay },
-        // RPT-F02 — the totals block named its money fields differently from the by_truck rows in the
-        // SAME payload: rows carry card_amount_cents / wo_amount_cents, totals carried
-        // fuel_card_amount_cents / wo_fuel_amount_cents. The page read the row-shaped names for both,
-        // so the headline tiles resolved to undefined and rendered $0 while real data sat underneath —
-        // and the Delta tile worked, because delta_cents happened to match. A silent $0 next to a
-        // correct $60,159.10 is the worst version of this: it reads as a real figure, not an error.
-        //
-        // Fixed at the SOURCE by making totals use the payload's own row-level names, so one shape
-        // holds throughout. Not a frontend mapping — a mapping would leave two vocabularies alive and
-        // the next reader would have to learn both.
-        //
-        // ADDITIVE: the old keys are retained as aliases so any unknown consumer keeps working, and
-        // unmatched_card_count / unmatched_wo_count stay because they carry information the single
-        // unmatched_count cannot. unmatched_count is the SUM — the UI asked for one number and the
-        // server only ever offered two halves, which is why that tile could never have worked.
+        // RPT-F02 — totals use the same money field names as by_truck rows.
         totals: {
           card_amount_cents: cardTotalCents,
           wo_amount_cents: woFuelTotal,
