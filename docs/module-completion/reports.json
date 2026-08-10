@@ -19,9 +19,9 @@
         "DOD-B"
       ],
       "spec": "ReportsHome · reports-docs-maintenance breadth pass",
-      "status": "OPEN",
-      "evidence": "scaffold — auditor Layer A PASS: 15 available across 8 categories",
-      "pr": null,
+      "status": "PASS",
+      "evidence": "ReportsHome.tsx renders CategoryHoverNav, Accounting+Financial report grid with 12 report links, Management reports grid with 3 report links (15+ total), and KPI summary via getKpiSummary scoped to companyId. Guard: scripts/verify-rpt-s01-s05-reports-home-ifta.mjs.",
+      "pr": "#5344",
       "prod_verified": false
     },
     {
@@ -70,9 +70,9 @@
         "DOD-B"
       ],
       "spec": "IFTAPreparer · reports execution pass",
-      "status": "OPEN",
-      "evidence": "scaffold — auditor noted IFTA Q3 due in 91d",
-      "pr": null,
+      "status": "PASS",
+      "evidence": "ReportsHome.tsx renders IftaPreparerCard only after getIftaStatus resolves, with daysUntilDue computed from real status and a loading placeholder of '—'. Guard: scripts/verify-rpt-s01-s05-reports-home-ifta.mjs.",
+      "pr": "#5344",
       "prod_verified": false
     },
     {
@@ -121,7 +121,7 @@
       "prod_verified": false
     }
   ],
-  "pass_count": 0,
+  "pass_count": 2,
   "total_count": 8,
-  "progress": "0 of 8"
+  "progress": "2 of 8"
 }
