@@ -16,6 +16,8 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { StatusBadge } from "../../components/StatusBadge";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { EntityPicker } from "../../components/parity/EntityPicker";
+import { ListErrorState } from "../../components/ListErrorState";
+import { formatQueryErrorDetail } from "../../lib/tableError";
 
 export function InTransitIssuesPage() {
   const { selectedCompanyId } = useCompanyContext();
@@ -128,7 +130,14 @@ export function InTransitIssuesPage() {
         }
       />
 
-      <ParityTable<DispatchIntransitIssueRow>
+      {issuesQ.isError ? (
+        <ListErrorState
+          title="Couldn't load in-transit issues"
+          {...formatQueryErrorDetail(issuesQ.error)}
+          onRetry={() => void issuesQ.refetch()}
+        />
+      ) : (
+        <ParityTable<DispatchIntransitIssueRow>
         columns={columns}
         rows={issues}
         rowKey={(issue) => issue.id}
@@ -136,7 +145,8 @@ export function InTransitIssuesPage() {
         emptyText="No in-transit issues."
         storageKey="dispatch-intransit-issues"
         exportFilename="intransit-issues"
-      />
+        />
+      )}
 
       <Modal variant="drawer" open={createOpen} onClose={() => setCreateOpen(false)} title="Create In-Transit Issue">
         <form
