@@ -1945,5 +1945,10 @@
     "claimed_at": "2026-08-10",
     "claimed_by": "cursor",
     "purpose": "verify-catalog-config-physical-columns"
+  },
+  "2994": {
+    "claimed_at": "2026-08-10",
+    "claimed_by": "cursor",
+    "purpose": "verify-no-mdata-drivers-active-phantom"
   }
 }
