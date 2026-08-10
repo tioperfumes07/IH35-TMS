@@ -21,7 +21,7 @@
       "spec": "Form425CHome route",
       "status": "PASS",
       "evidence": "Form425CHome.tsx reads selectedCompanyId and passes operating_company_id to 425C report APIs. /425c route mounts Form425CHome; /form-425c redirects to /425c. Tabs profile/qb/form/merge/history render. Guard: scripts/verify-425-s01-s02-surfaces.mjs.",
-      "pr": "#TBD",
+      "pr": "#5357",
       "prod_verified": false
     },
     {
@@ -34,7 +34,7 @@
       "spec": "C10-ROUTES tab law · 425c exhibits route",
       "status": "PASS",
       "evidence": "/425c/exhibits route mounts Form425CExhibitsViewer, which reads selectedCompanyId and passes operating_company_id to /api/v1/reports/form-425c/exhibits/build. Backend route validates operating_company_id and applies withCompanyScope + retrieval entity check. Exhibits A–F tabs rendered. Guard: scripts/verify-425-s01-s02-surfaces.mjs.",
-      "pr": "#TBD",
+      "pr": "#5357",
       "prod_verified": false
     },
     {
