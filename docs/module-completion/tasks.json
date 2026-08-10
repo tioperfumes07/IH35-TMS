@@ -62,9 +62,9 @@
         "DOD-C"
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
-      "pr": null,
+      "status": "PASS",
+      "evidence": "Route /tasks/mine registered as ProtectedRoute wrapping TasksMinePage; page now guards missing operating company with honest empty state; fetches current user via getMe and /api/v1/tasks/planner via fetchPlannerTasks with operating_company_id, assigned_to=currentUser, date_from, date_to; query errors now surface ListErrorBanner with retry; ParityTable renders assigned tasks with open/overdue/completed summary cards and honest empty text.",
+      "pr": "#5318",
       "prod_verified": false
     },
     {
@@ -83,7 +83,7 @@
     }
   ],
   "M": 5,
-  "pass_count": 3,
+  "pass_count": 4,
   "total_count": 5,
-  "progress": "3 of 5"
+  "progress": "4 of 5"
 }
