@@ -11,6 +11,7 @@ import { CashAdvancesKpiRow } from "./components/CashAdvancesKpiRow";
 import { CashAdvancesTable } from "./components/CashAdvancesTable";
 import { CreateAdvanceModal } from "./components/CreateAdvanceModal";
 import { MarkDisbursedModal } from "./components/MarkDisbursedModal";
+import { ListErrorState } from "../../components/ListErrorState";
 
 const SUBNAV = [
   ["All Advances", "all"],
@@ -120,9 +121,25 @@ export function CashAdvancesHomePage() {
         </div>
       </div>
 
-      <CashAdvancesKpiRow kpis={kpisQuery.data} />
+      {kpisQuery.isError ? (
+        <ListErrorState
+          title="Couldn't load cash advance totals"
+          status={0}
+          message={(kpisQuery.error as Error)?.message}
+          onRetry={() => void kpisQuery.refetch()}
+        />
+      ) : (
+        <CashAdvancesKpiRow kpis={kpisQuery.data} />
+      )}
 
-      {listState.isEmpty ? (
+      {listQuery.isError ? (
+        <ListErrorState
+          title="Couldn't load cash advances"
+          status={0}
+          message={(listQuery.error as Error)?.message}
+          onRetry={() => void listQuery.refetch()}
+        />
+      ) : listState.isEmpty ? (
         <p
           className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-3 text-center text-xs text-slate-600"
           data-testid="cash-advances-empty"
@@ -143,6 +160,15 @@ export function CashAdvancesHomePage() {
           }}
         />
       )}
+
+      {detailOpen && detailQuery.isError ? (
+        <ListErrorState
+          title="Couldn't load cash advance details"
+          status={0}
+          message={(detailQuery.error as Error)?.message}
+          onRetry={() => void detailQuery.refetch()}
+        />
+      ) : null}
 
       <CreateAdvanceModal
         open={createOpen}
