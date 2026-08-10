@@ -117,6 +117,12 @@ export function customerVendorDetailUrlSortErrors({ hookSrc, pages }) {
     }
     const bad = findNonSortableDataColumns(pageSrc);
     if (bad.length) failures.push(`${page.file} — data column(s) missing sortable: true: ${bad.join(", ")}`);
+    if (page.file.endsWith("VendorDetail.tsx")) {
+      for (const query of ["vendorQuery", "billsQuery", "vendorExpensesQuery", "vendorCreditsQuery"]) {
+        const retry = new RegExp(`${query}\\.isError[\\s\\S]{0,220}<ListErrorBanner[\\s\\S]{0,220}${query}\\.refetch\\(\\)`);
+        if (!retry.test(pageSrc)) failures.push(`${page.file} — ${query} failure must render retryable ListErrorBanner`);
+      }
+    }
   }
   return failures;
 }
@@ -146,6 +152,10 @@ function selftest() {
     { key: "bill_number", label: "Bill #", sortable: true }
     <ParityTable sortKey={paySortKey} sortDirection={paySortDirection} onSortChange={onPaySortChange} />
     <ParityTable sortKey={billSortKey} sortDirection={billSortDirection} onSortChange={onBillSortChange} />
+    {vendorQuery.isError ? <ListErrorBanner onRetry={() => void vendorQuery.refetch()} /> : null}
+    {billsQuery.isError ? <ListErrorBanner onRetry={() => void billsQuery.refetch()} /> : null}
+    {vendorExpensesQuery.isError ? <ListErrorBanner onRetry={() => void vendorExpensesQuery.refetch()} /> : null}
+    {vendorCreditsQuery.isError ? <ListErrorBanner onRetry={() => void vendorCreditsQuery.refetch()} /> : null}
   `;
   const pages = [
     {
@@ -217,6 +227,17 @@ function selftest() {
         ],
       },
       "missing sortable: true",
+    ],
+    [
+      "vendor credits retry removed",
+      {
+        ...good,
+        pages: [
+          pages[0],
+          { ...pages[1], pageSrc: goodVendor.replace("vendorCreditsQuery.refetch()", "noop()") },
+        ],
+      },
+      "vendorCreditsQuery failure must render retryable ListErrorBanner",
     ],
   ];
   const goodErrors = customerVendorDetailUrlSortErrors(good);
