@@ -22,6 +22,9 @@ export function audit(src) {
   if (/if \(!q\.data && !q\.isLoading\) return null/.test(src)) {
     problems.push(`${TARGET}: legacy early return still swallows query errors`);
   }
+  if (/q\.isError\s*\?\s*\(\s*<div className="[^"]*(?:rounded|border)/.test(src)) {
+    problems.push(`${TARGET}: error alert must stay flat inside the panel frame (no box-in-box)`);
+  }
   return problems;
 }
 
@@ -29,13 +32,14 @@ function selftest() {
   const good = `
     props.onBlockersChange?.(q.isError || blockers.length > 0);
     userFacingApiError(q.error, "Could not verify dispatch authorization");
-    <button onClick={() => void q.refetch()}>Retry</button>`;
+    {q.isError ? (<div className="bg-red-50"><button onClick={() => void q.refetch()}>Retry</button></div>) : null}`;
   const bad = `
     props.onBlockersChange?.(blockers.length > 0);
-    if (!q.data && !q.isLoading) return null;`;
+    if (!q.data && !q.isLoading) return null;
+    {q.isError ? (<div className="rounded-sm border border-red-200">Failed</div>) : null}`;
   const failures = [];
   if (audit(good).length) failures.push(`good fixture rejected: ${audit(good).join(" | ")}`);
-  if (audit(bad).length < 4) failures.push("silent fail-open regression was not fully detected");
+  if (audit(bad).length < 5) failures.push("silent fail-open / nested-frame regression was not fully detected");
   if (failures.length) {
     failures.forEach((failure) => console.error(`  ✗ ${LABEL}: ${failure}`));
     process.exit(1);
