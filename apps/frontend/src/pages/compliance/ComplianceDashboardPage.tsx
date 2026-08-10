@@ -134,6 +134,7 @@ export function ComplianceDashboardPage() {
     if (ownerTypeFilter) rows = rows.filter((r: ComplianceCredential) => r.owner_type === ownerTypeFilter);
     return rows;
   }, [dashboardQ.data?.credentials, typeFilter, ownerTypeFilter]);
+  const overviewQueriesFailed = summaryQ.isError || dashboardQ.isError || rulesQ.isError || logQ.isError;
 
   if (!companyId) {
     return <div className="rounded-sm border bg-white p-4 text-sm">Select an operating company.</div>;
@@ -198,7 +199,7 @@ export function ComplianceDashboardPage() {
 
       {tab !== "overview" ? null : (
       <>
-      {(summaryQ.isError || dashboardQ.isError || rulesQ.isError || logQ.isError) ? (
+      {overviewQueriesFailed ? (
         <ListErrorBanner
           onRetry={() => {
             void summaryQ.refetch();
@@ -212,6 +213,8 @@ export function ComplianceDashboardPage() {
         <FleetHosBoardSection operatingCompanyId={companyId} />
       </SectionErrorBoundary>
 
+      {!overviewQueriesFailed ? (
+      <>
       <SectionErrorBoundary name="Summary">
         <section data-testid="compliance-section-summary">
           <SummaryCards
@@ -273,6 +276,8 @@ export function ComplianceDashboardPage() {
         />
       </section>
       </SectionErrorBoundary>
+      </>
+      ) : null}
       </>
       )}
     </div>
