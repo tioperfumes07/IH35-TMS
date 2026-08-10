@@ -62,14 +62,16 @@ export const CASH_LIKE_SUBTYPES: ReadonlySet<string> = new Set(
 );
 
 /** Account TYPES that are themselves a means of payment regardless of detail type. */
-export const PAYMENT_ACCOUNT_TYPES: ReadonlySet<string> = new Set(["Bank", "CreditCard"]);
+export const PAYMENT_ACCOUNT_TYPES: ReadonlySet<string> = new Set(
+  ["Bank", "Credit Card", "CreditCard"].map(normalizeSubtype)
+);
 
 /** Expense-side types for a cost/category line. Income, assets and liabilities are never valid here. */
-export const EXPENSE_ACCOUNT_TYPES: ReadonlySet<string> = new Set([
-  "Expense",
-  "CostOfGoodsSold",
-  "OtherExpense",
-]);
+export const EXPENSE_ACCOUNT_TYPES: ReadonlySet<string> = new Set(
+  ["Expense", "Cost of Goods Sold", "CostOfGoodsSold", "Other Expense", "OtherExpense"].map(
+    normalizeSubtype
+  )
+);
 
 function isSelectable(a: PickerAccount): boolean {
   return Boolean(a.is_postable) && !a.deactivated_at;
@@ -81,9 +83,9 @@ function isSelectable(a: PickerAccount): boolean {
  */
 export function isPaymentAccount(a: PickerAccount): boolean {
   if (!isSelectable(a)) return false;
-  const type = String(a.account_type ?? "");
+  const type = normalizeSubtype(a.account_type);
   if (PAYMENT_ACCOUNT_TYPES.has(type)) return true;
-  return type === "Asset" && CASH_LIKE_SUBTYPES.has(normalizeSubtype(a.account_subtype));
+  return type === "asset" && CASH_LIKE_SUBTYPES.has(normalizeSubtype(a.account_subtype));
 }
 
 /**
@@ -93,5 +95,5 @@ export function isPaymentAccount(a: PickerAccount): boolean {
  */
 export function isExpenseAccount(a: PickerAccount): boolean {
   if (!isSelectable(a)) return false;
-  return EXPENSE_ACCOUNT_TYPES.has(String(a.account_type ?? ""));
+  return EXPENSE_ACCOUNT_TYPES.has(normalizeSubtype(a.account_type));
 }
