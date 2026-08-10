@@ -69,6 +69,12 @@ function main() {
   if (!page.includes("+ Create Inspection")) failures.push("InspectionsPage must expose + Create Inspection");
   if (!page.includes("requestUploadUrl")) failures.push("InspectionsPage must upload photos via docs module");
   if (!page.includes("getSafetyDvirSubmissions")) failures.push("InspectionsPage must wire DVIR linkage");
+  if (!/<Combobox[\s\S]*?id="maintenance-inspection-dvir-picker"/.test(page)) {
+    failures.push("InspectionsPage DVIR linkage must use the searchable Combobox");
+  }
+  if (/<select[\s\S]*?value=\{draft\.dvir_submission_id\}/.test(page)) {
+    failures.push("InspectionsPage DVIR linkage must not regress to a native UUID-valued select");
+  }
   if ((pageTest.match(/\bit\(/g) ?? []).length < 3) {
     failures.push("InspectionsPage.test must include at least 3 vitest cases");
   }

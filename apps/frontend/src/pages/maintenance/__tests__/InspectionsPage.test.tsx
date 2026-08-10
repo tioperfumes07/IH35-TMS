@@ -117,6 +117,9 @@ describe("Maintenance InspectionsPage (B30)", () => {
     renderPage();
     await user.click(await screen.findByRole("button", { name: "+ Create Inspection" }));
     await user.selectOptions(screen.getByDisplayValue("Annual DOT"), "pre_trip");
-    expect(await screen.findByText("Link DVIR submission")).toBeInTheDocument();
+    const picker = await screen.findByRole("combobox", { name: "Link DVIR submission" });
+    expect(picker).toHaveAttribute("aria-autocomplete", "list");
+    await user.click(picker);
+    expect(await screen.findByText("Pre trip · 2026-06-04T08:00:00Z")).toBeInTheDocument();
   });
 });

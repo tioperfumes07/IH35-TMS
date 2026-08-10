@@ -20,6 +20,7 @@ import { EntityPicker } from "../../../components/parity/EntityPicker";
 import { useToast } from "../../../components/Toast";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+import { Combobox } from "../../../components/Combobox";
 
 type InspectionDraft = {
   unit_id: string;
@@ -99,6 +100,17 @@ export function InspectionsPage() {
       }),
     enabled: Boolean(companyId) && (draft.inspection_type === "pre_trip" || draft.inspection_type === "post_trip"),
   });
+
+  const dvirOptions = useMemo(
+    () =>
+      (dvirQ.data?.submissions ?? []).map((submission: Record<string, unknown>) => ({
+        value: String(submission.id ?? ""),
+        label: `${humanizeEnumLabel(String(submission.type ?? "DVIR"))} · ${
+          submission.submitted_at ? String(submission.submitted_at) : "Date unavailable"
+        }`,
+      })).filter((option) => option.value),
+    [dvirQ.data?.submissions],
+  );
 
   const refresh = async () => {
     await queryClient.invalidateQueries({ queryKey: ["maintenance", "inspections", companyId] });
@@ -291,21 +303,19 @@ export function InspectionsPage() {
           </label>
 
           {(draft.inspection_type === "pre_trip" || draft.inspection_type === "post_trip") ? (
-            <label className="block">
-              <span className="text-xs text-gray-600">Link DVIR submission</span>
-              <select
-                className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1"
-                value={draft.dvir_submission_id}
-                onChange={(e) => setDraft((d) => ({ ...d, dvir_submission_id: e.target.value }))}
-              >
-                <option value="">No DVIR link</option>
-                {(dvirQ.data?.submissions ?? []).map((sub: Record<string, unknown>) => (
-                  <option key={String(sub.id)} value={String(sub.id)}>
-                    {String(sub.type ?? "dvir")} · {String(sub.submitted_at ?? sub.id)}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <div className="block">
+              <label htmlFor="maintenance-inspection-dvir-picker" className="text-xs text-gray-600">Link DVIR submission</label>
+              <Combobox
+                id="maintenance-inspection-dvir-picker"
+                className="mt-1"
+                options={dvirOptions}
+                value={draft.dvir_submission_id || null}
+                onChange={(next) => setDraft((d) => ({ ...d, dvir_submission_id: next ?? "" }))}
+                placeholder="No DVIR link"
+                loading={dvirQ.isLoading}
+                error={dvirQ.isError ? "Couldn't load DVIR submissions" : undefined}
+              />
+            </div>
           ) : null}
 
           <div className="grid grid-cols-2 gap-2">
