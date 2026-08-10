@@ -8,6 +8,7 @@ import {
   DISPATCH_LOCAL_SETTINGS_KEY,
   DispatchSettingsPage,
 } from "../DispatchSettingsPage";
+import * as dispatchApi from "../../../api/dispatch";
 
 vi.mock("../../../components/Toast", () => ({
   useToast: () => ({ pushToast: vi.fn() }),
@@ -61,5 +62,13 @@ describe("DispatchSettingsPage (B21-D11)", () => {
     const loadsRadio = await screen.findByTestId("dispatch-default-view-loads");
     await user.click(loadsRadio);
     expect(updateDispatchPreferences).toHaveBeenCalledWith("loads");
+  });
+
+  // DISP-S34: getDispatchPreferences failing silently fell back to the "home" default with no
+  // indication the saved preference never loaded — a swallowed error presented as a settled fact.
+  it("names a fetch failure instead of silently defaulting to home", async () => {
+    vi.mocked(dispatchApi.getDispatchPreferences).mockRejectedValueOnce(new Error("boom"));
+    wrap(<DispatchSettingsPage />);
+    expect(await screen.findByTestId("dispatch-settings-prefs-error")).toBeTruthy();
   });
 });

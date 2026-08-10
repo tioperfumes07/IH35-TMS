@@ -159,6 +159,12 @@ export function DispatchSettingsPage() {
           <p className="mb-3 text-sm text-slate-600">
             Choose which dispatch surface opens when you visit Dispatch Home without a view override.
           </p>
+          {prefsQuery.isError ? (
+            <p className="mb-3 text-xs text-red-700" data-testid="dispatch-settings-prefs-error">
+              Couldn&apos;t load your saved default view — showing "Dispatch Home" until this loads. Choosing an
+              option below will still save.
+            </p>
+          ) : null}
           <div className="space-y-2">
             <label className="flex items-center gap-2 text-sm">
               <input
