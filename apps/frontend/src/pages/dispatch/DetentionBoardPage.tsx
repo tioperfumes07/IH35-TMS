@@ -16,6 +16,8 @@ import { StatusBadge } from "../../components/StatusBadge";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatUsdCents } from "../../lib/money";
 import { entityLabel } from "../../lib/entity-label";
+import { ListErrorState } from "../../components/ListErrorState";
+import { formatQueryErrorDetail } from "../../lib/tableError";
 
 function formatMoney(cents: number): string {
   return formatUsdCents(Math.max(0, cents));
@@ -212,7 +214,14 @@ export function DetentionBoardPage() {
         {boardQ.data?.notify_threshold_minutes ?? 60} billable minutes.
       </p>
 
-      <ParityTable<DetentionRow>
+      {boardQ.isError ? (
+        <ListErrorState
+          title="Couldn't load detention events"
+          {...formatQueryErrorDetail(boardQ.error)}
+          onRetry={() => void boardQ.refetch()}
+        />
+      ) : (
+        <ParityTable<DetentionRow>
         columns={columns}
         rows={events}
         rowKey={(event) => String(event.id)}
@@ -220,7 +229,8 @@ export function DetentionBoardPage() {
         emptyText="No active detention accrual. Confirmed stop arrivals will appear after sync."
         storageKey="dispatch-detention-board"
         exportFilename="detention-board"
-      />
+        />
+      )}
     </div>
   );
 }
