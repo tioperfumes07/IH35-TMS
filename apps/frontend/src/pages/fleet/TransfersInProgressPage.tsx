@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { apiRequest } from "../../api/client";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { ListErrorState } from "../../components/ListErrorState";
 
 type TransferRow = {
   id: string;
@@ -38,6 +39,13 @@ export function TransfersInProgressPage() {
         </div>
       ) : query.isLoading ? (
         <div className="rounded-sm border bg-white p-4 text-sm">Loading transfers…</div>
+      ) : query.isError ? (
+        <ListErrorState
+          title="Couldn't load equipment transfers"
+          status={0}
+          message="The transfer queue is temporarily unavailable."
+          onRetry={() => void query.refetch()}
+        />
       ) : (query.data ?? []).length === 0 ? (
         <div className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-sm text-gray-700">
           No pending equipment transfers for this operating company.
