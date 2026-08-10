@@ -1920,5 +1920,10 @@
     "claimed_at": "2026-08-10",
     "claimed_by": "cursor",
     "purpose": "verify-migration-claimed-on-main"
+  },
+  "2984": {
+    "claimed_at": "2026-08-10",
+    "claimed_by": "cursor",
+    "purpose": "verify-usmca-active-not-hidden-skills"
   }
 }
