@@ -18,6 +18,11 @@ function run() {
     'searchParams.get("tab")',
     "parseIntegrityAlertsTab",
     'params.set("tab", next)',
+    "ListErrorBanner",
+    "alertsQuery.isError",
+    "rulesQuery.isError",
+    "alertsQuery.refetch()",
+    "rulesQuery.refetch()",
   ]) {
     if (!source.includes(needle)) throw new Error(`${LABEL}: missing ${JSON.stringify(needle)} in ${PAGE}`);
   }
