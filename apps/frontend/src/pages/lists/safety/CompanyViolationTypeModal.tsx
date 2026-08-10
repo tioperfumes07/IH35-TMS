@@ -88,7 +88,6 @@ export function CompanyViolationTypeModal({ open, companyId, row, onClose, onSav
       onClose();
     } catch (error) {
       if (error instanceof ApiError) {
-        const data = (error.data as Record<string, unknown>) ?? {};
         setSubmitError(userFacingApiError(error, "Save failed"));
       } else {
         setSubmitError("Failed to save Company Violation Type.");
@@ -108,7 +107,6 @@ export function CompanyViolationTypeModal({ open, companyId, row, onClose, onSav
       onClose();
     } catch (error) {
       if (error instanceof ApiError) {
-        const data = (error.data as Record<string, unknown>) ?? {};
         setSubmitError(userFacingApiError(error, "Save failed"));
       } else {
         setSubmitError("Failed to deactivate Company Violation Type.");

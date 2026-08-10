@@ -60,7 +60,7 @@ export function SettlementDisputesTab({ companyId }: { companyId: string }) {
       pushToast("Dispute marked under review", "success");
       await queryClient.invalidateQueries({ queryKey: ["driver-finance", "settlement-disputes"] });
     },
-    onError: (error) => pushToast(userFacingApiError(error, error), "error"),
+    onError: (error) => pushToast(userFacingApiError(error, "Could not mark dispute under review"), "error"),
   });
 
   const resolveMutation = useMutation({
@@ -80,7 +80,7 @@ export function SettlementDisputesTab({ companyId }: { companyId: string }) {
       setResolutionAmount("");
       await queryClient.invalidateQueries({ queryKey: ["driver-finance", "settlement-disputes"] });
     },
-    onError: (error) => pushToast(userFacingApiError(error, error), "error"),
+    onError: (error) => pushToast(userFacingApiError(error, "Could not resolve dispute"), "error"),
   });
 
   const rows = disputesQuery.data?.disputes ?? [];

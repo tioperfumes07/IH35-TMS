@@ -77,7 +77,6 @@ export function InternalFineReasonModal({ open, companyId, row, onClose, onSaved
       onClose();
     } catch (error) {
       if (error instanceof ApiError) {
-        const data = (error.data as Record<string, unknown>) ?? {};
         setSubmitError(userFacingApiError(error, "Save failed"));
       } else {
         setSubmitError("Failed to save Internal Fine Reason.");
@@ -97,7 +96,6 @@ export function InternalFineReasonModal({ open, companyId, row, onClose, onSaved
       onClose();
     } catch (error) {
       if (error instanceof ApiError) {
-        const data = (error.data as Record<string, unknown>) ?? {};
         setSubmitError(userFacingApiError(error, "Save failed"));
       } else {
         setSubmitError("Failed to deactivate Internal Fine Reason.");

@@ -168,7 +168,6 @@ export function PostingTemplateModal({ open, mode, row, operatingCompanyId, clie
       onClose();
     } catch (error) {
       if (error instanceof ApiError) {
-        const data = (error.data as Record<string, unknown>) ?? {};
         setSubmitError(userFacingApiError(error, "Save failed"));
       } else {
         setSubmitError("Failed to save posting template.");

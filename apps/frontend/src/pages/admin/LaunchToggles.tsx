@@ -68,7 +68,7 @@ export function LaunchTogglesPage() {
       await queryClient.invalidateQueries({ queryKey: ["admin-launch-toggles"] });
       await queryClient.invalidateQueries({ queryKey: ["org", "my-companies"] });
     },
-    onError: (err) => setError(userFacingApiError(err, err)),
+    onError: (err) => setError(userFacingApiError(err, "Toggle action failed")),
   });
 
   const rows = togglesQuery.data?.toggles ?? [];

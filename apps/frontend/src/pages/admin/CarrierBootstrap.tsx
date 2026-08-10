@@ -60,7 +60,7 @@ export function CarrierBootstrapPage() {
       setLastResult(data);
       setError(null);
     },
-    onError: (err) => setError(userFacingApiError(err, err)),
+    onError: (err) => setError(userFacingApiError(err, "Bootstrap failed")),
   });
 
   if (!allowed) {
