@@ -82,7 +82,7 @@ const SIBLINGS = [
   },
   {
     rel: "apps/frontend/src/pages/accounting/BillPaymentsListPage.tsx",
-    bad: /label=\{row\.vendor_name\s*\?\?\s*row\.vendor_id\}/,
+    bad: /label=\{row\.vendor_name\s*\?\?\s*row\.vendor_id\}|vendorName=\{selectedBill\?\.vendor_name\s*\?\?\s*selectedBill\?\.vendor_id/,
     good: /entityLabel\(\s*row\.vendor_name\s*,\s*row\.vendor_id\s*,\s*"Vendor"\s*\)/,
   },
   {

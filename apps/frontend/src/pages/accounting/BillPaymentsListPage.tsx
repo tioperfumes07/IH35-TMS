@@ -321,7 +321,7 @@ export function BillPaymentsListPage() {
         <PayBillModal
           open={payModalOpen}
           operatingCompanyId={companyId}
-          vendorName={selectedBill?.vendor_name ?? selectedBill?.vendor_id ?? "Vendor"}
+          vendorName={entityLabel(selectedBill?.vendor_name, selectedBill?.vendor_id, "Vendor")}
           bill={selectedBill}
           onClose={() => setPayModalOpen(false)}
           onSaved={() => {
