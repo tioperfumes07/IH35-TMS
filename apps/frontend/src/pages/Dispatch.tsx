@@ -24,6 +24,8 @@ import { DispatchOverview } from "./dispatch/DispatchOverview";
 import { RoundTrips } from "./dispatch/RoundTrips";
 import { DispatchSubnav } from "../components/dispatch/DispatchSubnav";
 import { PreSettlementsPanel } from "../components/driver-finance/PreSettlementsPanel";
+import { ListErrorBanner } from "../components/shared/ListErrorBanner";
+import { userFacingApiError } from "../lib/api-error-message";
 import { DISPATCH_SECONDARY_TAB_PATH, dispatchSecondaryTabFromPath } from "../router/route-manifest";
 
 type ViewMode = "overview" | "list" | "kanban" | "units";
@@ -466,17 +468,50 @@ export function DispatchPage({
           <AssignmentHistoryPage />
         </div>
       ) : subTab === "pre_settlements" ? (
-        <PreSettlementsPanel
-          rows={(preSettlementsQuery.data?.settlements ?? []).filter((settlement) => ["presettle", "acked", "locked"].includes(String(settlement.status)))}
-          loading={preSettlementsQuery.isLoading}
-          isError={preSettlementsQuery.isError}
-        />
+        !defaultCompanyIds[0] ? (
+          <div
+            data-testid="dispatch-pre-settlements-need-company"
+            className="rounded-sm border bg-white p-4 text-sm text-slate-600"
+          >
+            Select an operating company to load pre-settlements for that entity.
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {preSettlementsQuery.isError ? (
+              <ListErrorBanner
+                message={userFacingApiError(preSettlementsQuery.error, "Could not load pre-settlements")}
+                onRetry={() => void preSettlementsQuery.refetch()}
+              />
+            ) : null}
+            <PreSettlementsPanel
+              rows={(preSettlementsQuery.data?.settlements ?? []).filter((settlement) =>
+                ["presettle", "acked", "locked"].includes(String(settlement.status))
+              )}
+              loading={preSettlementsQuery.isLoading}
+              isError={preSettlementsQuery.isError}
+            />
+          </div>
+        )
+      ) : !defaultCompanyIds[0] ? (
+        <div
+          data-testid="dispatch-settlements-need-company"
+          className="rounded-sm border bg-white p-4 text-sm text-slate-600"
+        >
+          Select an operating company — settlement runs are entity-scoped in Driver Finance.
+        </div>
       ) : (
         /* ARCHIVE B21-D12 Sunset 2026-06-04: settlements stub replaced by Driver Finance quick-link (A24-2 pattern) */
         <div data-testid="dispatch-settlements-quicklink">
           <DataPanel title="Settlements">
             <DataPanelRow>
-              <span className="text-sm text-gray-700">Settlement runs, acknowledgements, and payouts live in Driver Finance.</span>
+              <span
+                className="text-sm text-gray-700"
+                data-testid="dispatch-settlements-honest-empty"
+              >
+                No settlement list on this Dispatch tab — runs, acknowledgements, and payouts live in Driver
+                Finance for the active company. Open Settlements there after loads are delivered and
+                pre-settled.
+              </span>
               <Link
                 to="/driver-finance/settlements"
                 className="text-xs text-slate-700 underline"

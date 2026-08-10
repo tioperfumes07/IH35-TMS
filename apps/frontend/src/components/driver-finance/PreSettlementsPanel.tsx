@@ -63,7 +63,13 @@ export function PreSettlementsPanel({ rows, loading = false, isError = false, ti
           </DataPanelRow>
         ))}
       {!loading && !isError && rows.length === 0 ? (
-        <p className="px-2 py-2 text-xs text-gray-500">No pre-settlements ready right now.</p>
+        <p
+          className="px-2 py-2 text-xs text-gray-500"
+          data-testid="dispatch-pre-settlements-honest-empty"
+        >
+          No pre-settlements in presettle/acked/locked for this company. Deliver loads and run
+          pre-settle in Driver Finance — rows appear here once settlements enter those statuses.
+        </p>
       ) : null}
       {!isError && showTotal ? (
         <DataPanelRow>

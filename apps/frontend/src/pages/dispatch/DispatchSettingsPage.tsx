@@ -6,7 +6,10 @@ import {
   type DispatchV2View,
 } from "../../api/dispatch";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useToast } from "../../components/Toast";
+import { userFacingApiError } from "../../lib/api-error-message";
+import { useCompanyContext } from "../../contexts/CompanyContext";
 
 export const DISPATCH_LOCAL_SETTINGS_KEY = "ih35.dispatch.local_settings";
 
@@ -85,6 +88,7 @@ function PrefToggle({
 export function DispatchSettingsPage() {
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
+  const { selectedCompanyId } = useCompanyContext();
   const [localSettings, setLocalSettings] = useState<DispatchLocalSettings>(() => readDispatchLocalSettings());
 
   const prefsQuery = useQuery({
@@ -113,12 +117,41 @@ export function DispatchSettingsPage() {
     pushToast("Dispatcher defaults updated.");
   }
 
+  if (!selectedCompanyId) {
+    return (
+      <div
+        data-testid="dispatch-settings-need-company"
+        className="rounded-sm border bg-white p-4 text-sm text-slate-600"
+      >
+        Select an operating company. Local dispatcher defaults apply per browser; the default landing
+        view preference saves for your user once a company context is active for Dispatch.
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4 p-4" data-testid="dispatch-settings-page">
       <PageHeader
         title="Dispatch settings"
         subtitle="Dispatcher defaults — landing view, sort, alert thresholds, auto-routing (B21-D11)"
       />
+
+      {prefsQuery.isError ? (
+        <ListErrorBanner
+          message={userFacingApiError(prefsQuery.error, "Could not load dispatch preferences")}
+          onRetry={() => void prefsQuery.refetch()}
+        />
+      ) : null}
+
+      {!prefsQuery.isError && !prefsQuery.isLoading && !prefsQuery.data ? (
+        <p
+          className="rounded-sm border bg-white p-3 text-sm text-slate-600"
+          data-testid="dispatch-settings-honest-empty"
+        >
+          No saved default landing view yet — choose Home or Loads below to create your preference.
+          Sort and alert thresholds are stored in this browser until you change them.
+        </p>
+      ) : null}
 
       <div className="grid gap-4 lg:grid-cols-2">
         <section className="rounded-sm border p-4" data-testid="dispatch-settings-default-view">

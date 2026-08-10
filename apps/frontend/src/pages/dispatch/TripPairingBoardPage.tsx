@@ -3,10 +3,12 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { DrillKpiCard } from "../../components/layout/DrillKpiCard";
+import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { getTripPairingBoard, type TripLeg, type TripPairingUnitRow } from "../../api/dispatch";
 import { BookLoadModalV4 } from "./components/BookLoadModalV4";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 // §7 navy ruling (Jorge 2026-06-23): NB/TR/SB render in the navy family — no blue/purple/green pills.
 // Three distinguishable navy-family shades replace the old SB green (#16a34a) and any blue/purple.
@@ -96,6 +98,17 @@ export function TripPairingBoardPage() {
   const unbooked = showUnbooked ? (data?.unbooked ?? []).filter(matches) : [];
   const tours = (data?.tours ?? []).filter(matches).filter(tourInSegment);
 
+  if (!companyId) {
+    return (
+      <div
+        data-testid="dispatch-trip-pairing-need-company"
+        className="rounded-sm border bg-white p-4 text-sm text-slate-600"
+      >
+        Select an operating company to load the trip pairing board.
+      </div>
+    );
+  }
+
   // Real client-side CSV export of exactly what's on the board (respects the active segment + search).
   // Mirrors the Blob-download pattern used by DispatchBoard's "Export CSV".
   const legsText = (row: TripPairingUnitRow, type: "NB" | "TR" | "SB") =>
@@ -130,7 +143,7 @@ export function TripPairingBoardPage() {
   };
 
   return (
-    <div>
+    <div data-testid="dispatch-trip-pairing-page">
       <PageHeader title="Trip Pairing Board" subtitle="Northbound · Triangulation(s) · Southbound — settlement closes on return to Laredo." />
 
       {data ? (
@@ -193,7 +206,18 @@ export function TripPairingBoardPage() {
       {query.isLoading ? (
         <div className="px-3 py-6 text-sm text-slate-500">Loading board…</div>
       ) : query.isError ? (
-        <div className="px-3 py-6 text-sm text-red-600">Failed to load the board.</div>
+        <ListErrorBanner
+          message={userFacingApiError(query.error, "Could not load trip pairing board")}
+          onRetry={() => void query.refetch()}
+        />
+      ) : tours.length === 0 && unbooked.length === 0 ? (
+        <div
+          data-testid="dispatch-trip-pairing-honest-empty"
+          className="rounded-sm border bg-white px-3 py-6 text-center text-sm text-slate-500"
+        >
+          No tours or unbooked units for this company on the trip pairing board. Assign units/drivers
+          and book northbound loads — rows appear once the board feed returns tours or an unbooked pool.
+        </div>
       ) : (
         <div className="space-y-4">
           {/* Zone 1 — Unbooked / available pool (navy-family per §7; "+ Book NB" cards). */}
