@@ -51,6 +51,14 @@ for (const rel of noDirtyPickerFiles) {
   }
 }
 
+const lawsuitCreate = read("apps/frontend/src/components/insurance/LawsuitCreateModal.tsx");
+if (!/<EntityPicker[\s\S]*?kind=["']insurance_claim["'][\s\S]*?allowCreate=\{false\}/.test(lawsuitCreate)) {
+  failures.push("LawsuitCreateModal linked claim must use EntityPicker kind=insurance_claim in filter mode");
+}
+if (/<select[\s\S]*?value=\{form\.claim_id\}/.test(lawsuitCreate)) {
+  failures.push("LawsuitCreateModal linked claim must not regress to a native UUID-valued select");
+}
+
 // ── money create shells must be ParityDrawer (QBO side panel), not centered Modal ──
 const parityDrawerShells = [
   "apps/frontend/src/components/insurance/PolicyCreateModal.tsx",
