@@ -72,6 +72,12 @@ function assertMigrated(src) {
   if (!src.includes("ListErrorBanner")) {
     errors.push(`${PAGE}: must keep the agenciesQuery ListErrorBanner error surface`);
   }
+  if (!/<SelectCombobox[\s\S]*?value=\{selectedAgencyId\}/.test(src)) {
+    errors.push(`${PAGE}: agency must use the searchable select adapter`);
+  }
+  if (/<select[\s\S]*?value=\{selectedAgencyId\}/.test(src)) {
+    errors.push(`${PAGE}: agency must not regress to a native ID-valued select`);
+  }
   return errors;
 }
 
@@ -80,6 +86,7 @@ function selftest() {
     import { ListErrorState } from "../../components/ListErrorState";
     import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
     import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
+    const SelectCombobox = () => <input />;
     const COLUMNS = [
       { key: "agency_name", label: "Agency" },
       { key: "period_start", label: "Period" },
@@ -101,6 +108,7 @@ function selftest() {
         emptyText="No sales tax returns prepared yet."
       />
     )}
+    <SelectCombobox value={selectedAgencyId} />
   `;
   const bad = `
     export function SalesTaxPage() {
