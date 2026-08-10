@@ -9,6 +9,7 @@ import {
   type RequiredDocEnforcement,
   type RequiredDocumentType,
 } from "../../api/requiredDocuments";
+import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
 // DOC-REQ-2 — per-carrier "Required Documents" config (decision #6). Additive section in the Compliance
@@ -136,7 +137,7 @@ export function RequiredDocumentsSection({ operatingCompanyId }: { operatingComp
       ) : null}
 
       {listQ.isError ? (
-        <p className="text-[12px] text-red-600">Could not load required document types.</p>
+        <ListErrorBanner onRetry={() => void listQ.refetch()} />
       ) : (
         <ParityTable<RequiredDocumentType>
           columns={columns}
