@@ -18,6 +18,7 @@ import { Combobox, type ComboboxOption } from "../components/Combobox";
 import { PageHeader } from "../components/layout/PageHeader";
 import { Modal } from "../components/Modal";
 import { ActionButton } from "../components/shared/ActionButton";
+import { ListErrorBanner } from "../components/shared/ListErrorBanner";
 import { useToast } from "../components/Toast";
 
 const createSchema = z.object({
@@ -141,6 +142,8 @@ export function DriverLoadStatusesPage() {
 
       {statusesQuery.isLoading ? (
         <div className="rounded-sm border border-gray-200 bg-white p-3 text-[13px] text-gray-500">Loading statuses...</div>
+      ) : statusesQuery.isError ? (
+        <ListErrorBanner message="Failed to load driver statuses." onRetry={() => void statusesQuery.refetch()} />
       ) : (
         <div className="space-y-2">
           {statuses.map((status) => (
@@ -172,6 +175,7 @@ export function DriverLoadStatusesPage() {
                   <Button
                     variant="secondary"
                     size="sm"
+                    aria-label={`Edit ${status.name}`}
                     onClick={() => {
                       setSelectedStatus(status);
                       setEditForm({
@@ -228,7 +232,7 @@ export function DriverLoadStatusesPage() {
         />
       </Modal>
 
-      <Modal open={editOpen} onClose={() => setEditOpen(false)} title="Edit Driver Load Status">
+      <Modal variant="drawer" open={editOpen} onClose={() => setEditOpen(false)} title="Edit Driver Load Status">
         <StatusForm
           form={editForm}
           setForm={setEditForm}
