@@ -52,10 +52,10 @@ function exportSelectedCsv(selected: WorkOrder[]) {
   const header = ["WO #", "Source", "Unit", "Driver", "Vendor", "Status", "Cost", "Timing"];
   const lines = selected.map((row) =>
     [
-      row.display_id ?? row.id,
+      entityLabel(row.display_id, row.id, "Work order"),
       row.source_type ?? "",
-      row.unit_number ?? row.unit_id,
-      row.driver_id ?? "",
+      entityLabel(row.unit_number, row.unit_id, "Unit"),
+      entityLabel(null, row.driver_id, "Driver") ?? "",
       row.external_vendor_id ?? "",
       row.status ?? "",
       money((row as Record<string, unknown>).total_actual_cost),
