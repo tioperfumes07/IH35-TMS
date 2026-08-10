@@ -65,6 +65,31 @@ const SIBLINGS = [
     bad: /let driverLabel = row\.driver_id/,
     good: /let driverLabel = entityLabel\(\s*null\s*,\s*row\.driver_id\s*,\s*"Driver"\s*\)/,
   },
+  {
+    rel: "apps/frontend/src/pages/accounting/InvoiceDetailPage.tsx",
+    bad: /invoice\.customer_name\s*\?\?\s*invoice\.customer_id/,
+    good: /entityLabel\(\s*invoice\.customer_name\s*,\s*invoice\.customer_id\s*,\s*"Customer"\s*\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/accounting/InvoicesListPage.tsx",
+    bad: /label=\{row\.customer_name\s*\?\?\s*row\.customer_id\}/,
+    good: /entityLabel\(\s*row\.customer_name\s*,\s*row\.customer_id\s*,\s*"Customer"\s*\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/accounting/BillPaymentsListPage.tsx",
+    bad: /label=\{row\.vendor_name\s*\?\?\s*row\.vendor_id\}/,
+    good: /entityLabel\(\s*row\.vendor_name\s*,\s*row\.vendor_id\s*,\s*"Vendor"\s*\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/accounting/loans/LoansAdvancesPage.tsx",
+    bad: /r\.counterparty_name\s*\?\?\s*r\.counterparty_id|r\.account_name\s*\?\?\s*r\.account_id/,
+    good: /entityLabel\(\s*r\.account_name\s*,\s*r\.account_id\s*,\s*"Account"\s*\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/accounting/AllocationsPage.tsx",
+    bad: /row\.vendor_name\s*\?\?\s*row\.vendor_id/,
+    good: /entityLabel\(\s*row\.vendor_name\s*,\s*row\.vendor_id\s*,\s*"Vendor"\s*\)/,
+  },
 ];
 
 export function auditEntityLabel(src) {

@@ -131,7 +131,7 @@ export function AllocationsPage() {
           <EntityLink
             kind="vendor"
             id={billVendorDrillId({ vendor_uuid: row.vendor_uuid, mdata_vendor_id: row.mdata_vendor_id })}
-            label={row.vendor_name ?? row.vendor_id ?? "—"}
+            label={entityLabel(row.vendor_name, row.vendor_id, "Vendor")}
           />
         ),
       },

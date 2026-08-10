@@ -244,12 +244,15 @@ export function InvoicesListPage() {
         key: "customer_name",
         label: "Customer",
         sortable: true,
-        sortValue: (row) => row.customer_name ?? row.customer_id,
-        render: (row) => (
-          <span title={row.customer_name ?? undefined} className="single-line-name">
-            <EntityLink kind="customer" id={row.customer_id} label={row.customer_name ?? row.customer_id} />
+        sortValue: (row) => entityLabel(row.customer_name, row.customer_id, "Customer"),
+        render: (row) => {
+          const label = entityLabel(row.customer_name, row.customer_id, "Customer");
+          return (
+          <span title={label} className="single-line-name">
+            <EntityLink kind="customer" id={row.customer_id} label={label} />
           </span>
-        ),
+          );
+        },
       },
       { key: "issue_date", label: "Issue", sortable: true, render: (row) => formatDateUS(row.issue_date) },
       { key: "due_date", label: "Due", sortable: true, render: (row) => formatDateUS(row.due_date) },
