@@ -37,6 +37,7 @@ const REQUIRED_ERROR_STATE = [
   "apps/frontend/src/pages/safety/PermitsPage.tsx",
   "apps/frontend/src/pages/maintenance/ServiceLocationPage.tsx",
   "apps/frontend/src/pages/maintenance/FaultRulesPage.tsx",
+  "apps/frontend/src/pages/maintenance/parts/PartsMasterDataPage.tsx",
   "apps/frontend/src/pages/legal/LegalPoliciesPage.tsx",
   // TIER-3 batch 4 — direct-empty list pages given honest isError -> ListErrorState (no false-empty/false-$0 on outage).
   "apps/frontend/src/pages/accounting/SalesTaxPage.tsx",

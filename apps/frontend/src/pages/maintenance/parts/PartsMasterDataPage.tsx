@@ -11,11 +11,13 @@ import {
   voidMaintenancePart,
 } from "../../../api/maintenance";
 import { Button } from "../../../components/Button";
+import { ListErrorState } from "../../../components/ListErrorState";
 import { Modal } from "../../../components/Modal";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { useToast } from "../../../components/Toast";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
+import { formatQueryErrorDetail } from "../../../lib/tableError";
 
 type PartDraft = {
   part_number: string;
@@ -209,16 +211,24 @@ export function PartsMasterDataPage() {
             Download template
           </a>
         </div>
-        <ParityTable<MaintenancePartRow>
-          columns={columns}
-          rows={rows}
-          rowKey={(row) => row.id}
-          loading={partsQuery.isLoading}
-          emptyText="No parts found."
-          storageKey="maint-master-data-parts"
-          exportFilename="maintenance-parts"
-          rowActions={rowActions}
-        />
+        {partsQuery.isError ? (
+          <ListErrorState
+            title="Couldn't load maintenance parts"
+            {...formatQueryErrorDetail(partsQuery.error)}
+            onRetry={() => void partsQuery.refetch()}
+          />
+        ) : (
+          <ParityTable<MaintenancePartRow>
+            columns={columns}
+            rows={rows}
+            rowKey={(row) => row.id}
+            loading={partsQuery.isLoading}
+            emptyText="No parts found."
+            storageKey="maint-master-data-parts"
+            exportFilename="maintenance-parts"
+            rowActions={rowActions}
+          />
+        )}
       </div>
 
       <Modal variant="drawer" open={createOpen} onClose={() => setCreateOpen(false)} title="Create Part">
