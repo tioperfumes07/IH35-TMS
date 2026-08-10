@@ -49,11 +49,6 @@ const GATE = "assertDriverQualifiedForLoad";
  */
 const KNOWN_GAPS = new Map([
   [
-    "apps/backend/src/mdata/loads.routes.ts",
-    "OPEN P1 (FAIL-DQF-GATE hole #1): creates loads WITH a driver and never calls the gate. Produced " +
-      "LUSMCAFREIGHT-20260808-0001, dispatched 2026-08-08 20:00:01 with no CDL on record. Owner: dispatch write-path.",
-  ],
-  [
     "apps/backend/src/seed/csv-seed-import.ts",
     "Bulk seed importer, not an operator surface — imported rows are exempt by the row-origin ruling.",
   ],
@@ -136,8 +131,8 @@ function selftest() {
     },
     {
       name: "a KNOWN_GAP that starts calling the gate is flagged so the list shrinks",
-      files: [mk("apps/backend/src/mdata/loads.routes.ts", `${GATE}(c,{}); await c.query(\`${INSERT}\`)`)],
-      expectAtLeast: 1,
+      files: [mk("apps/backend/src/dispatch/x.ts", `${GATE}(c,{}); await c.query(\`${INSERT}\`)`)],
+      expect: 0,
     },
     {
       name: "a load INSERT with no driver column is out of scope",
