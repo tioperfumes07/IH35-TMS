@@ -739,7 +739,11 @@ export function WorkOrderDetailPage() {
                 <div className="text-[11px] text-gray-500">Roadside breakdown load</div>
                 <p>
                   {wo.roadside_breakdown_load_id ? (
-                    <EntityLink kind="load" id={String(wo.roadside_breakdown_load_id)} />
+                    <EntityLink
+                      kind="load"
+                      id={String(wo.roadside_breakdown_load_id)}
+                      label={typeof wo.roadside_breakdown_load_number === "string" ? wo.roadside_breakdown_load_number : undefined}
+                    />
                   ) : (
                     "—"
                   )}
@@ -748,14 +752,22 @@ export function WorkOrderDetailPage() {
               <div>
                 <div className="text-[11px] text-gray-500">Driver</div>
                 <p>
-                  {wo.driver_id ? <EntityLink kind="driver" id={String(wo.driver_id)} /> : "—"}
+                  {wo.driver_id ? (
+                    <EntityLink kind="driver" id={String(wo.driver_id)} label={typeof wo.driver_name === "string" ? wo.driver_name : undefined} />
+                  ) : (
+                    "—"
+                  )}
                 </p>
               </div>
               <div>
                 <div className="text-[11px] text-gray-500">Vendor</div>
                 <p>
                   {wo.external_vendor_id ? (
-                    <EntityLink kind="vendor" id={String(wo.external_vendor_id)} />
+                    <EntityLink
+                      kind="vendor"
+                      id={String(wo.external_vendor_id)}
+                      label={typeof wo.external_vendor_name === "string" ? wo.external_vendor_name : undefined}
+                    />
                   ) : (
                     "—"
                   )}

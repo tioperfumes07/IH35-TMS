@@ -515,10 +515,26 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
 
     const detail = await withCompany(user.uuid, companyId, async (client) => {
       if (!(await maintenanceReady(client))) return null;
-      const wo = await client.query(`SELECT * FROM maintenance.work_orders WHERE id = $1 AND operating_company_id = $2 LIMIT 1`, [
-        params.data.id,
-        companyId,
-      ]);
+      // MAINT-DETAIL-UUID-LABEL: the list route already joins unit_number (MAINT-3 above); the
+      // detail route's SELECT * had NO joins at all, so unit_name/driver/vendor/roadside-load
+      // EntityLinks on WorkOrderDetailPage all fell back to the raw uuid despite the label prop
+      // being wired — the backend simply never sent a name to put there.
+      const wo = await client.query(
+        `SELECT w.*, u.unit_number,
+                NULLIF(TRIM(COALESCE(d.first_name, '') || ' ' || COALESCE(d.last_name, '')), '') AS driver_name,
+                v.vendor_name AS external_vendor_name,
+                rl.load_number AS roadside_breakdown_load_number
+           FROM maintenance.work_orders w
+           LEFT JOIN mdata.units u
+             ON u.id = w.unit_id
+            AND (u.owner_company_id = w.operating_company_id
+                 OR u.currently_leased_to_company_id = w.operating_company_id)
+           LEFT JOIN mdata.drivers d ON d.id = w.driver_id AND d.operating_company_id = w.operating_company_id
+           LEFT JOIN mdata.vendors v ON v.id = w.external_vendor_id AND v.operating_company_id = w.operating_company_id
+           LEFT JOIN mdata.loads rl ON rl.id = w.roadside_breakdown_load_id AND rl.operating_company_id = w.operating_company_id
+          WHERE w.id = $1 AND w.operating_company_id = $2 LIMIT 1`,
+        [params.data.id, companyId]
+      );
       if (wo.rowCount === 0) return null;
       const lines = await client.query(`SELECT * FROM maintenance.work_order_lines WHERE work_order_uuid = $1 ORDER BY created_at ASC`, [params.data.id]);
       const history = await client.query(`SELECT * FROM maintenance.wo_status_history WHERE work_order_id = $1 ORDER BY created_at ASC`, [params.data.id]);
