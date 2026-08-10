@@ -121,6 +121,9 @@ export function collectFailures({
       "CreateTrailerModal create payload must include currently_leased_to_company_id (lease scope for roster tenant filter)",
     );
   }
+  if (!/userFacingApiError\(\s*error\s*,\s*"Failed to create trailer"\s*\)/.test(createTrailer)) {
+    failures.push("CreateTrailerModal must not expose raw backend errors in its failure toast");
+  }
 
   // API helpers wired to canonical endpoints
   if (!/export function createUnit\b/.test(api)) {
@@ -159,7 +162,7 @@ function selftest() {
     createUnit:
       'createUnit({ unit_number, vin, currently_leased_to_company_id: operatingCompanyId }) fleet-create-unit-form + Create userFacingApiError(error, "Failed to create unit")',
     createTrailer:
-      'createEquipment({ equipment_number, equipment_type, currently_leased_to_company_id: operatingCompanyId }) fleet-create-trailer-form + Create',
+      'createEquipment({ equipment_number, equipment_type, currently_leased_to_company_id: operatingCompanyId }) fleet-create-trailer-form + Create userFacingApiError(error, "Failed to create trailer")',
     api: `export function createUnit() { fetch("/api/v1/mdata/units", { method: "POST" }); }
 export function createEquipment() { fetch("/api/v1/mdata/equipment", { method: "POST" }); }`,
     unitsRoutes: 'app.post("/api/v1/mdata/units"',
@@ -214,6 +217,18 @@ export function createEquipment() { fetch("/api/v1/mdata/equipment", { method: "
       `${LABEL} --selftest FAIL: removing currently_leased_to_company_id from CreateTrailerModal must be caught`,
     );
     console.error(`  got: ${JSON.stringify(badTrailer)}`);
+    process.exit(1);
+  }
+
+  const rawErrorTrailer = collectFailures({
+    ...base,
+    createTrailer: base.createTrailer.replace(
+      /userFacingApiError\(error, "Failed to create trailer"\)/,
+      'error instanceof Error ? error.message : "Failed to create trailer"',
+    ),
+  });
+  if (!rawErrorTrailer.some((f) => f.includes("raw backend errors"))) {
+    console.error(`${LABEL} --selftest FAIL: raw CreateTrailerModal backend error toast must be caught`);
     process.exit(1);
   }
 

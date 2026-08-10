@@ -6,6 +6,7 @@ import { Modal } from "../Modal";
 import { Button } from "../Button";
 import { FormField } from "../forms/FormField";
 import { FieldSet } from "../forms/FieldSet";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 const EQUIPMENT_TYPES = [
   "DryVan",
@@ -79,7 +80,7 @@ export function CreateTrailerModal({ open, operatingCompanyId, onClose, onCreate
       onCreated?.(String(created.id));
       resetAndClose();
     },
-    onError: (e) => pushToast(e instanceof Error ? e.message : "Failed to create trailer", "error"),
+    onError: (error) => pushToast(userFacingApiError(error, "Failed to create trailer"), "error"),
   });
 
   const canSubmit = Boolean(draft.equipment_number.trim() && draft.equipment_type) && !createMutation.isPending;
