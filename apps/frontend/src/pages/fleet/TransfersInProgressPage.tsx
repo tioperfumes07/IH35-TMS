@@ -32,11 +32,23 @@ export function TransfersInProgressPage() {
         title="Equipment transfers in progress"
         subtitle="Dual confirmation — pending until both drivers acknowledge."
       />
-      {(query.data ?? []).map((row) => (
-        <div key={row.id} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-sm">
-          Dropoff: {row.dual_ack?.dropoff_ack_at ? "✓" : "pending"} · Pickup: {row.dual_ack?.pickup_ack_at ? "✓" : "pending"}
+      {!companyId ? (
+        <div className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-sm text-gray-700">
+          Select an operating company to view transfers.
         </div>
-      ))}
+      ) : query.isLoading ? (
+        <div className="rounded-sm border bg-white p-4 text-sm">Loading transfers…</div>
+      ) : (query.data ?? []).length === 0 ? (
+        <div className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-sm text-gray-700">
+          No pending equipment transfers for this operating company.
+        </div>
+      ) : (
+        (query.data ?? []).map((row) => (
+          <div key={row.id} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-sm">
+            Dropoff: {row.dual_ack?.dropoff_ack_at ? "✓" : "pending"} · Pickup: {row.dual_ack?.pickup_ack_at ? "✓" : "pending"}
+          </div>
+        ))
+      )}
     </div>
   );
 }
