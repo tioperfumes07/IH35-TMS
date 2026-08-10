@@ -46,9 +46,9 @@
         "VERIFY-2"
       ],
       "spec": "DUAL-FACTOR-SUBMIT-NOTES · SCHEMA-FINDINGS sibling sweep",
-      "status": "OPEN",
-      "evidence": "scaffold — FAIL retained from cascade sibling sweep",
-      "pr": null,
+      "status": "PASS",
+      "evidence": "SubmitFactoringModal reads the active factor from listFactors/factoring.factor and prefills advance_rate, reserve_rate, fee_rate from the canonical factoring.factor row; no parseVendorNotes usage; guard verify-fact-dual-02-submit-rates-from-factor.mjs selftests.",
+      "pr": "#5337",
       "prod_verified": false
     },
     {
@@ -150,9 +150,9 @@
       "prod_verified": false
     }
   ],
-  "pass_count": 6,
+  "pass_count": 7,
   "total_count": 10,
-  "progress": "6 of 10",
+  "progress": "7 of 10",
   "live_scenario_probe": {
     "source": "scripts/scoreboard-from-live.mjs (live prod probes, TMS-native only)",
     "pass_count": 0,
