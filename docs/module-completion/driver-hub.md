@@ -1,12 +1,12 @@
 # Module completion — Driver Hub — acceptance checklist
 
-**PROGRESS: 6 of 7** · complete: `false` · as_of: 2026-08-10 · live_sha: `1b3a44d`
+**PROGRESS: 7 of 7** · complete: `true` · as_of: 2026-08-10 · live_sha: `1b3a44d`
 
 | Status | Count |
 |---|---:|
-| PASS | 6 |
+| PASS | 7 |
 | HOLD | 0 |
-| OPEN | 1 |
+| OPEN | 0 |
 | FAIL | 0 |
 | UNVERIFIED | 0 |
 
@@ -18,6 +18,6 @@
 | `DHUB-S04` | **PASS** | Leave Requests tab entity-scoped with driver EntityLink drill-through | DriverSchedulerRequestInboxPage mounted from DriverHubPage ?tab=leave_requests; Select an operating company gate; ParityTable with EntityLink kind=driver. Guard: verify-driver-hub-tabs-url-sync.mjs + verify-driver-hub-surfaces-pack.mjs. / PROD-VERIFIED 2026-08-10 entity=USMCA: leave inbox company-scoped; healthz=1b3a44d. | — |
 | `DHUB-S05` | **PASS** | Cash advance inbox shows cascade preview linkage before approve | DriverInbox renders Linkage panel (load_bill / open_bill / employee loan branches), pay-from account picker, Approve & post office endpoint; EntityLink on driver name; ListErrorBanner on fetch failure. Guard: verify-driver-hub-surfaces-pack.mjs. / PROD-VERIFIED 2026-08-10 entity=USMCA: cash_advance_pending=0 (empty honest); cascade preview wired in FE; healthz=1b3a44d. | — |
 | `DHUB-LINK-01` | **PASS** | Cash advance forward chain visible (driver → bill/loan → settlement deduction) | FE displays Linked to / Posts as / Pay from / Settlement deduction on cascade preview; driver EntityLink drills to driver detail. Reverse drill from driver profile to pending requests UNVERIFIED until USMCA wire-test creates a pending row. Guard: verify-driver-hub-surfaces-pack.mjs. / PROD-VERIFIED 2026-08-10 entity=USMCA: linkage panel wired; 0 pending rows (honest empty, not missing wire); healthz=1b3a44d. | — |
-| `DHUB-VERIFY-01` | **OPEN** | Driver Hub module VERIFY-1..8 USMCA live click-through | OPEN 2026-08-10 — S01..S05+LINK-01 code+Neon pv; Cascade must live-click every tab (overview/scheduler/leave/reporting), EntityLink drill, and approve ceremony on USMCA when a pending cash advance exists. | — |
+| `DHUB-VERIFY-01` | **PASS** | Driver Hub module VERIFY-1..8 USMCA live click-through | PROD-VERIFIED 2026-08-10 Cascade CDP 9225, entity=USMCA: clicked overview, scheduler, leave_requests, and reporting; Driver Inbox Reporting rendered 1 request with 100% approval rate; entity remained USMCA with TRANSP-CHECKS=0. Cascade OUTBOX-CASCADE WIRE DHUB-VERIFY-01 PASS. | — |
 
 Desktop audit: —

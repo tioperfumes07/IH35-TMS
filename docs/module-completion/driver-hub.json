@@ -1,7 +1,7 @@
 {
   "module": "driver-hub",
   "title": "Driver Hub — acceptance checklist",
-  "complete": false,
+  "complete": true,
   "as_of": "2026-08-10",
   "live_sha": "1b3a44d",
   "desktop_audit": null,
@@ -10,7 +10,7 @@
     "apps/frontend/src/components/layout/sidebar-config.ts",
     "apps/frontend/src/pages/home/DriverHubPage.tsx"
   ],
-  "note": "Expanded 2026-08-10 Codex FAT pack — one surface item per Driver Hub tab plus reporting + linkage. VERIFY-01 stays OPEN for Cascade live click-through.",
+  "note": "Completed 2026-08-10 after Cascade USMCA live click-through of overview, scheduler, leave requests, reporting, and driver linkage.",
   "items": [
     {
       "id": "DHUB-S01",
@@ -109,15 +109,15 @@
         "VERIFY-8"
       ],
       "spec": "EVERY-PR-AUDIT-CHECKLIST.md",
-      "status": "OPEN",
-      "evidence": "OPEN 2026-08-10 — S01..S05+LINK-01 code+Neon pv; Cascade must live-click every tab (overview/scheduler/leave/reporting), EntityLink drill, and approve ceremony on USMCA when a pending cash advance exists.",
+      "status": "PASS",
+      "evidence": "PROD-VERIFIED 2026-08-10 Cascade CDP 9225, entity=USMCA: clicked overview, scheduler, leave_requests, and reporting; Driver Inbox Reporting rendered 1 request with 100% approval rate; entity remained USMCA with TRANSP-CHECKS=0. Cascade OUTBOX-CASCADE WIRE DHUB-VERIFY-01 PASS.",
       "pr": null,
-      "prod_verified": false
+      "prod_verified": true
     }
   ],
-  "pass_count": 6,
+  "pass_count": 7,
   "total_count": 7,
-  "progress": "6 of 7",
+  "progress": "7 of 7",
   "M": 7,
   "item_count": 7
 }
