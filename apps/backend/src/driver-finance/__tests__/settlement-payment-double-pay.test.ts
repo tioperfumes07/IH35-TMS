@@ -57,6 +57,7 @@ function settlementRow(overrides: Row = {}): Row {
     payment_method: "check",
     payment_bank_reference: null,
     payment_release_idempotency_key: null,
+    paid_at: null,
     ...overrides,
   };
 }
@@ -132,6 +133,7 @@ describe("settlement-payment double-pay fix (D2/D3/D4)", () => {
 
     const update = stateUpdates(calls)[0];
     expect(update.sql).toContain("payment_state IS NOT DISTINCT FROM");
+    expect(update.sql).toContain("paid_at = COALESCE(paid_at, now())");
     // CAS is predicated on the RAW observed state (nullable), never the coerced value.
     expect(update.values).toContain("unpaid");
 
@@ -146,7 +148,7 @@ describe("settlement-payment double-pay fix (D2/D3/D4)", () => {
   });
 
   it("CAS loser (0-row UPDATE) with row already in target = idempotent success, NO event, NO audit", async () => {
-    const winnerRow = settlementRow({ payment_state: "manual_paid" });
+    const winnerRow = settlementRow({ payment_state: "manual_paid", paid_at: "2026-07-21T00:00:00Z" });
     const { client, calls } = scriptedClient({ lockedSelect: settlementRow(), update: null, reread: winnerRow });
     runInTx(client);
 
@@ -156,13 +158,37 @@ describe("settlement-payment double-pay fix (D2/D3/D4)", () => {
     expect(mocked.appendCrudAuditMock).not.toHaveBeenCalled();
   });
 
-  it("double-click observed under the lock (already in target) = idempotent success before any UPDATE", async () => {
-    const { client, calls } = scriptedClient({ lockedSelect: settlementRow({ payment_state: "manual_paid" }) });
+  it("double-click observed under the lock (already in target + paid_at set) = idempotent success before any UPDATE", async () => {
+    const { client, calls } = scriptedClient({
+      lockedSelect: settlementRow({ payment_state: "manual_paid", paid_at: "2026-07-21T00:00:00Z" }),
+    });
     runInTx(client);
 
     const result = await markPaidManually(SID, OPCO, "cash", "ref-1", USER);
     expect((result as Row).payment_state).toBe("manual_paid");
     expect(stateUpdates(calls)).toHaveLength(0);
+    expect(eventInserts(calls)).toHaveLength(0);
+    expect(mocked.appendCrudAuditMock).not.toHaveBeenCalled();
+  });
+
+  it("manual_paid with paid_at NULL heals paid_at without a second payment event", async () => {
+    const healed = settlementRow({
+      payment_state: "manual_paid",
+      payment_method: "cash",
+      paid_at: "2026-08-10T05:00:00Z",
+    });
+    const { client, calls } = scriptedClient({
+      lockedSelect: settlementRow({ payment_state: "manual_paid", paid_at: null }),
+      update: healed,
+    });
+    runInTx(client);
+
+    const result = await markPaidManually(SID, OPCO, "cash", "ref-1", USER);
+    expect((result as Row).paid_at).toBe("2026-08-10T05:00:00Z");
+    const updates = stateUpdates(calls);
+    expect(updates).toHaveLength(1);
+    expect(updates[0].sql).toContain("paid_at = now()");
+    expect(updates[0].sql).toContain("paid_at IS NULL");
     expect(eventInserts(calls)).toHaveLength(0);
     expect(mocked.appendCrudAuditMock).not.toHaveBeenCalled();
   });
