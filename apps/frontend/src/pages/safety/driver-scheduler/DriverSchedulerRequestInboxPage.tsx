@@ -8,6 +8,7 @@ import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { Button } from "../../../components/Button";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { entityLabel } from "../../../lib/entity-label";
 
 type PendingRequestRow = Record<string, unknown>;
 
@@ -26,7 +27,7 @@ export function DriverSchedulerRequestInboxPage() {
   const columns = useMemo<ParityColumn<PendingRequestRow>[]>(
     () => [
       { key: "request_number", label: "Request", sortable: true, className: "font-mono", cellClass: "font-mono", render: (r) => String(r.request_number) },
-      { key: "driver_name", label: "Driver", sortable: true, render: (r) => <EntityLink kind="driver" id={String(r.driver_id ?? "")} label={String(r.driver_name ?? "Driver")} /> },
+      { key: "driver_name", label: "Driver", sortable: true, render: (r) => <EntityLink kind="driver" id={String(r.driver_id ?? "")} label={entityLabel(String(r.driver_name ?? ""), String(r.driver_id ?? ""), "Driver")} /> },
       { key: "leave_type", label: "Type", sortable: true, render: (r) => String(r.leave_type) },
       {
         key: "dates",

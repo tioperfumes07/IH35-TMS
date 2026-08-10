@@ -160,7 +160,7 @@ export function ExpensesListPage() {
       key: "linked_work_order_uuid",
       label: "WO",
       sortable: true,
-      sortValue: (r) => r.work_order_display_id ?? r.linked_work_order_uuid ?? "",
+      sortValue: (r) => entityLabel(r.work_order_display_id, r.linked_work_order_uuid, "Work order"),
       render: (r) => (
         <EntityLink
           kind="work_order"

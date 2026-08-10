@@ -8,6 +8,7 @@ import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { EscrowForfeitModal } from "../components/EscrowForfeitModal";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { entityLabel } from "../../../lib/entity-label";
 
 export function EscrowRecordTab() {
   const auth = useAuth();
@@ -92,7 +93,7 @@ export function EscrowRecordTab() {
           <EntityLink
             kind="driver"
             id={row.id || null}
-            label={row.driver_name}
+            label={entityLabel(row.driver_name, row.id, "Driver")}
             className="font-semibold text-slate-700"
             data-testid={`escrow-driver-link-${row.id}`}
           />

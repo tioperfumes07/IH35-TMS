@@ -11,6 +11,7 @@ import { ReportBlockTPendingBanner } from "./ReportBlockTPendingBanner";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { useListState } from "../../components/list-state";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { entityLabel } from "../../lib/entity-label";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -79,9 +80,21 @@ export function ProfitPerTruckPage() {
 
   const columns = useMemo<ParityColumn<ProfitPerTruckRow>[]>(
     () => [
-      { key: "unit_number", label: "Unit #", sortable: true, render: (r) => <span className="font-medium text-gray-900">{r.unit_number}</span> },
+      {
+        key: "unit_number",
+        label: "Unit #",
+        sortable: true,
+        render: (r) => (
+          <span className="font-medium text-gray-900">{entityLabel(r.unit_number, r.unit_id, "Unit")}</span>
+        ),
+      },
       { key: "truck_type", label: "Type", sortable: true },
-      { key: "primary_driver_name", label: "Driver", sortable: true, render: (r) => r.primary_driver_name ?? "—" },
+      {
+        key: "primary_driver_name",
+        label: "Driver",
+        sortable: true,
+        render: (r) => entityLabel(r.primary_driver_name, r.primary_driver_id, "Driver"),
+      },
       { key: "load_count", label: "Loads", sortable: true, className: "text-right", cellClass: "text-right" },
       { key: "miles_driven", label: "Miles", sortable: true, className: "text-right", cellClass: "text-right" },
       { key: "revenue_cents", label: "Revenue", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.revenue_cents) },
@@ -268,8 +281,8 @@ export function ProfitPerTruckPage() {
               ["Fleet avg CPM", money(fleetCostPerMile)],
               ["Fleet avg RPM", money(fleetRevenuePerMile)],
               ["Fleet avg PPM", money(fleetProfitPerMile)],
-              ["Best CPM", bestCpmTruck ? `${bestCpmTruck.unit_number} (${money(bestCpmTruck.cost_per_mile_cents)})` : "—"],
-              ["Worst CPM", worstCpmTruck ? `${worstCpmTruck.unit_number} (${money(worstCpmTruck.cost_per_mile_cents)})` : "—"],
+              ["Best CPM", bestCpmTruck ? `${entityLabel(bestCpmTruck.unit_number, bestCpmTruck.unit_id, "Unit")} (${money(bestCpmTruck.cost_per_mile_cents)})` : "—"],
+              ["Worst CPM", worstCpmTruck ? `${entityLabel(worstCpmTruck.unit_number, worstCpmTruck.unit_id, "Unit")} (${money(worstCpmTruck.cost_per_mile_cents)})` : "—"],
             ] as const
           ).map(([label, val]) => (
             <div key={label} className="rounded-sm border border-gray-200 bg-white px-2 py-2">

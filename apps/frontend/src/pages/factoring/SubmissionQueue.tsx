@@ -157,7 +157,13 @@ export function SubmissionQueue() {
                           label={entityLabel(item.display_id, item.invoice_id, "Invoice")}
                         />
                       </td>
-                      <td className="py-1.5 pr-3">{item.customer_name ?? "—"}</td>
+                      <td className="py-1.5 pr-3">
+                        <EntityLink
+                          kind="customer"
+                          id={item.customer_id}
+                          label={entityLabel(item.customer_name, item.customer_id, "Customer")}
+                        />
+                      </td>
                       <td className="py-1.5 pr-3">{item.issue_date ? formatDateUS(item.issue_date) : "—"}</td>
                       <td className="py-1.5 pr-3 text-right tabular-nums">{asMoney(item.total_cents)}</td>
                       <td className="py-1.5 pr-3 text-slate-500">{item.factor_name ?? "—"}</td>

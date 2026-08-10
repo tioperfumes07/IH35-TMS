@@ -1,4 +1,5 @@
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
+import { entityLabel } from "../../lib/entity-label";
 import type { AssetLifecycle, AssetRow } from "./types";
 
 type Props = {
@@ -27,7 +28,7 @@ const COLUMNS: Array<ParityColumn<AssetRow>> = [
     sortable: true,
     render: (row) => (
       <div>
-        <p className="font-medium text-gray-900">{row.unit_number}</p>
+        <p className="font-medium text-gray-900">{entityLabel(row.unit_number, row.id, "Unit")}</p>
         <p className="text-xs text-gray-500">{row.vin || "VIN pending"}</p>
       </div>
     ),

@@ -49,7 +49,13 @@ const LOG_COLUMNS: Array<ParityColumn<CustomerNotifyLogEntry>> = [
     key: "customer_name",
     label: "Customer",
     sortable: true,
-    render: (entry) => <EntityLink kind="customer" id={entry.customer_id} label={entry.customer_name ?? "—"} />,
+    render: (entry) => (
+      <EntityLink
+        kind="customer"
+        id={entry.customer_id}
+        label={entityLabel(entry.customer_name, entry.customer_id, "Customer")}
+      />
+    ),
   },
   {
     key: "milestone_type",

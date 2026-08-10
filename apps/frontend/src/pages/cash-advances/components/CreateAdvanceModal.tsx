@@ -18,6 +18,7 @@ import { ParityDrawer } from "../../../components/parity/ParityDrawer";
 import { useToast } from "../../../components/Toast";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { entityLabel } from "../../../lib/entity-label";
 import {
   formatBankAccountPickerLabel,
   type BankAccountPickerRow,
@@ -528,7 +529,7 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
                       <EntityLink
                         kind="bill"
                         id={String(selectedBill.id)}
-                        label={String(selectedBill.display_id ?? selectedBill.id)}
+                        label={entityLabel(selectedBill.display_id, selectedBill.id, "Bill")}
                       />{" "}
                       — amount auto-fills; recipient becomes vendor on disbursement.
                     </p>

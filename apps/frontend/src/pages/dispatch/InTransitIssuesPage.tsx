@@ -1,8 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { entityLabel } from "../../lib/entity-label";
 import {
   createDispatchIntransitIssue,
   listDispatchIntransitIssues,
@@ -78,10 +78,10 @@ export function InTransitIssuesPage() {
           issue.load_id ? (
             <EntityLink kind="load" id={issue.load_id} label={entityLabel(issue.load_number, issue.load_id, "Load")} />
           ) : (
-            issue.load_number ?? "—"
+            entityLabel(issue.load_number, null, "Load")
           ),
       },
-      { key: "driver_name", label: "Driver", sortable: true, render: (issue) => <EntityLink kind="driver" id={issue.driver_id ?? undefined} label={issue.driver_name ?? "—"} /> },
+      { key: "driver_name", label: "Driver", sortable: true, render: (issue) => <EntityLink kind="driver" id={issue.driver_id ?? undefined} label={entityLabel(issue.driver_name, issue.driver_id, "Driver")} /> },
       { key: "issue_category", label: "Category", sortable: true },
       { key: "severity", label: "Severity", render: (issue) => <StatusBadge status={issue.severity} /> },
       { key: "status", label: "Status", sortable: true },

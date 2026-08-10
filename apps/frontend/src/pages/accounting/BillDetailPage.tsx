@@ -154,7 +154,7 @@ export function BillDetailPage() {
       key: "load_id",
       label: "Load",
       sortable: true,
-      sortValue: (line) => line.load_number ?? line.load_id ?? "",
+      sortValue: (line) => entityLabel(line.load_number, line.load_id, "Load"),
       render: (line) =>
         line.load_id ? (
           <EntityLink kind="load" id={line.load_id} label={entityLabel(line.load_number, line.load_id, "Load")} />

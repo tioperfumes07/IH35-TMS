@@ -5,6 +5,7 @@ import { DataPanelRow } from "../layout/DataPanelRow";
 import { colors } from "../../design/tokens";
 import { formatUsd } from "../../lib/money";
 import { formatDateUS } from "../../lib/formatDate";
+import { entityLabel } from "../../lib/entity-label";
 
 function formatMoney(value: number) {
   return formatUsd(value);
@@ -42,7 +43,7 @@ export function PreSettlementsPanel({ rows, loading = false, isError = false, ti
               <EntityLink
                 kind="driver"
                 id={settlement.driver_id}
-                label={settlement.driver_full_name || "Driver"}
+                label={entityLabel(settlement.driver_full_name, settlement.driver_id, "Driver")}
               />
               <span className="text-gray-400">·</span>
               <EntityLink

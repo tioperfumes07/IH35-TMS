@@ -1,3 +1,4 @@
+import { entityLabel } from "../../lib/entity-label";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useSearchParams } from "react-router-dom";
@@ -94,7 +95,7 @@ export function WorkOrdersConsoleListPage() {
         key: "display_id",
         label: "WO #",
         render: (row) => (
-          <span className="font-mono text-xs">{String(row.display_id ?? row.id ?? "")}</span>
+          <span className="font-mono text-xs">{entityLabel(row.display_id, row.id, "Work order")}</span>
         ),
       },
       {

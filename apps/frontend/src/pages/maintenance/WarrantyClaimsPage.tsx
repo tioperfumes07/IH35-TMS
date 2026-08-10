@@ -18,6 +18,7 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { EntityPicker } from "../../components/parity/EntityPicker";
 import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { vendorReferenceOption } from "../../components/parity/referenceOptionLabels";
+import { entityLabel } from "../../lib/entity-label";
 
 type ClaimDraft = {
   part_description: string;
@@ -133,7 +134,7 @@ export function WarrantyClaimsPage() {
   const columns = useMemo<ParityColumn<MaintenanceWarrantyClaimRow>[]>(
     () => [
       { key: "part_description", label: "Part", sortable: true, render: (row) => row.part_description },
-      { key: "vendor_name", label: "Vendor", sortable: true, render: (row) => <EntityLink kind="vendor" id={row.vendor_id ?? undefined} label={row.vendor_name ?? "—"} /> },
+      { key: "vendor_name", label: "Vendor", sortable: true, render: (row) => <EntityLink kind="vendor" id={row.vendor_id ?? undefined} label={entityLabel(row.vendor_name, row.vendor_id, "Vendor")} /> },
       { key: "claim_number", label: "Claim #", sortable: true, render: (row) => row.claim_number || "—" },
       { key: "status", label: "Status", sortable: true, render: (row) => row.status_label ?? row.status },
       { key: "claim_amount_cents", label: "Amount", render: (row) => `$${((row.claim_amount_cents ?? 0) / 100).toFixed(2)}` },

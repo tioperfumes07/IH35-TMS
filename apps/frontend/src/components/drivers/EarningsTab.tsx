@@ -13,6 +13,7 @@ import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 import { useLiveDebt } from "../../pages/driver-finance/hooks/useLiveDebt";
 import { listAutoDeductionPolicies } from "../../hooks/useAutoDeductionPolicies";
 import { formatDateUS } from "../../lib/formatDate";
+import { entityLabel } from "../../lib/entity-label";
 
 type Props = {
   driverId: string;
@@ -361,7 +362,11 @@ export function EarningsTab({ driverId, operatingCompanyId, onOpenOperationsView
                 <EntityLink
                   kind="vendor"
                   id={apVendorQuery.data.vendor.id}
-                  label={apVendorQuery.data.vendor.name ?? apVendorQuery.data.vendor.id}
+                  label={entityLabel(
+                    apVendorQuery.data.vendor.name,
+                    apVendorQuery.data.vendor.id,
+                    "Vendor"
+                  )}
                 />
               </div>
             </div>

@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { entityLabel } from "../../../lib/entity-label";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { EntityPicker } from "../../../components/parity/EntityPicker";
@@ -172,7 +173,7 @@ export function SevereRepairOosTab({ operatingCompanyId }: Props) {
       label: "Unit",
       sortable: true,
       render: (row) => (
-        <EntityLink kind="unit" id={row.unit_id} label={row.unit_number ?? undefined} />
+        <EntityLink kind="unit" id={row.unit_id} label={entityLabel(row.unit_number, row.unit_id, "Unit")} />
       ),
     },
     {
@@ -182,7 +183,7 @@ export function SevereRepairOosTab({ operatingCompanyId }: Props) {
       label: "Driver",
       sortable: true,
       render: (row) =>
-        <EntityLink kind="driver" id={row.driver_id ?? undefined} label={row.driver_name ?? undefined} />,
+        <EntityLink kind="driver" id={row.driver_id ?? undefined} label={entityLabel(row.driver_name, row.driver_id, "Driver")} />,
     },
     {
       key: "damage_severity",
@@ -348,7 +349,7 @@ export function SevereRepairOosTab({ operatingCompanyId }: Props) {
       <Modal open={returnOpen} onClose={() => setReturnOpen(false)} title="Return Unit to Service">
         <div className="space-y-3">
           <div className="text-sm text-gray-700">
-            Unit: <span className="font-semibold">{returnEstimate?.unit_number ?? "—"}</span>
+            Unit: <span className="font-semibold">{entityLabel(returnEstimate?.unit_number, returnEstimate?.unit_id, "Unit")}</span>
           </div>
           <div className="text-xs text-gray-500">
             Disabled if open estimates exist. Open count: <span className="font-semibold">{returnEstimate ? openByUnit.get(returnEstimate.unit_id) ?? 0 : 0}</span>

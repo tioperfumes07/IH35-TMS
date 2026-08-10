@@ -5,6 +5,7 @@ import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { formatDateUS } from "../../../lib/formatDate";
 import { ExpiryDashboard } from "../expiry-tracking/ExpiryDashboard";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { entityLabel } from "../../../lib/entity-label";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 
 type DotReferenceCard = {
@@ -109,7 +110,7 @@ export function DOTComplianceTab() {
 
   const reminderColumns = useMemo<ParityColumn<SafetyReminderRow>[]>(
     () => [
-      { key: "driver_name", label: "Driver", sortable: true, render: (row) => <EntityLink kind="driver" id={row.driver_id} label={row.driver_name ?? undefined} /> },
+      { key: "driver_name", label: "Driver", sortable: true, render: (row) => <EntityLink kind="driver" id={row.driver_id} label={entityLabel(row.driver_name, row.driver_id, "Driver")} /> },
       { key: "item_name", label: "Item", sortable: true },
       { key: "due_date", label: "Due", sortable: true, render: (row) => formatDateUS(row.due_date) },
       { key: "days_to_expiry", label: "Days", sortable: true },

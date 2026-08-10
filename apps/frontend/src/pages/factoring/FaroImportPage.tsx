@@ -9,6 +9,7 @@ import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { apiRequest } from "../../api/client";
 import { companyToday } from "../../lib/businessDate";
+import { entityLabel } from "../../lib/entity-label";
 
 type PreviewLine = {
   invoice_number: string;
@@ -54,7 +55,7 @@ const PREVIEW_COLUMNS: Array<ParityColumn<PreviewLine>> = [
       <EntityLink
         kind="invoice"
         id={row.invoice_id}
-        label={row.invoice_number}
+        label={entityLabel(row.invoice_number, row.invoice_id, "Invoice")}
         data-testid="faro-import-invoice-link"
       />
     ),
@@ -67,7 +68,7 @@ const PREVIEW_COLUMNS: Array<ParityColumn<PreviewLine>> = [
       <EntityLink
         kind="customer"
         id={row.customer_id}
-        label={row.customer_display_name ?? row.customer_name ?? "—"}
+        label={entityLabel(row.customer_display_name ?? row.customer_name, row.customer_id, "Customer")}
         data-testid="faro-import-customer-link"
       />
     ),

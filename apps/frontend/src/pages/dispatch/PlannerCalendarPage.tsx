@@ -14,6 +14,7 @@ import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { LoadTemplateLibrary } from "./LoadTemplateLibrary";
+import { entityLabel } from "../../lib/entity-label";
 
 function dayKey(date: Date): string {
   return date.toISOString().slice(0, 10);
@@ -55,11 +56,11 @@ function PlannerLoadChip({ load }: { load: PlannerLoadEvent }) {
       type="button"
       data-testid={`planner-load-${load.load_number}`}
       className={`mb-1 block w-full rounded-sm border border-slate-300 bg-slate-100 px-2 py-1 text-left text-[11px] text-slate-700 ${isDragging ? "opacity-60" : ""}`}
-      title={`${load.customer_name ?? "Load"} · ${load.pickup_city ?? ""}${load.pickup_state ? `, ${load.pickup_state}` : ""} — click to open detail`}
+      title={`${entityLabel(load.load_number, load.id, "Load")} · ${entityLabel(load.customer_name, null, "Customer")} · ${load.pickup_city ?? ""}${load.pickup_state ? `, ${load.pickup_state}` : ""} — click to open detail`}
       onClick={() => navigate(`/dispatch/loads/${encodeURIComponent(load.id)}`)}
     >
-      <span className="font-semibold">{load.load_number}</span>
-      <span className="block truncate text-[10px] text-slate-700">{load.customer_name ?? "—"}</span>
+      <span className="font-semibold">{entityLabel(load.load_number, load.id, "Load")}</span>
+      <span className="block truncate text-[10px] text-slate-700">{entityLabel(load.customer_name, null, "Customer")}</span>
     </button>
   );
 }
@@ -285,7 +286,7 @@ export function PlannerCalendarPage() {
                     <tr key={driver.id}>
                       <td className="sticky left-0 z-10 border-b bg-white px-3 py-2">
                         <div className="font-medium">{driver.name}</div>
-                        <div className="text-xs text-slate-500">{driver.unit_number ?? "No unit"}</div>
+                        <div className="text-xs text-slate-500">{entityLabel(driver.unit_number, driver.unit_id ?? null, "Unit")}</div>
                         <span className={`mt-1 inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold ${hosClass(driver.hos_status)}`}>
                           {driver.hos_status === "violation" ? "HOS VIOL" : driver.hos_status === "ok" ? "HOS OK" : "HOS WARN"}
                         </span>

@@ -1,3 +1,4 @@
+import { entityLabel } from "../../lib/entity-label";
 import { useMemo, useState } from "react";
 import { resolveApiUrl } from "../../api/client";
 import { useQuery } from "@tanstack/react-query";
@@ -43,7 +44,7 @@ export function SettlementDisputeModal({ open, onClose }: SettlementDisputeModal
     () =>
       (settlementsQuery.data ?? []).map((settlement) => ({
         value: settlement.id,
-        label: settlement.driver_display_id ?? settlement.id,
+        label: entityLabel(settlement.display_id, settlement.id, "Settlement"),
       })),
     [settlementsQuery.data]
   );

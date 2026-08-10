@@ -14,6 +14,7 @@ import { DriverPickerWithCreate } from "../../../components/drivers/DriverPicker
 import { EntityPicker } from "../../../components/parity/EntityPicker";
 import { VoidReasonModal } from "../../../components/accounting/VoidReasonModal";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+import { entityLabel } from "../../../lib/entity-label";
 
 export function DOTInspectionsTab() {
   const { selectedCompanyId } = useCompanyContext();
@@ -90,7 +91,7 @@ export function DOTInspectionsTab() {
         <EntityLink
           kind="driver"
           id={row.driver_id as string | undefined}
-          label={(row.driver_name as string | undefined)?.trim() || "Driver"}
+          label={entityLabel((row.driver_name as string | undefined)?.trim(), String(row.driver_id ?? ""), "Driver")}
         />
       ),
     },
@@ -101,7 +102,7 @@ export function DOTInspectionsTab() {
         <EntityLink
           kind="unit"
           id={row.unit_id as string | undefined}
-          label={(row.unit_number as string | undefined)?.trim() || "Unit"}
+          label={entityLabel((row.unit_number as string | undefined)?.trim(), row.unit_id as string | undefined, "Unit")}
         />
       ),
     },
@@ -231,12 +232,12 @@ export function DOTInspectionsTab() {
               <div key={String(row.id)} className="rounded-sm border border-gray-200 p-2 text-xs">
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-semibold text-slate-800">
-                    {String(row.station_label ?? "DOT station")} · Unit {String(row.unit_number ?? "—")}
+                    {String(row.station_label ?? "DOT station")} · Unit {entityLabel(String(row.unit_number ?? ""), row.unit_id as string | undefined, "Unit")}
                   </span>
                   <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-slate-700">{String(row.dwell_minutes ?? 0)} min</span>
                 </div>
                 <p className="mt-1 text-slate-600">
-                  Driver: {String(row.driver_name ?? "Unknown")} · Departed: {String(row.departed_at ?? "n/a")}
+                  Driver: {entityLabel(String(row.driver_name ?? ""), row.driver_id as string | undefined, "Driver")} · Departed: {String(row.departed_at ?? "n/a")}
                 </p>
                 <div className="mt-2 flex items-center gap-2">
                   <button
@@ -269,7 +270,7 @@ export function DOTInspectionsTab() {
       <VoidReasonModal
         open={voidTargetId !== null}
         title="Void DOT Inspection"
-        entityRef={voidTargetId ? `Inspection ${voidTargetId}` : undefined}
+        entityRef={voidTargetId ? entityLabel(null, voidTargetId, "Inspection") : undefined}
         postsReversingEntry={false}
         onClose={() => setVoidTargetId(null)}
         onSubmit={async (reason) => {

@@ -341,9 +341,9 @@ export function DispatchOverview({ operatingCompanyId, onLoadClick }: Props) {
             exposureLoads.slice(0, PANEL_ROW_LIMIT).map((load: DispatchLoad) => (
               <PanelRow
                 key={load.id}
-                unit={load.unit_number ?? "—"}
-                driver={load.driver_short_name ?? "—"}
-                loadCustomer={`${load.load_number} · ${load.customer_name ?? "—"}`}
+                unit={entityLabel(load.unit_number, null, "Unit")}
+                driver={entityLabel(load.driver_short_name, null, "Driver")}
+                loadCustomer={`${entityLabel(load.load_number, load.id, "Load")} · ${entityLabel(load.customer_name, null, "Customer")}`}
                 onClick={onLoadClick ? () => onLoadClick(load.id) : undefined}
               />
             ))
@@ -359,9 +359,9 @@ export function DispatchOverview({ operatingCompanyId, onLoadClick }: Props) {
             atRiskLoads.slice(0, PANEL_ROW_LIMIT).map((load: AtRiskLoadRow) => (
               <PanelRow
                 key={load.id}
-                unit={load.unit_number ?? "—"}
-                driver={load.driver_name ?? "—"}
-                loadCustomer={`${load.load_number} · ${load.customer_name ?? "—"}`}
+                unit={entityLabel(load.unit_number, null, "Unit")}
+                driver={entityLabel(load.driver_name, null, "Driver")}
+                loadCustomer={`${entityLabel(load.load_number, load.id, "Load")} · ${entityLabel(load.customer_name, null, "Customer")}`}
                 onClick={onLoadClick ? () => onLoadClick(load.id) : undefined}
               />
             ))
@@ -378,8 +378,8 @@ export function DispatchOverview({ operatingCompanyId, onLoadClick }: Props) {
               <PanelRow
                 key={event.id}
                 unit="—"
-                driver={event.driver_name ?? "—"}
-                loadCustomer={`${event.load_number} · ${event.customer_name ?? "—"}`}
+                driver={entityLabel(event.driver_name, null, "Driver")}
+                loadCustomer={`${entityLabel(event.load_number, event.load_id, "Load")} · ${entityLabel(event.customer_name, null, "Customer")}`}
                 onClick={onLoadClick ? () => onLoadClick(event.load_id) : undefined}
               />
             ))
@@ -417,9 +417,9 @@ export function DispatchOverview({ operatingCompanyId, onLoadClick }: Props) {
             oosLoads.slice(0, PANEL_ROW_LIMIT).map((load: DispatchLoad) => (
               <PanelRow
                 key={load.id}
-                unit={load.unit_number ?? "—"}
-                driver={load.driver_short_name ?? "—"}
-                loadCustomer={`${load.load_number} · ${load.dispatch_block_reason ?? "Blocked"}`}
+                unit={entityLabel(load.unit_number, null, "Unit")}
+                driver={entityLabel(load.driver_short_name, null, "Driver")}
+                loadCustomer={`${entityLabel(load.load_number, load.id, "Load")} · ${load.dispatch_block_reason ?? "Blocked"}`}
                 onClick={onLoadClick ? () => onLoadClick(load.id) : undefined}
               />
             ))

@@ -174,7 +174,7 @@ export function InvoiceDetailPage() {
       key: "account_id",
       label: "Income account",
       sortable: true,
-      sortValue: (line) => line.income_account_name ?? line.account_id ?? "",
+      sortValue: (line) => entityLabel(line.income_account_name, line.account_id, "Account"),
       render: (line) => {
         if (!line.account_id) return <span className="text-gray-400">—</span>;
         const label =
@@ -251,7 +251,7 @@ export function InvoiceDetailPage() {
           { label: "Invoices", href: "/accounting/invoices" },
           { label: invoice.display_id },
         ]}
-        subtitle={invoice.customer_name ?? "Invoice detail"}
+        subtitle={entityLabel(invoice.customer_name, invoice.customer_id, "Customer")}
         actions={
           <div className="flex gap-2">
             {canRecordPayment ? (
@@ -440,7 +440,7 @@ export function InvoiceDetailPage() {
         <DataPanel title="Factoring">
           <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
             <div className="text-gray-700">
-              This invoice is part of <EntityLink kind="factoring_advance" id={invoice.factoring_advance_id ?? undefined} label={invoice.factoring_display_id ?? "a factoring batch"} />.
+              This invoice is part of <EntityLink kind="factoring_advance" id={invoice.factoring_advance_id ?? undefined} label={entityLabel(invoice.factoring_display_id, invoice.factoring_advance_id, "Factoring batch")} />.
               {invoice.factoring_status ? (
                 <span className={`ml-2 ${factoringPillClass(invoice.factoring_status)}`}>{invoice.factoring_status.replaceAll("_", " ")}</span>
               ) : null}

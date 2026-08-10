@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { listDriverLoads, type DriverLoad } from "../../api/driver";
+import { entityLabel } from "../../lib/entity-label";
 
 export function DriverLoadsPage() {
   const { t } = useTranslation();
@@ -21,7 +22,7 @@ export function DriverLoadsPage() {
             <Link className="font-medium text-slate-900" to={`/driver/loads/${load.id}`}>
               {load.display_id}
             </Link>
-            <p className="text-xs text-slate-600">{load.customer_name}</p>
+            <p className="text-xs text-slate-600">{entityLabel(load.customer_name, null, "Customer")}</p>
             <p className="text-[11px] text-slate-500">
               {t("driver.pickup")}: {load.pickup_location} → {t("driver.dropoff")}: {load.delivery_location}
             </p>

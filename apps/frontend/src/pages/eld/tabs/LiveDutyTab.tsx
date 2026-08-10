@@ -40,7 +40,7 @@ export function LiveDutyTab({ operatingCompanyId }: Props) {
         key: "unit_number",
         label: "Unit",
         sortable: true,
-        render: (row) => row.unit_number ?? "—",
+        render: (row) => entityLabel(row.unit_number, null, "Unit") ?? "—",
       },
       {
         key: "current_duty_status",

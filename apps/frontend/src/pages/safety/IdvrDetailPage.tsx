@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { getSafetyDvirDetail } from "../../api/safety";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
 type DefectRow = Record<string, unknown>;
@@ -87,7 +88,7 @@ export function IdvrDetailPage() {
             <EntityLink
               kind="driver"
               id={submission.driver_id as string | undefined}
-              label={submission.driver_name as string | undefined}
+              label={entityLabel(submission.driver_name, submission.driver_id, "Driver")}
             />
           </dd>
         </div>
@@ -97,7 +98,7 @@ export function IdvrDetailPage() {
             <EntityLink
               kind="unit"
               id={submission.unit_id as string | undefined}
-              label={(submission.unit_number as string | undefined) ?? undefined}
+              label={entityLabel(submission.unit_number, submission.unit_id, "Unit")}
             />
           </dd>
         </div>

@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import type { SettlementListRow } from "../../../api/driverFinance";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { entityLabel } from "../../../lib/entity-label";
 import { formatDateUS } from "../../../lib/formatDate";
 import { useUrlSort } from "../../../hooks/useUrlSort";
 
@@ -42,7 +43,11 @@ export function SettlementsTable({ rows, onOpen, loading = false }: Props) {
         // preserved (the link moved onto the name); nothing is lost but the uuid.
         render: (row) => (
           <div className="font-semibold">
-            <EntityLink kind="driver" id={row.driver_id} label={row.driver_full_name} />
+            <EntityLink
+              kind="driver"
+              id={row.driver_id}
+              label={entityLabel(row.driver_full_name, row.driver_id, "Driver")}
+            />
           </div>
         ),
       },
@@ -50,9 +55,9 @@ export function SettlementsTable({ rows, onOpen, loading = false }: Props) {
         key: "settlement_display_id",
         label: "Settlement #",
         sortable: true,
-        sortValue: (row) => row.display_id ?? null,
+        sortValue: (row) => entityLabel(row.display_id, row.id, "Settlement"),
         render: (row) => (
-          <EntityLink kind="settlement" id={row.id} label={row.display_id ?? "—"} />
+          <EntityLink kind="settlement" id={row.id} label={entityLabel(row.display_id, row.id, "Settlement")} />
         ),
       },
       {

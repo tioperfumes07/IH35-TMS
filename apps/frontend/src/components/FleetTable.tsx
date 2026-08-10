@@ -1,4 +1,5 @@
 import { humanizeEnumLabel } from "../lib/humanizeEnumLabel";
+import { entityLabel } from "../lib/entity-label";
 import { useCallback, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -366,7 +367,7 @@ export function FleetTable({
     const cols = columns.filter((c) => table.isColumnVisible(c.key));
     const cell = (row: FleetRow, key: string): string => {
       switch (key) {
-        case "unit_number": return String(row.unit_number ?? row.id ?? "");
+        case "unit_number": return entityLabel(row.unit_number, row.id, "Unit");
         case "vin": return String(row.vin ?? "");
         case "type": return displayType(row);
         case "make_model": return `${row.make ?? ""} ${row.model ?? ""}`.trim();
@@ -542,7 +543,7 @@ export function FleetTable({
                     <td className="px-2 py-1" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
                       <input
                         type="checkbox"
-                        aria-label={`Select unit ${row.unit_number ?? row.id}`}
+                        aria-label={`Select unit ${entityLabel(row.unit_number, row.id, "Unit")}`}
                         checked={selectCtx.isSelected(row.id)}
                         onChange={() => selectCtx.toggle(row.id)}
                       />
@@ -550,13 +551,13 @@ export function FleetTable({
                     {showMaintenanceColumns ? (
                       <td className="px-2 py-1" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
                         <Link to={fleetProfilePath(row)} className="font-semibold text-slate-700 hover:underline">
-                          {String(row.unit_number ?? row.id ?? "—")}
+                          {entityLabel(row.unit_number, row.id, "Unit")}
                         </Link>
                       </td>
                     ) : (
                       <td className="px-2 py-1" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
                         <Link to={fleetProfilePath(row)} className="font-semibold text-slate-700 hover:underline">
-                          {String(row.unit_number ?? row.id ?? "—")}
+                          {entityLabel(row.unit_number, row.id, "Unit")}
                         </Link>
                       </td>
                     )}
@@ -586,7 +587,7 @@ export function FleetTable({
                       <button
                         type="button"
                         className="rounded-sm border border-gray-300 bg-white px-1.5 py-0.5 text-[10px] font-semibold text-gray-700 hover:bg-gray-50"
-                        aria-label={`Edit unit ${row.unit_number ?? row.id}`}
+                        aria-label={`Edit unit ${entityLabel(row.unit_number, row.id, "Unit")}`}
                         onClick={() => {
                           setEditingUnitId(row.id);
                           setEditingRow(row);

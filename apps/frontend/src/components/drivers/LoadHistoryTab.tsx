@@ -31,14 +31,14 @@ const ASSIGNED_COLUMNS: Array<ParityColumn<DriverAssignedLoad>> = [
     key: "customer_name",
     label: "Customer",
     sortable: true,
-    render: (row) => <EntityLink kind="customer" id={row.customer_id} label={row.customer_name ?? undefined} />,
+    render: (row) => <EntityLink kind="customer" id={row.customer_id} label={entityLabel(row.customer_name, row.customer_id, "Customer")} />,
   },
   {
     key: "assigned_unit_number",
     label: "Unit",
     sortable: true,
     render: (row) => (
-      <EntityLink kind="unit" id={row.assigned_unit_id} label={row.assigned_unit_number ?? undefined} />
+      <EntityLink kind="unit" id={row.assigned_unit_id} label={entityLabel(row.assigned_unit_number, row.assigned_unit_id, "Unit")} />
     ),
   },
   {
@@ -78,7 +78,7 @@ const HISTORY_COLUMNS: Array<ParityColumn<DispatchAssignmentHistoryRow>> = [
       <EntityLink
         kind="driver"
         id={row.previous_driver_id}
-        label={row.previous_driver_name ?? undefined}
+        label={entityLabel(row.previous_driver_name, row.previous_driver_id, "Driver")}
         data-testid={`driver-load-history-prev-driver-${row.id}`}
       />
     ),
@@ -91,7 +91,7 @@ const HISTORY_COLUMNS: Array<ParityColumn<DispatchAssignmentHistoryRow>> = [
       <EntityLink
         kind="driver"
         id={row.new_driver_id}
-        label={row.new_driver_name ?? undefined}
+        label={entityLabel(row.new_driver_name, row.new_driver_id, "Driver")}
         data-testid={`driver-load-history-new-driver-${row.id}`}
       />
     ),

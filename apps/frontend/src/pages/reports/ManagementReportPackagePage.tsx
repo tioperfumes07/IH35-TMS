@@ -8,6 +8,7 @@ import { BasisSelector, type AccountingBasis } from "../../components/accounting
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { getProfitLossReport, getBalanceSheetReport, getArAgingReport, getApAgingReport, getCustomerProfitability } from "../../api/reports";
 import { ReportsSubNav } from "./ReportsSubNav";
+import { entityLabel } from "../../lib/entity-label";
 
 type PackageType = "company-overview" | "sales-performance" | "expenses-performance";
 
@@ -178,7 +179,7 @@ function ARAgingSection({ companyId, asOfDate }: { companyId: string; asOfDate: 
         <tbody>
           {rows.map((row) => (
             <tr key={row.customer_id} className="border-b border-gray-50">
-              <td className="py-0.5 text-slate-800">{row.customer_name}</td>
+              <td className="py-0.5 text-slate-800">{entityLabel(row.customer_name, row.customer_id, "Customer")}</td>
               <td className="py-0.5 text-right">{money(row.current_cents)}</td>
               <td className="py-0.5 text-right">{money(row.bucket_1_30_cents)}</td>
               <td className="py-0.5 text-right">{money(row.bucket_31_60_cents)}</td>
@@ -265,7 +266,7 @@ function CustomerSummarySection({ companyId, fromDate, toDate }: { companyId: st
         <tbody>
           {sorted.slice(0, 30).map((row) => (
             <tr key={row.customer_id} className="border-b border-gray-50">
-              <td className="py-0.5 text-slate-800">{row.customer_name}</td>
+              <td className="py-0.5 text-slate-800">{entityLabel(row.customer_name, row.customer_id, "Customer")}</td>
               <td className="py-0.5 text-right">{money(row.revenue_cents)}</td>
               <td className="py-0.5 text-right">{row.load_count}</td>
             </tr>

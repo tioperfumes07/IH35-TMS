@@ -1,3 +1,4 @@
+import { entityLabel } from "../../lib/entity-label";
 import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -253,11 +254,11 @@ export function DailyTasksPage() {
         key: "assigned_to_email",
         label: "Assignee",
         sortable: true,
-        sortValue: (task) => task.assigned_to_email || task.assigned_to_user_id,
+        sortValue: (task) => entityLabel(task.assigned_to_email, task.assigned_to_user_id, "User"),
         render: (task) => (
           <div className="inline-flex items-center gap-1 text-slate-700">
             <UserRound className="h-3.5 w-3.5" />
-            <span>{task.assigned_to_email || task.assigned_to_user_id}</span>
+            <span>{entityLabel(task.assigned_to_email, task.assigned_to_user_id, "User")}</span>
           </div>
         ),
       },
@@ -501,7 +502,7 @@ function TaskDetailDrawer({
                 <div>Status: {task.status}</div>
                 <div>Progress: {STATUS_STEPS[task.status]}</div>
                 <div>Priority: {task.priority}</div>
-                <div>Assignee: {task.assigned_to_email || task.assigned_to_user_id}</div>
+                <div>Assignee: {entityLabel(task.assigned_to_email, task.assigned_to_user_id, "User")}</div>
                 <div>Due: {formatDateTime(task.due_at)}</div>
                 <div>Created: {formatDateTime(task.created_at)}</div>
                 <div>Accepted: {formatDateTime(task.accepted_at)}</div>

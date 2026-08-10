@@ -14,6 +14,7 @@ import type { DispatchLoadRow, LoadStatus } from "../../api/loads";
 import type { UnitsWithoutLoad } from "../../api/dispatch";
 import type { DataTableErrorState } from "../../lib/tableError";
 import { classifyProfit, formatProfitCents, getLoadProfitability, profitBadgeClassName } from "../../lib/loadProfit";
+import { entityLabel } from "../../lib/entity-label";
 import { ListErrorState } from "../ListErrorState";
 import { useToast } from "../Toast";
 import { canDragLoad, flagDotColor, flagDotLabel, flagDotTag, hasVisibleFlag, toRouteSummary } from "./constants";
@@ -439,7 +440,7 @@ function KanbanCompactCard({
       {...attributes}
       {...listeners}
       onClick={() => onClick(load.id)}
-      title={`${load.load_number} · ${driverUnitLabel(load)} · ${lane}`}
+      title={`${entityLabel(load.load_number, load.id, "Load")} · ${driverUnitLabel(load)} · ${lane}`}
       className={`flex h-10 items-center gap-2 rounded border border-gray-200 bg-white px-2 text-[11px] shadow-xs transition hover:bg-gray-50 ${
         isDragging ? "opacity-60" : ""
       } ${draggableEnabled ? "cursor-grab active:cursor-grabbing" : "cursor-pointer"}`}
@@ -448,7 +449,7 @@ function KanbanCompactCard({
     >
       <span className={`h-2 w-2 shrink-0 rounded-full ${onTimeChipClass(load).split(" ")[0]}`} aria-hidden />
       <span className="min-w-0 flex-1 truncate font-semibold text-gray-900">{driverUnitLabel(load)}</span>
-      <span className="shrink-0 font-mono text-[10px] text-gray-500">{load.load_number}</span>
+      <span className="shrink-0 font-mono text-[10px] text-gray-500">{entityLabel(load.load_number, load.id, "Load")}</span>
       {/* KANBAN-COMPACT-TRUNCATE (owner-live): the driver label was truncating because this SECONDARY lane
           text held up to 120px of the same row at every width above `sm`. The driver is the identifying
           field on a compact card, so the lane now yields first — it appears only on wide boards and takes
@@ -851,7 +852,7 @@ export function DispatchKanban({ loads, awaitingTrucks = [], activeGeofenceBreac
                 >
                   <span className="text-red-600" aria-hidden>▲</span>
                   <span className="font-semibold text-gray-900">{driverUnitLabel(load)}</span>
-                  <span className="font-mono text-[10px] text-gray-500">{load.load_number}</span>
+                  <span className="font-mono text-[10px] text-gray-500">{entityLabel(load.load_number, load.id, "Load")}</span>
                   <span className="rounded-sm bg-red-100 px-1.5 text-[10px] font-semibold text-red-800">Breakdown</span>
                 </button>
               ))}

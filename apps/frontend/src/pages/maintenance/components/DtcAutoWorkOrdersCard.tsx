@@ -36,7 +36,7 @@ export function DtcAutoWorkOrdersCard({ operatingCompanyId, compact = false, onO
                 <>
                   <div className="flex items-center justify-between gap-1">
                     <span className="font-semibold" style={{ color: "#1F2A44" }}>
-                      {row.unit_number ?? "N/A"}
+                      {entityLabel(row.unit_number, row.unit_id, "Unit") ?? "N/A"}
                     </span>
                     <span className="text-[9px]" style={{ color: "#854F0B" }}>{row.status}</span>
                   </div>
@@ -75,7 +75,7 @@ export function DtcAutoWorkOrdersCard({ operatingCompanyId, compact = false, onO
             <div key={row.id} className="rounded-sm border border-gray-200 p-2 text-xs">
               <div className="flex items-center justify-between">
                 <span className="font-semibold text-gray-900">
-                  <EntityLink kind="work_order" id={row.id} label={entityLabel(row.display_id, row.id, "Record")} /> · Unit {row.unit_number ?? "N/A"}
+                  <EntityLink kind="work_order" id={row.id} label={entityLabel(row.display_id, row.id, "Record")} /> · Unit {entityLabel(row.unit_number, row.unit_id, "Unit") ?? "N/A"}
                 </span>
                 <span className="rounded-sm bg-amber-100 px-2 py-0.5 text-amber-800">{row.status}</span>
               </div>

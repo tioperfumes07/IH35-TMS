@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import type { AccountingHomeData } from "../../api/accountingHome";
 import { fetchPendingApprovalsGl } from "../../api/accountingHome";
+import { entityLabel } from "../../lib/entity-label";
 import { formatShortDate, formatUsdFromCents } from "../../pages/home/HomeKpiCard";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { entityLabel } from "../../lib/entity-label";
@@ -101,7 +102,7 @@ export function AccountingPendingApprovalsPanel({ data, isLoading }: Props) {
           <ul className="divide-y divide-slate-100">
             {items.map((item) => {
               const key = item.journal_entry_id ?? item.forward_drill.href ?? "item";
-              const title = item.journal_display_id ?? entityLabel(null, item.journal_entry_id, "Journal entry") ?? "Journal entry";
+              const title = entityLabel(item.journal_display_id, item.journal_entry_id, "Journal entry");
               const accountSummary = item.governed_accounts
                 .slice(0, 3)
                 .map((a) => accountLabel(a))

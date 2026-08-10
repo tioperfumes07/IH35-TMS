@@ -166,7 +166,7 @@ const postingColumns: Array<ParityColumn<JournalEntryPosting>> = [
         className="text-slate-700 hover:underline"
         onClick={(event) => event.stopPropagation()}
       >
-        {posting.account_name || "—"}
+        {entityLabel(posting.account_name, posting.account_id, "Account")}
       </Link>
     ),
   },

@@ -6,6 +6,7 @@ import { ParityDrawer } from "../../../components/parity/ParityDrawer";
 import { FineConvertConfirmModal } from "./FineConvertConfirmModal";
 import { FineLifecycleActions } from "./FineLifecycleActions";
 import { FinePaymentLinkBanner } from "./FinePaymentLinkBanner";
+import { entityLabel } from "../../../lib/entity-label";
 
 type Props = {
   open: boolean;
@@ -88,7 +89,7 @@ export function FineDetailDrawer({
               <EntityLink
                 kind="driver"
                 id={String(fine.subject_driver_id)}
-                label={(fine.subject_driver_name as string | undefined) ?? undefined}
+                label={entityLabel(fine.subject_driver_name, String(fine.subject_driver_id), "Driver")}
               />
             </div>
           ) : null}
@@ -105,7 +106,7 @@ export function FineDetailDrawer({
               <EntityLink
                 kind="unit"
                 id={String(fine.related_unit_id)}
-                label={(fine.related_unit_number as string | undefined)?.trim() || "Unit"}
+                label={entityLabel(fine.related_unit_number, String(fine.related_unit_id), "Unit")}
                 data-testid="fine-related-unit-link"
               />
             ) : (
@@ -118,7 +119,7 @@ export function FineDetailDrawer({
               <EntityLink
                 kind="load"
                 id={String(fine.related_load_id)}
-                label={(fine.related_load_number as string | undefined)?.trim() || "Load"}
+                label={entityLabel(fine.related_load_number, String(fine.related_load_id), "Load")}
                 data-testid="fine-related-load-link"
               />
             ) : (

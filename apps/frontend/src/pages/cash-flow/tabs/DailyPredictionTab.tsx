@@ -11,6 +11,7 @@ import {
 } from "../../../api/cashFlow";
 import { addDaysIso, companyToday, localDateFromIso } from "../../../lib/businessDate";
 import { formatUsdCents } from "../../../lib/money";
+import { entityLabel } from "../../../lib/entity-label";
 
 function fmtDate(iso: string): string {
   return localDateFromIso(iso).toLocaleDateString("en-US", {
@@ -232,8 +233,8 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
                   className="flex cursor-pointer items-start justify-between px-4 py-2.5 text-sm hover:bg-gray-50"
                 >
                   <div className="min-w-0 flex-1">
-                    <span className="font-medium text-gray-900 hover:underline">#{item.load_number}</span>
-                    <span className="ml-2 text-gray-600">{item.customer_name}</span>
+                    <span className="font-medium text-gray-900 hover:underline">{entityLabel(item.load_number, item.load_id, "Load")}</span>
+                    <span className="ml-2 text-gray-600">{entityLabel(item.customer_name, null, "Customer")}</span>
                     {item.delivery_time && (
                       <span className="ml-2 text-xs text-gray-400">
                         {new Date(item.delivery_time).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}

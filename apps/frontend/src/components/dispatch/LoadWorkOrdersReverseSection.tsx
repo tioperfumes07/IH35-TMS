@@ -68,7 +68,7 @@ export function LoadWorkOrdersReverseSection({
                 <span className="ml-2 text-xs text-gray-500">
                   {row.opened_at ? formatDateUS(String(row.opened_at).slice(0, 10)) : "—"}
                   {` · ${row.status}`}
-                  {row.unit_number ? ` · ${row.unit_number}` : ""}
+                  {row.unit_number ? ` · ${entityLabel(String(row.unit_number), String(row.unit_id ?? ""), "Unit")}` : ""}
                   {row.description ? ` · ${row.description}` : ""}
                 </span>
               </li>

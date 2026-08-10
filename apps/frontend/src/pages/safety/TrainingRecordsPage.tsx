@@ -9,6 +9,7 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { Modal } from "../../components/Modal";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { companyToday } from "../../lib/businessDate";
+import { entityLabel } from "../../lib/entity-label";
 
 type TrainingRecordRow = Record<string, unknown>;
 
@@ -72,7 +73,7 @@ export function TrainingRecordsPage({ operatingCompanyId }: Props) {
         const id = String(row.driver_id ?? "").trim();
         if (!id) return "—";
         const driverName = String(row.driver_name ?? "").trim();
-        return <EntityLink kind="driver" id={id} label={driverName || "Driver"} />;
+        return <EntityLink kind="driver" id={id} label={entityLabel(driverName, id, "Driver")} />;
       },
     },
     {

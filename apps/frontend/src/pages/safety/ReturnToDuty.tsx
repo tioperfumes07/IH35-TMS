@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { formatDateUS } from "../../lib/formatDate";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 import { resolveApiUrl } from "../../api/client";
 
 // SAF-F06: these page-local helpers called bare fetch(path), so with
@@ -71,7 +72,7 @@ export function ReturnToDuty() {
                 <EntityLink
                   kind="driver"
                   id={proc.driver_id ? String(proc.driver_id) : undefined}
-                  label={(proc.driver_name as string | undefined) || undefined}
+                  label={entityLabel(proc.driver_name, proc.driver_id ? String(proc.driver_id) : undefined, "Driver")}
                 />
               </div>
               <div className="text-slate-600">Status: {String(proc.status)} · Started {formatDateUS(proc.started_at)}</div>
@@ -91,7 +92,7 @@ export function ReturnToDuty() {
                 <EntityLink
                   kind="driver"
                   id={row.driver_id ? String(row.driver_id) : undefined}
-                  label={(row.driver_name as string | undefined) || undefined}
+                  label={entityLabel(row.driver_name, row.driver_id ? String(row.driver_id) : undefined, "Driver")}
                 />{" "}
                 · {String(row.test_date)}
               </span>

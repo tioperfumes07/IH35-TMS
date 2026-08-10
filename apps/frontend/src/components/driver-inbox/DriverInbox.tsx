@@ -6,6 +6,7 @@ import {
   type CashAdvanceRequestRow,
 } from "../../api/cashAdvanceRequests";
 import { EntityLink } from "../shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 import { ListErrorBanner } from "../shared/ListErrorBanner";
 
 // B6 — Driver Inbox (inside Driver Hub Home). Built to APPROVED-PREVIEW-driver-inbox.html.
@@ -146,7 +147,7 @@ export function DriverInbox({ companyId, canReview }: { companyId: string; canRe
         ) : showCash && cashRows.length > 0 ? (
           cashRows.map((row) => {
             const id = String(row.id ?? "");
-            const name = String(row.driver_name ?? "Driver");
+            const name = entityLabel(String(row.driver_name ?? ""), String(row.driver_id ?? ""), "Driver");
             const open = openId === id;
             const preview = previewQuery.data;
             const timeline = (timelineQuery.data?.timeline ?? null) as Record<string, unknown> | null;

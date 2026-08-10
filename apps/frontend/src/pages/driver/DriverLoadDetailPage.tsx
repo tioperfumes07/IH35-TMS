@@ -6,6 +6,7 @@ import { getDriverLoad, type DriverLoad } from "../../api/driver";
 import { titleize } from "../../lib/titleize";
 import { useState } from "react";
 import { ReportIssueModal } from "./ReportIssueModal";
+import { entityLabel } from "../../lib/entity-label";
 
 export function DriverLoadDetailPage() {
   const { id } = useParams();
@@ -36,7 +37,7 @@ export function DriverLoadDetailPage() {
         <EntityLink kind="load" id={load.id} label={load.display_id} /> — {t("driver.load_detail")}
       </h2>
       <p className="text-xs text-slate-600">
-        {t("driver.customer")}: {load.customer_name}
+        {t("driver.customer")}: {entityLabel(load.customer_name, null, "Customer")}
       </p>
       <div className="rounded-sm border border-slate-200 bg-white p-2">
         <p className="text-[11px] font-semibold uppercase text-slate-500">{t("driver.stops")}</p>

@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import { expenseCategoriesCatalogClient } from "../../api/catalogs-accounting";
 // ACCT-F92: one shared definition of which accounts belong in which picker.
 import { isExpenseAccount } from "../../lib/account-picker-scope";
+import { entityLabel } from "../../lib/entity-label";
 import { tirePositionsCatalogClient } from "../../api/catalogs-fleet";
 import { getCoaAccounts } from "../../api/banking";
 import { getWoCostContext } from "../../api/maintenance";
@@ -157,7 +158,7 @@ export function TwoSectionLineEditor({
     if (merged.size > 0) return Array.from(merged.values());
     const fromAccounting = (accountingCategoriesQuery.data ?? []).map((entry) => ({
       id: String(entry.id ?? ""),
-      label: `${entry.name ?? ""}`.trim() || String(entry.account_number ?? entry.qbo_id ?? ""),
+      label: `${entry.name ?? ""}`.trim() || entityLabel(entry.account_number, entry.id ?? entry.qbo_id, "Account"),
     }));
     if (fromAccounting.length > 0) return fromAccounting;
     return (costContextQuery.data?.expense_categories ?? []).map((entry) => ({

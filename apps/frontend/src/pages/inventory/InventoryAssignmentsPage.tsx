@@ -7,6 +7,7 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { listPartsAssignments, type PartsAssignmentRow } from "../../api/maintenance";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { entityLabel } from "../../lib/entity-label";
 
 function formatMoney(value: number | null | undefined) {
   return `$${Number(value ?? 0).toFixed(2)}`;
@@ -79,7 +80,7 @@ export function InventoryAssignmentsPage() {
         <EntityLink
           kind="work_order"
           id={row.work_order_id}
-          label={row.work_order_display_id ?? "Work order — no number"}
+          label={entityLabel(row.work_order_display_id, row.work_order_id, "Work order")}
         />
       ),
     },
@@ -89,7 +90,7 @@ export function InventoryAssignmentsPage() {
       sortable: true,
       render: (row) =>
         row.unit_id ? (
-          <EntityLink kind="unit" id={row.unit_id} label={row.unit_number ?? "Unit — not visible"} />
+          <EntityLink kind="unit" id={row.unit_id} label={entityLabel(row.unit_number, row.unit_id, "Unit")} />
         ) : (
           "—"
         ),
@@ -116,7 +117,7 @@ export function InventoryAssignmentsPage() {
       sortable: true,
       render: (row) =>
         row.vendor_id ? (
-          <EntityLink kind="vendor" id={row.vendor_id} label={row.vendor_name ?? "Vendor — not visible"} />
+          <EntityLink kind="vendor" id={row.vendor_id} label={entityLabel(row.vendor_name, row.vendor_id, "Vendor")} />
         ) : (
           "—"
         ),

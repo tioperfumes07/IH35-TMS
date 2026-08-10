@@ -14,6 +14,7 @@ import { TableSelection, TableSelectionHeader } from "../bulk";
 import { InlineUnitPicker } from "./InlineUnitPicker";
 import { InlineDriverPicker } from "./InlineDriverPicker";
 import type { DispatchListProps, SortField } from "./dispatchListTypes";
+import { entityLabel } from "../../lib/entity-label";
 
 export type { DispatchListProps } from "./dispatchListTypes";
 
@@ -233,10 +234,10 @@ export function DispatchList({
                         </span>
                       ) : null}
                     </td>
-                    <td className="code-cell px-3 py-2 font-medium text-gray-800">{load.load_number}</td>
+                    <td className="code-cell px-3 py-2 font-medium text-gray-800">{entityLabel(load.load_number, load.id, "Load")}</td>
                     <td className="min-w-0 max-w-[240px] px-3 py-2">
                       <span title={load.customer_name ?? undefined} className="single-line-name">
-                        {load.customer_name ?? "-"}
+                        {entityLabel(load.customer_name, null, "Customer")}
                       </span>
                     </td>
                     <td className="px-3 py-2">{load.first_pickup_city ?? "-"}</td>
@@ -247,7 +248,7 @@ export function DispatchList({
                           loadId={load.id}
                           operatingCompanyId={operatingCompanyId}
                           unitId={load.assigned_unit_id}
-                          displayLabel={load.assigned_unit_number ?? "—"}
+                          displayLabel={entityLabel(load.assigned_unit_number, load.assigned_unit_id, "Unit")}
                           onAssigned={({ unitId, label }) =>
                             setRowOverrides((prev) => ({
                               ...prev,
@@ -263,7 +264,7 @@ export function DispatchList({
                           }
                         />
                       ) : (
-                        load.assigned_unit_number ?? "-"
+                        load.assigned_unit_number ?? entityLabel(null, load.assigned_unit_id, "Unit")
                       )}
                     </td>
                     <td className="min-w-0 max-w-[240px] px-3 py-2">
@@ -272,7 +273,7 @@ export function DispatchList({
                           loadId={load.id}
                           operatingCompanyId={operatingCompanyId}
                           driverId={load.assigned_primary_driver_id}
-                          displayLabel={load.assigned_primary_driver_name ?? "Unassigned"}
+                          displayLabel={entityLabel(load.assigned_primary_driver_name, load.assigned_primary_driver_id, "Driver")}
                           onAssigned={({ driverId, label }) =>
                             setRowOverrides((prev) => ({
                               ...prev,
@@ -288,10 +289,10 @@ export function DispatchList({
                           }
                         />
                       ) : (
-                        <span title={load.assigned_primary_driver_name ?? undefined} className="single-line-name inline-flex items-center gap-1.5">
+                        <span title={entityLabel(load.assigned_primary_driver_name, load.assigned_primary_driver_id, "Driver")} className="single-line-name inline-flex items-center gap-1.5">
                           {/* DISPATCH-UI-REFINE-2 ITEM 5 — HOS duty/health dot next to the driver name. */}
                           <DriverHosStatusDot driverId={load.assigned_primary_driver_id} operatingCompanyId={load.operating_company_id} />
-                          {load.assigned_primary_driver_name ?? "Unassigned"}
+                          {entityLabel(load.assigned_primary_driver_name, load.assigned_primary_driver_id, "Driver")}
                         </span>
                       )}
                     </td>
@@ -380,7 +381,7 @@ export function DispatchList({
               className="w-full rounded-sm border border-gray-200 bg-white p-3 text-left"
             >
               <div className="flex items-center justify-between">
-                <div className="code-cell font-semibold">{load.load_number}</div>
+                <div className="code-cell font-semibold">{entityLabel(load.load_number, load.id, "Load")}</div>
                 <div>
                   {hasVisibleFlag(load.flag_code) ? (
                     <span
@@ -395,15 +396,15 @@ export function DispatchList({
               </div>
               <div className="mt-1 min-w-0 text-sm text-gray-700">
                 <span title={load.customer_name ?? undefined} className="single-line-name">
-                  {load.customer_name ?? "-"}
+                  {entityLabel(load.customer_name, null, "Customer")}
                 </span>
               </div>
               <div className="mt-1 text-xs text-gray-500">
                 {load.first_pickup_city ?? "-"} {"->"} {load.first_delivery_city ?? "-"}
               </div>
               <div className="mt-2 flex min-w-0 items-center justify-between text-xs">
-                <span title={load.assigned_primary_driver_name ?? undefined} className="single-line-name">
-                  {load.assigned_primary_driver_name ?? "Unassigned"}
+                <span title={entityLabel(load.assigned_primary_driver_name, load.assigned_primary_driver_id, "Driver")} className="single-line-name">
+                  {entityLabel(load.assigned_primary_driver_name, load.assigned_primary_driver_id, "Driver")}
                 </span>
                 <span>{formatMoneyCents(load.rate_total_cents, load.currency_code)}</span>
               </div>

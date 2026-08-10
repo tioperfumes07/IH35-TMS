@@ -1,3 +1,5 @@
+import { EntityLink } from "../../components/shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 import { useQuery } from "@tanstack/react-query";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useState } from "react";
@@ -7,8 +9,6 @@ import { Button } from "../../components/Button";
 import { ListErrorState } from "../../components/ListErrorState";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
-import { EntityLink } from "../../components/shared/EntityLink";
-import { entityLabel } from "../../lib/entity-label";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { EntityPicker } from "../../components/parity/EntityPicker";
 
@@ -56,14 +56,14 @@ export function AssignmentHistoryPage() {
       key: "previous_driver_name",
       label: "Previous driver",
       render: (row) => (
-        <EntityLink kind="driver" id={row.previous_driver_id} label={row.previous_driver_name ?? undefined} />
+        <EntityLink kind="driver" id={row.previous_driver_id} label={entityLabel(row.previous_driver_name, row.previous_driver_id, "Driver")} />
       ),
     },
     {
       key: "new_driver_name",
       label: "New driver",
       render: (row) => (
-        <EntityLink kind="driver" id={row.new_driver_id} label={row.new_driver_name ?? undefined} />
+        <EntityLink kind="driver" id={row.new_driver_id} label={entityLabel(row.new_driver_name, row.new_driver_id, "Driver")} />
       ),
     },
     { key: "reason_code", label: "Reason", render: (row) => row.reason_code ?? row.notes ?? "—" },

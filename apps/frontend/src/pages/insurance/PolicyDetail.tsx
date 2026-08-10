@@ -138,7 +138,9 @@ export function PolicyDetail() {
         key: "claim_number",
         label: "Claim #",
         sortable: true,
-        render: (claim) => <EntityLink kind="claim" id={claim.id} label={claim.claim_number} />,
+        render: (claim) => (
+          <EntityLink kind="claim" id={claim.id} label={entityLabel(claim.claim_number, claim.id, "Claim")} />
+        ),
       },
       { key: "status", label: "Status", sortable: true },
       { key: "amount_claimed_cents", label: "Claimed", sortable: true, render: (claim) => formatMoney(claim.amount_claimed_cents) },
@@ -152,7 +154,9 @@ export function PolicyDetail() {
         key: "case_number",
         label: "Case #",
         sortable: true,
-        render: (row) => <EntityLink kind="lawsuit" id={row.id} label={row.case_number} />,
+        render: (row) => (
+          <EntityLink kind="lawsuit" id={row.id} label={entityLabel(row.case_number, row.id, "Case")} />
+        ),
       },
       { key: "status", label: "Status", sortable: true },
       { key: "demand_cents", label: "Demand", sortable: true, render: (row) => formatMoney(row.demand_cents) },

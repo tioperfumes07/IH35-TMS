@@ -11,6 +11,7 @@ import { DateTimePicker } from "../../../components/forms/DateTimePicker";
 import { Combobox } from "../../../components/shared/Combobox";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { capNotice, listCapInfo } from "../../../lib/list-cap";
+import { entityLabel } from "../../../lib/entity-label";
 
 // CLS-SILENT-CAP: named so the fetch and the truncation check read the SAME number.
 // 2,836 vendors exist on prod, so an unsearched 200-row fetch hides 2,636 of them.
@@ -40,7 +41,7 @@ type Props = {
   register: UseFormRegister<CreateWOFormValues>;
   watch: UseFormWatch<CreateWOFormValues>;
   requireLoadForExpense?: boolean;
-  suggestedLoad?: { load_number: string; confidence: "exact" | "fuzzy" | "none" } | null;
+  suggestedLoad?: { load_id: string; load_number: string; confidence: "exact" | "fuzzy" | "none" } | null;
   backendLoadError?: string | null;
   operatingCompanyId?: string;
   setValue?: UseFormSetValue<CreateWOFormValues>;
@@ -462,7 +463,7 @@ export function CreateWOSectionIdentification({
       </div>
       {suggestedLoad ? (
         <div className="mt-2 rounded-sm border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs text-emerald-900">
-          Suggested load: <span className="font-semibold">{suggestedLoad.load_number}</span>{" "}
+          Suggested load: <span className="font-semibold">{entityLabel(suggestedLoad.load_number, suggestedLoad.load_id, "Load")}</span>{" "}
           <span className="rounded-sm bg-emerald-100 px-1 py-0.5 uppercase">{suggestedLoad.confidence}</span>
         </div>
       ) : null}

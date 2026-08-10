@@ -33,6 +33,7 @@ import { LoadWorkOrdersReverseSection } from "./LoadWorkOrdersReverseSection";
 import { BookLoadModalV4 } from "../../pages/dispatch/components/BookLoadModalV4";
 import { CargoSensorTimeline } from "../../pages/dispatch/cargo-sensors/CargoSensorTimeline";
 import { EntityLink } from "../shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 
 type Props = {
   loadId: string | null;
@@ -290,7 +291,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
             <div>
               <h2 className="text-lg font-semibold text-gray-900">
                 Load{" "}
-                <EntityLink kind="load" id={load?.id ?? loadId} label={load?.load_number ?? loadId} />
+                <EntityLink kind="load" id={load?.id ?? loadId} label={entityLabel(load?.load_number, load?.id ?? loadId, "Load")} />
               </h2>
               <p className="text-xs text-gray-500">{routeSummary}</p>
             </div>
@@ -317,7 +318,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
                   <FlatFieldGrid
                     columns={2}
                     fields={[
-                      { label: "Customer", value: load.customer_name ?? "—" },
+                      { label: "Customer", value: entityLabel(load.customer_name, load.customer_id, "Customer") },
                       {
                         label: "Status",
                         value: (
@@ -376,10 +377,18 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
                     fields={[
                       { label: "Trip Type", value: load.trip_type ? (TRIP_TYPE_LABEL[load.trip_type] ?? load.trip_type) : "—" },
                       { label: "Trailer type", value: load.trailer_equipment_type ?? "—" },
-                      { label: "Truck unit", value: load.assigned_unit_number ?? "—" },
-                      { label: "Trailer unit", value: load.trailer_number ?? "—" },
-                      { label: "Driver", value: load.assigned_primary_driver_name ?? "Unassigned" },
-                      { label: "Team driver", value: load.assigned_secondary_driver_name ?? (load.assigned_secondary_driver_id ? "—" : "Solo") },
+                      { label: "Truck unit", value: entityLabel(load.assigned_unit_number, load.assigned_unit_id, "Unit") },
+                      { label: "Trailer unit", value: entityLabel(load.trailer_number, null, "Trailer") },
+                      {
+                        label: "Driver",
+                        value: entityLabel(load.assigned_primary_driver_name, load.assigned_primary_driver_id, "Driver"),
+                      },
+                      {
+                        label: "Team driver",
+                        value: load.assigned_secondary_driver_id
+                          ? entityLabel(load.assigned_secondary_driver_name, load.assigned_secondary_driver_id, "Driver")
+                          : "Solo",
+                      },
                       { label: "Driver pay rate / mi", value: "—" },
                     ]}
                   />

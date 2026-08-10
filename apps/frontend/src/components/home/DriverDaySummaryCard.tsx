@@ -5,6 +5,7 @@ import { fetchDriverDaySummary, type HomeDriverDaySummaryRow } from "../../api/h
 import { companyToday } from "../../lib/businessDate";
 import { ListErrorState } from "../ListErrorState";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
+import { entityLabel } from "../../lib/entity-label";
 
 type Props = {
   operatingCompanyId: string | null;
@@ -35,7 +36,7 @@ export function DriverDaySummaryCard({ operatingCompanyId }: Props) {
       key: "driver_name",
       label: "Driver",
       sortable: true,
-      render: (row) => <span className="font-medium text-slate-800">{row.driver_name}</span>,
+      render: (row) => <span className="font-medium text-slate-800">{entityLabel(row.driver_name, row.driver_id, "Driver")}</span>,
     },
     {
       key: "miles",

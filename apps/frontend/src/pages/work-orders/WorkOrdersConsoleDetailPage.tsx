@@ -1,3 +1,4 @@
+import { entityLabel } from "../../lib/entity-label";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
@@ -39,7 +40,10 @@ export function WorkOrdersConsoleDetailPage() {
 
   const wo = detailQuery.data?.work_order;
 
-  const title = useMemo(() => `Work order ${String(wo?.display_id ?? id ?? "")}`, [id, wo?.display_id]);
+  const title = useMemo(
+    () => `Work order ${entityLabel(wo?.display_id, id, "Work order")}`,
+    [id, wo?.display_id],
+  );
 
   const invalidate = () => void queryClient.invalidateQueries({ queryKey: ["work-orders-console"] });
 
@@ -169,7 +173,7 @@ export function WorkOrdersConsoleDetailPage() {
         <Breadcrumb
           items={[
             { label: "Work orders", href: "/work-orders" },
-            { label: String(wo?.display_id ?? "Detail") },
+            { label: entityLabel(wo?.display_id, id, "Work order") },
           ]}
         />
       </div>

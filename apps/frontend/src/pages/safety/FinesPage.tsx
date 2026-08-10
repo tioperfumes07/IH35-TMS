@@ -10,6 +10,7 @@ import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ListErrorState } from "../../components/ListErrorState";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 
 type FineRow = Record<string, unknown>;
 
@@ -108,7 +109,7 @@ export function FinesPage({ operatingCompanyId }: Props) {
           <EntityLink
             kind="driver"
             id={String(row.subject_driver_id)}
-            label={(row.subject_driver_name as string | undefined) ?? undefined}
+            label={entityLabel(row.subject_driver_name, String(row.subject_driver_id), "Driver")}
           />
         ) : (
           <span className="text-slate-400">—</span>

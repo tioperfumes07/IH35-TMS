@@ -47,7 +47,11 @@ export function AdvanceDetailDrawer({ open, operatingCompanyId, advance, onClose
             <EntityLink
               kind="driver"
               id={advance.driver_id ? String(advance.driver_id) : null}
-              label={String(advance.driver_full_name ?? "—")}
+              label={entityLabel(
+                advance.driver_full_name ? String(advance.driver_full_name) : null,
+                advance.driver_id ? String(advance.driver_id) : null,
+                "Driver"
+              )}
             />
           </div>
           <div>Recipient: {String(advance.recipient_name ?? "Driver")}</div>
@@ -74,7 +78,7 @@ export function AdvanceDetailDrawer({ open, operatingCompanyId, advance, onClose
           {advance.linked_bill_id ? (
             <>
               <div>
-                Linked to bill {entityLabel(advance.linked_bill_display_id, advance.linked_bill_id, "Bill")} ({String(advance.linked_bill_vendor_id ?? "vendor")})
+                Linked to bill {entityLabel(advance.linked_bill_display_id, advance.linked_bill_id, "Bill")} ({entityLabel(null, String(advance.linked_bill_vendor_id ?? ""), "Vendor")})
               </div>
               <EntityLink
                 kind="bill"

@@ -6,6 +6,7 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { EntityLink } from "../../components/shared/EntityLink";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { StatusBadge } from "../../components/StatusBadge";
+import { entityLabel } from "../../lib/entity-label";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 
 function etaLabel(prediction: Record<string, unknown> | null | undefined): string {
@@ -44,11 +45,21 @@ export function LateArrivalsPage() {
       sortable: true,
       className: "font-medium",
       render: (load) => (
-        <EntityLink kind="load" id={load.id} label={load.load_number} data-testid={`late-arrival-load-${load.id}`} />
+        <EntityLink
+          kind="load"
+          id={load.id}
+          label={entityLabel(load.load_number, load.id, "Load")}
+          data-testid={`late-arrival-load-${load.id}`}
+        />
       ),
     },
-    { key: "customer_name", label: "Customer", sortable: true, render: (load) => load.customer_name ?? "—" },
-    { key: "driver_name", label: "Driver", sortable: true, render: (load) => load.driver_name ?? "—" },
+    { key: "customer_name", label: "Customer", sortable: true, render: (load) => entityLabel(load.customer_name, null, "Customer") },
+    {
+      key: "driver_name",
+      label: "Driver",
+      sortable: true,
+      render: (load) => entityLabel(load.driver_name, null, "Driver"),
+    },
     {
       key: "next_stop_city",
       label: "Next stop",

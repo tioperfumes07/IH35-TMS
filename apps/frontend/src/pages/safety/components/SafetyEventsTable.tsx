@@ -3,6 +3,7 @@ import { formatDateUS } from "../../../lib/formatDate";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { useToast } from "../../../components/Toast";
+import { entityLabel } from "../../../lib/entity-label";
 
 type SafetyEventRow = Record<string, unknown>;
 
@@ -33,8 +34,8 @@ function csvEscape(value: string): string {
 function exportSelectedCsv(selected: SafetyEventRow[], pushToast: (message: string, kind: "success" | "info" | "error") => void) {
   const cols: Array<[string, (row: SafetyEventRow) => string]> = [
     ["Date", (row) => formatDateUS(row.event_at)],
-    ["Driver", (row) => String(row.driver_full_name ?? "")],
-    ["Unit", (row) => String(row.unit_display_id ?? "")],
+    ["Driver", (row) => entityLabel(row.driver_full_name, String(row.driver_id ?? ""), "Driver")],
+    ["Unit", (row) => entityLabel(row.unit_display_id, String(row.unit_id ?? ""), "Unit")],
     ["Type", (row) => String(row.event_type ?? "")],
     ["Severity", (row) => String(row.severity ?? "minor")],
     ["Source", (row) => String(row.source ?? "system")],
@@ -64,8 +65,8 @@ export function SafetyEventsTable({ rows, onOpenAccident, loading }: Props) {
         sortable: true,
         render: (row) => {
           const id = String(row.driver_id ?? "").trim();
-          const label = String(row.driver_full_name ?? "").trim() || undefined;
-          if (!id) return label || "—";
+          const label = entityLabel(row.driver_full_name, id, "Driver");
+          if (!id) return label;
           return <EntityLink kind="driver" id={id} label={label} />;
         },
       },
@@ -74,8 +75,8 @@ export function SafetyEventsTable({ rows, onOpenAccident, loading }: Props) {
         label: "Unit",
         render: (row) => {
           const id = String(row.unit_id ?? "").trim();
-          const label = String(row.unit_display_id ?? "").trim() || undefined;
-          if (!id) return label || "—";
+          const label = entityLabel(row.unit_display_id, id, "Unit");
+          if (!id) return label;
           return <EntityLink kind="unit" id={id} label={label} />;
         },
       },

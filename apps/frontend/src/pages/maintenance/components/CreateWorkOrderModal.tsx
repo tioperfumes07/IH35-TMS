@@ -812,7 +812,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
             <EntityLink
               kind="work_order"
               id={editWorkOrder.id}
-              label={editWorkOrder.display_id ?? undefined}
+              label={entityLabel(editWorkOrder.display_id, editWorkOrder.id, "Work order")}
               className="rounded-sm border border-[#34466a] bg-[#0f1a30] px-2 py-0.5 font-semibold text-white hover:underline"
             />
             <span>·</span>
@@ -1033,7 +1033,11 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
             requireLoadForExpense={requiresLoadForG18}
             suggestedLoad={
               suggestionQuery.data?.data
-                ? { load_number: suggestionQuery.data.data.load_number, confidence: suggestionQuery.data.data.confidence }
+                ? {
+                    load_id: suggestionQuery.data.data.load_id,
+                    load_number: suggestionQuery.data.data.load_number,
+                    confidence: suggestionQuery.data.data.confidence,
+                  }
                 : null
             }
             backendLoadError={backendLoadError}

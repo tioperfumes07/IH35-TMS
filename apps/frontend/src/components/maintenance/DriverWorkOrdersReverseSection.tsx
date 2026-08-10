@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { listWorkOrdersFiltered } from "../../api/maintenance";
 import { EntityLink } from "../shared/EntityLink";
 import { ListErrorState } from "../ListErrorState";
+import { entityLabel } from "../../lib/entity-label";
 
 type Props = {
   operatingCompanyId: string;
@@ -55,12 +56,20 @@ export function DriverWorkOrdersReverseSection({
         <ul className="space-y-2">
           {rows.map((wo) => {
             const id = String(wo.id ?? "");
-            const label = String(wo.display_id ?? wo.description ?? id);
+            const label = entityLabel(wo.display_id ?? wo.description, id, "Work order");
             return (
               <li key={id} className="flex flex-wrap items-center gap-2 text-sm">
                 <EntityLink kind="work_order" id={id} label={label} />
-                {wo.unit_id ? <EntityLink kind="unit" id={String(wo.unit_id)} label={wo.unit_number ? String(wo.unit_number) : undefined} /> : null}
-                {wo.load_id ? <EntityLink kind="load" id={String(wo.load_id)} /> : null}
+                {wo.unit_id ? (
+                  <EntityLink
+                    kind="unit"
+                    id={String(wo.unit_id)}
+                    label={entityLabel(wo.unit_number, wo.unit_id, "Unit")}
+                  />
+                ) : null}
+                {wo.load_id ? (
+                  <EntityLink kind="load" id={String(wo.load_id)} label={entityLabel(null, wo.load_id, "Load")} />
+                ) : null}
                 <span className="text-xs text-slate-500">{String(wo.status ?? "")}</span>
               </li>
             );

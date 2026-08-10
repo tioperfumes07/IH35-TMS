@@ -62,16 +62,16 @@ export function GeofenceBreachesTab() {
                 <span className={`rounded-sm px-2 py-0.5 text-xs font-semibold ${event.event_type === "entry" ? "bg-slate-100 text-slate-700" : "bg-slate-100 text-slate-700"}`}>
                   {event.event_type}
                 </span>
-                <span className="text-sm font-medium text-slate-900">Unit <EntityLink kind="unit" id={event.vehicle_id} label={event.unit_number?.trim() || "Unit"} /></span>
+                <span className="text-sm font-medium text-slate-900">Unit <EntityLink kind="unit" id={event.vehicle_id} label={entityLabel(event.unit_number, event.vehicle_id, "Unit")} /></span>
               </div>
               <span className="text-xs text-slate-500">{formatDateTimeUS(event.event_at)} CT</span>
             </div>
             <div className="mt-1 text-xs text-slate-600">
               Geofence: {entityLabel(event.geofence_label, event.geofence_id, "Geofence")} · Customer:{" "}
               {event.customer_id ? (
-                <EntityLink kind="customer" id={event.customer_id} label={event.customer_name ?? undefined} />
+                <EntityLink kind="customer" id={event.customer_id} label={entityLabel(event.customer_name, event.customer_id, "Customer")} />
               ) : (
-                event.customer_name ?? "N/A"
+                entityLabel(event.customer_name, event.customer_id, "Customer")
               )}{" "}
               · Position: {Number(event.position_lat).toFixed(5)}, {Number(event.position_lng).toFixed(5)}
             </div>

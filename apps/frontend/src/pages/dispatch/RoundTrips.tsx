@@ -7,6 +7,7 @@ import { flagDotColor, flagDotLabel, flagDotTag, hasVisibleFlag, STATUS_LABEL, f
 import { Button } from "../../components/Button";
 import { ListErrorState } from "../../components/ListErrorState";
 import type { DataTableErrorState } from "../../lib/tableError";
+import { entityLabel } from "../../lib/entity-label";
 
 const ACTIVE_STATUSES = new Set([
   "assigned",
@@ -24,6 +25,7 @@ type UnitPair = {
   unitId: string;
   unitNumber: string;
   driverName: string | null;
+  driverId: string | null;
   outbound: DispatchLoadRow | null;
   returnLoad: DispatchLoadRow | null;
   needsReturn: boolean;
@@ -55,7 +57,7 @@ function TripCard({
       data-testid={`round-trip-load-${load.load_number}`}
     >
       <div className="flex items-center justify-between gap-2">
-        <span className="font-semibold text-gray-900">{load.load_number}</span>
+        <span className="font-semibold text-gray-900">{entityLabel(load.load_number, load.id, "Load")}</span>
         <div className="flex items-center gap-1">
           {tag ? (
             <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-700">{tag}</span>
@@ -71,10 +73,10 @@ function TripCard({
           ) : null}
         </div>
       </div>
-      <div className="mt-1 text-xs text-gray-700">{load.customer_name ?? "—"}</div>
+      <div className="mt-1 text-xs text-gray-700">{entityLabel(load.customer_name, load.customer_id, "Customer")}</div>
       <div className="mt-1 text-[11px] text-gray-500">{toRouteSummary(load.first_pickup_city, load.first_delivery_city)}</div>
       <div className="mt-1.5 flex items-center justify-between text-[10px] text-gray-600">
-        <span>{load.assigned_primary_driver_name ?? "Unassigned"}</span>
+        <span>{entityLabel(load.assigned_primary_driver_name, load.assigned_primary_driver_id, "Driver")}</span>
         <span className="rounded-sm bg-gray-100 px-1.5 py-0.5">{STATUS_LABEL[load.status]}</span>
       </div>
       <div className="mt-1 text-[10px] font-semibold text-gray-800">
@@ -146,6 +148,7 @@ function buildUnitPairs(
       unitId,
       unitNumber: outbound?.assigned_unit_number ?? sorted[0]?.assigned_unit_number ?? unitId,
       driverName: outbound?.assigned_primary_driver_name ?? sorted[0]?.assigned_primary_driver_name ?? null,
+      driverId: outbound?.assigned_primary_driver_id ?? sorted[0]?.assigned_primary_driver_id ?? null,
       outbound,
       returnLoad,
       needsReturn,
@@ -158,6 +161,7 @@ function buildUnitPairs(
       unitId: unit.id,
       unitNumber: unit.unit_number,
       driverName: unit.driver_name,
+      driverId: unit.driver_id ?? null,
       outbound: null,
       returnLoad: null,
       needsReturn: true,
@@ -173,6 +177,7 @@ function buildUnitPairs(
       unitId,
       unitNumber: outbound.assigned_unit_number ?? unitId,
       driverName: outbound.assigned_primary_driver_name ?? null,
+      driverId: outbound.assigned_primary_driver_id ?? null,
       outbound,
       returnLoad: null,
       needsReturn: true,
@@ -249,7 +254,9 @@ export function RoundTrips({ loads, operatingCompanyId, loading, listError, onLo
               <div className="flex min-w-0 flex-col gap-1">
                 <div className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">
                   {pair.unitNumber}
-                  {pair.driverName ? ` · ${pair.driverName}` : ""}
+                  {pair.driverId || pair.driverName
+                    ? ` · ${entityLabel(pair.driverName, pair.driverId, "Driver")}`
+                    : ""}
                 </div>
                 {pair.outbound ? (
                   <TripCard load={pair.outbound} onClick={onLoadClick} />

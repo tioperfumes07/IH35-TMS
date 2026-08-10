@@ -1,3 +1,4 @@
+import { entityLabel } from "../../../lib/entity-label";
 import { useEffect, useMemo, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { convertIssueToWo, type ArrivingSoonCard } from "../../../api/maintenance";
@@ -32,7 +33,7 @@ export function ConvertIssueToWOModal({ open, operatingCompanyId, card, onClose,
   const mutation = useMutation({
     mutationFn: () => convertIssueToWo(String(card!.load_id), operatingCompanyId, { issue_id: selectedIssueId, wo_source_type: sourceType, additional_notes: notes || undefined }),
     onSuccess: (payload) => {
-      pushToast(`WO created: ${String(payload.wo.display_id ?? payload.wo.id)}`, "success");
+      pushToast(`WO created: ${entityLabel(payload.wo.display_id, payload.wo.id, "Work order")}`, "success");
       if (payload.unit_blocked) pushToast("Unit auto-blocked for dispatch (severe issue)", "info");
       onDone();
     },
@@ -54,7 +55,8 @@ export function ConvertIssueToWOModal({ open, operatingCompanyId, card, onClose,
 
         <div className="space-y-2">
           <div className="rounded-sm border border-gray-200 bg-gray-50 p-2">
-            {card.unit_number} · {card.driver_name ?? "Unassigned"} · <EntityLink kind="load" id={card.load_id} label={card.load_display_id} />
+            {entityLabel(card.unit_number, card.unit_id, "Unit")} · {entityLabel(card.driver_name, card.driver_id, "Driver")} ·{" "}
+            <EntityLink kind="load" id={card.load_id} label={entityLabel(card.load_display_id, card.load_id, "Load")} />
           </div>
           <label className="space-y-1">
             <span>WO Source Type</span>

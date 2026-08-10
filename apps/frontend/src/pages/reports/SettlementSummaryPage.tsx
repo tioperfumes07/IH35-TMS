@@ -15,6 +15,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ReportBlockTPendingBanner } from "./ReportBlockTPendingBanner";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { entityLabel } from "../../lib/entity-label";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -71,7 +72,7 @@ export function SettlementSummaryPage() {
 
   const driverColumns = useMemo<ParityColumn<SettlementSummaryDriverRow>[]>(
     () => [
-      { key: "driver_name", label: "Driver", sortable: true, render: (r) => <span className="font-medium text-gray-900">{r.driver_name}</span> },
+      { key: "driver_name", label: "Driver", sortable: true, render: (r) => <span className="font-medium text-gray-900">{entityLabel(r.driver_name, r.driver_id, "Driver")}</span> },
       { key: "load_count", label: "Loads", sortable: true, className: "text-right", cellClass: "text-right" },
       { key: "settlement_count", label: "Settlements", sortable: true, className: "text-right", cellClass: "text-right" },
       { key: "gross_pay_cents", label: "Gross", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.gross_pay_cents) },

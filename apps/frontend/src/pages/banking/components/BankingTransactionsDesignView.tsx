@@ -1048,28 +1048,28 @@ export function BankingTransactionsDesignView({
                       <EntityLink
                         kind="unit"
                         id={tx.categorization_unit_id}
-                        label={tx.categorization_unit_number || "Unit"}
+                        label={entityLabel(tx.categorization_unit_number, tx.categorization_unit_id, "Unit")}
                       />
                     ) : null}
                     {tx.categorization_trailer_id ? (
                       <EntityLink
                         kind="trailer"
                         id={tx.categorization_trailer_id}
-                        label={tx.categorization_trailer_number || "Trailer"}
+                        label={entityLabel(tx.categorization_trailer_number, tx.categorization_trailer_id, "Trailer")}
                       />
                     ) : null}
                     {tx.categorization_driver_id ? (
                       <EntityLink
                         kind="driver"
                         id={tx.categorization_driver_id}
-                        label={tx.categorization_driver_name || "Driver"}
+                        label={entityLabel(tx.categorization_driver_name, tx.categorization_driver_id, "Driver")}
                       />
                     ) : null}
                     {tx.categorization_load_id || tx.matched_load_id ? (
                       <EntityLink
                         kind="load"
                         id={tx.categorization_load_id || tx.matched_load_id}
-                        label={tx.categorization_load_number || "Trip"}
+                        label={entityLabel(tx.categorization_load_number, tx.categorization_load_id || tx.matched_load_id, "Load")}
                       />
                     ) : null}
                     {tx.matched_settlement_id ? (
@@ -1132,7 +1132,7 @@ export function BankingTransactionsDesignView({
                 <EntityLink
                   kind="driver"
                   id={tx.categorization_driver_id}
-                  label={tx.categorization_driver_name || "Driver"}
+                  label={entityLabel(tx.categorization_driver_name, tx.categorization_driver_id, "Driver")}
                 />
               </span>
             ) : (
@@ -1151,7 +1151,7 @@ export function BankingTransactionsDesignView({
                 <EntityLink
                   kind="unit"
                   id={tx.categorization_unit_id}
-                  label={tx.categorization_unit_number || "Truck"}
+                  label={entityLabel(tx.categorization_unit_number, tx.categorization_unit_id, "Unit")}
                 />
               </span>
             ) : (
@@ -1170,7 +1170,7 @@ export function BankingTransactionsDesignView({
                 <EntityLink
                   kind="load"
                   id={tx.categorization_load_id || tx.matched_load_id!}
-                  label={tx.categorization_load_number || "Load"}
+                  label={entityLabel(tx.categorization_load_number, tx.categorization_load_id || tx.matched_load_id, "Load")}
                 />
               </span>
             ) : (
@@ -1484,22 +1484,22 @@ export function BankingTransactionsDesignView({
             {hasPersistedLinks && expandedTxId === tx.id ? (
               <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs" onClick={(e) => e.stopPropagation()}>
                 {links?.driver_id ? (
-                  <EntityLink kind="driver" id={links.driver_id} label={links.driver_name || "Driver"} />
+                  <EntityLink kind="driver" id={links.driver_id} label={entityLabel(links.driver_name, links.driver_id, "Driver")} />
                 ) : null}
                 {links?.unit_id ? (
-                  <EntityLink kind="unit" id={links.unit_id} label={links.unit_number || "Unit"} />
+                  <EntityLink kind="unit" id={links.unit_id} label={entityLabel(links.unit_number, links.unit_id, "Unit")} />
                 ) : null}
                 {links?.trailer_id ? (
-                  <EntityLink kind="trailer" id={links.trailer_id} label={links.trailer_number || "Trailer"} />
+                  <EntityLink kind="trailer" id={links.trailer_id} label={entityLabel(links.trailer_number, links.trailer_id, "Trailer")} />
                 ) : null}
                 {links?.load_id ? (
-                  <EntityLink kind="load" id={links.load_id} label={links.load_number || "Trip"} />
+                  <EntityLink kind="load" id={links.load_id} label={entityLabel(links.load_number, links.load_id, "Load")} />
                 ) : null}
                 {links?.vendor_id ? (
-                  <EntityLink kind="vendor" id={links.vendor_id} label={links.vendor_name || "Vendor"} />
+                  <EntityLink kind="vendor" id={links.vendor_id} label={entityLabel(links.vendor_name, links.vendor_id, "Vendor")} />
                 ) : null}
                 {links?.customer_id ? (
-                  <EntityLink kind="customer" id={links.customer_id} label={links.customer_name || "Customer"} />
+                  <EntityLink kind="customer" id={links.customer_id} label={entityLabel(links.customer_name, links.customer_id, "Customer")} />
                 ) : null}
                 {links?.item_id ? (
                   <span className="text-gray-700">Item: {entityLabel(links.item_name, links.item_id, "Item")}</span>
@@ -1865,7 +1865,7 @@ export function BankingTransactionsDesignView({
               </div>
               {draft.driverId ? (
                 <div className="mt-0.5 flex items-center gap-2 text-[11px]">
-                  <EntityLink kind="driver" id={draft.driverId} label={draft.driverName || "Driver"} />
+                  <EntityLink kind="driver" id={draft.driverId} label={entityLabel(draft.driverName, draft.driverId, "Driver")} />
                   <button
                     type="button"
                     className="text-slate-700 underline"
@@ -1887,7 +1887,7 @@ export function BankingTransactionsDesignView({
               </div>
               {draft.unitId ? (
                 <div className="mt-0.5 flex items-center gap-2 text-[11px]">
-                  <EntityLink kind="unit" id={draft.unitId} label={draft.unitName || "Unit"} />
+                  <EntityLink kind="unit" id={draft.unitId} label={entityLabel(draft.unitName, draft.unitId, "Unit")} />
                   <button
                     type="button"
                     className="text-slate-700 underline"
@@ -1912,7 +1912,7 @@ export function BankingTransactionsDesignView({
               </div>
               {draft.trailerId ? (
                 <div className="mt-0.5 flex items-center gap-2 text-[11px]">
-                  <EntityLink kind="trailer" id={draft.trailerId} label={draft.trailerName || "Trailer"} />
+                  <EntityLink kind="trailer" id={draft.trailerId} label={entityLabel(draft.trailerName, draft.trailerId, "Trailer")} />
                   <button
                     type="button"
                     className="text-slate-700 underline"
@@ -1937,7 +1937,7 @@ export function BankingTransactionsDesignView({
               </div>
               {draft.loadId ? (
                 <div className="mt-0.5 flex items-center gap-2 text-[11px]">
-                  <EntityLink kind="load" id={draft.loadId} label={draft.loadName || "Trip"} />
+                  <EntityLink kind="load" id={draft.loadId} label={entityLabel(draft.loadName, draft.loadId, "Load")} />
                   <button
                     type="button"
                     className="text-slate-700 underline"
@@ -2141,7 +2141,8 @@ export function BankingTransactionsDesignView({
                       .catch((error) => pushToast(userFacingApiError(error, "Match failed"), "error"));
                   }}
                 >
-                  {String(suggestion.category ?? suggestion.kind ?? "candidate")} · {String(suggestion.id ?? "")}
+                  {String(suggestion.category ?? suggestion.kind ?? "candidate")} ·{" "}
+                  {entityLabel(suggestion.description, suggestion.id, "Transaction")}
                 </button>
               ))}
             </div>

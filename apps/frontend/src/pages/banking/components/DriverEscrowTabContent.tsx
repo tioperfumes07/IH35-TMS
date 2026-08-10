@@ -183,7 +183,7 @@ export function DriverEscrowTabContent({ operatingCompanyId, driverEscrowBalance
             <p className="mt-1 text-sm font-semibold text-gray-900">
               {selectedDriver ? (
                 <>
-                  Driver: <Link to={`/drivers/${selectedDriver.driver_id}`} className="text-slate-700 hover:underline">{selectedDriver.driver_name ?? "Unknown"}</Link>
+                  Driver: <Link to={`/drivers/${selectedDriver.driver_id}`} className="text-slate-700 hover:underline">{entityLabel(selectedDriver.driver_name, selectedDriver.driver_id, "Driver")}</Link>
                 </>
               ) : (
                 "Account-level ledger"
@@ -206,7 +206,7 @@ export function DriverEscrowTabContent({ operatingCompanyId, driverEscrowBalance
               <option value="">All drivers (escrow account ledger)</option>
               {driverRows.map((driver) => (
                 <option key={driver.driver_id} value={driver.driver_id}>
-                  {driver.driver_name ?? "Unknown"} - ${Number(driver.escrow_balance ?? 0).toFixed(2)}
+                  {entityLabel(driver.driver_name, driver.driver_id, "Driver")} - ${Number(driver.escrow_balance ?? 0).toFixed(2)}
                 </option>
               ))}
             </SelectCombobox>

@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { listVehicleDriverHistory, type VehicleDriverHistoryRow } from "../../api/vehicleDriverPairing";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { entityLabel } from "../../lib/entity-label";
 
 function formatDateTime(value: string | null) {
   if (!value) return "Current";
@@ -16,13 +17,13 @@ const COLUMNS: Array<ParityColumn<VehicleDriverHistoryRow>> = [
     key: "unit_number",
     label: "Unit",
     sortable: true,
-    render: (row) => <span className="font-medium text-gray-900">{row.unit_number}</span>,
+    render: (row) => <span className="font-medium text-gray-900">{entityLabel(row.unit_number, row.unit_id, "Unit")}</span>,
   },
   {
     key: "driver_name",
     label: "Driver",
     sortable: true,
-    render: (row) => row.driver_name ?? "Unassigned",
+    render: (row) => entityLabel(row.driver_name, row.driver_id, "Driver"),
   },
   {
     key: "started_at",

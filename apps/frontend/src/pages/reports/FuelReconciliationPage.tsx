@@ -19,6 +19,7 @@ import { useToast } from "../../components/Toast";
 import { ReportBlockVPendingBanner } from "./ReportBlockVPendingBanner";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { entityLabel } from "../../lib/entity-label";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -89,7 +90,7 @@ export function FuelReconciliationPage() {
 
   const truckColumns = useMemo<ParityColumn<FuelReconciliationTruckRow>[]>(
     () => [
-      { key: "unit_number", label: "Unit #", sortable: true, render: (r) => <span className="font-medium">{r.unit_number}</span> },
+      { key: "unit_number", label: "Unit #", sortable: true, render: (r) => <span className="font-medium">{entityLabel(r.unit_number, r.unit_id, "Unit")}</span> },
       { key: "card_amount_cents", label: "Card $", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.card_amount_cents) },
       { key: "wo_amount_cents", label: "WO $", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.wo_amount_cents) },
       { key: "delta_cents", label: "Delta", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.delta_cents) },

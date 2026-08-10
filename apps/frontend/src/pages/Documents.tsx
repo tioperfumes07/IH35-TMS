@@ -13,6 +13,7 @@ import { PageHeader } from "../components/layout/PageHeader";
 import { useToast } from "../components/Toast";
 import { dataTableErrorState } from "../lib/tableError";
 import { formatDateUS } from "../lib/formatDate";
+import { entityLabel } from "../lib/entity-label";
 import { entityLabel as formatEntityLabel } from "../lib/entity-label";
 import { DatePicker } from "../components/forms/DatePicker";
 
@@ -168,7 +169,7 @@ export function DocumentsPage() {
           <Combobox
             options={(usersQuery.data ?? []).map((entry) => ({
               value: entry.id,
-              label: entry.email ?? entry.id,
+              label: entityLabel(entry.email, entry.id, "User"),
               sublabel: entry.role,
             }))}
             value={uploaderFilter}

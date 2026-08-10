@@ -10,6 +10,7 @@ import {
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { formatClockTimeCT } from "../../lib/businessDate";
+import { entityLabel } from "../../lib/entity-label";
 
 function hmm(min: number | null): string {
   if (min == null || Number.isNaN(min)) return "—";
@@ -74,7 +75,7 @@ const FLEET_HOS_COLUMNS: ParityColumn<FleetLocationHosRow>[] = [
     alwaysVisible: true,
     sortable: true,
     cellClass: "font-medium",
-    render: (row) => row.unit_number ?? "—",
+    render: (row) => entityLabel(row.unit_number, row.unit_id, "Unit"),
   },
   {
     key: "driver_name",
@@ -82,7 +83,7 @@ const FLEET_HOS_COLUMNS: ParityColumn<FleetLocationHosRow>[] = [
     sortable: true,
     render: (row) => (
       <span className={row.driver_name ? "" : "text-slate-400 italic"}>
-        {row.driver_name ?? "Not assigned"}
+        {entityLabel(row.driver_name, row.driver_id, "Driver")}
       </span>
     ),
   },

@@ -10,6 +10,7 @@
  */
 
 import { useCallback, useRef, useState } from "react";
+import { entityLabel } from "../../lib/entity-label";
 import { useQuery } from "@tanstack/react-query";
 import {
   fetchPlannerTasks,
@@ -227,7 +228,7 @@ export function TaskPlannerGrid() {
   const dates = buildDateRange(filter.from, filter.to);
   const rolloverDay = overdueRolloverDay(dates, filter.from);
   const employees = query.data
-    ? [...new Map(query.data.tasks.map((t) => [t.assigned_to_user_id, entityLabel(t.assigned_to_name, t.assigned_to_user_id, "User") ?? t.assigned_to_email ?? "—"])).entries()]
+    ? [...new Map(query.data.tasks.map((t) => [t.assigned_to_user_id, entityLabel(t.assigned_to_name || t.assigned_to_email, t.assigned_to_user_id, "User")])).entries()]
     : [];
 
   const dayColPct = dates.length > 0 ? Math.floor(80 / dates.length) : 9;
