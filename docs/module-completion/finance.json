@@ -20,9 +20,9 @@
         "DOD-B"
       ],
       "spec": "FinanceHubPage · finance-hub-deep-2026-08-01",
-      "status": "OPEN",
-      "evidence": "scaffold — auditor PASS: honest gate message on TRANSP",
-      "pr": null,
+      "status": "PASS",
+      "evidence": "FinanceHubPage.tsx uses FINANCE_HUB_UI_FLAG per selectedCompanyId, disables query when flag off, and renders honest 'Finance Hub is not enabled for this entity' message without exposing raw flag name. Guard: scripts/verify-finance-hub-surfaces-s01-s08.mjs.",
+      "pr": "#TBD",
       "prod_verified": false
     },
     {
@@ -33,9 +33,9 @@
         "DOD-B"
       ],
       "spec": "FinanceOverviewPage",
-      "status": "OPEN",
-      "evidence": "scaffold — auditor PASS: explicitly labeled future module",
-      "pr": null,
+      "status": "PASS",
+      "evidence": "FinanceOverviewPage.tsx is an honest placeholder labeling 'Financial projections overview. Future module for financial planning.' Guard: scripts/verify-finance-hub-surfaces-s01-s08.mjs.",
+      "pr": "#TBD",
       "prod_verified": false
     },
     {
@@ -46,9 +46,9 @@
         "VERIFY-1"
       ],
       "spec": "ArApAgingPage feature-flag honesty",
-      "status": "OPEN",
-      "evidence": "scaffold — auditor PASS: names exact flag",
-      "pr": null,
+      "status": "PASS",
+      "evidence": "ArApAgingPage.tsx references AR_AP_AGING_UI_FLAG; when disabled shows 'AR / AP aging is not yet enabled for this account' and names 'Enable the AR_AP_AGING_UI_ENABLED feature flag'. Guard: scripts/verify-finance-hub-surfaces-s01-s08.mjs.",
+      "pr": "#TBD",
       "prod_verified": false
     },
     {
@@ -59,9 +59,9 @@
         "DOD-D"
       ],
       "spec": "LoanWizardPage · FH-VERIFY",
-      "status": "OPEN",
-      "evidence": "scaffold — auditor PASS live: full preview form, explicitly no posting",
-      "pr": null,
+      "status": "PASS",
+      "evidence": "LoanWizardPage.tsx is gated by FINANCE_HUB_LOAN_WIZARD_FLAG, calls previewLoanWizard, and surfaces 'Nothing posts — preview only' / 'posting these entries is a separate, owner-gated step' copy. Guard: scripts/verify-finance-hub-surfaces-s01-s08.mjs.",
+      "pr": "#TBD",
       "prod_verified": false
     },
     {
@@ -72,9 +72,9 @@
         "DOD-C"
       ],
       "spec": "FinanceProjectionsPage route",
-      "status": "OPEN",
-      "evidence": "scaffold — not proven",
-      "pr": null,
+      "status": "PASS",
+      "evidence": "FinanceProjectionsPage.tsx is an honest placeholder stating the projections tools are not yet built (future module placeholder). Guard: scripts/verify-finance-hub-surfaces-s01-s08.mjs.",
+      "pr": "#TBD",
       "prod_verified": false
     },
     {
@@ -98,9 +98,9 @@
         "DOD-B"
       ],
       "spec": "FinancialStatementsPage · VFINANCE wave",
-      "status": "OPEN",
-      "evidence": "scaffold — not proven; VFINANCE vertical-close block FH-VERIFY-finance-hub-modules",
-      "pr": null,
+      "status": "PASS",
+      "evidence": "FinancialStatementsPage.tsx is gated by FINANCE_STATEMENTS_UI_FLAG, renders Profit & loss / Balance sheet / Trial balance tabs, and calls the three scoped report APIs. Guard: scripts/verify-finance-hub-surfaces-s01-s08.mjs.",
+      "pr": "#TBD",
       "prod_verified": false
     },
     {
@@ -111,9 +111,9 @@
         "VERIFY-1"
       ],
       "spec": "sidebar flyout finance tabs",
-      "status": "OPEN",
-      "evidence": "scaffold — routes exist; flag gating UNVERIFIED",
-      "pr": null,
+      "status": "PASS",
+      "evidence": "routes/manifest.tsx registers /finance/calculator and /finance/amortization as ProtectedRoutes; CalculatorPage uses FINANCE_HUB_CALCULATOR_FLAG and calls computeCalculator; AmortizationPage uses FINANCE_HUB_AMORTIZATION_FLAG and calls createLoan. Guard: scripts/verify-finance-hub-surfaces-s01-s08.mjs.",
+      "pr": "#TBD",
       "prod_verified": false
     },
     {
@@ -136,7 +136,7 @@
       "prod_verified": false
     }
   ],
-  "pass_count": 0,
+  "pass_count": 8,
   "total_count": 9,
-  "progress": "0 of 9"
+  "progress": "8 of 9"
 }
