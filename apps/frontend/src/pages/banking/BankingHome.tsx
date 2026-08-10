@@ -29,6 +29,7 @@ import { useAuth } from "../../auth/useAuth";
 import { ManageAccountsModal } from "./components/ManageAccountsModal";
 import { AccountTilesRow } from "./components/AccountTilesRow";
 import { SyncStatusStrip } from "./components/SyncStatusStrip";
+import { getQboConnectionStatus } from "../../api/forensic";
 import { ManualJEModal } from "../accounting/ManualJEModal";
 import { BankingPlaidConnectionsPanel } from "./components/BankingPlaidConnectionsPanel";
 import { Link, NavLink, useLocation, useNavigate, useSearchParams } from "react-router-dom";
@@ -125,6 +126,11 @@ export function BankingHomePage({ initialTab }: Props = {}) {
   const qboSyncStatsQuery = useQuery({
     queryKey: ["banking", "qbo-sync-stats", companyId],
     queryFn: () => getQboSyncQueueStats(companyId),
+    enabled: Boolean(companyId),
+  });
+  const qboConnectionQuery = useQuery({
+    queryKey: ["banking", "qbo-connection", companyId],
+    queryFn: () => getQboConnectionStatus(companyId),
     enabled: Boolean(companyId),
   });
   const tiles = useMemo(() => filterBankingTilesForCompany(tilesQuery.data?.tiles ?? [], companyId), [tilesQuery.data?.tiles, companyId]);
@@ -382,6 +388,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
             transactionCount={syncTransactionCount}
             uncategorizedCount={uncategorizedCount}
             pendingSyncCount={pendingSyncCount}
+            isConnected={qboConnectionQuery.data?.connected ?? false}
           />
           {showVirtualTilesEmptyHonesty ? (
             <div
