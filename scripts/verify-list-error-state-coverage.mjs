@@ -47,6 +47,9 @@ const REQUIRED_ERROR_STATE = [
   "apps/frontend/src/pages/reports/GeofenceReconciliationReport.tsx",
   "apps/frontend/src/pages/reports/CashFlowReport.tsx",
   "apps/frontend/src/pages/fleet/TransfersInProgressPage.tsx",
+  // Audit / alerts — honest isError -> ListErrorState (WAR-290 / WAR-291 regression ratchet).
+  "apps/frontend/src/pages/audit/AuditEventsList.tsx",
+  "apps/frontend/src/pages/alerts/DocumentAlertsPage.tsx",
 ];
 
 function stripComments(src) {
