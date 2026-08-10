@@ -1,12 +1,12 @@
 # Module completion — Dispatch — acceptance checklist
 
-**PROGRESS: 24 of 37** · complete: `false` · as_of: 2026-08-09T01:52:04.159Z · live_sha: `—`
+**PROGRESS: 25 of 37** · complete: `false` · as_of: 2026-08-09T01:52:04.159Z · live_sha: `—`
 
 | Status | Count |
 |---|---:|
-| PASS | 24 |
+| PASS | 25 |
 | HOLD | 0 |
-| OPEN | 13 |
+| OPEN | 12 |
 | FAIL | 0 |
 | UNVERIFIED | 0 |
 
@@ -34,7 +34,7 @@
 | `DISP-S20` | **PASS** | Surface /dispatch/loads renders, is entity-scoped, and shows an honest empty state | PASS 2026-08-09 — /dispatch/loads board list — live USMCA loads exist; entity-scoped useLoadsList. | — |
 | `DISP-S21` | **PASS** | Surface /dispatch/loads/:id renders, is entity-scoped, and shows an honest empty state | PASS 2026-08-09 — /dispatch/loads/:id detail — live drill on rescued loads; EntityLinks. | — |
 | `DISP-S22` | **OPEN** | Surface /dispatch/loads/:id/banking renders, is entity-scoped, and shows an honest empty state | NOT YET VERIFIED — status stays OPEN. Page component: apps/frontend/src/pages/dispatch/LoadBankingLinkagePage.tsx (resolved from routes/manifest.tsx, local wrappers followed). PASS REQUIRES, on TRANSP + TRK + USMCA: (1) the route renders without error or blank frame; (2) every data call it fires carries operating_company_id for the active entity and returns 2xx; (3) when the backing table has no rows for that entity the surface shows an HONEST EMPTY STATE — named, explaining what would populate it — never a silent blank, a spinner that never resolves, a zero presented as a fact, or a swallowed error. Row density is NOT required and NOT sufficient. Prior bar and why it changed: see the module note and docs/trackers/DISP-MAINT-SURFACE-SWEEP-BLOCKED-ON-DATA-2026-07-31.md. | — |
-| `DISP-S23` | **OPEN** | Surface /dispatch/map renders, is entity-scoped, and shows an honest empty state | NOT YET VERIFIED — status stays OPEN. Page component: apps/frontend/src/pages/dispatch/MapView.tsx (resolved from routes/manifest.tsx, local wrappers followed). PASS REQUIRES, on TRANSP + TRK + USMCA: (1) the route renders without error or blank frame; (2) every data call it fires carries operating_company_id for the active entity and returns 2xx; (3) when the backing table has no rows for that entity the surface shows an HONEST EMPTY STATE — named, explaining what would populate it — never a silent blank, a spinner that never resolves, a zero presented as a fact, or a swallowed error. Row density is NOT required and NOT sufficient. Prior bar and why it changed: see the module note and docs/trackers/DISP-MAINT-SURFACE-SWEEP-BLOCKED-ON-DATA-2026-07-31.md. | — |
+| `DISP-S23` | **PASS** | Surface /dispatch/map renders, is entity-scoped, and shows an honest empty state | PASS 2026-08-09 — MapView company-gated Samsara positions; need-company + positions honest empty + map-not-configured honest empty (no fake pins); ListErrorBanner; guard scripts/verify-disp-s23-map-surface.mjs --selftest exit 0. | — |
 | `DISP-S24` | **PASS** | Surface /dispatch/notify-preferences renders, is entity-scoped, and shows an honest empty state | PASS 2026-08-09 — NotifyPreferencesPage ParityTable settled empty; verify-list-empty-settled. | — |
 | `DISP-S25` | **PASS** | Surface /dispatch/ocr-queue renders, is entity-scoped, and shows an honest empty state | PASS 2026-08-09 — OcrQueuePage ParityTable settled empty; verify-list-empty-settled. | — |
 | `DISP-S26` | **OPEN** | Surface /dispatch/planner renders, is entity-scoped, and shows an honest empty state | NOT YET VERIFIED — status stays OPEN. Page component: apps/frontend/src/pages/dispatch/PlannerCalendarPage.tsx (resolved from routes/manifest.tsx, local wrappers followed). PASS REQUIRES, on TRANSP + TRK + USMCA: (1) the route renders without error or blank frame; (2) every data call it fires carries operating_company_id for the active entity and returns 2xx; (3) when the backing table has no rows for that entity the surface shows an HONEST EMPTY STATE — named, explaining what would populate it — never a silent blank, a spinner that never resolves, a zero presented as a fact, or a swallowed error. Row density is NOT required and NOT sufficient. Prior bar and why it changed: see the module note and docs/trackers/DISP-MAINT-SURFACE-SWEEP-BLOCKED-ON-DATA-2026-07-31.md. | — |

@@ -2,7 +2,9 @@ import { useQuery } from "@tanstack/react-query";
 import { MapPin } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 import { resolveApiUrl } from "../../api/client";
+import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { userFacingApiError } from "../../lib/api-error-message";
 import { isDispatchMapProviderConfigured } from "../../lib/dispatch-map-provider";
 
 type MapPosition = {
@@ -49,6 +51,20 @@ export function MapView() {
   return (
     <div className="space-y-3 p-4" data-testid="dispatch-map-view">
       <h1 className="text-lg font-semibold">Active Load Map</h1>
+      {!companyId ? (
+        <p
+          className="rounded-sm border border-dashed border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-700"
+          data-testid="dispatch-map-need-company"
+        >
+          Select an operating company to load entity-scoped GPS positions for active loads.
+        </p>
+      ) : null}
+      {companyId && query.isError ? (
+        <ListErrorBanner
+          message={userFacingApiError(query.error, "Could not load GPS positions")}
+          onRetry={() => void query.refetch()}
+        />
+      ) : null}
       {hasFocus ? (
         <p className="text-xs text-slate-600" data-testid="dispatch-map-focus">
           {focused.length > 0
@@ -56,7 +72,7 @@ export function MapView() {
             : "No GPS match for this driver/load yet."}
         </p>
       ) : null}
-      {!mapConfigured ? (
+      {companyId && !mapConfigured ? (
         <section
           className="rounded-sm border border-gray-200 bg-white p-6 text-center"
           data-testid="dispatch-map-not-configured"
@@ -71,9 +87,6 @@ export function MapView() {
             Contact the owner or administrator to configure a map provider (Mapbox) before this view can plot
             vehicle positions.
           </p>
-          {query.isError ? (
-            <p className="mt-3 text-sm text-red-700">Could not load GPS positions. Try again or check Samsara integration.</p>
-          ) : null}
           {!query.isError && positions.length > 0 ? (
             <p className="mt-3 text-sm text-slate-600">
               {positions.length} active load{positions.length === 1 ? "" : "s"} with GPS — positions are not shown here
@@ -81,7 +94,10 @@ export function MapView() {
             </p>
           ) : null}
           {!query.isError && !query.isLoading && positions.length === 0 ? (
-            <p className="mt-3 text-sm text-slate-500">No in-transit loads with GPS right now.</p>
+            <p className="mt-3 text-sm text-slate-700" data-testid="dispatch-map-positions-honest-empty">
+              No in-transit loads with GPS for this company right now. Positions appear when Samsara reports an active
+              load with coordinates.
+            </p>
           ) : null}
         </section>
       ) : null}
