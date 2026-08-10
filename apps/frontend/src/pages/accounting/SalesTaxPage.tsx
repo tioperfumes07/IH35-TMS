@@ -21,6 +21,7 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { SelectCombobox } from "../../components/shared/SelectCombobox";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -272,7 +273,7 @@ export function SalesTaxPage() {
           </div>
         ) : null}
         <div className="grid grid-cols-1 gap-2 md:grid-cols-4">
-          <select
+          <SelectCombobox
             className="rounded-sm border border-gray-300 px-2 py-1 text-sm"
             value={selectedAgencyId}
             onChange={(event) => setSelectedAgencyId(event.target.value)}
@@ -283,7 +284,7 @@ export function SalesTaxPage() {
                 {agency.name}
               </option>
             ))}
-          </select>
+          </SelectCombobox>
           <DatePicker value={periodStart} onChange={(next) => setPeriodStart(next)} className="rounded-sm border border-gray-300 px-2 py-1 text-sm" />
           <DatePicker value={periodEnd} onChange={(next) => setPeriodEnd(next)} className="rounded-sm border border-gray-300 px-2 py-1 text-sm" />
           <Button
