@@ -3,9 +3,6 @@
   "scanned": 1525,
   "offenders": [
     "apps/frontend/src/api/forensic.ts",
-    "apps/frontend/src/components/accounting/JournalEntryTypePicker.tsx",
-    "apps/frontend/src/components/customers/CustomerEditModal.tsx",
-    "apps/frontend/src/components/dispatch/AccessorialEditor.tsx",
     "apps/frontend/src/components/driver-profile/AssignTruckModal.tsx",
     "apps/frontend/src/components/drivers/AuditHistoryTab.tsx",
     "apps/frontend/src/components/expenses/RecordExpenseForm.tsx",

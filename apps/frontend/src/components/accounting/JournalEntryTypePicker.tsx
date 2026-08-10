@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { journalEntryTypesCatalogClient } from "../../api/catalogs-accounting";
 import { Button } from "../Button";
+import { CappedListNotice } from "../CappedListNotice";
 import { Combobox } from "../Combobox";
 import { ParityDrawer } from "../parity/ParityDrawer";
 import { useToast } from "../Toast";
@@ -82,6 +83,13 @@ export function JournalEntryTypePicker({ operatingCompanyId, value, onChange, di
           onAdd: () => setCreateOpen(true),
         }}
         dataField="journal-entry-type"
+      />
+      <CappedListNotice
+        shown={options.length}
+        limit={200}
+        total={typesQuery.data?.total ?? null}
+        hint="Type to search or create a new journal entry type."
+        className="text-[11px] text-slate-600"
       />
       <span data-testid="journal-entry-type-picker" className="sr-only" aria-hidden="true" />
       <ParityDrawer open={createOpen} onClose={() => setCreateOpen(false)} title="Create journal entry type" size="regular">
