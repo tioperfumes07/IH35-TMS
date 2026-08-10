@@ -7,6 +7,8 @@ export type BankAccountReconRow = {
   inflows_cents: number;
   outflows_cents: number;
   closing_balance_cents: number;
+  opening_balance_source: "reconciliation_session" | "unavailable";
+  reconciliation_session_id: string | null;
 };
 
 export type ExhibitC = {
@@ -27,19 +29,18 @@ export async function buildExhibitC(
   // Own-transfers excluded (mirrors bank-feed-gl-posting.service.ts:155). account_name/account_mask
   // are the real columns (a.name/a.mask were phantom). NO .catch(): fail loud, not a blank exhibit.
   //
-  // OPENING BALANCE — DEFERRED / FLAGGED FOR JORGE + COUNSEL: there is NO migration-free per-account
-  // historical daily-balance source (banking.bank_account_balances does not exist in any migration;
-  // it was phantom). We therefore report opening_balance_cents = 0 here rather than fabricate a court
-  // number. Consequence: closing_balance_cents = net flow only and will NOT tie to the Wells Fargo
-  // statement ending balance until a per-account opening anchor exists (needs a banking.* snapshot
-  // table — a migration, CLAUDE.md §1.4 STOP-gate, Jorge's decision). Do NOT file Exhibit C closing
-  // balances as authoritative until this anchor is set. See REPAIR spec §5.2.
+  // Opening cash comes from the bank reconciliation session for this exact account and period. That
+  // session is the statement-backed legal source of record; never substitute current_balance_cents or
+  // silently manufacture an opening value. Accounts without a matching session remain explicitly
+  // unavailable so reviewers can see that the statement chain is incomplete.
   const accountsRes = await client.query<{
     id: string;
     name: string;
     mask: string | null;
     inflows: string | null;
     outflows: string | null;
+    beginning_balance_cents: string | null;
+    reconciliation_session_id: string | null;
   }>(
     `
       SELECT
@@ -47,7 +48,9 @@ export async function buildExhibitC(
         COALESCE(a.account_name, a.institution_name, 'Bank account') AS name,
         a.account_mask AS mask,
         COALESCE(flow.inflows, 0)::bigint AS inflows,
-        COALESCE(flow.outflows, 0)::bigint AS outflows
+        COALESCE(flow.outflows, 0)::bigint AS outflows,
+        statement.beginning_balance_cents::bigint AS beginning_balance_cents,
+        statement.id::text AS reconciliation_session_id
       FROM banking.bank_accounts a
       LEFT JOIN LATERAL (
         SELECT
@@ -61,6 +64,20 @@ export async function buildExhibitC(
           AND bt.transfer_kind IS NULL
           AND bt.destination_bank_account_id IS NULL
       ) flow ON TRUE
+      LEFT JOIN LATERAL (
+        SELECT rs.id, rs.beginning_balance_cents
+        FROM banking.reconciliation_sessions rs
+        WHERE rs.operating_company_id = a.operating_company_id
+          AND rs.bank_account_id = a.id
+          AND rs.period_start = $2::date
+          AND rs.period_end = $3::date
+          AND rs.beginning_balance_cents IS NOT NULL
+        ORDER BY
+          CASE WHEN rs.status IN ('reconciled', 'closed', 'finalized') THEN 0 ELSE 1 END,
+          rs.finalized_at DESC NULLS LAST,
+          rs.updated_at DESC
+        LIMIT 1
+      ) statement ON TRUE
       WHERE a.operating_company_id = $1
         AND COALESCE(a.account_type, '') NOT LIKE 'virtual_%'
       ORDER BY a.account_name
@@ -69,8 +86,8 @@ export async function buildExhibitC(
   );
 
   const accounts: BankAccountReconRow[] = accountsRes.rows.map((row) => {
-    // Opening balance deferred (no migration-free per-account historical source) — see header note.
-    const opening = 0;
+    const hasStatementOpening = row.beginning_balance_cents !== null;
+    const opening = hasStatementOpening ? Math.trunc(Number(row.beginning_balance_cents)) : 0;
     const inflows = Math.trunc(Number(row.inflows ?? 0));
     const outflows = Math.trunc(Number(row.outflows ?? 0));
     const closing = opening + inflows - outflows;
@@ -82,6 +99,8 @@ export async function buildExhibitC(
       inflows_cents: inflows,
       outflows_cents: outflows,
       closing_balance_cents: closing,
+      opening_balance_source: hasStatementOpening ? "reconciliation_session" : "unavailable",
+      reconciliation_session_id: row.reconciliation_session_id ? String(row.reconciliation_session_id) : null,
     };
   });
 
