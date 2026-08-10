@@ -110,7 +110,7 @@ export function BorderCrossingWizardPage() {
     <div data-testid="border-crossing-wizard-page" className="mx-auto max-w-4xl space-y-4">
       <PageHeader
         title="Border Crossing Wizard"
-        subtitle="Northbound/southbound crossing prep · eManifest V1 · CBP wait times"
+        subtitle="Prepare northbound and southbound crossings with eManifest V1 and CBP wait times."
         actions={
           <Link to="/dispatch/border-crossing/history" className="rounded-sm border px-3 py-1.5 text-sm">
             History
