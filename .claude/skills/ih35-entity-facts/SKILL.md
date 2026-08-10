@@ -21,7 +21,7 @@ local CLAUDE.md/secrets, never hard-code them in tracked code.
 |---|---|---|---|
 | **TRANSP** | **Operating carrier** (active) | Runs freight; customer-facing; the books that mirror QBO; signs customer/broker docs; leases units FROM TRK | Live. QBO realm = "IH 35 Transportation LLC". |
 | **TRK** | **Asset holder** | **Owns** the units/equipment; **depreciates** them (5-yr straight-line); earns rental income by leasing units to the operating carrier; **signs equipment leases** | Live (holding co). |
-| **USMCA** | **Future carrier** | A second operating carrier | **Launches July 2026** — hidden until then; starts with **0 balances, TMS-only, isolated**. |
+| **USMCA** | **Operating carrier** (active) | A second operating carrier; test entity for live transaction battery | **Active** — test entity, TMS-native transactions allowed, posting flags ON where enabled. Not hidden; not at zero balances (live test data). |
 
 ## Who signs / books what (get this right)
 - **Customer / broker contracts, rate cons, invoices → TRANSP** (the operating carrier that runs the freight).
@@ -38,8 +38,8 @@ local CLAUDE.md/secrets, never hard-code them in tracked code.
 - **`mdata.*` / `catalogs.*` RLS is ROLE-scoped, not entity-scoped today.** Cross-entity data blends are masked
   now and **break at USMCA launch (July 2026)** — entity-scope remediation must land before USMCA. Never
   assume a `mdata`/`catalogs` read is entity-isolated; verify.
-- **USMCA is isolated at launch** — 0 balances, TMS-only, no QBO. Don't wire it to shared registries or
-  TRANSP's data.
+- **USMCA is active and isolated by entity ID** — test data only, no QBO mirror. Use its `operating_company_id`
+  for entity-scoped reads/writes; never assume it shares TRANSP's data.
 
 ## Rules of engagement
 - Before booking/posting/signing anything, ask: **which entity?** Default wrong = expensive.

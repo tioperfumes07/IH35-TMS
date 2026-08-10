@@ -163,7 +163,7 @@ asset) / **Factoring Recoursed Invoices**. ASC 860 control-test nuance applies; 
 
 ## 9. Entities & tax
 - `TRANSP` (operating carrier, QBO realm = "IH 35 Transportation LLC"), `TRK` (asset holder, owns/depreciates
-  units — 5yr straight-line), `USMCA` (future; launches with **0 balances, TMS-only, isolated** July 2026).
+  units — 5yr straight-line), `USMCA` (active operating carrier / test entity; TMS-native transactions allowed, posting flags ON where enabled; not hidden and not at zero balances).
 - Entities maintain **separate entity books** with **reciprocal intercompany monitoring**.
 - Retain existing **read-only consolidated reporting** additively for future reporting needs — never delete
   the consolidated surface; do not treat it as the books of record for a legal entity.
