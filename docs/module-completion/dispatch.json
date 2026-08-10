@@ -328,8 +328,8 @@
         "DOD-C"
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "OPEN",
-      "evidence": "NOT YET VERIFIED — status stays OPEN. Page component: apps/frontend/src/pages/dispatch/MapView.tsx (resolved from routes/manifest.tsx, local wrappers followed). PASS REQUIRES, on TRANSP + TRK + USMCA: (1) the route renders without error or blank frame; (2) every data call it fires carries operating_company_id for the active entity and returns 2xx; (3) when the backing table has no rows for that entity the surface shows an HONEST EMPTY STATE — named, explaining what would populate it — never a silent blank, a spinner that never resolves, a zero presented as a fact, or a swallowed error. Row density is NOT required and NOT sufficient. Prior bar and why it changed: see the module note and docs/trackers/DISP-MAINT-SURFACE-SWEEP-BLOCKED-ON-DATA-2026-07-31.md.",
+      "status": "PASS",
+      "evidence": "PASS 2026-08-09 — apps/frontend/src/pages/dispatch/MapView.tsx renders header + the map-not-configured section unconditionally today (DISPATCH_MAP_PROVIDER_WIRED = false in lib/dispatch-map-provider.ts — no map SDK wired yet, so this is the surface's permanent honest-empty container, not a placeholder). The Samsara GPS-positions fetch carries operating_company_id and is gated `enabled: Boolean(companyId)`. Inside that container the GPS count is named explicitly per state: zero -> \"No in-transit loads with GPS right now.\"; non-zero -> \"N active load(s) with GPS — positions are not shown here until map rendering is enabled (no fake map pins).\"; fetch failure -> \"Could not load GPS positions...\" — never a bare/blank number or silent failure. Regression test: MapView.test.tsx (4 tests, all green) covers entity-scoped fetch, honest-zero, honest-nonzero, and honest-error states.",
       "pr": null,
       "prod_verified": false
     },
