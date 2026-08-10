@@ -63,6 +63,9 @@ export function collectProblems(files) {
   if (!/maintenance\.parts_inventory/.test(page)) {
     problems.push(`${PARTS_STOCK_PAGE}: comment/doc must anchor roster to maintenance.parts_inventory canonical table`);
   }
+  if (!/partsQuery\.isError[\s\S]*?<ListErrorState[\s\S]*?partsQuery\.refetch\(\)/.test(pageCode)) {
+    problems.push(`${PARTS_STOCK_PAGE}: list failure must render a retryable ListErrorState before empty copy`);
+  }
 
   if (!/listMaintenanceParts/.test(api)) {
     problems.push(`${MAINTENANCE_API}: must export listMaintenanceParts`);
