@@ -190,7 +190,11 @@ export async function registerDispatchRefinementsRoutes(app: FastifyInstance) {
           message: "Selected driver does not meet DOT qualification requirements for this load.",
         });
       }
-      throw e;
+      req.log.error({ err: e }, "dispatch reassign failed");
+      return reply.code(500).send({
+        error: "server_error",
+        message: "Could not reassign this load. Try again or contact support.",
+      });
     }
   });
 
@@ -203,7 +207,8 @@ export async function registerDispatchRefinementsRoutes(app: FastifyInstance) {
     if (!q.success) return sendZodValidation(reply, q.error);
     try {
       return await listLoadStopsRefined(user.uuid, q.data.operating_company_id, params.data.loadId);
-    } catch {
+    } catch (e) {
+      req.log.error({ err: e }, "dispatch load stops lookup failed");
       return reply.code(500).send({
         error: "server_error",
         message: "Could not load stops for this load. Try again or contact support.",
@@ -230,7 +235,11 @@ export async function registerDispatchRefinementsRoutes(app: FastifyInstance) {
           message: "Load not found for this operating company.",
         });
       }
-      throw e;
+      req.log.error({ err: e }, "dispatch load stops replacement failed");
+      return reply.code(500).send({
+        error: "server_error",
+        message: "Could not update stops for this load. Try again or contact support.",
+      });
     }
   });
 
@@ -266,7 +275,11 @@ export async function registerDispatchRefinementsRoutes(app: FastifyInstance) {
           message: "Load not found for this operating company.",
         });
       }
-      throw e;
+      req.log.error({ err: e }, "dispatch available drivers lookup failed");
+      return reply.code(500).send({
+        error: "server_error",
+        message: "Could not load available drivers. Try again or contact support.",
+      });
     }
   });
 
@@ -293,7 +306,11 @@ export async function registerDispatchRefinementsRoutes(app: FastifyInstance) {
           message: "ETA is only available while the load is in transit.",
         });
       }
-      throw e;
+      req.log.error({ err: e }, "dispatch ETA lookup failed");
+      return reply.code(500).send({
+        error: "server_error",
+        message: "Could not calculate ETA for this load. Try again or contact support.",
+      });
     }
   });
 
