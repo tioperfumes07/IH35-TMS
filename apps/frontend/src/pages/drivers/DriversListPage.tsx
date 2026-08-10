@@ -15,6 +15,7 @@ import { colors } from "../../design/tokens";
 import { type DqfComplianceLevel, driverDisplayName, summarizeDriverDqf } from "../../lib/driverDqf";
 import { formatDateUS } from "../../lib/formatDate";
 import { DriversTable } from "./DriversTable";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 type DriversListPageProps = {
   onOpenProfile?: (driverId: string) => void;
@@ -52,7 +53,7 @@ export function DriversListPage({ onOpenProfile }: DriversListPageProps) {
     queryFn: () =>
       listDrivers({ operating_company_id: companyId, status: "All", search, limit: pageSize, offset: page * pageSize }),
   });
-  const pageDrivers = driversQ.data?.drivers ?? [];
+  const pageDrivers = useMemo(() => driversQ.data?.drivers ?? [], [driversQ.data?.drivers]);
   const totalDrivers = driversQ.data?.total ?? 0;
 
   const dqfQ = useQuery({
@@ -80,7 +81,7 @@ export function DriversListPage({ onOpenProfile }: DriversListPageProps) {
         summary: summarizeDriverDqf(items),
       };
     });
-  }, [driversQ.data, dqfQ.data]);
+  }, [dqfQ.data, pageDrivers]);
 
   const totals = useMemo(() => {
     const compliant = rows.filter((row) => row.summary.level === "compliant").length;
@@ -178,7 +179,7 @@ export function DriversListPage({ onOpenProfile }: DriversListPageProps) {
     } catch (err) {
       // Previously absent: the 400 from the over-limit request rejected into nothing, so a broken
       // export was indistinguishable from a working one.
-      pushToast(err instanceof Error ? err.message : "Failed to export driver profiles", "error");
+      pushToast(userFacingApiError(err, "Failed to export driver profiles"), "error");
     } finally {
       setExporting(false);
     }

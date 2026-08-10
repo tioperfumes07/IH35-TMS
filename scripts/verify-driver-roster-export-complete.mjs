@@ -104,6 +104,9 @@ function check(sources, max) {
   if (!/catch\s*\(/.test(page) || !/pushToast\(/.test(page)) {
     errors.push(`${PAGE}: CSV export has no visible error path — a failed export looks like a no-op`);
   }
+  if (!/pushToast\(userFacingApiError\(err,\s*"Failed to export driver profiles"\),\s*"error"\)/.test(page)) {
+    errors.push(`${PAGE}: CSV export must humanize backend failures before showing the toast`);
+  }
   return errors;
 }
 
