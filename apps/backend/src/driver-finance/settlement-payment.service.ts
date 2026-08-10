@@ -468,7 +468,7 @@ export async function markPaidManually(
                 updated_at = now()
             WHERE id = $1
               AND operating_company_id = $2
-              AND payment_state = 'manual_paid'
+              AND payment_state IS NOT DISTINCT FROM 'manual_paid'
               AND paid_at IS NULL
             RETURNING ${SETTLEMENT_ROW_COLUMNS}
           `,
