@@ -200,7 +200,7 @@ export function BatchWizard() {
             />
           ) : !candidatesQuery.isLoading && (candidatesQuery.data ?? []).length === 0 ? (
             <div
-              className="rounded-sm border border-slate-200 bg-white px-4 py-10 text-center text-xs text-slate-400"
+              className="border-y border-slate-200 bg-slate-50 px-4 py-10 text-center text-xs text-slate-500"
               data-testid="factoring-batches-honest-empty"
             >
               No paid-ready invoices available for a new batch.
@@ -292,4 +292,3 @@ export function BatchWizard() {
     </div>
   );
 }
-
