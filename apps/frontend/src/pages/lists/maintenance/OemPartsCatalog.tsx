@@ -13,6 +13,7 @@ import { ParityTable, type ParityColumn } from "../../../components/parity/Parit
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { ListsSubNav } from "../ListsSubNav";
+import { userFacingApiError } from "../../../lib/api-error-message";
 
 function formatCost(value: string | null) {
   if (!value) return "—";
@@ -83,7 +84,7 @@ function OemPartsCreateModal({
       onSaved();
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create OEM part template");
+      setError(userFacingApiError(err, "Failed to create OEM part template"));
     } finally {
       setSaving(false);
     }
