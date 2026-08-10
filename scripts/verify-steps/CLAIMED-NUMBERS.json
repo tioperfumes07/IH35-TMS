@@ -1975,5 +1975,10 @@
     "claimed_at": "2026-08-10",
     "claimed_by": "cursor",
     "purpose": "verify-bills-list-vendor-name-resolved"
+  },
+  "3006": {
+    "claimed_at": "2026-08-10",
+    "claimed_by": "cursor",
+    "purpose": "verify-expense-load-field-for-fuel"
   }
 }
