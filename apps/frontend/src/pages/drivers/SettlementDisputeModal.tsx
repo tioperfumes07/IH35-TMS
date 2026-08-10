@@ -10,6 +10,7 @@ import { Button } from "../../components/Button";
 import { useToast } from "../../components/Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { Combobox } from "../../components/Combobox";
 import {
   SETTLEMENT_DISPUTE_CATEGORY_OPTIONS,
   type SettlementDisputeCategoryOption,
@@ -122,22 +123,19 @@ export function SettlementDisputeModal({ open, onClose }: SettlementDisputeModal
             />
           </label>
 
-          <label className="block space-y-1">
-            <span className="font-medium">Settlement</span>
-            <select
-              className="w-full rounded-sm border border-gray-300 px-2 py-1"
-              value={settlement_id}
+          <div className="block space-y-1">
+            <label htmlFor="settlement-dispute-settlement-picker" className="font-medium">Settlement</label>
+            <Combobox
+              id="settlement-dispute-settlement-picker"
+              options={settlementOptions}
+              value={settlement_id || null}
+              onChange={(next) => set_settlement_id(next ?? "")}
+              placeholder="Select settlement"
               disabled={!driverId}
-              onChange={(e) => set_settlement_id(e.target.value)}
-            >
-              <option value="">Select settlement</option>
-              {settlementOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
+              loading={settlementsQuery.isLoading}
+              error={settlementsQuery.isError ? "Couldn't load settlements" : undefined}
+            />
+          </div>
 
           <label className="block space-y-1">
             <span className="font-medium">Dispute type</span>
