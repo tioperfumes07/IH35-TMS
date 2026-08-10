@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useParams } from "react-router-dom";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateUS } from "../../lib/formatDate";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
@@ -75,6 +76,25 @@ function RenditionListView({ companyId }: { companyId: string }) {
 
   const renditions = renditionsQ.data?.renditions ?? [];
   const districts = districtsQ.data?.districts ?? [];
+
+  if (renditionsQ.isError || districtsQ.isError) {
+    return (
+      <div className="space-y-4" data-testid="property-tax-list">
+        <PageHeader
+          backHref="/compliance"
+          breadcrumb={BREADCRUMB}
+          title="Business Property Tax"
+          subtitle="Texas business personal-property tax renditions (Form 50-144) per entity + appraisal district"
+        />
+        <ListErrorBanner
+          onRetry={() => {
+            void renditionsQ.refetch();
+            void districtsQ.refetch();
+          }}
+        />
+      </div>
+    );
+  }
 
   const renditionColumns = useMemo<ParityColumn<Rendition>[]>(
     () => [
