@@ -2,10 +2,12 @@ import { useMemo, useState } from "react";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { Button } from "../../components/Button";
 import { DriverPickerWithCreate } from "../../components/drivers/DriverPickerWithCreate";
+import { ListErrorState } from "../../components/ListErrorState";
 import { Modal } from "../../components/Modal";
 import { StatusBadge } from "../../components/StatusBadge";
 import { useTeamSplits } from "../../hooks/useTeamSplits";
 import { entityLabel } from "../../lib/entity-label";
+import { formatQueryErrorDetail } from "../../lib/tableError";
 
 type Props = {
   operatingCompanyId: string;
@@ -26,7 +28,7 @@ export function TeamSplitConfigPanel() {
 }
 
 export function TeamSplitConfig({ operatingCompanyId }: Props) {
-  const { data, isLoading, create, endConfig } = useTeamSplits(operatingCompanyId);
+  const { data, isLoading, isError, error, refetch, create, endConfig } = useTeamSplits(operatingCompanyId);
 
   const [createOpen, setCreateOpen] = useState(false);
   const [primaryDriverId, setPrimaryDriverId] = useState("");
@@ -70,7 +72,16 @@ export function TeamSplitConfig({ operatingCompanyId }: Props) {
       </div>
 
       {isLoading ? <p className="text-xs text-gray-500">Loading team split configs…</p> : null}
-      {active.length === 0 && !isLoading ? <p className="text-xs text-gray-500">No active team split configs.</p> : null}
+      {isError ? (
+        <ListErrorState
+          title="Couldn't load team split configs"
+          {...formatQueryErrorDetail(error)}
+          onRetry={() => void refetch()}
+        />
+      ) : null}
+      {active.length === 0 && !isLoading && !isError ? (
+        <p className="text-xs text-gray-500">No active team split configs.</p>
+      ) : null}
 
       <div className="space-y-2">
         {active.map((row) => (

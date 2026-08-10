@@ -103,6 +103,9 @@ function main() {
   if (!panel.includes("Create config")) {
     fail("TeamSplitConfig must include create config UI");
   }
+  if (!/isError[\s\S]*?<ListErrorState[\s\S]*?refetch\(\)/.test(panel)) {
+    fail("TeamSplitConfig must render a retryable ListErrorState when the configs query fails");
+  }
 
   console.log("verify:team-split-applies-to-shared-load OK");
 }

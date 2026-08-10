@@ -26,6 +26,7 @@ const repoRoot = process.cwd();
 const REQUIRED_ERROR_STATE = [
   "apps/frontend/src/pages/Vendors.tsx",
   "apps/frontend/src/pages/drivers/RetentionDashboard.tsx",
+  "apps/frontend/src/pages/drivers/TeamSplitConfig.tsx",
   "apps/frontend/src/pages/drivers/ApplicantsPipelinePage.tsx",
   "apps/frontend/src/pages/drivers/MessagesInboxPage.tsx",
   "apps/frontend/src/pages/drivers/DriversListPage.tsx",
