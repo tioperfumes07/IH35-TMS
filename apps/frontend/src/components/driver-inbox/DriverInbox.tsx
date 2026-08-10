@@ -5,6 +5,7 @@ import {
   cashAdvanceRequestsOfficeApi,
   type CashAdvanceRequestRow,
 } from "../../api/cashAdvanceRequests";
+import { EntityLink } from "../shared/EntityLink";
 
 // B6 — Driver Inbox (inside Driver Hub Home). Built to APPROVED-PREVIEW-driver-inbox.html.
 // Locked tokens: navy banner #1A1F36, white active-tab underline; cards #fff / #e5e7eb 4px;
@@ -152,7 +153,7 @@ export function DriverInbox({ companyId, canReview }: { companyId: string; canRe
                   </span>
                   <span className="flex-1">
                     <span className="block">
-                      <span className="text-[13px] font-semibold text-[#1A1F36]">{name}</span>{" "}
+                      <EntityLink kind="driver" id={String(row.driver_id ?? "")} label={name} className="text-[13px] font-semibold text-[#1A1F36] hover:underline" />{" "}
                       <span className="rounded-xs bg-[#fef3e2] px-[6px] py-[2px] text-[9px] font-semibold uppercase tracking-[0.25px] text-[#854f0b]">Cash advance</span>{" "}
                       <span className="text-[11px] text-[#8A92AB]">
                         {String(row.submitted_at ?? "").replace("T", " ").slice(0, 16)}

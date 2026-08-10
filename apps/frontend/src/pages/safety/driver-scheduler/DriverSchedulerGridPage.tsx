@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { driverSchedulerOfficeApi } from "../../../api/driver-scheduler";
 import { PageHeader } from "../../../components/layout/PageHeader";
+import { EntityLink } from "../../../components/shared/EntityLink";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { companyToday } from "../../../lib/businessDate";
 
@@ -55,6 +56,8 @@ export function DriverSchedulerGridPage() {
     <div className="space-y-3">
       <PageHeader title="Driver Scheduler" subtitle={`${range.start} through ${range.end} — fleet leave grid`} />
 
+      {!operatingCompanyId ? <div className="text-sm text-gray-500">Select an operating company to view the driver schedule.</div> : null}
+
       <div className="flex flex-wrap items-center gap-2 rounded-sm border border-gray-200 bg-white p-2 text-xs">
         <span className="font-semibold text-gray-600">Range</span>
         {[7, 14, 30, 40].map((d) => (
@@ -93,7 +96,9 @@ export function DriverSchedulerGridPage() {
                 const unit = dr.unit_number ? String(dr.unit_number) : "—";
                 return (
                   <tr key={driverId} className="border-t border-gray-100">
-                    <td className="sticky left-0 z-10 border-r bg-white px-2 py-0.5 text-xs font-medium text-gray-900">{name}</td>
+                    <td className="sticky left-0 z-10 border-r bg-white px-2 py-0.5 text-xs font-medium text-gray-900">
+                      <EntityLink kind="driver" id={driverId} label={name} />
+                    </td>
                     <td className="border-r px-1 py-0.5 text-gray-600">{unit}</td>
                     {days.map((d) => {
                       const lt = cellByDriverDay.get(`${driverId}|${d}`);
@@ -120,6 +125,10 @@ export function DriverSchedulerGridPage() {
             </tbody>
           </table>
         </div>
+      ) : null}
+
+      {query.data && (query.data.drivers ?? []).length === 0 ? (
+        <div className="text-sm text-gray-500">No drivers are available for this operating company.</div>
       ) : null}
 
       {query.data?.pending_requests?.length ? (
