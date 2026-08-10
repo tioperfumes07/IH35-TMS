@@ -13,16 +13,29 @@ function formatMoney(value: number) {
 type Props = {
   rows: SettlementListRow[];
   loading?: boolean;
+  /**
+   * DISP-S33: without this, a failed fetch left `rows` at its `[]` default and rendered the SAME
+   * "No pre-settlements ready right now." text as a genuine zero-row result — a swallowed error
+   * masquerading as an honest empty state. Pass the query's isError through so a fetch failure is
+   * named, not silently presented as "there is nothing to pay."
+   */
+  isError?: boolean;
   title?: string;
   showTotal?: boolean;
 };
 
-export function PreSettlementsPanel({ rows, loading = false, title = "Pre-settlements", showTotal = true }: Props) {
+export function PreSettlementsPanel({ rows, loading = false, isError = false, title = "Pre-settlements", showTotal = true }: Props) {
   const total = rows.reduce((sum, row) => sum + Number(row.net_pay ?? 0), 0);
   return (
     <DataPanel title={`${title} · ${rows.length} drivers`} accentColor={colors.accounting.strong}>
       {loading ? <p className="px-2 py-2 text-xs text-gray-500">Loading pre-settlements…</p> : null}
+      {!loading && isError ? (
+        <p className="px-2 py-2 text-xs text-red-700" data-testid="pre-settlements-error">
+          Couldn&apos;t load pre-settlements. Try refreshing the page.
+        </p>
+      ) : null}
       {!loading &&
+        !isError &&
         rows.map((settlement) => (
           <DataPanelRow key={settlement.id} data-testid="pre-settlement-row-reverse">
             <span className="flex flex-wrap items-center gap-1 text-sm">
@@ -49,8 +62,10 @@ export function PreSettlementsPanel({ rows, loading = false, title = "Pre-settle
             <span>{formatMoney(Number(settlement.net_pay ?? 0))}</span>
           </DataPanelRow>
         ))}
-      {!loading && rows.length === 0 ? <p className="px-2 py-2 text-xs text-gray-500">No pre-settlements ready right now.</p> : null}
-      {showTotal ? (
+      {!loading && !isError && rows.length === 0 ? (
+        <p className="px-2 py-2 text-xs text-gray-500">No pre-settlements ready right now.</p>
+      ) : null}
+      {!isError && showTotal ? (
         <DataPanelRow>
           <span className="font-semibold">Total payout this batch</span>
           <span className="font-semibold">{formatMoney(total)}</span>

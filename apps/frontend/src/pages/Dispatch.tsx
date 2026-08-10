@@ -469,6 +469,7 @@ export function DispatchPage({
         <PreSettlementsPanel
           rows={(preSettlementsQuery.data?.settlements ?? []).filter((settlement) => ["presettle", "acked", "locked"].includes(String(settlement.status)))}
           loading={preSettlementsQuery.isLoading}
+          isError={preSettlementsQuery.isError}
         />
       ) : (
         /* ARCHIVE B21-D12 Sunset 2026-06-04: settlements stub replaced by Driver Finance quick-link (A24-2 pattern) */
