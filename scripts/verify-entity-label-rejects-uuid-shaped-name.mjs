@@ -110,6 +110,16 @@ const SIBLINGS = [
     bad: /bill\.vendor_name\s*\?\?\s*bill\.vendor_id/,
     good: /entityLabel\(\s*bill\.vendor_name\s*,\s*bill\.vendor_id\s*,\s*"Vendor"\s*\)/,
   },
+  {
+    rel: "apps/frontend/src/pages/accounting/ExpenseCategoryMapPage.tsx",
+    bad: /row\.account_name\s*\?\?\s*row\.account_id/,
+    good: /entityLabel\(\s*row\.account_name\s*,\s*row\.account_id\s*,\s*"Account"\s*\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/maintenance/WorkOrderDetailPage.tsx",
+    bad: /row\.ps_category_name\s*\|\|\s*row\.ps_category_id|row\.ps_item_name\s*\|\|\s*row\.ps_item_id/,
+    good: /entityLabel\(\s*row\.ps_category_name\s*,\s*row\.ps_category_id\s*,\s*"Category"\s*\)/,
+  },
 ];
 
 export function auditEntityLabel(src) {

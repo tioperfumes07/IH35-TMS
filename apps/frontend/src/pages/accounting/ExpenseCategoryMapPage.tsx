@@ -21,6 +21,7 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { entityLabel } from "../../lib/entity-label";
 
 const KIND_OPTIONS: ExpenseCategoryMapKind[] = [
   "fuel",
@@ -124,12 +125,8 @@ export function ExpenseCategoryMapPage() {
       key: "account_number",
       label: "Account",
       sortable: true,
-      sortValue: (row) => `${row.account_name ?? row.account_id}`,
-      render: (row) => (
-        <>
-          {row.account_name ?? row.account_id}
-        </>
-      ),
+      sortValue: (row) => entityLabel(row.account_name, row.account_id, "Account"),
+      render: (row) => <>{entityLabel(row.account_name, row.account_id, "Account")}</>,
     },
     { key: "posting_side", label: "Side", sortable: true },
     {
