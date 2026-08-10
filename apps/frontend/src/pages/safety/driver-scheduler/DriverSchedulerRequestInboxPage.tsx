@@ -7,6 +7,7 @@ import { PageHeader } from "../../../components/layout/PageHeader";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { Button } from "../../../components/Button";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+import { EntityLink } from "../../../components/shared/EntityLink";
 
 type PendingRequestRow = Record<string, unknown>;
 
@@ -25,7 +26,7 @@ export function DriverSchedulerRequestInboxPage() {
   const columns = useMemo<ParityColumn<PendingRequestRow>[]>(
     () => [
       { key: "request_number", label: "Request", sortable: true, className: "font-mono", cellClass: "font-mono", render: (r) => String(r.request_number) },
-      { key: "driver_name", label: "Driver", sortable: true, render: (r) => String(r.driver_name ?? "") },
+      { key: "driver_name", label: "Driver", sortable: true, render: (r) => <EntityLink kind="driver" id={String(r.driver_id ?? "")} label={String(r.driver_name ?? "Driver")} /> },
       { key: "leave_type", label: "Type", sortable: true, render: (r) => String(r.leave_type) },
       {
         key: "dates",
@@ -54,6 +55,7 @@ export function DriverSchedulerRequestInboxPage() {
   return (
     <div className="space-y-3">
       <PageHeader title="Leave Requests" subtitle="Pending time-off requests awaiting review" />
+      {!operatingCompanyId ? <div className="text-sm text-gray-500">Select an operating company to view leave requests.</div> : null}
       <div className="mb-2">
         <Link to="/safety/driver-scheduler" className="text-xs text-slate-700 hover:underline">
           ← Back to Driver Scheduler grid

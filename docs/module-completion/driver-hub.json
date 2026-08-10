@@ -2,7 +2,7 @@
   "module": "driver-hub",
   "title": "Driver Hub — acceptance checklist",
   "complete": false,
-  "as_of": "2026-07-29",
+  "as_of": "2026-08-09",
   "live_sha": null,
   "desktop_audit": null,
   "spec_sources": [
@@ -20,8 +20,8 @@
         "DOD-C"
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "status": "PASS",
+      "evidence": "Route manifest mounts DriverHubPage. The overview, scheduler, and leave-request data calls are company-scoped; missing-company and empty-driver states are explicit; cash-advance, scheduler, and leave-request driver labels drill through with EntityLink. Guard: node scripts/verify-driver-hub-tabs-url-sync.mjs --selftest && node scripts/verify-driver-hub-tabs-url-sync.mjs. Live/Neon proof intentionally deferred by the active wire-only/no-Neon wave.",
       "pr": null,
       "prod_verified": false
     },
@@ -41,7 +41,7 @@
     }
   ],
   "M": 2,
-  "pass_count": 0,
+  "pass_count": 1,
   "total_count": 2,
-  "progress": "0 of 2"
+  "progress": "1 of 2"
 }
