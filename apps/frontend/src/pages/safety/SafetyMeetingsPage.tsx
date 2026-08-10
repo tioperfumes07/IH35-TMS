@@ -16,6 +16,7 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { companyToday } from "../../lib/businessDate";
+import { CappedListNotice } from "../../components/CappedListNotice";
 
 type Props = {
   operatingCompanyId: string;
@@ -233,6 +234,13 @@ export function SafetyMeetingsPage({ operatingCompanyId }: Props) {
                 dataTestId="safety-meeting-driver-picker"
               />
             </div>
+            <CappedListNotice
+              shown={(driversQuery.data?.drivers ?? []).length}
+              limit={500}
+              total={driversQuery.data?.total}
+              hint="Attendee name lookup may be incomplete — use the picker search for drivers beyond the first page."
+              className="mt-1 text-xs text-slate-600"
+            />
             {requiredAttendees.length > 0 ? (
               <ul className="mt-2 space-y-1 rounded-sm border border-gray-200 p-2">
                 {requiredAttendees.map((driverId) => (

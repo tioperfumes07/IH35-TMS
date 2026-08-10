@@ -15,6 +15,7 @@ import { companyToday } from "../../lib/businessDate";
 import { entityLabel } from "../../lib/entity-label";
 import { useAuth } from "../../auth/useAuth";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { CappedListNotice } from "../../components/CappedListNotice";
 
 type InternalFineRow = Record<string, unknown>;
 
@@ -213,6 +214,13 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
               });
               void reasonsQuery.refetch();
             }}
+          />
+          <CappedListNotice
+            shown={reasons.length}
+            limit={200}
+            total={reasonsQuery.data?.total}
+            hint="Type to search the full internal-fine-reason catalog."
+            className="text-xs text-slate-600 md:col-span-6"
           />
           {/* M-1 (GUARD inline FAIL): this is the inline-create fine AMOUNT (sent to createInternalFine as
               dollars; display is $row.amount.toFixed(2)). dollars-mode MoneyInput; amount stays a DOLLAR

@@ -9,6 +9,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { colors } from "../../design/tokens";
 import { formatUsdCents } from "../../lib/money";
 import { entityLabel } from "../../lib/entity-label";
+import { CappedListNotice } from "../../components/CappedListNotice";
 
 /**
  * FAIL-DD2 — pending rows from driver_finance.driver_settlement_deductions.
@@ -61,6 +62,12 @@ export function PendingSettlementDeductionsPanel() {
             </span>
           </DataPanelRow>
         ))}
+        <CappedListNotice
+          shown={rows.length}
+          limit={200}
+          hint="This queue shows pending recoveries only — narrow with the driver filter if the list is truncated."
+          className="px-2 py-1 text-xs text-slate-600"
+        />
       </DataPanel>
     </div>
   );
