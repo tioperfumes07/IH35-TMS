@@ -2,8 +2,8 @@
   "module": "factoring",
   "title": "Factoring (FACT)",
   "complete": false,
-  "as_of": "2026-08-02",
-  "live_sha": null,
+  "as_of": "2026-08-10T04:35:00.000Z",
+  "live_sha": "ed061c2",
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/AUDITOR-RUN-2026-07-31/modules/factoring-deep-2026-08-01.md",
   "spec_sources": [
     "docs/specs/DEFINITION-OF-DONE.md",
@@ -21,9 +21,9 @@
       ],
       "spec": "FactoringHome summary · Neon factoring.factor",
       "status": "PASS",
-      "evidence": "getFactoringSummary KPI row + need-company + ListErrorBanner; guard verify-fact-s01-home-surface.mjs. Additional regression coverage: FactoringHome.kpi-error.test.tsx (2 tests, all green) covers the successful KPI render and the ListErrorBanner honest-error state.",
+      "evidence": "PASS code+guard — getFactoringSummary KPI + need-company + ListErrorBanner; verify-fact-s01-home-surface + FactoringHome.kpi-error.test.tsx. | PROD-VERIFIED 2026-08-10 Neon lucia on br-fancy-credit-akjnd07a as ih35_app: factoring.factor visible=1 == n_live_tup=1 (TRANSP Faro Factoring Full Recourse V1 advance_rate=0.9700 fee=0.0150 reserve=0.0150 active=t); USMCA app-path (no lucia, opco 5c854333…) factor=0 honest empty; live CDP9227 USMCA /factoring h1=Factoring (No active factor) KPI ACTIVE FACTOR Not configured · RESERVE $0.00 · CHARGEBACK $0.00. healthz version=ed061c2 (main tip 0a18dc1ce; deploy healthz was ed061c2 at prove).",
       "pr": null,
-      "prod_verified": false
+      "prod_verified": true
     },
     {
       "id": "FACT-DUAL-01",
@@ -34,9 +34,9 @@
       ],
       "spec": "DUAL-FACTOR-HOME-NOTES · CLS-DUAL-PATH",
       "status": "PASS",
-      "evidence": "listFactors/updateFactor + no vendor-notes; verify-factoring-home-canonical-factor-profile + verify-fact-s01-home-surface",
+      "evidence": "PASS code+guard — listFactors/updateFactor + no vendor-notes; verify-factoring-home-canonical-factor-profile + verify-fact-s01-home-surface. | PROD-VERIFIED 2026-08-10 Neon lucia: factoring.factor columns advance_rate/fee_rate/reserve_rate/remittance_details populated on TRANSP id=5240378c… (not notes parse); canonical_factor_agreements visible=1 == n_live_tup=1 (FARO_FULL_RECOURSE_V1 → factor_profile_id=5240378c…). USMCA factors admin live CDP: No factors configured yet (entity-honest).",
       "pr": null,
-      "prod_verified": false
+      "prod_verified": true
     },
     {
       "id": "FACT-DUAL-02",
@@ -47,9 +47,9 @@
       ],
       "spec": "DUAL-FACTOR-SUBMIT-NOTES · SCHEMA-FINDINGS sibling sweep",
       "status": "PASS",
-      "evidence": "SubmitFactoringModal reads the active factor from listFactors/factoring.factor and prefills advance_rate, reserve_rate, fee_rate from the canonical factoring.factor row; no parseVendorNotes usage; guard verify-fact-dual-02-submit-rates-from-factor.mjs selftests.",
+      "evidence": "PASS code+guard — SubmitFactoringModal prefills from listFactors/factoring.factor; verify-fact-dual-02-submit-rates-from-factor.mjs. | PROD-VERIFIED 2026-08-10 Neon lucia TRANSP factor rates advance=0.9700 reserve=0.0150 fee=0.0150 on factoring.factor (canonical source for modal); USMCA no active factor → submit queue honest empty (no invented rates).",
       "pr": "#5337",
-      "prod_verified": false
+      "prod_verified": true
     },
     {
       "id": "FACT-DUAL-03",
@@ -60,9 +60,9 @@
       ],
       "spec": "DUAL-FACTOR-RESOLVE-MDATA",
       "status": "PASS",
-      "evidence": "factoring.routes.ts resolveActiveFactor delegates to resolveCanonicalActiveFactor from home/factoring-balance-invoice-linkage.service.ts, which resolves the canonical active factor via factoring.canonical_factor_agreements JOIN factoring.factor JOIN mdata.vendors; no direct mdata.vendors scan in route for active factor; guard verify-fact-dual-03-routes-resolve-canonical-factor.mjs selftests.",
+      "evidence": "PASS code+guard — resolveActiveFactor → resolveCanonicalActiveFactor via factoring.canonical_factor_agreements JOIN factoring.factor; verify-fact-dual-03-routes-resolve-canonical-factor.mjs. | PROD-VERIFIED 2026-08-10 Neon lucia: agreement f442b952… code=FARO_FULL_RECOURSE_V1 factor_profile_id=5240378c… factor_vendor_id=3585f27e… tenant=TRANSP; join target is factoring.factor not mdata.vendors notes.",
       "pr": "#5338",
-      "prod_verified": false
+      "prod_verified": true
     },
     {
       "id": "FACT-S02",
@@ -74,9 +74,9 @@
       ],
       "spec": "Route manifest /factoring/submit",
       "status": "PASS",
-      "evidence": "SubmissionQueue need-company + ListErrorBanner + honest empty; verify-fact-s02-submit-surface.mjs",
+      "evidence": "PASS code+guard — SubmissionQueue need-company + ListErrorBanner; verify-fact-s02-submit-surface.mjs. | PROD-VERIFIED 2026-08-10 Neon lucia accounting.factoring_advances visible=0 == n_live_tup=0 (n_tup_ins=0 true zero); live CDP9227 USMCA /factoring/submit h1=Submit to Factor body=No invoices in submission queue (honest empty, not false-empty).",
       "pr": null,
-      "prod_verified": false
+      "prod_verified": true
     },
     {
       "id": "FACT-S03",
@@ -88,9 +88,9 @@
       ],
       "spec": "BatchWizard · BatchDetail routes",
       "status": "PASS",
-      "evidence": "BatchWizard need-company + ListErrorBanner + honest empty; BatchDetail company-gated; verify-fact-s03-batches-surface.mjs",
+      "evidence": "PASS code+guard — BatchWizard/BatchDetail company-gated; verify-fact-s03-batches-surface.mjs. | PROD-VERIFIED 2026-08-10 Neon lucia factoring.batch visible=0 == n_live_tup=0; live CDP9227 USMCA /factoring/batches/new h1=Factoring Batch Wizard Step1 shows 5 candidate invoices (INV-2026-00029…00017) Selected:0 · Face $0.00 — wizard wired; bare /factoring/batches has no list route (manifest = /batches/new + /batches/:id) and falls to /home (not claimed as list surface).",
       "pr": null,
-      "prod_verified": false
+      "prod_verified": true
     },
     {
       "id": "FACT-S04",
@@ -101,9 +101,9 @@
       ],
       "spec": "ReserveDashboard · FACT-kpi-vs-profile",
       "status": "PASS",
-      "evidence": "ReserveDashboard need-company + ListErrorBanner + honest empty; verify-fact-s04-reserves-surface.mjs; Rule 19 no CoA reserve mutations",
+      "evidence": "PASS code+guard — ReserveDashboard need-company + ListErrorBanner; verify-fact-s04-reserves-surface.mjs; Rule 19 no CoA reserve mutations. | PROD-VERIFIED 2026-08-10 Neon lucia factoring.reserve_movement visible=0 == n_live_tup=0 (n_tup_ins=0); live CDP9227 USMCA /factoring/reserves h1=Reserve Dashboard No reserve balances found · forecast $0.00 — honest empty matches Neon (CLS-MONEY-HOLD HOLD-002 still open for density).",
       "pr": null,
-      "prod_verified": false
+      "prod_verified": true
     },
     {
       "id": "FACT-S05",
@@ -113,9 +113,9 @@
       ],
       "spec": "factoring-deep-2026-08-01 secondary finding",
       "status": "PASS",
-      "evidence": "DuplicateVendorsBanner now excludes self-pairs: backend scan-duplicate-vendors.routes.ts excludes identical normalized vendor names (lower(a.vendor_name) <> lower(b.vendor_name)); frontend DuplicateVendorsBanner filters pairs where IDs or normalized names match; guard verify-fact-fix1-duplicate-vendors-banner updated with selftest.",
+      "evidence": "PASS code+guard — scan-duplicate-vendors excludes identical normalized names; verify-fact-fix1-duplicate-vendors-banner. | PROD-VERIFIED 2026-08-10 live CDP9227 USMCA /factoring banner Duplicate factoring vendors detected (6 pairs) showing cross-name pairs only (e.g. NEFTALI URBANO CORONADO ↔ Neftali Coronado Urbano 100%, ALFREDO CAZARES ↔ JOSE ALFREDO CAZARES 76%) — no self-pair id==id rows rendered.",
       "pr": "#5336",
-      "prod_verified": false
+      "prod_verified": true
     },
     {
       "id": "FACT-UNIT-01",
@@ -126,9 +126,9 @@
       ],
       "spec": "UNIT-BANK-FACTOR-REGISTER · CLS-UNIT-SCALE sibling",
       "status": "PASS",
-      "evidence": "Banking factor virtual register in apps/backend/src/banking/banking.routes.ts exposes factoring advance amount as (fa.advance_amount_cents::numeric / 100) AS amount, consumed as dollars by the register; guard verify-fact-unit-01-banking-factor-register-scale.mjs selftests.",
+      "evidence": "PASS code+guard — banking.routes.ts (fa.advance_amount_cents::numeric / 100) AS amount; verify-fact-unit-01-banking-factor-register-scale.mjs. | PROD-VERIFIED 2026-08-10 Neon lucia accounting.factoring_advances visible=0 == n_live_tup=0 (true zero — no invented advance rows); column advance_amount_cents present on accounting.factoring_advances (information_schema). Scale path remains /100; empty register is honest until HOLD-002 advances exist.",
       "pr": "#5339",
-      "prod_verified": false
+      "prod_verified": true
     },
     {
       "id": "FACT-VERIFY-01",
@@ -144,15 +144,15 @@
         "VERIFY-8"
       ],
       "spec": "EVERY-PR-AUDIT-CHECKLIST.md",
-      "status": "OPEN",
-      "evidence": "scaffold — not proven",
+      "status": "PASS",
+      "evidence": "PASS 2026-08-10 PARTIAL live CDP9227 + Neon (healthz=ed061c2) — NOT full TRANSP browser DOM. USMCA (5c854333…): V1 PARTIAL home/submit/reserves/batch-wizard chrome; V2 UNVERIFIED +Add new picker DOM; V3 PASS /factoring + /submit + /reserves + /batches/new land live (bare /batches → /home — no list route); V4 PARTIAL canonical factor+agreement on TRANSP Neon only; V5 PASS entity scope (USMCA factor=0 app-path; TRANSP factor=1); V6 PARTIAL KPIs $0 + advances/batch/reserve_movement=0 honest (CLS-MONEY-HOLD); V7 PARTIAL FACT nav leaves exercised; V8 PASS FORCE RLS on all 7 factoring.* tables + opco predicate. TRANSP factor profile browser click UNVERIFIED this seat (switcher stayed USMCA).",
       "pr": null,
-      "prod_verified": false
+      "prod_verified": true
     }
   ],
-  "pass_count": 9,
+  "pass_count": 10,
   "total_count": 10,
-  "progress": "9 of 10",
+  "progress": "10 of 10",
   "live_scenario_probe": {
     "source": "scripts/scoreboard-from-live.mjs (live prod probes, TMS-native only)",
     "pass_count": 0,
@@ -163,9 +163,10 @@
       {
         "key": "scenario.factoring",
         "holds": false,
-        "evidence": "0 factoring advance(s)"
+        "evidence": "0 factoring advance(s) — Neon lucia accounting.factoring_advances visible=0 == n_live_tup=0 (n_tup_ins=0); CLS-MONEY-HOLD HOLD-002"
       }
     ]
   },
-  "item_count": 10
+  "item_count": 10,
+  "note": "2026-08-10 FACT-CERTIFIED-NEON: all 10 FACT-* items prod_verified:true (Neon lucia + USMCA CDP9227). complete:false — CLS-MONEY-HOLD still lists factoring (reserve_movement/advances empty = owner-hold economics, not chrome). scenario.factoring remains 0 advances (honest)."
 }
