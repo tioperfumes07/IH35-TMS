@@ -1,4 +1,4 @@
-import { run } from "../../verify-migration-claimed-on-main.mjs";
+import { run } from "../verify-migration-claimed-on-main.mjs";
 
 export default {
   name: "verify-migration-claimed-on-main",
