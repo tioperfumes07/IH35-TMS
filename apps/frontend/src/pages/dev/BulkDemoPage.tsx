@@ -2,6 +2,7 @@ import { useState } from "react";
 import { BulkActionModal, BulkProgressDialog } from "../../components/bulk";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { bulkUpdate } from "../../api/bulk";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 type DemoRow = {
   id: string;
@@ -66,7 +67,7 @@ export function BulkDemoPage() {
       setTableResetKey((k) => k + 1);
       setPendingIds([]);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Bulk update failed";
+      const message = userFacingApiError(error, "Bulk update failed");
       setProgress({
         requested: ids.length,
         succeeded: 0,
@@ -89,7 +90,7 @@ export function BulkDemoPage() {
       </header>
 
       {capMessage ? (
-        <div className="rounded-sm border border-amber-200 bg-amber-50 p-2 text-sm text-amber-900" role="alert">
+        <div className="rounded-sm border border-slate-300 bg-slate-50 p-2 text-sm text-slate-800" role="alert">
           {capMessage}
           <button type="button" className="ml-2 underline" onClick={() => setCapMessage(null)}>
             Dismiss
