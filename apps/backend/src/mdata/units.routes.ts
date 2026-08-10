@@ -396,7 +396,11 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
         countOpenWorkOrdersForUnit(client, parsedParams.data.id)
       );
       if (openWoCount > 0) {
-        return reply.code(409).send({ error: "E_UNIT_HAS_OPEN_WO", open_wo_count: openWoCount });
+        return reply.code(409).send({
+          error: "E_UNIT_HAS_OPEN_WO",
+          open_wo_count: openWoCount,
+          message: `Unit has ${openWoCount} open work order(s) and cannot be sold or transferred until they are closed.`,
+        });
       }
     }
 

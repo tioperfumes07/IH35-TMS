@@ -234,7 +234,12 @@ export async function registerMaintenancePartsInvoiceLinksRoutes(app: FastifyIns
     });
 
     if ("notFound" in result) return reply.code(404).send({ error: "work_order_not_found" });
-    if ("locked" in result) return reply.code(422).send({ error: "E_WO_DISPLAY_ID_LOCKED" });
+    if ("locked" in result) {
+      return reply.code(422).send({
+        error: "E_WO_DISPLAY_ID_LOCKED",
+        message: "Work-order display ID is locked after completion and cannot be changed.",
+      });
+    }
     return reply.code(201).send(result);
   });
 

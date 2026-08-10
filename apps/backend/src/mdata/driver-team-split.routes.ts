@@ -117,7 +117,12 @@ export async function registerDriverTeamSplitRoutes(app: FastifyInstance) {
     if (!query.success) return sendValidationError(reply, query.error);
     try {
       const team = await getDriverTeam(user.uuid, query.data.operating_company_id, params.data.id);
-      if (!team) return reply.code(404).send({ error: "E_TEAM_NOT_FOUND" });
+      if (!team) {
+        return reply.code(404).send({
+          error: "E_TEAM_NOT_FOUND",
+          message: "Driver team not found for this operating company.",
+        });
+      }
       return { team };
     } catch (error) {
       const mapped = mapServiceError(error);

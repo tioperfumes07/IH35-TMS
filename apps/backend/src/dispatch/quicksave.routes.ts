@@ -139,7 +139,10 @@ export async function registerDispatchQuicksaveRoutes(app: FastifyInstance) {
       return result;
       } catch (error) {
               if (String((error as Error)?.message ?? "") === "E_LOAD_NOT_FOUND") {
-        return reply.code(404).send({ error: "E_LOAD_NOT_FOUND" });
+        return reply.code(404).send({
+          error: "E_LOAD_NOT_FOUND",
+          message: "Load not found for this operating company.",
+        });
       }
       const mapped = mapQuickAssignError(error);
       if (mapped) return reply.code(mapped.status).send(mapped.payload);

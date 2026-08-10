@@ -758,6 +758,8 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
             vendor_invoice_cents: error.vendor_invoice_cents,
             delta_cents: error.delta_cents,
             source: error.source,
+            message:
+              "Work-order line total does not match the vendor invoice amount. Correct the lines or the invoice before closing.",
           });
         }
         const message = String((error as Error)?.message ?? "");
@@ -1185,13 +1187,21 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
     if ("notFound" in result) return reply.code(404).send({ error: "work_order_not_found" });
     if ("invoiceMismatch" in result) {
       const d = result.detail;
-      if (!d) return reply.code(409).send({ error: "WO_INVOICE_MISMATCH" });
+      if (!d) {
+        return reply.code(409).send({
+          error: "WO_INVOICE_MISMATCH",
+          message:
+            "Work-order line total does not match the vendor invoice amount. Correct the lines or the invoice before closing.",
+        });
+      }
       return reply.code(409).send({
         error: d.code,
         total_line_items_cents: d.total_line_items_cents,
         vendor_invoice_cents: d.vendor_invoice_cents,
         delta_cents: d.delta_cents,
         source: d.source,
+        message:
+          "Work-order line total does not match the vendor invoice amount. Correct the lines or the invoice before closing.",
       });
     }
     if ("blocked" in result) return reply.code(422).send({ error: result.code, message: result.message });
