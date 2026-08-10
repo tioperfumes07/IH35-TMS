@@ -39,6 +39,11 @@ if (!/isEmpty\s*&&\s*status\.isFetching\)\s*return\s*"loading"/.test(listStateSr
   fail("resolveListState no longer treats zero-rows-while-fetching as loading (race guard removed)");
 }
 
+const maintenancePartsSrc = read("apps/frontend/src/pages/maintenance/parts/PartsMasterDataPage.tsx");
+if (!/partsQuery\.isError[\s\S]*?<ListErrorState[\s\S]*?partsQuery\.refetch\(\)/.test(maintenancePartsSrc)) {
+  fail("Maintenance Parts must render a retryable ListErrorState before its empty table");
+}
+
 // 2) Migrated list surfaces: each MUST import the primitive and gate every
 //    empty literal on the resolved settled state (listState.isEmpty / === "empty").
 const MIGRATED = [
