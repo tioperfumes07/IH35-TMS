@@ -1,12 +1,12 @@
 # Module completion — Factoring (FACT)
 
-**PROGRESS: 8 of 10** · complete: `false` · as_of: 2026-08-02 · live_sha: `—`
+**PROGRESS: 9 of 10** · complete: `false` · as_of: 2026-08-02 · live_sha: `—`
 
 | Status | Count |
 |---|---:|
-| PASS | 8 |
+| PASS | 9 |
 | HOLD | 0 |
-| OPEN | 2 |
+| OPEN | 1 |
 | FAIL | 0 |
 | UNVERIFIED | 0 |
 
@@ -20,7 +20,7 @@
 | `FACT-S03` | **PASS** | /factoring/batches batch wizard + detail drill-through | BatchWizard need-company + ListErrorBanner + honest empty; BatchDetail company-gated; verify-fact-s03-batches-surface.mjs | — |
 | `FACT-S04` | **PASS** | /factoring/reserves reserve dashboard economics honest | ReserveDashboard need-company + ListErrorBanner + honest empty; verify-fact-s04-reserves-surface.mjs; Rule 19 no CoA reserve mutations | — |
 | `FACT-S05` | **PASS** | Duplicate factor vendor banner excludes self-pairs | DuplicateVendorsBanner now excludes self-pairs: backend scan-duplicate-vendors.routes.ts excludes identical normalized vendor names (lower(a.vendor_name) <> lower(b.vendor_name)); frontend DuplicateVendorsBanner filters pairs where IDs or normalized names match; guard verify-fact-fix1-duplicate-vendors-banner updated with selftest. | #5336 |
-| `FACT-UNIT-01` | **OPEN** | Banking factor virtual register amount displays cents/100 correctly | scaffold — FAIL: banking.routes.ts:308 advance_amount_cents without /100 | — |
+| `FACT-UNIT-01` | **PASS** | Banking factor virtual register amount displays cents/100 correctly | Banking factor virtual register in apps/backend/src/banking/banking.routes.ts exposes factoring advance amount as (fa.advance_amount_cents::numeric / 100) AS amount, consumed as dollars by the register; guard verify-fact-unit-01-banking-factor-register-scale.mjs selftests. | #5339 |
 | `FACT-VERIFY-01` | **OPEN** | Factoring module VERIFY-1..8 click-through TRANSP + USMCA | scaffold — not proven | — |
 
 Desktop audit: ~/Desktop/IH35-CURSOR-AUDIT/AUDITOR-RUN-2026-07-31/modules/factoring-deep-2026-08-01.md
