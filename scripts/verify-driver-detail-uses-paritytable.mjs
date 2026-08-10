@@ -29,6 +29,15 @@ function assertMigrated(src) {
   if (!src.includes("ListErrorState")) {
     errors.push(`${PAGE}: must render ListErrorState on rate-history query failure`);
   }
+  if (!/driverQuery\.isError[\s\S]{0,420}<ListErrorState[\s\S]{0,420}driverQuery\.refetch\(\)/.test(src)) {
+    errors.push(`${PAGE}: driver detail failure must render retryable ListErrorState before not-found`);
+  }
+  for (const rawFallback of ["item.created_by_user_email || item.created_by_user_id", "event.voided_by_user_email || event.voided_by_user_id", "Last updated by {driver.updated_by_user_id}"]) {
+    if (src.includes(rawFallback)) errors.push(`${PAGE}: raw UUID display fallback remains: ${rawFallback}`);
+  }
+  if (/>\s*\{driver\.prior_driver_id\}\s*</.test(src)) {
+    errors.push(`${PAGE}: prior driver UUID must not be visible link copy`);
+  }
   if ((src.match(/<ParityTable\b/g) ?? []).length < 1) {
     errors.push(`${PAGE}: expected ≥1 <ParityTable>`);
   }
@@ -75,6 +84,7 @@ function selftest() {
     ];
     <span>Corrected</span>
     <ListErrorState title="Couldn't load rate history" status={0} onRetry={() => {}} />
+    {driverQuery.isError ? <ListErrorState onRetry={() => void driverQuery.refetch()} /> : null}
     <ParityTable
       storageKey="driver-rate-history"
       tableTestId="driver-rate-history-table"

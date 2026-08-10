@@ -42,6 +42,8 @@ import { DriverSafetyReverseSection } from "../components/safety/DriverSafetyRev
 import { DriverWorkOrdersReverseSection } from "../components/maintenance/DriverWorkOrdersReverseSection";
 import { Button } from "../components/Button";
 import { ListErrorState } from "../components/ListErrorState";
+import { EntityLink } from "../components/shared/EntityLink";
+import { entityLabel } from "../lib/entity-label";
 import { ParityTable, type ParityColumn } from "../components/parity/ParityTable";
 import { ReferenceSelect } from "../components/parity/ReferenceSelect";
 import { Combobox, type ComboboxOption } from "../components/Combobox";
@@ -667,7 +669,7 @@ export function DriverDetailPage() {
       {
         key: "created_by_user_email",
         label: "Changed by",
-        render: (item) => item.created_by_user_email || item.created_by_user_id || "—",
+        render: (item) => entityLabel(item.created_by_user_email, item.created_by_user_id, "User"),
       },
       {
         key: "created_at",
@@ -694,6 +696,17 @@ export function DriverDetailPage() {
 
   if (driverQuery.isLoading) {
     return <div className="text-sm text-gray-500">Loading driver...</div>;
+  }
+
+  if (driverQuery.isError) {
+    return (
+      <ListErrorState
+        title="Couldn't load driver"
+        status={driverQuery.error instanceof ApiError ? driverQuery.error.status : 0}
+        message={driverQuery.error instanceof Error ? driverQuery.error.message : undefined}
+        onRetry={() => void driverQuery.refetch()}
+      />
+    );
   }
 
   if (!driver) {
@@ -1149,7 +1162,7 @@ export function DriverDetailPage() {
             ) : null}
           </div>
           <div className="rounded-sm border border-gray-200 bg-gray-50 p-2 text-xs">
-            <div>Current Vendor ID: <span className="font-semibold text-gray-900">{driver.qbo_vendor_id ?? "-"}</span></div>
+            <div>Current Vendor: <EntityLink kind="vendor" id={driver.qbo_vendor_id} label={entityLabel(null, driver.qbo_vendor_id, "Vendor")} className="font-semibold text-gray-900" /></div>
             <div>Linked At: <span className="font-semibold text-gray-900">{driver.qbo_vendor_linked_at ? new Date(driver.qbo_vendor_linked_at).toLocaleString() : "-"}</span></div>
           </div>
           <div>
@@ -1178,9 +1191,7 @@ export function DriverDetailPage() {
               <div className="flex flex-col gap-1">
                 <label className="text-xs font-semibold text-gray-600">Prior driver record</label>
                 <div className="rounded-sm border border-gray-300 bg-gray-50 px-2 text-sm py-2">
-                  <Link to={`/drivers/${driver.prior_driver_id}`} className="text-slate-700 hover:underline">
-                    {driver.prior_driver_id}
-                  </Link>
+                  <EntityLink kind="driver" id={driver.prior_driver_id} label={entityLabel(null, driver.prior_driver_id, "Driver")} />
                 </div>
               </div>
             ) : null}
@@ -1462,7 +1473,7 @@ export function DriverDetailPage() {
                           ) : null}
                           {isVoided ? (
                             <div className="rounded-sm bg-gray-200 px-2 py-1 text-xs text-gray-700">
-                              VOIDED on {new Date(event.voided_at || "").toLocaleString()} by {event.voided_by_user_email || event.voided_by_user_id}:{" "}
+                              VOIDED on {new Date(event.voided_at || "").toLocaleString()} by {entityLabel(event.voided_by_user_email, event.voided_by_user_id, "User")}: {" "}
                               {event.void_reason}
                             </div>
                           ) : null}
@@ -1632,7 +1643,7 @@ export function DriverDetailPage() {
       ) : null}
 
       <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-xs text-gray-700">
-        Last updated by {driver.updated_by_user_id} on {new Date(driver.updated_at).toLocaleString()}
+        Last updated by {entityLabel(null, driver.updated_by_user_id, "User")} on {new Date(driver.updated_at).toLocaleString()}
       </div>
 
       <Modal variant="drawer" open={addQualificationOpen} onClose={() => setAddQualificationOpen(false)} title="Create Equipment Qualification">
