@@ -24,6 +24,12 @@ export function collectProblems(root = ROOT) {
   if (!/DriverPickerWithCreate/.test(code)) problems.push(`${MODAL}: must use DriverPickerWithCreate`);
   if (/listDrivers\(/.test(code)) problems.push(`${MODAL}: must not call listDrivers`);
   if (/limit:\s*200/.test(code) && /listDrivers/.test(src)) problems.push(`${MODAL}: silent listDrivers limit:200`);
+  if (!/<Combobox[\s\S]*?id=["']settlement-dispute-settlement-picker["']/.test(code)) {
+    problems.push(`${MODAL}: settlement must use the searchable Combobox`);
+  }
+  if (/<select[\s\S]*?value=\{settlement_id\}/.test(code)) {
+    problems.push(`${MODAL}: settlement must not regress to a native ID-valued select`);
+  }
 
   // SETL-PICK-03
   const shared = readRel(root, SHARED);
