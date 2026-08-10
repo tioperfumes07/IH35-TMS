@@ -67,6 +67,9 @@ function main() {
   if (!page.includes("createMaintenancePmSchedule")) {
     failures.push("PmSchedulePage must call createMaintenancePmSchedule");
   }
+  if (!/setFormError\(userFacingApiError\(err,\s*"Failed to create PM schedule"\)\)/.test(page)) {
+    failures.push("PmSchedulePage create failures must use userFacingApiError instead of raw error.message");
+  }
 
   if (!api.includes("export function createMaintenancePmSchedule")) {
     failures.push("maintenance API must export createMaintenancePmSchedule");
