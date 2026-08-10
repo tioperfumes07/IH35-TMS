@@ -4,6 +4,7 @@ import { categorizeBankTransaction, getPlaidBankAccounts, recordCcPayment } from
 import { listCatalogAccounts } from "../../api/catalog-accounts";
 import { listVendors } from "../../api/mdata";
 import { Button } from "../../components/Button";
+import { CappedListNotice } from "../../components/CappedListNotice";
 import { ParityDrawer } from "../../components/parity/ParityDrawer";
 import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { vendorReferenceOption } from "../../components/parity/referenceOptionLabels";
