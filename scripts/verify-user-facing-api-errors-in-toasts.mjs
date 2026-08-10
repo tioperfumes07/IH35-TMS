@@ -19,6 +19,7 @@ const LABEL = "verify-user-facing-api-errors-in-toasts";
 // Files converted to userFacingApiError for API-catch toasts. Keep this list
 // exact; add a file only after every API error toast in it uses the helper.
 const RATCHETED_FILES = [
+  "apps/frontend/src/components/catalogs/CatalogExcelUploadModal.tsx",
   "apps/frontend/src/components/FleetTable.tsx",
   "apps/frontend/src/components/drivers/CreateDriverModal.tsx",
   "apps/frontend/src/pages/dispatch/DispatchBoard.tsx",
@@ -30,6 +31,7 @@ const RATCHETED_FILES = [
 ];
 
 const RAW_PATTERNS = [
+  /setUploadError\([^)]*(?:error|err)\.message[^)]*\)/,
   /pushToast\([^)]*error\.(message|toString\(\))[^)]*\)/,
   /pushToast\([^)]*err\.(message|toString\(\))[^)]*\)/,
   /pushToast\([^)]*firstError\.(message|toString\(\))[^)]*\)/,
