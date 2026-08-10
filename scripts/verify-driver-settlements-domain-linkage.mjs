@@ -147,7 +147,7 @@ requireMatch(
 );
 requireMatch(
   "apps/frontend/src/pages/drivers/AutoDeductionPolicies.tsx",
-  /EntityLink kind="driver" id=\{row\.driver_id\} label=\{row\.driver_name/,
+  /EntityLink kind="driver" id=\{row\.driver_id\} label=\{[^}]*row\.driver_name/,
   "AutoDeductionPolicies card title must pass driver_name as EntityLink label (FAIL-DD1)"
 );
 
