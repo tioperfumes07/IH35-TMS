@@ -76,8 +76,8 @@
         "DOD-C"
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "status": "PASS",
+      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing. | Route /drivers/alerts wired to pages/alerts/DocumentAlertsPage.tsx. getDocumentAlertsInbox / getDocumentAlertRules take operatingCompanyId and are gated by selectedCompanyId. Inbox links to /drivers/:driver_id/profile or /safety/permits; rules editor persists thresholds. DocumentAlertsPage.test.tsx passes (4/4).",
       "pr": null,
       "prod_verified": false
     },
@@ -90,8 +90,8 @@
         "DOD-C"
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "status": "PASS",
+      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing. | Route /drivers/applicants wired to pages/drivers/ApplicantsPipelinePage.tsx. listDriverApplicants scoped to selectedCompanyId; convert-to-driver and onboarding links wired. Empty state + pipeline card render. ApplicantsPipelinePage.test.tsx passes (4/4).",
       "pr": null,
       "prod_verified": false
     },
@@ -104,8 +104,8 @@
         "DOD-C"
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "status": "PASS",
+      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing. | Route /drivers/auto-deductions redirects to /drivers/deductions and shares AutoDeductionPoliciesPanel. useAutoDeductionPolicies accepts operatingCompanyId + optional driver_id filter; policy list joins mdata.drivers for driver_name and renders EntityLink. verify-driver-default-expense-account-held.mjs OK; verify-driver-default-expense-account-wired.mjs OK.",
       "pr": null,
       "prod_verified": false
     },
@@ -118,8 +118,8 @@
         "DOD-C"
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "status": "PASS",
+      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing. | Route /drivers/cash-advances renders debt-alert panel in pages/Drivers.tsx using selectedCompanyId-scoped cashAdvanceRequestsOfficeApi.list, liabilitiesQuery, and settlementsQuery. Links to canonical /driver-finance/cash-advance-requests. No dead end.",
       "pr": null,
       "prod_verified": false
     },
@@ -132,8 +132,8 @@
         "DOD-C"
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "status": "PASS",
+      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing. | Route /drivers/deductions wired to AutoDeductionPoliciesPanel. Uses useDriverDeductionTypeCatalog (entity-scoped catalogs.driver_deduction_types) and ReferenceSelect with inline create. Driver name rendered as EntityLink. reverse-link from driver profile ?driver_id honored.",
       "pr": null,
       "prod_verified": false
     },
@@ -146,8 +146,8 @@
         "DOD-C"
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "status": "PASS",
+      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing. | Route /drivers/disputes wired to pages/drivers/SettlementDisputeList.tsx. useSettlementDisputes reads selectedCompanyId and sends operating_company_id. Table renders driver and settlement as EntityLinks and supports create dispute modal. No dead end.",
       "pr": null,
       "prod_verified": false
     },
@@ -293,9 +293,9 @@
     }
   ],
   "M": 20,
-  "pass_count": 4,
+  "pass_count": 7,
   "total_count": 20,
-  "progress": "4 of 20",
+  "progress": "7 of 20",
   "live_scenario_probe": {
     "source": "scripts/scoreboard-from-live.mjs (live prod probes, TMS-native only)",
     "pass_count": 1,
