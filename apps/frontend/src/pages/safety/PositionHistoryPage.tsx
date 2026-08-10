@@ -84,7 +84,7 @@ export default function PositionHistoryPage() {
         key: "unit_id",
         label: "Unit",
         sortable: true,
-        sortValue: (row) => row.unit_number ?? row.unit_id,
+        sortValue: (row) => entityLabel(row.unit_number, row.unit_id, "Unit"),
         render: (row) => (
           <div>
             <EntityLink

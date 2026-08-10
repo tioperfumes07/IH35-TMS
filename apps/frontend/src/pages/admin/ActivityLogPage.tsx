@@ -29,7 +29,7 @@ const COLUMNS: Array<ParityColumn<AdminActivityItem>> = [
     key: "actor_email",
     label: "Actor",
     sortable: true,
-    sortValue: (row) => row.actor_email ?? row.actor_user_id ?? "",
+    sortValue: (row) => entityLabel(row.actor_email, row.actor_user_id, "User") ?? "",
     render: (row) => <span className="text-gray-800">{entityLabel(row.actor_email, row.actor_user_id, "User") ?? "—"}</span>,
   },
   {

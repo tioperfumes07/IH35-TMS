@@ -58,7 +58,7 @@ const COLUMNS: Array<ParityColumn<AuditViewerEvent>> = [
     key: "actor_email",
     label: "Actor",
     sortable: true,
-    sortValue: (row) => row.actor_email ?? row.actor_user_id ?? "",
+    sortValue: (row) => entityLabel(row.actor_email, row.actor_user_id, "User") ?? "",
     render: (row) => (
       <span className="text-gray-600">
         {row.actor_email ?? (row.actor_user_id ? entityLabel(null, row.actor_user_id, "User") : "—")}
