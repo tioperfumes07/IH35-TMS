@@ -3,6 +3,7 @@ import { DatePicker } from "../../../components/forms/DatePicker";
 import { useQuery } from "@tanstack/react-query";
 import { Download } from "lucide-react";
 import { ApiError, apiRequest, resolveApiUrl } from "../../../api/client";
+import { userFacingApiError } from "../../../lib/api-error-message";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { Button } from "../../../components/Button";
 import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
@@ -106,7 +107,7 @@ export function EldAuditTrailViewer() {
       to,
     })
       .then(() => pushToast("ELD audit PDF downloaded", "success"))
-      .catch((error: Error) => pushToast(error.message || "Failed to export ELD audit PDF", "error"))
+      .catch((error: Error) => pushToast(userFacingApiError(error, "Failed to export ELD audit PDF"), "error"))
       .finally(() => setExporting(false));
   };
 

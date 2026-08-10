@@ -16,6 +16,7 @@ import { Button } from "../../components/Button";
 import { Modal } from "../../components/Modal";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useToast } from "../../components/Toast";
+import { userFacingApiError } from "../../lib/api-error-message";
 import { ReportBlockVPendingBanner } from "./ReportBlockVPendingBanner";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
@@ -265,7 +266,7 @@ export function FuelReconciliationPage() {
                           pushToast("GPS re-match queued", "success");
                           void queryClient.invalidateQueries({ queryKey: ["reports", "fuel-reconciliation", companyId] });
                         })
-                        .catch((error: Error) => pushToast(error.message || "Failed to re-match GPS", "error"));
+                        .catch((error: Error) => pushToast(userFacingApiError(error, "Failed to re-match GPS"), "error"));
                     }}
                   >
                     Re-match GPS
