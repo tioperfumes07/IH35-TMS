@@ -1,12 +1,12 @@
 # Module completion — Factoring (FACT)
 
-**PROGRESS: 2 of 10** · complete: `false` · as_of: 2026-08-02 · live_sha: `—`
+**PROGRESS: 3 of 10** · complete: `false` · as_of: 2026-08-02 · live_sha: `—`
 
 | Status | Count |
 |---|---:|
-| PASS | 2 |
+| PASS | 3 |
 | HOLD | 0 |
-| OPEN | 8 |
+| OPEN | 7 |
 | FAIL | 0 |
 | UNVERIFIED | 0 |
 
@@ -16,7 +16,7 @@
 | `FACT-DUAL-01` | **PASS** | Factor profile panel reads factoring.factor columns (not mdata.vendors notes parse) | listFactors/updateFactor + no vendor-notes; verify-factoring-home-canonical-factor-profile + verify-fact-s01-home-surface | — |
 | `FACT-DUAL-02` | **OPEN** | SubmitFactoringModal rates from factoring.factor (not parseVendorNotes) | scaffold — FAIL retained from cascade sibling sweep | — |
 | `FACT-DUAL-03` | **OPEN** | factoring.routes active factor resolves canonical factoring.factor not mdata.vendors | scaffold — FAIL: factoring.routes.ts:39-60 mdata path | — |
-| `FACT-S02` | **OPEN** | /factoring/submit submission queue wired and entity-scoped | scaffold — not proven | — |
+| `FACT-S02` | **PASS** | /factoring/submit submission queue wired and entity-scoped | SubmissionQueue need-company + ListErrorBanner + honest empty; verify-fact-s02-submit-surface.mjs | — |
 | `FACT-S03` | **OPEN** | /factoring/batches batch wizard + detail drill-through | scaffold — not proven | — |
 | `FACT-S04` | **OPEN** | /factoring/reserves reserve dashboard economics honest | scaffold — dual-path FAIL retained; reserve movement density UNVERIFIED | — |
 | `FACT-S05` | **OPEN** | Duplicate factor vendor banner excludes self-pairs | scaffold — live proof: Faro Factoring ↔ Faro Factoring 100% similar false positive | — |
