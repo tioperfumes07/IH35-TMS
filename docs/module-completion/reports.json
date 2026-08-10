@@ -60,7 +60,7 @@
       "spec": "FuelReconciliationPage \u00b7 VFUEL",
       "status": "PASS",
       "evidence": "FuelReconciliationPage.tsx uses useCompanyContext selectedCompanyId, gates query on companyId, calls getFuelReconciliation({ operating_company_id }). FE api withCompany(/api/v1/reports/fuel-reconciliation). BE fuel-reconciliation.routes.ts uses companyQuerySchema + withCompanyScope and reads card totals/by-unit/unmatched from fuel.fuel_transactions (ft.operating_company_id = $1, archived_at IS NULL, ROUND(total_cost*100) cents) \u2014 not banking.bank_transactions merchant heuristics. Guard: scripts/verify-rpt-s04-fuel-reconciliation.mjs.",
-      "pr": "PENDING",
+      "pr": "#5359",
       "prod_verified": false
     },
     {
@@ -98,7 +98,7 @@
       "spec": "A8-AUDIT-REPORTS-SECTION \u00b7 audit/* report routes",
       "status": "PASS",
       "evidence": "ReportsSubNav AUDIT_REPORT_CHILDREN + 7 manifest routes + AuditReportPage company scope; verify-rpt-s07-audit-reports-section.mjs",
-      "pr": "PENDING",
+      "pr": "#5353",
       "prod_verified": false
     },
     {
