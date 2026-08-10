@@ -21,6 +21,7 @@ const ADMIN_TILES: AdminTile[] = [
   { label: "Integrity Checks", description: "Run data integrity audits", path: "/admin/integrity" },
   { label: "Error Monitor", description: "Production error stream", path: "/admin/error-monitor" },
   { label: "Activity Log", description: "User activity audit trail", path: "/admin/activity" },
+  { label: "Audit Log Viewer", description: "Entity-scoped audit events, severity, actor, and payload detail", path: "/admin/audit-log", ownerOnly: true },
   { label: "Profile Settings", description: "Manage your profile and open notification preferences", path: "/settings" },
   { label: "Notification Preferences", description: "Choose which configured events notify you", path: "/settings/notifications" },
   { label: "Notification Center", description: "Review your delivered and unread notifications", path: "/notifications" },
