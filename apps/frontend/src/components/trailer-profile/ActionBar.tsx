@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 const linkClass =
   "inline-flex h-8 items-center justify-center rounded-sm border border-gray-300 bg-white px-3 text-[13px] font-medium text-gray-800";
 
@@ -25,9 +27,9 @@ export function ActionBar({
       <button type="button" className={linkClass} onClick={onChangeStatus}>
         Change Status
       </button>
-      <a className={linkClass} href={`/maintenance/work-orders/new?equipment_id=${equipmentId}`}>
+      <Link className={linkClass} to={`/maintenance/work-orders/new?equipment_id=${equipmentId}`}>
         + Create WO
-      </a>
+      </Link>
       <a className={linkClass} href={pdfUrl} download data-testid="tp-export-pdf">
         Export PDF
       </a>

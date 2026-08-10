@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { Button } from "../Button";
 
 const linkClass =
@@ -28,13 +29,13 @@ export function ActionBar({
       <Button size="sm" variant="secondary" onClick={onChangeStatus}>
         Change Status
       </Button>
-      <a
+      <Link
         className={linkClass}
-        href={`/maintenance/work-orders/new?unit_id=${encodeURIComponent(unitId)}`}
+        to={`/maintenance/work-orders/new?unit_id=${encodeURIComponent(unitId)}`}
         data-testid="vp-create-work-order"
       >
         + Create Work Order
-      </a>
+      </Link>
       <a className={linkClass} href={`/dispatch/map?unit=${unitId}`}>
         View on Map
       </a>
