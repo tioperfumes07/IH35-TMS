@@ -2,7 +2,7 @@
   "module": "form_425",
   "title": "Form 425C",
   "complete": false,
-  "as_of": "2026-08-02",
+  "as_of": "2026-08-10",
   "live_sha": null,
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/AUDITOR-RUN-2026-07-31/modules/form-425c.md",
   "spec_sources": [
@@ -19,9 +19,9 @@
         "DOD-B"
       ],
       "spec": "Form425CHome route",
-      "status": "OPEN",
-      "evidence": "scaffold — not proven; /form-425c redirects to /425c",
-      "pr": null,
+      "status": "PASS",
+      "evidence": "Form425CHome.tsx reads selectedCompanyId and passes operating_company_id to 425C report APIs. /425c route mounts Form425CHome; /form-425c redirects to /425c. Tabs profile/qb/form/merge/history render. Guard: scripts/verify-425-s01-s02-surfaces.mjs.",
+      "pr": "#TBD",
       "prod_verified": false
     },
     {
@@ -32,9 +32,9 @@
         "VERIFY-1"
       ],
       "spec": "C10-ROUTES tab law · 425c exhibits route",
-      "status": "OPEN",
-      "evidence": "scaffold — not proven",
-      "pr": null,
+      "status": "PASS",
+      "evidence": "/425c/exhibits route mounts Form425CExhibitsViewer, which reads selectedCompanyId and passes operating_company_id to /api/v1/reports/form-425c/exhibits/build. Backend route validates operating_company_id and applies withCompanyScope + retrieval entity check. Exhibits A–F tabs rendered. Guard: scripts/verify-425-s01-s02-surfaces.mjs.",
+      "pr": "#TBD",
       "prod_verified": false
     },
     {
@@ -83,7 +83,7 @@
       "prod_verified": false
     }
   ],
-  "pass_count": 0,
+  "pass_count": 2,
   "total_count": 5,
-  "progress": "0 of 5"
+  "progress": "2 of 5"
 }
