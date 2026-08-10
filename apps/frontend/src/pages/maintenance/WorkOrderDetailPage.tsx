@@ -17,7 +17,6 @@ import { TwoSectionLineEditor, type TwoSectionLine } from "../../components/form
 import { PageHeader } from "../../components/forms/shared/PageHeader";
 import { FlatFieldGrid } from "../../components/layout/FlatFieldGrid";
 import { Combobox } from "../../components/shared/Combobox";
-import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { UploadZone } from "../../components/UploadZone";
 import { LaborTracker } from "../../components/maintenance/LaborTracker";
 import { TasksTab } from "../../components/tasks/TasksTab";
@@ -479,8 +478,6 @@ export function WorkOrderDetailPage() {
 
   useEffect(() => {
     if (!wo) return;
-    const initialAsset = String(wo.asset_id ?? wo.unit_id ?? "");
-    setSelectedAssetId(initialAsset);
     setLineDraft(normalizeLineItems(wo.line_items));
   }, [wo]);
 
