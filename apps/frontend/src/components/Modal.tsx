@@ -117,7 +117,12 @@ export function Modal({
     onClose();
   }, [confirmDiscardOnClose, isDirty, onClose]);
 
-  useEscapeKey(attemptClose, open);
+  useEscapeKey(() => {
+    // WO-CREATE-UX: Escape on an open Combobox list or nested QuickCreate must not discard the parent wizard.
+    if (document.querySelector('[data-combobox-listbox="portal"]')) return;
+    if (document.querySelector('[data-parity-drawer-stack-above-modal="true"]')) return;
+    attemptClose();
+  }, open);
 
   useEffect(() => {
     if (!onRegisterAttemptClose) return;

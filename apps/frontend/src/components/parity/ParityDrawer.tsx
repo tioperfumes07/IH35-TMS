@@ -21,6 +21,11 @@ export type ParityDrawerProps = {
   children: ReactNode;
   /** "regular" ≈576px, "wide" ≈700px. */
   size?: "regular" | "wide";
+  /**
+   * Nested inline "+ Create" opened from a wide wizard / shared Modal (z-[70]). Stacks at z-[80]
+   * so Save clicks are not intercepted by the parent overlay; Escape is scoped to this drawer.
+   */
+  stackAboveModal?: boolean;
 };
 
 export function ParityDrawer({
@@ -31,15 +36,22 @@ export function ParityDrawer({
   footer,
   children,
   size = "regular",
+  stackAboveModal = false,
 }: ParityDrawerProps) {
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key !== "Escape") return;
+      e.preventDefault();
+      // Capture + stop so parent Modal (Create WO) does not treat Escape as discard.
+      if (stackAboveModal) {
+        e.stopImmediatePropagation();
+      }
+      onClose();
     };
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [open, onClose]);
+    document.addEventListener("keydown", onKey, stackAboveModal ? { capture: true } : false);
+    return () => document.removeEventListener("keydown", onKey, stackAboveModal ? { capture: true } : false);
+  }, [open, onClose, stackAboveModal]);
 
   if (!open) return null;
   const widthClass = size === "wide" ? PARITY_DRAWER_WIDTH_WIDE : PARITY_DRAWER_WIDTH;
@@ -64,8 +76,13 @@ export function ParityDrawer({
   // STACKING (live 2026-08-04): BookLoadModalV4 / shared Modal shells sit at z-50. This drawer must
   // stack ABOVE them (z-[60]) or Save clicks hit the wizard backdrop (onMouseDown → close) and the
   // create never POSTs — same symptom as the nested-form GET (wizard closes, nothing persisted).
+  // WO-CREATE-UX: shared Modal upgraded to z-[70]; nested QuickCreate uses stackAboveModal → z-[80].
+  const stackClass = stackAboveModal ? "z-[80]" : "z-[60]";
   return createPortal(
-    <div className="fixed inset-0 z-[60]">
+    <div
+      className={`fixed inset-0 ${stackClass}`}
+      {...(stackAboveModal ? { "data-parity-drawer-stack-above-modal": "true" } : {})}
+    >
       <div className="absolute inset-0 bg-black/30" aria-hidden="true" onClick={onClose} />
       <aside
         role="dialog"

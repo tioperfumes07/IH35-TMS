@@ -309,6 +309,7 @@ export function Combobox({
     }
     if (event.key === "Escape") {
       event.preventDefault();
+      event.stopPropagation();
       setOpen(false);
       setQuery("");
       setActiveIndex(-1);

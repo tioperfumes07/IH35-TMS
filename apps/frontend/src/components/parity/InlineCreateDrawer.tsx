@@ -51,7 +51,7 @@ const TITLES: Record<InlineCreateKind, string> = {
 
 export function InlineCreateDrawer({ open, kind, operatingCompanyId, onClose, onCreated }: Props) {
   return (
-    <ParityDrawer open={open} title={TITLES[kind]} onClose={onClose}>
+    <ParityDrawer open={open} title={TITLES[kind]} onClose={onClose} stackAboveModal>
       <div data-testid={`inline-create-drawer-${kind}`}>
         {kind === "account" && (
           <NewAccountDrawerForm
