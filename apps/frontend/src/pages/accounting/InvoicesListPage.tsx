@@ -28,6 +28,7 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { CollapsedListFilters } from "../../components/table";
 import { useUrlSort } from "../../hooks/useUrlSort";
 import { EntityPicker } from "../../components/parity/EntityPicker";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 // INVOICE-LISTFILTER-01: real InvoiceStatus values go to the backend `status` param.
 // "with_balance" is a UI label for server-side has_balance=true (aging-compatible open AR).
@@ -212,7 +213,7 @@ export function InvoicesListPage() {
         }
       );
     } catch (error) {
-      pushToast(error instanceof Error ? error.message : "Bulk invoice update failed", "error");
+      pushToast(userFacingApiError(error, "Bulk invoice update failed"), "error");
     }
   };
 
