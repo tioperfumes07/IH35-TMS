@@ -40,6 +40,7 @@ import { useCompanyContext } from "../contexts/CompanyContext";
 import { colors } from "../design/tokens";
 import { SelectCombobox } from "../components/shared/SelectCombobox";
 import { CreateDriverModal } from "../components/drivers/CreateDriverModal";
+import { DriverPickerWithCreate } from "../components/drivers/DriverPickerWithCreate";
 import { DriversListPage } from "./drivers/DriversListPage";
 import { AutoDeductionPoliciesPanel } from "./drivers/AutoDeductionPolicies";
 import { PendingSettlementDeductionsPanel } from "./drivers/PendingSettlementDeductionsPanel";
@@ -909,29 +910,27 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-gray-600">Primary Driver</label>
-            <SelectCombobox
-              value={teamForm.primary_driver_id}
-              onChange={(event) => setTeamForm((current) => ({ ...current, primary_driver_id: event.target.value }))}
+            <DriverPickerWithCreate
+              operatingCompanyId={selectedCompanyId}
+              value={teamForm.primary_driver_id || null}
+              onChange={(driverId) => setTeamForm((current) => ({ ...current, primary_driver_id: driverId ?? "" }))}
+              open={teamCreateOpen}
+              shell="drawer"
+              placeholder="Select primary driver"
               className="rounded-sm border border-gray-300 h-9 px-2 text-[13px]"
-            >
-              <option value="">Select driver</option>
-              {(driversQuery.data ?? []).map((driver) => (
-                <option key={driver.id} value={driver.id}>{driver.first_name} {driver.last_name}</option>
-              ))}
-            </SelectCombobox>
+            />
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-gray-600">Co Driver</label>
-            <SelectCombobox
-              value={teamForm.co_driver_id}
-              onChange={(event) => setTeamForm((current) => ({ ...current, co_driver_id: event.target.value }))}
+            <DriverPickerWithCreate
+              operatingCompanyId={selectedCompanyId}
+              value={teamForm.co_driver_id || null}
+              onChange={(driverId) => setTeamForm((current) => ({ ...current, co_driver_id: driverId ?? "" }))}
+              open={teamCreateOpen}
+              shell="drawer"
+              placeholder="Select co-driver"
               className="rounded-sm border border-gray-300 h-9 px-2 text-[13px]"
-            >
-              <option value="">Select driver</option>
-              {(driversQuery.data ?? []).map((driver) => (
-                <option key={driver.id} value={driver.id}>{driver.first_name} {driver.last_name}</option>
-              ))}
-            </SelectCombobox>
+            />
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-gray-600">Primary %</label>
