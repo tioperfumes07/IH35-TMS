@@ -79,6 +79,13 @@ const REQUIRED = {
 };
 
 const failures = [];
+const workOrderDetail = readFileSync("apps/frontend/src/pages/maintenance/WorkOrderDetailPage.tsx", "utf8");
+if (workOrderDetail.includes("selectedAssetId") || workOrderDetail.includes("Asset Selector")) {
+  failures.push("WorkOrderDetailPage: dead local-only asset selector must not return");
+}
+if (!workOrderDetail.includes('kind="unit"') || !workOrderDetail.includes("Change in Edit")) {
+  failures.push("WorkOrderDetailPage: current asset must drill through and route changes to the wired Edit flow");
+}
 for (const [file, prefixes] of Object.entries(REQUIRED)) {
   let src;
   try { src = readFileSync(file, "utf8"); } catch { failures.push(`${file} (missing)`); continue; }
