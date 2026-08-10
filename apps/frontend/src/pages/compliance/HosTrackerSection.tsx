@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getHosDailyRoster, DUTY_LABEL, DUTY_COLOR, type HosRosterDriver } from "../../api/hosTracker";
-import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
+import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { companyToday } from "../../lib/businessDate";
 import { entityLabel } from "../../lib/entity-label";
@@ -196,7 +196,7 @@ export function HosTrackerSection({ operatingCompanyId }: { operatingCompanyId: 
         </div>
 
         {rosterQ.isError ? (
-          <ListErrorBanner onRetry={() => void rosterQ.refetch()} />
+          <ListErrorState title="Couldn't load HOS roster" onRetry={() => void rosterQ.refetch()} />
         ) : (
           <ParityTable
             rows={roster?.drivers ?? []}
