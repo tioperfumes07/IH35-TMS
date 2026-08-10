@@ -25,6 +25,9 @@ export function checkEntityBadgeSingleSource({ topbar, switcher, helper }) {
   if (!/selectedCompanySwitcherLabel/.test(switcher)) {
     reasons.push(`${SWITCHER}: selectedLabel must use selectedCompanySwitcherLabel(selectedCompany)`);
   }
+  if (!/userFacingApiError\(err,\s*"Could not switch company"\)/.test(switcher)) {
+    reasons.push(`${SWITCHER}: switch failures must be humanized before toast display`);
+  }
   if (!/export function selectedCompanyLegalBadgeLabel/.test(helper)) {
     reasons.push(`${HELPER}: shared selectedCompanyLegalBadgeLabel helper missing`);
   }
@@ -37,7 +40,7 @@ export function checkEntityBadgeSingleSource({ topbar, switcher, helper }) {
 function selfTest() {
   const ok = checkEntityBadgeSingleSource({
     topbar: 'selectedCompanyLegalBadgeLabel(selectedCompany)',
-    switcher: 'selectedCompanySwitcherLabel(selectedCompany)',
+    switcher: 'selectedCompanySwitcherLabel(selectedCompany); userFacingApiError(err, "Could not switch company")',
     helper: 'export function selectedCompanyLegalBadgeLabel\nexport function selectedCompanySwitcherLabel',
   });
   const bad = checkEntityBadgeSingleSource({

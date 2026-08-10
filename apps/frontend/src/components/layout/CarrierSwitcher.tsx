@@ -4,10 +4,10 @@ import { useMemo, useState } from "react";
 import { Button } from "../Button";
 import { useToast } from "../Toast";
 import { switchIdentityCompany } from "../../api/identity";
-import { ApiError } from "../../api/client";
 import type { MyCompany } from "../../api/org";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { selectedCompanySwitcherLabel } from "../../lib/selected-company-label";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 /** Only launched (is_active) carriers appear in the office company switcher. */
 function visibleCompanies(companies: MyCompany[]): MyCompany[] {
@@ -42,11 +42,7 @@ export function CarrierSwitcher() {
       pushToast(`Switched to ${company.short_name || company.legal_name}`, "success");
       setOpen(false);
     } catch (err) {
-      if (err instanceof ApiError) {
-        pushToast(err.message || "Could not switch company", "error");
-      } else {
-        pushToast("Could not switch company", "error");
-      }
+      pushToast(userFacingApiError(err, "Could not switch company"), "error");
     } finally {
       setSwitchingCompanyId(null);
     }
