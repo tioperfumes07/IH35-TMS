@@ -74,7 +74,7 @@ export function RoadServiceList({ operatingCompanyId }: Props) {
       sortable: true,
       render: (row) => (
         <Link to={`/fleet/${row.unit_id}`} className={LINK}>
-          {row.unit_display_id ?? row.unit_id}
+          {entityLabel(row.unit_display_id, row.unit_id, "Unit")}
         </Link>
       ),
     },

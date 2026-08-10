@@ -12,6 +12,7 @@ import {
 import { Modal } from "../../components/Modal";
 import { DateTimePicker } from "../../components/forms/DateTimePicker";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 import { useListState } from "../../components/list-state";
 import { useSafetyUiContext } from "./SafetyLayout";
 import { SafetyEventsTable } from "./components/SafetyEventsTable";
@@ -438,7 +439,7 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
                 <EntityLink
                   kind="load"
                   id={detailQuery.data.related_load_id}
-                  label={detailQuery.data.related_load_number ?? detailQuery.data.related_load_id}
+                  label={entityLabel(detailQuery.data.related_load_number, detailQuery.data.related_load_id, "Load")}
                   data-testid="safety-event-related-load-link"
                 />
               ) : (

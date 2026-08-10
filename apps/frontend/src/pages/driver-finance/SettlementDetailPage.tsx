@@ -19,6 +19,7 @@ import {
 import { resolveApiUrl } from "../../api/client";
 import { formatUsdCents } from "../../lib/money";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { Button } from "../../components/Button";
@@ -699,7 +700,7 @@ function OpenDriverBillsSection({
         <div className="space-y-1">
           {items.map((bill) => (
             <div key={bill.id} className="flex items-center justify-between text-sm">
-              <EntityLink kind="load" id={bill.load_id ?? ""} label={bill.load_number ?? bill.load_id ?? "—"} />
+              <EntityLink kind="load" id={bill.load_id ?? ""} label={entityLabel(bill.load_number, bill.load_id, "Load")} />
               <span className="font-semibold">{formatUsdCents(bill.gross_amount_cents)}</span>
             </div>
           ))}

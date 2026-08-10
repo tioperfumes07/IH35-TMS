@@ -29,7 +29,7 @@ export function CurrentLoadSection({
         <EntityLink
           kind="load"
           id={String(currentLoad.load_id)}
-          label={String(currentLoad.load_number ?? currentLoad.load_id)}
+          label={entityLabel(currentLoad.load_number, currentLoad.load_id, "Load")}
           className="mt-2 inline-block text-xs font-semibold text-slate-700 underline"
         />
       ) : null}
