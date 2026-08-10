@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { ApiError } from "../../api/client";
 import type { CatalogFieldConfig, CatalogRow } from "../../hooks/useCatalogQuery";
+import { userFacingApiError } from "../../lib/api-error-message";
 import { Button } from "../Button";
 import { DatePicker } from "../forms/DatePicker";
 import { Modal } from "../Modal";
@@ -195,12 +195,7 @@ export function CatalogEditModal({
       await onSave(body, row);
       onClose();
     } catch (error) {
-      if (error instanceof ApiError) {
-        const payload = error.data as { error?: string } | undefined;
-        setSubmitError(payload?.error ?? error.message);
-      } else {
-        setSubmitError(error instanceof Error ? error.message : "Failed to save catalog row");
-      }
+      setSubmitError(userFacingApiError(error, "Failed to save catalog row"));
     } finally {
       setSaving(false);
     }
