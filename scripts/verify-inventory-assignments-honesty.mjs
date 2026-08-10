@@ -45,6 +45,9 @@ export function computeFailures(files) {
   if (!/kind="work_order"/.test(assignments) || !/kind="unit"/.test(assignments)) {
     errors.push("InventoryAssignmentsPage must EntityLink WO + unit");
   }
+  if (!/assignmentsQuery\.isError/.test(assignments) || !/\bListErrorState\b/.test(assignments)) {
+    errors.push("InventoryAssignmentsPage must use assignmentsQuery.isError -> ListErrorState (not static error div)");
+  }
   return errors;
 }
 
@@ -56,6 +59,7 @@ function selftest() {
       <Link to="/inventory/purchases">Purchase History</Link>
       <EntityLink kind="work_order" id={r.wo_id} />
       <EntityLink kind="unit" id={r.unit_id} />
+      assignmentsQuery.isError ? <ListErrorState /> : null
     `,
     purchases: `
       export function InventoryPurchasesPage() {

@@ -15,6 +15,8 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { partNeedsReorder } from "../maintenance/parts-low-stock";
 import { displayPartInventoryCategory } from "./partInventoryCategories";
 import { CappedListNotice } from "../../components/CappedListNotice";
+import { ListErrorState } from "../../components/ListErrorState";
+import { formatQueryErrorDetail } from "../../lib/tableError";
 
 // ParityColumn only honors key/label/render/className/sortable — the earlier align/format/badge keys
 // were silently ignored (columns is a variable, so no excess-property check), so unit-cost formatting
@@ -189,25 +191,33 @@ export function InventoryPartsStockPage() {
         hint="Vendor names on this grid are enriched from the first page of active vendors only."
         className="mb-2 text-xs text-slate-600"
       />
-      <ParityTable
-        columns={columns}
-        rows={rows}
-        loading={partsQuery.isLoading}
-        emptyText="No parts found. Create your first part to get started."
-        rowKey={(row: { id: string }) => row.id}
-        rowActions={(row) => (
-          <button
-            type="button"
-            className="text-slate-600 underline text-xs"
-            onClick={() => {
-              const raw = rawParts.find((p) => p.id === row.id) ?? null;
-              setEditingPart(raw);
-            }}
-          >
-            Edit
-          </button>
-        )}
-      />
+      {partsQuery.isError ? (
+        <ListErrorState
+          title="Couldn't load parts inventory"
+          {...formatQueryErrorDetail(partsQuery.error)}
+          onRetry={() => void partsQuery.refetch()}
+        />
+      ) : (
+        <ParityTable
+          columns={columns}
+          rows={rows}
+          loading={partsQuery.isLoading}
+          emptyText="No parts found. Create your first part to get started."
+          rowKey={(row: { id: string }) => row.id}
+          rowActions={(row) => (
+            <button
+              type="button"
+              className="text-slate-600 underline text-xs"
+              onClick={() => {
+                const raw = rawParts.find((p) => p.id === row.id) ?? null;
+                setEditingPart(raw);
+              }}
+            >
+              Edit
+            </button>
+          )}
+        />
+      )}
       <PartCreateDrawer
         isOpen={isCreateOpen}
         onClose={() => setIsCreateOpen(false)}

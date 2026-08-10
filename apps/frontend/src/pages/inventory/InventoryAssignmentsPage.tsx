@@ -8,6 +8,8 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { listPartsAssignments, type PartsAssignmentRow } from "../../api/maintenance";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { entityLabel } from "../../lib/entity-label";
+import { ListErrorState } from "../../components/ListErrorState";
+import { formatQueryErrorDetail } from "../../lib/tableError";
 
 function formatMoney(value: number | null | undefined) {
   return `$${Number(value ?? 0).toFixed(2)}`;
@@ -159,9 +161,11 @@ export function InventoryAssignmentsPage() {
           Loading assignment trail...
         </div>
       ) : assignmentsQuery.isError ? (
-        <div className="rounded-sm border border-red-200 bg-red-50 p-8 text-center text-sm text-red-700">
-          Could not load assignment trail. Retry or check Maintenance work-order parts links.
-        </div>
+        <ListErrorState
+          title="Couldn't load assignment trail"
+          {...formatQueryErrorDetail(assignmentsQuery.error)}
+          onRetry={() => void assignmentsQuery.refetch()}
+        />
       ) : (
         <div className="space-y-2 rounded-sm border border-gray-200 bg-white p-3">
           <h3 className="text-sm font-semibold">Assignment trail</h3>
