@@ -73,7 +73,7 @@ describeIntegration("0280-02 revenue-gl-linkage (real Postgres)", () => {
   async function bypass<T>(scopeCompanyId: string, fn: () => Promise<T>): Promise<T> {
     await db.query("BEGIN");
     await db.query("SET LOCAL app.bypass_rls = 'lucia'");
-    await db.query("SELECT set_config('app.operating_company_id', $1, true)", [scopeCompanyId]);
+    await db.query("SELECT set_config('app.operating_company_id', $1::text, true)", [scopeCompanyId]);
     try {
       const result = await fn();
       await db.query("COMMIT");
@@ -88,7 +88,7 @@ describeIntegration("0280-02 revenue-gl-linkage (real Postgres)", () => {
   async function withEnforcedCompanyRls<T>(scopeCompanyId: string, fn: () => Promise<T>): Promise<T> {
     await db.query("BEGIN");
     await db.query(`SELECT set_config('app.bypass_rls', '', true)`);
-    await db.query("SELECT set_config('app.operating_company_id', $1, true)", [scopeCompanyId]);
+    await db.query("SELECT set_config('app.operating_company_id', $1::text, true)", [scopeCompanyId]);
     try {
       const result = await fn();
       await db.query("COMMIT");

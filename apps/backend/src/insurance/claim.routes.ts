@@ -44,7 +44,7 @@ async function withCompanyScope<T>(
 ) {
   await assertCompanyMembership(userId, operatingCompanyId);
   return withCurrentUser(userId, async (client) => {
-    await client.query("SELECT set_config('app.operating_company_id', $1, true)", [operatingCompanyId]);
+    await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [operatingCompanyId]);
     // Probed once per process and cached; every claim SQL builder below is shaped by the answer so
     // that a database missing either held migration degrades instead of 500-ing.
     const caps = await getClaimColumnCapabilities(client as Queryable);

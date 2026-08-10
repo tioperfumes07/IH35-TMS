@@ -38,7 +38,7 @@ export async function registerScheduledReportAdminRoutes(app: FastifyInstance) {
       const operatingCompanyId = await resolveDefaultOperatingCompanyId(client, user.uuid);
       if (!operatingCompanyId) return null;
 
-      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [operatingCompanyId]);
+      await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [operatingCompanyId]);
       const scheduleRes = await client.query(
         `
           SELECT recipient_roles

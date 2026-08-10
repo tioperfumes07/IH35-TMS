@@ -38,7 +38,7 @@ async function withCompanyScope<T>(
 ) {
   return withCurrentUser(userId, async (client) => {
     await assertCompanyMembership(client, userId, operatingCompanyId);
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     return fn(client as Queryable);
   });
 }
@@ -110,7 +110,7 @@ export async function registerDriversMessagesRoutes(app: FastifyInstance) {
       const operatingCompanyId = companyRes.rows[0]?.operating_company_id;
       if (operatingCompanyId) {
         // membership-scope-exempt: principal-derived
-        await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+        await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
       }
       return listDriverPwaMessages(client as Queryable, driver.id);
     });
@@ -131,7 +131,7 @@ export async function registerDriversMessagesRoutes(app: FastifyInstance) {
       const operatingCompanyId = companyRes.rows[0]?.operating_company_id;
       if (!operatingCompanyId) throw new Error("driver_company_missing");
       // membership-scope-exempt: principal-derived
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
       const created = await insertDriverReply(client as Queryable, {
         operatingCompanyId,
         driverId: driver.id,
@@ -163,7 +163,7 @@ export async function registerDriversMessagesRoutes(app: FastifyInstance) {
       const operatingCompanyId = companyRes.rows[0]?.operating_company_id;
       if (!operatingCompanyId) return null;
       // membership-scope-exempt: principal-derived
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
       return markMessageRead(client as Queryable, params.data.messageId, operatingCompanyId, userId);
     });
     if (!message) return reply.code(404).send({ error: "not_found" });

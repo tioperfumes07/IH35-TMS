@@ -55,7 +55,7 @@ export async function registerCustomerBillingRoutes(app: FastifyInstance) {
       const customerId = parsedParams.data.customer_id;
 
       await assertCompanyMembership(authUser.uuid, operatingCompanyId);
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
       const customerRes = await client.query(
         `
           SELECT

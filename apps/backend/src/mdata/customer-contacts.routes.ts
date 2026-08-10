@@ -116,7 +116,7 @@ async function ensureCustomerInScope(
 ): Promise<string | null> {
   const operatingCompanyId = await resolveOperatingCompanyId(client, userId, requestedOpco ?? null);
   if (!operatingCompanyId) return null;
-  await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+  await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
   const ok = await ensureCustomerExists(client, customerId, operatingCompanyId);
   return ok ? operatingCompanyId : null;
 }

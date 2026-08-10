@@ -190,7 +190,7 @@ export async function runCsaBasicPullTick(onlyCompanyId?: string) {
     const companies = await listCompaniesForPull(client, onlyCompanyId);
     for (const company of companies) {
       assertTenantContext(company.id, "compliance.csa_basic_pull_cron");
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [company.id]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [company.id]);
       const usdot = company.usdot_number?.trim() ?? "";
       if (!usdot) {
         failures.push(`${company.id}:missing_usdot`);

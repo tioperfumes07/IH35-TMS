@@ -151,7 +151,7 @@ export async function createSettlementDispute(
   input: z.infer<typeof createDisputeBodySchema>
 ) {
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [input.operating_company_id]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
 
     const settlementRes = await client.query<{ id: string; driver_id: string }>(
       `
@@ -218,7 +218,7 @@ export async function createSettlementDispute(
 
 export async function listSettlementDisputes(userId: string, query: z.infer<typeof listQuerySchema>) {
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [query.operating_company_id]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [query.operating_company_id]);
 
     const values: unknown[] = [query.operating_company_id];
     const filters: string[] = [`d.operating_company_id = $1::uuid`];
@@ -279,7 +279,7 @@ export async function reviewSettlementDispute(
   if (!isOwner(userRole)) throw new Error("E_OWNER_ONLY");
 
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [input.operating_company_id]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
 
     const disputeRes = await client.query<{
       id: string;

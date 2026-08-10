@@ -1221,7 +1221,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
       const scopedCompanyId = await resolveOperatingCompanyId(client, authUser.uuid, operating_company_id);
       if (!scopedCompanyId) return { rows: [], total: 0 };
       // membership-scope-exempt: scopedCompanyId comes from resolveOperatingCompanyId, which validates a requested company against org.user_accessible_company_ids() and throws forbidden_company_membership
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [scopedCompanyId]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [scopedCompanyId]);
       values.push(scopedCompanyId);
       const ociIdx = values.length;
       // Predicate must appear in the SQL template literal (verify-mdata-entity-scope ratchet) —
@@ -1338,7 +1338,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
       const scopedCompanyId = await resolveOperatingCompanyId(client, authUser.uuid, requestedCompanyId);
       if (!scopedCompanyId) return null;
       // membership-scope-exempt: scopedCompanyId comes from resolveOperatingCompanyId, which validates a requested company against org.user_accessible_company_ids() and throws forbidden_company_membership
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [scopedCompanyId]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [scopedCompanyId]);
       const res = await client.query(
         `
           SELECT
@@ -1409,7 +1409,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
           parsedQuery.data.operating_company_id
         );
         if (!scopedCompanyId) return { error: "operating_company_id_required" as const };
-        await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [scopedCompanyId]);
+        await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [scopedCompanyId]);
 
         const driverExists = await client.query(
           `SELECT 1 FROM mdata.drivers WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,

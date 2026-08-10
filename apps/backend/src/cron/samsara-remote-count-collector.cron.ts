@@ -80,7 +80,7 @@ export function initializeSamsaraRemoteCountCollectorCron(app: FastifyInstance) 
 
             for (const operatingCompanyId of activeTenantIds) {
               assertTenantContext(operatingCompanyId, CRON_NAME);
-              await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+              await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
               const enabled = await isSamsaraEnabledForTenant(client, operatingCompanyId);
               if (!enabled) {
                 await appendCronAuditEvent(client, "cron_skipped_samsara_disabled", "info", {

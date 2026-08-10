@@ -23,7 +23,7 @@ export function initializeFuelGpsMatchCron(app: FastifyInstance) {
         );
         for (const company of companies.rows) {
           assertTenantContext(company.id, "safety.fuel_gps_match_cron");
-          await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [company.id]);
+          await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [company.id]);
           const matched = await runFuelGpsMatchBatch(client, company.id);
           app.log.info({ operating_company_id: company.id, matched }, "[FUEL_GPS_MATCH_CRON] run complete");
         }

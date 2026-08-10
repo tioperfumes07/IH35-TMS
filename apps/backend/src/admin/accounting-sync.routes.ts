@@ -45,7 +45,7 @@ export async function registerAdminAccountingSyncRoutes(app: FastifyInstance) {
 
     const offset = q.data.cursor ?? 0;
     const rows = await withLuciaBypass(async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [q.data.operating_company_id]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [q.data.operating_company_id]);
       const params: unknown[] = [q.data.operating_company_id];
       let where = `operating_company_id = $1`;
       if (q.data.status) {
@@ -124,7 +124,7 @@ export async function registerAdminAccountingSyncRoutes(app: FastifyInstance) {
     if (!q.success) return reply.code(400).send({ error: "validation_error", details: q.error.flatten() });
 
     const rows = await withLuciaBypass(async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [q.data.operating_company_id]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [q.data.operating_company_id]);
       const params: unknown[] = [q.data.operating_company_id];
       let where = `operating_company_id = $1`;
       if (q.data.status) {
@@ -219,7 +219,7 @@ export async function registerAdminAccountingSyncRoutes(app: FastifyInstance) {
     if (!body.success) return reply.code(400).send({ error: "validation_error", details: body.error.flatten() });
 
     await withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [body.data.operating_company_id]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [body.data.operating_company_id]);
       await client.query(
         `
           UPDATE integrations.qbo_sync_queue
@@ -240,7 +240,7 @@ export async function registerAdminAccountingSyncRoutes(app: FastifyInstance) {
 
 async function appendAudit(actorId: string, operatingCompanyId: string, eventClass: string, payload: Record<string, unknown>) {
   await withCurrentUser(actorId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     await client.query(`SELECT audit.append_event($1, $2, $3::jsonb, $4::uuid, $5)`, [
       eventClass,
       "info",

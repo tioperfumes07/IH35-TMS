@@ -47,7 +47,7 @@ export async function registerCashFlowModuleRoutes(app: FastifyInstance): Promis
     }
     await assertCompanyMembership(user.uuid, query.data.operating_company_id);
     const result = await withCurrentUser(user.uuid, async (client) => {
-      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [query.data.operating_company_id]);
+      await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [query.data.operating_company_id]);
       // BLOCK 2: re-bucket projected income by projected_cash_date only when the master flag is on
       // (OFF/unregistered → false → current behaviour).
       const cashFollowsEta = await isEnabled(client, "CASH_FOLLOWS_ETA_ENABLED", {
@@ -69,7 +69,7 @@ export async function registerCashFlowModuleRoutes(app: FastifyInstance): Promis
     }
     await assertCompanyMembership(user.uuid, query.data.operating_company_id);
     const result = await withCurrentUser(user.uuid, async (client) => {
-      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [query.data.operating_company_id]);
+      await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [query.data.operating_company_id]);
       const cashFollowsEta = await isEnabled(client, "CASH_FOLLOWS_ETA_ENABLED", {
         operating_company_id: query.data.operating_company_id,
         user_uuid: user.uuid,
@@ -89,7 +89,7 @@ export async function registerCashFlowModuleRoutes(app: FastifyInstance): Promis
     }
     await assertCompanyMembership(user.uuid, body.data.operating_company_id);
     const result = await withCurrentUser(user.uuid, async (client) => {
-      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [body.data.operating_company_id]);
+      await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [body.data.operating_company_id]);
       const row = await addAdjustment(client, {
         operating_company_id: body.data.operating_company_id,
         entry_date: body.data.entry_date,

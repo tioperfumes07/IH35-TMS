@@ -195,7 +195,7 @@ async function finalizeJeGateFlagOff(opts: SyncEntityToQboOpts): Promise<void> {
   const release = !opts.db;
   try {
     await client.query("BEGIN");
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [opts.operating_company_id]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [opts.operating_company_id]);
     await client.query(
       `
         UPDATE integrations.qbo_sync_queue
@@ -226,7 +226,7 @@ async function finalizeJeGateRefusal(opts: SyncEntityToQboOpts, sourceSystem: st
   const release = !opts.db;
   try {
     await client.query("BEGIN");
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [opts.operating_company_id]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [opts.operating_company_id]);
     await client.query(
       `
         UPDATE integrations.qbo_sync_queue
@@ -269,7 +269,7 @@ export async function syncEntityToQbo(opts: SyncEntityToQboOpts): Promise<SyncEn
   // anything, so a disabled/refused entity makes ZERO QuickBooks calls. ──────────
   if (entityType === "journal_entry") {
     const gate = await withLuciaBypass(async (c) => {
-      await c.query(`SELECT set_config('app.operating_company_id', $1, true)`, [opts.operating_company_id]);
+      await c.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [opts.operating_company_id]);
       return evaluateJeQboPushGate(c, opts.operating_company_id, opts.entity_id);
     });
     if (gate.decision === "import_source") {
@@ -287,7 +287,7 @@ export async function syncEntityToQbo(opts: SyncEntityToQboOpts): Promise<SyncEn
   // terminal semantics as the JE gate. ──────────
   if (entityType === "invoice" || entityType === "bill") {
     const gate = await withLuciaBypass(async (c) => {
-      await c.query(`SELECT set_config('app.operating_company_id', $1, true)`, [opts.operating_company_id]);
+      await c.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [opts.operating_company_id]);
       return evaluateEntityPushGate(c, {
         operatingCompanyId: opts.operating_company_id,
         entityKind: entityType,
@@ -310,7 +310,7 @@ export async function syncEntityToQbo(opts: SyncEntityToQboOpts): Promise<SyncEn
   // TMS does not push it. This closes the last known ungated outbound JE path. ──────────
   if (entityType === "factoring_advance") {
     const enabled = await withLuciaBypass(async (c) => {
-      await c.query(`SELECT set_config('app.operating_company_id', $1, true)`, [opts.operating_company_id]);
+      await c.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [opts.operating_company_id]);
       return isEnabled(c, JE_QBO_PUSH_FLAG, { operating_company_id: opts.operating_company_id });
     });
     if (!enabled) {
@@ -337,7 +337,7 @@ export async function syncEntityToQbo(opts: SyncEntityToQboOpts): Promise<SyncEn
 
   try {
     await outerClient.query("BEGIN");
-    await outerClient.query(`SELECT set_config('app.operating_company_id', $1, true)`, [opts.operating_company_id]);
+    await outerClient.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [opts.operating_company_id]);
 
     const lockKey = `${opts.operating_company_id}:${opts.entity_type}:${opts.entity_id}`;
     const lockRes = await outerClient.query<{ pg_try_advisory_xact_lock: boolean }>(
@@ -347,7 +347,7 @@ export async function syncEntityToQbo(opts: SyncEntityToQboOpts): Promise<SyncEn
     if (!lockRes.rows[0]?.pg_try_advisory_xact_lock) {
       await outerClient.query("ROLLBACK");
       await withLuciaBypass(async (c) => {
-        await c.query(`SELECT set_config('app.operating_company_id', $1, true)`, [opts.operating_company_id]);
+        await c.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [opts.operating_company_id]);
         await c.query(
           `
             UPDATE integrations.qbo_sync_queue
@@ -651,7 +651,7 @@ export async function syncEntityToQbo(opts: SyncEntityToQboOpts): Promise<SyncEn
     // the known HTTP-error branches use, so unknown errors also stop after N attempts and dead-letter.
     const dead = shouldDeadLetterAccountingAttempt(attemptCountForCap);
     await withLuciaBypass(async (c) => {
-      await c.query(`SELECT set_config('app.operating_company_id', $1, true)`, [opts.operating_company_id]);
+      await c.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [opts.operating_company_id]);
       await c.query(
         `
           UPDATE integrations.qbo_sync_queue

@@ -216,7 +216,7 @@ export class TmsAccountPushHandler implements OutboxEventHandler {
     const operationHint = requireOperation(payload.operation);
 
     await ctx.client.query(`SELECT set_config('app.bypass_rls', 'lucia', true)`);
-    await ctx.client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operating_company_id]);
+    await ctx.client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operating_company_id]);
 
     // IMPORT-P0b — entity-push kill-switch (see invoice handler): gate BEFORE mirror write / QBO token fetch.
     const p0bGate = await evaluateEntityPushGate(ctx.client, {

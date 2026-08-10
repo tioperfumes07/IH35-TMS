@@ -330,7 +330,7 @@ export async function pushSingleQboAccount(
   }
 
   await client.query(`SELECT set_config('app.bypass_rls', 'lucia', true)`);
-  await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [row.operating_company_id]);
+  await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [row.operating_company_id]);
 
   try {
     await ensureMdataMirror(client, row);

@@ -282,7 +282,7 @@ export class TmsInvoicePushHandler implements OutboxEventHandler {
     const operationHint = requireOperation(payload.operation);
 
     await ctx.client.query(`SELECT set_config('app.bypass_rls', 'lucia', true)`);
-    await ctx.client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operating_company_id]);
+    await ctx.client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operating_company_id]);
 
     // IMPORT-P0b — entity-push kill-switch. Consult the shared gate BEFORE any load / QBO token fetch:
     // outbound is OFF under the parallel-books architecture, and a QBO-origin/cloned row is refused even

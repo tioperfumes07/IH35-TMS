@@ -527,7 +527,7 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
     }
 
     const result = await withCurrentUser(authUser.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [resolvedOperatingCompanyId]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [resolvedOperatingCompanyId]);
       const values: unknown[] = [];
       const filters: string[] = [EXCLUDE_ARCHIVED_MDATA_CUSTOMERS_SQL];
       if (status === "active") filters.push("deactivated_at IS NULL");
@@ -795,7 +795,7 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
       return reply.code(400).send({ error: "operating_company_id_required" });
     }
     const row = await withCurrentUser(authUser.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [resolvedOperatingCompanyId]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [resolvedOperatingCompanyId]);
       const res = await client.query(
         `SELECT ${CUSTOMER_SELECT_COLUMNS} FROM mdata.customers WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
         [parsedParams.data.id, resolvedOperatingCompanyId]
@@ -820,7 +820,7 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
       return reply.code(400).send({ error: "operating_company_id_required" });
     }
     const row = await withCurrentUser(authUser.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [resolvedOperatingCompanyId]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [resolvedOperatingCompanyId]);
       const res = await client.query(
         `
           SELECT
@@ -943,7 +943,7 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
       // belonging to another operating company. Scope to the user's current company.
       const scopedCompanyId = await resolveOperatingCompanyId(client, authUser.uuid);
       if (!scopedCompanyId) return null;
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [scopedCompanyId]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [scopedCompanyId]);
       const res = await client.query(
         `SELECT ${CUSTOMER_SELECT_COLUMNS} FROM mdata.customers WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
         [parsedParams.data.id, scopedCompanyId]
@@ -1058,7 +1058,7 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
         // before the UPDATE (existingRow already gated it above).
         const scopedCompanyId = await resolveOperatingCompanyId(client, authUser.uuid);
         if (!scopedCompanyId) return null;
-        await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [scopedCompanyId]);
+        await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [scopedCompanyId]);
         const oldRes = await client.query(
           `SELECT ${CUSTOMER_SELECT_COLUMNS} FROM mdata.customers WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
           [parsedParams.data.id, scopedCompanyId]
@@ -1235,7 +1235,7 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
         parsedQuery.data.operating_company_id
       );
       if (!operatingCompanyId) return null;
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
       const customerRes = await client.query(
         `SELECT id FROM mdata.customers WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
         [parsedParams.data.id, operatingCompanyId]
@@ -1263,7 +1263,7 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
       // Entity scope (USMCA cross-entity leak fix): never deactivate a customer in another company.
       const scopedCompanyId = await resolveOperatingCompanyId(client, authUser.uuid);
       if (!scopedCompanyId) return null;
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [scopedCompanyId]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [scopedCompanyId]);
       const oldRes = await client.query(
         `SELECT id, operating_company_id, deactivated_at FROM mdata.customers WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
         [parsedParams.data.id, scopedCompanyId]

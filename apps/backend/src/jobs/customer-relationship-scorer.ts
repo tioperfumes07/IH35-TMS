@@ -45,7 +45,7 @@ export async function runCustomerRelationshipScorerTick(): Promise<{
     );
 
     for (const company of companies.rows) {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [company.id]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [company.id]);
       const customers = await client.query<{ id: string }>(
         `
           SELECT id::text AS id

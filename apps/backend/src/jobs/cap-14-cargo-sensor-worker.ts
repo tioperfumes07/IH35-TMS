@@ -29,7 +29,7 @@ export async function runCap14CargoSensorWorkerTick(): Promise<{
     for (const row of companies.rows) {
       const operatingCompanyId = String(row.id ?? "");
       if (!operatingCompanyId) continue;
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
       const alertResult = await processOutOfRangeAlerts(client, operatingCompanyId);
       alerts += alertResult.incidents;
     }

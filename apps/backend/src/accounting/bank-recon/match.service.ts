@@ -720,7 +720,7 @@ export async function findCandidates(input: {
   search_query?: string;
 }): Promise<MatchCandidate[]> {
   return withLuciaBypass(async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [input.operating_company_id]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
     const txn = await loadTransaction(client, input.operating_company_id, input.bank_transaction_id);
     if (!txn) return [];
 
@@ -804,7 +804,7 @@ export async function findCandidates(input: {
 
 export async function acceptMatchWithResolveDifference(input: ResolveDifferenceInput): Promise<ResolveDifferenceResult> {
   return withLuciaBypass(async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [input.operating_company_id]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
     const txn = await loadTransaction(client, input.operating_company_id, input.bank_transaction_id);
     if (!txn) {
       throw new Error("bank_transaction_not_found");
@@ -936,7 +936,7 @@ export async function previewMatchVariance(input: {
   ledger_entry_id: string;
 }): Promise<MatchVariancePreview> {
   return withLuciaBypass(async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [input.operating_company_id]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
     const txn = await loadTransaction(client, input.operating_company_id, input.bank_transaction_id);
     if (!txn) throw new Error("bank_transaction_not_found");
     const ledgerAmountAbs = await loadLedgerAmountCents(client, input.operating_company_id, input.ledger_entry_kind, input.ledger_entry_id);

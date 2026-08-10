@@ -72,7 +72,7 @@ export async function registerPropertyTaxRoutes(app: FastifyInstance) {
     if (!q.success) return reply.code(400).send({ error: "validation_error", details: q.error.flatten() });
     await assertCompanyMembership(user.uuid, q.data.operating_company_id);
     const districts = await withCurrentUser(user.uuid, async (client) => {
-      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [q.data.operating_company_id]);
+      await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [q.data.operating_company_id]);
       return listAppraisalDistricts(client);
     });
     return reply.send({ districts });
@@ -86,7 +86,7 @@ export async function registerPropertyTaxRoutes(app: FastifyInstance) {
     if (!body.success) return reply.code(400).send({ error: "validation_error", details: body.error.flatten() });
     await assertCompanyMembership(user.uuid, body.data.operating_company_id);
     const district = await withCurrentUser(user.uuid, async (client) => {
-      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [body.data.operating_company_id]);
+      await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [body.data.operating_company_id]);
       return createAppraisalDistrict(client, user.uuid, { state: body.data.state, county: body.data.county, cad_name: body.data.cad_name });
     });
     return reply.code(201).send({ district });
@@ -100,7 +100,7 @@ export async function registerPropertyTaxRoutes(app: FastifyInstance) {
     if (!q.success) return reply.code(400).send({ error: "validation_error", details: q.error.flatten() });
     await assertCompanyMembership(user.uuid, q.data.operating_company_id);
     const assets = await withCurrentUser(user.uuid, async (client) => {
-      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [q.data.operating_company_id]);
+      await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [q.data.operating_company_id]);
       return listCandidateAssets(client, q.data.operating_company_id);
     });
     return reply.send({ assets });
@@ -114,7 +114,7 @@ export async function registerPropertyTaxRoutes(app: FastifyInstance) {
     if (!q.success) return reply.code(400).send({ error: "validation_error", details: q.error.flatten() });
     await assertCompanyMembership(user.uuid, q.data.operating_company_id);
     const renditions = await withCurrentUser(user.uuid, async (client) => {
-      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [q.data.operating_company_id]);
+      await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [q.data.operating_company_id]);
       return listRenditions(client, q.data.operating_company_id);
     });
     return reply.send({ renditions });
@@ -129,7 +129,7 @@ export async function registerPropertyTaxRoutes(app: FastifyInstance) {
     const { id } = req.params as { id: string };
     await assertCompanyMembership(user.uuid, q.data.operating_company_id);
     const result = await withCurrentUser(user.uuid, async (client) => {
-      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [q.data.operating_company_id]);
+      await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [q.data.operating_company_id]);
       return getRendition(client, q.data.operating_company_id, id);
     });
     if (!result) return reply.code(404).send({ error: "not_found" });
@@ -144,7 +144,7 @@ export async function registerPropertyTaxRoutes(app: FastifyInstance) {
     if (!body.success) return reply.code(400).send({ error: "validation_error", details: body.error.flatten() });
     await assertCompanyMembership(user.uuid, body.data.operating_company_id);
     const rendition = await withCurrentUser(user.uuid, async (client) => {
-      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [body.data.operating_company_id]);
+      await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [body.data.operating_company_id]);
       return createRendition(client, body.data.operating_company_id, user.uuid, {
         tax_year: body.data.tax_year,
         appraisal_district_id: body.data.appraisal_district_id,
@@ -165,7 +165,7 @@ export async function registerPropertyTaxRoutes(app: FastifyInstance) {
     const { id } = req.params as { id: string };
     await assertCompanyMembership(user.uuid, body.data.operating_company_id);
     const rendition = await withCurrentUser(user.uuid, async (client) => {
-      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [body.data.operating_company_id]);
+      await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [body.data.operating_company_id]);
       return updateRendition(client, body.data.operating_company_id, user.uuid, id, {
         status: body.data.status,
         value_basis: body.data.value_basis,
@@ -189,7 +189,7 @@ export async function registerPropertyTaxRoutes(app: FastifyInstance) {
     const { id } = req.params as { id: string };
     await assertCompanyMembership(user.uuid, body.data.operating_company_id);
     const line = await withCurrentUser(user.uuid, async (client) => {
-      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [body.data.operating_company_id]);
+      await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [body.data.operating_company_id]);
       return addRenditionLine(client, body.data.operating_company_id, user.uuid, id, {
         unit_id: body.data.unit_id,
         equipment_id: body.data.equipment_id,

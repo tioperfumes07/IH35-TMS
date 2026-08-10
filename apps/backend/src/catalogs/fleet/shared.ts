@@ -36,7 +36,7 @@ type DbClient = {
 export async function withCompanyScope<T>(userId: string, operatingCompanyId: string, fn: (client: DbClient) => Promise<T>) {
   return withCurrentUser(userId, async (client) => {
     await assertCompanyMembership(client, userId, operatingCompanyId);
-    await client.query("SELECT set_config('app.operating_company_id', $1, true)", [operatingCompanyId]);
+    await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [operatingCompanyId]);
     return fn(client as DbClient);
   });
 }

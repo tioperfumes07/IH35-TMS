@@ -31,7 +31,7 @@ async function withCompanyScope<T>(userId: string, operatingCompanyId: string, f
   return withCurrentUser(userId, async (client) => {
     // operatingCompanyId is a validated uuid (zod) — safe to interpolate, matching the
     // existing insurance routes' RLS scoping.
-    await client.query("SELECT set_config('app.operating_company_id', $1, true)", [operatingCompanyId]);
+    await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [operatingCompanyId]);
     return fn(client as Queryable);
   });
 }

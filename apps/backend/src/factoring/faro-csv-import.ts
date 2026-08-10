@@ -479,7 +479,7 @@ export async function commitFaroCsvImport(input: {
   const { importResult, sideEffects, advanceActuals, postingEnabled } = await withCurrentUser(
     input.userId,
     async (client) => {
-      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [input.operatingCompanyId]);
+      await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [input.operatingCompanyId]);
       const factorId = await resolveActiveFactorId(client, input.operatingCompanyId, statementDate);
       if (!factorId) {
         throw new FaroCsvImportError(

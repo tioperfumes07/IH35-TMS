@@ -45,7 +45,7 @@ describeIntegration("legal template library + Option-B handoff (real Postgres)",
     await db.query("BEGIN");
     try {
       await db.query("SET LOCAL app.bypass_rls = 'lucia'");
-      await db.query(`SELECT set_config('app.operating_company_id', $1, true)`, [companyId]);
+      await db.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [companyId]);
       const out = await fn();
       await db.query("COMMIT");
       return out;

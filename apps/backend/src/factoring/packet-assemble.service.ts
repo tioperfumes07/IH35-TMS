@@ -86,7 +86,7 @@ export async function assembleFactoringPacket(
   input: AssemblePacketInput,
 ): Promise<AssemblePacketResult> {
   return withCurrentUser(input.userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [
       input.operatingCompanyId,
     ]);
 
@@ -247,7 +247,7 @@ export async function sweepAndAssemblePackets(
   operatingCompanyId: string,
 ): Promise<{ assembled: number; skipped: number; errored: number }> {
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [
       operatingCompanyId,
     ]);
 

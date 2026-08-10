@@ -71,7 +71,7 @@ async function withCompanyScope<T>(
 ) {
   return withCurrentUser(userId, async (client) => {
     await assertCompanyMembership(client, userId, operatingCompanyId);
-    await client.query("SELECT set_config('app.operating_company_id', $1, true)", [operatingCompanyId]);
+    await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [operatingCompanyId]);
     return fn(client);
   });
 }
@@ -94,7 +94,7 @@ export async function registerDriverSchedulerRoutes(app: FastifyInstance) {
     if (!oc) return reply.code(403).send({ error: "driver_company_not_found" });
     const rows = await withCurrentUser(req.user!.uuid, async (client) => {
       // membership-scope-exempt: principal-derived
-      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [oc]);
+      await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [oc]);
       return listMyLeaveRequests(client, oc, d.id);
     });
     return { requests: rows };
@@ -109,7 +109,7 @@ export async function registerDriverSchedulerRoutes(app: FastifyInstance) {
     if (!oc) return reply.code(403).send({ error: "driver_company_not_found" });
     const payload = await withCurrentUser(req.user!.uuid, async (client) => {
       // membership-scope-exempt: principal-derived
-      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [oc]);
+      await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [oc]);
       return getMySchedule(client, {
         operatingCompanyId: oc,
         driverId: d.id,
@@ -129,7 +129,7 @@ export async function registerDriverSchedulerRoutes(app: FastifyInstance) {
     if (!oc) return reply.code(403).send({ error: "driver_company_not_found" });
     const result = await withCurrentUser(req.user!.uuid, async (client) => {
       // membership-scope-exempt: principal-derived
-      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [oc]);
+      await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [oc]);
       return createDriverLeaveRequest(client, {
         operatingCompanyId: oc,
         driverId: d.id,
@@ -152,7 +152,7 @@ export async function registerDriverSchedulerRoutes(app: FastifyInstance) {
     if (!oc) return reply.code(403).send({ error: "driver_company_not_found" });
     const row = await withCurrentUser(req.user!.uuid, async (client) => {
       // membership-scope-exempt: principal-derived
-      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [oc]);
+      await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [oc]);
       return cancelDriverLeaveRequest(client, {
         operatingCompanyId: oc,
         driverId: d.id,
@@ -175,7 +175,7 @@ export async function registerDriverSchedulerRoutes(app: FastifyInstance) {
     if (!oc) return reply.code(403).send({ error: "driver_company_not_found" });
     const result = await withCurrentUser(req.user!.uuid, async (client) => {
       // membership-scope-exempt: principal-derived
-      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [oc]);
+      await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [oc]);
       return attachLeaveRequestDocumentation(client, {
         operatingCompanyId: oc,
         driverId: d.id,
@@ -201,7 +201,7 @@ export async function registerDriverSchedulerRoutes(app: FastifyInstance) {
     const year = parsedQuery.data.year ?? new Date().getUTCFullYear();
     const bal = await withCurrentUser(req.user!.uuid, async (client) => {
       // membership-scope-exempt: principal-derived
-      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [oc]);
+      await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [oc]);
       return getLeaveBalance(client, oc, d.id, year);
     });
     return { balance: bal, year };

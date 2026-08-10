@@ -58,7 +58,7 @@ async function probeCompany(operatingCompanyId: string): Promise<CompanyHeartbea
   // before we SET the RLS GUC — otherwise event_log RLS would silently read another/zero scope.
   assertTenantContext(operatingCompanyId, "admin.spine_heartbeat");
   return withLuciaBypass(async (client) => {
-    await client.query(`SELECT set_config('app.current_operating_company_id', $1, true)`, [
+    await client.query(`SELECT set_config('app.current_operating_company_id', $1::text, true)`, [
       operatingCompanyId,
     ]);
 

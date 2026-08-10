@@ -30,7 +30,7 @@ export async function registerRelayWalletBankFeedBackfillRoute(app: FastifyInsta
       void (async () => {
         try {
           const summary = await withLuciaBypass(async (client) => {
-            await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [companyId]);
+            await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [companyId]);
             const fuel = await backfillRelayWalletBankFeedForCompany(client, companyId);
             const deposits = await backfillRelayWalletDepositFeedForCompany(client, companyId);
             return { fuel, deposits };

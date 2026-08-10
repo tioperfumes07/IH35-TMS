@@ -40,7 +40,7 @@ function ensureAllowedSize(sizeBytes: number) {
 }
 
 async function setCompanyScope(client: DbClient, operatingCompanyId: string) {
-  await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+  await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
 }
 
 /** Entity types whose create forms attach files BEFORE the record exists (random draft entity_id). */

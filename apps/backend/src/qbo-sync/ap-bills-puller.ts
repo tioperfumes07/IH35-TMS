@@ -232,7 +232,7 @@ async function upsertApBillMirror(
 /** Durable audit begin — own COMMIT via withLuciaBypass. Survives later data-txn rollback. */
 export async function beginApMirrorSyncRun(operatingCompanyId: string): Promise<string | null> {
   return withLuciaBypass(async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     const exists = await client.query<{ ok: boolean }>(`SELECT to_regclass('qbo.sync_runs') IS NOT NULL AS ok`);
     if (!exists.rows[0]?.ok) return null;
     // Schema (0162+0163): id, operating_company_id, kind, status∈(pending|running|success|failed|…),
@@ -274,7 +274,7 @@ export async function finishApMirrorSyncRun(input: {
 }): Promise<void> {
   if (!input.runId) return;
   await withLuciaBypass(async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [input.operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operatingCompanyId]);
     await client.query(
       `
         UPDATE qbo.sync_runs
@@ -312,7 +312,7 @@ export async function pullApBillsFromQbo(operatingCompanyId: string): Promise<Ap
   const pulledAt = new Date().toISOString();
 
   const enabled = await withLuciaBypass(async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     return isEnabled(client, AP_MIRROR_PULL_FLAG, { operating_company_id: operatingCompanyId });
   });
   if (!enabled) {
@@ -342,7 +342,7 @@ export async function pullApBillsFromQbo(operatingCompanyId: string): Promise<Ap
     }
 
     await withLuciaBypass(async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
       for (const row of pulledRows) {
         await upsertApBillMirror(client, operatingCompanyId, row);
         rowsUpserted += 1;
@@ -417,7 +417,7 @@ export async function projectApBillLinesToLedger(
   `;
 
   return withLuciaBypass(async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     const enabled =
       opts?.skipFlagCheck === true
         ? true
@@ -612,7 +612,7 @@ export async function projectApBillsToLedger(operatingCompanyId: string): Promis
   let rowsProjected = 0;
 
   await withLuciaBypass(async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     enabled = await isEnabled(client, AP_BILLS_PROJECTION_FLAG, {
       operating_company_id: operatingCompanyId,
     });

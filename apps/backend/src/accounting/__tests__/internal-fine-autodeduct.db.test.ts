@@ -24,7 +24,7 @@ run("internal fine auto-deducts from driver pay up to the per-settlement cap", (
 
   async function tx(fn: () => Promise<void>) {
     await db.query("BEGIN"); await db.query("SET LOCAL app.bypass_rls='lucia'");
-    await db.query("SELECT set_config('app.operating_company_id',$1,true)", [companyId]);
+    await db.query("SELECT set_config('app.operating_company_id', $1::text, true)", [companyId]);
     try { await fn(); await db.query("COMMIT"); } catch (e) { await db.query("ROLLBACK").catch(()=>{}); throw e; }
   }
 
@@ -65,11 +65,11 @@ run("internal fine auto-deducts from driver pay up to the per-settlement cap", (
     expect(result.total_materialized_cents).toBe(5);          // deducted the CAP, auto
     expect(result.materialized).toHaveLength(1);
 
-    const rows = await (async()=>{ await db.query("BEGIN"); await db.query("SET LOCAL app.bypass_rls='lucia'"); await db.query("SELECT set_config('app.operating_company_id',$1,true)",[companyId]); const r=await db.query(`SELECT deducted_so_far_cents::int d, total_owed_cents::int t, status FROM driver_finance.auto_deduction_policies WHERE id=$1::uuid`,[id.policy]); await db.query("COMMIT"); return r.rows; })();
+    const rows = await (async()=>{ await db.query("BEGIN"); await db.query("SET LOCAL app.bypass_rls='lucia'"); await db.query("SELECT set_config('app.operating_company_id', $1::text, true)",[companyId]); const r=await db.query(`SELECT deducted_so_far_cents::int d, total_owed_cents::int t, status FROM driver_finance.auto_deduction_policies WHERE id=$1::uuid`,[id.policy]); await db.query("COMMIT"); return r.rows; })();
     expect(rows[0].d).toBe(5);                                  // policy advanced by the cap
     expect(rows[0].t - rows[0].d).toBe(5);                      // 5c remaining rolls to next settlement
     // the sub-ledger deduction row exists and is policy-linked
-    const ded = await (async()=>{ await db.query("BEGIN"); await db.query("SET LOCAL app.bypass_rls='lucia'"); await db.query("SELECT set_config('app.operating_company_id',$1,true)",[companyId]); const r=await db.query(`SELECT amount_cents::int a, deduction_type FROM driver_finance.driver_settlement_deductions WHERE source_auto_deduction_policy_id=$1::uuid`,[id.policy]); await db.query("COMMIT"); return r.rows; })();
+    const ded = await (async()=>{ await db.query("BEGIN"); await db.query("SET LOCAL app.bypass_rls='lucia'"); await db.query("SELECT set_config('app.operating_company_id', $1::text, true)",[companyId]); const r=await db.query(`SELECT amount_cents::int a, deduction_type FROM driver_finance.driver_settlement_deductions WHERE source_auto_deduction_policy_id=$1::uuid`,[id.policy]); await db.query("COMMIT"); return r.rows; })();
     expect(ded[0].a).toBe(5); expect(ded[0].deduction_type).toBe("fine");
   });
 });

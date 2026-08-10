@@ -41,7 +41,7 @@ describeIntegration("MOR/425C cash lines — is_credit grouping + own-transfer e
   async function bypass(fn: () => Promise<void>) {
     await db.query("BEGIN");
     await db.query("SET LOCAL app.bypass_rls = 'lucia'");
-    await db.query("SELECT set_config('app.operating_company_id', $1, true)", [companyId]);
+    await db.query("SELECT set_config('app.operating_company_id', $1::text, true)", [companyId]);
     try {
       await fn();
       await db.query("COMMIT");
@@ -57,7 +57,7 @@ describeIntegration("MOR/425C cash lines — is_credit grouping + own-transfer e
     query: async <R = Record<string, unknown>>(sql: string, values?: unknown[]): Promise<{ rows: R[] }> => {
       await db.query("BEGIN");
       await db.query("SET LOCAL app.bypass_rls = 'lucia'");
-      await db.query("SELECT set_config('app.operating_company_id', $1, true)", [companyId]);
+      await db.query("SELECT set_config('app.operating_company_id', $1::text, true)", [companyId]);
       try {
         const r = await db.query(sql, values);
         await db.query("COMMIT");

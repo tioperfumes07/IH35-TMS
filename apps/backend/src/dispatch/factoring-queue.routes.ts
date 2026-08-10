@@ -91,7 +91,7 @@ export async function registerFactoringQueueRoutes(app: FastifyInstance) {
     await assertCompanyMembership(user.uuid, companyId);
 
     return withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [companyId]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [companyId]);
 
       // ── fetch delivered+ loads with linked invoice info + doc presence ─────
       const res = await client.query<{

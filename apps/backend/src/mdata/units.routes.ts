@@ -155,7 +155,7 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
         // from another operating company never appear.
         const scopedCompanyId = await resolveOperatingCompanyId(client, authUser.uuid, operating_company_id);
         if (!scopedCompanyId) return { rows: [], total: 0 };
-        await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [scopedCompanyId]);
+        await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [scopedCompanyId]);
         return fetchUnifiedFleetList(client, {
           limit,
           offset,
@@ -195,7 +195,7 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
       // company from the param or user context so units from another entity never leak.
       const scopedCompanyId = await resolveOperatingCompanyId(client, authUser.uuid, operating_company_id);
       if (!scopedCompanyId) return { rows: [], total: 0 };
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [scopedCompanyId]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [scopedCompanyId]);
       values.push(scopedCompanyId);
       const ownerLeasedIdx = values.length;
       filters.push(`(owner_company_id = $${ownerLeasedIdx} OR currently_leased_to_company_id = $${ownerLeasedIdx})`);
@@ -361,7 +361,7 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
     if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
 
     const financial = await withCurrentUser(authUser.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [
         parsedQuery.data.operating_company_id,
       ]);
       return getUnitFinancialYTD(

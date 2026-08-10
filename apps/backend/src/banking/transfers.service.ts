@@ -225,7 +225,7 @@ export async function createTransfer(input: TransferInput, userId: string) {
   }
 
   const transfer = await withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [input.operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operatingCompanyId]);
     return insertTransferInClient(client, input, userId);
   });
 
@@ -362,7 +362,7 @@ export async function markBankFeedLineAsTransfer(input: MarkBankFeedTransferInpu
   const pairedTransactionId = input.pairedTransactionId ?? null;
 
   const result = await withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     // Serialize concurrent mark-as-transfer for THIS feed line (hashtext key matches cash-advance / QBO pullers).
     await client.query(`SELECT pg_advisory_xact_lock(hashtext($1::text))`, [
       `banking.mark_transfer:${bankTransactionId}`,
@@ -511,7 +511,7 @@ async function mintTransferForBankFeedLineInClient(
 
 export async function revokeTransfer(transferId: string, operatingCompanyId: string, reason: string, userId: string) {
   const transfer = await withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     const currentRes = await client.query<TransferRow>(
       `
         SELECT id, operating_company_id, from_account_id, from_account_kind, to_account_id, to_account_kind, amount_cents, revoked_at
@@ -612,7 +612,7 @@ export async function listTransfers(input: {
   offset: number;
 }) {
   return withCurrentUser(input.userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [input.operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operatingCompanyId]);
     const values: unknown[] = [input.operatingCompanyId];
     const where: string[] = ["t.operating_company_id = $1"];
     if (input.fromDate) {
@@ -670,7 +670,7 @@ export async function listTransfers(input: {
 
 export async function getTransferDetail(transferId: string, operatingCompanyId: string, userId: string) {
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     const transferRes = await client.query(
       `
         SELECT

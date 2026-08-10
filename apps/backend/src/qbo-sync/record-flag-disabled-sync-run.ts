@@ -14,7 +14,7 @@ export async function recordFlagDisabledMirrorSyncRun(input: {
   mirrorTable: string;
 }): Promise<void> {
   await withLuciaBypass(async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [input.operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operatingCompanyId]);
     const exists = await client.query<{ ok: boolean }>(`SELECT to_regclass('qbo.sync_runs') IS NOT NULL AS ok`);
     if (!exists.rows[0]?.ok) return;
     await client.query(

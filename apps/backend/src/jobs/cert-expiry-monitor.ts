@@ -24,7 +24,7 @@ export async function runCertExpiryMonitorTick(app: FastifyInstance) {
       const operatingCompanyId = String(row.operating_company_id ?? "");
       if (!operatingCompanyId) continue;
       assertTenantContext(operatingCompanyId, "safety.cert_expiry_monitor");
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
       const alerts = await scanAllDrivers(client, operatingCompanyId);
       await notifyCriticalExpiries(client, operatingCompanyId, alerts);
 

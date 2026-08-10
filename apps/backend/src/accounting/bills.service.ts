@@ -414,7 +414,7 @@ export async function resolveVendorDisplayMap(
 ): Promise<Record<string, string>> {
   if (!vendorIds.length) return {};
   return withLuciaBypass(async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     const res = await client.query<{
       vendor_id: string;
       display_name: string | null;
@@ -492,7 +492,7 @@ export async function listVendorBalances(
   options: ListVendorBalancesOptions
 ) {
   const rows = await withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     const where: string[] = ["vb.operating_company_id = $1"];
     if (!options.includeZero) where.push("vb.balance_cents > 0");
     const orderBy =
@@ -541,7 +541,7 @@ export async function listBillsByVendor(
   options: ListBillsOptions
 ) {
   const rows = await withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     // ACCT-ECON-05: match EITHER identifier space. Callers pass an mdata.vendors uuid (vendor
     // detail A/P tab, vendor-credit apply picker) while QBO-sourced bills carry the QBO vendor id,
     // so an equality test on the raw value returned zero rows for 16211 of 16212 prod bills.
@@ -593,7 +593,7 @@ export async function listAllBillsForCompany(
   options: ListBillsOptions
 ) {
   const rows = await withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     const where: string[] = ["b.operating_company_id = $1"];
     const values: unknown[] = [operatingCompanyId];
     if (options.fromDate) {
@@ -642,7 +642,7 @@ export async function listAllBillsForCompany(
 
 export async function listBillPaymentsForBill(userId: string, operatingCompanyId: string, billId: string) {
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     const billRes = await client.query<{ id: string }>(
       `
         SELECT id
@@ -698,7 +698,7 @@ export async function listWorkOrderLinkedFinancials(
   expenses: Array<{ id: string; transaction_date: string | null; total_amount_cents: number; status: string | null; memo: string | null }>;
 }> {
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     const colExists = async (schema: string, table: string, column: string): Promise<boolean> => {
       const r = await client.query(
         `SELECT 1 FROM information_schema.columns WHERE table_schema=$1 AND table_name=$2 AND column_name=$3`,
@@ -772,7 +772,7 @@ export async function listClaimLinkedFinancials(
   columns_present: { bills: boolean; expenses: boolean; work_orders: boolean };
 }> {
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     const colExists = async (schema: string, table: string, column: string): Promise<boolean> => {
       const r = await client.query(
         `SELECT 1 FROM information_schema.columns WHERE table_schema=$1 AND table_name=$2 AND column_name=$3`,
@@ -871,7 +871,7 @@ export async function listUnitLinkedFinancials(
   columns_present: { bills: boolean; expenses: boolean };
 }> {
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     const colExists = async (schema: string, table: string, column: string): Promise<boolean> => {
       const r = await client.query(
         `SELECT 1 FROM information_schema.columns WHERE table_schema=$1 AND table_name=$2 AND column_name=$3`,
@@ -972,7 +972,7 @@ export async function listBillPayments(
   options: ListBillPaymentsOptions
 ) {
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     const where: string[] = ["bp.operating_company_id = $1", "bp.revoked_at IS NULL"];
     const values: unknown[] = [operatingCompanyId];
     if (options.vendorId) {
@@ -1018,7 +1018,7 @@ export async function listBillPayments(
 
 export async function getBillDetail(userId: string, operatingCompanyId: string, billId: string) {
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     const billRes = await client.query<BillRow & { vendor_name?: string | null; unit_id?: string | null; unit_display_id?: string | null; linked_work_order_uuid?: string | null }>(
       `
         SELECT
@@ -1179,7 +1179,7 @@ export async function getBillDetail(userId: string, operatingCompanyId: string, 
 /** Law §9 reverse: bill payment detail + JE from postings (no journal_entry_id column on bill_payments). */
 export async function getBillPaymentDetail(userId: string, operatingCompanyId: string, paymentId: string) {
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     const paymentRes = await client.query<
       BillPaymentRow & {
         journal_entry_id: string | null;
@@ -1305,7 +1305,7 @@ export async function createBill(input: CreateBillInput, userId: string) {
   }
 
   const bill = await withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [input.operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operatingCompanyId]);
     const claimCol = await client.query(
       `SELECT 1 FROM information_schema.columns
         WHERE table_schema='accounting' AND table_name='bills' AND column_name='insurance_claim_id'`
@@ -1794,7 +1794,7 @@ export async function payBill(input: PayBillInput, userId: string) {
   const glPostingEnabled = await isBillPaymentGlPostingEnabled(input.operatingCompanyId, userId);
 
   const payment = await withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [input.operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operatingCompanyId]);
     const billRes = await client.query<BillRow>(
       `
         SELECT *
@@ -1983,7 +1983,7 @@ export async function voidBill(
   opts: VoidBillOptions = {}
 ) {
   const result = await withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
 
     const flagOn = await isVoidEnforcementEnabled(client, operatingCompanyId, userId);
     if (!opts.system) {
@@ -2312,7 +2312,7 @@ export async function voidBillInClientTx(
 export async function voidBillPayment(operatingCompanyId: string, paymentId: string, reason: string, userId: string) {
   const currentBusinessDate = companyBusinessDate();
   const voided = await withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     return voidBillPaymentInClientTx(client, {
       operatingCompanyId,
       paymentId,
@@ -2359,7 +2359,7 @@ export async function listLegalMatterLinkedCosts(
   columns_present: { bills: boolean };
 }> {
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     const colRes = await client.query(
       `SELECT 1 FROM information_schema.columns
         WHERE table_schema='accounting' AND table_name='bills' AND column_name='legal_matter_id'`

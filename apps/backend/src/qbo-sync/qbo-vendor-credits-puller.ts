@@ -160,7 +160,7 @@ async function beginVendorCreditSyncRun(
   payload: Record<string, unknown>
 ): Promise<string | null> {
   return withLuciaBypass(async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     const exists = await client.query<{ ok: boolean }>(`SELECT to_regclass('qbo.sync_runs') IS NOT NULL AS ok`);
     if (!exists.rows[0]?.ok) return null;
     const res = await client.query<{ id: string }>(
@@ -186,7 +186,7 @@ async function finishVendorCreditSyncRun(input: {
 }): Promise<void> {
   if (!input.runId) return;
   await withLuciaBypass(async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [input.operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operatingCompanyId]);
     await client.query(
       `
         UPDATE qbo.sync_runs
@@ -217,7 +217,7 @@ export async function pullVendorCreditsFromQbo(operatingCompanyId: string): Prom
   const pulledAt = new Date().toISOString();
 
   const enabled = await withLuciaBypass(async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     return isEnabled(client, MIRROR_PULL_FLAG, { operating_company_id: operatingCompanyId });
   });
   if (!enabled) {
@@ -249,7 +249,7 @@ export async function pullVendorCreditsFromQbo(operatingCompanyId: string): Prom
     }
 
     await withLuciaBypass(async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
       for (const row of pulledRows) {
         await upsertVendorCreditMirror(client, operatingCompanyId, row);
         rowsUpserted += 1;
@@ -288,7 +288,7 @@ export async function projectVendorCreditsToLedger(
 
   let enabled = false;
   await withLuciaBypass(async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     enabled = await isEnabled(client, PROJECTION_FLAG, { operating_company_id: operatingCompanyId });
   });
   if (!enabled) {
@@ -311,7 +311,7 @@ export async function projectVendorCreditsToLedger(
 
   try {
     await withLuciaBypass(async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
 
       const unresolved = await client.query<{ n: string }>(
         `

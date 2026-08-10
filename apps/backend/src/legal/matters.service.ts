@@ -119,7 +119,7 @@ export function canAccessLegalMattersOffice(role: string) {
 }
 
 async function setOperatingCompany(client: QueryableClient, operatingCompanyId: string) {
-  await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+  await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
 }
 
 function severityRankSql() {

@@ -365,7 +365,7 @@ export async function approvePendingDeduction(
   }
 
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [input.operating_company_id]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
 
     const lockRes = await client.query<{
       id: string;
@@ -471,7 +471,7 @@ export async function rejectPendingDeduction(
   }
 
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [input.operating_company_id]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
 
     const res = await client.query<{ id: string; driver_id: string; load_id: string | null }>(
       `

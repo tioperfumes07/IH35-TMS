@@ -163,7 +163,7 @@ export async function registerQboUnlinkedEntitiesRoutes(app: FastifyInstance) {
     await assertCompanyMembership(user.uuid, oc);
 
     const payload = await withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [oc]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [oc]);
 
       const vendorRes = await client.query<VendorRow>(
         `

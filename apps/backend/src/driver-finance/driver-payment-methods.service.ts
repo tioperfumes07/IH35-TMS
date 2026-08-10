@@ -44,7 +44,7 @@ const SELECT_COLS = `
 const PAYMENT_METHODS_FLAG_KEY = "DRIVER_PAYMENT_METHODS_ENABLED";
 
 async function setScope(client: QueryableClient, operatingCompanyId: string) {
-  await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+  await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
 }
 
 export async function listDriverPaymentMethods(

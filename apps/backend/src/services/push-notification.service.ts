@@ -96,7 +96,7 @@ export async function notifyLoadAssigned(input: {
   });
 
   void withLuciaBypass(async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [input.operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operatingCompanyId]);
     const res = await client.query<{
       identity_user_id: string | null;
       phone: string | null;

@@ -38,7 +38,7 @@ export async function runBankReconAutoMatchTick(
 
     for (const company of companies.rows) {
       assertTenantContext(String(company.id ?? ""), "accounting.bank_recon_auto_match_cron");
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [company.id]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [company.id]);
 
       // Fetch unmatched transactions for this company in the last 90 days
       const txns = await client.query<{ id: string }>(

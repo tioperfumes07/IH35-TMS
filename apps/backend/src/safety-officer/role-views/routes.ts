@@ -45,7 +45,7 @@ export async function registerSafetyOfficerRoleHomeRoutes(app: FastifyInstance) 
 
     await assertCompanyMembership(user.uuid, operating_company_id);
     return withCurrentUser(user.uuid, async (client) => {
-      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [operating_company_id]);
+      await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [operating_company_id]);
       await client.query(`SELECT set_config('app.user_role', $1, true)`, [user.role]);
 
       const data = await getSafetyHomeData(client, operating_company_id);

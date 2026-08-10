@@ -184,7 +184,7 @@ async function upsertArPaymentMirror(client: PoolClient, operatingCompanyId: str
 /** Durable audit begin — own COMMIT via withLuciaBypass. Survives later data-txn rollback. */
 export async function beginArPaymentsMirrorSyncRun(operatingCompanyId: string): Promise<string | null> {
   return withLuciaBypass(async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     const exists = await client.query<{ ok: boolean }>(`SELECT to_regclass('qbo.sync_runs') IS NOT NULL AS ok`);
     if (!exists.rows[0]?.ok) return null;
     const res = await client.query<{ id: string }>(
@@ -224,7 +224,7 @@ export async function finishArPaymentsMirrorSyncRun(input: {
 }): Promise<void> {
   if (!input.runId) return;
   await withLuciaBypass(async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [input.operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operatingCompanyId]);
     await client.query(
       `
         UPDATE qbo.sync_runs
@@ -262,7 +262,7 @@ export async function pullArPaymentsFromQbo(operatingCompanyId: string): Promise
   const pulledAt = new Date().toISOString();
 
   const enabled = await withLuciaBypass(async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     return isEnabled(client, AR_PAYMENT_MIRROR_PULL_FLAG, { operating_company_id: operatingCompanyId });
   });
   if (!enabled) {
@@ -291,7 +291,7 @@ export async function pullArPaymentsFromQbo(operatingCompanyId: string): Promise
     }
 
     await withLuciaBypass(async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
       for (const row of pulledRows) {
         await upsertArPaymentMirror(client, operatingCompanyId, row);
         rowsUpserted += 1;
@@ -360,7 +360,7 @@ export async function projectArPaymentsToLedger(operatingCompanyId: string): Pro
 
   let enabled = false;
   await withLuciaBypass(async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     enabled = await isEnabled(client, AR_PAYMENTS_PROJECTION_FLAG, { operating_company_id: operatingCompanyId });
   });
   if (!enabled) {
@@ -380,7 +380,7 @@ export async function projectArPaymentsToLedger(operatingCompanyId: string): Pro
   let applicationsUnlinked = 0;
 
   await withLuciaBypass(async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     // Serialize display_id allocation for this company (same advisory key family as nextPaymentDisplayId).
     await client.query(`SELECT pg_advisory_xact_lock(hashtext($1))`, [
       `accounting.payment.display_id:${operatingCompanyId}:qbo_project`,

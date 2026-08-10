@@ -71,7 +71,7 @@ export function validationError(reply: FastifyReply, error: z.ZodError) {
 export async function withCompanyScope<T>(userId: string, operatingCompanyId: string, fn: (client: DbClient) => Promise<T>) {
   await assertCompanyMembership(userId, operatingCompanyId);
   return withCurrentUser(userId, async (client) => {
-    await client.query("SELECT set_config('app.operating_company_id', $1, true)", [operatingCompanyId]);
+    await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [operatingCompanyId]);
     return fn(client as DbClient);
   });
 }

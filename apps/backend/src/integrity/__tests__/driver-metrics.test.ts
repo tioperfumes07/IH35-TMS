@@ -195,7 +195,7 @@ describe("driver metrics routes", () => {
     expect(body.driver.driver_id).toBe("11111111-1111-4111-8111-111111111111");
     expect(body.period.period).toBe("monthly");
     expect(queryMock).toHaveBeenCalledWith(
-      "SELECT set_config('app.operating_company_id', $1, true)",
+      "SELECT set_config('app.operating_company_id', $1::text, true)",
       ["33333333-3333-4333-8333-333333333333"]
     );
   });

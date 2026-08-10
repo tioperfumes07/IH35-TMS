@@ -30,7 +30,7 @@ async function tick(app: FastifyInstance) {
     let count = 0;
     for (const { id } of companies.rows) {
       try {
-        await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [id]);
+        await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [id]);
         const result = await aggregateForPeriod(client, id, from, to);
         count += result.dispatchers.length;
       } catch (err) {

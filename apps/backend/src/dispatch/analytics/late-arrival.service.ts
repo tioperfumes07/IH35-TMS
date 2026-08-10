@@ -341,7 +341,7 @@ export async function runLateArrivalAggregatorTick(client: PoolClient): Promise<
   for (const row of companies.rows) {
     const ociId = String(row.id ?? "");
     if (!ociId) continue;
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [ociId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [ociId]);
     for (const groupBy of ["driver", "customer", "lane"] as LateArrivalGroupBy[]) {
       await queryAggregates(client, ociId, from, to, groupBy);
     }

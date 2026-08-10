@@ -134,7 +134,7 @@ export async function registerRelayFuelCsvImportRoute(app: FastifyInstance) {
     const pendingGlPosts: FuelTxnGlPostCandidate[] = [];
     const actorUserId = String((req.user as { uuid?: string } | undefined)?.uuid ?? "");
     await withLuciaBypass(async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [opco]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [opco]);
       // Owner-editable company-card set — used to classify deposit funding sources (Part B). Loaded once.
       const companyCards = await loadCompanyCardSet(client, opco);
       for (let i = 1; i < rows.length; i++) {

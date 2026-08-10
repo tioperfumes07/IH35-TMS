@@ -33,7 +33,7 @@ export async function enqueueQboMasterEntityPush(client: PoolClient, payload: Qb
 
 async function applyBypass(client: PoolClient, operatingCompanyId: string) {
   await client.query(`SELECT set_config('app.bypass_rls', 'lucia', true)`);
-  await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+  await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
 }
 
 function emailAddr(address?: string | null) {

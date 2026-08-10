@@ -22,7 +22,7 @@ export async function runDriverRetentionScorerTick(): Promise<{ drivers_scored: 
       `SELECT id::text AS id FROM org.companies WHERE is_active = true AND deactivated_at IS NULL`
     );
     for (const company of companies.rows) {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [company.id]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [company.id]);
       const drivers = await client.query<{ id: string }>(
         `SELECT id::text AS id FROM mdata.drivers WHERE operating_company_id = $1::uuid AND deactivated_at IS NULL`,
         [company.id]

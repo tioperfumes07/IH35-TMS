@@ -92,7 +92,7 @@ export function initializeReeferHoursPollCron(app: FastifyInstance) {
                 throw error;
               }
 
-              await dbClient.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+              await dbClient.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
               const enabled = await isSamsaraEnabledForTenant(dbClient, operatingCompanyId);
               if (!enabled) {
                 await appendCronAuditEvent(dbClient, "cron_skipped_samsara_disabled", "info", {

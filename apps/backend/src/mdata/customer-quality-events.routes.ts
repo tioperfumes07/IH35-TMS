@@ -123,7 +123,7 @@ export async function registerCustomerQualityEventsRoutes(app: FastifyInstance) 
       // company and set the GUC so the read returns the entity's rows; also filter explicitly.
       const companyId = await resolveOperatingCompanyId(client, authUser.uuid);
       if (!companyId) return null;
-      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [companyId]);
+      await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [companyId]);
       const values: unknown[] = [companyId];
       const filters: string[] = ["r.operating_company_id = $1"];
       if (!parsedQuery.data.include_inactive) filters.push("r.is_active = true", "r.deactivated_at IS NULL");
@@ -168,7 +168,7 @@ export async function registerCustomerQualityEventsRoutes(app: FastifyInstance) 
       const companyId = await resolveOperatingCompanyId(client, authUser.uuid);
       if (!companyId) return { error: "mdata_customer_not_found" as const };
       // Set the GUC so the LEFT JOIN on the per-entity reasons catalog resolves under FORCE RLS.
-      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [companyId]);
+      await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [companyId]);
 
       const customerRes = await client.query(
         `SELECT id FROM mdata.customers WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
@@ -222,7 +222,7 @@ export async function registerCustomerQualityEventsRoutes(app: FastifyInstance) 
       // customer's entity (customer_quality_event_reasons is FORCE RLS).
       const companyId = await resolveOperatingCompanyId(client, authUser.uuid);
       if (!companyId) return { error: "mdata_customer_not_found" as const };
-      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [companyId]);
+      await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [companyId]);
       const customerRes = await client.query(
         `SELECT id FROM mdata.customers WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
         [parsedParams.data.customer_id, companyId]

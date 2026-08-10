@@ -1037,7 +1037,7 @@ async function upsertBankAccounts(
   const counters: RowReport = { inserted: 0, skipped: 0, errors: [] };
   await beginSeedTxn(client, txnMode);
   try {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     for (let idx = 0; idx < parsedRows.length; idx += 1) {
       const rowNumber = idx + 2;
       const row = parsedRows[idx];
@@ -1133,7 +1133,7 @@ async function upsertBankTransactions(
   const counters: RowReport = { inserted: 0, skipped: 0, errors: [] };
   await beginSeedTxn(client, txnMode);
   try {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     for (let idx = 0; idx < parsedRows.length; idx += 1) {
       const rowNumber = idx + 2;
       const row = parsedRows[idx];

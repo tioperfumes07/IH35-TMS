@@ -124,7 +124,7 @@ export async function registerQboSyncDriftDashboardRoutes(app: FastifyInstance) 
     ]);
 
     const payload = await withLuciaBypass(async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
       const driftLogCounts = await countDriftLogByEntity(client, operatingCompanyId);
       const lastAlert = await fetchLastAlert(client, operatingCompanyId);
 
@@ -217,7 +217,7 @@ export async function registerQboSyncDriftDashboardRoutes(app: FastifyInstance) 
 
     await assertCompanyMembership(authUser.uuid, body.data.operating_company_id);
     const updated = await withLuciaBypass(async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [body.data.operating_company_id]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [body.data.operating_company_id]);
       const res = await client.query(
         `
           UPDATE qbo_sync.drift_log

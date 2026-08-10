@@ -397,7 +397,7 @@ export async function runCargoSensorIngestionTick(deps?: {
   await withLuciaBypassImpl(async (client) => {
     const companyIds = await listActiveCompanyIds(client);
     for (const operatingCompanyId of companyIds) {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
       const result = await runCargoSensorIngestionForCompany(client, operatingCompanyId, provider);
       summary.companies_processed += 1;
       summary.reefer_loads_scanned += result.reefer_loads_scanned;

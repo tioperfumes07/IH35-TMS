@@ -17,7 +17,7 @@ async function scopeToCompany(
 ): Promise<string | null> {
   const operatingCompanyId = await resolveOperatingCompanyId(client, userId, requested ?? null);
   if (!operatingCompanyId) return null;
-  await client.query("SELECT set_config('app.operating_company_id', $1, true)", [operatingCompanyId]);
+  await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [operatingCompanyId]);
   return operatingCompanyId;
 }
 

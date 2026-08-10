@@ -38,7 +38,7 @@ export async function registerUnitFinanceLinkageRoutes(app: FastifyInstance) {
         parsedQuery.data.operating_company_id
       );
       if (!scopedCompanyId) return null;
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [scopedCompanyId]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [scopedCompanyId]);
       return getUnitFinanceLinkage(client, scopedCompanyId, parsedParams.data.id);
     });
 

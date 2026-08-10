@@ -14,7 +14,7 @@ export async function runIntegrityAlertEngineCronTick() {
     );
     for (const company of companies.rows) {
       assertTenantContext(String(company.id ?? ""), "safety.integrity_alert_engine_cron");
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [company.id]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [company.id]);
       await runIntegrityAlertEngineForTenant(client, company.id);
     }
   });

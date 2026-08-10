@@ -103,7 +103,7 @@ async function appendSyncAudit(
 
 async function pickExpenseAccountId(operatingCompanyId: string) {
   return withLuciaBypass(async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     const res = await client.query<{ qbo_entity_id: string }>(
       `
         SELECT qbo_entity_id
@@ -122,7 +122,7 @@ async function pickExpenseAccountId(operatingCompanyId: string) {
 
 async function pickClassId(operatingCompanyId: string, className: string) {
   return withLuciaBypass(async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     const res = await client.query<{ qbo_entity_id: string }>(
       `
         SELECT qbo_entity_id
@@ -141,7 +141,7 @@ async function pickClassId(operatingCompanyId: string, className: string) {
 
 async function loadBankTxnContext(operatingCompanyId: string, entityId: string) {
   return withLuciaBypass(async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     const res = await client.query<BankTxnContext>(
       `
         SELECT
@@ -178,7 +178,7 @@ async function loadBankTxnContext(operatingCompanyId: string, entityId: string) 
 
 async function syncTransferPreview(job: QueueRow) {
   return withLuciaBypass(async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [job.operating_company_id]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [job.operating_company_id]);
     const transferRes = await client.query<{ revoked_at: string | null }>(
       `
         SELECT revoked_at
@@ -252,7 +252,7 @@ export async function enqueueSyncJob(
     return null;
   }
   const upsertQueue = async (client: { query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }> }) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     const res = await client.query<{ id: string }>(
       `
         INSERT INTO integrations.qbo_sync_queue AS q (
@@ -323,7 +323,7 @@ async function markJobResult(
   patch: { qboId?: string | null; syncToken?: string | null; errorMessage?: string | null; errorDetails?: unknown; nextAttemptAt?: string | null }
 ) {
   await withLuciaBypass(async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [job.operating_company_id]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [job.operating_company_id]);
     await client.query(
       `
         UPDATE integrations.qbo_sync_queue
@@ -495,7 +495,7 @@ export async function processSyncQueueBatch(maxItems = 50): Promise<QueueProcess
       // must NEVER create a QBO Purchase unless the owner explicitly turns QBO_ENTITY_PUSH_ENABLED ON
       // for this company. Default OFF ⇒ this path makes ZERO QBO calls. Gate BEFORE any token fetch.
       const bankPushEnabled = await withLuciaBypass(async (client) => {
-        await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [job.operating_company_id]);
+        await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [job.operating_company_id]);
         return isEntityPushEnabled(client, job.operating_company_id);
       });
       if (!bankPushEnabled) {
@@ -638,7 +638,7 @@ export async function listSyncQueue(params: {
   offset: number;
 }) {
   return withLuciaBypass(async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [params.operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [params.operatingCompanyId]);
     const res = await client.query(
       `
         SELECT
@@ -703,7 +703,7 @@ export async function listSyncQueue(params: {
 
 export async function retrySyncQueueItem(queueId: string, actorUserId: string, operatingCompanyId: string) {
   const updated = await withCurrentUser(actorUserId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     const res = await client.query<{ id: string }>(
       `
         UPDATE integrations.qbo_sync_queue
@@ -739,7 +739,7 @@ export async function skipSyncQueueItem(
   reason: string
 ) {
   const updated = await withCurrentUser(actorUserId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     const res = await client.query<{ id: string }>(
       `
         UPDATE integrations.qbo_sync_queue
@@ -772,7 +772,7 @@ export async function dismissOutboundSyncQueueItem(
   note: string
 ) {
   const updated = await withCurrentUser(actorUserId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     const res = await client.query<{ id: string }>(
       `
         UPDATE integrations.qbo_sync_queue
@@ -800,7 +800,7 @@ export async function dismissOutboundSyncQueueItem(
 
 export async function getSyncQueueStats(operatingCompanyId: string) {
   return withLuciaBypass(async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     const countsRes = await client.query<{ sync_status: QueueStatus; count: string }>(
       `
         SELECT sync_status, COUNT(*)::text AS count

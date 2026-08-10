@@ -78,7 +78,7 @@ export function initializeSamsaraHosPullCron(app: FastifyInstance) {
           // Short, tenant-scoped transaction (sets app.operating_company_id for RLS, then runs fn).
           const runScoped = <T>(oci: string, fn: (c: PoolClient) => Promise<T>): Promise<T> =>
             withLuciaBypass(async (c) => {
-              await c.query(`SELECT set_config('app.operating_company_id', $1, true)`, [oci]);
+              await c.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [oci]);
               return fn(c);
             });
 

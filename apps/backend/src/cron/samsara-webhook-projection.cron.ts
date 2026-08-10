@@ -43,7 +43,7 @@ export function initializeSamsaraWebhookProjectionCron(app: FastifyInstance) {
             const tenants = await listActiveTenantIds(client);
             for (const operatingCompanyId of tenants) {
               assertTenantContext(operatingCompanyId, CRON_NAME);
-              await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+              await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
               await projectSamsaraWebhookEventsForTenant(client, operatingCompanyId);
             }
           });

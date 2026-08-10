@@ -74,7 +74,7 @@ export async function registerRateConExtractRoutes(app: FastifyInstance) {
       try {
         await assertCompanyMembership(user.uuid, opco);
       return await withCurrentUser(user.uuid, async (client) => {
-          await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [opco]);
+          await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [opco]);
 
           // Kill-switch: OFF → 409, no Anthropic call, no behavior.
           const enabled = await isEnabled(client, RATECON_EXTRACT_FLAG_KEY, { operating_company_id: opco });

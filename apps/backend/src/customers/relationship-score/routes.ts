@@ -52,7 +52,7 @@ export async function registerCustomerRelationshipScoreRoutes(app: FastifyInstan
       );
       if (!operatingCompanyId) return { error: "operating_company_id_required" as const };
 
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
       const customerRes = await client.query<{ id: string }>(
         `
           SELECT id::text AS id
@@ -104,7 +104,7 @@ export async function registerCustomerRelationshipScoreRoutes(app: FastifyInstan
       );
       if (!operatingCompanyId) return { error: "operating_company_id_required" as const };
 
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
       const rows = await listAtRiskRelationshipScores(client, operatingCompanyId, parsedQuery.data.limit);
       return { operating_company_id: operatingCompanyId, count: rows.length, customers: rows };
     });

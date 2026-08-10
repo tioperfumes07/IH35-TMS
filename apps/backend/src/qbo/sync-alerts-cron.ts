@@ -69,7 +69,7 @@ export function initializeQboSyncAlertsCron(app: FastifyInstance) {
               });
               throw error;
             }
-            await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+            await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
 
             const nextRetryCount = Number(row.retry_count ?? 0) + 1;
             const baseMinutes = 5 * 2 ** Math.max(0, nextRetryCount - 1);

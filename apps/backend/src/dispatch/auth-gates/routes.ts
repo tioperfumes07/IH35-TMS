@@ -42,7 +42,7 @@ export async function registerDispatchAuthGateRoutes(app: FastifyInstance) {
     const d = parsed.data;
     await assertCompanyMembership(req.user!.uuid, d.operating_company_id);
     const result = await withCurrentUser(req.user!.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [d.operating_company_id]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [d.operating_company_id]);
       return checkGates({
         operating_company_id: d.operating_company_id,
         action_slug: d.action,
@@ -68,7 +68,7 @@ export async function registerDispatchAuthGateRoutes(app: FastifyInstance) {
     if (!z.string().uuid().safeParse(oci).success) return;
     await assertCompanyMembership(req.user.uuid, oci);
     const gateResult = await withCurrentUser(req.user.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [oci]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [oci]);
       return checkGates(extractBodyContext(body, match.action, oci), client);
     });
     if (!gateResult.pass) {

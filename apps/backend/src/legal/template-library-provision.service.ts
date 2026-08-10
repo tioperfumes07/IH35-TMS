@@ -75,7 +75,7 @@ export async function provisionLegalTemplateLibraryForCompany(
   client: Queryable,
   args: { operatingCompanyId: string; actorUserId: string }
 ) {
-  await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [args.operatingCompanyId]);
+  await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [args.operatingCompanyId]);
   return ensureLegalTemplateLibrary(client, {
     operatingCompanyId: args.operatingCompanyId,
     actorUserId: args.actorUserId,

@@ -150,7 +150,7 @@ describe("handleEngineFaultEvent", () => {
       .mockResolvedValueOnce({ rows: [] });
 
     await handleEngineFaultEvent({ query: queryMock }, OC, parsed);
-    expect(queryMock).toHaveBeenCalledWith(`SELECT set_config('app.operating_company_id', $1, true)`, [OC]);
+    expect(queryMock).toHaveBeenCalledWith(`SELECT set_config('app.operating_company_id', $1::text, true)`, [OC]);
   });
 });
 

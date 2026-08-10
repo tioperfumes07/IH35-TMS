@@ -309,7 +309,7 @@ describe("reports home fleet Samsara live counter", () => {
 
     await expect(
       mocks.query(
-        "SELECT 1 /* set_config('app.operating_company_id', $1, true) */",
+        "SELECT 1 /* set_config('app.operating_company_id', $1::text, true) */",
         [COMPANY_D],
       ),
     ).rejects.toThrow("GUC SQL must execute set_config");

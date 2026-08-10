@@ -75,7 +75,7 @@ export async function registerCashAdvanceRequestRoutes(app: FastifyInstance) {
     if (!oc) return reply.code(403).send({ error: "driver_company_not_found" });
     const rows = await withCurrentUser(req.user!.uuid, async (client) => {
       // membership-scope-exempt: principal-derived
-      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [oc]);
+      await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [oc]);
       return listMyCashAdvanceRequests(client, oc, d.id);
     });
     return { requests: rows };
@@ -90,7 +90,7 @@ export async function registerCashAdvanceRequestRoutes(app: FastifyInstance) {
     if (!oc) return reply.code(403).send({ error: "driver_company_not_found" });
     const result = await withCurrentUser(req.user!.uuid, async (client) => {
       // membership-scope-exempt: principal-derived
-      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [oc]);
+      await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [oc]);
       return createCashAdvanceRequest(client, {
         operatingCompanyId: oc,
         driverId: d.id,
@@ -115,7 +115,7 @@ export async function registerCashAdvanceRequestRoutes(app: FastifyInstance) {
     if (!oc) return reply.code(403).send({ error: "driver_company_not_found" });
     const row = await withCurrentUser(req.user!.uuid, async (client) => {
       // membership-scope-exempt: principal-derived
-      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [oc]);
+      await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [oc]);
       return cancelMyCashAdvanceRequest(client, {
         operatingCompanyId: oc,
         driverId: d.id,
@@ -137,7 +137,7 @@ export async function registerCashAdvanceRequestRoutes(app: FastifyInstance) {
     if (!parsed.success) return sendValidationError(reply, parsed.error);
     const rows = await withCurrentUser(user.uuid, async (client) => {
       await assertCompanyMembership(client, user.uuid, parsed.data.operating_company_id);
-      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [parsed.data.operating_company_id]);
+      await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [parsed.data.operating_company_id]);
       return listPendingCashAdvanceRequests(client, parsed.data.operating_company_id);
     });
     return { requests: rows };
@@ -153,7 +153,7 @@ export async function registerCashAdvanceRequestRoutes(app: FastifyInstance) {
     if (!parsed.success) return sendValidationError(reply, parsed.error);
     const rows = await withCurrentUser(user.uuid, async (client) => {
       await assertCompanyMembership(client, user.uuid, parsed.data.operating_company_id);
-      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [parsed.data.operating_company_id]);
+      await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [parsed.data.operating_company_id]);
       return listCashAdvanceRequests(client, parsed.data.operating_company_id, {
         status: parsed.data.status,
       });
@@ -171,7 +171,7 @@ export async function registerCashAdvanceRequestRoutes(app: FastifyInstance) {
     if (!parsed.success) return sendValidationError(reply, parsed.error);
     const rows = await withCurrentUser(user.uuid, async (client) => {
       await assertCompanyMembership(client, user.uuid, parsed.data.operating_company_id);
-      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [parsed.data.operating_company_id]);
+      await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [parsed.data.operating_company_id]);
       return listPendingOwnerApprovalCashAdvanceRequests(client, parsed.data.operating_company_id);
     });
     return { requests: rows };
@@ -190,7 +190,7 @@ export async function registerCashAdvanceRequestRoutes(app: FastifyInstance) {
 
     const esc = await withCurrentUser(user.uuid, async (client) => {
       await assertCompanyMembership(client, user.uuid, parsedQuery.data.operating_company_id);
-      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [parsedQuery.data.operating_company_id]);
+      await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [parsedQuery.data.operating_company_id]);
       return escalateCashAdvanceRequestToOwner(client, {
         operatingCompanyId: parsedQuery.data.operating_company_id,
         requestId: parsedParams.data.id,
@@ -233,7 +233,7 @@ export async function registerCashAdvanceRequestRoutes(app: FastifyInstance) {
     if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
     const detail = await withCurrentUser(user.uuid, async (client) => {
       await assertCompanyMembership(client, user.uuid, parsedQuery.data.operating_company_id);
-      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [parsedQuery.data.operating_company_id]);
+      await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [parsedQuery.data.operating_company_id]);
       const d = await getCashAdvanceRequestDetail(client, parsedQuery.data.operating_company_id, parsedParams.data.id);
       // B4: record the FIRST office view of this request (accountability response-time signal).
       // Only office reviewers reach here (canReviewCashAdvanceRequest gate above); idempotent.
@@ -269,7 +269,7 @@ export async function registerCashAdvanceRequestRoutes(app: FastifyInstance) {
 
     const preview = await withCurrentUser(user.uuid, async (client) => {
       await assertCompanyMembership(client, user.uuid, parsedQuery.data.operating_company_id);
-      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [parsedQuery.data.operating_company_id]);
+      await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [parsedQuery.data.operating_company_id]);
       return previewCashAdvanceCascade(client, parsedQuery.data.operating_company_id, parsedParams.data.id);
     });
     if ("error" in preview) return reply.code(404).send({ error: preview.error });
@@ -290,7 +290,7 @@ export async function registerCashAdvanceRequestRoutes(app: FastifyInstance) {
 
     const timeline = await withCurrentUser(user.uuid, async (client) => {
       await assertCompanyMembership(client, user.uuid, parsedQuery.data.operating_company_id);
-      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [parsedQuery.data.operating_company_id]);
+      await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [parsedQuery.data.operating_company_id]);
       return getCashAdvanceRequestTimeline(client, parsedQuery.data.operating_company_id, parsedParams.data.id);
     });
     return { timeline };
@@ -312,7 +312,7 @@ export async function registerCashAdvanceRequestRoutes(app: FastifyInstance) {
 
     const result = await withCurrentUser(user.uuid, async (client) => {
       await assertCompanyMembership(client, user.uuid, parsedQuery.data.operating_company_id);
-      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [parsedQuery.data.operating_company_id]);
+      await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [parsedQuery.data.operating_company_id]);
       return createOfficeCashAdvanceRequest(client, {
         operatingCompanyId: parsedQuery.data.operating_company_id,
         actorUserId: user.uuid,
@@ -359,7 +359,7 @@ export async function registerCashAdvanceRequestRoutes(app: FastifyInstance) {
 
     const result = await withCurrentUser(user.uuid, async (client) => {
       await assertCompanyMembership(client, user.uuid, parsedQuery.data.operating_company_id);
-      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [parsedQuery.data.operating_company_id]);
+      await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [parsedQuery.data.operating_company_id]);
       return approveCashAdvanceRequest(client, {
         operatingCompanyId: parsedQuery.data.operating_company_id,
         requestId: parsedParams.data.id,
@@ -421,7 +421,7 @@ export async function registerCashAdvanceRequestRoutes(app: FastifyInstance) {
 
     const result = await withCurrentUser(user.uuid, async (client) => {
       await assertCompanyMembership(client, user.uuid, parsedQuery.data.operating_company_id);
-      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [parsedQuery.data.operating_company_id]);
+      await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [parsedQuery.data.operating_company_id]);
       return denyCashAdvanceRequest(client, {
         operatingCompanyId: parsedQuery.data.operating_company_id,
         requestId: parsedParams.data.id,

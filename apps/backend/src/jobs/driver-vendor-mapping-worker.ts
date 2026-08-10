@@ -16,7 +16,7 @@ async function runScan(app: FastifyInstance) {
       `SELECT id::text AS id FROM org.companies WHERE is_active = true AND deactivated_at IS NULL`
     );
     for (const { id } of companies.rows) {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [id]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [id]);
       const findings = await checkAllMappings(client, id);
       await persistFindings(client, id, findings);
       const critical = findings.filter((f) => f.severity === "critical");

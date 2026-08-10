@@ -257,7 +257,7 @@ export async function dispatchNotification(input: DispatchNotificationInput): Pr
 
   try {
     await withLuciaBypass(async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
 
       const merged = await loadMergedNotificationPreferences(client as QueryableClient, input.user_id);
       const quiet = isQuietHoursNow(merged.timezone, merged.quiet_hours_start, merged.quiet_hours_end);
@@ -459,7 +459,7 @@ export async function notifyAbandonedLoadStakeholders(input: {
   actorUserId: string;
 }) {
   const detail = await withLuciaBypass(async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [input.operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operatingCompanyId]);
     const res = await client.query<{ load_number: string | null; driver_name: string | null }>(
       `
         SELECT

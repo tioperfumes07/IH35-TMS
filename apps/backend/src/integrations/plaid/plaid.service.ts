@@ -348,7 +348,7 @@ export async function exchangePublicToken(publicToken: string, operatingCompanyI
     // persisted; only link_token_created in the audit). SUPPLY the target scope (mirrors the
     // withCompanyScope pattern every read route uses) — this does NOT bypass RLS: the writes can
     // still only touch the scoped opco, so a USMCA connect can never write a TRANSP/TRK row.
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     const companyCodeRes = await client.query<{ code: string }>(
       `SELECT code FROM org.companies WHERE id = $1::uuid LIMIT 1`,
       [operatingCompanyId]

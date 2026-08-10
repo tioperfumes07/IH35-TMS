@@ -84,7 +84,7 @@ export async function forfeitDriverEscrow(
   const amountCents = dollarsToCents(input.amount);
 
   return withCurrentUser(actor.userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [input.operating_company_id]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
 
     // Invariant: forfeit ≤ current escrow balance; balance never negative. Read BEFORE any write.
     const balanceCents = await readDriverEscrowBalanceCents(client as never, input.operating_company_id, input.driver_uuid);

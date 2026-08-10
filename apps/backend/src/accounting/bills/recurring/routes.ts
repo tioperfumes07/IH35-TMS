@@ -225,7 +225,7 @@ async function recurringBillRoutes(app: FastifyInstance) {
     await assertCompanyMembership(String(user.uuid), query.data.operating_company_id);
 
     const rows = await withCurrentUser(String(user.uuid), async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [query.data.operating_company_id]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [query.data.operating_company_id]);
       const params: unknown[] = [query.data.operating_company_id, query.data.limit, query.data.offset];
       let sql = `
         SELECT l.*, t.template_name, t.vendor_uuid

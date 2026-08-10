@@ -28,7 +28,7 @@ export type AccountingBuildResult = {
 };
 
 async function pickDefaultItemQboId(client: PoolClient, oc: string): Promise<string | null> {
-  await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [oc]);
+  await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [oc]);
   const res = await client.query<{ qbo_id: string }>(
     `
       SELECT qbo_id
@@ -45,7 +45,7 @@ async function pickDefaultItemQboId(client: PoolClient, oc: string): Promise<str
 }
 
 export async function resolveCustomerQboId(client: PoolClient, oc: string, customerUuid: string): Promise<string | null> {
-  await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [oc]);
+  await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [oc]);
   const res = await client.query<{ qbo_id: string | null }>(
     `
       SELECT qc.qbo_id
@@ -78,7 +78,7 @@ export async function resolveCustomerQboId(client: PoolClient, oc: string, custo
 }
 
 async function resolveVendorQboId(client: PoolClient, oc: string, vendorUuid: string): Promise<string | null> {
-  await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [oc]);
+  await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [oc]);
   // Linkage: mdata.vendors.qbo_vendor_id = mdata.qbo_vendors.qbo_id (Rule 14 canonical).
   // There is no vendor_uuid column on mdata.qbo_vendors (or the RETIRE mdata mirror).
   const res = await client.query<{ qbo_id: string | null }>(
@@ -100,7 +100,7 @@ async function resolveVendorQboId(client: PoolClient, oc: string, vendorUuid: st
 
 async function resolveAccountQboId(client: PoolClient, oc: string, accountUuid: string | null): Promise<string | null> {
   if (!accountUuid) return null;
-  await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [oc]);
+  await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [oc]);
   const res = await client.query<{ qbo_account_id: string | null }>(
     `
       SELECT qbo_account_id
@@ -120,7 +120,7 @@ export async function loadEntityVersionSnapshot(
   entityType: AccountingOutboundEntityType,
   entityId: string
 ): Promise<{ version_int: number; updated_at: string }> {
-  await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [oc]);
+  await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [oc]);
   switch (entityType) {
     case "invoice": {
       const r = await client.query<{ version_int: number | null; updated_at: string | null }>(

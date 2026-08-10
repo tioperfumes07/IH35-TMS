@@ -463,7 +463,7 @@ export async function ownerTokenApproveCashAdvanceRequest(
     const operatingCompanyId = String(row.operating_company_id ?? "");
     const requestId = String(row.id ?? "");
     const driverId = String(row.driver_id ?? "");
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
 
     const ownerUuid = await resolvePrimaryOwnerUserUuid(client);
     if (!ownerUuid) {
@@ -615,7 +615,7 @@ export async function ownerTokenDenyCashAdvanceRequest(
     const operatingCompanyId = String(row.operating_company_id ?? "");
     const requestId = String(row.id ?? "");
     const driverId = String(row.driver_id ?? "");
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
 
     const ownerUuid = await resolvePrimaryOwnerUserUuid(client);
     if (!ownerUuid) {

@@ -86,7 +86,7 @@ async function enqueueAlertAndEmail(
   }
 ) {
   await client.query(`SELECT set_config('app.bypass_rls', 'lucia', true)`);
-  await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [args.operatingCompanyId]);
+  await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [args.operatingCompanyId]);
 
   await client.query(
     `

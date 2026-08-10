@@ -53,7 +53,7 @@ export async function registerPlaidAdminRoutes(app: FastifyInstance) {
     const result = await syncTransactions(account.plaid_item_id, { actorUserUuid: user.uuid });
 
     await withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [account.operating_company_id]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [account.operating_company_id]);
       await appendCrudAudit(
         client,
         user.uuid,

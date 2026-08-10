@@ -33,7 +33,7 @@ export async function recomputeActiveDriverSet(
   threshold_days: number = DEFAULT_THRESHOLD_DAYS
 ): Promise<ActiveDriverSetSnapshot> {
   await client.query(
-    `SELECT set_config('app.operating_company_id', $1, true)`,
+    `SELECT set_config('app.operating_company_id', $1::text, true)`,
     [operating_company_id]
   );
 

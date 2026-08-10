@@ -105,7 +105,7 @@ export async function canAssignLoadToDriver(
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
-    await client.query("SELECT set_config('app.operating_company_id', $1, true)", [tenantId]);
+    await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [tenantId]);
     const result = await run(client);
     await client.query("COMMIT");
     return result;

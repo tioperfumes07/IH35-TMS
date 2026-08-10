@@ -276,7 +276,7 @@ export async function detectAnomalies(
 
   if (out.length > 0) {
     const insertAnomalies = async (client: DbClientLike) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [params.operatingCompanyId]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [params.operatingCompanyId]);
       for (const anomaly of out) {
         await client.query(
           `
@@ -336,7 +336,7 @@ export async function importEntities(actorUserId: string, batchId: string, qboCo
           });
           await client.query("BEGIN");
           try {
-            await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [qboContext.operatingCompanyId]);
+            await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [qboContext.operatingCompanyId]);
             for (const row of page) {
               const entityId = String(row.Id ?? "");
               if (!entityId) continue;
@@ -496,7 +496,7 @@ export async function importTransactions(actorUserId: string, batchId: string, q
           });
           await client.query("BEGIN");
           try {
-            await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [qboContext.operatingCompanyId]);
+            await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [qboContext.operatingCompanyId]);
             for (const row of page) {
               const txnId = getTxId(row);
               if (!txnId) continue;
@@ -689,7 +689,7 @@ export async function importAttachments(actorUserId: string, batchId: string, qb
     current_total_pages: null,
   });
   await withCurrentUser(actorUserId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [qboContext.operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [qboContext.operatingCompanyId]);
     const txRows = await client.query<{
       id: string;
       qbo_txn_id: string;
@@ -789,7 +789,7 @@ export async function importAttachments(actorUserId: string, batchId: string, qb
           // Short transaction: persist the already-fetched attachments. No HTTP inside.
           await client.query("BEGIN");
           try {
-            await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [qboContext.operatingCompanyId]);
+            await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [qboContext.operatingCompanyId]);
             for (const f of fetched) {
               try {
                 const insertRes = await client.query(
@@ -968,7 +968,7 @@ export async function completeImportBatch(actorUserId: string, batchId: string, 
   const status = (extraCounts.errorsCount ?? 0) > 0 ? "partial" : "completed";
 
   await withCurrentUser(actorUserId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [batch.operating_company_id]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [batch.operating_company_id]);
     await client.query(
       `
         UPDATE qbo_archive.import_batches
@@ -1097,7 +1097,7 @@ export async function runForensicImport(
     }
 
     await withCurrentUser(actorUserId, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [batch.operating_company_id]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [batch.operating_company_id]);
       await client.query(
         `
           UPDATE qbo_archive.import_batches

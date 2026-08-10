@@ -617,7 +617,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
         const scopedCompanyId = await resolveOperatingCompanyId(client, authUser.uuid);
         if (!scopedCompanyId) return { rows: [], totalCount: 0 };
         // membership-scope-exempt: transaction-resolved-user-company
-        await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [scopedCompanyId]);
+        await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [scopedCompanyId]);
         scopedCompanyIds = [scopedCompanyId];
       }
       // Keep the company scope as parameter 1 so both SQL literals carry a visible, fail-closed
@@ -1705,7 +1705,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
       const scopedId = await resolveOperatingCompanyId(client, authUser.uuid, operating_company_id);
       if (!scopedId) return { rows: [], totalCount: 0 };
       // membership-scope-exempt: transaction-resolved-user-company
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [scopedId]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [scopedId]);
 
       // $1 = driver uuid, $2 = operating_company_id uuid (always present)
       const values: unknown[] = [params.data.id, scopedId];

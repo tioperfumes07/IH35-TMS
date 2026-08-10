@@ -878,7 +878,7 @@ export async function runReconciliationCategoryTick(integration: Integration, mi
       }
 
       const runId = randomUUID();
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
       try {
         await appendAuditEvent(client, "reconciliation.tick.started", "info", {
           operating_company_id: operatingCompanyId,

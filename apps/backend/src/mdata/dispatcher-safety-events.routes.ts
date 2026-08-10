@@ -17,7 +17,7 @@ async function setOperatingCompanyGuc(client: ScopeClient, operatingCompanyId: s
   // the derived company before reaching here (MDATA-F03). An assert inside this one-line helper would
   // re-check what the caller just established.
   // membership-scope-exempt: shared setter; callers authorise before invoking it (see above)
-  await client.query("SELECT set_config('app.operating_company_id', $1, true)", [operatingCompanyId]);
+  await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [operatingCompanyId]);
 }
 
 async function scopeToCallerCompany(client: ScopeClient, userId: string, requested?: string | null): Promise<string | null> {

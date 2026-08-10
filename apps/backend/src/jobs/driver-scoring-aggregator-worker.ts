@@ -34,7 +34,7 @@ export async function runDriverScoringAggregatorTick(deps?: {
     );
 
     for (const { id } of companies.rows) {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [id]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [id]);
       const result = await aggregateForPeriod(client, id, period_start, period_end);
       rowsWritten += result.rows_written;
       companiesProcessed += 1;

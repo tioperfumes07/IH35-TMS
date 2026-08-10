@@ -14,7 +14,7 @@ async function runCadence(app: FastifyInstance, maxCadenceMinutes: number) {
     );
     for (const { id } of companies.rows) {
       try {
-        await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [id]);
+        await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [id]);
         await seedDefaultAnomalyRules(client, id);
         const result = await evaluateRulesForTenant(client, id, maxCadenceMinutes);
         app.log.info({ company_id: id, ...result, cadence: maxCadenceMinutes }, `[${WORKER_NAME}] evaluated`);

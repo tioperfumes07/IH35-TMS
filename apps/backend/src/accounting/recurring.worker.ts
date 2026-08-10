@@ -400,7 +400,7 @@ async function processOneTemplate(client: PoolClient, tmplId: string): Promise<E
   const actorId = tmpl.created_by_user_id ? String(tmpl.created_by_user_id) : null;
   if (!actorId) throw new Error("recurring_missing_created_by_user");
 
-  await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [String(tmpl.operating_company_id)]);
+  await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [String(tmpl.operating_company_id)]);
 
   const kind = String(tmpl.kind);
   let entityId: string;

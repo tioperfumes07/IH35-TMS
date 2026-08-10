@@ -140,7 +140,7 @@ export async function createQboClass(operatingCompanyId: string, className: stri
 
 export async function listAvailableVendors(userId: string, operatingCompanyId: string, query = "", limit = 50) {
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     const term = `%${query.trim()}%`;
     const res = await client.query<VendorRow>(
       `
@@ -176,7 +176,7 @@ export async function suggestMatches(
 ) {
   const normalizedType = normalizeEntityType(entityType);
   const [vendors, sourceLabel] = await withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     let source = "";
     if (normalizedType === "driver") {
       const row = await client.query<{ first_name: string; last_name: string }>(
@@ -243,7 +243,7 @@ export async function linkVendor(
 ) {
   const entityType = normalizeEntityType(input.entityType);
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [input.operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operatingCompanyId]);
     if (!(await ensureVendorExists(client, input.operatingCompanyId, input.qboVendorId))) {
       throw new Error("qbo_vendor_not_found");
     }
@@ -316,7 +316,7 @@ export async function unlinkVendor(
 ) {
   const entityType = normalizeEntityType(input.entityType);
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [input.operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operatingCompanyId]);
     const table = entityType === "driver" ? "mdata.drivers" : entityType === "unit" ? "mdata.units" : "mdata.equipment";
     const row = await client.query<{ current_id: string | null }>(
       `SELECT qbo_vendor_id AS current_id FROM ${table} WHERE id = $1 LIMIT 1`,
@@ -377,7 +377,7 @@ export async function linkClass(
   const isUnit = input.entityType === "unit";
   const table = isUnit ? "mdata.units" : "mdata.equipment";
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [input.operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operatingCompanyId]);
     const current = await client.query<{ current_id: string | null }>(
       `SELECT qbo_class_id AS current_id FROM ${table} WHERE id = $1 LIMIT 1`,
       [input.entityId]
@@ -432,7 +432,7 @@ export async function unlinkClass(
 ) {
   const table = input.entityType === "unit" ? "mdata.units" : "mdata.equipment";
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [input.operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operatingCompanyId]);
     const row = await client.query<{ current_id: string | null }>(
       `SELECT qbo_class_id AS current_id FROM ${table} WHERE id = $1 LIMIT 1`,
       [input.entityId]
@@ -469,7 +469,7 @@ export async function unlinkClass(
 
 export async function listDriverMappingStatus(userId: string, operatingCompanyId: string) {
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     const drivers = await client.query<{
       id: string;
       first_name: string;
@@ -500,7 +500,7 @@ export async function listLinkageHistory(
   entityId?: string
 ) {
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     const where: string[] = ["operating_company_id = $1"];
     const values: unknown[] = [operatingCompanyId];
     if (entityType) {
@@ -527,7 +527,7 @@ export async function listLinkageHistory(
 
 export async function createDriverWithQboVendor(userId: string, input: DriverCreateInput) {
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [input.operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operatingCompanyId]);
     const driverRes = await client.query<{ id: string }>(
       `
         INSERT INTO mdata.drivers (
@@ -609,7 +609,7 @@ export async function createDriverWithQboVendor(userId: string, input: DriverCre
 
 export async function createUnitWithQboClass(userId: string, input: UnitCreateInput & { operatingCompanyId: string }) {
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [input.operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operatingCompanyId]);
     const unitRes = await client.query<{ id: string }>(
       `
         INSERT INTO mdata.units (

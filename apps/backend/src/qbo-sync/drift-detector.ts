@@ -408,7 +408,7 @@ async function detectVendorsDrift(client: PoolClient, operatingCompanyId: string
 
 export async function detectDriftForCompany(operatingCompanyId: string): Promise<DriftDetectResult[]> {
   return withLuciaBypass(async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
 
     const exists = await client.query(`SELECT to_regclass('qbo_sync.drift_log') IS NOT NULL AS ok`);
     if (!exists.rows[0]?.ok) return [];

@@ -22,7 +22,7 @@ export async function runFmcsaSaferVerificationTick(options?: { operatingCompany
     const stale = await listStaleSaferEntities(client as DbClient, options?.operatingCompanyId, maxEntities);
     for (const entity of stale) {
       assertTenantContext(entity.operating_company_id, "compliance.fmcsa_safer_verification_cron");
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [entity.operating_company_id]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [entity.operating_company_id]);
       try {
         const result = await verifySaferEntity(client as DbClient, {
           entityType: entity.entity_type,

@@ -91,7 +91,7 @@ async function insertCriticalAlert(input: {
   message: string;
 }) {
   await withLuciaBypass(async (client: PoolClient) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [input.operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operatingCompanyId]);
     const existsRes = await client.query(`SELECT to_regclass('qbo.sync_alerts') IS NOT NULL AS ok`);
     if (!existsRes.rows[0]?.ok) return;
 
@@ -165,7 +165,7 @@ async function finalizeFailure(row: SyncRunRow, err: unknown) {
     });
 
     await withLuciaBypass(async (client: PoolClient) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [row.operating_company_id]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [row.operating_company_id]);
       await client.query(`SELECT audit.append_event($1, $2, $3::jsonb, NULL, $4)`, [
         "qbo.sync_dead_letter",
         "warning",

@@ -153,7 +153,7 @@ export async function registerEquipmentRoutes(app: FastifyInstance) {
       // shared by count + item queries (identical filter indices on both).
       const scopedCompanyId = await resolveOperatingCompanyId(client, authUser.uuid, operating_company_id);
       if (!scopedCompanyId) return { rows: [], total: 0 };
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [scopedCompanyId]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [scopedCompanyId]);
 
       // $1 = scoped company. Optional status/search bind at $2+. Limit/offset append after count.
       const values: unknown[] = [scopedCompanyId];

@@ -45,7 +45,7 @@ export async function registerDriverMessagesRoutes(app: FastifyInstance) {
       // it and have deliverDriverProfileMessage send a REAL SMS/email to any driver id they supplied.
       // Assert membership BEFORE the GUC set, so the scope is proven to be the caller's own.
       await assertCompanyMembership(client, authUser.uuid, query.data.operating_company_id);
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [query.data.operating_company_id]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [query.data.operating_company_id]);
 
       // The driver id was likewise never checked against that company: with a valid company of their own,
       // a caller could still address a driver belonging to a different entity, since neither the INSERT

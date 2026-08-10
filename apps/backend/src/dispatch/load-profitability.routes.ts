@@ -38,7 +38,7 @@ export async function registerLoadProfitabilityRoutes(app: FastifyInstance) {
 
     await assertCompanyMembership(user.uuid, operating_company_id);
     const result = await withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operating_company_id]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operating_company_id]);
       return computeLoadProfitability(client, operating_company_id, loadId);
     });
 
@@ -65,7 +65,7 @@ export async function registerLoadProfitabilityRoutes(app: FastifyInstance) {
 
     await assertCompanyMembership(user.uuid, operating_company_id);
     const result = await withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operating_company_id]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operating_company_id]);
       return computeTripProfitabilityReport(client, operating_company_id, from, to);
     });
 

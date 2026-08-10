@@ -36,7 +36,7 @@ function canReviewDriverHubRequest(role: string): boolean {
 async function withCompany<T>(userUuid: string, companyId: string, fn: (client: Parameters<Parameters<typeof withCurrentUser>[1]>[0]) => Promise<T>) {
   await assertCompanyMembership(userUuid, companyId);
   return withCurrentUser(userUuid, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [companyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [companyId]);
     return fn(client);
   });
 }

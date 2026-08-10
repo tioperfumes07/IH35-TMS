@@ -140,7 +140,7 @@ async function generateMonthlyPnl(
 async function generateSafetyDigest(operatingCompanyId: string): Promise<GeneratedBundle> {
   const { withLuciaBypass } = await import("../../auth/db.js");
   const rows = await withLuciaBypass(async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     const res = await client.query<{ title: string; severity: string; created_at: string }>(
       `
         SELECT title, severity, created_at::text

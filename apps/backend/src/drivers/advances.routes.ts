@@ -48,7 +48,7 @@ export async function registerDriverAdvancesRoutes(app: FastifyInstance) {
 
     const result = await withCurrentUser(authUser.uuid, async (rawClient) => {
       const client = rawClient as Queryable;
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
 
       const driverRes = await client.query<{ id: string }>(
         `SELECT id FROM mdata.drivers WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,

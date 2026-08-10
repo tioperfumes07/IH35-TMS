@@ -9,7 +9,7 @@ let initialized = false;
 
 export async function runDeadheadRefreshTick(operatingCompanyId: string) {
   await withLuciaBypass(async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     await refreshDeadheadCache(client, operatingCompanyId);
   });
 }

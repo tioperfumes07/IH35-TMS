@@ -116,7 +116,7 @@ export async function registerQboMasterWriteRoutes(app: FastifyInstance) {
     const body = parsed.data;
 
     const row = await withCurrentUser(String(user.uuid), async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [body.operating_company_id]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [body.operating_company_id]);
       const allowed = await assertCompanyAccess(client, String(user.uuid), body.operating_company_id);
       if (!allowed) return null;
 
@@ -197,7 +197,7 @@ export async function registerQboMasterWriteRoutes(app: FastifyInstance) {
     const body = parsed.data;
 
     const updated = await withCurrentUser(String(user.uuid), async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [body.operating_company_id]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [body.operating_company_id]);
       const allowed = await assertCompanyAccess(client, String(user.uuid), body.operating_company_id);
       if (!allowed) return null;
 
@@ -267,7 +267,7 @@ export async function registerQboMasterWriteRoutes(app: FastifyInstance) {
     const body = parsed.data;
 
     const row = await withCurrentUser(String(user.uuid), async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [body.operating_company_id]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [body.operating_company_id]);
       const allowed = await assertCompanyAccess(client, String(user.uuid), body.operating_company_id);
       if (!allowed) return null;
 
@@ -330,7 +330,7 @@ export async function registerQboMasterWriteRoutes(app: FastifyInstance) {
     const body = parsed.data;
 
     const updated = await withCurrentUser(String(user.uuid), async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [body.operating_company_id]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [body.operating_company_id]);
       const allowed = await assertCompanyAccess(client, String(user.uuid), body.operating_company_id);
       if (!allowed) return null;
 
@@ -395,7 +395,7 @@ export async function registerQboMasterWriteRoutes(app: FastifyInstance) {
     const body = parsed.data;
 
     const row = await withCurrentUser(String(user.uuid), async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [body.operating_company_id]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [body.operating_company_id]);
       const allowed = await assertCompanyAccess(client, String(user.uuid), body.operating_company_id);
       if (!allowed) return null;
 
@@ -450,7 +450,7 @@ export async function registerQboMasterWriteRoutes(app: FastifyInstance) {
     const body = parsed.data;
 
     const updated = await withCurrentUser(String(user.uuid), async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [body.operating_company_id]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [body.operating_company_id]);
       const allowed = await assertCompanyAccess(client, String(user.uuid), body.operating_company_id);
       if (!allowed) return null;
 
@@ -526,7 +526,7 @@ export async function registerQboMasterWriteRoutes(app: FastifyInstance) {
     const body = parsed.data;
 
     const row = await withCurrentUser(String(user.uuid), async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [body.operating_company_id]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [body.operating_company_id]);
       const allowed = await assertCompanyAccess(client, String(user.uuid), body.operating_company_id);
       if (!allowed) return null;
 
@@ -587,7 +587,7 @@ export async function registerQboMasterWriteRoutes(app: FastifyInstance) {
     const body = parsed.data;
 
     const updated = await withCurrentUser(String(user.uuid), async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [body.operating_company_id]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [body.operating_company_id]);
       const allowed = await assertCompanyAccess(client, String(user.uuid), body.operating_company_id);
       if (!allowed) return null;
 

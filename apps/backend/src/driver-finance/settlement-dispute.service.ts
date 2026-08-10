@@ -105,7 +105,7 @@ export async function createCorrectiveJournalEntry(params: {
   resolutionNotes: string;
 }) {
   return withCurrentUser(params.actorUserId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [params.operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [params.operatingCompanyId]);
     // FLAG GATE — OFF => post NOTHING (checked BEFORE any account read / JE insert), mirroring
     // settlement-posting.service.ts. This corrective JE previously posted UNGATED, so with
     // SETTLEMENT_GL_POSTING_ENABLED ON in prod it went live regardless of intent. Honor per-entity
@@ -149,7 +149,7 @@ export async function listDisputes(
   input: { operating_company_id: string; status?: "open" | "all"; driver_id?: string }
 ) {
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [input.operating_company_id]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
     const values: unknown[] = [input.operating_company_id];
     const where: string[] = [`d.operating_company_id = $1`];
     if (input.status && input.status !== "all") {
@@ -187,7 +187,7 @@ export async function listDisputes(
 
 export async function getDispute(userId: string, input: { operating_company_id: string; dispute_id: string }) {
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [input.operating_company_id]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
     const res = await client.query(
       `
         SELECT
@@ -231,7 +231,7 @@ export async function openDispute(
     throw new Error("E_DESCRIPTION_REQUIRED: dispute_description >=20 chars required");
   }
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [input.operating_company_id]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
   const settlement = await client.query(
       `
         SELECT id
@@ -309,7 +309,7 @@ export async function markUnderReview(
 ) {
   if (!isOwnerOrAdmin(userRole)) throw new Error("E_OWNER_OR_ADMIN_ONLY");
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [input.operating_company_id]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
     const current = await loadDisputeForUpdate(client, input.dispute_id, input.operating_company_id);
     if (!current) throw new Error("E_NOT_FOUND");
     if (CLOSED_STATUSES.has(String(current.status))) throw new Error("E_CLOSED_IMMUTABLE");
@@ -358,7 +358,7 @@ export async function resolveDispute(
   }
 
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [input.operating_company_id]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
     const dispute = await loadDisputeForUpdate(client, input.dispute_id, input.operating_company_id);
     if (!dispute) throw new Error("E_NOT_FOUND");
     if (CLOSED_STATUSES.has(String(dispute.status))) throw new Error("E_CLOSED_IMMUTABLE");
@@ -437,7 +437,7 @@ export async function withdrawDispute(
   input: { operating_company_id: string; dispute_id: string; driver_id: string }
 ) {
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [input.operating_company_id]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
     const dispute = await loadDisputeForUpdate(client, input.dispute_id, input.operating_company_id);
     if (!dispute) throw new Error("E_NOT_FOUND");
     if (CLOSED_STATUSES.has(String(dispute.status))) throw new Error("E_CLOSED_IMMUTABLE");
