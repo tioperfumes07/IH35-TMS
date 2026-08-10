@@ -12,7 +12,7 @@
 
 | ID | Status | Title | Evidence | PR |
 |---|---|---|---|---|
-| `FACT-S01` | **PASS** | /factoring home KPI row matches factoring.factor canonical row | getFactoringSummary KPI row + need-company + ListErrorBanner; guard verify-fact-s01-home-surface.mjs | — |
+| `FACT-S01` | **PASS** | /factoring home KPI row matches factoring.factor canonical row | getFactoringSummary KPI row + need-company + ListErrorBanner; guard verify-fact-s01-home-surface.mjs. Additional regression coverage: FactoringHome.kpi-error.test.tsx (2 tests, all green) covers the successful KPI render and the ListErrorBanner honest-error state. | — |
 | `FACT-DUAL-01` | **PASS** | Factor profile panel reads factoring.factor columns (not mdata.vendors notes parse) | listFactors/updateFactor + no vendor-notes; verify-factoring-home-canonical-factor-profile + verify-fact-s01-home-surface | — |
 | `FACT-DUAL-02` | **PASS** | SubmitFactoringModal rates from factoring.factor (not parseVendorNotes) | SubmitFactoringModal reads the active factor from listFactors/factoring.factor and prefills advance_rate, reserve_rate, fee_rate from the canonical factoring.factor row; no parseVendorNotes usage; guard verify-fact-dual-02-submit-rates-from-factor.mjs selftests. | #5337 |
 | `FACT-DUAL-03` | **PASS** | factoring.routes active factor resolves canonical factoring.factor not mdata.vendors | factoring.routes.ts resolveActiveFactor delegates to resolveCanonicalActiveFactor from home/factoring-balance-invoice-linkage.service.ts, which resolves the canonical active factor via factoring.canonical_factor_agreements JOIN factoring.factor JOIN mdata.vendors; no direct mdata.vendors scan in route for active factor; guard verify-fact-dual-03-routes-resolve-canonical-factor.mjs selftests. | #5338 |

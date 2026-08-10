@@ -10,6 +10,16 @@ export const FINANCE_LANDING_CORE_CHECKS = [
     args: ["scripts/verify-finance-landing-hub.mjs", "--selftest"],
   },
   {
+    label: "finance hub surfaces S01..S08 ratchet",
+    command: "node",
+    args: ["scripts/verify-finance-hub-surfaces-s01-s08.mjs"],
+  },
+  {
+    label: "finance hub surfaces S01..S08 selftest",
+    command: "node",
+    args: ["scripts/verify-finance-hub-surfaces-s01-s08.mjs", "--selftest"],
+  },
+  {
     label: "behavioral route test",
     command: "npx",
     args: [
