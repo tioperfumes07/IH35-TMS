@@ -1960,5 +1960,10 @@
     "claimed_at": "2026-08-10",
     "claimed_by": "cursor",
     "purpose": "verify-no-hold-language-in-active-blocks"
+  },
+  "3000": {
+    "claimed_at": "2026-08-10",
+    "claimed_by": "cursor",
+    "purpose": "verify-invoice-send-disabled-reason"
   }
 }
