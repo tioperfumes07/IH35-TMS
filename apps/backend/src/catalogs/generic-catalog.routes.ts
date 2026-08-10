@@ -14,6 +14,7 @@ export const fleetEquipmentTypesCatalogConfig: GenericCatalogConfig = {
   routePrefix: "/api/v1/catalogs/fleet",
   urlSegment: "equipment-types",
   displayName: "Equipment Types",
+  displayNameColumn: "name",
   allowedColumns: ["code", "display_name", "description", "is_active", "sort_order"],
   requiredColumns: ["code", "display_name"],
   validators: {
@@ -163,6 +164,7 @@ export const dispatchLumperProvidersCatalogConfig: GenericCatalogConfig = {
   routePrefix: "/api/v1/catalogs/dispatch",
   urlSegment: "lumper-providers",
   displayName: "Lumper Providers",
+  displayNameColumn: "display_name",
   allowedColumns: ["code", "display_name", "description", "is_active", "sort_order"],
   requiredColumns: ["code", "display_name"],
   validators: {
@@ -197,6 +199,7 @@ export const accidentTypesCatalogConfig: GenericCatalogConfig = {
   routePrefix: "/api/v1/catalogs/safety",
   urlSegment: "accident-types",
   displayName: "Accident Types",
+  displayNameColumn: "name",
   allowedColumns: ["code", "display_name", "description", "is_active", "sort_order"],
   requiredColumns: ["code", "display_name"],
   validators: {
@@ -218,6 +221,7 @@ export const workplaceIncidentTypesCatalogConfig: GenericCatalogConfig = {
   routePrefix: "/api/v1/catalogs/safety",
   urlSegment: "workplace-incident-types",
   displayName: "Workplace Incident Types",
+  displayNameColumn: "name",
   allowedColumns: ["code", "display_name", "description", "is_active", "sort_order"],
   requiredColumns: ["code", "display_name"],
   validators: {
@@ -239,6 +243,7 @@ export const leaveTypesCatalogConfig: GenericCatalogConfig = {
   routePrefix: "/api/v1/catalogs/driver",
   urlSegment: "leave-types",
   displayName: "Leave Types",
+  displayNameColumn: "name",
   allowedColumns: ["code", "display_name", "description", "is_active", "sort_order"],
   requiredColumns: ["code", "display_name"],
   validators: {
@@ -260,6 +265,7 @@ export const cashAdvanceTypesCatalogConfig: GenericCatalogConfig = {
   routePrefix: "/api/v1/catalogs/driver",
   urlSegment: "cash-advance-types",
   displayName: "Cash Advance Types",
+  displayNameColumn: "name",
   allowedColumns: ["code", "display_name", "description", "is_active", "sort_order"],
   requiredColumns: ["code", "display_name"],
   validators: {
@@ -281,6 +287,7 @@ export const pmIntervalsCatalogConfig: GenericCatalogConfig = {
   routePrefix: "/api/v1/catalogs/maintenance",
   urlSegment: "pm-intervals",
   displayName: "Pm Intervals",
+  displayNameColumn: "name",
   allowedColumns: ["code", "display_name", "description", "is_active", "sort_order"],
   requiredColumns: ["code", "display_name"],
   validators: {
@@ -302,6 +309,7 @@ export const repairLocationsCatalogConfig: GenericCatalogConfig = {
   routePrefix: "/api/v1/catalogs/maintenance",
   urlSegment: "repair-locations",
   displayName: "Repair Locations",
+  displayNameColumn: "name",
   allowedColumns: ["code", "display_name", "description", "is_active", "sort_order"],
   requiredColumns: ["code", "display_name"],
   validators: {
@@ -323,6 +331,7 @@ export const workOrderTemplatesCatalogConfig: GenericCatalogConfig = {
   routePrefix: "/api/v1/catalogs/maintenance",
   urlSegment: "work-order-templates",
   displayName: "Work Order Templates",
+  displayNameColumn: "name",
   allowedColumns: ["code", "display_name", "description", "is_active", "sort_order"],
   requiredColumns: ["code", "display_name"],
   validators: {
@@ -344,6 +353,7 @@ export const airBagCatalogCatalogConfig: GenericCatalogConfig = {
   routePrefix: "/api/v1/catalogs/maintenance",
   urlSegment: "air-bag-catalog",
   displayName: "Air Bag",
+  displayNameColumn: "name",
   allowedColumns: ["code", "display_name", "description", "is_active", "sort_order"],
   requiredColumns: ["code", "display_name"],
   validators: {
@@ -365,6 +375,7 @@ export const batteryCatalogCatalogConfig: GenericCatalogConfig = {
   routePrefix: "/api/v1/catalogs/maintenance",
   urlSegment: "battery-catalog",
   displayName: "Battery",
+  displayNameColumn: "name",
   allowedColumns: ["code", "display_name", "description", "is_active", "sort_order"],
   requiredColumns: ["code", "display_name"],
   validators: {
@@ -386,6 +397,7 @@ export const tireCatalogCatalogConfig: GenericCatalogConfig = {
   routePrefix: "/api/v1/catalogs/maintenance",
   urlSegment: "tire-catalog",
   displayName: "Tire",
+  displayNameColumn: "name",
   allowedColumns: ["code", "display_name", "description", "is_active", "sort_order"],
   requiredColumns: ["code", "display_name"],
   validators: {
@@ -407,6 +419,7 @@ export const trailerPartsCatalogConfig: GenericCatalogConfig = {
   routePrefix: "/api/v1/catalogs/maintenance",
   urlSegment: "trailer-parts",
   displayName: "Trailer Parts",
+  displayNameColumn: "name",
   allowedColumns: ["code", "display_name", "description", "is_active", "sort_order"],
   requiredColumns: ["code", "display_name"],
   validators: {
@@ -428,6 +441,7 @@ export const truckPartsCatalogConfig: GenericCatalogConfig = {
   routePrefix: "/api/v1/catalogs/maintenance",
   urlSegment: "truck-parts",
   displayName: "Truck Parts",
+  displayNameColumn: "name",
   allowedColumns: ["code", "display_name", "description", "is_active", "sort_order"],
   requiredColumns: ["code", "display_name"],
   validators: {
@@ -449,6 +463,7 @@ export const defStationsCatalogConfig: GenericCatalogConfig = {
   routePrefix: "/api/v1/catalogs/fuel",
   urlSegment: "def-stations",
   displayName: "Def Stations",
+  displayNameColumn: "name",
   allowedColumns: ["code", "display_name", "description", "is_active", "sort_order"],
   requiredColumns: ["code", "display_name"],
   validators: {
@@ -470,6 +485,7 @@ export const fuelStationsCatalogConfig: GenericCatalogConfig = {
   routePrefix: "/api/v1/catalogs/fuel",
   urlSegment: "fuel-stations",
   displayName: "Fuel Stations",
+  displayNameColumn: "name",
   allowedColumns: ["code", "display_name", "description", "is_active", "sort_order"],
   requiredColumns: ["code", "display_name"],
   validators: {
@@ -491,6 +507,7 @@ export const relayAccountsCatalogConfig: GenericCatalogConfig = {
   routePrefix: "/api/v1/catalogs/fuel",
   urlSegment: "relay-accounts",
   displayName: "Relay Accounts",
+  displayNameColumn: "name",
   allowedColumns: ["code", "display_name", "description", "is_active", "sort_order"],
   requiredColumns: ["code", "display_name"],
   validators: {
@@ -512,6 +529,7 @@ export const tollProvidersCatalogConfig: GenericCatalogConfig = {
   routePrefix: "/api/v1/catalogs/fuel",
   urlSegment: "toll-providers",
   displayName: "Toll Providers",
+  displayNameColumn: "name",
   allowedColumns: ["code", "display_name", "description", "is_active", "sort_order"],
   requiredColumns: ["code", "display_name"],
   validators: {
@@ -533,6 +551,7 @@ export const loadTrailerEquipmentCatalogConfig: GenericCatalogConfig = {
   routePrefix: "/api/v1/catalogs/dispatch",
   urlSegment: "load-trailer-equipment",
   displayName: "Load Trailer Equipment",
+  displayNameColumn: "name",
   allowedColumns: ["code", "display_name", "description", "is_active", "sort_order"],
   requiredColumns: ["code", "display_name"],
   validators: {
@@ -554,6 +573,7 @@ export const mxCustomsBrokersCatalogConfig: GenericCatalogConfig = {
   routePrefix: "/api/v1/catalogs/dispatch",
   urlSegment: "brokers",
   displayName: "Mx Customs Brokers",
+  displayNameColumn: "name",
   allowedColumns: ["code", "display_name", "description", "is_active", "sort_order"],
   requiredColumns: ["code", "display_name"],
   validators: {
@@ -575,6 +595,7 @@ export const vendorTypesCatalogConfig: GenericCatalogConfig = {
   routePrefix: "/api/v1/catalogs/vendors",
   urlSegment: "vendor-types",
   displayName: "Vendor Types",
+  displayNameColumn: "display_name",
   allowedColumns: ["code", "display_name", "description", "is_active", "sort_order"],
   requiredColumns: ["code", "display_name"],
   validators: {
@@ -674,6 +695,7 @@ export const customerTypesCatalogConfig: GenericCatalogConfig = {
   routePrefix: "/api/v1/catalogs/customers",
   urlSegment: "customer-types",
   displayName: "Customer Types",
+  displayNameColumn: "display_name",
   allowedColumns: ["code", "display_name", "description", "is_active", "sort_order"],
   requiredColumns: ["code", "display_name"],
   validators: {
