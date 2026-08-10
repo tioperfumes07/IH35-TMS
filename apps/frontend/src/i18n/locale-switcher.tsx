@@ -38,7 +38,11 @@ export function LocaleSwitcher() {
   const currentLanguage = normalizeLocale(i18n.resolvedLanguage ?? i18n.language) ?? "en";
 
   return (
-    <label className="inline-flex items-center gap-1 rounded-sm border px-2 py-1 text-xs" style={{ borderColor: "rgba(255,255,255,0.2)", color: "inherit" }}>
+    <label
+      className="inline-flex items-center gap-1 rounded-sm border px-2 py-1 text-xs"
+      style={{ borderColor: "rgba(255,255,255,0.2)", color: "inherit" }}
+      title="Office Spanish is a machine-translated preview pending review; driver-app Spanish is separately reviewed."
+    >
       <span className="sr-only">{t("common.language", "Language")}</span>
       <select
         aria-label={t("common.language", "Language")}
@@ -56,7 +60,7 @@ export function LocaleSwitcher() {
           {t("common.english", "English")}
         </option>
         <option value="es" style={{ color: "#0f172a" }}>
-          {t("common.spanish", "Spanish")}
+          {t("common.spanish", "Spanish")} (preview)
         </option>
       </select>
     </label>
