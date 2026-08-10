@@ -2,7 +2,7 @@
   "module": "reports",
   "title": "Reports",
   "complete": false,
-  "as_of": "2026-08-09",
+  "as_of": "2026-08-10",
   "live_sha": null,
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/AUDITOR-RUN-2026-07-31/modules/reports-docs-maintenance-2026-08-01.md",
   "spec_sources": [
@@ -47,7 +47,7 @@
       "spec": "SettlementSummaryPage · VSETTLE",
       "status": "PASS",
       "evidence": "SettlementSummaryPage.tsx uses useCompanyContext selectedCompanyId, gates the query on companyId, and calls getSettlementSummary({ operating_company_id }). FE api withCompany(/api/v1/reports/settlement-summary). BE settlement-summary.routes.ts uses companyQuerySchema + withCompanyScope and SQL s.operating_company_id = $1 / d.operating_company_id = $1 on driver_finance.driver_settlements. Guard: scripts/verify-rpt-s03-settlement-summary.mjs.",
-      "pr": null,
+      "pr": "#5347",
       "prod_verified": false
     },
     {
@@ -85,7 +85,7 @@
       "spec": "SubscriptionManager · 0243-e1-3 two engines",
       "status": "PASS",
       "evidence": "ReportsHome kpiReady —/0 honesty; SubscriptionManager emptyMessage; ScheduledReportsPanel No active schedules; verify-rpt-s06-scheduled-honest-zero.mjs",
-      "pr": "PENDING",
+      "pr": "#5351",
       "prod_verified": false
     },
     {
@@ -98,7 +98,7 @@
       "spec": "A8-AUDIT-REPORTS-SECTION · audit/* report routes",
       "status": "PASS",
       "evidence": "Routes /reports/audit/* registered in manifest.tsx for activity-by-user, activity-by-module, financial-change-log, maintenance-decision-log, deduction-trail, void-reversal, period-close-history, all mounting AuditXxxPage wrappers. ReportsSubNav lists Audit dropdown with exact hrefs. AuditReportPage reads selectedCompanyId, passes operating_company_id to fetchAuditReport, and renders ParityTable with loading, empty text, and error state. Backend audit-reports.routes.ts validates operating_company_id and filters every endpoint with el.operating_company_id = $1::uuid. Guard: scripts/verify-rpt-s07-audit-reports-section.mjs.",
-      "pr": "#TBD",
+      "pr": "#5353",
       "prod_verified": false
     },
     {
