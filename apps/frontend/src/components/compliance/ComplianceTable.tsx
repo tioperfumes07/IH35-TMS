@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import type { ComplianceCredential } from "../../api/compliance";
 import { formatDateUS } from "../../lib/formatDate";
+import { entityLabel } from "../../lib/entity-label";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 import { EntityLink, type EntityKind } from "../shared/EntityLink";
 
@@ -18,6 +19,21 @@ const severityClass: Record<string, string> = {
   yellow: "text-slate-700",
   green: "text-slate-700",
 };
+
+function ownerNoun(ownerType: string): string {
+  switch (ownerType) {
+    case "driver":
+      return "Driver";
+    case "unit":
+    case "unit_plate":
+      return "Unit";
+    case "equipment":
+    case "equipment_plate":
+      return "Trailer";
+    default:
+      return "Owner";
+  }
+}
 
 function ownerEntityKind(ownerType: string): EntityKind | null {
   switch (ownerType) {
@@ -52,8 +68,9 @@ const COLUMNS: Array<ParityColumn<ComplianceCredential>> = [
     sortable: true,
     render: (row) => {
       const kind = ownerEntityKind(row.owner_type);
-      if (!kind || !row.owner_id) return row.owner_name;
-      return <EntityLink kind={kind} id={row.owner_id} label={row.owner_name} />;
+      const label = entityLabel(row.owner_name, row.owner_id, ownerNoun(row.owner_type));
+      if (!kind || !row.owner_id) return label;
+      return <EntityLink kind={kind} id={row.owner_id} label={label} />;
     },
   },
   {

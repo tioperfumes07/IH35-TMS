@@ -17,6 +17,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
 import { useListState } from "../../components/list-state";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { entityLabel } from "../../lib/entity-label";
 
 // ─── types ────────────────────────────────────────────────────────────────────
 
@@ -152,13 +153,13 @@ export function FactoringQueuePage() {
         label: "Load #",
         sortable: true,
         className: "font-medium",
-        render: (row) => <EntityLink kind="load" id={row.load_id} label={row.load_number} />,
+        render: (row) => <EntityLink kind="load" id={row.load_id} label={entityLabel(row.load_number, row.load_id, "Load")} />,
       },
       {
         key: "customer_name",
         label: "Customer",
         sortable: true,
-        render: (row) => row.customer_name ?? "—",
+        render: (row) => entityLabel(row.customer_name, null, "Customer"),
       },
       {
         key: "delivery_city",
@@ -217,7 +218,7 @@ export function FactoringQueuePage() {
               to={`/accounting/invoices/${row.invoice_id}`}
               className="text-slate-700 hover:underline"
             >
-              {row.invoice_display_id ?? "Invoice"}
+              {entityLabel(row.invoice_display_id, row.invoice_id, "Invoice")}
             </Link>
           ) : (
             <span className="text-slate-700">No invoice</span>

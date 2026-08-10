@@ -15,6 +15,7 @@ import { BookLoadModal } from "./components/BookLoadModal";
 import { buildTemplateJsonFromOcrItem } from "./ocr-book-load-prefill";
 import { formatUsdCents } from "../../lib/money";
 import { formatDateUS } from "../../lib/formatDate";
+import { entityLabel } from "../../lib/entity-label";
 
 function formatMoney(cents: number): string {
   return formatUsdCents(Math.max(0, cents));
@@ -25,7 +26,7 @@ function ExtractedSummary({ item }: { item: OcrIntakeQueueItem }) {
   return (
     <dl className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-slate-700">
       <dt className="text-slate-500">Customer</dt>
-      <dd>{f.customer_name_raw ?? "—"}</dd>
+      <dd>{entityLabel(f.customer_name_raw, f.customer_id, "Customer")}</dd>
       <dt className="text-slate-500">Lane</dt>
       <dd>
         {[f.origin_city, f.origin_state].filter(Boolean).join(", ") || "—"} →{" "}

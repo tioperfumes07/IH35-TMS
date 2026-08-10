@@ -1,5 +1,6 @@
 import { DataTable } from "../../../components/DataTable";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { entityLabel } from "../../../lib/entity-label";
 import { formatDateUS } from "../../../lib/formatDate";
 
 // AUTO-15 — migrated onto the shared DataTable (sort/resize/paging/search/gear). Same 4 columns,
@@ -25,7 +26,7 @@ export function TrainingTable({ rows }: Props) {
             <EntityLink
               kind="driver"
               id={row.driver_id ? String(row.driver_id) : undefined}
-              label={(row.driver_name as string | undefined) ?? undefined}
+              label={entityLabel(row.driver_name, row.driver_id ? String(row.driver_id) : undefined, "Driver")}
             />
           ),
         },

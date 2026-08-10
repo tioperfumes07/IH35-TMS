@@ -8,6 +8,7 @@ import { StatusBadge } from "../../components/StatusBadge";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { colors } from "../../design/tokens";
 import { formatUsdCents } from "../../lib/money";
+import { entityLabel } from "../../lib/entity-label";
 
 /**
  * FAIL-DD2 — pending rows from driver_finance.driver_settlement_deductions.
@@ -50,7 +51,7 @@ export function PendingSettlementDeductionsPanel() {
         {rows.map((row) => (
           <DataPanelRow key={row.id}>
             <span className="min-w-0">
-              <EntityLink kind="driver" id={row.driver_id} label={row.driver_name || "Driver"} />
+              <EntityLink kind="driver" id={row.driver_id} label={entityLabel(row.driver_name, row.driver_id, "Driver")} />
               {" · "}
               <span className="text-slate-700">{row.reason?.trim() || row.deduction_type}</span>{" "}
               <StatusBadge status={row.status} />

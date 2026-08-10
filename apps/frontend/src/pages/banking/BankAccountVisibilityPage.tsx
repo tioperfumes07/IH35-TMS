@@ -14,6 +14,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useAuth } from "../../auth/useAuth";
 import { useFeatureFlag } from "../../hooks/useFeatureFlag";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { entityLabel } from "../../lib/entity-label";
 
 // [HOLD-FOR-JORGE — TIER 1] Per-entity bank-account HIDE/EXCLUDE (build-and-hold, flag OFF by default).
 //
@@ -76,9 +77,12 @@ export function BankAccountVisibilityPage() {
     [query.data]
   );
 
+  const accountLabel = (account: BankAccountVisibilityRow) =>
+    entityLabel(account.account_name ?? account.display_name, account.id, "Account");
+
   const onHide = (account: BankAccountVisibilityRow) => {
     const reason = window.prompt(
-      `Hide "${account.account_name ?? account.display_name ?? account.id}" for this company (required reason, min 3 chars):`,
+      `Hide "${accountLabel(account)}" for this company (required reason, min 3 chars):`,
       ""
     );
     if (!reason || reason.trim().length < 3) return;
@@ -87,7 +91,7 @@ export function BankAccountVisibilityPage() {
   };
 
   const onUnhide = (account: BankAccountVisibilityRow) => {
-    if (!window.confirm(`Unhide "${account.account_name ?? account.display_name ?? account.id}" for this company?`)) return;
+    if (!window.confirm(`Unhide "${accountLabel(account)}" for this company?`)) return;
     setBusyId(account.id);
     unhideMutation.mutate({ id: account.id });
   };
@@ -151,7 +155,7 @@ export function BankAccountVisibilityPage() {
               return (
                 <tr key={account.id} className="border-t border-gray-100">
                   <td className="px-3 py-2 font-medium text-slate-800">
-                    {account.account_name ?? account.display_name ?? account.id}
+                    {accountLabel(account)}
                   </td>
                   <td className="px-3 py-2 text-slate-600">{account.institution_name ?? "—"}</td>
                   <td className="px-3 py-2 text-slate-600">{account.account_mask ?? "—"}</td>

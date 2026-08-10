@@ -1,3 +1,4 @@
+import { entityLabel } from "../../../lib/entity-label";
 import { humanizeEnumLabel } from "../../../lib/humanizeEnumLabel";
 import { useMemo, useState } from "react";
 import { EntityLink } from "../../../components/shared/EntityLink";

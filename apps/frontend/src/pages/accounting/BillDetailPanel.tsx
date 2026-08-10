@@ -1,8 +1,10 @@
 import { FlatFieldGrid } from "../../components/layout/FlatFieldGrid";
+import { entityLabel } from "../../lib/entity-label";
 
 type BillSummary = {
   bill_number?: string | null;
   vendor_name?: string | null;
+  vendor_id?: string | null;
   status?: string | null;
   amount_cents?: number | null;
   balance_cents?: number | null;
@@ -30,7 +32,7 @@ export function BillDetailPanel({ bill }: Props) {
         columns={3}
         fields={[
           { label: "Bill #", value: bill.bill_number ?? "—" },
-          { label: "Vendor", value: bill.vendor_name ?? "—" },
+          { label: "Vendor", value: entityLabel(bill.vendor_name, bill.vendor_id, "Vendor") },
           { label: "Status", value: bill.status ?? "—" },
           { label: "Amount", value: money.format(amount) },
           { label: "Open balance", value: money.format(balance) },

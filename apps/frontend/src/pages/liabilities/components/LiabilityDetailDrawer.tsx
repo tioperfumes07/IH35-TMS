@@ -3,6 +3,7 @@ import { userFacingApiError } from "../../../lib/api-error-message";
 import { Button } from "../../../components/Button";
 import { useToast } from "../../../components/Toast";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { entityLabel } from "../../../lib/entity-label";
 
 type Props = {
   open: boolean;
@@ -32,7 +33,11 @@ export function LiabilityDetailDrawer({ open, operatingCompanyId, liability, onC
             <EntityLink
               kind="driver"
               id={liability.driver_id ? String(liability.driver_id) : null}
-              label={String(liability.driver_full_name ?? "—")}
+              label={entityLabel(
+                liability.driver_full_name ? String(liability.driver_full_name) : null,
+                liability.driver_id ? String(liability.driver_id) : null,
+                "Driver"
+              )}
             />
           </div>
           <div>Type: {String(liability.type ?? "—")}</div>

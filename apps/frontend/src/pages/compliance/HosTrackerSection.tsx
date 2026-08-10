@@ -4,6 +4,7 @@ import { getHosDailyRoster, DUTY_LABEL, DUTY_COLOR, type HosRosterDriver } from 
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { companyToday } from "../../lib/businessDate";
+import { entityLabel } from "../../lib/entity-label";
 
 // SAFETY-1: the roster date defaults to the current duty day in the CARRIER timezone
 // (America/Chicago), never the UTC calendar date (which rolls to "tomorrow" after ~19:00 CT).
@@ -82,7 +83,9 @@ export function HosTrackerSection({ operatingCompanyId }: { operatingCompanyId: 
         label: "Driver",
         sortable: true,
         render: (driver) => (
-          <span className="font-medium text-slate-900">{driver.driver_name ?? "—"}</span>
+          <span className="font-medium text-slate-900">
+            {entityLabel(driver.driver_name, driver.driver_id, "Driver")}
+          </span>
         ),
       },
       {
@@ -90,7 +93,7 @@ export function HosTrackerSection({ operatingCompanyId }: { operatingCompanyId: 
         label: "Unit",
         sortable: true,
         cellClass: "font-mono",
-        render: (driver) => driver.unit_number ?? "—",
+        render: (driver) => entityLabel(driver.unit_number, null, "Unit"),
       },
       {
         key: "current_duty_status",
@@ -216,8 +219,10 @@ export function HosTrackerSection({ operatingCompanyId }: { operatingCompanyId: 
           <div className="relative z-10 h-full w-[380px] max-w-[90vw] overflow-y-auto bg-white shadow-xl">
             <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
               <div>
-                <div className="text-sm font-semibold text-slate-900">{selectedDriver.driver_name ?? "—"}</div>
-                <div className="text-[11px] text-slate-500">Unit {selectedDriver.unit_number ?? "—"} · {selectedDate} · HOS cycle detail</div>
+                <div className="text-sm font-semibold text-slate-900">
+                  {entityLabel(selectedDriver.driver_name, selectedDriver.driver_id, "Driver")}
+                </div>
+                <div className="text-[11px] text-slate-500">Unit {entityLabel(selectedDriver.unit_number, null, "Unit")} · {selectedDate} · HOS cycle detail</div>
               </div>
               <button type="button" onClick={() => setSelectedDriver(null)} className="rounded-sm px-2 py-1 text-slate-500 hover:bg-slate-100" aria-label="Close">✕</button>
             </div>

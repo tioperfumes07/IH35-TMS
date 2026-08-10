@@ -2,6 +2,7 @@ import { Lock } from "lucide-react";
 import { Link } from "react-router-dom";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { formatDateUS } from "../../../lib/formatDate";
+import { entityLabel } from "../../../lib/entity-label";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ApiError } from "../../../api/client";
@@ -208,7 +209,11 @@ export function ComplaintsTab() {
         <EntityLink
           kind="driver"
           id={String(row.complainant_driver_id)}
-          label={row.complainant_driver_name ? String(row.complainant_driver_name) : "Driver"}
+          label={entityLabel(
+            row.complainant_driver_name ? String(row.complainant_driver_name) : null,
+            row.complainant_driver_id ? String(row.complainant_driver_id) : null,
+            "Driver"
+          )}
         />
       );
     // FAIL-CP1 residual: this was the one EntityLink still handed no label, nine lines under the
@@ -219,7 +224,11 @@ export function ComplaintsTab() {
         <EntityLink
           kind="customer"
           id={String(row.complainant_customer_id)}
-          label={row.complainant_customer_name ? String(row.complainant_customer_name) : "Customer"}
+          label={entityLabel(
+            row.complainant_customer_name ? String(row.complainant_customer_name) : null,
+            row.complainant_customer_id ? String(row.complainant_customer_id) : null,
+            "Customer"
+          )}
         />
       );
     if (row.complainant_user_id) {
@@ -238,7 +247,11 @@ export function ComplaintsTab() {
         <EntityLink
           kind="driver"
           id={driverId}
-          label={row.respondent_driver_name ? String(row.respondent_driver_name) : "Driver"}
+          label={entityLabel(
+            row.respondent_driver_name ? String(row.respondent_driver_name) : null,
+            driverId || null,
+            "Driver"
+          )}
         />
       );
     if (row.respondent_user_id) {
@@ -485,7 +498,7 @@ export function ComplaintsTab() {
       <VoidReasonModal
         open={voidTargetId !== null}
         title="Void Complaint"
-        entityRef={voidTargetId ? `Complaint ${voidTargetId}` : undefined}
+        entityRef={voidTargetId ? entityLabel(null, voidTargetId, "Complaint") : undefined}
         postsReversingEntry={false}
         onClose={() => setVoidTargetId(null)}
         onSubmit={async (reason) => {

@@ -76,8 +76,8 @@ export function LoadSafetyReverseSection({
                   <EntityLink kind="accident" id={id} label={entityLabel(s(row.description) || null, id, "Accident")} />
                   <span className="ml-2 text-xs text-gray-500">
                     {when ? formatDateUS(String(when).slice(0, 10)) : "—"}
-                    {row.driver_name ? ` · ${s(row.driver_name)}` : ""}
-                    {row.unit_number ? ` · ${s(row.unit_number)}` : ""}
+                    {row.driver_name ? ` · ${entityLabel(s(row.driver_name), s(row.driver_id), "Driver")}` : ""}
+                    {row.unit_number ? ` · ${entityLabel(s(row.unit_number), s(row.unit_id), "Unit")}` : ""}
                   </span>
                 </li>
               );

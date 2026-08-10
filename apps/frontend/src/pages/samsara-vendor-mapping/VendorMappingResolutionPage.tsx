@@ -13,6 +13,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { entityLabel } from "../../lib/entity-label";
 
 type ActionDraft =
   | {
@@ -162,7 +163,7 @@ export function VendorMappingResolutionPage() {
                 type: "link",
                 samsara_driver_id: row.samsara_driver_id,
                 qbo_vendor_id: "",
-                label: `Link ${row.driver_name}`,
+                label: `Link ${entityLabel(row.driver_name, row.local_driver_id, "Driver")}`,
               })
             }
           >

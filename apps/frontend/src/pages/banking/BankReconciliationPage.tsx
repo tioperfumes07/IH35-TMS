@@ -1,3 +1,4 @@
+import { entityLabel } from "../../lib/entity-label";
 import { useMemo, useState } from "react";
 import { formatDateUS } from "../../lib/formatDate";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -237,7 +238,7 @@ export function BankReconciliationPage() {
           <option value="">Select bank account</option>
           {(accountsQuery.data ?? []).map((account) => (
             <option key={account.id} value={account.id}>
-              {account.account_name ?? account.id}
+              {entityLabel(account.account_name, account.id, "Account")}
             </option>
           ))}
         </SelectCombobox>
@@ -396,7 +397,7 @@ export function BankReconciliationPage() {
             <div className="max-h-[180px] space-y-1 overflow-auto">
               {(worklistQuery.data?.variance_resolved_entries ?? []).map((entry) => (
                 <div key={entry.journal_entry_id} className="rounded-sm border border-gray-100 px-2 py-1 text-xs text-gray-700">
-                  {entry.entry_date} · {entry.reference_no ?? entry.journal_entry_id} · {money(entry.variance_cents)}
+                  {entry.entry_date} · {entityLabel(entry.reference_no, entry.journal_entry_id, "Journal entry")} · {money(entry.variance_cents)}
                 </div>
               ))}
               {(worklistQuery.data?.variance_resolved_entries ?? []).length === 0 ? <div className="text-xs text-gray-500">No variance entries in this period.</div> : null}

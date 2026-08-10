@@ -11,6 +11,7 @@ import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { useListState } from "../../../components/list-state";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { entityLabel } from "../../../lib/entity-label";
 import { CappedListNotice } from "../../../components/CappedListNotice";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 
@@ -129,7 +130,7 @@ export function HOSViolationsTab() {
   const columns = useMemo<Array<ParityColumn<HosViolationRow>>>(
     () => [
       { key: "driver_id", label: "Driver", sortable: true, render: (row) => (
-        <EntityLink kind="driver" id={row.driver_id as string | undefined} label={(row.driver_name as string | undefined) ?? undefined} />
+        <EntityLink kind="driver" id={row.driver_id as string | undefined} label={entityLabel(row.driver_name, row.driver_id, "Driver")} />
       ) },
       {
         key: "violation_type",
@@ -283,7 +284,7 @@ export function HOSViolationsTab() {
         title="Void HOS Violation"
         entityRef={
           voidTarget
-            ? `${violationTypeLabel(voidTarget.violation_type)} · driver ${String(voidTarget.driver_id ?? "—")}`
+            ? `${violationTypeLabel(voidTarget.violation_type)} · driver ${entityLabel(voidTarget.driver_name, voidTarget.driver_id, "Driver")}`
             : undefined
         }
         minLength={3}

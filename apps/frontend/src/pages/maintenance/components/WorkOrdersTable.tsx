@@ -55,7 +55,7 @@ function exportSelectedCsv(selected: WorkOrder[]) {
       entityLabel(row.display_id, row.id, "Work order"),
       row.source_type ?? "",
       entityLabel(row.unit_number, row.unit_id, "Unit"),
-      entityLabel(null, row.driver_id, "Driver") ?? "",
+      entityLabel(null, row.driver_id, "Driver"),
       row.external_vendor_id ?? "",
       row.status ?? "",
       money((row as Record<string, unknown>).total_actual_cost),
@@ -103,21 +103,21 @@ export function WorkOrdersTable({
       key: "display_id",
       label: "WO #",
       sortable: true,
-      render: (row) => <EntityLink kind="work_order" id={row.id} label={row.display_id ?? undefined} />,
+      render: (row) => <EntityLink kind="work_order" id={row.id} label={entityLabel(row.display_id, row.id, "Work order")} />,
     },
     { key: "source_type", label: "Source", sortable: true, render: (row) => row.source_type ?? "—" },
     {
       key: "unit_number",
       label: "Unit",
       sortable: true,
-      render: (row) => <EntityLink kind="unit" id={row.unit_id} label={row.unit_number ?? undefined} />,
+      render: (row) => <EntityLink kind="unit" id={row.unit_id} label={entityLabel(row.unit_number, row.unit_id, "Unit")} />,
     },
     {
       key: "load_id",
       label: "Load",
       render: (row) =>
         row.load_id ? (
-          <EntityLink kind="load" id={row.load_id} label={row.linked_load_number ?? undefined} />
+          <EntityLink kind="load" id={row.load_id} label={entityLabel(row.linked_load_number, row.load_id, "Load")} />
         ) : (
           "—"
         ),

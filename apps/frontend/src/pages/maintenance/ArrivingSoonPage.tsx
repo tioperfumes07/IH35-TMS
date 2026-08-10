@@ -8,6 +8,7 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { ArrivingSoonFilterBar } from "./components/ArrivingSoonFilterBar";
 import { ArrivingSoonCard } from "./components/ArrivingSoonCard";
 import { ConvertIssueToWOModal } from "./components/ConvertIssueToWOModal";
+import { entityLabel } from "../../lib/entity-label";
 
 type Props = {
   operatingCompanyId: string;
@@ -114,7 +115,7 @@ export function ArrivingSoonPage({ operatingCompanyId }: Props) {
       sortable: true,
       render: (card) => (
         <Link to={`/fleet/units/${card.unit_id}`} className={`${LINK} font-semibold`}>
-          {card.unit_number}
+          {entityLabel(card.unit_number, card.unit_id, "Unit")}
         </Link>
       ),
     },
@@ -124,7 +125,7 @@ export function ArrivingSoonPage({ operatingCompanyId }: Props) {
       sortable: true,
       render: (card) => (
         <Link to={`/dispatch/loads/${card.load_id}`} className={LINK}>
-          {card.load_display_id}
+          {entityLabel(card.load_display_id, card.load_id, "Load")}
         </Link>
       ),
     },
@@ -134,7 +135,7 @@ export function ArrivingSoonPage({ operatingCompanyId }: Props) {
       sortable: true,
       render: (card) =>
         card.driver_id ? (
-          <EntityLink kind="driver" id={card.driver_id} label={card.driver_name ?? undefined} />
+          <EntityLink kind="driver" id={card.driver_id} label={entityLabel(card.driver_name, card.driver_id, "Driver")} />
         ) : (
           <span className="text-gray-400">Unassigned</span>
         ),

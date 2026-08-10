@@ -7,6 +7,7 @@ import { Button } from "../../components/Button";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
 type PerTruckCpmRow = {
@@ -59,7 +60,7 @@ export function PerTruckCpmReport() {
   const columns = useMemo<ParityColumn<PerTruckCpmRow>[]>(
     () => [
       { key: "rank", label: "Rank", sortable: true },
-      { key: "display_id", label: "Unit", sortable: true, render: (row) => <EntityLink kind="unit" id={row.unit_uuid} label={row.display_id} /> },
+      { key: "display_id", label: "Unit", sortable: true, render: (row) => <EntityLink kind="unit" id={row.unit_uuid} label={entityLabel(row.display_id, row.unit_uuid, "Unit")} /> },
       { key: "miles", label: "Miles", sortable: true, render: (row) => row.miles.toLocaleString() },
       { key: "total_cost_cents", label: "Total cost", sortable: true, render: (row) => money(row.total_cost_cents) },
       { key: "cpm_cents", label: "CPM", sortable: true, render: (row) => `${money(row.cpm_cents)}/mi` },

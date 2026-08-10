@@ -1,5 +1,6 @@
 import type { ArrivingSoonCard as ArrivingSoonCardType } from "../../../api/maintenance";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { entityLabel } from "../../../lib/entity-label";
 
 type Props = {
   card: ArrivingSoonCardType;
@@ -18,7 +19,8 @@ export function ArrivingSoonCard({ card, canConvert, onConvert }: Props) {
     <article className={`rounded-sm border border-gray-200 bg-white p-3 text-xs ${severityClass(card)}`}>
       <div className="flex items-start justify-between gap-2">
         <div className="font-semibold">
-          {card.unit_number} · {card.driver_name ?? "Unassigned"} · <EntityLink kind="load" id={card.load_id} label={card.load_display_id} />
+          {entityLabel(card.unit_number, card.unit_id, "Unit")} · {entityLabel(card.driver_name, card.driver_id, "Driver")} ·{" "}
+          <EntityLink kind="load" id={card.load_id} label={entityLabel(card.load_display_id, card.load_id, "Load")} />
         </div>
         <span className={`rounded-full px-2 py-0.5 text-[10px] ${card.severe_count > 0 ? "bg-red-100 text-red-700" : card.warning_count > 0 ? "bg-amber-100 text-amber-700" : "bg-gray-100 text-gray-700"}`}>
           {card.severe_count > 0 ? "SEVERE" : card.warning_count > 0 ? "WARNING" : "INFO"}

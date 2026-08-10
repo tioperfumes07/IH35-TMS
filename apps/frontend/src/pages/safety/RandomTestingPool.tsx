@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { formatDateUS } from "../../lib/formatDate";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 import { resolveApiUrl } from "../../api/client";
 
 // SAF-F06: these page-local helpers called bare fetch(path), so with
@@ -45,7 +46,7 @@ export function RandomTestingPool() {
               <EntityLink
                 kind="driver"
                 id={member.driver_id ? String(member.driver_id) : undefined}
-                label={(member.driver_name as string | undefined) || undefined}
+                label={entityLabel(member.driver_name, member.driver_id ? String(member.driver_id) : undefined, "Driver")}
               />
               <span>{formatDateUS(member.added_at)}</span>
             </li>
@@ -70,7 +71,7 @@ export function RandomTestingPool() {
               <EntityLink
                 kind="driver"
                 id={sel.driver_id ? String(sel.driver_id) : undefined}
-                label={(sel.driver_name as string | undefined) || undefined}
+                label={entityLabel(sel.driver_name, sel.driver_id ? String(sel.driver_id) : undefined, "Driver")}
               />
               <span>{String(sel.test_type)}</span>
             </li>

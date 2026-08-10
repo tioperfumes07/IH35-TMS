@@ -12,6 +12,7 @@ import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { EntityPicker } from "../../components/parity/EntityPicker";
 import { companyToday } from "../../lib/businessDate";
+import { entityLabel } from "../../lib/entity-label";
 import { useAuth } from "../../auth/useAuth";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
@@ -114,7 +115,7 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
         <EntityLink
           kind="driver"
           id={row.driver_id as string | undefined}
-          label={(row.driver_name as string | undefined)?.trim() || "Driver"}
+          label={entityLabel((row.driver_name as string | undefined)?.trim(), String(row.driver_id ?? ""), "Driver")}
         />
       ),
     },

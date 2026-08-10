@@ -115,14 +115,14 @@ export function TransfersListPage() {
         key: "from_account_id",
         label: "From",
         render: (row) => (
-          <EntityLink kind="bank_account" id={row.from_account_id} label={row.from_bank_name || row.from_coa_name || accountNameMap.get(row.from_account_id) || undefined} />
+          <EntityLink kind="bank_account" id={row.from_account_id} label={entityLabel(row.from_bank_name || row.from_coa_name || accountNameMap.get(row.from_account_id), row.from_account_id, "Account")} />
         ),
       },
       {
         key: "to_account_id",
         label: "To",
         render: (row) => (
-          <EntityLink kind="bank_account" id={row.to_account_id} label={row.to_bank_name || row.to_coa_name || accountNameMap.get(row.to_account_id) || undefined} />
+          <EntityLink kind="bank_account" id={row.to_account_id} label={entityLabel(row.to_bank_name || row.to_coa_name || accountNameMap.get(row.to_account_id), row.to_account_id, "Account")} />
         ),
       },
       {

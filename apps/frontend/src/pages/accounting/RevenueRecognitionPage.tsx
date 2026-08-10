@@ -145,7 +145,7 @@ function LeakagePanel({ operatingCompanyId }: { operatingCompanyId: string }) {
         key: "load",
         label: "Load",
         sortable: true,
-        sortValue: (row) => row.load_number ?? row.load_id,
+        sortValue: (row) => entityLabel(row.load_number, row.load_id, "Load"),
         render: (row) => (
           <EntityLink kind="load" id={row.load_id} label={entityLabel(row.load_number, row.load_id, "Load")} />
         ),

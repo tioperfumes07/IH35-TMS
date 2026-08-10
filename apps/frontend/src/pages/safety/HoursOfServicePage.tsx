@@ -6,6 +6,7 @@ import { listDrivers } from "../../api/mdata";
 import { listHosViolations } from "../../api/safetyV64";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 import { HosViolationCreateModal } from "./components/HosViolationCreateModal";
 import { formatDateUS } from "../../lib/formatDate";
 
@@ -129,7 +130,7 @@ export function HoursOfServicePage({ operatingCompanyId }: Props) {
         sortable: true,
         cellClass: "font-medium",
         // SAF-F14 / linkage: name-only text blocked drill-through to the driver record.
-        render: (row) => <EntityLink kind="driver" id={row.driverId} label={row.driverName} />,
+        render: (row) => <EntityLink kind="driver" id={row.driverId} label={entityLabel(row.driverName, row.driverId, "Driver")} />,
       },
       {
         key: "currentDutyStatus",

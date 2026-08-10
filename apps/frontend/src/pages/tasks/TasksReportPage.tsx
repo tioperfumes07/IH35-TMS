@@ -1,3 +1,4 @@
+import { entityLabel } from "../../lib/entity-label";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -8,7 +9,6 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { fetchPlannerTasks, type Task, type TaskStatus } from "../../api/tasks";
 import { addDaysIso, companyToday } from "../../lib/businessDate";
 import { isOpenTaskStatus } from "./taskDisplay";
-import { entityLabel } from "../../lib/entity-label";
 
 const WINDOWS: Array<[string, number]> = [
   ["7d", 7],
@@ -24,6 +24,10 @@ type AssigneeRow = {
   overdue: number;
   avgActualMinutes: number | null;
 };
+
+function taskAssigneeLabel(task: Task) {
+  return entityLabel(task.assigned_to_name || task.assigned_to_email, task.assigned_to_user_id, "User");
+}
 
 // TASK-4: Admin Report — team task productivity (was an unbuilt placeholder). Aggregates the
 // existing /api/v1/tasks/planner data client-side: throughput by status and per-assignee.
@@ -54,7 +58,7 @@ export function TasksReportPage() {
   const byAssignee = useMemo<AssigneeRow[]>(() => {
     const groups = new Map<string, Task[]>();
     for (const t of tasks) {
-      const name = entityLabel(t.assigned_to_name, t.assigned_to_user_id, "User") ?? t.assigned_to_email ?? "—";
+      const name = taskAssigneeLabel(t);
       const list = groups.get(name) ?? [];
       list.push(t);
       groups.set(name, list);

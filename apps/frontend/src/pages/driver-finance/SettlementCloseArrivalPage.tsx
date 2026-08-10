@@ -189,7 +189,8 @@ export function SettlementCloseArrivalPage() {
                     — {entityLabel(settlement.display_id, settlement.id, "Record")}
                   </div>
                   <div className="text-xs text-gray-600">
-                    {settlement.first_load_number ?? "—"} → {settlement.last_load_number ?? "—"} · status: {settlement.status}
+                    {entityLabel(settlement.first_load_number, settlement.first_load_id, "Load")} →{" "}
+                    {entityLabel(settlement.last_load_number, settlement.last_load_id, "Load")} · status: {settlement.status}
                   </div>
                 </div>
               </div>

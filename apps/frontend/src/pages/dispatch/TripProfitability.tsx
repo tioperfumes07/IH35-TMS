@@ -73,14 +73,19 @@ export function TripProfitability() {
         </span>
       ),
     },
-    { key: "driver_name", label: "Driver", sortable: true, render: (row) => row.driver_name ?? "—" },
+    {
+      key: "driver_name",
+      label: "Driver",
+      sortable: true,
+      render: (row) => entityLabel(row.driver_name, null, "Driver"),
+    },
     {
       key: "nb_load_number",
       label: "NB Load",
       sortable: true,
       render: (row) => (
         <span className="font-mono text-xs">
-          <EntityLink kind="load" id={row.nb_load_id} label={row.nb_load_number ?? "—"} />
+          <EntityLink kind="load" id={row.nb_load_id} label={entityLabel(row.nb_load_number, row.nb_load_id, "Load")} />
         </span>
       ),
     },
@@ -90,7 +95,7 @@ export function TripProfitability() {
       sortable: true,
       render: (row) => (
         <span className="font-mono text-xs">
-          <EntityLink kind="load" id={row.sb_load_id} label={row.sb_load_number ?? "—"} />
+          <EntityLink kind="load" id={row.sb_load_id} label={entityLabel(row.sb_load_number, row.sb_load_id, "Load")} />
         </span>
       ),
     },

@@ -23,6 +23,7 @@ import { companyNow } from "../../../lib/businessDate";
 import { formatUsdCents } from "../../../lib/money";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { entityLabel } from "../../../lib/entity-label";
 
 type Props = {
   operatingCompanyId: string;
@@ -214,7 +215,7 @@ export function CargoClaimIntakeSurface({
             <EntityLink
               kind="customer"
               id={String(row.claimant_customer_id)}
-              label={customerNameById.get(String(row.claimant_customer_id)) ?? "Customer"}
+              label={entityLabel(customerNameById.get(String(row.claimant_customer_id)), row.claimant_customer_id, "Customer")}
             />
           ) : (
             "—"
@@ -228,7 +229,7 @@ export function CargoClaimIntakeSurface({
             <EntityLink
               kind="load"
               id={String(row.load_id)}
-              label={loadNumberById.get(String(row.load_id)) ?? "Load"}
+              label={entityLabel(loadNumberById.get(String(row.load_id)), row.load_id, "Load")}
             />
           ) : (
             "—"
@@ -730,7 +731,7 @@ export function CargoClaimIntakeSurface({
                   <EntityLink
                     kind="customer"
                     id={String(detail.claimant_customer_id)}
-                    label={customerNameById.get(String(detail.claimant_customer_id)) ?? undefined}
+                    label={entityLabel(customerNameById.get(String(detail.claimant_customer_id)), detail.claimant_customer_id, "Customer")}
                   />
                 ) : (
                   "—"
@@ -742,7 +743,7 @@ export function CargoClaimIntakeSurface({
                   <EntityLink
                     kind="load"
                     id={String(detail.load_id)}
-                    label={loadNumberById.get(String(detail.load_id)) ?? undefined}
+                    label={entityLabel(loadNumberById.get(String(detail.load_id)), detail.load_id, "Load")}
                   />
                 ) : (
                   "—"

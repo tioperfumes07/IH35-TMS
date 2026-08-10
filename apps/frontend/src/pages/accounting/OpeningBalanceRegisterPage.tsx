@@ -6,6 +6,7 @@ import { formatUsdCents } from "../../lib/money";
 import { formatDateUS } from "../../lib/formatDate";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 import {
   cloneAsIsImportAndCommit,
   commitOpeningBalanceRegister,
@@ -214,7 +215,13 @@ export function OpeningBalanceRegisterPage() {
         label: "Account",
         sortable: true,
         // Both-way drill: the register line hands off to the account it will write.
-        render: (row) => <EntityLink kind="account" id={row.account_id} label={row.account_name} />,
+        render: (row) => (
+          <EntityLink
+            kind="account"
+            id={row.account_id}
+            label={entityLabel(row.account_name, row.account_id, "Account")}
+          />
+        ),
       },
       { key: "account_type", label: "Type", sortable: true, render: (row) => row.account_type ?? "—" },
       {

@@ -42,7 +42,7 @@ function downloadCSV(events: SpineEvent[]) {
   const cols = ["occurred_at", "event_type", "actor_email", "subject_type", "subject_id", "source_table", "source_reference_id", "correlation_id"];
   const header = cols.join(",");
   const rows = events.map((e) =>
-    [e.occurred_at, e.event_type, entityLabel(e.actor_email, e.actor_user_id, "User") ?? "", e.subject_type ?? "", e.subject_id ?? "", e.source_table ?? "", e.source_reference_id ?? "", e.correlation_id ?? ""]
+    [e.occurred_at, e.event_type, entityLabel(e.actor_email, e.actor_user_id, "User"), e.subject_type ?? "", e.subject_id ?? "", e.source_table ?? "", e.source_reference_id ?? "", e.correlation_id ?? ""]
       .map((v) => `"${String(v).replace(/"/g, '""')}"`)
       .join(",")
   );
@@ -73,10 +73,10 @@ const COLUMNS: Array<ParityColumn<SpineEvent>> = [
     key: "actor_email",
     label: "Actor",
     sortable: true,
-    sortValue: (row) => entityLabel(row.actor_email, row.actor_user_id, "User") ?? "",
+    sortValue: (row) => entityLabel(row.actor_email, row.actor_user_id, "User"),
     render: (row) => (
       <span className="text-gray-600">
-        {row.actor_email ?? (row.actor_user_id ? entityLabel(null, row.actor_user_id, "User") : "—")}
+        {entityLabel(row.actor_email, row.actor_user_id, "User") || "—"}
       </span>
     ),
   },

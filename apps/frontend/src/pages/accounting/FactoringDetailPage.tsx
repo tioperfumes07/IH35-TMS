@@ -159,7 +159,12 @@ export function FactoringDetailPage() {
         </span>
       ),
     },
-    { key: "customer_name", label: "Customer", sortable: true },
+    {
+      key: "customer_name",
+      label: "Customer",
+      sortable: true,
+      render: (invoice) => entityLabel(invoice.customer_name, invoice.customer_id, "Customer"),
+    },
     { key: "issue_date", label: "Issue Date", sortable: true, render: (invoice) => formatDateUS(invoice.issue_date) },
     { key: "total_cents", label: "Total", sortable: true, render: (invoice) => money(invoice.total_cents) },
     { key: "factoring_status", label: "Factoring Status", sortable: true },

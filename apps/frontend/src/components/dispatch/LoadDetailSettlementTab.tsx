@@ -60,7 +60,7 @@ function LegRow({ label, leg, isCurrent }: { label: string; leg: SettlementLeg |
     <div className="flex items-center gap-2 text-sm">
       <span className={`w-5 text-xs font-bold ${isCurrent ? "text-slate-700" : "text-gray-500"}`}>{label}</span>
       <span className={`font-mono text-xs ${isCurrent ? "font-bold text-slate-700" : "text-gray-700"}`}>
-        {leg.load_number}
+        {entityLabel(leg.load_number, leg.load_id, "Load")}
       </span>
       {isCurrent && (
         <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-700">
@@ -113,7 +113,7 @@ export function LoadDetailSettlementTab({ loadId, operatingCompanyId, currencyCo
           <div className="text-xs text-gray-500">Settlement</div>
           <div className="font-semibold text-gray-900"><EntityLink kind="settlement" id={settlement.id} label={entityLabel(settlement.display_id, settlement.id, "Record")} /></div>
           {settlement.driver_name ? (
-            <div className="text-xs text-gray-600">{settlement.driver_name}</div>
+            <div className="text-xs text-gray-600">{entityLabel(settlement.driver_name, settlement.driver_id, "Driver")}</div>
           ) : null}
         </div>
         <div className="flex flex-col items-end gap-1">

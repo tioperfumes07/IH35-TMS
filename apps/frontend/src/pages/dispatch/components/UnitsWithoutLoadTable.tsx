@@ -1,6 +1,7 @@
 import type { UnitsWithoutLoad, UnitLiveLocation } from "../../../api/dispatch";
 import { DataTable } from "../../../components/DataTable";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { entityLabel } from "../../../lib/entity-label";
 
 type Props = {
   rows: UnitsWithoutLoad[];
@@ -48,7 +49,7 @@ export function UnitsWithoutLoadTable({ rows, onRowClick, loading }: Props) {
           // stopPropagation: the row also has its own onRowClick (opens "book load for this unit");
           // the unit # link drills through to the unit's fleet profile instead.
           render: (row) => (
-            <EntityLink kind="unit" id={row.id} label={row.unit_number} onClick={(e) => e.stopPropagation()} />
+            <EntityLink kind="unit" id={row.id} label={entityLabel(row.unit_number, row.id, "Unit")} onClick={(e) => e.stopPropagation()} />
           ),
         },
         { key: "trailer_number", label: "Trailer", sortable: true, render: (row) => row.trailer_number ?? "-" },
@@ -57,7 +58,7 @@ export function UnitsWithoutLoadTable({ rows, onRowClick, loading }: Props) {
           label: "Driver",
           sortable: true,
           render: (row) => (
-            <EntityLink kind="driver" id={row.driver_id} label={row.driver_name ?? "-"} onClick={(e) => e.stopPropagation()} />
+            <EntityLink kind="driver" id={row.driver_id} label={entityLabel(row.driver_name, row.driver_id, "Driver")} onClick={(e) => e.stopPropagation()} />
           ),
         },
         {

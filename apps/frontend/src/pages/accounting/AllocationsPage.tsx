@@ -50,7 +50,7 @@ function ReallocatePanel({
         <BillAllocationPanel
           companyId={companyId}
           billId={row.bill_id}
-          billLabel={row.bill_number ?? row.bill_id}
+          billLabel={entityLabel(row.bill_number, row.bill_id, "Bill")}
           billAmountCents={row.bill_amount_cents}
         />
         <div className="mt-3 flex justify-end">
@@ -139,7 +139,9 @@ export function AllocationsPage() {
         key: "unit_code",
         label: "Unit",
         sortable: true,
-        render: (row) => <EntityLink kind="unit" id={row.unit_id} label={row.unit_code} />,
+        render: (row) => (
+          <EntityLink kind="unit" id={row.unit_id} label={entityLabel(row.unit_code, row.unit_id, "Unit")} />
+        ),
       },
       {
         key: "gl_account_name",

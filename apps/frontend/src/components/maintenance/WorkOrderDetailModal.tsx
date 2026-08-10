@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { Button } from "../Button";
 import { Modal } from "../Modal";
 import { EntityLink } from "../shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 
 type Props = {
   open: boolean;
@@ -68,7 +69,7 @@ export function WorkOrderDetailModal({ open, workOrder, canRefreshDisplayId, onR
           <div>
             Unit:{" "}
             {workOrder.unit_id ? (
-              <EntityLink kind="unit" id={String(workOrder.unit_id)} label={String(workOrder.unit_number ?? "") || undefined} />
+              <EntityLink kind="unit" id={String(workOrder.unit_id)} label={entityLabel(workOrder.unit_number, workOrder.unit_id, "Unit")} />
             ) : (
               "—"
             )}
@@ -79,7 +80,7 @@ export function WorkOrderDetailModal({ open, workOrder, canRefreshDisplayId, onR
               <EntityLink
                 kind="load"
                 id={String(workOrder.load_id)}
-                label={String(workOrder.linked_load_number ?? "") || undefined}
+                label={entityLabel(workOrder.linked_load_number, workOrder.load_id, "Load")}
               />
             ) : (
               "—"
@@ -87,7 +88,15 @@ export function WorkOrderDetailModal({ open, workOrder, canRefreshDisplayId, onR
           </div>
           <div>
             Driver:{" "}
-            {workOrder.driver_id ? <EntityLink kind="driver" id={String(workOrder.driver_id)} /> : "—"}
+            {workOrder.driver_id ? (
+              <EntityLink
+                kind="driver"
+                id={String(workOrder.driver_id)}
+                label={entityLabel(workOrder.driver_name, workOrder.driver_id, "Driver")}
+              />
+            ) : (
+              "—"
+            )}
           </div>
           <div>Opened: {formatDateTime(workOrder.opened_at)}</div>
           <div>Closed: {formatDateTime(workOrder.closed_at)}</div>

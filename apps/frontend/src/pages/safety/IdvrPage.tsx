@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getSafetyDvirSubmissions } from "../../api/safety";
 import { useListState } from "../../components/list-state";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityPicker } from "../../components/parity/EntityPicker";
 
@@ -53,14 +54,14 @@ export function IdvrPage({ operatingCompanyId }: Props) {
         key: "driver_id",
         label: "Driver",
         render: (row) => (
-          <EntityLink kind="driver" id={row.driver_id as string | undefined} label={row.driver_name as string | undefined} />
+          <EntityLink kind="driver" id={row.driver_id as string | undefined} label={entityLabel(row.driver_name, row.driver_id, "Driver")} />
         ),
       },
       {
         key: "unit_id",
         label: "Unit",
         render: (row) => (
-          <EntityLink kind="unit" id={row.unit_id as string | undefined} label={row.unit_number as string | undefined} />
+          <EntityLink kind="unit" id={row.unit_id as string | undefined} label={entityLabel(row.unit_number, row.unit_id, "Unit")} />
         ),
       },
       { key: "type", label: "Type", sortable: true, render: (row) => String(row.type ?? "—").replace("_", " ") },

@@ -233,8 +233,8 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
     const esc = (v: string) => (/[",\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v);
     const cols: Array<[string, (row: (typeof bulkTableRows)[number]) => string]> = [
       ["Date", (row) => String(row.event_at ?? "").slice(0, 10)],
-      ["Driver", (row) => String(row.driver_full_name ?? "")],
-      ["Unit", (row) => String(row.unit_display_id ?? "")],
+      ["Driver", (row) => entityLabel(row.driver_full_name, String(row.driver_id ?? ""), "Driver")],
+      ["Unit", (row) => entityLabel(row.unit_display_id, String(row.unit_id ?? ""), "Unit")],
       ["Type", (row) => String(row.event_type ?? "")],
       ["Severity", (row) => String(row.severity ?? "")],
       ["Status", (row) => String(row.status ?? "")],
@@ -695,13 +695,13 @@ function KpiCard({
 function renderSubject(row: SafetyEventLogRow) {
   if (row.subject_type === "driver") {
     const id = String(row.subject_driver_id ?? "").trim();
-    const label = String(row.subject_driver_name ?? "").trim() || "Driver";
+    const label = entityLabel(row.subject_driver_name, id, "Driver");
     if (!id) return label;
     return <EntityLink kind="driver" id={id} label={label} />;
   }
   if (row.subject_type === "unit") {
     const id = String(row.subject_unit_id ?? "").trim();
-    const label = String(row.subject_unit_number ?? "").trim() || "Unit";
+    const label = entityLabel(row.subject_unit_number, id, "Unit");
     if (!id) return label;
     return <EntityLink kind="unit" id={id} label={label} />;
   }

@@ -5,6 +5,7 @@ import { apiRequest } from "../../../api/client";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { PageHeader } from "../../../components/layout/PageHeader";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+import { entityLabel } from "../../../lib/entity-label";
 
 type SessionRow = {
   uuid: string;
@@ -36,8 +37,13 @@ export function PhotoComparisonPage() {
   const columns = useMemo<ParityColumn<SessionRow>[]>(
     () => [
       { key: "created_at", label: "Date", sortable: true, render: (session) => new Date(session.created_at).toLocaleDateString() },
-      { key: "unit_number", label: "Unit", sortable: true, render: (session) => session.unit_number ?? "—" },
-      { key: "driver_name", label: "Driver", sortable: true, render: (session) => session.driver_name ?? "—" },
+      { key: "unit_number", label: "Unit", sortable: true, render: (session) => entityLabel(session.unit_number, null, "Unit") },
+      {
+        key: "driver_name",
+        label: "Driver",
+        sortable: true,
+        render: (session) => entityLabel(session.driver_name, null, "Driver"),
+      },
       { key: "diff_status", label: "Status", sortable: true },
       { key: "diff_summary", label: "Summary", render: (session) => session.diff_summary ?? "—" },
       {

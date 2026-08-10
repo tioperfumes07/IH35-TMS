@@ -86,7 +86,9 @@ export function PodReviewPage() {
         key: "driver_name",
         label: "Driver",
         sortable: true,
-        render: (doc) => <EntityLink kind="driver" id={doc.driver_id} label={doc.driver_name ?? "—"} />,
+        render: (doc) => (
+          <EntityLink kind="driver" id={doc.driver_id} label={entityLabel(doc.driver_name, doc.driver_id, "Driver")} />
+        ),
       },
       { key: "recipient_name", label: "Recipient", render: (doc) => doc.recipient_name ?? "—" },
       {

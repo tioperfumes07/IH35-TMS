@@ -6,6 +6,7 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 import { StatusBadge } from "../../components/StatusBadge";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 
@@ -41,11 +42,11 @@ export function AtRiskQueuePage() {
         label: "Load",
         sortable: true,
         className: "font-medium",
-        render: (load) => <EntityLink kind="load" id={load.id} label={load.load_number ?? load.id} />,
+        render: (load) => <EntityLink kind="load" id={load.id} label={entityLabel(load.load_number, load.id, "Load")} />,
       },
-      { key: "customer_name", label: "Customer", sortable: true, render: (load) => load.customer_name ?? "—" },
-      { key: "driver_name", label: "Driver", sortable: true, render: (load) => load.driver_name ?? "—" },
-      { key: "unit_number", label: "Unit", sortable: true, render: (load) => load.unit_number ?? "—" },
+      { key: "customer_name", label: "Customer", sortable: true, render: (load) => entityLabel(load.customer_name, null, "Customer") },
+      { key: "driver_name", label: "Driver", sortable: true, render: (load) => entityLabel(load.driver_name, null, "Driver") },
+      { key: "unit_number", label: "Unit", sortable: true, render: (load) => entityLabel(load.unit_number, null, "Unit") },
       {
         key: "delivery_city",
         label: "Delivery",

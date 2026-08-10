@@ -2,16 +2,18 @@ import { Fragment, useMemo, useState, type ReactNode } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { DispatchLoadRow } from "../../api/loads";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 
 // Record-cell link: the Customer cell links to the customer's detail page. stopPropagation so it does NOT
 // also trigger the row's onRowClick (which opens the load drawer). Falls back to plain text when no id.
 function renderCustomerCell(load: DispatchLoadRow): ReactNode {
-  if (!load.customer_id || !load.customer_name) return load.customer_name ?? "—";
+  const label = entityLabel(load.customer_name, load.customer_id, "Customer");
+  if (!load.customer_id) return label;
   return (
     <EntityLink
       kind="customer"
       id={load.customer_id}
-      label={load.customer_name}
+      label={label}
       onClick={(e) => e.stopPropagation()}
       className="text-slate-700 hover:underline"
       data-testid="loads-customer-link"
@@ -27,7 +29,7 @@ function renderLoadNumberCell(load: DispatchLoadRow, className = "code-cell font
     <EntityLink
       kind="load"
       id={load.id}
-      label={load.load_number}
+      label={entityLabel(load.load_number, load.id, "Load")}
       onClick={(e) => e.stopPropagation()}
       className={className}
     />
@@ -647,7 +649,7 @@ export function DispatchBoard({
         loadId={load.id}
         operatingCompanyId={companyId}
         unitId={load.assigned_unit_id}
-        displayLabel={load.assigned_unit_number ?? "—"}
+        displayLabel={entityLabel(load.assigned_unit_number, load.assigned_unit_id, "Unit")}
         onAssigned={({ unitId, label }) =>
           setRowOverrides((prev) => ({
             ...prev,
@@ -663,7 +665,7 @@ export function DispatchBoard({
         }
       />
     ) : (
-      <EntityLink kind="unit" id={load.assigned_unit_id} label={load.assigned_unit_number ?? "—"} />
+      <EntityLink kind="unit" id={load.assigned_unit_id} label={entityLabel(load.assigned_unit_number, load.assigned_unit_id, "Unit")} />
     );
 
   const renderDriverCell = (load: DispatchLoadRow) =>
@@ -672,7 +674,7 @@ export function DispatchBoard({
         loadId={load.id}
         operatingCompanyId={companyId}
         driverId={load.assigned_primary_driver_id}
-        displayLabel={load.assigned_primary_driver_name ?? "Unassigned"}
+        displayLabel={entityLabel(load.assigned_primary_driver_name, load.assigned_primary_driver_id, "Driver")}
         onAssigned={({ driverId, label }) =>
           setRowOverrides((prev) => ({
             ...prev,
@@ -688,7 +690,7 @@ export function DispatchBoard({
         }
       />
     ) : (
-      <EntityLink kind="driver" id={load.assigned_primary_driver_id} label={load.assigned_primary_driver_name ?? "Unassigned"} />
+      <EntityLink kind="driver" id={load.assigned_primary_driver_id} label={entityLabel(load.assigned_primary_driver_name, load.assigned_primary_driver_id, "Driver")} />
     );
 
   const renderTrailerCell = (load: BoardLoad) =>
@@ -697,7 +699,7 @@ export function DispatchBoard({
         loadId={load.id}
         operatingCompanyId={companyId}
         trailerId={rowOverrides[load.id]?.trailerId ?? (load as { trailer_id?: string | null }).trailer_id ?? null}
-        displayLabel={rowOverrides[load.id]?.trailerLabel ?? load.trailer_number ?? "—"}
+        displayLabel={rowOverrides[load.id]?.trailerLabel ?? entityLabel(load.trailer_number, (load as { trailer_id?: string | null }).trailer_id, "Trailer")}
         onAssigned={({ trailerId, label }) =>
           setRowOverrides((prev) => ({
             ...prev,
@@ -716,7 +718,7 @@ export function DispatchBoard({
       <EntityLink
         kind="trailer"
         id={(load as { trailer_id?: string | null }).trailer_id ?? null}
-        label={load.trailer_number ?? "—"}
+        label={entityLabel(load.trailer_number, (load as { trailer_id?: string | null }).trailer_id, "Trailer")}
       />
     );
 

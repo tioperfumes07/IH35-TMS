@@ -1,4 +1,5 @@
 import { EntityLink } from "../shared/EntityLink";
+import { entityLabel } from "../lib/entity-label";
 
 export type DispatcherActiveLoadRow = {
   id: string;
@@ -66,21 +67,21 @@ export function DispatcherActiveLoadsPanel({ rows, isLoading, isError, onRetry }
         <ul className="divide-y divide-slate-100">
           {rows.map((row) => (
             <li key={row.id} className="flex flex-wrap items-center gap-2 px-3 py-2 text-sm">
-              <span className="w-24 shrink-0 font-mono text-xs text-slate-600">{row.load_number}</span>
-              <span className="min-w-40 flex-1 truncate text-slate-900">{row.customer_name}</span>
+              <span className="w-24 shrink-0 font-mono text-xs text-slate-600">{entityLabel(row.load_number, row.id, "Load")}</span>
+              <span className="min-w-40 flex-1 truncate text-slate-900">{entityLabel(row.customer_name, null, "Customer")}</span>
               <span className="min-w-0 truncate text-xs text-slate-500">
                 {row.pickup_city ?? "—"} to {row.delivery_city ?? "—"}
               </span>
               <span className="min-w-0 shrink-0 truncate text-xs text-slate-500">
                 {row.driver_id ? (
-                  <EntityLink kind="driver" id={row.driver_id} label={row.driver_name ?? "Driver"} className="single-line-name text-slate-700 hover:underline" />
+                  <EntityLink kind="driver" id={row.driver_id} label={entityLabel(row.driver_name, row.driver_id, "Driver")} className="single-line-name text-slate-700 hover:underline" />
                 ) : (
                   <span className="text-slate-400">Unassigned</span>
                 )}
               </span>
               <span className="shrink-0 font-mono text-xs">
                 {row.unit_id ? (
-                  <EntityLink kind="unit" id={row.unit_id} label={row.unit_number ?? "Unit"} className="text-slate-700 hover:underline" />
+                  <EntityLink kind="unit" id={row.unit_id} label={entityLabel(row.unit_number, row.unit_id, "Unit")} className="text-slate-700 hover:underline" />
                 ) : (
                   <span className="text-slate-400">—</span>
                 )}

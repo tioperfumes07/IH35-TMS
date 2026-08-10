@@ -72,7 +72,7 @@ export function FaultDraftsPage() {
 
   const columns = useMemo<ParityColumn<FaultDraft>[]>(
     () => [
-      { key: "unit_id", label: "Unit", render: (row) => <EntityLink kind="unit" id={row.unit_id} label={row.unit_number ?? undefined} /> },
+      { key: "unit_id", label: "Unit", render: (row) => <EntityLink kind="unit" id={row.unit_id} label={entityLabel(row.unit_number, row.unit_id, "Unit")} /> },
       { key: "fault_code", label: "Fault code", sortable: true, render: (row) => row.fault_code ?? "—" },
       { key: "fault_severity", label: "Severity", sortable: true, render: (row) => <span className="capitalize">{row.fault_severity ?? "—"}</span> },
       {

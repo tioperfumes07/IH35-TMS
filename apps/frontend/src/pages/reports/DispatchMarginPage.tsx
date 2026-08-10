@@ -7,6 +7,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
 function money(cents: number) {
@@ -46,8 +47,8 @@ export function DispatchMarginPage() {
 
   const columns = useMemo<ParityColumn<DispatchMarginRow>[]>(
     () => [
-      { key: "load_number", label: "Load", sortable: true, render: (row) => <EntityLink kind="load" id={row.load_id} label={row.load_number ?? undefined} /> },
-      { key: "customer_name", label: "Customer", sortable: true, render: (row) => row.customer_name ?? "—" },
+      { key: "load_number", label: "Load", sortable: true, render: (row) => <EntityLink kind="load" id={row.load_id} label={entityLabel(row.load_number, row.load_id, "Load")} /> },
+      { key: "customer_name", label: "Customer", sortable: true, render: (row) => entityLabel(row.customer_name, null, "Customer") },
       { key: "revenue_cents", label: "Revenue", sortable: true, className: "text-right", cellClass: "text-right", render: (row) => money(row.revenue_cents) },
       { key: "direct_cost_cents", label: "Direct cost", sortable: true, className: "text-right", cellClass: "text-right", render: (row) => money(row.direct_cost_cents) },
       { key: "margin_cents", label: "Margin", sortable: true, className: "text-right", cellClass: "text-right", render: (row) => money(row.margin_cents) },

@@ -7,6 +7,7 @@ import { useInvoiceCreateFromLoad, type LoadStatusFilter } from "../../hooks/use
 import { InvoiceCreateBlankPage } from "./InvoiceCreateBlankPage";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { entityLabel } from "../../lib/entity-label";
 
 type Step = "choose" | "from_load" | "blank";
 
@@ -126,8 +127,8 @@ export function InvoiceCreateModal({ open, operatingCompanyId, onClose }: Props)
                 <tbody>
                   {loads.map((load) => (
                     <tr key={load.id} className="border-t border-gray-100">
-                      <td className="px-2 py-2 font-medium">{load.load_number}</td>
-                      <td className="px-2 py-2">{load.customer_name ?? "—"}</td>
+                      <td className="px-2 py-2 font-medium">{entityLabel(load.load_number, load.id, "Load")}</td>
+                      <td className="px-2 py-2">{entityLabel(load.customer_name, load.customer_id, "Customer")}</td>
                       <td className="px-2 py-2">{load.status}</td>
                       <td className="px-2 py-2 text-xs text-gray-600">
                         {load.first_pickup_city ?? "—"} → {load.first_delivery_city ?? "—"}

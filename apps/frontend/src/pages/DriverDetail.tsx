@@ -1,3 +1,4 @@
+import { entityLabel } from "../lib/entity-label";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { DatePicker } from "../components/forms/DatePicker";
 import { FORM_INPUT_CLASS, FORM_TEXTAREA_CLASS } from "../components/forms/inputClass";

@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { entityLabel } from "../../lib/entity-label";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   createFactoringBatchDraft,
@@ -88,12 +89,18 @@ export function BatchWizard() {
         key: "display_id",
         label: "Invoice",
         cellClass: "font-medium text-gray-900",
-        render: (invoice) => <EntityLink kind="invoice" id={invoice.id} label={invoice.display_id ?? invoice.id} />,
+        render: (invoice) => <EntityLink kind="invoice" id={invoice.id} label={entityLabel(invoice.display_id, invoice.id, "Invoice")} />,
       },
       {
         key: "customer_name",
         label: "Customer",
-        render: (invoice) => invoice.customer_name ?? "—",
+        render: (invoice) => (
+          <EntityLink
+            kind="customer"
+            id={invoice.customer_id}
+            label={entityLabel(invoice.customer_name, invoice.customer_id, "Customer")}
+          />
+        ),
       },
       {
         key: "issue_date",

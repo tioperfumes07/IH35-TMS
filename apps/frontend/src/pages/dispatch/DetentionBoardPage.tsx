@@ -15,6 +15,7 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { StatusBadge } from "../../components/StatusBadge";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatUsdCents } from "../../lib/money";
+import { entityLabel } from "../../lib/entity-label";
 
 function formatMoney(cents: number): string {
   return formatUsdCents(Math.max(0, cents));
@@ -131,9 +132,11 @@ export function DetentionBoardPage() {
       label: "Load",
       sortable: true,
       className: "font-medium",
-      render: (event) => <EntityLink kind="load" id={event.load_id} label={event.load_number} />,
+      render: (event) => (
+        <EntityLink kind="load" id={event.load_id} label={entityLabel(event.load_number, event.load_id, "Load")} />
+      ),
     },
-    { key: "customer_name", label: "Customer", sortable: true, render: (event) => event.customer_name ?? "—" },
+    { key: "customer_name", label: "Customer", sortable: true, render: (event) => entityLabel(event.customer_name, null, "Customer") },
     {
       key: "stop_city",
       label: "Stop",
@@ -144,7 +147,12 @@ export function DetentionBoardPage() {
         </>
       ),
     },
-    { key: "driver_name", label: "Driver", sortable: true, render: (event) => event.driver_name ?? "—" },
+    {
+      key: "driver_name",
+      label: "Driver",
+      sortable: true,
+      render: (event) => entityLabel(event.driver_name, null, "Driver"),
+    },
     {
       key: "started_at",
       label: "Elapsed",

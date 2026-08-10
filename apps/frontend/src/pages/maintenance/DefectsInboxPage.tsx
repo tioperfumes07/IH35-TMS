@@ -13,6 +13,7 @@ import { Button } from "../../components/Button";
 import { useToast } from "../../components/Toast";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { PageHeader } from "../../components/forms/shared/PageHeader";
+import { entityLabel } from "../../lib/entity-label";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { CollapsedListFilters } from "../../components/table";
 import { entityLabel } from "../../lib/entity-label";
@@ -60,8 +61,8 @@ export function DefectsInboxPage() {
         sortable: true,
         render: (row) => (row.submitted_at ? new Date(row.submitted_at).toLocaleString() : "—"),
       },
-      { key: "unit_id", label: "Unit", render: (row) => <EntityLink kind="unit" id={row.unit_id} label={row.unit_number ?? undefined} /> },
-      { key: "driver_name", label: "Driver", sortable: true, render: (row) => <EntityLink kind="driver" id={row.driver_id ?? undefined} label={row.driver_name ?? "—"} /> },
+      { key: "unit_id", label: "Unit", render: (row) => <EntityLink kind="unit" id={row.unit_id} label={entityLabel(row.unit_number, row.unit_id, "Unit")} /> },
+      { key: "driver_name", label: "Driver", sortable: true, render: (row) => <EntityLink kind="driver" id={row.driver_id ?? undefined} label={entityLabel(row.driver_name, row.driver_id, "Driver")} /> },
       { key: "item_key", label: "Item", sortable: true, render: (row) => row.item_key },
       {
         key: "severity",

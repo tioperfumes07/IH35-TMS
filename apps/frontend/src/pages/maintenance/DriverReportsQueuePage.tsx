@@ -79,7 +79,7 @@ export function DriverReportsQueuePage() {
           "—"
         ),
     },
-    { key: "load_number", label: "Load", render: (row) => <EntityLink kind="load" id={row.load_id ?? undefined} label={row.load_number ?? undefined} /> },
+    { key: "load_number", label: "Load", render: (row) => <EntityLink kind="load" id={row.load_id ?? undefined} label={entityLabel(row.load_number, row.load_id, "Load")} /> },
     {
       key: "description",
       label: "Description",

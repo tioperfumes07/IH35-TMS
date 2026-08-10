@@ -7,6 +7,7 @@ import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { addDaysIso } from "./planner-range";
 import { usePlannerRange } from "./PlannerRangeContext";
+import { entityLabel } from "../../../lib/entity-label";
 
 function toDayKey(iso: string | null | undefined): string | null {
   if (!iso) return null;
@@ -137,9 +138,9 @@ export function LoadsPlanner() {
                             className="w-full truncate text-[9px] font-medium text-slate-700 hover:underline"
                             data-testid={`loads-planner-bar-${load.load_number}`}
                             onClick={() => openLoad(load.id)}
-                            title={`${load.load_number} · ${load.customer_name ?? ""} · ${load.status}`}
+                            title={`${entityLabel(load.load_number, load.id, "Load")} · ${entityLabel(load.customer_name, null, "Customer")} · ${load.status}`}
                           >
-                            {load.load_number}
+                            {entityLabel(load.load_number, load.id, "Load")}
                           </button>
                         </td>
                       );

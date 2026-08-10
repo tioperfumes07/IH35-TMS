@@ -152,7 +152,7 @@ export function PostingLineagePage() {
         sortValue: (row) => `${row.account_name ?? ""}`.trim(),
         render: (row) => (
           <>
-            {row.account_name ?? "—"}
+            {entityLabel(row.account_name, row.account_id, "Account")}
           </>
         ),
       },

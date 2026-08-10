@@ -8,6 +8,7 @@ import { useToast } from "../../../components/Toast";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+import { entityLabel } from "../../../lib/entity-label";
 
 /**
  * BANK-F10 / FUEL-03 — operator queue for fuel-card overage approve-then-recover.
@@ -105,13 +106,13 @@ export function CardOverageQueuePage() {
         key: "driver_name",
         label: "Driver",
         sortable: true,
-        render: (row) => row.driver_name,
+        render: (row) => entityLabel(row.driver_name, row.driver_id, "Driver"),
       },
       {
         key: "unit_number",
         label: "Unit",
         sortable: true,
-        render: (row) => row.unit_number ?? "—",
+        render: (row) => entityLabel(row.unit_number, row.unit_id, "Unit"),
       },
       {
         key: "overage_rule",
@@ -147,7 +148,7 @@ export function CardOverageQueuePage() {
                 onClick={() => {
                   if (
                     window.confirm(
-                      `Approve recovery of ${money(row.overage_cents)} for ${row.driver_name}? Posts JE only when FUEL_CARD_OVERAGE_GL_POSTING is ON.`
+                      `Approve recovery of ${money(row.overage_cents)} for ${entityLabel(row.driver_name, row.driver_id, "Driver")}? Posts JE only when FUEL_CARD_OVERAGE_GL_POSTING is ON.`
                     )
                   ) {
                     approveMut.mutate(row.id);

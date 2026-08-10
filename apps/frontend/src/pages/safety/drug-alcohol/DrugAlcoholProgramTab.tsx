@@ -13,6 +13,7 @@ import { ListErrorState } from "../../../components/ListErrorState";
 import { TestSchedulingPanel } from "./TestSchedulingPanel";
 import { RandomPoolDashboard } from "./RandomPoolDashboard";
 import { resolveApiUrl } from "../../../api/client";
+import { entityLabel } from "../../../lib/entity-label";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -88,7 +89,7 @@ export function DrugAlcoholProgramTab() {
           <EntityLink
             kind="driver"
             id={enrollment.driver_uuid}
-            label={enrollment.driver_name?.trim() || "Driver"}
+            label={entityLabel(enrollment.driver_name?.trim(), enrollment.driver_uuid, "Driver")}
           />
         ),
       },
@@ -105,7 +106,7 @@ export function DrugAlcoholProgramTab() {
         label: "Driver",
         sortable: true,
         render: (test) => (
-          <EntityLink kind="driver" id={test.driver_uuid} label={test.driver_name?.trim() || "Driver"} />
+          <EntityLink kind="driver" id={test.driver_uuid} label={entityLabel(test.driver_name?.trim(), test.driver_uuid, "Driver")} />
         ),
       },
       {

@@ -13,6 +13,7 @@ import { apiRequest } from "../../api/client";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { CollapsedListFilters } from "../../components/table";
+import { entityLabel } from "../../lib/entity-label";
 
 type KpiTileId = MaintKpiDrilldownKind | "pm_compliance";
 type DrillRow = Record<string, unknown>;
@@ -231,7 +232,7 @@ export function MaintKpiDashboardPage() {
                   <option value="">All fleet</option>
                   {(unitsQ.data?.rows ?? []).map((row) => (
                     <option key={row.id} value={row.id}>
-                      {row.unit_number}
+                      {entityLabel(row.unit_number, row.id, "Unit")}
                     </option>
                   ))}
                 </select>

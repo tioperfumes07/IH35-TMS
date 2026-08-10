@@ -8,6 +8,7 @@ import { ParityDrawer } from "../../components/parity/ParityDrawer";
 import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { vendorReferenceOption } from "../../components/parity/referenceOptionLabels";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 
 function money(cents: number) {
@@ -242,7 +243,7 @@ export function SubmitFactoringModal({ open, operatingCompanyId, onClose, onCrea
                       <input type="checkbox" checked={selectedInvoiceIds.includes(row.id)} onChange={() => toggleInvoice(row.id)} />
                     </td>
                     <td className="px-2 py-1.5 text-gray-900"><EntityLink kind="invoice" id={row.id} label={row.display_id} /></td>
-                    <td className="px-2 py-1.5 text-gray-700">{row.customer_name}</td>
+                    <td className="px-2 py-1.5 text-gray-700">{entityLabel(row.customer_name, row.customer_id, "Customer")}</td>
                     <td className="px-2 py-1.5 text-gray-700">{money(row.total_cents)}</td>
                     <td className="px-2 py-1.5 text-gray-700">{row.customer_recourse_type}</td>
                   </tr>

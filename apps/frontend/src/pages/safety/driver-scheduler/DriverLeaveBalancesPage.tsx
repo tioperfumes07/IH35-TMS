@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { PageHeader } from "../../../components/layout/PageHeader";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { entityLabel } from "../../../lib/entity-label";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { driverSchedulerOfficeApi } from "../../../api/driver-scheduler";
@@ -49,7 +50,7 @@ export function DriverLeaveBalancesPage() {
         key: "driver_id",
         label: "Driver",
         render: (row) => (
-          <EntityLink kind="driver" id={row.driver_id} label={row.driver_name || undefined} />
+          <EntityLink kind="driver" id={row.driver_id} label={entityLabel(row.driver_name, row.driver_id, "Driver")} />
         ),
       },
       {

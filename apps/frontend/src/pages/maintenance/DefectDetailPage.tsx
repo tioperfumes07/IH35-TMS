@@ -77,7 +77,7 @@ export function DefectDetailPage() {
               {defect.item_key} · {defect.severity}
             </h1>
             <p className="mt-1 text-sm text-gray-600">
-              Unit {entityLabel(defect.unit_number, defect.unit_id, "Unit")} · Driver {defect.driver_name ?? "—"} ·{" "}
+              Unit {entityLabel(defect.unit_number, defect.unit_id, "Unit")} · Driver {entityLabel(defect.driver_name, defect.driver_id, "Driver")} ·{" "}
               {defect.submitted_at ? new Date(defect.submitted_at).toLocaleString() : "—"}
             </p>
             <p className="mt-2 whitespace-pre-wrap text-sm text-gray-800">{defect.notes || "No driver notes."}</p>

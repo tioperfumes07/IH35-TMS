@@ -8,6 +8,7 @@ import {
   type OwnerApprovalPortalPayload,
 } from "../../api/owner-approval";
 import { Button } from "../../components/Button";
+import { entityLabel } from "../../lib/entity-label";
 
 function money(n: number) {
   return new Intl.NumberFormat(undefined, { style: "currency", currency: "USD" }).format(n);
@@ -101,7 +102,7 @@ export function OwnerApprovalPortalPage() {
                 <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Request</div>
                 <p className="mt-2 font-mono text-xs">{String(req?.display_id ?? "")}</p>
                 <p className="mt-2">
-                  <strong>Driver:</strong> {String(req?.driver_name ?? "")}
+                  <strong>Driver:</strong> {entityLabel(String(req?.driver_name ?? ""), String(req?.driver_id ?? ""), "Driver")}
                 </p>
                 <p className="mt-1">
                   <strong>Amount:</strong> {money(Number(req?.requested_amount_cents ?? 0) / 100)}

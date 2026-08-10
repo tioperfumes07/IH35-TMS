@@ -14,6 +14,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { ListErrorState } from "../../components/ListErrorState";
 import { SendMessageModal } from "../../components/drivers/SendMessageModal";
 import { formatDateTimeUS } from "../../lib/formatDate";
+import { entityLabel } from "../../lib/entity-label";
 
 // Office-facing timestamps must render through the shared US/Central formatter (never device
 // locale/timezone) — same rule already applied on DriverHosDetailPage; this inbox was the one
@@ -48,7 +49,7 @@ function ConversationList({
             onClick={() => onSelect(row.driver_id)}
           >
             <div className="flex items-center justify-between gap-2">
-              <span className="font-semibold text-gray-900">{row.driver_name}</span>
+              <span className="font-semibold text-gray-900">{entityLabel(String(row.driver_name ?? ""), String(row.driver_id ?? ""), "Driver")}</span>
               {row.unread_count > 0 ? (
                 <span className="rounded-full bg-red-600 px-2 py-0.5 text-[10px] font-bold text-white">{row.unread_count}</span>
               ) : null}

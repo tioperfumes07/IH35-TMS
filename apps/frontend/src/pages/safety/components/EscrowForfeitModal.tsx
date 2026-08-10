@@ -9,6 +9,7 @@ import { getLiabilitiesByDriver } from "../../../api/liabilities";
 import { driverDeductionTypesCatalogClient } from "../../../api/catalogs-driver";
 import { formatUsd } from "../../../lib/money";
 import type { EscrowRecordRow } from "../../../api/driverFinance";
+import { entityLabel } from "../../../lib/entity-label";
 
 /**
  * SAF-F10 + SAF-F25 + ND-ESC-01 — Escrow Forfeit surface.
@@ -115,7 +116,7 @@ export function EscrowForfeitModal({ open, row, operatingCompanyId, loading, onC
     <ParityDrawer
       open={open}
       onClose={handleClose}
-      title={row ? `Escrow Forfeit — ${row.driver_name}` : "Escrow Forfeit"}
+      title={row ? `Escrow Forfeit — ${entityLabel(row.driver_name, row.id, "Driver")}` : "Escrow Forfeit"}
     >
       <div className="space-y-3 text-sm text-gray-700" data-testid="escrow-forfeit-modal">
         <div className="rounded-sm border border-gray-200 bg-gray-50 px-2 py-1 text-xs text-slate-700">

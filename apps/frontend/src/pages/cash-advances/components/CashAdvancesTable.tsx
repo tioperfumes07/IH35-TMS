@@ -52,7 +52,11 @@ export function CashAdvancesTable({ rows, onOpenDetail, onMarkDisbursed, isLoadi
                     <EntityLink
                       kind="driver"
                       id={row.driver_id ? String(row.driver_id) : null}
-                      label={String(row.driver_full_name ?? "—")}
+                      label={entityLabel(
+                        row.driver_full_name ? String(row.driver_full_name) : null,
+                        row.driver_id ? String(row.driver_id) : null,
+                        "Driver"
+                      )}
                       onClick={(event) => event.stopPropagation()}
                     />
                   </td>

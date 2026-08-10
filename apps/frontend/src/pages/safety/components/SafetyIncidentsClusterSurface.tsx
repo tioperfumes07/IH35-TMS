@@ -17,6 +17,7 @@ import { Button } from "../../../components/Button";
 import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
 import { EntityPicker } from "../../../components/parity/EntityPicker";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { entityLabel } from "../../../lib/entity-label";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { companyToday } from "../../../lib/businessDate";
@@ -365,9 +366,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
             <EntityLink
               kind="driver"
               id={String(row.driver_id)}
-              label={
-                (row.driver_name as string | undefined) || undefined
-              }
+              label={entityLabel(row.driver_name, row.driver_id, "Driver")}
             />
           ) : (
             "—"
@@ -382,7 +381,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
             <EntityLink
               kind="unit"
               id={String(row.unit_id)}
-              label={str(row.unit_number) || undefined}
+              label={entityLabel(str(row.unit_number) || null, row.unit_id, "Unit")}
             />
           ) : (
             "—"
@@ -614,7 +613,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
                     <EntityLink
                       kind="driver"
                       id={String(detail.driver_id)}
-                      label={(detail.driver_name as string | undefined) || undefined}
+                      label={entityLabel(detail.driver_name, detail.driver_id, "Driver")}
                     />
                   </div>
                 ) : (
@@ -678,7 +677,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
                     <EntityLink
                       kind="trailer"
                       id={String(detail.trailer_id)}
-                      label={(detail.trailer_number as string | undefined) || undefined}
+                      label={entityLabel(detail.trailer_number, detail.trailer_id, "Trailer")}
                       data-testid={`${config.pageTestId}-detail-trailer-link`}
                     />
                   </div>
@@ -713,7 +712,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
                     <EntityLink
                       kind="load"
                       id={String(detail.load_id)}
-                      label={(detail.load_number as string | undefined) ?? undefined}
+                      label={entityLabel(detail.load_number, detail.load_id, "Load")}
                       data-testid={`${config.pageTestId}-detail-load-link`}
                     />
                   </div>

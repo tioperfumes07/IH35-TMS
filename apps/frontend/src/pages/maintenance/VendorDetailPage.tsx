@@ -1,3 +1,4 @@
+import { entityLabel } from "../../lib/entity-label";
 import { Link, useParams } from "react-router-dom";
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";

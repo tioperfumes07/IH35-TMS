@@ -6,6 +6,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { CustomsTimePill } from "../../components/dispatch/CustomsTimePill";
 import { resolveApiUrl } from "../../api/client";
 import { formatDateUS } from "../../lib/formatDate";
+import { entityLabel } from "../../lib/entity-label";
 
 type CrossingRow = {
   id: string;
@@ -79,7 +80,7 @@ export function BorderCrossingHistoryPage() {
         </div>
       ),
     },
-    { key: "unit_number", label: "Unit", sortable: true, render: (row) => row.unit_number ?? "—" },
+    { key: "unit_number", label: "Unit", sortable: true, render: (row) => entityLabel(row.unit_number, null, "Unit") },
     { key: "emanifest_reference", label: "eManifest", render: (row) => row.emanifest_reference ?? "—" },
   ];
 
@@ -127,10 +128,10 @@ export function BorderCrossingHistoryPage() {
                 <span className="text-gray-500">Commodity:</span> {selected.commodity ?? "—"}
               </p>
               <p>
-                <span className="text-gray-500">Driver:</span> {selected.driver_name ?? "—"}
+                <span className="text-gray-500">Driver:</span> {entityLabel(selected.driver_name, null, "Driver")}
               </p>
               <p>
-                <span className="text-gray-500">Load:</span> {selected.load_number ?? "—"}
+                <span className="text-gray-500">Load:</span> {entityLabel(selected.load_number, null, "Load")}
               </p>
               <p>
                 <span className="text-gray-500">Broker status:</span> {selected.customs_broker_status ?? "—"}

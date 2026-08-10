@@ -135,7 +135,7 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
           <EntityLink
             kind="unit"
             id={claim.unit_id ?? undefined}
-            label={claim.unit_display_id ?? undefined}
+            label={entityLabel(claim.unit_display_id, claim.unit_id, "Unit")}
           />
         ),
       },
@@ -146,7 +146,7 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
           <EntityLink
             kind="driver"
             id={claim.driver_id ?? undefined}
-            label={claim.driver_display_name ?? undefined}
+            label={entityLabel(claim.driver_display_name, claim.driver_id, "Driver")}
           />
         ),
       },
@@ -157,7 +157,7 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
           <EntityLink
             kind="load"
             id={claim.load_id ?? undefined}
-            label={claim.load_display_id ?? undefined}
+            label={entityLabel(claim.load_display_id, claim.load_id, "Load")}
           />
         ),
       },
