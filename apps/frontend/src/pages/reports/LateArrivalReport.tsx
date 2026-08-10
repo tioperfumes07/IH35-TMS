@@ -3,9 +3,11 @@ import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { ListErrorState } from "../../components/ListErrorState";
 import { Button } from "../../components/Button";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ReportsSubNav } from "./ReportsSubNav";
+import { formatQueryErrorDetail } from "../../lib/tableError";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
 type GroupBy = "driver" | "customer" | "lane";
@@ -138,15 +140,23 @@ export function LateArrivalReport() {
         ))}
       </div>
 
-      <ParityTable
-        rows={rows}
-        columns={columns}
-        rowKey={(row) => row.entity_id}
-        loading={reportQuery.isPending || (reportQuery.isFetching && rows.length === 0)}
-        storageKey="late-arrival-report"
-        emptyText="No completed stops with scheduled times in this period."
-        rowClassName={(row) => (row.chronic_offender ? "bg-slate-50" : "")}
-      />
+      {reportQuery.isError ? (
+        <ListErrorState
+          title="Couldn't load late arrival report"
+          {...formatQueryErrorDetail(reportQuery.error)}
+          onRetry={() => void reportQuery.refetch()}
+        />
+      ) : (
+        <ParityTable
+          rows={rows}
+          columns={columns}
+          rowKey={(row) => row.entity_id}
+          loading={reportQuery.isPending || (reportQuery.isFetching && rows.length === 0)}
+          storageKey="late-arrival-report"
+          emptyText="No completed stops with scheduled times in this period."
+          rowClassName={(row) => (row.chronic_offender ? "bg-slate-50" : "")}
+        />
+      )}
     </div>
   );
 }

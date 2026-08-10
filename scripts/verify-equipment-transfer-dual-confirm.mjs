@@ -80,7 +80,12 @@ contains("apps/backend/src/index.ts", indexTs, [
 ]);
 
 read("apps/frontend/src/components/dispatch/EquipmentTransferModal.tsx");
-read("apps/frontend/src/pages/dispatch/EquipmentTransferRequests.tsx");
+const transfersPage = read("apps/frontend/src/pages/dispatch/EquipmentTransferRequests.tsx");
+contains("apps/frontend/src/pages/dispatch/EquipmentTransferRequests.tsx", transfersPage, [
+  { pattern: /query\.isError/, label: "failed-list branch" },
+  { pattern: /ListErrorState/, label: "retryable list error state" },
+  { pattern: /query\.refetch\(\)/, label: "failed-list retry action" },
+]);
 
 const manifest = read("apps/frontend/src/routes/manifest.tsx");
 contains("apps/frontend/src/routes/manifest.tsx", manifest, [

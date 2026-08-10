@@ -51,6 +51,8 @@ const REQUIRED_ERROR_STATE = [
   "apps/frontend/src/pages/audit/AuditEventsList.tsx",
   "apps/frontend/src/pages/alerts/DocumentAlertsPage.tsx",
   "apps/frontend/src/pages/dispatch/PodReviewPage.tsx",
+  "apps/frontend/src/pages/reports/LateArrivalReport.tsx",
+  "apps/frontend/src/pages/dispatch/EquipmentTransferRequests.tsx",
 ];
 
 function stripComments(src) {

@@ -7,6 +7,8 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { EquipmentTransferModal } from "../../components/dispatch/EquipmentTransferModal";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
+import { ListErrorState } from "../../components/ListErrorState";
+import { formatQueryErrorDetail } from "../../lib/tableError";
 
 type TransferRow = {
   uuid: string;
@@ -85,7 +87,14 @@ export function EquipmentTransferRequests() {
           }}
         />
       ) : null}
-      <ParityTable<TransferRow>
+      {query.isError ? (
+        <ListErrorState
+          title="Couldn't load equipment transfer requests"
+          {...formatQueryErrorDetail(query.error)}
+          onRetry={() => void query.refetch()}
+        />
+      ) : (
+        <ParityTable<TransferRow>
         columns={columns}
         rows={query.data?.requests ?? []}
         rowKey={(row) => row.uuid}
@@ -93,7 +102,8 @@ export function EquipmentTransferRequests() {
         emptyText="No pending equipment transfer requests."
         storageKey="dispatch-equipment-transfer-requests"
         exportFilename="equipment-transfer-requests"
-      />
+        />
+      )}
     </div>
   );
 }
