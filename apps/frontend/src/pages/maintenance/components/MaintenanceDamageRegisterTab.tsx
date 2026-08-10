@@ -19,6 +19,7 @@ type DamageIncidentRow = {
   description: string | null;
   status: string | null;
   unit_number: string | null;
+  unit_id: string | null;
   photo_keys: string[] | null;
 };
 
@@ -48,6 +49,7 @@ export function MaintenanceDamageRegisterTab({ operatingCompanyId }: Props) {
       description: (row.description as string | null) ?? null,
       status: (row.status as string | null) ?? null,
       unit_number: (row.unit_number as string | null) ?? null,
+      unit_id: (row.unit_id as string | null) ?? null,
       photo_keys: (row.photo_keys as string[] | null) ?? null,
     }));
   }, [incidentsQuery.data]);
@@ -66,7 +68,7 @@ export function MaintenanceDamageRegisterTab({ operatingCompanyId }: Props) {
       key: "unit_number",
       label: "Unit",
       sortable: true,
-      render: (row) => row.unit_number || "—",
+      render: (row) => entityLabel(row.unit_number, row.unit_id, "Unit"),
     },
     {
       key: "incident_at",

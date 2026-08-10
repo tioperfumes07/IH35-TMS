@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { patchUnit } from "../../api/mdata";
+import { entityLabel } from "../../lib/entity-label";
 import { QuickAvailabilityToggle } from "./QuickAvailabilityToggle";
 import { StatusChangeModal } from "./StatusChangeModal";
 import { PlatesTable } from "./PlatesTable";
@@ -37,7 +38,7 @@ export function IdentityStatusHeader({
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="text-lg font-semibold text-gray-900">
-            {String(unit.unit_number ?? unitId)} · {[unit.year, unit.make, unit.model].filter(Boolean).join(" ")}
+            {entityLabel(String(unit.unit_number ?? ""), unitId, "Unit")} · {[unit.year, unit.make, unit.model].filter(Boolean).join(" ")}
           </h2>
           <p className="text-xs text-gray-600">VIN {String(unit.vin ?? "—")}</p>
           <p className="text-xs text-gray-600">

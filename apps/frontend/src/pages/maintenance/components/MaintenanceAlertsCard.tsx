@@ -6,6 +6,7 @@ import {
   type MaintenancePmAlert,
 } from "../../../api/maintenance";
 import { useToast } from "../../../components/Toast";
+import { entityLabel } from "../../../lib/entity-label";
 
 type Props = {
   operatingCompanyId: string;
@@ -79,7 +80,7 @@ export function MaintenanceAlertsCard({ operatingCompanyId, compact = false }: P
             <li key={alert.id} className="rounded-sm border border-gray-200 p-2">
               <div className="flex items-center justify-between gap-2">
                 <p className="text-xs font-semibold text-gray-900">
-                  Unit {alert.unit_number} · {alert.schedule_label}
+                  Unit {entityLabel(alert.unit_number, alert.unit_id, "Unit")} · {alert.schedule_label}
                 </p>
                 <span className="text-[11px] text-gray-500">Due @ {alert.trigger_odometer.toLocaleString()} mi</span>
               </div>
