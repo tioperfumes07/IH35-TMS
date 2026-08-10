@@ -5,6 +5,7 @@ import { calculateUsTrusteeQuarterlyFeeCents } from "../exhibit-d-quarterly-fees
 import { billReference, buildExhibitF } from "../exhibit-f-supporting-docs.js";
 import { buildAllExhibits, getBuiltExhibits } from "../exhibits-builder.service.js";
 import { registerForm425cExhibitsRoutes } from "../routes.js";
+import { buildExhibitC } from "../exhibit-c-bank-reconciliation.js";
 
 const companyId = "44444444-4444-4444-8444-444444444444";
 
@@ -47,6 +48,8 @@ vi.mock("../../../shared.js", async () => {
                   mask: "3500",
                   inflows: "500000",
                   outflows: "200000",
+                  beginning_balance_cents: "900000",
+                  reconciliation_session_id: "22222222-2222-4222-8222-222222222222",
                 },
               ],
             };
@@ -106,6 +109,36 @@ describe("form-425c exhibits", () => {
       expect(built.exhibits.e).toBeTruthy();
       expect(built.exhibits.f).toBeTruthy();
       expect(getBuiltExhibits(built.filing_uuid)).toEqual(built);
+    });
+  });
+
+  describe("Exhibit C statement chain", () => {
+    it("uses the exact-period reconciliation opening balance and exposes its source", async () => {
+      const client = {
+        query: vi.fn(async () => ({
+          rows: [{
+            id: "11111111-1111-4111-8111-111111111111",
+            name: "DIP Operating",
+            mask: "3500",
+            inflows: "500000",
+            outflows: "200000",
+            beginning_balance_cents: "900000",
+            reconciliation_session_id: "22222222-2222-4222-8222-222222222222",
+          }],
+        })),
+      };
+      const exhibit = await buildExhibitC(client, {
+        operating_company_id: companyId,
+        period_start: "2026-05-01",
+        period_end: "2026-05-31",
+      });
+      expect(exhibit.accounts[0]).toMatchObject({
+        opening_balance_cents: 900000,
+        closing_balance_cents: 1200000,
+        opening_balance_source: "reconciliation_session",
+        reconciliation_session_id: "22222222-2222-4222-8222-222222222222",
+      });
+      expect(String(client.query.mock.calls[0]?.[0])).toContain("banking.reconciliation_sessions");
     });
   });
 

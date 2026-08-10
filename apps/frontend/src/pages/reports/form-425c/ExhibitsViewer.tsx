@@ -72,9 +72,12 @@ export function ExhibitsViewer() {
           <h1 className="text-lg font-semibold text-slate-900">Form 425C Exhibits A–F</h1>
           <p className="text-sm text-slate-600">Auto-build court-ready supporting exhibits for TRANSP monthly DIP filings.</p>
         </div>
-        <Link to="/425c" className="text-sm font-semibold text-[#1f2a44] hover:underline">
-          ← Back to Form 425C
-        </Link>
+        <div className="flex flex-wrap items-center gap-3 text-sm font-semibold text-[#1f2a44]">
+          <Link to="/accounting/reconciliation" className="hover:underline">Bank reconciliation</Link>
+          <Link to="/finance/statements" className="hover:underline">Accounting statements</Link>
+          <Link to="/legal/reports" className="hover:underline">Legal reports</Link>
+          <Link to="/425c" className="hover:underline">← Form 425C</Link>
+        </div>
       </div>
 
       <section className="rounded-sm border border-slate-200 bg-white p-3">
