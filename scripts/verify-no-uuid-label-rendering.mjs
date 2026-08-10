@@ -40,6 +40,15 @@ const SRC = "apps/frontend/src";
  */
 const UUID_SLICE = /\b([A-Za-z_$][\w.$?]*(?:_id|Id|uuid|Uuid))\s*\)?\s*\.slice\(\s*0\s*,\s*\d+\s*\)/g;
 
+/**
+ * Raw UUID rendered as JSX text inside a Link or plain element: `>{row.related_load_uuid}<`.
+ * A bare uuid as link/label text is the same operator problem as a truncated one.
+ * Allowed: explicit short reference fields (display_id, *_number, *_code, *_hash) and
+ * identifiers that are genuinely opaque IDs (block_id, bulk_call_id, samsara_driver_id).
+ */
+const RAW_UUID_TEXT = />\s*\{([A-Za-z_$][\w.$]*_uuid)\}\s*</g;
+const RAW_UUID_ALLOWED = /(display_id|_number|_code|_hash|block_id|bulk_call_id|samsara_driver_id)$/i;
+
 /** Truncation that is fine: display ids, numbers, names, hashes shown deliberately as short refs. */
 const ALLOWED_SUFFIX = /(display_id|_number|_name|sha|hash|_code)$/i;
 
@@ -85,17 +94,29 @@ export function offenderKeys(text, file) {
   return keys;
 }
 
+export function rawUuidOffenderKeys(text, file) {
+  const keys = [];
+  for (const m of text.matchAll(RAW_UUID_TEXT)) {
+    if (RAW_UUID_ALLOWED.test(m[1])) continue;
+    keys.push(`${file}|${m[1]}`);
+  }
+  return keys;
+}
+
 const BASELINE_PATH = "scripts/no-uuid-label-baseline.json";
 
 function collectAll() {
   const files = [];
   walk(SRC, files);
   const keys = [];
+  const rawKeys = [];
   for (const rel of files) {
     if (rel.endsWith("verify-no-uuid-label-rendering.mjs")) continue;
-    keys.push(...offenderKeys(maskComments(readFileSync(join(ROOT, rel), "utf8")), rel));
+    const masked = maskComments(readFileSync(join(ROOT, rel), "utf8"));
+    keys.push(...offenderKeys(masked, rel));
+    rawKeys.push(...rawUuidOffenderKeys(masked, rel));
   }
-  return { keys, fileCount: files.length };
+  return { keys, rawKeys, fileCount: files.length };
 }
 
 /**
@@ -105,18 +126,22 @@ function collectAll() {
  * regenerate, and the ceiling drops permanently.
  */
 function auditTree() {
-  const { keys, fileCount } = collectAll();
+  const { keys, rawKeys, fileCount } = collectAll();
   if (fileCount === 0) return [`${LABEL}: no frontend sources found — scope is wrong, refusing to pass vacuously.`];
 
   const baselinePath = join(ROOT, BASELINE_PATH);
   if (!existsSync(baselinePath)) {
     return [`${LABEL}: missing ${BASELINE_PATH}. Regenerate with --write-baseline.`];
   }
-  const baseline = new Set(JSON.parse(readFileSync(baselinePath, "utf8")).offenders ?? []);
+  const stored = JSON.parse(readFileSync(baselinePath, "utf8"));
+  const baseline = new Set(stored.offenders ?? []);
+  const rawBaseline = new Set(stored.raw_offenders ?? []);
   // Compare UNIQUE keys to the (deduped) baseline. Comparing raw occurrence count to a deduped
   // baseline reported a false "count rose 164 -> 173" — a guard that cries wolf gets switched off.
   const unique = [...new Set(keys)];
   const added = unique.filter((k) => !baseline.has(k));
+  const rawUnique = [...new Set(rawKeys)];
+  const rawAdded = rawUnique.filter((k) => !rawBaseline.has(k));
   const problems = [];
   if (added.length) {
     problems.push(
@@ -125,8 +150,18 @@ function auditTree() {
         `\nReturn a display name from the query (LEFT JOIN) and label the link with it.`
     );
   }
+  if (rawAdded.length) {
+    problems.push(
+      `${rawAdded.length} NEW raw-uuid text label(s) — the ratchet may only shrink:\n  ` +
+        rawAdded.slice(0, 10).join("\n  ") +
+        `\nUse entityLabel/EntityLink with a display name, or baseline an opaque id reference.`
+    );
+  }
   if (unique.length > baseline.size) {
-    problems.push(`${LABEL}: offender count rose ${baseline.size} -> ${unique.length}. The baseline may only shrink.`);
+    problems.push(`${LABEL}: truncated-uuid offender count rose ${baseline.size} -> ${unique.length}. The baseline may only shrink.`);
+  }
+  if (rawUnique.length > rawBaseline.size) {
+    problems.push(`${LABEL}: raw-uuid offender count rose ${rawBaseline.size} -> ${rawUnique.length}. The baseline may only shrink.`);
   }
   return problems;
 }
@@ -173,10 +208,14 @@ function selftest() {
 function main() {
   if (process.argv.includes("--selftest")) return selftest();
   if (process.argv.includes("--write-baseline")) {
-    const { keys } = collectAll();
-    const out = { note: "CLS-UUID-LABEL ratchet — may only SHRINK. Regenerate after draining a file.", offenders: [...new Set(keys)].sort() };
+    const { keys, rawKeys } = collectAll();
+    const out = {
+      note: "CLS-UUID-LABEL ratchet — may only SHRINK. Regenerate after draining a file.",
+      offenders: [...new Set(keys)].sort(),
+      raw_offenders: [...new Set(rawKeys)].sort(),
+    };
     writeFileSync(join(ROOT, BASELINE_PATH), JSON.stringify(out, null, 2) + "\n");
-    console.log(`${LABEL}: baseline written with ${out.offenders.length} offender(s)`);
+    console.log(`${LABEL}: baseline written with ${out.offenders.length} slice offender(s), ${out.raw_offenders.length} raw-uuid offender(s)`);
     return;
   }
   const problems = auditTree();
