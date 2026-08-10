@@ -17,10 +17,11 @@ type SettlementRow = {
   payment_method: string | null;
   payment_bank_reference: string | null;
   payment_release_idempotency_key: string | null;
+  paid_at: Date | string | null;
 };
 
 const SETTLEMENT_ROW_COLUMNS =
-  "id, operating_company_id, driver_id, status, payment_state, payment_method, payment_bank_reference, payment_release_idempotency_key";
+  "id, operating_company_id, driver_id, status, payment_state, payment_method, payment_bank_reference, payment_release_idempotency_key, paid_at";
 
 function settlementPaymentState(settlement: SettlementRow): PaymentState {
   return (settlement.payment_state ?? "unpaid") as PaymentState;
@@ -457,7 +458,26 @@ export async function markPaidManually(
     const settlement = await loadSettlement(client, settlementId, operatingCompanyId, { forUpdate: true });
     if (!settlement) throw new Error("settlement_not_found");
     const currentState = settlementPaymentState(settlement);
-    if (currentState === "manual_paid") return settlement; // idempotent: disbursement already recorded ONCE
+    // Idempotent for state — but heal paid_at when Mark Paid previously left it NULL (S-0085 class).
+    if (currentState === "manual_paid") {
+      if (settlement.paid_at == null) {
+        const heal = await client.query<SettlementRow>(
+          `
+            UPDATE driver_finance.driver_settlements
+            SET paid_at = now(),
+                updated_at = now()
+            WHERE id = $1
+              AND operating_company_id = $2
+              AND payment_state = 'manual_paid'
+              AND paid_at IS NULL
+            RETURNING ${SETTLEMENT_ROW_COLUMNS}
+          `,
+          [settlement.id, settlement.operating_company_id]
+        );
+        if (heal.rows[0]) return heal.rows[0];
+      }
+      return settlement; // idempotent: disbursement already recorded ONCE
+    }
     if (!validateTransition(currentState, "manual_paid")) {
       throw new Error("invalid_payment_state_transition");
     }
@@ -468,6 +488,7 @@ export async function markPaidManually(
         SET payment_state = 'manual_paid',
             payment_method = $3,
             payment_bank_reference = $4,
+            paid_at = COALESCE(paid_at, now()),
             updated_at = now()
         WHERE id = $1
           AND operating_company_id = $2

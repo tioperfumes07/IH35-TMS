@@ -78,6 +78,8 @@ function baseSettlement(paymentState: PaymentState | null) {
     payment_state: paymentState,
     payment_method: "ach",
     payment_bank_reference: null as string | null,
+    // Already-manual_paid fixtures carry paid_at so heal path does not fire on diagonal idempotent.
+    paid_at: paymentState === "manual_paid" ? "2026-07-21T00:00:00.000Z" : null,
   };
 }
 
