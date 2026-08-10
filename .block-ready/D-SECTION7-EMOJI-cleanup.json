@@ -1,9 +1,9 @@
 {
   "block_id": "D-SECTION7-EMOJI-cleanup",
-  "status": "BUILD",
+  "status": "MERGED",
   "classification": "NON-FINANCIAL",
   "phase": "DESIGN-PARITY",
-  "task": "0441-mod12-legal-emoji + §7 decorative-emoji sweep: §7 forbids emojis in headers/labels. Verify-first scanned the office UI (excluding tests/pwa/mockups + functional close/check glyphs). Removed the 3 decorative-emoji violations: LegalMatterDetailPage.tsx (🔒 privileged label), planner/UniversalFilterBar.tsx (📅 date-range button), program/FinalAdditionsPage.tsx (🎉 empty state). Kept text/labels intact. NOTED (not touched — functional status indicators, converting to CSS dots is a separate design change): dispatch/constants.ts color-dot emojis (🟢🔵🟡🟠🔴🟣) + 📡 samsara-source chips. Non-financial UI; frontend tsc clean; verify:section7-palette-nonfinancial PASS.",
+  "task": "0441-mod12-legal-emoji + \u00a77 decorative-emoji sweep: \u00a77 forbids emojis in headers/labels. Verify-first scanned the office UI (excluding tests/pwa/mockups + functional close/check glyphs). Removed the 3 decorative-emoji violations: LegalMatterDetailPage.tsx (\ud83d\udd12 privileged label), planner/UniversalFilterBar.tsx (\ud83d\udcc5 date-range button), program/FinalAdditionsPage.tsx (\ud83c\udf89 empty state). Kept text/labels intact. NOTED (not touched \u2014 functional status indicators, converting to CSS dots is a separate design change): dispatch/constants.ts color-dot emojis (\ud83d\udfe2\ud83d\udd35\ud83d\udfe1\ud83d\udfe0\ud83d\udd34\ud83d\udfe3) + \ud83d\udce1 samsara-source chips. Non-financial UI; frontend tsc clean; verify:section7-palette-nonfinancial PASS.",
   "branch": "fix/section7-emoji-cleanup",
   "lane": "DESIGN-PARITY",
   "allowed_files": [
@@ -13,14 +13,29 @@
     ".block-ready/D-SECTION7-EMOJI-cleanup.json"
   ],
   "acceptance": [
-    { "kind": "live", "assert": "grep of the 3 files shows no decorative emoji; frontend tsc clean; verify:section7-palette-nonfinancial PASS. Functional dispatch status-dot emojis explicitly deferred (design change)." },
-    { "kind": "design", "spec": "AGENTS.md / CLAUDE.md §7", "sections": ["No emojis in headers/sidebar/tables"] }
+    {
+      "kind": "live",
+      "assert": "grep of the 3 files shows no decorative emoji; frontend tsc clean; verify:section7-palette-nonfinancial PASS. Functional dispatch status-dot emojis explicitly deferred (design change)."
+    },
+    {
+      "kind": "design",
+      "spec": "AGENTS.md / CLAUDE.md \u00a77",
+      "sections": [
+        "No emojis in headers/sidebar/tables"
+      ]
+    }
   ],
-  "linkage": "N/A — presentational §7 cleanup; no data/entity/FK change",
+  "linkage": "N/A \u2014 presentational \u00a77 cleanup; no data/entity/FK change",
   "db_required": false,
   "guard_required": false,
   "extra_gates": [],
   "deferred": [
-    { "item": "dispatch/constants.ts color-dot emojis (🟢🔵🟡🟠🔴🟣) + 📡 samsara-source chips", "reason": "functional status indicators referenced as constants; converting to CSS/lucide dots is a design change with dispatch-UI blast radius — separate block, not a silent decorative removal." }
+    {
+      "item": "dispatch/constants.ts color-dot emojis (\ud83d\udfe2\ud83d\udd35\ud83d\udfe1\ud83d\udfe0\ud83d\udd34\ud83d\udfe3) + \ud83d\udce1 samsara-source chips",
+      "reason": "functional status indicators referenced as constants; converting to CSS/lucide dots is a design change with dispatch-UI blast radius \u2014 separate block, not a silent decorative removal."
+    }
+  ],
+  "details": [
+    "Decorative emojis already removed from the three target files; verify-section7-palette-nonfinancial green."
   ]
 }

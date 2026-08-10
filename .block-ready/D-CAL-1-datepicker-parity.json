@@ -1,9 +1,9 @@
 {
   "block_id": "D-CAL-1-datepicker-parity",
-  "status": "BUILD",
+  "status": "MERGED",
   "classification": "NON-FINANCIAL",
   "phase": "DESIGN-PARITY",
-  "task": "D-CAL-1 (DESIGN-PARITY REQ 1): every date field uses the canonical QuickBooks-format month-grid picker components/forms/DatePicker.tsx. Converted the two LIVE raw <input type=\"date\"> offenders — pages/banking/components/ManualJEModal.tsx (Journal date) + components/accounting/ManualJEModal.tsx (Journal date) — to DatePicker. Verify-first cleared the other two audit entries: pages/CustomerDetail.tsx 'Event Date' is ALREADY correct (its local Field component renders DatePicker for type=='date'), and pages/banking/components/forms/ManualJEForm.tsx is @archived dead code (guard-protected, not rendered) — skipped, not converted. Non-financial UI; frontend tsc clean.",
+  "task": "D-CAL-1 (DESIGN-PARITY REQ 1): every date field uses the canonical QuickBooks-format month-grid picker components/forms/DatePicker.tsx. Converted the two LIVE raw <input type=\"date\"> offenders \u2014 pages/banking/components/ManualJEModal.tsx (Journal date) + components/accounting/ManualJEModal.tsx (Journal date) \u2014 to DatePicker. Verify-first cleared the other two audit entries: pages/CustomerDetail.tsx 'Event Date' is ALREADY correct (its local Field component renders DatePicker for type=='date'), and pages/banking/components/forms/ManualJEForm.tsx is @archived dead code (guard-protected, not rendered) \u2014 skipped, not converted. Non-financial UI; frontend tsc clean.",
   "branch": "fix/coa-datepicker-parity",
   "lane": "DESIGN-PARITY",
   "allowed_files": [
@@ -12,13 +12,33 @@
     ".block-ready/D-CAL-1-datepicker-parity.json"
   ],
   "acceptance": [
-    { "kind": "mounted", "component": "apps/frontend/src/pages/banking/components/ManualJEModal.tsx", "note": "Journal date renders DatePicker (imported), not raw input" },
-    { "kind": "mounted", "component": "apps/frontend/src/components/accounting/ManualJEModal.tsx", "note": "Journal date renders DatePicker (imported), not raw input" },
-    { "kind": "live", "assert": "frontend tsc clean re the 2 changed files; CustomerDetail Field already renders DatePicker (verified, not touched); ManualJEForm is @archived (skipped)" },
-    { "kind": "design", "spec": "DESIGN-PARITY-AUDIT-2026-07-11", "sections": ["REQ 1 D-CAL-1"] }
+    {
+      "kind": "mounted",
+      "component": "apps/frontend/src/pages/banking/components/ManualJEModal.tsx",
+      "note": "Journal date renders DatePicker (imported), not raw input"
+    },
+    {
+      "kind": "mounted",
+      "component": "apps/frontend/src/components/accounting/ManualJEModal.tsx",
+      "note": "Journal date renders DatePicker (imported), not raw input"
+    },
+    {
+      "kind": "live",
+      "assert": "frontend tsc clean re the 2 changed files; CustomerDetail Field already renders DatePicker (verified, not touched); ManualJEForm is @archived (skipped)"
+    },
+    {
+      "kind": "design",
+      "spec": "DESIGN-PARITY-AUDIT-2026-07-11",
+      "sections": [
+        "REQ 1 D-CAL-1"
+      ]
+    }
   ],
-  "linkage": "N/A — presentational UI component swap; no entity/data/FK change",
+  "linkage": "N/A \u2014 presentational UI component swap; no entity/data/FK change",
   "db_required": false,
   "guard_required": false,
-  "extra_gates": []
+  "extra_gates": [],
+  "details": [
+    "DatePicker already in use in both ManualJEModal files; raw type=date offenders absent."
+  ]
 }
