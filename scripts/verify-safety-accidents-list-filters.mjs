@@ -63,11 +63,11 @@ export function collectProblems(root = ROOT) {
     problems.push(`${FILE}: unit filter must expose dataTestId=accidents-unit-filter`);
   }
 
-  if (!/kind=["']driver["'][\s\S]{0,120}label=\{\(row\.driver_name/.test(code)) {
-    problems.push(`${FILE}: Driver column EntityLink must pass driver_name as label`);
+  if (!/kind=["']driver["'][\s\S]{0,180}label=\{entityLabel\(\(row\.driver_name/.test(code)) {
+    problems.push(`${FILE}: Driver column EntityLink must pass driver_name through entityLabel`);
   }
-  if (!/kind=["']unit["'][\s\S]{0,120}label=\{\(row\.unit_number/.test(code)) {
-    problems.push(`${FILE}: Unit column EntityLink must pass unit_number as label`);
+  if (!/kind=["']unit["'][\s\S]{0,180}label=\{entityLabel\(\(row\.unit_number/.test(code)) {
+    problems.push(`${FILE}: Unit column EntityLink must pass unit_number through entityLabel`);
   }
   if (!/row\.driver_name/.test(code) || !/row\.unit_number/.test(code)) {
     problems.push(`${FILE}: filter logic must reference driver_name/unit_number, not uuid-only`);
