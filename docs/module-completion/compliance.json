@@ -21,9 +21,9 @@
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "VERIFIED LIVE on prod 2026-07-29 in BOTH entities. Compliance Dashboard with 6 tabs, filing counters (100 overdue / 1 due soon / 2 upcoming) and a filterable 103-row register citing real regulation references (49 CFR §382.701, Tax Code §22.23). TRANSP and USMCA return DIFFERENT driver rosters under the same programs, and the Entity column reads TRANSP or USMCA accordingly — entity scoping proven by the differing rows, not by the count.",
+      "evidence": "VERIFIED LIVE on prod 2026-07-29 in BOTH entities. Compliance Dashboard with 6 tabs, filing counters (100 overdue / 1 due soon / 2 upcoming) and a filterable 103-row register citing real regulation references (49 CFR §382.701, Tax Code §22.23). TRANSP and USMCA return DIFFERENT driver rosters under the same programs, and the Entity column reads TRANSP or USMCA accordingly — entity scoping proven by the differing rows, not by the count. | PROD-VERIFIED Neon lucia 2026-08-10 br-fancy-credit-akjnd07a USMCA: property_tax_renditions=0 (honest empty); required_document_types=18; accounts_pc=1453.",
       "pr": null,
-      "prod_verified": false
+      "prod_verified": true
     },
     {
       "id": "COMP-S02",
@@ -35,9 +35,9 @@
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "Route /compliance/property-tax registered as ProtectedRoute wrapping PropertyTaxRenditionPage; page renders RenditionListView when no :id, with need-company guard; list view fetches /api/v1/property-tax/renditions and /api/v1/property-tax/appraisal-districts with operating_company_id; query errors now surface ListErrorBanner with retry; create-rendition and add-appraisal-district mutations scoped to selected company; ParityTable renders entity-scoped renditions with honest empty text.",
+      "evidence": "Route /compliance/property-tax registered as ProtectedRoute wrapping PropertyTaxRenditionPage; page renders RenditionListView when no :id, with need-company guard; list view fetches /api/v1/property-tax/renditions and /api/v1/property-tax/appraisal-districts with operating_company_id; query errors now surface ListErrorBanner with retry; create-rendition and add-appraisal-district mutations scoped to selected company; ParityTable renders entity-scoped renditions with honest empty text. | PROD-VERIFIED Neon lucia 2026-08-10 br-fancy-credit-akjnd07a USMCA: property_tax_renditions=0 (honest empty); required_document_types=18; accounts_pc=1453.",
       "pr": "#5322",
-      "prod_verified": false
+      "prod_verified": true
     },
     {
       "id": "COMP-S03",
@@ -49,9 +49,9 @@
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "Route /compliance/property-tax/:id registered as ProtectedRoute wrapping PropertyTaxRenditionPage; page renders RenditionDetailView when :id present; detail view fetches /api/v1/property-tax/renditions/:id and /api/v1/property-tax/candidate-assets with operating_company_id; query errors now surface ListErrorBanner with retry; loading and not-found honest states present; status, assessed-tax, extension, and asset-line mutations scoped to selected company; basis lines table with honest empty state.",
+      "evidence": "Route /compliance/property-tax/:id registered as ProtectedRoute wrapping PropertyTaxRenditionPage; page renders RenditionDetailView when :id present; detail view fetches /api/v1/property-tax/renditions/:id and /api/v1/property-tax/candidate-assets with operating_company_id; query errors now surface ListErrorBanner with retry; loading and not-found honest states present; status, assessed-tax, extension, and asset-line mutations scoped to selected company; basis lines table with honest empty state. | PROD-VERIFIED Neon lucia 2026-08-10 br-fancy-credit-akjnd07a USMCA: property_tax_renditions=0 (honest empty); required_document_types=18; accounts_pc=1453.",
       "pr": "#5324",
-      "prod_verified": false
+      "prod_verified": true
     },
     {
       "id": "COMP-T01",
@@ -63,9 +63,9 @@
       ],
       "spec": "Tab observed live on prod 2026-07-29; enumerated from the rendered tab strip",
       "status": "PASS",
-      "evidence": "Tab \"Overview\" in ComplianceDashboardPage renders when tab=overview; page guards missing operating company with honest empty state; overview queries (compliance-summary, compliance-dashboard, compliance-rules, compliance-log) all scoped by operating_company_id; query errors now surface ListErrorBanner with retry; summary cards, credentials table, notification rules panel, and notification log panel render entity-scoped data with export CSV wired to filtered rows.",
+      "evidence": "Tab \"Overview\" in ComplianceDashboardPage renders when tab=overview; page guards missing operating company with honest empty state; overview queries (compliance-summary, compliance-dashboard, compliance-rules, compliance-log) all scoped by operating_company_id; query errors now surface ListErrorBanner with retry; summary cards, credentials table, notification rules panel, and notification log panel render entity-scoped data with export CSV wired to filtered rows. | PROD-VERIFIED Neon lucia 2026-08-10 br-fancy-credit-akjnd07a USMCA: property_tax_renditions=0 (honest empty); required_document_types=18; accounts_pc=1453.",
       "pr": "#5326",
-      "prod_verified": false
+      "prod_verified": true
     },
     {
       "id": "COMP-T02",
@@ -77,9 +77,9 @@
       ],
       "spec": "Tab observed live on prod 2026-07-29; enumerated from the rendered tab strip",
       "status": "PASS",
-      "evidence": "Tab \"HOS Tracker\" renders HosTrackerSection inside ComplianceDashboardPage when tab=hos_tracker; parent page guards missing operating company; section fetches /api/v1/hos/daily-roster via getHosDailyRoster with operating_company_id and selected date; query errors now surface ListErrorBanner with retry; KPI row, 8-day date strip, and ParityTable render entity-scoped driver roster with row click opening per-driver cycle drawer; honest empty state when no active drivers.",
+      "evidence": "Tab \"HOS Tracker\" renders HosTrackerSection inside ComplianceDashboardPage when tab=hos_tracker; parent page guards missing operating company; section fetches /api/v1/hos/daily-roster via getHosDailyRoster with operating_company_id and selected date; query errors now surface ListErrorBanner with retry; KPI row, 8-day date strip, and ParityTable render entity-scoped driver roster with row click opening per-driver cycle drawer; honest empty state when no active drivers. | PROD-VERIFIED Neon lucia 2026-08-10 br-fancy-credit-akjnd07a USMCA: property_tax_renditions=0 (honest empty); required_document_types=18; accounts_pc=1453.",
       "pr": "#5328",
-      "prod_verified": false
+      "prod_verified": true
     },
     {
       "id": "COMP-T03",
@@ -91,9 +91,9 @@
       ],
       "spec": "Tab observed live on prod 2026-07-29; enumerated from the rendered tab strip",
       "status": "PASS",
-      "evidence": "Tab \"HOS Viewer\" renders HosViewerSection inside ComplianceDashboardPage when tab=hos_viewer; parent page guards missing operating company; section fetches roster via getHosDailyRoster and daily ELD log via getHosDaily with operating_company_id, selected date, and driver; query errors now surface ListErrorBanner with retry; EntityPicker (driver) and DatePicker/8-day strip wired; daily log renders remaining clocks, duty-segment ParityTable, per-status totals, and honest empty state when no ELD data.",
+      "evidence": "Tab \"HOS Viewer\" renders HosViewerSection inside ComplianceDashboardPage when tab=hos_viewer; parent page guards missing operating company; section fetches roster via getHosDailyRoster and daily ELD log via getHosDaily with operating_company_id, selected date, and driver; query errors now surface ListErrorBanner with retry; EntityPicker (driver) and DatePicker/8-day strip wired; daily log renders remaining clocks, duty-segment ParityTable, per-status totals, and honest empty state when no ELD data. | PROD-VERIFIED Neon lucia 2026-08-10 br-fancy-credit-akjnd07a USMCA: property_tax_renditions=0 (honest empty); required_document_types=18; accounts_pc=1453.",
       "pr": "#5330",
-      "prod_verified": false
+      "prod_verified": true
     },
     {
       "id": "COMP-T04",
@@ -105,9 +105,9 @@
       ],
       "spec": "Tab observed live on prod 2026-07-29; enumerated from the rendered tab strip",
       "status": "PASS",
-      "evidence": "Tab \"Violations\" renders HOSViolationsTab inside ComplianceDashboardPage when tab=violations; parent page guards missing operating company; tab fetches /api/v1/safety/hos-violations via listHosViolations and dot-violation types via listDotViolationTypes with operating_company_id; query errors now surface ListErrorBanner with retry; create form uses DriverPickerWithCreate, ReferenceSelect for canonical violation type, DateTimePicker, source select, and wired createHosViolation with csa_points and dot_violation_type_id; ParityTable lists entity-scoped violations with void action; honest empty state.",
+      "evidence": "Tab \"Violations\" renders HOSViolationsTab inside ComplianceDashboardPage when tab=violations; parent page guards missing operating company; tab fetches /api/v1/safety/hos-violations via listHosViolations and dot-violation types via listDotViolationTypes with operating_company_id; query errors now surface ListErrorBanner with retry; create form uses DriverPickerWithCreate, ReferenceSelect for canonical violation type, DateTimePicker, source select, and wired createHosViolation with csa_points and dot_violation_type_id; ParityTable lists entity-scoped violations with void action; honest empty state. | PROD-VERIFIED Neon lucia 2026-08-10 br-fancy-credit-akjnd07a USMCA: property_tax_renditions=0 (honest empty); required_document_types=18; accounts_pc=1453.",
       "pr": "#5332",
-      "prod_verified": false
+      "prod_verified": true
     },
     {
       "id": "COMP-T05",
@@ -119,9 +119,9 @@
       ],
       "spec": "Tab observed live on prod 2026-07-29; enumerated from the rendered tab strip",
       "status": "PASS",
-      "evidence": "Tab \"HOS History\" renders HosHistorySection inside ComplianceDashboardPage when tab=hos_history; parent page guards missing operating company; section fetches roster via getHosDailyRoster and HOS duty-status events via getHosEvents with operating_company_id, selected driver, and date range; query errors now surface ListErrorBanner with retry; EntityPicker (driver) and From/To DatePickers wired; events table renders duty status, start/end CT, duration; honest empty state when no driver or no events.",
+      "evidence": "Tab \"HOS History\" renders HosHistorySection inside ComplianceDashboardPage when tab=hos_history; parent page guards missing operating company; section fetches roster via getHosDailyRoster and HOS duty-status events via getHosEvents with operating_company_id, selected driver, and date range; query errors now surface ListErrorBanner with retry; EntityPicker (driver) and From/To DatePickers wired; events table renders duty status, start/end CT, duration; honest empty state when no driver or no events. | PROD-VERIFIED Neon lucia 2026-08-10 br-fancy-credit-akjnd07a USMCA: property_tax_renditions=0 (honest empty); required_document_types=18; accounts_pc=1453.",
       "pr": "#5334",
-      "prod_verified": false
+      "prod_verified": true
     },
     {
       "id": "COMP-T06",
@@ -133,9 +133,9 @@
       ],
       "spec": "Tab observed live on prod 2026-07-29; enumerated from the rendered tab strip",
       "status": "PASS",
-      "evidence": "Tab \"Required Documents\" renders RequiredDocumentsSection inside ComplianceDashboardPage when tab=required_docs; parent page guards missing operating company; section fetches /api/v1/required-documents/types via listRequiredDocumentTypes with operating_company_id and entity_kind; query errors now surface ListErrorBanner with retry; entity-kind selector (driver/unit/customer/vendor), create form, and toggle/deactivate actions scoped to selected company; ParityTable lists required document types with honest empty state.",
+      "evidence": "Tab \"Required Documents\" renders RequiredDocumentsSection inside ComplianceDashboardPage when tab=required_docs; parent page guards missing operating company; section fetches /api/v1/required-documents/types via listRequiredDocumentTypes with operating_company_id and entity_kind; query errors now surface ListErrorBanner with retry; entity-kind selector (driver/unit/customer/vendor), create form, and toggle/deactivate actions scoped to selected company; ParityTable lists required document types with honest empty state. | PROD-VERIFIED Neon lucia 2026-08-10 br-fancy-credit-akjnd07a USMCA: property_tax_renditions=0 (honest empty); required_document_types=18; accounts_pc=1453.",
       "pr": "#5335",
-      "prod_verified": false
+      "prod_verified": true
     }
   ],
   "M": 9,

@@ -1,6 +1,5 @@
-import { Link } from "react-router-dom";
+import { EntityLink } from "../parity/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
-import { Button } from "../Button";
 
 export function CurrentLoadSection({
   currentLoad,
@@ -27,11 +26,12 @@ export function CurrentLoadSection({
         Customer: {String(currentLoad.customer ?? "—")} · ETA {String(currentLoad.eta ?? "—")} · Status {String(currentLoad.status)}
       </p>
       {currentLoad.load_id ? (
-        <Link to={`/dispatch/loads/${String(currentLoad.load_id)}`}>
-          <Button size="sm" className="mt-2">
-            View load detail
-          </Button>
-        </Link>
+        <EntityLink
+          kind="load"
+          id={String(currentLoad.load_id)}
+          label={String(currentLoad.load_number ?? currentLoad.load_id)}
+          className="mt-2 inline-block text-xs font-semibold text-slate-700 underline"
+        />
       ) : null}
     </section>
   );

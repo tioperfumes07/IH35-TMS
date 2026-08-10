@@ -239,6 +239,11 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
                 <p className="text-xs text-gray-500">Loading fuel transactions…</p>
               ) : fuelTransactionsQuery.isError ? (
                 <ListErrorBanner onRetry={() => void fuelTransactionsQuery.refetch()} />
+              ) : (fuelTransactionsQuery.data?.transactions ?? []).length === 0 ? (
+                <p className="text-xs text-gray-600">
+                  No fuel transactions for USMCA yet — use Import Fuel Transactions to load fleet-card history
+                  (Love&apos;s / WEX / EFS / Comdata). Manual entry is import-only today; no TMS-native rows expected until dispatch is live.
+                </p>
               ) : (
                 <FuelTransactionsTable rows={fuelTransactionsQuery.data?.transactions ?? []} />
               )}
