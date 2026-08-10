@@ -1,12 +1,12 @@
 # Module completion — Dispatch — acceptance checklist
 
-**PROGRESS: 23 of 37** · complete: `false` · as_of: 2026-08-09T01:52:04.159Z · live_sha: `—`
+**PROGRESS: 24 of 37** · complete: `false` · as_of: 2026-08-09T01:52:04.159Z · live_sha: `—`
 
 | Status | Count |
 |---|---:|
-| PASS | 23 |
+| PASS | 24 |
 | HOLD | 0 |
-| OPEN | 14 |
+| OPEN | 13 |
 | FAIL | 0 |
 | UNVERIFIED | 0 |
 
@@ -22,7 +22,7 @@
 | `DISP-S08` | **PASS** | Surface /dispatch/border-crossing renders, is entity-scoped, and shows an honest empty state | PASS 2026-08-09 — BorderCrossingWizardPage company-scoped submit + brokers; ports/brokers load errors surfaced; need-company + ports/brokers honest empty testids; guard scripts/verify-disp-s08-border-crossing-surface.mjs --selftest exit 0. | — |
 | `DISP-S09` | **PASS** | Surface /dispatch/border-crossing/history renders, is entity-scoped, and shows an honest empty state | PASS 2026-08-09 — BorderCrossingHistoryPage ParityTable settled empty; verify-list-empty-settled. | — |
 | `DISP-S10` | **PASS** | Surface /dispatch/borders/geofence-history renders, is entity-scoped, and shows an honest empty state | PASS 2026-08-09 — borders/BorderCrossingHistory ParityTable settled empty; verify-list-empty-settled. | — |
-| `DISP-S11` | **OPEN** | Surface /dispatch/chat renders, is entity-scoped, and shows an honest empty state | NOT YET VERIFIED — status stays OPEN. Page component: apps/frontend/src/pages/chat/DispatchChatPage.tsx (resolved from routes/manifest.tsx, local wrappers followed). PASS REQUIRES, on TRANSP + TRK + USMCA: (1) the route renders without error or blank frame; (2) every data call it fires carries operating_company_id for the active entity and returns 2xx; (3) when the backing table has no rows for that entity the surface shows an HONEST EMPTY STATE — named, explaining what would populate it — never a silent blank, a spinner that never resolves, a zero presented as a fact, or a swallowed error. Row density is NOT required and NOT sufficient. Prior bar and why it changed: see the module note and docs/trackers/DISP-MAINT-SURFACE-SWEEP-BLOCKED-ON-DATA-2026-07-31.md. | — |
+| `DISP-S11` | **PASS** | Surface /dispatch/chat renders, is entity-scoped, and shows an honest empty state | PASS 2026-08-09 — DispatchChatPage company-gated listChatThreads; ListErrorBanner; need-company + threads honest empty testids; guard scripts/verify-disp-s11-chat-surface.mjs --selftest exit 0. | — |
 | `DISP-S12` | **PASS** | Surface /dispatch/detention renders, is entity-scoped, and shows an honest empty state | PASS 2026-08-09 — DetentionBoardPage ParityTable settled empty; verify-list-empty-settled. | — |
 | `DISP-S13` | **PASS** | Surface /dispatch/equipment-transfers renders, is entity-scoped, and shows an honest empty state | PASS 2026-08-09 — EquipmentTransferRequests ParityTable settled empty; verify-list-empty-settled. | — |
 | `DISP-S14` | **PASS** | Surface /dispatch/factoring-packets renders, is entity-scoped, and shows an honest empty state | PASS 2026-08-09 — /dispatch/factoring-packets Navigate→/accounting/factoring (wired redirect, no orphan chrome). | — |
