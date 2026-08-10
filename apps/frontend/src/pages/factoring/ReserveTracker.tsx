@@ -16,12 +16,13 @@ import { entityLabel } from "../../lib/entity-label";
 import { formatDateUS } from "../../lib/formatDate";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   getFactoringSummary,
   getFactoringChargebacksFees,
   getReserveBalances,
   getReserveBalanceHistory,
+  createFactor,
   getReserveReleaseForecast,
   listFactors,
   listFactoringBatches,
@@ -29,7 +30,11 @@ import {
   type FactoringReserveBalanceHistoryEntry,
   type FactoringReserveReleaseForecastPoint,
 } from "../../api/factoring";
+import { Button } from "../../components/Button";
+import { Combobox } from "../../components/Combobox";
 import { ListErrorState } from "../../components/ListErrorState";
+import { useToast } from "../../components/Toast";
+import { userFacingApiError } from "../../lib/api-error-message";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -164,8 +169,18 @@ const CHARGEBACK_COLUMNS: Array<ParityColumn<FactoringChargebackFeeRow>> = [
 export function ReserveTracker() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
+  const { pushToast } = useToast();
+  const queryClient = useQueryClient();
 
   const [selectedFactorId, setSelectedFactorId] = useState("");
+  const [showAddFactorModal, setShowAddFactorModal] = useState(false);
+  const [addForm, setAddForm] = useState({
+    name: "",
+    advance_rate: "0.95",
+    fee_rate: "0.025",
+    reserve_rate: "0.10",
+    recourse_days: "90",
+  });
   const [histPage, setHistPage] = useState(0);
   const PAGE_SIZE = 20;
 
@@ -174,6 +189,28 @@ export function ReserveTracker() {
     queryKey: ["factoring", "factors", "all", companyId],
     queryFn: () => listFactors(companyId, { active_only: false }).then((r) => r.factors),
     enabled: Boolean(companyId),
+  });
+  const factorFilterOptions = useMemo(
+    () => (factorsQ.data ?? []).map((f) => ({ value: f.id, label: f.name })),
+    [factorsQ.data],
+  );
+  const addFactorMutation = useMutation({
+    mutationFn: async () =>
+      createFactor(companyId, {
+        name: addForm.name.trim(),
+        advance_rate: Number(addForm.advance_rate),
+        fee_rate: Number(addForm.fee_rate),
+        reserve_rate: Number(addForm.reserve_rate),
+        recourse_days: Number(addForm.recourse_days),
+      }),
+    onSuccess: async (created) => {
+      setShowAddFactorModal(false);
+      setAddForm({ name: "", advance_rate: "0.95", fee_rate: "0.025", reserve_rate: "0.10", recourse_days: "90" });
+      if (created?.id) setSelectedFactorId(created.id);
+      pushToast("Factor created", "success");
+      await queryClient.invalidateQueries({ queryKey: ["factoring", "factors"] });
+    },
+    onError: (error) => pushToast(userFacingApiError(error, "Failed to create factor"), "error"),
   });
 
   // summary (submitted count, reserve balance, chargeback balance)
@@ -357,18 +394,21 @@ export function ReserveTracker() {
       <div className="rounded-sm border border-gray-200 bg-white p-3">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <div className="text-sm font-semibold text-gray-800">Estimated Reserve Release Schedule</div>
-          <select
-            className="rounded-sm border border-gray-300 px-2 py-1 text-sm"
-            value={selectedFactorId}
-            onChange={(e) => setSelectedFactorId(e.target.value)}
-          >
-            <option value="">— all factors —</option>
-            {(factorsQ.data ?? []).map((f) => (
-              <option key={f.id} value={f.id}>
-                {f.name}
-              </option>
-            ))}
-          </select>
+          <div className="min-w-[220px]" data-testid="reserve-tracker-factor-picker">
+            {/* LST-F159: bare <select> had no + Add new — operators left Reserve Tracker to create a factor. */}
+            <Combobox
+              options={factorFilterOptions}
+              value={selectedFactorId || null}
+              onChange={(next) => setSelectedFactorId(next ?? "")}
+              placeholder="— all factors —"
+              loading={factorsQ.isLoading}
+              allowClear
+              allowAddNew={{
+                label: "+ Add new factor",
+                onAdd: () => setShowAddFactorModal(true),
+              }}
+            />
+          </div>
         </div>
 
         {/* Forecast windows */}
@@ -493,7 +533,7 @@ export function ReserveTracker() {
           <ListErrorState
             title="Couldn't load chargeback + fee history"
             status={0}
-            message={(chargebacksQ.error as Error)?.message}
+            message={userFacingApiError(chargebacksQ.error, "Request failed")}
             onRetry={() => void chargebacksQ.refetch()}
           />
         </div>
@@ -508,6 +548,74 @@ export function ReserveTracker() {
             tableTestId="chargeback-fee-history-table"
             emptyText="No chargebacks or fees recorded."
           />
+        </div>
+      ) : null}
+
+      {showAddFactorModal ? (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-3">
+          <div className="w-full max-w-md rounded-sm border border-gray-200 bg-white p-4 shadow-xl">
+            <div className="mb-3 text-sm font-semibold text-gray-900">Add Factor</div>
+            <div className="space-y-2 text-xs">
+              <label className="block">
+                <div className="mb-1">Name</div>
+                <input
+                  value={addForm.name}
+                  onChange={(event) => setAddForm((current) => ({ ...current, name: event.target.value }))}
+                  className="w-full rounded-sm border border-gray-300 px-2 py-1"
+                />
+              </label>
+              <label className="block">
+                <div className="mb-1">Advance Rate (0-1)</div>
+                <input
+                  value={addForm.advance_rate}
+                  onChange={(event) => setAddForm((current) => ({ ...current, advance_rate: event.target.value }))}
+                  className="w-full rounded-sm border border-gray-300 px-2 py-1"
+                />
+              </label>
+              <label className="block">
+                <div className="mb-1">Fee Rate (0-1)</div>
+                <input
+                  value={addForm.fee_rate}
+                  onChange={(event) => setAddForm((current) => ({ ...current, fee_rate: event.target.value }))}
+                  className="w-full rounded-sm border border-gray-300 px-2 py-1"
+                />
+              </label>
+              <label className="block">
+                <div className="mb-1">Reserve Rate (0-1)</div>
+                <input
+                  value={addForm.reserve_rate}
+                  onChange={(event) => setAddForm((current) => ({ ...current, reserve_rate: event.target.value }))}
+                  className="w-full rounded-sm border border-gray-300 px-2 py-1"
+                />
+              </label>
+              <label className="block">
+                <div className="mb-1">Recourse Days</div>
+                <input
+                  value={addForm.recourse_days}
+                  onChange={(event) => setAddForm((current) => ({ ...current, recourse_days: event.target.value }))}
+                  className="w-full rounded-sm border border-gray-300 px-2 py-1"
+                />
+              </label>
+            </div>
+            <div className="mt-4 flex justify-end gap-2">
+              <Button size="sm" variant="secondary" onClick={() => setShowAddFactorModal(false)}>
+                Cancel
+              </Button>
+              <Button
+                size="sm"
+                loading={addFactorMutation.isPending}
+                onClick={() => {
+                  if (!addForm.name.trim()) {
+                    pushToast("Factor name is required", "error");
+                    return;
+                  }
+                  void addFactorMutation.mutateAsync();
+                }}
+              >
+                Save
+              </Button>
+            </div>
+          </div>
         </div>
       ) : null}
     </div>
