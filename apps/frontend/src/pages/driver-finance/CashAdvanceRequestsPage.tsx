@@ -6,8 +6,10 @@ import { Button } from "../../components/Button";
 import { DriverPickerWithCreate } from "../../components/drivers/DriverPickerWithCreate";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useToast } from "../../components/Toast";
+import { entityLabel } from "../../lib/entity-label";
 
 function formatUsdFromCents(cents: unknown) {
   const n = Number(cents ?? 0);
@@ -221,10 +223,14 @@ export function CashAdvanceRequestsPage() {
                     <td className="min-w-0 max-w-[240px] px-3 py-2">
                       {(() => {
                         const v = String(row.driver_name ?? "");
+                        const driverId = String(row.driver_id ?? "");
                         return (
-                          <span title={v.trim() ? v : undefined} className="single-line-name">
-                            {v}
-                          </span>
+                          <EntityLink
+                            kind="driver"
+                            id={driverId}
+                            label={entityLabel(v, driverId, "Driver")}
+                            className="single-line-name"
+                          />
                         );
                       })()}
                     </td>
