@@ -21,6 +21,7 @@ import { getSamsaraHealth } from "../api/samsara";
 import { Button } from "../components/Button";
 import { DataTable } from "../components/DataTable";
 import { ListErrorState } from "../components/ListErrorState";
+import { ListErrorBanner } from "../components/shared/ListErrorBanner";
 import { ParityTable, type ParityColumn } from "../components/parity/ParityTable";
 import { DataPanel } from "../components/layout/DataPanel";
 import { DataPanelRow } from "../components/layout/DataPanelRow";
@@ -974,8 +975,10 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
         </form>
       </Modal>
 
-      <Modal open={teamDetailOpen} onClose={() => setTeamDetailOpen(false)} title="Team Detail">
-        {teamDetailQuery.data ? (
+      <Modal variant="drawer" open={teamDetailOpen} onClose={() => setTeamDetailOpen(false)} title="Team Detail">
+        {teamDetailQuery.isError ? (
+          <ListErrorBanner message="Failed to load team details." onRetry={() => void teamDetailQuery.refetch()} />
+        ) : teamDetailQuery.data ? (
           <div className="space-y-3">
             <div className="rounded-sm border border-gray-200 bg-gray-50 p-2 text-xs">
               <p className="font-semibold">{String(teamDetailQuery.data.team_name)}</p>
@@ -1016,13 +1019,13 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
                     <EntityLink
                       kind="load"
                       id={(row as Record<string, unknown>).load_id as string | null}
-                      label={String((row as Record<string, unknown>).load_id ?? "—")}
+                      label={entityLabel(null, (row as Record<string, unknown>).load_id, "Load")}
                     />{" "}
                     · Driver{" "}
                     <EntityLink
                       kind="driver"
                       id={(row as Record<string, unknown>).driver_id as string | null}
-                      label={String((row as Record<string, unknown>).driver_id ?? "—")}
+                      label={entityLabel(null, (row as Record<string, unknown>).driver_id, "Driver")}
                     />{" "}
                     · Pay {formatUsdCents(Number((row as Record<string, unknown>).driver_pay_cents ?? 0) || 0)}
                   </div>
