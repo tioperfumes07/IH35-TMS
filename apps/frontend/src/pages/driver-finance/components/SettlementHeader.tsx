@@ -39,7 +39,7 @@ export function SettlementHeader({
       <div>
         <div className="text-[10px] uppercase text-gray-500">Driver</div>
         <div className="text-sm font-semibold">
-          <EntityLink kind="driver" id={driverId} label={driverName} />
+          <EntityLink kind="driver" id={driverId} label={entityLabel(driverName, driverId, "Driver")} />
         </div>
       </div>
       <div>

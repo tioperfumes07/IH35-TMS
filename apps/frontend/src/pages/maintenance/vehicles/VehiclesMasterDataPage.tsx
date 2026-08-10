@@ -14,6 +14,7 @@ import { Modal } from "../../../components/Modal";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { useToast } from "../../../components/Toast";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
+import { entityLabel } from "../../../lib/entity-label";
 
 const LINK = "text-slate-700 hover:underline";
 
@@ -134,7 +135,7 @@ export function VehiclesMasterDataPage() {
       sortable: true,
       render: (row) => (
         <Link to={`/fleet/units/${row.id}`} className={`${LINK} font-semibold`}>
-          {row.unit_display_id}
+          {entityLabel(row.unit_display_id, row.id, "Unit")}
         </Link>
       ),
     },

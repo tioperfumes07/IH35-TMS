@@ -100,7 +100,7 @@ export function OwnerApprovalPortalPage() {
             <div className="grid gap-3 md:grid-cols-2">
               <div className="rounded-sm border border-slate-200 bg-white p-4 text-sm">
                 <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Request</div>
-                <p className="mt-2 font-mono text-xs">{String(req?.display_id ?? "")}</p>
+                <p className="mt-2 font-mono text-xs">{entityLabel(String(req?.display_id ?? ""), String(req?.id ?? ""), "Request")}</p>
                 <p className="mt-2">
                   <strong>Driver:</strong> {entityLabel(String(req?.driver_name ?? ""), String(req?.driver_id ?? ""), "Driver")}
                 </p>

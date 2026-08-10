@@ -4,6 +4,7 @@ import { ParityDrawer } from "../../components/parity/ParityDrawer";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import type { Invoice } from "../../api/accounting";
+import { entityLabel } from "../../lib/entity-label";
 
 type Props = {
   open: boolean;
@@ -65,7 +66,7 @@ export function PaymentApplyModal({ open, loading = false, unappliedCents, invoi
             <option value="">Select invoice</option>
             {filteredInvoices.map((invoice) => (
               <option key={invoice.id} value={invoice.id}>
-                {invoice.display_id} · Open {money(invoice.amount_open_cents)}
+                {entityLabel(invoice.display_id, invoice.id, "Invoice")} · Open {money(invoice.amount_open_cents)}
               </option>
             ))}
           </SelectCombobox>

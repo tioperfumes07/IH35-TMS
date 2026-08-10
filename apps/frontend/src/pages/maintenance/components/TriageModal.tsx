@@ -2,6 +2,7 @@ import type { InTransitIssue } from "../../../api/maintenance";
 import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { entityLabel } from "../../../lib/entity-label";
 
 type Props = {
   open: boolean;
@@ -17,7 +18,7 @@ export function TriageModal({ open, issue, onClose, onConvertToWo, onConvertToDa
       {!issue ? null : (
         <div className="space-y-3 text-sm">
           <div className="rounded-sm border border-gray-200 bg-gray-50 p-2">
-            <div><span className="font-semibold">Unit:</span> <EntityLink kind="unit" id={issue.unit_id} label={issue.unit_display_id} /></div>
+            <div><span className="font-semibold">Unit:</span> <EntityLink kind="unit" id={issue.unit_id} label={entityLabel(issue.unit_display_id, issue.unit_id, "Unit")} /></div>
             <div><span className="font-semibold">Driver:</span> {issue.driver_full_name}</div>
             <div><span className="font-semibold">Category:</span> {issue.issue_category}</div>
             <div><span className="font-semibold">Description:</span> {issue.issue_description}</div>

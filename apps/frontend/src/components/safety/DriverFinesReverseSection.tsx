@@ -76,7 +76,7 @@ export function DriverFinesReverseSection({
           <ul className="mt-1 space-y-2">
             {civil.map((f: Record<string, unknown>) => {
               const id = String(f.id ?? "");
-              const label = String(f.violation_code ?? entityLabel(f.jurisdiction, id, "Record"));
+              const label = entityLabel(f.violation_code ?? f.jurisdiction, id, "Record") ?? "Record — not visible";
               return (
                 <li key={id} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-sm">
                   <EntityLink kind="safety_fine" id={id} label={label} className="font-semibold text-slate-700" />

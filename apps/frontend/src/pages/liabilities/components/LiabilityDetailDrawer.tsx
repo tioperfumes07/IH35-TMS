@@ -65,7 +65,12 @@ export function LiabilityDetailDrawer({ open, operatingCompanyId, liability, onC
             {settlementHistory.map((row) => (
               <div key={String(row.settlement_id ?? row.id)} className="rounded-sm border border-gray-100 px-2 py-1">
                 Settlement{" "}
-                <EntityLink kind="settlement" id={row.settlement_id ? String(row.settlement_id) : null} label={String(row.settlement_id ?? "—")} /> ·
+                <EntityLink
+                  kind="settlement"
+                  id={row.settlement_id ? String(row.settlement_id) : null}
+                  label={entityLabel(null, row.settlement_id ? String(row.settlement_id) : null, "Settlement")}
+                />{" "}
+                ·
                 ${Number(row.amount ?? 0).toFixed(2)}
               </div>
             ))}

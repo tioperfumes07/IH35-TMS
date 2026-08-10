@@ -1073,7 +1073,11 @@ export function BankingTransactionsDesignView({
                       />
                     ) : null}
                     {tx.matched_settlement_id ? (
-                      <EntityLink kind="settlement" id={tx.matched_settlement_id} label="Settlement" />
+                      <EntityLink
+                        kind="settlement"
+                        id={tx.matched_settlement_id}
+                        label={entityLabel(null, tx.matched_settlement_id, "Settlement")}
+                      />
                     ) : null}
                   </div>
                 )}
@@ -1085,7 +1089,7 @@ export function BankingTransactionsDesignView({
                   <EntityLink
                     kind="journal_entry"
                     id={tx.matched_journal_entry_id}
-                    label="Journal Entry"
+                    label={entityLabel(null, tx.matched_journal_entry_id, "Journal entry")}
                     data-testid="bank-txn-je-link"
                   />
                 </div>
@@ -1259,7 +1263,11 @@ export function BankingTransactionsDesignView({
         render: (tx) => {
           const draft = getDraft(tx);
           return draft.customerId ? (
-            <EntityLink kind="customer" id={draft.customerId} label={draft.customerProject || "—"} />
+            <EntityLink
+              kind="customer"
+              id={draft.customerId}
+              label={entityLabel(draft.customerProject, draft.customerId, "Customer")}
+            />
           ) : (
             draft.customerProject || "—"
           );
@@ -1295,7 +1303,11 @@ export function BankingTransactionsDesignView({
         render: (tx) => {
           const draft = getDraft(tx);
           return draft.vendorId ? (
-            <EntityLink kind="vendor" id={draft.vendorId} label={draft.payee || "—"} />
+            <EntityLink
+              kind="vendor"
+              id={draft.vendorId}
+              label={entityLabel(draft.payee, draft.vendorId, "Vendor")}
+            />
           ) : (
             draft.payee || "—"
           );

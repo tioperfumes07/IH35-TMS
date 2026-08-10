@@ -224,7 +224,7 @@ function APAgingSection({ companyId, asOfDate }: { companyId: string; asOfDate: 
         <tbody>
           {rows.map((row) => (
             <tr key={row.vendor_id} className="border-b border-gray-50">
-              <td className="py-0.5 text-slate-800">{row.vendor_name}</td>
+              <td className="py-0.5 text-slate-800">{entityLabel(row.vendor_name, row.vendor_id, "Vendor")}</td>
               <td className="py-0.5 text-right">{money(row.current_cents)}</td>
               <td className="py-0.5 text-right">{money(row.bucket_1_30_cents)}</td>
               <td className="py-0.5 text-right">{money(row.bucket_31_60_cents)}</td>
@@ -304,7 +304,7 @@ function VendorExpenseSummarySection({ companyId, fromDate, toDate }: { companyI
         <tbody>
           {sorted.slice(0, 30).map((row) => (
             <tr key={row.vendor_id} className="border-b border-gray-50">
-              <td className="py-0.5 text-slate-800">{row.vendor_name}</td>
+              <td className="py-0.5 text-slate-800">{entityLabel(row.vendor_name, row.vendor_id, "Vendor")}</td>
               <td className="py-0.5 text-right">{money(row.total_open_cents)}</td>
               <td className="py-0.5 text-right">{row.open_bill_count}</td>
             </tr>

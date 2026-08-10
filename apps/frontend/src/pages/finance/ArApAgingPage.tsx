@@ -5,6 +5,7 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { formatDateUS } from "../../lib/formatDate";
 import { formatUsdCents } from "../../lib/money";
+import { entityLabel } from "../../lib/entity-label";
 import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { FinanceModuleTabs } from "./FinanceModuleTabs";
@@ -76,7 +77,7 @@ const AR_COLUMNS: ParityColumn<ArAgingCustomerRow>[] = [
     label: "Customer",
     sortable: true,
     cellClass: "whitespace-nowrap text-gray-900",
-    render: (r) => r.customer_name || "—",
+    render: (r) => entityLabel(r.customer_name, r.customer_id, "Customer"),
   },
   {
     key: "open_invoice_count",
@@ -95,7 +96,7 @@ const AP_COLUMNS: ParityColumn<ApAgingVendorRow>[] = [
     label: "Vendor",
     sortable: true,
     cellClass: "whitespace-nowrap text-gray-900",
-    render: (r) => r.vendor_name || "—",
+    render: (r) => entityLabel(r.vendor_name, r.vendor_id, "Vendor"),
   },
   {
     key: "open_bill_count",
@@ -114,7 +115,9 @@ const AR_DRILL_COLUMNS: ParityColumn<ArAgingInvoiceRow>[] = [
     label: "Invoice",
     sortable: true,
     cellClass: "whitespace-nowrap",
-    render: (inv) => <EntityLink kind="invoice" id={inv.invoice_id} label={inv.display_id} />,
+    render: (inv) => (
+      <EntityLink kind="invoice" id={inv.invoice_id} label={entityLabel(inv.display_id, inv.invoice_id, "Invoice")} />
+    ),
   },
   { key: "status", label: "Status", sortable: true, cellClass: "capitalize" },
   { key: "issue_date", label: "Issued", sortable: true, cellClass: "whitespace-nowrap", render: (inv) => fmtDate(inv.issue_date) },
@@ -154,7 +157,7 @@ const AP_DRILL_COLUMNS: ParityColumn<ApAgingBillRow>[] = [
     label: "Bill #",
     sortable: true,
     cellClass: "whitespace-nowrap",
-    render: (b) => b.bill_number ?? "—",
+    render: (b) => entityLabel(b.bill_number, b.bill_id, "Bill"),
   },
   { key: "status", label: "Status", sortable: true, cellClass: "capitalize" },
   { key: "bill_date", label: "Bill date", sortable: true, cellClass: "whitespace-nowrap", render: (b) => fmtDate(b.bill_date) },
@@ -199,7 +202,7 @@ function ArInvoicesDrill({ operatingCompanyId, customer, asOfDate }: { operating
   return (
     <div className="rounded-sm border border-gray-200 bg-white">
       <div className="border-b border-gray-100 px-3 py-1.5 text-xs font-semibold text-gray-600">
-        Open invoices — {customer.customer_name}
+        Open invoices — {entityLabel(customer.customer_name, customer.customer_id, "Customer")}
       </div>
       {query.isError ? (
         <ListErrorState
@@ -231,7 +234,7 @@ function ApBillsDrill({ operatingCompanyId, vendor, asOfDate }: { operatingCompa
   return (
     <div className="rounded-sm border border-gray-200 bg-white">
       <div className="border-b border-gray-100 px-3 py-1.5 text-xs font-semibold text-gray-600">
-        Open bills — {vendor.vendor_name}
+        Open bills — {entityLabel(vendor.vendor_name, vendor.vendor_id, "Vendor")}
       </div>
       {query.isError ? (
         <ListErrorState

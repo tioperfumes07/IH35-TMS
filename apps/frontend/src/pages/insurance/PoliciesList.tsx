@@ -18,6 +18,7 @@ import { CollapsedListFilters } from "../../components/table";
 import { formatDateUS } from "../../lib/formatDate";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatUsdCents } from "../../lib/money";
+import { entityLabel } from "../../lib/entity-label";
 
 function formatMoney(cents: number) {
   return formatUsdCents(cents);
@@ -83,7 +84,7 @@ export function PoliciesList() {
 
   // TBL-STANDARD: shared DataTable columns (alignment per GLOBAL-SORT-RULE — text centers, money/dates right).
   const columns = [
-    { key: "policy_number", label: "Policy #", sortable: true, render: (p: InsurancePolicy) => <span className="font-medium text-slate-800">{p.policy_number}</span> },
+    { key: "policy_number", label: "Policy #", sortable: true, render: (p: InsurancePolicy) => <span className="font-medium text-slate-800">{entityLabel(p.policy_number, p.id, "Policy")}</span> },
     { key: "insurer_name", label: "Insurer", sortable: true },
     { key: "coverage_type", label: "Type", sortable: true },
     { key: "total_premium_cents", label: "Coverage Amount", sortable: true, numeric: true, render: (p: InsurancePolicy) => formatMoney(p.total_premium_cents) },

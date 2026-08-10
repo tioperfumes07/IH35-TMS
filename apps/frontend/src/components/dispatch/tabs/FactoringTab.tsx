@@ -20,6 +20,7 @@ import { Button } from "../../Button";
 import { Combobox } from "../../Combobox";
 import { useToast } from "../../Toast";
 import { userFacingApiError } from "../../../lib/api-error-message";
+import { entityLabel } from "../../../lib/entity-label";
 
 // ─── constants ───────────────────────────────────────────────────────────────
 
@@ -400,7 +401,7 @@ export function FactoringTab({ loadId, operatingCompanyId, canEdit, onPacketUpda
           <CheckItem
             label="Invoice"
             ok={hasInvoice}
-            note={hasInvoice ? (linkedInvoice?.display_id ?? undefined) : "Create invoice from Overview tab"}
+            note={hasInvoice ? entityLabel(linkedInvoice?.display_id, linkedInvoice?.id, "Invoice") : "Create invoice from Overview tab"}
           />
           {hasInvoice ? (
             <CheckItem

@@ -437,7 +437,7 @@ export function CustomersPage() {
       {
         key: "doc_no",
         label: "Doc #",
-        render: (r) => <EntityLink kind="invoice" id={r.id} label={r.display_id} />,
+        render: (r) => <EntityLink kind="invoice" id={r.id} label={entityLabel(r.display_id, r.id, "Invoice")} />,
       },
       { key: "status", label: "Status", sortable: true, render: (r) => r.status },
       { key: "amount", label: "Amount", render: (r) => fmtMoney(r.total_cents) },

@@ -21,12 +21,12 @@ import { ParityDrawer } from "../../components/parity/ParityDrawer";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { CollapsedListFilters } from "../../components/table";
 import { useToast } from "../../components/Toast";
 import { useAuth } from "../../auth/useAuth";
 import { useCompanyContext } from "../../contexts/CompanyContext";
-import { entityLabel } from "../../lib/entity-label";
 import { formatDateUS } from "../../lib/formatDate";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 
@@ -151,13 +151,15 @@ export function VendorCreditsPage() {
         key: "display_id",
         label: "Credit #",
         sortable: true,
-        render: (row) => row.display_id,
+        render: (row) => entityLabel(row.display_id, row.id, "Vendor credit"),
       },
       {
         key: "vendor_id",
         label: "Vendor",
         sortable: true,
-        render: (row) => <EntityLink kind="vendor" id={row.vendor_id} />,
+        render: (row) => (
+          <EntityLink kind="vendor" id={row.vendor_id} label={entityLabel(null, row.vendor_id, "Vendor")} />
+        ),
       },
       {
         key: "issue_date",
@@ -310,7 +312,7 @@ export function VendorCreditsPage() {
       <ParityDrawer
         open={Boolean(selectedCreditId)}
         onClose={() => setSelectedCreditId(null)}
-        title={credit?.display_id ?? "Vendor credit"}
+        title={credit ? entityLabel(credit.display_id, credit.id, "Vendor credit") : "Vendor credit"}
         size="wide"
         footer={
           <div className="flex justify-end gap-2">
@@ -345,7 +347,11 @@ export function VendorCreditsPage() {
               <div>
                 <dt className="text-xs font-semibold text-slate-600">Vendor</dt>
                 <dd className="mt-0.5">
-                  <EntityLink kind="vendor" id={credit.vendor_id} />
+                  <EntityLink
+                    kind="vendor"
+                    id={credit.vendor_id}
+                    label={entityLabel(null, credit.vendor_id, "Vendor")}
+                  />
                 </dd>
               </div>
               <div>
@@ -444,7 +450,11 @@ export function VendorCreditsPage() {
       <VoidReasonModal
         open={voidOpen}
         title="Void vendor credit"
-        entityRef={credit ? `${credit.display_id} · ${money(credit.amount_cents)}` : undefined}
+        entityRef={
+          credit
+            ? `${entityLabel(credit.display_id, credit.id, "Vendor credit")} · ${money(credit.amount_cents)}`
+            : undefined
+        }
         minLength={1}
         postsReversingEntry={false}
         onClose={() => setVoidOpen(false)}

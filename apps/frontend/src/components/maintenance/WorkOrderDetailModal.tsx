@@ -54,7 +54,7 @@ export function WorkOrderDetailModal({ open, workOrder, canRefreshDisplayId, onR
           ? "text-slate-600"
           : "text-red-700";
 
-  const displayId = String(workOrder.display_id ?? "—");
+  const displayId = entityLabel(workOrder.display_id, workOrder.id, "Record") ?? "—";
   const modalTitle = displayId !== "—" ? `Work Order Details · ${displayId}` : "Work Order Details";
 
   return (
@@ -112,7 +112,15 @@ export function WorkOrderDetailModal({ open, workOrder, canRefreshDisplayId, onR
             <div>
               Vendor:{" "}
               {workOrder.external_vendor_id ? (
-                <EntityLink kind="vendor" id={String(workOrder.external_vendor_id)} />
+                <EntityLink
+                  kind="vendor"
+                  id={String(workOrder.external_vendor_id)}
+                  label={entityLabel(
+                    typeof workOrder.external_vendor_name === "string" ? workOrder.external_vendor_name : null,
+                    workOrder.external_vendor_id,
+                    "Vendor"
+                  )}
+                />
               ) : (
                 "—"
               )}

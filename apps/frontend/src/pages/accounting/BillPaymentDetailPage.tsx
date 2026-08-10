@@ -124,13 +124,13 @@ export function BillPaymentDetailPage() {
         {payment.reference_number ? (
           <DataPanelRow>
             <span className="text-xs font-semibold text-gray-600">Reference</span>
-            <span className="text-sm text-gray-900">{payment.reference_number}</span>
+            <span className="text-sm text-gray-900">{entityLabel(payment.reference_number, payment.id, "Reference")}</span>
           </DataPanelRow>
         ) : null}
         {payment.check_number ? (
           <DataPanelRow>
             <span className="text-xs font-semibold text-gray-600">Check #</span>
-            <span className="text-sm text-gray-900">{payment.check_number}</span>
+            <span className="text-sm text-gray-900">{entityLabel(payment.check_number, payment.id, "Check")}</span>
           </DataPanelRow>
         ) : null}
         {payment.memo ? (

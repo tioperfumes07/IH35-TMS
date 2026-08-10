@@ -34,7 +34,7 @@ export function DriverLoadDetailPage() {
         </button>
       </div>
       <h2 className="text-base font-semibold">
-        <EntityLink kind="load" id={load.id} label={load.display_id} /> — {t("driver.load_detail")}
+        <EntityLink kind="load" id={load.id} label={entityLabel(load.display_id, load.id, "Load")} /> — {t("driver.load_detail")}
       </h2>
       <p className="text-xs text-slate-600">
         {t("driver.customer")}: {entityLabel(load.customer_name, null, "Customer")}

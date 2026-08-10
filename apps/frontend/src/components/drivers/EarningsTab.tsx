@@ -100,7 +100,11 @@ const LIABILITY_COLUMNS: Array<ParityColumn<LiabilityRow>> = [
     label: "Type",
     sortable: true,
     render: (row) => (
-      <EntityLink kind="liability" id={row.id ? String(row.id) : null} label={String(row.type ?? "—")} />
+      <EntityLink
+        kind="liability"
+        id={row.id ? String(row.id) : null}
+        label={entityLabel(row.type ? String(row.type) : null, row.id ? String(row.id) : null, "Liability")}
+      />
     ),
   },
   {

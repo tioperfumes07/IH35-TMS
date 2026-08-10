@@ -11,6 +11,7 @@ import { SubmitFactoringModal } from "./SubmitFactoringModal";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { CollapsedListFilters } from "../../components/table";
 import { useUrlSort } from "../../hooks/useUrlSort";
@@ -71,7 +72,13 @@ export function FactoringListPage() {
         key: "display_id",
         label: "Batch #",
         sortable: true,
-        render: (row) => <EntityLink kind="factoring_advance" id={row.id} label={row.display_id} />,
+        render: (row) => (
+          <EntityLink
+            kind="factoring_advance"
+            id={row.id}
+            label={entityLabel(row.display_id, row.id, "Advance")}
+          />
+        ),
       },
       { key: "submitted_at", label: "Submitted", sortable: true, render: (row) => formatDateUS(row.submitted_at) },
       { key: "factoring_company_name", label: "Factor", sortable: true },

@@ -6,6 +6,7 @@ import { Button } from "../../../components/Button";
 import { PageHeader } from "../../../components/layout/PageHeader";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { entityLabel } from "../../../lib/entity-label";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { LegalModuleTabs } from "../LegalModuleTabs";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
@@ -78,7 +79,7 @@ export function LegalMattersListPage() {
           <EntityLink
             kind="matter"
             id={String(row.id ?? "")}
-            label={String(row.matter_number ?? "")}
+            label={entityLabel(row.matter_number, row.id, "Record")}
             className="font-mono text-xs"
           />
         ),

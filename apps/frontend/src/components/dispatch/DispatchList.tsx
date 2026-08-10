@@ -339,7 +339,7 @@ export function DispatchList({
                         <div className="flex items-center gap-2 text-xs text-slate-700">
                           <span className="font-semibold">Driver has open pre-settlement</span>
                           {openPreSettlement.settlement_number ? (
-                            <span className="font-mono text-slate-700">{openPreSettlement.settlement_number}</span>
+                            <span className="font-mono text-slate-700">{entityLabel(openPreSettlement.settlement_number, openPreSettlement.settlement_id, "Settlement")}</span>
                           ) : null}
                           <span className="text-slate-700">· add this load to it?</span>
                           <button

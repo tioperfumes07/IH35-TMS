@@ -129,12 +129,15 @@ export function ProfitPerTruckPage() {
   const perMileChart = useMemo(() => {
     const rows = [...filteredRows];
     rows.sort((a, b) => b.profit_per_mile_cents - a.profit_per_mile_cents);
-    return rows.slice(0, 10).map((r) => ({
-      name: r.unit_number.length > 10 ? `${r.unit_number.slice(0, 8)}…` : r.unit_number,
-      revenuePerMile: r.revenue_per_mile_cents,
-      costPerMile: r.cost_per_mile_cents,
-      profitPerMile: r.profit_per_mile_cents,
-    }));
+    return rows.slice(0, 10).map((r) => {
+      const unitLabel = entityLabel(r.unit_number, r.unit_id, "Unit");
+      return {
+        name: unitLabel.length > 10 ? `${unitLabel.slice(0, 8)}…` : unitLabel,
+        revenuePerMile: r.revenue_per_mile_cents,
+        costPerMile: r.cost_per_mile_cents,
+        profitPerMile: r.profit_per_mile_cents,
+      };
+    });
   }, [filteredRows]);
 
   function exportCsv(data: ProfitPerTruckResponse) {

@@ -24,7 +24,7 @@ export type FleetHosDriverRow = {
 
 function driverDisplayName(driver: { id: string; first_name?: string | null; last_name?: string | null }) {
   const name = `${driver.first_name ?? ""} ${driver.last_name ?? ""}`.trim();
-  return name || driver.id;
+  return entityLabel(name || null, driver.id, "Driver");
 }
 
 function isOnDuty(status: string | null) {
@@ -272,10 +272,12 @@ export function HoursOfServicePage({ operatingCompanyId }: Props) {
                       <EntityLink
                         kind="driver"
                         id={row.driver_id ? String(row.driver_id) : undefined}
-                        label={
+                        label={entityLabel(
                           (row.driver_name as string | undefined) ??
-                          (row.driver_id ? driverNameById.get(String(row.driver_id)) : undefined)
-                        }
+                            (row.driver_id ? driverNameById.get(String(row.driver_id)) : undefined),
+                          row.driver_id ? String(row.driver_id) : null,
+                          "Driver"
+                        )}
                       />{" "}
                       · {formatDateUS(row.occurred_at) || String(row.occurred_at ?? "—")}
                     </div>

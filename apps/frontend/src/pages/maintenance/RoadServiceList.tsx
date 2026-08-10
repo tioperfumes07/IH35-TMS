@@ -98,10 +98,10 @@ export function RoadServiceList({ operatingCompanyId }: Props) {
       render: (row) =>
         row.vendor_id ? (
           <Link to={`/vendors/${row.vendor_id}`} className={LINK}>
-            {row.vendor_name}
+            {entityLabel(row.vendor_name, row.vendor_id, "Vendor")}
           </Link>
         ) : (
-          row.vendor_name ?? "—"
+          entityLabel(row.vendor_name, row.vendor_id, "Vendor")
         ),
     },
     { key: "service_type", label: "Service", sortable: true },

@@ -583,7 +583,7 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
                   <EntityLink
                     kind="work_order"
                     id={wo.id}
-                    label={wo.display_id}
+                    label={entityLabel(wo.display_id, wo.id, "Work order")}
                     className="font-semibold text-slate-700 underline"
                     data-testid={`accident-spawned-wo-link-${wo.id}`}
                   />

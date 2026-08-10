@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { listFactoringReserveBalances, type FactorReserveBalance } from "../../api/accounting";
 import { DataPanel } from "../../components/layout/DataPanel";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { titleize } from "../../lib/titleize";
@@ -14,7 +15,19 @@ function money(cents: number) {
 // Released), the money() cents formatter, and the read-only cells are preserved 1:1 from the
 // former hand-rolled table markup. No mutation lives in this table.
 const columns: Array<ParityColumn<FactorReserveBalance>> = [
-  { key: "customer_name", label: "Customer", sortable: true },
+  {
+    key: "customer_name",
+    label: "Customer",
+    sortable: true,
+    sortValue: (row) => entityLabel(row.customer_name, row.customer_id, "Customer"),
+    render: (row) => (
+      <EntityLink
+        kind="customer"
+        id={row.customer_id}
+        label={entityLabel(row.customer_name, row.customer_id, "Customer")}
+      />
+    ),
+  },
   {
     key: "reserve_balance_cents",
     label: "Current reserve",
@@ -75,7 +88,13 @@ export function FactorReserveCard({ operatingCompanyId }: { operatingCompanyId: 
             <div key={`${event.factoring_advance_id}-${event.occurred_at}`} className="rounded-sm border border-gray-200 p-2 text-xs">
               <div className="flex items-center justify-between gap-2">
                 <span className="font-semibold text-gray-900">
-                  <EntityLink kind="factoring_advance" id={event.factoring_advance_id} label={event.display_id} /> - {event.customer_name}
+                  <EntityLink kind="factoring_advance" id={event.factoring_advance_id} label={entityLabel(event.display_id, event.factoring_advance_id, "Advance")} />{" "}
+                  ·{" "}
+                  <EntityLink
+                    kind="customer"
+                    id={event.customer_id}
+                    label={entityLabel(event.customer_name, event.customer_id, "Customer")}
+                  />
                 </span>
                 <span className="text-gray-500">{new Date(event.occurred_at).toLocaleString()}</span>
               </div>

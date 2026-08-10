@@ -155,7 +155,7 @@ export function LoadsPlanner() {
                     <tr key={load.id} className="border-t border-gray-100">
                       <td className="sticky left-0 z-10 border-r bg-white px-2 py-0.5 text-xs font-medium text-gray-900">
                         <button type="button" className="text-slate-700 hover:underline" onClick={() => openLoad(load.id)}>
-                          {load.load_number}
+                          {entityLabel(load.load_number, load.id, "Load")}
                         </button>
                       </td>
                       <td className="border-r px-1 py-0.5 text-gray-600">{lane}</td>

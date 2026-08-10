@@ -323,7 +323,7 @@ export function VendorBillForm({
     <form className="space-y-3" onSubmit={handleSubmit}>
       {linkedWoId && linkedWoDisplayId ? (
         <div className="rounded-sm border border-slate-200 bg-slate-100 px-2 py-1 text-xs text-slate-700">
-          Linked — <EntityLink kind="work_order" id={linkedWoId} label={linkedWoDisplayId} />
+          Linked — <EntityLink kind="work_order" id={linkedWoId} label={entityLabel(linkedWoDisplayId, linkedWoId, "Work order")} />
         </div>
       ) : null}
       {linkedClaimId ? (

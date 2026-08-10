@@ -112,7 +112,7 @@ export function PaymentsListPage() {
         key: "display_id",
         label: "Payment #",
         sortable: true,
-        render: (row) => <span className={row.voided_at ? "text-gray-500 line-through" : "text-gray-900"}>{row.display_id}</span>,
+        render: (row) => <span className={row.voided_at ? "text-gray-500 line-through" : "text-gray-900"}>{entityLabel(row.display_id, row.id, "Payment")}</span>,
       },
       {
         key: "customer_name",

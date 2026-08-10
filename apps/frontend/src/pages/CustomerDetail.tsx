@@ -2051,7 +2051,7 @@ export function CustomerDetailPage() {
                             onChange={(e) => setPayInvoiceInclude((p) => ({ ...p, [inv.id]: e.target.checked }))}
                           />
                         ) : null}
-                        <EntityLink kind="invoice" id={inv.id} label={inv.display_id} className="font-medium text-gray-800 hover:underline" />
+                        <EntityLink kind="invoice" id={inv.id} label={entityLabel(inv.display_id, inv.id, "Invoice")} className="font-medium text-gray-800 hover:underline" />
                         <span className="text-gray-600">Open {formatCurrencyCents(inv.amount_open_cents)}</span>
                         {!payAutoApply ? (
                           // M-1: dollars-mode; Math.round(payInvoiceAmount*100)=cents byte-for-byte (per-invoice apply).
@@ -2204,7 +2204,7 @@ export function CustomerDetailPage() {
                 <tbody>
                   {recentInvoices.map((invoice) => (
                     <tr key={invoice.id} className="cursor-pointer border-b border-gray-100 hover:bg-gray-50" onClick={() => navigate(`/accounting/invoices/${invoice.id}`)}>
-                      <td className="px-2 py-1.5 text-gray-900" onClick={(e) => e.stopPropagation()}><EntityLink kind="invoice" id={invoice.id} label={invoice.display_id} /></td>
+                      <td className="px-2 py-1.5 text-gray-900" onClick={(e) => e.stopPropagation()}><EntityLink kind="invoice" id={invoice.id} label={entityLabel(invoice.display_id, invoice.id, "Invoice")} /></td>
                       <td className="px-2 py-1.5 text-gray-700">{formatDateUS(invoice.issue_date)}</td>
                       <td className="px-2 py-1.5 text-gray-700">{invoice.status}</td>
                       <td className="px-2 py-1.5 text-gray-700">{(Number(invoice.total_cents ?? 0) / 100).toFixed(2)}</td>

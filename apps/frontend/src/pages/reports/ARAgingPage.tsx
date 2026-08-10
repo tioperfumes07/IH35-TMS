@@ -223,7 +223,7 @@ export function ARAgingPage() {
             <Button
               size="sm"
               variant="secondary"
-              aria-label={`Open invoices for ${r.customer_name}`}
+              aria-label={`Open invoices for ${entityLabel(r.customer_name, r.customer_id, "Customer")}`}
               onClick={() => navigate(arAgingInvoiceListHref(r.customer_id))}
             >
               Open invoices
@@ -231,7 +231,7 @@ export function ARAgingPage() {
             <Button
               size="sm"
               variant="secondary"
-              aria-label={`Open customer profile for ${r.customer_name}`}
+              aria-label={`Open customer profile for ${entityLabel(r.customer_name, r.customer_id, "Customer")}`}
               onClick={() => navigate(arAgingCustomerProfileHref(r.customer_id))}
             >
               Customer profile

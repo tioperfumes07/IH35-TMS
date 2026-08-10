@@ -13,6 +13,7 @@ import { MoneyInput } from "../../components/forms/MoneyInput";
 import { companyToday } from "../../lib/businessDate";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { formatBankAccountPickerLabel } from "../banking/transferAccountPicker";
+import { entityLabel } from "../../lib/entity-label";
 
 type Props = {
   open: boolean;
@@ -427,7 +428,7 @@ export function RecordPaymentModal({
                           setApplyByInvoice((current) => ({ ...current, [invoice.id]: Math.max(0, defaultApply) }));
                         }}
                       />
-                      {invoice.display_id} · Open {money(invoiceOpen)}
+                      {entityLabel(invoice.display_id, invoice.id, "Invoice")} · Open {money(invoiceOpen)}
                     </label>
                     {checked ? (
                       // M-1: cents-mode QBO money entry; clamp to the invoice open balance unchanged.

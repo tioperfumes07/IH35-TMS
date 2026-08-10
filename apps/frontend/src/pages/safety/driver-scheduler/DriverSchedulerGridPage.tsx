@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { driverSchedulerOfficeApi } from "../../../api/driver-scheduler";
 import { PageHeader } from "../../../components/layout/PageHeader";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { entityLabel } from "../../../lib/entity-label";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { companyToday } from "../../../lib/businessDate";
 
@@ -92,8 +93,8 @@ export function DriverSchedulerGridPage() {
             <tbody>
               {(query.data.drivers ?? []).map((dr) => {
                 const driverId = String(dr.driver_id);
-                const name = String(dr.driver_name ?? "");
-                const unit = dr.unit_number ? String(dr.unit_number) : "—";
+                const name = entityLabel(dr.driver_name, driverId, "Driver");
+                const unit = entityLabel(dr.unit_number, (dr as { unit_id?: string | null }).unit_id, "Unit") ?? "—";
                 return (
                   <tr key={driverId} className="border-t border-gray-100">
                     <td className="sticky left-0 z-10 border-r bg-white px-2 py-0.5 text-xs font-medium text-gray-900">
