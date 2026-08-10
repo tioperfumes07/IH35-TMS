@@ -6,6 +6,7 @@ import { PageHeader } from "../../../components/layout/PageHeader";
 import { ActionButton } from "../../../components/shared/ActionButton";
 import { useToast } from "../../../components/Toast";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
+import { userFacingApiError } from "../../../lib/api-error-message";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { entityLabel } from "../../../lib/entity-label";
@@ -81,8 +82,8 @@ export function CardOverageQueuePage() {
       pushToast("Overage recovery approved (posts only when GL flag is ON).", "success");
       invalidate();
     },
-    onError: (err: Error) => {
-      pushToast(err.message || "Approve failed", "error");
+    onError: (err: unknown) => {
+      pushToast(userFacingApiError(err, "Approve failed"), "error");
     },
   });
 
