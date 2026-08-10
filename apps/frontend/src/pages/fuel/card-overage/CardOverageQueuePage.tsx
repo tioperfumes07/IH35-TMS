@@ -173,6 +173,17 @@ export function CardOverageQueuePage() {
     [approveMut]
   );
 
+  if (!companyId) {
+    return (
+      <div className="space-y-3 p-3" data-testid="fuel-card-overage-need-company">
+        <PageHeader title="Fuel card overage" subtitle="Approve-then-recover over-limit card charges" />
+        <div className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-sm text-gray-700">
+          Select an operating company to review fuel card overage events.
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-3" data-testid="fuel-card-overage-queue">
       <PageHeader

@@ -44,6 +44,11 @@
     "purpose": "verify-usmca-fleet-fuel-tasks-neon-pv",
     "claimed_at": "2026-08-10"
   },
+  "2964": {
+    "claimed_by": "devin",
+    "purpose": "verify-usmca-compliance-neon-pv",
+    "claimed_at": "2026-08-10"
+  },
   "claimed": {
     "10": "10-backend-vitest.mjs",
     "11": "11-frontend-vitest.mjs",
@@ -1470,6 +1475,7 @@
       "claimed_at": "2026-08-10"
     },
     "2962": "2962-verify-usmca-fleet-fuel-tasks-neon-pv.mjs",
+    "2964": "2964-verify-usmca-compliance-neon-pv.mjs",
     "01": "01-ensure-database-url.mjs",
     "02": "02-db-reset.mjs",
     "03": "03-build-backend-emit.mjs",
