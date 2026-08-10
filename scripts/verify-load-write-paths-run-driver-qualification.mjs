@@ -71,13 +71,25 @@ function walk(dir, out = []) {
   return out;
 }
 
-/** A file is in scope when it INSERTs a load AND names the driver column — i.e. it can seat a driver. */
+/**
+ * A file is in scope when a SQL template literal INSERTs or UPDATEs mdata.loads AND sets
+ * assigned_primary_driver_id — i.e. it can seat a driver. Reading the column in a SELECT or
+ * declaring it in a Zod schema is not enough.
+ */
 export function classify(files) {
   const inScope = [];
   for (const { rel, src } of files) {
     const code = strip(src);
-    if (!/INSERT\s+INTO\s+mdata\.loads/i.test(code)) continue;
-    if (!/assigned_primary_driver_id/.test(code)) continue;
+    let writesDriver = false;
+    for (const m of code.matchAll(/`([^`]*)`/gs)) {
+      const block = m[1];
+      const writesLoad = /INSERT\s+INTO\s+mdata\.loads/i.test(block) || /UPDATE\s+mdata\.loads/i.test(block);
+      if (writesLoad && /assigned_primary_driver_id/.test(block)) {
+        writesDriver = true;
+        break;
+      }
+    }
+    if (!writesDriver) continue;
     inScope.push({ rel, runsGate: code.includes(GATE) });
   }
   return inScope;
@@ -91,7 +103,7 @@ export function collectProblems(files) {
     const known = KNOWN_GAPS.has(rel);
     if (!runsGate && !known) {
       problems.push(
-        `${rel}: writes a driver onto a load (INSERT INTO mdata.loads + assigned_primary_driver_id) but never ` +
+        `${rel}: writes/updates a driver onto a load (INSERT/UPDATE mdata.loads + assigned_primary_driver_id) but never ` +
           `calls ${GATE}. A new unqualified-dispatch path — wire the gate or add it to KNOWN_GAPS with a reason.`
       );
     }
