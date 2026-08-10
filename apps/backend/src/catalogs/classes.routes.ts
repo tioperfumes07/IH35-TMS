@@ -6,6 +6,7 @@ import { resolveOperatingCompanyId } from "../auth/operating-company-scope.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { isCatalogWriteRole } from "../auth/role-helpers.js";
 import { requireAuth } from "../auth/session-middleware.js";
+import { resolveCatalogDescriptionFromName } from "./accounting/factory.js";
 
 const listQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(200).default(50),
@@ -82,7 +83,7 @@ function mapClassConflict(constraint?: string): string {
 }
 
 export async function registerClassRoutes(app: FastifyInstance) {
-  app.get("/api/v1/catalogs/classes", async (req, reply) => {
+  app.get("/api/v1/catalogs/classes", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const parsed = listQuerySchema.safeParse(req.query ?? {});
@@ -132,13 +133,16 @@ export async function registerClassRoutes(app: FastifyInstance) {
     return { classes };
   });
 
-  app.post("/api/v1/catalogs/classes", async (req, reply) => {
+  app.post("/api/v1/catalogs/classes", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
     const parsed = createBodySchema.safeParse(req.body ?? {});
     if (!parsed.success) return sendValidationError(reply, parsed.error);
     const b = parsed.data;
+    // LV-LIST-SAMPLE-TAG-IN-NAME-ONLY: if the operator puts a Gate-B sample tag in the class name and
+    // leaves notes empty, copy the tag into notes so a single predicate can find the row.
+    const resolvedNotes = resolveCatalogDescriptionFromName(b.class_name, b.notes) ?? b.notes ?? null;
 
     try {
       const created = await withCurrentUser(authUser.uuid, async (client) => {
@@ -160,7 +164,7 @@ export async function registerClassRoutes(app: FastifyInstance) {
               id, class_name, class_code, parent_class_id, qbo_class_id, notes,
               created_at, updated_at, deactivated_at, created_by_user_id, updated_by_user_id
           `,
-          [b.class_name, b.class_code ?? null, b.parent_class_id ?? null, b.qbo_class_id ?? null, b.notes ?? null, operatingCompanyId, authUser.uuid]
+          [b.class_name, b.class_code ?? null, b.parent_class_id ?? null, b.qbo_class_id ?? null, resolvedNotes, operatingCompanyId, authUser.uuid]
         );
         const row = res.rows[0];
         await appendCrudAudit(client, authUser.uuid, "catalogs.classes.created", {

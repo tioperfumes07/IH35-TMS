@@ -14,6 +14,11 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const SQL_FILE = "scripts/gate-b-purge-predicate.sql";
+const CATALOG_CREATORS = [
+  "apps/backend/src/catalogs/accounting/factory.ts",
+  "apps/backend/src/catalogs/payment-terms.routes.ts",
+  "apps/backend/src/catalogs/classes.routes.ts",
+];
 const LABEL = "verify-gate-b-purge-predicate";
 
 const REQUIRED_TABLES = [
@@ -39,6 +44,20 @@ const OPTIONAL_MASTER_DATA = [
 
 const TAG_PATTERN = /USMCA_GATEB_SAMPLE_[%\d{4}-\d{2}-\d{2}]/;
 const LEGACY_BILL_PATTERN = /CASCADE-GATEB-%/;
+
+export function assertCatalogCreators(creators) {
+  const errors = [];
+  for (const [relPath, src] of Object.entries(creators)) {
+    if (!/resolveCatalogDescriptionFromName/.test(src)) {
+      errors.push(`${relPath}: does not use resolveCatalogDescriptionFromName`);
+      continue;
+    }
+    if (!/resolvedNotes/.test(src) && !/resolvedDescription/.test(src)) {
+      errors.push(`${relPath}: does not apply resolved tag to notes/description on create`);
+    }
+  }
+  return errors;
+}
 
 export function assertPredicate(sql) {
   const errors = [];
@@ -145,7 +164,13 @@ if (!fs.existsSync(p)) {
   process.exit(1);
 }
 
-const errors = assertPredicate(fs.readFileSync(p, "utf8"));
+const creators = Object.fromEntries(
+  CATALOG_CREATORS.map((rel) => [rel, fs.readFileSync(path.join(ROOT, rel), "utf8")])
+);
+const errors = [
+  ...assertPredicate(fs.readFileSync(p, "utf8")),
+  ...assertCatalogCreators(creators),
+];
 if (errors.length) {
   console.error(`[${LABEL}] FAILED — ${errors.length} issue(s):`);
   for (const e of errors) console.error(`  ✗ ${e}`);

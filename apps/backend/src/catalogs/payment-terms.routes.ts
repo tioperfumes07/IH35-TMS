@@ -5,6 +5,7 @@ import { withCurrentUser } from "../auth/db.js";
 import { isCatalogWriteRole } from "../auth/role-helpers.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
+import { resolveCatalogDescriptionFromName } from "./accounting/factory.js";
 
 const listQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -98,7 +99,7 @@ const SELECT_COLS = `
 `;
 
 export async function registerPaymentTermsRoutes(app: FastifyInstance) {
-  app.get("/api/v1/catalogs/payment-terms", async (req, reply) => {
+  app.get("/api/v1/catalogs/payment-terms", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const parsed = listQuerySchema.safeParse(req.query ?? {});
@@ -139,13 +140,16 @@ export async function registerPaymentTermsRoutes(app: FastifyInstance) {
     return { payment_terms };
   });
 
-  app.post("/api/v1/catalogs/payment-terms", async (req, reply) => {
+  app.post("/api/v1/catalogs/payment-terms", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
     const parsed = createBodySchema.safeParse(req.body ?? {});
     if (!parsed.success) return sendValidationError(reply, parsed.error);
     const b = parsed.data;
+    // LV-LIST-SAMPLE-TAG-IN-NAME-ONLY: if the operator puts a Gate-B sample tag in the name and
+    // leaves notes empty, copy the tag into notes so a single predicate can find the row.
+    const resolvedNotes = resolveCatalogDescriptionFromName(b.terms_name, b.notes) ?? b.notes ?? null;
 
     try {
       const created = await withEntityScope(authUser.uuid, b.operating_company_id, async (client) => {
@@ -166,7 +170,7 @@ export async function registerPaymentTermsRoutes(app: FastifyInstance) {
             b.early_payment_discount_pct ?? null,
             b.early_payment_discount_days ?? null,
             b.qbo_terms_id ?? null,
-            b.notes ?? null,
+            resolvedNotes,
             authUser.uuid,
           ]
         );
