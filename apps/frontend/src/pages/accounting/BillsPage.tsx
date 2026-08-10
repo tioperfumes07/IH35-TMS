@@ -357,7 +357,7 @@ export function BillsPage() {
 
   const columns = useMemo<ParityColumn<VendorBill>[]>(
     () => [
-      { key: "vendor_name", label: "Vendor", sortable: true, render: (bill) => <EntityLink kind="vendor" id={billVendorDrillId(bill)} label={bill.vendor_name || bill.vendor_id} /> },
+      { key: "vendor_name", label: "Vendor", sortable: true, render: (bill) => <EntityLink kind="vendor" id={billVendorDrillId(bill)} label={entityLabel(bill.vendor_name, bill.vendor_id, "Vendor")} /> },
       {
         key: "bill_number",
         label: "Bill #",

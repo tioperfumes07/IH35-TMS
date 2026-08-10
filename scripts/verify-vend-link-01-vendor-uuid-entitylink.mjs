@@ -120,7 +120,7 @@ if (IS_MAIN && process.argv.includes("--selftest")) {
     failures.push("legacy vendor_id EntityLink id not caught");
   }
 
-  const canonical = `<EntityLink kind="vendor" id={bill.mdata_vendor_id} label={bill.vendor_name || bill.vendor_id} />`;
+  const canonical = `<EntityLink kind="vendor" id={bill.mdata_vendor_id} label={entityLabel(bill.vendor_name, bill.vendor_id, "Vendor")} />`;
   if (auditSurface("x.tsx", canonical).length !== 0) {
     failures.push("canonical mdata_vendor_id EntityLink wrongly flagged");
   }
