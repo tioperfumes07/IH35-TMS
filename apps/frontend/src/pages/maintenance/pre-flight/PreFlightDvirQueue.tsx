@@ -9,6 +9,7 @@ import {
   type PreFlightDvirQueueRow,
 } from "../../../api/maintenance";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
+import { entityLabel } from "../../../lib/entity-label";
 import { Button } from "../../../components/Button";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { useToast } from "../../../components/Toast";
@@ -59,7 +60,7 @@ export function PreFlightDvirQueue() {
     mutationFn: (defectId: string) => routePreFlightDvirDefect(defectId, operatingCompanyId),
     onSuccess: async (result) => {
       if (result.action === "work_order_created") {
-        pushToast(`Work order ${result.display_id ?? result.work_order_id} created`, "success");
+        pushToast(`Work order ${entityLabel(result.display_id, result.work_order_id, "Work order")} created`, "success");
       } else if (result.action === "queued_next_pm") {
         pushToast("Queued for next PM service", "success");
       } else if (result.action === "logged_observation") {

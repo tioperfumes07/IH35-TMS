@@ -8,6 +8,7 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { CollapsedListFilters } from "../../components/table";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 
 function PodRowActions({
   doc,
@@ -79,7 +80,7 @@ export function PodReviewPage() {
         key: "load_number",
         label: "Load",
         sortable: true,
-        render: (doc) => <EntityLink kind="load" id={doc.load_id} label={doc.load_number ?? doc.load_id} />,
+        render: (doc) => <EntityLink kind="load" id={doc.load_id} label={entityLabel(doc.load_number, doc.load_id, "Load")} />,
       },
       {
         key: "driver_name",
