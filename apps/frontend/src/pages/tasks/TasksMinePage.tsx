@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { TasksModuleTabs } from "./TasksModuleTabs";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -62,6 +63,18 @@ export function TasksMinePage() {
     [today],
   );
 
+  if (!companyId) {
+    return (
+      <div className="space-y-4 p-4">
+        <PageHeader title="My Tasks" subtitle="Tasks assigned to you" />
+        <TasksModuleTabs />
+        <div className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-sm text-gray-700">
+          Select an operating company to view your tasks.
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       <PageHeader title="My Tasks" subtitle="Tasks assigned to you" />
@@ -81,7 +94,7 @@ export function TasksMinePage() {
       </div>
 
       {query.isError ? (
-        <div className="rounded-sm border border-slate-200 bg-white p-4 text-xs text-red-700">Couldn't load your tasks.</div>
+        <ListErrorBanner onRetry={() => void query.refetch()} />
       ) : (
         <ParityTable
           rows={tasks}
