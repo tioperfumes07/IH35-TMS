@@ -187,7 +187,10 @@ export async function registerInvoiceLineRoutes(app: FastifyInstance) {
     }
   });
 
-  app.patch("/api/v1/accounting/invoices/:id/lines/:lineId", async (req, reply) => {
+  app.patch(
+    "/api/v1/accounting/invoices/:id/lines/:lineId",
+    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
+    async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const params = lineParamsSchema.safeParse(req.params ?? {});
@@ -235,8 +238,6 @@ export async function registerInvoiceLineRoutes(app: FastifyInstance) {
       if ("qbo_item_id" in body.data) add("qbo_item_id", body.data.qbo_item_id ?? null);
       if ("display_order" in body.data) add("display_order", body.data.display_order);
       add("line_total_cents", nextLineTotal);
-      values.push(params.data.lineId);
-      values.push(params.data.id);
 
         const resolvedLineType = body.data.line_type ?? String(oldRow.line_type ?? "");
         const revenueResolution = await resolveInvoiceLineRevenueAccountId(query.data.operating_company_id, {
@@ -244,6 +245,10 @@ export async function registerInvoiceLineRoutes(app: FastifyInstance) {
         });
         add("revenue_code", revenueResolution.revenue_code);
         add("account_id", revenueResolution.account_id);
+        // Keep WHERE identifiers last. Pushing them before the derived revenue fields left two
+        // unused, untyped parameters in the query and production PostgreSQL rejected PATCH with 42P18.
+        values.push(params.data.lineId);
+        values.push(params.data.id);
 
         const rowRes = await client.query(
         `
@@ -289,7 +294,8 @@ export async function registerInvoiceLineRoutes(app: FastifyInstance) {
       }
       throw error;
     }
-  });
+    }
+  );
 
   app.delete("/api/v1/accounting/invoices/:id/lines/:lineId", async (req, reply) => {
     const user = currentAuthUser(req, reply);
