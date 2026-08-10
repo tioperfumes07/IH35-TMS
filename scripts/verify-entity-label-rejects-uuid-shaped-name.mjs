@@ -18,7 +18,7 @@ const LABEL = "verify-entity-label-rejects-uuid-shaped-name";
 const TARGET = "apps/frontend/src/lib/entity-label.ts";
 const BILLS = "apps/frontend/src/pages/accounting/BillsPage.tsx";
 
-/** Batch-2 drain sites — name||id paints (CLS-UUID-LABEL). */
+/** Batch-2/3 drain sites — name||id / name??id paints (CLS-UUID-LABEL). */
 const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/eld/tabs/LiveDutyTab.tsx",
@@ -37,8 +37,23 @@ const SIBLINGS = [
   },
   {
     rel: "apps/frontend/src/pages/driver-finance/components/SettlementDisputesTab.tsx",
-    bad: /detail\.driver_name\s*\?\?\s*detail\.driver_id/,
-    good: /entityLabel\(\s*detail\.driver_name\s*,\s*detail\.driver_id\s*,\s*"Driver"\s*\)/,
+    bad: /detail\.driver_name\s*\?\?\s*detail\.driver_id|row\.driver_name\s*\?\?\s*row\.driver_id/,
+    good: /entityLabel\(\s*(?:detail|row)\.driver_name\s*,\s*(?:detail|row)\.driver_id\s*,\s*"Driver"\s*\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/Drivers.tsx",
+    bad: /primary_driver_name\s*\?\?\s*row\.primary_driver_id|co_driver_name\s*\?\?\s*row\.secondary_driver_id/,
+    good: /entityLabel\(\s*row\.primary_driver_name\s*,\s*row\.primary_driver_id\s*,\s*"Driver"\s*\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/driver-finance/SettlementsPage.tsx",
+    bad: /bill\.driver_name\s*\?\?\s*bill\.driver_id/,
+    good: /entityLabel\(\s*bill\.driver_name\s*,\s*bill\.driver_id\s*,\s*"Driver"\s*\)/,
+  },
+  {
+    rel: "apps/frontend/src/components/dispatch/tabs/FinesDeductionsCard.tsx",
+    bad: /selectedPending\.driver_name\s*\?\?\s*selectedPending\.driver_id/,
+    good: /entityLabel\(\s*selectedPending\.driver_name\s*,\s*selectedPending\.driver_id\s*,\s*"Driver"\s*\)/,
   },
   {
     rel: "apps/frontend/src/pages/driver-finance/components/SettlementDisputesTab.tsx",

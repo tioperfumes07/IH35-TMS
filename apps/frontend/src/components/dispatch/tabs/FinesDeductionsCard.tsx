@@ -310,7 +310,9 @@ export function FinesDeductionsCard({ loadId, operatingCompanyId, canEdit }: Fin
               <div>
                 <span className="font-semibold">Reason:</span> {selectedPending.proposed_reason}
               </div>
-              <div className="text-xs text-gray-500">Driver: {selectedPending.driver_name ?? selectedPending.driver_id}</div>
+              <div className="text-xs text-gray-500">
+                Driver: {entityLabel(selectedPending.driver_name, selectedPending.driver_id, "Driver")}
+              </div>
             </div>
             <label className="block text-xs font-semibold uppercase text-gray-600">
               Review notes

@@ -32,6 +32,7 @@ import { dataTableErrorState, formatQueryErrorDetail } from "../lib/tableError";
 import { Modal } from "../components/Modal";
 import { ActionButton } from "../components/shared/ActionButton";
 import { EntityLink } from "../components/shared/EntityLink";
+import { entityLabel } from "../lib/entity-label";
 import { SecondaryNavTabs } from "../components/shared/SecondaryNavTabs";
 import { StatusBadge } from "../components/StatusBadge";
 import { useToast } from "../components/Toast";
@@ -637,9 +638,9 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
                 label: "Primary",
                 className: "min-w-0 max-w-[240px] whitespace-nowrap",
                 render: (row) => {
-                  const v = String(row.primary_driver_name ?? row.primary_driver_id ?? "—");
+                  const v = entityLabel(row.primary_driver_name, row.primary_driver_id, "Driver");
                   return (
-                    <span title={v !== "—" ? v : undefined} className="single-line-name">
+                    <span title={v} className="single-line-name">
                       <EntityLink kind="driver" id={String(row.primary_driver_id ?? "")} label={v} />
                     </span>
                   );
@@ -650,9 +651,9 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
                 label: "Co",
                 className: "min-w-0 max-w-[240px] whitespace-nowrap",
                 render: (row) => {
-                  const v = String(row.co_driver_name ?? row.secondary_driver_id ?? "—");
+                  const v = entityLabel(row.co_driver_name, row.secondary_driver_id, "Driver");
                   return (
-                    <span title={v !== "—" ? v : undefined} className="single-line-name">
+                    <span title={v} className="single-line-name">
                       <EntityLink kind="driver" id={String(row.secondary_driver_id ?? "")} label={v} />
                     </span>
                   );
@@ -984,7 +985,11 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
                 <EntityLink
                   kind="driver"
                   id={String(teamDetailQuery.data.primary_driver_id ?? "")}
-                  label={String(teamDetailQuery.data.primary_driver_name ?? teamDetailQuery.data.primary_driver_id)}
+                  label={entityLabel(
+                    teamDetailQuery.data.primary_driver_name,
+                    teamDetailQuery.data.primary_driver_id,
+                    "Driver",
+                  )}
                 />
               </p>
               <p>
@@ -992,7 +997,11 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
                 <EntityLink
                   kind="driver"
                   id={String(teamDetailQuery.data.secondary_driver_id ?? "")}
-                  label={String(teamDetailQuery.data.co_driver_name ?? teamDetailQuery.data.secondary_driver_id)}
+                  label={entityLabel(
+                    teamDetailQuery.data.co_driver_name,
+                    teamDetailQuery.data.secondary_driver_id,
+                    "Driver",
+                  )}
                 />
               </p>
               <p>Split: {String(teamDetailQuery.data.split_method)} ({Number(teamDetailQuery.data.primary_share_pct)} / {Number(teamDetailQuery.data.co_share_pct)})</p>
