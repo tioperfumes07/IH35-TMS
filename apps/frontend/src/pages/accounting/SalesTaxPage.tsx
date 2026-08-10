@@ -112,13 +112,13 @@ export function SalesTaxPage() {
               <EntityLink
                 kind="vendor"
                 id={vendorId}
-                label={row.agency_name ?? row.agency_id}
+                label={entityLabel(row.agency_name, row.agency_id, "Agency")}
               />
             );
           }
-          return row.agency_name ?? row.agency_id;
+          return entityLabel(row.agency_name, row.agency_id, "Agency");
         },
-        sortValue: (row) => row.agency_name ?? row.agency_id,
+        sortValue: (row) => entityLabel(row.agency_name, row.agency_id, "Agency"),
       },
       {
         key: "period_start",

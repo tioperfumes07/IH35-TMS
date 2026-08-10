@@ -166,7 +166,7 @@ export function CCPaymentModal({ open, operatingCompanyId, bill, onClose, onSave
             <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
               Vendor
               <input
-                value={bill.vendor_name ?? bill.vendor_id ?? "Vendor"}
+                value={entityLabel(bill.vendor_name, bill.vendor_id, "Vendor")}
                 readOnly
                 className="h-9 rounded-sm border border-gray-300 bg-gray-100 px-2 text-[13px]"
               />
