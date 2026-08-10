@@ -96,6 +96,9 @@ export function collectFailures({
       "CreateUnitModal create payload must include currently_leased_to_company_id (lease scope for roster tenant filter)",
     );
   }
+  if (!/userFacingApiError\(\s*error\s*,\s*"Failed to create unit"\s*\)/.test(createUnit)) {
+    failures.push("CreateUnitModal must not expose raw backend errors in its failure toast");
+  }
 
   // Trailer modal → createEquipment API + lease scope
   if (!createTrailer.includes("createEquipment(") && !createTrailer.includes("createEquipment({")) {
@@ -154,7 +157,7 @@ function selftest() {
     home:
       'data-testid="fleet-roster-create-actions" + Create Unit + Create Trailer CreateUnitModal CreateTrailerModal FleetTablePage',
     createUnit:
-      'createUnit({ unit_number, vin, currently_leased_to_company_id: operatingCompanyId }) fleet-create-unit-form + Create',
+      'createUnit({ unit_number, vin, currently_leased_to_company_id: operatingCompanyId }) fleet-create-unit-form + Create userFacingApiError(error, "Failed to create unit")',
     createTrailer:
       'createEquipment({ equipment_number, equipment_type, currently_leased_to_company_id: operatingCompanyId }) fleet-create-trailer-form + Create',
     api: `export function createUnit() { fetch("/api/v1/mdata/units", { method: "POST" }); }
@@ -181,6 +184,18 @@ export function createEquipment() { fetch("/api/v1/mdata/equipment", { method: "
       `${LABEL} --selftest FAIL: removing currently_leased_to_company_id from CreateUnitModal must be caught`,
     );
     console.error(`  got: ${JSON.stringify(badUnit)}`);
+    process.exit(1);
+  }
+
+  const rawErrorUnit = collectFailures({
+    ...base,
+    createUnit: base.createUnit.replace(
+      /userFacingApiError\(error, "Failed to create unit"\)/,
+      'error instanceof Error ? error.message : "Failed to create unit"',
+    ),
+  });
+  if (!rawErrorUnit.some((f) => f.includes("raw backend errors"))) {
+    console.error(`${LABEL} --selftest FAIL: raw CreateUnitModal backend error toast must be caught`);
     process.exit(1);
   }
 
