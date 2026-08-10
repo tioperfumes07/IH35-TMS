@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { DUTY_LABEL, fetchEldLiveDutyRoster, type HosRosterDriver } from "../../../api/eld";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { companyToday } from "../../../lib/businessDate";
+import { entityLabel } from "../../../lib/entity-label";
 
 function formatMinutes(min: number | null | undefined): string {
   if (min == null || Number.isNaN(min)) return "—";
@@ -33,7 +34,7 @@ export function LiveDutyTab({ operatingCompanyId }: Props) {
         label: "Driver",
         sortable: true,
         cellClass: "font-medium",
-        render: (row) => row.driver_name?.trim() || row.driver_id,
+        render: (row) => entityLabel(row.driver_name, row.driver_id, "Driver"),
       },
       {
         key: "unit_number",

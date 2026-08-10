@@ -191,11 +191,14 @@ export function CreateMultipleBillsPage() {
         }
         const memoParts = [row.memo.trim()];
         if (row.driver_id) {
-          let driverLabel = row.driver_id;
+          let driverLabel = entityLabel(null, row.driver_id, "Driver");
           try {
             const driver = await getDriver(row.driver_id, companyId);
-            driverLabel =
-              [driver.first_name, driver.last_name].filter(Boolean).join(" ").trim() || row.driver_id;
+            driverLabel = entityLabel(
+              [driver.first_name, driver.last_name].filter(Boolean).join(" ").trim(),
+              row.driver_id,
+              "Driver",
+            );
           } catch {
             /* memo falls back to id */
           }
