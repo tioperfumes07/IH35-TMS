@@ -99,6 +99,16 @@ export function assertGuard({ file, source }) {
       );
     }
   }
+  for (const tag of extractTags(source, ["button"])) {
+    const hasUndefinedHandler =
+      /\bonClick=\{\s*undefined\s*\}/.test(tag) ||
+      /\bonClick=\{[^{}]*\?[^{}]*:\s*undefined\s*\}/.test(tag);
+    if (!hasUndefinedHandler || DISABLED_PROP.test(tag)) continue;
+    const snippet = tag.replace(/\s+/g, " ").slice(0, 160);
+    errors.push(
+      `${file}: enabled button can receive an undefined onClick — conditionally disable it or render non-button text. Tag: ${snippet}`
+    );
+  }
   return errors;
 }
 
@@ -176,9 +186,15 @@ function selftest() {
       want: 0,
     },
     {
-      n: "unrelated component (Button) → 0",
+      n: "native button with undefined handler → 1",
       file: "Fixture.tsx",
-      src: `<Button onClick={undefined}>Save</Button>`,
+      src: `<button onClick={undefined}>Save</button>`,
+      want: 1,
+    },
+    {
+      n: "native button with conditional handler and disabled → 0",
+      file: "Fixture.tsx",
+      src: `<button onClick={canSave ? save : undefined} disabled={!canSave}>Save</button>`,
       want: 0,
     },
   ];
