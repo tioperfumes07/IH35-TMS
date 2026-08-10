@@ -1,4 +1,4 @@
-import { run } from "../../verify-dependabot-exempt-in-body-gates.mjs";
+import { run } from "../verify-dependabot-exempt-in-body-gates.mjs";
 
 export default {
   name: "verify-dependabot-exempt-in-body-gates",

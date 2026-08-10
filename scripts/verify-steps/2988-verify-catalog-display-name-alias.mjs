@@ -1,4 +1,4 @@
-import { run } from "../../verify-catalog-display-name-alias.mjs";
+import { run } from "../verify-catalog-display-name-alias.mjs";
 
 export default {
   name: "verify-catalog-display-name-alias",

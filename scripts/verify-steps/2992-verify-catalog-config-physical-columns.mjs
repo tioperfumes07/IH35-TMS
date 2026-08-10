@@ -1,4 +1,4 @@
-import { run } from "../../verify-catalog-config-physical-columns.mjs";
+import { run } from "../verify-catalog-config-physical-columns.mjs";
 
 export default {
   name: "verify-catalog-config-physical-columns",
