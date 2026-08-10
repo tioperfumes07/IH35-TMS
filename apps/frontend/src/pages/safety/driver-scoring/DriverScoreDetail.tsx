@@ -4,6 +4,7 @@ import { listDriverSafetyTrend, listDriverScoreEvents, type DriverSafetyScoreRow
 import { ListErrorState } from "../../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { entityLabel } from "../../../lib/entity-label";
 import { HarshEventDetail } from "../HarshEventDetail";
 
 type Props = {
@@ -221,9 +222,13 @@ export function DriverScoreDetail({ companyId, driverUuid, driverName, onClose }
                 <span>
                   {String(event.event_at).slice(0, 19).replace("T", " ")} · {event.event_kind} · {event.severity} · Unit{" "}
                   {event.unit_id ? (
-                    <EntityLink kind="unit" id={String(event.unit_id)} label={event.unit_number?.trim() || "Unit"} />
+                    <EntityLink
+                      kind="unit"
+                      id={String(event.unit_id)}
+                      label={entityLabel(event.unit_number, event.unit_id, "Unit")}
+                    />
                   ) : (
-                    event.unit_number ?? "N/A"
+                    entityLabel(event.unit_number, null, "Unit")
                   )}{" "}
                   · lat/lng {event.latitude ?? "—"}/{event.longitude ?? "—"}
                 </span>

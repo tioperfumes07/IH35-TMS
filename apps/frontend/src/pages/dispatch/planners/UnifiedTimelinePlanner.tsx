@@ -6,6 +6,7 @@ import { driverSchedulerOfficeApi } from "../../../api/driver-scheduler";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { userFacingApiError } from "../../../lib/api-error-message";
+import { entityLabel } from "../../../lib/entity-label";
 import { addDaysIso } from "./planner-range";
 import { usePlannerRange } from "./PlannerRangeContext";
 import { BookLoadModalV4 } from "../components/BookLoadModalV4";
@@ -232,7 +233,7 @@ export function UnifiedTimelinePlanner() {
                   <tr key={driver.id} className="border-t border-gray-100">
                     <td className="sticky left-0 z-10 border-r bg-white px-2 py-0.5 text-xs font-medium text-gray-900">
                       <span>{driver.name}</span>
-                      <span className="ml-1 text-[10px] text-gray-500">{driver.unit_number ?? "—"}</span>
+                      <span className="ml-1 text-[10px] text-gray-500">{entityLabel(driver.unit_number, driver.unit_id, "Unit")}</span>
                       {status === "Available" ? (
                         <button
                           type="button"
