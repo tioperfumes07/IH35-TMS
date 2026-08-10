@@ -634,11 +634,13 @@
     "lists": [
       "Lists & Catalogs",
       "Names Master",
+      "Catalog Index",
       "Catalog domains",
       "Safety catalogs",
-      "Internal Fine Reasons",
-      "Civil Fine Types",
-      "Company Violation Types"
+      "Fleet catalogs",
+      "Dispatch catalogs",
+      "Maintenance catalogs",
+      "Parts Catalog"
     ],
     "legal": [
       "Contracts",
