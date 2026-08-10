@@ -1940,5 +1940,10 @@
     "claimed_at": "2026-08-10",
     "claimed_by": "cursor",
     "purpose": "verify-dependabot-exempt-in-body-gates"
+  },
+  "2992": {
+    "claimed_at": "2026-08-10",
+    "claimed_by": "cursor",
+    "purpose": "verify-catalog-config-physical-columns"
   }
 }
