@@ -25,6 +25,7 @@ const RATCHETED_FILES = [
   "apps/frontend/src/pages/dispatch/DispatchBoard.tsx",
   "apps/frontend/src/pages/dispatch/NotifyPreferencesPage.tsx",
   "apps/frontend/src/pages/safety/eld/EldAuditTrailViewer.tsx",
+  "apps/frontend/src/pages/safety/components/CargoClaimIntakeSurface.tsx",
   "apps/frontend/src/pages/reports/FuelReconciliationPage.tsx",
   "apps/frontend/src/pages/fuel/card-overage/CardOverageQueuePage.tsx",
   "apps/frontend/src/pages/fuel/FuelPlannerHome.tsx",
@@ -32,6 +33,7 @@ const RATCHETED_FILES = [
 
 const RAW_PATTERNS = [
   /setUploadError\([^)]*(?:error|err)\.message[^)]*\)/,
+  /setError\([^)]*(?:error|err)\.message[^)]*\)/,
   /pushToast\([^)]*error\.(message|toString\(\))[^)]*\)/,
   /pushToast\([^)]*err\.(message|toString\(\))[^)]*\)/,
   /pushToast\([^)]*firstError\.(message|toString\(\))[^)]*\)/,
