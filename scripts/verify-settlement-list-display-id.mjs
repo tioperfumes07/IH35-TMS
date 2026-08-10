@@ -29,6 +29,12 @@ export function run() {
 
   assert(table.includes('key: "settlement_display_id"') || table.includes("display_id"), "SettlementsTable must render display_id", errors);
 
+  const detail = read("apps/frontend/src/pages/driver-finance/SettlementDetailPage.tsx");
+  const header = read("apps/frontend/src/pages/driver-finance/components/SettlementHeader.tsx");
+  assert(detail.includes("settlementDisplayId"), "SettlementDetailPage must pass settlement display_id to header", errors);
+  assert(header.includes("settlementDisplayId"), "SettlementHeader must render settlement display_id", errors);
+  assert(detail.includes("showManualPaidDraftBanner"), "SettlementDetailPage must surface manual_paid draft honesty banner", errors);
+
   return errors;
 }
 

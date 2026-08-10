@@ -119,10 +119,12 @@ export function VendorCreateModal({ open, onClose, operatingCompanyId }: Props) 
   });
   const vendorTypeOptions = useMemo(
     () =>
-      (vendorTypesQuery.data?.rows ?? []).map((row: Record<string, unknown>) => ({
-        value: String(row.display_name ?? ""),
-        label: String(row.display_name ?? ""),
-      })),
+      (vendorTypesQuery.data?.rows ?? []).map((row: Record<string, unknown>) => {
+        const label = String(
+          row.display_name ?? row.vendor_type_name ?? row.vendor_type_code ?? row.code ?? "",
+        );
+        return { value: label, label };
+      }),
     [vendorTypesQuery.data]
   );
 

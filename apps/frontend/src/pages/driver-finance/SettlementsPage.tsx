@@ -44,6 +44,13 @@ export function SettlementsPage() {
     queryFn: () => listSettlements(companyId, { payment_state: selectedPaymentState ?? undefined }),
     enabled: Boolean(companyId),
   });
+  // FAIL-SETL-KPI-PERIOD — KPI tiles must count the full entity-scoped list, not the payment_state-filtered
+  // slice. Filtering the table must not shrink YTD / This Period / debt counts.
+  const kpiBaseQuery = useQuery({
+    queryKey: ["driver-finance", "settlements-kpi-base", companyId],
+    queryFn: () => listSettlements(companyId),
+    enabled: Boolean(companyId),
+  });
   const openBillsQuery = useQuery({
     queryKey: ["driver-finance", "open-driver-bills", companyId],
     queryFn: () => getOpenDriverBills(companyId),
@@ -51,6 +58,9 @@ export function SettlementsPage() {
   });
 
   const settlements = (listQuery.data?.settlements ?? []).filter((s) =>
+    filterDriverId ? s.driver_id === filterDriverId : true,
+  );
+  const kpiSettlements = (kpiBaseQuery.data?.settlements ?? []).filter((s) =>
     filterDriverId ? s.driver_id === filterDriverId : true,
   );
   const openBillsSummary = openBillsQuery.data?.open_driver_bills ?? { total_count: 0, total_gross_cents: 0, items: [] as OpenDriverBill[] };
@@ -62,22 +72,22 @@ export function SettlementsPage() {
     d.setHours(0, 0, 0, 0);
     return d;
   })();
-  const isInThisPeriod = (s: (typeof settlements)[number]) => {
+  const isInThisPeriod = (s: (typeof kpiSettlements)[number]) => {
     const end = new Date(s.period_end);
     if (Number.isNaN(end.getTime())) return false;
     return end.getTime() >= periodStartOfWeek.getTime();
   };
-  const isYtd = (s: (typeof settlements)[number]) => {
+  const isYtd = (s: (typeof kpiSettlements)[number]) => {
     const end = new Date(s.period_end);
     return !Number.isNaN(end.getTime()) && end.getFullYear() === ytdYear;
   };
   const kpis = {
-    total_unpaid: settlements.filter((s) => s.status !== "paid").length,
-    this_period: settlements.filter(isInThisPeriod).length,
-    drivers_with_debt: settlements.filter((s) => typeof s.live_debt_flag === "number" && s.live_debt_flag > 0).length,
-    pending_acks: settlements.filter((s) => s.has_pending_acks).length,
-    held_deductions: settlements.filter((s) => s.status === "held").length,
-    ytd_settlements: settlements.filter(isYtd).length,
+    total_unpaid: kpiSettlements.filter((s) => s.status !== "paid").length,
+    this_period: kpiSettlements.filter(isInThisPeriod).length,
+    drivers_with_debt: kpiSettlements.filter((s) => typeof s.live_debt_flag === "number" && s.live_debt_flag > 0).length,
+    pending_acks: kpiSettlements.filter((s) => s.has_pending_acks).length,
+    held_deductions: kpiSettlements.filter((s) => s.status === "held").length,
+    ytd_settlements: kpiSettlements.filter(isYtd).length,
     open_driver_bills: openBillsSummary.total_count,
   };
   const focusedSettlements = useMemo(() => {
@@ -100,11 +110,12 @@ export function SettlementsPage() {
     setSearchParams(params);
   };
   const paymentPipeline = {
-    unpaid: settlements.filter((s) => (s.payment_state ?? "unpaid") === "unpaid").length,
-    queued: settlements.filter((s) => s.payment_state === "queued").length,
-    sent_to_bank: settlements.filter((s) => s.payment_state === "sent_to_bank").length,
-    cleared: settlements.filter((s) => s.payment_state === "cleared").length,
-    bounced: settlements.filter((s) => s.payment_state === "bounced").length,
+    unpaid: kpiSettlements.filter((s) => (s.payment_state ?? "unpaid") === "unpaid").length,
+    queued: kpiSettlements.filter((s) => s.payment_state === "queued").length,
+    sent_to_bank: kpiSettlements.filter((s) => s.payment_state === "sent_to_bank").length,
+    cleared: kpiSettlements.filter((s) => s.payment_state === "cleared").length,
+    bounced: kpiSettlements.filter((s) => s.payment_state === "bounced").length,
+    manual_paid: kpiSettlements.filter((s) => s.payment_state === "manual_paid").length,
   };
 
   if (selectedSettlementId && activeTab === "settlements") {
@@ -234,6 +245,9 @@ export function SettlementsPage() {
           </Button>
           <Button size="sm" variant={selectedPaymentState === "bounced" ? "primary" : "secondary"} onClick={() => setFilter("bounced", searchParams, setSearchParams)}>
             Bounced ({paymentPipeline.bounced})
+          </Button>
+          <Button size="sm" variant={selectedPaymentState === "manual_paid" ? "primary" : "secondary"} onClick={() => setFilter("manual_paid", searchParams, setSearchParams)}>
+            Manual Paid ({paymentPipeline.manual_paid})
           </Button>
         </div>
       </div>

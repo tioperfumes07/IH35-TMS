@@ -150,6 +150,12 @@ function contractErrors(src) {
   if (/this_period:\s*settlements\.length/.test(src.settlementsPage) || /ytd_settlements:\s*settlements\.length/.test(src.settlementsPage)) {
     errors.push("VERIFY-1: SettlementsPage This Period / YTD KPIs must not equal raw settlements.length");
   }
+  if (!src.settlementsPage.includes("settlements-kpi-base") || !src.settlementsPage.includes("kpiSettlements")) {
+    errors.push("FAIL-SETL-KPI-PERIOD: SettlementsPage must load unfiltered kpiBaseQuery for KPI tiles");
+  }
+  if (!src.settlementsPage.includes("manual_paid")) {
+    errors.push("VERIFY-1: SettlementsPage payment pipeline must expose manual_paid filter");
+  }
   if (!src.settlementsPage.includes("getFullYear") && !src.settlementsPage.includes("ytdYear")) {
     errors.push("VERIFY-1: SettlementsPage YTD KPI must filter by calendar year (period_end)");
   }
