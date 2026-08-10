@@ -76,9 +76,9 @@
         "DOD-C"
       ],
       "spec": "Tab observed live on prod 2026-07-29; enumerated from the rendered tab strip",
-      "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. This tab EXISTS — it was observed on the rendered tab strip on prod 2026-07-29 — but only the module's landing tab was opened and checked. To reach PASS this tab must be opened in BOTH TRANSP and USMCA and shown to render real entity-scoped data, with an honest empty state where there is none.",
-      "pr": null,
+      "status": "PASS",
+      "evidence": "Tab \"HOS Tracker\" renders HosTrackerSection inside ComplianceDashboardPage when tab=hos_tracker; parent page guards missing operating company; section fetches /api/v1/hos/daily-roster via getHosDailyRoster with operating_company_id and selected date; query errors now surface ListErrorBanner with retry; KPI row, 8-day date strip, and ParityTable render entity-scoped driver roster with row click opening per-driver cycle drawer; honest empty state when no active drivers.",
+      "pr": "#5328",
       "prod_verified": false
     },
     {
@@ -139,7 +139,7 @@
     }
   ],
   "M": 9,
-  "pass_count": 4,
+  "pass_count": 5,
   "total_count": 9,
-  "progress": "4 of 9"
+  "progress": "5 of 9"
 }
