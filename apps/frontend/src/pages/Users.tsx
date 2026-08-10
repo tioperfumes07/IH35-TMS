@@ -146,6 +146,7 @@ export function UsersPage() {
   const [returningDetection, setReturningDetection] = useState<ReturningDispatcherDetectionResult | null>(null);
   const [checkingReturningDispatcher, setCheckingReturningDispatcher] = useState(false);
   const [roleChangeRole, setRoleChangeRole] = useState<UserRole>("Manager");
+  const [roleApproverId, setRoleApproverId] = useState("");
   const [roleReason, setRoleReason] = useState("");
   const [inviteBaseline, setInviteBaseline] = useState({
     inviteName: "",
@@ -221,6 +222,7 @@ export function UsersPage() {
     mutationFn: createIdentityWorkflow,
     onSuccess: () => {
       setRoleModalUser(null);
+      setRoleApproverId("");
       setRoleReason("");
       pushToast("Role change request submitted for approval", "success");
     },
@@ -246,6 +248,19 @@ export function UsersPage() {
   });
 
   const allUsers = usersQuery.data ?? [];
+  const roleApproverOptions = useMemo(
+    () =>
+      allUsers
+        .filter((user) => ["Owner", "Administrator"].includes(user.role))
+        .filter((user) => !user.deactivated_at)
+        // Distinct approver: never the target of the role change, nor the requester.
+        .filter((user) => user.id !== roleModalUser?.id && user.id !== auth.user?.uuid)
+        .map((user) => ({
+          value: user.id,
+          label: `${user.name ?? user.email ?? user.id} — ${ROLE_LABEL[user.role as UserRole] ?? user.role}`,
+        })),
+    [allUsers, roleModalUser?.id, auth.user?.uuid]
+  );
 
   const tabCounts = useMemo(() => {
     return {
@@ -261,6 +276,7 @@ export function UsersPage() {
     [inviteInitialPassword]
   );
   const invitePasswordReady = provisionMode !== "set_password" || invitePasswordStrength.meetsPolicy;
+  const roleRequiresApprover = roleChangeRole === "Owner" || roleChangeRole === "Administrator";
 
   const userColumns = useMemo<Array<ParityColumn<IdentityUser>>>(
     () => [
@@ -371,6 +387,7 @@ export function UsersPage() {
   useEffect(() => {
     if (!roleModalUser) return;
     setRoleChangeRole(roleModalUser.role);
+    setRoleApproverId("");
     setRoleReason("");
     setRoleBaseline({
       roleChangeRole: roleModalUser.role,
@@ -741,6 +758,17 @@ export function UsersPage() {
           onSubmit={async (event) => {
             event.preventDefault();
             if (!roleModalUser) return;
+            if (roleRequiresApprover && !roleApproverId) {
+              pushToast("Select an approver for this role change", "error");
+              return;
+            }
+            if (
+              roleRequiresApprover &&
+              (roleApproverId === roleModalUser.id || roleApproverId === auth.user?.uuid)
+            ) {
+              pushToast("Approver must be distinct from the requester and target", "error");
+              return;
+            }
             try {
               await roleWorkflowMutation.mutateAsync({
                 action_code: IDENTITY_ROLE_CHANGE_ACTION_CODE,
@@ -748,6 +776,7 @@ export function UsersPage() {
                 payload: {
                   new_role: roleChangeRole,
                   reason: roleReason.trim() || undefined,
+                  required_approver_user_id: roleRequiresApprover ? roleApproverId : undefined,
                 },
               });
             } catch {
@@ -765,6 +794,20 @@ export function UsersPage() {
               placeholder="Select role"
             />
           </div>
+          {roleRequiresApprover ? (
+            <div data-testid="user-role-required-approver">
+              <label className="mb-1 block text-xs font-semibold text-gray-600">Required approver</label>
+              <Combobox
+                options={roleApproverOptions}
+                value={roleApproverId}
+                onChange={(value) => setRoleApproverId(value ?? "")}
+                placeholder="Select approver"
+              />
+              <p className="mt-1 text-xs text-slate-600">
+                Policy-sensitive role changes require a distinct approver before submission.
+              </p>
+            </div>
+          ) : null}
           <div>
             <label className="mb-1 block text-xs font-semibold text-gray-600">Reason (optional)</label>
             <textarea
@@ -778,7 +821,7 @@ export function UsersPage() {
             <Button type="button" variant="secondary" onClick={() => setRoleModalUser(null)}>
               Cancel
             </Button>
-            <Button type="submit" loading={roleWorkflowMutation.isPending}>
+            <Button type="submit" loading={roleWorkflowMutation.isPending} disabled={roleRequiresApprover && !roleApproverId}>
               Submit Request
             </Button>
           </div>

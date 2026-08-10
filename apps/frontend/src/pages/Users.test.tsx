@@ -9,6 +9,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "../api/client";
 import { ToastProvider } from "../components/Toast";
 import { UsersPage } from "./Users";
+import { within } from "@testing-library/react";
 
 expect.extend(jestDomMatchers);
 
@@ -16,6 +17,7 @@ const createUserMock = vi.fn();
 const listUsersMock = vi.fn();
 const checkReturningDispatcherMock = vi.fn();
 const deactivateUserMock = vi.fn();
+const createIdentityWorkflowMock = vi.fn();
 
 vi.mock("../auth/useAuth", () => ({
   useAuth: () => ({
@@ -35,7 +37,7 @@ vi.mock("../api/identity", async () => {
     checkReturningDispatcher: (...args: unknown[]) => checkReturningDispatcherMock(...args),
     createUser: (...args: unknown[]) => createUserMock(...args),
     deactivateUser: (...args: unknown[]) => deactivateUserMock(...args),
-    createIdentityWorkflow: vi.fn(),
+    createIdentityWorkflow: (...args: unknown[]) => createIdentityWorkflowMock(...args),
   };
 });
 
@@ -278,5 +280,61 @@ describe("UsersPage — Deactivate control", () => {
     render(wrap(<UsersPage />));
     const btn = await screen.findByRole("button", { name: /^Deactivate Bob Gone$/ });
     expect(btn).toBeDisabled();
+  });
+});
+
+describe("UsersPage — Change role ceremony", () => {
+  beforeEach(() => {
+    createIdentityWorkflowMock.mockReset();
+    listUsersMock.mockResolvedValue({
+      users: [
+        { id: "owner-1", name: "Owner One", email: "owner@example.com", role: "Owner", deactivated_at: null, auth_method: "Password", created_at: "2024-01-01T00:00:00Z", last_login_at: null },
+        { id: "admin-1", name: "Admin One", email: "admin@example.com", role: "Administrator", deactivated_at: null, auth_method: "Password", created_at: "2024-01-01T00:00:00Z", last_login_at: null },
+        { id: "u4", name: "Target User", email: "target@example.com", role: "Manager", deactivated_at: null, auth_method: "Password", created_at: "2024-01-01T00:00:00Z", last_login_at: null },
+      ],
+    });
+  });
+
+  it("requires a distinct approver for policy-sensitive role changes", async () => {
+    createIdentityWorkflowMock.mockResolvedValue({ id: "wf-1" });
+    const user = userEvent.setup();
+    render(wrap(<UsersPage />));
+    // Target User (Manager) — change role button aria includes name
+    const changeBtn = await screen.findByRole("button", { name: /change role for target user/i });
+    await user.click(changeBtn);
+
+    const roleInput = screen.getAllByPlaceholderText("Select role").at(-1)!;
+    await user.clear(roleInput);
+    await user.type(roleInput, "Administrator");
+    const roleListbox = await screen.findByRole("listbox");
+    await user.click(within(roleListbox).getByRole("option", { name: /^Administrator$/i }));
+
+    expect(screen.getByTestId("user-role-required-approver")).toBeInTheDocument();
+    expect(screen.getByText(/policy-sensitive role changes require a distinct approver/i)).toBeInTheDocument();
+    const submit = screen.getByRole("button", { name: /submit request/i });
+    expect(submit).toBeDisabled();
+
+    await user.click(submit);
+    expect(createIdentityWorkflowMock).not.toHaveBeenCalled();
+
+    const approverInput = screen.getByPlaceholderText("Select approver");
+    await user.clear(approverInput);
+    await user.type(approverInput, "Admin One");
+    const approverListbox = await screen.findByRole("listbox");
+    await user.click(within(approverListbox).getByRole("option", { name: /Admin One/i }));
+
+    expect(submit).not.toBeDisabled();
+    await user.click(submit);
+    await waitFor(() => expect(createIdentityWorkflowMock).toHaveBeenCalledOnce());
+    expect(createIdentityWorkflowMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action_code: "WF-064-IDENT-002",
+        target_user: "u4",
+        payload: expect.objectContaining({
+          new_role: "Administrator",
+          required_approver_user_id: "admin-1",
+        }),
+      })
+    );
   });
 });
