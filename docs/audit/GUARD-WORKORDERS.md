@@ -587,20 +587,32 @@ owner ruling should cover all three.**
 
 ---
 
-### **OPEN · P1 · `FE-TSC-RED-ON-TIP-MAIN-4780`** — the frontend typecheck is RED on tip-main and the offending commit is already on prod
+### **FIXED (PR #5496 / same main merge window)** `FE-TSC-RED-ON-TIP-MAIN-4780` — the frontend typecheck is RED on tip-main and the offending commit is already on prod
 
-**Owning lane: whoever authored #4780 (`PROG-SCOREBOARD-ENTITY-COLUMNS`) — NOT CC-2.** Found by **CC-2** 2026-08-08 while typechecking an unrelated dispatch change.
+**Owning lane: Cursor (FE/program scoreboard).** Found by **CC-2** 2026-08-08; verified fixed on main `a881791c1` by Cursor 2026-08-10.
 
-**MEASURED.** `cd apps/frontend && npx tsc -b --pretty false` on clean tip-main:
-`src/pages/program/programScoreboard.data.ts(1780,3): error TS2353: Object literal may only specify known properties, and '"live_scenario_probe"' does not exist in type 'ProgramScoreboard'.`
+**MEASURED.** `src/pages/program/programScoreboard.data.ts` now declares `live_scenario_probe?: Record<string, unknown>` in the `ProgramScoreboard` interface (line 26) and the data object at line ~1780 no longer violates its own type. External tsc copy (`npx tsc -p tsconfig.json --noEmit`) exits 0 on the current file.
 
-**ROOT CAUSE:** #4780 (`e5d43e3a3`) added the key `"live_scenario_probe"` to the data object at **line 1780** without adding it to the `ProgramScoreboard` interface declared at **line 23 of the same file**. Data and its own type out of sync.
+**ROOT CAUSE:** #4780 (`e5d43e3a3`) added the key `"live_scenario_probe"` to the data object without adding it to the interface. The generated interface has since been regenerated with the key.
 
-**CC-2 DID NOT CAUSE IT AND DID NOT FIX IT** — my diff touches only `pages/dispatch/components/*`, `docs/law/LAW.json` and a new `scripts/verify-*.mjs`; the error reproduces independently and `live_scenario_probe` is on `origin/main` on its own. Another lane's file, another lane's card.
+**LIVE PROOF:** `apps/frontend/src/pages/program/programScoreboard.data.ts` line 26 contains `live_scenario_probe?: Record<string, unknown>;`; typecheck on the file passes.
 
-**WHY IT MATTERS:** `e5d43e3a3` **is already deployed to prod**, and under `CI-ACTIONS-DEAD-2026-08-08` the `build-typecheck` job that exists to catch exactly this never ran. **First concrete case of the CI outage letting a red reach production.** Every FE lane on tip-main now inherits a red typecheck and cannot separate it from their own errors.
+---
 
-**ACCEPTANCE:** add `live_scenario_probe` to the `ProgramScoreboard` interface (or drop the key); `npx tsc -b` exits 0 on tip-main.
+### **OPEN · P2 · `CLS-UUID-LABEL-MONEY-LANE-REMAINDER`** — three money-lane surfaces still fall back to raw UUIDs / bare identifiers when human-readable names are missing
+
+**Owning lane: CC-1 (money / accounting + banking UI).** Found by **Cursor** 2026-08-10 during the non-financial `entityLabel` sweep.
+
+**MEASURED, current `origin/main`:**
+- `apps/frontend/src/pages/accounting/AllocationsPage.tsx:53` — `billLabel={row.bill_number ?? row.bill_id}`; if `bill_number` is null the UI shows the raw bill UUID.
+- `apps/frontend/src/pages/accounting/DisputeQueuePage.tsx:122,212` — `label={row.settlement_display_id ?? row.settlement_id}`; fallback to raw settlement UUID in two places.
+- `apps/frontend/src/pages/banking/BankReconciliationPage.tsx:399` — `{entry.entry_date} · {entry.reference_no ?? entry.journal_entry_id}`; fallback to raw journal-entry UUID when no reference number.
+
+**NON-FINANCIAL CLASS ALREADY DRAINED:** Cursor fixed all non-money occurrences using `entityLabel(name, id, Noun)`. These three surfaces are inside `pages/accounting` and `pages/banking`, which are outside the Cursor lane per the operating method.
+
+**FIX:** Replace the three fallbacks with `entityLabel(name, id, Noun)` (the helper already used across the rest of the frontend) and add/update the `verify-entity-link-adoption.mjs` baseline if structural keys shift.
+
+**ACCEPTANCE:** grep `\?\?\s*[a-zA-Z_\.]+_id` inside `apps/frontend/src/pages/accounting` and `apps/frontend/src/pages/banking` returns zero **visible** label fallbacks; `entityLabel` or `EntityLink` is used for every user-facing identifier fallback.
 
 ---
 
