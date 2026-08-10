@@ -17,6 +17,7 @@ import {
 import { listCustomers } from "../api/mdata";
 import { formatDateTimeUS, formatDateUS } from "../lib/formatDate";
 import { Button } from "../components/Button";
+import { ListErrorState } from "../components/ListErrorState";
 import { Combobox, type ComboboxOption } from "../components/Combobox";
 import { ReferenceSelect } from "../components/parity/ReferenceSelect";
 import { DriverPickerWithCreate } from "../components/drivers/DriverPickerWithCreate";
@@ -183,6 +184,9 @@ export function UserDetailPage() {
   const isOwner = auth.user?.role === "Owner";
   const canReadSafety = auth.user?.role === "Owner" || auth.user?.role === "Administrator";
   const targetUser = userDetailQuery.data?.user ?? null;
+  const defaultCompany = (userDetailQuery.data?.accessible_companies ?? []).find(
+    (company) => company.id === targetUser?.default_company_id,
+  );
   const canShowSafetyTab = Boolean(
     canReadSafety &&
       targetUser &&
@@ -239,6 +243,16 @@ export function UserDetailPage() {
   });
 
   if (userDetailQuery.isLoading) return <div className="p-4 text-sm text-gray-500">Loading user...</div>;
+  if (userDetailQuery.isError) {
+    return (
+      <ListErrorState
+        title="Couldn't load user"
+        status={userDetailQuery.error instanceof ApiError ? userDetailQuery.error.status : 0}
+        message={userDetailQuery.error instanceof Error ? userDetailQuery.error.message : undefined}
+        onRetry={() => void userDetailQuery.refetch()}
+      />
+    );
+  }
   if (!targetUser) return <div className="p-4 text-sm text-gray-500">User not found.</div>;
 
   return (
@@ -275,7 +289,7 @@ export function UserDetailPage() {
             <div><span className="text-xs text-gray-500">Role</span><div>{targetUser.role}</div></div>
             <div><span className="text-xs text-gray-500">Status</span><div>{targetUser.deactivated_at ? "Inactive" : "Active"}</div></div>
             <div><span className="text-xs text-gray-500">Created at</span><div>{formatDateTimeUS(targetUser.created_at)}</div></div>
-            <div><span className="text-xs text-gray-500">Default company</span><div>{targetUser.default_company_id ?? "—"}</div></div>
+            <div><span className="text-xs text-gray-500">Default company</span><div>{defaultCompany?.short_name ?? defaultCompany?.code ?? entityLabel(null, targetUser.default_company_id, "Company")}</div></div>
             <div><span className="text-xs text-gray-500">Has driver record</span><div>{userDetailQuery.data?.has_driver_record ? "Yes" : "No"}</div></div>
           </div>
         </DataPanel>
