@@ -17,6 +17,7 @@ import {
   type GeofenceLocationKind,
 } from "../../api/geofencing";
 import { listCustomers, listLocations, listVendors } from "../../api/mdata";
+import { CappedListNotice } from "../../components/CappedListNotice";
 
 const LOCATION_KIND_OPTIONS: Array<{ id: GeofenceLocationKind; label: string }> = [
   { id: "customer_site", label: "Customer site" },
@@ -256,6 +257,13 @@ export function GeofencesPage() {
                   loading={customersQuery.isLoading}
                   onSearch={setCustomerSearch}
                 />
+                <CappedListNotice
+                  shown={customerRefOptions.length}
+                  limit={5000}
+                  total={customersQuery.data?.total}
+                  hint="Type to search the full customer catalog."
+                  className="mt-1 text-xs text-slate-600"
+                />
               </div>
             ) : locationKind === "vendor_site" ? (
               <div className="mt-1">
@@ -269,6 +277,13 @@ export function GeofencesPage() {
                   disabled={!operatingCompanyId}
                   loading={vendorsQuery.isLoading}
                   onSearch={setVendorSearch}
+                />
+                <CappedListNotice
+                  shown={vendorRefOptions.length}
+                  limit={5000}
+                  total={vendorsQuery.data?.total}
+                  hint="Type to search the full vendor catalog."
+                  className="mt-1 text-xs text-slate-600"
                 />
               </div>
             ) : locationKind === "yard" ? (

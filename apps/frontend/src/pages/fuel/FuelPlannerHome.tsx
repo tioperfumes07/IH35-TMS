@@ -39,6 +39,7 @@ import { FuelHomePage } from "./FuelHome";
 import { FuelTransactionsTable } from "./FuelTransactionsTable";
 import { ExpensiveStatesMultiselect } from "./components/ExpensiveStatesMultiselect";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { CappedListNotice } from "../../components/CappedListNotice";
 
 export type { FuelTabId } from "./FUEL_TABS_CONFIG";
 
@@ -246,7 +247,16 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
                   (Love&apos;s / WEX / EFS / Comdata). Manual entry is import-only today; no TMS-native rows expected until dispatch is live.
                 </p>
               ) : (
-                <FuelTransactionsTable rows={fuelTransactionsQuery.data?.transactions ?? []} />
+                <>
+                  <FuelTransactionsTable rows={fuelTransactionsQuery.data?.transactions ?? []} />
+                  <CappedListNotice
+                    shown={(fuelTransactionsQuery.data?.transactions ?? []).length}
+                    limit={200}
+                    total={fuelTransactionsQuery.data?.total_count}
+                    hint="History shows the most recent page — use import filters or a dedicated report for the full fleet-card history."
+                    className="mt-2 text-xs text-slate-600"
+                  />
+                </>
               )}
             </div>
           </section>

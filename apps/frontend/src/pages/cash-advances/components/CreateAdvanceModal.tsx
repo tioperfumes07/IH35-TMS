@@ -19,6 +19,7 @@ import { useToast } from "../../../components/Toast";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
+import { CappedListNotice } from "../../../components/CappedListNotice";
 import {
   formatBankAccountPickerLabel,
   type BankAccountPickerRow,
@@ -308,8 +309,8 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
             <label className="space-y-1 md:col-span-2">
               <span className="font-medium text-gray-700">Driver</span>
               {/*
-                SAF-B29: Combobox over listDrivers(search:"", limit:200) silently hid drivers past the
-                first page. DriverPickerWithCreate owns server search + inline create (drawer chrome).
+                SAF-B29: bare Combobox over an uncapped driver roster silently hid drivers past the first
+                page. DriverPickerWithCreate owns server search + inline create (drawer chrome).
               */}
               <DriverPickerWithCreate
                 operatingCompanyId={operatingCompanyId}
@@ -371,6 +372,13 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
                   Could not load cash advance types — using built-in purposes until the catalog is reachable.
                 </p>
               ) : null}
+              <CappedListNotice
+                shown={advanceTypesQuery.data?.rows?.length ?? 0}
+                limit={200}
+                total={advanceTypesQuery.data?.total}
+                hint="Cash advance type catalog is paginated — contact admin if a type is missing."
+                className="text-[11px] text-slate-600"
+              />
               {/* UI-only taxonomy until WAVE-V-SETTLE adds cash_advance_type_id FK. */}
               <span className="sr-only" data-testid="advance-type-code">
                 {advanceTypeCode}

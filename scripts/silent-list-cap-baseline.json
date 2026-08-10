@@ -14,7 +14,6 @@
     "apps/frontend/src/components/parity/drawers/NewCustomerDrawerForm.tsx",
     "apps/frontend/src/components/parity/drawers/NewServiceDrawerForm.tsx",
     "apps/frontend/src/components/parity/entityPickerRegistry.ts",
-    "apps/frontend/src/components/tasks/TaskLinkPicker.tsx",
     "apps/frontend/src/hooks/useDriverDeductionTypeCatalog.ts",
     "apps/frontend/src/pages/accounting/AccountRegisterPage.tsx",
     "apps/frontend/src/pages/accounting/BillsPage.tsx",
@@ -27,20 +26,13 @@
     "apps/frontend/src/pages/accounting/bills/RecurringBillCreate.tsx",
     "apps/frontend/src/pages/accounting/loans/LoansAdvancesPage.tsx",
     "apps/frontend/src/pages/accounting/modals/InvoiceTypeModalBase.tsx",
-    "apps/frontend/src/pages/audit/AuditEventsList.tsx",
     "apps/frontend/src/pages/banking/EmailQueuePage.tsx",
     "apps/frontend/src/pages/banking/QboSyncQueuePage.tsx",
     "apps/frontend/src/pages/banking/RecordCCPaymentModal.tsx",
-    "apps/frontend/src/pages/cash-advances/components/CreateAdvanceModal.tsx",
-    "apps/frontend/src/pages/customers/CustomersListView.tsx",
-    "apps/frontend/src/pages/drivers/onboarding/OnboardingStepVehicleAssignment.tsx",
-    "apps/frontend/src/pages/fuel/FuelPlannerHome.tsx",
-    "apps/frontend/src/pages/inventory/InventoryPartsStockPage.tsx",
     "apps/frontend/src/pages/legal/contracts/UnifiedContractCreatorModal.tsx",
     "apps/frontend/src/pages/lists/accounting/DetailTypesListPage.tsx",
     "apps/frontend/src/pages/lists/accounting/ItemEditorModal.tsx",
     "apps/frontend/src/pages/lists/accounting/PostingTemplateModal.tsx",
-    "apps/frontend/src/pages/operations/GeofencesPage.tsx",
     "apps/frontend/src/pages/qbo/QBOSyncStatusDashboardPage.tsx"
   ]
 }

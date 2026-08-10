@@ -8,6 +8,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { useListState } from "../../components/list-state";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { CappedListNotice } from "../../components/CappedListNotice";
 
 function bulkCallPreview(id: string | null | undefined): string {
   if (!id) return "—";
@@ -177,6 +178,13 @@ export function AuditEventsList() {
                 </pre>
               </div>
             )}
+          />
+          <CappedListNotice
+            shown={rows.length}
+            limit={100}
+            total={eventsQuery.data?.total_count}
+            hint="Narrow filters or export for the full audit trail."
+            className="mt-2 text-xs text-slate-600"
           />
         </div>
       )}
