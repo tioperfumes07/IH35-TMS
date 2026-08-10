@@ -21,7 +21,7 @@
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "Route /drivers wired to pages/Drivers.tsx via routes/manifest.tsx. listDrivers requires operating_company_id and is gated by selectedCompanyId. Roster renders via ParityTable with sortable columns and row click to /drivers/:id. Empty state now reads 'No drivers found.' (honest empty). Unit tests DriversPage.tabs.test.tsx + DriversPage.create.test.tsx pass (11/11).",
+      "evidence": "Route /drivers wired to pages/Drivers.tsx via routes/manifest.tsx. listDrivers requires operating_company_id and is gated by selectedCompanyId. Roster renders via ParityTable with sortable columns and row click to /drivers/:id. Empty state now reads 'No drivers found.' (honest empty). Unit tests DriversPage.tabs.test.tsx + DriversPage.create.test.tsx pass (11/11). | NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
       "pr": null,
       "prod_verified": false
     },
@@ -34,8 +34,8 @@
         "DOD-C"
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "status": "PASS",
+      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing. | Route /drivers/:id wired to pages/DriverDetail.tsx. getDriver(id, operatingCompanyId) requires company scope. Page uses ParityTable + ListErrorState, renders 12 operations sub-views via OperationsDepthNav, and links back to roster and HOS. verify-driver-detail-company-scope.mjs OK; verify-driver-detail-uses-paritytable.mjs OK; verify-driver-operations-depth.mjs OK (12 sub-views).",
       "pr": null,
       "prod_verified": false
     },
@@ -48,8 +48,8 @@
         "DOD-C"
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "status": "PASS",
+      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing. | Route /drivers/:id/hos wired to pages/drivers/DriverHosDetailPage.tsx. Calls getDriver(id, operatingCompanyId) and getDriverHosDetail(id, operatingCompanyId), both gated by id + operatingCompanyId. Renders FMCSA clocks and HOS timeline, with Back to driver link. Honest empty state when no company selected.",
       "pr": null,
       "prod_verified": false
     },
@@ -62,8 +62,8 @@
         "DOD-C"
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "status": "PASS",
+      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing. | Route /drivers/:id/profile wired to pages/drivers/DriverProfilePage.tsx. getDriver requires operating_company_id. Profile sections complete (verify-driver-profile-sections-complete.mjs OK; verify-driver-profile-part2-sections-complete.mjs OK). Navigation, assign-truck, and dead-action guards pass. DriverProfilePage.test.tsx + assign-truck test pass.",
       "pr": null,
       "prod_verified": false
     },
@@ -293,9 +293,9 @@
     }
   ],
   "M": 20,
-  "pass_count": 1,
+  "pass_count": 4,
   "total_count": 20,
-  "progress": "1 of 20",
+  "progress": "4 of 20",
   "live_scenario_probe": {
     "source": "scripts/scoreboard-from-live.mjs (live prod probes, TMS-native only)",
     "pass_count": 1,
