@@ -12,6 +12,7 @@ import { useListState } from "../../../components/list-state";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { CappedListNotice } from "../../../components/CappedListNotice";
+import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 
 type HosViolationRow = Record<string, unknown>;
 type Source = "samsara_auto" | "manual_office" | "dot_citation";
@@ -257,6 +258,15 @@ export function HOSViolationsTab() {
           {createMutation.error instanceof Error ? createMutation.error.message : "Create failed."}
         </div>
       ) : null}
+
+      {(query.isError || violationTypesQuery.isError) && (
+        <ListErrorBanner
+          onRetry={() => {
+            void query.refetch();
+            void violationTypesQuery.refetch();
+          }}
+        />
+      )}
 
       <ParityTable<HosViolationRow>
         columns={columns}
