@@ -69,7 +69,10 @@ const columnGuard = /^[a-z_]+$/;
 
 /** API column -> physical column, honouring the per-catalog aliases. */
 function dbColumnForApiColumn(column: string, config?: GenericCatalogConfig): string {
-  if (column === "display_name") return config?.displayNameColumn ?? "name";
+  // LV-CAT-500: the previous default `name` broke tables whose physical display-name column
+  // is actually `display_name` (vendor_types, customer_types, lumper_providers, …). Default to
+  // identity and let configs whose physical column is `name` declare it explicitly.
+  if (column === "display_name") return config?.displayNameColumn ?? "display_name";
   if (column === "code" && config?.codeColumn) return config.codeColumn;
   return column;
 }
