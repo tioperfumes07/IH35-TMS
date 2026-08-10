@@ -99,6 +99,22 @@ export function DrugAlcoholTab() {
       ),
   });
 
+  // SAF-B24-residual: DriverPickerWithCreate's onChange only returns the id, so the "Selected:"
+  // preview line below rendered an unlabeled EntityLink — the raw uuid was the visible link text.
+  const allDriversQ = useQuery({
+    queryKey: ["mdata", "drivers", "all", companyId],
+    queryFn: () => listDrivers({ operating_company_id: companyId, include_system: true, limit: 500 }),
+    enabled: Boolean(companyId),
+  });
+  const driverNameById = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const driver of allDriversQ.data?.drivers ?? []) {
+      const name = [driver.first_name, driver.last_name].filter(Boolean).join(" ").trim();
+      if (name) map.set(driver.id, name);
+    }
+    return map;
+  }, [allDriversQ.data]);
+
   const testsQ = useQuery({
     queryKey: ["safety", "drug-program", "tests", companyId],
     enabled: Boolean(companyId),
@@ -235,7 +251,7 @@ export function DrugAlcoholTab() {
           </label>
           {driverId ? (
             <div className="text-xs text-slate-600">
-              Selected: <EntityLink kind="driver" id={driverId} />
+              Selected: <EntityLink kind="driver" id={driverId} label={driverNameById.get(driverId)} />
             </div>
           ) : null}
         </div>
