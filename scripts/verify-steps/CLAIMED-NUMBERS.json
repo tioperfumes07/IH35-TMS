@@ -1990,5 +1990,10 @@
     "claimed_at": "2026-08-10",
     "claimed_by": "codex",
     "purpose": "verify-driver-fuel-unit-picker"
+  },
+  "3012": {
+    "claimed_at": "2026-08-10",
+    "claimed_by": "cursor",
+    "purpose": "verify-docs-file-link-entity-contract"
   }
 }
