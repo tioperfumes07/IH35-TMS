@@ -19,6 +19,7 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { CollapsedListFilters } from "../../components/table";
 import { useUrlSort } from "../../hooks/useUrlSort";
 import { formatUsdCents } from "../../lib/money";
+import { SelectCombobox } from "../../components/shared/SelectCombobox";
 
 function fmtMoneyCents(value: number) {
   return formatUsdCents(value);
@@ -294,7 +295,7 @@ export function AccountingAuditTrailPage() {
         </label>
         <label className="text-xs text-slate-600">
           Account
-          <select
+          <SelectCombobox
             className="mt-1 block h-9 w-full rounded-sm border border-slate-300 px-2 text-sm"
             value={accountId}
             onChange={(e) => setAccountId(e.target.value)}
@@ -305,7 +306,7 @@ export function AccountingAuditTrailPage() {
                 {account.account_number} - {account.account_name}
               </option>
             ))}
-          </select>
+          </SelectCombobox>
         </label>
         <div className="flex items-end">
           <Button
