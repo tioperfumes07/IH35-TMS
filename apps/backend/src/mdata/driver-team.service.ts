@@ -1,5 +1,6 @@
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
+import { assertDriverQualifiedForLoad } from "../dispatch/driver-qualification.service.js";
 
 export type TeamSplitMethod = "50_50" | "60_40" | "70_30" | "mileage_prorated" | "hours_prorated" | "custom";
 
@@ -376,7 +377,8 @@ export async function assignTeamToLoad(
 
     const loadRes = await client.query(
       `
-        SELECT id, assigned_primary_driver_id, team_id
+        SELECT id, assigned_primary_driver_id, team_id,
+               COALESCE((quicksave_pending_fields->>'hazmat')::boolean, false) AS is_hazmat
         FROM mdata.loads
         WHERE id = $1
           AND operating_company_id = $2
@@ -385,9 +387,25 @@ export async function assignTeamToLoad(
       `,
       [input.load_id, input.operating_company_id]
     );
-    const load = loadRes.rows[0];
+    const load = loadRes.rows[0] as
+      | { id: string; assigned_primary_driver_id: string | null; team_id: string | null; is_hazmat: boolean }
+      | undefined;
     if (!load) throw new Error("E_LOAD_NOT_FOUND");
     if (load.assigned_primary_driver_id) throw new Error("E_LOAD_ALREADY_SOLO_ASSIGNED");
+
+    const teamDriverIds = [team.primary_driver_id, team.secondary_driver_id].filter(Boolean) as string[];
+    for (const driverId of teamDriverIds) {
+      const block = await assertDriverQualifiedForLoad(client, {
+        driverId,
+        operatingCompanyId: input.operating_company_id,
+        isHazmat: load.is_hazmat,
+      });
+      if (block) {
+        const err = new Error("E_DRIVER_NOT_QUALIFIED");
+        (err as Error & { reasons: string[] }).reasons = block.reasons;
+        throw err;
+      }
+    }
 
     const updated = await client.query(
       `

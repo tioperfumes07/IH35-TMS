@@ -39,11 +39,6 @@ const GATE = "assertDriverQualifiedForLoad";
 
 const KNOWN_GAPS = new Map([
   [
-    "apps/backend/src/mdata/driver-team.service.ts",
-    "OPEN P1 (FAIL-D1, SAME CLASS — found by this guard, not by the card): team assignment reassigns the " +
-      "primary driver on a load with no gate call. Owner: dispatch write-path.",
-  ],
-  [
     "apps/backend/src/onboarding/seed-sample-data.ts",
     "Sample-data seeder; rows it writes are fixtures by construction.",
   ],
