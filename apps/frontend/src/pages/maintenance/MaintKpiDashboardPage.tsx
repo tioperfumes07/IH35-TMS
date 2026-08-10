@@ -9,11 +9,10 @@ import {
   type MaintKpiDrilldownKind,
   type MaintKpiSparkPoint,
 } from "../../api/maintenance";
-import { apiRequest } from "../../api/client";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { EntityPicker } from "../../components/parity/EntityPicker";
 import { CollapsedListFilters } from "../../components/table";
-import { entityLabel } from "../../lib/entity-label";
 
 type KpiTileId = MaintKpiDrilldownKind | "pm_compliance";
 type DrillRow = Record<string, unknown>;
@@ -97,15 +96,6 @@ export function MaintKpiDashboardPage() {
   const summaryQ = useQuery({
     queryKey: ["maintenance", "kpi-dashboard", "summary", companyId, periodStart, periodEnd, unitId],
     queryFn: () => getMaintenanceKpiSummary(companyId, periodStart, periodEnd, unitId || undefined),
-    enabled: Boolean(companyId),
-  });
-
-  const unitsQ = useQuery({
-    queryKey: ["maintenance", "kpi-dashboard", "units", companyId],
-    queryFn: () =>
-      apiRequest<{ rows: Array<{ id: string; unit_number: string }> }>(
-        `/api/v1/maintenance/fleet-table/rows?operating_company_id=${encodeURIComponent(companyId)}`
-      ),
     enabled: Boolean(companyId),
   });
 
@@ -221,22 +211,18 @@ export function MaintKpiDashboardPage() {
                   data-testid="maint-kpi-filter-end"
                 />
               </label>
-              <label className="flex flex-col gap-0.5">
+              <div className="flex min-w-48 flex-col gap-0.5">
                 <span className="text-[10px] uppercase text-slate-500">Unit</span>
-                <select
-                  className="min-w-32 rounded-sm border border-gray-300 px-2 py-1"
-                  value={unitId}
-                  onChange={(e) => setUnitId(e.target.value)}
-                  data-testid="maint-kpi-filter-unit"
-                >
-                  <option value="">All fleet</option>
-                  {(unitsQ.data?.rows ?? []).map((row) => (
-                    <option key={row.id} value={row.id}>
-                      {entityLabel(row.unit_number, row.id, "Unit")}
-                    </option>
-                  ))}
-                </select>
-              </label>
+                <EntityPicker
+                  kind="unit"
+                  operatingCompanyId={companyId}
+                  value={unitId || null}
+                  onChange={(next) => setUnitId(next ?? "")}
+                  allowCreate={false}
+                  placeholder="All fleet"
+                  dataTestId="maint-kpi-filter-unit"
+                />
+              </div>
             </div>
           </CollapsedListFilters>
         </div>

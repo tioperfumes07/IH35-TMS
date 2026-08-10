@@ -8,6 +8,7 @@ import process from "node:process";
 
 const ROOT = process.cwd();
 const read = (f) => fs.readFileSync(path.join(ROOT, f), "utf8");
+const dashboard = read("apps/frontend/src/pages/maintenance/MaintKpiDashboardPage.tsx");
 
 function fail(msg) {
   console.error(`verify:maint-kpi-dashboard FAIL: ${msg}`);
@@ -25,16 +26,18 @@ const checks = [
   ["pm-compliance endpoint", read("apps/backend/src/maintenance/kpi.routes.ts").includes('app.get("/api/v1/maintenance/kpi/pm-compliance"')],
   ["computeMtbfHours", read("apps/backend/src/maintenance/kpi.routes.ts").includes("computeMtbfHours")],
   ["5 backend tests", (read("apps/backend/src/maintenance/__tests__/kpi.routes.test.ts").match(/\bit\(/g) ?? []).length >= 5],
-  ["dashboard page", read("apps/frontend/src/pages/maintenance/MaintKpiDashboardPage.tsx").includes('data-testid="maint-kpi-dashboard"')],
-  ["sparkline tiles", read("apps/frontend/src/pages/maintenance/MaintKpiDashboardPage.tsx").includes("MiniSparkline")],
-  ["date filters", read("apps/frontend/src/pages/maintenance/MaintKpiDashboardPage.tsx").includes("maint-kpi-filter-start")],
-  ["pm hub", read("apps/frontend/src/pages/maintenance/MaintKpiDashboardPage.tsx").includes("maint-kpi-pm-hub")],
+  ["dashboard page", dashboard.includes('data-testid="maint-kpi-dashboard"')],
+  ["sparkline tiles", dashboard.includes("MiniSparkline")],
+  ["date filters", dashboard.includes("maint-kpi-filter-start")],
+  ["searchable unit picker", /<EntityPicker[\s\S]*?kind="unit"[\s\S]*?allowCreate=\{false\}[\s\S]*?dataTestId="maint-kpi-filter-unit"/.test(dashboard)],
+  ["no native UUID unit select", !/<select[\s\S]*?value=\{unitId\}/.test(dashboard)],
+  ["pm hub", dashboard.includes("maint-kpi-pm-hub")],
   ["3 frontend tests", (read("apps/frontend/src/pages/maintenance/__tests__/MaintKpiDashboardPage.test.tsx").match(/\bit\(/g) ?? []).length >= 3],
   ["manifest route", read("apps/frontend/src/routes/manifest.tsx").includes('path="/maintenance/kpi-dashboard"')],
   ["api helpers", read("apps/frontend/src/api/maintenance.ts").includes("getMaintenanceKpiSummary")],
   ["index register", read("apps/backend/src/index.ts").includes("registerMaintenanceKpiRoutes")],
   ["0364 unused", !fs.existsSync("db/migrations/0364_maint_kpi.sql")],
-  ["report cross-link", read("apps/frontend/src/pages/maintenance/MaintKpiDashboardPage.tsx").includes("/reports/maintenance-cost-per-unit")],
+  ["report cross-link", dashboard.includes("/reports/maintenance-cost-per-unit")],
   ["arch design", read("docs/specs/IH35_ARCHITECTURAL_DESIGN.md").includes("verify:maint-kpi-dashboard")],
 ];
 
