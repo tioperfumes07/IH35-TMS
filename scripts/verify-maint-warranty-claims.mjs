@@ -83,6 +83,9 @@ function main() {
   if (!page.includes("File claim")) failures.push("WarrantyClaimsPage must expose File claim action");
   if (!page.includes("warranty-vendor-select")) failures.push("WarrantyClaimsPage must expose vendor select");
   if (!page.includes("warranty-claims-table")) failures.push("WarrantyClaimsPage must expose claims table");
+  if (!/claimsQ\.isError[\s\S]*?<ListErrorState[\s\S]*?claimsQ\.refetch\(\)/.test(page)) {
+    failures.push("WarrantyClaimsPage must expose a retryable list failure before empty copy");
+  }
   if (!page.includes("warranty-detect-from-wo")) failures.push("WarrantyClaimsPage must expose detect from WO");
   if ((pageTest.match(/\bit\(/g) ?? []).length < 3) {
     failures.push("WarrantyClaimsPage.test must include at least 3 vitest cases");
