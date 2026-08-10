@@ -16,6 +16,7 @@ import { NotificationLogPanel } from "../../components/compliance/NotificationLo
 import { NotificationRulesPanel } from "../../components/compliance/NotificationRulesPanel";
 import { SummaryCards } from "../../components/compliance/SummaryCards";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { FilingsComplianceDueSection } from "./FilingsComplianceDueSection";
 import { FleetHosBoardSection } from "./FleetHosBoardSection";
 import { HosTrackerSection } from "./HosTrackerSection";
@@ -197,6 +198,16 @@ export function ComplianceDashboardPage() {
 
       {tab !== "overview" ? null : (
       <>
+      {(summaryQ.isError || dashboardQ.isError || rulesQ.isError || logQ.isError) ? (
+        <ListErrorBanner
+          onRetry={() => {
+            void summaryQ.refetch();
+            void dashboardQ.refetch();
+            void rulesQ.refetch();
+            void logQ.refetch();
+          }}
+        />
+      ) : null}
       <SectionErrorBoundary name="Live Fleet HOS">
         <FleetHosBoardSection operatingCompanyId={companyId} />
       </SectionErrorBoundary>
