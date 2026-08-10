@@ -9,11 +9,29 @@ import {
   uploadNewVersion,
   type FileEntityType,
 } from "../../api/docs";
+import { listCustomers } from "../../api/mdata";
 import { Button } from "../Button";
 import { Combobox } from "../Combobox";
 import { Modal } from "../Modal";
 import { useToast } from "../Toast";
 import { useQuery } from "@tanstack/react-query";
+import { EntityPicker } from "../parity/EntityPicker";
+import { ReferenceSelect } from "../parity/ReferenceSelect";
+import type { EntityPickerKind } from "../parity/entityPickerRegistry";
+
+type StandaloneLinkType = "driver" | "unit" | "vendor" | "customer";
+
+const STANDALONE_LINK_TYPES: Array<{ value: StandaloneLinkType; label: string }> = [
+  { value: "driver", label: "Driver" },
+  { value: "unit", label: "Unit" },
+  { value: "vendor", label: "Vendor" },
+  { value: "customer", label: "Customer" },
+];
+
+function standaloneLinkToPickerKind(type: StandaloneLinkType): EntityPickerKind | null {
+  if (type === "driver" || type === "unit" || type === "vendor") return type;
+  return null;
+}
 
 type UploadModalProps = {
   // Optional: when omitted, the upload is a STANDALONE document (no entity link) —
@@ -22,6 +40,8 @@ type UploadModalProps = {
   entityId?: string;
   entityName?: string;
   parentFileId?: string;
+  /** When standalone, pre-select the optional link entity type (e.g. DocsHome active tab). */
+  defaultLinkEntityType?: StandaloneLinkType;
   // FIX-2 (docs-upload-viewed-entity): the operating_company_id of the VIEWED entity (the
   // company selected in CompanyContext when the profile was opened). Without this,
   // requestUploadUrl falls back to the server's resolveOperatingCompanyId (the caller's
@@ -73,14 +93,19 @@ export function UploadModal({
   entityId,
   entityName,
   parentFileId,
+  defaultLinkEntityType,
   operatingCompanyId,
   onClose,
   onUploadSuccess,
 }: UploadModalProps) {
   const { pushToast } = useToast();
+  const isStandalone = !entityType && !entityId && !parentFileId;
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [categoryId, setCategoryId] = useState<string | null>(null);
+  const [linkEntityType, setLinkEntityType] = useState<StandaloneLinkType | null>(defaultLinkEntityType ?? null);
+  const [linkEntityId, setLinkEntityId] = useState<string | null>(null);
+  const [customerSearch, setCustomerSearch] = useState("");
   const [documentDate, setDocumentDate] = useState(todayIso());
   const [expirationDate, setExpirationDate] = useState("");
   const [description, setDescription] = useState("");
@@ -91,9 +116,35 @@ export function UploadModal({
   const abortUploadRef = useRef<(() => void) | null>(null);
 
   const categoriesQuery = useQuery({
-    queryKey: ["file-categories", entityType ?? "all"],
-    queryFn: () => listFileCategories(entityType).then((result) => result.categories.filter((category) => category.is_active)),
+    queryKey: ["file-categories", entityType ?? linkEntityType ?? "all"],
+    queryFn: () =>
+      listFileCategories(entityType ?? linkEntityType ?? undefined).then((result) =>
+        result.categories.filter((category) => category.is_active)
+      ),
   });
+
+  const customersQuery = useQuery({
+    queryKey: ["docs-upload-customers", operatingCompanyId, customerSearch],
+    queryFn: () =>
+      listCustomers({
+        operating_company_id: operatingCompanyId,
+        search: customerSearch || undefined,
+        limit: 200,
+      }),
+    enabled: Boolean(operatingCompanyId) && isStandalone && linkEntityType === "customer",
+  });
+
+  const customerOptions = useMemo(
+    () =>
+      (customersQuery.data?.customers ?? []).map((customer) => ({
+        value: customer.id,
+        label: customer.customer_name ?? customer.display_id ?? customer.id,
+      })),
+    [customersQuery.data]
+  );
+
+  const resolvedEntityType = entityType ?? (linkEntityId && linkEntityType ? linkEntityType : undefined);
+  const resolvedEntityId = entityId ?? linkEntityId ?? undefined;
 
   const selectedCategory = useMemo(
     () => categoriesQuery.data?.find((category) => category.id === categoryId) ?? null,
@@ -151,8 +202,9 @@ export function UploadModal({
             mime_type: selectedFile.type || "application/octet-stream",
             size_bytes: selectedFile.size,
             category_id: categoryId,
-            // standalone upload (Documents page) sends no entity link
-            ...(entityType && entityId ? { entity_links: [{ entity_type: entityType, entity_id: entityId }] } : {}),
+            ...(resolvedEntityType && resolvedEntityId
+              ? { entity_links: [{ entity_type: resolvedEntityType, entity_id: resolvedEntityId }] }
+              : {}),
             // FIX-2: file under the VIEWED company, not the uploader's default_company_id.
             ...(operatingCompanyId ? { operating_company_id: operatingCompanyId } : {}),
           });
@@ -234,8 +286,50 @@ export function UploadModal({
             onChange={(value) => setCategoryId(value)}
             loading={categoriesQuery.isLoading}
             placeholder="Select category"
+            dataTestId="docs-upload-category-combobox"
           />
         </div>
+
+        {isStandalone && operatingCompanyId ? (
+          <div className="space-y-2 rounded-sm border border-gray-200 bg-gray-50 p-3" data-testid="docs-upload-entity-link-panel">
+            <div className="text-xs font-semibold text-gray-700">Link to entity (optional)</div>
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-gray-600">Entity type</label>
+              <Combobox
+                options={STANDALONE_LINK_TYPES.map((row) => ({ value: row.value, label: row.label }))}
+                value={linkEntityType}
+                onChange={(value) => {
+                  setLinkEntityType((value as StandaloneLinkType | null) ?? null);
+                  setLinkEntityId(null);
+                }}
+                placeholder="None — standalone document"
+                allowClear
+                dataTestId="docs-upload-link-entity-type"
+              />
+            </div>
+            {linkEntityType === "customer" ? (
+              <ReferenceSelect
+                value={linkEntityId}
+                onChange={(next) => setLinkEntityId(next)}
+                options={customerOptions}
+                createKind="customer"
+                operatingCompanyId={operatingCompanyId}
+                placeholder={customersQuery.isLoading ? "Loading customers…" : "Select customer to link"}
+                loading={customersQuery.isLoading}
+                onSearch={setCustomerSearch}
+              />
+            ) : linkEntityType && standaloneLinkToPickerKind(linkEntityType) ? (
+              <EntityPicker
+                kind={standaloneLinkToPickerKind(linkEntityType)!}
+                operatingCompanyId={operatingCompanyId}
+                value={linkEntityId}
+                onChange={setLinkEntityId}
+                placeholder={`Search ${linkEntityType}…`}
+                dataTestId={`docs-upload-link-${linkEntityType}-picker`}
+              />
+            ) : null}
+          </div>
+        ) : null}
 
         <div className="grid gap-3 md:grid-cols-2">
           <div className="space-y-1">

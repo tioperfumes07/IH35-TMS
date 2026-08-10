@@ -250,19 +250,32 @@ export function DocsHomePage() {
           <button
             type="button"
             onClick={() => setUploadOpen(true)}
-            className="rounded-sm bg-[#1F2A44] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#0f1729]"
+            disabled={!companyId}
+            className="rounded-sm bg-[#1F2A44] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#0f1729] disabled:cursor-not-allowed disabled:opacity-50"
+            data-testid="docs-home-upload-button"
           >
             + Upload Document
           </button>
         }
       />
 
-      {uploadOpen ? (
+      {!companyId ? (
+        <p className="text-sm text-gray-500" data-testid="docs-home-need-company">
+          Select an operating company to view documents and upload attachments.
+        </p>
+      ) : null}
+
+      {uploadOpen && companyId ? (
         <UploadModal
           // FIX-2: this page's list/KPIs are scoped to `companyId` (the viewed company), so a
           // standalone upload with no operating_company_id can file under the uploader's default
           // company and never show up in this company-filtered list.
-          operatingCompanyId={companyId || undefined}
+          operatingCompanyId={companyId}
+          defaultLinkEntityType={
+            activeTab === "driver" || activeTab === "customer" || activeTab === "vendor" || activeTab === "unit"
+              ? activeTab
+              : undefined
+          }
           onClose={() => setUploadOpen(false)}
           onUploadSuccess={() => {
             setUploadOpen(false);
