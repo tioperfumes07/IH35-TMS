@@ -2,13 +2,14 @@ import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery } from "@tanstack/react-query";
-import { getDocsFoundationKpis, listDocsFoundation, type DocsFoundationRow, type FileEntityType } from "../../api/docs";
+import { getDocsFoundationDetail, getDocsFoundationKpis, listDocsFoundation, type DocsFoundationRow, type FileEntityType } from "../../api/docs";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { CollapsedListFilters } from "../../components/table";
 import { SecondaryNavTabs } from "../../components/shared/SecondaryNavTabs";
 import { UploadModal } from "../../components/documents/UploadModal";
+import { PreviewModal } from "../../components/documents/PreviewModal";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { EntityLink, type EntityKind } from "../../components/shared/EntityLink";
 
@@ -42,12 +43,22 @@ const ENTITY_TABS: Array<{ id: DocsEntityTabId; label: string }> = [
 ];
 const DOCS_ENTITY_TAB_IDS = new Set<string>(ENTITY_TABS.map((tab) => tab.id));
 
-const DOCS_COLUMNS: Array<ParityColumn<DocsFoundationRow>> = [
+function docsColumns(onPreview: (id: string) => void): Array<ParityColumn<DocsFoundationRow>> {
+  return [
   {
     key: "original_filename",
     label: "File",
     sortable: true,
-    render: (row) => <span className="truncate">{row.original_filename}</span>,
+    render: (row) => (
+      <button
+        type="button"
+        className="max-w-full truncate text-left font-medium text-slate-700 underline"
+        onClick={() => onPreview(row.id)}
+        data-testid="docs-file-preview-link"
+      >
+        {row.original_filename}
+      </button>
+    ),
   },
   {
     key: "type_label",
@@ -114,7 +125,8 @@ const DOCS_COLUMNS: Array<ParityColumn<DocsFoundationRow>> = [
     sortValue: (row) => new Date(row.created_at).getTime(),
     render: (row) => <span className="truncate">{fmtDate(row.created_at)}</span>,
   },
-];
+  ];
+}
 
 export function parseDocsEntityTab(raw: string | null): DocsEntityTabId {
   if (raw && DOCS_ENTITY_TAB_IDS.has(raw)) return raw as DocsEntityTabId;
@@ -153,6 +165,7 @@ export function DocsHomePage() {
   const [kpiFilter, setKpiFilter] = useState<"none" | "missing_required" | "recent_uploads">("none");
   const [page, setPage] = useState(1);
   const [uploadOpen, setUploadOpen] = useState(false);
+  const [previewFileId, setPreviewFileId] = useState<string | null>(null);
   const limit = 25;
 
   const clearListFilters = () => {
@@ -186,6 +199,12 @@ export function DocsHomePage() {
   });
 
   const rows = listQuery.data?.rows ?? [];
+  const previewQuery = useQuery({
+    queryKey: ["docs", "foundation", "detail", companyId, previewFileId],
+    queryFn: () => getDocsFoundationDetail(previewFileId!, companyId),
+    enabled: Boolean(companyId && previewFileId),
+  });
+  const columns = docsColumns(setPreviewFileId);
   const total = listQuery.data?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / limit));
   const canPrev = page > 1;
@@ -338,7 +357,7 @@ export function DocsHomePage() {
         ) : (
           <ParityTable
             rows={rows}
-            columns={DOCS_COLUMNS}
+            columns={columns}
             rowKey={(row) => row.id}
             loading={listQuery.isLoading}
             filterBar={filterBar}
@@ -378,6 +397,24 @@ export function DocsHomePage() {
           </div>
         ) : null}
       </section>
+
+      {previewQuery.data ? (
+        <PreviewModal
+          file={previewQuery.data}
+          canEditMetadata={false}
+          onClose={() => setPreviewFileId(null)}
+          onRequestEditMetadata={() => setPreviewFileId(null)}
+        />
+      ) : null}
+
+      {previewFileId && previewQuery.isError ? (
+        <ListErrorState
+          title="Couldn't open document"
+          status={0}
+          message={(previewQuery.error as Error)?.message}
+          onRetry={() => void previewQuery.refetch()}
+        />
+      ) : null}
     </div>
   );
 }
