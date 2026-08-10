@@ -17,6 +17,7 @@ import {
   type TaskStatus,
 } from "../../api/tasks";
 import { UniversalFilterBar, type FilterState } from "../../components/planner/UniversalFilterBar";
+import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateUS } from "../../lib/formatDate";
 import { isOpenTaskStatus } from "./taskDisplay";
@@ -274,6 +275,11 @@ export function TaskPlannerGrid() {
               </tr>
             </thead>
             <tbody>
+              {query.isError && (
+                <tr><td colSpan={dates.length + 1} className="p-4">
+                  <ListErrorBanner onRetry={() => void query.refetch()} />
+                </td></tr>
+              )}
               {query.isLoading && (
                 <tr><td colSpan={dates.length + 1} className="p-4 text-center text-xs text-gray-500">Loading…</td></tr>
               )}
