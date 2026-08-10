@@ -1995,5 +1995,10 @@
     "claimed_at": "2026-08-10",
     "claimed_by": "cursor",
     "purpose": "verify-docs-file-link-entity-contract"
+  },
+  "3014": {
+    "claimed_at": "2026-08-10",
+    "claimed_by": "cursor",
+    "purpose": "verify-outbox-handlers-rls-context"
   }
 }
