@@ -62,6 +62,16 @@ export async function getDriverMe() {
   return driverApiRequest<DriverMeResponse>("/api/v1/driver/me");
 }
 
+export type DriverFuelUnit = {
+  id: string;
+  unit_number: string | null;
+  display_id: string | null;
+};
+
+export async function listDriverFuelUnits() {
+  return driverApiRequest<{ units: DriverFuelUnit[] }>("/api/v1/driver/fuel/units");
+}
+
 export async function patchDriverOnboarding(body: { complete: boolean }) {
   return driverApiRequest<{ ok: boolean; onboarding_completed_at: string | null }>("/api/v1/driver/me/onboarding", {
     method: "PATCH",
