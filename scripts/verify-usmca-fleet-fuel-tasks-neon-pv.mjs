@@ -75,74 +75,42 @@ export async function auditNeonLive(client) {
     return problems;
   }
 
-  const q = async (label, sql, params = []) => {
+  const q = async (sql, params = []) => {
     const r = await client.query(sql, params);
-    return Number(r.rows[0]?.n ?? r.rows[0]?.count ?? 0);
+    return Number(r.rows[0]?.n ?? 0);
   };
 
   const units = await q(
-    "fleet_units",
     `SELECT count(*)::int AS n FROM mdata.units u
      WHERE u.deactivated_at IS NULL
        AND (u.owner_company_id = $1::uuid OR u.currently_leased_to_company_id = $1::uuid)`,
     [USMCA]
   );
-  if (units < 1) {
-    problems.push(`USMCA fleet units (owner/leased) expected >=1, got ${units}`);
-  }
+  if (units < 1) problems.push(`USMCA fleet units (owner/leased) expected >=1, got ${units}`);
 
   const equipment = await q(
-    "fleet_equipment",
     `SELECT count(*)::int AS n FROM mdata.equipment e
      WHERE e.deactivated_at IS NULL
        AND (e.owner_company_id = $1::uuid OR e.currently_leased_to_company_id = $1::uuid)`,
     [USMCA]
   );
-  if (equipment < 0) {
-    problems.push(`USMCA equipment count invalid: ${equipment}`);
-  }
 
   const planner = await q(
-    "fuel_planner",
     `SELECT count(*)::int AS n FROM fuel.fuel_planner_settings WHERE operating_company_id = $1::uuid`,
     [USMCA]
   );
-  if (planner < 1) {
-    problems.push(`USMCA fuel_planner_settings expected >=1, got ${planner}`);
-  }
+  if (planner < 1) problems.push(`USMCA fuel_planner_settings expected >=1, got ${planner}`);
 
   const fuelTxn = await q(
-    "fuel_txn",
     `SELECT count(*)::int AS n FROM fuel.fuel_transactions WHERE operating_company_id = $1::uuid`,
     [USMCA]
   );
-  if (fuelTxn < 0) {
-    problems.push(`USMCA fuel_transactions count invalid: ${fuelTxn}`);
-  }
 
   const tasks = await q(
-    "tasks",
     `SELECT count(*)::int AS n FROM tasks.task WHERE operating_company_id = $1::uuid AND is_active = true`,
     [USMCA]
   );
-  if (tasks < 1) {
-    problems.push(`USMCA active tasks expected >=1, got ${tasks}`);
-  }
-
-  for (const [table, schema] of [
-    ["units", "mdata"],
-    ["fuel_transactions", "fuel"],
-    ["task", "tasks"],
-  ]) {
-    const stat = await client.query(
-      `SELECT n_live_tup::int AS live FROM pg_stat_all_tables WHERE schemaname = $1 AND relname = $2`,
-      [schema, table]
-    );
-    const live = Number(stat.rows[0]?.live ?? -1);
-    if (live < 0) {
-      problems.push(`pg_stat missing for ${schema}.${table}`);
-    }
-  }
+  if (tasks < 1) problems.push(`USMCA active tasks expected >=1, got ${tasks}`);
 
   console.log(
     `[${LABEL}] Neon lucia USMCA: units=${units} equipment=${equipment} fuel_txn=${fuelTxn} planner=${planner} tasks=${tasks} branch=${BRANCH}`
@@ -155,15 +123,13 @@ async function main() {
     const tmp = fs.mkdtempSync("/tmp/usmca-pv-stack-");
     try {
       for (const { file } of MANIFESTS) {
-        const src = path.join(ROOT, file);
         fs.mkdirSync(path.join(tmp, path.dirname(file)), { recursive: true });
-        fs.copyFileSync(src, path.join(tmp, file));
+        fs.copyFileSync(path.join(ROOT, file), path.join(tmp, file));
       }
       const fleetPath = path.join(tmp, "docs/module-completion/fleet.json");
       const fleet = JSON.parse(fs.readFileSync(fleetPath, "utf8"));
       fleet.items[0].prod_verified = false;
       fs.writeFileSync(fleetPath, JSON.stringify(fleet, null, 2) + "\n");
-
       const planted = auditManifests(tmp);
       if (!planted.some((p) => /prod_verified must be true/.test(p))) {
         console.error(`${LABEL} SELFTEST FAIL: planted prod_verified:false not caught`);
@@ -179,7 +145,7 @@ async function main() {
   const problems = auditManifests();
   if (process.env.DATABASE_URL) {
     assertNotPooler(process.env.DATABASE_URL);
-    const { default: pg } = await import("pg");
+    const pg = (await import("pg")).default;
     const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL, max: 1 });
     const client = await pool.connect();
     try {
