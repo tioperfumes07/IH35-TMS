@@ -466,7 +466,14 @@ export function DailyTasksPage() {
       </Modal>
 
       {detailTaskId ? (
-        <TaskDetailDrawer task={detailTask} events={eventsQuery.data?.events ?? []} onClose={() => setDetailTaskId(null)} />
+        <TaskDetailDrawer
+          task={detailTask}
+          events={eventsQuery.data?.events ?? []}
+          eventsError={eventsQuery.isError ? eventsQuery.error : null}
+          eventsLoading={eventsQuery.isPending}
+          onRetryEvents={() => void eventsQuery.refetch()}
+          onClose={() => setDetailTaskId(null)}
+        />
       ) : null}
     </div>
   );
@@ -475,10 +482,16 @@ export function DailyTasksPage() {
 function TaskDetailDrawer({
   task,
   events,
+  eventsError,
+  eventsLoading,
+  onRetryEvents,
   onClose,
 }: {
   task: DailyTask | null;
   events: DailyTaskEvent[];
+  eventsError: unknown;
+  eventsLoading: boolean;
+  onRetryEvents: () => void;
   onClose: () => void;
 }) {
   return (
@@ -515,10 +528,14 @@ function TaskDetailDrawer({
                 Activity Timeline
               </div>
               <div className="space-y-2">
-                {events.length === 0 ? (
+                {eventsError ? (
+                  <ListErrorState title="Couldn't load task activity" {...formatQueryErrorDetail(eventsError)} onRetry={onRetryEvents} />
+                ) : eventsLoading ? (
+                  <div className="rounded-sm border border-slate-200 bg-slate-50 p-3 text-slate-600">Loading activity…</div>
+                ) : events.length === 0 ? (
                   <div className="rounded-sm border border-slate-200 bg-white p-3 text-slate-500">No activity events yet.</div>
                 ) : null}
-                {events.map((event) => (
+                {!eventsError && !eventsLoading ? events.map((event) => (
                   <div key={event.id} className="rounded-sm border border-slate-200 bg-white p-3">
                     <div className="mb-1 flex items-center justify-between gap-2">
                       <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700">
@@ -527,14 +544,14 @@ function TaskDetailDrawer({
                       </span>
                       <span className="text-[10px] text-slate-500">{formatDateTime(event.created_at)}</span>
                     </div>
-                    <div className="text-[11px] text-slate-700">Actor: {event.actor_user_id}</div>
+                    <div className="text-[11px] text-slate-700">Actor: {entityLabel(null, event.actor_user_id, "User")}</div>
                     {Object.keys(event.payload ?? {}).length > 0 ? (
                       <pre className="mt-2 overflow-x-auto rounded-sm bg-slate-50 p-2 text-[10px] text-slate-600">
                         {JSON.stringify(event.payload, null, 2)}
                       </pre>
                     ) : null}
                   </div>
-                ))}
+                )) : null}
               </div>
             </div>
           </div>

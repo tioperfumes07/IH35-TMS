@@ -43,6 +43,12 @@ function assertMigrated(source) {
   if (!source.includes("task.is_overdue ?")) {
     errors.push(`${PAGE}: must preserve overdue row highlighting`);
   }
+  if (!source.includes('title="Couldn\'t load task activity"') || !source.includes("onRetry={onRetryEvents}")) {
+    errors.push(`${PAGE}: task activity failure must be visible and retryable`);
+  }
+  if (!/Actor:\s*\{entityLabel\(null,\s*event\.actor_user_id,\s*"User"\)\}/.test(source)) {
+    errors.push(`${PAGE}: activity actor must suppress raw user ids with entityLabel`);
+  }
   return errors;
 }
 
@@ -59,18 +65,34 @@ function selftest() {
       { key: "actions", label: "Actions" },
     ];
     export function DailyTasksPage() {
-      return <>{task.is_overdue ? "Overdue" : null}<ListErrorState /><ParityTable storageKey="daily-tasks" rowTestId={(task) => \`task-row-\${task.id}\`} columns={columns} /></>;
+      return <>{task.is_overdue ? "Overdue" : null}<ListErrorState title="Couldn't load task activity" onRetry={onRetryEvents} />Actor: {entityLabel(null, event.actor_user_id, "User")}<ParityTable storageKey="daily-tasks" rowTestId={(task) => \`task-row-\${task.id}\`} columns={columns} /></>;
     }
   `;
   const bad = `export function DailyTasksPage() { return <table><thead><tr><th>Task</th></tr></thead></table>; }`;
   const goodErrors = assertMigrated(good);
   const badErrors = assertMigrated(bad);
+  const rawActorErrors = assertMigrated(good.replace(
+    'Actor: {entityLabel(null, event.actor_user_id, "User")}',
+    "Actor: {event.actor_user_id}"
+  ));
+  const noActivityRetryErrors = assertMigrated(good.replace(
+    '<ListErrorState title="Couldn\'t load task activity" onRetry={onRetryEvents} />',
+    '<div>No activity events yet.</div>'
+  ));
   if (goodErrors.length) {
     console.error(`${LABEL} --selftest FAIL good fixture:`, goodErrors);
     process.exit(1);
   }
   if (badErrors.length < 4) {
     console.error(`${LABEL} --selftest FAIL bad fixture should fail hard:`, badErrors);
+    process.exit(1);
+  }
+  if (!rawActorErrors.some((error) => error.includes("activity actor"))) {
+    console.error(`${LABEL} --selftest FAIL raw actor mutation survived`);
+    process.exit(1);
+  }
+  if (!noActivityRetryErrors.some((error) => error.includes("activity failure"))) {
+    console.error(`${LABEL} --selftest FAIL activity retry mutation survived`);
     process.exit(1);
   }
   console.log(`${LABEL} --selftest PASS`);
