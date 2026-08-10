@@ -27,7 +27,7 @@ export function CurrentAssignmentSection({
           <div className="font-semibold text-slate-800">Default truck</div>
           {def ? (
             <Link to={`/fleet/units/${def.unit_id}`} className="text-slate-700 hover:underline">
-              {String(def.unit_number ?? def.unit_id)}
+              {entityLabel(def.unit_number, def.unit_id, "Unit")}
             </Link>
           ) : (
             <span>—</span>
@@ -38,7 +38,7 @@ export function CurrentAssignmentSection({
           {cur ? (
             <>
               <Link to={`/fleet/units/${cur.unit_id}`} className="text-slate-700 hover:underline">
-                {String(cur.unit_number ?? cur.unit_id)}
+                {entityLabel(cur.unit_number, cur.unit_id, "Unit")}
               </Link>
               {cur.samsara_logged_in_at ? (
                 <div className="text-slate-500">Samsara {String(cur.samsara_logged_in_at)}</div>
@@ -54,7 +54,7 @@ export function CurrentAssignmentSection({
             <EntityLink
               kind="load"
               id={String(load.load_id)}
-              label={`${String(load.load_number ?? load.load_id)} · ${String(load.status ?? "—")}`}
+              label={`${entityLabel(load.load_number, load.load_id, "Load")} · ${String(load.status ?? "—")}`}
             />
           ) : (
             <span>—</span>

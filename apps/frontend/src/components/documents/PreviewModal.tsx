@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { getDownloadUrl, type DocsFile } from "../../api/docs";
 import { ApiError } from "../../api/client";
 import { Button } from "../Button";
+import { entityLabel } from "../../lib/entity-label";
 import { Modal } from "../Modal";
 
 type PreviewModalProps = {
@@ -60,7 +61,7 @@ export function PreviewModal({ file, canEditMetadata, onClose, onRequestEditMeta
             <span className="font-semibold">Category:</span> {file.category_label ?? "Uncategorized"}
           </div>
           <div>
-            <span className="font-semibold">Uploader:</span> {file.uploader_email ?? file.uploader_user_id}
+            <span className="font-semibold">Uploader:</span> {entityLabel(file.uploader_email, file.uploader_user_id, "User")}
           </div>
           <div>
             <span className="font-semibold">Uploaded:</span> {new Date(file.created_at).toLocaleString()}

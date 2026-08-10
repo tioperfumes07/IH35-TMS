@@ -70,7 +70,7 @@ export function RevenueDiscrepancyDrill({
               <span aria-hidden="true">·</span>
               <span>{reasonLabel(inv.reason)}</span>
               <span className="sr-only">
-                {` Invoice ${inv.display_id ?? inv.invoice_id}, ${reasonLabel(inv.reason)}, ${formatUsdFromCents(inv.invoice_revenue_cents)}`}
+                {` Invoice ${entityLabel(inv.display_id, inv.invoice_id, "Invoice")}, ${reasonLabel(inv.reason)}, ${formatUsdFromCents(inv.invoice_revenue_cents)}`}
               </span>
             </Link>
           </li>
@@ -86,7 +86,7 @@ export function RevenueDiscrepancyDrill({
               <span aria-hidden="true">·</span>
               <span>{reasonLabel(je.reason)}</span>
               <span className="sr-only">
-                {` Journal entry ${je.journal_entry_id}, ${reasonLabel(je.reason)}, ${formatUsdFromCents(je.gl_revenue_cents)}`}
+                {` Journal entry ${entityLabel(null, je.journal_entry_id, "Journal entry")}, ${reasonLabel(je.reason)}, ${formatUsdFromCents(je.gl_revenue_cents)}`}
               </span>
             </Link>
           </li>

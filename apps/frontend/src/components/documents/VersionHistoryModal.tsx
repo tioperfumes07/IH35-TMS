@@ -8,6 +8,7 @@ import { Modal } from "../Modal";
 import { useToast } from "../Toast";
 import { PreviewModal } from "./PreviewModal";
 import { UploadModal } from "./UploadModal";
+import { entityLabel } from "../../lib/entity-label";
 
 type VersionHistoryModalProps = {
   rootFileId: string;
@@ -103,7 +104,7 @@ export function VersionHistoryModal({
                     {new Date(version.created_at).toLocaleString()} | {formatSize(version.size_bytes)}
                   </div>
                 </div>
-                <div className="mt-1 text-xs text-gray-600">Uploader: {version.uploader_email ?? version.uploader_user_id}</div>
+                <div className="mt-1 text-xs text-gray-600">Uploader: {entityLabel(version.uploader_email, version.uploader_user_id, "User")}</div>
                 <div className="mt-2 flex gap-2">
                   <Button
                     size="sm"
