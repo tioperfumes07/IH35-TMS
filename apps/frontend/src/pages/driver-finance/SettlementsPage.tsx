@@ -12,6 +12,7 @@ import { SettlementsTable } from "./components/SettlementsTable";
 import { DataPanel } from "../../components/layout/DataPanel";
 import { formatUsdCents } from "../../lib/money";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 
 type FocusFilter = "debt" | "pending_acks" | "held" | null;
 
@@ -303,9 +304,17 @@ function OpenDriverBillsPanel({
           {items.map((bill) => (
             <div key={bill.id} className="flex items-center justify-between text-sm">
               <span className="flex flex-wrap items-center gap-1">
-                <EntityLink kind="driver" id={bill.driver_id} label={bill.driver_name ?? bill.driver_id} />
+                <EntityLink
+                  kind="driver"
+                  id={bill.driver_id}
+                  label={entityLabel(bill.driver_name, bill.driver_id, "Driver")}
+                />
                 <span className="text-gray-400">·</span>
-                <EntityLink kind="load" id={bill.load_id ?? ""} label={bill.load_number ?? bill.load_id ?? "—"} />
+                <EntityLink
+                  kind="load"
+                  id={bill.load_id ?? ""}
+                  label={entityLabel(bill.load_number, bill.load_id, "Load")}
+                />
                 {bill.bill_number ? <span className="text-[10px] text-gray-400">({bill.bill_number})</span> : null}
               </span>
               <span className="font-semibold">{formatUsdCents(bill.gross_amount_cents)}</span>
