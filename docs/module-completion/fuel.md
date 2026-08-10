@@ -1,12 +1,12 @@
 # Module completion — Fuel — acceptance checklist
 
-**PROGRESS: 7 of 9** · complete: `false` · as_of: 2026-07-29 · live_sha: `—`
+**PROGRESS: 8 of 9** · complete: `false` · as_of: 2026-07-29 · live_sha: `—`
 
 | Status | Count |
 |---|---:|
-| PASS | 7 |
+| PASS | 8 |
 | HOLD | 0 |
-| OPEN | 2 |
+| OPEN | 1 |
 | FAIL | 0 |
 | UNVERIFIED | 0 |
 
@@ -19,7 +19,7 @@
 | `FUEL-S05` | **PASS** | Surface /fuel/history renders real entity-scoped data with no dead end | Route /fuel/history registered as ProtectedRoute wrapping FuelTabRoute tabId=history → FuelPlannerHomePage; FuelPlannerHomePage guards missing operating company; history tab fetches /api/v1/fuel/transactions via getFuelTransactions(companyId, {limit:200}) only when tab is active; transaction query errors now surface ListErrorBanner with retry; loading and honest empty states present; FuelTransactionsTable renders entity-scoped rows. | #5307 |
 | `FUEL-S06` | **PASS** | Surface /fuel/inbox renders real entity-scoped data with no dead end | Route /fuel/inbox registered as ProtectedRoute wrapping FuelTabRoute tabId=relay_inbox → FuelPlannerHomePage; FuelPlannerHomePage guards missing operating company; inbox tab renders RelayDepositReview which fetches /api/v1/relay/deposits and /api/v1/relay/company-cards with operating_company_id; component now surfaces ListErrorBanner on deposits/cards query errors with retry, plus need-company, loading, and honest empty states; add/remove company-card mutations scoped to selected company. | #5308 |
 | `FUEL-S07` | **PASS** | Surface /fuel/loves-prices renders real entity-scoped data with no dead end | Route /fuel/loves-prices registered as ProtectedRoute wrapping FuelTabRoute tabId=loves_prices → FuelPlannerHomePage; FuelPlannerHomePage guards missing operating company; loves_prices tab fetches /api/v1/fuel/loves-sync/status via getLovesSyncStatus(companyId); query errors now surface ListErrorBanner with retry; loading and honest empty states present; upload modal available. | #5311 |
-| `FUEL-S08` | **OPEN** | Surface /fuel/planner renders real entity-scoped data with no dead end | NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing. | — |
+| `FUEL-S08` | **PASS** | Surface /fuel/planner renders real entity-scoped data with no dead end | Route /fuel/planner registered as ProtectedRoute wrapping FuelTabRoute tabId=planner → FuelPlannerHomePage; FuelPlannerHomePage guards missing operating company; planner tab fetches dashboard, active routes, planner settings, compliance summary, and recommendation detail all scoped by operating_company_id; query errors now surface ListErrorBanner with retry; honest empty states for no active route / no HOS-aware stops; send-to-driver action and upload/import modals wired. | #5312 |
 | `FUEL-S09` | **OPEN** | Surface /fuel/settings renders real entity-scoped data with no dead end | NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing. | — |
 
 Desktop audit: —

@@ -275,6 +275,16 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
       ) : null}
 
       {tab === "planner" ? (
+        dashboardQuery.isError || activeRoutesQuery.isError || settingsQuery.isError || detailQuery.isError ? (
+          <ListErrorBanner
+            onRetry={() => {
+              void dashboardQuery.refetch();
+              void activeRoutesQuery.refetch();
+              void settingsQuery.refetch();
+              if (activeRoute?.id) void detailQuery.refetch();
+            }}
+          />
+        ) : (
         <>
           <FuelKpiRow dashboard={dashboardQuery.data} lovesSyncStatus={lovesSyncQuery.data} />
           <ActiveTripStrip route={activeRoute} />
@@ -346,7 +356,7 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
             />
           </div>
         </>
-      ) : null}
+      )) : null}
 
       <UploadLovesPricesModal
         open={uploadOpen}
