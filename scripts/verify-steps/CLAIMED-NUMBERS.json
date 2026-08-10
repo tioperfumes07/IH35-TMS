@@ -1970,5 +1970,10 @@
     "claimed_at": "2026-08-10",
     "claimed_by": "cursor",
     "purpose": "verify-invoice-line-no-uuid-in-description"
+  },
+  "3004": {
+    "claimed_at": "2026-08-10",
+    "claimed_by": "cursor",
+    "purpose": "verify-bills-list-vendor-name-resolved"
   }
 }
