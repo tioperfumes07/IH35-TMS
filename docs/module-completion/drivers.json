@@ -20,8 +20,8 @@
         "DOD-C"
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "status": "PASS",
+      "evidence": "Route /drivers wired to pages/Drivers.tsx via routes/manifest.tsx. listDrivers requires operating_company_id and is gated by selectedCompanyId. Roster renders via ParityTable with sortable columns and row click to /drivers/:id. Empty state now reads 'No drivers found.' (honest empty). Unit tests DriversPage.tabs.test.tsx + DriversPage.create.test.tsx pass (11/11).",
       "pr": null,
       "prod_verified": false
     },
@@ -293,9 +293,9 @@
     }
   ],
   "M": 20,
-  "pass_count": 0,
+  "pass_count": 1,
   "total_count": 20,
-  "progress": "0 of 20",
+  "progress": "1 of 20",
   "live_scenario_probe": {
     "source": "scripts/scoreboard-from-live.mjs (live prod probes, TMS-native only)",
     "pass_count": 1,

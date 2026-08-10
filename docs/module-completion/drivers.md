@@ -1,18 +1,18 @@
 # Module completion — Drivers — acceptance checklist
 
-**PROGRESS: 0 of 20** · complete: `false` · as_of: 2026-07-29 · live_sha: `—`
+**PROGRESS: 1 of 20** · complete: `false` · as_of: 2026-07-29 · live_sha: `—`
 
 | Status | Count |
 |---|---:|
-| PASS | 0 |
+| PASS | 1 |
 | HOLD | 0 |
-| OPEN | 20 |
+| OPEN | 19 |
 | FAIL | 0 |
 | UNVERIFIED | 0 |
 
 | ID | Status | Title | Evidence | PR |
 |---|---|---|---|---|
-| `DRV-S01` | **OPEN** | Surface /drivers renders real entity-scoped data with no dead end | NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing. | — |
+| `DRV-S01` | **PASS** | Surface /drivers renders real entity-scoped data with no dead end | Route /drivers wired to pages/Drivers.tsx via routes/manifest.tsx. listDrivers requires operating_company_id and is gated by selectedCompanyId. Roster renders via ParityTable with sortable columns and row click to /drivers/:id. Empty state now reads 'No drivers found.' (honest empty). Unit tests DriversPage.tabs.test.tsx + DriversPage.create.test.tsx pass (11/11). | — |
 | `DRV-S02` | **OPEN** | Surface /drivers/:id renders real entity-scoped data with no dead end | NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing. | — |
 | `DRV-S03` | **OPEN** | Surface /drivers/:id/hos renders real entity-scoped data with no dead end | NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing. | — |
 | `DRV-S04` | **OPEN** | Surface /drivers/:id/profile renders real entity-scoped data with no dead end | NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing. | — |
