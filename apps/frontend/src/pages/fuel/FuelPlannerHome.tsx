@@ -15,6 +15,7 @@ import {
   type FuelPlannerSettings,
 } from "../../api/fuelPlanner";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { ActionButton } from "../../components/shared/ActionButton";
 import { SecondaryNavTabs } from "../../components/shared/SecondaryNavTabs";
 import { useToast } from "../../components/Toast";
@@ -259,12 +260,16 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
       ) : null}
 
       {tab === "compliance" ? (
-        <CompliancePanel
-          sentToDriverAt={activeRoute?.computed_at ?? null}
-          fleetPct={Number(complianceQuery.data?.fleet_pct_followed ?? 0)}
-          fleetTotalRecommendations={Number(complianceQuery.data?.fleet_total_recommendations ?? 0)}
-          driverPct={driverPct}
-        />
+        complianceQuery.isError ? (
+          <ListErrorBanner onRetry={() => void complianceQuery.refetch()} />
+        ) : (
+          <CompliancePanel
+            sentToDriverAt={activeRoute?.computed_at ?? null}
+            fleetPct={Number(complianceQuery.data?.fleet_pct_followed ?? 0)}
+            fleetTotalRecommendations={Number(complianceQuery.data?.fleet_total_recommendations ?? 0)}
+            driverPct={driverPct}
+          />
+        )
       ) : null}
 
       {tab === "planner" ? (
