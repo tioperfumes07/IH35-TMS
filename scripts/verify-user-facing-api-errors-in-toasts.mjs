@@ -26,6 +26,7 @@ const RATCHETED_FILES = [
   "apps/frontend/src/pages/dispatch/NotifyPreferencesPage.tsx",
   "apps/frontend/src/pages/safety/eld/EldAuditTrailViewer.tsx",
   "apps/frontend/src/pages/safety/components/CargoClaimIntakeSurface.tsx",
+  "apps/frontend/src/pages/safety/components/SafetyIncidentsClusterSurface.tsx",
   "apps/frontend/src/pages/reports/FuelReconciliationPage.tsx",
   "apps/frontend/src/pages/fuel/card-overage/CardOverageQueuePage.tsx",
   "apps/frontend/src/pages/fuel/FuelPlannerHome.tsx",

@@ -26,6 +26,7 @@ import { ListErrorState } from "../../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { formatUsdCents } from "../../../lib/money";
 import { DamageReportDetail } from "../damage-reports/DamageReportDetail";
+import { userFacingApiError } from "../../../lib/api-error-message";
 
 // Declarative per-incident-type field keys. The COMMON set renders for every type;
 // `typedFields` on each config adds the type-specific inputs (root-fix: one surface,
@@ -913,7 +914,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
                               .catch((err: unknown) => {
                                 // No silent failure: a void that did not happen must never look like one
                                 // that did.
-                                setVoidError(err instanceof Error ? err.message : "Void failed.");
+                                setVoidError(userFacingApiError(err, "Could not void the safety incident."));
                               });
                           }}
                         >
