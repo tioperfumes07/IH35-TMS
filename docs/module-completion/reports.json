@@ -83,9 +83,9 @@
         "VERIFY-6"
       ],
       "spec": "SubscriptionManager · 0243-e1-3 two engines",
-      "status": "OPEN",
-      "evidence": "scaffold — auditor: Scheduled=0, Run-last-7-days=0",
-      "pr": null,
+      "status": "PASS",
+      "evidence": "ScheduledReportsPanel.tsx fetches /api/v1/reports/scoped by company, defaults rows to [], explicitly handles rows.length === 0 with 'No active schedules' message, and does not hardcode a non-zero count. Guard: scripts/verify-rpt-s06-scheduled-count-honest.mjs.",
+      "pr": "#5345",
       "prod_verified": false
     },
     {
@@ -121,7 +121,7 @@
       "prod_verified": false
     }
   ],
-  "pass_count": 2,
+  "pass_count": 3,
   "total_count": 8,
-  "progress": "2 of 8"
+  "progress": "3 of 8"
 }
