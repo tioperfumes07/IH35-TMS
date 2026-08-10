@@ -23,7 +23,8 @@ const COLUMNS: Array<ParityColumn<VehicleDriverHistoryRow>> = [
     key: "driver_name",
     label: "Driver",
     sortable: true,
-    render: (row) => entityLabel(row.driver_name, row.driver_id, "Driver"),
+    render: (row) =>
+      row.driver_name ? entityLabel(row.driver_name, row.driver_id, "Driver") : "Unassigned",
   },
   {
     key: "started_at",

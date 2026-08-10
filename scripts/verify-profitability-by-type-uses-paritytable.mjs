@@ -5,8 +5,7 @@
  * The profitability By Equipment Type view must use shared ParityTable grammar
  * (sort/resize/gear), not a hand-rolled <table>. The view is a static placeholder
  * (no query wired yet), so no ListErrorState is required; the empty-state copy
- * "No data loaded" is preserved. Columns Type / Loads / Miles / Rev/Mi / Cost/Mi /
- * Margin/Mi / Total Margin preserved in order.
+ * honest disconnected-feed copy is preserved (aligned with by-lane sibling guard).
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -15,6 +14,7 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-profitability-by-type-uses-paritytable";
 const PAGE = "apps/frontend/src/pages/profitability/ByTypeView.tsx";
+const HONEST_EMPTY = 'emptyText="Profitability feed is not connected; no figures are available for this view."';
 
 const REQUIRED_LABELS = ["Type", "Loads", "Miles", "Rev/Mi", "Cost/Mi", "Margin/Mi", "Total Margin"];
 
@@ -46,8 +46,11 @@ function assertMigrated(src) {
   if (!src.includes('tableTestId="profitability-by-type-table"')) {
     errors.push(`${PAGE}: must set tableTestId="profitability-by-type-table"`);
   }
-  if (!src.includes("No data loaded")) {
-    errors.push(`${PAGE}: must keep the "No data loaded" empty-state copy`);
+  if (!src.includes(HONEST_EMPTY)) {
+    errors.push(`${PAGE}: must name the disconnected profitability feed in emptyText`);
+  }
+  if (src.includes('emptyText="No data loaded"')) {
+    errors.push(`${PAGE}: must not present the unwired feed as a successful empty query`);
   }
   if (!src.includes("By Equipment Type")) {
     errors.push(`${PAGE}: must keep the By Equipment Type heading`);
@@ -71,7 +74,7 @@ function selftest() {
     <ParityTable
       storageKey="profitability-by-type"
       tableTestId="profitability-by-type-table"
-      emptyText="No data loaded"
+      emptyText="Profitability feed is not connected; no figures are available for this view."
     />
   `;
   const bad = `

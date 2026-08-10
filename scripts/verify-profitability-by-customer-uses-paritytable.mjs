@@ -4,7 +4,7 @@
  *
  * Profitability By-Customer view must use the shared ParityTable grammar (sort/resize/gear),
  * not a hand-rolled <table>. Display-only stub surface (no data source wired); the former
- * hardcoded "No data loaded" placeholder row is preserved as the ParityTable empty state.
+ * hardcoded honest disconnected-feed copy is preserved as the ParityTable empty state.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -13,6 +13,7 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-profitability-by-customer-uses-paritytable";
 const PAGE = "apps/frontend/src/pages/profitability/ByCustomerView.tsx";
+const HONEST_EMPTY = 'emptyText="Profitability feed is not connected; no figures are available for this view."';
 
 const REQUIRED_LABELS = ["Customer", "Loads", "Miles", "Rev/Mi", "Cost/Mi", "Margin/Mi", "Total Margin"];
 
@@ -41,8 +42,11 @@ function assertMigrated(src) {
   if (!src.includes('tableTestId="profitability-by-customer-table"')) {
     errors.push(`${PAGE}: must set tableTestId="profitability-by-customer-table"`);
   }
-  if (!src.includes('emptyText="No data loaded"')) {
-    errors.push(`${PAGE}: must keep "No data loaded" empty state`);
+  if (!src.includes(HONEST_EMPTY)) {
+    errors.push(`${PAGE}: must name the disconnected profitability feed in emptyText`);
+  }
+  if (src.includes('emptyText="No data loaded"')) {
+    errors.push(`${PAGE}: must not present the unwired feed as a successful empty query`);
   }
   return errors;
 }
@@ -62,7 +66,7 @@ function selftest() {
     <ParityTable
       storageKey="profitability-by-customer"
       tableTestId="profitability-by-customer-table"
-      emptyText="No data loaded"
+      emptyText="Profitability feed is not connected; no figures are available for this view."
     />
   `;
   const bad = `
