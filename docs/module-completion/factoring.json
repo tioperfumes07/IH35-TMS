@@ -100,8 +100,8 @@
         "VERIFY-6"
       ],
       "spec": "ReserveDashboard \u00b7 FACT-kpi-vs-profile",
-      "status": "OPEN",
-      "evidence": "scaffold \u2014 dual-path FAIL retained; reserve movement density UNVERIFIED",
+      "status": "PASS",
+      "evidence": "ReserveDashboard need-company + ListErrorBanner + honest empty; verify-fact-s04-reserves-surface.mjs; Rule 19 no CoA reserve mutations",
       "pr": null,
       "prod_verified": false
     },
@@ -150,9 +150,9 @@
       "prod_verified": false
     }
   ],
-  "pass_count": 4,
+  "pass_count": 5,
   "total_count": 10,
-  "progress": "4 of 10",
+  "progress": "5 of 10",
   "live_scenario_probe": {
     "source": "scripts/scoreboard-from-live.mjs (live prod probes, TMS-native only)",
     "pass_count": 0,

@@ -16,6 +16,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { useToast } from "../../components/Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { ListErrorState } from "../../components/ListErrorState";
+import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useListState } from "../../components/list-state";
 import { formatDateUS } from "../../lib/formatDate";
@@ -224,7 +225,16 @@ export function ReserveDashboard() {
         title="Reserve Dashboard"
         subtitle="Reserve balances, release forecasts, and movement history by factor"
       />
+      {!companyId ? (
+        <div
+          className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-sm text-gray-700"
+          data-testid="factoring-reserves-need-company"
+        >
+          Select an operating company to view reserve balances (display only — no CoA reserve mutations).
+        </div>
+      ) : (
       <div className="space-y-3 rounded-sm border border-gray-200 bg-white p-4">
+      {balancesQuery.isError ? <ListErrorBanner onRetry={() => void balancesQuery.refetch()} /> : null}
       <div className="flex flex-wrap items-end gap-3">
         <div className="min-w-[240px]" data-testid="reserve-dashboard-factor-picker">
           <div className="text-xs uppercase tracking-wide text-gray-500">Factor Filter</div>
@@ -245,7 +255,7 @@ export function ReserveDashboard() {
         </div>
       </div>
 
-      <div className="grid gap-2 md:grid-cols-3">
+      <div className="grid gap-2 md:grid-cols-3" data-testid="factoring-reserves-kpi">
         {(balancesQuery.data ?? []).map((balance) => (
           <div key={balance.factor_id} className="rounded-sm border border-gray-200 p-3 text-sm">
             <div className="text-xs uppercase tracking-wide text-gray-500">{factorNameById.get(balance.factor_id) ?? balance.factor_id}</div>
@@ -255,7 +265,12 @@ export function ReserveDashboard() {
           </div>
         ))}
         {balancesListState.isEmpty ? (
-          <div className="rounded-sm border border-dashed border-gray-300 p-3 text-sm text-gray-500">No reserve balances found.</div>
+          <div
+            className="rounded-sm border border-dashed border-gray-300 p-3 text-sm text-gray-500"
+            data-testid="factoring-reserves-honest-empty"
+          >
+            No reserve balances found.
+          </div>
         ) : null}
       </div>
 
@@ -368,6 +383,7 @@ export function ReserveDashboard() {
         )}
       </div>
       </div>
+      )}
 
       {showAddFactorModal ? (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-3">
