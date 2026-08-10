@@ -1,12 +1,12 @@
 # Module completion — Factoring (FACT)
 
-**PROGRESS: 5 of 10** · complete: `false` · as_of: 2026-08-02 · live_sha: `—`
+**PROGRESS: 6 of 10** · complete: `false` · as_of: 2026-08-02 · live_sha: `—`
 
 | Status | Count |
 |---|---:|
-| PASS | 5 |
+| PASS | 6 |
 | HOLD | 0 |
-| OPEN | 5 |
+| OPEN | 4 |
 | FAIL | 0 |
 | UNVERIFIED | 0 |
 
@@ -19,7 +19,7 @@
 | `FACT-S02` | **PASS** | /factoring/submit submission queue wired and entity-scoped | SubmissionQueue need-company + ListErrorBanner + honest empty; verify-fact-s02-submit-surface.mjs | — |
 | `FACT-S03` | **PASS** | /factoring/batches batch wizard + detail drill-through | BatchWizard need-company + ListErrorBanner + honest empty; BatchDetail company-gated; verify-fact-s03-batches-surface.mjs | — |
 | `FACT-S04` | **PASS** | /factoring/reserves reserve dashboard economics honest | ReserveDashboard need-company + ListErrorBanner + honest empty; verify-fact-s04-reserves-surface.mjs; Rule 19 no CoA reserve mutations | — |
-| `FACT-S05` | **OPEN** | Duplicate factor vendor banner excludes self-pairs | scaffold — live proof: Faro Factoring ↔ Faro Factoring 100% similar false positive | — |
+| `FACT-S05` | **PASS** | Duplicate factor vendor banner excludes self-pairs | DuplicateVendorsBanner now excludes self-pairs: backend scan-duplicate-vendors.routes.ts excludes identical normalized vendor names (lower(a.vendor_name) <> lower(b.vendor_name)); frontend DuplicateVendorsBanner filters pairs where IDs or normalized names match; guard verify-fact-fix1-duplicate-vendors-banner updated with selftest. | #5336 |
 | `FACT-UNIT-01` | **OPEN** | Banking factor virtual register amount displays cents/100 correctly | scaffold — FAIL: banking.routes.ts:308 advance_amount_cents without /100 | — |
 | `FACT-VERIFY-01` | **OPEN** | Factoring module VERIFY-1..8 click-through TRANSP + USMCA | scaffold — not proven | — |
 
