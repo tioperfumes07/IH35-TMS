@@ -3,13 +3,13 @@
   "title": "Fuel — acceptance checklist",
   "complete": false,
   "as_of": "2026-08-10T05:50:00.000Z",
-  "live_sha": "a1a7b50",
+  "live_sha": null,
   "desktop_audit": null,
   "spec_sources": [
     "apps/frontend/src/routes/manifest.tsx",
     "apps/frontend/src/components/layout/sidebar-config.ts"
   ],
-  "note": "2026-08-10 USMCA-PV-STACK: FUEL-S01..S09 prod_verified:true (Neon lucia USMCA; fuel_transactions=0 honest). complete:false — scenario.fuel probe 0 TMS-native USMCA txns. healthz=a1a7b50.",
+  "note": "BASELINE created 2026-07-29. Until now this module had NO acceptance list, so \"completely built\" had no definition and no honest percentage could be shown. Every item starts OPEN because none has been verified — this is a scope statement, not a claim of failure. M grows when new surfaces or defects appear (Rule 21).",
   "items": [
     {
       "id": "FUEL-S01",
@@ -153,6 +153,11 @@
         "key": "scenario.fuel",
         "holds": false,
         "evidence": "0 fuel transaction(s) USMCA — honest pre-operational empty"
+      },
+      {
+        "key": "scenario.fuel",
+        "holds": false,
+        "evidence": "0 fuel transaction(s)"
       }
     ]
   }
