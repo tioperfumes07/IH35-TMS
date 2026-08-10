@@ -11,6 +11,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { EntityPicker } from "../../components/parity/EntityPicker";
+import { formatQueryErrorDetail } from "../../lib/tableError";
 
 export function AssignmentHistoryPage() {
   const { selectedCompanyId } = useCompanyContext();
@@ -117,8 +118,7 @@ export function AssignmentHistoryPage() {
       {historyQ.isError ? (
         <ListErrorState
           title="Couldn't load assignment history"
-          status={0}
-          message={(historyQ.error as Error)?.message}
+          {...formatQueryErrorDetail(historyQ.error)}
           onRetry={() => void historyQ.refetch()}
         />
       ) : (

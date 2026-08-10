@@ -33,6 +33,7 @@ import { join } from "node:path";
 const ROOT = process.cwd();
 const SERVICE = "apps/backend/src/dispatch/quick-assign.service.ts";
 const DRAWER = "apps/frontend/src/components/dispatch/LoadDetailDrawer.tsx";
+const PAGE = "apps/frontend/src/pages/dispatch/AssignmentHistoryPage.tsx";
 const LABEL = "verify-assignment-history-resolves-names";
 
 function stripComments(src) {
@@ -86,6 +87,20 @@ export function auditDrawer(raw) {
   return problems;
 }
 
+export function auditPage(raw) {
+  const problems = [];
+  if (!raw.includes("{...formatQueryErrorDetail(historyQ.error)}")) {
+    problems.push(`${PAGE}: query failure must use operator-safe error detail formatting.`);
+  }
+  if (/message=\{\(historyQ\.error\s+as\s+Error\)\?\.message\}/.test(raw)) {
+    problems.push(`${PAGE}: query failure must not display raw error.message.`);
+  }
+  if (!raw.includes("onRetry={() => void historyQ.refetch()}")) {
+    problems.push(`${PAGE}: query failure must remain retryable.`);
+  }
+  return problems;
+}
+
 if (process.argv.includes("--selftest")) {
   const goodSvc = `export async function getAssignmentHistory(u, c, l) {
   await assertCompanyMembership(client, u, c);
@@ -114,6 +129,9 @@ export async function other(){}`, 1],
 export async function other(){}`, 1],
     ["clean drawer", auditDrawer, `const prev = driverLabel(r.previous_driver_id, r.previous_driver_name);`, 0],
     ["drawer slices the uuid", auditDrawer, `const prev = String(r.previous_driver_id).slice(0, 8);`, 1],
+    ["safe retryable page error", auditPage, `{...formatQueryErrorDetail(historyQ.error)} onRetry={() => void historyQ.refetch()}`, 0],
+    ["raw page error", auditPage, `message={(historyQ.error as Error)?.message} onRetry={() => void historyQ.refetch()}`, 1],
+    ["page retry removed", auditPage, `{...formatQueryErrorDetail(historyQ.error)}`, 1],
   ];
   let bad = 0;
   for (const [name, fn, src, expect] of cases) {
@@ -129,6 +147,7 @@ export async function other(){}`, 1],
 const problems = [
   ...auditService(readFileSync(join(ROOT, SERVICE), "utf8")),
   ...auditDrawer(readFileSync(join(ROOT, DRAWER), "utf8")),
+  ...auditPage(readFileSync(join(ROOT, PAGE), "utf8")),
 ];
 if (problems.length) {
   console.error(`FAIL ${LABEL}:`);
