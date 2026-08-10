@@ -74,7 +74,7 @@ export function GeofenceReconciliationReport() {
   const findingColumns = useMemo<ParityColumn<Finding>[]>(
     () => [
       { key: "unit_id", label: "Unit", render: (f) => <EntityLink kind="unit" id={f.unit_id ?? undefined} label={f.unit_id ? entityLabel(null, f.unit_id, "Unit") : "—"} /> },
-      { key: "geofence_id", label: "Geofence", render: (f) => f.geofence_id ?? "—" },
+      { key: "geofence_id", label: "Geofence", render: (f) => entityLabel(null, f.geofence_id, "Geofence") },
       { key: "occurred_at", label: "Time", sortable: true, render: (f) => (f.occurred_at ? `${formatDateTimeUS(f.occurred_at)} CT` : "—") },
       {
         key: "resolved",
