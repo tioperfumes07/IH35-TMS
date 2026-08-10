@@ -379,28 +379,28 @@ export function SettlementDetailPage() {
             }}
           />
           {showFinalizeBlock ? (
-          <FinalizeBlock
-            checked={ackChecked}
-            pendingAcks={(debt.debt?.pending_ack_count ?? 0) > 0 || Boolean(settlement.has_pending_acks)}
-            staleDebt={debt.isStale}
-            onCheckedChange={(checked) => {
-              setAckChecked(checked);
-              if (!checked || !companyId) return;
-              void acknowledgeSettlement(settlementId, companyId)
-                .then(() => pushToast("Debt summary acknowledged", "success"))
-                .catch(() => pushToast("Failed to acknowledge settlement", "error"));
-            }}
-            onSaveDraft={() => pushToast("Draft persistence is not available yet", "info")}
-            onFinalize={() => {
-              if (!companyId) return;
-              void finalizeSettlement(settlementId, companyId)
-                .then(() => {
-                  pushToast("Settlement finalized", "success");
-                  void refreshSettlementViews();
-                })
-                .catch((error) => pushToast(userFacingApiError(error, "Finalize blocked"), "error"));
-            }}
-          />
+            <FinalizeBlock
+              checked={ackChecked}
+              pendingAcks={(debt.debt?.pending_ack_count ?? 0) > 0 || Boolean(settlement.has_pending_acks)}
+              staleDebt={debt.isStale}
+              onCheckedChange={(checked) => {
+                setAckChecked(checked);
+                if (!checked || !companyId) return;
+                void acknowledgeSettlement(settlementId, companyId)
+                  .then(() => pushToast("Debt summary acknowledged", "success"))
+                  .catch(() => pushToast("Failed to acknowledge settlement", "error"));
+              }}
+              onSaveDraft={() => pushToast("Draft persistence is not available yet", "info")}
+              onFinalize={() => {
+                if (!companyId) return;
+                void finalizeSettlement(settlementId, companyId)
+                  .then(() => {
+                    pushToast("Settlement finalized", "success");
+                    void refreshSettlementViews();
+                  })
+                  .catch((error) => pushToast(userFacingApiError(error, "Finalize blocked"), "error"));
+              }}
+            />
           ) : null}
           {companyId ? (
             <PayRunClosePanel
