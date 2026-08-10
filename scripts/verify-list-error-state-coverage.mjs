@@ -50,6 +50,7 @@ const REQUIRED_ERROR_STATE = [
   // Audit / alerts — honest isError -> ListErrorState (WAR-290 / WAR-291 regression ratchet).
   "apps/frontend/src/pages/audit/AuditEventsList.tsx",
   "apps/frontend/src/pages/alerts/DocumentAlertsPage.tsx",
+  "apps/frontend/src/pages/dispatch/PodReviewPage.tsx",
 ];
 
 function stripComments(src) {
