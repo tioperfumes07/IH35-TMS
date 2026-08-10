@@ -7,7 +7,6 @@ import { BackArrowHeader } from "../../components/layout/BackArrowHeader";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
-import { entityLabel } from "../../lib/entity-label";
 
 type VendorHistoryRow = Record<string, unknown>;
 

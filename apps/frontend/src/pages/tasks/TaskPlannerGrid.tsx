@@ -21,7 +21,6 @@ import { UniversalFilterBar, type FilterState } from "../../components/planner/U
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateUS } from "../../lib/formatDate";
-import { entityLabel } from "../../lib/entity-label";
 import { isOpenTaskStatus } from "./taskDisplay";
 
 const STATUS_COLORS: Record<TaskStatus, string> = {

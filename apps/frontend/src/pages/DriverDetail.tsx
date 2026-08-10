@@ -44,7 +44,6 @@ import { DriverWorkOrdersReverseSection } from "../components/maintenance/Driver
 import { Button } from "../components/Button";
 import { ListErrorState } from "../components/ListErrorState";
 import { EntityLink } from "../components/shared/EntityLink";
-import { entityLabel } from "../lib/entity-label";
 import { ParityTable, type ParityColumn } from "../components/parity/ParityTable";
 import { ReferenceSelect } from "../components/parity/ReferenceSelect";
 import { Combobox, type ComboboxOption } from "../components/Combobox";
