@@ -319,6 +319,28 @@ export function RecordExpenseForm({
         </div>
       </label>
 
+      <label className="text-xs font-semibold text-gray-700" htmlFor={fieldId("load")}>
+        Trip / Load {/(?:fuel|diesel|gas|roadside|ifta)/i.test(values.categoryLabel) ? "*" : "(optional)"}
+        <div className="mt-1">
+          <EntityPicker
+            kind="load"
+            operatingCompanyId={operatingCompanyId}
+            value={values.loadId || null}
+            onChange={(next) =>
+              setValues((prev) => ({
+                ...prev,
+                loadId: next ?? "",
+                loadLabel: next ?? "",
+              }))
+            }
+            placeholder="Search trip / load…"
+            dataField={fieldId("load")}
+            dataTestId={fieldId("load")}
+            allowClear
+          />
+        </div>
+      </label>
+
       <label className="text-xs font-semibold text-gray-700" htmlFor={fieldId("description")}>
         Description
         <input

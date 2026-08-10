@@ -14,6 +14,8 @@ export type RecordExpenseFormValues = {
   categoryQboId: string | null;
   unitId: string;
   unitLabel: string;
+  loadId: string;
+  loadLabel: string;
   paymentAccountId: string;
   paymentAccountLabel: string;
   billDate: string;
@@ -42,6 +44,7 @@ export function buildRecordExpenseMemo(values: RecordExpenseFormValues, linkage?
   if (values.description.trim()) parts.push(values.description.trim());
   if (values.categoryLabel) parts.push(`Category: ${values.categoryLabel}`);
   if (values.unitLabel) parts.push(`Unit: ${values.unitLabel}`);
+  if (values.loadLabel) parts.push(`Load: ${values.loadLabel}`);
   if (values.paymentAccountLabel) parts.push(`Paid from: ${values.paymentAccountLabel}`);
   if (values.paymentMethod) parts.push(`Payment: ${values.paymentMethod.toUpperCase()}`);
   return parts.join(" · ");
@@ -61,6 +64,9 @@ export async function submitRecordExpense(
   if (!values.categoryQboId && !values.categoryId) throw new Error("Category is required");
   if (!values.paymentAccountId) throw new Error("Payment account is required");
   if (!values.paymentMethod) throw new Error("Payment method is required");
+  // LV-EXP-NOLOAD: diesel/fuel/roadside expenses must link to a load for IFTA attribution and per-load cost.
+  const isFuelRoadside = /(?:fuel|diesel|gas|roadside|ifta)/i.test(values.categoryLabel);
+  if (isFuelRoadside && !values.loadId) throw new Error("Load / Trip is required for fuel, diesel, or roadside expenses");
   const cents = dollarsToCents(values.amount);
   if (cents <= 0) throw new Error("Amount must be greater than zero");
 
@@ -82,6 +88,7 @@ export async function submitRecordExpense(
     // HARD cross-module FKs (maintenance): only when linkage / picker supplies them — absent = unchanged.
     ...(linkage?.workOrderId ? { work_order_id: linkage.workOrderId } : {}),
     ...(resolvedUnitId ? { unit_id: resolvedUnitId } : {}),
+    ...(values.loadId ? { load_id: values.loadId } : {}),
     // FAIL-F2 class-B: always SUPPLIED, never omitted — an absent field is what left the merged writer inert.
     is_sample_data: values.isSampleData === true,
   });
@@ -106,6 +113,8 @@ export function initialRecordExpenseFormValues(): RecordExpenseFormValues {
     categoryQboId: null,
     unitId: "",
     unitLabel: "",
+    loadId: "",
+    loadLabel: "",
     paymentAccountId: "",
     paymentAccountLabel: "",
     billDate: companyToday(),
