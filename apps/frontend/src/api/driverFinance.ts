@@ -160,37 +160,55 @@ export function finalizeSettlement(id: string, companyId: string) {
   });
 }
 
-export function queueSettlementPayment(id: string) {
-  return apiRequest<{ settlement: Record<string, unknown> }>(`/api/v1/driver-pay/settlements/${id}/queue-payment`, {
-    method: "POST",
-  });
+// SETTLE-PAY-FE-COMPANY-ID — every driver-pay settlement mutation requires
+// `operating_company_id` as a query param (settlement-payment.routes parseCompanyQuery).
+// Omitting it 400s validation_error before the service runs — Jorge cannot Mark Paid / Queue.
+export function queueSettlementPayment(id: string, companyId: string) {
+  return apiRequest<{ settlement: Record<string, unknown> }>(
+    `/api/v1/driver-pay/settlements/${id}/queue-payment?${q(companyId)}`,
+    { method: "POST" }
+  );
 }
 
-export function markSettlementSent(id: string, bankReference: string) {
-  return apiRequest<{ settlement: Record<string, unknown> }>(`/api/v1/driver-pay/settlements/${id}/mark-sent`, {
-    method: "POST",
-    body: { bank_reference: bankReference },
-  });
+export function markSettlementSent(id: string, companyId: string, bankReference: string) {
+  return apiRequest<{ settlement: Record<string, unknown> }>(
+    `/api/v1/driver-pay/settlements/${id}/mark-sent?${q(companyId)}`,
+    {
+      method: "POST",
+      body: { bank_reference: bankReference },
+    }
+  );
 }
 
-export function markSettlementCleared(id: string) {
-  return apiRequest<{ settlement: Record<string, unknown> }>(`/api/v1/driver-pay/settlements/${id}/mark-cleared`, {
-    method: "POST",
-  });
+export function markSettlementCleared(id: string, companyId: string) {
+  return apiRequest<{ settlement: Record<string, unknown> }>(
+    `/api/v1/driver-pay/settlements/${id}/mark-cleared?${q(companyId)}`,
+    { method: "POST" }
+  );
 }
 
-export function markSettlementBounced(id: string, reason: string) {
-  return apiRequest<{ settlement: Record<string, unknown> }>(`/api/v1/driver-pay/settlements/${id}/mark-bounced`, {
-    method: "POST",
-    body: { reason },
-  });
+export function markSettlementBounced(id: string, companyId: string, reason: string) {
+  return apiRequest<{ settlement: Record<string, unknown> }>(
+    `/api/v1/driver-pay/settlements/${id}/mark-bounced?${q(companyId)}`,
+    {
+      method: "POST",
+      body: { reason },
+    }
+  );
 }
 
-export function markSettlementPaidManually(id: string, payload: { payment_method: string; reference?: string }) {
-  return apiRequest<{ settlement: Record<string, unknown> }>(`/api/v1/driver-pay/settlements/${id}/mark-paid-manually`, {
-    method: "POST",
-    body: payload,
-  });
+export function markSettlementPaidManually(
+  id: string,
+  companyId: string,
+  payload: { payment_method: string; reference?: string }
+) {
+  return apiRequest<{ settlement: Record<string, unknown> }>(
+    `/api/v1/driver-pay/settlements/${id}/mark-paid-manually?${q(companyId)}`,
+    {
+      method: "POST",
+      body: payload,
+    }
+  );
 }
 
 export function getSettlementPaymentEvents(id: string, companyId: string) {

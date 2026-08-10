@@ -425,22 +425,24 @@ export function SettlementDetailPage() {
                     <button
                       type="button"
                       className="rounded-sm bg-[#1F2A44] px-2 py-1 text-xs text-white"
-                      onClick={() =>
-                        void queueSettlementPayment(settlementId)
+                      onClick={() => {
+                        if (!companyId) return;
+                        void queueSettlementPayment(settlementId, companyId)
                           .then(() => {
                             pushToast("Settlement payment queued", "success");
                             void refreshSettlementViews();
                           })
-                          .catch((error) => pushToast(userFacingApiError(error, "Queue failed"), "error"))
-                      }
+                          .catch((error) => pushToast(userFacingApiError(error, "Queue failed"), "error"));
+                      }}
                     >
                       Queue Payment
                     </button>
                     <button
                       type="button"
                       className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
-                      onClick={() =>
-                        void markSettlementPaidManually(settlementId, {
+                      onClick={() => {
+                        if (!companyId) return;
+                        void markSettlementPaidManually(settlementId, companyId, {
                           payment_method: manualPaymentMethod,
                           reference: manualReference || undefined,
                         })
@@ -448,8 +450,8 @@ export function SettlementDetailPage() {
                             pushToast("Marked paid manually", "success");
                             void refreshSettlementViews();
                           })
-                          .catch((error) => pushToast(userFacingApiError(error, "Mark manual failed"), "error"))
-                      }
+                          .catch((error) => pushToast(userFacingApiError(error, "Mark manual failed"), "error"));
+                      }}
                     >
                       Mark Paid Manually
                     </button>
@@ -468,14 +470,15 @@ export function SettlementDetailPage() {
                     <button
                       type="button"
                       className="rounded-sm bg-[#1F2A44] px-2 py-1 text-xs text-white"
-                      onClick={() =>
-                        void markSettlementSent(settlementId, bankReference || "manual-bank-reference")
+                      onClick={() => {
+                        if (!companyId) return;
+                        void markSettlementSent(settlementId, companyId, bankReference || "manual-bank-reference")
                           .then(() => {
                             pushToast("Marked sent to bank", "success");
                             void refreshSettlementViews();
                           })
-                          .catch((error) => pushToast(userFacingApiError(error, "Mark sent failed"), "error"))
-                      }
+                          .catch((error) => pushToast(userFacingApiError(error, "Mark sent failed"), "error"));
+                      }}
                     >
                       Mark Sent to Bank
                     </button>
@@ -488,14 +491,15 @@ export function SettlementDetailPage() {
                       <button
                         type="button"
                         className="rounded-sm bg-slate-600 px-2 py-1 text-xs text-white"
-                        onClick={() =>
-                          void markSettlementCleared(settlementId)
+                        onClick={() => {
+                          if (!companyId) return;
+                          void markSettlementCleared(settlementId, companyId)
                             .then(() => {
                               pushToast("Marked cleared", "success");
                               void refreshSettlementViews();
                             })
-                            .catch((error) => pushToast(userFacingApiError(error, "Mark cleared failed"), "error"))
-                        }
+                            .catch((error) => pushToast(userFacingApiError(error, "Mark cleared failed"), "error"));
+                        }}
                       >
                         Mark Cleared
                       </button>
@@ -509,14 +513,15 @@ export function SettlementDetailPage() {
                     <button
                       type="button"
                       className="rounded-sm border border-red-300 px-2 py-1 text-xs text-red-700"
-                      onClick={() =>
-                        void markSettlementBounced(settlementId, bounceReason || "Bank return")
+                      onClick={() => {
+                        if (!companyId) return;
+                        void markSettlementBounced(settlementId, companyId, bounceReason || "Bank return")
                           .then(() => {
                             pushToast("Marked bounced", "success");
                             void refreshSettlementViews();
                           })
-                          .catch((error) => pushToast(userFacingApiError(error, "Mark bounced failed"), "error"))
-                      }
+                          .catch((error) => pushToast(userFacingApiError(error, "Mark bounced failed"), "error"));
+                      }}
                     >
                       Mark Bounced
                     </button>
@@ -543,22 +548,24 @@ export function SettlementDetailPage() {
                     <button
                       type="button"
                       className="rounded-sm bg-[#1F2A44] px-2 py-1 text-xs text-white"
-                      onClick={() =>
-                        void queueSettlementPayment(settlementId)
+                      onClick={() => {
+                        if (!companyId) return;
+                        void queueSettlementPayment(settlementId, companyId)
                           .then(() => {
                             pushToast("Retry queued", "success");
                             void refreshSettlementViews();
                           })
-                          .catch((error) => pushToast(userFacingApiError(error, "Retry failed"), "error"))
-                      }
+                          .catch((error) => pushToast(userFacingApiError(error, "Retry failed"), "error"));
+                      }}
                     >
                       Retry
                     </button>
                     <button
                       type="button"
                       className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
-                      onClick={() =>
-                        void markSettlementPaidManually(settlementId, {
+                      onClick={() => {
+                        if (!companyId) return;
+                        void markSettlementPaidManually(settlementId, companyId, {
                           payment_method: manualPaymentMethod,
                           reference: manualReference || undefined,
                         })
@@ -566,8 +573,8 @@ export function SettlementDetailPage() {
                             pushToast("Marked paid manually", "success");
                             void refreshSettlementViews();
                           })
-                          .catch((error) => pushToast(userFacingApiError(error, "Mark manual failed"), "error"))
-                      }
+                          .catch((error) => pushToast(userFacingApiError(error, "Mark manual failed"), "error"));
+                      }}
                     >
                       Mark Paid Manually
                     </button>
