@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { createFactor } from "../../api/factoring";
 import { Button } from "../../components/Button";
+import { Modal } from "../../components/Modal";
 import { useToast } from "../../components/Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
 
@@ -50,10 +51,8 @@ export function ReserveDashboardAddFactorModal({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-3">
-      <div className="w-full max-w-md rounded-sm border border-gray-200 bg-white p-4 shadow-xl">
-        <div className="mb-3 text-sm font-semibold text-gray-900">Add Factor</div>
-        <div className="space-y-2 text-xs">
+    <Modal open={open} onClose={onClose} title="Add Factor">
+      <div className="space-y-2 text-xs">
           <label className="block">
             <div className="mb-1">Name</div>
             <input
@@ -113,7 +112,6 @@ export function ReserveDashboardAddFactorModal({
             Save
           </Button>
         </div>
-      </div>
-    </div>
+    </Modal>
   );
 }
