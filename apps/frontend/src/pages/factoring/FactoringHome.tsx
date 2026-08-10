@@ -33,6 +33,7 @@ import {
 } from "../../api/data-infra";
 import { Button } from "../../components/Button";
 import { ListErrorState } from "../../components/ListErrorState";
+import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { formatQueryErrorDetail } from "../../lib/tableError";
 import { formatDateUS } from "../../lib/formatDate";
@@ -281,6 +282,20 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
   );
   const canDeactivate = user?.role === "Owner";
 
+  if (!companyId) {
+    return (
+      <div className="space-y-3">
+        <PageHeader title="Factoring" subtitle="Deep-dive workspace for recourse pipeline, chargebacks, fees, and settings" />
+        <div
+          className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-sm text-gray-700"
+          data-testid="factoring-home-need-company"
+        >
+          Select an operating company to view factoring KPIs and the active factor profile.
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-3">
       <PageHeader
@@ -307,9 +322,13 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
         }
       />
 
-      {companyId ? <DuplicateVendorsBanner companyId={companyId} /> : null}
+      {summaryQuery.isError ? (
+        <ListErrorBanner onRetry={() => void summaryQuery.refetch()} />
+      ) : null}
 
-      <div className="grid gap-2 md:grid-cols-4">
+      <DuplicateVendorsBanner companyId={companyId} />
+
+      <div className="grid gap-2 md:grid-cols-4" data-testid="factoring-home-kpi-row">
         <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm">
           <div className="text-xs uppercase tracking-wide text-gray-500">Active Factor</div>
           <div className="mt-1 font-semibold text-gray-900">{summary?.active_factor_name ?? "Not configured"}</div>
