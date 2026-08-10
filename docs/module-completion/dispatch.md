@@ -1,12 +1,12 @@
 # Module completion — Dispatch — acceptance checklist
 
-**PROGRESS: 32 of 37** · complete: `false` · as_of: 2026-08-09T01:52:04.159Z · live_sha: `—`
+**PROGRESS: 33 of 37** · complete: `false` · as_of: 2026-08-09T01:52:04.159Z · live_sha: `—`
 
 | Status | Count |
 |---|---:|
-| PASS | 32 |
+| PASS | 33 |
 | HOLD | 0 |
-| OPEN | 5 |
+| OPEN | 4 |
 | FAIL | 0 |
 | UNVERIFIED | 0 |
 
@@ -33,7 +33,7 @@
 | `DISP-S19` | **PASS** | Surface /dispatch/layovers/driver/:driverId renders, is entity-scoped, and shows an honest empty state | PASS 2026-08-09 — apps/frontend/src/pages/drivers/DriverLayoverHistoryPage.tsx renders the driver's name in the header, entity-scopes via operating_company_id (DriverLayoverHistory's fetch includes operating_company_id + driver in the query string), and honestly names 3 empty/blocked states: no company selected, no driver in the route, and (inside ParityTable) "No layovers detected in this period." for a real zero-row result — never a bare number or silent blank. Fetch failure shows ListErrorState with retry. Regression test: DriverLayoverHistoryPage.test.tsx (4 tests, all green) covers render+scope, honest-zero, no-driver, and honest-error. / NOT YET VERIFIED — status stays OPEN. Page component: apps/frontend/src/pages/drivers/DriverLayoverHistoryPage.tsx (resolved from routes/manifest.tsx, local wrappers followed). PASS REQUIRES, on TRANSP + TRK + USMCA: (1) the route renders without error or blank frame; (2) every data call it fires carries operating_company_id for the active entity and returns 2xx; (3) when the backing table has no rows for that entity the surface shows an HONEST EMPTY STATE — named, explaining what would populate it — never a silent blank, a spinner that never resolves, a zero presented as a fact, or a swallowed error. Row density is NOT required and NOT sufficient. Prior bar and why it changed: see the module note and docs/trackers/DISP-MAINT-SURFACE-SWEEP-BLOCKED-ON-DATA-2026-07-31.md. | — |
 | `DISP-S20` | **PASS** | Surface /dispatch/loads renders, is entity-scoped, and shows an honest empty state | PASS 2026-08-09 — /dispatch/loads board list — live USMCA loads exist; entity-scoped useLoadsList. | — |
 | `DISP-S21` | **PASS** | Surface /dispatch/loads/:id renders, is entity-scoped, and shows an honest empty state | PASS 2026-08-09 — /dispatch/loads/:id detail — live drill on rescued loads; EntityLinks. | — |
-| `DISP-S22` | **OPEN** | Surface /dispatch/loads/:id/banking renders, is entity-scoped, and shows an honest empty state | NOT YET VERIFIED — status stays OPEN. Page component: apps/frontend/src/pages/dispatch/LoadBankingLinkagePage.tsx (resolved from routes/manifest.tsx, local wrappers followed). PASS REQUIRES, on TRANSP + TRK + USMCA: (1) the route renders without error or blank frame; (2) every data call it fires carries operating_company_id for the active entity and returns 2xx; (3) when the backing table has no rows for that entity the surface shows an HONEST EMPTY STATE — named, explaining what would populate it — never a silent blank, a spinner that never resolves, a zero presented as a fact, or a swallowed error. Row density is NOT required and NOT sufficient. Prior bar and why it changed: see the module note and docs/trackers/DISP-MAINT-SURFACE-SWEEP-BLOCKED-ON-DATA-2026-07-31.md. | — |
+| `DISP-S22` | **PASS** | Surface /dispatch/loads/:id/banking renders, is entity-scoped, and shows an honest empty state | PASS 2026-08-09 — apps/frontend/src/pages/dispatch/LoadBankingLinkagePage.tsx renders header + LinkedBankTransactionsPanel; the linkage fetch (getBankTransactionsByLinkage) carries operating_company_id + load_id and is gated enabled: Boolean(companyId && linkage.id). Honest empty state is already named: "No bank transactions tagged to this load yet. Tagging happens on Banking → Transactions → Categorize (persisted links only)." shown only after a successful zero-row response (never on pending/failed fetch); fetch failure shows an error banner with Refresh. Regression test: LoadBankFeedLinkagePage.test.tsx (3 tests, all green) covers entity-scoped fetch, honest-zero, and honest-error. | — |
 | `DISP-S23` | **PASS** | Surface /dispatch/map renders, is entity-scoped, and shows an honest empty state | PASS 2026-08-09 — MapView company-gated Samsara positions; need-company + positions honest empty + map-not-configured honest empty (no fake pins); ListErrorBanner; guard scripts/verify-disp-s23-map-surface.mjs --selftest exit 0. | — |
 | `DISP-S24` | **PASS** | Surface /dispatch/notify-preferences renders, is entity-scoped, and shows an honest empty state | PASS 2026-08-09 — NotifyPreferencesPage ParityTable settled empty; verify-list-empty-settled. | — |
 | `DISP-S25` | **PASS** | Surface /dispatch/ocr-queue renders, is entity-scoped, and shows an honest empty state | PASS 2026-08-09 — OcrQueuePage ParityTable settled empty; verify-list-empty-settled. | — |

@@ -4,9 +4,9 @@ import { Link } from "react-router-dom";
 import { apiRequest } from "../../../api/client";
 import { PageHeader } from "../../../components/layout/PageHeader";
 import { ActionButton } from "../../../components/shared/ActionButton";
+import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { useToast } from "../../../components/Toast";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
-import { ListErrorState } from "../../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 
 type FraudAlertRow = {
@@ -139,6 +139,17 @@ export function FraudAlertsListPage() {
     [investigateMut, confirmMut, dismissMut],
   );
 
+  if (!companyId) {
+    return (
+      <div className="space-y-3 p-4">
+        <PageHeader title="Fuel fraud alerts" subtitle="CAP-11 real-time fuel card fraud monitoring" />
+        <div className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-sm text-gray-700">
+          Select an operating company to view fraud alerts.
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-3">
       <PageHeader
@@ -165,7 +176,7 @@ export function FraudAlertsListPage() {
       </div>
 
       {alertsQuery.isError ? (
-        <ListErrorState title="Couldn't load fraud alerts" status={0} message={(alertsQuery.error as Error)?.message} onRetry={() => void alertsQuery.refetch()} />
+        <ListErrorBanner onRetry={() => void alertsQuery.refetch()} />
       ) : (
         <ParityTable
           rows={rows}
