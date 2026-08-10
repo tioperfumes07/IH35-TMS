@@ -93,13 +93,13 @@
       ],
       "spec": "EVERY-PR-AUDIT-CHECKLIST.md",
       "status": "PASS",
-      "evidence": "PROD-VERIFIED PARTIAL 2026-08-10 Cascade CDP 9225: USMCA /users rendered 15 rows and KPI 15/4/7/4; Laura Munoz Change Role displayed Required approver plus distinct-approver policy copy, with Submit disabled until selection; dialog cancelled without mutation. TRANSP showed the same global Owner directory by design because the Owner fallback spans accessible active companies. Disclosed residual: deeper Admin/Manager/Dispatcher permission matrix was not exercised.",
-      "pr": "PENDING",
+      "evidence": "PROD-VERIFIED PARTIAL 2026-08-10 Cascade CDP 9225 (OUTBOX lines 3686-3687): USMCA /users 15 rows KPI 15/4/7/4; Laura Munoz Change Role showed Required approver + distinct-approver copy; Submit disabled until selection; cancelled without mutation. TRANSP same global Owner directory BY DESIGN (Owner → user_accessible_company_ids all active companies; FE list omits operating_company_id). Residual disclosed: deeper Admin/Manager/Dispatcher permission matrix not exercised.",
+      "pr": null,
       "prod_verified": true
     }
   ],
   "pass_count": 6,
   "total_count": 6,
   "progress": "6 of 6",
-  "note": " | 2026-08-10 USER-CERTIFIED-NEON: S01–S05 pv refreshed with denser lucia counts and PR refs; USER-VERIFY-01 promoted from Cascade PARTIAL live-click proof with non-Owner role matrix disclosed. complete:true."
+  "note": " | 2026-08-10 USER-CERTIFIED-NEON: S01–S05 Neon lucia pv + PR refs; USER-VERIFY-01 PASS PARTIAL from Cascade CDP click notes; complete:true (6/6). Residual: non-Owner role matrix."
 }
