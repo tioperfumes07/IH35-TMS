@@ -27,6 +27,12 @@ const loadExists = { match: /SELECT \* FROM mdata\.loads WHERE id/, rows: [{ id:
 const noSettlement = { match: /FROM driver_finance\.driver_settlements/, rows: [] as Row[] };
 const noInvoice = { match: /FROM accounting\.invoices/, rows: [] as Row[] };
 const noBill = { match: /FROM driver_finance\.driver_bills/, rows: [] as Row[] };
+// DRV-BILL-SKIP-PATHS re-entry read (ensureDriverBillArtifactsForLoad) — no driver/team seated, so it
+// short-circuits to `not_applicable` without any further stops/advisory-lock/bill queries.
+const driverBillReentryNoDriver = {
+  match: /requires_tarps, miles_shortest, miles_practical/,
+  rows: [{ id: LOAD_ID, operating_company_id: OCI, assigned_primary_driver_id: null, team_id: null }],
+};
 
 describe("updateDispatchLoad — money/evidence guards", () => {
   it("throws LoadNotFoundError when the load does not exist", async () => {
@@ -85,6 +91,7 @@ describe("updateDispatchLoad — rate re-sync", () => {
       { match: /SELECT id::text, sequence_number FROM mdata\.load_stops/, rows: [] as Row[] },
       { match: /SELECT id::text FROM mdata\.load_stops WHERE load_id/, rows: [] as Row[] },
       { match: /SELECT \* FROM mdata\.load_stops WHERE load_id/, rows: [] as Row[] },
+      driverBillReentryNoDriver,
     ]);
 
     await updateDispatchLoad(client, {
@@ -112,6 +119,7 @@ describe("updateDispatchLoad — rate re-sync", () => {
       { match: /SELECT id::text, sequence_number FROM mdata\.load_stops/, rows: [] as Row[] },
       { match: /SELECT id::text FROM mdata\.load_stops WHERE load_id/, rows: [] as Row[] },
       { match: /SELECT \* FROM mdata\.load_stops WHERE load_id/, rows: [] as Row[] },
+      driverBillReentryNoDriver,
     ]);
 
     await updateDispatchLoad(client, {
@@ -145,6 +153,7 @@ describe("updateDispatchLoad — evidence-safe stops replace", () => {
       ] },
       { match: /SELECT id::text FROM mdata\.load_stops WHERE load_id = \$1::uuid AND sequence_number > /, rows: [{ id: "st3" }] },
       { match: /SELECT \* FROM mdata\.load_stops WHERE load_id/, rows: [] },
+      driverBillReentryNoDriver,
     ]);
 
     await updateDispatchLoad(client, {
