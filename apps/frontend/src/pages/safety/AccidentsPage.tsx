@@ -116,8 +116,8 @@ export function AccidentsPage({ operatingCompanyId }: Props) {
   // action are preserved verbatim (§7 additive-only).
   const columns: Array<ParityColumn<AccidentRow>> = [
     { key: "accident_at", label: "Date", sortable: true, render: (row) => formatDateUS(row.accident_at) },
-    { key: "driver_id", label: "Driver", render: (row) => <EntityLink kind="driver" id={row.driver_id as string | undefined} label={entityLabel((row.driver_name as string | undefined)?.trim(), row.driver_id as string | undefined, "Driver")} /> },
-    { key: "unit_id", label: "Unit", render: (row) => <EntityLink kind="unit" id={row.unit_id as string | undefined} label={entityLabel((row.unit_number as string | undefined)?.trim(), row.unit_id as string | undefined, "Unit")} /> },
+    { key: "driver_id", label: "Driver", render: (row) => <EntityLink kind="driver" id={row.driver_id as string | undefined} label={(row.driver_name as string | undefined)?.trim() || "Driver"} /> },
+    { key: "unit_id", label: "Unit", render: (row) => <EntityLink kind="unit" id={row.unit_id as string | undefined} label={(row.unit_number as string | undefined)?.trim() || "Unit"} /> },
     // SAF-B25: the load leg of the accident. safety.accident_reports.load_id has FKed mdata.loads
     // since the table existed and appeared on no list and in no join, so an accident could not be
     // read against the trip it happened on — the link an insurer, attorney or claims adjuster asks
