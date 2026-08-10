@@ -1,11 +1,13 @@
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { ListErrorState } from "../../components/ListErrorState";
 import { FinanceModuleTabs } from "./FinanceModuleTabs";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useFeatureFlag } from "../../hooks/useFeatureFlag";
 import { FINANCE_HUB_UI_FLAG, getFinanceHubOverview, type FinanceHubKpi } from "../../api/financeHub";
 import { formatUsdCents } from "../../lib/money";
+import { formatQueryErrorDetail } from "../../lib/tableError";
 
 // AF-6 — Finance Hub landing dashboard.
 // READ-ONLY: a single GET aggregates headline KPIs from the existing read-only finance/accounting
@@ -110,7 +112,13 @@ export function FinanceHubPage() {
       {!companyId ? <p className="mb-3 text-sm text-red-600">Select an operating company.</p> : null}
 
       {overviewQuery.isLoading ? <p className="text-sm text-slate-500">Loading…</p> : null}
-      {overviewQuery.isError ? <p className="text-sm text-red-600">Could not load the Finance Hub overview.</p> : null}
+      {overviewQuery.isError ? (
+        <ListErrorState
+          title="Couldn't load Finance Hub overview"
+          {...formatQueryErrorDetail(overviewQuery.error)}
+          onRetry={() => void overviewQuery.refetch()}
+        />
+      ) : null}
 
       {overviewQuery.data ? (
         <>
