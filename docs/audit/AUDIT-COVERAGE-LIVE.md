@@ -68,15 +68,15 @@ amount+date (or stronger) matches > 0 with the discriminator applied, **or** (2)
 
 | Metric | Value | As of |
 |---|---|---|
-| Modules certified full-PASS (all 5 layers, TRANSP) | **0 / 30** | 2026-08-06 |
-| Modules with a confirmed live defect (non-superseded FAIL) | **15 / 30** | 2026-08-06 |
-| Cells covered (any active row · module×layer) per entity | TRANSP **150 / 150** · TRK **147 / 150** · USMCA **150 / 150** | 2026-08-06 |
-| Cells PASS (active PASS, no active FAIL · module×layer) per entity | TRANSP **65 / 150** · TRK **9 / 150** · USMCA **63 / 150** | 2026-08-06 |
-| Rows in this file | **691** | 2026-08-06 |
-| Rows `FAIL` + `OPEN` | **15** | 2026-08-06 |
-| Rows `Owner-gate? = YES` (blocked on a decision) | **12** | 2026-08-06 |
-| Rows `VERIFIED` by GUARD | **2** | 2026-08-06 |
-| Verdict tally (all rows) | FAIL=71 · PASS=196 · N/A=218 · UNVERIFIED=12 · SUPERSEDED=7 · OTHER=187 | 2026-08-06 |
+| Modules certified full-PASS (all 5 layers, TRANSP) | **0 / 30** | 2026-08-10 |
+| Modules with a confirmed live defect (non-superseded FAIL) | **15 / 30** | 2026-08-10 |
+| Cells covered (any active row · module×layer) per entity | TRANSP **150 / 150** · TRK **147 / 150** · USMCA **150 / 150** | 2026-08-10 |
+| Cells PASS (active PASS, no active FAIL · module×layer) per entity | TRANSP **65 / 150** · TRK **9 / 150** · USMCA **63 / 150** | 2026-08-10 |
+| Rows in this file | **691** | 2026-08-10 |
+| Rows `FAIL` + `OPEN` | **14** | 2026-08-10 |
+| Rows `Owner-gate? = YES` (blocked on a decision) | **12** | 2026-08-10 |
+| Rows `VERIFIED` by GUARD | **2** | 2026-08-10 |
+| Verdict tally (all rows) | FAIL=71 · PASS=196 · N/A=218 · UNVERIFIED=12 · SUPERSEDED=7 · OTHER=187 | 2026-08-10 |
 
 Deployed SHA at establishment: `45f7c28047` (== `origin/main`, `/api/v1/healthz/shallow` → `45f7c28`).
 
