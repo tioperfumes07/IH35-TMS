@@ -1,12 +1,12 @@
 # Module completion — Compliance — acceptance checklist
 
-**PROGRESS: 5 of 9** · complete: `false` · as_of: 2026-07-29 · live_sha: `—`
+**PROGRESS: 6 of 9** · complete: `false` · as_of: 2026-07-29 · live_sha: `—`
 
 | Status | Count |
 |---|---:|
-| PASS | 5 |
+| PASS | 6 |
 | HOLD | 0 |
-| OPEN | 4 |
+| OPEN | 3 |
 | FAIL | 0 |
 | UNVERIFIED | 0 |
 
@@ -17,7 +17,7 @@
 | `COMP-S03` | **PASS** | Surface /compliance/property-tax/:id renders real entity-scoped data with no dead end | Route /compliance/property-tax/:id registered as ProtectedRoute wrapping PropertyTaxRenditionPage; page renders RenditionDetailView when :id present; detail view fetches /api/v1/property-tax/renditions/:id and /api/v1/property-tax/candidate-assets with operating_company_id; query errors now surface ListErrorBanner with retry; loading and not-found honest states present; status, assessed-tax, extension, and asset-line mutations scoped to selected company; basis lines table with honest empty state. | #5324 |
 | `COMP-T01` | **PASS** | Tab "Overview" opens and renders real entity-scoped data | Tab "Overview" in ComplianceDashboardPage renders when tab=overview; page guards missing operating company with honest empty state; overview queries (compliance-summary, compliance-dashboard, compliance-rules, compliance-log) all scoped by operating_company_id; query errors now surface ListErrorBanner with retry; summary cards, credentials table, notification rules panel, and notification log panel render entity-scoped data with export CSV wired to filtered rows. | #5326 |
 | `COMP-T02` | **PASS** | Tab "HOS Tracker" opens and renders real entity-scoped data | Tab "HOS Tracker" renders HosTrackerSection inside ComplianceDashboardPage when tab=hos_tracker; parent page guards missing operating company; section fetches /api/v1/hos/daily-roster via getHosDailyRoster with operating_company_id and selected date; query errors now surface ListErrorBanner with retry; KPI row, 8-day date strip, and ParityTable render entity-scoped driver roster with row click opening per-driver cycle drawer; honest empty state when no active drivers. | #5328 |
-| `COMP-T03` | **OPEN** | Tab "HOS Viewer" opens and renders real entity-scoped data | NOT YET VERIFIED. This tab EXISTS — it was observed on the rendered tab strip on prod 2026-07-29 — but only the module's landing tab was opened and checked. To reach PASS this tab must be opened in BOTH TRANSP and USMCA and shown to render real entity-scoped data, with an honest empty state where there is none. | — |
+| `COMP-T03` | **PASS** | Tab "HOS Viewer" opens and renders real entity-scoped data | Tab "HOS Viewer" renders HosViewerSection inside ComplianceDashboardPage when tab=hos_viewer; parent page guards missing operating company; section fetches roster via getHosDailyRoster and daily ELD log via getHosDaily with operating_company_id, selected date, and driver; query errors now surface ListErrorBanner with retry; EntityPicker (driver) and DatePicker/8-day strip wired; daily log renders remaining clocks, duty-segment ParityTable, per-status totals, and honest empty state when no ELD data. | #5330 |
 | `COMP-T04` | **OPEN** | Tab "Violations" opens and renders real entity-scoped data | NOT YET VERIFIED. This tab EXISTS — it was observed on the rendered tab strip on prod 2026-07-29 — but only the module's landing tab was opened and checked. To reach PASS this tab must be opened in BOTH TRANSP and USMCA and shown to render real entity-scoped data, with an honest empty state where there is none. | — |
 | `COMP-T05` | **OPEN** | Tab "HOS History" opens and renders real entity-scoped data | NOT YET VERIFIED. This tab EXISTS — it was observed on the rendered tab strip on prod 2026-07-29 — but only the module's landing tab was opened and checked. To reach PASS this tab must be opened in BOTH TRANSP and USMCA and shown to render real entity-scoped data, with an honest empty state where there is none. | — |
 | `COMP-T06` | **OPEN** | Tab "Required Documents" opens and renders real entity-scoped data | NOT YET VERIFIED. This tab EXISTS — it was observed on the rendered tab strip on prod 2026-07-29 — but only the module's landing tab was opened and checked. To reach PASS this tab must be opened in BOTH TRANSP and USMCA and shown to render real entity-scoped data, with an honest empty state where there is none. | — |

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { DatePicker } from "../../components/forms/DatePicker";
-import { ListErrorState } from "../../components/ListErrorState";
+import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { EntityPicker } from "../../components/parity/EntityPicker";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import {
@@ -170,6 +170,17 @@ export function HosViewerSection({ operatingCompanyId }: { operatingCompanyId: s
         </div>
       </div>
 
+      {(rosterQ.isError || dailyQ.isError) && (
+        <div className="mt-3">
+          <ListErrorBanner
+            onRetry={() => {
+              void rosterQ.refetch();
+              void dailyQ.refetch();
+            }}
+          />
+        </div>
+      )}
+
       {/* Body */}
       <div className="mt-3">
         {!driverId ? (
@@ -179,13 +190,6 @@ export function HosViewerSection({ operatingCompanyId }: { operatingCompanyId: s
           </div>
         ) : dailyQ.isLoading ? (
           <div className="space-y-1">{[0, 1, 2, 3, 4].map((i) => <div key={i} className="h-[26px] animate-pulse rounded-sm bg-slate-100" />)}</div>
-        ) : dailyQ.isError ? (
-          <ListErrorState
-            title={`Couldn't load the ELD log for ${selectedName}.`}
-            status={0}
-            message={(dailyQ.error as Error)?.message}
-            onRetry={() => void dailyQ.refetch()}
-          />
         ) : !daily || daily.available === false || (daily.segments?.length ?? 0) === 0 ? (
           <div className="rounded-sm border border-slate-200 bg-white px-4 py-12 text-center">
             <div className="text-sm font-semibold text-slate-700">No ELD data</div>
