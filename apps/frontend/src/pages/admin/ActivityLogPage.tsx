@@ -5,15 +5,14 @@ import { useAuth } from "../../auth/useAuth";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { DateTimePicker } from "../../components/forms/DateTimePicker";
 import { ListErrorState } from "../../components/ListErrorState";
+import { entityLabel } from "../../lib/entity-label";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
 function formatEntity(row: AdminActivityItem): string {
-  const type = row.entity_type?.trim();
+  const type = row.entity_type?.trim() ?? "Record";
   const id = row.entity_id?.trim();
-  if (type && id) return `${type} · ${id}`;
-  if (type) return type;
-  if (id) return id;
-  return "—";
+  if (!id) return type || "—";
+  return `${type} · ${entityLabel(null, id, type) ?? id}`;
 }
 
 const COLUMNS: Array<ParityColumn<AdminActivityItem>> = [
@@ -31,7 +30,7 @@ const COLUMNS: Array<ParityColumn<AdminActivityItem>> = [
     label: "Actor",
     sortable: true,
     sortValue: (row) => row.actor_email ?? row.actor_user_id ?? "",
-    render: (row) => <span className="text-gray-800">{row.actor_email ?? row.actor_user_id ?? "—"}</span>,
+    render: (row) => <span className="text-gray-800">{entityLabel(row.actor_email, row.actor_user_id, "User") ?? "—"}</span>,
   },
   {
     key: "action",

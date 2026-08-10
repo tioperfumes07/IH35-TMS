@@ -399,7 +399,7 @@ export function UserDetailPage() {
                     </div>
                     {event.voided_at ? (
                       <div className="font-semibold">
-                        VOIDED on {formatDateTimeUS(event.voided_at)} by {event.voided_by_user_email ?? event.voided_by_user_id}:{" "}
+                        VOIDED on {formatDateTimeUS(event.voided_at)} by {entityLabel(event.voided_by_user_email, event.voided_by_user_id, "User")}:{" "}
                         {event.void_reason}
                       </div>
                     ) : null}

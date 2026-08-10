@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "../Button";
 import { Modal } from "../Modal";
+import { entityLabel } from "../../lib/entity-label";
 import {
   linkQboVendor,
   listQboVendors,
@@ -74,7 +75,7 @@ export function VendorLinkageModal({
       onClick={() => setSelectedVendorId(row.qbo_vendor_id)}
     >
       <div className="font-semibold text-gray-900">{row.display_name}</div>
-      <div className="text-gray-600">{row.company_name ?? row.qbo_vendor_id}</div>
+      <div className="text-gray-600">{entityLabel(row.company_name, row.qbo_vendor_id, "QBO vendor")}</div>
       {"score" in row && row.score !== undefined ? <div className="text-[11px] text-slate-700">Score: {Number(row.score).toFixed(2)}</div> : null}
     </button>
   );
@@ -107,7 +108,7 @@ export function VendorLinkageModal({
             {selectedVendor ? (
               <>
                 <div className="mt-1 text-gray-800">{selectedVendor.display_name}</div>
-                <div className="text-gray-600">{selectedVendor.company_name ?? selectedVendor.qbo_vendor_id}</div>
+                <div className="text-gray-600">{entityLabel(selectedVendor.company_name, selectedVendor.qbo_vendor_id, "QBO vendor")}</div>
               </>
             ) : (
               <div className="mt-1 text-gray-500">No vendor selected.</div>

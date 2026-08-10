@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { entityLabel } from "../../lib/entity-label";
 
 export function MaintenanceSnapshotSection({ maintenance }: { maintenance: Record<string, unknown> }) {
   const workOrders = (Array.isArray(maintenance.work_orders) ? maintenance.work_orders : []) as Array<
@@ -13,7 +14,7 @@ export function MaintenanceSnapshotSection({ maintenance }: { maintenance: Recor
           {workOrders.map((wo) => (
             <li key={String(wo.wo_id)} className="text-xs">
               <Link to={`/maintenance/work-orders/${String(wo.wo_id)}`} className="text-slate-700 hover:underline">
-                {String(wo.display_id ?? wo.wo_id)}
+                {entityLabel(wo.display_id, wo.wo_id, "Work order")}
               </Link>
               <span className="text-gray-500"> · {String(wo.status ?? "open")}</span>
             </li>
