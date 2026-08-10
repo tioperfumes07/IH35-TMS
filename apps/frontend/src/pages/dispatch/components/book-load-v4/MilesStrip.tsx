@@ -9,6 +9,8 @@ type Props = {
   onDeadheadChange?: (n: number) => void;
   /** When true, shortest field shows required affordance. */
   shortestRequired?: boolean;
+  /** When true, practical field shows required affordance. */
+  practicalRequired?: boolean;
 };
 
 function numFromInput(raw: string): number {
@@ -29,6 +31,7 @@ export function MilesStrip({
   onShortestChange,
   onDeadheadChange,
   shortestRequired = false,
+  practicalRequired = false,
 }: Props) {
   const cell = "flex flex-1 flex-col items-center justify-center border-r border-gray-200 px-2 py-2 text-center last:border-r-0";
   const editable = Boolean(onPracticalChange && onShortestChange);
@@ -37,7 +40,7 @@ export function MilesStrip({
       <div className="flex text-[10px] font-semibold uppercase tracking-wide text-slate-700">
         <div className={cell}>
           <label className="text-gray-500" htmlFor="book-miles-practical">
-            Practical (long)
+            Practical (long){practicalRequired ? " *" : ""}
           </label>
           {editable ? (
             <input
@@ -46,7 +49,8 @@ export function MilesStrip({
               type="number"
               min={0}
               step={1}
-              className="mt-1 w-full max-w-[7rem] rounded-sm border border-gray-300 px-1.5 py-1 font-mono text-sm text-gray-900"
+              required={practicalRequired}
+              className="mt-1 w-full max-w-[7rem] rounded-sm border border-slate-400 px-1.5 py-1 font-mono text-sm text-slate-900"
               value={Number.isFinite(practical) ? practical : 0}
               onChange={(e) => onPracticalChange?.(numFromInput(e.target.value))}
             />
