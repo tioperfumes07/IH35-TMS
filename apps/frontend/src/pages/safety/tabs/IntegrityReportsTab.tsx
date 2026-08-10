@@ -15,6 +15,7 @@ import { DriverVendorMappingTab } from "../integrity-reports/DriverVendorMapping
 import { AnomaliesTab } from "./AnomaliesTab";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { entityLabel } from "../../../lib/entity-label";
 
 type IntegrityRow = Record<string, unknown> & { _rowKey: string };
 
@@ -25,9 +26,9 @@ function IntegrityEntityCell({ row }: { row: IntegrityRow }) {
   const unitId = String(row.unit_id ?? row.subject_unit_id ?? "").trim();
   const vendorId = String(row.vendor_id ?? row.subject_vendor_id ?? "").trim();
   const links: ReactNode[] = [];
-  if (driverId) links.push(<EntityLink key="d" kind="driver" id={driverId} />);
-  if (unitId) links.push(<EntityLink key="u" kind="unit" id={unitId} />);
-  if (vendorId) links.push(<EntityLink key="v" kind="vendor" id={vendorId} />);
+  if (driverId) links.push(<EntityLink key="d" kind="driver" id={driverId} label={entityLabel(null, driverId, "Driver")} />);
+  if (unitId) links.push(<EntityLink key="u" kind="unit" id={unitId} label={entityLabel(null, unitId, "Unit")} />);
+  if (vendorId) links.push(<EntityLink key="v" kind="vendor" id={vendorId} label={entityLabel(null, vendorId, "Vendor")} />);
   if (!links.length) {
     const fallback = String(row.subject_id ?? "").trim();
     return <>{fallback || "—"}</>;

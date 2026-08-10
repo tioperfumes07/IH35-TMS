@@ -199,7 +199,7 @@ export function EscrowDeductionsPendingTab() {
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2 rounded-sm border border-gray-200 bg-gray-50 p-3 text-sm">
               <div><span className="font-semibold">Driver:</span> {selected.driver_name ?? "—"}</div>
-              <div><span className="font-semibold">Load:</span> {selected.load_number ?? selected.load_id ?? "—"}</div>
+              <div><span className="font-semibold">Load:</span> {entityLabel(selected.load_number, selected.load_id, "Load") ?? "—"}</div>
               <div><span className="font-semibold">Proposed:</span> {formatMoney(selected.proposed_amount_cents)}</div>
               <div><span className="font-semibold">Reason:</span> {selected.proposed_reason}</div>
               <div className="space-y-1">

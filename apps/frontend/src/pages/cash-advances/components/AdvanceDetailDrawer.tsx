@@ -74,12 +74,12 @@ export function AdvanceDetailDrawer({ open, operatingCompanyId, advance, onClose
           {advance.linked_bill_id ? (
             <>
               <div>
-                Linked to bill {String(advance.linked_bill_display_id ?? advance.linked_bill_id)} ({String(advance.linked_bill_vendor_id ?? "vendor")})
+                Linked to bill {entityLabel(advance.linked_bill_display_id, advance.linked_bill_id, "Bill")} ({String(advance.linked_bill_vendor_id ?? "vendor")})
               </div>
               <EntityLink
                 kind="bill"
                 id={String(advance.linked_bill_id)}
-                label={String(advance.linked_bill_display_id ?? advance.linked_bill_id)}
+                label={entityLabel(advance.linked_bill_display_id, advance.linked_bill_id, "Bill")}
               />
             </>
           ) : (

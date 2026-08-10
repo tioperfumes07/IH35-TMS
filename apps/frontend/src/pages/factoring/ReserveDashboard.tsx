@@ -20,6 +20,7 @@ import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useListState } from "../../components/list-state";
 import { formatDateUS } from "../../lib/formatDate";
+import { entityLabel } from "../../lib/entity-label";
 
 const LOOKAHEAD_WINDOWS = [7, 14, 30, 60] as const;
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
@@ -133,7 +134,7 @@ export function ReserveDashboard() {
 
   const factorNameById = useMemo(() => {
     const map = new Map<string, string>();
-    for (const factor of factorsQuery.data ?? []) map.set(factor.id, factor.name);
+    for (const factor of factorsQuery.data ?? []) map.set(factor.id, entityLabel(factor.name, factor.id, "Factor"));
     return map;
   }, [factorsQuery.data]);
 
@@ -258,7 +259,7 @@ export function ReserveDashboard() {
       <div className="grid gap-2 md:grid-cols-3" data-testid="factoring-reserves-kpi">
         {(balancesQuery.data ?? []).map((balance) => (
           <div key={balance.factor_id} className="rounded-sm border border-gray-200 p-3 text-sm">
-            <div className="text-xs uppercase tracking-wide text-gray-500">{factorNameById.get(balance.factor_id) ?? balance.factor_id}</div>
+            <div className="text-xs uppercase tracking-wide text-gray-500">{factorNameById.get(balance.factor_id) ?? "—"}</div>
             <div className="mt-1 text-lg font-semibold text-gray-900">{asMoney(balance.balance_cents)}</div>
             <div className="mt-1 text-xs text-gray-600">Last movement: {asDateTime(balance.last_movement_at)}</div>
             <div className="text-xs text-gray-600">Total movements: {balance.movement_count}</div>
