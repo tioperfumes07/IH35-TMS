@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { TasksModuleTabs } from "./TasksModuleTabs";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -95,6 +96,18 @@ export function TasksReportPage() {
     [],
   );
 
+  if (!companyId) {
+    return (
+      <div className="space-y-4 p-4">
+        <PageHeader title="Admin Report" subtitle="Task throughput and team productivity" />
+        <TasksModuleTabs />
+        <div className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-sm text-gray-700">
+          Select an operating company to view the task report.
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       <PageHeader title="Admin Report" subtitle="Task throughput and team productivity" />
@@ -115,7 +128,7 @@ export function TasksReportPage() {
       </div>
 
       {query.isLoading ? <div className="text-xs text-slate-500">Loading report…</div> : null}
-      {query.isError ? <div className="text-xs text-red-700">Couldn't load the report.</div> : null}
+      {query.isError ? <ListErrorBanner onRetry={() => void query.refetch()} /> : null}
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         {([
