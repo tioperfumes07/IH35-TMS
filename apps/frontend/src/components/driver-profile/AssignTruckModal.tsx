@@ -36,7 +36,7 @@ export function AssignTruckModal({ open, driverId, companyId, driverName, onClos
         }}
       >
         <p className="text-xs text-gray-600">Select the default truck for this driver.</p>
-        {/* SAF-B29 / picker law: never silent <SelectCombobox> over listUnits(limit:500). */}
+        {/* SAF-B29 / picker law: EntityPicker server search — not a silent capped unit dropdown. */}
         <EntityPicker
           kind="unit"
           operatingCompanyId={companyId}
