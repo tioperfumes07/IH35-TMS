@@ -125,9 +125,9 @@
         "VERIFY-6"
       ],
       "spec": "UNIT-BANK-FACTOR-REGISTER · CLS-UNIT-SCALE sibling",
-      "status": "OPEN",
-      "evidence": "scaffold — FAIL: banking.routes.ts:308 advance_amount_cents without /100",
-      "pr": null,
+      "status": "PASS",
+      "evidence": "Banking factor virtual register in apps/backend/src/banking/banking.routes.ts exposes factoring advance amount as (fa.advance_amount_cents::numeric / 100) AS amount, consumed as dollars by the register; guard verify-fact-unit-01-banking-factor-register-scale.mjs selftests.",
+      "pr": "#5339",
       "prod_verified": false
     },
     {
@@ -150,9 +150,9 @@
       "prod_verified": false
     }
   ],
-  "pass_count": 8,
+  "pass_count": 9,
   "total_count": 10,
-  "progress": "8 of 10",
+  "progress": "9 of 10",
   "live_scenario_probe": {
     "source": "scripts/scoreboard-from-live.mjs (live prod probes, TMS-native only)",
     "pass_count": 0,
