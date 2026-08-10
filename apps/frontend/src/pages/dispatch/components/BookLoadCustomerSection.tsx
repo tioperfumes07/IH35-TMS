@@ -2,6 +2,7 @@ import { useMemo, useState, type JSX } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { UseFormGetValues, UseFormRegister, UseFormSetValue, UseFormWatch } from "react-hook-form";
 import { listCustomers } from "../../../api/mdata";
+import { CappedListNotice } from "../../../components/CappedListNotice";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 
 export type BookLoadFormValues = {
@@ -101,6 +102,14 @@ export function BookLoadCustomerSection({
           ) : (
             <div className="rounded-sm border border-slate-200 bg-white px-2 py-2 text-xs text-slate-700">Company context required for customer lookup.</div>
           )}
+          {/* CLS-SILENT-CAP: book-load customer picker caps at 500 (no search) / 200 (search). Surface truncation so a customer past the cap is not silently missing. */}
+          <CappedListNotice
+            shown={customerOptions.length}
+            limit={customerSearch ? 200 : 500}
+            total={customersQuery.data?.total ?? null}
+            hint="Type to search for a customer that is not listed."
+            className="text-[11px] text-slate-600"
+          />
           {customerIdError ? <p className="text-[11px] text-red-600">{customerIdError}</p> : null}
         </div>
         <Field label="Customer WO# / PU#" input={<input {...register("customer_wo_number")} className="h-8 w-full rounded-sm border border-gray-300 px-2 text-sm" />} />

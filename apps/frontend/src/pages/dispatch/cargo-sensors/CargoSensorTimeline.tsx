@@ -12,6 +12,7 @@ import {
   YAxis,
 } from "recharts";
 import { apiRequest } from "../../../api/client";
+import { CappedListNotice } from "../../../components/CappedListNotice";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 
 type Props = {
@@ -130,6 +131,13 @@ export function CargoSensorTimeline({ loadId, operatingCompanyId }: Props) {
           </LineChart>
         </ResponsiveContainer>
       </div>
+      {/* CLS-SILENT-CAP: cargo-sensor timeline caps at 240 readings; surfacing truncation so older readings are not silently hidden. */}
+      <CappedListNotice
+        shown={query.data.rows.length}
+        limit={240}
+        hint="Sensor timeline is capped — contact support for older readings."
+        className="text-[11px] text-slate-600"
+      />
     </section>
   );
 }
