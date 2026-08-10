@@ -85,8 +85,8 @@
         "DOD-C"
       ],
       "spec": "FinanceScenariosPage route",
-      "status": "OPEN",
-      "evidence": "scaffold — not proven",
+      "status": "PASS",
+      "evidence": "PASS 2026-08-09 — apps/frontend/src/pages/finance/FinanceScenariosPage.tsx renders (header + FinanceModuleTabs, both already entity-scoped). The route itself has no data model, backend endpoint, or operating_company_id query — nothing to entity-scope — so DOD-C is satisfied vacuously as a static placeholder, not by omission. FIXED an honesty gap: the placeholder blurb read like a description of a working feature (\"Scenario planning and what-if analysis for financial decisions.\") with no signal that nothing is built yet. Changed the copy to state plainly the feature is not available. Regression test: FinanceScenariosPage.test.tsx (2 tests, all green).",
       "pr": null,
       "prod_verified": false
     },
