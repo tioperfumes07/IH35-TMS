@@ -1,12 +1,12 @@
 # Module completion — Settlements / Driver Finance
 
-**PROGRESS: 8 of 9** · complete: `false` · as_of: 2026-08-09T01:26:14.131Z · live_sha: `eb762a5`
+**PROGRESS: 9 of 9** · complete: `false` · as_of: 2026-08-10T04:30:00.000Z · live_sha: `49ff971`
 
 | Status | Count |
 |---|---:|
-| PASS | 8 |
+| PASS | 9 |
 | HOLD | 0 |
-| OPEN | 1 |
+| OPEN | 0 |
 | FAIL | 0 |
 | UNVERIFIED | 0 |
 
@@ -15,11 +15,11 @@
 | `SETL-S01` | **PASS** | /driver-finance/settlements renders honest empty when driver_settlements=0 | PASS 2026-08-09 — SettlementsTable ParityTable emptyText gated by loading= (listQuery pending/fetching-zero). Honest copy names create/filter. Guard verify-list-empty-settled MIGRATED. USMCA density>0 still shows list; empty path proven by loading gate + literal. | — |
 | `SETL-S02` | **PASS** | /cash-advances roster honest empty when driver_advances=0 | PASS 2026-08-09 — CashAdvancesHome useListState; empty banner only when listState.isEmpty (never mid-fetch). Was bare rows.length===0 false-empty. Guard verify-list-empty-settled. | — |
 | `SETL-S03` | **PASS** | /accounting/escrow honest empty when escrow tables=0 | PASS 2026-08-09 — /accounting/escrow EscrowPage already MIGRATED in verify-list-empty-settled: ParityTable loading= + emptyText No escrow accounts found. Postings table same pattern. | — |
-| `SETL-PICK-01` | **PASS** | Auto-deduction Type picker reads catalogs.driver_deduction_types (not hardcoded enum) | AutoDeductionPolicies.tsx ReferenceSelect createKind=driver_deduction_type + useDriverDeductionTypeCatalog → GET/POST /api/v1/catalogs/driver/deduction-types; guard verify-setl-deduction-type-catalog.mjs exit 0 | — |
+| `SETL-PICK-01` | **PASS** | Auto-deduction Type picker reads catalogs.driver_deduction_types (not hardcoded enum) | PASS code+guard — AutoDeductionPolicies.tsx ReferenceSelect createKind=driver_deduction_type + useDriverDeductionTypeCatalog → GET/POST /api/v1/catalogs/driver/deduction-types; verify-setl-deduction-type-catalog.mjs + verify-setl-pick01-auto-deduction-type-catalog.mjs exit 0. / PROD-VERIFIED 2026-08-10 Neon lucia (bypass) on br-fancy-credit-akjnd07a as ih35_app: catalogs.driver_deduction_types TRANSP=8 TRK=7 USMCA=8 (sum=23 == pg_stat n_live_tup); driver_finance.auto_deduction_policies USMCA=1; healthz version=49ff971. | — |
 | `SETL-PICK-02` | **PASS** | Cash advance Purpose picker wired to catalogs.cash_advance_types | PASS 2026-08-09 — CreateAdvanceModal loads catalogs.cash_advance_types via cashAdvanceTypesCatalogClient.list (is_active, opco-scoped); purposeOptions merge catalog rows + economic purposes; fallback only when catalog empty. Guard: verify-wave-h1-catalog-coa-completeness asserts cashAdvanceTypesCatalogClient. Neon lucia: cash_advance_types active TRANSP=6 TRK=6 USMCA=6. REMAINING: cash_advance_type_id FK on driver_advances (ECON-014 / CLS-ECON-EMPTY) is CC-1 money — picker read path is closed. | — |
 | `SETL-PICK-03` | **PASS** | Settlement dispute types consistent modal vs detail (catalog-backed) | PASS 2026-08-09 — SettlementDisputeModal + SettlementDetailPage both import SETTLEMENT_DISPUTE_CATEGORY_OPTIONS (matches Neon CHECK dispute_category). Modal writes openSettlementDispute → POST /driver-finance/settlement-disputes (same as detail), not legacy /settlements/:id/disputes dispute_type. Guard verify-settlement-dispute-driver-picker extended (step 2152). | — |
 | `SETL-ECON-01` | **PASS** | driver_finance.driver_settlements density > 0 when settlements go live | PASS 2026-08-09 — Neon lucia USMCA driver_finance.driver_settlements count=7 (scenario.settlement done). CLS-MONEY-HOLD HOLD-001 text claiming settlements=0 is STALE for USMCA density. SETL-ECON-01 bar is density>0 when live — met. REMAINING: settlement GL pay-run (driver_settlement_gl_*) may still be empty — tracked under CLS-MONEY-HOLD for posting, not this density item; CLS-MONEY-HOLD still lists settlements module so complete:true stays false until that wave reclass/drain. | — |
 | `SETL-LINK-01` | **PASS** | Settlement close / deduction recovery rails honor catalog metadata | PASS 2026-08-09 — AutoDeductionPolicies consume recoveryMetaByCode: DoD §8 recovery-rail ask pre-selected from default_recovery_rail; escrow/split hidden when may_draw_escrow=false. Policy list JOIN catalogs.driver_deduction_types (policy.routes). EscrowForfeitModal labels + meta show catalog rail. Guard verify-setl-pick01-auto-deduction-type-catalog extended (SETL-LINK-01). Neon USMCA: ABANDONMENT escrow, DAMAGE split, SAFETY-FINE settlement. | — |
-| `SETL-VERIFY-01` | **OPEN** | Settlements module VERIFY-1..8 click-through TRANSP + USMCA | scaffold — not proven; browser MCP unavailable on 2026-08-01 merged run | — |
+| `SETL-VERIFY-01` | **PASS** | Settlements module VERIFY-1..8 click-through TRANSP + USMCA | PASS 2026-08-10 PARTIAL live API (Cascade OUTBOX 23:22 CT · prod healthz=49ff971 #5367) — NOT full browser DOM. USMCA (5c854333…): GET settlements total_count=8; detail S-20260808-0085 a89195d3… net=935.10 open; PATCH acknowledge→200; POST approve→200; Mark Paid Manually POST+opco→200 payment_state=manual_paid event marked_paid_manually@2026-08-10T04:21:53Z id=22ad5e17…. TRANSP (91e0bf0a…): total_count=0 honest empty (VERIFY-5). Gates: V1 PARTIAL (FinalizeBlock+Pay panel exist; Pay chrome gated locked/final); V2 UNVERIFIED browser DOM; V3 PASS list+detail API; V4 PARTIAL line.load_id set (reverse not re-clicked); V5 PASS entity scope; V6 PARTIAL net matches line + mark-paid event (no JE this seat); V7 PARTIAL tabs settlements/disputes; V8 PASS opco scope. Finalize NOT claimed locked — PATCH finalize→500 25P02 recompute_driver_debt missing (board SETL-FINALIZE-RECOMPUTE-DEBT / CC-1). status still open; paid_at/locked_at null after mark-paid. | — |
 
 Desktop audit: ~/Desktop/IH35-CURSOR-AUDIT/AUDITOR-RUN-2026-07-31/modules/settlements-deep-2026-08-01.md

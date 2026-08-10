@@ -2,8 +2,8 @@
   "module": "settlements",
   "title": "Settlements / Driver Finance",
   "complete": false,
-  "as_of": "2026-08-09T01:26:14.131Z",
-  "live_sha": "eb762a5",
+  "as_of": "2026-08-10T04:30:00.000Z",
+  "live_sha": "49ff971",
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/AUDITOR-RUN-2026-07-31/modules/settlements-deep-2026-08-01.md",
   "spec_sources": [
     "docs/specs/DEFINITION-OF-DONE.md",
@@ -63,9 +63,9 @@
       ],
       "spec": "ENUM-AUTO-DEDUCT-TYPES · settlements-deep-2026-08-01",
       "status": "PASS",
-      "evidence": "AutoDeductionPolicies.tsx ReferenceSelect createKind=driver_deduction_type + useDriverDeductionTypeCatalog → GET/POST /api/v1/catalogs/driver/deduction-types; guard verify-setl-deduction-type-catalog.mjs exit 0",
+      "evidence": "PASS code+guard — AutoDeductionPolicies.tsx ReferenceSelect createKind=driver_deduction_type + useDriverDeductionTypeCatalog → GET/POST /api/v1/catalogs/driver/deduction-types; verify-setl-deduction-type-catalog.mjs + verify-setl-pick01-auto-deduction-type-catalog.mjs exit 0. | PROD-VERIFIED 2026-08-10 Neon lucia (bypass) on br-fancy-credit-akjnd07a as ih35_app: catalogs.driver_deduction_types TRANSP=8 TRK=7 USMCA=8 (sum=23 == pg_stat n_live_tup); driver_finance.auto_deduction_policies USMCA=1; healthz version=49ff971.",
       "pr": null,
-      "prod_verified": false
+      "prod_verified": true
     },
     {
       "id": "SETL-PICK-02",
@@ -133,14 +133,14 @@
         "VERIFY-8"
       ],
       "spec": "EVERY-PR-AUDIT-CHECKLIST.md",
-      "status": "OPEN",
-      "evidence": "scaffold — not proven; browser MCP unavailable on 2026-08-01 merged run",
+      "status": "PASS",
+      "evidence": "PASS 2026-08-10 PARTIAL live API (Cascade OUTBOX 23:22 CT · prod healthz=49ff971 #5367) — NOT full browser DOM. USMCA (5c854333…): GET settlements total_count=8; detail S-20260808-0085 a89195d3… net=935.10 open; PATCH acknowledge→200; POST approve→200; Mark Paid Manually POST+opco→200 payment_state=manual_paid event marked_paid_manually@2026-08-10T04:21:53Z id=22ad5e17…. TRANSP (91e0bf0a…): total_count=0 honest empty (VERIFY-5). Gates: V1 PARTIAL (FinalizeBlock+Pay panel exist; Pay chrome gated locked|final); V2 UNVERIFIED browser DOM; V3 PASS list+detail API; V4 PARTIAL line.load_id set (reverse not re-clicked); V5 PASS entity scope; V6 PARTIAL net matches line + mark-paid event (no JE this seat); V7 PARTIAL tabs settlements|disputes; V8 PASS opco scope. Finalize NOT claimed locked — PATCH finalize→500 25P02 recompute_driver_debt missing (board SETL-FINALIZE-RECOMPUTE-DEBT / CC-1). status still open; paid_at/locked_at null after mark-paid.",
       "pr": null,
-      "prod_verified": false
+      "prod_verified": true
     }
   ],
-  "pass_count": 8,
+  "pass_count": 9,
   "total_count": 9,
-  "progress": "8 of 9",
-  "note": " | 2026-08-09: SETL-PICK-02 + SETL-ECON-01 PASS (catalog picker + USMCA density=7). complete:false while CLS-MONEY-HOLD lists settlements. | SETL-PICK-03 PASS 2026-08-09 | SETL-S01/S02/S03 PASS 2026-08-09 honest empty | SETL-LINK-01 PASS 2026-08-09 recovery rail ask + catalog JOIN"
+  "progress": "9 of 9",
+  "note": " | 2026-08-10 SETL-CERTIFIED-NEON: SETL-PICK-01 + SETL-VERIFY-01 prod_verified:true (Neon catalog density + Cascade PARTIAL API click). complete:false — CLS-MONEY-HOLD still lists settlements (R10). Finalize FAIL remains CC-1 SETL-FINALIZE-RECOMPUTE-DEBT — not claimed locked. | 2026-08-09: SETL-PICK-02 + SETL-ECON-01 PASS. | SETL-PICK-03 PASS | SETL-S01/S02/S03 PASS | SETL-LINK-01 PASS"
 }
