@@ -67,6 +67,9 @@ function main() {
   if (!inboxPage.includes("Convert to WO")) {
     failures.push("DefectsInboxPage must offer Convert to WO triage");
   }
+  if (!/q\.isError[\s\S]*?<ListErrorState[\s\S]*?q\.refetch\(\)/.test(inboxPage)) {
+    failures.push("DefectsInboxPage must render retryable list failure before empty queue copy");
+  }
   if (!detailPage.includes("maint-dvir-defect-detail")) {
     failures.push("DefectDetailPage must expose detail test id");
   }
