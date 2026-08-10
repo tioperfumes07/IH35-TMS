@@ -92,10 +92,6 @@
     "_comment_vehiclerecentactivity: @archived Fleet Vehicle Profile active-path (DUALPATH-06, 2026-07-22) \u2014 superseded by ServiceTimeline; no longer imported/rendered by VehicleProfilePage.tsx. Enforced by verify-fleet-profile-no-dual-activity.mjs.",
     "apps/frontend/src/components/vehicle-profile/RecentActivitySection.tsx",
     "_comment_trailerrecentactivity: @archived Fleet Trailer Profile active-path (DUALPATH-07, 2026-07-22) \u2014 superseded by ServiceTimeline (equipment_id-filtered per B26); no longer imported/rendered by TrailerProfilePage.tsx. Enforced by verify-fleet-profile-no-dual-activity.mjs.",
-    "apps/frontend/src/components/trailer-profile/TrailerRecentActivitySection.tsx",
-    "test utility helpers, not routed production components",
-    "apps/frontend/src/test-utils/pickCombo.tsx",
-    "test utility helpers, not routed production components",
-    "apps/frontend/src/test-utils/pickDate.tsx"
+    "apps/frontend/src/components/trailer-profile/TrailerRecentActivitySection.tsx"
   ]
 }
