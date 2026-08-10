@@ -236,9 +236,7 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
               {fuelTransactionsQuery.isLoading ? (
                 <p className="text-xs text-gray-500">Loading fuel transactions…</p>
               ) : fuelTransactionsQuery.isError ? (
-                <p className="text-xs text-red-700">
-                  {String((fuelTransactionsQuery.error as Error)?.message || "Failed to load fuel transactions.")}
-                </p>
+                <ListErrorBanner onRetry={() => void fuelTransactionsQuery.refetch()} />
               ) : (
                 <FuelTransactionsTable rows={fuelTransactionsQuery.data?.transactions ?? []} />
               )}
