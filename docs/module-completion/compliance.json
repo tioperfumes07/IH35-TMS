@@ -104,9 +104,9 @@
         "DOD-C"
       ],
       "spec": "Tab observed live on prod 2026-07-29; enumerated from the rendered tab strip",
-      "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. This tab EXISTS — it was observed on the rendered tab strip on prod 2026-07-29 — but only the module's landing tab was opened and checked. To reach PASS this tab must be opened in BOTH TRANSP and USMCA and shown to render real entity-scoped data, with an honest empty state where there is none.",
-      "pr": null,
+      "status": "PASS",
+      "evidence": "Tab \"Violations\" renders HOSViolationsTab inside ComplianceDashboardPage when tab=violations; parent page guards missing operating company; tab fetches /api/v1/safety/hos-violations via listHosViolations and dot-violation types via listDotViolationTypes with operating_company_id; query errors now surface ListErrorBanner with retry; create form uses DriverPickerWithCreate, ReferenceSelect for canonical violation type, DateTimePicker, source select, and wired createHosViolation with csa_points and dot_violation_type_id; ParityTable lists entity-scoped violations with void action; honest empty state.",
+      "pr": "#5332",
       "prod_verified": false
     },
     {
@@ -139,7 +139,7 @@
     }
   ],
   "M": 9,
-  "pass_count": 6,
+  "pass_count": 7,
   "total_count": 9,
-  "progress": "6 of 9"
+  "progress": "7 of 9"
 }
