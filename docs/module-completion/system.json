@@ -2,8 +2,8 @@
   "module": "system",
   "title": "System (Owner)",
   "complete": false,
-  "as_of": "2026-08-02",
-  "live_sha": null,
+  "as_of": "2026-08-10T05:45:00.000Z",
+  "live_sha": "e16ebd0",
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/AUDITOR-RUN-2026-07-31/modules/program-system-help-2026-08-01.md",
   "spec_sources": [
     "docs/specs/DEFINITION-OF-DONE.md",
@@ -19,9 +19,9 @@
       ],
       "spec": "SystemModulePage · program-system-help SYSTEM section",
       "status": "PASS",
-      "evidence": "SystemModulePage.tsx mounts overview/qbo-recon/qbo-sync/program/software/claude-coder tabs and renders live QBO reconciliation (getQboReconciliation) + sync status (getQboSyncHealth), including unresolved alerts and connection pills. Guard: scripts/verify-system-module-surfaces-s01-s04.mjs selftests.",
+      "evidence": "SystemModulePage.tsx mounts overview/qbo-recon/qbo-sync/program/software/claude-coder tabs and renders live QBO reconciliation (getQboReconciliation) + sync status (getQboSyncHealth), including unresolved alerts and connection pills. Guard: scripts/verify-system-module-surfaces-s01-s04.mjs selftests. | PROD-VERIFIED 2026-08-10 Neon lucia ih35_app on br-fancy-credit-akjnd07a: TRANSP opco 91e0bf0a-133f-4ce8-a734-2586cfa66d96 active_qbo_connections=1 · open_sync_alerts=0 · success_sync_runs=489; qbo.sync_runs n_live_tup=1086 · integrations.qbo_inbound_events n_live_tup=1313. healthz version=e16ebd0 (main tip 203758833).",
       "pr": "#5343",
-      "prod_verified": false
+      "prod_verified": true
     },
     {
       "id": "SYS-S02",
@@ -32,9 +32,9 @@
       ],
       "spec": "System health DEGRADED when background_jobs.stale DOWN",
       "status": "PASS",
-      "evidence": "Software/Build card fetches live /api/v1/healthz via fetchHealth, displays DEGRADED when ok=false, and lists individual service checks with OK/DOWN pills. Guard: scripts/verify-system-module-surfaces-s01-s04.mjs selftests.",
+      "evidence": "Software/Build card fetches live /api/v1/healthz via fetchHealth, displays DEGRADED when ok=false, and lists individual service checks with OK/DOWN pills. Guard: scripts/verify-system-module-surfaces-s01-s04.mjs selftests. | PROD-VERIFIED 2026-08-10 GET https://ih35-tms.onrender.com/api/v1/healthz ok=false (honest DEGRADED, not false green): background_jobs.stale tier=warning ok=false error=never_succeeded_jobs; critical checks postgres.select1/migrations.ledger/redis.ping all ok=true. shallow version=e16ebd0.",
       "pr": "#5343",
-      "prod_verified": false
+      "prod_verified": true
     },
     {
       "id": "SYS-S03",
@@ -44,9 +44,9 @@
       ],
       "spec": "System page Program Tracker subsection",
       "status": "PASS",
-      "evidence": "Program Tracker card fetches getProgramTracker, mirrors registered_total / view_counts, and links to the canonical /program board. Guard: scripts/verify-system-module-surfaces-s01-s04.mjs selftests.",
+      "evidence": "Program Tracker card fetches getProgramTracker, mirrors registered_total / view_counts, and links to the canonical /program board. Guard: scripts/verify-system-module-surfaces-s01-s04.mjs selftests. | PROD-VERIFIED 2026-08-10 tip 203758833 .block-ready registry n=1382 JSON files (registered_total computed at request from deployed artifacts per program-tracker.service.ts); GET /api/v1/program/tracker returns 401 without session (auth-gated, expected); SystemModulePage + /program board route wired on main #5343.",
       "pr": "#5343",
-      "prod_verified": false
+      "prod_verified": true
     },
     {
       "id": "SYS-S04",
@@ -57,9 +57,9 @@
       ],
       "spec": "Health & Deploys detail panel",
       "status": "PASS",
-      "evidence": "Health & Deploys / Service checks drill-in maps over health.data.checks and renders each check name, tier, and OK/DOWN status. Guard: scripts/verify-system-module-surfaces-s01-s04.mjs selftests.",
+      "evidence": "Health & Deploys / Service checks drill-in maps over health.data.checks and renders each check name, tier, and OK/DOWN status. Guard: scripts/verify-system-module-surfaces-s01-s04.mjs selftests. | PROD-VERIFIED 2026-08-10 GET /api/v1/healthz checks[] exposes 7 named probes (postgres.select1, migrations.ledger, redis.ping, r2.head_bucket, qbo.sync_alerts.unresolved_depth, email.queue.depth, background_jobs.stale) each with ok/tier; failing check surfaces error=never_succeeded_jobs (not silent green).",
       "pr": "#5343",
-      "prod_verified": false
+      "prod_verified": true
     },
     {
       "id": "SYS-S05",
@@ -69,9 +69,9 @@
       ],
       "spec": "Architecture docs · QBO pull-only law",
       "status": "PASS",
-      "evidence": "SystemModulePage.tsx calls getQboSyncHealth, surfaces a QBO write-back row, labels it 'OFF (by design)', and includes explanatory pull-only / no write-back text; guard verify-sys-s05-qbo-sync-writeback-off.mjs selftests.",
+      "evidence": "SystemModulePage.tsx calls getQboSyncHealth, surfaces a QBO write-back row, labels it 'OFF (by design)', and includes explanatory pull-only / no write-back text; guard verify-sys-s05-qbo-sync-writeback-off.mjs selftests. | PROD-VERIFIED 2026-08-10 Neon lucia: lib.feature_flags QBO_ENTITY_PUSH_ENABLED default_enabled=false · QBO_JE_PUSH_ENABLED default_enabled=false (parallel-books pull-only law); node scripts/verify-sys-s05-qbo-sync-writeback-off.mjs exit 0.",
       "pr": "#5341",
-      "prod_verified": false
+      "prod_verified": true
     },
     {
       "id": "SYS-VERIFY-01",
@@ -95,5 +95,6 @@
   ],
   "pass_count": 5,
   "total_count": 6,
-  "progress": "5 of 6"
+  "progress": "5 of 6",
+  "note": "2026-08-10 SYS-CERTIFIED-NEON: SYS-S01..S05 prod_verified:true (Neon lucia + prod healthz/API). complete:false — SYS-VERIFY-01 stays OPEN (Cascade live click-through VERIFY-1..8). healthz=e16ebd0 at prove; main tip 203758833."
 }
