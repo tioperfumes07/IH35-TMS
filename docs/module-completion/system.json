@@ -1,8 +1,8 @@
 {
   "module": "system",
   "title": "System (Owner)",
-  "complete": false,
-  "as_of": "2026-08-10T05:45:00.000Z",
+  "complete": true,
+  "as_of": "2026-08-10T06:32:27Z",
   "live_sha": "e16ebd0",
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/AUDITOR-RUN-2026-07-31/modules/program-system-help-2026-08-01.md",
   "spec_sources": [
@@ -17,9 +17,9 @@
         "DOD-A",
         "DOD-B"
       ],
-      "spec": "SystemModulePage · program-system-help SYSTEM section",
+      "spec": "SystemModulePage \u00b7 program-system-help SYSTEM section",
       "status": "PASS",
-      "evidence": "SystemModulePage.tsx mounts overview/qbo-recon/qbo-sync/program/software/claude-coder tabs and renders live QBO reconciliation (getQboReconciliation) + sync status (getQboSyncHealth), including unresolved alerts and connection pills. Guard: scripts/verify-system-module-surfaces-s01-s04.mjs selftests. | PROD-VERIFIED 2026-08-10 Neon lucia ih35_app on br-fancy-credit-akjnd07a: TRANSP opco 91e0bf0a-133f-4ce8-a734-2586cfa66d96 active_qbo_connections=1 · open_sync_alerts=0 · success_sync_runs=489; qbo.sync_runs n_live_tup=1086 · integrations.qbo_inbound_events n_live_tup=1313. healthz version=e16ebd0 (main tip 203758833).",
+      "evidence": "SystemModulePage.tsx mounts overview/qbo-recon/qbo-sync/program/software/claude-coder tabs and renders live QBO reconciliation (getQboReconciliation) + sync status (getQboSyncHealth), including unresolved alerts and connection pills. Guard: scripts/verify-system-module-surfaces-s01-s04.mjs selftests. | PROD-VERIFIED 2026-08-10 Neon lucia ih35_app on br-fancy-credit-akjnd07a: TRANSP opco 91e0bf0a-133f-4ce8-a734-2586cfa66d96 active_qbo_connections=1 \u00b7 open_sync_alerts=0 \u00b7 success_sync_runs=489; qbo.sync_runs n_live_tup=1086 \u00b7 integrations.qbo_inbound_events n_live_tup=1313. healthz version=e16ebd0 (main tip 203758833).",
       "pr": "#5343",
       "prod_verified": true
     },
@@ -67,9 +67,9 @@
       "layers": [
         "DOD-B"
       ],
-      "spec": "Architecture docs · QBO pull-only law",
+      "spec": "Architecture docs \u00b7 QBO pull-only law",
       "status": "PASS",
-      "evidence": "SystemModulePage.tsx calls getQboSyncHealth, surfaces a QBO write-back row, labels it 'OFF (by design)', and includes explanatory pull-only / no write-back text; guard verify-sys-s05-qbo-sync-writeback-off.mjs selftests. | PROD-VERIFIED 2026-08-10 Neon lucia: lib.feature_flags QBO_ENTITY_PUSH_ENABLED default_enabled=false · QBO_JE_PUSH_ENABLED default_enabled=false (parallel-books pull-only law); node scripts/verify-sys-s05-qbo-sync-writeback-off.mjs exit 0.",
+      "evidence": "SystemModulePage.tsx calls getQboSyncHealth, surfaces a QBO write-back row, labels it 'OFF (by design)', and includes explanatory pull-only / no write-back text; guard verify-sys-s05-qbo-sync-writeback-off.mjs selftests. | PROD-VERIFIED 2026-08-10 Neon lucia: lib.feature_flags QBO_ENTITY_PUSH_ENABLED default_enabled=false \u00b7 QBO_JE_PUSH_ENABLED default_enabled=false (parallel-books pull-only law); node scripts/verify-sys-s05-qbo-sync-writeback-off.mjs exit 0.",
       "pr": "#5341",
       "prod_verified": true
     },
@@ -87,14 +87,14 @@
         "VERIFY-8"
       ],
       "spec": "EVERY-PR-AUDIT-CHECKLIST.md",
-      "status": "OPEN",
-      "evidence": "scaffold — infra alert surfaced honestly; app-layer fixes out of scope",
-      "pr": null,
-      "prod_verified": false
+      "status": "PASS",
+      "evidence": "PROD-VERIFIED Cascade OUTBOX 2026-08-09 SYS-VERIFY-01 \u2014 CDP 9225 Owner session, USMCA (+TRANSP qbo-sync). All six /system tabs clicked: overview \u00b7 qbo-recon \u00b7 qbo-sync \u00b7 program \u00b7 software \u00b7 claude-coder \u2014 each renders (not 404). QBO write-back OFF by design (SYS-S05); Software DEGRADED honest (SYS-S02); Program Tracker counts + link to /program. VERIFY V1/V3/V5/V7/V8 PASS; V2 N/A; V6 N/A. Neon 2026-08-10: audit.scenario_status has hop.book/dispatch/deliver/invoice/gl passed (CI-PROBE). Cursor closed stale scaffold evidence that predated Cascade click notes.",
+      "pr": "Cascade OUTBOX + Neon",
+      "prod_verified": true
     }
   ],
-  "pass_count": 5,
+  "pass_count": 6,
   "total_count": 6,
-  "progress": "5 of 6",
-  "note": "2026-08-10 SYS-CERTIFIED-NEON: SYS-S01..S05 prod_verified:true (Neon lucia + prod healthz/API). complete:false — SYS-VERIFY-01 stays OPEN (Cascade live click-through VERIFY-1..8). healthz=e16ebd0 at prove; main tip 203758833."
+  "progress": "6 of 6",
+  "note": "2026-08-10 SYS-CERTIFIED-NEON: SYS-S01..S05 prod_verified:true (Neon lucia + prod healthz/API). complete:false \u2014 SYS-VERIFY-01 stays OPEN (Cascade live click-through VERIFY-1..8). healthz=e16ebd0 at prove; main tip 203758833. | 2026-08-10 Cursor CLOSED SYS-VERIFY-01 from Cascade OUTBOX PROD-VERIFIED + Neon Neftali/5743/5753 + audit.scenario_status (searched trackers, not memory)."
 }
