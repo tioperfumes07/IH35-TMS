@@ -1925,5 +1925,10 @@
     "claimed_at": "2026-08-10",
     "claimed_by": "cursor",
     "purpose": "verify-usmca-active-not-hidden-skills"
+  },
+  "2986": {
+    "claimed_at": "2026-08-10",
+    "claimed_by": "cursor",
+    "purpose": "verify-invoice-send-accessible-reason"
   }
 }
