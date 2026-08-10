@@ -6,6 +6,8 @@ import { listDrivers } from "../../api/mdata";
 import { CappedListNotice } from "../../components/CappedListNotice";
 import { Combobox } from "../../components/Combobox";
 import { CreateDriverModal } from "../../components/drivers/CreateDriverModal";
+import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 /** Pre-create roster page size. Named so the cap and its disclosure can never drift apart. */
 const ROSTER_LIMIT = 200;
@@ -82,6 +84,7 @@ export function AssignDriverDropdown({
   }));
 
   const drivers = driversOverride ?? (loadId ? q.data?.drivers ?? [] : rosterDrivers);
+  const activeQuery = loadId ? q : rosterQ;
   const sorted = useMemo(() => {
     const copy = [...drivers];
     copy.sort((a, b) => {
@@ -151,13 +154,19 @@ export function AssignDriverDropdown({
         hint="Type to search for a driver that is not listed."
         className="text-[11px] text-slate-600"
       />
+      {!driversOverride && activeQuery.isError ? (
+        <ListErrorBanner
+          message={userFacingApiError(activeQuery.error, "Could not load available drivers")}
+          onRetry={() => void activeQuery.refetch()}
+        />
+      ) : null}
       <Combobox
         className="h-9 w-full text-sm"
         options={comboboxOptions}
         value={value || null}
-        disabled={disabled || (!driversOverride && q.isLoading)}
-        loading={!driversOverride && q.isLoading}
-        placeholder={q.isLoading ? "Loading…" : "Select driver"}
+        disabled={disabled || (!driversOverride && activeQuery.isLoading)}
+        loading={!driversOverride && activeQuery.isLoading}
+        placeholder={activeQuery.isLoading ? "Loading…" : "Select driver"}
         allowClear
         allowAddNew={{
           label: "+ Create driver",
