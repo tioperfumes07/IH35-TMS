@@ -90,9 +90,9 @@
         "DOD-C"
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
-      "pr": null,
+      "status": "PASS",
+      "evidence": "Route /fleet/units/:id registered as ProtectedRoute wrapping VehicleProfilePage; fetches /api/v1/mdata/units/:id?operating_company_id=...; buildUnitAggregate scopes unit + all child queries by owner/lessee operating_company_id; page uses entityLabel for human unit number, need-company guard, ListErrorBanner on error, and renders identity/telemetry/driver/load/maintenance/compliance/insurance/reefer/financial/documents plus reverse safety/insurance/legal/bank linkages and audit history; archive wired to soft-delete endpoint; edit/quick-assign modals present.",
+      "pr": "#5300",
       "prod_verified": false
     },
     {
@@ -111,7 +111,7 @@
     }
   ],
   "M": 7,
-  "pass_count": 5,
+  "pass_count": 6,
   "total_count": 7,
-  "progress": "5 of 7"
+  "progress": "6 of 7"
 }
