@@ -59,6 +59,9 @@ function main() {
   if (!migration.includes("dispatch.bol_documents")) failures.push("migration 0356 must create bol_documents");
   if (!page.includes("dispatch-pod-review-page")) failures.push("PodReviewPage must expose test id");
   if (!page.includes("pod-review-panel")) failures.push("PodReviewPage must expose review panel");
+  if (!page.includes("podsQuery.isError") || !page.includes("ListErrorState") || !page.includes("podsQuery.refetch()")) {
+    failures.push("PodReviewPage must distinguish a failed POD list from an honest empty list and expose retry");
+  }
   // CLS-DISP-WIRE-09: BOL chrome lives in shared LoadBolPanel (Pod Review + Load Detail drawer).
   // Page must mount the panel; panel must expose the download control (not inline-only on PodReviewPage).
   if (!page.includes("LoadBolPanel")) failures.push("PodReviewPage must mount LoadBolPanel for BOL download/generate");

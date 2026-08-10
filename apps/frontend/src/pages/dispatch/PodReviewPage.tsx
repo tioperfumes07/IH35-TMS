@@ -9,6 +9,8 @@ import { CollapsedListFilters } from "../../components/table";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
+import { ListErrorState } from "../../components/ListErrorState";
+import { formatQueryErrorDetail } from "../../lib/tableError";
 
 function PodRowActions({
   doc,
@@ -167,7 +169,14 @@ export function PodReviewPage() {
       {loadId ? <LoadBolPanel loadId={loadId} companyId={companyId} /> : null}
 
       <div className="mt-4">
-        <ParityTable<PodDocumentSummary>
+        {podsQuery.isError ? (
+          <ListErrorState
+            title="Couldn't load POD documents"
+            {...formatQueryErrorDetail(podsQuery.error)}
+            onRetry={() => void podsQuery.refetch()}
+          />
+        ) : (
+          <ParityTable<PodDocumentSummary>
           columns={columns}
           rows={documents}
           rowKey={(doc) => doc.id}
@@ -178,7 +187,8 @@ export function PodReviewPage() {
           filterBar={filterBar}
           tableTestId="pod-review-panel"
           rowTestId={(doc) => `pod-row-${doc.id}`}
-        />
+          />
+        )}
       </div>
     </div>
   );
