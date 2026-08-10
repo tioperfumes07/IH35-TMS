@@ -731,11 +731,7 @@ does not fix what it verified (maker != checker) — it owns CI-guards only.
 
 **TIER 2 — MECHANICAL / FE (mechanical lane per §3 — NOT CC-2):**
 
-8. **`LV-LOAD-DETAIL-SHOWS-UNASSIGNED`** — `GET /dispatch/loads/:id` selects `l.*` from an 18-column
-   view lacking `trip_type` / `assigned_unit_number` / `assigned_primary_driver_name`. **COMPLETE FIX:**
-   mirror for the PRIMARY driver exactly what the same query already does for the SECONDARY, and add
-   `trip_type`. **DO NOT PATCH BY:** having the UI fall back to a UUID — that is the defect this repo
-   already fixed once elsewhere (`CLS-UUID-LABEL`).
+8. **FIXED on main (verified 2026-08-10)** `LV-LOAD-DETAIL-SHOWS-UNASSIGNED` — `GET /dispatch/loads/:id` now projects `assigned_primary_driver_name`, `assigned_unit_number`, and `trip_type` from `mdata.drivers`, `mdata.units`, and `mdata.loads` respectively, entity-scoped. The drawer no longer shows "Unassigned"/"-" for loads that have a primary driver, unit, or trip type. The UI does not fall back to a UUID.
 
 9. **`LV-STOP-ZIP-DROPPED`** — `postal_code` is NULL on **0 of 18** stops while city/state persist.
    **COMPLETE FIX:** persist it on the booking path. **WHY IT IS NOT COSMETIC:** it is the PC*MILER
