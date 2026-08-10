@@ -22,7 +22,7 @@
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
       "evidence": "Route /fleet registered; FleetHomePage uses CompanyContext and renders FleetTablePage with operatingCompanyId; GET /api/v1/mdata/units?include=trailers resolves entity scope via resolveOperatingCompanyId + owner/leased predicate; FleetTable renders unit_number, VIN, type, status, location with no uuid-fallback labels; + Create Unit / + Create Trailer actions wired; honest empty state when no company selected; tests pass.",
-      "pr": "#5287",
+      "pr": "#5289",
       "prod_verified": false
     },
     {
