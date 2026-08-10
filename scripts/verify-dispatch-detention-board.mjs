@@ -49,6 +49,9 @@ function main() {
   if (!page.includes("dispatch-detention-board-page")) failures.push("DetentionBoardPage must expose test id");
   if (!page.includes("detention-elapsed")) failures.push("DetentionBoardPage must show elapsed timer");
   if (!page.includes("Bridge to billing")) failures.push("DetentionBoardPage must expose billing bridge action");
+  if (!page.includes("boardQ.isError") || !page.includes("ListErrorState") || !page.includes("boardQ.refetch()")) {
+    failures.push("DetentionBoardPage must distinguish board failure from honest empty state and expose retry");
+  }
   if ((pageTest.match(/\bit\(/g) ?? []).length < 3) failures.push("DetentionBoardPage tests must cover at least 3 cases");
   if ((routeTest.match(/\bit\(/g) ?? []).length < 5) failures.push("detention.routes tests must cover at least 5 cases");
 
