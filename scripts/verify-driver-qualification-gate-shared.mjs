@@ -36,9 +36,14 @@ if (shared) {
   if (!new RegExp(`export\\s+async\\s+function\\s+${SHARED_FN}\\b`).test(shared)) {
     errors.push(`driver-qualification.service.ts must export async function ${SHARED_FN}`);
   }
-  // D3-1 hazmat branch: the endorsement column must be read AND the reason emitted.
-  if (!shared.includes("hazmat_endorsement")) {
-    errors.push("driver-qualification.service.ts must reference mdata.drivers.hazmat_endorsement (D3-1 hazmat branch missing)");
+  // D3-1 hazmat branch: the H-endorsement columns must be read AND the reason emitted.
+  // The canonical driver-side hazmat flag is mdata.drivers.endorsement_h (migration 0301);
+  // mdata.drivers.hazmat_endorsement does not exist.
+  if (!shared.includes("endorsement_h")) {
+    errors.push("driver-qualification.service.ts must reference mdata.drivers.endorsement_h (D3-1 hazmat branch missing)");
+  }
+  if (!shared.includes("hazmat_endorsement_expires_at")) {
+    errors.push("driver-qualification.service.ts must reference mdata.drivers.hazmat_endorsement_expires_at (D3-1 expiry check missing)");
   }
   if (!shared.includes("hazmat_endorsement_missing")) {
     errors.push('driver-qualification.service.ts must emit reason "hazmat_endorsement_missing" (D3-1)');
