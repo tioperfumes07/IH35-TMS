@@ -2,10 +2,12 @@ import { useQuery } from "@tanstack/react-query";
 import { formatDateTimeUS } from "../../../lib/formatDate";
 import { resolveApiUrl } from "../../../api/client";
 import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { PageHeader } from "../../../components/layout/PageHeader";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
+import { entityLabel } from "../../../lib/entity-label";
 
 type EdiMessage = {
   uuid: string;
@@ -141,7 +143,13 @@ export function EdiTransactionLog() {
                   {selected.error_message && <p className="text-red-600">{selected.error_message}</p>}
                   {selected.related_load_uuid && (
                     <p>
-                      <span className="font-medium">Load:</span> {selected.related_load_uuid}
+                      <span className="font-medium">Load:</span>{" "}
+                      <Link
+                        to={`/loads/${selected.related_load_uuid}`}
+                        className="text-slate-600 underline"
+                      >
+                        {entityLabel(null, selected.related_load_uuid, "Load")}
+                      </Link>
                     </p>
                   )}
                   <button
