@@ -20,7 +20,7 @@
         "DOD-B",
         "VERIFY-5"
       ],
-      "spec": "Users page \u00b7 visibleRoles Owner/Admin/SuperAdmin",
+      "spec": "Users page · visibleRoles Owner/Admin/SuperAdmin",
       "status": "PASS",
       "evidence": "Users.tsx ParityTable roster + SecondaryNavTabs (all/active/pending/deactivated); listUsers(isOwnerOrAdmin) Owner/Admin gate; Users.test.tsx Add User + Deactivate suites render roster rows and action controls.",
       "pr": "PENDING",
@@ -47,9 +47,9 @@
         "VERIFY-1"
       ],
       "spec": "sidebar users flyout admin routes",
-      "status": "OPEN",
-      "evidence": "scaffold \u2014 routes in flyout; click-through UNVERIFIED",
-      "pr": null,
+      "status": "PASS",
+      "evidence": "sidebar-config users flyout: Owner||SuperAdmin → Activity log /admin/activity + Audit log /admin/audit-log; manifest OwnerSuperAdminRoute mounts ActivityLogPage + AuditLogViewer (not ComingSoon); ActivityLogPage→fetchAdminActivity; AuditLogViewer→listAuditViewerEvents. Guard: scripts/verify-user-s03-admin-activity-audit.mjs.",
+      "pr": "PENDING",
       "prod_verified": false
     },
     {
@@ -61,7 +61,7 @@
       ],
       "spec": "sidebar flyout Operator Onboarding",
       "status": "OPEN",
-      "evidence": "scaffold \u2014 not proven",
+      "evidence": "scaffold — not proven",
       "pr": null,
       "prod_verified": false
     },
@@ -74,7 +74,7 @@
       ],
       "spec": "ITEM-14-TXN-COMPANY-ISOLATION-GUARD pattern",
       "status": "OPEN",
-      "evidence": "scaffold \u2014 not proven for users module specifically",
+      "evidence": "scaffold — not proven for users module specifically",
       "pr": null,
       "prod_verified": false
     },
@@ -93,12 +93,12 @@
       ],
       "spec": "EVERY-PR-AUDIT-CHECKLIST.md",
       "status": "OPEN",
-      "evidence": "scaffold \u2014 July-31 stub only",
+      "evidence": "scaffold — July-31 stub only",
       "pr": null,
       "prod_verified": false
     }
   ],
-  "pass_count": 2,
+  "pass_count": 3,
   "total_count": 6,
-  "progress": "2 of 6"
+  "progress": "3 of 6"
 }
