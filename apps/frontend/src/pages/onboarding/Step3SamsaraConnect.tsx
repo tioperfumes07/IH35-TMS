@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getSamsaraOwnerConfig, saveSamsaraOwnerConfig } from "../../api/samsara";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 export type SamsaraStepData = {
   configured?: boolean;
@@ -48,7 +49,7 @@ export function Step3SamsaraConnect({ companyId, value, disabled, onChange }: Pr
       });
       await qc.invalidateQueries({ queryKey: ["onboarding", "samsara-config", companyId] });
     },
-    onError: (err: Error) => setError(err.message),
+    onError: (err: unknown) => setError(userFacingApiError(err, "Could not save Samsara settings")),
   });
 
   const configured = configQuery.data?.is_configured ?? value.configured ?? false;
