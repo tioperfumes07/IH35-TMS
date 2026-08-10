@@ -19,6 +19,7 @@ import { EntityPicker } from "../../components/parity/EntityPicker";
 import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { vendorReferenceOption } from "../../components/parity/referenceOptionLabels";
 import { entityLabel } from "../../lib/entity-label";
+import { ListErrorState } from "../../components/ListErrorState";
 
 type ClaimDraft = {
   part_description: string;
@@ -201,15 +202,24 @@ export function WarrantyClaimsPage() {
       </div>
 
       <section data-testid="warranty-claims-table">
-        <ParityTable
-          rows={claims}
-          columns={columns}
-          rowKey={(row) => row.id}
-          loading={claimsQ.isPending}
-          storageKey="maintenance-warranty-claims"
-          emptyText="No warranty claims yet."
-          exportFilename="warranty-claims"
-        />
+        {claimsQ.isError ? (
+          <ListErrorState
+            title="Couldn't load warranty claims"
+            status={0}
+            message={(claimsQ.error as Error)?.message}
+            onRetry={() => void claimsQ.refetch()}
+          />
+        ) : (
+          <ParityTable
+            rows={claims}
+            columns={columns}
+            rowKey={(row) => row.id}
+            loading={claimsQ.isPending}
+            storageKey="maintenance-warranty-claims"
+            emptyText="No warranty claims yet."
+            exportFilename="warranty-claims"
+          />
+        )}
       </section>
 
       <Modal variant="drawer" open={createOpen} onClose={() => setCreateOpen(false)} title="+ Create Claim">
