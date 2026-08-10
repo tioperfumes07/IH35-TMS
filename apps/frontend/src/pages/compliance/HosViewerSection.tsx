@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { DatePicker } from "../../components/forms/DatePicker";
-import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
+import { ListErrorState } from "../../components/ListErrorState";
 import { EntityPicker } from "../../components/parity/EntityPicker";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import {
@@ -172,7 +172,10 @@ export function HosViewerSection({ operatingCompanyId }: { operatingCompanyId: s
 
       {(rosterQ.isError || dailyQ.isError) && (
         <div className="mt-3">
-          <ListErrorBanner
+          <ListErrorState
+            title={`Couldn't load the ELD log for ${selectedName}.`}
+            status={0}
+            message={((rosterQ.error ?? dailyQ.error) as Error | undefined)?.message}
             onRetry={() => {
               void rosterQ.refetch();
               void dailyQ.refetch();
