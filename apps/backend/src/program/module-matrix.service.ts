@@ -217,6 +217,7 @@ export type ModuleMatrixPayload = {
     honesty: string;
     tipSha?: string;
     probeProgress?: number | null;
+    probeSource?: "neon_live" | "committed_stale";
     reconAsOf?: string | null;
     feedNote?: string;
   };
@@ -467,7 +468,13 @@ type ModuleProbe = {
   progress: number | null;
 };
 
-function loadModuleProbes(moduleId: string): { slices: ModuleProbe[]; progress: number | null } {
+type ModuleProbePack = {
+  slices: ModuleProbe[];
+  progress: number | null;
+  probeSource: "neon_live" | "committed_stale";
+};
+
+function loadModuleProbes(moduleId: string): ModuleProbePack {
   const out: ModuleProbe[] = [];
   let progress: number | null = null;
   const board = readJson<{
@@ -524,7 +531,7 @@ function loadModuleProbes(moduleId: string): { slices: ModuleProbe[]; progress: 
       });
     }
   }
-  return { slices: out, progress };
+  return { slices: out, progress, probeSource: "committed_stale" };
 }
 
 /** Leaf ↔ module-completion item — must hit accounting bills/expenses/JE, not only maint/safety. */
@@ -876,6 +883,7 @@ export async function buildModuleMatrix(
         "4-box law (2026-08-10). Audited ≠ Built ≠ Live. Built = Neon probe hold. Live = PROD-VERIFIED only. Checklist N/M never greens Built or Live.",
       tipSha: sha,
       probeProgress: probePack.progress,
+      probeSource: probePack.probeSource,
       reconAsOf: recon,
       feedNote:
         probePack.probeSource === "neon_live"
