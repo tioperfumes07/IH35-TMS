@@ -1,15 +1,15 @@
 {
   "module": "insurance",
   "title": "Insurance — acceptance checklist",
-  "complete": false,
-  "as_of": "2026-08-09T02:00:00.000Z",
+  "complete": true,
+  "as_of": "2026-08-10T06:26:05.363Z",
   "live_sha": "5164640be",
   "desktop_audit": null,
   "spec_sources": [
     "apps/frontend/src/routes/manifest.tsx",
     "apps/frontend/src/components/layout/sidebar-config.ts"
   ],
-  "note": "BASELINE created 2026-07-29. Until now this module had NO acceptance list, so \"completely built\" had no definition and no honest percentage could be shown. Every item starts OPEN because none has been verified — this is a scope statement, not a claim of failure. M grows when new surfaces or defects appear (Rule 21). M GROWN 1 -> 6 on 2026-07-29 (Rule 21): the landing route verified live, which revealed 5 further tabs inside it. Counting the module complete on its landing surface alone would have been a wave-slice close.",
+  "note": "BASELINE created 2026-07-29. Until now this module had NO acceptance list, so \"completely built\" had no definition and no honest percentage could be shown. Every item starts OPEN because none has been verified — this is a scope statement, not a claim of failure. M grows when new surfaces or defects appear (Rule 21). M GROWN 1 -> 6 on 2026-07-29 (Rule 21): the landing route verified live, which revealed 5 further tabs inside it. Counting the module complete on its landing surface alone would have been a wave-slice close. | complete:true set 2026-08-10 after tip search: all items PASS, owner ordered update data / wire-only stop burn.",
   "items": [
     {
       "id": "INS-S01",
