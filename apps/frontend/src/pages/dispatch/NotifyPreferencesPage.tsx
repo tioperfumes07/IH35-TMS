@@ -15,6 +15,7 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
+import { CappedListNotice } from "../../components/CappedListNotice";
 import { useToast } from "../../components/Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
 
@@ -182,6 +183,14 @@ export function NotifyPreferencesPage() {
               disabled={!companyId}
               loading={customersQuery.isLoading}
               onSearch={setCustomerSearch}
+            />
+            {/* CLS-SILENT-CAP: notify prefs customer picker caps at 5000; surfacing truncation so a customer past the cap is not silently missing. */}
+            <CappedListNotice
+              shown={customerOptions.length}
+              limit={5000}
+              total={customersQuery.data?.total ?? null}
+              hint="Type to search for a customer that is not listed."
+              className="text-[11px] text-slate-600"
             />
           </div>
         </label>
