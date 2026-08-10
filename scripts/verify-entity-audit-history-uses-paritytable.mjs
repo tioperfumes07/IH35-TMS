@@ -53,6 +53,15 @@ function assertMigrated(src) {
   if (!src.includes("entity-audit-history-")) {
     errors.push(`${PAGE}: must set storageKey entity-audit-history-{entityType}`);
   }
+  if (!src.includes("{...formatQueryErrorDetail(auditQuery.error)}")) {
+    errors.push(`${PAGE}: audit outage must use operator-safe query error detail`);
+  }
+  if (!/sortValue:\s*\(row\)\s*=>\s*entityLabel\(row\.actor_email,\s*row\.actor_user_id,\s*"User"\)/.test(src)) {
+    errors.push(`${PAGE}: actor sorting must use the same UUID-safe human label as display`);
+  }
+  if (!/Actor:\s*entityLabel\(e\.actor_email,\s*e\.actor_user_id,\s*"User"\)/.test(src)) {
+    errors.push(`${PAGE}: CSV actor export must suppress raw user ids`);
+  }
   return errors;
 }
 
@@ -63,12 +72,13 @@ function selftest() {
     function ChangesDiff() { return null; }
     const COLUMNS = [
       { key: "created_at", label: "When" },
-      { key: "actor_email", label: "Who" },
+      { key: "actor_email", label: "Who", sortValue: (row) => entityLabel(row.actor_email, row.actor_user_id, "User") },
       { key: "event_type", label: "Action" },
       { key: "summary", label: "Summary" },
       { key: "source", label: "Source" },
     ];
-    <ListErrorState title="Couldn't load audit history" status={0} onRetry={() => {}} />
+    const exported = { Actor: entityLabel(e.actor_email, e.actor_user_id, "User") };
+    <ListErrorState title="Couldn't load audit history" {...formatQueryErrorDetail(auditQuery.error)} onRetry={() => {}} />
     <ParityTable
       storageKey={\`entity-audit-history-\${entityType}\`}
       emptyText="No audit events found for this record."
@@ -87,12 +97,28 @@ function selftest() {
   `;
   const goodErrors = assertMigrated(good);
   const badErrors = assertMigrated(bad);
+  const rawActorErrors = assertMigrated(good.replace(
+    'Actor: entityLabel(e.actor_email, e.actor_user_id, "User")',
+    'Actor: e.actor_email || e.actor_user_id || "—"'
+  ));
+  const rawErrorErrors = assertMigrated(good.replace(
+    "{...formatQueryErrorDetail(auditQuery.error)}",
+    "message={(auditQuery.error as Error)?.message}"
+  ));
   if (goodErrors.length) {
     console.error(`${LABEL} --selftest FAIL good fixture:`, goodErrors);
     process.exit(1);
   }
   if (badErrors.length < 3) {
     console.error(`${LABEL} --selftest FAIL bad fixture should fail hard:`, badErrors);
+    process.exit(1);
+  }
+  if (!rawActorErrors.some((error) => error.includes("CSV actor"))) {
+    console.error(`${LABEL} --selftest FAIL raw CSV actor mutation survived`);
+    process.exit(1);
+  }
+  if (!rawErrorErrors.some((error) => error.includes("operator-safe"))) {
+    console.error(`${LABEL} --selftest FAIL raw audit error mutation survived`);
     process.exit(1);
   }
   console.log(`${LABEL} --selftest PASS`);
