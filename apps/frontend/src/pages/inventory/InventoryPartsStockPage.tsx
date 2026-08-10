@@ -163,7 +163,7 @@ export function InventoryPartsStockPage() {
     },
   });
 
-  const rawParts = partsQuery.data?.rawParts ?? [];
+  const rawParts = useMemo(() => partsQuery.data?.rawParts ?? [], [partsQuery.data?.rawParts]);
   const rows = useMemo(
     () => mapMaintenancePartsToInventoryRows(rawParts, vendorNameById),
     [rawParts, vendorNameById],
