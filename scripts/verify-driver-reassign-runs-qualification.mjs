@@ -66,6 +66,14 @@ export function reassignsDriver(code) {
     const stmt = code.slice(m.index, end === -1 ? m.index + 700 : end);
     if (/\bassigned_primary_driver_id\s*=/.test(stmt)) return true;
   }
+  // Dynamic PATCH (mdata/loads.routes.ts): SET clause built from add("assigned_primary_driver_id", …).
+  if (
+    /UPDATE\s+mdata\.loads/i.test(code) &&
+    /"assigned_primary_driver_id"\s+in\s+b/.test(code) &&
+    /assigned_primary_driver_id/.test(code)
+  ) {
+    return true;
+  }
   return false;
 }
 

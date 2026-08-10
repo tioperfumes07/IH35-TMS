@@ -19,7 +19,12 @@ import {
   stampFinalActiveDeliveryDeparture,
 } from "../dispatch/stamp-final-delivery-departure.js";
 import { ensureDriverBillArtifactsForLoad } from "../dispatch/book-load.service.js";
+import {
+  assertDriverQualifiedForLoad,
+  DriverNotQualifiedError,
+} from "../dispatch/driver-qualification.service.js";
 import { resyncProformaInvoiceFromLoadRate } from "../accounting/resync-proforma-from-load-rate.js";
+import type { PoolClient } from "pg";
 
 const loadStatusSchema = z.enum([
   "draft",
@@ -210,6 +215,24 @@ const updateStopBodySchema = z
   })
   .refine((v) => Object.keys(v).length > 0, { message: "at least one field is required" });
 
+/** FAIL-DQF-GATE hole #1 — mdata POST/PATCH must run the same shared gate as book-load / quicksave / update-load. */
+async function gateMdataLoadDriverAssignment(
+  client: PoolClient,
+  operatingCompanyId: string,
+  driverIds: Array<string | null | undefined>,
+  isHazmat: boolean
+) {
+  for (const driverId of driverIds) {
+    if (!driverId) continue;
+    const block = await assertDriverQualifiedForLoad(client, {
+      driverId: String(driverId),
+      operatingCompanyId,
+      isHazmat,
+    });
+    if (block) throw new DriverNotQualifiedError(block);
+  }
+}
+
 function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
   if (!requireAuth(req, reply)) return null;
   return req.user;
@@ -342,6 +365,15 @@ export async function registerLoadRoutes(app: FastifyInstance) {
         );
         if (customerRes.rows.length === 0) {
           return { error: "invalid_customer_for_company" as const };
+        }
+
+        if (b.assigned_primary_driver_id || b.assigned_secondary_driver_id) {
+          await gateMdataLoadDriverAssignment(
+            client,
+            b.operating_company_id,
+            [b.assigned_primary_driver_id, b.assigned_secondary_driver_id],
+            false
+          );
         }
 
         let loadNumber = "";
@@ -511,6 +543,19 @@ export async function registerLoadRoutes(app: FastifyInstance) {
 
       return reply.code(201).send(created);
     } catch (err) {
+      if (err instanceof DriverNotQualifiedError) {
+        return reply.code(422).send({
+          error: err.code,
+          message: err.message,
+          details: {
+            driver_id: err.block.driverId,
+            reasons: err.block.reasons,
+            cdl_expires_at: err.block.cdlExpiresAt,
+            medical_expiry_date: err.block.medicalExpiryDate,
+            hazmat_endorsement_expires_at: err.block.hazmatEndorsementExpiresAt,
+          },
+        });
+      }
       const code = (err as { code?: string }).code;
       if (code === "23503") return reply.code(400).send({ error: "invalid_foreign_key" });
       if (code === "23505") return reply.code(409).send({ error: "mdata_load_conflict" });
@@ -1195,6 +1240,34 @@ export async function registerLoadRoutes(app: FastifyInstance) {
         const oldRow = oldRes.rows[0] ?? null;
         if (!oldRow) return null;
 
+        const primaryChanged =
+          "assigned_primary_driver_id" in b &&
+          String(b.assigned_primary_driver_id ?? "") !== String(oldRow.assigned_primary_driver_id ?? "");
+        const secondaryChanged =
+          "assigned_secondary_driver_id" in b &&
+          String(b.assigned_secondary_driver_id ?? "") !== String(oldRow.assigned_secondary_driver_id ?? "");
+        if (primaryChanged || secondaryChanged) {
+          const hazmatRes = await client.query<{ is_hazmat: boolean }>(
+            `
+              SELECT COALESCE((quicksave_pending_fields->>'hazmat')::boolean, false) AS is_hazmat
+              FROM mdata.loads
+              WHERE id = $1::uuid
+              LIMIT 1
+            `,
+            [parsedParams.data.id]
+          );
+          const isHazmat = Boolean(hazmatRes.rows[0]?.is_hazmat);
+          await gateMdataLoadDriverAssignment(
+            client,
+            String(oldRow.operating_company_id),
+            [
+              primaryChanged ? (b.assigned_primary_driver_id ?? null) : null,
+              secondaryChanged ? (b.assigned_secondary_driver_id ?? null) : null,
+            ],
+            isHazmat
+          );
+        }
+
         const res = await client.query(
           `
             UPDATE mdata.loads
@@ -1325,6 +1398,19 @@ export async function registerLoadRoutes(app: FastifyInstance) {
       if (!updated) return reply.code(404).send({ error: "mdata_load_not_found" });
       return updated;
     } catch (err) {
+      if (err instanceof DriverNotQualifiedError) {
+        return reply.code(422).send({
+          error: err.code,
+          message: err.message,
+          details: {
+            driver_id: err.block.driverId,
+            reasons: err.block.reasons,
+            cdl_expires_at: err.block.cdlExpiresAt,
+            medical_expiry_date: err.block.medicalExpiryDate,
+            hazmat_endorsement_expires_at: err.block.hazmatEndorsementExpiresAt,
+          },
+        });
+      }
       const code = (err as { code?: string }).code;
       if (code === "23505") return reply.code(409).send({ error: "mdata_load_conflict" });
       if (code === "23503") return reply.code(400).send({ error: "invalid_foreign_key" });
