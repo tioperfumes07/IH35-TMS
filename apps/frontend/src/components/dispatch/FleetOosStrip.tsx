@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { listUnits } from "../../api/mdata";
 import { listSevereRepairEstimates } from "../../api/maintenance";
 import { capNotice, listCapInfo } from "../../lib/list-cap";
+import { entityLabel } from "../../lib/entity-label";
 
 /**
  * The route's own maximum (units.routes.ts). Named rather than inlined so the cap and the truncation
@@ -96,7 +97,7 @@ export function FleetOosStrip({ operatingCompanyId }: Props) {
 
       byUnitId.set(unitId, {
         unitId,
-        unitNumber: String(unit.unit_number ?? unitId),
+        unitNumber: entityLabel(unit.unit_number, unitId, "Unit"),
         // Only a REAL recorded reason. This used to fall back to `unit.status`, which put the raw
         // enum "OutOfService" on the card directly beneath the label that already says "Out of
         // service" — 13 units on prod showed the enum, because none of them has an oos_reason. An
@@ -115,7 +116,7 @@ export function FleetOosStrip({ operatingCompanyId }: Props) {
       const etaBack = formatEta(estimate.estimated_completion_date);
       byUnitId.set(estimate.unit_id, {
         unitId: estimate.unit_id,
-        unitNumber: estimate.unit_number ?? existing?.unitNumber ?? estimate.unit_id,
+        unitNumber: entityLabel(estimate.unit_number, estimate.unit_id, "Unit") ?? existing?.unitNumber,
         reason,
         etaBack,
         statusLabel: existing?.statusLabel ?? "Out of service",
