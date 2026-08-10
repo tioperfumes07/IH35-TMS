@@ -19,6 +19,7 @@ import {
   stampFinalActiveDeliveryDeparture,
 } from "../dispatch/stamp-final-delivery-departure.js";
 import { ensureDriverBillArtifactsForLoad } from "../dispatch/book-load.service.js";
+import { resyncProformaInvoiceFromLoadRate } from "../accounting/resync-proforma-from-load-rate.js";
 
 const loadStatusSchema = z.enum([
   "draft",
@@ -1304,6 +1305,18 @@ export async function registerLoadRoutes(app: FastifyInstance) {
             "warning",
             "BT-3-LOADS-SCHEMA"
           );
+        }
+
+        // FAIL-I1 dual-path: mdata PATCH was updating rate_total_cents without refreshing the
+        // draft/proforma from-load invoice (dispatch updateDispatchLoad already did). Same helper.
+        const oldRate = Number((oldRow as { rate_total_cents?: unknown }).rate_total_cents ?? 0);
+        const newRate = Number((row as { rate_total_cents?: unknown }).rate_total_cents ?? 0);
+        if ("rate_total_cents" in b && oldRate !== newRate) {
+          await resyncProformaInvoiceFromLoadRate(client, {
+            loadId: String((row as { id: string }).id),
+            operatingCompanyId: String((row as { operating_company_id: string }).operating_company_id),
+            newRateTotalCents: newRate,
+          });
         }
 
         return row;

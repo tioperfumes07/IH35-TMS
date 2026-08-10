@@ -8,7 +8,7 @@
 //     (stop arrivals, detention events, POD/BOL). We UPDATE kept stops in place (preserving the row +
 //     its evidence) and ARCHIVE removed stops via status='cancelled'. No DELETE, ever.
 // No migration: every column already exists. This file writes only mdata.loads + mdata.load_stops.
-import { recomputeInvoiceTotals } from "../accounting/shared.js";
+import { resyncProformaInvoiceFromLoadRate } from "../accounting/resync-proforma-from-load-rate.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { bookLoadRateTotalCents } from "./book-load-accessorial.js";
 
@@ -467,29 +467,14 @@ export async function updateDispatchLoad(
   // and the same principle draws the line here.
   // A VOIDED invoice is likewise never revived: `voided_at IS NULL` keeps a dead document dead.
   // recomputeInvoiceTotals is the existing shared helper — no new money math is introduced.
+  // Shared helper — same wire as mdata PATCH /loads/:id (FAIL-I1 dual-path).
   if (rateChanged) {
     const newTotal = Number((updatedLoadRes.rows[0] as { rate_total_cents?: unknown } | undefined)?.rate_total_cents ?? 0);
-    if (Number.isFinite(newTotal) && newTotal > 0) {
-      const resync = await client.query<{ invoice_id: string }>(
-        `
-          UPDATE accounting.invoice_lines l
-             SET unit_amount_cents = $3::bigint,
-                 line_total_cents  = $3::bigint
-            FROM accounting.invoices i
-           WHERE l.invoice_id = i.id
-             AND i.source_load_id = $1::uuid
-             AND i.operating_company_id = $2::uuid
-             AND i.status IN ('draft', 'proforma')
-             AND i.voided_at IS NULL
-             AND l.line_type = 'linehaul'
-          RETURNING i.id::text AS invoice_id
-        `,
-        [loadId, operatingCompanyId, newTotal]
-      );
-      for (const row of resync.rows) {
-        await recomputeInvoiceTotals(client, String(row.invoice_id));
-      }
-    }
+    await resyncProformaInvoiceFromLoadRate(client, {
+      loadId,
+      operatingCompanyId,
+      newRateTotalCents: newTotal,
+    });
   }
 
   // 6) Audit — record what changed (field keys, rate change, stop counts).
