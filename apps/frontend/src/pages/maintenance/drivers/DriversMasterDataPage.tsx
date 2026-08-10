@@ -10,6 +10,7 @@ import {
   voidMaintenanceDriver,
 } from "../../../api/maintenance";
 import { Button } from "../../../components/Button";
+import { ListErrorState } from "../../../components/ListErrorState";
 import { Modal } from "../../../components/Modal";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { useToast } from "../../../components/Toast";
@@ -199,16 +200,25 @@ export function DriversMasterDataPage() {
           </Button>
           {!csvEnabled ? <span className="text-[11px] text-amber-700">CSV fallback disabled for projected entity</span> : null}
         </div>
-        <ParityTable<MaintenanceDriverRow>
-          columns={columns}
-          rows={rows}
-          rowKey={(row) => row.id}
-          loading={driversQuery.isLoading}
-          emptyText="No drivers found."
-          storageKey="maint-master-data-drivers"
-          exportFilename="maintenance-drivers"
-          rowActions={rowActions}
-        />
+        {driversQuery.isError ? (
+          <ListErrorState
+            title="Couldn't load maintenance drivers"
+            status={0}
+            message={(driversQuery.error as Error)?.message}
+            onRetry={() => void driversQuery.refetch()}
+          />
+        ) : (
+          <ParityTable<MaintenanceDriverRow>
+            columns={columns}
+            rows={rows}
+            rowKey={(row) => row.id}
+            loading={driversQuery.isLoading}
+            emptyText="No drivers found."
+            storageKey="maint-master-data-drivers"
+            exportFilename="maintenance-drivers"
+            rowActions={rowActions}
+          />
+        )}
       </div>
 
       <Modal variant="drawer" open={createOpen} onClose={() => setCreateOpen(false)} title="Create Driver">
