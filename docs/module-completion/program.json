@@ -2,8 +2,8 @@
   "module": "program",
   "title": "Program Tracker",
   "complete": false,
-  "as_of": "2026-08-10",
-  "live_sha": "1b3a44d",
+  "as_of": "2026-08-10T06:05:00.000Z",
+  "live_sha": "50ce01b",
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/AUDITOR-RUN-2026-07-31/modules/program-system-help-2026-08-01.md",
   "spec_sources": [
     "docs/specs/DEFINITION-OF-DONE.md",
@@ -20,8 +20,8 @@
       ],
       "spec": "ProgramBoardPage · program-system-help breadth pass",
       "status": "PASS",
-      "evidence": "Route manifest mounts /program -> AuditScoreboardPage -> ScenarioTrackerHome; ProgramModuleNav links /program; verify-program-audit-scoreboard-api-url.mjs PASS. Guard: scripts/verify-program-surfaces-s01-s05.mjs. | PROD-VERIFIED 2026-08-10 entity=USMCA (program is entity-agnostic Owner/Admin chrome): GET /api/v1/healthz/shallow version=a1a7b50; app.ih35dispatch.com/docs 200; verify-program-surfaces-s01-s05.mjs exit 0; verify-program-audit-scoreboard-api-url.mjs exit 0.",
-      "pr": "#TBD",
+      "evidence": "Route manifest mounts /program -> AuditScoreboardPage -> ScenarioTrackerHome; ProgramModuleNav links /program; verify-program-audit-scoreboard-api-url.mjs PASS. Guard: scripts/verify-program-surfaces-s01-s05.mjs. | PROD-VERIFIED 2026-08-10 GET /api/v1/program/audit-scoreboard returns 401 without session (auth-gated, expected); audit-scoreboard.routes stamps prodReadAt via Neon SELECT now() (verify-program-scoreboard-13gate-prodread PASS); node scripts/verify-program-audit-scoreboard-api-url.mjs exit 0; healthz version=50ce01b.",
+      "pr": "#5373",
       "prod_verified": true
     },
     {
@@ -33,8 +33,8 @@
       ],
       "spec": "npm run reconcile:blocks shared JSON",
       "status": "PASS",
-      "evidence": "Route /program/legacy-scoreboard -> ProgramBoardPage; getProgramBoard API; program-board.service.ts reads docs/trackers/block-reconciliation-data.json; verify-program-scoreboard-13gate-prodread.mjs PASS. Guard: scripts/verify-program-surfaces-s01-s05.mjs. | PROD-VERIFIED 2026-08-10: verify-program-scoreboard-13gate-prodread.mjs exit 0 (13-gate prodread); verify-program-board-repo-root.mjs exit 0; healthz=a1a7b50.",
-      "pr": "#TBD",
+      "evidence": "Route /program/legacy-scoreboard -> ProgramBoardPage; getProgramBoard API; program-board.service.ts reads docs/trackers/block-reconciliation-data.json; verify-program-scoreboard-13gate-prodread.mjs PASS. Guard: scripts/verify-program-surfaces-s01-s05.mjs. | PROD-VERIFIED 2026-08-10 committed docs/trackers/block-reconciliation-data.json date=2026-08-08 generated_at_iso=2026-08-08T02:25:00.607Z · universe.total_blocks_after_dedup=1203 · counts DONE=593 PENDING=15 NEEDS-VERIFY=59; GET /api/v1/program/board 401 auth-gated; verify-program-scoreboard-13gate-prodread.mjs exit 0; healthz=50ce01b.",
+      "pr": "#5373",
       "prod_verified": true
     },
     {
@@ -46,8 +46,8 @@
       ],
       "spec": "ModuleCompletionPage · verify-module-completion",
       "status": "PASS",
-      "evidence": "Route /program/modules -> ModuleCompletionPage; imports generated MODULE_COMPLETION and renders N-of-M progress for every manifest. Guard: scripts/verify-program-surfaces-s01-s05.mjs. | PROD-VERIFIED 2026-08-10: manifest route + ModuleCompletionPage prod_verified/code_verified badges wired; verify-module-completion.mjs --write-md exit 0; healthz=a1a7b50.",
-      "pr": "#TBD",
+      "evidence": "Route /program/modules -> ModuleCompletionPage; imports generated MODULE_COMPLETION and renders N-of-M progress for every manifest. Guard: scripts/verify-program-surfaces-s01-s05.mjs. | PROD-VERIFIED 2026-08-10 docs/module-completion/*.json n=30 manifests; node scripts/verify-module-completion.mjs PASS (all manifests legal); ModuleCompletionPage buildRows() wired on main #5373; healthz=50ce01b.",
+      "pr": "#5373",
       "prod_verified": true
     },
     {
@@ -59,8 +59,8 @@
       ],
       "spec": "reconcile-block-status truth-first law",
       "status": "PASS",
-      "evidence": "Route /program/tracker -> ProgramTrackerPage; fetches /api/v1/program/tracker and renders per-block status/PR/completeness; verify-program-tracker-r2-live.mjs + verify-program-tracker-tabs-url-sync.mjs PASS. Guard: scripts/verify-program-surfaces-s01-s05.mjs. | PROD-VERIFIED 2026-08-10: verify-program-tracker-r2-live.mjs exit 0 (R2 CI-refreshed spine + committed fallback); verify-program-tracker-tabs-url-sync.mjs exit 0; healthz=a1a7b50.",
-      "pr": "#TBD",
+      "evidence": "Route /program/tracker -> ProgramTrackerPage; fetches /api/v1/program/tracker and renders per-block status/PR/completeness; verify-program-tracker-r2-live.mjs + verify-program-tracker-tabs-url-sync.mjs PASS. Guard: scripts/verify-program-surfaces-s01-s05.mjs. | PROD-VERIFIED 2026-08-10 .block-ready active registrations n=1015 (367 retired excluded); verify-program-tracker-r2-live.mjs exit 0 (R2 CI-refreshed spine + committed fallback); GET /api/v1/program/tracker 401 auth-gated; healthz=50ce01b.",
+      "pr": "#5373",
       "prod_verified": true
     },
     {
@@ -71,8 +71,8 @@
       ],
       "spec": "Program tracker tab 01 Merged PRs",
       "status": "PASS",
-      "evidence": "ProgramBoardPage includes merged tab and renders merged_pr_total / recent_merged slices; verify-program-board-tab-render-parity.mjs + verify-program-board-tabs-url-sync.mjs PASS. Guard: scripts/verify-program-surfaces-s01-s05.mjs. | PROD-VERIFIED 2026-08-10: verify-program-board-tab-render-parity.mjs exit 0; verify-program-board-tabs-url-sync.mjs exit 0; healthz=a1a7b50.",
-      "pr": "#TBD",
+      "evidence": "ProgramBoardPage includes merged tab and renders merged_pr_total / recent_merged slices; verify-program-board-tab-render-parity.mjs + verify-program-board-tabs-url-sync.mjs PASS. Guard: scripts/verify-program-surfaces-s01-s05.mjs. | PROD-VERIFIED 2026-08-10 block-reconciliation-data.json merged_prs n=600; program-board.service mergedAll.slice(0, MERGED_PR_SLICE) wired; verify-program-board-tab-render-parity.mjs exit 0; healthz=50ce01b.",
+      "pr": "#5373",
       "prod_verified": true
     },
     {
@@ -110,5 +110,6 @@
   ],
   "pass_count": 6,
   "total_count": 7,
-  "progress": "6 of 7"
+  "progress": "6 of 7",
+  "note": "2026-08-10 PROG-CERTIFIED-NEON: PROG-S01..S05 evidence upgraded with reconcile artifact + API/code proof (#5373); PROG-S06 unchanged (Codex). PROG-VERIFY-01 stays OPEN. healthz=50ce01b at prove; main tip d7de2fabb."
 }
