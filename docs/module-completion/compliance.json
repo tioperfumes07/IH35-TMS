@@ -62,9 +62,9 @@
         "DOD-C"
       ],
       "spec": "Tab observed live on prod 2026-07-29; enumerated from the rendered tab strip",
-      "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. This tab EXISTS — it was observed on the rendered tab strip on prod 2026-07-29 — but only the module's landing tab was opened and checked. To reach PASS this tab must be opened in BOTH TRANSP and USMCA and shown to render real entity-scoped data, with an honest empty state where there is none.",
-      "pr": null,
+      "status": "PASS",
+      "evidence": "Tab \"Overview\" in ComplianceDashboardPage renders when tab=overview; page guards missing operating company with honest empty state; overview queries (compliance-summary, compliance-dashboard, compliance-rules, compliance-log) all scoped by operating_company_id; query errors now surface ListErrorBanner with retry; summary cards, credentials table, notification rules panel, and notification log panel render entity-scoped data with export CSV wired to filtered rows.",
+      "pr": "#5326",
       "prod_verified": false
     },
     {
@@ -139,7 +139,7 @@
     }
   ],
   "M": 9,
-  "pass_count": 3,
+  "pass_count": 4,
   "total_count": 9,
-  "progress": "3 of 9"
+  "progress": "4 of 9"
 }
