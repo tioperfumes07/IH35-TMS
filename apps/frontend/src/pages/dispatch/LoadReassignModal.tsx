@@ -8,6 +8,7 @@ import { AssignDriverDropdown, REASSIGN_REASON_CODES, type AssignDriverDropdownP
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { OptimalDriversPanel } from "../../components/dispatch/OptimalDriversPanel";
 import { AuthGatePanel } from "../../components/dispatch/AuthGatePanel";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 type Props = {
   open: boolean;
@@ -56,7 +57,7 @@ export function LoadReassignModal({ open, onClose, loadId, operatingCompanyId, l
         onSubmit={(e) => {
           e.preventDefault();
           if (!driverId) return;
-          void mut.mutateAsync();
+          mut.mutate();
         }}
       >
         <OptimalDriversPanel
@@ -99,7 +100,9 @@ export function LoadReassignModal({ open, onClose, loadId, operatingCompanyId, l
             onBlockersChange={setGateBlocked}
           />
         ) : null}
-        {mut.isError ? <div className="text-xs text-red-600">Could not reassign. Check permissions and try again.</div> : null}
+        {mut.isError ? (
+          <div className="text-xs text-red-600">{userFacingApiError(mut.error, "Could not reassign load")}</div>
+        ) : null}
         <div className="flex justify-end gap-2 pt-1">
           <Button type="button" variant="secondary" size="sm" onClick={onClose}>
             Close

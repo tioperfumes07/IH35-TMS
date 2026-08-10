@@ -68,4 +68,42 @@ describe("LoadReassignModal (P5-T17)", () => {
     const body = (postLoadReassign as ReturnType<typeof vi.fn>).mock.calls[0][1] as { reason_code: string };
     expect(body.reason_code).toBeTruthy();
   });
+
+  it("renders the API's operator-facing reassign error", async () => {
+    const user = userEvent.setup();
+    (postLoadReassign as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
+      new Error("Selected driver was not found for this operating company.")
+    );
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
+    render(
+      <QueryClientProvider client={qc}>
+        <MemoryRouter>
+          <LoadReassignModal
+            open
+            onClose={vi.fn()}
+            loadId="00000000-0000-4000-8000-000000000001"
+            operatingCompanyId="00000000-0000-4000-8000-000000000002"
+            loadNumber="L-100"
+            driversOverride={[
+              {
+                driver_id: "00000000-0000-4000-8000-000000000010",
+                display_name: "Test Driver",
+                display_id: "d1",
+                hours_remaining_today: 8,
+                hours_remaining_week: 60,
+                distance_to_pickup_miles: 10,
+                hos_safe: true,
+                is_in_violation: false,
+              },
+            ]}
+          />
+        </MemoryRouter>
+      </QueryClientProvider>
+    );
+
+    pickCombo(screen.getAllByRole("combobox")[0], /Test Driver/i);
+    await user.click(screen.getByRole("button", { name: /^Reassign$/i }));
+
+    expect(await screen.findByText("Selected driver was not found for this operating company.")).toBeInTheDocument();
+  });
 });

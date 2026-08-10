@@ -177,6 +177,12 @@ export async function registerDispatchRefinementsRoutes(app: FastifyInstance) {
           message: "Load not found for this operating company.",
         });
       }
+      if (msg === "E_DRIVER_NOT_FOUND") {
+        return reply.code(404).send({
+          error: "E_DRIVER_NOT_FOUND",
+          message: "Selected driver was not found for this operating company.",
+        });
+      }
       if (msg === "E_DRIVER_NOT_QUALIFIED") {
         return reply.code(422).send({
           error: "E_DRIVER_NOT_QUALIFIED",
