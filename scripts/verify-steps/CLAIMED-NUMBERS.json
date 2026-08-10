@@ -2005,5 +2005,10 @@
     "claimed_at": "2026-08-10",
     "claimed_by": "cursor",
     "purpose": "verify-gate-b-purge-predicate"
+  },
+  "3018": {
+    "claimed_at": "2026-08-10",
+    "claimed_by": "cursor",
+    "purpose": "verify-user-facing-toast-errors"
   }
 }
