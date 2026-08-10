@@ -995,6 +995,14 @@ export function CustomerDetailPage() {
   const customerLoadsListState = useListState(customerLoadsQuery, customerLoads.length === 0);
 
   if (detailQuery.isLoading) return <div className="text-sm text-gray-500">Loading customer...</div>;
+  if (detailQuery.isError) {
+    return (
+      <ListErrorBanner
+        message="Failed to load customer details."
+        onRetry={() => void detailQuery.refetch()}
+      />
+    );
+  }
   if (!customer) {
     return (
       <div className="space-y-3">

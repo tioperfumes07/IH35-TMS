@@ -48,6 +48,14 @@ if (!ciSource.includes("verify:customer-billing-endpoints")) {
 if (!customerDetailSource.includes("billingSummaryQuery.isError") || !customerDetailSource.includes("ListErrorBanner")) {
   failures.push("CustomerDetail.tsx must surface billing-summary errors via ListErrorBanner");
 }
+const detailErrorIndex = customerDetailSource.indexOf("if (detailQuery.isError)");
+const missingCustomerIndex = customerDetailSource.lastIndexOf("if (!customer)");
+if (detailErrorIndex < 0 || missingCustomerIndex < 0 || detailErrorIndex > missingCustomerIndex) {
+  failures.push("CustomerDetail.tsx must distinguish detail-query failure before the not-found branch");
+}
+if (!/detailQuery\.isError[\s\S]{0,220}<ListErrorBanner[\s\S]{0,220}detailQuery\.refetch\(\)/.test(customerDetailSource)) {
+  failures.push("CustomerDetail.tsx detail-query failure must use retryable ListErrorBanner");
+}
 
 if (failures.length > 0) {
   console.error("verify:customer-billing-endpoints — FAILED");
