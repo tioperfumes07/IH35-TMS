@@ -5,6 +5,8 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { DrillKpiCard } from "../../components/layout/DrillKpiCard";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { ListErrorState } from "../../components/ListErrorState";
+import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import {
@@ -13,6 +15,7 @@ import {
   type InboxReportingDriverRow,
 } from "../../api/driverInboxReporting";
 import { formatUsdCents } from "../../lib/money";
+import { entityLabel } from "../../lib/entity-label";
 
 function isoDaysAgo(days: number): string {
   const d = new Date();
@@ -77,7 +80,9 @@ const DRIVER_REPORTING_COLUMNS: Array<ParityColumn<InboxReportingDriverRow>> = [
     key: "driver_name",
     label: "Driver",
     sortable: true,
-    render: (r) => <span className="text-[#1f2a44]">{r.driver_name}</span>,
+    render: (r) => (
+      <EntityLink kind="driver" id={r.driver_id} label={entityLabel(r.driver_name, r.driver_id, "Driver")} />
+    ),
   },
   {
     key: "total_requests",
@@ -169,6 +174,15 @@ export function DriverHubReportingPage() {
         }
       />
 
+      {!companyId ? (
+        <div
+          className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-sm text-gray-700"
+          data-testid="driver-hub-reporting-need-company"
+        >
+          Select an operating company to view driver inbox reporting.
+        </div>
+      ) : (
+        <>
       <div className="flex flex-wrap items-end gap-3 rounded-sm border border-gray-200 bg-white p-3">
         <div className="space-y-1">
           <label className="block text-[9px] font-semibold uppercase tracking-wide text-[#8A92AB]">From</label>
@@ -183,9 +197,10 @@ export function DriverHubReportingPage() {
         </Link>
       </div>
 
-      {!companyId ? (
-        <div className="rounded-sm border border-gray-200 bg-white p-4 text-sm text-gray-500">Select a company to view reporting.</div>
-      ) : query.isLoading ? (
+      {query.isError ? (
+        <ListErrorBanner onRetry={() => void query.refetch()} />
+      ) : null}
+      {query.isLoading ? (
         <div className="rounded-sm border border-gray-200 bg-white p-4 text-sm text-gray-500">Loading…</div>
       ) : query.isError ? (
         <ListErrorState
@@ -194,6 +209,13 @@ export function DriverHubReportingPage() {
           message={(query.error as Error)?.message}
           onRetry={() => void query.refetch()}
         />
+      ) : data && data.by_driver.length === 0 ? (
+        <div
+          className="rounded-sm border border-slate-200 bg-white px-4 py-10 text-center text-xs text-slate-400"
+          data-testid="driver-hub-reporting-honest-empty"
+        >
+          No requests in this period.
+        </div>
       ) : data ? (
         <>
           <div className="grid grid-cols-2 gap-2 md:grid-cols-4 xl:grid-cols-7">
@@ -227,6 +249,8 @@ export function DriverHubReportingPage() {
           ) : null}
         </>
       ) : null}
+        </>
+      )}
     </div>
   );
 }

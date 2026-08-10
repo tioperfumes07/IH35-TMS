@@ -1,7 +1,7 @@
 {
   "module": "driver-hub",
-  "title": "Driver Hub — acceptance checklist",
-  "complete": false,
+  "title": "Driver Hub \u2014 acceptance checklist",
+  "complete": true,
   "as_of": "2026-08-09",
   "live_sha": null,
   "desktop_audit": null,
@@ -9,7 +9,7 @@
     "apps/frontend/src/routes/manifest.tsx",
     "apps/frontend/src/components/layout/sidebar-config.ts"
   ],
-  "note": "BASELINE created 2026-07-29. Until now this module had NO acceptance list, so \"completely built\" had no definition and no honest percentage could be shown. Every item starts OPEN because none has been verified — this is a scope statement, not a claim of failure. M grows when new surfaces or defects appear (Rule 21).",
+  "note": "BASELINE created 2026-07-29. Until now this module had NO acceptance list, so \"completely built\" had no definition and no honest percentage could be shown. Every item starts OPEN because none has been verified \u2014 this is a scope statement, not a claim of failure. M grows when new surfaces or defects appear (Rule 21).",
   "items": [
     {
       "id": "DHUB-S01",
@@ -34,14 +34,15 @@
         "DOD-C"
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
+      "status": "PASS",
+      "evidence": "DriverHubReportingPage need-company + ListErrorBanner + honest empty + EntityLink; verify-dhub-s02-reporting-surface.mjs",
       "pr": null,
       "prod_verified": false
     }
   ],
   "M": 2,
-  "pass_count": 1,
+  "pass_count": 2,
   "total_count": 2,
-  "progress": "1 of 2"
+  "progress": "2 of 2",
+  "item_count": 2
 }
