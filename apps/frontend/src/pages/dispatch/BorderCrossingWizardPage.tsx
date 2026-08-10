@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { resolveApiUrl } from "../../api/client";
 import { Link } from "react-router-dom";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { CbpWaitTimesWidget } from "../../components/border-crossing/CbpWaitTimesWidget";
 import {
@@ -15,12 +16,15 @@ import { WizardStep3 } from "../../components/border-crossing/WizardStep3";
 import { WizardStep4 } from "../../components/border-crossing/WizardStep4";
 import { WizardStep5 } from "../../components/border-crossing/WizardStep5";
 import { WizardStep6 } from "../../components/border-crossing/WizardStep6";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 const STEPS = ["Load", "Port", "Cargo", "Broker", "FAST", "Review"];
 
 export function BorderCrossingWizardPage() {
   const { selectedCompanyId } = useCompanyContext();
-  const { ports, brokers } = useBorderCrossingApi(selectedCompanyId ?? undefined);
+  const { ports, brokers, portsLoading, brokersLoading, portsError, brokersError } = useBorderCrossingApi(
+    selectedCompanyId ?? undefined,
+  );
   const [step, setStep] = useState(0);
   const [form, setForm] = useState<WizardFormState>(initialWizardForm);
   const [submitting, setSubmitting] = useState(false);
@@ -40,6 +44,11 @@ export function BorderCrossingWizardPage() {
     if (step === 2) return Boolean(form.commodity.trim());
     return true;
   }, [step, form]);
+
+  const catalogSettled = !portsLoading && (!selectedCompanyId || !brokersLoading);
+  const showPortsEmpty = Boolean(selectedCompanyId) && catalogSettled && !portsError && ports.length === 0;
+  const showBrokersEmpty =
+    Boolean(selectedCompanyId) && catalogSettled && !brokersError && step === 3 && brokers.length === 0;
 
   const submitWizard = async () => {
     if (!selectedCompanyId) {
@@ -86,7 +95,7 @@ export function BorderCrossingWizardPage() {
       });
       setStep(5);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Submission failed");
+      setError(userFacingApiError(err, "Wizard submission failed"));
     } finally {
       setSubmitting(false);
     }
@@ -108,6 +117,30 @@ export function BorderCrossingWizardPage() {
           </Link>
         }
       />
+
+      {!selectedCompanyId ? (
+        <p className="rounded-sm border border-dashed border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-700" data-testid="border-crossing-need-company">
+          Select an operating company to load entity-scoped customs brokers and submit a crossing.
+        </p>
+      ) : null}
+      {portsError ? (
+        <ListErrorBanner message={portsError} onRetry={() => window.location.reload()} />
+      ) : null}
+      {brokersError ? (
+        <ListErrorBanner message={brokersError} onRetry={() => window.location.reload()} />
+      ) : null}
+      {showPortsEmpty ? (
+        <p className="rounded-sm border border-dashed border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-700" data-testid="border-crossing-ports-honest-empty">
+          No ports of entry are available yet. Ports populate from the border-crossing ports catalog; until then the
+          Port step has nothing to select.
+        </p>
+      ) : null}
+      {showBrokersEmpty ? (
+        <p className="rounded-sm border border-dashed border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-700" data-testid="border-crossing-brokers-honest-empty">
+          No customs brokers for this company. Brokers appear after they are created for the active entity (Broker
+          step can stay empty until then).
+        </p>
+      ) : null}
 
       <div className="grid gap-4 lg:grid-cols-[1fr_280px]">
         <div className="rounded-sm border border-gray-200 bg-white p-4">

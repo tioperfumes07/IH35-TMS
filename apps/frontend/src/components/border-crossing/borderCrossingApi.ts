@@ -80,15 +80,60 @@ export async function fetchCustomsBrokers(operatingCompanyId: string): Promise<C
 export function useBorderCrossingApi(operatingCompanyId: string | undefined) {
   const [ports, setPorts] = useState<PortOfEntry[]>([]);
   const [brokers, setBrokers] = useState<CustomsBroker[]>([]);
+  const [portsLoading, setPortsLoading] = useState(true);
+  const [brokersLoading, setBrokersLoading] = useState(false);
+  const [portsError, setPortsError] = useState<string | null>(null);
+  const [brokersError, setBrokersError] = useState<string | null>(null);
 
   useEffect(() => {
-    void fetchPortsOfEntry().then(setPorts).catch(() => setPorts([]));
+    let cancelled = false;
+    setPortsLoading(true);
+    setPortsError(null);
+    void fetchPortsOfEntry()
+      .then((rows) => {
+        if (!cancelled) setPorts(rows);
+      })
+      .catch((err: unknown) => {
+        if (!cancelled) {
+          setPorts([]);
+          setPortsError(err instanceof Error ? err.message : "Failed to load ports of entry");
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setPortsLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
-    if (!operatingCompanyId) return;
-    void fetchCustomsBrokers(operatingCompanyId).then(setBrokers).catch(() => setBrokers([]));
+    if (!operatingCompanyId) {
+      setBrokers([]);
+      setBrokersLoading(false);
+      setBrokersError(null);
+      return;
+    }
+    let cancelled = false;
+    setBrokersLoading(true);
+    setBrokersError(null);
+    void fetchCustomsBrokers(operatingCompanyId)
+      .then((rows) => {
+        if (!cancelled) setBrokers(rows);
+      })
+      .catch((err: unknown) => {
+        if (!cancelled) {
+          setBrokers([]);
+          setBrokersError(err instanceof Error ? err.message : "Failed to load customs brokers");
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setBrokersLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [operatingCompanyId]);
 
-  return { ports, brokers };
+  return { ports, brokers, portsLoading, brokersLoading, portsError, brokersError };
 }
