@@ -16,6 +16,7 @@ import { PageHeader } from "../../components/forms/shared/PageHeader";
 import { entityLabel } from "../../lib/entity-label";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { CollapsedListFilters } from "../../components/table";
+import { ListErrorState } from "../../components/ListErrorState";
 
 export function DefectsInboxPage() {
   const { selectedCompanyId, companies } = useCompanyContext();
@@ -128,17 +129,26 @@ export function DefectsInboxPage() {
         </CollapsedListFilters>
       </div>
 
-      <ParityTable
-        rows={rows}
-        columns={columns}
-        rowKey={(row) => row.id}
-        loading={q.isPending}
-        storageKey="maintenance-dvir-defects"
-        emptyText="No DVIR defects in this queue."
-        exportFilename="dvir-defects"
-        tableTestId="maint-dvir-defects-table"
-        rowTestId={(row) => `defect-row-${row.id}`}
-      />
+      {q.isError ? (
+        <ListErrorState
+          title="Couldn't load DVIR defects"
+          status={0}
+          message={(q.error as Error)?.message}
+          onRetry={() => void q.refetch()}
+        />
+      ) : (
+        <ParityTable
+          rows={rows}
+          columns={columns}
+          rowKey={(row) => row.id}
+          loading={q.isPending}
+          storageKey="maintenance-dvir-defects"
+          emptyText="No DVIR defects in this queue."
+          exportFilename="dvir-defects"
+          tableTestId="maint-dvir-defects-table"
+          rowTestId={(row) => `defect-row-${row.id}`}
+        />
+      )}
     </div>
   );
 }
