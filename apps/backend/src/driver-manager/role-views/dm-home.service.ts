@@ -247,7 +247,8 @@ async function loadScoringLeaderboard(
        AND e.operating_company_id = d.operating_company_id
        AND e.event_at >= (now() - interval '7 days')
       WHERE d.operating_company_id = $1::uuid
-        AND d.active = true
+        AND d.deactivated_at IS NULL
+        AND d.archived_at IS NULL
       GROUP BY d.id, d.first_name, d.last_name
       HAVING count(e.id) > 0
     `,
@@ -322,7 +323,7 @@ async function loadCoolingDrivers(client: DbClient, ociId: string): Promise<Cool
         ) msg_activity ON true
         WHERE d.operating_company_id = $1::uuid
           AND d.deactivated_at IS NULL
-          AND d.active = true
+          AND d.archived_at IS NULL
       ) cooling
       WHERE cooling.days_idle >= 14
       ORDER BY cooling.days_idle DESC, cooling.driver_name ASC

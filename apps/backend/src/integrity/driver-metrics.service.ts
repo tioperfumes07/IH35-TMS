@@ -234,8 +234,8 @@ export function buildDriverMetricsAggregationSql(): string {
         NULLIF(trim(CONCAT_WS(' ', d.first_name, d.last_name)), '') AS driver_name
       FROM mdata.drivers d
       WHERE d.operating_company_id = $1::uuid
-        AND COALESCE(d.active, true) = true
-        AND COALESCE(d.deactivated_at, NULL) IS NULL
+        AND d.deactivated_at IS NULL
+        AND d.archived_at IS NULL
     ),
     fuel_agg AS (
       SELECT

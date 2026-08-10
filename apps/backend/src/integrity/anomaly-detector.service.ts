@@ -89,8 +89,8 @@ export class AnomalyDetectorService {
          AND mc.voided_at IS NULL
          AND (mc.expiry_date IS NULL OR mc.expiry_date >= current_date)
         WHERE d.operating_company_id = $1::uuid
-          AND COALESCE(d.active, true) = true
           AND d.deactivated_at IS NULL
+          AND d.archived_at IS NULL
           AND mc.id IS NULL
         ORDER BY d.id
       `,
