@@ -92,15 +92,23 @@ export function SafetyLayout() {
     // detected explicitly — otherwise it fell through to the "driver-files" fallback below and the
     // breadcrumb/nav highlighted "Driver Files & Training" while the page showed something else.
     if (path === "/safety/home" || path === "/safety") return "home";
+    // INS-CLAIMS-ROUTE (Cascade USMCA wire 2026-08-09): exact `tab.route === path` missed nested
+    // Insurance mounts (`/safety/insurance/claims`, `/policies/:id`, …) so the chrome lied as
+    // "Driver Files & Training" while Outlet correctly showed Claims. Match longest prefix first
+    // with `route` or `route/` boundary (never `/safety/hos` swallowing `/safety/hos-violations`).
+    const matchRoute = (route: string) => path === route || path.startsWith(`${route}/`);
+    const candidates: { id: string; route: string }[] = [];
     for (const group of SAFETY_GROUPS) {
       for (const tab of group.tabs) {
-        if (tab.route === path) return tab.id;
+        if (matchRoute(tab.route)) candidates.push({ id: tab.id, route: tab.route });
       }
     }
-    // Alias entry points (e.g. Cert Expiry) reuse a screen under a different group but have their own
-    // route, so the active-tab + breadcrumb reflect the group the user clicked from.
     for (const alias of SAFETY_ALIAS_TABS) {
-      if (alias.tab.route === path) return alias.tab.id;
+      if (matchRoute(alias.tab.route)) candidates.push({ id: alias.tab.id, route: alias.tab.route });
+    }
+    if (candidates.length > 0) {
+      candidates.sort((a, b) => b.route.length - a.route.length);
+      return candidates[0].id;
     }
     return "driver-files";
   }, [location.pathname]);
