@@ -5,6 +5,7 @@ import { DriverPickerWithCreate } from "../../components/drivers/DriverPickerWit
 import { Modal } from "../../components/Modal";
 import { StatusBadge } from "../../components/StatusBadge";
 import { useTeamSplits } from "../../hooks/useTeamSplits";
+import { entityLabel } from "../../lib/entity-label";
 
 type Props = {
   operatingCompanyId: string;
@@ -77,7 +78,8 @@ export function TeamSplitConfig({ operatingCompanyId }: Props) {
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
                 <div className="text-sm font-semibold text-gray-900">
-                  {row.primary_driver_name || row.primary_driver_id} / {row.secondary_driver_name || row.secondary_driver_id}
+                  {entityLabel(row.primary_driver_name, row.primary_driver_id, "Driver")} /{" "}
+                  {entityLabel(row.secondary_driver_name, row.secondary_driver_id, "Driver")}
                 </div>
                 <div className="text-xs text-gray-600">
                   {Math.round(Number(row.primary_ratio) * 100)}% / {Math.round(Number(row.secondary_ratio) * 100)}%

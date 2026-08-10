@@ -199,14 +199,10 @@ export function SettlementDisputesTab({ companyId }: { companyId: string }) {
               <p className="text-xs text-gray-500">
                 <EntityLink kind="settlement" id={detail.settlement_id} label={entityLabel(detail.settlement_display_id, detail.settlement_id, "Settlement")} /> ·{" "}
                 <span
-                  title={
-                    detail.driver_name || detail.driver_id
-                      ? String(detail.driver_name ?? detail.driver_id)
-                      : undefined
-                  }
+                  title={entityLabel(detail.driver_name, detail.driver_id, "Driver")}
                   className="single-line-name"
                 >
-                  {detail.driver_name ?? detail.driver_id}
+                  {entityLabel(detail.driver_name, detail.driver_id, "Driver")}
                 </span>
               </p>
             </div>
