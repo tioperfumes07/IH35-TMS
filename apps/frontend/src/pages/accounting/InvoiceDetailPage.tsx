@@ -130,6 +130,15 @@ export function InvoiceDetailPage() {
   const canRecordPayment = invoice?.status === "sent" || invoice?.status === "partial";
   const lineCount = invoice?.lines?.length ?? 0;
 
+  // LV-SEND-NOREASON: a disabled primary action must announce why to users and assistive tech.
+  const sendDisabledReason = (() => {
+    if (!invoice) return undefined;
+    if (lineCount === 0) return "Add at least one line item before sending the invoice.";
+    if (!isDraft) return `This invoice is ${invoice.status.replaceAll("_", " ")}. Only draft invoices can be sent.`;
+    return undefined;
+  })();
+  const sendButtonId = "invoice-send-disabled-reason";
+
   const journalEntryIds = useMemo(() => {
     const rows = lineageQuery.data?.rows ?? [];
     const seen = new Set<string>();
@@ -276,13 +285,23 @@ export function InvoiceDetailPage() {
             >
               View invoice PDF
             </Button>
-            <Button
-              onClick={() => sendMutation.mutate()}
-              loading={sendMutation.isPending}
-              disabled={!isDraft || lineCount === 0}
-            >
-              Send
-            </Button>
+            <span className="inline-flex items-center gap-2">
+              <Button
+                onClick={() => sendMutation.mutate()}
+                loading={sendMutation.isPending}
+                disabled={!isDraft || lineCount === 0}
+                aria-disabled={(!isDraft || lineCount === 0) ? "true" : undefined}
+                aria-describedby={sendDisabledReason ? sendButtonId : undefined}
+                title={sendDisabledReason ?? "Send invoice to customer"}
+              >
+                Send
+              </Button>
+              {sendDisabledReason ? (
+                <span id={sendButtonId} className="text-xs text-gray-600">
+                  {sendDisabledReason}
+                </span>
+              ) : null}
+            </span>
             <Button
               variant="danger"
               onClick={() => setVoidOpen(true)}
