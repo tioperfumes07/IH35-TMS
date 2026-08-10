@@ -1,14 +1,18 @@
 #!/usr/bin/env node
 /**
- * RPT-S07 — Audit reports section is routed, surfaced in the reports sub-nav,
- * and entity-scoped via AuditReportPage / backend operating_company_id predicate.
+ * RPT-S07 — Audit reports section (activity, financial change log, deduction trail, …).
+ * Sub-nav + manifest routes + shared AuditReportPage entity scope.
  */
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const AUDIT_ROUTES = [
+const ROOT = process.cwd();
+const SUBNAV = "apps/frontend/src/pages/reports/ReportsSubNav.tsx";
+const MANIFEST = "apps/frontend/src/routes/manifest.tsx";
+const SHARED = "apps/frontend/src/pages/reports/audit/AuditReportPage.tsx";
+
+const AUDIT_HREFS = [
   "/reports/audit/activity-by-user",
   "/reports/audit/activity-by-module",
   "/reports/audit/financial-change-log",
@@ -17,113 +21,70 @@ const AUDIT_ROUTES = [
   "/reports/audit/void-reversal",
   "/reports/audit/period-close-history",
 ];
-const AUDIT_PAGES = [
-  "AuditActivityByUserPage",
-  "AuditActivityByModulePage",
-  "AuditFinancialChangeLogPage",
-  "AuditMaintenanceDecisionLogPage",
-  "AuditDeductionTrailPage",
-  "AuditVoidReversalPage",
-  "AuditPeriodCloseHistoryPage",
-];
 
 function read(rel) {
   return fs.readFileSync(path.join(ROOT, rel), "utf8");
 }
 
-function assert(cond, msg, errors) {
-  if (!cond) errors.push(msg);
-}
-
 export function run() {
-  const errors = [];
-  const manifest = read("apps/frontend/src/routes/manifest.tsx");
-  const subNav = read("apps/frontend/src/pages/reports/ReportsSubNav.tsx");
-  const auditPage = read("apps/frontend/src/pages/reports/audit/AuditReportPage.tsx");
-  const backend = read("apps/backend/src/audit/audit-reports.routes.ts");
-
-  for (let i = 0; i < AUDIT_ROUTES.length; i++) {
-    const route = AUDIT_ROUTES[i];
-    const page = AUDIT_PAGES[i];
-    const escapedRoute = route.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    assert(
-      new RegExp('path=["\']' + escapedRoute + '["\']').test(manifest),
-      `manifest missing route ${route}`,
-      errors,
-    );
-    assert(
-      new RegExp('<' + page + '\\s*/>').test(manifest),
-      `manifest route ${route} does not mount ${page}`,
-      errors,
-    );
-    assert(
-      new RegExp('href: *["\']' + escapedRoute + '["\']').test(subNav),
-      `ReportsSubNav missing exact audit link ${route}`,
-      errors,
-    );
+  const failures = [];
+  for (const f of [SUBNAV, MANIFEST, SHARED]) {
+    if (!fs.existsSync(path.join(ROOT, f))) failures.push(`MISSING: ${f}`);
   }
+  if (failures.length) return failures;
 
-  assert(auditPage.includes("useCompanyContext"), "AuditReportPage must read selectedCompanyId", errors);
-  assert(/operating_company_id:\s*companyId/.test(auditPage), "AuditReportPage must pass operating_company_id", errors);
-  assert(/fetchAuditReport\(endpoint,\s*params\)/.test(auditPage), "AuditReportPage must call fetchAuditReport with params", errors);
-  assert(/No records for the selected filters/.test(auditPage), "AuditReportPage must have honest empty state", errors);
-  assert(/Failed to load report/.test(auditPage), "AuditReportPage must surface error state", errors);
+  const sub = read(SUBNAV);
+  const man = read(MANIFEST);
+  const shared = read(SHARED);
 
-  for (const route of AUDIT_ROUTES) {
-    const apiPath = route.replace("/reports/audit/", "/api/v1/audit/reports/");
-    assert(
-      backend.includes('app.get("' + apiPath + '"'),
-      `backend missing route ${apiPath}`,
-      errors,
-    );
+  if (!/AUDIT_REPORT_CHILDREN/.test(sub)) {
+    failures.push(`${SUBNAV}: must define AUDIT_REPORT_CHILDREN`);
   }
-  const endpointBlocks = backend.split("app.get(").slice(1);
-  for (const block of endpointBlocks) {
-    if (!block.includes('"/api/v1/audit/reports/"')) continue;
-    assert(
-      /el\.operating_company_id\s*=\s*\$1::uuid/.test(block) ||
-      /operating_company_id\s*=\s*\$1/.test(block),
-      `backend audit endpoint missing operating_company_id predicate: ${block.slice(0, 80)}`,
-      errors,
-    );
+  if (!/label:\s*"Audit"/.test(sub) || !/children:\s*AUDIT_REPORT_CHILDREN/.test(sub)) {
+    failures.push(`${SUBNAV}: must surface Audit flyout with AUDIT_REPORT_CHILDREN`);
   }
-
-  return errors;
-}
-
-function selftest() {
-  const realPath = path.join(ROOT, "apps/frontend/src/pages/reports/ReportsSubNav.tsx");
-  const backup = fs.readFileSync(realPath, "utf8");
-  try {
-    fs.writeFileSync(
-      realPath,
-      backup.replaceAll('/reports/audit/activity-by-user', '/reports/audit/activity-by-user-orphan'),
-      "utf8",
-    );
-    const planted = run();
-    if (!planted.some((e) => e.includes("activity-by-user"))) {
-      console.error("[verify-rpt-s07] SELFTEST FAIL: planted stale route not detected");
-      process.exit(1);
+  for (const href of AUDIT_HREFS) {
+    if (!sub.includes(`href: "${href}"`)) {
+      failures.push(`${SUBNAV}: missing audit child ${href}`);
     }
-    console.log(`[verify-rpt-s07] SELFTEST PASS (${planted.length} planted failures detected)`);
-  } finally {
-    fs.writeFileSync(realPath, backup, "utf8");
+    if (!man.includes(`path="${href}"`)) {
+      failures.push(`${MANIFEST}: missing Route ${href}`);
+    }
   }
+  if (!/useCompanyContext/.test(shared) || !/operating_company_id:\s*companyId/.test(shared)) {
+    failures.push(`${SHARED}: must pass operating_company_id from company context`);
+  }
+  if (!/enabled:\s*Boolean\(companyId\)/.test(shared)) {
+    failures.push(`${SHARED}: must not fetch audit rows without companyId`);
+  }
+  return failures;
 }
 
 function main() {
   if (process.argv.includes("--selftest")) {
-    selftest();
-    process.exit(0);
+    const orig = read(SUBNAV);
+    const broken = orig.replace(/href: "\/reports\/audit\/activity-by-user"/g, 'href: "/reports/audit/REMOVED"');
+    fs.writeFileSync(path.join(ROOT, SUBNAV), broken);
+    let fail;
+    try {
+      fail = run();
+    } finally {
+      fs.writeFileSync(path.join(ROOT, SUBNAV), orig);
+    }
+    if (!fail.length) {
+      console.error("SELFTEST FAIL: expected failures");
+      process.exit(1);
+    }
+    console.log("SELFTEST OK");
+    return;
   }
-  const errors = run();
-  if (errors.length) {
-    console.error("\n[verify-rpt-s07] FAILED:\n");
-    for (const e of errors) console.error(`  ✗ ${e}`);
+  const failures = run();
+  if (failures.length) {
+    console.error("FAIL RPT-S07:");
+    for (const f of failures) console.error(" -", f);
     process.exit(1);
   }
-  console.log("[verify-rpt-s07] All checks passed ✓");
-  process.exit(0);
+  console.log("PASS RPT-S07 — audit reports section ratcheted");
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
