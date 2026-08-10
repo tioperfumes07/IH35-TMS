@@ -15,6 +15,7 @@ import { getVendorIntegrityHistory } from "../api/maintenance";
 import { patchVendorAccountingCategory } from "../api/vendorCategory";
 import { useAuth } from "../auth/useAuth";
 import { EntityLink } from "../components/shared/EntityLink";
+import { ListErrorBanner } from "../components/shared/ListErrorBanner";
 import { DocumentsTab } from "../components/documents/DocumentsTab";
 import { TasksTab } from "../components/tasks/TasksTab";
 import { EntityAuditHistoryTab } from "../components/audit/EntityAuditHistoryTab";
@@ -451,6 +452,9 @@ export function VendorDetailPage() {
   );
 
   if (vendorQuery.isLoading) return <div className="text-sm text-gray-500">Loading vendor...</div>;
+  if (vendorQuery.isError) {
+    return <ListErrorBanner message="Failed to load vendor details." onRetry={() => void vendorQuery.refetch()} />;
+  }
   if (!vendorQuery.data) {
     return (
       <div className="space-y-3">
@@ -1030,7 +1034,7 @@ export function VendorDetailPage() {
               />
             )}
           </div>
-          {billsQuery.isError ? <p className="text-sm text-red-600">Could not load bills.</p> : null}
+          {billsQuery.isError ? <ListErrorBanner message="Could not load bills." onRetry={() => void billsQuery.refetch()} /> : null}
           {!billsQuery.isError ? (
             <ParityTable<VendorBill>
               rows={billsQuery.data?.rows ?? []}
@@ -1067,7 +1071,7 @@ export function VendorDetailPage() {
           ) : null}
           <div className="rounded-sm border border-gray-200 bg-white p-3">
             <div className="mb-2 text-sm font-semibold text-gray-900">Expenses</div>
-            {vendorExpensesQuery.isError ? <p className="text-sm text-red-600">Could not load expenses.</p> : null}
+            {vendorExpensesQuery.isError ? <ListErrorBanner message="Could not load expenses." onRetry={() => void vendorExpensesQuery.refetch()} /> : null}
             {!vendorExpensesQuery.isError ? (
               <ParityTable<ExpenseListRow>
                 rows={vendorExpensesQuery.data ?? []}
@@ -1115,7 +1119,7 @@ export function VendorDetailPage() {
                 View all credits
               </Link>
             </div>
-            {vendorCreditsQuery.isError ? <p className="text-sm text-red-600">Could not load vendor credits.</p> : null}
+            {vendorCreditsQuery.isError ? <ListErrorBanner message="Could not load vendor credits." onRetry={() => void vendorCreditsQuery.refetch()} /> : null}
             {!vendorCreditsQuery.isError ? (
               <ParityTable
                 rows={vendorCreditsQuery.data ?? []}
