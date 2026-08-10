@@ -200,7 +200,7 @@ export function CreateMultipleBillsPage() {
               "Driver",
             );
           } catch {
-            /* memo falls back to id */
+            /* Keep the honest unresolved label; never persist a raw UUID as operator chrome. */
           }
           memoParts.push(`driver:${driverLabel}`);
         }
