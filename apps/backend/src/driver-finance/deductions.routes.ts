@@ -7,6 +7,14 @@ import { requireAuth } from "../auth/session-middleware.js";
 
 const deductionIdParamsSchema = z.object({ id: z.string().uuid() });
 const companyQuerySchema = z.object({ operating_company_id: z.string().uuid() });
+// FAIL-DD2 — list filters. `status` is a free string (column is not a DB enum).
+const listDeductionsQuerySchema = z.object({
+  operating_company_id: z.string().uuid(),
+  driver_id: z.string().uuid().optional(),
+  status: z.string().trim().min(1).max(40).optional(),
+  limit: z.coerce.number().int().min(1).max(500).default(100),
+  offset: z.coerce.number().int().min(0).default(0),
+});
 const holdBodySchema = z.object({
   hold_until_period: z.string(),
   reason: z.string().trim().min(10),
@@ -35,6 +43,72 @@ async function hasDeductionSchedule(client: any) {
 }
 
 export async function registerDriverFinanceDeductionRoutes(app: FastifyInstance) {
+  // FAIL-DD2 — LIST settlement deductions. Without this, pending cash-advance recoveries
+  // (e.g. b4a09ab6 $100) are unservable: hold/resume existed, list did not.
+  // Entity-scoped BOTH ways: withCompany GUC + explicit d.operating_company_id predicate
+  // (Owner sessions see every company via org.user_accessible_company_ids — GUC alone is not enough).
+  // Joins are LEFT and entity-pinned so archived driver/load cannot silently drop money rows.
+  app.get(
+    "/api/v1/driver-finance/deductions",
+    { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } },
+    async (req, reply) => {
+      const user = authed(req, reply);
+      if (!user) return;
+      const query = listDeductionsQuerySchema.safeParse(req.query ?? {});
+      if (!query.success) return validationError(reply, query.error);
+      const { operating_company_id, driver_id, status, limit, offset } = query.data;
+
+      const rows = await withCompany(user.uuid, operating_company_id, async (client) => {
+        const values: unknown[] = [operating_company_id];
+        const where = ["d.operating_company_id = $1"];
+        if (driver_id) {
+          values.push(driver_id);
+          where.push(`d.driver_id = $${values.length}`);
+        }
+        if (status) {
+          values.push(status);
+          where.push(`d.status = $${values.length}`);
+        }
+        values.push(limit, offset);
+        const res = await client.query(
+          `
+            SELECT
+              d.id::text                        AS id,
+              d.driver_id::text                 AS driver_id,
+              TRIM(COALESCE(dr.first_name, '') || ' ' || COALESCE(dr.last_name, '')) AS driver_name,
+              d.deduction_type,
+              d.status,
+              d.amount_cents::int                AS amount_cents,
+              COALESCE(d.remaining_balance_cents, d.amount_cents)::int AS remaining_balance_cents,
+              d.reason,
+              d.load_id::text                   AS load_id,
+              l.load_number                     AS load_number,
+              d.applied_to_settlement_id::text  AS applied_to_settlement_id,
+              s.display_id                      AS applied_to_settlement_display_id,
+              d.created_at::text                AS created_at
+            FROM driver_finance.driver_settlement_deductions d
+            LEFT JOIN mdata.drivers dr
+              ON dr.id = d.driver_id
+             AND dr.operating_company_id = d.operating_company_id
+            LEFT JOIN mdata.loads l
+              ON l.id = d.load_id
+             AND l.operating_company_id = d.operating_company_id
+            LEFT JOIN driver_finance.driver_settlements s
+              ON s.id = d.applied_to_settlement_id
+             AND s.operating_company_id = d.operating_company_id
+            WHERE ${where.join(" AND ")}
+            ORDER BY d.created_at DESC
+            LIMIT $${values.length - 1} OFFSET $${values.length}
+          `,
+          values
+        );
+        return res.rows;
+      });
+
+      return reply.code(200).send({ deductions: rows });
+    }
+  );
+
   app.patch("/api/v1/driver-finance/deduction-schedules/:id/hold", async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;

@@ -41,6 +41,7 @@ import { SelectCombobox } from "../components/shared/SelectCombobox";
 import { CreateDriverModal } from "../components/drivers/CreateDriverModal";
 import { DriversListPage } from "./drivers/DriversListPage";
 import { AutoDeductionPoliciesPanel } from "./drivers/AutoDeductionPolicies";
+import { PendingSettlementDeductionsPanel } from "./drivers/PendingSettlementDeductionsPanel";
 import { SettlementDisputeList } from "./drivers/SettlementDisputeList";
 import { TeamSplitConfigPanel } from "./drivers/TeamSplitConfig";
 import { useSettlementDisputes } from "../hooks/useSettlementDisputes";
@@ -381,10 +382,16 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
     }
 
     for (const liability of liabilitiesQuery.data?.liabilities ?? []) {
-      const type = String(liability.type ?? "");
+      const type = String(liability.type ?? "").toLowerCase();
       const source = String(liability.source_description ?? liability.description ?? "");
       const category = `${type} ${source}`.toLowerCase();
+      // FAIL-DD2 / FAIL-DO1: cash-advance recoveries are type=advance|loan (and often "Cash advance …"
+      // in source). The prior keyword allowlist only kept repair/damage/late/penalt, so a live $100
+      // loan + $250 advance printed Total outstanding -$0.00 on Cash advances while Banking showed $350.
       const matchesDebtAlert =
+        type === "advance" ||
+        type === "loan" ||
+        category.includes("cash advance") ||
         category.includes("repair") ||
         category.includes("damage") ||
         category.includes("late") ||
@@ -758,8 +765,11 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
           {subnavTab === "deductions" ? (
             <div className="space-y-2" data-testid="drivers-deductions-panel">
               <p className="px-1 text-xs text-gray-600">
-                Settlement auto-deduction policies (amount, type, hold/resume, remaining balance). Cash-advance debt alerts live under Cash advances.
+                Pending settlement deductions (including cash-advance recoveries) appear first. Auto-deduction
+                policies (schedule amount, hold/resume) are below. Outstanding cash-advance debt also surfaces
+                under Cash advances.
               </p>
+              <PendingSettlementDeductionsPanel />
               <AutoDeductionPoliciesPanel />
             </div>
           ) : null}
