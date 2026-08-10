@@ -63,6 +63,8 @@ const REQUIRED_ERROR_STATE = [
   // Reports — honest isError -> ListErrorState (INBOX-309).
   "apps/frontend/src/pages/reports/LaneProfitabilityPage.tsx",
   "apps/frontend/src/pages/reports/DeadheadReportPage.tsx",
+  "apps/frontend/src/pages/reports/DispatchMarginPage.tsx",
+  "apps/frontend/src/pages/reports/CancellationsReportPage.tsx",
 ];
 
 function stripComments(src) {
