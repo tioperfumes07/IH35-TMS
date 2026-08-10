@@ -104,6 +104,7 @@ export async function buildInvoiceFromLoad(client: Queryable, input: BuildInvoic
     `
       SELECT
         l.id,
+        l.load_number,
         l.customer_id,
         l.is_sample_data,
         l.rate_total_cents,
@@ -216,6 +217,14 @@ export async function buildInvoiceFromLoad(client: Queryable, input: BuildInvoic
   const revenueResolution = await resolveInvoiceLineRevenueAccountId(input.operatingCompanyId, {
     line_type: "linehaul",
   });
+  // LV-INV-UUID — customer-facing line text must carry load_number (L-…), never the load UUID.
+  const loadNumber = String(load.load_number ?? "").trim();
+  if (!loadNumber) {
+    throw Object.assign(new Error("load_number_required_for_invoice_line"), {
+      code: "load_number_required_for_invoice_line",
+    });
+  }
+  const linehaulDescription = `Linehaul · Load ${loadNumber}`;
   const lineRes = await client.query(
     `
       INSERT INTO accounting.invoice_lines (
@@ -239,7 +248,7 @@ export async function buildInvoiceFromLoad(client: Queryable, input: BuildInvoic
       input.loadId,
       revenueResolution.revenue_code,
       revenueResolution.account_id,
-      `Linehaul · Load ${String(load.id)}`,
+      linehaulDescription,
       lineTotal,
     ]
   );
