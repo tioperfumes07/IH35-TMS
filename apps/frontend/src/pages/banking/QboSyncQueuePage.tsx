@@ -9,6 +9,7 @@ import {
 } from "../../api/banking";
 import { useAuth } from "../../auth/useAuth";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { CappedListNotice } from "../../components/CappedListNotice";
 import { ActionButton } from "../../components/shared/ActionButton";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useToast } from "../../components/Toast";
@@ -121,6 +122,12 @@ export function QboSyncQueuePage() {
             <p className="text-sm text-gray-500">No queue items found for this company.</p>
           ) : null}
         </div>
+        <CappedListNotice
+          shown={queueQuery.data?.items.length ?? 0}
+          limit={100}
+          hint="Only the newest sync jobs are shown; older queue entries are not included in this view."
+          className="mt-3 text-xs text-amber-700"
+        />
       </div>
     </div>
   );
