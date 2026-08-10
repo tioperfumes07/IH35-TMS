@@ -39,13 +39,17 @@ function assertWiring(readSourceFn = readSource) {
   for (const [name, src, needles] of [
     [FILES.hubPage, hub, ['useSearchParams', "leave_requests", "DriverSchedulerGridPage", "DriverSchedulerRequestInboxPage", "DriverInbox"]],
     [FILES.reporting, reporting, ["ListErrorBanner", "EntityLink", "getInboxReporting", 'data-testid="driver-hub-reporting-need-company"']],
-    [FILES.inbox, inbox, ['<EntityLink kind="driver"', "cascadePreview", "Linkage — what posts on approve", "ListErrorBanner", "cashAdvanceRequestsOfficeApi.listPending", 'data-testid="driver-inbox-list-error"']],
+    [FILES.inbox, inbox, ['<EntityLink kind="driver"', "cascadePreview", "Linkage — what posts on approve", "ListErrorBanner", "cashAdvanceRequestsOfficeApi.listPending", 'data-testid="driver-inbox-list-error"', '<SelectCombobox', 'aria-label="Pay from account"']],
     [FILES.scheduler, scheduler, ['<EntityLink kind="driver"', "No drivers are available for this operating company.", "Select an operating company"]],
     [FILES.leaveRequests, leave, ['<EntityLink kind="driver"', "Select an operating company to view leave requests."]],
   ]) {
     for (const needle of needles) {
       if (!src.includes(needle)) problems.push(`${name} missing ${JSON.stringify(needle)}`);
     }
+  }
+
+  if (/<select[^>]*>[\s\S]*?Company default cash account/.test(inbox)) {
+    problems.push(`${FILES.inbox} pay-from account regressed to a native select`);
   }
 
   return problems;
@@ -66,6 +70,7 @@ function selftest() {
   const cases = [
     [FILES.inbox, 'data-testid="driver-inbox-list-error"', "inbox ListErrorBanner testid"],
     [FILES.inbox, "Linkage — what posts on approve", "cascade linkage panel"],
+    [FILES.inbox, '<SelectCombobox', "searchable pay-from account adapter"],
     [FILES.scheduler, "No drivers are available for this operating company.", "scheduler honest empty"],
   ];
   for (const [file, needle, label] of cases) {

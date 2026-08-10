@@ -8,6 +8,7 @@ import {
 import { EntityLink } from "../shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { ListErrorBanner } from "../shared/ListErrorBanner";
+import { SelectCombobox } from "../shared/SelectCombobox";
 
 // B6 — Driver Inbox (inside Driver Hub Home). Built to APPROVED-PREVIEW-driver-inbox.html.
 // Locked tokens: navy banner #1A1F36, white active-tab underline; cards #fff / #e5e7eb 4px;
@@ -200,7 +201,8 @@ export function DriverInbox({ companyId, canReview }: { companyId: string; canRe
                         </span>
                         <span className="text-[#8A92AB]">Pay from</span>
                         <span>
-                          <select
+                          <SelectCombobox
+                            aria-label="Pay from account"
                             className="h-[28px] w-full rounded-xs border border-[#e5e7eb] text-[11px]"
                             value={payFrom[id] ?? ""}
                             onChange={(e) => setPayFrom((p) => ({ ...p, [id]: e.target.value }))}
@@ -211,7 +213,7 @@ export function DriverInbox({ companyId, canReview }: { companyId: string; canRe
                                 {a.account_number} · {a.account_name}
                               </option>
                             ))}
-                          </select>
+                          </SelectCombobox>
                         </span>
                         <span className="text-[#8A92AB]">Also</span>
                         <span className="text-[#1A1F36]">Settlement deduction on next pay</span>
