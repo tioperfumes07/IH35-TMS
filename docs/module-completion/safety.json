@@ -2,7 +2,7 @@
   "module": "safety",
   "title": "Safety (Module 3)",
   "complete": true,
-  "as_of": "2026-08-09T01:13:42.960Z",
+  "as_of": "2026-08-10T15:30:00.000Z",
   "live_sha": "5197b0f",
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/modules/safety.md",
   "spec_sources": [
@@ -10,7 +10,7 @@
     "docs/specs/EVERY-PR-AUDIT-CHECKLIST.md",
     "apps/frontend/src/components/safety/SAFETY_TABS_CONFIG.ts"
   ],
-  "note": "38 of 38 — complete:true 2026-08-09. SAF-B08 + SAF-ORPH-05 are qualifying HOLDs (owner Legal density + remaining tab wizard depth). openWaveIdsForModule(safety)=[]. Dispatch spine already live-proven; do not re-audit Book Load for Safety close.",
+  "note": "38 of 38 — complete:true 2026-08-10. Complaint API validation, consistency, and not-found paths now include human-readable messages; mutation guard verify-safety-complaints-error-messages passes. SAF-B08 + SAF-ORPH-05 are qualifying HOLDs (owner Legal density + remaining tab wizard depth). openWaveIdsForModule(safety)=[]. Dispatch spine already live-proven; do not re-audit Book Load for Safety close.",
   "items": [
     {
       "id": "SAF-B01",
