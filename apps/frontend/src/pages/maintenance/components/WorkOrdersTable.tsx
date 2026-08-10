@@ -6,12 +6,14 @@ import { ParityTable, type ParityColumn } from "../../../components/parity/Parit
 import { Button } from "../../../components/Button";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { CollapsedListFilters } from "../../../components/table";
+import { EntityPicker } from "../../../components/parity/EntityPicker";
 import { useToast } from "../../../components/Toast";
 
 type Props = {
   rows: WorkOrder[];
   /** MAINT-S02 — ParityTable emptyText only when settled (never mid-fetch false-empty). */
   loading?: boolean;
+  operatingCompanyId: string;
   sourceTypeFilter: string;
   externalVendorFilter: string;
   onSourceTypeChange: (value: string) => void;
@@ -78,6 +80,7 @@ function exportSelectedCsv(selected: WorkOrder[]) {
 export function WorkOrdersTable({
   rows,
   loading = false,
+  operatingCompanyId,
   sourceTypeFilter,
   externalVendorFilter,
   onSourceTypeChange,
@@ -220,16 +223,17 @@ export function WorkOrdersTable({
                     <option value="RS">RS</option>
                   </SelectCombobox>
                 </label>
-                <label className="space-y-1 text-xs text-gray-600">
+                <div className="space-y-1 text-xs text-gray-600">
                   <span>External vendor id</span>
-                  <input
-                    aria-label="Filter by external vendor id"
-                    className="min-h-12 w-full rounded-sm border border-gray-300 px-2 text-sm sm:h-9 sm:min-h-0"
-                    value={externalVendorFilter}
-                    onChange={(e) => onExternalVendorChange(e.target.value)}
-                    placeholder="External vendor id…"
+                  <EntityPicker
+                    kind="vendor"
+                    operatingCompanyId={operatingCompanyId}
+                    value={externalVendorFilter || null}
+                    onChange={(next) => onExternalVendorChange(next ?? "")}
+                    placeholder="All external vendors"
+                    className="min-h-12 w-full sm:h-9 sm:min-h-0"
                   />
-                </label>
+                </div>
               </div>
             </CollapsedListFilters>
           </div>

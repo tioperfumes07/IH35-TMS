@@ -306,6 +306,7 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
       {tab === "active_wos" ? (
         <WorkOrdersTable
           rows={workOrdersQuery.data?.work_orders ?? []}
+          operatingCompanyId={companyId}
           loading={workOrdersQuery.isPending || (workOrdersQuery.isFetching && (workOrdersQuery.data?.work_orders?.length ?? 0) === 0)}
           sourceTypeFilter={sourceTypeFilter}
           externalVendorFilter={externalVendorFilter}
