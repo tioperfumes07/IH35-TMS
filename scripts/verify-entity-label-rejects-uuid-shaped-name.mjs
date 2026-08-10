@@ -40,6 +40,16 @@ const SIBLINGS = [
     bad: /detail\.driver_name\s*\?\?\s*detail\.driver_id/,
     good: /entityLabel\(\s*detail\.driver_name\s*,\s*detail\.driver_id\s*,\s*"Driver"\s*\)/,
   },
+  {
+    rel: "apps/frontend/src/pages/driver-finance/components/SettlementDisputesTab.tsx",
+    bad: /row\.driver_name\s*\?\?\s*row\.driver_id/,
+    good: /entityLabel\(\s*row\.driver_name\s*,\s*row\.driver_id\s*,\s*"Driver"\s*\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/accounting/CreateMultipleBillsPage.tsx",
+    bad: /let driverLabel = row\.driver_id/,
+    good: /let driverLabel = entityLabel\(\s*null\s*,\s*row\.driver_id\s*,\s*"Driver"\s*\)/,
+  },
 ];
 
 export function auditEntityLabel(src) {

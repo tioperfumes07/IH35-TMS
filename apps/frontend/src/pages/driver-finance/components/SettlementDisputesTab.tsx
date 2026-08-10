@@ -151,14 +151,12 @@ export function SettlementDisputesTab({ companyId }: { companyId: string }) {
             {rows.map((row) => (
               <tr key={row.id} className="border-t border-gray-100">
                 <td className="min-w-0 max-w-[240px] px-3 py-2">
-                  {(() => {
-                    const dn = row.driver_name ?? row.driver_id ?? "—";
-                    return (
-                      <span title={dn !== "—" ? String(dn) : undefined} className="single-line-name">
-                        {String(dn)}
-                      </span>
-                    );
-                  })()}
+                  <EntityLink
+                    kind="driver"
+                    id={row.driver_id}
+                    label={entityLabel(row.driver_name, row.driver_id, "Driver")}
+                    className="single-line-name"
+                  />
                 </td>
                 <td className="px-3 py-2">
                   {row.period_start ? formatDateUS(row.period_start) : "—"} to{" "}
