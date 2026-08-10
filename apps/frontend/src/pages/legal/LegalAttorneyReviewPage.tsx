@@ -7,6 +7,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { LegalModuleTabs } from "./LegalModuleTabs";
+import { ListErrorState } from "../../components/ListErrorState";
 
 export function LegalAttorneyReviewPage() {
   const navigate = useNavigate();
@@ -57,15 +58,24 @@ export function LegalAttorneyReviewPage() {
 
       <div className="rounded-sm border border-gray-200 bg-white p-3">
         <div className="mb-2 text-sm font-semibold text-gray-900">Review Queue</div>
-        <ParityTable
-          rows={rows}
-          columns={columns}
-          rowKey={(row) => row.id}
-          // Settled-only empty (LIST-EMPTY-1 invariant): see LegalPoliciesPage for the same pattern.
-          loading={query.isPending || (query.isFetching && rows.length === 0)}
-          storageKey="legal-attorney-review"
-          emptyText="No templates currently pending attorney review."
-        />
+        {query.isError ? (
+          <ListErrorState
+            title="Couldn't load attorney review queue"
+            status={0}
+            message={(query.error as Error)?.message}
+            onRetry={() => void query.refetch()}
+          />
+        ) : (
+          <ParityTable
+            rows={rows}
+            columns={columns}
+            rowKey={(row) => row.id}
+            // Settled-only empty (LIST-EMPTY-1 invariant): see LegalPoliciesPage for the same pattern.
+            loading={query.isPending || (query.isFetching && rows.length === 0)}
+            storageKey="legal-attorney-review"
+            emptyText="No templates currently pending attorney review."
+          />
+        )}
       </div>
     </div>
   );

@@ -43,6 +43,10 @@ const maintenancePartsSrc = read("apps/frontend/src/pages/maintenance/parts/Part
 if (!/partsQuery\.isError[\s\S]*?<ListErrorState[\s\S]*?partsQuery\.refetch\(\)/.test(maintenancePartsSrc)) {
   fail("Maintenance Parts must render a retryable ListErrorState before its empty table");
 }
+const attorneyReviewSrc = read("apps/frontend/src/pages/legal/LegalAttorneyReviewPage.tsx");
+if (!/query\.isError[\s\S]*?<ListErrorState[\s\S]*?query\.refetch\(\)/.test(attorneyReviewSrc)) {
+  fail("Legal Attorney Review must render a retryable ListErrorState before its empty queue");
+}
 
 // 2) Migrated list surfaces: each MUST import the primitive and gate every
 //    empty literal on the resolved settled state (listState.isEmpty / === "empty").
