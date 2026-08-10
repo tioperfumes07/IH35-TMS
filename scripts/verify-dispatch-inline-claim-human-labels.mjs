@@ -26,6 +26,16 @@ function assertAll(srcs) {
     if (/\.slice\(0,\s*8\)/.test(src)) problems.push(`${file}: still UUID-slices`);
     if (!/entityLabel\(/.test(src)) problems.push(`${file}: missing entityLabel`);
   }
+  const assign = srcs["apps/frontend/src/pages/dispatch/AssignDriverDropdown.tsx"];
+  if (!assign.includes('userFacingApiError(activeQuery.error, "Could not load available drivers")')) {
+    problems.push("AssignDriverDropdown: active load/roster query failure must use operator-safe copy");
+  }
+  if (!assign.includes("onRetry={() => void activeQuery.refetch()}")) {
+    problems.push("AssignDriverDropdown: active load/roster query failure must be retryable");
+  }
+  if (!assign.includes("activeQuery.isLoading")) {
+    problems.push("AssignDriverDropdown: pre-create roster loading state must drive the picker");
+  }
   return problems;
 }
 
@@ -33,14 +43,17 @@ const read = () => Object.fromEntries(FILES.map((f) => [f, fs.readFileSync(path.
 
 if (SELFTEST) {
   const srcs = read();
-  const planted = { ...srcs };
-  planted[FILES[0]] = planted[FILES[0]].replace(
-    /entityLabel\(null,\s*next,\s*"Unit"\)/,
-    "next.slice(0, 8)",
-  );
-  if (!assertAll(planted).length) {
-    console.error(`${LABEL} SELFTEST FAILED: planted defect not caught`);
-    process.exit(1);
+  const mutations = [
+    [FILES[0], /entityLabel\(null,\s*next,\s*"Unit"\)/, "next.slice(0, 8)", "UUID slice"],
+    ["apps/frontend/src/pages/dispatch/AssignDriverDropdown.tsx", "onRetry={() => void activeQuery.refetch()}", "", "driver retry"],
+    ["apps/frontend/src/pages/dispatch/AssignDriverDropdown.tsx", 'userFacingApiError(activeQuery.error, "Could not load available drivers")', 'String(activeQuery.error)', "safe driver error"],
+  ];
+  for (const [file, needle, replacement, label] of mutations) {
+    const planted = { ...srcs, [file]: srcs[file].replace(needle, replacement) };
+    if (planted[file] === srcs[file] || !assertAll(planted).length) {
+      console.error(`${LABEL} SELFTEST FAILED: planted ${label} defect not caught`);
+      process.exit(1);
+    }
   }
   const live = assertAll(srcs);
   if (live.length) {
