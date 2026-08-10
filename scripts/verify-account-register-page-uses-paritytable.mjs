@@ -45,8 +45,11 @@ function assertMigrated(src) {
   if (!src.includes('storageKey="account-register-audit"')) {
     errors.push(`${PAGE}: audit-history view must set storageKey="account-register-audit"`);
   }
-  if (!src.includes("Couldn't load the register for this account and date range.")) {
-    errors.push(`${PAGE}: must keep the CHAIN-02 register error surface literal`);
+  if (!src.includes('title="Couldn\'t load the register for this account and date range"')) {
+    errors.push(`${PAGE}: must keep the CHAIN-02 register error title`);
+  }
+  if (!src.includes("onRetry={() => void registerQuery.refetch()}")) {
+    errors.push(`${PAGE}: register outage must offer a working retry`);
   }
   if (!src.includes("ListErrorState")) {
     errors.push(`${PAGE}: must render ListErrorState on audit-history load failure`);
@@ -97,7 +100,8 @@ function selftest() {
       { key: "debit_or_credit", label: "Dr/Cr" },
       { key: "amount_cents", label: "Amount" },
     ];
-    <p>Couldn't load the register for this account and date range.</p>
+    const registerQuery = { refetch() {} };
+    <ListErrorState title="Couldn't load the register for this account and date range" status={0} onRetry={() => void registerQuery.refetch()} />
     <div>Reconciliation not yet available</div>
     <span>Opening balance</span>
     <ParityTable storageKey="account-register" emptyText="No transactions in this range." />
