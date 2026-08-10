@@ -269,10 +269,10 @@ export async function createWorkOrderWithLines(
   }
 
   // render-v5 header (migration 202606221200 #1353) — persist authorized-by / repaired-by / authorization # /
-  // service-location / open date-time post-insert. All COALESCE so a missing field never clobbers the INSERT
-  // defaults (e.g. opened_at). DB CHECK constraints enforce service_location_type/repaired_by domains.
+  // service-location / priority / close date-time post-insert. All COALESCE so a missing field never
+  // clobbers the INSERT defaults. opened_at is intentionally NOT here: the INSERT already sets it from
+  // service_date (or now()), and the table trigger forbids changing it on UPDATE.
   if (
-    header.opened_at != null ||
     header.authorized_by_user_id != null ||
     header.authorization_number != null ||
     header.service_location_type != null ||
@@ -282,17 +282,15 @@ export async function createWorkOrderWithLines(
   ) {
     await client.query(
       `UPDATE maintenance.work_orders
-         SET opened_at = COALESCE($1, opened_at),
-             authorized_by_user_id = COALESCE($2, authorized_by_user_id),
-             authorization_number = COALESCE($3, authorization_number),
-             service_location_type = COALESCE($4, service_location_type),
-             repaired_by = COALESCE($5, repaired_by),
-             wo_priority = COALESCE($6, wo_priority),
-             closed_at = COALESCE($7, closed_at),
+         SET authorized_by_user_id = COALESCE($1, authorized_by_user_id),
+             authorization_number = COALESCE($2, authorization_number),
+             service_location_type = COALESCE($3, service_location_type),
+             repaired_by = COALESCE($4, repaired_by),
+             wo_priority = COALESCE($5, wo_priority),
+             closed_at = COALESCE($6, closed_at),
              updated_at = now()
-       WHERE id = $8`,
+       WHERE id = $7`,
       [
-        header.opened_at ?? null,
         header.authorized_by_user_id ?? null,
         header.authorization_number ?? null,
         header.service_location_type ?? null,
