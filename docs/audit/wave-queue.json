@@ -977,7 +977,6 @@
       "lane": "money",
       "layer": "C",
       "modules": [
-        "dispatch",
         "fuel"
       ],
       "instances": [
@@ -987,12 +986,14 @@
           "note": "N/A-PRE-OPERATIONAL per FINDING-LOAD-LINKAGE-SCOPE-RULING. Going-forward linkage only. Claude Coder: backfill load_required=false + load_exemption_reason='PRE_TMS_DISPATCH_IMPORT'."
         }
       ],
-      "completeness": "Owner ruling 2026-08-04: 1,552 fuel_transactions.load_id=NULL are pre-dispatch QBO imports — expected state, not broken wiring (FINDING-LOAD-LINKAGE-SCOPE-RULING). Live 2026-08-05: expense_attribution.expense_load_links=0; accounting.expenses with load_id=0; loads status: completed_docs_received=1, assigned_not_dispatched=4, cancelled=1. Going-forward TMS-native load→expense/fuel linkage guard still needed; none yet operational.",
+      "completeness": "Owner ruling 2026-08-04: 1,552 fuel_transactions.load_id=NULL are pre-dispatch QBO imports — expected state, not broken wiring (FINDING-LOAD-LINKAGE-SCOPE-RULING). Live 2026-08-05: expense_attribution.expense_load_links=0; accounting.expenses with load_id=0; loads status: completed_docs_received=1, assigned_not_dispatched=4, cancelled=1. Going-forward TMS-native load→expense/fuel linkage guard still needed; none yet operational. | 2026-08-09 Cursor: dispatch delisted post #5369; fuel remains for CC-1 going-forward guard (no historical invent).",
       "guard": "scripts/verify-disp-wire-06-load-expense-link.mjs",
       "drain_proof": {
         "guard_green": false,
-        "guard_sample": "WIRE-06 load-expense/fuel linkage: 1,552 fuel_transactions.load_id=NULL (exempt pre-dispatch imports); expense_load_links=0; expenses.load_id=0. No TMS-native load has linked costs yet. Critical path blocked by WIRE-07 departure capture.",
-        "money_critical": true
+        "guard_sample": "WIRE-06: fuel exempt PRE_TMS (1555 load_required=false); expenses USMCA load_id=9 going-forward; dispatch CERTIFIED #5369 — module delisted.",
+        "money_critical": true,
+        "dispatch_delisted_at": "2026-08-10T04:26:00Z",
+        "dispatch_note": "dispatch removed from modules after #5369 CERTIFIED (37/37 pv). Fuel historical load_id=NULL remains N/A-PRE-OPERATIONAL (owner 2026-08-04); going-forward accounting.expenses USMCA load_id n=9 (Devin OUTBOX). No invent FKs."
       },
       "status": "open",
       "hotfiles": [
