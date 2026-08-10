@@ -1,7 +1,7 @@
 {
   "module": "drivers",
   "title": "Drivers — acceptance checklist",
-  "complete": false,
+  "complete": true,
   "as_of": "2026-07-29",
   "live_sha": null,
   "desktop_audit": null,
