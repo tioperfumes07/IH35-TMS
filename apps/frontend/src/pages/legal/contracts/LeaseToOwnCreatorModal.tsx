@@ -13,6 +13,7 @@ import { ParityTable, type ParityColumn } from "../../../components/parity/Parit
 import { ListErrorState } from "../../../components/ListErrorState";
 import { useToast } from "../../../components/Toast";
 import { entityLabel } from "../../../lib/entity-label";
+import { Combobox } from "../../../components/Combobox";
 
 type Props = {
   open: boolean;
@@ -83,7 +84,7 @@ export function LeaseToOwnCreatorModal({ open, operatingCompanyId, onClose, onSa
     const m = new Map<string, string>();
     for (const u of units) if (u.owner_company_id) m.set(u.owner_company_id, entityLabel(u.owner_label, u.owner_company_id, "Owner"));
     if (seller?.id) m.set(seller.id, seller.short_name ?? seller.legal_name);
-    return Array.from(m.entries());
+    return Array.from(m.entries()).map(([value, label]) => ({ value, label }));
   }, [units, seller]);
 
   // template content for the live preview — real backend call
@@ -266,11 +267,18 @@ export function LeaseToOwnCreatorModal({ open, operatingCompanyId, onClose, onSa
             <label className="flex flex-col gap-1 text-sm">Seller signer title
               <input className="rounded-sm border px-2 py-1" value={sellerSigner.signer_title} onChange={(e) => setSellerSigner({ ...sellerSigner, signer_title: e.target.value })} />
             </label>
-            <label className="flex flex-col gap-1 text-sm">Truck-owner to lease from
-              <select className="rounded-sm border px-2 py-1" value={ownerCompanyId} onChange={(e) => setOwnerCompanyId(e.target.value)}>
-                {ownerOptions.map(([id, label]) => <option key={id} value={id}>{label}</option>)}
-              </select>
-            </label>
+            <div className="flex flex-col gap-1 text-sm">
+              <label htmlFor="lease-to-own-owner-picker">Truck-owner to lease from</label>
+              <Combobox
+                id="lease-to-own-owner-picker"
+                options={ownerOptions}
+                value={ownerCompanyId || null}
+                onChange={(next) => setOwnerCompanyId(next ?? "")}
+                placeholder="Select truck owner"
+                loading={fleetQuery.isLoading || ensureQuery.isLoading}
+                allowClear={false}
+              />
+            </div>
             <label className="flex flex-col gap-1 text-sm">Lessee (Buyer) legal name
               <input className="rounded-sm border px-2 py-1" value={lessee.name} onChange={(e) => setLessee({ ...lessee, name: e.target.value })} placeholder="Acme Transportation, Inc." />
             </label>
