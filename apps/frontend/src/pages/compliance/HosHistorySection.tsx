@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { EntityPicker } from "../../components/parity/EntityPicker";
+import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { getHosDailyRoster, getHosEvents, DUTY_LABEL, DUTY_COLOR } from "../../api/hosTracker";
 import { companyToday, addDaysIso, formatInCompanyTimeZone } from "../../lib/businessDate";
 
@@ -97,6 +98,17 @@ export function HosHistorySection({ operatingCompanyId }: { operatingCompanyId: 
         </div>
       </div>
 
+      {(rosterQ.isError || eventsQ.isError) && (
+        <div className="mt-3">
+          <ListErrorBanner
+            onRetry={() => {
+              void rosterQ.refetch();
+              void eventsQ.refetch();
+            }}
+          />
+        </div>
+      )}
+
       <div className="mt-3">
         {!driverId ? (
           <div className="rounded-sm border border-slate-200 bg-white px-4 py-12 text-center">
@@ -105,8 +117,6 @@ export function HosHistorySection({ operatingCompanyId }: { operatingCompanyId: 
           </div>
         ) : eventsQ.isLoading ? (
           <div className="space-y-1">{[0, 1, 2, 3, 4].map((i) => <div key={i} className="h-[26px] animate-pulse rounded-sm bg-slate-100" />)}</div>
-        ) : eventsQ.isError ? (
-          <div className="rounded-sm border border-slate-200 bg-white px-4 py-10 text-center text-sm text-red-600">Failed to load HOS history for {selectedName}.</div>
         ) : events.length === 0 ? (
           <div className="rounded-sm border border-slate-200 bg-white px-4 py-12 text-center">
             <div className="text-sm font-semibold text-slate-700">No HOS history in this range.</div>
