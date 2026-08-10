@@ -7,6 +7,7 @@ import { listAuditEvents, type AuditEventListItem } from "../../api/audit";
 import { Button } from "../Button";
 import { ListErrorState } from "../ListErrorState";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
+import { formatQueryErrorDetail } from "../../lib/tableError";
 
 interface EntityAuditHistoryTabProps {
   operatingCompanyId: string;
@@ -75,7 +76,7 @@ const COLUMNS: Array<ParityColumn<EventWithPayload>> = [
     key: "actor_email",
     label: "Who",
     sortable: true,
-    sortValue: (row) => row.actor_email || row.actor_user_id || "",
+    sortValue: (row) => entityLabel(row.actor_email, row.actor_user_id, "User"),
     render: (row) => <>{entityLabel(row.actor_email, row.actor_user_id, "User") || "—"}</>,
   },
   {
@@ -164,7 +165,7 @@ export function EntityAuditHistoryTab({ operatingCompanyId, entityType, entityId
     if (!events.length) return;
     const rows = events.map((e: AuditEventListItem) => ({
       Date: e.created_at,
-      Actor: e.actor_email || e.actor_user_id || "—",
+      Actor: entityLabel(e.actor_email, e.actor_user_id, "User"),
       Type: e.event_type,
       Summary: e.summary || "—",
       Source: e.source || "—",
@@ -287,8 +288,7 @@ export function EntityAuditHistoryTab({ operatingCompanyId, entityType, entityId
           {filterBar}
           <ListErrorState
             title="Couldn't load audit history"
-            status={0}
-            message={(auditQuery.error as Error)?.message}
+            {...formatQueryErrorDetail(auditQuery.error)}
             onRetry={() => void auditQuery.refetch()}
           />
         </>
