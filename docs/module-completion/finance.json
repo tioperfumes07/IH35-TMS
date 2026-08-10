@@ -2,7 +2,7 @@
   "module": "finance",
   "title": "Finance Hub",
   "complete": false,
-  "as_of": "2026-08-02",
+  "as_of": "2026-08-10",
   "live_sha": null,
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/AUDITOR-RUN-2026-07-31/modules/finance-hub-deep-2026-08-01.md",
   "spec_sources": [
@@ -22,7 +22,7 @@
       "spec": "FinanceHubPage · finance-hub-deep-2026-08-01",
       "status": "PASS",
       "evidence": "FinanceHubPage.tsx uses FINANCE_HUB_UI_FLAG per selectedCompanyId, disables query when flag off, and renders honest 'Finance Hub is not enabled for this entity' message without exposing raw flag name. Guard: scripts/verify-finance-hub-surfaces-s01-s08.mjs.",
-      "pr": "#TBD",
+      "pr": "#5348",
       "prod_verified": false
     },
     {
@@ -35,7 +35,7 @@
       "spec": "FinanceOverviewPage",
       "status": "PASS",
       "evidence": "FinanceOverviewPage.tsx is an honest placeholder labeling 'Financial projections overview. Future module for financial planning.' Guard: scripts/verify-finance-hub-surfaces-s01-s08.mjs.",
-      "pr": "#TBD",
+      "pr": "#5348",
       "prod_verified": false
     },
     {
@@ -48,7 +48,7 @@
       "spec": "ArApAgingPage feature-flag honesty",
       "status": "PASS",
       "evidence": "ArApAgingPage.tsx references AR_AP_AGING_UI_FLAG; when disabled shows 'AR / AP aging is not yet enabled for this account' and names 'Enable the AR_AP_AGING_UI_ENABLED feature flag'. Guard: scripts/verify-finance-hub-surfaces-s01-s08.mjs.",
-      "pr": "#TBD",
+      "pr": "#5348",
       "prod_verified": false
     },
     {
@@ -61,7 +61,7 @@
       "spec": "LoanWizardPage · FH-VERIFY",
       "status": "PASS",
       "evidence": "LoanWizardPage.tsx is gated by FINANCE_HUB_LOAN_WIZARD_FLAG, calls previewLoanWizard, and surfaces 'Nothing posts — preview only' / 'posting these entries is a separate, owner-gated step' copy. Guard: scripts/verify-finance-hub-surfaces-s01-s08.mjs.",
-      "pr": "#TBD",
+      "pr": "#5348",
       "prod_verified": false
     },
     {
@@ -74,7 +74,7 @@
       "spec": "FinanceProjectionsPage route",
       "status": "PASS",
       "evidence": "FinanceProjectionsPage.tsx is an honest placeholder stating the projections tools are not yet built (future module placeholder). Guard: scripts/verify-finance-hub-surfaces-s01-s08.mjs.",
-      "pr": "#TBD",
+      "pr": "#5348",
       "prod_verified": false
     },
     {
@@ -100,7 +100,7 @@
       "spec": "FinancialStatementsPage · VFINANCE wave",
       "status": "PASS",
       "evidence": "FinancialStatementsPage.tsx is gated by FINANCE_STATEMENTS_UI_FLAG, renders Profit & loss / Balance sheet / Trial balance tabs, and calls the three scoped report APIs. Guard: scripts/verify-finance-hub-surfaces-s01-s08.mjs.",
-      "pr": "#TBD",
+      "pr": "#5348",
       "prod_verified": false
     },
     {
@@ -113,7 +113,7 @@
       "spec": "sidebar flyout finance tabs",
       "status": "PASS",
       "evidence": "routes/manifest.tsx registers /finance/calculator and /finance/amortization as ProtectedRoutes; CalculatorPage uses FINANCE_HUB_CALCULATOR_FLAG and calls computeCalculator; AmortizationPage uses FINANCE_HUB_AMORTIZATION_FLAG and calls createLoan. Guard: scripts/verify-finance-hub-surfaces-s01-s08.mjs.",
-      "pr": "#TBD",
+      "pr": "#5348",
       "prod_verified": false
     },
     {
