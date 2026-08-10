@@ -8,6 +8,7 @@ import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { listCompanyViolationTypes } from "../../../api/catalogs-safety";
 import { companyToday } from "../../../lib/businessDate";
+import { CappedListNotice } from "../../../components/CappedListNotice";
 
 type Props = {
   open: boolean;
@@ -103,6 +104,13 @@ export function CompanyViolationCreateModal({ open, operatingCompanyId, onClose,
                 });
                 void typesQuery.refetch();
               }}
+            />
+            <CappedListNotice
+              shown={typeOptions.length}
+              limit={200}
+              total={typesQuery.data?.total}
+              hint="Type to search the full company-violation-type catalog."
+              className="text-xs text-slate-600"
             />
             <span className="text-[11px] text-gray-500">
               Required. Carries the catalogued default fine amount. Without it the amount cannot resolve.

@@ -11,6 +11,7 @@ import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { companyToday } from "../../../lib/businessDate";
+import { CappedListNotice } from "../../../components/CappedListNotice";
 
 type Props = {
   open: boolean;
@@ -253,6 +254,13 @@ export function FineCreateModal({ open, operatingCompanyId, onClose, onCreated }
                   applyFineType(opt.value, opt.label);
                   void civilFineTypesQuery.refetch();
                 }}
+              />
+              <CappedListNotice
+                shown={civilFineTypeOptions.length}
+                limit={200}
+                total={civilFineTypesQuery.data?.total}
+                hint="Type to search the full civil-fine-type catalog."
+                className="text-xs text-slate-600"
               />
             </div>
             <div className="flex flex-col gap-1 md:col-span-2">

@@ -176,7 +176,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
   const canVoid = user?.role === "Owner" || user?.role === "Administrator";
 
   // SAF-B29: pickers are EntityPicker / DriverPickerWithCreate (server search). Do NOT bulk
-  // listUnits/listDrivers(limit:200) for labels — list/detail APIs already JOIN unit_number /
+  // listUnits/listDrivers roster fetches for labels — list/detail APIs already JOIN unit_number /
   // trailer_number / driver_name. Silent fleet maps fail verify-safety-b29-typeahead-inventory.
 
   // Server already applies date_from/date_to (+ driver/unit) — no second client filter.
