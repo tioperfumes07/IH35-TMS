@@ -80,7 +80,13 @@ contains("apps/frontend/src/pages/reports/SubscriptionManager.tsx", manager, [
   { pattern: /\/api\/v1\/reports\/scheduled\/subscriptions/, label: "subscriptions API wired" },
 ]);
 
-read("apps/frontend/src/components/reports/SubscriptionEditor.tsx");
+const editor = read("apps/frontend/src/components/reports/SubscriptionEditor.tsx");
+contains("apps/frontend/src/components/reports/SubscriptionEditor.tsx", editor, [
+  { pattern: /<SelectCombobox[\s\S]*?aria-label="Report"[\s\S]*?value=\{reportSlug\}/, label: "searchable report picker" },
+]);
+if (/<select[\s\S]{0,300}value=\{reportSlug\}/.test(editor)) {
+  fail("apps/frontend/src/components/reports/SubscriptionEditor.tsx: report picker regressed to a native select");
+}
 
 const manifest = read("apps/frontend/src/routes/manifest.tsx");
 contains("apps/frontend/src/routes/manifest.tsx", manifest, [

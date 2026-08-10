@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "../Button";
 import { TimePicker } from "../forms/TimePicker";
+import { SelectCombobox } from "../shared/SelectCombobox";
 
 export type SubscriptionFormValues = {
   report_slug: string;
@@ -84,7 +85,8 @@ export function SubscriptionEditor({ open, onClose, onSave, initial, reportOptio
         <div className="mt-4 space-y-3 text-sm">
           <label className="block">
             <span className="font-medium text-slate-700">Report</span>
-            <select
+            <SelectCombobox
+              aria-label="Report"
               className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1.5"
               value={reportSlug}
               onChange={(e) => setReportSlug(e.target.value)}
@@ -95,7 +97,7 @@ export function SubscriptionEditor({ open, onClose, onSave, initial, reportOptio
                   {opt.label}
                 </option>
               ))}
-            </select>
+            </SelectCombobox>
           </label>
 
           <label className="block">
