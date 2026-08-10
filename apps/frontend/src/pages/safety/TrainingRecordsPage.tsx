@@ -10,6 +10,7 @@ import { Modal } from "../../components/Modal";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { companyToday } from "../../lib/businessDate";
 import { entityLabel } from "../../lib/entity-label";
+import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 
 type TrainingRecordRow = Record<string, unknown>;
 
@@ -105,17 +106,24 @@ export function TrainingRecordsPage({ operatingCompanyId }: Props) {
         </Button>
       </div>
 
-      <ParityTable<TrainingRecordRow>
-        columns={recordColumns}
-        rows={rows}
-        rowKey={(row) => String(row.id)}
-        loading={recordsQuery.isLoading}
-        emptyText="No training records found."
-        storageKey="safety-training-records"
-        exportFilename="training-records"
-        tableTestId="training-records-table"
-        rowTestId={(row) => `training-record-row-${String(row.id)}`}
-      />
+      {recordsQuery.isError ? (
+        <ListErrorBanner
+          message="Training records could not be loaded."
+          onRetry={() => void recordsQuery.refetch()}
+        />
+      ) : (
+        <ParityTable<TrainingRecordRow>
+          columns={recordColumns}
+          rows={rows}
+          rowKey={(row) => String(row.id)}
+          loading={recordsQuery.isLoading}
+          emptyText="No training records found."
+          storageKey="safety-training-records"
+          exportFilename="training-records"
+          tableTestId="training-records-table"
+          rowTestId={(row) => `training-record-row-${String(row.id)}`}
+        />
+      )}
 
       <Modal variant="drawer" open={createOpen} onClose={() => setCreateOpen(false)} title="Create Training Record">
         <form

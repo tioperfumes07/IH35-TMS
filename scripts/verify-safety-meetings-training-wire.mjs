@@ -58,6 +58,9 @@ function main() {
   if (!recordsPage.includes('data-testid="training-records-page"')) {
     failures.push("TrainingRecordsPage.tsx missing training-records-page test id");
   }
+  if (!/recordsQuery\.isError[\s\S]*?<ListErrorBanner[\s\S]*?recordsQuery\.refetch\(\)/.test(recordsPage)) {
+    failures.push("TrainingRecordsPage.tsx must render retryable ListErrorBanner before empty copy");
+  }
 
   if (!orphanPrograms.includes("ARCHIVE (A23-5)")) {
     failures.push("orphan training/TrainingProgramsPage.tsx must carry ARCHIVE (A23-5) header");
