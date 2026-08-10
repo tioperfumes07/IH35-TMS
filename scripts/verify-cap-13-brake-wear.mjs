@@ -78,6 +78,7 @@ contains("apps/backend/src/index.ts", indexTs, [
 const dashboard = read("apps/frontend/src/pages/maintenance/brakes/BrakeWearDashboard.tsx");
 contains("apps/frontend/src/pages/maintenance/brakes/BrakeWearDashboard.tsx", dashboard, [
   { pattern: /BrakeWearDashboard/, label: "dashboard export" },
+  { pattern: /atRiskQ\.isError[\s\S]*?<ListErrorState[\s\S]*?atRiskQ\.refetch\(\)/, label: "retryable list failure before empty projections" },
   { pattern: /brake-wear-dashboard/, label: "dashboard test id" },
   { pattern: /\/api\/v1\/maintenance\/brake-wear\/at-risk/, label: "at-risk API call" },
 ]);
