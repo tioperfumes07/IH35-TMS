@@ -44,11 +44,14 @@ function main() {
   const failures = [];
 
   if (!atRiskPage.includes("dispatch-at-risk-page")) failures.push("AtRiskQueuePage must expose test id");
-  if (!intransitPage.includes("+ Create Issue")) failures.push("InTransitIssuesPage must expose create flow");
-  if (!intransitPage.includes("issuesQ.isError") || !intransitPage.includes("ListErrorState") || !intransitPage.includes("issuesQ.refetch()")) {
-    failures.push("InTransitIssuesPage must distinguish list failure from an honest empty issue queue and expose retry");
+  if (!atRiskPage.includes("loadsQ.isError") || !atRiskPage.includes("ListErrorState") || !atRiskPage.includes("loadsQ.refetch()")) {
+    failures.push("AtRiskQueuePage must distinguish list failure from an honest empty at-risk queue and expose retry");
   }
+  if (!intransitPage.includes("+ Create Issue")) failures.push("InTransitIssuesPage must expose create flow");
   if (!historyPage.includes("dispatch-assignment-history-page")) failures.push("AssignmentHistoryPage must expose test id");
+  if (!historyPage.includes("historyQ.isError") || !historyPage.includes("ListErrorState") || !historyPage.includes("historyQ.refetch()")) {
+    failures.push("AssignmentHistoryPage must distinguish list failure from an honest empty history and expose retry");
+  }
 
   if (!routes.includes("/api/v1/dispatch/at-risk-loads")) failures.push("arch-tabs routes must expose at-risk endpoint");
   if (!routes.includes("/api/v1/dispatch/intransit-issues")) failures.push("arch-tabs routes must list intransit issues");

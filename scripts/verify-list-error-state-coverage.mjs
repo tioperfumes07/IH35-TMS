@@ -55,6 +55,8 @@ const REQUIRED_ERROR_STATE = [
   "apps/frontend/src/pages/dispatch/EquipmentTransferRequests.tsx",
   "apps/frontend/src/pages/dispatch/DetentionBoardPage.tsx",
   "apps/frontend/src/pages/dispatch/InTransitIssuesPage.tsx",
+  "apps/frontend/src/pages/dispatch/AtRiskQueuePage.tsx",
+  "apps/frontend/src/pages/dispatch/AssignmentHistoryPage.tsx",
   // Inventory — honest isError -> ListErrorState (INBOX-298; standing P1 inventory module).
   "apps/frontend/src/pages/inventory/InventoryPartsStockPage.tsx",
   "apps/frontend/src/pages/inventory/InventoryAssignmentsPage.tsx",
