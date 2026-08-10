@@ -17,6 +17,7 @@ import { useAuth } from "../../auth/useAuth";
 import { Button } from "../../components/Button";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { companyToday, monthBoundsIso } from "../../lib/businessDate";
+import { entityLabel } from "../../lib/entity-label";
 
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
 
@@ -285,7 +286,7 @@ export function AccountingHubPage() {
     for (const row of billPayments.slice(0, 12)) {
       items.push({
         key: `bp-${row.id}`,
-        label: row.reference_number || row.check_number || row.memo || "Bill payment",
+        label: entityLabel(row.reference_number || row.check_number || row.memo, row.id, "Payment"),
         date: row.payment_date,
         amountCents: Number(row.amount_cents ?? 0),
         type: "Bill payment",
@@ -294,7 +295,7 @@ export function AccountingHubPage() {
     for (const row of receivePayments.slice(0, 12)) {
       items.push({
         key: `rp-${row.id}`,
-        label: row.display_id || row.customer_name || "Receive payment",
+        label: entityLabel(row.display_id || row.customer_name, row.id, "Payment"),
         date: row.payment_date,
         amountCents: Number(row.amount_cents ?? 0),
         type: "Receive payment",
@@ -313,7 +314,7 @@ export function AccountingHubPage() {
 
   const unmatchedRows: AmountRow[] = unmatchedItems.slice(0, 5).map((item) => ({
     key: item.id,
-    left: `${item.entity_type} · ${item.display_id}`,
+    left: `${item.entity_type} · ${entityLabel(item.display_id, item.entity_id, "Record")}`,
     right: item.sync_status,
     muted: relativeRetry(item.next_attempt_at),
   }));

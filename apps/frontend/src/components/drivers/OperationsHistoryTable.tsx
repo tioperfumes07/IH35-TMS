@@ -4,6 +4,7 @@ import { apiRequest } from "../../api/client";
 import { ListErrorState } from "../ListErrorState";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 import { EntityLink, type EntityKind } from "../shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 
 export type OperationsColumn = {
   key: string;
@@ -44,12 +45,40 @@ function formatCell(value: unknown): string {
   return String(value);
 }
 
+function linkNoun(kind: EntityKind): string {
+  switch (kind) {
+    case "driver":
+      return "Driver";
+    case "unit":
+      return "Unit";
+    case "load":
+      return "Load";
+    case "work_order":
+      return "Work order";
+    case "customer":
+      return "Customer";
+    case "vendor":
+      return "Vendor";
+    case "invoice":
+      return "Invoice";
+    case "bill":
+      return "Bill";
+    case "settlement":
+      return "Settlement";
+    case "trailer":
+      return "Trailer";
+    default:
+      return "Record";
+  }
+}
+
 function renderCell(row: OperationsRow, column: OperationsColumn) {
   if (column.entityKind) {
     const idValue = row[column.idKey ?? column.key];
     const id = idValue == null ? null : String(idValue);
     const labelValue = row[column.key];
-    const label = labelValue === null || labelValue === undefined || labelValue === "" ? undefined : formatCell(labelValue);
+    const raw = labelValue === null || labelValue === undefined || labelValue === "" ? null : formatCell(labelValue);
+    const label = entityLabel(raw, id, linkNoun(column.entityKind)) ?? undefined;
     return <EntityLink kind={column.entityKind} id={id} label={label} />;
   }
   return formatCell(row[column.key]);

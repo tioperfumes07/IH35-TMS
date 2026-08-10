@@ -117,7 +117,11 @@ export function DOTInspectionsTab() {
           <EntityLink
             kind="work_order"
             id={row.auto_spawned_wo_id as string}
-            label={(row.work_order_display_id as string | undefined)?.trim() || "Work order"}
+            label={entityLabel(
+              (row.work_order_display_id as string | undefined)?.trim(),
+              row.auto_spawned_wo_id as string,
+              "Work order"
+            )}
           />
         ) : (
           "—"

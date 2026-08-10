@@ -13,6 +13,7 @@ import { Modal } from "../../components/Modal";
 import { EntityPicker } from "../../components/parity/EntityPicker";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 
 type Props = {
   operatingCompanyId: string;
@@ -319,7 +320,11 @@ export function TrainingProgramsPage({ operatingCompanyId }: Props) {
                   className="flex items-center justify-between gap-2 text-xs text-slate-700"
                   data-testid={`training-program-assign-driver-${driverId}`}
                 >
-                  <EntityLink kind="driver" id={driverId} label={driverNameById.get(driverId)} />
+                  <EntityLink
+                    kind="driver"
+                    id={driverId}
+                    label={entityLabel(driverNameById.get(driverId), driverId, "Driver")}
+                  />
                   <button
                     type="button"
                     className="text-slate-600 underline"

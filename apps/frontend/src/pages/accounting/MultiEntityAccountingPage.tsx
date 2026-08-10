@@ -13,6 +13,7 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { EntityLink } from "../../components/shared/EntityLink";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { companyToday, monthBoundsIso } from "../../lib/businessDate";
+import { entityLabel } from "../../lib/entity-label";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -93,12 +94,7 @@ export function MultiEntityAccountingPage() {
           <EntityLink
             kind="account"
             id={row.account_id}
-            label={
-              <>
-                
-                {row.account_name}
-              </>
-            }
+            label={entityLabel(row.account_name, row.account_id, "Account")}
             data-testid="multi-entity-account-link"
           />
         ),

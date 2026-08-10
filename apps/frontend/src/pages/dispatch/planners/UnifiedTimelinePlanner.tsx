@@ -206,11 +206,11 @@ export function UnifiedTimelinePlanner() {
                         <button
                           type="button"
                           className="w-full truncate text-[9px] font-medium text-slate-700 hover:underline"
-                          data-testid={`timeline-load-${load.load_number}`}
+                          data-testid={`timeline-load-${load.id}`}
                           onClick={() => openLoad(load.id)}
-                          title={`${load.load_number} · ${load.customer_name ?? ""} · ${load.status}`}
+                          title={`${entityLabel(load.load_number, load.id, "Load")} · ${entityLabel(load.customer_name, null, "Customer")} · ${load.status}`}
                         >
-                          {load.load_number}
+                          {entityLabel(load.load_number, load.id, "Load")}
                         </button>
                       </td>
                     );

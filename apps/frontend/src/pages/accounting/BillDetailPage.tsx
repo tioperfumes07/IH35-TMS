@@ -371,7 +371,7 @@ export function BillDetailPage() {
                   to={`/accounting/vendor-credits?credit_id=${encodeURIComponent(application.credit_id)}`}
                   className="text-sm font-medium text-slate-800 hover:underline"
                 >
-                  {application.display_id}
+                  {entityLabel(application.display_id, application.credit_id, "Vendor credit")}
                 </Link>
                 <div className="text-right text-xs text-slate-600">
                   <div className="font-semibold text-slate-900">{money(application.applied_cents)}</div>

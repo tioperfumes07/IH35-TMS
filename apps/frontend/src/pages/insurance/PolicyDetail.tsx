@@ -200,8 +200,8 @@ export function PolicyDetail() {
     <div className="space-y-4">
       <PageHeader
         backHref="/safety/insurance/policies"
-        breadcrumb={["Insurance", "Policies", policy.policy_number]}
-        title={`Policy ${policy.policy_number}`}
+        breadcrumb={["Insurance", "Policies", entityLabel(policy.policy_number, policy.id, "Policy")]}
+        title={`Policy ${entityLabel(policy.policy_number, policy.id, "Policy")}`}
         subtitle={`${policy.insurer_name} · ${policy.coverage_type} · ${policy.status}`}
         actions={
           <div className="flex items-center gap-2">

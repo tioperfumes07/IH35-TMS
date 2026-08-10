@@ -96,15 +96,27 @@ function DetailPanel({ detail, onClose }: { detail: RevenueContractDetail; onClo
           <div className="flex flex-wrap gap-x-4 gap-y-1 text-gray-600">
             <span>
               Customer:{" "}
-              <EntityLink kind="customer" id={detail.customer_uuid} label={detail.customer_uuid ? undefined : "—"} />
+              <EntityLink
+                kind="customer"
+                id={detail.customer_uuid}
+                label={entityLabel(null, detail.customer_uuid, "Customer")}
+              />
             </span>
             <span>
               Invoice:{" "}
-              <EntityLink kind="invoice" id={detail.source_invoice_id} label={detail.source_invoice_id ? undefined : "—"} />
+              <EntityLink
+                kind="invoice"
+                id={detail.source_invoice_id}
+                label={entityLabel(null, detail.source_invoice_id, "Invoice")}
+              />
             </span>
             <span>
               Load:{" "}
-              <EntityLink kind="load" id={detail.source_load_id} label={detail.source_load_id ? undefined : "—"} />
+              <EntityLink
+                kind="load"
+                id={detail.source_load_id}
+                label={entityLabel(null, detail.source_load_id, "Load")}
+              />
             </span>
           </div>
         </div>
@@ -174,7 +186,11 @@ function LeakagePanel({ operatingCompanyId }: { operatingCompanyId: string }) {
         label: "Links",
         render: (row) =>
           row.earn_journal_entry_id ? (
-            <EntityLink kind="journal_entry" id={row.earn_journal_entry_id} label="Earn JE" />
+            <EntityLink
+              kind="journal_entry"
+              id={row.earn_journal_entry_id}
+              label={entityLabel(null, row.earn_journal_entry_id, "Journal entry")}
+            />
           ) : (
             <span className="text-gray-400">—</span>
           ),

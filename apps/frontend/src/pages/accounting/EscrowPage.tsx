@@ -38,6 +38,19 @@ function escrowSourceEntityKind(sourceType: EscrowPosting["source_type"]): Entit
   }
 }
 
+function escrowHolderNoun(holderType: EscrowAccount["holder_type"]): string {
+  switch (holderType) {
+    case "driver":
+      return "Driver";
+    case "vendor":
+      return "Vendor";
+    case "factor":
+      return "Factor";
+    default:
+      return "Holder";
+  }
+}
+
 function escrowSourceNoun(sourceType: EscrowPosting["source_type"]): string {
   switch (sourceType) {
     case "driver_settlement":
@@ -134,11 +147,19 @@ export function EscrowPage() {
         sortable: true,
         render: (row) =>
           row.holder_type === "driver" ? (
-            <EntityLink kind="driver" id={row.holder_id} />
+            <EntityLink
+              kind="driver"
+              id={row.holder_id}
+              label={entityLabel(null, row.holder_id, escrowHolderNoun(row.holder_type))}
+            />
           ) : row.holder_type === "vendor" ? (
-            <EntityLink kind="vendor" id={row.holder_id} />
+            <EntityLink
+              kind="vendor"
+              id={row.holder_id}
+              label={entityLabel(null, row.holder_id, escrowHolderNoun(row.holder_type))}
+            />
           ) : (
-            row.holder_id
+            entityLabel(null, row.holder_id, escrowHolderNoun(row.holder_type))
           ),
       },
       { key: "holder_type", label: "Type", sortable: true },

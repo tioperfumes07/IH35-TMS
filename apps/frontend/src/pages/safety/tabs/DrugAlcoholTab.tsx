@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { entityLabel } from "../../../lib/entity-label";
 import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { listDrivers } from "../../../api/mdata";
@@ -251,7 +252,12 @@ export function DrugAlcoholTab() {
           </label>
           {driverId ? (
             <div className="text-xs text-slate-600">
-              Selected: <EntityLink kind="driver" id={driverId} label={driverNameById.get(driverId)} />
+              Selected:{" "}
+              <EntityLink
+                kind="driver"
+                id={driverId}
+                label={entityLabel(driverNameById.get(driverId), driverId, "Driver")}
+              />
             </div>
           ) : null}
         </div>
@@ -482,7 +488,11 @@ export function DrugAlcoholTab() {
                 <EntityLink
                   kind="driver"
                   id={entry.driver_id ? String(entry.driver_id) : undefined}
-                  label={typeof entry.driver_name === "string" && entry.driver_name.trim() ? entry.driver_name : "Driver"}
+                  label={entityLabel(
+                    typeof entry.driver_name === "string" ? entry.driver_name.trim() || null : null,
+                    entry.driver_id ? String(entry.driver_id) : null,
+                    "Driver"
+                  )}
                 />
                 <span>{String(entry.status ?? "selected")}</span>
               </li>
@@ -498,7 +508,11 @@ export function DrugAlcoholTab() {
                 <EntityLink
                   kind="driver"
                   id={entry.driver_id ? String(entry.driver_id) : undefined}
-                  label={typeof entry.driver_name === "string" && entry.driver_name.trim() ? entry.driver_name : "Driver"}
+                  label={entityLabel(
+                    typeof entry.driver_name === "string" ? entry.driver_name.trim() || null : null,
+                    entry.driver_id ? String(entry.driver_id) : null,
+                    "Driver"
+                  )}
                 />
                 <span>{String(entry.query_status ?? "pending")}</span>
               </li>

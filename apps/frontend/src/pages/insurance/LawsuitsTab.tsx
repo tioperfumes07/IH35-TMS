@@ -94,7 +94,7 @@ export function LawsuitsTab({ operatingCompanyId, claimId }: Props) {
             className="font-medium text-slate-700 underline"
             onClick={() => setSelectedLawsuitId(lawsuit.id)}
           >
-            {lawsuit.case_number}
+            {entityLabel(lawsuit.case_number, lawsuit.id, "Case")}
           </button>
         ),
       },

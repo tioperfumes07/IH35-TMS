@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
 import { formatMoneyCents } from "./constants";
+import { entityLabel } from "../../lib/entity-label";
 
 /**
  * Load → Driver Pay tab reads driver_finance.driver_bills (header payables),
@@ -148,7 +149,7 @@ export function LoadDetailDriverPayTab({ loadId, operatingCompanyId, currencyCod
                   <span className={`rounded-sm px-1.5 py-0.5 text-[10px] font-semibold ${statusBadge(bill.status)}`}>
                     {statusLabel(bill.status)}
                   </span>
-                  <span className="truncate text-xs font-medium text-gray-800">{bill.bill_number}</span>
+                  <span className="truncate text-xs font-medium text-gray-800">{entityLabel(bill.bill_number, bill.id, "Bill")}</span>
                 </div>
                 <span className="truncate text-xs text-gray-600">{billDescription(bill)}</span>
               </div>

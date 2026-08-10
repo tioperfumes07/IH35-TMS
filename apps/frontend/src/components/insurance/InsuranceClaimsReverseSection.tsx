@@ -73,7 +73,11 @@ function ClaimEconomics({ claim }: { claim: InsuranceClaim }) {
     });
   }
   if (claim.trailer_display_id) {
-    chips.push({ key: "trailer", label: `Trailer ${claim.trailer_display_id}`, tone: "neutral" });
+    chips.push({
+      key: "trailer",
+      label: `Trailer ${entityLabel(claim.trailer_display_id, claim.trailer_id, "Trailer")}`,
+      tone: "neutral",
+    });
   }
 
   if (chips.length === 0) return null;

@@ -160,12 +160,12 @@ export function PaymentDetailPage() {
   return (
     <AccountingSubNavWrapper>
       <PageHeader
-        title={payment.display_id}
+        title={entityLabel(payment.display_id, payment.id, "Payment")}
         backHref="/accounting/payments"
         breadcrumb={[
           { label: "Accounting", href: "/accounting" },
           { label: "Payments", href: "/accounting/payments" },
-          { label: payment.display_id },
+          { label: entityLabel(payment.display_id, payment.id, "Payment") },
         ]}
         actions={
           <div className="flex items-center gap-2">

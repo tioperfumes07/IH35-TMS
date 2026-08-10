@@ -202,7 +202,7 @@ export function EscrowRecordTab() {
         <div className="mt-2 space-y-1 text-[11px]">
           {attempts.map((entry) => (
             <div key={entry.id} className={entry.status === "blocked" ? "text-red-700" : "text-slate-700"}>
-              {entry.created_at.slice(0, 16).replace("T", " ")} - {entry.driver_name} - ${entry.amount.toFixed(2)} - {entry.reason} (
+              {entry.created_at.slice(0, 16).replace("T", " ")} - {entityLabel(entry.driver_name, null, "Driver")} - ${entry.amount.toFixed(2)} - {entry.reason} (
               {entry.status})
             </div>
           ))}

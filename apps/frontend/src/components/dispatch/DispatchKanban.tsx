@@ -195,25 +195,35 @@ function formatWeight(weightLbs?: number | null): string {
 }
 
 function driverUnitLabel(load: DispatchLoadRow): string {
-  const driver = load.assigned_primary_driver_name;
-  const unit = load.assigned_unit_number;
-  if (!driver && !unit) return "Unassigned";
-  if (driver && unit) return `${driver} · ${unit}`;
-  return driver ?? unit ?? "Unassigned";
+  const driverLabel =
+    load.assigned_primary_driver_name || load.assigned_primary_driver_id
+      ? entityLabel(load.assigned_primary_driver_name, load.assigned_primary_driver_id, "Driver")
+      : null;
+  const unitLabel =
+    load.assigned_unit_number || load.assigned_unit_id
+      ? entityLabel(load.assigned_unit_number, load.assigned_unit_id, "Unit")
+      : null;
+  if (!driverLabel && !unitLabel) return "Unassigned";
+  if (driverLabel && unitLabel) return `${driverLabel} · ${unitLabel}`;
+  return driverLabel ?? unitLabel ?? "Unassigned";
 }
 
 // DISPATCH-UI-REFINE-2 ITEM 2 — UNIT-FIRST cards. Any load that has a unit shows the UNIT NUMBER as
 // the primary (bold) line; the LOAD # drops to a muted secondary line. Loads with no unit (e.g. Booked
 // unassigned) keep the load # primary. Awaiting-assignment cards are already unit-first (synthetic).
 function cardPrimaryLabel(load: DispatchLoadRow): string {
-  return load.assigned_unit_number || load.load_number;
+  if (load.assigned_unit_number) {
+    return entityLabel(load.assigned_unit_number, load.assigned_unit_id, "Unit");
+  }
+  return entityLabel(load.load_number, load.id, "Load");
 }
 function cardSecondaryLoadNumber(load: DispatchLoadRow): string | null {
   // Only surface the load # as a secondary line when the unit already occupies the primary line.
-  return load.assigned_unit_number ? load.load_number : null;
+  return load.assigned_unit_number ? entityLabel(load.load_number, load.id, "Load") : null;
 }
 function driverNameLabel(load: DispatchLoadRow): string {
-  return load.assigned_primary_driver_name || "Unassigned";
+  if (!load.assigned_primary_driver_name && !load.assigned_primary_driver_id) return "Unassigned";
+  return entityLabel(load.assigned_primary_driver_name, load.assigned_primary_driver_id, "Driver");
 }
 
 function onTimeChipClass(load: DispatchLoadRow): string {
@@ -491,7 +501,7 @@ function KanbanStandardCard({
       {...attributes}
       {...listeners}
       onClick={() => onClick(load.id)}
-      title={`${cardPrimaryLabel(load)} · ${load.load_number} · ${lane}`}
+      title={`${cardPrimaryLabel(load)} · ${entityLabel(load.load_number, load.id, "Load")} · ${lane}`}
       className={`flex flex-col gap-0.5 rounded border border-gray-200 bg-white px-2 py-1.5 text-[11px] shadow-xs transition hover:bg-gray-50 ${
         isDragging ? "opacity-60" : ""
       } ${draggableEnabled ? "cursor-grab active:cursor-grabbing" : "cursor-pointer"}`}
@@ -543,8 +553,13 @@ function KanbanStandardCard({
 // onBookForUnit and had no visible affordance. This is a purpose-built, NON-draggable card with an
 // explicit "+ Book load" button; clicking anywhere opens the Book wizard pre-filled with this truck.
 function AwaitingTruckCard({ load, onBook }: { load: DispatchLoadRow; onBook: (id: string) => void }) {
-  const unit = load.assigned_unit_number || load.load_number;
-  const driver = load.assigned_primary_driver_name;
+  const unit = load.assigned_unit_number
+    ? entityLabel(load.assigned_unit_number, load.assigned_unit_id, "Unit")
+    : entityLabel(load.load_number, load.id, "Load");
+  const driver =
+    load.assigned_primary_driver_name || load.assigned_primary_driver_id
+      ? entityLabel(load.assigned_primary_driver_name, load.assigned_primary_driver_id, "Driver")
+      : null;
   // Clicking anywhere on the card OR the explicit "+ Book load" button opens the Book wizard pre-filled with
   // this truck. The button is a real <button> (not a span) so it's an unmistakable, findable affordance; it
   // stops propagation only to avoid a harmless double-fire with the card click.
@@ -576,7 +591,7 @@ function AwaitingTruckCard({ load, onBook }: { load: DispatchLoadRow; onBook: (i
           + Book load
         </button>
       </div>
-      <div className="mt-0.5 truncate text-[11px] text-gray-500">{driver || "No driver assigned"}</div>
+      <div className="mt-0.5 truncate text-[11px] text-gray-500">{driver ?? "No driver assigned"}</div>
     </div>
   );
 }

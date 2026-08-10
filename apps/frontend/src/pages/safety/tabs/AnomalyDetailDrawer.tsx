@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ackAnomaly, dismissAnomaly, getAnomaly, resolveAnomaly, type SafetyAnomaly } from "../../../api/safety";
 import { ParityDrawer } from "../../../components/parity/ParityDrawer";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { entityLabel } from "../../../lib/entity-label";
 import { useEscapeKey } from "../../../hooks/useEscapeKey";
 
 type Props = {
@@ -132,7 +133,23 @@ export function AnomalyDetailDrawer({
                     subject_type ("driver" | "unit" | "customer" | "invoice") is a real EntityLink
                     kind, so this drills straight through to the entity under suspicion. */}
                 <span className="font-semibold">Subject ID:</span>{" "}
-                <EntityLink kind={anomaly.subject_type} id={anomaly.subject_id} />
+                <EntityLink
+                  kind={anomaly.subject_type}
+                  id={anomaly.subject_id}
+                  label={entityLabel(
+                    null,
+                    anomaly.subject_id,
+                    anomaly.subject_type === "driver"
+                      ? "Driver"
+                      : anomaly.subject_type === "unit"
+                        ? "Unit"
+                        : anomaly.subject_type === "customer"
+                          ? "Customer"
+                          : anomaly.subject_type === "invoice"
+                            ? "Invoice"
+                            : "Record"
+                  )}
+                />
               </div>
               <div>
                 <span className="font-semibold">Detected:</span> {new Date(anomaly.detected_at).toLocaleString()}

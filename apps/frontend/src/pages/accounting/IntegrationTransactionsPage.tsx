@@ -196,10 +196,18 @@ export function IntegrationTransactionsPage() {
         return (
           <span className="flex flex-wrap gap-2 whitespace-nowrap text-xs">
             {bt?.matched_load_id ? (
-              <EntityLink kind="load" id={bt.matched_load_id} label="Load" />
+              <EntityLink
+                kind="load"
+                id={bt.matched_load_id}
+                label={entityLabel(null, bt.matched_load_id, "Load")}
+              />
             ) : null}
             {bt?.matched_bill_id ? (
-              <EntityLink kind="bill" id={bt.matched_bill_id} label="Bill" />
+              <EntityLink
+                kind="bill"
+                id={bt.matched_bill_id}
+                label={entityLabel(null, bt.matched_bill_id, "Bill")}
+              />
             ) : null}
             {!bt?.matched_load_id && !bt?.matched_bill_id ? <span className="text-gray-400">—</span> : null}
           </span>

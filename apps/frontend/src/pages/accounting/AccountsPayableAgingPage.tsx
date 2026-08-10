@@ -13,6 +13,7 @@ import { useUrlSort } from "../../hooks/useUrlSort";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { companyToday } from "../../lib/businessDate";
 import { apAgingBillsListHref } from "../reports/agingDrillThrough";
+import { entityLabel } from "../../lib/entity-label";
 
 type ApAgingView = "by_vendor" | "by_type";
 
@@ -93,13 +94,13 @@ const VENDOR_COLUMNS: Array<ParityColumn<ApAgingVendor>> = [
     render: (v) =>
       v.vendor_id ? (
         <span className="inline-flex flex-col gap-0.5">
-          <Link to={`/vendors/${v.vendor_id}`} className="font-medium text-slate-700 hover:underline">{v.vendor_name}</Link>
+          <Link to={`/vendors/${v.vendor_id}`} className="font-medium text-slate-700 hover:underline">{entityLabel(v.vendor_name, v.vendor_id, "Vendor")}</Link>
           <Link to={apAgingBillsListHref(v.vendor_id)} className="text-[10px] font-medium text-slate-500 hover:underline">
             Open bills
           </Link>
         </span>
       ) : (
-        <span className="font-medium">{v.vendor_name}</span>
+        <span className="font-medium">{entityLabel(v.vendor_name, v.vendor_id, "Vendor")}</span>
       ),
   },
   {
@@ -438,13 +439,13 @@ function GroupBlock({ group, rows, subtotal, open, onToggle }: { group: ApAgingD
               <td className="px-2 py-1.5 pl-7">
                 {v.vendor_id ? (
                   <span className="inline-flex flex-col gap-0.5">
-                    <Link to={`/vendors/${v.vendor_id}`} className="text-slate-700 hover:underline">{v.vendor_name}</Link>
+                    <Link to={`/vendors/${v.vendor_id}`} className="text-slate-700 hover:underline">{entityLabel(v.vendor_name, v.vendor_id, "Vendor")}</Link>
                     <Link to={apAgingBillsListHref(v.vendor_id)} className="text-[10px] font-medium text-slate-500 hover:underline">
                       Open bills
                     </Link>
                   </span>
                 ) : (
-                  v.vendor_name
+                  entityLabel(v.vendor_name, v.vendor_id, "Vendor")
                 )}
               </td>
               {MONEY_KEYS.map((k) => <td key={k} className={moneyCellClass(k)}>{money(amount(v, k))}</td>)}

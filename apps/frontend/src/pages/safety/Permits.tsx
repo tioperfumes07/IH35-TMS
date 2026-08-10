@@ -3,6 +3,7 @@ import { PermitsPage } from "./PermitsPage";
 import { Form2290Filings } from "../compliance/Form2290Filings";
 import { resolveApiUrl } from "../../api/client";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 
 type Props = {
   operatingCompanyId: string;
@@ -69,7 +70,7 @@ export function Permits({ operatingCompanyId }: Props) {
               .map((u, idx) => (
                 <span key={u.unit_id}>
                   {idx > 0 ? " · " : null}
-                  <EntityLink kind="unit" id={u.unit_id} label={u.unit_number?.trim() || "Unit"} /> due {u.deadline}
+                  <EntityLink kind="unit" id={u.unit_id} label={entityLabel(u.unit_number, u.unit_id, "Unit")} /> due {u.deadline}
                 </span>
               ))}
             {perUnit.length > 4 ? ` · +${perUnit.length - 4} more` : ""}

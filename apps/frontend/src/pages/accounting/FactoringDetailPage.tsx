@@ -155,7 +155,7 @@ export function FactoringDetailPage() {
       sortable: true,
       render: (invoice) => (
         <span onClick={(e) => e.stopPropagation()}>
-          <EntityLink kind="invoice" id={invoice.id} label={invoice.display_id} />
+          <EntityLink kind="invoice" id={invoice.id} label={entityLabel(invoice.display_id, invoice.id, "Invoice")} />
         </span>
       ),
     },
@@ -173,12 +173,12 @@ export function FactoringDetailPage() {
   return (
     <AccountingSubNavWrapper>
       <PageHeader
-        title={detail.display_id}
+        title={entityLabel(detail.display_id, detail.id, "Advance")}
         backHref="/accounting/factoring"
         breadcrumb={[
           { label: "Accounting", href: "/accounting" },
           { label: "Factoring", href: "/accounting/factoring" },
-          { label: detail.display_id },
+          { label: entityLabel(detail.display_id, detail.id, "Advance") },
         ]}
         subtitle={`Factor: ${detail.factoring_company_name}`}
         actions={

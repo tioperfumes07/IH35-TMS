@@ -519,7 +519,7 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
                     <option value="">Select unpaid bill</option>
                     {(billsQuery.data?.bills ?? []).map((bill) => (
                       <option key={String(bill.id)} value={String(bill.id)}>
-                        {String(bill.display_id)} · ${Number(bill.total_amount ?? 0).toFixed(2)}
+                        {entityLabel(bill.display_id, bill.id, "Bill")} · ${Number(bill.total_amount ?? 0).toFixed(2)}
                       </option>
                     ))}
                   </SelectCombobox>

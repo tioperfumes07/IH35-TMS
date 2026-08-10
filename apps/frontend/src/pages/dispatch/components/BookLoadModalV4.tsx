@@ -16,6 +16,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createDispatchLoad } from "../../../api/dispatch";
 import { ApiError } from "../../../api/client";
 import { userFacingApiError } from "../../../lib/api-error-message";
+import { entityLabel } from "../../../lib/entity-label";
 import { getLoad, updateDispatchLoadFull, type LoadDetail } from "../../../api/loads";
 import { buildEditPrefill, buildEditPatchBody } from "./book-load-v4/editLoadMapping";
 import { bookLoadToastMessage, bookLoadToastTone, serverStatusOf } from "./book-load-toast";
@@ -958,7 +959,7 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
             {/* Two literal headings (not a ternary string) so the locked-ui-surface guard still sees the
                 ">Book load<" text node for the create wizard while Edit shows the load number. */}
             {isEditMode ? (
-              <div className="text-base font-bold">Edit load{editLoad?.load_number ? ` ${editLoad.load_number}` : ""}</div>
+              <div className="text-base font-bold">Edit load{editLoad?.load_number ? ` ${entityLabel(editLoad.load_number, editLoad.id, "Load")}` : ""}</div>
             ) : (
               <div className="text-base font-bold">Book load</div>
             )}

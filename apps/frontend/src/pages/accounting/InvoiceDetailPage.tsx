@@ -253,12 +253,12 @@ export function InvoiceDetailPage() {
   return (
     <AccountingSubNavWrapper>
       <PageHeader
-        title={invoice.display_id}
+        title={entityLabel(invoice.display_id, invoice.id, "Invoice")}
         backHref="/accounting/invoices"
         breadcrumb={[
           { label: "Accounting", href: "/accounting" },
           { label: "Invoices", href: "/accounting/invoices" },
-          { label: invoice.display_id },
+          { label: entityLabel(invoice.display_id, invoice.id, "Invoice") },
         ]}
         subtitle={entityLabel(invoice.customer_name, invoice.customer_id, "Customer")}
         actions={

@@ -95,7 +95,7 @@ export function VendorBalancesPage() {
                   setSelectedBillId(null);
                 }}
               >
-                <div className="truncate text-sm font-semibold text-gray-900">{row.vendor_name}</div>
+                <div className="truncate text-sm font-semibold text-gray-900">{entityLabel(row.vendor_name, row.vendor_id, "Vendor")}</div>
                 <div className="mt-0.5 flex items-center justify-between text-xs text-gray-600">
                   <span>{row.open_bill_count} open bills</span>
                   <span className="font-semibold text-red-700">{money(row.balance_cents)}</span>
@@ -109,7 +109,7 @@ export function VendorBalancesPage() {
         <section className="rounded-sm border border-gray-200 bg-white">
           <div className="flex items-center justify-between border-b border-gray-200 px-3 py-2">
             <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-              {selectedVendor ? `Bills · ${selectedVendor.vendor_name}` : "Bills"}
+              {selectedVendor ? `Bills · ${entityLabel(selectedVendor.vendor_name, selectedVendor.vendor_id, "Vendor")}` : "Bills"}
             </div>
             {selectedVendor ? (
               <Button size="sm" variant="secondary" onClick={() => setMultiPayModalOpen(true)}>

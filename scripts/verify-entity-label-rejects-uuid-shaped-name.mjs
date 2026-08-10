@@ -1140,6 +1140,531 @@ const SIBLINGS = [
     bad: /\{row\.unit_number\}\s*<\/option>/,
     good: /entityLabel\(\s*row\.unit_number\s*,\s*row\.id\s*,\s*"Unit"\s*\)/,
   },
+  {
+    rel: "apps/frontend/src/pages/reports/APAgingPage.tsx",
+    bad: />\{r\.vendor_name\}</,
+    good: /entityLabel\(\s*r\.vendor_name\s*,\s*r\.vendor_id\s*,\s*"Vendor"\s*\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/reports/ARAgingPage.tsx",
+    bad: /aria-label=\{\`Open invoices for \$\{r\.customer_name\}\`\}/,
+    good: /entityLabel\(\s*r\.customer_name\s*,\s*r\.customer_id\s*,\s*"Customer"\s*\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/finance/ArApAgingPage.tsx",
+    bad: /r\.customer_name \|\| "—"|r\.vendor_name \|\| "—"/,
+    good: /entityLabel\(\s*r\.customer_name\s*,\s*r\.customer_id\s*,\s*"Customer"\s*\)/,
+  },
+  {
+    rel: "apps/frontend/src/components/dispatch/DispatchKanban.tsx",
+    bad: /return load\.assigned_unit_number \|\| load\.load_number;/,
+    good: /entityLabel\(\s*load\.assigned_unit_number\s*,\s*load\.assigned_unit_id\s*,\s*"Unit"\s*\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/accounting/SubmitFactoringModal.tsx",
+    bad: /label=\{row\.display_id\}/,
+    good: /entityLabel\(\s*row\.display_id\s*,\s*row\.id\s*,\s*"Invoice"\s*\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/accounting/InvoicesListPage.tsx",
+    bad: /label=\{row\.display_id\}/,
+    good: /entityLabel\(\s*row\.display_id\s*,\s*row\.id\s*,\s*"Invoice"\s*\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/accounting/FactoringListPage.tsx",
+    bad: /label=\{row\.display_id\}/,
+    good: /entityLabel\(\s*row\.display_id\s*,\s*row\.id\s*,\s*"Advance"\s*\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/accounting/FactorReserveCard.tsx",
+    bad: /label=\{event\.display_id\}/,
+    good: /entityLabel\(\s*event\.display_id\s*,\s*event\.factoring_advance_id\s*,\s*"Advance"\s*\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/accounting/FactoringDetailPage.tsx",
+    bad: /label=\{invoice\.display_id\}/,
+    good: /entityLabel\(\s*invoice\.display_id\s*,\s*invoice\.id\s*,\s*"Invoice"\s*\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/Customers.tsx",
+    bad: /label=\{r\.display_id\}/,
+    good: /entityLabel\(\s*r\.display_id\s*,\s*r\.id\s*,\s*"Invoice"\s*\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/CustomerDetail.tsx",
+    bad: /label=\{inv\.display_id\}/,
+    good: /entityLabel\(\s*inv\.display_id\s*,\s*inv\.id\s*,\s*"Invoice"\s*\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/CustomerDetail.tsx",
+    bad: /label=\{invoice\.display_id\}/,
+    good: /entityLabel\(\s*invoice\.display_id\s*,\s*invoice\.id\s*,\s*"Invoice"\s*\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/maintenance/components/TriageModal.tsx",
+    bad: /label=\{issue\.unit_display_id\}/,
+    good: /entityLabel\(\s*issue\.unit_display_id\s*,\s*issue\.unit_id\s*,\s*"Unit"\s*\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/maintenance/components/InTransitTriageBand.tsx",
+    bad: /label=\{issue\.unit_display_id\}/,
+    good: /entityLabel\(\s*issue\.unit_display_id\s*,\s*issue\.unit_id\s*,\s*"Unit"\s*\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/driver/DriverLoadDetailPage.tsx",
+    bad: /label=\{load\.display_id\}/,
+    good: /entityLabel\(\s*load\.display_id\s*,\s*load\.id\s*,\s*"Load"\s*\)/,
+  },
+  {
+    rel: "apps/frontend/src/components/safety/AccidentReportDrawer.tsx",
+    bad: /label=\{wo\.display_id\}/,
+    good: /entityLabel\(\s*wo\.display_id\s*,\s*wo\.id\s*,\s*"Work order"\s*\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/safety/tabs/DOTInspectionsTab.tsx",
+    bad: /work_order_display_id as string \| undefined\)\?\.trim\(\)\s*\|\|\s*"Work order"/,
+    good: /entityLabel\(\s*\(row\.work_order_display_id as string \| undefined\)\?\.trim\(\)\s*,\s*row\.auto_spawned_wo_id as string\s*,\s*"Work order"\s*\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/fuel/components/ActiveTripStrip.tsx",
+    bad: /label=\{route\?\.load_display_id \?\? "—"\}/,
+    good: /entityLabel\(\s*route\?\.load_display_id\s*,\s*route\?\.load_id\s*,\s*"Load"\s*\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/fuel/components/ActiveTripStrip.tsx",
+    bad: /route\?\.unit_display_id \?\? "—"/,
+    good: /entityLabel\(\s*route\?\.unit_display_id\s*,\s*null\s*,\s*"Unit"\s*\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/dispatch/LoadCreateModal.tsx",
+    bad: /work_order_display_id \?\? availabilityQuery\.data\?\.work_order_id/,
+    good: /entityLabel\(\s*availabilityQuery\.data\?\.work_order_display_id/,
+  },
+  {
+    rel: "apps/frontend/src/pages/maintenance/WorkOrderDetailPage.tsx",
+    bad: /label=\{typeof wo\.linked_load_number === "string" \? wo\.linked_load_number : undefined\}/,
+    good: /entityLabel\(\s*typeof wo\.linked_load_number === "string" \? wo\.linked_load_number : null\s*,\s*wo\.load_id\s*,\s*"Load"\s*\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/maintenance/WorkOrderDetailPage.tsx",
+    bad: /label=\{typeof wo\.roadside_breakdown_load_number === "string" \? wo\.roadside_breakdown_load_number : undefined\}/,
+    good: /entityLabel\(\s*typeof wo\.roadside_breakdown_load_number === "string" \? wo\.roadside_breakdown_load_number : null\s*,\s*wo\.roadside_breakdown_load_id\s*,\s*"Load"\s*\)/,
+  },
+  {
+    rel: "apps/frontend/src/components/maintenance/WorkOrderDetailModal.tsx",
+    bad: /const displayId = String\(workOrder\.display_id/,
+    good: /entityLabel\(workOrder\.display_id, workOrder\.id, "Record"\)/,
+  },
+  {
+    rel: "apps/frontend/src/components/accounting/VendorBillForm.tsx",
+    bad: /label=\{linkedWoDisplayId\}/,
+    good: /entityLabel\(linkedWoDisplayId, linkedWoId, "Work order"\)/,
+  },
+  {
+    rel: "apps/frontend/src/components/expenses/RecordExpenseForm.tsx",
+    bad: /label=\{linkedWoDisplayId\}/,
+    good: /entityLabel\(linkedWoDisplayId, workOrderId, "Work order"\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/safety/driver-scheduler/DriverSchedulerGridPage.tsx",
+    bad: /const name = String\(dr\.driver_name/,
+    good: /entityLabel\(dr\.driver_name, driverId, "Driver"\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/driver-finance/components/SettlementHeader.tsx",
+    bad: /label=\{driverName\}/,
+    good: /entityLabel\(driverName, driverId, "Driver"\)/,
+  },
+  {
+    rel: "apps/frontend/src/components/drivers/OperationsHistoryTable.tsx",
+    bad: /const label = labelValue === null \|\| labelValue === undefined \|\| labelValue === "" \? undefined : formatCell\(labelValue\)/,
+    good: /entityLabel\(raw, id, linkNoun\(column\.entityKind\)\)/,
+  },
+  {
+    rel: "apps/frontend/src/components/safety/DriverFinesReverseSection.tsx",
+    bad: /const label = String\(f\.violation_code/,
+    good: /entityLabel\(f\.violation_code \?\? f\.jurisdiction, id, "Record"\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/legal/matters/LegalMattersListPage.tsx",
+    bad: /label=\{String\(row\.matter_number/,
+    good: /entityLabel\(row\.matter_number, row\.id, "Record"\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/insurance/ClaimsTab.tsx",
+    bad: /label=\{m\.matter_number\}/,
+    good: /entityLabel\(m\.matter_number, m\.id, "Record"\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/liabilities/components/LiabilityDetailDrawer.tsx",
+    bad: /label=\{String\(row\.settlement_id/,
+    good: /entityLabel\(\s*null\s*,\s*row\.settlement_id/,
+  },
+  {
+    rel: "apps/frontend/src/components/drivers/EarningsTab.tsx",
+    bad: /label=\{String\(row\.type/,
+    good: /entityLabel\(\s*row\.type/,
+  },
+  {
+    rel: "apps/frontend/src/pages/insurance/ClaimsTab.tsx",
+    bad: /label=\{graph\.claim\.driver_id \? "Driver" : undefined\}/,
+    good: /entityLabel\(\s*graph\.claim\.driver_display_name\s*,\s*graph\.claim\.driver_id\s*,\s*"Driver"\s*\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/maintenance/WorkOrderDetailPage.tsx",
+    bad: /label=\{typeof wo\.unit_number === "string" \? wo\.unit_number : undefined\}/,
+    good: /entityLabel\(\s*typeof wo\.unit_number === "string" \? wo\.unit_number : null\s*,\s*wo\.unit_id\s*,\s*"Unit"\s*\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/maintenance/WorkOrderDetailPage.tsx",
+    bad: /label=\{typeof wo\.driver_name === "string" \? wo\.driver_name : undefined\}/,
+    good: /entityLabel\(\s*typeof wo\.driver_name === "string" \? wo\.driver_name : null\s*,\s*wo\.driver_id\s*,\s*"Driver"\s*\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/maintenance/WorkOrderDetailPage.tsx",
+    bad: /label=\{typeof wo\.external_vendor_name === "string" \? wo\.external_vendor_name : undefined\}/,
+    good: /entityLabel\(\s*typeof wo\.external_vendor_name === "string" \? wo\.external_vendor_name : null\s*,\s*wo\.external_vendor_id\s*,\s*"Vendor"\s*\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/safety/Permits.tsx",
+    bad: /label=\{u\.unit_number\?\.trim\(\) \|\| "Unit"\}/,
+    good: /entityLabel\(\s*u\.unit_number\s*,\s*u\.unit_id\s*,\s*"Unit"\s*\)/,
+  },
+  {
+    rel: "apps/frontend/src/components/factoring/VendorMergeDiffPreview.tsx",
+    bad: /label=\{fromVendorId \|\| "—"\}/,
+    good: /entityLabel\(\s*fromVendorName\s*,\s*fromVendorId/,
+  },
+  {
+    rel: "apps/frontend/src/pages/accounting/RevenueRecognitionPage.tsx",
+    bad: /label=\{detail\.customer_uuid \? undefined : "—"\}/,
+    good: /entityLabel\(\s*null\s*,\s*detail\.customer_uuid\s*,\s*"Customer"\s*\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx",
+    bad: /label=\{draft\.customerProject \|\| "—"\}/,
+    good: /entityLabel\(\s*draft\.customerProject\s*,\s*draft\.customerId\s*,\s*"Customer"\s*\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx",
+    bad: /label=\{draft\.payee \|\| "—"\}/,
+    good: /entityLabel\(\s*draft\.payee\s*,\s*draft\.vendorId\s*,\s*"Vendor"\s*\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/maintenance/WorkOrderDetailPage.tsx",
+    bad: /<EntityLink kind="claim" id=\{String\(wo\.insurance_claim_id\)\} \/>/,
+    good: /entityLabel\(null, wo\.insurance_claim_id, "Claim"\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/safety/SafetyMeetingsPage.tsx",
+    bad: /label=\{driverNameById\.get\(driverId\)\}/,
+    good: /entityLabel\(\s*driverNameById\.get\(driverId\)\s*,\s*driverId\s*,\s*"Driver"\s*\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/safety/TrainingProgramsPage.tsx",
+    bad: /label=\{driverNameById\.get\(driverId\)\}/,
+    good: /entityLabel\(\s*driverNameById\.get\(driverId\)\s*,\s*driverId\s*,\s*"Driver"\s*\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/safety/tabs/DrugAlcoholTab.tsx",
+    bad: /label=\{driverNameById\.get\(driverId\)\}/,
+    good: /entityLabel\(\s*driverNameById\.get\(driverId\)\s*,\s*driverId\s*,\s*"Driver"\s*\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/safety/HoursOfServicePage.tsx",
+    bad: /return name \|\| driver\.id/,
+    good: /entityLabel\(name \|\| null, driver\.id, "Driver"\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/safety/HoursOfServicePage.tsx",
+    bad: /label=\{\s*\(row\.driver_name as string \| undefined\) \?\?\s*\(row\.driver_id \? driverNameById\.get/,
+    good: /entityLabel\(\s*\(row\.driver_name as string \| undefined\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/accounting/PrepaidExpensesPage.tsx",
+    bad: /<EntityLink kind="account" id=\{detail\.asset_account_id\} \/>/,
+    good: /entityLabel\(null, detail\.asset_account_id, "Account"\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/accounting/EscrowPage.tsx",
+    bad: /<EntityLink kind="driver" id=\{row\.holder_id\} \/>/,
+    good: /entityLabel\(null, row\.holder_id, escrowHolderNoun\(row\.holder_type\)\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/accounting/VendorCreditsPage.tsx",
+    bad: /<EntityLink kind="vendor" id=\{row\.vendor_id\} \/>/,
+    good: /entityLabel\(null, row\.vendor_id, "Vendor"\)/,
+  },
+  {
+    rel: "apps/frontend/src/components/maintenance/WorkOrderDetailModal.tsx",
+    bad: /<EntityLink kind="vendor" id=\{String\(workOrder\.external_vendor_id\)\} \/>/,
+    good: /entityLabel\(\s*typeof workOrder\.external_vendor_name === "string"/,
+  },
+  {
+    rel: "apps/frontend/src/pages/safety/tabs/AnomalyDetailDrawer.tsx",
+    bad: /<EntityLink kind=\{anomaly\.subject_type\} id=\{anomaly\.subject_id\} \/>/,
+    good: /entityLabel\(\s*null,\s*anomaly\.subject_id,/,
+  },
+  {
+    rel: "apps/frontend/src/pages/accounting/RevenueRecognitionPage.tsx",
+    bad: /label="Earn JE"/,
+    good: /entityLabel\(null, row\.earn_journal_entry_id, "Journal entry"\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/insurance/ClaimsTab.tsx",
+    bad: /Lawsuit \{l\.case_number\}/,
+    good: /entityLabel\(l\.case_number, l\.id, "Case"\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/accounting/FactorReserveCard.tsx",
+    bad: /\{ key: "customer_name", label: "Customer", sortable: true \},/,
+    good: /entityLabel\(row\.customer_name, row\.customer_id, "Customer"\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/accounting/FactorReserveCard.tsx",
+    bad: /- \{event\.customer_name\}/,
+    good: /entityLabel\(event\.customer_name, event\.customer_id, "Customer"\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/safety/tabs/DrugAlcoholTab.tsx",
+    bad: /entry\.driver_name : "Driver"/,
+    good: /entityLabel\(\s*typeof entry\.driver_name === "string"/,
+  },
+  {
+    rel: "apps/frontend/src/pages/safety/components/FinePaymentLinkBanner.tsx",
+    bad: /label="Bank payment"/,
+    good: /entityLabel\(null, bankTransactionId, "Bank transaction"\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/banking/BankAccountDetail.tsx",
+    bad: /label="Load"/,
+    good: /entityLabel\(null, row\.matched_load_id, "Load"\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/accounting/IntegrationTransactionsPage.tsx",
+    bad: /label="Load"/,
+    good: /entityLabel\(null, bt\.matched_load_id, "Load"\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx",
+    bad: /label="Settlement"/,
+    good: /entityLabel\(null, tx\.matched_settlement_id, "Settlement"\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx",
+    bad: /label="Journal Entry"/,
+    good: /entityLabel\(null, tx\.matched_journal_entry_id, "Journal entry"\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/insurance/LawsuitsTab.tsx",
+    bad: /\{lawsuit\.case_number\}/,
+    good: /entityLabel\(\s*lawsuit\.case_number\s*,\s*lawsuit\.id\s*,\s*"Case"\s*\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/insurance/ClaimsTab.tsx",
+    bad: /\{claim\.claim_number\}/,
+    good: /entityLabel\(\s*claim\.claim_number\s*,\s*claim\.id\s*,\s*"Claim"\s*\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/accounting/AccountsPayableAgingPage.tsx",
+    bad: /\{v\.vendor_name\}/,
+    good: /entityLabel\(\s*v\.vendor_name\s*,\s*v\.vendor_id\s*,\s*"Vendor"\s*\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/maintenance/RoadServiceList.tsx",
+    bad: /\{row\.vendor_name\}/,
+    good: /entityLabel\(\s*row\.vendor_name\s*,\s*row\.vendor_id\s*,\s*"Vendor"\s*\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/insurance/PoliciesList.tsx",
+    bad: /\{p\.policy_number\}/,
+    good: /entityLabel\(\s*p\.policy_number\s*,\s*p\.id\s*,\s*"Policy"\s*\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/accounting/VendorBalancesPage.tsx",
+    bad: /\{row\.vendor_name\}|\$\{selectedVendor\.vendor_name\}/,
+    good: /entityLabel\(\s*row\.vendor_name\s*,\s*row\.vendor_id\s*,\s*"Vendor"\s*\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/reports/ManagementReportPackagePage.tsx",
+    bad: /\{row\.vendor_name\}/,
+    good: /entityLabel\(\s*row\.vendor_name\s*,\s*row\.vendor_id\s*,\s*"Vendor"\s*\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/dispatch/planners/UnifiedTimelinePlanner.tsx",
+    bad: /\{load\.load_number\}/,
+    good: /entityLabel\(\s*load\.load_number\s*,\s*load\.id\s*,\s*"Load"\s*\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/safety/tabs/EscrowRecordTab.tsx",
+    bad: /\{entry\.driver_name\}/,
+    good: /entityLabel\(\s*entry\.driver_name\s*,\s*null\s*,\s*"Driver"\s*\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/insurance/PolicyDetail.tsx",
+    bad: /Policy \$\{policy\.policy_number\}|Policies", policy\.policy_number/,
+    good: /entityLabel\(\s*policy\.policy_number\s*,\s*policy\.id\s*,\s*"Policy"\s*\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/legal/matters/LegalMatterFormFields.tsx",
+    bad: /\{claim\.claim_number\} —/,
+    good: /kind="insurance_claim"/,
+  },
+  {
+    rel: "apps/frontend/src/pages/legal/matters/LegalMatterFormFields.tsx",
+    bad: /\{lawsuit\.case_number\} —/,
+    good: /kind="insurance_lawsuit"/,
+  },
+  {
+    rel: "apps/frontend/src/pages/dispatch/DispatchBoard.tsx",
+    bad: /\{openPreSettlement\.settlement_number\}/,
+    good: /entityLabel\(\s*openPreSettlement\.settlement_number\s*,\s*openPreSettlement\.settlement_id\s*,\s*"Settlement"\s*\)/,
+  },
+  {
+    rel: "apps/frontend/src/components/dispatch/DispatchList.tsx",
+    bad: /\{openPreSettlement\.settlement_number\}/,
+    good: /entityLabel\(\s*openPreSettlement\.settlement_number\s*,\s*openPreSettlement\.settlement_id\s*,\s*"Settlement"\s*\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/dispatch/components/BookLoadModalV4.tsx",
+    bad: /`\s*\$\{editLoad\.load_number\}`/,
+    good: /entityLabel\(\s*editLoad\.load_number\s*,\s*editLoad\.id\s*,\s*"Load"\s*\)/,
+  },
+  {
+    rel: "apps/frontend/src/components/dispatch/DispatchKanban.tsx",
+    bad: /return load\.assigned_unit_number \? load\.load_number : null;/,
+    good: /entityLabel\(\s*load\.load_number\s*,\s*load\.id\s*,\s*"Load"\s*\)/,
+  },
+  {
+    rel: "apps/frontend/src/components/dispatch/DispatchKanban.tsx",
+    bad: /cardPrimaryLabel\(load\)\} · \$\{load\.load_number\}/,
+    good: /entityLabel\(\s*load\.load_number\s*,\s*load\.id\s*,\s*"Load"\s*\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/driver/DriverLoadsPage.tsx",
+    bad: /\{load\.display_id\}/,
+    good: /entityLabel\(\s*load\.display_id\s*,\s*load\.id\s*,\s*"Load"\s*\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/driver-finance/SettlementsPage.tsx",
+    bad: /\(\{bill\.bill_number\}\)/,
+    good: /entityLabel\(\s*bill\.bill_number\s*,\s*bill\.id\s*,\s*"Bill"\s*\)/,
+  },
+  {
+    rel: "apps/frontend/src/components/dispatch/LoadDetailDriverPayTab.tsx",
+    bad: /\{bill\.bill_number\}/,
+    good: /entityLabel\(\s*bill\.bill_number\s*,\s*bill\.id\s*,\s*"Bill"\s*\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/accounting/PaymentsListPage.tsx",
+    bad: /\{row\.display_id\}/,
+    good: /entityLabel\(\s*row\.display_id\s*,\s*row\.id\s*,\s*"Payment"\s*\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/accounting/PaymentDetailPage.tsx",
+    bad: /title=\{payment\.display_id\}|label: payment\.display_id/,
+    good: /entityLabel\(\s*payment\.display_id\s*,\s*payment\.id\s*,\s*"Payment"\s*\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/accounting/InvoiceDetailPage.tsx",
+    bad: /title=\{invoice\.display_id\}|label: invoice\.display_id/,
+    good: /entityLabel\(\s*invoice\.display_id\s*,\s*invoice\.id\s*,\s*"Invoice"\s*\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/accounting/AccountingHubPage.tsx",
+    bad: /label: row\.display_id \|\| row\.customer_name|left: `\$\{item\.entity_type\} · \$\{item\.display_id\}`/,
+    good: /entityLabel\(\s*item\.display_id\s*,\s*item\.entity_id\s*,\s*"Record"\s*\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/accounting/MultiEntityAccountingPage.tsx",
+    bad: /label=\{\s*row\.account_name\s*\}/,
+    good: /entityLabel\(\s*row\.account_name\s*,\s*row\.account_id\s*,\s*"Account"\s*\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/accounting/CoaAsymmetryReportPanel.tsx",
+    bad: / · \{row\.account_name\} · /,
+    good: /entityLabel\(\s*row\.account_name\s*,\s*null\s*,\s*"Account"\s*\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/insurance/ClaimsTab.tsx",
+    bad: /label=\{graph\.claim\.load_id \? "Load"|label=\{graph\.claim\.unit_id \? "Unit"/,
+    good: /entityLabel\(\s*graph\.claim\.load_display_id\s*,\s*graph\.claim\.load_id\s*,\s*"Load"\s*\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/accounting/PaymentApplyModal.tsx",
+    bad: /\{invoice\.display_id\} · Open/,
+    good: /entityLabel\(\s*invoice\.display_id\s*,\s*invoice\.id\s*,\s*"Invoice"\s*\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/accounting/RecordPaymentModal.tsx",
+    bad: /\{invoice\.display_id\} · Open/,
+    good: /entityLabel\(\s*invoice\.display_id\s*,\s*invoice\.id\s*,\s*"Invoice"\s*\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/accounting/FactoringDetailPage.tsx",
+    bad: /title=\{detail\.display_id\}/,
+    good: /entityLabel\(\s*detail\.display_id\s*,\s*detail\.id\s*,\s*"Advance"\s*\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/accounting/VendorCreditsPage.tsx",
+    bad: /render: \(row\) => row\.display_id|title=\{credit\?\.display_id|`\$\{credit\.display_id\} ·/,
+    good: /entityLabel\(\s*row\.display_id\s*,\s*row\.id\s*,\s*"Vendor credit"\s*\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/accounting/BillDetailPage.tsx",
+    bad: /\{application\.display_id\}/,
+    good: /entityLabel\(\s*application\.display_id\s*,\s*application\.credit_id\s*,\s*"Vendor credit"\s*\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/accounting/BillPaymentDetailPage.tsx",
+    bad: /<span className="text-sm text-gray-900">\{payment\.reference_number\}<\/span>/,
+    good: /entityLabel\(\s*payment\.reference_number\s*,\s*payment\.id\s*,\s*"Reference"\s*\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/accounting/BillPaymentDetailPage.tsx",
+    bad: /<span className="text-sm text-gray-900">\{payment\.check_number\}<\/span>/,
+    good: /entityLabel\(\s*payment\.check_number\s*,\s*payment\.id\s*,\s*"Check"\s*\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/cash-advances/components/CreateAdvanceModal.tsx",
+    bad: /\{String\(bill\.display_id\)\}/,
+    good: /entityLabel\(\s*bill\.display_id\s*,\s*bill\.id\s*,\s*"Bill"\s*\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/accounting/AccountingHubPage.tsx",
+    bad: /label: row\.reference_number \|\| row\.check_number \|\| row\.memo \|\| "Bill payment"/,
+    good: /entityLabel\(\s*row\.reference_number \|\| row\.check_number \|\| row\.memo\s*,\s*row\.id\s*,\s*"Payment"\s*\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/VendorDetail.tsx",
+    bad: /\{c\.display_id\}/,
+    good: /entityLabel\(\s*c\.display_id\s*,\s*c\.id\s*,\s*"Vendor credit"\s*\)/,
+  },
+  {
+    rel: "apps/frontend/src/components/dispatch/tabs/FactoringTab.tsx",
+    bad: /linkedInvoice\?\.display_id \?\? undefined/,
+    good: /entityLabel\(\s*linkedInvoice\?\.display_id\s*,\s*linkedInvoice\?\.id\s*,\s*"Invoice"\s*\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/driver-finance/OwnerApprovalPortalPage.tsx",
+    bad: /\{String\(req\?\.display_id \?\? ""\)\}/,
+    good: /entityLabel\(\s*String\(req\?\.display_id \?\? ""\)\s*,\s*String\(req\?\.id \?\? ""\)\s*,\s*"Request"\s*\)/,
+  },
+  {
+    rel: "apps/frontend/src/components/insurance/InsuranceClaimsReverseSection.tsx",
+    bad: /Trailer \$\{claim\.trailer_display_id\}/,
+    good: /entityLabel\(\s*claim\.trailer_display_id\s*,\s*claim\.trailer_id\s*,\s*"Trailer"\s*\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/maintenance/vehicles/VehiclesMasterDataPage.tsx",
+    bad: /\{row\.unit_display_id\}/,
+    good: /entityLabel\(\s*row\.unit_display_id\s*,\s*row\.id\s*,\s*"Unit"\s*\)/,
+  },
+  {
+    rel: "apps/frontend/src/pages/reports/ProfitPerTruckPage.tsx",
+    bad: /r\.unit_number\.length > 10 \? `\$\{r\.unit_number\.slice\(0, 8\)/,
+    good: /entityLabel\(\s*r\.unit_number\s*,\s*r\.unit_id\s*,\s*"Unit"\s*\)/,
+  },
 ];
 
 export function auditEntityLabel(src) {

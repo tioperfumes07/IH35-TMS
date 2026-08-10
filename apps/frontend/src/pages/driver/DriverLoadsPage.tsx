@@ -20,7 +20,7 @@ export function DriverLoadsPage() {
         {loads.map((load: DriverLoad) => (
           <li key={load.id} className="rounded-sm border border-slate-200 bg-white p-3">
             <Link className="font-medium text-slate-900" to={`/driver/loads/${load.id}`}>
-              {load.display_id}
+              {entityLabel(load.display_id, load.id, "Load")}
             </Link>
             <p className="text-xs text-slate-600">{entityLabel(load.customer_name, null, "Customer")}</p>
             <p className="text-[11px] text-slate-500">

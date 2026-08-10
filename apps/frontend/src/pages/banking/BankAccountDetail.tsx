@@ -15,6 +15,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ActionButton } from "../../components/shared/ActionButton";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -249,11 +250,23 @@ const ARCHIVED_TX_COLUMNS: ParityColumn<PlaidBankTransaction>[] = [
     label: "Matched",
     render: (row) =>
       row.matched_load_id ? (
-        <EntityLink kind="load" id={row.matched_load_id} label="Load" />
+        <EntityLink
+          kind="load"
+          id={row.matched_load_id}
+          label={entityLabel(null, row.matched_load_id, "Load")}
+        />
       ) : row.matched_bill_id ? (
-        <EntityLink kind="bill" id={row.matched_bill_id} label="Bill" />
+        <EntityLink
+          kind="bill"
+          id={row.matched_bill_id}
+          label={entityLabel(null, row.matched_bill_id, "Bill")}
+        />
       ) : row.matched_settlement_id ? (
-        <EntityLink kind="settlement" id={row.matched_settlement_id} label="Settlement" />
+        <EntityLink
+          kind="settlement"
+          id={row.matched_settlement_id}
+          label={entityLabel(null, row.matched_settlement_id, "Settlement")}
+        />
       ) : (
         "No"
       ),

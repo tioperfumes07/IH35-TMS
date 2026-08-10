@@ -242,7 +242,7 @@ export function SubmitFactoringModal({ open, operatingCompanyId, onClose, onCrea
                     <td className="px-2 py-1.5">
                       <input type="checkbox" checked={selectedInvoiceIds.includes(row.id)} onChange={() => toggleInvoice(row.id)} />
                     </td>
-                    <td className="px-2 py-1.5 text-gray-900"><EntityLink kind="invoice" id={row.id} label={row.display_id} /></td>
+                    <td className="px-2 py-1.5 text-gray-900"><EntityLink kind="invoice" id={row.id} label={entityLabel(row.display_id, row.id, "Invoice")} /></td>
                     <td className="px-2 py-1.5 text-gray-700">{entityLabel(row.customer_name, row.customer_id, "Customer")}</td>
                     <td className="px-2 py-1.5 text-gray-700">{money(row.total_cents)}</td>
                     <td className="px-2 py-1.5 text-gray-700">{row.customer_recourse_type}</td>

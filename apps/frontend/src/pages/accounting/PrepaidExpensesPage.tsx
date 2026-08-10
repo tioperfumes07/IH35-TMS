@@ -91,17 +91,32 @@ function SchedulePanel({ detail, onClose }: { detail: PrepaidAssetDetail; onClos
           ) : null}
           {detail.asset_account_id ? (
             <p>
-              Prepaid GL: <EntityLink kind="account" id={detail.asset_account_id} />
+              Prepaid GL:{" "}
+              <EntityLink
+                kind="account"
+                id={detail.asset_account_id}
+                label={entityLabel(null, detail.asset_account_id, "Account")}
+              />
             </p>
           ) : null}
           {detail.expense_account_id ? (
             <p>
-              Expense GL: <EntityLink kind="account" id={detail.expense_account_id} />
+              Expense GL:{" "}
+              <EntityLink
+                kind="account"
+                id={detail.expense_account_id}
+                label={entityLabel(null, detail.expense_account_id, "Account")}
+              />
             </p>
           ) : null}
           {detail.payment_account_id ? (
             <p>
-              Payment GL: <EntityLink kind="account" id={detail.payment_account_id} />
+              Payment GL:{" "}
+              <EntityLink
+                kind="account"
+                id={detail.payment_account_id}
+                label={entityLabel(null, detail.payment_account_id, "Account")}
+              />
             </p>
           ) : null}
           {detail.je_preview.purchase_je ? (

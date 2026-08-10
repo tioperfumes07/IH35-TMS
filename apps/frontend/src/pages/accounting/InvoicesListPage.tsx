@@ -236,7 +236,7 @@ export function InvoicesListPage() {
         sortable: true,
         render: (row) => (
           <span className="inline-flex items-center gap-1">
-            <EntityLink kind="invoice" id={row.id} label={row.display_id} />
+            <EntityLink kind="invoice" id={row.id} label={entityLabel(row.display_id, row.id, "Invoice")} />
             {row.factoring_advance_id ? <ArrowRightCircle className="h-3.5 w-3.5 text-slate-600" /> : null}
           </span>
         ),

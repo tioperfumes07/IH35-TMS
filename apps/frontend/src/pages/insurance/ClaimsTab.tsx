@@ -109,7 +109,7 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
             className="font-medium text-slate-700 underline"
             onClick={() => setHighlightedClaimId(claim.id)}
           >
-            {claim.claim_number}
+            {entityLabel(claim.claim_number, claim.id, "Claim")}
           </button>
         ),
       },
@@ -258,11 +258,11 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
             <div className="grid gap-1 md:grid-cols-2">
               <div>
                 <strong>Forward:</strong>{" "}
-                <EntityLink kind="driver" id={graph.claim.driver_id} label={graph.claim.driver_id ? "Driver" : undefined} />
+                <EntityLink kind="driver" id={graph.claim.driver_id} label={entityLabel(graph.claim.driver_display_name, graph.claim.driver_id, "Driver")} />
                 {" · "}
-                <EntityLink kind="load" id={graph.claim.load_id} label={graph.claim.load_id ? "Load" : undefined} />
+                <EntityLink kind="load" id={graph.claim.load_id} label={entityLabel(graph.claim.load_display_id, graph.claim.load_id, "Load")} />
                 {" · "}
-                <EntityLink kind="unit" id={graph.claim.unit_id} label={graph.claim.unit_id ? "Unit" : undefined} />
+                <EntityLink kind="unit" id={graph.claim.unit_id} label={entityLabel(graph.claim.unit_display_id, graph.claim.unit_id, "Unit")} />
                 {graph.claim.accident_report_id ? (
                   <>
                     {" · "}
@@ -283,12 +283,16 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
               <div>
                 <strong>Reverse:</strong>{" "}
                 {graph.reverse.lawsuits.map((l) => (
-                  <span key={l.id} className="mr-2">
-                    Lawsuit {l.case_number}
-                  </span>
+                  <EntityLink
+                    key={l.id}
+                    kind="lawsuit"
+                    id={l.id}
+                    label={entityLabel(l.case_number, l.id, "Case")}
+                    className="mr-2 text-slate-700 underline"
+                  />
                 ))}
                 {graph.reverse.matters.map((m) => (
-                  <EntityLink key={m.id} kind="matter" id={m.id} label={m.matter_number} className="mr-2 text-slate-700 underline" />
+                  <EntityLink key={m.id} kind="matter" id={m.id} label={entityLabel(m.matter_number, m.id, "Record")} className="mr-2 text-slate-700 underline" />
                 ))}
                 {graph.reverse.accidents.map((a) => (
                   <EntityLink

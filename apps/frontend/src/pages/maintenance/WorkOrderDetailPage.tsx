@@ -715,7 +715,15 @@ export function WorkOrderDetailPage() {
                 <div className="text-[11px] text-gray-500">Unit</div>
                 <p>
                   {wo.unit_id ? (
-                    <EntityLink kind="unit" id={String(wo.unit_id)} label={typeof wo.unit_number === "string" ? wo.unit_number : undefined} />
+                    <EntityLink
+                      kind="unit"
+                      id={String(wo.unit_id)}
+                      label={entityLabel(
+                        typeof wo.unit_number === "string" ? wo.unit_number : null,
+                        wo.unit_id,
+                        "Unit"
+                      )}
+                    />
                   ) : (
                     "—"
                   )}
@@ -728,7 +736,11 @@ export function WorkOrderDetailPage() {
                     <EntityLink
                       kind="load"
                       id={String(wo.load_id)}
-                      label={typeof wo.linked_load_number === "string" ? wo.linked_load_number : undefined}
+                      label={entityLabel(
+                        typeof wo.linked_load_number === "string" ? wo.linked_load_number : null,
+                        wo.load_id,
+                        "Load"
+                      )}
                     />
                   ) : (
                     "—"
@@ -742,7 +754,11 @@ export function WorkOrderDetailPage() {
                     <EntityLink
                       kind="load"
                       id={String(wo.roadside_breakdown_load_id)}
-                      label={typeof wo.roadside_breakdown_load_number === "string" ? wo.roadside_breakdown_load_number : undefined}
+                      label={entityLabel(
+                        typeof wo.roadside_breakdown_load_number === "string" ? wo.roadside_breakdown_load_number : null,
+                        wo.roadside_breakdown_load_id,
+                        "Load"
+                      )}
                     />
                   ) : (
                     "—"
@@ -753,7 +769,15 @@ export function WorkOrderDetailPage() {
                 <div className="text-[11px] text-gray-500">Driver</div>
                 <p>
                   {wo.driver_id ? (
-                    <EntityLink kind="driver" id={String(wo.driver_id)} label={typeof wo.driver_name === "string" ? wo.driver_name : undefined} />
+                    <EntityLink
+                      kind="driver"
+                      id={String(wo.driver_id)}
+                      label={entityLabel(
+                        typeof wo.driver_name === "string" ? wo.driver_name : null,
+                        wo.driver_id,
+                        "Driver"
+                      )}
+                    />
                   ) : (
                     "—"
                   )}
@@ -766,7 +790,11 @@ export function WorkOrderDetailPage() {
                     <EntityLink
                       kind="vendor"
                       id={String(wo.external_vendor_id)}
-                      label={typeof wo.external_vendor_name === "string" ? wo.external_vendor_name : undefined}
+                      label={entityLabel(
+                        typeof wo.external_vendor_name === "string" ? wo.external_vendor_name : null,
+                        wo.external_vendor_id,
+                        "Vendor"
+                      )}
                     />
                   ) : (
                     "—"
@@ -777,7 +805,11 @@ export function WorkOrderDetailPage() {
                 <div className="text-[11px] text-gray-500">Insurance claim</div>
                 <p>
                   {wo.insurance_claim_id ? (
-                    <EntityLink kind="claim" id={String(wo.insurance_claim_id)} />
+                    <EntityLink
+                      kind="claim"
+                      id={String(wo.insurance_claim_id)}
+                      label={entityLabel(null, wo.insurance_claim_id, "Claim")}
+                    />
                   ) : (
                     "—"
                   )}

@@ -1,4 +1,5 @@
 import { EntityLink } from "../shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 
 type Props = {
   driverName: string;
@@ -23,8 +24,24 @@ export function VendorMergeDiffPreview({
     <div className="rounded-sm border border-slate-200 bg-slate-100 p-3 text-xs" data-vendor-merge-diff-preview="true">
       <p className="font-semibold text-gray-900">Merge preview</p>
       <p className="mt-1">Driver: {driverName || "—"}</p>
-      <p>From vendor: {fromVendorName || fromVendorId || "—"} (<EntityLink kind="vendor" id={fromVendorId || undefined} label={fromVendorId || "—"} />)</p>
-      <p>To vendor: {toVendorName || toVendorId || "—"} (<EntityLink kind="vendor" id={toVendorId || undefined} label={toVendorId || "—"} />)</p>
+      <p>
+        From vendor: {fromVendorName || fromVendorId || "—"} (
+        <EntityLink
+          kind="vendor"
+          id={fromVendorId || undefined}
+          label={entityLabel(fromVendorName, fromVendorId || null, "Vendor")}
+        />
+        )
+      </p>
+      <p>
+        To vendor: {toVendorName || toVendorId || "—"} (
+        <EntityLink
+          kind="vendor"
+          id={toVendorId || undefined}
+          label={entityLabel(toVendorName, toVendorId || null, "Vendor")}
+        />
+        )
+      </p>
       <p className="mt-2 text-gray-700">After merge: transactions on the source vendor will consolidate under the target vendor.</p>
       <label className="mt-2 block">
         Type MERGE to confirm
