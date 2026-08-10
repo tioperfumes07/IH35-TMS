@@ -12,6 +12,7 @@ import {
 } from "../../../api/forecast";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
+import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { sumCents, toCents, computeProjectionTotals } from "./manualProjectionMath";
 import { formatUsdCents } from "../../../lib/money";
 
@@ -293,6 +294,20 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
 
   return (
     <div className="space-y-4">
+      {(entriesQuery.isError || openingQuery.isError) && (
+        <ListErrorBanner
+          message={`Failed to load projections: ${((entriesQuery.error ?? openingQuery.error) as Error | undefined)?.message ?? "Request failed"}`}
+          onRetry={() => {
+            void entriesQuery.refetch();
+            void openingQuery.refetch();
+          }}
+        />
+      )}
+      {(entriesQuery.isLoading || openingQuery.isLoading) && (
+        <div className="rounded-lg border border-gray-200 bg-white p-4 text-sm text-gray-500">
+          Loading projections…
+        </div>
+      )}
       {/* KPI cards (kept). */}
       <div className="grid grid-cols-3 gap-3">
         <div className="rounded-lg border border-gray-200 bg-white px-4 py-3">
