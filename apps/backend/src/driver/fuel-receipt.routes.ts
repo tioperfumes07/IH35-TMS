@@ -21,6 +21,41 @@ function sendValidationError(reply: FastifyReply, error: z.ZodError) {
 }
 
 export async function registerDriverFuelReceiptRoutes(app: FastifyInstance) {
+  app.get("/api/v1/driver/fuel/units", async (req, reply) => {
+    if (!(await requireDriverSession(req, reply))) return;
+    const driver = req.driver;
+    const user = req.user;
+    if (!driver || !user) return reply.code(403).send({ error: "forbidden" });
+
+    const units = await withCurrentUser(user.uuid, async (client) => {
+      const driverCtx = await client.query<{ operating_company_id: string | null }>(
+        `SELECT operating_company_id FROM mdata.drivers WHERE id = $1 LIMIT 1`,
+        [driver.id]
+      );
+      const operatingCompanyId = driverCtx.rows[0]?.operating_company_id ?? null;
+      if (!operatingCompanyId) throw new Error("driver_company_missing");
+      await setScopedCompanyContext(client, user.uuid, operatingCompanyId);
+      const result = await client.query<{ id: string; unit_number: string | null; display_id: string | null }>(
+        `
+          SELECT id, unit_number, display_id
+          FROM mdata.units
+          WHERE operating_company_id = $1::uuid
+            AND deactivated_at IS NULL
+            AND (assigned_driver_id IS NULL OR assigned_driver_id = $2::uuid)
+          ORDER BY (assigned_driver_id = $2::uuid) DESC, unit_number ASC NULLS LAST
+        `,
+        [operatingCompanyId, driver.id]
+      );
+      return result.rows;
+    }).catch((error) => {
+      if (String((error as Error).message) === "driver_company_missing") return null;
+      throw error;
+    });
+
+    if (!units) return reply.code(404).send({ error: "driver_company_not_found" });
+    return reply.send({ units });
+  });
+
   app.post("/api/v1/driver/fuel/upload-receipt", { config: { rateLimit: { max: 20, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!(await requireDriverSession(req, reply))) return;
     const driver = req.driver;
@@ -54,20 +89,20 @@ export async function registerDriverFuelReceiptRoutes(app: FastifyInstance) {
         );
         const operatingCompanyId = driverCtx.rows[0]?.operating_company_id ?? null;
         if (!operatingCompanyId) throw new Error("driver_company_missing");
+        await setScopedCompanyContext(client, user.uuid, operatingCompanyId);
 
         const truckOk = await client.query(
           `
             SELECT 1 FROM mdata.units
             WHERE id = $1::uuid
+              AND operating_company_id = $3::uuid
               AND deactivated_at IS NULL
               AND (assigned_driver_id IS NULL OR assigned_driver_id = $2::uuid)
             LIMIT 1
           `,
-          [parsed.data.truck_id, driver.id]
+          [parsed.data.truck_id, driver.id, operatingCompanyId]
         );
         if (truckOk.rows.length === 0) throw new Error("truck_not_allowed");
-
-        await setScopedCompanyContext(client, user.uuid, operatingCompanyId);
 
         // BANK-ACCOUNT-HIDE: an account hidden for THIS entity must never be auto-picked as the fuel
         // -receipt deposit target (flag OFF by default — see docs/accounting/BANK-ACCOUNT-ENTITY-HIDE-DESIGN.md).

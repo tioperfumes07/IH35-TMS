@@ -1,4 +1,7 @@
 import { useCallback, useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { listDriverFuelUnits } from "../../api/driver";
+import { Combobox } from "../../components/shared/Combobox";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { resolveApiUrl } from "../../api/client";
 import { getValidDriverAccessToken } from "../../lib/auth-token";
@@ -16,6 +19,14 @@ export function FuelReceiptPage() {
   const [station, setStation] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const unitsQuery = useQuery({
+    queryKey: ["driver", "fuel", "units"],
+    queryFn: listDriverFuelUnits,
+  });
+  const unitOptions = (unitsQuery.data?.units ?? []).map((unit) => ({
+    value: unit.id,
+    label: unit.unit_number || unit.display_id || "Unnumbered unit",
+  }));
 
   const stopCamera = useCallback(() => {
     stream?.getTracks().forEach((t) => t.stop());
@@ -140,8 +151,20 @@ export function FuelReceiptPage() {
       {previewUrl ? <img src={previewUrl} alt="Receipt preview" className="w-full rounded-sm border" /> : null}
 
       <label className="block text-xs font-medium text-slate-600">
-        Truck (unit) ID
-        <input className="mt-1 w-full rounded-sm border px-2 py-1" value={truckId} onChange={(e) => setTruckId(e.target.value)} />
+        Truck / unit
+        <div className="mt-1">
+          <Combobox
+            value={truckId || null}
+            onChange={(next) => setTruckId(next ?? "")}
+            options={unitOptions}
+            placeholder={unitsQuery.isLoading ? "Loading allowed units…" : "Select truck / unit"}
+            loading={unitsQuery.isLoading}
+            disabled={unitsQuery.isLoading || unitsQuery.isError}
+          />
+        </div>
+        {unitsQuery.isError ? (
+          <span className="mt-1 block text-xs text-red-700">Could not load allowed units. Refresh and try again.</span>
+        ) : null}
       </label>
       <label className="block text-xs font-medium text-slate-600">
         Odometer
