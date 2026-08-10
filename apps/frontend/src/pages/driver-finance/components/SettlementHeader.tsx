@@ -3,6 +3,7 @@ import { entityLabel } from "../../../lib/entity-label";
 import { formatDateUS } from "../../../lib/formatDate";
 
 type Props = {
+  settlementDisplayId?: string | null;
   driverId: string | null;
   driverName: string;
   periodStart: string;
@@ -17,6 +18,7 @@ type Props = {
 };
 
 export function SettlementHeader({
+  settlementDisplayId,
   driverId,
   driverName,
   periodStart,
@@ -27,7 +29,13 @@ export function SettlementHeader({
   onRefresh,
 }: Props) {
   return (
-    <div className="grid grid-cols-1 gap-2 rounded-sm border border-gray-200 bg-white p-3 lg:grid-cols-4">
+    <div className="grid grid-cols-1 gap-2 rounded-sm border border-gray-200 bg-white p-3 lg:grid-cols-5">
+      {settlementDisplayId ? (
+        <div>
+          <div className="text-[10px] uppercase text-gray-500">Settlement No</div>
+          <div className="text-sm font-semibold">{settlementDisplayId}</div>
+        </div>
+      ) : null}
       <div>
         <div className="text-[10px] uppercase text-gray-500">Driver</div>
         <div className="text-sm font-semibold">

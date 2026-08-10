@@ -29,6 +29,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-lst-picker01-vendor-type-detail-inline-create";
 
 const VENDOR_DETAIL = "apps/frontend/src/pages/VendorDetail.tsx";
+const VENDOR_CREATE = "apps/frontend/src/components/vendors/VendorCreateModal.tsx";
 const REGISTRY = "apps/frontend/src/components/parity/catalogPickerRegistry.ts";
 const ROUTES = "apps/backend/src/mdata/vendors.routes.ts";
 
@@ -74,6 +75,12 @@ export function collectProblems(root = ROOT, overrides = null) {
     if (/vendor_type:\s*profileForm\.vendorType\s+as\s+["']Fuel["']/.test(code)) {
       problems.push(`${VENDOR_DETAIL}: update payload must not cast vendor_type to the frozen union`);
     }
+  }
+
+  const vendorCreate = readRel(root, VENDOR_CREATE, overrides);
+  if (!vendorCreate) problems.push(`missing ${VENDOR_CREATE}`);
+  else if (!/vendor_type_name/.test(vendorCreate) || !/createKind=["']vendor_type["']/.test(vendorCreate)) {
+    problems.push(`${VENDOR_CREATE}: vendor type options must fall back to vendor_type_name and use createKind=vendor_type`);
   }
 
   if (!registry) problems.push(`missing ${REGISTRY}`);

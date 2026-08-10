@@ -93,7 +93,11 @@ export function SettlementDetailPage() {
 
   const settlement = (detailQuery.data ?? {}) as Record<string, unknown>;
   const paymentState = String(settlement.payment_state ?? "unpaid");
+  const settlementDisplayId =
+    typeof settlement.display_id === "string" && settlement.display_id ? settlement.display_id : null;
   const isFinalSettlement = String(settlement.status ?? "") === "locked" || String(settlement.status ?? "") === "final";
+  const showFinalizeBlock = !isFinalSettlement;
+  const showManualPaidDraftBanner = paymentState === "manual_paid" && !isFinalSettlement;
   const canOpenDispute = auth.user?.role === "Owner" || auth.user?.role === "Administrator" || auth.user?.role === "Driver";
 
   async function refreshSettlementViews() {
@@ -206,7 +210,7 @@ export function SettlementDetailPage() {
         ]}
       />
       <PageHeader
-        title="Settlement Detail"
+        title={settlementDisplayId ? `Settlement ${settlementDisplayId}` : "Settlement Detail"}
         subtitle="Debt-alert invariant enforced"
         actions={
           <Button
@@ -232,6 +236,7 @@ export function SettlementDetailPage() {
         </div>
       ) : null}
       <SettlementHeader
+        settlementDisplayId={settlementDisplayId}
         driverId={driverId}
         driverName={String(settlement.driver_full_name ?? "-")}
         periodStart={String(settlement.period_start ?? "-")}
@@ -241,6 +246,12 @@ export function SettlementDetailPage() {
         loadIds={settlementLoadIds}
         onRefresh={() => void debt.refresh()}
       />
+      {showManualPaidDraftBanner ? (
+        <div className="rounded-sm border border-slate-300 bg-slate-100 px-3 py-2 text-xs text-slate-800">
+          Payment is recorded as <span className="font-semibold">manual_paid</span> but this settlement is not
+          finalized yet — finalize to lock the period before treating pay as complete on the books.
+        </div>
+      ) : null}
       {canOpenDispute ? (
         <div className="rounded-sm border border-slate-200 bg-slate-100 p-3 text-xs">
           <p className="mb-2 font-semibold text-slate-700">Open Dispute</p>
@@ -367,6 +378,7 @@ export function SettlementDetailPage() {
               navigate(`/accounting/escrow${q.toString() ? `?${q.toString()}` : ""}`);
             }}
           />
+          {showFinalizeBlock ? (
           <FinalizeBlock
             checked={ackChecked}
             pendingAcks={(debt.debt?.pending_ack_count ?? 0) > 0 || Boolean(settlement.has_pending_acks)}
@@ -389,6 +401,7 @@ export function SettlementDetailPage() {
                 .catch((error) => pushToast(userFacingApiError(error, "Finalize blocked"), "error"));
             }}
           />
+          ) : null}
           {companyId ? (
             <PayRunClosePanel
               settlementId={settlementId}
@@ -580,6 +593,16 @@ export function SettlementDetailPage() {
                     </button>
                     </div>
                   </div>
+                ) : null}
+
+                {paymentState === "manual_paid" ? (
+                  <p className="text-xs text-gray-600">
+                    Marked paid manually — no further bank pipeline actions unless bounced back to unpaid.
+                  </p>
+                ) : null}
+
+                {paymentState === "cleared" ? (
+                  <p className="text-xs text-gray-600">Payment cleared through the bank pipeline.</p>
                 ) : null}
 
                 <div className="space-y-1 border-t border-gray-100 pt-2">
