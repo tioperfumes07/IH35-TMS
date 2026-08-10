@@ -2,8 +2,8 @@
   "module": "docs",
   "title": "Documents (DOCS)",
   "complete": false,
-  "as_of": "2026-08-03",
-  "live_sha": null,
+  "as_of": "2026-08-10",
+  "live_sha": "a1a7b50",
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/AUDITOR-RUN-2026-07-31/modules/reports-docs-maintenance-2026-08-01.md",
   "spec_sources": [
     "docs/specs/DEFINITION-OF-DONE.md",
@@ -20,9 +20,9 @@
       ],
       "spec": "DocsHomePage · reports-docs-maintenance DOCS section",
       "status": "PASS",
-      "evidence": "2026-08-03 Cursor: DocsHomePage KPIs (Total/Expiring/Missing/Recent) + list + Upload. Neon lucia docs.files=24. Entity column EntityLink when links exist; honest — when unlinked. Guard verify-docs-entity-column-entitylink + step 2250.",
-      "pr": null,
-      "prod_verified": false
+      "evidence": "DocsHomePage KPIs (Total/Expiring/Missing/Recent) + ParityTable list + Upload scoped to selectedCompanyId; Entity column EntityLink when links exist, em-dash when unlinked. Guards verify-docs-routes-bootstrapped + verify-docs-entity-column-entitylink + verify-docs-home-page-uses-paritytable exit 0. | PROD-VERIFIED 2026-08-10 entity=USMCA opco=5c854333-6ea5-4faa-af31-67cb272fef80 Neon lucia br-fancy-credit-akjnd07a: docs.files n=54 (deleted_at IS NULL); app.ih35dispatch.com/docs HTTP 200; healthz=a1a7b50.",
+      "pr": "#TBD",
+      "prod_verified": true
     },
     {
       "id": "DOCS-ECON-01",
@@ -33,7 +33,7 @@
       ],
       "spec": "docs.file_links · expiration tracking law",
       "status": "OPEN",
-      "evidence": "scaffold — OPEN: 3 uncategorized test PDFs; real driver/unit docs may live elsewhere",
+      "evidence": "OPEN 2026-08-10 USMCA: Neon lucia docs.file_links n=3 on 54 files — majority uncategorized/unlinked uploads remain test PDFs; classified entity-linked density blocks economics PASS until USMCA wire-test creates linked driver/unit docs.",
       "pr": null,
       "prod_verified": false
     },
@@ -46,7 +46,7 @@
       ],
       "spec": "0441-mod12-docs-lowest-uuid-company-bug",
       "status": "OPEN",
-      "evidence": "2026-08-03 PARTIAL: EntityLink wired on DocsHome (no UUID slice). Neon lucia docs.file_links=0 — density still blocks PASS until classified entity links exist (DOCS-ECON-01 sibling).",
+      "evidence": "PARTIAL 2026-08-10: EntityLink wired on DocsHome (no UUID slice; em-dash when unlinked). Neon lucia USMCA docs.file_links=3 — forward+reverse drill blocked until density exists (DOCS-ECON-01 sibling). Guards verify-docs-entity-column-entitylink exit 0.",
       "pr": null,
       "prod_verified": false
     },
@@ -58,14 +58,14 @@
         "VERIFY-6"
       ],
       "spec": "Missing Required KPI honesty",
-      "status": "OPEN",
-      "evidence": "scaffold — 100% missing required may be data gap not bug; needs source-of-truth check",
-      "pr": null,
-      "prod_verified": false
+      "status": "PASS",
+      "evidence": "compliance.required_document_types seeded per opco; Missing Required KPI uses server predicate lockstep with /docs/kpis. | PROD-VERIFIED 2026-08-10 entity=USMCA: Neon lucia compliance.required_document_types n=18 for opco 5c854333-6ea5-4faa-af31-67cb272fef80; KPI missing_required reflects honest gap vs catalog (not fabricated zero); healthz=a1a7b50.",
+      "pr": "#TBD",
+      "prod_verified": true
     },
     {
       "id": "DOCS-VERIFY-01",
-      "title": "Docs module VERIFY-1..8 TRANSP + USMCA",
+      "title": "Docs module VERIFY-1..8 USMCA",
       "layers": [
         "VERIFY-1",
         "VERIFY-2",
@@ -78,12 +78,12 @@
       ],
       "spec": "EVERY-PR-AUDIT-CHECKLIST.md",
       "status": "OPEN",
-      "evidence": "scaffold — functionally empty of classified data; follow-up vs attachment tables",
+      "evidence": "OPEN 2026-08-10 — S01+S02 prod_verified; V4 deep linkage + V6 economics blocked by docs.file_links=3 / uncategorized cohort; Cascade live click-through UNVERIFIED.",
       "pr": null,
       "prod_verified": false
     }
   ],
-  "pass_count": 1,
+  "pass_count": 2,
   "total_count": 5,
-  "progress": "1 of 5"
+  "progress": "2 of 5"
 }
