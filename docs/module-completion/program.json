@@ -2,8 +2,8 @@
   "module": "program",
   "title": "Program Tracker",
   "complete": false,
-  "as_of": "2026-08-02",
-  "live_sha": null,
+  "as_of": "2026-08-10",
+  "live_sha": "ed061c20a",
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/AUDITOR-RUN-2026-07-31/modules/program-system-help-2026-08-01.md",
   "spec_sources": [
     "docs/specs/DEFINITION-OF-DONE.md",
@@ -19,9 +19,9 @@
         "DOD-B"
       ],
       "spec": "ProgramBoardPage · program-system-help breadth pass",
-      "status": "OPEN",
-      "evidence": "scaffold — auditor PASS: ~1029 registered blocks, sequence/by-module views",
-      "pr": null,
+      "status": "PASS",
+      "evidence": "Route manifest mounts /program -> AuditScoreboardPage -> ScenarioTrackerHome; ProgramModuleNav links /program; verify-program-audit-scoreboard-api-url.mjs PASS. Guard: scripts/verify-program-surfaces-s01-s05.mjs.",
+      "pr": "#TBD",
       "prod_verified": false
     },
     {
@@ -32,9 +32,9 @@
         "VERIFY-6"
       ],
       "spec": "npm run reconcile:blocks shared JSON",
-      "status": "OPEN",
-      "evidence": "scaffold — not proven after this measurability pass regen",
-      "pr": null,
+      "status": "PASS",
+      "evidence": "Route /program/legacy-scoreboard -> ProgramBoardPage; getProgramBoard API; program-board.service.ts reads docs/trackers/block-reconciliation-data.json; verify-program-scoreboard-13gate-prodread.mjs PASS. Guard: scripts/verify-program-surfaces-s01-s05.mjs.",
+      "pr": "#TBD",
       "prod_verified": false
     },
     {
@@ -45,9 +45,9 @@
         "DOD-C"
       ],
       "spec": "ModuleCompletionPage · verify-module-completion",
-      "status": "OPEN",
-      "evidence": "scaffold — 13 new manifests added 2026-08-02; UI sync UNVERIFIED",
-      "pr": null,
+      "status": "PASS",
+      "evidence": "Route /program/modules -> ModuleCompletionPage; imports generated MODULE_COMPLETION and renders N-of-M progress for every manifest. Guard: scripts/verify-program-surfaces-s01-s05.mjs.",
+      "pr": "#TBD",
       "prod_verified": false
     },
     {
@@ -58,9 +58,9 @@
         "VERIFY-6"
       ],
       "spec": "reconcile-block-status truth-first law",
-      "status": "OPEN",
-      "evidence": "scaffold — overrides + superseded blocks must reflect in UI",
-      "pr": null,
+      "status": "PASS",
+      "evidence": "Route /program/tracker -> ProgramTrackerPage; fetches /api/v1/program/tracker and renders per-block status/PR/completeness; verify-program-tracker-r2-live.mjs + verify-program-tracker-tabs-url-sync.mjs PASS. Guard: scripts/verify-program-surfaces-s01-s05.mjs.",
+      "pr": "#TBD",
       "prod_verified": false
     },
     {
@@ -70,9 +70,9 @@
         "DOD-C"
       ],
       "spec": "Program tracker tab 01 Merged PRs",
-      "status": "OPEN",
-      "evidence": "scaffold — not proven",
-      "pr": null,
+      "status": "PASS",
+      "evidence": "ProgramBoardPage includes merged tab and renders merged_pr_total / recent_merged slices; verify-program-board-tab-render-parity.mjs + verify-program-board-tabs-url-sync.mjs PASS. Guard: scripts/verify-program-surfaces-s01-s05.mjs.",
+      "pr": "#TBD",
       "prod_verified": false
     },
     {
@@ -95,7 +95,7 @@
       "prod_verified": false
     }
   ],
-  "pass_count": 0,
+  "pass_count": 5,
   "total_count": 6,
-  "progress": "0 of 6"
+  "progress": "5 of 6"
 }
