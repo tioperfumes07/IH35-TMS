@@ -38,7 +38,7 @@ local CLAUDE.md/secrets, never hard-code them in tracked code.
 - **`mdata.*` / `catalogs.*` RLS is ROLE-scoped, not entity-scoped today.** Cross-entity data blends are masked
   now and **break at USMCA launch (July 2026)** — entity-scope remediation must land before USMCA. Never
   assume a `mdata`/`catalogs` read is entity-isolated; verify.
-- **USMCA is active and isolated by entity ID** — test data only, no QBO mirror. Use its `operating_company_id`
+- **USMCA is active and entity-scoped by ID** — test data only, no QBO mirror. Use its `operating_company_id`
   for entity-scoped reads/writes; never assume it shares TRANSP's data.
 
 ## Rules of engagement
