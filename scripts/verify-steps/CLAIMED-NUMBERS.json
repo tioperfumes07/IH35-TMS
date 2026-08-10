@@ -1870,5 +1870,21 @@
     "locked": "2026-08-04",
     "note": "Supersedes 2026-07-28 odd/even-only. Claim-before-write required.",
     "credit": "CC-2 analysis"
+  },
+  "2968": {
+    "claimed_by": "cursor",
+    "purpose": "verify-drv-bill-skip-audit-paths",
+    "claimed_at": "2026-08-10"
+  },
+  "2970": {
+    "claimed_by": "cursor",
+    "purpose": "verify-systemic-42p18-set-config-text",
+    "claimed_at": "2026-08-10"
+  },
+  "2972": {
+    "claimed_by": "cursor",
+    "purpose": "verify-setl-paid-lifecycle",
+    "claimed_at": "2026-08-10"
   }
 }
+
