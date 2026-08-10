@@ -50,6 +50,9 @@ export function checkChrome11({ referenceSelect, quickCreate, createDriverModal,
   if (/from\s+["']\.\.\/Modal["']/.test(referenceSelect)) {
     failures.push("ReferenceSelect.tsx imports the centered Modal shell directly — regression to Modal-on-drawer");
   }
+  if (!/onBack=\{onClose\}/.test(quickCreate)) {
+    failures.push("QuickCreateEntityModal.tsx must expose a back affordance to its parent surface");
+  }
 
   // 2) QuickCreateEntityModal's own outer shell must stay ParityDrawer (fixed by PR #3200) — never
   //    regress back to the centered Modal it replaced.
@@ -92,7 +95,7 @@ function goodFixture() {
     referenceSelect: `import { InlineCreateDrawer } from "./InlineCreateDrawer";
 import { QuickCreateEntityModal } from "../forms/shared/QuickCreateEntityModal";`,
     quickCreate: `import { ParityDrawer } from "../../parity/ParityDrawer";
-export function QuickCreateEntityModal() { return <ParityDrawer />; }`,
+export function QuickCreateEntityModal({ onClose }) { return <ParityDrawer onBack={onClose} />; }`,
     createDriverModal: `import { ParityDrawer } from "../parity/ParityDrawer";
 type Props = { shell?: "modal" | "drawer" };
 export function CreateDriverModal({ shell = "modal" }: Props) {
@@ -119,6 +122,7 @@ function selftest() {
     ["referenceSelect", (f) => { f.referenceSelect += `\nimport { Modal } from "../Modal";`; }, "centered Modal shell directly"],
     ["quickCreate", (f) => { f.quickCreate = f.quickCreate.replace(/ParityDrawer/g, "Modal"); }, "no longer shells with ParityDrawer"],
     ["quickCreate", (f) => { f.quickCreate += "\n<Modal />"; }, "renders a centered <Modal>"],
+    ["quickCreate", (f) => { f.quickCreate = f.quickCreate.replace("onBack={onClose}", ""); }, "back affordance"],
     ["createDriverModal", (f) => { f.createDriverModal = f.createDriverModal.replace('shell?: "modal" | "drawer"', "shell?: string"); }, "missing shell"],
     ["createDriverModal", (f) => { f.createDriverModal = f.createDriverModal.replace('shell === "drawer"', 'shell === "sheet"'); }, "no longer branches"],
     ["vendorBillForm", (f) => { f.vendorBillForm = `<CreateDriverModal open={x} onClose={y} />`; }, "Modal-on-drawer regression on Bill create"],

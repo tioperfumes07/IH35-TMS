@@ -16,6 +16,8 @@ export type ParityDrawerProps = {
   title: string;
   subtitle?: string;
   onClose: () => void;
+  /** Nested create return affordance. When present, renders a visible back arrow in the header. */
+  onBack?: () => void;
   /** Sticky footer slot (Cancel / Save / Make inactive). */
   footer?: ReactNode;
   children: ReactNode;
@@ -33,6 +35,7 @@ export function ParityDrawer({
   title,
   subtitle,
   onClose,
+  onBack,
   footer,
   children,
   size = "regular",
@@ -90,9 +93,21 @@ export function ParityDrawer({
         className={`absolute right-0 top-0 flex h-full max-h-screen flex-col border-l border-gray-200 bg-white shadow-xl ${widthClass}`}
       >
         <header className="flex items-start justify-between gap-2 border-b border-gray-200 px-4 py-3">
-          <div className="min-w-0">
-            <h2 className="truncate text-[15px] font-semibold text-gray-900">{title}</h2>
-            {subtitle ? <p className="truncate text-[12px] text-gray-500">{subtitle}</p> : null}
+          <div className="flex min-w-0 items-start gap-2">
+            {onBack ? (
+              <button
+                type="button"
+                aria-label="Back to previous surface"
+                onClick={onBack}
+                className="min-h-11 rounded-sm px-2 text-lg text-gray-600 hover:bg-gray-100 sm:min-h-0"
+              >
+                ←
+              </button>
+            ) : null}
+            <div className="min-w-0">
+              <h2 className="truncate text-[15px] font-semibold text-gray-900">{title}</h2>
+              {subtitle ? <p className="truncate text-[12px] text-gray-500">{subtitle}</p> : null}
+            </div>
           </div>
           <button
             type="button"
