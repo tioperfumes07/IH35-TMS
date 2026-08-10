@@ -79,6 +79,10 @@ const REQUIRED = {
 };
 
 const failures = [];
+const maintenanceDrivers = readFileSync("apps/frontend/src/pages/maintenance/drivers/DriversMasterDataPage.tsx", "utf8");
+if (!/driversQuery\.isError[\s\S]*?<ListErrorState[\s\S]*?driversQuery\.refetch\(\)/.test(maintenanceDrivers)) {
+  failures.push("DriversMasterDataPage: list failures must render a retryable ListErrorState before the empty table");
+}
 const workOrderDetail = readFileSync("apps/frontend/src/pages/maintenance/WorkOrderDetailPage.tsx", "utf8");
 if (workOrderDetail.includes("selectedAssetId") || workOrderDetail.includes("Asset Selector")) {
   failures.push("WorkOrderDetailPage: dead local-only asset selector must not return");
