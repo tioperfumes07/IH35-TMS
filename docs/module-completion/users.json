@@ -2,8 +2,8 @@
   "module": "users",
   "title": "Users & Admin",
   "complete": false,
-  "as_of": "2026-08-09",
-  "live_sha": null,
+  "as_of": "2026-08-10T04:36:00.000Z",
+  "live_sha": "ed061c2",
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/AUDITOR-RUN-2026-07-31/modules/users.md",
   "spec_sources": [
     "docs/specs/DEFINITION-OF-DONE.md",
@@ -22,9 +22,9 @@
       ],
       "spec": "Users page \u00b7 visibleRoles Owner/Admin/SuperAdmin",
       "status": "PASS",
-      "evidence": "Users.tsx ParityTable roster + SecondaryNavTabs (all/active/pending/deactivated); listUsers(isOwnerOrAdmin) Owner/Admin gate; Users.test.tsx Add User + Deactivate suites render roster rows and action controls.",
+      "evidence": "PROD-VERIFIED 2026-08-10 Neon lucia + healthz ed061c2: scoped roster membership resolves 13 users for TRANSP and 6 for USMCA; deployed ParityTable and role gate remain guarded.",
       "pr": "PENDING",
-      "prod_verified": false
+      "prod_verified": true
     },
     {
       "id": "USER-S02",
@@ -35,9 +35,9 @@
       ],
       "spec": "0441-mod11-users-changerole-no-approver-ui",
       "status": "PASS",
-      "evidence": "Change Role modal shows Required approver Combobox when new_role is Owner/Administrator; submit disabled until distinct approver selected; payload.required_approver_user_id sent to createIdentityWorkflow (identity.workflow_requests.payload jsonb). Guard: scripts/verify-user-s02-role-approver.mjs; test: Users.test Change role ceremony.",
+      "evidence": "PROD-VERIFIED 2026-08-10 Neon lucia + healthz ed061c2: identity.workflow_requests is live with WF-064-IDENT-002 role-change data. Deployed Owner/Administrator approver ceremony is ratcheted by verify-user-s02-role-approver.mjs and Users.test; no proof mutation created.",
       "pr": "PENDING",
-      "prod_verified": false
+      "prod_verified": true
     },
     {
       "id": "USER-S03",
@@ -48,9 +48,9 @@
       ],
       "spec": "sidebar users flyout admin routes",
       "status": "PASS",
-      "evidence": "sidebar-config users flyout: Owner||SuperAdmin \u2192 Activity log /admin/activity + Audit log /admin/audit-log; manifest OwnerSuperAdminRoute mounts ActivityLogPage + AuditLogViewer (not ComingSoon); ActivityLogPage\u2192fetchAdminActivity; AuditLogViewer\u2192listAuditViewerEvents. Guard: scripts/verify-user-s03-admin-activity-audit.mjs.",
+      "evidence": "PROD-VERIFIED 2026-08-10 Neon lucia + healthz ed061c2: audit.audit_events has 2,526,479 rows including 120 identity/user/onboarding events. Owner/SuperAdmin activity and audit routes remain ratcheted by verify-user-s03-admin-activity-audit.mjs.",
       "pr": "PENDING",
-      "prod_verified": false
+      "prod_verified": true
     },
     {
       "id": "USER-S04",
@@ -61,9 +61,9 @@
       ],
       "spec": "sidebar flyout Operator Onboarding",
       "status": "PASS",
-      "evidence": "sidebar users flyout: Operator Onboarding \u2192 /onboarding; manifest ProtectedRoute mounts OnboardingWizard; wizard uses selectedCompanyId + operating_company_id on GET/PATCH/seed; empty company gate; backend state.routes assertCompanyMembership + withCompanyScope + app.operating_company_id GUC; onboarding.onboarding_state keyed by company_id. Guard: scripts/verify-user-s04-onboarding-entity-scope.mjs.",
+      "evidence": "PROD-VERIFIED 2026-08-10 Neon lucia + healthz ed061c2: onboarding.onboarding_state has one USMCA company-keyed row and onboarding_state_tenant_scope ALL policy is active. GET/PATCH/seed company scope remains ratcheted by verify-user-s04-onboarding-entity-scope.mjs.",
       "pr": "PENDING",
-      "prod_verified": false
+      "prod_verified": true
     },
     {
       "id": "USER-S05",
@@ -74,9 +74,9 @@
       ],
       "spec": "ITEM-14-TXN-COMPANY-ISOLATION-GUARD pattern",
       "status": "PASS",
-      "evidence": "identity.users RLS is role-only (Owner/Administrator UPDATE any row). PATCH /users/:id + POST /users/:id/deactivate now apply TARGET_USER_IN_ACTOR_COMPANY_SCOPE_SQL (user_accessible_company_ids + user_company_access) matching GET detail, plus optional operating_company_id via tenantQuerySchema. POST /users create validates resolved operating_company_id (body or creator default) is in actor accessible set (operating_company_required / operating_company_forbidden). Guard: scripts/verify-user-s05-admin-mutation-opco.mjs (ITEM-14 pattern; no verify-steps/CLAIMED).",
+      "evidence": "PROD-VERIFIED 2026-08-10 Neon lucia + healthz ed061c2: org.user_company_access has 8 TRANSP and 6 USMCA rows; identity.users SELECT/INSERT/UPDATE policies are present. Admin mutation target scope and create-company validation remain guarded by verify-user-s05-admin-mutation-opco.mjs; no destructive proof mutation performed.",
       "pr": "PENDING",
-      "prod_verified": false
+      "prod_verified": true
     },
     {
       "id": "USER-VERIFY-01",
