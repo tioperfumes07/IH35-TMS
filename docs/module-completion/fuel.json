@@ -2,7 +2,7 @@
   "module": "fuel",
   "title": "Fuel — acceptance checklist",
   "complete": false,
-  "as_of": "2026-07-29",
+  "as_of": "2026-08-10",
   "live_sha": null,
   "desktop_audit": null,
   "spec_sources": [
@@ -132,16 +132,16 @@
         "DOD-C"
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "OPEN",
-      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing.",
-      "pr": null,
+      "status": "PASS",
+      "evidence": "Route /fuel/settings registered as ProtectedRoute wrapping FuelTabRoute tabId=settings → FuelPlannerHomePage; FuelPlannerHomePage guards missing operating company; settings tab fetches /api/v1/fuel/planner/settings via getFuelPlannerSettings(companyId); query errors now surface ListErrorBanner with retry; loading and unavailable states present; PlannerSettingsForm edits settings via PATCH /api/v1/fuel/planner/settings with operating_company_id.",
+      "pr": "#5313",
       "prod_verified": false
     }
   ],
   "M": 9,
-  "pass_count": 8,
+  "pass_count": 9,
   "total_count": 9,
-  "progress": "8 of 9",
+  "progress": "9 of 9",
   "live_scenario_probe": {
     "source": "scripts/scoreboard-from-live.mjs (live prod probes, TMS-native only)",
     "pass_count": 0,

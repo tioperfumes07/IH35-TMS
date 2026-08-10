@@ -191,6 +191,8 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
       {tab === "settings" ? (
         settingsQuery.isLoading ? (
           <section className="rounded-sm border border-gray-200 bg-white p-4 text-xs text-gray-500">Loading planner settings…</section>
+        ) : settingsQuery.isError ? (
+          <ListErrorBanner onRetry={() => void settingsQuery.refetch()} />
         ) : settingsQuery.data ? (
           <PlannerSettingsForm companyId={companyId} key={companyId} settings={settingsQuery.data} />
         ) : (
