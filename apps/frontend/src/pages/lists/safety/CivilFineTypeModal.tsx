@@ -80,7 +80,6 @@ export function CivilFineTypeModal({ open, companyId, row, onClose, onSaved }: P
       onClose();
     } catch (error) {
       if (error instanceof ApiError) {
-        const data = (error.data as Record<string, unknown>) ?? {};
         setSubmitError(userFacingApiError(error, "Save failed"));
       } else {
         setSubmitError("Failed to save Civil Fine Type.");
@@ -100,7 +99,6 @@ export function CivilFineTypeModal({ open, companyId, row, onClose, onSaved }: P
       onClose();
     } catch (error) {
       if (error instanceof ApiError) {
-        const data = (error.data as Record<string, unknown>) ?? {};
         setSubmitError(userFacingApiError(error, "Save failed"));
       } else {
         setSubmitError("Failed to deactivate Civil Fine Type.");

@@ -242,7 +242,6 @@ export function ItemEditorModal({ open, mode, row, operatingCompanyId, client, o
       onClose();
     } catch (err) {
       if (err instanceof ApiError) {
-        const data = (err.data as Record<string, unknown>) ?? {};
         setSubmitError(userFacingApiError(err, "Save failed"));
       } else {
         setSubmitError("Failed to save item.");
@@ -261,7 +260,6 @@ export function ItemEditorModal({ open, mode, row, operatingCompanyId, client, o
       onClose();
     } catch (err) {
       if (err instanceof ApiError) {
-        const data = (err.data as Record<string, unknown>) ?? {};
         setSubmitError(userFacingApiError(err, "Save failed"));
       } else {
         setSubmitError("Failed to deactivate item.");

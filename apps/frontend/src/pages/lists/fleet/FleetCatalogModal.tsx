@@ -88,7 +88,6 @@ export function FleetCatalogModal({ open, operatingCompanyId, displayName, clien
       onClose();
     } catch (error) {
       if (error instanceof ApiError) {
-        const data = (error.data as Record<string, unknown>) ?? {};
         setSubmitError(userFacingApiError(error, "Save failed"));
       } else {
         setSubmitError(`Failed to save ${displayName}.`);
@@ -108,7 +107,6 @@ export function FleetCatalogModal({ open, operatingCompanyId, displayName, clien
       onClose();
     } catch (error) {
       if (error instanceof ApiError) {
-        const data = (error.data as Record<string, unknown>) ?? {};
         setSubmitError(userFacingApiError(error, "Save failed"));
       } else {
         setSubmitError(`Failed to deactivate ${displayName}.`);

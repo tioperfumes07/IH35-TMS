@@ -2,7 +2,6 @@ import { entityLabel } from "../../lib/entity-label";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { ApiError } from "../../api/client";
 import {
   approvePendingEscrowDeduction,
   listPendingEscrowDeductions,

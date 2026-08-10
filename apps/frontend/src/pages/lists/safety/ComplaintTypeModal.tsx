@@ -88,7 +88,6 @@ export function ComplaintTypeModal({ open, companyId, row, onClose, onSaved }: P
       onClose();
     } catch (error) {
       if (error instanceof ApiError) {
-        const data = (error.data as Record<string, unknown>) ?? {};
         setSubmitError(userFacingApiError(error, "Save failed"));
       } else {
         setSubmitError("Failed to save Complaint Type.");
@@ -108,7 +107,6 @@ export function ComplaintTypeModal({ open, companyId, row, onClose, onSaved }: P
       onClose();
     } catch (error) {
       if (error instanceof ApiError) {
-        const data = (error.data as Record<string, unknown>) ?? {};
         setSubmitError(userFacingApiError(error, "Save failed"));
       } else {
         setSubmitError("Failed to deactivate Complaint Type.");

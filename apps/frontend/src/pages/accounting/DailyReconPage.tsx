@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { entityLabel } from "../../lib/entity-label";
+import { entityLabel as formatEntityLabel } from "../../lib/entity-label";
 import { formatDateUS } from "../../lib/formatDate";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -44,7 +44,7 @@ function formatCents(cents: number | null): string {
   return formatUsdCents(cents);
 }
 
-function entityLabel(type: string): string {
+function reconEntityTypeLabel(type: string): string {
   return ENTITY_TYPE_OPTIONS.find((o) => o.value === type)?.label ?? type;
 }
 
@@ -52,17 +52,17 @@ function entityLabel(type: string): string {
 // per-day markup — B21/TBL-STANDARD). Every day-group renders its own ParityTable instance so
 // the existing day-header rollup ("All reconciled" / "N item(s) need attention") is preserved.
 const RECON_COLUMNS: Array<ParityColumn<DailyReconRow>> = [
-  { key: "entity_type", label: "Type", render: (row) => <span className="whitespace-nowrap text-gray-500">{entityLabel(row.entity_type)}</span> },
+  { key: "entity_type", label: "Type", render: (row) => <span className="whitespace-nowrap text-gray-500">{reconEntityTypeLabel(row.entity_type)}</span> },
   {
     key: "entity_id",
     label: "ID",
     render: (row) =>
       row.tms_detail_path ? (
         <Link to={row.tms_detail_path} className="font-mono text-[10px] text-slate-600 hover:underline">
-          {entityLabel(null, row.entity_id, "Entity")}
+          {formatEntityLabel(null, row.entity_id, "Entity")}
         </Link>
       ) : (
-        <span className="font-mono text-[10px] text-gray-500">{entityLabel(null, row.entity_id, "Entity")}</span>
+        <span className="font-mono text-[10px] text-gray-500">{formatEntityLabel(null, row.entity_id, "Entity")}</span>
       ),
   },
   { key: "tms_amount_cents", label: "TMS Amount", render: (row) => <span className="text-gray-700">{formatCents(row.tms_amount_cents)}</span> },

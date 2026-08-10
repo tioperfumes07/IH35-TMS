@@ -119,7 +119,6 @@ export function AccountingCatalogModal({
       onClose();
     } catch (error) {
       if (error instanceof ApiError) {
-        const data = (error.data as Record<string, unknown>) ?? {};
         setSubmitError(userFacingApiError(error, "Save failed"));
       } else {
         setSubmitError(`Failed to save ${displayName}.`);
@@ -139,7 +138,6 @@ export function AccountingCatalogModal({
       onClose();
     } catch (error) {
       if (error instanceof ApiError) {
-        const data = (error.data as Record<string, unknown>) ?? {};
         setSubmitError(userFacingApiError(error, "Save failed"));
       } else {
         setSubmitError(`Failed to deactivate ${displayName}.`);

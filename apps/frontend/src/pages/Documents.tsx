@@ -13,7 +13,7 @@ import { PageHeader } from "../components/layout/PageHeader";
 import { useToast } from "../components/Toast";
 import { dataTableErrorState } from "../lib/tableError";
 import { formatDateUS } from "../lib/formatDate";
-import { entityLabel } from "../lib/entity-label";
+import { entityLabel as formatEntityLabel } from "../lib/entity-label";
 import { DatePicker } from "../components/forms/DatePicker";
 
 const ENTITY_TYPE_OPTIONS = [
@@ -29,10 +29,10 @@ const ENTITY_TYPE_OPTIONS = [
   { value: "standalone", label: "Standalone" },
 ] as const;
 
-function entityLabel(file: DocsFile) {
+function docsFileEntityLabel(file: DocsFile) {
   const firstLink = file.links?.[0];
   if (!firstLink) return "Standalone";
-  return `${firstLink.entity_type[0].toUpperCase()}${firstLink.entity_type.slice(1)}: ${entityLabel(null, firstLink.entity_id, "Record")}`;
+  return `${firstLink.entity_type[0].toUpperCase()}${firstLink.entity_type.slice(1)}: ${formatEntityLabel(null, firstLink.entity_id, "Record")}`;
 }
 
 export function DocumentsPage() {
@@ -242,7 +242,7 @@ export function DocumentsPage() {
         columns={[
           { key: "original_filename", label: "Filename" },
           { key: "category_label", label: "Category", render: (row) => row.category_label ?? "-" },
-          { key: "entity", label: "Entity", render: (row) => entityLabel(row) },
+          { key: "entity", label: "Entity", render: (row) => docsFileEntityLabel(row) },
           { key: "uploader_email", label: "Uploader", render: (row) => row.uploader_email ?? row.uploader_user_id },
           { key: "document_date", label: "Doc Date", render: (row) => formatDateUS(row.document_date) || "-" },
           { key: "expiration_date", label: "Expires", render: (row) => formatDateUS(row.expiration_date) || "-" },

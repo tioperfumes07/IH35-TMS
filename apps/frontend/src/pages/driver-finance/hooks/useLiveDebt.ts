@@ -28,7 +28,7 @@ export function useLiveDebt(driverId: string | null, operatingCompanyId: string 
       setState((current) => ({
         ...current,
         loading: false,
-        error: userFacingApiError(error, error),
+        error: userFacingApiError(error, "Could not load debt summary"),
       }));
     }
   }, [driverId, operatingCompanyId]);
