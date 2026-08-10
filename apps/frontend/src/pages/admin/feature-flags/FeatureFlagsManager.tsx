@@ -116,6 +116,15 @@ export function FeatureFlagsManager() {
           </ul>
         ),
       },
+      {
+        key: "actions",
+        label: "Actions",
+        render: (row) => (
+          <span className="text-xs text-gray-500">
+            {row.per_entity_only ? "Tenant override ON" : "—"}
+          </span>
+        ),
+      },
     ],
     [],
   );

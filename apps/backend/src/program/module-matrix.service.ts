@@ -30,13 +30,20 @@ const WAVE_QUEUE_JSON = path.join(REPO_ROOT, "docs/audit/wave-queue.json");
 const RECON_JSON = path.join(REPO_ROOT, "docs/trackers/block-reconciliation-data.json");
 const MATRIX_CACHE_MS = 60_000;
 
-export type MatrixCellState = "done" | "audited" | "unaudited" | "na";
+export type MatrixCellState = "live" | "built" | "audited" | "unaudited" | "na" | "done";
 
 export type MatrixCell = {
+  /** @deprecated use live — kept for API compat; live === done */
   state: MatrixCellState;
   audited: boolean;
+  built: boolean;
+  live: boolean;
+  /** @deprecated alias for live */
   done: boolean;
   auditedReason?: string;
+  builtReason?: string;
+  liveReason?: string;
+  /** @deprecated use builtReason/liveReason */
   doneReason?: string;
 };
 
@@ -226,11 +233,18 @@ export type ModuleMatrixPayload = {
     leafCount: number;
     colCount: number;
     requiredCells: number;
+    liveCells: number;
+    builtCells: number;
+    /** @deprecated use liveCells */
     doneCells: number;
     auditedCells: number;
     unauditedCells: number;
     buildQueue: number;
+    /** Live % (Box 4) — module certification bar */
     modulePct: number;
+    /** @deprecated alias for modulePct */
+    livePct: number;
+    builtPct: number;
     auditedPct: number;
   };
 };
@@ -625,8 +639,9 @@ function leafTouchesText(leaf: RequiredLeaf, text: string): boolean {
   return false;
 }
 
-function cellState(audited: boolean, done: boolean): MatrixCellState {
-  if (done) return "done";
+function cellState(audited: boolean, built: boolean, live: boolean): MatrixCellState {
+  if (live) return "live";
+  if (built) return "built";
   if (audited) return "audited";
   return "unaudited";
 }
@@ -700,17 +715,21 @@ function leafColumnAuditedReason(
   return undefined;
 }
 
-function leafColumnDoneReason(
+function leafColumnBuiltReason(
+  leaf: RequiredLeaf,
+  colId: string,
+  moduleId: string,
+  probes: ModuleProbe[],
+): string | undefined {
+  return probeDoneReason(moduleId, leaf, colId, probes);
+}
+
+function leafColumnLiveReason(
   leaf: RequiredLeaf,
   colId: string,
   moduleId: string,
   ledger: LedgerRow[],
-  leafItems: CompletionItem[],
-  probes: ModuleProbe[],
 ): string | undefined {
-  const fromProbe = probeDoneReason(moduleId, leaf, colId, probes);
-  if (fromProbe) return fromProbe;
-
   for (const row of ledger) {
     if (!rowTouchesModule(row, moduleId)) continue;
     const hay = moduleHay(row);
@@ -719,21 +738,27 @@ function leafColumnDoneReason(
     if (!columnTouches(colId, hay)) continue;
     return `ledger #${row.num} PROD-VERIFIED`;
   }
-
-  for (const item of leafItems) {
-    if (!itemIsAuditedStatus(String(item.status ?? ""))) continue;
-    const blob = `${item.evidence ?? ""} ${item.status ?? ""}`;
-    const live = Boolean(item.prod_verified) || evidenceIsLiveNeon(blob);
-    if (!live) continue;
-    const cols = columnsFromCompletionItem(item);
-    if (!cols.has(colId)) continue;
-    return `module-completion ${item.id} Neon/live evidence`;
-  }
-
   return undefined;
 }
 
-export async function buildModuleMatrix(moduleId: string): Promise<ModuleMatrixPayload> {
+/** @deprecated use leafColumnBuiltReason + leafColumnLiveReason */
+function leafColumnDoneReason(
+  leaf: RequiredLeaf,
+  colId: string,
+  moduleId: string,
+  ledger: LedgerRow[],
+  _leafItems: CompletionItem[],
+  probes: ModuleProbe[],
+): string | undefined {
+  const live = leafColumnLiveReason(leaf, colId, moduleId, ledger);
+  if (live) return live;
+  return leafColumnBuiltReason(leaf, colId, moduleId, probes);
+}
+
+export async function buildModuleMatrix(
+  moduleId: string,
+  userUuid?: string,
+): Promise<ModuleMatrixPayload> {
   const now = Date.now();
   if (cache && cache.module === moduleId && now - cache.atMs < MATRIX_CACHE_MS) {
     return cache.payload;
@@ -749,7 +774,8 @@ export async function buildModuleMatrix(moduleId: string): Promise<ModuleMatrixP
   ]);
 
   let requiredCells = 0;
-  let doneCells = 0;
+  let liveCells = 0;
+  let builtOnlyCells = 0;
   let auditedCells = 0;
   let unauditedCells = 0;
 
@@ -760,23 +786,24 @@ export async function buildModuleMatrix(moduleId: string): Promise<ModuleMatrixP
     const cells: Record<string, MatrixCell> = {};
     for (const col of required.columns) {
       if (!req.has(col.id)) {
-        cells[col.id] = { state: "na", audited: false, done: false };
+        cells[col.id] = {
+          state: "na",
+          audited: false,
+          built: false,
+          live: false,
+          done: false,
+        };
         continue;
       }
       requiredCells += 1;
 
-      const doneReason = leafColumnDoneReason(
-        leaf,
-        col.id,
-        moduleId,
-        ledger,
-        leafItems,
-        probePack.slices,
-      );
-      const done = Boolean(doneReason);
+      const builtReason = leafColumnBuiltReason(leaf, col.id, moduleId, probePack.slices);
+      const liveReason = leafColumnLiveReason(leaf, col.id, moduleId, ledger);
+      const built = Boolean(builtReason) || Boolean(liveReason);
+      const live = Boolean(liveReason);
 
-      let audited = done;
-      let auditedReason: string | undefined = done ? doneReason : undefined;
+      let audited = live || built;
+      let auditedReason: string | undefined = liveReason || builtReason;
       if (!audited) {
         auditedReason = leafColumnAuditedReason(
           leaf,
@@ -790,17 +817,22 @@ export async function buildModuleMatrix(moduleId: string): Promise<ModuleMatrixP
         audited = Boolean(auditedReason);
       }
 
-      const state = cellState(audited, done);
-      if (state === "done") doneCells += 1;
-      else if (state === "audited") auditedCells += 1;
+      const state = cellState(audited, built, live);
+      if (live) liveCells += 1;
+      else if (built) builtOnlyCells += 1;
+      else if (audited) auditedCells += 1;
       else unauditedCells += 1;
 
       cells[col.id] = {
-        state,
+        state: live ? "live" : state,
         audited,
-        done,
+        built,
+        live,
+        done: live,
         ...(auditedReason ? { auditedReason } : {}),
-        ...(doneReason ? { doneReason } : {}),
+        ...(builtReason ? { builtReason } : {}),
+        ...(liveReason ? { liveReason } : {}),
+        ...(liveReason || builtReason ? { doneReason: liveReason ?? builtReason } : {}),
       };
     }
 
@@ -814,10 +846,12 @@ export async function buildModuleMatrix(moduleId: string): Promise<ModuleMatrixP
     };
   });
 
-  const buildQueue = requiredCells - doneCells;
-  const modulePct = requiredCells === 0 ? 0 : Math.round((doneCells / requiredCells) * 100);
+  const builtCells = builtOnlyCells + liveCells;
+  const buildQueue = requiredCells - liveCells;
+  const livePct = requiredCells === 0 ? 0 : Math.round((liveCells / requiredCells) * 100);
+  const builtPct = requiredCells === 0 ? 0 : Math.round((builtCells / requiredCells) * 100);
   const auditedPct =
-    requiredCells === 0 ? 0 : Math.round(((doneCells + auditedCells) / requiredCells) * 100);
+    requiredCells === 0 ? 0 : Math.round(((liveCells + builtOnlyCells + auditedCells) / requiredCells) * 100);
   const sha = tipSha();
   const recon = reconAsOf();
 
@@ -835,17 +869,18 @@ export async function buildModuleMatrix(moduleId: string): Promise<ModuleMatrixP
         `docs/module-completion/${moduleId}.json (leaf×column via layers/evidence)`,
       ],
       doneSources: [
-        "docs/audit/program-scoreboard.json#live_scenario_probe (module hops → leaf/cols via PROBE_DONE_MAP)",
-        "AUDIT-COVERAGE-LIVE PROD-VERIFIED (leaf×column)",
-        `docs/module-completion/${moduleId}.json Neon/LIVE PASS (leaf×column)`,
-        "docs/trackers/block-reconciliation-data.json (as-of stamp only)",
+        "Box 3 Built: request-time Neon live_scenario_probe via scripts/scoreboard-from-live.mjs",
+        "Box 4 Live: AUDIT-COVERAGE-LIVE PROD-VERIFIED leaf×column only",
       ],
       honesty:
-        "Audited ≠ live verify. Done green only from live_scenario_probe holds (mapped to leaves), PROD-VERIFIED ledger, or Neon-backed module-completion PASS. No module-wide keyword yellow flood. % = done÷required.",
+        "4-box law (2026-08-10). Audited ≠ Built ≠ Live. Built = Neon probe hold. Live = PROD-VERIFIED only. Checklist N/M never greens Built or Live.",
       tipSha: sha,
       probeProgress: probePack.progress,
       reconAsOf: recon,
-      feedNote: `git tip ${sha ?? "n/a"} · probe progress ${probePack.progress ?? "n/a"}% · recon as-of ${recon ?? "n/a"} · completion items ${completion.items.length}`,
+      feedNote:
+        probePack.probeSource === "neon_live"
+          ? `Built from request-time Neon probes · Live from PROD-VERIFIED ledger · tip ${sha ?? "n/a"} · probe ${probePack.progress ?? "n/a"}%`
+          : `STALE committed probe snapshot for Built — add DATABASE_DIRECT_URL for auto-sync · tip ${sha ?? "n/a"}`,
     },
     columns: required.columns,
     leaves,
@@ -853,11 +888,15 @@ export async function buildModuleMatrix(moduleId: string): Promise<ModuleMatrixP
       leafCount: required.leaves.length,
       colCount: required.columns.length,
       requiredCells,
-      doneCells,
+      liveCells,
+      builtCells,
+      doneCells: liveCells,
       auditedCells,
       unauditedCells,
       buildQueue,
-      modulePct,
+      modulePct: livePct,
+      livePct,
+      builtPct,
       auditedPct,
     },
   };
@@ -866,7 +905,153 @@ export async function buildModuleMatrix(moduleId: string): Promise<ModuleMatrixP
   return payload;
 }
 
+const MATRIX_ORDER_JSON = path.join(REPO_ROOT, "docs/specs/scoreboard/matrix-module-order.json");
+
+export type SystemModuleMatrixRow = {
+  module: string;
+  label: string;
+  available: boolean;
+  metrics: ModuleMatrixPayload["metrics"];
+  probeProgress?: number | null;
+  probeSource?: "neon_live" | "committed_stale";
+};
+
+export type SystemModuleMatrixPayload = {
+  sample: false;
+  scope: "system";
+  generatedAt: string;
+  modules: SystemModuleMatrixRow[];
+  system: {
+    moduleCount: number;
+    modulesAvailable: number;
+    requiredCells: number;
+    liveCells: number;
+    builtCells: number;
+    auditedCells: number;
+    unauditedCells: number;
+    buildQueue: number;
+    livePct: number;
+    builtPct: number;
+    auditedPct: number;
+  };
+  meta: {
+    tipSha?: string;
+    orderSource: string;
+    honesty: string;
+    probeSource?: "neon_live" | "committed_stale";
+  };
+};
+
+let systemCache: { atMs: number; probeScope: string; payload: SystemModuleMatrixPayload } | null = null;
+
+function emptyModuleMetrics(): ModuleMatrixPayload["metrics"] {
+  return {
+    leafCount: 0,
+    colCount: 0,
+    requiredCells: 0,
+    liveCells: 0,
+    builtCells: 0,
+    doneCells: 0,
+    auditedCells: 0,
+    unauditedCells: 0,
+    buildQueue: 0,
+    modulePct: 0,
+    livePct: 0,
+    builtPct: 0,
+    auditedPct: 0,
+  };
+}
+
+function loadMatrixModuleOrder(): Array<{ id: string; label: string }> {
+  const doc = readJson<{ modules?: Array<{ id: string; label: string }> }>(MATRIX_ORDER_JSON);
+  return doc?.modules ?? [];
+}
+
+export async function buildSystemModuleMatrix(userUuid?: string): Promise<SystemModuleMatrixPayload> {
+  const now = Date.now();
+  const probeScope = userUuid ? "neon_live" : "committed_stale";
+  if (systemCache && systemCache.probeScope === probeScope && now - systemCache.atMs < MATRIX_CACHE_MS) {
+    return systemCache.payload;
+  }
+
+  const order = loadMatrixModuleOrder();
+  const modules: SystemModuleMatrixRow[] = [];
+  let requiredCells = 0;
+  let liveCells = 0;
+  let builtCells = 0;
+  let auditedCells = 0;
+  let unauditedCells = 0;
+  let buildQueue = 0;
+  let modulesAvailable = 0;
+  let probeSource: "neon_live" | "committed_stale" = "committed_stale";
+
+  for (const entry of order) {
+    try {
+      const board = await buildModuleMatrix(entry.id, userUuid);
+      modulesAvailable += 1;
+      if (board.meta.probeSource === "neon_live") probeSource = "neon_live";
+      modules.push({
+        module: entry.id,
+        label: entry.label,
+        available: true,
+        metrics: board.metrics,
+        probeProgress: board.meta.probeProgress,
+        probeSource: board.meta.probeSource,
+      });
+      requiredCells += board.metrics.requiredCells;
+      liveCells += board.metrics.liveCells;
+      builtCells += board.metrics.builtCells;
+      auditedCells += board.metrics.auditedCells;
+      unauditedCells += board.metrics.unauditedCells;
+      buildQueue += board.metrics.buildQueue;
+    } catch {
+      modules.push({
+        module: entry.id,
+        label: entry.label,
+        available: false,
+        metrics: emptyModuleMetrics(),
+      });
+    }
+  }
+
+  const livePct = requiredCells === 0 ? 0 : Math.round((liveCells / requiredCells) * 100);
+  const builtPct = requiredCells === 0 ? 0 : Math.round((builtCells / requiredCells) * 100);
+  const auditedPct =
+    requiredCells === 0 ? 0 : Math.round(((liveCells + auditedCells + (builtCells - liveCells)) / requiredCells) * 100);
+
+  const payload: SystemModuleMatrixPayload = {
+    sample: false,
+    scope: "system",
+    generatedAt: new Date().toISOString(),
+    modules,
+    system: {
+      moduleCount: order.length,
+      modulesAvailable,
+      requiredCells,
+      liveCells,
+      builtCells,
+      auditedCells,
+      unauditedCells,
+      buildQueue,
+      livePct,
+      builtPct,
+      auditedPct,
+    },
+    meta: {
+      tipSha: tipSha(),
+      orderSource: "docs/specs/scoreboard/matrix-module-order.json",
+      honesty:
+        "System rollup = sum of all module boards (sidebar order). Live % = Box 4 PROD-VERIFIED cells ÷ Required. Built % includes probe-wired cells not yet live-verified.",
+      probeSource,
+    },
+  };
+
+  systemCache = { atMs: now, probeScope, payload };
+  return payload;
+}
+
 /** Test helper — clear request cache between assertions. */
 export function clearModuleMatrixCache(): void {
   cache = null;
+  systemCache = null;
 }
