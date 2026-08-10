@@ -3,6 +3,7 @@
 import { useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import {
   listChatThreads,
@@ -13,6 +14,7 @@ import {
   type ChatThread,
   type ChatMessage,
 } from "../../api/chat";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 const TZ = "America/Chicago";
 const ATTACH_ACCEPT = "image/jpeg,image/png,image/heic,image/webp,application/pdf";
@@ -101,18 +103,30 @@ export function DispatchChatPage() {
   const archived = activeThread?.status === "archived";
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full flex-col" data-testid="dispatch-chat-page">
       <PageHeader title="Dispatch Chat" subtitle="Per-load driver ↔ office communication" />
       {!companyId ? (
-        <p className="p-4 text-sm text-slate-500">Select a company to view chats.</p>
+        <p className="p-4 text-sm text-slate-700" data-testid="dispatch-chat-need-company">
+          Select an operating company to load entity-scoped chat threads.
+        </p>
       ) : (
-        <div className="flex min-h-0 flex-1 gap-4 p-4">
+        <div className="flex min-h-0 flex-1 flex-col gap-2 p-4">
+          {threadsQuery.isError ? (
+            <ListErrorBanner
+              message={userFacingApiError(threadsQuery.error, "Failed to load chat threads")}
+              onRetry={() => void threadsQuery.refetch()}
+            />
+          ) : null}
+          <div className="flex min-h-0 flex-1 gap-4">
           {/* Thread list */}
           <aside className="flex w-72 flex-col overflow-y-auto rounded-sm border border-slate-200">
             {threadsQuery.isLoading ? (
               <p className="p-3 text-sm text-slate-500">Loading…</p>
             ) : threads.length === 0 ? (
-              <p className="p-3 text-sm text-slate-500">No chats yet. A thread is created when you message a load's driver.</p>
+              <p className="p-3 text-sm text-slate-700" data-testid="dispatch-chat-threads-honest-empty">
+                No chats for this company yet. Threads appear when you message a load&apos;s driver from dispatch (or a
+                driver opens a direct thread). Empty is expected until the first thread is created.
+              </p>
             ) : (
               threads.map((t) => {
                 const active = t.id === activeThreadId;
@@ -244,6 +258,7 @@ export function DispatchChatPage() {
               </>
             )}
           </section>
+          </div>
         </div>
       )}
     </div>
