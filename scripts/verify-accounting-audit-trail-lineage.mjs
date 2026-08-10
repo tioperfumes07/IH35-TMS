@@ -34,5 +34,11 @@ if (!serviceSource.includes("accounting.transaction_source_links")) {
 if (!pageSource.includes("Source lineage")) {
   fail("audit trail page must expose source lineage action");
 }
+if (!/<SelectCombobox[\s\S]*?value=\{accountId\}/.test(pageSource)) {
+  fail("audit trail account filter must use the searchable select adapter");
+}
+if (/<select[\s\S]*?value=\{accountId\}/.test(pageSource)) {
+  fail("audit trail account filter must not regress to a native account-ID select");
+}
 
 console.log("verify:accounting-audit-trail-lineage — OK");
