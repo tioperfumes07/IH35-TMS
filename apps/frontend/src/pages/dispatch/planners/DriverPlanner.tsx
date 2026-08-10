@@ -8,6 +8,17 @@ export function DriverPlanner() {
   const operatingCompanyId = selectedCompanyId ?? "";
   const { range } = usePlannerRange();
 
+  if (!operatingCompanyId) {
+    return (
+      <div
+        data-testid="dispatch-driver-planner-need-company"
+        className="rounded-sm border bg-white p-4 text-sm text-slate-600"
+      >
+        Select an operating company to load the driver planner.
+      </div>
+    );
+  }
+
   return (
     <div data-testid="dispatch-driver-planner-page" className="space-y-3">
       <div className="flex flex-wrap items-center gap-2 text-xs">

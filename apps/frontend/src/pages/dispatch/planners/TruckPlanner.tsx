@@ -4,7 +4,9 @@ import { Link } from "react-router-dom";
 import { driverSchedulerOfficeApi } from "../../../api/driver-scheduler";
 import { listUnitsWithoutLoad } from "../../../api/dispatch";
 import { listUnits } from "../../../api/mdata";
+import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
+import { userFacingApiError } from "../../../lib/api-error-message";
 import { usePlannerRange } from "./PlannerRangeContext";
 
 type TruckStatus = "assigned" | "available" | "reserved-hold" | "in-shop";
@@ -111,11 +113,32 @@ export function TruckPlanner() {
 
   const isLoading = gridQuery.isLoading || unitsQuery.isLoading || reservedQuery.isLoading;
   const isError = gridQuery.isError || unitsQuery.isError || reservedQuery.isError;
+  const firstError = gridQuery.error ?? unitsQuery.error ?? reservedQuery.error;
+
+  if (!operatingCompanyId) {
+    return (
+      <div
+        data-testid="dispatch-truck-planner-need-company"
+        className="rounded-sm border bg-white p-4 text-sm text-slate-600"
+      >
+        Select an operating company to load the truck planner.
+      </div>
+    );
+  }
 
   return (
     <div data-testid="dispatch-truck-planner-page" className="space-y-2">
       {isLoading ? <div className="text-sm text-gray-500">Loading truck grid…</div> : null}
-      {isError ? <div className="text-sm text-red-700">Failed to load truck planner grid.</div> : null}
+      {isError ? (
+        <ListErrorBanner
+          message={userFacingApiError(firstError, "Could not load truck planner grid")}
+          onRetry={() => {
+            void gridQuery.refetch();
+            void unitsQuery.refetch();
+            void reservedQuery.refetch();
+          }}
+        />
+      ) : null}
 
       {!isLoading && !isError ? (
           <div className="max-w-[calc(100vw-48px)] overflow-x-auto rounded-sm border border-gray-200 bg-white">
@@ -132,7 +155,19 @@ export function TruckPlanner() {
               </tr>
             </thead>
             <tbody>
-              {truckRows.map((row) => (
+              {truckRows.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={2 + days.length}
+                    data-testid="dispatch-truck-planner-honest-empty"
+                    className="px-3 py-4 text-center text-sm text-gray-500"
+                  >
+                    No units for this company in the planner range. Units leased/owned under Fleet appear here once
+                    listUnits / scheduler grid return rows for the active entity.
+                  </td>
+                </tr>
+              ) : (
+              truckRows.map((row) => (
                 <tr key={row.unitId} className="border-t border-gray-100">
                   <td className="sticky left-0 z-10 border-r bg-white px-2 py-0.5 text-xs font-medium text-gray-900">
                     <Link to={`/fleet/units/${row.unitId}`} className="text-slate-700 hover:underline">
@@ -146,7 +181,8 @@ export function TruckPlanner() {
                     </td>
                   ))}
                 </tr>
-              ))}
+              ))
+              )}
             </tbody>
           </table>
         </div>
