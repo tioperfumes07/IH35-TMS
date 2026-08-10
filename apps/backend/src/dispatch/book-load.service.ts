@@ -358,6 +358,16 @@ async function resolveDriverBasePayCents(
 ): Promise<number | null> {
   if (!driverId) return null;
 
+  // MILES-ON-BOOK / WIRE-02 — a per-load rate entered in the Book Load wizard is an explicit operator
+  // agreement for THIS load. Use it when present so the preview the dispatcher saw becomes the bill.
+  // The driver-level rate card (below) remains the default for loads that do not carry an override.
+  const perLoadRateDollars = Number(load.driver_pay_rate_per_mile ?? Number.NaN);
+  const perLoadMiles = Number(load.miles_shortest ?? Number.NaN);
+  if (Number.isFinite(perLoadRateDollars) && perLoadRateDollars > 0 && Number.isFinite(perLoadMiles) && perLoadMiles > 0) {
+    lastResolvedRateWasTestData = false;
+    return Math.round(perLoadRateDollars * 100 * perLoadMiles);
+  }
+
   const rateRes = await client.query<{
     basis_type: string;
     rate_per_mile_cents: string | null;
