@@ -13,7 +13,6 @@
     "apps/frontend/src/pages/accounting/bills/RecurringBillCreate.tsx",
     "apps/frontend/src/pages/accounting/loans/LoansAdvancesPage.tsx",
     "apps/frontend/src/pages/accounting/modals/InvoiceTypeModalBase.tsx",
-    "apps/frontend/src/pages/banking/QboSyncQueuePage.tsx",
     "apps/frontend/src/pages/banking/RecordCCPaymentModal.tsx"
   ]
 }

@@ -16,6 +16,7 @@ import { entityLabel } from "../../lib/entity-label";
 import { useAuth } from "../../auth/useAuth";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { CappedListNotice } from "../../components/CappedListNotice";
+import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 
 type InternalFineRow = Record<string, unknown>;
 
@@ -58,7 +59,7 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
     enabled: Boolean(operatingCompanyId),
   });
 
-  const reasons = reasonsQuery.data?.rows ?? [];
+  const reasons = useMemo(() => reasonsQuery.data?.rows ?? [], [reasonsQuery.data?.rows]);
 
   const reasonOptions = useMemo(
     () =>
@@ -266,15 +267,22 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
         </div>
       </div>
 
-      <ParityTable<InternalFineRow>
-        columns={columns}
-        rows={query.data?.fines ?? []}
-        rowKey={(row) => String(row.id)}
-        loading={query.isLoading}
-        emptyText="No internal fines found."
-        storageKey="safety-internal-fines"
-        exportFilename="internal-fines"
-      />
+      {query.isError ? (
+        <ListErrorBanner
+          message="Internal fines could not be loaded."
+          onRetry={() => void query.refetch()}
+        />
+      ) : (
+        <ParityTable<InternalFineRow>
+          columns={columns}
+          rows={query.data?.fines ?? []}
+          rowKey={(row) => String(row.id)}
+          loading={query.isLoading}
+          emptyText="No internal fines found."
+          storageKey="safety-internal-fines"
+          exportFilename="internal-fines"
+        />
+      )}
 
       {/* SAF-F12: reason-required lifecycle shell, reused from the accounting void contract.
           postsReversingEntry={false} — a safety fine void posts no GL entry; claiming it would be a lie. */}

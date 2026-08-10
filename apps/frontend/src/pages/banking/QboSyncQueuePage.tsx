@@ -8,6 +8,7 @@ import {
   type QboSyncQueueItem,
 } from "../../api/banking";
 import { useAuth } from "../../auth/useAuth";
+import { CappedListNotice } from "../../components/CappedListNotice";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ActionButton } from "../../components/shared/ActionButton";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
@@ -121,6 +122,12 @@ export function QboSyncQueuePage() {
             <p className="text-sm text-gray-500">No queue items found for this company.</p>
           ) : null}
         </div>
+        <CappedListNotice
+          shown={queueQuery.data?.items.length ?? 0}
+          limit={100}
+          hint="Only the newest sync jobs are shown; use filters or admin tools for the full queue."
+          className="mt-3 text-xs text-slate-700"
+        />
       </div>
     </div>
   );
