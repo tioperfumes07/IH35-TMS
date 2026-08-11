@@ -16,6 +16,7 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { RecordExpenseModal } from "../../components/expenses/RecordExpenseModal";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { useToast } from "../../components/Toast";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { entityLabel } from "../../lib/entity-label";
 import { formatDateUS } from "../../lib/formatDate";
@@ -63,6 +64,7 @@ export function ExpensesListPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { selectedCompanyId } = useCompanyContext();
+  const { success } = useToast();
   const companyId = selectedCompanyId ?? "";
   const [searchParams] = useSearchParams();
   // BANK-SORT-ROLLOUT-ACCT: every visible column header sorts ASC/DESC; sort persists in the URL
@@ -84,6 +86,7 @@ export function ExpensesListPage() {
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["accounting", "expenses", selectedCompanyId] });
+      success("Expense voided");
     },
   });
 

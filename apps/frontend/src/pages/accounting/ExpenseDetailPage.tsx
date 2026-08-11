@@ -14,6 +14,7 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
 import { Button } from "../../components/Button";
+import { useToast } from "../../components/Toast";
 import { useState } from "react";
 
 function money(cents: number | string | null | undefined) {
@@ -36,6 +37,7 @@ export function ExpenseDetailPage() {
   const { selectedCompanyId } = useCompanyContext();
 
   const queryClient = useQueryClient();
+  const { success } = useToast();
   const [voidOpen, setVoidOpen] = useState(false);
   // FAIL-A2: void is reason-required at the server, so the reason travels with the mutation rather than
   // being collected after the fact. On success the detail query is invalidated so `voided_at` (and the
@@ -44,6 +46,7 @@ export function ExpenseDetailPage() {
     mutationFn: (reason: string) => voidExpense(id, selectedCompanyId!, reason),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["accounting", "expense", selectedCompanyId, id] });
+      success("Expense voided");
     },
   });
 
