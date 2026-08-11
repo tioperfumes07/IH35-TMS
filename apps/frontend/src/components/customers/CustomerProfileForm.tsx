@@ -481,7 +481,7 @@ export function CustomerProfileForm({ values, onPatch, operatingCompanyId, mode,
               { value: "direct_shipper", label: "Direct shipper" },
             ]}
           />
-          <TextField label="Email" type="email" value={values.email} onChange={(email) => onPatch({ email })} />
+          <TextField label="Email" type="email" value={values.email} onChange={(email) => onPatch({ email })} required />
           <TextField label="Phone" value={values.phone} onChange={(phone) => onPatch({ phone })} />
           <TextField label="Mobile" value={values.mobile} onChange={(mobile) => onPatch({ mobile })} />
           <TextField label="Fax" value={values.fax_phone} onChange={(fax_phone) => onPatch({ fax_phone })} />

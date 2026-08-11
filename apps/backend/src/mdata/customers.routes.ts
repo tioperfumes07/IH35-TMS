@@ -61,7 +61,7 @@ const createCustomerBodySchema = z
   dba: z.string().trim().max(200).optional(),
   customer_code: z.string().trim().max(100).optional(),
   code: z.string().trim().max(100).optional(),
-  email: z.string().email().transform((v) => v.toLowerCase()).optional(),
+  email: z.string().email().min(1).transform((v) => v.toLowerCase()),
   phone: z.string().trim().max(50).optional(),
   billing_address: z.string().trim().max(500).optional(),
   billing_state: z.string().trim().max(8).optional(),

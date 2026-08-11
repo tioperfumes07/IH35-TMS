@@ -238,7 +238,7 @@ export function CustomersPage() {
   const [createOpen, setCreateOpen] = useState(false);
   const [createValues, setCreateValues] = useState<CustomerProfileFormValues>(emptyCustomerProfileValues);
   const [createFormError, setCreateFormError] = useState("");
-  const [createFieldErrors, setCreateFieldErrors] = useState<{ legal_name?: string; mc_number?: string; customer_type?: string }>({});
+  const [createFieldErrors, setCreateFieldErrors] = useState<{ legal_name?: string; mc_number?: string; customer_type?: string; email?: string }>({});
   // CLOSURE-31: default to the prior "master-detail" design; "list" is opt-in only.
   const { viewMode, setViewMode } = useViewModePref("customers", "master-detail");
 
@@ -255,6 +255,12 @@ export function CustomersPage() {
       if (!createValues.customer_type) {
         const error = new Error("Customer type is required.");
         (error as Error & { code?: string }).code = "customer_type_required";
+        throw error;
+      }
+      // CUSTOMER-EMAIL-REQUIRED: email is required for invoice deliverability.
+      if (!createValues.email.trim()) {
+        const error = new Error("Email is required.");
+        (error as Error & { code?: string }).code = "email_required";
         throw error;
       }
       return createCustomer(profileValuesToCreatePayload(createValues, companyId));
@@ -277,6 +283,10 @@ export function CustomersPage() {
       }
       if ((error as Error & { code?: string }).code === "customer_type_required") {
         setCreateFieldErrors({ customer_type: "Customer type is required" });
+        return;
+      }
+      if ((error as Error & { code?: string }).code === "email_required") {
+        setCreateFieldErrors({ email: "Email is required" });
         return;
       }
       const err = error as ApiError;
@@ -771,6 +781,11 @@ export function CustomersPage() {
           {createFieldErrors.customer_type ? (
             <span id="customer_type-error" className="block text-xs text-red-700">
               {createFieldErrors.customer_type}
+            </span>
+          ) : null}
+          {createFieldErrors.email ? (
+            <span id="email-error" className="block text-xs text-red-700">
+              {createFieldErrors.email}
             </span>
           ) : null}
           <CustomerProfileForm

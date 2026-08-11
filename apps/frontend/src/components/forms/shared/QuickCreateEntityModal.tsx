@@ -217,6 +217,11 @@ export function QuickCreateEntityModal({
       pushToast("Select an operating company first.", "error");
       return;
     }
+    // CUSTOMER-EMAIL-REQUIRED: email is required for invoice deliverability.
+    if (kind === "customer" && !parsed.data.email?.trim()) {
+      pushToast("Email is required for a customer.", "error");
+      return;
+    }
 
     setSaving(true);
     try {
@@ -241,7 +246,7 @@ export function QuickCreateEntityModal({
       } else if (kind === "customer") {
         // D1-1: writes to mdata.customers (canonical) — already fixed in the prior customer path.
         // Same deliverability stamp as NewCustomerDrawerForm: email → billing_email (API) + ar/ap.
-        const invoiceEmail = parsed.data.email || undefined;
+        const invoiceEmail = parsed.data.email?.trim() || undefined;
         const res = await createCustomer({
           name: parsed.data.name,
           operating_company_id: operatingCompanyId,
