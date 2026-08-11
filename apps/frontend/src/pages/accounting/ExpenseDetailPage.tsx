@@ -37,7 +37,7 @@ export function ExpenseDetailPage() {
   const { selectedCompanyId } = useCompanyContext();
 
   const queryClient = useQueryClient();
-  const { success } = useToast();
+  const { pushToast } = useToast();
   const [voidOpen, setVoidOpen] = useState(false);
   // FAIL-A2: void is reason-required at the server, so the reason travels with the mutation rather than
   // being collected after the fact. On success the detail query is invalidated so `voided_at` (and the
@@ -46,7 +46,7 @@ export function ExpenseDetailPage() {
     mutationFn: (reason: string) => voidExpense(id, selectedCompanyId!, reason),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["accounting", "expense", selectedCompanyId, id] });
-      success("Expense voided");
+      pushToast("Expense voided", "success");
     },
   });
 

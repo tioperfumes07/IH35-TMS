@@ -9,6 +9,7 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const listPage = fs.readFileSync(path.join(ROOT, "apps/frontend/src/pages/accounting/ExpensesListPage.tsx"), "utf8");
+const detailPage = fs.readFileSync(path.join(ROOT, "apps/frontend/src/pages/accounting/ExpenseDetailPage.tsx"), "utf8");
 const errors = [];
 
 if (!/voidExpense/.test(listPage)) {
@@ -25,6 +26,17 @@ if (!/stopPropagation/.test(listPage)) {
 }
 if (!/invalidateQueries\(\{\s*queryKey:\s*\["accounting",\s*"expenses",\s*selectedCompanyId\]\s*\}\)/.test(listPage)) {
   errors.push("ExpensesListPage does not invalidate expenses list cache after void");
+}
+for (const [rel, src] of [
+  ["ExpensesListPage", listPage],
+  ["ExpenseDetailPage", detailPage],
+]) {
+  if (/\{\s*success\s*\}\s*=\s*useToast\(\)/.test(src)) {
+    errors.push(`${rel} destructures toast.success — ToastContext only exposes pushToast (Render tsc fails)`);
+  }
+  if (!/pushToast\(\s*["']Expense voided["']\s*,\s*["']success["']\s*\)/.test(src)) {
+    errors.push(`${rel} must pushToast("Expense voided", "success") after void`);
+  }
 }
 
 if (errors.length > 0) {

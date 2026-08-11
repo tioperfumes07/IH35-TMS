@@ -64,7 +64,7 @@ export function ExpensesListPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { selectedCompanyId } = useCompanyContext();
-  const { success } = useToast();
+  const { pushToast } = useToast();
   const companyId = selectedCompanyId ?? "";
   const [searchParams] = useSearchParams();
   // BANK-SORT-ROLLOUT-ACCT: every visible column header sorts ASC/DESC; sort persists in the URL
@@ -86,7 +86,7 @@ export function ExpensesListPage() {
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["accounting", "expenses", selectedCompanyId] });
-      success("Expense voided");
+      pushToast("Expense voided", "success");
     },
   });
 
