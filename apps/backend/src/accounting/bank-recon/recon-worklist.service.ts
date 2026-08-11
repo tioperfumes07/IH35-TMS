@@ -79,21 +79,34 @@ export async function getReconWorklist(input: {
     const varianceResolved = await client.query<{
       journal_entry_id: string;
       entry_date: string;
+      /** Sourced from journal_entries.memo — there is no reference_no column; name kept for the payload contract. */
       reference_no: string | null;
+      /** Canonical JE label (memo IS the JE's identity — no number/ref column exists on the table). */
+      memo: string | null;
       variance_cents: number;
     }>(
       `
         SELECT
           je.id::text AS journal_entry_id,
           je.entry_date::text,
-          je.reference_no::text,
+          -- LV-JE-LABEL-IGNORES-POPULATED-MEMO / phantom column: accounting.journal_entries has NO
+          -- reference_no column — verified against information_schema, it does not exist on that
+          -- table or ANY table in the database. This query named it in the SELECT *and* the WHERE, so
+          -- it raised 42703 every time it ran; Postgres resolves columns at parse time, so it failed
+          -- regardless of how many rows existed. The writer settles where the tag actually lives:
+          -- match.service.ts:654 inserts bank-recon:<bank_transaction_id> into **memo**. Repointed to
+          -- memo rather than guessed. AS reference_no is retained deliberately so the existing payload
+          -- contract (apps/frontend/src/api/banking.ts:204) keeps working; je.memo is also selected as
+          -- the canonical JE label so this payload can no longer render "Journal entry - not visible".
+          je.memo::text AS reference_no,
+          je.memo,
           COALESCE(SUM(CASE WHEN jep.debit_or_credit = 'debit' THEN jep.amount_cents ELSE -jep.amount_cents END), 0)::int AS variance_cents
         FROM accounting.journal_entries je
         LEFT JOIN accounting.journal_entry_postings jep ON jep.journal_entry_uuid = je.id
         WHERE je.operating_company_id = $1::uuid
           AND je.source = 'bank_reconciliation'
           AND je.entry_date BETWEEN $2::date AND $3::date
-          AND COALESCE(je.reference_no, '') LIKE 'bank-recon:%'
+          AND COALESCE(je.memo, '') LIKE 'bank-recon:%'
         GROUP BY je.id
         ORDER BY je.entry_date DESC, je.created_at DESC
       `,

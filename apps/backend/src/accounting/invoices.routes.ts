@@ -152,6 +152,13 @@ export async function enrichInvoice(client: { query: (sql: string, values?: unkn
         je.entry_date::text AS entry_date,
         je.status,
         je.source,
+        -- LV-JE-LABEL-IGNORES-POPULATED-MEMO (CLS-LINKAGE-ONEWAY): accounting.journal_entries has NO
+        -- number/ref/doc column — memo IS the JE's human identity, and it is populated on 1864 of
+        -- 1864 rows (USMCA 89/89). This payload was the only JE payload in accounting/ that dropped it
+        -- (expenses, bills, account-register and daily-recon all carry it), so the invoice GL section
+        -- rendered "Journal entry - not visible" for a JE that is posted, linked and named. The link
+        -- was never broken; the label simply never left the server.
+        je.memo,
         jep.source_transaction_type,
         jep.source_transaction_id,
         jep.posting_batch_id::text AS posting_batch_id
