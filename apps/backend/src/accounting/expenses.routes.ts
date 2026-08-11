@@ -453,7 +453,10 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
     return reply.code(200).send(result);
   });
 
-  app.post("/api/v1/expenses", async (req: FastifyRequest, reply: FastifyReply) => {
+  // Pre-existing gap surfaced by verify-new-auth-routes-rate-limited when this file changed: the
+  // expense CREATE route authorized but carried no rateLimit (CodeQL js/missing-rate-limiting), while
+  // its sibling GET/PATCH routes here already do. Matched to the mutating-route budget used at :334.
+  app.post("/api/v1/expenses", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!accountingRoles(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
@@ -715,11 +718,56 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
           // which has no registered handler and therefore FAILED in the outbox on every explicit-load
           // expense (2 such failures on prod 2026-08-03). `explicit_load` in the payload preserves the
           // distinction between auto-attributed and hand-stamped.
+          //
+          // LV-EXPENSE-NUMBER-NEVER-POPULATED: this branch said the expense IS attributed and then
+          // skipped everything that RECORDS the attribution — no expense number, no link row. The
+          // auto-attribution branch above did all three. Two writers for one concept, one incomplete:
+          // 9 of 22 USMCA expenses carried a load_id with 0 expense_number, and
+          // expense_attribution.expense_load_links was 0 rows database-wide.
+          // expense_number is a LOAD-SCOPED sequence (L-<load>-Exx), not a QBO-style document series,
+          // so it is generated HERE from the same generator rather than invented as a second series,
+          // and historical rows are NOT backfilled — a number implies an attribution event that never
+          // happened for them.
+          const numbered = await generateExpenseNumber(client, body.load_id);
+          await client.query(
+            `
+              INSERT INTO expense_attribution.expense_load_links (
+                operating_company_id,
+                expense_id,
+                expense_source,
+                load_id,
+                load_number,
+                expense_seq,
+                expense_number,
+                attribution_method,
+                attribution_confidence,
+                attribution_reason,
+                attributed_by_user_id
+              )
+              VALUES ($1,$2,'accounting',$3,$4,$5,$6,'explicit_load',1,$7,$8)
+            `,
+            [
+              body.operating_company_id,
+              expenseId,
+              body.load_id,
+              numbered.loadNumber,
+              numbered.seq,
+              numbered.number,
+              "Load stamped explicitly by the operator on expense create",
+              user.uuid,
+            ]
+          );
+          expenseNumber = numbered.number;
+          if (hasExpenseNumber) {
+            await client.query(`UPDATE accounting.expenses SET expense_number = $2 WHERE id = $1`, [expenseId, numbered.number]);
+          }
+
           await emitOutbox(client, "expense.created.attributed", {
             expense_id: expenseId,
             operating_company_id: body.operating_company_id,
             load_id: body.load_id,
             explicit_load: true,
+            expense_number: numbered.number,
             category_account_id: categoryAccountId,
           });
           await appendCrudAudit(
