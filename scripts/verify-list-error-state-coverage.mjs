@@ -22,6 +22,56 @@ import process from "node:process";
 
 const repoRoot = process.cwd();
 
+/**
+ * ★ DISCOVERY RATCHET (added 2026-08-11) — the roster below is HAND-MAINTAINED, so the guard can only
+ * ever protect pages somebody remembered to type into it.
+ *
+ * The header above is explicit that this "does NOT try to detect every query page missing an error
+ * branch (that false-fires on mutation-only pages)". That objection is correct and is why the sweep
+ * below is NOT "every page with useQuery" — measured, that is 135 pages and it does include
+ * mutation-only screens. It is narrowed to pages that actually RENDER A LIST from a query
+ * (`<table` / `<tbody` / ParityTable / DataTable), which is the population this guard is about.
+ * On that population: **289 list pages, of which 46 have no error branch at all.**
+ *
+ * MEASURED, NOT ASSUMED — and the gap is worst exactly where a false all-clear is most expensive:
+ * safety 13 (6 pages + 4 tabs + integrity-reports + expiry-tracking + driver-scoring), maintenance 7,
+ * dispatch 3, reports/ifta 3. `SafetyEventsPage.tsx` makes SIX useQuery calls and contains the string
+ * `isError` ZERO times; IdvrPage and HoursOfServicePage the same. A safety manager whose query failed
+ * is shown an empty table, which reads as "no violations" — the outage and the all-clear are
+ * indistinguishable on a compliance surface.
+ *
+ * Baselined rather than hard-zeroed because 46 pages cannot be fixed in one PR and a red that cannot
+ * be cleared gets the guard disabled. The baseline may only SHRINK: a NEW list page without an error
+ * branch fails immediately, so the class cannot grow while it drains.
+ */
+const DISCOVERED_BASELINE_PATH = "scripts/list-error-state-coverage-baseline.json";
+const PAGES_ROOT = "apps/frontend/src/pages";
+const RENDERS_A_LIST = /<table|<tbody|ParityTable|DataTable/;
+const HAS_ERROR_BRANCH = /isError|ListErrorState|ListErrorBanner/;
+
+function walkPages(dir, out = []) {
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const abs = path.join(dir, entry.name);
+    if (entry.isDirectory()) walkPages(abs, out);
+    else if (abs.endsWith(".tsx") && !abs.endsWith(".test.tsx")) out.push(abs);
+  }
+  return out;
+}
+
+export function discoverOffenders() {
+  const root = path.join(repoRoot, PAGES_ROOT);
+  if (!fs.existsSync(root)) return null; // scope wrong — caller refuses to pass vacuously
+  const offenders = [];
+  for (const abs of walkPages(root)) {
+    const src = fs.readFileSync(abs, "utf8");
+    if (!/useQuery/.test(src)) continue;
+    if (!RENDERS_A_LIST.test(src)) continue;
+    if (HAS_ERROR_BRANCH.test(src)) continue;
+    offenders.push(path.relative(repoRoot, abs).replace(/\\/g, "/"));
+  }
+  return offenders.sort();
+}
+
 // Pages that MUST keep an honest error state (isError -> ListErrorState). Losing it is a regression.
 const REQUIRED_ERROR_STATE = [
   "apps/frontend/src/pages/Vendors.tsx",
@@ -96,14 +146,45 @@ function scan() {
   return failures;
 }
 
+/** Discovery ratchet: the hand-roster protects what someone typed; this protects everything else. */
+function ratchet() {
+  const failures = [];
+  const discovered = discoverOffenders();
+  if (discovered === null) {
+    return [`${PAGES_ROOT} not found — scope is wrong, refusing to pass vacuously.`];
+  }
+  const baselineFull = path.join(repoRoot, DISCOVERED_BASELINE_PATH);
+  if (!fs.existsSync(baselineFull)) {
+    return [`missing ${DISCOVERED_BASELINE_PATH} — generate with --write-baseline.`];
+  }
+  const baseline = new Set(JSON.parse(fs.readFileSync(baselineFull, "utf8")).offenders ?? []);
+  const added = discovered.filter((f) => !baseline.has(f));
+  if (added.length) {
+    failures.push(
+      `${added.length} NEW list page(s) render a query result with NO error branch — an outage is ` +
+        `indistinguishable from "no records":\n    ` + added.slice(0, 15).join("\n    ")
+    );
+  }
+  if (discovered.length > baseline.size) {
+    failures.push(
+      `discovered offender count rose ${baseline.size} -> ${discovered.length}. The baseline may only SHRINK.`
+    );
+  }
+  return failures;
+}
+
 export function run() {
-  const failures = scan();
+  const failures = [...scan(), ...ratchet()];
   if (failures.length) {
     console.error("[verify-list-error-state-coverage] FAIL — a list page lost its honest error state:");
     for (const f of failures) console.error(`  - ${f}`);
     return { ok: false, offenders: failures };
   }
-  console.log(`[verify-list-error-state-coverage] PASS — ${REQUIRED_ERROR_STATE.length} list pages keep isError -> ListErrorState`);
+  const remaining = discoverOffenders()?.length ?? 0;
+  console.log(
+    `[verify-list-error-state-coverage] PASS — ${REQUIRED_ERROR_STATE.length} roster pages keep isError -> ListErrorState; ` +
+      `discovery ratchet holding at ${remaining} un-fixed list page(s) (may only shrink)`
+  );
   return { ok: true, offenders: [] };
 }
 
