@@ -21,6 +21,7 @@ import { ReferenceSelect, type ReferenceOption } from "../../../components/parit
 import { formatDateUS } from "../../../lib/formatDate";
 import { companyNow } from "../../../lib/businessDate";
 import { formatUsdCents } from "../../../lib/money";
+import { ListErrorState } from "../../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
@@ -604,6 +605,17 @@ export function CargoClaimIntakeSurface({
           in the app has. It also showed neither the CLAIMANT nor the LOAD, which are the two things
           a cargo claim is actually about, and nothing on the row drilled anywhere. A claim you
           cannot trace to its customer or its load is a number in a list. */}
+      {/* CLS-LIST-ERROR-STATE-UNGUARDED: the page DOES have an `error` state, but it is local useState serving the create/edit
+          MUTATION forms — the LIST query had no branch at all, so a failed cargo-claim load fell
+          through to emptyText "No records found." and read as a carrier with no cargo claims. */}
+      {listQuery.isError ? (
+        <ListErrorState
+          title="Couldn't load cargo claims"
+          status={0}
+          message={(listQuery.error as Error)?.message}
+          onRetry={() => void listQuery.refetch()}
+        />
+      ) : (
       <ParityTable<Record<string, unknown>>
         columns={claimColumns}
         rows={rows}
@@ -615,6 +627,7 @@ export function CargoClaimIntakeSurface({
         tableTestId={`${pageTestId}-table`}
         rowTestId={(row) => `${pageTestId}-row-${String(row.id ?? "")}`}
       />
+      )}
 
       {selectedId ? (
         <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid={`${pageTestId}-detail`}>
