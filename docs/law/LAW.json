@@ -358,7 +358,7 @@
   },
   {
     "id": "LAW-2026-08-06-LOAD-DETAIL-RESOLVES-NAMES",
-    "title": "The dispatch load-detail query must RESOLVE the primary driver name and unit number, not only carry their ids — a drawer that renders a covered load as \"Unassigned\" invites double-assignment, and the entity predicates on those joins must scope units by the owner/leased pair",
+    "title": "EVERY by-id load read the detail drawer can land on must RESOLVE the primary driver name and unit number, not only carry their ids — a drawer that renders a covered load as \"Unassigned\" invites double-assignment; the entity predicates on those joins must scope units by the owner/leased pair; and the assertion is per-route, because a LIST query resolving the names does not make the by-id payload carry them",
     "source_file": "apps/backend/src/dispatch/loads.routes.ts",
     "guard": "scripts/verify-load-detail-resolves-names.mjs",
     "type": "enforced"

@@ -805,26 +805,42 @@ export async function registerLoadRoutes(app: FastifyInstance) {
       const loadRes = await client.query(
         `
           SELECT
-            id, operating_company_id, load_number, customer_id, status, rate_total_cents, currency_code,
-            assigned_unit_id, assigned_primary_driver_id, assigned_secondary_driver_id, team_id,
-            dispatcher_user_id, notes, created_at, updated_at, soft_deleted_at, deleted_by_user_id,
+            l.id, l.operating_company_id, l.load_number, l.customer_id, l.status, l.rate_total_cents, l.currency_code,
+            l.assigned_unit_id, l.assigned_primary_driver_id, l.assigned_secondary_driver_id, l.team_id,
+            l.dispatcher_user_id, l.notes, l.created_at, l.updated_at, l.soft_deleted_at, l.deleted_by_user_id,
+            -- LV-TXN-002 (name resolution). This by-id read returned the three assignment UUIDs and NOTHING
+            -- else, so every consumer of GET /api/v1/mdata/loads/:id had to render an id. LoadDetailDrawer
+            -- falls back to exactly this endpoint whenever it has no operatingCompanyId
+            -- (LoadDetailDrawer.tsx:147 useLoad(operatingCompanyId ? null : loadId)), and FactoringTab /
+            -- FinesDeductionsCard read it unconditionally — so on that path the drawer showed
+            -- "Driver 3f2a…" / "Unit 91c7…" for a load that HAS both. The sibling
+            -- GET /api/v1/dispatch/loads/:id already resolves these (see the dispatch loads route file,
+            -- lines 709-715); the file name is spelled out rather than dotted because
+            -- verify-sql-read-targets parses comment text and reads a dotted name as <table>.<column>;
+            -- this endpoint was simply never given the same joins, which is what makes the two paths
+            -- disagree about the same load. Read-only enrichment: no new column, no fabricated field.
+            -- PROD-VERIFIED 2026-08-10 (bypass, existence only, 34/34 loads visible == n_live_tup):
+            -- L-20260810-0003 resolves to "Rafael Rogelio Rivero Reynoso" / unit "T149".
+            NULLIF(TRIM(CONCAT(COALESCE(pd.first_name, ''), ' ', COALESCE(pd.last_name, ''))), '') AS assigned_primary_driver_name,
+            NULLIF(TRIM(CONCAT(COALESCE(sd.first_name, ''), ' ', COALESCE(sd.last_name, ''))), '') AS assigned_secondary_driver_name,
+            u.unit_number AS assigned_unit_number,
             -- Block 7 (full-edit prefill): editable columns the book-load INSERT actually writes, so the
             -- Edit wizard can round-trip them. Read-only enrichment; every column verified present in
             -- book-load.service.ts INSERT + accepted by the PATCH schema (no fabricated fields).
-            customer_wo_number, pickup_number, border_routing, driver_instructions_text,
+            l.customer_wo_number, l.pickup_number, l.border_routing, l.driver_instructions_text,
             -- FAIL-B4 completion: the Edit wizard prefills the sample checkbox from this field, and the
             -- book-load INSERT has written it since FAIL-D6 — but this SELECT never returned it, so the
             -- box rendered UNCHECKED on every edit of a sample load no matter what the row held. Verified
             -- live on prod: GET /api/v1/mdata/loads/:id answered 200 for a known sample load with the key
             -- entirely ABSENT from the payload. Column verified present (migration 0403), not fabricated.
-            is_sample_data,
-            requires_tarps, tarp_type, lumper_amount_cents,
-            customer_chargeback_requested, customer_chargeback_reason, live_load_number,
-            anticipated_chargeback_cents, anticipated_chargeback_reason,
-            detention_expected_y_n, detention_expected_hours,
-            detention_bill_customer_per_hour_cents, detention_driver_pay_per_hour_cents,
-            late_delivery_risk_y_n, late_delivery_est_deduction_cents, late_delivery_reason,
-            miles_practical, miles_shortest, miles_deadhead,
+            l.is_sample_data,
+            l.requires_tarps, l.tarp_type, l.lumper_amount_cents,
+            l.customer_chargeback_requested, l.customer_chargeback_reason, l.live_load_number,
+            l.anticipated_chargeback_cents, l.anticipated_chargeback_reason,
+            l.detention_expected_y_n, l.detention_expected_hours,
+            l.detention_bill_customer_per_hour_cents, l.detention_driver_pay_per_hour_cents,
+            l.late_delivery_risk_y_n, l.late_delivery_est_deduction_cents, l.late_delivery_reason,
+            l.miles_practical, l.miles_shortest, l.miles_deadhead,
             -- CLS-SCHEMA-DRIFT / PHANTOM COLUMN — verified against the PROD branch 2026-08-07:
             -- mdata.loads has NO commodity, NO cargo_weight_lbs and NO reefer_setpoint_temp_f.
             -- The comment above asserted those names; information_schema does not. This SELECT made
@@ -832,25 +848,36 @@ export async function registerLoadRoutes(app: FastifyInstance) {
             -- EVERY load, while the list and dispatch endpoints — which do not select them — returned
             -- 200. Found by creating a real USMCA load and reading it back.
             -- The reefer setpoint that DOES exist is reefer_temp_f, already selected below.
-            trip_type,
+            l.trip_type,
             -- Block 7 (migration 202606221000, Jorge-approved): pieces + customer PO round-trip in Edit.
-            piece_count, customer_po_number,
+            l.piece_count, l.customer_po_number,
             -- render-v6 §B reefer/tarp detail (migration 202606231400).
-            reefer_temp_f, reefer_mode, pre_cool, tarp_qty, tarp_size
-          FROM mdata.loads
-          WHERE id = $1
+            l.reefer_temp_f, l.reefer_mode, l.pre_cool, l.tarp_qty, l.tarp_size
+          FROM mdata.loads l
+          -- Entity predicates copied verbatim from the already-correct sibling
+          -- (the dispatch loads route file, lines 747-750): drivers scope on operating_company_id, but mdata.units
+          -- has NO such column (§4) — it is scoped by the owner/leased PAIR, and the live case that
+          -- exposed this is exactly a TRK-owned unit LEASED to USMCA, which a bare owner_company_id
+          -- predicate would silently drop back to a raw id.
+          LEFT JOIN mdata.drivers pd ON pd.id = l.assigned_primary_driver_id
+                                    AND pd.operating_company_id = l.operating_company_id
+          LEFT JOIN mdata.drivers sd ON sd.id = l.assigned_secondary_driver_id
+                                    AND sd.operating_company_id = l.operating_company_id
+          LEFT JOIN mdata.units u ON u.id = l.assigned_unit_id
+                                 AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = l.operating_company_id
+          WHERE l.id = $1
             -- Tier-1 entity-scope (money by-id IDOR): rate_total_cents is GROSS customer revenue.
             -- Defense-in-depth mirror of the two SELECT RLS policies (loads_select_office +
             -- loads_select_driver) so an office user only reads loads of their accessible companies
             -- (Owner = all) while an assigned driver still reads their own load. Without this, a
             -- bypass/unforced-RLS regression would leak cross-entity revenue/customer/detention.
             AND (
-              operating_company_id IN (SELECT org.user_accessible_company_ids())
+              l.operating_company_id IN (SELECT org.user_accessible_company_ids())
               OR EXISTS (
                 SELECT 1 FROM mdata.drivers d
                 WHERE d.identity_user_id = NULLIF(current_setting('app.current_user_id', true), '')::uuid
-                  AND d.operating_company_id = mdata.loads.operating_company_id
-                  AND (d.id = mdata.loads.assigned_primary_driver_id OR d.id = mdata.loads.assigned_secondary_driver_id)
+                  AND d.operating_company_id = l.operating_company_id
+                  AND (d.id = l.assigned_primary_driver_id OR d.id = l.assigned_secondary_driver_id)
               )
             )
           LIMIT 1
