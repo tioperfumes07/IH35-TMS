@@ -189,6 +189,10 @@ export const DOMAIN_CONFIG: DomainConfig[] = [
     label: "Customers",
     pillClass: "bg-slate-100 text-slate-700",
     catalogs: [
+      // C-01 — the Lists hub must enter the canonical customer roster, where +Create writes the
+      // same mdata.customers rows consumed by customer pickers. Customer Types alone is not that
+      // operational chain.
+      { name: "Customers", description: "Customer roster, profiles, and +Create", live: true, catalogKey: "customers-master" },
       { name: "Customer Types", description: "QuickBooks-style customer classification", live: true, catalogKey: "customer-types" },
       { name: "Customer Quality Event Reasons", description: "Customer service-quality event reason codes", live: true, catalogKey: "customer-quality-event-reasons" },
     ],
@@ -269,6 +273,7 @@ function normalizeListsDomain(domain: string): string {
 export function buildCatalogPath(domain: string, catalogKey: string): string {
   const routeDomain = normalizeListsDomain(domain);
   if (catalogKey === "_create") return `/lists/hub/${domain}`;
+  if (domain === "customers" && catalogKey === "customers-master") return "/customers";
   if (domain === "dispatch") {
     const dispatchRouteMap: Record<string, string> = {
       "load-types": "/lists/dispatch/load-types",
