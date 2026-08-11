@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -9,6 +9,12 @@ import { UnifiedTimelinePlanner } from "./UnifiedTimelinePlanner";
 
 vi.mock("../../../contexts/CompanyContext", () => ({
   useCompanyContext: () => ({ selectedCompanyId: "91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071" }),
+}));
+
+vi.mock("../components/BookLoadModalV4", () => ({
+  BookLoadModalV4: ({ prefillUnitId, prefillDriverId }: { prefillUnitId?: string | null; prefillDriverId?: string | null }) => (
+    <div data-testid="book-load-prefill">{`${prefillUnitId}|${prefillDriverId}`}</div>
+  ),
 }));
 
 // Deterministic range so the test doesn't depend on "today".
@@ -36,7 +42,7 @@ describe("UnifiedTimelinePlanner (Phase 1)", () => {
       drivers: [
         { id: "d1", name: "Jane Driver", unit_number: "T-101", hos_status: "ok", blackouts: [] },
         { id: "d2", name: "On Leave Guy", unit_number: "T-102", hos_status: "ok", blackouts: [] },
-        { id: "d3", name: "Free Agent", unit_number: "T-103", hos_status: "ok", blackouts: [] },
+        { id: "d3", name: "Free Agent", unit_number: "T-103", unit_id: "unit-103", hos_status: "ok", blackouts: [] },
       ],
       loads: [
         { id: "load-500", load_number: "L-500", driver_id: "d1", customer_name: "ACME", status: "dispatched", start_at: "2026-06-23T08:00:00Z", end_at: "2026-06-24T08:00:00Z", pickup_city: "Laredo", pickup_state: "TX" },
@@ -67,5 +73,11 @@ describe("UnifiedTimelinePlanner (Phase 1)", () => {
     expect(screen.getByText("Available")).toBeTruthy(); // d3 free
     // Idle/available driver gets a + Book affordance.
     expect(screen.getByTestId("timeline-book-d3")).toBeTruthy();
+  });
+
+  it("passes the planner row id as the canonical driver FK when booking its unit", async () => {
+    wrap(<UnifiedTimelinePlanner />);
+    fireEvent.click(await screen.findByTestId("timeline-book-d3"));
+    expect(screen.getByTestId("book-load-prefill").textContent).toBe("unit-103|d3");
   });
 });
