@@ -3,6 +3,23 @@ export const COA_ROLE_VALUES = [
   "ap_control",
   "cash_clearing",
   "undeposited_funds",
+  /**
+   * ACCT-F345 — the account a DISBURSEMENT credits when the operator did not pick a source.
+   *
+   * Distinct from cash_clearing/undeposited_funds on purpose. Those are RECEIPT-side clearing
+   * accounts (money received, not yet deposited); crediting one for money LEAVING the business drove
+   * USMCA's Undeposited Funds to a -$350.00 credit balance and overstated the bank by the same amount.
+   *
+   * DELIBERATELY ABSENT FROM ROLE_FALLBACKS — owner designates, exactly like the lease roles above.
+   * A heuristic here would have to choose between "Bank of America - Operating" and "Relay Fuel
+   * Wallet" (the diesel card) by name-matching, and guessing which account real money left is the
+   * failure this role exists to end. Unmapped resolves to null and the poster fails closed.
+   *
+   * Owner 2026-08-11: "THE DEFAULT BANK SHOULD BE BANK OF AMERICA ... WE NEED TO PICK THE SOURCE
+   * BECAUSE WE MIGHT SIGN CASH ADVANCE FROM BANK OF AMERICA ACCOUNT, OR USE CASH APP, OR CREDIT CARD,
+   * OR DIESEL CARD, ETC." — so this is the DEFAULT only; an explicit operator-chosen source always wins.
+   */
+  "operating_bank",
   "revenue_default",
   "expense_default",
   "factor_reserve_default",

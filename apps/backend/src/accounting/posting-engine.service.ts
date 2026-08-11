@@ -447,6 +447,32 @@ async function resolveCashLikeAccountForCompany(client: DbClient, operatingCompa
   );
 }
 
+/**
+ * ACCT-F345 — the cash account a DISBURSEMENT credits when the operator did not pick a source.
+ *
+ * WHY THIS IS NOT resolveCashLikeAccountForCompany. That helper returns undeposited_funds, then
+ * cash_clearing. Both are RECEIPT-side clearing accounts — "money received, not yet deposited" — and
+ * crediting one for money LEAVING the business is wrong by definition. On USMCA it drove
+ * 1090 Undeposited Funds to a -$350.00 credit balance (a negative asset) and left the books claiming
+ * $250 more at Bank of America than the bank actually held, so the bank reconciliation could not tie.
+ *
+ * AND ITS "FALLBACK" WAS NOT ONE: USMCA maps BOTH undeposited_funds AND cash_clearing to the SAME
+ * account (1090). A two-tier chain where both tiers resolve identically offers the appearance of a
+ * second chance and none of the substance — there was no configuration in which an un-sourced
+ * disbursement could reach the real operating bank.
+ *
+ * FAILS CLOSED. Returns null when operating_bank is not designated, and every caller raises
+ * ACCOUNT_MAPPING_MISSING. A refused post is recoverable in seconds; a silent post to the wrong
+ * control account is the family that produced ACCT-F330, F331 and F333 — each found weeks later.
+ * Never falls back to a clearing account: that is the defect, not a safety net.
+ */
+async function resolveDisbursementCashAccountForCompany(
+  client: DbClient,
+  operatingCompanyId: string
+): Promise<string | null> {
+  return resolveRoleAccountOptional(client, operatingCompanyId, "operating_bank");
+}
+
 // CHAIN-04 — resolve a bank account's cash GL account via the bank->GL bridge
 // banking.bank_accounts.ledger_account_id (the column the Cash-GL setup screen reads/writes; FK to
 // catalogs.accounts added by migration 202606280100, backfilled by 202606300070). Returns null when
@@ -1507,6 +1533,21 @@ async function buildBillPaymentLines(client: DbClient, operatingCompanyId: strin
     cashAccountId = payment.cc_account_id;
     creditRole = "cc";
   } else {
+    // ACCT-F345 — DELIBERATELY STILL THE RECEIPT-SIDE FALLBACK HERE, and that is not an oversight.
+    //
+    // This tier has the same wrong-direction flaw as the driver-advance path (a bill payment is money
+    // LEAVING, so crediting undeposited_funds/cash_clearing is wrong by the same argument). I repointed
+    // it, then reverted on evidence: guard 3057 found TRANSP (91e0bf0a) ACTIVELY USING this tier —
+    // 2 bill_payment posting lines crediting its QBO-168 Undeposited Funds. My first reading, that the
+    // tier had "never been hit on prod", was true only for USMCA and false globally.
+    //
+    // Making it fail closed therefore stops being a safety improvement and becomes an outage for an
+    // entity that has no operating_bank binding — and the 2026-08-11 weekend merge law is USMCA-ONLY
+    // and forbids binding TRANSP/TRK. Shipping a fail-closed path for an entity I am not permitted to
+    // configure would break a live carrier's bill payments to fix a defect it is not yet exposed to.
+    //
+    // Tracked as the ACCT-F345 follow-up: bind operating_bank for TRANSP/TRK, then repoint this tier
+    // and add bill_payment to guard 3057's DISBURSEMENT_SOURCE_TYPES in the same PR.
     cashAccountId = await resolveCashLikeAccountForCompany(client, operatingCompanyId);
     if (!cashAccountId) throw new PostingEngineError("ACCOUNT_MAPPING_MISSING", "Cash account mapping is missing");
     creditRole = "cash_like";
@@ -1581,7 +1622,7 @@ async function buildCashAdvanceLines(
   const mapped = await resolveAccountForCategory(operatingCompanyId, "cash_advance", "cash_advance");
   const debitAccountId = mapped.account_id;
 
-  const creditAccount = creditAccountId ?? (await resolveCashLikeAccountForCompany(client, operatingCompanyId));
+  const creditAccount = creditAccountId ?? (await resolveDisbursementCashAccountForCompany(client, operatingCompanyId));
   if (!creditAccount) {
     throw new PostingEngineError("ACCOUNT_MAPPING_MISSING", "Cash account mapping for cash advance is missing");
   }
@@ -1663,7 +1704,7 @@ async function buildDriverAdvanceLines(
   const mapped = await resolveAccountForCategory(operatingCompanyId, "cash_advance", "cash_advance");
   const debitAccountId = mapped.account_id;
 
-  const creditAccount = creditAccountId ?? (await resolveCashLikeAccountForCompany(client, operatingCompanyId));
+  const creditAccount = creditAccountId ?? (await resolveDisbursementCashAccountForCompany(client, operatingCompanyId));
   if (!creditAccount) {
     throw new PostingEngineError("ACCOUNT_MAPPING_MISSING", "Cash account mapping for driver advance is missing");
   }
@@ -1746,7 +1787,7 @@ async function buildDriverReimbursementLines(
   if (!debitAccountId) {
     throw new PostingEngineError("ACCOUNT_MAPPING_MISSING", "No 'reimbursement_expense' role designation for driver reimbursement");
   }
-  const creditAccount = creditAccountId ?? (await resolveCashLikeAccountForCompany(client, operatingCompanyId));
+  const creditAccount = creditAccountId ?? (await resolveDisbursementCashAccountForCompany(client, operatingCompanyId));
   if (!creditAccount) {
     throw new PostingEngineError("ACCOUNT_MAPPING_MISSING", "Cash account mapping for driver reimbursement is missing");
   }
