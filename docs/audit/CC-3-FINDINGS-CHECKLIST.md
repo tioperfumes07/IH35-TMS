@@ -85,6 +85,7 @@ is no "in progress" state, because a half-fix in production is indistinguishable
 
 | ☐ | Finding ID | Sev | Owning lane | Coder | PR | Date | Live proof of fix | Guard (file + step #) | CC-3 VERIFIED |
 |---|---|---|---|---|---|---|---|---|---|
+| ☐ | `CI-PREPAID-POST-FLAG-GATE-FALSE-RED` | P0 | CC-1 (money / prepaid guard) | — | — | — | CI run 31545443506: locked-guards false-red on merged main | `scripts/verify-prepaid-post-flag-gate.mjs` | — |
 | ☐ | `MATRIX-REQ-MAINT` | P0 | Cursor (FE/program) | — | — | — | — | — | — |
 | ☐ | `MATRIX-LIVE-RAD` | P0 | Cursor (FE) + API | — | — | — | — | — | — |
 | ☐ | `MATRIX-DONE-GUARD` | P1 | CC-2 (GUARD) | — | — | — | — | — | — |
