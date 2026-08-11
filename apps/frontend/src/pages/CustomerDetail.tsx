@@ -688,6 +688,7 @@ export function CustomerDetailPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["customer-detail", id] });
       queryClient.invalidateQueries({ queryKey: ["customers"] });
+      setForm({});
       setEditMode(false);
       setStatusConfirmOpen(false);
       setStatusReason("");
@@ -1071,7 +1072,16 @@ export function CustomerDetailPage() {
                   Reactivate
                 </Button>
               )}
-              <Button onClick={() => setEditMode(true)}>Edit</Button>
+              <Button
+                onClick={() => {
+                  // Materialize the complete record before the first field change. Leaving `form`
+                  // empty makes the first updater spread `{}` and discard every untouched field.
+                  setForm({ ...hydratedForm });
+                  setEditMode(true);
+                }}
+              >
+                Edit
+              </Button>
               <Button variant="secondary" onClick={() => setEditModalOpen(true)}>Full Edit</Button>
             </div>
           ) : (
