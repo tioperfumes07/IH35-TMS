@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import type { ReactElement } from "react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -26,10 +27,15 @@ vi.mock("../api/mdata", async (importOriginal) => {
     ...actual,
     getCustomerDetail: vi.fn(),
     getCustomerBillingSummary: vi.fn(),
+    getCustomerFinancialSummary: vi.fn(),
+    getCustomerRelationshipScore: vi.fn(),
+    listCustomers: vi.fn(),
     listCustomerLanes: vi.fn().mockResolvedValue({ lanes: [] }),
     listCustomerContacts: vi.fn().mockResolvedValue({ contacts: [] }),
     listVendors: vi.fn().mockResolvedValue({ vendors: [] }),
     listCustomerQualityEvents: vi.fn().mockResolvedValue({ events: [] }),
+    listPaymentTermOptions: vi.fn(),
+    updateCustomer: vi.fn(),
   };
 });
 
@@ -53,6 +59,10 @@ vi.mock("../api/catalogs", () => ({
 
 vi.mock("../api/fmcsa", () => ({
   listFmcsaLookups: vi.fn().mockResolvedValue({ lookups: [] }),
+}));
+
+vi.mock("../components/customers/FreeTimeDetentionEditor", () => ({
+  FreeTimeDetentionEditor: () => null,
 }));
 
 // CustomerDetail reads useCompanyContext, which THROWS outside CompanyProvider
@@ -101,6 +111,9 @@ describe("CustomerDetail cash application", () => {
       outstanding_balance_cents: 0,
       aging_buckets: { total_open: 0, open_invoice_count: 0 },
     } as never);
+    vi.mocked(mdataApi.getCustomerFinancialSummary).mockRejectedValue(new Error("not needed"));
+    vi.mocked(mdataApi.getCustomerRelationshipScore).mockRejectedValue(new Error("not needed"));
+    vi.mocked(mdataApi.listCustomers).mockResolvedValue({ customers: [], total: 0 } as never);
     vi.mocked(accountingApi.listInvoices).mockResolvedValue({
       invoices: [
         {
@@ -116,6 +129,10 @@ describe("CustomerDetail cash application", () => {
     });
     vi.mocked(customersApi.listCustomerPayments).mockResolvedValue({ rows: [], total: 0 });
     vi.mocked(customersApi.recordCustomerPayment).mockResolvedValue({ ok: true });
+    vi.mocked(mdataApi.listPaymentTermOptions).mockResolvedValue({
+      payment_terms: [{ id: "84532954-6f73-4445-bb09-7f53a1b43c75", terms_name: "Net 30", days_until_due: 30 }],
+    } as never);
+    vi.mocked(mdataApi.updateCustomer).mockResolvedValue({ id: "c1" } as never);
   });
 
   it("shows Record Payment section on billing tab", async () => {
@@ -127,5 +144,26 @@ describe("CustomerDetail cash application", () => {
     vi.mocked(customersApi.listCustomerPayments).mockRejectedValue(new ApiError(404, {}));
     render(wrap(<CustomerDetailPage />));
     await waitFor(() => expect(screen.getByText(/Backend pending/i)).toBeInTheDocument());
+  });
+
+  it("preserves the hydrated customer when payment terms is the first edit", async () => {
+    const user = userEvent.setup();
+    render(wrap(<CustomerDetailPage />));
+
+    await user.click(await screen.findByRole("button", { name: /^Edit$/ }));
+    await user.click(screen.getByRole("button", { name: /^Profile$/ }));
+    await user.click(screen.getByPlaceholderText("Select terms"));
+    await user.click(screen.getByRole("option", { name: "Net 30 (30d)" }));
+    await user.click(screen.getByRole("button", { name: /^Save$/ }));
+
+    await waitFor(() => expect(mdataApi.updateCustomer).toHaveBeenCalled());
+    expect(vi.mocked(mdataApi.updateCustomer).mock.calls[0]?.[1]).toMatchObject({
+      name: "Acme",
+      status: "active",
+      quality_overall_flag: "standard",
+      free_time_pickup_minutes: 120,
+      free_time_delivery_minutes: 120,
+      payment_terms_id: "84532954-6f73-4445-bb09-7f53a1b43c75",
+    });
   });
 });
