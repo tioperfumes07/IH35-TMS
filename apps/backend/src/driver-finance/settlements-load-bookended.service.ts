@@ -100,6 +100,20 @@ export async function openLoadBookendedSettlement(
         AND s.operating_company_id = $2
         AND s.settlement_model = 'load_bookended'
         AND s.trip_closed_at IS NULL
+        -- ACCT-F347 — a CANCELLED settlement is not a reusable one. ACCT-F266 (below) stopped reuse
+        -- when the ANCHOR LOAD died, but said nothing about the settlement's own status, so a
+        -- settlement that was CANCELLED while its anchor load stayed alive remained "open" forever:
+        -- cancelling does not set trip_closed_at, and the close path never fires for it.
+        --
+        -- Live consequence on prod after the owner void-all: FOUR USMCA drivers (Leonel Morales,
+        -- Jorge Pablo Munoz, Rafael Rivero, Neftali Coronado) each had a cancelled settlement whose
+        -- anchor load was still in_transit / completed_docs_received. openLoadBookendedSettlement
+        -- handed that cancelled settlement back, so every future load for those drivers would attach
+        -- its pay to paperwork that can never pay out — and, exactly as in ACCT-F266, the paperwork
+        -- would LOOK complete. Found by running the P36 smoke and getting an existing cancelled
+        -- settlement back instead of a new one.
+        AND s.status <> 'cancelled'
+        AND s.voided_at IS NULL
         -- ACCT-F266 — do NOT reuse an ORPHANED bookend settlement.
         --
         -- Reuse is the point of the bookend model: one open settlement spans a driver's trip and later
@@ -617,6 +631,11 @@ export async function getActiveSettlementForDriver(
         AND operating_company_id = $2
         AND settlement_model = 'load_bookended'
         AND trip_closed_at IS NULL
+        -- ACCT-F347 — same exclusion as the reuse query in openLoadBookendedSettlement. This reader
+        -- feeds "which settlement is this driver currently on"; returning a cancelled one sends the
+        -- caller to dead paperwork just as surely as reusing it does.
+        AND status <> 'cancelled'
+        AND voided_at IS NULL
       ORDER BY created_at DESC
       LIMIT 1
     `,
