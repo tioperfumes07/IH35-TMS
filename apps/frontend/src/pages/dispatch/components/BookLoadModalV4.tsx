@@ -187,6 +187,8 @@ type Props = {
   editLoadId?: string | null;
   /** Dispatch "+ Book load" per-truck action — prefill the assigned unit when opening a fresh booking. */
   prefillUnitId?: string | null;
+  /** If the entry point already knows the driver for that unit, prefill it too. */
+  prefillDriverId?: string | null;
 };
 
 function numOrUndef(v: unknown): number | undefined {
@@ -239,7 +241,16 @@ const BOOK_LOAD_CORRECT_DESIGN_CSS = `
 [data-wizard-v5="on"] .space-y-2>*+*{margin-top:4px}
 `;
 
-export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, templatePrefillJson, editLoadId, prefillUnitId }: Props) {
+export function BookLoadModalV4({
+  open,
+  operatingCompanyId,
+  onClose,
+  onCreated,
+  templatePrefillJson,
+  editLoadId,
+  prefillUnitId,
+  prefillDriverId,
+}: Props) {
   const auth = useAuth();
   const queryClient = useQueryClient();
   const isEditMode = Boolean(editLoadId);
@@ -285,11 +296,11 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
       fuel_surcharge_cents: 0,
       accessorial_cents: 0,
       trailer_type: "dry_van",
-      assigned_unit_id: "",
+      assigned_unit_id: prefillUnitId ?? "",
       assigned_trailer_unit_id: "",
       assignment_mode: "solo",
       team_id: "",
-      assigned_primary_driver_id: "",
+      assigned_primary_driver_id: prefillDriverId ?? "",
       assigned_secondary_driver_id: "",
       temp_fahrenheit: 0,
       driver_pay_rate_per_mile: 0,
@@ -405,6 +416,11 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
     if (!open || editLoadId || !prefillUnitId) return;
     form.setValue("assigned_unit_id", prefillUnitId, { shouldDirty: true });
   }, [open, editLoadId, prefillUnitId, form]);
+
+  useEffect(() => {
+    if (!open || editLoadId || !prefillDriverId) return;
+    form.setValue("assigned_primary_driver_id", prefillDriverId, { shouldDirty: true });
+  }, [open, editLoadId, prefillDriverId, form]);
 
   // Block 7 — EDIT mode: load the existing load and prefill the wizard. form.reset(...keepDefaults)
   // marks nothing dirty, so the Save body (dirtyFields-gated) only contains what the user then changes.

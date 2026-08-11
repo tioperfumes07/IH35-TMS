@@ -80,9 +80,9 @@ describe("BookLoadModalV4", () => {
     expect(screen.getByText(/Drop rate confirmation PDF/)).toBeTruthy();
     expect(screen.getAllByText(/Expected adjustments/i).length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText(/Equipment · Driver · Trailer/i).length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText(/Stops · PC\*MILER routing/i).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText(/Stops · Miles/i).length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText(/Pre-dispatch validation/i)).toBeTruthy();
-    expect(screen.getByText(/Shortest miles \(yellow\) used for driver pay/i)).toBeTruthy();
+    expect(screen.getByText(/Enter Shortest \(driver pay\)/i)).toBeTruthy();
     await waitFor(() => {
       expect(screen.getByText(/L-20991231-0001/)).toBeTruthy();
     });
@@ -119,5 +119,26 @@ describe("BookLoadModalV4", () => {
     // dispatcher could book the load against a customer that was no longer on screen.
     await user.type(customerInput, "XYZ");
     await waitFor(() => expect(hidden()?.value).toBe(""));
+  });
+
+  it("prefills the canonical driver and unit FKs supplied by an awaiting-unit entry point", async () => {
+    render(
+      wrap(
+        <ToastProvider>
+          <BookLoadModalV4
+            open
+            operatingCompanyId="91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071"
+            prefillUnitId="395352db-7b51-4f07-8dc7-f1e2f1a321bc"
+            prefillDriverId="49427973-e93e-4ea7-a2eb-eb9eefa7f331"
+            onClose={vi.fn()}
+            onCreated={vi.fn()}
+          />
+        </ToastProvider>
+      )
+    );
+
+    await waitFor(() => expect(screen.getByTestId("deadhead-optimizer-panel")).toBeTruthy());
+    expect(screen.getByTestId("book-miles-shortest").getAttribute("required")).not.toBeNull();
+    expect(screen.queryByText("Select driver / unit / customer to run checks")).toBeNull();
   });
 });

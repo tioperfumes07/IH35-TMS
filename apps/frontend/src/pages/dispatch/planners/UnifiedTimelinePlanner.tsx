@@ -259,6 +259,7 @@ export function UnifiedTimelinePlanner() {
           open={bookOpen}
           operatingCompanyId={operatingCompanyId}
           prefillUnitId={bookUnitId}
+          prefillDriverId={rows.find((driver) => driver.unit_id === bookUnitId)?.driver_id ?? null}
           onClose={closeBook}
           onCreated={() => {
             closeBook();

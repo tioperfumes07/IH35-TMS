@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi, beforeEach } from "vitest";
@@ -11,6 +11,21 @@ vi.mock("../../api/dispatch", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../api/dispatch")>();
   return {
     ...actual,
+    listUnitsWithoutLoad: vi.fn().mockResolvedValue({
+      units: [
+        {
+          id: "unit-1",
+          unit_number: "T-1",
+          driver_id: "driver-1",
+          driver_name: "Driver One",
+          trailer_number: "TR-9",
+          location: null,
+          last_drop_at: null,
+          hours_since_last_delivery: null,
+        },
+      ],
+    }),
+    listDispatchInShopUnits: vi.fn().mockResolvedValue({ units: [] }),
     getDispatchLoadEta: vi.fn().mockResolvedValue({
       driver_lat: 30.2,
       driver_lng: -97.7,
@@ -107,8 +122,74 @@ describe("DispatchBoard ETA chip (P5-T20)", () => {
       </QueryClientProvider>
     );
 
-    const link = await screen.findByTestId("loads-customer-link");
+    const link = (await screen.findAllByTestId("loads-customer-link"))[0];
     expect(link.textContent).toContain("ACME");
     expect(link.getAttribute("href")).toBe("/customers/00000000-0000-4000-8000-0000000000cc");
+  });
+
+  it("books an awaiting-assignment unit row instead of silently ignoring the click", async () => {
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const onBookForUnit = vi.fn();
+    const onRowClick = vi.fn();
+    render(
+      <QueryClientProvider client={qc}>
+        <MemoryRouter initialEntries={["/dispatch?board=assignment"]}>
+          <ToastProvider>
+            <DispatchBoard
+              loads={[mockLoad()]}
+              totalCount={1}
+              limit={50}
+              offset={0}
+              loading={false}
+              sortField="created_at"
+              sortDirection="desc"
+              onSortChange={vi.fn()}
+              onPageChange={vi.fn()}
+              onRowClick={onRowClick}
+              onExportCsv={vi.fn()}
+              onBookForUnit={onBookForUnit}
+              operatingCompanyId="00000000-0000-4000-8000-0000000000bb"
+            />
+          </ToastProvider>
+        </MemoryRouter>
+      </QueryClientProvider>
+    );
+
+    await screen.getAllByTestId("dispatch-board-mode-assignment")[0].click();
+    const unitCell = (await screen.findAllByText("T-1"))[0];
+    fireEvent.click(unitCell.closest("tr")!);
+    expect(onBookForUnit).toHaveBeenCalledWith("unit-1");
+    expect(onRowClick).not.toHaveBeenCalled();
+  });
+
+  it("keeps an awaiting unit inert when the parent has no booking callback", async () => {
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const onRowClick = vi.fn();
+    render(
+      <QueryClientProvider client={qc}>
+        <MemoryRouter initialEntries={["/dispatch?board=assignment"]}>
+          <ToastProvider>
+            <DispatchBoard
+              loads={[mockLoad()]}
+              totalCount={1}
+              limit={50}
+              offset={0}
+              loading={false}
+              sortField="created_at"
+              sortDirection="desc"
+              onSortChange={vi.fn()}
+              onPageChange={vi.fn()}
+              onRowClick={onRowClick}
+              onExportCsv={vi.fn()}
+              operatingCompanyId="00000000-0000-4000-8000-0000000000bb"
+            />
+          </ToastProvider>
+        </MemoryRouter>
+      </QueryClientProvider>
+    );
+
+    await screen.getAllByTestId("dispatch-board-mode-assignment")[0].click();
+    fireEvent.click((await screen.findAllByText("T-1"))[0].closest("tr")!);
+    expect(onRowClick).not.toHaveBeenCalled();
   });
 });
