@@ -16,6 +16,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
 import { useListState } from "../../components/list-state";
+import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { entityLabel } from "../../lib/entity-label";
 
@@ -328,6 +329,15 @@ export function FactoringQueuePage() {
       </div>
 
       {/* Queue table — shared ParityTable (GLOBAL-COLS-01 / ACCT-R-25 Phase A adoption) */}
+      {/* CLS-LIST-ERROR-STATE-UNGUARDED: a failed query fell through to the empty state — an outage presenting as an empty factoring queue. */}
+      {queueQ.isError ? (
+        <ListErrorState
+          title="Couldn't load the factoring queue"
+          status={0}
+          message={(queueQ.error as Error)?.message}
+          onRetry={() => void queueQ.refetch()}
+        />
+      ) : (
       <ParityTable<FactoringQueueRow>
         columns={columns}
         rows={filtered}
@@ -338,6 +348,7 @@ export function FactoringQueuePage() {
         tableTestId="factoring-queue-table"
         exportFilename="factoring-queue"
       />
+      )}
 
       {filtered.length > 0 ? (
         <p className="text-right text-xs text-gray-400">

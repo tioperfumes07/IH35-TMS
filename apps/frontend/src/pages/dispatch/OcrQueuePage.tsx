@@ -8,6 +8,7 @@ import {
   type OcrIntakeQueueItem,
 } from "../../api/dispatch";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { StatusBadge } from "../../components/StatusBadge";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -198,6 +199,15 @@ export function OcrQueuePage() {
         uploads — this page is the dedicated inbox (B21-D7).
       </p>
 
+      {/* CLS-LIST-ERROR-STATE-UNGUARDED: a failed query fell through to the empty state — an outage presenting as no documents awaiting OCR. */}
+      {queueQ.isError ? (
+        <ListErrorState
+          title="Couldn't load the OCR queue"
+          status={0}
+          message={(queueQ.error as Error)?.message}
+          onRetry={() => void queueQ.refetch()}
+        />
+      ) : (
       <ParityTable<OcrRow>
         columns={columns}
         rows={items}
@@ -207,6 +217,7 @@ export function OcrQueuePage() {
         storageKey="dispatch-ocr-queue"
         rowTestId={(item) => `ocr-queue-row-${item.id}`}
       />
+      )}
 
       <BookLoadModal
         open={bookOpen}

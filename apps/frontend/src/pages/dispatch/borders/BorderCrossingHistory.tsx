@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { useQuery } from "@tanstack/react-query";
+import { ListErrorState } from "../../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { CollapsedListFilters } from "../../../components/table";
 import { formatDateTimeUS } from "../../../lib/formatDate";
@@ -37,7 +38,7 @@ export function BorderCrossingHistory() {
   const [from, setFrom] = useState(weekAgo);
   const [to, setTo] = useState(today);
 
-  const { data, isLoading } = useQuery<{ data: CrossingEvent[] }>({
+  const { data, isLoading, isError, error, refetch } = useQuery<{ data: CrossingEvent[] }>({
     queryKey: ["border-crossings-history", operatingCompanyId, from, to],
     queryFn: async () => {
       const res = await fetch(resolveApiUrl(`/api/v1/dispatch/border-crossings/history?operating_company_id=${encodeURIComponent(operatingCompanyId)}&from=${from}&to=${to}`),
@@ -114,6 +115,16 @@ export function BorderCrossingHistory() {
   return (
     <div className="p-6">
       <h1 className="text-xl font-semibold mb-4">GPS Border Crossing Events</h1>
+      {/* CLS-LIST-ERROR-STATE-UNGUARDED: a failed query fell through to the empty state — an outage
+          presenting as a unit with no border crossings, on a USMCA cross-border compliance surface. */}
+      {isError ? (
+        <ListErrorState
+          title="Couldn't load border crossings"
+          status={0}
+          message={(error as Error)?.message}
+          onRetry={() => void refetch()}
+        />
+      ) : (
       <ParityTable<CrossingEvent>
         columns={columns}
         rows={events}
@@ -124,6 +135,7 @@ export function BorderCrossingHistory() {
         exportFilename="border-crossing-gps-history"
         filterBar={filterBar}
       />
+      )}
     </div>
   );
 }
