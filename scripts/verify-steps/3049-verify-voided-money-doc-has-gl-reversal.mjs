@@ -119,7 +119,29 @@ try {
   const summary = [];
   let totalVoided = 0;
 
+  // A REACHABLE DATABASE IS NOT A MIGRATED ONE. CI's build-typecheck job hands this guard a live
+  // DATABASE_URL pointing at a fresh Postgres that has never had the accounting schema applied, so the
+  // first query died with `relation "accounting.bills" does not exist` and the guard reported FAIL —
+  // a crash dressed up as a money finding. The existing SKIP only covered "no URL" and "cannot
+  // connect"; this is the third static context and it needs the same treatment. Keyed on the oldest,
+  // most fundamental money table: if accounting.bills is absent, no migrations ran here at all.
+  const schemaProbe = await client.query(`SELECT to_regclass('accounting.bills') IS NOT NULL AS present`);
+  if (!schemaProbe.rows[0]?.present) {
+    await client.query("ROLLBACK").catch(() => {});
+    console.log(`[${LABEL}] SKIP — database reachable but the accounting schema is not present (fresh/unmigrated DB); this guard is DB-backed by design`);
+    client.release();
+    await pool.end();
+    process.exit(0);
+  }
+
   for (const doc of DOC_TYPES) {
+    // A doc type whose table is missing must be NAMED, never silently skipped — an unchecked type that
+    // reports nothing is exactly the coverage hole that let ACCT-F333 through.
+    const tbl = await client.query(`SELECT to_regclass($1) IS NOT NULL AS present`, [doc.table]);
+    if (!tbl.rows[0]?.present) {
+      summary.push(`${doc.type}: TABLE ABSENT — not checked`);
+      continue;
+    }
     const { rows } = await client.query(
       `
         SELECT
