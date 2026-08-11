@@ -2,6 +2,14 @@
   "_README": "Shipped Wave-A writers that green Matrix Box 3 Built. Updated when a Pxx task merges with guard+smoke. Live (Box 4) still requires PROD-VERIFIED ledger.",
   "entries": [
     {
+      "task": "P06",
+      "pr": "#5829",
+      "guard": "scripts/verify-steps/3072-verify-fk-on-create.mjs",
+      "modules": ["accounting", "insurance", "driver_finance"],
+      "cols": ["ap_bill", "vendor", "unit", "load", "driver", "connectivity"],
+      "leafRe": "^(bills\\.|invoices\\.|claims|settlements|driver)"
+    },
+    {
       "task": "P38",
       "pr": "#5805",
       "guard": "scripts/verify-steps/3061-verify-bill-wave-a-fk-write-path.mjs",
