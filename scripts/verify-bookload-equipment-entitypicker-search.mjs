@@ -10,6 +10,9 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-bookload-equipment-entitypicker-search";
 const FILE = "apps/frontend/src/pages/dispatch/components/BookLoadEquipmentSection.tsx";
+const MODAL_FILE = "apps/frontend/src/pages/dispatch/components/BookLoadModalV4.tsx";
+const TRIP_PAIRING_FILE = "apps/frontend/src/pages/dispatch/TripPairingBoardPage.tsx";
+const TIMELINE_FILE = "apps/frontend/src/pages/dispatch/planners/UnifiedTimelinePlanner.tsx";
 
 function readRel(root, rel) {
   const p = path.join(root, rel);
@@ -50,6 +53,20 @@ export function collectProblems(root = ROOT) {
 
   if (/limit:\s*500/.test(code)) {
     problems.push(`${FILE}: must not fetch silent limit:500 fleet page`);
+  }
+
+  const modal = readRel(root, MODAL_FILE) ?? "";
+  if (!/prefillDriverId\?:\s*string\s*\|\s*null/.test(modal)) {
+    problems.push(`${MODAL_FILE}: awaiting-unit entry points must be able to prefill the canonical driver FK`);
+  }
+  if (!/assigned_primary_driver_id:\s*prefillDriverId\s*\?\?\s*["']{2}/.test(modal)) {
+    problems.push(`${MODAL_FILE}: prefillDriverId must initialize assigned_primary_driver_id in form defaults`);
+  }
+  for (const entryFile of [TRIP_PAIRING_FILE, TIMELINE_FILE]) {
+    const entry = readRel(root, entryFile) ?? "";
+    if (!/prefillDriverId=\{/.test(entry)) {
+      problems.push(`${entryFile}: BookLoadModalV4 must receive the awaiting unit's driver FK`);
+    }
   }
 
   return problems;

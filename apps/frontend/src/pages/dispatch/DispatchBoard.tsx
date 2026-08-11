@@ -211,8 +211,8 @@ const SECTION_META: Array<{ key: string; title: string; placeholder?: string }> 
 ];
 
 // A truck-without-a-load rendered as a board row: Unit (+Driver/Trailer when known) populated, all
-// load-specific cells fall through to "—". id is prefixed "unit:" so row-click is a no-op (no load
-// to open yet). Driver/HOS populate once the roster read exposes the unit's default driver.
+// load-specific cells fall through to "—". id is prefixed "unit:"; row-click books the unit when the
+// parent passes onBookForUnit, otherwise it stays inert because there is no load drawer to open yet.
 function unitToBoardRow(unit: UnitsWithoutLoad): BoardLoad {
   return {
     id: `unit:${unit.id}`,
@@ -238,6 +238,10 @@ function inShopUnitToBoardRow(unit: DispatchInShopUnit): BoardLoad {
     status: "unassigned",
     customer_wo_number: (unit.open_wo_count ?? 0) > 0 ? `${unit.open_wo_count} open` : null,
   } as unknown as BoardLoad;
+}
+
+function unitIdFromBoardRowId(id: string) {
+  return id.startsWith("unit:") ? id.replace(/^unit:(?:inshop:)?/, "") : null;
 }
 
 function sortUnassignedFirst(loads: DispatchLoadRow[]) {
@@ -1028,11 +1032,16 @@ export function DispatchBoard({
                           ) : null}
                           {rows.map((load) => {
                             const boardLoad = readBoardLoad(load);
+                            const unitId = unitIdFromBoardRowId(load.id);
+                            const onUnitBook = unitId && onBookForUnit ? () => onBookForUnit(unitId) : undefined;
                             return (
                               <Fragment key={load.id}>
                                 <tr
-                                  onClick={() => { if (!String(load.id).startsWith("unit:")) onRowClick(load.id); }}
-                                  className={`border-b border-gray-100 hover:bg-gray-50 ${String(load.id).startsWith("unit:") ? "" : "cursor-pointer"}`}
+                                  onClick={() => {
+                                    if (onUnitBook) onUnitBook();
+                                    else if (!unitId) onRowClick(load.id);
+                                  }}
+                                  className={`border-b border-gray-100 hover:bg-gray-50 ${onUnitBook || !unitId ? "cursor-pointer" : ""}`}
                                 >
                                   <td className="px-2 py-1" onClick={(event: { stopPropagation(): void }) => event.stopPropagation()}>
                                     <input

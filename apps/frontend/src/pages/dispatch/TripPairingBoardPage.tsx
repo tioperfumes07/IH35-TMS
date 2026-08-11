@@ -352,6 +352,7 @@ export function TripPairingBoardPage() {
           open={Boolean(bookUnitId)}
           operatingCompanyId={companyId}
           prefillUnitId={bookUnitId}
+          prefillDriverId={unbooked.find((u) => u.unit_id === bookUnitId)?.driver_id ?? null}
           onClose={() => setBookUnitId(null)}
           onCreated={() => {
             setBookUnitId(null);
