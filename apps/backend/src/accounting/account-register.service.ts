@@ -212,6 +212,9 @@ export async function getAccountRegister(
        FROM accounting.journal_entry_postings p
        JOIN accounting.journal_entries je
          ON je.id = p.journal_entry_uuid AND je.operating_company_id = p.operating_company_id
+       -- ACCT-F350 — the entry this one reverses, for the LIFO unwind ordering documented at ORDER BY.
+       LEFT JOIN accounting.journal_entries orig
+         ON orig.id = je.reverses_je_id AND orig.operating_company_id = je.operating_company_id
        LEFT JOIN catalogs.classes cls ON cls.id = p.class_id
        LEFT JOIN accounting.bills b
          ON p.source_transaction_type = 'bill' AND b.id::text = p.source_transaction_id
@@ -256,7 +259,28 @@ export async function getAccountRegister(
       -- je.created_at is the ledger's own record of document order (populated on all 1,919 entries; there
       -- is no document-sequence column), je.id breaks exact ties deterministically, and line_sequence then
       -- orders the lines WITHIN one entry, which is what it was always for.
-      ORDER BY je.entry_date ASC, je.created_at ASC, je.id ASC, p.line_sequence ASC, p.created_at ASC`,
+      -- ACCT-F350 — WITHIN A DATE: ORIGINALS IN RECORDING ORDER, THEN THEIR REVERSALS LIFO.
+      --
+      -- A reversal is back-dated onto the ORIGINAL entry's date whenever that period is still open
+      -- (resolveReversalDate — deliberate, matches QuickBooks, 4 tests pin it). So one date legitimately
+      -- holds a document AND its unwind, recorded days apart. Ordering those purely by recording time
+      -- interleaves an unwind into the middle of still-live documents, and the running balance then shows
+      -- a state that never existed.
+      --
+      -- Measured on prod 2026-08-11 — USMCA A/P (2000) on 2026-08-06: bill CC3-VOIDTEST-20260807-01
+      -- (+8,877) had two payments (−3,340, −1,260); its VOID reversal was recorded 02:12:56 but the second
+      -- payment's reversal only at 18:51, so the bill's liability was removed while a payment against it
+      -- was still standing — A/P read **−3,340**, a negative accounts payable.
+      --
+      -- Unwinding is last-in-first-out: you cannot un-bill something while a payment against it stands.
+      -- Ordering originals by recording order (a payment is never recorded before its bill) and then their
+      -- reversals by the ORIGINAL's recording order DESCENDING replays the unwind as an unwind, so the
+      -- balance cannot pass through a state the books were never in. The net for the date is unchanged —
+      -- this reorders presentation only, and the closing balance still ties to fn_account_balances_as_of.
+      ORDER BY je.entry_date ASC,
+               (je.reverses_je_id IS NOT NULL) ASC,
+               CASE WHEN je.reverses_je_id IS NOT NULL THEN orig.created_at END DESC NULLS LAST,
+               je.created_at ASC, je.id ASC, p.line_sequence ASC, p.created_at ASC`,
     params
   );
   const postings: RawPosting[] = res.rows.map((r) => ({ ...r, amount_cents: Number(r.amount_cents) }));
