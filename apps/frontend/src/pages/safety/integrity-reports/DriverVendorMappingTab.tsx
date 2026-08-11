@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { resolveApiUrl } from "../../../api/client";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
+import { ListErrorState } from "../../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { useToast } from "../../../components/Toast";
 
@@ -96,6 +97,16 @@ export function DriverVendorMappingTab() {
       >
         Run scan
       </button>
+      {/* CLS-LIST-ERROR-STATE-UNGUARDED: a failed query fell through to emptyText "No drift findings." — an outage presenting as a
+          clean driver-to-vendor mapping, which is exactly the integrity claim this tab exists to test. */}
+      {query.isError ? (
+        <ListErrorState
+          title="Couldn't load driver-vendor mapping drift"
+          status={0}
+          message={(query.error as Error)?.message}
+          onRetry={() => void query.refetch()}
+        />
+      ) : (
       <ParityTable<FindingRow>
         columns={columns}
         rows={rows}
@@ -106,6 +117,7 @@ export function DriverVendorMappingTab() {
         exportFilename="driver-vendor-mapping-findings"
         tableTestId="driver-vendor-mapping-tab-table"
       />
+      )}
     </div>
   );
 }

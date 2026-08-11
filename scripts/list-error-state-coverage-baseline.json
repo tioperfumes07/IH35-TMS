@@ -1,5 +1,5 @@
 {
-  "note": "Discovered list pages (useQuery + renders a table) with NO error branch. May only SHRINK. Generated 2026-08-11.",
+  "note": "Discovered list pages (useQuery + renders a table) with NO error branch. May only SHRINK. Safety is DRAINED and locked at zero (see DRAINED_MODULES in the guard). Generated 2026-08-11.",
   "offenders": [
     "apps/frontend/src/pages/Documents.tsx",
     "apps/frontend/src/pages/banking/components/forms/BillPaymentForm.tsx",
@@ -31,9 +31,6 @@
     "apps/frontend/src/pages/reports/ifta/IFTAStepGallons.tsx",
     "apps/frontend/src/pages/reports/ifta/IFTAStepMiles.tsx",
     "apps/frontend/src/pages/reports/ifta/IFTAStepTax.tsx",
-    "apps/frontend/src/pages/safety/components/CargoClaimIntakeSurface.tsx",
-    "apps/frontend/src/pages/safety/driver-scoring/DriverScoringTab.tsx",
-    "apps/frontend/src/pages/safety/integrity-reports/DriverVendorMappingTab.tsx",
     "apps/frontend/src/pages/vendors/VendorsListView.tsx"
   ]
 }

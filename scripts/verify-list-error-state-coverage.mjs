@@ -183,6 +183,27 @@ function ratchet() {
       `discovered offender count rose ${baseline.size} -> ${discovered.length}. The baseline may only SHRINK.`
     );
   }
+
+  /**
+   * DRAINED MODULES ARE LOCKED AT ZERO — a ratchet alone does not protect a finished module.
+   *
+   * Safety reached 0 offenders on 2026-08-11 (14 pages drained across three PRs). Under the global
+   * count-may-only-shrink rule, a NEW un-guarded Safety page could still land as long as some other
+   * module drained one in the same window — the total would not rise, and the regression would be
+   * invisible. On compliance surfaces that is the whole defect coming back: an outage rendering as
+   * "no violations". A module that reaches zero is therefore pinned at zero, independently of the
+   * global count. Add a module here the moment it drains; never remove one to make a build pass.
+   */
+  const DRAINED_MODULES = ["apps/frontend/src/pages/safety/"];
+  for (const prefix of DRAINED_MODULES) {
+    const regressed = discovered.filter((f) => f.startsWith(prefix));
+    if (regressed.length) {
+      failures.push(
+        `${prefix} is a DRAINED module and must stay at zero — ${regressed.length} un-guarded list ` +
+          `page(s) reappeared:\n    ` + regressed.join("\n    ")
+      );
+    }
+  }
   return failures;
 }
 

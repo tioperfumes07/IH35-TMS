@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { listDriverSafetyPeriodScores, type DriverSafetyScoreRow } from "../../../api/safety";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { DriverScoreDetail } from "./DriverScoreDetail";
+import { ListErrorState } from "../../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 
 type PeriodPreset = "week" | "month" | "quarter";
@@ -90,6 +91,16 @@ export function DriverScoringTab() {
         </div>
       </div>
 
+      {/* CLS-LIST-ERROR-STATE-UNGUARDED: a failed query fell through to emptyText about weekly aggregation — an outage presenting
+          as "scores not computed yet", which hides a real reporting failure behind a normal-sounding wait. */}
+      {leaderboardQuery.isError ? (
+        <ListErrorState
+          title="Couldn't load driver scores"
+          status={0}
+          message={(leaderboardQuery.error as Error)?.message}
+          onRetry={() => void leaderboardQuery.refetch()}
+        />
+      ) : (
       <ParityTable<DriverSafetyScoreRow>
         columns={columns}
         rows={rows}
@@ -114,6 +125,7 @@ export function DriverScoringTab() {
           </div>
         }
       />
+      )}
 
       {selectedDriver ? (
         <DriverScoreDetail
