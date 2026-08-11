@@ -482,7 +482,7 @@ export function voidInvoice(id: string, operatingCompanyId: string, reason?: str
 export function voidExpense(id: string, operatingCompanyId: string, reason: string) {
   return apiRequest<{ id: string; voided_at: string | null; reversed_by_je_id: string | null }>(
     withCompany(`/api/v1/expenses/${id}/void`, operatingCompanyId),
-    { method: "POST", body: { reason } }
+    { method: "POST", body: { operating_company_id: operatingCompanyId, reason } }
   );
 }
 
