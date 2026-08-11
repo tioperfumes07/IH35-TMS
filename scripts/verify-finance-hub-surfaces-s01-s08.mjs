@@ -49,6 +49,9 @@ export function run() {
   if (!/Finance Hub is not enabled for this entity/.test(hub)) failures.push("FinanceHubPage: missing disabled gate message");
   if (!/getFinanceHubOverview\s*\(/.test(hub)) failures.push("FinanceHubPage: must fetch finance hub overview");
   if (!/operating_company_id:\s*companyId/.test(hub)) failures.push("FinanceHubPage: must pass operating_company_id");
+  if (!/overviewQuery\.isError[\s\S]*?<ListErrorState[\s\S]*?overviewQuery\.refetch\(\)/.test(hub)) {
+    failures.push("FinanceHubPage: overview query failures must render a retryable ListErrorState");
+  }
 
   if (!/future module|not yet built|placeholder/i.test(overview)) failures.push("FinanceOverviewPage: must label itself as a future/placeholder module");
 
