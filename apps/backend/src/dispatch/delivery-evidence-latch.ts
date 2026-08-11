@@ -36,6 +36,9 @@
 import { postLoadRevenueLatch } from "../accounting/revrec-delivery-posting/poster.service.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
 import { enqueueAfterCommit } from "../lib/after-commit.js";
+import { convertProformaToOfficial } from "../accounting/proforma-convert.service.js";
+import { sendDraftInvoice } from "../accounting/invoice-send.service.js";
+import { isEnabled } from "../lib/feature-flags/service.js";
 
 /**
  * Load statuses that constitute delivery evidence. Kept in ONE place so the driver paths and the
@@ -46,6 +49,17 @@ const DELIVERY_EVIDENCE_STATUSES = new Set(["delivered_pending_docs", "completed
 export function isDeliveryEvidenceStatus(status: string): boolean {
   return DELIVERY_EVIDENCE_STATUSES.has(status);
 }
+
+/**
+ * The caller's transaction client. Used as the after-commit queue key AND (ACCT-F351) to run the
+ * proforma conversion + send on the caller's own transaction. Typed structurally so a caller outside a
+ * managed transaction, or a test double without `query`, still works — the invoice half is skipped
+ * rather than crashing a delivery capture.
+ */
+type QueryableClient = {
+  query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }>;
+};
+export type LatchClient = object | QueryableClient;
 
 export type DeliveryEvidenceLatchInput = {
   operatingCompanyId: string;
@@ -76,7 +90,64 @@ async function firePostLoadRevenueLatch(input: DeliveryEvidenceLatchInput): Prom
 }
 
 /**
- * Fire the revenue latch for a load that just reached a delivery-evidence status.
+ * ACCT-F351 — REVENUE AND THE RECEIVABLE MUST BE WIRED TO THE SAME EVENT.
+ *
+ * The revenue latch was extracted into this helper precisely because five delivery paths existed and
+ * only one of them recognized revenue. The INVOICE half was never given the same treatment: the
+ * proforma -> draft conversion + auto-send lived INLINE in `dispatch/loads.routes.ts` and had exactly
+ * ONE caller, while `latchOnDeliveryEvidence` had five. So on the four other paths — including BOTH
+ * driver-PWA capture paths, which is where a delivery is actually performed — the load reached a
+ * delivery-evidence status, revenue was recognized, and the customer invoice was never converted and
+ * never sent. Freight the books had already earned had no receivable to collect against.
+ *
+ * That is the CLS-DISP-WIRE-07 defect exactly, one layer up, and the same rule fixes it: ONE HELPER,
+ * NOT FIVE COPIES. Coupling the two into a single call is deliberate — recognizing revenue and
+ * raising the receivable are two halves of one event, and anything that can drift will.
+ *
+ * Runs INLINE on the caller's transaction (unlike the latch, which must wait for COMMIT): the
+ * conversion is a plain UPDATE on rows the caller already owns, and the office path has always done
+ * it this way. Swallow-and-log matches the latch: a failure here must never 500 a driver's
+ * "I delivered" tap — losing the delivery capture is worse than deferring the invoice.
+ */
+async function convertAndSendInvoiceOnDelivery(
+  client: LatchClient,
+  input: DeliveryEvidenceLatchInput
+): Promise<void> {
+  if (typeof (client as QueryableClient).query !== "function") return;
+  const db = client as QueryableClient;
+  try {
+    const pipelineOn = await isEnabled(db as never, "INVOICE_PROFORMA_PIPELINE_ENABLED", {
+      operating_company_id: input.operatingCompanyId,
+      user_uuid: input.actorUserId,
+    });
+    if (!pipelineOn) return;
+
+    const converted = await convertProformaToOfficial(db as never, {
+      operatingCompanyId: input.operatingCompanyId,
+      loadId: input.loadId,
+      userId: input.actorUserId,
+    });
+    if (!converted.converted || !converted.invoiceId) return;
+
+    const sent = await sendDraftInvoice(db as never, {
+      invoiceId: converted.invoiceId,
+      operatingCompanyId: input.operatingCompanyId,
+      userId: input.actorUserId,
+    });
+    if (!sent.ok) {
+      console.warn(
+        { load_id: input.loadId, invoice_id: converted.invoiceId, error: sent.error },
+        "acct_f351_auto_send_after_delivery_failed"
+      );
+    }
+  } catch (err) {
+    console.warn({ err, load_id: input.loadId }, "acct_f351_proforma_convert_failed");
+  }
+}
+
+/**
+ * Fire the revenue latch for a load that just reached a delivery-evidence status, and raise the
+ * receivable for the same event (ACCT-F351).
  * No-op for any other status. Never throws — see the swallow-and-log note above.
  *
  * @param client the transaction client the caller is writing on. Used ONLY as the after-commit
@@ -88,10 +159,13 @@ async function firePostLoadRevenueLatch(input: DeliveryEvidenceLatchInput): Prom
  *          "skipped" when the status is not delivery evidence.
  */
 export async function latchOnDeliveryEvidence(
-  client: object,
+  client: LatchClient,
   input: DeliveryEvidenceLatchInput
 ): Promise<"deferred" | "fired" | "skipped"> {
   if (!isDeliveryEvidenceStatus(input.targetStatus)) return "skipped";
+  // ACCT-F351 — raise the receivable in the caller's transaction, BEFORE queueing the revenue latch,
+  // so no delivery path can recognize revenue without also invoicing the customer.
+  await convertAndSendInvoiceOnDelivery(client, input);
   const queued = enqueueAfterCommit(client, {
     label: `revrec-latch:${input.loadId}:${input.targetStatus}`,
     run: () => firePostLoadRevenueLatch(input),
