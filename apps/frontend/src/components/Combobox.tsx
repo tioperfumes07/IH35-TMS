@@ -219,19 +219,34 @@ export function Combobox({
     };
   }, [open]);
 
+  function closeListbox() {
+    setOpen(false);
+    setQuery("");
+    setActiveIndex(-1);
+  }
+
   useEffect(() => {
     function onDocumentClick(event: MouseEvent) {
       const target = event.target as Node | null;
       if (!target) return;
       if (containerRef.current?.contains(target)) return;
       if (listboxRef.current?.contains(target)) return;
-      setOpen(false);
-      setQuery("");
-      setActiveIndex(-1);
+      closeListbox();
     }
     document.addEventListener("mousedown", onDocumentClick);
     return () => document.removeEventListener("mousedown", onDocumentClick);
   }, []);
+
+  function handleInputBlur() {
+    // Tab/click to another control must dismiss the portal listbox — mousedown-only left Payment Terms
+    // (and every other Combobox) open until a row was picked. Defer so list option mousedown can commit.
+    window.setTimeout(() => {
+      const active = document.activeElement;
+      if (containerRef.current?.contains(active)) return;
+      if (listboxRef.current?.contains(active)) return;
+      closeListbox();
+    }, 0);
+  }
 
   // Single-open coordinator (app-wide): only one Combobox stays open at a time. When this one
   // opens it broadcasts its id; every other currently-open Combobox (which has a live listener
@@ -241,9 +256,7 @@ export function Combobox({
     function onOtherOpen(event: Event) {
       const openedId = (event as CustomEvent<string>).detail;
       if (openedId !== listboxId) {
-        setOpen(false);
-        setQuery("");
-        setActiveIndex(-1);
+        closeListbox();
       }
     }
     window.addEventListener("ih35:combobox-open", onOtherOpen);
@@ -263,9 +276,7 @@ export function Combobox({
 
   function commitSelection(nextValue: string | null) {
     onChange(nextValue);
-    setOpen(false);
-    setQuery("");
-    setActiveIndex(-1);
+    closeListbox();
   }
 
   function handleKeyDown(event: KeyboardEvent<HTMLInputElement>) {
@@ -297,8 +308,7 @@ export function Combobox({
       // Add row is index 0 when showAddNew; options are at 1..n.
       if (showAddNew && activeIndex === 0) {
         allowAddNew!.onAdd(query.trim());
-        setOpen(false);
-        setQuery("");
+        closeListbox();
         return;
       }
       const optionIndex = showAddNew ? activeIndex - 1 : activeIndex;
@@ -310,9 +320,7 @@ export function Combobox({
     if (event.key === "Escape") {
       event.preventDefault();
       event.stopPropagation();
-      setOpen(false);
-      setQuery("");
-      setActiveIndex(-1);
+      closeListbox();
     }
   }
 
@@ -342,8 +350,7 @@ export function Combobox({
                 onMouseDown={(event) => event.preventDefault()}
                 onClick={() => {
                   allowAddNew.onAdd(query.trim());
-                  setOpen(false);
-                  setQuery("");
+                  closeListbox();
                 }}
                 onMouseEnter={() => setActiveIndex(0)}
                 className={`w-full border-b border-gray-100 px-2 py-1.5 text-left text-[13px] font-medium ${
@@ -435,6 +442,7 @@ export function Combobox({
               setQuery("");
             }
           }}
+          onBlur={handleInputBlur}
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
           disabled={disabled}

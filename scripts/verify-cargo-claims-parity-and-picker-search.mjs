@@ -74,6 +74,11 @@ export function assertCargoParityAndPickerSearch(sources) {
       `${COMBOBOX}: onSearch path still slices to MAX_VISIBLE_OPTIONS — server-returned roster is truncated in the UI with no notice.`
     );
   }
+  if (!/onBlur=\{handleInputBlur\}/.test(src[COMBOBOX]) || !/function handleInputBlur/.test(src[COMBOBOX])) {
+    problems.push(
+      `${COMBOBOX}: Combobox must close its portal list on blur/tab-away — otherwise Payment Terms (and every picker) stays open until a row is picked.`
+    );
+  }
 
   // F31 — unit/load: EntityPicker (registry server search) OR legacy Combobox+*Search state.
   // EntityPicker supersedes local unitSearch/loadSearch; vendor remains Combobox+vendorSearch.
