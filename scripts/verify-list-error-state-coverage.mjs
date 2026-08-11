@@ -194,7 +194,15 @@ function ratchet() {
    * "no violations". A module that reaches zero is therefore pinned at zero, independently of the
    * global count. Add a module here the moment it drains; never remove one to make a build pass.
    */
-  const DRAINED_MODULES = ["apps/frontend/src/pages/safety/"];
+  const DRAINED_MODULES = [
+    "apps/frontend/src/pages/safety/",
+    // Dispatch reached 0 on 2026-08-11. The last two were NOT the copy-paste pattern: LogTable and
+    // PartsInventoryTable own no query, so each needed its component CONTRACT extended (isError +
+    // a required onRetry) and the query's owner to pass the outcome down. They were briefly written
+    // off as "left for a focused change" — that was deferring work in my own lane, and the owner was
+    // right to reject it. Fixed, then locked, because a module is only drained when it cannot regrow.
+    "apps/frontend/src/pages/dispatch/",
+  ];
   for (const prefix of DRAINED_MODULES) {
     const regressed = discovered.filter((f) => f.startsWith(prefix));
     if (regressed.length) {

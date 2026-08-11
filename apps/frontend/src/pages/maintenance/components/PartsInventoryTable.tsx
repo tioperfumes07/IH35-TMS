@@ -10,6 +10,7 @@ import { vendorReferenceOption } from "../../../components/parity/referenceOptio
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
+import { ListErrorState } from "../../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { capNotice, listCapInfo } from "../../../lib/list-cap";
 
@@ -23,6 +24,15 @@ type Props = {
   rows: PartsInventoryRow[];
   /** MAINT-S19 — ParityTable emptyText only when settled. */
   loading?: boolean;
+  // CLS-LIST-ERROR-STATE-UNGUARDED. This component owns no query — the parent does — so it could not
+  // know a fetch had failed and rendered its empty state instead, i.e. "no parts in inventory" when the
+  // truth was "we could not ask". The contract is extended the same way `loading` already is: the owner
+  // of the query passes the outcome down. Threading two more props is the ROOT fix; special-casing the
+  // empty text inside this component would have been the patch.
+  isError?: boolean;
+  // REQUIRED, not optional: ListErrorState needs a retry, and an error state you cannot retry is a
+  // dead end. Making it optional would have let a future caller wire isError without a way out.
+  onRetry: () => void;
 };
 
 type PurchaseForm = {
@@ -43,7 +53,7 @@ const EMPTY_PURCHASE: PurchaseForm = {
   location: "",
 };
 
-export function PartsInventoryTable({ companyId, rows, loading = false }: Props) {
+export function PartsInventoryTable({ companyId, rows, loading = false, isError = false, onRetry }: Props) {
   const queryClient = useQueryClient();
   const [openPurchase, setOpenPurchase] = useState(false);
   const [search, setSearch] = useState("");
@@ -161,6 +171,14 @@ export function PartsInventoryTable({ companyId, rows, loading = false }: Props)
         <Button size="sm" onClick={() => setOpenPurchase(true)}>+ Record Purchase</Button>
       </div>
 
+      {isError ? (
+        <ListErrorState
+          title="Couldn't load parts inventory"
+          status={0}
+          message={undefined}
+          onRetry={onRetry}
+        />
+      ) : (
       <ParityTable<PartsInventoryRow>
         columns={columns}
         rows={filteredRows}
@@ -179,6 +197,7 @@ export function PartsInventoryTable({ companyId, rows, loading = false }: Props)
           />
         }
       />
+      )}
 
       <Modal open={openPurchase} onClose={() => setOpenPurchase(false)} title="Record Purchase">
         <div className="space-y-2">

@@ -11,6 +11,7 @@ import {
 import { listCustomers } from "../../api/mdata";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
+import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { EntityLink } from "../../components/shared/EntityLink";
@@ -80,7 +81,32 @@ const LOG_COLUMNS: Array<ParityColumn<CustomerNotifyLogEntry>> = [
   },
 ];
 
-function LogTable({ entries, loading }: { entries: CustomerNotifyLogEntry[]; loading?: boolean }) {
+// CLS-LIST-ERROR-STATE-UNGUARDED. LogTable owns no query — the page does — so it could not know a
+// fetch had failed and rendered "No delivery confirmations logged yet." instead. On a customer-notify
+// log that is a claim the carrier never notified anyone, when the truth is that we could not ask.
+// The contract is extended the same way `loading` already is: the query's owner passes the outcome
+// down. onRetry is REQUIRED, not optional — an error state you cannot retry is a dead end.
+function LogTable({
+  entries,
+  loading,
+  isError = false,
+  onRetry,
+}: {
+  entries: CustomerNotifyLogEntry[];
+  loading?: boolean;
+  isError?: boolean;
+  onRetry: () => void;
+}) {
+  if (isError) {
+    return (
+      <ListErrorState
+        title="Couldn't load the notification log"
+        status={0}
+        message={undefined}
+        onRetry={onRetry}
+      />
+    );
+  }
   return (
     <ParityTable<CustomerNotifyLogEntry>
       columns={LOG_COLUMNS}
@@ -228,7 +254,12 @@ export function NotifyPreferencesPage() {
 
       <div className="mt-8">
         <h2 className="mb-3 font-semibold">Delivery log</h2>
-        <LogTable entries={logQuery.data?.entries ?? []} loading={logQuery.isLoading} />
+        <LogTable
+          entries={logQuery.data?.entries ?? []}
+          loading={logQuery.isLoading}
+          isError={logQuery.isError}
+          onRetry={() => void logQuery.refetch()}
+        />
       </div>
     </div>
   );

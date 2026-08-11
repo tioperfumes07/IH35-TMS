@@ -432,6 +432,8 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
               partsInventoryRowsQuery.isPending ||
               (partsInventoryRowsQuery.isFetching && (partsInventoryRowsQuery.data?.length ?? 0) === 0)
             }
+            isError={partsInventoryRowsQuery.isError}
+            onRetry={() => void partsInventoryRowsQuery.refetch()}
           />
           <div className="rounded-sm border border-gray-200 bg-white p-3">
             <div className="mb-2 flex items-center justify-between">
