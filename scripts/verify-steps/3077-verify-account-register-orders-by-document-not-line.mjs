@@ -108,19 +108,22 @@ if (process.argv.includes("--selftest")) {
     }
   };
 
-  // Exactly the pre-fix ORDER BY.
-  mutate(
-    "regress to line_sequence-first ordering",
-    "ORDER BY je.entry_date ASC, je.created_at ASC, je.id ASC, p.line_sequence ASC, p.created_at ASC",
-    "ORDER BY je.entry_date ASC, p.line_sequence ASC, p.created_at ASC",
-    "FIRST tiebreaker after entry_date"
-  );
+  // ACCT-F350 added the LIFO-unwind keys ahead of the document key, so these anchors track the CURRENT
+  // ORDER BY tail. A guard whose mutation no longer applies reports PASS while proving nothing — the
+  // "guard that cannot go green after its own repair" failure. The `mutate` helper fails loud on a
+  // missing anchor for exactly that reason.
+  const TAIL = "je.created_at ASC, je.id ASC, p.line_sequence ASC, p.created_at ASC";
+
+  // Exactly the pre-ACCT-F349 ordering: line position as the first tiebreaker after the date.
+  // Dropping the tail removes je.created_at AND je.id, which IS the pre-ACCT-F349 state: no document-level
+  // key at all, so entries sharing a date fall back to line position.
+  mutate("regress to line_sequence-first ordering", TAIL, "p.line_sequence ASC, p.created_at ASC", "NO document-level key");
 
   // Document key present but ranked after the line — the subtler regression.
   mutate(
     "document key demoted below line_sequence",
-    "ORDER BY je.entry_date ASC, je.created_at ASC, je.id ASC, p.line_sequence ASC, p.created_at ASC",
-    "ORDER BY je.entry_date ASC, p.line_sequence ASC, je.created_at ASC, je.id ASC, p.created_at ASC",
+    TAIL,
+    "p.line_sequence ASC, je.created_at ASC, je.id ASC, p.created_at ASC",
     "BEFORE the document key"
   );
 
