@@ -2171,7 +2171,31 @@ export async function voidBillPaymentInClientTx(
     // settlement-bill-payment-posting.service.ts pass exactly these values already (true for the cash
     // payment, false for the deduction), so this changes nothing for them — it only stops the next
     // caller from having to know, which is how the UI void path came to reverse nothing at all.
-    const reversePostedGl = input.reversePostedGl ?? payment.settlement_deduction_noncash !== true;
+    const reversePostedGlIntent = input.reversePostedGl ?? payment.settlement_deduction_noncash !== true;
+
+    // ACCT-F327 — intent is not existence. The line above assumes any non-deduction payment HAS a
+    // posted batch, but a payment written while BILL_PAYMENT_GL_POSTING_ENABLED was OFF (or whose
+    // post failed and was surfaced as unposted) has none, and the posting engine then throws
+    // SOURCE_NOT_FOUND "No posted batch found to reverse" — so the payment could NEVER be voided, and
+    // the bill it paid could never be voided either, permanently. Found executing the owner's
+    // void-all: 2 payments blocked 2 bills with was_posted=false confirmed on prod.
+    // Reverse when a posting actually EXISTS; skip only when there is genuinely nothing to reverse.
+    // This is deliberately NOT a try/catch around the reversal: swallowing SOURCE_NOT_FOUND would also
+    // swallow a real reversal failure on a payment that IS posted, which is the silent-GL-loss case.
+    const postedBatchRes = await client.query<{ exists: boolean }>(
+      `
+        SELECT EXISTS (
+          SELECT 1
+          FROM accounting.journal_entry_postings
+          WHERE operating_company_id = $1
+            AND source_transaction_type = 'bill_payment'
+            AND source_transaction_id = $2::text
+        ) AS exists
+      `,
+      [input.operatingCompanyId, input.paymentId]
+    );
+    const hasPostedBatch = Boolean(postedBatchRes.rows[0]?.exists);
+    const reversePostedGl = reversePostedGlIntent && hasPostedBatch;
 
     const reversal = reversePostedGl
       ? await reversePostedSourceTransactionInClientTx(
