@@ -4,6 +4,7 @@ import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery } from "@tanstack/react-query";
 import { getSafetyDvirSubmissions } from "../../api/safety";
 import { useListState } from "../../components/list-state";
+import { ListErrorState } from "../../components/ListErrorState";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
@@ -91,6 +92,18 @@ export function IdvrPage({ operatingCompanyId }: Props) {
         </div>
       </div>
 
+      {/* CLS-LIST-ERROR-STATE-UNGUARDED: this page computed listState and then threw the error away —
+          only `loading` reached ParityTable, which has no error branch, so a failed query fell through
+          to emptyText "No DVIR submissions found for the selected filters." On a DVIR queue that reads
+          as "no defects reported", which is the opposite of the truth and blocks nothing downstream. */}
+      {listState.isError ? (
+        <ListErrorState
+          title="Couldn't load DVIR submissions"
+          status={0}
+          message={(listQuery.error as Error)?.message}
+          onRetry={() => void listQuery.refetch()}
+        />
+      ) : (
       <ParityTable<DvirRow>
         columns={columns}
         rows={rows}
@@ -158,6 +171,7 @@ export function IdvrPage({ operatingCompanyId }: Props) {
           </div>
         }
       />
+      )}
     </div>
   );
 }

@@ -11,6 +11,7 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityPicker } from "../../components/parity/EntityPicker";
 import { entityLabel } from "../../lib/entity-label";
+import { ListErrorState } from "../../components/ListErrorState";
 
 type AccidentRow = Record<string, unknown>;
 
@@ -188,6 +189,17 @@ export function AccidentsPage({ operatingCompanyId }: Props) {
         </Button>
       </div>
 
+      {/* CLS-LIST-ERROR-STATE-UNGUARDED: a failed query fell through to emptyText
+          "No accident reports found." On an accident register that reads as a clean safety record —
+          the outage and the all-clear are indistinguishable to a safety manager. */}
+      {accidentsQuery.isError ? (
+        <ListErrorState
+          title="Couldn't load accident reports"
+          status={0}
+          message={(accidentsQuery.error as Error)?.message}
+          onRetry={() => void accidentsQuery.refetch()}
+        />
+      ) : (
       <ParityTable<AccidentRow>
         columns={columns}
         rows={rows}
@@ -250,6 +262,7 @@ export function AccidentsPage({ operatingCompanyId }: Props) {
           </div>
         }
       />
+      )}
 
       <AccidentReportDrawer
         open={drawerOpen}
