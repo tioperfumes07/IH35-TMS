@@ -1113,7 +1113,7 @@
     "exceljs": "4.4.0",
     "fastify": "^5.10.0",
     "handlebars": "^4.7.9",
-    "ioredis": "^5.10.1",
+    "ioredis": "^6.0.0",
     "jsonwebtoken": "^9.0.3",
     "lucia": "3.2.2",
     "luxon": "^3.5.0",
