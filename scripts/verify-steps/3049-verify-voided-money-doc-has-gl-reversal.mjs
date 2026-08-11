@@ -72,6 +72,26 @@ const DOC_TYPES = [
   { table: "accounting.prepaid_assets", type: "prepaid_purchase", voided: "voided_at IS NOT NULL OR status = 'voided'" },
   { table: "banking.transfers", type: "transfer", voided: "revoked_at IS NOT NULL" },
   { table: "accounting.fixed_assets", type: "fixed_asset_depreciation", voided: "voided_at IS NOT NULL OR status = 'void'" },
+  /**
+   * ACCT-F336 — added BEFORE the defect, not after, because the exposure is dated.
+   *
+   * banking.bank_transactions.voided_at has exactly ONE writer in the codebase (bank-tx-dedup.ts:115,
+   * `voided_at = COALESCE(voided_at, now())`). It is a direct status flip: it does not call the
+   * canonical reverser, so a voided bank transaction that HAS bank_categorization postings would leave
+   * its DR expense / CR bank standing — ACCT-F330 and ACCT-F333 reproduced a third time.
+   *
+   * On prod today: 24 voided bank transactions on USMCA, 0 of them with GL postings. That zero is
+   * VACUOUS — it proves the path has never been exercised, not that it is safe. The F-19 prove-chain
+   * row (94d30341) now carries a real posted JE and is scheduled to be voided, which makes it the
+   * FIRST voided bank transaction ever to hold GL postings. The safe route is undo-categorization
+   * (banking.routes.ts → reverseJournalEntryNoFlip, and POSTING_ENGINE_SUPPORTS_REPOST is true so its
+   * fail-closed branch does not fire); a direct voided_at flip is the unsafe one. This entry is the
+   * ratchet that catches the unsafe route the moment anyone takes it.
+   *
+   * Mutation-proven on prod inside a rolled-back txn: baseline 24 voided / 0 missing; after flipping
+   * voided_at on the F-19 row it reported 25 voided / 1 missing.
+   */
+  { table: "banking.bank_transactions", type: "bank_categorization", voided: "voided_at IS NOT NULL" },
 ];
 
 /**
@@ -80,13 +100,18 @@ const DOC_TYPES = [
  * - driver_advance (driver_finance.driver_advances): the table has NO void predicate at all — only
  *   `status`, whose sole value on prod is 'outstanding'. There is nothing to check yet; adding it
  *   would contribute a permanent 0 that LOOKS like coverage. Revisit when a void path exists.
- * - fuel_event / bank_categorization: high-volume automatic feeds, not voidable money documents.
+ * - fuel_event: high-volume automatic feed with no void predicate on its source row.
  * - loan_payment: single doc, amortization-row sourced; its void semantics are not yet settled.
+ *
+ * bank_categorization WAS excluded here as "a high-volume automatic feed, not a voidable money
+ * document". That reasoning was wrong on the second half: banking.bank_transactions carries voided_at
+ * and 24 USMCA rows already have it set. It is now covered (ACCT-F336).
  *
  * Every type in DOC_TYPES had its id-space verified against prod before being added: each distinct
  * source_transaction_id for that type resolves to a row in the named table (prepaid_purchase 2/2,
- * transfer 4/4, fixed_asset_depreciation 1/1, bill_payment 6/6). A doc type whose ids do NOT match
- * its table joins to nothing and reports a clean 0 forever — coverage theatre, not coverage.
+ * transfer 4/4, fixed_asset_depreciation 1/1, bill_payment 6/6, bank_categorization 175/175). A doc
+ * type whose ids do NOT match its table joins to nothing and reports a clean 0 forever — coverage
+ * theatre, not coverage.
  */
 
 function fail(msg) {
