@@ -13,6 +13,7 @@ import {
 import { IntegrityAlertsPage } from "../IntegrityAlertsPage";
 import { DriverVendorMappingTab } from "../integrity-reports/DriverVendorMappingTab";
 import { AnomaliesTab } from "./AnomaliesTab";
+import { ListErrorState } from "../../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
@@ -245,6 +246,16 @@ export function IntegrityReportsTab() {
         ))}
       </div>
 
+      {/* CLS-LIST-ERROR-STATE-UNGUARDED: a failed query fell through to emptyText "No observations available for this integrity report."
+          — an outage presenting as an integrity report with nothing to observe. */}
+      {woQuery.isError ? (
+        <ListErrorState
+          title="Couldn't load integrity observations"
+          status={0}
+          message={(woQuery.error as Error)?.message}
+          onRetry={() => void woQuery.refetch()}
+        />
+      ) : (
       <ParityTable<IntegrityRow>
         columns={columns}
         rows={keyedRows}
@@ -254,6 +265,7 @@ export function IntegrityReportsTab() {
         storageKey="safety-integrity-reports"
         exportFilename="integrity-reports"
       />
+      )}
     </div>
   );
 }

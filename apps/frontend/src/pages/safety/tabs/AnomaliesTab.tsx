@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { listAnomalies, type SafetyAnomaly, type SafetyAnomalySeverity, type SafetyAnomalyStatus } from "../../../api/safety";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { AnomalyDetailDrawer } from "./AnomalyDetailDrawer";
+import { ListErrorState } from "../../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { CollapsedListFilters } from "../../../components/table";
 import { EntityLink, type EntityKind } from "../../../components/shared/EntityLink";
@@ -138,6 +139,16 @@ export function AnomaliesTab() {
 
   return (
     <div className="space-y-3">
+      {/* CLS-LIST-ERROR-STATE-UNGUARDED: a failed query fell through to emptyText "No anomalies for selected filters." — an outage
+          presenting as a fleet with nothing anomalous. */}
+      {anomaliesQuery.isError ? (
+        <ListErrorState
+          title="Couldn't load anomalies"
+          status={0}
+          message={(anomaliesQuery.error as Error)?.message}
+          onRetry={() => void anomaliesQuery.refetch()}
+        />
+      ) : (
       <ParityTable<SafetyAnomaly>
         columns={columns}
         rows={anomaliesQuery.data?.anomalies ?? []}
@@ -149,6 +160,7 @@ export function AnomaliesTab() {
         exportFilename="anomalies"
         filterBar={filterBar}
       />
+      )}
 
       <AnomalyDetailDrawer
         open={Boolean(selected)}

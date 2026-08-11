@@ -12,6 +12,7 @@ import { listDrivers } from "../../api/mdata";
 import { Button } from "../../components/Button";
 import { Modal } from "../../components/Modal";
 import { EntityPicker } from "../../components/parity/EntityPicker";
+import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
@@ -137,6 +138,16 @@ export function SafetyMeetingsPage({ operatingCompanyId }: Props) {
         </Button>
       </div>
 
+      {/* CLS-LIST-ERROR-STATE-UNGUARDED: a failed query fell through to emptyText "No safety meetings found." — an outage
+          presenting as a carrier holding no safety meetings, which is a training-compliance claim. */}
+      {meetingsQuery.isError ? (
+        <ListErrorState
+          title="Couldn't load safety meetings"
+          status={0}
+          message={(meetingsQuery.error as Error)?.message}
+          onRetry={() => void meetingsQuery.refetch()}
+        />
+      ) : (
       <ParityTable<SafetyMeetingRow>
         columns={meetingColumns}
         rows={meetings}
@@ -148,6 +159,7 @@ export function SafetyMeetingsPage({ operatingCompanyId }: Props) {
         tableTestId="safety-meetings-table"
         rowTestId={(m) => `safety-meeting-row-${m.id}`}
       />
+      )}
 
       {expandedMeetingId ? (
         <div className="rounded-sm border border-gray-200 bg-white px-3 py-2" data-testid="safety-meeting-attendance-panel">

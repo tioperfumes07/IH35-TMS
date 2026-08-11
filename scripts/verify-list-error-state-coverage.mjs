@@ -47,7 +47,20 @@ const repoRoot = process.cwd();
 const DISCOVERED_BASELINE_PATH = "scripts/list-error-state-coverage-baseline.json";
 const PAGES_ROOT = "apps/frontend/src/pages";
 const RENDERS_A_LIST = /<table|<tbody|ParityTable|DataTable/;
-const HAS_ERROR_BRANCH = /isError|ListErrorState|ListErrorBanner/;
+/**
+ * An error branch in ANY of the spellings this codebase actually uses.
+ *
+ * ★ WIDENED 2026-08-11 after the predicate produced FALSE POSITIVES — caught by reading a flagged page
+ * before editing it, not by the guard. `DOTComplianceTab.tsx:154` renders
+ * `{remindersQ.error ? <p …>Could not load reminders. Try again.</p> : null}` — a real, honest error
+ * branch that simply never says `isError`. Four of the 37 flagged pages were like that
+ * (DOTComplianceTab, ExpiryDashboard, CargoClaimIntakeSurface, BookLoadModalV4). Keying on ONE spelling
+ * would have sent the next agent to "fix" pages that were already correct — the same
+ * detector-blind-to-a-moved-control failure as CLS-GUARD-LITERAL-DETECTION, reproduced by me in the
+ * guard I wrote to prevent it. `<query>.error ?` / `.error &&` is therefore accepted as an error branch;
+ * a bare `.error` mention (e.g. inside a message string) is not.
+ */
+const HAS_ERROR_BRANCH = /isError|ListErrorState|ListErrorBanner|\.error\s*(?:\?|&&)/;
 
 function walkPages(dir, out = []) {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {

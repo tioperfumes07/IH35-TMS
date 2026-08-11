@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
 import { useAuth } from "../../auth/useAuth";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
 type BasicCategory =
@@ -210,6 +211,16 @@ export function CSAMitigationQueuePage() {
         </div>
       </div>
 
+      {/* CLS-LIST-ERROR-STATE-UNGUARDED: a failed query fell through to emptyText "No open mitigation actions." — an outage
+          presenting as a CSA queue with nothing outstanding. */}
+      {queueQuery.isError ? (
+        <ListErrorState
+          title="Couldn't load the mitigation queue"
+          status={0}
+          message={(queueQuery.error as Error)?.message}
+          onRetry={() => void queueQuery.refetch()}
+        />
+      ) : (
       <ParityTable<QueueItem>
         columns={columns}
         rows={queue}
@@ -219,6 +230,7 @@ export function CSAMitigationQueuePage() {
         storageKey="safety-csa-mitigation-queue"
         exportFilename="csa-mitigation-queue"
       />
+      )}
     </div>
   );
 }
