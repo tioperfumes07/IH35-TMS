@@ -547,6 +547,10 @@ export async function computeRevenueGlLinkage(
       SELECT
         je.id::text AS journal_entry_id,
         je.entry_date::text AS entry_date,
+        -- LV-JE-LABEL-IGNORES-POPULATED-MEMO (CLS-LINKAGE-ONEWAY): this drill-through hands the owner
+        -- a list of UNLINKED revenue JEs to investigate, so an unidentifiable row is the worst case for
+        -- it. memo IS the JE's identity (no number/ref column exists) and is populated 1864/1864.
+        je.memo,
         COALESCE(
           SUM(
             CASE
