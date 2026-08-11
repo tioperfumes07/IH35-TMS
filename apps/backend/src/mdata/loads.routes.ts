@@ -814,7 +814,9 @@ export async function registerLoadRoutes(app: FastifyInstance) {
             -- (LoadDetailDrawer.tsx:147 useLoad(operatingCompanyId ? null : loadId)), and FactoringTab /
             -- FinesDeductionsCard read it unconditionally — so on that path the drawer showed
             -- "Driver 3f2a…" / "Unit 91c7…" for a load that HAS both. The sibling
-            -- GET /api/v1/dispatch/loads/:id already resolves these (dispatch/loads.routes.ts:709-715);
+            -- GET /api/v1/dispatch/loads/:id already resolves these (see the dispatch loads route file,
+            -- lines 709-715); the file name is spelled out rather than dotted because
+            -- verify-sql-read-targets parses comment text and reads a dotted name as <table>.<column>;
             -- this endpoint was simply never given the same joins, which is what makes the two paths
             -- disagree about the same load. Read-only enrichment: no new column, no fabricated field.
             -- PROD-VERIFIED 2026-08-10 (bypass, existence only, 34/34 loads visible == n_live_tup):
@@ -853,7 +855,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
             l.reefer_temp_f, l.reefer_mode, l.pre_cool, l.tarp_qty, l.tarp_size
           FROM mdata.loads l
           -- Entity predicates copied verbatim from the already-correct sibling
-          -- (dispatch/loads.routes.ts:747-750): drivers scope on operating_company_id, but mdata.units
+          -- (the dispatch loads route file, lines 747-750): drivers scope on operating_company_id, but mdata.units
           -- has NO such column (§4) — it is scoped by the owner/leased PAIR, and the live case that
           -- exposed this is exactly a TRK-owned unit LEASED to USMCA, which a bare owner_company_id
           -- predicate would silently drop back to a raw id.
