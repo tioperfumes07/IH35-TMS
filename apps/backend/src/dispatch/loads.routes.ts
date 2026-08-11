@@ -40,9 +40,6 @@ import { assertCompanyMembership } from "../_helpers/company-membership-guard.js
 // enforces, so it must answer it with the same code, not its own narrower copy.
 import { evaluateDriverDrugAlcoholStatus } from "./driver-qualification.service.js";
 import type { PoolClient } from "pg";
-import { convertProformaToOfficial } from "../accounting/proforma-convert.service.js";
-import { sendDraftInvoice } from "../accounting/invoice-send.service.js";
-import { isEnabled } from "../lib/feature-flags/service.js";
 import { latchOnDeliveryEvidence } from "./delivery-evidence-latch.js";
 import {
   ensureDriverBillArtifactsForLoad,
@@ -1399,39 +1396,12 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
         });
       }
 
-      // ND-INV-01 — at POD (delivered_pending_docs), convert proforma → draft so send/A/R/factoring can proceed.
-      if (targetStatus === "delivered_pending_docs") {
-        const pipelineOn = await isEnabled(client, "INVOICE_PROFORMA_PIPELINE_ENABLED", {
-          operating_company_id: operatingCompanyId,
-          user_uuid: authUser.uuid,
-        });
-        if (pipelineOn) {
-          try {
-            // ND-INV-01 + ACCT-R-24 / owner B2d: convert proforma → draft, then auto-send
-            // (same sendDraftInvoice path as POST /accounting/invoices/:id/send — never silent $0).
-            const converted = await convertProformaToOfficial(client, {
-              operatingCompanyId,
-              loadId: params.data.id,
-              userId: authUser.uuid,
-            });
-            if (converted.converted && converted.invoiceId) {
-              const sent = await sendDraftInvoice(client, {
-                invoiceId: converted.invoiceId,
-                operatingCompanyId,
-                userId: authUser.uuid,
-              });
-              if (!sent.ok) {
-                console.warn(
-                  { load_id: params.data.id, invoice_id: converted.invoiceId, error: sent.error },
-                  "acct_r24_auto_send_after_pod_failed"
-                );
-              }
-            }
-          } catch (err) {
-            console.warn({ err, load_id: params.data.id }, "nd_inv_01_proforma_convert_failed");
-          }
-        }
-      }
+      // ND-INV-01 — at delivery evidence, convert proforma → draft and auto-send so A/R + factoring can
+      // proceed. ACCT-F351 MOVED THIS INTO latchOnDeliveryEvidence (below): it lived here inline, gated on
+      // the single status `delivered_pending_docs`, and had exactly ONE caller while the revenue latch had
+      // five. Every other delivery path — including both driver-PWA capture paths, where a delivery is
+      // actually performed — recognized revenue and never raised the receivable. Recognizing revenue and
+      // invoicing the customer are two halves of one event, so they are now ONE call (§9.0.17).
 
       // DISP-01 — two-event revenue latch (flag OFF → no-op). Earn at delivery; bill at POD.
       //
