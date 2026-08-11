@@ -12,6 +12,7 @@
     "202612480900": "bills_sync_void_markers",
     "202612481000": "vendor_types_description_canonical_shape",
     "202612481100": "invoice_lines_item_id_canonical_fk",
-    "202612481200": "usmca_operating_bank_role_acct_f345"
+    "202612481200": "usmca_operating_bank_role_acct_f345",
+    "202612481130": "usmca_operating_bank_role_acct_f345"
   }
 }
