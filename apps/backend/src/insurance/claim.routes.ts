@@ -582,6 +582,21 @@ export async function registerInsuranceClaimRoutes(app: FastifyInstance) {
       );
       const createdId = insert.rows[0]?.id;
       if (!createdId) return { kind: "claim_not_found" as const };
+      // P41 — insurance.claim.accident_report_id (set above) is the FORWARD FK; nothing wrote the
+      // reverse pointer safety.accident_reports.insurance_claim_id (migration 202607250000), so a
+      // claim created FROM an accident was reachable claim->accident but not accident->claim. Sync
+      // both directions the moment the link is known, scoped to the same tenant so a cross-entity
+      // accident_report_id (already rejected above by assertOptionalHubExists) can never be reached.
+      if (body.accident_report_id) {
+        await client.query(
+          `
+            UPDATE safety.accident_reports
+            SET insurance_claim_id = $3::uuid
+            WHERE id = $1::uuid AND operating_company_id = $2::uuid
+          `,
+          [body.accident_report_id, body.operating_company_id, createdId]
+        );
+      }
       const result = await client.query(
         `
           SELECT ${claimSelectColumns(caps, "c")}
@@ -726,6 +741,18 @@ export async function registerInsuranceClaimRoutes(app: FastifyInstance) {
 
       if (assignments.length === 0) return { kind: "claim_not_found" as const };
 
+      // P41 — same reverse-pointer gap as the create route: capture the PRIOR accident_report_id
+      // before the UPDATE so a re-link (or unlink) can clear the old accident's back-pointer rather
+      // than leaving it dangling at a claim that no longer references it.
+      let priorAccidentReportId: string | null = null;
+      if (body.accident_report_id !== undefined) {
+        const prior = await client.query<{ accident_report_id: string | null }>(
+          `SELECT accident_report_id::text FROM insurance.claim WHERE tenant_id = $1::uuid AND id = $2::uuid LIMIT 1`,
+          [query.data.operating_company_id, params.data.id]
+        );
+        priorAccidentReportId = prior.rows[0]?.accident_report_id ?? null;
+      }
+
       const upd = await client.query<{ id: string }>(
         `
           UPDATE insurance.claim
@@ -736,6 +763,29 @@ export async function registerInsuranceClaimRoutes(app: FastifyInstance) {
         values
       );
       if (!upd.rows[0]) return { kind: "claim_not_found" as const };
+      if (body.accident_report_id !== undefined) {
+        if (priorAccidentReportId && priorAccidentReportId !== body.accident_report_id) {
+          // Only clear if it still points at THIS claim — never clobber a link another claim made.
+          await client.query(
+            `
+              UPDATE safety.accident_reports
+              SET insurance_claim_id = NULL
+              WHERE id = $1::uuid AND operating_company_id = $2::uuid AND insurance_claim_id = $3::uuid
+            `,
+            [priorAccidentReportId, query.data.operating_company_id, params.data.id]
+          );
+        }
+        if (body.accident_report_id) {
+          await client.query(
+            `
+              UPDATE safety.accident_reports
+              SET insurance_claim_id = $3::uuid
+              WHERE id = $1::uuid AND operating_company_id = $2::uuid
+            `,
+            [body.accident_report_id, query.data.operating_company_id, params.data.id]
+          );
+        }
+      }
       const result = await client.query(
         `
           SELECT ${claimSelectColumns(caps, "c")}
