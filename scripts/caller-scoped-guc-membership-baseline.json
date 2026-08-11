@@ -3,10 +3,5 @@
   "apps/backend/src/admin/accounting-sync.routes.ts|GET|/api/v1/admin/sync/outbound",
   "apps/backend/src/admin/accounting-sync.routes.ts|POST|/api/v1/admin/sync/reset-realm",
   "apps/backend/src/integrations/integration-health.routes.ts|GET|/api/integrations/health",
-  "apps/backend/src/maintenance/severe-repair-estimate.routes.ts|GET|/api/v1/maintenance/severe-repair-estimates",
-  "apps/backend/src/maintenance/severe-repair-estimate.routes.ts|GET|/api/v1/maintenance/severe-repair-estimates/total",
-  "apps/backend/src/maintenance/severe-repair-estimate.routes.ts|GET|/api/v1/maintenance/severe-repair/fleet-restore-cost",
-  "apps/backend/src/maintenance/severe-repair-estimate.routes.ts|GET|/api/v1/maintenance/severe-repair/per-unit-breakdown",
-  "apps/backend/src/maintenance/severe-repair-estimate.routes.ts|POST|/api/v1/maintenance/severe-repair/export-pdf",
   "apps/backend/src/mdata/units.routes.ts|GET|/api/v1/mdata/units/:id/financial"
 ]
