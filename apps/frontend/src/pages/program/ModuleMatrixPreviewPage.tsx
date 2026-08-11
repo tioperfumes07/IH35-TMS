@@ -541,9 +541,10 @@ export function ModuleMatrixPreviewPage() {
         </div>
       ) : liveOk ? (
         <div className="banner live" data-testid="module-matrix-live-banner">
-          <b>REQUEST-TIME FEED.</b> Required = committed map · Audited = leaf×column ledger / GUARD /
-          wave / module-completion (not live verify) · Done = <code>live_scenario_probe</code> hops +
-          PROD-VERIFIED + Neon completion PASS
+          <b>REQUEST-TIME FEED — NOT module-completion green.</b> Required ={" "}
+          <code>*.required.json</code> · Audited = ledger/GUARD (not verify) ·{" "}
+          <b>Built (Box 3)</b> = wired/Neon probe · <b>Live (Box 4)</b> = PROD-VERIFIED click-through
+          only · <code>complete:true</code> / scenario dots ≠ linkage done
           {live?.meta?.tipSha ? <> · tip <code>{live.meta.tipSha}</code></> : null}
           {typeof live?.meta?.probeProgress === "number" ? (
             <> · probe {live.meta.probeProgress}%</>

@@ -1,8 +1,34 @@
 # MODULE MATRIX SCOREBOARD — DESIGN LOCKED
 
 **Owner approved:** 2026-08-08 CT (“yes that is exactly it”)  
-**Live requirement (owner 2026-08-08):** truly live / real — auto-moves on merge + deploy; fed from Cascade audits, reconciliation, Neon proofs, scenario certs — not hand-typed %.  
+**Final definitions (owner reconcile 2026-08-11):** §FINAL DEFINITIONS below — supersedes any conflicting checklist JSON, scenario dot, or chat claim.  
+**Coder entry (purge 2026-08-11):** `CODER-START-HERE-LOCKED.md` · Desktop `00-CODER-START-HERE.md` — only valid read order.  
+**Vertical wire method:** `VERTICAL-COLUMN-WAVE-METHOD-LOCKED.md` — column waves A→D across priority modules; Live (Box 4) **after** full wire + system test.  
 **Pixel / layout preview:** `MODULE-MATRIX-SCOREBOARD-PREVIEW.html` (Maintenance sample)
+
+---
+
+## FINAL DEFINITIONS (reconcile — authoritative 2026-08-11)
+
+These resolve scoreboard dishonesty. **When sources disagree, this table wins.**
+
+| Source | What it measures | Counts as “done”? | Common lie |
+|--------|------------------|-------------------|------------|
+| **`docs/module-completion/*.json`** `complete:true` | Checklist items PASS (often chrome/list-error) | **NO** for linkage or economics | “Accounting complete” while matrix Live ≈ 0% |
+| **`live_scenario_probe` / scenario dot** | TMS-native **row count** (e.g. “2 claims”) | **NO** for deep linkage | Green `scenario.insurance` while claim hub FKs all NULL |
+| **Matrix Box 1 Required** | Column applies to leaf (`*.required.json`) | N/A — applicability only | — |
+| **Matrix Box 2 Audited** | Ledger/GUARD/wave row exists for leaf×column | **NO** — mapping only (yellow ●) | Treating audit FAIL as fixed |
+| **Matrix Box 3 Built** | **Wire sprint target:** forward writer + reverse nav + guard; FK/graph assumed present; **create path works in code** | **YES for “wired”** during build phase | Checklist PASS without submit payload |
+| **Matrix Box 4 Live** | **After system test:** PROD-VERIFIED click + Neon on deployed SHA | **YES for “certified”** | CI green · merge · Built mistaken for Live |
+| **Desktop audit packs** | Owner click-through inventory | Input to Required map · **not** auto-green matrix | Re-auditing during wire sprint |
+
+**Certification % (honest)** = Box 4 Live ÷ Box 1 Required (per module or system rollup).  
+**Wire progress % (honest during sprint)** = Box 3 Built ÷ Box 1 Required.  
+**Build queue** = Required − Live (not Required − checklist PASS).
+
+**Insurance §B9** = **depth model** for every module (forward + reverse + economics). It is **not** the instruction to build insurance first; it defines how deep each leaf×column must be when marked Built/Live.
+
+**Weekend merge verification** = `cursor-ship-preflight` / `money-pr-local-gate` PASS + OUTBOX gate line — **not** GitHub Actions while checks are down. Admin merge is UI only. Local gate ≈ same teeth as pre-push CI; full remote `build-typecheck` resumes when Actions returns.
 
 ## Shape (non-negotiable)
 
