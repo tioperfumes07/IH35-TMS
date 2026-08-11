@@ -43,6 +43,7 @@ import {
 import { useUrlSort } from "../hooks/useUrlSort";
 import { formatDateUS } from "../lib/formatDate";
 import { userFacingApiError } from "../lib/api-error-message";
+import { VendorWorkOrdersReverseSection } from "./vendors/VendorWorkOrdersReverseSection";
 
 type SaferEntityStatus = {
   id: string;
@@ -547,6 +548,7 @@ export function VendorDetailPage() {
       </div>
 
       {activeTab === "Profile" ? (
+        <div className="space-y-2">
         <DataPanel title="Vendor Profile">
           {/* FAIL-AP1 — Vendor → Driver reverse when mdata.vendors.driver_id is set.
               Distinct from QBO Mapping. */}
@@ -866,6 +868,8 @@ export function VendorDetailPage() {
           </DataPanelRow>
           {/* Edit/Save/Cancel moved to the top of the panel (discoverable). */}
         </DataPanel>
+        <VendorWorkOrdersReverseSection operatingCompanyId={companyId} vendorId={vendor.id} />
+        </div>
       ) : null}
 
       {activeTab === "A/P" ? (
