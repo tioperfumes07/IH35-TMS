@@ -37,7 +37,7 @@ export function MaintenanceCatalogListPage({ client, displayName, breadcrumbPath
 
   const query = useQuery({
     queryKey: ["catalogs", "maintenance", displayName, companyId, search, status],
-    queryFn: () => client.list({ operating_company_id: companyId, search: search || undefined, is_active: status, limit: 500, offset: 0 }),
+    queryFn: () => client.list({ operating_company_id: companyId, search: search || undefined, is_active: status, limit: 200, offset: 0 }),
     enabled: Boolean(companyId),
   });
 

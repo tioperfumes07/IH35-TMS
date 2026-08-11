@@ -166,6 +166,27 @@ export function auditOverCap(feSources) {
   return problems;
 }
 
+/**
+ * The maintenance catalogs share a typed client, so their list request does not contain a literal API
+ * URL for auditOverCap to resolve. Compare that shared page's requested limit directly with the shared
+ * backend schema instead. This is the exact shape that made every maintenance catalog route return 400.
+ */
+export function auditMaintenanceCatalogCap(frontendSource, backendSource) {
+  const requested = frontendSource.match(/client\.list\(\{[\s\S]*?\blimit:\s*(\d+)/)?.[1];
+  const max = backendSource.match(/\blimit:\s*z\.coerce\.number\(\)[^,;\n]*?\.max\((\d+)\)/)?.[1];
+  if (!requested || !max) {
+    return [
+      `${LABEL}: could not resolve the maintenance catalog frontend limit and backend max; ` +
+        `refusing to let a contract rewrite disable the guard vacuously.`,
+    ];
+  }
+  if (Number(requested) <= Number(max)) return [];
+  return [
+    `MaintenanceCatalogListPage requests limit=${requested}, but maintenance shared schema declares ` +
+      `max(${max}). Every maintenance catalog list request 400s.`,
+  ];
+}
+
 function auditTree() {
   const { offenders, scanned } = collect();
   if (scanned === 0) {
@@ -190,6 +211,12 @@ function auditTree() {
   const feFiles = [];
   walk(SRC, feFiles);
   problems.push(...auditOverCap(feFiles.map((rel) => [rel, readFileSync(join(ROOT, rel), "utf8")])));
+  problems.push(
+    ...auditMaintenanceCatalogCap(
+      readFileSync(join(ROOT, "apps/frontend/src/pages/lists/maintenance/MaintenanceCatalogListPage.tsx"), "utf8"),
+      readFileSync(join(ROOT, "apps/backend/src/catalogs/maintenance/shared.ts"), "utf8")
+    )
+  );
 
   return problems;
 }
@@ -220,8 +247,26 @@ function selftest() {
   const infinite = `useInfiniteQuery({ queryFn: ({ pageParam }) => api.list({ limit: 100, cursor: pageParam }) })`;
   if (auditFile(infinite).length !== 0) failures.push("case6 FAIL — an infinite query was flagged");
 
+  const maintenanceFrontendPath = join(
+    ROOT,
+    "apps/frontend/src/pages/lists/maintenance/MaintenanceCatalogListPage.tsx"
+  );
+  const maintenanceBackendPath = join(ROOT, "apps/backend/src/catalogs/maintenance/shared.ts");
+  const maintenanceGood = readFileSync(maintenanceFrontendPath, "utf8");
+  const maintenanceBackend = readFileSync(maintenanceBackendPath, "utf8");
+  const maintenanceBad = maintenanceGood.replace(/\blimit:\s*200\b/, "limit: 500");
+  if (maintenanceBad === maintenanceGood) {
+    failures.push("case7 FAIL — maintenance over-cap mutation was inert");
+  }
+  if (auditMaintenanceCatalogCap(maintenanceBad, maintenanceBackend).length === 0) {
+    failures.push("case8 FAIL — maintenance request above the backend max was NOT caught");
+  }
+  if (auditMaintenanceCatalogCap(maintenanceGood, maintenanceBackend).length !== 0) {
+    failures.push("case9 FAIL — maintenance request at the backend max was flagged");
+  }
+
   const tree = auditTree();
-  if (tree.length !== 0) failures.push(`case7 FAIL — real tree flagged against baseline: ${tree.join(" | ")}`);
+  if (tree.length !== 0) failures.push(`case10 FAIL — real tree flagged against baseline: ${tree.join(" | ")}`);
 
   if (failures.length) {
     for (const f of failures) console.error(`  ✗ ${LABEL}: ${f}`);
