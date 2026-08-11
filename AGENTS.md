@@ -34,6 +34,10 @@
 > **★★★ THEN READ [docs/audit/GUARD-WORKORDERS.md](docs/audit/GUARD-WORKORDERS.md)** — the GUARD fix board: your lane's OPEN items, the fix
 > requirement + standard for each, and GUARD status. Pull the top OPEN item in your lane; do not idle.
 
+> **★★★ FINDINGS TRIPLE-LOCK (owner 2026-08-11 — PERMANENT):** [docs/audit/FINDINGS-TRIPLE-LOCK-LAW.md](docs/audit/FINDINGS-TRIPLE-LOCK-LAW.md) —
+> every finding = board OPEN + register ☐ + Desktop routing row + OUTBOX same turn; FIXED = five proofs same
+> turn as merge. **Chat-only or "already fixed" without main grep = unfixed.** Never skip cross-lane without filing.
+
 > **Consolidated index:** docs/specs/LAW-OF-THE-LAND-COMPLETE-2026-07-25.md — the complete 24-rule + 18-key-gate map (source .cursor/rule wins on conflict).
 
 > **★ DEFINITION OF DONE (owner-agreed, BINDING — read before you call anything done):** [docs/specs/DEFINITION-OF-DONE.md](docs/specs/DEFINITION-OF-DONE.md) — five DONE layers (DOD-A…E) + evidence. **CI-green is the floor, not the verdict.**

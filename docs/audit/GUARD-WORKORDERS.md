@@ -1,5 +1,17 @@
 # GUARD WORK-ORDERS — the live fix board (read after AUDIT-COVERAGE-LIVE.md, before any block)
 
+## ★★★ TRIPLE-LOCK LAW (owner-locked 2026-08-11 — PERMANENT)
+
+**Canonical:** `docs/audit/FINDINGS-TRIPLE-LOCK-LAW.md` · Desktop mirror: `FINDINGS-TRIPLE-LOCK-LAW.md`
+
+**No finding is filed until all four locks land same turn:** (1) OPEN row **here** · (2) ☐ row in
+`docs/audit/CC-3-FINDINGS-CHECKLIST.md` · (3) Desktop `FINDINGS-OPEN-P1-ROUTING.md` · (4) your OUTBOX
+`FINDING|ROUTE|BLOCKED` line. **No fix is FIXED until five proofs** (main merge · grep mechanism · guard ·
+register ☑ · board+routing FIXED) — **same turn as merge**. Chat-only / OUTBOX-only / PR-only = **unfixed**.
+
+**Before OPEN:** search board + register + routing for the id — if FIXED with PR#, **REOPEN** with regression
+evidence; do not invent a duplicate row. **Skip because other lane** = forbidden without all four locks.
+
 ## ★★★ STANDING RULE — THE COMPLETION REGISTER. EVERY FIXED FINDING IS TICKED BY THE CODER WHO FIXED IT.
 
 **Owner-locked 2026-08-07 (Jorge, verbatim): _"create permanent rule that you will write all findings,
