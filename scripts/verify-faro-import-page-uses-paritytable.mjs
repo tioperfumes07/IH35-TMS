@@ -60,7 +60,10 @@ function assertMigrated(src) {
   if (!src.includes("/api/v1/factoring/import/faro")) {
     errors.push(`${PAGE}: must keep the Faro import endpoint call unchanged`);
   }
-  if (!src.includes('pushToast(error.message || "Import failed", "error")')) {
+  if (
+    !src.includes('pushToast(error.message || "Import failed", "error")') &&
+    !src.includes('pushToast(userFacingApiError(error, "Import failed"), "error")')
+  ) {
     errors.push(`${PAGE}: must keep the mutation onError toast (no silent failures)`);
   }
   return errors;
