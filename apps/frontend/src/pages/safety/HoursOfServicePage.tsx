@@ -10,6 +10,7 @@ import { entityLabel } from "../../lib/entity-label";
 import { HosViolationCreateModal } from "./components/HosViolationCreateModal";
 import { formatDateUS } from "../../lib/formatDate";
 import { CappedListNotice } from "../../components/CappedListNotice";
+import { ListErrorState } from "../../components/ListErrorState";
 
 const ON_DUTY_STATUSES = new Set(["driving", "on_duty_not_driving", "yard_moves"]);
 const NEAR_CAP_MINUTES = 30;
@@ -245,6 +246,17 @@ export function HoursOfServicePage({ operatingCompanyId }: Props) {
               data-testid="safety-hos-fleet-search"
             />
           </div>
+          {/* CLS-LIST-ERROR-STATE-UNGUARDED: a failed fleet-HOS query fell through to
+              emptyText "No active drivers for this company." On an hours-of-service surface that
+              reads as a clean fleet with nobody near a limit — an outage presenting as compliance. */}
+          {fleetQuery.isError ? (
+            <ListErrorState
+              title="Couldn't load fleet HOS status"
+              status={0}
+              message={(fleetQuery.error as Error)?.message}
+              onRetry={() => void fleetQuery.refetch()}
+            />
+          ) : (
           <ParityTable<FleetHosDriverRow>
             columns={fleetColumns}
             rows={rows}
@@ -256,6 +268,7 @@ export function HoursOfServicePage({ operatingCompanyId }: Props) {
             tableTestId="safety-hos-fleet-table"
             rowTestId={(row) => `safety-hos-row-${row.driverId}`}
           />
+          )}
           <CappedListNotice
             shown={rows.length}
             limit={200}
