@@ -87,10 +87,11 @@ function docsColumns(onPreview: (id: string) => void): Array<ParityColumn<DocsFo
         <span className="flex min-w-0 flex-wrap gap-x-2 gap-y-1">
           {links.map((link) => {
             const kind = docsLinkToEntityKind(link.entity_type);
+            const label = link.entity_label ?? undefined;
             if (!kind) {
               return (
                 <span key={`${link.entity_type}:${link.entity_id}`} className="truncate" data-testid="docs-entity-plain">
-                  {link.entity_type}
+                  {label ?? link.entity_type}
                 </span>
               );
             }
@@ -101,6 +102,7 @@ function docsColumns(onPreview: (id: string) => void): Array<ParityColumn<DocsFo
                 key={`${link.entity_type}:${link.entity_id}`}
                 kind={kind}
                 id={link.entity_id}
+                label={label}
                 className="truncate"
                 data-testid="docs-entity-link"
               />
