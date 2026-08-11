@@ -60,7 +60,7 @@ only truly closed when both the coder's ☑ and CC-3's VERIFIED are present.
 |---|---|
 | **total findings filed** | **99** |
 | **OPEN — awaiting a coder** | **80** |
-| **☑ fixed & signed off by a coder** | **2** (`LV-USMCA-ACTIVE-DRIVERS-HAVE-NO-PAY-RATE` — owner-assigned to CC-3 and executed by CC-3, so maker=checker here BY OWNER INSTRUCTION; every other row still awaits its lane) |
+| **☑ fixed & signed off by a coder** | **14** (re-counted 2026-08-11 by CC-2 — the prior "2" here was stale; `grep -c "^\| ☑"` on this file, minus the template example row, is the live source of truth) |
 | **VERIFIED ✓ by CC-3 (independently re-tested)** | **2** (`CLS-MONEY-WORM-GAP` 99.6% · `LV-ESCROW-SUBLEDGER-NOT-WORM` partial — both still OPEN pending coder sign-off) |
 | **created-txn registration runs** | **5** — 2 PASS, **1 FAIL (P0)**, 1 owner task DONE+VERIFIED; see the verify section below |
 | closed / withdrawn / superseded by CC-3 | 8 |
@@ -185,6 +185,9 @@ is no "in progress" state, because a half-fix in production is indistinguishable
 | ☐ | `LV-SCENARIO-REVENUE-DOT-IS-FALSE-GREEN` | **P0** | CC-1 (money — probe semantics) | — | — | — | — | — | **CC-3 PROVEN live 2026-08-07** — the "Revenue recognition latch" dot is GREEN on USMCA while `load_revenue_recognition_postings` for USMCA = **0** and `unbilled_revenue` GL lines = **0**. Its probe is **byte-identical** to `hop.invoice` — it measures invoice status, not the latch. **Under the owner's "drive every dot green" directive this dot cannot fail, and it certifies exactly what `LV-TXN-004` proves is broken.** |
 | ☐ | `LV-USMCA-SCENARIO-MAP-2026-08-07` | info | ALL LANES (work list) | — | — | — | — | — | **CC-3 reference 2026-08-07** — all 24 tracker probes run VERBATIM on USMCA: **14 green / 10 red**, each red dot's blocker measured. 6 of 10 exercisable today with no code fix; 2 blocked on `LV-TXN-004`; 1 hard-blocked on `LV-WO-CREATE-500-OPENED-AT`; 1 config-gated. |
 | ☐ | `LV-ACCT-F158-IS-ISOLATED` | info | CC-1 (informational) | — | — | — | — | — | **CC-3 scope note 2026-08-07** — parity sweep bounds the ACCT-F158 P0: **11 of 12** entity FKs and **135 of 135** triggers are repo-traceable. Fix is ONE migration, not a remediation programme. |
+| ☑ | `ACCT-INS-ACCIDENT-CLAIM-REVERSE-FK` | P1 | CC-2 (owner-assigned WIRING-PLAN-50 P41) | CC-2 | #5813 | 2026-08-11 | Prod USMCA `br-fancy-credit-akjnd07a`: fix's exact SQL against real accident `b99b9461…` + claim `CLM-CASCADE-USMCA-01` — JOIN both directions resolves to one row. Re-confirmed independently via the live PATCH endpoint during P35 (`reverse.accidents` in the graph response shows `insurance_claim_id` set). | `scripts/verify-accident-claim-reverse-fk-synced.mjs` + step `3059` | — |
+| ☑ | `CLS-DRIVERS-HUB-TILES-NO-LINK` | P1 | CC-2 (owner-assigned WIRING-PLAN-50 P40) | CC-2 | #5818 | 2026-08-11 | Live browser `find()` on `app.ih35dispatch.com/drivers` (USMCA): Debt Alert + Active Drivers tiles now render `EntityLink` (was bare text pre-fix); `fetch()` confirmed `assigned_primary_driver_id` already in the deployed API response. tsc -b clean. | `scripts/verify-drivers-hub-tiles-driver-link.mjs` + step `3071` | — |
+| ☑ | `INS-CLAIM-GRAPH-6-NULL-FKS` | P1 | CC-2 (owner-assigned WIRING-PLAN-50 P35) | CC-2 | #5825 | 2026-08-11 | Prod USMCA: `PATCH /api/v1/insurance/claims/2d0fd151-…` HTTP 200, all 4 backfilled FKs (driver/load/asset/trailer) each traced to a real linked row, none fabricated. `GET .../graph` confirms all 6 FKs resolve to human-readable names live. | N/A — data backfill via the real API, not a code invariant; validated by the endpoint's own `assertOptionalHubExists` | — |
 
 ---
 
