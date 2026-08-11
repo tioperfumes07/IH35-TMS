@@ -9,6 +9,7 @@ import {
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { Button } from "../../components/Button";
 import { useToast } from "../../components/Toast";
+import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { formatDateTimeUS } from "../../lib/formatDate";
 import { entityLabel } from "../../lib/entity-label";
@@ -88,6 +89,16 @@ export function PmAutoEnginePage() {
           Status: {isPaused ? "Paused" : "Active"} · Lookahead {dashboardQ.data?.lookahead_miles ?? "—"} mi
         </div>
         <h3 className="mb-2 text-xs font-semibold uppercase text-gray-600">Recent runs</h3>
+        {/* CLS-LIST-ERROR-STATE-UNGUARDED: a failed query fell through to emptyText "No engine runs recorded yet." — an outage presenting
+            as a PM scheduler that has simply never run. */}
+        {dashboardQ.isError ? (
+          <ListErrorState
+            title="Couldn't load PM engine runs"
+            status={0}
+            message={(dashboardQ.error as Error)?.message}
+            onRetry={() => void dashboardQ.refetch()}
+          />
+        ) : (
         <ParityTable
           rows={runs}
           columns={runColumns}
@@ -96,6 +107,7 @@ export function PmAutoEnginePage() {
           storageKey="maintenance-pm-auto-engine-runs"
           emptyText="No engine runs recorded yet."
         />
+        )}
       </div>
 
       <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm">

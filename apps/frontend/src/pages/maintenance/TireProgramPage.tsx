@@ -17,6 +17,7 @@ import { Button } from "../../components/Button";
 import { Modal } from "../../components/Modal";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { EntityPicker } from "../../components/parity/EntityPicker";
@@ -319,6 +320,16 @@ export function TireProgramPage() {
 
           <section data-testid="tire-program-history">
             <h3 className="mb-2 text-xs font-semibold uppercase text-gray-600">Rotation / replacement history</h3>
+            {/* CLS-LIST-ERROR-STATE-UNGUARDED: a failed query fell through to emptyText "No tire events yet for this unit." — an outage
+                presenting as a unit with no tire history. */}
+            {eventsQ.isError ? (
+              <ListErrorState
+                title="Couldn't load tire events"
+                status={0}
+                message={(eventsQ.error as Error)?.message}
+                onRetry={() => void eventsQ.refetch()}
+              />
+            ) : (
             <ParityTable
               rows={eventRows}
               columns={eventColumns}
@@ -327,6 +338,7 @@ export function TireProgramPage() {
               storageKey="maintenance-tire-events"
               emptyText="No tire events yet for this unit."
             />
+            )}
           </section>
         </div>
       ) : (

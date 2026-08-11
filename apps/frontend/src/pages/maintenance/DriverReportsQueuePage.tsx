@@ -6,6 +6,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { Button } from "../../components/Button";
 import { useToast } from "../../components/Toast";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { CollapsedListFilters } from "../../components/table";
 import { EntityLink } from "../../components/shared/EntityLink";
@@ -135,6 +136,16 @@ export function DriverReportsQueuePage() {
         <h2 className="text-lg font-semibold text-gray-900">Driver Reports Queue</h2>
       </div>
 
+      {/* CLS-LIST-ERROR-STATE-UNGUARDED: a failed query fell through to emptyText "No driver reports found." — an outage presenting as
+          drivers reporting no defects. */}
+      {q.isError ? (
+        <ListErrorState
+          title="Couldn't load driver reports"
+          status={0}
+          message={(q.error as Error)?.message}
+          onRetry={() => void q.refetch()}
+        />
+      ) : (
       <ParityTable<DriverReportRow>
         columns={columns}
         rows={rows}
@@ -176,6 +187,7 @@ export function DriverReportsQueuePage() {
           </div>
         }
       />
+      )}
     </div>
   );
 }
