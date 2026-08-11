@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { listMaintenanceCompliance425cLog } from "../../../api/maintenance";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
+import { ListErrorState } from "../../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { formatDateTimeUS } from "../../../lib/formatDate";
 
@@ -43,6 +44,15 @@ export function Compliance425CPage() {
       <h2 className="text-base font-semibold text-gray-900">Compliance / 425C Linkage</h2>
       <div className="rounded-sm border border-gray-200 bg-white p-3">
         <div className="mb-2 text-xs text-gray-600">Read-only 425C audit linkage feed for maintenance events.</div>
+        {/* CLS-LIST-ERROR-STATE-UNGUARDED: a failed query fell through to the empty state — an outage presenting as a clean 425C compliance record. */}
+        {listQ.isError ? (
+          <ListErrorState
+            title="Couldn't load 425C compliance records"
+            status={0}
+            message={(listQ.error as Error)?.message}
+            onRetry={() => void listQ.refetch()}
+          />
+        ) : (
         <ParityTable
           rows={rows}
           columns={columns}
@@ -51,6 +61,7 @@ export function Compliance425CPage() {
           storageKey="maintenance-compliance-425c"
           emptyText="No 425C-linked events found."
         />
+        )}
       </div>
     </div>
   );

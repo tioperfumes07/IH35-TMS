@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { entityLabel } from "../../../lib/entity-label";
 import { useQuery } from "@tanstack/react-query";
+import { ListErrorState } from "../../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { listSafetyIncidents } from "../../../api/safety";
 
@@ -103,7 +104,18 @@ export function MaintenanceDamageRegisterTab({ operatingCompanyId }: Props) {
     },
   ];
 
-  return (
+  // CLS-LIST-ERROR-STATE-UNGUARDED: a failed query fell through to the empty state — an outage
+  // presenting as a unit with no damage history. The table is this component's only return value,
+  // so the error state is a conditional RETURN rather than a JSX sibling (two sibling expressions
+  // directly inside return(...) is not valid JSX — tsc caught that immediately).
+  return incidentsQuery.isError ? (
+      <ListErrorState
+        title="Couldn't load damage incidents"
+        status={0}
+        message={(incidentsQuery.error as Error)?.message}
+        onRetry={() => void incidentsQuery.refetch()}
+      />
+  ) : (
     <ParityTable<DamageIncidentRow>
       columns={columns}
       rows={rows}
