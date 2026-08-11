@@ -2735,6 +2735,7 @@
       "created_at",
       "created_by_user_id",
       "deactivated_at",
+      "description",
       "display_name",
       "id",
       "is_active",
