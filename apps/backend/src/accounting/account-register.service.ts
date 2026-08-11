@@ -239,7 +239,24 @@ export async function getAccountRegister(
            JOIN catalogs.accounts sa ON sa.id = d.account_id
        ) sp ON true
       WHERE ${where}
-      ORDER BY je.entry_date ASC, p.line_sequence ASC, p.created_at ASC`,
+      -- ACCT-F349 — ORDER BY DOCUMENT, THEN BY LINE WITHIN THAT DOCUMENT.
+      --
+      -- line_sequence was the first tiebreaker, which sorted ACROSS journal entries by each posting's
+      -- position INSIDE its own entry. A bill credits A/P on line 2 (its expense line is 1); a bill
+      -- payment debits A/P on line 1. So in the A/P register EVERY payment sorted before EVERY bill that
+      -- shared its date, no matter which actually happened first, and the running-balance column then
+      -- showed a state that never existed.
+      --
+      -- Measured on prod 2026-08-11: USMCA A/P (2000), 2026-08-16 — the payment of bill L-20260810-0003
+      -- (JE created 22:45:57) sorted above the bill itself (JE created 22:45:54), so the register read
+      -- -17,415c: a NEGATIVE accounts-payable balance, from paying a bill the register had not yet shown.
+      -- 468 account-days across the ledger carry more than one journal entry, so this is the norm on any
+      -- day a bill is paid the day it is entered, not an edge case.
+      --
+      -- je.created_at is the ledger's own record of document order (populated on all 1,919 entries; there
+      -- is no document-sequence column), je.id breaks exact ties deterministically, and line_sequence then
+      -- orders the lines WITHIN one entry, which is what it was always for.
+      ORDER BY je.entry_date ASC, je.created_at ASC, je.id ASC, p.line_sequence ASC, p.created_at ASC`,
     params
   );
   const postings: RawPosting[] = res.rows.map((r) => ({ ...r, amount_cents: Number(r.amount_cents) }));
