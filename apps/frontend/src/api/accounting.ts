@@ -1375,7 +1375,7 @@ export async function listCoaAccountsForJe(
 
 export function listClassesForJe() {
   return apiRequest<{ classes: Array<{ id: string; class_name: string; class_code?: string | null }> }>(
-    "/api/v1/catalogs/classes?include_inactive=false&limit=300"
+    "/api/v1/catalogs/classes?include_inactive=false&limit=200"
   );
 }
 
