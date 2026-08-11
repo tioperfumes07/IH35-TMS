@@ -16,6 +16,8 @@ import fp from "fastify-plugin";
 import { z } from "zod";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
+import { postVoidReversal } from "./void.service.js";
+import { requireVoidCancelExecutor } from "../lib/authz/void-cancel-authz.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { AmortizationPostingError } from "./amortization-posting/amortization-posting.math.js";
 import { postPrepaidPurchase, type PrepaidPurchasePostingResult } from "./amortization-posting/amortization-posting.service.js";
@@ -327,7 +329,10 @@ async function registerPrepaidExpensesRoutes(app: FastifyInstance) {
   });
 
   // CREATE asset + generate schedule
-  app.post("/api/v1/accounting/prepaid-expenses", async (req, reply) => {
+  // Pre-existing gap surfaced by verify-new-auth-routes-rate-limited when this file changed: the
+  // prepaid CREATE route authorized but carried no rateLimit (CodeQL js/missing-rate-limiting).
+  // Matched to the mutating-route budget used by the void route below.
+  app.post("/api/v1/accounting/prepaid-expenses", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!accountingRoles(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -466,6 +471,125 @@ async function registerPrepaidExpensesRoutes(app: FastifyInstance) {
       throw error;
     }
   });
+
+  /**
+   * ACCT-F331 — POST /api/v1/accounting/prepaid-expenses/:id/void
+   *
+   * accounting.prepaid_assets carried voided_at / voided_by_user_id / void_reason and a 'voided'
+   * status value, but NO route ever wrote them: an UNVOIDABLE money document. A USMCA prepaid asset
+   * held $300.00 of A/P that the owner's void-all could not reach, because there was no void path to
+   * call. Voiding is a reversal, not a status flip — QuickBooks zeroes a voided transaction's ledger
+   * impact and NetSuite writes a reversing journal; leaving the credit standing overstates A/P to any
+   * lender, auditor or CPA reading the balance sheet.
+   *
+   * Reuses the canonical postVoidReversal — no new GL math here. It reads the original postings by
+   * source_transaction_type='prepaid_purchase' and flips them.
+   *
+   * FAILS CLOSED: if the asset is posted but the reverser returns a null reversal, this raises 409
+   * rather than marking the document void. That exact silent-null is how ACCT-F330 left $1,643.21 of
+   * phantom A/P on the books — a void that reverses nothing must never look like success.
+   */
+  app.post(
+    "/api/v1/accounting/prepaid-expenses/:id/void",
+    { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } },
+    async (req, reply) => {
+      const user = currentAuthUser(req, reply);
+      if (!user) return;
+      // Voiding a financial record is EXECUTOR-only (Owner|Administrator|Accountant), consistent with
+      // the invoice / bill / payment void routes — not merely accountingRoles.
+      if (!requireVoidCancelExecutor(reply, String(user.role ?? ""))) return;
+
+      const pp = detailParamsSchema.safeParse(req.params);
+      if (!pp.success) return validationError(reply, pp.error);
+      const qp = companyQuerySchema.safeParse(req.query ?? {});
+      if (!qp.success) return validationError(reply, qp.error);
+      const body = z.object({ reason: z.string().trim().min(1).max(500) }).safeParse(req.body ?? {});
+      if (!body.success) return validationError(reply, body.error);
+
+      const oci = qp.data.operating_company_id;
+      const assetId = pp.data.id;
+
+      return withCompanyScope(user.uuid, oci, async (client) => {
+        const cur = await client.query(
+          `SELECT status::text AS status, posting_status::text AS posting_status, voided_at,
+                  purchase_date::text AS purchase_date, asset_number
+             FROM accounting.prepaid_assets
+            WHERE id = $1::uuid AND operating_company_id = $2::uuid
+            LIMIT 1
+              FOR UPDATE`,
+          [assetId, oci]
+        );
+        const asset = cur.rows[0] as
+          | { status: string; posting_status: string | null; voided_at: string | null; purchase_date: string; asset_number: string }
+          | undefined;
+        if (!asset) return reply.code(404).send({ error: "prepaid_asset_not_found" });
+        if (asset.voided_at || asset.status === "voided") {
+          return reply.code(409).send({ error: "prepaid_asset_already_void" });
+        }
+
+        // A posted asset MUST produce a reversal. An unposted one legitimately has nothing to reverse.
+        const wasPosted = asset.posting_status === "posted";
+        const reversal = await postVoidReversal(
+          client,
+          {
+            operatingCompanyId: oci,
+            entityType: "prepaid_purchase",
+            entityId: assetId,
+            originalDate: String(asset.purchase_date).slice(0, 10),
+            memo: `Void reversal of prepaid asset ${asset.asset_number}: ${body.data.reason}`,
+          },
+          { userId: String(user.uuid) }
+        );
+        if (wasPosted && !reversal.reversal_journal_entry_id) {
+          return reply.code(409).send({
+            error: "prepaid_void_reversal_failed",
+            message:
+              "This prepaid asset is posted but no GL lines could be reversed, so voiding it would leave its balance standing on the control account. Nothing was changed.",
+          });
+        }
+
+        await client.query(
+          `UPDATE accounting.prepaid_assets
+              SET status = 'voided', voided_at = now(), voided_by_user_id = $3::uuid,
+                  void_reason = $4, updated_at = now()
+            WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+          [assetId, oci, user.uuid, body.data.reason]
+        );
+        // Void-not-delete: future unposted schedule rows are deactivated, never removed, and POSTED
+        // rows are left untouched — their own GL stands until separately reversed.
+        await client.query(
+          `UPDATE accounting.prepaid_amortization_rows
+              SET is_active = false, deleted_at = now(), updated_at = now()
+            WHERE asset_id = $1::uuid AND operating_company_id = $2::uuid
+              AND posted = false AND is_active`,
+          [assetId, oci]
+        );
+
+        await appendCrudAudit(
+          client,
+          String(user.uuid),
+          "accounting.prepaid_asset.voided",
+          {
+            resource_type: "accounting.prepaid_assets",
+            resource_id: assetId,
+            operating_company_id: oci,
+            reason: body.data.reason,
+            reversal_journal_entry_id: reversal.reversal_journal_entry_id,
+            reversed_line_count: reversal.reversed_line_count,
+          },
+          "warning",
+          "ACCT-F331"
+        );
+
+        return {
+          prepaid_asset_id: assetId,
+          status: "voided",
+          reversal_journal_entry_id: reversal.reversal_journal_entry_id,
+          reversed_line_count: reversal.reversed_line_count,
+        };
+      });
+    }
+  );
 }
 
 export default fp(registerPrepaidExpensesRoutes);
