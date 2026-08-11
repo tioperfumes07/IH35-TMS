@@ -21,6 +21,14 @@ const createLineBodySchema = z.object({
   account_id: z.string().uuid().optional(),
   qbo_class_snapshot: z.string().trim().max(120).optional(),
   qbo_item_id: z.string().trim().max(120).optional(),
+  /**
+   * ACCT-F329 — canonical TMS-native link to catalogs.items. qbo_item_id is a QuickBooks id and can
+   * never resolve for an entity with no QuickBooks realm: USMCA has 0 rows in
+   * integrations.qbo_connections (owner ruling 2026-08-11 — "USMCA is entirely our TMS ERP"), so a
+   * catalog item picked on an invoice line previously had nowhere to be stored. uuid, not free text:
+   * the FK is what makes the reverse hop (item -> its invoice lines) possible at all.
+   */
+  item_id: z.string().uuid().optional(),
   display_order: z.coerce.number().int().min(0).optional(),
 });
 
@@ -56,6 +64,8 @@ const patchLineBodySchema = z
     source_load_id: z.string().uuid().nullable().optional(),
     qbo_class_snapshot: z.string().trim().max(120).nullable().optional(),
     qbo_item_id: z.string().trim().max(120).nullable().optional(),
+    /** ACCT-F329 — nullable so an operator can CLEAR a wrongly-linked item, not only set one. */
+    item_id: z.string().uuid().nullable().optional(),
     display_order: z.coerce.number().int().min(0).optional(),
   })
   .refine((value) => Object.keys(value).length > 0, { message: "at least one field is required" });
@@ -123,10 +133,11 @@ export async function registerInvoiceLineRoutes(app: FastifyInstance) {
               line_total_cents,
               qbo_class_snapshot,
               qbo_item_id,
+              item_id,
               display_order
             ) VALUES (
-              $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,
-              COALESCE($13, (
+              $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,
+              COALESCE($14, (
                 SELECT COALESCE(MAX(display_order), -1) + 1
                 FROM accounting.invoice_lines
                 WHERE invoice_id = $2
@@ -147,6 +158,7 @@ export async function registerInvoiceLineRoutes(app: FastifyInstance) {
             lineTotal,
             body.data.qbo_class_snapshot ?? null,
             body.data.qbo_item_id ?? null,
+            body.data.item_id ?? null,
             body.data.display_order ?? null,
           ]
         );
@@ -236,6 +248,9 @@ export async function registerInvoiceLineRoutes(app: FastifyInstance) {
       if ("source_load_id" in body.data) add("source_load_id", body.data.source_load_id ?? null);
       if ("qbo_class_snapshot" in body.data) add("qbo_class_snapshot", body.data.qbo_class_snapshot ?? null);
       if ("qbo_item_id" in body.data) add("qbo_item_id", body.data.qbo_item_id ?? null);
+      // ACCT-F329 — editable, not create-only: a line whose item can be set once and never corrected
+      // is the same dead end in slower motion.
+      if ("item_id" in body.data) add("item_id", body.data.item_id ?? null);
       if ("display_order" in body.data) add("display_order", body.data.display_order);
       add("line_total_cents", nextLineTotal);
 
