@@ -29,7 +29,6 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-load-detail-resolves-names";
-const FILE = "apps/backend/src/dispatch/loads.routes.ts";
 
 /**
  * The columns LoadDetailDrawer.tsx reads with `?? "Unassigned"` / `?? "—"`.
@@ -41,6 +40,53 @@ const FILE = "apps/backend/src/dispatch/loads.routes.ts";
  * card closed is exactly the half-fix this guard exists to prevent.
  */
 const REQUIRED_COLUMNS = ["assigned_primary_driver_name", "assigned_unit_number", "trip_type"];
+
+/**
+ * ★ SCOPE WIDENED 2026-08-10 — the guard covered ONE file, which is why the class was only half fixed.
+ *
+ * This guard was written for the dispatch by-id read and hard-coded to that single path. The drawer has
+ * TWO by-id sources: `LoadDetailDrawer.tsx:146-148` prefers `useDispatchLoad` but falls back to `useLoad`
+ * (`GET /api/v1/mdata/loads/:id`) whenever it has no `operatingCompanyId`, and `FactoringTab.tsx:164` /
+ * `FinesDeductionsCard.tsx:55` call `useLoad` unconditionally. That mdata endpoint returned the three
+ * assignment UUIDs and no resolved names at all — the SAME defect this guard exists to catch — and the
+ * guard printed OK the entire time, because the broken path was simply outside its scope. A single-file
+ * guard on a class that has more than one site is a false green by construction, so the file list is now
+ * the unit of scope: adding a third by-id load read means adding it here.
+ *
+ * Per-target required columns, because the two SELECTs legitimately differ: the dispatch read projects
+ * `trip_type` out of a VIEW that lacks the column (hence `ml.trip_type AS trip_type`), while the mdata
+ * read selects it straight off `mdata.loads` as `l.trip_type` — same payload key, no alias needed.
+ */
+const TARGETS = [
+  { file: "apps/backend/src/dispatch/loads.routes.ts", route: "/api/v1/dispatch/loads/:id", columns: REQUIRED_COLUMNS },
+  {
+    file: "apps/backend/src/mdata/loads.routes.ts",
+    route: "/api/v1/mdata/loads/:id",
+    columns: ["assigned_primary_driver_name", "assigned_unit_number"],
+  },
+];
+
+/**
+ * The body of one route handler: from its `app.<verb>("<route>"` declaration to the next route
+ * declaration at the same indent.
+ *
+ * ★ WHY THE COLUMN CHECK IS SLICED AND NOT FILE-WIDE (mutation-proven 2026-08-10, and it FAILED first):
+ * the column assertion used to run over the whole file. Both loads.routes.ts files contain a LIST query
+ * that already produces `AS assigned_primary_driver_name` and `AS assigned_unit_number` — so when the
+ * by-id detail query lost BOTH names, the guard still printed OK, satisfied by the list query several
+ * hundred lines away. I reproduced that live: stripping the aliases off the real file left the guard
+ * green (rc=0). That is the identical file-wide-`.test()` false green the units-join check was already
+ * fixed for; the columns had simply never been given the same treatment. Slicing to the route means the
+ * detail query has to carry its own names and cannot borrow a sibling's.
+ */
+function routeSlice(src, route) {
+  const decl = new RegExp(String.raw`app\.(?:get|post|put|patch|delete)\s*\(\s*['"\`]${route.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}['"\`]`);
+  const start = src.search(decl);
+  if (start === -1) return null;
+  const rest = src.slice(start + 1);
+  const next = rest.search(/\n\s{0,4}app\.(?:get|post|put|patch|delete)\s*\(/);
+  return rest.slice(0, next === -1 ? rest.length : next);
+}
 
 /**
  * Every ON-clause for `LEFT JOIN <table> <alias>` in `src`, one entry per OCCURRENCE.
@@ -68,13 +114,26 @@ function joinOnClauses(src, table, alias) {
   return clauses;
 }
 
-export function auditSource(src) {
+export function auditSource(src, FILE = TARGETS[0].file, columns = REQUIRED_COLUMNS, route = null) {
   const problems = [];
 
-  for (const col of REQUIRED_COLUMNS) {
-    if (!new RegExp(String.raw`AS\s+${col}\b`, "i").test(src)) {
+  // Columns are asserted against the by-id handler ONLY (see routeSlice). `route: null` means the caller
+  // already handed us an isolated query — the selftest's synthetic cases — so the slice is the input.
+  let scope = src;
+  if (route) {
+    scope = routeSlice(src, route);
+    if (scope === null) {
+      return [
+        `${FILE}: no handler found for \`${route}\` — the guard cannot locate the by-id load read it ` +
+          `exists to check, so it would otherwise pass vacuously. If the route moved, move this target.`,
+      ];
+    }
+  }
+
+  for (const col of columns) {
+    if (!new RegExp(String.raw`AS\s+${col}\b`, "i").test(scope)) {
       problems.push(
-        `${FILE}: the dispatch load-detail SELECT does not produce \`${col}\`. ` +
+        `${FILE}: the load-detail SELECT does not produce \`${col}\`. ` +
           `LoadDetailDrawer reads it and falls back to "Unassigned"/"—", so a load WITH a driver or unit ` +
           `renders as having neither (LV-TXN-002).`,
       );
@@ -167,6 +226,62 @@ if (process.argv.includes("--selftest")) {
     "u.owner_company_id",
   );
 
+  // The mdata by-id read: what shipped, and what it must look like. Kept as literal source rather than
+  // a mutation of `good`, because the defect here is the ABSENCE of the joins entirely — not a tweak to
+  // a query that already had them.
+  const mdataShipped = `
+    SELECT
+      id, operating_company_id, load_number, customer_id, status,
+      assigned_unit_id, assigned_primary_driver_id, assigned_secondary_driver_id, team_id,
+      trip_type
+    FROM mdata.loads
+    WHERE id = $1
+    LIMIT 1
+  `;
+  const mdataFixed = `
+    SELECT
+      l.id, l.operating_company_id, l.load_number, l.status,
+      l.assigned_unit_id, l.assigned_primary_driver_id, l.assigned_secondary_driver_id,
+      NULLIF(TRIM(CONCAT(pd.first_name,' ',pd.last_name)),'') AS assigned_primary_driver_name,
+      NULLIF(TRIM(CONCAT(sd.first_name,' ',sd.last_name)),'') AS assigned_secondary_driver_name,
+      u.unit_number AS assigned_unit_number,
+      l.trip_type
+    FROM mdata.loads l
+    LEFT JOIN mdata.drivers pd ON pd.id = l.assigned_primary_driver_id
+                              AND pd.operating_company_id = l.operating_company_id
+    LEFT JOIN mdata.drivers sd ON sd.id = l.assigned_secondary_driver_id
+                              AND sd.operating_company_id = l.operating_company_id
+    LEFT JOIN mdata.units u ON u.id = l.assigned_unit_id
+                           AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = l.operating_company_id
+    WHERE l.id = $1
+    LIMIT 1
+  `;
+
+  // Two handlers in one file: the LIST resolves both names, the BY-ID resolves neither. This is the real
+  // shape of apps/backend/src/mdata/loads.routes.ts as it stood on b9f897488.
+  const listResolvesButDetailDoesNot = `
+  app.get("/api/v1/mdata/loads", async (req, reply) => {
+    const res = await client.query(\`
+      SELECT l.*,
+        NULLIF(TRIM(CONCAT(pd.first_name,' ',pd.last_name)),'') AS assigned_primary_driver_name,
+        u.unit_number AS assigned_unit_number
+      FROM mdata.loads l
+      LEFT JOIN mdata.drivers pd ON pd.id = l.assigned_primary_driver_id
+                                AND pd.operating_company_id = l.operating_company_id
+      LEFT JOIN mdata.units u ON u.id = l.assigned_unit_id
+                             AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = l.operating_company_id
+    \`);
+  });
+
+  app.get("/api/v1/mdata/loads/:id", async (req, reply) => {
+    const res = await client.query(\`
+      SELECT id, operating_company_id, load_number,
+             assigned_unit_id, assigned_primary_driver_id, assigned_secondary_driver_id
+      FROM mdata.loads WHERE id = $1 LIMIT 1
+    \`);
+  });
+  `;
+
   const cases = [
     ["fully fixed query", good, 0],
     ["missing BOTH columns (the shipped defect)", good.replace(/AS assigned_primary_driver_name/, "AS x").replace(/AS assigned_unit_number/, "AS y"), 2],
@@ -178,10 +293,36 @@ if (process.argv.includes("--selftest")) {
     ["two units joins, both correct", twoUnitJoins, 0],
     ["REGRESSION BAR — only the SECOND units join unscoped (old guard passed this)", secondUnitJoinUnscoped, 1],
     ["REGRESSION BAR — only the FIRST units join unscoped (old guard passed this)", firstUnitJoinUnscoped, 1],
+    // ── The mdata by-id read (TARGETS[1]) — the site the single-file guard could not see. ──────────
+    // `mdataShipped` is the SELECT verbatim as it stood on origin/main b9f897488: the three assignment
+    // UUIDs and not one resolved name. The old guard printed OK against this file because it never read
+    // it; the widened guard must score it as TWO problems, or the scope widening bought nothing.
+    ["REGRESSION BAR — mdata by-id read as SHIPPED (uuids only, zero joins)", mdataShipped, 2, TARGETS[1].columns],
+    ["mdata by-id read, fixed", mdataFixed, 0, TARGETS[1].columns],
+    ["mdata fixed but unit join scoped by owner_company_id alone (drops leased units)", mdataFixed.replace(/COALESCE\([^)]*\)/, "u.owner_company_id"), 1, TARGETS[1].columns],
+    ["mdata fixed but primary-driver join unscoped (cross-entity leak)", mdataFixed.replace(/\s+AND pd\.operating_company_id = l\.operating_company_id/, ""), 1, TARGETS[1].columns],
+    // ── The false green this guard actually shipped with. ─────────────────────────────────────────
+    // A file where the LIST query resolves both names and the by-id query resolves neither. The
+    // file-wide column check scored this 0 problems — verified against the real file, not predicted.
+    // Route-sliced, it must score 2. This is the regression bar for the scope of the column check.
+    [
+      "REGRESSION BAR — list query resolves names, by-id query does not (file-wide check passed this)",
+      listResolvesButDetailDoesNot,
+      2,
+      TARGETS[1].columns,
+      "/api/v1/mdata/loads/:id",
+    ],
+    [
+      "route absent — guard must refuse to pass vacuously",
+      listResolvesButDetailDoesNot.replace('"/api/v1/mdata/loads/:id"', '"/api/v1/mdata/loads/:other"'),
+      1,
+      TARGETS[1].columns,
+      "/api/v1/mdata/loads/:id",
+    ],
   ];
   let bad = 0;
-  for (const [name, src, want] of cases) {
-    const got = auditSource(src).length;
+  for (const [name, src, want, columns, route] of cases) {
+    const got = auditSource(src, TARGETS[0].file, columns ?? REQUIRED_COLUMNS, route ?? null).length;
     if (got !== want) {
       console.error(`SELFTEST FAIL: ${name} — expected ${want} problem(s), got ${got}`);
       bad++;
@@ -192,21 +333,28 @@ if (process.argv.includes("--selftest")) {
   process.exit(0);
 }
 
-const abs = path.join(ROOT, FILE);
-if (!fs.existsSync(abs)) {
-  console.error(`${LABEL} FAIL — missing ${FILE}; scope is wrong, refusing to pass vacuously.`);
-  process.exit(1);
+const problems = [];
+for (const target of TARGETS) {
+  const abs = path.join(ROOT, target.file);
+  if (!fs.existsSync(abs)) {
+    console.error(`${LABEL} FAIL — missing ${target.file}; scope is wrong, refusing to pass vacuously.`);
+    process.exit(1);
+  }
+  problems.push(...auditSource(fs.readFileSync(abs, "utf8"), target.file, target.columns, target.route));
 }
 
-const problems = auditSource(fs.readFileSync(abs, "utf8"));
 if (problems.length) {
   console.error(`${LABEL} FAIL — the load-detail drawer will render a covered load as uncovered:\n`);
   for (const p of problems) console.error(`  - ${p}`);
   console.error(
-    `\nFix: mirror the already-correct sibling query at apps/backend/src/mdata/loads.routes.ts:636.\n`,
+    `\nFix: mirror the resolving joins already present in the sibling by-id read — every by-id load\n` +
+      `read the drawer can land on must produce the same names, or the payload the user sees depends on\n` +
+      `which of the two endpoints answered.\n`,
   );
   process.exit(1);
 }
 
-console.log(`${LABEL} OK — load detail resolves ${REQUIRED_COLUMNS.join(" + ")}, both joins entity-scoped.`);
+console.log(
+  `${LABEL} OK — ${TARGETS.length} by-id load reads resolve driver + unit names, every join entity-scoped.`,
+);
 process.exit(0);
