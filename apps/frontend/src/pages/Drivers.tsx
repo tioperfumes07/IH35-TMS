@@ -417,10 +417,18 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
     [debtAlertRows]
   );
   const activeDriverLoadRows = useMemo(() => {
-    const byDriver = new Map<string, { driver_name: string; stage: string; route: string; eta: string }>();
+    // P40 — driver_short_name was rendered as plain text with no link back to the canonical driver
+    // (§10 picker-law: a hub tile is not "wired" if it names a driver but can't navigate to them).
+    // assigned_primary_driver_id is already on every load row (views.dispatch_load_with_driver_status
+    // via `l.*`); it was simply never carried through this aggregation. Keyed by driver_id (not name)
+    // so two drivers who happen to share a short name never collapse into one tile row.
+    const byDriver = new Map<string, { driver_id: string | null; driver_name: string; stage: string; route: string; eta: string }>();
     for (const load of dispatchLoadsQuery.data?.loads ?? []) {
       const driverName = String(load.driver_short_name ?? "").trim();
-      if (!driverName || byDriver.has(driverName)) continue;
+      if (!driverName) continue;
+      const driverId = isUuid(load.assigned_primary_driver_id) ? load.assigned_primary_driver_id : null;
+      const key = driverId ?? driverName;
+      if (byDriver.has(key)) continue;
       const stage = String(load.driver_lifecycle_stage ?? "unknown").replaceAll("_", " ");
       const route = `${String(load.pickup_city ?? "—")} - ${String(load.delivery_city ?? "—")}`;
       const etaVariance = Number(load.latest_eta_prediction?.variance_minutes ?? 0);
@@ -428,7 +436,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
         load.latest_eta_prediction?.predicted_arrival_at
           ? `${new Date(load.latest_eta_prediction.predicted_arrival_at).toLocaleDateString()} (${etaVariance}m)`
           : "ETA n/a";
-      byDriver.set(driverName, { driver_name: driverName, stage, route, eta });
+      byDriver.set(key, { driver_id: driverId, driver_name: driverName, stage, route, eta });
     }
     return Array.from(byDriver.values()).slice(0, 8);
   }, [dispatchLoadsQuery.data?.loads]);
@@ -822,7 +830,10 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
               <DataPanel title="Debt Alert · before any payment" accentColor={colors.crit.strong}>
                 {debtAlertRows.map((row) => (
                   <DataPanelRow key={row.driver_id}>
-                    <span>{row.driver_name} · {row.reasons.slice(0, 2).join(" + ")}</span>
+                    <span>
+                      <EntityLink kind="driver" id={isUuid(row.driver_id) ? row.driver_id : null} label={row.driver_name} /> ·{" "}
+                      {row.reasons.slice(0, 2).join(" + ")}
+                    </span>
                     <span className="text-red-600">-{formatMoney(row.total)}</span>
                   </DataPanelRow>
                 ))}
@@ -834,8 +845,10 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
                 accentColor={colors.info.strong}
               >
                 {activeDriverLoadRows.map((row) => (
-                  <DataPanelRow key={`${row.driver_name}-${row.route}`}>
-                    <span>{row.driver_name} · {row.stage} · {row.route}</span>
+                  <DataPanelRow key={row.driver_id ?? `${row.driver_name}-${row.route}`}>
+                    <span>
+                      <EntityLink kind="driver" id={row.driver_id} label={row.driver_name} /> · {row.stage} · {row.route}
+                    </span>
                     <span>{row.eta}</span>
                   </DataPanelRow>
                 ))}
