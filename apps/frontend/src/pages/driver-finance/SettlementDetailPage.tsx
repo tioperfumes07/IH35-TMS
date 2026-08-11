@@ -336,13 +336,23 @@ export function SettlementDetailPage() {
         <div className="rounded-sm border border-slate-300 bg-slate-100 p-3 text-xs">
           <p className="mb-1 font-semibold text-slate-700">Team Split</p>
           <div className="space-y-1">
-            {((teamSplitQuery.data as Record<string, unknown>).splits as Array<Record<string, unknown>>).map((split, index) => (
-              <div key={`${index}-${String(split.driver_id ?? "")}`} className="rounded-sm border border-slate-300 bg-white px-2 py-1">
-                Driver {String(split.driver_id ?? "—")} · Role {String(split.pay_role ?? "—")} ·
-                Share {Number(split.share_pct ?? 0)}% ·
-                Pay ${((Number(split.driver_pay_cents ?? 0) || 0) / 100).toFixed(2)}
-              </div>
-            ))}
+            {((teamSplitQuery.data as Record<string, unknown>).splits as Array<Record<string, unknown>>).map((split, index) => {
+              const driverId = typeof split.driver_id === "string" && split.driver_id ? split.driver_id : null;
+              const driverName = typeof split.driver_name === "string" ? split.driver_name : null;
+              return (
+                <div key={`${index}-${driverId ?? index}`} className="rounded-sm border border-slate-300 bg-white px-2 py-1">
+                  Driver{" "}
+                  {driverId ? (
+                    <EntityLink kind="driver" id={driverId} label={entityLabel(driverName, driverId, "Driver")} />
+                  ) : (
+                    entityLabel(driverName, driverId, "Driver")
+                  )}{" "}
+                  · Role {String(split.pay_role ?? "—")} ·
+                  Share {Number(split.share_pct ?? 0)}% ·
+                  Pay ${((Number(split.driver_pay_cents ?? 0) || 0) / 100).toFixed(2)}
+                </div>
+              );
+            })}
           </div>
         </div>
       ) : null}
