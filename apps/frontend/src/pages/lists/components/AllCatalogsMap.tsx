@@ -202,6 +202,9 @@ export const DOMAIN_CONFIG: DomainConfig[] = [
     label: "Vendors",
     pillClass: "bg-slate-100 text-slate-700",
     catalogs: [
+      // C-02 — enter the canonical vendor roster from Lists so +Create writes mdata.vendors rows
+      // consumed by bill, expense, maintenance, and insurance vendor pickers.
+      { name: "Vendors", description: "Vendor roster, profiles, and +Create", live: true, catalogKey: "vendors-master" },
       // LST-WIRE-04 — vendor types were a frozen TypeScript union in the vendor create form. The
       // catalog existed, seeded per entity, and nothing read it: the owner could pick a type but
       // never add, rename or retire one. This tile is the operator's way in.
@@ -274,6 +277,7 @@ export function buildCatalogPath(domain: string, catalogKey: string): string {
   const routeDomain = normalizeListsDomain(domain);
   if (catalogKey === "_create") return `/lists/hub/${domain}`;
   if (domain === "customers" && catalogKey === "customers-master") return "/customers";
+  if (domain === "vendors" && catalogKey === "vendors-master") return "/vendors";
   if (domain === "dispatch") {
     const dispatchRouteMap: Record<string, string> = {
       "load-types": "/lists/dispatch/load-types",

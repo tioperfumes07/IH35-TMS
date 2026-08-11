@@ -74,6 +74,7 @@ describe("Lists reorg — buildCatalogPath (shared resolver)", () => {
     expect(buildCatalogPath("accounting", "_create")).toBe("/lists/hub/accounting");
     expect(buildCatalogPath("drivers", "_create")).toBe("/lists/hub/drivers");
     expect(buildCatalogPath("customers", "customers-master")).toBe("/customers");
+    expect(buildCatalogPath("vendors", "vendors-master")).toBe("/vendors");
     // LST-F13 — mounted orphans must resolve from DOMAIN_CONFIG keys.
     expect(buildCatalogPath("maintenance", "parts-catalog")).toBe("/lists/maintenance/parts-catalog");
     expect(buildCatalogPath("accounting", "abandonment-defaults")).toBe("/lists/accounting/abandonment-defaults");
@@ -84,6 +85,15 @@ describe("Lists reorg — buildCatalogPath (shared resolver)", () => {
     expect(customers?.catalogs).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ name: "Customers", catalogKey: "customers-master", live: true }),
+      ]),
+    );
+  });
+
+  it("exposes the canonical Vendors roster from the Vendors domain", () => {
+    const vendors = DOMAIN_CONFIG.find((d) => d.key === "vendors");
+    expect(vendors?.catalogs).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ name: "Vendors", catalogKey: "vendors-master", live: true }),
       ]),
     );
   });
