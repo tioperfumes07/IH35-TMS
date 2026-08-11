@@ -9,6 +9,7 @@
   "_why": "202612350000 was claimed twice by two concurrently-open CC-1 branches. The migration lane-band guard (HH 00\u201311 / 12\u201323) only prevents inter-lane collisions; it cannot see two unmerged branches in the same lane. A registry merged before authorship converts the invisible race into a git conflict.",
   "claimed": {
     "202612471800": "backfill_gate_b_sample_tag_catalogs",
-    "202612480900": "bills_sync_void_markers"
+    "202612480900": "bills_sync_void_markers",
+    "202612481000": "vendor_types_description_canonical_shape"
   }
 }
