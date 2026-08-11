@@ -9,6 +9,8 @@ import { ReportsSubNav } from "./ReportsSubNav";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { ListErrorState } from "../../components/ListErrorState";
+import { formatQueryErrorDetail } from "../../lib/tableError";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -87,9 +89,11 @@ export function DispatchMarginPage() {
 
       {query.isLoading ? <div className="rounded-sm border bg-white p-4 text-sm text-slate-500">Loading…</div> : null}
       {query.isError ? (
-        <div className="rounded-sm border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-          Failed to load dispatch margin. <button type="button" className="underline" onClick={() => query.refetch()}>Retry</button>
-        </div>
+        <ListErrorState
+          title="Couldn't load dispatch margin"
+          {...formatQueryErrorDetail(query.error)}
+          onRetry={() => void query.refetch()}
+        />
       ) : null}
 
       {query.data ? (

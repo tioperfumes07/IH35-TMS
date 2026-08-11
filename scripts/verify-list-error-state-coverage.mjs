@@ -61,6 +61,11 @@ const REQUIRED_ERROR_STATE = [
   // Inventory — honest isError -> ListErrorState (INBOX-298; standing P1 inventory module).
   "apps/frontend/src/pages/inventory/InventoryPartsStockPage.tsx",
   "apps/frontend/src/pages/inventory/InventoryAssignmentsPage.tsx",
+  // Reports — honest isError -> ListErrorState (INBOX-309).
+  "apps/frontend/src/pages/reports/LaneProfitabilityPage.tsx",
+  "apps/frontend/src/pages/reports/DeadheadReportPage.tsx",
+  "apps/frontend/src/pages/reports/DispatchMarginPage.tsx",
+  "apps/frontend/src/pages/reports/CancellationsReportPage.tsx",
 ];
 
 function stripComments(src) {

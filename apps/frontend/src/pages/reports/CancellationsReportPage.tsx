@@ -7,6 +7,8 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { getCancellationsReport, type CancellationBucket } from "../../api/reports";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { ListErrorState } from "../../components/ListErrorState";
+import { formatQueryErrorDetail } from "../../lib/tableError";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -131,9 +133,11 @@ export function CancellationsReportPage() {
       </div>
 
       {query.isError ? (
-        <div className="rounded-sm border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800">
-          Couldn't load the cancellations report.
-        </div>
+        <ListErrorState
+          title="Couldn't load cancellations report"
+          {...formatQueryErrorDetail(query.error)}
+          onRetry={() => void query.refetch()}
+        />
       ) : (
         <>
           <div className="grid grid-cols-2 gap-2 md:grid-cols-3">

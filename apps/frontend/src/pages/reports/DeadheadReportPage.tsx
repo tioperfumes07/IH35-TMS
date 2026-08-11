@@ -8,6 +8,8 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { entityLabel } from "../../lib/entity-label";
+import { ListErrorState } from "../../components/ListErrorState";
+import { formatQueryErrorDetail } from "../../lib/tableError";
 
 type DeadheadPeriod = "last_4_weeks" | "last_12_weeks" | "YTD";
 
@@ -196,7 +198,13 @@ export function DeadheadReportPage() {
         </>
       ) : null}
 
-      {reportQuery.isError ? <p className="text-sm text-red-600">Failed to load deadhead report.</p> : null}
+      {reportQuery.isError ? (
+        <ListErrorState
+          title="Couldn't load deadhead report"
+          {...formatQueryErrorDetail(reportQuery.error)}
+          onRetry={() => void reportQuery.refetch()}
+        />
+      ) : null}
     </div>
   );
 }
