@@ -10,6 +10,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { apiRequest } from "../../api/client";
 import { companyToday } from "../../lib/businessDate";
 import { entityLabel } from "../../lib/entity-label";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 type PreviewLine = {
   invoice_number: string;
@@ -133,8 +134,8 @@ export function FaroImportPage() {
       setCsvText("");
       setFileName("");
     },
-    onError: (error: Error) => {
-      pushToast(error.message || "Import failed", "error");
+    onError: (error: unknown) => {
+      pushToast(userFacingApiError(error, "Import failed"), "error");
     },
   });
 
