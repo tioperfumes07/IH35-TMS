@@ -16,6 +16,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { labelResolves } from "./lib/entity-label-detect.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const ROUTE = "apps/backend/src/safety/safety.routes.ts";
@@ -66,11 +67,20 @@ export function assertAccidentsNames(sources) {
   }
 
   // Frontend: EntityLink columns carry the name as label, filters match the name.
-  if (!/kind="driver"[\s\S]{0,120}label=\{\(row\.driver_name/.test(page)) {
-    problems.push(`${PAGE}: the Driver EntityLink does not pass driver_name as label — it shows the raw uuid.`);
+  //
+  // ★ DETECTOR WIDENED 2026-08-11 (CLS-GUARD-LITERAL-DETECTION). These two checks used to demand the
+  // literal `label={(row.driver_name` / `label={(row.unit_number`. The page moved to the shared helper
+  // — `label={entityLabel((row.driver_name as string | undefined)?.trim(), row.driver_id, "Driver")}` —
+  // and this guard reddened on a page that had become STRICTLY SAFER, while its selftest went INERT
+  // because the mutation it plants targets a spelling the file no longer contains. Live prod renders
+  // "Juan USMCA-Battery" / "TEST-UNIT-20260806-01" on /safety/accidents, so the SCREEN was never the
+  // defect — the detector was. Accepted spelling widens; the assertion does not weaken, because
+  // entityLabel additionally rejects a uuid-shaped value arriving in the name column.
+  if (!labelResolves(page, { field: "driver_name", noun: "Driver" })) {
+    problems.push(`${PAGE}: the Driver EntityLink does not resolve driver_name to a word — it shows the raw uuid.`);
   }
-  if (!/kind="unit"[\s\S]{0,120}label=\{\(row\.unit_number/.test(page)) {
-    problems.push(`${PAGE}: the Unit EntityLink does not pass unit_number as label — it shows the raw uuid.`);
+  if (!labelResolves(page, { field: "unit_number", noun: "Unit" })) {
+    problems.push(`${PAGE}: the Unit EntityLink does not resolve unit_number to a word — it shows the raw uuid.`);
   }
   if (!/row\.driver_name/.test(page) || !/row\.unit_number/.test(page)) {
     problems.push(`${PAGE}: filters/columns never reference driver_name/unit_number — they still key on the raw uuid.`);
@@ -113,17 +123,43 @@ if (SELFTEST) {
     "not scoped by owner_company_id",
   );
   // 3. frontend drops the driver name label.
+  //
+  // The old mutation named the INLINE spelling verbatim; once the page moved to entityLabel() it
+  // matched nothing, so this case planted no change and `expectCaught` scored it "inert mutation" —
+  // the guard was certifying a detector that had not run. The mutation now targets whichever label
+  // expression actually references driver_name, so it cannot go inert as the spelling evolves.
   expectCaught(
     "no-driver-label",
     {
       ...live,
-      [PAGE]: live[PAGE].replace(
-        /label=\{\(row\.driver_name as string \| undefined\)(?:\?\.trim\(\) \|\| "Driver"| \?\? undefined)\}/,
-        'label={undefined}',
-      ),
+      [PAGE]: live[PAGE].replace(/label=\{[^}]*row\.driver_name[^}]*\}/, "label={undefined}"),
     },
-    "does not pass driver_name as label",
+    "does not resolve driver_name",
   );
+  // 3b. the same for the unit column — half a fix is how this class survived the first pass.
+  expectCaught(
+    "no-unit-label",
+    {
+      ...live,
+      [PAGE]: live[PAGE].replace(/label=\{[^}]*row\.unit_number[^}]*\}/, "label={row.unit_id}"),
+    },
+    "does not resolve unit_number",
+  );
+  // 3c. the LEGACY inline spelling must still be accepted — widening must not orphan the old form.
+  {
+    const legacy = {
+      ...live,
+      [PAGE]: live[PAGE].replace(
+        /label=\{[^}]*row\.driver_name[^}]*\}/,
+        'label={(row.driver_name as string | undefined)?.trim() || "Driver"}',
+      ),
+    };
+    if (JSON.stringify(legacy) === JSON.stringify(live)) {
+      failures.push("legacy-spelling-accepted: inert mutation");
+    } else if (assertAccidentsNames(legacy).some((p) => p.includes("driver_name"))) {
+      failures.push("legacy-spelling-accepted: the legacy inline spelling must still pass");
+    }
+  }
   const liveProblems = assertAccidentsNames(live);
   if (liveProblems.length) failures.push(`live sources FAIL: ${liveProblems.join(" | ")}`);
 
