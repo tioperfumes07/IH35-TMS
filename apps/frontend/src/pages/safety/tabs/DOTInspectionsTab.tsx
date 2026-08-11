@@ -13,6 +13,7 @@ import { InspectionScoreBadge } from "../../../components/safety/InspectionScore
 import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
 import { EntityPicker } from "../../../components/parity/EntityPicker";
 import { VoidReasonModal } from "../../../components/accounting/VoidReasonModal";
+import { ListErrorState } from "../../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { entityLabel } from "../../../lib/entity-label";
 
@@ -216,6 +217,16 @@ export function DOTInspectionsTab() {
         </button>
       </div>
 
+      {/* CLS-LIST-ERROR-STATE-UNGUARDED: a failed query fell through to emptyText "No DOT inspections found." — an outage presenting
+          as a carrier with no DOT inspection history. */}
+      {openEventsQuery.isError ? (
+        <ListErrorState
+          title="Couldn't load DOT inspections"
+          status={0}
+          message={(openEventsQuery.error as Error)?.message}
+          onRetry={() => void openEventsQuery.refetch()}
+        />
+      ) : (
       <ParityTable<Record<string, unknown>>
         columns={columns}
         rows={query.data?.dot_inspections ?? []}
@@ -225,6 +236,7 @@ export function DOTInspectionsTab() {
         storageKey="safety-dot-inspections"
         exportFilename="dot-inspections"
       />
+      )}
 
       <div className="rounded-sm border border-gray-200 bg-white p-3">
         <h3 className="mb-2 text-xs font-semibold text-slate-800">Open DOT Station Dwell Events (last captured)</h3>

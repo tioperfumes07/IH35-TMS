@@ -11,6 +11,7 @@ import { listDrivers } from "../../api/mdata";
 import { Button } from "../../components/Button";
 import { Modal } from "../../components/Modal";
 import { EntityPicker } from "../../components/parity/EntityPicker";
+import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
@@ -194,6 +195,16 @@ export function TrainingProgramsPage({ operatingCompanyId }: Props) {
         </Button>
       </div>
 
+      {/* CLS-LIST-ERROR-STATE-UNGUARDED: a failed query fell through to emptyText "No training programs found." — an outage
+          presenting as a carrier with no driver training on record. */}
+      {completionsQuery.isError ? (
+        <ListErrorState
+          title="Couldn't load training programs"
+          status={0}
+          message={(completionsQuery.error as Error)?.message}
+          onRetry={() => void completionsQuery.refetch()}
+        />
+      ) : (
       <ParityTable<ProgramRow>
         columns={programColumns}
         rows={programs}
@@ -205,6 +216,7 @@ export function TrainingProgramsPage({ operatingCompanyId }: Props) {
         tableTestId="training-programs-table"
         rowTestId={(p) => `training-program-row-${p.id}`}
       />
+      )}
 
       <Modal variant="drawer" open={createOpen} onClose={() => setCreateOpen(false)} title="Create Training Program">
         <form
