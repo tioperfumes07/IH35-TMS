@@ -10,6 +10,7 @@
   "claimed": {
     "202612471800": "backfill_gate_b_sample_tag_catalogs",
     "202612480900": "bills_sync_void_markers",
-    "202612481000": "vendor_types_description_canonical_shape"
+    "202612481000": "vendor_types_description_canonical_shape",
+    "202612481100": "invoice_lines_item_id_canonical_fk"
   }
 }
