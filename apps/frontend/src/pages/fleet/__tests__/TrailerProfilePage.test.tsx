@@ -29,6 +29,7 @@ const aggregateFixture = {
   equipment: { equipment_number: "T-100", equipment_type: "Reefer", status: "InService", vin: "VIN1" },
   type_specs: { length_ft: 53 },
   current_assignment: { attached_to_unit: null, current_load: null },
+  loads: [{ load_id: "load-1", load_number: "L-100", status: "cancelled" }],
   reefer: { reefer_brand: "Carrier" },
   samsara_telemetry: null,
   maintenance: { open_wo_count: 0, next_pm_due: null, last_service: null },
@@ -62,6 +63,8 @@ describe("TrailerProfilePage", () => {
     expect(await screen.findByTestId("tp-section-1-identity")).toBeTruthy();
     expect(screen.getByTestId("tp-section-2-specs")).toBeTruthy();
     expect(screen.getByTestId("tp-section-3-assignment")).toBeTruthy();
+    expect(screen.getByTestId("tp-section-3b-load-history")).toBeTruthy();
+    expect(screen.getByRole("link", { name: "L-100" })).toHaveAttribute("href", "/dispatch/loads/load-1");
     expect(screen.getByTestId("tp-section-4-reefer")).toBeTruthy();
     expect(screen.getByTestId("tp-section-5-maintenance")).toBeTruthy();
     expect(screen.getByTestId("service-timeline")).toBeTruthy();

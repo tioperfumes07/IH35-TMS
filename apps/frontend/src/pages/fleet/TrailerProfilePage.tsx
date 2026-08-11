@@ -22,11 +22,14 @@ import { AssetSafetyReverseSection } from "../../components/safety/AssetSafetyRe
 import { LinkedBankTransactionsPanel } from "../../components/banking/LinkedBankTransactionsPanel";
 import { EntityAuditHistoryTab } from "../../components/audit/EntityAuditHistoryTab";
 import { LegalMattersReverseSection } from "../../components/legal/LegalMattersReverseSection";
+import { EntityLink } from "../../components/shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 
 export type TrailerProfileAggregate = {
   equipment: Record<string, unknown>;
   type_specs: Record<string, unknown>;
   current_assignment: Record<string, unknown>;
+  loads: Array<Record<string, unknown>>;
   reefer: Record<string, unknown> | null;
   samsara_telemetry: Record<string, unknown> | null;
   maintenance: Record<string, unknown>;
@@ -115,6 +118,22 @@ export function TrailerProfilePage() {
       <div data-testid="tp-section-3-assignment">
         <CurrentAssignmentSection assignment={aggregate.current_assignment} />
       </div>
+      <section data-testid="tp-section-3b-load-history" className="rounded-sm border border-gray-200 bg-white p-4">
+        <h2 className="text-sm font-semibold text-gray-800">Loads</h2>
+        <div className="mt-2 space-y-1 text-xs">
+          {(aggregate.loads ?? []).map((load) => (
+            <div key={String(load.load_id)} className="flex items-center justify-between gap-3">
+              <EntityLink
+                kind="load"
+                id={String(load.load_id)}
+                label={entityLabel(load.load_number, load.load_id, "Load")}
+              />
+              <span className="text-gray-500">{String(load.status ?? "—")}</span>
+            </div>
+          ))}
+          {(aggregate.loads ?? []).length === 0 ? <p className="text-gray-500">No linked loads.</p> : null}
+        </div>
+      </section>
       {isReefer ? (
         <>
           <div data-testid="tp-section-4-reefer">

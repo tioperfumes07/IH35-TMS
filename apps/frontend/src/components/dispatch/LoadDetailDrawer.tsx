@@ -318,7 +318,16 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
                   <FlatFieldGrid
                     columns={2}
                     fields={[
-                      { label: "Customer", value: entityLabel(load.customer_name, load.customer_id, "Customer") },
+                      {
+                        label: "Customer",
+                        value: (
+                          <EntityLink
+                            kind="customer"
+                            id={load.customer_id}
+                            label={entityLabel(load.customer_name, load.customer_id, "Customer")}
+                          />
+                        ),
+                      },
                       {
                         label: "Status",
                         value: (
@@ -377,7 +386,16 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
                     fields={[
                       { label: "Trip Type", value: load.trip_type ? (TRIP_TYPE_LABEL[load.trip_type] ?? load.trip_type) : "—" },
                       { label: "Trailer type", value: load.trailer_equipment_type ?? "—" },
-                      { label: "Truck unit", value: entityLabel(load.assigned_unit_number, load.assigned_unit_id, "Unit") },
+                      {
+                        label: "Truck unit",
+                        value: (
+                          <EntityLink
+                            kind="unit"
+                            id={load.assigned_unit_id}
+                            label={entityLabel(load.assigned_unit_number, load.assigned_unit_id, "Unit")}
+                          />
+                        ),
+                      },
                       {
                         label: "Trailer unit",
                         value: load.trailer_id ? (
