@@ -2010,5 +2010,10 @@
     "claimed_at": "2026-08-10",
     "claimed_by": "cursor",
     "purpose": "verify-user-facing-toast-errors"
+  },
+  "3021": {
+    "claimed_at": "2026-08-11",
+    "claimed_by": "cc-1",
+    "purpose": "verify-bill-void-markers-agree"
   }
 }
