@@ -714,6 +714,7 @@
       "display_order",
       "id",
       "invoice_id",
+      "item_id",
       "line_total_cents",
       "line_type",
       "operating_company_id",
