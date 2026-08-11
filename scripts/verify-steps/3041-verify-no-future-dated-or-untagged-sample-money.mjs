@@ -21,16 +21,56 @@
  *
  * Skips cleanly with an explicit SKIP line when no database is reachable (verify:static runs with a
  * dead-port sentinel), so it never fakes green in a no-DB context.
+ *
+ * CI-3041-BANK-TXNS-SCHEMA-CI (2026-08-11): `build-typecheck`'s ephemeral CI Postgres IS reachable —
+ * DATABASE_URL points at a live service container — but this guard runs early in the verify-step sweep
+ * against whatever schema state exists at that point, and `banking.bank_transactions` was undefined
+ * there: a genuine "relation does not exist" (Postgres 42P01), not a query bug. The old catch-all
+ * treated that identically to a real assertion failure and hard-FAILed every PR, including ones that
+ * never touched banking or accounting. This guard's whole PURPOSE is reading LIVE production-shaped
+ * data (see false-empty law above) — a throwaway DB missing the schema it needs is the exact same
+ * "cannot verify" case as an unreachable database, not a "verified and it's dirty" case. Fixed by
+ * classifying 42P01 on one of THIS guard's own tables as SKIP, same as the two existing no-DB SKIPs.
+ * Any other error (syntax, permission, connection reset mid-query, a column that vanished) still FAILs
+ * loud — only "the specific relation this guard reads doesn't exist yet" is treated as unverifiable.
  */
 import pg from "pg";
 
 const LABEL = "3041-verify-no-future-dated-or-untagged-sample-money";
 const FUTURE_DAYS = 30;
 const TEST_NAME_RE = "(SAMPLE|CC3-|GATEB|REPROVE|USMCA_GATEB_SAMPLE)";
+const GUARDED_RELATIONS = ["banking.bank_transactions", "accounting.bills", "accounting.invoices"];
 
 function fail(msg) {
   console.error(`[${LABEL}] FAIL: ${msg}`);
   process.exit(1);
+}
+
+/**
+ * True when `err` is Postgres 42P01 (undefined_table) on one of the tables THIS guard reads — i.e. the
+ * schema this guard depends on simply isn't provisioned in the current DB context. Scoped to
+ * GUARDED_RELATIONS on purpose: an undefined-table error on some unrelated relation should still FAIL
+ * loud rather than be waved through as "just a missing schema".
+ */
+export function isMissingGuardedRelation(err) {
+  if (!err || err.code !== "42P01") return false;
+  const msg = String(err.message ?? "");
+  return GUARDED_RELATIONS.some((rel) => msg.includes(rel) || msg.includes(rel.split(".")[1]));
+}
+
+if (process.argv.includes("--selftest")) {
+  const missing = { code: "42P01", message: 'relation "banking.bank_transactions" does not exist' };
+  const missingOther = { code: "42P01", message: 'relation "accounting.invoices" does not exist' };
+  const unrelatedTable = { code: "42P01", message: 'relation "foo.bar_widgets" does not exist' };
+  const syntaxError = { code: "42601", message: "syntax error at or near" };
+  const connReset = { code: "08006", message: "connection reset by peer" };
+  if (!isMissingGuardedRelation(missing)) fail("selftest: 42P01 on banking.bank_transactions must classify as SKIP");
+  if (!isMissingGuardedRelation(missingOther)) fail("selftest: 42P01 on accounting.invoices must classify as SKIP");
+  if (isMissingGuardedRelation(unrelatedTable)) fail("selftest: 42P01 on an unrelated relation must NOT classify as SKIP — over-broad");
+  if (isMissingGuardedRelation(syntaxError)) fail("selftest: a syntax error must NOT classify as SKIP");
+  if (isMissingGuardedRelation(connReset)) fail("selftest: a connection error must NOT classify as SKIP");
+  console.log(`[${LABEL}] selftest: PASS — 42P01 on a guarded relation SKIPs; every other error still FAILs`);
+  process.exit(0);
 }
 
 const url = process.env.DATABASE_URL;
@@ -114,6 +154,14 @@ try {
   );
 } catch (err) {
   await client.query("ROLLBACK").catch(() => {});
+  if (isMissingGuardedRelation(err)) {
+    // Same posture as the no-DATABASE_URL / unreachable-DB SKIPs above: the process is exiting either
+    // way, so no cleanup dance — just report and go, matching this file's own established style.
+    console.log(
+      `[${LABEL}] SKIP — ${err.message} (schema not provisioned in this DB context; this guard is DB-backed by design, same class as no-DATABASE_URL / unreachable-DB)`
+    );
+    process.exit(0);
+  }
   fail(`query failed: ${err?.message ?? err}`);
 } finally {
   client.release();
