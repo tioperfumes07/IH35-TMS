@@ -1961,16 +1961,41 @@ export function BankingTransactionsDesignView({
               ) : null}
             </div>
           </div>
-          {draft.driverId ? (
-            <div className="mt-2 rounded-sm border border-gray-200 bg-gray-50 px-2 py-1.5">
-              <label className="flex items-center gap-2 text-xs font-medium text-gray-700">
+          {/* P0#3 (owner sequence 2026-08-11) — RECOVER/PAYABLE BOX IS ALWAYS VISIBLE.
+              It used to render only when a driver was already tagged (`draft.driverId ? … : null`),
+              so a categorizer who did not already know the feature existed had no way to discover
+              that a company-paid driver expense CAN be recovered on settlement — the control was
+              invisible at exactly the moment the decision is made. It now always renders, disabled
+              with a one-line reason until a driver is tagged, which teaches the workflow instead of
+              hiding it. The outline is darkened from gray-200/gray-50 to slate-300/slate-100 so the
+              panel reads as a distinct decision box against the surrounding form (owner: "darker
+              panel outline"). Behaviour is unchanged when no driver is tagged: the checkbox cannot
+              be checked, and BankingTransactionsDesignView already sends recover_from_driver only
+              when draft.driverId is set (see the submit payload above). */}
+          <div
+            className={`mt-2 rounded-sm border px-2 py-1.5 ${
+              draft.driverId ? "border-slate-300 bg-slate-100" : "border-slate-200 bg-slate-50"
+            }`}
+            data-testid="bank-categorize-recover-box"
+          >
+              <label
+                className={`flex items-center gap-2 text-xs font-medium ${
+                  draft.driverId ? "text-gray-700" : "text-gray-400"
+                }`}
+              >
                 <input
                   type="checkbox"
-                  checked={draft.recoverFromDriver}
+                  checked={draft.driverId ? draft.recoverFromDriver : false}
+                  disabled={!draft.driverId}
                   onChange={(event) => setDraft(tx, { recoverFromDriver: event.target.checked })}
                 />
                 Recover from driver (auto-deduction on settlement)
               </label>
+              {!draft.driverId ? (
+                <p className="mt-1 text-[11px] text-gray-500">
+                  Tag a driver above to enable recovery on their next settlement.
+                </p>
+              ) : null}
               {draft.recoverFromDriver ? (
                 <label className="mt-1.5 block text-xs text-gray-600">
                   Recovery type
@@ -1987,8 +2012,7 @@ export function BankingTransactionsDesignView({
                   </SelectCombobox>
                 </label>
               ) : null}
-            </div>
-          ) : null}
+          </div>
           <label className="mt-2 block text-xs text-gray-600">
             Memo
             <textarea
