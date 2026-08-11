@@ -14,6 +14,7 @@ import { coaAccountReferenceOption, vendorReferenceOption } from "../../../compo
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { companyToday } from "../../../lib/businessDate";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
+import { CappedListNotice } from "../../../components/CappedListNotice";
 
 const FREQUENCIES: { value: RecurringBillFrequency; label: string }[] = [
   { value: "weekly", label: "Weekly" },
@@ -183,6 +184,13 @@ export function RecurringBillCreate() {
             operatingCompanyId={companyId}
             placeholder="Select vendor..."
             disabled={!companyId}
+          />
+          <CappedListNotice
+            shown={vendors.length}
+            limit={1000}
+            total={vendorsQuery.data?.total ?? null}
+            hint="Type in the vendor field to search the full roster."
+            className="mt-1 text-[11px] text-slate-600"
           />
         </div>
 
