@@ -8,6 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { apiRequest } from "../../../api/client";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
+import { ListErrorState } from "../../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { formatDateUS } from "../../../lib/formatDate";
 
@@ -118,6 +119,16 @@ export function TireWearDashboard() {
         </div>
         {atRiskQ.isLoading ? <p className="p-3 text-xs text-gray-500">Loading projections...</p> : null}
         <div className="p-3">
+          {/* CLS-LIST-ERROR-STATE-UNGUARDED: a failed query fell through to the empty state — an outage presenting as NO TIRES AT RISK, which on a
+            tire-wear dashboard is a safety claim, not a cosmetic gap. */}
+          {atRiskQ.isError ? (
+            <ListErrorState
+              title="Couldn't load at-risk tires"
+              status={0}
+              message={(atRiskQ.error as Error)?.message}
+              onRetry={() => void atRiskQ.refetch()}
+            />
+          ) : (
           <ParityTable
             rows={rows}
             columns={columns}
@@ -127,6 +138,7 @@ export function TireWearDashboard() {
             emptyText="No tires projected for replacement within 30 days."
             exportFilename="tire-wear-at-risk"
           />
+          )}
         </div>
       </section>
     </div>
