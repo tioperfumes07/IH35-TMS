@@ -152,7 +152,8 @@ export type LoadDetail = DispatchLoadRow & {
   tarp_size?: string | null;
   // W-FIX-3a: side-panel §B Equipment enrichment (read-only joins, no new column).
   assigned_secondary_driver_name?: string | null; // team driver (assigned_secondary_driver_id → drivers)
-  trailer_equipment_type?: string | null;          // mdata.loads.trailer_id → mdata.equipment.equipment_type
+  trailer_id?: string | null;                      // load_assignment_history.new_trailer_id → mdata.equipment.id
+  trailer_equipment_type?: string | null;          // load_assignment_history.new_trailer_id → mdata.equipment.equipment_type
   trailer_number?: string | null;                  // mdata.equipment.equipment_number
   // A9 — rate-con PDF resolved from docs.file_links + docs.files (category 'rate_confirmation'),
   // no persisted column on the load. Fetch the PDF via GET /api/v1/docs/files/{ratecon_file_id}/download-url

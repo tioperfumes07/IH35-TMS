@@ -368,8 +368,8 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
                   </div>
                 </OverviewWizardSection>
 
-                {/* §B — Equipment · Driver · Trailer. W-FIX-3a surfaces team-driver name (join) + trailer
-                    type/unit (loads.trailer_id → equipment) via read-only joins. Driver pay rate stays "—"
+                {/* §B — Equipment · Driver · Trailer. The trailer is resolved from the canonical
+                    load_assignment_history.new_trailer_id link. Driver pay rate stays "—"
                     (the load-specific rate isn't persisted on the load — not fabricated). */}
                 <OverviewWizardSection title="Equipment · Driver · Trailer" canEdit={canEdit} onEdit={() => setEditWizardOpen(true)}>
                   <FlatFieldGrid
@@ -378,7 +378,18 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
                       { label: "Trip Type", value: load.trip_type ? (TRIP_TYPE_LABEL[load.trip_type] ?? load.trip_type) : "—" },
                       { label: "Trailer type", value: load.trailer_equipment_type ?? "—" },
                       { label: "Truck unit", value: entityLabel(load.assigned_unit_number, load.assigned_unit_id, "Unit") },
-                      { label: "Trailer unit", value: entityLabel(load.trailer_number, null, "Trailer") },
+                      {
+                        label: "Trailer unit",
+                        value: load.trailer_id ? (
+                          <EntityLink
+                            kind="trailer"
+                            id={load.trailer_id}
+                            label={entityLabel(load.trailer_number, load.trailer_id, "Trailer")}
+                          />
+                        ) : (
+                          entityLabel(load.trailer_number, load.trailer_id, "Trailer")
+                        ),
+                      },
                       {
                         label: "Driver",
                         value: load.assigned_primary_driver_id ? (
@@ -406,7 +417,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
                       { label: "Driver pay rate / mi", value: "—" },
                     ]}
                   />
-                  <p className="mt-1 text-[10px] text-gray-400">Trailer type/unit show when a trailer is assigned (loads.trailer_id). Driver pay rate is the load-specific rate, not stored on the load yet.</p>
+                  <p className="mt-1 text-[10px] text-gray-400">Trailer type/unit come from the latest persisted trailer assignment. Driver pay rate is the load-specific rate, not stored on the load yet.</p>
                 </OverviewWizardSection>
 
                 <OverviewWizardSection title="Miles" canEdit={canEdit} onEdit={() => setEditWizardOpen(true)}>
