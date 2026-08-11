@@ -158,6 +158,32 @@ requireMatch(
   "DriverDetailPage must pass onOpenOperationsView to EarningsTab (Escrow tile -> Operations tab drill)"
 );
 
+// 9. LV-SETTLEMENT-LOAD-FK (F-06): the settlement DETAIL lines must carry the load NUMBER, not just
+//    the load id — and the join that resolves it must be entity-scoped.
+//
+//    THE DEFECT, exactly as it shipped: the detail read was `SELECT * FROM
+//    driver_finance.settlement_lines`, which returns load_id and nothing a human can read, because
+//    load_number lives on mdata.loads. Meanwhile SettlementDetailPage.tsx ALREADY read
+//    `line.load_number` and already handled the null case — its own comment says "The line already has
+//    it (`line.load_number`)". It did not. The frontend had been built for a payload the API never
+//    sent, so the field was permanently undefined and the Load column had only a uuid to show. A
+//    half-wired chain like this passes every FE test (the component is correct) and every backend test
+//    (the query is valid) while being broken end to end, which is why the assertion belongs here.
+//
+//    PROD-VERIFIED 2026-08-11 (USMCA, control healthy at 4 lines / 8 settlements): the link is real —
+//    S-20260808-0085 -> L-20260808-0085, S-20260808-0090 -> L-20260808-0090 — while S-2026-0001's two
+//    lines carry no load_id at all, so a NULL load_number there is correct and must stay honest.
+requireMatch(
+  "apps/backend/src/driver-finance/settlements.routes.ts",
+  /LEFT JOIN mdata\.loads l[\s\S]{0,200}?l\.operating_company_id\s*=\s*\$2::uuid/,
+  "settlement detail lines must LEFT JOIN mdata.loads scoped by operating_company_id (a load from another entity must never resolve into this payload)"
+);
+requireMatch(
+  "apps/backend/src/driver-finance/settlements.routes.ts",
+  /SELECT\s+sl\.\*,\s*l\.load_number/,
+  "settlement detail lines must project l.load_number — SettlementDetailPage reads line.load_number and renders a raw uuid without it (LV-SETTLEMENT-LOAD-FK)"
+);
+
 if (failures.length > 0) {
   console.error("FAIL verify-driver-settlements-domain-linkage:");
   for (const failure of failures) console.error(` - ${failure}`);
