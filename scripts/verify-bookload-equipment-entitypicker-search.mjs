@@ -11,6 +11,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-bookload-equipment-entitypicker-search";
 const FILE = "apps/frontend/src/pages/dispatch/components/BookLoadEquipmentSection.tsx";
 const MODAL_FILE = "apps/frontend/src/pages/dispatch/components/BookLoadModalV4.tsx";
+const BOOK_LOAD_SERVICE = "apps/backend/src/dispatch/book-load.service.ts";
 const TRIP_PAIRING_FILE = "apps/frontend/src/pages/dispatch/TripPairingBoardPage.tsx";
 const TIMELINE_FILE = "apps/frontend/src/pages/dispatch/planners/UnifiedTimelinePlanner.tsx";
 
@@ -62,6 +63,32 @@ export function collectProblems(root = ROOT) {
   if (!/assigned_primary_driver_id:\s*prefillDriverId\s*\?\?\s*["']{2}/.test(modal)) {
     problems.push(`${MODAL_FILE}: prefillDriverId must initialize assigned_primary_driver_id in form defaults`);
   }
+  for (const [field, label] of [
+    ["customer_id", "customer"],
+    ["assigned_unit_id", "unit"],
+    ["assigned_trailer_unit_id", "trailer"],
+  ]) {
+    if (!new RegExp(`${field}:\\s*values\\.${field}`).test(modal)) {
+      problems.push(`${MODAL_FILE}: submit payload must carry the canonical ${label} FK (${field})`);
+    }
+  }
+  if (!/assigned_primary_driver_id:\s*values\.assignment_mode\s*===\s*["']solo["'][\s\S]{0,120}?values\.assigned_primary_driver_id/.test(modal)) {
+    problems.push(`${MODAL_FILE}: submit payload must carry the canonical driver FK (assigned_primary_driver_id)`);
+  }
+
+  const service = readRel(root, BOOK_LOAD_SERVICE) ?? "";
+  if (!/INSERT INTO mdata\.loads[\s\S]*?customer_id[\s\S]*?assigned_unit_id[\s\S]*?assigned_primary_driver_id/.test(service)) {
+    problems.push(`${BOOK_LOAD_SERVICE}: mdata.loads INSERT must persist customer, unit, and primary-driver FKs`);
+  }
+  if (!/input\.customer_id[\s\S]*?input\.assigned_unit_id\s*\?\?\s*null[\s\S]*?input\.team_id\s*\?\s*null\s*:\s*\(input\.assigned_primary_driver_id/.test(service)) {
+    problems.push(`${BOOK_LOAD_SERVICE}: INSERT values must bind customer_id, assigned_unit_id, and assigned_primary_driver_id`);
+  }
+  if (!/INSERT INTO dispatch\.load_assignment_history[\s\S]*?new_trailer_id[\s\S]*?trailerIdForInsert/.test(service)) {
+    problems.push(
+      `${BOOK_LOAD_SERVICE}: selected trailer must persist to dispatch.load_assignment_history.new_trailer_id ` +
+        `(mdata.loads has no trailer column)`
+    );
+  }
   for (const entryFile of [TRIP_PAIRING_FILE, TIMELINE_FILE]) {
     const entry = readRel(root, entryFile) ?? "";
     if (!/prefillDriverId=\{/.test(entry)) {
@@ -78,6 +105,40 @@ if (process.argv.includes("--selftest")) {
     console.error(`${LABEL} SELFTEST FAIL:`);
     for (const p of baseline) console.error("  - " + p);
     process.exit(1);
+  }
+  const realModal = readRel(ROOT, MODAL_FILE);
+  const realService = readRel(ROOT, BOOK_LOAD_SERVICE);
+  if (!realModal || !realService) {
+    console.error(`${LABEL} SELFTEST FAIL: missing real modal/service sources`);
+    process.exit(1);
+  }
+  const fkMutations = [
+    [MODAL_FILE, realModal, /customer_id:\s*values\.customer_id/, "customer_id: undefined", "customer FK"],
+    [MODAL_FILE, realModal, /assigned_unit_id:\s*values\.assigned_unit_id\s*\|\|\s*undefined/, "assigned_unit_id: undefined", "unit FK"],
+    [MODAL_FILE, realModal, /assigned_primary_driver_id:\s*values\.assignment_mode[\s\S]*?undefined,/, "assigned_primary_driver_id: undefined,", "driver FK"],
+    [MODAL_FILE, realModal, /assigned_trailer_unit_id:\s*values\.assigned_trailer_unit_id\s*\|\|\s*undefined/, "assigned_trailer_unit_id: undefined", "trailer FK"],
+    [BOOK_LOAD_SERVICE, realService, /new_trailer_id,/, "removed_trailer_column,", "trailer sink"],
+  ];
+  for (const [rel, original, pattern, replacement, label] of fkMutations) {
+    const mutated = original.replace(pattern, replacement);
+    if (mutated === original) {
+      console.error(`${LABEL} SELFTEST FAIL: ${label} mutation was inert`);
+      process.exit(1);
+    }
+    const mutationRoot = fs.mkdtempSync(path.join(ROOT, ".tmp-bookload-fk-"));
+    try {
+      for (const sourceRel of [FILE, MODAL_FILE, BOOK_LOAD_SERVICE, TRIP_PAIRING_FILE, TIMELINE_FILE]) {
+        const target = path.join(mutationRoot, sourceRel);
+        fs.mkdirSync(path.dirname(target), { recursive: true });
+        fs.writeFileSync(target, sourceRel === rel ? mutated : readRel(ROOT, sourceRel));
+      }
+      if (!collectProblems(mutationRoot).some((p) => p.includes(label.split(" ")[0]))) {
+        console.error(`${LABEL} SELFTEST FAIL: ${label} mutation was not detected`);
+        process.exit(1);
+      }
+    } finally {
+      fs.rmSync(mutationRoot, { recursive: true, force: true });
+    }
   }
   const stubRoot = fs.mkdtempSync(path.join(ROOT, ".tmp-bookload-equip-"));
   try {
