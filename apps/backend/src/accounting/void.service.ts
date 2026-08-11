@@ -28,7 +28,21 @@ export const VOID_FLAG_KEY = "VOID_ENFORCEMENT_ENABLED";
 // source_transaction_type recorded by the posting engine — no new query needed). Both types are
 // already real source_transaction_type values written by settlement-bill-payment-posting.service.ts
 // (bill_payment) and accounting/payments/apply.service.ts (customer_payment). Additive; NO new GL math.
-export type VoidableEntityType = "invoice" | "journal_entry" | "bill" | "expense" | "bill_payment" | "customer_payment";
+/**
+ * ACCT-F331 — `prepaid_purchase` added. accounting.prepaid_assets carries voided_at /
+ * voided_by_user_id / void_reason and a 'voided' status value, but had NO void path anywhere in the
+ * backend: an unvoidable money document whose A/P credit could never be reversed. The entityType is
+ * passed straight through as source_transaction_type by readOriginalGlPostings, so the canonical
+ * reverser handles it with no new GL math.
+ */
+export type VoidableEntityType =
+  | "invoice"
+  | "journal_entry"
+  | "bill"
+  | "expense"
+  | "bill_payment"
+  | "customer_payment"
+  | "prepaid_purchase";
 
 type QueryableClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
@@ -157,7 +171,19 @@ async function readOriginalGlPostings(
       WHERE operating_company_id = $1::uuid
         AND source_transaction_type = $3
         AND source_transaction_id = $2
-        AND posting_batch_id IS NOT NULL
+        -- ACCT-F331 — the old predicate also required posting_batch_id IS NOT NULL, which silently
+        -- meant "posted BY THE POSTING ENGINE" rather than "posted". The sub-ledger posters
+        -- (amortization-posting.service.ts family: prepaid_purchase, fixed_asset_depreciation,
+        -- loan_payment) write real, balanced, source-linked lines keyed by idempotency_key instead of
+        -- a posting batch — so their documents were UNREVERSIBLE: postVoidReversal read 0 lines and
+        -- returned a null reversal with NO error, leaving the balance standing while the document read
+        -- "voided". That is the ACCT-F330 defect in a second place.
+        -- Provably safe, measured across ALL entities before changing: 3,681 source-linked posting
+        -- lines exist, 3,670 carry a batch, and the ONLY 11 without one are those three sub-ledger
+        -- types — none of which was in VoidableEntityType. So this widens nothing for
+        -- invoice/bill/expense/bill_payment/customer_payment (every one of their lines has a batch)
+        -- and unblocks the sub-ledger family. Drafts are not a risk here: an unposted draft has no
+        -- source-linked posting row at all.
       ORDER BY line_sequence ASC
     `,
     [operatingCompanyId, entityId, entityType]
@@ -408,6 +434,8 @@ export async function auditVoid(
     expense: "accounting.expenses",
     bill_payment: "accounting.bill_payments",
     customer_payment: "accounting.payments",
+    // ACCT-F331 — the audit row must name the table an auditor would open, not the posting source type.
+    prepaid_purchase: "accounting.prepaid_assets",
   };
   const resourceType = resourceTypeByEntity[entityType];
   await appendCrudAudit(
