@@ -154,7 +154,9 @@ export type PostingErrorCode =
   | "QBO_BILL_PAYMENT_POST_GL_REFUSED"
   | "EXPENSE_POST_GL_REFUSED"
   | "QBO_CUSTOMER_PAYMENT_POST_GL_REFUSED"
-  | "QBO_INVOICE_POST_GL_REFUSED";
+  | "QBO_INVOICE_POST_GL_REFUSED"
+  | "POSTING_BATCH_SETTLED_WITHOUT_LINES"
+  | "POSTING_BATCH_RECLAIM_HAS_LINES";
 
 export class PostingEngineError extends Error {
   code: PostingErrorCode;
@@ -2052,6 +2054,11 @@ async function buildPostingDraft(
   throw new PostingEngineError("UNKNOWN_SOURCE_TYPE", `Unknown source type: ${sourceType}`);
 }
 
+// ACCT-F348 — failure bookkeeping must never DOWNGRADE a settled batch. The DO UPDATE below was
+// unconditional, so an error raised anywhere in a later attempt (the duplicate-key crash this finding
+// is about, among others) could stamp `failed` onto the batch of an entry whose journal lines are
+// posted and real. The books would then disagree with their own audit trail about whether that money
+// reached the ledger. A `posted`/`reversed` batch is terminal in both directions.
 async function markBatchFailed(
   actor: Actor,
   operatingCompanyId: string,
@@ -2079,6 +2086,7 @@ async function markBatchFailed(
         VALUES ($1::uuid, 'failed', $2, $3, $4, $5::uuid, $6::uuid, $7, now(), now())
         ON CONFLICT (operating_company_id, idempotency_key) WHERE idempotency_key IS NOT NULL
         DO UPDATE SET batch_status = 'failed', updated_at = now()
+          WHERE accounting.posting_batches.batch_status NOT IN ('posted', 'reversed')
       `,
       [operatingCompanyId, sourceType, sourceId, idempotencyKey, actor.userId, postingTemplateId, sourceType]
     );
@@ -2141,6 +2149,32 @@ async function executePostingOnClient(client: DbClient, ctx: PostingExecCtx): Pr
   assertBalanced(draft.lines);
 
   const postingTemplateId = await resolvePostingTemplateId(client, sourceType, input.operating_company_id);
+  // ACCT-F348 — RECLAIM THE BATCH, NEVER INSERT A SECOND ONE UNDER THE SAME KEY.
+  //
+  // A bare INSERT here made every FAILURE PERMANENT. The idempotency key is deterministic, and
+  // markBatchFailed COMMITS a `failed` batch row under that exact key in its own transaction after a
+  // post throws. The pre-check above only short-circuits on `posted`/`reversed`, so the next attempt
+  // fell through to this INSERT and died on uq_posting_batches_company_idempotency_key — the document
+  // could never post again, no matter what was fixed. The failure record poisoned its own retry.
+  //
+  // Measured on prod 2026-08-11: 11,980 documents carry a `failed` batch with zero GL lines and are
+  // therefore un-postable forever. The one that blocked USMCA is bill L-20260810-0003
+  // (35b8ce38, $297.60 of real driver pay): postSettlementBillPayment creates the Bill, BILL_GL_POSTING_ENABLED
+  // auto-posts it before its bill_lines exist (BILL_LINE_ACCOUNT_UNRESOLVED -> failed batch), then the
+  // settlement adds the line and posts explicitly — straight into the duplicate key. That is why
+  // driver_settlement_gl_runs / gl_bills were 0 on every entity. bills.service.ts called this state
+  // "retriable"; it was not.
+  //
+  // WHY RECLAIM IS SAFE: a non-terminal batch NEVER owns GL lines. executePostingOnClient runs inside a
+  // single transaction (withCurrentUser BEGINs), so a failed attempt rolls its batch AND its lines back
+  // together; the only committed non-terminal rows are the line-less ones markBatchFailed writes. The
+  // assertion below enforces that rather than trusting it — reclaiming a batch that somehow held lines
+  // would attach a second JE's worth of postings to it.
+  //
+  // WHY THE WHERE CLAUSE: a `posted`/`reversed` batch is settled money and must never be reopened here.
+  // If the conflicting row is terminal, DO UPDATE matches nothing, RETURNING is empty, and we resolve it
+  // as an existing posting instead (concurrent-writer case: Postgres blocks this upsert on the other
+  // transaction's row lock, so we observe its committed result rather than racing it).
   const batch = await client.query<{ id: string }>(
     `
       INSERT INTO accounting.posting_batches (
@@ -2156,12 +2190,53 @@ async function executePostingOnClient(client: DbClient, ctx: PostingExecCtx): Pr
         updated_at
       )
       VALUES ($1::uuid, 'queued', $2, $3, $4, $5::uuid, $6::uuid, $7, now(), now())
+      ON CONFLICT (operating_company_id, idempotency_key) WHERE idempotency_key IS NOT NULL
+      DO UPDATE SET batch_status = 'queued',
+                    created_by_user_id = EXCLUDED.created_by_user_id,
+                    posting_template_id = EXCLUDED.posting_template_id,
+                    source_template_code = EXCLUDED.source_template_code,
+                    updated_at = now()
+        WHERE accounting.posting_batches.batch_status NOT IN ('posted', 'reversed')
       RETURNING id::text
     `,
     [input.operating_company_id, sourceType, sourceId, idempotencyKey, actor.userId, postingTemplateId, sourceType]
   );
   const postingBatchId = batch.rows[0]?.id;
-  if (!postingBatchId) throw new Error("posting_batch_create_failed");
+  if (!postingBatchId) {
+    // The key is taken by a settled batch. Re-read it: normally that is a concurrent writer that just
+    // committed, and its result is the correct answer to return.
+    const settled = await getExistingPostingResultByIdempotencyKey(
+      client,
+      input.operating_company_id,
+      idempotencyKey,
+      postingPurpose,
+      sourceType,
+      sourceId
+    );
+    if (settled) return settled;
+    // Terminal batch with no readable lines — corrupt, and reposting would write a JE that the batch
+    // does not account for. Fail loud instead of duplicating (prod count of this state: 0).
+    throw new PostingEngineError(
+      "POSTING_BATCH_SETTLED_WITHOUT_LINES",
+      `Posting batch ${idempotencyKey} is already posted/reversed but exposes no journal lines — refusing to post a second entry under a settled key`
+    );
+  }
+
+  const reclaimedLines = await client.query<{ n: string }>(
+    `
+      SELECT count(*)::text AS n
+      FROM accounting.journal_entry_postings
+      WHERE operating_company_id = $1::uuid
+        AND posting_batch_id = $2::uuid
+    `,
+    [input.operating_company_id, postingBatchId]
+  );
+  if (Number(reclaimedLines.rows[0]?.n ?? "0") > 0) {
+    throw new PostingEngineError(
+      "POSTING_BATCH_RECLAIM_HAS_LINES",
+      `Posting batch ${postingBatchId} was non-terminal but already carries journal lines — refusing to post onto it`
+    );
+  }
 
   await client.query(
     `

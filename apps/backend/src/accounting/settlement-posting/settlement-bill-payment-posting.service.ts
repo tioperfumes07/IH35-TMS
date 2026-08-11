@@ -314,7 +314,34 @@ export async function postSettlementBillPayment(
     );
     const runRow = existingRun.rows[0] ?? null;
     if (runRow && runRow.status === "posted") {
-      return { alreadyPosted: true as const, runId: runRow.id };
+      // ACCT-F348 — 'posted' ON THE RUN ROW IS NOT PROOF THE LEDGER RECEIVED ANYTHING.
+      //
+      // The run row is CLAIMED with status 'posted' (see the INSERT below — the CHECK constraint on
+      // driver_settlement_gl_runs.status admits only 'posted'/'reversed', so there is no honest
+      // in-progress value to claim it with). If the poster then throws part-way — which is exactly what
+      // the duplicate-key crash this finding is about did — the settlement is left marked posted with
+      // ZERO gl_bills and ZERO journal lines, and this short-circuit refuses to ever resume it. The
+      // settlement becomes permanently unpostable while REPORTING that it posted.
+      //
+      // Measured on prod 2026-08-11: settlement S-2026-0002 (USMCA) had run c5caca25 status='posted',
+      // 0 gl_bills, and $297.60 of driver pay sitting in an unposted A/P bill.
+      //
+      // The per-bill rows are the real completion signal, so ask them. Everything downstream is already
+      // re-entrant (doneByBill + posting idempotency), so resuming an incomplete run cannot double-post.
+      const doneBills = await client.query<{ n: string }>(
+        `SELECT count(*)::text AS n
+           FROM driver_finance.driver_settlement_gl_bills
+          WHERE run_id = $1::uuid AND bill_journal_entry_id IS NOT NULL`,
+        [runRow.id]
+      );
+      const postedBills = Number(doneBills.rows[0]?.n ?? "0");
+      const expectedBills = (await loadDriverBills(client, opco, settlementId, settlement.driver_id)).length;
+      // postedBills > 0 (not >= alone) so a run with nothing on the ledger can never look complete;
+      // >= expectedBills keeps a legitimately finished run short-circuiting even if its driver bills
+      // were voided afterwards, which drops expectedBills to 0.
+      if (postedBills > 0 && postedBills >= expectedBills) {
+        return { alreadyPosted: true as const, runId: runRow.id };
+      }
     }
 
     // Driver vendor + name (+ hire_date, needed for the escrow leaf's stable name-with-hire-date).
@@ -511,6 +538,16 @@ export async function postSettlementBillPayment(
 
     // (a) create the Bill (numbered by load#) + one driver-pay expense line + post its A/P leg.
     if (!accountingBillId) {
+      // ACCT-F348 — the driver-pay line is passed INTO createBill, not added after it.
+      //
+      // The GL poster reads accounting.bill_lines (not coa_account_id), and createBill AUTO-POSTS while
+      // BILL_GL_POSTING_ENABLED is ON for this entity. Creating the header first and adding the line
+      // afterwards therefore guaranteed that auto-post ran against a line-less bill, failed
+      // BILL_LINE_ACCOUNT_UNRESOLVED, and committed a `failed` posting batch under the bill's
+      // deterministic idempotency key — which the explicit post below then collided with. Building the
+      // bill complete in one call means the first post is the one that succeeds, so this path no longer
+      // depends on failure-then-retry at all.
+      const lineDescription = `Load ${b.load_number ?? b.load_id} — Cost of Labor–Mexico Drivers`;
       const bill = await createBill(
         {
           operatingCompanyId: opco,
@@ -520,17 +557,53 @@ export async function postSettlementBillPayment(
           amountCents: b.gross_amount_cents,
           memo: `${label} — driver pay, load ${b.load_number ?? b.load_id}`,
           coaAccountId: driverPayAccount,
+          lines: [
+            {
+              amountCents: b.gross_amount_cents,
+              description: lineDescription,
+              accountId: driverPayAccount,
+              // The bill→load link lives on the LINE (accounting.bills has no load_id). The hand-rolled
+              // INSERT this replaces never wrote it, so driver-pay bills reached the ledger with no
+              // machine-readable path back to the load whose pay they are.
+              loadId: b.load_id,
+            },
+          ],
         },
         actor.userId
       );
       accountingBillId = bill.id;
-      // The GL poster reads accounting.bill_lines (not coa_account_id) — add the single driver-pay line.
+      // Backstop, not the primary path: if a future createBill change stops writing bill_lines, the
+      // poster must still find its line rather than fail closed on a settlement mid-flight.
       await scoped(actor, opco, (client) =>
         client.query(
-          `INSERT INTO accounting.bill_lines (bill_id, line_sequence, amount, description, account_id)
-           VALUES ($1::uuid, 1, $2, $3, $4::uuid)
+          `INSERT INTO accounting.bill_lines (bill_id, line_sequence, amount, description, account_id, load_id)
+           VALUES ($1::uuid, 1, $2, $3, $4::uuid, $5::uuid)
            ON CONFLICT (bill_id, line_sequence) DO NOTHING`,
-          [accountingBillId, b.gross_amount_cents / 100, `Load ${b.load_number ?? b.load_id} — Cost of Labor–Mexico Drivers`, driverPayAccount]
+          [accountingBillId, b.gross_amount_cents / 100, lineDescription, driverPayAccount, b.load_id]
+        )
+      );
+      // ACCT-F348 — PERSIST THE LINK THE INSTANT THE BILL EXISTS, not at the end of the leg.
+      //
+      // The per-load link row was written only in step (d), AFTER the bill JE and both payments. A crash
+      // anywhere in (a)–(c) therefore left an accounting bill that NOTHING pointed at: doneByBill came
+      // back empty on the next run, step (a) called createBill again with the same load-numbered
+      // bill_number, and the LV-AP-DUP duplicate-vendor-invoice control refused it — so the settlement
+      // could not go forward (no link) and could not start over (duplicate number). That is what
+      // stranded USMCA bill L-20260810-0003 ($297.60) after the duplicate-key crash.
+      //
+      // Step (d)'s upsert COALESCEs every downstream id, so writing the skeleton here and filling it in
+      // there composes exactly as before — this only makes the bill discoverable one step earlier.
+      await scoped(actor, opco, (client) =>
+        client.query(
+          `
+            INSERT INTO driver_finance.driver_settlement_gl_bills
+              (operating_company_id, run_id, settlement_id, driver_bill_id, load_id, load_number,
+               accounting_bill_id, gross_cents, deduction_cents, cash_cents)
+            VALUES ($1::uuid,$2::uuid,$3::uuid,$4::uuid,$5::uuid,$6,$7::uuid,$8,$9,$10)
+            ON CONFLICT (operating_company_id, driver_bill_id) DO UPDATE SET
+              accounting_bill_id = EXCLUDED.accounting_bill_id
+          `,
+          [opco, runId, settlementId, b.id, b.load_id, b.load_number, accountingBillId, b.gross_amount_cents, alloc.deductionCents, alloc.cashCents]
         )
       );
     }
@@ -608,7 +681,13 @@ export async function postSettlementBillPayment(
             bill_journal_entry_id = COALESCE(EXCLUDED.bill_journal_entry_id, driver_settlement_gl_bills.bill_journal_entry_id),
             cash_bill_payment_id = COALESCE(EXCLUDED.cash_bill_payment_id, driver_settlement_gl_bills.cash_bill_payment_id),
             cash_journal_entry_id = COALESCE(EXCLUDED.cash_journal_entry_id, driver_settlement_gl_bills.cash_journal_entry_id),
-            deduction_bill_payment_id = COALESCE(EXCLUDED.deduction_bill_payment_id, driver_settlement_gl_bills.deduction_bill_payment_id)
+            deduction_bill_payment_id = COALESCE(EXCLUDED.deduction_bill_payment_id, driver_settlement_gl_bills.deduction_bill_payment_id),
+            -- ACCT-F348: the amounts belong to the run that actually posted. The skeleton row written in
+            -- step (a) carries this leg's allocation as computed at creation time; refreshing them here
+            -- means the link row can never keep a figure the posted entries disagree with.
+            gross_cents = EXCLUDED.gross_cents,
+            deduction_cents = EXCLUDED.deduction_cents,
+            cash_cents = EXCLUDED.cash_cents
         `,
         [opco, runId, settlementId, b.id, b.load_id, b.load_number, accountingBillId, billJeId, cashBpId, cashJeId, deductionBpId, b.gross_amount_cents, alloc.deductionCents, alloc.cashCents]
       );
