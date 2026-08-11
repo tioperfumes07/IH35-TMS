@@ -211,7 +211,10 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
     return { accounts };
   });
 
-  app.get("/api/v1/banking/plaid/accounts/:id", async (req, reply) => {
+  app.get(
+    "/api/v1/banking/plaid/accounts/:id",
+    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
+    async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
 
@@ -273,7 +276,12 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
     if (!query.success) return sendValidationError(reply, query.error);
 
     const rows = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
-      const predicates: string[] = ["bt.bank_account_id = $1", "bt.operating_company_id = $2"];
+      const predicates: string[] = [
+        "bt.bank_account_id = $1",
+        "bt.operating_company_id = $2",
+        "bt.voided_at IS NULL",
+        "bt.transaction_date <= (CURRENT_DATE + INTERVAL '1 day')",
+      ];
       const values: unknown[] = [params.data.id, query.data.operating_company_id];
       let index = values.length + 1;
 
@@ -502,7 +510,10 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
     return { ok: true, deactivated_accounts: result.count };
   });
 
-  app.get("/api/v1/banking/plaid/company-transactions", async (req, reply) => {
+  app.get(
+    "/api/v1/banking/plaid/company-transactions",
+    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
+    async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
 
@@ -519,7 +530,11 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
             : "bt.transaction_date DESC, bt.created_at DESC";
 
     const rows = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
-      const predicates: string[] = ["bt.operating_company_id = $1"];
+      const predicates: string[] = [
+        "bt.operating_company_id = $1",
+        "bt.voided_at IS NULL",
+        "bt.transaction_date <= (CURRENT_DATE + INTERVAL '1 day')",
+      ];
       const values: unknown[] = [query.data.operating_company_id];
       let idx = 2;
       if (query.data.bank_account_id) {
@@ -573,6 +588,8 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
           bt.categorization_location,
           bt.is_billable,
           bt.tags,
+          bt.categorization_recover_from_driver,
+          bt.categorization_recover_deduction_type,
           ba.institution_name,
           ba.account_name,
           ba.account_mask,

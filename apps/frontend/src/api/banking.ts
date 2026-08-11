@@ -109,6 +109,8 @@ export type PlaidBankTransaction = {
   categorization_location?: string | null;
   is_billable?: boolean | null;
   tags?: string | null;
+  categorization_recover_from_driver?: boolean | null;
+  categorization_recover_deduction_type?: string | null;
   /**
    * Relay Fuel Wallet: product lines from integrations.relay_fuel_transaction_lines
    * (diesel truck / reefer / DEF / fee) when source_ref is relay_fuel:*.

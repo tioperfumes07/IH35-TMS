@@ -115,6 +115,8 @@ type RowDetailDraft = {
   loadName: string;
   recoverFromDriver: boolean;
   recoverDeductionType: string;
+  /** none | recover (settlement deduction) | payable (driver advance / company owes driver) */
+  driverMoneyTreatment: "none" | "recover" | "payable";
 };
 
 const USD = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
@@ -738,8 +740,9 @@ export function BankingTransactionsDesignView({
       trailerName: tx.categorization_trailer_number ?? "",
       loadId: tx.categorization_load_id ?? tx.matched_load_id ?? "",
       loadName: tx.categorization_load_number ?? "",
-      recoverFromDriver: false,
-      recoverDeductionType: "fine",
+      recoverFromDriver: Boolean(tx.categorization_recover_from_driver),
+      recoverDeductionType: tx.categorization_recover_deduction_type?.trim() || "fine",
+      driverMoneyTreatment: tx.categorization_recover_from_driver ? "recover" : "none",
     };
   }
 
@@ -1471,7 +1474,7 @@ export function BankingTransactionsDesignView({
           matchedJournalEntryId)
     );
     return (
-      <div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-2 lg:grid-cols-2" data-testid="banking-categorize-expanded-panel">
         <div className="p-1">
           <p className="mb-2 text-xs font-semibold text-gray-900">{transactionLabel(tx)}</p>
           <div
@@ -1881,7 +1884,14 @@ export function BankingTransactionsDesignView({
                   <button
                     type="button"
                     className="text-slate-700 underline"
-                    onClick={() => setDraft(tx, { driverId: "", driverName: "", recoverFromDriver: false })}
+                    onClick={() =>
+                      setDraft(tx, {
+                        driverId: "",
+                        driverName: "",
+                        recoverFromDriver: false,
+                        driverMoneyTreatment: "none",
+                      })
+                    }
                   >
                     Clear
                   </button>
@@ -1961,43 +1971,88 @@ export function BankingTransactionsDesignView({
               ) : null}
             </div>
           </div>
-          {/* P0#3 (owner sequence 2026-08-11) — RECOVER/PAYABLE BOX IS ALWAYS VISIBLE.
-              It used to render only when a driver was already tagged (`draft.driverId ? … : null`),
-              so a categorizer who did not already know the feature existed had no way to discover
-              that a company-paid driver expense CAN be recovered on settlement — the control was
-              invisible at exactly the moment the decision is made. It now always renders, disabled
-              with a one-line reason until a driver is tagged, which teaches the workflow instead of
-              hiding it. The outline is darkened from gray-200/gray-50 to slate-300/slate-100 so the
-              panel reads as a distinct decision box against the surrounding form (owner: "darker
-              panel outline"). Behaviour is unchanged when no driver is tagged: the checkbox cannot
-              be checked, and BankingTransactionsDesignView already sends recover_from_driver only
-              when draft.driverId is set (see the submit payload above). */}
-          <div
-            className={`mt-2 rounded-sm border px-2 py-1.5 ${
-              draft.driverId ? "border-slate-300 bg-slate-100" : "border-slate-200 bg-slate-50"
-            }`}
-            data-testid="bank-categorize-recover-box"
-          >
-              <label
-                className={`flex items-center gap-2 text-xs font-medium ${
-                  draft.driverId ? "text-gray-700" : "text-gray-400"
-                }`}
+          {!tx.is_credit && draft.mode === "categorize" ? (
+            <div
+              className="mt-2 border-t border-slate-400 pt-2"
+              data-testid="banking-driver-money-treatment"
+            >
+              <p className="text-xs font-semibold text-slate-900">Driver expense treatment</p>
+              <p className="mt-0.5 text-[11px] text-slate-600">
+                Paid a fine or cost for a driver without creating an expense first? Choose recoverable (deduct on
+                settlement) or payable (company owes the driver — posts to Driver Advance / Employee Loan when
+                enabled).
+              </p>
+              <div
+                className="mt-2 rounded-sm border border-slate-300 bg-slate-50 px-2 py-1.5"
+                data-testid="bank-categorize-recover-box"
               >
-                <input
-                  type="checkbox"
-                  checked={draft.driverId ? draft.recoverFromDriver : false}
-                  disabled={!draft.driverId}
-                  onChange={(event) => setDraft(tx, { recoverFromDriver: event.target.checked })}
-                />
-                Recover from driver (auto-deduction on settlement)
-              </label>
-              {!draft.driverId ? (
-                <p className="mt-1 text-[11px] text-gray-500">
-                  Tag a driver above to enable recovery on their next settlement.
-                </p>
-              ) : null}
-              {draft.recoverFromDriver ? (
-                <label className="mt-1.5 block text-xs text-gray-600">
+                <label className="flex items-start gap-2 text-xs text-gray-800">
+                  <input
+                    type="checkbox"
+                    className="mt-0.5"
+                    checked={draft.recoverFromDriver}
+                    disabled={!draft.driverId}
+                    onChange={(event) =>
+                      setDraft(tx, {
+                        recoverFromDriver: event.target.checked,
+                        driverMoneyTreatment: event.target.checked ? "recover" : "none",
+                      })
+                    }
+                  />
+                  <span>
+                    <span className="font-semibold">Recover from driver</span> on settlement (deduction / liability)
+                  </span>
+                </label>
+                {!draft.driverId ? (
+                  <p className="mt-1 text-[11px] text-slate-700">Tag a driver above to enable recovery</p>
+                ) : null}
+              </div>
+              <fieldset className="mt-2 space-y-1.5">
+                <label className="flex items-start gap-2 text-xs text-gray-800">
+                  <input
+                    type="radio"
+                    name={`driver-money-${tx.id}`}
+                    className="mt-0.5"
+                    checked={draft.driverMoneyTreatment === "none"}
+                    onChange={() =>
+                      setDraft(tx, { driverMoneyTreatment: "none", recoverFromDriver: false })
+                    }
+                  />
+                  <span>Standard tag only — no recovery or advance</span>
+                </label>
+                <label className="flex items-start gap-2 text-xs text-gray-800">
+                  <input
+                    type="radio"
+                    name={`driver-money-${tx.id}`}
+                    className="mt-0.5"
+                    checked={draft.driverMoneyTreatment === "recover"}
+                    onChange={() =>
+                      setDraft(tx, { driverMoneyTreatment: "recover", recoverFromDriver: true })
+                    }
+                  />
+                  <span>
+                    <span className="font-semibold">Recoverable</span> — auto-deduct from driver on settlement
+                    (creates pending deduction / liability)
+                  </span>
+                </label>
+                <label className="flex items-start gap-2 text-xs text-gray-800">
+                  <input
+                    type="radio"
+                    name={`driver-money-${tx.id}`}
+                    className="mt-0.5"
+                    checked={draft.driverMoneyTreatment === "payable"}
+                    onChange={() =>
+                      setDraft(tx, { driverMoneyTreatment: "payable", recoverFromDriver: false })
+                    }
+                  />
+                  <span>
+                    <span className="font-semibold">Payable to driver</span> — company owes driver; select Driver
+                    Advance or Employee Loan in Category above
+                  </span>
+                </label>
+              </fieldset>
+              {draft.driverMoneyTreatment === "recover" ? (
+                <label className="mt-2 block text-xs text-gray-600">
                   Recovery type
                   <SelectCombobox
                     className="mt-0.5 w-full"
@@ -2012,7 +2067,13 @@ export function BankingTransactionsDesignView({
                   </SelectCombobox>
                 </label>
               ) : null}
-          </div>
+              {!draft.driverId ? (
+                <p className="mt-1.5 text-[11px] text-slate-700">
+                  Select a driver above before Post — recovery and payable paths require a driver tag.
+                </p>
+              ) : null}
+            </div>
+          ) : null}
           <label className="mt-2 block text-xs text-gray-600">
             Memo
             <textarea
