@@ -249,6 +249,11 @@
     "claimed_by": "cc-1",
     "purpose": "verify-invoice-create-stamps-source-load-id"
   },
+  "3066": {
+    "claimed_at": "2026-08-11",
+    "claimed_by": "cursor",
+    "purpose": "verify-wiring-plan-50-present"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
