@@ -25,4 +25,15 @@ describe("dispatch/loads.routes — trailer read-model (A9)", () => {
     // Regression guard: the broken join (unit.id = driver.id) must never come back.
     expect(routes).not.toContain("mdata.units tr ON tr.id = l.assigned_secondary_driver_id");
   });
+
+  it("uses the same assignment-history trailer link for the load detail response", () => {
+    const detailStart = routes.indexOf('app.get("/api/v1/dispatch/loads/:id"');
+    const detailEnd = routes.indexOf('app.post("/api/v1/dispatch/loads/:id/distribute-instructions"', detailStart);
+    const detailRoute = routes.slice(detailStart, detailEnd);
+    expect(detailRoute).toContain("tr.id AS trailer_id");
+    expect(detailRoute).toContain("tr.equipment_number AS trailer_number");
+    expect(detailRoute).toContain("tr.equipment_type AS trailer_equipment_type");
+    expect(detailRoute).toContain("lah.operating_company_id = l.operating_company_id");
+    expect(detailRoute).not.toContain("NULL::text AS trailer_number");
+  });
 });

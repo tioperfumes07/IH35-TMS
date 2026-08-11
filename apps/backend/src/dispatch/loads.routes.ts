@@ -695,12 +695,11 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
     const detail = await withCompanyScope(authUser.uuid, operatingCompanyId, async (client) => {
       // BUGFIX (Block 1, 2026-06-24): the prior W-FIX-3a join `LEFT JOIN mdata.equipment te ON te.id =
       // l.trailer_id` referenced a column that DOES NOT EXIST. mdata.loads (and the dispatch view) have no
-      // trailer_id; its nullable trailer_type is descriptive text, not an equipment FK. The only equipment
-      // column stored directly on a load is assigned_unit_id (the truck). That non-existent column 500'd
+      // trailer FK; its nullable trailer_type is descriptive text. The canonical equipment link is
+      // dispatch.load_assignment_history.new_trailer_id. That non-existent column 500'd
       // every load-detail fetch (42703), which in turn broke the cancel flow (overview 500 → load never leaves the board) and
-      // left the Cancelled Kanban column counted-but-empty. There is no persisted trailer↔load link to read,
-      // so the trailer fields are honestly NULL ("—"); the response SHAPE is unchanged (both keys present).
-      // A real trailer-on-load link (persist a trailer unit/type) is a separate additive feature — flagged.
+      // left the Cancelled Kanban column counted-but-empty. The detail query now resolves the latest
+      // entity-scoped assignment-history trailer, matching the list read model and Book Load write sink.
       //   team-driver name ← assigned_secondary_driver_id → mdata.drivers (persisted, kept).
       // Driver pay rate is NOT a load-persisted value (load-specific rate isn't stored; mdata.driver_pay_rates
       // is effective-dated per-qualification) → intentionally not surfaced here (stays "—"), no fabrication.
@@ -732,8 +731,9 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
                  ml.miles_practical AS miles_practical,
                  ml.loaded_miles AS loaded_miles,
                  ml.miles_deadhead AS miles_deadhead,
-                 NULL::text AS trailer_equipment_type,
-                 NULL::text AS trailer_number,
+                 tr.id AS trailer_id,
+                 tr.equipment_type AS trailer_equipment_type,
+                 tr.equipment_number AS trailer_number,
                  rc.file_id AS ratecon_file_id,
                  rc.original_filename AS ratecon_file_name,
                  rc.uploaded_at AS ratecon_uploaded_at
@@ -754,6 +754,21 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
           -- carries the load's own operating_company_id predicate rather than trusting the view's row.
           LEFT JOIN mdata.loads ml ON ml.id = l.id
                                   AND ml.operating_company_id = l.operating_company_id
+          -- P39: Book Load persists the trailer on assignment history because mdata.loads has no
+          -- trailer FK. Detail must read that same canonical sink; returning hard-coded NULL here
+          -- made a correctly linked load render "Unassigned" in the drawer.
+          LEFT JOIN LATERAL (
+            SELECT eq.id, eq.equipment_number, eq.equipment_type
+            FROM dispatch.load_assignment_history lah
+            JOIN mdata.equipment eq ON eq.id = lah.new_trailer_id
+                                   AND COALESCE(eq.currently_leased_to_company_id, eq.owner_company_id) = l.operating_company_id
+              AND (eq.owner_company_id = l.operating_company_id OR eq.currently_leased_to_company_id = l.operating_company_id)
+            WHERE lah.load_id = l.id
+              AND lah.operating_company_id = l.operating_company_id
+              AND lah.new_trailer_id IS NOT NULL
+            ORDER BY lah.assigned_at DESC, lah.created_at DESC
+            LIMIT 1
+          ) tr ON true
           -- A9 — surface the load's rate-con PDF (docs.file_links + docs.files, category
           -- 'rate_confirmation'). No column on mdata.loads carries this (unlike
           -- driver_instructions_file_id below, which IS persisted) — the link is polymorphic via
