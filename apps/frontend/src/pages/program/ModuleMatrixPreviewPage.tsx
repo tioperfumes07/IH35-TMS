@@ -203,6 +203,27 @@ function leafPct(cells: Array<{ req: boolean; live: boolean }>): number {
   return Math.round((live / owed.length) * 100);
 }
 
+/** Per-leaf wired / live / queue counts — matches system rollup Built | Live | Queue columns. */
+function leafSummaryCounts(
+  cells: Array<{ req: boolean; built: boolean; live: boolean }>,
+): { built: number; live: number; queue: number } {
+  let built = 0;
+  let live = 0;
+  let queue = 0;
+  for (const st of cells) {
+    if (!st.req) continue;
+    if (st.live) {
+      live += 1;
+      built += 1;
+    } else if (st.built) {
+      built += 1;
+    } else {
+      queue += 1;
+    }
+  }
+  return { built, live, queue };
+}
+
 function sectionForLeaf(moduleId: MatrixModuleId, leaf: RequiredLeaf): string {
   if (moduleId === "drivers") {
     if (leaf.id === "home") return "Drivers home";
@@ -387,15 +408,20 @@ function boardMetrics(map: RequiredMap, rows: Row[], live: LiveMatrix | null) {
     for (const st of row.cells) {
       if (!st.req) continue;
       requiredCells += 1;
-      if (st.live) liveCells += 1;
-      else if (st.built) builtCells += 1;
-      else if (st.audited) auditedCells += 1;
-      else buildQueue += 1;
+      if (st.live) {
+        liveCells += 1;
+        builtCells += 1;
+      } else if (st.built) {
+        builtCells += 1;
+      } else if (st.audited) {
+        auditedCells += 1;
+      } else {
+        buildQueue += 1;
+      }
     }
   }
   const modulePct = requiredCells === 0 ? 0 : Math.round((liveCells / requiredCells) * 100);
-  const builtPct =
-    requiredCells === 0 ? 0 : Math.round(((builtCells + liveCells) / requiredCells) * 100);
+  const builtPct = requiredCells === 0 ? 0 : Math.round((builtCells / requiredCells) * 100);
   const auditedPct =
     requiredCells === 0
       ? 0
@@ -445,7 +471,7 @@ export function ModuleMatrixPreviewPage() {
   const requiredMap = REQUIRED_BY_MODULE[moduleId];
   const cols = requiredMap.columns;
 
-  const { data: live, isError, isFetched } = useQuery({
+  const { data: live, isError, isFetched, dataUpdatedAt, isFetching } = useQuery({
     queryKey: ["program", "module-matrix", moduleId],
     queryFn: () => fetchModuleMatrix(moduleId),
     refetchInterval: MATRIX_POLL_MS,
@@ -515,14 +541,26 @@ export function ModuleMatrixPreviewPage() {
         </div>
       ) : liveOk ? (
         <div className="banner live" data-testid="module-matrix-live-banner">
-          <b>REQUEST-TIME FEED.</b> Required = committed map · Audited = leaf×column ledger / GUARD /
-          wave / module-completion (not live verify) · Done = <code>live_scenario_probe</code> hops +
-          PROD-VERIFIED + Neon completion PASS
+          <b>REQUEST-TIME FEED — NOT module-completion green.</b> Required ={" "}
+          <code>*.required.json</code> · Audited = ledger/GUARD (not verify) ·{" "}
+          <b>Built (Box 3)</b> = wired/Neon probe · <b>Live (Box 4)</b> = PROD-VERIFIED click-through
+          only · <code>complete:true</code> / scenario dots ≠ linkage done
           {live?.meta?.tipSha ? <> · tip <code>{live.meta.tipSha}</code></> : null}
           {typeof live?.meta?.probeProgress === "number" ? (
             <> · probe {live.meta.probeProgress}%</>
           ) : null}
-          {live?.meta?.reconAsOf ? <> · recon {live.meta.reconAsOf}</> : null}.
+          {live?.meta?.reconAsOf ? <> · recon {live.meta.reconAsOf}</> : null}
+          {dataUpdatedAt ? (
+            <>
+              {" "}
+              · refreshed{" "}
+              <span data-testid="module-matrix-last-refresh">
+                {new Date(dataUpdatedAt).toLocaleTimeString()}
+              </span>
+              {isFetching ? " (polling…)" : null}
+            </>
+          ) : null}
+          .
         </div>
       ) : (
         <div className="banner" data-testid="module-matrix-loading-banner">
@@ -623,6 +661,14 @@ export function ModuleMatrixPreviewPage() {
           <div className="n">{metrics.requiredCells}</div>
           <div className="l">Required cells<br />(box 1 green)</div>
         </div>
+        <div className="metric amb" data-testid="module-matrix-built-cells-metric">
+          <div className="n">{metrics.builtCells ?? 0}</div>
+          <div className="l">
+            Built cells (Box 3)
+            <br />
+            wired / Neon probe
+          </div>
+        </div>
         <div className="metric good">
           <div className="n">{metrics.liveCells ?? metrics.doneCells}</div>
           <div className="l">Live cells<br />(Box 4 green)</div>
@@ -689,6 +735,15 @@ export function ModuleMatrixPreviewPage() {
                   {g.group}
                 </th>
               ))}
+              <th className="sum-col" rowSpan={2} data-testid="module-matrix-leaf-built-cells">
+                Built
+              </th>
+              <th className="sum-col" rowSpan={2}>
+                Live
+              </th>
+              <th className="sum-col" rowSpan={2}>
+                Queue
+              </th>
             </tr>
             <tr>
               {cols.map((c) => (
@@ -703,10 +758,11 @@ export function ModuleMatrixPreviewPage() {
               if (row.kind === "section") {
                 return (
                   <tr key={`s-${row.label}-${i}`} className="section">
-                    <td colSpan={1 + cols.length}>{row.label}</td>
+                    <td colSpan={1 + cols.length + 3}>{row.label}</td>
                   </tr>
                 );
               }
+              const leafCounts = leafSummaryCounts(row.cells);
               return (
                 <tr key={row.leaf.id}>
                   <td className={`leaf-cell indent-${row.indent}`}>
@@ -719,10 +775,34 @@ export function ModuleMatrixPreviewPage() {
                       <Cell4 {...st} />
                     </td>
                   ))}
+                  <td className="sum-val amb">{leafCounts.built}</td>
+                  <td className="sum-val good">{leafCounts.live}</td>
+                  <td className="sum-val big">{leafCounts.queue}</td>
                 </tr>
               );
             })}
           </tbody>
+          <tfoot>
+            <tr className="module-total">
+              <td className="leaf-cell">
+                <b>Module total</b>
+              </td>
+              {cols.map((c) => (
+                <td key={c.id} className="gc">
+                  —
+                </td>
+              ))}
+              <td className="sum-val amb">
+                <b>{metrics.builtCells ?? 0}</b>
+              </td>
+              <td className="sum-val good">
+                <b>{metrics.liveCells ?? metrics.doneCells ?? 0}</b>
+              </td>
+              <td className="sum-val big">
+                <b>{metrics.buildQueue}</b>
+              </td>
+            </tr>
+          </tfoot>
         </table>
       </div>
 
@@ -773,7 +853,8 @@ const CSS = `
 .ih35mm .mod-pill.on{background:var(--navy);color:#fff;border-color:var(--navy)}
 .ih35mm .mod-pill.live{background:#fff;color:var(--navy);border-color:var(--navy)}
 .ih35mm .mod-pill.dim{opacity:.55}
-.ih35mm .metrics{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin:0 0 16px}
+.ih35mm .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:0 0 16px}
+@media(min-width:1100px){.ih35mm .metrics{grid-template-columns:repeat(8,1fr)}}
 .ih35mm .metric{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 13px}
 .ih35mm .metric .n{font-size:22px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums}
 .ih35mm .metric .l{font-size:10px;color:var(--slate-lt);text-transform:uppercase;letter-spacing:.3px;margin-top:8px;line-height:1.3}
@@ -807,6 +888,9 @@ const CSS = `
 .ih35mm td.leaf-cell .pct.lo{background:var(--red-bg);color:var(--red)}
 .ih35mm td.gc{text-align:center;padding:6px 4px}
 .ih35mm tr.section td{background:#f8fafc;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:.35px;color:var(--slate)}
+.ih35mm th.sum-col,.ih35mm td.sum-val{text-align:center;min-width:52px;background:#f8fafc;font-variant-numeric:tabular-nums;font-weight:700}
+.ih35mm td.sum-val.amb{color:var(--amber)}.ih35mm td.sum-val.good{color:var(--green)}.ih35mm td.sum-val.big{color:var(--red)}
+.ih35mm tr.module-total td{background:var(--accent-bg);border-top:2px solid var(--line)}
 .ih35mm .tri4{display:inline-grid;grid-template-columns:repeat(4,14px);gap:2px}
 .ih35mm .cell4{display:inline-grid;grid-template-columns:repeat(4,16px);gap:2px;justify-content:center}
 .ih35mm .cell4 .bx{width:16px;height:16px;font-size:10px}

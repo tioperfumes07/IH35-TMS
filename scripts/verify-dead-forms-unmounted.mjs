@@ -23,30 +23,18 @@
 import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
+import {
+  DEAD_FORM_BASENAMES,
+  DEAD_FORM_MODULE_SUFFIXES,
+  DEAD_FORM_TSX_PATH_SET,
+} from "./dead-form-modules.mjs";
 
 const repoRoot = process.cwd();
 const SCAN_ROOT = "apps/frontend/src";
 
-// Dead / @archived modules that MUST NOT be mounted on the live surface. Distinctive basenames
-// (no extension) — the import specifier of any live file must never resolve to one of these.
-const DEAD_MODULES = [
-  // @archived Workflow-B banking categorization chain (superseded by BankingTransactionsDesignView)
-  "pages/banking/BankTxCategorizationPage",
-  "pages/banking/components/CategorizeDrawer",
-  "pages/banking/components/forms/ApplyToBillForm",
-  "pages/banking/components/forms/BillPaymentForm",
-  "pages/banking/components/forms/CreateExpenseForm",
-  "pages/banking/components/forms/DriverSettlementForm",
-  "pages/banking/components/forms/FactoringAdvanceForm",
-  "pages/banking/components/forms/ManualJEForm",
-  "pages/banking/components/forms/SplitTransactionModal",
-  "pages/banking/components/forms/TransferForm",
-  // orphan dead create modal (0 importers, no submit)
-  "pages/maintenance/WorkOrderCreateModal",
-];
-
-const DEAD_BASENAMES = new Set(DEAD_MODULES.map((m) => m.split("/").pop()));
-const DEAD_RELSET = new Set(DEAD_MODULES.map((m) => `${SCAN_ROOT}/${m}.tsx`));
+const DEAD_MODULES = DEAD_FORM_MODULE_SUFFIXES;
+const DEAD_BASENAMES = DEAD_FORM_BASENAMES;
+const DEAD_RELSET = DEAD_FORM_TSX_PATH_SET;
 
 function isTestFile(rel) {
   return /\.test\.[tj]sx?$/.test(rel) || /(^|\/)__tests__\//.test(rel);

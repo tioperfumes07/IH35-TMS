@@ -201,8 +201,12 @@ export function assertScoreboardContract(sources) {
     }
     if (
       !/module-matrix-module-rail/.test(matrixPage) ||
-      (!/module-matrix-pill-safety/.test(matrixPage) && !/module-matrix-pill-\$\{id\}/.test(matrixPage)) ||
-      (!/module-matrix-pill-insurance/.test(matrixPage) && !/LIVE_MODULES/.test(matrixPage))
+      (!/module-matrix-pill-safety/.test(matrixPage) &&
+        !/module-matrix-pill-\$\{id\}/.test(matrixPage) &&
+        !/module-matrix-pill-\$\{m\.id\}/.test(matrixPage)) ||
+      (!/module-matrix-pill-insurance/.test(matrixPage) &&
+        !/LIVE_MODULES/.test(matrixPage) &&
+        !/module-matrix-pill-\$\{m\.id\}/.test(matrixPage))
     ) {
       problems.push(
         `${matrixPageRel}: must expose clickable Safety + Insurance pills on module rail (MATRIX-REQ-SAFETY / MATRIX-REQ-INSURANCE)`,
@@ -211,6 +215,14 @@ export function assertScoreboardContract(sources) {
     if (!/picker_law|qbo_chrome|connectivity|reverse_link/.test(matrixPage)) {
       problems.push(
         `${matrixPageRel}: chrome/wiring columns (picker/QBO/connectivity/reverse) must be named on the board`,
+      );
+    }
+    if (
+      !/module-matrix-built-cells-metric/.test(matrixPage) ||
+      !/module-matrix-leaf-built-cells/.test(matrixPage)
+    ) {
+      problems.push(
+        `${matrixPageRel}: individual module board must show Built cells count + per-leaf Built column (parity with system rollup)`,
       );
     }
   }

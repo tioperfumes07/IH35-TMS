@@ -19,6 +19,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
+import { isListErrorDiscoveryExempt } from "./dead-form-modules.mjs";
 
 const repoRoot = process.cwd();
 
@@ -76,11 +77,13 @@ export function discoverOffenders() {
   if (!fs.existsSync(root)) return null; // scope wrong — caller refuses to pass vacuously
   const offenders = [];
   for (const abs of walkPages(root)) {
+    const rel = path.relative(repoRoot, abs).replace(/\\/g, "/");
+    if (isListErrorDiscoveryExempt(rel)) continue;
     const src = fs.readFileSync(abs, "utf8");
     if (!/useQuery/.test(src)) continue;
     if (!RENDERS_A_LIST.test(src)) continue;
     if (HAS_ERROR_BRANCH.test(src)) continue;
-    offenders.push(path.relative(repoRoot, abs).replace(/\\/g, "/"));
+    offenders.push(rel);
   }
   return offenders.sort();
 }
@@ -246,7 +249,22 @@ function selftest() {
     console.error("[verify-list-error-state-coverage] SELFTEST FAIL — loading-only page counted as having error state");
     process.exit(1);
   }
-  console.log("[verify-list-error-state-coverage] SELFTEST PASS — requires isError + ListErrorState; flags loading-only");
+  const discovered = discoverOffenders() ?? [];
+  const mustExclude = [
+    "apps/frontend/src/pages/banking/components/forms/BillPaymentForm.tsx",
+    "apps/frontend/src/pages/program/LegacyAuditScoreboardPage.tsx",
+  ];
+  const stillFlagged = mustExclude.filter((p) => discovered.includes(p));
+  if (stillFlagged.length) {
+    console.error(
+      "[verify-list-error-state-coverage] SELFTEST FAIL — dead/exempt page(s) still discovered:",
+      stillFlagged.join(", "),
+    );
+    process.exit(1);
+  }
+  console.log(
+    "[verify-list-error-state-coverage] SELFTEST PASS — requires isError + ListErrorState; flags loading-only; excludes dead forms",
+  );
 }
 
 const isMain = path.resolve(process.argv[1] ?? "") === path.resolve(new URL(import.meta.url).pathname);

@@ -1,8 +1,7 @@
 {
-  "note": "Discovered list pages (useQuery + renders a table) with NO error branch. May only SHRINK. Safety and Dispatch are DRAINED and locked at zero (see DRAINED_MODULES in the guard). Generated 2026-08-11.",
+  "note": "Discovered list pages (useQuery + renders a table) with NO error branch. May only SHRINK. Dead @archived forms and LIST_ERROR_DISCOVERY_EXEMPT pages are excluded at scan time (scripts/dead-form-modules.mjs). Safety and Dispatch are DRAINED and locked at zero.",
   "offenders": [
     "apps/frontend/src/pages/Documents.tsx",
-    "apps/frontend/src/pages/banking/components/forms/BillPaymentForm.tsx",
     "apps/frontend/src/pages/compliance/Form2290Filings.tsx",
     "apps/frontend/src/pages/customers/CustomersListView.tsx",
     "apps/frontend/src/pages/customers/components/PortalUsersTab.tsx",
@@ -10,7 +9,6 @@
     "apps/frontend/src/pages/driver-finance/components/SettlementDisputesTab.tsx",
     "apps/frontend/src/pages/factoring/SubmissionWorkqueue.tsx",
     "apps/frontend/src/pages/maintenance/components/CreateWorkOrderModal.tsx",
-    "apps/frontend/src/pages/program/LegacyAuditScoreboardPage.tsx",
     "apps/frontend/src/pages/reports/PerTruckCpmReport.tsx",
     "apps/frontend/src/pages/reports/ifta/IFTAStepGallons.tsx",
     "apps/frontend/src/pages/reports/ifta/IFTAStepMiles.tsx",
