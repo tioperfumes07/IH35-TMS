@@ -364,9 +364,28 @@ export function BillsPage() {
         key: "bill_number",
         label: "Bill #",
         sortable: true,
-        render: (bill) => (
-          <EntityLink kind="bill" id={bill.id} label={entityLabel(bill.bill_number, bill.id, "Bill")} />
-        ),
+        // F-18 / LV-BILLS-NULL-BILL-NUMBER. entityLabel(name, id, noun) answers "can this record be
+        // NAMED?" and falls back to "<noun> — not visible", which is the right words for a row whose
+        // record the caller cannot see. It is the WRONG words here: the bill IS visible — the operator
+        // is looking straight at its row — it simply has no document number yet. Telling an A/P clerk a
+        // bill is "not visible" while showing it to them is a false statement about their own data.
+        // PROD-VERIFIED 2026-08-11 via psql as neondb_owner (same-statement control, accounting.bills =
+        // 16,294): USMCA holds 47 bills and exactly ONE carries bill_number IS NULL, so this is a real
+        // row, not a hypothetical. It is currently voided, which is why the list does not show it today.
+        // The shared helper is deliberately NOT changed — its wording is correct for the question it
+        // answers, and it is used across many surfaces and guarded by
+        // verify-entity-label-rejects-uuid-shaped-name. The distinction is made HERE, where the two
+        // cases are actually distinguishable.
+        render: (bill) => {
+          const number = typeof bill.bill_number === "string" ? bill.bill_number.trim() : "";
+          return (
+            <EntityLink
+              kind="bill"
+              id={bill.id}
+              label={number !== "" ? number : "No bill #"}
+            />
+          );
+        },
       },
       { key: "bill_date", label: "Date", sortable: true, render: (bill) => formatDateUS(bill.bill_date) },
       { key: "amount_cents", label: "Original", sortable: true, className: "text-right", cellClass: "text-right", render: (bill) => money(bill.amount_cents) },
