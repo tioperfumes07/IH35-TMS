@@ -9,6 +9,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { SettlementDetailPage } from "./SettlementDetailPage";
 import { SettlementDisputesTab } from "./components/SettlementDisputesTab";
 import { SettlementsTable } from "./components/SettlementsTable";
+import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { DataPanel } from "../../components/layout/DataPanel";
 import { formatUsdCents } from "../../lib/money";
 import { EntityLink } from "../../components/shared/EntityLink";
@@ -252,6 +253,21 @@ export function SettlementsPage() {
           </Button>
         </div>
       </div>
+
+      {listQuery.isError || kpiBaseQuery.isError || openBillsQuery.isError ? (
+        <ListErrorBanner
+          message={`Failed to load settlement data: ${[
+            listQuery.isError ? "list" : "",
+            kpiBaseQuery.isError ? "KPI" : "",
+            openBillsQuery.isError ? "open driver bills" : "",
+          ].filter(Boolean).join(", ")}.`}
+          onRetry={() => {
+            if (listQuery.isError) void listQuery.refetch();
+            if (kpiBaseQuery.isError) void kpiBaseQuery.refetch();
+            if (openBillsQuery.isError) void openBillsQuery.refetch();
+          }}
+        />
+      ) : null}
 
       <OpenDriverBillsPanel
         loading={openBillsQuery.isPending}
