@@ -76,7 +76,9 @@ type CreateBillInput = {
   /**
    * Vendor Bill create (LAW §9): when provided, must be non-empty and is INSERTed into
    * accounting.bill_lines in the SAME transaction as the bill header. Omitted = legacy
-   * programmatic callers (settlement/insurance) that still add lines on their own path.
+   * programmatic callers (insurance) that still add lines on their own path — which means the
+   * auto-post below runs against a line-less bill and fails BILL_LINE_ACCOUNT_UNRESOLVED, so
+   * prefer passing lines here (ACCT-F348 moved the settlement poster onto this path).
    * Never invent GL accounts — accountId must be caller-supplied or left null for poster tiers.
    */
   lines?: CreateBillLineInput[];
