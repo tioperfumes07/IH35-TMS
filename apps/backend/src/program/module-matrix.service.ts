@@ -653,6 +653,35 @@ function cellState(audited: boolean, built: boolean, live: boolean): MatrixCellS
   return "unaudited";
 }
 
+type WireSprintBuiltEntry = {
+  task: string;
+  pr: string;
+  guard: string;
+  modules: string[];
+  cols: string[];
+  leafRe: string;
+};
+
+function loadWireSprintBuilt(): WireSprintBuiltEntry[] {
+  const j = readJson<{ entries?: WireSprintBuiltEntry[] }>(
+    path.join(REPO_ROOT, "docs/specs/scoreboard/wire-sprint-built.json"),
+  );
+  return j?.entries ?? [];
+}
+
+/** Wave-A shipped writers green Box 3 Built when guard file exists on disk (H-3 feed). */
+function wireSprintBuiltReason(leaf: RequiredLeaf, colId: string, moduleId: string): string | undefined {
+  for (const entry of loadWireSprintBuilt()) {
+    if (!entry.modules.includes(moduleId)) continue;
+    if (!entry.cols.includes(colId)) continue;
+    if (!new RegExp(entry.leafRe).test(leaf.id)) continue;
+    const guardAbs = path.join(REPO_ROOT, entry.guard);
+    if (!existsSync(guardAbs)) continue;
+    return `${entry.task} ${entry.pr} · ${path.basename(entry.guard)}`;
+  }
+  return undefined;
+}
+
 function probeDoneReason(
   moduleId: string,
   leaf: RequiredLeaf,
@@ -728,6 +757,8 @@ function leafColumnBuiltReason(
   moduleId: string,
   probes: ModuleProbe[],
 ): string | undefined {
+  const wire = wireSprintBuiltReason(leaf, colId, moduleId);
+  if (wire) return wire;
   return probeDoneReason(moduleId, leaf, colId, probes);
 }
 

@@ -16,6 +16,8 @@ const SELFTEST = process.argv.includes("--selftest");
 
 const PLAN = "docs/specs/scoreboard/WIRING-PLAN-50-TASKS-LOCKED.md";
 const START = "docs/specs/scoreboard/CODER-START-HERE-LOCKED.md";
+const WIRE_SPRINT = "docs/specs/scoreboard/wire-sprint-built.json";
+const MATRIX_SERVICE = "apps/backend/src/program/module-matrix.service.ts";
 
 const PLAN_MARKERS = [
   "Historical Reconcile Track",
@@ -57,6 +59,31 @@ export function collectWiringPlanProblems(root = ROOT) {
     }
   }
 
+  const wireAbs = path.join(root, WIRE_SPRINT);
+  if (!fs.existsSync(wireAbs)) {
+    problems.push(`MISSING ${WIRE_SPRINT} (H-3 matrix Built feed)`);
+  } else {
+    try {
+      const wire = JSON.parse(fs.readFileSync(wireAbs, "utf8"));
+      const tasks = new Set((wire.entries ?? []).map((e) => e.task));
+      for (const t of ["P38", "P37", "P41"]) {
+        if (!tasks.has(t)) problems.push(`${WIRE_SPRINT} missing shipped task ${t}`);
+      }
+    } catch {
+      problems.push(`${WIRE_SPRINT} invalid JSON`);
+    }
+  }
+
+  const matrixAbs = path.join(root, MATRIX_SERVICE);
+  if (fs.existsSync(matrixAbs)) {
+    const body = fs.readFileSync(matrixAbs, "utf8");
+    if (!body.includes("wireSprintBuiltReason")) {
+      problems.push(`${MATRIX_SERVICE} missing wireSprintBuiltReason (H-3 Built feed)`);
+    }
+  } else {
+    problems.push(`MISSING ${MATRIX_SERVICE}`);
+  }
+
   return problems;
 }
 
@@ -70,6 +97,7 @@ if (SELFTEST) {
   const tmp = fs.mkdtempSync(path.join(ROOT, ".tmp-wiring-plan-"));
   try {
     fs.mkdirSync(path.join(tmp, "docs/specs/scoreboard"), { recursive: true });
+    fs.mkdirSync(path.join(tmp, "apps/backend/src/program"), { recursive: true });
     fs.writeFileSync(path.join(tmp, PLAN), "stub without markers\n");
     fs.writeFileSync(path.join(tmp, START), "WIRING-PLAN-50-TASKS-LOCKED.md\nverify-wiring-plan-50-present\n");
     if (collectWiringPlanProblems(tmp).length === 0) fail("--selftest expected missing-marker failure");
@@ -77,6 +105,11 @@ if (SELFTEST) {
       path.join(tmp, PLAN),
       `${PLAN_MARKERS.join("\n")}\n| **H-5** | CC-1 |\n`,
     );
+    fs.writeFileSync(
+      path.join(tmp, WIRE_SPRINT),
+      JSON.stringify({ entries: [{ task: "P38" }, { task: "P37" }, { task: "P41" }] }),
+    );
+    fs.writeFileSync(path.join(tmp, MATRIX_SERVICE), "function wireSprintBuiltReason() {}\n");
     assertWiringPlanPresent(tmp);
     console.log(`${LABEL} --selftest PASS`);
   } finally {
