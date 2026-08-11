@@ -413,10 +413,22 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
                   <FlatFieldGrid
                     columns={2}
                     fields={[
-                      { label: "Practical", value: load.miles_practical ?? "—" },
-                      { label: "Shortest", value: load.miles_shortest ?? "—" },
-                      { label: "Loaded", value: load.loaded_miles ?? "—" },
-                      { label: "Deadhead", value: load.miles_deadhead ?? "—" },
+                      {
+                        label: "Practical",
+                        value: load.miles_practical != null ? load.miles_practical.toLocaleString() : "—",
+                      },
+                      {
+                        label: "Shortest",
+                        value: load.miles_shortest != null ? load.miles_shortest.toLocaleString() : "—",
+                      },
+                      {
+                        label: "Loaded",
+                        value: load.loaded_miles != null ? load.loaded_miles.toLocaleString() : "—",
+                      },
+                      {
+                        label: "Deadhead",
+                        value: load.miles_deadhead != null ? load.miles_deadhead.toLocaleString() : "—",
+                      },
                     ]}
                   />
                 </OverviewWizardSection>

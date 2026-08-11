@@ -46,6 +46,12 @@ function check(src) {
   if (!/ml\.trip_type\s+AS\s+trip_type[\s\S]{0,1000}?ml\.loaded_miles\s+AS\s+loaded_miles/.test(src)) {
     problems.push(`${TARGET}: GET detail must project ml.loaded_miles AS loaded_miles`);
   }
+  if (!/ml\.trip_type\s+AS\s+trip_type[\s\S]{0,1100}?ml\.miles_deadhead\s+AS\s+miles_deadhead/.test(src)) {
+    problems.push(`${TARGET}: GET detail must project ml.miles_deadhead AS miles_deadhead`);
+  }
+  if (!/ml\.loaded_miles\s+AS\s+loaded_miles[\s\S]{0,120}?ml\.miles_deadhead\s+AS\s+miles_deadhead/.test(src)) {
+    problems.push(`${TARGET}: LIST GET must project ml.miles_deadhead AS miles_deadhead`);
+  }
   // List GET — board SELECT uses l.*; must also join ml + project miles
   if (!/invoice_amount_open_cents[\s\S]{0,200}?ml\.miles_shortest\s+AS\s+miles_shortest/.test(src)) {
     problems.push(
@@ -76,7 +82,8 @@ function main() {
       const broken = src
         .replace(/ml\.miles_shortest\s+AS\s+miles_shortest,?\s*/g, "")
         .replace(/ml\.miles_practical\s+AS\s+miles_practical,?\s*/g, "")
-        .replace(/ml\.loaded_miles\s+AS\s+loaded_miles,?\s*/g, "");
+        .replace(/ml\.loaded_miles\s+AS\s+loaded_miles,?\s*/g, "")
+        .replace(/ml\.miles_deadhead\s+AS\s+miles_deadhead,?\s*/g, "");
       const problems = check(broken);
       if (problems.length === 0) {
         console.error(`${LABEL}: --selftest FAIL — mutation not detected`);
@@ -96,7 +103,7 @@ function main() {
     for (const p of problems) console.error(`  - ${p}`);
     process.exit(1);
   }
-  console.log(`${LABEL}: PASS — GET list+detail project miles_shortest/practical/loaded_miles via ml`);
+  console.log(`${LABEL}: PASS — GET list+detail project miles_shortest/practical/loaded_miles/miles_deadhead via ml`);
   process.exit(0);
 }
 
