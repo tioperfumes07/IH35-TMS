@@ -395,6 +395,18 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
                   <p className="mt-1 text-[10px] text-gray-400">Trailer type/unit show when a trailer is assigned (loads.trailer_id). Driver pay rate is the load-specific rate, not stored on the load yet.</p>
                 </OverviewWizardSection>
 
+                <OverviewWizardSection title="Miles" canEdit={canEdit} onEdit={() => setEditWizardOpen(true)}>
+                  <FlatFieldGrid
+                    columns={2}
+                    fields={[
+                      { label: "Practical", value: load.miles_practical ?? "—" },
+                      { label: "Shortest", value: load.miles_shortest ?? "—" },
+                      { label: "Loaded", value: load.loaded_miles ?? "—" },
+                      { label: "Deadhead", value: load.miles_deadhead ?? "—" },
+                    ]}
+                  />
+                </OverviewWizardSection>
+
                 {/* §C — Stops · PC*MILER Routing (per-stop, from the live payload). */}
                 <OverviewWizardSection title="Stops · PC*MILER Routing" canEdit={canEdit} onEdit={() => setEditWizardOpen(true)}>
                   <div className="space-y-2">
