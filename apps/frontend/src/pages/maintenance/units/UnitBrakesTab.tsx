@@ -6,6 +6,7 @@ import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "../../../api/client";
 import { BrakeWearGauge } from "../../../components/maintenance/BrakeWearGauge";
+import { ListErrorState } from "../../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 
 type MeasurementRow = {
@@ -133,6 +134,16 @@ export function UnitBrakesTab({ unitId, companyId }: UnitBrakesTabProps) {
         <div className="border-b border-gray-100 px-3 py-2">
           <h4 className="text-xs font-semibold text-gray-900">Measurement history</h4>
         </div>
+        {/* CLS-LIST-ERROR-STATE-UNGUARDED: a failed query fell through to the empty state — an outage presenting as a unit with no brake
+          history, on a component that gates roadworthiness. */}
+        {historyQ.isError ? (
+          <ListErrorState
+            title="Couldn't load brake history"
+            status={0}
+            message={(historyQ.error as Error)?.message}
+            onRetry={() => void historyQ.refetch()}
+          />
+        ) : (
         <ParityTable
           rows={historyRows}
           columns={historyColumns}
@@ -141,6 +152,7 @@ export function UnitBrakesTab({ unitId, companyId }: UnitBrakesTabProps) {
           storageKey="maintenance-unit-brakes-history"
           emptyText="No history yet."
         />
+        )}
       </div>
     </section>
   );

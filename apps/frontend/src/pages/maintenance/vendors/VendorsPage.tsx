@@ -13,6 +13,7 @@ import {
 import { listVendors } from "../../../api/mdata";
 import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
+import { ListErrorState } from "../../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { useToast } from "../../../components/Toast";
@@ -271,6 +272,16 @@ export function VendorsPage() {
             Download template
           </a>
         </div>
+        {/* CLS-LIST-ERROR-STATE-UNGUARDED: a failed query fell through to the empty state — an outage presenting as a carrier with no
+          maintenance vendors on file. */}
+        {listQ.isError ? (
+          <ListErrorState
+            title="Couldn't load maintenance vendors"
+            status={0}
+            message={(listQ.error as Error)?.message}
+            onRetry={() => void listQ.refetch()}
+          />
+        ) : (
         <ParityTable<MaintenanceVendorRow>
           columns={columns}
           rows={rows}
@@ -281,6 +292,7 @@ export function VendorsPage() {
           exportFilename="maintenance-vendors"
           rowActions={rowActions}
         />
+        )}
       </div>
 
       <Modal variant="drawer" open={createOpen} onClose={() => setCreateOpen(false)} title="Create Vendor">

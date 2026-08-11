@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getMaintenanceReportRows, getMaintenanceReportXlsxUrl } from "../../../api/maintenance";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
+import { ListErrorState } from "../../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 
 type ReportRow = Record<string, unknown>;
@@ -71,6 +72,15 @@ export function MaintenanceReportsPage() {
             ))}
           </select>
         </label>
+        {/* CLS-LIST-ERROR-STATE-UNGUARDED: a failed query fell through to the empty state — an outage presenting as a report with no findings. */}
+        {reportQ.isError ? (
+          <ListErrorState
+            title="Couldn't load the maintenance report"
+            status={0}
+            message={(reportQ.error as Error)?.message}
+            onRetry={() => void reportQ.refetch()}
+          />
+        ) : (
         <ParityTable
           rows={rows}
           columns={columns}
@@ -80,6 +90,7 @@ export function MaintenanceReportsPage() {
           emptyText="No rows for this report."
           exportFilename={report}
         />
+        )}
       </div>
     </div>
   );
