@@ -44,6 +44,22 @@ const createBodySchema = z.object({
   attachment_draft_id: z.string().uuid().optional().nullable(),
   // CUSTVEND-PAR-1: Manager+ override when customer is at/over credit limit.
   override_credit_limit: z.boolean().optional(),
+  /**
+   * P37 (37 OF 50) — Wave-A load linkage AT CREATE.
+   *
+   * accounting.invoices.source_load_id already existed, the PATCH schema already accepted it, and the
+   * list query already FILTERED on it — but CREATE could not set it. An operator invoicing a load
+   * directly had to create the invoice and then PATCH it, and until that second call landed the
+   * invoice was orphan revenue: no load, no unit cost, no per-load margin.
+   *
+   * It surfaced as a BLOCKED POST rather than a wrong number, because invoice-linkage-guards.ts
+   * refuses to post GL for load revenue without this column ("Create via from-load or set
+   * source_load_id"). Fail-closed, but still a hole in the write path.
+   *
+   * /from-load stays the linked-by-construction path; this lets the ordinary create state the link in
+   * ONE call instead of two.
+   */
+  source_load_id: z.string().uuid().nullable().optional(),
 });
 
 const fromLoadBodySchema = z.object({
@@ -337,6 +353,19 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
       const customer = customerRes.rows[0] ?? null;
       if (!customer) return { code: 404 as const, error: "customer_not_found" };
 
+      // P37 — ENTITY-SCOPED FK VALIDATION. The load must belong to THIS operating company. An
+      // unscoped lookup would let a caller stamp another entity's load onto USMCA revenue — the
+      // CLS-JOIN-ENTITY-UNSCOPED class, where the invoice reads fine and the load is in someone
+      // else's books. Fails closed with 404 rather than writing NULL: silently dropping an FK the
+      // caller supplied is how this column came to be settable by PATCH but not by create.
+      if (body.data.source_load_id) {
+        const loadRes = await client.query(
+          `SELECT 1 FROM mdata.loads WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
+          [body.data.source_load_id, query.data.operating_company_id]
+        );
+        if (loadRes.rows.length === 0) return { code: 404 as const, error: "load_not_found_for_entity" };
+      }
+
       // CUSTVEND-PAR-1: Credit-limit enforcement. Check open exposure vs stored limit.
       // Includes open invoices + unbilled active loads. Factor-sourced limits show the source.
       if (customer.credit_limit_cents != null) {
@@ -408,9 +437,10 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
             customer_notes,
             currency_code,
             created_by_user_id,
-            updated_by_user_id
+            updated_by_user_id,
+            source_load_id
           ) VALUES (
-            $1,$2,$3,'draft',$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$14
+            $1,$2,$3,'draft',$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$14,$15
           )
           RETURNING id
         `,
@@ -429,6 +459,7 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
           body.data.customer_notes ?? null,
           body.data.currency_code ?? "USD",
           user.uuid,
+          body.data.source_load_id ?? null,
         ]
       );
       const invoiceId = String(insertRes.rows[0]?.id ?? "");
