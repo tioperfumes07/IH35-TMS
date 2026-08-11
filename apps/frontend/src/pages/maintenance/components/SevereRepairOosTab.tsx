@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ListErrorState } from "../../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { EntityPicker } from "../../../components/parity/EntityPicker";
 import {
@@ -285,6 +286,15 @@ export function SevereRepairOosTab({ operatingCompanyId }: Props) {
         </div>
       </div>
 
+      {/* CLS-LIST-ERROR-STATE-UNGUARDED: a failed query fell through to the empty state — an outage presenting as no units out of service. */}
+      {estimatesQuery.isError ? (
+        <ListErrorState
+          title="Couldn't load severe-repair estimates"
+          status={0}
+          message={(estimatesQuery.error as Error)?.message}
+          onRetry={() => void estimatesQuery.refetch()}
+        />
+      ) : (
       <ParityTable<SevereRepairEstimate>
         columns={columns}
         rows={rows}
@@ -303,6 +313,7 @@ export function SevereRepairOosTab({ operatingCompanyId }: Props) {
           />
         }
       />
+      )}
 
       <Modal open={markOosOpen} onClose={() => setMarkOosOpen(false)} title="Mark Unit OOS">
         <div className="space-y-3">

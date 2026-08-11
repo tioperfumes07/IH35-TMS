@@ -15,6 +15,7 @@ import { EntityLink } from "../../../components/shared/EntityLink";
 import { useToast } from "../../../components/Toast";
 import { PageHeader } from "../../../components/forms/shared/PageHeader";
 import { DvirSeverityBadge } from "../../../components/maintenance/DvirSeverityBadge";
+import { ListErrorState } from "../../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 
 const TABS: Array<{ key: DvirSeverityLevel; label: string }> = [
@@ -156,6 +157,16 @@ export function PreFlightDvirQueue() {
         ))}
       </div>
 
+      {/* CLS-LIST-ERROR-STATE-UNGUARDED: a failed query fell through to the empty state — an outage presenting as no pre-flight inspections
+          awaiting review, on a surface that gates whether a truck may roll. */}
+      {q.isError ? (
+        <ListErrorState
+          title="Couldn't load the pre-flight DVIR queue"
+          status={0}
+          message={(q.error as Error)?.message}
+          onRetry={() => void q.refetch()}
+        />
+      ) : (
       <ParityTable
         rows={rows}
         columns={columns}
@@ -173,6 +184,7 @@ export function PreFlightDvirQueue() {
         tableTestId="pre-flight-dvir-table"
         rowTestId={(row) => `dvir-queue-row-${row.id}`}
       />
+      )}
     </div>
   );
 }
