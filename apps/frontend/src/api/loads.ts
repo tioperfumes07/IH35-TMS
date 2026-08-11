@@ -126,6 +126,7 @@ export type DispatchLoadRow = {
   miles_practical?: number | null;
   miles_shortest?: number | null;
   miles_deadhead?: number | null;
+  loaded_miles?: number | null;
 };
 
 export type LoadsListResponse = {
