@@ -85,6 +85,7 @@ is no "in progress" state, because a half-fix in production is indistinguishable
 
 | ☐ | Finding ID | Sev | Owning lane | Coder | PR | Date | Live proof of fix | Guard (file + step #) | CC-3 VERIFIED |
 |---|---|---|---|---|---|---|---|---|---|
+| ☑ | `P31-TRAILER-LOAD-REVERSE-MISSING` | P1 | Codex (Dispatch) | Codex | #5830 | 2026-08-11 | healthz `b81b37e`; live USMCA load→trailer→same historical load drawer F+R OK | `equipment-aggregate-trailer-loads.test.ts`; FE 7/7 | Awaiting independent CC-3 verify |
 | ☐ | `CI-PREPAID-POST-FLAG-GATE-FALSE-RED` | P0 | CC-1 (money / prepaid guard) | — | — | — | CI run 31545443506: locked-guards false-red on merged main | `scripts/verify-prepaid-post-flag-gate.mjs` | — |
 | ☐ | `MATRIX-REQ-MAINT` | P0 | Cursor (FE/program) | — | — | — | — | — | — |
 | ☐ | `MATRIX-LIVE-RAD` | P0 | Cursor (FE) + API | — | — | — | — | — | — |
