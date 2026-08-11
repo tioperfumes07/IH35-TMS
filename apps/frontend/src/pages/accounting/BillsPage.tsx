@@ -21,6 +21,7 @@ import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { CollapsedListFilters } from "../../components/table";
 import { useUrlSort } from "../../hooks/useUrlSort";
+import { CappedListNotice } from "../../components/CappedListNotice";
 import { CreateBillModal } from "../maintenance/components/CreateBillModal";
 import { companyToday, addDaysIso, monthBoundsIso } from "../../lib/businessDate";
 import { userFacingApiError } from "../../lib/api-error-message";
@@ -498,6 +499,13 @@ export function BillsPage() {
               operatingCompanyId={companyId}
               placeholder="All vendors"
               disabled={!companyId}
+            />
+            <CappedListNotice
+              shown={vendorOptions.length}
+              limit={1000}
+              total={vendorsQuery.data?.total ?? null}
+              hint="Narrow by typing in the vendor field."
+              className="mt-1 text-[11px] text-slate-600"
             />
           </div>
         </div>
