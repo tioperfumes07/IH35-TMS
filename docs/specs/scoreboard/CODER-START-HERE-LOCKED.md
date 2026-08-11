@@ -9,11 +9,12 @@ Agents without Desktop access: follow this file. **Do not** load archived `PASTE
 ## Read order (6 files max)
 
 1. This file (or Desktop `00-CODER-START-HERE.md`)
-2. Desktop `CODER-FILE-INDEX-LOCKED.md` (whitelist)
-3. `docs/specs/scoreboard/VERTICAL-COLUMN-WAVE-METHOD-LOCKED.md`
-4. `docs/specs/scoreboard/MODULE-MATRIX-SCOREBOARD-LOCKED.md` §FINAL DEFINITIONS
-5. `docs/audit/GUARD-WORKORDERS.md` — top OPEN in your lane
-6. Seat INBOX on Desktop bus (if seated)
+2. **`docs/specs/scoreboard/WIRING-PLAN-50-TASKS-LOCKED.md`** — 50-task countdown + H-track (CI: `scripts/verify-wiring-plan-50-present.mjs`)
+3. Desktop `CODER-FILE-INDEX-LOCKED.md` (whitelist) · repo law enforced by `scripts/verify-wiring-plan-50-present.mjs`
+4. `docs/specs/scoreboard/VERTICAL-COLUMN-WAVE-METHOD-LOCKED.md`
+5. `docs/specs/scoreboard/MODULE-MATRIX-SCOREBOARD-LOCKED.md` §FINAL DEFINITIONS
+6. `docs/audit/GUARD-WORKORDERS.md` — top OPEN in your lane
+7. Seat INBOX on Desktop bus (if seated)
 
 ---
 
@@ -22,7 +23,7 @@ Agents without Desktop access: follow this file. **Do not** load archived `PASTE
 | State | Truth |
 |-------|-------|
 | API `GET /api/v1/program/module-matrix` | Live feed when deployed — Required from `*.required.json` + ledger projection |
-| Per-module **Built / Live / Queue** columns | Ship in PR **#5780** — required before steering "10–14 done" |
+| Per-module **Built / Live / Queue** columns | **LIVE on prod** since deploy `441991c` (#5780) — Built fills as Wave A ships |
 | `complete:true` / scenario dots | **Not** linkage done |
 | Box 3 **Built** | Wired sprint target — FK row + guard |
 | Box 4 **Live** | After full wire + system test |
