@@ -43,6 +43,17 @@ export function assertNoMetadataPhantom(sources) {
     }
   }
 
+  // Inline `--` inside SQL template strings breaks RETURNING lists (42601 on POST create — P47).
+  const sqlTemplates = src.match(/`[^`]*`/gs) ?? [];
+  for (const tpl of sqlTemplates) {
+    if (/\b(SELECT|INSERT|UPDATE|DELETE|RETURNING)\b/i.test(tpl) && /--/.test(tpl)) {
+      problems.push(
+        `${FACTORY}: SQL template contains inline \`--\` comment — PostgreSQL treats it as end-of-statement; move comment to JS above the template (P47 fleet create 42601).`,
+      );
+      break;
+    }
+  }
+
   return problems;
 }
 
@@ -60,10 +71,13 @@ if (SELFTEST) {
   expectCaught("insert-names-metadata",
     { [FACTORY]: live[FACTORY].replace("(code, name, description, is_active, sort_order, created_by_user_id, updated_by_user_id)", "(code, name, description, metadata, is_active, sort_order, created_by_user_id, updated_by_user_id)") },
     "does not exist on any fleet catalog table");
+  expectCaught("inline-sql-dash-comment",
+    { [FACTORY]: live[FACTORY].replace("RETURNING id, code, name AS display_name", "RETURNING id, code, name AS display_name -- oops") },
+    "inline `--` comment");
   const liveProblems = assertNoMetadataPhantom(live);
   if (liveProblems.length) failures.push(`live sources FAIL: ${liveProblems.join(" | ")}`);
   if (failures.length) { console.error(`${LABEL} SELFTEST FAILED:`); for (const f of failures) console.error(`  ${f}`); process.exit(1); }
-  console.log(`${LABEL} SELFTEST PASS — 2 planted defects caught, live sources clean`);
+  console.log(`${LABEL} SELFTEST PASS — 3 planted defects caught, live sources clean`);
   process.exit(0);
 }
 

@@ -64,8 +64,7 @@ const LEGACY_BACKENDS = {
 
 /** Catalog families that must NOT be wired until their backend is fixed (each is a live defect). */
 const FORBIDDEN_ENDPOINTS = [
-  ["/api/v1/catalogs/fleet/", "fleet create emits invalid SQL (apps/backend/src/catalogs/fleet/factory.ts:198 RETURNING ends in a `--` comment → trailing comma → 42601)"],
-  // maintenance catalogs ARE mounted (registerMaintenanceCatalogRoutes in index.ts) — do not forbid.
+  // fleet catalogs fixed (P47) — inline `--` removed from factory.ts SQL templates
   ["/api/v1/catalogs/accounting/payment-terms", "codeColumn and nameColumn are both terms_name (accounting/index.ts:100-101) → INSERT names the column twice → 42701"],
   ["/api/v1/accounting/categories", "reads mdata.qbo_accounts but creates into catalogs.* → clause-5 violation, owned by another PR"],
 ];
