@@ -26,6 +26,10 @@ export type InvoiceLine = {
 
 export type InvoiceJournalEntryLink = {
   journal_entry_id: string;
+  // F-18b — accounting.journal_entries has no number/ref/doc column, so memo IS the JE's human
+  // identity. Backend #5731 (236a6a143) selects je.memo in this payload; the type never declared it,
+  // so the field arrived and TypeScript could not see it.
+  memo: string | null;
   entry_date: string | null;
   status: string | null;
   source: string | null;

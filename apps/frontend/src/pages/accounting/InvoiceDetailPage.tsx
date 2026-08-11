@@ -377,6 +377,12 @@ export function InvoiceDetailPage() {
                 <span className="text-gray-500">—</span>
               ) : (
                 <span className="inline-flex flex-wrap gap-2">
+                  {/* F-18b scope note: these lineage chips stay id-only ON PURPOSE. The source-lineage
+                      endpoint (accounting/audit-trail/routes.ts) does NOT select je.memo — verified, 0
+                      occurrences — so there is no name to render here. Inventing one, or widening the
+                      type to claim a field the server never sends, would be exactly the phantom-column
+                      defect this codebase keeps paying for. The backend change belongs in that route
+                      first; board row filed. */}
                   {journalEntryIds.map((jeId) => (
                     <EntityLink key={jeId} kind="journal_entry" id={jeId} label={entityLabel(null, jeId, "Journal entry")} />
                   ))}
@@ -443,7 +449,17 @@ export function InvoiceDetailPage() {
                   <span className="mr-2 font-semibold uppercase tracking-wide text-gray-500">
                     {je.source_transaction_type ?? "source"}
                   </span>
-                  <EntityLink kind="journal_entry" id={je.journal_entry_id} label={entityLabel(null, je.journal_entry_id, "Journal entry")} />
+                  {/* F-18b / LV-JE-LABEL-IGNORES-POPULATED-MEMO. This passed a hardcoded null as the
+                      NAME, so every journal entry rendered "Journal entry — not visible" no matter what
+                      the payload carried. accounting.journal_entries has no number/ref/doc column —
+                      memo IS the JE's human identity — and backend #5731 (236a6a143) started returning
+                      je.memo for exactly this. The label had simply never left the server, and then the
+                      FE threw it away on arrival. */}
+                  <EntityLink
+                    kind="journal_entry"
+                    id={je.journal_entry_id}
+                    label={entityLabel(je.memo, je.journal_entry_id, "Journal entry")}
+                  />
                 </span>
                 <span className="text-sm text-gray-900">
                   {je.entry_date ? formatDateUS(je.entry_date) : "—"}
