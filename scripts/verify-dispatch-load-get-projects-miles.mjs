@@ -19,6 +19,18 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const SELFTEST = process.argv.includes("--selftest");
 const LABEL = "verify-dispatch-load-get-projects-miles";
 const TARGET = "apps/backend/src/dispatch/loads.routes.ts";
+const LOADS_TS = "apps/frontend/src/api/loads.ts";
+const DRAWER = "apps/frontend/src/components/dispatch/LoadDetailDrawer.tsx";
+
+function checkFe(srcLoads, srcDrawer) {
+  const problems = [];
+  if (srcDrawer.includes("load.loaded_miles") && !/loaded_miles\?:\s*number/.test(srcLoads)) {
+    problems.push(
+      `${LOADS_TS}: LoadDetailDrawer renders load.loaded_miles but DispatchLoadRow/LoadDetail type omits loaded_miles (Render tsc fails)`,
+    );
+  }
+  return problems;
+}
 
 function check(src) {
   const problems = [];
@@ -78,6 +90,7 @@ function main() {
   }
 
   const problems = check(src);
+  problems.push(...checkFe(readFileSync(path.join(ROOT, LOADS_TS), "utf8"), readFileSync(path.join(ROOT, DRAWER), "utf8")));
   if (problems.length) {
     console.error(`${LABEL}: FAIL`);
     for (const p of problems) console.error(`  - ${p}`);
