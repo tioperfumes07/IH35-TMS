@@ -25,6 +25,12 @@ function renderCustomerCell(load: DispatchLoadRow): ReactNode {
 // the load's detail page. stopPropagation so it does NOT also trigger the row's onRowClick (which opens
 // the load drawer) — same pattern as renderCustomerCell above.
 function renderLoadNumberCell(load: DispatchLoadRow, className = "code-cell font-medium"): ReactNode {
+  // Awaiting-assignment rows are keyed by a synthetic "unit:<uuid>" or "unit:inshop:<uuid>" id. A load
+  // that does not exist must render "Unassigned", not "Load — not visible" — the id-present branch of
+  // entityLabel would invert the contract and make every empty truck look like an unresolvable load.
+  if (load.id.startsWith("unit:")) {
+    return <span className={className}>Unassigned</span>;
+  }
   return (
     <EntityLink
       kind="load"
