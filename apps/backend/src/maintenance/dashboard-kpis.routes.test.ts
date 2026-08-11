@@ -83,4 +83,28 @@ describe("maintenance dashboard kpis routes (AUDIT-FIX-9)", () => {
     expect(res.statusCode).toBe(200);
     expect(res.json()).toMatchObject({ open_wos: 0, tire_alerts: 0, pm_due: 0 });
   });
+
+  it("preserves open WO count and dollars when an optional KPI query fails", async () => {
+    let criticalCalls = 0;
+    mockQuery.mockImplementation(async (sql: string, values?: unknown[]) => {
+      if (sql.includes("SET LOCAL app.operating_company_id")) return { rows: [] };
+      if (sql.includes("to_regclass($1)") && values?.[0] === "maintenance.work_orders") return { rows: [{ ok: true }] };
+      if (sql.includes("to_regclass($1)")) return { rows: [{ ok: false }] };
+      if (sql.includes("AS open_wos")) {
+        criticalCalls += 1;
+        return { rows: [{ open_wos: 3, open_dollars: 100 }] };
+      }
+      if (sql.includes("information_schema.columns")) throw new Error("optional schema drift");
+      return { rows: [] };
+    });
+
+    const res = await app.inject({
+      method: "GET",
+      url: `/api/v1/maintenance/dashboard/kpis?operating_company_id=${COMPANY}`,
+    });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toMatchObject({ open_wos: 3, open_dollars: 100 });
+    expect(criticalCalls).toBe(2);
+  });
 });

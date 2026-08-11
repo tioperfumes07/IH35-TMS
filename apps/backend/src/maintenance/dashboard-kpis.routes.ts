@@ -3,7 +3,6 @@ import { z } from "zod";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import {
-  countOpenMaintenanceWorkOrders,
   countPastDueMaintenanceWorkOrders,
   countPmDueAlerts,
   openWorkOrderPredicate,
@@ -54,6 +53,24 @@ async function columnExists(client: Queryable, schema: string, table: string, co
     [schema, table, column]
   );
   return Boolean(res.rows[0]?.ok);
+}
+
+async function getCriticalWorkOrderKpis(client: Queryable, companyId: string) {
+  const result = await client.query<{ open_wos: number; open_dollars: number }>(
+    `
+      SELECT
+        COUNT(*)::int AS open_wos,
+        COALESCE(SUM(COALESCE((to_jsonb(w) ->> 'total_actual_cost')::numeric, 0)), 0)::numeric AS open_dollars
+      FROM maintenance.work_orders w
+      WHERE w.operating_company_id = $1::uuid
+        AND ${openWorkOrderPredicate("w")}
+    `,
+    [companyId]
+  );
+  return {
+    open_wos: Number(result.rows[0]?.open_wos ?? 0),
+    open_dollars: Number(result.rows[0]?.open_dollars ?? 0),
+  };
 }
 
 const EMPTY_KPI_PAYLOAD = {
@@ -133,21 +150,7 @@ export async function registerMaintenanceDashboardKpisRoutes(app: FastifyInstanc
           dotOos = Number(fleet?.dot_oos ?? 0);
         }
 
-        const openWoCount = await countOpenMaintenanceWorkOrders(client, companyId);
-
-        let openCost = 0;
-        if (await columnExists(client, "maintenance", "work_orders", "total_actual_cost")) {
-          const openRes = await client.query<{ open_cost: number }>(
-            `
-              SELECT COALESCE(SUM(COALESCE(total_actual_cost, 0)), 0)::numeric AS open_cost
-              FROM maintenance.work_orders
-              WHERE operating_company_id = $1::uuid
-                AND ${openWorkOrderPredicate()}
-            `,
-            [companyId]
-          );
-          openCost = Number(openRes.rows[0]?.open_cost ?? 0);
-        }
+        const criticalWorkOrderKpis = await getCriticalWorkOrderKpis(client, companyId);
 
         let avgCloseDays = 0;
         if (await columnExists(client, "maintenance", "work_orders", "duration_seconds")) {
@@ -236,7 +239,7 @@ export async function registerMaintenanceDashboardKpisRoutes(app: FastifyInstanc
         }
 
         return {
-          open_wos: Number(openWoCount ?? base.open_wos ?? 0),
+          open_wos: criticalWorkOrderKpis.open_wos,
           in_shop: Number(base.in_shop ?? 0),
           past_due_pm: pastDueCount,
           out_of_service: 0,
@@ -250,7 +253,7 @@ export async function registerMaintenanceDashboardKpisRoutes(app: FastifyInstanc
           pending_qbo: 0,
           past_due: pastDueCount,
           avg_close_days: avgCloseDays,
-          open_dollars: openCost,
+          open_dollars: criticalWorkOrderKpis.open_dollars,
           tire_alerts: tireAlerts,
           pm_due: pmDueCount,
           dot_oos: dotOos,
@@ -266,7 +269,15 @@ export async function registerMaintenanceDashboardKpisRoutes(app: FastifyInstanc
       return payload;
     } catch (error) {
       req.log.warn({ err: error }, "maintenance dashboard kpis degraded to empty payload");
-      return { ...EMPTY_KPI_PAYLOAD };
+      try {
+        const criticalWorkOrderKpis = await withCompany(user.uuid, companyId, (client) =>
+          getCriticalWorkOrderKpis(client, companyId)
+        );
+        return { ...EMPTY_KPI_PAYLOAD, ...criticalWorkOrderKpis };
+      } catch (criticalError) {
+        req.log.warn({ err: criticalError }, "maintenance critical work-order kpis unavailable");
+        return { ...EMPTY_KPI_PAYLOAD };
+      }
     }
   });
 }
