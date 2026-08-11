@@ -102,6 +102,13 @@ try {
        WHERE jep.source_transaction_type = ANY($1::text[])
          AND jep.debit_or_credit = 'credit'
          AND je.status = 'posted'
+         -- A REVERSED LINE IS NOT A LIVE VIOLATION. Reversal in a WORM ledger writes a NEW opposing
+         -- entry; it never deletes the original, so the offending credit line survives forever by
+         -- design. Without this clause the guard stays RED after a correct repair — it did exactly
+         -- that when the ACCT-F345 repair was rehearsed on a prod fork: 1090 was back to 0.00 and
+         -- invariant B passed, while invariant A still flagged the two now-reversed originals.
+         -- A guard that cannot go green after the fix it demands is a guard someone deletes.
+         AND jep.reversed_by_line_id IS NULL
          -- EXISTS, NOT A JOIN, AND THIS IS THE WHOLE POINT. A posting line matches if its account
          -- plays ANY receipt-clearing role. Joining chart_of_accounts_roles instead FANS OUT one line
          -- into one row PER MATCHING ROLE — and on USMCA both undeposited_funds AND cash_clearing are
