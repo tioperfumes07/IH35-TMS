@@ -87,6 +87,10 @@ export function NewCustomerDrawerForm({ operatingCompanyId, onCreated, onClose }
     // missing type). Block client-side so the user gets an inline message instead of a raw 400, and so
     // the field's "*" marker is actually enforced.
     if (!form.customerType) { pushToast("Customer type is required.", "error"); return; }
+    // CUSTOMER-EMAIL-REQUIRED: email is required for invoice deliverability.
+    const invoiceEmail = form.email.trim();
+    if (!invoiceEmail) { pushToast("Email is required.", "error"); return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(invoiceEmail)) { pushToast("A valid email is required.", "error"); return; }
     // D1-4: a sub-customer with no parent selected is invalid — the "Parent customer *" marker was never
     // enforced before (submit went through and the parent was silently dropped). Block submit here.
     if (form.isSubCustomer && !form.parentCustomerId) {
@@ -102,7 +106,7 @@ export function NewCustomerDrawerForm({ operatingCompanyId, onCreated, onClose }
       // Invoice send resolves recipient via ap_email → billing_email → ar_email (invoice-send.service).
       // Backend maps `email` → billing_email; also stamp ar_email + ap_email from the same field so a
       // quick-created customer is deliverable without opening CustomerDetail (Cascade #9 / $284k open).
-      const invoiceEmail = form.email.trim() || undefined;
+      // invoiceEmail was validated above; at this point it is non-empty.
       const res = await createCustomer({
         name: displayName,
         operating_company_id: operatingCompanyId,
@@ -167,16 +171,20 @@ export function NewCustomerDrawerForm({ operatingCompanyId, onCreated, onClose }
         <input className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-sm" value={form.displayName} onChange={(e) => set("displayName", e.target.value)} placeholder="How this customer appears on transactions" />
       </label>
       <label className="block">
-        <span className="text-xs font-medium text-gray-700">Billing / invoice email</span>
+        <span className="text-xs font-medium text-gray-700">
+          Billing / invoice email <span className="text-red-500">*</span>
+        </span>
         <input
           type="email"
+          required
+          aria-required="true"
           className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-sm"
           value={form.email}
           onChange={(e) => set("email", e.target.value)}
           placeholder="Used when sending invoices"
         />
         <span className="mt-0.5 block text-[11px] text-slate-500">
-          Without this, invoices mark sent but cannot email the customer.
+          Required — invoices cannot be emailed without it.
         </span>
       </label>
       <div className="grid grid-cols-2 gap-3">

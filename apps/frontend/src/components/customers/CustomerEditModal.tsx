@@ -76,6 +76,11 @@ export function CustomerEditModal({ open, customer, operatingCompanyId, saving =
             setFormError("Customer type is required.");
             return;
           }
+          // CUSTOMER-EMAIL-REQUIRED: email is required for invoice deliverability.
+          if (!values.email.trim()) {
+            setFormError("Email is required.");
+            return;
+          }
           setFormError("");
           void onSave(profileValuesToUpdatePayload(values));
         }}
@@ -106,7 +111,7 @@ export function CustomerEditModal({ open, customer, operatingCompanyId, saving =
           <Button type="button" variant="secondary" onClick={onClose}>
             Cancel
           </Button>
-          <Button type="submit" disabled={saving || !values.name.trim() || !values.customer_type}>
+          <Button type="submit" disabled={saving || !values.name.trim() || !values.customer_type || !values.email.trim()}>
             {saving ? "Saving…" : "Save"}
           </Button>
         </div>
