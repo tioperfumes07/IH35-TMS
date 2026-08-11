@@ -25,6 +25,7 @@ import { entityLabel } from "../../lib/entity-label";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { CollapsedListFilters } from "../../components/table";
 import { useToast } from "../../components/Toast";
+import { CappedListNotice } from "../../components/CappedListNotice";
 import { useAuth } from "../../auth/useAuth";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateUS } from "../../lib/formatDate";
@@ -284,6 +285,13 @@ export function VendorCreditsPage() {
                 operatingCompanyId={companyId}
                 placeholder="Select vendor"
                 disabled={!companyId}
+              />
+              <CappedListNotice
+                shown={vendorOptions.length}
+                limit={1000}
+                total={vendorsQuery.data?.total ?? null}
+                hint="Type in the vendor field to search the full roster."
+                className="mt-1 text-[11px] text-slate-600"
               />
             </div>
           </label>
