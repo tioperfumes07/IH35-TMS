@@ -75,7 +75,7 @@ export type DocsFoundationRow = {
   expiration_date: string | null;
   upload_completed_at: string | null;
   created_at: string;
-  links: Array<{ entity_type: FileEntityType; entity_id: string }>;
+  links: Array<{ entity_type: FileEntityType; entity_id: string; entity_label?: string | null }>;
 };
 
 export function requestUploadUrl(payload: {
