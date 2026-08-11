@@ -7,7 +7,7 @@
  * placeholder surface: no query is wired on this view yet, so there is no
  * ListErrorState requirement — but columns Load ID / Lane / Miles / Revenue /
  * Cost / Margin / $/Mi, the "By Load (Detail)" heading, and the "No data loaded"
- * empty copy must be preserved 1:1.
+ * empty copy must state the feed is not connected (aligned with by-lane sibling guard).
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -16,6 +16,7 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-profitability-by-load-uses-paritytable";
 const PAGE = "apps/frontend/src/pages/profitability/ByLoadView.tsx";
+const HONEST_EMPTY = 'emptyText="Profitability feed is not connected; no figures are available for this view."';
 
 const REQUIRED_LABELS = ["Load ID", "Lane", "Miles", "Revenue", "Cost", "Margin", "$/Mi"];
 
@@ -50,8 +51,11 @@ function assertMigrated(src) {
   if (!src.includes("By Load (Detail)")) {
     errors.push(`${PAGE}: must keep the "By Load (Detail)" heading`);
   }
-  if (!src.includes("No data loaded")) {
-    errors.push(`${PAGE}: must keep the "No data loaded" empty copy`);
+  if (!src.includes(HONEST_EMPTY)) {
+    errors.push(`${PAGE}: must name the disconnected profitability feed in emptyText`);
+  }
+  if (src.includes('emptyText="No data loaded"')) {
+    errors.push(`${PAGE}: must not present the unwired feed as a successful empty query`);
   }
   return errors;
 }
@@ -72,7 +76,7 @@ function selftest() {
     <ParityTable
       storageKey="profitability-by-load"
       tableTestId="profitability-by-load-table"
-      emptyText="No data loaded"
+      emptyText="Profitability feed is not connected; no figures are available for this view."
     />
   `;
   const bad = `

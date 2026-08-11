@@ -31,6 +31,7 @@ const read = (rel) => {
 };
 
 const ROUTES_REL = "apps/backend/src/mdata/vendors.routes.ts";
+const SHARED_REL = "apps/backend/src/mdata/ensure-driver-vendor.shared.ts";
 const ROUTE_DECL = 'app.post("/api/v1/mdata/vendors/ensure-drivers"';
 const routes = read(ROUTES_REL);
 const api = read("apps/frontend/src/api/mdata.ts");
@@ -55,24 +56,34 @@ if (!/rateLimit:\s*\{[^}]*max:\s*\d+/.test(registration)) {
 const nextRoute = routes.indexOf('app.post("/api/v1/mdata/vendors"', handlerStart);
 const handler = routes.slice(handlerStart, nextRoute > 0 ? nextRoute : routes.length);
 
+// Logic may live inline in the route OR in ensure-driver-vendor.shared.ts (extracted so hire path
+// and maintenance route cannot drift). The contract is the same either way.
+const delegatesToShared = /\bensureDriverVendor\s*\(/.test(handler);
+const contractSrc = delegatesToShared ? read(SHARED_REL) : handler;
+const contractLabel = delegatesToShared ? SHARED_REL : ROUTES_REL;
+
+if (delegatesToShared && !routes.includes("ensureDriverVendor")) {
+  fail(`${ROUTES_REL}: ensure-drivers delegates to ensureDriverVendor but does not import it`);
+}
+
 // (3) driver_id FK is the identity key (an existing-payee LOOKUP filters on it), and it is written
 // on INSERT. Anchored on SELECT ... WHERE so the `SET driver_id = $n::uuid` of the back-link UPDATE
 // cannot satisfy this on its own.
-if (!/SELECT[\s\S]{0,400}?WHERE[\s\S]{0,300}?\bdriver_id\s*=\s*\$\d+::uuid/.test(handler)) {
-  fail(`${ROUTES_REL}: ensure-drivers must resolve the existing payee by mdata.vendors.driver_id`);
+if (!/SELECT[\s\S]{0,400}?WHERE[\s\S]{0,300}?\bdriver_id\s*=\s*\$\d+::uuid/.test(contractSrc)) {
+  fail(`${contractLabel}: ensure-drivers must resolve the existing payee by mdata.vendors.driver_id`);
 }
-if (!/INSERT INTO mdata\.vendors[\s\S]{0,400}driver_id/.test(handler)) {
-  fail(`${ROUTES_REL}: ensure-drivers INSERT must populate driver_id (FK), not just vendor_code`);
+if (!/INSERT INTO mdata\.vendors[\s\S]{0,400}driver_id/.test(contractSrc)) {
+  fail(`${contractLabel}: ensure-drivers INSERT must populate driver_id (FK), not just vendor_code`);
 }
 
 // (4) 23505 absorbed, inside a SAVEPOINT. Match the actual error-code comparison, not a comment
 // that merely mentions the number.
-if (!/\bcode\s*[!=]==\s*["']23505["']/.test(handler)) {
-  fail(`${ROUTES_REL}: ensure-drivers must tolerate 23505 unique_violation as already-present`);
+if (!/\bcode\s*[!=]==\s*["']23505["']/.test(contractSrc)) {
+  fail(`${contractLabel}: ensure-drivers must tolerate 23505 unique_violation as already-present`);
 }
-if (!handler.includes("SAVEPOINT") || !handler.includes("ROLLBACK TO SAVEPOINT")) {
+if (!contractSrc.includes("SAVEPOINT") || !contractSrc.includes("ROLLBACK TO SAVEPOINT")) {
   fail(
-    `${ROUTES_REL}: the 23505 path must use SAVEPOINT/ROLLBACK TO SAVEPOINT — withCurrentUser is one transaction`
+    `${contractLabel}: the 23505 path must use SAVEPOINT/ROLLBACK TO SAVEPOINT — withCurrentUser is one transaction`
   );
 }
 
