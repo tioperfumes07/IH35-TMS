@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { setScopedCompanyContext } from "../../_helpers/scoped-company-context.js";
 
 type Queryable = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }>;
@@ -320,6 +321,48 @@ export async function isEnabled(
   );
   const flag = flagRes.rows[0];
   if (!flag) return false;
+
+  // ★ THE PER-ENTITY OVERRIDE IS INVISIBLE UNLESS THE ENTITY GUC IS SET (found live 2026-08-11).
+  //
+  // `lib.feature_flag_overrides` is FORCE-RLS with policy ff_overrides_select:
+  //     is_lucia_bypass() OR user_uuid IS NOT NULL OR operating_company_id IS NULL
+  //     OR operating_company_id = current_setting('app.operating_company_id')::uuid
+  //
+  // Every caller reaches this through withCurrentUser(), which sets app.current_user_id and
+  // app.session_id but NOT app.operating_company_id — so the last clause can never match and a
+  // per-entity override row is filtered out by RLS BEFORE the WHERE below is evaluated. The query
+  // was never wrong; it returned zero rows against correct data, and the flag then fell through to
+  // its per-entity-only default of OFF.
+  //
+  // MEASURED ON PROD, not inferred: as ih35_app, `lib.feature_flag_overrides` showed 2 visible rows
+  // against n_live_tup 242, with 0 of the per-entity rows visible (lib.feature_flags read 85 in the
+  // same statement, so the connection was healthy). USMCA alone holds 78 override rows — including
+  // FINANCE_HUB_UI_ENABLED = true since 2026-07-11 — while GET /api/feature-flags/check?key=
+  // FINANCE_HUB_UI_ENABLED&operating_company_id=5c854333… answered {"enabled":false} and the screen
+  // rendered "Finance Hub is not enabled for this entity". The flags had been switched on for a
+  // month and had never once taken effect on this path.
+  //
+  // Membership is asserted BEFORE the GUC is set (setScopedCompanyContext does both, in that order),
+  // so a caller-named company still cannot widen its own scope — the CLS-GUC law. If the caller is
+  // not a member we deliberately do NOT throw: resolution falls through unscoped and yields the
+  // same OFF as before, so this fix can only ever turn a legitimately-enabled flag ON.
+  if (context.operating_company_id) {
+    try {
+      const actingUser =
+        context.user_uuid ??
+        (
+          await client.query<{ uid: string | null }>(
+            `SELECT NULLIF(current_setting('app.current_user_id', true), '') AS uid`
+          )
+        ).rows[0]?.uid ??
+        null;
+      if (actingUser) {
+        await setScopedCompanyContext(client, actingUser, context.operating_company_id);
+      }
+    } catch {
+      // Not a member (or no user context) — leave the scope unset and resolve as before.
+    }
+  }
 
   const overrideRes = await client.query<FeatureFlagOverrideRow>(
     `

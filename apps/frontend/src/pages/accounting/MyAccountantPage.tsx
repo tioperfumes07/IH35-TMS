@@ -167,7 +167,7 @@ export function MyAccountantPage() {
       <AccountingSubNavWrapper title="My Accountant" subtitle="Read-only accountant workspace">
         <div className="rounded-sm border border-gray-200 bg-white px-4 py-12 text-center text-sm text-gray-500">
           The accountant workspace is not yet enabled for this account.
-          <p className="mt-1 text-xs text-gray-400">Enable the MY_ACCOUNTANT_ENABLED feature flag to use this module.</p>
+          <p className="mt-1 text-xs text-gray-400">This module is turned on per operating company and isn’t active for the company you have selected — this is expected, not an error. Contact the owner or an administrator to enable it, or switch to a company where it’s already on.</p>
         </div>
       </AccountingSubNavWrapper>
     );
