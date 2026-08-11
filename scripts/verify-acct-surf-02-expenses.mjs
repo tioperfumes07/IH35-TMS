@@ -98,7 +98,8 @@ function contractErrors(src) {
     errors.push("VERIFY-3: missing createExpense API helper");
   } else {
     const idx = src.api.indexOf("function createExpense");
-    const slice = src.api.slice(idx, idx + 1200);
+    const nextExport = src.api.indexOf("\nexport function ", idx + 1);
+    const slice = src.api.slice(idx, nextExport === -1 ? undefined : nextExport);
     if (!slice.includes('"/api/v1/expenses"') || !slice.includes('method: "POST"')) {
       errors.push("VERIFY-3: createExpense must POST /api/v1/expenses");
     }
@@ -144,6 +145,17 @@ function selftest() {
   };
   if (contractErrors(good).length) {
     console.error(`${LABEL} --selftest FAIL good:`, contractErrors(good));
+    process.exit(1);
+  }
+  const longApi = {
+    ...good,
+    api:
+      `export function createExpense(operatingCompanyId: string, body: { ${"optional_field?: string; ".repeat(90)} }) {\n` +
+      `return apiRequest("/api/v1/expenses", { method: "POST" })\n}\n` +
+      `export function nextHelper(){}`,
+  };
+  if (contractErrors(longApi).some((e) => e.includes("createExpense must POST"))) {
+    console.error(`${LABEL} --selftest FAIL long typed createExpense was truncated before its POST call`);
     process.exit(1);
   }
   const thin = { ...good, modal: "export function RecordExpenseModal(){ return <div>thin</div> }" };
