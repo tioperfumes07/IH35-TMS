@@ -7,8 +7,13 @@
 > and you show it to me and I know the jobs were completed."*
 
 **THIS FILE IS THE SINGLE PLACE THE OWNER LOOKS TO SEE WHAT IS DONE.** It is the completion register for
-every defect CC-3 files. `GUARD-WORKORDERS.md` holds the evidence and the fix instructions; **this file
+every defect any coder files. `GUARD-WORKORDERS.md` holds the evidence and the fix instructions; **this file
 holds the sign-off.**
+
+**★ TRIPLE-LOCK (owner 2026-08-11):** every new ☐ row here MUST have a matching OPEN row on the board,
+a row in Desktop `FINDINGS-OPEN-P1-ROUTING.md`, and an OUTBOX `FINDING|ROUTE` line — **same turn**.
+**★ FIXED:** only the **coder who merged the fix** flips ☐ → ☑ with PR + live proof + guard — same turn as
+board FIXED. See `docs/audit/FINDINGS-TRIPLE-LOCK-LAW.md`.
 
 
 > **★★★ PERMANENT RULE — OWNER-RESTATED 2026-08-07: "you need to add everything to the shared file… that is a
