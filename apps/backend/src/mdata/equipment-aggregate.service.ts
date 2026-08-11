@@ -76,6 +76,33 @@ export async function buildEquipmentAggregate(
     current_load = loadRes.rows[0] ?? null;
   }
 
+  // P31 reverse linkage: trailer assignment is persisted on load_assignment_history, not on
+  // mdata.loads. Return recent loads from that canonical FK so a trailer profile can navigate back
+  // even after the load is delivered or cancelled (when it is no longer a current assignment).
+  const loadsRes = await client.query(
+    `
+      SELECT linked.load_id, linked.load_number, linked.status
+      FROM (
+        SELECT DISTINCT ON (l.id)
+          l.id::text AS load_id,
+          l.load_number,
+          l.status::text AS status,
+          l.updated_at,
+          lah.assigned_at
+        FROM dispatch.load_assignment_history lah
+        JOIN mdata.loads l ON l.id = lah.load_id
+                          AND l.operating_company_id = lah.operating_company_id
+        WHERE lah.new_trailer_id = $1::uuid
+          AND lah.operating_company_id = $2::uuid
+          AND l.soft_deleted_at IS NULL
+        ORDER BY l.id, lah.assigned_at DESC, lah.created_at DESC
+      ) linked
+      ORDER BY linked.updated_at DESC, linked.assigned_at DESC
+      LIMIT 20
+    `,
+    [equipmentId, operatingCompanyId]
+  );
+
   const isReefer = String(equipment.equipment_type) === "Reefer";
   const reefer = isReefer
     ? {
@@ -244,6 +271,7 @@ export async function buildEquipmentAggregate(
     equipment,
     type_specs,
     current_assignment: { attached_to_unit, current_load },
+    loads: loadsRes.rows,
     reefer,
     samsara_telemetry,
     maintenance,

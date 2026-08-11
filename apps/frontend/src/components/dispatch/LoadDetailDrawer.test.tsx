@@ -236,6 +236,34 @@ describe("LoadDetailDrawer footer cancel vs close (d-02)", () => {
   });
 });
 
+describe("P31 load hub forward links", () => {
+  it("links the load's customer, truck, trailer, and driver to their canonical profiles", () => {
+    mockUseDispatchLoad.mockReturnValue({
+      data: mockLoadDetail({
+        assigned_unit_id: "unit-1",
+        assigned_unit_number: "TRUCK-1",
+        trailer_id: "trailer-1",
+        trailer_number: "TRAILER-1",
+        assigned_primary_driver_id: "driver-1",
+        assigned_primary_driver_name: "Driver One",
+      }),
+      isLoading: false,
+      isError: false,
+      error: null,
+      refetch: vi.fn(),
+    });
+    mockUseLoad.mockReturnValue({ data: undefined, isLoading: false, isError: false, error: null, refetch: vi.fn() });
+    mockUseLoadAudit.mockReturnValue({ data: [], refetch: vi.fn() });
+
+    renderDrawer(<LoadDetailDrawer loadId="load-1" isOpen canEdit operatingCompanyId="co-1" onClose={vi.fn()} />);
+
+    expect(screen.getByRole("link", { name: "ACME" })).toHaveAttribute("href", "/customers/cust-1");
+    expect(screen.getByRole("link", { name: "TRUCK-1" })).toHaveAttribute("href", "/fleet/units/unit-1");
+    expect(screen.getByRole("link", { name: "TRAILER-1" })).toHaveAttribute("href", "/fleet/trailers/trailer-1");
+    expect(screen.getByRole("link", { name: "Driver One" })).toHaveAttribute("href", "/drivers/driver-1");
+  });
+});
+
 describe("LV-INVOICE-RATE-SNAPSHOT — a $0-rate load must not mint an invoice", () => {
   // An invoice snapshots load.rate_total_cents ONCE (accounting/from-load.ts:186) and no backend path ever
   // re-syncs it, so an invoice created at rate 0 is permanently $0 — L-0087 ($3,210 load / $0 invoice).
