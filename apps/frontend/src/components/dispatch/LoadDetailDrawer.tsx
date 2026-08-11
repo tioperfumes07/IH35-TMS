@@ -381,13 +381,27 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
                       { label: "Trailer unit", value: entityLabel(load.trailer_number, null, "Trailer") },
                       {
                         label: "Driver",
-                        value: entityLabel(load.assigned_primary_driver_name, load.assigned_primary_driver_id, "Driver"),
+                        value: load.assigned_primary_driver_id ? (
+                          <EntityLink
+                            kind="driver"
+                            id={load.assigned_primary_driver_id}
+                            label={entityLabel(load.assigned_primary_driver_name, load.assigned_primary_driver_id, "Driver")}
+                          />
+                        ) : (
+                          entityLabel(load.assigned_primary_driver_name, load.assigned_primary_driver_id, "Driver")
+                        ),
                       },
                       {
                         label: "Team driver",
-                        value: load.assigned_secondary_driver_id
-                          ? entityLabel(load.assigned_secondary_driver_name, load.assigned_secondary_driver_id, "Driver")
-                          : "Solo",
+                        value: load.assigned_secondary_driver_id ? (
+                          <EntityLink
+                            kind="driver"
+                            id={load.assigned_secondary_driver_id}
+                            label={entityLabel(load.assigned_secondary_driver_name, load.assigned_secondary_driver_id, "Driver")}
+                          />
+                        ) : (
+                          "Solo"
+                        ),
                       },
                       { label: "Driver pay rate / mi", value: "—" },
                     ]}
