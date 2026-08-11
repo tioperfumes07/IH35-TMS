@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { Link } from "react-router-dom";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 
 function cents(n: unknown) {
@@ -67,9 +68,9 @@ export function SettlementsSection({
           <input type="checkbox" checked={autoPayEnabled} disabled={!onAutoPayChange || autoPaySaving} onChange={(e) => onAutoPayChange?.(e.target.checked)} />
           Auto-pay on payday
         </label>
-        <a href={`/driver-finance/settlements?driver_id=${driverId}`} className="text-xs text-slate-700 underline">
+        <Link to={`/driver-finance/settlements?driver_id=${driverId}`} className="text-xs text-slate-700 underline">
           Full settlements
-        </a>
+        </Link>
       </div>
       <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
         <div className="rounded-sm border border-gray-100 p-2">
