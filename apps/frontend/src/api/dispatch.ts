@@ -41,6 +41,10 @@ export type DispatchLoad = {
   status: string;
   unit_number: string | null;
   trailer_number: string | null;
+  // P40 — the "home" view response already carries this (views.dispatch_load_with_driver_status via
+  // `l.*`); it just wasn't declared here, so callers had no typed way to link driver_short_name back
+  // to the canonical driver record. Live-verified present on GET /dispatch/loads?view=home.
+  assigned_primary_driver_id: string | null;
   driver_short_name: string | null;
   has_open_pm_due_wo?: boolean;
   is_dispatch_blocked?: boolean;
