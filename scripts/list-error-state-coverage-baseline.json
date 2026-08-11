@@ -1,17 +1,15 @@
 {
-  "note": "Discovered list pages (useQuery + renders a table) with NO error branch. May only SHRINK. Safety is DRAINED and locked at zero (see DRAINED_MODULES in the guard). Generated 2026-08-11.",
+  "note": "Discovered list pages (useQuery + renders a table) with NO error branch. May only SHRINK. Safety and Dispatch are DRAINED and locked at zero (see DRAINED_MODULES in the guard). Generated 2026-08-11.",
   "offenders": [
     "apps/frontend/src/pages/Documents.tsx",
     "apps/frontend/src/pages/banking/components/forms/BillPaymentForm.tsx",
     "apps/frontend/src/pages/compliance/Form2290Filings.tsx",
     "apps/frontend/src/pages/customers/CustomersListView.tsx",
     "apps/frontend/src/pages/customers/components/PortalUsersTab.tsx",
-    "apps/frontend/src/pages/dispatch/NotifyPreferencesPage.tsx",
     "apps/frontend/src/pages/driver-finance/EscrowDeductionsPendingTab.tsx",
     "apps/frontend/src/pages/driver-finance/components/SettlementDisputesTab.tsx",
     "apps/frontend/src/pages/factoring/SubmissionWorkqueue.tsx",
     "apps/frontend/src/pages/maintenance/components/CreateWorkOrderModal.tsx",
-    "apps/frontend/src/pages/maintenance/components/PartsInventoryTable.tsx",
     "apps/frontend/src/pages/maintenance/reports/MaintenanceReportsPage.tsx",
     "apps/frontend/src/pages/maintenance/tires/TireWearDashboard.tsx",
     "apps/frontend/src/pages/maintenance/units/UnitBrakesTab.tsx",
