@@ -86,7 +86,8 @@ is no "in progress" state, because a half-fix in production is indistinguishable
 | ☐ | Finding ID | Sev | Owning lane | Coder | PR | Date | Live proof of fix | Guard (file + step #) | CC-3 VERIFIED |
 |---|---|---|---|---|---|---|---|---|---|
 | ☑ | `P31-TRAILER-LOAD-REVERSE-MISSING` | P1 | Codex (Dispatch) | Codex | #5830 | 2026-08-11 | healthz `b81b37e`; live USMCA load→trailer→same historical load drawer F+R OK | `equipment-aggregate-trailer-loads.test.ts`; FE 7/7 | Awaiting independent CC-3 verify |
-| ☐ | `CI-PREPAID-POST-FLAG-GATE-FALSE-RED` | P0 | CC-1 (money / prepaid guard) | — | — | — | CI run 31545443506: locked-guards false-red on merged main | `scripts/verify-prepaid-post-flag-gate.mjs` | — |
+| ☑ | `CI-PREPAID-POST-FLAG-GATE-FALSE-RED` | P0 | CC-1 (money / prepaid guard) | CC-1 | #5838 | 2026-08-11 | `node scripts/verify-prepaid-post-flag-gate.mjs` on merged main `6387f1be6` flips FAIL→PASS against unmodified route file; `--selftest` exit 0 (regression fixture: ACCT-F331 void-sibling shape must PASS, engine-inside-create must still FAIL) | `scripts/verify-prepaid-post-flag-gate.mjs` --selftest | — |
+| ☑ | `CI-3041-BANK-TXNS-SCHEMA-CI` | P0 | CC-1 (money / sample-data guard) | CC-1 | #5838 | 2026-08-11 | `node scripts/verify-steps/3041-verify-no-future-dated-or-untagged-sample-money.mjs --selftest` exit 0 on merged main `6387f1be6` (42P01 on guarded relation → SKIP; unrelated-table/syntax/connection errors → still FAIL) | `scripts/verify-steps/3041-verify-no-future-dated-or-untagged-sample-money.mjs` --selftest | — |
 | ☐ | `MATRIX-REQ-MAINT` | P0 | Cursor (FE/program) | — | — | — | — | — | — |
 | ☐ | `MATRIX-LIVE-RAD` | P0 | Cursor (FE) + API | — | — | — | — | — | — |
 | ☐ | `MATRIX-DONE-GUARD` | P1 | CC-2 (GUARD) | — | — | — | — | — | — |
