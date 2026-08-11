@@ -104,6 +104,68 @@ function collect() {
   return { offenders: [...new Set(offenders)].sort(), scanned: files.length };
 }
 
+/**
+ * OVER-CAP: a frontend request whose hardcoded `limit=N` EXCEEDS the backend's own `z…max(M)`.
+ *
+ * ★ THIS GUARD ALREADY DESCRIBED THE DEFECT AND NEVER ASSERTED IT (added 2026-08-11). The header above
+ * says of the drivers instance: "the cap exceeded the backend's own max, so the request 400'd and the
+ * export produced no file AND no error." True — and nothing here checked for it, so
+ * `apps/frontend/src/api/accounting.ts:1378` sat on main requesting
+ * `/api/v1/catalogs/classes?…&limit=300` while `catalogs/classes.routes.ts:12` declares
+ * `limit: z.coerce.number().int().min(1).max(200)`. Every Manual-JE and Driver-Detail class picker
+ * 400'd on open — the pickers were simply dead, and the silent-cap baseline had nothing to say about it
+ * because the request never returned a capped list at all. A guard that narrates a failure mode in prose
+ * while asserting nothing about it is documentation, not enforcement.
+ *
+ * HARD ZERO, not a ratchet: exceeding a declared max is never a judgement call, it is a guaranteed 400.
+ * Resolution is conservative — the FE limit is compared against the LARGEST limit max declared in the
+ * route file that owns the path, so a file with several schemas cannot produce a false positive.
+ */
+const FE_LIMIT_CALL = /["'`](\/api\/v1\/[a-zA-Z0-9/_-]+)\?[^"'`]*?\blimit=(\d+)/g;
+const BACKEND_LIMIT_MAX = /limit:\s*z\.coerce\.number\(\)[^,;\n]*?\.max\((\d+)\)/g;
+
+function backendLimitMaxFor(apiPath) {
+  const backendSrc = join(ROOT, "apps/backend/src");
+  if (!existsSync(backendSrc)) return null;
+  const routeFiles = [];
+  walkAbs(backendSrc, routeFiles);
+  const decl = new RegExp(String.raw`app\.(?:get|post)\s*\(\s*["'\`]${apiPath.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}["'\`]`);
+  for (const file of routeFiles) {
+    const src = readFileSync(file, "utf8");
+    if (!decl.test(src)) continue;
+    const maxes = [...src.matchAll(BACKEND_LIMIT_MAX)].map((m) => Number(m[1]));
+    if (maxes.length) return Math.max(...maxes);
+  }
+  return null;
+}
+
+function walkAbs(dir, out) {
+  for (const e of readdirSync(dir)) {
+    const p = join(dir, e);
+    if (statSync(p).isDirectory()) walkAbs(p, out);
+    else if (p.endsWith(".ts") && !p.includes(".test.")) out.push(p);
+  }
+  return out;
+}
+
+export function auditOverCap(feSources) {
+  const problems = [];
+  for (const [rel, src] of feSources) {
+    for (const m of src.matchAll(FE_LIMIT_CALL)) {
+      const [, apiPath, rawLimit] = m;
+      const requested = Number(rawLimit);
+      const max = backendLimitMaxFor(apiPath);
+      if (max != null && requested > max) {
+        problems.push(
+          `${rel}: requests ${apiPath}?…limit=${requested}, but the backend declares max(${max}). ` +
+            `The request 400s — the list is not capped, it is DEAD, with no rows and no error shown.`
+        );
+      }
+    }
+  }
+  return problems;
+}
+
 function auditTree() {
   const { offenders, scanned } = collect();
   if (scanned === 0) {
@@ -123,6 +185,12 @@ function auditTree() {
   if (offenders.length > baseline.size) {
     problems.push(`${LABEL}: offender count rose ${baseline.size} -> ${offenders.length}. The baseline may only SHRINK.`);
   }
+
+  // OVER-CAP is a hard zero — it is a guaranteed 400, never a judgement call, so it is not baselined.
+  const feFiles = [];
+  walk(SRC, feFiles);
+  problems.push(...auditOverCap(feFiles.map((rel) => [rel, readFileSync(join(ROOT, rel), "utf8")])));
+
   return problems;
 }
 
