@@ -515,7 +515,7 @@ function ReconDisabledHint() {
   return (
     <div className="rounded-sm border border-gray-200 bg-white px-4 py-10 text-center text-sm text-gray-500">
       The QBO↔TMS reconciliation module is not enabled for this account.
-      <p className="mt-1 text-xs text-gray-400">Enable the TMS_QBO_RECON_ENABLED feature flag to run and view reconciliation passes.</p>
+      <p className="mt-1 text-xs text-gray-400">Reconciliation passes are turned on per operating company and aren’t active for the company you have selected — this is expected, not an error. Contact the owner or an administrator to enable them, or switch to a company where they’re already on.</p>
     </div>
   );
 }

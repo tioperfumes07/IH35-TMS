@@ -159,7 +159,7 @@ export function DailyReconPage() {
         <div className="rounded-sm border border-slate-200 bg-slate-50 px-4 py-6 text-center">
           <p className="font-semibold text-slate-700">TMS posting not enabled — nothing to reconcile yet.</p>
           <p className="mt-1 text-sm text-slate-600">
-            The GL_POSTING_ENABLED feature flag is off for this entity. Once posting is live, daily TMS
+            GL posting is not yet turned on for this entity. Once posting is live, daily TMS
             journal entries will appear here paired against QBO sync queue results.
           </p>
         </div>
