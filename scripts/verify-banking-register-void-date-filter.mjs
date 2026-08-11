@@ -17,15 +17,15 @@ const need = [
 ];
 const missing = need.filter((s) => !src.includes(s));
 if (process.argv.includes("--selftest")) {
-  const bad = "bt.voided_at IS NULL /* selftest removed */";
+  const bad = "VOID_FILTER_SELFTEST_REMOVED";
   if (src.includes(bad)) {
     console.error("verify-banking-register-void-date-filter --selftest INERT");
     process.exit(1);
   }
-  const probe = src.replace("bt.voided_at IS NULL", bad);
+  const probe = src.replaceAll("bt.voided_at IS NULL", bad);
   const probeMissing = need.filter((s) => !probe.includes(s));
-  if (probeMissing.length !== need.length) {
-    console.error("verify-banking-register-void-date-filter --selftest INERT");
+  if (!probeMissing.includes("bt.voided_at IS NULL")) {
+    console.error("verify-banking-register-void-date-filter --selftest INERT — guard did not detect removed void filter");
     process.exit(1);
   }
   console.log("verify-banking-register-void-date-filter --selftest PASS");

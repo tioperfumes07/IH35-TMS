@@ -1982,6 +1982,31 @@ export function BankingTransactionsDesignView({
                 settlement) or payable (company owes the driver — posts to Driver Advance / Employee Loan when
                 enabled).
               </p>
+              <div
+                className="mt-2 rounded-sm border border-slate-300 bg-slate-50 px-2 py-1.5"
+                data-testid="bank-categorize-recover-box"
+              >
+                <label className="flex items-start gap-2 text-xs text-gray-800">
+                  <input
+                    type="checkbox"
+                    className="mt-0.5"
+                    checked={draft.recoverFromDriver}
+                    disabled={!draft.driverId}
+                    onChange={(event) =>
+                      setDraft(tx, {
+                        recoverFromDriver: event.target.checked,
+                        driverMoneyTreatment: event.target.checked ? "recover" : "none",
+                      })
+                    }
+                  />
+                  <span>
+                    <span className="font-semibold">Recover from driver</span> on settlement (deduction / liability)
+                  </span>
+                </label>
+                {!draft.driverId ? (
+                  <p className="mt-1 text-[11px] text-slate-700">Tag a driver above to enable recovery</p>
+                ) : null}
+              </div>
               <fieldset className="mt-2 space-y-1.5">
                 <label className="flex items-start gap-2 text-xs text-gray-800">
                   <input
