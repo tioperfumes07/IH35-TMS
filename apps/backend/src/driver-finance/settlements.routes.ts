@@ -321,8 +321,25 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
       const row = res.rows[0];
       if (!row) return null;
       const linesRes = await client.query(
-        `SELECT * FROM driver_finance.settlement_lines WHERE settlement_id = $1 ORDER BY created_at ASC`,
-        [params.data.id]
+        `
+          -- LV-SETTLEMENT-LOAD-FK (F-06). This was SELECT *, which returns settlement_lines.load_id and
+          -- nothing a human can read — load_number lives on mdata.loads, so the settlement detail handed
+          -- the UI a raw uuid for the one field that says WHICH LOAD the driver is being paid for.
+          -- PROD-VERIFIED 2026-08-11 (USMCA, control healthy at 4 lines / 8 settlements): the link is
+          -- real and resolvable — S-20260808-0085 -> L-20260808-0085 and S-20260808-0090 ->
+          -- L-20260808-0090. S-2026-0001's two lines carry NO load_id at all, so load_number stays NULL
+          -- there by construction and the UI must say so honestly rather than invent a link.
+          -- Entity-scoped join: mdata.loads carries operating_company_id, and the settlement is already
+          -- constrained to $2 above, so a load from another entity can never resolve into this payload.
+          SELECT sl.*, l.load_number
+          FROM driver_finance.settlement_lines sl
+          LEFT JOIN mdata.loads l
+            ON l.id = sl.load_id
+           AND l.operating_company_id = $2::uuid
+          WHERE sl.settlement_id = $1
+          ORDER BY sl.created_at ASC
+        `,
+        [params.data.id, companyId]
       );
       const debt = await recomputeDebtSync(client, String(row.driver_id));
       return {
