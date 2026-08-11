@@ -34,6 +34,7 @@ import {
   listCustomerQualityEventReasons,
   listCustomerQualityEvents,
   listCustomers,
+  listPaymentTermOptions,
   listVendors,
   listCustomerContacts,
   reactivateCustomerContact,
@@ -462,6 +463,20 @@ export function CustomerDetailPage() {
         .map((c) => ({ value: c.id, label: c.customer_code ? `${c.name} (${c.customer_code})` : c.name })),
     [parentCandidatesQuery.data, id]
   );
+  const paymentTermsQuery = useQuery({
+    queryKey: ["payment-term-options", operatingCompanyId],
+    queryFn: () => listPaymentTermOptions(operatingCompanyId!),
+    enabled: Boolean(operatingCompanyId),
+    staleTime: 5 * 60 * 1000,
+  });
+  const paymentTermOptions = useMemo(
+    () =>
+      (paymentTermsQuery.data?.payment_terms ?? []).map((term) => ({
+        value: term.id,
+        label: `${term.terms_name} (${term.days_until_due}d)`,
+      })),
+    [paymentTermsQuery.data]
+  );
   const lanesQuery = useQuery({
     queryKey: ["customer-lanes", id, operatingCompanyId, includeInactiveLanes],
     queryFn: () => listCustomerLanes(id, operatingCompanyId!, includeInactiveLanes).then((result) => result.lanes),
@@ -584,6 +599,7 @@ export function CustomerDetailPage() {
       status: customer.status,
       customer_type: customer.customer_type ?? "",
       parent_customer_id: customer.parent_customer_id ?? "",
+      payment_terms_id: customer.payment_terms_id ?? "",
       website: customer.website ?? "",
       office_phone: customer.office_phone ?? "",
       fax_phone: customer.fax_phone ?? "",
@@ -634,6 +650,7 @@ export function CustomerDetailPage() {
         tax_id: hydratedForm.tax_id || null,
         customer_type: hydratedForm.customer_type ? (hydratedForm.customer_type as "broker" | "direct_shipper") : null,
         parent_customer_id: hydratedForm.parent_customer_id || null, // D1-4: persist / clear parent hard link
+        payment_terms_id: hydratedForm.payment_terms_id || null,
         status: hydratedForm.status as Customer["status"],
         status_change_reason: statusChangeReason,
         website: hydratedForm.website || null,
@@ -1211,6 +1228,29 @@ export function CustomerDetailPage() {
             <Field label="A/R Phone" value={hydratedForm.ar_phone} onChange={(value) => setForm((current) => ({ ...current, ar_phone: value }))} disabled={!editMode} />
             <Field label="A/P Email" value={hydratedForm.ap_email} onChange={(value) => setForm((current) => ({ ...current, ap_email: value }))} disabled={!editMode} />
             <Field label="A/P Phone" value={hydratedForm.ap_phone} onChange={(value) => setForm((current) => ({ ...current, ap_phone: value }))} disabled={!editMode} />
+          </DataPanel>
+
+          <DataPanel title="Payment Terms">
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-gray-600">Assigned term</label>
+              <ReferenceSelect
+                value={hydratedForm.payment_terms_id || null}
+                onChange={(nextValue) => setForm((current) => ({ ...current, payment_terms_id: nextValue ?? "" }))}
+                options={paymentTermOptions}
+                createKind="payment_term"
+                operatingCompanyId={operatingCompanyId ?? ""}
+                disabled={!editMode}
+                placeholder="Select terms"
+                onOptionCreated={() => void paymentTermsQuery.refetch()}
+              />
+              <button
+                type="button"
+                className="self-start text-xs font-medium text-slate-700 underline underline-offset-2"
+                onClick={() => navigate("/lists/accounting/payment-terms")}
+              >
+                Manage Payment Terms
+              </button>
+            </div>
           </DataPanel>
 
           <DataPanel title="Credit Limit">
