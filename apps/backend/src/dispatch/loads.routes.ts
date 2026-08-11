@@ -610,7 +610,8 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
             -- DISPATCH-MILES-LIST: view has no mile cols; project from mdata.loads (same as GET :id).
             ml.miles_shortest AS miles_shortest,
             ml.miles_practical AS miles_practical,
-            ml.loaded_miles AS loaded_miles
+            ml.loaded_miles AS loaded_miles,
+            ml.miles_deadhead AS miles_deadhead
           FROM views.dispatch_load_with_driver_status l
           JOIN mdata.customers c ON c.id = l.customer_id
                                 AND c.operating_company_id = l.operating_company_id
@@ -730,6 +731,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
                  ml.miles_shortest AS miles_shortest,
                  ml.miles_practical AS miles_practical,
                  ml.loaded_miles AS loaded_miles,
+                 ml.miles_deadhead AS miles_deadhead,
                  NULL::text AS trailer_equipment_type,
                  NULL::text AS trailer_number,
                  rc.file_id AS ratecon_file_id,
