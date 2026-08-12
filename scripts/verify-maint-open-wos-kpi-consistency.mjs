@@ -86,6 +86,10 @@ export function assertGuard({ kpi, bucket, list, dash }) {
   if (/openWorkOrderPredicate/.test(dashBody) === false && /open_cost|tire_alerts|road_service/.test(dashBody)) {
     errs.push(`${DASH}: open-WO subsidiary queries must import and use openWorkOrderPredicate()`);
   }
+  const openDollarsQuery = /SELECT[\s\S]{0,500}?AS open_dollars/.exec(dashBody)?.[0] ?? "";
+  if (!/COALESCE\s*\(\s*w\.total_actual_cost\s*,\s*COALESCE\s*\(\s*w\.estimated_cost_cents\s*,\s*0\s*\)::numeric\s*\/\s*100\.0\s*\)/.test(openDollarsQuery)) {
+    errs.push(`${DASH}: open_dollars must use actual cost when present, otherwise estimated_cost_cents converted to dollars`);
+  }
 
   return errs;
 }
@@ -108,7 +112,7 @@ function selftest() {
   const goodDash =
     `import { countOpenMaintenanceWorkOrders, openWorkOrderPredicate } from "../kpi/canonical-kpis.js";\n` +
     `const openWoCount = await countOpenMaintenanceWorkOrders(client, companyId);\n` +
-    `AND \${openWorkOrderPredicate()}\n`;
+    `SELECT SUM(COALESCE(w.total_actual_cost, COALESCE(w.estimated_cost_cents, 0)::numeric / 100.0)) AS open_dollars AND \${openWorkOrderPredicate()}\n`;
   const cases = [
     { n: "well-formed → 0", in: { kpi: goodKpi, bucket: goodBucket, list: goodList, dash: goodDash }, want: 0 },
     {
@@ -124,6 +128,11 @@ function selftest() {
     {
       n: "dash ad-hoc status IN",
       in: { kpi: goodKpi, bucket: goodBucket, list: goodList, dash: goodDash.replace("${openWorkOrderPredicate()}", "status IN ('open', 'in_progress', 'waiting_parts')") },
+      min: 1,
+    },
+    {
+      n: "open dollars ignores estimates",
+      in: { kpi: goodKpi, bucket: goodBucket, list: goodList, dash: goodDash.replace("COALESCE(w.total_actual_cost, COALESCE(w.estimated_cost_cents, 0)::numeric / 100.0)", "COALESCE(w.total_actual_cost, 0)") },
       min: 1,
     },
   ];
