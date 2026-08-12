@@ -1,6 +1,6 @@
 # PRIORITY 10 · 3-BOX GATE — LIVE GAP
 
-**as_of:** 2026-08-12T21:17:05.699Z · **main:** `5020146db`
+**as_of:** 2026-08-12T21:21:54.287Z · **main:** `e5ff951b5`
 
 ## Bar
 
@@ -8,15 +8,15 @@ All 10 modules: **Required + Audited + Built = 100%** before Live. Wave **A→B�
 
 ## Built coverage
 
-- All cells: **86%** (2281/2666)
-- Wave A–C (no chrome): **99%** (2024/2041)
+- All cells: **86%** (2281/2664)
+- Wave A–C (no chrome): **99%** (2024/2039)
 
 | Module | Built% all | Built% A–C |
 |--------|-----------:|-----------:|
 | lists | 85% | 100% |
-| accounting | 82% | 96% |
+| accounting | 83% | 97% |
 | dispatch | 91% | 100% |
-| settlements | 81% | 97% |
+| settlements | 82% | 100% |
 | factoring | 78% | 90% |
 | banking | 85% | 98% |
 | customers | 92% | 100% |
@@ -30,8 +30,8 @@ All 10 modules: **Required + Audited + Built = 100%** before Live. Wave **A→B�
 |-----|------:|------|
 | `qbo_chrome` | 293 | D LAST |
 | `picker_law` | 73 | D LAST |
-| `liability` | 14 | CC-1 |
-| `gl_je` | 3 | CC-1 C |
+| `liability` | 13 | CC-1 |
+| `gl_je` | 2 | CC-1 C |
 | `inventory` | 1 | ? |
 | `scenario.maintenance` | 1 | ? |
 

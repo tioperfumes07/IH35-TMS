@@ -711,6 +711,18 @@
           "proof": "MonthClosePage adjusting_entries + link to JE list"
         }
       ]
+    },
+    "factoring_list_gl_je_built_2026_08_12": {
+      "finding": "ACCT-FACTORING-LIST-GL-JE-BUILT",
+      "matrix_built": [
+        {
+          "id": "factoring.list",
+          "cols": [
+            "gl_je"
+          ],
+          "proof": "FactoringDetailPage journal_entry_id EntityLink (list\u2192:id)"
+        }
+      ]
     }
   }
 }
