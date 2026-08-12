@@ -353,10 +353,29 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
         [params.data.id, companyId]
       );
       const debt = await recomputeDebtSync(client, String(row.driver_id));
+      // AP_BILL / GL_JE column-wave: settlement-bill-payment-posting.service.ts (flag
+      // SETTLEMENT_GL_POSTING_ENABLED, live for all 3 entities since 2026-07-26) already writes a
+      // real, queryable link per driver bill funded by this settlement — driver_settlement_gl_bills
+      // (accounting_bill_id, bill_journal_entry_id) — but no settlement read path ever selected it.
+      // Confirmed reachable, not academic: this table is populated whenever the flag is on, which it
+      // is; a settlement detail page reader had no way to see or drill into the real bills/JEs its
+      // own posting created.
+      const linkedBillsRes = await client
+        .query(
+          `
+            SELECT accounting_bill_id::text, bill_journal_entry_id::text, load_number
+            FROM driver_finance.driver_settlement_gl_bills
+            WHERE settlement_id = $1::uuid AND operating_company_id = $2::uuid
+            ORDER BY created_at ASC
+          `,
+          [params.data.id, companyId]
+        )
+        .catch(() => ({ rows: [] as Array<Record<string, unknown>> }));
       return {
         ...row,
         lines: linesRes.rows,
         debt_summary: debt,
+        linked_bills: linkedBillsRes.rows,
       };
     });
     if (detail && "unavailable" in detail) return reply.code(501).send({ error: "driver_finance_schema_not_available" });
