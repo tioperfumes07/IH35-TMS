@@ -72,6 +72,9 @@ const FILES = {
   cargoClaimSurface: "apps/frontend/src/pages/safety/components/CargoClaimIntakeSurface.tsx",
   incidentsRoute: "apps/backend/src/safety/incidents.routes.ts",
   cargoClaimReasonMigration: "db/migrations/202612511800_p44_cargo_claim_reason_same_opco_fk.sql",
+  bookLoadCustomer: "apps/frontend/src/pages/dispatch/components/BookLoadCustomerSection.tsx",
+  invoiceCustomer: "apps/frontend/src/pages/accounting/modals/InvoiceTypeModalBase.tsx",
+  customerConsumerMigration: "db/migrations/202612512000_p43_load_invoice_customer_same_opco_fks.sql",
 };
 
 const MISSING = "MISSING";
@@ -245,6 +248,9 @@ export function contractErrors(src) {
   if (!/createKind="cargo_claim_reason"/.test(src.cargoClaimSurface) || !/claim_reason_id:\s*form\.claimReasonId/.test(src.cargoClaimSurface)) errors.push("P44-FK: cargo claim creator must select and submit canonical reason UUID");
   if (!/claim_reason_id:\s*z\.string\(\)\.uuid/.test(src.incidentsRoute) || !/claim_reason_id,/.test(src.incidentsRoute)) errors.push("P44-FK: incident create route must validate and persist claim_reason_id UUID");
   if (!/incidents_claim_reason_same_company_fk/.test(src.cargoClaimReasonMigration) || !/incidents_cargo_claim_reason_required/.test(src.cargoClaimReasonMigration)) errors.push("P44-FK: cargo claims must enforce a required same-opco reason FK");
+  if (!/createKind="customer"/.test(src.bookLoadCustomer) || !/customer_id/.test(src.bookLoadCustomer)) errors.push("P43-FK: Book Load must select canonical customer UUID with inline create");
+  if (!/createKind="customer"/.test(src.invoiceCustomer) || !/customer_id/.test(src.invoiceCustomer)) errors.push("P43-FK: invoice create must select canonical customer UUID with inline create");
+  if (!/loads_customer_same_company_fk/.test(src.customerConsumerMigration) || !/invoices_customer_same_company_fk/.test(src.customerConsumerMigration)) errors.push("P43-FK: loads and invoices must enforce same-opco customer FKs");
 
   // ── CONFIG-DRIVEN: the pinned defect ────────────────────────────────────────────────────────
   if (/INLINE_KINDS/.test(select)) {
