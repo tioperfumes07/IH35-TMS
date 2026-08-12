@@ -1478,9 +1478,9 @@ async function buildBillPaymentLines(client: DbClient, operatingCompanyId: strin
   if (!payment.bill_id) {
     throw new PostingEngineError("BILL_AP_NOT_POSTED", "Bill payment has no bill_id; cannot verify the bill's A/P leg is posted");
   }
-  const billSrcRes = await client.query<{ source_system: string | null }>(
+  const billSrcRes = await client.query<{ source_system: string | null; bill_number: string | null }>(
     `
-      SELECT source_system::text
+      SELECT source_system::text, bill_number
       FROM accounting.bills
       WHERE operating_company_id = $1::uuid
         AND id::text = $2
@@ -1560,7 +1560,10 @@ async function buildBillPaymentLines(client: DbClient, operatingCompanyId: strin
   }
 
   const amount = Number(payment.amount_cents ?? Math.round(Number(payment.amount ?? "0") * 100));
-  const label = `Bill payment ${sourceId}`;
+  // JE-MEMO-STORES-RAW-UUID-AT-POSTER — name the bill, not the payment's own uuid. billSrcRes is
+  // already fetched above for the source_system check; bill_number rides along for free.
+  const billNumber = billSrcRes.rows[0]?.bill_number;
+  const label = billNumber ? `Bill payment for bill ${billNumber}` : `Bill payment ${sourceId}`;
   return {
     postingDate: payment.payment_date,
     memo: `${label} posting`,
@@ -1601,13 +1604,15 @@ async function buildCashAdvanceLines(
     requested_amount_cents: string;
     status: string;
     posting_date: string;
+    display_id: string | null;
   }>(
     `
       SELECT
         id::text,
         requested_amount_cents::bigint,
         status::text,
-        COALESCE(reviewed_at, submitted_at, created_at)::date::text AS posting_date
+        COALESCE(reviewed_at, submitted_at, created_at)::date::text AS posting_date,
+        display_id
       FROM driver_finance.cash_advance_requests
       WHERE operating_company_id = $1::uuid
         AND id::text = $2
@@ -1634,7 +1639,8 @@ async function buildCashAdvanceLines(
   }
 
   const amount = Number(request.requested_amount_cents);
-  const label = `Cash advance ${sourceId}`;
+  // JE-MEMO-STORES-RAW-UUID-AT-POSTER — name the request, not its own uuid.
+  const label = request.display_id ? `Cash advance ${request.display_id}` : `Cash advance ${sourceId}`;
   return {
     postingDate: request.posting_date,
     memo: `${label} posting`,
@@ -1682,6 +1688,7 @@ async function buildDriverAdvanceLines(
     disbursed_at: string | null;
     created_at: string;
     from_bank_account_id: string | null;
+    display_id: string | null;
   }>(
     `
       SELECT
@@ -1691,7 +1698,8 @@ async function buildDriverAdvanceLines(
         posting_date::text,
         disbursed_at::text,
         created_at::text,
-        from_bank_account_id::text
+        from_bank_account_id::text,
+        display_id
       FROM driver_finance.driver_advances
       WHERE operating_company_id = $1::uuid
         AND id::text = $2
@@ -1746,7 +1754,8 @@ async function buildDriverAdvanceLines(
     (advance.disbursed_at ? advance.disbursed_at.slice(0, 10) : advance.created_at.slice(0, 10));
   // amount is numeric(10,2) dollars → cents for the ledger.
   const amountCents = Math.round(Number(advance.amount) * 100);
-  const label = `Driver advance ${sourceId}`;
+  // JE-MEMO-STORES-RAW-UUID-AT-POSTER — name the advance, not its own uuid.
+  const label = advance.display_id ? `Driver advance ${advance.display_id}` : `Driver advance ${sourceId}`;
   return {
     postingDate,
     memo: `${label} posting`,
@@ -1826,7 +1835,14 @@ async function buildDriverReimbursementLines(
   const postingDate =
     reimb.posting_date ?? (reimb.paid_at ? reimb.paid_at.slice(0, 10) : reimb.created_at.slice(0, 10));
   const amountCents = Math.round(Number(reimb.amount_cents));
-  const label = `Driver reimbursement ${sourceId}`;
+  // JE-MEMO-STORES-RAW-UUID-AT-POSTER — driver_reimbursements has no display_id/number column
+  // (verified live against prod information_schema), so a per-document identifier still has to come
+  // from the id — but the TYPE is real, readable information a bare uuid alone never carried, and
+  // keeping a short id suffix (not the full uuid) preserves per-row uniqueness for a memo that would
+  // otherwise collide across every reimbursement of the same type.
+  const label = reimb.reimbursement_type
+    ? `Driver reimbursement (${reimb.reimbursement_type}) ${sourceId.slice(0, 8)}`
+    : `Driver reimbursement ${sourceId}`;
   return {
     postingDate,
     memo: `${label} posting`,
@@ -1872,6 +1888,7 @@ async function buildBankCategorizationLines(client: DbClient, operatingCompanyId
     transaction_date: string;
     categorization_gl_account_id: string | null;
     bank_ledger_account_id: string | null;
+    description: string | null;
   }>(
     `
       SELECT
@@ -1881,7 +1898,8 @@ async function buildBankCategorizationLines(client: DbClient, operatingCompanyId
         bt.amount_cents::bigint AS amount_cents,
         bt.transaction_date::text AS transaction_date,
         bt.categorization_gl_account_id::text AS categorization_gl_account_id,
-        ba.ledger_account_id::text AS bank_ledger_account_id
+        ba.ledger_account_id::text AS bank_ledger_account_id,
+        bt.description
       FROM banking.bank_transactions bt
       LEFT JOIN banking.bank_accounts ba
         ON ba.id = bt.bank_account_id
@@ -1920,7 +1938,13 @@ async function buildBankCategorizationLines(client: DbClient, operatingCompanyId
     throw new PostingEngineError("BANK_CATEGORIZATION_NOT_POSTING_ELIGIBLE", "Bank transaction has a zero/non-finite amount");
   }
 
-  const label = `Bank categorization ${sourceId}`;
+  // JE-MEMO-STORES-RAW-UUID-AT-POSTER — name the transaction by its own bank-statement description
+  // (real information), not its uuid. Truncated + a short id suffix: descriptions repeat across many
+  // rows (e.g. "Wire Transfer Fee"), so the suffix keeps the memo unique per transaction.
+  const txnDescription = (txn.description ?? "").trim();
+  const label = txnDescription
+    ? `Bank categorization: ${txnDescription.slice(0, 60)} ${sourceId.slice(0, 8)}`
+    : `Bank categorization ${sourceId}`;
   const moneyIn = txn.is_credit === true;
   const catLine: PostingLineDraft = {
     account_id: catAccountId,
@@ -1993,6 +2017,7 @@ async function buildTransferLines(client: DbClient, operatingCompanyId: string, 
     transfer_date: string;
     memo: string | null;
     revoked_at: string | null;
+    reference_number: string | null;
   }>(
     `
       SELECT
@@ -2005,7 +2030,8 @@ async function buildTransferLines(client: DbClient, operatingCompanyId: string, 
         amount_cents::bigint,
         transfer_date::text,
         memo,
-        revoked_at::text
+        revoked_at::text,
+        reference_number
       FROM banking.transfers
       WHERE operating_company_id = $1::uuid
         AND id::text = $2
@@ -2040,7 +2066,11 @@ async function buildTransferLines(client: DbClient, operatingCompanyId: string, 
     );
   }
 
-  const label = `Transfer (${transfer.transfer_type}) ${sourceId}`;
+  // JE-MEMO-STORES-RAW-UUID-AT-POSTER — name the transfer by its own reference_number when the
+  // operator gave it one; the type is real information either way, so it always leads.
+  const label = transfer.reference_number
+    ? `Transfer (${transfer.transfer_type}) ${transfer.reference_number}`
+    : `Transfer (${transfer.transfer_type}) ${sourceId}`;
   return {
     postingDate: transfer.transfer_date,
     memo: transfer.memo ? `${label} — ${transfer.memo}` : `${label} posting`,

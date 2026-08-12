@@ -12,9 +12,13 @@ const { mockQuery, mockWithLuciaBypass, mockResolveAccountForCategory } = vi.hoi
   };
 });
 
-vi.mock("../../../auth/db.js", () => ({
-  withLuciaBypass: mockWithLuciaBypass,
-}));
+// Partial-mock so other exports (luciaPool, etc.) stay real for the module graph — auth/lucia.ts
+// constructs its adapter from luciaPool at import time, so a bare replacement mock breaks the whole
+// import chain (same fix shape as posting-kill-switch-gated.test.ts / posting-engine-driver-advance.test.ts).
+vi.mock("../../../auth/db.js", async (orig) => {
+  const actual = (await orig()) as Record<string, unknown>;
+  return { ...actual, withLuciaBypass: mockWithLuciaBypass };
+});
 
 vi.mock("../../expense-category-map/resolver.service.js", () => ({
   resolveAccountForCategory: mockResolveAccountForCategory,
