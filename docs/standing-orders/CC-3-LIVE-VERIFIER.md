@@ -1,3 +1,5 @@
+> **USMCA WIRE SPRINT 2026-08-12: CC-3 SEAT IS OFF.** Do not paste CC-3. Four seats only: Cursor · Codex · CC-1 · CC-2. See `docs/specs/CODER-PASTE-INSTRUCTIONS-2026-08-12.md`.
+
 # CC-3 — PERMANENT STANDING ORDER (LIVE VERIFIER + USMCA BATTERY)
 
 > **Owner-issued, re-issued verbatim 2026-08-07. Permanent law, not a one-time message.**
