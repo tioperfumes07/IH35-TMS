@@ -502,9 +502,10 @@ export async function createDriverCanonical(
               SELECT id, status, curp, cdl_number, cdl_state, rehire_count
               FROM mdata.drivers
               WHERE id = $1
+                AND operating_company_id = $2::uuid
               LIMIT 1
             `,
-          [b.prior_driver_id]
+          [b.prior_driver_id, b.operating_company_id]
         );
         const priorDriver = priorRes.rows[0] ?? null;
         if (!priorDriver) {
@@ -545,12 +546,14 @@ export async function createDriverCanonical(
         }
         let chainTip: { id: string; rehire_count: number | null } = priorDriver;
         if (tipFilters.length > 0) {
+          tipValues.push(b.operating_company_id);
           const tipRes = await client.query<{ id: string; rehire_count: number | null }>(
             `
                 SELECT id, rehire_count
                 FROM mdata.drivers
                 WHERE status = 'Terminated'
                   AND (${tipFilters.join(" OR ")})
+                  AND operating_company_id = $${tipValues.length}::uuid
                 ORDER BY rehire_count DESC NULLS LAST, created_at DESC
                 LIMIT 1
               `,
@@ -2123,7 +2126,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
     }
   });
 
-  app.post("/api/v1/mdata/drivers/:id/deactivate", async (req, reply) => {
+  app.post("/api/v1/mdata/drivers/:id/deactivate", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -2136,9 +2139,16 @@ export async function registerDriverRoutes(app: FastifyInstance) {
           SELECT id, deactivated_at, identity_user_id, status
           FROM mdata.drivers
           WHERE id = $1
+            AND operating_company_id IN (
+              SELECT uca.company_id
+                FROM org.user_company_access uca
+                JOIN org.companies oc ON oc.id = uca.company_id AND oc.deactivated_at IS NULL
+               WHERE uca.user_id = $2::uuid
+                 AND uca.deactivated_at IS NULL
+            )
           LIMIT 1
         `,
-        [parsedParams.data.id]
+        [parsedParams.data.id, authUser.uuid]
       );
       const oldRow = oldRes.rows[0] ?? null;
       if (!oldRow) return null;
@@ -2211,7 +2221,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
 
   // Reverse of /deactivate — "Show in lists" un-hides a soft-hidden driver (Inactive -> Active). Reversible soft
   // write; preserves a deliberate 'Terminated' end-state (never un-terminates). Mirrors the deactivate audit.
-  app.post("/api/v1/mdata/drivers/:id/reactivate", async (req, reply) => {
+  app.post("/api/v1/mdata/drivers/:id/reactivate", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -2220,8 +2230,20 @@ export async function registerDriverRoutes(app: FastifyInstance) {
 
     const reactivated = await withCurrentUser(authUser.uuid, async (client) => {
       const oldRes = await client.query(
-        `SELECT id, deactivated_at, identity_user_id, status FROM mdata.drivers WHERE id = $1 LIMIT 1`,
-        [parsedParams.data.id]
+        `
+          SELECT id, deactivated_at, identity_user_id, status
+          FROM mdata.drivers
+          WHERE id = $1
+            AND operating_company_id IN (
+              SELECT uca.company_id
+                FROM org.user_company_access uca
+                JOIN org.companies oc ON oc.id = uca.company_id AND oc.deactivated_at IS NULL
+               WHERE uca.user_id = $2::uuid
+                 AND uca.deactivated_at IS NULL
+            )
+          LIMIT 1
+        `,
+        [parsedParams.data.id, authUser.uuid]
       );
       const oldRow = oldRes.rows[0] ?? null;
       if (!oldRow) return null;
@@ -2273,7 +2295,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
     return reactivated;
   });
 
-  app.post("/api/v1/mdata/drivers/:id/enable-phone-login", async (req, reply) => {
+  app.post("/api/v1/mdata/drivers/:id/enable-phone-login", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -2287,9 +2309,16 @@ export async function registerDriverRoutes(app: FastifyInstance) {
             SELECT id, phone, email, identity_user_id
             FROM mdata.drivers
             WHERE id = $1
+              AND operating_company_id IN (
+                SELECT uca.company_id
+                  FROM org.user_company_access uca
+                  JOIN org.companies oc ON oc.id = uca.company_id AND oc.deactivated_at IS NULL
+                 WHERE uca.user_id = $2::uuid
+                   AND uca.deactivated_at IS NULL
+              )
             LIMIT 1
           `,
-          [parsedParams.data.id]
+          [parsedParams.data.id, authUser.uuid]
         );
         const driver = driverRes.rows[0];
         if (!driver) return { error: "mdata_driver_not_found" as const };
@@ -2345,7 +2374,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
     }
   });
 
-  app.post("/api/v1/mdata/drivers/:id/disable-phone-login", async (req, reply) => {
+  app.post("/api/v1/mdata/drivers/:id/disable-phone-login", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -2358,9 +2387,16 @@ export async function registerDriverRoutes(app: FastifyInstance) {
           SELECT id, identity_user_id
           FROM mdata.drivers
           WHERE id = $1
+            AND operating_company_id IN (
+              SELECT uca.company_id
+                FROM org.user_company_access uca
+                JOIN org.companies oc ON oc.id = uca.company_id AND oc.deactivated_at IS NULL
+               WHERE uca.user_id = $2::uuid
+                 AND uca.deactivated_at IS NULL
+            )
           LIMIT 1
         `,
-        [parsedParams.data.id]
+        [parsedParams.data.id, authUser.uuid]
       );
       const driver = driverRes.rows[0];
       if (!driver) return { error: "mdata_driver_not_found" as const };
