@@ -23,6 +23,7 @@ function mockLoad(overrides: Partial<DispatchLoadRow> = {}): DispatchLoadRow {
     first_pickup_city: "Austin",
     first_delivery_city: "Dallas",
     flag_code: "BLUE",
+    dispatch_flag_color_id: "00000000-0000-4000-8000-0000000000ff",
     created_at: "2026-01-01T00:00:00.000Z",
     updated_at: "2026-01-01T00:00:00.000Z",
     soft_deleted_at: null,
