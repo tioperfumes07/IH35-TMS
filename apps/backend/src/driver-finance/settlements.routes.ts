@@ -331,10 +331,21 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
           -- there by construction and the UI must say so honestly rather than invent a link.
           -- Entity-scoped join: mdata.loads carries operating_company_id, and the settlement is already
           -- constrained to $2 above, so a load from another entity can never resolve into this payload.
-          SELECT sl.*, l.load_number
+          --
+          -- SETTLEMENT-DETAIL-LOAD-COALESCE-DRIFT — this joined mdata.loads on sl.load_id ALONE, so a
+          -- line reachable only through its driver bill (source_driver_bill_id set, sl.load_id NULL)
+          -- rendered "LOADS IN CYCLE —" here while the LIST endpoint (settlements.routes.ts:157-173),
+          -- which already resolves COALESCE(db.load_id, sl.load_id), reported load_count 1 for the same
+          -- settlement — one rule, two call sites, drifted apart. Bill-first COALESCE, identical order
+          -- and LEFT-JOIN shape to the list query (ACCT-F275), closes the second call site. The trailing
+          -- COALESCE(db.load_id, sl.load_id) AS load_id overrides sl.*'s raw load_id column (later
+          -- columns win by name in the driver's row object) so the existing frontend read of
+          -- line.load_id resolves correctly with zero UI changes — no data mutation, read-path only.
+          SELECT sl.*, l.load_number, COALESCE(db.load_id, sl.load_id) AS load_id
           FROM driver_finance.settlement_lines sl
+          LEFT JOIN driver_finance.driver_bills db ON db.id = sl.source_driver_bill_id
           LEFT JOIN mdata.loads l
-            ON l.id = sl.load_id
+            ON l.id = COALESCE(db.load_id, sl.load_id)
            AND l.operating_company_id = $2::uuid
           WHERE sl.settlement_id = $1
           ORDER BY sl.created_at ASC
