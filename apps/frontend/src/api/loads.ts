@@ -119,6 +119,7 @@ export type DispatchLoadRow = {
   anticipated_chargeback_reason?: string | null;
   detention_expected_y_n?: boolean | null;
   detention_reason_id?: string | null;
+  catalog_load_type_id?: string | null;
   detention_expected_hours?: number | null;
   detention_bill_customer_per_hour_cents?: number | null;
   detention_driver_pay_per_hour_cents?: number | null;

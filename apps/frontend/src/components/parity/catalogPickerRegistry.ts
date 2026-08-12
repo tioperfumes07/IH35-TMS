@@ -379,6 +379,7 @@ export const CATALOG_PICKER_CONFIGS = {
     table: "catalogs.load_types",
     endpoint: "/api/v1/catalogs/dispatch/load-types",
     evidence: "apps/backend/src/catalogs/dispatch/shared.ts:104,138,204 — one tableName, SELECT and INSERT",
+    consumerPath: "apps/frontend/src/pages/dispatch/components/BookLoadModalV4.tsx",
   }),
 
 
