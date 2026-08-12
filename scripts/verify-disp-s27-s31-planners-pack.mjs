@@ -52,12 +52,14 @@ function assertLive() {
   if (!/data-testid="dispatch-loads-planner-honest-empty"/.test(loads)) problems.push("S29 missing honest empty");
   if (!/ListErrorBanner/.test(loads)) problems.push("S29 missing ListErrorBanner");
   if (!/enabled:\s*Boolean\(operatingCompanyId\)/.test(loads)) problems.push("S29 not company-gated");
+  if (!/<EntityLink kind="customer" id=\{load\.customer_id\}/.test(loads)) problems.push("S29 load rows missing canonical customer link");
 
   const timeline = read(FILES.timeline);
   if (!/data-testid="dispatch-timeline-need-company"/.test(timeline)) problems.push("S30 missing need-company");
   if (!/data-testid="dispatch-timeline-honest-empty"/.test(timeline)) problems.push("S30 missing honest empty");
   if (!/ListErrorBanner/.test(timeline)) problems.push("S30 missing ListErrorBanner");
   if (!/enabled:\s*Boolean\(operatingCompanyId\)/.test(timeline)) problems.push("S30 not company-gated");
+  if (!/<EntityLink kind="customer" id=\{load\.customer_id\}/.test(timeline)) problems.push("S30 timeline rows missing canonical customer link");
 
   const truck = read(FILES.truck);
   if (!/data-testid="dispatch-truck-planner-need-company"/.test(truck)) problems.push("S31 missing need-company");

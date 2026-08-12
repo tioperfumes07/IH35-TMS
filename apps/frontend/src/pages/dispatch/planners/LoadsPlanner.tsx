@@ -8,6 +8,7 @@ import { userFacingApiError } from "../../../lib/api-error-message";
 import { addDaysIso } from "./planner-range";
 import { usePlannerRange } from "./PlannerRangeContext";
 import { entityLabel } from "../../../lib/entity-label";
+import { EntityLink } from "../../../components/shared/EntityLink";
 
 function toDayKey(iso: string | null | undefined): string | null {
   if (!iso) return null;
@@ -157,6 +158,7 @@ export function LoadsPlanner() {
                         <button type="button" className="text-slate-700 hover:underline" onClick={() => openLoad(load.id)}>
                           {entityLabel(load.load_number, load.id, "Load")}
                         </button>
+                        <span className="block text-[9px]"><EntityLink kind="customer" id={load.customer_id} label={entityLabel(load.customer_name, load.customer_id, "Customer")} /></span>
                       </td>
                       <td className="border-r px-1 py-0.5 text-gray-600">{lane}</td>
                       {cells}

@@ -569,6 +569,8 @@ export function listDispatchCancellationReasons(operatingCompanyId: string) {
 
 export type AvailableDriverRow = {
   driver_id: string;
+  customer_id: string;
+  unit_id: string | null;
   display_name: string;
   display_id: string | null;
   hours_remaining_today: number;

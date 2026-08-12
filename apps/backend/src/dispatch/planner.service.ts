@@ -18,6 +18,8 @@ export type PlannerLoadEvent = {
   id: string;
   load_number: string;
   driver_id: string;
+  customer_id: string;
+  unit_id: string | null;
   customer_name: string | null;
   status: string;
   start_at: string;
@@ -158,6 +160,8 @@ export async function getPlannerWeek(userId: string, operatingCompanyId: string,
           l.load_number,
           l.status::text AS status,
           l.assigned_primary_driver_id::text AS driver_id,
+          l.customer_id::text AS customer_id,
+          l.assigned_unit_id::text AS unit_id,
           c.customer_name,
           COALESCE(pu.scheduled_arrival_at, pu.appointment_start_at)::text AS start_at,
           COALESCE(del.scheduled_arrival_at, del.appointment_end_at, pu.scheduled_arrival_at + interval '24 hours')::text AS end_at,
@@ -222,6 +226,8 @@ export async function getPlannerWeek(userId: string, operatingCompanyId: string,
       id: String(row.id),
       load_number: String(row.load_number),
       driver_id: String(row.driver_id),
+      customer_id: String(row.customer_id),
+      unit_id: row.unit_id ? String(row.unit_id) : null,
       customer_name: row.customer_name ? String(row.customer_name) : null,
       status: String(row.status),
       start_at: String(row.start_at),
@@ -393,6 +399,8 @@ export async function reschedulePlannerLoad(
           l.load_number,
           l.status::text AS status,
           l.assigned_primary_driver_id::text AS driver_id,
+          l.customer_id::text AS customer_id,
+          l.assigned_unit_id::text AS unit_id,
           c.customer_name,
           COALESCE(pu.scheduled_arrival_at, pu.appointment_start_at)::text AS start_at,
           COALESCE(del.scheduled_arrival_at, del.appointment_end_at, pu.scheduled_arrival_at + interval '24 hours')::text AS end_at,
@@ -428,6 +436,8 @@ export async function reschedulePlannerLoad(
         id: String(updated.id),
         load_number: String(updated.load_number),
         driver_id: String(updated.driver_id),
+        customer_id: String(updated.customer_id),
+        unit_id: updated.unit_id ? String(updated.unit_id) : null,
         customer_name: updated.customer_name ? String(updated.customer_name) : null,
         status: String(updated.status),
         start_at: String(updated.start_at),

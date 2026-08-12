@@ -55,6 +55,12 @@ function main() {
   }
   if (!service.includes("detectPlannerConflict")) failures.push("planner service must detect schedule conflicts");
   if (!service.includes("hos.duty_status_events")) failures.push("planner service must read HOS blackout events");
+  if (!service.includes("l.customer_id::text AS customer_id") || !service.includes("l.assigned_unit_id::text AS unit_id")) {
+    failures.push("planner week payload must carry canonical customer and unit FKs");
+  }
+  if (!/<EntityLink kind="customer" id=\{load\.customer_id\}/.test(page)) {
+    failures.push("planner calendar must link each load customer through its canonical FK");
+  }
   if (!index.includes("registerDispatchPlannerRoutes")) failures.push("backend index must register planner routes");
 
   if (!dispatchApi.includes("getDispatchPlannerWeek")) failures.push("dispatch API must export getDispatchPlannerWeek");
