@@ -3411,6 +3411,21 @@
       "reason_code_id",
       "status"
     ],
+    "dispatch.load_charge_lines": [
+      "additional_charge_id",
+      "amount_cents",
+      "charge_code",
+      "created_at",
+      "created_by_user_id",
+      "description",
+      "id",
+      "is_active",
+      "line_kind",
+      "load_id",
+      "operating_company_id",
+      "sort_order",
+      "updated_at"
+    ],
     "dispatch.load_eta_predictions": [
       "computed_at",
       "computed_by",
