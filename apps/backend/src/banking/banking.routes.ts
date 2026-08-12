@@ -683,7 +683,7 @@ export async function registerBankingRoutes(app: FastifyInstance) {
                 ba.ledger_account_id::text,
                 a.account_name AS ledger_account_name, a.account_number AS ledger_account_number
            FROM banking.bank_accounts ba
-           LEFT JOIN catalogs.accounts a ON a.id = ba.ledger_account_id
+           LEFT JOIN catalogs.accounts a ON a.id = ba.ledger_account_id AND a.operating_company_id = ba.operating_company_id
           WHERE ba.operating_company_id = $1::uuid AND ba.deactivated_at IS NULL
           ${bankAccountHiddenFilterSql(hideOn, "ba")}
           ORDER BY ba.account_name ASC`,

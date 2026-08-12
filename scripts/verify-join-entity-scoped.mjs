@@ -66,7 +66,50 @@ const TARGETS = new Map([
 // Any backticked literal that reads a table. This deliberately matches FROM as well as JOIN: an earlier
 // version keyed on JOIN alone, which meant a bare `SELECT ... FROM mdata.drivers WHERE id = $1` was never
 // even scanned — the exact WO-611 shape the guard is supposed to catch.
-const SQL_BLOCK = /`([^`]*\b(?:FROM|JOIN)\b[^`]*)`/gi;
+const HAS_FROM_OR_JOIN = /\b(?:FROM|JOIN)\b/i;
+
+/**
+ * BACKTICK-BRIDGING BUG (found 2026-08-12, hit repeatedly: accounting/break-even.service.ts,
+ * dispatch/book-load.service.ts, master-data/.../fuel-history.service.ts,
+ * telematics/fleet-location-hos.service.ts). The old approach — `` /`([^`]*\b(?:FROM|JOIN)\b[^`]*)`/g ``
+ * — has no concept of "this backtick already CLOSED a literal, it cannot also be the OPEN of the next
+ * match." A short unrelated literal (e.g. a `set_config(...)` call) that does NOT itself contain FROM/
+ * JOIN fails to match on its own true open/close pair; the regex engine then retries starting at that
+ * literal's CLOSING backtick, treating it as a fresh open, and pairs it with the NEXT literal's opening
+ * backtick — bridging everything in between (including plain code and `//` comments) into one bogus
+ * "SQL block." A comment mentioning "FROM mdata.units" on the way to the real, already-correctly-scoped
+ * query then gets misattributed to that real query's line number as an unscoped read.
+ *
+ * Fix: tokenize template literals by SEQUENTIALLY PAIRING backticks (1st-with-2nd, 3rd-with-4th, ...),
+ * exactly how JS/TS actually delimits them — a backtick can never appear unescaped inside a literal, so
+ * this pairing is exact, not heuristic. Each pair is one true literal; no literal can borrow a
+ * neighboring literal's boundary.
+ */
+function extractTemplateLiterals(src) {
+  const literals = [];
+  let i = 0;
+  const n = src.length;
+  while (i < n) {
+    if (src[i] !== "`") {
+      i++;
+      continue;
+    }
+    const start = i + 1;
+    let j = start;
+    while (j < n) {
+      if (src[j] === "\\") {
+        j += 2;
+        continue;
+      }
+      if (src[j] === "`") break;
+      j++;
+    }
+    if (j >= n) break; // unterminated backtick to EOF — nothing more to pair
+    literals.push({ content: src.slice(start, j), index: i });
+    i = j + 1;
+  }
+  return literals;
+}
 
 /** `LEFT JOIN mdata.drivers d ON ...` / `JOIN accounting.bills AS b ON ...` */
 const JOIN_RE =
@@ -103,13 +146,14 @@ function refIsScoped(block, alias, columns) {
 
 export function auditSql(src, file = "<mem>") {
   const problems = [];
-  for (const blockMatch of src.matchAll(SQL_BLOCK)) {
+  for (const blockMatch of extractTemplateLiterals(src)) {
+    if (!HAS_FROM_OR_JOIN.test(blockMatch.content)) continue;
     // CLS-GUARD-READS-COMMENTS (5th instance, found 2026-08-07). The scope test accepts `IS` as a
     // comparison operator, so a SQL comment containing "…operating_company_id is read out later" made
     // this guard report a real unscoped JOIN as scoped — prose satisfying a security check. Mask `--`
     // and slash-star comments inside the SQL before matching. Offset-preserving, so the line numbers
     // this guard reports stay correct.
-    const block = maskSqlComments(blockMatch[1]);
+    const block = maskSqlComments(blockMatch.content);
     const refs = [];
     for (const j of block.matchAll(JOIN_RE)) refs.push({ table: j[1].toLowerCase(), alias: j[2], kind: "JOIN" });
     for (const f of block.matchAll(FROM_RE)) {

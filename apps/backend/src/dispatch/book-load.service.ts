@@ -1815,8 +1815,9 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
           `SELECT tour_id::text FROM mdata.loads
              WHERE assigned_unit_id = $1::uuid AND trip_type = 'NB' AND tour_id IS NOT NULL
                AND soft_deleted_at IS NULL
+               AND operating_company_id = $2::uuid
              ORDER BY created_at DESC LIMIT 1`,
-          [input.assigned_unit_id]
+          [input.assigned_unit_id, input.operating_company_id]
         );
         tourId = t.rows[0]?.tour_id ?? null;
       } else {

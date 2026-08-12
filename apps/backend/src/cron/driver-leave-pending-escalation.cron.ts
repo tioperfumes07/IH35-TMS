@@ -49,7 +49,7 @@ async function loadStalePending(client: QueryClient): Promise<StaleRow[]> {
         (CURRENT_DATE - r.created_at::date)::int AS days_pending,
         concat_ws(' ', d.first_name, d.last_name) AS driver_name
       FROM safety.driver_leave_requests r
-      JOIN mdata.drivers d ON d.id = r.driver_id
+      JOIN mdata.drivers d ON d.id = r.driver_id AND d.operating_company_id = r.operating_company_id
       WHERE r.status = 'pending_review'
         AND r.voided_at IS NULL
         AND r.created_at < now() - ($1 * interval '1 day')

@@ -215,22 +215,27 @@ export async function getAccountRegister(
        -- ACCT-F350 — the entry this one reverses, for the LIFO unwind ordering documented at ORDER BY.
        LEFT JOIN accounting.journal_entries orig
          ON orig.id = je.reverses_je_id AND orig.operating_company_id = je.operating_company_id
-       LEFT JOIN catalogs.classes cls ON cls.id = p.class_id
+       LEFT JOIN catalogs.classes cls ON cls.id = p.class_id AND cls.operating_company_id = p.operating_company_id
        LEFT JOIN accounting.bills b
          ON p.source_transaction_type = 'bill' AND b.id::text = p.source_transaction_id
-       LEFT JOIN mdata.vendors bv ON bv.id::text = b.vendor_uuid
+        AND b.operating_company_id = p.operating_company_id
+       LEFT JOIN mdata.vendors bv ON bv.id::text = b.vendor_uuid AND bv.operating_company_id = p.operating_company_id
        LEFT JOIN accounting.expenses ex
          ON p.source_transaction_type = 'expense' AND ex.id::text = p.source_transaction_id
-       LEFT JOIN mdata.vendors ev ON ev.id = ex.vendor_uuid
+        AND ex.operating_company_id = p.operating_company_id
+       LEFT JOIN mdata.vendors ev ON ev.id = ex.vendor_uuid AND ev.operating_company_id = p.operating_company_id
        LEFT JOIN accounting.invoices inv
          ON p.source_transaction_type = 'invoice' AND inv.id::text = p.source_transaction_id
-       LEFT JOIN mdata.customers ic ON ic.id = inv.customer_id
+        AND inv.operating_company_id = p.operating_company_id
+       LEFT JOIN mdata.customers ic ON ic.id = inv.customer_id AND ic.operating_company_id = p.operating_company_id
        LEFT JOIN accounting.payments pay
          ON p.source_transaction_type = 'customer_payment' AND pay.id::text = p.source_transaction_id
-       LEFT JOIN mdata.customers pc ON pc.id = pay.customer_id
+        AND pay.operating_company_id = p.operating_company_id
+       LEFT JOIN mdata.customers pc ON pc.id = pay.customer_id AND pc.operating_company_id = p.operating_company_id
        LEFT JOIN driver_finance.driver_settlements ds
          ON p.source_transaction_type = 'settlement' AND ds.id::text = p.source_transaction_id
-       LEFT JOIN mdata.drivers dr ON dr.id = ds.driver_id
+        AND ds.operating_company_id = p.operating_company_id
+       LEFT JOIN mdata.drivers dr ON dr.id = ds.driver_id AND dr.operating_company_id = p.operating_company_id
        LEFT JOIN LATERAL (
          SELECT CASE WHEN count(*) = 0 THEN NULL
                      WHEN count(*) = 1 THEN max(sa.account_name)
@@ -239,7 +244,7 @@ export async function getAccountRegister(
                    FROM accounting.journal_entry_postings op
                   WHERE op.journal_entry_uuid = p.journal_entry_uuid
                     AND op.account_id <> p.account_id) d
-           JOIN catalogs.accounts sa ON sa.id = d.account_id
+           JOIN catalogs.accounts sa ON sa.id = d.account_id AND sa.operating_company_id = p.operating_company_id
        ) sp ON true
       WHERE ${where}
       -- ACCT-F349 — ORDER BY DOCUMENT, THEN BY LINE WITHIN THAT DOCUMENT.

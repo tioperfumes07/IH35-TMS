@@ -137,9 +137,9 @@ export async function registerSafetyComplaintsRoutes(app: FastifyInstance) {
                 TRIM(CONCAT(rd.first_name, ' ', rd.last_name)) AS respondent_driver_name,
                 cc.customer_name AS complainant_customer_name
          FROM safety.complaints c
-         LEFT JOIN mdata.drivers cd ON cd.id = c.complainant_driver_id
-         LEFT JOIN mdata.drivers rd ON rd.id = c.respondent_driver_id
-         LEFT JOIN mdata.customers cc ON cc.id = c.complainant_customer_id
+         LEFT JOIN mdata.drivers cd ON cd.id = c.complainant_driver_id AND cd.operating_company_id = c.operating_company_id
+         LEFT JOIN mdata.drivers rd ON rd.id = c.respondent_driver_id AND rd.operating_company_id = c.operating_company_id
+         LEFT JOIN mdata.customers cc ON cc.id = c.complainant_customer_id AND cc.operating_company_id = c.operating_company_id
          WHERE c.operating_company_id = $1::uuid
          ${driverFilter.replace(/complainant_driver_id/g, "c.complainant_driver_id").replace(/respondent_driver_id/g, "c.respondent_driver_id")}
          ORDER BY c.filed_at DESC LIMIT 500`,
