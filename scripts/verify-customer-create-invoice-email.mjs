@@ -19,6 +19,7 @@ const ROOT = path.resolve(__dirname, "..");
 const PROFILE = "apps/frontend/src/components/customers/CustomerProfileForm.tsx";
 const DRAWER = "apps/frontend/src/components/parity/drawers/NewCustomerDrawerForm.tsx";
 const QUICK = "apps/frontend/src/components/forms/shared/QuickCreateEntityModal.tsx";
+const BACKEND = "apps/backend/src/mdata/customers.routes.ts";
 
 function assert(cond, msg) {
   if (!cond) throw new Error(msg);
@@ -39,13 +40,16 @@ function checkTree() {
   const profilePath = path.join(ROOT, PROFILE);
   const drawerPath = path.join(ROOT, DRAWER);
   const quickPath = path.join(ROOT, QUICK);
+  const backendPath = path.join(ROOT, BACKEND);
   assert(fs.existsSync(profilePath), `MISSING FILE: ${PROFILE}`);
   assert(fs.existsSync(drawerPath), `MISSING FILE: ${DRAWER}`);
   assert(fs.existsSync(quickPath), `MISSING FILE: ${QUICK}`);
+  assert(fs.existsSync(backendPath), `MISSING FILE: ${BACKEND}`);
 
   const profile = fs.readFileSync(profilePath, "utf8");
   const drawer = fs.readFileSync(drawerPath, "utf8");
   const quick = fs.readFileSync(quickPath, "utf8");
+  const backend = fs.readFileSync(backendPath, "utf8");
 
   assert(/validateCustomerProfileForCreate/.test(profile), `${PROFILE}: must export validateCustomerProfileForCreate`);
   assert(/label="Email"[\s\S]{0,120}required/.test(profile), `${PROFILE}: Email field must be required`);
@@ -62,6 +66,17 @@ function checkTree() {
   assert(/profileValuesToCreatePayload/.test(drawer), `${DRAWER}: must submit via profileValuesToCreatePayload`);
   assert(/createCustomer\s*\(/.test(drawer), `${DRAWER}: must call createCustomer(...)`);
   assert(!/createQboCustomer/.test(drawer), `${DRAWER}: must not call createQboCustomer`);
+
+  // P43: billing locality must survive both create surfaces and edit/reload. The DB columns existed,
+  // but omitting them from the API contract made the fields structurally unwritable.
+  for (const field of ["billing_city", "billing_zip"]) {
+    assert(new RegExp(`${field}:\\s*trimOrUndef\\(v\\.${field}\\)`).test(profile), `${PROFILE}: create payload must carry ${field}`);
+    assert(new RegExp(`${field}:\\s*trimOrNull\\(v\\.${field}\\)`).test(profile), `${PROFILE}: update payload must carry ${field}`);
+    assert(new RegExp(`${field}:\\s*z\\.string`).test(backend), `${BACKEND}: schemas must accept ${field}`);
+  }
+  assert(/addOptional\("billing_city", b\.billing_city\)/.test(backend), `${BACKEND}: create must persist billing_city`);
+  assert(/addOptional\("billing_postal_code", b\.billing_zip\)/.test(backend), `${BACKEND}: create must persist billing_zip`);
+  assert(/billing_postal_code AS billing_zip/.test(backend), `${BACKEND}: reload must return billing_zip`);
 
   checkQuickCreateSource(QUICK, quick);
 }

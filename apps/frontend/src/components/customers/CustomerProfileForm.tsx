@@ -40,7 +40,9 @@ export type CustomerProfileFormValues = {
   tax_id: string;
   // Billing address
   billing_address: string;
+  billing_city: string;
   billing_state: string;
+  billing_zip: string;
   // Terms & credit
   payment_terms_id: string;
   credit_limit: string;
@@ -101,7 +103,9 @@ export function emptyCustomerProfileValues(): CustomerProfileFormValues {
     dot_number: "",
     tax_id: "",
     billing_address: "",
+    billing_city: "",
     billing_state: "",
+    billing_zip: "",
     payment_terms_id: "",
     credit_limit: "",
     credit_limit_source: "",
@@ -157,7 +161,9 @@ export function customerToProfileValues(c: Customer): CustomerProfileFormValues 
     dot_number: str(c.dot_number),
     tax_id: str(c.tax_id),
     billing_address: str(c.billing_address),
+    billing_city: str(c.billing_city),
     billing_state: str(c.billing_state),
+    billing_zip: str(c.billing_zip),
     payment_terms_id: str(c.payment_terms_id),
     credit_limit: str(c.credit_limit),
     credit_limit_source: c.credit_limit_source ?? "",
@@ -245,7 +251,9 @@ export function profileValuesToCreatePayload(v: CustomerProfileFormValues, opera
     dot_number: trimOrUndef(v.dot_number),
     tax_id: trimOrUndef(v.tax_id),
     billing_address: trimOrUndef(v.billing_address),
+    billing_city: trimOrUndef(v.billing_city),
     billing_state: trimOrUndef(v.billing_state),
+    billing_zip: trimOrUndef(v.billing_zip),
     payment_terms_id: v.payment_terms_id || null,
     credit_limit: numOrUndef(v.credit_limit),
     credit_limit_source: v.credit_limit_source || null,
@@ -301,7 +309,9 @@ export function profileValuesToUpdatePayload(v: CustomerProfileFormValues): Upda
     dot_number: trimOrNull(v.dot_number),
     tax_id: trimOrNull(v.tax_id),
     billing_address: trimOrNull(v.billing_address),
+    billing_city: trimOrNull(v.billing_city),
     billing_state: trimOrNull(v.billing_state),
+    billing_zip: trimOrNull(v.billing_zip),
     payment_terms_id: v.payment_terms_id || null,
     credit_limit: numOrNull(v.credit_limit),
     credit_limit_source: v.credit_limit_source || null,
@@ -554,7 +564,9 @@ export function CustomerProfileForm({ values, onPatch, operatingCompanyId, mode,
             className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]"
           />
         </label>
+        <TextField label="Billing city" value={values.billing_city} onChange={(billing_city) => onPatch({ billing_city })} />
         <TextField label="Billing state" value={values.billing_state} onChange={(billing_state) => onPatch({ billing_state })} placeholder="TX" />
+        <TextField label="Billing ZIP" value={values.billing_zip} onChange={(billing_zip) => onPatch({ billing_zip })} placeholder="78040" />
       </Section>
 
       {/* Terms & credit */}

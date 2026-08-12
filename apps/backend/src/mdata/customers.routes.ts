@@ -64,7 +64,9 @@ const createCustomerBodySchema = z
   email: z.string().email().min(1).transform((v) => v.toLowerCase()),
   phone: z.string().trim().max(50).optional(),
   billing_address: z.string().trim().max(500).optional(),
+  billing_city: z.string().trim().max(100).optional(),
   billing_state: z.string().trim().max(8).optional(),
+  billing_zip: z.string().trim().max(20).optional(),
   mc_number: z.string().trim().max(50).optional(),
   dot_number: z.string().trim().max(50).optional(),
   tax_id: z.string().trim().max(50).optional(),
@@ -150,7 +152,9 @@ const updateCustomerBodySchema = z
     email: z.string().email().transform((v) => v.toLowerCase()).nullable().optional(),
     phone: z.string().trim().max(50).nullable().optional(),
     billing_address: z.string().trim().max(500).nullable().optional(),
+    billing_city: z.string().trim().max(100).nullable().optional(),
     billing_state: z.string().trim().max(8).nullable().optional(),
+    billing_zip: z.string().trim().max(20).nullable().optional(),
     mc_number: z.string().trim().max(50).nullable().optional(),
     dot_number: z.string().trim().max(50).nullable().optional(),
     tax_id: z.string().trim().max(50).nullable().optional(),
@@ -333,7 +337,9 @@ const CUSTOMER_SELECT_COLUMNS = `
   billing_email AS email,
   billing_phone AS phone,
   billing_address_line1 AS billing_address,
+  billing_city,
   billing_state,
+  billing_postal_code AS billing_zip,
   mc_number,
   dot_number,
   tax_id_encrypted,
@@ -658,7 +664,9 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
         addOptional("billing_email", b.email);
         addOptional("billing_phone", b.phone);
         addOptional("billing_address_line1", b.billing_address);
+        addOptional("billing_city", b.billing_city);
         addOptional("billing_state", b.billing_state);
+        addOptional("billing_postal_code", b.billing_zip);
         addOptional("mc_number", b.mc_number);
         addOptional("dot_number", b.dot_number);
         if (b.tax_id !== undefined) addOptional("tax_id_encrypted", b.tax_id ? encrypt(b.tax_id) : null);
@@ -979,7 +987,9 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
     if ("email" in b) add("billing_email", b.email ?? null);
     if ("phone" in b) add("billing_phone", b.phone ?? null);
     if ("billing_address" in b) add("billing_address_line1", b.billing_address ?? null);
+    if ("billing_city" in b) add("billing_city", b.billing_city ?? null);
     if ("billing_state" in b) add("billing_state", b.billing_state ?? null);
+    if ("billing_zip" in b) add("billing_postal_code", b.billing_zip ?? null);
     if ("mc_number" in b) add("mc_number", b.mc_number ?? null);
     if ("dot_number" in b) add("dot_number", b.dot_number ?? null);
     if ("tax_id" in b) add("tax_id_encrypted", b.tax_id ? encrypt(b.tax_id) : null);
