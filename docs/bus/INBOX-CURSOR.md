@@ -1,11 +1,10 @@
 # Cursor INBOX
 
-**Gate:** 3-box 100% · Built **46%** · non-stop
+**JORGE AWAY ~90m** · self-run · Built **53%**
 
 ## ☐ NOW
+1. 5m lead tick + **15m seat nudge** (tmux cc1/cc2 + WAKE + INBOX)
+2. Overflow: next ranked column if seats idle (vendor / connectivity FE)
+3. FAST-MERGE ready tips · refresh gap · **never idle waiting for Jorge**
 
-1. Refresh gap after each merge · sync INBOXes · lead tick
-2. leafRe ratchet · deploy catch-up (tracker #6137 + Built auto)
-3. Overflow only
-
-OUTBOX: `Cursor | … | Built=% | NEXT=…`
+OUTBOX one-liner every ship.
