@@ -36,6 +36,52 @@ function fail(msg, problems = []) {
   process.exit(1);
 }
 
+/** Built feed cols + leafRe must match *.required.json or Box 3 stays falsely 0%. */
+export function collectWireSprintBuiltFeedProblems(root, entries) {
+  const problems = [];
+  const modulesDir = path.join(root, "docs/specs/scoreboard/modules");
+  if (!fs.existsSync(modulesDir)) return problems;
+  const moduleCols = new Map();
+  const moduleLeaves = new Map();
+
+  for (const file of fs.readdirSync(modulesDir)) {
+    if (!file.endsWith(".required.json")) continue;
+    const mod = file.replace(/\.required\.json$/, "");
+    const j = JSON.parse(fs.readFileSync(path.join(modulesDir, file), "utf8"));
+    moduleCols.set(mod, new Set((j.columns ?? []).map((c) => c.id)));
+    moduleLeaves.set(
+      mod,
+      (j.leaves ?? []).map((leaf) => String(leaf.id ?? "")),
+    );
+  }
+
+  for (const entry of entries) {
+    const guardAbs = path.join(root, String(entry.guard ?? ""));
+    if (entry.guard && !fs.existsSync(guardAbs)) {
+      problems.push(`${entry.task}: guard missing on disk ${entry.guard}`);
+    }
+    for (const mod of entry.modules ?? []) {
+      const cols = moduleCols.get(mod);
+      const leaves = moduleLeaves.get(mod) ?? [];
+      if (!cols) {
+        problems.push(`${entry.task}: unknown module ${mod}`);
+        continue;
+      }
+      for (const col of entry.cols ?? []) {
+        if (!cols.has(col)) {
+          problems.push(`${entry.task}: col ${col} not in ${mod}.required.json`);
+        }
+      }
+      const leafRe = new RegExp(String(entry.leafRe ?? "^$"));
+      const hits = leaves.filter((id) => leafRe.test(id));
+      if (hits.length === 0) {
+        problems.push(`${entry.task}: leafRe ${entry.leafRe} matches zero leaves in ${mod}`);
+      }
+    }
+  }
+  return problems;
+}
+
 export function collectWiringPlanProblems(root = ROOT) {
   const problems = [];
   const planAbs = path.join(root, PLAN);
@@ -69,8 +115,12 @@ export function collectWiringPlanProblems(root = ROOT) {
       for (const t of ["P38", "P37", "P41", "P36", "P39"]) {
         if (!tasks.has(t)) problems.push(`${WIRE_SPRINT} missing shipped task ${t}`);
       }
-    } catch {
+      problems.push(...collectWireSprintBuiltFeedProblems(root, wire.entries ?? []));
+    } catch (err) {
       problems.push(`${WIRE_SPRINT} invalid JSON`);
+      if (process.env.DEBUG_WIRING_PLAN) {
+        problems.push(String(err instanceof Error ? err.message : err));
+      }
     }
   }
 

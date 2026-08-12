@@ -1,11 +1,11 @@
 {
-  "_README": "Shipped Wave-A writers that green Matrix Box 3 Built. Updated when a Pxx task merges with guard+smoke. Live (Box 4) still requires PROD-VERIFIED ledger.",
+  "_README": "Shipped Wave-A writers that green Matrix Box 3 Built. Updated when a Pxx task merges with guard+smoke. Live (Box 4) still requires PROD-VERIFIED ledger. leafRe must match docs/specs/scoreboard/modules/*.required.json leaf ids; cols must match column ids (picker_law not picker).",
   "entries": [
     {
       "task": "P06",
       "pr": "#5829",
       "guard": "scripts/verify-steps/3072-verify-fk-on-create.mjs",
-      "modules": ["accounting", "insurance", "driver_finance"],
+      "modules": ["accounting", "insurance"],
       "cols": ["ap_bill", "vendor", "unit", "load", "driver", "connectivity"],
       "leafRe": "^(bills\\.|invoices\\.|claims|settlements|driver)"
     },
@@ -31,7 +31,7 @@
       "guard": "scripts/verify-steps/3059-verify-accident-claim-reverse-fk-synced.mjs",
       "modules": ["safety"],
       "cols": ["driver", "unit", "load", "connectivity", "reverse_link"],
-      "leafRe": "^(accidents|violations|claims|driver|load)"
+      "leafRe": "^(accidents|violations|claims|cargo_claims|driver|load)"
     },
     {
       "task": "P34",
@@ -45,9 +45,9 @@
       "task": "P36",
       "pr": "#5852",
       "guard": "scripts/verify-steps/3089-verify-settlement-line-binds-load-id.mjs",
-      "modules": ["settlements", "driver_finance", "dispatch"],
+      "modules": ["settlements", "dispatch"],
       "cols": ["load", "driver", "connectivity", "reverse_link"],
-      "leafRe": "^(settlements\\.|settlement_close|pre_settlements|secondary\\.settlements|dispatch\\.queue)"
+      "leafRe": "^(settlements\\.|settlement_close|pre_settlements|secondary\\.settlements|queues\\.)"
     },
     {
       "task": "P39",
@@ -55,7 +55,7 @@
       "guard": "scripts/verify-steps/3114-verify-book-load-stamps-linkage-fks.mjs",
       "modules": ["dispatch"],
       "cols": ["customer", "driver", "unit", "trailer", "load", "connectivity", "reverse_link"],
-      "leafRe": "^(secondary\\.book_load|planning\\.reserve|home\\.|load_board|load\\.detail)"
+      "leafRe": "^(secondary\\.book_load|planning\\.reserve|home\\.|load_board|load\\.)"
     },
     {
       "task": "P33",
@@ -70,96 +70,96 @@
       "pr": "#5847 + #5990",
       "guard": "scripts/verify-steps/2358-verify-lst-picker01-consumer-adoption.mjs",
       "modules": ["lists", "dispatch"],
-      "cols": ["connectivity", "picker"],
-      "leafRe": "^(lists\\.|secondary\\.book_load|customers\\.|vendors\\.)"
+      "cols": ["connectivity", "picker_law"],
+      "leafRe": "^(hub\\.|catalog\\.|secondary\\.book_load|load\\.)"
     },
     {
       "task": "P44-dispatch-flag-colors",
       "pr": "#5925",
       "guard": "scripts/verify-lst-picker-config-driven.mjs",
       "modules": ["lists", "dispatch"],
-      "cols": ["connectivity", "picker", "load"],
-      "leafRe": "^(lists\\.|dispatch\\.|loads\\.)"
+      "cols": ["connectivity", "picker_law", "load"],
+      "leafRe": "^(catalog\\.dispatch\\.dispatch_flag_colors|secondary\\.book_load|load\\.)"
     },
     {
       "task": "P44-additional-charges",
       "pr": "#5931",
       "guard": "scripts/verify-lst-picker-config-driven.mjs",
       "modules": ["lists", "dispatch"],
-      "cols": ["connectivity", "picker", "load"],
-      "leafRe": "^(lists\\.|dispatch\\.|loads\\.)"
+      "cols": ["connectivity", "picker_law", "load"],
+      "leafRe": "^(catalog\\.dispatch\\.additional_charges|secondary\\.book_load|load\\.)"
     },
     {
       "task": "P44-lumper-providers",
       "pr": "#5934",
       "guard": "scripts/verify-lst-picker-config-driven.mjs",
       "modules": ["lists", "dispatch"],
-      "cols": ["connectivity", "picker", "load"],
-      "leafRe": "^(lists\\.|dispatch\\.|loads\\.)"
+      "cols": ["connectivity", "picker_law", "load"],
+      "leafRe": "^(catalog\\.dispatch\\.lumper_providers|secondary\\.book_load|load\\.)"
     },
     {
       "task": "P44-load-trailer-equipment",
       "pr": "#5936",
       "guard": "scripts/verify-lst-picker-config-driven.mjs",
       "modules": ["lists", "dispatch"],
-      "cols": ["connectivity", "picker", "load"],
-      "leafRe": "^(lists\\.|dispatch\\.|loads\\.)"
+      "cols": ["connectivity", "picker_law", "load"],
+      "leafRe": "^(catalog\\.dispatch\\.load_trailer_equipment|secondary\\.book_load|load\\.)"
     },
     {
       "task": "P44-accident-types",
       "pr": "#5947",
       "guard": "scripts/verify-lst-picker-config-driven.mjs",
       "modules": ["lists", "safety"],
-      "cols": ["connectivity", "picker", "load"],
-      "leafRe": "^(lists\\.|safety\\.|accidents\\.)"
+      "cols": ["connectivity", "picker_law", "load"],
+      "leafRe": "^(catalog\\.safety\\.accident_types|accidents\\.)"
     },
     {
       "task": "P44-complaint-types",
       "pr": "#5949",
       "guard": "scripts/verify-lst-picker-config-driven.mjs",
       "modules": ["lists", "safety"],
-      "cols": ["connectivity", "picker", "load"],
-      "leafRe": "^(lists\\.|safety\\.|complaints\\.)"
+      "cols": ["connectivity", "picker_law", "load"],
+      "leafRe": "^(catalog\\.safety\\.complaint_types|complaints\\.)"
     },
     {
       "task": "P44-cargo-claim-reasons",
       "pr": "#5951",
       "guard": "scripts/verify-lst-picker-config-driven.mjs",
       "modules": ["lists", "safety", "insurance"],
-      "cols": ["connectivity", "picker", "load"],
-      "leafRe": "^(lists\\.|safety\\.|insurance\\.|cargo_claims\\.)"
+      "cols": ["connectivity", "picker_law", "load"],
+      "leafRe": "^(catalog\\.safety\\.cargo_claim_reasons|cargo_claims\\.|claims\\.)"
     },
     {
       "task": "P43-customers",
       "pr": "#5953",
       "guard": "scripts/verify-lst-picker-config-driven.mjs",
       "modules": ["customers", "dispatch", "accounting"],
-      "cols": ["connectivity", "picker", "load", "invoice"],
-      "leafRe": "^(customers\\.|loads\\.|invoices\\.)"
+      "cols": ["connectivity", "picker_law", "load", "customer"],
+      "leafRe": "^(list\\.|detail\\.|md\\.|home|secondary\\.book_load|load\\.|invoices\\.)"
     },
     {
       "task": "P42-vendors",
       "pr": "#5957",
       "guard": "scripts/verify-lst-picker-config-driven.mjs",
       "modules": ["vendors", "accounting", "maintenance"],
-      "cols": ["connectivity", "picker", "expense", "ap_bill"],
-      "leafRe": "^(vendors\\.|expenses\\.|bills\\.)"
+      "cols": ["connectivity", "picker_law", "expense", "ap_bill"],
+      "leafRe": "^(list\\.|detail\\.|md\\.|home|bills\\.|expenses\\.|wo\\.)"
     },
     {
       "task": "CATALOG-RLS-SCOPE",
       "pr": "#5961",
       "guard": "scripts/verify-steps/2992-verify-catalog-config-physical-columns.mjs",
       "modules": ["lists"],
-      "cols": ["connectivity", "entity_scope"],
-      "leafRe": "^lists\\."
+      "cols": ["connectivity"],
+      "leafRe": "^(hub\\.|catalog\\.)"
     },
     {
       "task": "P29",
       "pr": "#5821",
       "guard": "scripts/verify-steps/3073-verify-failed-posting-batch-is-retriable.mjs",
-      "modules": ["settlements", "driver_finance", "accounting"],
+      "modules": ["settlements", "accounting"],
       "cols": ["gl_je", "liability", "connectivity"],
-      "leafRe": "^(settlements\\.|settlement_close|driver_finance\\.)"
+      "leafRe": "^(settlements\\.|settlement_close|pre_settlements|je\\.)"
     },
     {
       "task": "P28",
@@ -167,7 +167,7 @@
       "guard": "scripts/verify-steps/3077-verify-account-register-orders-by-document-not-line.mjs",
       "modules": ["accounting"],
       "cols": ["ap_bill", "gl_je", "connectivity"],
-      "leafRe": "^(bills\\.|ap\\.|account_register)"
+      "leafRe": "^(bills\\.|ap\\.|register|transactions\\.)"
     },
     {
       "task": "P32",
@@ -183,7 +183,7 @@
       "guard": "scripts/verify-steps/1349-verify-fleet-catalog-no-metadata-phantom.mjs",
       "modules": ["fleet"],
       "cols": ["connectivity"],
-      "leafRe": "^(fleet\\.|catalogs\\.)"
+      "leafRe": "^(home\\.|roster\\.|unit\\.|trailer\\.|catalog\\.)"
     },
     {
       "task": "P46",
@@ -191,7 +191,7 @@
       "guard": "scripts/verify-steps/2646-verify-no-silent-list-caps.mjs",
       "modules": ["lists", "maintenance"],
       "cols": ["connectivity"],
-      "leafRe": "^(lists\\.|maintenance\\.)"
+      "leafRe": "^(hub\\.|catalog\\.|wo\\.|parts\\.|vendors\\.)"
     },
     {
       "task": "P22",
@@ -199,7 +199,7 @@
       "guard": "scripts/verify-steps/3119-verify-banking-matchdrawer-uses-paritydrawer.mjs",
       "modules": ["banking"],
       "cols": ["qbo_chrome", "connectivity"],
-      "leafRe": "^(accounts|transactions\\.|match|categorize)"
+      "leafRe": "^(accounts|transactions\\.)"
     },
     {
       "task": "P43",
@@ -207,23 +207,23 @@
       "guard": "scripts/verify-steps/2900-verify-customer-create-invoice-email.mjs",
       "modules": ["customers"],
       "cols": ["customer", "connectivity"],
-      "leafRe": "^(customers\\.|secondary\\.book_load)"
+      "leafRe": "^(list\\.|detail\\.|md\\.)"
     },
     {
       "task": "P44",
       "pr": "#5918",
       "guard": "scripts/verify-steps/1510-verify-lst-picker-config-driven.mjs",
       "modules": ["lists", "dispatch"],
-      "cols": ["load", "connectivity", "picker"],
-      "leafRe": "^(lists\\.|secondary\\.book_load|load\\.detail)"
+      "cols": ["load", "connectivity", "picker_law"],
+      "leafRe": "^(catalog\\.|secondary\\.book_load|load\\.)"
     },
     {
       "task": "P45",
       "pr": "#4876",
       "guard": "scripts/verify-steps/2853-verify-catalog-column-collision-safe.mjs",
       "modules": ["lists", "accounting"],
-      "cols": ["connectivity", "picker"],
-      "leafRe": "^(lists\\.|customers\\.|vendors\\.)"
+      "cols": ["connectivity", "picker_law"],
+      "leafRe": "^(hub\\.|catalog\\.|bills\\.|expenses\\.)"
     },
     {
       "task": "P31",
@@ -231,7 +231,15 @@
       "guard": "scripts/verify-trailer-profile-sections-complete.mjs",
       "modules": ["dispatch", "fleet"],
       "cols": ["load", "connectivity", "reverse_link"],
-      "leafRe": "^(load\\.detail|fleet\\.|secondary\\.book_load)"
+      "leafRe": "^(load\\.|secondary\\.book_load|home\\.|roster\\.|unit\\.|trailer\\.)"
+    },
+    {
+      "task": "P30",
+      "pr": "#5979",
+      "guard": "scripts/verify-steps/3123-verify-driver-profile-settlement-reverse-link.mjs",
+      "modules": ["settlements", "drivers"],
+      "cols": ["reverse_link", "connectivity", "load"],
+      "leafRe": "^(settlements\\.|settlement_close|pre_settlements|profiles\\.|^settlements$|^pre_settlements$)"
     },
     {
       "task": "F361",
@@ -239,7 +247,7 @@
       "guard": "scripts/verify-steps/3129-verify-expenses-list-je-memo.mjs",
       "modules": ["accounting"],
       "cols": ["gl_je", "connectivity", "reverse_link"],
-      "leafRe": "^(expenses\\.|account_register)"
+      "leafRe": "^(expenses\\.|register|transactions\\.)"
     }
   ]
 }
