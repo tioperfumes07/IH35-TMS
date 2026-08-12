@@ -8,7 +8,9 @@ import {
   getPlaidBankAccount,
   getPlaidBankAccounts,
   getPlaidBankTransactions,
+  listTransfers,
   syncPlaidBankAccount,
+  type Transfer,
 } from "../../api/banking";
 import { useAuth } from "../../auth/useAuth";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -77,6 +79,20 @@ export function BankAccountDetailPage() {
     queryFn: () => getPlaidBankAccounts(companyId),
     enabled: Boolean(companyId),
   });
+
+  // P19-MODULE-BANKING-TRANSFERS-REVERSE-LINK — banking.transfers.from_account_id/to_account_id are
+  // a real, join-able link into this exact account (listTransfers already filters by accountId; the
+  // /banking/transfers list page already uses it), but nothing on the account's OWN page ever called
+  // it — an internal transfer into/out of this account was completely invisible here, reachable only
+  // by a manual trip to the global transfers list with the filter set by hand. The Plaid-sourced
+  // register below (BankingTransactionsDesignView) does not carry these rows either — a transfer not
+  // matched to a Plaid feed row (matched_transfer_id) leaves no trace in it at all.
+  const transfersQuery = useQuery({
+    queryKey: ["banking", "transfers", "by-account", id, companyId],
+    queryFn: () => listTransfers(companyId, { accountId: id, status: "active", limit: 50 }),
+    enabled: Boolean(id && companyId),
+  });
+  const transfers: Transfer[] = transfersQuery.data?.transfers ?? [];
 
   const account = detailQuery.data?.account;
 
@@ -174,8 +190,56 @@ export function BankAccountDetailPage() {
         </div>
       </div>
 
+      {/* P19-MODULE-BANKING-TRANSFERS-REVERSE-LINK — internal transfers into/out of THIS account, via
+      the real from_account_id/to_account_id FK. Never shown here before; only reachable via a manual
+      trip to /banking/transfers with the filter set by hand. */}
+      {transfers.length > 0 ? (
+        <div className="rounded-sm border border-gray-200 bg-white p-4" data-testid="bank-account-detail-transfers">
+          <h3 className="mb-2 text-sm font-semibold text-gray-800">Transfers ({transfers.length})</h3>
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-gray-200 text-left text-xs uppercase tracking-wide text-gray-500">
+                <th className="py-1 pr-2">Date</th>
+                <th className="py-1 pr-2">Direction</th>
+                <th className="py-1 pr-2">Other account</th>
+                <th className="py-1 pr-2 text-right">Amount</th>
+                <th className="py-1 pr-2">Memo</th>
+              </tr>
+            </thead>
+            <tbody>
+              {transfers.map((t) => {
+                const isOutgoing = t.from_account_id === id;
+                const otherAccountId = isOutgoing ? t.to_account_id : t.from_account_id;
+                const otherAccountKind = isOutgoing ? t.to_account_kind : t.from_account_kind;
+                const otherAccountName = isOutgoing
+                  ? t.to_bank_name || t.to_coa_name
+                  : t.from_bank_name || t.from_coa_name;
+                return (
+                  <tr key={t.id} className="border-b border-gray-100 last:border-0">
+                    <td className="py-1 pr-2 text-gray-700">{formatDateUS(t.transfer_date)}</td>
+                    <td className="py-1 pr-2 text-gray-700">{isOutgoing ? "Out" : "In"}</td>
+                    <td className="py-1 pr-2">
+                      <EntityLink
+                        kind={otherAccountKind === "coa" ? "account" : "bank_account"}
+                        id={otherAccountId}
+                        label={entityLabel(otherAccountName, otherAccountId, "Account")}
+                      />
+                    </td>
+                    <td className="py-1 pr-2 text-right font-semibold text-gray-900">
+                      {isOutgoing ? "−" : "+"}
+                      {formatUsdCents(Number(t.amount_cents))}
+                    </td>
+                    <td className="py-1 pr-2 text-gray-600">{t.memo || "—"}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      ) : null}
+
       {/* KEYSTONE — the categorize-capable register (single live transaction surface), pre-filtered to this
-      account. Selecting another account chip keeps the URL in sync via onSelectAccount → navigate. */}
+      account. Selecting another account chip keeps the URL in sync → navigate. */}
       <BankingTransactionsDesignView
         companyId={companyId}
         accounts={accountsQuery.data?.accounts ?? []}
