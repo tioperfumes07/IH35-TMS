@@ -59,7 +59,12 @@ export type EntityKind =
   // Naming them by type keeps EntityLink's contract intact: every declared kind resolves to a real route.
   | "damage_report"
   | "trailer_interchange"
-  | "cargo_claim";
+  | "cargo_claim"
+  // USERS column-wave: no EntityKind existed for identity.users, so every "created by / updated
+  // by / voided by / approved by" field across the app rendered as plain text — no drill-through
+  // to the acting user's own profile at all. Route verified present in routes/manifest.tsx:
+  // <Route path="/users/:id">.
+  | "user";
 
 export interface EntityLinkProps {
   kind: EntityKind;
@@ -178,6 +183,8 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
       return `/safety/trailer-interchanges?incident_id=${id}`;
     case "cargo_claim":
       return `/safety/cargo-claims?incident_id=${id}`;
+    case "user":
+      return `/users/${id}`;
     default:
       return null;
   }

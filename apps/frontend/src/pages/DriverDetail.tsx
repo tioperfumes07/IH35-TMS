@@ -669,7 +669,13 @@ export function DriverDetailPage() {
       {
         key: "created_by_user_email",
         label: "Changed by",
-        render: (item) => entityLabel(item.created_by_user_email, item.created_by_user_id, "User"),
+        render: (item) => (
+          <EntityLink
+            kind="user"
+            id={item.created_by_user_id}
+            label={entityLabel(item.created_by_user_email, item.created_by_user_id, "User")}
+          />
+        ),
       },
       {
         key: "created_at",
@@ -1473,7 +1479,13 @@ export function DriverDetailPage() {
                           ) : null}
                           {isVoided ? (
                             <div className="rounded-sm bg-gray-200 px-2 py-1 text-xs text-gray-700">
-                              VOIDED on {new Date(event.voided_at || "").toLocaleString()} by {entityLabel(event.voided_by_user_email, event.voided_by_user_id, "User")}: {" "}
+                              VOIDED on {new Date(event.voided_at || "").toLocaleString()} by{" "}
+                              <EntityLink
+                                kind="user"
+                                id={event.voided_by_user_id}
+                                label={entityLabel(event.voided_by_user_email, event.voided_by_user_id, "User")}
+                              />
+                              : {" "}
                               {event.void_reason}
                             </div>
                           ) : null}
@@ -1643,7 +1655,7 @@ export function DriverDetailPage() {
       ) : null}
 
       <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-xs text-gray-700">
-        Last updated by {entityLabel(null, driver.updated_by_user_id, "User")} on {new Date(driver.updated_at).toLocaleString()}
+        Last updated by <EntityLink kind="user" id={driver.updated_by_user_id} label={entityLabel(null, driver.updated_by_user_id, "User")} /> on {new Date(driver.updated_at).toLocaleString()}
       </div>
 
       <Modal variant="drawer" open={addQualificationOpen} onClose={() => setAddQualificationOpen(false)} title="Create Equipment Qualification">
