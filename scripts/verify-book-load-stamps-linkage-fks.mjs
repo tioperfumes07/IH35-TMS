@@ -1,0 +1,100 @@
+#!/usr/bin/env node
+/**
+ * P39 (WIRING-PLAN-50) — Book Load must persist linkage FKs on create:
+ *   - mdata.loads: customer_id, assigned_unit_id, assigned_primary_driver_id
+ *   - dispatch.load_assignment_history.new_trailer_id when trailer selected
+ *   - BookLoadModalV4 submit payload carries the same ids to the API
+ *
+ * Static ratchet — no Neon required in CI.
+ *
+ *   node scripts/verify-book-load-stamps-linkage-fks.mjs [--selftest]
+ */
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const LABEL = "verify-book-load-stamps-linkage-fks";
+const SELFTEST = process.argv.includes("--selftest");
+const BOOK = "apps/backend/src/dispatch/book-load.service.ts";
+const MODAL = "apps/frontend/src/pages/dispatch/components/BookLoadModalV4.tsx";
+
+function read(rel) {
+  return fs.readFileSync(path.join(ROOT, rel), "utf8");
+}
+
+export function collectProblems(bookSrc, modalSrc) {
+  const problems = [];
+
+  const insertMatch = bookSrc.match(/INSERT INTO mdata\.loads\s*\(([\s\S]*?)\)\s*\n\s*VALUES/s);
+  if (!insertMatch) {
+    problems.push(`${BOOK}: INSERT INTO mdata.loads block not found`);
+  } else {
+    const cols = insertMatch[1];
+    for (const col of ["customer_id", "assigned_unit_id", "assigned_primary_driver_id"]) {
+      if (!new RegExp(`\\b${col}\\b`).test(cols)) {
+        problems.push(`${BOOK}: mdata.loads INSERT missing column ${col}`);
+      }
+    }
+    const valuesSlice = bookSrc.slice(insertMatch.index ?? 0, (insertMatch.index ?? 0) + 2500);
+    if (!/input\.customer_id/.test(valuesSlice)) {
+      problems.push(`${BOOK}: INSERT VALUES must bind input.customer_id`);
+    }
+    if (!/input\.assigned_unit_id/.test(valuesSlice)) {
+      problems.push(`${BOOK}: INSERT VALUES must bind input.assigned_unit_id`);
+    }
+    if (!/input\.assigned_primary_driver_id/.test(valuesSlice)) {
+      problems.push(`${BOOK}: INSERT VALUES must bind input.assigned_primary_driver_id`);
+    }
+  }
+
+  if (!/INSERT INTO dispatch\.load_assignment_history/.test(bookSrc)) {
+    problems.push(`${BOOK}: missing load_assignment_history INSERT for trailer link`);
+  } else if (!/new_trailer_id/.test(bookSrc)) {
+    problems.push(`${BOOK}: load_assignment_history INSERT must set new_trailer_id`);
+  }
+  if (!/assigned_trailer_unit_id/.test(bookSrc)) {
+    problems.push(`${BOOK}: must accept assigned_trailer_unit_id on book-load input`);
+  }
+
+  for (const key of ["customer_id:", "assigned_unit_id:", "assigned_primary_driver_id:", "assigned_trailer_unit_id:"]) {
+    if (!modalSrc.includes(key)) {
+      problems.push(`${MODAL}: submit payload must include ${key.replace(":", "")}`);
+    }
+  }
+  if (!/customer_id:\s*values\.customer_id/.test(modalSrc)) {
+    problems.push(`${MODAL}: submit must pass values.customer_id to book-load API`);
+  }
+
+  return problems;
+}
+
+if (SELFTEST) {
+  const book = read(BOOK);
+  const modal = read(MODAL);
+  if (collectProblems(book, modal).length) {
+    console.error(`${LABEL} selftest baseline FAIL`);
+    process.exit(1);
+  }
+  const badBook = book.replace(/assigned_unit_id, assigned_primary_driver_id/, "assigned_primary_driver_id");
+  if (!collectProblems(badBook, modal).length) {
+    console.error(`${LABEL} selftest: removing assigned_unit_id from INSERT cols did not fail`);
+    process.exit(1);
+  }
+  const badModal = modal.replace("customer_id: values.customer_id", "customer_id: undefined");
+  if (!collectProblems(book, badModal).length) {
+    console.error(`${LABEL} selftest: stripping modal customer_id did not fail`);
+    process.exit(1);
+  }
+  console.log(`${LABEL} selftest PASS`);
+  process.exit(0);
+}
+
+const problems = collectProblems(read(BOOK), read(MODAL));
+if (problems.length) {
+  console.error(`${LABEL} FAIL:`);
+  for (const p of problems) console.error(`  - ${p}`);
+  process.exit(1);
+}
+console.log(`${LABEL} OK — Book Load stamps customer/unit/driver on load row and trailer on assignment history`);
+process.exit(0);
