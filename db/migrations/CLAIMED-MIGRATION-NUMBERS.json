@@ -45,6 +45,10 @@
     "202612511200": {
       "claimed_by": "cursor",
       "purpose": "p44_load_trailer_equipment_canonical_fk"
+    },
+    "202612511400": {
+      "claimed_by": "cursor",
+      "purpose": "p44_accident_report_type_canonical_fk"
     }
   }
 }
