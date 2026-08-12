@@ -48,6 +48,17 @@ function buildQuery(filters: DispatchCatalogListFilters) {
   return query.toString();
 }
 
+export function resolveDispatchCatalogRowId(
+  raw: string | undefined,
+  rows: DispatchCatalogRow[]
+): string | undefined {
+  const value = String(raw ?? "").trim();
+  if (!value) return undefined;
+  const byId = rows.find((row) => row.id === value);
+  if (byId) return byId.id;
+  return rows.find((row) => row.code === value)?.id;
+}
+
 export function createDispatchCatalogClient(catalogPath: "load-types" | "detention-reasons" | "pickup-time-types" | "additional-charges" | "lumper-providers" | "load-trailer-equipment") {
   const basePath = `/api/v1/catalogs/dispatch/${catalogPath}`;
   return {

@@ -28,14 +28,24 @@ export function ExpectedAdjustmentsCallout({ register, operatingCompanyId, watch
     enabled: Boolean(operatingCompanyId),
   });
 
+  const detentionReasonRows = detentionReasonsQuery.data?.rows ?? [];
+
   const detentionReasonOptions = useMemo(
     () =>
-      (detentionReasonsQuery.data?.rows ?? []).map((row) => ({
-        value: row.id,
+      detentionReasonRows.map((row) => ({
+        value: row.code,
         label: row.display_name,
       })),
-    [detentionReasonsQuery.data?.rows]
+    [detentionReasonRows]
   );
+
+  const detentionReasonPickerValue = useMemo(() => {
+    const raw = detentionReasonId.trim();
+    if (!raw) return "";
+    const byId = detentionReasonRows.find((row) => row.id === raw);
+    if (byId) return byId.code;
+    return detentionReasonRows.some((row) => row.code === raw) ? raw : raw;
+  }, [detentionReasonId, detentionReasonRows]);
 
   return (
     <div className="rounded-sm border border-slate-200 bg-[#FEF3C7] px-3 py-2 text-[11px] text-slate-700">
@@ -71,11 +81,12 @@ export function ExpectedAdjustmentsCallout({ register, operatingCompanyId, watch
                 catalogs.detention_reasons (same table Lists → Detention Reasons reads). Options keyed by code.
               */}
               <ReferenceSelect
-                value={detentionReasonId || null}
+                value={detentionReasonPickerValue || null}
                 onChange={(next) => setValue("detention_reason_id", next ?? "", { shouldDirty: true })}
                 options={detentionReasonOptions}
                 createKind="detention_reason"
                 operatingCompanyId={operatingCompanyId}
+                createdValueField="code"
                 loading={detentionReasonsQuery.isLoading}
                 placeholder="Select reason"
                 onOptionCreated={() => {

@@ -14,7 +14,7 @@ import { createPortal } from "react-dom";
 import { useForm, type FieldErrors, type UseFormSetValue } from "react-hook-form";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createDispatchLoad } from "../../../api/dispatch";
-import { loadTypesCatalogClient, lumperProvidersCatalogClient, pickupTimeTypesCatalogClient } from "../../../api/catalogs-dispatch";
+import { loadTypesCatalogClient, lumperProvidersCatalogClient, pickupTimeTypesCatalogClient, resolveDispatchCatalogRowId, type DispatchCatalogRow } from "../../../api/catalogs-dispatch";
 import { ApiError } from "../../../api/client";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { entityLabel } from "../../../lib/entity-label";
@@ -258,6 +258,18 @@ export function BookLoadModalV4({
 }: Props) {
   const auth = useAuth();
   const queryClient = useQueryClient();
+  const resolveDetentionReasonId = useCallback(
+    (raw: string) =>
+      resolveDispatchCatalogRowId(
+        raw,
+        queryClient.getQueryData<{ rows: DispatchCatalogRow[] }>([
+          "book-load",
+          "detention-reasons",
+          operatingCompanyId,
+        ])?.rows ?? []
+      ),
+    [operatingCompanyId, queryClient]
+  );
   const isEditMode = Boolean(editLoadId);
   const { pushToast } = useToast();
   const panelRef = useRef<HTMLDivElement>(null);
@@ -686,7 +698,11 @@ export function BookLoadModalV4({
     if (isEditMode && editLoadId) {
       try {
         const body = buildEditPatchBody(
-          values as unknown as Record<string, unknown>,
+          {
+            ...values,
+            detention_reason_id:
+              resolveDetentionReasonId(values.detention_reason_id) ?? values.detention_reason_id,
+          } as unknown as Record<string, unknown>,
           form.formState.dirtyFields as unknown as Record<string, unknown>,
           operatingCompanyId
         );
@@ -801,7 +817,7 @@ export function BookLoadModalV4({
         anticipated_chargeback_cents: numOrUndef(values.anticipated_chargeback_cents),
         anticipated_chargeback_reason: values.anticipated_chargeback_reason || undefined,
         detention_expected_y_n: values.detention_expected_y_n,
-        detention_reason_id: values.detention_reason_id || undefined,
+        detention_reason_id: resolveDetentionReasonId(values.detention_reason_id) || undefined,
         detention_expected_hours: numOrUndef(values.detention_expected_hours),
         detention_bill_customer_per_hour_cents: numOrUndef(values.detention_bill_customer_per_hour_cents),
         detention_driver_pay_per_hour_cents: numOrUndef(values.detention_driver_pay_per_hour_cents),
