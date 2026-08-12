@@ -11,6 +11,7 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { formatClockTimeCT } from "../../lib/businessDate";
 import { entityLabel } from "../../lib/entity-label";
+import { EntityLink } from "../../components/shared/EntityLink";
 
 function hmm(min: number | null): string {
   if (min == null || Number.isNaN(min)) return "—";
@@ -75,7 +76,7 @@ const FLEET_HOS_COLUMNS: ParityColumn<FleetLocationHosRow>[] = [
     alwaysVisible: true,
     sortable: true,
     cellClass: "font-medium",
-    render: (row) => entityLabel(row.unit_number, row.unit_id, "Unit"),
+    render: (row) => <EntityLink kind="unit" id={row.unit_id} label={entityLabel(row.unit_number, row.unit_id, "Unit")} onClick={(event) => event.stopPropagation()} />,
   },
   {
     key: "driver_name",

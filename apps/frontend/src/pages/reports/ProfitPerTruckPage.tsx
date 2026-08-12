@@ -12,6 +12,7 @@ import { ReportsSubNav } from "./ReportsSubNav";
 import { useListState } from "../../components/list-state";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { entityLabel } from "../../lib/entity-label";
+import { EntityLink } from "../../components/shared/EntityLink";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -85,7 +86,7 @@ export function ProfitPerTruckPage() {
         label: "Unit #",
         sortable: true,
         render: (r) => (
-          <span className="font-medium text-gray-900">{entityLabel(r.unit_number, r.unit_id, "Unit")}</span>
+          <EntityLink kind="unit" id={r.unit_id} label={entityLabel(r.unit_number, r.unit_id, "Unit")} className="font-medium text-gray-900" onClick={(event) => event.stopPropagation()} />
         ),
       },
       { key: "truck_type", label: "Type", sortable: true },
