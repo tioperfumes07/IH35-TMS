@@ -88,7 +88,6 @@ function redactedFormMetadata(form: URLSearchParams) {
     has_code: Boolean(form.get("code")),
     has_refresh_token: Boolean(form.get("refresh_token")),
     has_redirect_uri: Boolean(form.get("redirect_uri")),
-    redirect_uri: form.get("redirect_uri"),
   };
 }
 
@@ -238,7 +237,7 @@ export function buildAuthorizationUrl(operatingCompanyId: string, redirectUri = 
   logOauthStep("info", {
     step: "oauth_start_url_built",
     operating_company_id: operatingCompanyId,
-    redirect_uri: redirectUri,
+    has_redirect_uri: Boolean(redirectUri),
     clientIdPrefix: clientIdPrefix(),
   });
   const params = new URLSearchParams({
@@ -257,7 +256,7 @@ async function tokenExchangeRequest(form: URLSearchParams) {
     step: "token_exchange_request",
     token_endpoint: qboTokenEndpoint(),
     clientIdPrefix: clientIdPrefix(),
-    redirectUri,
+    has_redirect_uri: Boolean(redirectUri),
     form: redactedFormMetadata(form),
   });
 
@@ -765,4 +764,3 @@ export async function getConnectionsWithAccessTokenExpiringWithin(secondsAhead: 
     return out;
   });
 }
-

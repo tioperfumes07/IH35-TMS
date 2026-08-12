@@ -111,7 +111,12 @@ function main() {
   assertIncludes(authRoutes, "generateCodeVerifier", "Google OAuth must use PKCE");
   assertIncludes(authRoutes, "validateReturnTo", "OAuth returnTo must be allowlisted");
 
-  console.log(JSON.stringify(report, null, 2));
+  // Keep the audit output structural. Printing the full auth report makes future
+  // additions prone to leaking credential-bearing fields into CI logs.
+  console.log(JSON.stringify({
+    checks: Object.keys(report).filter((key) => key !== "findings"),
+    finding_count: report.findings.length,
+  }, null, 2));
 
   const high = report.findings.filter((f) => f.severity === "high");
   if (high.length > 0) {
