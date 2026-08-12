@@ -1,4 +1,9 @@
 {
+  "3177": {
+    "claimed_at": "2026-08-12",
+    "claimed_by": "cc-1",
+    "purpose": "verify-voided-money-docs-zero-balance"
+  },
   "3179": {
     "claimed_at": "2026-08-12",
     "claimed_by": "cc-2",
