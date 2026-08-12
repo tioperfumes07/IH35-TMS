@@ -117,7 +117,7 @@ export async function buildInvoiceFromLoad(client: Queryable, input: BuildInvoic
         pt.terms_name AS payment_terms_label,
         pt.days_until_due AS payment_terms_days
       FROM mdata.loads l
-      JOIN mdata.customers c ON c.id = l.customer_id
+      JOIN mdata.customers c ON c.id = l.customer_id AND c.operating_company_id = l.operating_company_id
       LEFT JOIN catalogs.payment_terms pt ON pt.id = c.payment_terms_id
       WHERE l.id = $1
         AND l.operating_company_id = $2::uuid
@@ -363,7 +363,7 @@ export async function buildInvoiceFromLoad(client: Queryable, input: BuildInvoic
   }
 
   await recomputeInvoiceTotals(client, String(invoice.id));
-  const refreshedInvoiceRes = await client.query(`SELECT * FROM accounting.invoices WHERE id = $1 LIMIT 1`, [invoice.id]);
+  const refreshedInvoiceRes = await client.query(`SELECT * FROM accounting.invoices WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`, [invoice.id, input.operatingCompanyId]);
   const refreshedInvoice = refreshedInvoiceRes.rows[0] ?? invoice;
 
   await appendCrudAudit(

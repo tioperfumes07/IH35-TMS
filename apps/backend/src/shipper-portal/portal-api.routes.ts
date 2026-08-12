@@ -197,7 +197,11 @@ export async function registerPortalApiRoutes(app: FastifyInstance) {
         updated_at: load.updated_at ? String(load.updated_at) : null,
       });
       await ensurePodMilestone(client, { operating_company_id: portalUser.operating_company_id, load_id: params.data.id });
-      await processPendingMilestoneEmails(client, { load_id: params.data.id, customer_id: portalUser.customer_id });
+      await processPendingMilestoneEmails(client, {
+        operating_company_id: portalUser.operating_company_id,
+        load_id: params.data.id,
+        customer_id: portalUser.customer_id,
+      });
 
       const stopsRes = await client.query(
         `
@@ -215,11 +219,11 @@ export async function registerPortalApiRoutes(app: FastifyInstance) {
             COALESCE(loc.latitude, NULL) AS latitude,
             COALESCE(loc.longitude, NULL) AS longitude
           FROM mdata.load_stops s
-          LEFT JOIN mdata.locations loc ON loc.id = s.location_id
+          LEFT JOIN mdata.locations loc ON loc.id = s.location_id AND loc.operating_company_id = $2::uuid
           WHERE s.load_id = $1::uuid
           ORDER BY s.sequence_number ASC
         `,
-        [params.data.id]
+        [params.data.id, portalUser.operating_company_id]
       );
 
       const milestonesRes = await client.query(

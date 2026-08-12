@@ -50,6 +50,7 @@ export async function listEligibleAssetIds(client: DbClient, operatingCompanyId:
       FROM accounting.fixed_assets AS fixed_asset
       LEFT JOIN mdata.units AS unit
         ON unit.id = fixed_asset.unit_uuid
+       AND COALESCE(unit.currently_leased_to_company_id, unit.owner_company_id) = fixed_asset.operating_company_id
       WHERE fixed_asset.operating_company_id = $1::uuid
         AND fixed_asset.is_active = true
         AND fixed_asset.status = 'active'

@@ -118,8 +118,9 @@ export async function enrichLoadsLiveEta(
         LIMIT 1
       ) sd ON true
       WHERE l.id = ANY($1::uuid[])
+        AND l.operating_company_id = ANY($2::uuid[])
     `,
-    [loadIds]
+    [loadIds, companyIds]
   );
 
   for (const row of loadMetaRes.rows) {

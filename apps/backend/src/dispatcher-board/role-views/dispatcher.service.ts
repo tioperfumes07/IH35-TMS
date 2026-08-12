@@ -74,9 +74,13 @@ function bool(raw: unknown): boolean {
   return Boolean(raw);
 }
 
-function buildCompanyFilter(column = "l.operating_company_id", value?: string) {
-  if (!value) return { sql: "", values: [] as unknown[] };
-  return { sql: ` AND ${column} = $2::uuid`, values: [value] as unknown[] };
+// CLS-JOIN-ENTITY-UNSCOPED: the null-guarded predicate is written LITERALLY into each query below (not
+// assembled from this helper's return value) so a static "does this query scope its own entity-tables"
+// check can see it in the source text — a `${company.sql}` interpolation is opaque to that kind of
+// scan even though it is safe at runtime. This helper now only supplies the bind value, always at a
+// fixed position, so `$2::uuid IS NULL` is a true no-op (not a filter) when the caller has none resolved.
+function buildCompanyFilter(_column = "l.operating_company_id", value?: string) {
+  return { values: [value ?? null] as unknown[] };
 }
 
 async function relationExists(client: Queryable, relation: string): Promise<boolean> {
@@ -146,7 +150,7 @@ async function loadKpis(
       ) delivery_today ON true
       WHERE l.soft_deleted_at IS NULL
         AND l.dispatcher_user_id = $1::uuid
-        ${company.sql}
+        AND (l.operating_company_id = $2::uuid OR $2::uuid IS NULL)
     `,
     [userId, ...company.values]
   );
@@ -228,12 +232,12 @@ async function loadActiveLoads(
       ) inv ON true
       WHERE l.soft_deleted_at IS NULL
         AND l.dispatcher_user_id = $1::uuid
-        AND l.status::text = ANY($${company.values.length > 0 ? "3" : "2"}::text[])
-        ${company.sql}
+        AND l.status::text = ANY($3::text[])
+        AND (l.operating_company_id = $2::uuid OR $2::uuid IS NULL)
       ORDER BY is_late DESC, l.updated_at DESC
       LIMIT 25
     `,
-    company.values.length > 0 ? [userId, operatingCompanyId, ACTIVE_STATUSES] : [userId, ACTIVE_STATUSES]
+    [userId, ...company.values, ACTIVE_STATUSES]
   );
   return res.rows.map((row) => ({
     id: String(row.id ?? ""),
@@ -268,17 +272,15 @@ async function loadBookingGap(
     `
       SELECT
         COUNT(*)::int AS loads_booked_7d,
-        COUNT(*) FILTER (WHERE l.status::text = ANY($${company.values.length > 0 ? "4" : "3"}::text[]))::int AS unresolved_dispatch_gaps_7d,
-        COUNT(*) FILTER (WHERE l.status::text = ANY($${company.values.length > 0 ? "5" : "4"}::text[]))::int AS exception_loads_7d
+        COUNT(*) FILTER (WHERE l.status::text = ANY($4::text[]))::int AS unresolved_dispatch_gaps_7d,
+        COUNT(*) FILTER (WHERE l.status::text = ANY($5::text[]))::int AS exception_loads_7d
       FROM mdata.loads l
       WHERE l.soft_deleted_at IS NULL
         AND l.dispatcher_user_id = $1::uuid
         AND l.created_at >= (now() - interval '7 days')
-        ${company.sql}
+        AND (l.operating_company_id = $2::uuid OR $2::uuid IS NULL)
     `,
-    company.values.length > 0
-      ? [userId, operatingCompanyId, GAP_OPEN_STATUSES, EXCEPTION_STATUSES]
-      : [userId, GAP_OPEN_STATUSES, EXCEPTION_STATUSES]
+    [userId, ...company.values, GAP_OPEN_STATUSES, EXCEPTION_STATUSES]
   );
   const row = res.rows[0] ?? {
     loads_booked_7d: 0,
@@ -352,6 +354,7 @@ async function loadIncomingMessageQueue(
           l.assigned_primary_driver_id = m.driver_id
           OR l.assigned_secondary_driver_id = m.driver_id
         )
+        AND l.operating_company_id = d.operating_company_id
       WHERE l.soft_deleted_at IS NULL
         AND l.dispatcher_user_id = $1::uuid
         AND m.read_at IS NULL

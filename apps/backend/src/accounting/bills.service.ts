@@ -659,7 +659,7 @@ export async function listBillsByVendor(
       `
         SELECT b.*, ${BILL_IS_RECONCILED_SQL} AS is_reconciled
         FROM accounting.bills b
-        WHERE ${where.join(" AND ")}
+        WHERE b.operating_company_id = $1::uuid AND ${where.join(" AND ")}
         ORDER BY b.bill_date DESC, b.created_at DESC
         LIMIT $${values.length - 1}
         OFFSET $${values.length}
@@ -705,7 +705,7 @@ export async function listAllBillsForCompany(
       `
         SELECT b.*, ${BILL_IS_RECONCILED_SQL} AS is_reconciled
         FROM accounting.bills b
-        WHERE ${where.join(" AND ")}
+        WHERE b.operating_company_id = $1::uuid AND ${where.join(" AND ")}
         ORDER BY b.bill_date DESC, b.created_at DESC
         LIMIT $${values.length - 1}
         OFFSET $${values.length}
@@ -1086,7 +1086,7 @@ export async function listBillPayments(
                ${BILL_PAYMENT_JOURNAL_ENTRY_ID_SQL} AS journal_entry_id,
                ${BILL_PAYMENT_BANK_TRANSACTION_ID_SQL} AS matched_bank_transaction_id
         FROM accounting.bill_payments bp
-        WHERE ${where.join(" AND ")}
+        WHERE bp.operating_company_id = $1::uuid AND ${where.join(" AND ")}
         ORDER BY bp.payment_date DESC, bp.created_at DESC
         LIMIT $${values.length - 1}
         OFFSET $${values.length}

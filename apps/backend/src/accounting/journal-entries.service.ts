@@ -542,6 +542,7 @@ export async function reverseJournalEntryNoFlip(
            FROM accounting.transaction_source_links tsl
            JOIN accounting.journal_entry_postings jep ON jep.id = tsl.journal_entry_posting_id
            JOIN accounting.journal_entries je ON je.id = jep.journal_entry_uuid
+                                              AND je.operating_company_id = $2::uuid
           WHERE tsl.operating_company_id = $2::uuid
             AND tsl.linked_object_type = 'journal_entry'
             AND tsl.linked_object_id = $1

@@ -1576,6 +1576,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
           FROM mdata.units u
           LEFT JOIN mdata.loads l
             ON l.assigned_unit_id = u.id
+            AND l.operating_company_id = $1::uuid
             AND l.soft_deleted_at IS NULL
             AND l.status IN (
               'assigned_not_dispatched'::mdata.load_status_enum,

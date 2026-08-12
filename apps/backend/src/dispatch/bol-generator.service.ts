@@ -196,11 +196,11 @@ export async function fetchBolPayload(client: PoolClient, operatingCompanyId: st
         s.appointment_start_at::text AS appointment_start,
         s.appointment_end_at::text AS appointment_end
       FROM mdata.load_stops s
-      LEFT JOIN mdata.locations loc ON loc.id = s.location_id
+      LEFT JOIN mdata.locations loc ON loc.id = s.location_id AND loc.operating_company_id = $2::uuid
       WHERE s.load_id = $1::uuid
       ORDER BY s.sequence_number ASC
     `,
-    [loadId]
+    [loadId, operatingCompanyId]
   );
 
   return {

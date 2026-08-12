@@ -180,20 +180,20 @@ export async function suggestMatches(
     let source = "";
     if (normalizedType === "driver") {
       const row = await client.query<{ first_name: string; last_name: string }>(
-        `SELECT first_name, last_name FROM mdata.drivers WHERE id = $1 LIMIT 1`,
-        [entityId]
+        `SELECT first_name, last_name FROM mdata.drivers WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
+        [entityId, operatingCompanyId]
       );
       source = `${row.rows[0]?.first_name ?? ""} ${row.rows[0]?.last_name ?? ""}`.trim();
     } else if (normalizedType === "unit") {
       const row = await client.query<{ unit_number: string; make: string | null; model: string | null }>(
-        `SELECT unit_number, make, model FROM mdata.units WHERE id = $1 LIMIT 1`,
-        [entityId]
+        `SELECT unit_number, make, model FROM mdata.units WHERE id = $1 AND COALESCE(currently_leased_to_company_id, owner_company_id) = $2::uuid LIMIT 1`,
+        [entityId, operatingCompanyId]
       );
       source = `${row.rows[0]?.unit_number ?? ""} ${row.rows[0]?.make ?? ""} ${row.rows[0]?.model ?? ""}`.trim();
     } else {
       const row = await client.query<{ equipment_number: string; equipment_type: string }>(
-        `SELECT equipment_number, equipment_type FROM mdata.equipment WHERE id = $1 LIMIT 1`,
-        [entityId]
+        `SELECT equipment_number, equipment_type FROM mdata.equipment WHERE id = $1 AND COALESCE(currently_leased_to_company_id, owner_company_id) = $2::uuid LIMIT 1`,
+        [entityId, operatingCompanyId]
       );
       source = `${row.rows[0]?.equipment_number ?? ""} ${row.rows[0]?.equipment_type ?? ""}`.trim();
     }

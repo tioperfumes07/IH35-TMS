@@ -673,7 +673,7 @@ export async function registerBillsRoutes(app: FastifyInstance) {
           SELECT
             COALESCE(SUM(a.allocated_amount_cents), 0)::bigint AS total_allocated_cents
           FROM accounting.bill_unit_allocation a
-          JOIN accounting.bills b ON b.id = a.bill_id
+          JOIN accounting.bills b ON b.id = a.bill_id AND b.operating_company_id = a.tenant_id
           WHERE ${where.join(" AND ")}
         `,
         values

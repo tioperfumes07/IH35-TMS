@@ -59,7 +59,7 @@ function pickExistingColumn(existingColumns: Set<string>, candidates: string[]):
 }
 
 export async function registerIntransitIssuesRoutes(app: FastifyInstance) {
-  app.post("/api/v1/dispatch/intransit-issues", async (req, reply) => {
+  app.post("/api/v1/dispatch/intransit-issues", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const bodyParsed = createIssueBodySchema.safeParse(req.body ?? {});
@@ -67,9 +67,9 @@ export async function registerIntransitIssuesRoutes(app: FastifyInstance) {
     const body = bodyParsed.data;
 
     const result = await withCurrentUser(authUser.uuid, async (client) => {
-      const driverRes = await client.query<{ id: string; full_name: string | null }>(
+      const driverRes = await client.query<{ id: string; full_name: string | null; operating_company_id: string }>(
         `
-          SELECT id, concat_ws(' ', first_name, last_name) AS full_name
+          SELECT id, concat_ws(' ', first_name, last_name) AS full_name, operating_company_id::text AS operating_company_id
           FROM mdata.drivers
           WHERE identity_user_id = $1
             AND deactivated_at IS NULL
@@ -85,10 +85,11 @@ export async function registerIntransitIssuesRoutes(app: FastifyInstance) {
           SELECT id, assigned_unit_id, assigned_primary_driver_id, assigned_secondary_driver_id
           FROM mdata.loads
           WHERE id = $1
+            AND operating_company_id = $2::uuid
             AND soft_deleted_at IS NULL
           LIMIT 1
         `,
-        [body.load_id]
+        [body.load_id, driver.operating_company_id]
       );
       const load = loadRes.rows[0] ?? null;
       if (!load) return { kind: "not_found" as const, code: 404, error: "load_not_found" };

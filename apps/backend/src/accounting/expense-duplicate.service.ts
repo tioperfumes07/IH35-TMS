@@ -54,7 +54,7 @@ export async function listExpenseDuplicateGroups(
         e.total_amount_cents::text AS total_amount_cents,
         COUNT(*)::text AS count
       FROM accounting.expenses e
-      LEFT JOIN mdata.vendors v ON v.id = e.vendor_uuid
+      LEFT JOIN mdata.vendors v ON v.id = e.vendor_uuid AND v.operating_company_id = e.operating_company_id
       WHERE e.operating_company_id = $1::uuid
         AND e.voided_at IS NULL
         AND e.deleted_at IS NULL
@@ -111,7 +111,7 @@ export async function listExpenseDuplicateGroups(
           e.status::text AS status,
           e.journal_entry_id::text AS journal_entry_id
         FROM accounting.expenses e
-        LEFT JOIN mdata.vendors v ON v.id = e.vendor_uuid
+        LEFT JOIN mdata.vendors v ON v.id = e.vendor_uuid AND v.operating_company_id = e.operating_company_id
         WHERE e.operating_company_id = $1::uuid
           AND e.vendor_uuid = $2::uuid
           AND e.transaction_date = $3::date

@@ -98,6 +98,7 @@ export async function registerDispatchPodBolRoutes(app: FastifyInstance) {
             SELECT s.id, s.stop_type::text, l.operating_company_id::text
             FROM mdata.load_stops s
             JOIN mdata.loads l ON l.id = s.load_id
+            JOIN mdata.drivers dd ON dd.id = $3::uuid AND dd.operating_company_id = l.operating_company_id
             WHERE s.id = $1::uuid
               AND s.load_id = $2::uuid
               AND (l.assigned_primary_driver_id = $3::uuid OR l.assigned_secondary_driver_id = $3::uuid)

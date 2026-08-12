@@ -114,7 +114,8 @@ type PreviewItem = {
 
 async function fetchPreviewItems(
   client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: Array<Record<string, unknown>> }> },
-  code: z.infer<typeof catalogCodeSchema>
+  code: z.infer<typeof catalogCodeSchema>,
+  operatingCompanyId: string | null
 ) {
   const limitPlusOne = 21;
   const queries: Record<z.infer<typeof catalogCodeSchema>, { sql: string; map: (row: Record<string, unknown>) => PreviewItem }> = {
@@ -145,6 +146,7 @@ async function fetchPreviewItems(
         SELECT id, account_name, account_number
         FROM catalogs.accounts
         WHERE deactivated_at IS NULL
+          AND operating_company_id = $1::uuid
         ORDER BY account_number, account_name
         LIMIT ${limitPlusOne}
       `,
@@ -155,6 +157,7 @@ async function fetchPreviewItems(
         SELECT id, class_name, class_code
         FROM catalogs.classes
         WHERE deactivated_at IS NULL
+          AND operating_company_id = $1::uuid
         ORDER BY class_name
         LIMIT ${limitPlusOne}
       `,
@@ -216,7 +219,7 @@ async function fetchPreviewItems(
     },
   };
   const queryDef = queries[code];
-  const res = await client.query(queryDef.sql);
+  const res = await client.query(queryDef.sql, [operatingCompanyId]);
   const rows = res.rows;
   const truncated = rows.length > 20;
   const sliced = rows.slice(0, 20).map((row) => queryDef.map(row));
@@ -309,7 +312,7 @@ export async function registerCatalogRegistryRoutes(app: FastifyInstance) {
       );
       if (registryRes.rows.length === 0) return reply.code(404).send({ error: "catalog_registry_not_found" });
       const row = registryRes.rows[0];
-      const preview = await fetchPreviewItems(client, parsedParams.data.code);
+      const preview = await fetchPreviewItems(client, parsedParams.data.code, operatingCompanyId);
       return {
         code: row.code,
         name: row.name,

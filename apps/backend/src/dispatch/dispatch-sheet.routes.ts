@@ -78,9 +78,10 @@ export async function registerDispatchSheetHtmlRoutes(app: FastifyInstance) {
 
       let secondaryIdentity: string | null = null;
       if (load.assigned_secondary_driver_id) {
-        const secondaryDriverRes = await client.query(`SELECT identity_user_id FROM mdata.drivers WHERE id = $1 LIMIT 1`, [
-          load.assigned_secondary_driver_id,
-        ]);
+        const secondaryDriverRes = await client.query(
+          `SELECT identity_user_id FROM mdata.drivers WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
+          [load.assigned_secondary_driver_id, query.data.operating_company_id]
+        );
         secondaryIdentity = (secondaryDriverRes.rows[0]?.identity_user_id as string | undefined | null) ?? null;
       }
 
@@ -111,10 +112,11 @@ export async function registerDispatchSheetHtmlRoutes(app: FastifyInstance) {
             loc.name AS location_name
           FROM mdata.load_stops s
           LEFT JOIN mdata.locations loc ON loc.id = s.location_id
+                                        AND loc.operating_company_id = $2::uuid
           WHERE s.load_id = $1
           ORDER BY s.sequence_number ASC
         `,
-        [params.data.loadId]
+        [params.data.loadId, query.data.operating_company_id]
       );
 
       const pickups = stopsRes.rows.filter((row: Record<string, unknown>) => String(row.stop_type) === "pickup").length;

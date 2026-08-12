@@ -195,7 +195,12 @@ export async function registerAccountRoutes(app: FastifyInstance) {
         values.push(parent_account_id);
         filters.push(`parent_account_id = $${values.length}`);
       }
-      const whereClause = filters.length > 0 ? `WHERE ${filters.join(" AND ")}` : "";
+      // ENTITY PREDICATE (CLS-JOIN-ENTITY-UNSCOPED): RLS alone is not a backstop here — the af1 policy
+      // admits org.user_accessible_company_ids(), which returns EVERY active company for an Owner role.
+      // Scope explicitly to the resolved entity rather than relying on RLS alone.
+      filters.push(`operating_company_id = $${values.length + 1}`);
+      values.push(operatingCompanyId);
+      const whereClause = `WHERE ${filters.join(" AND ")}`;
 
       // 0091-g9-h6: return the total row count of the (filtered) set so the UI can page past the
       // first 50. Without it the CoA management list capped silently at limit=50 with no way to size a
@@ -328,7 +333,7 @@ export async function registerAccountRoutes(app: FastifyInstance) {
     }
   });
 
-  app.get("/api/v1/catalogs/accounts/:id", async (req, reply) => {
+  app.get("/api/v1/catalogs/accounts/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
@@ -347,9 +352,10 @@ export async function registerAccountRoutes(app: FastifyInstance) {
           SELECT ${ACCOUNT_SELECT_COLS}
           FROM catalogs.accounts
           WHERE id = $1
+            AND operating_company_id = $2::uuid
           LIMIT 1
         `,
-        [parsedParams.data.id]
+        [parsedParams.data.id, operatingCompanyId]
       );
       return res.rows[0] ?? null;
     });
@@ -358,7 +364,7 @@ export async function registerAccountRoutes(app: FastifyInstance) {
     return row;
   });
 
-  app.patch("/api/v1/catalogs/accounts/:id", async (req, reply) => {
+  app.patch("/api/v1/catalogs/accounts/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -380,14 +386,19 @@ export async function registerAccountRoutes(app: FastifyInstance) {
           await assertCompanyMembership(client, authUser.uuid, operatingCompanyId);
           await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
         }
+        // ENTITY PREDICATE (CLS-JOIN-ENTITY-UNSCOPED): operatingCompanyId can be null here (resolution
+        // fell through), in which case behaviour is unchanged (RLS-only, as before). When it IS known,
+        // scope explicitly rather than relying on RLS alone (Owner role sees every company via
+        // org.user_accessible_company_ids()).
         const oldRes = await client.query(
           `
             SELECT ${ACCOUNT_SELECT_COLS}
             FROM catalogs.accounts
             WHERE id = $1
+            ${operatingCompanyId ? "AND operating_company_id = $2::uuid" : ""}
             LIMIT 1
           `,
-          [parsedParams.data.id]
+          operatingCompanyId ? [parsedParams.data.id, operatingCompanyId] : [parsedParams.data.id]
         );
         const oldRow = oldRes.rows[0] ?? null;
         if (!oldRow) return null;
@@ -481,7 +492,7 @@ export async function registerAccountRoutes(app: FastifyInstance) {
     }
   });
 
-  app.post("/api/v1/catalogs/accounts/:id/deactivate", async (req, reply) => {
+  app.post("/api/v1/catalogs/accounts/:id/deactivate", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -497,14 +508,19 @@ export async function registerAccountRoutes(app: FastifyInstance) {
         await assertCompanyMembership(client, authUser.uuid, operatingCompanyId);
         await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
       }
+      // ENTITY PREDICATE (CLS-JOIN-ENTITY-UNSCOPED): operatingCompanyId can be null here (resolution fell
+      // through), in which case behaviour is unchanged (RLS-only, as before). When known, scope
+      // explicitly rather than relying on RLS alone (Owner role sees every company via
+      // org.user_accessible_company_ids()).
       const oldRes = await client.query(
         `
           SELECT id, deactivated_at, is_locked
           FROM catalogs.accounts
           WHERE id = $1
+          ${operatingCompanyId ? "AND operating_company_id = $2::uuid" : ""}
           LIMIT 1
         `,
-        [parsedParams.data.id]
+        operatingCompanyId ? [parsedParams.data.id, operatingCompanyId] : [parsedParams.data.id]
       );
       const oldRow = oldRes.rows[0] ?? null;
       if (!oldRow) return null;

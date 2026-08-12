@@ -65,6 +65,7 @@ export async function registerSalesTaxRoutes(app: FastifyInstance) {
             v.vendor_name AS agency_vendor_name
           FROM accounting.sales_tax_agencies a
           LEFT JOIN mdata.vendors v ON v.id = a.agency_vendor_id
+                                   AND v.operating_company_id = a.operating_company_id
           WHERE a.operating_company_id = $1::uuid
           ORDER BY a.name ASC
         `,

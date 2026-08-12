@@ -140,6 +140,7 @@ export async function listAccountingAuditTrail(
        AND pb.operating_company_id = jp.operating_company_id
       LEFT JOIN catalogs.accounts a
         ON a.id = jp.account_id
+       AND a.operating_company_id = jp.operating_company_id
       WHERE ${where.join(" AND ")}
       ORDER BY COALESCE(je.created_at, pb.created_at, now()) DESC, jp.id DESC
       LIMIT $${values.length}
@@ -244,6 +245,7 @@ export async function listAccountingSourceLineage(
        AND tsl.operating_company_id = jp.operating_company_id
       LEFT JOIN catalogs.accounts a
         ON a.id = jp.account_id
+       AND a.operating_company_id = jp.operating_company_id
       WHERE jp.operating_company_id = $1::uuid
         AND jp.source_transaction_type = $2::text
         AND jp.source_transaction_id = $3::text

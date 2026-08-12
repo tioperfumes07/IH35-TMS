@@ -607,11 +607,12 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
             d.identity_user_id,
             d.phone
           FROM driver_finance.driver_settlements s
-          JOIN mdata.drivers d ON d.id = s.driver_id
+          JOIN mdata.drivers d ON d.id = s.driver_id AND d.operating_company_id = s.operating_company_id
           WHERE s.id = $1
+            AND s.operating_company_id = $2::uuid
           LIMIT 1
         `,
-        [params.data.id]
+        [params.data.id, companyId]
       );
       const row = rowRes.rows[0] as Record<string, unknown> | undefined;
       if (!row?.operating_company_id) return;

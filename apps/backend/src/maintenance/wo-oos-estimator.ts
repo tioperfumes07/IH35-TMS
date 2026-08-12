@@ -72,7 +72,7 @@ export async function loadWoOosDowntimeEstimate(
 
   let daysOos = 0;
   if (wo.unit_id) {
-    const unitRes = await client.query(`SELECT oos_since::text FROM mdata.units WHERE id = $1::uuid LIMIT 1`, [wo.unit_id]);
+    const unitRes = await client.query(`SELECT oos_since::text FROM mdata.units WHERE id = $1::uuid AND COALESCE(currently_leased_to_company_id, owner_company_id) = $2::uuid LIMIT 1`, [wo.unit_id, operatingCompanyId]);
     const oosSince = unitRes.rows[0]?.oos_since ? new Date(String(unitRes.rows[0].oos_since)) : null;
     if (oosSince && !Number.isNaN(oosSince.getTime())) {
       daysOos = Math.max(0, (Date.now() - oosSince.getTime()) / 86_400_000);

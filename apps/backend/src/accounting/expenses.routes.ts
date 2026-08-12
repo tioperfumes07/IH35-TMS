@@ -281,9 +281,9 @@ export async function queryExpensesList(
         )                                            AS is_reconciled,
         ${EXPENSE_MATCHED_BANK_TRANSACTION_ID_SQL}   AS matched_bank_transaction_id
       FROM accounting.expenses e
-      LEFT JOIN mdata.vendors v ON v.id = e.vendor_uuid
-      LEFT JOIN mdata.drivers dr ON dr.id = e.driver_uuid
-      LEFT JOIN mdata.loads l ON l.id = e.load_id
+      LEFT JOIN mdata.vendors v ON v.id = e.vendor_uuid AND v.operating_company_id = e.operating_company_id
+      LEFT JOIN mdata.drivers dr ON dr.id = e.driver_uuid AND dr.operating_company_id = e.operating_company_id
+      LEFT JOIN mdata.loads l ON l.id = e.load_id AND l.operating_company_id = e.operating_company_id
       LEFT JOIN maintenance.work_orders wo ON wo.id = e.linked_work_order_uuid
       LEFT JOIN accounting.journal_entries je ON je.id = e.journal_entry_id AND je.operating_company_id = e.operating_company_id
       WHERE ${where.join(" AND ")}
@@ -416,14 +416,14 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
             bt.description                                 AS matched_bank_transaction_description,
             bt.amount_cents::text                          AS matched_bank_transaction_amount_cents
           FROM accounting.expenses e
-          LEFT JOIN mdata.vendors v ON v.id = e.vendor_uuid
-          LEFT JOIN mdata.drivers dr ON dr.id = e.driver_uuid
-          LEFT JOIN mdata.loads l ON l.id = e.load_id
+          LEFT JOIN mdata.vendors v ON v.id = e.vendor_uuid AND v.operating_company_id = e.operating_company_id
+          LEFT JOIN mdata.drivers dr ON dr.id = e.driver_uuid AND dr.operating_company_id = e.operating_company_id
+          LEFT JOIN mdata.loads l ON l.id = e.load_id AND l.operating_company_id = e.operating_company_id
           LEFT JOIN accounting.journal_entries je ON je.id = e.journal_entry_id AND je.operating_company_id = e.operating_company_id
           LEFT JOIN banking.bank_transactions bt ON bt.matched_expense_id = e.id AND bt.operating_company_id = e.operating_company_id
-          ${hasUnitId ? "LEFT JOIN mdata.units u ON u.id = e.unit_id" : ""}
+          ${hasUnitId ? "LEFT JOIN mdata.units u ON u.id = e.unit_id AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = e.operating_company_id" : ""}
           ${hasWorkOrderId ? "LEFT JOIN maintenance.work_orders wo ON wo.id = e.linked_work_order_uuid" : ""}
-          ${hasPaymentAccount ? "LEFT JOIN catalogs.accounts pay_acct ON pay_acct.id = e.payment_account_uuid" : "LEFT JOIN catalogs.accounts pay_acct ON false"}
+          ${hasPaymentAccount ? "LEFT JOIN catalogs.accounts pay_acct ON pay_acct.id = e.payment_account_uuid AND pay_acct.operating_company_id = e.operating_company_id" : "LEFT JOIN catalogs.accounts pay_acct ON false"}
           WHERE e.id = $1::uuid
             AND e.operating_company_id = $2::uuid
           LIMIT 1

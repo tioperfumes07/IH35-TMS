@@ -104,9 +104,13 @@ async function fetchAdvanceDetail(client: any, advanceId: string) {
       JOIN mdata.customers c ON c.id = i.customer_id
                             AND c.operating_company_id = i.operating_company_id
       WHERE i.factoring_advance_id = $1
+        -- ENTITY PREDICATE (CLS-JOIN-ENTITY-UNSCOPED): i itself was read by factoring_advance_id alone,
+        -- with no tie back to a company. advance.operating_company_id is already in scope from the
+        -- fetch immediately above (same function, no new bind/parameter needed).
+        AND i.operating_company_id = $2::uuid
       ORDER BY i.issue_date DESC, i.created_at DESC
     `,
-    [advanceId]
+    [advanceId, advance.operating_company_id]
   );
 
   return {
@@ -265,6 +269,7 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
             c.factoring_eligible
           FROM accounting.invoices i
           JOIN mdata.customers c ON c.id = i.customer_id
+                                AND c.operating_company_id = i.operating_company_id
           WHERE i.operating_company_id = $1::uuid
             AND i.status = 'sent'
             AND i.voided_at IS NULL
@@ -334,6 +339,7 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
             c.factoring_eligible
           FROM accounting.invoices i
           JOIN mdata.customers c ON c.id = i.customer_id
+                                AND c.operating_company_id = i.operating_company_id
           WHERE i.operating_company_id = $1::uuid
             AND i.id = ANY($2::uuid[])
         `,
@@ -588,9 +594,10 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
           SELECT id, customer_id, total_cents
           FROM accounting.invoices
           WHERE factoring_advance_id = $1
+            AND operating_company_id = $2::uuid
           ORDER BY issue_date ASC, created_at ASC
         `,
-        [params.data.id]
+        [params.data.id, query.data.operating_company_id]
       );
       const invoices = invoicesRes.rows.map((row: Record<string, unknown>) => ({
         invoice_id: String(row.id),
@@ -694,9 +701,11 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
           SELECT BOOL_AND(COALESCE(c.factoring_recourse_type, 'recourse') = 'recourse') AS all_recourse
           FROM accounting.invoices i
           JOIN mdata.customers c ON c.id = i.customer_id
+                                AND c.operating_company_id = i.operating_company_id
           WHERE i.factoring_advance_id = $1
+            AND i.operating_company_id = $2::uuid
         `,
-        [params.data.id]
+        [params.data.id, query.data.operating_company_id]
       );
       const allRecourse = Boolean(recourceResRow(recourseRes.rows[0]).all_recourse);
       if (!allRecourse) return { code: 409 as const, error: "non_recourse_customer_cannot_recourse_return" };

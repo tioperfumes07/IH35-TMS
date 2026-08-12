@@ -249,7 +249,7 @@ export async function registerSettlementsMvpRoutes(app: FastifyInstance) {
               d.identity_user_id,
               u.email AS user_email
             FROM driver_finance.driver_settlements s
-            JOIN mdata.drivers d ON d.id = s.driver_id
+            JOIN mdata.drivers d ON d.id = s.driver_id AND d.operating_company_id = s.operating_company_id
             LEFT JOIN identity.users u ON u.id = d.identity_user_id
             WHERE s.id = $1::uuid
               AND s.operating_company_id = $2::uuid

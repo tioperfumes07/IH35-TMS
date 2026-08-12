@@ -37,7 +37,7 @@ async function enqueueInvoiceHtmlOutbox(client: { query: (sql: string, values?: 
 }
 
 export async function registerAccountingInvoiceHtmlRoutes(app: FastifyInstance) {
-  app.get("/api/v1/accounting/invoices/:invoiceId.html", async (req: FastifyRequest, reply: FastifyReply) => {
+  app.get("/api/v1/accounting/invoices/:invoiceId.html", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canViewInvoiceHtml(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
@@ -48,7 +48,7 @@ export async function registerAccountingInvoiceHtmlRoutes(app: FastifyInstance) 
     if (!query.success) return validationError(reply, query.error);
 
     const payload = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
-      const enriched = await enrichInvoice(client, params.data.invoiceId);
+      const enriched = await enrichInvoice(client, params.data.invoiceId, query.data.operating_company_id);
       if (!enriched) return { kind: "not_found" as const };
       const invoice = enriched as Record<string, unknown>;
 
@@ -58,7 +58,10 @@ export async function registerAccountingInvoiceHtmlRoutes(app: FastifyInstance) 
       let deliveryStop: Record<string, unknown> | null = null;
 
       if (loadId) {
-        const loadRes = await client.query(`SELECT * FROM mdata.loads WHERE id = $1 LIMIT 1`, [loadId]);
+        const loadRes = await client.query(`SELECT * FROM mdata.loads WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`, [
+          loadId,
+          query.data.operating_company_id,
+        ]);
         load = loadRes.rows[0] ?? null;
         const stopsRes = await client.query(
           `SELECT * FROM mdata.load_stops WHERE load_id = $1 ORDER BY sequence_number ASC`,
@@ -71,7 +74,10 @@ export async function registerAccountingInvoiceHtmlRoutes(app: FastifyInstance) 
           null;
       }
 
-      const customerRes = await client.query(`SELECT * FROM mdata.customers WHERE id = $1 LIMIT 1`, [invoice.customer_id]);
+      const customerRes = await client.query(`SELECT * FROM mdata.customers WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`, [
+        invoice.customer_id,
+        query.data.operating_company_id,
+      ]);
       const customer = customerRes.rows[0] ?? {};
 
       const companyRes = await client.query(
@@ -88,11 +94,11 @@ export async function registerAccountingInvoiceHtmlRoutes(app: FastifyInstance) 
           `
             SELECT fa.advance_rate_pct, fa.reserve_pct, v.vendor_name
             FROM accounting.factoring_advances fa
-            JOIN mdata.vendors v ON v.id = fa.factoring_company_vendor_id
+            JOIN mdata.vendors v ON v.id = fa.factoring_company_vendor_id AND v.operating_company_id = $2::uuid
             WHERE fa.id = $1
             LIMIT 1
           `,
-          [invoice.factoring_advance_id]
+          [invoice.factoring_advance_id, query.data.operating_company_id]
         );
         const factorRow = factorRes.rows[0];
         if (factorRow) {

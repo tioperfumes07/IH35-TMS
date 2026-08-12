@@ -163,13 +163,14 @@ export function buildBillJeDraft(input: {
   };
 }
 
-async function accountRef(client: DbClient, accountId: string): Promise<AccountRef> {
+async function accountRef(client: DbClient, accountId: string, operatingCompanyId: string): Promise<AccountRef> {
   const res = await client.query<{ account_number: string | null; account_name: string | null }>(
     `SELECT account_number::text AS account_number, account_name::text AS account_name
        FROM catalogs.accounts
       WHERE id = $1::uuid
+        AND operating_company_id = $2::uuid
       LIMIT 1`,
-    [accountId]
+    [accountId, operatingCompanyId]
   );
   const row = res.rows[0];
   if (!row) {
@@ -200,7 +201,7 @@ export async function computeBillGlDraft(
       "ap_control role is not mapped for this entity — cannot credit A/P (FAIL LOUD)"
     );
   }
-  const ap = await accountRef(client, apId);
+  const ap = await accountRef(client, apId, operatingCompanyId);
 
   const debits: ResolvedDebit[] = [];
   for (let i = 0; i < spec.lines.length; i++) {
@@ -218,7 +219,7 @@ export async function computeBillGlDraft(
       category_kind: line.category_kind ?? null,
       category_code: line.category_code ?? null,
     });
-    const ref = await accountRef(client, resolved.account_id);
+    const ref = await accountRef(client, resolved.account_id, operatingCompanyId);
 
     debits.push({
       ...ref,

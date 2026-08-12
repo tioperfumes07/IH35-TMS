@@ -123,8 +123,8 @@ export async function computeLoadProfitability(
      FROM mdata.loads l
      LEFT JOIN mdata.customers c ON c.id = l.customer_id
                               AND c.operating_company_id = l.operating_company_id
-     WHERE l.id = $1 LIMIT 1`,
-    [loadId]
+     WHERE l.id = $1 AND l.operating_company_id = $2::uuid LIMIT 1`,
+    [loadId, operatingCompanyId]
   );
   const customerName = custRes.rows[0]?.customer_name ?? null;
 
@@ -286,6 +286,7 @@ export async function computeTripProfitabilityReport(
       SELECT l.id::text AS load_id, COALESCE(l.rate_total_cents, 0)::bigint AS rev
       FROM mdata.loads l
       WHERE l.id = ANY(ARRAY(SELECT load_id::uuid FROM load_ids))
+        AND l.operating_company_id = $1::uuid
     ),
     pay AS (
       SELECT db.load_id::text, COALESCE(SUM(db.gross_amount_cents), 0)::bigint AS pay

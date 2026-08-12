@@ -49,14 +49,17 @@ export async function mxPermitsRoutes(app: FastifyInstance) {
     const { operating_company_id } = companyQuery.parse(req.query);
 
     const rows = await withCompany(user.uuid, operating_company_id, async (client) => {
-      const { rows } = await client.query(`
+      const { rows } = await client.query(
+        `
         SELECT p.*, u.unit_number, d.first_name || ' ' || d.last_name AS driver_name
         FROM mdata.mx_permits p
-        LEFT JOIN mdata.units u ON u.id = p.unit_id
-        LEFT JOIN mdata.drivers d ON d.id = p.driver_id
+        LEFT JOIN mdata.units u ON u.id = p.unit_id AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $1::uuid
+        LEFT JOIN mdata.drivers d ON d.id = p.driver_id AND d.operating_company_id = $1::uuid
         WHERE p.is_active = true
         ORDER BY p.expires_date ASC
-      `);
+      `,
+        [operating_company_id]
+      );
       return rows;
     });
 
@@ -77,13 +80,13 @@ export async function mxPermitsRoutes(app: FastifyInstance) {
         SELECT p.*, u.unit_number, d.first_name || ' ' || d.last_name AS driver_name,
                (p.expires_date - current_date) AS days_until_expiry
         FROM mdata.mx_permits p
-        LEFT JOIN mdata.units u ON u.id = p.unit_id
-        LEFT JOIN mdata.drivers d ON d.id = p.driver_id
+        LEFT JOIN mdata.units u ON u.id = p.unit_id AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $2::uuid
+        LEFT JOIN mdata.drivers d ON d.id = p.driver_id AND d.operating_company_id = $2::uuid
         WHERE p.is_active = true
           AND p.expires_date <= current_date + ($1 || ' days')::interval
           AND p.expires_date >= current_date
         ORDER BY p.expires_date ASC
-      `, [query.days]);
+      `, [query.days, query.operating_company_id]);
       return rows;
     });
 

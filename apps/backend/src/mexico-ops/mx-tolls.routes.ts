@@ -51,8 +51,11 @@ export async function mxTollsRoutes(app: FastifyInstance) {
 
     const rows = await withCompany(user.uuid, q.operating_company_id, async (client) => {
       const conditions: string[] = [];
-      const params: unknown[] = [];
-      let idx = 1;
+      // CLS-JOIN-ENTITY-UNSCOPED: bound first so the units/drivers JOINs below can reference $1
+      // literally — mdata.mx_tolls_ledger itself carries no literal company predicate in this query
+      // (RLS aside), so without this the joined driver/unit rows had no entity predicate at all.
+      const params: unknown[] = [q.operating_company_id];
+      let idx = 2;
 
       if (q.load_id) { conditions.push(`t.load_id = $${idx++}`); params.push(q.load_id); }
       if (q.unit_id) { conditions.push(`t.unit_id = $${idx++}`); params.push(q.unit_id); }
@@ -68,7 +71,8 @@ export async function mxTollsRoutes(app: FastifyInstance) {
                d.first_name || ' ' || d.last_name AS driver_name
         FROM mdata.mx_tolls_ledger t
         LEFT JOIN mdata.units u ON u.id = t.unit_id
-        LEFT JOIN mdata.drivers d ON d.id = t.driver_id
+                               AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $1::uuid
+        LEFT JOIN mdata.drivers d ON d.id = t.driver_id AND d.operating_company_id = $1::uuid
         ${conditions.length ? "WHERE " + conditions.join(" AND ") : ""}
         ORDER BY t.toll_date DESC, t.created_at DESC
         LIMIT $${idx++} OFFSET $${idx++}
@@ -97,10 +101,11 @@ export async function mxTollsRoutes(app: FastifyInstance) {
                sum(t.amount_usd_cents) AS total_usd_cents
         FROM mdata.mx_tolls_ledger t
         JOIN mdata.units u ON u.id = t.unit_id
+                          AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $3::uuid
         WHERE t.toll_date BETWEEN $1 AND $2 AND t.is_active = true
         GROUP BY u.id, u.unit_number
         ORDER BY total_usd_cents DESC NULLS LAST
-      `, [q.from_date, q.to_date]);
+      `, [q.from_date, q.to_date, q.operating_company_id]);
       return rows;
     });
 

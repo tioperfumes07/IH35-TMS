@@ -112,6 +112,7 @@ type LoadRow = {
   id: string;
   load_number: string | null;
   status: string;
+  operating_company_id: string;
   customer_name: string | null;
   special_instructions: string | null;
   pickup_contact_name: string | null;
@@ -153,6 +154,7 @@ async function fetchDriverOwnedLoad(
         l.id,
         l.load_number,
         l.status::text,
+        l.operating_company_id::text,
         c.customer_name,
         NULL::text AS special_instructions,
         pickup.site_contact_name AS pickup_contact_name,
@@ -162,6 +164,10 @@ async function fetchDriverOwnedLoad(
       FROM mdata.loads l
       JOIN mdata.customers c ON c.id = l.customer_id
                           AND c.operating_company_id = l.operating_company_id
+      -- ENTITY PREDICATE (CLS-JOIN-ENTITY-UNSCOPED): the load itself carries no entity predicate above,
+      -- so bind it here via the driver acting on it — the JOIN only matches when the driver identified
+      -- by $2 belongs to the SAME company as the load, which fails closed (no row) on a cross-entity FK.
+      JOIN mdata.drivers drv ON drv.id = $2 AND drv.operating_company_id = l.operating_company_id
       LEFT JOIN LATERAL (
         SELECT s.site_contact_name, s.site_contact_phone
         FROM mdata.load_stops s
@@ -188,7 +194,8 @@ async function fetchDriverOwnedLoad(
 
 async function loadDispatchStops(
   client: { query: <R>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }> },
-  loadId: string
+  loadId: string,
+  operatingCompanyId: string
 ): Promise<DispatchViewStop[]> {
   const stopsRes = await client.query<StopRow>(
     `
@@ -218,11 +225,14 @@ async function loadDispatchStops(
             AND p.archived_at IS NULL
         ) AS docs_uploaded
       FROM mdata.load_stops s
-      LEFT JOIN mdata.locations loc ON loc.id = s.location_id
+      -- ENTITY PREDICATE (CLS-JOIN-ENTITY-UNSCOPED): scoped to the CALLER-validated company (the load
+      -- was already proven to belong to this driver's company in fetchDriverOwnedLoad) rather than
+      -- re-deriving it, which would just add another unscoped read.
+      LEFT JOIN mdata.locations loc ON loc.id = s.location_id AND loc.operating_company_id = $2::uuid
       WHERE s.load_id = $1
       ORDER BY s.sequence_number ASC
     `,
-    [loadId]
+    [loadId, operatingCompanyId]
   );
 
   return stopsRes.rows.map((row) => {
@@ -284,7 +294,7 @@ export async function registerDispatchViewRoutes(app: FastifyInstance) {
     const payload = await withCurrentUser(req.user!.uuid, async (client) => {
       const load = await fetchDriverOwnedLoad(client, params.data.uuid, driver.id);
       if (!load) return null;
-      const stops = await loadDispatchStops(client, load.id);
+      const stops = await loadDispatchStops(client, load.id, load.operating_company_id);
       return buildDispatchViewPayload(load, stops);
     });
 
@@ -387,19 +397,18 @@ export async function registerDispatchViewRoutes(app: FastifyInstance) {
                  l.operating_company_id::text AS operating_company_id
           FROM mdata.load_stops s
           JOIN mdata.loads l ON l.id = s.load_id
+          -- ENTITY PREDICATE (CLS-JOIN-ENTITY-UNSCOPED): the load must belong to the SAME operating
+          -- company as the driver acting on it. The driver session carries only an id, so the entity
+          -- is derived from the driver's own row (mdata.drivers.operating_company_id, uuid NOT NULL,
+          -- verified on prod) via a real JOIN (not a projected subquery) so the predicate is a
+          -- COMPARISON, not merely a projection.
+          JOIN mdata.drivers drv ON drv.id = $3 AND drv.operating_company_id = l.operating_company_id
           LEFT JOIN mdata.locations loc ON loc.id = s.location_id
                                       AND loc.operating_company_id = l.operating_company_id
           WHERE s.id = $1
             AND s.load_id = $2
             AND (l.assigned_primary_driver_id = $3 OR l.assigned_secondary_driver_id = $3)
             AND l.soft_deleted_at IS NULL
-            -- ENTITY PREDICATE (verify-mdata-entity-scope): the load must belong to the SAME operating
-            -- company as the driver acting on it. The driver session carries only an id, so the entity
-            -- is derived from the driver's own row (mdata.drivers.operating_company_id, uuid NOT NULL,
-            -- verified on prod). Selecting l.operating_company_id for the revenue latch does NOT scope
-            -- the query — a scope column must be COMPARED, not merely projected — and this is the
-            -- predicate that makes the value we hand to the latch provably the driver's own entity.
-            AND l.operating_company_id = (SELECT d.operating_company_id FROM mdata.drivers d WHERE d.id = $3)
           LIMIT 1
         `,
         [params.data.stop_uuid, params.data.uuid, driver.id]

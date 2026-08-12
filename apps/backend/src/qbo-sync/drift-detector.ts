@@ -276,7 +276,7 @@ async function detectCustomersDrift(client: PoolClient, operatingCompanyId: stri
         AND qc.qbo_id IS NOT NULL
         AND qc.active = true
         AND NOT EXISTS (
-          SELECT 1 FROM mdata.customers c WHERE c.qbo_customer_id = qc.qbo_id
+          SELECT 1 FROM mdata.customers c WHERE c.qbo_customer_id = qc.qbo_id AND c.operating_company_id = $1::uuid
         )
     `,
     [operatingCompanyId]
@@ -358,7 +358,7 @@ async function detectVendorsDrift(client: PoolClient, operatingCompanyId: string
         AND qv.qbo_id IS NOT NULL
         AND qv.active = true
         AND NOT EXISTS (
-          SELECT 1 FROM mdata.vendors v WHERE v.qbo_vendor_id = qv.qbo_id
+          SELECT 1 FROM mdata.vendors v WHERE v.qbo_vendor_id = qv.qbo_id AND v.operating_company_id = $1::uuid
         )
     `,
     [operatingCompanyId]

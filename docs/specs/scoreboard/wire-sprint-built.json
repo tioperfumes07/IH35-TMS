@@ -2,6 +2,38 @@
   "_README": "Shipped Wave-A writers that green Matrix Box 3 Built. Updated when a Pxx task merges with guard+smoke. Live (Box 4) still requires PROD-VERIFIED ledger. leafRe must match docs/specs/scoreboard/modules/*.required.json leaf ids; cols must match column ids (picker_law not picker).",
   "entries": [
     {
+      "task": "WAVE-B-vendor-reverse-link",
+      "pr": "this PR",
+      "guard": "scripts/verify-accounting-vendor-reverse-link-wired.mjs",
+      "modules": ["accounting"],
+      "cols": ["reverse_link", "connectivity"],
+      "leafRe": "^(bills\\.|vendors\\.|ap\\.)"
+    },
+    {
+      "task": "WAVE-B-driver-load-reverse-link",
+      "pr": "this PR",
+      "guard": "scripts/verify-driver-load-reverse-link-wired.mjs",
+      "modules": ["settlements", "dispatch"],
+      "cols": ["reverse_link", "connectivity"],
+      "leafRe": "^(cash_advances|pod|documents\\.)"
+    },
+    {
+      "task": "WAVE-B-safety-incidents-reverse-link",
+      "pr": "this PR",
+      "guard": "scripts/verify-safety-incidents-reverse-link-wired.mjs",
+      "modules": ["safety"],
+      "cols": ["reverse_link", "connectivity"],
+      "leafRe": "^(incidents|accidents)"
+    },
+    {
+      "task": "WAVE-B-customer-reverse-link",
+      "pr": "this PR",
+      "guard": "scripts/verify-customer-reverse-link-wired.mjs",
+      "modules": ["customers", "insurance", "reports"],
+      "cols": ["reverse_link", "connectivity"],
+      "leafRe": "^(contracts|coi|profitability|customer)"
+    },
+    {
       "task": "P06",
       "pr": "#5829",
       "guard": "scripts/verify-steps/3072-verify-fk-on-create.mjs",

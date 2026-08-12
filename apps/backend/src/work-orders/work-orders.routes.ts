@@ -475,11 +475,13 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
               OR COALESCE(w.shop_name, '') ILIKE $${needleIdx}
               OR EXISTS (
                 SELECT 1 FROM mdata.units u
-                WHERE u.id = w.unit_id AND COALESCE(u.unit_number, '') ILIKE $${needleIdx}
+                WHERE u.id = w.unit_id
+                  AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = w.operating_company_id
+                  AND COALESCE(u.unit_number, '') ILIKE $${needleIdx}
               )
               OR EXISTS (
                 SELECT 1 FROM mdata.drivers d
-                WHERE d.id = w.driver_id AND (
+                WHERE d.id = w.driver_id AND d.operating_company_id = w.operating_company_id AND (
                   COALESCE(d.first_name, '') ILIKE $${needleIdx}
                   OR COALESCE(d.last_name, '') ILIKE $${needleIdx}
                 )
@@ -957,7 +959,10 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
       if (!wo) return { kind: "missing" as const };
       let unitLabel: string | null = null;
       if (wo.unit_id) {
-        const ures = await client.query(`SELECT unit_number FROM mdata.units WHERE id = $1 LIMIT 1`, [wo.unit_id]);
+        const ures = await client.query(
+          `SELECT unit_number FROM mdata.units WHERE id = $1 AND COALESCE(currently_leased_to_company_id, owner_company_id) = $2::uuid LIMIT 1`,
+          [wo.unit_id, query.data.operating_company_id]
+        );
         unitLabel = ures.rows[0]?.unit_number != null ? String(ures.rows[0].unit_number) : null;
       }
       await appendCrudAudit(client, user.uuid, "maintenance.work_order.approved", { resource_id: wo.id, entity_type: "work_order", entity_id: wo.id }, "info", "P6-T11179");
@@ -1072,7 +1077,10 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
       });
 
       if (vendor_invoice_number && vendorUuid) {
-        const billExists = await client.query(`SELECT id FROM accounting.bills WHERE linked_work_order_uuid = $1 LIMIT 1`, [params.data.id]);
+        const billExists = await client.query(
+          `SELECT id FROM accounting.bills WHERE linked_work_order_uuid = $1 AND operating_company_id = $2::uuid LIMIT 1`,
+          [params.data.id, query.data.operating_company_id]
+        );
         if ((billExists.rows?.length ?? 0) === 0) {
           const memo = `Auto-created from work order ${String(prior.display_id ?? params.data.id)}`;
           const bill = await autoCreateBillFromWO(client as never, user.uuid, params.data.id, {
@@ -1416,13 +1424,19 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
 
       let unit: Record<string, unknown> | null = null;
       if (wo.unit_id) {
-        const unitRes = await client.query(`SELECT * FROM mdata.units WHERE id = $1 LIMIT 1`, [wo.unit_id]);
+        const unitRes = await client.query(
+          `SELECT * FROM mdata.units WHERE id = $1 AND COALESCE(currently_leased_to_company_id, owner_company_id) = $2::uuid LIMIT 1`,
+          [wo.unit_id, query.data.operating_company_id]
+        );
         unit = unitRes.rows[0] ?? null;
       }
 
       let driver: Record<string, unknown> | null = null;
       if (wo.driver_id) {
-        const driverRes = await client.query(`SELECT * FROM mdata.drivers WHERE id = $1 LIMIT 1`, [wo.driver_id]);
+        const driverRes = await client.query(
+          `SELECT * FROM mdata.drivers WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
+          [wo.driver_id, query.data.operating_company_id]
+        );
         driver = driverRes.rows[0] ?? null;
       }
 

@@ -63,7 +63,9 @@ export async function listFactorReserveBalances(input: { operating_company_id: s
             fa.release_amount_cents::numeric AS release_amount_cents
           FROM accounting.factoring_advances fa
           JOIN accounting.invoices i ON i.factoring_advance_id = fa.id
+                                     AND i.operating_company_id = fa.operating_company_id
           JOIN mdata.customers c ON c.id = i.customer_id
+                                 AND c.operating_company_id = fa.operating_company_id
           WHERE fa.operating_company_id = $1::uuid
             AND fa.status <> 'voided'
         )
@@ -115,6 +117,7 @@ export async function listFactorReserveBalances(input: { operating_company_id: s
           LIMIT 1
         ) i ON true
         JOIN mdata.customers c ON c.id = i.customer_id
+                               AND c.operating_company_id = fa.operating_company_id
         WHERE fa.operating_company_id = $1::uuid
           AND fa.status <> 'voided'
         ORDER BY COALESCE(fa.released_at, fa.collected_at, fa.advanced_at, fa.submitted_at) DESC

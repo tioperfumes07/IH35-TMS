@@ -287,6 +287,7 @@ const PART_SELECT = `
     pw.updated_at
   FROM maintenance.parts_warranty pw
   LEFT JOIN mdata.vendors v ON v.id = pw.vendor_id
+                            AND v.operating_company_id = pw.operating_company_id
 `;
 
 const CLAIM_SELECT = `
@@ -312,6 +313,7 @@ const CLAIM_SELECT = `
     wc.updated_at
   FROM maintenance.warranty_claims wc
   LEFT JOIN mdata.vendors v ON v.id = wc.vendor_id
+                            AND v.operating_company_id = wc.operating_company_id
 `;
 
 async function fetchClaimById(client: DbClient, companyId: string, id: string) {

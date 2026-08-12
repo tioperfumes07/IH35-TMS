@@ -337,7 +337,7 @@ export async function listCollectionTasks(input: {
           t.updated_at::text,
           t.closed_at::text
         FROM accounting.ar_collection_tasks t
-        LEFT JOIN mdata.customers c ON c.id = t.customer_id
+        LEFT JOIN mdata.customers c ON c.id = t.customer_id AND c.operating_company_id = t.operating_company_id
         WHERE ${where.join(" AND ")}
         ORDER BY
           CASE t.status
@@ -386,7 +386,7 @@ export async function getCollectionTask(input: {
           t.updated_at::text,
           t.closed_at::text
         FROM accounting.ar_collection_tasks t
-        LEFT JOIN mdata.customers c ON c.id = t.customer_id
+        LEFT JOIN mdata.customers c ON c.id = t.customer_id AND c.operating_company_id = t.operating_company_id
         WHERE t.operating_company_id = $1::uuid
           AND t.id = $2::uuid
         LIMIT 1
