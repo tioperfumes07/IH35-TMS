@@ -1,5 +1,6 @@
-import { useMemo, type CSSProperties } from "react";
+import { useMemo, type CSSProperties, type ReactNode } from "react";
 import { entityLabel } from "../../lib/entity-label";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
@@ -126,9 +127,9 @@ function PanelRow({
   loadCustomer,
   onClick,
 }: {
-  unit: string;
-  driver: string;
-  loadCustomer: string;
+  unit: ReactNode;
+  driver: ReactNode;
+  loadCustomer: ReactNode;
   onClick?: () => void;
 }) {
   const content = (
@@ -140,17 +141,9 @@ function PanelRow({
         <span style={{ color: colors.mutedText }}> · </span>
         {loadCustomer}
       </span>
-      {onClick ? <span className="shrink-0 text-[11px] text-slate-700">open →</span> : null}
+      {onClick ? <button type="button" onClick={onClick} className="shrink-0 text-[11px] text-slate-700 hover:underline">open →</button> : null}
     </>
   );
-
-  if (onClick) {
-    return (
-      <button type="button" onClick={onClick} className="w-full text-left hover:bg-gray-50">
-        <DataPanelRow>{content}</DataPanelRow>
-      </button>
-    );
-  }
 
   return <DataPanelRow>{content}</DataPanelRow>;
 }
@@ -324,8 +317,8 @@ export function DispatchOverview({ operatingCompanyId, onLoadClick }: Props) {
               // other producer regresses.
               <PanelRow
                 key={unit.id}
-                unit={unit.unit_number}
-                driver={unit.driver_name || "—"}
+                unit={<EntityLink kind="unit" id={unit.id} label={entityLabel(unit.unit_number, unit.id, "Unit")} />}
+                driver={<EntityLink kind="driver" id={unit.driver_id} label={entityLabel(unit.driver_name, unit.driver_id, "Driver")} />}
                 loadCustomer="Need load"
               />
             ))
@@ -341,9 +334,9 @@ export function DispatchOverview({ operatingCompanyId, onLoadClick }: Props) {
             exposureLoads.slice(0, PANEL_ROW_LIMIT).map((load: DispatchLoad) => (
               <PanelRow
                 key={load.id}
-                unit={entityLabel(load.unit_number, null, "Unit")}
-                driver={entityLabel(load.driver_short_name, null, "Driver")}
-                loadCustomer={`${entityLabel(load.load_number, load.id, "Load")} · ${entityLabel(load.customer_name, null, "Customer")}`}
+                unit={<EntityLink kind="unit" id={load.assigned_unit_id} label={entityLabel(load.unit_number, load.assigned_unit_id, "Unit")} />}
+                driver={<EntityLink kind="driver" id={load.assigned_primary_driver_id} label={entityLabel(load.driver_short_name, load.assigned_primary_driver_id, "Driver")} />}
+                loadCustomer={<><EntityLink kind="load" id={load.id} label={entityLabel(load.load_number, load.id, "Load")} /> · <EntityLink kind="customer" id={load.customer_id} label={entityLabel(load.customer_name, load.customer_id, "Customer")} /></>}
                 onClick={onLoadClick ? () => onLoadClick(load.id) : undefined}
               />
             ))
@@ -359,9 +352,9 @@ export function DispatchOverview({ operatingCompanyId, onLoadClick }: Props) {
             atRiskLoads.slice(0, PANEL_ROW_LIMIT).map((load: AtRiskLoadRow) => (
               <PanelRow
                 key={load.id}
-                unit={entityLabel(load.unit_number, null, "Unit")}
-                driver={entityLabel(load.driver_name, null, "Driver")}
-                loadCustomer={`${entityLabel(load.load_number, load.id, "Load")} · ${entityLabel(load.customer_name, null, "Customer")}`}
+                unit={<EntityLink kind="unit" id={load.unit_id} label={entityLabel(load.unit_number, load.unit_id, "Unit")} />}
+                driver={<EntityLink kind="driver" id={load.driver_id} label={entityLabel(load.driver_name, load.driver_id, "Driver")} />}
+                loadCustomer={<><EntityLink kind="load" id={load.id} label={entityLabel(load.load_number, load.id, "Load")} /> · <EntityLink kind="customer" id={load.customer_id} label={entityLabel(load.customer_name, load.customer_id, "Customer")} /></>}
                 onClick={onLoadClick ? () => onLoadClick(load.id) : undefined}
               />
             ))
@@ -377,9 +370,9 @@ export function DispatchOverview({ operatingCompanyId, onLoadClick }: Props) {
             detentionEvents.slice(0, PANEL_ROW_LIMIT).map((event: DetentionBoardEvent) => (
               <PanelRow
                 key={event.id}
-                unit="—"
-                driver={entityLabel(event.driver_name, null, "Driver")}
-                loadCustomer={`${entityLabel(event.load_number, event.load_id, "Load")} · ${entityLabel(event.customer_name, null, "Customer")}`}
+                unit={<EntityLink kind="unit" id={event.unit_id} label={entityLabel(event.unit_number, event.unit_id, "Unit")} />}
+                driver={<EntityLink kind="driver" id={event.driver_id} label={entityLabel(event.driver_name, event.driver_id, "Driver")} />}
+                loadCustomer={<><EntityLink kind="load" id={event.load_id} label={entityLabel(event.load_number, event.load_id, "Load")} /> · <EntityLink kind="customer" id={event.customer_id} label={entityLabel(event.customer_name, event.customer_id, "Customer")} /></>}
                 onClick={onLoadClick ? () => onLoadClick(event.load_id) : undefined}
               />
             ))
@@ -417,9 +410,9 @@ export function DispatchOverview({ operatingCompanyId, onLoadClick }: Props) {
             oosLoads.slice(0, PANEL_ROW_LIMIT).map((load: DispatchLoad) => (
               <PanelRow
                 key={load.id}
-                unit={entityLabel(load.unit_number, null, "Unit")}
-                driver={entityLabel(load.driver_short_name, null, "Driver")}
-                loadCustomer={`${entityLabel(load.load_number, load.id, "Load")} · ${load.dispatch_block_reason ?? "Blocked"}`}
+                unit={<EntityLink kind="unit" id={load.assigned_unit_id} label={entityLabel(load.unit_number, load.assigned_unit_id, "Unit")} />}
+                driver={<EntityLink kind="driver" id={load.assigned_primary_driver_id} label={entityLabel(load.driver_short_name, load.assigned_primary_driver_id, "Driver")} />}
+                loadCustomer={<><EntityLink kind="load" id={load.id} label={entityLabel(load.load_number, load.id, "Load")} /> · {load.dispatch_block_reason ?? "Blocked"}</>}
                 onClick={onLoadClick ? () => onLoadClick(load.id) : undefined}
               />
             ))

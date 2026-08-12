@@ -746,6 +746,21 @@ const SIBLINGS = [
     good: /entityLabel\(\s*load\.load_number\s*,\s*load\.id\s*,\s*"Load"\s*\)/,
   },
   {
+    rel: "apps/frontend/src/pages/dispatch/DispatchOverview.tsx",
+    bad: /entityLabel\(\s*load\.unit_number\s*,\s*null\s*,\s*"Unit"\s*\)/,
+    good: /<EntityLink kind="unit" id=\{load\.(?:assigned_unit_id|unit_id)\}/,
+  },
+  {
+    rel: "apps/frontend/src/pages/dispatch/DispatchOverview.tsx",
+    bad: /entityLabel\(\s*load\.(?:driver_short_name|driver_name)\s*,\s*null\s*,\s*"Driver"\s*\)/,
+    good: /<EntityLink kind="driver" id=\{load\.(?:assigned_primary_driver_id|driver_id)\}/,
+  },
+  {
+    rel: "apps/frontend/src/pages/dispatch/DispatchOverview.tsx",
+    bad: /entityLabel\(\s*load\.customer_name\s*,\s*null\s*,\s*"Customer"\s*\)/,
+    good: /<EntityLink kind="customer" id=\{load\.customer_id\}/,
+  },
+  {
     rel: "apps/frontend/src/pages/compliance/HosTrackerSection.tsx",
     bad: /driver\.driver_name\s*\?\?\s*"—"|driver\.unit_number\s*\?\?\s*"—"/,
     good: /entityLabel\(\s*driver\.driver_name\s*,\s*driver\.driver_id\s*,\s*"Driver"\s*\)/,
