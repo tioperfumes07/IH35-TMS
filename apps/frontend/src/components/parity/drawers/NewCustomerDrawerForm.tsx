@@ -13,6 +13,7 @@ import {
   type CustomerProfileFormValues,
 } from "../../customers/CustomerProfileForm";
 import { ActionButton } from "../../shared/ActionButton";
+import { CappedListNotice } from "../../CappedListNotice";
 import { useToast } from "../../Toast";
 import type { InlineCreateResult } from "../InlineCreateDrawer";
 import { userFacingApiError } from "../../../lib/api-error-message";
@@ -23,6 +24,8 @@ type Props = {
   onClose: () => void;
 };
 
+const PARENT_CUSTOMER_FETCH_LIMIT = 200;
+
 export function NewCustomerDrawerForm({ operatingCompanyId, onCreated, onClose }: Props) {
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
@@ -31,7 +34,12 @@ export function NewCustomerDrawerForm({ operatingCompanyId, onCreated, onClose }
 
   const customersQuery = useQuery({
     queryKey: ["customers", "inline-create-parents", operatingCompanyId],
-    queryFn: () => listCustomers({ operating_company_id: operatingCompanyId, limit: 5000, active_company_only: true }),
+    queryFn: () =>
+      listCustomers({
+        operating_company_id: operatingCompanyId,
+        limit: PARENT_CUSTOMER_FETCH_LIMIT,
+        active_company_only: true,
+      }),
     enabled: Boolean(operatingCompanyId),
   });
   const parentCustomerOptions = useMemo(
@@ -113,6 +121,13 @@ export function NewCustomerDrawerForm({ operatingCompanyId, onCreated, onClose }
         onPaymentTermCreated={() => void paymentTermsQuery.refetch()}
         parentCustomerOptions={parentCustomerOptions}
         onParentCustomerCreated={() => void customersQuery.refetch()}
+      />
+      <CappedListNotice
+        shown={parentCustomerOptions.length}
+        total={customersQuery.data?.total}
+        limit={PARENT_CUSTOMER_FETCH_LIMIT}
+        hint="Parent customer dropdown shows the first page — use Customers list to find others."
+        className="text-xs text-slate-600"
       />
       <div className="flex justify-end gap-2 border-t border-gray-200 pt-3">
         <ActionButton type="button" onClick={onClose}>
