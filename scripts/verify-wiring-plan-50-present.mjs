@@ -91,6 +91,9 @@ export function collectWiringPlanProblems(root = ROOT) {
     if (!body.includes("probe-hold (Audited only, not Built)")) {
       problems.push(`${MATRIX_SERVICE} missing probe→Audited-only honesty marker`);
     }
+    if (!body.includes("matrix-metrics-tally")) {
+      problems.push(`${MATRIX_SERVICE} missing matrix-metrics-tally import (Option A ribbon)`);
+    }
   } else {
     problems.push(`MISSING ${MATRIX_SERVICE}`);
   }
@@ -130,7 +133,7 @@ if (SELFTEST) {
     );
     fs.writeFileSync(
       path.join(tmp, MATRIX_SERVICE),
-      "function wireSprintBuiltReason() {}\nfunction leafColumnBuiltReason() {}\nprobe-hold (Audited only, not Built)\n",
+      "function wireSprintBuiltReason() {}\nfunction leafColumnBuiltReason() {}\nprobe-hold (Audited only, not Built)\nmatrix-metrics-tally\n",
     );
     assertWiringPlanPresent(tmp);
     console.log(`${LABEL} --selftest PASS`);

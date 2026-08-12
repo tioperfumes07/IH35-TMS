@@ -1,10 +1,31 @@
 /**
  * System-wide module matrix rollup — all modules in sidebar order (owner lock 2026-08-10).
+ * Option A ribbon metrics (2026-08-11).
  */
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { resolveApiUrl } from "../../api/client";
 import { MATRIX_MODULES_SIDEBAR_ORDER } from "./moduleMatrixCatalog";
+
+type TierMetrics = {
+  requiredCells: number;
+  liveCells: number;
+  builtOnlyCells: number;
+  probeOnlyCells: number;
+  auditedOnlyCells: number;
+  unauditedCells: number;
+  buildQueue: number;
+  requiredPct: number;
+  auditedOnlyPct: number;
+  probeOnlyPct: number;
+  builtOnlyPct: number;
+  livePct: number;
+  certifiedPct: number;
+  builtCells: number;
+  leafCount: number;
+  auditedPct?: number;
+  builtPct?: number;
+};
 
 type SystemPayload = {
   sample: false;
@@ -13,30 +34,12 @@ type SystemPayload = {
     module: string;
     label: string;
     available: boolean;
-    metrics: {
-      requiredCells: number;
-      liveCells: number;
-      builtCells: number;
-      auditedCells: number;
-      buildQueue: number;
-      livePct: number;
-      builtPct: number;
-      auditedPct: number;
-      leafCount: number;
-    };
+    metrics: TierMetrics;
     probeProgress?: number | null;
   }>;
-  system: {
+  system: TierMetrics & {
     moduleCount: number;
     modulesAvailable: number;
-    requiredCells: number;
-    liveCells: number;
-    builtCells: number;
-    auditedCells: number;
-    buildQueue: number;
-    livePct: number;
-    builtPct: number;
-    auditedPct: number;
   };
   meta?: { tipSha?: string; probeSource?: string; honesty?: string };
 };
@@ -77,54 +80,48 @@ export function ModuleMatrixSystemView() {
           <b>SYSTEM ROLLUP UNAVAILABLE.</b> Could not load{" "}
           <code>GET /api/v1/program/module-matrix?scope=system</code>.
         </div>
-      ) : data?.meta?.probeSource === "committed_stale" ? (
-        <div className="banner" data-testid="module-matrix-system-stale">
-          <b>STALE BUILT PROBES.</b> Box 3 Built may use committed snapshots — Live (Box 4) still from
-          PROD-VERIFIED ledger only.
-          {data.meta.tipSha ? <> · tip <code>{data.meta.tipSha}</code></> : null}.
-        </div>
       ) : ok ? (
         <div className="banner live" data-testid="module-matrix-system-live">
-          <b>SYSTEM ROLLUP — ALL {sys?.moduleCount ?? 29} MODULES.</b> Summed Required / Built / Live cells
-          across sidebar order. Software certification % = Box 4 Live ÷ Required.
+          <b>SYSTEM ROLLUP — {sys?.moduleCount ?? 29} MODULES.</b> Option A ribbon — mutually exclusive tiers.
+          Certified % = Live ÷ Required only.
           {data?.meta?.tipSha ? <> · tip <code>{data.meta.tipSha}</code></> : null}.
         </div>
       ) : (
         <div className="banner">Loading system matrix rollup…</div>
       )}
 
-      <div className="metrics metrics-system">
-        <div className="metric big">
-          <div className="n">{sys?.livePct ?? "—"}%</div>
+      <div className="metrics metrics-ribbon metrics-system">
+        <div className="metric">
+          <div className="n">{sys?.requiredPct ?? "—"}%</div>
           <div className="l">
-            Software Live % (Box 4)
+            Required
             <br />
-            {sys?.liveCells ?? 0} / {sys?.requiredCells ?? 0} cells
+            {sys?.requiredCells ?? 0} cells
           </div>
+        </div>
+        <div className="metric">
+          <div className="n">{sys?.auditedOnlyPct ?? "—"}%</div>
+          <div className="l">Audited · ledger/GUARD</div>
         </div>
         <div className="metric amb">
-          <div className="n">{sys?.builtPct ?? "—"}%</div>
-          <div className="l">
-            Software Built % (Box 3)
-            <br />
-            {sys?.builtCells ?? 0} wired cells
-          </div>
+          <div className="n">{sys?.probeOnlyPct ?? "—"}%</div>
+          <div className="l">Probe hold</div>
         </div>
-        <div className="metric">
-          <div className="n">{sys?.auditedPct ?? "—"}%</div>
-          <div className="l">Audited coverage (Box 2 path)</div>
-        </div>
-        <div className="metric">
-          <div className="n">{sys?.requiredCells ?? "—"}</div>
-          <div className="l">Total required cells</div>
+        <div className="metric amb">
+          <div className="n">{sys?.builtOnlyPct ?? "—"}%</div>
+          <div className="l">Built wire-sprint</div>
         </div>
         <div className="metric good">
-          <div className="n">{sys?.liveCells ?? "—"}</div>
-          <div className="l">Live-verified cells</div>
+          <div className="n">{sys?.livePct ?? "—"}%</div>
+          <div className="l">Live PROD-VERIFIED</div>
         </div>
         <div className="metric big">
-          <div className="n">{sys?.buildQueue ?? "—"}</div>
-          <div className="l">Build queue (not Live)</div>
+          <div className="n">{sys?.certifiedPct ?? "—"}%</div>
+          <div className="l">
+            Certified
+            <br />
+            {sys?.liveCells ?? 0} / {sys?.requiredCells ?? 0}
+          </div>
         </div>
       </div>
 
@@ -139,14 +136,13 @@ export function ModuleMatrixSystemView() {
             <tr>
               <th className="sticky-col">Module</th>
               <th>Leaves</th>
-              <th>Required</th>
-              <th>Audited %</th>
+              <th>Req</th>
+              <th>Audit %</th>
+              <th>Probe %</th>
               <th>Built %</th>
               <th>Live %</th>
-              <th>Live cells</th>
-              <th>Built cells</th>
+              <th>Cert %</th>
               <th>Queue</th>
-              <th>Probe</th>
               <th>Open</th>
             </tr>
           </thead>
@@ -158,12 +154,18 @@ export function ModuleMatrixSystemView() {
               metrics: {
                 requiredCells: 0,
                 liveCells: 0,
-                builtCells: 0,
-                auditedCells: 0,
+                builtOnlyCells: 0,
+                probeOnlyCells: 0,
+                auditedOnlyCells: 0,
+                unauditedCells: 0,
                 buildQueue: 0,
+                requiredPct: 0,
+                auditedOnlyPct: 0,
+                probeOnlyPct: 0,
+                builtOnlyPct: 0,
                 livePct: 0,
-                builtPct: 0,
-                auditedPct: 0,
+                certifiedPct: 0,
+                builtCells: 0,
                 leafCount: 0,
               },
             }))).map((row) => (
@@ -175,22 +177,29 @@ export function ModuleMatrixSystemView() {
                 <td>{row.metrics.leafCount}</td>
                 <td>{row.metrics.requiredCells}</td>
                 <td>
-                  <span className={`pct ${pctClass(row.metrics.auditedPct)}`}>{row.metrics.auditedPct}%</span>
+                  <span className={`pct ${pctClass(row.metrics.auditedOnlyPct)}`}>
+                    {row.metrics.auditedOnlyPct}%
+                  </span>
                 </td>
                 <td>
-                  <span className={`pct ${pctClass(row.metrics.builtPct)}`}>{row.metrics.builtPct}%</span>
+                  <span className={`pct ${pctClass(row.metrics.probeOnlyPct)}`}>
+                    {row.metrics.probeOnlyPct}%
+                  </span>
+                </td>
+                <td>
+                  <span className={`pct ${pctClass(row.metrics.builtOnlyPct)}`}>
+                    {row.metrics.builtOnlyPct}%
+                  </span>
                 </td>
                 <td>
                   <span className={`pct ${pctClass(row.metrics.livePct)}`}>{row.metrics.livePct}%</span>
                 </td>
-                <td>{row.metrics.liveCells}</td>
-                <td>{row.metrics.builtCells}</td>
-                <td>{row.metrics.buildQueue}</td>
                 <td>
-                  {"probeProgress" in row && typeof row.probeProgress === "number"
-                    ? `${row.probeProgress}%`
-                    : "—"}
+                  <span className={`pct ${pctClass(row.metrics.certifiedPct)}`}>
+                    {row.metrics.certifiedPct}%
+                  </span>
                 </td>
+                <td>{row.metrics.buildQueue}</td>
                 <td>
                   {row.available ? (
                     <Link to={`/program/matrix?module=${row.module}`}>Board →</Link>
@@ -210,19 +219,23 @@ export function ModuleMatrixSystemView() {
                 <td>—</td>
                 <td>{sys.requiredCells}</td>
                 <td>
-                  <span className={`pct ${pctClass(sys.auditedPct)}`}>{sys.auditedPct}%</span>
+                  <span className={`pct ${pctClass(sys.auditedOnlyPct)}`}>{sys.auditedOnlyPct}%</span>
                 </td>
                 <td>
-                  <span className={`pct ${pctClass(sys.builtPct)}`}>{sys.builtPct}%</span>
+                  <span className={`pct ${pctClass(sys.probeOnlyPct)}`}>{sys.probeOnlyPct}%</span>
+                </td>
+                <td>
+                  <span className={`pct ${pctClass(sys.builtOnlyPct)}`}>{sys.builtOnlyPct}%</span>
                 </td>
                 <td>
                   <span className={`pct ${pctClass(sys.livePct)}`}>{sys.livePct}%</span>
                 </td>
-                <td>{sys.liveCells}</td>
-                <td>{sys.builtCells}</td>
+                <td>
+                  <span className={`pct ${pctClass(sys.certifiedPct)}`}>{sys.certifiedPct}%</span>
+                </td>
                 <td>{sys.buildQueue}</td>
-                <td colSpan={2}>
-                  {sys.modulesAvailable}/{sys.moduleCount} boards loaded
+                <td colSpan={1}>
+                  {sys.modulesAvailable}/{sys.moduleCount} boards
                 </td>
               </tr>
             </tfoot>
