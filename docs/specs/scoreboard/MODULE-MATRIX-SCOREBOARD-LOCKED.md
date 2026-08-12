@@ -23,8 +23,27 @@ These resolve scoreboard dishonesty. **When sources disagree, this table wins.**
 | **Desktop audit packs** | Owner click-through inventory | Input to Required map · **not** auto-green matrix | Re-auditing during wire sprint |
 
 **Certification % (honest)** = Box 4 Live ÷ Box 1 Required (per module or system rollup).  
-**Wire progress % (honest during sprint)** = Box 3 Built ÷ Box 1 Required.  
+**Wire progress % (honest during sprint)** = Box 3 Built-only ÷ Box 1 Required (wire-sprint guard; excludes Live).  
+**Probe % (informational)** = probe-only cells ÷ Required — never counts as Built or Certified.  
+**Audited % (ledger/GUARD)** = audited-only cells ÷ Required — excludes probe, built, live.  
 **Build queue** = Required − Live (not Required − checklist PASS).
+
+### Option A ribbon (deployed 2026-08-11)
+
+Six mutually exclusive tiers per module (same denominator = required cells):
+
+| Tile | Count rule | % formula |
+|------|------------|-----------|
+| Required | all applicable cells | 100% anchor |
+| Audited | ledger/GUARD/wave only | auditedOnly ÷ required |
+| Probe | scenario/Neon density hold | probeOnly ÷ required |
+| Built | wire-sprint guard on disk | builtOnly ÷ required |
+| Live | PROD-VERIFIED ledger | live ÷ required |
+| Certified | **same as Live** | live ÷ required |
+
+**Group rollups:** per `columns[].group` in `*.required.json` — linkage · money · chrome · wiring · process — each with the same six percentages.
+
+**Tally law:** `live + builtOnly + probeOnly + auditedOnly + unaudited === required` (CI: `verify-matrix-metrics-tally.mjs`).
 
 **Insurance §B9** = **depth model** for every module (forward + reverse + economics). It is **not** the instruction to build insurance first; it defines how deep each leaf×column must be when marked Built/Live.
 

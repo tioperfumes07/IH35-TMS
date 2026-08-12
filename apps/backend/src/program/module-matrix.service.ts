@@ -15,6 +15,20 @@ import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { resolveMonorepoRoot } from "../lib/monorepo-root.js";
+import {
+  accumulateTierBucket,
+  assertTierTallyConsistent,
+  classifyMatrixCellTier,
+  emptyTierBucket,
+  finalizeTierMetrics,
+  groupLabel,
+  mergeTierBuckets,
+  sortGroupRollups,
+  matrixPct,
+  type MatrixCellTier,
+  type MatrixGroupRollup,
+  type MatrixTierMetrics,
+} from "./matrix-metrics-tally.js";
 
 const REPO_ROOT = (() => {
   try {
@@ -46,6 +60,8 @@ export type MatrixCell = {
   builtReason?: string;
   /** Neon/scenario density hold — Audited ● only; must not set built=true */
   probeReason?: string;
+  /** Mutually exclusive tier used for ribbon % (required cells only) */
+  tier?: MatrixCellTier;
   liveReason?: string;
   /** @deprecated use builtReason/liveReason */
   doneReason?: string;
@@ -234,24 +250,17 @@ export type ModuleMatrixPayload = {
     required: string[];
     cells: Record<string, MatrixCell>;
   }>;
-  metrics: {
+  metrics: MatrixTierMetrics & {
     leafCount: number;
     colCount: number;
-    requiredCells: number;
-    liveCells: number;
-    builtCells: number;
     /** @deprecated use liveCells */
     doneCells: number;
-    auditedCells: number;
-    unauditedCells: number;
-    buildQueue: number;
-    /** Live % (Box 4) — module certification bar */
-    modulePct: number;
-    /** @deprecated alias for modulePct */
-    livePct: number;
-    builtPct: number;
+    /** @deprecated cumulative audited path — use auditedOnlyPct + probeOnlyPct */
     auditedPct: number;
+    /** @deprecated use builtOnlyPct — wire-sprint only, excludes live */
+    builtPct: number;
   };
+  groupRollups: MatrixGroupRollup[];
 };
 
 function readJson<T>(p: string): T | null {
@@ -813,11 +822,17 @@ export async function buildModuleMatrix(
     Promise.resolve(loadWaveHits(moduleId)),
   ]);
 
-  let requiredCells = 0;
-  let liveCells = 0;
-  let builtOnlyCells = 0;
-  let auditedCells = 0;
-  let unauditedCells = 0;
+  const moduleBucket = emptyTierBucket();
+  const groupBuckets = new Map<string, ReturnType<typeof emptyTierBucket>>();
+  const colGroup = new Map(required.columns.map((c) => [c.id, c.group || "other"]));
+
+  const bumpTier = (colId: string, tier: MatrixCellTier) => {
+    accumulateTierBucket(moduleBucket, tier);
+    if (tier === "na") return;
+    const g = colGroup.get(colId) ?? "other";
+    if (!groupBuckets.has(g)) groupBuckets.set(g, emptyTierBucket());
+    accumulateTierBucket(groupBuckets.get(g)!, tier);
+  };
 
   const leaves = required.leaves.map((leaf) => {
     const req = new Set(leaf.required);
@@ -832,10 +847,10 @@ export async function buildModuleMatrix(
           built: false,
           live: false,
           done: false,
+          tier: "na",
         };
         continue;
       }
-      requiredCells += 1;
 
       const builtReason = leafColumnBuiltReason(leaf, col.id, moduleId);
       const liveReason = leafColumnLiveReason(leaf, col.id, moduleId, ledger);
@@ -863,10 +878,8 @@ export async function buildModuleMatrix(
       }
 
       const state = cellState(audited, built, live);
-      if (live) liveCells += 1;
-      else if (built) builtOnlyCells += 1;
-      else if (audited) auditedCells += 1;
-      else unauditedCells += 1;
+      const tier = classifyMatrixCellTier({ required: true, live, built, probeReason, audited });
+      bumpTier(col.id, tier);
 
       cells[col.id] = {
         state: live ? "live" : state,
@@ -874,6 +887,7 @@ export async function buildModuleMatrix(
         built,
         live,
         done: live,
+        tier,
         ...(auditedReason ? { auditedReason } : {}),
         ...(builtReason ? { builtReason } : {}),
         ...(probeReason ? { probeReason } : {}),
@@ -892,12 +906,22 @@ export async function buildModuleMatrix(
     };
   });
 
-  const builtCells = builtOnlyCells + liveCells;
-  const buildQueue = requiredCells - liveCells;
-  const livePct = requiredCells === 0 ? 0 : Math.round((liveCells / requiredCells) * 100);
-  const builtPct = requiredCells === 0 ? 0 : Math.round((builtCells / requiredCells) * 100);
-  const auditedPct =
-    requiredCells === 0 ? 0 : Math.round(((liveCells + builtOnlyCells + auditedCells) / requiredCells) * 100);
+  moduleBucket.requiredCells =
+    moduleBucket.liveCells +
+    moduleBucket.builtOnlyCells +
+    moduleBucket.probeOnlyCells +
+    moduleBucket.auditedOnlyCells +
+    moduleBucket.unauditedCells;
+  assertTierTallyConsistent(moduleBucket, moduleId);
+  const tierMetrics = finalizeTierMetrics(moduleBucket);
+  const groupRollups: MatrixGroupRollup[] = sortGroupRollups(
+    [...groupBuckets.entries()].map(([group, bucket]) => {
+      bucket.requiredCells = bucket.requiredCells || 0;
+      assertTierTallyConsistent(bucket, `${moduleId}:${group}`);
+      return { group, label: groupLabel(group), ...finalizeTierMetrics(bucket) };
+    }),
+  );
+
   const sha = tipSha();
   const recon = reconAsOf();
 
@@ -920,7 +944,7 @@ export async function buildModuleMatrix(
         "Probe density: live_scenario_probe → Audited ● only (never Built)",
       ],
       honesty:
-        "4-box law (2026-08-11). Audited ≠ Built ≠ Live. Built = wire-sprint guard only (+ Live). Probes = yellow ● only. Live = PROD-VERIFIED only.",
+        "Option A ribbon (2026-08-11). Mutually exclusive tiers: Audited · Probe · Built (wire-sprint) · Live (certified). Sum = Required.",
       tipSha: sha,
       probeProgress: probePack.progress,
       probeSource: probePack.probeSource,
@@ -932,20 +956,14 @@ export async function buildModuleMatrix(
     },
     columns: required.columns,
     leaves,
+    groupRollups,
     metrics: {
       leafCount: required.leaves.length,
       colCount: required.columns.length,
-      requiredCells,
-      liveCells,
-      builtCells,
-      doneCells: liveCells,
-      auditedCells,
-      unauditedCells,
-      buildQueue,
-      modulePct: livePct,
-      livePct,
-      builtPct,
-      auditedPct,
+      ...tierMetrics,
+      doneCells: tierMetrics.liveCells,
+      auditedPct: matrixPct(tierMetrics.auditedOnlyCells + tierMetrics.probeOnlyCells, tierMetrics.requiredCells),
+      builtPct: tierMetrics.builtOnlyPct,
     },
   };
 
@@ -960,6 +978,7 @@ export type SystemModuleMatrixRow = {
   label: string;
   available: boolean;
   metrics: ModuleMatrixPayload["metrics"];
+  groupRollups?: MatrixGroupRollup[];
   probeProgress?: number | null;
   probeSource?: "neon_live" | "committed_stale";
 };
@@ -969,18 +988,13 @@ export type SystemModuleMatrixPayload = {
   scope: "system";
   generatedAt: string;
   modules: SystemModuleMatrixRow[];
-  system: {
+  system: MatrixTierMetrics & {
     moduleCount: number;
     modulesAvailable: number;
-    requiredCells: number;
-    liveCells: number;
-    builtCells: number;
-    auditedCells: number;
-    unauditedCells: number;
-    buildQueue: number;
-    livePct: number;
-    builtPct: number;
+    /** @deprecated legacy cumulative audited path */
     auditedPct: number;
+    /** @deprecated use builtOnlyPct */
+    builtPct: number;
   };
   meta: {
     tipSha?: string;
@@ -993,20 +1007,14 @@ export type SystemModuleMatrixPayload = {
 let systemCache: { atMs: number; probeScope: string; payload: SystemModuleMatrixPayload } | null = null;
 
 function emptyModuleMetrics(): ModuleMatrixPayload["metrics"] {
+  const base = finalizeTierMetrics(emptyTierBucket());
   return {
     leafCount: 0,
     colCount: 0,
-    requiredCells: 0,
-    liveCells: 0,
-    builtCells: 0,
+    ...base,
     doneCells: 0,
-    auditedCells: 0,
-    unauditedCells: 0,
-    buildQueue: 0,
-    modulePct: 0,
-    livePct: 0,
-    builtPct: 0,
     auditedPct: 0,
+    builtPct: 0,
   };
 }
 
@@ -1024,12 +1032,7 @@ export async function buildSystemModuleMatrix(userUuid?: string): Promise<System
 
   const order = loadMatrixModuleOrder();
   const modules: SystemModuleMatrixRow[] = [];
-  let requiredCells = 0;
-  let liveCells = 0;
-  let builtCells = 0;
-  let auditedCells = 0;
-  let unauditedCells = 0;
-  let buildQueue = 0;
+  const systemBucket = emptyTierBucket();
   let modulesAvailable = 0;
   let probeSource: "neon_live" | "committed_stale" = "committed_stale";
 
@@ -1043,29 +1046,31 @@ export async function buildSystemModuleMatrix(userUuid?: string): Promise<System
         label: entry.label,
         available: true,
         metrics: board.metrics,
+        groupRollups: board.groupRollups,
         probeProgress: board.meta.probeProgress,
         probeSource: board.meta.probeSource,
       });
-      requiredCells += board.metrics.requiredCells;
-      liveCells += board.metrics.liveCells;
-      builtCells += board.metrics.builtCells;
-      auditedCells += board.metrics.auditedCells;
-      unauditedCells += board.metrics.unauditedCells;
-      buildQueue += board.metrics.buildQueue;
+      mergeTierBuckets(systemBucket, {
+        requiredCells: board.metrics.requiredCells,
+        liveCells: board.metrics.liveCells,
+        builtOnlyCells: board.metrics.builtOnlyCells,
+        probeOnlyCells: board.metrics.probeOnlyCells,
+        auditedOnlyCells: board.metrics.auditedOnlyCells,
+        unauditedCells: board.metrics.unauditedCells,
+      });
     } catch {
       modules.push({
         module: entry.id,
         label: entry.label,
         available: false,
         metrics: emptyModuleMetrics(),
+        groupRollups: [],
       });
     }
   }
 
-  const livePct = requiredCells === 0 ? 0 : Math.round((liveCells / requiredCells) * 100);
-  const builtPct = requiredCells === 0 ? 0 : Math.round((builtCells / requiredCells) * 100);
-  const auditedPct =
-    requiredCells === 0 ? 0 : Math.round(((liveCells + auditedCells + (builtCells - liveCells)) / requiredCells) * 100);
+  assertTierTallyConsistent(systemBucket, "system");
+  const systemMetrics = finalizeTierMetrics(systemBucket);
 
   const payload: SystemModuleMatrixPayload = {
     sample: false,
@@ -1075,15 +1080,12 @@ export async function buildSystemModuleMatrix(userUuid?: string): Promise<System
     system: {
       moduleCount: order.length,
       modulesAvailable,
-      requiredCells,
-      liveCells,
-      builtCells,
-      auditedCells,
-      unauditedCells,
-      buildQueue,
-      livePct,
-      builtPct,
-      auditedPct,
+      ...systemMetrics,
+      auditedPct: matrixPct(
+        systemMetrics.auditedOnlyCells + systemMetrics.probeOnlyCells,
+        systemMetrics.requiredCells,
+      ),
+      builtPct: systemMetrics.builtOnlyPct,
     },
     meta: {
       tipSha: tipSha(),

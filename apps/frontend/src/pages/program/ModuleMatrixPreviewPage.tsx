@@ -79,26 +79,41 @@ type LiveCell = {
   done?: boolean;
 };
 
+type TierMetrics = {
+  requiredCells: number;
+  liveCells: number;
+  builtOnlyCells: number;
+  probeOnlyCells: number;
+  auditedOnlyCells: number;
+  unauditedCells: number;
+  builtCells: number;
+  auditedCells: number;
+  buildQueue: number;
+  requiredPct: number;
+  auditedOnlyPct: number;
+  probeOnlyPct: number;
+  builtOnlyPct: number;
+  livePct: number;
+  certifiedPct: number;
+  modulePct: number;
+  leafCount: number;
+  colCount: number;
+  doneCells: number;
+  /** @deprecated legacy cumulative */
+  auditedPct?: number;
+  /** @deprecated legacy — use builtOnlyPct */
+  builtPct?: number;
+};
+
+type GroupRollup = TierMetrics & { group: string; label: string };
+
 type LiveMatrix = {
   sample: false;
   module?: string;
   entity_default?: string;
   leaves: Array<{ id: string; cells: Record<string, LiveCell> }>;
-  metrics?: {
-    leafCount: number;
-    colCount: number;
-    requiredCells: number;
-    livePct?: number;
-    builtPct?: number;
-    liveCells?: number;
-    builtCells?: number;
-    doneCells: number;
-    auditedCells: number;
-    unauditedCells: number;
-    buildQueue: number;
-    modulePct: number;
-    auditedPct?: number;
-  };
+  groupRollups?: GroupRollup[];
+  metrics?: TierMetrics;
   meta?: {
     honesty?: string;
     tipSha?: string;
@@ -382,63 +397,140 @@ function pctClass(n: number) {
   return "lo";
 }
 
-function boardMetrics(map: RequiredMap, rows: Row[], live: LiveMatrix | null) {
+function boardMetrics(map: RequiredMap, rows: Row[], live: LiveMatrix | null): TierMetrics {
   if (live?.metrics) {
+    const m = live.metrics;
     return {
-      modulePct: live.metrics.livePct ?? live.metrics.modulePct,
-      builtPct: live.metrics.builtPct ?? 0,
-      auditedPct: live.metrics.auditedPct ?? 0,
-      leafCount: live.metrics.leafCount || map.leaves.length,
-      colCount: live.metrics.colCount || map.columns.length,
-      requiredCells: live.metrics.requiredCells,
-      liveCells: live.metrics.liveCells ?? live.metrics.doneCells,
-      builtCells: live.metrics.builtCells ?? 0,
-      doneCells: live.metrics.liveCells ?? live.metrics.doneCells,
-      auditedCells: live.metrics.auditedCells ?? 0,
-      buildQueue: live.metrics.buildQueue,
+      ...m,
+      modulePct: m.livePct ?? m.modulePct ?? 0,
+      certifiedPct: m.certifiedPct ?? m.livePct ?? 0,
+      doneCells: m.liveCells ?? m.doneCells ?? 0,
+      builtPct: m.builtOnlyPct ?? m.builtPct ?? 0,
+      auditedPct: m.auditedOnlyPct ?? m.auditedPct ?? 0,
+      leafCount: m.leafCount || map.leaves.length,
+      colCount: m.colCount || map.columns.length,
     };
   }
   let requiredCells = 0;
   let liveCells = 0;
-  let builtCells = 0;
-  let auditedCells = 0;
-  let buildQueue = 0;
+  let builtOnlyCells = 0;
+  let probeOnlyCells = 0;
+  let auditedOnlyCells = 0;
+  let unauditedCells = 0;
   for (const row of rows) {
     if (row.kind !== "leaf") continue;
     for (const st of row.cells) {
       if (!st.req) continue;
       requiredCells += 1;
-      if (st.live) {
-        liveCells += 1;
-        builtCells += 1;
-      } else if (st.built) {
-        builtCells += 1;
-      } else if (st.audited) {
-        auditedCells += 1;
-      } else {
-        buildQueue += 1;
-      }
+      if (st.live) liveCells += 1;
+      else if (st.built) builtOnlyCells += 1;
+      else if (st.audited) auditedOnlyCells += 1;
+      else unauditedCells += 1;
     }
   }
-  const modulePct = requiredCells === 0 ? 0 : Math.round((liveCells / requiredCells) * 100);
-  const builtPct = requiredCells === 0 ? 0 : Math.round((builtCells / requiredCells) * 100);
-  const auditedPct =
-    requiredCells === 0
-      ? 0
-      : Math.round(((liveCells + builtCells + auditedCells) / requiredCells) * 100);
+  const pct = (n: number) => (requiredCells === 0 ? 0 : Math.round((n / requiredCells) * 100));
+  const livePct = pct(liveCells);
   return {
-    modulePct,
-    builtPct,
-    auditedPct,
-    leafCount: map.leaves.length,
-    colCount: map.columns.length,
     requiredCells,
     liveCells,
-    builtCells,
+    builtOnlyCells,
+    probeOnlyCells,
+    auditedOnlyCells,
+    unauditedCells,
+    builtCells: builtOnlyCells + liveCells,
+    auditedCells: auditedOnlyCells + probeOnlyCells,
+    buildQueue: requiredCells - liveCells,
+    requiredPct: requiredCells === 0 ? 0 : 100,
+    auditedOnlyPct: pct(auditedOnlyCells),
+    probeOnlyPct: pct(probeOnlyCells),
+    builtOnlyPct: pct(builtOnlyCells),
+    livePct,
+    certifiedPct: livePct,
+    modulePct: livePct,
+    leafCount: map.leaves.length,
+    colCount: map.columns.length,
     doneCells: liveCells,
-    auditedCells,
-    buildQueue,
+    builtPct: pct(builtOnlyCells),
+    auditedPct: pct(auditedOnlyCells + probeOnlyCells),
   };
+}
+
+function MatrixScoreRibbon({ metrics, liveOk }: { metrics: TierMetrics; liveOk: boolean }) {
+  const tiles = [
+    { key: "req", label: "Required", pct: metrics.requiredPct, count: metrics.requiredCells, cls: "" },
+    { key: "audit", label: "Audited", pct: metrics.auditedOnlyPct, count: metrics.auditedOnlyCells, cls: "" },
+    { key: "probe", label: "Probe hold", pct: metrics.probeOnlyPct, count: metrics.probeOnlyCells, cls: "amb" },
+    { key: "built", label: "Built (wire)", pct: metrics.builtOnlyPct, count: metrics.builtOnlyCells, cls: "amb" },
+    { key: "live", label: "Live", pct: metrics.livePct, count: metrics.liveCells, cls: "good" },
+    { key: "cert", label: "Certified", pct: metrics.certifiedPct, count: metrics.liveCells, cls: "big" },
+  ];
+  return (
+    <div className="metrics metrics-ribbon" data-testid="module-matrix-tier-ribbon">
+      {tiles.map((t) => (
+        <div key={t.key} className={`metric ${t.cls}`} data-testid={`module-matrix-tier-${t.key}${t.key === "built" ? " module-matrix-built-cells-metric" : ""}`}>
+          <div className="n">{liveOk ? `${t.pct}%` : "—"}</div>
+          <div className="l">
+            {t.label}
+            <br />
+            {liveOk ? `${t.count} / ${metrics.requiredCells} cells` : "pending feed"}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function GroupRollupTable({ rollups, liveOk }: { rollups: GroupRollup[]; liveOk: boolean }) {
+  if (!rollups.length) return null;
+  return (
+    <>
+      <h2>
+        Column groups{" "}
+        <span className="sub">same denominator per group · mutually exclusive tiers</span>
+      </h2>
+      <div className="scroll scroll-groups">
+        <table className="group-table" data-testid="module-matrix-group-rollups">
+          <thead>
+            <tr>
+              <th>Group</th>
+              <th>Required</th>
+              <th>Audited %</th>
+              <th>Probe %</th>
+              <th>Built %</th>
+              <th>Live %</th>
+              <th>Certified %</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rollups.map((g) => (
+              <tr key={g.group}>
+                <td>
+                  <b>{g.label}</b>
+                  <span className="mod-id">{g.group}</span>
+                </td>
+                <td>{g.requiredCells}</td>
+                <td>
+                  <span className={`pct ${pctClass(g.auditedOnlyPct)}`}>{liveOk ? `${g.auditedOnlyPct}%` : "—"}</span>
+                </td>
+                <td>
+                  <span className={`pct ${pctClass(g.probeOnlyPct)}`}>{liveOk ? `${g.probeOnlyPct}%` : "—"}</span>
+                </td>
+                <td>
+                  <span className={`pct ${pctClass(g.builtOnlyPct)}`}>{liveOk ? `${g.builtOnlyPct}%` : "—"}</span>
+                </td>
+                <td>
+                  <span className={`pct ${pctClass(g.livePct)}`}>{liveOk ? `${g.livePct}%` : "—"}</span>
+                </td>
+                <td>
+                  <span className={`pct ${pctClass(g.certifiedPct)}`}>{liveOk ? `${g.certifiedPct}%` : "—"}</span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </>
+  );
 }
 
 function titleCase(id: MatrixModuleId): string {
@@ -629,54 +721,21 @@ export function ModuleMatrixPreviewPage() {
         <ModuleMatrixSystemView />
       ) : (
         <>
-      <div className="metrics">
-        <div className={`metric ${metrics.modulePct >= 40 ? "amb" : "big"}`}>
-          <div className="n">{metrics.modulePct}%</div>
-          <div className="l">
-            {titleCase(moduleId)} Live % (Box 4)
-            <br />
-            (live ÷ required{liveOk ? "" : " · pending feed"})
-          </div>
-        </div>
-        <div className="metric amb">
-          <div className="n">{metrics.builtPct ?? 0}%</div>
-          <div className="l">
-            Built % (Box 3)
-            <br />
-            wire-sprint guard only
-          </div>
-        </div>
-        <div className="metric">
-          <div className="n">{metrics.auditedPct ?? 0}%</div>
-          <div className="l">
-            Audited coverage (Box 2)
-            <br />
-            audit trail only
-          </div>
-        </div>
+      <MatrixScoreRibbon metrics={metrics} liveOk={liveOk} />
+      <GroupRollupTable rollups={live?.groupRollups ?? []} liveOk={liveOk} />
+
+      <div className="metrics metrics-secondary">
         <div className="metric">
           <div className="n">{metrics.leafCount}</div>
-          <div className="l">Leaves on this board<br />(from required JSON)</div>
+          <div className="l">Leaves<br />on board</div>
         </div>
         <div className="metric">
-          <div className="n">{metrics.requiredCells}</div>
-          <div className="l">Required cells<br />(box 1 green)</div>
-        </div>
-        <div className="metric amb" data-testid="module-matrix-built-cells-metric">
-          <div className="n">{metrics.builtCells ?? 0}</div>
-          <div className="l">
-            Built cells (Box 3)
-            <br />
-            wire-sprint guard only
-          </div>
-        </div>
-        <div className="metric good">
-          <div className="n">{metrics.liveCells ?? metrics.doneCells}</div>
-          <div className="l">Live cells<br />(Box 4 green)</div>
+          <div className="n">{metrics.unauditedCells}</div>
+          <div className="l">Unaudited cells<br />not started</div>
         </div>
         <div className="metric big">
           <div className="n">{metrics.buildQueue}</div>
-          <div className="l">Build queue<br />(required, not Live)</div>
+          <div className="l">Build queue<br />(required − live)</div>
         </div>
       </div>
 
@@ -808,9 +867,9 @@ export function ModuleMatrixPreviewPage() {
       </div>
 
       <div className="note">
-        <b>4-box law (locked 2026-08-11):</b> Box 2 Audited = audit trail or probe density (●) · Box 3 Built =
-        wire-sprint guard only · Box 4 Live = PROD-VERIFIED only. Probes never green Built. A cell may show
-        ✓●✕✕ (probe audited, not wired). Module % = Box 4 ÷ Required.
+        <b>4-box law + Option A ribbon (2026-08-11):</b> Ribbon tiers are mutually exclusive (sum = Required).
+        Audited = ledger/GUARD only · Probe = density ● · Built = wire-sprint guard · Certified = Live =
+        PROD-VERIFIED. Group table breaks down linkage / money / chrome / wiring / process.
       </div>
 
       <div className="foot">
@@ -854,8 +913,18 @@ const CSS = `
 .ih35mm .mod-pill.on{background:var(--navy);color:#fff;border-color:var(--navy)}
 .ih35mm .mod-pill.live{background:#fff;color:var(--navy);border-color:var(--navy)}
 .ih35mm .mod-pill.dim{opacity:.55}
-.ih35mm .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:0 0 16px}
-@media(min-width:1100px){.ih35mm .metrics{grid-template-columns:repeat(8,1fr)}}
+.ih35mm .metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:0 0 16px}
+.ih35mm .metrics-ribbon{grid-template-columns:repeat(2,1fr)}
+@media(min-width:900px){.ih35mm .metrics-ribbon{grid-template-columns:repeat(3,1fr)}}
+@media(min-width:1200px){.ih35mm .metrics-ribbon{grid-template-columns:repeat(6,1fr)}}
+.ih35mm .metrics-secondary{grid-template-columns:repeat(3,1fr);margin-top:-6px}
+.ih35mm .group-table{min-width:720px}
+.ih35mm .scroll-groups{margin-bottom:16px}
+.ih35mm .pct{display:inline-block;font-size:11px;font-weight:800;padding:2px 6px;border-radius:999px;background:var(--gray-bg);color:var(--slate);font-variant-numeric:tabular-nums}
+.ih35mm .pct.hi{background:var(--green-bg);color:var(--green)}
+.ih35mm .pct.mid{background:var(--amber-bg);color:var(--amber)}
+.ih35mm .pct.lo{background:var(--red-bg);color:var(--red)}
+@media(min-width:1100px){.ih35mm .metrics:not(.metrics-ribbon):not(.metrics-secondary){grid-template-columns:repeat(8,1fr)}}
 .ih35mm .metric{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 13px}
 .ih35mm .metric .n{font-size:22px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums}
 .ih35mm .metric .l{font-size:10px;color:var(--slate-lt);text-transform:uppercase;letter-spacing:.3px;margin-top:8px;line-height:1.3}
