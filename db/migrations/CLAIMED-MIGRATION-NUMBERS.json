@@ -53,6 +53,10 @@
     "202612511600": {
       "claimed_by": "cursor",
       "purpose": "p44_complaint_type_same_opco_fk"
+    },
+    "202612511800": {
+      "claimed_by": "cursor",
+      "purpose": "p44_cargo_claim_reason_same_opco_fk"
     }
   }
 }
