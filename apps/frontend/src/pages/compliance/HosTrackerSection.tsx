@@ -5,6 +5,7 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { companyToday } from "../../lib/businessDate";
 import { entityLabel } from "../../lib/entity-label";
+import { EntityLink } from "../../components/shared/EntityLink";
 
 // SAFETY-1: the roster date defaults to the current duty day in the CARRIER timezone
 // (America/Chicago), never the UTC calendar date (which rolls to "tomorrow" after ~19:00 CT).
@@ -84,7 +85,7 @@ export function HosTrackerSection({ operatingCompanyId }: { operatingCompanyId: 
         sortable: true,
         render: (driver) => (
           <span className="font-medium text-slate-900">
-            {entityLabel(driver.driver_name, driver.driver_id, "Driver")}
+            <EntityLink kind="driver" id={driver.driver_id} label={entityLabel(driver.driver_name, driver.driver_id, "Driver")} />
           </span>
         ),
       },

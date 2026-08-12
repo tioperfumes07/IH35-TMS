@@ -5,6 +5,8 @@ import { formatDateUS } from "../../lib/formatDate";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ListErrorState } from "../../components/ListErrorState";
 import { resolveApiUrl } from "../../api/client";
+import { EntityLink } from "../../components/shared/EntityLink";
+import { Fragment } from "react";
 
 type Filing = Record<string, unknown>;
 
@@ -143,8 +145,12 @@ export function Form2290Filings() {
                 .slice()
                 .sort((a, b) => a.deadline.localeCompare(b.deadline))
                 .slice(0, 4)
-                .map((u) => `${u.unit_number} due ${u.deadline}`)
-                .join(" · ")}
+                .map((u, idx) => (
+                  <Fragment key={u.unit_id}>
+                    {idx > 0 ? " · " : ""}
+                    <EntityLink kind="unit" id={u.unit_id} label={u.unit_number} /> due {u.deadline}
+                  </Fragment>
+                ))}
               {perUnit.length > 4 ? ` · +${perUnit.length - 4} more` : ""}
             </p>
           ) : null}
