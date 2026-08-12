@@ -218,6 +218,14 @@
       "leafRe": "^(lists\\.|secondary\\.book_load|load\\.detail)"
     },
     {
+      "task": "P45",
+      "pr": "#4876",
+      "guard": "scripts/verify-steps/2853-verify-catalog-column-collision-safe.mjs",
+      "modules": ["lists", "accounting"],
+      "cols": ["connectivity", "picker"],
+      "leafRe": "^(lists\\.|customers\\.|vendors\\.)"
+    },
+    {
       "task": "F361",
       "pr": "#5919",
       "guard": "scripts/verify-steps/3129-verify-expenses-list-je-memo.mjs",
