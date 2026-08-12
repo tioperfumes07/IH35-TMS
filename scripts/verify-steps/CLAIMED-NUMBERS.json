@@ -1,4 +1,9 @@
 {
+  "3119": {
+    "claimed_at": "2026-08-12",
+    "claimed_by": "cc-2",
+    "purpose": "verify-banking-matchdrawer-uses-paritydrawer"
+  },
   "3121": {
     "claimed_at": "2026-08-12",
     "claimed_by": "cc-1",
