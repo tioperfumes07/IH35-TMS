@@ -17,6 +17,10 @@
     "202612501200": {
       "claimed_by": "cursor",
       "purpose": "p44_load_detention_reason_canonical_fk"
+    },
+    "202612501400": {
+      "claimed_by": "cursor",
+      "purpose": "p44_load_stop_pickup_time_type_canonical_fk"
     }
   }
 }
