@@ -443,6 +443,28 @@ function storageStatusForPaid(total: number, paid: number): string {
   return "partially_paid";
 }
 
+/**
+ * ACCT-F376 — a voided bill must read $0 balance_cents, never the un-netted amount_cents.
+ *
+ * `voidBillInClientTx` refuses to void a bill that still has payments (bill_has_payments_cannot_void),
+ * so `paid_cents = 0` on a voided bill is CORRECT, not stale — but that means the naive
+ * `amount_cents - paid_cents` formula reads the FULL original amount as still owed the moment a bill
+ * is voided. Confirmed this is REACHABLE, not academic (the sibling class, ACCT-F197 on invoices, was
+ * withdrawn precisely because its equivalent raw value was never read by any application code path —
+ * checked before shipping this): `apps/frontend/src/pages/accounting/BillsPage.tsx`'s "Balance"
+ * column renders `bill.balance_cents` directly for every row regardless of status, and the list
+ * endpoint's own `status` query param explicitly supports fetching voided bills
+ * (`options.status === "voided"` branch in `listBillsByVendor`/`listAllBillsForCompany`) — so a user
+ * viewing the Voided tab/filter sees the wrong balance today. Measured live on prod USMCA before
+ * this fix: 47 voided bills, nonzero computed balance. `r.status` here is the CANONICAL
+ * post-normalizeBill value ("voided", not "void"/legacy spellings) — checked directly rather than
+ * re-deriving from revoked_at, since normalizeBill already did that resolution once.
+ */
+function computeBillBalanceCents(r: { status: string; amount_cents: number; paid_cents: number }): number {
+  if (r.status === "voided") return 0;
+  return Math.max(0, r.amount_cents - r.paid_cents);
+}
+
 function normalizeBill(row: BillRow) {
   const amountCents = Number(row.amount_cents ?? Math.round(Number(row.total_amount ?? 0) * 100));
   const paidCents = Number(
@@ -698,7 +720,7 @@ export async function listAllBillsForCompany(
   return rows.map((r) => ({
     ...r,
     vendor_name: r.vendor_id ? vendorNames[r.vendor_id] ?? r.vendor_id : null,
-    balance_cents: Math.max(0, r.amount_cents - r.paid_cents),
+    balance_cents: computeBillBalanceCents(r),
   }));
 }
 
@@ -1024,7 +1046,7 @@ export async function listBills(
   return rows.map((r) => ({
     ...r,
     vendor_name: r.vendor_id ? vendorNames[r.vendor_id] ?? r.vendor_id : null,
-    balance_cents: Math.max(0, r.amount_cents - r.paid_cents),
+    balance_cents: computeBillBalanceCents(r),
   }));
 }
 
