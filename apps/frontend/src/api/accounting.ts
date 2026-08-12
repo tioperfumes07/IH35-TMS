@@ -624,6 +624,7 @@ export type ExpenseListRow = {
   line_description: string | null;
   is_reconciled: boolean;
   journal_entry_id: string | null;
+  journal_entry_memo: string | null;
   linked_work_order_uuid: string | null;
   work_order_display_id: string | null;
   /** ACCT-F17 — reverse bank hop when matched_expense_id is stamped. */
@@ -1774,6 +1775,7 @@ export type AccountingAuditTrailEvent = {
   event_class: "accounting.posting_line_created" | "accounting.posting_line_reversal" | "accounting.posting_line_reversed";
   operating_company_id: string;
   journal_entry_id: string;
+  memo: string | null;
   posting_batch_id: string | null;
   source_transaction_type: string | null;
   source_transaction_id: string | null;
@@ -1791,6 +1793,7 @@ export type AccountingAuditTrailEvent = {
 export type AccountingSourceLineageRow = {
   posting_id: string;
   journal_entry_id: string;
+  memo: string | null;
   posting_batch_id: string | null;
   source_transaction_type: string;
   source_transaction_id: string;

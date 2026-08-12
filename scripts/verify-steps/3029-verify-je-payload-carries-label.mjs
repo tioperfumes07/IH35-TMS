@@ -25,6 +25,20 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const LABEL = "3029-verify-je-payload-carries-label";
 const SCAN_DIR = path.join(ROOT, "apps/backend/src");
+const FRONTEND_CONSUMERS = [
+  {
+    file: "apps/frontend/src/pages/accounting/ExpensesListPage.tsx",
+    required: /entityLabel\(r\.journal_entry_memo,\s*r\.journal_entry_id,\s*"Journal entry"\)/,
+  },
+  {
+    file: "apps/frontend/src/pages/accounting/AccountingAuditTrailPage.tsx",
+    required: /entityLabel\(row\.memo,\s*row\.journal_entry_id,\s*"Journal entry"\)/,
+  },
+  {
+    file: "apps/frontend/src/pages/accounting/InvoiceDetailPage.tsx",
+    required: /entityLabel\(je\.memo,\s*je\.id,\s*"Journal entry"\)/,
+  },
+];
 
 function fail(msg) {
   console.error(`[${LABEL}] FAIL: ${msg}`);
@@ -128,6 +142,13 @@ function audit() {
     }
   }
 
+  for (const consumer of FRONTEND_CONSUMERS) {
+    const src = fs.readFileSync(path.join(ROOT, consumer.file), "utf8");
+    if (!consumer.required.test(src)) {
+      problems.push(`${consumer.file}: JE link discards the memo label supplied by its payload`);
+    }
+  }
+
   if (scanned === 0) {
     // If the matcher stops matching, this guard would pass forever while the class rots.
     problems.push(
@@ -179,6 +200,21 @@ function selftest() {
 
   const clean = audit();
   if (clean.problems.length) fail(`selftest cleanup still red: ${clean.problems.join("; ")}`);
+
+  for (const consumer of FRONTEND_CONSUMERS) {
+    const target = path.join(ROOT, consumer.file);
+    const original = fs.readFileSync(target, "utf8");
+    const broken = original.replace(consumer.required, 'entityLabel(null, "lost-id", "Journal entry")');
+    if (broken === original) fail(`selftest INERT: frontend mutation did not apply to ${consumer.file}`);
+    fs.writeFileSync(target, broken);
+    const stillClean = audit().problems.length === 0;
+    fs.writeFileSync(target, original);
+    if (stillClean) fail(`selftest: expected FAIL after ${consumer.file} discarded its JE memo`);
+    planted += 1;
+  }
+
+  const afterFrontend = audit();
+  if (afterFrontend.problems.length) fail(`selftest frontend cleanup still red: ${afterFrontend.problems.join("; ")}`);
   console.log(`[${LABEL}] SELFTEST PASS (${planted} planted failures detected)`);
 }
 

@@ -139,17 +139,17 @@ export function InvoiceDetailPage() {
   })();
   const sendButtonId = "invoice-send-disabled-reason";
 
-  const journalEntryIds = useMemo(() => {
+  const journalEntries = useMemo(() => {
     const rows = lineageQuery.data?.rows ?? [];
     const seen = new Set<string>();
-    const ids: string[] = [];
+    const entries: Array<{ id: string; memo: string | null }> = [];
     for (const row of rows) {
       const jeId = String(row.journal_entry_id ?? "").trim();
       if (!jeId || seen.has(jeId)) continue;
       seen.add(jeId);
-      ids.push(jeId);
+      entries.push({ id: jeId, memo: row.memo });
     }
-    return ids;
+    return entries;
   }, [lineageQuery.data?.rows]);
 
   const totals = useMemo(
@@ -373,18 +373,12 @@ export function InvoiceDetailPage() {
             <span className="text-sm text-gray-900" data-testid="invoice-journal-entry-links">
               {lineageQuery.isError ? (
                 <span className="text-red-600">Could not load JE links</span>
-              ) : journalEntryIds.length === 0 ? (
+              ) : journalEntries.length === 0 ? (
                 <span className="text-gray-500">—</span>
               ) : (
                 <span className="inline-flex flex-wrap gap-2">
-                  {/* F-18b scope note: these lineage chips stay id-only ON PURPOSE. The source-lineage
-                      endpoint (accounting/audit-trail/routes.ts) does NOT select je.memo — verified, 0
-                      occurrences — so there is no name to render here. Inventing one, or widening the
-                      type to claim a field the server never sends, would be exactly the phantom-column
-                      defect this codebase keeps paying for. The backend change belongs in that route
-                      first; board row filed. */}
-                  {journalEntryIds.map((jeId) => (
-                    <EntityLink key={jeId} kind="journal_entry" id={jeId} label={entityLabel(null, jeId, "Journal entry")} />
+                  {journalEntries.map((je) => (
+                    <EntityLink key={je.id} kind="journal_entry" id={je.id} label={entityLabel(je.memo, je.id, "Journal entry")} />
                   ))}
                 </span>
               )}
