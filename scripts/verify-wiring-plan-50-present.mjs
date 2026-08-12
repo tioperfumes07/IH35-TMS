@@ -80,6 +80,17 @@ export function collectWiringPlanProblems(root = ROOT) {
     if (!body.includes("wireSprintBuiltReason")) {
       problems.push(`${MATRIX_SERVICE} missing wireSprintBuiltReason (H-3 Built feed)`);
     }
+    if (/function leafColumnBuiltReason\([\s\S]*?\n\}/.test(body)) {
+      const fn = body.match(/function leafColumnBuiltReason\([\s\S]*?\n\}/)?.[0] ?? "";
+      if (fn.includes("probeDoneReason")) {
+        problems.push(
+          `${MATRIX_SERVICE} leafColumnBuiltReason must not call probeDoneReason (probes → Audited only)`,
+        );
+      }
+    }
+    if (!body.includes("probe-hold (Audited only, not Built)")) {
+      problems.push(`${MATRIX_SERVICE} missing probe→Audited-only honesty marker`);
+    }
   } else {
     problems.push(`MISSING ${MATRIX_SERVICE}`);
   }
@@ -109,7 +120,10 @@ if (SELFTEST) {
       path.join(tmp, WIRE_SPRINT),
       JSON.stringify({ entries: [{ task: "P38" }, { task: "P37" }, { task: "P41" }] }),
     );
-    fs.writeFileSync(path.join(tmp, MATRIX_SERVICE), "function wireSprintBuiltReason() {}\n");
+    fs.writeFileSync(
+      path.join(tmp, MATRIX_SERVICE),
+      "function wireSprintBuiltReason() {}\nfunction leafColumnBuiltReason() {}\nprobe-hold (Audited only, not Built)\n",
+    );
     assertWiringPlanPresent(tmp);
     console.log(`${LABEL} --selftest PASS`);
   } finally {

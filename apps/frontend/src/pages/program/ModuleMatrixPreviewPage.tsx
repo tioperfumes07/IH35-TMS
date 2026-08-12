@@ -543,7 +543,8 @@ export function ModuleMatrixPreviewPage() {
         <div className="banner live" data-testid="module-matrix-live-banner">
           <b>REQUEST-TIME FEED — NOT module-completion green.</b> Required ={" "}
           <code>*.required.json</code> · Audited = ledger/GUARD (not verify) ·{" "}
-          <b>Built (Box 3)</b> = wired/Neon probe · <b>Live (Box 4)</b> = PROD-VERIFIED click-through
+          <b>Built (Box 3)</b> = wire-sprint guard shipped only · <b>Probes</b> = Audited ● only ·{" "}
+          <b>Live (Box 4)</b> = PROD-VERIFIED click-through
           only · <code>complete:true</code> / scenario dots ≠ linkage done
           {live?.meta?.tipSha ? <> · tip <code>{live.meta.tipSha}</code></> : null}
           {typeof live?.meta?.probeProgress === "number" ? (
@@ -642,7 +643,7 @@ export function ModuleMatrixPreviewPage() {
           <div className="l">
             Built % (Box 3)
             <br />
-            wired / Neon probe
+            wire-sprint guard only
           </div>
         </div>
         <div className="metric">
@@ -666,7 +667,7 @@ export function ModuleMatrixPreviewPage() {
           <div className="l">
             Built cells (Box 3)
             <br />
-            wired / Neon probe
+            wire-sprint guard only
           </div>
         </div>
         <div className="metric good">
@@ -807,9 +808,9 @@ export function ModuleMatrixPreviewPage() {
       </div>
 
       <div className="note">
-        <b>4-box law (locked 2026-08-10):</b> Box 2 Audited = audit trail · Box 3 Built = Neon probe / wired ·
-        Box 4 Live = PROD-VERIFIED only. A cell may show ✓✓✓✕ (built but not click-verified). Module % = Box 4 ÷
-        Required.
+        <b>4-box law (locked 2026-08-11):</b> Box 2 Audited = audit trail or probe density (●) · Box 3 Built =
+        wire-sprint guard only · Box 4 Live = PROD-VERIFIED only. Probes never green Built. A cell may show
+        ✓●✕✕ (probe audited, not wired). Module % = Box 4 ÷ Required.
       </div>
 
       <div className="foot">
