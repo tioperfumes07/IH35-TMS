@@ -1,44 +1,44 @@
 {
-  "as_of": "2026-08-12T19:51:44.402Z",
-  "main_sha": "c4f9cb1c6",
+  "as_of": "2026-08-12T19:58:08.164Z",
+  "main_sha": "afd8040b2",
   "gate": "PRIORITY_10_3BOX_100",
   "allRequired": {
-    "totR": 3110,
-    "totB": 2055,
-    "pct": 66
+    "totR": 3095,
+    "totB": 2165,
+    "pct": 70
   },
   "waveABC_noChrome": {
-    "abcR": 2480,
-    "abcB": 1804,
-    "pct": 73
+    "abcR": 2465,
+    "abcB": 1914,
+    "pct": 78
   },
   "per_module": [
     {
       "mod": "lists",
       "req": 1721,
-      "built": 1071,
-      "pct": 62,
+      "built": 1158,
+      "pct": 67,
       "abcReq": 1312,
-      "abcBuilt": 867,
-      "abcPct": 66
+      "abcBuilt": 954,
+      "abcPct": 73
     },
     {
       "mod": "accounting",
-      "req": 185,
-      "built": 127,
-      "pct": 69,
-      "abcReq": 153,
-      "abcBuilt": 119,
-      "abcPct": 78
+      "req": 170,
+      "built": 114,
+      "pct": 67,
+      "abcReq": 138,
+      "abcBuilt": 106,
+      "abcPct": 77
     },
     {
       "mod": "dispatch",
       "req": 363,
-      "built": 275,
-      "pct": 76,
+      "built": 288,
+      "pct": 79,
       "abcReq": 318,
-      "abcBuilt": 265,
-      "abcPct": 83
+      "abcBuilt": 278,
+      "abcPct": 87
     },
     {
       "mod": "settlements",
@@ -88,20 +88,20 @@
     {
       "mod": "drivers",
       "req": 62,
-      "built": 35,
-      "pct": 56,
+      "built": 41,
+      "pct": 66,
       "abcReq": 50,
-      "abcBuilt": 35,
-      "abcPct": 70
+      "abcBuilt": 41,
+      "abcPct": 82
     },
     {
       "mod": "safety",
       "req": 203,
-      "built": 100,
-      "pct": 49,
+      "built": 117,
+      "pct": 58,
       "abcReq": 160,
-      "abcBuilt": 95,
-      "abcPct": 59
+      "abcBuilt": 112,
+      "abcPct": 70
     }
   ],
   "ranked_gaps": [
@@ -160,22 +160,6 @@
       "seat": "CC-1"
     },
     {
-      "col": "liability",
-      "cells": 93,
-      "byMod": {
-        "lists": 44,
-        "accounting": 3,
-        "dispatch": 10,
-        "settlements": 1,
-        "factoring": 19,
-        "banking": 2,
-        "vendors": 3,
-        "drivers": 6,
-        "safety": 5
-      },
-      "seat": "CC-1"
-    },
-    {
       "col": "connectivity",
       "cells": 84,
       "byMod": {
@@ -188,6 +172,20 @@
         "safety": 33
       },
       "seat": "CC-2"
+    },
+    {
+      "col": "liability",
+      "cells": 82,
+      "byMod": {
+        "lists": 44,
+        "accounting": 3,
+        "dispatch": 10,
+        "settlements": 1,
+        "factoring": 19,
+        "banking": 2,
+        "vendors": 3
+      },
+      "seat": "CC-1"
     },
     {
       "col": "picker_law",
@@ -204,29 +202,9 @@
       "seat": "D LAST"
     },
     {
-      "col": "customer",
-      "cells": 72,
-      "byMod": {
-        "lists": 67,
-        "safety": 5
-      },
-      "seat": "Codex"
-    },
-    {
-      "col": "trailer",
-      "cells": 40,
-      "byMod": {
-        "lists": 20,
-        "dispatch": 13,
-        "safety": 7
-      },
-      "seat": "Codex"
-    },
-    {
       "col": "load",
-      "cells": 31,
+      "cells": 29,
       "byMod": {
-        "accounting": 2,
         "dispatch": 12,
         "factoring": 7,
         "banking": 1,
@@ -278,5 +256,5 @@
       "seat": "?"
     }
   ],
-  "entry_count": 101
+  "entry_count": 104
 }
