@@ -1,0 +1,30 @@
+{
+  "block_id": "lv-class-picker-book-load-catalog-pagination",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL",
+  "phase": "LISTS-CONNECTIVITY",
+  "branch": "codex/close-stale-class-picker-cap",
+  "task": "Reconcile the shipped class-picker cap finding and make the Book Load trailer-requirement picker consume every catalog page.",
+  "allowed_files": [
+    ".block-ready/lv-class-picker-book-load-catalog-pagination.json",
+    "apps/frontend/src/pages/dispatch/components/BookLoadEquipmentSection.tsx",
+    "docs/audit/GUARD-WORKORDERS.md"
+  ],
+  "acceptance": [
+    {
+      "kind": "guard",
+      "script": "scripts/verify-no-silent-list-caps.mjs",
+      "assert": "selftest and full-tree checks pass; Book Load follows total with offset pagination"
+    },
+    {
+      "kind": "guard",
+      "script": "scripts/verify-class-picker-limit-respects-backend-cap.mjs",
+      "assert": "shared class picker remains at or below the backend cap"
+    }
+  ],
+  "linkage": "Book Load trailer requirement ReferenceSelect -> entity-scoped dispatch catalog -> canonical UUID persisted on the load; the creator and reload path remain shared.",
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}
