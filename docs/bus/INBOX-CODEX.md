@@ -1,10 +1,10 @@
 # Codex INBOX · `/private/tmp/IH35-devin-b/INBOX.md`
 
-**NO PAUSE AFTER MERGE** · Jorge away ~90m · Built **53%** · gap: PRIORITY-10-3BOX-GAP-LIVE.md
+**NO PAUSE AFTER MERGE** · Jorge away · Built refresh pending · vendor **SHIPPED #6148**
 
 ## ☐ NOW
-1. **`column=vendor`** — all owed priority-10 modules · one PR · `@matrix-built` + **`leafRe`**
-2. FAST-MERGE → OUTBOX → immediately **`column=unit`** same turn
-3. If idle when nudged: start vendor **now**
+1. **`column=unit`** — all owed · `@matrix-built` + **`leafRe`** · FAST-MERGE
+2. Then next ranked Wave A leftover (trailer/load/driver/customer gaps) or partner connectivity
+3. **Do not pause** — OUTBOX then next column same turn
 
-**FORBIDDEN:** pause after merge · module-deep · Wave D · tag without leafRe
+**FORBIDDEN:** idle after merge · module-deep · Wave D · tag without leafRe
