@@ -14,6 +14,7 @@ import { createPortal } from "react-dom";
 import { useForm, type FieldErrors, type UseFormSetValue } from "react-hook-form";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createDispatchLoad } from "../../../api/dispatch";
+import { pickupTimeTypesCatalogClient } from "../../../api/catalogs-dispatch";
 import { ApiError } from "../../../api/client";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { entityLabel } from "../../../lib/entity-label";
@@ -160,6 +161,7 @@ type FormValues = BookLoadFormValues & {
     postal_code?: string;
     scheduled_arrival_at: string;
     time_window_type?: "appointment" | "open_window" | "select_hours" | "refused";
+    pickup_time_type_id?: string;
     appointment_start_at?: string;
     appointment_end_at?: string;
     lumper_required?: boolean;
@@ -505,6 +507,15 @@ export function BookLoadModalV4({
         .sort((a, b) => a.label.localeCompare(b.label)),
     [customersQuery.data?.customers]
   );
+  const pickupTimeTypesQuery = useQuery({
+    queryKey: ["book-load-pickup-time-types", operatingCompanyId],
+    queryFn: () => pickupTimeTypesCatalogClient.list({ operating_company_id: operatingCompanyId, is_active: "true", limit: 200 }),
+    enabled: Boolean(operatingCompanyId),
+  });
+  const pickupTimeTypeOptions = useMemo(
+    () => (pickupTimeTypesQuery.data?.rows ?? []).map((row) => ({ value: row.id, label: row.display_name, type: row.code })),
+    [pickupTimeTypesQuery.data?.rows]
+  );
 
   const sectionTotal = useMemo(
     () => computeBookLoadSectionTotalCents(linehaul || 0, fuel || 0, accessorialRows ?? []),
@@ -832,6 +843,7 @@ export function BookLoadModalV4({
           address_line1: stop.address_line1,
           scheduled_arrival_at: stop.scheduled_arrival_at ? new Date(stop.scheduled_arrival_at).toISOString() : undefined,
           time_window_type: stop.time_window_type,
+          pickup_time_type_id: stop.pickup_time_type_id || undefined,
           appointment_start_at: stop.appointment_start_at ? new Date(stop.appointment_start_at).toISOString() : undefined,
           appointment_end_at: stop.appointment_end_at ? new Date(stop.appointment_end_at).toISOString() : undefined,
           // Stop booleans: RHF hidden inputs read as "" when empty → never send "" for a boolean field
@@ -1521,7 +1533,15 @@ export function BookLoadModalV4({
                 <span className="blw-sec-meta">1 pickup · 1 delivery · type short + long</span>
               </div>
               <div className="space-y-2 p-3">
-                <BookLoadStopsSection control={form.control as never} register={form.register as never} setValue={form.setValue as never} />
+                <BookLoadStopsSection
+                  operatingCompanyId={operatingCompanyId}
+                  pickupTimeTypeOptions={pickupTimeTypeOptions}
+                  pickupTimeTypesLoading={pickupTimeTypesQuery.isLoading}
+                  onPickupTimeTypeCreated={() => void pickupTimeTypesQuery.refetch()}
+                  control={form.control as never}
+                  register={form.register as never}
+                  setValue={form.setValue as never}
+                />
                 <MilesStrip
                   practical={milesPractical}
                   shortest={milesShortest}

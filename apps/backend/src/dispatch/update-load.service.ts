@@ -40,6 +40,7 @@ export type UpdateLoadStopInput = {
   country?: string | null;
   scheduled_arrival_at?: string | null;
   time_window_type?: string | null;
+  pickup_time_type_id?: string | null;
   appointment_start_at?: string | null;
   appointment_end_at?: string | null;
   lumper_required?: boolean;
@@ -298,10 +299,10 @@ async function replaceStops(
         `
           UPDATE mdata.load_stops SET
             stop_type = $2, location_id = $3, address_line1 = $4, city = $5, state = $6, country = $7,
-            scheduled_arrival_at = $8, time_window_type = $9, appointment_start_at = $10, appointment_end_at = $11,
-            lumper_required = $12, lumper_paid_by = $13, lumper_amount_cents = $14, is_tarp_stop = $15,
-            tarp_count = $16, stop_notes = $17, site_contact_name = $18, site_contact_phone = $19,
-            gate_dock_text = $20, postal_code = $21,
+            scheduled_arrival_at = $8, time_window_type = $9, pickup_time_type_id = $10, appointment_start_at = $11, appointment_end_at = $12,
+            lumper_required = $13, lumper_paid_by = $14, lumper_amount_cents = $15, is_tarp_stop = $16,
+            tarp_count = $17, stop_notes = $18, site_contact_name = $19, site_contact_phone = $20,
+            gate_dock_text = $21, postal_code = $22,
             status = CASE WHEN status = 'cancelled' THEN 'pending' ELSE status END,
             updated_at = now()
           WHERE id = $1::uuid
@@ -316,6 +317,7 @@ async function replaceStops(
           stop.country ?? null,
           stop.scheduled_arrival_at ?? null,
           tw,
+          stop.pickup_time_type_id ?? null,
           stop.appointment_start_at ?? null,
           stop.appointment_end_at ?? null,
           Boolean(stop.lumper_required),
@@ -336,10 +338,10 @@ async function replaceStops(
         `
           INSERT INTO mdata.load_stops (
             load_id, sequence_number, stop_type, location_id, address_line1, city, state, country, scheduled_arrival_at, status,
-            time_window_type, appointment_start_at, appointment_end_at, lumper_required, lumper_paid_by, lumper_amount_cents, is_tarp_stop, tarp_count, stop_notes,
+            time_window_type, pickup_time_type_id, appointment_start_at, appointment_end_at, lumper_required, lumper_paid_by, lumper_amount_cents, is_tarp_stop, tarp_count, stop_notes,
             site_contact_name, site_contact_phone, gate_dock_text, postal_code
           )
-          VALUES ($1::uuid,$2,$3,$4,$5,$6,$7,$8,$9,'pending',$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22)
+          VALUES ($1::uuid,$2,$3,$4,$5,$6,$7,$8,$9,'pending',$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23)
         `,
         [
           loadId,
@@ -352,6 +354,7 @@ async function replaceStops(
           stop.country ?? null,
           stop.scheduled_arrival_at ?? null,
           tw,
+          stop.pickup_time_type_id ?? null,
           stop.appointment_start_at ?? null,
           stop.appointment_end_at ?? null,
           Boolean(stop.lumper_required),

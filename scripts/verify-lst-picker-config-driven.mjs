@@ -51,6 +51,8 @@ const FILES = {
   loadRoutes: "apps/backend/src/dispatch/loads.routes.ts",
   bookService: "apps/backend/src/dispatch/book-load.service.ts",
   migration: "db/migrations/202612501200_p44_load_detention_reason_canonical_fk.sql",
+  pickupPicker: "apps/frontend/src/pages/dispatch/components/BookLoadStopsSection.tsx",
+  pickupMigration: "db/migrations/202612501400_p44_load_stop_pickup_time_type_canonical_fk.sql",
 };
 
 const MISSING = "MISSING";
@@ -146,6 +148,21 @@ export function contractErrors(src) {
   }
   if (!/FOREIGN KEY \(detention_reason_id, operating_company_id\)/.test(src.migration)) {
     errors.push("P44-FK: migration must enforce same-opco detention reason linkage");
+  }
+  if (!/createKind="pickup_time_type"/.test(src.pickupPicker) || !/value:\s*row\.id/.test(src.bookLoad)) {
+    errors.push("P44-FK: Book Load pickup type picker must create and select catalogs.pickup_time_types.id");
+  }
+  if (!/pickup_time_type_id:\s*stop\.pickup_time_type_id/.test(src.bookLoad)) {
+    errors.push("P44-FK: Book Load stop payload must carry pickup_time_type_id");
+  }
+  if (!/pickup_time_type_id:\s*z\.string\(\)\.uuid/.test(src.loadRoutes)) {
+    errors.push("P44-FK: backend stop schemas must accept pickup_time_type_id UUID");
+  }
+  if (!/time_window_type, pickup_time_type_id, appointment_start_at/.test(src.bookService)) {
+    errors.push("P44-FK: load stop INSERT must persist pickup_time_type_id");
+  }
+  if (!/FOREIGN KEY \(pickup_time_type_id\)/.test(src.pickupMigration) || !/enforce_load_stop_pickup_time_type_company/.test(src.pickupMigration)) {
+    errors.push("P44-FK: pickup-time migration must enforce canonical FK plus same-opco constraint");
   }
 
   // ── CONFIG-DRIVEN: the pinned defect ────────────────────────────────────────────────────────
@@ -396,10 +413,12 @@ const GOOD_BACKEND = `
 function selftest() {
   const p44 = {
     detentionPicker: "const options = rows.map((row) => ({ value: row.id }));",
-    bookLoad: "detention_reason_id: values.detention_reason_id || undefined,",
-    loadRoutes: "detention_reason_id: z.string().uuid().optional(),",
-    bookService: "detention_expected_y_n, detention_reason_id, detention_expected_hours,",
+    bookLoad: "detention_reason_id: values.detention_reason_id || undefined, pickup_time_type_id: stop.pickup_time_type_id || undefined, const options = rows.map((row) => ({ value: row.id }));",
+    loadRoutes: "detention_reason_id: z.string().uuid().optional(), pickup_time_type_id: z.string().uuid().optional(),",
+    bookService: "detention_expected_y_n, detention_reason_id, detention_expected_hours, time_window_type, pickup_time_type_id, appointment_start_at,",
     migration: "FOREIGN KEY (detention_reason_id, operating_company_id)",
+    pickupPicker: 'createKind="pickup_time_type"; const options = rows.map((row) => ({ value: row.id }));',
+    pickupMigration: "FOREIGN KEY (pickup_time_type_id); enforce_load_stop_pickup_time_type_company",
   };
   const good = { registry: GOOD_REGISTRY, select: GOOD_SELECT, drawer: GOOD_DRAWER, backendIndex: GOOD_BACKEND, ...p44 };
   const failures = [];
