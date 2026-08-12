@@ -44,6 +44,7 @@ import { useUrlSort } from "../hooks/useUrlSort";
 import { formatDateUS } from "../lib/formatDate";
 import { userFacingApiError } from "../lib/api-error-message";
 import { VendorWorkOrdersReverseSection } from "./vendors/VendorWorkOrdersReverseSection";
+import { VendorPartsHistorySection } from "./vendors/VendorPartsHistorySection";
 import { LinkedBankTransactionsPanel } from "../components/banking/LinkedBankTransactionsPanel";
 
 type SaferEntityStatus = {
@@ -870,6 +871,7 @@ export function VendorDetailPage() {
           {/* Edit/Save/Cancel moved to the top of the panel (discoverable). */}
         </DataPanel>
         <VendorWorkOrdersReverseSection operatingCompanyId={companyId} vendorId={vendor.id} />
+        <VendorPartsHistorySection operatingCompanyId={companyId} vendorId={vendor.id} />
         <LinkedBankTransactionsPanel companyId={companyId} linkage={{ kind: "vendor_id", id: vendor.id }} entityLabel={vendor.name} />
         </div>
       ) : null}
