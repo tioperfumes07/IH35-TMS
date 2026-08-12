@@ -143,7 +143,6 @@
       "route_hint": "/banking/factoring",
       "required": [
         "customer",
-        "load",
         "gl_je",
         "liability",
         "connectivity",
@@ -216,5 +215,19 @@
         "qbo_chrome"
       ]
     }
-  ]
+  ],
+  "honesty_audit": {
+    "load_inflation_2026_08_12": {
+      "finding": "DISP-REQUIRED-LOAD-INFLATION",
+      "drops": [
+        {
+          "module": "banking",
+          "id": "factoring",
+          "removed": [
+            "load"
+          ]
+        }
+      ]
+    }
+  }
 }

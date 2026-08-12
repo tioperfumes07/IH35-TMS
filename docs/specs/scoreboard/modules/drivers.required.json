@@ -217,7 +217,6 @@
       "route_hint": "/drivers/team-splits",
       "required": [
         "driver",
-        "load",
         "connectivity",
         "picker_law"
       ]
@@ -245,5 +244,19 @@
         "picker_law"
       ]
     }
-  ]
+  ],
+  "honesty_audit": {
+    "load_inflation_2026_08_12": {
+      "finding": "DISP-REQUIRED-LOAD-INFLATION",
+      "drops": [
+        {
+          "module": "drivers",
+          "id": "team_splits",
+          "removed": [
+            "load"
+          ]
+        }
+      ]
+    }
+  }
 }
