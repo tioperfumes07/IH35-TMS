@@ -364,6 +364,48 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
     return detail;
   });
 
+  // LOAD-SETTLEMENT-TAB-SHOWS-OPEN-NOT-SETTLING — the load→settlement REVERSE hop. Before this route,
+  // nothing resolved "which settlement actually covers load X" — the load drawer's Settlement tab
+  // called a DRIVER-scoped "open pre-settlement" lookup instead, so a load already paid on a LOCKED
+  // settlement showed the driver's separate, unrelated, empty open cycle. Same bill-first
+  // COALESCE(db.load_id, sl.load_id) resolution the settlement detail route above already uses
+  // (SETTLEMENT-DETAIL-LOAD-COALESCE-DRIFT) — reused here, not reinvented, so the two call sites can
+  // never drift apart on which load a settlement line covers.
+  app.get("/api/v1/driver-finance/settlements/for-load/:loadId", async (req, reply) => {
+    const user = authed(req, reply);
+    if (!user) return;
+    const params = z.object({ loadId: z.string().uuid() }).safeParse(req.params ?? {});
+    if (!params.success) return validationError(reply, params.error);
+    const companyId = String((req.query as Record<string, unknown> | undefined)?.["operating_company_id"] ?? "");
+    if (!companyId) return reply.code(400).send({ error: "operating_company_id_required" });
+
+    const result = await withCompany(user.uuid, companyId, async (client) => {
+      if (!(await hasSettlementSchema(client))) return { unavailable: true as const };
+      const res = await client.query(
+        `
+          SELECT DISTINCT
+            s.id::text AS settlement_id,
+            s.display_id,
+            s.status::text AS status,
+            s.gross_pay,
+            s.net_pay,
+            s.locked_at,
+            s.paid_at
+          FROM driver_finance.settlement_lines sl
+          LEFT JOIN driver_finance.driver_bills db ON db.id = sl.source_driver_bill_id
+          JOIN driver_finance.driver_settlements s ON s.id = sl.settlement_id
+          WHERE COALESCE(db.load_id, sl.load_id) = $1::uuid
+            AND s.operating_company_id = $2::uuid
+          ORDER BY s.locked_at DESC NULLS LAST, settlement_id DESC
+        `,
+        [params.data.loadId, companyId]
+      );
+      return { settlements: res.rows };
+    });
+    if ("unavailable" in result) return reply.code(501).send({ error: "driver_finance_schema_not_available" });
+    return result;
+  });
+
   app.get("/api/v1/driver-finance/settlements/:id/pdf", async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
