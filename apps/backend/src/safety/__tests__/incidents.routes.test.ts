@@ -146,7 +146,7 @@ describe("safety incidents routes (A23-7)", () => {
     mockQuery.mockImplementation(async (sql: string) => {
       if (sql.includes("SET LOCAL")) return { rows: [], rowCount: 0 };
       if (sql.includes("INSERT INTO safety.incidents")) {
-        return { rows: [{ id: INCIDENT_ID, incident_type: "cargo_claim", status: "open" }], rowCount: 1 };
+        return { rows: [{ id: INCIDENT_ID, incident_type: "damage_report", status: "open" }], rowCount: 1 };
       }
       return { rows: [], rowCount: 0 };
     });
@@ -155,13 +155,13 @@ describe("safety incidents routes (A23-7)", () => {
       url: "/api/v1/safety/incidents",
       payload: {
         operating_company_id: COMPANY,
-        incident_type: "cargo_claim",
+        incident_type: "damage_report",
         location: "Dock 3",
         description: "Seal broken",
       },
     });
     expect(res.statusCode).toBe(201);
-    expect(res.json()).toMatchObject({ incident: { id: INCIDENT_ID, incident_type: "cargo_claim" } });
+    expect(res.json()).toMatchObject({ incident: { id: INCIDENT_ID, incident_type: "damage_report" } });
     expect(mockAppendCrudAudit).toHaveBeenCalled();
   });
 
@@ -198,6 +198,7 @@ describe("safety incidents routes (A23-7)", () => {
 
   // SC4 — Carmack/49 CFR 1005.2 cargo-claim intake validations.
   const CUSTOMER_ID = "33333333-3333-4333-8333-333333333333";
+  const CLAIM_REASON_ID = "66666666-6666-4666-8666-666666666666";
 
   it("POST rejects claim_* fields on a non-cargo_claim incident (400)", async () => {
     const res = await app.inject({
@@ -228,6 +229,7 @@ describe("safety incidents routes (A23-7)", () => {
         operating_company_id: COMPANY,
         incident_type: "cargo_claim",
         description: "Shortage",
+        claim_reason_id: CLAIM_REASON_ID,
         claimant_customer_id: CUSTOMER_ID,
       },
     });
@@ -248,7 +250,7 @@ describe("safety incidents routes (A23-7)", () => {
         operating_company_id: COMPANY,
         incident_type: "cargo_claim",
         description: "Loss",
-        claim_reason_code: "not_a_real_code",
+        claim_reason_id: CLAIM_REASON_ID,
       },
     });
     expect(res.statusCode).toBe(400);
@@ -262,7 +264,7 @@ describe("safety incidents routes (A23-7)", () => {
         return { rows: [{ operating_company_id: COMPANY }], rowCount: 1 };
       }
       if (sql.includes("catalogs.cargo_claim_reasons")) {
-        return { rows: [{ "?column?": 1 }], rowCount: 1 };
+        return { rows: [{ reason_code: "theft" }], rowCount: 1 };
       }
       if (sql.includes("INSERT INTO safety.incidents")) {
         return {
@@ -289,7 +291,7 @@ describe("safety incidents routes (A23-7)", () => {
         description: "Theft in transit",
         damage_amount_cents: 125000,
         claimant_customer_id: CUSTOMER_ID,
-        claim_reason_code: "theft",
+        claim_reason_id: CLAIM_REASON_ID,
         claim_filed_at: "2026-06-01",
       },
     });

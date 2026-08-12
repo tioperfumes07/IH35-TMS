@@ -1104,6 +1104,7 @@ export function createSafetyIncident(body: {
   damage_amount_cents?: number;
   // SC4 — Carmack/49 CFR 1005.2 cargo-claim fields (cargo_claim rows only).
   claim_reason_code?: string | null;
+  claim_reason_id?: string | null;
   claimant_customer_id?: string | null;
   claim_filed_at?: string | null;
 }) {

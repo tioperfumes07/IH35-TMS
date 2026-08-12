@@ -69,6 +69,7 @@ const createBodySchema = z.object({
   damage_amount_cents: z.coerce.number().int().min(0).default(0),
   // SC4 — Carmack/49 CFR 1005.2 cargo-claim fields (cargo_claim rows only; enforced below).
   claim_reason_code: z.string().trim().max(80).nullable().optional(),
+  claim_reason_id: z.string().uuid().nullable().optional(),
   claimant_customer_id: z.string().uuid().nullable().optional(),
   claim_filed_at: z
     .string()
@@ -111,6 +112,7 @@ const patchBodySchema = z
     interchange_party: z.string().max(200).nullable().optional(),
     damage_amount_cents: z.coerce.number().int().min(0).optional(),
     claim_reason_code: z.string().trim().max(80).nullable().optional(),
+    claim_reason_id: z.string().uuid().nullable().optional(),
     claimant_customer_id: z.string().uuid().nullable().optional(),
     claim_filed_at: z
       .string()
@@ -237,7 +239,7 @@ export async function registerSafetyIncidentsRoutes(app: FastifyInstance) {
     return { incidents: rows };
   });
 
-  app.get("/api/v1/safety/incidents/:id", async (req, reply) => {
+  app.get("/api/v1/safety/incidents/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const params = idParamsSchema.safeParse(req.params ?? {});
@@ -281,7 +283,7 @@ export async function registerSafetyIncidentsRoutes(app: FastifyInstance) {
     return { incident: row };
   });
 
-  app.post("/api/v1/safety/incidents", async (req, reply) => {
+  app.post("/api/v1/safety/incidents", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!isSafetyMutationAllowed(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -292,16 +294,20 @@ export async function registerSafetyIncidentsRoutes(app: FastifyInstance) {
     // damage_report / trailer_interchange so those clusters stay clean. Trust the incident_type,
     // never the client.
     const claimReasonCode = body.data.claim_reason_code ?? null;
+    const claimReasonId = body.data.claim_reason_id ?? null;
     const claimantCustomerId = body.data.claimant_customer_id ?? null;
     const claimFiledAt = body.data.claim_filed_at ?? null;
     if (
       body.data.incident_type !== "cargo_claim" &&
-      (claimReasonCode !== null || claimantCustomerId !== null || claimFiledAt !== null)
+      (claimReasonCode !== null || claimReasonId !== null || claimantCustomerId !== null || claimFiledAt !== null)
     ) {
       return reply.code(400).send({
         error: "validation_error",
         details: "claim_reason_code / claimant_customer_id / claim_filed_at are only valid for incident_type=cargo_claim",
       });
+    }
+    if (body.data.incident_type === "cargo_claim" && claimReasonId === null) {
+      return reply.code(400).send({ error: "validation_error", details: "claim_reason_id is required for cargo claims" });
     }
 
     const trailerId = body.data.trailer_id ?? null;
@@ -337,21 +343,23 @@ export async function registerSafetyIncidentsRoutes(app: FastifyInstance) {
       }
       // Validate reason against the SAME source the catalog route reads (catalogs.cargo_claim_reasons),
       // active codes only, scoped to this company.
-      if (claimReasonCode !== null) {
-        const reasonRes = await client.query(
+      let canonicalReasonCode = claimReasonCode;
+      if (claimReasonId !== null) {
+        const reasonRes = await client.query<{ reason_code: string }>(
           `
-            SELECT 1
+            SELECT reason_code
             FROM catalogs.cargo_claim_reasons
             WHERE operating_company_id = $1
-              AND reason_code = $2
+              AND id = $2
               AND is_active = true
             LIMIT 1
           `,
-          [body.data.operating_company_id, claimReasonCode]
+          [body.data.operating_company_id, claimReasonId]
         );
         if (reasonRes.rows.length === 0) {
           return { error: "invalid_claim_reason" as const };
         }
+        canonicalReasonCode = reasonRes.rows[0].reason_code;
       }
 
       const res = await client.query(
@@ -369,6 +377,7 @@ export async function registerSafetyIncidentsRoutes(app: FastifyInstance) {
             interchange_party,
             damage_amount_cents,
             claim_reason_code,
+            claim_reason_id,
             claimant_customer_id,
             claim_filed_at,
             recovery_rail,
@@ -381,7 +390,8 @@ export async function registerSafetyIncidentsRoutes(app: FastifyInstance) {
           VALUES (
             $1, $2,
             COALESCE($3::timestamptz, now()),
-            $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14::date
+            $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15::date,
+            $16, $17, $18, $19, $20, $21
           )
           RETURNING *
         `,
@@ -397,7 +407,8 @@ export async function registerSafetyIncidentsRoutes(app: FastifyInstance) {
           body.data.load_id ?? null,
           body.data.interchange_party ?? null,
           body.data.damage_amount_cents,
-          claimReasonCode,
+          canonicalReasonCode,
+          claimReasonId,
           claimantCustomerId,
           claimFiledAt,
           body.data.recovery_rail,
@@ -514,15 +525,27 @@ export async function registerSafetyIncidentsRoutes(app: FastifyInstance) {
       "interchange_party",
       "damage_amount_cents",
       "claim_reason_code",
+      "claim_reason_id",
       "claimant_customer_id",
       "claim_filed_at",
     ] as const;
 
     const updated = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
+      const patchData: Record<string, unknown> = { ...body.data };
+      if (body.data.claim_reason_id !== undefined) {
+        if (body.data.claim_reason_id === null) return null;
+        const reasonRes = await client.query<{ reason_code: string }>(
+          `SELECT reason_code FROM catalogs.cargo_claim_reasons
+           WHERE id = $1 AND operating_company_id = $2 AND is_active = true LIMIT 1`,
+          [body.data.claim_reason_id, query.data.operating_company_id]
+        );
+        if (!reasonRes.rows[0]) return null;
+        patchData.claim_reason_code = reasonRes.rows[0].reason_code;
+      }
       const sets: string[] = [];
       const values: unknown[] = [params.data.id, query.data.operating_company_id];
       for (const column of PATCHABLE) {
-        const value = (body.data as Record<string, unknown>)[column];
+        const value = patchData[column];
         if (value === undefined) continue;
         values.push(value);
         sets.push(`${column} = $${values.length}`);
