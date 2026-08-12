@@ -21,6 +21,7 @@ const MAINT_WO_ROUTES = "apps/backend/src/maintenance/work-orders.routes.ts";
 const MAINT_WO_TABLE = "apps/frontend/src/pages/maintenance/components/WorkOrdersTable.tsx";
 const CUSTOMER_DETAIL = "apps/frontend/src/pages/CustomerDetail.tsx";
 const VENDOR_WORK_ORDERS = "apps/frontend/src/pages/vendors/VendorWorkOrdersReverseSection.tsx";
+const DETENTION_BOARD = "apps/frontend/src/pages/dispatch/DetentionBoardPage.tsx";
 
 /** Batch-2/3 drain sites — name||id / name??id paints (CLS-UUID-LABEL). */
 const SIBLINGS = [
@@ -832,17 +833,17 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/dispatch/LateArrivalsPage.tsx",
     bad: /load\.customer_name\s*\?\?\s*"—"/,
-    good: /entityLabel\(\s*load\.customer_name\s*,\s*null\s*,\s*"Customer"\s*\)/,
+    good: /entityLabel\(\s*load\.customer_name\s*,\s*load\.customer_id\s*,\s*"Customer"\s*\)/,
   },
   {
     rel: "apps/frontend/src/pages/dispatch/AtRiskQueuePage.tsx",
     bad: /load\.customer_name\s*\?\?\s*"—"/,
-    good: /entityLabel\(\s*load\.customer_name\s*,\s*null\s*,\s*"Customer"\s*\)/,
+    good: /entityLabel\(\s*load\.customer_name\s*,\s*load\.customer_id\s*,\s*"Customer"\s*\)/,
   },
   {
     rel: "apps/frontend/src/pages/dispatch/DetentionBoardPage.tsx",
     bad: /event\.customer_name\s*\?\?\s*"—"/,
-    good: /entityLabel\(\s*event\.customer_name\s*,\s*null\s*,\s*"Customer"\s*\)/,
+    good: /entityLabel\(\s*event\.customer_name\s*,\s*event\.customer_id\s*,\s*"Customer"\s*\)/,
   },
   {
     rel: "apps/frontend/src/components/dispatch/DispatchKanban.tsx",
@@ -1749,6 +1750,19 @@ export function auditVendorWorkOrderUnitLink(src) {
   return problems;
 }
 
+export function auditDetentionBoardEntityLinks(src) {
+  const problems = [];
+  for (const [kind, id, name, fallback] of [
+    ["customer", "customer_id", "customer_name", "Customer"],
+    ["driver", "driver_id", "driver_name", "Driver"],
+    ["unit", "unit_id", "unit_number", "Unit"],
+  ]) {
+    const linkRe = new RegExp(`<EntityLink\\s+kind="${kind}"\\s+id=\\{event\\.${id}\\}\\s+label=\\{entityLabel\\(event\\.${name}, event\\.${id}, "${fallback}"\\)\\}`);
+    if (!linkRe.test(src)) problems.push(`${DETENTION_BOARD}: detention rows must drill through the ${kind} FK`);
+  }
+  return problems;
+}
+
 function auditTree() {
   const problems = [
     ...auditEntityLabel(readFileSync(join(ROOT, TARGET), "utf8")),
@@ -1759,6 +1773,7 @@ function auditTree() {
     ),
     ...auditCustomerLoadEntityLinks(readFileSync(join(ROOT, CUSTOMER_DETAIL), "utf8")),
     ...auditVendorWorkOrderUnitLink(readFileSync(join(ROOT, VENDOR_WORK_ORDERS), "utf8")),
+    ...auditDetentionBoardEntityLinks(readFileSync(join(ROOT, DETENTION_BOARD), "utf8")),
   ];
   for (const s of SIBLINGS) {
     problems.push(...auditSibling(s.rel, readFileSync(join(ROOT, s.rel), "utf8"), s.bad, s.good));
@@ -1817,6 +1832,17 @@ function selftest() {
   }
   if (!auditVendorWorkOrderUnitLink(goodVendorWorkOrderUnitLink.replace('id={workOrder.unit_id}', 'id={undefined}')).length) {
     failures.push("selftest: missing vendor work-order unit FK link NOT detected");
+  }
+  const goodDetentionLinks = `
+    <EntityLink kind="customer" id={event.customer_id} label={entityLabel(event.customer_name, event.customer_id, "Customer")} />
+    <EntityLink kind="driver" id={event.driver_id} label={entityLabel(event.driver_name, event.driver_id, "Driver")} />
+    <EntityLink kind="unit" id={event.unit_id} label={entityLabel(event.unit_number, event.unit_id, "Unit")} />
+  `;
+  if (auditDetentionBoardEntityLinks(goodDetentionLinks).length) failures.push("selftest: good detention links flagged");
+  for (const kind of ["customer", "driver", "unit"]) {
+    if (!auditDetentionBoardEntityLinks(goodDetentionLinks.replace(`kind="${kind}"`, 'kind="load"')).some((p) => p.includes(`${kind} FK`))) {
+      failures.push(`selftest: missing detention ${kind} FK link NOT detected`);
+    }
   }
   const sib = SIBLINGS[0];
   if (

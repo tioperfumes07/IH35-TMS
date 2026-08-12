@@ -138,7 +138,12 @@ export function DetentionBoardPage() {
         <EntityLink kind="load" id={event.load_id} label={entityLabel(event.load_number, event.load_id, "Load")} />
       ),
     },
-    { key: "customer_name", label: "Customer", sortable: true, render: (event) => entityLabel(event.customer_name, null, "Customer") },
+    {
+      key: "customer_name",
+      label: "Customer",
+      sortable: true,
+      render: (event) => <EntityLink kind="customer" id={event.customer_id} label={entityLabel(event.customer_name, event.customer_id, "Customer")} />,
+    },
     {
       key: "stop_city",
       label: "Stop",
@@ -153,7 +158,13 @@ export function DetentionBoardPage() {
       key: "driver_name",
       label: "Driver",
       sortable: true,
-      render: (event) => entityLabel(event.driver_name, null, "Driver"),
+      render: (event) => <EntityLink kind="driver" id={event.driver_id} label={entityLabel(event.driver_name, event.driver_id, "Driver")} />,
+    },
+    {
+      key: "unit_number",
+      label: "Unit",
+      sortable: true,
+      render: (event) => <EntityLink kind="unit" id={event.unit_id} label={entityLabel(event.unit_number, event.unit_id, "Unit")} />,
     },
     {
       key: "started_at",

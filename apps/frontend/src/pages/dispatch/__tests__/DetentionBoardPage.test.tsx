@@ -19,11 +19,15 @@ vi.mock("../../../api/dispatch", () => ({
         id: "det-1",
         load_id: "load-1",
         load_number: "L-100",
+        customer_id: "customer-1",
+        driver_id: "driver-1",
+        unit_id: "unit-1",
         customer_name: "Acme",
         stop_city: "Dallas",
         stop_state: "TX",
         stop_type: "delivery",
         driver_name: "Pat Driver",
+        unit_number: "T-101",
         status: "accruing",
         started_at: new Date(Date.now() - 90 * 60_000).toISOString(),
         billable_minutes: 30,
@@ -64,6 +68,9 @@ describe("DetentionBoardPage (B21-D5)", () => {
     wrap(<DetentionBoardPage />);
     expect(await screen.findByTestId("detention-elapsed-det-1")).toBeTruthy();
     expect(screen.getByText("L-100")).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Acme" }).getAttribute("href")).toBe("/customers/customer-1");
+    expect(screen.getByRole("link", { name: "Pat Driver" }).getAttribute("href")).toBe("/drivers/driver-1");
+    expect(screen.getByRole("link", { name: "T-101" }).getAttribute("href")).toBe("/fleet/units/unit-1");
   });
 
   it("exposes sync from arrivals and bridge-oriented actions row", async () => {

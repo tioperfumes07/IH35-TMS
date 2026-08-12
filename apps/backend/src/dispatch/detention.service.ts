@@ -122,6 +122,7 @@ export async function listDetentionBoard(userId: string, operatingCompanyId: str
           de.*,
           l.load_number,
           l.status AS load_status,
+          l.customer_id,
           c.customer_name,
           c.ar_email AS customer_email,
           ls.stop_type::text AS stop_type,
