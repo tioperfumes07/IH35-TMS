@@ -143,6 +143,12 @@ export type LoadsListResponse = {
 
 export type LoadDetail = DispatchLoadRow & {
   stops: LoadStop[];
+  charges?: Array<{
+    code: string;
+    additional_charge_id?: string | null;
+    description?: string | null;
+    amount_cents: number;
+  }>;
   // Block 7 (Jorge-approved, no migration): freight attributes the Edit wizard prefills + round-trips.
   commodity?: string | null;
   cargo_weight_lbs?: number | null;
@@ -378,7 +384,7 @@ export function useLoad(id: string | null) {
  */
 export function getDispatchLoad(id: string, operatingCompanyId: string) {
   const qs = new URLSearchParams({ operating_company_id: operatingCompanyId }).toString();
-  return apiRequest<LoadDetail & { charges?: Array<{ code: string; amount_cents: number }> }>(
+  return apiRequest<LoadDetail>(
     `/api/v1/dispatch/loads/${id}?${qs}`
   );
 }

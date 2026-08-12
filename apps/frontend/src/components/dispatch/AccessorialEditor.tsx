@@ -49,18 +49,13 @@ export function AccessorialEditor({ operatingCompanyId, rows, onRowsChange, onDe
     const catalogRows = catalogQuery.data?.rows ?? [];
     if (catalogRows.length > 0) {
       return catalogRows.map((row) => ({
-        value: row.code,
+        value: row.id,
+        code: row.code,
         label: row.display_name,
         description: row.description ?? row.display_name,
       }));
     }
-    return [
-      { value: "DETENTION", label: "Detention", description: "Detention charge" },
-      { value: "LAYOVER", label: "Layover", description: "Layover charge" },
-      { value: "LUMPER", label: "Lumper", description: "Lumper charge" },
-      { value: "TONU", label: "TONU", description: "Truck ordered not used" },
-      { value: "MISC", label: "Misc accessorial", description: "Misc accessorial" },
-    ];
+    return [];
   }, [catalogQuery.data?.rows]);
 
   const accessorialSubtotal = sumAccessorialCents(rows) + Math.max(0, extraSubtotalCents);
@@ -75,18 +70,24 @@ export function AccessorialEditor({ operatingCompanyId, rows, onRowsChange, onDe
 
   function handleSeed(preset: AccessorialSeedPreset) {
     const row = seedAccessorialRow(preset);
-    appendRow(row);
+    const canonical = catalogOptions.find((option) => option.code === row.code);
+    appendRow({
+      ...row,
+      additional_charge_id: canonical?.value ?? "",
+      description: canonical?.description ?? row.description,
+    });
     if (preset === "detention") {
       onDetentionSeed?.({ detention_expected_y_n: true });
     }
   }
 
-  function handleCodeChange(id: string, code: string) {
-    const option = catalogOptions.find((o) => o.value === code);
+  function handleCodeChange(id: string, catalogId: string) {
+    const option = catalogOptions.find((o) => o.value === catalogId);
     const existing = rows.find((r) => r.id === id);
     onRowsChange(
       updateRow(rows, id, {
-        code,
+        additional_charge_id: catalogId,
+        code: option?.code ?? existing?.code ?? "",
         // A code created inline is not in catalogOptions until the refetch lands — keep whatever
         // description the row already had rather than blanking it in that window.
         description: option?.description ?? option?.label ?? existing?.description ?? "",
@@ -111,12 +112,11 @@ export function AccessorialEditor({ operatingCompanyId, rows, onRowsChange, onDe
         // createdValueField="code" selects the new row by the value this editor actually stores.
         render: (row) => (
           <ReferenceSelect
-            value={row.code || null}
+            value={row.additional_charge_id || null}
             onChange={(next) => handleCodeChange(row.id, next ?? "")}
             options={catalogOptions.map((o) => ({ value: o.value, label: o.label }))}
             createKind="additional_charge"
             operatingCompanyId={operatingCompanyId}
-            createdValueField="code"
             loading={catalogQuery.isLoading}
             placeholder="Select code"
             onOptionCreated={() => void catalogQuery.refetch()}
