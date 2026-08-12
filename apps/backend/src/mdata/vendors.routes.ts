@@ -598,7 +598,7 @@ export async function registerVendorRoutes(app: FastifyInstance) {
     return row;
   });
 
-  app.patch("/api/v1/mdata/vendors/:id", async (req, reply) => {
+  app.patch("/api/v1/mdata/vendors/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -666,18 +666,28 @@ export async function registerVendorRoutes(app: FastifyInstance) {
             SELECT ${VENDOR_SELECT_COLUMNS}
             FROM mdata.vendors
             WHERE id = $1
+              AND operating_company_id IN (
+                SELECT uca.company_id
+                  FROM org.user_company_access uca
+                  JOIN org.companies oc ON oc.id = uca.company_id AND oc.deactivated_at IS NULL
+                 WHERE uca.user_id = $2::uuid
+                   AND uca.deactivated_at IS NULL
+              )
             LIMIT 1
           `,
-          [parsedParams.data.id]
+          [parsedParams.data.id, authUser.uuid]
         );
         const oldRow = oldRes.rows[0] ?? null;
         if (!oldRow) return null;
 
+        values.push(oldRow.operating_company_id);
+        const scopeIdx = values.length;
         const res = await client.query(
           `
             UPDATE mdata.vendors
             SET ${setParts.join(", ")}
             WHERE id = $${idIdx}
+              AND operating_company_id = $${scopeIdx}::uuid
             RETURNING ${VENDOR_SELECT_COLUMNS}
           `,
           values
@@ -725,9 +735,16 @@ export async function registerVendorRoutes(app: FastifyInstance) {
           SELECT id, operating_company_id, deactivated_at
           FROM mdata.vendors
           WHERE id = $1
+            AND operating_company_id IN (
+              SELECT uca.company_id
+                FROM org.user_company_access uca
+                JOIN org.companies oc ON oc.id = uca.company_id AND oc.deactivated_at IS NULL
+               WHERE uca.user_id = $2::uuid
+                 AND uca.deactivated_at IS NULL
+            )
           LIMIT 1
         `,
-        [parsedParams.data.id]
+        [parsedParams.data.id, authUser.uuid]
       );
       const oldRow = oldRes.rows[0] ?? null;
       if (!oldRow) return null;
@@ -740,10 +757,11 @@ export async function registerVendorRoutes(app: FastifyInstance) {
             UPDATE mdata.vendors
             SET deactivated_at = now(), updated_by_user_id = $2
             WHERE id = $1
+              AND operating_company_id = $3::uuid
               AND deactivated_at IS NULL
             RETURNING id, deactivated_at
           `,
-          [parsedParams.data.id, authUser.uuid]
+          [parsedParams.data.id, authUser.uuid, oldRow.operating_company_id]
         );
         deactivatedAt = (res.rows[0]?.deactivated_at as string | undefined) ?? deactivatedAt;
         wasAlreadyDeactivated = false;
