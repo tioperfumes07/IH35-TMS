@@ -1,54 +1,4 @@
 {
-  "3181": {
-    "claimed_at": "2026-08-12",
-    "claimed_by": "cc-1",
-    "purpose": "verify-usmca-posting-on-qbo-off"
-  },
-  "3177": {
-    "claimed_at": "2026-08-12",
-    "claimed_by": "cc-1",
-    "purpose": "verify-voided-money-docs-zero-balance"
-  },
-  "3179": {
-    "claimed_at": "2026-08-12",
-    "claimed_by": "cc-2",
-    "purpose": "verify-safety-temp-cover-assignments-wired"
-  },
-  "3173": {
-    "claimed_at": "2026-08-12",
-    "claimed_by": "cc-1",
-    "purpose": "verify-bank-suggestions-includes-rule-match"
-  },
-  "3175": {
-    "claimed_at": "2026-08-12",
-    "claimed_by": "cc-2",
-    "purpose": "verify-bank-account-detail-transfers-reverse-link"
-  },
-  "3171": {
-    "claimed_at": "2026-08-12",
-    "claimed_by": "cc-2",
-    "purpose": "verify-unit-insurance-linked-policies"
-  },
-  "3167": {
-    "claimed_at": "2026-08-12",
-    "claimed_by": "cc-2",
-    "purpose": "verify-da-program-routes-uuid-scoped"
-  },
-  "3163": {
-    "claimed_at": "2026-08-12",
-    "claimed_by": "cc-2",
-    "purpose": "verify-qbo-oauth-redirect-uri-not-logged"
-  },
-  "3159": {
-    "claimed_at": "2026-08-12",
-    "claimed_by": "cc-2",
-    "purpose": "verify-load-drawer-settlement-tab-load-aware"
-  },
-  "3155": {
-    "claimed_at": "2026-08-12",
-    "claimed_by": "cc-2",
-    "purpose": "verify-rate-resync-mints-invoice-when-none-exists"
-  },
   "2912": {
     "claimed_at": "2026-08-08",
     "claimed_by": "cursor",
@@ -459,10 +409,65 @@
     "claimed_by": "cc-1",
     "purpose": "verify-ap-bills-void-spelling"
   },
+  "3155": {
+    "claimed_at": "2026-08-12",
+    "claimed_by": "cc-2",
+    "purpose": "verify-rate-resync-mints-invoice-when-none-exists"
+  },
   "3157": {
     "claimed_at": "2026-08-12",
     "claimed_by": "cc-1",
     "purpose": "verify-void-reversal-posting-source-tagged"
+  },
+  "3159": {
+    "claimed_at": "2026-08-12",
+    "claimed_by": "cc-2",
+    "purpose": "verify-load-drawer-settlement-tab-load-aware"
+  },
+  "3163": {
+    "claimed_at": "2026-08-12",
+    "claimed_by": "cc-2",
+    "purpose": "verify-qbo-oauth-redirect-uri-not-logged"
+  },
+  "3167": {
+    "claimed_at": "2026-08-12",
+    "claimed_by": "cc-2",
+    "purpose": "verify-da-program-routes-uuid-scoped"
+  },
+  "3171": {
+    "claimed_at": "2026-08-12",
+    "claimed_by": "cc-2",
+    "purpose": "verify-unit-insurance-linked-policies"
+  },
+  "3173": {
+    "claimed_at": "2026-08-12",
+    "claimed_by": "cc-1",
+    "purpose": "verify-bank-suggestions-includes-rule-match"
+  },
+  "3175": {
+    "claimed_at": "2026-08-12",
+    "claimed_by": "cc-2",
+    "purpose": "verify-bank-account-detail-transfers-reverse-link"
+  },
+  "3177": {
+    "claimed_at": "2026-08-12",
+    "claimed_by": "cc-1",
+    "purpose": "verify-voided-money-docs-zero-balance"
+  },
+  "3179": {
+    "claimed_at": "2026-08-12",
+    "claimed_by": "cc-2",
+    "purpose": "verify-safety-temp-cover-assignments-wired"
+  },
+  "3181": {
+    "claimed_at": "2026-08-12",
+    "claimed_by": "cc-1",
+    "purpose": "verify-usmca-posting-on-qbo-off"
+  },
+  "3183": {
+    "claimed_at": "2026-08-12",
+    "claimed_by": "cc-2",
+    "purpose": "verify-no-uncast-operating-company-id"
   },
   "_band": {
     "cc-1": "n%4===1",
