@@ -1,4 +1,9 @@
 {
+  "3125": {
+    "claimed_at": "2026-08-12",
+    "claimed_by": "cc-1",
+    "purpose": "verify-qbo-sync-bill-payment-phantom-column"
+  },
   "3119": {
     "claimed_at": "2026-08-12",
     "claimed_by": "cc-2",
@@ -2198,5 +2203,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1117
+  "total_claimed": 1118
 }
