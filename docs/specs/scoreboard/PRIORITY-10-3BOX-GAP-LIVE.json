@@ -1,16 +1,16 @@
 {
-  "as_of": "2026-08-12T20:25:57.741Z",
-  "main_sha": "37048fb3d",
+  "as_of": "2026-08-12T20:27:38.096Z",
+  "main_sha": "744ed1296",
   "gate": "PRIORITY_10_3BOX_100",
   "allRequired": {
     "totR": 3051,
-    "totB": 2232,
-    "pct": 73
+    "totB": 2258,
+    "pct": 74
   },
   "waveABC_noChrome": {
     "abcR": 2421,
-    "abcB": 1981,
-    "pct": 82
+    "abcB": 2007,
+    "pct": 83
   },
   "per_module": [
     {
@@ -52,20 +52,20 @@
     {
       "mod": "factoring",
       "req": 131,
-      "built": 76,
-      "pct": 58,
+      "built": 86,
+      "pct": 66,
       "abcReq": 114,
-      "abcBuilt": 76,
-      "abcPct": 67
+      "abcBuilt": 86,
+      "abcPct": 75
     },
     {
       "mod": "banking",
       "req": 49,
-      "built": 32,
-      "pct": 65,
+      "built": 40,
+      "pct": 82,
       "abcReq": 41,
-      "abcBuilt": 30,
-      "abcPct": 73
+      "abcBuilt": 38,
+      "abcPct": 93
     },
     {
       "mod": "customers",
@@ -88,11 +88,11 @@
     {
       "mod": "drivers",
       "req": 62,
-      "built": 41,
-      "pct": 66,
+      "built": 49,
+      "pct": 79,
       "abcReq": 50,
-      "abcBuilt": 41,
-      "abcPct": 82
+      "abcBuilt": 49,
+      "abcPct": 98
     },
     {
       "mod": "safety",
@@ -197,16 +197,6 @@
       "seat": "Codex"
     },
     {
-      "col": "connectivity",
-      "cells": 26,
-      "byMod": {
-        "factoring": 10,
-        "banking": 8,
-        "drivers": 8
-      },
-      "seat": "CC-2"
-    },
-    {
       "col": "scenario.maintenance",
       "cells": 5,
       "byMod": {
@@ -248,5 +238,5 @@
       "seat": "?"
     }
   ],
-  "entry_count": 122
+  "entry_count": 125
 }
