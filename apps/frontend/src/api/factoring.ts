@@ -267,6 +267,10 @@ export type Factor = {
   notes: string | null;
   created_at: string;
   updated_at: string;
+  /** LIABILITY column-wave: current $ reserve/liability balance Faro holds for this factor, from
+   * the real factoring.v_factor_reserve_balance ledger (same source reserves.dashboard already
+   * uses). Only present on the list response. */
+  reserve_balance_cents?: number | null;
 };
 
 export type LetterOfRelease = {

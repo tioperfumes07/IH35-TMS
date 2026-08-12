@@ -22,6 +22,10 @@ export type FactorRow = {
   notes: string | null;
   created_at: string;
   updated_at: string;
+  // LIABILITY column-wave: only listFactors() computes this (via a LEFT JOIN on
+  // factoring.v_factor_reserve_balance) — other mapFactorRow call sites (get/create/update a single
+  // factor) never queried it, so it's optional/null there rather than fabricated as 0.
+  reserve_balance_cents?: number | null;
 };
 
 export type LetterOfReleaseRow = {
@@ -109,6 +113,7 @@ function mapFactorRow(row: Record<string, unknown>): FactorRow {
     notes: row.notes != null ? String(row.notes) : null,
     created_at: String(row.created_at),
     updated_at: String(row.updated_at),
+    reserve_balance_cents: row.reserve_balance_cents != null ? toNumber(row.reserve_balance_cents) : null,
   };
 }
 
@@ -144,34 +149,43 @@ export async function listFactors(
   deps: { client: Queryable }
 ): Promise<FactorRow[]> {
   const values: unknown[] = [tenantId];
-  const filters = ["tenant_id = $1::uuid"];
-  if (opts.activeOnly) filters.push("active = true");
+  const filters = ["f.tenant_id = $1::uuid"];
+  if (opts.activeOnly) filters.push("f.active = true");
 
   const res = await deps.client.query<Record<string, unknown>>(
     `
       SELECT
-        id::text,
-        tenant_id::text,
-        name,
-        advance_rate::numeric,
-        fee_rate::numeric,
-        reserve_rate::numeric,
-        recourse_days,
-        active,
-        fee_schedule,
-        reserve_schedule,
-        fee_application_mode,
-        remittance_details,
-        noa_stamp_text,
-        noa_remit_to_name,
-        noa_remit_to_addr,
-        noa_remit_to_wire_ref,
-        notes,
-        created_at::text,
-        updated_at::text
-      FROM factoring.factor
+        f.id::text,
+        f.tenant_id::text,
+        f.name,
+        f.advance_rate::numeric,
+        f.fee_rate::numeric,
+        f.reserve_rate::numeric,
+        f.recourse_days,
+        f.active,
+        f.fee_schedule,
+        f.reserve_schedule,
+        f.fee_application_mode,
+        f.remittance_details,
+        f.noa_stamp_text,
+        f.noa_remit_to_name,
+        f.noa_remit_to_addr,
+        f.noa_remit_to_wire_ref,
+        f.notes,
+        f.created_at::text,
+        f.updated_at::text,
+        -- LIABILITY column-wave: factors.admin previously showed only contract-term percentages,
+        -- never the outstanding dollar reserve/liability balance Faro currently holds per factor
+        -- — reused the same real, live, correctly-cents-suffixed view reserves.dashboard already
+        -- uses (factoring.v_factor_reserve_balance), not the broken to_jsonb(fa) view family
+        -- FACT-PHANTOM-01 diagnosed and is queued (HOLD-FOR-JORGE) to fix separately.
+        COALESCE(rb.balance_cents, 0)::bigint AS reserve_balance_cents
+      FROM factoring.factor f
+      LEFT JOIN factoring.v_factor_reserve_balance rb
+        ON rb.factor_id = f.id
+       AND rb.tenant_id = f.tenant_id
       WHERE ${filters.join(" AND ")}
-      ORDER BY active DESC, name ASC
+      ORDER BY f.active DESC, f.name ASC
     `,
     values
   );

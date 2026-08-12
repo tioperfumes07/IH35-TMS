@@ -362,10 +362,23 @@ export async function listEquipmentLoans(userId: string, operatingCompanyId: str
         SELECT
           l.*,
           e.equipment_number,
-          v.vendor_name AS lender_vendor_name
+          v.vendor_name AS lender_vendor_name,
+          -- LIABILITY column-wave: home.equipment_loans previously showed only the static
+          -- principal_cents at origination, never a computed outstanding balance — the true
+          -- current loan liability (principal minus payments actually applied to principal).
+          GREATEST(
+            l.principal_cents - COALESCE(pay.paid_principal_cents, 0),
+            0
+          )::bigint AS outstanding_balance_cents
         FROM banking.equipment_loans l
         JOIN mdata.equipment e ON e.id = l.equipment_id AND COALESCE(e.currently_leased_to_company_id, e.owner_company_id) = l.operating_company_id
         JOIN mdata.vendors v ON v.id = l.lender_vendor_id AND v.operating_company_id = l.operating_company_id
+        LEFT JOIN LATERAL (
+          SELECT SUM(p.principal_cents)::bigint AS paid_principal_cents
+          FROM banking.equipment_loan_payments p
+          WHERE p.loan_id = l.id
+            AND p.operating_company_id = l.operating_company_id
+        ) pay ON true
         ${whereSql}
         ORDER BY l.started_on DESC, l.created_at DESC
         LIMIT 300

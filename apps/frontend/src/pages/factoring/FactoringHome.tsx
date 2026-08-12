@@ -850,7 +850,14 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
                     <div>
                       <EntityLink kind="unit" id={row.equipment_id} label={entityLabel(row.equipment_number, row.equipment_id, "Equipment")} className="font-semibold" />{" "}
                       · <EntityLink kind="vendor" id={row.lender_vendor_id} label={entityLabel(row.lender_vendor_name, row.lender_vendor_id, "Vendor")} /> ·{" "}
-                      {fmtCurrency(Number(row.principal_cents ?? 0) / 100)}
+                      Principal {fmtCurrency(Number(row.principal_cents ?? 0) / 100)}
+                      {/* LIABILITY column-wave: outstanding_balance_cents = principal minus
+                          payments actually applied to principal — the current loan liability,
+                          distinct from the static origination principal shown above. */}
+                      {" · "}Outstanding{" "}
+                      <span className="font-semibold">
+                        {fmtCurrency(Number(row.outstanding_balance_cents ?? row.principal_cents ?? 0) / 100)}
+                      </span>
                     </div>
                     <div className="flex items-center gap-2">
                       <Button size="sm" variant="secondary" onClick={() => setSelectedLoanId(String(row.id))}>
