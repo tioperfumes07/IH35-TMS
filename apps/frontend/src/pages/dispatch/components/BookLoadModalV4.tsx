@@ -14,7 +14,7 @@ import { createPortal } from "react-dom";
 import { useForm, type FieldErrors, type UseFormSetValue } from "react-hook-form";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createDispatchLoad } from "../../../api/dispatch";
-import { pickupTimeTypesCatalogClient } from "../../../api/catalogs-dispatch";
+import { loadTypesCatalogClient, pickupTimeTypesCatalogClient } from "../../../api/catalogs-dispatch";
 import { ApiError } from "../../../api/client";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { entityLabel } from "../../../lib/entity-label";
@@ -88,6 +88,7 @@ const FIELD_LABELS: Record<string, string> = {
 
 type FormValues = BookLoadFormValues & {
   load_type: "broker" | "direct";
+  catalog_load_type_id: string;
   pieces: string;
   trip_type: "" | "NB" | "TR" | "SB";
   tour_id: string;
@@ -289,6 +290,7 @@ export function BookLoadModalV4({
       commodity: "",
       weight_lbs: 0,
       load_type: "broker",
+      catalog_load_type_id: "",
       pieces: "",
       trip_type: "",
       tour_id: "",
@@ -515,6 +517,15 @@ export function BookLoadModalV4({
   const pickupTimeTypeOptions = useMemo(
     () => (pickupTimeTypesQuery.data?.rows ?? []).map((row) => ({ value: row.id, label: row.display_name, type: row.code })),
     [pickupTimeTypesQuery.data?.rows]
+  );
+  const loadTypesQuery = useQuery({
+    queryKey: ["book-load-catalog-load-types", operatingCompanyId],
+    queryFn: () => loadTypesCatalogClient.list({ operating_company_id: operatingCompanyId, is_active: "true", limit: 200 }),
+    enabled: Boolean(operatingCompanyId),
+  });
+  const loadTypeOptions = useMemo(
+    () => (loadTypesQuery.data?.rows ?? []).map((row) => ({ value: row.id, label: row.display_name, type: row.code })),
+    [loadTypesQuery.data?.rows]
   );
 
   const sectionTotal = useMemo(
@@ -754,6 +765,7 @@ export function BookLoadModalV4({
         requires_load_locks: values.requires_load_locks,
         requires_straps: values.requires_straps,
         load_type: values.load_type,
+        catalog_load_type_id: values.catalog_load_type_id || undefined,
         driver_pay_rate_per_mile:
           Number.isFinite(values.driver_pay_rate_per_mile) && values.driver_pay_rate_per_mile > 0
             ? values.driver_pay_rate_per_mile
@@ -1300,6 +1312,21 @@ export function BookLoadModalV4({
                   </div>
 
                   <div className="grid grid-cols-1 gap-2 md:grid-cols-4">
+                    <label className="text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-500">
+                      Equipment / load type
+                      <div className="mt-0.5">
+                        <ReferenceSelect
+                          value={form.watch("catalog_load_type_id") || null}
+                          onChange={(value) => form.setValue("catalog_load_type_id", value ?? "", { shouldDirty: true })}
+                          options={loadTypeOptions}
+                          createKind="load_type"
+                          operatingCompanyId={operatingCompanyId}
+                          placeholder="Select load type"
+                          loading={loadTypesQuery.isLoading}
+                          onOptionCreated={() => void loadTypesQuery.refetch()}
+                        />
+                      </div>
+                    </label>
                     <label className="text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-500">
                       Type
                       <div className="mt-0.5 inline-flex h-7 overflow-hidden rounded-sm border border-gray-300 bg-white text-[11px]">
