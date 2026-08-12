@@ -151,7 +151,7 @@ export type DispatchBookLoadPayload = {
   requires_straps?: boolean;
   load_type?: "broker" | "direct";
   catalog_load_type_id?: string;
-  load_trailer_equipment_id?: string;
+  load_trailer_equipment_id: string;
   driver_pay_rate_per_mile?: number;
   factoring_company_vendor_id?: string;
   tarp_type?: string;
@@ -183,12 +183,13 @@ export type DispatchBookLoadPayload = {
     sequence_number: number;
     location_id?: string;
     company_name?: string;
-    city?: string;
+    city: string;
     state?: string;
     country?: string;
     address_line1?: string;
     scheduled_arrival_at?: string;
     time_window_type?: "appointment" | "open_window" | "select_hours" | "refused" | "first_come_first_serve" | "drop_window";
+    pickup_time_type_id?: string;
     appointment_start_at?: string;
     appointment_end_at?: string;
     lumper_required?: boolean;
@@ -201,6 +202,7 @@ export type DispatchBookLoadPayload = {
     site_contact_name?: string;
     site_contact_phone?: string;
     gate_dock_text?: string;
+    postal_code?: string;
   }>;
   save_mode: "draft" | "book_dispatch";
   override_token?: string;
