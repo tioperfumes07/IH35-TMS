@@ -312,6 +312,14 @@
       "modules": ["vendors"],
       "cols": ["unit", "connectivity", "reverse_link"],
       "leafRe": "^detail\\.profile$"
+    },
+    {
+      "task": "CLS-DISPATCH-AT-RISK-FK-LINKS",
+      "pr": "this PR",
+      "guard": "scripts/verify-steps/1033-verify-at-risk-queue-error-entitylink.mjs",
+      "modules": ["dispatch"],
+      "cols": ["customer", "driver", "unit", "load", "connectivity", "reverse_link"],
+      "leafRe": "^queues\\.at_risk$"
     }
   ]
 }

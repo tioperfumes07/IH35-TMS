@@ -5,7 +5,7 @@
  * systemic-pattern-mandatory-error-states + EntityLink (one surface):
  * AtRiskQueuePage must:
  *  1. Surface loadsQ failures via ListErrorState (not false-empty "No at-risk loads")
- *  2. Render EntityLink kind="load" (not ad-hoc /dispatch?load_id= Link)
+ *  2. Render canonical FK-backed EntityLinks for load/customer/driver/unit
  *
  * Rule 17 — verify-step only (no package.json / locked-guards / ci.yml).
  *
@@ -47,6 +47,10 @@ export function check(sources) {
     }
     if (!/EntityLink/.test(page) || !/kind\s*=\s*["']load["']/.test(page)) {
       failures.push(`${FILES.page}: must render EntityLink kind="load"`);
+    }
+    for (const [kind, id] of [["customer", "customer_id"], ["driver", "driver_id"], ["unit", "unit_id"]]) {
+      const linkRe = new RegExp(`kind\\s*=\\s*["']${kind}["'][\\s\\S]{0,80}id=\\{load\\.${id}\\}`);
+      if (!linkRe.test(page)) failures.push(`${FILES.page}: must render EntityLink kind="${kind}" from load.${id}`);
     }
     if (/to=\{`\/dispatch\?load_id=/.test(page) || /to="\/dispatch\?load_id=/.test(page)) {
       failures.push(`${FILES.page}: must not use ad-hoc /dispatch?load_id= Link for load cells`);
@@ -105,7 +109,12 @@ if (process.argv.includes("--selftest")) {
     {loadsQ.isError ? (
       <ListErrorState title="Couldn't load at-risk queue" status={0} message={msg} onRetry={() => void loadsQ.refetch()} />
     ) : (
-      <ParityTable emptyText="No at-risk loads right now." columns={[{ render: (load) => <EntityLink kind="load" id={load.id} label={load.load_number} /> }]} />
+      <ParityTable emptyText="No at-risk loads right now." columns={[
+        { render: (load) => <EntityLink kind="load" id={load.id} label={load.load_number} /> },
+        { render: (load) => <EntityLink kind="customer" id={load.customer_id} label={load.customer_name} /> },
+        { render: (load) => <EntityLink kind="driver" id={load.driver_id} label={load.driver_name} /> },
+        { render: (load) => <EntityLink kind="unit" id={load.unit_id} label={load.unit_number} /> },
+      ]} />
     )}
   `;
   const goodTest = `
@@ -113,6 +122,9 @@ if (process.argv.includes("--selftest")) {
     expect(screen.queryByText("No at-risk loads right now.")).toBeNull();
     await user.click(screen.getByRole("button", { name: /Retry/i }));
     expect(link.getAttribute("href")).toBe("/dispatch/loads/load-1");
+    expect(customerLink.getAttribute("href")).toBe("/customers/customer-1");
+    expect(driverLink.getAttribute("href")).toBe("/drivers/driver-1");
+    expect(unitLink.getAttribute("href")).toBe("/fleet/units/unit-1");
   `;
   const goodStep = `ctx.run("node", ["scripts/verify-at-risk-queue-error-entitylink.mjs"]);`;
 
