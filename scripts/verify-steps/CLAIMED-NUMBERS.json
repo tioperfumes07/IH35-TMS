@@ -1,4 +1,9 @@
 {
+  "3118": {
+    "claimed_at": "2026-08-12",
+    "claimed_by": "cursor",
+    "purpose": "verify-required-surface-inventory-complete"
+  },
   "3217": {
     "claimed_at": "2026-08-12",
     "claimed_by": "cc-1",
