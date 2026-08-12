@@ -97,7 +97,17 @@ function audit() {
       const joinsJe = /\b(?:FROM|JOIN)\s+accounting\.journal_entries\s+(?:AS\s+)?(\w+)/i.exec(block);
       if (!joinsJe) continue;
       const alias = joinsJe[1];
-      const exposesId = new RegExp(`\\b${alias}\\.id::text\\s+AS\\s+journal_entry_id`, "i").test(block);
+      // LINEAGE-ROUTE-OMITS-JE-MEMO — the id can be exposed TWO shapes: `<je alias>.id::text AS
+      // journal_entry_id` (the shape this guard originally matched), OR `<any other alias, typically
+      // a postings/lines table>.journal_entry_uuid::text AS journal_entry_id` — a FK column on a
+      // DIFFERENT joined table pointing at journal_entries, which is how
+      // audit-trail/service.ts's listAccountingSourceLineage exposed it. That query joined
+      // journal_entries, exposed the id via `jp.journal_entry_uuid`, and never selected je.memo — the
+      // original matcher only ever checked the je-alias.id shape, so this defect was invisible to the
+      // guard meant to catch exactly it.
+      const exposesId =
+        new RegExp(`\\b${alias}\\.id::text\\s+AS\\s+journal_entry_id`, "i").test(block) ||
+        /\b\w+\.journal_entry_uuid::text\s+AS\s+journal_entry_id/i.test(block);
       if (!exposesId) continue;
 
       scanned += 1;
@@ -142,6 +152,22 @@ function selftest() {
     if (stillClean) fail(`selftest: expected FAIL after mutation "${name}"`);
     planted += 1;
   }
+
+  // LINEAGE-ROUTE-OMITS-JE-MEMO regression: proves the exposesId widening (jp.journal_entry_uuid
+  // shape, not just <je alias>.id) actually fires — mutating audit-trail/service.ts's
+  // listAccountingSourceLineage back to its pre-fix shape (no je.memo) must go red. Without this
+  // fixture the widened regex could silently stop matching and the guard would report PASS forever.
+  const lineageTarget = path.join(ROOT, "apps/backend/src/accounting/audit-trail/service.ts");
+  const lineageOriginal = fs.readFileSync(lineageTarget, "utf8");
+  const lineageBroken = lineageOriginal.replace(/^\s*je\.memo\s*$/m, "");
+  if (lineageBroken === lineageOriginal) {
+    fail(`selftest INERT: audit-trail/service.ts mutation did not apply — the guard proves nothing for this shape`);
+  }
+  fs.writeFileSync(lineageTarget, lineageBroken);
+  const lineageStillClean = audit().problems.length === 0;
+  fs.writeFileSync(lineageTarget, lineageOriginal);
+  if (lineageStillClean) fail("selftest: expected FAIL after dropping je.memo from listAccountingSourceLineage (jp.journal_entry_uuid shape)");
+  planted += 1;
 
   const clean = audit();
   if (clean.problems.length) fail(`selftest cleanup still red: ${clean.problems.join("; ")}`);
