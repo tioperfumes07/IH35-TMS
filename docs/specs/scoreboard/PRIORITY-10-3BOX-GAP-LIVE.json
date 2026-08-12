@@ -1,26 +1,26 @@
 {
-  "as_of": "2026-08-12T19:47:39.619Z",
-  "main_sha": "eb83c58e2",
+  "as_of": "2026-08-12T19:49:39.666Z",
+  "main_sha": "c3fe548b2",
   "gate": "PRIORITY_10_3BOX_100",
   "allRequired": {
     "totR": 3110,
-    "totB": 1814,
-    "pct": 58
+    "totB": 1958,
+    "pct": 63
   },
   "waveABC_noChrome": {
     "abcR": 2480,
-    "abcB": 1563,
-    "pct": 63
+    "abcB": 1707,
+    "pct": 69
   },
   "per_module": [
     {
       "mod": "lists",
       "req": 1721,
-      "built": 864,
-      "pct": 50,
+      "built": 974,
+      "pct": 57,
       "abcReq": 1312,
-      "abcBuilt": 660,
-      "abcPct": 50
+      "abcBuilt": 770,
+      "abcPct": 59
     },
     {
       "mod": "accounting",
@@ -34,38 +34,38 @@
     {
       "mod": "dispatch",
       "req": 363,
-      "built": 265,
-      "pct": 73,
+      "built": 275,
+      "pct": 76,
       "abcReq": 318,
-      "abcBuilt": 255,
-      "abcPct": 80
+      "abcBuilt": 265,
+      "abcPct": 83
     },
     {
       "mod": "settlements",
       "req": 42,
-      "built": 29,
-      "pct": 69,
+      "built": 31,
+      "pct": 74,
       "abcReq": 36,
-      "abcBuilt": 29,
-      "abcPct": 81
+      "abcBuilt": 31,
+      "abcPct": 86
     },
     {
       "mod": "factoring",
       "req": 131,
-      "built": 75,
-      "pct": 57,
+      "built": 76,
+      "pct": 58,
       "abcReq": 114,
-      "abcBuilt": 75,
-      "abcPct": 66
+      "abcBuilt": 76,
+      "abcPct": 67
     },
     {
       "mod": "banking",
       "req": 49,
-      "built": 26,
-      "pct": 53,
+      "built": 27,
+      "pct": 55,
       "abcReq": 41,
-      "abcBuilt": 24,
-      "abcPct": 59
+      "abcBuilt": 25,
+      "abcPct": 61
     },
     {
       "mod": "customers",
@@ -88,20 +88,20 @@
     {
       "mod": "drivers",
       "req": 62,
-      "built": 32,
-      "pct": 52,
+      "built": 35,
+      "pct": 56,
       "abcReq": 50,
-      "abcBuilt": 32,
-      "abcPct": 64
+      "abcBuilt": 35,
+      "abcPct": 70
     },
     {
       "mod": "safety",
       "req": 203,
-      "built": 83,
-      "pct": 41,
+      "built": 100,
+      "pct": 49,
       "abcReq": 160,
-      "abcBuilt": 78,
-      "abcPct": 49
+      "abcBuilt": 95,
+      "abcPct": 59
     }
   ],
   "ranked_gaps": [
@@ -121,20 +121,6 @@
         "safety": 11
       },
       "seat": "D LAST"
-    },
-    {
-      "col": "unit",
-      "cells": 144,
-      "byMod": {
-        "lists": 110,
-        "dispatch": 10,
-        "settlements": 2,
-        "factoring": 1,
-        "banking": 1,
-        "drivers": 3,
-        "safety": 17
-      },
-      "seat": "Codex A"
     },
     {
       "col": "expense",
@@ -300,5 +286,5 @@
       "seat": "?"
     }
   ],
-  "entry_count": 99
+  "entry_count": 100
 }
