@@ -1,10 +1,11 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
 import { driverSchedulerOfficeApi } from "../../../api/driver-scheduler";
 import { listUnitsWithoutLoad } from "../../../api/dispatch";
 import { listUnits } from "../../../api/mdata";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
+import { EntityLink } from "../../../components/shared/EntityLink";
+import { entityLabel } from "../../../lib/entity-label";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { usePlannerRange } from "./PlannerRangeContext";
@@ -28,6 +29,7 @@ function truckStatusLabel(status: TruckStatus): string {
 type TruckRow = {
   unitId: string;
   unitNumber: string;
+  driverId: string | null;
   driverName: string | null;
   status: TruckStatus;
 };
@@ -67,6 +69,7 @@ export function TruckPlanner() {
       rows.set(unitId, {
         unitId,
         unitNumber,
+        driverId: dr.driver_id ? String(dr.driver_id) : null,
         driverName: dr.driver_name ? String(dr.driver_name) : null,
         status: "assigned",
       });
@@ -79,6 +82,7 @@ export function TruckPlanner() {
       rows.set(unitId, {
         unitId,
         unitNumber,
+        driverId: null,
         driverName: null,
         status: reservedIds.has(unitId) ? "reserved-hold" : "available",
       });
@@ -95,6 +99,7 @@ export function TruckPlanner() {
         rows.set(unitId, {
           unitId,
           unitNumber,
+          driverId: existing?.driverId ?? null,
           driverName: existing?.driverName ?? null,
           status: "in-shop",
         });
@@ -102,6 +107,7 @@ export function TruckPlanner() {
         rows.set(unitId, {
           unitId,
           unitNumber,
+          driverId: null,
           driverName: null,
           status: vacantIds.has(unitId) ? "available" : "reserved-hold",
         });
@@ -170,11 +176,9 @@ export function TruckPlanner() {
               truckRows.map((row) => (
                 <tr key={row.unitId} className="border-t border-gray-100">
                   <td className="sticky left-0 z-10 border-r bg-white px-2 py-0.5 text-xs font-medium text-gray-900">
-                    <Link to={`/fleet/units/${row.unitId}`} className="text-slate-700 hover:underline">
-                      {row.unitNumber}
-                    </Link>
+                    <EntityLink kind="unit" id={row.unitId} label={entityLabel(row.unitNumber, row.unitId, "Unit")} />
                   </td>
-                  <td className="border-r px-1 py-0.5 text-gray-600">{row.driverName ?? "—"}</td>
+                  <td className="border-r px-1 py-0.5 text-gray-600"><EntityLink kind="driver" id={row.driverId} label={entityLabel(row.driverName, row.driverId, "Driver")} /></td>
                   {days.map((d) => (
                     <td key={d} className={`border-l border-gray-50 px-0 py-0 text-center ${truckStatusClass(row.status)}`} title={row.status}>
                       <span className="text-[9px]">{truckStatusLabel(row.status)}</span>
