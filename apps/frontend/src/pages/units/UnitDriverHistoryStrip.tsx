@@ -4,6 +4,7 @@ import { listVehicleDriverHistory, type VehicleDriverHistoryRow } from "../../ap
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { entityLabel } from "../../lib/entity-label";
+import { EntityLink } from "../../components/shared/EntityLink";
 
 function formatDateTime(value: string | null) {
   if (!value) return "Current";
@@ -17,7 +18,7 @@ const COLUMNS: Array<ParityColumn<VehicleDriverHistoryRow>> = [
     key: "unit_number",
     label: "Unit",
     sortable: true,
-    render: (row) => <span className="font-medium text-gray-900">{entityLabel(row.unit_number, row.unit_id, "Unit")}</span>,
+    render: (row) => <EntityLink kind="unit" id={row.unit_id} label={entityLabel(row.unit_number, row.unit_id, "Unit")} className="font-medium text-gray-900" />,
   },
   {
     key: "driver_name",
