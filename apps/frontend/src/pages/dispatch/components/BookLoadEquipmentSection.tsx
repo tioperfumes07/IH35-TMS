@@ -1,4 +1,4 @@
-import type { JSX } from "react";
+import { useEffect, type JSX } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { UseFormRegister, UseFormSetValue, UseFormWatch } from "react-hook-form";
 import { listDriverTeams } from "../../../api/mdata";
@@ -10,6 +10,8 @@ import { DriverHosClocksBlock } from "../../../components/dispatch/hos/DriverHos
 import { DeadheadOptimizerPanel } from "../../../components/dispatch/DeadheadOptimizerPanel";
 import { DriverInstructionsTextarea } from "./book-load-v4/DriverInstructionsTextarea";
 import { ExpectedAdjustmentsCallout } from "./book-load-v4/ExpectedAdjustmentsCallout";
+import { loadTrailerEquipmentCatalogClient } from "../../../api/catalogs-dispatch";
+import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 
 type Props = {
   register: UseFormRegister<any>;
@@ -50,6 +52,16 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
     queryFn: () => listDriverTeams(String(operatingCompanyId)),
     enabled: Boolean(operatingCompanyId),
   });
+  const trailerEquipmentQuery = useQuery({
+    queryKey: ["book-load-trailer-equipment", operatingCompanyId],
+    queryFn: () => loadTrailerEquipmentCatalogClient.list({ operating_company_id: String(operatingCompanyId), is_active: "true", limit: 200 }),
+    enabled: Boolean(operatingCompanyId),
+  });
+  useEffect(() => {
+    if (!watch || !setValue || watch("load_trailer_equipment_id")) return;
+    const match = trailerEquipmentQuery.data?.rows.find((row) => row.code.toLowerCase() === trailerType);
+    if (match) setValue("load_trailer_equipment_id", match.id);
+  }, [setValue, trailerEquipmentQuery.data?.rows, trailerType, watch]);
   // C9: all six equipment requirement chips persist on mdata.loads (requires_tarps historically;
   // the other five via HOLD migration 202609170000).
   const toggles = [
@@ -66,19 +78,22 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
       <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
         {/* render-v6 §B labels: Reefer / Flatbed / Dry Van (/ Lowboy — needs a trailer_type enum value via a
             gated migration; flagged). power_only_* kept — real data; removing them would break power-only loads. */}
-        <Field
-          label="Trailer type"
-          input={
-            <SelectCombobox {...register("trailer_type")} className="h-7 w-full text-xs">
-              <option value="refrigerated_van">Reefer</option>
-              <option value="flatbed">Flatbed</option>
-              <option value="dry_van">Dry Van</option>
-              <option value="lowboy">Lowboy</option>
-              <option value="power_only_no_trailer">Power-only · no trailer</option>
-              <option value="power_only_customer_trailer">Power-only · customer trailer</option>
-            </SelectCombobox>
-          }
-        />
+        <Field label="Trailer type" input={
+          <ReferenceSelect
+            value={watch ? String(watch("load_trailer_equipment_id") ?? "") || null : null}
+            onChange={(next) => {
+              const row = trailerEquipmentQuery.data?.rows.find((item) => item.id === next);
+              setValue?.("load_trailer_equipment_id", next ?? "", { shouldDirty: true });
+              if (row) setValue?.("trailer_type", row.code.toLowerCase(), { shouldDirty: true });
+            }}
+            options={(trailerEquipmentQuery.data?.rows ?? []).map((row) => ({ value: row.id, label: row.display_name, type: row.code }))}
+            createKind="load_trailer_equipment"
+            operatingCompanyId={operatingCompanyId ?? ""}
+            loading={trailerEquipmentQuery.isLoading}
+            placeholder="Select trailer requirement"
+            onOptionCreated={() => void trailerEquipmentQuery.refetch()}
+          />
+        } />
         <Field
           label="Truck unit"
           input={

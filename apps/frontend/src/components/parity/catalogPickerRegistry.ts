@@ -459,6 +459,14 @@ export const CATALOG_PICKER_CONFIGS = {
     evidence: "apps/backend/src/catalogs/generic-catalog.routes.ts:162 — one GenericCatalogConfig drives SELECT and INSERT",
     consumerPath: "apps/frontend/src/pages/dispatch/components/BookLoadModalV4.tsx",
   }),
+  load_trailer_equipment: catalogEntry({
+    key: "load_trailer_equipment",
+    label: "Trailer equipment requirement",
+    table: "catalogs.load_trailer_equipment",
+    endpoint: "/api/v1/catalogs/dispatch/load-trailer-equipment",
+    evidence: "apps/backend/src/catalogs/generic-catalog.routes.ts:549 — one GenericCatalogConfig drives SELECT and INSERT",
+    consumerPath: "apps/frontend/src/pages/dispatch/components/BookLoadEquipmentSection.tsx",
+  }),
 
 
 

@@ -62,6 +62,8 @@ const FILES = {
   accessorialEditor: "apps/frontend/src/components/dispatch/AccessorialEditor.tsx",
   additionalChargeMigration: "db/migrations/202612502200_p44_load_additional_charge_lines_canonical_fk.sql",
   lumperProviderMigration: "db/migrations/202612502300_p44_load_stop_lumper_provider_canonical_fk.sql",
+  trailerEquipmentPicker: "apps/frontend/src/pages/dispatch/components/BookLoadEquipmentSection.tsx",
+  trailerEquipmentMigration: "db/migrations/202612511200_p44_load_trailer_equipment_canonical_fk.sql",
 };
 
 const MISSING = "MISSING";
@@ -217,6 +219,15 @@ export function contractErrors(src) {
   }
   if (!/lumper_provider_id:\s*str\(s\.lumper_provider_id\)/.test(src.editMapping)) {
     errors.push("P44-FK: lumper provider selection must survive stop detail reload into Edit Book Load");
+  }
+  if (!/createKind="load_trailer_equipment"/.test(src.trailerEquipmentPicker) || !/load_trailer_equipment_id/.test(src.bookLoad)) {
+    errors.push("P44-FK: Book Load must select and submit canonical trailer equipment requirement UUID");
+  }
+  if (!/loads_trailer_equipment_same_company_fk/.test(src.trailerEquipmentMigration) || !/ALTER COLUMN load_trailer_equipment_id SET NOT NULL/.test(src.trailerEquipmentMigration)) {
+    errors.push("P44-FK: loads must enforce a NOT NULL same-opco trailer equipment requirement FK");
+  }
+  if (!/load_trailer_equipment_id:\s*str\(load\.load_trailer_equipment_id\)/.test(src.editMapping)) {
+    errors.push("P44-FK: trailer equipment requirement must survive detail reload into Edit Book Load");
   }
 
   // ── CONFIG-DRIVEN: the pinned defect ────────────────────────────────────────────────────────

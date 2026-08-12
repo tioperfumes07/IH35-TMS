@@ -98,6 +98,14 @@
       "leafRe": "^(lists\\.|dispatch\\.|loads\\.)"
     },
     {
+      "task": "P44-load-trailer-equipment",
+      "pr": "#5936",
+      "guard": "scripts/verify-lst-picker-config-driven.mjs",
+      "modules": ["lists", "dispatch"],
+      "cols": ["connectivity", "picker", "load"],
+      "leafRe": "^(lists\\.|dispatch\\.|loads\\.)"
+    },
+    {
       "task": "P29",
       "pr": "#5821",
       "guard": "scripts/verify-steps/3073-verify-failed-posting-batch-is-retriable.mjs",
