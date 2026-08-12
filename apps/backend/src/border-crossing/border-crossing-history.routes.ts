@@ -31,6 +31,7 @@ export async function registerBorderCrossingHistoryRoutes(app: FastifyInstance) 
           SELECT ubc.id::text, ubc.crossing_date, ubc.planned_crossing_date, ubc.direction,
                  ubc.port_of_entry, ubc.commodity, ubc.emanifest_reference, ubc.emanifest_status,
                  ubc.customs_broker_status, ubc.wizard_completed_at,
+                 ubc.unit_id::text, ubc.driver_id::text, ubc.load_id::text,
                  u.unit_number, d.first_name || ' ' || d.last_name AS driver_name,
                  l.load_number
           FROM mdata.unit_border_crossings ubc

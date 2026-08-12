@@ -763,7 +763,7 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/dispatch/BorderCrossingHistoryPage.tsx",
     bad: /selected\.driver_name\s*\?\?\s*"—"|row\.unit_number\s*\?\?\s*"—"/,
-    good: /entityLabel\(\s*selected\.driver_name\s*,\s*null\s*,\s*"Driver"\s*\)/,
+    good: /entityLabel\(\s*selected\.driver_name\s*,\s*selected\.driver_id\s*,\s*"Driver"\s*\)/,
   },
   {
     rel: "apps/frontend/src/pages/safety/photo-comparison/PhotoComparisonPage.tsx",
