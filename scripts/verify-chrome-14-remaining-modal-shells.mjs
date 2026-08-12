@@ -47,6 +47,9 @@ const TARGETS = [
   // P17 modules 11–28: Maintenance Fault Rules create/edit is an active +Create workflow and must
   // use the same QBO-style drawer + sticky footer as the rest of Maintenance.
   "apps/frontend/src/components/maintenance/FaultRuleModal.tsx",
+  // P17 modules 11–28: Fleet roster and nested picker creators share one chrome contract.
+  "apps/frontend/src/components/fleet/CreateUnitModal.tsx",
+  "apps/frontend/src/components/fleet/CreateTrailerModal.tsx",
 ];
 
 function runSelftest() {

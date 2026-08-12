@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createEquipment, type CreateEquipmentInput } from "../../api/mdata";
 import { useToast } from "../Toast";
-import { Modal } from "../Modal";
+import { ParityDrawer } from "../parity/ParityDrawer";
 import { Button } from "../Button";
 import { FormField } from "../forms/FormField";
 import { FieldSet } from "../forms/FieldSet";
@@ -86,12 +86,29 @@ export function CreateTrailerModal({ open, operatingCompanyId, onClose, onCreate
   const canSubmit = Boolean(draft.equipment_number.trim() && draft.equipment_type) && !createMutation.isPending;
 
   return (
-    <Modal variant="drawer" open={open} title="Create Trailer" onClose={resetAndClose} modalKind="fleet-create-trailer" sizePreset="md">
+    <ParityDrawer
+      open={open}
+      title="Create Trailer"
+      onClose={resetAndClose}
+      stackAboveModal
+      footer={
+        <div className="flex justify-end gap-2">
+          <Button type="button" variant="secondary" onClick={resetAndClose}>
+            Cancel
+          </Button>
+          <Button form="fleet-create-trailer-form" type="submit" data-testid="fleet-create-trailer-submit" loading={createMutation.isPending} disabled={!canSubmit}>
+            + Create
+          </Button>
+        </div>
+      }
+    >
       <form
+        id="fleet-create-trailer-form"
         data-testid="fleet-create-trailer-form"
         className="space-y-3"
         onSubmit={(e) => {
           e.preventDefault();
+          e.stopPropagation();
           if (canSubmit) createMutation.mutate();
         }}
       >
@@ -155,15 +172,7 @@ export function CreateTrailerModal({ open, operatingCompanyId, onClose, onCreate
             />
           </FormField>
         </FieldSet>
-        <div className="flex justify-end gap-2">
-          <Button type="button" variant="secondary" onClick={resetAndClose}>
-            Cancel
-          </Button>
-          <Button type="submit" data-testid="fleet-create-trailer-submit" loading={createMutation.isPending} disabled={!canSubmit}>
-            + Create
-          </Button>
-        </div>
       </form>
-    </Modal>
+    </ParityDrawer>
   );
 }
