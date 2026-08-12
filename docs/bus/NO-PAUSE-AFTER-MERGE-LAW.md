@@ -1,13 +1,7 @@
-# NO PAUSE AFTER MERGE · 2026-08-12 17:30
+# NO PAUSE AFTER MERGE · OWNER-SEQ-P10-THEN-ALL
 
-**FORBIDDEN:** stop, summarize, wait Jorge, wait audit, wait WAKE/nudge, “holding,” owner-gate theater.
+**FORBIDDEN:** stop after merge · claim A–C done on P10 % · owner-gate · holding · nudge wait · Wave D early.
 
-**REQUIRED same turn after merge:**
-1. OUTBOX **one line** (`column=` or `class=`)
-2. Read INBOX ☐ NOW — start next ranked column
-3. `@matrix-built` + `leafRe` on wiring guards
-4. FAST-MERGE: gate PASS → push → admin/REST merge → next
+**REQUIRED:** OUTBOX one line → INBOX next ☐ → if Step-1 (P10) just closed a column, **immediately** start Step-2 (all modules) for that column · FAST-MERGE.
 
-**Jorge is present — no seat nudge.** Cursor lead does **not** spam WAKE flags.
-
-Wave order: **A → B → C** then D. UNIVERSAL extend to all owed modules every column-wave.
+Canonical sequence: `docs/lockdown/VERTICAL-WIRING-LAW-2026-08-12.md` §3.
