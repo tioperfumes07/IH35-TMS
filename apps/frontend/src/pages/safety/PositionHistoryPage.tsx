@@ -128,10 +128,10 @@ export default function PositionHistoryPage() {
         sortable: true,
         sortValue: (row) => entityLabel(row.actor_name, row.actor_id, "User"),
         render: (row) =>
-          row.actor_name ? (
-            <span className="text-gray-900">{row.actor_name}</span>
-          ) : row.actor_id ? (
-            <span className="text-xs text-gray-900">{entityLabel(null, row.actor_id, "User")}</span>
+          row.actor_id ? (
+            <span className="text-gray-900">
+              <EntityLink kind="user" id={row.actor_id} label={row.actor_name || entityLabel(null, row.actor_id, "User")} />
+            </span>
           ) : (
             <span className="text-gray-400">—</span>
           ),
