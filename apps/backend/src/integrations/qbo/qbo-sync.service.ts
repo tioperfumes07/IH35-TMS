@@ -649,7 +649,17 @@ export async function listSyncQueue(params: {
               WHEN 'expense' THEN e.expense_number
               WHEN 'invoice' THEN i.display_id
               WHEN 'payment' THEN p.display_id
-              WHEN 'bill_payment' THEN bp.bill_number
+              -- LV-QBO-SYNC-BILL-PAYMENT-PHANTOM-BILL-NUMBER — accounting.bill_payments has no
+              -- bill_number or display_id column (verified against prod information_schema; the
+              -- sibling branches above each read their own table's real identity column, but
+              -- bill_payments has none — consistent with the expense_number series never being
+              -- populated). This referenced a column that does not exist and would throw the moment
+              -- a bill_payment entered the sync queue (QBO write-back is OFF by owner law, so it has
+              -- never fired). reference_number is a real column and the closest human-supplied
+              -- reference this table carries (check/wire confirmation); NULL when absent, which the
+              -- outer COALESCE already falls through to the short entity-id — never fabricating an
+              -- identity series this table was never given.
+              WHEN 'bill_payment' THEN bp.reference_number
               WHEN 'factoring_advance' THEN fa.display_id
               WHEN 'settlement' THEN s.display_id
               WHEN 'credit_memo' THEN vc.display_id

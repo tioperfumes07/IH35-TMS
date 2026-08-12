@@ -101,6 +101,7 @@
     "verify:settlement-detail-load-coalesce": "node scripts/verify-settlement-detail-load-coalesce.mjs",
     "verify:driver-advance-bank-credit-resolution": "node scripts/verify-driver-advance-bank-credit-resolution.mjs",
     "verify:ci-dist-coverage-step-order": "node scripts/verify-ci-dist-coverage-step-order.mjs",
+    "verify:qbo-sync-bill-payment-phantom-column": "node scripts/verify-qbo-sync-bill-payment-phantom-column.mjs",
     "verify:static": "node scripts/verify-static.mjs",
     "verify:local-ci": "node scripts/verify-local-ci.mjs",
     "verify:unit-retire-open-wo-gate": "node scripts/verify-unit-retire-open-wo-gate.mjs",
