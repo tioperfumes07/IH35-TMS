@@ -2,6 +2,5 @@
   "apps/backend/src/admin/accounting-sync.routes.ts|GET|/api/v1/admin/sync/inbound",
   "apps/backend/src/admin/accounting-sync.routes.ts|GET|/api/v1/admin/sync/outbound",
   "apps/backend/src/admin/accounting-sync.routes.ts|POST|/api/v1/admin/sync/reset-realm",
-  "apps/backend/src/integrations/integration-health.routes.ts|GET|/api/integrations/health",
-  "apps/backend/src/mdata/units.routes.ts|GET|/api/v1/mdata/units/:id/financial"
+  "apps/backend/src/integrations/integration-health.routes.ts|GET|/api/integrations/health"
 ]

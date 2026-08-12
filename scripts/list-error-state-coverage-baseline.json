@@ -5,8 +5,6 @@
     "apps/frontend/src/pages/compliance/Form2290Filings.tsx",
     "apps/frontend/src/pages/customers/CustomersListView.tsx",
     "apps/frontend/src/pages/customers/components/PortalUsersTab.tsx",
-    "apps/frontend/src/pages/driver-finance/EscrowDeductionsPendingTab.tsx",
-    "apps/frontend/src/pages/driver-finance/components/SettlementDisputesTab.tsx",
     "apps/frontend/src/pages/factoring/SubmissionWorkqueue.tsx",
     "apps/frontend/src/pages/maintenance/components/CreateWorkOrderModal.tsx",
     "apps/frontend/src/pages/reports/PerTruckCpmReport.tsx",

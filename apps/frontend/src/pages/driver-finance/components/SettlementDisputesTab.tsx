@@ -178,6 +178,16 @@ export function SettlementDisputesTab({ companyId }: { companyId: string }) {
                 </td>
               </tr>
             ))}
+            {listState.isError ? (
+              <tr>
+                <td colSpan={8} className="px-3 py-6 text-center text-red-600">
+                  Couldn't load disputes.{" "}
+                  <button type="button" className="underline" onClick={() => void disputesQuery.refetch()}>
+                    Retry
+                  </button>
+                </td>
+              </tr>
+            ) : null}
             {listState.isLoading || listState.isEmpty ? (
               <tr>
                 <td colSpan={8} className="px-3 py-6 text-center text-gray-500">

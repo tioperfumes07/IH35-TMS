@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { driverSchedulerOfficeApi } from "../../../api/driver-scheduler";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { driverSchedulerOfficeApi, type TempAssignment } from "../../../api/driver-scheduler";
 import { PageHeader } from "../../../components/layout/PageHeader";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
@@ -8,6 +8,14 @@ import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { companyToday } from "../../../lib/businessDate";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { formatQueryErrorDetail } from "../../../lib/tableError";
+import { Button } from "../../../components/Button";
+import { Modal } from "../../../components/Modal";
+import { EntityPicker } from "../../../components/parity/EntityPicker";
+import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
+import { DatePicker } from "../../../components/forms/DatePicker";
+import { formatDateUS } from "../../../lib/formatDate";
+import { useToast } from "../../../components/Toast";
+import { userFacingApiError } from "../../../lib/api-error-message";
 
 function addDaysIso(iso: string, days: number): string {
   const [y, m, d] = iso.split("-").map(Number);
@@ -19,10 +27,25 @@ function addDaysIso(iso: string, days: number): string {
   return `${yy}-${mm}-${dd}`;
 }
 
+const EMPTY_TEMP_COVER_FORM = {
+  unitId: "" as string | null,
+  primaryDriverId: "" as string | null,
+  coverDriverId: "" as string | null,
+  startDate: companyToday(),
+  endDate: companyToday(),
+  notes: "",
+};
+
 export function DriverSchedulerGridPage() {
   const { selectedCompanyId } = useCompanyContext();
   const operatingCompanyId = selectedCompanyId ?? "";
+  const { pushToast } = useToast();
+  const queryClient = useQueryClient();
   const [windowDays, setWindowDays] = useState(30);
+  const [tempCoverModalOpen, setTempCoverModalOpen] = useState(false);
+  const [tempCoverForm, setTempCoverForm] = useState(EMPTY_TEMP_COVER_FORM);
+  const [cancelTarget, setCancelTarget] = useState<TempAssignment | null>(null);
+  const [cancelReason, setCancelReason] = useState("");
   const range = useMemo(() => {
     // Company-local "today" (Central), not UTC — otherwise the grid starts on tomorrow's column
     // in the evening. See lib/businessDate.
@@ -55,9 +78,74 @@ export function DriverSchedulerGridPage() {
     return m;
   }, [query.data?.leave_day_cells]);
 
+  // SAFETY-TEMP-COVER-ASSIGNMENTS-ZERO-FE-CALLERS — the backend list/create/cancel endpoints
+  // (GAP-81) had zero frontend callers anywhere. This is the reachable UI: a section on the
+  // Driver Scheduler page listing active temp-cover assignments, a create modal (unit + primary
+  // driver + cover driver + date range, all via the canonical pickers — never a raw-id input), and
+  // a cancel affordance with a required reason, matching the void/cancel pattern used everywhere
+  // else in this app.
+  const tempAssignmentsQuery = useQuery({
+    queryKey: ["driver-scheduler", "temp-assignments", operatingCompanyId],
+    queryFn: () => driverSchedulerOfficeApi.listTempAssignments(operatingCompanyId),
+    enabled: Boolean(operatingCompanyId),
+  });
+  const tempAssignments = tempAssignmentsQuery.data?.assignments ?? [];
+
+  const assignMutation = useMutation({
+    mutationFn: () => {
+      if (!tempCoverForm.unitId || !tempCoverForm.primaryDriverId || !tempCoverForm.coverDriverId) {
+        throw new Error("Unit, primary driver, and cover driver are all required.");
+      }
+      return driverSchedulerOfficeApi.assignTempCover(operatingCompanyId, {
+        unit_id: tempCoverForm.unitId,
+        primary_driver_id: tempCoverForm.primaryDriverId,
+        cover_driver_id: tempCoverForm.coverDriverId,
+        start_date: tempCoverForm.startDate,
+        end_date: tempCoverForm.endDate,
+        notes: tempCoverForm.notes.trim() || undefined,
+      });
+    },
+    onSuccess: () => {
+      pushToast("Temp cover assigned", "success");
+      setTempCoverModalOpen(false);
+      setTempCoverForm(EMPTY_TEMP_COVER_FORM);
+      void queryClient.invalidateQueries({ queryKey: ["driver-scheduler", "temp-assignments", operatingCompanyId] });
+    },
+    onError: (err) => pushToast(userFacingApiError(err, "Failed to assign temp cover"), "error"),
+  });
+
+  const cancelMutation = useMutation({
+    mutationFn: () => {
+      if (!cancelTarget) throw new Error("no target");
+      return driverSchedulerOfficeApi.cancelTempCover(operatingCompanyId, cancelTarget.id, cancelReason.trim());
+    },
+    onSuccess: () => {
+      pushToast("Temp cover assignment cancelled", "success");
+      setCancelTarget(null);
+      setCancelReason("");
+      void queryClient.invalidateQueries({ queryKey: ["driver-scheduler", "temp-assignments", operatingCompanyId] });
+    },
+    onError: (err) => pushToast(userFacingApiError(err, "Failed to cancel"), "error"),
+  });
+
   return (
     <div className="space-y-3">
-      <PageHeader title="Driver Scheduler" subtitle={`${range.start} through ${range.end} — fleet leave grid`} />
+      <PageHeader
+        title="Driver Scheduler"
+        subtitle={`${range.start} through ${range.end} — fleet leave grid`}
+        actions={
+          <Button
+            data-testid="driver-scheduler-assign-temp-cover"
+            disabled={!operatingCompanyId}
+            onClick={() => {
+              setTempCoverForm(EMPTY_TEMP_COVER_FORM);
+              setTempCoverModalOpen(true);
+            }}
+          >
+            + Assign Temp Cover
+          </Button>
+        }
+      />
 
       {!operatingCompanyId ? <div className="text-sm text-gray-500">Select an operating company to view the driver schedule.</div> : null}
 
@@ -152,6 +240,183 @@ export function DriverSchedulerGridPage() {
           </ul>
         </div>
       ) : null}
+
+      <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid="driver-scheduler-temp-cover-section">
+        <h3 className="mb-2 text-sm font-semibold text-gray-800">Temp cover assignments</h3>
+        {tempAssignmentsQuery.isLoading ? <div className="text-xs text-gray-500">Loading…</div> : null}
+        {tempAssignmentsQuery.isError ? (
+          <ListErrorState
+            title="Couldn't load temp cover assignments"
+            {...formatQueryErrorDetail(tempAssignmentsQuery.error)}
+            onRetry={() => void tempAssignmentsQuery.refetch()}
+          />
+        ) : null}
+        {!tempAssignmentsQuery.isLoading && !tempAssignmentsQuery.isError && tempAssignments.length === 0 ? (
+          <p className="text-xs text-gray-500">No active temp cover assignments.</p>
+        ) : null}
+        {tempAssignments.length > 0 ? (
+          <table className="w-full text-xs">
+            <thead>
+              <tr className="border-b border-gray-200 text-left uppercase tracking-wide text-gray-500">
+                <th className="py-1 pr-2">Unit</th>
+                <th className="py-1 pr-2">Primary driver</th>
+                <th className="py-1 pr-2">Cover driver</th>
+                <th className="py-1 pr-2">Dates</th>
+                <th className="py-1 pr-2">Notes</th>
+                <th className="py-1 pr-2" />
+              </tr>
+            </thead>
+            <tbody>
+              {tempAssignments.map((a) => (
+                <tr key={a.id} className="border-b border-gray-100 last:border-0" data-testid="driver-scheduler-temp-cover-row">
+                  <td className="py-1 pr-2">
+                    <EntityLink kind="unit" id={a.unit_id} label={entityLabel(a.unit_number, a.unit_id, "Unit")} />
+                  </td>
+                  <td className="py-1 pr-2">
+                    <EntityLink kind="driver" id={a.primary_driver_id} label={entityLabel(a.primary_driver_name, a.primary_driver_id, "Driver")} />
+                  </td>
+                  <td className="py-1 pr-2">
+                    <EntityLink kind="driver" id={a.cover_driver_id} label={entityLabel(a.cover_driver_name, a.cover_driver_id, "Driver")} />
+                  </td>
+                  <td className="py-1 pr-2 text-gray-600">
+                    {formatDateUS(a.start_date)}–{formatDateUS(a.end_date)}
+                  </td>
+                  <td className="py-1 pr-2 text-gray-600">{a.notes || "—"}</td>
+                  <td className="py-1 pr-2">
+                    <Button
+                      size="sm"
+                      variant="danger"
+                      data-testid="driver-scheduler-temp-cover-cancel"
+                      onClick={() => {
+                        setCancelTarget(a);
+                        setCancelReason("");
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : null}
+      </div>
+
+      <Modal
+        open={tempCoverModalOpen}
+        onClose={() => setTempCoverModalOpen(false)}
+        title="Assign temp cover"
+      >
+        <div className="space-y-3 text-sm">
+          <label className="block text-xs font-semibold uppercase text-gray-600">
+            Unit
+            <div className="mt-1">
+              <EntityPicker
+                kind="unit"
+                operatingCompanyId={operatingCompanyId}
+                value={tempCoverForm.unitId}
+                onChange={(unitId) => setTempCoverForm((f) => ({ ...f, unitId }))}
+                allowCreate={false}
+              />
+            </div>
+          </label>
+          <label className="block text-xs font-semibold uppercase text-gray-600">
+            Primary driver (going on leave)
+            <div className="mt-1">
+              <DriverPickerWithCreate
+                operatingCompanyId={operatingCompanyId}
+                value={tempCoverForm.primaryDriverId}
+                onChange={(primaryDriverId) => setTempCoverForm((f) => ({ ...f, primaryDriverId }))}
+                shell="modal"
+              />
+            </div>
+          </label>
+          <label className="block text-xs font-semibold uppercase text-gray-600">
+            Cover driver
+            <div className="mt-1">
+              <DriverPickerWithCreate
+                operatingCompanyId={operatingCompanyId}
+                value={tempCoverForm.coverDriverId}
+                onChange={(coverDriverId) => setTempCoverForm((f) => ({ ...f, coverDriverId }))}
+                shell="modal"
+              />
+            </div>
+          </label>
+          <div className="grid grid-cols-2 gap-2">
+            <label className="block text-xs font-semibold uppercase text-gray-600">
+              Start date
+              <div className="mt-1">
+                <DatePicker
+                  value={tempCoverForm.startDate}
+                  onChange={(startDate) => setTempCoverForm((f) => ({ ...f, startDate, endDate: f.endDate < startDate ? startDate : f.endDate }))}
+                />
+              </div>
+            </label>
+            <label className="block text-xs font-semibold uppercase text-gray-600">
+              End date
+              <div className="mt-1">
+                <DatePicker
+                  value={tempCoverForm.endDate}
+                  min={tempCoverForm.startDate}
+                  onChange={(endDate) => setTempCoverForm((f) => ({ ...f, endDate }))}
+                />
+              </div>
+            </label>
+          </div>
+          <label className="block text-xs font-semibold uppercase text-gray-600">
+            Notes (optional)
+            <textarea
+              className="mt-1 min-h-16 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
+              value={tempCoverForm.notes}
+              onChange={(e) => setTempCoverForm((f) => ({ ...f, notes: e.target.value }))}
+            />
+          </label>
+          <div className="flex justify-end gap-2">
+            <Button variant="secondary" onClick={() => setTempCoverModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              loading={assignMutation.isPending}
+              disabled={!tempCoverForm.unitId || !tempCoverForm.primaryDriverId || !tempCoverForm.coverDriverId}
+              onClick={() => assignMutation.mutate()}
+            >
+              Assign
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal
+        open={Boolean(cancelTarget)}
+        onClose={() => setCancelTarget(null)}
+        title="Cancel temp cover assignment"
+      >
+        {cancelTarget ? (
+          <div className="space-y-3 text-sm">
+            <p className="text-xs text-gray-600">
+              Cancel the cover assignment for {entityLabel(cancelTarget.cover_driver_name, cancelTarget.cover_driver_id, "Driver")} on{" "}
+              {entityLabel(cancelTarget.unit_number, cancelTarget.unit_id, "Unit")}?
+            </p>
+            <label className="block text-xs font-semibold uppercase text-gray-600">
+              Reason
+              <textarea
+                className="mt-1 min-h-16 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
+                value={cancelReason}
+                onChange={(e) => setCancelReason(e.target.value)}
+                placeholder="Why is this assignment being cancelled?"
+              />
+            </label>
+            <div className="flex justify-end gap-2">
+              <Button variant="secondary" onClick={() => setCancelTarget(null)}>
+                Keep assignment
+              </Button>
+              <Button variant="danger" loading={cancelMutation.isPending} onClick={() => cancelMutation.mutate()}>
+                Cancel assignment
+              </Button>
+            </div>
+          </div>
+        ) : null}
+      </Modal>
     </div>
   );
 }

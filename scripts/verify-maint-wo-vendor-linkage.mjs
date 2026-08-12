@@ -38,6 +38,9 @@ export function checkLinkage(routes, vendorsPage, maintenanceApi, vendorDetailPa
   if (!routes.includes("FROM mdata.vendors WHERE id = $1")) {
     failures.push("vendors.routes must query canonical mdata.vendors (not qbo mirror)");
   }
+  if (!/ap_vendor\.vendor_name\s+AS\s+mdata_vendor_name/.test(routes) || !/ap_vendor\.operating_company_id\s*=\s*mvendor\.operating_company_id/.test(routes)) {
+    failures.push("vendor detail must resolve the canonical AP vendor label through an entity-scoped join");
+  }
   if (routes.includes("mdata.qbo_vendors")) {
     failures.push("vendors.routes must not read mdata.qbo_vendors for AP linkage");
   }
@@ -49,9 +52,15 @@ export function checkLinkage(routes, vendorsPage, maintenanceApi, vendorDetailPa
   if (!maintenanceApi.includes("mdata_vendor_id: string | null")) {
     failures.push("MaintenanceVendorRow type must include mdata_vendor_id");
   }
+  if (!maintenanceApi.includes("mdata_vendor_name: string | null")) {
+    failures.push("MaintenanceVendorRow type must include mdata_vendor_name");
+  }
 
   if (!vendorDetailPage.includes("vendor.mdata_vendor_id")) {
     failures.push("VendorDetailPage must show linked AP vendor");
+  }
+  if (!/entityLabel\(vendor\.mdata_vendor_name, vendor\.mdata_vendor_id, "Vendor"\)/.test(vendorDetailPage)) {
+    failures.push("VendorDetailPage must render the resolved AP vendor label with its canonical FK");
   }
 
   return failures;
@@ -79,15 +88,19 @@ function selftest() {
     mdata_vendor_id: typeof metadata.mdata_vendor_id === "string" ? metadata.mdata_vendor_id : null,
     async function assertMdataVendorExists() {}
     SELECT id FROM mdata.vendors WHERE id = $1
+    ap_vendor.vendor_name AS mdata_vendor_name
+    ap_vendor.operating_company_id = mvendor.operating_company_id
   `;
   const goodPage = `listVendors mdata_vendor_id AP Vendor`;
-  const goodApi = `mdata_vendor_id: string | null`;
-  const goodDetail = `vendor.mdata_vendor_id`;
+  const goodApi = `mdata_vendor_id: string | null; mdata_vendor_name: string | null`;
+  const goodDetail = `vendor.mdata_vendor_id entityLabel(vendor.mdata_vendor_name, vendor.mdata_vendor_id, "Vendor")`;
 
   const checks = [
     ["good wiring passes", checkLinkage(goodRoutes, goodPage, goodApi, goodDetail).length === 0],
     ["missing schema field caught", checkLinkage("", goodPage, goodApi, goodDetail).length > 0],
     ["missing FE picker caught", checkLinkage(goodRoutes, "", goodApi, goodDetail).length > 0],
+    ["missing AP vendor label join caught", checkLinkage(goodRoutes.replace("ap_vendor.vendor_name AS mdata_vendor_name", ""), goodPage, goodApi, goodDetail).some((f) => f.includes("resolve the canonical AP vendor label"))],
+    ["null AP vendor label caught", checkLinkage(goodRoutes, goodPage, goodApi, `vendor.mdata_vendor_id entityLabel(null, vendor.mdata_vendor_id, "Vendor")`).some((f) => f.includes("resolved AP vendor label"))],
   ];
   const failed = checks.filter(([, ok]) => !ok);
   if (failed.length) {

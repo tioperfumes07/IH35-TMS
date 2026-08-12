@@ -2,6 +2,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { appendCrudAudit, buildPatchChanges } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
+import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import { countOpenWorkOrdersForUnit } from "../kpi/canonical-kpis.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { resolveDefaultOperatingCompanyId, resolveOperatingCompanyId } from "../auth/operating-company-scope.js";
@@ -335,7 +336,7 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
     }
   });
 
-  app.get("/api/v1/mdata/units/:id", async (req, reply) => {
+  app.get("/api/v1/mdata/units/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
@@ -361,9 +362,11 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
     if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
 
     const financial = await withCurrentUser(authUser.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [
-        parsedQuery.data.operating_company_id,
-      ]);
+      // CLS-GUC-BASELINE-CARRIED-5-PHANTOM-SLOTS — this set the tenant-scope GUC directly from the
+      // caller-named operating_company_id query param with no membership check. RLS then enforced
+      // whatever the caller asked for, not what they were entitled to — an IDOR on a route that
+      // returns FINANCIAL data per unit. setScopedCompanyContext asserts membership FIRST.
+      await setScopedCompanyContext(client, authUser.uuid, parsedQuery.data.operating_company_id);
       return getUnitFinancialYTD(
         client,
         parsedParams.data.id,

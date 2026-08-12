@@ -328,6 +328,62 @@
       "modules": ["dispatch"],
       "cols": ["customer", "driver", "unit", "load", "connectivity", "reverse_link"],
       "leafRe": "^queues\\.late$"
+    },
+    {
+      "task": "CLS-DISPATCH-DETENTION-FK-LINKS",
+      "pr": "this PR",
+      "guard": "scripts/verify-steps/2978-verify-entity-label-rejects-uuid-shaped-name.mjs",
+      "modules": ["dispatch"],
+      "cols": ["customer", "driver", "unit", "load", "connectivity", "reverse_link"],
+      "leafRe": "^queues\\.detention$"
+    },
+    {
+      "task": "CLS-DISPATCH-ASSIGNMENT-HISTORY-UNIT-LINKS",
+      "pr": "this PR",
+      "guard": "scripts/verify-steps/2978-verify-entity-label-rejects-uuid-shaped-name.mjs",
+      "modules": ["dispatch"],
+      "cols": ["driver", "unit", "load", "connectivity", "reverse_link"],
+      "leafRe": "^secondary\\.assignments$"
+    },
+    {
+      "task": "CLS-MAINT-VENDOR-AP-LABEL-LINK",
+      "pr": "this PR",
+      "guard": "scripts/verify-steps/441-verify-maint-wo-vendor-linkage.mjs",
+      "modules": ["maintenance"],
+      "cols": ["vendor", "connectivity", "reverse_link"],
+      "leafRe": "^vendors\\.create$"
+    },
+    {
+      "task": "CLS-MAINT-VENDOR-WO-HISTORY-LINKS",
+      "pr": "this PR",
+      "guard": "scripts/verify-steps/2902-verify-maint-vendor-master-unify.mjs",
+      "modules": ["maintenance"],
+      "cols": ["vendor", "connectivity", "reverse_link"],
+      "leafRe": "^vendors\\.create$"
+    },
+    {
+      "task": "CLS-DISPATCH-BORDER-HISTORY-FK-LINKS",
+      "pr": "this PR",
+      "guard": "scripts/verify-border-crossing-history-errors.mjs",
+      "modules": ["dispatch"],
+      "cols": ["driver", "unit", "load", "connectivity", "reverse_link"],
+      "leafRe": "^queues\\.border_history$"
+    },
+    {
+      "task": "CLS-DISPATCH-INTRANSIT-UNIT-LINK",
+      "pr": "this PR",
+      "guard": "scripts/verify-dispatch-arch-tab-parity.mjs",
+      "modules": ["dispatch"],
+      "cols": ["driver", "unit", "load", "connectivity", "reverse_link"],
+      "leafRe": "^queues\\.in_transit$"
+    },
+    {
+      "task": "CLS-DISPATCH-OVERVIEW-ENTITY-LINKS",
+      "pr": "this PR",
+      "guard": "scripts/verify-steps/2978-verify-entity-label-rejects-uuid-shaped-name.mjs",
+      "modules": ["dispatch"],
+      "cols": ["customer", "driver", "unit", "load", "connectivity", "reverse_link"],
+      "leafRe": "^home\\.overview$"
     }
   ]
 }
