@@ -28,13 +28,13 @@ export interface ProgramScoreboard {
 
 export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
   "meta": {
-    "generatedAt": "2026-08-10T11:58:53-05:00",
-    "sourceSha": "f67752ea9",
+    "generatedAt": "2026-08-12T06:21:50-05:00",
+    "sourceSha": "0735373d4",
     "deployedSha": "308bc66",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 691,
-    "failOpen": 13,
-    "defects": 15
+    "ledgerRows": 705,
+    "failOpen": 14,
+    "defects": 16
   },
   "modules": [
     {
@@ -469,7 +469,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
         "AUDIT",
         "AUDIT",
         "FAIL",
-        "FIX",
+        "FAIL",
         "AUDIT",
         "AUDIT",
         "FIX",
@@ -486,7 +486,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
           "AUDIT",
           "AUDIT",
           "FAIL",
-          "FIX",
+          "FAIL",
           "AUDIT",
           "AUDIT",
           "FIX",
@@ -606,7 +606,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
         "USMCA": [
           "AUDIT",
           "AUDIT",
-          "AUDIT",
+          "UNV",
           "AUDIT",
           "AUDIT",
           "AUDIT",
@@ -840,7 +840,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
         "AUDIT",
         "AUDIT",
         "UNV",
-        "AUDIT",
+        "FAIL",
         "AUDIT",
         "AUDIT",
         "AUDIT",
@@ -872,7 +872,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
           "AUDIT",
           "AUDIT",
           "AUDIT",
-          "AUDIT",
+          "FAIL",
           "AUDIT",
           "AUDIT",
           "AUDIT",
@@ -1422,7 +1422,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
       "cells": [
         "AUDIT",
         "AUDIT",
-        "FIX",
+        "UNV",
         "NA",
         "AUDIT",
         "AUDIT",
@@ -1454,7 +1454,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
         "USMCA": [
           "AUDIT",
           "AUDIT",
-          "NA",
+          "UNV",
           "NA",
           "AUDIT",
           "AUDIT",
