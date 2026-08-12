@@ -1,6 +1,6 @@
 # PRIORITY 10 · 3-BOX GATE — LIVE GAP
 
-**as_of:** 2026-08-12T20:09:50.740Z · **main:** `c3eedcf49`
+**as_of:** 2026-08-12T20:11:41.562Z · **main:** `17866c9db`
 
 ## Bar
 
@@ -8,17 +8,17 @@ All 10 modules: **Required + Audited + Built = 100%** before Live. Wave **A→B�
 
 ## Built coverage
 
-- All cells: **71%** (2176/3051)
-- Wave A–C (no chrome): **80%** (1925/2421)
+- All cells: **72%** (2186/3051)
+- Wave A–C (no chrome): **80%** (1935/2421)
 
 | Module | Built% all | Built% A–C |
 |--------|-----------:|-----------:|
 | lists | 69% | 75% |
-| accounting | 73% | 84% |
-| dispatch | 79% | 87% |
+| accounting | 75% | 86% |
+| dispatch | 80% | 89% |
 | settlements | 76% | 89% |
 | factoring | 58% | 67% |
-| banking | 55% | 61% |
+| banking | 61% | 68% |
 | customers | 91% | 100% |
 | vendors | 86% | 97% |
 | drivers | 66% | 82% |
@@ -29,11 +29,11 @@ All 10 modules: **Required + Audited + Built = 100%** before Live. Wave **A→B�
 | Col | Cells | Seat |
 |-----|------:|------|
 | `qbo_chrome` | 293 | D LAST |
-| `expense` | 130 | CC-1 |
 | `gl_je` | 127 | CC-1 C |
+| `expense` | 123 | CC-1 |
 | `ap_bill` | 99 | CC-1 |
 | `picker_law` | 73 | D LAST |
-| `connectivity` | 73 | CC-2 |
+| `connectivity` | 70 | CC-2 |
 | `liability` | 38 | CC-1 |
 | `load` | 29 | Codex |
 | `scenario.maintenance` | 5 | ? |

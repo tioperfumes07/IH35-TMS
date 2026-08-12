@@ -1,15 +1,15 @@
 {
-  "as_of": "2026-08-12T20:09:50.740Z",
-  "main_sha": "c3eedcf49",
+  "as_of": "2026-08-12T20:11:41.562Z",
+  "main_sha": "17866c9db",
   "gate": "PRIORITY_10_3BOX_100",
   "allRequired": {
     "totR": 3051,
-    "totB": 2176,
-    "pct": 71
+    "totB": 2186,
+    "pct": 72
   },
   "waveABC_noChrome": {
     "abcR": 2421,
-    "abcB": 1925,
+    "abcB": 1935,
     "pct": 80
   },
   "per_module": [
@@ -25,20 +25,20 @@
     {
       "mod": "accounting",
       "req": 170,
-      "built": 124,
-      "pct": 73,
+      "built": 127,
+      "pct": 75,
       "abcReq": 138,
-      "abcBuilt": 116,
-      "abcPct": 84
+      "abcBuilt": 119,
+      "abcPct": 86
     },
     {
       "mod": "dispatch",
       "req": 363,
-      "built": 288,
-      "pct": 79,
+      "built": 292,
+      "pct": 80,
       "abcReq": 318,
-      "abcBuilt": 278,
-      "abcPct": 87
+      "abcBuilt": 282,
+      "abcPct": 89
     },
     {
       "mod": "settlements",
@@ -61,11 +61,11 @@
     {
       "mod": "banking",
       "req": 49,
-      "built": 27,
-      "pct": 55,
+      "built": 30,
+      "pct": 61,
       "abcReq": 41,
-      "abcBuilt": 25,
-      "abcPct": 61
+      "abcBuilt": 28,
+      "abcPct": 68
     },
     {
       "mod": "customers",
@@ -123,19 +123,6 @@
       "seat": "D LAST"
     },
     {
-      "col": "expense",
-      "cells": 130,
-      "byMod": {
-        "lists": 116,
-        "accounting": 1,
-        "dispatch": 4,
-        "factoring": 1,
-        "banking": 3,
-        "safety": 5
-      },
-      "seat": "CC-1"
-    },
-    {
       "col": "gl_je",
       "cells": 127,
       "byMod": {
@@ -144,6 +131,17 @@
         "settlements": 1
       },
       "seat": "CC-1 C"
+    },
+    {
+      "col": "expense",
+      "cells": 123,
+      "byMod": {
+        "lists": 116,
+        "accounting": 1,
+        "factoring": 1,
+        "safety": 5
+      },
+      "seat": "CC-1"
     },
     {
       "col": "ap_bill",
@@ -175,9 +173,8 @@
     },
     {
       "col": "connectivity",
-      "cells": 73,
+      "cells": 70,
       "byMod": {
-        "accounting": 3,
         "dispatch": 11,
         "factoring": 10,
         "banking": 8,
@@ -254,5 +251,5 @@
       "seat": "?"
     }
   ],
-  "entry_count": 114
+  "entry_count": 116
 }
