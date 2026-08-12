@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 import { cashAdvanceRequestsOfficeApi } from "../../api/cashAdvanceRequests";
 import { getDebtSummary, listSettlements, type SettlementListRow } from "../../api/driverFinance";
 import { getLiabilitiesByDriver } from "../../api/liabilities";
-import { listVendorBills } from "../../api/accounting";
+import { listExpenses, listVendorBills } from "../../api/accounting";
 import { getDriverApVendor } from "../../api/mdata";
 import { Button } from "../Button";
 import { EntityLink } from "../shared/EntityLink";
@@ -196,6 +196,15 @@ export function EarningsTab({ driverId, operatingCompanyId, onOpenOperationsView
       }),
     enabled: enabled && Boolean(apVendorId),
   });
+  // EXPENSE column-wave: accounting.expenses.driver_uuid is a SEPARATE leaf from the driver-as-vendor
+  // AP bills above — a driver-attributed general expense (recorded via RecordExpenseForm's driver
+  // picker, added in this same commit). Backend has supported create/list/detail-by-driver since the
+  // route's original build; no Driver page ever queried it until now.
+  const driverExpensesQuery = useQuery({
+    queryKey: ["driver-expenses", operatingCompanyId, driverId],
+    queryFn: () => listExpenses(operatingCompanyId, { driver_id: driverId, limit: 50 }).then((res) => res.rows),
+    enabled,
+  });
   const openBillTotalCents = useMemo(() => {
     const rows = openBillsQuery.data?.rows ?? [];
     return rows.reduce((sum, row) => {
@@ -383,6 +392,34 @@ export function EarningsTab({ driverId, operatingCompanyId, onOpenOperationsView
                 {(openBillsQuery.data?.rows ?? []).length} unpaid bill(s)
               </div>
             </div>
+          </div>
+        )}
+      </div>
+
+      <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid="driver-earnings-expenses">
+        <div className="mb-1 flex items-center justify-between">
+          <h4 className="text-xs font-semibold uppercase text-gray-600">Driver-attributed expenses</h4>
+          <Link
+            to={`/accounting/expenses?driver_id=${encodeURIComponent(driverId)}`}
+            className="text-xs text-slate-700 underline"
+          >
+            Open all →
+          </Link>
+        </div>
+        {driverExpensesQuery.isPending ? (
+          <p className="text-xs text-gray-500">Loading…</p>
+        ) : (driverExpensesQuery.data ?? []).length === 0 ? (
+          <p className="text-xs text-gray-500" data-testid="driver-earnings-expenses-empty">
+            No expenses recorded against this driver.
+          </p>
+        ) : (
+          <div className="space-y-1">
+            {(driverExpensesQuery.data ?? []).slice(0, 5).map((row) => (
+              <div key={row.id} className="flex items-center justify-between text-xs">
+                <EntityLink kind="expense" id={row.id} label={entityLabel(row.memo, row.id, "Expense")} />
+                <span className="text-gray-700">{money(Number(row.total_amount_cents ?? 0) / 100)}</span>
+              </div>
+            ))}
           </div>
         )}
       </div>

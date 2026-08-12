@@ -76,7 +76,7 @@ function computeSummary(transactions: PlaidBankTransaction[], statementBalanceCe
   let matchedCredits = 0;
   let matchedDebits = 0;
   for (const tx of transactions) {
-    const isMatched = Boolean(tx.matched_load_id || tx.matched_bill_id || tx.matched_settlement_id);
+    const isMatched = Boolean(tx.matched_load_id || tx.matched_bill_id || tx.matched_settlement_id || tx.matched_expense_id);
     if (!isMatched) continue;
     const amountAbs = Math.abs(Number(tx.amount_cents ?? 0));
     if (tx.is_credit) matchedCredits += amountAbs;
@@ -167,7 +167,7 @@ export function ReconciliationWorkspacePage() {
       filterMode === "all"
         ? localTransactions
         : localTransactions.filter((tx) => {
-            const matched = Boolean(tx.matched_load_id || tx.matched_bill_id || tx.matched_settlement_id);
+            const matched = Boolean(tx.matched_load_id || tx.matched_bill_id || tx.matched_settlement_id || tx.matched_expense_id);
             return filterMode === "matched" ? matched : !matched;
           });
     const dir = txnSort.dir === "asc" ? 1 : -1;
@@ -434,7 +434,7 @@ export function ReconciliationWorkspacePage() {
             </div>
             <div className="max-h-[560px] space-y-1 overflow-auto">
               {visibleTransactions.map((tx) => {
-                const matched = Boolean(tx.matched_load_id || tx.matched_bill_id || tx.matched_settlement_id);
+                const matched = Boolean(tx.matched_load_id || tx.matched_bill_id || tx.matched_settlement_id || tx.matched_expense_id);
                 return (
                   <button
                     key={tx.id}
@@ -464,6 +464,14 @@ export function ReconciliationWorkspacePage() {
                             id={tx.matched_settlement_id}
                             label={entityLabel(null, tx.matched_settlement_id, "Settlement")}
                           />
+                        ) : null}
+                        {/* EXPENSE column-wave: bank-transaction-splits.service.ts (and the
+                            accounting-side bank-recon accept flow) genuinely stamp matched_expense_id;
+                            this workspace never rendered it, so an expense-matched transaction looked
+                            unmatched here even though ExpenseDetailPage.tsx already showed the reverse
+                            link correctly. */}
+                        {tx.matched_expense_id ? (
+                          <EntityLink kind="expense" id={tx.matched_expense_id} label={entityLabel(null, tx.matched_expense_id, "Expense")} />
                         ) : null}
                       </div>
                     ) : null}

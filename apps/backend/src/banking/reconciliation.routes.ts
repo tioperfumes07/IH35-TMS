@@ -124,6 +124,11 @@ function computeSummaryFromTransactions(
     matched_load_id?: string | null;
     matched_bill_id?: string | null;
     matched_settlement_id?: string | null;
+    // EXPENSE column-wave: bank-transaction-splits.service.ts (and accounting/bank-recon's accept
+    // flow) genuinely stamp matched_expense_id, but this route's own "matched" computation never
+    // counted it — a transaction matched ONLY to an expense showed as uncleared/unmatched here even
+    // though the accounting side (ExpenseDetailPage.tsx) already showed the reverse link correctly.
+    matched_expense_id?: string | null;
   }>,
   opts: { beginningBalanceCents: number; statementEndingCents: number }
 ) {
@@ -135,7 +140,7 @@ function computeSummaryFromTransactions(
     is_credit: t.is_credit,
     reconciliation_cleared: anyCleared
       ? Boolean(t.reconciliation_cleared)
-      : Boolean(t.matched_load_id || t.matched_bill_id || t.matched_settlement_id),
+      : Boolean(t.matched_load_id || t.matched_bill_id || t.matched_settlement_id || t.matched_expense_id),
   }));
   return computeAdjustedBalanceSummary({
     beginningBalanceCents: opts.beginningBalanceCents,
@@ -401,6 +406,7 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
         matched_load_id: string | null;
         matched_bill_id: string | null;
         matched_settlement_id: string | null;
+        matched_expense_id: string | null;
         notes: string | null;
       }>(
         `
@@ -419,6 +425,7 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
             matched_load_id,
             matched_bill_id,
             matched_settlement_id,
+            matched_expense_id,
             notes
           FROM banking.bank_transactions
           WHERE bank_account_id = $1
@@ -475,8 +482,8 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
         );
       }
 
-      const matchedTransactions = transactions.filter((row) => Boolean(row.matched_load_id || row.matched_bill_id || row.matched_settlement_id));
-      const unmatchedTransactions = transactions.filter((row) => !(row.matched_load_id || row.matched_bill_id || row.matched_settlement_id));
+      const matchedTransactions = transactions.filter((row) => Boolean(row.matched_load_id || row.matched_bill_id || row.matched_settlement_id || row.matched_expense_id));
+      const unmatchedTransactions = transactions.filter((row) => !(row.matched_load_id || row.matched_bill_id || row.matched_settlement_id || row.matched_expense_id));
       // BANK-DOM-04: age + classify unmatched (uncleared) items; escalate 90+ / investigate.
       const reconcilingItems = ageUnclearedTransactions(unmatchedTransactions);
       const escalatedReconcilingItems = reconcilingItems.filter((item) => item.escalated);
@@ -864,10 +871,11 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
         matched_load_id: string | null;
         matched_bill_id: string | null;
         matched_settlement_id: string | null;
+        matched_expense_id: string | null;
       }>(
         `
           SELECT amount_cents, is_credit, reconciliation_cleared,
-                 matched_load_id, matched_bill_id, matched_settlement_id
+                 matched_load_id, matched_bill_id, matched_settlement_id, matched_expense_id
           FROM banking.bank_transactions
           WHERE bank_account_id = $1
             AND operating_company_id = $2::uuid

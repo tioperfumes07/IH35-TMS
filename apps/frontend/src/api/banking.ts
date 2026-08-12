@@ -73,6 +73,9 @@ export type PlaidBankTransaction = {
   matched_load_id: string | null;
   matched_bill_id: string | null;
   matched_settlement_id: string | null;
+  /** EXPENSE column-wave: reconciliation.routes.ts now selects this back; previously omitted, so a
+   * transaction matched only to an expense showed as unmatched in the Reconciliation Workspace. */
+  matched_expense_id?: string | null;
   /** Stamped when categorize→GL posts via bank_categorization (Law §9 reverse → JE). */
   matched_journal_entry_id?: string | null;
   institution_name?: string | null;
@@ -1361,6 +1364,9 @@ export type UnmatchedBankTxnRow = {
   matched_load_id: string | null;
   matched_bill_id: string | null;
   matched_settlement_id: string | null;
+  /** EXPENSE column-wave: reconciliation.routes.ts now selects this back; previously omitted, so a
+   * transaction matched only to an expense showed as unmatched in the Reconciliation Workspace. */
+  matched_expense_id?: string | null;
   reconciled_obligation_type: string | null;
   reconciled_obligation_id: string | null;
   reviewed_at: string | null;

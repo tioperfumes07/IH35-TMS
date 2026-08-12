@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getWoCostContext } from "../../api/maintenance";
 import { ensureDriverVendors, listVendors } from "../../api/mdata";
+import { DriverPickerWithCreate } from "../drivers/DriverPickerWithCreate";
 import { listCatalogAccounts } from "../../api/catalog-accounts";
 // ACCT-F92: one definition of which accounts may appear in which picker — see account-picker-scope.ts
 // for the live evidence (Accumulated Depreciation / Trucks / Prepaid / A/R are all account_type Asset).
@@ -229,6 +230,23 @@ export function RecordExpenseForm({
             total={vendorsQuery.data?.total ?? null}
             hint="Type in the vendor field to search, or narrow with filters on the Vendors list."
             className="mt-1 text-[11px] text-slate-600"
+          />
+        </div>
+      </label>
+
+      {/* EXPENSE column-wave: accounting.expenses.driver_uuid was fully wired server-side
+          (create/list/detail all already read/write it, driver name joined) but this form had no
+          field for it — a driver-caused general expense could never be attributed to the driver it
+          belonged to. Optional: fuel-card overage and reimbursements post through their own direct-JE
+          leaves and don't use this field at all. */}
+      <label className="text-xs font-semibold text-gray-700" htmlFor={fieldId("driver")}>
+        Driver (optional)
+        <div className="mt-1" data-testid="record-expense-driver-picker">
+          <DriverPickerWithCreate
+            operatingCompanyId={operatingCompanyId}
+            value={values.driverId || null}
+            onChange={(next) => setValues((prev) => ({ ...prev, driverId: next ?? null }))}
+            placeholder="Search driver…"
           />
         </div>
       </label>
