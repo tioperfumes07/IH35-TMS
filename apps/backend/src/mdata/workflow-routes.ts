@@ -144,10 +144,10 @@ async function callerCanTargetResource(
 ) {
   const fromClause =
     targetResourceType === "driver"
-      ? `FROM mdata.drivers r JOIN org.user_company_access uca ON uca.company_id = r.operating_company_id`
+      ? `FROM mdata.drivers r JOIN org.user_company_access uca ON r.operating_company_id = uca.company_id`
       : `FROM ${targetResourceType === "unit" ? "mdata.units" : "mdata.equipment"} r
            JOIN org.user_company_access uca
-             ON uca.company_id = COALESCE(r.currently_leased_to_company_id, r.owner_company_id)`;
+             ON COALESCE(r.currently_leased_to_company_id, r.owner_company_id) = uca.company_id`;
   const res = await client.query(
     `
       SELECT r.id

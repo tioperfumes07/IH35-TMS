@@ -108,11 +108,13 @@ async function findAffected(
        AND ba.operating_company_id = bt.operating_company_id
       JOIN catalogs.accounts cur
         ON cur.id = ba.ledger_account_id
+       AND cur.operating_company_id = ba.operating_company_id
       JOIN accounting.journal_entry_postings p
         ON p.journal_entry_uuid = bt.matched_journal_entry_id
        AND p.operating_company_id = bt.operating_company_id
       JOIN catalogs.accounts posted
         ON posted.id = p.account_id
+       AND posted.operating_company_id = p.operating_company_id
       WHERE bt.operating_company_id = $1::uuid
         AND bt.matched_journal_entry_id IS NOT NULL
         AND ($2::uuid IS NULL OR ba.id = $2::uuid)

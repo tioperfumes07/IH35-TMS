@@ -52,7 +52,7 @@ async function loadDueReminders(client: QueryClient): Promise<ReminderRow[]> {
         (COALESCE(r.approved_start_date, r.start_date) - CURRENT_DATE)::int AS days_out,
         concat_ws(' ', d.first_name, d.last_name) AS driver_name
       FROM safety.driver_leave_requests r
-      JOIN mdata.drivers d ON d.id = r.driver_id
+      JOIN mdata.drivers d ON d.id = r.driver_id AND d.operating_company_id = r.operating_company_id
       WHERE r.status = 'approved'
         AND r.voided_at IS NULL
         AND (COALESCE(r.approved_start_date, r.start_date) - CURRENT_DATE) = ANY($1::int[])

@@ -163,7 +163,7 @@ export async function getSettlementSummary(
       ) as total_count,
       COALESCE(eb.current_balance_cents, 0) as escrow_balance_cents
     FROM driver_finance.driver_settlements s
-    JOIN mdata.drivers d ON d.id = s.driver_id
+    JOIN mdata.drivers d ON d.id = s.driver_id AND d.operating_company_id = s.operating_company_id
     LEFT JOIN driver_finance.escrow_balances eb
       ON eb.driver_id = s.driver_id AND eb.operating_company_id = s.operating_company_id
     WHERE s.id = $1 AND s.operating_company_id = $2::uuid

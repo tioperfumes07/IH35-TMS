@@ -319,8 +319,10 @@ export async function aggregateSettlementTotals(
         -- mechanism. That is a separate open row, not silently folded in here.
         SELECT COALESCE(db.load_id, sl.load_id) AS load_id, l.load_number, l.created_at
           FROM driver_finance.settlement_lines sl
+          JOIN driver_finance.driver_settlements ds ON ds.id = sl.settlement_id
           LEFT JOIN driver_finance.driver_bills db ON db.id = sl.source_driver_bill_id
           JOIN mdata.loads l ON l.id = COALESCE(db.load_id, sl.load_id)
+                             AND l.operating_company_id = ds.operating_company_id
          WHERE sl.settlement_id = $1::uuid
            AND sl.is_active = true
            AND COALESCE(db.load_id, sl.load_id) IS NOT NULL

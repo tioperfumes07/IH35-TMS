@@ -33,7 +33,7 @@ export interface ClassScoreboard {
 
 export const CLASS_SCOREBOARD: ClassScoreboard = {
   "meta": {
-    "generatedAt": "2026-08-12T19:24:22.530Z",
+    "generatedAt": "2026-08-12T22:02:45.799Z",
     "source": "docs/audit/wave-queue.json"
   },
   "summary": {

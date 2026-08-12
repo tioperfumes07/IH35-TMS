@@ -173,7 +173,7 @@ async function callerCanTargetAccount(
       SELECT a.id
         FROM catalogs.accounts a
         JOIN org.user_company_access uca
-          ON uca.company_id = a.operating_company_id
+          ON a.operating_company_id = uca.company_id
          AND uca.user_id = $2::uuid
          AND uca.deactivated_at IS NULL
         JOIN org.companies oc ON oc.id = uca.company_id AND oc.deactivated_at IS NULL
