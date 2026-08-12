@@ -5,6 +5,7 @@ export type DispatcherActiveLoadRow = {
   id: string;
   load_number: string;
   status: string;
+  customer_id: string;
   customer_name: string;
   pickup_city: string | null;
   delivery_city: string | null;
@@ -68,7 +69,7 @@ export function DispatcherActiveLoadsPanel({ rows, isLoading, isError, onRetry }
           {rows.map((row) => (
             <li key={row.id} className="flex flex-wrap items-center gap-2 px-3 py-2 text-sm">
               <span className="w-24 shrink-0 font-mono text-xs text-slate-600">{entityLabel(row.load_number, row.id, "Load")}</span>
-              <span className="min-w-40 flex-1 truncate text-slate-900">{entityLabel(row.customer_name, null, "Customer")}</span>
+              <span className="min-w-40 flex-1 truncate text-slate-900"><EntityLink kind="customer" id={row.customer_id} label={entityLabel(row.customer_name, row.customer_id, "Customer")} /></span>
               <span className="min-w-0 truncate text-xs text-slate-500">
                 {row.pickup_city ?? "—"} to {row.delivery_city ?? "—"}
               </span>

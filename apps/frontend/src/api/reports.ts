@@ -1146,6 +1146,7 @@ export async function getMaintenanceCostPerUnit(params: {
 export type DispatchMarginRow = {
   load_id: string;
   load_number: string | null;
+  customer_id: string;
   customer_name: string | null;
   revenue_cents: number;
   driver_pay_cents: number;

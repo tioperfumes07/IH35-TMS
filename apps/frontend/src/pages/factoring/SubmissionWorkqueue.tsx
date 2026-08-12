@@ -105,7 +105,7 @@ export function SubmissionWorkqueue() {
                   label={entityLabel(item.display_id, item.invoice_id, "Invoice")}
                 />
               </td>
-              <td className="py-1.5 pr-3">{entityLabel(item.customer_name, null, "Customer")}</td>
+              <td className="py-1.5 pr-3"><EntityLink kind="customer" id={item.customer_id} label={entityLabel(item.customer_name, item.customer_id, "Customer")} /></td>
               <td className="py-1.5 pr-3 font-mono text-slate-500">{item.batch_number ?? "—"}</td>
               <td className="py-1.5 pr-3 text-slate-500">{item.submitted_at ? formatDateUS(item.submitted_at.slice(0, 10)) : "—"}</td>
               <td className="py-1.5 pr-3">

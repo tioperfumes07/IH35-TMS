@@ -12,6 +12,7 @@ const querySchema = companyQuerySchema.extend({
 type DispatchMarginRow = {
   load_id: string;
   load_number: string | null;
+  customer_id: string;
   customer_name: string | null;
   revenue_cents: number;
   driver_pay_cents: number;
@@ -109,6 +110,7 @@ export async function registerDispatchMarginRoutes(app: FastifyInstance) {
             SELECT
               l.id,
               l.load_number,
+              l.customer_id::text,
               c.customer_name,
               COALESCE(l.rate_total_cents, 0)::bigint AS revenue_cents
             FROM mdata.loads l
@@ -143,6 +145,7 @@ export async function registerDispatchMarginRoutes(app: FastifyInstance) {
           SELECT
             ls.id::text AS load_id,
             ls.load_number,
+            ls.customer_id,
             ls.customer_name,
             ls.revenue_cents::text AS revenue_cents,
             COALESCE(pay.driver_pay_cents, 0)::text AS driver_pay_cents,
@@ -171,6 +174,7 @@ export async function registerDispatchMarginRoutes(app: FastifyInstance) {
         return {
           load_id: String(row.load_id),
           load_number: row.load_number,
+          customer_id: String(row.customer_id),
           customer_name: row.customer_name,
           revenue_cents: revenue,
           driver_pay_cents: driverPay,

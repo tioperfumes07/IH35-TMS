@@ -15,6 +15,7 @@ export type DriverMeResponse = {
 export type DriverLoad = {
   id: string;
   display_id: string;
+  customer_id: string;
   customer_name: string;
   pickup_location: string;
   delivery_location: string;
