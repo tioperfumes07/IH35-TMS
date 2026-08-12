@@ -7,6 +7,7 @@ import { CustomsTimePill } from "../../components/dispatch/CustomsTimePill";
 import { resolveApiUrl } from "../../api/client";
 import { formatDateUS } from "../../lib/formatDate";
 import { entityLabel } from "../../lib/entity-label";
+import { EntityLink } from "../../components/shared/EntityLink";
 
 type CrossingRow = {
   id: string;
@@ -19,6 +20,9 @@ type CrossingRow = {
   emanifest_status: string | null;
   customs_broker_status: string | null;
   wizard_completed_at: string | null;
+  unit_id: string | null;
+  driver_id: string | null;
+  load_id: string | null;
   unit_number: string | null;
   driver_name: string | null;
   load_number: string | null;
@@ -80,7 +84,7 @@ export function BorderCrossingHistoryPage() {
         </div>
       ),
     },
-    { key: "unit_number", label: "Unit", sortable: true, render: (row) => entityLabel(row.unit_number, null, "Unit") },
+    { key: "unit_number", label: "Unit", sortable: true, render: (row) => <EntityLink kind="unit" id={row.unit_id} label={entityLabel(row.unit_number, row.unit_id, "Unit")} /> },
     { key: "emanifest_reference", label: "eManifest", render: (row) => row.emanifest_reference ?? "—" },
   ];
 
@@ -128,10 +132,10 @@ export function BorderCrossingHistoryPage() {
                 <span className="text-gray-500">Commodity:</span> {selected.commodity ?? "—"}
               </p>
               <p>
-                <span className="text-gray-500">Driver:</span> {entityLabel(selected.driver_name, null, "Driver")}
+                <span className="text-gray-500">Driver:</span>{" "}<EntityLink kind="driver" id={selected.driver_id} label={entityLabel(selected.driver_name, selected.driver_id, "Driver")} />
               </p>
               <p>
-                <span className="text-gray-500">Load:</span> {entityLabel(selected.load_number, null, "Load")}
+                <span className="text-gray-500">Load:</span>{" "}<EntityLink kind="load" id={selected.load_id} label={entityLabel(selected.load_number, selected.load_id, "Load")} />
               </p>
               <p>
                 <span className="text-gray-500">Broker status:</span> {selected.customs_broker_status ?? "—"}

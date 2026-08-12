@@ -360,6 +360,14 @@
       "modules": ["maintenance"],
       "cols": ["vendor", "connectivity", "reverse_link"],
       "leafRe": "^vendors\\.create$"
+    },
+    {
+      "task": "CLS-DISPATCH-BORDER-HISTORY-FK-LINKS",
+      "pr": "this PR",
+      "guard": "scripts/verify-border-crossing-history-errors.mjs",
+      "modules": ["dispatch"],
+      "cols": ["driver", "unit", "load", "connectivity", "reverse_link"],
+      "leafRe": "^queues\\.border_history$"
     }
   ]
 }
