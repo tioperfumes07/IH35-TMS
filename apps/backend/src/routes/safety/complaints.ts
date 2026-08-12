@@ -140,7 +140,7 @@ export async function registerSafetyComplaintsRoutes(app: FastifyInstance) {
          LEFT JOIN mdata.drivers cd ON cd.id = c.complainant_driver_id
          LEFT JOIN mdata.drivers rd ON rd.id = c.respondent_driver_id
          LEFT JOIN mdata.customers cc ON cc.id = c.complainant_customer_id
-         WHERE c.operating_company_id = $1
+         WHERE c.operating_company_id = $1::uuid
          ${driverFilter.replace(/complainant_driver_id/g, "c.complainant_driver_id").replace(/respondent_driver_id/g, "c.respondent_driver_id")}
          ORDER BY c.filed_at DESC LIMIT 500`,
         values
@@ -163,7 +163,7 @@ export async function registerSafetyComplaintsRoutes(app: FastifyInstance) {
 
     const row = await withCompany(user.uuid, appRole, query.data.operating_company_id, async (client) => {
       const res = await client.query(
-        `SELECT * FROM safety.complaints WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+        `SELECT * FROM safety.complaints WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
         [params.data.id, query.data.operating_company_id]
       );
       return res.rows[0] ?? null;
@@ -285,7 +285,7 @@ export async function registerSafetyComplaintsRoutes(app: FastifyInstance) {
               resolved_at = CASE WHEN COALESCE($3, status) IN ('resolved', 'dismissed') THEN now() ELSE resolved_at END,
               resolved_by = CASE WHEN COALESCE($3, status) IN ('resolved', 'dismissed') THEN $5 ELSE resolved_by END
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
           RETURNING *
         `,
         [params.data.id, query.data.operating_company_id, body.data.status ?? null, body.data.resolution ?? null, user.uuid]
@@ -331,7 +331,7 @@ export async function registerSafetyComplaintsRoutes(app: FastifyInstance) {
           UPDATE safety.complaints
           SET voided_at = now(), voided_by = $2, void_reason = $4
           WHERE id = $1
-            AND operating_company_id = $3
+            AND operating_company_id = $3::uuid
             AND voided_at IS NULL
           RETURNING *
         `,

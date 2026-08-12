@@ -33,7 +33,7 @@ export async function importSamsaraVehicles(client: PgClient, operatingCompanyId
     }
   }
   await client.query(
-    `UPDATE integrations.samsara_config SET last_health_check_at = now(), last_health_status = 'green' WHERE operating_company_id = $1`,
+    `UPDATE integrations.samsara_config SET last_health_check_at = now(), last_health_status = 'green' WHERE operating_company_id = $1::uuid`,
     [operatingCompanyId]
   );
   return { imported, master_sync: stats };

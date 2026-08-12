@@ -77,7 +77,7 @@ export async function registerPreSettlementRoutes(app: FastifyInstance) {
             s.period_start
           FROM driver_finance.driver_settlements s
           LEFT JOIN mdata.drivers d ON d.id = s.driver_id
-          WHERE s.operating_company_id = $1
+          WHERE s.operating_company_id = $1::uuid
             AND s.settlement_model = 'load_bookended'
             AND s.trip_closed_at IS NULL
             AND s.status NOT IN ('approved', 'paid', 'cancelled')
@@ -130,7 +130,7 @@ export async function registerPreSettlementRoutes(app: FastifyInstance) {
             s.period_end
           FROM driver_finance.driver_settlements s
           WHERE s.driver_id = $1
-            AND s.operating_company_id = $2
+            AND s.operating_company_id = $2::uuid
             AND s.settlement_model = 'load_bookended'
             AND s.status NOT IN ('approved', 'paid', 'cancelled')
           ORDER BY s.created_at DESC
@@ -184,7 +184,7 @@ export async function registerPreSettlementRoutes(app: FastifyInstance) {
           SELECT id, driver_id, status, trip_closed_at
           FROM driver_finance.driver_settlements
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
             AND settlement_model = 'load_bookended'
           LIMIT 1
           FOR UPDATE
@@ -200,7 +200,7 @@ export async function registerPreSettlementRoutes(app: FastifyInstance) {
           SELECT id, load_number, assigned_primary_driver_id, assigned_secondary_driver_id
           FROM mdata.loads
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
             AND soft_deleted_at IS NULL
           LIMIT 1
         `,
@@ -306,7 +306,7 @@ export async function registerPreSettlementRoutes(app: FastifyInstance) {
           JOIN mdata.drivers d ON d.id = s.driver_id
           LEFT JOIN identity.users u ON u.id = d.identity_user_id
           WHERE s.id = $1
-            AND s.operating_company_id = $2
+            AND s.operating_company_id = $2::uuid
             AND s.settlement_model = 'load_bookended'
           LIMIT 1
           FOR UPDATE

@@ -183,7 +183,7 @@ function locationSelectSql() {
 }
 
 export async function registerLocationRoutes(app: FastifyInstance) {
-  app.get("/api/v1/mdata/locations", async (req, reply) => {
+  app.get("/api/v1/mdata/locations", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const parsedQuery = listQuerySchema.safeParse(req.query ?? {});
@@ -224,7 +224,7 @@ export async function registerLocationRoutes(app: FastifyInstance) {
       }
       // ALWAYS bind the resolved operating company — never optional (cross-entity leak guard).
       values.push(scopedCompanyId);
-      filters.push(`operating_company_id = $${values.length}`);
+      filters.push(`operating_company_id = $${values.length}::uuid`);
       values.push(limit);
       values.push(offset);
       const whereClause = filters.length > 0 ? `WHERE ${filters.join(" AND ")}` : "";
@@ -244,7 +244,7 @@ export async function registerLocationRoutes(app: FastifyInstance) {
     return { locations: result.rows };
   });
 
-  app.post("/api/v1/mdata/locations", async (req, reply) => {
+  app.post("/api/v1/mdata/locations", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -262,7 +262,7 @@ export async function registerLocationRoutes(app: FastifyInstance) {
           `
             SELECT id
             FROM mdata.locations
-            WHERE operating_company_id = $1
+            WHERE operating_company_id = $1::uuid
               AND location_name = $2
             LIMIT 1
           `,
@@ -388,7 +388,7 @@ export async function registerLocationRoutes(app: FastifyInstance) {
     }
   });
 
-  app.get("/api/v1/mdata/locations/:id", async (req, reply) => {
+  app.get("/api/v1/mdata/locations/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
@@ -401,7 +401,7 @@ export async function registerLocationRoutes(app: FastifyInstance) {
       const scopedCompanyId = await resolveOperatingCompanyId(client, authUser.uuid);
       if (!scopedCompanyId) return null;
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [scopedCompanyId]);
-      const res = await client.query(`${locationSelectSql()} WHERE id = $1 AND operating_company_id = $2 LIMIT 1`, [
+      const res = await client.query(`${locationSelectSql()} WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`, [
         parsedParams.data.id,
         scopedCompanyId,
       ]);
@@ -461,7 +461,7 @@ export async function registerLocationRoutes(app: FastifyInstance) {
     return row;
   });
 
-  app.patch("/api/v1/mdata/locations/:id", async (req, reply) => {
+  app.patch("/api/v1/mdata/locations/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -525,7 +525,7 @@ export async function registerLocationRoutes(app: FastifyInstance) {
             `
               SELECT id
               FROM mdata.locations
-              WHERE operating_company_id = $1
+              WHERE operating_company_id = $1::uuid
                 AND location_name = $2
                 AND id <> $3
               LIMIT 1

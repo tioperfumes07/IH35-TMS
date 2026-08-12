@@ -36,7 +36,7 @@ export async function canAssignLoadToDriver(
                COALESCE(is_in_violation, false) AS is_in_violation
         FROM views.drivers_with_hos_status
         WHERE id = $1
-          AND operating_company_id = $2
+          AND operating_company_id = $2::uuid
         LIMIT 1
       `,
       [driverId, tenantId]
@@ -68,7 +68,7 @@ export async function canAssignLoadToDriver(
         LEFT JOIN mdata.units u ON u.id = wo.unit_id
          AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = wo.operating_company_id
         WHERE wo.driver_id = $1
-          AND wo.operating_company_id = $2
+          AND wo.operating_company_id = $2::uuid
           AND wo.status::text NOT IN ('completed', 'cancelled')
         ORDER BY wo.created_at DESC
         LIMIT 1

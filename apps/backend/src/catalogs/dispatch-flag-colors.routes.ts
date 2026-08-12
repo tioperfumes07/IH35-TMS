@@ -68,7 +68,7 @@ function sendValidationError(reply: FastifyReply, error: z.ZodError) {
 }
 
 export async function registerDispatchFlagColorRoutes(app: FastifyInstance) {
-  app.get("/api/v1/catalogs/dispatch-flag-colors", async (req, reply) => {
+  app.get("/api/v1/catalogs/dispatch-flag-colors", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const parsedQuery = listQuerySchema.safeParse(req.query ?? {});
@@ -78,7 +78,7 @@ export async function registerDispatchFlagColorRoutes(app: FastifyInstance) {
       const companyId = await resolveOperatingCompanyId(client, user.uuid, parsedQuery.data.operating_company_id);
       if (!companyId) return [];
       const values: unknown[] = [companyId];
-      const filters: string[] = [`operating_company_id = $1`];
+      const filters: string[] = [`operating_company_id = $1::uuid`];
       if (parsedQuery.data.include_inactive !== "true") {
         filters.push("is_active = true");
       }

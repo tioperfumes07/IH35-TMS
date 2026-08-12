@@ -58,7 +58,7 @@ async function loadSettlement(
       SELECT ${SETTLEMENT_ROW_COLUMNS}
       FROM driver_finance.driver_settlements
       WHERE id = $1
-        AND operating_company_id = $2
+        AND operating_company_id = $2::uuid
       LIMIT 1
       ${options.forUpdate ? "FOR UPDATE" : ""}
     `,
@@ -216,7 +216,7 @@ export async function queuePayment(settlementId: string, operatingCompanyId: str
             payment_release_idempotency_key = $4,
             updated_at = now()
         WHERE id = $1
-          AND operating_company_id = $2
+          AND operating_company_id = $2::uuid
           AND payment_state IS NOT DISTINCT FROM $3
         RETURNING ${SETTLEMENT_ROW_COLUMNS}, payment_queued_at
       `,
@@ -277,7 +277,7 @@ export async function markSentToBank(settlementId: string, operatingCompanyId: s
             payment_release_idempotency_key = COALESCE(payment_release_idempotency_key, $5),
             updated_at = now()
         WHERE id = $1
-          AND operating_company_id = $2
+          AND operating_company_id = $2::uuid
           AND payment_state IS NOT DISTINCT FROM $4
         RETURNING ${SETTLEMENT_ROW_COLUMNS}, payment_sent_at
       `,
@@ -332,7 +332,7 @@ export async function markCleared(settlementId: string, operatingCompanyId: stri
             payment_cleared_at = now(),
             updated_at = now()
         WHERE id = $1
-          AND operating_company_id = $2
+          AND operating_company_id = $2::uuid
           AND payment_state IS NOT DISTINCT FROM $3
         RETURNING ${SETTLEMENT_ROW_COLUMNS}, payment_cleared_at
       `,
@@ -394,7 +394,7 @@ export async function markBounced(settlementId: string, operatingCompanyId: stri
             payment_bounced_reason = $3,
             updated_at = now()
         WHERE id = $1
-          AND operating_company_id = $2
+          AND operating_company_id = $2::uuid
           AND payment_state IS NOT DISTINCT FROM $4
         RETURNING ${SETTLEMENT_ROW_COLUMNS}, updated_at
       `,
@@ -467,7 +467,7 @@ export async function markPaidManually(
             SET paid_at = now(),
                 updated_at = now()
             WHERE id = $1
-              AND operating_company_id = $2
+              AND operating_company_id = $2::uuid
               AND payment_state IS NOT DISTINCT FROM 'manual_paid'
               AND paid_at IS NULL
             RETURNING ${SETTLEMENT_ROW_COLUMNS}
@@ -491,7 +491,7 @@ export async function markPaidManually(
             paid_at = COALESCE(paid_at, now()),
             updated_at = now()
         WHERE id = $1
-          AND operating_company_id = $2
+          AND operating_company_id = $2::uuid
           AND payment_state IS NOT DISTINCT FROM $5
         RETURNING ${SETTLEMENT_ROW_COLUMNS}, updated_at
       `,
@@ -564,7 +564,7 @@ export async function listPaymentEvents(settlementId: string, operatingCompanyId
         SELECT id, settlement_id, operating_company_id, event_type, payload, user_id, created_at
         FROM driver_finance.settlement_payment_events
         WHERE settlement_id = $1
-          AND operating_company_id = $2
+          AND operating_company_id = $2::uuid
         ORDER BY created_at ASC
       `,
       [settlementId, operatingCompanyId]

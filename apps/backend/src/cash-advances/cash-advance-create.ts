@@ -182,7 +182,7 @@ export async function createDriverCashAdvanceCore(
         SELECT id, assigned_unit_id
         FROM mdata.loads
         WHERE id = $1
-          AND operating_company_id = $2
+          AND operating_company_id = $2::uuid
           AND soft_deleted_at IS NULL
         LIMIT 1
       `,
@@ -197,7 +197,7 @@ export async function createDriverCashAdvanceCore(
         SELECT id
         FROM banking.bank_accounts
         WHERE id = $1
-          AND operating_company_id = $2
+          AND operating_company_id = $2::uuid
         LIMIT 1
       `,
       [body.from_bank_account_id, companyId]
@@ -212,7 +212,7 @@ export async function createDriverCashAdvanceCore(
         SELECT id, total_amount, status, vendor_id, display_id
         FROM accounting.bills
         WHERE id = $1
-          AND operating_company_id = $2
+          AND operating_company_id = $2::uuid
         LIMIT 1
       `,
       [body.linked_bill_id, companyId]

@@ -86,7 +86,7 @@ export async function registerRelatedPartyLoanRoutes(app: FastifyInstance) {
 
       const result = await withCompanyScope(authUser.uuid, q.operating_company_id, async (client) => {
         const values: unknown[] = [q.operating_company_id];
-        const filters: string[] = ["e.operating_company_id = $1", "e.deleted_at IS NULL"];
+        const filters: string[] = ["e.operating_company_id = $1::uuid", "e.deleted_at IS NULL"];
         // void-not-delete: a reversed entry is retained forever but must not inflate the register's
         // running balance. It is included only when the caller asks for that status explicitly.
         if (!q.status) filters.push("e.reversed_at IS NULL");

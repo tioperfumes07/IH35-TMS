@@ -114,7 +114,7 @@ function virtualKind(accountId: string) {
 }
 
 export async function registerBankingRoutes(app: FastifyInstance) {
-  app.get("/api/v1/banking/dashboard/kpis", async (req, reply) => {
+  app.get("/api/v1/banking/dashboard/kpis", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -130,7 +130,7 @@ export async function registerBankingRoutes(app: FastifyInstance) {
           WITH tiles AS (
             SELECT t.*
             FROM views.banking_account_tiles t
-            WHERE t.operating_company_id = $1
+            WHERE t.operating_company_id = $1::uuid
               AND (
                 t.tile_kind <> 'real'
                 OR EXISTS (
@@ -202,7 +202,7 @@ export async function registerBankingRoutes(app: FastifyInstance) {
     return payload;
   });
 
-  app.get("/api/v1/banking/account-tiles", async (req, reply) => {
+  app.get("/api/v1/banking/account-tiles", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -228,7 +228,7 @@ export async function registerBankingRoutes(app: FastifyInstance) {
           LEFT JOIN catalogs.accounts ca
             ON ca.id = ba.ledger_account_id
            AND ca.operating_company_id = ba.operating_company_id
-          WHERE t.operating_company_id = $1
+          WHERE t.operating_company_id = $1::uuid
             AND (
               t.tile_kind <> 'real'
               OR EXISTS (
@@ -264,7 +264,7 @@ export async function registerBankingRoutes(app: FastifyInstance) {
         `
           SELECT *
           FROM banking.bank_accounts
-          WHERE operating_company_id = $1
+          WHERE operating_company_id = $1::uuid
           ${activeClause}
           ${hiddenClause}
           ORDER BY display_order, display_name
@@ -298,7 +298,7 @@ export async function registerBankingRoutes(app: FastifyInstance) {
                 tag = COALESCE($4, tag),
                 is_dip = COALESCE($5, is_dip)
             WHERE id = $1
-              AND operating_company_id = $6
+              AND operating_company_id = $6::uuid
             RETURNING *
           `,
           [account.id, account.visible, account.display_order, account.tag ?? null, account.is_dip ?? null, b.operating_company_id]
@@ -338,7 +338,7 @@ export async function registerBankingRoutes(app: FastifyInstance) {
                 'virtual_factoring'::text AS category,
                 'synced'::text AS status
               FROM accounting.factoring_advances fa
-              WHERE fa.operating_company_id = $1
+              WHERE fa.operating_company_id = $1::uuid
               ORDER BY fa.created_at DESC
               LIMIT $2 OFFSET $3
             `,
@@ -365,7 +365,7 @@ export async function registerBankingRoutes(app: FastifyInstance) {
                 'synced'::text AS status,
                 el.driver_id::text AS driver_id
               FROM driver_finance.escrow_ledger el
-              WHERE el.operating_company_id = $1
+              WHERE el.operating_company_id = $1::uuid
               ORDER BY el.created_at DESC
               LIMIT $2 OFFSET $3
             `,
@@ -386,7 +386,7 @@ export async function registerBankingRoutes(app: FastifyInstance) {
                 'cash_advance'::text AS category,
                 'synced'::text AS status
               FROM driver_finance.driver_advances da
-              WHERE da.operating_company_id = $1
+              WHERE da.operating_company_id = $1::uuid
                 AND da.status = 'outstanding'
               ORDER BY da.created_at DESC
               LIMIT $2 OFFSET $3
@@ -408,7 +408,7 @@ export async function registerBankingRoutes(app: FastifyInstance) {
               CASE WHEN bt.amount_cents < 0 THEN abs(bt.amount_cents)::numeric / 100 ELSE 0 END AS deposits,
               CASE WHEN bt.amount_cents > 0 THEN bt.amount_cents::numeric / 100 ELSE 0 END AS withdrawals
             FROM banking.bank_transactions bt
-            WHERE bt.operating_company_id = $1
+            WHERE bt.operating_company_id = $1::uuid
               AND bt.bank_account_id = $2
               AND bt.voided_at IS NULL
             ORDER BY bt.transaction_date DESC, bt.created_at DESC
@@ -438,7 +438,7 @@ export async function registerBankingRoutes(app: FastifyInstance) {
             SELECT description, amount_cents, bank_account_id::text
             FROM banking.bank_transactions
             WHERE id = $1
-              AND operating_company_id = $2
+              AND operating_company_id = $2::uuid
             LIMIT 1
           `,
           [params.data.id, companyId]
@@ -460,7 +460,7 @@ export async function registerBankingRoutes(app: FastifyInstance) {
               category,
               status
             FROM banking.bank_transactions
-            WHERE operating_company_id = $1
+            WHERE operating_company_id = $1::uuid
               AND voided_at IS NULL
               AND NOT (status IN ('pending_categorization','uncategorized'))
               AND abs(amount_cents - $2) <= 500
@@ -486,7 +486,7 @@ export async function registerBankingRoutes(app: FastifyInstance) {
             SELECT id, priority, description_contains, description_regex, amount_min_cents,
                    amount_max_cents, bank_account_filter_id, then_vendor_id, then_account_id
             FROM accounting.banking_rules
-            WHERE operating_company_id = $1 AND is_active = true
+            WHERE operating_company_id = $1::uuid AND is_active = true
             ORDER BY priority DESC, created_at ASC
           `,
           [companyId]
@@ -567,7 +567,7 @@ export async function registerBankingRoutes(app: FastifyInstance) {
       const posted = await client.query<{ matched_journal_entry_id: string | null }>(
         `SELECT matched_journal_entry_id::text
            FROM banking.bank_transactions
-          WHERE id = $1 AND operating_company_id = $2
+          WHERE id = $1 AND operating_company_id = $2::uuid
           LIMIT 1
           FOR UPDATE`,
         [params.data.id, companyId]
@@ -629,7 +629,7 @@ export async function registerBankingRoutes(app: FastifyInstance) {
             categorized_at = NULL,
             updated_at = now()
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
           RETURNING id
         `,
         [params.data.id, companyId]
@@ -670,7 +670,7 @@ export async function registerBankingRoutes(app: FastifyInstance) {
   // ── Cash-GL setup (B-1, fork-A: reuse banking.bank_accounts.ledger_account_id) ───────────────────────
   // Maps each bank account → its COA cash GL account, per entity. NO posting, NO flag — setup only.
   // GET returns the bank accounts + their current mapping + the entity's COA asset accounts to choose from.
-  app.get("/api/v1/banking/accounts/cash-gl-mapping", async (req, reply) => {
+  app.get("/api/v1/banking/accounts/cash-gl-mapping", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = z.object({ operating_company_id: z.string().uuid() }).safeParse(req.query ?? {});
@@ -684,7 +684,7 @@ export async function registerBankingRoutes(app: FastifyInstance) {
                 a.account_name AS ledger_account_name, a.account_number AS ledger_account_number
            FROM banking.bank_accounts ba
            LEFT JOIN catalogs.accounts a ON a.id = ba.ledger_account_id
-          WHERE ba.operating_company_id = $1 AND ba.deactivated_at IS NULL
+          WHERE ba.operating_company_id = $1::uuid AND ba.deactivated_at IS NULL
           ${bankAccountHiddenFilterSql(hideOn, "ba")}
           ORDER BY ba.account_name ASC`,
         [companyId]
@@ -693,7 +693,7 @@ export async function registerBankingRoutes(app: FastifyInstance) {
       const coa = await client.query<{ id: string; account_number: string; account_name: string }>(
         `SELECT id::text, account_number, account_name
            FROM catalogs.accounts
-          WHERE operating_company_id = $1
+          WHERE operating_company_id = $1::uuid
             AND deactivated_at IS NULL
             AND account_type ILIKE 'asset'
             AND is_postable = true
@@ -707,7 +707,7 @@ export async function registerBankingRoutes(app: FastifyInstance) {
 
   // PUT sets a bank account's cash GL account. Owner/Administrator only. Cross-entity is rejected fail-loud:
   // the chosen COA account's operating_company_id MUST equal the bank account's (both already entity-scoped).
-  app.put("/api/v1/banking/accounts/:id/cash-gl", async (req, reply) => {
+  app.put("/api/v1/banking/accounts/:id/cash-gl", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!["Owner", "Administrator"].includes(String((user as { role?: string }).role ?? ""))) {
@@ -724,7 +724,7 @@ export async function registerBankingRoutes(app: FastifyInstance) {
     const result = await withCompanyScope(user.uuid, companyId, async (client) => {
       const hideOn = await isBankAccountHideEnabled(client, companyId);
       const bank = await client.query<{ id: string }>(
-        `SELECT id FROM banking.bank_accounts WHERE id = $1 AND operating_company_id = $2 AND deactivated_at IS NULL ${bankAccountHiddenFilterSql(hideOn, "banking.bank_accounts")} LIMIT 1`,
+        `SELECT id FROM banking.bank_accounts WHERE id = $1 AND operating_company_id = $2::uuid AND deactivated_at IS NULL ${bankAccountHiddenFilterSql(hideOn, "banking.bank_accounts")} LIMIT 1`,
         [params.data.id, companyId]
       );
       if (!bank.rows[0]) return { error: "bank_account_not_found" as const };
@@ -733,7 +733,7 @@ export async function registerBankingRoutes(app: FastifyInstance) {
         const acct = await client.query<{ id: string; is_postable: boolean }>(
           `SELECT id, is_postable
              FROM catalogs.accounts
-            WHERE id = $1 AND operating_company_id = $2 AND deactivated_at IS NULL
+            WHERE id = $1 AND operating_company_id = $2::uuid AND deactivated_at IS NULL
             LIMIT 1`,
           [body.data.ledger_account_id, companyId]
         );
@@ -741,7 +741,7 @@ export async function registerBankingRoutes(app: FastifyInstance) {
         if (acct.rows[0].is_postable !== true) return { error: "account_not_postable" as const };
       }
       await client.query(
-        `UPDATE banking.bank_accounts SET ledger_account_id = $1, updated_at = now() WHERE id = $2 AND operating_company_id = $3`,
+        `UPDATE banking.bank_accounts SET ledger_account_id = $1, updated_at = now() WHERE id = $2 AND operating_company_id = $3::uuid`,
         [body.data.ledger_account_id, params.data.id, companyId]
       );
       await appendCrudAudit(

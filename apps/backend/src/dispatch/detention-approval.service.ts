@@ -49,7 +49,7 @@ async function syncRequestsFromEvents(client: PoolClient, operatingCompanyId: st
       FROM dispatch.detention_events de
       JOIN mdata.loads l ON l.id = de.load_id
                         AND l.operating_company_id = de.operating_company_id
-      WHERE de.operating_company_id = $1
+      WHERE de.operating_company_id = $1::uuid
         AND de.status = 'closed'
         AND de.accrued_amount_cents > 0
         AND NOT EXISTS (
@@ -91,7 +91,7 @@ export async function listDetentionRequests(
         LEFT JOIN mdata.customers c ON c.id = dr.customer_id
                                    AND c.operating_company_id = dr.operating_company_id
         JOIN mdata.load_stops ls ON ls.id = dr.stop_id
-        WHERE dr.operating_company_id = $1
+        WHERE dr.operating_company_id = $1::uuid
           ${statusClause}
         ORDER BY
           CASE dr.status WHEN 'pending_review' THEN 0 ELSE 1 END ASC,
@@ -120,7 +120,7 @@ export async function detentionApprovalKpis(userId: string, operatingCompanyId: 
               AND reviewed_at >= date_trunc('year', now())
           ), 0)::bigint AS ytd_approved_cents
         FROM dispatch.detention_requests
-        WHERE operating_company_id = $1
+        WHERE operating_company_id = $1::uuid
       `,
       [operatingCompanyId]
     );
@@ -178,7 +178,7 @@ async function recordDetentionEvidence(
       LEFT JOIN dispatch.stop_arrivals sa ON sa.id = de.stop_arrival_id
       LEFT JOIN integrations.samsara_vehicles sv ON sv.local_unit_id = de.unit_id
       WHERE de.id = $3
-        AND de.operating_company_id = $1
+        AND de.operating_company_id = $1::uuid
       RETURNING *
     `,
     [operatingCompanyId, requestId, detentionEventId, billableMinutes]
@@ -237,7 +237,7 @@ async function notifyCustomerOfApprovedDetention(
     const claimed = await withCompany(userId, operatingCompanyId, async (client) => {
       const res = await client.query(
         `SELECT customer_notified_at FROM dispatch.detention_requests
-         WHERE id = $1 AND operating_company_id = $2`,
+         WHERE id = $1 AND operating_company_id = $2::uuid`,
         [requestId, operatingCompanyId]
       );
       return res.rows[0] && !res.rows[0].customer_notified_at;
@@ -293,7 +293,7 @@ async function notifyCustomerOfApprovedDetention(
       client.query(
         `UPDATE dispatch.detention_requests
          SET customer_notified_at = now(), updated_at = now()
-         WHERE id = $1 AND operating_company_id = $2 AND customer_notified_at IS NULL`,
+         WHERE id = $1 AND operating_company_id = $2::uuid AND customer_notified_at IS NULL`,
         [requestId, operatingCompanyId]
       )
     );
@@ -319,7 +319,7 @@ export async function approveDetentionRequest(
                           AND l.operating_company_id = dr.operating_company_id
         LEFT JOIN mdata.customers c ON c.id = dr.customer_id
                                    AND c.operating_company_id = dr.operating_company_id
-        WHERE dr.id = $1 AND dr.operating_company_id = $2
+        WHERE dr.id = $1 AND dr.operating_company_id = $2::uuid
       `,
       [requestId, operatingCompanyId]
     );
@@ -364,7 +364,7 @@ export async function approveDetentionRequest(
             invoice_id = $3,
             invoice_line_id = $4,
             updated_at = now()
-        WHERE id = $1 AND operating_company_id = $5
+        WHERE id = $1 AND operating_company_id = $5::uuid
         RETURNING *
       `,
       [requestId, userId, invoiceId, lineId, operatingCompanyId]
@@ -428,7 +428,7 @@ export async function rejectDetentionRequest(
 ) {
   return withCompany(userId, operatingCompanyId, async (client) => {
     const existing = await client.query(
-      `SELECT * FROM dispatch.detention_requests WHERE id = $1 AND operating_company_id = $2`,
+      `SELECT * FROM dispatch.detention_requests WHERE id = $1 AND operating_company_id = $2::uuid`,
       [requestId, operatingCompanyId]
     );
     const row = existing.rows[0];
@@ -443,7 +443,7 @@ export async function rejectDetentionRequest(
             reviewed_at = now(),
             rejection_reason = $3,
             updated_at = now()
-        WHERE id = $1 AND operating_company_id = $4
+        WHERE id = $1 AND operating_company_id = $4::uuid
         RETURNING *
       `,
       [requestId, userId, reason, operatingCompanyId]

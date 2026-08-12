@@ -25,7 +25,7 @@ export async function loadAbandonmentDefaults(client: DbClient, operatingCompany
         default_replacement_premium_pct,
         require_approval_above_cents
       FROM driver_finance.abandonment_defaults
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
       LIMIT 1
     `,
     [operatingCompanyId]
@@ -187,7 +187,7 @@ export async function recordLoadAbandonmentChargeback(
       SELECT rate_total_cents, assigned_primary_driver_id, assigned_secondary_driver_id, team_id
       FROM mdata.loads
       WHERE id = $1
-        AND operating_company_id = $2
+        AND operating_company_id = $2::uuid
         AND soft_deleted_at IS NULL
       LIMIT 1
     `,
@@ -232,7 +232,7 @@ export async function recordLoadAbandonmentChargeback(
       SET status = 'abandoned',
           updated_at = now()
       WHERE id = $1
-        AND operating_company_id = $2
+        AND operating_company_id = $2::uuid
         AND soft_deleted_at IS NULL
     `,
     [input.loadId, input.operatingCompanyId]
@@ -317,7 +317,7 @@ export async function applyApprovedAbandonmentChargebacksToSettlement(
     `
       SELECT id, total_chargeback_cents, load_id
       FROM driver_finance.abandonment_chargebacks
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
         AND driver_id = $2
         AND status = 'approved'
         AND applied_to_settlement_id IS NULL

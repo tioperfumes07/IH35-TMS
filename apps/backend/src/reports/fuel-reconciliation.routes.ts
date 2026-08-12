@@ -73,7 +73,7 @@ export async function registerFuelReconciliationRoutes(app: FastifyInstance) {
         `
           SELECT COALESCE(SUM(ROUND(ft.total_cost::numeric * 100)), 0)::text AS fuel_card_amount_cents
           FROM fuel.fuel_transactions ft
-          WHERE ft.operating_company_id = $1
+          WHERE ft.operating_company_id = $1::uuid
             AND ft.archived_at IS NULL
             AND ft.transaction_at::date BETWEEN $2::date AND $3::date
         `,
@@ -94,7 +94,7 @@ export async function registerFuelReconciliationRoutes(app: FastifyInstance) {
           JOIN mdata.units u
             ON u.id = COALESCE(ft.unit_id, l.assigned_unit_id)
            AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = ft.operating_company_id
-          WHERE ft.operating_company_id = $1
+          WHERE ft.operating_company_id = $1::uuid
             AND ft.archived_at IS NULL
             AND ft.transaction_at::date BETWEEN $2::date AND $3::date
             AND COALESCE(ft.unit_id, l.assigned_unit_id) IS NOT NULL
@@ -113,7 +113,7 @@ export async function registerFuelReconciliationRoutes(app: FastifyInstance) {
           FROM maintenance.work_orders wo
           JOIN mdata.units u ON u.id = wo.unit_id
                             AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = wo.operating_company_id
-          WHERE wo.operating_company_id = $1
+          WHERE wo.operating_company_id = $1::uuid
             AND wo.unit_id IS NOT NULL
             AND COALESCE(wo.updated_at, wo.opened_at)::date BETWEEN $2::date AND $3::date
             AND u.deactivated_at IS NULL
@@ -147,7 +147,7 @@ export async function registerFuelReconciliationRoutes(app: FastifyInstance) {
             ON l.id = ft.load_id
            AND l.operating_company_id = ft.operating_company_id
            AND l.soft_deleted_at IS NULL
-          WHERE ft.operating_company_id = $1
+          WHERE ft.operating_company_id = $1::uuid
             AND ft.archived_at IS NULL
             AND ft.transaction_at::date BETWEEN $2::date AND $3::date
             AND COALESCE(ft.unit_id, l.assigned_unit_id) IS NULL
@@ -167,7 +167,7 @@ export async function registerFuelReconciliationRoutes(app: FastifyInstance) {
           FROM maintenance.work_orders wo
           JOIN mdata.units u ON u.id = wo.unit_id
                             AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = wo.operating_company_id
-          WHERE wo.operating_company_id = $1
+          WHERE wo.operating_company_id = $1::uuid
             AND wo.unit_id IS NOT NULL
             AND wo.fuel_cost_cents > 0
             AND COALESCE(wo.updated_at, wo.opened_at)::date BETWEEN $2::date AND $3::date
@@ -178,7 +178,7 @@ export async function registerFuelReconciliationRoutes(app: FastifyInstance) {
                 ON l.id = ft2.load_id
                AND l.operating_company_id = ft2.operating_company_id
                AND l.soft_deleted_at IS NULL
-              WHERE ft2.operating_company_id = $1
+              WHERE ft2.operating_company_id = $1::uuid
                 AND ft2.archived_at IS NULL
                 AND ft2.transaction_at::date BETWEEN $2::date AND $3::date
                 AND COALESCE(ft2.unit_id, l.assigned_unit_id) = wo.unit_id
@@ -249,7 +249,7 @@ export async function registerFuelReconciliationRoutes(app: FastifyInstance) {
             ON l.id = ft.load_id
            AND l.operating_company_id = ft.operating_company_id
            AND l.soft_deleted_at IS NULL
-          WHERE ft.operating_company_id = $1
+          WHERE ft.operating_company_id = $1::uuid
             AND ft.archived_at IS NULL
             AND ft.transaction_at::date BETWEEN $2::date AND $3::date
             AND COALESCE(ft.unit_id, l.assigned_unit_id) IS NULL
@@ -261,7 +261,7 @@ export async function registerFuelReconciliationRoutes(app: FastifyInstance) {
         `
           SELECT COUNT(*)::text AS c
           FROM maintenance.work_orders wo
-          WHERE wo.operating_company_id = $1
+          WHERE wo.operating_company_id = $1::uuid
             AND wo.unit_id IS NOT NULL
             AND wo.fuel_cost_cents > 0
             AND COALESCE(wo.updated_at, wo.opened_at)::date BETWEEN $2::date AND $3::date
@@ -272,7 +272,7 @@ export async function registerFuelReconciliationRoutes(app: FastifyInstance) {
                 ON l.id = ft2.load_id
                AND l.operating_company_id = ft2.operating_company_id
                AND l.soft_deleted_at IS NULL
-              WHERE ft2.operating_company_id = $1
+              WHERE ft2.operating_company_id = $1::uuid
                 AND ft2.archived_at IS NULL
                 AND ft2.transaction_at::date BETWEEN $2::date AND $3::date
                 AND COALESCE(ft2.unit_id, l.assigned_unit_id) = wo.unit_id

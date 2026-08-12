@@ -431,7 +431,7 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
     const payload = await withCompany(user.uuid, q.operating_company_id, async (client) => {
       if (!(await maintenanceReady(client))) return { rows: [], total: 0 };
       const values: unknown[] = [q.operating_company_id];
-      const where: string[] = ["w.operating_company_id = $1"];
+      const where: string[] = ["w.operating_company_id = $1::uuid"];
       // MAINT-2: Active WOs list + KPI share openWorkOrderPredicate (open status set + voided_at IS NULL).
       // Explicit status or equipment_id drill-through keeps caller-controlled scope; default list = open WOs only.
       if (q.status) {
@@ -540,7 +540,7 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
            LEFT JOIN mdata.drivers d ON d.id = w.driver_id AND d.operating_company_id = w.operating_company_id
            LEFT JOIN mdata.vendors v ON v.id = w.external_vendor_id AND v.operating_company_id = w.operating_company_id
            LEFT JOIN mdata.loads rl ON rl.id = w.roadside_breakdown_load_id AND rl.operating_company_id = w.operating_company_id
-          WHERE w.id = $1 AND w.operating_company_id = $2 LIMIT 1`,
+          WHERE w.id = $1 AND w.operating_company_id = $2::uuid LIMIT 1`,
         [params.data.id, companyId]
       );
       if (wo.rowCount === 0) return null;
@@ -576,7 +576,7 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
     if (!companyId) return reply.code(400).send({ error: "operating_company_id_required" });
     const rows = await withCompany(user.uuid, companyId, async (client) => {
       const values: unknown[] = [companyId];
-      let where = "operating_company_id = $1 AND is_active = true";
+      let where = "operating_company_id = $1::uuid AND is_active = true";
       if (unitClass) {
         values.push(unitClass);
         where += ` AND (applies_to = 'both' OR applies_to = $${values.length})`;
@@ -1005,7 +1005,7 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
 
     const result = await withCompany(user.uuid, companyId, async (client) => {
       if (!(await maintenanceReady(client))) return { unavailable: true as const };
-      const currentRes = await client.query(`SELECT * FROM maintenance.work_orders WHERE id = $1 AND operating_company_id = $2 LIMIT 1`, [
+      const currentRes = await client.query(`SELECT * FROM maintenance.work_orders WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`, [
         params.data.id,
         companyId,
       ]);
@@ -1132,7 +1132,7 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
 
     const result = await withCompany(user.uuid, companyId, async (client) => {
       if (!(await maintenanceReady(client))) return { unavailable: true as const };
-      const currentRes = await client.query(`SELECT * FROM maintenance.work_orders WHERE id = $1 AND operating_company_id = $2 LIMIT 1`, [
+      const currentRes = await client.query(`SELECT * FROM maintenance.work_orders WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`, [
         params.data.id,
         companyId,
       ]);
@@ -1242,7 +1242,7 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
     const result = await withCompany(user.uuid, companyId, async (client) => {
       if (!(await maintenanceReady(client))) return { unavailable: true as const };
       const currentRes = await client.query(
-        `SELECT status FROM maintenance.work_orders WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+        `SELECT status FROM maintenance.work_orders WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
         [params.data.id, companyId]
       );
       const current = currentRes.rows[0] as { status: z.infer<typeof workOrderStatusSchema> } | undefined;
@@ -1333,7 +1333,7 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
     const result = await withCompany(user.uuid, companyId, async (client) => {
       if (!(await maintenanceReady(client))) return { unavailable: true as const };
       const currentRes = await client.query(
-        `SELECT status FROM maintenance.work_orders WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+        `SELECT status FROM maintenance.work_orders WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
         [params.data.id, companyId]
       );
       const current = currentRes.rows[0] as { status: z.infer<typeof workOrderStatusSchema> } | undefined;
@@ -1397,7 +1397,7 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
     try {
       row = await withCompany(user.uuid, companyId, async (client) => {
         if (!(await maintenanceReady(client))) return null;
-        const wo = await client.query(`SELECT id FROM maintenance.work_orders WHERE id = $1 AND operating_company_id = $2 LIMIT 1`, [
+        const wo = await client.query(`SELECT id FROM maintenance.work_orders WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`, [
           params.data.id,
           companyId,
         ]);
@@ -1479,7 +1479,7 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
             WHERE li.uuid = $1
               AND li.work_order_uuid = w.id
               AND w.id = $2
-              AND w.operating_company_id = $3
+              AND w.operating_company_id = $3::uuid
             RETURNING li.uuid
           `,
           [params.data.lid, params.data.id, companyId]

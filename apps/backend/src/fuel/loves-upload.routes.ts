@@ -88,7 +88,7 @@ export async function registerFuelLovesUploadRoutes(app: FastifyInstance) {
             'none'
           ) || ':' || count(*)::text AS marker
           FROM fuel.loves_prices_daily
-          WHERE operating_company_id = $1
+          WHERE operating_company_id = $1::uuid
             AND effective_date = current_date
         `,
         [companyId]
@@ -130,7 +130,7 @@ export async function registerFuelLovesUploadRoutes(app: FastifyInstance) {
                   uploaded_by_user_id = $5,
                   source_file_name = $6,
                   updated_at = now()
-              WHERE operating_company_id = $7
+              WHERE operating_company_id = $7::uuid
                 AND effective_date = current_date
                 AND station_name = $8
                 AND station_address = $9
@@ -211,7 +211,7 @@ export async function registerFuelLovesUploadRoutes(app: FastifyInstance) {
             'none'
           ) || ':' || count(*)::text AS marker
           FROM fuel.loves_prices_daily
-          WHERE operating_company_id = $1
+          WHERE operating_company_id = $1::uuid
             AND effective_date = current_date
         `,
         [companyId]

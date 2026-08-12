@@ -29,7 +29,7 @@ export async function ensureTruckLeaseTemplate(
 ): Promise<{ id: string; version: number; seeded: boolean }> {
   const existing = await client.query(
     `SELECT id::text, version FROM legal.contract_templates
-      WHERE operating_company_id = $1 AND template_code = $2 AND status = 'active'
+      WHERE operating_company_id = $1::uuid AND template_code = $2 AND status = 'active'
       ORDER BY version DESC LIMIT 1`,
     [operatingCompanyId, TRUCK_LEASE_TEMPLATE_CODE],
   );
@@ -67,7 +67,7 @@ export async function ensureTruckLeaseTemplate(
   // Lost race — re-read the active one.
   const reread = await client.query(
     `SELECT id::text, version FROM legal.contract_templates
-      WHERE operating_company_id = $1 AND template_code = $2 AND status = 'active'
+      WHERE operating_company_id = $1::uuid AND template_code = $2 AND status = 'active'
       ORDER BY version DESC LIMIT 1`,
     [operatingCompanyId, TRUCK_LEASE_TEMPLATE_CODE],
   );

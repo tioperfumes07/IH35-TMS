@@ -128,7 +128,7 @@ export async function registerMaintenanceDashboardKpisRoutes(app: FastifyInstanc
 
         let base: Record<string, unknown> = {};
         if (await relationExists(client, "views.maintenance_dashboard_kpis")) {
-          const kpi = await client.query(`SELECT * FROM views.maintenance_dashboard_kpis WHERE operating_company_id = $1 LIMIT 1`, [
+          const kpi = await client.query(`SELECT * FROM views.maintenance_dashboard_kpis WHERE operating_company_id = $1::uuid LIMIT 1`, [
             companyId,
           ]);
           base = kpi.rows[0] ?? {};

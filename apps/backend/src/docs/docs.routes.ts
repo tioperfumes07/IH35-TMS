@@ -36,7 +36,7 @@ function sendValidationError(reply: FastifyReply, error: z.ZodError) {
 }
 
 export async function registerDocsFoundationRoutes(app: FastifyInstance) {
-  app.get("/api/v1/docs/kpis", async (req, reply) => {
+  app.get("/api/v1/docs/kpis", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const parsedQuery = companyScopeQuerySchema.safeParse(req.query ?? {});
@@ -53,7 +53,7 @@ export async function registerDocsFoundationRoutes(app: FastifyInstance) {
           WITH scoped_files AS (
             SELECT f.id, f.category_id, f.upload_completed_at, f.expiration_date, f.created_at
             FROM docs.files f
-            WHERE f.operating_company_id = $1
+            WHERE f.operating_company_id = $1::uuid
               AND f.deleted_at IS NULL
           )
           SELECT
@@ -88,7 +88,7 @@ export async function registerDocsFoundationRoutes(app: FastifyInstance) {
     };
   });
 
-  app.get("/api/v1/docs", async (req, reply) => {
+  app.get("/api/v1/docs", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const parsedQuery = listQuerySchema.safeParse(req.query ?? {});
@@ -106,7 +106,7 @@ export async function registerDocsFoundationRoutes(app: FastifyInstance) {
 
     const payload = await withCurrentUser(authUser.uuid, async (client) => {
       const params: unknown[] = [operatingCompanyId];
-      const whereClauses = ["f.operating_company_id = $1", "f.deleted_at IS NULL"];
+      const whereClauses = ["f.operating_company_id = $1::uuid", "f.deleted_at IS NULL"];
 
       if (query.type) {
         params.push(query.type);
@@ -200,7 +200,7 @@ export async function registerDocsFoundationRoutes(app: FastifyInstance) {
     return payload;
   });
 
-  app.get("/api/v1/docs/:id", async (req, reply) => {
+  app.get("/api/v1/docs/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
@@ -236,7 +236,7 @@ export async function registerDocsFoundationRoutes(app: FastifyInstance) {
           FROM docs.files f
           LEFT JOIN catalogs.file_categories fc ON fc.id = f.category_id
           WHERE f.id = $1
-            AND f.operating_company_id = $2
+            AND f.operating_company_id = $2::uuid
             AND f.deleted_at IS NULL
           LIMIT 1
         `,

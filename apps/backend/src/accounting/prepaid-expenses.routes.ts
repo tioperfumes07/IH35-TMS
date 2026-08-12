@@ -152,7 +152,7 @@ interface PrepaidInsertRow {
 
 async function registerPrepaidExpensesRoutes(app: FastifyInstance) {
   // LIST
-  app.get("/api/v1/accounting/prepaid-expenses", async (req, reply) => {
+  app.get("/api/v1/accounting/prepaid-expenses", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!accountingRoles(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -163,7 +163,7 @@ async function registerPrepaidExpensesRoutes(app: FastifyInstance) {
     const { operating_company_id, status, date_from, date_to, limit, offset } = parsed.data;
 
     return withCompanyScope(user.uuid, operating_company_id, async (client) => {
-      const conds = ["pa.operating_company_id = $1", "pa.is_active = true"];
+      const conds = ["pa.operating_company_id = $1::uuid", "pa.is_active = true"];
       const params: unknown[] = [operating_company_id];
       let pi = 2;
 
@@ -255,7 +255,7 @@ async function registerPrepaidExpensesRoutes(app: FastifyInstance) {
           COUNT(r.id) FILTER (WHERE r.posted = false AND r.is_active)::text AS pending_periods
         FROM accounting.prepaid_assets pa
         LEFT JOIN accounting.prepaid_amortization_rows r ON r.asset_id = pa.id AND r.is_active = true
-        WHERE pa.id = $1 AND pa.operating_company_id = $2 AND pa.is_active = true
+        WHERE pa.id = $1 AND pa.operating_company_id = $2::uuid AND pa.is_active = true
         GROUP BY pa.id`,
         [pp.data.id, qp.data.operating_company_id]
       );

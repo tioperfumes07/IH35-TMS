@@ -155,11 +155,11 @@ async function fetchReconRows(
           (SELECT SUM(p.amount_cents) FILTER (WHERE p.debit_or_credit = 'debit')
            FROM accounting.journal_entry_postings p
            WHERE p.journal_entry_uuid = je.id
-             AND p.operating_company_id = $1),
+             AND p.operating_company_id = $1::uuid),
           0
         )::bigint                               AS tms_amount_cents
       FROM accounting.journal_entries je
-      WHERE je.operating_company_id = $1
+      WHERE je.operating_company_id = $1::uuid
         AND je.entry_date BETWEEN $2 AND $3
         AND je.status = 'posted'
     ),
@@ -181,7 +181,7 @@ async function fetchReconRows(
           ELSE NULL
         END                                     AS qbo_amount_cents
       FROM integrations.qbo_sync_queue q
-      WHERE q.operating_company_id = $1
+      WHERE q.operating_company_id = $1::uuid
         AND q.entity_type IN ('invoice','bill','bill_payment','payment','journal_entry','expense','factoring_advance','credit_memo')
         ${entityFilter}
         AND q.updated_at::date BETWEEN $2 AND $3

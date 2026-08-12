@@ -76,7 +76,7 @@ export async function attributeExpenseToLoad(
         ORDER BY ls.sequence_number DESC
         LIMIT 1
       ) drop_drop ON true
-      WHERE l.operating_company_id = $1
+      WHERE l.operating_company_id = $1::uuid
         AND (l.assigned_primary_driver_id = $2 OR l.assigned_secondary_driver_id = $2)
         AND l.soft_deleted_at IS NULL
         AND (

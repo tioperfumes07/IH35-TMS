@@ -30,7 +30,7 @@ async function listAutoPayCandidatesForCompany(operatingCompanyId: string): Prom
         FROM driver_finance.driver_settlements s
         JOIN mdata.drivers d ON d.id = s.driver_id
                              AND d.operating_company_id = s.operating_company_id
-        WHERE s.operating_company_id = $1
+        WHERE s.operating_company_id = $1::uuid
           AND d.settlement_auto_pay_enabled = true
           AND s.status IN ('locked', 'final')
           AND COALESCE(s.payment_state, 'unpaid') = 'unpaid'

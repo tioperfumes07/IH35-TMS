@@ -22,7 +22,7 @@ function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
 }
 
 export async function registerScheduledReportAdminRoutes(app: FastifyInstance) {
-  app.post("/api/v1/admin/run-scheduled-report", async (req, reply) => {
+  app.post("/api/v1/admin/run-scheduled-report", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (user.role !== "Owner") return reply.code(403).send({ error: "forbidden" });
@@ -43,7 +43,7 @@ export async function registerScheduledReportAdminRoutes(app: FastifyInstance) {
         `
           SELECT recipient_roles
           FROM reports.scheduled_reports
-          WHERE operating_company_id = $1
+          WHERE operating_company_id = $1::uuid
             AND report_id = $2
             AND enabled = true
           LIMIT 1

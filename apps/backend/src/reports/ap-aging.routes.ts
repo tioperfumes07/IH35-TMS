@@ -137,7 +137,7 @@ export async function registerReportsApAgingRoutes(app: FastifyInstance) {
                                         AND b.operating_company_id = bp.operating_company_id
           WHERE bp.revoked_at IS NULL
             AND bp.payment_date <= $2::date
-            AND b.operating_company_id = $1
+            AND b.operating_company_id = $1::uuid
           GROUP BY COALESCE(NULLIF(trim(b.vendor_uuid), ''), b.vendor_id, 'unknown')
         `,
         [query.data.operating_company_id, asOf]

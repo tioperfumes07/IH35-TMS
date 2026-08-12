@@ -272,7 +272,7 @@ export async function getReconciliationReport(
     const res = await client.query(
       `SELECT uuid, anomaly_class, geofence_id, unit_id, load_uuid, occurred_at, details, resolved, resolved_at, resolution_note
        FROM safety.integrity_findings
-       WHERE operating_company_id = $1 AND report_date = $2::date
+       WHERE operating_company_id = $1::uuid AND report_date = $2::date
        ORDER BY anomaly_class, occurred_at`,
       [operatingCompanyId, date]
     );

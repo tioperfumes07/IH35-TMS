@@ -71,7 +71,7 @@ export async function listOcrIntakeQueue(userId: string, operatingCompanyId: str
       `
         SELECT *
         FROM dispatch.ocr_intake_queue
-        WHERE operating_company_id = $1
+        WHERE operating_company_id = $1::uuid
           AND status IN ('pending_ocr', 'processing', 'ready_review', 'failed')
         ORDER BY created_at DESC
         LIMIT 200
@@ -141,7 +141,7 @@ export async function processOcrIntakeQueueItem(itemId: string, operatingCompany
   return withLuciaBypass(async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     const existing = await client.query(
-      `SELECT * FROM dispatch.ocr_intake_queue WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+      `SELECT * FROM dispatch.ocr_intake_queue WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
       [itemId, operatingCompanyId]
     );
     const row = existing.rows[0] as Record<string, unknown> | undefined;
@@ -215,7 +215,7 @@ async function fuzzyMatchCustomer(client: DbClient, operatingCompanyId: string, 
     `
       SELECT id, customer_name
       FROM mdata.customers
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
         AND deactivated_at IS NULL
       LIMIT 500
     `,
@@ -238,7 +238,7 @@ export async function getOcrIntakeConvertPrefill(
 ): Promise<{ ok: true; item: OcrIntakeQueueRow; book_load_prefill: Record<string, unknown> } | { ok: false; error: string }> {
   return withCompany(userId, operatingCompanyId, async (client) => {
     const res = await client.query(
-      `SELECT * FROM dispatch.ocr_intake_queue WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+      `SELECT * FROM dispatch.ocr_intake_queue WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
       [itemId, operatingCompanyId]
     );
     const row = res.rows[0] as Record<string, unknown> | undefined;

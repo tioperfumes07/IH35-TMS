@@ -47,7 +47,7 @@ export async function routeDefect(
       SELECT id, operating_company_id, dvir_submission_id, unit_id, item_key, notes, severity
       FROM safety.dvir_defects
       WHERE id = $1
-        AND operating_company_id = $2
+        AND operating_company_id = $2::uuid
       LIMIT 1
     `,
     [defectId, operatingCompanyId]

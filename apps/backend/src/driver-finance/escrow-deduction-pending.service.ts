@@ -129,7 +129,7 @@ export async function emitAutoProposedEscrowEvents(params: {
       LEFT JOIN mdata.loads l ON l.id = p.load_id
       LEFT JOIN mdata.drivers d ON d.id = p.driver_id
                                AND d.operating_company_id = p.operating_company_id
-      WHERE p.operating_company_id = $1
+      WHERE p.operating_company_id = $1::uuid
         AND p.load_id = $2
         AND p.source_type = '${LOAD_ABANDONMENT_SOURCE_TYPE}'
         AND p.status = 'pending'
@@ -246,7 +246,7 @@ export async function processEscrowPendingExpiryReminders(
       LEFT JOIN mdata.loads l ON l.id = p.load_id
       LEFT JOIN mdata.drivers d ON d.id = p.driver_id
                                AND d.operating_company_id = p.operating_company_id
-      WHERE p.operating_company_id = $1
+      WHERE p.operating_company_id = $1::uuid
         AND p.status = 'pending'
         AND p.expires_at <= (now() + INTERVAL '7 days')
         AND p.wf064_reminder_7d_at IS NULL
@@ -295,7 +295,7 @@ export async function processEscrowPendingExpiryReminders(
       UPDATE driver_finance.escrow_deductions_pending
       SET status = 'expired',
           updated_at = now()
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
         AND status = 'pending'
         AND expires_at <= now()
         AND wf064_reminder_7d_at IS NOT NULL
@@ -324,7 +324,7 @@ export async function listPendingDeductions(client: PoolClient, operating_compan
       LEFT JOIN mdata.drivers d ON d.id = p.driver_id
                                AND d.operating_company_id = p.operating_company_id
       LEFT JOIN mdata.loads l ON l.id = p.load_id
-      WHERE p.operating_company_id = $1
+      WHERE p.operating_company_id = $1::uuid
         AND p.status = 'pending'
       ORDER BY p.proposed_at DESC
     `,
@@ -345,7 +345,7 @@ export async function listLoadAbandonments(client: PoolClient, operating_company
       FROM dispatch.load_abandonments a
       LEFT JOIN mdata.drivers d ON d.id = a.driver_id
       LEFT JOIN mdata.loads l ON l.id = a.load_id
-      WHERE a.operating_company_id = $1
+      WHERE a.operating_company_id = $1::uuid
       ${sinceClause}
       ORDER BY a.abandoned_at DESC
       LIMIT 200
@@ -379,7 +379,7 @@ export async function approvePendingDeduction(
       `
         SELECT id, driver_id, proposed_amount_cents, proposed_reason, load_id, status, expires_at::text
         FROM driver_finance.escrow_deductions_pending
-        WHERE id = $1 AND operating_company_id = $2
+        WHERE id = $1 AND operating_company_id = $2::uuid
         FOR UPDATE
       `,
       [input.pending_id, input.operating_company_id]
@@ -482,7 +482,7 @@ export async function rejectPendingDeduction(
             review_notes = $3,
             updated_at = now()
         WHERE id = $1
-          AND operating_company_id = $4
+          AND operating_company_id = $4::uuid
           AND status = 'pending'
         RETURNING id, driver_id, load_id
       `,

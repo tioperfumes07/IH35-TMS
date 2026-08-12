@@ -54,7 +54,7 @@ export async function registerDriverReportsRoutes(app: FastifyInstance) {
             `
               SELECT 1 FROM mdata.loads
               WHERE id = $1
-                AND operating_company_id = $2
+                AND operating_company_id = $2::uuid
                 AND soft_deleted_at IS NULL
                 AND (assigned_primary_driver_id = $3 OR assigned_secondary_driver_id = $3)
               LIMIT 1

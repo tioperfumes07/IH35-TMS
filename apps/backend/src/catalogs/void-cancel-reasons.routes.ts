@@ -102,7 +102,7 @@ export async function registerVoidCancelReasonRoutes(app: FastifyInstance) {
       if (!operatingCompanyId) return [];
 
       const values: unknown[] = [operatingCompanyId];
-      let whereClause = `WHERE operating_company_id = $1`;
+      let whereClause = `WHERE operating_company_id = $1::uuid`;
       if (!includeInactive) whereClause += ` AND is_active = true`;
       const res = await client.query(
         `

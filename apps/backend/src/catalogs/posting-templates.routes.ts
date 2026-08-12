@@ -91,7 +91,7 @@ async function assertSameEntityAccounts(
 ): Promise<"ok" | "invalid_account_or_class_reference"> {
   const acct = await client.query(
     `SELECT id FROM catalogs.accounts
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
         AND deactivated_at IS NULL
         AND id = ANY($2::uuid[])`,
     [opco, [debitId, creditId]]
@@ -101,7 +101,7 @@ async function assertSameEntityAccounts(
   if (classId) {
     const cls = await client.query(
       `SELECT id FROM catalogs.classes
-        WHERE id = $1 AND operating_company_id = $2 AND deactivated_at IS NULL
+        WHERE id = $1 AND operating_company_id = $2::uuid AND deactivated_at IS NULL
         LIMIT 1`,
       [classId, opco]
     );
@@ -111,7 +111,7 @@ async function assertSameEntityAccounts(
 }
 
 export async function registerPostingTemplateRoutes(app: FastifyInstance) {
-  app.get("/api/v1/catalogs/posting-templates", async (req, reply) => {
+  app.get("/api/v1/catalogs/posting-templates", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const parsed = listQuerySchema.safeParse(req.query ?? {});
@@ -125,7 +125,7 @@ export async function registerPostingTemplateRoutes(app: FastifyInstance) {
 
     const posting_templates = await withEntityScope(authUser.uuid, opco, async (client) => {
       const values: unknown[] = [opco];
-      const filters: string[] = ["operating_company_id = $1"];
+      const filters: string[] = ["operating_company_id = $1::uuid"];
       if (status === "active") filters.push("is_active = true");
       if (status === "inactive") filters.push("is_active = false");
       if (search) {
@@ -152,7 +152,7 @@ export async function registerPostingTemplateRoutes(app: FastifyInstance) {
     return { posting_templates };
   });
 
-  app.post("/api/v1/catalogs/posting-templates", async (req, reply) => {
+  app.post("/api/v1/catalogs/posting-templates", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -224,7 +224,7 @@ export async function registerPostingTemplateRoutes(app: FastifyInstance) {
     }
   });
 
-  app.get("/api/v1/catalogs/posting-templates/:id", async (req, reply) => {
+  app.get("/api/v1/catalogs/posting-templates/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
@@ -237,7 +237,7 @@ export async function registerPostingTemplateRoutes(app: FastifyInstance) {
         `
           SELECT ${SELECT_COLS}
           FROM catalogs.posting_templates
-          WHERE id = $1 AND operating_company_id = $2
+          WHERE id = $1 AND operating_company_id = $2::uuid
           LIMIT 1
         `,
         [parsedParams.data.id, parsedQuery.data.operating_company_id]
@@ -248,7 +248,7 @@ export async function registerPostingTemplateRoutes(app: FastifyInstance) {
     return row;
   });
 
-  app.patch("/api/v1/catalogs/posting-templates/:id", async (req, reply) => {
+  app.patch("/api/v1/catalogs/posting-templates/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -287,7 +287,7 @@ export async function registerPostingTemplateRoutes(app: FastifyInstance) {
           `
             SELECT ${SELECT_COLS}
             FROM catalogs.posting_templates
-            WHERE id = $1 AND operating_company_id = $2
+            WHERE id = $1 AND operating_company_id = $2::uuid
             LIMIT 1
           `,
           [parsedParams.data.id, opco]
@@ -312,7 +312,7 @@ export async function registerPostingTemplateRoutes(app: FastifyInstance) {
           `
             UPDATE catalogs.posting_templates
             SET ${setParts.join(", ")}
-            WHERE id = $${idIdx} AND operating_company_id = $${opcoIdx}
+            WHERE id = $${idIdx} AND operating_company_id = $${opcoIdx}::uuid
             RETURNING ${SELECT_COLS}
           `,
           values
@@ -358,7 +358,7 @@ export async function registerPostingTemplateRoutes(app: FastifyInstance) {
     }
   });
 
-  app.post("/api/v1/catalogs/posting-templates/:id/deactivate", async (req, reply) => {
+  app.post("/api/v1/catalogs/posting-templates/:id/deactivate", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -373,7 +373,7 @@ export async function registerPostingTemplateRoutes(app: FastifyInstance) {
         `
           SELECT id, is_active
           FROM catalogs.posting_templates
-          WHERE id = $1 AND operating_company_id = $2
+          WHERE id = $1 AND operating_company_id = $2::uuid
           LIMIT 1
         `,
         [parsedParams.data.id, opco]
@@ -388,7 +388,7 @@ export async function registerPostingTemplateRoutes(app: FastifyInstance) {
           `
             UPDATE catalogs.posting_templates
             SET is_active = false, updated_by_user_id = $3
-            WHERE id = $1 AND operating_company_id = $2
+            WHERE id = $1 AND operating_company_id = $2::uuid
             RETURNING id, is_active
           `,
           [parsedParams.data.id, opco, authUser.uuid]

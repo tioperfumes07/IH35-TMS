@@ -24,7 +24,7 @@ export async function getAverageCustomsTime(
               ROUND(AVG(customs_clearance_minutes))::integer AS avg_minutes,
               COUNT(*)::integer AS sample_count
        FROM dispatch.border_crossing_events
-       WHERE operating_company_id = $1
+       WHERE operating_company_id = $1::uuid
          AND crossing_point = $2
          AND direction = $3
          AND exited_geofence_at IS NOT NULL
@@ -47,7 +47,7 @@ export async function getRecentCrossings(
       `SELECT uuid, crossing_point, direction, entered_geofence_at, exited_geofence_at,
               customs_clearance_minutes, load_uuid
        FROM dispatch.border_crossing_events
-       WHERE operating_company_id = $1 AND vehicle_id = $2
+       WHERE operating_company_id = $1::uuid AND vehicle_id = $2
        ORDER BY entered_geofence_at DESC LIMIT $3`,
       [operatingCompanyId, vehicleId, lastN]
     );
@@ -73,7 +73,7 @@ export async function getHistoryForPeriod(
       `SELECT uuid, vehicle_id, driver_uuid, load_uuid, crossing_point, direction,
               entered_geofence_at, exited_geofence_at, customs_clearance_minutes, created_at
        FROM dispatch.border_crossing_events
-       WHERE operating_company_id = $1
+       WHERE operating_company_id = $1::uuid
          AND entered_geofence_at BETWEEN $2::date AND ($3::date + INTERVAL '1 day')
          ${vehicleFilter}
        ORDER BY entered_geofence_at DESC

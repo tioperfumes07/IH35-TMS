@@ -58,7 +58,7 @@ export async function registerBrokerUpdateRoutes(app: FastifyInstance) {
       const result = await (client as Queryable).query(
         `SELECT id, broker_name, email, auto_send_enabled, auto_send_classes, is_active, created_at
          FROM brokerupdate.profile
-         WHERE operating_company_id = $1 AND is_active = true
+         WHERE operating_company_id = $1::uuid AND is_active = true
          ORDER BY broker_name`,
         [operating_company_id]
       );
@@ -92,7 +92,7 @@ export async function registerBrokerUpdateRoutes(app: FastifyInstance) {
       }>(
         `SELECT auto_send_enabled, auto_send_classes
          FROM brokerupdate.profile
-         WHERE id = $1 AND operating_company_id = $2 AND is_active = true`,
+         WHERE id = $1 AND operating_company_id = $2::uuid AND is_active = true`,
         [input.profile_id, input.operating_company_id]
       );
 
@@ -136,7 +136,7 @@ export async function registerBrokerUpdateRoutes(app: FastifyInstance) {
                 p.broker_name, p.email
          FROM brokerupdate.send s
          JOIN brokerupdate.profile p ON p.id = s.profile_id
-         WHERE s.operating_company_id = $1
+         WHERE s.operating_company_id = $1::uuid
            AND s.status = 'pending_review'
            AND s.is_active = true
          ORDER BY s.created_at ASC`,
@@ -160,7 +160,7 @@ export async function registerBrokerUpdateRoutes(app: FastifyInstance) {
       const { rows } = await (client as Queryable).query<{ id: string }>(
         `UPDATE brokerupdate.send
          SET status = 'approved', reviewed_by_user_id = $1, reviewed_at = now()
-         WHERE id = $2 AND operating_company_id = $3 AND status = 'pending_review'
+         WHERE id = $2 AND operating_company_id = $3::uuid AND status = 'pending_review'
          RETURNING id`,
         [user.uuid, id, operating_company_id]
       );
@@ -183,7 +183,7 @@ export async function registerBrokerUpdateRoutes(app: FastifyInstance) {
       const { rows } = await (client as Queryable).query<{ id: string }>(
         `UPDATE brokerupdate.send
          SET status = 'rejected', reviewed_by_user_id = $1, reviewed_at = now()
-         WHERE id = $2 AND operating_company_id = $3 AND status = 'pending_review'
+         WHERE id = $2 AND operating_company_id = $3::uuid AND status = 'pending_review'
          RETURNING id`,
         [user.uuid, id, operating_company_id]
       );

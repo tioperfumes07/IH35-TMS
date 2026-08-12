@@ -100,7 +100,7 @@ interface FixedAssetDisposalRow {
 
 async function registerFixedAssetsRoutes(app: FastifyInstance) {
   // CLASS CATALOG (read)
-  app.get("/api/v1/accounting/fixed-asset-classes", async (req, reply) => {
+  app.get("/api/v1/accounting/fixed-asset-classes", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!accountingRoles(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -113,7 +113,7 @@ async function registerFixedAssetsRoutes(app: FastifyInstance) {
         `SELECT id, class_code, class_name, is_depreciable, default_method,
                 default_useful_life_months
          FROM accounting.fixed_asset_classes
-         WHERE operating_company_id = $1 AND is_active = true
+         WHERE operating_company_id = $1::uuid AND is_active = true
          ORDER BY class_code`,
         [parsed.data.operating_company_id]
       );
@@ -122,7 +122,7 @@ async function registerFixedAssetsRoutes(app: FastifyInstance) {
   });
 
   // LIST
-  app.get("/api/v1/accounting/fixed-assets", async (req, reply) => {
+  app.get("/api/v1/accounting/fixed-assets", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!accountingRoles(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -133,7 +133,7 @@ async function registerFixedAssetsRoutes(app: FastifyInstance) {
     const { operating_company_id, status, class_id, limit, offset } = parsed.data;
 
     return withCompanyScope(user.uuid, operating_company_id, async (client) => {
-      const conds = ["fa.operating_company_id = $1", "fa.is_active = true"];
+      const conds = ["fa.operating_company_id = $1::uuid", "fa.is_active = true"];
       const params: unknown[] = [operating_company_id];
       let pi = 2;
       if (status) { conds.push(`fa.status = $${pi++}`); params.push(status); }
@@ -211,7 +211,7 @@ async function registerFixedAssetsRoutes(app: FastifyInstance) {
   });
 
   // DETAIL + computed schedule + disposal + gated JE preview
-  app.get("/api/v1/accounting/fixed-assets/:id", async (req, reply) => {
+  app.get("/api/v1/accounting/fixed-assets/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!accountingRoles(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -236,7 +236,7 @@ async function registerFixedAssetsRoutes(app: FastifyInstance) {
          FROM accounting.fixed_assets fa
          LEFT JOIN accounting.fixed_asset_classes fac ON fac.id = fa.class_id
          LEFT JOIN org.companies owner ON owner.id = fa.owner_operating_company_id
-         WHERE fa.id = $1 AND fa.operating_company_id = $2 AND fa.is_active = true`,
+         WHERE fa.id = $1 AND fa.operating_company_id = $2::uuid AND fa.is_active = true`,
         [pp.data.id, qp.data.operating_company_id]
       );
       if (!res.rows[0]) return reply.code(404).send({ error: "not_found" });

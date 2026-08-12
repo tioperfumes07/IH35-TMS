@@ -171,7 +171,7 @@ export async function pushJournalEntryToQuickBooksFromQueue(job: { operating_com
         SELECT qbo_journal_entry_id, qbo_sync_pending, status, source_system
         FROM accounting.journal_entries
         WHERE id = $1
-          AND operating_company_id = $2
+          AND operating_company_id = $2::uuid
         LIMIT 1
       `,
       [job.entity_id, oc]
@@ -216,7 +216,7 @@ export async function pushJournalEntryToQuickBooksFromQueue(job: { operating_com
               qbo_sync_pending = false,
               updated_at = now()
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
         `,
         [job.entity_id, oc]
       );

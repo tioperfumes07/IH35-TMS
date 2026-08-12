@@ -70,7 +70,7 @@ export async function registerSafetyHosViolationsRoutes(app: FastifyInstance) {
 
     const rows = await withCompany(user.uuid, user.role, query.data.operating_company_id, async (client) => {
       const values: unknown[] = [query.data.operating_company_id];
-      const filters: string[] = ["operating_company_id = $1", "voided_at IS NULL"];
+      const filters: string[] = ["operating_company_id = $1::uuid", "voided_at IS NULL"];
       if (query.data.driver_id) {
         values.push(query.data.driver_id);
         filters.push(`driver_id = $${values.length}`);
@@ -124,7 +124,7 @@ export async function registerSafetyHosViolationsRoutes(app: FastifyInstance) {
           SELECT *
           FROM safety.hos_violations
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
           LIMIT 1
         `,
         [params.data.id, query.data.operating_company_id]
@@ -218,7 +218,7 @@ export async function registerSafetyHosViolationsRoutes(app: FastifyInstance) {
           UPDATE safety.hos_violations
           SET voided_at = now(), voided_by = $2, void_reason = $4
           WHERE id = $1
-            AND operating_company_id = $3
+            AND operating_company_id = $3::uuid
             AND voided_at IS NULL
           RETURNING *
         `,

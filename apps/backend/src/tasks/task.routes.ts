@@ -148,7 +148,7 @@ export default async function taskRoutes(fastify: FastifyInstance) {
           t.alarm_at, t.anticipated_category, t.task_type_id
         FROM tasks.task t
         LEFT JOIN identity.users u ON u.id = t.assigned_to_user_id
-        WHERE t.operating_company_id = $1 AND t.is_active = true
+        WHERE t.operating_company_id = $1::uuid AND t.is_active = true
       `;
       const params: (string | number)[] = [input.operating_company_id];
       let paramIdx = 2;
@@ -203,7 +203,7 @@ export default async function taskRoutes(fastify: FastifyInstance) {
         FROM tasks.task t
         LEFT JOIN identity.users u ON u.id = t.assigned_to_user_id
         LEFT JOIN tasks.task_type tt ON tt.id = t.task_type_id
-        WHERE t.operating_company_id = $1 AND t.is_active = true
+        WHERE t.operating_company_id = $1::uuid AND t.is_active = true
           AND (
             t.scheduled_date BETWEEN $2 AND $3
             OR (
@@ -358,7 +358,7 @@ export default async function taskRoutes(fastify: FastifyInstance) {
       await client.query(SET_TASK_SCOPE_SQL, [parsed.data.operating_company_id]);
       const res = await (client as Queryable).query(
         `SELECT id, name, is_active, category, description, default_link_kinds, alarm_lead_days
-         FROM tasks.task_type WHERE operating_company_id = $1 AND is_active = true ORDER BY name`,
+         FROM tasks.task_type WHERE operating_company_id = $1::uuid AND is_active = true ORDER BY name`,
         [parsed.data.operating_company_id]
       );
       return { types: res.rows };
@@ -509,7 +509,7 @@ export default async function taskRoutes(fastify: FastifyInstance) {
                 COALESCE(u.first_name || ' ' || u.last_name, u.email) AS author_name
          FROM tasks.task_comments c
          LEFT JOIN identity.users u ON u.id = c.author_user_id
-         WHERE c.task_id = $1 AND c.operating_company_id = $2 AND c.deleted_at IS NULL
+         WHERE c.task_id = $1 AND c.operating_company_id = $2::uuid AND c.deleted_at IS NULL
          ORDER BY c.created_at ASC`,
         [id, ocId]
       );
@@ -577,7 +577,7 @@ export default async function taskRoutes(fastify: FastifyInstance) {
                 COALESCE(u.first_name || ' ' || u.last_name, u.email) AS actor_name
          FROM tasks.task_activity a
          LEFT JOIN identity.users u ON u.id = a.actor_user_id
-         WHERE a.task_id = $1 AND a.operating_company_id = $2
+         WHERE a.task_id = $1 AND a.operating_company_id = $2::uuid
          ORDER BY a.created_at DESC`,
         [id, ocId]
       );

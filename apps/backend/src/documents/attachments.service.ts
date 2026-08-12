@@ -169,7 +169,7 @@ export async function finalizeAttachmentUpload(
         SELECT id, r2_object_key, entity_type, entity_id, is_deleted
         FROM documents.attachments
         WHERE id = $1
-          AND operating_company_id = $2
+          AND operating_company_id = $2::uuid
         LIMIT 1
       `,
       [input.attachmentId, input.operatingCompanyId]
@@ -183,7 +183,7 @@ export async function finalizeAttachmentUpload(
       `
         SELECT id
         FROM documents.attachments
-        WHERE operating_company_id = $1
+        WHERE operating_company_id = $1::uuid
           AND entity_type = $2
           AND entity_id = $3
           AND sha256_hash = $4
@@ -245,7 +245,7 @@ export async function listAttachments(userId: string, input: { operatingCompanyI
       `
         SELECT *
         FROM documents.attachments
-        WHERE operating_company_id = $1
+        WHERE operating_company_id = $1::uuid
           AND entity_type = $2
           AND entity_id = $3::uuid
           AND is_deleted = false
@@ -265,7 +265,7 @@ export async function generateAttachmentDownloadUrl(userId: string, input: { att
         SELECT id, r2_object_key
         FROM documents.attachments
         WHERE id = $1
-          AND operating_company_id = $2
+          AND operating_company_id = $2::uuid
           AND is_deleted = false
         LIMIT 1
       `,
@@ -288,7 +288,7 @@ export async function softDeleteAttachment(userId: string, input: { attachmentId
             deleted_at = now(),
             deleted_by_user_id = $2
         WHERE id = $1
-          AND operating_company_id = $3
+          AND operating_company_id = $3::uuid
           AND is_deleted = false
         RETURNING id
       `,

@@ -206,7 +206,7 @@ export async function importLovesRowsForCompany(
               state = COALESCE($4, state),
               source_file_name = $5,
               updated_at = now()
-          WHERE operating_company_id = $6
+          WHERE operating_company_id = $6::uuid
             AND effective_date = current_date
             AND station_name = $7
             AND station_address = $8

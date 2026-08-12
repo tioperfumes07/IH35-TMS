@@ -68,7 +68,7 @@ export async function registerDispatchSheetHtmlRoutes(app: FastifyInstance) {
           LEFT JOIN mdata.units u ON u.id = l.assigned_unit_id
                                  AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = l.operating_company_id
           WHERE l.id = $1
-            AND l.operating_company_id = $2
+            AND l.operating_company_id = $2::uuid
           LIMIT 1
         `,
         [params.data.loadId, query.data.operating_company_id]

@@ -107,7 +107,7 @@ async function loadSession(
         SELECT *
         FROM banking.reconciliation_sessions
         WHERE id = $1
-          AND operating_company_id = $2
+          AND operating_company_id = $2::uuid
         LIMIT 1
       `,
       [sessionId, operatingCompanyId]
@@ -185,7 +185,7 @@ function amountToCents(input: string) {
 }
 
 export async function registerBankingReconciliationRoutes(app: FastifyInstance) {
-  app.get("/api/v1/banking/reconciliation/sessions", async (req, reply) => {
+  app.get("/api/v1/banking/reconciliation/sessions", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
 
@@ -204,7 +204,7 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
         `
           SELECT id, bank_account_id, period_start, period_end, statement_balance_cents, variance_cents, status, created_at
           FROM banking.reconciliation_sessions
-          WHERE operating_company_id = $1
+          WHERE operating_company_id = $1::uuid
             AND status = 'open'
             ${hiddenSessionFilter}
           ORDER BY created_at DESC
@@ -215,7 +215,7 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
         `
           SELECT id, bank_account_id, period_start, period_end, statement_balance_cents, variance_cents, status, reconciled_at
           FROM banking.reconciliation_sessions
-          WHERE operating_company_id = $1
+          WHERE operating_company_id = $1::uuid
             AND status = 'reconciled'
             ${hiddenSessionFilter}
           ORDER BY reconciled_at DESC NULLS LAST, created_at DESC
@@ -229,7 +229,7 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
     return payload;
   });
 
-  app.post("/api/v1/banking/reconciliation/start", async (req, reply) => {
+  app.post("/api/v1/banking/reconciliation/start", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canReconcile(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -262,7 +262,7 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
           SELECT statement_balance_cents
           FROM banking.reconciliation_sessions
           WHERE bank_account_id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
             AND status = 'reconciled'
           ORDER BY reconciled_at DESC NULLS LAST, created_at DESC
           LIMIT 1
@@ -371,7 +371,7 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
     return { session_id: created };
   });
 
-  app.get("/api/v1/banking/reconciliation/:sessionId", async (req, reply) => {
+  app.get("/api/v1/banking/reconciliation/:sessionId", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canReconcile(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -422,7 +422,7 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
             notes
           FROM banking.bank_transactions
           WHERE bank_account_id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
             AND transaction_date BETWEEN $3 AND $4
           ORDER BY transaction_date DESC, created_at DESC
         `,
@@ -486,7 +486,7 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
           `
             SELECT id, created_at::date AS event_date, 'load'::text AS event_type
             FROM mdata.loads
-            WHERE operating_company_id = $1
+            WHERE operating_company_id = $1::uuid
               AND created_at::date BETWEEN $2 AND $3
             ORDER BY created_at DESC
             LIMIT 500
@@ -503,7 +503,7 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
               `
                 SELECT id, created_at::date AS event_date, 'bill'::text AS event_type
                 FROM accounting.bills
-                WHERE operating_company_id = $1
+                WHERE operating_company_id = $1::uuid
                   AND created_at::date BETWEEN $2 AND $3
                 ORDER BY created_at DESC
                 LIMIT 500
@@ -522,7 +522,7 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
               `
                 SELECT id, created_at::date AS event_date, 'settlement'::text AS event_type
                 FROM driver_pay.settlements
-                WHERE operating_company_id = $1
+                WHERE operating_company_id = $1::uuid
                   AND created_at::date BETWEEN $2 AND $3
                 ORDER BY created_at DESC
                 LIMIT 500
@@ -537,7 +537,7 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
                 `
                   SELECT id, created_at::date AS event_date, 'settlement'::text AS event_type
                   FROM driver_finance.driver_settlements
-                  WHERE operating_company_id = $1
+                  WHERE operating_company_id = $1::uuid
                     AND created_at::date BETWEEN $2 AND $3
                   ORDER BY created_at DESC
                   LIMIT 500
@@ -587,7 +587,7 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
     return payload;
   });
 
-  app.patch("/api/v1/banking/reconciliation/:sessionId/reconciling-items/:transactionId", async (req, reply) => {
+  app.patch("/api/v1/banking/reconciliation/:sessionId/reconciling-items/:transactionId", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canReconcile(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -625,7 +625,7 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
               updated_at = now()
             WHERE id = $1
               AND bank_account_id = $2
-              AND operating_company_id = $3
+              AND operating_company_id = $3::uuid
             RETURNING id, reconciling_item_class, reconciling_item_escalated_at
           `,
           [
@@ -652,7 +652,7 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
     }
   });
 
-  app.post("/api/v1/banking/reconciliation/:sessionId/clear", async (req, reply) => {
+  app.post("/api/v1/banking/reconciliation/:sessionId/clear", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canReconcile(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -684,7 +684,7 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
             reconciliation_session_id = CASE WHEN $3 THEN $4::uuid ELSE reconciliation_session_id END,
             updated_at = now()
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
             AND bank_account_id = $5
             AND transaction_date BETWEEN $6 AND $7
           RETURNING id
@@ -705,7 +705,7 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
     return { ok: true, transaction_id: body.data.transaction_id, cleared: body.data.cleared };
   });
 
-  app.post("/api/v1/banking/reconciliation/:sessionId/match", async (req, reply) => {
+  app.post("/api/v1/banking/reconciliation/:sessionId/match", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canReconcile(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -727,7 +727,7 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
           FROM banking.bank_transactions
           WHERE id = $1
             AND bank_account_id = $2
-            AND operating_company_id = $3
+            AND operating_company_id = $3::uuid
             AND transaction_date BETWEEN $4 AND $5
           LIMIT 1
         `,
@@ -782,7 +782,7 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
     return { ok: true };
   });
 
-  app.post("/api/v1/banking/reconciliation/:sessionId/unmatch", async (req, reply) => {
+  app.post("/api/v1/banking/reconciliation/:sessionId/unmatch", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canReconcile(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -808,7 +808,7 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
             updated_at = now()
           WHERE id = $1
             AND bank_account_id = $2
-            AND operating_company_id = $3
+            AND operating_company_id = $3::uuid
             AND transaction_date BETWEEN $4 AND $5
           RETURNING id
         `,
@@ -870,7 +870,7 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
                  matched_load_id, matched_bill_id, matched_settlement_id
           FROM banking.bank_transactions
           WHERE bank_account_id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
             AND transaction_date BETWEEN $3 AND $4
         `,
         [session.bank_account_id, query.data.operating_company_id, session.period_start, session.period_end]
@@ -972,7 +972,7 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
             reconciliation_session_id = $1,
             updated_at = now()
           WHERE bank_account_id = $2
-            AND operating_company_id = $3
+            AND operating_company_id = $3::uuid
             AND transaction_date BETWEEN $4 AND $5
             AND reconciliation_session_id IS NULL
         `,
@@ -1020,7 +1020,7 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
           FROM banking.bank_transactions bt
           JOIN banking.bank_accounts ba ON ba.id = bt.bank_account_id
           WHERE bt.bank_account_id = $1
-            AND bt.operating_company_id = $2
+            AND bt.operating_company_id = $2::uuid
             AND bt.transaction_date BETWEEN $3 AND $4
             AND (bt.matched_load_id IS NOT NULL OR bt.matched_bill_id IS NOT NULL OR bt.matched_settlement_id IS NOT NULL)
             AND bt.qbo_synced_at IS NULL

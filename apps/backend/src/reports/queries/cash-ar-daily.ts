@@ -24,7 +24,7 @@ export async function cashArDailyQuery(context: QueryContext): Promise<ReportDat
           COALESCE(SUM(total_open_cents), 0)::bigint AS ar_total_open_cents,
           COALESCE(SUM(open_invoice_count), 0)::int AS open_invoice_count
         FROM views.ar_aging
-        WHERE operating_company_id = $1
+        WHERE operating_company_id = $1::uuid
       `,
       [context.operatingCompanyId]
     );
@@ -33,7 +33,7 @@ export async function cashArDailyQuery(context: QueryContext): Promise<ReportDat
       `
         SELECT COALESCE(SUM(amount_cents), 0)::bigint AS cash_received_last_24h_cents
         FROM accounting.payments
-        WHERE operating_company_id = $1
+        WHERE operating_company_id = $1::uuid
           AND voided_at IS NULL
           AND payment_date >= now() - interval '24 hours'
       `,

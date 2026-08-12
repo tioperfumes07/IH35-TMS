@@ -177,7 +177,7 @@ export async function registerSafetyCompanyViolationsRoutes(
                  COALESCE((SELECT array_agg(f.fine_id) FROM safety.company_violation_fines f
                             WHERE f.violation_id = cv.id AND f.is_active), '{}') AS related_civil_fine_ids
           FROM safety.company_violations cv
-          WHERE cv.operating_company_id = $1
+          WHERE cv.operating_company_id = $1::uuid
             AND cv.deactivated_at IS NULL
           ORDER BY cv.reported_date DESC, cv.created_at DESC
           LIMIT 500
@@ -219,7 +219,7 @@ export async function registerSafetyCompanyViolationsRoutes(
                 COALESCE((SELECT array_agg(f.fine_id) FROM safety.company_violation_fines f
                            WHERE f.violation_id = cv.id AND f.is_active), '{}') AS related_civil_fine_ids
            FROM safety.company_violations cv
-          WHERE cv.id = $1 AND cv.operating_company_id = $2
+          WHERE cv.id = $1 AND cv.operating_company_id = $2::uuid
           LIMIT 1`,
             [params.data.id, query.data.operating_company_id],
           );
@@ -410,7 +410,7 @@ export async function registerSafetyCompanyViolationsRoutes(
           UPDATE safety.company_violations
           SET ${sets.join(", ")}
           WHERE id = $${values.length - 1}
-            AND operating_company_id = $${values.length}
+            AND operating_company_id = $${values.length}::uuid
           RETURNING *
         `,
             values,
@@ -474,7 +474,7 @@ export async function registerSafetyCompanyViolationsRoutes(
                 `UPDATE safety.${table}
                 SET is_active = FALSE
               WHERE violation_id = $1
-                AND operating_company_id = $2
+                AND operating_company_id = $2::uuid
                 AND is_active
                 AND ${column} <> ALL ($3::uuid[])`,
                 [row.id, query.data.operating_company_id, ids],
@@ -530,7 +530,7 @@ export async function registerSafetyCompanyViolationsRoutes(
           SET audit_export_doc_id = $3,
               updated_by_user_id = $4
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
           RETURNING *
         `,
             [
@@ -577,7 +577,7 @@ export async function registerSafetyCompanyViolationsRoutes(
               notes = COALESCE(notes || E'\n', '') || COALESCE($4, ''),
               updated_by_user_id = $5
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
           RETURNING *
         `,
             [
@@ -648,7 +648,7 @@ export async function registerSafetyCompanyViolationsRoutes(
               notes = COALESCE(notes || E'\n', '') || COALESCE($3, ''),
               updated_by_user_id = $4
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
           RETURNING *
         `,
             [

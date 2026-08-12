@@ -370,7 +370,7 @@ export async function registerMaintenanceReeferHoursRoutes(app: FastifyInstance)
     if (!parsed.success) return validationError(reply, parsed.error);
 
     const rows = await withCompany(user.uuid, parsed.data.operating_company_id, async (client) => {
-      const filters = ["l.operating_company_id = $1"];
+      const filters = ["l.operating_company_id = $1::uuid"];
       const values: unknown[] = [parsed.data.operating_company_id];
       if (!parsed.data.include_archived) filters.push("l.archived_at IS NULL");
       if (parsed.data.equipment_id) {
@@ -466,7 +466,7 @@ export async function registerMaintenanceReeferHoursRoutes(app: FastifyInstance)
       values.push(body.equipment_id, body.operating_company_id);
       await client.query(
         `UPDATE maintenance.reefer_specs SET ${sets.join(", ")}
-         WHERE equipment_id = $${values.length - 1} AND operating_company_id = $${values.length} AND archived_at IS NULL`,
+         WHERE equipment_id = $${values.length - 1} AND operating_company_id = $${values.length}::uuid AND archived_at IS NULL`,
         values
       );
       await appendCrudAudit(client, user.uuid, "maintenance.reefer_specs.updated", {
@@ -520,7 +520,7 @@ export async function registerMaintenanceReeferHoursRoutes(app: FastifyInstance)
       await client.query(
         `UPDATE maintenance.reefer_hours_log
          SET archived_at = now(), archive_reason = $3
-         WHERE id = $1 AND operating_company_id = $2 AND archived_at IS NULL`,
+         WHERE id = $1 AND operating_company_id = $2::uuid AND archived_at IS NULL`,
         [params.data.id, parsed.data.operating_company_id, parsed.data.archive_reason ?? "Archived reefer hours entry"]
       );
       await appendCrudAudit(client, user.uuid, "maintenance.reefer_hours.archived", { id: params.data.id });

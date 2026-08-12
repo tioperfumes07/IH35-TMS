@@ -50,7 +50,7 @@ export default async function profitabilityRoutes(fastify: FastifyInstance) {
     return withCurrentUser(user.uuid, async (client) => {
       await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [f.operating_company_id]);
 
-      let where = `operating_company_id = $1 AND pickup_date BETWEEN $2 AND $3`;
+      let where = `operating_company_id = $1::uuid AND pickup_date BETWEEN $2 AND $3`;
       const params: (string | number)[] = [f.operating_company_id, f.date_from, f.date_to];
       let idx = 4;
 
@@ -102,7 +102,7 @@ export default async function profitabilityRoutes(fastify: FastifyInstance) {
           sum(margin) as total_margin,
           bool_or(has_allocated_costs) as has_allocated_costs
         FROM analytics.load_fact
-        WHERE operating_company_id = $1 AND pickup_date BETWEEN $2 AND $3
+        WHERE operating_company_id = $1::uuid AND pickup_date BETWEEN $2 AND $3
           ${f.equipment_type ? "AND equipment_type = $4" : ""}
           ${f.customer_id ? f.equipment_type ? "AND customer_id = $5" : "AND customer_id = $4" : ""}
         GROUP BY lane_key
@@ -146,7 +146,7 @@ export default async function profitabilityRoutes(fastify: FastifyInstance) {
           sum(margin) as total_margin,
           bool_or(has_allocated_costs) as has_allocated_costs
         FROM analytics.load_fact
-        WHERE operating_company_id = $1 AND pickup_date BETWEEN $2 AND $3
+        WHERE operating_company_id = $1::uuid AND pickup_date BETWEEN $2 AND $3
           ${f.customer_id ? "AND customer_id = $4" : ""}
           ${f.lane_key ? f.customer_id ? "AND lane_key = $5" : "AND lane_key = $4" : ""}
         GROUP BY equipment_type
@@ -186,7 +186,7 @@ export default async function profitabilityRoutes(fastify: FastifyInstance) {
           sum(margin) as total_margin,
           bool_or(has_allocated_costs) as has_allocated_costs
         FROM analytics.load_fact
-        WHERE operating_company_id = $1 AND pickup_date BETWEEN $2 AND $3
+        WHERE operating_company_id = $1::uuid AND pickup_date BETWEEN $2 AND $3
           ${f.equipment_type ? "AND equipment_type = $4" : ""}
           ${f.lane_key ? f.equipment_type ? "AND lane_key = $5" : "AND lane_key = $4" : ""}
         GROUP BY customer_id
@@ -216,7 +216,7 @@ export default async function profitabilityRoutes(fastify: FastifyInstance) {
     return withCurrentUser(user.uuid, async (client) => {
       await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [f.operating_company_id]);
 
-      let where = `operating_company_id = $1 AND pickup_date BETWEEN $2 AND $3`;
+      let where = `operating_company_id = $1::uuid AND pickup_date BETWEEN $2 AND $3`;
       const params: (string | number)[] = [f.operating_company_id, f.date_from, f.date_to];
       let idx = 4;
 
@@ -276,7 +276,7 @@ export default async function profitabilityRoutes(fastify: FastifyInstance) {
         FROM analytics.load_fact f
         LEFT JOIN mdata.customers c ON c.id = f.customer_id
                                     AND c.operating_company_id = $2::uuid
-        WHERE f.load_id = $1 AND f.operating_company_id = $2
+        WHERE f.load_id = $1 AND f.operating_company_id = $2::uuid
       `;
       const result = await (client as Queryable).query(sql, [id, operating_company_id]);
 

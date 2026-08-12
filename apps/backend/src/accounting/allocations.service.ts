@@ -69,7 +69,7 @@ export async function listBillUnitAllocations(
   return withCurrentUser(userId, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
 
-    const where: string[] = ["a.tenant_id = $1", "b.operating_company_id = $1", "a.superseded_at IS NULL"];
+    const where: string[] = ["a.tenant_id = $1", "b.operating_company_id = $1::uuid", "a.superseded_at IS NULL"];
     const values: unknown[] = [operatingCompanyId];
     if (options.billId) {
       values.push(options.billId);

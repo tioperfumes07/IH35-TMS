@@ -93,7 +93,7 @@ export async function renderSettlementStatementPdf(client: DbClient, input: Sett
       FROM driver_finance.driver_settlements s
       JOIN mdata.drivers d ON d.id = s.driver_id
       LEFT JOIN identity.users u ON u.id = d.identity_user_id
-      WHERE s.operating_company_id = $1
+      WHERE s.operating_company_id = $1::uuid
         AND s.id = $2
       LIMIT 1
     `,

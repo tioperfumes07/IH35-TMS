@@ -110,7 +110,7 @@ export async function positionHistoryRoutes(fastify: FastifyInstance) {
     return withCompany(user.uuid, q.operating_company_id, async (client: any) => {
       if (!(await canonicalTableReady(client))) return sendCanonicalTableMissing(reply);
       const values: unknown[] = [q.operating_company_id];
-      const where = ["ph.operating_company_id = $1"];
+      const where = ["ph.operating_company_id = $1::uuid"];
       let paramIdx = 1;
 
       if (q.unit_id) {
@@ -193,7 +193,7 @@ export async function positionHistoryRoutes(fastify: FastifyInstance) {
           AND (u.owner_company_id = $2 OR u.currently_leased_to_company_id = $2)
         LEFT JOIN maint.position_set ps ON ps.id = ph.position_set_id
         LEFT JOIN maint.part p ON p.id = ph.part_id
-        WHERE ph.id = $1 AND ph.operating_company_id = $2
+        WHERE ph.id = $1 AND ph.operating_company_id = $2::uuid
         LIMIT 1`,
         [id, operating_company_id]
       );
@@ -309,7 +309,7 @@ export async function positionHistoryRoutes(fastify: FastifyInstance) {
           AND (u.owner_company_id = $1 OR u.currently_leased_to_company_id = $1)
         LEFT JOIN maint.position_set ps ON ps.id = ph.position_set_id
         LEFT JOIN maint.part p ON p.id = ph.part_id
-        WHERE ph.operating_company_id = $1
+        WHERE ph.operating_company_id = $1::uuid
           AND ph.unit_id = $2
           AND ph.position_code = $3
         ORDER BY ph.action_at DESC

@@ -37,7 +37,7 @@ export async function listWorkOrdersByBucket(client: QueryClient, operatingCompa
         v.vendor_name AS roadside_provider_name
       FROM maintenance.work_orders w
       LEFT JOIN mdata.vendors v ON v.id = w.roadside_provider_vendor_id
-      WHERE w.operating_company_id = $1
+      WHERE w.operating_company_id = $1::uuid
         AND ${openWorkOrderPredicate("w")}
       ORDER BY w.opened_at DESC NULLS LAST, w.created_at DESC
       LIMIT 80

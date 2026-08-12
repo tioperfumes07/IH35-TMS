@@ -96,7 +96,7 @@ function mapRow(row: Record<string, unknown>) {
 }
 
 export async function registerScheduledReportsRoutes(app: FastifyInstance) {
-  app.get("/api/v1/scheduled-reports", async (req: FastifyRequest, reply: FastifyReply) => {
+  app.get("/api/v1/scheduled-reports", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!accountingRoles(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
@@ -109,7 +109,7 @@ export async function registerScheduledReportsRoutes(app: FastifyInstance) {
       if (!exists.rows[0]?.ok) return [];
 
       const values: unknown[] = [parsed.data.operating_company_id];
-      const where = [`operating_company_id = $1`];
+      const where = [`operating_company_id = $1::uuid`];
       if (parsed.data.status) {
         values.push(parsed.data.status);
         where.push(`status = $${values.length}`);

@@ -82,7 +82,7 @@ async function detectGeofenceDuplicateFire(client: Parameters<DetectorFn>[0], oc
   const res = await client.query<{ geofence_id: string; unit_id: string; fire_count: string }>(
     `SELECT geofence_id, unit_id, COUNT(*)::text AS fire_count
      FROM safety.integrity_findings
-     WHERE operating_company_id = $1 AND anomaly_class = 'duplicate_fire'
+     WHERE operating_company_id = $1::uuid AND anomaly_class = 'duplicate_fire'
        AND report_date >= CURRENT_DATE - 1 AND resolved = false
      GROUP BY geofence_id, unit_id LIMIT 50`,
     [oci]

@@ -165,7 +165,7 @@ export async function registerSafetyIncidentsRoutes(app: FastifyInstance) {
 
     const rows = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       const params: unknown[] = [query.data.operating_company_id, query.data.incident_type];
-      const filters: string[] = ["i.operating_company_id = $1", "i.incident_type = $2"];
+      const filters: string[] = ["i.operating_company_id = $1::uuid", "i.incident_type = $2"];
 
       if (query.data.driver_id) {
         params.push(query.data.driver_id);
@@ -271,7 +271,7 @@ export async function registerSafetyIncidentsRoutes(app: FastifyInstance) {
             ON l.id = i.load_id
            AND l.operating_company_id = i.operating_company_id
           WHERE i.id = $1
-            AND i.operating_company_id = $2
+            AND i.operating_company_id = $2::uuid
           LIMIT 1
         `,
         [params.data.id, query.data.operating_company_id]
@@ -334,7 +334,7 @@ export async function registerSafetyIncidentsRoutes(app: FastifyInstance) {
       // (operating_company_id) IN the query, so a cross-entity customer is simply not found → mismatch.
       if (claimantCustomerId !== null) {
         const custRes = await client.query<{ id: string }>(
-          `SELECT id FROM mdata.customers WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+          `SELECT id FROM mdata.customers WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
           [claimantCustomerId, body.data.operating_company_id]
         );
         if (custRes.rows.length === 0) {
@@ -349,7 +349,7 @@ export async function registerSafetyIncidentsRoutes(app: FastifyInstance) {
           `
             SELECT reason_code
             FROM catalogs.cargo_claim_reasons
-            WHERE operating_company_id = $1
+            WHERE operating_company_id = $1::uuid
               AND id = $2
               AND is_active = true
             LIMIT 1
@@ -444,7 +444,7 @@ export async function registerSafetyIncidentsRoutes(app: FastifyInstance) {
     return reply.code(201).send({ incident: created.row });
   });
 
-  app.post("/api/v1/safety/incidents/:id/photos", async (req, reply) => {
+  app.post("/api/v1/safety/incidents/:id/photos", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!isSafetyMutationAllowed(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -463,7 +463,7 @@ export async function registerSafetyIncidentsRoutes(app: FastifyInstance) {
           SET photo_keys = array_append(photo_keys, $3),
               updated_at = now()
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
             -- SAF-B19: no new evidence onto a retracted record.
             AND voided_at IS NULL
             AND cardinality(photo_keys) < 10
@@ -536,7 +536,7 @@ export async function registerSafetyIncidentsRoutes(app: FastifyInstance) {
         if (body.data.claim_reason_id === null) return null;
         const reasonRes = await client.query<{ reason_code: string }>(
           `SELECT reason_code FROM catalogs.cargo_claim_reasons
-           WHERE id = $1 AND operating_company_id = $2 AND is_active = true LIMIT 1`,
+           WHERE id = $1 AND operating_company_id = $2::uuid AND is_active = true LIMIT 1`,
           [body.data.claim_reason_id, query.data.operating_company_id]
         );
         if (!reasonRes.rows[0]) return null;
@@ -557,7 +557,7 @@ export async function registerSafetyIncidentsRoutes(app: FastifyInstance) {
           SET ${sets.join(", ")}, updated_at = now()
           -- SAF-B19: a voided incident is immutable. The void route's contract said so; nothing
           -- enforced it, so a retracted record could still be edited after the fact.
-          WHERE id = $1 AND operating_company_id = $2 AND voided_at IS NULL
+          WHERE id = $1 AND operating_company_id = $2::uuid AND voided_at IS NULL
           RETURNING *
         `,
         values
@@ -600,7 +600,7 @@ export async function registerSafetyIncidentsRoutes(app: FastifyInstance) {
 
     const outcome = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       const current = await client.query(
-        `SELECT id, status, incident_type, voided_at FROM safety.incidents WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+        `SELECT id, status, incident_type, voided_at FROM safety.incidents WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
         [params.data.id, query.data.operating_company_id]
       );
       const row = current.rows[0];
@@ -616,7 +616,7 @@ export async function registerSafetyIncidentsRoutes(app: FastifyInstance) {
           SET status = $3,
               description = COALESCE(description || E'\n', '') || $4,
               updated_at = now()
-          WHERE id = $1 AND operating_company_id = $2
+          WHERE id = $1 AND operating_company_id = $2::uuid
           RETURNING *
         `,
         [
@@ -682,7 +682,7 @@ export async function registerSafetyIncidentsRoutes(app: FastifyInstance) {
         `
           UPDATE safety.incidents
           SET voided_at = now(), voided_reason = $3, voided_by_user_id = $4, updated_at = now()
-          WHERE id = $1 AND operating_company_id = $2 AND voided_at IS NULL
+          WHERE id = $1 AND operating_company_id = $2::uuid AND voided_at IS NULL
           RETURNING *
         `,
         [params.data.id, query.data.operating_company_id, body.data.void_reason, user.uuid]

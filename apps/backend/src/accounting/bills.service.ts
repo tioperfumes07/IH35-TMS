@@ -506,7 +506,7 @@ export async function resolveVendorDisplayMap(
             COALESCE(es.raw_snapshot->>'DisplayName', es.raw_snapshot->>'Name', es.qbo_entity_id) AS display_name,
             ROW_NUMBER() OVER (PARTITION BY es.qbo_entity_id ORDER BY es.snapshot_taken_at DESC, es.created_at DESC) AS rn
           FROM qbo_archive.entities_snapshot es
-          WHERE es.operating_company_id = $1
+          WHERE es.operating_company_id = $1::uuid
             AND es.qbo_entity_type = 'Vendor'
             AND es.qbo_entity_id = ANY($2::text[])
         )
@@ -561,7 +561,7 @@ export async function updateBankBalance(
       SET current_balance_cents = current_balance_cents + $3,
           updated_at = now()
       WHERE id = $1
-        AND operating_company_id = $2
+        AND operating_company_id = $2::uuid
     `,
     [bankAccountId, operatingCompanyId, deltaCents]
   );
@@ -577,7 +577,7 @@ export async function listVendorBalances(
 ) {
   const rows = await withCurrentUser(userId, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
-    const where: string[] = ["vb.operating_company_id = $1"];
+    const where: string[] = ["vb.operating_company_id = $1::uuid"];
     if (!options.includeZero) where.push("vb.balance_cents > 0");
     const orderBy =
       options.sort === "balance_asc"
@@ -630,7 +630,7 @@ export async function listBillsByVendor(
     // detail A/P tab, vendor-credit apply picker) while QBO-sourced bills carry the QBO vendor id,
     // so an equality test on the raw value returned zero rows for 16211 of 16212 prod bills.
     const where: string[] = [
-      "b.operating_company_id = $1",
+      "b.operating_company_id = $1::uuid",
       `COALESCE(NULLIF(b.vendor_id,''), NULLIF(b.vendor_uuid,'')) IN ${vendorIdentitySetSql(1, 2)}`,
     ];
     const values: unknown[] = [operatingCompanyId, vendorId];
@@ -678,7 +678,7 @@ export async function listAllBillsForCompany(
 ) {
   const rows = await withCurrentUser(userId, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
-    const where: string[] = ["b.operating_company_id = $1"];
+    const where: string[] = ["b.operating_company_id = $1::uuid"];
     const values: unknown[] = [operatingCompanyId];
     if (options.fromDate) {
       values.push(options.fromDate);
@@ -732,7 +732,7 @@ export async function listBillPaymentsForBill(userId: string, operatingCompanyId
         SELECT id
         FROM accounting.bills
         WHERE id = $1
-          AND operating_company_id = $2
+          AND operating_company_id = $2::uuid
         LIMIT 1
       `,
       [billId, operatingCompanyId]
@@ -753,7 +753,7 @@ export async function listBillPaymentsForBill(userId: string, operatingCompanyId
                ${BILL_PAYMENT_BANK_TRANSACTION_ID_SQL} AS matched_bank_transaction_id
         FROM accounting.bill_payments bp
         WHERE bp.bill_id = $1
-          AND bp.operating_company_id = $2
+          AND bp.operating_company_id = $2::uuid
           AND bp.revoked_at IS NULL
         ORDER BY bp.payment_date DESC, bp.created_at DESC
       `,
@@ -797,7 +797,7 @@ export async function listWorkOrderLinkedFinancials(
         `SELECT b.id::text AS id, b.bill_number, b.bill_date::text AS bill_date,
                 COALESCE(b.amount_cents, 0)::bigint AS amount_cents, b.status, b.memo
            FROM accounting.bills b
-          WHERE b.operating_company_id = $1
+          WHERE b.operating_company_id = $1::uuid
             AND b.linked_work_order_uuid = $2
             AND b.revoked_at IS NULL
           ORDER BY b.bill_date DESC NULLS LAST, b.created_at DESC`,
@@ -821,7 +821,7 @@ export async function listWorkOrderLinkedFinancials(
                 COALESCE(e.total_amount_cents, 0)::bigint AS total_amount_cents, e.status,
                 ${hasMemo ? "e.memo" : "NULL::text AS memo"}
            FROM accounting.expenses e
-          WHERE e.operating_company_id = $1
+          WHERE e.operating_company_id = $1::uuid
             AND e.linked_work_order_uuid = $2
             AND e.status <> 'void'
           ORDER BY e.transaction_date DESC NULLS LAST, e.created_at DESC`,
@@ -875,7 +875,7 @@ export async function listClaimLinkedFinancials(
         `SELECT b.id::text AS id, b.bill_number, b.bill_date::text AS bill_date,
                 COALESCE(b.amount_cents, 0)::bigint AS amount_cents, b.status, b.memo
            FROM accounting.bills b
-          WHERE b.operating_company_id = $1
+          WHERE b.operating_company_id = $1::uuid
             AND b.insurance_claim_id = $2
             AND b.revoked_at IS NULL
           ORDER BY b.bill_date DESC NULLS LAST, b.created_at DESC`,
@@ -899,7 +899,7 @@ export async function listClaimLinkedFinancials(
                 COALESCE(e.total_amount_cents, 0)::bigint AS total_amount_cents, e.status,
                 ${hasMemo ? "e.memo" : "NULL::text AS memo"}
            FROM accounting.expenses e
-          WHERE e.operating_company_id = $1
+          WHERE e.operating_company_id = $1::uuid
             AND e.insurance_claim_id = $2
             AND e.status <> 'void'
           ORDER BY e.transaction_date DESC NULLS LAST, e.created_at DESC`,
@@ -919,7 +919,7 @@ export async function listClaimLinkedFinancials(
       const res = await client.query(
         `SELECT wo.id::text AS id, wo.display_id, wo.status
            FROM maintenance.work_orders wo
-          WHERE wo.operating_company_id = $1
+          WHERE wo.operating_company_id = $1::uuid
             AND wo.insurance_claim_id = $2
           ORDER BY wo.created_at DESC NULLS LAST
           LIMIT 100`,
@@ -973,7 +973,7 @@ export async function listUnitLinkedFinancials(
         `SELECT b.id::text AS id, b.bill_number, b.bill_date::text AS bill_date,
                 COALESCE(b.amount_cents, 0)::bigint AS amount_cents, b.status, b.memo
            FROM accounting.bills b
-          WHERE b.operating_company_id = $1
+          WHERE b.operating_company_id = $1::uuid
             AND b.unit_id = $2
             AND b.revoked_at IS NULL
           ORDER BY b.bill_date DESC NULLS LAST, b.created_at DESC`,
@@ -997,7 +997,7 @@ export async function listUnitLinkedFinancials(
                 COALESCE(e.total_amount_cents, 0)::bigint AS total_amount_cents, e.status,
                 ${hasMemo ? "e.memo" : "NULL::text AS memo"}
            FROM accounting.expenses e
-          WHERE e.operating_company_id = $1
+          WHERE e.operating_company_id = $1::uuid
             AND e.unit_id = $2
             AND e.status <> 'void'
           ORDER BY e.transaction_date DESC NULLS LAST, e.created_at DESC`,
@@ -1057,7 +1057,7 @@ export async function listBillPayments(
 ) {
   return withCurrentUser(userId, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
-    const where: string[] = ["bp.operating_company_id = $1", "bp.revoked_at IS NULL"];
+    const where: string[] = ["bp.operating_company_id = $1::uuid", "bp.revoked_at IS NULL"];
     const values: unknown[] = [operatingCompanyId];
     if (options.vendorId) {
       values.push(options.vendorId);
@@ -1124,7 +1124,7 @@ export async function getBillDetail(userId: string, operatingCompanyId: string, 
           ON u.id = b.unit_id
          AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = b.operating_company_id
         WHERE b.id = $1
-          AND b.operating_company_id = $2
+          AND b.operating_company_id = $2::uuid
         LIMIT 1
       `,
       [billId, operatingCompanyId]
@@ -1136,7 +1136,7 @@ export async function getBillDetail(userId: string, operatingCompanyId: string, 
         SELECT *
         FROM accounting.bill_payments
         WHERE bill_id = $1
-          AND operating_company_id = $2
+          AND operating_company_id = $2::uuid
         ORDER BY payment_date DESC, created_at DESC
       `,
       [billId, operatingCompanyId]
@@ -1885,7 +1885,7 @@ export async function payBill(input: PayBillInput, userId: string) {
         SELECT *
         FROM accounting.bills
         WHERE id = $1
-          AND operating_company_id = $2
+          AND operating_company_id = $2::uuid
         LIMIT 1
         FOR UPDATE
       `,
@@ -2092,7 +2092,7 @@ export async function voidBill(
                bill_date::text AS bill_date_iso
         FROM accounting.bills
         WHERE id = $1
-          AND operating_company_id = $2
+          AND operating_company_id = $2::uuid
         LIMIT 1
         FOR UPDATE
       `,
@@ -2108,7 +2108,7 @@ export async function voidBill(
         SELECT COUNT(*)::int AS count
         FROM accounting.bill_payments
         WHERE bill_id = $1
-          AND operating_company_id = $2
+          AND operating_company_id = $2::uuid
           AND revoked_at IS NULL
       `,
       [billId, operatingCompanyId]
@@ -2154,7 +2154,7 @@ export async function voidBill(
             revoked_reason = $4,
             updated_at = now()
         WHERE id = $1
-          AND operating_company_id = $2
+          AND operating_company_id = $2::uuid
       `,
       [billId, operatingCompanyId, userId, reason]
     );
@@ -2222,7 +2222,7 @@ export async function voidBillPaymentInClientTx(
         SELECT *
         FROM accounting.bill_payments
         WHERE id = $1
-          AND operating_company_id = $2
+          AND operating_company_id = $2::uuid
         LIMIT 1
         FOR UPDATE
       `,
@@ -2237,7 +2237,7 @@ export async function voidBillPaymentInClientTx(
         SELECT *
         FROM accounting.bills
         WHERE id = $1
-          AND operating_company_id = $2
+          AND operating_company_id = $2::uuid
         LIMIT 1
         FOR UPDATE
       `,
@@ -2272,7 +2272,7 @@ export async function voidBillPaymentInClientTx(
         SELECT EXISTS (
           SELECT 1
           FROM accounting.journal_entry_postings
-          WHERE operating_company_id = $1
+          WHERE operating_company_id = $1::uuid
             AND source_transaction_type = 'bill_payment'
             AND source_transaction_id = $2::text
         ) AS exists
@@ -2304,7 +2304,7 @@ export async function voidBillPaymentInClientTx(
             revoked_reason = $4,
             updated_at = now()
         WHERE id = $1
-          AND operating_company_id = $2
+          AND operating_company_id = $2::uuid
       `,
       [input.paymentId, input.operatingCompanyId, input.userId, input.reason]
     );
@@ -2480,7 +2480,7 @@ export async function listLegalMatterLinkedCosts(
       `SELECT b.id::text AS id, b.bill_number, b.bill_date::text AS bill_date,
               COALESCE(b.amount_cents, 0)::bigint AS amount_cents, b.status, b.memo
          FROM accounting.bills b
-        WHERE b.operating_company_id = $1
+        WHERE b.operating_company_id = $1::uuid
           AND b.legal_matter_id = $2
           AND b.revoked_at IS NULL
         ORDER BY b.bill_date DESC NULLS LAST, b.created_at DESC`,

@@ -86,7 +86,7 @@ export async function runCap13BrakeWearWorkerTick(deps?: {
                 odometer_miles,
                 created_at::text
               FROM maintenance.brake_wear_measurements
-              WHERE operating_company_id = $1
+              WHERE operating_company_id = $1::uuid
                 AND unit_uuid = $2
                 AND brake_position = $3
               ORDER BY measured_at ASC

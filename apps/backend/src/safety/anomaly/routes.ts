@@ -22,7 +22,7 @@ export async function registerAnomalyDetectionRoutes(app: FastifyInstance) {
     if (!q.success) return reply.code(400).send({ error: "validation_error" });
     const rows = await withCurrentUser(user.uuid, async (client) => {
       await setScopedCompanyContext(client, user.uuid, q.data.operating_company_id);
-      const res = await client.query(`SELECT * FROM safety.anomaly_alert_rules WHERE operating_company_id = $1 ORDER BY rule_name`, [q.data.operating_company_id]);
+      const res = await client.query(`SELECT * FROM safety.anomaly_alert_rules WHERE operating_company_id = $1::uuid ORDER BY rule_name`, [q.data.operating_company_id]);
       return res.rows;
     });
     return { rules: rows };
@@ -82,7 +82,7 @@ export async function registerAnomalyDetectionRoutes(app: FastifyInstance) {
     if (!q.success) return reply.code(400).send({ error: "validation_error" });
     const rows = await withCurrentUser(user.uuid, async (client) => {
       await setScopedCompanyContext(client, user.uuid, q.data.operating_company_id);
-      const filters = ["operating_company_id = $1"]; const vals: unknown[] = [q.data.operating_company_id]; let i = 2;
+      const filters = ["operating_company_id = $1::uuid"]; const vals: unknown[] = [q.data.operating_company_id]; let i = 2;
       if (q.data.status) { filters.push(`resolution_status = $${i++}`); vals.push(q.data.status); }
       if (q.data.severity) { filters.push(`severity = $${i++}`); vals.push(q.data.severity); }
       if (q.data.from) { filters.push(`detected_at >= $${i++}::timestamptz`); vals.push(q.data.from); }

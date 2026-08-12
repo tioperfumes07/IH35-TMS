@@ -179,7 +179,7 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
     const q = query.data;
 
     const rows = await withCompanyScope(user.uuid, q.operating_company_id, async (client) => {
-      const where: string[] = ["fa.operating_company_id = $1"];
+      const where: string[] = ["fa.operating_company_id = $1::uuid"];
       const values: unknown[] = [q.operating_company_id];
       if (q.status && q.status !== "all") {
         values.push(q.status);
@@ -244,7 +244,7 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
     };
   });
 
-  app.get("/api/v1/accounting/factoring-advances/candidate-invoices", async (req, reply) => {
+  app.get("/api/v1/accounting/factoring-advances/candidate-invoices", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -265,7 +265,7 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
             c.factoring_eligible
           FROM accounting.invoices i
           JOIN mdata.customers c ON c.id = i.customer_id
-          WHERE i.operating_company_id = $1
+          WHERE i.operating_company_id = $1::uuid
             AND i.status = 'sent'
             AND i.voided_at IS NULL
             AND COALESCE(i.factoring_status, 'not_factored') = 'not_factored'
@@ -301,7 +301,7 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
     return detail;
   });
 
-  app.post("/api/v1/accounting/factoring-advances", async (req, reply) => {
+  app.post("/api/v1/accounting/factoring-advances", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -315,7 +315,7 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
           SELECT id
           FROM mdata.vendors
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
             AND deactivated_at IS NULL
           LIMIT 1
         `,
@@ -334,7 +334,7 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
             c.factoring_eligible
           FROM accounting.invoices i
           JOIN mdata.customers c ON c.id = i.customer_id
-          WHERE i.operating_company_id = $1
+          WHERE i.operating_company_id = $1::uuid
             AND i.id = ANY($2::uuid[])
         `,
         [query.data.operating_company_id, body.data.invoice_ids]
@@ -397,7 +397,7 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
               factoring_status = 'submitted',
               updated_at = now(),
               updated_by_user_id = $3
-          WHERE operating_company_id = $1
+          WHERE operating_company_id = $1::uuid
             AND id = ANY($4::uuid[])
         `,
         [query.data.operating_company_id, advanceId, user.uuid, body.data.invoice_ids]
@@ -426,7 +426,7 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
     return reply.code(result.code).send(result.data);
   });
 
-  app.post("/api/v1/accounting/factoring-advances/:id/advance", async (req, reply) => {
+  app.post("/api/v1/accounting/factoring-advances/:id/advance", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const params = idParamsSchema.safeParse(req.params ?? {});
@@ -437,7 +437,7 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
     if (!body.success) return validationError(reply, body.error);
 
     const result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
-      const advanceRes = await client.query(`SELECT * FROM accounting.factoring_advances WHERE id = $1 AND operating_company_id = $2 LIMIT 1`, [
+      const advanceRes = await client.query(`SELECT * FROM accounting.factoring_advances WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`, [
         params.data.id,
         query.data.operating_company_id,
       ]);
@@ -491,7 +491,7 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
     return result.data;
   });
 
-  app.post("/api/v1/accounting/factoring-advances/:id/reserve-held", async (req, reply) => {
+  app.post("/api/v1/accounting/factoring-advances/:id/reserve-held", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const params = idParamsSchema.safeParse(req.params ?? {});
@@ -502,7 +502,7 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
     if (!body.success) return validationError(reply, body.error);
 
     const result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
-      const advanceRes = await client.query(`SELECT * FROM accounting.factoring_advances WHERE id = $1 AND operating_company_id = $2 LIMIT 1`, [
+      const advanceRes = await client.query(`SELECT * FROM accounting.factoring_advances WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`, [
         params.data.id,
         query.data.operating_company_id,
       ]);
@@ -564,7 +564,7 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
     return result.data;
   });
 
-  app.post("/api/v1/accounting/factoring-advances/:id/release", async (req, reply) => {
+  app.post("/api/v1/accounting/factoring-advances/:id/release", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const params = idParamsSchema.safeParse(req.params ?? {});
@@ -575,7 +575,7 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
     if (!body.success) return validationError(reply, body.error);
 
     const result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
-      const advanceRes = await client.query(`SELECT * FROM accounting.factoring_advances WHERE id = $1 AND operating_company_id = $2 LIMIT 1`, [
+      const advanceRes = await client.query(`SELECT * FROM accounting.factoring_advances WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`, [
         params.data.id,
         query.data.operating_company_id,
       ]);
@@ -670,7 +670,7 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
     return result.data;
   });
 
-  app.post("/api/v1/accounting/factoring-advances/:id/recourse-return", async (req, reply) => {
+  app.post("/api/v1/accounting/factoring-advances/:id/recourse-return", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const params = idParamsSchema.safeParse(req.params ?? {});
@@ -681,7 +681,7 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
     if (!body.success) return validationError(reply, body.error);
 
     const result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
-      const advanceRes = await client.query(`SELECT * FROM accounting.factoring_advances WHERE id = $1 AND operating_company_id = $2 LIMIT 1`, [
+      const advanceRes = await client.query(`SELECT * FROM accounting.factoring_advances WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`, [
         params.data.id,
         query.data.operating_company_id,
       ]);
@@ -744,7 +744,7 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
     return result.data;
   });
 
-  app.post("/api/v1/accounting/factoring-advances/:id/void", async (req, reply) => {
+  app.post("/api/v1/accounting/factoring-advances/:id/void", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     // G9-C3: voiding a factoring advance is an EXECUTOR-only action (Owner|Administrator|Accountant).
@@ -759,7 +759,7 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
     if (!body.success) return validationError(reply, body.error);
 
     const result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
-      const advanceRes = await client.query(`SELECT * FROM accounting.factoring_advances WHERE id = $1 AND operating_company_id = $2 LIMIT 1`, [
+      const advanceRes = await client.query(`SELECT * FROM accounting.factoring_advances WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`, [
         params.data.id,
         query.data.operating_company_id,
       ]);

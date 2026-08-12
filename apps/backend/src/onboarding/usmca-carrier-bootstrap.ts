@@ -72,7 +72,7 @@ async function copyCatalogTable(
   }
 
   const existing = await client.query<{ c: number }>(
-    `SELECT count(*)::int AS c FROM ${spec.table} WHERE operating_company_id = $1`,
+    `SELECT count(*)::int AS c FROM ${spec.table} WHERE operating_company_id = $1::uuid`,
     [newCarrierId]
   );
   if (Number(existing.rows[0]?.c ?? 0) > 0) {
@@ -103,13 +103,13 @@ async function cloneCoaIfEmpty(
   if (!(await tableExists(client, "mdata.qbo_accounts"))) return 0;
 
   const existing = await client.query<{ c: number }>(
-    `SELECT count(*)::int AS c FROM mdata.qbo_accounts WHERE operating_company_id = $1`,
+    `SELECT count(*)::int AS c FROM mdata.qbo_accounts WHERE operating_company_id = $1::uuid`,
     [newCarrierId]
   );
   if (Number(existing.rows[0]?.c ?? 0) > 0) return 0;
 
   const templateCount = await client.query<{ c: number }>(
-    `SELECT count(*)::int AS c FROM mdata.qbo_accounts WHERE operating_company_id = $1`,
+    `SELECT count(*)::int AS c FROM mdata.qbo_accounts WHERE operating_company_id = $1::uuid`,
     [templateCarrierId]
   );
   if (Number(templateCount.rows[0]?.c ?? 0) === 0) return 0;
@@ -127,7 +127,7 @@ async function cloneCoaIfEmpty(
       INSERT INTO tmp_bootstrap_coa_map (old_id, new_id)
       SELECT id, gen_random_uuid()
       FROM mdata.qbo_accounts
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
     `,
     [templateCarrierId]
   );

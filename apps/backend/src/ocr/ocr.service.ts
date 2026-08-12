@@ -41,7 +41,7 @@ async function fuzzyMatchCustomer(client: DbClient, operatingCompanyId: string, 
     `
       SELECT id, customer_name
       FROM mdata.customers
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
         AND deactivated_at IS NULL
       LIMIT 500
     `,
@@ -71,7 +71,7 @@ export async function parseRateConfirmation(
         SELECT filename, category, entity_id::text
         FROM documents.attachments
         WHERE id = $1
-          AND operating_company_id = $2
+          AND operating_company_id = $2::uuid
           AND is_deleted = false
         LIMIT 1
       `,

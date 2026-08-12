@@ -63,7 +63,7 @@ export default async function alertRoutes(fastify: FastifyInstance) {
     return withCurrentUser(user.uuid, async (client) => {
       await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [operating_company_id]);
       const result = await (client as Queryable).query(
-        `SELECT * FROM alerts.profile WHERE operating_company_id = $1 AND is_active = true ORDER BY profile_type, name`,
+        `SELECT * FROM alerts.profile WHERE operating_company_id = $1::uuid AND is_active = true ORDER BY profile_type, name`,
         [operating_company_id]
       );
       return { profiles: result.rows };
@@ -167,7 +167,7 @@ export default async function alertRoutes(fastify: FastifyInstance) {
                                 AND l.operating_company_id = $1::uuid
         LEFT JOIN mdata.customers c ON c.id = q.broker_id
                                     AND c.operating_company_id = $1::uuid
-        WHERE q.operating_company_id = $1 AND q.status = 'pending' AND q.is_active = true
+        WHERE q.operating_company_id = $1::uuid AND q.status = 'pending' AND q.is_active = true
         ORDER BY q.created_at DESC
       `;
       const result = await (client as Queryable).query(sql, [operating_company_id]);
@@ -193,7 +193,7 @@ export default async function alertRoutes(fastify: FastifyInstance) {
       const sql = `
         UPDATE alerts.broker_queue
         SET status = $1, decided_by_user_id = $2, decided_at = NOW(), edited_message = $3
-        WHERE queue_id = $4 AND operating_company_id = $5
+        WHERE queue_id = $4 AND operating_company_id = $5::uuid
         RETURNING *
       `;
       const result = await (client as Queryable).query(sql, [

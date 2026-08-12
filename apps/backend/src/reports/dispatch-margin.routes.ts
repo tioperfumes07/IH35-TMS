@@ -114,7 +114,7 @@ export async function registerDispatchMarginRoutes(app: FastifyInstance) {
             FROM mdata.loads l
             LEFT JOIN mdata.customers c ON c.id = l.customer_id
                                         AND c.operating_company_id = $1::uuid
-            WHERE l.operating_company_id = $1
+            WHERE l.operating_company_id = $1::uuid
               AND l.soft_deleted_at IS NULL
               AND l.status IS DISTINCT FROM 'cancelled'
               AND ${dateFilter}
@@ -129,7 +129,7 @@ export async function registerDispatchMarginRoutes(app: FastifyInstance) {
             SELECT ft.load_id, COALESCE(SUM(ROUND(ft.total_cost::numeric * 100)), 0)::bigint AS fuel_cents
             FROM fuel.fuel_transactions ft
             INNER JOIN load_scope ls ON ls.id = ft.load_id
-            WHERE ft.operating_company_id = $1
+            WHERE ft.operating_company_id = $1::uuid
             GROUP BY ft.load_id
           ),
           ${tollsCte},
@@ -137,7 +137,7 @@ export async function registerDispatchMarginRoutes(app: FastifyInstance) {
             SELECT ac.load_id, COALESCE(SUM(ac.total_chargeback_cents), 0)::bigint AS chargebacks_cents
             FROM driver_finance.abandonment_chargebacks ac
             INNER JOIN load_scope ls ON ls.id = ac.load_id
-            WHERE ac.operating_company_id = $1
+            WHERE ac.operating_company_id = $1::uuid
             GROUP BY ac.load_id
           )
           SELECT

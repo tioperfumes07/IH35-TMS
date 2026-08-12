@@ -173,7 +173,7 @@ export async function registerFactoringQueueRoutes(app: FastifyInstance) {
           ORDER BY sequence_number DESC
           LIMIT 1
         ) sd ON true
-        WHERE l.operating_company_id = $1
+        WHERE l.operating_company_id = $1::uuid
           AND l.soft_deleted_at IS NULL
           AND l.status IN ('delivered', 'invoiced', 'paid', 'closed')
         ORDER BY l.updated_at DESC

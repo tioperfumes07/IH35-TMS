@@ -38,7 +38,7 @@ export async function buildTrkMigrationStatus(client: { query: (sql: string, val
 
   const coaRes = hasCoa
     ? await client.query(
-        `SELECT COUNT(*)::int AS c FROM accounting.chart_of_accounts WHERE operating_company_id = $1 AND archived_at IS NULL`,
+        `SELECT COUNT(*)::int AS c FROM accounting.chart_of_accounts WHERE operating_company_id = $1::uuid AND archived_at IS NULL`,
         [operatingCompanyId]
       )
     : { rows: [{ c: 0 }] };
@@ -46,13 +46,13 @@ export async function buildTrkMigrationStatus(client: { query: (sql: string, val
 
   const arRes = await relationExists(client, "accounting.invoices")
     ? await client.query(
-        `SELECT COALESCE(SUM(total_cents), 0)::bigint AS total FROM accounting.invoices WHERE operating_company_id = $1 AND status IN ('open','partial')`,
+        `SELECT COALESCE(SUM(total_cents), 0)::bigint AS total FROM accounting.invoices WHERE operating_company_id = $1::uuid AND status IN ('open','partial')`,
         [operatingCompanyId]
       )
     : { rows: [{ total: 0 }] };
   const apRes = await relationExists(client, "accounting.bills")
     ? await client.query(
-        `SELECT COALESCE(SUM(amount_cents - paid_cents), 0)::bigint AS total FROM accounting.bills WHERE operating_company_id = $1 AND status IN ('open','partial')`,
+        `SELECT COALESCE(SUM(amount_cents - paid_cents), 0)::bigint AS total FROM accounting.bills WHERE operating_company_id = $1::uuid AND status IN ('open','partial')`,
         [operatingCompanyId]
       )
     : { rows: [{ total: 0 }] };

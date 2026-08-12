@@ -75,7 +75,7 @@ export async function computeAndUpsertScore(client: any, companyId: string, acto
             THEN (violations_jsonb -> 'csa_point_breakdown' ->> 'crash_indicator')::numeric
           END AS crash_indicator_points
         FROM safety.dot_inspections
-        WHERE operating_company_id = $1
+        WHERE operating_company_id = $1::uuid
           AND voided_at IS NULL
           AND inspection_date >= (CURRENT_DATE - INTERVAL '180 days')
       )
@@ -152,7 +152,7 @@ export async function registerSafetyCsaScoresRoutes(app: FastifyInstance) {
     if (!query.success) return validationError(reply, query.error);
     const rows = await withCompany(user.uuid, user.role, query.data.operating_company_id, async (client) => {
       const res = await client.query(
-        `SELECT * FROM safety.csa_scores WHERE operating_company_id = $1 ORDER BY period_end DESC LIMIT 50`,
+        `SELECT * FROM safety.csa_scores WHERE operating_company_id = $1::uuid ORDER BY period_end DESC LIMIT 50`,
         [query.data.operating_company_id]
       );
       return res.rows.map((row: Record<string, unknown>) => ({ ...row, basic_hazmat: null }));
@@ -167,7 +167,7 @@ export async function registerSafetyCsaScoresRoutes(app: FastifyInstance) {
     if (!query.success) return validationError(reply, query.error);
     const row = await withCompany(user.uuid, user.role, query.data.operating_company_id, async (client) => {
       const res = await client.query(
-        `SELECT * FROM safety.csa_scores WHERE operating_company_id = $1 ORDER BY period_end DESC LIMIT 1`,
+        `SELECT * FROM safety.csa_scores WHERE operating_company_id = $1::uuid ORDER BY period_end DESC LIMIT 1`,
         [query.data.operating_company_id]
       );
       const current = res.rows[0] ?? null;

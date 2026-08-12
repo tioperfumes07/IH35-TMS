@@ -131,7 +131,7 @@ export async function registerTaxDocumentRoutes(app: FastifyInstance) {
         const profileRes = await client.query<{ id: string; tax_status: string }>(
           `
             SELECT id, tax_status FROM catalogs.payee_tax_profile
-            WHERE operating_company_id = $1 AND payee_type = 'driver' AND payee_id = $2
+            WHERE operating_company_id = $1::uuid AND payee_type = 'driver' AND payee_id = $2
               AND effective_tax_year = $3 AND voided_at IS NULL
             LIMIT 1
           `,
@@ -144,7 +144,7 @@ export async function registerTaxDocumentRoutes(app: FastifyInstance) {
         }
 
         const driverRes = await client.query<{ first_name: string; last_name: string }>(
-          `SELECT first_name, last_name FROM mdata.drivers WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+          `SELECT first_name, last_name FROM mdata.drivers WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
           [row.driver_id, body.data.operating_company_id]
         );
         const driver = driverRes.rows[0];
@@ -238,7 +238,7 @@ export async function registerTaxDocumentRoutes(app: FastifyInstance) {
           SELECT f.*, td.status AS tax_document_status
           FROM accounting.form_1099_nec f
           JOIN accounting.tax_document td ON td.id = f.tax_document_id
-          WHERE f.id = $1 AND f.operating_company_id = $2
+          WHERE f.id = $1 AND f.operating_company_id = $2::uuid
           LIMIT 1
         `,
         [params.data.id, query.data.operating_company_id]

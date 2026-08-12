@@ -59,7 +59,7 @@ export async function createDriverReimbursementCore(
   if (!body.reason?.trim()) return { ok: false, code: 400, error: "reason is required" };
 
   const driverRes = await client.query(
-    `SELECT id, status FROM mdata.drivers WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+    `SELECT id, status FROM mdata.drivers WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
     [body.driver_id, companyId]
   );
   const driver = driverRes.rows[0];

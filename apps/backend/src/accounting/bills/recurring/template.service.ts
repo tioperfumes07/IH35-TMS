@@ -159,7 +159,7 @@ export async function getTemplate(uuid: string, operatingCompanyId: string, user
   const result = await withCurrentUser(userId, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     const res = await client.query<RecurringBillTemplate>(
-      `SELECT * FROM accounting.recurring_bill_templates WHERE uuid = $1::uuid AND operating_company_id = $2`,
+      `SELECT * FROM accounting.recurring_bill_templates WHERE uuid = $1::uuid AND operating_company_id = $2::uuid`,
       [uuid, operatingCompanyId]
     );
     if (!res.rows[0]) throw new Error("recurring_bill_template_not_found");
@@ -173,7 +173,7 @@ export async function listTemplates(
   userId: string,
   opts: { activeOnly?: boolean; dueSoon?: boolean } = {}
 ): Promise<RecurringBillTemplate[]> {
-  const conditions: string[] = ["operating_company_id = $1"];
+  const conditions: string[] = ["operating_company_id = $1::uuid"];
   const values: unknown[] = [operatingCompanyId];
   let idx = 2;
 

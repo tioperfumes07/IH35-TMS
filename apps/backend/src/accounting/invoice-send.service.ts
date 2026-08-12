@@ -75,7 +75,7 @@ export async function sendDraftInvoice(
   input: { invoiceId: string; operatingCompanyId: string; userId: string }
 ): Promise<SendDraftInvoiceResult> {
   const currentRes = await client.query(
-    `SELECT * FROM accounting.invoices WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+    `SELECT * FROM accounting.invoices WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
     [input.invoiceId, input.operatingCompanyId]
   );
   const current = currentRes.rows[0] ?? null;
@@ -328,9 +328,9 @@ export async function sendDraftInvoice(
       JOIN mdata.customers c
         ON c.id = i.customer_id
        AND c.operating_company_id = i.operating_company_id
-       AND c.operating_company_id = $2
+       AND c.operating_company_id = $2::uuid
       WHERE i.id = $1
-        AND i.operating_company_id = $2
+        AND i.operating_company_id = $2::uuid
       LIMIT 1
     `,
     [input.invoiceId, input.operatingCompanyId]

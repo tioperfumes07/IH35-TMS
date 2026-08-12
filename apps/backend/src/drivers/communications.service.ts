@@ -64,7 +64,7 @@ export async function listDriverCommunications(
   }
 ): Promise<{ entries: DriverCommEntry[]; total: number }> {
   const conditions: string[] = [
-    "m.operating_company_id = $1",
+    "m.operating_company_id = $1::uuid",
     "m.driver_id = $2",
   ];
   const values: unknown[] = [opts.operatingCompanyId, opts.driverId];

@@ -39,7 +39,7 @@ async function withCompanyScope<T>(
 }
 
 export async function registerBankingEscrowVisualizerRoutes(app: FastifyInstance) {
-  app.get("/api/v1/banking/escrow-visualizer", async (req, reply) => {
+  app.get("/api/v1/banking/escrow-visualizer", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = escrowQuerySchema.safeParse(req.query ?? {});
@@ -62,7 +62,7 @@ export async function registerBankingEscrowVisualizerRoutes(app: FastifyInstance
             LEFT JOIN driver_finance.escrow_balances eb
               ON eb.driver_id = d.id
               AND eb.operating_company_id = d.operating_company_id
-            WHERE d.operating_company_id = $1
+            WHERE d.operating_company_id = $1::uuid
               AND d.deactivated_at IS NULL
             ORDER BY driver_name
           `,
@@ -74,7 +74,7 @@ export async function registerBankingEscrowVisualizerRoutes(app: FastifyInstance
     return { drivers: rows };
   });
 
-  app.get("/api/v1/banking/escrow-visualizer/:driver_id", async (req, reply) => {
+  app.get("/api/v1/banking/escrow-visualizer/:driver_id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const params = driverParamsSchema.safeParse(req.params ?? {});
@@ -85,7 +85,7 @@ export async function registerBankingEscrowVisualizerRoutes(app: FastifyInstance
 
     const timeline = await withCompanyScope(user.uuid, q.operating_company_id, async (client) => {
       const values: unknown[] = [q.operating_company_id, params.data.driver_id];
-      const filters = ["operating_company_id = $1", "driver_id = $2"];
+      const filters = ["operating_company_id = $1::uuid", "driver_id = $2"];
       if (q.from) {
         values.push(q.from);
         filters.push(`created_at >= $${values.length}::timestamptz`);

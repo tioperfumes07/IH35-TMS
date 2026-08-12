@@ -95,7 +95,7 @@ export async function registerMaintenanceDefectsRoutes(app: FastifyInstance) {
             ORDER BY ae.created_at DESC
             LIMIT 1
           ) triage ON true
-          WHERE dd.operating_company_id = $1
+          WHERE dd.operating_company_id = $1::uuid
             AND dd.resolved_at IS NULL
           ORDER BY ds.submitted_at DESC, dd.created_at DESC
           LIMIT $2 OFFSET $3
@@ -139,7 +139,7 @@ export async function registerMaintenanceDefectsRoutes(app: FastifyInstance) {
           LEFT JOIN mdata.units u ON u.id = dd.unit_id
                                  AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = dd.operating_company_id
           WHERE dd.id = $1
-            AND dd.operating_company_id = $2
+            AND dd.operating_company_id = $2::uuid
           LIMIT 1
         `,
         [params.data.id, query.data.operating_company_id]
@@ -184,7 +184,7 @@ export async function registerMaintenanceDefectsRoutes(app: FastifyInstance) {
           FROM safety.dvir_defects dd
           INNER JOIN safety.dvir_submissions ds ON ds.id = dd.dvir_submission_id
           WHERE dd.id = $1
-            AND dd.operating_company_id = $2
+            AND dd.operating_company_id = $2::uuid
           LIMIT 1
         `,
         [params.data.id, body.data.operating_company_id]
@@ -283,7 +283,7 @@ export async function registerMaintenanceDefectsRoutes(app: FastifyInstance) {
           UPDATE safety.dvir_defects
           SET follow_up_wo_id = COALESCE(follow_up_wo_id, $2)
           WHERE id = $1
-            AND operating_company_id = $3
+            AND operating_company_id = $3::uuid
         `,
         [params.data.id, workOrderId, body.data.operating_company_id]
       );

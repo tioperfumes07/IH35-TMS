@@ -118,7 +118,7 @@ const DISAMBIGUATED_NAME = `qi.name || ' [QBO ' || qi.qbo_id || ']'`;
 const PULLER_ITEM_NAME_EXPR = `
       CASE WHEN NOT EXISTS (
         SELECT 1 FROM catalogs.items other
-         WHERE other.operating_company_id = $1
+         WHERE other.operating_company_id = $1::uuid
            AND other.item_name = $2
       ) THEN $2 ELSE $2 || ' [QBO ' || $6 || ']' END`;
 
@@ -127,12 +127,12 @@ const PULLER_ITEM_CODE_EXPR = `
       CASE
         WHEN NOT EXISTS (
           SELECT 1 FROM catalogs.items other
-           WHERE other.operating_company_id = $1
+           WHERE other.operating_company_id = $1::uuid
              AND other.item_code = $3
         ) THEN $3
         WHEN NOT EXISTS (
           SELECT 1 FROM catalogs.items other
-           WHERE other.operating_company_id = $1
+           WHERE other.operating_company_id = $1::uuid
              AND other.item_code = CONCAT('QBO-', $6)
         ) THEN CONCAT('QBO-', $6)
         ELSE NULL

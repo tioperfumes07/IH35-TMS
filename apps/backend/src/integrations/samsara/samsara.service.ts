@@ -50,7 +50,7 @@ export function toPublicConfig(row: Record<string, unknown> | null): {
 
 export async function getSamsaraConfigForCompany(client: PgClient, operatingCompanyId: string) {
   const res = await client.query(
-    `SELECT * FROM integrations.samsara_config WHERE operating_company_id = $1 LIMIT 1`,
+    `SELECT * FROM integrations.samsara_config WHERE operating_company_id = $1::uuid LIMIT 1`,
     [operatingCompanyId]
   );
   return res.rows[0] ?? null;
@@ -115,7 +115,7 @@ export async function disableSamsaraConfig(client: PgClient, operatingCompanyId:
         last_health_check_at = NULL,
         last_health_status = 'not_configured',
         last_error = NULL
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
     `,
     [operatingCompanyId]
   );
@@ -155,7 +155,7 @@ export async function runSamsaraHealthCheckForRow(client: PgClient, operatingCom
           last_health_check_at = now(),
           last_health_status = 'transient_error',
           last_error = $2
-        WHERE operating_company_id = $1
+        WHERE operating_company_id = $1::uuid
       `,
       [operatingCompanyId, `decrypt_failed: ${e instanceof Error ? e.message : "unknown"}`]
     );
@@ -173,7 +173,7 @@ export async function runSamsaraHealthCheckForRow(client: PgClient, operatingCom
       `
         UPDATE integrations.samsara_config
         SET last_health_check_at = now(), last_health_status = 'ok', last_error = NULL
-        WHERE operating_company_id = $1
+        WHERE operating_company_id = $1::uuid
       `,
       [operatingCompanyId]
     );
@@ -193,7 +193,7 @@ export async function runSamsaraHealthCheckForRow(client: PgClient, operatingCom
           last_health_check_at = now(),
           last_health_status = $2,
           last_error = $3
-        WHERE operating_company_id = $1
+        WHERE operating_company_id = $1::uuid
       `,
       [operatingCompanyId, status, msg]
     );

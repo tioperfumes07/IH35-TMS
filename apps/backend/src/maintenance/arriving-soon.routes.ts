@@ -66,7 +66,7 @@ export async function registerMaintenanceArrivingSoonRoutes(app: FastifyInstance
 
     const payload = await withCompany(user.uuid, q.operating_company_id, async (client) => {
       const values: unknown[] = [q.operating_company_id];
-      const filters = [`operating_company_id = $1`];
+      const filters = [`operating_company_id = $1::uuid`];
 
       if (!q.include_already_arrived) {
         filters.push("already_arrived = false");
@@ -160,7 +160,7 @@ export async function registerMaintenanceArrivingSoonRoutes(app: FastifyInstance
           SELECT id, operating_company_id, assigned_unit_id AS unit_id, assigned_primary_driver_id AS driver_id
           FROM mdata.loads
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
             AND soft_deleted_at IS NULL
           LIMIT 1
         `,

@@ -73,7 +73,7 @@ export async function registerMaintenancePmScheduleRoutes(app: FastifyInstance) 
 
     const rows = await withCompany(user.uuid, q.operating_company_id, async (client) => {
       const values: unknown[] = [q.operating_company_id];
-      const filters = ["s.operating_company_id = $1", "s.is_active = true"];
+      const filters = ["s.operating_company_id = $1::uuid", "s.is_active = true"];
       if (q.unit_id) {
         values.push(q.unit_id);
         filters.push(`s.unit_id = $${values.length}`);
@@ -161,7 +161,7 @@ export async function registerMaintenancePmScheduleRoutes(app: FastifyInstance) 
     if (!query.success) return validationError(reply, query.error);
     const result = await withCompany(user.uuid, query.data.operating_company_id, async (client) => {
       const schedule = await client.query(
-        `SELECT id, unit_id FROM maintenance.pm_schedules WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+        `SELECT id, unit_id FROM maintenance.pm_schedules WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
         [params.data.id, query.data.operating_company_id]
       );
       if (!schedule.rows[0]) return null;
@@ -169,7 +169,7 @@ export async function registerMaintenancePmScheduleRoutes(app: FastifyInstance) 
         `
           SELECT id::text
           FROM maintenance.work_orders
-          WHERE operating_company_id = $1
+          WHERE operating_company_id = $1::uuid
             AND unit_id = $2
             AND wo_type = 'pm'
           ORDER BY created_at DESC

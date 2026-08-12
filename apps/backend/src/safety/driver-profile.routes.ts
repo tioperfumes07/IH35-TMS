@@ -55,7 +55,7 @@ export async function registerSafetyDriverProfileRoutes(app: FastifyInstance) {
           `
             SELECT *
             FROM safety.driver_safety_profiles
-            WHERE operating_company_id = $1
+            WHERE operating_company_id = $1::uuid
               AND driver_id = $2
               AND voided_at IS NULL
             LIMIT 1

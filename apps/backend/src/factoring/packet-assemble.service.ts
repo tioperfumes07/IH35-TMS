@@ -263,7 +263,7 @@ export async function sweepAndAssemblePackets(
         AND p.operating_company_id = l.operating_company_id
         AND p.status = 'approved'
         AND p.archived_at IS NULL
-      WHERE l.operating_company_id = $1
+      WHERE l.operating_company_id = $1::uuid
         AND l.soft_deleted_at IS NULL
         AND l.status IN ('delivered', 'invoiced', 'paid', 'closed')
       LIMIT 500

@@ -76,7 +76,7 @@ async function searchCustomers(
         c.qbo_customer_id AS qbo_id,
         COALESCE(c.archived_at, c.deactivated_at) AS archived_at
       FROM mdata.customers c
-      WHERE c.operating_company_id = $1
+      WHERE c.operating_company_id = $1::uuid
         AND ${testSeedFilter}
         AND ${archivedFilter}
         ${search.sql}
@@ -108,7 +108,7 @@ async function searchVendors(
         v.qbo_vendor_id AS qbo_id,
         v.deactivated_at AS archived_at
       FROM mdata.vendors v
-      WHERE v.operating_company_id = $1
+      WHERE v.operating_company_id = $1::uuid
         AND ${archivedFilter}
         ${search.sql}
       ORDER BY v.vendor_name ASC
@@ -128,7 +128,7 @@ async function searchDrivers(
 ) {
   const values: unknown[] = [companyId];
   const pseudoFilter = EXCLUDE_PSEUDO_DRIVERS_SQL.replace(/\bfirst_name\b/g, 'd.first_name').replace(/\blast_name\b/g, 'd.last_name').replace(/\bcdl_number\b/g, 'd.cdl_number');
-  const filters = [`d.operating_company_id = $1`, pseudoFilter];
+  const filters = [`d.operating_company_id = $1::uuid`, pseudoFilter];
   if (!includeArchived) {
     filters.push("d.archived_at IS NULL");
     filters.push("d.deactivated_at IS NULL");
@@ -180,7 +180,7 @@ async function searchContacts(
         cc.customer_uuid AS customer_id
       FROM mdata.customer_contacts cc
       INNER JOIN mdata.customers c ON c.id = cc.customer_uuid
-      WHERE c.operating_company_id = $1
+      WHERE c.operating_company_id = $1::uuid
         AND ${archivedFilter}
         ${search.sql}
       ORDER BY cc.name ASC
@@ -243,11 +243,11 @@ async function searchUnlinkedQboCustomers(
         qc.qbo_id,
         qc.archived_at
       FROM mdata.qbo_customers qc
-      WHERE qc.operating_company_id = $1
+      WHERE qc.operating_company_id = $1::uuid
         AND ${archivedFilter}
         AND NOT EXISTS (
           SELECT 1 FROM mdata.customers c
-          WHERE c.operating_company_id = $1 AND c.qbo_customer_id = qc.qbo_id
+          WHERE c.operating_company_id = $1::uuid AND c.qbo_customer_id = qc.qbo_id
         )
         ${search.sql}
       ORDER BY qc.display_name ASC
@@ -278,11 +278,11 @@ async function searchUnlinkedQboVendors(
         qv.qbo_id,
         NULL::timestamptz AS archived_at
       FROM mdata.qbo_vendors qv
-      WHERE qv.operating_company_id = $1
+      WHERE qv.operating_company_id = $1::uuid
         AND ${archivedFilter}
         AND NOT EXISTS (
           SELECT 1 FROM mdata.vendors v
-          WHERE v.operating_company_id = $1 AND v.qbo_vendor_id = qv.qbo_id
+          WHERE v.operating_company_id = $1::uuid AND v.qbo_vendor_id = qv.qbo_id
         )
         ${search.sql}
       ORDER BY qv.display_name ASC
@@ -345,7 +345,7 @@ export async function registerNamesMasterRoutes(app: FastifyInstance) {
     return { rows, total: merged.length, limit, offset };
   });
 
-  app.get("/api/v1/lists/names/counts", async (req, reply) => {
+  app.get("/api/v1/lists/names/counts", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const parsed = namesCountsQuerySchema.safeParse(req.query ?? {});
@@ -360,17 +360,17 @@ export async function registerNamesMasterRoutes(app: FastifyInstance) {
     const counts = await withCompanyScope(authUser.uuid, operating_company_id, async (client) => {
       const customers = await countActive(
         client,
-        `SELECT count(*)::text AS count FROM mdata.customers WHERE operating_company_id = $1 AND ${archivedCustomers}`,
+        `SELECT count(*)::text AS count FROM mdata.customers WHERE operating_company_id = $1::uuid AND ${archivedCustomers}`,
         [operating_company_id]
       );
       const vendors = await countActive(
         client,
-        `SELECT count(*)::text AS count FROM mdata.vendors WHERE operating_company_id = $1 AND ${archivedVendors}`,
+        `SELECT count(*)::text AS count FROM mdata.vendors WHERE operating_company_id = $1::uuid AND ${archivedVendors}`,
         [operating_company_id]
       );
       const drivers = await countActive(
         client,
-        `SELECT count(*)::text AS count FROM mdata.drivers WHERE operating_company_id = $1 AND ${EXCLUDE_PSEUDO_DRIVERS_SQL} AND ${archivedDrivers}`,
+        `SELECT count(*)::text AS count FROM mdata.drivers WHERE operating_company_id = $1::uuid AND ${EXCLUDE_PSEUDO_DRIVERS_SQL} AND ${archivedDrivers}`,
         [operating_company_id]
       );
       const contacts = await countActive(
@@ -379,7 +379,7 @@ export async function registerNamesMasterRoutes(app: FastifyInstance) {
           SELECT count(*)::text AS count
           FROM mdata.customer_contacts cc
           INNER JOIN mdata.customers c ON c.id = cc.customer_uuid
-          WHERE c.operating_company_id = $1 AND ${archivedContacts}
+          WHERE c.operating_company_id = $1::uuid AND ${archivedContacts}
         `,
         [operating_company_id]
       );
@@ -397,9 +397,9 @@ export async function registerNamesMasterRoutes(app: FastifyInstance) {
         client,
         `
           SELECT count(*)::text AS count FROM mdata.qbo_customers qc
-          WHERE qc.operating_company_id = $1 AND ${include_archived ? "TRUE" : EXCLUDE_ARCHIVED_QBO_CUSTOMERS_SQL}
+          WHERE qc.operating_company_id = $1::uuid AND ${include_archived ? "TRUE" : EXCLUDE_ARCHIVED_QBO_CUSTOMERS_SQL}
             AND NOT EXISTS (
-              SELECT 1 FROM mdata.customers c WHERE c.operating_company_id = $1 AND c.qbo_customer_id = qc.qbo_id
+              SELECT 1 FROM mdata.customers c WHERE c.operating_company_id = $1::uuid AND c.qbo_customer_id = qc.qbo_id
             )
         `,
         [operating_company_id]
@@ -408,9 +408,9 @@ export async function registerNamesMasterRoutes(app: FastifyInstance) {
         client,
         `
           SELECT count(*)::text AS count FROM mdata.qbo_vendors qv
-              WHERE qv.operating_company_id = $1 AND ${include_archived ? "TRUE" : "qv.active = true"}
+              WHERE qv.operating_company_id = $1::uuid AND ${include_archived ? "TRUE" : "qv.active = true"}
             AND NOT EXISTS (
-              SELECT 1 FROM mdata.vendors v WHERE v.operating_company_id = $1 AND v.qbo_vendor_id = qv.qbo_id
+              SELECT 1 FROM mdata.vendors v WHERE v.operating_company_id = $1::uuid AND v.qbo_vendor_id = qv.qbo_id
             )
         `,
         [operating_company_id]

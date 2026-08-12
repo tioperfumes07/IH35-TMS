@@ -71,7 +71,7 @@ export async function registerFuelCardOverageRoutes(app: FastifyInstance) {
 
         const values: unknown[] = [q.operating_company_id];
         const filters: string[] = [
-          "e.operating_company_id = $1",
+          "e.operating_company_id = $1::uuid",
           "e.voided_at IS NULL",
         ];
         if (q.status !== "all") {

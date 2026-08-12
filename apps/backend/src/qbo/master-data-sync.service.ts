@@ -69,7 +69,7 @@ async function resolveDeltaCursorIso(
     `
       SELECT cdc_cursor::text AS cdc_cursor
       FROM mdata.qbo_sync_runs
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
         AND entity_type = $2
         AND sync_type = 'delta'
         AND finished_at IS NOT NULL
@@ -82,7 +82,7 @@ async function resolveDeltaCursorIso(
   const fromRun = lastRun.rows[0]?.cdc_cursor;
   if (fromRun) return new Date(fromRun).toISOString();
   const maxMirror = await client.query<{ max_u: string | null }>(
-    `SELECT max(qbo_updated_at)::text AS max_u FROM ${table} WHERE operating_company_id = $1`,
+    `SELECT max(qbo_updated_at)::text AS max_u FROM ${table} WHERE operating_company_id = $1::uuid`,
     [operatingCompanyId]
   );
   const maxU = maxMirror.rows[0]?.max_u;

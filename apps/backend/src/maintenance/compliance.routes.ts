@@ -40,7 +40,7 @@ export async function registerMaintenanceComplianceRoutes(app: FastifyInstance) 
             created_at::text,
             payload
           FROM audit.audit_events
-          WHERE operating_company_id = $1
+          WHERE operating_company_id = $1::uuid
             AND (
               event_type ILIKE '%425c%'
               OR event_type ILIKE '%inspection%'

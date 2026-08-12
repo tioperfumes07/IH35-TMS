@@ -181,7 +181,7 @@ export async function listMatters(
 ) {
   await setOperatingCompany(client, args.operatingCompanyId);
   const values: unknown[] = [args.operatingCompanyId];
-  const where: string[] = ["m.operating_company_id = $1"];
+  const where: string[] = ["m.operating_company_id = $1::uuid"];
   if (!canManageLegalMatters(args.requesterRole)) {
     values.push(args.requesterUserId);
     where.push(`m.related_user_id = $${values.length}`);
@@ -309,7 +309,7 @@ export async function getMatter(
                                   AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = m.operating_company_id
       LEFT JOIN insurance.claim ic ON ic.id = m.insurance_claim_id
         LEFT JOIN insurance.lawsuit lw ON lw.id = m.insurance_lawsuit_id
-      WHERE m.operating_company_id = $1 AND m.id = $2
+      WHERE m.operating_company_id = $1::uuid AND m.id = $2
       LIMIT 1
     `,
     [args.operatingCompanyId, args.matterId]
@@ -505,7 +505,7 @@ export async function updateMatter(
   if (input.unit_id !== undefined) push("unit_id", input.unit_id);
   if (input.equipment_id !== undefined) push("equipment_id", input.equipment_id);
   if (fields.length === 0) {
-    const cur = await client.query(`SELECT * FROM legal.matters WHERE id = $1 AND operating_company_id = $2`, [
+    const cur = await client.query(`SELECT * FROM legal.matters WHERE id = $1 AND operating_company_id = $2::uuid`, [
       args.matterId,
       args.operatingCompanyId,
     ]);
@@ -514,7 +514,7 @@ export async function updateMatter(
   push("updated_by_user_id", args.actorUserId);
   values.push(args.matterId, args.operatingCompanyId);
   const res = await client.query(
-    `UPDATE legal.matters SET ${fields.join(", ")} WHERE id = $${i} AND operating_company_id = $${i + 1} RETURNING *`,
+    `UPDATE legal.matters SET ${fields.join(", ")} WHERE id = $${i} AND operating_company_id = $${i + 1}::uuid RETURNING *`,
     values
   );
   const row = res.rows[0] ?? null;
@@ -545,7 +545,7 @@ export async function closeMatter(
   const input = closeMatterSchema.parse(args.body);
   await setOperatingCompany(client, args.operatingCompanyId);
   const cur = await client.query(
-    `SELECT * FROM legal.matters WHERE id = $1 AND operating_company_id = $2`,
+    `SELECT * FROM legal.matters WHERE id = $1 AND operating_company_id = $2::uuid`,
     [args.matterId, args.operatingCompanyId]
   );
   const row = cur.rows[0] ?? null;
@@ -560,7 +560,7 @@ export async function closeMatter(
           closed_at = now(),
           closed_by_user_id = $4,
           updated_by_user_id = $4
-      WHERE id = $1 AND operating_company_id = $2
+      WHERE id = $1 AND operating_company_id = $2::uuid
       RETURNING *
     `,
     [args.matterId, args.operatingCompanyId, input.outcome_summary, args.actorUserId]
@@ -734,7 +734,7 @@ export async function completeMatterDeadline(
           completed_by_user_id = $4
       WHERE id = $1
         AND matter_id = $2
-        AND operating_company_id = $3
+        AND operating_company_id = $3::uuid
         AND completed_at IS NULL
       RETURNING *
     `,
@@ -780,7 +780,7 @@ export async function getMatterDocumentForDownload(
         m.related_user_id AS matter_related_user_id
       FROM legal.matter_documents d
       JOIN legal.matters m ON m.id = d.matter_id
-      WHERE d.id = $1 AND d.matter_id = $2 AND d.operating_company_id = $3
+      WHERE d.id = $1 AND d.matter_id = $2 AND d.operating_company_id = $3::uuid
       LIMIT 1
     `,
     [args.documentId, args.matterId, args.operatingCompanyId]
@@ -801,7 +801,7 @@ export async function getMatterDocumentForDownload(
 
 export async function legalMattersReportsSummary(client: QueryableClient, operatingCompanyId: string) {
   await setOperatingCompany(client, operatingCompanyId);
-  const openWhere = `operating_company_id = $1 AND status IN ('open','investigating','litigation')`;
+  const openWhere = `operating_company_id = $1::uuid AND status IN ('open','investigating','litigation')`;
   const counts = await client.query(
     `
       SELECT severity, count(*)::int AS n
@@ -834,7 +834,7 @@ export async function legalMattersReportsSummary(client: QueryableClient, operat
         count(*)::int AS closed_n,
         avg(amount_claimed_against_us)::numeric AS avg_settled_claim
       FROM legal.matters
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
         AND status = 'closed'
         AND amount_claimed_against_us IS NOT NULL
     `,
@@ -844,7 +844,7 @@ export async function legalMattersReportsSummary(client: QueryableClient, operat
     `
       SELECT count(*)::int AS n
       FROM legal.matter_deadlines d
-      WHERE d.operating_company_id = $1
+      WHERE d.operating_company_id = $1::uuid
         AND d.completed_at IS NULL
         AND d.deadline_at <= now() + interval '30 days'
         AND d.deadline_at >= now()
@@ -855,7 +855,7 @@ export async function legalMattersReportsSummary(client: QueryableClient, operat
     `
       SELECT count(*)::int AS n
       FROM legal.matters
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
         AND status IN ('open','investigating','litigation')
         AND statute_of_limitations_at IS NOT NULL
         AND statute_of_limitations_at <= (current_date + interval '90 days')

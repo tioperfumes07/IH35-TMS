@@ -512,7 +512,7 @@ export async function reverseJournalEntryNoFlip(
   const existingRes = await client.query<{ status: JournalEntryStatus; entry_date: string; reversed_by_je_id: string | null }>(
     `SELECT status, entry_date::text AS entry_date, ${hasLinkage ? "reversed_by_je_id::text" : "NULL::text"} AS reversed_by_je_id
        FROM accounting.journal_entries
-      WHERE id = $1 AND operating_company_id = $2
+      WHERE id = $1 AND operating_company_id = $2::uuid
       LIMIT 1 FOR UPDATE`,
     [journalEntryId, operatingCompanyId]
   );
@@ -587,12 +587,12 @@ export async function reverseJournalEntryNoFlip(
   if (hasLinkage) {
     await client.query(
       `UPDATE accounting.journal_entries SET reversed_by_je_id = $2::uuid, updated_at = now()
-         WHERE id = $1 AND operating_company_id = $3`,
+         WHERE id = $1 AND operating_company_id = $3::uuid`,
       [journalEntryId, reversal.reversal_journal_entry_id, operatingCompanyId]
     );
     await client.query(
       `UPDATE accounting.journal_entries SET reverses_je_id = $2::uuid, void_reason = $3, updated_at = now()
-         WHERE id = $1 AND operating_company_id = $4`,
+         WHERE id = $1 AND operating_company_id = $4::uuid`,
       [reversal.reversal_journal_entry_id, journalEntryId, reason, operatingCompanyId]
     );
     linkageWritten = true;
@@ -700,7 +700,7 @@ export async function listJournalEntries(input: {
   return withCurrentUser(input.userId, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
     const values: unknown[] = [input.operating_company_id];
-    const filters: string[] = ["je.operating_company_id = $1"];
+    const filters: string[] = ["je.operating_company_id = $1::uuid"];
     if (input.source) {
       values.push(input.source);
       filters.push(`je.source = $${values.length}`);
@@ -782,7 +782,7 @@ export async function getJournalEntrySourceLinks(userId: string, operatingCompan
   return withCurrentUser(userId, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     const headerRes = await client.query(
-      `SELECT id FROM accounting.journal_entries WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+      `SELECT id FROM accounting.journal_entries WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
       [journalEntryId, operatingCompanyId]
     );
     if (!headerRes.rows[0]) throw new Error("journal_entry_not_found");
@@ -804,7 +804,7 @@ export async function getJournalEntrySourceLinks(userId: string, operatingCompan
         FROM accounting.journal_entry_postings jep
         LEFT JOIN accounting.transaction_source_links tsl ON tsl.journal_entry_posting_id = jep.id
         WHERE jep.journal_entry_uuid = $1
-          AND jep.operating_company_id = $2
+          AND jep.operating_company_id = $2::uuid
         ORDER BY jep.line_sequence ASC, tsl.created_at ASC NULLS LAST
       `,
       [journalEntryId, operatingCompanyId]
@@ -847,7 +847,7 @@ export async function getJournalEntryDetail(userId: string, operatingCompanyId: 
         FROM accounting.journal_entries je
         ${typeJoin}
         WHERE je.id = $1
-          AND je.operating_company_id = $2
+          AND je.operating_company_id = $2::uuid
         LIMIT 1
       `,
       [journalEntryId, operatingCompanyId]
@@ -881,7 +881,7 @@ export async function getJournalEntryDetail(userId: string, operatingCompanyId: 
         LEFT JOIN catalogs.classes c ON c.id = p.class_id
                                     AND c.operating_company_id = p.operating_company_id
         WHERE p.journal_entry_uuid = $1
-          AND p.operating_company_id = $2
+          AND p.operating_company_id = $2::uuid
         ORDER BY p.line_sequence ASC, p.created_at ASC
       `,
       [journalEntryId, operatingCompanyId]

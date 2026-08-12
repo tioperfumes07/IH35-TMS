@@ -56,7 +56,7 @@ export async function listDriverBillsForSettlementPeriod(
             db.rate_per_mile_cents,
             db.notes
           FROM driver_finance.driver_bills db
-          WHERE db.operating_company_id = $1
+          WHERE db.operating_company_id = $1::uuid
             AND db.driver_id = $2
             AND db.created_at::date >= $3::date
             AND db.created_at::date <= $4::date
@@ -95,7 +95,7 @@ export async function listDriverBillsForSettlementPeriod(
            AND regexp_replace(regexp_replace(COALESCE(ab.display_id, ab.bill_number, ''), '^[Bb]-', ''), '^[Ll]-', '')
               = regexp_replace(l.load_number, '^[Ll]-', '')
            AND l.soft_deleted_at IS NULL
-          WHERE ab.operating_company_id = $1
+          WHERE ab.operating_company_id = $1::uuid
             AND COALESCE(l.assigned_primary_driver_id, l.assigned_secondary_driver_id) = $2
             AND ab.created_at::date >= $3::date
             AND ab.created_at::date <= $4::date

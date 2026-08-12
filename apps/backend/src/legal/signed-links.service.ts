@@ -93,7 +93,7 @@ async function loadInstance(
       SELECT id, template_code, template_version, signer_type, signer_entity_id,
              signer_name, filled_variables, void_legal_matter_id
       FROM legal.contract_instances
-      WHERE operating_company_id = $1 AND id = $2
+      WHERE operating_company_id = $1::uuid AND id = $2
       LIMIT 1
     `,
     [operatingCompanyId, contractInstanceId]

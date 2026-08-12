@@ -59,7 +59,7 @@ export async function listOpenEstimates(client: PoolClient, operating_company_id
                              AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = e.operating_company_id
       LEFT JOIN mdata.drivers d ON d.id = u.assigned_driver_id
                                AND d.operating_company_id = e.operating_company_id
-      WHERE e.operating_company_id = $1
+      WHERE e.operating_company_id = $1::uuid
         AND e.estimate_status IN ('open', 'awaiting_approval', 'approved')
       ORDER BY e.estimated_total_cents DESC
     `,
@@ -101,7 +101,7 @@ export async function getFleetRestoreCost(client: PoolClient, operating_company_
       LEFT JOIN maintenance.work_orders w ON w.id = e.trigger_wo_id
       LEFT JOIN mdata.units u ON u.id = e.unit_id
                              AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = e.operating_company_id
-      WHERE e.operating_company_id = $1
+      WHERE e.operating_company_id = $1::uuid
         AND e.estimate_status IN ('open', 'awaiting_approval', 'approved')
     `,
     [operating_company_id]
@@ -130,7 +130,7 @@ export async function getPerUnitBreakdown(client: PoolClient, operating_company_
       FROM maintenance.severe_repair_estimates e
       LEFT JOIN mdata.units u ON u.id = e.unit_id
                              AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = e.operating_company_id
-      WHERE e.operating_company_id = $1
+      WHERE e.operating_company_id = $1::uuid
         AND e.estimate_status IN ('open', 'awaiting_approval', 'approved')
       GROUP BY e.unit_id, u.unit_number
       ORDER BY total_cost_cents DESC
@@ -159,7 +159,7 @@ export async function getRollupTotal(client: PoolClient, operating_company_id: s
       FROM maintenance.severe_repair_estimates e
       LEFT JOIN mdata.units u ON u.id = e.unit_id
                              AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = e.operating_company_id
-      WHERE e.operating_company_id = $1
+      WHERE e.operating_company_id = $1::uuid
         AND e.estimate_status IN ('open', 'awaiting_approval', 'approved')
     `,
     [operating_company_id]
@@ -236,7 +236,7 @@ export async function manualReturnUnitToService(
         SELECT COUNT(*)::int AS ct
         FROM maintenance.severe_repair_estimates
         WHERE unit_id = $1
-          AND operating_company_id = $2
+          AND operating_company_id = $2::uuid
           AND estimate_status IN ('open', 'awaiting_approval', 'approved')
       `,
       [input.unit_id, input.operating_company_id]
@@ -307,7 +307,7 @@ export async function refreshEstimate(userId: string, estimate_id: string, opera
           JOIN maintenance.work_orders w ON w.id = e.trigger_wo_id
           LEFT JOIN maintenance.work_order_lines wl ON wl.work_order_uuid = w.id
           WHERE e.id = $1
-            AND e.operating_company_id = $2
+            AND e.operating_company_id = $2::uuid
           GROUP BY e.id
         )
         UPDATE maintenance.severe_repair_estimates e

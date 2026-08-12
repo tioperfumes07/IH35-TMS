@@ -52,7 +52,7 @@ export function createCatalogRoutes(app: FastifyInstance, config: CatalogFactory
 
     const payload = await withCompanyScope(authUser.uuid, q.operating_company_id, async (client) => {
       const values: unknown[] = [q.operating_company_id];
-      const where: string[] = ["t.operating_company_id = $1"];
+      const where: string[] = ["t.operating_company_id = $1::uuid"];
       if (q.is_active === "true") where.push("t.is_active = true");
       if (q.is_active === "false") where.push("t.is_active = false");
       if (q.search) {
@@ -118,7 +118,7 @@ export function createCatalogRoutes(app: FastifyInstance, config: CatalogFactory
             updated_at
           FROM catalogs.${config.tableName}
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
           LIMIT 1
         `,
         [parsedParams.data.id, parsedQuery.data.operating_company_id]
@@ -145,7 +145,7 @@ export function createCatalogRoutes(app: FastifyInstance, config: CatalogFactory
         `
           SELECT id
           FROM catalogs.${config.tableName}
-          WHERE operating_company_id = $1
+          WHERE operating_company_id = $1::uuid
             AND code = $2
           LIMIT 1
         `,
@@ -213,7 +213,7 @@ export function createCatalogRoutes(app: FastifyInstance, config: CatalogFactory
           `
             SELECT id
             FROM catalogs.${config.tableName}
-            WHERE operating_company_id = $1
+            WHERE operating_company_id = $1::uuid
               AND code = $2
               AND id <> $3
             LIMIT 1
@@ -243,7 +243,7 @@ export function createCatalogRoutes(app: FastifyInstance, config: CatalogFactory
           UPDATE catalogs.${config.tableName}
           SET ${fields.join(", ")}
           WHERE id = $${values.length - 1}
-            AND operating_company_id = $${values.length}
+            AND operating_company_id = $${values.length}::uuid
           RETURNING
             id,
             operating_company_id,
@@ -291,7 +291,7 @@ export function createCatalogRoutes(app: FastifyInstance, config: CatalogFactory
           SET is_active = false,
               updated_at = now()
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
           RETURNING id, code
         `,
         [parsedParams.data.id, parsedQuery.data.operating_company_id]

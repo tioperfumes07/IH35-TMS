@@ -544,7 +544,7 @@ export async function registerBillsRoutes(app: FastifyInstance) {
     return detail;
   });
 
-  app.post("/api/v1/accounting/bills/:id/allocate", async (req, reply) => {
+  app.post("/api/v1/accounting/bills/:id/allocate", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canAccessAccounting(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
@@ -563,7 +563,7 @@ export async function registerBillsRoutes(app: FastifyInstance) {
           SELECT id, amount_cents
           FROM accounting.bills
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
           LIMIT 1
         `,
         [params.data.id, query.data.operating_company_id]
@@ -645,7 +645,7 @@ export async function registerBillsRoutes(app: FastifyInstance) {
     return { rows: billAllocation.rows };
   });
 
-  app.get("/api/v1/assets/:id/allocated-costs", async (req, reply) => {
+  app.get("/api/v1/assets/:id/allocated-costs", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canAccessAccounting(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
@@ -658,7 +658,7 @@ export async function registerBillsRoutes(app: FastifyInstance) {
     await assertCompanyMembership(String(user.uuid), query.data.operating_company_id);
     const payload = await withCompanyScope(String(user.uuid), query.data.operating_company_id, async (client) => {
       const values: unknown[] = [query.data.operating_company_id, params.data.id];
-      const where = ["a.tenant_id = $1", "a.asset_id = $2", "b.operating_company_id = $1", "a.superseded_at IS NULL"];
+      const where = ["a.tenant_id = $1", "a.asset_id = $2", "b.operating_company_id = $1::uuid", "a.superseded_at IS NULL"];
       if (query.data.from) {
         values.push(query.data.from);
         where.push(`b.bill_date >= $${values.length}::date`);

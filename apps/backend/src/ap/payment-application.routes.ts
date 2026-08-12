@@ -56,7 +56,7 @@ async function updateBankBalance(
       SET current_balance_cents = current_balance_cents + $3,
           updated_at = now()
       WHERE id = $1
-        AND operating_company_id = $2
+        AND operating_company_id = $2::uuid
     `,
     [bankAccountId, operatingCompanyId, deltaCents]
   );
@@ -95,7 +95,7 @@ export async function registerApPaymentApplicationRoutes(app: FastifyInstance) {
       const result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
         if (body.data.bank_account_id) {
           const acctProbe = await client.query(
-            `SELECT id FROM banking.bank_accounts WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+            `SELECT id FROM banking.bank_accounts WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
             [body.data.bank_account_id, query.data.operating_company_id]
           );
           if (!acctProbe.rows[0]) return { code: 400 as const, error: "bank_account_not_found_for_payment" as const };
@@ -119,7 +119,7 @@ export async function registerApPaymentApplicationRoutes(app: FastifyInstance) {
               SELECT *
               FROM accounting.bills
               WHERE id = $1
-                AND operating_company_id = $2
+                AND operating_company_id = $2::uuid
               LIMIT 1
               FOR UPDATE
             `,

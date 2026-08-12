@@ -90,7 +90,7 @@ const LANE_COMPUTE_SQL = `
     FROM mdata.loads l
     JOIN pickup p ON p.load_id = l.id
     JOIN delivery d ON d.load_id = l.id
-    WHERE l.operating_company_id = $1
+    WHERE l.operating_company_id = $1::uuid
       AND l.soft_deleted_at IS NULL
       AND l.created_at::date BETWEEN $2::date AND $3::date
       AND p.origin_city IS NOT NULL
@@ -125,7 +125,7 @@ const LANE_COMPUTE_SQL = `
       COALESCE(SUM(db.gross_amount_cents), 0)::bigint AS driver_pay_cents
     FROM driver_finance.driver_bills db
     JOIN load_scope ls ON ls.id = db.load_id
-    WHERE db.operating_company_id = $1
+    WHERE db.operating_company_id = $1::uuid
     GROUP BY ls.origin_city, ls.origin_state, ls.destination_city, ls.destination_state
   ),
   maint AS (
@@ -140,7 +140,7 @@ const LANE_COMPUTE_SQL = `
       )::bigint AS maintenance_cents
     FROM maintenance.work_orders wo
     JOIN load_scope ls ON ls.id = wo.load_id
-    WHERE wo.operating_company_id = $1
+    WHERE wo.operating_company_id = $1::uuid
     GROUP BY ls.origin_city, ls.origin_state, ls.destination_city, ls.destination_state
   ),
   fuel AS (
@@ -152,7 +152,7 @@ const LANE_COMPUTE_SQL = `
       COALESCE(SUM(ROUND(ft.total_cost::numeric * 100)), 0)::bigint AS fuel_cents
     FROM fuel.fuel_transactions ft
     JOIN load_scope ls ON ls.id = ft.load_id
-    WHERE ft.operating_company_id = $1
+    WHERE ft.operating_company_id = $1::uuid
     GROUP BY ls.origin_city, ls.origin_state, ls.destination_city, ls.destination_state
   )
   SELECT
@@ -472,7 +472,7 @@ export async function getLaneLoadDetails(
         FROM mdata.loads l
         JOIN pickup p ON p.load_id = l.id
         JOIN delivery d ON d.load_id = l.id
-        WHERE l.operating_company_id = $1
+        WHERE l.operating_company_id = $1::uuid
           AND l.soft_deleted_at IS NULL
           AND l.created_at::date BETWEEN $2::date AND $3::date
           AND LOWER(p.origin_city) = LOWER($4)

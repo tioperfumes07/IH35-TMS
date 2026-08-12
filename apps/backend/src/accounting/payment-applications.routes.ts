@@ -69,13 +69,13 @@ export async function registerPaymentApplicationsRoutes(app: FastifyInstance) {
       // audit trail could record another entity's unapplied/open balance as this application's outcome.
       // An audit row that is wrong is worse than one that is missing.
       const paymentAfterRes = await client.query(
-        `SELECT amount_unapplied_cents FROM accounting.payments WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+        `SELECT amount_unapplied_cents FROM accounting.payments WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
         [params.data.paymentId, query.data.operating_company_id]
       );
       const invoiceAfterRes =
         targetKind === "invoice"
           ? await client.query(
-              `SELECT amount_open_cents, status FROM accounting.invoices WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+              `SELECT amount_open_cents, status FROM accounting.invoices WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
               [targetId, query.data.operating_company_id]
             )
           : { rows: [{ amount_open_cents: 0, status: "n/a" }] };
@@ -134,7 +134,7 @@ export async function registerPaymentApplicationsRoutes(app: FastifyInstance) {
     return reply.code(result.code).send(result.data);
   });
 
-  app.delete("/api/v1/accounting/payments/:paymentId/applications/:id", async (req, reply) => {
+  app.delete("/api/v1/accounting/payments/:paymentId/applications/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
 
@@ -149,7 +149,7 @@ export async function registerPaymentApplicationsRoutes(app: FastifyInstance) {
           SELECT id, voided_at
           FROM accounting.payments
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
           LIMIT 1
         `,
         [params.data.paymentId, query.data.operating_company_id]

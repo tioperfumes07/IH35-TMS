@@ -113,7 +113,7 @@ export async function registerPaymentTermsRoutes(app: FastifyInstance) {
 
     const payment_terms = await withEntityScope(authUser.uuid, opco, async (client) => {
       const values: unknown[] = [opco];
-      const filters: string[] = ["operating_company_id = $1"];
+      const filters: string[] = ["operating_company_id = $1::uuid"];
       if (status === "active") filters.push("deactivated_at IS NULL");
       if (status === "inactive") filters.push("deactivated_at IS NOT NULL");
       if (search) {
@@ -195,7 +195,7 @@ export async function registerPaymentTermsRoutes(app: FastifyInstance) {
     }
   });
 
-  app.get("/api/v1/catalogs/payment-terms/:id", async (req, reply) => {
+  app.get("/api/v1/catalogs/payment-terms/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
@@ -208,7 +208,7 @@ export async function registerPaymentTermsRoutes(app: FastifyInstance) {
         `
           SELECT ${SELECT_COLS}
           FROM catalogs.payment_terms
-          WHERE id = $1 AND operating_company_id = $2
+          WHERE id = $1 AND operating_company_id = $2::uuid
           LIMIT 1
         `,
         [parsedParams.data.id, parsedQuery.data.operating_company_id]
@@ -219,7 +219,7 @@ export async function registerPaymentTermsRoutes(app: FastifyInstance) {
     return row;
   });
 
-  app.patch("/api/v1/catalogs/payment-terms/:id", async (req, reply) => {
+  app.patch("/api/v1/catalogs/payment-terms/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -257,7 +257,7 @@ export async function registerPaymentTermsRoutes(app: FastifyInstance) {
           `
             SELECT ${SELECT_COLS}
             FROM catalogs.payment_terms
-            WHERE id = $1 AND operating_company_id = $2
+            WHERE id = $1 AND operating_company_id = $2::uuid
             LIMIT 1
           `,
           [parsedParams.data.id, opco]
@@ -269,7 +269,7 @@ export async function registerPaymentTermsRoutes(app: FastifyInstance) {
           `
             UPDATE catalogs.payment_terms
             SET ${setParts.join(", ")}
-            WHERE id = $${idIdx} AND operating_company_id = $${opcoIdx}
+            WHERE id = $${idIdx} AND operating_company_id = $${opcoIdx}::uuid
             RETURNING ${SELECT_COLS}
           `,
           values
@@ -299,7 +299,7 @@ export async function registerPaymentTermsRoutes(app: FastifyInstance) {
     }
   });
 
-  app.post("/api/v1/catalogs/payment-terms/:id/deactivate", async (req, reply) => {
+  app.post("/api/v1/catalogs/payment-terms/:id/deactivate", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -314,7 +314,7 @@ export async function registerPaymentTermsRoutes(app: FastifyInstance) {
         `
           SELECT id, deactivated_at
           FROM catalogs.payment_terms
-          WHERE id = $1 AND operating_company_id = $2
+          WHERE id = $1 AND operating_company_id = $2::uuid
           LIMIT 1
         `,
         [parsedParams.data.id, opco]
@@ -330,7 +330,7 @@ export async function registerPaymentTermsRoutes(app: FastifyInstance) {
             UPDATE catalogs.payment_terms
             SET deactivated_at = now(), updated_by_user_id = $3
             WHERE id = $1
-              AND operating_company_id = $2
+              AND operating_company_id = $2::uuid
               AND deactivated_at IS NULL
             RETURNING id, deactivated_at
           `,

@@ -63,7 +63,7 @@ export async function registerDriverSettlementSummaryRoutes(app: FastifyInstance
           -- backstop here — an unscoped join could print another entity's driver name on a pay report.
           LEFT JOIN mdata.drivers d ON d.id = s.driver_id
                                    AND d.operating_company_id = s.operating_company_id
-          WHERE s.operating_company_id = $1
+          WHERE s.operating_company_id = $1::uuid
             AND s.status IS DISTINCT FROM 'cancelled'
             AND s.period_start >= $2::date
             AND s.period_end <= $3::date

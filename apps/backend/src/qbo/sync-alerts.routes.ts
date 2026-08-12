@@ -57,7 +57,7 @@ async function appendSyncAlertAcknowledgedAudit(payload: Record<string, unknown>
 }
 
 export async function registerQboSyncAlertsRoutes(app: FastifyInstance) {
-  app.get("/api/v1/qbo/sync/alerts", async (req: FastifyRequest, reply: FastifyReply) => {
+  app.get("/api/v1/qbo/sync/alerts", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!accountingRoles(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
@@ -78,7 +78,7 @@ export async function registerQboSyncAlertsRoutes(app: FastifyInstance) {
 
       const cursor = decodeCursor(parsed.data.cursor);
       const values: unknown[] = [parsed.data.operating_company_id];
-      const where: string[] = [`operating_company_id = $1`];
+      const where: string[] = [`operating_company_id = $1::uuid`];
 
       if (parsed.data.resolved === "false") {
         where.push(`resolved_at IS NULL`);
@@ -117,7 +117,7 @@ export async function registerQboSyncAlertsRoutes(app: FastifyInstance) {
     return payload;
   });
 
-  app.post("/api/v1/qbo/sync/alerts/:alertId/acknowledge", async (req: FastifyRequest, reply: FastifyReply) => {
+  app.post("/api/v1/qbo/sync/alerts/:alertId/acknowledge", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!accountingRoles(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
@@ -136,7 +136,7 @@ export async function registerQboSyncAlertsRoutes(app: FastifyInstance) {
               acknowledged_by_user_id = $3,
               error_payload = COALESCE(error_payload, '{}'::jsonb) || jsonb_build_object('ack_note', $4::text)
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
           RETURNING id
         `,
         [params.data.alertId, body.data.operating_company_id, user.uuid, body.data.note ?? null]
@@ -157,7 +157,7 @@ export async function registerQboSyncAlertsRoutes(app: FastifyInstance) {
     return { ok: true as const, id: updated };
   });
 
-  app.post("/api/v1/qbo/sync/alerts/:alertId/retry-now", async (req: FastifyRequest, reply: FastifyReply) => {
+  app.post("/api/v1/qbo/sync/alerts/:alertId/retry-now", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!ownerAdministrator(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
@@ -177,7 +177,7 @@ export async function registerQboSyncAlertsRoutes(app: FastifyInstance) {
               severity = 'warning',
               error_payload = COALESCE(error_payload, '{}'::jsonb) || jsonb_build_object('manual_retry_at', now())
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
           RETURNING id
         `,
         [params.data.alertId, body.data.operating_company_id]

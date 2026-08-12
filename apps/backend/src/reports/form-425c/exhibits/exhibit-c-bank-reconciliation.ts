@@ -78,7 +78,7 @@ export async function buildExhibitC(
           rs.updated_at DESC
         LIMIT 1
       ) statement ON TRUE
-      WHERE a.operating_company_id = $1
+      WHERE a.operating_company_id = $1::uuid
         AND COALESCE(a.account_type, '') NOT LIKE 'virtual_%'
       ORDER BY a.account_name
     `,

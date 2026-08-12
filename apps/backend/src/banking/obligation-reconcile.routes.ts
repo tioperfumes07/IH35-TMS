@@ -90,7 +90,7 @@ async function loadObligationCandidates(
         `
         SELECT id, load_number, rate_total_cents, created_at::text
         FROM mdata.loads
-        WHERE operating_company_id = $1
+        WHERE operating_company_id = $1::uuid
           AND soft_deleted_at IS NULL
         ORDER BY created_at DESC
         LIMIT 400
@@ -117,7 +117,7 @@ async function loadObligationCandidates(
         `
         SELECT id, net_settlement_cents, created_at::text
         FROM driver_finance.driver_settlements
-        WHERE operating_company_id = $1
+        WHERE operating_company_id = $1::uuid
         ORDER BY created_at DESC
         LIMIT 200
       `,
@@ -143,7 +143,7 @@ async function loadObligationCandidates(
         `
         SELECT id, total_cost, purchased_at::text
         FROM fuel.fuel_transactions
-        WHERE operating_company_id = $1
+        WHERE operating_company_id = $1::uuid
         ORDER BY purchased_at DESC NULLS LAST
         LIMIT 200
       `,
@@ -170,7 +170,7 @@ async function loadObligationCandidates(
         `
         SELECT id, description, total_actual_cost, opened_at::text
         FROM maintenance.work_orders
-        WHERE operating_company_id = $1
+        WHERE operating_company_id = $1::uuid
         ORDER BY opened_at DESC NULLS LAST
         LIMIT 200
       `,
@@ -197,7 +197,7 @@ async function loadObligationCandidates(
         `
         SELECT id, display_id, total_cents, issue_date::text
         FROM accounting.invoices
-        WHERE operating_company_id = $1
+        WHERE operating_company_id = $1::uuid
           AND status NOT IN ('void', 'draft')
         ORDER BY issue_date DESC
         LIMIT 200
@@ -224,7 +224,7 @@ async function loadObligationCandidates(
         `
         SELECT id, bill_number, memo, amount_cents, bill_date::text
         FROM accounting.bills
-        WHERE operating_company_id = $1
+        WHERE operating_company_id = $1::uuid
           AND revoked_at IS NULL
         ORDER BY bill_date DESC NULLS LAST
         LIMIT 200
@@ -261,7 +261,7 @@ function isUnreconciledTxnRow(row: {
 }
 
 export async function registerBankingObligationReconcileRoutes(app: FastifyInstance) {
-  app.get("/api/v1/banking/reconcile/unmatched-transactions", async (req, reply) => {
+  app.get("/api/v1/banking/reconcile/unmatched-transactions", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canReconcile(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -270,7 +270,7 @@ export async function registerBankingObligationReconcileRoutes(app: FastifyInsta
     if (!q.success) return sendValidationError(reply, q.error);
 
     const rows = await withCompanyScope(user.uuid, q.data.operating_company_id, async (client) => {
-      const filters: string[] = ["operating_company_id = $1"];
+      const filters: string[] = ["operating_company_id = $1::uuid"];
       const vals: unknown[] = [q.data.operating_company_id];
       let i = 2;
       if (q.data.bank_account_id) {

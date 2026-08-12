@@ -532,7 +532,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
     const query = parsed.data;
 
     const values: unknown[] = [query.operating_company_id];
-    const filters: string[] = [`l.operating_company_id = $1`, `l.soft_deleted_at IS NULL`];
+    const filters: string[] = [`l.operating_company_id = $1::uuid`, `l.soft_deleted_at IS NULL`];
     if (query.status && query.status.length > 0) {
       const mappedStatuses = query.status.map((status) => toMdataStatus(status));
       values.push(mappedStatuses);
@@ -808,7 +808,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
             LIMIT 1
           ) rc ON true
           WHERE l.id = $1
-            AND l.operating_company_id = $2
+            AND l.operating_company_id = $2::uuid
           LIMIT 1
         `,
         [params.data.id, operatingCompanyId]
@@ -828,7 +828,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
       const chargesRes = await client.query(
         `SELECT charge_code AS code, additional_charge_id, description, amount_cents
            FROM dispatch.load_charge_lines
-          WHERE load_id = $1 AND operating_company_id = $2 AND is_active = true
+          WHERE load_id = $1 AND operating_company_id = $2::uuid AND is_active = true
           ORDER BY sort_order, created_at`,
         [params.data.id, operatingCompanyId]
       );
@@ -866,7 +866,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
     }
   });
 
-  app.get("/api/v1/dispatch/units/:unit_id/dispatch-status", async (req, reply) => {
+  app.get("/api/v1/dispatch/units/:unit_id/dispatch-status", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const params = dispatchUnitIdParamsSchema.safeParse(req.params ?? {});
@@ -881,7 +881,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
             SELECT id, display_id, is_dispatch_blocked, dispatch_block_reason, has_open_pm_due_wo, open_wo_count
             FROM views.units_with_dispatch_status
             WHERE id = $1
-              AND operating_company_id = $2
+              AND operating_company_id = $2::uuid
             LIMIT 1
           `,
           [params.data.unit_id, operatingCompanyId]
@@ -982,7 +982,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
     return payload;
   });
 
-  app.get("/api/v1/dispatch/drivers/:driver_id/drug-status", async (req, reply) => {
+  app.get("/api/v1/dispatch/drivers/:driver_id/drug-status", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const params = dispatchDriverIdParamsSchema.safeParse(req.params ?? {});
@@ -1013,7 +1013,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
         `
           SELECT id::text, result::text, test_type, test_date::text, created_at::text
           FROM safety.drug_test
-          WHERE operating_company_id = $1
+          WHERE operating_company_id = $1::uuid
             AND driver_id = $2
             AND voided_at IS NULL
           ORDER BY test_date DESC, created_at DESC
@@ -1031,7 +1031,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
         `
           SELECT id::text, status::text, selection_period, selected_at::text
           FROM safety.random_pool
-          WHERE operating_company_id = $1
+          WHERE operating_company_id = $1::uuid
             AND driver_id = $2
             AND voided_at IS NULL
           ORDER BY selected_at DESC, created_at DESC
@@ -1048,7 +1048,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
         `
           SELECT id::text, query_status::text, queried_at::text
           FROM safety.clearinghouse_query
-          WHERE operating_company_id = $1
+          WHERE operating_company_id = $1::uuid
             AND driver_id = $2
             AND voided_at IS NULL
           ORDER BY queried_at DESC, created_at DESC
@@ -1119,18 +1119,18 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
                    SELECT SUM(i.total_cents)
                    FROM accounting.invoices i
                    WHERE i.customer_id = $1
-                     AND i.operating_company_id = $2
+                     AND i.operating_company_id = $2::uuid
                      AND i.status NOT IN ('void', 'paid')
                  ), 0)::bigint AS open_invoice_cents,
                  COALESCE((
                    SELECT SUM(l.rate_total_cents)
                    FROM mdata.loads l
                    WHERE l.customer_id = $1
-                     AND l.operating_company_id = $2
+                     AND l.operating_company_id = $2::uuid
                      AND l.status NOT IN ('draft', 'invoiced', 'paid', 'closed', 'cancelled')
                  ), 0)::bigint AS unbilled_load_cents
                FROM mdata.customers c
-               WHERE c.id = $1 AND c.operating_company_id = $2 LIMIT 1`,
+               WHERE c.id = $1 AND c.operating_company_id = $2::uuid LIMIT 1`,
               [body.data.customer_id, body.data.operating_company_id]
             );
             return res.rows[0] ?? null;
@@ -1283,7 +1283,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
               customer_chargeback_reason = $3,
               updated_at = now()
           WHERE id = $1
-            AND operating_company_id = $4
+            AND operating_company_id = $4::uuid
             AND soft_deleted_at IS NULL
           RETURNING id, customer_chargeback_requested, customer_chargeback_reason
         `,
@@ -1343,7 +1343,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
           SELECT status
           FROM mdata.loads
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
             AND soft_deleted_at IS NULL
           LIMIT 1
         `,
@@ -1500,7 +1500,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
           `
             SELECT count(*)::int AS count
             FROM mdata.loads
-            WHERE operating_company_id = $1
+            WHERE operating_company_id = $1::uuid
               AND soft_deleted_at IS NULL
               AND status IN ('dispatched'::mdata.load_status_enum, 'in_transit'::mdata.load_status_enum)
           `,
@@ -1510,7 +1510,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
           `
             SELECT count(*)::int AS count
             FROM mdata.loads
-            WHERE operating_company_id = $1
+            WHERE operating_company_id = $1::uuid
               AND soft_deleted_at IS NULL
               AND status = 'delivered_pending_docs'::mdata.load_status_enum
           `,
@@ -1520,7 +1520,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
           `
             SELECT COALESCE(sum(rate_total_cents), 0)::bigint AS amount
             FROM mdata.loads
-            WHERE operating_company_id = $1
+            WHERE operating_company_id = $1::uuid
               AND date_trunc('week', created_at) = date_trunc('week', now())
               AND soft_deleted_at IS NULL
           `,
@@ -1643,7 +1643,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
     return { units: rows };
   });
 
-  app.get("/api/v1/dispatch/loads/:id/driver-status", async (req, reply) => {
+  app.get("/api/v1/dispatch/loads/:id/driver-status", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const params = dispatchLoadIdParamsSchema.safeParse(req.params ?? {});
@@ -1660,7 +1660,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
             l.latest_eta_prediction
           FROM views.dispatch_load_with_driver_status l
           WHERE l.id = $1
-            AND l.operating_company_id = $2
+            AND l.operating_company_id = $2::uuid
           LIMIT 1
         `,
         [params.data.id, operatingCompanyId]

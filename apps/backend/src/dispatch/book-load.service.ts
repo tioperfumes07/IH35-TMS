@@ -326,7 +326,7 @@ async function collectAssignedDriverIdsForDrugGate(
         SELECT primary_driver_id, secondary_driver_id, is_active
         FROM mdata.driver_teams
         WHERE id = $1
-          AND operating_company_id = $2
+          AND operating_company_id = $2::uuid
         LIMIT 1
       `,
       [input.team_id, input.operating_company_id]
@@ -604,7 +604,7 @@ export async function createDriverBillArtifacts(
         SELECT primary_driver_id, secondary_driver_id, split_method::text, primary_share_pct, co_share_pct, is_active
         FROM mdata.driver_teams
         WHERE id = $1
-          AND operating_company_id = $2
+          AND operating_company_id = $2::uuid
         LIMIT 1
       `,
       [input.team_id, input.operating_company_id]
@@ -1114,7 +1114,7 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
           SELECT id, display_id, full_name, hos_badge_color, is_in_violation, minutes_until_violation
           FROM views.drivers_with_hos_status
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
           LIMIT 1
         `,
         [input.assigned_primary_driver_id, input.operating_company_id]
@@ -1223,7 +1223,7 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
               result::text,
               test_date::text
             FROM safety.drug_test
-            WHERE operating_company_id = $1
+            WHERE operating_company_id = $1::uuid
               AND driver_id = ANY($2::uuid[])
               AND voided_at IS NULL
             ORDER BY driver_id, test_date DESC, created_at DESC

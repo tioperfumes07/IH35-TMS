@@ -17,7 +17,7 @@ export async function listSafetyEvents(
   return withCurrentUser(userId, async (client) => {
     await setScopedCompanyContext(client, userId, input.operating_company_id);
     const values: unknown[] = [input.operating_company_id];
-    const filters = ["operating_company_id = $1"];
+    const filters = ["operating_company_id = $1::uuid"];
     if (input.event_type) {
       values.push(input.event_type);
       filters.push(`event_type = $${values.length}`);
@@ -52,7 +52,7 @@ export async function listSafetyEvents(
       )
       .catch(() => ({ rows: [] as Record<string, unknown>[] }));
 
-    const countFilters = ["operating_company_id = $1"];
+    const countFilters = ["operating_company_id = $1::uuid"];
     if (windowSql) countFilters.push(windowSql);
     const counts = await client
       .query<{ active_count: number; resolved_count: number; total_count: number }>(

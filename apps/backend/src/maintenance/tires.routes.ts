@@ -253,7 +253,7 @@ async function resolveBrandName(
 ) {
   if (!brandId) return fallback;
   const res = await client.query(
-    `SELECT name FROM maintenance.tire_brands WHERE id = $1 AND operating_company_id = $2 AND archived_at IS NULL`,
+    `SELECT name FROM maintenance.tire_brands WHERE id = $1 AND operating_company_id = $2::uuid AND archived_at IS NULL`,
     [brandId, companyId]
   );
   return String(res.rows[0]?.name ?? fallback);
@@ -264,7 +264,7 @@ async function fetchRecordById(
   companyId: string,
   id: string
 ) {
-  const res = await client.query(`${RECORD_SELECT} WHERE tr.id = $1 AND tr.operating_company_id = $2`, [id, companyId]);
+  const res = await client.query(`${RECORD_SELECT} WHERE tr.id = $1 AND tr.operating_company_id = $2::uuid`, [id, companyId]);
   return res.rows[0] ?? null;
 }
 
@@ -279,7 +279,7 @@ export async function registerMaintenanceTiresRoutes(app: FastifyInstance) {
       const res = await client.query(
         `SELECT id::text, name, manufacturer, tread_warranty_32nds, is_active, sort_order
          FROM maintenance.tire_brands
-         WHERE operating_company_id = $1 AND archived_at IS NULL
+         WHERE operating_company_id = $1::uuid AND archived_at IS NULL
          ORDER BY sort_order, name`,
         [parsed.data.operating_company_id]
       );
@@ -323,7 +323,7 @@ export async function registerMaintenanceTiresRoutes(app: FastifyInstance) {
 
     const positions = parsed.data.equipment_id ? TRAILER_POSITIONS : TRACTOR_POSITIONS;
     const payload = await withCompany(user.uuid, parsed.data.operating_company_id, async (client) => {
-      const filters = ["tr.operating_company_id = $1", "tr.status = 'active'"];
+      const filters = ["tr.operating_company_id = $1::uuid", "tr.status = 'active'"];
       const values: unknown[] = [parsed.data.operating_company_id];
       if (parsed.data.unit_id) {
         values.push(parsed.data.unit_id);
@@ -351,7 +351,7 @@ export async function registerMaintenanceTiresRoutes(app: FastifyInstance) {
     if (!parsed.success) return validationError(reply, parsed.error);
 
     const rows = await withCompany(user.uuid, parsed.data.operating_company_id, async (client) => {
-      const filters = ["tr.operating_company_id = $1"];
+      const filters = ["tr.operating_company_id = $1::uuid"];
       const values: unknown[] = [parsed.data.operating_company_id];
       if (!parsed.data.include_archived) filters.push("tr.status = 'active'");
       if (parsed.data.unit_id) {
@@ -459,7 +459,7 @@ export async function registerMaintenanceTiresRoutes(app: FastifyInstance) {
       values.push(params.data.id, body.operating_company_id);
       await client.query(
         `UPDATE maintenance.tire_records SET ${sets.join(", ")}
-         WHERE id = $${values.length - 1} AND operating_company_id = $${values.length}`,
+         WHERE id = $${values.length - 1} AND operating_company_id = $${values.length}::uuid`,
         values
       );
       await appendCrudAudit(client, user.uuid, "maintenance.tire_record.updated", { id: params.data.id });
@@ -483,7 +483,7 @@ export async function registerMaintenanceTiresRoutes(app: FastifyInstance) {
       await client.query(
         `UPDATE maintenance.tire_records
          SET status = 'archived', archived_at = now(), archive_reason = $3, updated_at = now()
-         WHERE id = $1 AND operating_company_id = $2 AND status = 'active'`,
+         WHERE id = $1 AND operating_company_id = $2::uuid AND status = 'active'`,
         [params.data.id, parsed.data.operating_company_id, parsed.data.archive_reason ?? "Archived from tire program"]
       );
       await appendCrudAudit(client, user.uuid, "maintenance.tire_record.archived", { id: params.data.id });
@@ -498,7 +498,7 @@ export async function registerMaintenanceTiresRoutes(app: FastifyInstance) {
     if (!parsed.success) return validationError(reply, parsed.error);
 
     const rows = await withCompany(user.uuid, parsed.data.operating_company_id, async (client) => {
-      const filters = ["te.operating_company_id = $1"];
+      const filters = ["te.operating_company_id = $1::uuid"];
       const values: unknown[] = [parsed.data.operating_company_id];
       if (parsed.data.tire_record_id) {
         values.push(parsed.data.tire_record_id);
@@ -544,7 +544,7 @@ export async function registerMaintenanceTiresRoutes(app: FastifyInstance) {
 
       const occupant = await client.query(
         `${RECORD_SELECT}
-         WHERE tr.operating_company_id = $1 AND tr.status = 'active' AND tr.position_code = $2
+         WHERE tr.operating_company_id = $1::uuid AND tr.status = 'active' AND tr.position_code = $2
            AND (($3::uuid IS NOT NULL AND tr.unit_id = $3) OR ($4::uuid IS NOT NULL AND tr.equipment_id = $4))
          LIMIT 1`,
         [body.operating_company_id, body.to_position_code, source.unit_id ?? null, source.equipment_id ?? null]
@@ -622,7 +622,7 @@ export async function registerMaintenanceTiresRoutes(app: FastifyInstance) {
       await client.query(
         `UPDATE maintenance.tire_records
          SET status = 'archived', archived_at = now(), archive_reason = $3, updated_at = now()
-         WHERE id = $1 AND operating_company_id = $2`,
+         WHERE id = $1 AND operating_company_id = $2::uuid`,
         [body.tire_record_id, body.operating_company_id, "Replaced via tire program"]
       );
 
@@ -695,7 +695,7 @@ export async function registerMaintenanceTiresRoutes(app: FastifyInstance) {
 
       await client.query(
         `UPDATE maintenance.tire_records SET tread_depth_32nds = $1, updated_at = now()
-         WHERE id = $2 AND operating_company_id = $3`,
+         WHERE id = $2 AND operating_company_id = $3::uuid`,
         [body.tread_depth_32nds, body.tire_record_id, body.operating_company_id]
       );
       await client.query(
@@ -729,7 +729,7 @@ export async function registerMaintenanceTiresRoutes(app: FastifyInstance) {
     const rows = await withCompany(user.uuid, parsed.data.operating_company_id, async (client) => {
       const res = await client.query(
         `${RECORD_SELECT}
-         WHERE tr.operating_company_id = $1
+         WHERE tr.operating_company_id = $1::uuid
            AND tr.status = 'active'
            AND tr.tread_depth_32nds <= tr.tread_low_threshold_32nds
          ORDER BY tr.tread_depth_32nds ASC, tr.position_code`,

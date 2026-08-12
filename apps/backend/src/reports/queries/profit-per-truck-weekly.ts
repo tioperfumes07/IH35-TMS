@@ -41,11 +41,11 @@ export async function profitPerTruckWeeklyQuery(context: QueryContext): Promise<
           )::bigint AS wo_cost_cents
         FROM mdata.units u
         LEFT JOIN mdata.loads l
-          ON l.operating_company_id = $1
+          ON l.operating_company_id = $1::uuid
           AND l.assigned_unit_id = u.id
           AND l.soft_deleted_at IS NULL
         LEFT JOIN maintenance.work_orders wo
-          ON wo.operating_company_id = $1
+          ON wo.operating_company_id = $1::uuid
           AND wo.unit_id = u.id
         -- §4: mdata.units has NO operating_company_id — scope via owner_company_id / currently_leased_to_company_id.
         WHERE (u.owner_company_id = $1 OR u.currently_leased_to_company_id = $1)

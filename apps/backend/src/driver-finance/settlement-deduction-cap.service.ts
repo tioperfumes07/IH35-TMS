@@ -242,7 +242,7 @@ export async function applyPendingDeductionsToSettlementWithNetFloor(
     `
       SELECT id, amount_cents::bigint AS amount_cents, reason, deduction_type
       FROM driver_finance.driver_settlement_deductions
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
         AND driver_id = $2
         AND applied_to_settlement_id IS NULL
       -- PAY-FIRST-THEN-ESCROW (owner-locked 2026-07-04): recover advances/debts BEFORE withholding

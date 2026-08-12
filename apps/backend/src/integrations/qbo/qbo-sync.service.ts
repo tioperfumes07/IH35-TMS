@@ -108,7 +108,7 @@ async function pickExpenseAccountId(operatingCompanyId: string) {
       `
         SELECT qbo_entity_id
         FROM qbo_archive.entities_snapshot
-        WHERE operating_company_id = $1
+        WHERE operating_company_id = $1::uuid
           AND qbo_entity_type = 'Account'
           AND COALESCE(raw_snapshot->>'AccountType', '') IN ('Expense', 'Cost of Goods Sold')
         ORDER BY snapshot_taken_at DESC
@@ -127,7 +127,7 @@ async function pickClassId(operatingCompanyId: string, className: string) {
       `
         SELECT qbo_entity_id
         FROM qbo_archive.entities_snapshot
-        WHERE operating_company_id = $1
+        WHERE operating_company_id = $1::uuid
           AND qbo_entity_type = 'Class'
           AND LOWER(COALESCE(raw_snapshot->>'Name','')) = LOWER($2)
         ORDER BY snapshot_taken_at DESC
@@ -167,7 +167,7 @@ async function loadBankTxnContext(operatingCompanyId: string, entityId: string) 
         LEFT JOIN mdata.drivers d ON d.id = l.assigned_primary_driver_id
                                  AND d.operating_company_id = bt.operating_company_id
         WHERE bt.id = $2
-          AND bt.operating_company_id = $1
+          AND bt.operating_company_id = $1::uuid
         LIMIT 1
       `,
       [operatingCompanyId, entityId]
@@ -184,7 +184,7 @@ async function syncTransferPreview(job: QueueRow) {
         SELECT revoked_at
         FROM banking.transfers
         WHERE id = $1
-          AND operating_company_id = $2
+          AND operating_company_id = $2::uuid
         LIMIT 1
       `,
       [job.entity_id, job.operating_company_id]
@@ -198,7 +198,7 @@ async function syncTransferPreview(job: QueueRow) {
           SET qbo_journal_entry_id = NULL,
               updated_at = now()
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
         `,
         [job.entity_id, job.operating_company_id]
       );
@@ -212,7 +212,7 @@ async function syncTransferPreview(job: QueueRow) {
         SET qbo_journal_entry_id = $3,
             updated_at = now()
         WHERE id = $1
-          AND operating_company_id = $2
+          AND operating_company_id = $2::uuid
       `,
       [job.entity_id, job.operating_company_id, qboId]
     );
@@ -342,7 +342,7 @@ async function markJobResult(
     );
     if (nextStatus === "synced" && job.entity_type === "bank_transaction" && patch.qboId) {
       await client.query(
-        `UPDATE banking.bank_transactions SET qbo_id = $2, qbo_synced_at = now(), updated_at = now() WHERE id = $1 AND operating_company_id = $3`,
+        `UPDATE banking.bank_transactions SET qbo_id = $2, qbo_synced_at = now(), updated_at = now() WHERE id = $1 AND operating_company_id = $3::uuid`,
         [job.entity_id, patch.qboId, job.operating_company_id]
       );
     }
@@ -700,7 +700,7 @@ export async function listSyncQueue(params: {
           ON q.entity_type = 'credit_memo'
          AND vc.id = q.entity_id
          AND vc.operating_company_id = q.operating_company_id
-        WHERE q.operating_company_id = $1
+        WHERE q.operating_company_id = $1::uuid
           AND ($2::text IS NULL OR q.sync_status = $2)
         ORDER BY q.created_at DESC
         LIMIT $3 OFFSET $4
@@ -725,7 +725,7 @@ export async function retrySyncQueueItem(queueId: string, actorUserId: string, o
           error_details = NULL,
           updated_at = now()
         WHERE id = $1
-          AND operating_company_id = $2
+          AND operating_company_id = $2::uuid
         RETURNING id
       `,
       [queueId, operatingCompanyId]
@@ -758,7 +758,7 @@ export async function skipSyncQueueItem(
           error_message = $3,
           updated_at = now()
         WHERE id = $1
-          AND operating_company_id = $2
+          AND operating_company_id = $2::uuid
         RETURNING id
       `,
       [queueId, operatingCompanyId, reason]
@@ -791,7 +791,7 @@ export async function dismissOutboundSyncQueueItem(
           error_message = $3,
           updated_at = now()
         WHERE id = $1
-          AND operating_company_id = $2
+          AND operating_company_id = $2::uuid
         RETURNING id
       `,
       [queueId, operatingCompanyId, note.slice(0, 2000)]
@@ -815,7 +815,7 @@ export async function getSyncQueueStats(operatingCompanyId: string) {
       `
         SELECT sync_status, COUNT(*)::text AS count
         FROM integrations.qbo_sync_queue
-        WHERE operating_company_id = $1
+        WHERE operating_company_id = $1::uuid
         GROUP BY sync_status
       `,
       [operatingCompanyId]
@@ -826,7 +826,7 @@ export async function getSyncQueueStats(operatingCompanyId: string) {
           AVG(EXTRACT(EPOCH FROM (synced_at - created_at)) * 1000)::bigint::text AS avg_ms,
           MAX(synced_at)::text AS last_synced_at
         FROM integrations.qbo_sync_queue
-        WHERE operating_company_id = $1
+        WHERE operating_company_id = $1::uuid
           AND sync_status = 'synced'
       `,
       [operatingCompanyId]

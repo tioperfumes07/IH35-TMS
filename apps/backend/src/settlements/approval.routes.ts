@@ -244,7 +244,7 @@ export async function registerSettlementApprovalRoutes(app: FastifyInstance) {
           q.created_at
         FROM driver_finance.trip_link_queue q
         LEFT JOIN mdata.units u ON u.id = q.unit_id
-        WHERE q.operating_company_id = $1 AND q.status != 'linked'
+        WHERE q.operating_company_id = $1::uuid AND q.status != 'linked'
         ORDER BY q.created_at DESC
       `, [scopedCompanyId]);
       return { items: result.rows };
@@ -312,7 +312,7 @@ export async function registerSettlementApprovalRoutes(app: FastifyInstance) {
       // Get settlement status — canonical header (driver_finance.driver_settlements), P2.4a repoint.
       const statusResult = await client.query<{ approval_status: string }>(`
         SELECT approval_status FROM driver_finance.driver_settlements
-        WHERE id = $1 AND operating_company_id = $2
+        WHERE id = $1 AND operating_company_id = $2::uuid
       `, [parsed.data.settlement_id, scopedCompanyId]);
       
       if (statusResult.rows.length === 0) {

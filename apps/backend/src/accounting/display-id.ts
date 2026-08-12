@@ -26,7 +26,7 @@ export async function nextInvoiceDisplayId(client: Queryable, operatingCompanyId
         0
       ) + 1 AS next_number
       FROM accounting.invoices
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
         AND issue_date >= make_date($3, 1, 1)
         AND issue_date < make_date($3 + 1, 1, 1)
     `,
@@ -52,7 +52,7 @@ export async function nextPaymentDisplayId(client: Queryable, operatingCompanyId
         0
       ) + 1 AS next_number
       FROM accounting.payments
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
         AND payment_date >= make_date($3, 1, 1)
         AND payment_date < make_date($3 + 1, 1, 1)
     `,
@@ -78,7 +78,7 @@ export async function nextCreditMemoDisplayId(client: Queryable, operatingCompan
         0
       ) + 1 AS next_number
       FROM accounting.credit_memos
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
         AND issue_date >= make_date($3, 1, 1)
         AND issue_date < make_date($3 + 1, 1, 1)
     `,
@@ -117,7 +117,7 @@ export async function nextBillDisplayId(client: Queryable, operatingCompanyId: s
         0
       ) + 1 AS next_number
       FROM accounting.bills
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
         AND bill_date >= make_date($3, 1, 1)
         AND bill_date < make_date($3 + 1, 1, 1)
     `,
@@ -143,7 +143,7 @@ export async function nextVendorCreditDisplayId(client: Queryable, operatingComp
         0
       ) + 1 AS next_number
       FROM accounting.vendor_credits
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
         AND issue_date >= make_date($3, 1, 1)
         AND issue_date < make_date($3 + 1, 1, 1)
     `,
@@ -169,7 +169,7 @@ export async function nextFactoringDisplayId(client: Queryable, operatingCompany
         0
       ) + 1 AS next_number
       FROM accounting.factoring_advances
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
         AND submitted_at >= make_date($3, 1, 1)
         AND submitted_at < make_date($3 + 1, 1, 1)
     `,

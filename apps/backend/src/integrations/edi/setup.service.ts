@@ -81,7 +81,7 @@ export async function listPartners(client: DbClient, operatingCompanyId: string)
         is_active,
         created_at::text
       FROM integrations.edi_partners
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
         AND is_active = true
       ORDER BY partner_name ASC
     `,
@@ -111,7 +111,7 @@ export async function getPartnerByUuid(
         is_active,
         created_at::text
       FROM integrations.edi_partners
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
         AND uuid = $2
       LIMIT 1
     `,

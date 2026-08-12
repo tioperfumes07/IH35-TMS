@@ -21,7 +21,7 @@ async function fetchLoadForUpdate(client: PoolClient, loadId: string, operatingC
              COALESCE((quicksave_pending_fields->>'hazmat')::boolean, false) AS is_hazmat
       FROM mdata.loads
       WHERE id = $1
-        AND operating_company_id = $2
+        AND operating_company_id = $2::uuid
         AND soft_deleted_at IS NULL
       FOR UPDATE
     `,

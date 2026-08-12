@@ -124,7 +124,7 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
     const payload = await withCompany(user.uuid, q.operating_company_id, async (client) => {
       if (!(await hasSettlementSchema(client))) return { rows: [], total: 0 };
       const values: unknown[] = [q.operating_company_id];
-      const where = ["s.operating_company_id = $1"];
+      const where = ["s.operating_company_id = $1::uuid"];
       if (q.status) {
         values.push(q.status);
         where.push(`s.status = $${values.length}`);
@@ -221,7 +221,7 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
     const payload = await withCompany(user.uuid, query.data.operating_company_id, async (client) => {
       if (!(await hasSettlementSchema(client))) return { rows: [], total: 0 };
       const values: unknown[] = [query.data.operating_company_id, params.data.id];
-      const where = ["s.operating_company_id = $1", "s.driver_id = $2::uuid"];
+      const where = ["s.operating_company_id = $1::uuid", "s.driver_id = $2::uuid"];
       if (query.data.status) {
         values.push(query.data.status);
         where.push(`s.status = $${values.length}`);
@@ -313,7 +313,7 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
             s.payment_method
           FROM views.driver_settlement_with_debt v
           JOIN driver_finance.driver_settlements s ON s.id = v.id
-          WHERE v.id = $1 AND s.operating_company_id = $2
+          WHERE v.id = $1 AND s.operating_company_id = $2::uuid
           LIMIT 1
         `,
         [params.data.id, companyId]
@@ -510,7 +510,7 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
     const result = await withCompany(user.uuid, companyId, async (client) => {
       if (!(await hasSettlementSchema(client))) return { unavailable: true as const };
       const currentRes = await client.query(
-        `SELECT id, acknowledged_at, acknowledged_by_user_id, updated_at FROM driver_finance.driver_settlements WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+        `SELECT id, acknowledged_at, acknowledged_by_user_id, updated_at FROM driver_finance.driver_settlements WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
         [params.data.id, companyId]
       );
       const current = currentRes.rows[0];
@@ -560,7 +560,7 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
     const result = await withCompany(user.uuid, companyId, async (client) => {
       if (!(await hasSettlementSchema(client))) return { unavailable: true as const };
       const currentRes = await client.query(
-        `SELECT s.*, v.has_pending_acks FROM driver_finance.driver_settlements s JOIN views.driver_settlement_with_debt v ON v.id = s.id WHERE s.id = $1 AND s.operating_company_id = $2 LIMIT 1`,
+        `SELECT s.*, v.has_pending_acks FROM driver_finance.driver_settlements s JOIN views.driver_settlement_with_debt v ON v.id = s.id WHERE s.id = $1 AND s.operating_company_id = $2::uuid LIMIT 1`,
         [params.data.id, companyId]
       );
       const current = currentRes.rows[0];

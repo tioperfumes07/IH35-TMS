@@ -122,7 +122,7 @@ async function loadBankAccountsByIds(ids: string[], operatingCompanyId: string) 
           is_active,
           last_synced_at
         FROM banking.bank_accounts
-        WHERE operating_company_id = $1
+        WHERE operating_company_id = $1::uuid
           AND id = ANY($2::uuid[])
       `,
       [operatingCompanyId, ids]
@@ -195,7 +195,7 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
             created_at,
             updated_at
           FROM banking.bank_accounts
-          WHERE operating_company_id = $1
+          WHERE operating_company_id = $1::uuid
             AND deactivated_at IS NULL
           ORDER BY institution_name NULLS LAST, account_name NULLS LAST, created_at DESC
         `,
@@ -244,7 +244,7 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
             updated_at
           FROM banking.bank_accounts
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
           LIMIT 1
         `,
         [params.data.id, query.data.operating_company_id]
@@ -278,7 +278,7 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
     const rows = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       const predicates: string[] = [
         "bt.bank_account_id = $1",
-        "bt.operating_company_id = $2",
+        "bt.operating_company_id = $2::uuid",
         "bt.voided_at IS NULL",
         "bt.transaction_date <= (CURRENT_DATE + INTERVAL '1 day')",
       ];
@@ -346,7 +346,7 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
           SELECT id, plaid_item_id
           FROM banking.bank_accounts
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
           LIMIT 1
         `,
         [params.data.id, body.data.operating_company_id]
@@ -360,7 +360,7 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
             SELECT plaid_access_token
             FROM banking.bank_accounts
             WHERE plaid_item_id = $1
-              AND operating_company_id = $2
+              AND operating_company_id = $2::uuid
               AND plaid_access_token IS NOT NULL
             LIMIT 1
           `,
@@ -391,7 +391,7 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
             plaid_access_token = NULL,
             updated_at = now()
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
           RETURNING id
         `,
         [params.data.id, body.data.operating_company_id]
@@ -451,7 +451,7 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
           SELECT plaid_access_token
           FROM banking.bank_accounts
           WHERE plaid_item_id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
             AND plaid_access_token IS NOT NULL
           LIMIT 1
         `,
@@ -481,7 +481,7 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
             plaid_access_token = NULL,
             updated_at = now()
           WHERE plaid_item_id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
           RETURNING id
         `,
         [body.data.plaid_item_id, body.data.operating_company_id]
@@ -531,7 +531,7 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
 
     const rows = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       const predicates: string[] = [
-        "bt.operating_company_id = $1",
+        "bt.operating_company_id = $1::uuid",
         "bt.voided_at IS NULL",
         "bt.transaction_date <= (CURRENT_DATE + INTERVAL '1 day')",
       ];
@@ -658,7 +658,7 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
   // transaction's date; a bank-fed (Plaid/QBO/CSV import) row's date is locked to what the feed reported.
   // Manual-only guard: editable ONLY when source = 'manual' AND plaid_transaction_id IS NULL. Any bank-fed
   // row is rejected with a clear error and never mutated. The change is append-only audit-logged.
-  app.patch("/api/v1/banking/transactions/:id", async (req, reply) => {
+  app.patch("/api/v1/banking/transactions/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!ensureRole(reply, user.role, ownerAdminRoles)) return;
@@ -678,7 +678,7 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
       }>(
         `SELECT id, source, plaid_transaction_id, transaction_date::text AS transaction_date
            FROM banking.bank_transactions
-          WHERE id = $1 AND operating_company_id = $2`,
+          WHERE id = $1 AND operating_company_id = $2::uuid`,
         [params.data.id, body.data.operating_company_id]
       );
       const row = existing.rows[0] ?? null;
@@ -692,7 +692,7 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
         `UPDATE banking.bank_transactions
             SET transaction_date = $3, updated_at = now()
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
             AND source = 'manual'
             AND plaid_transaction_id IS NULL
           RETURNING id, transaction_date::text AS transaction_date`,

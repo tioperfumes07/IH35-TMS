@@ -43,7 +43,7 @@ export async function listAtRiskLoads(userId: string, operatingCompanyId: string
           ORDER BY scheduled_arrival_at ASC
           LIMIT 1
         ) sp ON true
-        WHERE l.operating_company_id = $1
+        WHERE l.operating_company_id = $1::uuid
           AND l.soft_deleted_at IS NULL
           AND l.status = 'in_transit'
           AND (
@@ -95,7 +95,7 @@ export async function listIntransitIssues(userId: string, operatingCompanyId: st
                                AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = i.operating_company_id
         LEFT JOIN mdata.drivers d ON d.id = i.driver_id
                                  AND d.operating_company_id = i.operating_company_id
-        WHERE l.operating_company_id = $1
+        WHERE l.operating_company_id = $1::uuid
           AND l.soft_deleted_at IS NULL
           ${statusFilter}
         ORDER BY i.reported_at DESC
@@ -115,7 +115,7 @@ export async function listAssignmentHistoryGlobal(
   return withCurrentUser(userId, async (client) => {
     await setScopedCompanyContext(client, userId, operatingCompanyId);
     const values: unknown[] = [operatingCompanyId];
-    const clauses: string[] = ["h.operating_company_id = $1"];
+    const clauses: string[] = ["h.operating_company_id = $1::uuid"];
 
     if (filters.driver_id) {
       values.push(filters.driver_id);
@@ -153,7 +153,7 @@ export async function listAssignmentHistoryGlobal(
           pu.unit_number AS previous_unit_number,
           nu.unit_number AS new_unit_number
         FROM dispatch.load_assignment_history h
-        JOIN mdata.loads l ON l.id = h.load_id AND l.operating_company_id = $1
+        JOIN mdata.loads l ON l.id = h.load_id AND l.operating_company_id = $1::uuid
         LEFT JOIN mdata.drivers pd ON pd.id = h.previous_driver_id
                                   AND pd.operating_company_id = l.operating_company_id
         LEFT JOIN mdata.drivers nd ON nd.id = h.new_driver_id
@@ -182,7 +182,7 @@ export async function resolveIntransitIssue(userId: string, operatingCompanyId: 
         FROM mdata.loads l
         WHERE i.id = $2
           AND i.load_id = l.id
-          AND l.operating_company_id = $1
+          AND l.operating_company_id = $1::uuid
           AND i.status IN ('open', 'acknowledged')
         RETURNING i.id, i.status
       `,
@@ -215,7 +215,7 @@ export async function createOfficeIntransitIssue(
   return withCurrentUser(userId, async (client) => {
     await setScopedCompanyContext(client, userId, operatingCompanyId);
     const loadRes = await client.query<{ id: string; assigned_unit_id: string | null; assigned_primary_driver_id: string | null }>(
-      `SELECT id, assigned_unit_id, assigned_primary_driver_id FROM mdata.loads WHERE id = $1 AND operating_company_id = $2 AND soft_deleted_at IS NULL LIMIT 1`,
+      `SELECT id, assigned_unit_id, assigned_primary_driver_id FROM mdata.loads WHERE id = $1 AND operating_company_id = $2::uuid AND soft_deleted_at IS NULL LIMIT 1`,
       [body.load_id, operatingCompanyId]
     );
     const load = loadRes.rows[0];

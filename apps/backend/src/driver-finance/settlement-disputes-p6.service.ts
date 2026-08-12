@@ -233,7 +233,7 @@ export async function listSettlementDisputesForSettlementDriverP6(
       `
         SELECT ${P6_WIRE_SELECT}
         FROM driver_finance.driver_settlement_disputes d
-        WHERE d.operating_company_id = $1
+        WHERE d.operating_company_id = $1::uuid
           AND d.settlement_id = $2
           AND d.driver_id = $3
         ORDER BY d.opened_at DESC
@@ -258,7 +258,7 @@ export async function withdrawSettlementDisputeP6(
             closed_at = now(),
             updated_at = now()
         WHERE id = $2
-          AND operating_company_id = $1
+          AND operating_company_id = $1::uuid
           AND driver_id = $3
           AND status IN ('open')
         RETURNING id
@@ -298,7 +298,7 @@ export async function listSettlementDisputesForSettlementOfficeP6(
         JOIN mdata.drivers dr
           ON dr.id = d.driver_id
          AND dr.operating_company_id = d.operating_company_id
-        WHERE d.operating_company_id = $1
+        WHERE d.operating_company_id = $1::uuid
           AND d.settlement_id = $2
         ORDER BY d.opened_at DESC
       `,
@@ -322,7 +322,7 @@ export async function listSettlementDisputeQueueP6(
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
 
     const values: unknown[] = [input.operating_company_id];
-    const where: string[] = [`d.operating_company_id = $1`];
+    const where: string[] = [`d.operating_company_id = $1::uuid`];
 
     if (input.status && input.status !== "all") {
       values.push(toCanonicalStatus(input.status));
@@ -386,7 +386,7 @@ export async function startSettlementDisputeReviewP6(userId: string, input: { op
             reviewed_at = COALESCE(reviewed_at, now()),
             updated_at = now()
         WHERE id = $2
-          AND operating_company_id = $1
+          AND operating_company_id = $1::uuid
           AND status = 'open'
         RETURNING id
       `,
@@ -438,7 +438,7 @@ export async function decideSettlementDisputeP6(
         SELECT id, settlement_id, driver_id, status, disputed_amount_cents
         FROM driver_finance.driver_settlement_disputes
         WHERE id = $2
-          AND operating_company_id = $1
+          AND operating_company_id = $1::uuid
         FOR UPDATE
       `,
       [input.operating_company_id, input.dispute_id]
@@ -483,7 +483,7 @@ export async function decideSettlementDisputeP6(
             closed_at = now(),
             updated_at = now()
         WHERE id = $2
-          AND operating_company_id = $1
+          AND operating_company_id = $1::uuid
       `,
       [
         input.operating_company_id,
@@ -529,7 +529,7 @@ export async function decideSettlementDisputeP6(
           SELECT d.email, d.first_name, d.last_name
           FROM mdata.drivers d
           WHERE d.id = $1
-            AND d.operating_company_id = $2
+            AND d.operating_company_id = $2::uuid
           LIMIT 1
         `,
         [dispute.driver_id, input.operating_company_id]

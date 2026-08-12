@@ -231,7 +231,7 @@ async function recurringBillRoutes(app: FastifyInstance) {
         SELECT l.*, t.template_name, t.vendor_uuid
         FROM accounting.recurring_bill_generation_log l
         JOIN accounting.recurring_bill_templates t ON t.uuid = l.template_uuid
-        WHERE t.operating_company_id = $1
+        WHERE t.operating_company_id = $1::uuid
       `;
       if (query.data.template_uuid) {
         params.push(query.data.template_uuid);

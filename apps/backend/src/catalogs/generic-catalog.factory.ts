@@ -178,7 +178,7 @@ export function createCatalogRoutes(
           const where: string[] = [];
           if (entityScoped) {
             values.push(q.operating_company_id);
-            where.push(`t.operating_company_id = $${values.length}`);
+            where.push(`t.operating_company_id = $${values.length}::uuid`);
           }
           if (q.is_active === "true") where.push(config.hasDeactivatedAt ? `t.${config.softDeleteColumn} = true AND t.deactivated_at IS NULL` : `t.${config.softDeleteColumn} = true`);
           if (q.is_active === "false") where.push(config.hasDeactivatedAt ? `(t.${config.softDeleteColumn} = false OR t.deactivated_at IS NOT NULL)` : `t.${config.softDeleteColumn} = false`);
@@ -234,7 +234,7 @@ export function createCatalogRoutes(
         const runCreate = async (client: any) => {
           if ("code" in body && body.code) {
             const conflictSql = entityScoped
-              ? `SELECT id FROM catalogs.${config.tableName} WHERE code = $1 AND operating_company_id = $2 LIMIT 1`
+              ? `SELECT id FROM catalogs.${config.tableName} WHERE code = $1 AND operating_company_id = $2::uuid LIMIT 1`
               : `SELECT id FROM catalogs.${config.tableName} WHERE code = $1 LIMIT 1`;
             const conflictVals = entityScoped ? [body.code, operatingCompanyId] : [body.code];
             const conflict = await client.query(conflictSql, conflictVals);

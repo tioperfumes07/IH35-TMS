@@ -66,7 +66,7 @@ function ensureRole(reply: FastifyReply, role: string, allowed: string[]) {
 // The local definition is deleted; the import below is the canonical one.
 
 export async function registerFmcsaRoutes(app: FastifyInstance) {
-  app.post("/api/v1/catalogs/fmcsa/lookup", async (req, reply) => {
+  app.post("/api/v1/catalogs/fmcsa/lookup", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!ensureRole(reply, authUser.role, LOOKUP_ROLES)) return;
@@ -108,7 +108,7 @@ export async function registerFmcsaRoutes(app: FastifyInstance) {
             fetched_at,
             cached_until
           FROM catalogs.fmcsa_lookups
-          WHERE operating_company_id = $1
+          WHERE operating_company_id = $1::uuid
             AND lookup_type = $2
             AND lookup_value = $3
             AND cached_until > now()
@@ -284,7 +284,7 @@ export async function registerFmcsaRoutes(app: FastifyInstance) {
     return reply.send({ customer: updated });
   });
 
-  app.get("/api/v1/catalogs/fmcsa/lookups", async (req, reply) => {
+  app.get("/api/v1/catalogs/fmcsa/lookups", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!ensureRole(reply, authUser.role, LOOKUP_ROLES)) return;
@@ -323,7 +323,7 @@ export async function registerFmcsaRoutes(app: FastifyInstance) {
             created_at,
             created_by_user_id
           FROM catalogs.fmcsa_lookups
-          WHERE operating_company_id = $1
+          WHERE operating_company_id = $1::uuid
           ORDER BY created_at DESC
           LIMIT $2
           OFFSET $3

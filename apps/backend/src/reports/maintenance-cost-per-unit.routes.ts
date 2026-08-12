@@ -149,7 +149,7 @@ export async function registerMaintenanceCostPerUnitRoutes(app: FastifyInstance)
           WITH wo_scope AS (
             SELECT wo.*
             FROM maintenance.work_orders wo
-            WHERE wo.operating_company_id = $1
+            WHERE wo.operating_company_id = $1::uuid
               AND wo.unit_id IS NOT NULL
               AND COALESCE(wo.updated_at, wo.opened_at)::date BETWEEN $2::date AND $3::date
               AND ($4::boolean OR COALESCE(wo.bucket::text, 'in_house') <> 'roadside')
@@ -200,7 +200,7 @@ export async function registerMaintenanceCostPerUnitRoutes(app: FastifyInstance)
           WITH wo_scope AS (
             SELECT wo.*
             FROM maintenance.work_orders wo
-            WHERE wo.operating_company_id = $1
+            WHERE wo.operating_company_id = $1::uuid
               AND wo.unit_id IS NOT NULL
               AND COALESCE(wo.updated_at, wo.opened_at)::date BETWEEN $2::date AND $3::date
               AND ($4::boolean OR COALESCE(wo.bucket::text, 'in_house') <> 'roadside')
@@ -226,7 +226,7 @@ export async function registerMaintenanceCostPerUnitRoutes(app: FastifyInstance)
             l.assigned_unit_id::text AS unit_id,
             COALESCE(SUM(COALESCE(l.miles_practical, l.miles_shortest, 0)), 0)::text AS miles
           FROM mdata.loads l
-          WHERE l.operating_company_id = $1
+          WHERE l.operating_company_id = $1::uuid
             AND l.soft_deleted_at IS NULL
             AND l.assigned_unit_id IS NOT NULL
             AND l.created_at::date BETWEEN $2::date AND $3::date
@@ -241,7 +241,7 @@ export async function registerMaintenanceCostPerUnitRoutes(app: FastifyInstance)
             unit_id::text AS unit_id,
             inspection_date::date::text AS inspection_day
           FROM safety.dot_inspections
-          WHERE operating_company_id = $1
+          WHERE operating_company_id = $1::uuid
             AND unit_id IS NOT NULL
           ORDER BY unit_id, inspection_date DESC NULLS LAST
         `,

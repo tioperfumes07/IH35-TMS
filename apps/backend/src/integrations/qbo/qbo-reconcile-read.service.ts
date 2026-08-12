@@ -237,7 +237,7 @@ export async function listQboReconAlerts(
   const res = await client.query(
     `SELECT uuid, run_at, entity_type, local_count, qbo_count, delta_pct, severity, notified_at
        FROM qbo.reconciliation_alerts
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
       ORDER BY run_at DESC
       LIMIT $2`,
     [opts.operatingCompanyId, opts.limit],

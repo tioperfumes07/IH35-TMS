@@ -61,7 +61,7 @@ export async function findConflictingInvoiceForLoad(
     `
       SELECT i.id
       FROM accounting.invoices i
-      WHERE i.operating_company_id = $1
+      WHERE i.operating_company_id = $1::uuid
         AND i.source_load_id = $2
         AND i.voided_at IS NULL
         ${excludeSql}
@@ -77,7 +77,7 @@ export async function buildInvoiceFromLoad(client: Queryable, input: BuildInvoic
     `
       SELECT i.*
       FROM accounting.invoices i
-      WHERE i.operating_company_id = $1
+      WHERE i.operating_company_id = $1::uuid
         AND i.source_load_id = $2
         AND i.voided_at IS NULL
       ORDER BY i.created_at DESC
@@ -120,7 +120,7 @@ export async function buildInvoiceFromLoad(client: Queryable, input: BuildInvoic
       JOIN mdata.customers c ON c.id = l.customer_id
       LEFT JOIN catalogs.payment_terms pt ON pt.id = c.payment_terms_id
       WHERE l.id = $1
-        AND l.operating_company_id = $2
+        AND l.operating_company_id = $2::uuid
       LIMIT 1
     `,
     [input.loadId, input.operatingCompanyId]
@@ -274,7 +274,7 @@ export async function buildInvoiceFromLoad(client: Queryable, input: BuildInvoic
         FROM dispatch.stop_extra_rates ser
         JOIN mdata.load_stops ls
           ON ls.id = ser.stop_uuid
-        WHERE ser.operating_company_id = $1
+        WHERE ser.operating_company_id = $1::uuid
           AND ser.load_uuid = $2
           AND ser.is_active = true
         ORDER BY ls.sequence_number ASC, ser.created_at ASC

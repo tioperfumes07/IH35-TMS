@@ -105,7 +105,7 @@ export async function listPendingHubCashAdvanceRequests(client: QueryableClient,
       FROM driver_finance.cash_advance_requests r
       JOIN mdata.drivers d ON d.id = r.driver_id
                            AND d.operating_company_id = $1::uuid
-      WHERE r.operating_company_id = $1
+      WHERE r.operating_company_id = $1::uuid
         AND r.status IN ('pending', 'under_review')
       ORDER BY r.is_above_policy ASC, r.submitted_at ASC
       LIMIT 500
@@ -134,7 +134,7 @@ export async function approveHubCashAdvanceRequest(
     `
       SELECT id, driver_id, display_id, status, requested_amount_cents, expires_at::text AS expires_at, is_above_policy
       FROM driver_finance.cash_advance_requests
-      WHERE operating_company_id = $1 AND id = $2
+      WHERE operating_company_id = $1::uuid AND id = $2
       FOR UPDATE
     `,
     [args.operatingCompanyId, args.requestId]
@@ -175,7 +175,7 @@ export async function approveHubCashAdvanceRequest(
         reviewed_by_user_id = $3,
         approval_notes = $4,
         denial_reason = NULL
-      WHERE operating_company_id = $1 AND id = $2
+      WHERE operating_company_id = $1::uuid AND id = $2
       RETURNING *
     `,
     [args.operatingCompanyId, args.requestId, args.actorUserId, notes]
@@ -235,7 +235,7 @@ export async function denyHubCashAdvanceRequest(
     `
       SELECT id, driver_id, display_id, status, requested_amount_cents, expires_at::text AS expires_at, is_above_policy
       FROM driver_finance.cash_advance_requests
-      WHERE operating_company_id = $1 AND id = $2
+      WHERE operating_company_id = $1::uuid AND id = $2
       FOR UPDATE
     `,
     [args.operatingCompanyId, args.requestId]
@@ -256,7 +256,7 @@ export async function denyHubCashAdvanceRequest(
         reviewed_by_user_id = $3,
         denial_reason = $4,
         approval_notes = NULL
-      WHERE operating_company_id = $1 AND id = $2
+      WHERE operating_company_id = $1::uuid AND id = $2
       RETURNING *
     `,
     [args.operatingCompanyId, args.requestId, args.actorUserId, reason]

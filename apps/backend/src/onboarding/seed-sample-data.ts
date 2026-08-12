@@ -43,7 +43,7 @@ async function ensureCustomer(client: Queryable, companyId: string, actorUserId:
     `
       SELECT id::text AS id
       FROM mdata.customers
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
         AND customer_name = 'Sample Customer Inc'
       LIMIT 1
     `,
@@ -87,7 +87,7 @@ async function ensureVendor(client: Queryable, companyId: string, actorUserId: s
     `
       SELECT id::text AS id
       FROM mdata.vendors
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
         AND vendor_name = 'Sample Vendor Co'
       LIMIT 1
     `,
@@ -129,7 +129,7 @@ async function ensureDriver(client: Queryable, companyId: string, actorUserId: s
     `
       SELECT id::text AS id
       FROM mdata.drivers
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
         AND first_name = 'John'
         AND last_name = 'Tester'
         AND phone = '+15557654321'
@@ -236,7 +236,7 @@ async function ensureLoad(
     `
       SELECT id::text AS id
       FROM mdata.loads
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
         AND load_number = 'LD-SAMPLE-001'
       LIMIT 1
     `,

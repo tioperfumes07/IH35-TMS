@@ -46,7 +46,7 @@ export async function registerSafetyDocRoutes(app: FastifyInstance) {
       const result = await (client as Queryable).query(
         `SELECT id, title, doc_type, version, is_active, created_at
          FROM safetydoc.document
-         WHERE operating_company_id = $1 AND is_active = true AND soft_deleted_at IS NULL
+         WHERE operating_company_id = $1::uuid AND is_active = true AND soft_deleted_at IS NULL
          ORDER BY created_at DESC`,
         [operating_company_id]
       );
@@ -93,7 +93,7 @@ export async function registerSafetyDocRoutes(app: FastifyInstance) {
                 d.title, d.body_html, d.doc_type
          FROM safetydoc.assignment a
          JOIN safetydoc.document d ON d.id = a.document_id
-         WHERE a.operating_company_id = $1
+         WHERE a.operating_company_id = $1::uuid
            AND a.driver_id = $2
            AND a.is_active = true
            AND a.status IN ('sent','read')
@@ -118,7 +118,7 @@ export async function registerSafetyDocRoutes(app: FastifyInstance) {
       const { rows } = await (client as Queryable).query<{ id: string }>(
         `UPDATE safetydoc.assignment
          SET status = 'read', read_at = now()
-         WHERE id = $1 AND operating_company_id = $2 AND status = 'sent'
+         WHERE id = $1 AND operating_company_id = $2::uuid AND status = 'sent'
          RETURNING id`,
         [id, operating_company_id]
       );
@@ -147,7 +147,7 @@ export async function registerSafetyDocRoutes(app: FastifyInstance) {
              signature_data = $2,
              signature_ip = $3,
              signature_user_agent = $4
-         WHERE id = $5 AND operating_company_id = $6 AND status IN ('sent','read')
+         WHERE id = $5 AND operating_company_id = $6::uuid AND status IN ('sent','read')
          RETURNING id`,
         [
           user.uuid,
@@ -181,7 +181,7 @@ export async function registerSafetyDocRoutes(app: FastifyInstance) {
                 d.title, d.doc_type, d.version
          FROM safetydoc.assignment a
          JOIN safetydoc.document d ON d.id = a.document_id
-         WHERE a.id = $1 AND a.operating_company_id = $2`,
+         WHERE a.id = $1 AND a.operating_company_id = $2::uuid`,
         [id, operating_company_id]
       );
       if (rows.length === 0) return reply.status(404).send({ error: "Assignment not found" });

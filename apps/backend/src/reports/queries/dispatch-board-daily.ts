@@ -11,7 +11,7 @@ export async function dispatchBoardDailyQuery(context: QueryContext): Promise<Re
       `
         SELECT status::text AS status, count(*)::int AS count
         FROM mdata.loads
-        WHERE operating_company_id = $1
+        WHERE operating_company_id = $1::uuid
           AND soft_deleted_at IS NULL
           AND status NOT IN ('delivered', 'invoiced', 'paid', 'closed', 'cancelled')
         GROUP BY status

@@ -108,7 +108,7 @@ async function getOrCreateRenewalReminder(client: Queryable, companyId: string) 
     `
       SELECT *
       FROM safety.permit_renewal_reminders
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
       LIMIT 1
     `,
     [companyId]
@@ -139,7 +139,7 @@ export async function registerSafetyPermitsRoutes(app: FastifyInstance) {
       const daysBefore = Number((reminder as { days_before_expiry?: number }).days_before_expiry ?? 30);
       const reminderEnabled = Boolean((reminder as { enabled?: boolean }).enabled);
 
-      const filters = ["p.operating_company_id = $1"];
+      const filters = ["p.operating_company_id = $1::uuid"];
       const values: unknown[] = [query.data.operating_company_id];
       if (!query.data.include_archived) {
         filters.push("p.archived_at IS NULL");
@@ -170,7 +170,7 @@ export async function registerSafetyPermitsRoutes(app: FastifyInstance) {
               p.*,
               (p.expiry_date - CURRENT_DATE) AS days_to_expiry
             FROM safety.permits p
-            WHERE p.operating_company_id = $1
+            WHERE p.operating_company_id = $1::uuid
               AND p.archived_at IS NULL
               AND (p.expiry_date - CURRENT_DATE) <= $2
             ORDER BY p.expiry_date ASC
@@ -219,7 +219,7 @@ export async function registerSafetyPermitsRoutes(app: FastifyInstance) {
           SET days_before_expiry = COALESCE($2, days_before_expiry),
               enabled = COALESCE($3, enabled),
               updated_at = now()
-          WHERE operating_company_id = $1
+          WHERE operating_company_id = $1::uuid
           RETURNING *
         `,
         [query.data.operating_company_id, body.data.days_before_expiry ?? null, body.data.enabled ?? null]
@@ -333,7 +333,7 @@ export async function registerSafetyPermitsRoutes(app: FastifyInstance) {
               updated_by_user_id = $11,
               updated_at = now()
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
             AND archived_at IS NULL
           RETURNING *, (expiry_date - CURRENT_DATE) AS days_to_expiry
         `,
@@ -389,7 +389,7 @@ export async function registerSafetyPermitsRoutes(app: FastifyInstance) {
               updated_by_user_id = $3,
               updated_at = now()
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
             AND archived_at IS NULL
           RETURNING *
         `,
@@ -433,7 +433,7 @@ export async function registerSafetyPermitsRoutes(app: FastifyInstance) {
               updated_by_user_id = $3,
               updated_at = now()
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
             AND archived_at IS NOT NULL
           RETURNING *, (expiry_date - CURRENT_DATE) AS days_to_expiry
         `,

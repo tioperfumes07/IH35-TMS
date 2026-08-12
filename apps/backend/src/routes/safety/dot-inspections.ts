@@ -89,7 +89,7 @@ export async function registerSafetyDotInspectionsRoutes(app: FastifyInstance) {
             COUNT(*)::int AS total_inspections,
             COUNT(*) FILTER (WHERE outcome <> 'OOS')::int AS clean_inspections
           FROM safety.dot_inspections
-          WHERE operating_company_id = $1
+          WHERE operating_company_id = $1::uuid
             AND voided_at IS NULL
             AND inspection_date >= (CURRENT_DATE - make_interval(months => $2))
             AND ($3::uuid IS NULL OR driver_id = $3)
@@ -151,7 +151,7 @@ export async function registerSafetyDotInspectionsRoutes(app: FastifyInstance) {
                 OR u.currently_leased_to_company_id = di.operating_company_id)
           LEFT JOIN maintenance.work_orders wo
             ON wo.id = di.auto_spawned_wo_id
-          WHERE di.operating_company_id = $1
+          WHERE di.operating_company_id = $1::uuid
           ${filters.join("\n          ")}
           ORDER BY di.inspection_date DESC, di.created_at DESC
           LIMIT 500
@@ -177,7 +177,7 @@ export async function registerSafetyDotInspectionsRoutes(app: FastifyInstance) {
           SELECT *
           FROM safety.dot_inspections
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
           LIMIT 1
         `,
         [params.data.id, query.data.operating_company_id]
@@ -346,7 +346,7 @@ export async function registerSafetyDotInspectionsRoutes(app: FastifyInstance) {
           UPDATE safety.dot_inspections
           SET inspection_pdf_url = $2
           WHERE id = $1
-            AND operating_company_id = $3
+            AND operating_company_id = $3::uuid
           RETURNING *
         `,
         [params.data.id, pdfUrl, query.data.operating_company_id]
@@ -385,7 +385,7 @@ export async function registerSafetyDotInspectionsRoutes(app: FastifyInstance) {
           UPDATE safety.dot_inspections
           SET voided_at = now(), voided_by = $2, void_reason = $4
           WHERE id = $1
-            AND operating_company_id = $3
+            AND operating_company_id = $3::uuid
             AND voided_at IS NULL
           RETURNING *
         `,

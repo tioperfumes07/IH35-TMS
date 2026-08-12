@@ -45,7 +45,7 @@ export async function registerBankingP7Wave2Routes(app: FastifyInstance) {
         `SELECT priority, description_contains, description_regex, amount_min_cents, amount_max_cents,
                 bank_account_filter_id, then_vendor_id, then_account_id, then_class_id
          FROM accounting.banking_rules
-         WHERE operating_company_id = $1 AND is_active = true`,
+         WHERE operating_company_id = $1::uuid AND is_active = true`,
         [q.operating_company_id]
       );
       const rules = rulesRes.rows as BankingRuleRow[];
@@ -55,7 +55,7 @@ export async function registerBankingP7Wave2Routes(app: FastifyInstance) {
       // docs/accounting/BANK-ACCOUNT-ENTITY-HIDE-DESIGN.md).
       const hideOn = await isBankAccountHideEnabled(client, q.operating_company_id);
       const params: unknown[] = [q.operating_company_id];
-      let where = `bt.operating_company_id = $1 ${bankTransactionHiddenFilterSql(hideOn, "bt")}`;
+      let where = `bt.operating_company_id = $1::uuid ${bankTransactionHiddenFilterSql(hideOn, "bt")}`;
       if (q.state) {
         params.push(q.state);
         where += ` AND bt.review_state = $${params.length}`;
@@ -181,7 +181,7 @@ export async function registerBankingP7Wave2Routes(app: FastifyInstance) {
     if (!parsed.success) return validationError(reply, parsed.error);
 
     const rows = await withCompanyScope(user.uuid, parsed.data.operating_company_id, async (client) => {
-      const res = await client.query(`SELECT * FROM accounting.banking_rules WHERE operating_company_id = $1 ORDER BY priority DESC`, [
+      const res = await client.query(`SELECT * FROM accounting.banking_rules WHERE operating_company_id = $1::uuid ORDER BY priority DESC`, [
         parsed.data.operating_company_id,
       ]);
       return res.rows;
@@ -272,7 +272,7 @@ export async function registerBankingP7Wave2Routes(app: FastifyInstance) {
             priority = COALESCE($3, priority),
             is_active = COALESCE($4, is_active),
             updated_at = now()
-          WHERE id = $1 AND operating_company_id = $2
+          WHERE id = $1 AND operating_company_id = $2::uuid
         `,
         [params.data.id, body.data.operating_company_id, body.data.priority ?? null, body.data.is_active ?? null]
       );
@@ -291,7 +291,7 @@ export async function registerBankingP7Wave2Routes(app: FastifyInstance) {
 
     await withCompanyScope(user.uuid, q.data.operating_company_id, async (client) => {
       // INV-2: void-never-delete — deactivate, never hard-delete banking rule config.
-      await client.query(`UPDATE accounting.banking_rules SET is_active = false, updated_at = now() WHERE id = $1 AND operating_company_id = $2`, [
+      await client.query(`UPDATE accounting.banking_rules SET is_active = false, updated_at = now() WHERE id = $1 AND operating_company_id = $2::uuid`, [
         params.data.id,
         q.data.operating_company_id,
       ]);
@@ -319,7 +319,7 @@ export async function registerBankingP7Wave2Routes(app: FastifyInstance) {
         `SELECT priority, description_contains, description_regex, amount_min_cents, amount_max_cents,
                 bank_account_filter_id, then_vendor_id, then_account_id, then_class_id
          FROM accounting.banking_rules
-         WHERE operating_company_id = $1 AND is_active = true`,
+         WHERE operating_company_id = $1::uuid AND is_active = true`,
         [body.data.operating_company_id]
       );
       const sug = suggestionFromRules(rulesRes.rows as BankingRuleRow[], {
@@ -406,7 +406,7 @@ export async function registerBankingP7Wave2Routes(app: FastifyInstance) {
 
     const rows = await withCompanyScope(user.uuid, q.data.operating_company_id, async (client) => {
       const params: unknown[] = [q.data.operating_company_id];
-      let where = `operating_company_id = $1`;
+      let where = `operating_company_id = $1::uuid`;
       if (q.data.account_id) {
         params.push(q.data.account_id);
         where += ` AND bank_account_id = $${params.length}`;
@@ -425,7 +425,7 @@ export async function registerBankingP7Wave2Routes(app: FastifyInstance) {
     if (!params.success || !q.success) return reply.code(400).send({ error: "validation_error" });
 
     const payload = await withCompanyScope(user.uuid, q.data.operating_company_id, async (client) => {
-      const ses = await client.query(`SELECT * FROM banking.reconciliation_sessions WHERE id = $1 AND operating_company_id = $2`, [
+      const ses = await client.query(`SELECT * FROM banking.reconciliation_sessions WHERE id = $1 AND operating_company_id = $2::uuid`, [
         params.data.id,
         q.data.operating_company_id,
       ]);
@@ -435,7 +435,7 @@ export async function registerBankingP7Wave2Routes(app: FastifyInstance) {
         `
           SELECT *
           FROM banking.bank_transactions
-          WHERE operating_company_id = $1
+          WHERE operating_company_id = $1::uuid
             AND reconciliation_session_id = $2::uuid
           ORDER BY transaction_date DESC
         `,
@@ -457,7 +457,7 @@ export async function registerBankingP7Wave2Routes(app: FastifyInstance) {
 
     await withCompanyScope(user.uuid, body.data.operating_company_id, async (client) => {
       const ses = await client.query(
-        `SELECT variance_cents::text FROM banking.reconciliation_sessions WHERE id = $1 AND operating_company_id = $2`,
+        `SELECT variance_cents::text FROM banking.reconciliation_sessions WHERE id = $1 AND operating_company_id = $2::uuid`,
         [params.data.id, body.data.operating_company_id]
       );
       const variance = Number((ses.rows[0] as { variance_cents?: string } | undefined)?.variance_cents ?? 0);
@@ -472,7 +472,7 @@ export async function registerBankingP7Wave2Routes(app: FastifyInstance) {
               finalized_at = now(),
               reconciled_at = COALESCE(reconciled_at, now()),
               reconciled_by_user_id = $3::uuid
-          WHERE id = $1 AND operating_company_id = $2
+          WHERE id = $1 AND operating_company_id = $2::uuid
         `,
         [params.data.id, body.data.operating_company_id, user.uuid]
       );

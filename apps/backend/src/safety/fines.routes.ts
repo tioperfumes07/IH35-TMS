@@ -98,7 +98,7 @@ function canMutate(role: string) {
 }
 
 export async function registerSafetyFinesRoutes(app: FastifyInstance) {
-  app.get("/api/v1/safety/fines", async (req, reply) => {
+  app.get("/api/v1/safety/fines", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = finesQuerySchema.safeParse(req.query ?? {});
@@ -108,7 +108,7 @@ export async function registerSafetyFinesRoutes(app: FastifyInstance) {
     const rows = await withCompanyScope(user.uuid, q.operating_company_id, async (client) => {
       // SAF-F18: qualify every filter with cf. — the driver-name LEFT JOIN below adds mdata.drivers,
       // which shares operating_company_id / deactivated_at, so unqualified columns would be ambiguous.
-      const filters = ["cf.operating_company_id = $1", "cf.deactivated_at IS NULL"];
+      const filters = ["cf.operating_company_id = $1::uuid", "cf.deactivated_at IS NULL"];
       const values: unknown[] = [q.operating_company_id];
       if (q.status) {
         values.push(q.status);
@@ -165,7 +165,7 @@ export async function registerSafetyFinesRoutes(app: FastifyInstance) {
     return { fines: rows };
   });
 
-  app.get("/api/v1/safety/fines/:id", async (req, reply) => {
+  app.get("/api/v1/safety/fines/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const params = idParamsSchema.safeParse(req.params ?? {});
@@ -182,7 +182,7 @@ export async function registerSafetyFinesRoutes(app: FastifyInstance) {
          LEFT JOIN mdata.drivers d
            ON d.id = cf.subject_driver_id
           AND d.operating_company_id = cf.operating_company_id
-         WHERE cf.id = $1 AND cf.operating_company_id = $2 LIMIT 1`,
+         WHERE cf.id = $1 AND cf.operating_company_id = $2::uuid LIMIT 1`,
         [params.data.id, query.data.operating_company_id]
       );
       return res.rows[0] ?? null;
@@ -287,7 +287,7 @@ export async function registerSafetyFinesRoutes(app: FastifyInstance) {
           UPDATE safety.civil_fines
           SET ${sets.join(", ")}
           WHERE id = $${values.length - 1}
-            AND operating_company_id = $${values.length}
+            AND operating_company_id = $${values.length}::uuid
           RETURNING *
         `,
         values
@@ -333,7 +333,7 @@ export async function registerSafetyFinesRoutes(app: FastifyInstance) {
             SELECT *
             FROM safety.civil_fines
             WHERE id = $1
-              AND operating_company_id = $2
+              AND operating_company_id = $2::uuid
             LIMIT 1
             FOR UPDATE
           `,
@@ -478,7 +478,7 @@ export async function registerSafetyFinesRoutes(app: FastifyInstance) {
     return result;
   });
 
-  app.post("/api/v1/safety/fines/:id/contest", async (req, reply) => {
+  app.post("/api/v1/safety/fines/:id/contest", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canMutate(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -497,7 +497,7 @@ export async function registerSafetyFinesRoutes(app: FastifyInstance) {
               notes = COALESCE($3, notes),
               updated_by_user_id = $4
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
             AND voided_at IS NULL
           RETURNING *
         `,
@@ -509,7 +509,7 @@ export async function registerSafetyFinesRoutes(app: FastifyInstance) {
     return updated;
   });
 
-  app.post("/api/v1/safety/fines/:id/dismiss", async (req, reply) => {
+  app.post("/api/v1/safety/fines/:id/dismiss", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canMutate(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -528,7 +528,7 @@ export async function registerSafetyFinesRoutes(app: FastifyInstance) {
               notes = COALESCE($3, notes),
               updated_by_user_id = $4
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
             AND voided_at IS NULL
           RETURNING *
         `,
@@ -540,7 +540,7 @@ export async function registerSafetyFinesRoutes(app: FastifyInstance) {
     return updated;
   });
 
-  app.post("/api/v1/safety/fines/:id/reduce", async (req, reply) => {
+  app.post("/api/v1/safety/fines/:id/reduce", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canMutate(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -571,7 +571,7 @@ export async function registerSafetyFinesRoutes(app: FastifyInstance) {
         `
           SELECT id::text, voided_at, converted_to_liability_id::text
           FROM safety.civil_fines
-          WHERE id = $1 AND operating_company_id = $2
+          WHERE id = $1 AND operating_company_id = $2::uuid
           LIMIT 1
         `,
         [params.data.id, query.data.operating_company_id]
@@ -591,7 +591,7 @@ export async function registerSafetyFinesRoutes(app: FastifyInstance) {
               notes = COALESCE(notes || E'\n', '') || $4,
               updated_by_user_id = $5
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
             AND voided_at IS NULL
             AND converted_to_liability_id IS NULL
           RETURNING *
@@ -631,7 +631,7 @@ export async function registerSafetyFinesRoutes(app: FastifyInstance) {
     return outcome.row;
   });
 
-  app.post("/api/v1/safety/fines/:id/link-payment", async (req, reply) => {
+  app.post("/api/v1/safety/fines/:id/link-payment", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canMutate(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -652,7 +652,7 @@ export async function registerSafetyFinesRoutes(app: FastifyInstance) {
               status = 'paid',
               updated_by_user_id = $6
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
           RETURNING *
         `,
         [

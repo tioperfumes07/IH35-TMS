@@ -39,7 +39,7 @@ export async function notifyDriverWebPush(input: {
       `
         SELECT endpoint, p256dh_key, auth_key
         FROM driver_pwa.push_subscriptions
-        WHERE operating_company_id = $1
+        WHERE operating_company_id = $1::uuid
           AND driver_id = $2
       `,
       [input.operatingCompanyId, input.driverId]
@@ -107,7 +107,7 @@ export async function notifyLoadAssigned(input: {
         SELECT identity_user_id, phone, first_name, last_name
         FROM mdata.drivers
         WHERE id = $1
-          AND operating_company_id = $2
+          AND operating_company_id = $2::uuid
         LIMIT 1
       `,
       [input.driverId, input.operatingCompanyId]

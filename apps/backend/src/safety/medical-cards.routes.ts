@@ -102,7 +102,7 @@ export async function registerSafetyMedicalCardsRoutes(app: FastifyInstance) {
               ELSE (expiry_date - CURRENT_DATE)
             END AS days_to_expiry
           FROM safety.medical_cards
-          WHERE operating_company_id = $1
+          WHERE operating_company_id = $1::uuid
             AND driver_id = $2
             AND voided_at IS NULL
           ORDER BY expiry_date DESC, created_at DESC
@@ -184,7 +184,7 @@ export async function registerSafetyMedicalCardsRoutes(app: FastifyInstance) {
           SELECT *
           FROM safety.medical_cards
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
             AND voided_at IS NULL
           LIMIT 1
         `,
@@ -201,7 +201,7 @@ export async function registerSafetyMedicalCardsRoutes(app: FastifyInstance) {
                 voided_reason = $3,
                 updated_at = now()
             WHERE id = $1
-              AND operating_company_id = $2
+              AND operating_company_id = $2::uuid
               AND voided_at IS NULL
             RETURNING *
           `,
@@ -232,7 +232,7 @@ export async function registerSafetyMedicalCardsRoutes(app: FastifyInstance) {
               notes = COALESCE($6, notes),
               updated_at = now()
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
             AND voided_at IS NULL
           RETURNING *
         `,

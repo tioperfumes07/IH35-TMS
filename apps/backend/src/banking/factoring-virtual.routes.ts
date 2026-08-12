@@ -32,7 +32,7 @@ async function withCompanyScope<T>(
 }
 
 export async function registerBankingFactoringVirtualRoutes(app: FastifyInstance) {
-  app.get("/api/v1/banking/factoring-virtual", async (req, reply) => {
+  app.get("/api/v1/banking/factoring-virtual", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -57,7 +57,7 @@ export async function registerBankingFactoringVirtualRoutes(app: FastifyInstance
           LEFT JOIN mdata.vendors v
             ON v.id = f.factor_vendor_id
            AND v.operating_company_id = f.operating_company_id
-          WHERE f.operating_company_id = $1
+          WHERE f.operating_company_id = $1::uuid
           GROUP BY f.factor_vendor_id, v.vendor_name
           ORDER BY COALESCE(v.vendor_name, 'Factoring')
         `,
@@ -74,7 +74,7 @@ export async function registerBankingFactoringVirtualRoutes(app: FastifyInstance
     return { companies: summary.rows };
   });
 
-  app.get("/api/v1/banking/factoring-virtual/timeline", async (req, reply) => {
+  app.get("/api/v1/banking/factoring-virtual/timeline", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -93,7 +93,7 @@ export async function registerBankingFactoringVirtualRoutes(app: FastifyInstance
               fa.created_at::text AS created_at,
               fa.advanced_at::text AS advanced_at
             FROM accounting.factoring_advances fa
-            WHERE fa.operating_company_id = $1
+            WHERE fa.operating_company_id = $1::uuid
               AND fa.status IS DISTINCT FROM 'voided'
             ORDER BY COALESCE(fa.advanced_at, fa.created_at) DESC NULLS LAST
             LIMIT 25

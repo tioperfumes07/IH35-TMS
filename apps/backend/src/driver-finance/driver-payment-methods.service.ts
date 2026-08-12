@@ -59,7 +59,7 @@ export async function listDriverPaymentMethods(
       `
         SELECT ${SELECT_COLS}
         FROM driver_finance.driver_payment_methods
-        WHERE operating_company_id = $1 AND driver_id = $2
+        WHERE operating_company_id = $1::uuid AND driver_id = $2
           ${opts.includeInactive ? "" : "AND is_active = true"}
         ORDER BY is_default DESC, created_at DESC
       `,
@@ -91,7 +91,7 @@ export async function createDriverPaymentMethod(
       await client.query(
         `UPDATE driver_finance.driver_payment_methods
            SET is_default = false, updated_by_user_id = $3, updated_at = now()
-         WHERE operating_company_id = $1 AND driver_id = $2 AND is_default = true AND is_active = true`,
+         WHERE operating_company_id = $1::uuid AND driver_id = $2 AND is_default = true AND is_active = true`,
         [input.operatingCompanyId, input.driverId, userId]
       );
     }
@@ -146,7 +146,7 @@ export async function setDefaultDriverPaymentMethod(
     const target = await client.query<{ id: string; driver_id: string }>(
       `SELECT id, driver_id::text AS driver_id
          FROM driver_finance.driver_payment_methods
-        WHERE id = $1 AND operating_company_id = $2 AND is_active = true
+        WHERE id = $1 AND operating_company_id = $2::uuid AND is_active = true
         LIMIT 1 FOR UPDATE`,
       [id, operatingCompanyId]
     );
@@ -155,13 +155,13 @@ export async function setDefaultDriverPaymentMethod(
     await client.query(
       `UPDATE driver_finance.driver_payment_methods
          SET is_default = false, updated_by_user_id = $3, updated_at = now()
-       WHERE operating_company_id = $1 AND driver_id = $2 AND is_default = true AND is_active = true`,
+       WHERE operating_company_id = $1::uuid AND driver_id = $2 AND is_default = true AND is_active = true`,
       [operatingCompanyId, found.driver_id, userId]
     );
     const res = await client.query<DriverPaymentMethod>(
       `UPDATE driver_finance.driver_payment_methods
          SET is_default = true, updated_by_user_id = $3, updated_at = now()
-       WHERE id = $1 AND operating_company_id = $2
+       WHERE id = $1 AND operating_company_id = $2::uuid
        RETURNING ${SELECT_COLS}`,
       [id, operatingCompanyId, userId]
     );
@@ -198,7 +198,7 @@ export async function voidDriverPaymentMethod(
       `UPDATE driver_finance.driver_payment_methods
          SET is_active = false, is_default = false, voided_at = now(), voided_by_user_id = $3,
              void_reason = $4, updated_by_user_id = $3, updated_at = now()
-       WHERE id = $1 AND operating_company_id = $2 AND is_active = true
+       WHERE id = $1 AND operating_company_id = $2::uuid AND is_active = true
        RETURNING ${SELECT_COLS}`,
       [id, operatingCompanyId, userId, reason.trim()]
     );
@@ -243,7 +243,7 @@ export async function resolveDefaultAchToken(
   const res = await client.query<{ account_token: string | null }>(
     `SELECT account_token
        FROM driver_finance.driver_payment_methods
-      WHERE operating_company_id = $1 AND driver_id = $2
+      WHERE operating_company_id = $1::uuid AND driver_id = $2
         AND method = 'ach' AND is_default = true AND is_active = true AND account_token IS NOT NULL
       LIMIT 1`,
     [operatingCompanyId, driverId]

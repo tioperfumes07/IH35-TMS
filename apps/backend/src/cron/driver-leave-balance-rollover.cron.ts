@@ -39,7 +39,7 @@ export async function runDriverLeaveBalanceRolloverTick(targetYear = new Date().
 
       // A company with no policy row cannot allocate — skip it (nothing to roll into).
       const policyRes = await client.query<{ ok: boolean }>(
-        `SELECT true AS ok FROM catalogs.leave_policies WHERE operating_company_id = $1 LIMIT 1`,
+        `SELECT true AS ok FROM catalogs.leave_policies WHERE operating_company_id = $1::uuid LIMIT 1`,
         [company.id]
       );
       if (policyRes.rows.length === 0) continue;

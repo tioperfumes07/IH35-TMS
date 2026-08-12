@@ -105,7 +105,7 @@ export async function computeLoadProfitability(
        l.created_at AS trip_start
      FROM mdata.loads l
      WHERE l.id = $1
-       AND l.operating_company_id = $2
+       AND l.operating_company_id = $2::uuid
        AND l.soft_deleted_at IS NULL
      LIMIT 1`,
     [loadId, operatingCompanyId]
@@ -132,7 +132,7 @@ export async function computeLoadProfitability(
   const payRes = await client.query<{ driver_pay_cents: string }>(
     `SELECT COALESCE(SUM(db.gross_amount_cents), 0)::text AS driver_pay_cents
      FROM driver_finance.driver_bills db
-     WHERE db.load_id = $1 AND db.operating_company_id = $2`,
+     WHERE db.load_id = $1 AND db.operating_company_id = $2::uuid`,
     [loadId, operatingCompanyId]
   );
   const driverPay = num(payRes.rows[0]?.driver_pay_cents);
@@ -141,7 +141,7 @@ export async function computeLoadProfitability(
   const fuelRes = await client.query<{ fuel_cents: string }>(
     `SELECT COALESCE(SUM(ROUND(ft.total_cost::numeric * 100)), 0)::text AS fuel_cents
      FROM fuel.fuel_transactions ft
-     WHERE ft.load_id = $1 AND ft.operating_company_id = $2`,
+     WHERE ft.load_id = $1 AND ft.operating_company_id = $2::uuid`,
     [loadId, operatingCompanyId]
   );
   const fuelCents = num(fuelRes.rows[0]?.fuel_cents);
@@ -150,7 +150,7 @@ export async function computeLoadProfitability(
   const maintRes = await client.query<{ maintenance_cents: string }>(
     `SELECT COALESCE(SUM(ROUND(COALESCE(wo.total_actual_cost, 0)::numeric * 100))::bigint, 0)::text AS maintenance_cents
      FROM maintenance.work_orders wo
-     WHERE wo.load_id = $1 AND wo.operating_company_id = $2`,
+     WHERE wo.load_id = $1 AND wo.operating_company_id = $2::uuid`,
     [loadId, operatingCompanyId]
   );
   const maintCents = num(maintRes.rows[0]?.maintenance_cents);
@@ -199,7 +199,7 @@ export async function computeLoadProfitability(
        FROM accounting.invoices inv
        JOIN accounting.factoring_advances fa ON fa.id = inv.factoring_advance_id
        WHERE inv.source_load_id = $1
-         AND inv.operating_company_id = $2`,
+         AND inv.operating_company_id = $2::uuid`,
       [loadId, operatingCompanyId]
     );
     factoringFeeCents = num(factRes.rows[0]?.fee_cents);
@@ -213,7 +213,7 @@ export async function computeLoadProfitability(
     const accRes = await client.query<{ acc_cents: string }>(
       `SELECT COALESCE(SUM(ac.total_chargeback_cents), 0)::text AS acc_cents
        FROM driver_finance.abandonment_chargebacks ac
-       WHERE ac.load_id = $1 AND ac.operating_company_id = $2`,
+       WHERE ac.load_id = $1 AND ac.operating_company_id = $2::uuid`,
       [loadId, operatingCompanyId]
     );
     accessorialCents = num(accRes.rows[0]?.acc_cents);
@@ -270,7 +270,7 @@ export async function computeTripProfitabilityReport(
       FROM driver_finance.driver_settlements s
       LEFT JOIN mdata.drivers d ON d.id = s.driver_id
                              AND d.operating_company_id = s.operating_company_id
-      WHERE s.operating_company_id = $1
+      WHERE s.operating_company_id = $1::uuid
         AND s.settlement_model = 'load_bookended'
         AND (
           s.trip_closed_at::date BETWEEN $2::date AND $3::date
@@ -291,21 +291,21 @@ export async function computeTripProfitabilityReport(
       SELECT db.load_id::text, COALESCE(SUM(db.gross_amount_cents), 0)::bigint AS pay
       FROM driver_finance.driver_bills db
       WHERE db.load_id = ANY(ARRAY(SELECT load_id::uuid FROM load_ids))
-        AND db.operating_company_id = $1
+        AND db.operating_company_id = $1::uuid
       GROUP BY db.load_id
     ),
     fuel AS (
       SELECT ft.load_id::text, COALESCE(SUM(ROUND(ft.total_cost::numeric * 100)), 0)::bigint AS fuel
       FROM fuel.fuel_transactions ft
       WHERE ft.load_id = ANY(ARRAY(SELECT load_id::uuid FROM load_ids))
-        AND ft.operating_company_id = $1
+        AND ft.operating_company_id = $1::uuid
       GROUP BY ft.load_id
     ),
     maint AS (
       SELECT wo.load_id::text, COALESCE(SUM(ROUND(COALESCE(wo.total_actual_cost,0)::numeric*100))::bigint, 0) AS maint
       FROM maintenance.work_orders wo
       WHERE wo.load_id = ANY(ARRAY(SELECT load_id::uuid FROM load_ids))
-        AND wo.operating_company_id = $1
+        AND wo.operating_company_id = $1::uuid
       GROUP BY wo.load_id
     ),
     fact AS (
@@ -313,7 +313,7 @@ export async function computeTripProfitabilityReport(
       FROM accounting.invoices inv
       JOIN accounting.factoring_advances fa ON fa.id = inv.factoring_advance_id
       WHERE inv.source_load_id = ANY(ARRAY(SELECT load_id::uuid FROM load_ids))
-        AND inv.operating_company_id = $1
+        AND inv.operating_company_id = $1::uuid
       GROUP BY inv.source_load_id
     )
     SELECT

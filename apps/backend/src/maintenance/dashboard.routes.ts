@@ -148,7 +148,7 @@ export async function registerMaintenanceDashboardRoutes(app: FastifyInstance) {
         -- Entity-scoped on PURPOSE: mdata.loads RLS allows any of a multi-entity user's companies, so we
         -- additionally pin the Load # join to the viewed operating company ($1) — a load from another entity
         -- (TRANSP/TRK/USMCA) can never surface here even for a cross-entity user. ETA stop inherits the load.
-        LEFT JOIN mdata.loads l ON l.id = i.load_id AND l.operating_company_id = $1
+        LEFT JOIN mdata.loads l ON l.id = i.load_id AND l.operating_company_id = $1::uuid
         LEFT JOIN mdata.load_stops s ON s.id = i.stop_id AND s.load_id = l.id
         WHERE i.promoted_to_wo_id IS NULL
           AND i.promoted_to_damage_report_id IS NULL
@@ -177,7 +177,7 @@ export async function registerMaintenanceDashboardRoutes(app: FastifyInstance) {
       const recent = await client.query(
         `
           SELECT * FROM maintenance.work_orders
-          WHERE operating_company_id = $1
+          WHERE operating_company_id = $1::uuid
             -- MAINT-VOID: voided work orders are not recent ACTIVITY, they are retracted records.
             -- Without this the voided demo rows DEMO-WO-001/002 sat in this panel on prod while the
             -- main work-order table correctly showed none.
@@ -190,7 +190,7 @@ export async function registerMaintenanceDashboardRoutes(app: FastifyInstance) {
       const completed = await client.query(
         `
           SELECT * FROM maintenance.work_orders
-          WHERE operating_company_id = $1
+          WHERE operating_company_id = $1::uuid
             AND status = 'complete'
             AND voided_at IS NULL
           ORDER BY updated_at DESC NULLS LAST

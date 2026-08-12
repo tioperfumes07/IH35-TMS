@@ -25,7 +25,7 @@ const updateBodySchema = z
   .refine((value) => Object.keys(value).length > 0, { message: "at least one field is required" });
 
 export async function registerCivilFineTypesRoutes(app: FastifyInstance) {
-  app.get("/api/v1/catalogs/safety/civil-fine-types", async (req, reply) => {
+  app.get("/api/v1/catalogs/safety/civil-fine-types", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const parsed = listQuerySchema.safeParse(req.query ?? {});
@@ -34,7 +34,7 @@ export async function registerCivilFineTypesRoutes(app: FastifyInstance) {
 
     const payload = await withCompanyScope(authUser.uuid, q.operating_company_id, async (client) => {
       const values: unknown[] = [q.operating_company_id];
-      const where: string[] = ["c.operating_company_id = $1"];
+      const where: string[] = ["c.operating_company_id = $1::uuid"];
       if (q.is_active === "true") where.push("c.is_active = true");
       if (q.is_active === "false") where.push("c.is_active = false");
       if (q.search) {
@@ -72,7 +72,7 @@ export async function registerCivilFineTypesRoutes(app: FastifyInstance) {
     return payload;
   });
 
-  app.get("/api/v1/catalogs/safety/civil-fine-types/:id", async (req, reply) => {
+  app.get("/api/v1/catalogs/safety/civil-fine-types/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
@@ -96,7 +96,7 @@ export async function registerCivilFineTypesRoutes(app: FastifyInstance) {
             updated_at
           FROM catalogs.civil_fine_types
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
           LIMIT 1
         `,
         [parsedParams.data.id, parsedQuery.data.operating_company_id]
@@ -107,7 +107,7 @@ export async function registerCivilFineTypesRoutes(app: FastifyInstance) {
     return row;
   });
 
-  app.post("/api/v1/catalogs/safety/civil-fine-types", async (req, reply) => {
+  app.post("/api/v1/catalogs/safety/civil-fine-types", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -122,7 +122,7 @@ export async function registerCivilFineTypesRoutes(app: FastifyInstance) {
         `
           SELECT id
           FROM catalogs.civil_fine_types
-          WHERE operating_company_id = $1
+          WHERE operating_company_id = $1::uuid
             AND code = $2
           LIMIT 1
         `,
@@ -163,7 +163,7 @@ export async function registerCivilFineTypesRoutes(app: FastifyInstance) {
     return reply.code(201).send(created.row);
   });
 
-  app.patch("/api/v1/catalogs/safety/civil-fine-types/:id", async (req, reply) => {
+  app.patch("/api/v1/catalogs/safety/civil-fine-types/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -181,7 +181,7 @@ export async function registerCivilFineTypesRoutes(app: FastifyInstance) {
           `
             SELECT id
             FROM catalogs.civil_fine_types
-            WHERE operating_company_id = $1
+            WHERE operating_company_id = $1::uuid
               AND code = $2
               AND id <> $3
             LIMIT 1
@@ -210,7 +210,7 @@ export async function registerCivilFineTypesRoutes(app: FastifyInstance) {
           UPDATE catalogs.civil_fine_types
           SET ${fields.join(", ")}
           WHERE id = $${values.length - 1}
-            AND operating_company_id = $${values.length}
+            AND operating_company_id = $${values.length}::uuid
           RETURNING
             id,
             operating_company_id,
@@ -241,7 +241,7 @@ export async function registerCivilFineTypesRoutes(app: FastifyInstance) {
     return updated.row;
   });
 
-  app.delete("/api/v1/catalogs/safety/civil-fine-types/:id", async (req, reply) => {
+  app.delete("/api/v1/catalogs/safety/civil-fine-types/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -257,7 +257,7 @@ export async function registerCivilFineTypesRoutes(app: FastifyInstance) {
           SET is_active = false,
               updated_at = now()
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
           RETURNING id, code
         `,
         [parsedParams.data.id, parsedQuery.data.operating_company_id]

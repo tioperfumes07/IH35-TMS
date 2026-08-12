@@ -53,14 +53,14 @@ function canWriteVendorCredits(role: string) {
 
 export async function registerVendorCreditsRoutes(app: FastifyInstance) {
   // GET /api/v1/accounting/vendor-credits?operating_company_id=...&vendor_id=...&status=...
-  app.get("/api/v1/accounting/vendor-credits", async (req, reply) => {
+  app.get("/api/v1/accounting/vendor-credits", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = listQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
 
     const rows = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
-      const conditions: string[] = ["vc.operating_company_id = $1"];
+      const conditions: string[] = ["vc.operating_company_id = $1::uuid"];
       const params: unknown[] = [query.data.operating_company_id];
 
       if (query.data.vendor_id) {
@@ -99,7 +99,7 @@ export async function registerVendorCreditsRoutes(app: FastifyInstance) {
 
   // Law §9 reverse drill-through: a credit must expose every bill it reduced.
   // Read-only and company-scoped; this route does not calculate or post any GL.
-  app.get("/api/v1/accounting/vendor-credits/:id", async (req, reply) => {
+  app.get("/api/v1/accounting/vendor-credits/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const params = idParamSchema.safeParse(req.params ?? {});
@@ -123,7 +123,7 @@ export async function registerVendorCreditsRoutes(app: FastifyInstance) {
            created_by_user_id
          FROM accounting.vendor_credits
          WHERE id = $1
-           AND operating_company_id = $2
+           AND operating_company_id = $2::uuid
          LIMIT 1`,
         [params.data.id, query.data.operating_company_id]
       );
@@ -143,7 +143,7 @@ export async function registerVendorCreditsRoutes(app: FastifyInstance) {
            ON b.id = vca.bill_id
           AND b.operating_company_id = vca.operating_company_id
          WHERE vca.credit_id = $1
-           AND vca.operating_company_id = $2
+           AND vca.operating_company_id = $2::uuid
          ORDER BY vca.applied_at DESC, vca.id DESC`,
         [params.data.id, query.data.operating_company_id]
       );
@@ -155,7 +155,7 @@ export async function registerVendorCreditsRoutes(app: FastifyInstance) {
   });
 
   // POST /api/v1/accounting/vendor-credits
-  app.post("/api/v1/accounting/vendor-credits", async (req, reply) => {
+  app.post("/api/v1/accounting/vendor-credits", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canWriteVendorCredits(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -174,7 +174,7 @@ export async function registerVendorCreditsRoutes(app: FastifyInstance) {
 
     const result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       const vendorRes = await client.query(
-        `SELECT id FROM mdata.vendors WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+        `SELECT id FROM mdata.vendors WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
         [body.data.vendor_id, query.data.operating_company_id]
       );
       if (!vendorRes.rows[0]) return { code: 404 as const, error: "vendor_not_found" };
@@ -225,7 +225,7 @@ export async function registerVendorCreditsRoutes(app: FastifyInstance) {
   });
 
   // POST /api/v1/accounting/vendor-credits/:id/apply — apply credit to one or more bills
-  app.post("/api/v1/accounting/vendor-credits/:id/apply", async (req, reply) => {
+  app.post("/api/v1/accounting/vendor-credits/:id/apply", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canWriteVendorCredits(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -240,7 +240,7 @@ export async function registerVendorCreditsRoutes(app: FastifyInstance) {
     const result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       const creditRes = await client.query(
         `SELECT id, status, vendor_id, amount_unapplied_cents FROM accounting.vendor_credits
-         WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+         WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
         [params.data.id, query.data.operating_company_id]
       );
       const credit = creditRes.rows[0];
@@ -272,7 +272,7 @@ export async function registerVendorCreditsRoutes(app: FastifyInstance) {
           `SELECT id, amount_cents, paid_cents,
                   COALESCE(NULLIF(vendor_id, ''), NULLIF(vendor_uuid, '')) AS vendor_id
              FROM accounting.bills
-            WHERE id = $1 AND operating_company_id = $2 AND revoked_at IS NULL LIMIT 1`,
+            WHERE id = $1 AND operating_company_id = $2::uuid AND revoked_at IS NULL LIMIT 1`,
           [app.bill_id, query.data.operating_company_id]
         );
         const bill = billRes.rows[0];
@@ -299,7 +299,7 @@ export async function registerVendorCreditsRoutes(app: FastifyInstance) {
           `SELECT COALESCE(SUM(applied_cents), 0)::text AS applied_cents
              FROM accounting.vendor_credit_applications
             WHERE bill_id = $1
-              AND operating_company_id = $2
+              AND operating_company_id = $2::uuid
               AND voided_at IS NULL`,
           [app.bill_id, query.data.operating_company_id]
         );
@@ -374,7 +374,7 @@ export async function registerVendorCreditsRoutes(app: FastifyInstance) {
   });
 
   // POST /api/v1/accounting/vendor-credits/:id/void — void (never delete)
-  app.post("/api/v1/accounting/vendor-credits/:id/void", async (req, reply) => {
+  app.post("/api/v1/accounting/vendor-credits/:id/void", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canWriteVendorCredits(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -389,7 +389,7 @@ export async function registerVendorCreditsRoutes(app: FastifyInstance) {
     const result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       const creditRes = await client.query(
         `SELECT id, status FROM accounting.vendor_credits
-         WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+         WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
         [params.data.id, query.data.operating_company_id]
       );
       const credit = creditRes.rows[0];

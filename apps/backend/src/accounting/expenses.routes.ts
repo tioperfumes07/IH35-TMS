@@ -901,7 +901,7 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
     }
   });
 
-  app.post("/api/v1/expenses/:expenseId/reattribute", async (req: FastifyRequest, reply: FastifyReply) => {
+  app.post("/api/v1/expenses/:expenseId/reattribute", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!accountingRoles(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
@@ -925,7 +925,7 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
             FROM expense_attribution.expense_load_links
             WHERE expense_source = 'accounting'
               AND expense_id = $1
-              AND operating_company_id = $2
+              AND operating_company_id = $2::uuid
             LIMIT 1
           `,
           [params.data.expenseId, body.operating_company_id]

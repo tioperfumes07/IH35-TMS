@@ -37,7 +37,7 @@ export async function evaluateRulesForTenant(client: Queryable, operatingCompany
   const res = await client.query<AnomalyRule>(
     `SELECT uuid::text, operating_company_id, rule_slug, rule_name, category, detector_function,
             threshold_config, severity, is_active, notify_roles, cadence_minutes
-     FROM safety.anomaly_alert_rules WHERE operating_company_id = $1 AND is_active = true${cadenceSql}`,
+     FROM safety.anomaly_alert_rules WHERE operating_company_id = $1::uuid AND is_active = true${cadenceSql}`,
     params
   );
   let alerts = 0;

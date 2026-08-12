@@ -68,7 +68,7 @@ export async function registerAccountBalanceRoutes(app: FastifyInstance) {
           SELECT id, account_name, ledger_account_id::text, plaid_item_id, current_balance_cents::text
           FROM banking.bank_accounts
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
             AND deactivated_at IS NULL
           ${bankAccountHiddenFilterSql(hideOn, "banking.bank_accounts")}
           LIMIT 1
@@ -83,7 +83,7 @@ export async function registerAccountBalanceRoutes(app: FastifyInstance) {
           SELECT MAX(reconciled_at)::text AS last_reconciled_at
           FROM banking.reconciliation_sessions
           WHERE bank_account_id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
             AND status = 'reconciled'
         `,
         [bank.id, query.data.operating_company_id]
@@ -94,7 +94,7 @@ export async function registerAccountBalanceRoutes(app: FastifyInstance) {
           SELECT MAX(transaction_date)::text AS last_transaction_at
           FROM banking.bank_transactions
           WHERE bank_account_id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
         `,
         [bank.id, query.data.operating_company_id]
       );
@@ -130,7 +130,7 @@ export async function registerAccountBalanceRoutes(app: FastifyInstance) {
             JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid
                                               AND je.operating_company_id = p.operating_company_id
             WHERE p.account_id = $1
-              AND p.operating_company_id = $2
+              AND p.operating_company_id = $2::uuid
               AND je.status = 'posted'
               AND je.entry_date <= CURRENT_DATE
           `,

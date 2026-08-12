@@ -54,7 +54,7 @@ export async function buildExhibitD(
       SELECT COALESCE(SUM(CASE WHEN NOT bt.is_credit THEN abs(bt.amount_cents) END), 0)::bigint AS disbursements_cents
       FROM banking.bank_transactions bt
       JOIN banking.bank_accounts a ON a.id = bt.bank_account_id
-      WHERE bt.operating_company_id = $1
+      WHERE bt.operating_company_id = $1::uuid
         AND COALESCE(a.account_type, '') NOT LIKE 'virtual_%'
         AND bt.is_credit = false
         AND bt.transaction_date >= $2::date

@@ -95,7 +95,7 @@ function mapReceiptSource(r: ReceiptListRow) {
 
 async function registerReceiptsRoutes(app: FastifyInstance) {
   // LIST
-  app.get("/api/v1/accounting/receipts", async (req, reply) => {
+  app.get("/api/v1/accounting/receipts", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
 
@@ -105,7 +105,7 @@ async function registerReceiptsRoutes(app: FastifyInstance) {
     const { operating_company_id, entity_type, date_from, date_to, q, limit, offset } = parsed.data;
 
     return withCompanyScope(user.uuid, operating_company_id, async (client) => {
-      const conds = ["a.operating_company_id = $1", "a.is_deleted = false", RECEIPT_SCOPE_SQL];
+      const conds = ["a.operating_company_id = $1::uuid", "a.is_deleted = false", RECEIPT_SCOPE_SQL];
       const params: unknown[] = [operating_company_id];
       let pi = 2;
 
@@ -206,7 +206,7 @@ async function registerReceiptsRoutes(app: FastifyInstance) {
   });
 
   // DETAIL + presigned download URL
-  app.get("/api/v1/accounting/receipts/:id", async (req, reply) => {
+  app.get("/api/v1/accounting/receipts/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
 
@@ -255,7 +255,7 @@ async function registerReceiptsRoutes(app: FastifyInstance) {
          LEFT JOIN accounting.payments p ON p.id = a.entity_id AND a.entity_type = 'payment'
          LEFT JOIN mdata.customers c ON c.id = p.customer_id AND a.entity_type = 'payment'
                                 AND c.operating_company_id = $2::uuid
-         WHERE a.id = $1 AND a.operating_company_id = $2
+         WHERE a.id = $1 AND a.operating_company_id = $2::uuid
            AND a.is_deleted = false
            AND ${RECEIPT_SCOPE_SQL}`,
         [paramsParsed.data.id, queryParsed.data.operating_company_id]

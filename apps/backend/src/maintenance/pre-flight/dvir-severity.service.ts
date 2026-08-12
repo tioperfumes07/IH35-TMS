@@ -66,7 +66,7 @@ export async function getEffectiveSeverity(
     `
       SELECT dvir_defect_id, severity, major_defect_code, source, routed, auto_wo_id, created_at::text AS created_at
       FROM safety.dvir_defect_severity_tags
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
         AND dvir_defect_id = $2
       ORDER BY created_at DESC
       LIMIT 1
@@ -153,7 +153,7 @@ export async function setSeverity(
       SELECT id
       FROM safety.dvir_defects
       WHERE id = $1
-        AND operating_company_id = $2
+        AND operating_company_id = $2::uuid
       LIMIT 1
     `,
     [args.defectId, args.operatingCompanyId]

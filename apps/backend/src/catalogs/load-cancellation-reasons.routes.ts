@@ -75,7 +75,7 @@ function sendValidationError(reply: FastifyReply, error: z.ZodError) {
 }
 
 export async function registerLoadCancellationReasonRoutes(app: FastifyInstance) {
-  app.get("/api/v1/catalogs/load-cancellation-reasons", async (req, reply) => {
+  app.get("/api/v1/catalogs/load-cancellation-reasons", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const parsedQuery = listQuerySchema.safeParse(req.query ?? {});
@@ -97,7 +97,7 @@ export async function registerLoadCancellationReasonRoutes(app: FastifyInstance)
 
       const values: unknown[] = [operatingCompanyId];
       let whereClause = `
-        WHERE operating_company_id = $1
+        WHERE operating_company_id = $1::uuid
       `;
       if (!includeInactive) {
         whereClause += `

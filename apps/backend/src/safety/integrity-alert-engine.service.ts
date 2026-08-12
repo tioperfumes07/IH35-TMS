@@ -39,7 +39,7 @@ export async function listIntegrityAlertRules(client: QueryableClient, operating
     `
       SELECT *
       FROM safety.integrity_alert_rules
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
       ORDER BY rule_name ASC
     `,
     [operatingCompanyId]
@@ -55,7 +55,7 @@ export async function evaluateIntegrityRulesForTenant(
     `
       SELECT *
       FROM safety.integrity_alert_rules
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
         AND enabled = true
       ORDER BY rule_code ASC
     `,
@@ -90,7 +90,7 @@ async function evaluateRuleMatches(
       `
         SELECT *
         FROM safety.v_fuel_mpg_anomalies
-        WHERE operating_company_id = $1
+        WHERE operating_company_id = $1::uuid
         LIMIT 200
       `,
       [operatingCompanyId]
@@ -113,7 +113,7 @@ async function evaluateRuleMatches(
       `
         SELECT *
         FROM safety.v_driver_dwell_outliers
-        WHERE operating_company_id = $1
+        WHERE operating_company_id = $1::uuid
           AND minutes_over_avg >= $2
         LIMIT 200
       `,
@@ -136,7 +136,7 @@ async function evaluateRuleMatches(
       `
         SELECT *
         FROM safety.v_wo_cost_outliers
-        WHERE operating_company_id = $1
+        WHERE operating_company_id = $1::uuid
           AND z_score >= $2
         LIMIT 200
       `,
@@ -166,7 +166,7 @@ async function evaluateRuleMatches(
           SUM(CASE WHEN jep.debit_or_credit = 'credit' THEN jep.amount_cents ELSE 0 END) AS credit_total
         FROM accounting.journal_entries je
         JOIN accounting.journal_entry_postings jep ON jep.journal_entry_uuid = je.id
-        WHERE je.operating_company_id = $1
+        WHERE je.operating_company_id = $1::uuid
           AND je.status = 'posted'
           AND je.created_at > now() - ($2 || ' days')::interval
         GROUP BY je.id, je.entry_date, je.memo
@@ -232,7 +232,7 @@ async function evaluateRuleMatches(
           LEFT JOIN mdata.vendors v
             ON v.qbo_vendor_id = b.vendor_id
            AND v.operating_company_id = b.operating_company_id
-          WHERE b.operating_company_id = $1
+          WHERE b.operating_company_id = $1::uuid
             AND b.revoked_at IS NULL
             AND b.created_at > now() - ($2 || ' days')::interval
             -- The GL lives on the LINES. A bill is a GL orphan when NO line carries an account.
@@ -286,7 +286,7 @@ async function evaluateRuleMatches(
           p.amount_cents,
           p.amount_unapplied_cents
         FROM accounting.payments p
-        WHERE p.operating_company_id = $1
+        WHERE p.operating_company_id = $1::uuid
           AND p.voided_at IS NULL
           AND p.amount_unapplied_cents > 0
           AND p.created_at < now() - ($2 || ' days')::interval
@@ -318,7 +318,7 @@ async function evaluateRuleMatches(
           pb.source_transaction_id::text AS source_transaction_id,
           pb.created_at::text AS created_at
         FROM accounting.posting_batches pb
-        WHERE pb.operating_company_id = $1
+        WHERE pb.operating_company_id = $1::uuid
           AND pb.batch_status IN ('queued', 'in_progress')
           AND pb.created_at < now() - ($2 || ' days')::interval
         ORDER BY pb.created_at ASC

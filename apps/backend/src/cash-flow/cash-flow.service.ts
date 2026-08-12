@@ -152,7 +152,7 @@ export async function getDailyPrediction(
           ORDER BY sequence_number DESC
           LIMIT 1
         ) fd ON true
-        WHERE l.operating_company_id = $1
+        WHERE l.operating_company_id = $1::uuid
           AND ${ACTIVE_LOAD_FILTER}
       )
       SELECT id::text, load_number, customer_name, delivery_time::text AS delivery_time, rate_total_cents, status
@@ -175,7 +175,7 @@ export async function getDailyPrediction(
       AND ls.scheduled_arrival_at::date = $2::date
     LEFT JOIN mdata.customers c ON c.id = l.customer_id
                                AND c.operating_company_id = l.operating_company_id
-    WHERE l.operating_company_id = $1
+    WHERE l.operating_company_id = $1::uuid
       AND ${ACTIVE_LOAD_FILTER}
     ORDER BY ls.scheduled_arrival_at ASC NULLS LAST, l.load_number ASC
     `;
@@ -223,7 +223,7 @@ export async function getDailyPrediction(
       FROM driver_finance.driver_settlements s
       LEFT JOIN mdata.drivers d ON d.id = s.driver_id
                              AND d.operating_company_id = s.operating_company_id
-      WHERE s.operating_company_id = $1
+      WHERE s.operating_company_id = $1::uuid
         AND s.reversed_at IS NULL
         AND COALESCE(s.net_pay, 0) > 0
         AND COALESCE(s.payment_state, 'unpaid') NOT IN ('cleared', 'manual_paid', 'bounced')
@@ -276,7 +276,7 @@ export async function getDailyPrediction(
     FROM accounting.bills b
     LEFT JOIN mdata.vendors v ON v.id::text = b.vendor_id
                               AND v.operating_company_id = $1::uuid
-    WHERE b.operating_company_id = $1
+    WHERE b.operating_company_id = $1::uuid
       AND b.due_date::date = $2::date
       AND b.status <> 'paid'
       AND ${notVoidedSql("b")}
@@ -302,7 +302,7 @@ export async function getDailyPrediction(
     `
     SELECT id::text, label, amount_cents::int
     FROM accounting.cash_flow_adjustments
-    WHERE operating_company_id = $1
+    WHERE operating_company_id = $1::uuid
       AND entry_date = $2::date
       AND archived_at IS NULL
     ORDER BY created_at ASC
@@ -375,7 +375,7 @@ async function buildSevenDayStrip(
             WHERE load_id = l.id AND stop_type = 'delivery'
             ORDER BY sequence_number DESC LIMIT 1
           ) fd ON true
-          WHERE l.operating_company_id = $1
+          WHERE l.operating_company_id = $1::uuid
             AND ${ACTIVE_LOAD_FILTER}
             AND ${projectedCashDateSql({ deliveryScheduledExpr: "fd.scheduled_arrival_at" })} = $2::date
         )`
@@ -385,7 +385,7 @@ async function buildSevenDayStrip(
           JOIN mdata.load_stops ls
             ON ls.load_id = l.id AND ls.stop_type = 'delivery'
             AND ls.scheduled_arrival_at::date = $2::date
-          WHERE l.operating_company_id = $1
+          WHERE l.operating_company_id = $1::uuid
             AND ${ACTIVE_LOAD_FILTER}
         )`;
   for (let i = 0; i < 7; i++) {
@@ -402,7 +402,7 @@ async function buildSevenDayStrip(
           COALESCE((
             SELECT SUM(GREATEST(COALESCE(b.amount_cents, 0) - COALESCE(b.paid_cents, 0), 0))
             FROM accounting.bills b
-            WHERE b.operating_company_id = $1
+            WHERE b.operating_company_id = $1::uuid
               AND b.due_date::date = $2::date
               AND b.status <> 'paid'
               AND ${notVoidedSql("b")}
@@ -411,7 +411,7 @@ async function buildSevenDayStrip(
           COALESCE((
             SELECT SUM(ROUND(COALESCE(s.net_pay, 0) * 100)::bigint)
             FROM driver_finance.driver_settlements s
-            WHERE s.operating_company_id = $1
+            WHERE s.operating_company_id = $1::uuid
               AND s.reversed_at IS NULL
               AND COALESCE(s.net_pay, 0) > 0
               AND COALESCE(s.payment_state, 'unpaid') NOT IN ('cleared', 'manual_paid', 'bounced')
@@ -470,7 +470,7 @@ export async function getActualVsProjected(
         WHERE load_id = l.id AND stop_type = 'delivery'
         ORDER BY sequence_number DESC LIMIT 1
       ) fd ON true
-      WHERE l.operating_company_id = $1
+      WHERE l.operating_company_id = $1::uuid
         AND ${ACTIVE_LOAD_FILTER}
     )
     SELECT bucket_date::text AS delivery_date, SUM(rate_total_cents)::int AS projected_income_cents
@@ -486,7 +486,7 @@ export async function getActualVsProjected(
     FROM mdata.loads l
     JOIN mdata.load_stops ls
       ON ls.load_id = l.id AND ls.stop_type = 'delivery'
-    WHERE l.operating_company_id = $1
+    WHERE l.operating_company_id = $1::uuid
       AND ls.scheduled_arrival_at::date BETWEEN $2::date AND $3::date
       AND ${ACTIVE_LOAD_FILTER}
     GROUP BY ls.scheduled_arrival_at::date
@@ -504,7 +504,7 @@ export async function getActualVsProjected(
       p.payment_date::date::text AS payment_date,
       SUM(p.amount_cents)::int AS actual_income_cents
     FROM accounting.payments p
-    WHERE p.operating_company_id = $1
+    WHERE p.operating_company_id = $1::uuid
       AND p.payment_date::date BETWEEN $2::date AND $3::date
       AND p.voided_at IS NULL
     GROUP BY p.payment_date::date
@@ -520,7 +520,7 @@ export async function getActualVsProjected(
       b.due_date::date::text AS due_date,
       SUM(COALESCE(b.amount_cents, 0))::int AS projected_expense_cents
     FROM accounting.bills b
-    WHERE b.operating_company_id = $1
+    WHERE b.operating_company_id = $1::uuid
       AND b.due_date::date BETWEEN $2::date AND $3::date
       AND ${notVoidedSql("b")}
     GROUP BY b.due_date::date
@@ -536,7 +536,7 @@ export async function getActualVsProjected(
       bp.payment_date::date::text AS payment_date,
       SUM(COALESCE(bp.amount_cents, 0))::int AS actual_expense_cents
     FROM accounting.bill_payments bp
-    WHERE bp.operating_company_id = $1
+    WHERE bp.operating_company_id = $1::uuid
       AND bp.payment_date::date BETWEEN $2::date AND $3::date
       AND ${notVoidedSql("bp")}
     GROUP BY bp.payment_date::date

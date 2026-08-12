@@ -75,7 +75,7 @@ async function findBindingIdByRoleKey(
   return withEntityScope(authUserId, operatingCompanyId, async (client) => {
     const res = await client.query(
       `SELECT id FROM catalogs.account_role_bindings
-        WHERE operating_company_id = $1 AND role_key = $2
+        WHERE operating_company_id = $1::uuid AND role_key = $2
         LIMIT 1`,
       [operatingCompanyId, roleKey]
     );
@@ -84,7 +84,7 @@ async function findBindingIdByRoleKey(
 }
 
 export async function registerAccountRoleBindingRoutes(app: FastifyInstance) {
-  app.get("/api/v1/catalogs/account-role-bindings", async (req, reply) => {
+  app.get("/api/v1/catalogs/account-role-bindings", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const parsedQuery = companyQuerySchema.safeParse(req.query ?? {});
@@ -114,7 +114,7 @@ export async function registerAccountRoleBindingRoutes(app: FastifyInstance) {
           FROM role_keys r
           LEFT JOIN catalogs.account_role_bindings b
             ON b.role_key = r.role_key
-           AND b.operating_company_id = $2
+           AND b.operating_company_id = $2::uuid
           ORDER BY r.role_key
         `,
         [ROLE_KEYS, opco]
@@ -125,7 +125,7 @@ export async function registerAccountRoleBindingRoutes(app: FastifyInstance) {
     return { account_role_bindings };
   });
 
-  app.post("/api/v1/catalogs/account-role-bindings", async (req, reply) => {
+  app.post("/api/v1/catalogs/account-role-bindings", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -138,7 +138,7 @@ export async function registerAccountRoleBindingRoutes(app: FastifyInstance) {
         // Same-entity account: refuse binding a foreign CoA account (VERIFY-5 / VERIFY-6).
         const acct = await client.query(
           `SELECT id FROM catalogs.accounts
-            WHERE id = $1 AND operating_company_id = $2 AND deactivated_at IS NULL
+            WHERE id = $1 AND operating_company_id = $2::uuid AND deactivated_at IS NULL
             LIMIT 1`,
           [b.account_id, b.operating_company_id]
         );
@@ -198,7 +198,7 @@ export async function registerAccountRoleBindingRoutes(app: FastifyInstance) {
     }
   });
 
-  app.get("/api/v1/catalogs/account-role-bindings/:id", async (req, reply) => {
+  app.get("/api/v1/catalogs/account-role-bindings/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
@@ -216,7 +216,7 @@ export async function registerAccountRoleBindingRoutes(app: FastifyInstance) {
             created_at, updated_at, deactivated_at,
             created_by_user_id, updated_by_user_id
           FROM catalogs.account_role_bindings
-          WHERE id = $1 AND operating_company_id = $2
+          WHERE id = $1 AND operating_company_id = $2::uuid
           LIMIT 1
         `,
         [parsedParams.data.id, parsedQuery.data.operating_company_id]
@@ -228,7 +228,7 @@ export async function registerAccountRoleBindingRoutes(app: FastifyInstance) {
     return row;
   });
 
-  app.patch("/api/v1/catalogs/account-role-bindings/:id", async (req, reply) => {
+  app.patch("/api/v1/catalogs/account-role-bindings/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -263,7 +263,7 @@ export async function registerAccountRoleBindingRoutes(app: FastifyInstance) {
         if (b.account_id) {
           const acct = await client.query(
             `SELECT id FROM catalogs.accounts
-              WHERE id = $1 AND operating_company_id = $2 AND deactivated_at IS NULL
+              WHERE id = $1 AND operating_company_id = $2::uuid AND deactivated_at IS NULL
               LIMIT 1`,
             [b.account_id, opco]
           );
@@ -281,7 +281,7 @@ export async function registerAccountRoleBindingRoutes(app: FastifyInstance) {
               created_at, updated_at, deactivated_at,
               created_by_user_id, updated_by_user_id
             FROM catalogs.account_role_bindings
-            WHERE id = $1 AND operating_company_id = $2
+            WHERE id = $1 AND operating_company_id = $2::uuid
             LIMIT 1
           `,
           [parsedParams.data.id, opco]
@@ -293,7 +293,7 @@ export async function registerAccountRoleBindingRoutes(app: FastifyInstance) {
           `
             UPDATE catalogs.account_role_bindings
             SET ${setParts.join(", ")}
-            WHERE id = $${idIdx} AND operating_company_id = $${opcoIdx}
+            WHERE id = $${idIdx} AND operating_company_id = $${opcoIdx}::uuid
             RETURNING
               id, operating_company_id, role_key, account_id, description,
               created_at, updated_at, deactivated_at,

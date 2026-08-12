@@ -43,7 +43,7 @@ export async function fetchTeamDriversForLoad(
       SELECT team_id
       FROM mdata.loads
       WHERE id = $1
-        AND operating_company_id = $2
+        AND operating_company_id = $2::uuid
         AND soft_deleted_at IS NULL
       LIMIT 1
     `,
@@ -65,7 +65,7 @@ export async function fetchTeamDriversForLoad(
       SELECT id, primary_driver_id, secondary_driver_id, split_method::text, primary_share_pct, co_share_pct, is_active
       FROM mdata.driver_teams
       WHERE id = $1
-        AND operating_company_id = $2
+        AND operating_company_id = $2::uuid
       LIMIT 1
     `,
     [teamId, input.operatingCompanyId]

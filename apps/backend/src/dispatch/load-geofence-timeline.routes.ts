@@ -41,7 +41,7 @@ export async function registerLoadGeofenceTimelineRoutes(app: FastifyInstance) {
 
       const loadRes = await client.query<{ id: string }>(
         `SELECT id FROM mdata.loads
-         WHERE id = $1 AND operating_company_id = $2 AND soft_deleted_at IS NULL
+         WHERE id = $1 AND operating_company_id = $2::uuid AND soft_deleted_at IS NULL
          LIMIT 1`,
         [loadId, operating_company_id]
       );
@@ -92,7 +92,7 @@ export async function registerLoadGeofenceTimelineRoutes(app: FastifyInstance) {
            de.stopped_at::text
          FROM dispatch.detention_events de
          WHERE de.load_id = $1
-           AND de.operating_company_id = $2`,
+           AND de.operating_company_id = $2::uuid`,
         [loadId, operating_company_id]
       );
 
@@ -114,8 +114,8 @@ export async function registerLoadGeofenceTimelineRoutes(app: FastifyInstance) {
          FROM geo.geofences g
          JOIN geo.geofence_events ge
            ON ge.geofence_id = g.id
-          AND ge.operating_company_id = $1
-         WHERE g.operating_company_id = $1
+          AND ge.operating_company_id = $1::uuid
+         WHERE g.operating_company_id = $1::uuid
            AND g.label LIKE $2
          GROUP BY g.label`,
         // NOTE: loadId is NOT passed as a separate bind — it is already embedded in the $2 LIKE

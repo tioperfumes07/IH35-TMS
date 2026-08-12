@@ -116,7 +116,7 @@ async function withCompanyScope<T>(
 }
 
 export async function registerCashAdvancesRoutes(app: FastifyInstance) {
-  app.get("/api/v1/cash-advances/dashboard/kpis", async (req, reply) => {
+  app.get("/api/v1/cash-advances/dashboard/kpis", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = COMPANY_QUERY.safeParse(req.query ?? {});
@@ -128,7 +128,7 @@ export async function registerCashAdvancesRoutes(app: FastifyInstance) {
           `
             SELECT *
             FROM views.cash_advances_dashboard_kpis
-            WHERE operating_company_id = $1
+            WHERE operating_company_id = $1::uuid
             LIMIT 1
           `,
           [companyId]
@@ -148,14 +148,14 @@ export async function registerCashAdvancesRoutes(app: FastifyInstance) {
     );
   });
 
-  app.get("/api/v1/cash-advances", async (req, reply) => {
+  app.get("/api/v1/cash-advances", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = listQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return sendValidationError(reply, query.error);
     const companyId = query.data.operating_company_id;
     const rows = await withCompanyScope(user.uuid, companyId, async (client) => {
-      const where: string[] = ["operating_company_id = $1"];
+      const where: string[] = ["operating_company_id = $1::uuid"];
       const values: unknown[] = [companyId];
       if (query.data.view === "pending_approval") where.push(`disbursement_status = 'pending_approval'`);
       if (query.data.view === "outstanding") where.push("COALESCE(outstanding_balance, 0) > 0");
@@ -189,7 +189,7 @@ export async function registerCashAdvancesRoutes(app: FastifyInstance) {
     return { advances: rows };
   });
 
-  app.get("/api/v1/cash-advances/unpaid-bills", async (req, reply) => {
+  app.get("/api/v1/cash-advances/unpaid-bills", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = COMPANY_QUERY.safeParse(req.query ?? {});
@@ -218,7 +218,7 @@ export async function registerCashAdvancesRoutes(app: FastifyInstance) {
             LEFT JOIN mdata.qbo_vendors qv
               ON qv.qbo_id = b.vendor_id
              AND qv.operating_company_id = b.operating_company_id
-            WHERE b.operating_company_id = $1
+            WHERE b.operating_company_id = $1::uuid
               AND b.status = 'unpaid'
             ORDER BY b.due_date ASC NULLS LAST, b.created_at DESC
             LIMIT 200
@@ -231,7 +231,7 @@ export async function registerCashAdvancesRoutes(app: FastifyInstance) {
     return { bills: rows };
   });
 
-  app.get("/api/v1/cash-advances/:id", async (req, reply) => {
+  app.get("/api/v1/cash-advances/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const params = ID_PARAMS.safeParse(req.params ?? {});
@@ -246,7 +246,7 @@ export async function registerCashAdvancesRoutes(app: FastifyInstance) {
             SELECT *
             FROM views.cash_advances_with_context
             WHERE id = $1
-              AND operating_company_id = $2
+              AND operating_company_id = $2::uuid
             LIMIT 1
           `,
           [params.data.id, companyId]
@@ -337,7 +337,7 @@ export async function registerCashAdvancesRoutes(app: FastifyInstance) {
     return reply.code(created.code).send(created.data);
   });
 
-  app.patch("/api/v1/cash-advances/:id/mark-disbursed", async (req, reply) => {
+  app.patch("/api/v1/cash-advances/:id/mark-disbursed", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const params = ID_PARAMS.safeParse(req.params ?? {});
@@ -354,7 +354,7 @@ export async function registerCashAdvancesRoutes(app: FastifyInstance) {
           SELECT *
           FROM driver_finance.driver_advances
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
           LIMIT 1
         `,
         [params.data.id, companyId]
@@ -418,7 +418,7 @@ export async function registerCashAdvancesRoutes(app: FastifyInstance) {
             SET advance_id = $1,
                 updated_at = now()
             WHERE id = $2
-              AND operating_company_id = $3
+              AND operating_company_id = $3::uuid
           `,
           [advance.id, body.data.bank_txn_id, companyId]
         );
@@ -479,7 +479,7 @@ export async function registerCashAdvancesRoutes(app: FastifyInstance) {
     return result.data;
   });
 
-  app.patch("/api/v1/cash-advances/:id/reverse", async (req, reply) => {
+  app.patch("/api/v1/cash-advances/:id/reverse", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!["Owner", "Admin"].includes(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden_owner_admin_only" });
@@ -495,7 +495,7 @@ export async function registerCashAdvancesRoutes(app: FastifyInstance) {
           SELECT *
           FROM driver_finance.driver_advances
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
           LIMIT 1
         `,
         [params.data.id, companyId]

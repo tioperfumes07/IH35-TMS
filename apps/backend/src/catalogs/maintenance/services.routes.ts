@@ -66,7 +66,7 @@ export async function registerMaintenanceServicesCatalogRoutes(app: FastifyInsta
 
     return withCompany(user.uuid, q.operating_company_id, async (client) => {
       const values: unknown[] = [q.operating_company_id];
-      const where = ["operating_company_id = $1"];
+      const where = ["operating_company_id = $1::uuid"];
       if (q.search) { values.push(`%${q.search}%`); where.push(`(service_code ILIKE $${values.length} OR service_name ILIKE $${values.length})`); }
       if (q.applies_to) { values.push(q.applies_to); where.push(`(applies_to_type = $${values.length} OR applies_to_type = 'all')`); }
       if (q.category) { values.push(q.category); where.push(`service_category = $${values.length}`); }
@@ -94,7 +94,7 @@ export async function registerMaintenanceServicesCatalogRoutes(app: FastifyInsta
         interval_miles: number | null; interval_months: number | null;
         applies_to_type: string; is_safety_critical: boolean;
       }>(
-        "SELECT id, service_code, service_name, interval_miles, interval_months, interval_hours, applies_to_type, is_safety_critical FROM mdata.maintenance_services WHERE operating_company_id = $1 AND is_active = true",
+        "SELECT id, service_code, service_name, interval_miles, interval_months, interval_hours, applies_to_type, is_safety_critical FROM mdata.maintenance_services WHERE operating_company_id = $1::uuid AND is_active = true",
         [operating_company_id]
       );
 
@@ -104,7 +104,7 @@ export async function registerMaintenanceServicesCatalogRoutes(app: FastifyInsta
       // (odometer_mi, keyed by unit_id + operating_company_id — the live Samsara odometer). Alias keeps the
       // downstream .hub_meter_current shape; returns null when the unit has no GPS odometer yet (calc handles null).
       const unitRow = await client.query<{ hub_meter_current: number | null }>(
-        "SELECT odometer_mi AS hub_meter_current FROM telematics.vehicle_latest_position WHERE unit_id = $1 AND operating_company_id = $2 LIMIT 1",
+        "SELECT odometer_mi AS hub_meter_current FROM telematics.vehicle_latest_position WHERE unit_id = $1 AND operating_company_id = $2::uuid LIMIT 1",
         [unit_id, operating_company_id]
       );
       const currentOdo = (unitRow.rows[0] as { hub_meter_current?: number | null } | undefined)?.hub_meter_current ?? null;
@@ -115,7 +115,7 @@ export async function registerMaintenanceServicesCatalogRoutes(app: FastifyInsta
       // last-service odometer; there is no last-service DATE column on pm_schedules → date-based eta degrades
       // to null (mile-based eta still computes). Stops the 500 with correct mileage data.
       const lastSvcRow = await client.query<{ last_odo: number | null }>(
-        `SELECT MAX(last_service_odometer) AS last_odo FROM maintenance.pm_schedules WHERE unit_id = $1 AND operating_company_id = $2 AND is_active = true`,
+        `SELECT MAX(last_service_odometer) AS last_odo FROM maintenance.pm_schedules WHERE unit_id = $1 AND operating_company_id = $2::uuid AND is_active = true`,
         [unit_id, operating_company_id]
       );
       const lastCompletedDate: string | null = null;

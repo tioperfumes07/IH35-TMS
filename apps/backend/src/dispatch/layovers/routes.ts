@@ -44,7 +44,7 @@ export async function registerLayoverRoutes(app: FastifyInstance) {
     await assertCompanyMembership(user.uuid, body.data.operating_company_id);
     await withCurrentUser(user.uuid, async (client) => {
       await client.query(
-        `UPDATE dispatch.driver_layovers SET billable_to_customer = $1 WHERE uuid = $2 AND operating_company_id = $3`,
+        `UPDATE dispatch.driver_layovers SET billable_to_customer = $1 WHERE uuid = $2 AND operating_company_id = $3::uuid`,
         [body.data.billable, uuid, body.data.operating_company_id]
       );
     });
@@ -64,7 +64,7 @@ export async function registerLayoverRoutes(app: FastifyInstance) {
     await assertCompanyMembership(user.uuid, body.data.operating_company_id);
     await withCurrentUser(user.uuid, async (client) => {
       await client.query(
-        `UPDATE dispatch.driver_layovers SET per_diem_eligible = $1 WHERE uuid = $2 AND operating_company_id = $3`,
+        `UPDATE dispatch.driver_layovers SET per_diem_eligible = $1 WHERE uuid = $2 AND operating_company_id = $3::uuid`,
         [body.data.per_diem_eligible, uuid, body.data.operating_company_id]
       );
     });

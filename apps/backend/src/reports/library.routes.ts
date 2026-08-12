@@ -62,7 +62,7 @@ export async function registerReportsLibraryRoutes(app: FastifyInstance) {
     return res.rows.length > 0;
   }
 
-  app.get("/api/v1/reports/library", async (req, reply) => {
+  app.get("/api/v1/reports/library", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -70,7 +70,7 @@ export async function registerReportsLibraryRoutes(app: FastifyInstance) {
     return { reports: REPORT_LIBRARY };
   });
 
-  app.get("/api/v1/reports/frequently-run", async (req, reply) => {
+  app.get("/api/v1/reports/frequently-run", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = frequentlyRunQuerySchema.safeParse(req.query ?? {});
@@ -82,7 +82,7 @@ export async function registerReportsLibraryRoutes(app: FastifyInstance) {
         `
           SELECT report_id, count(*)::text AS run_count
           FROM reports.run_log
-          WHERE operating_company_id = $1
+          WHERE operating_company_id = $1::uuid
             AND run_at >= (now() - ($2::int || ' days')::interval)
           GROUP BY report_id
           ORDER BY count(*) DESC
@@ -108,7 +108,7 @@ export async function registerReportsLibraryRoutes(app: FastifyInstance) {
     return { rows: top };
   });
 
-  app.get("/api/v1/reports/scheduled", async (req, reply) => {
+  app.get("/api/v1/reports/scheduled", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = scheduledQuerySchema.safeParse(req.query ?? {});
@@ -118,7 +118,7 @@ export async function registerReportsLibraryRoutes(app: FastifyInstance) {
         `
           SELECT id, report_id, cadence, cadence_detail, recipient_roles, recipient_emails
           FROM reports.scheduled_reports
-          WHERE operating_company_id = $1
+          WHERE operating_company_id = $1::uuid
             AND enabled = true
           ORDER BY created_at ASC
         `,
@@ -161,18 +161,18 @@ export async function registerReportsLibraryRoutes(app: FastifyInstance) {
     try {
     const data = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       const scheduledRes = await client.query(
-        `SELECT count(*)::text AS cnt FROM reports.scheduled_reports WHERE operating_company_id = $1 AND enabled = true`,
+        `SELECT count(*)::text AS cnt FROM reports.scheduled_reports WHERE operating_company_id = $1::uuid AND enabled = true`,
         [query.data.operating_company_id]
       );
       const runRes = await client.query(
-        `SELECT count(*)::text AS cnt FROM reports.run_log WHERE operating_company_id = $1 AND run_at >= now() - interval '7 days'`,
+        `SELECT count(*)::text AS cnt FROM reports.run_log WHERE operating_company_id = $1::uuid AND run_at >= now() - interval '7 days'`,
         [query.data.operating_company_id]
       );
       const arSumRes = await client.query(
         `
           SELECT COALESCE(SUM(total_open_cents), 0) AS total
           FROM views.ar_aging
-          WHERE operating_company_id = $1
+          WHERE operating_company_id = $1::uuid
         `,
         [query.data.operating_company_id]
       );
@@ -212,7 +212,7 @@ export async function registerReportsLibraryRoutes(app: FastifyInstance) {
             ELSE (
               SELECT count(*)::bigint
               FROM safety.accident_reports a
-              WHERE a.operating_company_id = $1
+              WHERE a.operating_company_id = $1::uuid
             )
           END AS total
         `,
@@ -570,7 +570,7 @@ export async function registerReportsLibraryRoutes(app: FastifyInstance) {
           `
             SELECT lower(COALESCE(repair_location, '')) AS repair_location, count(*)::text AS total
             FROM maintenance.work_orders
-            WHERE operating_company_id = $1
+            WHERE operating_company_id = $1::uuid
               AND voided_at IS NULL
               AND status NOT IN ('complete', 'cancelled')
             GROUP BY lower(COALESCE(repair_location, ''))
@@ -629,7 +629,7 @@ export async function registerReportsLibraryRoutes(app: FastifyInstance) {
           `
             SELECT count(DISTINCT assigned_unit_id)::text AS total
             FROM mdata.loads
-            WHERE operating_company_id = $1
+            WHERE operating_company_id = $1::uuid
               AND assigned_unit_id IS NOT NULL
               AND status::text IN (
                 'booked',

@@ -60,7 +60,7 @@ export async function registerCustomerContractRoutes(app: FastifyInstance) {
       await setScopedCompanyContext(client, user.uuid, body.data.operating_company_id);
 
       const custCheck = await client.query<{ id: string }>(
-        `SELECT id FROM mdata.customers WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+        `SELECT id FROM mdata.customers WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
         [body.data.customer_id, body.data.operating_company_id]
       );
       if (!custCheck.rows[0]) return reply.code(404).send({ error: "customer_not_found" });
@@ -133,7 +133,7 @@ export async function registerCustomerContractRoutes(app: FastifyInstance) {
          FROM customer.contract c
          LEFT JOIN docs.files f ON f.id = c.file_id AND f.deleted_at IS NULL
          WHERE c.customer_id = $1
-           AND c.operating_company_id = $2
+           AND c.operating_company_id = $2::uuid
            ${query.data.include_superseded ? "" : "AND c.is_active = true AND c.supersedes_id IS NULL"}
          ORDER BY c.created_at DESC`,
         [query.data.customer_id, query.data.operating_company_id]
@@ -165,7 +165,7 @@ export async function registerCustomerContractRoutes(app: FastifyInstance) {
          FROM customer.contract c
          LEFT JOIN docs.files f ON f.id = c.file_id AND f.deleted_at IS NULL
          WHERE c.id = $1
-           AND c.operating_company_id = $2
+           AND c.operating_company_id = $2::uuid
          LIMIT 1`,
         [params.data.id, qs.data.operating_company_id]
       );
@@ -194,7 +194,7 @@ export async function registerCustomerContractRoutes(app: FastifyInstance) {
       }>(
         `SELECT id, customer_id, contract_type, effective_date, expiration_date
          FROM customer.contract
-         WHERE id = $1 AND operating_company_id = $2 AND is_active = true
+         WHERE id = $1 AND operating_company_id = $2::uuid AND is_active = true
          LIMIT 1`,
         [params.data.id, body.data.operating_company_id]
       );

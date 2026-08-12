@@ -86,7 +86,7 @@ export async function runCap12TireTreadWorkerTick(deps?: {
                 odometer_miles,
                 created_at::text
               FROM maintenance.tire_tread_measurements
-              WHERE operating_company_id = $1
+              WHERE operating_company_id = $1::uuid
                 AND unit_uuid = $2
                 AND tire_position = $3
               ORDER BY measured_at ASC

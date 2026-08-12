@@ -152,7 +152,7 @@ export async function listAvailableVendors(userId: string, operatingCompanyId: s
             COALESCE((es.raw_snapshot->>'Active')::boolean, true) AS active,
             ROW_NUMBER() OVER (PARTITION BY es.qbo_entity_id ORDER BY es.snapshot_taken_at DESC, es.created_at DESC) AS rn
           FROM qbo_archive.entities_snapshot es
-          WHERE es.operating_company_id = $1
+          WHERE es.operating_company_id = $1::uuid
             AND es.qbo_entity_type = 'Vendor'
         )
         SELECT qbo_vendor_id, display_name, company_name, active
@@ -220,7 +220,7 @@ async function ensureVendorExists(
     `
       SELECT es.qbo_entity_id AS id
       FROM qbo_archive.entities_snapshot es
-      WHERE es.operating_company_id = $1
+      WHERE es.operating_company_id = $1::uuid
         AND es.qbo_entity_type = 'Vendor'
         AND es.qbo_entity_id = $2
       LIMIT 1
@@ -480,7 +480,7 @@ export async function listDriverMappingStatus(userId: string, operatingCompanyId
       `
         SELECT id, first_name, last_name, qbo_vendor_id, qbo_vendor_linked_at::text
         FROM mdata.drivers
-        WHERE operating_company_id = $1
+        WHERE operating_company_id = $1::uuid
           AND deactivated_at IS NULL
         ORDER BY last_name, first_name
       `,
@@ -501,7 +501,7 @@ export async function listLinkageHistory(
 ) {
   return withCurrentUser(userId, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
-    const where: string[] = ["operating_company_id = $1"];
+    const where: string[] = ["operating_company_id = $1::uuid"];
     const values: unknown[] = [operatingCompanyId];
     if (entityType) {
       values.push(normalizeEntityType(entityType));

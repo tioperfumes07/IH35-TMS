@@ -58,7 +58,7 @@ export async function registerMaintenanceDriverReportsRoutes(app: FastifyInstanc
                                AND d.operating_company_id = r.operating_company_id
         LEFT JOIN mdata.loads l ON l.id = r.load_id
                              AND l.operating_company_id = r.operating_company_id
-        WHERE r.operating_company_id = $1
+        WHERE r.operating_company_id = $1::uuid
       `;
       if (query.data.status) {
         values.push(query.data.status);
@@ -90,7 +90,7 @@ export async function registerMaintenanceDriverReportsRoutes(app: FastifyInstanc
               reviewed_at = CASE WHEN $3 IN ('resolved','dismissed') AND reviewed_at IS NULL THEN now() WHEN $3 = 'under_review' THEN now() ELSE reviewed_at END,
               updated_at = now()
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
           RETURNING *
         `,
         [

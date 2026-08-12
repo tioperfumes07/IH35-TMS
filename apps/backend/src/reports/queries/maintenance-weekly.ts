@@ -11,7 +11,7 @@ export async function maintenanceWeeklyQuery(context: QueryContext): Promise<Rep
       `
         SELECT status::text AS status, count(*)::int AS count
         FROM maintenance.work_orders
-        WHERE operating_company_id = $1
+        WHERE operating_company_id = $1::uuid
           AND status NOT IN ('complete', 'cancelled')
         GROUP BY status
         ORDER BY count(*) DESC, status::text

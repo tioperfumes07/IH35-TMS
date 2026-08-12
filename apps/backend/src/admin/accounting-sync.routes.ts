@@ -47,7 +47,7 @@ export async function registerAdminAccountingSyncRoutes(app: FastifyInstance) {
     const rows = await withLuciaBypass(async (client) => {
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [q.data.operating_company_id]);
       const params: unknown[] = [q.data.operating_company_id];
-      let where = `operating_company_id = $1`;
+      let where = `operating_company_id = $1::uuid`;
       if (q.data.status) {
         params.push(q.data.status);
         where += ` AND sync_status = $${params.length}`;
@@ -126,7 +126,7 @@ export async function registerAdminAccountingSyncRoutes(app: FastifyInstance) {
     const rows = await withLuciaBypass(async (client) => {
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [q.data.operating_company_id]);
       const params: unknown[] = [q.data.operating_company_id];
-      let where = `operating_company_id = $1`;
+      let where = `operating_company_id = $1::uuid`;
       if (q.data.status) {
         params.push(q.data.status);
         where += ` AND status = $${params.length}`;
@@ -226,7 +226,7 @@ export async function registerAdminAccountingSyncRoutes(app: FastifyInstance) {
           SET sync_status = 'dead_letter',
               error_message = COALESCE(error_message, '') || ' reset-realm dead-letter',
               updated_at = now()
-          WHERE operating_company_id = $1
+          WHERE operating_company_id = $1::uuid
             AND sync_status IN ('pending','failed','in_flight')
         `,
         [body.data.operating_company_id]

@@ -65,7 +65,7 @@ export async function openLoadBookendedSettlement(
              is_sample_data
       FROM mdata.loads
       WHERE id = $1
-        AND operating_company_id = $2
+        AND operating_company_id = $2::uuid
         AND soft_deleted_at IS NULL
       LIMIT 1
     `,
@@ -97,7 +97,7 @@ export async function openLoadBookendedSettlement(
       SELECT s.id, s.display_id
       FROM driver_finance.driver_settlements s
       WHERE s.driver_id = $1
-        AND s.operating_company_id = $2
+        AND s.operating_company_id = $2::uuid
         AND s.settlement_model = 'load_bookended'
         AND s.trip_closed_at IS NULL
         -- ACCT-F347 — a CANCELLED settlement is not a reusable one. ACCT-F266 (below) stopped reuse
@@ -362,7 +362,7 @@ async function closeLoadBookendedSettlementForDriver(
     `
       SELECT count(*)::int AS cnt
       FROM mdata.loads l
-      WHERE l.operating_company_id = $1
+      WHERE l.operating_company_id = $1::uuid
         AND l.soft_deleted_at IS NULL
         AND l.id <> $2::uuid
         AND (
@@ -393,7 +393,7 @@ async function closeLoadBookendedSettlementForDriver(
     `
       SELECT id
       FROM driver_finance.driver_settlements
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
         AND driver_id = $2
         AND settlement_model = 'load_bookended'
         AND trip_closed_at IS NULL
@@ -590,7 +590,7 @@ export async function closeSettlementForFinalLoad(
     `
       SELECT id, load_number, assigned_primary_driver_id, assigned_secondary_driver_id
       FROM mdata.loads
-      WHERE id = $1 AND operating_company_id = $2 AND soft_deleted_at IS NULL
+      WHERE id = $1 AND operating_company_id = $2::uuid AND soft_deleted_at IS NULL
       LIMIT 1
     `,
     [opts.loadId, opts.operatingCompanyId]
@@ -628,7 +628,7 @@ export async function getActiveSettlementForDriver(
       SELECT id, display_id
       FROM driver_finance.driver_settlements
       WHERE driver_id = $1
-        AND operating_company_id = $2
+        AND operating_company_id = $2::uuid
         AND settlement_model = 'load_bookended'
         AND trip_closed_at IS NULL
         -- ACCT-F347 — same exclusion as the reuse query in openLoadBookendedSettlement. This reader
@@ -664,7 +664,7 @@ export async function pingSettlementOnLoadEvent(
     `
       SELECT assigned_primary_driver_id, assigned_secondary_driver_id, team_id
       FROM mdata.loads
-      WHERE id = $1 AND operating_company_id = $2 AND soft_deleted_at IS NULL
+      WHERE id = $1 AND operating_company_id = $2::uuid AND soft_deleted_at IS NULL
       LIMIT 1
     `,
     [opts.loadId, opts.operatingCompanyId]

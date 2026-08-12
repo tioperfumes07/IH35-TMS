@@ -187,7 +187,7 @@ async function driverExists(client: pg.Client, companyId: string, cdlNumber: str
     `
       SELECT id
       FROM mdata.drivers
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
         AND cdl_number = $2
       LIMIT 1
     `,
@@ -201,7 +201,7 @@ async function customerExists(client: pg.Client, companyId: string, customerCode
     `
       SELECT id
       FROM mdata.customers
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
         AND lower(customer_code) = lower($2)
       LIMIT 1
     `,
@@ -215,7 +215,7 @@ async function vendorExists(client: pg.Client, companyId: string, vendorCode: st
     `
       SELECT id
       FROM mdata.vendors
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
         AND lower(vendor_code) = lower($2)
       LIMIT 1
     `,
@@ -245,7 +245,7 @@ async function loadExists(client: pg.Client, operatingCompanyId: string, loadNum
     `
       SELECT id
       FROM mdata.loads
-      WHERE operating_company_id = $1 AND load_number = $2 AND soft_deleted_at IS NULL
+      WHERE operating_company_id = $1::uuid AND load_number = $2 AND soft_deleted_at IS NULL
       LIMIT 1
     `,
     [operatingCompanyId, loadNumber.trim()]
@@ -258,7 +258,7 @@ async function resolveCustomerIdForCompany(client: pg.Client, operatingCompanyId
     `
       SELECT id
       FROM mdata.customers
-      WHERE operating_company_id = $1 AND lower(customer_code) = lower($2)
+      WHERE operating_company_id = $1::uuid AND lower(customer_code) = lower($2)
       LIMIT 1
     `,
     [operatingCompanyId, customerCode.trim()]
@@ -310,7 +310,7 @@ async function resolveDriverIdByCdl(client: pg.Client, operatingCompanyId: strin
     `
       SELECT id
       FROM mdata.drivers
-      WHERE operating_company_id = $1 AND cdl_number = $2 AND deactivated_at IS NULL
+      WHERE operating_company_id = $1::uuid AND cdl_number = $2 AND deactivated_at IS NULL
       LIMIT 1
     `,
     [operatingCompanyId, cdlNumber]
@@ -333,7 +333,7 @@ async function resolveLoadIdByNumber(client: pg.Client, operatingCompanyId: stri
     `
       SELECT id
       FROM mdata.loads
-      WHERE operating_company_id = $1 AND load_number = $2 AND soft_deleted_at IS NULL
+      WHERE operating_company_id = $1::uuid AND load_number = $2 AND soft_deleted_at IS NULL
       LIMIT 1
     `,
     [operatingCompanyId, loadNumber.trim()]
@@ -353,7 +353,7 @@ async function resolveBankAccountId(
       `
         SELECT id
         FROM banking.bank_accounts
-        WHERE operating_company_id = $1 AND plaid_account_id = $2
+        WHERE operating_company_id = $1::uuid AND plaid_account_id = $2
         LIMIT 1
       `,
       [operatingCompanyId, plaidAccountId.trim()]
@@ -365,7 +365,7 @@ async function resolveBankAccountId(
       `
         SELECT id
         FROM banking.bank_accounts
-        WHERE operating_company_id = $1
+        WHERE operating_company_id = $1::uuid
           AND institution_name = $2
           AND account_mask = $3
         ORDER BY created_at DESC

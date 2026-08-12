@@ -63,7 +63,7 @@ async function assertTxnIdsTenantScoped(
     `
       SELECT id
       FROM banking.bank_transactions
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
         AND id = ANY($2::uuid[])
     `,
     [operatingCompanyId, txnIds]
@@ -112,7 +112,7 @@ export async function bulkCategorizeTransactions(
           updated_at = now(),
           skip_reason = NULL,
           investigate_note = NULL
-        WHERE bt.operating_company_id = $1
+        WHERE bt.operating_company_id = $1::uuid
           AND bt.id = ANY($5::uuid[])
           AND ${pendingStatusesSql()}
       `,
@@ -197,7 +197,7 @@ export async function bulkPostTransactionsAsBills(
           categorization_vendor_id,
           bank_account_id
         FROM banking.bank_transactions bt
-        WHERE bt.operating_company_id = $1
+        WHERE bt.operating_company_id = $1::uuid
           AND bt.id = ANY($2::uuid[])
           AND ${pendingStatusesSql()}
         ORDER BY bt.transaction_date ASC, bt.id ASC
@@ -353,7 +353,7 @@ export async function bulkPostTransactionsAsBills(
             categorized_at = now(),
             updated_at = now()
           WHERE id = $1
-            AND operating_company_id = $6
+            AND operating_company_id = $6::uuid
         `,
         [
           txn.id,

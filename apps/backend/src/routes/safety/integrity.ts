@@ -43,7 +43,7 @@ export async function registerSafetyIntegrityRoutes(app: FastifyInstance) {
     if (!query.success) return validationError(reply, query.error);
     const rows = await withCompany(user.uuid, user.role, query.data.operating_company_id, async (client) => {
       const res = await client.query(
-        `SELECT * FROM safety.v_wo_cost_outliers WHERE operating_company_id = $1 ORDER BY created_at DESC LIMIT 200`,
+        `SELECT * FROM safety.v_wo_cost_outliers WHERE operating_company_id = $1::uuid ORDER BY created_at DESC LIMIT 200`,
         [query.data.operating_company_id]
       );
       return res.rows;
@@ -58,7 +58,7 @@ export async function registerSafetyIntegrityRoutes(app: FastifyInstance) {
     if (!query.success) return validationError(reply, query.error);
     const rows = await withCompany(user.uuid, user.role, query.data.operating_company_id, async (client) => {
       const res = await client.query(
-        `SELECT * FROM safety.v_fuel_mpg_anomalies WHERE operating_company_id = $1 ORDER BY transaction_date DESC LIMIT 200`,
+        `SELECT * FROM safety.v_fuel_mpg_anomalies WHERE operating_company_id = $1::uuid ORDER BY transaction_date DESC LIMIT 200`,
         [query.data.operating_company_id]
       );
       return res.rows;
@@ -73,7 +73,7 @@ export async function registerSafetyIntegrityRoutes(app: FastifyInstance) {
     if (!query.success) return validationError(reply, query.error);
     const rows = await withCompany(user.uuid, user.role, query.data.operating_company_id, async (client) => {
       const res = await client.query(
-        `SELECT * FROM safety.v_driver_dwell_outliers WHERE operating_company_id = $1 ORDER BY minutes_over_avg DESC LIMIT 200`,
+        `SELECT * FROM safety.v_driver_dwell_outliers WHERE operating_company_id = $1::uuid ORDER BY minutes_over_avg DESC LIMIT 200`,
         [query.data.operating_company_id]
       );
       return res.rows;
@@ -88,7 +88,7 @@ export async function registerSafetyIntegrityRoutes(app: FastifyInstance) {
     if (!query.success) return validationError(reply, query.error);
     const rows = await withCompany(user.uuid, user.role, query.data.operating_company_id, async (client) => {
       const res = await client.query(
-        `SELECT * FROM safety.v_hos_pattern_breaks WHERE operating_company_id = $1 ORDER BY violations_30d DESC LIMIT 200`,
+        `SELECT * FROM safety.v_hos_pattern_breaks WHERE operating_company_id = $1::uuid ORDER BY violations_30d DESC LIMIT 200`,
         [query.data.operating_company_id]
       );
       return res.rows;
@@ -106,7 +106,7 @@ export async function registerSafetyIntegrityRoutes(app: FastifyInstance) {
         `
           SELECT *
           FROM safety.integrity_observations
-          WHERE operating_company_id = $1
+          WHERE operating_company_id = $1::uuid
           ORDER BY observed_at DESC
           LIMIT 500
         `,
@@ -132,7 +132,7 @@ export async function registerSafetyIntegrityRoutes(app: FastifyInstance) {
           UPDATE safety.integrity_observations
           SET status = 'reviewed', reviewed_at = now(), reviewed_by = $2
           WHERE id = $1
-            AND operating_company_id = $3
+            AND operating_company_id = $3::uuid
           RETURNING *
         `,
         [params.data.id, user.uuid, query.data.operating_company_id]
