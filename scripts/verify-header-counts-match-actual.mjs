@@ -49,6 +49,9 @@ const EXPECTED_TABLE_COUNTS = {
   dispatch: 11, // +load_cancellation_reasons +dispatcher_error_reasons +customer_quality_event_reasons
   drivers: 13, // +driver_termination_reasons +driver_load_statuses (LST-A-01 hub); LST-F20: +cash_advance_types +leave_types
   accounting: 16, // +journal_entry_types, +account_types, +detail_types, +void_cancel_reasons
+  customers: 3,
+  vendors: 2,
+  reference: 2,
 };
 
 // The accounting header total no longer has a literal bolted on: ACCOUNTING_JOURNAL_ENTRY_TYPES_COUNT

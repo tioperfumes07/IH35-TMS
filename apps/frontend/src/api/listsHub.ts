@@ -56,7 +56,10 @@ export type ListsModule =
   | "FUEL"
   | "FLEET"
   | "ACCOUNTING"
-  | "NAMES_MASTER";
+  | "NAMES_MASTER"
+  | "CUSTOMERS"
+  | "VENDORS"
+  | "REFERENCE";
 
 /**
  * The endpoint returns `degraded: true` + `missing_tables` when one of the module's spec tables does
@@ -69,4 +72,3 @@ export function getListsModuleCount(moduleSlug: string, companyId: string) {
     `/api/v1/lists/${encodeURIComponent(moduleSlug)}/count?${q(companyId)}`
   );
 }
-

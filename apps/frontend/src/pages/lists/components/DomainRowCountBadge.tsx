@@ -14,17 +14,16 @@ const DOMAIN_MODULE: Record<string, ListsModule> = {
   fleet: "FLEET",
   accounting: "ACCOUNTING",
   names_master: "NAMES_MASTER",
+  customers: "CUSTOMERS",
+  vendors: "VENDORS",
+  reference: "REFERENCE",
 };
-
-// These domains have no backend aggregate spec. Keep the opt-out explicit so a newly-added domain
-// fails verify:header-counts instead of issuing /lists/undefined/count and painting a false zero.
-const DOMAIN_WITHOUT_COUNT = new Set(["customers", "vendors", "reference"]);
 
 export function DomainRowCountBadge({ domain, className }: { domain: string; className?: string }) {
   const module = DOMAIN_MODULE[domain];
   const { count, loading, error, degraded, missingTables } = useModuleCount(module);
   if (loading) return <span className={className}>…</span>;
-  if (DOMAIN_WITHOUT_COUNT.has(domain) || !module || error || count == null) {
+  if (!module || error || count == null) {
     return <span className={className} title={error ?? "Live count is not available for this domain"}>—</span>;
   }
   // LST-F21: when a spec table is absent the count covers only the tables that exist. Marking it "+"

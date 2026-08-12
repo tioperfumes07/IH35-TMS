@@ -191,6 +191,19 @@ export const LISTS_MODULE_COUNT_SPECS: Record<string, ModuleCountTableSpec[]> = 
       whereSql: "customer_type::text = 'broker'",
     },
   ],
+  customers: [
+    { schema: "mdata", table: "customers", activeFilter: "deactivated_at", companyScoped: true },
+    { table: "customer_types", activeFilter: "is_active", companyScoped: true },
+    { table: "customer_quality_event_reasons", activeFilter: "is_active", companyScoped: true },
+  ],
+  vendors: [
+    { schema: "mdata", table: "vendors", activeFilter: "deactivated_at", companyScoped: true },
+    { table: "vendor_types", activeFilter: "is_active", companyScoped: true },
+  ],
+  reference: [
+    { table: "us_states", activeFilter: "is_active", companyScoped: false },
+    { table: "mexico_states", activeFilter: "is_active", companyScoped: false },
+  ],
 };
 
 // REMOVED 2026-07-25 — ACCOUNTING_JOURNAL_ENTRY_TYPES_COUNT was a hardcoded literal `3` ADDED to the
