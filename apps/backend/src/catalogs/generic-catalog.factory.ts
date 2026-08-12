@@ -67,6 +67,18 @@ const tableNameGuard = /^[a-z_]+$/;
 const urlSegmentGuard = /^[a-z-]+$/;
 const columnGuard = /^[a-z_]+$/;
 
+// Only these two catalogs are intentionally global. Every other table registered through this
+// factory is company-owned on the live schema and FORCE RLS. Defaulting an omitted flag to global
+// made those routes execute without app.operating_company_id and return a dishonest HTTP 200 empty.
+const GLOBAL_CATALOG_TABLES = new Set(["account_types", "audit_event_types"]);
+
+export function isEntityScopedCatalog(config: GenericCatalogConfig): boolean {
+  if (config.entityScoped === false && !GLOBAL_CATALOG_TABLES.has(config.tableName)) {
+    throw new Error(`entity_scoped_catalog_cannot_be_global: catalogs.${config.tableName}`);
+  }
+  return config.entityScoped ?? !GLOBAL_CATALOG_TABLES.has(config.tableName);
+}
+
 /** API column -> physical column, honouring the per-catalog aliases. */
 function dbColumnForApiColumn(column: string, config?: GenericCatalogConfig): string {
   // LV-CAT-500: the previous default `name` broke tables whose physical display-name column
@@ -115,6 +127,7 @@ export function createCatalogRoutes(
   options: { mode?: RouteMode } = {}
 ) {
   const mode = options.mode ?? "all";
+  const entityScoped = isEntityScopedCatalog(config);
   if (!tableNameGuard.test(config.tableName)) throw new Error(`invalid_table_name_for_catalog_factory: ${config.tableName}`);
   if (!urlSegmentGuard.test(config.urlSegment)) throw new Error(`invalid_url_segment_for_catalog_factory: ${config.urlSegment}`);
   for (const column of [...config.allowedColumns, ...config.searchableColumns, config.defaultSort.column, config.softDeleteColumn]) {
@@ -156,14 +169,14 @@ export function createCatalogRoutes(
       app.get(basePath, async (req, reply) => {
         const authUser = currentAuthUser(req, reply);
         if (!authUser) return;
-        const parsed = (config.entityScoped ? companyScopedListQuerySchema : listQuerySchema).safeParse(req.query ?? {});
+        const parsed = (entityScoped ? companyScopedListQuerySchema : listQuerySchema).safeParse(req.query ?? {});
         if (!parsed.success) return validationError(reply, parsed.error);
         const q = parsed.data;
 
         const runList = async (client: any) => {
           const values: unknown[] = [];
           const where: string[] = [];
-          if (config.entityScoped) {
+          if (entityScoped) {
             values.push(q.operating_company_id);
             where.push(`t.operating_company_id = $${values.length}`);
           }
@@ -198,7 +211,7 @@ export function createCatalogRoutes(
           return { rows: rowsRes.rows, total: Number((countRes.rows[0] as { total?: string } | undefined)?.total ?? 0) };
         };
 
-        if (config.entityScoped) {
+        if (entityScoped) {
           return withCompanyScope(authUser.uuid, q.operating_company_id as string, runList);
         }
         return withCurrentUser(authUser.uuid, runList);
@@ -209,7 +222,7 @@ export function createCatalogRoutes(
         if (!authUser) return;
         if (config.readOnly) return reply.code(405).send({ error: "catalog_read_only" });
         if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
-        const parsedQuery = (config.entityScoped ? companyScopedCompanyQuerySchema : companyQuerySchema).safeParse(
+        const parsedQuery = (entityScoped ? companyScopedCompanyQuerySchema : companyQuerySchema).safeParse(
           req.query ?? {}
         );
         if (!parsedQuery.success) return validationError(reply, parsedQuery.error);
@@ -220,10 +233,10 @@ export function createCatalogRoutes(
 
         const runCreate = async (client: any) => {
           if ("code" in body && body.code) {
-            const conflictSql = config.entityScoped
+            const conflictSql = entityScoped
               ? `SELECT id FROM catalogs.${config.tableName} WHERE code = $1 AND operating_company_id = $2 LIMIT 1`
               : `SELECT id FROM catalogs.${config.tableName} WHERE code = $1 LIMIT 1`;
-            const conflictVals = config.entityScoped ? [body.code, operatingCompanyId] : [body.code];
+            const conflictVals = entityScoped ? [body.code, operatingCompanyId] : [body.code];
             const conflict = await client.query(conflictSql, conflictVals);
             if (conflict.rows.length > 0) return { error: `catalog_${config.tableName}_code_conflict` as const };
           }
@@ -232,7 +245,7 @@ export function createCatalogRoutes(
           const insertValues: unknown[] = [authUser.uuid, authUser.uuid];
           const placeholders = ["$1", "$2"];
           let paramIndex = 3;
-          if (config.entityScoped) {
+          if (entityScoped) {
             insertColumns.push("operating_company_id");
             insertValues.push(operatingCompanyId);
             placeholders.push(`$${paramIndex}`);
@@ -264,7 +277,7 @@ export function createCatalogRoutes(
           return { row };
         };
 
-        const created = config.entityScoped
+        const created = entityScoped
           ? await withCompanyScope(authUser.uuid, operatingCompanyId as string, runCreate)
           : await withCurrentUser(authUser.uuid, runCreate);
 
