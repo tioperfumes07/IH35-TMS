@@ -138,6 +138,14 @@
       "leafRe": "^(customers\\.|loads\\.|invoices\\.)"
     },
     {
+      "task": "P42-vendors",
+      "pr": "#5957",
+      "guard": "scripts/verify-lst-picker-config-driven.mjs",
+      "modules": ["vendors", "accounting", "maintenance"],
+      "cols": ["connectivity", "picker", "expense", "ap_bill"],
+      "leafRe": "^(vendors\\.|expenses\\.|bills\\.)"
+    },
+    {
       "task": "P29",
       "pr": "#5821",
       "guard": "scripts/verify-steps/3073-verify-failed-posting-batch-is-retriable.mjs",

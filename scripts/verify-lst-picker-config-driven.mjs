@@ -75,6 +75,9 @@ const FILES = {
   bookLoadCustomer: "apps/frontend/src/pages/dispatch/components/BookLoadCustomerSection.tsx",
   invoiceCustomer: "apps/frontend/src/pages/accounting/modals/InvoiceTypeModalBase.tsx",
   customerConsumerMigration: "db/migrations/202612512000_p43_load_invoice_customer_same_opco_fks.sql",
+  recordExpenseForm: "apps/frontend/src/components/expenses/RecordExpenseForm.tsx",
+  expenseRoutes: "apps/backend/src/accounting/expenses.routes.ts",
+  expenseVendorMigration: "db/migrations/202612512200_p42_expense_vendor_same_opco_fk.sql",
 };
 
 const MISSING = "MISSING";
@@ -251,6 +254,9 @@ export function contractErrors(src) {
   if (!/createKind="customer"/.test(src.bookLoadCustomer) || !/customer_id/.test(src.bookLoadCustomer)) errors.push("P43-FK: Book Load must select canonical customer UUID with inline create");
   if (!/createKind="customer"/.test(src.invoiceCustomer) || !/customer_id/.test(src.invoiceCustomer)) errors.push("P43-FK: invoice create must select canonical customer UUID with inline create");
   if (!/loads_customer_same_company_fk/.test(src.customerConsumerMigration) || !/invoices_customer_same_company_fk/.test(src.customerConsumerMigration)) errors.push("P43-FK: loads and invoices must enforce same-opco customer FKs");
+  if (!/createKind="vendor"/.test(src.recordExpenseForm) || !/vendorUuid/.test(src.recordExpenseForm)) errors.push("P42-FK: Record Expense must select canonical vendor UUID with inline create");
+  if (!/expense_vendor_not_in_company/.test(src.expenseRoutes) || !/operating_company_id = \$2::uuid/.test(src.expenseRoutes)) errors.push("P42-FK: expense create route must reject a foreign-opco vendor UUID");
+  if (!/expenses_vendor_same_company_fk/.test(src.expenseVendorMigration) || !/FOREIGN KEY \(vendor_uuid, operating_company_id\)/.test(src.expenseVendorMigration)) errors.push("P42-FK: expenses must enforce a same-opco canonical vendor FK");
 
   // ── CONFIG-DRIVEN: the pinned defect ────────────────────────────────────────────────────────
   if (/INLINE_KINDS/.test(select)) {

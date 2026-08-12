@@ -506,6 +506,16 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
         const hasWorkOrderId = await columnExists(client, "accounting", "expenses", "linked_work_order_uuid");
         const hasUnitId = await columnExists(client, "accounting", "expenses", "unit_id");
 
+        if (body.vendor_uuid) {
+          const vendorRes = await client.query(
+            `SELECT id FROM mdata.vendors
+             WHERE id = $1::uuid AND operating_company_id = $2::uuid AND deactivated_at IS NULL
+             LIMIT 1`,
+            [body.vendor_uuid, body.operating_company_id]
+          );
+          if (!vendorRes.rows[0]) return { vendorNotInCompany: true as const };
+        }
+
         // Resolve the form's QBO category account → a catalogs.accounts (GL) id, ENTITY-SCOPED
         // (operating_company_id) per TRK/TRANSP/USMCA independence. Reject if the QBO account isn't yet
         // bridged into this entity's ledger chart — surfaced as an honest CoA-gap, never silently
@@ -827,6 +837,8 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
           error: "expense_category_not_in_entity_catalog",
           detail: "The selected expense category does not belong to this operating company, or is inactive. Pick a category from this entity's Expense Categories list.",
         });
+      if ("vendorNotInCompany" in payload)
+        return reply.code(400).send({ error: "expense_vendor_not_in_company" });
       void withCompanyScope(user.uuid, (payload as { operating_company_id?: string })?.operating_company_id ?? body.operating_company_id, (client) =>
         emitAccountingSpineEvent(client, {
           operating_company_id: body.operating_company_id,
