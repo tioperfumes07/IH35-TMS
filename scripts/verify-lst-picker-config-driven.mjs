@@ -61,6 +61,7 @@ const FILES = {
   dispatchFlagMigration: "db/migrations/202612502000_p44_dispatch_flag_color_canonical_fk.sql",
   accessorialEditor: "apps/frontend/src/components/dispatch/AccessorialEditor.tsx",
   additionalChargeMigration: "db/migrations/202612502200_p44_load_additional_charge_lines_canonical_fk.sql",
+  lumperProviderMigration: "db/migrations/202612502300_p44_load_stop_lumper_provider_canonical_fk.sql",
 };
 
 const MISSING = "MISSING";
@@ -207,6 +208,15 @@ export function contractErrors(src) {
   }
   if (!/additional_charge_id:\s*str\(line\.additional_charge_id\)/.test(src.editMapping)) {
     errors.push("P44-FK: canonical accessorial selection must survive detail reload into Edit Book Load");
+  }
+  if (!/createKind="lumper_provider"/.test(src.bookLoad) || !/lumper_provider_id:\s*stop\.lumper_provider_id/.test(src.bookLoad)) {
+    errors.push("P44-FK: Book Load must select and submit the canonical lumper provider UUID");
+  }
+  if (!/load_stops_lumper_provider_required/.test(src.lumperProviderMigration) || !/enforce_load_stop_lumper_provider_company/.test(src.lumperProviderMigration)) {
+    errors.push("P44-FK: lumper-required stops must enforce a non-null same-opco provider FK");
+  }
+  if (!/lumper_provider_id:\s*str\(s\.lumper_provider_id\)/.test(src.editMapping)) {
+    errors.push("P44-FK: lumper provider selection must survive stop detail reload into Edit Book Load");
   }
 
   // ── CONFIG-DRIVEN: the pinned defect ────────────────────────────────────────────────────────

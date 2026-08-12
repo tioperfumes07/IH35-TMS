@@ -14,7 +14,7 @@ import { createPortal } from "react-dom";
 import { useForm, type FieldErrors, type UseFormSetValue } from "react-hook-form";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createDispatchLoad } from "../../../api/dispatch";
-import { loadTypesCatalogClient, pickupTimeTypesCatalogClient } from "../../../api/catalogs-dispatch";
+import { loadTypesCatalogClient, lumperProvidersCatalogClient, pickupTimeTypesCatalogClient } from "../../../api/catalogs-dispatch";
 import { ApiError } from "../../../api/client";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { entityLabel } from "../../../lib/entity-label";
@@ -166,6 +166,7 @@ type FormValues = BookLoadFormValues & {
     appointment_start_at?: string;
     appointment_end_at?: string;
     lumper_required?: boolean;
+    lumper_provider_id?: string;
     lumper_paid_by?: "carrier" | "shipper" | "broker" | "receiver" | "unknown";
     lumper_amount_cents?: number;
     is_tarp_stop?: boolean;
@@ -518,6 +519,15 @@ export function BookLoadModalV4({
     () => (pickupTimeTypesQuery.data?.rows ?? []).map((row) => ({ value: row.id, label: row.display_name, type: row.code })),
     [pickupTimeTypesQuery.data?.rows]
   );
+  const lumperProvidersQuery = useQuery({
+    queryKey: ["book-load-lumper-providers", operatingCompanyId],
+    queryFn: () => lumperProvidersCatalogClient.list({ operating_company_id: operatingCompanyId, is_active: "true", limit: 200 }),
+    enabled: Boolean(operatingCompanyId),
+  });
+  const lumperProviderOptions = useMemo(
+    () => (lumperProvidersQuery.data?.rows ?? []).map((row) => ({ value: row.id, label: row.display_name, type: row.code })),
+    [lumperProvidersQuery.data?.rows]
+  );
   const loadTypesQuery = useQuery({
     queryKey: ["book-load-catalog-load-types", operatingCompanyId],
     queryFn: () => loadTypesCatalogClient.list({ operating_company_id: operatingCompanyId, is_active: "true", limit: 200 }),
@@ -862,6 +872,7 @@ export function BookLoadModalV4({
           // (backend Zod boolean rejects the string). Coerce to a strict boolean on the wire. (GUARD live
           // repro: stops posted is_tarp_stop:"" → 400 "expected boolean, received string".)
           lumper_required: stop.lumper_required === true || (stop.lumper_required as unknown) === "true",
+          lumper_provider_id: stop.lumper_provider_id || undefined,
           lumper_paid_by: stop.lumper_paid_by,
           lumper_amount_cents: Number(stop.lumper_amount_cents || 0),
           is_tarp_stop: stop.is_tarp_stop === true || (stop.is_tarp_stop as unknown) === "true",
@@ -1442,7 +1453,7 @@ export function BookLoadModalV4({
                       <div data-testid="section-a-lumper-responsibility" className="space-y-1">
                         <p className="text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-500">Lumper responsibility</p>
                         {withLumper.map(({ s, i }) => (
-                          <div key={i} className="grid grid-cols-1 items-end gap-2 rounded-sm border border-gray-200 p-1 md:grid-cols-3">
+                          <div key={i} className="grid grid-cols-1 items-end gap-2 rounded-sm border border-gray-200 p-1 md:grid-cols-4">
                             <div className="text-[10px] font-semibold text-gray-600">
                               Stop {i + 1} · {s?.stop_type === "delivery" ? "Delivery" : "Pickup"}
                             </div>
@@ -1455,6 +1466,19 @@ export function BookLoadModalV4({
                                 <option value="receiver">Receiver</option>
                                 <option value="unknown">Unknown</option>
                               </SelectCombobox>
+                            </label>
+                            <label className="text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-500">
+                              Lumper provider
+                              <ReferenceSelect
+                                value={form.watch(`stops.${i}.lumper_provider_id`) || null}
+                                onChange={(value) => form.setValue(`stops.${i}.lumper_provider_id`, value ?? "", { shouldDirty: true })}
+                                options={lumperProviderOptions}
+                                createKind="lumper_provider"
+                                operatingCompanyId={operatingCompanyId}
+                                loading={lumperProvidersQuery.isLoading}
+                                placeholder="Select provider"
+                                onOptionCreated={() => void lumperProvidersQuery.refetch()}
+                              />
                             </label>
                             <label className="flex items-center gap-2 text-[11px] text-gray-700">
                               <input type="checkbox" {...form.register(`stops.${i}.lumper_required`)} /> Lumper required
