@@ -37,10 +37,6 @@
     "202612502200": {
       "claimed_by": "cursor",
       "purpose": "p44_load_additional_charge_lines_canonical_fk"
-    },
-    "202612502300": {
-      "claimed_by": "cursor",
-      "purpose": "p44_load_stop_lumper_provider_canonical_fk"
     }
   }
 }
