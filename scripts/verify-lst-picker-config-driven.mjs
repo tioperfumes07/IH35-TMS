@@ -69,6 +69,9 @@ const FILES = {
   complaintsTab: "apps/frontend/src/pages/safety/tabs/ComplaintsTab.tsx",
   complaintsRoute: "apps/backend/src/routes/safety/complaints.ts",
   complaintTypeMigration: "db/migrations/202612511600_p44_complaint_type_same_opco_fk.sql",
+  cargoClaimSurface: "apps/frontend/src/pages/safety/components/CargoClaimIntakeSurface.tsx",
+  incidentsRoute: "apps/backend/src/safety/incidents.routes.ts",
+  cargoClaimReasonMigration: "db/migrations/202612511800_p44_cargo_claim_reason_same_opco_fk.sql",
 };
 
 const MISSING = "MISSING";
@@ -239,6 +242,9 @@ export function contractErrors(src) {
   if (!/createKind="complaint_type"/.test(src.complaintsTab) || !/complaint_type_id:\s*form\.complaint_type_id/.test(src.complaintsTab)) errors.push("P44-FK: complaint creator must select and submit canonical complaint type UUID");
   if (!/complaint_type_id:\s*z\.string\(\)\.uuid/.test(src.complaintsRoute) || !/\$12::uuid/.test(src.complaintsRoute)) errors.push("P44-FK: complaint create route must validate and persist complaint_type_id UUID");
   if (!/complaints_complaint_type_same_company_fk/.test(src.complaintTypeMigration) || !/FOREIGN KEY \(complaint_type_id, operating_company_id\)/.test(src.complaintTypeMigration)) errors.push("P44-FK: complaints must enforce a NOT NULL same-opco type FK");
+  if (!/createKind="cargo_claim_reason"/.test(src.cargoClaimSurface) || !/claim_reason_id:\s*form\.claimReasonId/.test(src.cargoClaimSurface)) errors.push("P44-FK: cargo claim creator must select and submit canonical reason UUID");
+  if (!/claim_reason_id:\s*z\.string\(\)\.uuid/.test(src.incidentsRoute) || !/claim_reason_id,/.test(src.incidentsRoute)) errors.push("P44-FK: incident create route must validate and persist claim_reason_id UUID");
+  if (!/incidents_claim_reason_same_company_fk/.test(src.cargoClaimReasonMigration) || !/incidents_cargo_claim_reason_required/.test(src.cargoClaimReasonMigration)) errors.push("P44-FK: cargo claims must enforce a required same-opco reason FK");
 
   // ── CONFIG-DRIVEN: the pinned defect ────────────────────────────────────────────────────────
   if (/INLINE_KINDS/.test(select)) {

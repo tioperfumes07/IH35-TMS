@@ -122,6 +122,14 @@
       "leafRe": "^(lists\\.|safety\\.|complaints\\.)"
     },
     {
+      "task": "P44-cargo-claim-reasons",
+      "pr": "#5951",
+      "guard": "scripts/verify-lst-picker-config-driven.mjs",
+      "modules": ["lists", "safety", "insurance"],
+      "cols": ["connectivity", "picker", "load"],
+      "leafRe": "^(lists\\.|safety\\.|insurance\\.|cargo_claims\\.)"
+    },
+    {
       "task": "P29",
       "pr": "#5821",
       "guard": "scripts/verify-steps/3073-verify-failed-posting-batch-is-retriable.mjs",

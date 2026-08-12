@@ -37,10 +37,13 @@ export function collectProblems(root = ROOT) {
     if (!/ReferenceSelect/.test(code)) {
       problems.push(`${PAGE}: must import/use ReferenceSelect`);
     }
-    if (!/createdValueField=["']code["']/.test(code)) {
-      problems.push(`${PAGE}: must select by reason_code (createdValueField=code)`);
+    if (!/claim_reason_id:\s*form\.claimReasonId/.test(code)) {
+      problems.push(`${PAGE}: create payload must submit canonical claim_reason_id UUID`);
     }
-    if (/data-testid=\{`\$\{pageTestId\}-reason`\}[\s\S]{0,120}<select/.test(code) || /claimReasonCode[\s\S]{0,200}<option value="">— Select reason/.test(code)) {
+    if (!/value:\s*String\(r\.id\)/.test(code)) {
+      problems.push(`${PAGE}: reason options must be keyed by catalog UUID`);
+    }
+    if (/data-testid=\{`\$\{pageTestId\}-reason`\}[\s\S]{0,120}<select/.test(code) || /claimReasonId[\s\S]{0,200}<option value="">— Select reason/.test(code)) {
       problems.push(`${PAGE}: must not keep bare <select> dual path for claim reason`);
     }
   }
