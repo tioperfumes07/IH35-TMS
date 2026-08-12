@@ -1,10 +1,10 @@
 # Cursor INBOX
 
-**JORGE AWAY** · NO-PAUSE · Built **71%** (2165/3051) after Required honesty
+**NO PAUSE** · Built **74%** · connectivity **0**
 
 ## ☐ NOW
-1. 5m lead tick + **15m seat nudge** (tmux cc1/cc2)
-2. Overflow: `column=connectivity` FE if CC-2 idle · Required honesty if counts lie
-3. FAST-MERGE ready tips · refresh gap · **never idle**
+1. Bus ticks · seat nudge · gap refresh
+2. Overflow: load / reverse_link / non-GL Wave C FE if seats idle
+3. Never Wave D until A–C green
 
 OUTBOX one-liner every ship.

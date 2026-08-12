@@ -1,10 +1,10 @@
-# Codex INBOX · `/private/tmp/IH35-devin-b/INBOX.md`
+# Codex INBOX
 
-**NO PAUSE AFTER MERGE** · Built **71%** · Wave A atoms largely drained
+**NO PAUSE** · Wave B connectivity **DRAINED**
 
 ## ☐ NOW
-1. **`column=load`** — all owed (29) · `@matrix-built` + **`leafRe`** · FAST-MERGE
-2. Partner **`connectivity`** leftovers if load blocked
-3. **Do not pause** — OUTBOX then next column same turn
+1. **`column=load`** leftovers (if any) · `@matrix-built` + leafRe
+2. Else partner Wave C FE (non-GL) / reverse_link stragglers
+3. FAST-MERGE → next · no pause
 
-**FORBIDDEN:** idle after merge · module-deep · Wave D · tag without leafRe
+**FORBIDDEN:** Wave D chrome · module-deep · idle after merge
