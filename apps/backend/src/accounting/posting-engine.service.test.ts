@@ -4,9 +4,13 @@ type QueryCall = { sql: string; values?: unknown[] };
 
 const withCurrentUserMock = vi.fn();
 
-vi.mock("../auth/db.js", () => ({
-  withCurrentUser: (...args: unknown[]) => withCurrentUserMock(...args),
-}));
+// Partial-mock so other exports (luciaPool, etc.) stay real for the module graph — auth/lucia.ts
+// constructs its adapter from luciaPool at import time, so a bare replacement mock breaks the whole
+// import chain (same fix shape as posting-kill-switch-gated.test.ts / posting-engine-driver-advance.test.ts).
+vi.mock("../auth/db.js", async (orig) => {
+  const actual = (await orig()) as Record<string, unknown>;
+  return { ...actual, withCurrentUser: (...args: unknown[]) => withCurrentUserMock(...args) };
+});
 
 function createMockClient(handler: (sql: string, values?: unknown[]) => { rows: unknown[]; rowCount?: number }) {
   const calls: QueryCall[] = [];
