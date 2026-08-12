@@ -196,34 +196,12 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
     onError: () => pushToast("Failed to update R&M status", "error"),
   });
 
+  // CLS-MONEY-KPI-FAKE-ZERO remainder (maintenance): never substitute a zero object when the
+  // dashboard KPI fetch fails or has not arrived — MaintKpiRows/RMStatStrip render "—" for absent
+  // fields. A fabricated open_wos:0 next to a loaded work-order table is the Cascade finding.
   const kpis = useMemo(
-    () =>
-      kpisQuery.data ?? {
-        open_wos: 0,
-        in_shop: 0,
-        past_due_pm: 0,
-        out_of_service: 0,
-        open_damage: 0,
-        avg_wo_age_days: 0,
-        mtd_repair_cost: 0,
-        mtd_parts_cost: 0,
-        avg_wo_cost: 0,
-        top_vendor: null,
-        top_failure: null,
-        pending_qbo: 0,
-        past_due: 0,
-        avg_close_days: 0,
-        open_dollars: 0,
-        tire_alerts: 0,
-        pm_due: 0,
-        dot_oos: 0,
-        in_progress: 0,
-        waiting_parts: 0,
-        severe_oos: 0,
-        road_service: 0,
-        parts_low_stock: 0,
-      },
-    [kpisQuery.data]
+    () => (kpisQuery.isError ? ({} as NonNullable<typeof kpisQuery.data>) : (kpisQuery.data ?? ({} as NonNullable<typeof kpisQuery.data>))),
+    [kpisQuery.data, kpisQuery.isError]
   );
 
   const partsReorderRows = partsReorderQuery.data?.rows ?? [];
@@ -293,7 +271,7 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
         })}
       </SubTabRow>
 
-      <MaintKpiRows kpis={kpis} />
+      <MaintKpiRows kpis={kpis} isError={kpisQuery.isError} />
       {/* On the R&M Status Board these three cards move into the right sidebar (compact) below; every
           other tab keeps its existing full-width layout. */}
       {companyId && tab !== "rm_status_board" ? (
