@@ -13,6 +13,7 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { formatDateTimeUS } from "../../lib/formatDate";
 import { entityLabel } from "../../lib/entity-label";
+import { EntityLink } from "../../components/shared/EntityLink";
 
 export function PmAutoEnginePage() {
   const { selectedCompanyId } = useCompanyContext();
@@ -116,8 +117,13 @@ export function PmAutoEnginePage() {
           {(dashboardQ.data?.recent_log ?? []).map((entry) => (
             <li key={entry.id} className="border-t border-gray-100 pt-1 first:border-0 first:pt-0">
               <span className="font-medium">{entry.action}</span> — {entityLabel(entry.schedule_label, entry.pm_schedule_id, "Schedule")}{" "}
-              {entry.unit_number ? `(${entityLabel(entry.unit_number, entry.unit_id, "Unit")})` : ""}
-              {entry.work_order_id ? ` · WO ${entry.work_order_id}` : ""}
+              {entry.unit_number ? <>(<EntityLink kind="unit" id={entry.unit_id} label={entityLabel(entry.unit_number, entry.unit_id, "Unit")} />)</> : ""}
+              {entry.work_order_id ? (
+                <>
+                  {" "}
+                  · WO <EntityLink kind="work_order" id={entry.work_order_id} label={entry.work_order_id} />
+                </>
+              ) : ""}
             </li>
           ))}
           {(dashboardQ.data?.recent_log ?? []).length === 0 ? (
