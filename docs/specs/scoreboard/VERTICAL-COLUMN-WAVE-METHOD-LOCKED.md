@@ -49,11 +49,13 @@ From every `*.required.json` — subset per module, **same column ids**:
 
 | Wave order | Group | Column ids | Wiring bar (create paths — schema assumed done) |
 |------------|-------|------------|--------------------------------------------------|
-| **A** | **linkage** | `driver` · `customer` · `vendor` · `unit` · `trailer` · `load` | Every picker/submit on applicable leaves writes **canonical FK** (not memo-only). Forward path: UI field → API payload → `mdata.*` / hub table. |
+| **A** | **linkage** | `driver` · `customer` · `vendor` · `unit` · `trailer` · `load` · **`claim` · `work_order` · `accident` · `policy` · `settlement` · `legal_matter`** (owner 2026-08-12 — §B9 link types as matrix columns) | Every picker/submit on applicable leaves writes **canonical FK** (not memo-only). Forward path: UI field → API payload → `mdata.*` / hub table. |
 | **B** | **wiring (double linkage)** | `connectivity` · `reverse_link` | **Forward:** nav → route → component → API → canonical row. **Reverse:** EntityLink / graph / profile tab clicks **back** to source with live data. Code trace alone = not Built. |
-| **C** | **money / economics** | `ap_bill` · `expense` · `gl_je` · `liability` | Purpose picks money object; poster path exists; balanced JE when posting flag ON (CC-1). Header **and** lines; no silent skip. |
+| **C** | **money / economics** | `ap_bill` · `expense` · **`invoice` · `bank`** · `gl_je` · `liability` · `inventory` | Purpose picks money object; poster path exists; balanced JE when posting flag ON (CC-1). Header **and** lines; no silent skip. AR invoice + bank match are first-class columns (owner 2026-08-12). |
 | **D** | **chrome** | `picker_law` · `qbo_chrome` | V2: `+ Add new` first row → module creator → same table R=W → selected → reload. V1: ParityDrawer, calendar, `+ Create`. |
 | **E** | **process** | `scenario.*` | Scenario probe holds **after** A–D wired on that slice — not before. |
+
+**Surface inventory (owner 2026-08-12):** every Modal / Drawer / Panel / Wizard / Sheet / Dialog / Flyout / Popover / ParityDrawer host is a **Required leaf** (rows), not a column. Guard: `verify-required-surface-inventory-complete` (step **3118**).
 
 **Owner sequence for coders:** **A → B → C → D** on all priority modules **in parallel lanes** (disjoint hotfiles). **E + Box 4 Live** = **after entire software wired** — system test pass, not during wire sprint.
 

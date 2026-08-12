@@ -70,6 +70,46 @@
       "id": "reverse_link",
       "group": "wiring",
       "label": "Reverse link"
+    },
+    {
+      "id": "claim",
+      "group": "linkage",
+      "label": "Claim"
+    },
+    {
+      "id": "work_order",
+      "group": "linkage",
+      "label": "Work order"
+    },
+    {
+      "id": "accident",
+      "group": "linkage",
+      "label": "Accident"
+    },
+    {
+      "id": "policy",
+      "group": "linkage",
+      "label": "Policy"
+    },
+    {
+      "id": "settlement",
+      "group": "linkage",
+      "label": "Settlement"
+    },
+    {
+      "id": "legal_matter",
+      "group": "linkage",
+      "label": "Legal matter"
+    },
+    {
+      "id": "invoice",
+      "group": "money",
+      "label": "AR / Invoice"
+    },
+    {
+      "id": "bank",
+      "group": "money",
+      "label": "Bank / Match"
     }
   ],
   "leaves": [
@@ -186,7 +226,7 @@
     {
       "id": "scenario.redirect",
       "tab": "Scenario tracker",
-      "sub": "/home/scenario-tracker → /program",
+      "sub": "/home/scenario-tracker \u2192 /program",
       "route_hint": "/home/scenario-tracker",
       "required": [
         "connectivity",
@@ -204,6 +244,34 @@
         "reverse_link",
         "qbo_chrome"
       ]
+    },
+    {
+      "id": "program.parity.legacy_audit_scoreboard_page",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Legacy Audit Scoreboard Page",
+      "route_hint": "surface://pages/program/LegacyAuditScoreboardPage.tsx",
+      "surface_kind": "parity_site",
+      "surface_path": "pages/program/LegacyAuditScoreboardPage.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link"
+      ]
     }
-  ]
+  ],
+  "honesty_audit": {
+    "surface_inventory_2026_08_12": {
+      "added_leaves": 1,
+      "new_columns": [
+        "claim",
+        "work_order",
+        "accident",
+        "policy",
+        "settlement",
+        "legal_matter",
+        "invoice",
+        "bank"
+      ],
+      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; \u00a7B9 link columns added."
+    }
+  }
 }

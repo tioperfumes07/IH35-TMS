@@ -69,6 +69,46 @@
       "id": "reverse_link",
       "group": "wiring",
       "label": "Reverse link"
+    },
+    {
+      "id": "claim",
+      "group": "linkage",
+      "label": "Claim"
+    },
+    {
+      "id": "work_order",
+      "group": "linkage",
+      "label": "Work order"
+    },
+    {
+      "id": "accident",
+      "group": "linkage",
+      "label": "Accident"
+    },
+    {
+      "id": "policy",
+      "group": "linkage",
+      "label": "Policy"
+    },
+    {
+      "id": "settlement",
+      "group": "linkage",
+      "label": "Settlement"
+    },
+    {
+      "id": "legal_matter",
+      "group": "linkage",
+      "label": "Legal matter"
+    },
+    {
+      "id": "invoice",
+      "group": "money",
+      "label": "AR / Invoice"
+    },
+    {
+      "id": "bank",
+      "group": "money",
+      "label": "Bank / Match"
     }
   ],
   "leaves": [
@@ -199,6 +239,83 @@
         "reverse_link",
         "picker_law"
       ]
+    },
+    {
+      "id": "docs.modal.edit_metadata",
+      "tab": "Modals",
+      "sub": "Modal: Edit Metadata",
+      "route_hint": "surface://components/documents/EditMetadataModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "components/documents/EditMetadataModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "docs.modal.preview",
+      "tab": "Modals",
+      "sub": "Modal: Preview",
+      "route_hint": "surface://components/documents/PreviewModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "components/documents/PreviewModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "docs.modal.soft_delete",
+      "tab": "Modals",
+      "sub": "Modal: Soft Delete",
+      "route_hint": "surface://components/documents/SoftDeleteModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "components/documents/SoftDeleteModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "docs.modal.upload",
+      "tab": "Modals",
+      "sub": "Modal: Upload",
+      "route_hint": "surface://components/documents/UploadModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "components/documents/UploadModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "load"
+      ]
+    },
+    {
+      "id": "docs.modal.version_history",
+      "tab": "Modals",
+      "sub": "Modal: Version History",
+      "route_hint": "surface://components/documents/VersionHistoryModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "components/documents/VersionHistoryModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link"
+      ]
     }
-  ]
+  ],
+  "honesty_audit": {
+    "surface_inventory_2026_08_12": {
+      "added_leaves": 5,
+      "new_columns": [
+        "claim",
+        "work_order",
+        "accident",
+        "policy",
+        "settlement",
+        "legal_matter",
+        "invoice",
+        "bank"
+      ],
+      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; \u00a7B9 link columns added."
+    }
+  }
 }

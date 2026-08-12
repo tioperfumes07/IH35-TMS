@@ -2,7 +2,7 @@
   "module": "fuel",
   "entity_default": "USMCA",
   "source": {
-    "arch_design": "IH35_ARCHITECTURAL_DESIGN — Fuel",
+    "arch_design": "IH35_ARCHITECTURAL_DESIGN \u2014 Fuel",
     "nav": "apps/frontend/src/pages/fuel/FUEL_TABS_CONFIG.ts",
     "routes": "/fuel/*"
   },
@@ -76,6 +76,46 @@
       "id": "reverse_link",
       "group": "wiring",
       "label": "Reverse link"
+    },
+    {
+      "id": "claim",
+      "group": "linkage",
+      "label": "Claim"
+    },
+    {
+      "id": "work_order",
+      "group": "linkage",
+      "label": "Work order"
+    },
+    {
+      "id": "accident",
+      "group": "linkage",
+      "label": "Accident"
+    },
+    {
+      "id": "policy",
+      "group": "linkage",
+      "label": "Policy"
+    },
+    {
+      "id": "settlement",
+      "group": "linkage",
+      "label": "Settlement"
+    },
+    {
+      "id": "legal_matter",
+      "group": "linkage",
+      "label": "Legal matter"
+    },
+    {
+      "id": "invoice",
+      "group": "money",
+      "label": "AR / Invoice"
+    },
+    {
+      "id": "bank",
+      "group": "money",
+      "label": "Bank / Match"
     }
   ],
   "leaves": [
@@ -134,7 +174,7 @@
     {
       "id": "expense_mapping",
       "tab": "Expense mapping",
-      "sub": "Fuel→expense map",
+      "sub": "Fuel\u2192expense map",
       "route_hint": "/fuel/expense-mapping",
       "required": [
         "expense",
@@ -178,6 +218,68 @@
         "driver",
         "connectivity"
       ]
+    },
+    {
+      "id": "fuel.modal.import_fuel_transactions",
+      "tab": "Modals",
+      "sub": "Modal: Import Fuel Transactions",
+      "route_hint": "surface://pages/fuel/components/ImportFuelTransactionsModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "pages/fuel/components/ImportFuelTransactionsModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "driver",
+        "unit",
+        "expense"
+      ]
+    },
+    {
+      "id": "fuel.modal.upload_loves_prices",
+      "tab": "Modals",
+      "sub": "Modal: Upload Loves Prices",
+      "route_hint": "surface://pages/fuel/components/UploadLovesPricesModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "pages/fuel/components/UploadLovesPricesModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "load",
+        "driver",
+        "unit",
+        "expense"
+      ]
+    },
+    {
+      "id": "fuel.panel.savings",
+      "tab": "Panels",
+      "sub": "Panel: Savings",
+      "route_hint": "surface://pages/fuel/components/SavingsPanel.tsx",
+      "surface_kind": "panel",
+      "surface_path": "pages/fuel/components/SavingsPanel.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "driver",
+        "unit",
+        "expense"
+      ]
     }
-  ]
+  ],
+  "honesty_audit": {
+    "surface_inventory_2026_08_12": {
+      "added_leaves": 3,
+      "new_columns": [
+        "claim",
+        "work_order",
+        "accident",
+        "policy",
+        "settlement",
+        "legal_matter",
+        "invoice",
+        "bank"
+      ],
+      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; \u00a7B9 link columns added."
+    }
+  }
 }

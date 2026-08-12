@@ -2,10 +2,10 @@
   "module": "vendors",
   "entity_default": "USMCA",
   "source": {
-    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md — Module 10 VENDORS (KPI/filters; live UI uses list segments)",
-    "list": "apps/frontend/src/pages/Vendors.tsx — VENDOR_LIST_TAB_IDS + VENDOR_TABS + VendorCreateModal",
+    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md \u2014 Module 10 VENDORS (KPI/filters; live UI uses list segments)",
+    "list": "apps/frontend/src/pages/Vendors.tsx \u2014 VENDOR_LIST_TAB_IDS + VENDOR_TABS + VendorCreateModal",
     "list_view": "apps/frontend/src/pages/vendors/VendorsListView.tsx",
-    "detail": "apps/frontend/src/pages/VendorDetail.tsx tabs Profile · A/P · Documents · Audit History · Tasks · W-9/1099",
+    "detail": "apps/frontend/src/pages/VendorDetail.tsx tabs Profile \u00b7 A/P \u00b7 Documents \u00b7 Audit History \u00b7 Tasks \u00b7 W-9/1099",
     "routes": "apps/frontend/src/routes/manifest.tsx /vendors, /vendors/:id"
   },
   "columns": [
@@ -78,6 +78,46 @@
       "id": "scenario.ap",
       "group": "process",
       "label": "Bill payment hop"
+    },
+    {
+      "id": "claim",
+      "group": "linkage",
+      "label": "Claim"
+    },
+    {
+      "id": "work_order",
+      "group": "linkage",
+      "label": "Work order"
+    },
+    {
+      "id": "accident",
+      "group": "linkage",
+      "label": "Accident"
+    },
+    {
+      "id": "policy",
+      "group": "linkage",
+      "label": "Policy"
+    },
+    {
+      "id": "settlement",
+      "group": "linkage",
+      "label": "Settlement"
+    },
+    {
+      "id": "legal_matter",
+      "group": "linkage",
+      "label": "Legal matter"
+    },
+    {
+      "id": "invoice",
+      "group": "money",
+      "label": "AR / Invoice"
+    },
+    {
+      "id": "bank",
+      "group": "money",
+      "label": "Bank / Match"
     }
   ],
   "leaves": [
@@ -123,7 +163,7 @@
     {
       "id": "list.segment.all",
       "tab": "All Vendors",
-      "sub": "Segment · All",
+      "sub": "Segment \u00b7 All",
       "route_hint": "/vendors?listTab=all",
       "required": [
         "vendor",
@@ -133,7 +173,7 @@
     {
       "id": "list.segment.active",
       "tab": "All Vendors",
-      "sub": "Segment · Active (default)",
+      "sub": "Segment \u00b7 Active (default)",
       "route_hint": "/vendors",
       "required": [
         "vendor",
@@ -144,7 +184,7 @@
     {
       "id": "list.segment.inactive",
       "tab": "All Vendors",
-      "sub": "Segment · Inactive",
+      "sub": "Segment \u00b7 Inactive",
       "route_hint": "/vendors?listTab=inactive",
       "required": [
         "vendor",
@@ -155,7 +195,7 @@
     {
       "id": "list.segment.by_category",
       "tab": "By Category",
-      "sub": "Segment · vendor_type filter",
+      "sub": "Segment \u00b7 vendor_type filter",
       "route_hint": "/vendors?listTab=by-category",
       "required": [
         "vendor",
@@ -167,7 +207,7 @@
     {
       "id": "list.filters",
       "tab": "All Vendors",
-      "sub": "Roster collapsed filters (status · category)",
+      "sub": "Roster collapsed filters (status \u00b7 category)",
       "route_hint": "/vendors",
       "required": [
         "vendor",
@@ -178,7 +218,7 @@
     {
       "id": "list.filter_chips",
       "tab": "All Vendors",
-      "sub": "List view filter chips (Active · 1099 · With open)",
+      "sub": "List view filter chips (Active \u00b7 1099 \u00b7 With open)",
       "route_hint": "/vendors",
       "required": [
         "vendor",
@@ -209,7 +249,8 @@
       "required": [
         "vendor",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "bank"
       ]
     },
     {
@@ -274,7 +315,7 @@
     {
       "id": "md.header.edit",
       "tab": "Vendor Detail",
-      "sub": "Edit → /vendors/:id full profile",
+      "sub": "Edit \u2192 /vendors/:id full profile",
       "route_hint": "/vendors/:id",
       "required": [
         "vendor",
@@ -301,7 +342,7 @@
     {
       "id": "md.txn.filters",
       "tab": "Vendor Detail",
-      "sub": "Transaction list filters (status · date · category)",
+      "sub": "Transaction list filters (status \u00b7 date \u00b7 category)",
       "route_hint": "/vendors?tab=transaction_list",
       "required": [
         "vendor",
@@ -564,6 +605,19 @@
         "reverse_link",
         "qbo_chrome"
       ]
+    },
+    {
+      "id": "vendors.panel.vendors_sync",
+      "tab": "Panels",
+      "sub": "Panel: Vendors Sync",
+      "route_hint": "surface://pages/vendors/VendorsSyncPanel.tsx",
+      "surface_kind": "panel",
+      "surface_path": "pages/vendors/VendorsSyncPanel.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "vendor"
+      ]
     }
   ],
   "honesty_audit": {
@@ -611,6 +665,20 @@
           ]
         }
       ]
+    },
+    "surface_inventory_2026_08_12": {
+      "added_leaves": 1,
+      "new_columns": [
+        "claim",
+        "work_order",
+        "accident",
+        "policy",
+        "settlement",
+        "legal_matter",
+        "invoice",
+        "bank"
+      ],
+      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; \u00a7B9 link columns added."
     }
   }
 }

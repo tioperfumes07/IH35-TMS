@@ -2,7 +2,7 @@
   "module": "legal",
   "entity_default": "USMCA",
   "source": {
-    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md — Legal module",
+    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md \u2014 Legal module",
     "nav": "apps/frontend/src/pages/legal/LegalModuleTabs.tsx",
     "routes": "/legal/*"
   },
@@ -81,6 +81,46 @@
       "id": "scenario.insurance",
       "group": "process",
       "label": "Insurance claim"
+    },
+    {
+      "id": "claim",
+      "group": "linkage",
+      "label": "Claim"
+    },
+    {
+      "id": "work_order",
+      "group": "linkage",
+      "label": "Work order"
+    },
+    {
+      "id": "accident",
+      "group": "linkage",
+      "label": "Accident"
+    },
+    {
+      "id": "policy",
+      "group": "linkage",
+      "label": "Policy"
+    },
+    {
+      "id": "settlement",
+      "group": "linkage",
+      "label": "Settlement"
+    },
+    {
+      "id": "legal_matter",
+      "group": "linkage",
+      "label": "Legal matter"
+    },
+    {
+      "id": "invoice",
+      "group": "money",
+      "label": "AR / Invoice"
+    },
+    {
+      "id": "bank",
+      "group": "money",
+      "label": "Bank / Match"
     }
   ],
   "leaves": [
@@ -90,7 +130,8 @@
       "sub": "Legal home",
       "route_hint": "/legal",
       "required": [
-        "connectivity"
+        "connectivity",
+        "legal_matter"
       ]
     },
     {
@@ -104,7 +145,8 @@
         "driver",
         "connectivity",
         "reverse_link",
-        "picker_law"
+        "picker_law",
+        "legal_matter"
       ]
     },
     {
@@ -119,7 +161,8 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "legal_matter"
       ]
     },
     {
@@ -150,7 +193,8 @@
       "route_hint": "/legal/policies",
       "required": [
         "connectivity",
-        "qbo_chrome"
+        "qbo_chrome",
+        "legal_matter"
       ]
     },
     {
@@ -178,7 +222,8 @@
         "connectivity",
         "reverse_link",
         "picker_law",
-        "scenario.insurance"
+        "scenario.insurance",
+        "legal_matter"
       ]
     },
     {
@@ -200,7 +245,8 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "legal_matter"
       ]
     },
     {
@@ -217,7 +263,8 @@
         "liability",
         "connectivity",
         "reverse_link",
-        "scenario.insurance"
+        "scenario.insurance",
+        "legal_matter"
       ]
     },
     {
@@ -227,8 +274,159 @@
       "route_hint": "/legal/reports",
       "required": [
         "connectivity",
-        "liability"
+        "liability",
+        "legal_matter"
+      ]
+    },
+    {
+      "id": "legal.modal.lease_to_own_creator",
+      "tab": "Modals",
+      "sub": "Modal: Lease To Own Creator",
+      "route_hint": "surface://pages/legal/contracts/LeaseToOwnCreatorModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "pages/legal/contracts/LeaseToOwnCreatorModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "legal_matter"
+      ]
+    },
+    {
+      "id": "legal.modal.send_contract",
+      "tab": "Modals",
+      "sub": "Modal: Send Contract",
+      "route_hint": "surface://pages/legal/contracts/SendContractModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "pages/legal/contracts/SendContractModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "legal_matter"
+      ]
+    },
+    {
+      "id": "legal.modal.truck_lease_creator",
+      "tab": "Modals",
+      "sub": "Modal: Truck Lease Creator",
+      "route_hint": "surface://pages/legal/contracts/TruckLeaseCreatorModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "pages/legal/contracts/TruckLeaseCreatorModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "unit",
+        "legal_matter"
+      ]
+    },
+    {
+      "id": "legal.modal.unified_contract_creator",
+      "tab": "Modals",
+      "sub": "Modal: Unified Contract Creator",
+      "route_hint": "surface://pages/legal/contracts/UnifiedContractCreatorModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "pages/legal/contracts/UnifiedContractCreatorModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "legal_matter"
+      ]
+    },
+    {
+      "id": "legal.modal.legal_template_new",
+      "tab": "Modals",
+      "sub": "Modal: Legal Template New",
+      "route_hint": "surface://pages/legal/templates/LegalTemplateNewModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "pages/legal/templates/LegalTemplateNewModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "picker_law",
+        "legal_matter"
+      ]
+    },
+    {
+      "id": "legal.parity.lease_to_own_creator",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Lease To Own Creator",
+      "route_hint": "surface://pages/legal/contracts/LeaseToOwnCreatorModal.tsx",
+      "surface_kind": "parity_site",
+      "surface_path": "pages/legal/contracts/LeaseToOwnCreatorModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "legal_matter"
+      ]
+    },
+    {
+      "id": "legal.parity.send_contract",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Send Contract",
+      "route_hint": "surface://pages/legal/contracts/SendContractModal.tsx",
+      "surface_kind": "parity_site",
+      "surface_path": "pages/legal/contracts/SendContractModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "legal_matter"
+      ]
+    },
+    {
+      "id": "legal.parity.truck_lease_creator",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Truck Lease Creator",
+      "route_hint": "surface://pages/legal/contracts/TruckLeaseCreatorModal.tsx",
+      "surface_kind": "parity_site",
+      "surface_path": "pages/legal/contracts/TruckLeaseCreatorModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "unit",
+        "legal_matter"
+      ]
+    },
+    {
+      "id": "legal.parity.unified_contract_creator",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Unified Contract Creator",
+      "route_hint": "surface://pages/legal/contracts/UnifiedContractCreatorModal.tsx",
+      "surface_kind": "parity_site",
+      "surface_path": "pages/legal/contracts/UnifiedContractCreatorModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "legal_matter"
+      ]
+    },
+    {
+      "id": "legal.parity.legal_template_new",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Legal Template New",
+      "route_hint": "surface://pages/legal/templates/LegalTemplateNewModal.tsx",
+      "surface_kind": "parity_site",
+      "surface_path": "pages/legal/templates/LegalTemplateNewModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "picker_law",
+        "legal_matter"
       ]
     }
-  ]
+  ],
+  "honesty_audit": {
+    "surface_inventory_2026_08_12": {
+      "added_leaves": 10,
+      "new_columns": [
+        "claim",
+        "work_order",
+        "accident",
+        "policy",
+        "settlement",
+        "legal_matter",
+        "invoice",
+        "bank"
+      ],
+      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; \u00a7B9 link columns added."
+    }
+  }
 }

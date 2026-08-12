@@ -71,6 +71,46 @@
       "id": "reverse_link",
       "group": "wiring",
       "label": "Reverse link"
+    },
+    {
+      "id": "claim",
+      "group": "linkage",
+      "label": "Claim"
+    },
+    {
+      "id": "work_order",
+      "group": "linkage",
+      "label": "Work order"
+    },
+    {
+      "id": "accident",
+      "group": "linkage",
+      "label": "Accident"
+    },
+    {
+      "id": "policy",
+      "group": "linkage",
+      "label": "Policy"
+    },
+    {
+      "id": "settlement",
+      "group": "linkage",
+      "label": "Settlement"
+    },
+    {
+      "id": "legal_matter",
+      "group": "linkage",
+      "label": "Legal matter"
+    },
+    {
+      "id": "invoice",
+      "group": "money",
+      "label": "AR / Invoice"
+    },
+    {
+      "id": "bank",
+      "group": "money",
+      "label": "Bank / Match"
     }
   ],
   "leaves": [
@@ -229,7 +269,8 @@
       "required": [
         "connectivity",
         "reverse_link",
-        "qbo_chrome"
+        "qbo_chrome",
+        "invoice"
       ]
     },
     {
@@ -246,19 +287,20 @@
     {
       "id": "jump.maintenance",
       "tab": "Quick jumps",
-      "sub": "→ Maintenance",
+      "sub": "\u2192 Maintenance",
       "route_hint": "/maintenance",
       "required": [
         "unit",
         "vendor",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "work_order"
       ]
     },
     {
       "id": "jump.accounting",
       "tab": "Quick jumps",
-      "sub": "→ Accounting",
+      "sub": "\u2192 Accounting",
       "route_hint": "/accounting/invoices",
       "required": [
         "customer",
@@ -271,19 +313,20 @@
     {
       "id": "jump.banking",
       "tab": "Quick jumps",
-      "sub": "→ Banking",
+      "sub": "\u2192 Banking",
       "route_hint": "/banking",
       "required": [
         "gl_je",
         "connectivity",
         "reverse_link",
-        "qbo_chrome"
+        "qbo_chrome",
+        "bank"
       ]
     },
     {
       "id": "jump.fuel",
       "tab": "Quick jumps",
-      "sub": "→ Fuel",
+      "sub": "\u2192 Fuel",
       "route_hint": "/fuel",
       "required": [
         "unit",
@@ -296,7 +339,7 @@
     {
       "id": "jump.safety",
       "tab": "Quick jumps",
-      "sub": "→ Safety",
+      "sub": "\u2192 Safety",
       "route_hint": "/safety",
       "required": [
         "driver",
@@ -308,7 +351,7 @@
     {
       "id": "jump.drivers",
       "tab": "Quick jumps",
-      "sub": "→ Drivers",
+      "sub": "\u2192 Drivers",
       "route_hint": "/drivers",
       "required": [
         "driver",
@@ -319,7 +362,7 @@
     {
       "id": "jump.dispatch",
       "tab": "Quick jumps",
-      "sub": "→ Dispatch",
+      "sub": "\u2192 Dispatch",
       "route_hint": "/dispatch",
       "required": [
         "customer",
@@ -333,7 +376,7 @@
     {
       "id": "jump.lists",
       "tab": "Quick jumps",
-      "sub": "→ Lists",
+      "sub": "\u2192 Lists",
       "route_hint": "/lists",
       "required": [
         "picker_law",
@@ -366,7 +409,7 @@
     {
       "id": "hop.program",
       "tab": "Program hop",
-      "sub": "Scenario tracker → Program",
+      "sub": "Scenario tracker \u2192 Program",
       "route_hint": "/program",
       "required": [
         "connectivity",
@@ -374,5 +417,21 @@
         "qbo_chrome"
       ]
     }
-  ]
+  ],
+  "honesty_audit": {
+    "surface_inventory_2026_08_12": {
+      "added_leaves": 0,
+      "new_columns": [
+        "claim",
+        "work_order",
+        "accident",
+        "policy",
+        "settlement",
+        "legal_matter",
+        "invoice",
+        "bank"
+      ],
+      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; \u00a7B9 link columns added."
+    }
+  }
 }

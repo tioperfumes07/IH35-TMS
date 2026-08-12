@@ -76,6 +76,46 @@
       "id": "reverse_link",
       "group": "wiring",
       "label": "Reverse link"
+    },
+    {
+      "id": "claim",
+      "group": "linkage",
+      "label": "Claim"
+    },
+    {
+      "id": "work_order",
+      "group": "linkage",
+      "label": "Work order"
+    },
+    {
+      "id": "accident",
+      "group": "linkage",
+      "label": "Accident"
+    },
+    {
+      "id": "policy",
+      "group": "linkage",
+      "label": "Policy"
+    },
+    {
+      "id": "settlement",
+      "group": "linkage",
+      "label": "Settlement"
+    },
+    {
+      "id": "legal_matter",
+      "group": "linkage",
+      "label": "Legal matter"
+    },
+    {
+      "id": "invoice",
+      "group": "money",
+      "label": "AR / Invoice"
+    },
+    {
+      "id": "bank",
+      "group": "money",
+      "label": "Bank / Match"
     }
   ],
   "leaves": [
@@ -91,7 +131,8 @@
         "liability",
         "connectivity",
         "reverse_link",
-        "picker_law"
+        "picker_law",
+        "settlement"
       ]
     },
     {
@@ -107,7 +148,8 @@
         "connectivity",
         "reverse_link",
         "gl_je",
-        "ap_bill"
+        "ap_bill",
+        "settlement"
       ]
     },
     {
@@ -119,7 +161,8 @@
         "driver",
         "connectivity",
         "reverse_link",
-        "picker_law"
+        "picker_law",
+        "settlement"
       ]
     },
     {
@@ -134,7 +177,8 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "settlement"
       ]
     },
     {
@@ -161,7 +205,170 @@
         "load",
         "liability",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "settlement"
+      ]
+    },
+    {
+      "id": "settlements.modal.create_advance",
+      "tab": "Modals",
+      "sub": "Modal: Create Advance",
+      "route_hint": "surface://pages/cash-advances/components/CreateAdvanceModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "pages/cash-advances/components/CreateAdvanceModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "picker_law",
+        "driver",
+        "load",
+        "settlement",
+        "liability"
+      ]
+    },
+    {
+      "id": "settlements.modal.mark_disbursed",
+      "tab": "Modals",
+      "sub": "Modal: Mark Disbursed",
+      "route_hint": "surface://pages/cash-advances/components/MarkDisbursedModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "pages/cash-advances/components/MarkDisbursedModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "driver",
+        "load",
+        "settlement",
+        "liability"
+      ]
+    },
+    {
+      "id": "settlements.modal.hold_deduction",
+      "tab": "Modals",
+      "sub": "Modal: Hold Deduction",
+      "route_hint": "surface://pages/driver-finance/components/HoldDeductionModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "pages/driver-finance/components/HoldDeductionModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "driver",
+        "liability",
+        "load",
+        "settlement"
+      ]
+    },
+    {
+      "id": "settlements.modal.liability_breakdown",
+      "tab": "Modals",
+      "sub": "Modal: Liability Breakdown",
+      "route_hint": "surface://pages/driver-finance/components/LiabilityBreakdownModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "pages/driver-finance/components/LiabilityBreakdownModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "driver",
+        "liability",
+        "load",
+        "settlement"
+      ]
+    },
+    {
+      "id": "settlements.modal.send_ack_request",
+      "tab": "Modals",
+      "sub": "Modal: Send Ack Request",
+      "route_hint": "surface://pages/liabilities/components/SendAckRequestModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "pages/liabilities/components/SendAckRequestModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "liability",
+        "driver",
+        "load",
+        "settlement"
+      ]
+    },
+    {
+      "id": "settlements.drawer.advance_detail",
+      "tab": "Drawers",
+      "sub": "Drawer: Advance Detail",
+      "route_hint": "surface://pages/cash-advances/components/AdvanceDetailDrawer.tsx",
+      "surface_kind": "drawer",
+      "surface_path": "pages/cash-advances/components/AdvanceDetailDrawer.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "driver",
+        "load",
+        "settlement",
+        "liability"
+      ]
+    },
+    {
+      "id": "settlements.drawer.liability_detail",
+      "tab": "Drawers",
+      "sub": "Drawer: Liability Detail",
+      "route_hint": "surface://pages/liabilities/components/LiabilityDetailDrawer.tsx",
+      "surface_kind": "drawer",
+      "surface_path": "pages/liabilities/components/LiabilityDetailDrawer.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "liability",
+        "driver",
+        "load",
+        "settlement"
+      ]
+    },
+    {
+      "id": "settlements.panel.pay_run_close",
+      "tab": "Panels",
+      "sub": "Panel: Pay Run Close",
+      "route_hint": "surface://pages/driver-finance/components/PayRunClosePanel.tsx",
+      "surface_kind": "panel",
+      "surface_path": "pages/driver-finance/components/PayRunClosePanel.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "driver",
+        "load",
+        "settlement",
+        "liability"
+      ]
+    },
+    {
+      "id": "settlements.parity.create_advance",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Create Advance",
+      "route_hint": "surface://pages/cash-advances/components/CreateAdvanceModal.tsx",
+      "surface_kind": "parity_site",
+      "surface_path": "pages/cash-advances/components/CreateAdvanceModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "picker_law",
+        "driver",
+        "load",
+        "settlement",
+        "liability"
+      ]
+    },
+    {
+      "id": "settlements.panel.pre_settlements",
+      "tab": "Panels",
+      "sub": "Panel: Pre Settlements",
+      "route_hint": "surface://components/driver-finance/PreSettlementsPanel.tsx",
+      "surface_kind": "panel",
+      "surface_path": "components/driver-finance/PreSettlementsPanel.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "driver",
+        "settlement",
+        "load",
+        "liability"
       ]
     }
   ],
@@ -227,6 +434,20 @@
         }
       ],
       "note": "Disputes tab and cash-advance requests have no driver_liabilities / LiabilityBreakdown UI"
+    },
+    "surface_inventory_2026_08_12": {
+      "added_leaves": 9,
+      "new_columns": [
+        "claim",
+        "work_order",
+        "accident",
+        "policy",
+        "settlement",
+        "legal_matter",
+        "invoice",
+        "bank"
+      ],
+      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; \u00a7B9 link columns added."
     }
   }
 }

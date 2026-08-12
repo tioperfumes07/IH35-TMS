@@ -2,7 +2,7 @@
   "module": "insurance",
   "entity_default": "USMCA",
   "source": {
-    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md — Insurance (under Safety nav)",
+    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md \u2014 Insurance (under Safety nav)",
     "nav": "apps/frontend/src/pages/safety/tabs/InsuranceTab.tsx",
     "routes": "/safety/insurance/*"
   },
@@ -81,6 +81,46 @@
       "id": "scenario.insurance",
       "group": "process",
       "label": "Insurance claim"
+    },
+    {
+      "id": "claim",
+      "group": "linkage",
+      "label": "Claim"
+    },
+    {
+      "id": "work_order",
+      "group": "linkage",
+      "label": "Work order"
+    },
+    {
+      "id": "accident",
+      "group": "linkage",
+      "label": "Accident"
+    },
+    {
+      "id": "policy",
+      "group": "linkage",
+      "label": "Policy"
+    },
+    {
+      "id": "settlement",
+      "group": "linkage",
+      "label": "Settlement"
+    },
+    {
+      "id": "legal_matter",
+      "group": "linkage",
+      "label": "Legal matter"
+    },
+    {
+      "id": "invoice",
+      "group": "money",
+      "label": "AR / Invoice"
+    },
+    {
+      "id": "bank",
+      "group": "money",
+      "label": "Bank / Match"
     }
   ],
   "leaves": [
@@ -91,7 +131,9 @@
       "route_hint": "/safety/insurance",
       "required": [
         "connectivity",
-        "scenario.insurance"
+        "scenario.insurance",
+        "claim",
+        "policy"
       ]
     },
     {
@@ -197,7 +239,9 @@
         "connectivity",
         "reverse_link",
         "picker_law",
-        "scenario.insurance"
+        "scenario.insurance",
+        "claim",
+        "policy"
       ]
     },
     {
@@ -220,7 +264,9 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "claim",
+        "policy"
       ]
     },
     {
@@ -235,7 +281,8 @@
         "connectivity",
         "reverse_link",
         "picker_law",
-        "scenario.insurance"
+        "scenario.insurance",
+        "legal_matter"
       ]
     },
     {
@@ -255,8 +302,146 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "legal_matter"
+      ]
+    },
+    {
+      "id": "insurance.modal.claim_create",
+      "tab": "Modals",
+      "sub": "Modal: Claim Create",
+      "route_hint": "surface://components/insurance/ClaimCreateModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "components/insurance/ClaimCreateModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "picker_law",
+        "claim",
+        "policy",
+        "driver",
+        "unit"
+      ]
+    },
+    {
+      "id": "insurance.modal.lawsuit_create",
+      "tab": "Modals",
+      "sub": "Modal: Lawsuit Create",
+      "route_hint": "surface://components/insurance/LawsuitCreateModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "components/insurance/LawsuitCreateModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "picker_law",
+        "claim",
+        "policy",
+        "driver",
+        "unit",
+        "legal_matter"
+      ]
+    },
+    {
+      "id": "insurance.modal.policy_create",
+      "tab": "Modals",
+      "sub": "Modal: Policy Create",
+      "route_hint": "surface://components/insurance/PolicyCreateModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "components/insurance/PolicyCreateModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "picker_law",
+        "policy",
+        "claim",
+        "driver",
+        "unit"
+      ]
+    },
+    {
+      "id": "insurance.wizard.policy_create",
+      "tab": "Wizards",
+      "sub": "Wizard: Policy Create",
+      "route_hint": "surface://components/insurance/PolicyCreateWizard.tsx",
+      "surface_kind": "wizard",
+      "surface_path": "components/insurance/PolicyCreateWizard.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "picker_law",
+        "policy",
+        "claim",
+        "driver",
+        "unit"
+      ]
+    },
+    {
+      "id": "insurance.parity.claim_create",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Claim Create",
+      "route_hint": "surface://components/insurance/ClaimCreateModal.tsx",
+      "surface_kind": "parity_site",
+      "surface_path": "components/insurance/ClaimCreateModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "picker_law",
+        "claim",
+        "policy",
+        "driver",
+        "unit"
+      ]
+    },
+    {
+      "id": "insurance.parity.lawsuit_create",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Lawsuit Create",
+      "route_hint": "surface://components/insurance/LawsuitCreateModal.tsx",
+      "surface_kind": "parity_site",
+      "surface_path": "components/insurance/LawsuitCreateModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "picker_law",
+        "claim",
+        "policy",
+        "driver",
+        "unit",
+        "legal_matter"
+      ]
+    },
+    {
+      "id": "insurance.parity.policy_create",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Policy Create",
+      "route_hint": "surface://components/insurance/PolicyCreateModal.tsx",
+      "surface_kind": "parity_site",
+      "surface_path": "components/insurance/PolicyCreateModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "picker_law",
+        "policy",
+        "claim",
+        "driver",
+        "unit"
       ]
     }
-  ]
+  ],
+  "honesty_audit": {
+    "surface_inventory_2026_08_12": {
+      "added_leaves": 7,
+      "new_columns": [
+        "claim",
+        "work_order",
+        "accident",
+        "policy",
+        "settlement",
+        "legal_matter",
+        "invoice",
+        "bank"
+      ],
+      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; \u00a7B9 link columns added."
+    }
+  }
 }

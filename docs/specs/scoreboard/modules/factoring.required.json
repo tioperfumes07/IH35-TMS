@@ -2,9 +2,9 @@
   "module": "factoring",
   "entity_default": "USMCA",
   "source": {
-    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md — Banking Factoring (Faro) + Accounting More Factoring/settlements + Dispatch packets/queue",
+    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md \u2014 Banking Factoring (Faro) + Accounting More Factoring/settlements + Dispatch packets/queue",
     "nav": "apps/frontend/src/pages/factoring/FactoringHome.tsx SUBNAV + sidebar-config FACT/flyouts",
-    "routes": "/factoring* · /accounting/factoring* · /banking/factoring · /dispatch/factoring-queue"
+    "routes": "/factoring* \u00b7 /accounting/factoring* \u00b7 /banking/factoring \u00b7 /dispatch/factoring-queue"
   },
   "columns": [
     {
@@ -71,6 +71,46 @@
       "id": "reverse_link",
       "group": "wiring",
       "label": "Reverse link"
+    },
+    {
+      "id": "claim",
+      "group": "linkage",
+      "label": "Claim"
+    },
+    {
+      "id": "work_order",
+      "group": "linkage",
+      "label": "Work order"
+    },
+    {
+      "id": "accident",
+      "group": "linkage",
+      "label": "Accident"
+    },
+    {
+      "id": "policy",
+      "group": "linkage",
+      "label": "Policy"
+    },
+    {
+      "id": "settlement",
+      "group": "linkage",
+      "label": "Settlement"
+    },
+    {
+      "id": "legal_matter",
+      "group": "linkage",
+      "label": "Legal matter"
+    },
+    {
+      "id": "invoice",
+      "group": "money",
+      "label": "AR / Invoice"
+    },
+    {
+      "id": "bank",
+      "group": "money",
+      "label": "Bank / Match"
     }
   ],
   "leaves": [
@@ -195,7 +235,8 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "invoice"
       ]
     },
     {
@@ -326,7 +367,8 @@
         "liability",
         "connectivity",
         "reverse_link",
-        "qbo_chrome"
+        "qbo_chrome",
+        "bank"
       ]
     },
     {
@@ -340,7 +382,8 @@
         "gl_je",
         "liability",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "bank"
       ]
     },
     {
@@ -354,6 +397,93 @@
         "liability",
         "connectivity",
         "reverse_link"
+      ]
+    },
+    {
+      "id": "factoring.modal.deactivate_factor_confirm",
+      "tab": "Modals",
+      "sub": "Modal: Deactivate Factor Confirm",
+      "route_hint": "surface://components/factoring/DeactivateFactorConfirmModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "components/factoring/DeactivateFactorConfirmModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome",
+        "gl_je",
+        "customer",
+        "invoice",
+        "liability"
+      ]
+    },
+    {
+      "id": "factoring.modal.reserve_dashboard_add_factor",
+      "tab": "Modals",
+      "sub": "Modal: Reserve Dashboard Add Factor",
+      "route_hint": "surface://pages/factoring/ReserveDashboardAddFactorModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "pages/factoring/ReserveDashboardAddFactorModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome",
+        "gl_je",
+        "customer",
+        "invoice",
+        "liability"
+      ]
+    },
+    {
+      "id": "factoring.panel.factoring_profile",
+      "tab": "Panels",
+      "sub": "Panel: Factoring Profile",
+      "route_hint": "surface://pages/factoring/FactoringProfilePanel.tsx",
+      "surface_kind": "panel",
+      "surface_path": "pages/factoring/FactoringProfilePanel.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome",
+        "gl_je",
+        "customer",
+        "invoice",
+        "liability"
+      ]
+    },
+    {
+      "id": "factoring.wizard.batch",
+      "tab": "Wizards",
+      "sub": "Wizard: Batch",
+      "route_hint": "surface://pages/factoring/BatchWizard.tsx",
+      "surface_kind": "wizard",
+      "surface_path": "pages/factoring/BatchWizard.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome",
+        "gl_je",
+        "customer",
+        "invoice",
+        "liability"
+      ]
+    },
+    {
+      "id": "factoring.parity.driver_autocomplete",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Driver Autocomplete",
+      "route_hint": "surface://components/factoring/DriverAutocomplete.tsx",
+      "surface_kind": "parity_site",
+      "surface_path": "components/factoring/DriverAutocomplete.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome",
+        "driver",
+        "gl_je",
+        "customer",
+        "invoice",
+        "liability"
       ]
     }
   ],
@@ -412,15 +542,33 @@
       "matrix_built": [
         {
           "id": "home.reserve_tracker",
-          "cols": ["liability"],
+          "cols": [
+            "liability"
+          ],
           "proof": "ReserveTracker getReserveBalances"
         },
         {
           "id": "reserves.dashboard",
-          "cols": ["liability"],
+          "cols": [
+            "liability"
+          ],
           "proof": "ReserveDashboard getReserveBalances"
         }
       ]
+    },
+    "surface_inventory_2026_08_12": {
+      "added_leaves": 5,
+      "new_columns": [
+        "claim",
+        "work_order",
+        "accident",
+        "policy",
+        "settlement",
+        "legal_matter",
+        "invoice",
+        "bank"
+      ],
+      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; \u00a7B9 link columns added."
     }
   }
 }

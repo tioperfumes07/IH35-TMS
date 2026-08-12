@@ -2,7 +2,7 @@
   "module": "customers",
   "entity_default": "USMCA",
   "source": {
-    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md — Module 8 CUSTOMERS",
+    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md \u2014 Module 8 CUSTOMERS",
     "nav": "apps/frontend/src/pages/Customers.tsx list segments + CUSTOMER_TABS",
     "detail": "apps/frontend/src/pages/CustomerDetail.tsx tabs",
     "routes": "apps/frontend/src/routes/manifest.tsx /customers, /customers/:id"
@@ -82,6 +82,46 @@
       "id": "scenario.dispatch",
       "group": "process",
       "label": "Dispatch load"
+    },
+    {
+      "id": "claim",
+      "group": "linkage",
+      "label": "Claim"
+    },
+    {
+      "id": "work_order",
+      "group": "linkage",
+      "label": "Work order"
+    },
+    {
+      "id": "accident",
+      "group": "linkage",
+      "label": "Accident"
+    },
+    {
+      "id": "policy",
+      "group": "linkage",
+      "label": "Policy"
+    },
+    {
+      "id": "settlement",
+      "group": "linkage",
+      "label": "Settlement"
+    },
+    {
+      "id": "legal_matter",
+      "group": "linkage",
+      "label": "Legal matter"
+    },
+    {
+      "id": "invoice",
+      "group": "money",
+      "label": "AR / Invoice"
+    },
+    {
+      "id": "bank",
+      "group": "money",
+      "label": "Bank / Match"
     }
   ],
   "leaves": [
@@ -127,7 +167,7 @@
     {
       "id": "list.segment.all",
       "tab": "All Customers",
-      "sub": "Segment · All",
+      "sub": "Segment \u00b7 All",
       "route_hint": "/customers?listTab=all",
       "required": [
         "customer",
@@ -137,7 +177,7 @@
     {
       "id": "list.segment.preferred",
       "tab": "By Quality Flag",
-      "sub": "Segment · Preferred",
+      "sub": "Segment \u00b7 Preferred",
       "route_hint": "/customers?listTab=preferred",
       "required": [
         "customer",
@@ -148,7 +188,7 @@
     {
       "id": "list.segment.watch",
       "tab": "By Quality Flag",
-      "sub": "Segment · Watch",
+      "sub": "Segment \u00b7 Watch",
       "route_hint": "/customers?listTab=watch",
       "required": [
         "customer",
@@ -159,7 +199,7 @@
     {
       "id": "list.segment.active",
       "tab": "All Customers",
-      "sub": "Segment · Active",
+      "sub": "Segment \u00b7 Active",
       "route_hint": "/customers?listTab=active",
       "required": [
         "customer",
@@ -169,7 +209,7 @@
     {
       "id": "list.segment.inactive",
       "tab": "All Customers",
-      "sub": "Segment · Inactive",
+      "sub": "Segment \u00b7 Inactive",
       "route_hint": "/customers?listTab=inactive",
       "required": [
         "customer",
@@ -179,7 +219,7 @@
     {
       "id": "list.segment.factored",
       "tab": "Factoring Config",
-      "sub": "Segment · Factored",
+      "sub": "Segment \u00b7 Factored",
       "route_hint": "/customers?listTab=factored",
       "required": [
         "customer",
@@ -217,7 +257,7 @@
     {
       "id": "list.filters",
       "tab": "All Customers",
-      "sub": "Roster filters (type · credit status)",
+      "sub": "Roster filters (type \u00b7 credit status)",
       "route_hint": "/customers",
       "required": [
         "customer",
@@ -274,7 +314,8 @@
         "gl_je",
         "connectivity",
         "reverse_link",
-        "qbo_chrome"
+        "qbo_chrome",
+        "invoice"
       ]
     },
     {
@@ -415,7 +456,7 @@
     {
       "id": "detail.billing",
       "tab": "Billing & Receivables",
-      "sub": "AR aging · invoices · payments",
+      "sub": "AR aging \u00b7 invoices \u00b7 payments",
       "route_hint": "/customers/:id?tab=billing",
       "required": [
         "customer",
@@ -423,7 +464,8 @@
         "gl_je",
         "connectivity",
         "reverse_link",
-        "qbo_chrome"
+        "qbo_chrome",
+        "invoice"
       ]
     },
     {
@@ -437,13 +479,14 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "invoice"
       ]
     },
     {
       "id": "detail.quality",
       "tab": "Quality & History",
-      "sub": "Scoring · quality events",
+      "sub": "Scoring \u00b7 quality events",
       "route_hint": "/customers/:id?tab=quality",
       "required": [
         "customer",
@@ -511,7 +554,9 @@
       "required": [
         "customer",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "claim",
+        "policy"
       ]
     },
     {
@@ -524,7 +569,8 @@
         "load",
         "connectivity",
         "reverse_link",
-        "picker_law"
+        "picker_law",
+        "legal_matter"
       ]
     },
     {
@@ -613,6 +659,35 @@
         "reverse_link",
         "qbo_chrome"
       ]
+    },
+    {
+      "id": "customers.panel.customers_sync",
+      "tab": "Panels",
+      "sub": "Panel: Customers Sync",
+      "route_hint": "surface://pages/customers/CustomersSyncPanel.tsx",
+      "surface_kind": "panel",
+      "surface_path": "pages/customers/CustomersSyncPanel.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "customer"
+      ]
     }
-  ]
+  ],
+  "honesty_audit": {
+    "surface_inventory_2026_08_12": {
+      "added_leaves": 1,
+      "new_columns": [
+        "claim",
+        "work_order",
+        "accident",
+        "policy",
+        "settlement",
+        "legal_matter",
+        "invoice",
+        "bank"
+      ],
+      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; \u00a7B9 link columns added."
+    }
+  }
 }
