@@ -8,6 +8,7 @@ import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { Button } from "../../../components/Button";
 import { ApiError } from "../../../api/client";
 import { entityLabel } from "../../../lib/entity-label";
+import { EntityLink } from "../../../components/shared/EntityLink";
 
 export function DriverSchedulerRequestDetailPage() {
   const { id = "" } = useParams();
@@ -66,7 +67,7 @@ export function DriverSchedulerRequestDetailPage() {
         <div className="grid gap-3 md:grid-cols-2">
           <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs">
             <div className="font-semibold text-gray-900">Driver</div>
-            <div>{entityLabel(String(req.driver_name ?? ""), String(req.driver_id ?? ""), "Driver")}</div>
+            <div><EntityLink kind="driver" id={String(req.driver_id ?? "")} label={entityLabel(String(req.driver_name ?? ""), String(req.driver_id ?? ""), "Driver")} /></div>
             <div className="mt-2 font-semibold">Type</div>
             <div>{String(req.leave_type)}</div>
             <div className="mt-2 font-semibold">Dates</div>

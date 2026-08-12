@@ -263,6 +263,7 @@ export type EscrowRecordRow = {
 
 export type EscrowForfeitAttempt = {
   id: string;
+  driver_id: string;
   driver_name: string;
   amount: number;
   reason: string;
@@ -302,6 +303,7 @@ function isForfeitEntry(entryType: unknown) {
 }
 
 function timelineToAttempts(
+  driverId: string,
   driverName: string,
   timeline: Array<Record<string, unknown>>
 ): EscrowForfeitAttempt[] {
@@ -309,6 +311,7 @@ function timelineToAttempts(
     .filter((row) => isForfeitEntry(row.entry_type))
     .map((row) => ({
       id: String(row.id ?? `${driverName}-${row.created_at ?? ""}`),
+      driver_id: driverId,
       driver_name: driverName,
       amount: Math.abs(Number(row.amount ?? 0)),
       reason: String(row.memo ?? row.reason ?? "Escrow forfeiture"),
@@ -358,7 +361,7 @@ export async function listEscrowRecords(companyId: string) {
       timelineErrors.push(`${driverName}: ${timelineResult.error}`);
     }
     const timeline = timelineResult.ok ? timelineResult.payload.timeline ?? [] : [];
-    forfeitAttempts.push(...timelineToAttempts(driverName, timeline));
+    forfeitAttempts.push(...timelineToAttempts(driverId, driverName, timeline));
 
     const preClause = Number(debt?.escrow_pre_clause ?? 0);
     const postClause = Number(debt?.escrow_post_clause ?? 0);

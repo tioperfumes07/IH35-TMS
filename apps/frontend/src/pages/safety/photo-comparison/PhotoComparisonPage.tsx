@@ -6,12 +6,15 @@ import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { PageHeader } from "../../../components/layout/PageHeader";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { entityLabel } from "../../../lib/entity-label";
+import { EntityLink } from "../../../components/shared/EntityLink";
 
 type SessionRow = {
   uuid: string;
   diff_status: string;
   diff_summary: string | null;
   created_at: string;
+  unit_uuid: string;
+  driver_uuid: string;
   unit_number?: string;
   driver_name?: string;
 };
@@ -37,12 +40,12 @@ export function PhotoComparisonPage() {
   const columns = useMemo<ParityColumn<SessionRow>[]>(
     () => [
       { key: "created_at", label: "Date", sortable: true, render: (session) => new Date(session.created_at).toLocaleDateString() },
-      { key: "unit_number", label: "Unit", sortable: true, render: (session) => entityLabel(session.unit_number, null, "Unit") },
+      { key: "unit_number", label: "Unit", sortable: true, render: (session) => <EntityLink kind="unit" id={session.unit_uuid} label={entityLabel(session.unit_number, session.unit_uuid, "Unit")} /> },
       {
         key: "driver_name",
         label: "Driver",
         sortable: true,
-        render: (session) => entityLabel(session.driver_name, null, "Driver"),
+        render: (session) => <EntityLink kind="driver" id={session.driver_uuid} label={entityLabel(session.driver_name, session.driver_uuid, "Driver")} />,
       },
       { key: "diff_status", label: "Status", sortable: true },
       { key: "diff_summary", label: "Summary", render: (session) => session.diff_summary ?? "—" },
