@@ -1418,6 +1418,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
             loadId: String((row as { id: string }).id),
             operatingCompanyId: String((row as { operating_company_id: string }).operating_company_id),
             newRateTotalCents: newRate,
+            userId: authUser.uuid,
           });
         }
 
