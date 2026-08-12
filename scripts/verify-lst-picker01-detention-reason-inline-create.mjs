@@ -39,8 +39,8 @@ export function collectProblems(root = ROOT, overrides = {}) {
     if (!/ReferenceSelect/.test(code)) {
       problems.push(`${CALLOUT}: must import/use ReferenceSelect`);
     }
-    if (!/createdValueField=["']code["']/.test(code)) {
-      problems.push(`${CALLOUT}: must select by code (createdValueField=code)`);
+    if (!/createdValueField=["']id["']/.test(code) || !/value:\s*row\.id/.test(code)) {
+      problems.push(`${CALLOUT}: must select the canonical UUID (createdValueField=id)`);
     }
     if (!/detentionReasonsCatalogClient/.test(code)) {
       problems.push(`${CALLOUT}: must list from detentionReasonsCatalogClient (same table as POST)`);
