@@ -105,6 +105,14 @@ function audit() {
       // journal_entries, exposed the id via `jp.journal_entry_uuid`, and never selected je.memo — the
       // original matcher only ever checked the je-alias.id shape, so this defect was invisible to the
       // guard meant to catch exactly it.
+      //
+      // A THIRD shape (`<any alias>.journal_entry_id::text AS journal_entry_id` — a source table's own
+      // stored FK column) was tried and reverted: it also matched CTE-chained queries where a `je`
+      // alias joined earlier in the SAME backtick block is no longer in scope by the time the final
+      // SELECT projects a derived journal_entry_id (e.g. home/revenue-gl-linkage.service.ts's
+      // `linked_postings` CTE) — a shape this block-level matcher cannot safely distinguish from a
+      // real same-scope reference without real SQL parsing. Left as a known gap rather than shipping a
+      // guard that fails on unrelated, more complex queries it cannot correctly reason about.
       const exposesId =
         new RegExp(`\\b${alias}\\.id::text\\s+AS\\s+journal_entry_id`, "i").test(block) ||
         /\b\w+\.journal_entry_uuid::text\s+AS\s+journal_entry_id/i.test(block);
