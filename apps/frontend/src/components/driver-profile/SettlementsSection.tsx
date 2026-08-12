@@ -1,6 +1,8 @@
 import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
+import { EntityLink } from "../shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 
 function cents(n: unknown) {
   const v = Number(n ?? 0);
@@ -8,17 +10,33 @@ function cents(n: unknown) {
 }
 
 type WeekRow = {
+  settlement_id: string;
   week_ending: string;
   gross: unknown;
   net: unknown;
 };
 
+// P30 reverse nav — the "Full settlements" link at the top only opens a driver-filtered LIST; it does
+// not let a viewer click straight from one of these 4 weekly rows to the SPECIFIC settlement it
+// summarizes. That per-row hop was structurally impossible before this change: the backend query
+// (driver-aggregate.service.ts last_4_weeks CTE) never selected driver_settlements.id, so there was no
+// id here to link to. Fixed at the root (added settlement_id to the SQL), not by inventing a client-side
+// workaround.
 const WEEK_COLUMNS: Array<ParityColumn<WeekRow>> = [
   {
     key: "week_ending",
     label: "Week ending",
     sortable: true,
-    render: (row) => String(row.week_ending || "—"),
+    render: (row) =>
+      row.settlement_id ? (
+        <EntityLink
+          kind="settlement"
+          id={row.settlement_id}
+          label={entityLabel(row.week_ending || null, row.settlement_id, "Settlement")}
+        />
+      ) : (
+        String(row.week_ending || "—")
+      ),
   },
   {
     key: "gross",
@@ -52,6 +70,7 @@ export function SettlementsSection({
   const weeks = useMemo((): WeekRow[] => {
     const raw = (settlements.last_4_weeks as Array<Record<string, unknown>>) ?? [];
     return raw.map((w) => ({
+      settlement_id: w.settlement_id ? String(w.settlement_id) : "",
       week_ending: String(w.week_ending ?? ""),
       gross: w.gross,
       net: w.net,
@@ -96,7 +115,7 @@ export function SettlementsSection({
           tableTestId="driver-settlements-weeks"
           columns={columns}
           rows={weeks}
-          rowKey={(row) => row.week_ending || "empty"}
+          rowKey={(row) => row.settlement_id || row.week_ending || "empty"}
           emptyText="No recent settlements."
           initialPageSize={10}
           pageSizeOptions={[5, 10, 20]}
