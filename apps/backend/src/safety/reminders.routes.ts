@@ -77,6 +77,7 @@ export async function registerSafetyRemindersRoutes(app: FastifyInstance) {
           FROM safety.compliance_reminders r
           LEFT JOIN mdata.drivers d
             ON d.id = r.driver_id
+           AND d.operating_company_id = r.operating_company_id
           WHERE r.operating_company_id = $1::uuid
             AND r.status = $2::text
             AND ($3::text IS NULL OR r.severity = $3::text)

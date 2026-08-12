@@ -375,8 +375,8 @@ export async function registerSafetyFinesRoutes(app: FastifyInstance) {
         }
 
         const driverRes = await client.query(
-          `SELECT id, status FROM mdata.drivers WHERE id = $1 LIMIT 1`,
-          [fine.subject_driver_id]
+          `SELECT id, status FROM mdata.drivers WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
+          [fine.subject_driver_id, query.data.operating_company_id]
         );
         const driver = driverRes.rows[0] as Record<string, unknown> | undefined;
         if (!driver || String(driver.status ?? "").toLowerCase() !== "active") {

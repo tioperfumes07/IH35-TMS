@@ -44,7 +44,7 @@ describe("fleet-brand-match computation", () => {
       rows: [{ brand: "FREIGHTLINER" }, { brand: "PETERBILT" }, { brand: "CARRIER" }, { brand: "WABASH" }],
     });
 
-    const brands = await fetchFleetBrands({ query });
+    const brands = await fetchFleetBrands({ query }, "00000000-0000-0000-0000-000000000001");
     expect(brands.has("FREIGHTLINER")).toBe(true);
     expect(brands.has("PETERBILT")).toBe(true);
     expect(brands.has("CARRIER")).toBe(true);
