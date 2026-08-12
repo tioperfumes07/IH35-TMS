@@ -1,5 +1,5 @@
-import { describe, expect, it, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi, beforeEach } from "vitest";
+import { cleanup, render, screen } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { VendorDetailPage } from "../VendorDetailPage";
@@ -31,6 +31,8 @@ function renderPage() {
 }
 
 describe("Maintenance VendorDetailPage (B29)", () => {
+  afterEach(cleanup);
+
   beforeEach(() => {
     getMaintenanceVendorDetail.mockReset();
     getMaintenanceVendorDetail.mockResolvedValue({
@@ -44,6 +46,8 @@ describe("Maintenance VendorDetailPage (B29)", () => {
         address: null,
         payment_terms: "Net 30",
         notes: "Preferred vendor",
+        mdata_vendor_id: "22222222-2222-4222-8222-222222222222",
+        mdata_vendor_name: "FleetPride AP",
         is_active: true,
       },
       wo_history: [{ id: "wo-1", display_id: "WO-1001", wo_type: "repair", status: "complete", repair_location: "FleetPride", opened_at: "2026-06-01" }],
@@ -53,10 +57,10 @@ describe("Maintenance VendorDetailPage (B29)", () => {
 
   it("renders vendor profile and history sections", async () => {
     renderPage();
-    expect(await screen.findByTestId("maint-vendor-detail-page")).toBeInTheDocument();
-    expect(await screen.findByRole("heading", { name: "FleetPride" })).toBeInTheDocument();
-    expect(screen.getByText("Work Order History")).toBeInTheDocument();
-    expect(screen.getByText("Invoice History")).toBeInTheDocument();
+    expect(await screen.findByTestId("maint-vendor-detail-page")).toBeTruthy();
+    expect(await screen.findByRole("heading", { name: "FleetPride" })).toBeTruthy();
+    expect(screen.getByText("Work Order History")).toBeTruthy();
+    expect(screen.getByText("Invoice History")).toBeTruthy();
   });
 
   it("shows linked work orders", async () => {
@@ -66,7 +70,13 @@ describe("Maintenance VendorDetailPage (B29)", () => {
 
   it("shows vendor invoice rows", async () => {
     renderPage();
-    expect(await screen.findByText("INV-77")).toBeInTheDocument();
-    expect(screen.getByText("$450.00")).toBeInTheDocument();
+    expect(await screen.findByText("INV-77")).toBeTruthy();
+    expect(screen.getByText("$450.00")).toBeTruthy();
+  });
+
+  it("links the canonical AP vendor with its resolved human label", async () => {
+    renderPage();
+    const link = await screen.findByRole("link", { name: "FleetPride AP" });
+    expect(link.getAttribute("href")).toBe("/vendors/22222222-2222-4222-8222-222222222222");
   });
 });

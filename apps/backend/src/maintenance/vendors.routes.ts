@@ -137,6 +137,7 @@ function mapVendorRow(row: Record<string, unknown>) {
     linked_vendor_id: linked,
     // Keep metadata.mdata_vendor_id exposure for verify-maint-wo-vendor-linkage (0441-mod9).
     mdata_vendor_id: typeof metadata.mdata_vendor_id === "string" ? metadata.mdata_vendor_id : linked,
+    mdata_vendor_name: typeof row.mdata_vendor_name === "string" ? row.mdata_vendor_name : null,
     is_active: row.is_active,
     active: row.is_active,
     archived_at: metadata.archived_at ?? null,
@@ -215,10 +216,21 @@ async function fetchVendorDetail(
 ) {
   const res = await client.query(
     `
-      SELECT id, operating_company_id, code, display_name, description, metadata, linked_vendor_id,
-             is_active, sort_order, created_at, updated_at
-      FROM catalogs.maintenance_vendors
-      WHERE id = $1 AND operating_company_id = $2
+      SELECT mvendor.id, mvendor.operating_company_id, mvendor.code, mvendor.display_name,
+             mvendor.description, mvendor.metadata, mvendor.linked_vendor_id,
+             mvendor.is_active, mvendor.sort_order, mvendor.created_at, mvendor.updated_at,
+             ap_vendor.vendor_name AS mdata_vendor_name
+      FROM catalogs.maintenance_vendors mvendor
+      LEFT JOIN mdata.vendors ap_vendor
+        ON ap_vendor.id = COALESCE(
+             mvendor.linked_vendor_id,
+             CASE
+               WHEN mvendor.metadata->>'mdata_vendor_id' ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
+               THEN (mvendor.metadata->>'mdata_vendor_id')::uuid
+             END
+           )
+       AND ap_vendor.operating_company_id = mvendor.operating_company_id
+      WHERE mvendor.id = $1 AND mvendor.operating_company_id = $2
       LIMIT 1
     `,
     [vendorId, companyId]
