@@ -192,7 +192,10 @@ async function readBills(
       WHERE b.operating_company_id = $1::uuid
         AND b.amount_cents IS NOT NULL
         AND b.revoked_at IS NULL
-        AND b.status NOT IN ('voided', 'draft')${dateSql}
+        -- LV-PAYABLE-SELECTOR-OFFERS-VOIDED-BILLS — same fix as ap-aging.service.ts: bills.status
+        -- carries 'void', never 'voided'. b.revoked_at IS NULL above already excludes voided bills
+        -- today, coincidentally; 'void' is added so this clause is no longer purely decorative.
+        AND b.status NOT IN ('void', 'voided', 'draft')${dateSql}
     `,
     values
   );

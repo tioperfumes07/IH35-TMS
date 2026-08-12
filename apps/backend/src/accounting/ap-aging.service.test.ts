@@ -45,7 +45,10 @@ describe("canonical unpaid SQL contract (payments + credits as-of)", () => {
     expect(AP_AGING_OPEN_BILLS_SQL).toContain("FROM accounting.vendor_credit_applications vca");
     expect(AP_AGING_OPEN_BILLS_SQL).toContain("vca.operating_company_id = $1::uuid");
     expect(AP_AGING_OPEN_BILLS_SQL).toContain("vca.voided_at IS NULL");
-    expect(AP_AGING_OPEN_BILLS_SQL).toContain("b.status NOT IN ('voided', 'draft')");
+    // LV-PAYABLE-SELECTOR-OFFERS-VOIDED-BILLS — the real column value is 'void', not 'voided';
+    // 'voided' is kept (no behavioural change removing it) but 'void' must be present or this clause
+    // is purely decorative (b.revoked_at IS NULL is what actually excludes voided bills).
+    expect(AP_AGING_OPEN_BILLS_SQL).toContain("b.status NOT IN ('void', 'voided', 'draft')");
     expect(AP_AGING_OPEN_BILLS_SQL).toContain("b.amount_cents IS NOT NULL");
     // Entity scope on bills + credits (cross-entity leak forbidden)
     expect(AP_AGING_OPEN_BILLS_SQL).toContain("b.operating_company_id = $1::uuid");
