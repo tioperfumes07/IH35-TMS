@@ -1,29 +1,31 @@
-# Cursor INBOX — 2026-08-12 evening · NON-STALE
+# Cursor INBOX — 2026-08-12 · UNIVERSAL VERTICAL (owner clarify)
 
-**NO PAUSE** · Built **~86%** · bus lead · tip includes #6222 matrix All-modules
+**NO PAUSE** · Built **~86%** · bus lead
 
-## ★ Law pack
+## ★ UNIVERSAL VERTICAL (answered=closed — reinforce every seat)
 
-`docs/specs/CODER-PASTE-INSTRUCTIONS-2026-08-12.md` (Cursor fence) · Desktop `CURSOR-LEAD-CADENCE.md` · `FAST-MERGE-4MIN-LAW.md` · Vertical · Wire-first
+Owner: linkage / connectivity / wiring / double-wiring multilayer sweeps on the **urgent 10** are **vertical + global**. Same fix **MUST** impact **every module / tab / leaf / popup** that shares the pattern — not a 10-module silo. After those columns are green everywhere they apply, finish **only** remaining modules on columns that were **never required** on the first 10.
+
+Locked in: `docs/lockdown/VERTICAL-WIRING-LAW-2026-08-12.md` §3 · `CODER-PASTE-INSTRUCTIONS-2026-08-12.md`
 
 ## ☐ NOW
 
-1. **Bus ticks** · seat nudge · OUTBOX · rewake idle · STATUS-NOW honest
-2. Keep seat INBOXes non-stale (`docs/bus/INBOX-*.md` → worktrees + Desktop)
-3. Overflow only when bus green: matrix/scoreboard honesty · non-money FE · never Wave D early
-4. **All-modules scoreboard** = union columns + A·B·L % (this wave) — prove live after deploy
+1. **Bus ticks** · nudge seats that still ship “10-only” PRs · OUTBOX · rewake idle · STATUS-NOW honest
+2. Keep `docs/bus/INBOX-*.md` synced → worktrees + Desktop (this clarify)
+3. Overflow when bus green: matrix/scoreboard · non-money FE · **never Wave D early**
+4. Reject / rework overflow PRs that touch one module on a shared column while siblings stay red
 
 ## Truth (for seats)
 
 | Fact | Number |
 |------|--------|
-| `picker_law` Built | ~**60%** (261/432) · Live **0%** — **NOT** universally wired across 28 |
-| Wave C money left | liability **10** · gl_je **2** → **CC-1** |
-| Wave D | **BLOCKED** until A–C green |
+| `picker_law` Built | ~**60%** · Live **0%** — **NOT** universal yet; Wave D blocked |
+| Wave C money left | liability · gl_je → **CC-1** (universal extend) |
+| Method | column-wave / class-sweep · **never** horizontal module-deep |
 
 ## FORBIDDEN
 
-Wave D primary · money/GL · soft-reset · claim+step same PR · idle after merge
+Wave D primary · money/GL · soft-reset · claim+step same PR · idle · treating priority-10 as the only wiring surface
 
 ## OUTBOX
 

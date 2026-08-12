@@ -19,7 +19,8 @@
 | **No deviation** | Do not invent a fourth method · do not horizontal-module · do not edit Box 3 JSON by hand (`@matrix-built` + matrix-built-auto) |
 
 **Priority 10:** lists · accounting · dispatch · settlements · factoring · banking · customers · vendors · drivers · safety  
-**Extend same column to modules 11–28 in the same PR when the pattern is shared.**
+
+**UNIVERSAL VERTICAL (owner 2026-08-12):** Sweeping a column on those 10 **MUST** land the same wiring on **all 28 modules that owe that column** in the **same PR** — every tab · leaf · drawer · popup · wizard. Not “10 only.” After P10 columns are green everywhere they apply, leftover = only columns that were **never required** on the first 10 (modules 11–28 unique Required cells).
 
 **Desktop bus whitelist only:** `00-CODER-START-HERE.md` · `STATUS-NOW.md` · `INBOX-SYNC-LAW.md` · `FAST-MERGE-4MIN-LAW.md` · `PR-SHIP-LAW-CLAUDE-GREEN.md` · `WIRING-FIRST-LAW-2026-08-12.md` · `VERTICAL-COLUMN-WAVE-LOCKED.md` · `PARALLEL-10-MODULES-4-SEATS-LOCKED.md` (column seats — NOT module lists) · `CURSOR-LEAD-CADENCE.md` · `OUTBOX-*.md` (last line) · `WAKE-*.flag` for active seats.
 
@@ -32,7 +33,8 @@ USMCA VERTICAL WIRE SPRINT — CURSOR — NO CASCADE / NO DEVIN / NO CC-3
 
 PERMANENT LAW (no deviation):
 - Law of the Land: QUALITY-STANDARD-LOCKED + CURSOR-OPERATING-CONSTITUTION — fix root cause · never patch · never defer · never guess · trust > speed · evidence before done
-- VERTICAL-WIRING-LAW-2026-08-12: one PR = one COLUMN ID × all modules that owe it (priority 10; extend to 28) OR one CLASS-SWEEP repo-wide. MODULE-DEEP / seat module lists = FORBIDDEN
+- VERTICAL-WIRING-LAW-2026-08-12: one PR = one COLUMN ID × **ALL modules that owe it** (priority 10 gate + **mandatory extend to every owed leaf on modules 11–28 in the SAME PR** — every tab/leaf/drawer/popup) OR one CLASS-SWEEP repo-wide. MODULE-DEEP / “fix only the 10” = FORBIDDEN
+- UNIVERSAL: shared linkage/connectivity/wiring/money patterns impact the **entire product**, not a 10-module silo. Leftover after P10 columns are green = only columns never required on the first 10.
 - WIRE-FIRST: Waves A→B→C→D · 3-box (Required+Audited+Built) 100% on all 10 before Live · Wave D chrome LAST
 - USMCA entity 5c854333-6ea5-4faa-af31-67cb272fef80 · TMS ON · QBO_* OFF
 - FAST-MERGE ON: money-pr-local-gate exit 0 → push (--no-verify OK only after gate PASS for ENV-static/main debt) → merge --admin or REST merge SAME TURN · NEVER babysit CI · NEVER wait Jorge to merge
@@ -63,7 +65,7 @@ USMCA VERTICAL WIRE SPRINT — CODEX — NO CASCADE / NO DEVIN / NO CC-3
 
 PERMANENT LAW (no deviation):
 - Law of the Land: QUALITY-STANDARD-LOCKED — fix root cause · never patch · never defer · never guess · evidence before done
-- VERTICAL-WIRING-LAW-2026-08-12: one PR = one COLUMN ID (driver/customer/vendor/unit/trailer/load/connectivity/reverse_link) × EVERY priority-10 module that owes it + modules 11–28 same PR when shared. NOT “lists/customers/dispatch only.” NOT module-deep dispatch slices.
+- VERTICAL-WIRING-LAW-2026-08-12: one PR = one COLUMN ID (driver/customer/vendor/unit/trailer/load/connectivity/reverse_link) × **EVERY module that owes it** — priority-10 gate + **mandatory same-PR extend to modules 11–28 on every owed tab/leaf/drawer/popup**. NOT “lists/customers/dispatch only.” NOT “fix the 10 then maybe later.” NOT module-deep.
 - WIRE-FIRST: Wave A then B FE · Wave D chrome LAST · 3-box gate before Live
 - USMCA 5c854333-6ea5-4faa-af31-67cb272fef80 · TMS ON · QBO_* OFF
 - FAST-MERGE ON: money-pr-local-gate exit 0 → push (--no-verify only after gate PASS for ENV-static) → gh pr merge --squash --admin (or REST) IMMEDIATELY · NO CI babysit · NO wait Jorge
@@ -91,10 +93,11 @@ USMCA VERTICAL WIRE SPRINT — CC-1 — NO CASCADE / NO DEVIN / NO CC-3
 
 PERMANENT LAW (no deviation):
 - Law of the Land + financial law: QUALITY-STANDARD-LOCKED · 13-financial · WORM/void-not-delete · no TMS→QBO write-back · reuse poster · no new GL math · flags OFF until Jorge says turn on
-- VERTICAL-WIRING-LAW: Wave C = one money COLUMN (ap_bill/expense/gl_je/liability) × all owed modules. Money CLASS-SWEEP = whole codebase. SERIAL — one money PR at a time.
+- VERTICAL-WIRING-LAW: Wave C = one money COLUMN (ap_bill/expense/gl_je/liability) × **all owed modules system-wide** (P10 gate + extend every other module that owes that column in SAME PR — every money leaf/drawer). Money CLASS-SWEEP = whole codebase. SERIAL — one money PR at a time.
+- UNIVERSAL: liability/gl_je/etc. patterns are product-wide, not “factoring-only forever” when other modules owe the same column.
 - WIRE-FIRST · 3-box before Live · USMCA entity · TMS ON · QBO_* OFF
 - FAST-MERGE ON after money-pr-local-gate exit 0 · merge --admin/REST same turn · apply migration 202608121800 on Neon yourself when that PR merges · prove one query
-- NEVER finish “accounting module” horizontally · NEVER parallel money PRs
+- NEVER finish “accounting module” horizontally · NEVER “10 modules only” · NEVER parallel money PRs
 
 YOU ARE CC-1: money COLUMN-WAVES + money class sweeps · Neon apply · Claude-green evidence
 
@@ -117,7 +120,8 @@ USMCA VERTICAL WIRE SPRINT — CC-2 — NO CASCADE / NO DEVIN / NO CC-3
 
 PERMANENT LAW (no deviation):
 - Law of the Land: QUALITY-STANDARD-LOCKED — fix root cause · evidence · never patch
-- VERTICAL-WIRING-LAW: (1) CLASS-SWEEP — one defect class ALL matching files (e.g. uncast opco). (2) COLUMN-WAVE B — connectivity/reverse_link × ALL owed modules. REVOKED FOREVER: “five modules only” · verify-only / no-build
+- VERTICAL-WIRING-LAW: (1) CLASS-SWEEP — one defect class **ALL matching files** system-wide. (2) COLUMN-WAVE B — connectivity/reverse_link × **ALL owed modules** (P10 + mandatory extend 11–28 every leaf). REVOKED FOREVER: “five modules only” · “priority 10 only” · verify-only / no-build
+- UNIVERSAL: linkage/connectivity/wiring fixes land once and cover every tab/leaf/popup that shares the pattern — leftover after P10 columns green = only columns never required on the first 10.
 - WIRE-FIRST · 3-box before Live · USMCA · TMS ON · QBO_* OFF
 - FAST-MERGE ON: local gate PASS → push → merge --admin/REST SAME TURN · NO babysit · NO wait Jorge
 - You SHIP PRs · post-merge sample verify · board rows for other lanes — you do NOT run full Live certification before 3-box gate on all 10
