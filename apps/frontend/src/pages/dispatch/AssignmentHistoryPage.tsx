@@ -67,6 +67,20 @@ export function AssignmentHistoryPage() {
         <EntityLink kind="driver" id={row.new_driver_id} label={entityLabel(row.new_driver_name, row.new_driver_id, "Driver")} />
       ),
     },
+    {
+      key: "previous_unit_number",
+      label: "Previous unit",
+      render: (row) => (
+        <EntityLink kind="unit" id={row.previous_unit_id} label={entityLabel(row.previous_unit_number, row.previous_unit_id, "Unit")} />
+      ),
+    },
+    {
+      key: "new_unit_number",
+      label: "New unit",
+      render: (row) => (
+        <EntityLink kind="unit" id={row.new_unit_id} label={entityLabel(row.new_unit_number, row.new_unit_id, "Unit")} />
+      ),
+    },
     { key: "reason_code", label: "Reason", render: (row) => row.reason_code ?? row.notes ?? "—" },
   ];
 

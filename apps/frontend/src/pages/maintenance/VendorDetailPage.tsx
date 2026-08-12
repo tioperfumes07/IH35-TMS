@@ -1,4 +1,5 @@
 import { entityLabel } from "../../lib/entity-label";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { Link, useParams } from "react-router-dom";
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -27,7 +28,7 @@ export function VendorDetailPage() {
 
   const woColumns = useMemo<ParityColumn<VendorHistoryRow>[]>(
     () => [
-      { key: "display_id", label: "WO", sortable: true, render: (row) => entityLabel(row.display_id, row.id, "Work order") },
+      { key: "display_id", label: "WO", sortable: true, render: (row) => <EntityLink kind="work_order" id={String(row.id)} label={entityLabel(row.display_id, row.id, "Work order")} /> },
       { key: "wo_type", label: "Type", sortable: true, render: (row) => String(row.wo_type ?? "—") },
       { key: "status", label: "Status", sortable: true, render: (row) => String(row.status ?? "—") },
       { key: "repair_location", label: "Location", render: (row) => String(row.repair_location ?? "—") },
@@ -39,7 +40,7 @@ export function VendorDetailPage() {
   const invoiceColumns = useMemo<ParityColumn<VendorHistoryRow>[]>(
     () => [
       { key: "invoice_number", label: "Invoice #", sortable: true, render: (row) => String(row.invoice_number ?? "—") },
-      { key: "display_id", label: "WO", render: (row) => entityLabel(row.display_id, row.work_order_id, "Work order") },
+      { key: "display_id", label: "WO", render: (row) => <EntityLink kind="work_order" id={String(row.work_order_id)} label={entityLabel(row.display_id, row.work_order_id, "Work order")} /> },
       {
         key: "invoice_amount",
         label: "Amount",
@@ -76,7 +77,7 @@ export function VendorDetailPage() {
                 <dd className="inline">
                   {vendor.mdata_vendor_id ? (
                     <Link className="text-slate-600 underline" to={`/vendors/${vendor.mdata_vendor_id}`}>
-                      {entityLabel(null, vendor.mdata_vendor_id, "Vendor")}
+                      {entityLabel(vendor.mdata_vendor_name, vendor.mdata_vendor_id, "Vendor")}
                     </Link>
                   ) : (
                     "—"

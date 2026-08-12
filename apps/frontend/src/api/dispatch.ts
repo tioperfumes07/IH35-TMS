@@ -805,6 +805,9 @@ export type LateArrivalLoadRow = {
   id: string;
   load_number: string;
   status: string;
+  customer_id: string;
+  unit_id: string | null;
+  driver_id: string | null;
   customer_name: string | null;
   unit_number: string | null;
   driver_name: string | null;
@@ -939,11 +942,15 @@ export type DetentionBoardEvent = {
   id: string;
   load_id: string;
   load_number: string;
+  customer_id: string;
+  driver_id: string | null;
+  unit_id: string | null;
   customer_name: string | null;
   stop_city: string | null;
   stop_state: string | null;
   stop_type: string | null;
   driver_name: string | null;
+  unit_number: string | null;
   status: string;
   started_at: string;
   stopped_at: string | null;

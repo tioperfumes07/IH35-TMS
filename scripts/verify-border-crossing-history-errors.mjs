@@ -9,10 +9,11 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const FILE = "apps/frontend/src/pages/dispatch/BorderCrossingHistoryPage.tsx";
+const ROUTE_FILE = "apps/backend/src/border-crossing/border-crossing-history.routes.ts";
 const LABEL = "verify-border-crossing-history-errors";
 const SELFTEST = process.argv.includes("--selftest");
 
-function assert(src) {
+function assert(src, routeSrc) {
   const problems = [];
   if (!/loadError/.test(src) || !/border-crossing-history-error/.test(src)) {
     problems.push(`${FILE}: must surface loadError (testid border-crossing-history-error)`);
@@ -23,11 +24,18 @@ function assert(src) {
   if (!/!res\.ok/.test(src)) {
     problems.push(`${FILE}: must fail closed on !res.ok`);
   }
+  for (const id of ["unit_id", "driver_id", "load_id"]) {
+    if (!new RegExp(`ubc\\.${id}::text`).test(routeSrc)) problems.push(`${ROUTE_FILE}: history payload must expose ${id}`);
+  }
+  for (const [kind, id] of [["unit", "row.unit_id"], ["driver", "selected.driver_id"], ["load", "selected.load_id"]]) {
+    if (!src.includes(`<EntityLink kind="${kind}" id={${id}}`)) problems.push(`${FILE}: missing canonical ${kind} EntityLink`);
+  }
   return problems;
 }
 
 if (SELFTEST) {
   const live = fs.readFileSync(path.join(ROOT, FILE), "utf8");
+  const routeLive = fs.readFileSync(path.join(ROOT, ROUTE_FILE), "utf8");
   const planted = live
     .replace(/loadError/g, "ignored")
     .replace(/border-crossing-history-error/g, "x")
@@ -36,12 +44,12 @@ if (SELFTEST) {
       /\.catch\(\([\s\S]*?\)\s*=>\s*\{[\s\S]*?\}\)/,
       ".catch(() => setRows([]))"
     );
-  const caught = assert(planted);
+  const caught = assert(planted, routeLive.replace("ubc.unit_id::text", "NULL AS unit_id"));
   if (!caught.length) {
     console.error(`${LABEL} SELFTEST FAILED: planted silent-empty not caught`);
     process.exit(1);
   }
-  const liveProblems = assert(live);
+  const liveProblems = assert(live, routeLive);
   if (liveProblems.length) {
     console.error(`${LABEL} SELFTEST FAILED: live sources red: ${liveProblems.join(" | ")}`);
     process.exit(1);
@@ -50,7 +58,7 @@ if (SELFTEST) {
   process.exit(0);
 }
 
-const problems = assert(fs.readFileSync(path.join(ROOT, FILE), "utf8"));
+const problems = assert(fs.readFileSync(path.join(ROOT, FILE), "utf8"), fs.readFileSync(path.join(ROOT, ROUTE_FILE), "utf8"));
 if (problems.length) {
   console.error(`${LABEL} FAILED:`);
   for (const p of problems) console.error(`  ${p}`);
