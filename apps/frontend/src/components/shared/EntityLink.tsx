@@ -49,6 +49,7 @@ export type EntityKind =
   // with a query param the page honors (same drill pattern as claim/lawsuit/settlement).
   | "accident"
   | "safety_fine"
+  | "internal_fine"
   | "complaint"
   | "dot_inspection"
   | "escrow_record"
@@ -158,6 +159,11 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
       return `/safety/accidents?accident_id=${id}`;
     case "safety_fine":
       return `/safety/external-fines?fine_id=${id}`;
+    // LIABILITY column-wave: internal fines convert to a driver liability the same way civil
+    // (external) fines do (safety-v5.routes.ts sets driver_liabilities.origin='internal_fine'),
+    // but no EntityKind existed to drill from the liability back to the fine that caused it.
+    case "internal_fine":
+      return `/safety/internal-fines?fine_id=${id}`;
     case "complaint":
       return `/safety/complaints?complaint_id=${id}`;
     case "dot_inspection":

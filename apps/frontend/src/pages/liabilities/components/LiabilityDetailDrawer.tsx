@@ -13,11 +13,26 @@ type Props = {
   onUpdated: () => void;
 };
 
+// LIABILITY column-wave: views.liabilities_active_with_context previously dropped origin/origin_id
+// entirely, so this reverse-link was architecturally impossible regardless of frontend code — fixed
+// alongside this render in db/migrations/202608120900_liabilities_view_reverse_link_columns.sql.
+// Every leaf that spawns a liability writes a distinct origin string; map it to the matching
+// EntityLink kind (added `internal_fine` in this same commit — it didn't exist before).
+const ORIGIN_TO_ENTITY_KIND: Record<string, "safety_fine" | "internal_fine" | "cash_advance" | "accident"> = {
+  safety_fine: "safety_fine",
+  internal_fine: "internal_fine",
+  cash_advance: "cash_advance",
+  safety_accident: "accident",
+};
+
 export function LiabilityDetailDrawer({ open, operatingCompanyId, liability, onClose, onUpdated }: Props) {
   const { pushToast } = useToast();
   if (!open || !liability) return null;
   const id = String(liability.id ?? "");
   const settlementHistory = (liability.settlement_history as Array<Record<string, unknown>> | undefined) ?? [];
+  const origin = liability.origin ? String(liability.origin) : null;
+  const originId = liability.origin_id ? String(liability.origin_id) : null;
+  const originKind = origin ? ORIGIN_TO_ENTITY_KIND[origin] : undefined;
 
   return (
     <>
@@ -46,6 +61,14 @@ export function LiabilityDetailDrawer({ open, operatingCompanyId, liability, onC
           <div>Paid: ${Number(liability.paid_to_date ?? 0).toFixed(2)}</div>
           <div>Balance: ${Number(liability.current_balance ?? 0).toFixed(2)}</div>
           <div>Scheduled deduction: ${Number(liability.scheduled_deduction ?? 0).toFixed(2)}</div>
+          <div>
+            Caused by:{" "}
+            {originId && originKind ? (
+              <EntityLink kind={originKind} id={originId} label={entityLabel(null, originId, origin ?? "Source")} />
+            ) : (
+              "—"
+            )}
+          </div>
         </div>
         <div className="mt-2 rounded-sm border border-gray-200 p-2">
           <div className="font-semibold">Acknowledgment / Forfeiture</div>
