@@ -20,6 +20,7 @@ const ACTIVITY_PREDICATE = `
       SELECT 1
         FROM mdata.loads l
        WHERE l.soft_deleted_at IS NULL
+         AND l.operating_company_id = d.operating_company_id
          AND (l.assigned_primary_driver_id = d.id OR l.assigned_secondary_driver_id = d.id)
          AND COALESCE(l.updated_at, l.created_at) >= now() - ($1 || ' days')::interval
     )

@@ -1281,9 +1281,10 @@ export async function registerLoadRoutes(app: FastifyInstance) {
               SELECT COALESCE((quicksave_pending_fields->>'hazmat')::boolean, false) AS is_hazmat
               FROM mdata.loads
               WHERE id = $1::uuid
+                AND operating_company_id = $2::uuid
               LIMIT 1
             `,
-            [parsedParams.data.id]
+            [parsedParams.data.id, oldRow.operating_company_id]
           );
           const isHazmat = Boolean(hazmatRes.rows[0]?.is_hazmat);
           await gateMdataLoadDriverAssignment(
