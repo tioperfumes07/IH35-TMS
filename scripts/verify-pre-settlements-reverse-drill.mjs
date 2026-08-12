@@ -14,6 +14,27 @@ function read(rel) {
   return fs.readFileSync(path.join(ROOT, rel), "utf8");
 }
 
+function assertEscrowCloseApprovalReverse() {
+  const errors = [];
+  const escrow = read("apps/frontend/src/pages/driver-finance/EscrowDeductionsPendingTab.tsx");
+  const close = read("apps/frontend/src/pages/driver-finance/SettlementCloseArrivalPage.tsx");
+  const approval = read("apps/frontend/src/pages/driver-finance/OwnerApprovalPortalPage.tsx");
+
+  if (!/EntityLink/.test(escrow) || !/kind="driver"/.test(escrow) || !/kind="load"/.test(escrow)) {
+    errors.push("EscrowDeductionsPendingTab: driver + load must use EntityLink");
+  }
+  if (/navigate\(`\/dispatch\/loads\//.test(escrow)) {
+    errors.push("EscrowDeductionsPendingTab: must not manual navigate to load — use EntityLink");
+  }
+  if (!/kind="driver"/.test(close) || !/kind="settlement"/.test(close) || !/first_load_id/.test(close)) {
+    errors.push("SettlementCloseArrivalPage: driver, settlement, and load range must EntityLink");
+  }
+  if (!/kind="settlement"/.test(approval) || !/driver_history\.settlements/.test(approval)) {
+    errors.push("OwnerApprovalPortalPage: settlement history must EntityLink");
+  }
+  return errors;
+}
+
 function assertPreSettlementsReverse() {
   const errors = [];
   const panel = read("apps/frontend/src/components/driver-finance/PreSettlementsPanel.tsx");
@@ -63,7 +84,7 @@ if (process.argv.includes("--selftest")) {
   process.exit(0);
 }
 
-const errors = assertPreSettlementsReverse();
+const errors = [...assertPreSettlementsReverse(), ...assertEscrowCloseApprovalReverse()];
 if (errors.length) {
   console.error(`${LABEL} FAIL`);
   for (const e of errors) console.error(`  ${e}`);

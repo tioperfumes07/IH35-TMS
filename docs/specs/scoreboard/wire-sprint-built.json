@@ -248,6 +248,22 @@
       "modules": ["accounting"],
       "cols": ["gl_je", "connectivity", "reverse_link"],
       "leafRe": "^(expenses\\.|register|transactions\\.)"
+    },
+    {
+      "task": "SETT-FE-REVERSE-02",
+      "pr": "TBD",
+      "guard": "scripts/verify-steps/1284-verify-pre-settlements-reverse-drill.mjs",
+      "modules": ["settlements"],
+      "cols": ["driver", "load", "connectivity", "reverse_link"],
+      "leafRe": "^(settlements\\.|settlement_close|pre_settlements|secondary\\.settlements|escrow|approval)"
+    },
+    {
+      "task": "FACT-FE-BATCH-INVOICES",
+      "pr": "TBD",
+      "guard": "scripts/verify-steps/1126-verify-factoring-batch-detail-uses-paritytable.mjs",
+      "modules": ["factoring"],
+      "cols": ["customer", "connectivity", "reverse_link"],
+      "leafRe": "^batches\\."
     }
   ]
 }
