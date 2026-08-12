@@ -42,7 +42,7 @@ import { apiRequest } from "../../api/client";
 export type CatalogPickerBackend = "inline-drawer" | "quick-create-modal" | "catalog";
 
 export type CatalogCreateField = {
-  name: "display_name" | "code" | "description" | "days_until_due";
+  name: "display_name" | "code" | "description" | "days_until_due" | "hex_color";
   label: string;
   required?: boolean;
   maxLength?: number;
@@ -103,6 +103,7 @@ export type CatalogCreateValues = {
   severity?: string;
   /** Payment terms (and similar) — days until due for Net-N style rows. */
   days_until_due?: number | string;
+  hex_color?: string;
 };
 
 /**
@@ -381,6 +382,41 @@ export const CATALOG_PICKER_CONFIGS = {
     evidence: "apps/backend/src/catalogs/dispatch/shared.ts:104,138,204 — one tableName, SELECT and INSERT",
     consumerPath: "apps/frontend/src/pages/dispatch/components/BookLoadModalV4.tsx",
   }),
+
+  dispatch_flag_color: {
+    key: "dispatch_flag_color",
+    label: "dispatch flag",
+    backend: "catalog",
+    readTable: "catalogs.dispatch_flag_colors",
+    writeTable: "catalogs.dispatch_flag_colors",
+    readEndpoint: "/api/v1/catalogs/dispatch-flag-colors",
+    writeEndpoint: "/api/v1/catalogs/dispatch-flag-colors",
+    entityScoped: true,
+    readWriteParity: "same-endpoint-verified",
+    evidence: "apps/backend/src/catalogs/dispatch-flag-colors.routes.ts — list and create use catalogs.dispatch_flag_colors",
+    consumerPath: "apps/frontend/src/components/dispatch/LoadDetailDrawer.tsx",
+    fields: [
+      { name: "display_name", label: "Name", required: true, maxLength: 120 },
+      { name: "code", label: "Code", maxLength: 40 },
+      { name: "hex_color", label: "Color (#RRGGBB)", required: true, placeholder: "#1f2a44" },
+      { name: "description", label: "Description", maxLength: 500, multiline: true },
+    ],
+    create: async (operatingCompanyId, values) => {
+      const displayName = values.display_name.trim();
+      const flagCode = deriveCatalogCode(displayName, values.code).replace(/-/g, "_");
+      const created = await apiRequest<{ id: string }>("/api/v1/catalogs/dispatch-flag-colors", {
+        method: "POST",
+        body: {
+          operating_company_id: operatingCompanyId,
+          flag_code: flagCode,
+          display_name: displayName,
+          hex_color: values.hex_color?.trim() || "#1f2a44",
+          description: values.description?.trim() || undefined,
+        },
+      });
+      return { id: created.id, label: displayName, code: flagCode };
+    },
+  },
 
 
 
