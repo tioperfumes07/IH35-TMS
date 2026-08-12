@@ -59,6 +59,8 @@ const FILES = {
   cancellationMigration: "db/migrations/202612501800_p44_load_cancellation_reason_same_opco_fk.sql",
   dispatchFlagDrawer: "apps/frontend/src/components/dispatch/LoadDetailDrawer.tsx",
   dispatchFlagMigration: "db/migrations/202612502000_p44_dispatch_flag_color_canonical_fk.sql",
+  accessorialEditor: "apps/frontend/src/components/dispatch/AccessorialEditor.tsx",
+  additionalChargeMigration: "db/migrations/202612502200_p44_load_additional_charge_lines_canonical_fk.sql",
 };
 
 const MISSING = "MISSING";
@@ -196,6 +198,15 @@ export function contractErrors(src) {
   }
   if (!/loads_dispatch_flag_color_same_company_fk/.test(src.dispatchFlagMigration) || !/ALTER COLUMN dispatch_flag_color_id SET NOT NULL/.test(src.dispatchFlagMigration)) {
     errors.push("P44-FK: loads must enforce a NOT NULL same-opco dispatch flag color FK");
+  }
+  if (!/value=\{row\.additional_charge_id \|\| null\}/.test(src.accessorialEditor) || !/createKind="additional_charge"/.test(src.accessorialEditor)) {
+    errors.push("P44-FK: Book Load accessorial picker must select the canonical additional charge UUID");
+  }
+  if (!/load_charge_lines_additional_charge_same_company_fk/.test(src.additionalChargeMigration) || !/line_kind = 'accessorial' AND additional_charge_id IS NOT NULL/.test(src.additionalChargeMigration)) {
+    errors.push("P44-FK: accessorial load lines must enforce a non-null same-opco additional charge FK");
+  }
+  if (!/additional_charge_id:\s*str\(line\.additional_charge_id\)/.test(src.editMapping)) {
+    errors.push("P44-FK: canonical accessorial selection must survive detail reload into Edit Book Load");
   }
 
   // ── CONFIG-DRIVEN: the pinned defect ────────────────────────────────────────────────────────

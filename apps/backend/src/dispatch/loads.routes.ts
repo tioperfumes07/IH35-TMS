@@ -211,6 +211,8 @@ const createDispatchLoadBodySchema = z.object({
     .array(
       z.object({
         code: z.string().trim().min(1).max(60),
+        additional_charge_id: z.string().uuid().optional(),
+        description: z.string().trim().max(500).optional(),
         amount_cents: z.number().int().min(0),
       })
     )
@@ -323,7 +325,12 @@ const updateDispatchLoadBodySchema = z.object({
   assigned_secondary_driver_id: z.string().uuid().nullable().optional(),
   team_id: z.string().uuid().nullable().optional(),
   charges: z
-    .array(z.object({ code: z.string().trim().min(1).max(60), amount_cents: z.number().int().min(0) }))
+    .array(z.object({
+      code: z.string().trim().min(1).max(60),
+      additional_charge_id: z.string().uuid().optional(),
+      description: z.string().trim().max(500).optional(),
+      amount_cents: z.number().int().min(0),
+    }))
     .optional(),
   stops: z
     .array(
@@ -813,11 +820,14 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
         `,
         [params.data.id]
       );
-      // Charges are a single rate_total_cents today (no line-item table yet — see the charge-line
-      // follow-on block). Reconstruct one LINEHAUL line so the Edit wizard can prefill + round-trip the
-      // rate; the follow-on block replaces this with real per-line charges.
-      const rateTotal = Number(load.rate_total_cents ?? 0);
-      const charges = rateTotal > 0 ? [{ code: "LINEHAUL", amount_cents: rateTotal }] : [];
+      const chargesRes = await client.query(
+        `SELECT charge_code AS code, additional_charge_id, description, amount_cents
+           FROM dispatch.load_charge_lines
+          WHERE load_id = $1 AND operating_company_id = $2 AND is_active = true
+          ORDER BY sort_order, created_at`,
+        [params.data.id, operatingCompanyId]
+      );
+      const charges = chargesRes.rows;
       return { ...load, stops: stopsRes.rows, charges, drivers: [] };
     });
 

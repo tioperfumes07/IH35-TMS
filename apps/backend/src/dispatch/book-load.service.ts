@@ -47,6 +47,8 @@ type BookLoadStop = {
 
 type BookLoadCharge = {
   code: string;
+  additional_charge_id?: string;
+  description?: string;
   amount_cents: number;
 };
 
@@ -1568,6 +1570,24 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
       ]
     );
     const load = loadRes.rows[0] as Record<string, unknown>;
+
+    for (const [index, charge] of input.charges.entries()) {
+      const isSystem = ["linehaul", "fuel_surcharge"].includes(charge.code.toLowerCase());
+      if (!isSystem && !charge.additional_charge_id) {
+        throw Object.assign(new Error("additional_charge_id_required"), { code: "23503" });
+      }
+      await client.query(
+        `INSERT INTO dispatch.load_charge_lines (
+           operating_company_id, load_id, line_kind, additional_charge_id, charge_code,
+           description, amount_cents, sort_order, created_by_user_id
+         ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+        [
+          input.operating_company_id, load.id, isSystem ? "system" : "accessorial",
+          charge.additional_charge_id ?? null, charge.code, charge.description ?? null,
+          charge.amount_cents, (index + 1) * 10, input.requestingUserUuid,
+        ]
+      );
+    }
 
     // ND-INV-01 — auto-create NON-POSTING proforma invoice at book when pipeline flag is on.
     // Reuses buildInvoiceFromLoad (no new GL math). Failures are loud so booking never silently

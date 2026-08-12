@@ -54,7 +54,7 @@ describe("accessorial-editor-lib (B21-D3)", () => {
     expect(lines).toEqual([
       { code: "linehaul", amount_cents: 50000 },
       { code: "fuel_surcharge", amount_cents: 5000 },
-      { code: "detention", amount_cents: 3000 },
+      { code: "detention", description: "Detention", amount_cents: 3000 },
     ]);
   });
 

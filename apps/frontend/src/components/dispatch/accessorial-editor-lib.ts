@@ -1,5 +1,6 @@
 export type AccessorialRow = {
   id: string;
+  additional_charge_id: string;
   code: string;
   description: string;
   amount_cents: number;
@@ -23,6 +24,7 @@ export function newAccessorialRowId(): string {
 export function createEmptyAccessorialRow(): AccessorialRow {
   return {
     id: newAccessorialRowId(),
+    additional_charge_id: "",
     code: "",
     description: "",
     amount_cents: 0,
@@ -37,6 +39,7 @@ export function seedAccessorialRow(
   const defaults = SEED_DEFAULTS[preset];
   return {
     id: newAccessorialRowId(),
+    additional_charge_id: "",
     code: defaults.code,
     description: opts?.description ?? defaults.description,
     amount_cents: Math.max(0, Number(opts?.amount_cents ?? 0)),
@@ -60,7 +63,7 @@ export function computeBookLoadSectionTotalCents(
   );
 }
 
-export type BookLoadChargeLine = { code: string; amount_cents: number };
+export type BookLoadChargeLine = { code: string; additional_charge_id?: string; description?: string; amount_cents: number };
 
 export function buildBookLoadChargeLines(input: {
   linehaul_cents: number;
@@ -75,7 +78,12 @@ export function buildBookLoadChargeLines(input: {
     const amount = Math.max(0, Number(row.amount_cents || 0));
     if (amount <= 0) continue;
     const code = String(row.code || "accessorial").trim() || "accessorial";
-    lines.push({ code: code.toLowerCase(), amount_cents: amount });
+    lines.push({
+      code: code.toLowerCase(),
+      ...(row.additional_charge_id ? { additional_charge_id: row.additional_charge_id } : {}),
+      ...(row.description ? { description: row.description } : {}),
+      amount_cents: amount,
+    });
   }
   return lines;
 }

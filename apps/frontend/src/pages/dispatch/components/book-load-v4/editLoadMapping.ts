@@ -37,6 +37,19 @@ function toLocalInput(iso: string | null | undefined): string {
 
 /** LoadDetail → form values for prefill (only the round-trippable set; unpersisted fields left default). */
 export function buildEditPrefill(load: LoadDetail): AnyValues {
+  const chargeLines = load.charges ?? [];
+  const linehaul = chargeLines.find((line) => line.code.toLowerCase() === "linehaul");
+  const fuel = chargeLines.find((line) => line.code.toLowerCase() === "fuel_surcharge");
+  const accessorialRows = chargeLines
+    .filter((line) => Boolean(line.additional_charge_id))
+    .map((line, index) => ({
+      id: `persisted-${index}-${line.additional_charge_id}`,
+      additional_charge_id: str(line.additional_charge_id),
+      code: str(line.code).toUpperCase(),
+      description: str(line.description),
+      amount_cents: num(line.amount_cents),
+      taxable: false,
+    }));
   const stops = (load.stops ?? []).map((s, i) => ({
     stop_type: s.stop_type === "delivery" ? "delivery" : "pickup",
     sequence_number: s.sequence_number ?? i + 1,
@@ -72,12 +85,10 @@ export function buildEditPrefill(load: LoadDetail): AnyValues {
     is_sample_data: Boolean((load as { is_sample_data?: boolean }).is_sample_data),
     notes: str(load.notes),
     driver_instructions_text: str(load.driver_instructions_text),
-    // Only the rate TOTAL is stored (no linehaul/fuel/accessorial breakdown) → seed linehaul with the
-    // total so the displayed total matches; fuel/accessorial start at 0.
-    linehaul_cents: num(load.rate_total_cents),
-    fuel_surcharge_cents: 0,
-    accessorial_cents: 0,
-    accessorial_rows: [],
+    linehaul_cents: linehaul ? num(linehaul.amount_cents) : num(load.rate_total_cents),
+    fuel_surcharge_cents: fuel ? num(fuel.amount_cents) : 0,
+    accessorial_cents: accessorialRows.reduce((sum, row) => sum + row.amount_cents, 0),
+    accessorial_rows: accessorialRows,
     requires_tarps: Boolean(load.requires_tarps),
     tarp_type: str(load.tarp_type),
     lumper_amount_cents: num(load.lumper_amount_cents),
