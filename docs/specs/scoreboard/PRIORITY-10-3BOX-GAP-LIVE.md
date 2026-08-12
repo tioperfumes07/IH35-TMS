@@ -1,6 +1,6 @@
 # PRIORITY 10 · 3-BOX GATE — LIVE GAP
 
-**as_of:** 2026-08-12T20:49:55.911Z · **main:** `50d26b508`
+**as_of:** 2026-08-12T20:52:02.737Z · **main:** `6351ddac3`
 
 ## Bar
 
@@ -8,19 +8,19 @@ All 10 modules: **Required + Audited + Built = 100%** before Live. Wave **A→B�
 
 ## Built coverage
 
-- All cells: **84%** (2272/2717)
-- Wave A–C (no chrome): **97%** (2021/2087)
+- All cells: **84%** (2270/2702)
+- Wave A–C (no chrome): **97%** (2019/2072)
 
 | Module | Built% all | Built% A–C |
 |--------|-----------:|-----------:|
 | lists | 85% | 100% |
 | accounting | 76% | 88% |
-| dispatch | 87% | 97% |
+| dispatch | 88% | 98% |
 | settlements | 76% | 89% |
-| factoring | 71% | 82% |
+| factoring | 76% | 89% |
 | banking | 83% | 95% |
 | customers | 91% | 100% |
-| vendors | 87% | 98% |
+| vendors | 87% | 99% |
 | drivers | 80% | 100% |
 | safety | 77% | 94% |
 
@@ -30,10 +30,10 @@ All 10 modules: **Required + Audited + Built = 100%** before Live. Wave **A→B�
 |-----|------:|------|
 | `qbo_chrome` | 293 | D LAST |
 | `picker_law` | 73 | D LAST |
-| `liability` | 35 | CC-1 |
+| `liability` | 27 | CC-1 |
 | `gl_je` | 13 | CC-1 C |
-| `ap_bill` | 11 | CC-1 |
-| `expense` | 7 | CC-1 |
+| `ap_bill` | 7 | CC-1 |
+| `expense` | 6 | CC-1 |
 | `scenario.maintenance` | 5 | ? |
 | `scenario.ap` | 3 | ? |
 | `scenario.insurance` | 3 | ? |
