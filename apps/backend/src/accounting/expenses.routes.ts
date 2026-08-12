@@ -174,6 +174,12 @@ export type ExpenseListRow = {
   line_description: string | null;
   is_reconciled: boolean;
   journal_entry_id: string | null;
+  // CLS-LINKAGE-ONEWAY instance (Expense -> JE, list view) — accounting.journal_entries has no
+  // number/ref/doc column; memo IS the JE's human identity. Named journal_entry_memo (not bare
+  // memo, which this row already uses for the expense's OWN memo) to match the expense DETAIL
+  // route's existing field name for the identical value (expenses.routes.ts's header query already
+  // selects je.memo AS journal_entry_memo — this list query just never joined journal_entries at all).
+  journal_entry_memo: string | null;
   linked_work_order_uuid: string | null;
   work_order_display_id: string | null;
   /** ACCT-F17 — bank txn stamped via matched_expense_id (Law §9 reverse). */
@@ -250,6 +256,7 @@ export async function queryExpensesList(
         e.vendor_uuid::text                          AS vendor_uuid,
         e.driver_uuid::text                          AS driver_uuid,
         e.journal_entry_id::text                     AS journal_entry_id,
+        je.memo                                       AS journal_entry_memo,
         e.linked_work_order_uuid::text               AS linked_work_order_uuid,
         e.created_at                                 AS created_at,
         v.vendor_name                                AS vendor_name,
@@ -278,6 +285,7 @@ export async function queryExpensesList(
       LEFT JOIN mdata.drivers dr ON dr.id = e.driver_uuid
       LEFT JOIN mdata.loads l ON l.id = e.load_id
       LEFT JOIN maintenance.work_orders wo ON wo.id = e.linked_work_order_uuid
+      LEFT JOIN accounting.journal_entries je ON je.id = e.journal_entry_id AND je.operating_company_id = e.operating_company_id
       WHERE ${where.join(" AND ")}
       ORDER BY e.transaction_date DESC, e.created_at DESC
       LIMIT $${limitIdx} OFFSET $${offsetIdx}
