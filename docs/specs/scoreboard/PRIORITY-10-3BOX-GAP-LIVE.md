@@ -1,6 +1,6 @@
 # PRIORITY 10 · 3-BOX GATE — LIVE GAP
 
-**as_of:** 2026-08-12T21:26:42.713Z · **main:** `9ced0eec5`
+**as_of:** 2026-08-12T21:31:14.089Z · **main:** `b674aa935`
 
 ## Bar
 
@@ -8,8 +8,8 @@ All 10 modules: **Required + Audited + Built = 100%** before Live. Wave **A→B�
 
 ## Built coverage
 
-- All cells: **86%** (2283/2662)
-- Wave A–C (no chrome): **99%** (2024/2037)
+- All cells: **86%** (2284/2662)
+- Wave A–C (no chrome): **99%** (2025/2037)
 
 | Module | Built% all | Built% A–C |
 |--------|-----------:|-----------:|
@@ -18,7 +18,7 @@ All 10 modules: **Required + Audited + Built = 100%** before Live. Wave **A→B�
 | dispatch | 91% | 100% |
 | settlements | 82% | 100% |
 | factoring | 78% | 90% |
-| banking | 85% | 98% |
+| banking | 88% | 100% |
 | customers | 92% | 100% |
 | vendors | 90% | 100% |
 | drivers | 80% | 100% |
@@ -30,7 +30,7 @@ All 10 modules: **Required + Audited + Built = 100%** before Live. Wave **A→B�
 |-----|------:|------|
 | `qbo_chrome` | 293 | D LAST |
 | `picker_law` | 73 | D LAST |
-| `liability` | 11 | CC-1 |
+| `liability` | 10 | CC-1 |
 | `gl_je` | 2 | CC-1 C |
 
 ## Seat NOW

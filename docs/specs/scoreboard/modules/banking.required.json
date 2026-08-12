@@ -2,7 +2,7 @@
   "module": "banking",
   "entity_default": "USMCA",
   "source": {
-    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md — Banking",
+    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md \u2014 Banking",
     "nav": "apps/frontend/src/pages/banking/BANKING_NAV_CONFIG.ts",
     "routes": "/banking/*"
   },
@@ -226,6 +226,18 @@
           "removed": [
             "load"
           ]
+        }
+      ]
+    },
+    "banking_factoring_liability_built_2026_08_12": {
+      "finding": "BANK-FACTORING-LIABILITY-BUILT",
+      "matrix_built": [
+        {
+          "id": "factoring",
+          "cols": [
+            "liability"
+          ],
+          "proof": "BankingHome factoring tab Reserves held from factoringVirtualSummary.reserve"
         }
       ]
     }
