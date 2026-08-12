@@ -118,6 +118,8 @@ them.** They are evidence.
 governs, and the opening JE stays deferred by owner decision — **which is an owner-written deferral, the
 one form the never-defer law explicitly allows.**
 
+| **FIXED (PR #5959, main `ea8348bfe`)** `CLS-LINKAGE-ONEWAY-MAINTENANCE-WO-LABELS` — reconciles maintenance instances 3 and 4 of the broader class. | `apps/backend/src/maintenance/work-orders.routes.ts`; `apps/frontend/src/pages/maintenance/components/WorkOrdersTable.tsx`; `scripts/verify-entity-label-rejects-uuid-shaped-name.mjs` | C | **Codex (maintenance)** | Current-main proof: list and detail serializers use same-opco driver/vendor joins, expose `driver_name` and `external_vendor_name`, and the table passes both through `entityLabel`. Ratchet mutation selftest and current-tree run both exit 0. The broader accounting class remains independently owned/open; only the maintenance half is closed here. | #5959 `ea8348bfe` | **FIXED** |
+
 ## ★ SHARED RESOURCE COORDINATION — DEBUGGED CHROME PORTS (owner-directed 2026-08-07)
 
 **Why this exists:** the browser is a SHARED resource. Lanes were attaching to the same Chrome instance,
