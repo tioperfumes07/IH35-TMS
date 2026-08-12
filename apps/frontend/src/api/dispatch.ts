@@ -172,7 +172,9 @@ export type DispatchBookLoadPayload = {
   tour_id?: string;
   trailer_type?: "refrigerated_van" | "dry_van" | "flatbed" | "lowboy" | "power_only_no_trailer" | "power_only_customer_trailer";
   assigned_unit_id?: string;
-  assigned_trailer_unit_id?: string; // W-FIX-3b: persisted to mdata.loads.trailer_id
+  // Persisted after load creation through dispatch.load_assignment_history.new_trailer_id;
+  // mdata.loads intentionally has no trailer FK column.
+  assigned_trailer_unit_id?: string;
   temperature_type?: "frozen" | "fresh"; // W-FIX-1: reefer Frozen/Fresh → mdata.loads.temperature_type
   assigned_primary_driver_id?: string;
   assigned_secondary_driver_id?: string;
