@@ -1,11 +1,11 @@
 {
-  "as_of": "2026-08-12T20:57:13.983Z",
-  "main_sha": "d61658c84",
+  "as_of": "2026-08-12T21:00:22.232Z",
+  "main_sha": "472244f18",
   "gate": "PRIORITY_10_3BOX_100",
   "allRequired": {
-    "totR": 2690,
-    "totB": 2270,
-    "pct": 84
+    "totR": 2689,
+    "totB": 2275,
+    "pct": 85
   },
   "waveABC_noChrome": {
     "abcR": 2064,
@@ -79,8 +79,8 @@
     {
       "mod": "vendors",
       "req": 174,
-      "built": 152,
-      "pct": 87,
+      "built": 155,
+      "pct": 89,
       "abcReq": 144,
       "abcBuilt": 142,
       "abcPct": 99
@@ -96,9 +96,9 @@
     },
     {
       "mod": "safety",
-      "req": 193,
-      "built": 154,
-      "pct": 80,
+      "req": 192,
+      "built": 156,
+      "pct": 81,
       "abcReq": 150,
       "abcBuilt": 149,
       "abcPct": 99
@@ -168,22 +168,6 @@
       "seat": "CC-1"
     },
     {
-      "col": "scenario.ap",
-      "cells": 3,
-      "byMod": {
-        "vendors": 3
-      },
-      "seat": "?"
-    },
-    {
-      "col": "scenario.insurance",
-      "cells": 3,
-      "byMod": {
-        "safety": 3
-      },
-      "seat": "?"
-    },
-    {
       "col": "expense",
       "cells": 2,
       "byMod": {
@@ -217,5 +201,5 @@
       "seat": "?"
     }
   ],
-  "entry_count": 129
+  "entry_count": 131
 }

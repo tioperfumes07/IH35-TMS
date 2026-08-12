@@ -380,7 +380,6 @@
         "driver",
         "vendor",
         "gl_je",
-        "scenario.insurance",
         "picker_law",
         "qbo_chrome",
         "connectivity",
@@ -667,6 +666,13 @@
             "ap_bill"
           ]
         }
+      ]
+    },
+    "scenario_insurance_2026_08_12": {
+      "finding": "SCENARIO-AP-INSURANCE-HONEST",
+      "note": "cargo claims use safety.incidents not insurance.claim",
+      "drops": [
+        "cargo_claims.create"
       ]
     }
   }
