@@ -1,12 +1,12 @@
 {
- "date": "2026-08-11",
- "generated_at_iso": "2026-08-11T13:47:34.534Z",
+ "date": "2026-08-12",
+ "generated_at_iso": "2026-08-12T07:56:29.392Z",
  "counts": {
   "PENDING": 15,
   "PENDING (GATED)": 29,
-  "NEEDS-VERIFY": 61,
+  "NEEDS-VERIFY": 60,
   "DONE": 548,
-  "AUDIT-NOTE": 554
+  "AUDIT-NOTE": 555
  },
  "universe": {
   "total_blocks_after_dedup": 1207,
@@ -56,7 +56,7 @@
   {
    "id": "DOC-17-DEFINITION-OF-DONE",
    "status": "DONE",
-   "pr": 2370,
+   "pr": null,
    "registered_on": "2026-07-11",
    "title": ""
   },
@@ -154,14 +154,14 @@
   {
    "id": "ITEM-13-CEREMONY-VALIDATE-FKS",
    "status": "DONE",
-   "pr": 2368,
+   "pr": null,
    "registered_on": "2026-07-11",
    "title": ""
   },
   {
    "id": "ITEM-14-TXN-COMPANY-ISOLATION-GUARD",
    "status": "DONE",
-   "pr": 2363,
+   "pr": null,
    "registered_on": "2026-07-11",
    "title": ""
   },
@@ -376,7 +376,7 @@
    "evidence": "[verified 2026-07-12] agent: migration validates unrelated FKs, no safety_events/driver_status FK exists",
    "name": "",
    "registered_on": null,
-   "pr": 5713
+   "pr": 5825
   },
   {
    "id": "AF-1-entity-coa-fix",
@@ -1203,17 +1203,6 @@
    "name": "",
    "registered_on": null,
    "pr": 3963
-  },
-  {
-   "id": "home-2-open-loads-inflight-late-consistency-un",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #2435 title-match only, unverified",
-   "name": "",
-   "registered_on": null,
-   "pr": 2435
   },
   {
    "id": "M1-POSITIONED-PARTS",
@@ -3405,7 +3394,7 @@
    "evidence": "all 1 file(s) on main",
    "name": "",
    "registered_on": "2026-07-11",
-   "pr": 2370
+   "pr": null
   },
   {
    "id": "driverhub-2-demo-duplicate-drivers-cleanup",
@@ -3966,7 +3955,7 @@
    "evidence": "[verified 2026-07-11] merged + deployed to prod (owner-approved / non-financial ship-on-green) 2026-07-11",
    "name": "",
    "registered_on": null,
-   "pr": 2351
+   "pr": null
   },
   {
    "id": "FIX-03-PRODUCTS-SERVICES-ACCOUNT-LINK",
@@ -3977,7 +3966,7 @@
    "evidence": "[verified 2026-07-11] merged + deployed to prod (owner-approved / non-financial ship-on-green) 2026-07-11",
    "name": "",
    "registered_on": null,
-   "pr": 2353
+   "pr": null
   },
   {
    "id": "FIX-04-BANKING-FROM-TO-ACCOUNTS",
@@ -3988,7 +3977,7 @@
    "evidence": "[verified 2026-07-11] merged + deployed to prod (owner-approved / non-financial ship-on-green) 2026-07-11",
    "name": "",
    "registered_on": null,
-   "pr": 2349
+   "pr": null
   },
   {
    "id": "FIX-06-INLINE-CREATE-COVERAGE-SWEEP",
@@ -3999,7 +3988,7 @@
    "evidence": "[verified 2026-07-11] merged + deployed to prod (owner-approved / non-financial ship-on-green) 2026-07-11",
    "name": "",
    "registered_on": null,
-   "pr": 2356
+   "pr": null
   },
   {
    "id": "FIX-06-referenceselect-inline-create-sweep",
@@ -4021,7 +4010,7 @@
    "evidence": "[verified 2026-07-11] merged + deployed to prod 2026-07-11",
    "name": "",
    "registered_on": null,
-   "pr": 2350
+   "pr": null
   },
   {
    "id": "FIX-11-TRACKER-BYMODULE-COLUMNS",
@@ -4032,7 +4021,7 @@
    "evidence": "[verified 2026-07-11] merged + deployed to prod 2026-07-11",
    "name": "",
    "registered_on": null,
-   "pr": 2352
+   "pr": null
   },
   {
    "id": "FIX-19B-EXPENSES-CATEGORY-INLINE-CREATE",
@@ -5644,7 +5633,7 @@
    "evidence": "[verified 2026-07-11] 8 ceremony FKs convalidated=true on prod br-fancy-credit-akjnd07a (Neon MCP read-only)",
    "name": "",
    "registered_on": "2026-07-11",
-   "pr": 2368
+   "pr": null
   },
   {
    "id": "ITEM-14-TXN-COMPANY-ISOLATION-GUARD",
@@ -5655,7 +5644,7 @@
    "evidence": "[verified 2026-07-11] prod: all accounting/banking/driver_finance policies scope to app.operating_company_id, 0 gaps; gu",
    "name": "",
    "registered_on": "2026-07-11",
-   "pr": 2363
+   "pr": null
   },
   {
    "id": "ITEM1-TWO-SIDED-ITEM",
@@ -6048,7 +6037,7 @@
    "evidence": "all 4 file(s) on main",
    "name": "",
    "registered_on": null,
-   "pr": 2449
+   "pr": null
   },
   {
    "id": "qbo-parity-a1-accessorial-editor-paritytable",
@@ -6944,7 +6933,7 @@
    "evidence": "[verified 2026-07-12] agent: 0 raw type=date + verify-no-raw-date-input guard passes",
    "name": "",
    "registered_on": null,
-   "pr": 5742
+   "pr": 5777
   },
   {
    "id": "UI-01_CALENDARS-AND-BOXES_DISPATCH",
@@ -11686,7 +11675,7 @@
    "evidence": "[verified 2026-08-02] [verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — reconciler status",
    "name": "Samsara freshness indicator pill (L1-L4, green/amber/red)",
    "registered_on": null,
-   "pr": 2400
+   "pr": null
   },
   {
    "id": "GAP-25",
@@ -11888,6 +11877,17 @@
   },
   {
    "id": "hiring-bypass-and-safety-contract-alerts",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "AUDIT-NOTE",
+   "evidence": "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter",
+   "name": "",
+   "registered_on": null,
+   "pr": null
+  },
+  {
+   "id": "home-2-open-loads-inflight-late-consistency-un",
    "source": ".block-ready",
    "fin": true,
    "tier": "",
@@ -12300,7 +12300,7 @@
    "evidence": "[verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — generic industry audit block, no IH35 s",
    "name": "",
    "registered_on": null,
-   "pr": 2385
+   "pr": null
   },
   {
    "id": "phase13-audit228-energy-duplicate",
@@ -12311,7 +12311,7 @@
    "evidence": "[verified 2026-08-02] EVAPORATE per 07-BLOCK-REBUCKETING-2026-07-31 §EVAPORATE — generic industry audit block, no IH35 s",
    "name": "",
    "registered_on": null,
-   "pr": 2385
+   "pr": null
   },
   {
    "id": "phase14-audit-241",
@@ -13306,6 +13306,792 @@
  ],
  "merged_prs": [
   {
+   "number": 5883,
+   "title": "Claude-1- docs: close ACCT-F358 board rows (partial)",
+   "mergedAt": "2026-08-12T03:45:12Z",
+   "branch": "docs/acct-f358-board-closeout"
+  },
+  {
+   "number": 5882,
+   "title": "Claude-1- fix(accounting): ACCT-F358 — driver advance disbursement credits its own bank, not a clearing account",
+   "mergedAt": "2026-08-12T03:43:41Z",
+   "branch": "money/cls-cash-out-credits-clearing-account"
+  },
+  {
+   "number": 5881,
+   "title": "Claude-1- chore: claim verify-step 3117 for driver-advance bank-credit guard",
+   "mergedAt": "2026-08-12T03:38:41Z",
+   "branch": "chore/claim-reserve-3117-driver-advance-bank-credit"
+  },
+  {
+   "number": 5880,
+   "title": "Claude-1- docs: close ACCT-F357 board row (deploy-pending)",
+   "mergedAt": "2026-08-12T03:16:10Z",
+   "branch": "docs/acct-f357-board-closeout"
+  },
+  {
+   "number": 5879,
+   "title": "Claude-1- fix(driver-finance): ACCT-F357 — attach row audit to 19 unaudited driver_finance tables",
+   "mergedAt": "2026-08-12T03:14:45Z",
+   "branch": "money/worm-row-audit-gap-driver-finance-19-tables"
+  },
+  {
+   "number": 5878,
+   "title": "Claude-1- docs: close ACCT-F356 board row",
+   "mergedAt": "2026-08-12T03:05:24Z",
+   "branch": "docs/acct-f356-board-closeout"
+  },
+  {
+   "number": 5877,
+   "title": "Claude-1- fix(settlements): ACCT-F356 — detail read drifted from list's bill-first load-coalesce rule",
+   "mergedAt": "2026-08-12T03:03:56Z",
+   "branch": "money/settlement-detail-load-coalesce-drift"
+  },
+  {
+   "number": 5876,
+   "title": "Claude-1- chore: claim verify-step 3113 for settlement-detail-load-coalesce guard",
+   "mergedAt": "2026-08-12T03:01:19Z",
+   "branch": "chore/claim-reserve-3113-settlement-detail-load-coalesce"
+  },
+  {
+   "number": 5875,
+   "title": "Claude-1- docs: close ACCT-F355 board row, route CI-ORPHAN-GUARDS-PREEXISTING-2 to CC-3",
+   "mergedAt": "2026-08-12T02:49:35Z",
+   "branch": "docs/acct-f355-board-closeout"
+  },
+  {
+   "number": 5874,
+   "title": "Claude-1- chore: claim verify-step 3109 for flag-keys-seeded guard",
+   "mergedAt": "2026-08-12T02:45:50Z",
+   "branch": "chore/claim-reserve-3109-verify-flag-keys-seeded"
+  },
+  {
+   "number": 5873,
+   "title": "Claude-1- fix(accounting): ACCT-F355 — seed 3 never-flippable feature flags",
+   "mergedAt": "2026-08-12T02:47:51Z",
+   "branch": "money/acct-f355-flag-keys-seeded"
+  },
+  {
+   "number": 5872,
+   "title": "Claude-1- FINDING: route CLS-MONEY-KPI-FAKE-ZERO-ON-FAILURE to CC-2",
+   "mergedAt": "2026-08-12T02:13:27Z",
+   "branch": "claude/route-money-kpi-fake-zero"
+  },
+  {
+   "number": 5871,
+   "title": "Claude-2- docs(audit): P22 finding — MatchDrawer.tsx does not use canonical ParityDrawer shell",
+   "mergedAt": "2026-08-12T02:14:02Z",
+   "branch": "cc-2/board-p22-matchdrawer-paritydrawer-gap"
+  },
+  {
+   "number": 5870,
+   "title": "Claude-2- fix(banking): BANK-F341 — vendor/customer reverse drill-through missing from by-linkage endpoint",
+   "mergedAt": "2026-08-12T02:06:19Z",
+   "branch": "cc-2/banking-vendor-customer-reverse-linkage"
+  },
+  {
+   "number": 5869,
+   "title": "Claude-1- FINDING: close SAMPLE-TAG-COVERAGE-CENSUS board row — ACCT-F353 fully closed",
+   "mergedAt": "2026-08-12T01:53:42Z",
+   "branch": "claude/close-acct-f353-final"
+  },
+  {
+   "number": 5868,
+   "title": "Claude-1- FINDING: ACCT-F353 stage 2 — journal_entries sample-tag writers",
+   "mergedAt": "2026-08-12T01:51:54Z",
+   "branch": "claude/acct-f353-stage2-je-writers"
+  },
+  {
+   "number": 5867,
+   "title": "Claude-1- FINDING: ACCT-F353-CLAIM-RESERVE — reserve verify-step 3105",
+   "mergedAt": "2026-08-12T01:50:11Z",
+   "branch": "chore/claim-reserve-3105-je-sample-tag"
+  },
+  {
+   "number": 5866,
+   "title": "Claude-1- FINDING: close SAMPLE-TAG-COVERAGE-CENSUS board row stage 1",
+   "mergedAt": "2026-08-12T01:07:06Z",
+   "branch": "claude/close-acct-f353-nonje-board"
+  },
+  {
+   "number": 5865,
+   "title": "Claude-1- FINDING: ACCT-F353 — 19 non-JE money-document writers never bound is_sample_data",
+   "mergedAt": "2026-08-12T01:05:39Z",
+   "branch": "claude/acct-f353-sample-tag-sweep"
+  },
+  {
+   "number": 5864,
+   "title": "Claude-1- FINDING: ACCT-F353-CLAIM-RESERVE — reserve verify-step 3101",
+   "mergedAt": "2026-08-12T01:02:44Z",
+   "branch": "chore/claim-reserve-3101-sample-tag-sweep"
+  },
+  {
+   "number": 5863,
+   "title": "Claude-2- docs(audit): BANKING-SCHEMA-ENTIRELY-EMPTY-NO-PLAID-TABLES — flags contradiction with owner bank-feed claim, blocks P32 smoke proof",
+   "mergedAt": "2026-08-12T01:03:59Z",
+   "branch": "cc-2/board-banking-empty-contradicts-owner-doc"
+  },
+  {
+   "number": 5862,
+   "title": "Cursor- fix(program): MATRIX-OPTION-A-RIBBON — 6-tile ribbon + honest tier tally + group rollups",
+   "mergedAt": "2026-08-12T00:55:27Z",
+   "branch": "cursor/matrix-metrics-v2-option-a"
+  },
+  {
+   "number": 5861,
+   "title": "Claude-2- docs(audit): TRIPLE-LOCK backfill — register + board for P33",
+   "mergedAt": "2026-08-12T00:54:19Z",
+   "branch": "cc-2/p33-triple-lock-backfill"
+  },
+  {
+   "number": 5860,
+   "title": "Claude-1- FINDING: close BREAKEVEN-INCLUDES-SAMPLE-DATA board row",
+   "mergedAt": "2026-08-12T00:46:07Z",
+   "branch": "claude/close-breakeven-board"
+  },
+  {
+   "number": 5859,
+   "title": "Claude-1- FINDING: ACCT-F354 — break-even excludes sample loads",
+   "mergedAt": "2026-08-12T00:44:49Z",
+   "branch": "claude/breakeven-exclude-sample-loads"
+  },
+  {
+   "number": 5858,
+   "title": "Claude-2- fix(insurance): CLS-INSURANCE-DRIVER-REVERSE-UNGUARDED — DriverProfilePage claims reverse was unguarded; register WIRING-PLAN-50 P33",
+   "mergedAt": "2026-08-12T00:48:40Z",
+   "branch": "cc-2/p33-insurance-driver-reverse-guard"
+  },
+  {
+   "number": 5857,
+   "title": "Claude-1- FINDING: BREAKEVEN-CLAIM-RESERVE — reserve verify-step 3097",
+   "mergedAt": "2026-08-12T00:43:24Z",
+   "branch": "chore/claim-reserve-3097-breakeven-sample"
+  },
+  {
+   "number": 5856,
+   "title": "Claude-1- FINDING: ACCT-F353 — sample-tag column rollout complete, writer coverage census",
+   "mergedAt": "2026-08-12T00:39:31Z",
+   "branch": "claude/clarify-sample-tag-coverage"
+  },
+  {
+   "number": 5855,
+   "title": "Claude-1- FINDING: close original LV-BILL-MDATA-VENDOR-FK-OPTOUT row",
+   "mergedAt": "2026-08-12T00:35:35Z",
+   "branch": "claude/close-original-lv-bill-vendor-fk-row"
+  },
+  {
+   "number": 5854,
+   "title": "Claude-1- FINDING: close LV-BILL-MDATA-VENDOR-FK-OPTOUT-SCOPE-CORRECTION board row",
+   "mergedAt": "2026-08-12T00:31:27Z",
+   "branch": "claude/close-lv-bill-vendor-fk-sweep-board"
+  },
+  {
+   "number": 5853,
+   "title": "Claude-1- FINDING: ACCT-F352 — 6 bill writers never bound the entity-consistent vendor FK",
+   "mergedAt": "2026-08-12T00:30:06Z",
+   "branch": "claude/lv-bill-mdata-vendor-fk-sweep"
+  },
+  {
+   "number": 5852,
+   "title": "Cursor- fix(program): WIRE-SPRINT-P36-P39-FEED — honest Built for Book Load + settlements load_id",
+   "mergedAt": "2026-08-12T00:29:46Z",
+   "branch": "cursor/wire-sprint-p36-p39-built-feed"
+  },
+  {
+   "number": 5851,
+   "title": "Cursor- fix(program): MATRIX-BUILT-PROBE-LIE — probes no longer green Box 3 Built",
+   "mergedAt": "2026-08-12T00:27:37Z",
+   "branch": "cursor/matrix-built-honesty-wire-sprint-only"
+  },
+  {
+   "number": 5850,
+   "title": "Claude-1- FINDING: LV-BILL-MDATA-VENDOR-FK-OPTOUT-CLAIM-RESERVE — reserve verify-step 3093",
+   "mergedAt": "2026-08-12T00:27:16Z",
+   "branch": "chore/claim-reserve-3093-bills-vendor-fk-sweep"
+  },
+  {
+   "number": 5849,
+   "title": "Claude-2- docs(audit): route CI-DIST-COVERAGE-NO-BUILD-STEP + CLS-CUSTOMER-PROFILE-MISSING-BILLING-CITY-ZIP + close P34/5788 routing",
+   "mergedAt": "2026-08-12T00:37:13Z",
+   "branch": "cc-2/route-customer-billing-city-zip-finding"
+  },
+  {
+   "number": 5848,
+   "title": "Claude-1- FINDING: clarify LV-BILL-MDATA-VENDOR-FK-OPTOUT scope",
+   "mergedAt": "2026-08-12T00:19:36Z",
+   "branch": "claude/clarify-bill-vendor-fk-optout"
+  },
+  {
+   "number": 5847,
+   "title": "Cursor- fix(pickers): P23 ratchet create-selected-reload contract",
+   "mergedAt": "2026-08-12T00:18:07Z",
+   "branch": "codex/p23-picker-law-ratchet"
+  },
+  {
+   "number": 5846,
+   "title": "Claude-1- FINDING: clarify CLS-ECON-EMPTY ECON-005 + ECON-014 scope",
+   "mergedAt": "2026-08-12T00:16:13Z",
+   "branch": "claude/clarify-econ-005-014"
+  },
+  {
+   "number": 5844,
+   "title": "Claude-1- FINDING: close LV-BILL-VOID-MARKERS-ARE-DISJOINT board row",
+   "mergedAt": "2026-08-12T00:09:31Z",
+   "branch": "claude/close-lv-bill-void-markers-board"
+  },
+  {
+   "number": 5843,
+   "title": "Cursor- chore(bus): P06-BUILT-FEED — wire-sprint matrix feed for #5829",
+   "mergedAt": "2026-08-12T00:07:05Z",
+   "branch": "cursor/bus-p06-wire-sprint-feed"
+  },
+  {
+   "number": 5842,
+   "title": "Claude-1- FINDING: P36 — settlement_lines.load_id wiring",
+   "mergedAt": "2026-08-12T00:02:24Z",
+   "branch": "claude/p36-settlement-lines-load-id"
+  },
+  {
+   "number": 5841,
+   "title": "Claude-1- FINDING: P36-CLAIM-RESERVE — reserve verify-step 3089",
+   "mergedAt": "2026-08-12T00:01:01Z",
+   "branch": "chore/claim-reserve-3089-settlement-line-load-id"
+  },
+  {
+   "number": 5840,
+   "title": "Claude-2- fix(legal): CLS-LEGAL-DRIVER-REVERSE-UNGUARDED — driver-side legal matter reverse linkage was unguarded; register WIRING-PLAN-50 P34",
+   "mergedAt": "2026-08-12T00:01:47Z",
+   "branch": "cc-2/p34-legal-wave-a-guard"
+  },
+  {
+   "number": 5839,
+   "title": "Claude-1- FINDING: close CI-3041 + CI-PREPAID board rows",
+   "mergedAt": "2026-08-11T23:53:30Z",
+   "branch": "claude/close-ci-3041-prepaid-board"
+  },
+  {
+   "number": 5838,
+   "title": "Claude-1- fix(ci): CI-3041 + prepaid-post-flag-gate guard false-reds",
+   "mergedAt": "2026-08-11T23:51:16Z",
+   "branch": "claude/ci-3041-prepaid-guard-false-red"
+  },
+  {
+   "number": 5837,
+   "title": "Claude-1- FINDING: ACCT-F351 — delivery-invoice wiring (4 of 5 paths never raised the receivable)",
+   "mergedAt": "2026-08-11T23:49:22Z",
+   "branch": "claude/acct-f351-delivery-invoice-wiring"
+  },
+  {
+   "number": 5836,
+   "title": "Claude-1- FINDING: ACCT-F351-CLAIM-RESERVE — reserve verify-step 3085",
+   "mergedAt": "2026-08-11T23:45:52Z",
+   "branch": "chore/claim-reserve-3085-delivery-invoice-wiring"
+  },
+  {
+   "number": 5835,
+   "title": "Codex-1- chore(audit): close P31 triple lock",
+   "mergedAt": "2026-08-11T23:19:21Z",
+   "branch": "codex/go"
+  },
+  {
+   "number": 5834,
+   "title": "Claude-2-docs(audit): TRIPLE-LOCK backfill — register + routing for P41/P40/P35",
+   "mergedAt": "2026-08-12T00:07:59Z",
+   "branch": "claude-2/triple-lock-backfill-p41-p40-p35"
+  },
+  {
+   "number": 5833,
+   "title": "Claude-1- FINDING: ACCT-F350 — the register replayed an unwind out of order, so A/P read NEGATIVE for money that was never overpaid",
+   "mergedAt": "2026-08-11T23:17:40Z",
+   "branch": "cc1/acct-f350-register-lifo-unwind-v2"
+  },
+  {
+   "number": 5832,
+   "title": "Codex-1- chore(audit): route prepaid guard false-red",
+   "mergedAt": "2026-08-11T23:16:41Z",
+   "branch": "codex/go"
+  },
+  {
+   "number": 5831,
+   "title": "Claude-1- chore: CLAIM-RESERVE 3081 verify-register-reversal-never-precedes-original",
+   "mergedAt": "2026-08-11T23:14:17Z",
+   "branch": "chore/claim-reserve-3081-lifo-unwind"
+  },
+  {
+   "number": 5830,
+   "title": "Codex-1- fix(dispatch): P31 restore load hub reverse links",
+   "mergedAt": "2026-08-11T23:10:38Z",
+   "branch": "codex/go"
+  },
+  {
+   "number": 5829,
+   "title": "Cursor- fix(wiring): P06-FK-ON-CREATE — Wave-A create-path FK ratchet",
+   "mergedAt": "2026-08-11T23:07:20Z",
+   "branch": "cursor/p06-fk-on-create"
+  },
+  {
+   "number": 5828,
+   "title": "Cursor- fix(governance): FINDINGS-TRIPLE-LOCK-LAW — 4 locks file · 5 proofs FIXED",
+   "mergedAt": "2026-08-11T23:05:53Z",
+   "branch": "cursor/findings-triple-lock-law"
+  },
+  {
+   "number": 5827,
+   "title": "Cursor- chore: CLAIM-RESERVE verify-step 3074 findings triple-lock",
+   "mergedAt": "2026-08-11T23:04:55Z",
+   "branch": "chore/claim-reserve-3074-findings"
+  },
+  {
+   "number": 5826,
+   "title": "Claude-1- FINDING: ACCT-F349 (P28 · 28 OF 50) — the A/P register showed a negative balance for money that was never overpaid, because it sorted payments above t",
+   "mergedAt": "2026-08-11T23:04:41Z",
+   "branch": "cc1/acct-f349-register-document-order"
+  },
+  {
+   "number": 5825,
+   "title": "Claude-2-docs(insurance): P35 — claim graph backfill, 6 FKs resolved live on USMCA",
+   "mergedAt": "2026-08-11T23:07:33Z",
+   "branch": "claude-2/board-p35-insurance-claim-graph-backfill"
+  },
+  {
+   "number": 5824,
+   "title": "Codex-1- fix(dispatch): P39 restore trailer detail linkage",
+   "mergedAt": "2026-08-11T23:01:38Z",
+   "branch": "codex/go"
+  },
+  {
+   "number": 5823,
+   "title": "Claude-1- chore: CLAIM-RESERVE 3077 verify-account-register-orders-by-document-not-line",
+   "mergedAt": "2026-08-11T23:00:50Z",
+   "branch": "chore/claim-reserve-3077-register-order"
+  },
+  {
+   "number": 5822,
+   "title": "Codex-1- fix(dispatch): P39 guard Book Load FK write sinks",
+   "mergedAt": "2026-08-11T22:56:38Z",
+   "branch": "codex/go"
+  },
+  {
+   "number": 5821,
+   "title": "Claude-1- FINDING: ACCT-F348 (P29 · 29 OF 50) — a FAILED posting batch made its own document un-postable forever, so no settlement could ever reach the GL",
+   "mergedAt": "2026-08-11T22:55:15Z",
+   "branch": "cc1/acct-f348-posting-batch-retry"
+  },
+  {
+   "number": 5820,
+   "title": "Claude-1- chore: CLAIM-RESERVE 3073 verify-failed-posting-batch-is-retriable",
+   "mergedAt": "2026-08-11T22:53:35Z",
+   "branch": "chore/claim-reserve-3073-retriable-guard"
+  },
+  {
+   "number": 5819,
+   "title": "Cursor- chore: CLAIM-RESERVE verify-step 3072 verify-fk-on-create",
+   "mergedAt": "2026-08-11T22:52:09Z",
+   "branch": "chore/claim-reserve-3072-fk-on-create"
+  },
+  {
+   "number": 5818,
+   "title": "Claude-2-fix(drivers): P40 — Debt Alert + Active Drivers hub tiles link to canonical driver_id",
+   "mergedAt": "2026-08-11T22:48:12Z",
+   "branch": "cc2/p40-drivers-hub-tiles-driver-link"
+  },
+  {
+   "number": 5817,
+   "title": "CC-2 chore: CLAIM-RESERVE 3071 verify-drivers-hub-tiles-driver-link",
+   "mergedAt": "2026-08-11T22:35:15Z",
+   "branch": "chore/claim-reserve-3071-driver-hub-tiles"
+  },
+  {
+   "number": 5816,
+   "title": "Cursor- fix(scoreboard): H-3-WIRE-SPRINT-BUILT-FEED — Matrix Built reads shipped Wave-A guards + P47 fleet SQL",
+   "mergedAt": "2026-08-11T22:24:45Z",
+   "branch": "cursor/h3-matrix-built-feed-p47-fleet"
+  },
+  {
+   "number": 5815,
+   "title": "Cursor- fix(program): PROG-WIRING-PLAN-H-TRACK-LOCK — repo mirror + CI guard for 50-task plan",
+   "mergedAt": "2026-08-11T21:57:41Z",
+   "branch": "cursor/fix-wiring-plan-h-track-lock"
+  },
+  {
+   "number": 5814,
+   "title": "Cursor- chore: CLAIM-RESERVE 3066 verify-wiring-plan-50-present",
+   "mergedAt": "2026-08-11T21:57:04Z",
+   "branch": "chore/claim-reserve-even-3066-wiring-plan"
+  },
+  {
+   "number": 5813,
+   "title": "CC-2 fix(safety): P41 — accident create + claim link stamps insurance_claim_id both ways",
+   "mergedAt": "2026-08-11T22:02:17Z",
+   "branch": "cc2/p41-safety-accident-claim-reverse-fk"
+  },
+  {
+   "number": 5812,
+   "title": "CC-1 ACCT-F347 (P36 · 36 OF 50) — a cancelled settlement was still handed back as the driver's open settlement",
+   "mergedAt": "2026-08-11T21:54:07Z",
+   "branch": "claude/acct-f347-cancelled-settlement-not-reusable"
+  },
+  {
+   "number": 5811,
+   "title": "CC-1 chore: CLAIM-RESERVE 3069 verify-cancelled-settlement-not-reusable",
+   "mergedAt": "2026-08-11T21:51:40Z",
+   "branch": "claude/claim-reserve-3069"
+  },
+  {
+   "number": 5810,
+   "title": "CC-1 ACCT-F346 (P37 · 37 OF 50) — invoice create accepted a load id and silently dropped it",
+   "mergedAt": "2026-08-11T21:39:40Z",
+   "branch": "claude/p37-invoice-create-stamps-source-load-id"
+  },
+  {
+   "number": 5809,
+   "title": "Cursor- fix(accounting): P42 — expense vendor-FK guard truncated valid create path",
+   "mergedAt": "2026-08-11T21:39:13Z",
+   "branch": "codex/go"
+  },
+  {
+   "number": 5808,
+   "title": "CC-2 chore: CLAIM-RESERVE 3059 verify-accident-claim-reverse-fk-synced",
+   "mergedAt": "2026-08-11T21:45:30Z",
+   "branch": "chore/claim-reserve-3059-accident-claim-reverse-fk"
+  },
+  {
+   "number": 5807,
+   "title": "CC-1 chore: CLAIM-RESERVE 3065 verify-invoice-create-stamps-source-load-id",
+   "mergedAt": "2026-08-11T21:36:16Z",
+   "branch": "claude/claim-reserve-3065"
+  },
+  {
+   "number": 5806,
+   "title": "Cursor- fix(lists): P46 — maintenance catalog requests exceeded API cap",
+   "mergedAt": "2026-08-11T21:29:44Z",
+   "branch": "codex/go"
+  },
+  {
+   "number": 5805,
+   "title": "CC-1 P38 (38 OF 50) — accounting bills Wave-A linkage: create stamps unit + vendor + load FKs, proven by a real USMCA bill",
+   "mergedAt": "2026-08-11T21:28:19Z",
+   "branch": "claude/p38-bill-wave-a-fk-write-path"
+  },
+  {
+   "number": 5804,
+   "title": "CC-1 chore: CLAIM-RESERVE 3061 verify-bill-wave-a-fk-write-path",
+   "mergedAt": "2026-08-11T21:26:03Z",
+   "branch": "claude/claim-reserve-3061"
+  },
+  {
+   "number": 5803,
+   "title": "CC-1 ACCT-F345b — guard 3057 could not go green after the repair it demands",
+   "mergedAt": "2026-08-11T21:03:38Z",
+   "branch": "claude/acct-f345b-guard-ignores-reversed-lines"
+  },
+  {
+   "number": 5802,
+   "title": "CC-1 ACCT-F345 — a driver cash advance credited Undeposited Funds, so money leaving the business landed in the account for money received",
+   "mergedAt": "2026-08-11T20:59:13Z",
+   "branch": "claude/acct-f345-disbursement-credits-operating-bank"
+  },
+  {
+   "number": 5801,
+   "title": "CC-2 GUARD: click-through verify combobox/customer-chrome/lists-picker-reverse items",
+   "mergedAt": "2026-08-11T21:07:14Z",
+   "branch": "docs/cc2-guard-verify-3784-3788-items"
+  },
+  {
+   "number": 5800,
+   "title": "CC-1 chore: CLAIM-MIGRATION 202612481130 usmca_operating_bank_role_acct_f345",
+   "mergedAt": "2026-08-11T20:56:41Z",
+   "branch": "claude/claim-migration-202612481130"
+  },
+  {
+   "number": 5799,
+   "title": "CC-1 chore: CLAIM-RESERVE 3057 verify-disbursement-never-credits-receipt-clearing",
+   "mergedAt": "2026-08-11T20:52:14Z",
+   "branch": "claude/claim-reserve-3057"
+  },
+  {
+   "number": 5798,
+   "title": "CC-1 chore: CLAIM-MIGRATION 202612481200 usmca_operating_bank_role_acct_f345",
+   "mergedAt": "2026-08-11T20:48:54Z",
+   "branch": "claude/claim-migration-202612481200"
+  },
+  {
+   "number": 5797,
+   "title": "Cursor: close stale catalog vendor types board row",
+   "mergedAt": "2026-08-11T20:05:50Z",
+   "branch": "cursor/board-close-catalog-vendor-types"
+  },
+  {
+   "number": 5796,
+   "title": "fix(customers): C-05 preserve first-change edit hydration",
+   "mergedAt": "2026-08-11T20:05:55Z",
+   "branch": "codex/go"
+  },
+  {
+   "number": 5795,
+   "title": "Cursor: ratchet class picker limit below backend cap",
+   "mergedAt": "2026-08-11T20:04:07Z",
+   "branch": "cursor/class-picker-limit-guard"
+  },
+  {
+   "number": 5794,
+   "title": "Cursor: dispatch awaiting rows render Unassigned",
+   "mergedAt": "2026-08-11T20:02:29Z",
+   "branch": "cursor/dispatch-awaiting-rows-not-visible"
+  },
+  {
+   "number": 5793,
+   "title": "Cursor- fix(customers): CUSTOMER-EMAIL-REQUIRED — require email on customer create and inline create",
+   "mergedAt": "2026-08-11T19:53:02Z",
+   "branch": "cursor-fix-customer-email-required"
+  },
+  {
+   "number": 5792,
+   "title": "Cursor: docs entity column label fix",
+   "mergedAt": "2026-08-11T19:47:48Z",
+   "branch": "cursor/docs-entity-link-label"
+  },
+  {
+   "number": 5791,
+   "title": "CC-2 board: CLS-ORPHAN-SURFACE stale-flip DONE + NEW finding CI-ORPHAN-GUARDS blocks every PR",
+   "mergedAt": "2026-08-11T19:57:10Z",
+   "branch": "docs/board-cls-orphan-surface-done"
+  },
+  {
+   "number": 5790,
+   "title": "Cursor-C-05 wire customer Payment Terms round-trip",
+   "mergedAt": "2026-08-11T19:44:59Z",
+   "branch": "codex/go"
+  },
+  {
+   "number": 5789,
+   "title": "CC-1 ACCT-F336 — a bank transaction's only voided_at writer is a direct status flip, and the first row that would expose it is voided today",
+   "mergedAt": "2026-08-11T19:44:08Z",
+   "branch": "claude/acct-f336-bank-categorization-void-coverage"
+  },
+  {
+   "number": 5788,
+   "title": "Cursor- fix(customers): CLS-INLINE-CREATE-NOT-CANONICAL-CUSTOMER — inline +Create uses CustomerProfileForm + email required",
+   "mergedAt": "2026-08-12T00:18:14Z",
+   "branch": "cursor/fix-inline-create-canonical-customer"
+  },
+  {
+   "number": 5787,
+   "title": "CC-1 ACCT-F335 — a reversing JE carried no JE-level reversal FK, so its reversal was invisible to every structural query",
+   "mergedAt": "2026-08-11T19:35:29Z",
+   "branch": "claude/acct-f335-je-level-reversal-fk"
+  },
+  {
+   "number": 5786,
+   "title": "Cursor-C-34 wire vendor work-order reverse links",
+   "mergedAt": "2026-08-11T19:33:03Z",
+   "branch": "codex/go"
+  },
+  {
+   "number": 5785,
+   "title": "CC-1 chore: CLAIM-RESERVE 3053 verify-reversing-je-carries-je-level-fk",
+   "mergedAt": "2026-08-11T19:32:19Z",
+   "branch": "claude/claim-reserve-3053"
+  },
+  {
+   "number": 5784,
+   "title": "Cursor- fix(ui): CLS-COMBOBOX-STUCK-OPEN-ON-BLUR — close dropdown on blur/tab away",
+   "mergedAt": "2026-08-11T20:02:08Z",
+   "branch": "cursor/fix-combobox-blur-close"
+  },
+  {
+   "number": 5782,
+   "title": "Cursor-C-21 fix planner driver FK deploy blocker",
+   "mergedAt": "2026-08-11T19:19:12Z",
+   "branch": "codex/go"
+  },
+  {
+   "number": 5781,
+   "title": "CC-1 ACCT-F333 — a voided bill payment kept its A/P debit; guard 3049 was blind to bill_payment",
+   "mergedAt": "2026-08-11T19:27:58Z",
+   "branch": "claude/acct-f333-voided-billpay-gl-reversal"
+  },
+  {
+   "number": 5780,
+   "title": "Cursor- fix(program): PROG-MATRIX-BUILT-COLS + list-error dead-form false-positive — Built cells parity + baseline 15→13",
+   "mergedAt": "2026-08-11T21:39:11Z",
+   "branch": "cursor/fix-module-matrix-built-cols"
+  },
+  {
+   "number": 5779,
+   "title": "Cursor-FINDING: C-02 Lists Vendors master entry",
+   "mergedAt": "2026-08-11T19:06:49Z",
+   "branch": "codex/go"
+  },
+  {
+   "number": 5778,
+   "title": "Cursor-FINDING: C-01 Lists Customers master entry",
+   "mergedAt": "2026-08-11T19:05:29Z",
+   "branch": "codex/go"
+  },
+  {
+   "number": 5777,
+   "title": "Cursor- fix(dispatch): C-21 — use typed timeline driver roster",
+   "mergedAt": "2026-08-11T18:54:28Z",
+   "branch": "codex/go"
+  },
+  {
+   "number": 5776,
+   "title": "Cursor- fix(dispatch): C-21 — wire awaiting units into Book Load FKs",
+   "mergedAt": "2026-08-11T18:50:46Z",
+   "branch": "codex/go"
+  },
+  {
+   "number": 5775,
+   "title": "Cursor- chore: CLAIM-RESERVE verify-steps 2420 + 2422 (EVEN)",
+   "mergedAt": "2026-08-11T18:37:50Z",
+   "branch": "chore/claim-reserve-even-2420-2422"
+  },
+  {
+   "number": 5774,
+   "title": "Cursor- fix(maintenance): LV-MAINTENANCE-KPI-TILES — preserve open WO KPIs",
+   "mergedAt": "2026-08-11T18:41:35Z",
+   "branch": "codex/go"
+  },
+  {
+   "number": 5773,
+   "title": "CC-1 FINDING: ACCT-F331 — prepaid assets had no void ROUTE (operator half; fails closed on a null reversal)",
+   "mergedAt": "2026-08-11T18:30:08Z",
+   "branch": "claude/prepaid-void-route"
+  },
+  {
+   "number": 5772,
+   "title": "CC-1 FINDING: ACCT-F331 — sub-ledger money documents were structurally unvoidable (prepaid A/P cleared)",
+   "mergedAt": "2026-08-11T18:22:18Z",
+   "branch": "claude/prepaid-void-reachability"
+  },
+  {
+   "number": 5771,
+   "title": "CC-2 board: ACCT-F343 — I created an OPEN/CLOSED duplicate and superseded it (not deleted)",
+   "mergedAt": "2026-08-11T18:21:42Z",
+   "branch": "claude/board-supersede-my-duplicate"
+  },
+  {
+   "number": 5770,
+   "title": "chore: CLAIM-RESERVE 2418 banking-register-void-date-filter",
+   "mergedAt": "2026-08-11T18:15:49Z",
+   "branch": "chore/claim-reserve-2418-banking-void-filter"
+  },
+  {
+   "number": 5769,
+   "title": "CC-2 fix(security): ACCT-F342 — the caller-scoped-GUC ratchet carried 5 phantom slots (baseline 10 to 5)",
+   "mergedAt": "2026-08-11T18:12:19Z",
+   "branch": "claude/guc-ratchet-tighten-10-to-5"
+  },
+  {
+   "number": 5768,
+   "title": "CC-2 fix(maintenance): ACCT-F341 — tire-wear showed no tires at risk on a failed query (19-15)",
+   "mergedAt": "2026-08-11T18:08:31Z",
+   "branch": "claude/maintenance-list-error-drain-3"
+  },
+  {
+   "number": 5767,
+   "title": "Cursor- fix(banking): BANK-F340 — register void filter + recover/payable categorize",
+   "mergedAt": "2026-08-11T21:40:41Z",
+   "branch": "cursor/fix-banking-scoreboard-kpi"
+  },
+  {
+   "number": 5766,
+   "title": "CC-1 FINDING: ACCT-F330 — voided money documents left balances standing on control accounts ($1,643.21 phantom A/P cleared)",
+   "mergedAt": "2026-08-11T17:49:43Z",
+   "branch": "claude/void-reversal-completeness"
+  },
+  {
+   "number": 5765,
+   "title": "CC-1 CLAIM-RESERVE: verify-step 3049 (ACCT-F330 voided-doc GL reversal completeness)",
+   "mergedAt": "2026-08-11T17:46:08Z",
+   "branch": "claude/claim-void-reversal-completeness"
+  },
+  {
+   "number": 5764,
+   "title": "CC-1 FINDING: ACCT-F329 — invoice lines can finally reference the item catalog on a TMS-native entity",
+   "mergedAt": "2026-08-11T17:32:34Z",
+   "branch": "claude/invoice-line-item-fk"
+  },
+  {
+   "number": 5763,
+   "title": "CC-2 fix: ACCT-F340 — the two components I deferred are fixed; dispatch drained 4/4 and locked (21-19)",
+   "mergedAt": "2026-08-11T17:31:23Z",
+   "branch": "claude/no-defer-partsinventory-logtable"
+  },
+  {
+   "number": 5762,
+   "title": "CC-1 CLAIM-RESERVE: verify-step 3045 + migration 202612481100 (ACCT-F329 invoice-line item FK)",
+   "mergedAt": "2026-08-11T17:28:02Z",
+   "branch": "claude/claim-invoice-line-item-fk"
+  },
+  {
+   "number": 5761,
+   "title": "CC-2 fix(maintenance): ACCT-F339 — four more surfaces render a failed query as a clean record (25-21)",
+   "mergedAt": "2026-08-11T17:22:45Z",
+   "branch": "claude/maintenance-list-error-drain-2"
+  },
+  {
+   "number": 5760,
+   "title": "CC-2 fix(accounting): ACCT-F338 / F-18b — invoice JE links discarded the memo label the backend now sends",
+   "mergedAt": "2026-08-11T17:17:27Z",
+   "branch": "claude/f18b-je-memo-label"
+  },
+  {
+   "number": 5759,
+   "title": "CC-2 fix(accounting): ACCT-F337 / F-18 — a bill with no number said it was not visible while shown on screen",
+   "mergedAt": "2026-08-11T17:12:00Z",
+   "branch": "claude/f18-bills-null-number-honest"
+  },
+  {
+   "number": 5758,
+   "title": "CC-2 fix(dispatch): ACCT-F336 — three dispatch surfaces render a failed query as an empty queue (28-25)",
+   "mergedAt": "2026-08-11T17:09:24Z",
+   "branch": "claude/dispatch-list-error-drain"
+  },
+  {
+   "number": 5757,
+   "title": "CC-2 board: ACCT-F335 — withdraw my A/P row (M-10 confirmed by data), correct my F-18 evidence, report malformed DATABASE_DIRECT_URL",
+   "mergedAt": "2026-08-11T17:04:14Z",
+   "branch": "claude/board-f18-correction-ap-closed"
+  },
+  {
+   "number": 5756,
+   "title": "CC-2 P0#3 fix(banking): ACCT-F334 — the driver-recovery control was hidden until a driver was already tagged",
+   "mergedAt": "2026-08-11T17:00:16Z",
+   "branch": "claude/p0-banking-categorize-recover-box"
+  },
+  {
+   "number": 5755,
+   "title": "CC-2 fix(maintenance): ACCT-F333 — three maintenance surfaces render a failed query as an empty record (31→28)",
+   "mergedAt": "2026-08-11T16:52:48Z",
+   "branch": "claude/maintenance-list-error-drain-1"
+  },
+  {
+   "number": 5754,
+   "title": "CC-2 fix(safety): ACCT-F332 — Safety list-error class DRAINED 14→0 and locked at zero (46→31 overall)",
+   "mergedAt": "2026-08-11T16:45:45Z",
+   "branch": "claude/safety-list-error-drain-zero"
+  },
+  {
+   "number": 5753,
+   "title": "CC-2 fix(safety): ACCT-F331 — six more Safety surfaces show an outage as a clean record (43→34), plus my own detector corrected for false positives",
+   "mergedAt": "2026-08-11T16:42:23Z",
+   "branch": "claude/safety-list-error-drain-2"
+  },
+  {
+   "number": 5752,
+   "title": "CC-1 FINDING: ACCT-F328 — ratchet: no future-dated or untagged test money in the ledger",
+   "mergedAt": "2026-08-11T16:39:03Z",
+   "branch": "claude/future-dated-money-ratchet"
+  },
+  {
+   "number": 5751,
+   "title": "CC-1 CLAIM-RESERVE: verify-step 3041 (future-dated / untagged sample money ratchet)",
+   "mergedAt": "2026-08-11T16:36:58Z",
+   "branch": "claude/claim-future-dated-money-ratchet"
+  },
+  {
    "number": 5743,
    "title": "CC-2 fix(safety): ACCT-F330 — three Safety pages rendered a failed query as a clean compliance record (46→43)",
    "mergedAt": "2026-08-11T03:21:16Z",
@@ -13556,6 +14342,12 @@
    "title": "Cursor- fix(maintenance): INBOX-379 — expose PM schedule failures",
    "mergedAt": "2026-08-10T19:26:48Z",
    "branch": "codex/inbox-379-pm-list-error"
+  },
+  {
+   "number": 5700,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-08-11T18:10:52Z",
+   "branch": "chore/tracker-artifacts-sync"
   },
   {
    "number": 5699,
@@ -16112,798 +16904,6 @@
    "title": "Cursor- fix(ui): LST-F152 — CU-09 residual err-as-Error toast drain (0 left)",
    "mergedAt": "2026-08-09T23:48:59Z",
    "branch": "cursor/lst-f152-cu09-err-remainder"
-  },
-  {
-   "number": 5261,
-   "title": "FINDING: CLS-HOS-VIOLATIONS-UUID-LABEL",
-   "mergedAt": "2026-08-09T23:48:46Z",
-   "branch": "cascade/c20-hos-violations-uuid-label"
-  },
-  {
-   "number": 5260,
-   "title": "Cursor- fix(tasks): LST-F151 — CreateTaskModal profile/assignee Combobox pickers",
-   "mergedAt": "2026-08-09T23:48:10Z",
-   "branch": "cursor/lst-f151-bare-entity-selects"
-  },
-  {
-   "number": 5259,
-   "title": "Cursor- chore(guards): LST-F150 — factor-assign picker guard ignore comment prose",
-   "mergedAt": "2026-08-09T23:47:09Z",
-   "branch": "cursor/lst-f150-factor-picker-guard-fix"
-  },
-  {
-   "number": 5258,
-   "title": "Cursor- fix(factoring): LST-F149 — assign-factor picker + Add new (no bare select)",
-   "mergedAt": "2026-08-09T23:46:40Z",
-   "branch": "cursor/lst-f149-factor-assign-picker"
-  },
-  {
-   "number": 5257,
-   "title": "Cursor- fix(ui): LST-F148 — CU-09 formatQueryErrorDetail prefers human message",
-   "mergedAt": "2026-08-09T23:45:52Z",
-   "branch": "cursor/lst-f148-table-error-humanize"
-  },
-  {
-   "number": 5256,
-   "title": "Devin-A fix(safety): repair accidents list guard multiline extraction + selftest",
-   "mergedAt": "2026-08-09T23:44:47Z",
-   "branch": "devin/a-fix-accidents-guard-multiline"
-  },
-  {
-   "number": 5255,
-   "title": "Cursor- fix(ui): LST-F147 — CU-09 legal/maintenance/collections toast drain (0 left)",
-   "mergedAt": "2026-08-09T23:44:25Z",
-   "branch": "cursor/lst-f147-cu09-remainder"
-  },
-  {
-   "number": 5254,
-   "title": "Cursor- fix(banking): LST-F146 — CU-09 banking recon + create/close toast humanize",
-   "mergedAt": "2026-08-09T23:43:34Z",
-   "branch": "cursor/lst-f146-cu09-banking-recon"
-  },
-  {
-   "number": 5253,
-   "title": "Cursor- fix(ui): LST-F145 — CU-09 settlement/forensic/drivers/425C toast humanize",
-   "mergedAt": "2026-08-09T23:42:28Z",
-   "branch": "cursor/lst-f145-cu09-forensic-settlement"
-  },
-  {
-   "number": 5252,
-   "title": "Devin-A fix(reports): D-A24 human company label + raw operating_company_id guard",
-   "mergedAt": "2026-08-09T23:42:30Z",
-   "branch": "devin/a-da24-reports-human"
-  },
-  {
-   "number": 5251,
-   "title": "FINDING: CLS-TRAINING-COMPLETIONS-UUID-LABEL",
-   "mergedAt": "2026-08-09T23:42:34Z",
-   "branch": "cascade/c20-training-completions-uuid-label"
-  },
-  {
-   "number": 5250,
-   "title": "Cursor- fix(ops): LST-F144 — CU-09 factoring/vendors/liabilities/banking toast humanize",
-   "mergedAt": "2026-08-09T23:41:24Z",
-   "branch": "cursor/lst-f144-cu09-ops-surfaces"
-  },
-  {
-   "number": 5249,
-   "title": "Cursor- fix(ui): LST-F143 — CU-09 create/submit toast humanize wave",
-   "mergedAt": "2026-08-09T23:40:34Z",
-   "branch": "cursor/lst-f143-cu09-create-surfaces"
-  },
-  {
-   "number": 5248,
-   "title": "Cursor- fix(lists): LST-F142 — CU-09 AccountDrawer/InlineUnit/BookLoad/WO error humanize",
-   "mergedAt": "2026-08-09T23:39:48Z",
-   "branch": "cursor/lst-f142-account-drawer-wire"
-  },
-  {
-   "number": 5247,
-   "title": "Cursor- docs: LST-F141 — READ-AGENT-BUS pointer for Devin repo search",
-   "mergedAt": "2026-08-09T23:38:09Z",
-   "branch": "cursor/docs-read-agent-bus-pointer"
-  },
-  {
-   "number": 5246,
-   "title": "FINDING: CLS-INTERNAL-FINES-UUID-LABEL",
-   "mergedAt": "2026-08-09T23:35:43Z",
-   "branch": "cascade/c20-internal-fines-uuid-label"
-  },
-  {
-   "number": 5245,
-   "title": "Cursor- fix(lists): LST-F140 — CU-09 catalog submit bare-error humanize",
-   "mergedAt": "2026-08-09T23:35:00Z",
-   "branch": "cursor/lst-f140-catalog-bare-error"
-  },
-  {
-   "number": 5244,
-   "title": "Cursor- fix(dispatch): LST-F139 — CU-09 bare E_* toast humanize",
-   "mergedAt": "2026-08-09T23:34:16Z",
-   "branch": "cursor/lst-f139-bare-error-toasts"
-  },
-  {
-   "number": 5243,
-   "title": "Cursor- fix(settlements): restore SettlementsTable emptyText prefix",
-   "mergedAt": "2026-08-09T23:32:40Z",
-   "branch": "cursor/fix-setl-emptytext"
-  },
-  {
-   "number": 5242,
-   "title": "FINDING: CLS-DOT-INSPECTIONS-UUID-LABEL",
-   "mergedAt": "2026-08-09T23:32:03Z",
-   "branch": "cascade/c20-dot-inspections-uuid-label"
-  },
-  {
-   "number": 5241,
-   "title": "Cursor- fix(admin): LST-F138 — QBO class picker names + raw UUID chrome",
-   "mergedAt": "2026-08-09T23:30:27Z",
-   "branch": "cursor/lst-f138-raw-uuid-class"
-  },
-  {
-   "number": 5240,
-   "title": "Cursor- fix(accounting): LST-F137 — VendorBill/User/dispatch UUID chrome",
-   "mergedAt": "2026-08-09T23:29:04Z",
-   "branch": "cursor/lst-f137-uuid-wave"
-  },
-  {
-   "number": 5239,
-   "title": "Cursor- fix(dispatch): LST-F136 — Inline pickers/claim/banking UUID chrome",
-   "mergedAt": "2026-08-09T23:27:36Z",
-   "branch": "cursor/lst-f136-dispatch-inline-claim"
-  },
-  {
-   "number": 5238,
-   "title": "Cursor- fix(safety): LST-F135 — Safety reverse/bulk/audit UUID chrome",
-   "mergedAt": "2026-08-09T23:26:54Z",
-   "branch": "cursor/lst-f135-safety-reverse-uuid"
-  },
-  {
-   "number": 5237,
-   "title": "Cursor- fix(driver-finance): LST-F134 — Settlement/advances/geofence UUID chrome",
-   "mergedAt": "2026-08-09T23:26:05Z",
-   "branch": "cursor/lst-f134-uuid-wave"
-  },
-  {
-   "number": 5236,
-   "title": "Cursor- fix(accounting): LST-F133 — Dispute/Recon/Payments/JE UUID chrome",
-   "mergedAt": "2026-08-09T23:25:23Z",
-   "branch": "cursor/lst-f133-dispute-recon-payments-je"
-  },
-  {
-   "number": 5235,
-   "title": "Cursor- fix(accounting): LST-F132 — Payment/QBO/Integration UUID chrome",
-   "mergedAt": "2026-08-09T23:24:32Z",
-   "branch": "cursor/lst-f132-payment-qbo-integration"
-  },
-  {
-   "number": 5234,
-   "title": "Cursor- fix(accounting): LST-F131 — posting/prepaid/register UUID chrome",
-   "mergedAt": "2026-08-09T23:23:17Z",
-   "branch": "cursor/lst-f131-posting-payment-prepaid"
-  },
-  {
-   "number": 5233,
-   "title": "Cursor- fix(accounting): LST-F130 — invoice/revrec/tax/assets UUID chrome",
-   "mergedAt": "2026-08-09T23:22:27Z",
-   "branch": "cursor/lst-f130-accounting-reports-uuid"
-  },
-  {
-   "number": 5232,
-   "title": "Cursor- fix(admin): LST-F129 — FeatureFlags/Users UUID chrome",
-   "mergedAt": "2026-08-09T23:21:43Z",
-   "branch": "cursor/lst-f129-featureflags-users-labels"
-  },
-  {
-   "number": 5231,
-   "title": "Cursor- fix(audit): LST-F128 — Audit/Geofence UUID chrome",
-   "mergedAt": "2026-08-09T23:21:03Z",
-   "branch": "cursor/lst-f128-audit-geofence-labels"
-  },
-  {
-   "number": 5230,
-   "title": "Cursor- fix(factoring): LST-F127 — Reserve/Documents/Liabilities UUID chrome",
-   "mergedAt": "2026-08-09T23:20:20Z",
-   "branch": "cursor/lst-f127-reserve-docs-liabilities"
-  },
-  {
-   "number": 5229,
-   "title": "Cursor- fix(factoring): LST-F126 — Factoring/Customer/Retention UUID chrome",
-   "mergedAt": "2026-08-09T23:17:56Z",
-   "branch": "cursor/lst-f126-factoring-customer-retention"
-  },
-  {
-   "number": 5228,
-   "title": "Cursor- fix(verify): picker-law selftest archived-superseded fixture",
-   "mergedAt": "2026-08-09T23:17:40Z",
-   "branch": "cursor/fix-safety-b29-entitylink-regex"
-  },
-  {
-   "number": 5227,
-   "title": "Cursor- fix(fleet): LST-F125 — Unit/Fault/Equipment-transfer UUID chrome",
-   "mergedAt": "2026-08-09T23:17:07Z",
-   "branch": "cursor/lst-f125-unit-fault-xfer-labels"
-  },
-  {
-   "number": 5226,
-   "title": "Cursor- fix(verify): allow multiline EntityLink in SAF-B29 guard",
-   "mergedAt": "2026-08-09T23:14:34Z",
-   "branch": "cursor/fix-safety-b29-entitylink-regex"
-  },
-  {
-   "number": 5225,
-   "title": "Cursor- fix(verify): recognize open* API writers and align dispute payload names",
-   "mergedAt": "2026-08-09T23:13:23Z",
-   "branch": "cursor/fix-form-field-roundtrip"
-  },
-  {
-   "number": 5224,
-   "title": "Cursor- fix(insurance): LST-F124 — Lawsuit/Policy/Customer UUID chrome",
-   "mergedAt": "2026-08-09T23:12:05Z",
-   "branch": "cursor/lst-f124-lawsuit-policy-customer-labels"
-  },
-  {
-   "number": 5223,
-   "title": "Cursor- fix(maintenance): remove empty-state bordered tile from MaintenanceSettings",
-   "mergedAt": "2026-08-09T23:10:06Z",
-   "branch": "cursor/maint-settings-no-box-in-box"
-  },
-  {
-   "number": 5222,
-   "title": "Cursor- fix(accounting): LST-F123 — Audit/WO/QBO-reconcile UUID chrome",
-   "mergedAt": "2026-08-09T23:08:40Z",
-   "branch": "cursor/lst-f123-audit-wo-table-labels"
-  },
-  {
-   "number": 5221,
-   "title": "Cursor- fix(accounting): LST-F122 — Escrow/Collections/Transfer UUID chrome",
-   "mergedAt": "2026-08-09T23:07:34Z",
-   "branch": "cursor/lst-f122-escrow-collections-transfer-labels"
-  },
-  {
-   "number": 5220,
-   "title": "Cursor- fix(banking): LST-F121 — Plaid/Escrow/BillPay UUID chrome",
-   "mergedAt": "2026-08-09T23:04:23Z",
-   "branch": "cursor/lst-f121-plaid-escrow-billpay-labels"
-  },
-  {
-   "number": 5219,
-   "title": "Cursor- fix(banking): LST-F120 — Banking Home/Transfers/Reconcile UUID chrome",
-   "mergedAt": "2026-08-09T23:03:40Z",
-   "branch": "cursor/lst-f120-banking-human-labels"
-  },
-  {
-   "number": 5218,
-   "title": "Cursor- fix(accounting): LST-F119 — Invoice/Shop/Bills deep-link UUID chrome",
-   "mergedAt": "2026-08-09T23:02:44Z",
-   "branch": "cursor/lst-f119-invoice-maint-shop-human-labels"
-  },
-  {
-   "number": 5217,
-   "title": "Cursor- fix(accounting): LST-F118 — PayBill/Bill detail UUID fragment labels",
-   "mergedAt": "2026-08-09T22:58:43Z",
-   "branch": "cursor/lst-f118-paybill-detail-human-labels"
-  },
-  {
-   "number": 5216,
-   "title": "Cursor- fix(accounting): LST-F117 — vendor balances/credits/bill-payments UUID labels",
-   "mergedAt": "2026-08-09T22:57:23Z",
-   "branch": "cursor/lst-f117-vendor-balances-human-labels"
-  },
-  {
-   "number": 5215,
-   "title": "Cursor- fix(accounting): LST-F116 — expenses list/detail UUID fragment labels",
-   "mergedAt": "2026-08-09T22:56:38Z",
-   "branch": "cursor/lst-f116-expenses-list-human-labels"
-  },
-  {
-   "number": 5214,
-   "title": "Cursor- fix(guard): allowlist AssignDriverDropdown as load-aware driver picker",
-   "mergedAt": "2026-08-09T22:56:33Z",
-   "branch": "cursor/allowlist-assign-driver-dropdown"
-  },
-  {
-   "number": 5213,
-   "title": "Cursor- fix(nav): allowlist /program/matrix via ProgramModuleNav tab row",
-   "mergedAt": "2026-08-09T22:55:36Z",
-   "branch": "cursor/fix-nav-integrity-program-module-nav"
-  },
-  {
-   "number": 5212,
-   "title": "Cursor- fix(accounting): LST-F115 — BillsPage bill labels were UUID fragments",
-   "mergedAt": "2026-08-09T22:55:21Z",
-   "branch": "cursor/lst-f115-bills-list-human-labels"
-  },
-  {
-   "number": 5211,
-   "title": "Cursor- fix(insurance): LST-F114 — claim graph bill/WO UUID fragment fallbacks",
-   "mergedAt": "2026-08-09T22:54:24Z",
-   "branch": "cursor/lst-f114-claim-graph-bill-wo-labels"
-  },
-  {
-   "number": 5210,
-   "title": "Cursor- fix(settlements): LST-F113 — settlement load hops UUID fragment fallback",
-   "mergedAt": "2026-08-09T22:53:51Z",
-   "branch": "cursor/lst-f113-settlement-load-human-labels"
-  },
-  {
-   "number": 5209,
-   "title": "Cursor- fix(vendors): VEND-S05 — make Active roster default explicit for guard",
-   "mergedAt": "2026-08-09T22:53:49Z",
-   "branch": "devin/fix-form-field-roundtrip-settlement-dispute"
-  },
-  {
-   "number": 5208,
-   "title": "Cursor- fix(assets): LST-F112 — assets list unit_number was UUID fragment",
-   "mergedAt": "2026-08-09T22:53:10Z",
-   "branch": "cursor/lst-f112-assets-unit-human-label"
-  },
-  {
-   "number": 5207,
-   "title": "Cursor- fix(maintenance): LST-F111 — WO linked expense UUID fragment labels",
-   "mergedAt": "2026-08-09T22:52:29Z",
-   "branch": "cursor/lst-f111-wo-expense-human-labels"
-  },
-  {
-   "number": 5206,
-   "title": "Cursor- fix(drivers): LST-F110 — onboarding wizard subtitle was UUID fragment",
-   "mergedAt": "2026-08-09T22:51:52Z",
-   "branch": "cursor/lst-f110-onboarding-session-human-label"
-  },
-  {
-   "number": 5205,
-   "title": "Cursor- fix(units): LST-F109 — unit linked expense UUID fragment labels",
-   "mergedAt": "2026-08-09T22:48:02Z",
-   "branch": "cursor/lst-f109-unit-expense-human-labels"
-  },
-  {
-   "number": 5204,
-   "title": "FINDING: C-13-SAFETY-DEAD-CLICK-DRIVER-VENDOR-ACK",
-   "mergedAt": "2026-08-09T23:10:09Z",
-   "branch": "cascade/c13-safety-dead-click"
-  },
-  {
-   "number": 5203,
-   "title": "docs(module-completion): insurance complete=false while CLS-MONEY-HOLD wave is open",
-   "mergedAt": "2026-08-09T22:47:21Z",
-   "branch": "devin/insurance-complete-fix"
-  },
-  {
-   "number": 5202,
-   "title": "Cursor- fix(insurance): LST-F108 — claim graph UUID fragment labels",
-   "mergedAt": "2026-08-09T22:47:02Z",
-   "branch": "cursor/lst-f108-claim-graph-human-labels"
-  },
-  {
-   "number": 5201,
-   "title": "docs(audit): CLS-DISP-WIRE-07 drained — departure-evidence guard green",
-   "mergedAt": "2026-08-09T22:46:32Z",
-   "branch": "devin/cls-disp-wire-07-drained"
-  },
-  {
-   "number": 5200,
-   "title": "Cursor- fix(catalogs): CLS-SCHEMA-DRIFT — gate deactivated_at on table shape",
-   "mergedAt": "2026-08-09T22:45:48Z",
-   "branch": "devin/cls-silent-cap-drained"
-  },
-  {
-   "number": 5199,
-   "title": "Cursor- fix(accounting): LST-F107 — Manual JE list JE column was UUID fragment",
-   "mergedAt": "2026-08-09T22:45:36Z",
-   "branch": "cursor/lst-f107-manual-je-list-human-labels"
-  },
-  {
-   "number": 5198,
-   "title": "Cursor- fix(safety): LST-F106 — Home event drill Open record was null",
-   "mergedAt": "2026-08-09T22:44:30Z",
-   "branch": "cursor/lst-f106-safety-events-event-id-deeplink"
-  },
-  {
-   "number": 5197,
-   "title": "Cursor- fix(accounting): LST-F105 — JE detail title was UUID fragment",
-   "mergedAt": "2026-08-09T22:43:37Z",
-   "branch": "cursor/lst-f105-je-detail-human-labels"
-  },
-  {
-   "number": 5196,
-   "title": "docs(audit): CLS-SILENT-CAP drained — verify-no-silent-list-caps OK",
-   "mergedAt": "2026-08-09T22:42:44Z",
-   "branch": "devin/cls-silent-cap-drained"
-  },
-  {
-   "number": 5195,
-   "title": "Cursor- fix(safety): LST-F104 — Safety Home accident Open record deeplink",
-   "mergedAt": "2026-08-09T22:39:28Z",
-   "branch": "cursor/lst-f104-safety-home-accident-drill"
-  },
-  {
-   "number": 5194,
-   "title": "Cursor- fix(accounting): D-A16 / ACCT-F601 — class picker name-label ratchet + close audit row",
-   "mergedAt": "2026-08-09T22:39:17Z",
-   "branch": "devin/a-da16-class-picker-names"
-  },
-  {
-   "number": 5193,
-   "title": "Cursor- fix(accounting): D-A12 — Chart of Accounts card → register wiring ratchet",
-   "mergedAt": "2026-08-09T22:35:16Z",
-   "branch": "devin/a-da12-coa-card-register"
-  },
-  {
-   "number": 5192,
-   "title": "Cursor- fix(factoring): D-A11 — raw locale date strings in factoring pages",
-   "mergedAt": "2026-08-09T22:33:30Z",
-   "branch": "devin/a-da11-factoring-forward-only-guard"
-  },
-  {
-   "number": 5191,
-   "title": "Cursor- fix(finance): LST-F103 — AmortizationPage silent empty on load fail",
-   "mergedAt": "2026-08-09T22:30:19Z",
-   "branch": "cursor/lst-f103-amortization-load-errors"
-  },
-  {
-   "number": 5190,
-   "title": "Cursor- fix(lists): LST-F102 — Dispatch catalogs subnav from DOMAIN_CONFIG",
-   "mergedAt": "2026-08-09T22:29:31Z",
-   "branch": "cursor/lst-f102-lists-dispatch-subnav"
-  },
-  {
-   "number": 5189,
-   "title": "Cursor- fix(dispatch): D-A10 — PreSettlementPanel used locale date string instead of formatDateUS",
-   "mergedAt": "2026-08-09T22:29:11Z",
-   "branch": "devin/a-da10-pre-settlement-labels"
-  },
-  {
-   "number": 5188,
-   "title": "Cursor- fix(lists): LST-F101 — Fleet catalogs subnav from DOMAIN_CONFIG",
-   "mergedAt": "2026-08-09T22:28:48Z",
-   "branch": "cursor/lst-f101-lists-fleet-subnav"
-  },
-  {
-   "number": 5187,
-   "title": "Cursor- fix(lists): LST-F100 — Safety subnav all live DOMAIN_CONFIG catalogs",
-   "mergedAt": "2026-08-09T22:28:03Z",
-   "branch": "cursor/lst-f100-lists-safety-subnav"
-  },
-  {
-   "number": 5186,
-   "title": "Cursor- fix(dispatch): LST-F99 — CancelLoadModal bare E_* error toast",
-   "mergedAt": "2026-08-09T22:26:28Z",
-   "branch": "cursor/lst-f99-cancel-human-errors"
-  },
-  {
-   "number": 5185,
-   "title": "Cursor- fix(dispatch): D-A10 — PreSettlementPanel locale date theater",
-   "mergedAt": "2026-08-09T22:25:25Z",
-   "branch": "devin/a-da10-pre-settlement-labels"
-  },
-  {
-   "number": 5184,
-   "title": "Cursor- fix(dispatch): LST-F98 — ratchet quick-assign HOS human toast order",
-   "mergedAt": "2026-08-09T22:24:12Z",
-   "branch": "cursor/lst-f98-hos-human-message"
-  },
-  {
-   "number": 5183,
-   "title": "Cursor- fix(dispatch): LST-F97 — BorderCrossingHistory silent empty on fetch fail",
-   "mergedAt": "2026-08-09T22:23:00Z",
-   "branch": "cursor/lst-f97-dispatch-dual-path"
-  },
-  {
-   "number": 5182,
-   "title": "Cursor- fix(safety): LST-F96 — Safety Home KPI tiles wrong External Fines filter",
-   "mergedAt": "2026-08-09T21:53:00Z",
-   "branch": "cursor/lst-f96-safety-home-tiles"
-  },
-  {
-   "number": 5181,
-   "title": "Cursor- fix(safety): LST-F94 — AccidentReportDrawer missing linked claim hop",
-   "mergedAt": "2026-08-09T21:50:21Z",
-   "branch": "cursor/lst-f94-accident-drawer-claim"
-  },
-  {
-   "number": 5180,
-   "title": "Cursor- fix(insurance): LST-F93 — ClaimsTab reverse incidents lacked incident_id deep-link",
-   "mergedAt": "2026-08-09T21:49:30Z",
-   "branch": "cursor/lst-f93-claim-incident-reverse"
-  },
-  {
-   "number": 5179,
-   "title": "Cursor- fix(safety): LST-F91 — accidents list missing reverse claim hop",
-   "mergedAt": "2026-08-09T21:48:09Z",
-   "branch": "cursor/lst-f91-accident-claim-hop"
-  },
-  {
-   "number": 5178,
-   "title": "Cursor- fix(driver-finance): D-A09 — settlement disputes tab label guard",
-   "mergedAt": "2026-08-09T21:45:41Z",
-   "branch": "devin/a-da09-settlement-disputes-labels"
-  },
-  {
-   "number": 5177,
-   "title": "Cursor- fix(accounting): D-A08 — AccountingHub unmatched tile used raw entity_id UUIDs",
-   "mergedAt": "2026-08-09T21:45:05Z",
-   "branch": "devin/a-da08-accounting-hub-labels"
-  },
-  {
-   "number": 5176,
-   "title": "Cursor- fix(accounting): D-A07 — PaymentDetailPage human-readable account + bank labels",
-   "mergedAt": "2026-08-09T21:41:09Z",
-   "branch": "devin/a-da07-payment-detail-labels"
-  },
-  {
-   "number": 5175,
-   "title": "Cursor- fix(accounting): D-A06 — BillPaymentDetailPage human-readable JE + bank labels",
-   "mergedAt": "2026-08-09T21:39:59Z",
-   "branch": "devin/a-da06-bill-payment-panel-labels"
-  },
-  {
-   "number": 5173,
-   "title": "Cursor- fix(accounting): D-A06 — payment detail customer/vendor EntityLink guard",
-   "mergedAt": "2026-08-09T21:38:11Z",
-   "branch": "devin/a-da06-payment-detail-entity-links"
-  },
-  {
-   "number": 5172,
-   "title": "Cursor- fix(accounting): D-A05 — BillDetailPage unit link used raw UUID label",
-   "mergedAt": "2026-08-09T21:37:30Z",
-   "branch": "devin/a-da05-bill-detail-links"
-  },
-  {
-   "number": 5171,
-   "title": "Devin- fix(accounting): D-A04 invoice detail void error regression test",
-   "mergedAt": "2026-08-09T21:36:05Z",
-   "branch": "devin/a-da04-invoice-detail-void-error"
-  },
-  {
-   "number": 5170,
-   "title": "Devin- fix(accounting): D-A03 invoice list status deep-link test robustness",
-   "mergedAt": "2026-08-09T21:34:58Z",
-   "branch": "devin/a-da03-invoice-list-status-deeplink"
-  },
-  {
-   "number": 5169,
-   "title": "Cursor- fix(settlements): FAIL-SET-DISPUTE-LIST-UUID-LABEL — dispute list EntityLink UUID fallback",
-   "mergedAt": "2026-08-09T21:34:53Z",
-   "branch": "cursor/setl-dispute-list-label"
-  },
-  {
-   "number": 5168,
-   "title": "Devin- fix(accounting): D-A02 ExpenseDetailPage human-readable JE + bank labels",
-   "mergedAt": "2026-08-09T21:34:35Z",
-   "branch": "devin/a-da02-expense-detail-labels"
-  },
-  {
-   "number": 5167,
-   "title": "Cursor- fix(settlements): FAIL-SET-DISPUTES-PERIOD-LABELS — disputes tab showed raw ISO periods",
-   "mergedAt": "2026-08-09T21:34:06Z",
-   "branch": "cursor/setl-disputes-period-labels"
-  },
-  {
-   "number": 5166,
-   "title": "Devin- fix(accounting): D-A02 ExpenseDetailPage human-readable JE + bank labels",
-   "mergedAt": "2026-08-09T21:32:09Z",
-   "branch": "devin/a-da02-expense-detail-labels"
-  },
-  {
-   "number": 5165,
-   "title": "Devin- fix(accounting): D-A01 ExpensesListPage row-level Void affordance",
-   "mergedAt": "2026-08-09T21:30:36Z",
-   "branch": "devin/a-da01-expense-list-void"
-  },
-  {
-   "number": 5164,
-   "title": "Devin- fix(settlements): settlement load-linkage non-null guard",
-   "mergedAt": "2026-08-09T21:27:19Z",
-   "branch": "devin/a-da04-settlement-load-linkage-guard"
-  },
-  {
-   "number": 5163,
-   "title": "Devin- fix(accounting): ACCT-F270 W5 guard for from-load unsent draft+proforma",
-   "mergedAt": "2026-08-09T21:26:16Z",
-   "branch": "devin/a-da03-from-load-unsent-draft-w5"
-  },
-  {
-   "number": 5162,
-   "title": "Cursor- docs(board): DISP-TRANSIT-500-TXN-ABORT — Cascade live in_transit 25P02",
-   "mergedAt": "2026-08-09T21:25:23Z",
-   "branch": "cursor/board-disp-transit-500"
-  },
-  {
-   "number": 5161,
-   "title": "Cursor- fix(insurance): FAIL-CLAIM-ACCIDENT-DEEPLINK — claim→accident used bare /safety/accidents",
-   "mergedAt": "2026-08-09T21:22:36Z",
-   "branch": "cursor/claim-accident-deeplink"
-  },
-  {
-   "number": 5160,
-   "title": "Devin- fix(accounting): ACCT-F223 A/R aging proforma exclusion regression guard",
-   "mergedAt": "2026-08-09T21:21:48Z",
-   "branch": "devin/a-da02-ar-aging-proforma-guard"
-  },
-  {
-   "number": 5159,
-   "title": "Cursor- fix(settlements): FAIL-SET-PAYMENT-ROUTES-MOUNT — mount settlement-payment routes FE already calls",
-   "mergedAt": "2026-08-09T21:21:23Z",
-   "branch": "cursor/setl-payment-routes-mount"
-  },
-  {
-   "number": 5158,
-   "title": "Devin- fix(accounting): ACCT-F270 from-load invoice rate re-sync for draft+proforma",
-   "mergedAt": "2026-08-09T21:20:12Z",
-   "branch": "devin/a-da01-invoice-rate-resync"
-  },
-  {
-   "number": 5157,
-   "title": "Cursor- fix(accounting): ACCT-F90 — hub settlement rows used display_id UUID",
-   "mergedAt": "2026-08-09T21:19:37Z",
-   "branch": "cursor/acct-hub-presettle-no-uuid"
-  },
-  {
-   "number": 5156,
-   "title": "Cursor- fix(settlements): FAIL-SET-EARNINGS-PERIOD-LABELS — EarningsTab raw ISO periods",
-   "mergedAt": "2026-08-09T21:18:21Z",
-   "branch": "cursor/earnings-tab-period-labels"
-  },
-  {
-   "number": 5155,
-   "title": "Cursor- fix(settlements): FAIL-SET-PRESETTLE-LABELS — UUID driver + raw ISO periods",
-   "mergedAt": "2026-08-09T21:15:57Z",
-   "branch": "cursor/presettlements-honest-labels"
-  },
-  {
-   "number": 5154,
-   "title": "Devin- fix(settlements): SETL-OPEN-BILLS — show open driver bills on Settlements list/detail",
-   "mergedAt": "2026-08-09T21:17:19Z",
-   "branch": "devin/a-settlements-bill-visibility"
-  },
-  {
-   "number": 5153,
-   "title": "Cursor- fix(settlements): FAIL-SET-HEADER-LABELS — detail header UUID + raw ISO period",
-   "mergedAt": "2026-08-09T21:10:21Z",
-   "branch": "cursor/settlement-header-honest-labels"
-  },
-  {
-   "number": 5152,
-   "title": "Cursor- fix(settlements): FAIL-SETL-KPI-PERIOD — This Period/YTD were list.length theater",
-   "mergedAt": "2026-08-09T21:09:07Z",
-   "branch": "cursor/settlements-kpi-period-ytd"
-  },
-  {
-   "number": 5151,
-   "title": "Cursor- fix(dispatch): FAIL-SETL-DRIVER-PAY-TAB — Load Driver Pay mapped settlement lines",
-   "mergedAt": "2026-08-09T21:08:08Z",
-   "branch": "cursor/load-driver-pay-bills-map"
-  },
-  {
-   "number": 5150,
-   "title": "Cursor- chore(guards): CLAIM-RESERVE-2916 — nest claimed map (gate reads claimed.*)",
-   "mergedAt": "2026-08-09T21:07:41Z",
-   "branch": "chore/claim-reserve-2916-nested"
-  },
-  {
-   "number": 5149,
-   "title": "Cursor- chore(guards): CLAIM-RESERVE-2916 — verify-load-detail-driver-pay-bills",
-   "mergedAt": "2026-08-09T21:06:13Z",
-   "branch": "chore/claim-reserve-2916-driver-pay-bills"
-  },
-  {
-   "number": 5148,
-   "title": "Cursor- fix(tasks): FAIL-TSK1-OVERDUE-ROLLOVER — This Week hid open overdue tasks",
-   "mergedAt": "2026-08-09T21:06:10Z",
-   "branch": "cursor/fail-tsk1-overdue-rollover"
-  },
-  {
-   "number": 5147,
-   "title": "Cursor- fix(dispatch): QUICK-ASSIGN-HOS — board Quick Assign must block HOS violators",
-   "mergedAt": "2026-08-09T20:59:09Z",
-   "branch": "cursor/quick-assign-hos-gate"
-  },
-  {
-   "number": 5146,
-   "title": "Cursor- fix(dispatch): MANUAL-MILES-BOOK — editable short/practical miles (no PC*MILER)",
-   "mergedAt": "2026-08-09T20:35:33Z",
-   "branch": "cursor/manual-miles-book-editable"
-  },
-  {
-   "number": 5145,
-   "title": "Cursor- fix(dispatch): FAIL-CA1 — Book/QuickAssign hid Probation drivers (create default)",
-   "mergedAt": "2026-08-09T18:02:58Z",
-   "branch": "cursor/fail-ca1-book-probation-roster"
-  },
-  {
-   "number": 5144,
-   "title": "Cursor- fix(dispatch): FAIL-K2 — ApiError showed bare status 400, hid server reason",
-   "mergedAt": "2026-08-09T17:50:24Z",
-   "branch": "cursor/fail-k2-apierror-message"
-  },
-  {
-   "number": 5143,
-   "title": "Cursor- fix(dispatch): MILES-ON-BOOK — pay skip was audit-only, operators never saw it",
-   "mergedAt": "2026-08-09T17:49:37Z",
-   "branch": "cursor/miles-on-book-loud-skip"
-  },
-  {
-   "number": 5142,
-   "title": "CC-1 FINDING: ACCT-F275 — Settlements screen shows \"0 loads\" for settlements that cover one (LIVE defect)",
-   "mergedAt": "2026-08-09T18:01:23Z",
-   "branch": "claude/acct-f275-load-count-counts-both-paths"
-  },
-  {
-   "number": 5139,
-   "title": "CC-1 FINDING: ACCT-F290 — settlement bookends resolved only the denormalized load column (FAIL-W7a) + 4 board rows",
-   "mergedAt": "2026-08-09T17:42:29Z",
-   "branch": "claude/acct-f290-bookend-covers-canonical-bill-path"
-  },
-  {
-   "number": 5137,
-   "title": "CC-1 FINDING: ACCT-F289 — the zero-rate invoice refusal rolled back the whole booking (completes FAIL-I1)",
-   "mergedAt": "2026-08-09T17:42:20Z",
-   "branch": "claude/acct-f289-zero-rate-refusal-blast-radius"
-  },
-  {
-   "number": 5136,
-   "title": "CC-1 CLAIM-RESERVE verify-step 2945 (unblocks the ACCT-F289 guard PR)",
-   "mergedAt": "2026-08-09T17:42:06Z",
-   "branch": "chore/claim-reserve-2945-cc1"
-  },
-  {
-   "number": 5134,
-   "title": "Claude-3 FINDING: FAIL-CP1 residual — customer complainant still rendered a raw uuid",
-   "mergedAt": "2026-08-09T17:42:33Z",
-   "branch": "fix/complaints-customer-complainant-name"
-  },
-  {
-   "number": 5132,
-   "title": "Claude-3 FINDING: hiring a driver never minted their A/P payee (3 of 3 operator-created USMCA drivers)",
-   "mergedAt": "2026-08-09T13:59:52Z",
-   "branch": "fix/driver-create-mints-vendor"
-  },
-  {
-   "number": 5131,
-   "title": "Claude-3 board: CLS-BARE-ERROR-CODE-REPLIES — 28 bare machine-code error replies, routed per lane",
-   "mergedAt": "2026-08-09T13:56:18Z",
-   "branch": "docs/board-bare-error-code-replies"
-  },
-  {
-   "number": 5130,
-   "title": "Claude-3 FINDING: Quick Assign toasted dispatchers the raw code E_DRIVER_REPAIR_BLOCK (FAIL-U1, second surface)",
-   "mergedAt": "2026-08-09T13:55:36Z",
-   "branch": "fix/quick-assign-blocker-message-fail-u1"
-  },
-  {
-   "number": 5129,
-   "title": "FINDING: ACCT-F288 — settlement lines never link to the driver bill, so the GL poster has nothing to post (HOLD-001 link 2)",
-   "mergedAt": "2026-08-09T13:49:24Z",
-   "branch": "claude/acct-f288-settlement-line-bill-link"
-  },
-  {
-   "number": 5128,
-   "title": "Claude-3 FINDING: Book Load previewed the CUSTOMER invoice total as the driver bill when miles were missing",
-   "mergedAt": "2026-08-09T13:52:14Z",
-   "branch": "fix/book-load-driver-pay-preview-not-customer-total"
-  },
-  {
-   "number": 5127,
-   "title": "Cursor- fix(insurance): FAIL-INS-VENDOR-UX — free-text insurer → 409 insurance_vendor_not_found",
-   "mergedAt": "2026-08-09T13:34:00Z",
-   "branch": "cursor/ins-vendor-picker-ux"
-  },
-  {
-   "number": 5126,
-   "title": "Claude-3 fix(dispatch): equipment transfer list showed driver UUIDs where the NAME was one join away",
-   "mergedAt": "2026-08-09T13:36:53Z",
-   "branch": "fix/equipment-transfer-driver-names"
-  },
-  {
-   "number": 5125,
-   "title": "Claude-1- fix(accounting): ACCT-F277 — DELIVERED-LOAD-NO-DRIVER-PAY create-time-only mint",
-   "mergedAt": "2026-08-09T13:30:18Z",
-   "branch": "claude/acct-f277-driver-pay-delivery"
-  },
-  {
-   "number": 5124,
-   "title": "Cursor- fix(tasks): FAIL-TSK1 — Task Board day cells blank despite task count",
-   "mergedAt": "2026-08-09T13:27:01Z",
-   "branch": "cursor/fail-tsk1-scheduled-date-ymd"
   }
  ],
  "merged_pr_total": 3000,
@@ -18418,126 +18418,6 @@
    "number": 2487,
    "title": "feat(insurance): G11-1 claim->accident/load/driver forward FKs (HOLD-…",
    "mergedAt": "2026-07-14T17:54:13Z",
-   "category": "HOLD"
-  },
-  {
-   "number": 2449,
-   "title": "feat(qbo-ap): [HOLD-FOR-JORGE] wire QBO A/P pull to DB feature flag (P0 — A/P shows $0)",
-   "mergedAt": "2026-07-14T01:13:52Z",
-   "category": "HOLD"
-  },
-  {
-   "number": 2441,
-   "title": "[HOLD-FOR-JORGE] fix(acct): A/P Aging QBO-tie honesty + sync timestamp (ACCT-2 Path A)",
-   "mergedAt": "2026-07-14T00:48:49Z",
-   "category": "HOLD"
-  },
-  {
-   "number": 2440,
-   "title": "[HOLD-FOR-JORGE] feat(migA2): valid-VIN CHECK blocks the 07-04 bulk-dup recurrence",
-   "mergedAt": "2026-07-14T00:29:29Z",
-   "category": "HOLD"
-  },
-  {
-   "number": 2433,
-   "title": "[HOLD-FOR-JORGE] fix(settlement-dispute): gate corrective JE on SETTLEMENT_GL_POSTING_ENABLED (Item 4)",
-   "mergedAt": "2026-07-13T21:45:57Z",
-   "category": "HOLD"
-  },
-  {
-   "number": 2431,
-   "title": "[HOLD-FOR-JORGE] feat(settlement-payrun): per-driver settlement close + escrow cap + advance recovery + payment-method catalog (reuse-and-extend, flags OFF)",
-   "mergedAt": "2026-07-13T21:45:47Z",
-   "category": "HOLD"
-  },
-  {
-   "number": 2421,
-   "title": "[HOLD-FOR-JORGE] fix(gov-void): governance JE void reverses-not-flips (converge w/ #2415; close guard blind spot)",
-   "mergedAt": "2026-07-13T12:27:19Z",
-   "category": "HOLD"
-  },
-  {
-   "number": 2419,
-   "title": "docs(qbo-parity): Settlement Pay-Run / Batch Disbursement design doc (DESIGN-ONLY — HOLD FOR JORGE)",
-   "mergedAt": "2026-07-13T00:01:01Z",
-   "category": "HOLD"
-  },
-  {
-   "number": 2418,
-   "title": "[HOLD-FOR-JORGE] feat(driver-finance): canonical driver payment-method master data (+ fixes phantom ACH probe)",
-   "mergedAt": "2026-07-12T23:59:00Z",
-   "category": "HOLD"
-  },
-  {
-   "number": 2417,
-   "title": "[HOLD-FOR-JORGE] fix(gl-void): JE reversal-linkage reads are deploy-order-safe (expand/contract)",
-   "mergedAt": "2026-07-12T21:52:59Z",
-   "category": "HOLD"
-  },
-  {
-   "number": 2415,
-   "title": "[HOLD-FOR-JORGE] feat(gl-void): JE void posts a linked reversing entry (Option 1), never flips the original",
-   "mergedAt": "2026-07-12T21:28:54Z",
-   "category": "HOLD"
-  },
-  {
-   "number": 2412,
-   "title": "fix(ci): hold-merge-gate blocks a held-migration PR unless the firewall is present (label-independent)",
-   "mergedAt": "2026-07-12T19:48:24Z",
-   "category": "HOLD"
-  },
-  {
-   "number": 2411,
-   "title": "[HOLD-FOR-JORGE] feat(gl-void): AF-7 money-control action gates — JE void + period close/reopen",
-   "mergedAt": "2026-07-12T19:48:13Z",
-   "category": "HOLD"
-  },
-  {
-   "number": 2408,
-   "title": "[HOLD-FOR-JORGE] fix(migrate): HELD migrations genuinely cannot run on prod (runtime enforcement)",
-   "mergedAt": "2026-07-12T18:53:44Z",
-   "category": "HOLD"
-  },
-  {
-   "number": 2405,
-   "title": "[HOLD-FOR-JORGE] feat(relay): CONN-3 Relay internal bank — wallet account + fuel product-services (Part B)",
-   "mergedAt": "2026-07-12T18:24:52Z",
-   "category": "HOLD"
-  },
-  {
-   "number": 2396,
-   "title": "[HOLD-FOR-JORGE] feat(relay): deposit-funding classifier + owner-review queue (Part B, display-only)",
-   "mergedAt": "2026-07-12T14:36:27Z",
-   "category": "HOLD"
-  },
-  {
-   "number": 2374,
-   "title": "[HOLD-FOR-JORGE] feat(banking): manual-txn date PATCH + canonical inline-create guard (Doc-18 A+B)",
-   "mergedAt": "2026-07-11T22:27:47Z",
-   "category": "HOLD"
-  },
-  {
-   "number": 2369,
-   "title": "[HOLD-FOR-JORGE] fix(rls): re-assert FORCED RLS on catalogs.excel_upload_jobs (ITEM-2)",
-   "mergedAt": "2026-07-11T21:12:01Z",
-   "category": "HOLD"
-  },
-  {
-   "number": 2364,
-   "title": "[HOLD-FOR-JORGE] feat(migration): VALIDATE the 8 ceremony NOT-VALID FKs (ITEM-13)",
-   "mergedAt": "2026-07-11T20:36:06Z",
-   "category": "HOLD"
-  },
-  {
-   "number": 2353,
-   "title": "[HOLD-FOR-JORGE] fix(accounting): FIX-03 — product/service + Create populates + persists income/expense account link",
-   "mergedAt": "2026-07-11T17:30:51Z",
-   "category": "HOLD"
-  },
-  {
-   "number": 2351,
-   "title": "[HOLD-FOR-JORGE] fix(accounting): FIX-02 — category + Create opens full COA creator (Account Type + Detail Type)",
-   "mergedAt": "2026-07-11T17:14:16Z",
    "category": "HOLD"
   }
  ]
