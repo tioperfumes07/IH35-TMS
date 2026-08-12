@@ -37,6 +37,8 @@ const MAINT_HOME = "apps/frontend/src/pages/maintenance/MaintenanceHome.tsx";
 const MAINT_KPI_ROWS = "apps/frontend/src/pages/maintenance/components/MaintKpiRows.tsx";
 const SERVICE_LOCATION = "apps/frontend/src/pages/maintenance/ServiceLocationPage.tsx";
 const SEVERE_OOS = "apps/frontend/src/pages/maintenance/components/SevereRepairOosTab.tsx";
+const SAFETY_EVENTS = "apps/frontend/src/pages/safety/SafetyEventsPage.tsx";
+const DISPATCH_OVERVIEW = "apps/frontend/src/pages/dispatch/DispatchOverview.tsx";
 
 function fail(msg) {
   console.error(`FAIL verify-money-kpi-strip-no-fake-zero-on-error: ${msg}`);
@@ -145,6 +147,27 @@ function checkSevereRepairOosTab(src) {
   }
   if (!src.includes('rollupQuery.isError ? "—" : rollup.open_count')) {
     fail(`${SEVERE_OOS}: OOS units tile must branch on rollupQuery.isError → "—".`);
+  }
+}
+
+function checkSafetyEventsPage(src) {
+  if (!src.includes('kpiQuery.isError ? "—" : Number(kpiQuery.data?.total ?? 0)')) {
+    fail(`${SAFETY_EVENTS}: Total events KPI must branch on kpiQuery.isError → "—", not Number(… ?? 0) alone.`);
+  }
+  if (!src.includes('kpiQuery.isError ? "—" : Number(kpiQuery.data?.open_count ?? 0)')) {
+    fail(`${SAFETY_EVENTS}: Open KPI must branch on kpiQuery.isError → "—".`);
+  }
+}
+
+function checkDispatchOverview(src) {
+  if (!src.includes("dashboardQ.isLoading || dashboardQ.isError ? \"—\"")) {
+    fail(`${DISPATCH_OVERVIEW}: Active loads KPI must treat dashboardQ.isError like loading (show "—", not fabricated 0).`);
+  }
+  if (!/atRiskQ\.isError\s*\|\|\s*lateQ\.isError/.test(src) && !src.includes("atRiskQ.isError || lateQ.isError")) {
+    fail(`${DISPATCH_OVERVIEW}: At-risk / late KPI must branch on atRiskQ.isError || lateQ.isError.`);
+  }
+  if (!src.includes("unitsWithoutLoadQ.isLoading || unitsWithoutLoadQ.isError ? \"—\"")) {
+    fail(`${DISPATCH_OVERVIEW}: Units available KPI must treat unitsWithoutLoadQ.isError like loading.`);
   }
 }
 
@@ -387,6 +410,65 @@ function selftest() {
     probesProven++;
   }
 
+  // Mutation 9: SafetyEventsPage drops kpiQuery.isError branches.
+  {
+    const original = fs.readFileSync(SAFETY_EVENTS, "utf8");
+    const mutated = original
+      .replace(/kpiQuery\.isError \? "—" : Number\(kpiQuery\.data\?\.total \?\? 0\)/g, "Number(kpiQuery.data?.total ?? 0)")
+      .replace(/kpiQuery\.isError \? "—" : Number\(kpiQuery\.data\?\.open_count \?\? 0\)/g, "Number(kpiQuery.data?.open_count ?? 0)")
+      .replace(/kpiQuery\.isError \? "—" : Number\(kpiQuery\.data\?\.severe_count \?\? 0\)/g, "Number(kpiQuery.data?.severe_count ?? 0)")
+      .replace(/kpiQuery\.isError \? "—" : Number\(kpiQuery\.data\?\.commendations_count \?\? 0\)/g, "Number(kpiQuery.data?.commendations_count ?? 0)");
+    if (mutated === original) {
+      console.error("SELFTEST SETUP FAILED: SafetyEventsPage kpiQuery.isError patterns not found.");
+      process.exitCode = 1;
+      return;
+    }
+    fs.writeFileSync(SAFETY_EVENTS, mutated);
+    let caught = false;
+    try {
+      checkSafetyEventsPage(mutated);
+      caught = process.exitCode === 1;
+    } finally {
+      process.exitCode = undefined;
+      fs.writeFileSync(SAFETY_EVENTS, original);
+    }
+    if (!caught) {
+      console.error("SELFTEST INERT: dropping SafetyEventsPage kpiQuery.isError was not caught.");
+      process.exitCode = 1;
+      return;
+    }
+    probesProven++;
+  }
+
+  // Mutation 10: DispatchOverview drops isError from Active loads KPI.
+  {
+    const original = fs.readFileSync(DISPATCH_OVERVIEW, "utf8");
+    const mutated = original.replace(
+      /dashboardQ\.isLoading \|\| dashboardQ\.isError \? "—" : \(dashboardQ\.data\?\.active_loads \?\? 0\)/,
+      'dashboardQ.isLoading ? "—" : (dashboardQ.data?.active_loads ?? 0)'
+    );
+    if (mutated === original) {
+      console.error("SELFTEST SETUP FAILED: DispatchOverview dashboardQ.isError pattern not found.");
+      process.exitCode = 1;
+      return;
+    }
+    fs.writeFileSync(DISPATCH_OVERVIEW, mutated);
+    let caught = false;
+    try {
+      checkDispatchOverview(mutated);
+      caught = process.exitCode === 1;
+    } finally {
+      process.exitCode = undefined;
+      fs.writeFileSync(DISPATCH_OVERVIEW, original);
+    }
+    if (!caught) {
+      console.error("SELFTEST INERT: dropping DispatchOverview dashboardQ.isError was not caught.");
+      process.exitCode = 1;
+      return;
+    }
+    probesProven++;
+  }
+
   console.log(`PASS verify-money-kpi-strip-no-fake-zero-on-error --selftest (mutation probes proven non-inert: ${probesProven})`);
 }
 
@@ -401,6 +483,8 @@ if (process.argv.includes("--selftest")) {
   checkMaintenanceHome(fs.readFileSync(MAINT_HOME, "utf8"), fs.readFileSync(MAINT_KPI_ROWS, "utf8"));
   checkServiceLocationPage(fs.readFileSync(SERVICE_LOCATION, "utf8"));
   checkSevereRepairOosTab(fs.readFileSync(SEVERE_OOS, "utf8"));
+  checkSafetyEventsPage(fs.readFileSync(SAFETY_EVENTS, "utf8"));
+  checkDispatchOverview(fs.readFileSync(DISPATCH_OVERVIEW, "utf8"));
   if (process.exitCode !== 1) {
     console.log("PASS verify-money-kpi-strip-no-fake-zero-on-error");
   }

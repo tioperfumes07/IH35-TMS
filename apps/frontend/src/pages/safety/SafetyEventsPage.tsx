@@ -290,17 +290,25 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
       {/* B-A3: Total / Open → statusFilter. Severe = high|critical (no single severity); Commendations
           need kpi_bucket on the list API — honest disabled (do not guess severity=high). */}
       <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-        <KpiCard label="Total events" value={Number(kpiQuery.data?.total ?? 0)} onClick={() => setStatusFilter("")} />
-        <KpiCard label="Open" value={Number(kpiQuery.data?.open_count ?? 0)} onClick={() => setStatusFilter("open")} />
+        <KpiCard
+          label="Total events"
+          value={kpiQuery.isError ? "—" : Number(kpiQuery.data?.total ?? 0)}
+          onClick={() => setStatusFilter("")}
+        />
+        <KpiCard
+          label="Open"
+          value={kpiQuery.isError ? "—" : Number(kpiQuery.data?.open_count ?? 0)}
+          onClick={() => setStatusFilter("open")}
+        />
         <KpiCard
           label="Severe"
-          value={Number(kpiQuery.data?.severe_count ?? 0)}
+          value={kpiQuery.isError ? "—" : Number(kpiQuery.data?.severe_count ?? 0)}
           disabled
           disabledReason={NOT_AVAILABLE_YET}
         />
         <KpiCard
           label="Commendations"
-          value={Number(kpiQuery.data?.commendations_count ?? 0)}
+          value={kpiQuery.isError ? "—" : Number(kpiQuery.data?.commendations_count ?? 0)}
           disabled
           disabledReason={NOT_AVAILABLE_YET}
         />
@@ -655,7 +663,7 @@ function KpiCard({
   disabledReason,
 }: {
   label: string;
-  value: number;
+  value: number | string;
   onClick?: () => void;
   disabled?: boolean;
   disabledReason?: string;
