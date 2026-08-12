@@ -278,25 +278,27 @@ export function DispatchOverview({ operatingCompanyId, onLoadClick }: Props) {
       <div className="grid grid-cols-1 gap-2 md:grid-cols-4">
         <KpiCard
           label="Active loads"
-          value={dashboardQ.isLoading ? "—" : (dashboardQ.data?.active_loads ?? 0)}
+          value={dashboardQ.isLoading || dashboardQ.isError ? "—" : (dashboardQ.data?.active_loads ?? 0)}
           hint={dashboardQ.data ? `${dashboardQ.data.in_transit} in transit` : undefined}
           to="/dispatch/loads"
         />
         <KpiCard
           label="At-risk / late"
-          value={atRiskQ.isLoading || lateQ.isLoading ? "—" : atRiskLateTotal}
+          value={
+            atRiskQ.isLoading || lateQ.isLoading || atRiskQ.isError || lateQ.isError ? "—" : atRiskLateTotal
+          }
           hint={atRiskLateTotal > 0 ? `${atRiskCount} at-risk · ${lateCount} late` : "none flagged"}
           to="/dispatch/at-risk"
         />
         <KpiCard
           label="Units available"
-          value={unitsWithoutLoadQ.isLoading ? "—" : unitsAvailable}
+          value={unitsWithoutLoadQ.isLoading || unitsWithoutLoadQ.isError ? "—" : unitsAvailable}
           hint="idle, no active load"
           to="/dispatch?view=loads"
         />
         <KpiCard
           label="Units needing return"
-          value={unitsWithoutLoadQ.isLoading ? "—" : unitsNeedingReturn}
+          value={unitsWithoutLoadQ.isLoading || unitsWithoutLoadQ.isError ? "—" : unitsNeedingReturn}
           hint="recent drop, no return booked"
           disabled
           disabledReason={NOT_AVAILABLE_YET}
