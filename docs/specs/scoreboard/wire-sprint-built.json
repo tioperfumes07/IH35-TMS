@@ -96,6 +96,22 @@
       "modules": ["banking"],
       "cols": ["vendor", "driver", "connectivity", "reverse_link"],
       "leafRe": "^(accounts|transactions\\.)"
+    },
+    {
+      "task": "P47",
+      "pr": "#5816",
+      "guard": "scripts/verify-steps/1349-verify-fleet-catalog-no-metadata-phantom.mjs",
+      "modules": ["fleet"],
+      "cols": ["connectivity"],
+      "leafRe": "^(fleet\\.|catalogs\\.)"
+    },
+    {
+      "task": "P46",
+      "pr": "#5806",
+      "guard": "scripts/verify-steps/2646-verify-no-silent-list-caps.mjs",
+      "modules": ["lists", "maintenance"],
+      "cols": ["connectivity"],
+      "leafRe": "^(lists\\.|maintenance\\.)"
     }
   ]
 }
