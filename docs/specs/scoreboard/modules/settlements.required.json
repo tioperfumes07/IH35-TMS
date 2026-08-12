@@ -169,5 +169,17 @@
         "reverse_link"
       ]
     }
-  ]
+  ],
+  "honesty_audit": {
+    "liability_surfaces_built_2026_08_12": {
+      "finding": "LIABILITY-SURFACES-BUILT",
+      "matrix_built": [
+        {
+          "id": "settlements.detail",
+          "cols": ["liability"],
+          "proof": "SettlementDetailPage LiabilityBreakdownModal"
+        }
+      ]
+    }
+  }
 }

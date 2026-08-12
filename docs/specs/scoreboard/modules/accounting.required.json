@@ -619,6 +619,18 @@
           ]
         }
       ]
+    },
+    "liability_surfaces_built_2026_08_12": {
+      "finding": "LIABILITY-SURFACES-BUILT",
+      "matrix_built": [
+        {
+          "id": "escrow",
+          "cols": [
+            "liability"
+          ],
+          "proof": "EscrowPage accounts+postings; KEEP liability required"
+        }
+      ]
     }
   }
 }
