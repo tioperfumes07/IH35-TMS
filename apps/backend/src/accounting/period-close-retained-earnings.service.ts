@@ -154,9 +154,13 @@ export async function insertRetainedEarningsClosingJournalIfNeeded(
         created_by_user_id,
         qbo_sync_pending,
         created_at,
-        updated_at
+        updated_at,
+        -- ACCT-F353 stage 2 — a year-end retained-earnings sweep is an AGGREGATE across every P&L
+        -- account for the fiscal year, not derived from one taggable source document; explicit
+        -- false, matching ACCT-F212's policy (posting-engine.service.ts).
+        is_sample_data
       )
-      VALUES ($1::uuid, $2::date, $3, 'posted', 'auto', $4::uuid, true, now(), now())
+      VALUES ($1::uuid, $2::date, $3, 'posted', 'auto', $4::uuid, true, now(), now(), false)
       RETURNING id::text
     `,
     [
