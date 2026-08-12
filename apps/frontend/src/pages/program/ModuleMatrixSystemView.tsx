@@ -1,16 +1,24 @@
 /**
- * System-wide module matrix — same column groups as each module board.
- * Rows = modules · columns = LINK/MONEY/CHROME/WIRE/PROC atoms.
- * Each cell = Audited% · Built% · Live% (Box 2/3/4 cumulative fill).
+ * System-wide module matrix — SAME column groups + SAME 4-box ✓/●/✕ chrome as each module board.
+ * Rows = modules (priority 10 first, then remainder) · columns = LINK/MONEY/CHROME/WIRE/PROC atoms.
+ * Each cell = MatrixCell4 from column Abl rollup (tooltip keeps Audited%·Built%·Live% detail).
  */
+import { Fragment, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { resolveApiUrl } from "../../api/client";
-import { MATRIX_MODULES_SIDEBAR_ORDER, matrixColumnHeaderLabel, matrixGroupHeaderLabel } from "./moduleMatrixCatalog";
+import {
+  MATRIX_MODULES_SIDEBAR_ORDER,
+  PRIORITY_10_MODULE_IDS,
+  isPriority10Module,
+  matrixColumnHeaderLabel,
+  matrixGroupHeaderLabel,
+  sortModulesPriority10First,
+} from "./moduleMatrixCatalog";
 import {
   MatrixBoxTracker,
-  pctClass,
+  MatrixCell4,
+  ablPctToCell4,
   type TierMetrics,
 } from "./moduleMatrixBoxes";
 
@@ -23,18 +31,20 @@ type AblPct = {
 
 type SystemColumn = { id: string; label: string; group: string };
 
+type SystemModuleRow = {
+  module: string;
+  label: string;
+  available: boolean;
+  metrics: TierMetrics;
+  boxAbl: AblPct;
+  columnAbl: Record<string, AblPct>;
+};
+
 type SystemPayload = {
   sample: false;
   scope: "system";
   columns: SystemColumn[];
-  modules: Array<{
-    module: string;
-    label: string;
-    available: boolean;
-    metrics: TierMetrics;
-    boxAbl: AblPct;
-    columnAbl: Record<string, AblPct>;
-  }>;
+  modules: SystemModuleRow[];
   columnAbl: Record<string, AblPct>;
   system: TierMetrics & {
     moduleCount: number;
@@ -95,24 +105,22 @@ const EMPTY_METRICS: TierMetrics = {
   leafCount: 0,
 };
 
-/** Triple % for Box 2 / 3 / 4 — audited · built · live */
-function TripleAbl({ abl, liveOk, testId }: { abl: AblPct; liveOk: boolean; testId?: string }) {
-  if (!liveOk || abl.requiredCells <= 0) {
-    return (
-      <span className="abl-triple dim" data-testid={testId}>
-        —
-      </span>
-    );
-  }
-  return (
-    <span className="abl-triple" data-testid={testId} title={`Req ${abl.requiredCells}`}>
-      <span className={`abl a ${pctClass(abl.auditedPct)}`}>{abl.auditedPct}%</span>
-      <span className="abl-sep">·</span>
-      <span className={`abl b ${pctClass(abl.builtPct)}`}>{abl.builtPct}%</span>
-      <span className="abl-sep">·</span>
-      <span className={`abl l ${pctClass(abl.livePct)}`}>{abl.livePct}%</span>
-    </span>
-  );
+function ablTitle(abl: AblPct): string {
+  if (abl.requiredCells <= 0) return "N/A — column not required on this module";
+  return `Req ${abl.requiredCells} · Audited ${abl.auditedPct}% · Built ${abl.builtPct}% · Live ${abl.livePct}%`;
+}
+
+function AblCell4({
+  abl,
+  liveOk,
+  testId,
+}: {
+  abl: AblPct;
+  liveOk: boolean;
+  testId?: string;
+}) {
+  const boxes = liveOk ? ablPctToCell4(abl) : { req: false, audited: false, built: false, live: false };
+  return <MatrixCell4 {...boxes} title={ablTitle(abl)} testId={testId} />;
 }
 
 export function ModuleMatrixSystemView() {
@@ -140,16 +148,22 @@ export function ModuleMatrixSystemView() {
     return spans;
   }, [columns]);
 
-  const rows =
-    data?.modules ??
-    MATRIX_MODULES_SIDEBAR_ORDER.map((m) => ({
-      module: m.id,
-      label: m.label,
-      available: false,
-      metrics: EMPTY_METRICS,
-      boxAbl: EMPTY_ABL,
-      columnAbl: {} as Record<string, AblPct>,
-    }));
+  const orderedRows = useMemo(() => {
+    const source =
+      data?.modules ??
+      MATRIX_MODULES_SIDEBAR_ORDER.map((m) => ({
+        module: m.id,
+        label: m.label,
+        available: false,
+        metrics: EMPTY_METRICS,
+        boxAbl: EMPTY_ABL,
+        columnAbl: {} as Record<string, AblPct>,
+      }));
+    return sortModulesPriority10First(source);
+  }, [data?.modules]);
+
+  const priorityRows = orderedRows.filter((r) => isPriority10Module(r.module));
+  const restRows = orderedRows.filter((r) => !isPriority10Module(r.module));
 
   // Feed 4-box tracker with cumulative counts reconstructed from boxAbl %
   const trackerMetrics: TierMetrics = useMemo(() => {
@@ -174,8 +188,47 @@ export function ModuleMatrixSystemView() {
       certifiedPct: sys.boxAbl.livePct,
       builtOnlyPct: req ? Math.round((builtOnly / req) * 100) : 0,
       auditedOnlyPct: req ? Math.round((auditedOnly / req) * 100) : 0,
+      buildQueue: Math.max(0, req - live),
     };
   }, [sys]);
+
+  const colSpan = 1 + columns.length + 3;
+
+  const renderModuleRow = (row: SystemModuleRow) => {
+    const built = row.metrics?.builtCells ?? Math.round(((row.boxAbl?.builtPct ?? 0) / 100) * (row.boxAbl?.requiredCells ?? 0));
+    const live = row.metrics?.liveCells ?? Math.round(((row.boxAbl?.livePct ?? 0) / 100) * (row.boxAbl?.requiredCells ?? 0));
+    const queue = row.metrics?.buildQueue ?? Math.max(0, (row.boxAbl?.requiredCells ?? 0) - live);
+    return (
+      <tr key={row.module} className={row.available ? "" : "dim-row"} data-testid={`system-row-${row.module}`}>
+        <td className="sticky-col">
+          <b>{row.label}</b>
+          <span className="mod-id">{row.module}</span>
+        </td>
+        {columns.map((c) => {
+          const abl = row.columnAbl?.[c.id] ?? EMPTY_ABL;
+          return (
+            <td key={c.id} className="gc">
+              <AblCell4 abl={abl} liveOk={ok && row.available} testId={`system-${row.module}-${c.id}-cell4`} />
+            </td>
+          );
+        })}
+        <td className="sum-val amb">{row.available ? built : "—"}</td>
+        <td className="sum-val good">{row.available ? live : "—"}</td>
+        <td className="sum-val big">
+          {row.available ? (
+            <>
+              {queue}{" "}
+              <Link to={`/program/matrix?module=${row.module}`} className="board-link">
+                Board →
+              </Link>
+            </>
+          ) : (
+            "—"
+          )}
+        </td>
+      </tr>
+    );
+  };
 
   return (
     <>
@@ -200,9 +253,9 @@ export function ModuleMatrixSystemView() {
         </div>
       ) : ok ? (
         <div className="banner live" data-testid="module-matrix-system-live">
-          <b>SYSTEM ROLLUP — {sys?.moduleCount ?? 29} MODULES.</b> Same columns as each module board
-          (LINK · MONEY · CHROME · WIRE). Each cell ={" "}
-          <b>Audited% · Built% · Live%</b> (Box 2/3/4 fill ÷ Required).
+          <b>ALL MODULES — SAME 4-BOX MATRIX.</b> Same LINK · MONEY · CHROME · WIRE columns and ✓/●/✕
+          cells as each module board. Rows: <b>priority 10 first</b> ({PRIORITY_10_MODULE_IDS.length}), then
+          remainder ({restRows.length}). Hover a cell for Audited% · Built% · Live% detail.
           {tip ? (
             <>
               {" "}
@@ -230,22 +283,50 @@ export function ModuleMatrixSystemView() {
         showChanges={false}
       />
 
-      <div className="legend" data-testid="module-matrix-abl-legend">
+      <div className="legend" data-testid="module-matrix-system-legend">
         <span>
-          Cell format: <b>Audited% · Built% · Live%</b> (Box 2 · 3 · 4 cumulative fill)
+          <span className="tri4">
+            <span className="bx req-y">✓</span>
+            <span className="bx map-n">✕</span>
+            <span className="bx done-n">✕</span>
+            <span className="bx done-n">✕</span>
+          </span>
+          Required · not audited
         </span>
-        <span className="abl-triple demo">
-          <span className="abl a hi">86%</span>
-          <span className="abl-sep">·</span>
-          <span className="abl b mid">82%</span>
-          <span className="abl-sep">·</span>
-          <span className="abl l lo">3%</span>
+        <span>
+          <span className="tri4">
+            <span className="bx req-y">✓</span>
+            <span className="bx map-w">●</span>
+            <span className="bx done-n">✕</span>
+            <span className="bx done-n">✕</span>
+          </span>
+          Audited (Box 2)
+        </span>
+        <span>
+          <span className="tri4">
+            <span className="bx req-y">✓</span>
+            <span className="bx map-y">✓</span>
+            <span className="bx done-y">✓</span>
+            <span className="bx done-n">✕</span>
+          </span>
+          Built wired (Box 3) · not Live
+        </span>
+        <span>
+          <span className="tri4">
+            <span className="bx req-y">✓</span>
+            <span className="bx map-y">✓</span>
+            <span className="bx done-y">✓</span>
+            <span className="bx live-y">✓</span>
+          </span>
+          Live verified (Box 4)
         </span>
       </div>
 
-      <h2>
-        All modules × all columns{" "}
-        <span className="sub">scroll → · click module name for full leaf board</span>
+      <h2 data-testid="module-matrix-system-heading">
+        All modules matrix{" "}
+        <span className="sub">
+          priority 10 → rest · left = module · top = same columns · cell = R / A / B / L
+        </span>
       </h2>
 
       <div className="scroll scroll-system">
@@ -261,13 +342,14 @@ export function ModuleMatrixSystemView() {
                     {matrixGroupHeaderLabel(g.group)}
                   </th>
                 ))}
-                <th className="sum-col" rowSpan={2} title="Module Box 2 · 3 · 4">
-                  Module
-                  <br />
-                  A · B · L
+                <th className="sum-col" rowSpan={2} data-testid="module-matrix-system-built-col">
+                  Built
                 </th>
                 <th className="sum-col" rowSpan={2}>
-                  Open
+                  Live
+                </th>
+                <th className="sum-col" rowSpan={2}>
+                  Queue
                 </th>
               </tr>
               <tr>
@@ -279,39 +361,17 @@ export function ModuleMatrixSystemView() {
               </tr>
             </thead>
             <tbody>
-              {rows.map((row) => (
-                <tr key={row.module} className={row.available ? "" : "dim-row"}>
-                  <td className="sticky-col">
-                    <b>{row.label}</b>
-                    <span className="mod-id">{row.module}</span>
-                  </td>
-                  {columns.map((c) => {
-                    const abl = row.columnAbl?.[c.id] ?? EMPTY_ABL;
-                    return (
-                      <td key={c.id} className="gc abl-cell">
-                        <TripleAbl
-                          abl={abl}
-                          liveOk={ok && row.available}
-                          testId={`system-${row.module}-${c.id}-abl`}
-                        />
-                      </td>
-                    );
-                  })}
-                  <td className="sum-val abl-cell">
-                    <TripleAbl
-                      abl={row.boxAbl ?? EMPTY_ABL}
-                      liveOk={ok && row.available}
-                      testId={`system-${row.module}-total-abl`}
-                    />
-                  </td>
-                  <td>
-                    {row.available ? (
-                      <Link to={`/program/matrix?module=${row.module}`}>Board →</Link>
-                    ) : (
-                      "—"
-                    )}
-                  </td>
-                </tr>
+              <tr className="section" data-testid="module-matrix-system-section-priority-10">
+                <td colSpan={colSpan}>Priority 10 — most urgent</td>
+              </tr>
+              {priorityRows.map((row) => (
+                <Fragment key={row.module}>{renderModuleRow(row)}</Fragment>
+              ))}
+              <tr className="section" data-testid="module-matrix-system-section-rest">
+                <td colSpan={colSpan}>Remaining modules</td>
+              </tr>
+              {restRows.map((row) => (
+                <Fragment key={row.module}>{renderModuleRow(row)}</Fragment>
               ))}
             </tbody>
             {sys ? (
@@ -324,22 +384,17 @@ export function ModuleMatrixSystemView() {
                     </span>
                   </td>
                   {columns.map((c) => (
-                    <td key={c.id} className="gc abl-cell">
-                      <TripleAbl
+                    <td key={c.id} className="gc">
+                      <AblCell4
                         abl={data?.columnAbl?.[c.id] ?? EMPTY_ABL}
                         liveOk={ok}
-                        testId={`system-total-${c.id}-abl`}
+                        testId={`system-total-${c.id}-cell4`}
                       />
                     </td>
                   ))}
-                  <td className="sum-val abl-cell">
-                    <TripleAbl
-                      abl={sys.boxAbl ?? EMPTY_ABL}
-                      liveOk={ok}
-                      testId="system-total-abl"
-                    />
-                  </td>
-                  <td>—</td>
+                  <td className="sum-val amb">{sys.builtCells ?? "—"}</td>
+                  <td className="sum-val good">{sys.liveCells ?? "—"}</td>
+                  <td className="sum-val big">{sys.buildQueue ?? "—"}</td>
                 </tr>
               </tfoot>
             ) : null}

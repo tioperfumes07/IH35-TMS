@@ -77,7 +77,7 @@ Per-cell expansion: `Req | Audit | Probe | Wire | Built | Live` (wider horizonta
 - **Module certification %** = Box 4 Live ÷ Required (honest bar). **Built %** = (Box 3 + Box 4) ÷ Required. **Build queue** = Required − Live.
 - A cell may show **✓ ✓ ✓ ✕** (coded/wired/Neon-proven but not yet live-click verified) — that is honest, not a defect.
 4. **Module rail order** = sidebar order in `docs/specs/scoreboard/matrix-module-order.json` (Home → Tasks → Fuel → Dispatch → … → System). First pill = **All modules** (system rollup).
-5. **System board** = `/program/matrix?scope=system` · `GET /api/v1/program/module-matrix?scope=system` — all module boards in one wide page with **summed** Required / Audited / Built / Live cells and per-module rows. Wide horizontal scroll is expected.
+5. **System board** = `/program/matrix?scope=system` · `GET /api/v1/program/module-matrix?scope=system` — **same columns and same 4-box ✓/●/✕ cells** as each module board (not a different % chrome). Rows = modules ordered **priority 10 first** (lists → accounting → dispatch → settlements → factoring → banking → customers → vendors → drivers → safety), then remaining modules. Hover keeps Audited% · Built% · Live% detail. Wide horizontal scroll is expected.
 6. **% math:** leaf row % = Live ÷ required on that row; module = Live ÷ required on that board; **system** = sum(Live cells) ÷ sum(Required cells) across all modules with required maps.
 
 ## Live feed contract (what moves each box)

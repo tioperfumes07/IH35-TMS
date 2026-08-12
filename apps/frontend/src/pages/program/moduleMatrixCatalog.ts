@@ -105,3 +105,46 @@ export function parseMatrixModule(raw: string | null): MatrixModuleId {
   if (normalized === "cashflow" || normalized === "cash_flow") return "cash-flow";
   return "home";
 }
+
+/**
+ * Owner urgency order — VERTICAL-COLUMN-WAVE-METHOD-LOCKED.md §2.
+ * All-modules system board lists these first, then remaining sidebar modules.
+ */
+export const PRIORITY_10_MODULE_IDS: readonly MatrixModuleId[] = [
+  "lists",
+  "accounting",
+  "dispatch",
+  "settlements",
+  "factoring",
+  "banking",
+  "customers",
+  "vendors",
+  "drivers",
+  "safety",
+] as const;
+
+export function isPriority10Module(id: string): boolean {
+  return (PRIORITY_10_MODULE_IDS as readonly string[]).includes(id);
+}
+
+/** Sort module rows: priority 10 (locked order) first, then remaining sidebar order. */
+export function sortModulesPriority10First<T extends { module: string }>(rows: T[]): T[] {
+  const byId = new Map(rows.map((r) => [r.module, r]));
+  const out: T[] = [];
+  for (const id of PRIORITY_10_MODULE_IDS) {
+    const hit = byId.get(id);
+    if (hit) {
+      out.push(hit);
+      byId.delete(id);
+    }
+  }
+  for (const m of MATRIX_MODULES_SIDEBAR_ORDER) {
+    const hit = byId.get(m.id);
+    if (hit) {
+      out.push(hit);
+      byId.delete(m.id);
+    }
+  }
+  for (const leftover of byId.values()) out.push(leftover);
+  return out;
+}

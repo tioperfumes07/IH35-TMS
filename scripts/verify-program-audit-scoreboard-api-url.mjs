@@ -250,13 +250,19 @@ export function assertScoreboardContract(sources) {
         if (!/MatrixBoxTracker/.test(sysPage) && !/module-matrix-box-tracker/.test(sysPage)) {
           problems.push(`${sysRel}: All modules must use the same 4-box tracker as module boards`);
         }
-        if (!/system-column-board/.test(sysPage) || !/TripleAbl/.test(sysPage)) {
+        if (!/system-column-board/.test(sysPage) || !/MatrixCell4|AblCell4|cell4/.test(sysPage)) {
           problems.push(
-            `${sysRel}: All modules must render union columns like module boards with Audited%·Built%·Live% per cell`,
+            `${sysRel}: All modules must render union columns like module boards with the same 4-box ✓/●/✕ cells`,
           );
         }
-        if (!/Audited% · Built% · Live%/.test(sysPage) && !/auditedPct/.test(sysPage)) {
-          problems.push(`${sysRel}: each column cell must expose Box 2/3/4 percentages`);
+        if (!/PRIORITY_10_MODULE_IDS|priority 10|Priority 10/.test(sysPage)) {
+          problems.push(`${sysRel}: All modules must list priority-10 modules first, then the remainder`);
+        }
+        if (!/module-matrix-system-section-priority-10/.test(sysPage)) {
+          problems.push(`${sysRel}: missing Priority 10 section marker (module-matrix-system-section-priority-10)`);
+        }
+        if (!/module-matrix-system-legend/.test(sysPage) && !/Required · not audited/.test(sysPage)) {
+          problems.push(`${sysRel}: must show the same 4-box legend as module boards`);
         }
         if (!/scope=system/.test(sysPage)) {
           problems.push(`${sysRel}: must fetch module-matrix?scope=system`);
