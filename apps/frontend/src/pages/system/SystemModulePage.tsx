@@ -368,9 +368,16 @@ function QboSyncTab({ data }: { data: SystemData }) {
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
       <Card
         title="QuickBooks Sync"
-        pill={syncHealth.data ? <Pill tone={connected ? "ok" : "warn"}>{connected ? "CONNECTED" : String(status ?? "UNKNOWN").toUpperCase()}</Pill> : <Pill tone="neutral">CHECKING</Pill>}
+        pill={syncHealth.isError
+          ? <Pill tone="off">UNAVAILABLE</Pill>
+          : syncHealth.data
+            ? <Pill tone={connected ? "ok" : "warn"}>{connected ? "CONNECTED" : String(status ?? "UNKNOWN").toUpperCase()}</Pill>
+            : <Pill tone="neutral">CHECKING</Pill>}
         sub="IH 35 Transportation · pull-only, no write-back."
       >
+        {syncHealth.isError ? (
+          <p className="mb-2 text-[12px] font-semibold text-red-700" role="alert">Could not load QuickBooks sync health.</p>
+        ) : null}
         <Kpi n={fmtUsd(apObj?.balance?.qbo_cents)} u={`QBO A/P${apAging.data ? ` · ${apAging.data.vendors.length} vendors` : ""}`} />
         <Row label="Last successful sync">{ctDateTime(syncHealth.data?.last_successful_sync_at)}</Row>
         <Row label="Pending / errors">

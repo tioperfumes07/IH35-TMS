@@ -96,6 +96,12 @@ export function computeSystemModuleFailures(files) {
   if (!/<ParityTable<ReconObject>[\s\S]{0,500}?storageKey="system-qbo-reconciled-objects"/.test(page)) {
     errors.push("SystemModulePage.tsx: QBO reconciliation objects must use persistent ParityTable chrome");
   }
+  if (!/syncHealth\.isError[\s\S]{0,180}?<Pill tone="off">UNAVAILABLE<\/Pill>/.test(page)) {
+    errors.push("SystemModulePage.tsx: QBO Sync request failures must render UNAVAILABLE, never remain CHECKING");
+  }
+  if (!/syncHealth\.isError[\s\S]{0,180}?role="alert"/.test(page)) {
+    errors.push("SystemModulePage.tsx: QBO Sync request failures must render an accessible error message");
+  }
 
   return errors;
 }
@@ -117,6 +123,8 @@ if (process.argv.includes("--selftest")) {
     "export function SystemModulePage() { return null; }\n" +
     'import { ParityTable } from "../../components/parity/ParityTable";\n' +
     '<ParityTable<ReconObject> storageKey="system-qbo-reconciled-objects" />\n' +
+    'syncHealth.isError ? <Pill tone="off">UNAVAILABLE</Pill> : <Pill>CHECKING</Pill>;\n' +
+    'syncHealth.isError ? <p role="alert">Could not load QuickBooks sync health.</p> : null;\n' +
     "// not bank reconciliation\n" +
     SYSTEM_TAB_LABELS.map((l) => `"${l}"`).join(",");
 
@@ -146,6 +154,13 @@ if (process.argv.includes("--selftest")) {
     manifest: goodManifest,
     page: goodPage.replace('<ParityTable<ReconObject> storageKey="system-qbo-reconciled-objects" />', "<table />"),
   });
+  const failFalseChecking = computeSystemModuleFailures({
+    sidebar: goodSidebar,
+    manifest: goodManifest,
+    page: goodPage
+      .replace('syncHealth.isError ? <Pill tone="off">UNAVAILABLE</Pill> : <Pill>CHECKING</Pill>;', '<Pill>CHECKING</Pill>;')
+      .replace('syncHealth.isError ? <p role="alert">Could not load QuickBooks sync health.</p> : null;', ""),
+  });
 
   const checks = [
     ["fully-wired inputs produce zero failures", pass.length === 0],
@@ -154,6 +169,7 @@ if (process.argv.includes("--selftest")) {
     ["missing tab is flagged", failMissingTab.some((e) => e.includes("Claude Coder"))],
     ["non-OwnerOnly route is flagged", failNotOwnerRoute.some((e) => e.includes("OwnerOnlyRoute"))],
     ["hand-built QBO table is flagged", failHandBuiltQboTable.some((e) => e.includes("persistent ParityTable"))],
+    ["false CHECKING state is flagged", failFalseChecking.filter((e) => e.includes("QBO Sync request failures")).length === 2],
   ];
   const failed = checks.filter(([, ok]) => !ok);
   if (failed.length) {
