@@ -10,6 +10,7 @@ import { fetchPlannerTasks, type Task } from "../../api/tasks";
 import { addDaysIso, companyToday } from "../../lib/businessDate";
 import { TASK_STATUS_BADGE, isOpenTaskStatus, priorityLabel, taskStatusLabel } from "./taskDisplay";
 import { formatDateUS } from "../../lib/formatDate";
+import { TaskSubjectLink } from "../../components/tasks/TaskSubjectLink";
 
 // TASK-2: My Tasks — the current user's assigned tasks (was an unbuilt placeholder). Reads the
 // existing /api/v1/tasks/planner endpoint filtered by assigned_to = current user.
@@ -38,6 +39,11 @@ export function TasksMinePage() {
   const columns = useMemo<ParityColumn<Task>[]>(
     () => [
       { key: "title", label: "Task", sortable: true, cellClass: "font-medium text-slate-800" },
+      {
+        key: "subject_id",
+        label: "About",
+        render: (row) => <TaskSubjectLink subjectType={row.subject_type} subjectId={row.subject_id} />,
+      },
       { key: "category", label: "Category", sortable: true, cellClass: "capitalize text-slate-600" },
       {
         key: "scheduled_date",

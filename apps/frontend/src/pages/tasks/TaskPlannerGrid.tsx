@@ -22,6 +22,7 @@ import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateUS } from "../../lib/formatDate";
 import { isOpenTaskStatus } from "./taskDisplay";
+import { TaskSubjectLink } from "../../components/tasks/TaskSubjectLink";
 
 const STATUS_COLORS: Record<TaskStatus, string> = {
   pending:     "bg-gray-100 text-gray-700 border-gray-300",
@@ -131,6 +132,12 @@ function TaskDrawer({ task, onClose }: DrawerProps) {
       <div className="flex-1 overflow-y-auto px-3 py-2 space-y-2 text-xs">
         <div><span className="text-gray-500">Status: </span><span className={`inline-block rounded-sm px-1 ${STATUS_COLORS[task.status]}`}>{statusLabel[task.status]}</span></div>
         {task.task_type_name && <div><span className="text-gray-500">Type: </span>{task.task_type_name}</div>}
+        {task.subject_id && (
+          <div>
+            <span className="text-gray-500">About: </span>
+            <TaskSubjectLink subjectType={task.subject_type} subjectId={task.subject_id} />
+          </div>
+        )}
         <div><span className="text-gray-500">Category: </span>{task.category}</div>
         <div><span className="text-gray-500">Date: </span>{formatDateUS(task.scheduled_date)}</div>
         {task.start_time && <div><span className="text-gray-500">Start: </span>{task.start_time}</div>}
