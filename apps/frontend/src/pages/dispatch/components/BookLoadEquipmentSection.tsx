@@ -10,7 +10,7 @@ import { DriverHosClocksBlock } from "../../../components/dispatch/hos/DriverHos
 import { DeadheadOptimizerPanel } from "../../../components/dispatch/DeadheadOptimizerPanel";
 import { DriverInstructionsTextarea } from "./book-load-v4/DriverInstructionsTextarea";
 import { ExpectedAdjustmentsCallout } from "./book-load-v4/ExpectedAdjustmentsCallout";
-import { loadTrailerEquipmentCatalogClient } from "../../../api/catalogs-dispatch";
+import { loadTrailerEquipmentCatalogClient, type DispatchCatalogRow } from "../../../api/catalogs-dispatch";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 
 type Props = {
@@ -54,7 +54,20 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
   });
   const trailerEquipmentQuery = useQuery({
     queryKey: ["book-load-trailer-equipment", operatingCompanyId],
-    queryFn: () => loadTrailerEquipmentCatalogClient.list({ operating_company_id: String(operatingCompanyId), is_active: "true", limit: 200 }),
+    queryFn: async () => {
+      const limit = 200;
+      const rows: DispatchCatalogRow[] = [];
+      for (let offset = 0; ; offset += limit) {
+        const page = await loadTrailerEquipmentCatalogClient.list({
+          operating_company_id: String(operatingCompanyId),
+          is_active: "true",
+          limit,
+          offset,
+        });
+        rows.push(...page.rows);
+        if (rows.length >= page.total || page.rows.length < limit) return { rows, total: page.total };
+      }
+    },
     enabled: Boolean(operatingCompanyId),
   });
   useEffect(() => {
