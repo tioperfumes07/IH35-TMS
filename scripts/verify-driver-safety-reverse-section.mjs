@@ -28,10 +28,14 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const SECTION = "apps/frontend/src/components/safety/DriverSafetyReverseSection.tsx";
 const DRIVER_DETAIL = "apps/frontend/src/pages/DriverDetail.tsx";
+// Two live driver routes exist — /drivers/:id (DriverDetail) and /drivers/:id/profile
+// (DriverProfilePage) — both mount the section independently (same class of gap as
+// CLS-LEGAL-DRIVER-REVERSE-UNGUARDED / CLS-INSURANCE-DRIVER-REVERSE-UNGUARDED this session).
+const DRIVER_PROFILE = "apps/frontend/src/pages/drivers/DriverProfilePage.tsx";
 const API = "apps/frontend/src/api/safety.ts";
 const INTERNAL_FINES_ROUTE = "apps/backend/src/safety/safety-v5.routes.ts";
 const COMPLAINTS_ROUTE = "apps/backend/src/routes/safety/complaints.ts";
-const FILES = [SECTION, DRIVER_DETAIL, API, INTERNAL_FINES_ROUTE, COMPLAINTS_ROUTE];
+const FILES = [SECTION, DRIVER_DETAIL, DRIVER_PROFILE, API, INTERNAL_FINES_ROUTE, COMPLAINTS_ROUTE];
 const LABEL = "verify-driver-safety-reverse-section";
 const SELFTEST = process.argv.includes("--selftest");
 
@@ -62,11 +66,16 @@ export function assertDriverSafetyReverse(sources) {
     }
   }
 
-  // 2. Mounted on the driver profile — existing-but-unmounted is a fake fix.
+  // 2. Mounted on BOTH live driver routes — existing-but-unmounted is a fake fix.
   if (!src[DRIVER_DETAIL].includes("DriverSafetyReverseSection")) {
     problems.push(`${DRIVER_DETAIL}: does not import DriverSafetyReverseSection — the section is not on the driver profile.`);
   } else if (!/<DriverSafetyReverseSection[\s\S]{0,200}driverId=/.test(src[DRIVER_DETAIL])) {
     problems.push(`${DRIVER_DETAIL}: DriverSafetyReverseSection is imported but not rendered with driverId.`);
+  }
+  if (!src[DRIVER_PROFILE].includes("DriverSafetyReverseSection")) {
+    problems.push(`${DRIVER_PROFILE}: does not import DriverSafetyReverseSection — the /drivers/:id/profile route has no safety reverse section.`);
+  } else if (!/<DriverSafetyReverseSection[\s\S]{0,200}driverId=/.test(src[DRIVER_PROFILE])) {
+    problems.push(`${DRIVER_PROFILE}: DriverSafetyReverseSection is imported but not rendered with driverId.`);
   }
 
   // 3. Server-side scoping (NOT a client-side filter over a LIMIT 500 company list).
@@ -120,10 +129,15 @@ if (SELFTEST) {
     { ...live, [SECTION]: live[SECTION].replace(/subject_driver_id: driverId/g, "status: undefined") },
     "not scoped to this driver"
   );
-  // 3. the section exists but is not mounted on the driver profile.
+  // 3. the section exists but is not mounted on the driver profile (either live route).
   expectCaught(
-    "not-mounted",
+    "not-mounted-driver-detail",
     { ...live, [DRIVER_DETAIL]: live[DRIVER_DETAIL].replace(/DriverSafetyReverseSection/g, "SomeOtherSection") },
+    "does not import DriverSafetyReverseSection"
+  );
+  expectCaught(
+    "not-mounted-driver-profile",
+    { ...live, [DRIVER_PROFILE]: live[DRIVER_PROFILE].replace(/DriverSafetyReverseSection/g, "SomeOtherSection") },
     "does not import DriverSafetyReverseSection"
   );
   // 4. server-side driver filter removed from the internal-fines SQL.
@@ -160,7 +174,7 @@ if (SELFTEST) {
     for (const f of failures) console.error(`  ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — 7 planted defects caught, live sources clean`);
+  console.log(`${LABEL} SELFTEST PASS — 8 planted defects caught, live sources clean`);
   process.exit(0);
 }
 
