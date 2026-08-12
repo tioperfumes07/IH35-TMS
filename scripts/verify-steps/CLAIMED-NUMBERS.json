@@ -1,4 +1,9 @@
 {
+  "3163": {
+    "claimed_at": "2026-08-12",
+    "claimed_by": "cc-2",
+    "purpose": "verify-qbo-oauth-redirect-uri-not-logged"
+  },
   "3159": {
     "claimed_at": "2026-08-12",
     "claimed_by": "cc-2",
