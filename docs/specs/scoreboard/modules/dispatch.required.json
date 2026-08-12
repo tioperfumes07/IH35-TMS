@@ -641,7 +641,6 @@
         "trailer",
         "load",
         "gl_je",
-        "liability",
         "connectivity",
         "reverse_link",
         "picker_law",
@@ -673,7 +672,6 @@
         "trailer",
         "load",
         "gl_je",
-        "liability",
         "connectivity",
         "reverse_link",
         "picker_law",
@@ -703,7 +701,6 @@
       "required": [
         "driver",
         "load",
-        "liability",
         "gl_je",
         "connectivity",
         "reverse_link"
@@ -733,7 +730,6 @@
       "required": [
         "customer",
         "load",
-        "liability",
         "gl_je",
         "connectivity",
         "reverse_link"
@@ -777,7 +773,6 @@
         "driver",
         "load",
         "customer",
-        "liability",
         "gl_je",
         "connectivity",
         "reverse_link"
@@ -829,7 +824,6 @@
         "driver",
         "load",
         "customer",
-        "liability",
         "gl_je",
         "connectivity",
         "reverse_link"
@@ -960,6 +954,17 @@
         "docs.ocr"
       ],
       "note": "scenario.maintenance=Maint WO; Book Load/OCR/reserve/in-transit ≠ WO create"
+    },
+    "load_liability_2026_08_12": {
+      "finding": "LOAD-LIABILITY-SCENARIO-DISPATCH-HONEST",
+      "drops": [
+        "load.detail",
+        "load.drawer.overview",
+        "load.drawer.driver_pay",
+        "load.drawer.factoring",
+        "load.drawer.settlement",
+        "load.drawer.pre_settlement"
+      ]
     }
   }
 }

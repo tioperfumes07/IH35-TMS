@@ -1,15 +1,15 @@
 {
-  "as_of": "2026-08-12T21:00:22.232Z",
-  "main_sha": "472244f18",
+  "as_of": "2026-08-12T21:02:22.817Z",
+  "main_sha": "5e801e9fc",
   "gate": "PRIORITY_10_3BOX_100",
   "allRequired": {
-    "totR": 2689,
-    "totB": 2275,
+    "totR": 2683,
+    "totB": 2277,
     "pct": 85
   },
   "waveABC_noChrome": {
-    "abcR": 2064,
-    "abcB": 2019,
+    "abcR": 2058,
+    "abcB": 2020,
     "pct": 98
   },
   "per_module": [
@@ -33,12 +33,12 @@
     },
     {
       "mod": "dispatch",
-      "req": 340,
+      "req": 334,
       "built": 302,
-      "pct": 89,
-      "abcReq": 299,
+      "pct": 90,
+      "abcReq": 293,
       "abcBuilt": 292,
-      "abcPct": 98
+      "abcPct": 100
     },
     {
       "mod": "settlements",
@@ -70,8 +70,8 @@
     {
       "mod": "customers",
       "req": 177,
-      "built": 161,
-      "pct": 91,
+      "built": 162,
+      "pct": 92,
       "abcReq": 149,
       "abcBuilt": 149,
       "abcPct": 100
@@ -97,11 +97,11 @@
     {
       "mod": "safety",
       "req": 192,
-      "built": 156,
-      "pct": 81,
+      "built": 157,
+      "pct": 82,
       "abcReq": 150,
-      "abcBuilt": 149,
-      "abcPct": 99
+      "abcBuilt": 150,
+      "abcPct": 100
     }
   ],
   "ranked_gaps": [
@@ -138,10 +138,10 @@
     },
     {
       "col": "liability",
-      "cells": 27,
+      "cells": 21,
       "byMod": {
         "accounting": 3,
-        "dispatch": 7,
+        "dispatch": 1,
         "settlements": 1,
         "factoring": 12,
         "banking": 2,
@@ -168,15 +168,6 @@
       "seat": "CC-1"
     },
     {
-      "col": "expense",
-      "cells": 2,
-      "byMod": {
-        "accounting": 1,
-        "safety": 1
-      },
-      "seat": "CC-1"
-    },
-    {
       "col": "inventory",
       "cells": 1,
       "byMod": {
@@ -193,13 +184,13 @@
       "seat": "?"
     },
     {
-      "col": "scenario.dispatch",
+      "col": "expense",
       "cells": 1,
       "byMod": {
-        "customers": 1
+        "accounting": 1
       },
-      "seat": "?"
+      "seat": "CC-1"
     }
   ],
-  "entry_count": 131
+  "entry_count": 133
 }
