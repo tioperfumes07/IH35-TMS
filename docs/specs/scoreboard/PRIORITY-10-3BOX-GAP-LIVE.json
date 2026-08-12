@@ -1,15 +1,15 @@
 {
-  "as_of": "2026-08-12T20:34:53.572Z",
-  "main_sha": "653b15859",
+  "as_of": "2026-08-12T20:47:45.026Z",
+  "main_sha": "a2a01b914",
   "gate": "PRIORITY_10_3BOX_100",
   "allRequired": {
-    "totR": 3042,
-    "totB": 2271,
+    "totR": 3034,
+    "totB": 2272,
     "pct": 75
   },
   "waveABC_noChrome": {
-    "abcR": 2412,
-    "abcB": 2020,
+    "abcR": 2404,
+    "abcB": 2021,
     "pct": 84
   },
   "per_module": [
@@ -33,12 +33,12 @@
     },
     {
       "mod": "dispatch",
-      "req": 358,
-      "built": 303,
-      "pct": 85,
-      "abcReq": 313,
-      "abcBuilt": 293,
-      "abcPct": 94
+      "req": 352,
+      "built": 304,
+      "pct": 86,
+      "abcReq": 307,
+      "abcBuilt": 294,
+      "abcPct": 96
     },
     {
       "mod": "settlements",
@@ -78,12 +78,12 @@
     },
     {
       "mod": "vendors",
-      "req": 177,
+      "req": 175,
       "built": 152,
-      "pct": 86,
-      "abcReq": 147,
+      "pct": 87,
+      "abcReq": 145,
       "abcBuilt": 142,
-      "abcPct": 97
+      "abcPct": 98
     },
     {
       "mod": "drivers",
@@ -182,15 +182,6 @@
         "vendors": 3
       },
       "seat": "CC-1"
-    },
-    {
-      "col": "load",
-      "cells": 9,
-      "byMod": {
-        "dispatch": 7,
-        "vendors": 2
-      },
-      "seat": "Codex"
     },
     {
       "col": "scenario.maintenance",

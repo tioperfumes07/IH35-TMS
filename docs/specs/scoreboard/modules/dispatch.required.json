@@ -319,7 +319,6 @@
         "driver",
         "unit",
         "trailer",
-        "load",
         "connectivity",
         "reverse_link"
       ]
@@ -419,7 +418,6 @@
         "driver",
         "unit",
         "trailer",
-        "load",
         "customer",
         "connectivity",
         "reverse_link",
@@ -435,7 +433,6 @@
         "driver",
         "unit",
         "trailer",
-        "load",
         "customer",
         "connectivity",
         "reverse_link",
@@ -481,7 +478,6 @@
       "route_hint": "/dispatch/planner?panel=templates",
       "required": [
         "customer",
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity",
@@ -497,7 +493,6 @@
         "unit",
         "trailer",
         "driver",
-        "load",
         "connectivity",
         "reverse_link",
         "picker_law"
@@ -620,7 +615,6 @@
       "required": [
         "driver",
         "unit",
-        "load",
         "connectivity",
         "reverse_link"
       ]
@@ -889,6 +883,47 @@
         {
           "module": "dispatch",
           "id": "docs.equipment_transfers",
+          "removed": [
+            "load"
+          ]
+        }
+      ]
+    },
+    "load_inflation_wave2_2026_08_12": {
+      "finding": "DISP-VENDORS-REQUIRED-LOAD-INFLATION",
+      "drops": [
+        {
+          "id": "queues.live_map",
+          "removed": [
+            "load"
+          ]
+        },
+        {
+          "id": "planning.driver",
+          "removed": [
+            "load"
+          ]
+        },
+        {
+          "id": "planning.truck",
+          "removed": [
+            "load"
+          ]
+        },
+        {
+          "id": "planning.templates",
+          "removed": [
+            "load"
+          ]
+        },
+        {
+          "id": "planning.unassigned",
+          "removed": [
+            "load"
+          ]
+        },
+        {
+          "id": "misc.geofence_history",
           "removed": [
             "load"
           ]
