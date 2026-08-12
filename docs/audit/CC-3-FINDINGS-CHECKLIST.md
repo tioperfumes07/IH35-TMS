@@ -60,7 +60,7 @@ only truly closed when both the coder's ☑ and CC-3's VERIFIED are present.
 |---|---|
 | **total findings filed** | **99** |
 | **OPEN — awaiting a coder** | **80** |
-| **☑ fixed & signed off by a coder** | **14** (re-counted 2026-08-11 by CC-2 — the prior "2" here was stale; `grep -c "^\| ☑"` on this file, minus the template example row, is the live source of truth) |
+| **☑ fixed & signed off by a coder** | **18** (re-counted 2026-08-11 by CC-2 after `CI-PREPAID-POST-FLAG-GATE-FALSE-RED` / `CI-3041-BANK-TXNS-SCHEMA-CI` / `CLS-LEGAL-DRIVER-REVERSE-UNGUARDED` landed; `grep -c "^\| ☑"` on this file, minus the template example row, is the live source of truth) |
 | **VERIFIED ✓ by CC-3 (independently re-tested)** | **2** (`CLS-MONEY-WORM-GAP` 99.6% · `LV-ESCROW-SUBLEDGER-NOT-WORM` partial — both still OPEN pending coder sign-off) |
 | **created-txn registration runs** | **5** — 2 PASS, **1 FAIL (P0)**, 1 owner task DONE+VERIFIED; see the verify section below |
 | closed / withdrawn / superseded by CC-3 | 8 |
@@ -88,6 +88,7 @@ is no "in progress" state, because a half-fix in production is indistinguishable
 | ☑ | `P31-TRAILER-LOAD-REVERSE-MISSING` | P1 | Codex (Dispatch) | Codex | #5830 | 2026-08-11 | healthz `b81b37e`; live USMCA load→trailer→same historical load drawer F+R OK | `equipment-aggregate-trailer-loads.test.ts`; FE 7/7 | Awaiting independent CC-3 verify |
 | ☑ | `CI-PREPAID-POST-FLAG-GATE-FALSE-RED` | P0 | CC-1 (money / prepaid guard) | CC-1 | #5838 | 2026-08-11 | `node scripts/verify-prepaid-post-flag-gate.mjs` on merged main `6387f1be6` flips FAIL→PASS against unmodified route file; `--selftest` exit 0 (regression fixture: ACCT-F331 void-sibling shape must PASS, engine-inside-create must still FAIL) | `scripts/verify-prepaid-post-flag-gate.mjs` --selftest | — |
 | ☑ | `CI-3041-BANK-TXNS-SCHEMA-CI` | P0 | CC-1 (money / sample-data guard) | CC-1 | #5838 | 2026-08-11 | `node scripts/verify-steps/3041-verify-no-future-dated-or-untagged-sample-money.mjs --selftest` exit 0 on merged main `6387f1be6` (42P01 on guarded relation → SKIP; unrelated-table/syntax/connection errors → still FAIL) | `scripts/verify-steps/3041-verify-no-future-dated-or-untagged-sample-money.mjs` --selftest | — |
+| ☑ | `CLS-LEGAL-DRIVER-REVERSE-UNGUARDED` | P2 | CC-2 (Legal) | CC-2 | #5840 | 2026-08-11 | `verify-legal-reverse-drill-fleet-insurance` now asserts DriverProfilePage mounts `LegalMattersReverseSection` filtered by `related_driver_id` (previously only vehicle/claims/lawsuits legs were guarded); live USMCA `legal.matters` row `34a494e6-9300-4c70-a4eb-73ada160b79e` (`SAMPLE-MATTER-5743`) has `related_driver_id` + `unit_id` both NOT NULL on entity `5c854333-…`, proving the Wave A/B write+reverse path already worked on main before this guard existed. Registered `WIRING-PLAN-50 P34` in `docs/specs/scoreboard/wire-sprint-built.json` (module `legal` had no entry at all). `insurance_claim_id` has full write-path + picker support but no live NOT-NULL USMCA row yet — not claimed, documented as REMAINING, not fabricated. | `scripts/verify-legal-reverse-drill-fleet-insurance.mjs`; `verify-steps/917` | — |
 | ☐ | `MATRIX-REQ-MAINT` | P0 | Cursor (FE/program) | — | — | — | — | — | — |
 | ☐ | `MATRIX-LIVE-RAD` | P0 | Cursor (FE) + API | — | — | — | — | — | — |
 | ☐ | `MATRIX-DONE-GUARD` | P1 | CC-2 (GUARD) | — | — | — | — | — | — |
