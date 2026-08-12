@@ -523,7 +523,11 @@ export async function resolveVendorDisplayMap(
   });
 }
 
-async function updateBankBalance(
+// Exported for reuse by sibling disbursement flows (ACCT-F358 — driver advance disbursement needs
+// the exact same same-transaction bank-cache decrement payBill already does; a second hand-rolled copy
+// is how CLS-CASH-OUT-CREDITS-CLEARING-ACCOUNT's siblings drifted from buildBillPaymentLines in the
+// first place). Additive export — no behavior change to existing callers in this file.
+export async function updateBankBalance(
   client: { query: (sql: string, values?: unknown[]) => Promise<{ rowCount?: number }> },
   operatingCompanyId: string,
   bankAccountId: string,

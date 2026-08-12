@@ -99,6 +99,7 @@
     "verify:ap-aging-qbo-tie": "node scripts/verify-ap-aging-qbo-tie.mjs",
     "verify:flag-keys-seeded": "node scripts/verify-flag-keys-seeded.mjs",
     "verify:settlement-detail-load-coalesce": "node scripts/verify-settlement-detail-load-coalesce.mjs",
+    "verify:driver-advance-bank-credit-resolution": "node scripts/verify-driver-advance-bank-credit-resolution.mjs",
     "verify:static": "node scripts/verify-static.mjs",
     "verify:local-ci": "node scripts/verify-local-ci.mjs",
     "verify:unit-retire-open-wo-gate": "node scripts/verify-unit-retire-open-wo-gate.mjs",

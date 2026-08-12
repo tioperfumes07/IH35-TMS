@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 // B3: disburse + posting_date edit. Pure unit test — DB, engine, audit, role helper mocked.
 
-const { mockQuery, mockWithCurrentUser, mockPost, mockAudit, mockIsEnabled } = vi.hoisted(() => {
+const { mockQuery, mockWithCurrentUser, mockPost, mockUpdateBankBalance, mockAudit, mockIsEnabled } = vi.hoisted(() => {
   const query = vi.fn();
   return {
     mockQuery: query,
@@ -10,13 +10,18 @@ const { mockQuery, mockWithCurrentUser, mockPost, mockAudit, mockIsEnabled } = v
       fn({ query })
     ),
     mockPost: vi.fn(),
+    mockUpdateBankBalance: vi.fn(),
     mockAudit: vi.fn(),
     mockIsEnabled: vi.fn(),
   };
 });
 
 vi.mock("../../auth/db.js", () => ({ withCurrentUser: mockWithCurrentUser }));
-vi.mock("../../accounting/posting-engine.service.js", () => ({ postSourceTransaction: mockPost }));
+// ACCT-F358 — the poster is now called IN the caller's own transaction (postSourceTransactionInClientTx,
+// same pattern payBill already uses), atomic with the bank-cache decrement (updateBankBalance, imported
+// from bills.service.js and reused rather than re-implemented).
+vi.mock("../../accounting/posting-engine.service.js", () => ({ postSourceTransactionInClientTx: mockPost }));
+vi.mock("../../accounting/bills.service.js", () => ({ updateBankBalance: mockUpdateBankBalance }));
 vi.mock("../../audit/crud-audit.js", () => ({ appendCrudAudit: mockAudit }));
 vi.mock("../../lib/feature-flags/service.js", () => ({ isEnabled: mockIsEnabled }));
 // Mirror the real isOwnerOrAdmin predicate (Owner/Administrator) for test isolation.
@@ -31,14 +36,24 @@ const ACTOR = "22222222-2222-4222-8222-222222222222";
 const ADV = "44444444-4444-4444-8444-444444444444";
 const CREDIT = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
 
-function installApproved() {
+function installApproved(fromBankAccountId: string | null = null) {
   mockQuery.mockReset();
   mockIsEnabled.mockReset();
   mockIsEnabled.mockResolvedValue(true);
   mockQuery.mockImplementation(async (sql: string) => {
     if (sql.includes("set_config")) return { rows: [] };
     if (sql.includes("SELECT") && sql.includes("driver_advances")) {
-      return { rows: [{ id: ADV, disbursement_status: "approved", posting_date: null }] };
+      return {
+        rows: [
+          {
+            id: ADV,
+            disbursement_status: "approved",
+            posting_date: null,
+            amount: "250.00",
+            from_bank_account_id: fromBankAccountId,
+          },
+        ],
+      };
     }
     if (sql.includes("UPDATE")) return { rows: [{ posting_date: "2026-05-25" }] };
     return { rows: [] };
@@ -59,11 +74,59 @@ describe("disburseDriverAdvanceCore (B3)", () => {
     mockWithCurrentUser.mockClear();
     mockAudit.mockReset();
     mockPost.mockReset();
+    mockUpdateBankBalance.mockReset();
     mockPost.mockResolvedValue({ result: "posted", source_transaction_type: "driver_advance" });
     installApproved();
     const r = await disburseDriverAdvanceCore(ACTOR, "Dispatcher", OPCO, { advance_id: ADV });
     expect(r.ok).toBe(true);
     expect(mockPost).toHaveBeenCalled();
+  });
+
+  it("ACCT-F358: advance names its own bank and no override -> bank cache decremented atomically before the post", async () => {
+    mockWithCurrentUser.mockClear();
+    mockAudit.mockReset();
+    mockPost.mockReset();
+    mockUpdateBankBalance.mockReset();
+    mockPost.mockResolvedValue({ result: "posted", source_transaction_type: "driver_advance" });
+    const BANK = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
+    installApproved(BANK);
+
+    const r = await disburseDriverAdvanceCore(ACTOR, "Owner", OPCO, { advance_id: ADV });
+    expect(r.ok).toBe(true);
+
+    // decremented the NAMED bank, by the advance's own amount, in cents, as a negative delta.
+    expect(mockUpdateBankBalance).toHaveBeenCalledWith(expect.anything(), OPCO, BANK, -25000);
+    // decrement happened before the post call (same transaction, decrement first).
+    const decrementOrder = mockUpdateBankBalance.mock.invocationCallOrder[0];
+    const postOrder = mockPost.mock.invocationCallOrder[0];
+    expect(decrementOrder).toBeLessThan(postOrder);
+  });
+
+  it("ACCT-F358: an explicit credit_account_id override at disbursement time skips the bank-cache decrement (ambiguous which bank, if any, it refers to)", async () => {
+    mockWithCurrentUser.mockClear();
+    mockAudit.mockReset();
+    mockPost.mockReset();
+    mockUpdateBankBalance.mockReset();
+    mockPost.mockResolvedValue({ result: "posted", source_transaction_type: "driver_advance" });
+    const BANK = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
+    installApproved(BANK);
+
+    const r = await disburseDriverAdvanceCore(ACTOR, "Owner", OPCO, { advance_id: ADV, credit_account_id: CREDIT });
+    expect(r.ok).toBe(true);
+    expect(mockUpdateBankBalance).not.toHaveBeenCalled();
+  });
+
+  it("ACCT-F358: advance names no bank -> no decrement attempted (nothing to decrement)", async () => {
+    mockWithCurrentUser.mockClear();
+    mockAudit.mockReset();
+    mockPost.mockReset();
+    mockUpdateBankBalance.mockReset();
+    mockPost.mockResolvedValue({ result: "posted", source_transaction_type: "driver_advance" });
+    installApproved(null);
+
+    const r = await disburseDriverAdvanceCore(ACTOR, "Owner", OPCO, { advance_id: ADV });
+    expect(r.ok).toBe(true);
+    expect(mockUpdateBankBalance).not.toHaveBeenCalled();
   });
 
   it("Fork 7: a second disburse (already disbursed) is 409 and never double-posts", async () => {
@@ -105,8 +168,10 @@ describe("disburseDriverAdvanceCore (B3)", () => {
     expect(auditPayload.posting_date_old).toBe(null);
     expect(auditPayload.posting_date_new).toBe("2026-05-25");
 
-    // posted via the engine using the driver_advance source + passed credit account.
+    // posted via the engine using the driver_advance source + passed credit account. First arg is now
+    // the caller's own client (postSourceTransactionInClientTx), not opened internally by the engine.
     expect(mockPost).toHaveBeenCalledWith(
+      expect.anything(),
       expect.objectContaining({
         source_transaction_type: "driver_advance",
         source_transaction_id: ADV,
