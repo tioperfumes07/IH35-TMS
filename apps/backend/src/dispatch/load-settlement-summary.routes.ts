@@ -75,8 +75,8 @@ export async function registerLoadSettlementSummaryRoutes(app: FastifyInstance) 
 
       const driverRes = await client.query<{ driver_name: string | null }>(
         `SELECT concat(d.first_name, ' ', d.last_name) AS driver_name
-         FROM mdata.drivers d WHERE d.id = $1 LIMIT 1`,
-        [s.driver_id]
+         FROM mdata.drivers d WHERE d.id = $1 AND d.operating_company_id = $2::uuid LIMIT 1`,
+        [s.driver_id, operating_company_id]
       );
       const driverName = driverRes.rows[0]?.driver_name ?? null;
 

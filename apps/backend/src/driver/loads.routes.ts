@@ -217,7 +217,8 @@ async function loadStops(client: { query: <R>(sql: string, values?: unknown[]) =
         loc.latitude,
         loc.longitude
       FROM mdata.load_stops s
-      LEFT JOIN mdata.locations loc ON loc.id = s.location_id
+      JOIN mdata.loads l ON l.id = s.load_id
+      LEFT JOIN mdata.locations loc ON loc.id = s.location_id AND loc.operating_company_id = l.operating_company_id
       WHERE s.load_id = $1
       ORDER BY s.sequence_number ASC
     `,
@@ -362,7 +363,8 @@ export async function registerDriverLoadsRoutes(app: FastifyInstance) {
         `
           SELECT loc.latitude, loc.longitude
           FROM mdata.load_stops s
-          LEFT JOIN mdata.locations loc ON loc.id = s.location_id
+          JOIN mdata.loads l ON l.id = s.load_id
+          LEFT JOIN mdata.locations loc ON loc.id = s.location_id AND loc.operating_company_id = l.operating_company_id
           WHERE s.load_id = $1
             AND s.stop_type = 'pickup'
           ORDER BY s.sequence_number ASC
@@ -477,7 +479,7 @@ export async function registerDriverLoadsRoutes(app: FastifyInstance) {
           SELECT s.id, s.stop_type::text, s.status::text, l.status::text AS load_status, loc.latitude, loc.longitude
           FROM mdata.load_stops s
           JOIN mdata.loads l ON l.id = s.load_id
-          LEFT JOIN mdata.locations loc ON loc.id = s.location_id
+          LEFT JOIN mdata.locations loc ON loc.id = s.location_id AND loc.operating_company_id = l.operating_company_id
           WHERE s.id = $1
             AND s.load_id = $2
             AND (l.assigned_primary_driver_id = $3 OR l.assigned_secondary_driver_id = $3)

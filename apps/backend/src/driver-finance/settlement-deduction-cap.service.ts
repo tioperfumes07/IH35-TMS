@@ -77,9 +77,10 @@ export async function resolveSettlementMinNet(
         SELECT min_net_settlement_pct AS pct, min_net_settlement_cents AS cents
         FROM mdata.drivers
         WHERE id = $1
+          AND operating_company_id = $2::uuid
         LIMIT 1
       `,
-      [driverId]
+      [driverId, operatingCompanyId]
     );
     const row = res.rows[0];
     if (row) {

@@ -126,7 +126,7 @@ export async function emitAutoProposedEscrowEvents(params: {
         (d.first_name || ' ' || d.last_name) AS driver_name,
         p.owner_notified_at::text
       FROM driver_finance.escrow_deductions_pending p
-      LEFT JOIN mdata.loads l ON l.id = p.load_id
+      LEFT JOIN mdata.loads l ON l.id = p.load_id AND l.operating_company_id = p.operating_company_id
       LEFT JOIN mdata.drivers d ON d.id = p.driver_id
                                AND d.operating_company_id = p.operating_company_id
       WHERE p.operating_company_id = $1::uuid
@@ -243,7 +243,7 @@ export async function processEscrowPendingExpiryReminders(
     `
       SELECT p.id, p.proposed_amount_cents, l.load_number, (d.first_name || ' ' || d.last_name) AS driver_name
       FROM driver_finance.escrow_deductions_pending p
-      LEFT JOIN mdata.loads l ON l.id = p.load_id
+      LEFT JOIN mdata.loads l ON l.id = p.load_id AND l.operating_company_id = p.operating_company_id
       LEFT JOIN mdata.drivers d ON d.id = p.driver_id
                                AND d.operating_company_id = p.operating_company_id
       WHERE p.operating_company_id = $1::uuid
@@ -323,7 +323,7 @@ export async function listPendingDeductions(client: PoolClient, operating_compan
       FROM driver_finance.escrow_deductions_pending p
       LEFT JOIN mdata.drivers d ON d.id = p.driver_id
                                AND d.operating_company_id = p.operating_company_id
-      LEFT JOIN mdata.loads l ON l.id = p.load_id
+      LEFT JOIN mdata.loads l ON l.id = p.load_id AND l.operating_company_id = p.operating_company_id
       WHERE p.operating_company_id = $1::uuid
         AND p.status = 'pending'
       ORDER BY p.proposed_at DESC
