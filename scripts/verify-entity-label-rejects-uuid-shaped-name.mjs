@@ -17,6 +17,8 @@ const ROOT = fileURLToPath(new URL("..", import.meta.url));
 const LABEL = "verify-entity-label-rejects-uuid-shaped-name";
 const TARGET = "apps/frontend/src/lib/entity-label.ts";
 const BILLS = "apps/frontend/src/pages/accounting/BillsPage.tsx";
+const MAINT_WO_ROUTES = "apps/backend/src/maintenance/work-orders.routes.ts";
+const MAINT_WO_TABLE = "apps/frontend/src/pages/maintenance/components/WorkOrdersTable.tsx";
 
 /** Batch-2/3 drain sites — name||id / name??id paints (CLS-UUID-LABEL). */
 const SIBLINGS = [
@@ -1707,10 +1709,33 @@ export function auditSibling(rel, src, bad, good) {
   return problems;
 }
 
+export function auditMaintenanceWorkOrderLabels(routesSrc, tableSrc) {
+  const problems = [];
+  const listQuery = routesSrc.match(/SELECT w\.\*, u\.unit_number,[\s\S]*?ORDER BY w\.opened_at DESC NULLS LAST/)?.[0] ?? "";
+  if (!/LEFT JOIN mdata\.drivers d ON d\.id = w\.driver_id AND d\.operating_company_id = w\.operating_company_id/.test(listQuery)
+    || !/LEFT JOIN mdata\.vendors v ON v\.id = w\.external_vendor_id AND v\.operating_company_id = w\.operating_company_id/.test(listQuery)) {
+    problems.push(`${MAINT_WO_ROUTES}: list serializer missing entity-scoped driver/vendor label join`);
+  }
+  if (!/AS driver_name/.test(listQuery) || !/AS external_vendor_name/.test(listQuery)) {
+    problems.push(`${MAINT_WO_ROUTES}: list payload must ship driver_name and external_vendor_name`);
+  }
+  if (!/entityLabel\(row\.driver_name, row\.driver_id, "Driver"\)/.test(tableSrc)) {
+    problems.push(`${MAINT_WO_TABLE}: driver link must consume resolved driver_name`);
+  }
+  if (!/entityLabel\(row\.external_vendor_name, row\.external_vendor_id, "Vendor"\)/.test(tableSrc)) {
+    problems.push(`${MAINT_WO_TABLE}: vendor link must consume resolved external_vendor_name`);
+  }
+  return problems;
+}
+
 function auditTree() {
   const problems = [
     ...auditEntityLabel(readFileSync(join(ROOT, TARGET), "utf8")),
     ...auditBillsPage(readFileSync(join(ROOT, BILLS), "utf8")),
+    ...auditMaintenanceWorkOrderLabels(
+      readFileSync(join(ROOT, MAINT_WO_ROUTES), "utf8"),
+      readFileSync(join(ROOT, MAINT_WO_TABLE), "utf8"),
+    ),
   ];
   for (const s of SIBLINGS) {
     problems.push(...auditSibling(s.rel, readFileSync(join(ROOT, s.rel), "utf8"), s.bad, s.good));
@@ -1738,6 +1763,17 @@ function selftest() {
   const badBills = `<EntityLink kind="vendor" id={billVendorDrillId(bill)} label={bill.vendor_name || bill.vendor_id} />`;
   if (!auditBillsPage(badBills).some((p) => p.includes("vendor_name ||"))) {
     failures.push("selftest: BillsPage uuid fallback NOT detected");
+  }
+  const goodMaintRoutes = `SELECT w.*, u.unit_number, NULLIF(TRIM('x'), '') AS driver_name, v.vendor_name AS external_vendor_name
+    LEFT JOIN mdata.drivers d ON d.id = w.driver_id AND d.operating_company_id = w.operating_company_id
+    LEFT JOIN mdata.vendors v ON v.id = w.external_vendor_id AND v.operating_company_id = w.operating_company_id
+    ORDER BY w.opened_at DESC NULLS LAST`;
+  const goodMaintTable = `entityLabel(row.driver_name, row.driver_id, "Driver"); entityLabel(row.external_vendor_name, row.external_vendor_id, "Vendor")`;
+  if (auditMaintenanceWorkOrderLabels(goodMaintRoutes, goodMaintTable).length) {
+    failures.push("selftest: good maintenance WO label serializer flagged");
+  }
+  if (!auditMaintenanceWorkOrderLabels(goodMaintRoutes.replace(" AS driver_name", ""), goodMaintTable).length) {
+    failures.push("selftest: missing maintenance WO driver label alias NOT detected");
   }
   const sib = SIBLINGS[0];
   if (

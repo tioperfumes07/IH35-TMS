@@ -491,12 +491,18 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
       // owner_company_id / currently_leased_to_company_id) so a unit name can NEVER leak across
       // operating companies (USMCA isolation); a foreign unit LEFT-JOINs to NULL → UUID fallback.
       const rowsRes = await client.query(
-        `SELECT w.*, u.unit_number
+        `SELECT w.*, u.unit_number,
+                NULLIF(TRIM(COALESCE(d.first_name, '') || ' ' || COALESCE(d.last_name, '')), '') AS driver_name,
+                v.vendor_name AS external_vendor_name,
+                l.load_number AS linked_load_number
            FROM maintenance.work_orders w
            LEFT JOIN mdata.units u
              ON u.id = w.unit_id
             AND (u.owner_company_id = w.operating_company_id
                  OR u.currently_leased_to_company_id = w.operating_company_id)
+           LEFT JOIN mdata.drivers d ON d.id = w.driver_id AND d.operating_company_id = w.operating_company_id
+           LEFT JOIN mdata.vendors v ON v.id = w.external_vendor_id AND v.operating_company_id = w.operating_company_id
+           LEFT JOIN mdata.loads l ON l.id = w.load_id AND l.operating_company_id = w.operating_company_id
           WHERE ${where.join(" AND ")}
           ORDER BY w.opened_at DESC NULLS LAST, w.created_at DESC
           LIMIT $${values.length - 1} OFFSET $${values.length}`,
