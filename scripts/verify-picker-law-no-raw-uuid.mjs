@@ -233,38 +233,10 @@ const AUDIT_PATH = /\/(admin|audit)\/|AuditTrail|AuditLog|ActivityLog|audit-log/
 // the cited column ever acquires a REFERENCES clause or an ADD CONSTRAINT ... FOREIGN KEY. The day
 // the FK lands, this guard turns red and says "migrate the call site" — the finding cannot rot.
 // =================================================================================================
-const NO_ENFORCED_FK = [
-  {
-    file: `${SRC}/components/border-crossing/WizardStep1.tsx`,
-    field: "loadId",
-    column: "mdata.unit_border_crossings.load_id",
-    migration: "db/migrations/0295_vehicle_profile_part1.sql",
-    writePath: "apps/backend/src/border-crossing/border-crossing-wizard.routes.ts:139 (INSERT)",
-    remedy:
-      "ADD CONSTRAINT ... FOREIGN KEY (load_id) REFERENCES mdata.loads(id) on mdata.unit_border_crossings, then migrate this field to <EntityPicker kind=\"load\">. Schema change — other lane, HELD for the owner.",
-  },
-  {
-    file: `${SRC}/components/border-crossing/WizardStep1.tsx`,
-    field: "driverId",
-    column: "mdata.unit_border_crossings.driver_id",
-    migration: "db/migrations/0295_vehicle_profile_part1.sql",
-    writePath: "apps/backend/src/border-crossing/border-crossing-wizard.routes.ts:139 (INSERT)",
-    remedy:
-      "ADD CONSTRAINT ... FOREIGN KEY (driver_id) REFERENCES mdata.drivers(id) on mdata.unit_border_crossings, then migrate this field to <EntityPicker kind=\"driver\">. Schema change — other lane, HELD for the owner.",
-  },
-  {
-    file: `${SRC}/components/dispatch/EquipmentTransferModal.tsx`,
-    field: "equipmentUuid",
-    column: "dispatch.equipment_transfer_requests.equipment_uuid",
-    migration: "db/migrations/202606080204_equipment_transfer_requests.sql",
-    writePath: "apps/backend/src/dispatch/equipment-transfer/request.service.ts:81 (INSERT)",
-    remedy:
-      "Two defects, both other-lane: (1) no FK on equipment_uuid; (2) request.service.ts:56-66 validates the id against mdata.equipment ONLY with no branch on equipment_kind, while the modal offers \"truck\" — so the accepted table and any unit roster disagree. Resolve the kind->table contract first, then add the FK, then migrate this field.",
-  },
-];
+const NO_ENFORCED_FK = [];
 
 /** Second ratchet, independent of EXEMPTION_CEILING. May only SHRINK. */
-const NO_ENFORCED_FK_CEILING = 3;
+const NO_ENFORCED_FK_CEILING = 0;
 
 /**
  * The §10(b) RETIRE / canonical map. A picker may NEVER read or write the right-hand side.
@@ -470,6 +442,18 @@ export function scanRawUuidInputs(files) {
 // =================================================================================================
 // The contract
 // =================================================================================================
+
+function p23DispatchErrors({ border, transfer, service, routes, migrations }) {
+  const errors = [];
+  if (!/<EntityPicker[\s\S]*?kind="load"[\s\S]*?value=\{form\.loadId/.test(border)) errors.push("P23-DISPATCH: border load must use the canonical load picker");
+  if (!/<EntityPicker[\s\S]*?kind="driver"[\s\S]*?value=\{form\.driverId/.test(border)) errors.push("P23-DISPATCH: border driver must use the canonical driver picker");
+  if (!/<EntityPicker[\s\S]*?kind="trailer"[\s\S]*?value=\{equipmentUuid/.test(transfer)) errors.push("P23-DISPATCH: equipment transfer must use the canonical trailer picker");
+  if (/value="truck"/.test(transfer) || /"truck"\s*\|\s*"trailer"/.test(service) || /z\.enum\(\["truck"/.test(routes)) errors.push("P23-DISPATCH: truck cannot target the trailer/chassis equipment table");
+  for (const constraint of ["unit_border_crossings_driver_company_fk", "unit_border_crossings_load_company_fk", "equipment_transfer_requests_equipment_fk"]) {
+    if (!migrations.includes(constraint)) errors.push(`P23-DISPATCH: missing enforced FK ${constraint}`);
+  }
+  return errors;
+}
 
 export function contractErrors(src) {
   const errors = [];
@@ -988,55 +972,6 @@ function selftest() {
       /REGISTRY-RETIRE-MAP: .*cancellation_reasons/,
     ],
     [
-      "a no-enforced-FK finding is kept after the field was migrated (a rotting hole)",
-      {
-        ...good,
-        files: { ...good.files, [`${SRC}/components/dispatch/EquipmentTransferModal.tsx`]: '<EntityPicker kind="unit" />' },
-      },
-      /FK-STALE: .*EquipmentTransferModal/,
-    ],
-    [
-      "THE FK LANDS: the cited column acquires REFERENCES, so the finding must be retired and the field migrated",
-      {
-        ...good,
-        migrations: {
-          ...good.migrations,
-          "db/migrations/0295_vehicle_profile_part1.sql":
-            "CREATE TABLE mdata.unit_border_crossings (\n  load_id uuid REFERENCES mdata.loads(id),\n  driver_id uuid\n);\n",
-        },
-      },
-      /FK-RESOLVED: mdata\.unit_border_crossings\.load_id now HAS an enforced foreign key/,
-    ],
-    [
-      "THE FK LANDS via a separate ADD CONSTRAINT migration",
-      {
-        ...good,
-        migrations: {
-          ...good.migrations,
-          "db/migrations/9999_later.sql":
-            "ALTER TABLE dispatch.equipment_transfer_requests ADD CONSTRAINT fk_x FOREIGN KEY (equipment_uuid) REFERENCES mdata.equipment(id);",
-        },
-      },
-      /FK-RESOLVED: dispatch\.equipment_transfer_requests\.equipment_uuid/,
-    ],
-    [
-      "a finding cites a migration that does not exist",
-      { ...good, migrations: {} },
-      /FK-EVIDENCE: .*does not exist/,
-    ],
-    [
-      "a finding cites a migration that never declares the column (fabricated evidence)",
-      {
-        ...good,
-        migrations: {
-          ...good.migrations,
-          "db/migrations/0295_vehicle_profile_part1.sql":
-            "CREATE TABLE mdata.unit_border_crossings (id uuid PRIMARY KEY);",
-        },
-      },
-      /FK-EVIDENCE: .*declares no/,
-    ],
-    [
       "an archived-superseded exemption loses its @archived marker (i.e. the file went live again)",
       {
         ...good,
@@ -1065,6 +1000,23 @@ function selftest() {
         `mutation NOT caught: ${name}\n      expected ${expected}\n      got: ${found.join(" | ") || "(no errors)"}`
       );
     }
+  }
+
+  const p23Good = {
+    border: '<EntityPicker kind="load" value={form.loadId || null} /><EntityPicker kind="driver" value={form.driverId || null} />',
+    transfer: '<EntityPicker kind="trailer" value={equipmentUuid || null} />',
+    service: 'equipment_kind: "trailer" | "chassis";',
+    routes: 'z.enum(["trailer", "chassis"])',
+    migrations: 'unit_border_crossings_driver_company_fk unit_border_crossings_load_company_fk equipment_transfer_requests_equipment_fk',
+  };
+  const p23Mutations = [
+    ["raw border load returns", { ...p23Good, border: p23Good.border.replace('<EntityPicker kind="load" value={form.loadId || null} />', '<input value={form.loadId} />') }, /border load/],
+    ["truck option returns", { ...p23Good, transfer: '<option value="truck">Truck</option>' + p23Good.transfer }, /truck cannot target/],
+    ["equipment FK disappears", { ...p23Good, migrations: p23Good.migrations.replace('equipment_transfer_requests_equipment_fk', '') }, /missing enforced FK equipment_transfer/],
+  ];
+  for (const [name, fixture, expected] of p23Mutations) {
+    const found = p23DispatchErrors(fixture);
+    if (!found.some((e) => expected.test(e))) failures.push(`mutation NOT caught: ${name}`);
   }
 
   // Mutations that must be proven against a MUTATED EXEMPTIONS table rather than a fixture: the
@@ -1187,7 +1139,7 @@ function selftest() {
   NO_ENFORCED_FK.length = 0;
   NO_ENFORCED_FK.push(...originalFk);
 
-  const total = mutations.length + tableMutations.length + fkTableMutations.length;
+  const total = mutations.length + tableMutations.length + fkTableMutations.length + p23Mutations.length;
   if (failures.length) {
     console.error(`FAIL ${LABEL} --selftest:\n  - ${failures.join("\n  - ")}`);
     process.exit(1);
@@ -1270,6 +1222,13 @@ if (!IS_ENTRY) {
     files,
   };
   const errors = contractErrors(src);
+  errors.push(...p23DispatchErrors({
+    border: files[`${SRC}/components/border-crossing/WizardStep1.tsx`] ?? "",
+    transfer: files[`${SRC}/components/dispatch/EquipmentTransferModal.tsx`] ?? "",
+    service: read("apps/backend/src/dispatch/equipment-transfer/request.service.ts"),
+    routes: read("apps/backend/src/dispatch/equipment-transfer/routes.ts"),
+    migrations: Object.values(src.migrations).join("\n"),
+  }));
   if (errors.length) {
     console.error(`FAIL ${LABEL}: ${errors.length} problem(s)\n  - ${errors.join("\n  - ")}`);
     process.exit(1);
