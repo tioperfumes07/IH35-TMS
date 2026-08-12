@@ -29,7 +29,7 @@ type DbClient = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }>;
 };
 
-export type UpdateLoadCharge = { code: string; amount_cents: number };
+export type UpdateLoadCharge = { code: string; additional_charge_id?: string; description?: string; amount_cents: number };
 
 export type UpdateLoadStopInput = {
   stop_type: string;
@@ -479,6 +479,23 @@ export async function updateDispatchLoad(
     const total = bookLoadRateTotalCents(input.charges);
     if (Number(old.rate_total_cents ?? 0) !== total) rateChanged = true;
     add("rate_total_cents", total);
+    await client.query(
+      `UPDATE dispatch.load_charge_lines SET is_active = false, updated_at = now()
+        WHERE load_id = $1::uuid AND operating_company_id = $2::uuid AND is_active = true`,
+      [loadId, operatingCompanyId]
+    );
+    for (const [index, charge] of input.charges.entries()) {
+      const isSystem = ["linehaul", "fuel_surcharge"].includes(charge.code.toLowerCase());
+      if (!isSystem && !charge.additional_charge_id) throw Object.assign(new Error("additional_charge_id_required"), { code: "23503" });
+      await client.query(
+        `INSERT INTO dispatch.load_charge_lines (
+           operating_company_id, load_id, line_kind, additional_charge_id, charge_code,
+           description, amount_cents, sort_order, created_by_user_id
+         ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+        [operatingCompanyId, loadId, isSystem ? "system" : "accessorial", charge.additional_charge_id ?? null,
+         charge.code, charge.description ?? null, charge.amount_cents, (index + 1) * 10, requestingUserUuid]
+      );
+    }
   }
 
   if (setParts.length > 0) {
