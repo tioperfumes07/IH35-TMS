@@ -59,11 +59,19 @@
     },
     {
       "task": "P33",
-      "pr": "#4278",
+      "pr": "#5858",
       "guard": "scripts/verify-steps/1223-verify-law-claim-legal-ui-linkage.mjs",
       "modules": ["insurance"],
       "cols": ["driver", "unit", "load", "connectivity", "reverse_link"],
       "leafRe": "^claims\\."
+    },
+    {
+      "task": "P23",
+      "pr": "#5847",
+      "guard": "scripts/verify-steps/2358-verify-lst-picker01-consumer-adoption.mjs",
+      "modules": ["lists", "dispatch"],
+      "cols": ["connectivity", "picker"],
+      "leafRe": "^(lists\\.|secondary\\.book_load|customers\\.|vendors\\.)"
     }
   ]
 }
