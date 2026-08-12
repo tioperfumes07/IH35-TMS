@@ -38,6 +38,10 @@ export type EquipmentLoanRow = {
   status: "active" | "paid_off" | "defaulted" | "voided";
   equipment_number?: string;
   lender_vendor_name?: string;
+  // LIABILITY column-wave: principal minus payments applied to principal. OPTIONAL — the FE
+  // (FactoringHome) falls back to principal_cents until the backend serializes it; serializer
+  // gap filed to the money lane. Making it required before the API emits it would be dishonest.
+  outstanding_balance_cents?: number;
 };
 
 export type EquipmentLoanLedger = {
