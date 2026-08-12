@@ -597,9 +597,14 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
     return payload;
   });
 
-  // BLOCK-6b — REVERSE drill-through: given a Driver / Unit / Trip(Load), list the bank transactions tagged
-  // to it (+ any deduction each created). Powers the driver / unit / load detail "linked bank expenses"
-  // panels. Exactly one of driver_id / unit_id / load_id is required.
+  // BLOCK-6b — REVERSE drill-through: given a Driver / Unit / Trip(Load) / Vendor / Customer, list the
+  // bank transactions tagged to it (+ any deduction each created). Powers the driver / unit / load /
+  // vendor / customer detail "linked bank expenses" panels. Exactly one linkage id is required.
+  // CLS-BANKING-VENDOR-CUSTOMER-REVERSE-MISSING — categorization_vendor_id / categorization_customer_id
+  // are written on categorize (line ~347 in this file) and already joined for forward display (line
+  // ~581/583), but this reverse endpoint never accepted them: a bank transaction tagged to a vendor or
+  // customer had a forward FK with no way back. Same defect class as the driver/unit/load endpoint this
+  // handler already covers.
   app.get("/api/v1/banking/transactions/by-linkage", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
@@ -610,15 +615,25 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
         unit_id: z.string().uuid().optional(),
         trailer_id: z.string().uuid().optional(),
         load_id: z.string().uuid().optional(),
+        vendor_id: z.string().uuid().optional(),
+        customer_id: z.string().uuid().optional(),
         limit: z.coerce.number().int().min(1).max(500).default(200),
       })
       .safeParse(req.query ?? {});
     if (!q.success) return validationError(reply, q.error);
-    const provided = [q.data.driver_id, q.data.unit_id, q.data.trailer_id, q.data.load_id].filter(Boolean);
+    const provided = [
+      q.data.driver_id,
+      q.data.unit_id,
+      q.data.trailer_id,
+      q.data.load_id,
+      q.data.vendor_id,
+      q.data.customer_id,
+    ].filter(Boolean);
     if (provided.length !== 1) {
-      return reply
-        .code(400)
-        .send({ error: "exactly_one_linkage_required", detail: "provide exactly one of driver_id, unit_id, trailer_id, load_id" });
+      return reply.code(400).send({
+        error: "exactly_one_linkage_required",
+        detail: "provide exactly one of driver_id, unit_id, trailer_id, load_id, vendor_id, customer_id",
+      });
     }
     const companyId = q.data.operating_company_id;
 
@@ -636,6 +651,8 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
             bt.categorization_unit_id::text AS unit_id,
             bt.categorization_trailer_id::text AS trailer_id,
             bt.categorization_load_id::text AS load_id,
+            bt.categorization_vendor_id::text AS vendor_id,
+            bt.categorization_customer_id::text AS customer_id,
             bt.categorization_recover_from_driver AS recover_from_driver,
             bt.categorization_deduction_id::text AS deduction_id,
             ded.amount_cents::bigint AS deduction_amount_cents,
@@ -649,11 +666,22 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
               OR ($3::uuid IS NOT NULL AND bt.categorization_unit_id = $3::uuid)
               OR ($4::uuid IS NOT NULL AND bt.categorization_load_id = $4::uuid)
               OR ($6::uuid IS NOT NULL AND bt.categorization_trailer_id = $6::uuid)
+              OR ($7::uuid IS NOT NULL AND bt.categorization_vendor_id = $7::uuid)
+              OR ($8::uuid IS NOT NULL AND bt.categorization_customer_id = $8::uuid)
             )
           ORDER BY bt.transaction_date DESC, bt.created_at DESC
           LIMIT $5
         `,
-        [companyId, q.data.driver_id ?? null, q.data.unit_id ?? null, q.data.load_id ?? null, q.data.limit, q.data.trailer_id ?? null]
+        [
+          companyId,
+          q.data.driver_id ?? null,
+          q.data.unit_id ?? null,
+          q.data.load_id ?? null,
+          q.data.limit,
+          q.data.trailer_id ?? null,
+          q.data.vendor_id ?? null,
+          q.data.customer_id ?? null,
+        ]
       );
       return res.rows;
     });

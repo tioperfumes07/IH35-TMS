@@ -6,7 +6,7 @@ import { ListErrorBanner } from "../shared/ListErrorBanner";
 import { formatUsdCents } from "../../lib/money";
 import { formatDateUS } from "../../lib/formatDate";
 
-type LinkageKind = "driver_id" | "unit_id" | "trailer_id" | "load_id";
+type LinkageKind = "driver_id" | "unit_id" | "trailer_id" | "load_id" | "vendor_id" | "customer_id";
 
 type Props = {
   companyId: string;
@@ -31,7 +31,8 @@ type LinkageRow = {
 /**
  * Law §9 REVERSE drill — BLOCK-6b.
  * API `GET /banking/transactions/by-linkage` existed with zero UI callers.
- * Mount on Driver / Unit (finance) / Load surfaces so bank feed tags are reachable both ways.
+ * Mount on Driver / Unit (finance) / Load / Vendor / Customer surfaces so bank feed tags are
+ * reachable both ways.
  */
 export function LinkedBankTransactionsPanel({ companyId, linkage, entityLabel }: Props) {
   const query = useQuery({

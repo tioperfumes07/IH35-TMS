@@ -552,16 +552,26 @@ export function getBankTransactionCategorizationLinks(transactionId: string, com
   );
 }
 
-/** BLOCK-6b — reverse drill-through: bank transactions tagged to a given driver / unit / load (+ their deduction). */
+/** BLOCK-6b — reverse drill-through: bank transactions tagged to a given driver / unit / load / vendor / customer (+ their deduction). */
 export function getBankTransactionsByLinkage(
   companyId: string,
-  linkage: { driver_id?: string; unit_id?: string; trailer_id?: string; load_id?: string; limit?: number }
+  linkage: {
+    driver_id?: string;
+    unit_id?: string;
+    trailer_id?: string;
+    load_id?: string;
+    vendor_id?: string;
+    customer_id?: string;
+    limit?: number;
+  }
 ) {
   const params = new URLSearchParams({ operating_company_id: companyId });
   if (linkage.driver_id) params.set("driver_id", linkage.driver_id);
   if (linkage.unit_id) params.set("unit_id", linkage.unit_id);
   if (linkage.trailer_id) params.set("trailer_id", linkage.trailer_id);
   if (linkage.load_id) params.set("load_id", linkage.load_id);
+  if (linkage.vendor_id) params.set("vendor_id", linkage.vendor_id);
+  if (linkage.customer_id) params.set("customer_id", linkage.customer_id);
   if (linkage.limit != null) params.set("limit", String(linkage.limit));
   return apiRequest<{ rows: Array<Record<string, unknown>>; total_count: number }>(
     `/api/v1/banking/transactions/by-linkage?${params.toString()}`
