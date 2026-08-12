@@ -1,9 +1,12 @@
 BEGIN;
 
 DO $$ BEGIN
-  ALTER TABLE catalogs.dispatch_flag_colors
-    ADD CONSTRAINT dispatch_flag_colors_company_id_id_key UNIQUE (operating_company_id, id);
-EXCEPTION WHEN duplicate_object THEN NULL;
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'dispatch_flag_colors_company_id_id_key'
+  ) THEN
+    ALTER TABLE catalogs.dispatch_flag_colors
+      ADD CONSTRAINT dispatch_flag_colors_company_id_id_key UNIQUE (operating_company_id, id);
+  END IF;
 END $$;
 
 ALTER TABLE mdata.loads
@@ -33,11 +36,14 @@ ALTER TABLE mdata.loads
   ALTER COLUMN dispatch_flag_color_id SET NOT NULL;
 
 DO $$ BEGIN
-  ALTER TABLE mdata.loads
-    ADD CONSTRAINT loads_dispatch_flag_color_same_company_fk
-      FOREIGN KEY (operating_company_id, dispatch_flag_color_id)
-      REFERENCES catalogs.dispatch_flag_colors (operating_company_id, id);
-EXCEPTION WHEN duplicate_object THEN NULL;
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'loads_dispatch_flag_color_same_company_fk'
+  ) THEN
+    ALTER TABLE mdata.loads
+      ADD CONSTRAINT loads_dispatch_flag_color_same_company_fk
+        FOREIGN KEY (operating_company_id, dispatch_flag_color_id)
+        REFERENCES catalogs.dispatch_flag_colors (operating_company_id, id);
+  END IF;
 END $$;
 
 CREATE OR REPLACE FUNCTION mdata.default_load_dispatch_flag_color()
