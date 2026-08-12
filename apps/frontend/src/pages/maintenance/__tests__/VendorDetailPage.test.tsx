@@ -65,7 +65,9 @@ describe("Maintenance VendorDetailPage (B29)", () => {
 
   it("shows linked work orders", async () => {
     renderPage();
-    expect((await screen.findAllByText("WO-1001")).length).toBeGreaterThan(0);
+    const workOrderLinks = await screen.findAllByRole("link", { name: "WO-1001" });
+    expect(workOrderLinks).toHaveLength(2);
+    expect(workOrderLinks.every((link) => link.getAttribute("href") === "/maintenance/work-orders/wo-1")).toBe(true);
   });
 
   it("shows vendor invoice rows", async () => {

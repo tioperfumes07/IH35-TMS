@@ -352,6 +352,14 @@
       "modules": ["maintenance"],
       "cols": ["vendor", "connectivity", "reverse_link"],
       "leafRe": "^vendors\\.create$"
+    },
+    {
+      "task": "CLS-MAINT-VENDOR-WO-HISTORY-LINKS",
+      "pr": "this PR",
+      "guard": "scripts/verify-steps/2902-verify-maint-vendor-master-unify.mjs",
+      "modules": ["maintenance"],
+      "cols": ["vendor", "connectivity", "reverse_link"],
+      "leafRe": "^vendors\\.create$"
     }
   ]
 }
