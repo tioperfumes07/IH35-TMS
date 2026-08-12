@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["accounting","insurance"],"cols":["ap_bill","vendor","unit","load","driver","connectivity"],"leafRe":"^(bills\\.|invoices\\.|claims|settlements|driver)","task":"P06","pr":"#5829"} */
 /**
  * P06 / H-3 — Wave-A create-path FK ratchet across canonical money/ops writers (ALL opcos).
  *

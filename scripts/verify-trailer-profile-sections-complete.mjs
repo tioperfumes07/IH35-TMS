@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["dispatch","fleet"],"cols":["load","connectivity","reverse_link"],"leafRe":"^(load\\.|secondary\\.book_load|home\\.|roster\\.|unit\\.|trailer\\.)","task":"P31","pr":"#5830"} */
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";

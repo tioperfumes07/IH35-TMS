@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["fleet"],"cols":["connectivity"],"leafRe":"^(home\\.|roster\\.|unit\\.|trailer\\.|catalog\\.)","task":"P47","pr":"#5816"} */
 /**
  * GUARD: the fleet catalog factory does not ACCEPT a metadata field it cannot persist (LST audit).
  *

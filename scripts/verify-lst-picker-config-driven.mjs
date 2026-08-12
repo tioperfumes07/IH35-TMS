@@ -1,4 +1,14 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["lists","dispatch"],"cols":["connectivity","picker_law","load"],"leafRe":"^(catalog\\.dispatch\\.dispatch_flag_colors|secondary\\.book_load|load\\.)","task":"P44-dispatch-flag-colors","pr":"#5925"} */
+/** @matrix-built {"modules":["lists","dispatch"],"cols":["connectivity","picker_law","load"],"leafRe":"^(catalog\\.dispatch\\.additional_charges|secondary\\.book_load|load\\.)","task":"P44-additional-charges","pr":"#5931"} */
+/** @matrix-built {"modules":["lists","dispatch"],"cols":["connectivity","picker_law","load"],"leafRe":"^(catalog\\.dispatch\\.lumper_providers|secondary\\.book_load|load\\.)","task":"P44-lumper-providers","pr":"#5934"} */
+/** @matrix-built {"modules":["lists","dispatch"],"cols":["connectivity","picker_law","load"],"leafRe":"^(catalog\\.dispatch\\.load_trailer_equipment|secondary\\.book_load|load\\.)","task":"P44-load-trailer-equipment","pr":"#5936"} */
+/** @matrix-built {"modules":["lists","safety"],"cols":["connectivity","picker_law","load"],"leafRe":"^(catalog\\.safety\\.accident_types|accidents\\.)","task":"P44-accident-types","pr":"#5947"} */
+/** @matrix-built {"modules":["lists","safety"],"cols":["connectivity","picker_law","load"],"leafRe":"^(catalog\\.safety\\.complaint_types|complaints\\.)","task":"P44-complaint-types","pr":"#5949"} */
+/** @matrix-built {"modules":["lists","safety","insurance"],"cols":["connectivity","picker_law","load"],"leafRe":"^(catalog\\.safety\\.cargo_claim_reasons|cargo_claims\\.|claims\\.)","task":"P44-cargo-claim-reasons","pr":"#5951"} */
+/** @matrix-built {"modules":["customers","dispatch","accounting"],"cols":["connectivity","picker_law","load","customer"],"leafRe":"^(list\\.|detail\\.|md\\.|home|secondary\\.book_load|load\\.|invoices\\.)","task":"P43-customers","pr":"#5953"} */
+/** @matrix-built {"modules":["vendors","accounting","maintenance"],"cols":["connectivity","picker_law","expense","ap_bill"],"leafRe":"^(list\\.|detail\\.|md\\.|home|bills\\.|expenses\\.|wo\\.)","task":"P42-vendors","pr":"#5957"} */
+/** @matrix-built {"modules":["lists","dispatch"],"cols":["load","connectivity","picker_law"],"leafRe":"^(catalog\\.|secondary\\.book_load|load\\.)","task":"P44","pr":"#5918"} */
 /**
  * LST-PICKER-01/03 — the shared picker capability must be CONFIG-DRIVEN, and every wired catalog's
  * inline create must write the SAME canonical table its picker reads.

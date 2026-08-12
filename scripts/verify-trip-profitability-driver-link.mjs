@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["dispatch"],"cols":["driver","load","connectivity","reverse_link"],"leafRe":"^misc\\.trip_profit$","task":"CLS-DISPATCH-TRIP-PROFIT-DRIVER-LINK"} */
 import fs from "node:fs";
 
 const service = fs.readFileSync("apps/backend/src/dispatch/load-profitability.service.ts", "utf8");

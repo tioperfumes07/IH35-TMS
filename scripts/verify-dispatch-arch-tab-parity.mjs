@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["dispatch"],"cols":["driver","unit","load","connectivity","reverse_link"],"leafRe":"^queues\\.in_transit$","task":"CLS-DISPATCH-INTRANSIT-UNIT-LINK"} */
 /**
  * Block B21-D2: Dispatch arch tab parity phase 1 — At-Risk, In-Transit Issues, Assignment History.
  */

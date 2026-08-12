@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["settlements"],"cols":["driver","load","connectivity","reverse_link"],"leafRe":"^(settlement_close|pre_settlements|escrow|owner_approval)","task":"SETT-FE-REVERSE-02","pr":"pending"} */
 /**
  * Rule-17: pre-settlements reverse drill-through (Law §9).
  * Accounting + Dispatch pre-settlement rows must EntityLink driver + settlement.

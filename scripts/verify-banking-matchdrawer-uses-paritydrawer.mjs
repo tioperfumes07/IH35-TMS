@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["banking"],"cols":["qbo_chrome","connectivity"],"leafRe":"^(accounts|transactions\\.)","task":"P22","pr":"#5897"} */
 /**
  * verify-banking-matchdrawer-uses-paritydrawer.mjs
  *

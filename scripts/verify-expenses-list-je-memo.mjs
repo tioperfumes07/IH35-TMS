@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["accounting"],"cols":["gl_je","connectivity","reverse_link"],"leafRe":"^(expenses\\.|register|transactions\\.)","task":"F361","pr":"#5919"} */
 /**
  * CLS-LINKAGE-ONEWAY instance (Expense -> JE, list view) — static ratchet.
  *

@@ -1,4 +1,9 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["customers"],"cols":["driver","unit","connectivity","reverse_link"],"leafRe":"^detail\\.loads$","task":"CLS-CUSTOMER-LOAD-DRIVER-UNIT-LINKS"} */
+/** @matrix-built {"modules":["vendors"],"cols":["unit","connectivity","reverse_link"],"leafRe":"^detail\\.profile$","task":"CLS-VENDOR-WO-UNIT-LINK"} */
+/** @matrix-built {"modules":["dispatch"],"cols":["customer","driver","unit","load","connectivity","reverse_link"],"leafRe":"^queues\\.detention$","task":"CLS-DISPATCH-DETENTION-FK-LINKS"} */
+/** @matrix-built {"modules":["dispatch"],"cols":["driver","unit","load","connectivity","reverse_link"],"leafRe":"^secondary\\.assignments$","task":"CLS-DISPATCH-ASSIGNMENT-HISTORY-UNIT-LINKS"} */
+/** @matrix-built {"modules":["dispatch"],"cols":["customer","driver","unit","load","connectivity","reverse_link"],"leafRe":"^home\\.overview$","task":"CLS-DISPATCH-OVERVIEW-ENTITY-LINKS"} */
 /**
  * CLS-UUID-LABEL / LV-BILLS-VENDOR-UUID — entityLabel must not treat a UUID string as a display name.
  *

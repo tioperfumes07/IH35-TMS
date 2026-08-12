@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["settlements","drivers"],"cols":["reverse_link","connectivity","load"],"leafRe":"^(settlements\\.|settlement_close|pre_settlements|profiles\\.|^settlements$|^pre_settlements$)","task":"P30","pr":"#5979"} */
 /**
  * verify-driver-profile-settlement-reverse-link.mjs
  *

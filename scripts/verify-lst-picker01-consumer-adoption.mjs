@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["lists","dispatch"],"cols":["connectivity","picker_law"],"leafRe":"^(hub\\.|catalog\\.|secondary\\.book_load|load\\.)","task":"P23","pr":"#5847 + #5990"} */
 /**
  * LST-PICKER-01 close — every catalogPickerRegistry entry with consumerPath MUST wire
  * ReferenceSelect createKind={key} in each documented consumer file.

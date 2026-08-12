@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["dispatch"],"cols":["customer","driver","unit","load","connectivity","reverse_link"],"leafRe":"^queues\\.at_risk$","task":"CLS-DISPATCH-AT-RISK-FK-LINKS"} */
 /**
  * verify-at-risk-queue-error-entitylink.mjs
  *

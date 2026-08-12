@@ -1,0 +1,158 @@
+/**
+ * AUTO Box 3 Built — no manual wire-sprint feed required for new guards.
+ *
+ * Sources (union, deduped):
+ *  1. docs/specs/scoreboard/wire-sprint-built.json (legacy manual feed)
+ *  2. @matrix-built JSON tags in scripts/verify-*.mjs headers (preferred for new merges)
+ *
+ * Built greens when the guard file exists on the deployed SHA (request-time read).
+ */
+import { existsSync, readFileSync, readdirSync } from "node:fs";
+import path from "node:path";
+
+export type WireSprintBuiltEntry = {
+  task: string;
+  pr?: string;
+  guard: string;
+  modules: string[];
+  cols: string[];
+  leafRe: string;
+  source?: string;
+};
+
+const MATRIX_BUILT_RE = /@matrix-built\s+(\{[\s\S]*?\})/g;
+
+function readJson<T>(abs: string): T | null {
+  try {
+    return JSON.parse(readFileSync(abs, "utf8")) as T;
+  } catch {
+    return null;
+  }
+}
+
+function resolveGuardScript(root: string, guardRel: string): string | null {
+  const direct = path.join(root, guardRel);
+  if (guardRel.endsWith(".mjs") && existsSync(direct) && !guardRel.includes("verify-steps/")) {
+    return guardRel.replace(/\\/g, "/");
+  }
+  if (guardRel.includes("verify-steps/")) {
+    const stepAbs = path.join(root, guardRel);
+    if (!existsSync(stepAbs)) return null;
+    const stepSrc = readFileSync(stepAbs, "utf8");
+    const runMatch = stepSrc.match(
+      /ctx\.run\(\s*["']node["']\s*,\s*\[\s*["'](scripts\/verify-[^"']+\.mjs)["']/,
+    );
+    if (runMatch && existsSync(path.join(root, runMatch[1]!))) return runMatch[1]!;
+    const m = stepSrc.match(/["'](scripts\/verify-[^"']+\.mjs)["']/);
+    if (m && existsSync(path.join(root, m[1]!))) return m[1]!;
+    return null;
+  }
+  if (existsSync(direct)) return guardRel.replace(/\\/g, "/");
+  return null;
+}
+
+function entryKey(e: WireSprintBuiltEntry): string {
+  return `${e.guard}|${e.modules.join(",")}|${e.cols.join(",")}|${e.leafRe}`;
+}
+
+function parseMatrixBuiltTags(guardRel: string, content: string): WireSprintBuiltEntry[] {
+  const out: WireSprintBuiltEntry[] = [];
+  for (const m of content.matchAll(MATRIX_BUILT_RE)) {
+    try {
+      const j = JSON.parse(m[1]!) as Partial<WireSprintBuiltEntry>;
+      if (!j.modules?.length || !j.cols?.length || !j.leafRe) continue;
+      out.push({
+        task: String(j.task ?? path.basename(guardRel, ".mjs")),
+        pr: j.pr,
+        guard: guardRel,
+        modules: j.modules,
+        cols: j.cols,
+        leafRe: j.leafRe,
+        source: "@matrix-built",
+      });
+    } catch {
+      /* skip malformed tag */
+    }
+  }
+  return out;
+}
+
+function guardFileOk(root: string, guardRel: string): boolean {
+  const guardAbs = path.join(root, guardRel);
+  if (existsSync(guardAbs)) return true;
+  const resolved = resolveGuardScript(root, guardRel);
+  return resolved != null && existsSync(path.join(root, resolved));
+}
+
+function loadManualFeed(root: string): WireSprintBuiltEntry[] {
+  const j = readJson<{ entries?: WireSprintBuiltEntry[] }>(
+    path.join(root, "docs/specs/scoreboard/wire-sprint-built.json"),
+  );
+  const entries: WireSprintBuiltEntry[] = [];
+  for (const raw of j?.entries ?? []) {
+    const guardField = String(raw.guard ?? "").trim();
+    let guard = resolveGuardScript(root, guardField);
+    if (!guard && existsSync(path.join(root, guardField))) {
+      guard = guardField.replace(/\\/g, "/");
+    }
+    if (!guard || !guardFileOk(root, guard)) continue;
+    entries.push({
+      task: String(raw.task ?? "?"),
+      pr: raw.pr,
+      guard,
+      modules: raw.modules ?? [],
+      cols: raw.cols ?? [],
+      leafRe: String(raw.leafRe ?? "^$"),
+      source: "wire-sprint-built.json",
+    });
+  }
+  return entries;
+}
+
+function scanGuardTags(root: string): WireSprintBuiltEntry[] {
+  const scriptsDir = path.join(root, "scripts");
+  const out: WireSprintBuiltEntry[] = [];
+  for (const name of readdirSync(scriptsDir)) {
+    if (!name.startsWith("verify-") || !name.endsWith(".mjs")) continue;
+    const guardRel = `scripts/${name}`;
+    const abs = path.join(scriptsDir, name);
+    out.push(...parseMatrixBuiltTags(guardRel, readFileSync(abs, "utf8")));
+  }
+  return out;
+}
+
+let cached: { root: string; atMs: number; entries: WireSprintBuiltEntry[] } | null = null;
+const CACHE_MS = 30_000;
+
+/** All Built entries for the deployed tree — refreshes on cache TTL (API poll). */
+export function discoverMatrixBuiltEntries(root: string): WireSprintBuiltEntry[] {
+  const now = Date.now();
+  if (cached && cached.root === root && now - cached.atMs < CACHE_MS) {
+    return cached.entries;
+  }
+  const byKey = new Map<string, WireSprintBuiltEntry>();
+  for (const e of [...loadManualFeed(root), ...scanGuardTags(root)]) {
+    if (!guardFileOk(root, e.guard)) continue;
+    byKey.set(entryKey(e), e);
+  }
+  cached = { root, atMs: now, entries: [...byKey.values()] };
+  return cached.entries;
+}
+
+export function wireSprintBuiltReasonFromEntries(
+  entries: WireSprintBuiltEntry[],
+  leafId: string,
+  colId: string,
+  moduleId: string,
+  root: string,
+): string | undefined {
+  for (const entry of entries) {
+    if (!entry.modules.includes(moduleId)) continue;
+    if (!entry.cols.includes(colId)) continue;
+    if (!new RegExp(entry.leafRe).test(leafId)) continue;
+    if (!guardFileOk(root, entry.guard)) continue;
+    const src = entry.source === "@matrix-built" ? "auto" : "feed";
+    return `${entry.task}${entry.pr ? ` ${entry.pr}` : ""} · ${path.basename(entry.guard)} (${src})`;
+  }
+  return undefined;
+}
