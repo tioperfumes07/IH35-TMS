@@ -31,7 +31,7 @@ export async function registerEquipmentTransferRoutes(app: FastifyInstance) {
     const body = companyBody
       .extend({
         equipment_uuid: z.string().uuid(),
-        equipment_kind: z.enum(["truck", "trailer", "chassis"]),
+        equipment_kind: z.enum(["trailer", "chassis"]),
         from_driver_uuid: z.string().uuid(),
         to_driver_uuid: z.string().uuid(),
         transfer_location: z.string().trim().min(1).max(500),

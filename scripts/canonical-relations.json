@@ -1,6 +1,6 @@
 {
   "generated_note": "Prod relation snapshot (read-only) — canonical set for the phantom-relation CI guard. Regenerate via scripts/gen-canonical-relations.mjs after schema changes. GATED prod access (CLAUDE.md §1.5).",
-  "count": 781,
+  "count": 782,
   "relations": [
     "_system._schema_migrations",
     "_system.admin_jobs",
@@ -276,6 +276,7 @@
     "dispatch.load_abandonments",
     "dispatch.load_assignment_history",
     "dispatch.load_cancellations",
+    "dispatch.load_charge_lines",
     "dispatch.load_eta_predictions",
     "dispatch.load_id_reservations",
     "dispatch.load_templates",

@@ -38,7 +38,7 @@ export async function initiateTransfer(
   input: {
     operating_company_id: string;
     equipment_uuid: string;
-    equipment_kind: "truck" | "trailer" | "chassis";
+    equipment_kind: "trailer" | "chassis";
     from_driver_uuid: string;
     to_driver_uuid: string;
     transfer_location: string;
