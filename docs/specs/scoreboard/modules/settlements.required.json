@@ -105,7 +105,9 @@
         "unit",
         "liability",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "gl_je",
+        "ap_bill"
       ]
     },
     {
@@ -145,7 +147,8 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "liability"
       ]
     },
     {

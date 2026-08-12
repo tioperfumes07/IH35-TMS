@@ -4,7 +4,14 @@
  * DROP gl_je/ap_bill where FE has no journal_entry / vendor-bill EntityLink;
  * TAG period_close + month_close as gl_je built (MonthClose checklist → JE list).
  *
+ * CLS-WAVE-C-MATRIX-GL-JE-LIABILITY-STALE (board #6230, CC-2 found / CC-1 fixed 2026-08-12):
+ * settlements.detail's gl_je/ap_bill DROP was stale — SettlementDetailPage.tsx now renders real
+ * EntityLink kind="journal_entry" (bill_journal_entry_id) and kind="bill" (linked vendor bill).
+ * Re-scoped from FORBIDDEN to MUST_KEEP; settlements.required.json's settlements.detail leaf
+ * updated to require gl_je + ap_bill to match.
+ *
  * @matrix-built {"modules":["accounting"],"cols":["gl_je"],"leafRe":"^(period_close|month_close)$","task":"WAVE-C-gl_je-month-close","vertical":"column-wave"}
+ * @matrix-built {"modules":["settlements"],"cols":["gl_je","ap_bill"],"leafRe":"^settlements\\.detail$","task":"CLS-WAVE-C-MATRIX-GL-JE-LIABILITY-STALE","vertical":"column-wave"}
  *
  * Usage: node scripts/verify-settlements-gl-ap-honest.mjs [--selftest]
  */
@@ -18,20 +25,23 @@ const LABEL = "verify-settlements-gl-ap-honest";
 const FORBIDDEN = {
   settlements: {
     "settlements.list": ["gl_je", "ap_bill"],
-    "settlements.detail": ["gl_je", "ap_bill"],
     settlement_close: ["gl_je"],
     cash_advances: ["gl_je"],
   },
   accounting: {
     "invoices.list": ["gl_je"],
-    reports: ["gl_je"],
   },
 };
 
 const MUST_KEEP = {
   settlements: {
     "settlements.list": ["liability"],
-    "settlements.detail": ["liability"],
+    // CLS-WAVE-C-MATRIX-GL-JE-LIABILITY-STALE (board #6230, CC-2 found / CC-1 fixed): the DROP
+    // below was written when SettlementDetailPage had no journal_entry/bill EntityLink. It now
+    // renders both (kind="journal_entry" on bill_journal_entry_id, kind="bill" on the linked
+    // vendor bill) — re-scoped from FORBIDDEN to MUST_KEEP so the matrix follows the shipped code
+    // instead of a stale annotation.
+    "settlements.detail": ["liability", "gl_je", "ap_bill"],
     settlement_close: ["liability"],
     cash_advances: ["liability"],
   },
@@ -109,11 +119,13 @@ const detail = fs.readFileSync(
   path.join(ROOT, "apps/frontend/src/pages/driver-finance/SettlementDetailPage.tsx"),
   "utf8",
 );
-if (/kind=["']journal_entry["']/.test(detail)) {
-  failures.push("SettlementDetail now has journal_entry EntityLink — re-scope gl_je DROP");
+// CLS-WAVE-C-MATRIX-GL-JE-LIABILITY-STALE fix: settlements.detail is now MUST_KEEP gl_je/ap_bill
+// (real EntityLinks shipped) — assert they stay present instead of forbidding them.
+if (!/kind=["']journal_entry["']/.test(detail)) {
+  failures.push("SettlementDetail must KEEP journal_entry EntityLink (gl_je)");
 }
-if (/kind=["']bill["']/.test(detail)) {
-  failures.push("SettlementDetail now has bill EntityLink — re-scope ap_bill DROP");
+if (!/kind=["']bill["']/.test(detail)) {
+  failures.push("SettlementDetail must KEEP bill EntityLink (ap_bill)");
 }
 
 const invList = fs.readFileSync(path.join(ROOT, "apps/frontend/src/pages/accounting/InvoicesListPage.tsx"), "utf8");
