@@ -116,6 +116,11 @@ async function readLoadMiles(
       WHERE l.operating_company_id = $1::uuid
         AND l.soft_deleted_at IS NULL
         AND l.status::text NOT IN ('draft', 'cancelled')
+        -- BREAKEVEN-INCLUDES-SAMPLE-DATA — a break-even rate that a dispatcher prices real freight
+        -- against must not be inflated/deflated by test loads. mdata.loads.is_sample_data is derived
+        -- reliably at creation (book-load.service.ts FAIL-D6), unlike journal_entries' equivalent
+        -- flag (see the GL-side note below) — safe to filter here.
+        AND COALESCE(l.is_sample_data, false) = false
         AND COALESCE(
               (SELECT MAX(s.actual_departure_at) FROM mdata.load_stops s WHERE s.load_id = l.id),
               l.created_at
@@ -144,6 +149,15 @@ export async function getBreakEvenInputs(input: {
   const { userId, operating_company_id, from_date, to_date } = input;
 
   // Revenue + expense lines reuse the read-only P&L service (manages its own opco-scoped client).
+  //
+  // BREAKEVEN-INCLUDES-SAMPLE-DATA — GL side is NOT filtered on journal_entries.is_sample_data here,
+  // and that is deliberate, not an oversight: traced live (2026-08-11) and the flag is UNRELIABLE —
+  // two journal entries from clearly-identical Cascade sweep sample expenses read is_sample_data
+  // true and false respectively, because expenses.routes.ts derives it from the source expense row
+  // and several OTHER expense/bill/payment writers never set it at all (ACCT-F353 census). Filtering
+  // on an unreliable flag would launder some sample GL lines through as "verified clean" while
+  // missing others — worse than the current honest "includes test data" disclaimer below. Filter
+  // this leg once ACCT-F353's writer sweep makes the flag trustworthy across all money tables.
   const pnl = await getProfitLossReport({ userId, operating_company_id, from_date, to_date });
 
   // COGS + operating expenses are the cost universe for the break-even split. Positive = expense.
@@ -178,7 +192,8 @@ export async function getBreakEvenInputs(input: {
     generated_at: new Date().toISOString(),
     read_only: true as const,
     disclaimer:
-      "Analytics estimate only — computed live from existing GL and load data. Nothing here is posted, and the fixed/variable split is an editable planning assumption, not an accounting entry.",
+      "Analytics estimate only — computed live from existing GL and load data. Nothing here is posted, and the fixed/variable split is an editable planning assumption, not an accounting entry. " +
+      "Miles/load-count/loads-revenue exclude sample/test loads; GL revenue and expense lines may still include untagged sample entries (sample-data tagging on the GL side is incomplete — ACCT-F353).",
     revenue: {
       gl_revenue_cents: pnl.revenue.total,
       loads_gross_revenue_cents: loads.loads_gross_revenue_cents,
