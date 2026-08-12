@@ -35,7 +35,7 @@
     },
     {
       "task": "P34",
-      "pr": "#5584",
+      "pr": "#5840",
       "guard": "scripts/verify-steps/917-verify-legal-reverse-drill-fleet-insurance.mjs",
       "modules": ["legal"],
       "cols": ["driver", "unit", "connectivity", "reverse_link"],
@@ -52,26 +52,42 @@
     {
       "task": "P39",
       "pr": "#5852",
-      "guard": "scripts/verify-book-load-stamps-linkage-fks.mjs",
+      "guard": "scripts/verify-steps/3114-verify-book-load-stamps-linkage-fks.mjs",
       "modules": ["dispatch"],
       "cols": ["customer", "driver", "unit", "trailer", "load", "connectivity", "reverse_link"],
       "leafRe": "^(secondary\\.book_load|planning\\.reserve|home\\.|load_board|load\\.detail)"
     },
     {
       "task": "P33",
-      "pr": "#4278",
+      "pr": "#5858",
       "guard": "scripts/verify-steps/1223-verify-law-claim-legal-ui-linkage.mjs",
       "modules": ["insurance"],
       "cols": ["driver", "unit", "load", "connectivity", "reverse_link"],
       "leafRe": "^claims\\."
     },
     {
-      "task": "P32",
-      "pr": "#3332",
-      "guard": "scripts/verify-steps/1316-verify-banking-match-entitylink-kinds.mjs",
-      "modules": ["banking"],
-      "cols": ["vendor", "connectivity"],
-      "leafRe": "^(accounts|transactions\\.)"
+      "task": "P23",
+      "pr": "#5847",
+      "guard": "scripts/verify-steps/2358-verify-lst-picker01-consumer-adoption.mjs",
+      "modules": ["lists", "dispatch"],
+      "cols": ["connectivity", "picker"],
+      "leafRe": "^(lists\\.|secondary\\.book_load|customers\\.|vendors\\.)"
+    },
+    {
+      "task": "P29",
+      "pr": "#5821",
+      "guard": "scripts/verify-steps/3073-verify-failed-posting-batch-is-retriable.mjs",
+      "modules": ["settlements", "driver_finance", "accounting"],
+      "cols": ["gl_je", "liability", "connectivity"],
+      "leafRe": "^(settlements\\.|settlement_close|driver_finance\\.)"
+    },
+    {
+      "task": "P28",
+      "pr": "#5826",
+      "guard": "scripts/verify-steps/3077-verify-account-register-orders-by-document-not-line.mjs",
+      "modules": ["accounting"],
+      "cols": ["ap_bill", "gl_je", "connectivity"],
+      "leafRe": "^(bills\\.|ap\\.|account_register)"
     }
   ]
 }
