@@ -1,26 +1,26 @@
 {
-  "as_of": "2026-08-12T20:47:45.026Z",
-  "main_sha": "a2a01b914",
+  "as_of": "2026-08-12T20:49:55.911Z",
+  "main_sha": "50d26b508",
   "gate": "PRIORITY_10_3BOX_100",
   "allRequired": {
-    "totR": 3034,
+    "totR": 2717,
     "totB": 2272,
-    "pct": 75
+    "pct": 84
   },
   "waveABC_noChrome": {
-    "abcR": 2404,
+    "abcR": 2087,
     "abcB": 2021,
-    "pct": 84
+    "pct": 97
   },
   "per_module": [
     {
       "mod": "lists",
-      "req": 1677,
+      "req": 1363,
       "built": 1158,
-      "pct": 69,
-      "abcReq": 1268,
+      "pct": 85,
+      "abcReq": 954,
       "abcBuilt": 954,
-      "abcPct": 75
+      "abcPct": 100
     },
     {
       "mod": "accounting",
@@ -33,12 +33,12 @@
     },
     {
       "mod": "dispatch",
-      "req": 352,
+      "req": 349,
       "built": 304,
-      "pct": 86,
-      "abcReq": 307,
+      "pct": 87,
+      "abcReq": 304,
       "abcBuilt": 294,
-      "abcPct": 96
+      "abcPct": 97
     },
     {
       "mod": "settlements",
@@ -123,40 +123,6 @@
       "seat": "D LAST"
     },
     {
-      "col": "gl_je",
-      "cells": 125,
-      "byMod": {
-        "lists": 112,
-        "accounting": 12,
-        "settlements": 1
-      },
-      "seat": "CC-1 C"
-    },
-    {
-      "col": "expense",
-      "cells": 123,
-      "byMod": {
-        "lists": 116,
-        "accounting": 1,
-        "factoring": 1,
-        "safety": 5
-      },
-      "seat": "CC-1"
-    },
-    {
-      "col": "ap_bill",
-      "cells": 97,
-      "byMod": {
-        "lists": 86,
-        "accounting": 1,
-        "dispatch": 3,
-        "settlements": 2,
-        "factoring": 1,
-        "safety": 4
-      },
-      "seat": "CC-1"
-    },
-    {
       "col": "picker_law",
       "cells": 73,
       "byMod": {
@@ -172,14 +138,45 @@
     },
     {
       "col": "liability",
-      "cells": 38,
+      "cells": 35,
       "byMod": {
         "accounting": 3,
-        "dispatch": 10,
+        "dispatch": 7,
         "settlements": 1,
         "factoring": 19,
         "banking": 2,
         "vendors": 3
+      },
+      "seat": "CC-1"
+    },
+    {
+      "col": "gl_je",
+      "cells": 13,
+      "byMod": {
+        "accounting": 12,
+        "settlements": 1
+      },
+      "seat": "CC-1 C"
+    },
+    {
+      "col": "ap_bill",
+      "cells": 11,
+      "byMod": {
+        "accounting": 1,
+        "dispatch": 3,
+        "settlements": 2,
+        "factoring": 1,
+        "safety": 4
+      },
+      "seat": "CC-1"
+    },
+    {
+      "col": "expense",
+      "cells": 7,
+      "byMod": {
+        "accounting": 1,
+        "factoring": 1,
+        "safety": 5
       },
       "seat": "CC-1"
     },

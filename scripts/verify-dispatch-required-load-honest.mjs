@@ -25,9 +25,9 @@ const LABEL = "verify-dispatch-required-load-honest";
 /** module → leafId → cols that must NOT appear */
 const FORBIDDEN = {
   dispatch: {
-    "secondary.settlements": ["load"],
-    "secondary.pre_settlements": ["load"],
-    "queues.factoring": ["load"],
+    "secondary.settlements": ["load", "liability"],
+    "secondary.pre_settlements": ["load", "liability"],
+    "queues.factoring": ["load", "liability"],
     "queues.live_map": ["load"],
     "misc.chat": ["load"],
     "misc.geofence_history": ["load"],
