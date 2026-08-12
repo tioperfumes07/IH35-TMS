@@ -179,11 +179,18 @@ async function loadChecklist(client: Client, input: { operatingCompanyId: string
 
   const apOverdueRes = await client.query<{ overdue_count: number }>(
     `
+      -- ACCT-F183 class (this is the third leaf found carrying it — bills.service.ts and
+      -- fin20-aging.service.ts were already fixed): accounting.bills.status is written as
+      -- 'unpaid'/'partial' by current code and 'open'/'partially_paid' by legacy/other writers —
+      -- live prod carries both 'unpaid' (1113 rows) and 'partial' (526 rows) today. Matching only
+      -- ('open','partial') silently dropped every 'unpaid' bill from the month-close AP-overdue
+      -- count. Measured live before this fix: 526 of 1512 true overdue-with-balance bills counted
+      -- (986 'unpaid' bills invisible to this warning, prod-wide).
       SELECT COUNT(*)::int AS overdue_count
       FROM accounting.bills b
       WHERE b.operating_company_id = $1::uuid
         AND b.revoked_at IS NULL
-        AND b.status IN ('open', 'partial')
+        AND b.status IN ('open', 'unpaid', 'partial', 'partially_paid')
         AND COALESCE(b.amount_cents - b.paid_cents, 0) > 0
         AND COALESCE(b.due_date, b.bill_date) < $2::date
     `,

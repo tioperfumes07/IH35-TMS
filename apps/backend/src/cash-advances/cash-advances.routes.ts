@@ -219,7 +219,14 @@ export async function registerCashAdvancesRoutes(app: FastifyInstance) {
               ON qv.qbo_id = b.vendor_id
              AND qv.operating_company_id = b.operating_company_id
             WHERE b.operating_company_id = $1::uuid
-              AND b.status = 'unpaid'
+              -- ACCT-F183 class: this picker is named "unpaid-bills" but its actual purpose is
+              -- linking a cash advance to a bill that still owes money — a 'partial' bill (paid
+              -- some, still has an open balance) belongs here too. Matching only 'unpaid' silently
+              -- hid every partially-paid bill from this picker. Measured live before this fix: 526
+              -- 'partial' bills prod-wide excluded. 'open'/'partially_paid' included for the same
+              -- legacy-spelling reason as bills.service.ts's canonical filter.
+              AND b.status IN ('open', 'unpaid', 'partial', 'partially_paid')
+              AND COALESCE(b.amount_cents, ROUND(COALESCE(b.total_amount, 0) * 100)) - COALESCE(b.paid_cents, 0) > 0
             ORDER BY b.due_date ASC NULLS LAST, b.created_at DESC
             LIMIT 200
           `,
