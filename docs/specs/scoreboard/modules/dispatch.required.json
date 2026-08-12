@@ -194,7 +194,6 @@
       "required": [
         "driver",
         "customer",
-        "liability",
         "gl_je",
         "connectivity",
         "reverse_link"
@@ -208,7 +207,6 @@
       "required": [
         "driver",
         "customer",
-        "liability",
         "gl_je",
         "connectivity",
         "reverse_link"
@@ -374,7 +372,6 @@
       "route_hint": "/accounting/factoring",
       "required": [
         "customer",
-        "liability",
         "gl_je",
         "connectivity",
         "reverse_link"
@@ -928,6 +925,14 @@
             "load"
           ]
         }
+      ]
+    },
+    "liability_hop_2026_08_12": {
+      "finding": "LISTS-REQUIRED-MONEY-INFLATION",
+      "drops": [
+        "secondary.settlements",
+        "secondary.pre_settlements",
+        "queues.factoring"
       ]
     }
   }
