@@ -25,10 +25,12 @@ Default to the lowest capable tier; escalate one tier on failure; **NEVER down-t
 - **"Done" = live proof** (Neon lucia + the running app), never CI-green alone.
 - No fake green. No unverified production claims. No unsafe financial writes. No guessed mappings. No hidden assumptions. No skipped migrations. No silent failures.
 
-## 4. GOVERNANCE (permanent, final 2026-08-03)
+## 4. GOVERNANCE (permanent, final 2026-08-03; USMCA flags amended 2026-08-12)
 - **NO holds. NO `JORGE-APPROVED`.** Coders **merge on green with proof** and **apply migrations/flags on Neon themselves.** The owner does **not** apply on Neon.
-- Owner's only money role: the **decision** of *when* to turn a posting flag ON, and entering opening-balance figures. Nothing else.
-- Safety = **proof, not approval**: additive/idempotent + guard + tests → coder applies on Neon → **GUARD verifies live AFTER.**
+- **USMCA posting flags:** **ALL ON permanently** for USMCA. **ALL QBO_* OFF permanently** for USMCA (no QBO account). See `docs/lockdown/USMCA-ENTITY-LAW-2026-08-12.md` — **do not re-ask.**
+- **TRANSP/TRK:** posting flags per `00_LOCKED_DECISIONS.md` §9.9; QBO write-back stays OFF everywhere.
+- Owner's money role for non-USMCA edge cases: opening-balance figures and any **new** flag class not in law files.
+- Safety = **proof, not approval**: additive/idempotent + guard + tests → coder applies on Neon → **GUARD verifies live AFTER** (wire sprint: after merge, not before).
 - Retained controls: migration firewall · WORM / void-not-delete · no TMS→QBO write-back · never edit an applied migration.
 
 ## 5. THE QUALITY HARDLINE (the standard — verbatim, owner)
@@ -66,6 +68,26 @@ Only escalate a question that is **genuinely absent from ALL of those AND is a t
 
 ## 7. TEST WITH OBVIOUS PLACEHOLDER NUMBERS (never block the skeleton on a missing real value)
 To exercise a skeleton hop before real operational values exist, use a **clearly-fake placeholder** (e.g. **$1,200** flat, `$1.20/mi`, or `$0.05` for accessorials per the test battery) and **label it test data**. A labeled placeholder in a test run is **not** a guess — a fabricated number presented as **real production data** is. Never stall a test waiting on a real rate/figure; the real figures are entered later (owner-entered where they are operational truth — pay rates, opening balances) **before the production posting flag flips**.
+
+## 8. WIRE-FIRST SPRINT + VERTICAL WIRING (owner-locked 2026-08-12)
+
+**Canonical:** `docs/lockdown/VERTICAL-WIRING-LAW-2026-08-12.md` · `docs/lockdown/WIRE-FIRST-SPRINT-LAW-2026-08-12.md`
+
+- **Vertical = one matrix column id (or CLASS-SWEEP) × every module that owes it** — priority 10 gate; extend to all 28 modules. **No seat module subsets. No module-deep slices.**
+- **10 priority modules:** lists · accounting · dispatch · settlements · factoring · banking · customers · vendors · drivers · safety (USMCA).
+- **Wire until 3 boxes green** on every Required cell. **Box 4 Live = after gate only.**
+- **Four seats:** Cursor · Codex · CC-1 · CC-2. **No CC-3.** CC-2 **ships** vertical PRs.
+- **Paste:** `docs/specs/CODER-PASTE-INSTRUCTIONS-2026-08-12.md` · **INBOX:** `docs/bus/INBOX-*.md`
+
+## 9. USMCA ENTITY LAW (owner-locked 2026-08-12 — answered=closed)
+
+**Canonical:** `docs/lockdown/USMCA-ENTITY-LAW-2026-08-12.md`
+
+- USMCA has **no QuickBooks** — TMS is authoritative.
+- **ALL TMS posting flags ON** for USMCA permanently (`lib.feature_flag_overrides`).
+- **ALL QBO-related flags OFF** for USMCA permanently (`QBO_%`, `TMS_QBO_RECON_ENABLED`, etc.).
+- **Do not re-ask** the owner to flip USMCA posting flags. **Do not** enable QBO sync for USMCA.
+- **Migration:** `db/migrations/202608121800_usmca_posting_on_qbo_off.sql` — CC-1 applies on Neon on merge.
 
 ---
 *Permanent. Loaded at every session boot alongside `DELIVERY-METHOD-LOCKED.md`, `OWNER-QUALITY-COMPACT.md`, and `ih35-tms-standards`. The `verify-no-approval-holds` guard protects §4; `verify-standing-directive-present` + `verify-owner-quality-compact-present` protect the always-read set.*

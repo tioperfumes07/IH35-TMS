@@ -1,7 +1,8 @@
-# VERTICAL COLUMN-WAVE METHOD — LOCKED (owner 2026-08-11)
+# VERTICAL COLUMN-WAVE METHOD — LOCKED (owner 2026-08-11 · amended 2026-08-12)
 
-**Status:** FINAL · reconciles `LAW-2026-08-07-VERTICAL-METHOD` with the module matrix  
-**Authority:** This file + `MODULE-MATRIX-SCOREBOARD-LOCKED.md` win over chat, block piles, and per-module JSON `complete:true`  
+**Supreme lockdown:** `docs/lockdown/VERTICAL-WIRING-LAW-2026-08-12.md` — read first  
+**Status:** FINAL · reconciles class-sweep law with the module matrix  
+**Authority:** This file + `MODULE-MATRIX-SCOREBOARD-LOCKED.md` win over seat module subset tables and horizontal module plans  
 **Weekend mode:** WIRE ONLY · merge on local gate · **Live prove AFTER full wire** (Cascade / owner test pass)
 
 ---

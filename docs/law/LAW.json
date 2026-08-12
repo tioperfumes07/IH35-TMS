@@ -544,5 +544,12 @@
     "source_file": "apps/backend/src/accounting/invoice-send.service.ts",
     "guard": "scripts/verify-invoice-send-date-cast.mjs",
     "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-12-VERTICAL-WIRING",
+    "title": "Matrix vertical wiring — one column id or one codebase class swept across every module that owes it (priority 10 gate; extend to 28); module-deep slices and seat module subsets forbidden",
+    "source_file": "docs/lockdown/VERTICAL-WIRING-LAW-2026-08-12.md",
+    "guard": "scripts/verify-vertical-wiring-law-present.mjs",
+    "type": "enforced"
   }
 ]

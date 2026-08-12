@@ -7,7 +7,7 @@
 **Does not supersede:** Law of the Land · Rule 16/21/23/24 · `00-operating-method-LAW.mdc` (OWNER LAW 2026-08-03) · parallel books (no TMS→QBO write-back)
 
 **Remind every session:**  
-`Execute docs/specs/DELIVERY-METHOD-LOCKED.md — vertical money skeleton → certify modules under WIP≤3 — do not invent a fourth method. Obey §9 coder instructions exactly.`
+`Execute docs/specs/DELIVERY-METHOD-LOCKED.md — USMCA WIRE-FIRST sprint (wire ≥20 PRs or 400 rows, test later) — do not invent a fourth method. Obey §9 coder instructions + docs/specs/CODER-PASTE-INSTRUCTIONS-2026-08-12.md exactly.`
 
 Companion: `docs/trackers/OWNER-EXECUTION-PLAN-2026-07-22.md` (module order + audit depth).  
 **Reservation protocol (before starting any class-drain wave):** `docs/audit/RESERVATION-LEDGER-PROTOCOL-2026-08-05.md` — reserve class-id **+ files** (as ONE reservation when two classes share a hotfile); draw verify-step numbers from your own CLAIM-BLOCK band and land the claim on `main` first (Rule 25/37); Scoreboard conflicts = union the Findings rows and **regenerate**, never hand-merge a generated file.  
@@ -475,7 +475,7 @@ Cascade is the **auditor**, not a third builder. Cascade prevents breadth amnesi
 | `AUDIT-COVERAGE-LIVE` Status FIXED | **OWN** lane | **OWN** lane | no | no |
 | `AUDIT-COVERAGE-LIVE` VERIFIED | no | no | no | **OWN** |
 | 680-row ledger queue use | forbidden | forbidden | reference only | — |
-| Posting flag ON | never alone | never alone | never | never — **Jorge chat only** |
+| Posting flag ON | never alone | **USMCA: migration 202608121800** | never | never — **USMCA ON by law; QBO OFF** |
 | Purge abolition / rewrite history | **FORBIDDEN** | **FORBIDDEN** | **FORBIDDEN** | **FORBIDDEN** |
 
 \*Cursor may land non-money schema only with Jorge chat if it unblocks a named hop — still WIP-counted; prefer Claude for any accounting/banking migration.
