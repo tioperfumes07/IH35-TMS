@@ -4,6 +4,7 @@ import { requireAuth } from "../auth/session-middleware.js";
 import { withLuciaBypass, withCurrentUser } from "../auth/db.js";
 import { dismissOutboundSyncQueueItem, retrySyncQueueItem } from "../integrations/qbo/qbo-sync.service.js";
 import { buildIdempotencyKey, enqueueAdminJob } from "./admin-jobs.service.js";
+import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 
 const ownerAdmin = new Set(["Owner", "Administrator"]);
 
@@ -27,6 +28,13 @@ function ownerGate(req: Parameters<typeof requireAuth>[0], reply: Parameters<typ
   return user;
 }
 
+// CLS-GUC-BASELINE (MDATA-F09 class) — every route below takes operating_company_id from the
+// caller (query/body) and hands it straight to set_config('app.operating_company_id', ...).
+// gate()/ownerGate() only check ROLE (Owner/Administrator), not membership in the named company —
+// an Administrator of Company A could read or dead-letter Company B's QBO sync queue by naming
+// Company B's id. Each route below asserts membership BEFORE the caller-supplied id is used for
+// anything (house pattern: accounting/recon/recon.routes.ts).
+
 export async function registerAdminAccountingSyncRoutes(app: FastifyInstance) {
   app.get("/api/v1/admin/sync/outbound", async (req, reply) => {
     const user = gate(req, reply);
@@ -42,6 +50,8 @@ export async function registerAdminAccountingSyncRoutes(app: FastifyInstance) {
       })
       .safeParse(req.query ?? {});
     if (!q.success) return reply.code(400).send({ error: "validation_error", details: q.error.flatten() });
+    try { await assertCompanyMembership(user.uuid, q.data.operating_company_id); }
+    catch { return reply.code(403).send({ error: "forbidden_company_membership" }); }
 
     const offset = q.data.cursor ?? 0;
     const rows = await withLuciaBypass(async (client) => {
@@ -85,6 +95,8 @@ export async function registerAdminAccountingSyncRoutes(app: FastifyInstance) {
     if (!params.success || !body.success) {
       return reply.code(400).send({ error: "validation_error" });
     }
+    try { await assertCompanyMembership(user.uuid, body.data.operating_company_id); }
+    catch { return reply.code(403).send({ error: "forbidden_company_membership" }); }
 
     await retrySyncQueueItem(params.data.id, user.uuid, body.data.operating_company_id);
     return { ok: true };
@@ -104,6 +116,8 @@ export async function registerAdminAccountingSyncRoutes(app: FastifyInstance) {
     if (!params.success || !body.success) {
       return reply.code(400).send({ error: "validation_error" });
     }
+    try { await assertCompanyMembership(user.uuid, body.data.operating_company_id); }
+    catch { return reply.code(403).send({ error: "forbidden_company_membership" }); }
 
     await dismissOutboundSyncQueueItem(params.data.id, user.uuid, body.data.operating_company_id, body.data.note ?? "dismissed");
     return { ok: true };
@@ -122,6 +136,8 @@ export async function registerAdminAccountingSyncRoutes(app: FastifyInstance) {
       })
       .safeParse(req.query ?? {});
     if (!q.success) return reply.code(400).send({ error: "validation_error", details: q.error.flatten() });
+    try { await assertCompanyMembership(user.uuid, q.data.operating_company_id); }
+    catch { return reply.code(403).send({ error: "forbidden_company_membership" }); }
 
     const rows = await withLuciaBypass(async (client) => {
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [q.data.operating_company_id]);
@@ -217,6 +233,8 @@ export async function registerAdminAccountingSyncRoutes(app: FastifyInstance) {
       })
       .safeParse(req.body ?? {});
     if (!body.success) return reply.code(400).send({ error: "validation_error", details: body.error.flatten() });
+    try { await assertCompanyMembership(user.uuid, body.data.operating_company_id); }
+    catch { return reply.code(403).send({ error: "forbidden_company_membership" }); }
 
     await withCurrentUser(user.uuid, async (client) => {
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [body.data.operating_company_id]);
