@@ -14,6 +14,7 @@ import {
 } from "./bank-account-visibility.js";
 import { countDriverEscrowKpis } from "./driver-escrow-counts.js";
 import { countTotalBankTransactions, countUncategorizedTransactions } from "./pending-categorization.js";
+import { bankingRuleMatches, type BankingRuleRow } from "./banking-rules.engine.js";
 import { reverseJournalEntryNoFlip } from "../accounting/journal-entries.service.js";
 import { POSTING_ENGINE_SUPPORTS_REPOST } from "../accounting/posting-engine.service.js";
 import {
@@ -430,11 +431,11 @@ export async function registerBankingRoutes(app: FastifyInstance) {
     if (!query.success) return sendValidationError(reply, query.error);
     const companyId = query.data.operating_company_id;
 
-    const suggestions = await withCompanyScope(user.uuid, companyId, async (client) => {
+    const { suggestions, ruleMatch } = await withCompanyScope(user.uuid, companyId, async (client) => {
       const targetRes = await client
-        .query<{ description: string | null; amount_cents: number }>(
+        .query<{ description: string | null; amount_cents: number; bank_account_id: string }>(
           `
-            SELECT description, amount_cents
+            SELECT description, amount_cents, bank_account_id::text
             FROM banking.bank_transactions
             WHERE id = $1
               AND operating_company_id = $2
@@ -442,9 +443,9 @@ export async function registerBankingRoutes(app: FastifyInstance) {
           `,
           [params.data.id, companyId]
         )
-        .catch(() => ({ rows: [] as { description: string | null; amount_cents: number }[] }));
+        .catch(() => ({ rows: [] as { description: string | null; amount_cents: number; bank_account_id: string }[] }));
       const target = targetRes.rows[0];
-      if (!target) return [];
+      if (!target) return { suggestions: [], ruleMatch: null };
       const res = await client
         .query(
           `
@@ -470,9 +471,42 @@ export async function registerBankingRoutes(app: FastifyInstance) {
           [companyId, Number(target.amount_cents ?? 0), `%${String(target.description ?? "").slice(0, 18)}%`]
         )
         .catch(() => ({ rows: [] as Record<string, unknown>[] }));
-      return res.rows;
+
+      // ACCT-F375 — accounting.banking_rules + banking-rules.engine.ts have
+      // always WRITTEN suggested_account_id/suggested_vendor_id/suggested_confidence on
+      // bank_transactions, but nothing anywhere READS those columns: no route selects them into a
+      // response, no frontend file references them. The rule engine has been dead weight since it
+      // shipped. This is the one endpoint the categorization UI actually calls for a suggestion
+      // (apps/frontend/src/api/banking.ts), so it is where a rule match belongs. Reuses
+      // bankingRuleMatches verbatim — no new matching logic, no new GL math, read-only.
+      let ruleMatch: { rule_id: string; then_account_id: string; then_vendor_id: string | null } | null = null;
+      const rulesRes = await client
+        .query<BankingRuleRow>(
+          `
+            SELECT id, priority, description_contains, description_regex, amount_min_cents,
+                   amount_max_cents, bank_account_filter_id, then_vendor_id, then_account_id
+            FROM accounting.banking_rules
+            WHERE operating_company_id = $1 AND is_active = true
+            ORDER BY priority DESC, created_at ASC
+          `,
+          [companyId]
+        )
+        .catch(() => ({ rows: [] as BankingRuleRow[] }));
+      for (const rule of rulesRes.rows) {
+        if (
+          bankingRuleMatches(rule, {
+            description: target.description,
+            amount_cents: Number(target.amount_cents ?? 0),
+            bank_account_id: target.bank_account_id,
+          })
+        ) {
+          ruleMatch = { rule_id: rule.id, then_account_id: rule.then_account_id, then_vendor_id: rule.then_vendor_id };
+          break;
+        }
+      }
+      return { suggestions: res.rows, ruleMatch };
     });
-    return { suggestions };
+    return { suggestions, rule_match: ruleMatch };
   });
 
   app.post("/api/v1/banking/transactions/:id/split", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
