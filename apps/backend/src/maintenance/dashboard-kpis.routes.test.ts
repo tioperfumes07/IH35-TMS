@@ -112,4 +112,29 @@ describe("maintenance dashboard kpis routes (AUDIT-FIX-9)", () => {
     // Primary attempt + degraded fallback each read count and dollars.
     expect(criticalCalls).toBe(4);
   });
+
+  it("defines open dollars as actual cost falling back to estimated cost", async () => {
+    const seenSql: string[] = [];
+    mockQuery.mockImplementation(async (sql: string, values?: unknown[]) => {
+      seenSql.push(sql);
+      if (sql.includes("to_regclass($1)") && values?.[0] === "maintenance.work_orders") return { rows: [{ ok: true }] };
+      if (sql.includes("to_regclass($1)")) return { rows: [{ ok: false }] };
+      if (sql.includes("AS count")) return { rows: [{ count: 3 }] };
+      if (sql.includes("AS open_dollars")) return { rows: [{ open_dollars: 125 }] };
+      if (sql.includes("information_schema.columns")) return { rows: [{ ok: false }] };
+      return { rows: [] };
+    });
+
+    const res = await app.inject({
+      method: "GET",
+      url: `/api/v1/maintenance/dashboard/kpis?operating_company_id=${COMPANY}`,
+    });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toMatchObject({ open_wos: 3, open_dollars: 125 });
+    const openDollarSql = seenSql.find((sql) => sql.includes("AS open_dollars"));
+    expect(openDollarSql).toContain("w.total_actual_cost");
+    expect(openDollarSql).toContain("w.estimated_cost_cents");
+    expect(openDollarSql).toContain("/ 100.0");
+  });
 });

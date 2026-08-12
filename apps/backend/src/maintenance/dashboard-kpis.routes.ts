@@ -62,7 +62,15 @@ async function getCriticalWorkOrderKpis(client: Queryable, companyId: string) {
     client.query<{ open_dollars: number }>(
     `
       SELECT
-        COALESCE(SUM(COALESCE((to_jsonb(w) ->> 'total_actual_cost')::numeric, 0)), 0)::numeric AS open_dollars
+        COALESCE(
+          SUM(
+            COALESCE(
+              w.total_actual_cost,
+              COALESCE(w.estimated_cost_cents, 0)::numeric / 100.0
+            )
+          ),
+          0
+        )::numeric AS open_dollars
       FROM maintenance.work_orders w
       WHERE w.operating_company_id = $1::uuid
         AND ${openWorkOrderPredicate("w")}
