@@ -137,6 +137,15 @@ jobs:
       - name: Verification source of truth (local + CI parity)
         run: npm run verify:pre-commit
 
+      # CI-DIST-COVERAGE — verify:accounting-autoload-coverage checks BOTH src/ (always present) and
+      # dist/accounting (compiled .js route files). The job's only `npm run build` step ran ~500 lines
+      # BELOW this one, so dist/accounting never existed yet when this check ran — every PR this
+      # session hit "FAIL: dist: no .js route files found under dist/accounting" for that reason alone,
+      # unrelated to any PR's actual diff. Building here (idempotent — tsc + copy-email-templates,
+      # re-run harmlessly by the later "Build" step) makes dist/ exist before the step that reads it.
+      - name: Build backend (dist for autoload coverage check below)
+        run: npm run build:backend
+
       - name: Verify accounting autoload coverage (src + dist)
         run: npm run verify:accounting-autoload-coverage
 
