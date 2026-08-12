@@ -39,7 +39,7 @@ export async function insertRetainedEarningsClosingJournalIfNeeded(
         SUM(CASE WHEN jep.debit_or_credit = 'credit' THEN jep.amount_cents ELSE 0 END)::text AS credits
       FROM accounting.journal_entry_postings jep
       INNER JOIN accounting.journal_entries je ON je.id = jep.journal_entry_uuid
-      INNER JOIN catalogs.accounts a ON a.id = jep.account_id
+      INNER JOIN catalogs.accounts a ON a.id = jep.account_id AND a.operating_company_id = jep.operating_company_id
       WHERE jep.operating_company_id = $1::uuid
         AND je.operating_company_id = $1::uuid
         AND je.status = 'posted'
@@ -94,7 +94,7 @@ export async function insertRetainedEarningsClosingJournalIfNeeded(
       `
         SELECT a.id::text
         FROM catalogs.accounts a
-        INNER JOIN accounting.journal_entry_postings jep ON jep.account_id = a.id
+        INNER JOIN accounting.journal_entry_postings jep ON jep.account_id = a.id AND jep.operating_company_id = a.operating_company_id
         WHERE jep.operating_company_id = $1::uuid
           AND a.account_type = 'Equity'
         ORDER BY a.account_number NULLS LAST, a.account_name NULLS LAST

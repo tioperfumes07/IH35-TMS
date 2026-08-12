@@ -90,7 +90,7 @@ export async function listMaintenanceShopHub(
         INNER JOIN maintenance.work_orders wo
           ON wo.id = b.linked_work_order_uuid
          AND wo.operating_company_id = b.operating_company_id
-        LEFT JOIN mdata.units u ON u.id = wo.unit_id
+        LEFT JOIN mdata.units u ON u.id = wo.unit_id AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = wo.operating_company_id
         WHERE b.operating_company_id = $1::uuid
           AND b.linked_work_order_uuid IS NOT NULL
           AND b.revoked_at IS NULL
@@ -115,7 +115,7 @@ export async function listMaintenanceShopHub(
         INNER JOIN maintenance.work_orders wo
           ON wo.id = e.linked_work_order_uuid
          AND wo.operating_company_id = e.operating_company_id
-        LEFT JOIN mdata.units u ON u.id = wo.unit_id
+        LEFT JOIN mdata.units u ON u.id = wo.unit_id AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = wo.operating_company_id
         WHERE e.operating_company_id = $1::uuid
           AND e.linked_work_order_uuid IS NOT NULL
           AND lower(coalesce(e.status, '')) <> 'void'

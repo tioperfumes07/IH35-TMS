@@ -1930,7 +1930,7 @@ export async function payBill(input: PayBillInput, userId: string) {
           -- derives from the load (ACCT-F193), the revrec latch derives from the load (ACCT-F210), the
           -- settlement derives from the load. A payment is never more or less sample than the bill it
           -- pays. COALESCE keeps the historical default if the bill row is somehow unreadable.
-          COALESCE((SELECT b.is_sample_data FROM accounting.bills b WHERE b.id = $2::uuid), false))
+          COALESCE((SELECT b.is_sample_data FROM accounting.bills b WHERE b.id = $2::uuid AND b.operating_company_id = $1::uuid), false))
         RETURNING *
       `,
       [
