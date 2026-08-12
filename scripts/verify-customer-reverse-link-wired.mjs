@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["customers","insurance","reports"],"cols":["reverse_link","connectivity"],"task":"WAVE-B-customer-reverse-link","leafRe":"^(contracts|coi|profitability|customer)"} */
+/** @matrix-built {"modules":["customers","insurance","reports"],"cols":["reverse_link","connectivity"],"task":"WAVE-B-customer-reverse-link","leafRe":"^(detail\\.(contracts|coi)|md\\.coi_requests|claims\\.|lawsuits\\.|report\\.(customer_profitability|lane_profitability|trip_profitability))"} */
 // CLASS-WAVE B (reverse_link/connectivity) — Wave-B investigation (2026-08-12) found these three
 // reverse-link families already fully built in code but never tagged in
 // docs/specs/scoreboard/wire-sprint-built.json, so the module matrix showed them red despite the

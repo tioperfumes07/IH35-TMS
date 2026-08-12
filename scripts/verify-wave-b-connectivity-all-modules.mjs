@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["*"],"cols":["connectivity"],"leafRe":".*","task":"WAVE-B-connectivity-all-modules","vertical":"column-wave"} */
+/** @matrix-built {"modules":["accounting","banking","cash-flow","compliance","customers","dispatch","docs","driver-hub","drivers","factoring","finance","fleet","form_425","fuel","help","home","insurance","inventory","legal","lists","maintenance","program","reports","safety","settlements","system","tasks","users","vendors"],"cols":["connectivity"],"leafRe":".*","task":"WAVE-B-connectivity-all-modules","vertical":"column-wave"} */
 /**
  * Full-product connectivity contract.
  * Every leaf that requires connectivity declares route_hint in its required.json. This guard proves
@@ -40,7 +40,7 @@ export function collectRequiredConnectivity(readDir = fs.readdirSync, read = fs.
   return leaves;
 }
 
-export function auditConnectivity(manifestSource, leaves) {
+export function auditConnectivity(manifestSource, leaves, minimumInventory = 800) {
   const failures = [];
   // A navigation `to=` is not connectivity proof: it can point at a 404. Only mounted Route paths
   // count here; Navigate aliases are represented by their own Route path.
@@ -66,7 +66,7 @@ export function auditConnectivity(manifestSource, leaves) {
     }
     if (!wired) failures.push(`${leaf.module}:${leaf.id}: ${leaf.route} has no mounted route or redirect`);
   }
-  if (leaves.length < 800) failures.push(`inventory unexpectedly shrank to ${leaves.length} connectivity leaves`);
+  if (leaves.length < minimumInventory) failures.push(`inventory unexpectedly shrank to ${leaves.length} connectivity leaves`);
   return failures;
 }
 

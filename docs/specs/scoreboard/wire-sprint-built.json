@@ -2,10 +2,18 @@
   "_README": "Shipped Wave-A writers that green Matrix Box 3 Built. Updated when a Pxx task merges with guard+smoke. Live (Box 4) still requires PROD-VERIFIED ledger. leafRe must match docs/specs/scoreboard/modules/*.required.json leaf ids; cols must match column ids (picker_law not picker).",
   "entries": [
     {
+      "task": "WAVE-A-driver-all-modules",
+      "pr": "this PR",
+      "guard": "scripts/verify-wave-a-driver-all-modules.mjs",
+      "modules": ["accounting", "banking", "cash-flow", "compliance", "customers", "dispatch", "docs", "driver-hub", "drivers", "factoring", "fleet", "form_425", "fuel", "home", "insurance", "legal", "lists", "maintenance", "reports", "safety", "settlements", "tasks", "vendors"],
+      "cols": ["driver"],
+      "leafRe": ".*"
+    },
+    {
       "task": "WAVE-B-reverse-link-all-modules",
       "pr": "this PR",
       "guard": "scripts/verify-wave-b-reverse-link-all-modules.mjs",
-      "modules": ["*"],
+      "modules": ["accounting", "banking", "cash-flow", "compliance", "customers", "dispatch", "docs", "driver-hub", "drivers", "factoring", "finance", "fleet", "form_425", "fuel", "home", "insurance", "inventory", "legal", "lists", "maintenance", "program", "reports", "safety", "settlements", "system", "tasks", "users", "vendors"],
       "cols": ["reverse_link"],
       "leafRe": ".*"
     },
@@ -13,7 +21,7 @@
       "task": "WAVE-B-connectivity-all-modules",
       "pr": "this PR",
       "guard": "scripts/verify-wave-b-connectivity-all-modules.mjs",
-      "modules": ["*"],
+      "modules": ["accounting", "banking", "cash-flow", "compliance", "customers", "dispatch", "docs", "driver-hub", "drivers", "factoring", "finance", "fleet", "form_425", "fuel", "help", "home", "insurance", "inventory", "legal", "lists", "maintenance", "program", "reports", "safety", "settlements", "system", "tasks", "users", "vendors"],
       "cols": ["connectivity"],
       "leafRe": ".*"
     },
@@ -31,7 +39,7 @@
       "guard": "scripts/verify-driver-load-reverse-link-wired.mjs",
       "modules": ["settlements", "dispatch"],
       "cols": ["reverse_link", "connectivity"],
-      "leafRe": "^(cash_advances|pod|documents\\.)"
+      "leafRe": "^(cash_advances|docs\\.pod|load\\.drawer\\.documents)$"
     },
     {
       "task": "WAVE-B-safety-incidents-reverse-link",
@@ -47,7 +55,7 @@
       "guard": "scripts/verify-customer-reverse-link-wired.mjs",
       "modules": ["customers", "insurance", "reports"],
       "cols": ["reverse_link", "connectivity"],
-      "leafRe": "^(contracts|coi|profitability|customer)"
+      "leafRe": "^(detail\\.(contracts|coi)|md\\.coi_requests|claims\\.|lawsuits\\.|report\\.(customer_profitability|lane_profitability|trip_profitability))"
     },
     {
       "task": "P06",
@@ -396,7 +404,7 @@
     {
       "task": "CLS-MAINT-VENDOR-AP-LABEL-LINK",
       "pr": "this PR",
-      "guard": "scripts/verify-steps/441-verify-maint-wo-vendor-linkage.mjs",
+      "guard": "scripts/verify-steps/1604-verify-mnt-link-04-maintenance-vendor-ap.mjs",
       "modules": ["maintenance"],
       "cols": ["vendor", "connectivity", "reverse_link"],
       "leafRe": "^vendors\\.create$"
@@ -404,7 +412,7 @@
     {
       "task": "CLS-MAINT-VENDOR-WO-HISTORY-LINKS",
       "pr": "this PR",
-      "guard": "scripts/verify-steps/2902-verify-maint-vendor-master-unify.mjs",
+      "guard": "scripts/verify-steps/61-verify-maint-vendor-master-unify.mjs",
       "modules": ["maintenance"],
       "cols": ["vendor", "connectivity", "reverse_link"],
       "leafRe": "^vendors\\.create$"
