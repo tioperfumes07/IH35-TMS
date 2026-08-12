@@ -106,13 +106,27 @@ export async function disburseCashAdvanceSplit(
 
       for (const leg of input.splits) {
         if (leg.kind === "bill_payment") {
+          // ACCT-F353 — derive from the BILL being paid, matching bills.service.ts's own bill_payment
+          // writer precedent (paying a sample bill is a sample payment).
+          const billSample = await client.query<{ is_sample_data: boolean | null }>(
+            `SELECT is_sample_data FROM accounting.bills WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
+            [leg.bill_id, companyId],
+          );
           // advance→bill leg (payment_date/status default; payment_method matches the existing rail).
           const bp = await client.query(
             `INSERT INTO accounting.bill_payments
-               (operating_company_id, bill_id, amount, amount_cents, payment_method, advance_id, source_bank_transaction_id)
-             VALUES ($1::uuid, $2::uuid, $3, $4, 'cash_advance', $5::uuid, $6)
+               (operating_company_id, bill_id, amount, amount_cents, payment_method, advance_id, source_bank_transaction_id, is_sample_data)
+             VALUES ($1::uuid, $2::uuid, $3, $4, 'cash_advance', $5::uuid, $6, $7)
              RETURNING id::text AS id`,
-            [companyId, leg.bill_id, leg.amount_cents / 100, leg.amount_cents, input.advance_id, input.source_bank_transaction_id ?? null],
+            [
+              companyId,
+              leg.bill_id,
+              leg.amount_cents / 100,
+              leg.amount_cents,
+              input.advance_id,
+              input.source_bank_transaction_id ?? null,
+              billSample.rows[0]?.is_sample_data === true,
+            ],
           );
           billPaymentIds.push(String((bp.rows[0] as { id: string }).id));
         } else {
@@ -128,12 +142,18 @@ export async function disburseCashAdvanceSplit(
           }
           const lumperAccountId = String((acct.rows[0] as { id: string }).id);
 
+          // ACCT-F353 — derive from the LOAD the lumper fee is tied to (mdata.loads.is_sample_data).
+          const loadSample = await client.query<{ is_sample_data: boolean | null }>(
+            `SELECT is_sample_data FROM mdata.loads WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
+            [leg.load_id, companyId],
+          );
+
           const exp = await client.query(
             `INSERT INTO accounting.expenses
-               (operating_company_id, status, transaction_date, total_amount_cents, load_id)
-             VALUES ($1::uuid, 'posted', CURRENT_DATE, $2, $3::uuid)
+               (operating_company_id, status, transaction_date, total_amount_cents, load_id, is_sample_data)
+             VALUES ($1::uuid, 'posted', CURRENT_DATE, $2, $3::uuid, $4)
              RETURNING id::text AS id`,
-            [companyId, leg.amount_cents, leg.load_id],
+            [companyId, leg.amount_cents, leg.load_id, loadSample.rows[0]?.is_sample_data === true],
           );
           const expenseId = String((exp.rows[0] as { id: string }).id);
           expenseIds.push(expenseId);

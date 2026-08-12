@@ -9,7 +9,7 @@ import { writeTransactionSourceLink } from "./accounting-spine-emit.js";
 import { nextInvoiceDisplayId } from "./display-id.js";
 import { recomputeInvoiceTotals } from "./shared.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
-import { resolveMdataVendorIdBestEffort } from "./bills.service.js";
+import { resolveMdataVendorIdBestEffort, resolveVendorIsSampleDataBestEffort } from "./bills.service.js";
 
 export function computeNextRecurringRunUtc(fromIso: string, cadence: string, cronExpr: string | null): string {
   const dt = DateTime.fromISO(fromIso, { zone: "utc" });
@@ -54,9 +54,10 @@ async function materializeInvoice(client: PoolClient, tmpl: Record<string, unkno
     ar_phone: string | null;
     terms_name: string | null;
     days_until_due: string | null;
+    is_sample_data: boolean | null;
   }>(
     `
-      SELECT c.payment_terms_id, c.ar_email, c.ar_phone, pt.terms_name, pt.days_until_due::text
+      SELECT c.payment_terms_id, c.ar_email, c.ar_phone, pt.terms_name, pt.days_until_due::text, c.is_sample_data
       FROM mdata.customers c
       LEFT JOIN catalogs.payment_terms pt ON pt.id = c.payment_terms_id
       WHERE c.id = $1 AND c.operating_company_id = $2::uuid
@@ -93,9 +94,12 @@ async function materializeInvoice(client: PoolClient, tmpl: Record<string, unkno
         customer_notes,
         currency_code,
         created_by_user_id,
-        updated_by_user_id
+        updated_by_user_id,
+        -- ACCT-F353 — derive from the CUSTOMER being invoiced, the same relationship
+        -- accounting.bills.mdata_vendor_id derives sample status from the vendor being billed.
+        is_sample_data
       ) VALUES (
-        $1::uuid,$2::uuid,$3,'draft',$4::date,$5::date,$6,$7,$8,$9,$10,$11,$12,'USD',$13::uuid,$13::uuid
+        $1::uuid,$2::uuid,$3,'draft',$4::date,$5::date,$6,$7,$8,$9,$10,$11,$12,'USD',$13::uuid,$13::uuid,$14
       )
       RETURNING id::text
     `,
@@ -113,6 +117,7 @@ async function materializeInvoice(client: PoolClient, tmpl: Record<string, unkno
       (body.internal_notes as string | undefined) ?? null,
       (body.customer_notes as string | undefined) ?? null,
       actorId,
+      Boolean(customer.is_sample_data),
     ]
   );
   const invoiceId = ins.rows[0]?.id;
@@ -174,6 +179,8 @@ async function materializeBill(client: PoolClient, tmpl: Record<string, unknown>
   // uuid (cast ::uuid below), not a QBO external id, so resolve it against the entity-scoped table
   // rather than trust it unchecked; best-effort (never blocks a scheduled materialization run).
   const mdataVendorId = await resolveMdataVendorIdBestEffort(client, oc, vendorId);
+  // ACCT-F353 — derive from the vendor being billed (same relationship the FK above resolves).
+  const vendorIsSampleData = await resolveVendorIsSampleDataBestEffort(client, oc, vendorId);
 
   const ins = await client.query<{ id: string }>(
     `
@@ -194,10 +201,12 @@ async function materializeBill(client: PoolClient, tmpl: Record<string, unknown>
         coa_account_id,
         created_by_user_id,
         created_at,
-        updated_at
+        updated_at,
+        -- ACCT-F353 — derived from the vendor being billed (vendorIsSampleData above).
+        is_sample_data
       )
       VALUES (
-        $1::uuid,$2::uuid,$2::uuid,$11::uuid,$3,$4::date,$5::date,$6,$7,0,0,'unpaid',$8,$9,$10::uuid,now(),now()
+        $1::uuid,$2::uuid,$2::uuid,$11::uuid,$3,$4::date,$5::date,$6,$7,0,0,'unpaid',$8,$9,$10::uuid,now(),now(),$12
       )
       RETURNING id::text
     `,
@@ -213,6 +222,7 @@ async function materializeBill(client: PoolClient, tmpl: Record<string, unknown>
       body.coa_account_id ?? null,
       actorId,
       mdataVendorId,
+      vendorIsSampleData,
     ]
   );
   const billId = ins.rows[0]?.id;
@@ -344,6 +354,10 @@ async function materializeExpense(client: PoolClient, tmpl: Record<string, unkno
   const reg = await client.query<{ ok: boolean }>(`SELECT to_regclass('accounting.expenses') IS NOT NULL AS ok`);
   if (!reg.rows[0]?.ok) throw new Error("recurring_expense_table_missing");
 
+  // ACCT-F353 — derive from the vendor being paid, when one is on the template; defaults false
+  // (not sample) when vendor_uuid is absent, matching the column's own default.
+  const vendorIsSampleData = await resolveVendorIsSampleDataBestEffort(client, oc, body.vendor_uuid as string | null | undefined);
+
   const ins = await client.query<{ id: string }>(
     `
       INSERT INTO accounting.expenses (
@@ -353,7 +367,8 @@ async function materializeExpense(client: PoolClient, tmpl: Record<string, unkno
         transaction_date,
         total_amount,
         memo,
-        payment_account_uuid
+        payment_account_uuid,
+        is_sample_data
       )
       VALUES (
         $1::uuid,
@@ -362,11 +377,12 @@ async function materializeExpense(client: PoolClient, tmpl: Record<string, unkno
         $3::date,
         $4,
         $5,
-        $6::uuid
+        $6::uuid,
+        $7
       )
       RETURNING id::text
     `,
-    [oc, body.vendor_uuid ?? null, expenseDate, totalAmount, body.memo ?? null, body.payment_account_uuid ?? null]
+    [oc, body.vendor_uuid ?? null, expenseDate, totalAmount, body.memo ?? null, body.payment_account_uuid ?? null, vendorIsSampleData]
   );
   const expenseId = ins.rows[0]?.id;
   if (!expenseId) throw new Error("recurring_expense_insert_failed");

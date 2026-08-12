@@ -169,7 +169,9 @@ export async function assembleFactoringPacket(
             issue_date,
             due_date,
             invoice_type,
-            created_by_user_id
+            created_by_user_id,
+            -- ACCT-F353 — derive from the LOAD this invoice is generated from.
+            is_sample_data
           )
           SELECT
             l.operating_company_id,
@@ -179,7 +181,8 @@ export async function assembleFactoringPacket(
             CURRENT_DATE,
             CURRENT_DATE + INTERVAL '30 days',
             'from_load',
-            $3::uuid
+            $3::uuid,
+            COALESCE(l.is_sample_data, false)
           FROM mdata.loads l
           WHERE l.id = $1::uuid AND l.operating_company_id = $2::uuid
           ON CONFLICT (source_load_id) DO NOTHING

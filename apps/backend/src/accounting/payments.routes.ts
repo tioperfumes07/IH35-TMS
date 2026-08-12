@@ -50,6 +50,10 @@ const createBodySchema = z.object({
   // Draft id for create-time payment attachments (check/ACH/wire confirmations); reconciled onto the
   // real payment id in the same txn (Option B inc 2 — docs/specs/ATTACHMENT-DRAFT-LINKAGE-FIX.md).
   attachment_draft_id: z.string().uuid().optional().nullable(),
+  // ACCT-F353 — sample-tag writer sweep. Only an explicit true marks sample; omitting it keeps the
+  // column's false default (matches ACCT-F264's customer-payments precedent), so no existing caller
+  // changes behaviour.
+  is_sample_data: z.boolean().optional(),
   apply_to: z
     .array(
       z.object({
@@ -320,8 +324,11 @@ export async function registerPaymentsRoutes(app: FastifyInstance) {
             amount_cents,
             deposited_to_account_id,
             notes,
-            created_by_user_id
-          ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+            created_by_user_id,
+            -- ACCT-F353 — this route never wrote the sample tag at all; posting-engine resolves it
+            -- from this SOURCE row, so an untagged payment yielded an untagged journal entry.
+            is_sample_data
+          ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
           RETURNING id, display_id, amount_unapplied_cents
         `,
         [
@@ -335,6 +342,8 @@ export async function registerPaymentsRoutes(app: FastifyInstance) {
           depositedToAccountId,
           body.data.notes ?? null,
           user.uuid,
+          // only an explicit true marks sample; omitting it keeps the column's false default.
+          body.data.is_sample_data === true,
         ]
       );
       const payment = paymentRes.rows[0] as { id: string; display_id: string; amount_unapplied_cents: number } | undefined;

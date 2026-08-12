@@ -316,7 +316,7 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
     };
   });
 
-  app.get("/api/v1/accounting/invoices/:id", async (req, reply) => {
+  app.get("/api/v1/accounting/invoices/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const params = idParamsSchema.safeParse(req.params ?? {});
@@ -341,7 +341,7 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
       const customerRes = await client.query(
         `
           SELECT c.id, c.payment_terms_id, c.ar_email, c.ar_phone, c.credit_limit_cents, c.credit_limit_source,
-                 pt.terms_name, pt.days_until_due
+                 c.is_sample_data, pt.terms_name, pt.days_until_due
           FROM mdata.customers c
           LEFT JOIN catalogs.payment_terms pt ON pt.id = c.payment_terms_id
           WHERE c.id = $1
@@ -438,9 +438,12 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
             currency_code,
             created_by_user_id,
             updated_by_user_id,
-            source_load_id
+            source_load_id,
+            -- ACCT-F353 — derive from the CUSTOMER being invoiced (same relationship
+            -- accounting.bills.mdata_vendor_id derives sample status from the vendor being billed).
+            is_sample_data
           ) VALUES (
-            $1,$2,$3,'draft',$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$14,$15
+            $1,$2,$3,'draft',$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$14,$15,$16
           )
           RETURNING id
         `,
@@ -460,6 +463,7 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
           body.data.currency_code ?? "USD",
           user.uuid,
           body.data.source_load_id ?? null,
+          Boolean(customer.is_sample_data),
         ]
       );
       const invoiceId = String(insertRes.rows[0]?.id ?? "");

@@ -359,6 +359,32 @@ export async function resolveMdataVendorIdBestEffort(
   return res.rows[0]?.id ?? null;
 }
 
+/**
+ * ACCT-F353 sample-tag sweep — best-effort `is_sample_data` lookup for the SAME writers as
+ * resolveMdataVendorIdBestEffort above, kept as a SEPARATE function (not folded into that one's
+ * return shape) so this fix does not touch that function's already-shipped signature. Derives from
+ * the vendor being billed/paid — same relationship a bill's mdata_vendor_id derives its FK from.
+ * Defaults false (not sample) when the vendor can't be resolved, matching the column's own default —
+ * never invents a "sample" tag the source data doesn't support.
+ */
+export async function resolveVendorIsSampleDataBestEffort(
+  client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: Array<{ is_sample_data: boolean | null }> }> },
+  operatingCompanyId: string,
+  vendorIdOrExternalId: string | null | undefined
+): Promise<boolean> {
+  const trimmed = String(vendorIdOrExternalId ?? "").trim();
+  if (!trimmed) return false;
+  const res = await client.query(
+    `SELECT v.is_sample_data
+       FROM mdata.vendors v
+      WHERE v.operating_company_id = $1::uuid
+        AND (v.id::text = $2::text OR v.qbo_vendor_id = $2::text)
+      LIMIT 1`,
+    [operatingCompanyId, trimmed]
+  );
+  return res.rows[0]?.is_sample_data === true;
+}
+
 /** ACCT-F603 — write vendor_id (QBO text), vendor_uuid (mdata uuid text), mdata_vendor_id (uuid FK). */
 async function resolveBillVendorWriteColumns(
   client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: Array<{ id: string; qbo_vendor_id: string | null }> }> },

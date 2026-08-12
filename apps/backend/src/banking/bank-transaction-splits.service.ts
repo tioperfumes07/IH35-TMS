@@ -55,7 +55,7 @@ import {
 } from "../accounting/posting-engine.service.js";
 import { BILL_GL_POSTING_FLAG_KEY } from "../accounting/bill-gl.service.js";
 import { BILL_PAYMENT_GL_POSTING_FLAG_KEY } from "../accounting/bill-payment-gl.service.js";
-import { resolveMdataVendorIdBestEffort } from "../accounting/bills.service.js";
+import { resolveMdataVendorIdBestEffort, resolveVendorIsSampleDataBestEffort } from "../accounting/bills.service.js";
 
 export const BANK_TX_SPLIT_FLAG_KEY = "BANK_TX_SPLIT_ENABLED";
 export const BANK_TX_SPLIT_GL_POSTING_FLAG_KEY = "BANK_TX_SPLIT_GL_POSTING_ENABLED";
@@ -820,15 +820,19 @@ async function commitVendorBillSplitLineAtomic(input: {
     // LV-BILL-MDATA-VENDOR-FK-OPTOUT sweep — input.vendorId is an mdata.vendors uuid; best-effort
     // resolve the typed FK so an atomic split write never blocks on an unresolvable vendor.
     const mdataVendorId = await resolveMdataVendorIdBestEffort(client, input.companyId, input.vendorId);
+    // ACCT-F353 — derive from the vendor being paid (same relationship the FK above resolves).
+    const vendorIsSampleData = await resolveVendorIsSampleDataBestEffort(client, input.companyId, input.vendorId);
 
     const billRes = await client.query<{ id: string }>(
       `
         INSERT INTO accounting.bills (
           operating_company_id, vendor_id, vendor_uuid, mdata_vendor_id, bill_date, due_date, amount_cents, total_amount,
           paid_cents, paid_amount, status, memo, coa_account_id, source_bank_transaction_id,
-          created_by_user_id, created_at, updated_at
+          created_by_user_id, created_at, updated_at,
+          -- ACCT-F353 — derived from the vendor being paid (vendorIsSampleData above).
+          is_sample_data
         )
-        VALUES ($1,$2,$2,$10,$3,$3,$4,$5,$4,$5,'paid',$6,$7,$8,$9,now(),now())
+        VALUES ($1,$2,$2,$10,$3,$3,$4,$5,$4,$5,'paid',$6,$7,$8,$9,now(),now(),$11)
         RETURNING id::text
       `,
       [
@@ -847,6 +851,7 @@ async function commitVendorBillSplitLineAtomic(input: {
         input.bankTransactionId,
         input.actorUserUuid,
         mdataVendorId,
+        vendorIsSampleData,
       ]
     );
     const billId = billRes.rows[0]?.id;
@@ -869,9 +874,11 @@ async function commitVendorBillSplitLineAtomic(input: {
         INSERT INTO accounting.bill_payments (
           operating_company_id, bill_id, vendor_id, payment_date, amount_cents, amount,
           payment_method, from_bank_account_id, memo, status, payment_source_kind,
-          source_bank_transaction_id, created_by_user_id, created_at, updated_at
+          source_bank_transaction_id, created_by_user_id, created_at, updated_at,
+          -- ACCT-F353 — same derivation as the bill row above (vendorIsSampleData).
+          is_sample_data
         )
-        VALUES ($1,$2,$3,$4,$5,$6,'ach',$7,$8,'posted','bank_tx_split',$9,$10,now(),now())
+        VALUES ($1,$2,$3,$4,$5,$6,'ach',$7,$8,'posted','bank_tx_split',$9,$10,now(),now(),$11)
         RETURNING id::text
       `,
       [
@@ -889,6 +896,7 @@ async function commitVendorBillSplitLineAtomic(input: {
         }),
         input.bankTransactionId,
         input.actorUserUuid,
+        vendorIsSampleData,
       ]
     );
     const billPaymentId = paymentRes.rows[0]?.id;

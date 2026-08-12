@@ -66,7 +66,7 @@ async function updateBankBalance(
 }
 
 export async function registerApPaymentApplicationRoutes(app: FastifyInstance) {
-  app.post("/api/v1/ap/bill-payments", async (req, reply) => {
+  app.post("/api/v1/ap/bill-payments", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
 
@@ -160,9 +160,12 @@ export async function registerApPaymentApplicationRoutes(app: FastifyInstance) {
                 updated_at,
                 payment_batch_id,
                 payment_source_kind,
-                source_bank_transaction_id
+                source_bank_transaction_id,
+                -- ACCT-F353 — derive from the BILL being paid, matching bills.service.ts's own
+                -- bill_payment writer precedent: paying a sample bill is a sample payment.
+                is_sample_data
               )
-              VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,'posted',$12,now(),now(),$13,'manual',$14)
+              VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,'posted',$12,now(),now(),$13,'manual',$14,$15)
               RETURNING id
             `,
             [
@@ -180,6 +183,7 @@ export async function registerApPaymentApplicationRoutes(app: FastifyInstance) {
               user.uuid,
               batchId,
               null,
+              Boolean(billRaw.is_sample_data),
             ]
           );
           const paymentId = paymentRes.rows[0]?.id as string | undefined;

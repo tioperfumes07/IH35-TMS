@@ -1,6 +1,7 @@
 import { resolveExpenseCategoryById } from "../accounting/expense-category-catalog.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { resolveBillLineAccountId } from "../bills/bill-line-account-resolution.service.js";
+import { resolveVendorIsSampleDataBestEffort } from "../accounting/bills.service.js";
 
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[]; rowCount?: number }>;
@@ -616,7 +617,7 @@ export async function autoCreateBillFromWO(
   const billRes = await client.query<{ id: string }>(
     `
       INSERT INTO accounting.bills (
-        operating_company_id, vendor_uuid, mdata_vendor_id, linked_work_order_uuid, unit_id, status, bill_date, due_date, amount_cents, total_amount, qbo_sync_pending
+        operating_company_id, vendor_uuid, mdata_vendor_id, linked_work_order_uuid, unit_id, status, bill_date, due_date, amount_cents, total_amount, qbo_sync_pending, is_sample_data
       )
       SELECT
         w.operating_company_id,
@@ -639,7 +640,12 @@ export async function autoCreateBillFromWO(
         -- Previously omitted -> violated bills_amount_cents_present / created a NULL-canonical row.
         ROUND(COALESCE(w.total_actual_cost, (COALESCE(w.estimated_cost_cents, 0)::numeric / 100.0), 0) * 100)::bigint,
         COALESCE(w.total_actual_cost, (COALESCE(w.estimated_cost_cents, 0)::numeric / 100.0), 0),
-        true
+        true,
+        -- ACCT-F353 — derived from the same resolved vendor above.
+        COALESCE((SELECT v.is_sample_data FROM mdata.vendors v
+          WHERE v.id = COALESCE(w.external_vendor_id, w.vendor_id)
+            AND v.operating_company_id = w.operating_company_id
+          LIMIT 1), false)
       FROM maintenance.work_orders w
       WHERE w.id = $1
       RETURNING id
@@ -743,6 +749,9 @@ export async function autoCreateExpenseFromWO(
   const hasLoadIdColumn = await columnExists(client, "accounting.expenses", "load_id");
   // Law §9: stamp unit_id from WO (migration 202607050810). Vendor preserved via wo.vendor_uuid.
   const hasUnitIdColumn = await columnExists(client, "accounting.expenses", "unit_id");
+  // ACCT-F353 — derive from the vendor on the work order (same relationship the accounting.bills
+  // writer elsewhere in this file derives its sample status from).
+  const vendorIsSampleData = await resolveVendorIsSampleDataBestEffort(client, wo.operating_company_id, wo.vendor_uuid as string | null | undefined);
 
   let expenseRes: { rows: { id: string }[] };
   if (hasUnitIdColumn && hasLoadIdColumn) {
@@ -757,12 +766,13 @@ export async function autoCreateExpenseFromWO(
           status,
           transaction_date,
           total_amount,
-          payment_account_uuid
+          payment_account_uuid,
+          is_sample_data
         )
-        VALUES ($1, $2, $3, $4, $5, 'posted', CURRENT_DATE, $6, $7)
+        VALUES ($1, $2, $3, $4, $5, 'posted', CURRENT_DATE, $6, $7, $8)
         RETURNING id
       `,
-      [wo.operating_company_id, wo.vendor_uuid, woUuid, wo.unit_id ?? null, wo.load_id, wo.total_amount, paymentAccountUuid ?? null]
+      [wo.operating_company_id, wo.vendor_uuid, woUuid, wo.unit_id ?? null, wo.load_id, wo.total_amount, paymentAccountUuid ?? null, vendorIsSampleData]
     );
   } else if (hasUnitIdColumn) {
     expenseRes = await client.query<{ id: string }>(
@@ -775,12 +785,13 @@ export async function autoCreateExpenseFromWO(
           status,
           transaction_date,
           total_amount,
-          payment_account_uuid
+          payment_account_uuid,
+          is_sample_data
         )
-        VALUES ($1, $2, $3, $4, 'posted', CURRENT_DATE, $5, $6)
+        VALUES ($1, $2, $3, $4, 'posted', CURRENT_DATE, $5, $6, $7)
         RETURNING id
       `,
-      [wo.operating_company_id, wo.vendor_uuid, woUuid, wo.unit_id ?? null, wo.total_amount, paymentAccountUuid ?? null]
+      [wo.operating_company_id, wo.vendor_uuid, woUuid, wo.unit_id ?? null, wo.total_amount, paymentAccountUuid ?? null, vendorIsSampleData]
     );
   } else if (hasLoadIdColumn) {
     expenseRes = await client.query<{ id: string }>(
@@ -793,12 +804,13 @@ export async function autoCreateExpenseFromWO(
           status,
           transaction_date,
           total_amount,
-          payment_account_uuid
+          payment_account_uuid,
+          is_sample_data
         )
-        VALUES ($1, $2, $3, $4, 'posted', CURRENT_DATE, $5, $6)
+        VALUES ($1, $2, $3, $4, 'posted', CURRENT_DATE, $5, $6, $7)
         RETURNING id
       `,
-      [wo.operating_company_id, wo.vendor_uuid, woUuid, wo.load_id, wo.total_amount, paymentAccountUuid ?? null]
+      [wo.operating_company_id, wo.vendor_uuid, woUuid, wo.load_id, wo.total_amount, paymentAccountUuid ?? null, vendorIsSampleData]
     );
   } else {
     expenseRes = await client.query<{ id: string }>(
@@ -810,12 +822,13 @@ export async function autoCreateExpenseFromWO(
           status,
           transaction_date,
           total_amount,
-          payment_account_uuid
+          payment_account_uuid,
+          is_sample_data
         )
-        VALUES ($1, $2, $3, 'posted', CURRENT_DATE, $4, $5)
+        VALUES ($1, $2, $3, 'posted', CURRENT_DATE, $4, $5, $6)
         RETURNING id
       `,
-      [wo.operating_company_id, wo.vendor_uuid, woUuid, wo.total_amount, paymentAccountUuid ?? null]
+      [wo.operating_company_id, wo.vendor_uuid, woUuid, wo.total_amount, paymentAccountUuid ?? null, vendorIsSampleData]
     );
   }
   const expenseId = String(expenseRes.rows[0]?.id ?? "");
