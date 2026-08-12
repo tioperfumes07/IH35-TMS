@@ -1045,9 +1045,9 @@ export async function listTempAssignments(client: QueryableClient, operatingComp
         pd.first_name || ' ' || pd.last_name AS primary_driver_name,
         cd.first_name || ' ' || cd.last_name AS cover_driver_name
       FROM safety.temp_unit_assignments t
-      LEFT JOIN mdata.units u ON u.id = t.unit_id
-      LEFT JOIN mdata.drivers pd ON pd.id = t.primary_driver_id
-      LEFT JOIN mdata.drivers cd ON cd.id = t.cover_driver_id
+      LEFT JOIN mdata.units u ON u.id = t.unit_id AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = t.operating_company_id
+      LEFT JOIN mdata.drivers pd ON pd.id = t.primary_driver_id AND pd.operating_company_id = t.operating_company_id
+      LEFT JOIN mdata.drivers cd ON cd.id = t.cover_driver_id AND cd.operating_company_id = t.operating_company_id
       WHERE t.operating_company_id = $1::uuid
         AND t.voided_at IS NULL
       ORDER BY t.start_date DESC
