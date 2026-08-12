@@ -1,6 +1,6 @@
 # PRIORITY 10 · 3-BOX GATE — LIVE GAP
 
-**as_of:** 2026-08-12T19:47:39.619Z · **main:** `eb83c58e2`
+**as_of:** 2026-08-12T19:49:39.666Z · **main:** `c3fe548b2`
 
 ## Bar
 
@@ -8,28 +8,27 @@ All 10 modules: **Required + Audited + Built = 100%** before Live. Wave **A→B�
 
 ## Built coverage
 
-- All cells: **58%** (1814/3110)
-- Wave A–C (no chrome): **63%** (1563/2480)
+- All cells: **63%** (1958/3110)
+- Wave A–C (no chrome): **69%** (1707/2480)
 
 | Module | Built% all | Built% A–C |
 |--------|-----------:|-----------:|
-| lists | 50% | 50% |
+| lists | 57% | 59% |
 | accounting | 69% | 78% |
-| dispatch | 73% | 80% |
-| settlements | 69% | 81% |
-| factoring | 57% | 66% |
-| banking | 53% | 59% |
+| dispatch | 76% | 83% |
+| settlements | 74% | 86% |
+| factoring | 58% | 67% |
+| banking | 55% | 61% |
 | customers | 91% | 100% |
 | vendors | 86% | 97% |
-| drivers | 52% | 64% |
-| safety | 41% | 49% |
+| drivers | 56% | 70% |
+| safety | 49% | 59% |
 
 ## Ranked gaps
 
 | Col | Cells | Seat |
 |-----|------:|------|
 | `qbo_chrome` | 293 | D LAST |
-| `unit` | 144 | Codex A |
 | `expense` | 130 | CC-1 |
 | `gl_je` | 127 | CC-1 C |
 | `ap_bill` | 99 | CC-1 |
@@ -42,6 +41,7 @@ All 10 modules: **Required + Audited + Built = 100%** before Live. Wave **A→B�
 | `load` | 31 | Codex |
 | `scenario.maintenance` | 5 | ? |
 | `scenario.ap` | 3 | ? |
+| `scenario.insurance` | 3 | ? |
 
 ## Seat NOW
 
