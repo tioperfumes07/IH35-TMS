@@ -40,6 +40,22 @@
       "modules": ["legal"],
       "cols": ["driver", "unit", "connectivity", "reverse_link"],
       "leafRe": "^matters\\."
+    },
+    {
+      "task": "P36",
+      "pr": "#5852",
+      "guard": "scripts/verify-steps/3089-verify-settlement-line-binds-load-id.mjs",
+      "modules": ["settlements", "driver_finance", "dispatch"],
+      "cols": ["load", "driver", "connectivity", "reverse_link"],
+      "leafRe": "^(settlements\\.|settlement_close|pre_settlements|secondary\\.settlements|dispatch\\.queue)"
+    },
+    {
+      "task": "P39",
+      "pr": "#5852",
+      "guard": "scripts/verify-book-load-stamps-linkage-fks.mjs",
+      "modules": ["dispatch"],
+      "cols": ["customer", "driver", "unit", "trailer", "load", "connectivity", "reverse_link"],
+      "leafRe": "^(secondary\\.book_load|planning\\.reserve|home\\.|load_board|load\\.detail)"
     }
   ]
 }

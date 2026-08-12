@@ -66,7 +66,7 @@ export function collectWiringPlanProblems(root = ROOT) {
     try {
       const wire = JSON.parse(fs.readFileSync(wireAbs, "utf8"));
       const tasks = new Set((wire.entries ?? []).map((e) => e.task));
-      for (const t of ["P38", "P37", "P41"]) {
+      for (const t of ["P38", "P37", "P41", "P36", "P39"]) {
         if (!tasks.has(t)) problems.push(`${WIRE_SPRINT} missing shipped task ${t}`);
       }
     } catch {
@@ -118,7 +118,15 @@ if (SELFTEST) {
     );
     fs.writeFileSync(
       path.join(tmp, WIRE_SPRINT),
-      JSON.stringify({ entries: [{ task: "P38" }, { task: "P37" }, { task: "P41" }] }),
+      JSON.stringify({
+        entries: [
+          { task: "P38" },
+          { task: "P37" },
+          { task: "P41" },
+          { task: "P36" },
+          { task: "P39" },
+        ],
+      }),
     );
     fs.writeFileSync(
       path.join(tmp, MATRIX_SERVICE),
