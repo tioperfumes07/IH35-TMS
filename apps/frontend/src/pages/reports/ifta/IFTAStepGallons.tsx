@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getIftaPreparation, runIftaAggregateGallons, type IftaPreparation } from "../../../api/ifta";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+import { ListErrorState } from "../../../components/ListErrorState";
 
 type Props = {
   operatingCompanyId: string;
@@ -81,14 +82,23 @@ export function IFTAStepGallons({ operatingCompanyId, preparationId, quarter, ye
         {prepQuery.data?.gallons_aggregated_at ? (
           <p className="text-slate-600">Last aggregated: {new Date(prepQuery.data.gallons_aggregated_at).toLocaleString()}</p>
         ) : null}
-        <ParityTable
-          columns={columns}
-          rows={rows}
-          rowKey={(row) => row.state}
-          loading={prepQuery.isPending || (prepQuery.isFetching && rows.length === 0)}
-          emptyText="No gallons aggregated yet — run Step 2."
-          storageKey="ifta-step-gallons"
-        />
+        {prepQuery.isError ? (
+          <ListErrorState
+            title="Couldn't load state gallons"
+            status={0}
+            message={(prepQuery.error as Error)?.message}
+            onRetry={() => void prepQuery.refetch()}
+          />
+        ) : (
+          <ParityTable
+            columns={columns}
+            rows={rows}
+            rowKey={(row) => row.state}
+            loading={prepQuery.isPending || (prepQuery.isFetching && rows.length === 0)}
+            emptyText="No gallons aggregated yet — run Step 2."
+            storageKey="ifta-step-gallons"
+          />
+        )}
         {rows.length > 0 ? <p className="text-right font-semibold text-slate-900">Total gallons: {fmtNum(total)}</p> : null}
       </div>
     </section>

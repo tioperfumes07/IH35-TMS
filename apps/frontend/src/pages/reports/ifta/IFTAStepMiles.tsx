@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getIftaPreparation, runIftaAggregateMiles } from "../../../api/ifta";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+import { ListErrorState } from "../../../components/ListErrorState";
 
 type Props = {
   operatingCompanyId: string;
@@ -93,17 +94,26 @@ export function IFTAStepMiles({ operatingCompanyId, preparationId, quarter, year
         {prepQuery.data?.miles_aggregated_at ? (
           <p className="text-slate-600">Last aggregated: {new Date(prepQuery.data.miles_aggregated_at).toLocaleString()}</p>
         ) : null}
-        <ParityTable
-          columns={columns}
-          rows={rows}
-          rowKey={(row) => row.state}
-          storageKey="ifta-step-miles"
-          emptyText="No miles aggregated yet — run Step 1."
-          density="compact"
-          tableTestId="ifta-step-miles-table"
-          initialPageSize={100}
-          pageSizeOptions={[15, 50, 100, 300]}
-        />
+        {prepQuery.isError ? (
+          <ListErrorState
+            title="Couldn't load state miles"
+            status={0}
+            message={(prepQuery.error as Error)?.message}
+            onRetry={() => void prepQuery.refetch()}
+          />
+        ) : (
+          <ParityTable
+            columns={columns}
+            rows={rows}
+            rowKey={(row) => row.state}
+            storageKey="ifta-step-miles"
+            emptyText="No miles aggregated yet — run Step 1."
+            density="compact"
+            tableTestId="ifta-step-miles-table"
+            initialPageSize={100}
+            pageSizeOptions={[15, 50, 100, 300]}
+          />
+        )}
         {rows.length > 0 ? (
           <div className="rounded-sm border border-slate-200 bg-slate-50 px-2 py-1.5 font-semibold text-slate-900">
             Total: {fmtNum(total)}
