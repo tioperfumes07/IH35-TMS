@@ -416,6 +416,7 @@ export type SubmissionQueueItem = {
 export type WorkqueueItem = {
   invoice_id: string;
   display_id: string | null;
+  customer_id: string | null;
   customer_name: string | null;
   batch_number: string | null;
   factoring_status: string | null;

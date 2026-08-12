@@ -20,6 +20,7 @@ export type DispatcherHomeActiveLoad = {
   id: string;
   load_number: string;
   status: string;
+  customer_id: string;
   customer_name: string;
   pickup_city: string | null;
   delivery_city: string | null;
@@ -175,6 +176,7 @@ async function loadActiveLoads(
         l.id::text,
         l.load_number::text,
         l.status::text,
+        l.customer_id::text,
         c.customer_name::text,
         pickup.city::text AS pickup_city,
         delivery.city::text AS delivery_city,
@@ -237,6 +239,7 @@ async function loadActiveLoads(
     id: String(row.id ?? ""),
     load_number: String(row.load_number ?? ""),
     status: String(row.status ?? ""),
+    customer_id: String(row.customer_id ?? ""),
     customer_name: String(row.customer_name ?? ""),
     pickup_city: row.pickup_city ? String(row.pickup_city) : null,
     delivery_city: row.delivery_city ? String(row.delivery_city) : null,

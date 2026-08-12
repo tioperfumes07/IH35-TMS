@@ -47,6 +47,7 @@ type DriverStop = {
 type DriverLoad = {
   id: string;
   display_id: string;
+  customer_id: string;
   customer_name: string;
   pickup_location: string;
   delivery_location: string;
@@ -146,6 +147,7 @@ type LoadRow = {
   assigned_unit_id: string | null;
   updated_at: string;
   accepted_at: string | null;
+  customer_id: string;
   customer_name: string | null;
   dispatcher_name: string | null;
   dispatcher_phone: string | null;
@@ -176,6 +178,7 @@ function mapLoadRowToDriverLoad(row: LoadRow, stops: DriverStop[]): DriverLoad {
   return {
     id: row.id,
     display_id: row.load_number ?? row.id,
+    customer_id: row.customer_id,
     customer_name: row.customer_name ?? "Unknown customer",
     pickup_location: pickup ? `${pickup.city}, ${pickup.state}` : "Unknown",
     delivery_location: delivery ? `${delivery.city}, ${delivery.state}` : "Unknown",
@@ -292,6 +295,7 @@ export async function registerDriverLoadsRoutes(app: FastifyInstance) {
             l.assigned_unit_id,
             l.updated_at,
             l.accepted_at,
+            l.customer_id::text,
             c.customer_name,
             concat_ws(' ', iu.first_name, iu.last_name) AS dispatcher_name,
             NULL::text AS dispatcher_phone,

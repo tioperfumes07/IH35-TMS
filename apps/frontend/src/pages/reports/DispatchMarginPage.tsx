@@ -50,7 +50,7 @@ export function DispatchMarginPage() {
   const columns = useMemo<ParityColumn<DispatchMarginRow>[]>(
     () => [
       { key: "load_number", label: "Load", sortable: true, render: (row) => <EntityLink kind="load" id={row.load_id} label={entityLabel(row.load_number, row.load_id, "Load")} /> },
-      { key: "customer_name", label: "Customer", sortable: true, render: (row) => entityLabel(row.customer_name, null, "Customer") },
+      { key: "customer_name", label: "Customer", sortable: true, render: (row) => <EntityLink kind="customer" id={row.customer_id} label={entityLabel(row.customer_name, row.customer_id, "Customer")} /> },
       { key: "revenue_cents", label: "Revenue", sortable: true, className: "text-right", cellClass: "text-right", render: (row) => money(row.revenue_cents) },
       { key: "direct_cost_cents", label: "Direct cost", sortable: true, className: "text-right", cellClass: "text-right", render: (row) => money(row.direct_cost_cents) },
       { key: "margin_cents", label: "Margin", sortable: true, className: "text-right", cellClass: "text-right", render: (row) => money(row.margin_cents) },

@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { listDriverLoads, type DriverLoad } from "../../api/driver";
 import { entityLabel } from "../../lib/entity-label";
+import { EntityLink } from "../../components/shared/EntityLink";
 
 export function DriverLoadsPage() {
   const { t } = useTranslation();
@@ -22,7 +23,7 @@ export function DriverLoadsPage() {
             <Link className="font-medium text-slate-900" to={`/driver/loads/${load.id}`}>
               {entityLabel(load.display_id, load.id, "Load")}
             </Link>
-            <p className="text-xs text-slate-600">{entityLabel(load.customer_name, null, "Customer")}</p>
+            <p className="text-xs text-slate-600"><EntityLink kind="customer" id={load.customer_id} label={entityLabel(load.customer_name, load.customer_id, "Customer")} /></p>
             <p className="text-[11px] text-slate-500">
               {t("driver.pickup")}: {load.pickup_location} → {t("driver.dropoff")}: {load.delivery_location}
             </p>

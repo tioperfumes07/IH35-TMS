@@ -22,6 +22,7 @@ export type SubmissionQueueItem = {
 export type WorkqueueItem = {
   invoice_id: string;
   display_id: string | null;
+  customer_id: string | null;
   customer_name: string | null;
   batch_number: string | null;
   factoring_status: string | null;
@@ -139,6 +140,7 @@ export async function listWorkqueueInvoices(
       SELECT
         i.id::text                                     AS invoice_id,
         i.display_id,
+        i.customer_id::text,
         c.customer_name,
         b.batch_number,
         i.factoring_status,
@@ -184,6 +186,7 @@ export async function listWorkqueueInvoices(
   return res.rows.map((row) => ({
     invoice_id: String(row.invoice_id),
     display_id: row.display_id ? String(row.display_id) : null,
+    customer_id: row.customer_id ? String(row.customer_id) : null,
     customer_name: row.customer_name ? String(row.customer_name) : null,
     batch_number: row.batch_number ? String(row.batch_number) : null,
     factoring_status: row.factoring_status ? String(row.factoring_status) : null,
