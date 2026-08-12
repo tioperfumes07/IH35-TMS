@@ -2,6 +2,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
+import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 
 const actionCodeSchema = z.enum([
   "WF-064-MDATA-001",
@@ -127,20 +128,38 @@ async function appendWorkflowAudit(
   );
 }
 
-async function resourceExists(
+// CLS-JOIN-ENTITY-UNSCOPED fix (same class + fix shape as catalogs/workflow-routes.ts's
+// callerCanTargetAccount): this route's create step had NO role check at all and its approve step
+// only checked isAdminRole (a global role, not company membership) — a caller from Company A could
+// name Company B's driver/unit/equipment id and get any Administrator (of ANY company) to approve
+// driver activation/termination or unit/equipment InService/disposal on it. mdata.drivers scopes by
+// operating_company_id directly; mdata.units/mdata.equipment have no such column, so scope by the
+// owner/leased pair (same rule as everywhere else). Require real org.user_company_access membership,
+// not bare existence.
+async function callerCanTargetResource(
   client: { query: (query: string, values?: unknown[]) => Promise<{ rows: Array<{ id: string }> }> },
   targetResourceType: z.infer<typeof resourceTypeSchema>,
-  targetResourceId: string
+  targetResourceId: string,
+  callerUserId: string
 ) {
-  if (targetResourceType === "driver") {
-    const res = await client.query(`SELECT id FROM mdata.drivers WHERE id = $1 LIMIT 1`, [targetResourceId]);
-    return res.rows.length > 0;
-  }
-  if (targetResourceType === "unit") {
-    const res = await client.query(`SELECT id FROM mdata.units WHERE id = $1 LIMIT 1`, [targetResourceId]);
-    return res.rows.length > 0;
-  }
-  const res = await client.query(`SELECT id FROM mdata.equipment WHERE id = $1 LIMIT 1`, [targetResourceId]);
+  const fromClause =
+    targetResourceType === "driver"
+      ? `FROM mdata.drivers r JOIN org.user_company_access uca ON uca.company_id = r.operating_company_id`
+      : `FROM ${targetResourceType === "unit" ? "mdata.units" : "mdata.equipment"} r
+           JOIN org.user_company_access uca
+             ON uca.company_id = COALESCE(r.currently_leased_to_company_id, r.owner_company_id)`;
+  const res = await client.query(
+    `
+      SELECT r.id
+        ${fromClause}
+         AND uca.user_id = $2::uuid
+         AND uca.deactivated_at IS NULL
+        JOIN org.companies oc ON oc.id = uca.company_id AND oc.deactivated_at IS NULL
+       WHERE r.id = $1::uuid
+       LIMIT 1
+    `,
+    [targetResourceId, callerUserId]
+  );
   return res.rows.length > 0;
 }
 
@@ -206,7 +225,7 @@ export async function registerMdataWorkflowRoutes(app: FastifyInstance) {
     }
 
     const created = await withCurrentUser(authUser.uuid, async (client) => {
-      const exists = await resourceExists(client, targetResourceType, targetResourceId);
+      const exists = await callerCanTargetResource(client, targetResourceType, targetResourceId, authUser.uuid);
       if (!exists) return { error: "target_resource_not_found" as const };
 
       const inserted = await client.query<WorkflowRequestRow>(
@@ -339,6 +358,17 @@ export async function registerMdataWorkflowRoutes(app: FastifyInstance) {
       if (!workflow) return { error: "mdata_workflow_request_not_found" as const };
       if (workflow.status !== "Pending") return { error: "mdata_workflow_request_not_pending" as const };
       if (workflow.requested_by === authUser.uuid) return { error: "cannot_decide_own_request" as const };
+
+      // Re-verify at decision time, not just at create time: the approving Administrator may belong to
+      // a different company than the requester, and isAdminRole alone does not imply company membership
+      // on this specific target resource.
+      const approverCanTarget = await callerCanTargetResource(
+        client,
+        workflow.target_resource_type,
+        workflow.target_resource_id,
+        authUser.uuid
+      );
+      if (!approverCanTarget) return { error: "mdata_workflow_request_not_found" as const };
 
       if (workflow.action_code === "WF-064-MDATA-001") {
         await client.query(

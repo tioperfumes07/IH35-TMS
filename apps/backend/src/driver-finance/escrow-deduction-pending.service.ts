@@ -343,8 +343,8 @@ export async function listLoadAbandonments(client: PoolClient, operating_company
              (d.first_name || ' ' || d.last_name) AS driver_name,
              l.load_number
       FROM dispatch.load_abandonments a
-      LEFT JOIN mdata.drivers d ON d.id = a.driver_id
-      LEFT JOIN mdata.loads l ON l.id = a.load_id
+      LEFT JOIN mdata.drivers d ON d.id = a.driver_id AND d.operating_company_id = a.operating_company_id
+      LEFT JOIN mdata.loads l ON l.id = a.load_id AND l.operating_company_id = a.operating_company_id
       WHERE a.operating_company_id = $1::uuid
       ${sinceClause}
       ORDER BY a.abandoned_at DESC
