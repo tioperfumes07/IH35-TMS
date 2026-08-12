@@ -77,7 +77,7 @@ const AR_COLUMNS: ParityColumn<ArAgingCustomerRow>[] = [
     label: "Customer",
     sortable: true,
     cellClass: "whitespace-nowrap text-gray-900",
-    render: (r) => entityLabel(r.customer_name, r.customer_id, "Customer"),
+    render: (r) => <EntityLink kind="customer" id={r.customer_id} label={entityLabel(r.customer_name, r.customer_id, "Customer")} />,
   },
   {
     key: "open_invoice_count",

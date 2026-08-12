@@ -70,12 +70,40 @@ function downloadCsv(fileName: string, rows: string[][]) {
   URL.revokeObjectURL(url);
 }
 
-// Drill-through: each account routes to the existing GL account register (reused surface),
-// which lists the journal_entry_postings the statement number is derived from.
-function AccountCell({ code, name }: { code: string; name: string }) {
+// Drill-through: each account routes to its OWN GL account register row (same surface/pattern
+// ProfitLossPage.tsx already uses — see registerHref there), not a generic unfiltered list. The
+// account_id was already on every line (StatementLine.account_id / AccountingTrialBalanceRow's
+// account_code-keyed row) but was never read here, so every row linked to the same page — a
+// dead-end drill-through, not a canonical one.
+function registerHref(accountId: string, fromDate: string, toDate: string, basis: string) {
+  const params = new URLSearchParams({ from_date: fromDate, to_date: toDate, basis });
+  return `/accounting/chart-of-accounts/register/${accountId}?${params}`;
+}
+
+function AccountCell({
+  code,
+  name,
+  accountId,
+  fromDate,
+  toDate,
+  basis,
+}: {
+  code: string;
+  name: string;
+  accountId?: string;
+  fromDate: string;
+  toDate: string;
+  basis: string;
+}) {
+  const display = name || code || "—";
+  if (!accountId) return <span>{display}</span>;
   return (
-    <Link to="/accounting/account-register" className="text-slate-700 underline-offset-2 hover:underline" title="View ledger detail">
-      {name || code || "—"}
+    <Link
+      to={registerHref(accountId, fromDate, toDate, basis)}
+      className="text-slate-700 underline-offset-2 hover:underline"
+      title="View ledger detail"
+    >
+      {display}
     </Link>
   );
 }
@@ -89,7 +117,7 @@ type StatementLine = {
   amount: number;
 };
 
-function statementColumns(showType: boolean): Array<ParityColumn<StatementLine>> {
+function statementColumns(showType: boolean, fromDate: string, toDate: string, basis: string): Array<ParityColumn<StatementLine>> {
   const columns: Array<ParityColumn<StatementLine>> = [
     {
       key: "account_code",
@@ -101,7 +129,9 @@ function statementColumns(showType: boolean): Array<ParityColumn<StatementLine>>
       key: "account_name",
       label: "Account",
       sortable: true,
-      render: (line) => <AccountCell code={line.account_code} name={line.account_name} />,
+      render: (line) => (
+        <AccountCell code={line.account_code} name={line.account_name} accountId={line.account_id} fromDate={fromDate} toDate={toDate} basis={basis} />
+      ),
     },
   ];
   if (showType) {
@@ -123,7 +153,8 @@ function statementColumns(showType: boolean): Array<ParityColumn<StatementLine>>
   return columns;
 }
 
-const TRIAL_BALANCE_COLUMNS: Array<ParityColumn<AccountingTrialBalanceRow>> = [
+function trialBalanceColumns(fromDate: string, toDate: string, basis: string): Array<ParityColumn<AccountingTrialBalanceRow>> {
+  return [
   {
     key: "account_code",
     label: "Account #",
@@ -134,7 +165,9 @@ const TRIAL_BALANCE_COLUMNS: Array<ParityColumn<AccountingTrialBalanceRow>> = [
     key: "account_name",
     label: "Account",
     sortable: true,
-    render: (row) => <AccountCell code={row.account_code} name={row.account_name} />,
+    render: (row) => (
+      <AccountCell code={row.account_code} name={row.account_name} accountId={row.account_id} fromDate={fromDate} toDate={toDate} basis={basis} />
+    ),
   },
   { key: "account_type", label: "Type", sortable: true, render: (row) => row.account_type || "—" },
   {
@@ -161,7 +194,8 @@ const TRIAL_BALANCE_COLUMNS: Array<ParityColumn<AccountingTrialBalanceRow>> = [
     cellClass: "text-right",
     render: (row) => <span className={row.net_balance < 0 ? "text-rose-700" : "text-slate-900"}>{money(row.net_balance)}</span>,
   },
-];
+  ];
+}
 
 export function FinancialStatementsPage() {
   const { selectedCompanyId } = useCompanyContext();
@@ -407,6 +441,9 @@ export function FinancialStatementsPage() {
                   showType
                   lines={section.lines}
                   footerRows={[{ label: "Section total", value: money(section.total) }]}
+                  fromDate={applied.start}
+                  toDate={applied.end}
+                  basis={basis}
                 />
               ))}
               <section className="overflow-hidden rounded-sm border border-slate-200 bg-white">
@@ -451,6 +488,9 @@ export function FinancialStatementsPage() {
                 showType={false}
                 lines={bsAssets}
                 footerRows={[{ label: "Total assets", value: money(bsQuery.data.assets.total) }]}
+                fromDate={appliedAsOf}
+                toDate={appliedAsOf}
+                basis={basis}
               />
               <StatementSection
                 title="Liabilities"
@@ -459,6 +499,9 @@ export function FinancialStatementsPage() {
                 showType={false}
                 lines={bsLiabilities}
                 footerRows={[{ label: "Total liabilities", value: money(bsQuery.data.liabilities.total) }]}
+                fromDate={appliedAsOf}
+                toDate={appliedAsOf}
+                basis={basis}
               />
               <StatementSection
                 title="Equity"
@@ -466,6 +509,9 @@ export function FinancialStatementsPage() {
                 tableTestId="fin19-bs-equity-table"
                 showType={false}
                 lines={bsEquity}
+                fromDate={appliedAsOf}
+                toDate={appliedAsOf}
+                basis={basis}
                 footerRows={[
                   { label: "Current year earnings", value: money(bsQuery.data.equity.current_year_earnings) },
                   { label: "Total equity", value: money(bsQuery.data.equity.total) },
@@ -503,7 +549,7 @@ export function FinancialStatementsPage() {
             <div className="border-b border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-800">Trial balance</div>
             <ParityTable
               embedded
-              columns={TRIAL_BALANCE_COLUMNS}
+              columns={trialBalanceColumns(applied.start, applied.end, basis)}
               rows={tbRows}
               rowKey={(row) => row.account_id}
               loading={tbQuery.isLoading}
@@ -553,6 +599,9 @@ function StatementSection({
   showType,
   lines,
   footerRows,
+  fromDate,
+  toDate,
+  basis,
 }: {
   title: string;
   storageKey: string;
@@ -560,8 +609,11 @@ function StatementSection({
   showType: boolean;
   lines: StatementLine[];
   footerRows: Array<{ label: string; value: string }>;
+  fromDate: string;
+  toDate: string;
+  basis: string;
 }) {
-  const columns = useMemo(() => statementColumns(showType), [showType]);
+  const columns = useMemo(() => statementColumns(showType, fromDate, toDate, basis), [showType, fromDate, toDate, basis]);
   return (
     <section className="overflow-hidden rounded-sm border border-slate-200 bg-white">
       <div className="border-b border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-800">{title}</div>
