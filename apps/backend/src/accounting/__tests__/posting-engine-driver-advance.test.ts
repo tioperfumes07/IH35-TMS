@@ -16,7 +16,13 @@ const { mockQuery, mockWithCurrentUser, mockResolveAccountForCategory, mockResol
   }
 );
 
-vi.mock("../../auth/db.js", () => ({ withCurrentUser: mockWithCurrentUser }));
+// Partial-mock so other exports (luciaPool, etc.) stay real for the module graph — auth/lucia.ts
+// constructs its adapter from luciaPool at import time, so a bare replacement mock breaks the whole
+// import chain (same fix shape as posting-kill-switch-gated.test.ts).
+vi.mock("../../auth/db.js", async (orig) => {
+  const actual = (await orig()) as Record<string, unknown>;
+  return { ...actual, withCurrentUser: mockWithCurrentUser };
+});
 vi.mock("../expense-category-map/resolver.service.js", () => ({ resolveAccountForCategory: mockResolveAccountForCategory }));
 vi.mock("../coa-roles/resolver.service.js", () => ({ resolveRoleAccountOptional: mockResolveRoleAccountOptional }));
 
@@ -29,9 +35,13 @@ const DEBIT = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"; // QBO-149 Driver Cash Adv
 const CREDIT = "cccccccc-cccc-4ccc-8ccc-cccccccccccc"; // operator-chosen source/bank
 const DEFAULT_CASH = "dddddddd-dddd-4ddd-8ddd-dddddddddddd";
 
-function installMock(opts: { status?: string; posting_date?: string | null } = {}) {
+function installMock(
+  opts: { status?: string; posting_date?: string | null; fromBankAccountId?: string | null; bankLedgerAccountId?: string | null } = {}
+) {
   const status = opts.status ?? "disbursed";
   const posting_date = opts.posting_date === undefined ? "2026-05-25" : opts.posting_date;
+  const fromBankAccountId = opts.fromBankAccountId ?? null;
+  const bankLedgerAccountId = opts.bankLedgerAccountId ?? null;
   const lines: Array<{ account_id: string; dc: string; cents: number }> = [];
   const links: Array<{ type: string; id: string }> = [];
   let entryDate: string | null = null;
@@ -49,9 +59,14 @@ function installMock(opts: { status?: string; posting_date?: string | null } = {
             posting_date,
             disbursed_at: "2026-06-13T00:00:00Z",
             created_at: "2026-06-13T00:00:00Z",
+            from_bank_account_id: fromBankAccountId,
           },
         ],
       };
+    }
+    // ACCT-F358 — resolveBankLedgerAccountId's bank->GL bridge lookup on banking.bank_accounts.
+    if (sql.includes("banking.bank_accounts")) {
+      return { rows: [{ ledger_account_id: bankLedgerAccountId }] };
     }
     if (sql.includes("closed_period_cutoff")) return { rows: [{ cutoff: null }] };
     if (sql.includes("INSERT INTO accounting.posting_batches")) return { rows: [{ id: "batch-1" }] };
@@ -69,6 +84,7 @@ function installMock(opts: { status?: string; posting_date?: string | null } = {
       return { rows: [] };
     }
     if (sql.includes("batch_status")) return { rows: [] };
+    if (sql.includes("isBankAccountHideEnabled") || sql.includes("feature_flags")) return { rows: [] };
     return { rows: [] };
   });
   return { lines, links, getEntryDate: () => entryDate };
@@ -153,5 +169,66 @@ describe("posting-engine driver_advance source type (B3)", () => {
         { userId: ACTOR }
       )
     ).rejects.toMatchObject({ code: "ADVANCE_NOT_POSTING_ELIGIBLE" });
+  });
+
+  // CLS-CASH-OUT-CREDITS-CLEARING-ACCOUNT / LV-ADVANCE-CREDITS-UNDEPOSITED-NOT-THE-BANK / ACCT-F358.
+  it("ACCT-F358: credits the advance's OWN bank via the bank->GL bridge when from_bank_account_id is set and no override is supplied", async () => {
+    mockWithCurrentUser.mockClear();
+    mockResolveAccountForCategory.mockReset();
+    mockResolveAccountForCategory.mockResolvedValue({ account_id: DEBIT, posting_side: "debit" });
+    mockResolveRoleAccountOptional.mockReset();
+    const BANK_ACCOUNT_ID = "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee";
+    const BANK_LEDGER_ACCOUNT_ID = "ffffffff-ffff-4fff-8fff-ffffffffffff";
+    const cap = installMock({ fromBankAccountId: BANK_ACCOUNT_ID, bankLedgerAccountId: BANK_LEDGER_ACCOUNT_ID });
+
+    const result = await postSourceTransaction(
+      { operating_company_id: OPCO, source_transaction_type: "driver_advance", source_transaction_id: ADV },
+      { userId: ACTOR }
+    );
+
+    expect(result.result).toBe("posted");
+    // credited the advance's OWN bank's ledger account — NOT the company-default cash-like/clearing
+    // account — and never touched resolveRoleAccountOptional (the old undeposited_funds fallback path).
+    expect(cap.lines.find((l) => l.dc === "credit")?.account_id).toBe(BANK_LEDGER_ACCOUNT_ID);
+    expect(mockResolveRoleAccountOptional).not.toHaveBeenCalled();
+  });
+
+  it("ACCT-F358: fails LOUD (never falls back to a clearing account) when the named bank has no ledger_account_id bridge", async () => {
+    mockWithCurrentUser.mockClear();
+    mockResolveAccountForCategory.mockReset();
+    mockResolveAccountForCategory.mockResolvedValue({ account_id: DEBIT, posting_side: "debit" });
+    mockResolveRoleAccountOptional.mockReset();
+    const BANK_ACCOUNT_ID = "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee";
+    installMock({ fromBankAccountId: BANK_ACCOUNT_ID, bankLedgerAccountId: null });
+
+    await expect(
+      postSourceTransaction(
+        { operating_company_id: OPCO, source_transaction_type: "driver_advance", source_transaction_id: ADV },
+        { userId: ACTOR }
+      )
+    ).rejects.toMatchObject({ code: "ACCOUNT_MAPPING_MISSING" });
+    expect(mockResolveRoleAccountOptional).not.toHaveBeenCalled();
+  });
+
+  it("ACCT-F358: an explicit credit_account_id still overrides the advance's own named bank", async () => {
+    mockWithCurrentUser.mockClear();
+    mockResolveAccountForCategory.mockReset();
+    mockResolveAccountForCategory.mockResolvedValue({ account_id: DEBIT, posting_side: "debit" });
+    mockResolveRoleAccountOptional.mockReset();
+    const BANK_ACCOUNT_ID = "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee";
+    const cap = installMock({ fromBankAccountId: BANK_ACCOUNT_ID, bankLedgerAccountId: "should-not-be-used" });
+
+    const result = await postSourceTransaction(
+      {
+        operating_company_id: OPCO,
+        source_transaction_type: "driver_advance",
+        source_transaction_id: ADV,
+        credit_account_id: CREDIT,
+      },
+      { userId: ACTOR }
+    );
+
+    expect(result.result).toBe("posted");
+    expect(cap.lines.find((l) => l.dc === "credit")?.account_id).toBe(CREDIT);
   });
 });

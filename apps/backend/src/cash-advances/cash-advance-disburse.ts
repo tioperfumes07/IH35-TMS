@@ -1,14 +1,15 @@
 import { withCurrentUser } from "../auth/db.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { isOwnerOrAdmin } from "../bulk/bulk-update.factory.js";
-import { postSourceTransaction } from "../accounting/posting-engine.service.js";
+import { postSourceTransactionInClientTx } from "../accounting/posting-engine.service.js";
+import { updateBankBalance } from "../accounting/bills.service.js";
 import { emitDriverRequestSpineEvent } from "../driver-finance/driver-request-spine-emit.js";
 import { logger } from "../observability/structured-logger.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 
 const DRIVER_ADVANCE_GL_POSTING_FLAG_KEY = "DRIVER_ADVANCE_GL_POSTING_ENABLED";
 
-type PostingResult = Awaited<ReturnType<typeof postSourceTransaction>>;
+type PostingResult = Awaited<ReturnType<typeof postSourceTransactionInClientTx>>;
 
 export type DisburseDriverAdvanceInput = {
   advance_id: string;
@@ -58,7 +59,7 @@ export async function disburseDriverAdvanceCore(
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [companyId]);
     const cur = await client.query(
       `
-        SELECT id::text, disbursement_status::text, posting_date::text
+        SELECT id::text, disbursement_status::text, posting_date::text, amount::text, from_bank_account_id::text
         FROM driver_finance.driver_advances
         WHERE operating_company_id = $1::uuid AND id::text = $2
         LIMIT 1
@@ -66,7 +67,9 @@ export async function disburseDriverAdvanceCore(
       `,
       [companyId, input.advance_id]
     );
-    const row = cur.rows[0] as { disbursement_status?: string; posting_date?: string | null } | undefined;
+    const row = cur.rows[0] as
+      | { disbursement_status?: string; posting_date?: string | null; amount?: string; from_bank_account_id?: string | null }
+      | undefined;
     if (!row) return { ok: false as const, code: 404, error: "advance_not_found" };
     if (String(row.disbursement_status ?? "") !== "approved") {
       return {
@@ -112,7 +115,13 @@ export async function disburseDriverAdvanceCore(
       user_uuid: actorUserUuid,
     });
 
-    return { ok: true as const, postingDate: postingDateNew, glPostingEnabled };
+    return {
+      ok: true as const,
+      postingDate: postingDateNew,
+      glPostingEnabled,
+      amountCents: Math.round(Number(row.amount ?? "0") * 100),
+      fromBankAccountId: row.from_bank_account_id ?? null,
+    };
   });
 
   if (!phase1.ok) return phase1;
@@ -123,15 +132,30 @@ export async function disburseDriverAdvanceCore(
     return { ok: true, advanceId: input.advance_id, postingDate: phase1.postingDate };
   }
 
-  const posting = await postSourceTransaction(
-    {
-      operating_company_id: companyId,
-      source_transaction_type: "driver_advance",
-      source_transaction_id: input.advance_id,
-      credit_account_id: input.credit_account_id ?? null,
-    },
-    { userId: actorUserUuid }
-  );
+  // ACCT-F358 — bank-cache decrement is ATOMIC with the JE post (postSourceTransactionInClientTx runs
+  // on THIS client), same shape as payBill's "GUARD 2026-07-11" comment: the bank-balance cache and the
+  // GL cash account are separate stores, so recording -amount in both is cache coherence, not double
+  // counting, and a posting failure now rolls back the decrement with it — bank and GL can never
+  // diverge. Only decrement when the advance names its own bank AND the caller did not override the
+  // credit account at disbursement time (an explicit credit_account_id is not guaranteed to be a
+  // banking.bank_accounts row, so there is nothing safe to decrement in that case — same ambiguity the
+  // GL-resolution precedence in buildDriverAdvanceLines already accepts for an explicit override).
+  const posting = await withCurrentUser(actorUserUuid, async (client) => {
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [companyId]);
+    if (!input.credit_account_id && phase1.fromBankAccountId) {
+      await updateBankBalance(client, companyId, phase1.fromBankAccountId, -Math.abs(phase1.amountCents));
+    }
+    return postSourceTransactionInClientTx(
+      client,
+      {
+        operating_company_id: companyId,
+        source_transaction_type: "driver_advance",
+        source_transaction_id: input.advance_id,
+        credit_account_id: input.credit_account_id ?? null,
+      },
+      { userId: actorUserUuid }
+    );
+  });
 
   // B4: timeline 'posted' step — if this advance originated from a cash-advance request, link
   // the money event back to that request. Best-effort: the disbursement + GL post already

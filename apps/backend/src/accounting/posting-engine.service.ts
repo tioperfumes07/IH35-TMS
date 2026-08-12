@@ -1681,6 +1681,7 @@ async function buildDriverAdvanceLines(
     posting_date: string | null;
     disbursed_at: string | null;
     created_at: string;
+    from_bank_account_id: string | null;
   }>(
     `
       SELECT
@@ -1689,7 +1690,8 @@ async function buildDriverAdvanceLines(
         disbursement_status::text,
         posting_date::text,
         disbursed_at::text,
-        created_at::text
+        created_at::text,
+        from_bank_account_id::text
       FROM driver_finance.driver_advances
       WHERE operating_company_id = $1::uuid
         AND id::text = $2
@@ -1710,9 +1712,32 @@ async function buildDriverAdvanceLines(
   const mapped = await resolveAccountForCategory(operatingCompanyId, "cash_advance", "cash_advance");
   const debitAccountId = mapped.account_id;
 
-  const creditAccount = creditAccountId ?? (await resolveDisbursementCashAccountForCompany(client, operatingCompanyId));
-  if (!creditAccount) {
-    throw new PostingEngineError("ACCOUNT_MAPPING_MISSING", "Cash account mapping for driver advance is missing");
+  // CLS-CASH-OUT-CREDITS-CLEARING-ACCOUNT / LV-ADVANCE-CREDITS-UNDEPOSITED-NOT-THE-BANK — this used to
+  // be `creditAccountId ?? resolveDisbursementCashAccountForCompany(...)`, so an advance that named its
+  // own from_bank_account_id (stamped at create time) was IGNORED at post time; the credit landed on a
+  // company-default account instead of the bank the money actually left, and the bank's own cache was
+  // never decremented. Precedence now matches buildBillPaymentLines' CHAIN-04 shape: an explicit
+  // caller-supplied credit_account_id still overrides (the disburse route's own operator choice at
+  // disbursement time), THEN the advance's own from_bank_account_id resolves via the SAME bank->GL
+  // bridge (banking.bank_accounts.ledger_account_id) every other bank-facing poster uses — fail LOUD if
+  // that bank has no bridge, never silently fall through to a clearing account. Only when the advance
+  // names no bank at all does the existing ACCT-F345 fail-closed company fallback apply.
+  let creditAccount: string | null;
+  if (creditAccountId) {
+    creditAccount = creditAccountId;
+  } else if (advance.from_bank_account_id) {
+    creditAccount = await resolveBankLedgerAccountId(client, operatingCompanyId, advance.from_bank_account_id);
+    if (!creditAccount) {
+      throw new PostingEngineError(
+        "ACCOUNT_MAPPING_MISSING",
+        `Bank ledger account mapping is missing (banking.bank_accounts.ledger_account_id) for from_bank_account_id ${advance.from_bank_account_id}`
+      );
+    }
+  } else {
+    creditAccount = await resolveDisbursementCashAccountForCompany(client, operatingCompanyId);
+    if (!creditAccount) {
+      throw new PostingEngineError("ACCOUNT_MAPPING_MISSING", "Cash account mapping for driver advance is missing");
+    }
   }
 
   // posting_date is the user-settable book date; fall back to disbursed_at / created_at.
