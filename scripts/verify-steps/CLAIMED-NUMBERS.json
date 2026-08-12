@@ -1,19 +1,4 @@
 {
-  "3145": {
-    "claimed_at": "2026-08-12",
-    "claimed_by": "cc-1",
-    "purpose": "verify-je-memo-not-bare-uuid"
-  },
-  "3141": {
-    "claimed_at": "2026-08-12",
-    "claimed_by": "cc-1",
-    "purpose": "verify-ap-bill-number-not-load-number"
-  },
-  "3137": {
-    "claimed_at": "2026-08-12",
-    "claimed_by": "cc-1",
-    "purpose": "verify-insurance-policy-opco-insert"
-  },
   "2912": {
     "claimed_at": "2026-08-08",
     "claimed_by": "cursor",
@@ -369,6 +354,11 @@
     "claimed_by": "cc-1",
     "purpose": "verify-ci-dist-coverage-step-order"
   },
+  "3123": {
+    "claimed_at": "2026-08-12",
+    "claimed_by": "cc-2",
+    "purpose": "verify-driver-profile-settlement-reverse-link"
+  },
   "3125": {
     "claimed_at": "2026-08-12",
     "claimed_by": "cc-1",
@@ -383,6 +373,21 @@
     "claimed_at": "2026-08-12",
     "claimed_by": "cc-1",
     "purpose": "verify-revenue-gl-linkage-je-memo"
+  },
+  "3137": {
+    "claimed_at": "2026-08-12",
+    "claimed_by": "cc-1",
+    "purpose": "verify-insurance-policy-opco-insert"
+  },
+  "3141": {
+    "claimed_at": "2026-08-12",
+    "claimed_by": "cc-1",
+    "purpose": "verify-ap-bill-number-not-load-number"
+  },
+  "3145": {
+    "claimed_at": "2026-08-12",
+    "claimed_by": "cc-1",
+    "purpose": "verify-je-memo-not-bare-uuid"
   },
   "_band": {
     "cc-1": "n%4===1",
@@ -2228,5 +2233,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1123
+  "total_claimed": 1122
 }
