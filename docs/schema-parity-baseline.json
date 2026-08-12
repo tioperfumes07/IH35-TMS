@@ -7294,6 +7294,7 @@
       "cancel_reason_code",
       "canceled_at",
       "canceled_by",
+      "catalog_load_type_id",
       "created_at",
       "currency_code",
       "customer_chargeback_amount_cents",
