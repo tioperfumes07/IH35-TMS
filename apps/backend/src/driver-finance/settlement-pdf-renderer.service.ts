@@ -91,7 +91,7 @@ export async function renderSettlementStatementPdf(client: DbClient, input: Sett
         concat_ws(' ', d.first_name, d.last_name) AS driver_name,
         u.preferred_language
       FROM driver_finance.driver_settlements s
-      JOIN mdata.drivers d ON d.id = s.driver_id
+      JOIN mdata.drivers d ON d.id = s.driver_id AND d.operating_company_id = s.operating_company_id
       LEFT JOIN identity.users u ON u.id = d.identity_user_id
       WHERE s.operating_company_id = $1::uuid
         AND s.id = $2

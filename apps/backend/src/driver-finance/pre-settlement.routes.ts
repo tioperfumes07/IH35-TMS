@@ -76,7 +76,7 @@ export async function registerPreSettlementRoutes(app: FastifyInstance) {
             s.trip_started_at,
             s.period_start
           FROM driver_finance.driver_settlements s
-          LEFT JOIN mdata.drivers d ON d.id = s.driver_id
+          LEFT JOIN mdata.drivers d ON d.id = s.driver_id AND d.operating_company_id = s.operating_company_id
           WHERE s.operating_company_id = $1::uuid
             AND s.settlement_model = 'load_bookended'
             AND s.trip_closed_at IS NULL
@@ -303,7 +303,7 @@ export async function registerPreSettlementRoutes(app: FastifyInstance) {
             d.identity_user_id,
             u.email      AS user_email
           FROM driver_finance.driver_settlements s
-          JOIN mdata.drivers d ON d.id = s.driver_id
+          JOIN mdata.drivers d ON d.id = s.driver_id AND d.operating_company_id = s.operating_company_id
           LEFT JOIN identity.users u ON u.id = d.identity_user_id
           WHERE s.id = $1
             AND s.operating_company_id = $2::uuid

@@ -333,8 +333,8 @@ export async function applyApprovedAbandonmentChargebacksToSettlement(
     const dollars = cents / 100;
 
     const loadLabelRes = await client.query<{ load_number: string | null }>(
-      `SELECT load_number FROM mdata.loads WHERE id = $1 LIMIT 1`,
-      [row.load_id]
+      `SELECT load_number FROM mdata.loads WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
+      [row.load_id, input.operatingCompanyId]
     );
     const loadNumber = loadLabelRes.rows[0]?.load_number ? String(loadLabelRes.rows[0].load_number) : String(row.load_id);
 
