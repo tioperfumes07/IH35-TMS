@@ -135,6 +135,8 @@ export function SevereRepairOosTab({ operatingCompanyId }: Props) {
   });
 
   const estimates = estimatesQuery.data?.data ?? [];
+  // CLS-MONEY-KPI-FAKE-ZERO: zero rollup fallback is only valid on a successful empty response —
+  // on rollupQuery.isError the tiles must show "—", not fabricated 0 OOS / $0.
   const rollup = rollupQuery.data?.data ?? { open_count: 0, total_cents: 0, avg_days_oos: 0, oldest_oos_days: 0 };
   const openByUnit = useMemo(() => {
     const map = new Map<string, number>();
@@ -268,15 +270,15 @@ export function SevereRepairOosTab({ operatingCompanyId }: Props) {
         <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-3">
           <div className="rounded-sm border border-gray-200 bg-white p-3">
             <div className="text-xs uppercase tracking-wide text-gray-500">Total to bring fleet back online</div>
-            <div className="text-lg font-semibold">{money(rollup.total_cents)}</div>
+            <div className="text-lg font-semibold">{rollupQuery.isError ? "—" : money(rollup.total_cents)}</div>
           </div>
           <div className="rounded-sm border border-gray-200 bg-white p-3">
             <div className="text-xs uppercase tracking-wide text-gray-500">OOS units</div>
-            <div className="text-lg font-semibold">{rollup.open_count}</div>
+            <div className="text-lg font-semibold">{rollupQuery.isError ? "—" : rollup.open_count}</div>
           </div>
           <div className="rounded-sm border border-gray-200 bg-white p-3">
             <div className="text-xs uppercase tracking-wide text-gray-500">Average days OOS</div>
-            <div className="text-lg font-semibold">{asDays(rollup.avg_days_oos)}</div>
+            <div className="text-lg font-semibold">{rollupQuery.isError ? "—" : asDays(rollup.avg_days_oos)}</div>
           </div>
         </div>
         <div className="ml-3">

@@ -22,10 +22,9 @@
 // FIX: all four totals surfaces now branch on the same isError flag that already drives their list's
 // ListErrorBanner. On error every value shows "—" instead of a fabricated zero.
 //
-// CLS-MONEY-KPI-FAKE-ZERO-REMAINDER-FACTORING-MAINT (Cursor #this): FactoringHome summary KPI row
-// still called fmtCurrency(summary?.…) while ListErrorBanner already knew summaryQuery failed —
-// fabricated $0.00 / default recourse days. MaintenanceHome substituted a full zero KPI object on
-// missing data so Open WOs rendered 0 next to a loaded WO table (Cascade LV-MAINTENANCE-KPI).
+// CLS-MONEY-KPI-FAKE-ZERO-REMAINDER-FACTORING-MAINT (Cursor #6254): FactoringHome + MaintenanceHome.
+// CLS-MONEY-KPI-FAKE-ZERO-REMAINDER-MAINT-TABS (Cursor #this): ServiceLocationPage zero-object fallback
+// + SevereRepairOosTab rollup tiles still money()/open_count with no rollupQuery.isError branch.
 // Extended here rather than a new verify-step number (Rule 17 / no hotfile thrash).
 import fs from "node:fs";
 
@@ -36,6 +35,8 @@ const EXPENSES_PAGE = "apps/frontend/src/pages/accounting/ExpensesListPage.tsx";
 const FACTORING_HOME = "apps/frontend/src/pages/factoring/FactoringHome.tsx";
 const MAINT_HOME = "apps/frontend/src/pages/maintenance/MaintenanceHome.tsx";
 const MAINT_KPI_ROWS = "apps/frontend/src/pages/maintenance/components/MaintKpiRows.tsx";
+const SERVICE_LOCATION = "apps/frontend/src/pages/maintenance/ServiceLocationPage.tsx";
+const SEVERE_OOS = "apps/frontend/src/pages/maintenance/components/SevereRepairOosTab.tsx";
 
 function fail(msg) {
   console.error(`FAIL verify-money-kpi-strip-no-fake-zero-on-error: ${msg}`);
@@ -126,6 +127,24 @@ function checkMaintenanceHome(src, rowsSrc) {
   }
   if (!rowsSrc.includes("isError ? null : pick(kpis.open_wos)")) {
     fail(`${MAINT_KPI_ROWS}: Open WOs tile must null out when isError.`);
+  }
+}
+
+function checkServiceLocationPage(src) {
+  if (/kpisQuery\.data\s*\?\?\s*\{[\s\S]{0,200}in_house_count:\s*0/.test(src)) {
+    fail(`${SERVICE_LOCATION}: still uses kpisQuery.data ?? { in_house_count: 0, … } — reintroduces fake zeros on fetch failure.`);
+  }
+  if (!src.includes("kpisQuery.isError ? null")) {
+    fail(`${SERVICE_LOCATION}: DrillKpiCard values must null out when kpisQuery.isError.`);
+  }
+}
+
+function checkSevereRepairOosTab(src) {
+  if (!src.includes('rollupQuery.isError ? "—" : money(rollup.total_cents)')) {
+    fail(`${SEVERE_OOS}: Total $ tile must branch on rollupQuery.isError → "—", not money(rollup.total_cents) alone.`);
+  }
+  if (!src.includes('rollupQuery.isError ? "—" : rollup.open_count')) {
+    fail(`${SEVERE_OOS}: OOS units tile must branch on rollupQuery.isError → "—".`);
   }
 }
 
@@ -305,6 +324,69 @@ function selftest() {
     probesProven++;
   }
 
+  // Mutation 7: ServiceLocationPage restores zero-object KPI fallback.
+  {
+    const original = fs.readFileSync(SERVICE_LOCATION, "utf8");
+    const mutated = original
+      .replace(
+        /\/\/ CLS-MONEY-KPI-FAKE-ZERO:[\s\S]*?const kpis = kpisQuery\.data;/,
+        "const kpis = kpisQuery.data ?? { in_house_count: 0, external_count: 0, roadside_count: 0, unique_locations: 0 };"
+      )
+      .replace(/kpisQuery\.isError \? null : \(kpis\?\.in_house_count \?\? null\)/g, "kpis.in_house_count")
+      .replace(/kpisQuery\.isError \? null : \(kpis\?\.external_count \?\? null\)/g, "kpis.external_count")
+      .replace(/kpisQuery\.isError \? null : \(kpis\?\.roadside_count \?\? null\)/g, "kpis.roadside_count")
+      .replace(/kpisQuery\.isError \? null : \(kpis\?\.unique_locations \?\? null\)/g, "kpis.unique_locations");
+    if (mutated === original || !/in_house_count:\s*0/.test(mutated)) {
+      console.error("SELFTEST SETUP FAILED: ServiceLocationPage honest KPI patterns not found to mutate.");
+      process.exitCode = 1;
+      return;
+    }
+    fs.writeFileSync(SERVICE_LOCATION, mutated);
+    let caught = false;
+    try {
+      checkServiceLocationPage(mutated);
+      caught = process.exitCode === 1;
+    } finally {
+      process.exitCode = undefined;
+      fs.writeFileSync(SERVICE_LOCATION, original);
+    }
+    if (!caught) {
+      console.error("SELFTEST INERT: restoring ServiceLocationPage zero-object fallback was not caught.");
+      process.exitCode = 1;
+      return;
+    }
+    probesProven++;
+  }
+
+  // Mutation 8: SevereRepairOosTab drops rollupQuery.isError branches.
+  {
+    const original = fs.readFileSync(SEVERE_OOS, "utf8");
+    const mutated = original
+      .replace(/\{rollupQuery\.isError \? "—" : money\(rollup\.total_cents\)\}/g, "{money(rollup.total_cents)}")
+      .replace(/\{rollupQuery\.isError \? "—" : rollup\.open_count\}/g, "{rollup.open_count}")
+      .replace(/\{rollupQuery\.isError \? "—" : asDays\(rollup\.avg_days_oos\)\}/g, "{asDays(rollup.avg_days_oos)}");
+    if (mutated === original) {
+      console.error("SELFTEST SETUP FAILED: SevereRepairOosTab rollupQuery.isError patterns not found.");
+      process.exitCode = 1;
+      return;
+    }
+    fs.writeFileSync(SEVERE_OOS, mutated);
+    let caught = false;
+    try {
+      checkSevereRepairOosTab(mutated);
+      caught = process.exitCode === 1;
+    } finally {
+      process.exitCode = undefined;
+      fs.writeFileSync(SEVERE_OOS, original);
+    }
+    if (!caught) {
+      console.error("SELFTEST INERT: dropping SevereRepairOosTab rollupQuery.isError was not caught.");
+      process.exitCode = 1;
+      return;
+    }
+    probesProven++;
+  }
+
   console.log(`PASS verify-money-kpi-strip-no-fake-zero-on-error --selftest (mutation probes proven non-inert: ${probesProven})`);
 }
 
@@ -317,6 +399,8 @@ if (process.argv.includes("--selftest")) {
   checkExpensesPage(fs.readFileSync(EXPENSES_PAGE, "utf8"));
   checkFactoringHome(fs.readFileSync(FACTORING_HOME, "utf8"));
   checkMaintenanceHome(fs.readFileSync(MAINT_HOME, "utf8"), fs.readFileSync(MAINT_KPI_ROWS, "utf8"));
+  checkServiceLocationPage(fs.readFileSync(SERVICE_LOCATION, "utf8"));
+  checkSevereRepairOosTab(fs.readFileSync(SEVERE_OOS, "utf8"));
   if (process.exitCode !== 1) {
     console.log("PASS verify-money-kpi-strip-no-fake-zero-on-error");
   }

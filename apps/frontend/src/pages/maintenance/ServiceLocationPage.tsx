@@ -43,7 +43,9 @@ export function ServiceLocationPage({ operatingCompanyId }: Props) {
     enabled: Boolean(operatingCompanyId),
   });
 
-  const kpis = kpisQuery.data ?? { in_house_count: 0, external_count: 0, roadside_count: 0, unique_locations: 0 };
+  // CLS-MONEY-KPI-FAKE-ZERO: never fabricate in_house_count:0 (etc.) when the KPI fetch failed —
+  // DrillKpiCard null → "—" (same class as MaintenanceHome / FactoringHome).
+  const kpis = kpisQuery.data;
   const rows = useMemo(() => rowsQuery.data?.rows ?? [], [rowsQuery.data?.rows]);
 
   // Each row → that location's open WOs (now a real, filtered list — work-orders endpoint honors
@@ -81,11 +83,36 @@ export function ServiceLocationPage({ operatingCompanyId }: Props) {
         {/* C8: KPI tile → the list it represents (00-MASTER-LINK-MAP). "Locations" is a distinct-count
             over the table already rendered below, so it drills to that tab rather than to a WO filter
             that would not match the figure. */}
-        <DrillKpiCard label="In-House" value={kpis.in_house_count} to="/maintenance/active-wos?bucket=in_house" />
-        <DrillKpiCard label="External" value={kpis.external_count} to="/maintenance/active-wos?bucket=external" />
-        <DrillKpiCard label="Roadside" value={kpis.roadside_count} to="/maintenance/active-wos?bucket=roadside" />
-        <DrillKpiCard label="Locations" value={kpis.unique_locations} to="/maintenance/service-location" />
+        <DrillKpiCard
+          label="In-House"
+          value={kpisQuery.isError ? null : (kpis?.in_house_count ?? null)}
+          to="/maintenance/active-wos?bucket=in_house"
+        />
+        <DrillKpiCard
+          label="External"
+          value={kpisQuery.isError ? null : (kpis?.external_count ?? null)}
+          to="/maintenance/active-wos?bucket=external"
+        />
+        <DrillKpiCard
+          label="Roadside"
+          value={kpisQuery.isError ? null : (kpis?.roadside_count ?? null)}
+          to="/maintenance/active-wos?bucket=roadside"
+        />
+        <DrillKpiCard
+          label="Locations"
+          value={kpisQuery.isError ? null : (kpis?.unique_locations ?? null)}
+          to="/maintenance/service-location"
+        />
       </div>
+
+      {kpisQuery.isError ? (
+        <ListErrorState
+          title="Couldn't load service-location KPIs"
+          status={0}
+          message={(kpisQuery.error as Error)?.message}
+          onRetry={() => void kpisQuery.refetch()}
+        />
+      ) : null}
 
       {rowsQuery.isError ? (
         <ListErrorState
