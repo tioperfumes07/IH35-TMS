@@ -54,6 +54,7 @@ export async function getArAgingReport(input: {
         FROM accounting.invoices i
         LEFT JOIN mdata.customers c
           ON c.id = i.customer_id
+          AND c.operating_company_id = i.operating_company_id
         WHERE i.operating_company_id = $1::uuid
           AND i.amount_open_cents IS NOT NULL
           AND i.amount_open_cents > 0

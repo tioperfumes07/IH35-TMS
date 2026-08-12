@@ -66,7 +66,7 @@ function mapEquipmentLogRow(row: Record<string, unknown>): EquipmentLogRow {
 }
 
 export async function registerEquipmentLogRoutes(app: FastifyInstance) {
-  app.get("/api/v1/mdata/equipment-log", async (req, reply) => {
+  app.get("/api/v1/mdata/equipment-log", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const parsedQuery = listQuerySchema.safeParse(req.query ?? {});
@@ -127,7 +127,7 @@ export async function registerEquipmentLogRoutes(app: FastifyInstance) {
             el.created_by_user_id,
             el.updated_by_user_id
           FROM mdata.equipment_log el
-          JOIN mdata.equipment e ON e.id = el.equipment_id
+          JOIN mdata.equipment e ON e.id = el.equipment_id AND (e.owner_company_id = $1 OR e.currently_leased_to_company_id = $1)
           ${whereClause}
           ORDER BY el.event_at DESC, el.created_at DESC
           LIMIT $${values.length - 1}
@@ -141,7 +141,7 @@ export async function registerEquipmentLogRoutes(app: FastifyInstance) {
     return { equipment_log };
   });
 
-  app.post("/api/v1/mdata/equipment-log", async (req, reply) => {
+  app.post("/api/v1/mdata/equipment-log", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -210,7 +210,7 @@ export async function registerEquipmentLogRoutes(app: FastifyInstance) {
     }
   });
 
-  app.get("/api/v1/mdata/equipment-log/:id", async (req, reply) => {
+  app.get("/api/v1/mdata/equipment-log/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
@@ -219,8 +219,8 @@ export async function registerEquipmentLogRoutes(app: FastifyInstance) {
     const row = await withCurrentUser(authUser.uuid, async (client) => {
       // Entity scope (USMCA cross-entity leak fix): mdata.equipment_log has NO company column and its
       // RLS is role-scoped, so a bare `WHERE id = $1` lets an Owner read another entity's equipment
-      // history by id. Join mdata.equipment and scope by the owner/leased pair (mirrors the list
-      // endpoint above); resolve the company from the caller's context.
+      // history by id. This route joins mdata.equipment, scoped by the owner/leased pair (mirrors the
+      // list endpoint above); resolve the company from the caller's context.
       const scopedCompanyId = await resolveOperatingCompanyId(client, authUser.uuid);
       if (!scopedCompanyId) return null;
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [scopedCompanyId]);

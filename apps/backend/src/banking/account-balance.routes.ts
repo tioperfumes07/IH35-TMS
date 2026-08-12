@@ -106,8 +106,8 @@ export async function registerAccountBalanceRoutes(app: FastifyInstance) {
 
       if (bank.ledger_account_id) {
         const typeRes = await client.query<{ account_type: string | null }>(
-          `SELECT account_type FROM catalogs.accounts WHERE id = $1 LIMIT 1`,
-          [bank.ledger_account_id]
+          `SELECT account_type FROM catalogs.accounts WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
+          [bank.ledger_account_id, query.data.operating_company_id]
         );
         const accountType = String(typeRes.rows[0]?.account_type ?? "Asset");
         const invert =

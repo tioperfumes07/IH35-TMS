@@ -30,7 +30,7 @@ const COMM_SELECT = `
     m.delivery_ref,
     d.identity_user_id::text AS identity_user_id
   FROM mdata.driver_profile_messages m
-  JOIN mdata.drivers d ON d.id = m.driver_id
+  JOIN mdata.drivers d ON d.id = m.driver_id AND d.operating_company_id = m.operating_company_id
 `;
 
 function mapEntry(row: Record<string, unknown>): DriverCommEntry {

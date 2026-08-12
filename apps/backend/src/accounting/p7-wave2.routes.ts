@@ -390,7 +390,9 @@ export async function registerAccountingP7Wave2Routes(app: FastifyInstance) {
             SUM(CASE WHEN jep.debit_or_credit = 'credit' THEN jep.amount_cents ELSE 0 END)::bigint AS credit_cents
           FROM accounting.journal_entry_postings jep
           JOIN accounting.journal_entries je ON je.id = jep.journal_entry_uuid
+                                             AND je.operating_company_id = jep.operating_company_id
           JOIN catalogs.accounts a ON a.id = jep.account_id
+                                   AND a.operating_company_id = jep.operating_company_id
           WHERE jep.operating_company_id = $1::uuid
             AND ($2::date IS NULL OR je.entry_date <= $2::date)
           GROUP BY jep.account_id, a.account_number, a.account_name, a.account_type

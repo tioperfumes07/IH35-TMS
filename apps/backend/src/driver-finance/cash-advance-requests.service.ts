@@ -639,8 +639,8 @@ export async function previewCashAdvanceCascade(
   try {
     const mapped = await resolveAccountForCategory(operatingCompanyId, "cash_advance", "cash_advance");
     const acc = await client.query(
-      `SELECT account_number, account_name FROM catalogs.accounts WHERE id = $1::uuid LIMIT 1`,
-      [mapped.account_id]
+      `SELECT account_number, account_name FROM catalogs.accounts WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
+      [mapped.account_id, operatingCompanyId]
     );
     const a = acc.rows[0] as { account_number?: string | null; account_name?: string | null } | undefined;
     resolved_account = {

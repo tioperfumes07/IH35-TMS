@@ -247,6 +247,7 @@ export const AP_AGING_OPEN_BILLS_SQL = `
                   SELECT SUM(COALESCE(bp.amount_cents, 0))
                   FROM accounting.bill_payments bp
                   WHERE bp.bill_id = b.id
+                    AND bp.operating_company_id = b.operating_company_id
                     AND bp.payment_date <= $2::date
                     AND (bp.revoked_at IS NULL OR bp.revoked_at::date > $2::date)
                 ), 0)
@@ -282,6 +283,7 @@ export const AP_AGING_OPEN_BILLS_SQL = `
             THEN b.vendor_uuid::uuid
             ELSE NULL
           END
+         AND v.operating_company_id = b.operating_company_id
         WHERE b.operating_company_id = $1::uuid
           AND b.bill_date <= $2::date
           AND b.amount_cents IS NOT NULL
@@ -299,6 +301,7 @@ export const AP_AGING_OPEN_BILLS_SQL = `
                   SELECT SUM(COALESCE(bp.amount_cents, 0))
                   FROM accounting.bill_payments bp
                   WHERE bp.bill_id = b.id
+                    AND bp.operating_company_id = b.operating_company_id
                     AND bp.payment_date <= $2::date
                     AND (bp.revoked_at IS NULL OR bp.revoked_at::date > $2::date)
                 ), 0)

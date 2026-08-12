@@ -211,7 +211,7 @@ export async function registerBankingP7Wave2Routes(app: FastifyInstance) {
     if (!body.success) return validationError(reply, body.error);
 
     const id = await withCompanyScope(user.uuid, body.data.operating_company_id, async (client) => {
-      const acct = await client.query(`SELECT id FROM catalogs.accounts WHERE id = $1 LIMIT 1`, [body.data.then_account_id]);
+      const acct = await client.query(`SELECT id FROM catalogs.accounts WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`, [body.data.then_account_id, body.data.operating_company_id]);
       if (!acct.rows[0]) {
         reply.code(400).send({ error: "unknown_account" });
         return null;

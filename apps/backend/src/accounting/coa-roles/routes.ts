@@ -47,7 +47,7 @@ export async function registerCoaRolesRoutes(app: FastifyInstance) {
             ORDER BY x.updated_at DESC
             LIMIT 1
           ) car ON true
-          LEFT JOIN catalogs.accounts a ON a.id = car.account_id
+          LEFT JOIN catalogs.accounts a ON a.id = car.account_id AND a.operating_company_id = $2::uuid
           ORDER BY r.role ASC
         `,
         [COA_ROLE_VALUES, query.data.operating_company_id]

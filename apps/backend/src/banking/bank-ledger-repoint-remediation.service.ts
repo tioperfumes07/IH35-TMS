@@ -142,6 +142,7 @@ async function bridgeIsSane(
       SELECT count(*)::int AS mismatched
       FROM banking.bank_accounts ba
       JOIN catalogs.accounts led ON led.id = ba.ledger_account_id
+                                 AND led.operating_company_id = ba.operating_company_id
       WHERE ba.operating_company_id = $1::uuid
         AND ($2::uuid IS NULL OR ba.id = $2::uuid)
         AND (

@@ -362,6 +362,7 @@ export async function getApAgingVendorBills(input: {
                   SELECT SUM(COALESCE(bp.amount_cents, 0))
                   FROM accounting.bill_payments bp
                   WHERE bp.bill_id = b.id
+                    AND bp.operating_company_id = b.operating_company_id
                     AND bp.payment_date <= $3::date
                     AND (bp.revoked_at IS NULL OR bp.revoked_at::date > $3::date)
                 ), 0)::bigint AS paid_as_of

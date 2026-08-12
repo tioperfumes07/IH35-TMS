@@ -231,7 +231,7 @@ export async function listEligibleDriverEscrowReturns(operatingCompanyId: string
                (d.first_name || ' ' || d.last_name) AS driver_name,
                ea.balance_cents::bigint AS current_balance_cents
         FROM driver_finance.driver_escrow_separations s
-        LEFT JOIN mdata.drivers d ON d.id = s.driver_id
+        LEFT JOIN mdata.drivers d ON d.id = s.driver_id AND d.operating_company_id = s.operating_company_id
         LEFT JOIN accounting.escrow_accounts ea ON ea.id = s.escrow_account_id
         WHERE s.operating_company_id = $1::uuid
           AND s.status IN ('pending','eligible')

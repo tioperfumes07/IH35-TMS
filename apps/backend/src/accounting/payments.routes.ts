@@ -91,7 +91,8 @@ const PAYMENT_MATCHED_BANK_TRANSACTION_ID_SQL = `
 
 async function fetchPaymentDetail(
   client: { query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }> },
-  paymentId: string
+  paymentId: string,
+  operatingCompanyId: string
 ) {
   const paymentRes = await client.query(
     `
@@ -115,9 +116,10 @@ async function fetchPaymentDetail(
         ON bt.id = ${PAYMENT_MATCHED_BANK_TRANSACTION_ID_SQL}::uuid
        AND bt.operating_company_id = p.operating_company_id
       WHERE p.id = $1
+        AND p.operating_company_id = $2::uuid
       LIMIT 1
     `,
-    [paymentId]
+    [paymentId, operatingCompanyId]
   );
   const payment = paymentRes.rows[0] ?? null;
   if (!payment) return null;
@@ -247,7 +249,7 @@ export async function registerPaymentsRoutes(app: FastifyInstance) {
     if (!query.success) return validationError(reply, query.error);
 
     const detail = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
-      return fetchPaymentDetail(client, params.data.id);
+      return fetchPaymentDetail(client, params.data.id, query.data.operating_company_id);
     });
 
     if (!detail) return reply.code(404).send({ error: "payment_not_found" });
@@ -595,7 +597,7 @@ export async function registerPaymentsRoutes(app: FastifyInstance) {
         "P3-T11.20.3-PAYMENT-RECORDING"
       );
 
-      const detail = await fetchPaymentDetail(client, params.data.id);
+      const detail = await fetchPaymentDetail(client, params.data.id, query.data.operating_company_id);
       return { code: 200 as const, data: detail };
     });
 

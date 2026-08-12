@@ -39,7 +39,7 @@ export async function registerDriverFuelReceiptRoutes(app: FastifyInstance) {
         `
           SELECT id, unit_number, display_id
           FROM mdata.units
-          WHERE operating_company_id = $1::uuid
+          WHERE COALESCE(currently_leased_to_company_id, owner_company_id) = $1::uuid
             AND deactivated_at IS NULL
             AND (assigned_driver_id IS NULL OR assigned_driver_id = $2::uuid)
           ORDER BY (assigned_driver_id = $2::uuid) DESC, unit_number ASC NULLS LAST
@@ -95,7 +95,7 @@ export async function registerDriverFuelReceiptRoutes(app: FastifyInstance) {
           `
             SELECT 1 FROM mdata.units
             WHERE id = $1::uuid
-              AND operating_company_id = $3::uuid
+              AND COALESCE(currently_leased_to_company_id, owner_company_id) = $3::uuid
               AND deactivated_at IS NULL
               AND (assigned_driver_id IS NULL OR assigned_driver_id = $2::uuid)
             LIMIT 1

@@ -117,10 +117,11 @@ async function validateAccountOwnership(
       SELECT id
       FROM catalogs.accounts
       WHERE id = $1
+        AND operating_company_id = $2::uuid
         AND deactivated_at IS NULL
       LIMIT 1
     `,
-    [accountId]
+    [accountId, operatingCompanyId]
   );
   return Boolean(res.rows[0]?.id);
 }
@@ -969,7 +970,7 @@ export async function listIntercompanyPairs(operatingCompanyId: string, userId: 
                p.deactivated_at, p.deactivated_by_user_id
           FROM banking.intercompany_entity_pairs p
           JOIN org.companies c ON c.id = p.counterparty_company_id
-          LEFT JOIN catalogs.accounts a ON a.id = p.intercompany_account_id
+          LEFT JOIN catalogs.accounts a ON a.id = p.intercompany_account_id AND a.operating_company_id = p.operating_company_id
          WHERE p.operating_company_id = $1::uuid
            AND ($2::boolean = true OR p.deactivated_at IS NULL)
          ORDER BY c.code

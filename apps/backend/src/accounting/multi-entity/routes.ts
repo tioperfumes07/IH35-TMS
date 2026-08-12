@@ -90,7 +90,7 @@ export async function registerMultiEntityAccountingRoutes(app: FastifyInstance) 
               jep.amount_cents::bigint AS amount_cents
             FROM accounting.journal_entry_postings jep
             JOIN accounting.journal_entries je ON je.id = jep.journal_entry_uuid
-            JOIN catalogs.accounts a ON a.id = jep.account_id
+            JOIN catalogs.accounts a ON a.id = jep.account_id AND a.operating_company_id = je.operating_company_id
             WHERE je.operating_company_id = ANY($1::uuid[])
               AND je.entry_date BETWEEN $2::date AND $3::date
           )
@@ -155,7 +155,7 @@ export async function registerMultiEntityAccountingRoutes(app: FastifyInstance) 
             COALESCE(SUM(CASE WHEN jep.debit_or_credit = 'credit' THEN jep.amount_cents ELSE 0 END), 0)::bigint AS credit_cents
           FROM accounting.journal_entry_postings jep
           JOIN accounting.journal_entries je ON je.id = jep.journal_entry_uuid
-          JOIN catalogs.accounts a ON a.id = jep.account_id
+          JOIN catalogs.accounts a ON a.id = jep.account_id AND a.operating_company_id = je.operating_company_id
           WHERE je.operating_company_id = ANY($1::uuid[])
             AND je.entry_date BETWEEN $2::date AND $3::date
           GROUP BY a.id, a.account_number, a.account_name, a.account_type

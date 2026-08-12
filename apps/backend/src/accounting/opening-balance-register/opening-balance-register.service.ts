@@ -451,7 +451,7 @@ async function loadStagedRows(
         a.opening_balance_cents AS posted_opening_balance_cents,
         a.opening_balance_as_of AS posted_opening_balance_as_of
       FROM accounting.ob_register_staging_lines l
-      JOIN catalogs.accounts a ON a.id = l.account_id
+      JOIN catalogs.accounts a ON a.id = l.account_id AND a.operating_company_id = l.operating_company_id
       WHERE l.operating_company_id = $1::uuid
         AND l.as_of_date = $2::date
         AND l.status = 'staged'
@@ -1497,7 +1497,7 @@ export async function listObRegisterAudit(
              e.created_at
       FROM accounting.ob_register_audit_events e
       LEFT JOIN identity.users u ON u.id = e.actor_user_id
-      LEFT JOIN catalogs.accounts a ON a.id = e.account_id
+      LEFT JOIN catalogs.accounts a ON a.id = e.account_id AND a.operating_company_id = e.operating_company_id
       WHERE e.operating_company_id = $1::uuid
         AND e.as_of_date = $2::date
       ORDER BY e.created_at DESC

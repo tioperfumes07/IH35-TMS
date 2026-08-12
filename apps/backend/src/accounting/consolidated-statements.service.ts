@@ -189,6 +189,7 @@ async function readBills(
           WHEN b.vendor_uuid ~* '${UUID_TEXT_RE}' THEN b.vendor_uuid::uuid
           ELSE NULL
         END
+        AND v.operating_company_id = b.operating_company_id
       WHERE b.operating_company_id = $1::uuid
         AND b.amount_cents IS NOT NULL
         AND b.revoked_at IS NULL
@@ -235,6 +236,7 @@ async function readInvoices(
       FROM accounting.invoices i
       LEFT JOIN mdata.customers c
         ON c.id = i.customer_id
+        AND c.operating_company_id = i.operating_company_id
       WHERE i.operating_company_id = $1::uuid
         AND i.voided_at IS NULL
         -- ACCT-F223 — same exclusion as A/R aging: a proforma posts no GL, so showing it on a

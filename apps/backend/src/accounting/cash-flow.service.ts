@@ -194,6 +194,7 @@ export async function getCashFlowReport(input: {
          AND pb.operating_company_id = p.operating_company_id
         LEFT JOIN catalogs.accounts a
           ON a.id = p.account_id
+         AND a.operating_company_id = p.operating_company_id
         WHERE p.operating_company_id = $1::uuid
           AND je.status <> 'voided'
           AND (p.posting_batch_id IS NULL OR pb.batch_status IN ('posted', 'reversed'))
@@ -286,6 +287,7 @@ export async function getCashFlowReport(input: {
                    AND pb.operating_company_id = p.operating_company_id
                   JOIN catalogs.accounts a
                     ON a.id = p.account_id
+                   AND a.operating_company_id = p.operating_company_id
                   WHERE p.operating_company_id = $1::uuid
                     AND je.status <> 'voided'
                     AND (p.posting_batch_id IS NULL OR pb.batch_status IN ('posted', 'reversed'))
@@ -314,6 +316,7 @@ export async function getCashFlowReport(input: {
              AND pb.operating_company_id = p.operating_company_id
             JOIN catalogs.accounts a
               ON a.id = p.account_id
+             AND a.operating_company_id = p.operating_company_id
             WHERE p.operating_company_id = $1::uuid
               AND je.status <> 'voided'
               AND (p.posting_batch_id IS NULL OR pb.batch_status IN ('posted', 'reversed'))

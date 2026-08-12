@@ -224,18 +224,18 @@ async function vendorExists(client: pg.Client, companyId: string, vendorCode: st
   return Boolean(res.rows[0]);
 }
 
-async function unitExists(client: pg.Client, unitNumber: string) {
+async function unitExists(client: pg.Client, companyId: string, unitNumber: string) {
   const res = await client.query<{ id: string }>(
-    `SELECT id FROM mdata.units WHERE unit_number = $1 LIMIT 1`,
-    [unitNumber.trim()]
+    `SELECT id FROM mdata.units WHERE unit_number = $1 AND COALESCE(currently_leased_to_company_id, owner_company_id) = $2::uuid LIMIT 1`,
+    [unitNumber.trim(), companyId]
   );
   return Boolean(res.rows[0]);
 }
 
-async function equipmentExists(client: pg.Client, equipmentNumber: string) {
+async function equipmentExists(client: pg.Client, companyId: string, equipmentNumber: string) {
   const res = await client.query<{ id: string }>(
-    `SELECT id FROM mdata.equipment WHERE equipment_number = $1 LIMIT 1`,
-    [equipmentNumber.trim()]
+    `SELECT id FROM mdata.equipment WHERE equipment_number = $1 AND COALESCE(currently_leased_to_company_id, owner_company_id) = $2::uuid LIMIT 1`,
+    [equipmentNumber.trim(), companyId]
   );
   return Boolean(res.rows[0]);
 }
@@ -318,12 +318,12 @@ async function resolveDriverIdByCdl(client: pg.Client, operatingCompanyId: strin
   return res.rows[0]?.id ?? null;
 }
 
-async function resolveUnitIdByNumber(client: pg.Client, unitNumberRaw: string | null) {
+async function resolveUnitIdByNumber(client: pg.Client, operatingCompanyId: string, unitNumberRaw: string | null) {
   const unitNumber = unitNumberRaw?.trim() ?? "";
   if (!unitNumber) return null;
   const res = await client.query<{ id: string }>(
-    `SELECT id FROM mdata.units WHERE unit_number = $1 LIMIT 1`,
-    [unitNumber]
+    `SELECT id FROM mdata.units WHERE unit_number = $1 AND COALESCE(currently_leased_to_company_id, owner_company_id) = $2::uuid LIMIT 1`,
+    [unitNumber, operatingCompanyId]
   );
   return res.rows[0]?.id ?? null;
 }
@@ -726,7 +726,7 @@ async function upsertAssets(
         const yearParsed = yearValue ? Number.parseInt(yearValue, 10) : null;
 
         if (kind.toLowerCase() === "truck") {
-          const existsAlready = await unitExists(client, unitNumber);
+          const existsAlready = await unitExists(client, companyId, unitNumber);
           if (existsAlready) {
             counters.skipped += 1;
             await client.query("RELEASE SAVEPOINT seed_row_assets");
@@ -770,7 +770,7 @@ async function upsertAssets(
           }
         } else if (kind.toLowerCase() === "trailer") {
           const trailerNumber = unitNumber.trim();
-          const existsAlready = await equipmentExists(client, trailerNumber);
+          const existsAlready = await equipmentExists(client, companyId, trailerNumber);
           if (existsAlready) {
             counters.skipped += 1;
             await client.query("RELEASE SAVEPOINT seed_row_assets");
@@ -898,7 +898,7 @@ async function upsertLoads(
           throw new Error(`secondary_driver_cdl "${row.secondary_driver_cdl}" not found`);
         }
 
-        const unitId = await resolveUnitIdByNumber(client, nullable(row.assigned_unit_number));
+        const unitId = await resolveUnitIdByNumber(client, operatingCompanyId, nullable(row.assigned_unit_number));
         if (nullable(row.assigned_unit_number)?.trim() && !unitId) {
           if (dryRun) {
             counters.skipped += 1;

@@ -63,6 +63,7 @@ const MESSAGE_SELECT = `
     concat_ws(' ', d.first_name, d.last_name) AS driver_name
   FROM mdata.driver_profile_messages m
   JOIN mdata.drivers d ON d.id = m.driver_id
+                       AND d.operating_company_id = m.operating_company_id
 `;
 
 export async function listDriverMessageThread(

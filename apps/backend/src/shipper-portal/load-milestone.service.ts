@@ -157,7 +157,7 @@ export async function ensurePodMilestone(
   });
 }
 
-export async function processPendingMilestoneEmails(client: DbClient, input: { load_id: string; customer_id: string }): Promise<void> {
+export async function processPendingMilestoneEmails(client: DbClient, input: { load_id: string; customer_id: string; operating_company_id: string }): Promise<void> {
   const usersRes = await client.query<{
     id: string;
     email: string;
@@ -199,9 +199,10 @@ export async function processPendingMilestoneEmails(client: DbClient, input: { l
         SELECT city, state FROM mdata.load_stops WHERE load_id = l.id AND stop_type = 'delivery' ORDER BY sequence_number DESC LIMIT 1
       ) sd ON true
       WHERE l.id = $1::uuid
+        AND l.operating_company_id = $2::uuid
       LIMIT 1
     `,
-    [input.load_id]
+    [input.load_id, input.operating_company_id]
   );
   const load = loadRes.rows[0];
   if (!load) return;

@@ -363,8 +363,8 @@ export async function applyPayment(client: Queryable, input: ApplyPaymentInput, 
   }
 
   const refreshedPaymentRes = await client.query<{ amount_unapplied_cents: number }>(
-    `SELECT amount_unapplied_cents::bigint AS amount_unapplied_cents FROM accounting.payments WHERE id = $1::uuid LIMIT 1`,
-    [input.payment_id]
+    `SELECT amount_unapplied_cents::bigint AS amount_unapplied_cents FROM accounting.payments WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
+    [input.payment_id, input.operating_company_id]
   );
   const unappliedAfter = Number(refreshedPaymentRes.rows[0]?.amount_unapplied_cents ?? 0);
 

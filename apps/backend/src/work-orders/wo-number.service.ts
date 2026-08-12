@@ -6,8 +6,8 @@ export async function generateWorkOrderNumber(
 ): Promise<string> {
   if (opts.linkedLoadId) {
     const row = await tx.query<{ load_number: string | null }>(
-      `SELECT load_number FROM mdata.loads WHERE id = $1 LIMIT 1`,
-      [opts.linkedLoadId]
+      `SELECT load_number FROM mdata.loads WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
+      [opts.linkedLoadId, opts.operatingCompanyId]
     );
     const loadNumber = String(row.rows[0]?.load_number ?? "").trim();
     const suffix = loadNumber.split("-").pop() ?? loadNumber;

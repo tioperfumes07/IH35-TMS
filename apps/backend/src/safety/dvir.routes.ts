@@ -170,7 +170,7 @@ export async function registerSafetyDvirRoutes(app: FastifyInstance) {
     return payload;
   });
 
-  app.post("/api/v1/safety/dvir", async (req, reply) => {
+  app.post("/api/v1/safety/dvir", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -184,9 +184,10 @@ export async function registerSafetyDvirRoutes(app: FastifyInstance) {
           SELECT id
           FROM mdata.drivers
           WHERE identity_user_id = $1
+            AND operating_company_id = $2::uuid
           LIMIT 1
         `,
-        [user.uuid]
+        [user.uuid, query.data.operating_company_id]
       );
     });
     const driver = driverRes.rows[0];

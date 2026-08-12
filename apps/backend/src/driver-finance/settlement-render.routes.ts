@@ -77,7 +77,7 @@ export async function registerDriverFinanceSettlementHtmlRoutes(app: FastifyInst
             d.identity_user_id,
             d.employee_id_display AS driver_display_id
           FROM driver_finance.driver_settlements s
-          JOIN mdata.drivers d ON d.id = s.driver_id
+          JOIN mdata.drivers d ON d.id = s.driver_id AND d.operating_company_id = s.operating_company_id
           WHERE s.id = $1
             AND s.operating_company_id = $2::uuid
           LIMIT 1

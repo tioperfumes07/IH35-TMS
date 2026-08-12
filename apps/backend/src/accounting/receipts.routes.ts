@@ -132,12 +132,12 @@ async function registerReceiptsRoutes(app: FastifyInstance) {
       const where = conds.join(" AND ");
       const joins = `
         LEFT JOIN accounting.expenses e ON e.id = a.entity_id AND a.entity_type = 'expense'
-        LEFT JOIN accounting.bills b ON b.id = a.entity_id AND a.entity_type = 'bill'
+        LEFT JOIN accounting.bills b ON b.id = a.entity_id AND a.entity_type = 'bill' AND b.operating_company_id = $1::uuid
         LEFT JOIN mdata.vendors bv
           ON bv.id::text = COALESCE(NULLIF(TRIM(b.vendor_id), ''), NULLIF(TRIM(b.vendor_uuid), ''))
          AND a.entity_type = 'bill'
          AND bv.operating_company_id = $1::uuid
-        LEFT JOIN accounting.payments p ON p.id = a.entity_id AND a.entity_type = 'payment'
+        LEFT JOIN accounting.payments p ON p.id = a.entity_id AND a.entity_type = 'payment' AND p.operating_company_id = $1::uuid
         LEFT JOIN mdata.customers c ON c.id = p.customer_id AND a.entity_type = 'payment'
                                 AND c.operating_company_id = $1::uuid
       `;
@@ -247,12 +247,12 @@ async function registerReceiptsRoutes(app: FastifyInstance) {
           c.customer_name AS customer_name
          FROM documents.attachments a
          LEFT JOIN accounting.expenses e ON e.id = a.entity_id AND a.entity_type = 'expense'
-         LEFT JOIN accounting.bills b ON b.id = a.entity_id AND a.entity_type = 'bill'
+         LEFT JOIN accounting.bills b ON b.id = a.entity_id AND a.entity_type = 'bill' AND b.operating_company_id = $2::uuid
          LEFT JOIN mdata.vendors bv
            ON bv.id::text = COALESCE(NULLIF(TRIM(b.vendor_id), ''), NULLIF(TRIM(b.vendor_uuid), ''))
           AND a.entity_type = 'bill'
           AND bv.operating_company_id = $2::uuid
-         LEFT JOIN accounting.payments p ON p.id = a.entity_id AND a.entity_type = 'payment'
+         LEFT JOIN accounting.payments p ON p.id = a.entity_id AND a.entity_type = 'payment' AND p.operating_company_id = $2::uuid
          LEFT JOIN mdata.customers c ON c.id = p.customer_id AND a.entity_type = 'payment'
                                 AND c.operating_company_id = $2::uuid
          WHERE a.id = $1 AND a.operating_company_id = $2::uuid

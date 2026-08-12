@@ -204,7 +204,7 @@ type LoadNotifyContext = {
   latest_eta_prediction: Record<string, unknown> | null;
 };
 
-async function fetchLoadNotifyContext(client: DbClient, loadId: string): Promise<LoadNotifyContext | null> {
+async function fetchLoadNotifyContext(client: DbClient, loadId: string, operatingCompanyId: string): Promise<LoadNotifyContext | null> {
   const res = await client.query<LoadNotifyContext>(
     `
       SELECT
@@ -229,9 +229,10 @@ async function fetchLoadNotifyContext(client: DbClient, loadId: string): Promise
         SELECT city, state FROM mdata.load_stops WHERE load_id = l.id AND stop_type = 'delivery' ORDER BY sequence_number DESC LIMIT 1
       ) sd ON true
       WHERE l.id = $1::uuid AND l.soft_deleted_at IS NULL
+        AND l.operating_company_id = $2::uuid
       LIMIT 1
     `,
-    [loadId]
+    [loadId, operatingCompanyId]
   );
   return res.rows[0] ?? null;
 }
@@ -398,7 +399,7 @@ export async function processStopArrivalNotifications(
   let processed = 0;
   let sent = 0;
   for (const row of arrivals.rows) {
-    const load = await fetchLoadNotifyContext(client, row.load_id);
+    const load = await fetchLoadNotifyContext(client, row.load_id, operatingCompanyId);
     if (!load) continue;
     const prefs = await fetchPreferences(client, operatingCompanyId, load.customer_id);
     const result = await dispatchCustomerNotify(client, userId, operatingCompanyId, {
@@ -428,7 +429,7 @@ export async function processStopArrivalNotifications(
   );
 
   for (const row of departures.rows) {
-    const load = await fetchLoadNotifyContext(client, row.load_id);
+    const load = await fetchLoadNotifyContext(client, row.load_id, operatingCompanyId);
     if (!load) continue;
     const prefs = await fetchPreferences(client, operatingCompanyId, load.customer_id);
     const result = await dispatchCustomerNotify(client, userId, operatingCompanyId, {
@@ -470,7 +471,7 @@ export async function processEtaUpdateNotifications(
   let processed = 0;
   let sent = 0;
   for (const row of loads.rows) {
-    const load = await fetchLoadNotifyContext(client, row.load_id);
+    const load = await fetchLoadNotifyContext(client, row.load_id, operatingCompanyId);
     if (!load) continue;
     const prefs = await fetchPreferences(client, operatingCompanyId, load.customer_id);
     const etaLabel = row.predicted_at ? new Date(row.predicted_at).toLocaleString() : "Check portal for live ETA.";

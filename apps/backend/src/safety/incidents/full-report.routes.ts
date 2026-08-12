@@ -48,7 +48,7 @@ function pick(existingColumns: Set<string>, candidates: string[]): string | null
 }
 
 export async function registerSafetyIncidentFullReportRoutes(app: FastifyInstance) {
-  app.post("/api/v1/safety/incidents/full-report", async (req, reply) => {
+  app.post("/api/v1/safety/incidents/full-report", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!(await requireDriverSession(req, reply))) return;
     if (!req.user || !req.driver) return reply.code(403).send({ error: "driver_profile_not_found" });
     const body = fullReportBodySchema.safeParse(req.body ?? {});
@@ -98,10 +98,11 @@ export async function registerSafetyIncidentFullReportRoutes(app: FastifyInstanc
             assigned_secondary_driver_id
           FROM mdata.loads
           WHERE id = $1::uuid
+            AND operating_company_id = $2::uuid
             AND soft_deleted_at IS NULL
           LIMIT 1
         `,
-        [body.data.load_id]
+        [body.data.load_id, driver.operating_company_id]
       );
       const load = loadRes.rows[0];
       if (!load) return { kind: "not_found" as const, code: 404, error: "load_not_found" };

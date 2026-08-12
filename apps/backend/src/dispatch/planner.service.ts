@@ -424,9 +424,10 @@ export async function reschedulePlannerLoad(
           LIMIT 1
         ) del ON true
         WHERE l.id = $1::uuid
+          AND l.operating_company_id = $2::uuid
         LIMIT 1
       `,
-      [loadId]
+      [loadId, operatingCompanyId]
     );
 
     const updated = refreshed.rows[0];

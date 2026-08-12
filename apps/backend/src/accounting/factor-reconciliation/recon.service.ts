@@ -412,6 +412,7 @@ export async function listImportCandidates(input: { operating_company_id: string
             SELECT v.vendor_name::text
             FROM accounting.factoring_advances fa
             JOIN mdata.vendors v ON v.id = fa.factoring_company_vendor_id
+                                 AND v.operating_company_id = fa.operating_company_id
             WHERE fa.operating_company_id = di.operating_company_id
               AND fa.submitted_at::date = di.statement_date
             ORDER BY fa.created_at DESC

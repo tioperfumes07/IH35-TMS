@@ -132,6 +132,7 @@ export async function registerReportsArAgingRoutes(app: FastifyInstance) {
           WHERE p.voided_at IS NULL
             AND p.payment_date <= $2::date
             AND i.operating_company_id = $1::uuid
+            AND p.operating_company_id = $1::uuid
           GROUP BY i.customer_id
         `,
         [query.data.operating_company_id, asOf]

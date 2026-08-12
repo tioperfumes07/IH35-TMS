@@ -264,8 +264,8 @@ export async function processVehicleFaultCodeWebhookEvent(
   let draftWosCreated = 0;
 
   const unitLabelRes = await client.query<{ unit_number: string | null }>(
-    `SELECT unit_number FROM mdata.units WHERE id = $1::uuid LIMIT 1`,
-    [localUnitId]
+    `SELECT unit_number FROM mdata.units WHERE id = $1::uuid AND COALESCE(currently_leased_to_company_id, owner_company_id) = $2::uuid LIMIT 1`,
+    [localUnitId, event.operating_company_id]
   );
   const unitLabel = unitLabelRes.rows[0]?.unit_number ? `Truck #${unitLabelRes.rows[0].unit_number}` : "Unit";
 

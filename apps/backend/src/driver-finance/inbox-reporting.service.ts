@@ -39,7 +39,7 @@ export async function getInboxReportingData(
              t.seconds_requested_to_decision
       FROM driver_finance.cash_advance_requests car
       LEFT JOIN views.driver_request_timeline t ON t.request_id = car.id
-      JOIN mdata.drivers d ON d.id = car.driver_id
+      JOIN mdata.drivers d ON d.id = car.driver_id AND d.operating_company_id = car.operating_company_id
       WHERE car.operating_company_id = $1::uuid
         AND car.submitted_at::date BETWEEN $2::date AND $3::date
       ORDER BY car.submitted_at DESC

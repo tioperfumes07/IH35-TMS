@@ -243,7 +243,7 @@ export async function registerSettlementApprovalRoutes(app: FastifyInstance) {
           q.status,
           q.created_at
         FROM driver_finance.trip_link_queue q
-        LEFT JOIN mdata.units u ON u.id = q.unit_id
+        LEFT JOIN mdata.units u ON u.id = q.unit_id AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = q.operating_company_id
         WHERE q.operating_company_id = $1::uuid AND q.status != 'linked'
         ORDER BY q.created_at DESC
       `, [scopedCompanyId]);

@@ -86,8 +86,11 @@ const PRESENCE_SQL: Record<string, string> = {
                 AND p.status = 'active' AND p.effective_date <= current_date AND p.expiry_date >= current_date
               WHERE a.tenant_id = $2::uuid AND a.unit_code = u.unit_number) AS insurance
     FROM mdata.units u WHERE u.id = $1::uuid
+      AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $2::uuid
     -- NOTE: mdata.units has NO operating_company_id (it uses owner_company_id / currently_leased_to_company_id);
     -- unit visibility is RLS-scoped, and every subquery above scopes its own table by $2 (opco/tenant).
+    -- ENTITY PREDICATE (CLS-JOIN-ENTITY-UNSCOPED) added on the outer unit row itself, matching the
+    -- lease-pair predicate already used by every subquery above.
   `,
   customer: `
     SELECT

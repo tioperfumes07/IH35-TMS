@@ -137,6 +137,7 @@ async function loadLeaseAssets(client: DbClient, operatingCompanyId: string, lea
        FROM accounting.lease_asset_line lal
        JOIN accounting.fixed_assets fa ON fa.id = lal.fixed_asset_id
        LEFT JOIN mdata.units u ON u.id = COALESCE(lal.unit_uuid, fa.unit_uuid)
+                               AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = lal.operating_company_id
       WHERE lal.operating_company_id = $1::uuid
         AND lal.lease_contract_id = $2::uuid
         AND lal.is_active = true

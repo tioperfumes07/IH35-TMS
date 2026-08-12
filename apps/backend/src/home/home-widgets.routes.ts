@@ -230,7 +230,7 @@ async function computeWoLinkedEconomics(
   const existsClauses: string[] = [];
   if (canJoinBills) {
     existsClauses.push(
-      `EXISTS (SELECT 1 FROM accounting.bills b WHERE b.linked_work_order_uuid = wo.id${billsRevokedCol ? " AND b.revoked_at IS NULL" : ""})`
+      `EXISTS (SELECT 1 FROM accounting.bills b WHERE b.linked_work_order_uuid = wo.id AND b.operating_company_id = wo.operating_company_id${billsRevokedCol ? " AND b.revoked_at IS NULL" : ""})`
     );
   }
   if (canJoinExpenses) {

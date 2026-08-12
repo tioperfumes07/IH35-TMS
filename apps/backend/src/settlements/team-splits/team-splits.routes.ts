@@ -197,7 +197,7 @@ const STATUS_FILTER_SQL: Record<"active" | "paused" | "ended", string> = {
 };
 
 export async function registerTeamSplitRoutes(app: FastifyInstance) {
-  app.get("/api/v1/team-splits/configs", async (req, reply) => {
+  app.get("/api/v1/team-splits/configs", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = listQuerySchema.safeParse(req.query ?? {});
@@ -222,7 +222,9 @@ export async function registerTeamSplitRoutes(app: FastifyInstance) {
             concat_ws(' ', s.first_name, s.last_name) AS secondary_driver_name
           FROM mdata.driver_teams t
           JOIN mdata.drivers p ON p.id = t.primary_driver_id
+                              AND p.operating_company_id = t.operating_company_id
           JOIN mdata.drivers s ON s.id = t.secondary_driver_id
+                              AND s.operating_company_id = t.operating_company_id
           WHERE t.operating_company_id = $1::uuid
           ${extra}
           ORDER BY t.created_at DESC

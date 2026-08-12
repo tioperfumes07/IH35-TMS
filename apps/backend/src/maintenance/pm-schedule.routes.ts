@@ -96,6 +96,7 @@ export async function registerMaintenancePmScheduleRoutes(app: FastifyInstance) 
             s.created_at::text
           FROM maintenance.pm_schedules s
           LEFT JOIN mdata.units u ON u.id = s.unit_id
+                                 AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = s.operating_company_id
           WHERE ${filters.join(" AND ")}
           ORDER BY COALESCE(s.next_due_odometer, 2147483647) ASC, s.created_at DESC
         `,

@@ -230,7 +230,7 @@ export async function getSettlementLineItems(
       li.dispute_reason,
       li.created_at
     FROM driver_finance.settlement_lines li
-    LEFT JOIN mdata.loads l ON l.id = li.load_id
+    LEFT JOIN mdata.loads l ON l.id = li.load_id AND l.operating_company_id = li.operating_company_id
     -- IDOR scope (xe-fin): settlement_lines RLS is role-scoped, NOT entity-scoped, so bind the
     -- caller's operating company explicitly. approve/reject scope the same way.
     WHERE li.settlement_id = $1 AND li.operating_company_id = $2::uuid

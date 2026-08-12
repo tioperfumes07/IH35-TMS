@@ -276,8 +276,11 @@ export async function verifySaferEntity(
 }
 
 export async function listStaleSaferEntities(client: DbClient, operatingCompanyId?: string, limit = 200) {
-  const companyFilter = operatingCompanyId ? "AND operating_company_id = $2::uuid" : "";
-  const params = operatingCompanyId ? [limit, operatingCompanyId] : [limit];
+  // CLS-JOIN-ENTITY-UNSCOPED: the predicate must be a LITERAL part of the SQL text (not conditionally
+  // interpolated) so a static entity-scope check can verify it. Behaviour is unchanged — passing no
+  // operatingCompanyId still sweeps every company (deliberate: cron/admin use), passing one still
+  // narrows to it — but the ($2::uuid IS NULL OR ...) form is always present in the query text.
+  const params = [limit, operatingCompanyId ?? null];
   const customers = await client.query<{ id: string; operating_company_id: string; entity_type: SaferEntityType }>(
     `
       SELECT id::text, operating_company_id::text, 'customer'::text AS entity_type
@@ -291,7 +294,7 @@ export async function listStaleSaferEntities(client: DbClient, operatingCompanyI
           safer_verified_at IS NULL
           OR safer_verified_at < now() - interval '7 days'
         )
-        ${companyFilter}
+        AND ($2::uuid IS NULL OR operating_company_id = $2::uuid)
       ORDER BY safer_verified_at NULLS FIRST, updated_at ASC
       LIMIT $1
     `,
@@ -310,7 +313,7 @@ export async function listStaleSaferEntities(client: DbClient, operatingCompanyI
           safer_verified_at IS NULL
           OR safer_verified_at < now() - interval '7 days'
         )
-        ${companyFilter}
+        AND ($2::uuid IS NULL OR operating_company_id = $2::uuid)
       ORDER BY safer_verified_at NULLS FIRST, updated_at ASC
       LIMIT $1
     `,

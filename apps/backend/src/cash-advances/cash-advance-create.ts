@@ -166,9 +166,10 @@ export async function createDriverCashAdvanceCore(
       SELECT id, status
       FROM mdata.drivers
       WHERE id = $1
+        AND operating_company_id = $2::uuid
       LIMIT 1
     `,
-    [body.driver_id]
+    [body.driver_id, companyId]
   );
   const driver = driverRes.rows[0];
   if (!driver) return { ok: false, code: 404, error: "driver_not_found" };

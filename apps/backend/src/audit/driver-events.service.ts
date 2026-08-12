@@ -119,7 +119,7 @@ export function buildDriverAuditEventsQuery(input: ListDriverAuditEventsInput): 
         e.source AS source,
         count(*) OVER()::int AS total_count
       FROM audit.audit_events e
-      INNER JOIN mdata.drivers d ON d.id = $2::uuid
+      INNER JOIN mdata.drivers d ON d.id = $2::uuid AND d.operating_company_id = $1::uuid
       LEFT JOIN identity.users u ON u.id = e.actor_user_uuid
       WHERE ${filters.join(" AND ")}
       ORDER BY e.created_at DESC, e.uuid DESC

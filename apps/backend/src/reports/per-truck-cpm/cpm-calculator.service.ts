@@ -125,6 +125,7 @@ export async function calculatePerTruckCpm(
       LEFT JOIN insurance ins ON ins.unit_id = u.id
       LEFT JOIN permits p ON p.unit_id = u.id
       WHERE u.deactivated_at IS NULL
+        AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $1::uuid
       ORDER BY u.unit_number
     `,
     [operatingCompanyId, from, to]

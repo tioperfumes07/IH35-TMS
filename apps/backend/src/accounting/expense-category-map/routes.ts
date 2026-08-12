@@ -154,7 +154,7 @@ export async function registerExpenseCategoryMapRoutes(app: FastifyInstance) {
             m.created_by_user_uuid::text AS created_by_user_uuid,
             m.updated_by_user_uuid::text AS updated_by_user_uuid
           FROM accounting.expense_category_account_map m
-          JOIN catalogs.accounts a ON a.id = m.account_id
+          JOIN catalogs.accounts a ON a.id = m.account_id AND a.operating_company_id = m.operating_company_id
           WHERE ${where.join(" AND ")}
           ORDER BY m.category_kind ASC, m.category_code ASC, m.updated_at DESC
         `,
@@ -196,7 +196,7 @@ export async function registerExpenseCategoryMapRoutes(app: FastifyInstance) {
             m.created_by_user_uuid::text AS created_by_user_uuid,
             m.updated_by_user_uuid::text AS updated_by_user_uuid
           FROM accounting.expense_category_account_map m
-          JOIN catalogs.accounts a ON a.id = m.account_id
+          JOIN catalogs.accounts a ON a.id = m.account_id AND a.operating_company_id = m.operating_company_id
           WHERE m.id = $1::uuid
             AND m.operating_company_id = $2::uuid
           LIMIT 1

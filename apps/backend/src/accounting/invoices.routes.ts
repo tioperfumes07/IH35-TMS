@@ -102,7 +102,7 @@ const voidBodySchema = z.object({
   reason: z.string().trim().min(3).max(500).optional(),
 });
 
-export async function enrichInvoice(client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: Array<Record<string, unknown>> }> }, invoiceId: string) {
+export async function enrichInvoice(client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: Array<Record<string, unknown>> }> }, invoiceId: string, operatingCompanyId: string) {
   const invoiceRes = await client.query(
     `
       SELECT
@@ -124,10 +124,15 @@ export async function enrichInvoice(client: { query: (sql: string, values?: unkn
       LEFT JOIN mdata.loads l
         ON l.id = i.source_load_id
        AND l.operating_company_id = i.operating_company_id
+      -- CLS-JOIN-ENTITY-UNSCOPED: i itself was read by bare id ($1) with no company predicate at all —
+      -- every downstream join pins to i.operating_company_id, but nothing pinned i.operating_company_id
+      -- to the CALLER's company, so an id from another entity would render fully (customer, factoring,
+      -- load all internally consistent, just for the wrong company).
       WHERE i.id = $1
+        AND i.operating_company_id = $2::uuid
       LIMIT 1
     `,
-    [invoiceId]
+    [invoiceId, operatingCompanyId]
   );
   const invoice = invoiceRes.rows[0] ?? null;
   if (!invoice) return null;
@@ -154,11 +159,12 @@ export async function enrichInvoice(client: { query: (sql: string, values?: unkn
       SELECT pa.*, p.display_id AS payment_display_id, p.payment_date
       FROM accounting.payment_applications pa
       JOIN accounting.payments p ON p.id = pa.payment_id
+                                 AND p.operating_company_id = $2::uuid
       WHERE pa.invoice_id = $1
       ORDER BY pa.applied_at DESC
       LIMIT 50
     `,
-    [invoiceId]
+    [invoiceId, invoice.operating_company_id]
   );
   // Law §9 forward: invoice → GL JE (+ payment JEs applied to this invoice). Read-only; no new GL math.
   const journalEntriesRes = await client.query(
@@ -324,7 +330,7 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
     const detail = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
-      return enrichInvoice(client, params.data.id);
+      return enrichInvoice(client, params.data.id, query.data.operating_company_id);
     });
     if (!detail) return reply.code(404).send({ error: "invoice_not_found" });
     return detail;
@@ -494,7 +500,7 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
         invoice_id: invoiceId,
         operation: "create",
       });
-      const detail = await enrichInvoice(client, invoiceId);
+      const detail = await enrichInvoice(client, invoiceId, query.data.operating_company_id);
       return { code: 201 as const, data: detail };
     });
     if ("error" in created) return reply.code(created.code).send({ error: created.error });
@@ -644,7 +650,7 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
             invoice_id: created.id,
             operation: "create",
           });
-          return enrichInvoice(client, created.id);
+          return enrichInvoice(client, created.id, query.data.operating_company_id);
         });
         if ((result as CreditBlock)._creditBlock) {
           const cb = (result as CreditBlock)._creditBlock;
@@ -767,7 +773,7 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
         invoice_id: params.data.id,
         operation: "update",
       });
-      const detail = await enrichInvoice(client, params.data.id);
+      const detail = await enrichInvoice(client, params.data.id, query.data.operating_company_id);
       return { code: 200 as const, data: detail };
     });
     if ("error" in result) return reply.code(result.code).send({ error: result.error });
@@ -811,7 +817,7 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
           factor_name: sent.factor_name,
         };
       }
-      const detail = await enrichInvoice(client, params.data.id);
+      const detail = await enrichInvoice(client, params.data.id, query.data.operating_company_id);
       return { code: 200 as const, data: detail };
     });
     if ("error" in result) {
@@ -959,7 +965,7 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
         invoice_id: params.data.id,
         operation: "update",
       });
-      const detail = await enrichInvoice(client, params.data.id);
+      const detail = await enrichInvoice(client, params.data.id, query.data.operating_company_id);
       return { code: 200 as const, data: detail };
     });
     if ("error" in result) return reply.code(result.code).send({ error: result.error });

@@ -203,7 +203,15 @@ export async function registerDriverProfileRoutes(app: FastifyInstance) {
 
     try {
       return await withCurrentUser(authUser.uuid, async (client) => {
-        const driverRes = await client.query(`SELECT id FROM mdata.drivers WHERE id = $1 LIMIT 1`, [parsedParams.data.id]);
+        // XE-IDOR (same class as the sibling GET route above): scope the driver existence check to the
+        // caller's own operating company so a foreign driver id cannot have a qualification created
+        // against it.
+        const companyId = await resolveOperatingCompanyId(client, authUser.uuid);
+        if (!companyId) return reply.code(400).send({ error: "operating_company_unresolved" });
+        const driverRes = await client.query(`SELECT id FROM mdata.drivers WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`, [
+          parsedParams.data.id,
+          companyId,
+        ]);
         if (driverRes.rows.length === 0) return reply.code(404).send({ error: "mdata_driver_not_found" });
 
         const equipmentTypeRes = await client.query(`SELECT id, code, name FROM catalogs.equipment_types WHERE id = $1 LIMIT 1`, [
@@ -888,7 +896,15 @@ export async function registerDriverProfileRoutes(app: FastifyInstance) {
     if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
 
     return withCurrentUser(authUser.uuid, async (client) => {
-      const driverRes = await client.query(`SELECT id FROM mdata.drivers WHERE id = $1 LIMIT 1`, [parsedParams.data.id]);
+      // XE-IDOR (same class as the qualifications GET/POST routes above): scope the driver existence
+      // check to the caller's own operating company so a foreign driver id cannot get a company
+      // authorization created against it.
+      const companyId = await resolveOperatingCompanyId(client, authUser.uuid);
+      if (!companyId) return reply.code(400).send({ error: "operating_company_unresolved" });
+      const driverRes = await client.query(`SELECT id FROM mdata.drivers WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`, [
+        parsedParams.data.id,
+        companyId,
+      ]);
       if (driverRes.rows.length === 0) return reply.code(404).send({ error: "mdata_driver_not_found" });
 
       const upsertRes = await client.query(
