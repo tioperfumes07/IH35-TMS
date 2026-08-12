@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { entityLabel } from "../../lib/entity-label";
 import { useQuery } from "@tanstack/react-query";
-import { payVendorBill, type BillPaymentMethod, type VendorBill } from "../../api/accounting";
+import { billVendorDrillId, payVendorBill, type BillPaymentMethod, type VendorBill } from "../../api/accounting";
 import { getAllAccounts } from "../../api/banking";
 import { Button } from "../../components/Button";
 import { Combobox } from "../../components/Combobox";
@@ -11,6 +11,7 @@ import { DatePicker } from "../../components/forms/DatePicker";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { companyToday } from "../../lib/businessDate";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
+import { EntityLink } from "../../components/shared/EntityLink";
 
 type Props = {
   open: boolean;
@@ -175,22 +176,22 @@ export function PayBillModal({ open, operatingCompanyId, vendorName, bill, onClo
             <div className="text-xs font-semibold uppercase tracking-wide text-slate-700">Bill Payment Details</div>
 
             <div className="grid grid-cols-1 gap-2 md:grid-cols-6">
-              <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
-                Vendor
-                <input
-                  value={vendorName}
-                  readOnly
-                  className="h-9 rounded-sm border border-gray-300 bg-gray-100 px-2 text-[13px]"
-                />
-              </label>
-              <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
-                Bill #
-                <input
-                  value={entityLabel(bill.bill_number, bill.id, "Bill")}
-                  readOnly
-                  className="h-9 rounded-sm border border-gray-300 bg-gray-100 px-2 text-[13px]"
-                />
-              </label>
+              <div className="flex flex-col gap-1 text-xs font-semibold text-gray-600 md:col-span-1">
+                <span>Vendor</span>
+                <div className="flex h-9 items-center rounded-sm border border-gray-300 bg-gray-100 px-2 text-[13px] font-normal text-slate-800">
+                  <EntityLink
+                    kind="vendor"
+                    id={billVendorDrillId(bill)}
+                    label={entityLabel(vendorName || bill.vendor_name, billVendorDrillId(bill), "Vendor")}
+                  />
+                </div>
+              </div>
+              <div className="flex flex-col gap-1 text-xs font-semibold text-gray-600 md:col-span-1">
+                <span>Bill #</span>
+                <div className="flex h-9 items-center rounded-sm border border-gray-300 bg-gray-100 px-2 text-[13px] font-normal text-slate-800">
+                  <EntityLink kind="bill" id={bill.id} label={entityLabel(bill.bill_number, bill.id, "Bill")} />
+                </div>
+              </div>
               <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
                 Payment date
                 <DatePicker value={paymentDate} onChange={setPaymentDate} className="text-[13px]" />
@@ -282,7 +283,7 @@ export function PayBillModal({ open, operatingCompanyId, vendorName, bill, onClo
                 </thead>
                 <tbody>
                   <tr className="border-t border-gray-100">
-                    <td className="px-2 py-1.5">{entityLabel(bill.bill_number, bill.id, "Bill")}</td>
+                    <td className="px-2 py-1.5"><EntityLink kind="bill" id={bill.id} label={entityLabel(bill.bill_number, bill.id, "Bill")} /></td>
                     <td className="px-2 py-1.5">{money(bill.amount_cents)}</td>
                     <td className="px-2 py-1.5">{money(bill.paid_cents)}</td>
                     <td className="px-2 py-1.5 font-semibold text-red-700">{money(remainingCents)}</td>
