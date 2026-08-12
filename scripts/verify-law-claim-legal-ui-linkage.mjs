@@ -5,7 +5,10 @@
  * Static guards (no migrations / no money):
  *   1. ClaimCreateModal exposes driver_id / load_id / accident_report_id and posts them
  *   2. LegalMatterFormFields has pickers for claim / lawsuit / driver / unit and payloads include them
- *   3. DriverDetail + VehicleProfile mount InsuranceClaimsReverseSection
+ *   3. DriverDetail + DriverProfilePage + VehicleProfile mount InsuranceClaimsReverseSection
+ *      (two live driver routes exist — /drivers/:id -> DriverDetail, /drivers/:id/profile ->
+ *      DriverProfilePage — both mount the reverse section independently, so both need coverage;
+ *      DriverProfilePage was unguarded until this pass even though it was already wired)
  *   4. Claims list API accepts driver_id + unit_id filters (schema + route)
  *
  * Self-test: node scripts/verify-law-claim-legal-ui-linkage.mjs --selftest
@@ -18,13 +21,13 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-law-claim-legal-ui-linkage";
 
 /**
- * @param {{ claimCreate: string, legalForm: string, driverDetail: string, vehicleProfile: string, claimShared: string, claimRoutes: string, reverseSection: string }} sources
+ * @param {{ claimCreate: string, legalForm: string, driverDetail: string, driverProfile: string, vehicleProfile: string, claimShared: string, claimRoutes: string, reverseSection: string }} sources
  * @returns {string[]}
  */
 export function computeFailures(sources) {
   const errors = [];
 
-  const { claimCreate, legalForm, driverDetail, vehicleProfile, claimShared, claimRoutes, reverseSection } = sources;
+  const { claimCreate, legalForm, driverDetail, driverProfile, vehicleProfile, claimShared, claimRoutes, reverseSection } = sources;
 
   if (!/driver_id:\s*form\.driver_id/.test(claimCreate) && !/driver_id:\s*form\.driver_id\s*\|\|/.test(claimCreate)) {
     errors.push("ClaimCreateModal must pass driver_id in create payload");
@@ -78,6 +81,13 @@ export function computeFailures(sources) {
   }
   if (!/driver_id:\s*id/.test(driverDetail) && !/filter=\{\{\s*driver_id:\s*id/.test(driverDetail)) {
     errors.push("DriverDetail claims reverse must filter by driver_id");
+  }
+
+  if (!/InsuranceClaimsReverseSection/.test(driverProfile)) {
+    errors.push("DriverProfilePage (/drivers/:id/profile) must mount InsuranceClaimsReverseSection");
+  }
+  if (!/driver_id:\s*id/.test(driverProfile) && !/filter=\{\{\s*driver_id:\s*id/.test(driverProfile)) {
+    errors.push("DriverProfilePage claims reverse must filter by driver_id");
   }
 
   if (!/InsuranceClaimsReverseSection/.test(vehicleProfile)) {
@@ -141,6 +151,9 @@ function selftest() {
     driverDetail: `
       <InsuranceClaimsReverseSection filter={{ driver_id: id }} />
     `,
+    driverProfile: `
+      <InsuranceClaimsReverseSection filter={{ driver_id: id }} />
+    `,
     vehicleProfile: `
       <InsuranceClaimsReverseSection filter={{ unit_id: id }} />
     `,
@@ -192,6 +205,7 @@ function main() {
     claimCreate: read("apps/frontend/src/components/insurance/ClaimCreateModal.tsx"),
     legalForm: read("apps/frontend/src/pages/legal/matters/LegalMatterFormFields.tsx"),
     driverDetail: read("apps/frontend/src/pages/DriverDetail.tsx"),
+    driverProfile: read("apps/frontend/src/pages/drivers/DriverProfilePage.tsx"),
     vehicleProfile: read("apps/frontend/src/pages/fleet/VehicleProfilePage.tsx"),
     claimShared: read("apps/backend/src/insurance/claim.shared.ts"),
     claimRoutes: read("apps/backend/src/insurance/claim.routes.ts"),
