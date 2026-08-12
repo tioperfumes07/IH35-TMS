@@ -28,6 +28,9 @@ describe("AtRiskQueuePage", () => {
           id: "load-1",
           load_number: "L-1001",
           status: "in_transit",
+          customer_id: "customer-1",
+          unit_id: "unit-1",
+          driver_id: "driver-1",
           customer_name: "Acme Freight",
           unit_number: "T169",
           driver_name: "Jane Driver",
@@ -44,8 +47,9 @@ describe("AtRiskQueuePage", () => {
     wrap(<AtRiskQueuePage />);
     const link = await screen.findByRole("link", { name: "L-1001" });
     expect(link.getAttribute("href")).toBe("/dispatch/loads/load-1");
-    expect(screen.getByText("Acme Freight")).toBeTruthy();
-    expect(screen.getByText("Jane Driver")).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Acme Freight" }).getAttribute("href")).toBe("/customers/customer-1");
+    expect(screen.getByRole("link", { name: "Jane Driver" }).getAttribute("href")).toBe("/drivers/driver-1");
+    expect(screen.getByRole("link", { name: "T169" }).getAttribute("href")).toBe("/fleet/units/unit-1");
   });
 
   it("surfaces query failures via ListErrorState (not false-empty)", async () => {

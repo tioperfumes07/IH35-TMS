@@ -44,9 +44,24 @@ export function AtRiskQueuePage() {
         className: "font-medium",
         render: (load) => <EntityLink kind="load" id={load.id} label={entityLabel(load.load_number, load.id, "Load")} />,
       },
-      { key: "customer_name", label: "Customer", sortable: true, render: (load) => entityLabel(load.customer_name, null, "Customer") },
-      { key: "driver_name", label: "Driver", sortable: true, render: (load) => entityLabel(load.driver_name, null, "Driver") },
-      { key: "unit_number", label: "Unit", sortable: true, render: (load) => entityLabel(load.unit_number, null, "Unit") },
+      {
+        key: "customer_name",
+        label: "Customer",
+        sortable: true,
+        render: (load) => <EntityLink kind="customer" id={load.customer_id} label={entityLabel(load.customer_name, load.customer_id, "Customer")} />,
+      },
+      {
+        key: "driver_name",
+        label: "Driver",
+        sortable: true,
+        render: (load) => <EntityLink kind="driver" id={load.driver_id} label={entityLabel(load.driver_name, load.driver_id, "Driver")} />,
+      },
+      {
+        key: "unit_number",
+        label: "Unit",
+        sortable: true,
+        render: (load) => <EntityLink kind="unit" id={load.unit_id} label={entityLabel(load.unit_number, load.unit_id, "Unit")} />,
+      },
       {
         key: "delivery_city",
         label: "Delivery",

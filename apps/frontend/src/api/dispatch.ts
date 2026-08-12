@@ -783,6 +783,9 @@ export type AtRiskLoadRow = {
   id: string;
   load_number: string;
   status: string;
+  customer_id: string;
+  unit_id: string | null;
+  driver_id: string | null;
   customer_name: string | null;
   unit_number: string | null;
   driver_name: string | null;
