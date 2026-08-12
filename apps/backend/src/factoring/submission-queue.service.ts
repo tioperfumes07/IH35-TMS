@@ -1,3 +1,5 @@
+import { getFactorForCustomer } from "./factor.service.js";
+
 type Queryable = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[]; rowCount?: number }>;
 };
@@ -17,6 +19,11 @@ export type SubmissionQueueItem = {
   has_rate_confirmation: boolean;
   is_submittable: boolean;
   missing_docs: string[];
+  // WAVE-C-liability-submit-queue: the reserve this invoice would create if submitted today,
+  // resolved via the SAME effective-dated factoring.customer_factor_assignment ->
+  // factoring.factor.reserve_rate lookup batch.service.ts:createDraftBatch already uses
+  // (getFactorForCustomer) — no new rate source, no GL posting, preview only.
+  expected_reserve_cents: number | null;
 };
 
 export type WorkqueueItem = {
@@ -106,20 +113,37 @@ export async function listSubmissionQueueInvoices(
     [operatingCompanyId]
   );
 
-  return res.rows.map((row) => {
+  // Resolve each row's effective-dated factor once per customer (cached), same lookup
+  // createDraftBatch uses, then derive the reserve preview from the real reserve_rate.
+  const reserveRateByCustomer = new Map<string, number | null>();
+  async function resolveReserveRate(customerId: string | null, asOfDate: string): Promise<number | null> {
+    if (!customerId) return null;
+    if (reserveRateByCustomer.has(customerId)) return reserveRateByCustomer.get(customerId) ?? null;
+    const factor = await getFactorForCustomer(operatingCompanyId, customerId, asOfDate, { client: deps.client });
+    const rate = factor ? toNumber(factor.reserve_rate) : null;
+    reserveRateByCustomer.set(customerId, rate);
+    return rate;
+  }
+
+  const items: SubmissionQueueItem[] = [];
+  for (const row of res.rows) {
     const hasPod = Boolean(row.has_approved_pod);
     const hasRatecon = Boolean(row.has_rate_confirmation);
     const missing: string[] = [];
     if (!hasPod) missing.push("POD (approved)");
     if (!hasRatecon) missing.push("Rate Confirmation");
-    return {
+    const customerId = row.customer_id ? String(row.customer_id) : null;
+    const totalCents = toNumber(row.total_cents);
+    const asOfDate = row.issue_date ? String(row.issue_date) : new Date().toISOString().slice(0, 10);
+    const reserveRate = await resolveReserveRate(customerId, asOfDate);
+    items.push({
       invoice_id: String(row.invoice_id),
       display_id: row.display_id ? String(row.display_id) : null,
-      customer_id: row.customer_id ? String(row.customer_id) : null,
+      customer_id: customerId,
       customer_name: row.customer_name ? String(row.customer_name) : null,
       issue_date: row.issue_date ? String(row.issue_date) : null,
       due_date: row.due_date ? String(row.due_date) : null,
-      total_cents: toNumber(row.total_cents),
+      total_cents: totalCents,
       factor_id: row.factor_id ? String(row.factor_id) : null,
       factor_name: row.factor_name ? String(row.factor_name) : null,
       load_id: row.load_id ? String(row.load_id) : null,
@@ -127,8 +151,10 @@ export async function listSubmissionQueueInvoices(
       has_rate_confirmation: hasRatecon,
       is_submittable: hasPod && hasRatecon,
       missing_docs: missing,
-    };
-  });
+      expected_reserve_cents: reserveRate != null ? Math.round(totalCents * reserveRate) : null,
+    });
+  }
+  return items;
 }
 
 export async function listWorkqueueInvoices(

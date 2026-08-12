@@ -152,7 +152,12 @@ export function BatchDetail({ batchId, companyId }: { batchId: string; companyId
         <div className="font-semibold text-gray-900">{detail.batch.batch_number}</div>
         <div className="text-gray-700">
           Status: {titleize(detail.batch.status)} · Face: {asMoney(detail.batch.total_face_cents)} · Advance: {asMoney(detail.batch.expected_advance_cents)} · Fee:{" "}
-          {asMoney(detail.batch.expected_fee_cents)}
+          {asMoney(detail.batch.expected_fee_cents)} · Reserve:{" "}
+          {/* WAVE-C-liability-batches-detail: same Net − Fee − Advance derivation as batches.create,
+              header summary alongside the real per-movement Reserve Movements ledger below. */}
+          <span data-testid="factoring-batch-detail-expected-reserve">
+            {asMoney(detail.batch.total_face_cents - detail.batch.expected_advance_cents - detail.batch.expected_fee_cents)}
+          </span>
         </div>
         <div className="mt-2 text-xs text-gray-600">Included invoices: {detail.invoices.length}</div>
       </div>

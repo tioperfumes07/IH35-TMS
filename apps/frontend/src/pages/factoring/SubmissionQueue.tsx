@@ -70,6 +70,12 @@ export function SubmissionQueue() {
   const selectedTotal = items
     .filter((item) => selected.includes(item.invoice_id))
     .reduce((sum, item) => sum + Number(item.total_cents ?? 0), 0);
+  // WAVE-C-liability-submit-queue: preview of the reserve/liability the selected invoices
+  // would create — sums the per-invoice expected_reserve_cents the backend already resolved
+  // from the customer's live factoring.factor.reserve_rate (same lookup batch creation uses).
+  const selectedExpectedReserve = items
+    .filter((item) => selected.includes(item.invoice_id))
+    .reduce((sum, item) => sum + Number(item.expected_reserve_cents ?? 0), 0);
 
   if (!companyId) {
     return (
@@ -108,9 +114,14 @@ export function SubmissionQueue() {
               {submittable.length} of {items.length} invoice{items.length !== 1 ? "s" : ""} ready to submit
             </div>
             {selected.length > 0 && (
-              <Button type="button" disabled={submitMutation.isPending} onClick={() => submitMutation.mutate()}>
-                Submit {selected.length} invoice{selected.length !== 1 ? "s" : ""} — {asMoney(selectedTotal)}
-              </Button>
+              <div className="flex items-center gap-3">
+                <span className="text-xs text-slate-500" data-testid="factoring-submit-expected-reserve">
+                  Expected reserve: {asMoney(selectedExpectedReserve)}
+                </span>
+                <Button type="button" disabled={submitMutation.isPending} onClick={() => submitMutation.mutate()}>
+                  Submit {selected.length} invoice{selected.length !== 1 ? "s" : ""} — {asMoney(selectedTotal)}
+                </Button>
+              </div>
             )}
           </div>
 
@@ -130,6 +141,7 @@ export function SubmissionQueue() {
                   <th className="py-1.5 pr-3">Customer</th>
                   <th className="py-1.5 pr-3">Issue Date</th>
                   <th className="py-1.5 pr-3 text-right">Amount</th>
+                  <th className="py-1.5 pr-3 text-right">Expected Reserve</th>
                   <th className="py-1.5 pr-3">Factor</th>
                   <th className="py-1.5">Docs</th>
                 </tr>
@@ -166,6 +178,9 @@ export function SubmissionQueue() {
                       </td>
                       <td className="py-1.5 pr-3">{item.issue_date ? formatDateUS(item.issue_date) : "—"}</td>
                       <td className="py-1.5 pr-3 text-right tabular-nums">{asMoney(item.total_cents)}</td>
+                      <td className="py-1.5 pr-3 text-right tabular-nums text-slate-600">
+                        {item.expected_reserve_cents != null ? asMoney(item.expected_reserve_cents) : "—"}
+                      </td>
                       <td className="py-1.5 pr-3 text-slate-500">{item.factor_name ?? "—"}</td>
                       <td className="py-1.5">
                         <DocGateBadge item={item} />
