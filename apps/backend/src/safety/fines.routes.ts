@@ -141,7 +141,13 @@ export async function registerSafetyFinesRoutes(app: FastifyInstance) {
                  -- links would render a truncated uuid as their label — the exact defect SAF-F18 and
                  -- SAF-F26 fixed on the driver/unit columns of the sibling lists.
                  u.unit_number  AS related_unit_number,
-                 l.load_number  AS related_load_number
+                 l.load_number  AS related_load_number,
+                 -- gl_je column-wave (2026-08-12): the company-paid expense leg posts
+                 -- accounting.civil_fine_postings.expense_je_id via poster.service.ts, but that id
+                 -- was never joined back into any GET — it existed for exactly one HTTP response (the
+                 -- link-payment POST) and was then unreachable. Same reverse-JOIN shape as
+                 -- bills.service.ts's bill-payment JE link (no FK column on the source row itself).
+                 cfp.expense_je_id::text AS journal_entry_id
           FROM safety.civil_fines cf
           LEFT JOIN mdata.drivers d
             ON d.id = cf.subject_driver_id
@@ -154,6 +160,10 @@ export async function registerSafetyFinesRoutes(app: FastifyInstance) {
           LEFT JOIN mdata.loads l
             ON l.id = cf.related_load_id
            AND l.operating_company_id = cf.operating_company_id
+          LEFT JOIN accounting.civil_fine_postings cfp
+            ON cfp.fine_id = cf.id
+           AND cfp.operating_company_id = cf.operating_company_id
+           AND cfp.is_active
           WHERE ${filters.join(" AND ")}
           ORDER BY cf.issued_date DESC, cf.created_at DESC
           LIMIT 500
@@ -176,12 +186,19 @@ export async function registerSafetyFinesRoutes(app: FastifyInstance) {
     const row = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       const res = await client.query(
         // SAF-F18: same driver-name join so the detail drawer shows a name, not the raw uuid.
+        // gl_je column-wave (2026-08-12): same reverse-JOIN to accounting.civil_fine_postings as the
+        // list query above — see that comment for why this can't be a stored FK on civil_fines.
         `SELECT cf.*,
-                NULLIF(TRIM(COALESCE(d.first_name, '') || ' ' || COALESCE(d.last_name, '')), '') AS subject_driver_name
+                NULLIF(TRIM(COALESCE(d.first_name, '') || ' ' || COALESCE(d.last_name, '')), '') AS subject_driver_name,
+                cfp.expense_je_id::text AS journal_entry_id
          FROM safety.civil_fines cf
          LEFT JOIN mdata.drivers d
            ON d.id = cf.subject_driver_id
           AND d.operating_company_id = cf.operating_company_id
+         LEFT JOIN accounting.civil_fine_postings cfp
+           ON cfp.fine_id = cf.id
+          AND cfp.operating_company_id = cf.operating_company_id
+          AND cfp.is_active
          WHERE cf.id = $1 AND cf.operating_company_id = $2::uuid LIMIT 1`,
         [params.data.id, query.data.operating_company_id]
       );

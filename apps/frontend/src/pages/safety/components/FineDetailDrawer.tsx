@@ -140,6 +140,24 @@ export function FineDetailDrawer({
               "No"
             )}
           </div>
+          {/* gl_je column-wave (2026-08-12): the company-paid expense leg posts to the GL
+              (accounting/safety-fine-posting/poster.service.ts) but the id was write-only until
+              fines.routes.ts started joining accounting.civil_fine_postings back in — same
+              reverse-drill discipline as EscrowPage.tsx / BillDetailPage.tsx. Absent (driver-recovery
+              fine, unpaid fine, or flag off) says so rather than rendering an empty row. */}
+          <div>
+            <strong>Expense journal entry:</strong>{" "}
+            {fine.journal_entry_id ? (
+              <EntityLink
+                kind="journal_entry"
+                id={String(fine.journal_entry_id)}
+                label="Journal entry"
+                data-testid="fine-journal-entry-link"
+              />
+            ) : (
+              "—"
+            )}
+          </div>
         </div>
 
         <div className="mt-3">
