@@ -368,6 +368,14 @@
       "modules": ["dispatch"],
       "cols": ["driver", "unit", "load", "connectivity", "reverse_link"],
       "leafRe": "^queues\\.border_history$"
+    },
+    {
+      "task": "CLS-DISPATCH-INTRANSIT-UNIT-LINK",
+      "pr": "this PR",
+      "guard": "scripts/verify-dispatch-arch-tab-parity.mjs",
+      "modules": ["dispatch"],
+      "cols": ["driver", "unit", "load", "connectivity", "reverse_link"],
+      "leafRe": "^queues\\.in_transit$"
     }
   ]
 }

@@ -84,6 +84,7 @@ export function InTransitIssuesPage() {
           ),
       },
       { key: "driver_name", label: "Driver", sortable: true, render: (issue) => <EntityLink kind="driver" id={issue.driver_id ?? undefined} label={entityLabel(issue.driver_name, issue.driver_id, "Driver")} /> },
+      { key: "unit_number", label: "Unit", sortable: true, render: (issue) => <EntityLink kind="unit" id={issue.unit_id ?? undefined} label={entityLabel(issue.unit_number, issue.unit_id, "Unit")} /> },
       { key: "issue_category", label: "Category", sortable: true },
       { key: "severity", label: "Severity", render: (issue) => <StatusBadge status={issue.severity} /> },
       { key: "status", label: "Status", sortable: true },

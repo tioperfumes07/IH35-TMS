@@ -45,6 +45,9 @@ function main() {
 
   if (!atRiskPage.includes("dispatch-at-risk-page")) failures.push("AtRiskQueuePage must expose test id");
   if (!intransitPage.includes("+ Create Issue")) failures.push("InTransitIssuesPage must expose create flow");
+  if (!/<EntityLink kind="unit" id=\{issue\.unit_id \?\? undefined\}/.test(intransitPage)) {
+    failures.push("InTransitIssuesPage must link each issue to its canonical unit FK");
+  }
   if (!intransitPage.includes("issuesQ.isError") || !intransitPage.includes("ListErrorState") || !intransitPage.includes("issuesQ.refetch()")) {
     failures.push("InTransitIssuesPage must distinguish list failure from an honest empty issue queue and expose retry");
   }

@@ -95,6 +95,7 @@ describe("dispatch arch tab pages (B21-D2)", () => {
     wrap(<InTransitIssuesPage />);
     expect(await screen.findByTestId("dispatch-intransit-issues-page")).toBeTruthy();
     expect(await screen.findByText("mechanical")).toBeTruthy();
+    expect(screen.getByRole("link", { name: "101" }).getAttribute("href")).toBe("/fleet/units/u1");
   });
 
   it("shows create issue action on in-transit page", async () => {
