@@ -264,6 +264,38 @@
       "modules": ["accounting"],
       "cols": ["gl_je", "connectivity", "reverse_link"],
       "leafRe": "^(expenses\\.|register|transactions\\.)"
+    },
+    {
+      "task": "P04-dispatch-queue",
+      "pr": "pending",
+      "guard": "scripts/verify-dispatch-factoring-queue-deeplinks.mjs",
+      "modules": ["factoring", "dispatch"],
+      "cols": ["customer", "load", "connectivity", "reverse_link"],
+      "leafRe": "^(dispatch\\.queue|home\\.|hub\\.)"
+    },
+    {
+      "task": "FACT-RECOURSE-CUSTOMER",
+      "pr": "pending",
+      "guard": "scripts/verify-recourse-pipeline-table-uses-paritytable.mjs",
+      "modules": ["factoring"],
+      "cols": ["customer", "connectivity", "reverse_link"],
+      "leafRe": "^(home\\.recourse_pipeline|recourse_pipeline)"
+    },
+    {
+      "task": "SETT-FE-REVERSE-02",
+      "pr": "pending",
+      "guard": "scripts/verify-pre-settlements-reverse-drill.mjs",
+      "modules": ["settlements"],
+      "cols": ["driver", "load", "connectivity", "reverse_link"],
+      "leafRe": "^(settlement_close|pre_settlements|escrow|owner_approval)"
+    },
+    {
+      "task": "FACT-FE-BATCH-INVOICES",
+      "pr": "pending",
+      "guard": "scripts/verify-factoring-batch-detail-uses-paritytable.mjs",
+      "modules": ["factoring"],
+      "cols": ["customer", "connectivity", "reverse_link"],
+      "leafRe": "^batches\\.detail"
     }
   ]
 }

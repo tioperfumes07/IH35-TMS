@@ -97,6 +97,7 @@ export async function registerFactoringQueueRoutes(app: FastifyInstance) {
       const res = await client.query<{
         load_id: string;
         load_number: string;
+        customer_id: string;
         customer_name: string | null;
         load_status: string;
         rate_total_cents: number;
@@ -116,6 +117,7 @@ export async function registerFactoringQueueRoutes(app: FastifyInstance) {
         SELECT
           l.id                          AS load_id,
           l.load_number,
+          c.id                          AS customer_id,
           c.customer_name,
           l.status                      AS load_status,
           l.rate_total_cents,
@@ -198,6 +200,7 @@ export async function registerFactoringQueueRoutes(app: FastifyInstance) {
           return {
             load_id: row.load_id,
             load_number: row.load_number,
+            customer_id: row.customer_id,
             customer_name: row.customer_name,
             load_status: row.load_status,
             rate_total_cents: Number(row.rate_total_cents),

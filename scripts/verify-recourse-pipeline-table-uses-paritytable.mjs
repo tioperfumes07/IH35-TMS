@@ -16,6 +16,7 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-recourse-pipeline-table-uses-paritytable";
 const PAGE = "apps/frontend/src/pages/factoring/RecoursePipelineTable.tsx";
+const ROUTES = "apps/backend/src/factoring/factoring.routes.ts";
 
 const REQUIRED_LABELS = ["Invoice", "Customer", "Advance", "Reserve", "Recourse Expiry", "Days Left"];
 
@@ -44,6 +45,9 @@ function assertMigrated(src) {
   if (!src.includes("EntityLink")) {
     errors.push(`${PAGE}: must keep the EntityLink to the factoring advance in the Invoice column`);
   }
+  if (!/<EntityLink[^>]*kind=["']customer["'][\s\S]{0,240}?row\.customer_id/.test(src)) {
+    errors.push(`${PAGE}: customer column must use EntityLink kind="customer" id={row.customer_id} when present`);
+  }
   if (!src.includes("Export Selected")) {
     errors.push(`${PAGE}: must keep the "Export Selected" CSV batch action`);
   }
@@ -62,13 +66,23 @@ function assertMigrated(src) {
   return errors;
 }
 
+function assertRecourseApi(src) {
+  const errors = [];
+  if (!/inv\.customer_id/.test(src) || !/factoring_advance_id = rr\.factoring_advance_id/.test(src)) {
+    errors.push(
+      `${ROUTES}: recourse-pipeline must join accounting.invoices on factoring_advance_id and return customer_id`,
+    );
+  }
+  return errors;
+}
+
 function selftest() {
   const good = `
     import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
     import { EntityLink } from "../../components/shared/EntityLink";
     const columns = [
       { key: "invoice_reference", label: "Invoice", render: (row) => <EntityLink kind="factoring_advance" id={row.factoring_advance_id} /> },
-      { key: "customer_name", label: "Customer" },
+      { key: "customer_name", label: "Customer", render: (row) => <EntityLink kind="customer" id={row.customer_id} label={row.customer_name} /> },
       { key: "advance_amount", label: "Advance" },
       { key: "reserve_amount", label: "Reserve" },
       { key: "recourse_expiry_date", label: "Recourse Expiry" },
@@ -102,6 +116,27 @@ function selftest() {
     console.error(`${LABEL} --selftest FAIL bad fixture should fail hard:`, badErrors);
     process.exit(1);
   }
+  const badCustomer = good.replace(
+    'kind="customer" id={row.customer_id}',
+    'kind="vendor" id={row.customer_id}',
+  );
+  if (assertMigrated(badCustomer).length < 1) {
+    console.error(`${LABEL} --selftest FAIL customer EntityLink regression`);
+    process.exit(1);
+  }
+  const goodRoutes = `
+    SELECT rr.*, inv.customer_id
+    LEFT JOIN LATERAL (
+      SELECT i.customer_id
+      FROM accounting.invoices i
+      WHERE i.factoring_advance_id = rr.factoring_advance_id
+    ) inv ON true
+  `;
+  const badRoutes = `SELECT * FROM views.factoring_recourse_at_risk`;
+  if (assertRecourseApi(goodRoutes).length !== 0 || assertRecourseApi(badRoutes).length === 0) {
+    console.error(`${LABEL} --selftest FAIL recourse API fixture`);
+    process.exit(1);
+  }
   console.log(`${LABEL} --selftest PASS`);
 }
 
@@ -111,7 +146,8 @@ function main() {
     return;
   }
   const src = fs.readFileSync(path.join(ROOT, PAGE), "utf8");
-  const errors = assertMigrated(src);
+  const routeSrc = fs.readFileSync(path.join(ROOT, ROUTES), "utf8");
+  const errors = [...assertMigrated(src), ...assertRecourseApi(routeSrc)];
   if (errors.length) {
     console.error(`FAIL ${LABEL}:`);
     for (const e of errors) console.error(`  - ${e}`);

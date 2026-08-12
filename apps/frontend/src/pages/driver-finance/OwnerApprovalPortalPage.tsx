@@ -8,6 +8,7 @@ import {
   type OwnerApprovalPortalPayload,
 } from "../../api/owner-approval";
 import { Button } from "../../components/Button";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 
 function money(n: number) {
@@ -152,11 +153,19 @@ export function OwnerApprovalPortalPage() {
                     {(data.driver_history.settlements ?? []).length === 0 ? (
                       <li className="text-slate-500">None in period.</li>
                     ) : (
-                      data.driver_history.settlements.map((s) => (
-                        <li key={String(s.id ?? Math.random())} className="border-b border-slate-100 py-1">
-                          {String(s.display_id ?? "")} · {String(s.status ?? "")} · {String(s.created_at ?? "").slice(0, 10)}
-                        </li>
-                      ))
+                      data.driver_history.settlements.map((s) => {
+                        const settlementId = String(s.id ?? "");
+                        return (
+                          <li key={settlementId || Math.random()} className="border-b border-slate-100 py-1">
+                            <EntityLink
+                              kind="settlement"
+                              id={settlementId}
+                              label={entityLabel(String(s.display_id ?? ""), settlementId, "Settlement")}
+                            />{" "}
+                            · {String(s.status ?? "")} · {String(s.created_at ?? "").slice(0, 10)}
+                          </li>
+                        );
+                      })
                     )}
                   </ul>
                 </div>

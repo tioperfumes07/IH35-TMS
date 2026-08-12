@@ -7,6 +7,7 @@ import { useToast } from "../../components/Toast";
 export type RecoursePipelineRow = {
   factoring_advance_id: string;
   invoice_reference: string;
+  customer_id: string | null;
   customer_name: string;
   advance_amount: number;
   reserve_amount: number;
@@ -74,7 +75,21 @@ export function RecoursePipelineTable({ rows, fmtCurrency, fmtDate }: Props) {
           />
         ),
       },
-      { key: "customer_name", label: "Customer", sortable: true },
+      {
+        key: "customer_name",
+        label: "Customer",
+        sortable: true,
+        render: (row) =>
+          row.customer_id ? (
+            <EntityLink
+              kind="customer"
+              id={row.customer_id}
+              label={entityLabel(row.customer_name, row.customer_id, "Customer")}
+            />
+          ) : (
+            entityLabel(row.customer_name, null, "Customer")
+          ),
+      },
       {
         key: "advance_amount",
         label: "Advance",

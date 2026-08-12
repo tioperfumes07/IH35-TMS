@@ -112,7 +112,10 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
   }
   );
 
-  app.get("/api/v1/factoring/recourse-pipeline", async (req, reply) => {
+  app.get(
+    "/api/v1/factoring/recourse-pipeline",
+    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
+    async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = recourseQuerySchema.safeParse(req.query ?? {});
@@ -123,10 +126,21 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
       const res = await client
         .query(
           `
-            SELECT *
-            FROM views.factoring_recourse_at_risk
-            WHERE operating_company_id = $1
-            ORDER BY days_until_recourse_expiry ASC, factored_at DESC
+            SELECT
+              rr.*,
+              inv.customer_id
+            FROM views.factoring_recourse_at_risk rr
+            LEFT JOIN LATERAL (
+              SELECT i.customer_id
+              FROM accounting.invoices i
+              WHERE i.factoring_advance_id = rr.factoring_advance_id
+                AND i.operating_company_id = rr.operating_company_id
+                AND i.status <> 'void'
+              ORDER BY i.created_at DESC
+              LIMIT 1
+            ) inv ON true
+            WHERE rr.operating_company_id = $1
+            ORDER BY rr.days_until_recourse_expiry ASC, rr.factored_at DESC
             LIMIT $2
           `,
           [companyId, limit]
@@ -136,7 +150,8 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
     });
 
     return { invoices };
-  });
+  },
+  );
 
   app.get("/api/v1/factoring/chargebacks-fees", async (req, reply) => {
     const user = currentAuthUser(req, reply);

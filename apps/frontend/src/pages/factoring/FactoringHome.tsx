@@ -318,6 +318,27 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
             >
               Submit to Factor
             </Link>
+            <Link
+              to="/dispatch/factoring-queue"
+              className="inline-flex items-center rounded-sm border border-slate-300 bg-white px-2.5 py-2 text-xs font-medium text-slate-800 hover:bg-slate-50"
+              data-testid="factoring-hub-dispatch-queue-reverse-link"
+            >
+              Dispatch queue
+            </Link>
+            <Link
+              to="/accounting/factoring"
+              className="inline-flex items-center rounded-sm border border-slate-300 bg-white px-2.5 py-2 text-xs font-medium text-slate-800 hover:bg-slate-50"
+              data-testid="factoring-hub-accounting-advances-reverse-link"
+            >
+              Accounting advances
+            </Link>
+            <Link
+              to="/banking/factoring"
+              className="inline-flex items-center rounded-sm border border-slate-300 bg-white px-2.5 py-2 text-xs font-medium text-slate-800 hover:bg-slate-50"
+              data-testid="factoring-hub-banking-entry-reverse-link"
+            >
+              Banking entry
+            </Link>
             <Button size="sm" variant="secondary" onClick={() => void queryClient.invalidateQueries({ queryKey: ["factoring"] })}>
               Refresh
             </Button>
