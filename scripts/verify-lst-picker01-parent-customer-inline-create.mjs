@@ -65,15 +65,14 @@ export function collectProblems(root = ROOT, overrides = null) {
 
   if (!drawer) problems.push(`missing ${DRAWER}`);
   else {
-    if (!/data-testid=["']customer-parent-select["']/.test(drawer)) {
-      problems.push(`${DRAWER}: parent picker must use data-testid=customer-parent-select`);
+    if (!/<CustomerProfileForm\s/.test(drawer)) {
+      problems.push(`${DRAWER}: inline customer create must render CustomerProfileForm (same as Customers +Create)`);
     }
-    const block = parentSelectBlock(drawer);
-    if (!/createKind=["']customer["']/.test(block)) {
-      problems.push(`${DRAWER}: parent customer picker must use createKind=customer`);
+    if (!/profileValuesToCreatePayload/.test(drawer)) {
+      problems.push(`${DRAWER}: inline customer create must submit via profileValuesToCreatePayload`);
     }
-    if (/<select[^>]*name=["']parent_customer_id["']/.test(drawer)) {
-      problems.push(`${DRAWER}: must not keep bare <select name=parent_customer_id> as primary control`);
+    if (!/validateCustomerProfileForCreate/.test(drawer)) {
+      problems.push(`${DRAWER}: inline customer create must use validateCustomerProfileForCreate`);
     }
   }
 
@@ -140,29 +139,10 @@ if (process.argv.includes("--selftest")) {
     "createKind=customer"
   );
   expectCaught(
-    "drawer-createKind-removed",
+    "drawer-not-canonical-form",
     DRAWER,
-    (s) =>
-      s.replace(
-        /(data-testid=["']customer-parent-select["'][\s\S]{0,1800}?)createKind=["']customer["']/,
-        '$1createKind="vendor"'
-      ),
-    "createKind=customer"
-  );
-  expectCaught(
-    "drawer-bare-select-reintroduced",
-    DRAWER,
-    (s) =>
-      s.replace(
-        /data-testid=["']customer-parent-select["'][\s\S]*?<\/label>/,
-        `data-testid="customer-parent-select">
-          <span className="text-xs font-medium text-gray-700">Parent customer *</span>
-          <select name="parent_customer_id" className="mt-1 w-full">
-            <option value="">— Select parent —</option>
-          </select>
-        </label>`
-      ),
-    "createKind=customer"
+    (s) => s.replace(/<CustomerProfileForm\s/, "<LegacyMiniForm "),
+    "CustomerProfileForm"
   );
 
   if (failures.length) {
@@ -170,7 +150,7 @@ if (process.argv.includes("--selftest")) {
     for (const f of failures) console.error("  - " + f);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST OK — 5 planted defects caught, live sources clean`);
+  console.log(`${LABEL} SELFTEST OK — 4 planted defects caught, live sources clean`);
 } else {
   const problems = collectProblems();
   if (problems.length) {

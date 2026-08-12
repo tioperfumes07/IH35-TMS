@@ -208,15 +208,36 @@ const numOrNull = (v: string) => {
   return v.trim() === "" || Number.isNaN(n) ? null : n;
 };
 
+export type CustomerCreateValidationCode = "legal_name_required" | "customer_type_required" | "email_required" | "parent_customer_required";
+
+/** Shared create validation for Customers module + inline picker create (same required fields). */
+export function validateCustomerProfileForCreate(
+  v: CustomerProfileFormValues
+): { ok: true } | { ok: false; code: CustomerCreateValidationCode; message: string } {
+  if (!v.name.trim()) {
+    return { ok: false, code: "legal_name_required", message: "Legal name is required" };
+  }
+  if (!v.customer_type) {
+    return { ok: false, code: "customer_type_required", message: "Customer type is required" };
+  }
+  if (!v.email.trim()) {
+    return { ok: false, code: "email_required", message: "Email is required" };
+  }
+  return { ok: true };
+}
+
 export function profileValuesToCreatePayload(v: CustomerProfileFormValues, operatingCompanyId: string): CreateCustomerInput {
   const name = v.name.trim();
+  const email = trimOrUndef(v.email);
+  const arEmail = trimOrUndef(v.ar_email) ?? email;
+  const apEmail = trimOrUndef(v.ap_email) ?? email;
   return {
     name,
     legal_name: name,
     customer_code: trimOrUndef(v.customer_code),
     customer_type: v.customer_type || undefined,
     parent_customer_id: v.parent_customer_id || undefined, // D1-4: persist parent hard link
-    email: trimOrUndef(v.email),
+    email,
     phone: trimOrUndef(v.phone),
     website: trimOrUndef(v.website),
     fax_phone: trimOrUndef(v.fax_phone),
@@ -232,9 +253,9 @@ export function profileValuesToCreatePayload(v: CustomerProfileFormValues, opera
     main_contact_name: trimOrUndef(v.main_contact_name),
     main_contact_title: trimOrUndef(v.main_contact_title),
     main_contact_mobile: trimOrUndef(v.mobile),
-    ar_email: trimOrUndef(v.ar_email),
+    ar_email: arEmail,
     ar_phone: trimOrUndef(v.ar_phone),
-    ap_email: trimOrUndef(v.ap_email),
+    ap_email: apEmail,
     ap_phone: trimOrUndef(v.ap_phone),
     free_time_pickup_minutes: numOrUndef(v.free_time_pickup_minutes),
     free_time_delivery_minutes: numOrUndef(v.free_time_delivery_minutes),

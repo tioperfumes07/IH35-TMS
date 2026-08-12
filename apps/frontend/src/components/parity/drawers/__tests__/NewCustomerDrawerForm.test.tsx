@@ -8,8 +8,12 @@ import { NewCustomerDrawerForm } from "../NewCustomerDrawerForm";
 
 vi.mock("../../../../api/mdata", () => ({
   createCustomer: vi.fn(),
-  // D1-4: the drawer now loads eligible parent customers when "is a sub-customer" is checked.
   listCustomers: vi.fn().mockResolvedValue({ customers: [] }),
+  listPaymentTermOptions: vi.fn().mockResolvedValue({ payment_terms: [] }),
+}));
+
+vi.mock("../../../../api/catalog-accounts", () => ({
+  listCatalogAccounts: vi.fn().mockResolvedValue({ accounts: [] }),
 }));
 
 import { createCustomer } from "../../../../api/mdata";
@@ -35,48 +39,50 @@ function renderDrawer() {
   );
 }
 
-describe("NewCustomerDrawerForm validation (D1-4 / D1-5)", () => {
-  it("D1-5: blocks submit and does NOT call createCustomer when customer_type is empty", async () => {
+describe("NewCustomerDrawerForm validation (canonical CustomerProfileForm)", () => {
+  it("blocks submit when customer_type is empty", async () => {
     const user = userEvent.setup();
-    vi.mocked(createCustomer).mockResolvedValue({ id: "c1" } as never);
+    vi.mocked(createCustomer).mockResolvedValue({ id: "c1", name: "Acme Freight" } as never);
     renderDrawer();
 
-    await user.type(screen.getByPlaceholderText(/How this customer appears/i), "Acme Freight");
-    // customer_type left as "" (— Select type —)
+    await user.type(screen.getByLabelText(/Customer display name/i), "Acme Freight");
+    await user.type(screen.getByLabelText(/^Email/i), "billing@acme.test");
     await user.click(screen.getByRole("button", { name: /^Save$/i }));
 
     expect(createCustomer).not.toHaveBeenCalled();
     await waitFor(() => expect(screen.getByText(/Customer type is required/i)).toBeTruthy());
   });
 
-  it("D1-4: blocks submit when sub-customer is checked but no parent is selected", async () => {
+  it("blocks submit when email is empty", async () => {
     const user = userEvent.setup();
-    vi.mocked(createCustomer).mockResolvedValue({ id: "c1" } as never);
+    vi.mocked(createCustomer).mockResolvedValue({ id: "c1", name: "Acme Freight" } as never);
     renderDrawer();
 
-    await user.type(screen.getByPlaceholderText(/How this customer appears/i), "Acme Freight");
-    await user.selectOptions(screen.getByRole("combobox", { name: /customer type/i }), "broker");
-    await user.click(screen.getByRole("checkbox", { name: /is a sub-customer/i }));
-    // parent left blank
+    await user.type(screen.getByLabelText(/Customer display name/i), "Acme Freight");
+    await user.selectOptions(screen.getByRole("combobox", { name: /Customer type/i }), "broker");
     await user.click(screen.getByRole("button", { name: /^Save$/i }));
 
     expect(createCustomer).not.toHaveBeenCalled();
-    await waitFor(() => expect(screen.getByText(/Parent customer is required/i)).toBeTruthy());
+    await waitFor(() => expect(screen.getByText(/Email is required/i)).toBeTruthy());
   });
 
-  it("submits with customer_type when the form is valid (non-sub-customer)", async () => {
+  it("submits with name, type, and email when valid", async () => {
     const user = userEvent.setup();
-    vi.mocked(createCustomer).mockResolvedValue({ id: "c1" } as never);
+    vi.mocked(createCustomer).mockResolvedValue({ id: "c1", name: "Acme Freight" } as never);
     renderDrawer();
 
-    await user.type(screen.getByPlaceholderText(/How this customer appears/i), "Acme Freight");
-    await user.selectOptions(screen.getByRole("combobox", { name: /customer type/i }), "direct_shipper");
+    await user.type(screen.getByLabelText(/Customer display name/i), "Acme Freight");
+    await user.selectOptions(screen.getByRole("combobox", { name: /Customer type/i }), "direct_shipper");
+    await user.type(screen.getByLabelText(/^Email/i), "billing@acme.test");
     await user.click(screen.getByRole("button", { name: /^Save$/i }));
 
     await waitFor(() => expect(createCustomer).toHaveBeenCalledTimes(1));
     expect(vi.mocked(createCustomer).mock.calls[0][0]).toMatchObject({
       name: "Acme Freight",
       customer_type: "direct_shipper",
+      email: "billing@acme.test",
+      ar_email: "billing@acme.test",
+      ap_email: "billing@acme.test",
     });
   });
 });

@@ -15,6 +15,7 @@ import {
   CustomerProfileForm,
   emptyCustomerProfileValues,
   profileValuesToCreatePayload,
+  validateCustomerProfileForCreate,
   type CustomerProfileFormValues,
 } from "../components/customers/CustomerProfileForm";
 import { Button } from "../components/Button";
@@ -244,17 +245,10 @@ export function CustomersPage() {
 
   const createMutation = useMutation({
     mutationFn: async () => {
-      const legalName = createValues.name.trim();
-      if (!legalName) {
-        const error = new Error("Customer legal name is required.");
-        (error as Error & { code?: string }).code = "legal_name_required";
-        throw error;
-      }
-      // D1-5: customer_type is required by the create endpoint — block client-side so the user gets an
-      // inline field error instead of a generic 400 "Could not save customer."
-      if (!createValues.customer_type) {
-        const error = new Error("Customer type is required.");
-        (error as Error & { code?: string }).code = "customer_type_required";
+      const check = validateCustomerProfileForCreate(createValues);
+      if (!check.ok) {
+        const error = new Error(check.message);
+        (error as Error & { code?: string }).code = check.code;
         throw error;
       }
       // CUSTOMER-EMAIL-REQUIRED: email is required for invoice deliverability.
