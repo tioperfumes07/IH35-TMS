@@ -9,6 +9,29 @@ export type FleetScheduleResponse = {
   vacant_units: Array<Record<string, unknown>>;
 };
 
+// SAFETY-TEMP-COVER-ASSIGNMENTS-ZERO-FE-CALLERS — /api/v1/safety/scheduler/temp-assignments
+// (list/create/cancel) has existed on the backend since GAP-81's scheduler build but had ZERO
+// frontend callers anywhere; this is the client for it.
+export type TempAssignment = {
+  id: string;
+  operating_company_id: string;
+  unit_id: string;
+  unit_number: string | null;
+  primary_driver_id: string;
+  primary_driver_name: string | null;
+  cover_driver_id: string;
+  cover_driver_name: string | null;
+  start_date: string;
+  end_date: string;
+  related_leave_request_id: string | null;
+  notes: string | null;
+  created_at: string;
+  created_by_user_id: string;
+  voided_at: string | null;
+  voided_by_user_id: string | null;
+  void_reason: string | null;
+};
+
 function withCompanyQuery(path: string, operatingCompanyId: string, params: Record<string, string>) {
   const search = new URLSearchParams({ operating_company_id: operatingCompanyId, ...params });
   const sep = path.includes("?") ? "&" : "?";
@@ -68,5 +91,36 @@ export const driverSchedulerOfficeApi = {
       year: number;
       balances: Array<Record<string, unknown>>;
     }>(withCompanyQuery("/api/v1/safety/scheduler/balances", operatingCompanyId, params));
+  },
+
+  listTempAssignments(operatingCompanyId: string) {
+    return apiRequest<{ assignments: TempAssignment[] }>(
+      withCompanyQuery("/api/v1/safety/scheduler/temp-assignments", operatingCompanyId, {})
+    );
+  },
+
+  assignTempCover(
+    operatingCompanyId: string,
+    body: {
+      unit_id: string;
+      primary_driver_id: string;
+      cover_driver_id: string;
+      start_date: string;
+      end_date: string;
+      related_leave_request_id?: string;
+      notes?: string;
+    }
+  ) {
+    return apiRequest<TempAssignment>(
+      withCompanyQuery("/api/v1/safety/scheduler/temp-assignments", operatingCompanyId, {}),
+      { method: "POST", body }
+    );
+  },
+
+  cancelTempCover(operatingCompanyId: string, id: string, reason?: string) {
+    return apiRequest<TempAssignment>(
+      withCompanyQuery(`/api/v1/safety/scheduler/temp-assignments/${encodeURIComponent(id)}/cancel`, operatingCompanyId, {}),
+      { method: "POST", body: { reason } }
+    );
   },
 };

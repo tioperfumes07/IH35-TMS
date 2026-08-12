@@ -123,7 +123,7 @@ async function nextRequestNumber(client: QueryableClient, operatingCompanyId: st
     `
       SELECT request_number
       FROM safety.driver_leave_requests
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
         AND request_number LIKE $2
       ORDER BY request_number DESC
       LIMIT 1
@@ -152,7 +152,7 @@ async function enqueueOutbox(client: QueryableClient, eventType: string, payload
 
 export async function getLeavePolicy(client: QueryableClient, operatingCompanyId: string) {
   const res = await client.query(
-    `SELECT * FROM catalogs.leave_policies WHERE operating_company_id = $1 LIMIT 1`,
+    `SELECT * FROM catalogs.leave_policies WHERE operating_company_id = $1::uuid LIMIT 1`,
     [operatingCompanyId]
   );
   return res.rows[0] ?? null;
@@ -195,7 +195,7 @@ export async function updateLeavePolicy(
     `
       UPDATE catalogs.leave_policies
       SET ${parts.join(", ")}
-      WHERE operating_company_id = $${values.length}
+      WHERE operating_company_id = $${values.length}::uuid
       RETURNING *
     `,
     values
@@ -250,7 +250,7 @@ export async function getLeaveBalance(client: QueryableClient, operatingCompanyI
   const res = await client.query(
     `
       SELECT * FROM catalogs.driver_leave_balances
-      WHERE operating_company_id = $1 AND driver_id = $2 AND plan_year = $3
+      WHERE operating_company_id = $1::uuid AND driver_id = $2 AND plan_year = $3
       LIMIT 1
     `,
     [operatingCompanyId, driverId, year]
@@ -288,7 +288,7 @@ export async function listLeaveBalances(
         $4,
         $5
       FROM mdata.drivers d
-      WHERE d.operating_company_id = $1
+      WHERE d.operating_company_id = $1::uuid
         AND d.deactivated_at IS NULL
         AND d.is_sample_data IS NOT TRUE
         AND concat_ws(' ', d.first_name, d.last_name) NOT ILIKE '%DEMO%'
@@ -325,7 +325,7 @@ export async function listLeaveBalances(
       FROM catalogs.driver_leave_balances b
       JOIN mdata.drivers d ON d.id = b.driver_id
                            AND d.operating_company_id = $1::uuid
-      WHERE b.operating_company_id = $1
+      WHERE b.operating_company_id = $1::uuid
         AND b.plan_year = $2
         AND d.deactivated_at IS NULL
         AND d.is_sample_data IS NOT TRUE
@@ -367,7 +367,7 @@ async function hasPendingOverlap(
     `
       SELECT 1
       FROM safety.driver_leave_requests r
-      WHERE r.operating_company_id = $1
+      WHERE r.operating_company_id = $1::uuid
         AND r.driver_id = $2
         AND r.status = 'pending_review'
         AND r.voided_at IS NULL
@@ -428,7 +428,7 @@ export async function createDriverLeaveRequest(
     const balRes = await client.query(
       `
         SELECT * FROM catalogs.driver_leave_balances
-        WHERE operating_company_id = $1 AND driver_id = $2 AND plan_year = $3
+        WHERE operating_company_id = $1::uuid AND driver_id = $2 AND plan_year = $3
         LIMIT 1
       `,
       [args.operatingCompanyId, args.driverId, planYear]
@@ -518,7 +518,7 @@ export async function cancelDriverLeaveRequest(
         voided_at = now(),
         voided_by_user_id = $4,
         void_reason = 'driver_cancelled'
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
         AND id = $2
         AND driver_id = $3
         AND status = 'pending_review'
@@ -554,7 +554,7 @@ export async function attachLeaveRequestDocumentation(
     `
       UPDATE safety.driver_leave_requests
       SET documentation_attachment_id = $4
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
         AND id = $2
         AND driver_id = $3
         AND status = 'pending_review'
@@ -582,7 +582,7 @@ export async function listMyLeaveRequests(client: QueryableClient, operatingComp
     `
       SELECT *
       FROM safety.driver_leave_requests
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
         AND driver_id = $2
       ORDER BY created_at DESC
       LIMIT 200
@@ -601,7 +601,7 @@ export async function getMySchedule(
       SELECT ld.leave_date::text AS d, ld.leave_type, r.status AS request_status, r.request_number
       FROM safety.driver_leave_days ld
       JOIN safety.driver_leave_requests r ON r.id = ld.leave_request_id
-      WHERE ld.operating_company_id = $1
+      WHERE ld.operating_company_id = $1::uuid
         AND ld.driver_id = $2
         AND ld.voided_at IS NULL
         AND ld.leave_date BETWEEN $3::date AND $4::date
@@ -613,7 +613,7 @@ export async function getMySchedule(
     `
       SELECT id, request_number, leave_type, start_date, end_date, status
       FROM safety.driver_leave_requests
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
         AND driver_id = $2
         AND status = 'pending_review'
         AND voided_at IS NULL
@@ -634,7 +634,7 @@ export async function listPendingLeaveRequests(client: QueryableClient, operatin
       FROM safety.driver_leave_requests r
       JOIN mdata.drivers d ON d.id = r.driver_id
                            AND d.operating_company_id = $1::uuid
-      WHERE r.operating_company_id = $1
+      WHERE r.operating_company_id = $1::uuid
         AND r.status = 'pending_review'
         AND r.voided_at IS NULL
       ORDER BY r.start_date ASC, r.created_at ASC
@@ -653,7 +653,7 @@ export async function listAllLeaveRequests(client: QueryableClient, operatingCom
       FROM safety.driver_leave_requests r
       JOIN mdata.drivers d ON d.id = r.driver_id
                            AND d.operating_company_id = $1::uuid
-      WHERE r.operating_company_id = $1
+      WHERE r.operating_company_id = $1::uuid
       ORDER BY r.created_at DESC
       LIMIT $2
     `,
@@ -670,7 +670,7 @@ export async function getLeaveRequestDetail(client: QueryableClient, operatingCo
       FROM safety.driver_leave_requests r
       JOIN mdata.drivers d ON d.id = r.driver_id
                            AND d.operating_company_id = $1::uuid
-      WHERE r.operating_company_id = $1 AND r.id = $2
+      WHERE r.operating_company_id = $1::uuid AND r.id = $2
       LIMIT 1
     `,
     [operatingCompanyId, requestId]
@@ -682,7 +682,7 @@ export async function getLeaveRequestDetail(client: QueryableClient, operatingCo
     `
       SELECT id, event_type, event_payload, actor_user_id, actor_name, created_at
       FROM safety.driver_leave_audit_log
-      WHERE operating_company_id = $1 AND leave_request_id = $2
+      WHERE operating_company_id = $1::uuid AND leave_request_id = $2
       ORDER BY id ASC
     `,
     [operatingCompanyId, requestId]
@@ -692,7 +692,7 @@ export async function getLeaveRequestDetail(client: QueryableClient, operatingCo
     `
       SELECT leave_date::text AS leave_date, leave_type
       FROM safety.driver_leave_days
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
         AND leave_request_id = $2
         AND voided_at IS NULL
       ORDER BY leave_date ASC
@@ -726,7 +726,7 @@ export async function reviewLeaveRequest(
   const input = reviewLeaveRequestSchema.parse(args.body);
 
   const curRes = await client.query(
-    `SELECT * FROM safety.driver_leave_requests WHERE operating_company_id = $1 AND id = $2 LIMIT 1`,
+    `SELECT * FROM safety.driver_leave_requests WHERE operating_company_id = $1::uuid AND id = $2 LIMIT 1`,
     [args.operatingCompanyId, args.requestId]
   );
   const current = curRes.rows[0] ?? null;
@@ -743,7 +743,7 @@ export async function reviewLeaveRequest(
           reviewed_at = now(),
           review_action = 'deny',
           denial_reason = $4
-        WHERE operating_company_id = $1 AND id = $2
+        WHERE operating_company_id = $1::uuid AND id = $2
         RETURNING *
       `,
       [args.operatingCompanyId, args.requestId, args.actorUserId, input.denied_reason ?? null]
@@ -774,7 +774,7 @@ export async function reviewLeaveRequest(
           reviewed_at = now(),
           review_action = 'defer',
           modification_reason = $4
-        WHERE operating_company_id = $1 AND id = $2
+        WHERE operating_company_id = $1::uuid AND id = $2
         RETURNING *
       `,
       [args.operatingCompanyId, args.requestId, args.actorUserId, input.modification_reason ?? null]
@@ -814,7 +814,7 @@ export async function reviewLeaveRequest(
     const balRes = await client.query(
       `
         SELECT * FROM catalogs.driver_leave_balances
-        WHERE operating_company_id = $1 AND driver_id = $2 AND plan_year = $3
+        WHERE operating_company_id = $1::uuid AND driver_id = $2 AND plan_year = $3
         FOR UPDATE
       `,
       [args.operatingCompanyId, current.driver_id, planYear]
@@ -846,7 +846,7 @@ export async function reviewLeaveRequest(
         reviewed_at = now(),
         review_action = $6::text,
         modification_reason = $7
-      WHERE operating_company_id = $1 AND id = $2
+      WHERE operating_company_id = $1::uuid AND id = $2
       RETURNING *
     `,
     [
@@ -890,7 +890,7 @@ export async function reviewLeaveRequest(
           sick_used = $4,
           personal_used = $5,
           updated_at = now()
-        WHERE operating_company_id = $1
+        WHERE operating_company_id = $1::uuid
           AND driver_id = $2
           AND plan_year = $6
       `,
@@ -944,7 +944,7 @@ export async function getFleetSchedule(
         SELECT l.assigned_unit_id
         FROM mdata.loads l
         WHERE l.assigned_primary_driver_id = d.id
-          AND l.operating_company_id = $1
+          AND l.operating_company_id = $1::uuid
           AND l.soft_deleted_at IS NULL
           AND l.assigned_unit_id IS NOT NULL
           AND l.status::text IN (${activeStatusList})
@@ -955,7 +955,7 @@ export async function getFleetSchedule(
         ON u.id = al.assigned_unit_id
         AND u.deactivated_at IS NULL
         AND (u.owner_company_id = $1 OR u.currently_leased_to_company_id = $1)
-      WHERE d.operating_company_id = $1
+      WHERE d.operating_company_id = $1::uuid
         AND d.deactivated_at IS NULL
         -- DRIVERHUB-2: never list non-genuine drivers on the Scheduler. Exclude onboarding sample
         -- rows (is_sample_data) plus DEMO/DUMMY/TEST seed-marker name rows. Read-only filter — the
@@ -979,7 +979,7 @@ export async function getFleetSchedule(
         r.id::text AS leave_request_id
       FROM safety.driver_leave_days ld
       JOIN safety.driver_leave_requests r ON r.id = ld.leave_request_id
-      WHERE ld.operating_company_id = $1
+      WHERE ld.operating_company_id = $1::uuid
         AND ld.voided_at IS NULL
         AND ld.leave_date BETWEEN $2::date AND $3::date
     `,
@@ -997,7 +997,7 @@ export async function getFleetSchedule(
         r.end_date::text AS end_date,
         r.status::text AS status
       FROM safety.driver_leave_requests r
-      WHERE r.operating_company_id = $1
+      WHERE r.operating_company_id = $1::uuid
         AND r.status = 'pending_review'
         AND r.voided_at IS NULL
         AND r.end_date >= $2::date
@@ -1032,13 +1032,25 @@ export async function getFleetSchedule(
 }
 
 export async function listTempAssignments(client: QueryableClient, operatingCompanyId: string) {
+  // SAFETY-TEMP-COVER-ASSIGNMENTS-ZERO-FE-CALLERS — this used to be SELECT * with no joins (unusable
+  // for a UI — raw driver/unit uuids, no names) and operating_company_id compared with no ::uuid
+  // cast (the same DA-PROGRAM-ROUTES-500 shape: safety.temp_unit_assignments.operating_company_id is
+  // UUID NOT NULL, and node-pg does not reliably infer the placeholder's type under a pooled
+  // connection). Both fixed here: join unit/driver names, cast the scope predicate.
   const res = await client.query(
     `
-      SELECT *
-      FROM safety.temp_unit_assignments
-      WHERE operating_company_id = $1
-        AND voided_at IS NULL
-      ORDER BY start_date DESC
+      SELECT
+        t.*,
+        u.unit_number,
+        pd.first_name || ' ' || pd.last_name AS primary_driver_name,
+        cd.first_name || ' ' || cd.last_name AS cover_driver_name
+      FROM safety.temp_unit_assignments t
+      LEFT JOIN mdata.units u ON u.id = t.unit_id
+      LEFT JOIN mdata.drivers pd ON pd.id = t.primary_driver_id
+      LEFT JOIN mdata.drivers cd ON cd.id = t.cover_driver_id
+      WHERE t.operating_company_id = $1::uuid
+        AND t.voided_at IS NULL
+      ORDER BY t.start_date DESC
       LIMIT 200
     `,
     [operatingCompanyId]
@@ -1121,7 +1133,7 @@ export async function cancelTempCover(
         voided_at = now(),
         voided_by_user_id = $3,
         void_reason = COALESCE($4, 'cancelled')
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
         AND id = $2
         AND voided_at IS NULL
       RETURNING *
