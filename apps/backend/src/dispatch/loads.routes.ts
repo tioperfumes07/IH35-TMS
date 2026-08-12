@@ -262,6 +262,7 @@ const createDispatchLoadBodySchema = z.object({
 const updateDispatchLoadBodySchema = z.object({
   operating_company_id: z.string().uuid(),
   customer_id: z.string().uuid().optional(),
+  dispatch_flag_color_id: z.string().uuid().optional(),
   customer_wo_number: z.string().trim().max(120).nullable().optional(),
   pickup_number: z.string().trim().max(120).nullable().optional(),
   border_routing: z.string().trim().max(120).nullable().optional(),
@@ -725,6 +726,10 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
                  -- rendered "-" for a load that has one. Read from mdata.loads, entity-scoped like the
                  -- joins above; NOT added to the view, which would widen it unscoped for every consumer.
                  ml.trip_type AS trip_type,
+                 ml.dispatch_flag_color_id AS dispatch_flag_color_id,
+                 df.flag_code AS flag_code,
+                 df.display_name AS flag_display_name,
+                 df.hex_color AS flag_hex_color,
                  -- DISPATCH-MILES-GET (Cascade create-depth 2026-08-10): Book POST accepts
                  -- miles_shortest/miles_practical and Neon stores them (e.g. L-20260809-0007 = 420/445),
                  -- but views.dispatch_load_with_driver_status has ZERO mile columns (information_schema
@@ -757,6 +762,8 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
           -- carries the load's own operating_company_id predicate rather than trusting the view's row.
           LEFT JOIN mdata.loads ml ON ml.id = l.id
                                   AND ml.operating_company_id = l.operating_company_id
+          JOIN catalogs.dispatch_flag_colors df ON df.id = ml.dispatch_flag_color_id
+                                                AND df.operating_company_id = ml.operating_company_id
           -- P39: Book Load persists the trailer on assignment history because mdata.loads has no
           -- trailer FK. Detail must read that same canonical sink; returning hard-coded NULL here
           -- made a correctly linked load render "Unassigned" in the drawer.

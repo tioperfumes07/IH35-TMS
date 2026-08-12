@@ -78,6 +78,17 @@ function checkTree() {
   assert(/addOptional\("billing_postal_code", b\.billing_zip\)/.test(backend), `${BACKEND}: create must persist billing_zip`);
   assert(/billing_postal_code AS billing_zip/.test(backend), `${BACKEND}: reload must return billing_zip`);
 
+  const mdataApi = fs.readFileSync(path.join(ROOT, "apps/frontend/src/api/mdata.ts"), "utf8");
+  for (const field of ["billing_city", "billing_zip"]) {
+    assert(new RegExp(`${field}\\?:\\s*string \\| null`).test(mdataApi), `mdata.ts Customer type must declare ${field}`);
+  }
+
+  const dispatchApi = fs.readFileSync(path.join(ROOT, "apps/frontend/src/api/dispatch.ts"), "utf8");
+  assert(
+    /catalog_load_type_id\?:\s*string/.test(dispatchApi),
+    "dispatch.ts DispatchBookLoadPayload must declare catalog_load_type_id (Render web tsc)"
+  );
+
   checkQuickCreateSource(QUICK, quick);
 }
 

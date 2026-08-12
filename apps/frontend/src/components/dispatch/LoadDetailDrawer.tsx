@@ -34,6 +34,8 @@ import { BookLoadModalV4 } from "../../pages/dispatch/components/BookLoadModalV4
 import { CargoSensorTimeline } from "../../pages/dispatch/cargo-sensors/CargoSensorTimeline";
 import { EntityLink } from "../shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
+import { listDispatchFlagColors } from "../../api/catalogs";
+import { ReferenceSelect } from "../parity/ReferenceSelect";
 
 type Props = {
   loadId: string | null;
@@ -161,6 +163,11 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
   });
 
   const load = loadQuery.data;
+  const flagColorsQuery = useQuery({
+    queryKey: ["dispatch-flag-colors", load?.operating_company_id],
+    queryFn: () => listDispatchFlagColors(load!.operating_company_id),
+    enabled: Boolean(load?.operating_company_id && activeTab === "Overview"),
+  });
   // d-02: Cancel Load is only for persisted, non-cancelled loads — unsaved/loading/not-found get plain Close.
   const canCancelPersistedLoad = Boolean(load && load.status !== "cancelled");
   const assignmentHistoryQuery = useQuery({
@@ -341,6 +348,26 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
                             ) : null}
                           </span>
                         ),
+                      },
+                      {
+                        label: "Dispatch flag",
+                        value: canEdit ? (
+                          <ReferenceSelect
+                            value={load.dispatch_flag_color_id}
+                            onChange={(value) => {
+                              if (!value) return;
+                              void updateMutation.mutateAsync({ id: load.id, body: { dispatch_flag_color_id: value } }).then(() => {
+                                void loadQuery.refetch();
+                                void queryClient.invalidateQueries({ queryKey: ["loads"] });
+                              });
+                            }}
+                            options={(flagColorsQuery.data?.flags ?? []).map((flag) => ({ value: flag.id, label: flag.display_name }))}
+                            createKind="dispatch_flag_color"
+                            operatingCompanyId={load.operating_company_id}
+                            addNewLabel="+ Add new dispatch flag"
+                            onOptionCreated={() => void flagColorsQuery.refetch()}
+                          />
+                        ) : (load.flag_display_name ?? load.flag_code),
                       },
                       { label: "Customer WO #", value: load.customer_wo_number ?? "—" },
                       { label: "Pickup #", value: load.pickup_number ?? "—" },

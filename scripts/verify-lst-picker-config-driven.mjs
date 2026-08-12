@@ -57,6 +57,8 @@ const FILES = {
   editMapping: "apps/frontend/src/pages/dispatch/components/book-load-v4/editLoadMapping.ts",
   cancellationService: "apps/backend/src/dispatch/cancellation.service.ts",
   cancellationMigration: "db/migrations/202612501800_p44_load_cancellation_reason_same_opco_fk.sql",
+  dispatchFlagDrawer: "apps/frontend/src/components/dispatch/LoadDetailDrawer.tsx",
+  dispatchFlagMigration: "db/migrations/202612502000_p44_dispatch_flag_color_canonical_fk.sql",
 };
 
 const MISSING = "MISSING";
@@ -188,6 +190,12 @@ export function contractErrors(src) {
   }
   if (!/FOREIGN KEY \(reason_code_id, operating_company_id\)/.test(src.cancellationMigration) || !/ALTER COLUMN reason_code_id SET NOT NULL/.test(src.cancellationMigration)) {
     errors.push("P44-FK: load cancellations must enforce a NOT NULL same-opco reason FK");
+  }
+  if (!/createKind="dispatch_flag_color"/.test(src.dispatchFlagDrawer) || !/dispatch_flag_color_id/.test(src.dispatchFlagDrawer)) {
+    errors.push("P44-FK: Dispatch load drawer must select and persist the canonical dispatch flag UUID");
+  }
+  if (!/loads_dispatch_flag_color_same_company_fk/.test(src.dispatchFlagMigration) || !/ALTER COLUMN dispatch_flag_color_id SET NOT NULL/.test(src.dispatchFlagMigration)) {
+    errors.push("P44-FK: loads must enforce a NOT NULL same-opco dispatch flag color FK");
   }
 
   // ── CONFIG-DRIVEN: the pinned defect ────────────────────────────────────────────────────────

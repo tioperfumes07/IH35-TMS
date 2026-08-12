@@ -87,6 +87,7 @@ export function CatalogQuickCreateDrawer({
         event_type: createExtras?.event_type,
         severity: createExtras?.severity,
         days_until_due: daysUntilDue,
+        hex_color: values.hex_color?.trim() || undefined,
       });
       pushToast("Created successfully", "success");
       setValues({});
