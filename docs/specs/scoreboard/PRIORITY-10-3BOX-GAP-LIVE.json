@@ -1,16 +1,16 @@
 {
-  "as_of": "2026-08-12T20:22:23.519Z",
-  "main_sha": "d2eb37430",
+  "as_of": "2026-08-12T20:25:57.741Z",
+  "main_sha": "37048fb3d",
   "gate": "PRIORITY_10_3BOX_100",
   "allRequired": {
     "totR": 3051,
-    "totB": 2221,
+    "totB": 2232,
     "pct": 73
   },
   "waveABC_noChrome": {
     "abcR": 2421,
-    "abcB": 1970,
-    "pct": 81
+    "abcB": 1981,
+    "pct": 82
   },
   "per_module": [
     {
@@ -34,11 +34,11 @@
     {
       "mod": "dispatch",
       "req": 363,
-      "built": 292,
-      "pct": 80,
+      "built": 303,
+      "pct": 83,
       "abcReq": 318,
-      "abcBuilt": 282,
-      "abcPct": 89
+      "abcBuilt": 293,
+      "abcPct": 92
     },
     {
       "mod": "settlements",
@@ -184,17 +184,6 @@
       "seat": "CC-1"
     },
     {
-      "col": "connectivity",
-      "cells": 37,
-      "byMod": {
-        "dispatch": 11,
-        "factoring": 10,
-        "banking": 8,
-        "drivers": 8
-      },
-      "seat": "CC-2"
-    },
-    {
       "col": "load",
       "cells": 29,
       "byMod": {
@@ -206,6 +195,16 @@
         "safety": 6
       },
       "seat": "Codex"
+    },
+    {
+      "col": "connectivity",
+      "cells": 26,
+      "byMod": {
+        "factoring": 10,
+        "banking": 8,
+        "drivers": 8
+      },
+      "seat": "CC-2"
     },
     {
       "col": "scenario.maintenance",
@@ -249,5 +248,5 @@
       "seat": "?"
     }
   ],
-  "entry_count": 121
+  "entry_count": 122
 }
