@@ -1,6 +1,6 @@
 # PRIORITY 10 · 3-BOX GATE — LIVE GAP
 
-**as_of:** 2026-08-12T20:17:17.484Z · **main:** `5d85f8a92`
+**as_of:** 2026-08-12T20:20:33.670Z · **main:** `4bd82b9ff`
 
 ## Bar
 
@@ -8,8 +8,8 @@ All 10 modules: **Required + Audited + Built = 100%** before Live. Wave **A→B�
 
 ## Built coverage
 
-- All cells: **72%** (2208/3051)
-- Wave A–C (no chrome): **81%** (1957/2421)
+- All cells: **72%** (2211/3051)
+- Wave A–C (no chrome): **81%** (1960/2421)
 
 | Module | Built% all | Built% A–C |
 |--------|-----------:|-----------:|
@@ -22,7 +22,7 @@ All 10 modules: **Required + Audited + Built = 100%** before Live. Wave **A→B�
 | customers | 91% | 100% |
 | vendors | 86% | 97% |
 | drivers | 66% | 82% |
-| safety | 67% | 83% |
+| safety | 69% | 84% |
 
 ## Ranked gaps
 
@@ -33,7 +33,7 @@ All 10 modules: **Required + Audited + Built = 100%** before Live. Wave **A→B�
 | `expense` | 123 | CC-1 |
 | `ap_bill` | 97 | CC-1 |
 | `picker_law` | 73 | D LAST |
-| `connectivity` | 50 | CC-2 |
+| `connectivity` | 47 | CC-2 |
 | `liability` | 38 | CC-1 |
 | `load` | 29 | Codex |
 | `scenario.maintenance` | 5 | ? |

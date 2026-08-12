@@ -1,15 +1,15 @@
 {
-  "as_of": "2026-08-12T20:17:17.484Z",
-  "main_sha": "5d85f8a92",
+  "as_of": "2026-08-12T20:20:33.670Z",
+  "main_sha": "4bd82b9ff",
   "gate": "PRIORITY_10_3BOX_100",
   "allRequired": {
     "totR": 3051,
-    "totB": 2208,
+    "totB": 2211,
     "pct": 72
   },
   "waveABC_noChrome": {
     "abcR": 2421,
-    "abcB": 1957,
+    "abcB": 1960,
     "pct": 81
   },
   "per_module": [
@@ -97,11 +97,11 @@
     {
       "mod": "safety",
       "req": 203,
-      "built": 137,
-      "pct": 67,
+      "built": 140,
+      "pct": 69,
       "abcReq": 160,
-      "abcBuilt": 132,
-      "abcPct": 83
+      "abcBuilt": 135,
+      "abcPct": 84
     }
   ],
   "ranked_gaps": [
@@ -172,13 +172,13 @@
     },
     {
       "col": "connectivity",
-      "cells": 50,
+      "cells": 47,
       "byMod": {
         "dispatch": 11,
         "factoring": 10,
         "banking": 8,
         "drivers": 8,
-        "safety": 13
+        "safety": 10
       },
       "seat": "CC-2"
     },
@@ -250,5 +250,5 @@
       "seat": "?"
     }
   ],
-  "entry_count": 119
+  "entry_count": 120
 }
