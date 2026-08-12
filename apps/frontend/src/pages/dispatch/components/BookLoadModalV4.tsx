@@ -843,6 +843,7 @@ export function BookLoadModalV4({
             | "refrigerated_van"
             | "dry_van"
             | "flatbed"
+            | "lowboy"
             | "power_only_no_trailer"
             | "power_only_customer_trailer"
             | undefined,

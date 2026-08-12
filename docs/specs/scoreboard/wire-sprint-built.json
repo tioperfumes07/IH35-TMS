@@ -51,7 +51,7 @@
     },
     {
       "task": "P39",
-      "pr": "#5852",
+      "pr": "#5958",
       "guard": "scripts/verify-steps/3114-verify-book-load-stamps-linkage-fks.mjs",
       "modules": ["dispatch"],
       "cols": ["customer", "driver", "unit", "trailer", "load", "connectivity", "reverse_link"],
