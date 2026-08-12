@@ -32,6 +32,7 @@ const weekPayload: dispatchApi.PlannerWeekPayload = {
       id: "l1",
       load_number: "LD-100",
       driver_id: "d1",
+      customer_id: "c1",
       customer_name: "Acme",
       status: "assigned_not_dispatched",
       start_at: "2026-06-03T14:00:00.000Z",

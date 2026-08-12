@@ -141,7 +141,7 @@ export function FeatureFlagsManager() {
     <div className="p-6 space-y-6" data-testid="feature-flags-manager">
       <PageHeader title="Feature Flags" subtitle="Read-only rollout and override status" />
 
-      <div className="rounded-sm border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-800" data-testid="feature-flags-read-only">
+      <div className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800" data-testid="feature-flags-read-only">
         Display only. Flag changes are managed through the controlled release workflow.
       </div>
 

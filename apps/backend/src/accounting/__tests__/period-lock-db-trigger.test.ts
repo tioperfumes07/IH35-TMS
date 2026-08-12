@@ -10,9 +10,13 @@ import { describe, expect, it, vi } from "vitest";
 
 const withCurrentUserMock = vi.fn();
 
-vi.mock("../../auth/db.js", () => ({
-  withCurrentUser: (...args: unknown[]) => withCurrentUserMock(...args),
-}));
+vi.mock("../../auth/db.js", async (orig) => {
+  const actual = (await orig()) as Record<string, unknown>;
+  return {
+    ...actual,
+    withCurrentUser: (...args: unknown[]) => withCurrentUserMock(...args),
+  };
+});
 
 const COMPANY_ID = "91e0bf0a-133f-4ce8-a734-2586cfa66d96";
 const INVOICE_ID = "aaaa0000-0000-4000-8000-000000000001";

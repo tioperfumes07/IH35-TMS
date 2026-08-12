@@ -33,6 +33,9 @@ const KNOWN_COLUMNS = {
     "reversed_by_je_id", "reverses_je_id",
     // HELD 202607960000 — ACCT-LINK-01 catalogs.journal_entry_types FK (col-gated in service)
     "journal_entry_type_id",
+    // 202612370000 sample_data_tag_money_tables — added via dynamic format() loop, invisible to the
+    // static migration parser; column verified live on prod (boolean NOT NULL DEFAULT false).
+    "is_sample_data",
   ]),
   "accounting.journal_entry_postings": new Set([
     "id", "operating_company_id", "journal_entry_uuid", "line_sequence",
@@ -183,6 +186,21 @@ for (const file of files) {
         }
       }
     }
+  }
+}
+
+// P44 (202612511200): mdata.loads.load_trailer_equipment_id is NOT NULL — book-load must resolve and INSERT it.
+{
+  const bookLoadPath = join(BACKEND_SRC, "dispatch/book-load.service.ts");
+  const bookLoadSrc = readFileSync(bookLoadPath, "utf8");
+  if (!bookLoadSrc.includes("resolveLoadTrailerEquipmentIdForInsert")) {
+    failures.push("dispatch/book-load.service.ts missing resolveLoadTrailerEquipmentIdForInsert (P44 NOT NULL)");
+  }
+  const insertBlock = bookLoadSrc.match(
+    /INSERT INTO mdata\.loads\s*\([\s\S]*?\)\s*VALUES/s
+  )?.[0];
+  if (!insertBlock?.includes("load_trailer_equipment_id")) {
+    failures.push("dispatch/book-load.service.ts lockstep INSERT missing load_trailer_equipment_id (P44 NOT NULL)");
   }
 }
 

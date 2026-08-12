@@ -40,6 +40,8 @@ describe("LoadReassignModal (P5-T17)", () => {
           driversOverride={[
             {
               driver_id: "00000000-0000-4000-8000-000000000010",
+              customer_id: "00000000-0000-4000-8000-000000000020",
+              unit_id: "00000000-0000-4000-8000-000000000030",
               display_name: "Test Driver",
               display_id: "d1",
               hours_remaining_today: 8,
@@ -87,6 +89,8 @@ describe("LoadReassignModal (P5-T17)", () => {
             driversOverride={[
               {
                 driver_id: "00000000-0000-4000-8000-000000000010",
+                customer_id: "00000000-0000-4000-8000-000000000020",
+                unit_id: "00000000-0000-4000-8000-000000000030",
                 display_name: "Test Driver",
                 display_id: "d1",
                 hours_remaining_today: 8,

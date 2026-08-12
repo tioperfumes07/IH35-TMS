@@ -196,6 +196,7 @@ export function BankAccountDetailPage() {
       {transfers.length > 0 ? (
         <div className="rounded-sm border border-gray-200 bg-white p-4" data-testid="bank-account-detail-transfers">
           <h3 className="mb-2 text-sm font-semibold text-gray-800">Transfers ({transfers.length})</h3>
+          <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-200 text-left text-xs uppercase tracking-wide text-gray-500">
@@ -235,6 +236,7 @@ export function BankAccountDetailPage() {
               })}
             </tbody>
           </table>
+          </div>
         </div>
       ) : null}
 

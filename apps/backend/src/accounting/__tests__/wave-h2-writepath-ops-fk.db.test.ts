@@ -110,10 +110,11 @@ describeIntegration("WAVE-H2 write-path stamps ops FKs (expense load_id + invoic
       await db.query(
         `INSERT INTO mdata.loads (
            id, operating_company_id, load_number, customer_id, dispatcher_user_id,
-           status, assigned_primary_driver_id, assigned_unit_id, rate_total_cents
+           status, assigned_primary_driver_id, assigned_unit_id, rate_total_cents, load_trailer_equipment_id
          ) VALUES (
            $1::uuid, $2::uuid, $3, $4::uuid, $5::uuid,
-           'delivered', $6::uuid, $7::uuid, 250000
+           'delivered', $6::uuid, $7::uuid, 250000,
+           (SELECT id FROM catalogs.load_trailer_equipment WHERE operating_company_id = $2::uuid AND code = 'DRY_VAN' LIMIT 1)
          )`,
         [loadId, companyId, `L-H2WP-${suffix}`, customerId, TEST_OWNER_USER_ID, driverId, unitId],
       );

@@ -68,7 +68,7 @@ run("dire accident scenario — full linkage (real engine)", () => {
       // status Active is REQUIRED, not decoration: the real spawn-liability route refuses a driver
       // whose status is not 'active' (safety.routes.ts driver_inactive guard).
       await db.query(`INSERT INTO mdata.drivers (id,operating_company_id,first_name,last_name,phone,status) VALUES ($1::uuid,$2::uuid,'AtFault','Driver',$3,'Active')`, [id.driver, companyId, `95605${s.slice(0,5)}`]);
-      await db.query(`INSERT INTO mdata.loads (id,operating_company_id,load_number,customer_id,dispatcher_user_id,status,assigned_primary_driver_id,assigned_unit_id) VALUES ($1::uuid,$2::uuid,$3,$4::uuid,$5::uuid,'delivered',$6::uuid,$7::uuid)`, [id.load, companyId, `LOAD-${s}`, id.customer, userId, id.driver, id.unit]);
+      await db.query(`INSERT INTO mdata.loads (id,operating_company_id,load_number,customer_id,dispatcher_user_id,status,assigned_primary_driver_id,assigned_unit_id,load_trailer_equipment_id) VALUES ($1::uuid,$2::uuid,$3,$4::uuid,$5::uuid,'delivered',$6::uuid,$7::uuid,(SELECT id FROM catalogs.load_trailer_equipment WHERE operating_company_id = $2::uuid AND code = 'DRY_VAN' LIMIT 1))`, [id.load, companyId, `LOAD-${s}`, id.customer, userId, id.driver, id.unit]);
       // insurance coverage type + policy
       await db.query(`INSERT INTO insurance.type_catalog (id,tenant_id,code,name) VALUES ($1::uuid,$2::uuid,$3,'Auto Liability')`, [id.covType, companyId, `AL-${s}`]);
       await db.query(`INSERT INTO insurance.policy (id,tenant_id,insurer_name,policy_number,coverage_type,coverage_type_id,effective_date,expiry_date) VALUES ($1::uuid,$2::uuid,'Progressive',$3,'auto_liability',$4::uuid,CURRENT_DATE - 30, CURRENT_DATE + 300)`, [id.policy, companyId, `POL-${s}`, id.covType]);

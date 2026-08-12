@@ -112,8 +112,8 @@ describeIntegration("CLS-SUBLEDGER-GL-DARK-TIEOUT — A/R subledger ties to the 
     await bypass(async () => {
       // P-INVOICE P0: a linehaul line requires source_load_id (fail-closed), so the load comes first.
       await db.query(
-        `INSERT INTO mdata.loads (id, operating_company_id, load_number, customer_id, status, rate_total_cents, dispatcher_user_id)
-         VALUES ($1::uuid,$2::uuid,$3,$4::uuid,'delivered',$5,$6::uuid)`,
+        `INSERT INTO mdata.loads (id, operating_company_id, load_number, customer_id, status, rate_total_cents, dispatcher_user_id, load_trailer_equipment_id)
+         VALUES ($1::uuid,$2::uuid,$3,$4::uuid,'delivered',$5,$6::uuid,(SELECT id FROM catalogs.load_trailer_equipment WHERE operating_company_id = $2::uuid AND code = 'DRY_VAN' LIMIT 1))`,
         [loadId, companyId, `L-TIE-${suffix}-${invoiceId.slice(0, 4)}`, customerId, INVOICE_CENTS, userId]
       );
       await db.query(

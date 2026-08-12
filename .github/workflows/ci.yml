@@ -239,6 +239,15 @@ jobs:
       - name: Migration runner hardening guard
         run: npm run verify:migration-runner-hardening
 
+      # CI-FRESH-DB-MIGRATE (2026-08-12) — the consistency guard below reads the 54329 service DB and
+      # by its own header requires a FRESH-MIGRATED DB ("CI provides DATABASE_URL for its fresh DB").
+      # No step in this job ever applied the migrations, so the guard read an EMPTY database and
+      # reported every table missing — red on every PR and on main itself once the 04:57 dist fix
+      # let the job reach this step. db-migrate targets the job-level DATABASE_URL (localhost:54329);
+      # its prod-refusal guard stays active (localhost is not a prod endpoint).
+      - name: Apply migrations to the fresh CI DB (consistency guard reads it)
+        run: npm run db:migrate
+
       - name: Migration application consistency guard
         run: npm run verify:migration-application-consistency
 

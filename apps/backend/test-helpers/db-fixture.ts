@@ -37,19 +37,91 @@ function connectString(): string {
 // Seed a minimal VALID mdata.loads row for a given operating company under app.bypass_rls. Satisfies the real
 // NOT-NULL-no-default columns (operating_company_id, load_number, customer_id, dispatcher_user_id); status defaults
 // 'draft'. Seeds a customer for the company first. Returns the new load id. [VERIFY]'d against the live schema.
+// P44 (202612502000): a BEFORE INSERT trigger on mdata.loads resolves dispatch_flag_color_id from
+// catalogs.dispatch_flag_colors by (operating_company_id, flag_code) and RAISES when the company has no
+// canonical rows. Prod companies were backfilled by the migration; fixture-created companies get nothing,
+// so every load INSERT in the integration suite failed with "No canonical dispatch flag color". Seed the
+// six codes the trigger can request, idempotently (mirrors the migration backfill / USMCA bootstrap shape).
+export async function seedDispatchFlagColorsForCompany(client: pg.Client, companyId: string): Promise<void> {
+  await client.query(
+    `
+      INSERT INTO catalogs.dispatch_flag_colors
+        (operating_company_id, flag_code, display_name, hex_color, severity_order, sort_order, created_by_user_id)
+      VALUES
+        ($1::uuid, 'RED',    'Problem',        '#dc2626', 90, 10, $2::uuid),
+        ($1::uuid, 'YELLOW', 'Assigned',       '#ca8a04', 50, 20, $2::uuid),
+        ($1::uuid, 'BLUE',   'In Transit',     '#2563eb', 40, 30, $2::uuid),
+        ($1::uuid, 'GREEN',  'Delivered',      '#16a34a', 30, 40, $2::uuid),
+        ($1::uuid, 'BLACK',  'Closed',         '#111827', 20, 50, $2::uuid),
+        ($1::uuid, 'GRAY',   'Draft',          '#6b7280', 10, 60, $2::uuid)
+      ON CONFLICT (operating_company_id, flag_code) DO NOTHING
+    `,
+    [companyId, TEST_OWNER_USER_ID]
+  );
+}
+
+// NOT-NULL-no-default columns include load_trailer_equipment_id (P44 migration).
+async function resolveLoadTrailerEquipmentId(client: pg.Client, companyId: string): Promise<string> {
+  const existing = await client.query<{ id: string }>(
+    `
+      SELECT id
+      FROM catalogs.load_trailer_equipment
+      WHERE operating_company_id = $1::uuid
+        AND code = 'DRY_VAN'
+      LIMIT 1
+    `,
+    [companyId]
+  );
+  if (existing.rows[0]?.id) return existing.rows[0].id;
+
+  const inserted = await client.query<{ id: string }>(
+    `
+      INSERT INTO catalogs.load_trailer_equipment (operating_company_id, code, display_name, is_active, sort_order)
+      VALUES ($1::uuid, 'DRY_VAN', 'Dry Van', true, 30)
+      ON CONFLICT (operating_company_id, code) DO UPDATE SET display_name = EXCLUDED.display_name
+      RETURNING id
+    `,
+    [companyId]
+  );
+  return inserted.rows[0]!.id;
+}
+
+export async function resolveLoadTrailerEquipmentIdForTests(
+  client: pg.Client,
+  companyId: string
+): Promise<string> {
+  // Company-GUC-only catalog policy (see seedLoadForCompany note): tests call this helper on their OWN
+  // clients, so the GUC must be set here as well or the DRY_VAN upsert 42501s on a fresh DB.
+  await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [companyId]);
+  return resolveLoadTrailerEquipmentId(client, companyId);
+}
+
+/** P44 prerequisites for any direct INSERT INTO mdata.loads in tests (flag colors + trailer catalog). */
+export async function prepareCompanyForLoadInserts(client: pg.Client, companyId: string): Promise<string> {
+  await seedDispatchFlagColorsForCompany(client, companyId);
+  return resolveLoadTrailerEquipmentId(client, companyId);
+}
+
 async function seedLoadForCompany(client: pg.Client, companyId: string, suffix: string): Promise<string> {
+  // Generic catalog tables (202606241800 loop) carry a company-GUC-ONLY policy — no lucia-bypass clause:
+  //   USING/WITH CHECK operating_company_id::text = current_setting('app.operating_company_id', true)
+  // The fixture historically set only app.bypass_rls, so catalog seeds (dispatch_flag_colors,
+  // load_trailer_equipment) hit 42501 on the fresh CI DB. Transaction-local; safe alongside bypass.
+  await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [companyId]);
+  await seedDispatchFlagColorsForCompany(client, companyId);
   const cust = await client.query<{ id: string }>(
     `INSERT INTO mdata.customers (customer_name, operating_company_id) VALUES ($1, $2::uuid) RETURNING id`,
     [`E2E Customer ${suffix}`, companyId]
   );
   const customerId = cust.rows[0]!.id;
+  const trailerEquipmentId = await resolveLoadTrailerEquipmentId(client, companyId);
   const load = await client.query<{ id: string }>(
     `
-      INSERT INTO mdata.loads (operating_company_id, load_number, customer_id, dispatcher_user_id)
-      VALUES ($1::uuid, $2, $3::uuid, $4::uuid)
+      INSERT INTO mdata.loads (operating_company_id, load_number, customer_id, dispatcher_user_id, load_trailer_equipment_id)
+      VALUES ($1::uuid, $2, $3::uuid, $4::uuid, $5::uuid)
       RETURNING id
     `,
-    [companyId, `E2E-${suffix}`, customerId, TEST_OWNER_USER_ID]
+    [companyId, `E2E-${suffix}`, customerId, TEST_OWNER_USER_ID, trailerEquipmentId]
   );
   return load.rows[0]!.id;
 }
@@ -102,6 +174,8 @@ export async function ensureSecondEntityLoad(): Promise<{ companyId: string; loa
       `INSERT INTO org.user_company_access (user_id, company_id) VALUES ($1::uuid, $2::uuid) ON CONFLICT (user_id, company_id) DO NOTHING`,
       [TEST_OWNER_USER_ID, companyId]
     );
+        await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [companyId]); // catalog policies are company-GUC-only
+    await seedDispatchFlagColorsForCompany(client, companyId); // P44 trigger prerequisite (see helper)
     await client.query("COMMIT");
     cachedSecondEntity = { companyId, loadId };
     return cachedSecondEntity;
@@ -191,6 +265,9 @@ export async function ensureIntegrationPrerequisites(): Promise<string> {
       [TEST_OWNER_USER_ID, companyId]
     );
 
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [companyId]); // catalog policies are company-GUC-only
+    await seedDispatchFlagColorsForCompany(client, companyId); // P44 trigger prerequisite (see helper)
+    await resolveLoadTrailerEquipmentId(client, companyId);
     await client.query("COMMIT");
     cachedOperatingCompanyId = companyId;
     return companyId;

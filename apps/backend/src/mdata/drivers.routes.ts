@@ -593,6 +593,10 @@ export async function createDriverCanonical(
           return { error: "operating_company_not_found" as const };
         }
         resolvedOperatingCompanyId = operatingCompany.id;
+        // Cross-tenant guard: operating_company_id is CALLER-SUPPLIED (request body). Assert the
+        // authed user is a member of that company on the SAME client BEFORE any tenant GUC is set
+        // (same pattern as the sub-account route below). verify:company-membership-assert enforces this.
+        await assertCompanyMembership(client, authUser.uuid, resolvedOperatingCompanyId);
 
         await client.query("SET LOCAL app.bypass_rls = 'lucia'");
 
@@ -907,6 +911,9 @@ export async function createDriverCanonical(
       // must never fail the hire, but it must never be silent either — the failure is audited.
       if (resolvedOperatingCompanyId) {
         try {
+          // Cross-tenant guard (site 2): re-assert caller-supplied company membership on this client
+          // before setting the tenant GUC. verify:company-membership-assert pairs one assertion per GUC site.
+          await assertCompanyMembership(client, authUser.uuid, resolvedOperatingCompanyId);
           await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [resolvedOperatingCompanyId]);
           await ensureDriverVendor(client, {
             operatingCompanyId: resolvedOperatingCompanyId,
