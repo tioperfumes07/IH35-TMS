@@ -21,6 +21,7 @@ const baseLoad = {
   customer_wo_number: "WO-9",
   pickup_number: "PU-3",
   detention_expected_y_n: true,
+  detention_reason_id: "7ec72d18-5fef-4f46-9008-66d08f019c55",
   detention_expected_hours: 2,
   miles_practical: 500,
   commodity: "STEEL COILS",
@@ -54,6 +55,13 @@ describe("editLoadMapping — anti-data-loss (GUARD #5)", () => {
     const body = buildEditPatchBody(values, { customer_wo_number: true }, OCID);
     expect(Object.keys(body).sort()).toEqual(["customer_wo_number", "operating_company_id"]);
     expect(body.customer_wo_number).toBe("WO-NEW");
+  });
+
+  it("P44 round-trips the canonical detention reason FK", () => {
+    const values = buildEditPrefill(baseLoad);
+    expect(values.detention_reason_id).toBe("7ec72d18-5fef-4f46-9008-66d08f019c55");
+    const body = buildEditPatchBody(values, { detention_reason_id: true }, OCID);
+    expect(body.detention_reason_id).toBe("7ec72d18-5fef-4f46-9008-66d08f019c55");
   });
 
   it("no edits → body is just operating_company_id (nothing overwritten)", () => {

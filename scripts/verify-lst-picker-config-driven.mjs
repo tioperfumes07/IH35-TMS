@@ -46,6 +46,11 @@ const FILES = {
   select: "apps/frontend/src/components/parity/ReferenceSelect.tsx",
   drawer: "apps/frontend/src/components/parity/CatalogQuickCreateDrawer.tsx",
   backendIndex: "apps/backend/src/index.ts",
+  detentionPicker: "apps/frontend/src/pages/dispatch/components/book-load-v4/ExpectedAdjustmentsCallout.tsx",
+  bookLoad: "apps/frontend/src/pages/dispatch/components/BookLoadModalV4.tsx",
+  loadRoutes: "apps/backend/src/dispatch/loads.routes.ts",
+  bookService: "apps/backend/src/dispatch/book-load.service.ts",
+  migration: "db/migrations/202612501200_p44_load_detention_reason_canonical_fk.sql",
 };
 
 const MISSING = "MISSING";
@@ -124,6 +129,24 @@ export function contractErrors(src) {
   const registry = stripComments(src.registry);
   const select = stripComments(src.select);
   const drawer = stripComments(src.drawer);
+
+  // P44 Wave A: the detention catalog is only R=W if the selected canonical UUID crosses every
+  // layer and survives reload. A code-only picker with no load FK is a dead-end, not linkage.
+  if (!/value:\s*row\.id/.test(src.detentionPicker) || /createdValueField="code"/.test(src.detentionPicker)) {
+    errors.push("P44-FK: detention picker must select catalogs.detention_reasons.id");
+  }
+  if (!/detention_reason_id:\s*values\.detention_reason_id/.test(src.bookLoad)) {
+    errors.push("P44-FK: Book Load payload must carry detention_reason_id");
+  }
+  if (!/detention_reason_id:\s*z\.string\(\)\.uuid/.test(src.loadRoutes)) {
+    errors.push("P44-FK: backend create/update schema must accept a UUID detention_reason_id");
+  }
+  if (!/detention_expected_y_n, detention_reason_id, detention_expected_hours/.test(src.bookService)) {
+    errors.push("P44-FK: mdata.loads INSERT must persist detention_reason_id");
+  }
+  if (!/FOREIGN KEY \(detention_reason_id, operating_company_id\)/.test(src.migration)) {
+    errors.push("P44-FK: migration must enforce same-opco detention reason linkage");
+  }
 
   // ── CONFIG-DRIVEN: the pinned defect ────────────────────────────────────────────────────────
   if (/INLINE_KINDS/.test(select)) {
@@ -371,7 +394,14 @@ const GOOD_BACKEND = `
 `;
 
 function selftest() {
-  const good = { registry: GOOD_REGISTRY, select: GOOD_SELECT, drawer: GOOD_DRAWER, backendIndex: GOOD_BACKEND };
+  const p44 = {
+    detentionPicker: "const options = rows.map((row) => ({ value: row.id }));",
+    bookLoad: "detention_reason_id: values.detention_reason_id || undefined,",
+    loadRoutes: "detention_reason_id: z.string().uuid().optional(),",
+    bookService: "detention_expected_y_n, detention_reason_id, detention_expected_hours,",
+    migration: "FOREIGN KEY (detention_reason_id, operating_company_id)",
+  };
+  const good = { registry: GOOD_REGISTRY, select: GOOD_SELECT, drawer: GOOD_DRAWER, backendIndex: GOOD_BACKEND, ...p44 };
   const failures = [];
 
   const clean = contractErrors(good);
@@ -379,6 +409,11 @@ function selftest() {
 
   /** Each mutation must be CAUGHT — a selftest that cannot fail is worthless. */
   const mutations = [
+    [
+      "P44 detention selection falls back to code",
+      { ...good, detentionPicker: 'const options = rows.map((row) => ({ value: row.code })); createdValueField="code"' },
+      /P44-FK: detention picker/,
+    ],
     [
       "the pre-fix hardcoded Set returns",
       { ...good, select: good.select + '\nconst INLINE_KINDS = new Set(["vendor","customer"]);\n' },

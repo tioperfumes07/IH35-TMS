@@ -15,7 +15,7 @@ type Props = {
 export function ExpectedAdjustmentsCallout({ register, operatingCompanyId, watch, setValue }: Props) {
   const queryClient = useQueryClient();
   const detentionExpected = Boolean(watch("detention_expected_y_n"));
-  const detentionReasonCode = String(watch("detention_reason_code") ?? "");
+  const detentionReasonId = String(watch("detention_reason_id") ?? "");
 
   const detentionReasonsQuery = useQuery({
     queryKey: ["book-load", "detention-reasons", operatingCompanyId],
@@ -31,7 +31,7 @@ export function ExpectedAdjustmentsCallout({ register, operatingCompanyId, watch
   const detentionReasonOptions = useMemo(
     () =>
       (detentionReasonsQuery.data?.rows ?? []).map((row) => ({
-        value: row.code,
+        value: row.id,
         label: row.display_name,
       })),
     [detentionReasonsQuery.data?.rows]
@@ -71,12 +71,11 @@ export function ExpectedAdjustmentsCallout({ register, operatingCompanyId, watch
                 catalogs.detention_reasons (same table Lists → Detention Reasons reads). Options keyed by code.
               */}
               <ReferenceSelect
-                value={detentionReasonCode || null}
-                onChange={(next) => setValue("detention_reason_code", next ?? "", { shouldDirty: true })}
+                value={detentionReasonId || null}
+                onChange={(next) => setValue("detention_reason_id", next ?? "", { shouldDirty: true })}
                 options={detentionReasonOptions}
                 createKind="detention_reason"
                 operatingCompanyId={operatingCompanyId}
-                createdValueField="code"
                 loading={detentionReasonsQuery.isLoading}
                 placeholder="Select reason"
                 onOptionCreated={() => {

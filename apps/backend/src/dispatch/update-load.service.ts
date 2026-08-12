@@ -73,6 +73,7 @@ export type UpdateDispatchLoadFields = Partial<{
   anticipated_chargeback_cents: number | null;
   anticipated_chargeback_reason: string | null;
   detention_expected_y_n: boolean;
+  detention_reason_id: string | null;
   detention_expected_hours: number | null;
   detention_bill_customer_per_hour_cents: number | null;
   detention_driver_pay_per_hour_cents: number | null;
@@ -154,6 +155,7 @@ const SCALAR_COLUMNS: Record<keyof UpdateDispatchLoadFields, string> = {
   anticipated_chargeback_cents: "anticipated_chargeback_cents",
   anticipated_chargeback_reason: "anticipated_chargeback_reason",
   detention_expected_y_n: "detention_expected_y_n",
+  detention_reason_id: "detention_reason_id",
   detention_expected_hours: "detention_expected_hours",
   detention_bill_customer_per_hour_cents: "detention_bill_customer_per_hour_cents",
   detention_driver_pay_per_hour_cents: "detention_driver_pay_per_hour_cents",
@@ -184,6 +186,7 @@ const SCALAR_COLUMNS: Record<keyof UpdateDispatchLoadFields, string> = {
 
 // Columns needing an explicit cast in the SET clause.
 const COLUMN_CAST: Partial<Record<string, string>> = {
+  detention_reason_id: "::uuid",
   trip_type: "::mdata.trip_type_enum",
   tour_id: "::uuid",
 };
