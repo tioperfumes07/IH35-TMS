@@ -502,7 +502,6 @@
       "route_hint": "/vendors/:id?tab=ap",
       "required": [
         "vendor",
-        "liability",
         "ap_bill",
         "connectivity",
         "reverse_link"
@@ -583,6 +582,17 @@
           "id": "detail.ap.bills",
           "removed": [
             "load"
+          ]
+        }
+      ]
+    },
+    "liability_chrome_2026_08_12": {
+      "finding": "FACTORING-REQUIRED-LIABILITY-INFLATION",
+      "drops": [
+        {
+          "id": "detail.ap.vendor_credits",
+          "removed": [
+            "liability"
           ]
         }
       ]

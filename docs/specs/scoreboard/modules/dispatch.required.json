@@ -162,7 +162,6 @@
         "trailer",
         "load",
         "gl_je",
-        "ap_bill",
         "expense",
         "scenario.maintenance",
         "picker_law",
@@ -507,7 +506,6 @@
         "trailer",
         "load",
         "gl_je",
-        "ap_bill",
         "expense",
         "scenario.maintenance",
         "picker_law",
@@ -543,9 +541,6 @@
         "unit",
         "trailer",
         "load",
-        "gl_je",
-        "ap_bill",
-        "expense",
         "scenario.maintenance",
         "picker_law",
         "qbo_chrome",
@@ -933,6 +928,31 @@
         "secondary.settlements",
         "secondary.pre_settlements",
         "queues.factoring"
+      ]
+    },
+    "liability_chrome_2026_08_12": {
+      "finding": "FACTORING-REQUIRED-LIABILITY-INFLATION",
+      "drops": [
+        {
+          "id": "docs.ocr",
+          "removed": [
+            "ap_bill",
+            "expense",
+            "gl_je"
+          ]
+        },
+        {
+          "id": "secondary.book_load",
+          "removed": [
+            "ap_bill"
+          ]
+        },
+        {
+          "id": "planning.reserve",
+          "removed": [
+            "ap_bill"
+          ]
+        }
       ]
     }
   }

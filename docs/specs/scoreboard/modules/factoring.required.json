@@ -83,7 +83,6 @@
         "customer",
         "load",
         "gl_je",
-        "liability",
         "connectivity",
         "reverse_link",
         "qbo_chrome"
@@ -125,8 +124,6 @@
       "required": [
         "customer",
         "gl_je",
-        "liability",
-        "expense",
         "connectivity",
         "reverse_link"
       ]
@@ -140,7 +137,6 @@
         "vendor",
         "customer",
         "gl_je",
-        "liability",
         "picker_law",
         "qbo_chrome",
         "connectivity",
@@ -155,7 +151,6 @@
       "required": [
         "customer",
         "gl_je",
-        "liability",
         "connectivity",
         "reverse_link",
         "qbo_chrome"
@@ -170,8 +165,6 @@
         "vendor",
         "unit",
         "gl_je",
-        "liability",
-        "ap_bill",
         "connectivity",
         "reverse_link"
       ]
@@ -243,7 +236,6 @@
       "required": [
         "vendor",
         "customer",
-        "liability",
         "picker_law",
         "qbo_chrome",
         "connectivity",
@@ -271,7 +263,6 @@
       "required": [
         "customer",
         "gl_je",
-        "liability",
         "connectivity",
         "reverse_link"
       ]
@@ -365,5 +356,56 @@
         "reverse_link"
       ]
     }
-  ]
+  ],
+  "honesty_audit": {
+    "liability_chrome_2026_08_12": {
+      "finding": "FACTORING-REQUIRED-LIABILITY-INFLATION",
+      "drops": [
+        {
+          "id": "home.summary",
+          "removed": [
+            "liability"
+          ]
+        },
+        {
+          "id": "home.statements_settings",
+          "removed": [
+            "liability"
+          ]
+        },
+        {
+          "id": "home.faro_imports",
+          "removed": [
+            "liability"
+          ]
+        },
+        {
+          "id": "home.chargebacks_fees",
+          "removed": [
+            "liability",
+            "expense"
+          ]
+        },
+        {
+          "id": "home.equipment_loans",
+          "removed": [
+            "liability",
+            "ap_bill"
+          ]
+        },
+        {
+          "id": "factors.admin",
+          "removed": [
+            "liability"
+          ]
+        },
+        {
+          "id": "faro.import",
+          "removed": [
+            "liability"
+          ]
+        }
+      ]
+    }
+  }
 }

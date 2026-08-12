@@ -1,15 +1,15 @@
 {
-  "as_of": "2026-08-12T20:49:55.911Z",
-  "main_sha": "50d26b508",
+  "as_of": "2026-08-12T20:52:02.737Z",
+  "main_sha": "6351ddac3",
   "gate": "PRIORITY_10_3BOX_100",
   "allRequired": {
-    "totR": 2717,
-    "totB": 2272,
+    "totR": 2702,
+    "totB": 2270,
     "pct": 84
   },
   "waveABC_noChrome": {
-    "abcR": 2087,
-    "abcB": 2021,
+    "abcR": 2072,
+    "abcB": 2019,
     "pct": 97
   },
   "per_module": [
@@ -33,12 +33,12 @@
     },
     {
       "mod": "dispatch",
-      "req": 349,
-      "built": 304,
-      "pct": 87,
-      "abcReq": 304,
-      "abcBuilt": 294,
-      "abcPct": 97
+      "req": 344,
+      "built": 302,
+      "pct": 88,
+      "abcReq": 299,
+      "abcBuilt": 292,
+      "abcPct": 98
     },
     {
       "mod": "settlements",
@@ -51,12 +51,12 @@
     },
     {
       "mod": "factoring",
-      "req": 131,
+      "req": 122,
       "built": 93,
-      "pct": 71,
-      "abcReq": 114,
+      "pct": 76,
+      "abcReq": 105,
       "abcBuilt": 93,
-      "abcPct": 82
+      "abcPct": 89
     },
     {
       "mod": "banking",
@@ -78,12 +78,12 @@
     },
     {
       "mod": "vendors",
-      "req": 175,
+      "req": 174,
       "built": 152,
       "pct": 87,
-      "abcReq": 145,
+      "abcReq": 144,
       "abcBuilt": 142,
-      "abcPct": 98
+      "abcPct": 99
     },
     {
       "mod": "drivers",
@@ -138,14 +138,14 @@
     },
     {
       "col": "liability",
-      "cells": 35,
+      "cells": 27,
       "byMod": {
         "accounting": 3,
         "dispatch": 7,
         "settlements": 1,
-        "factoring": 19,
+        "factoring": 12,
         "banking": 2,
-        "vendors": 3
+        "vendors": 2
       },
       "seat": "CC-1"
     },
@@ -160,22 +160,19 @@
     },
     {
       "col": "ap_bill",
-      "cells": 11,
+      "cells": 7,
       "byMod": {
         "accounting": 1,
-        "dispatch": 3,
         "settlements": 2,
-        "factoring": 1,
         "safety": 4
       },
       "seat": "CC-1"
     },
     {
       "col": "expense",
-      "cells": 7,
+      "cells": 6,
       "byMod": {
         "accounting": 1,
-        "factoring": 1,
         "safety": 5
       },
       "seat": "CC-1"
