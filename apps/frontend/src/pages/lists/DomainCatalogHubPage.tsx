@@ -1,8 +1,8 @@
-import { useParams, useNavigate } from "react-router-dom";
 import type { ListsModule } from "../../api/listsHub";
 import { ModuleHeader } from "../../components/layout/ModuleHeader";
 import { ComingSoonPage } from "../ComingSoonPage";
-import { DomainCatalogSection, buildCatalogPath, sortDomainsForDisplay } from "./components/AllCatalogsMap";
+import { Link, useParams, useNavigate } from "react-router-dom";
+import { DomainCatalogSection, buildCatalogPath, buildDomainModulePath, sortDomainsForDisplay } from "./components/AllCatalogsMap";
 
 // domain.key -> ListsModule, same mapping DomainRowCountBadge uses so this hub's header count and the
 // ribbon/map badges can never disagree.
@@ -43,6 +43,17 @@ export function DomainCatalogHubPage() {
         title={`${domain.label} catalogs`}
         subtitle="Catalogs in this domain"
         countModule={DOMAIN_MODULE[domain.key]}
+        actions={
+          buildDomainModulePath(domain.key) ? (
+            <Link
+              to={buildDomainModulePath(domain.key)!}
+              data-testid={`lists-domain-hub-open-module-${domain.key}`}
+              className="rounded-sm border border-slate-300 bg-white px-3 py-1 text-sm font-medium text-slate-800 hover:bg-slate-50"
+            >
+              Open {domain.label} module
+            </Link>
+          ) : null
+        }
       />
 
       <div className="rounded-sm border border-slate-200 bg-white p-3">
