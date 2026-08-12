@@ -45,7 +45,7 @@ export function ComplaintsTab() {
     respondent_type: "driver" as RespondentType,
     respondent_driver_id: "",
     respondent_user_id: "",
-    complaint_type: "",
+    complaint_type_id: "",
     summary: "",
     severity: "medium" as "low" | "medium" | "high" | "critical",
   });
@@ -109,7 +109,7 @@ export function ComplaintsTab() {
   const complaintTypeOptions = useMemo(
     () =>
       (complaintTypesQuery.data?.rows ?? []).map((t) => ({
-        value: String(t.type_code),
+        value: String(t.id),
         label: String(t.type_name),
         type: String(t.type_code),
       })),
@@ -145,7 +145,7 @@ export function ComplaintsTab() {
       const body: Record<string, unknown> = {
         complainant_type: form.complainant_type,
         respondent_type: form.respondent_type,
-        complaint_type: form.complaint_type,
+        complaint_type_id: form.complaint_type_id,
         summary: form.summary,
         severity: form.severity,
       };
@@ -168,7 +168,7 @@ export function ComplaintsTab() {
         complainant_customer_id: "",
         respondent_driver_id: "",
         respondent_user_id: "",
-        complaint_type: "",
+        complaint_type_id: "",
         summary: "",
       }));
       await queryClient.invalidateQueries({ queryKey: ["safety-v64", "complaints", companyId] });
@@ -193,7 +193,7 @@ export function ComplaintsTab() {
   const missingFields: string[] = [];
   if (!complainantReady) missingFields.push("Complainant");
   if (!respondentReady) missingFields.push(form.respondent_type === "driver" ? "Respondent driver" : "Respondent employee");
-  if (!form.complaint_type) missingFields.push("Type");
+  if (!form.complaint_type_id) missingFields.push("Type");
   if (!form.summary) missingFields.push("Summary");
   const createDisabled = missingFields.length > 0 || createMutation.isPending;
 
@@ -438,12 +438,11 @@ export function ComplaintsTab() {
             )}
 
             <ReferenceSelect
-              value={form.complaint_type || null}
-              onChange={(next) => setForm((v) => ({ ...v, complaint_type: next ?? "" }))}
+              value={form.complaint_type_id || null}
+              onChange={(next) => setForm((v) => ({ ...v, complaint_type_id: next ?? "" }))}
               options={complaintTypeOptions}
               createKind="complaint_type"
               operatingCompanyId={companyId}
-              createdValueField="code"
               placeholder={complaintTypesQuery.isLoading ? "Loading types…" : "Type"}
               loading={complaintTypesQuery.isLoading}
               onSearch={setComplaintTypeSearch}

@@ -66,6 +66,9 @@ const FILES = {
   trailerEquipmentMigration: "db/migrations/202612511200_p44_load_trailer_equipment_canonical_fk.sql",
   accidentDrawer: "apps/frontend/src/components/safety/AccidentReportDrawer.tsx",
   accidentTypeMigration: "db/migrations/202612511400_p44_accident_report_type_canonical_fk.sql",
+  complaintsTab: "apps/frontend/src/pages/safety/tabs/ComplaintsTab.tsx",
+  complaintsRoute: "apps/backend/src/routes/safety/complaints.ts",
+  complaintTypeMigration: "db/migrations/202612511600_p44_complaint_type_same_opco_fk.sql",
 };
 
 const MISSING = "MISSING";
@@ -233,6 +236,9 @@ export function contractErrors(src) {
   }
   if (!/createKind="accident_type"/.test(src.accidentDrawer) || !/accident_type_id:\s*accidentTypeId/.test(src.accidentDrawer)) errors.push("P44-FK: accident creator must select and submit canonical accident type UUID");
   if (!/accident_reports_type_same_company_fk/.test(src.accidentTypeMigration) || !/ALTER COLUMN accident_type_id SET NOT NULL/.test(src.accidentTypeMigration)) errors.push("P44-FK: accident reports must enforce NOT NULL same-opco type FK");
+  if (!/createKind="complaint_type"/.test(src.complaintsTab) || !/complaint_type_id:\s*form\.complaint_type_id/.test(src.complaintsTab)) errors.push("P44-FK: complaint creator must select and submit canonical complaint type UUID");
+  if (!/complaint_type_id:\s*z\.string\(\)\.uuid/.test(src.complaintsRoute) || !/\$12::uuid/.test(src.complaintsRoute)) errors.push("P44-FK: complaint create route must validate and persist complaint_type_id UUID");
+  if (!/complaints_complaint_type_same_company_fk/.test(src.complaintTypeMigration) || !/FOREIGN KEY \(complaint_type_id, operating_company_id\)/.test(src.complaintTypeMigration)) errors.push("P44-FK: complaints must enforce a NOT NULL same-opco type FK");
 
   // ── CONFIG-DRIVEN: the pinned defect ────────────────────────────────────────────────────────
   if (/INLINE_KINDS/.test(select)) {

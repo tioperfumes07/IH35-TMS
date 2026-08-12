@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * LST-PICKER-01 slice — ComplaintsTab type must use ReferenceSelect with
- * createKind=complaint_type (same-table write to catalogs.complaint_types).
+ * createKind=complaint_type (same-table write to catalogs.complaint_types) and submit its UUID.
  * Cursor even claim: 1818.
  */
 import fs from "node:fs";
@@ -37,8 +37,11 @@ export function collectProblems(root = ROOT) {
     if (!/ReferenceSelect/.test(code)) {
       problems.push(`${TAB}: must import/use ReferenceSelect`);
     }
-    if (!/createdValueField=["']code["']/.test(code)) {
-      problems.push(`${TAB}: must select by type_code (createdValueField=code)`);
+    if (!/complaint_type_id:\s*form\.complaint_type_id/.test(code)) {
+      problems.push(`${TAB}: payload must submit the canonical complaint_type_id UUID`);
+    }
+    if (!/value:\s*String\(t\.id\)/.test(code)) {
+      problems.push(`${TAB}: complaint type options must be keyed by catalog UUID`);
     }
     if (/<SelectCombobox[\s\S]{0,280}complaint_type|complaintTypesQuery\.data\?\.rows[\s\S]{0,120}<option/.test(code)) {
       problems.push(`${TAB}: must not keep SelectCombobox dual path for complaint type`);

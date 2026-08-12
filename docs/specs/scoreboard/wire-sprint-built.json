@@ -114,6 +114,14 @@
       "leafRe": "^(lists\\.|safety\\.|accidents\\.)"
     },
     {
+      "task": "P44-complaint-types",
+      "pr": "#5949",
+      "guard": "scripts/verify-lst-picker-config-driven.mjs",
+      "modules": ["lists", "safety"],
+      "cols": ["connectivity", "picker", "load"],
+      "leafRe": "^(lists\\.|safety\\.|complaints\\.)"
+    },
+    {
       "task": "P29",
       "pr": "#5821",
       "guard": "scripts/verify-steps/3073-verify-failed-posting-batch-is-retriable.mjs",
