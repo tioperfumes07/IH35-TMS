@@ -331,6 +331,10 @@ export type EscrowDriverTimelineRow = {
   /** Canonical driver_finance.driver_settlements id when this ledger row was posted from a settlement. */
   settlement_id?: string | null;
   settlement_line_id?: string | null;
+  /** WAVE-C-gl_je-driver-escrow: the settlement's deduction GL JE, one hop via settlement_id. */
+  journal_entry_id?: string | null;
+  journal_entry_date?: string | null;
+  journal_entry_memo?: string | null;
 };
 
 function q(companyId: string) {

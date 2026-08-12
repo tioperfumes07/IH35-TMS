@@ -85,18 +85,18 @@ export async function registerBankingEscrowVisualizerRoutes(app: FastifyInstance
 
     const timeline = await withCompanyScope(user.uuid, q.operating_company_id, async (client) => {
       const values: unknown[] = [q.operating_company_id, params.data.driver_id];
-      const filters = ["operating_company_id = $1::uuid", "driver_id = $2"];
+      const filters = ["el.operating_company_id = $1::uuid", "el.driver_id = $2"];
       if (q.from) {
         values.push(q.from);
-        filters.push(`created_at >= $${values.length}::timestamptz`);
+        filters.push(`el.created_at >= $${values.length}::timestamptz`);
       }
       if (q.to) {
         values.push(q.to);
-        filters.push(`created_at <= $${values.length}::timestamptz`);
+        filters.push(`el.created_at <= $${values.length}::timestamptz`);
       }
       if (q.type) {
         values.push(q.type);
-        filters.push(`transaction_type = $${values.length}`);
+        filters.push(`el.transaction_type = $${values.length}`);
       }
       // §4 landmine fix: driver_finance.escrow_ledger has NO entry_type/bucket/memo/amount columns
       // (migration 202606120600) — SELECT * used to leave the frontend's EscrowDriverTimelineRow
@@ -105,22 +105,38 @@ export async function registerBankingEscrowVisualizerRoutes(app: FastifyInstance
       // amount_cents, description. Aliased here to match the existing frontend contract (no bucket
       // concept exists on this ledger — always null, same honest-— rather than fabricated behavior
       // already used elsewhere in this codebase for missing dimensions).
+      // WAVE-C-gl_je-driver-escrow: forward escrow movement -> its settlement's deduction GL JE.
+      // driver_finance.escrow_ledger has no journal_entry_id of its own (§4 landmine above); the JE
+      // that actually recorded this deduction lives one hop over on the settlement's GL posting run
+      // (driver_finance.driver_settlement_gl_runs.deduction_journal_entry_id, written by the existing
+      // settlement GL poster — 202607060900_settlement_bill_payment_posting.sql). Read-only join; no
+      // new GL math, no posting from this read. A movement with no settlement_id (e.g. a manual
+      // adjustment) or a settlement not yet GL-posted honestly returns NULL, not a fabricated link.
       const res = await client
         .query(
           `
             SELECT
-              id,
-              driver_id,
-              transaction_type AS entry_type,
+              el.id,
+              el.driver_id,
+              el.transaction_type AS entry_type,
               NULL::text AS bucket,
-              (amount_cents::numeric / 100) AS amount,
-              description AS memo,
-              created_at,
-              settlement_id::text AS settlement_id,
-              settlement_line_id::text AS settlement_line_id
-            FROM driver_finance.escrow_ledger
+              (el.amount_cents::numeric / 100) AS amount,
+              el.description AS memo,
+              el.created_at,
+              el.settlement_id::text AS settlement_id,
+              el.settlement_line_id::text AS settlement_line_id,
+              je.id::text AS journal_entry_id,
+              je.entry_date::text AS journal_entry_date,
+              je.memo AS journal_entry_memo
+            FROM driver_finance.escrow_ledger el
+            LEFT JOIN driver_finance.driver_settlement_gl_runs sgr
+              ON sgr.settlement_id = el.settlement_id
+             AND sgr.operating_company_id = el.operating_company_id
+            LEFT JOIN accounting.journal_entries je
+              ON je.id = sgr.deduction_journal_entry_id
+             AND je.operating_company_id = el.operating_company_id
             WHERE ${filters.join(" AND ")}
-            ORDER BY created_at DESC
+            ORDER BY el.created_at DESC
             LIMIT 500
           `,
           values
