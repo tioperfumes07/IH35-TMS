@@ -6,7 +6,7 @@
  * Explicit unavailable banner only when the live API is unavailable; never sample cells.
  * Design lock: docs/specs/scoreboard/MODULE-MATRIX-SCOREBOARD-LOCKED.md
  */
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { resolveApiUrl } from "../../api/client";
@@ -457,27 +457,170 @@ function boardMetrics(map: RequiredMap, rows: Row[], live: LiveMatrix | null): T
   };
 }
 
-function MatrixScoreRibbon({ metrics, liveOk }: { metrics: TierMetrics; liveOk: boolean }) {
-  const tiles = [
-    { key: "req", label: "Required", pct: metrics.requiredPct, count: metrics.requiredCells, cls: "" },
-    { key: "audit", label: "Audited", pct: metrics.auditedOnlyPct, count: metrics.auditedOnlyCells, cls: "" },
-    { key: "probe", label: "Probe hold", pct: metrics.probeOnlyPct, count: metrics.probeOnlyCells, cls: "amb" },
-    { key: "built", label: "Built (wire)", pct: metrics.builtOnlyPct, count: metrics.builtOnlyCells, cls: "amb" },
-    { key: "live", label: "Live", pct: metrics.livePct, count: metrics.liveCells, cls: "good" },
-    { key: "cert", label: "Certified", pct: metrics.certifiedPct, count: metrics.liveCells, cls: "big" },
+/** Cumulative 4-box counts (owner tracker): green = N of Required for that box. */
+type BoxCounts = {
+  required: number;
+  audited: number;
+  built: number;
+  live: number;
+};
+
+function cumulativeBoxCounts(metrics: TierMetrics): BoxCounts {
+  const req = metrics.requiredCells || 0;
+  const live = metrics.liveCells || 0;
+  const builtOnly = metrics.builtOnlyCells || 0;
+  const auditedOnly = (metrics.auditedOnlyCells || 0) + (metrics.probeOnlyCells || 0);
+  // Built includes Live; Audited includes Built+Live (cumulative fill of boxes 2–4).
+  const built = builtOnly + live;
+  const audited = auditedOnly + built;
+  return { required: req, audited: Math.min(audited, req), built: Math.min(built, req), live };
+}
+
+type BoxChange = {
+  at: number;
+  box: "Required" | "Audited" | "Built" | "Live";
+  from: number;
+  to: number;
+  of: number;
+};
+
+const BOX_CHANGE_CAP = 12;
+
+function MatrixBoxTracker({
+  moduleId,
+  metrics,
+  liveOk,
+  dataUpdatedAt,
+}: {
+  moduleId: MatrixModuleId;
+  metrics: TierMetrics;
+  liveOk: boolean;
+  dataUpdatedAt?: number;
+}) {
+  const counts = cumulativeBoxCounts(metrics);
+  const prevRef = useRef<BoxCounts | null>(null);
+  const [changes, setChanges] = useState<BoxChange[]>([]);
+
+  useEffect(() => {
+    if (!liveOk || counts.required === 0) return;
+    const prev = prevRef.current;
+    prevRef.current = counts;
+    if (!prev) return;
+    const at = dataUpdatedAt || Date.now();
+    const next: BoxChange[] = [];
+    const pairs: Array<{ box: BoxChange["box"]; from: number; to: number }> = [
+      { box: "Required", from: prev.required, to: counts.required },
+      { box: "Audited", from: prev.audited, to: counts.audited },
+      { box: "Built", from: prev.built, to: counts.built },
+      { box: "Live", from: prev.live, to: counts.live },
+    ];
+    for (const p of pairs) {
+      if (p.from !== p.to) {
+        next.push({ at, box: p.box, from: p.from, to: p.to, of: counts.required });
+      }
+    }
+    if (!next.length) return;
+    setChanges((cur) => [...next, ...cur].slice(0, BOX_CHANGE_CAP));
+  }, [liveOk, counts.required, counts.audited, counts.built, counts.live, dataUpdatedAt]);
+
+  // Reset feed when switching modules
+  useEffect(() => {
+    prevRef.current = null;
+    setChanges([]);
+  }, [moduleId]);
+
+  const tiles: Array<{
+    key: string;
+    box: string;
+    label: string;
+    count: number;
+    of: number;
+    testId: string;
+    extraClass?: string;
+  }> = [
+    {
+      key: "1",
+      box: "Box 1",
+      label: "Required",
+      count: liveOk ? counts.required : 0,
+      of: counts.required || metrics.requiredCells,
+      testId: "module-matrix-tier-req",
+    },
+    {
+      key: "2",
+      box: "Box 2",
+      label: "Audited",
+      count: liveOk ? counts.audited : 0,
+      of: counts.required || metrics.requiredCells,
+      testId: "module-matrix-tier-audit",
+    },
+    {
+      key: "3",
+      box: "Box 3",
+      label: "Built",
+      count: liveOk ? counts.built : 0,
+      of: counts.required || metrics.requiredCells,
+      testId: "module-matrix-tier-built",
+      extraClass: "module-matrix-built-cells-metric",
+    },
+    {
+      key: "4",
+      box: "Box 4",
+      label: "Live",
+      count: liveOk ? counts.live : 0,
+      of: counts.required || metrics.requiredCells,
+      testId: "module-matrix-tier-live",
+    },
   ];
+
   return (
-    <div className="metrics metrics-ribbon" data-testid="module-matrix-tier-ribbon">
-      {tiles.map((t) => (
-        <div key={t.key} className={`metric ${t.cls}`} data-testid={`module-matrix-tier-${t.key}${t.key === "built" ? " module-matrix-built-cells-metric" : ""}`}>
-          <div className="n">{liveOk ? `${t.pct}%` : "—"}</div>
-          <div className="l">
-            {t.label}
-            <br />
-            {liveOk ? `${t.count} / ${metrics.requiredCells} cells` : "pending feed"}
-          </div>
+    <div className="box-tracker" data-testid="module-matrix-box-tracker">
+      <div className="metrics metrics-ribbon metrics-boxes" data-testid="module-matrix-tier-ribbon">
+        {tiles.map((t) => {
+          const pct = t.of === 0 ? 0 : Math.round((t.count / t.of) * 100);
+          const full = liveOk && t.of > 0 && t.count === t.of;
+          const cls = !liveOk ? "" : full ? "good" : pct >= 40 ? "amb" : "big";
+          return (
+            <div
+              key={t.key}
+              className={`metric ${cls}${t.extraClass ? ` ${t.extraClass}` : ""}`}
+              data-testid={t.testId}
+            >
+              <div className="box-tag">{t.box}</div>
+              <div className="n">{liveOk ? `${t.count} of ${t.of}` : "—"}</div>
+              <div className="l">
+                {t.label}
+                <br />
+                {liveOk ? `${pct}% green` : "pending feed"}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <div className="box-changes" data-testid="module-matrix-box-changes">
+        <div className="box-changes-hd">
+          Live changes (this board){" "}
+          <span className="sub">polls every {MATRIX_POLL_MS / 1000}s · shows count moves</span>
         </div>
-      ))}
+        {changes.length === 0 ? (
+          <div className="box-changes-empty">
+            No count changes yet since you opened this module — when Built goes 49 → 50 it will
+            appear here with the time.
+          </div>
+        ) : (
+          <ul className="box-changes-list">
+            {changes.map((c, i) => (
+              <li key={`${c.at}-${c.box}-${c.to}-${i}`}>
+                <span className="t">{new Date(c.at).toLocaleTimeString()}</span>
+                <span className="b">{c.box}</span>
+                <span className="d">
+                  {c.from} → <b>{c.to}</b> of {c.of} green
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
     </div>
   );
 }
@@ -723,7 +866,12 @@ export function ModuleMatrixPreviewPage() {
         <ModuleMatrixSystemView />
       ) : (
         <>
-      <MatrixScoreRibbon metrics={metrics} liveOk={liveOk} />
+      <MatrixBoxTracker
+        moduleId={moduleId}
+        metrics={metrics}
+        liveOk={liveOk}
+        dataUpdatedAt={dataUpdatedAt}
+      />
       <GroupRollupTable rollups={live?.groupRollups ?? []} liveOk={liveOk} />
 
       <div className="metrics metrics-secondary">
@@ -919,9 +1067,24 @@ const CSS = `
 .ih35mm .mod-pill.dim{opacity:.55}
 .ih35mm .metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:0 0 16px}
 .ih35mm .metrics-ribbon{grid-template-columns:repeat(2,1fr)}
-@media(min-width:900px){.ih35mm .metrics-ribbon{grid-template-columns:repeat(3,1fr)}}
-@media(min-width:1200px){.ih35mm .metrics-ribbon{grid-template-columns:repeat(6,1fr)}}
+.ih35mm .metrics-boxes{grid-template-columns:repeat(2,1fr)}
+@media(min-width:700px){.ih35mm .metrics-boxes{grid-template-columns:repeat(4,1fr)}}
+@media(min-width:900px){.ih35mm .metrics-ribbon:not(.metrics-boxes){grid-template-columns:repeat(3,1fr)}}
+@media(min-width:1200px){.ih35mm .metrics-ribbon:not(.metrics-boxes){grid-template-columns:repeat(6,1fr)}}
 .ih35mm .metrics-secondary{grid-template-columns:repeat(3,1fr);margin-top:-6px}
+.ih35mm .metric .box-tag{font-size:10px;font-weight:800;letter-spacing:.35px;text-transform:uppercase;color:var(--slate-lt);margin-bottom:4px}
+.ih35mm .box-tracker{margin:0 0 16px}
+.ih35mm .box-changes{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin-top:10px}
+.ih35mm .box-changes-hd{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.35px;color:var(--slate);margin-bottom:8px}
+.ih35mm .box-changes-hd .sub{text-transform:none;letter-spacing:0;font-weight:400;color:var(--slate-lt);margin-left:6px}
+.ih35mm .box-changes-empty{font-size:12.5px;color:var(--slate-lt);line-height:1.45}
+.ih35mm .box-changes-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.ih35mm .box-changes-list li{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:baseline;font-size:12.5px;font-variant-numeric:tabular-nums;border-bottom:1px solid var(--line);padding-bottom:6px}
+.ih35mm .box-changes-list li:last-child{border-bottom:0;padding-bottom:0}
+.ih35mm .box-changes-list .t{color:var(--slate-lt);min-width:72px}
+.ih35mm .box-changes-list .b{font-weight:800;color:var(--navy);min-width:64px}
+.ih35mm .box-changes-list .d{color:var(--slate)}
+.ih35mm .box-changes-list .d b{color:var(--green)}
 .ih35mm .group-table{min-width:720px}
 .ih35mm .scroll-groups{margin-bottom:16px}
 .ih35mm .pct{display:inline-block;font-size:11px;font-weight:800;padding:2px 6px;border-radius:999px;background:var(--gray-bg);color:var(--slate);font-variant-numeric:tabular-nums}
