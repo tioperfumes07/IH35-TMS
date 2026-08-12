@@ -18,7 +18,7 @@ These resolve scoreboard dishonesty. **When sources disagree, this table wins.**
 | **`live_scenario_probe` / scenario dot** | TMS-native **row count** (e.g. “2 claims”) | **NO** for deep linkage | Green `scenario.insurance` while claim hub FKs all NULL |
 | **Matrix Box 1 Required** | Column applies to leaf (`*.required.json`) | N/A — applicability only | — |
 | **Matrix Box 2 Audited** | Ledger/GUARD/wave row exists for leaf×column | **NO** — mapping only (yellow ●) | Treating audit FAIL as fixed |
-| **Matrix Box 3 Built** | **Wire sprint target:** forward writer + reverse nav + guard; FK/graph assumed present; **create path works in code** | **YES for “wired”** during build phase | Checklist PASS without submit payload |
+| **Matrix Box 3 Built** | **Wire sprint target:** guard shipped in `wire-sprint-built.json` + guard file on disk; forward writer + reverse nav assumed by guard | **YES for “wired”** during build phase | Scenario row-count probe · checklist PASS without guard |
 | **Matrix Box 4 Live** | **After system test:** PROD-VERIFIED click + Neon on deployed SHA | **YES for “certified”** | CI green · merge · Built mistaken for Live |
 | **Desktop audit packs** | Owner click-through inventory | Input to Required map · **not** auto-green matrix | Re-auditing during wire sprint |
 
@@ -41,11 +41,13 @@ These resolve scoreboard dishonesty. **When sources disagree, this table wins.**
 | N/A | · | · | · | · | Column does not apply — not in % |
 | Required, **not audited** | **✓** | **✕** | **✕** | **✕** | Owes the wire; never audited |
 | Required, **audited / in progress** | **✓** | **●** | **✕** | **✕** | Audit/mapping exists; not built |
-| Required, **built / wired** | **✓** | **✓** | **✓** | **✕** | Neon probe / FK / guard / route — not click-proven |
+| Required, **built / wired** | **✓** | **✓** | **✓** | **✕** | Wire-sprint guard shipped — not click-proven |
+| Required, **probe density only** | **✓** | **●** | **✕** | **✕** | Neon row-count / scenario hold — **not** Built |
 | Required, **live verified** | **✓** | **✓** | **✓** | **✓** | PROD-VERIFIED ledger leaf×column (V2/V3/V4 exercised) |
 
 - Box 2 **yellow (●)** = audit/mapping evidence only (ledger FAIL/FIXED, GUARD, wave, checklist item) — **not** live verify.
-- Box 3 **Built** = request-time `live_scenario_probe` hold and/or wired Neon density — **never** from checklist N/M PASS alone.
+- Box 3 **Built** = `wire-sprint-built.json` + guard on disk — **never** from checklist N/M or scenario row-count alone.
+- Scenario / Neon **probes** = Box 2 **Audited ●** only (density signal) — forbidden on Box 3.
 - Box 4 **Live** = `AUDIT-COVERAGE-LIVE` **PROD-VERIFIED** on that leaf×column only — visual/app click-through tier.
 - **Module certification %** = Box 4 Live ÷ Required (honest bar). **Built %** = (Box 3 + Box 4) ÷ Required. **Build queue** = Required − Live.
 - A cell may show **✓ ✓ ✓ ✕** (coded/wired/Neon-proven but not yet live-click verified) — that is honest, not a defect.
@@ -59,7 +61,7 @@ These resolve scoreboard dishonesty. **When sources disagree, this table wins.**
 |---|---|---|---|
 | **1 Required** | This column applies to this leaf | Committed **applicability matrix** (authored once from arch design + routes; Cascade FAIL rows can *propose* Required) | Rarely — only when product surface/law changes |
 | **2 Audited** | Cascade/repo audit exists (FAIL/OPEN/FIXED, wave-queue, guard named) — yellow until Built | Repo + ledger + GUARD-WORKORDERS + wave-queue | On **PR merge** / audit append |
-| **3 Built** | Wired + Neon probe hold (FK/route/guard/TMS-native density) | `live_scenario_probe` request-time Neon + probe map | On **probe refresh / deploy** |
+| **3 Built** | Wired guard shipped (Wave-A feed) | `wire-sprint-built.json` + guard file exists | On **guard merge** + feed entry |
 | **4 Live** | PROD-VERIFIED leaf×column (click-through tier) | `AUDIT-COVERAGE-LIVE` PROD-VERIFIED only | On **GUARD live verify / ledger tier upgrade** |
 
 ### Already-built pipes to reuse (do not invent a parallel truth)

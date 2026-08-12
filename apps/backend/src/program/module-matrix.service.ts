@@ -3,7 +3,9 @@
  *
  * Required: docs/specs/scoreboard/modules/<module>.required.json
  * Audited: leaf-scoped ledger / GUARD / wave-queue / module-completion (NOT module-wide keyword flood)
- * Done: live_scenario_probe (module-scoped hops) + PROD-VERIFIED ledger + Neon-backed completion PASS
+ * Built (Box 3): wire-sprint-built.json guard on disk only — NOT scenario row-count probes.
+ * Live (Box 4): PROD-VERIFIED ledger leaf×column only.
+ * Probes: Audited (yellow ●) density signal only — never Built.
  *
  * % = done ÷ required. Unsure → unaudited. Never invent Done.
  */
@@ -42,6 +44,8 @@ export type MatrixCell = {
   done: boolean;
   auditedReason?: string;
   builtReason?: string;
+  /** Neon/scenario density hold — Audited ● only; must not set built=true */
+  probeReason?: string;
   liveReason?: string;
   /** @deprecated use builtReason/liveReason */
   doneReason?: string;
@@ -751,15 +755,13 @@ function leafColumnAuditedReason(
   return undefined;
 }
 
+/** Box 3 Built — wire-sprint guard shipped only. Scenario probes never green Built (owner 2026-08-11). */
 function leafColumnBuiltReason(
   leaf: RequiredLeaf,
   colId: string,
   moduleId: string,
-  probes: ModuleProbe[],
 ): string | undefined {
-  const wire = wireSprintBuiltReason(leaf, colId, moduleId);
-  if (wire) return wire;
-  return probeDoneReason(moduleId, leaf, colId, probes);
+  return wireSprintBuiltReason(leaf, colId, moduleId);
 }
 
 function leafColumnLiveReason(
@@ -790,7 +792,7 @@ function leafColumnDoneReason(
 ): string | undefined {
   const live = leafColumnLiveReason(leaf, colId, moduleId, ledger);
   if (live) return live;
-  return leafColumnBuiltReason(leaf, colId, moduleId, probes);
+  return leafColumnBuiltReason(leaf, colId, moduleId);
 }
 
 export async function buildModuleMatrix(
@@ -835,13 +837,18 @@ export async function buildModuleMatrix(
       }
       requiredCells += 1;
 
-      const builtReason = leafColumnBuiltReason(leaf, col.id, moduleId, probePack.slices);
+      const builtReason = leafColumnBuiltReason(leaf, col.id, moduleId);
       const liveReason = leafColumnLiveReason(leaf, col.id, moduleId, ledger);
+      const probeReason = probeDoneReason(moduleId, leaf, col.id, probePack.slices);
       const built = Boolean(builtReason) || Boolean(liveReason);
       const live = Boolean(liveReason);
 
       let audited = live || built;
       let auditedReason: string | undefined = liveReason || builtReason;
+      if (!audited && probeReason) {
+        audited = true;
+        auditedReason = `probe-hold (Audited only, not Built): ${probeReason}`;
+      }
       if (!audited) {
         auditedReason = leafColumnAuditedReason(
           leaf,
@@ -869,6 +876,7 @@ export async function buildModuleMatrix(
         done: live,
         ...(auditedReason ? { auditedReason } : {}),
         ...(builtReason ? { builtReason } : {}),
+        ...(probeReason ? { probeReason } : {}),
         ...(liveReason ? { liveReason } : {}),
         ...(liveReason || builtReason ? { doneReason: liveReason ?? builtReason } : {}),
       };
@@ -907,19 +915,20 @@ export async function buildModuleMatrix(
         `docs/module-completion/${moduleId}.json (leaf×column via layers/evidence)`,
       ],
       doneSources: [
-        "Box 3 Built: request-time Neon live_scenario_probe via scripts/scoreboard-from-live.mjs",
+        "Box 3 Built: docs/specs/scoreboard/wire-sprint-built.json + guard file on disk (Wave shipped writer)",
         "Box 4 Live: AUDIT-COVERAGE-LIVE PROD-VERIFIED leaf×column only",
+        "Probe density: live_scenario_probe → Audited ● only (never Built)",
       ],
       honesty:
-        "4-box law (2026-08-10). Audited ≠ Built ≠ Live. Built = Neon probe hold. Live = PROD-VERIFIED only. Checklist N/M never greens Built or Live.",
+        "4-box law (2026-08-11). Audited ≠ Built ≠ Live. Built = wire-sprint guard only (+ Live). Probes = yellow ● only. Live = PROD-VERIFIED only.",
       tipSha: sha,
       probeProgress: probePack.progress,
       probeSource: probePack.probeSource,
       reconAsOf: recon,
       feedNote:
         probePack.probeSource === "neon_live"
-          ? `Built from request-time Neon probes · Live from PROD-VERIFIED ledger · tip ${sha ?? "n/a"} · probe ${probePack.progress ?? "n/a"}%`
-          : `STALE committed probe snapshot for Built — add DATABASE_DIRECT_URL for auto-sync · tip ${sha ?? "n/a"}`,
+          ? `Built = wire-sprint guards only · Probes → Audited ● · Live = PROD-VERIFIED · tip ${sha ?? "n/a"} · probe density ${probePack.progress ?? "n/a"}%`
+          : `Built = wire-sprint guards only (NOT stale probes) · probe snapshot ${probePack.probeSource ?? "n/a"} → Audited ● only · tip ${sha ?? "n/a"}`,
     },
     columns: required.columns,
     leaves,
