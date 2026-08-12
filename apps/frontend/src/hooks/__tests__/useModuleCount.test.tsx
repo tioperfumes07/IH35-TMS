@@ -24,4 +24,10 @@ describe("useModuleCount", () => {
     expect(result.current.count).toBe(42);
     expect(result.current.error).toBeNull();
   });
+
+  it("does not request an undefined route or fabricate zero for an unmapped domain", () => {
+    const { result } = renderHook(() => useModuleCount(undefined), { wrapper });
+    expect(result.current.loading).toBe(false);
+    expect(result.current.count).toBeUndefined();
+  });
 });

@@ -13,19 +13,20 @@ const MODULE_SLUG: Record<ListsModule, string> = {
   NAMES_MASTER: "names_master",
 };
 
-export function useModuleCount(module: ListsModule) {
+export function useModuleCount(module: ListsModule | undefined) {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
 
   const query = useQuery({
-    queryKey: ["lists-module-count", MODULE_SLUG[module], companyId],
-    queryFn: () => getListsModuleCount(MODULE_SLUG[module], companyId),
-    enabled: Boolean(companyId),
+    queryKey: ["lists-module-count", module ? MODULE_SLUG[module] : "unmapped", companyId],
+    queryFn: () => getListsModuleCount(MODULE_SLUG[module!], companyId),
+    enabled: Boolean(companyId && module),
     staleTime: 60_000,
   });
 
   return {
-    count: query.data?.count ?? 0,
+    // No response is not a measured zero. Callers render unavailable chrome until data exists.
+    count: query.data?.count,
     loading: query.isLoading,
     error: query.error ? String((query.error as Error).message || query.error) : null,
     // A DEGRADED count is not a wrong count — it is a PARTIAL one, and the difference has to reach
