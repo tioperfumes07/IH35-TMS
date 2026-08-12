@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["home","dispatch","safety","reports","factoring","driver-hub"],"cols":["reverse_link"],"leafRe":".*","task":"CLS-ENTITY-LABEL-FK-GUARD-DRIFT","vertical":"class-sweep"} */
 /** @matrix-built {"modules":["customers"],"cols":["driver","unit","connectivity","reverse_link"],"leafRe":"^detail\\.loads$","task":"CLS-CUSTOMER-LOAD-DRIVER-UNIT-LINKS"} */
 /** @matrix-built {"modules":["vendors"],"cols":["unit","connectivity","reverse_link"],"leafRe":"^detail\\.profile$","task":"CLS-VENDOR-WO-UNIT-LINK"} */
 /** @matrix-built {"modules":["dispatch"],"cols":["customer","driver","unit","load","connectivity","reverse_link"],"leafRe":"^queues\\.detention$","task":"CLS-DISPATCH-DETENTION-FK-LINKS"} */
@@ -648,7 +649,7 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/components/home/DispatcherActiveLoadsPanel.tsx",
     bad: />\{row\.customer_name\}</,
-    good: /entityLabel\(\s*row\.customer_name\s*,\s*null\s*,\s*"Customer"\s*\)/,
+    good: /entityLabel\(\s*row\.customer_name\s*,\s*row\.customer_id\s*,\s*"Customer"\s*\)/,
   },
   {
     rel: "apps/frontend/src/pages/safety/HoursOfServicePage.tsx",
@@ -743,7 +744,7 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/dispatch/TripProfitability.tsx",
     bad: /row\.driver_name\s*\?\?\s*"—"/,
-    good: /entityLabel\(\s*row\.driver_name\s*,\s*null\s*,\s*"Driver"\s*\)/,
+    good: /entityLabel\(\s*row\.driver_name\s*,\s*row\.driver_id\s*,\s*"Driver"\s*\)/,
   },
   {
     rel: "apps/frontend/src/pages/dispatch/DispatchOverview.tsx",
@@ -788,7 +789,7 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/safety/photo-comparison/PhotoComparisonPage.tsx",
     bad: /session\.driver_name\s*\?\?\s*"—"|session\.unit_number\s*\?\?\s*"—"/,
-    good: /entityLabel\(\s*session\.driver_name\s*,\s*null\s*,\s*"Driver"\s*\)/,
+    good: /entityLabel\(\s*session\.driver_name\s*,\s*session\.driver_uuid\s*,\s*"Driver"\s*\)/,
   },
   {
     rel: "apps/frontend/src/pages/factoring/FaroImportPage.tsx",
@@ -828,7 +829,7 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/reports/DispatchMarginPage.tsx",
     bad: /row\.customer_name\s*\?\?\s*"—"/,
-    good: /entityLabel\(\s*row\.customer_name\s*,\s*null\s*,\s*"Customer"\s*\)/,
+    good: /entityLabel\(\s*row\.customer_name\s*,\s*row\.customer_id\s*,\s*"Customer"\s*\)/,
   },
   {
     rel: "apps/frontend/src/pages/dispatch/RoundTrips.tsx",
@@ -848,7 +849,7 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/factoring/SubmissionWorkqueue.tsx",
     bad: /item\.customer_name\s*\?\?\s*"—"/,
-    good: /entityLabel\(\s*item\.customer_name\s*,\s*null\s*,\s*"Customer"\s*\)/,
+    good: /entityLabel\(\s*item\.customer_name\s*,\s*item\.customer_id\s*,\s*"Customer"\s*\)/,
   },
   {
     rel: "apps/frontend/src/pages/accounting/InvoiceCreateModal.tsx",
@@ -1023,7 +1024,7 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/driver/DriverLoadsPage.tsx",
     bad: /\{load\.customer_name\}/,
-    good: /entityLabel\(\s*load\.customer_name\s*,\s*null\s*,\s*"Customer"\s*\)/,
+    good: /entityLabel\(\s*load\.customer_name\s*,\s*load\.customer_id\s*,\s*"Customer"\s*\)/,
   },
   {
     rel: "apps/frontend/src/pages/driver-finance/CashAdvanceRequestsPage.tsx",
@@ -1073,7 +1074,7 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/driver/DriverLoadDetailPage.tsx",
     bad: /\{load\.customer_name\}/,
-    good: /entityLabel\(\s*load\.customer_name\s*,\s*null\s*,\s*"Customer"\s*\)/,
+    good: /entityLabel\(\s*load\.customer_name\s*,\s*load\.customer_id\s*,\s*"Customer"\s*\)/,
   },
   {
     rel: "apps/frontend/src/pages/safety/components/EscrowForfeitModal.tsx",
@@ -1538,7 +1539,7 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/safety/tabs/EscrowRecordTab.tsx",
     bad: /\{entry\.driver_name\}/,
-    good: /entityLabel\(\s*entry\.driver_name\s*,\s*null\s*,\s*"Driver"\s*\)/,
+    good: /entityLabel\(\s*entry\.driver_name\s*,\s*entry\.driver_id\s*,\s*"Driver"\s*\)/,
   },
   {
     rel: "apps/frontend/src/pages/insurance/PolicyDetail.tsx",
