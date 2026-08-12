@@ -638,7 +638,10 @@ async function postDifferenceJournalEntry(
         source,
         created_by_user_id,
         created_at,
-        updated_at
+        updated_at,
+        -- ACCT-F353 stage 2 — banking.bank_transactions carries no is_sample_data (bank feeds aren't
+        -- taggable); explicit false, matching ACCT-F212's policy (posting-engine.service.ts).
+        is_sample_data
       )
       VALUES (
         $1::uuid,
@@ -647,7 +650,8 @@ async function postDifferenceJournalEntry(
         'bank_reconciliation',
         $4::uuid,
         now(),
-        now()
+        now(),
+        false
       )
       RETURNING id::text
     `,

@@ -648,7 +648,7 @@ async function getPostingBySource(
  * classification. Defaulting false keeps real books real, which is the safe direction here because the
  * poster's output is the ledger itself.
  */
-const SAMPLE_TAGGED_SOURCE_TABLES: Partial<Record<PostingSourceType, string>> = {
+export const SAMPLE_TAGGED_SOURCE_TABLES: Partial<Record<PostingSourceType, string>> = {
   invoice: "accounting.invoices",
   bill: "accounting.bills",
   expense: "accounting.expenses",
@@ -656,7 +656,11 @@ const SAMPLE_TAGGED_SOURCE_TABLES: Partial<Record<PostingSourceType, string>> = 
   customer_payment: "accounting.payments",
 };
 
-async function readSourceIsSampleData(
+// ACCT-F353 stage 2 — exported so the JE writers OUTSIDE the canonical poster (void reversals,
+// amortization, settlement-posting, fuel-overage, period-close, bank-recon-match) can derive the
+// SAME sample flag from a source row that DOES carry it, rather than each reinventing this lookup
+// (or worse, silently defaulting false for a document type that actually has the column).
+export async function readSourceIsSampleData(
   client: DbClient,
   operatingCompanyId: string,
   sourceType: PostingSourceType,

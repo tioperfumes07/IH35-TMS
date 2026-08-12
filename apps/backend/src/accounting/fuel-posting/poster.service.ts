@@ -287,9 +287,12 @@ export async function postFuelExpenseFromEvent(input: FuelPostingInput): Promise
           created_by_user_id,
           qbo_sync_pending,
           created_at,
-          updated_at
+          updated_at,
+          -- ACCT-F353 stage 2 — fuel.fuel_transactions/fuel_events carry no is_sample_data; explicit
+          -- false, matching ACCT-F212's policy (posting-engine.service.ts) rather than guessing.
+          is_sample_data
         )
-        VALUES ($1::uuid, $2::date, $3, 'posted', 'auto', $4::uuid, true, now(), now())
+        VALUES ($1::uuid, $2::date, $3, 'posted', 'auto', $4::uuid, true, now(), now(), false)
         RETURNING id::text
       `,
       [input.operating_company_id, postingDate, memo, input.actor_user_id]

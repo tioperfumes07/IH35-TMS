@@ -266,9 +266,14 @@ async function materializeJournal(client: PoolClient, tmpl: Record<string, unkno
         created_by_user_id,
         qbo_sync_pending,
         created_at,
-        updated_at
+        updated_at,
+        -- ACCT-F353 stage 2 — a manual recurring-JE template has no source document (the postings
+        -- come straight from the template payload) and the template table itself carries no
+        -- is_sample_data; explicit false, matching ACCT-F212's own documented policy in
+        -- posting-engine.service.ts ("everything else returns false rather than guessing").
+        is_sample_data
       )
-      VALUES ($1::uuid,$2::date,$3,'posted','auto',$4::uuid,true,now(),now())
+      VALUES ($1::uuid,$2::date,$3,'posted','auto',$4::uuid,true,now(),now(),false)
       RETURNING id::text
     `,
     [oc, entryDate, memo, actorId]

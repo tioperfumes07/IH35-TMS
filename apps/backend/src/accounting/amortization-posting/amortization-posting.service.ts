@@ -117,6 +117,12 @@ export async function findExistingPostedJe(client: DbClient, operatingCompanyId:
  * (prepaid purchase, prepaid amortization, depreciation, and the Finance-Hub loan payment poster in
  * ../finance-hub-amortization-posting). Exported so a sibling poster reuses this exact SQL rather than
  * duplicating a second header INSERT that could drift on status / source / qbo_sync_pending.
+ *
+ * ACCT-F353 stage 2 — is_sample_data is explicit false: none of this spine's source tables
+ * (accounting.prepaid_assets, fixed_assets/depreciation schedules, finance-hub loans) carry the
+ * column, matching the policy posting-engine.service.ts's ACCT-F212 already established ("everything
+ * else returns false rather than guessing — inventing one would be fabricating a financial
+ * classification").
  */
 export async function insertJournalEntryHeader(
   client: DbClient,
@@ -128,8 +134,8 @@ export async function insertJournalEntryHeader(
   const res = await client.query<{ id: string }>(
     `
       INSERT INTO accounting.journal_entries
-        (operating_company_id, entry_date, memo, status, source, created_by_user_id, qbo_sync_pending, created_at, updated_at)
-      VALUES ($1::uuid, $2::date, $3, 'posted', 'auto', $4::uuid, true, now(), now())
+        (operating_company_id, entry_date, memo, status, source, created_by_user_id, qbo_sync_pending, created_at, updated_at, is_sample_data)
+      VALUES ($1::uuid, $2::date, $3, 'posted', 'auto', $4::uuid, true, now(), now(), false)
       RETURNING id::text
     `,
     [operatingCompanyId, entryDate, memo, actorUserId]
