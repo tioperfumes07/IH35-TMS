@@ -1476,6 +1476,7 @@ export type MaintenanceVendorRow = {
   notes: string | null;
   /** Canonical AP vendor (mdata.vendors) for WO/AP correlation. */
   mdata_vendor_id: string | null;
+  mdata_vendor_name: string | null;
   is_active: boolean;
   active?: boolean;
   archived_at?: string | null;

@@ -33,7 +33,7 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/maintenance/VendorDetailPage.tsx",
     bad: />\{vendor\.mdata_vendor_id\}</,
-    good: /entityLabel\(\s*null\s*,\s*vendor\.mdata_vendor_id\s*,\s*"Vendor"\s*\)/,
+    good: /entityLabel\(\s*vendor\.mdata_vendor_name\s*,\s*vendor\.mdata_vendor_id\s*,\s*"Vendor"\s*\)/,
   },
   {
     rel: "apps/frontend/src/pages/drivers/TeamSplitConfig.tsx",

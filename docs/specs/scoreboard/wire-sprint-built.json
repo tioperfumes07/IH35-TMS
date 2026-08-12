@@ -344,6 +344,14 @@
       "modules": ["dispatch"],
       "cols": ["driver", "unit", "load", "connectivity", "reverse_link"],
       "leafRe": "^secondary\\.assignments$"
+    },
+    {
+      "task": "CLS-MAINT-VENDOR-AP-LABEL-LINK",
+      "pr": "this PR",
+      "guard": "scripts/verify-steps/441-verify-maint-wo-vendor-linkage.mjs",
+      "modules": ["maintenance"],
+      "cols": ["vendor", "connectivity", "reverse_link"],
+      "leafRe": "^vendors\\.create$"
     }
   ]
 }
