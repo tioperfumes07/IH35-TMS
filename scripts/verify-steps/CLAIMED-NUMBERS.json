@@ -1,4 +1,9 @@
 {
+  "3173": {
+    "claimed_at": "2026-08-12",
+    "claimed_by": "cc-1",
+    "purpose": "verify-bank-suggestions-includes-rule-match"
+  },
   "3175": {
     "claimed_at": "2026-08-12",
     "claimed_by": "cc-2",
