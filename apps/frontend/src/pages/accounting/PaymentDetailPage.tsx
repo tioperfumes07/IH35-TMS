@@ -266,6 +266,38 @@ export function PaymentDetailPage() {
         ) : null}
       </DataPanel>
 
+      {/* WAVE-C-gl_je-payments-receive: forward payment -> GL JE, same shape as
+          InvoiceDetailPage's "GL / Journal entries" panel — reads customer_payment source rows
+          the existing poster already writes; no new GL math, no posting from this page. */}
+      <DataPanel title="GL / Journal entries">
+        {(payment.journal_entries ?? []).length === 0 ? (
+          <div className="text-sm text-gray-600" data-testid="payment-journal-entries-empty">
+            No journal entries linked yet (unposted or posting reversed).
+          </div>
+        ) : (
+          <div className="space-y-2" data-testid="payment-journal-entries">
+            {(payment.journal_entries ?? []).map((je) => (
+              <DataPanelRow key={je.journal_entry_id}>
+                <span className="text-xs text-gray-600">
+                  <span className="mr-2 font-semibold uppercase tracking-wide text-gray-500">
+                    {je.source_transaction_type ?? "source"}
+                  </span>
+                  <EntityLink
+                    kind="journal_entry"
+                    id={je.journal_entry_id}
+                    label={entityLabel(je.memo, je.journal_entry_id, "Journal entry")}
+                  />
+                </span>
+                <span className="text-sm text-gray-900">
+                  {je.entry_date ? formatDateUS(je.entry_date) : "—"}
+                  {je.status ? ` · ${je.status}` : ""}
+                </span>
+              </DataPanelRow>
+            ))}
+          </div>
+        )}
+      </DataPanel>
+
       <DataPanel title="Applications">
         <div className="mb-2 flex items-center justify-between">
           <div className="text-xs text-gray-600">Payment applications to invoices</div>
