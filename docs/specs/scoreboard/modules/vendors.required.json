@@ -446,7 +446,6 @@
         "ap_bill",
         "expense",
         "gl_je",
-        "liability",
         "connectivity",
         "reverse_link",
         "qbo_chrome"
@@ -461,7 +460,6 @@
         "vendor",
         "ap_bill",
         "gl_je",
-        "liability",
         "picker_law",
         "qbo_chrome",
         "connectivity",
@@ -591,6 +589,23 @@
       "drops": [
         {
           "id": "detail.ap.vendor_credits",
+          "removed": [
+            "liability"
+          ]
+        }
+      ]
+    },
+    "liability_chrome2_2026_08_12": {
+      "finding": "LIABILITY-CHROME-HONEST-2",
+      "drops": [
+        {
+          "id": "detail.ap",
+          "removed": [
+            "liability"
+          ]
+        },
+        {
+          "id": "detail.ap.record_bill_payment",
           "removed": [
             "liability"
           ]
