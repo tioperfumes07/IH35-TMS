@@ -1,4 +1,9 @@
 {
+  "3149": {
+    "claimed_at": "2026-08-12",
+    "claimed_by": "cc-1",
+    "purpose": "verify-settlement-for-load-reverse-hop"
+  },
   "3127": {
     "claimed_at": "2026-08-12",
     "claimed_by": "cc-2",
@@ -2238,5 +2243,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1122
+  "total_claimed": 1123
 }
