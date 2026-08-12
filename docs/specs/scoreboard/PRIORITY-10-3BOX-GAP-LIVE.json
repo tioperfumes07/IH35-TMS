@@ -1,9 +1,9 @@
 {
-  "as_of": "2026-08-12T20:55:53.465Z",
-  "main_sha": "b4ad95b8f",
+  "as_of": "2026-08-12T20:57:13.983Z",
+  "main_sha": "d61658c84",
   "gate": "PRIORITY_10_3BOX_100",
   "allRequired": {
-    "totR": 2694,
+    "totR": 2690,
     "totB": 2270,
     "pct": 84
   },
@@ -33,9 +33,9 @@
     },
     {
       "mod": "dispatch",
-      "req": 344,
+      "req": 340,
       "built": 302,
-      "pct": 88,
+      "pct": 89,
       "abcReq": 299,
       "abcBuilt": 292,
       "abcPct": 98
@@ -159,15 +159,6 @@
       "seat": "CC-1 C"
     },
     {
-      "col": "scenario.maintenance",
-      "cells": 5,
-      "byMod": {
-        "accounting": 1,
-        "dispatch": 4
-      },
-      "seat": "?"
-    },
-    {
       "col": "ap_bill",
       "cells": 3,
       "byMod": {
@@ -203,6 +194,14 @@
     },
     {
       "col": "inventory",
+      "cells": 1,
+      "byMod": {
+        "accounting": 1
+      },
+      "seat": "?"
+    },
+    {
+      "col": "scenario.maintenance",
       "cells": 1,
       "byMod": {
         "accounting": 1

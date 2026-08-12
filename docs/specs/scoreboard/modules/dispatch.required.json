@@ -163,7 +163,6 @@
         "load",
         "gl_je",
         "expense",
-        "scenario.maintenance",
         "picker_law",
         "qbo_chrome",
         "connectivity",
@@ -358,7 +357,6 @@
         "driver",
         "unit",
         "load",
-        "scenario.maintenance",
         "connectivity",
         "reverse_link",
         "picker_law"
@@ -507,7 +505,6 @@
         "load",
         "gl_je",
         "expense",
-        "scenario.maintenance",
         "picker_law",
         "qbo_chrome",
         "connectivity",
@@ -541,7 +538,6 @@
         "unit",
         "trailer",
         "load",
-        "scenario.maintenance",
         "picker_law",
         "qbo_chrome",
         "connectivity",
@@ -954,6 +950,16 @@
           ]
         }
       ]
+    },
+    "scenario_maint_2026_08_12": {
+      "finding": "DISP-REQUIRED-SCENARIO-MAINT-INFLATION",
+      "drops": [
+        "secondary.book_load",
+        "queues.in_transit",
+        "planning.reserve",
+        "docs.ocr"
+      ],
+      "note": "scenario.maintenance=Maint WO; Book Load/OCR/reserve/in-transit ≠ WO create"
     }
   }
 }

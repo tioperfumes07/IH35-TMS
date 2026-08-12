@@ -1,6 +1,6 @@
 # PRIORITY 10 · 3-BOX GATE — LIVE GAP
 
-**as_of:** 2026-08-12T20:55:53.465Z · **main:** `b4ad95b8f`
+**as_of:** 2026-08-12T20:57:13.983Z · **main:** `d61658c84`
 
 ## Bar
 
@@ -8,14 +8,14 @@ All 10 modules: **Required + Audited + Built = 100%** before Live. Wave **A→B�
 
 ## Built coverage
 
-- All cells: **84%** (2270/2694)
+- All cells: **84%** (2270/2690)
 - Wave A–C (no chrome): **98%** (2019/2064)
 
 | Module | Built% all | Built% A–C |
 |--------|-----------:|-----------:|
 | lists | 85% | 100% |
 | accounting | 76% | 88% |
-| dispatch | 88% | 98% |
+| dispatch | 89% | 98% |
 | settlements | 76% | 89% |
 | factoring | 76% | 89% |
 | banking | 83% | 95% |
@@ -32,12 +32,12 @@ All 10 modules: **Required + Audited + Built = 100%** before Live. Wave **A→B�
 | `picker_law` | 73 | D LAST |
 | `liability` | 27 | CC-1 |
 | `gl_je` | 13 | CC-1 C |
-| `scenario.maintenance` | 5 | ? |
 | `ap_bill` | 3 | CC-1 |
 | `scenario.ap` | 3 | ? |
 | `scenario.insurance` | 3 | ? |
 | `expense` | 2 | CC-1 |
 | `inventory` | 1 | ? |
+| `scenario.maintenance` | 1 | ? |
 | `scenario.dispatch` | 1 | ? |
 
 ## Seat NOW
