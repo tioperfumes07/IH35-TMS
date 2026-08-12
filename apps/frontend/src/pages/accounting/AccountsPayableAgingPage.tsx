@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useSearchParams } from "react-router-dom";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { Button } from "../../components/Button";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { ListErrorState } from "../../components/ListErrorState";
@@ -94,7 +95,7 @@ const VENDOR_COLUMNS: Array<ParityColumn<ApAgingVendor>> = [
     render: (v) =>
       v.vendor_id ? (
         <span className="inline-flex flex-col gap-0.5">
-          <Link to={`/vendors/${v.vendor_id}`} className="font-medium text-slate-700 hover:underline">{entityLabel(v.vendor_name, v.vendor_id, "Vendor")}</Link>
+          <EntityLink kind="vendor" id={v.vendor_id} label={entityLabel(v.vendor_name, v.vendor_id, "Vendor")} className="font-medium text-slate-700" />
           <Link to={apAgingBillsListHref(v.vendor_id)} className="text-[10px] font-medium text-slate-500 hover:underline">
             Open bills
           </Link>
@@ -439,7 +440,7 @@ function GroupBlock({ group, rows, subtotal, open, onToggle }: { group: ApAgingD
               <td className="px-2 py-1.5 pl-7">
                 {v.vendor_id ? (
                   <span className="inline-flex flex-col gap-0.5">
-                    <Link to={`/vendors/${v.vendor_id}`} className="text-slate-700 hover:underline">{entityLabel(v.vendor_name, v.vendor_id, "Vendor")}</Link>
+                    <EntityLink kind="vendor" id={v.vendor_id} label={entityLabel(v.vendor_name, v.vendor_id, "Vendor")} className="text-slate-700" />
                     <Link to={apAgingBillsListHref(v.vendor_id)} className="text-[10px] font-medium text-slate-500 hover:underline">
                       Open bills
                     </Link>
