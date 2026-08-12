@@ -67,7 +67,7 @@
     },
     {
       "task": "P23",
-      "pr": "#5847",
+      "pr": "#5847 + #5990",
       "guard": "scripts/verify-steps/2358-verify-lst-picker01-consumer-adoption.mjs",
       "modules": ["lists", "dispatch"],
       "cols": ["connectivity", "picker"],
