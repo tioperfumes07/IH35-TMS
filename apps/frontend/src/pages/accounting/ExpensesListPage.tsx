@@ -193,7 +193,7 @@ export function ExpensesListPage() {
         <EntityLink
           kind="journal_entry"
           id={r.journal_entry_id ?? undefined}
-          label={r.journal_entry_id ? entityLabel(null, r.journal_entry_id, "Journal entry") : undefined}
+          label={r.journal_entry_id ? entityLabel(r.journal_entry_memo, r.journal_entry_id, "Journal entry") : undefined}
         />
       ),
     },
