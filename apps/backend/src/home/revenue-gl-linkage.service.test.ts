@@ -563,6 +563,7 @@ describe("computeRevenueGlLinkage (mocked)", () => {
               {
                 invoice_id: invId,
                 journal_entry_id: jeId,
+                memo: "AR Invoice INV-2026-10005 — freight revenue",
                 entry_date: "2026-07-18",
                 je_status: "posted",
                 gl_revenue_cents: 9000,
@@ -601,6 +602,11 @@ describe("computeRevenueGlLinkage (mocked)", () => {
     });
     expect(result.drill.mismatched_invoices[0]?.reason).toBe("amount_mismatch");
     expect(result.discrepancy_cents).toBe(1000);
+    // CLS-LINKAGE-ONEWAY (Invoice -> JE, revenue-linkage drill): the mismatched-JE drill entry must
+    // carry the JE's memo (its only human identity — no number/ref column exists) so the owner's
+    // GL-mismatch investigation drill-through never renders an unidentified journal_entry_id.
+    expect(result.drill.mismatched_journal_entries[0]?.journal_entry_id).toBe(jeId);
+    expect(result.drill.mismatched_journal_entries[0]?.memo).toBe("AR Invoice INV-2026-10005 — freight revenue");
   });
 
   it("does not swallow query errors (propagates)", async () => {

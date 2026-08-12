@@ -52,6 +52,8 @@ export type RevenueInvoiceDrill = {
 
 export type RevenueJournalDrill = {
   journal_entry_id: string;
+  /** CLS-LINKAGE-ONEWAY: accounting.journal_entries has no number/ref/doc column; memo IS its identity. */
+  memo: string | null;
   entry_date: string;
   gl_revenue_cents: number;
   invoice_id: string | null;
@@ -348,6 +350,7 @@ type GlDayRow = {
 type InvoiceGlLinkRow = {
   invoice_id: string;
   journal_entry_id: string;
+  memo: string | null;
   entry_date: string;
   je_status: string;
   gl_revenue_cents: string | number;
@@ -357,6 +360,7 @@ type InvoiceGlLinkRow = {
 
 type UnlinkedGlRow = {
   journal_entry_id: string;
+  memo: string | null;
   entry_date: string;
   gl_revenue_cents: string | number;
   account_ids: string[] | null;
@@ -459,6 +463,11 @@ export async function computeRevenueGlLinkage(
           p.journal_entry_uuid AS journal_entry_id,
           je.entry_date,
           je.status::text AS je_status,
+          -- CLS-LINKAGE-ONEWAY (Invoice -> JE, revenue-linkage drill payload): je is already joined
+          -- here for entry_date/status; memo IS the JE's human identity (no number/ref column exists)
+          -- and was previously left off this CTE's own column list, so RevenueJournalDrill rendered
+          -- unidentified for the owner's GL-mismatch investigation drill-through.
+          je.memo,
           p.debit_or_credit,
           p.amount_cents,
           p.account_id,
@@ -486,6 +495,7 @@ export async function computeRevenueGlLinkage(
           p.journal_entry_uuid AS journal_entry_id,
           je.entry_date,
           je.status::text AS je_status,
+          je.memo,
           p.debit_or_credit,
           p.amount_cents,
           p.account_id,
@@ -513,6 +523,7 @@ export async function computeRevenueGlLinkage(
         lp.journal_entry_id::text AS journal_entry_id,
         lp.entry_date::text AS entry_date,
         lp.je_status,
+        lp.memo,
         COALESCE(
           SUM(
             CASE
@@ -536,7 +547,7 @@ export async function computeRevenueGlLinkage(
         )::bigint AS non_revenue_credit_cents,
         array_agg(DISTINCT lp.account_id::text) FILTER (WHERE lp.account_type = ANY($7::text[])) AS account_ids
       FROM linked_postings lp
-      GROUP BY lp.invoice_id, lp.journal_entry_id, lp.entry_date, lp.je_status
+      GROUP BY lp.invoice_id, lp.journal_entry_id, lp.entry_date, lp.je_status, lp.memo
     `,
     [operatingCompanyId, fromDate, toDate, COMPANY_TIME_ZONE, eligible, postedBatch, revenueTypes]
   );
@@ -671,9 +682,11 @@ export async function computeRevenueGlLinkage(
         href: invoiceHref(inv.invoice_id),
       });
       for (const jeId of jeIds) {
+        const voidedLink = voidedLinks.find((l) => l.journal_entry_id === jeId);
         mismatchedJournals.push({
           journal_entry_id: jeId,
-          entry_date: voidedLinks.find((l) => l.journal_entry_id === jeId)?.entry_date ?? inv.recognition_date,
+          memo: voidedLink?.memo ?? null,
+          entry_date: voidedLink?.entry_date ?? inv.recognition_date,
           gl_revenue_cents: 0,
           invoice_id: inv.invoice_id,
           account_ids: [],
@@ -706,6 +719,7 @@ export async function computeRevenueGlLinkage(
         if (Number(link.non_revenue_credit_cents ?? 0) > 0) {
           mismatchedJournals.push({
             journal_entry_id: link.journal_entry_id,
+            memo: link.memo ?? null,
             entry_date: link.entry_date,
             gl_revenue_cents: Number(link.gl_revenue_cents ?? 0),
             invoice_id: inv.invoice_id,
@@ -734,6 +748,7 @@ export async function computeRevenueGlLinkage(
         const link = activeLinks.find((l) => l.journal_entry_id === jeId)!;
         mismatchedJournals.push({
           journal_entry_id: jeId,
+          memo: link.memo ?? null,
           entry_date: link.entry_date,
           gl_revenue_cents: Number(link.gl_revenue_cents ?? 0),
           invoice_id: inv.invoice_id,
@@ -751,6 +766,7 @@ export async function computeRevenueGlLinkage(
     if (cents === 0) continue;
     mismatchedJournals.push({
       journal_entry_id: row.journal_entry_id,
+      memo: row.memo ?? null,
       entry_date: row.entry_date,
       gl_revenue_cents: cents,
       invoice_id: row.invoice_id,
