@@ -64,6 +64,14 @@
       "modules": ["insurance"],
       "cols": ["driver", "unit", "load", "connectivity", "reverse_link"],
       "leafRe": "^claims\\."
+    },
+    {
+      "task": "P32",
+      "pr": "#3332",
+      "guard": "scripts/verify-steps/1316-verify-banking-match-entitylink-kinds.mjs",
+      "modules": ["banking"],
+      "cols": ["vendor", "connectivity"],
+      "leafRe": "^(accounts|transactions\\.)"
     }
   ]
 }
