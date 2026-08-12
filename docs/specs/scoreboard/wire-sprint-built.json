@@ -536,6 +536,14 @@
       "modules": ["dispatch"],
       "cols": ["driver", "load", "connectivity", "reverse_link"],
       "leafRe": "^misc\\.trip_profit$"
+    },
+    {
+      "task": "WAVE-B-docs-module",
+      "pr": "this PR",
+      "guard": "scripts/verify-docs-module-reverse-link-wired.mjs",
+      "modules": ["docs"],
+      "cols": ["connectivity", "reverse_link"],
+      "leafRe": ".*"
     }
   ]
 }
