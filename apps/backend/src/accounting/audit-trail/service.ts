@@ -8,6 +8,11 @@ export type AccountingAuditTrailEvent = {
   event_class: "accounting.posting_line_created" | "accounting.posting_line_reversal" | "accounting.posting_line_reversed";
   operating_company_id: string;
   journal_entry_id: string;
+  // LINEAGE-ROUTE-OMITS-JE-MEMO — same shape/fix as AccountingSourceLineageRow.memo below: memo IS
+  // the JE's human identity, and this listing joined journal_entries + exposed the id without it.
+  // Named "memo" (not e.g. "journal_entry_memo") to match AccountingSourceLineageRow.memo — the two
+  // types share this file and the same fix, so they share the field name.
+  memo: string | null;
   posting_batch_id: string | null;
   source_transaction_type: string | null;
   source_transaction_id: string | null;
@@ -25,6 +30,13 @@ export type AccountingAuditTrailEvent = {
 export type AccountingSourceLineageRow = {
   posting_id: string;
   journal_entry_id: string;
+  // LINEAGE-ROUTE-OMITS-JE-MEMO — accounting.journal_entries has no number/ref/doc column; memo IS
+  // the JE's human identity (#5731/ACCT-F322 established this for 3 other payloads). Named "memo",
+  // not "journal_entry_memo", to match the sibling call site's field shape exactly
+  // (InvoiceDetailPage.tsx:461 already does entityLabel(je.memo, je.journal_entry_id, "Journal entry")
+  // against listAccountingAuditTrail's payload) — so the lineage-chips consumer at :387 can switch
+  // entityLabel(null, jeId, ...) to entityLabel(row.memo, jeId, ...) with no naming translation needed.
+  memo: string | null;
   posting_batch_id: string | null;
   source_transaction_type: string;
   source_transaction_id: string;
@@ -117,7 +129,8 @@ export async function listAccountingAuditTrail(
         jp.amount_cents::bigint AS amount_cents,
         jp.description,
         jp.reversal_of_line_id::text AS reversal_of_line_id,
-        jp.reversed_by_line_id::text AS reversed_by_line_id
+        jp.reversed_by_line_id::text AS reversed_by_line_id,
+        je.memo
       FROM accounting.journal_entry_postings jp
       JOIN accounting.journal_entries je
         ON je.id = jp.journal_entry_uuid
@@ -170,6 +183,7 @@ export async function listAccountingAuditTrail(
       event_class: eventClass,
       operating_company_id: String(row.operating_company_id ?? ""),
       journal_entry_id: String(row.journal_entry_id ?? ""),
+      memo: row.memo == null ? null : String(row.memo),
       posting_batch_id: row.posting_batch_id ? String(row.posting_batch_id) : null,
       source_transaction_type: row.source_transaction_type ? String(row.source_transaction_type) : null,
       source_transaction_id: row.source_transaction_id ? String(row.source_transaction_id) : null,
@@ -219,7 +233,8 @@ export async function listAccountingSourceLineage(
         jp.debit_or_credit,
         jp.amount_cents::bigint AS amount_cents,
         jp.description,
-        je.created_at::text AS occurred_at
+        je.created_at::text AS occurred_at,
+        je.memo
       FROM accounting.journal_entry_postings jp
       JOIN accounting.journal_entries je
         ON je.id = jp.journal_entry_uuid
@@ -242,6 +257,7 @@ export async function listAccountingSourceLineage(
     rows: (res.rows as Array<Record<string, unknown>>).map((row) => ({
       posting_id: String(row.posting_id ?? ""),
       journal_entry_id: String(row.journal_entry_id ?? ""),
+      memo: row.memo == null ? null : String(row.memo),
       posting_batch_id: row.posting_batch_id ? String(row.posting_batch_id) : null,
       source_transaction_type: String(row.source_transaction_type ?? ""),
       source_transaction_id: String(row.source_transaction_id ?? ""),
