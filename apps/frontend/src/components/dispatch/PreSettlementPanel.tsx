@@ -97,9 +97,12 @@ export function PreSettlementPanel({ driverId, operatingCompanyId, onSettled }: 
             <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold uppercase text-slate-700">
               NB
             </span>
-            <span className="font-mono text-xs font-semibold text-slate-700">
-              {settlement.first_load_number}
-            </span>
+            <EntityLink
+              kind="load"
+              id={settlement.first_load_id}
+              label={settlement.first_load_number}
+              className="font-mono text-xs font-semibold text-slate-700"
+            />
           </div>
         ) : null}
         {settlement.last_load_number &&
@@ -108,9 +111,12 @@ export function PreSettlementPanel({ driverId, operatingCompanyId, onSettled }: 
             <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold uppercase text-slate-700">
               SB
             </span>
-            <span className="font-mono text-xs font-semibold text-slate-700">
-              {settlement.last_load_number}
-            </span>
+            <EntityLink
+              kind="load"
+              id={settlement.last_load_id}
+              label={settlement.last_load_number}
+              className="font-mono text-xs font-semibold text-slate-700"
+            />
           </div>
         ) : (
           <div className="rounded-sm border border-dashed border-gray-200 px-2 py-1.5 text-xs text-gray-400">

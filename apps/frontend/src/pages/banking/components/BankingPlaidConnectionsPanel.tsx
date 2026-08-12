@@ -17,6 +17,7 @@ import { PlaidItemCard } from "./PlaidItemCard";
 import { derivePlaidConnectionBadgeLabel } from "./plaid-item-display";
 import { ActionButton } from "../../../components/shared/ActionButton";
 import { useToast } from "../../../components/Toast";
+import { EntityLink } from "../../../components/shared/EntityLink";
 import { filterPlaidBankAccountsForCompany } from "../../../lib/banking-company-filter";
 import { entityLabel } from "../../../lib/entity-label";
 import { Link } from "react-router-dom";
@@ -50,7 +51,9 @@ function categoryLabel(t: PlaidBankTransaction) {
 }
 
 function matchedLabel(t: PlaidBankTransaction) {
-  if (t.matched_kind === "load" && t.matched_load_id) return entityLabel(null, t.matched_load_id, "Load");
+  if (t.matched_kind === "load" && t.matched_load_id) {
+    return <EntityLink kind="load" id={t.matched_load_id} label={entityLabel(null, t.matched_load_id, "Load")} />;
+  }
   if (t.matched_kind === "settlement" && t.matched_settlement_id) {
     return entityLabel(null, t.matched_settlement_id, "Settlement");
   }
