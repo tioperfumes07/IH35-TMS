@@ -41,6 +41,9 @@ function timelineToRegisterRow(row: EscrowDriverTimelineRow): Record<string, unk
     driver_id: row.driver_id ?? "",
     settlement_id: row.settlement_id ?? "",
     settlement_line_id: row.settlement_line_id ?? "",
+    journal_entry_id: row.journal_entry_id ?? "",
+    journal_entry_date: row.journal_entry_date ?? "",
+    journal_entry_memo: row.journal_entry_memo ?? "",
   };
 }
 
@@ -133,6 +136,26 @@ export function DriverEscrowTabContent({ operatingCompanyId, driverEscrowBalance
               id={sid}
               label={entityLabel(null, sid, "Settlement")}
               data-testid="banking-escrow-settlement-link"
+            />
+          );
+        },
+      },
+      {
+        // WAVE-C-gl_je-driver-escrow: forward escrow movement -> its settlement's real deduction
+        // GL JE (driver_finance.driver_settlement_gl_runs.deduction_journal_entry_id, one hop via
+        // settlement_id — see escrow-visualizer.routes.ts). Honest "—" when no settlement GL run
+        // exists yet for this movement (manual adjustment, or settlement not yet GL-posted).
+        key: "journal_entry_id",
+        label: "Journal Entry",
+        render: (row) => {
+          const jeId = String(row.journal_entry_id ?? "").trim();
+          if (!jeId) return <span className="text-xs text-slate-500">—</span>;
+          return (
+            <EntityLink
+              kind="journal_entry"
+              id={jeId}
+              label={entityLabel(String(row.journal_entry_memo ?? "") || null, jeId, "Journal entry")}
+              data-testid="banking-escrow-journal-entry-link"
             />
           );
         },
