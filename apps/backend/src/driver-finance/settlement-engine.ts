@@ -177,8 +177,26 @@ export async function appendSettlementLineFromDriverBillIfMissing(
       ) AS ok
     `
   );
+  // P36 — settlement_lines.load_id (202607430000) sat unwritten by every INSERT site. This is the
+  // earnings-line site: the load is already known (it is how the eligible driver_bills row was found),
+  // so there is no excuse for the FK to be NULL. Feature-detected like the two checks above rather than
+  // assumed, so this function keeps working against a DB that predates the column.
+  const hasLoadCol = await client.query<{ ok: boolean }>(
+    `
+      SELECT EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_schema = 'driver_finance'
+          AND table_name = 'settlement_lines'
+          AND column_name = 'load_id'
+      ) AS ok
+    `
+  );
 
   const lineType = input.lineType ?? "earnings";
+  const loadCols = hasLoadCol.rows[0]?.ok ? [", load_id"] : [];
+  const loadColPlaceholder = (n: number) => (hasLoadCol.rows[0]?.ok ? [`,$${n}::uuid`] : []);
+  const loadParam = hasLoadCol.rows[0]?.ok ? [input.loadId] : [];
 
   if (hasSourceCol.rows[0]?.ok) {
     if (hasTeamCol.rows[0]?.ok) {
@@ -190,12 +208,12 @@ export async function appendSettlementLineFromDriverBillIfMissing(
             description,
             amount,
             team_id,
-            source_driver_bill_id
+            source_driver_bill_id${loadCols.join("")}
           )
-          VALUES ($1,$2,$3,$4,$5::uuid,$6::uuid)
+          VALUES ($1,$2,$3,$4,$5::uuid,$6::uuid${loadColPlaceholder(7).join("")})
           ON CONFLICT (source_driver_bill_id) WHERE source_driver_bill_id IS NOT NULL DO NOTHING
         `,
-        [input.settlementId, lineType, description, dollars, input.teamId ?? null, bill.id]
+        [input.settlementId, lineType, description, dollars, input.teamId ?? null, bill.id, ...loadParam]
       );
       return;
     }
@@ -207,12 +225,12 @@ export async function appendSettlementLineFromDriverBillIfMissing(
           line_type,
           description,
           amount,
-          source_driver_bill_id
+          source_driver_bill_id${loadCols.join("")}
         )
-        VALUES ($1,$2,$3,$4,$5::uuid)
+        VALUES ($1,$2,$3,$4,$5::uuid${loadColPlaceholder(6).join("")})
         ON CONFLICT (source_driver_bill_id) WHERE source_driver_bill_id IS NOT NULL DO NOTHING
       `,
-      [input.settlementId, lineType, description, dollars, bill.id]
+      [input.settlementId, lineType, description, dollars, bill.id, ...loadParam]
     );
     return;
   }
@@ -220,8 +238,8 @@ export async function appendSettlementLineFromDriverBillIfMissing(
   if (hasTeamCol.rows[0]?.ok) {
     await client.query(
       `
-        INSERT INTO driver_finance.settlement_lines (settlement_id, line_type, description, amount, team_id)
-        SELECT $1,$2,$3,$4,$5::uuid
+        INSERT INTO driver_finance.settlement_lines (settlement_id, line_type, description, amount, team_id${loadCols.join("")})
+        SELECT $1,$2,$3,$4,$5::uuid${loadColPlaceholder(6).join("")}
         WHERE NOT EXISTS (
           SELECT 1
           FROM driver_finance.settlement_lines sl
@@ -230,15 +248,15 @@ export async function appendSettlementLineFromDriverBillIfMissing(
             AND sl.line_type = $2
         )
       `,
-      [input.settlementId, lineType, description, dollars, input.teamId ?? null]
+      [input.settlementId, lineType, description, dollars, input.teamId ?? null, ...loadParam]
     );
     return;
   }
 
   await client.query(
     `
-      INSERT INTO driver_finance.settlement_lines (settlement_id, line_type, description, amount)
-      SELECT $1,$2,$3,$4
+      INSERT INTO driver_finance.settlement_lines (settlement_id, line_type, description, amount${loadCols.join("")})
+      SELECT $1,$2,$3,$4${loadColPlaceholder(5).join("")}
       WHERE NOT EXISTS (
         SELECT 1
         FROM driver_finance.settlement_lines sl
@@ -247,6 +265,6 @@ export async function appendSettlementLineFromDriverBillIfMissing(
           AND sl.line_type = $2
       )
     `,
-    [input.settlementId, lineType, description, dollars]
+    [input.settlementId, lineType, description, dollars, ...loadParam]
   );
 }
