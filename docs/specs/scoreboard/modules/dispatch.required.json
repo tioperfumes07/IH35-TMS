@@ -382,7 +382,6 @@
       "required": [
         "customer",
         "load",
-        "liability",
         "connectivity",
         "reverse_link"
       ]
@@ -964,6 +963,17 @@
         "load.drawer.factoring",
         "load.drawer.settlement",
         "load.drawer.pre_settlement"
+      ]
+    },
+    "liability_chrome2_2026_08_12": {
+      "finding": "LIABILITY-CHROME-HONEST-2",
+      "drops": [
+        {
+          "id": "queues.factoring_queue",
+          "removed": [
+            "liability"
+          ]
+        }
       ]
     }
   }

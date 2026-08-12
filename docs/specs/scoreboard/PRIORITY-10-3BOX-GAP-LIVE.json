@@ -1,15 +1,15 @@
 {
-  "as_of": "2026-08-12T21:02:22.817Z",
-  "main_sha": "5e801e9fc",
+  "as_of": "2026-08-12T21:05:33.645Z",
+  "main_sha": "5b789a721",
   "gate": "PRIORITY_10_3BOX_100",
   "allRequired": {
-    "totR": 2683,
-    "totB": 2277,
+    "totR": 2678,
+    "totB": 2278,
     "pct": 85
   },
   "waveABC_noChrome": {
-    "abcR": 2058,
-    "abcB": 2020,
+    "abcR": 2053,
+    "abcB": 2021,
     "pct": 98
   },
   "per_module": [
@@ -24,19 +24,19 @@
     },
     {
       "mod": "accounting",
-      "req": 170,
+      "req": 168,
       "built": 129,
-      "pct": 76,
-      "abcReq": 138,
+      "pct": 77,
+      "abcReq": 136,
       "abcBuilt": 121,
-      "abcPct": 88
+      "abcPct": 89
     },
     {
       "mod": "dispatch",
-      "req": 334,
+      "req": 333,
       "built": 302,
-      "pct": 90,
-      "abcReq": 293,
+      "pct": 91,
+      "abcReq": 292,
       "abcBuilt": 292,
       "abcPct": 100
     },
@@ -61,11 +61,11 @@
     {
       "mod": "banking",
       "req": 48,
-      "built": 40,
-      "pct": 83,
+      "built": 41,
+      "pct": 85,
       "abcReq": 40,
-      "abcBuilt": 38,
-      "abcPct": 95
+      "abcBuilt": 39,
+      "abcPct": 98
     },
     {
       "mod": "customers",
@@ -78,12 +78,12 @@
     },
     {
       "mod": "vendors",
-      "req": 174,
+      "req": 172,
       "built": 155,
-      "pct": 89,
-      "abcReq": 144,
+      "pct": 90,
+      "abcReq": 142,
       "abcBuilt": 142,
-      "abcPct": 99
+      "abcPct": 100
     },
     {
       "mod": "drivers",
@@ -138,14 +138,12 @@
     },
     {
       "col": "liability",
-      "cells": 21,
+      "cells": 17,
       "byMod": {
         "accounting": 3,
-        "dispatch": 1,
         "settlements": 1,
         "factoring": 12,
-        "banking": 2,
-        "vendors": 2
+        "banking": 1
       },
       "seat": "CC-1"
     },
@@ -160,9 +158,8 @@
     },
     {
       "col": "ap_bill",
-      "cells": 3,
+      "cells": 2,
       "byMod": {
-        "accounting": 1,
         "settlements": 2
       },
       "seat": "CC-1"
@@ -182,15 +179,7 @@
         "accounting": 1
       },
       "seat": "?"
-    },
-    {
-      "col": "expense",
-      "cells": 1,
-      "byMod": {
-        "accounting": 1
-      },
-      "seat": "CC-1"
     }
   ],
-  "entry_count": 133
+  "entry_count": 134
 }

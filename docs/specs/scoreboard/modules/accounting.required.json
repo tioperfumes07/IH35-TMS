@@ -526,8 +526,6 @@
       "route_hint": "/accounting/reports",
       "required": [
         "gl_je",
-        "ap_bill",
-        "expense",
         "connectivity"
       ]
     }
@@ -608,5 +606,19 @@
         "reason": "Payee is vendor_id on VendorBillForm; driver was memo-only theater"
       }
     ]
+  },
+  "honesty_audit": {
+    "liability_chrome2_2026_08_12": {
+      "finding": "LIABILITY-CHROME-HONEST-2",
+      "drops": [
+        {
+          "id": "reports",
+          "removed": [
+            "expense",
+            "ap_bill"
+          ]
+        }
+      ]
+    }
   }
 }
