@@ -115,7 +115,6 @@
       "route_hint": "/driver-finance/settlements?tab=disputes",
       "required": [
         "driver",
-        "liability",
         "connectivity",
         "reverse_link",
         "picker_law"
@@ -143,7 +142,6 @@
       "route_hint": "/driver-finance/cash-advance-requests",
       "required": [
         "driver",
-        "liability",
         "picker_law",
         "qbo_chrome",
         "connectivity",
@@ -208,6 +206,24 @@
         }
       ],
       "note": "Settlements FE has liability drills but no journal_entry/ap_bill EntityLink \u2014 money gl_je/ap_bill claims were inflation"
+    },
+    "liability_chrome_disputes_ca_2026_08_12": {
+      "finding": "SETTLEMENTS-LIABILITY-CHROME",
+      "drops": [
+        {
+          "id": "settlements.disputes",
+          "removed": [
+            "liability"
+          ]
+        },
+        {
+          "id": "cash_advances",
+          "removed": [
+            "liability"
+          ]
+        }
+      ],
+      "note": "Disputes tab and cash-advance requests have no driver_liabilities / LiabilityBreakdown UI"
     }
   }
 }
