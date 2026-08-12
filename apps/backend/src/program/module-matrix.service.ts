@@ -3,7 +3,7 @@
  *
  * Required: docs/specs/scoreboard/modules/<module>.required.json
  * Audited: leaf-scoped ledger / GUARD / wave-queue / module-completion (NOT module-wide keyword flood)
- * Built (Box 3): wire-sprint-built.json guard on disk only — NOT scenario row-count probes.
+ * Built (Box 3): auto from @matrix-built tags + wire-sprint-built.json when guard exists on deployed SHA.
  * Live (Box 4): PROD-VERIFIED ledger leaf×column only.
  * Probes: Audited (yellow ●) density signal only — never Built.
  *
@@ -29,6 +29,11 @@ import {
   type MatrixGroupRollup,
   type MatrixTierMetrics,
 } from "./matrix-metrics-tally.js";
+import {
+  discoverMatrixBuiltEntries,
+  wireSprintBuiltReasonFromEntries,
+  type WireSprintBuiltEntry,
+} from "./matrix-built-auto.js";
 
 const REPO_ROOT = (() => {
   try {
@@ -666,33 +671,16 @@ function cellState(audited: boolean, built: boolean, live: boolean): MatrixCellS
   return "unaudited";
 }
 
-type WireSprintBuiltEntry = {
-  task: string;
-  pr: string;
-  guard: string;
-  modules: string[];
-  cols: string[];
-  leafRe: string;
-};
+type WireSprintBuiltEntryLegacy = WireSprintBuiltEntry;
 
-function loadWireSprintBuilt(): WireSprintBuiltEntry[] {
-  const j = readJson<{ entries?: WireSprintBuiltEntry[] }>(
-    path.join(REPO_ROOT, "docs/specs/scoreboard/wire-sprint-built.json"),
-  );
-  return j?.entries ?? [];
+function loadWireSprintBuilt(): WireSprintBuiltEntryLegacy[] {
+  return discoverMatrixBuiltEntries(REPO_ROOT);
 }
 
-/** Wave-A shipped writers green Box 3 Built when guard file exists on disk (H-3 feed). */
+/** Wave-A shipped writers green Box 3 Built when guard file exists on disk (auto + legacy feed). */
 function wireSprintBuiltReason(leaf: RequiredLeaf, colId: string, moduleId: string): string | undefined {
-  for (const entry of loadWireSprintBuilt()) {
-    if (!entry.modules.includes(moduleId)) continue;
-    if (!entry.cols.includes(colId)) continue;
-    if (!new RegExp(entry.leafRe).test(leaf.id)) continue;
-    const guardAbs = path.join(REPO_ROOT, entry.guard);
-    if (!existsSync(guardAbs)) continue;
-    return `${entry.task} ${entry.pr} · ${path.basename(entry.guard)}`;
-  }
-  return undefined;
+  const entries = loadWireSprintBuilt();
+  return wireSprintBuiltReasonFromEntries(entries, leaf.id, colId, moduleId, REPO_ROOT);
 }
 
 function probeDoneReason(
@@ -939,7 +927,7 @@ export async function buildModuleMatrix(
         `docs/module-completion/${moduleId}.json (leaf×column via layers/evidence)`,
       ],
       doneSources: [
-        "Box 3 Built: docs/specs/scoreboard/wire-sprint-built.json + guard file on disk (Wave shipped writer)",
+        "Box 3 Built: AUTO — @matrix-built on scripts/verify-*.mjs + wire-sprint-built.json; guard must exist on deployed SHA",
         "Box 4 Live: AUDIT-COVERAGE-LIVE PROD-VERIFIED leaf×column only",
         "Probe density: live_scenario_probe → Audited ● only (never Built)",
       ],

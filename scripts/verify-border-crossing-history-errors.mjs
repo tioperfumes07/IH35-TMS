@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["dispatch"],"cols":["driver","unit","load","connectivity","reverse_link"],"leafRe":"^queues\\.border_history$","task":"CLS-DISPATCH-BORDER-HISTORY-FK-LINKS"} */
 /**
  * C-07 — BorderCrossingHistoryPage must not swallow fetch failures into an empty table
  * (looks like "no crossings" when the API is red).

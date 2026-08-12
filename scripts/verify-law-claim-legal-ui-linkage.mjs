@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["insurance"],"cols":["driver","unit","load","connectivity","reverse_link"],"leafRe":"^claims\\.","task":"P33","pr":"#5858"} */
 /**
  * Law §9 UI wiring — claim create + legal matter linkage pickers + driver/unit claim reverse.
  *

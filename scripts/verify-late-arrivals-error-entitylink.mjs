@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["dispatch"],"cols":["customer","driver","unit","load","connectivity","reverse_link"],"leafRe":"^queues\\.late$","task":"CLS-DISPATCH-LATE-ARRIVALS-FK-LINKS"} */
 /**
  * verify-late-arrivals-error-entitylink.mjs
  *

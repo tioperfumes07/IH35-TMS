@@ -35,6 +35,9 @@ export default {
 
     // Codex #6108 — verify-trip-profitability-driver-link was orphan (guard-wired).
     await ctx.run("node", ["scripts/verify-trip-profitability-driver-link.mjs"]);
+    // Box 3 auto — report-only until full @matrix-built inject (no new step number).
+    await ctx.run("node", ["scripts/verify-matrix-built-tag-present.mjs", "--selftest"]);
+    await ctx.run("node", ["scripts/verify-matrix-built-tag-present.mjs"]);
 
     // LAW-2026-08-07-LANE-TERRITORY — stop the lanes colliding, enforced rather than written.
     // Measured over 60 PRs: lanes do NOT collide on domain code (dispatch/mdata/frontend are CC-2

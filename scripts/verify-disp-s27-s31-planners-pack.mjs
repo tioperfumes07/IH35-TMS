@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["dispatch"],"cols":["driver","unit","load","connectivity","reverse_link"],"leafRe":"^planning\\.(calendar|loads|timeline)$","task":"CLS-DISPATCH-PLANNER-DRIVER-UNIT-LINKS"} */
+/** @matrix-built {"modules":["dispatch"],"cols":["driver","unit","connectivity","reverse_link"],"leafRe":"^planning\\.(driver|truck)$","task":"CLS-DISPATCH-DRIVER-TRUCK-PLANNER-LINKS"} */
 /** DISP-S27…S31 — planners redirect + leaf surfaces entity-scoped + honest empty. */
 import fs from "node:fs";
 import path from "node:path";

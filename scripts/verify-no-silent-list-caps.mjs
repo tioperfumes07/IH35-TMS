@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["lists","maintenance"],"cols":["connectivity"],"leafRe":"^(hub\\.|catalog\\.|wo\\.|parts\\.|vendors\\.)","task":"P46","pr":"#5806"} */
 /**
  * CLS-SILENT-CAP (frontend half) — a list that fetches a HARD CAP and never tells the user it capped.
  *

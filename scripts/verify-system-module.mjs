@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["system"],"cols":["qbo_chrome"],"leafRe":"^tab\\.qbo_recon$","task":"P17-system-qbo-recon"} */
+/** @matrix-built {"modules":["system"],"cols":["qbo_chrome"],"leafRe":"^tab\\.qbo_sync$","task":"P17-system-qbo-sync"} */
 /**
  * verify-system-module.mjs
  * CI guard: the Owner-only SYSTEM module (owner-supplied design) must stay WIRED — sidebar entry, route,

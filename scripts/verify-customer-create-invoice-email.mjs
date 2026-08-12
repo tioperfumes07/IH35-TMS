@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["customers"],"cols":["customer","connectivity"],"leafRe":"^(list\\.|detail\\.|md\\.)","task":"P43","pr":"#5913"} */
 /**
  * LV-CUSTOMER-CREATE-INVOICE-EMAIL (Cascade create-sweep #9 / DESK-REF)
  *

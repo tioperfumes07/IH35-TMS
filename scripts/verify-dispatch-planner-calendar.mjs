@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["dispatch"],"cols":["customer","driver","unit","load","connectivity","reverse_link"],"leafRe":"^planning\\.(calendar|loads|timeline)$","task":"CLS-DISPATCH-PLANNER-CUSTOMER-FK-LINKS"} */
 /**
  * Block B21-D4: Dispatch planner calendar week view with drag-drop reschedule + HOS overlay.
  */
