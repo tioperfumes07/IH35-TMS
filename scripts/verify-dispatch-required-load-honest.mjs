@@ -10,7 +10,8 @@
  * - banking factoring entry form — no load field
  * - drivers team_splits / safety hos_violations + geofence_alerts — no load_id
  *
- * KEEP load on: OCR→Book Load, planners, map (focusLoadId), notify (EntityLink kind=load).
+ * KEEP load on: OCR→Book Load, map (focusLoadId), notify + layover (kind=load),
+ * planning.loads / planning.calendar (EntityLink kind=load).
  *
  * Usage: node scripts/verify-dispatch-required-load-honest.mjs [--selftest]
  */
@@ -27,8 +28,14 @@ const FORBIDDEN = {
     "secondary.settlements": ["load"],
     "secondary.pre_settlements": ["load"],
     "queues.factoring": ["load"],
+    "queues.live_map": ["load"],
     "misc.chat": ["load"],
+    "misc.geofence_history": ["load"],
     "docs.equipment_transfers": ["load"],
+    "planning.driver": ["load"],
+    "planning.truck": ["load"],
+    "planning.templates": ["load"],
+    "planning.unassigned": ["load"],
   },
   banking: {
     factoring: ["load"],
@@ -40,14 +47,19 @@ const FORBIDDEN = {
     "hos_violations.list": ["load"],
     "geofence_alerts.list": ["load"],
   },
+  vendors: {
+    "md.transaction_list": ["load"],
+    "detail.ap.bills": ["load"],
+  },
 };
 
-/** Must KEEP load (canonical focus / Book Load / notify drill) */
+/** Must KEEP load (canonical focus / Book Load / notify / layover drill) */
 const MUST_KEEP = {
   dispatch: {
     "docs.ocr": ["load"],
     "queues.map": ["load"],
     "settings.notify": ["load"],
+    "misc.layover": ["load"],
   },
 };
 
@@ -152,8 +164,26 @@ const notify = fs.readFileSync(
 );
 if (!/kind=["']load["']/.test(notify)) failures.push("NotifyPreferencesPage must keep kind=load (MUST_KEEP settings.notify)");
 
+const layover = fs.readFileSync(
+  path.join(ROOT, "apps/frontend/src/pages/drivers/DriverLayoverHistory.tsx"),
+  "utf8",
+);
+if (!/kind=["']load["']/.test(layover)) {
+  failures.push("DriverLayoverHistory must keep kind=load (MUST_KEEP misc.layover)");
+}
+
+const geo = fs.readFileSync(path.join(ROOT, "apps/frontend/src/pages/operations/GeofencesPage.tsx"), "utf8");
+if (/kind=["']load["']/.test(geo)) {
+  failures.push("GeofencesPage has load drill — remove queues.live_map from FORBIDDEN and tag instead");
+}
+
+const vendorDetail = fs.readFileSync(path.join(ROOT, "apps/frontend/src/pages/VendorDetail.tsx"), "utf8");
+if (/kind=["']load["']/.test(vendorDetail) || /\bload_id\b/.test(vendorDetail)) {
+  failures.push("VendorDetail now has load drill — remove vendors FORBIDDEN leaves and tag instead");
+}
+
 if (failures.length) {
   console.error(`${LABEL} FAIL:\n${failures.map((f) => ` - ${f}`).join("\n")}`);
   process.exit(1);
 }
-console.log(`${LABEL} PASS — hop/no-FK load Required DROPs held; map+notify+ocr KEEP`);
+console.log(`${LABEL} PASS — hop/no-FK load Required DROPs held; map+notify+ocr+layover KEEP`);

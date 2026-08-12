@@ -242,7 +242,6 @@
       "required": [
         "vendor",
         "ap_bill",
-        "load",
         "gl_je",
         "connectivity",
         "reverse_link",
@@ -478,7 +477,6 @@
       "required": [
         "vendor",
         "ap_bill",
-        "load",
         "gl_je",
         "connectivity",
         "reverse_link"
@@ -570,5 +568,24 @@
         "qbo_chrome"
       ]
     }
-  ]
+  ],
+  "honesty_audit": {
+    "load_inflation_wave2_2026_08_12": {
+      "finding": "DISP-VENDORS-REQUIRED-LOAD-INFLATION",
+      "drops": [
+        {
+          "id": "md.transaction_list",
+          "removed": [
+            "load"
+          ]
+        },
+        {
+          "id": "detail.ap.bills",
+          "removed": [
+            "load"
+          ]
+        }
+      ]
+    }
+  }
 }
