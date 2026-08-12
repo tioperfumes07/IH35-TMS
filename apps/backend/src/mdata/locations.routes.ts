@@ -515,7 +515,18 @@ export async function registerLocationRoutes(app: FastifyInstance) {
     const idIdx = values.length;
     try {
       const updated = await withCurrentUser(authUser.uuid, async (client) => {
-        const oldRes = await client.query(`${locationSelectSql()} WHERE id = $1 LIMIT 1`, [parsedParams.data.id]);
+        const oldRes = await client.query(
+          `${locationSelectSql()} WHERE id = $1
+            AND operating_company_id IN (
+              SELECT uca.company_id
+                FROM org.user_company_access uca
+                JOIN org.companies oc ON oc.id = uca.company_id AND oc.deactivated_at IS NULL
+               WHERE uca.user_id = $2::uuid
+                 AND uca.deactivated_at IS NULL
+            )
+          LIMIT 1`,
+          [parsedParams.data.id, authUser.uuid]
+        );
         const oldRow = oldRes.rows[0] ?? null;
         if (!oldRow) return null;
 
@@ -535,11 +546,14 @@ export async function registerLocationRoutes(app: FastifyInstance) {
           if (conflictRes.rows.length > 0) return { error: "mdata_location_name_conflict" as const };
         }
 
+        values.push(oldRow.operating_company_id);
+        const scopeIdx = values.length;
         const res = await client.query(
           `
             UPDATE mdata.locations
             SET ${setParts.join(", ")}
             WHERE id = $${idIdx}
+              AND operating_company_id = $${scopeIdx}::uuid
             RETURNING *
           `,
           values
@@ -631,7 +645,7 @@ export async function registerLocationRoutes(app: FastifyInstance) {
     }
   });
 
-  app.post("/api/v1/mdata/locations/:id/contacts", async (req, reply) => {
+  app.post("/api/v1/mdata/locations/:id/contacts", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -643,8 +657,20 @@ export async function registerLocationRoutes(app: FastifyInstance) {
     const b = parsedBody.data;
     const created = await withCurrentUser(authUser.uuid, async (client) => {
       const locationRes = await client.query<{ id: string; operating_company_id: string }>(
-        `SELECT id, operating_company_id FROM mdata.locations WHERE id = $1 LIMIT 1`,
-        [parsedParams.data.id]
+        `
+          SELECT id, operating_company_id
+          FROM mdata.locations
+          WHERE id = $1
+            AND operating_company_id IN (
+              SELECT uca.company_id
+                FROM org.user_company_access uca
+                JOIN org.companies oc ON oc.id = uca.company_id AND oc.deactivated_at IS NULL
+               WHERE uca.user_id = $2::uuid
+                 AND uca.deactivated_at IS NULL
+            )
+          LIMIT 1
+        `,
+        [parsedParams.data.id, authUser.uuid]
       );
       const location = locationRes.rows[0] ?? null;
       if (!location) return null;
@@ -688,7 +714,7 @@ export async function registerLocationRoutes(app: FastifyInstance) {
     return reply.code(201).send({ contact: created });
   });
 
-  app.patch("/api/v1/mdata/locations/:id/contacts/:contactId", async (req, reply) => {
+  app.patch("/api/v1/mdata/locations/:id/contacts/:contactId", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -720,13 +746,21 @@ export async function registerLocationRoutes(app: FastifyInstance) {
     const updated = await withCurrentUser(authUser.uuid, async (client) => {
       const oldRes = await client.query(
         `
-          SELECT *
-          FROM mdata.location_contacts
-          WHERE location_id = $1
-            AND id = $2
+          SELECT lc.*
+          FROM mdata.location_contacts lc
+          JOIN mdata.locations l ON l.id = lc.location_id
+          WHERE lc.location_id = $1
+            AND lc.id = $2
+            AND l.operating_company_id IN (
+              SELECT uca.company_id
+                FROM org.user_company_access uca
+                JOIN org.companies oc ON oc.id = uca.company_id AND oc.deactivated_at IS NULL
+               WHERE uca.user_id = $3::uuid
+                 AND uca.deactivated_at IS NULL
+            )
           LIMIT 1
         `,
-        [parsedParams.data.id, parsedParams.data.contactId]
+        [parsedParams.data.id, parsedParams.data.contactId, authUser.uuid]
       );
       const oldRow = oldRes.rows[0] ?? null;
       if (!oldRow) return null;
@@ -765,7 +799,7 @@ export async function registerLocationRoutes(app: FastifyInstance) {
     return { contact: updated };
   });
 
-  app.post("/api/v1/mdata/locations/:id/contacts/:contactId/deactivate", async (req, reply) => {
+  app.post("/api/v1/mdata/locations/:id/contacts/:contactId/deactivate", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -779,9 +813,16 @@ export async function registerLocationRoutes(app: FastifyInstance) {
           SET is_active = false, is_primary = false
           WHERE location_id = $1
             AND id = $2
+            AND location_id IN (
+              SELECT l.id
+                FROM mdata.locations l
+                JOIN org.user_company_access uca ON l.operating_company_id = uca.company_id AND uca.deactivated_at IS NULL
+                JOIN org.companies oc ON oc.id = uca.company_id AND oc.deactivated_at IS NULL
+               WHERE uca.user_id = $3::uuid
+            )
           RETURNING *
         `,
-        [parsedParams.data.id, parsedParams.data.contactId]
+        [parsedParams.data.id, parsedParams.data.contactId, authUser.uuid]
       );
       const row = res.rows[0] ?? null;
       if (!row) return null;
@@ -797,7 +838,7 @@ export async function registerLocationRoutes(app: FastifyInstance) {
     return { contact: updated };
   });
 
-  app.post("/api/v1/mdata/locations/:id/contacts/:contactId/set-primary", async (req, reply) => {
+  app.post("/api/v1/mdata/locations/:id/contacts/:contactId/set-primary", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -807,14 +848,22 @@ export async function registerLocationRoutes(app: FastifyInstance) {
     const updated = await withCurrentUser(authUser.uuid, async (client) => {
       const existsRes = await client.query<{ id: string }>(
         `
-          SELECT id
-          FROM mdata.location_contacts
-          WHERE location_id = $1
-            AND id = $2
-            AND is_active = true
+          SELECT lc.id
+          FROM mdata.location_contacts lc
+          JOIN mdata.locations l ON l.id = lc.location_id
+          WHERE lc.location_id = $1
+            AND lc.id = $2
+            AND lc.is_active = true
+            AND l.operating_company_id IN (
+              SELECT uca.company_id
+                FROM org.user_company_access uca
+                JOIN org.companies oc ON oc.id = uca.company_id AND oc.deactivated_at IS NULL
+               WHERE uca.user_id = $3::uuid
+                 AND uca.deactivated_at IS NULL
+            )
           LIMIT 1
         `,
-        [parsedParams.data.id, parsedParams.data.contactId]
+        [parsedParams.data.id, parsedParams.data.contactId, authUser.uuid]
       );
       if (existsRes.rows.length === 0) return null;
 
@@ -843,7 +892,7 @@ export async function registerLocationRoutes(app: FastifyInstance) {
     return { contact: updated };
   });
 
-  app.post("/api/v1/mdata/locations/:id/deactivate", async (req, reply) => {
+  app.post("/api/v1/mdata/locations/:id/deactivate", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -853,12 +902,19 @@ export async function registerLocationRoutes(app: FastifyInstance) {
     const deactivated = await withCurrentUser(authUser.uuid, async (client) => {
       const oldRes = await client.query(
         `
-          SELECT id, deactivated_at
+          SELECT id, operating_company_id, deactivated_at
           FROM mdata.locations
           WHERE id = $1
+            AND operating_company_id IN (
+              SELECT uca.company_id
+                FROM org.user_company_access uca
+                JOIN org.companies oc ON oc.id = uca.company_id AND oc.deactivated_at IS NULL
+               WHERE uca.user_id = $2::uuid
+                 AND uca.deactivated_at IS NULL
+            )
           LIMIT 1
         `,
-        [parsedParams.data.id]
+        [parsedParams.data.id, authUser.uuid]
       );
       const oldRow = oldRes.rows[0] ?? null;
       if (!oldRow) return null;
@@ -871,10 +927,11 @@ export async function registerLocationRoutes(app: FastifyInstance) {
             UPDATE mdata.locations
             SET deactivated_at = now(), updated_by_user_id = $2
             WHERE id = $1
+              AND operating_company_id = $3::uuid
               AND deactivated_at IS NULL
             RETURNING id, deactivated_at
           `,
-          [parsedParams.data.id, authUser.uuid]
+          [parsedParams.data.id, authUser.uuid, oldRow.operating_company_id]
         );
         deactivatedAt = (res.rows[0]?.deactivated_at as string | undefined) ?? deactivatedAt;
         wasAlreadyDeactivated = false;
