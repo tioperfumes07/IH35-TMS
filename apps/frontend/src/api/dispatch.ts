@@ -40,6 +40,7 @@ export type DispatchLoad = {
   dispatch_status: DispatchStatus;
   status: string;
   unit_number: string | null;
+  assigned_unit_id: string | null;
   trailer_number: string | null;
   // P40 — the "home" view response already carries this (views.dispatch_load_with_driver_status via
   // `l.*`); it just wasn't declared here, so callers had no typed way to link driver_short_name back
