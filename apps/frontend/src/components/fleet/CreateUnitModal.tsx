@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createUnit } from "../../api/mdata";
 import { useToast } from "../Toast";
-import { Modal } from "../Modal";
+import { ParityDrawer } from "../parity/ParityDrawer";
 import { Button } from "../Button";
 import { FormField } from "../forms/FormField";
 import { FieldSet } from "../forms/FieldSet";
@@ -73,8 +73,24 @@ export function CreateUnitModal({ open, operatingCompanyId, onClose, onCreated }
   const canSubmit = Boolean(draft.unit_number.trim() && draft.vin.trim()) && !createMutation.isPending;
 
   return (
-    <Modal variant="drawer" open={open} title="Create Unit" onClose={resetAndClose} modalKind="fleet-create-unit" sizePreset="md">
+    <ParityDrawer
+      open={open}
+      title="Create Unit"
+      onClose={resetAndClose}
+      stackAboveModal
+      footer={
+        <div className="flex justify-end gap-2">
+          <Button type="button" variant="secondary" onClick={resetAndClose}>
+            Cancel
+          </Button>
+          <Button form="fleet-create-unit-form" type="submit" data-testid="fleet-create-unit-submit" loading={createMutation.isPending} disabled={!canSubmit}>
+            + Create
+          </Button>
+        </div>
+      }
+    >
       <form
+        id="fleet-create-unit-form"
         data-testid="fleet-create-unit-form"
         className="space-y-3"
         onSubmit={(e) => {
@@ -152,15 +168,7 @@ export function CreateUnitModal({ open, operatingCompanyId, onClose, onCreated }
             />
           </FormField>
         </FieldSet>
-        <div className="flex justify-end gap-2">
-          <Button type="button" variant="secondary" onClick={resetAndClose}>
-            Cancel
-          </Button>
-          <Button type="submit" data-testid="fleet-create-unit-submit" loading={createMutation.isPending} disabled={!canSubmit}>
-            + Create
-          </Button>
-        </div>
       </form>
-    </Modal>
+    </ParityDrawer>
   );
 }
