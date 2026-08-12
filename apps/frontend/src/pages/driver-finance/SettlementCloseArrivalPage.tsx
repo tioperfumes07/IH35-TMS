@@ -18,6 +18,7 @@ import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
 import { PaymentMethodPicker } from "../../components/driver-finance/PaymentMethodPicker";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { formatUsd } from "../../lib/money";
 
 // Owner-locked driver-bond/escrow cap (Phase 3 Settlement Pay-Run spec). This is the total escrow
@@ -184,13 +185,34 @@ export function SettlementCloseArrivalPage() {
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
                   <div className="text-sm font-semibold text-gray-900">
-                    {(openQuery.data?.pre_settlements ?? []).find((r) => r.driver_id === settlement.driver_id)?.driver_name?.trim() ||
-                      entityLabel(null, settlement.driver_id, "Driver")}{" "}
-                    — {entityLabel(settlement.display_id, settlement.id, "Record")}
+                    <EntityLink
+                      kind="driver"
+                      id={settlement.driver_id}
+                      label={
+                        (openQuery.data?.pre_settlements ?? []).find((r) => r.driver_id === settlement.driver_id)?.driver_name?.trim() ||
+                        entityLabel(null, settlement.driver_id, "Driver")
+                      }
+                    />{" "}
+                    —{" "}
+                    <EntityLink
+                      kind="settlement"
+                      id={settlement.id}
+                      label={entityLabel(settlement.display_id, settlement.id, "Settlement")}
+                    />
                   </div>
                   <div className="text-xs text-gray-600">
-                    {entityLabel(settlement.first_load_number, settlement.first_load_id, "Load")} →{" "}
-                    {entityLabel(settlement.last_load_number, settlement.last_load_id, "Load")} · status: {settlement.status}
+                    <EntityLink
+                      kind="load"
+                      id={settlement.first_load_id ?? ""}
+                      label={entityLabel(settlement.first_load_number, settlement.first_load_id, "Load")}
+                    />{" "}
+                    →{" "}
+                    <EntityLink
+                      kind="load"
+                      id={settlement.last_load_id ?? ""}
+                      label={entityLabel(settlement.last_load_number, settlement.last_load_id, "Load")}
+                    />{" "}
+                    · status: {settlement.status}
                   </div>
                 </div>
               </div>

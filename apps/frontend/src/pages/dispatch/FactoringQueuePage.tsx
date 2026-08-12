@@ -25,6 +25,7 @@ import { entityLabel } from "../../lib/entity-label";
 export type FactoringQueueRow = {
   load_id: string;
   load_number: string;
+  customer_id: string;
   customer_name: string | null;
   load_status: string;
   rate_total_cents: number;
@@ -160,7 +161,13 @@ export function FactoringQueuePage() {
         key: "customer_name",
         label: "Customer",
         sortable: true,
-        render: (row) => entityLabel(row.customer_name, null, "Customer"),
+        render: (row) => (
+          <EntityLink
+            kind="customer"
+            id={row.customer_id}
+            label={entityLabel(row.customer_name, row.customer_id, "Customer")}
+          />
+        ),
       },
       {
         key: "delivery_city",
@@ -215,12 +222,11 @@ export function FactoringQueuePage() {
         label: "Invoice",
         render: (row) =>
           row.invoice_id ? (
-            <Link
-              to={`/accounting/invoices/${row.invoice_id}`}
-              className="text-slate-700 hover:underline"
-            >
-              {entityLabel(row.invoice_display_id, row.invoice_id, "Invoice")}
-            </Link>
+            <EntityLink
+              kind="invoice"
+              id={row.invoice_id}
+              label={entityLabel(row.invoice_display_id, row.invoice_id, "Invoice")}
+            />
           ) : (
             <span className="text-slate-700">No invoice</span>
           ),

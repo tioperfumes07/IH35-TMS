@@ -1,8 +1,10 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { getFactoringBatchDetail, getReserveMovements, type FactoringReserveMovement } from "../../api/factoring";
+import { getFactoringBatchDetail, getReserveMovements, type FactoringBatchInvoice, type FactoringReserveMovement } from "../../api/factoring";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { EntityLink } from "../../components/shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 import { titleize } from "../../lib/titleize";
 import { formatDateUS } from "../../lib/formatDate";
 
@@ -71,6 +73,46 @@ const RESERVE_COLUMNS: Array<ParityColumn<ReserveMovementRow>> = [
   },
 ];
 
+const INVOICE_COLUMNS: Array<ParityColumn<FactoringBatchInvoice>> = [
+  {
+    key: "display_id",
+    label: "Invoice",
+    sortable: true,
+    render: (row) => (
+      <EntityLink kind="invoice" id={row.id} label={entityLabel(row.display_id, row.id, "Invoice")} />
+    ),
+  },
+  {
+    key: "customer_name",
+    label: "Customer",
+    sortable: true,
+    render: (row) =>
+      row.customer_id ? (
+        <EntityLink
+          kind="customer"
+          id={row.customer_id}
+          label={entityLabel(row.customer_name, row.customer_id, "Customer")}
+        />
+      ) : (
+        entityLabel(row.customer_name, null, "Customer")
+      ),
+  },
+  {
+    key: "total_cents",
+    label: "Amount",
+    sortable: true,
+    className: "text-right",
+    sortValue: (row) => row.total_cents,
+    render: (row) => asMoney(row.total_cents),
+  },
+  {
+    key: "status",
+    label: "Status",
+    sortable: true,
+    render: (row) => titleize(row.status ?? ""),
+  },
+];
+
 export function BatchDetail({ batchId, companyId }: { batchId: string; companyId: string }) {
   const detailQuery = useQuery({
     queryKey: ["factoring", "batch-detail", companyId, batchId],
@@ -113,6 +155,18 @@ export function BatchDetail({ batchId, companyId }: { batchId: string; companyId
           {asMoney(detail.batch.expected_fee_cents)}
         </div>
         <div className="mt-2 text-xs text-gray-600">Included invoices: {detail.invoices.length}</div>
+      </div>
+
+      <div className="rounded-sm border border-gray-200 p-3">
+        <div className="mb-2 text-sm font-medium text-gray-900">Batch Invoices</div>
+        <ParityTable
+          columns={INVOICE_COLUMNS}
+          rows={detail.invoices}
+          rowKey={(row) => row.id}
+          storageKey="factoring-batch-invoices"
+          tableTestId="factoring-batch-invoices-table"
+          emptyText="No invoices on this batch."
+        />
       </div>
 
       <div className="rounded-sm border border-gray-200 p-3">

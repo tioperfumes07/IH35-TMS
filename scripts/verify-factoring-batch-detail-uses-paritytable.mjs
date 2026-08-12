@@ -61,6 +61,9 @@ function assertMigrated(src) {
   if (src.includes("useMutation")) {
     errors.push(`${PAGE}: read-only surface — must not add mutations (financial-hold: display-only)`);
   }
+  if (!src.includes('kind="invoice"') || !src.includes("factoring-batch-invoices-table")) {
+    errors.push(`${PAGE}: batch invoices must EntityLink invoice + customer in ParityTable`);
+  }
   return errors;
 }
 
@@ -82,6 +85,8 @@ function selftest() {
       tableTestId="factoring-batch-reserve-movements-table"
       emptyText="No reserve movements for this batch."
     />
+    <EntityLink kind="invoice" id={row.id} />
+    <ParityTable storageKey="factoring-batch-invoices" tableTestId="factoring-batch-invoices-table" />
   `;
   const bad = `
     import { DataTable } from "../../components/DataTable";

@@ -35,6 +35,7 @@ export type FactoringRecourseInvoice = {
   operating_company_id: string;
   active_factor_name: string | null;
   invoice_reference: string;
+  customer_id: string | null;
   customer_name: string;
   invoice_amount: number;
   advance_amount: number;

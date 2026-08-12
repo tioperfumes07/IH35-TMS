@@ -1,7 +1,7 @@
 import { entityLabel } from "../../lib/entity-label";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { EntityLink } from "../../components/shared/EntityLink";
 import {
   approvePendingEscrowDeduction,
   listPendingEscrowDeductions,
@@ -36,7 +36,6 @@ function daysUntil(value: string) {
 
 export function EscrowDeductionsPendingTab() {
   const auth = useAuth();
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
@@ -133,19 +132,22 @@ export function EscrowDeductionsPendingTab() {
             <tbody>
               {rows.map((row) => {
                 const nearExpiry = daysUntil(row.expires_at) <= 3;
-                const loadId = row.load_id ?? "";
                 return (
                   <tr key={row.id} className="border-t border-gray-100">
-                    <td className="px-3 py-2">{entityLabel(row.driver_name, row.driver_id, "Driver")}</td>
+                    <td className="px-3 py-2">
+                      <EntityLink
+                        kind="driver"
+                        id={row.driver_id}
+                        label={entityLabel(row.driver_name, row.driver_id, "Driver")}
+                      />
+                    </td>
                     <td className="px-3 py-2">
                       {row.load_id ? (
-                        <button
-                          type="button"
-                          className="text-slate-700 underline hover:text-slate-700"
-                          onClick={() => navigate(`/dispatch/loads/${encodeURIComponent(loadId)}`)}
-                        >
-                          {entityLabel(row.load_number, row.load_id, "Load")}
-                        </button>
+                        <EntityLink
+                          kind="load"
+                          id={row.load_id}
+                          label={entityLabel(row.load_number, row.load_id, "Load")}
+                        />
                       ) : (
                         "—"
                       )}
