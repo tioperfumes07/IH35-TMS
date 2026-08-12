@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { CATALOG_IN_PREPARATION } from "../../../lib/prodEmptyStateCopy";
 import { DomainRowCountBadge } from "./DomainRowCountBadge";
 
@@ -261,6 +262,24 @@ export function resolveListsDomainHubKey(routeDomain: string, config: DomainConf
   return undefined;
 }
 
+
+/** Live operating-module route for a Lists domain (reverse_link: catalog hub → module). */
+export function buildDomainModulePath(domainKey: string): string | null {
+  const map: Record<string, string> = {
+    safety: "/safety",
+    maintenance: "/maintenance",
+    dispatch: "/dispatch",
+    fuel: "/fuel",
+    drivers: "/drivers",
+    fleet: "/fleet",
+    accounting: "/accounting",
+    customers: "/customers",
+    vendors: "/vendors",
+    names_master: "/lists/names",
+  };
+  return map[domainKey] ?? null;
+}
+
 export function listsDomainSectionId(domainKey: string): string {
   return `lists-domain-${domainKey}`;
 }
@@ -345,8 +364,19 @@ export function DomainCatalogSection({ domain, onCatalogClick, onDomainClick }: 
         ) : (
           <span className={`rounded-sm px-2 py-0.5 font-semibold ${domain.pillClass}`}>{domain.label}</span>
         )}
-        {/* #P3 parity — live row count via the same useModuleCount source as the ribbon badge. */}
-        <DomainRowCountBadge domain={domain.key} className="rounded-sm bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600" />
+        <div className="flex items-center gap-2">
+          {buildDomainModulePath(domain.key) ? (
+            <Link
+              to={buildDomainModulePath(domain.key)!}
+              data-testid={`lists-domain-open-module-${domain.key}`}
+              className="text-[10px] font-semibold text-slate-600 underline hover:text-slate-900"
+            >
+              Open {domain.label} module
+            </Link>
+          ) : null}
+          {/* #P3 parity — live row count via the same useModuleCount source as the ribbon badge. */}
+          <DomainRowCountBadge domain={domain.key} className="rounded-sm bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600" />
+        </div>
       </div>
       <div className="grid gap-1.5 md:grid-cols-2">
         {domain.catalogs.map((catalog) => (

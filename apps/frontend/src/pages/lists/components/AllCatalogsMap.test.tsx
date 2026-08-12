@@ -5,6 +5,7 @@ import {
   DOMAIN_CONFIG,
   DomainCatalogSection,
   buildCatalogPath,
+  buildDomainModulePath,
   sortDomainsForDisplay,
 } from "./AllCatalogsMap";
 import { DomainCatalogHubPage } from "../DomainCatalogHubPage";
@@ -50,7 +51,7 @@ describe("Lists reorg — domain header is a focusable control, not a bare span"
 
   it("renders a keyboard-focusable button that fires onDomainClick with the key", () => {
     const onDomainClick = vi.fn();
-    render(<DomainCatalogSection domain={accounting} onCatalogClick={vi.fn()} onDomainClick={onDomainClick} />);
+    render(<MemoryRouter><DomainCatalogSection domain={accounting} onCatalogClick={vi.fn()} onDomainClick={onDomainClick} /></MemoryRouter>);
     const header = screen.getByTestId("domain-header-link");
     expect(header.tagName).toBe("BUTTON");
     fireEvent.click(header);
@@ -58,7 +59,7 @@ describe("Lists reorg — domain header is a focusable control, not a bare span"
   });
 
   it("falls back to a plain span when no onDomainClick is provided", () => {
-    render(<DomainCatalogSection domain={accounting} onCatalogClick={vi.fn()} />);
+    render(<MemoryRouter><DomainCatalogSection domain={accounting} onCatalogClick={vi.fn()} /></MemoryRouter>);
     expect(screen.queryByTestId("domain-header-link")).toBeNull();
   });
 });
@@ -142,5 +143,24 @@ describe("Lists reorg — scroll-restore helper round-trips per pathname", () =>
     expect(readScrollPosition(storage, "/lists")).toBe(420);
     expect(readScrollPosition(storage, "/lists/hub/accounting")).toBe(0);
     expect(listsScrollKey("/lists")).toContain("/lists");
+  });
+});
+
+describe("Lists reverse_link — buildDomainModulePath", () => {
+  it("maps domains to live module routes", () => {
+    expect(buildDomainModulePath("safety")).toBe("/safety");
+    expect(buildDomainModulePath("dispatch")).toBe("/dispatch");
+    expect(buildDomainModulePath("customers")).toBe("/customers");
+    expect(buildDomainModulePath("reference")).toBeNull();
+  });
+
+  it("renders Open module link on domain section", () => {
+    const accounting = sortDomainsForDisplay(DOMAIN_CONFIG)[0];
+    render(
+      <MemoryRouter>
+        <DomainCatalogSection domain={accounting} onCatalogClick={vi.fn()} onDomainClick={vi.fn()} />
+      </MemoryRouter>,
+    );
+    expect(screen.getByTestId("lists-domain-open-module-accounting")).toHaveAttribute("href", "/accounting");
   });
 });
