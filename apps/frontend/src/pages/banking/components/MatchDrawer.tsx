@@ -11,6 +11,7 @@ import {
 import { listVendors } from "../../../api/mdata";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { EntityLink, type EntityKind } from "../../../components/shared/EntityLink";
+import { ParityDrawer } from "../../../components/parity/ParityDrawer";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { vendorReferenceOption } from "../../../components/parity/referenceOptionLabels";
 import { useToast } from "../../../components/Toast";
@@ -136,31 +137,23 @@ export function MatchDrawer({ open, bankTransactionId, operatingCompanyId, onClo
   // Empty message renders only once the candidates query settles, never mid-fetch.
   const listState = useListState(candidatesQuery, (candidatesQuery.data?.candidates ?? []).length === 0);
 
-  if (!open || !bankTransactionId) return null;
+  if (!bankTransactionId) return null;
 
   const candidates: BankMatchCandidate[] = candidatesQuery.data?.candidates ?? [];
   const topAutoMatchId = candidates.find((c) => c.auto_match)?.ledger_entry_id ?? null;
   const canCategorize = Boolean(categorizeGlAccountId) && !categorizeMutation.isPending;
 
   return (
-    <>
-      <div className="fixed inset-0 z-40 bg-black/20" onClick={onClose} data-testid="match-drawer-scrim" />
-      <aside
-        data-testid="match-drawer"
-        className="fixed right-0 top-0 z-50 h-full w-[480px] overflow-y-auto border-l border-slate-200 bg-white p-4"
-      >
-        <div className="mb-3 flex items-center justify-between border-b border-slate-200 pb-2">
-          <h2 className="text-sm font-semibold text-slate-900">Match transaction</h2>
-          <button
-            type="button"
-            data-testid="match-drawer-close"
-            className="rounded-sm border border-slate-300 bg-white px-2 py-1 text-[11px] text-slate-600 hover:bg-slate-50"
-            onClick={onClose}
-          >
-            Close
-          </button>
-        </div>
-
+    // CLS-BANKING-MATCHDRAWER-NOT-PARITYDRAWER — was a hand-rolled <aside> shell (fixed right-0 +
+    // manual scrim), which meant no portal render: a drawer opened from inside another <form> would
+    // have its own <form> tag silently deleted by the HTML5 parser (the exact INLINE-CREATE-NESTED-
+    // FORM defect class ParityDrawer's own top comment documents). BankingTransactionsDesignView, the
+    // only caller, has no <form> wrapper today so this was latent, not active — but VERIFY-1 (money
+    // creators are right-side ParityDrawer, DEFINITION-OF-DONE.md) requires the canonical shell
+    // regardless. Same body content, same testids on every interactive element below — only the
+    // wrapper changed.
+    <ParityDrawer open={open} title="Match transaction" onClose={onClose}>
+      <div data-testid="match-drawer">
         <p className="mb-3 text-[11px] text-slate-500">
           Recommended matches (±7 days). If none fit, use <strong>Search all</strong> like QuickBooks to widen the
           window and search by payee / memo / ref. Exact-amount matches can be confirmed to link and clear — no
@@ -375,7 +368,7 @@ export function MatchDrawer({ open, bankTransactionId, operatingCompanyId, onClo
             {categorizeMutation.isPending ? "Categorizing…" : "Categorize"}
           </button>
         </div>
-      </aside>
-    </>
+      </div>
+    </ParityDrawer>
   );
 }
