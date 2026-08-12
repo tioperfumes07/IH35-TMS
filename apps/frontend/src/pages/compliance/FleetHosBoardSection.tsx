@@ -84,7 +84,12 @@ const FLEET_HOS_COLUMNS: ParityColumn<FleetLocationHosRow>[] = [
     sortable: true,
     render: (row) => (
       <span className={row.driver_name ? "" : "text-slate-400 italic"}>
-        {entityLabel(row.driver_name, row.driver_id, "Driver")}
+        <EntityLink
+          kind="driver"
+          id={row.driver_id}
+          label={entityLabel(row.driver_name, row.driver_id, "Driver")}
+          onClick={(event) => event.stopPropagation()}
+        />
       </span>
     ),
   },
