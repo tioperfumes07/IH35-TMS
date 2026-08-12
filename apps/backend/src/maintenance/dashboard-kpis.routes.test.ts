@@ -90,9 +90,13 @@ describe("maintenance dashboard kpis routes (AUDIT-FIX-9)", () => {
       if (sql.includes("SET LOCAL app.operating_company_id")) return { rows: [] };
       if (sql.includes("to_regclass($1)") && values?.[0] === "maintenance.work_orders") return { rows: [{ ok: true }] };
       if (sql.includes("to_regclass($1)")) return { rows: [{ ok: false }] };
-      if (sql.includes("AS open_wos")) {
+      if (sql.includes("AS count") && sql.includes("maintenance.work_orders")) {
         criticalCalls += 1;
-        return { rows: [{ open_wos: 3, open_dollars: 100 }] };
+        return { rows: [{ count: 3 }] };
+      }
+      if (sql.includes("AS open_dollars")) {
+        criticalCalls += 1;
+        return { rows: [{ open_dollars: 100 }] };
       }
       if (sql.includes("information_schema.columns")) throw new Error("optional schema drift");
       return { rows: [] };
@@ -105,6 +109,7 @@ describe("maintenance dashboard kpis routes (AUDIT-FIX-9)", () => {
 
     expect(res.statusCode).toBe(200);
     expect(res.json()).toMatchObject({ open_wos: 3, open_dollars: 100 });
-    expect(criticalCalls).toBe(2);
+    // Primary attempt + degraded fallback each read count and dollars.
+    expect(criticalCalls).toBe(4);
   });
 });

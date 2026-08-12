@@ -3,6 +3,7 @@ import { z } from "zod";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import {
+  countOpenMaintenanceWorkOrders,
   countPastDueMaintenanceWorkOrders,
   countPmDueAlerts,
   openWorkOrderPredicate,
@@ -56,19 +57,21 @@ async function columnExists(client: Queryable, schema: string, table: string, co
 }
 
 async function getCriticalWorkOrderKpis(client: Queryable, companyId: string) {
-  const result = await client.query<{ open_wos: number; open_dollars: number }>(
+  const [openWos, result] = await Promise.all([
+    countOpenMaintenanceWorkOrders(client, companyId),
+    client.query<{ open_dollars: number }>(
     `
       SELECT
-        COUNT(*)::int AS open_wos,
         COALESCE(SUM(COALESCE((to_jsonb(w) ->> 'total_actual_cost')::numeric, 0)), 0)::numeric AS open_dollars
       FROM maintenance.work_orders w
       WHERE w.operating_company_id = $1::uuid
         AND ${openWorkOrderPredicate("w")}
     `,
     [companyId]
-  );
+    ),
+  ]);
   return {
-    open_wos: Number(result.rows[0]?.open_wos ?? 0),
+    open_wos: openWos,
     open_dollars: Number(result.rows[0]?.open_dollars ?? 0),
   };
 }
