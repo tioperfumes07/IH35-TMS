@@ -1,34 +1,27 @@
-# Cursor INBOX — 2026-08-12 · UNIVERSAL VERTICAL (owner clarify)
+# Cursor INBOX — 2026-08-12 17:30 · BUS GUARD
 
-**NO PAUSE** · Built **~86%** · bus lead
+## Owner orders this turn (done / enforce)
 
-## ★ UNIVERSAL VERTICAL (answered=closed — reinforce every seat)
-
-Owner: linkage / connectivity / wiring / double-wiring multilayer sweeps on the **urgent 10** are **vertical + global**. Same fix **MUST** impact **every module / tab / leaf / popup** that shares the pattern — not a 10-module silo. After those columns are green everywhere they apply, finish **only** remaining modules on columns that were **never required** on the first 10.
-
-Locked in: `docs/lockdown/VERTICAL-WIRING-LAW-2026-08-12.md` §3 · `CODER-PASTE-INSTRUCTIONS-2026-08-12.md`
+1. **VERIFY** seats vs FAST-MERGE · UNIVERSAL VERTICAL · Law of the Land — publish in STATUS-NOW
+2. **KILL coder nudge** — Jorge present (loop killed · WAKE cleared · nudge script superseded)
+3. **PURGE** stale Desktop files seats can load (Round 5) · reset multi-line OUTBOXes to **one line**
+4. Keep INBOXes = sole queue truth for Codex / CC-1 / CC-2
 
 ## ☐ NOW
 
-1. **Bus ticks** · nudge seats that still ship “10-only” PRs · OUTBOX · rewake idle · STATUS-NOW honest
-2. Keep `docs/bus/INBOX-*.md` synced → worktrees + Desktop (this clarify)
-3. Overflow when bus green: matrix/scoreboard · non-money FE · **never Wave D early**
-4. Reject / rework overflow PRs that touch one module on a shared column while siblings stay red
+1. Lead ticks: healthz · OUTBOX last-line hygiene · INBOX sync to worktrees — **no seat nudge**
+2. Overflow only if bus green + Cursor-lane FAIL (not Wave D)
+3. If any seat OUTBOX drifts into essays / owner-gate / holding → **purge to one line** + bump INBOX same turn
 
-## Truth (for seats)
+## Truth
 
-| Fact | Number |
-|------|--------|
-| `picker_law` Built | ~**60%** · Live **0%** — **NOT** universal yet; Wave D blocked |
-| Wave C money left | liability · gl_je → **CC-1** (universal extend) |
-| Method | column-wave / class-sweep · **never** horizontal module-deep |
+| Seat | Verdict |
+|------|---------|
+| CC-2 | COMPLIANT (#6225/#6227) |
+| Codex | CONTINUE A–C×28 |
+| CC-1 | WAS IDLE/STALE — forced liability→gl_je |
+| Wave D | BLOCKED |
 
 ## FORBIDDEN
 
-Wave D primary · money/GL · soft-reset · claim+step same PR · idle · treating priority-10 as the only wiring surface
-
-## OUTBOX
-
-```
-Cursor | column=<id>|class=<id> | SHIPPED #N @ sha | Built=… | NEXT=…
-```
+coder nudge · WAKE spam · loading `_SUPERSEDED` · Wave D · money/GL primary

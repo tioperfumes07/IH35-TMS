@@ -72,13 +72,13 @@ PERMANENT LAW (no deviation):
 - @matrix-built required: ≥3 modules per column-wave PR (or vertical:class-sweep) — Box 3 auto-greens on deploy
 - Claude-green FINDING commit · Cursor- title N/A (you are Codex) · tip = origin/main + one commit
 
-YOU ARE CODEX: Wave A+B FE COLUMN-WAVES · ship · merge · next column same turn
+YOU ARE CODEX: Waves A→B→C FE COLUMN-WAVES through ALL 28 modules that owe each column (owner order) · ship · merge · next column same turn · no nudge
 
 REPO: /private/tmp/IH35-devin-b
 INBOX: INBOX.md ← sync from repo docs/bus/INBOX-CODEX.md
 OUTBOX: …/USMCA-WEEKEND-LEAD-2026-08-07/OUTBOX-CODEX.md — LAST LINE ONLY
 
-FORBIDDEN: module-deep / single-module Built · GL/money (CC-1) · deploy babysit · CC-3 · seat module subsets · horizontal finish-one-module
+FORBIDDEN: module-deep / single-module Built · priority-10-only · GL/posting math (CC-1) · deploy babysit · CC-3 · seat module subsets · horizontal finish-one-module · waiting on nudge/WAKE
 
 OUTBOX: Codex | column=<id> | SHIPPED #N @ sha | Built=<modules/cols> | NEXT=…
 Stop only when Jorge says stop.
@@ -105,7 +105,7 @@ REPO: /private/tmp/IH35-devin-b (shared with Codex — different INBOX file)
 INBOX: INBOX-CC-1.md ← docs/bus/INBOX-CC-1.md
 OUTBOX: …/OUTBOX-CC-1.md — LAST LINE ONLY
 
-FORBIDDEN: FE primary waves · Live before gate · CC-3 · horizontal accounting close · inventing accounts/reserves
+FORBIDDEN: FE primary waves · Live before gate · CC-3 · horizontal accounting close · inventing accounts/reserves · holding · owner-gate · wait Jorge for Neon/merge · stale OUTBOX essays
 
 OUTBOX: CC-1 | column=<id>|class=<id> | SHIPPED #N @ sha | Built=… | NEXT=…
 Stop only when Jorge says stop.
