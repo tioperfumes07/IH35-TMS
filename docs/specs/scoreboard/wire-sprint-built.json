@@ -120,6 +120,30 @@
       "modules": ["banking"],
       "cols": ["qbo_chrome", "connectivity"],
       "leafRe": "^(accounts|transactions\\.|match|categorize)"
+    },
+    {
+      "task": "P43",
+      "pr": "#5913",
+      "guard": "scripts/verify-steps/2900-verify-customer-create-invoice-email.mjs",
+      "modules": ["customers"],
+      "cols": ["customer", "connectivity"],
+      "leafRe": "^(customers\\.|secondary\\.book_load)"
+    },
+    {
+      "task": "P44",
+      "pr": "#5918",
+      "guard": "scripts/verify-steps/1510-verify-lst-picker-config-driven.mjs",
+      "modules": ["lists", "dispatch"],
+      "cols": ["load", "connectivity", "picker"],
+      "leafRe": "^(lists\\.|secondary\\.book_load|load\\.detail)"
+    },
+    {
+      "task": "F361",
+      "pr": "#5919",
+      "guard": "scripts/verify-steps/3129-verify-expenses-list-je-memo.mjs",
+      "modules": ["accounting"],
+      "cols": ["gl_je", "connectivity", "reverse_link"],
+      "leafRe": "^(expenses\\.|account_register)"
     }
   ]
 }
