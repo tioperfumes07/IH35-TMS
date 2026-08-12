@@ -1,13 +1,14 @@
 type Props = {
   label: string;
-  count: number;
+  count?: number;
   loading?: boolean;
+  unavailable?: boolean;
   isActive: boolean;
   onMouseEnter: () => void;
   onClick: () => void;
 };
 
-export function DomainTab({ label, count, loading = false, isActive, onMouseEnter, onClick }: Props) {
+export function DomainTab({ label, count, loading = false, unavailable = false, isActive, onMouseEnter, onClick }: Props) {
   return (
     <button
       type="button"
@@ -19,8 +20,7 @@ export function DomainTab({ label, count, loading = false, isActive, onMouseEnte
       }`}
     >
       {label}{" "}
-      <span className="ml-1 rounded-sm bg-slate-100 px-1.5 py-0.5 text-[10px]">{loading ? "…" : count}</span>
+      <span className="ml-1 rounded-sm bg-slate-100 px-1.5 py-0.5 text-[10px]">{loading ? "…" : unavailable ? "—" : count}</span>
     </button>
   );
 }
-

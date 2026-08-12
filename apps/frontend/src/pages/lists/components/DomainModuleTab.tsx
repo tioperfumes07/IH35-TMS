@@ -23,13 +23,14 @@ type Props = {
 
 export function DomainModuleTab({ domain, label, isActive, onMouseEnter, onClick }: Props) {
   const module = DOMAIN_MODULE[domain];
-  const { count, loading } = useModuleCount(module);
+  const { count, loading, error } = useModuleCount(module);
 
   return (
     <DomainTab
       label={label}
       count={count}
       loading={loading}
+      unavailable={Boolean(error || count == null)}
       isActive={isActive}
       onMouseEnter={onMouseEnter}
       onClick={onClick}

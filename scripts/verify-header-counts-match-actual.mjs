@@ -6,6 +6,15 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const COUNT_SPEC = path.join(ROOT, "apps/backend/src/lists/lists-module-count-spec.ts");
 
+export function domainCoverageProblems(domainKeys, mappedKeys, optedOutKeys) {
+  const problems = [];
+  const covered = new Set([...mappedKeys, ...optedOutKeys]);
+  for (const key of domainKeys) if (!covered.has(key)) problems.push(`domain ${key} has neither a count mapping nor an explicit badge opt-out`);
+  for (const key of covered) if (!domainKeys.includes(key)) problems.push(`stale count mapping/opt-out for absent domain ${key}`);
+  for (const key of mappedKeys) if (optedOutKeys.includes(key)) problems.push(`domain ${key} is both mapped and opted out`);
+  return problems;
+}
+
 // Ratchet: these must be bumped IN THE SAME PR that adds a catalog to the count spec, so a table
 // can never be added or dropped silently. Updated 2026-07-25 by the count-spec completion —
 // nine live catalogs were on the Lists hub but absent from the spec, so the badges understated
@@ -111,11 +120,37 @@ for (const rel of HOOK_CONSUMERS) {
 // ribbon (DomainRowCountBadge → useModuleCount), NOT a static catalog-type count. Otherwise the badge
 // and the map disagree (the original P3 bug: ribbon=live-rows vs map=catalogs.length).
 const mapSource = read("apps/frontend/src/pages/lists/components/AllCatalogsMap.tsx");
+const badgeSource = read("apps/frontend/src/pages/lists/components/DomainRowCountBadge.tsx");
 if (!mapSource.includes("DomainRowCountBadge")) {
   fail("AllCatalogsMap.tsx must render DomainRowCountBadge so its domain count matches the ribbon badge");
 }
 if (/<span[^>]*>\{domain\.catalogs\.length\}<\/span>/.test(mapSource)) {
   fail("AllCatalogsMap.tsx still shows a static {domain.catalogs.length} header badge — use the live DomainRowCountBadge");
+}
+
+const domainKeys = [...mapSource.matchAll(/^\s{4}key:\s*"([a-z_]+)",/gm)].map((match) => match[1]);
+const mappingBlock = badgeSource.match(/const DOMAIN_MODULE[\s\S]*?=\s*\{([\s\S]*?)\n\};/)?.[1] ?? "";
+const mappedKeys = [...mappingBlock.matchAll(/^\s{2}([a-z_]+):/gm)].map((match) => match[1]);
+const optOutBlock = badgeSource.match(/DOMAIN_WITHOUT_COUNT\s*=\s*new Set\(\[([^\]]*)\]\)/)?.[1] ?? "";
+const optedOutKeys = [...optOutBlock.matchAll(/"([a-z_]+)"/g)].map((match) => match[1]);
+const coverageProblems = domainCoverageProblems(domainKeys, mappedKeys, optedOutKeys);
+if (coverageProblems.length) fail(coverageProblems.join("; "));
+if (!badgeSource.includes("error || count == null") || !badgeSource.includes(">—</span>")) {
+  fail("DomainRowCountBadge must render unavailable chrome for failed/unmeasured counts");
+}
+const hookSource = read("apps/frontend/src/hooks/useModuleCount.ts");
+if (/count:\s*query\.data\?\.count\s*\?\?\s*0/.test(hookSource)) {
+  fail("useModuleCount must not convert a failed/unmeasured request into zero");
+}
+
+if (process.argv.includes("--selftest")) {
+  const mutations = [
+    domainCoverageProblems([...domainKeys, "future_domain"], mappedKeys, optedOutKeys),
+    domainCoverageProblems(domainKeys, mappedKeys.filter((key) => key !== "fleet"), optedOutKeys),
+    domainCoverageProblems(domainKeys, mappedKeys, [...optedOutKeys, "fleet"]),
+  ];
+  if (mutations.some((problems) => problems.length === 0)) fail("selftest mutation escaped domain coverage ratchet");
+  console.log("verify:header-counts-match-actual SELFTEST PASS — 3/3 domain coverage mutations caught");
 }
 
 console.log(

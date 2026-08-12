@@ -2,10 +2,8 @@ import type { ListsModule } from "../../../api/listsHub";
 import { useModuleCount } from "../../../hooks/useModuleCount";
 
 /**
- * #P3 parity — the single live count badge for a Lists domain. Both the Domain ribbon
- * (DomainModuleTab) and the All Catalogs map render their domain count from useModuleCount via this
- * source, so the two surfaces can never disagree (the original P3 bug: badge=live-rows vs map=static
- * catalog-types). Canonical metric = live catalog-row count (enforced by verify:header-counts).
+ * #P3 parity — live count badge for mapped Lists domains. Domains without a backend count spec
+ * intentionally render an unavailable marker: no badge is more honest than a fabricated zero.
  */
 const DOMAIN_MODULE: Record<string, ListsModule> = {
   safety: "SAFETY",
@@ -18,10 +16,17 @@ const DOMAIN_MODULE: Record<string, ListsModule> = {
   names_master: "NAMES_MASTER",
 };
 
+// These domains have no backend aggregate spec. Keep the opt-out explicit so a newly-added domain
+// fails verify:header-counts instead of issuing /lists/undefined/count and painting a false zero.
+const DOMAIN_WITHOUT_COUNT = new Set(["customers", "vendors", "reference"]);
+
 export function DomainRowCountBadge({ domain, className }: { domain: string; className?: string }) {
   const module = DOMAIN_MODULE[domain];
-  const { count, loading, degraded, missingTables } = useModuleCount(module);
+  const { count, loading, error, degraded, missingTables } = useModuleCount(module);
   if (loading) return <span className={className}>…</span>;
+  if (DOMAIN_WITHOUT_COUNT.has(domain) || !module || error || count == null) {
+    return <span className={className} title={error ?? "Live count is not available for this domain"}>—</span>;
+  }
   // LST-F21: when a spec table is absent the count covers only the tables that exist. Marking it "+"
   // and naming the missing tables in the tooltip keeps a partial total from reading as a complete one.
   // The number is still shown — degrading to a dash would throw away a count that IS correct as far
