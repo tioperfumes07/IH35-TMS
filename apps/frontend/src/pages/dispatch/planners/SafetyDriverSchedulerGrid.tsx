@@ -6,6 +6,8 @@ import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { driverSchedulerOfficeApi } from "../../../api/driver-scheduler";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
+import { EntityLink } from "../../../components/shared/EntityLink";
+import { entityLabel } from "../../../lib/entity-label";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import type { PlannerRange } from "./planner-range";
 import { listPlannerDays } from "./planner-range";
@@ -86,11 +88,12 @@ export function SafetyDriverSchedulerGrid({ operatingCompanyId, range, testId = 
             {drivers.map((dr) => {
               const driverId = String(dr.driver_id);
               const name = String(dr.driver_name ?? "");
-              const unit = dr.unit_number ? String(dr.unit_number) : "—";
+              const unitId = dr.unit_id ? String(dr.unit_id) : null;
+              const unit = dr.unit_number ? String(dr.unit_number) : null;
               return (
                 <tr key={driverId} className="border-t border-gray-100">
-                  <td className="sticky left-0 z-10 border-r bg-white px-2 py-0.5 text-xs font-medium text-gray-900">{name}</td>
-                  <td className="border-r px-1 py-0.5 text-gray-600">{unit}</td>
+                  <td className="sticky left-0 z-10 border-r bg-white px-2 py-0.5 text-xs font-medium text-gray-900"><EntityLink kind="driver" id={driverId} label={entityLabel(name, driverId, "Driver")} /></td>
+                  <td className="border-r px-1 py-0.5 text-gray-600"><EntityLink kind="unit" id={unitId} label={entityLabel(unit, unitId, "Unit")} /></td>
                   {days.map((d) => {
                     const lt = cellByDriverDay.get(`${driverId}|${d}`);
                     const label = lt ? String(lt).slice(0, 3) : "";

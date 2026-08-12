@@ -400,6 +400,14 @@
       "modules": ["dispatch"],
       "cols": ["driver", "unit", "load", "connectivity", "reverse_link"],
       "leafRe": "^planning\\.(calendar|loads|timeline)$"
+    },
+    {
+      "task": "CLS-DISPATCH-DRIVER-TRUCK-PLANNER-LINKS",
+      "pr": "this PR",
+      "guard": "scripts/verify-disp-s27-s31-planners-pack.mjs",
+      "modules": ["dispatch"],
+      "cols": ["driver", "unit", "connectivity", "reverse_link"],
+      "leafRe": "^planning\\.(driver|truck)$"
     }
   ]
 }

@@ -46,6 +46,8 @@ function assertLive() {
   if (!/ListErrorBanner/.test(grid)) problems.push("S28 grid missing ListErrorBanner");
   if (!/data-testid="dispatch-driver-planner-honest-empty"/.test(grid)) problems.push("S28 missing honest empty");
   if (!/enabled:\s*Boolean\(operatingCompanyId\)/.test(grid)) problems.push("S28 grid not company-gated");
+  if (!/<EntityLink kind="driver" id=\{driverId\}/.test(grid)) problems.push("S28 grid missing canonical driver links");
+  if (!/<EntityLink kind="unit" id=\{unitId\}/.test(grid)) problems.push("S28 grid missing canonical unit links");
 
   const loads = read(FILES.loads);
   if (!/data-testid="dispatch-loads-planner-need-company"/.test(loads)) problems.push("S29 missing need-company");
@@ -69,6 +71,9 @@ function assertLive() {
   if (!/data-testid="dispatch-truck-planner-honest-empty"/.test(truck)) problems.push("S31 missing honest empty");
   if (!/ListErrorBanner/.test(truck)) problems.push("S31 missing ListErrorBanner");
   if (!/enabled:\s*Boolean\(operatingCompanyId\)/.test(truck)) problems.push("S31 not company-gated");
+  if (!/driverId:\s*dr\.driver_id \? String\(dr\.driver_id\) : null/.test(truck)) problems.push("S31 drops driver FK while shaping truck rows");
+  if (!/<EntityLink kind="unit" id=\{row\.unitId\}/.test(truck)) problems.push("S31 missing canonical unit links");
+  if (!/<EntityLink kind="driver" id=\{row\.driverId\}/.test(truck)) problems.push("S31 missing canonical driver links");
 
   return problems;
 }
