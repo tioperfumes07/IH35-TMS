@@ -1,0 +1,59 @@
+#!/usr/bin/env node
+/** @matrix-built {"modules":["accounting","banking","compliance","dispatch","fleet","fuel","home","insurance","inventory","legal","maintenance","reports","safety","vendors"],"cols":["expense"],"leafRe":".*","task":"WAVE-C-expense-fe-all-modules","vertical":"column-wave"} */
+/** Non-posting expense FE contract. This guard never validates or changes GL math. */
+import fs from "node:fs";
+import path from "node:path";
+import { spawnSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
+import { auditConnectivity } from "./verify-wave-b-connectivity-all-modules.mjs";
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const MODULE_DIR = path.join(ROOT, "docs/specs/scoreboard/modules");
+const P10 = new Set(["lists", "accounting", "dispatch", "settlements", "factoring", "banking", "customers", "vendors", "drivers", "safety"]);
+const ROUTES = ["apps/frontend/src/routes/manifest.tsx", "apps/frontend/src/routes/collections.routes.ts", "apps/frontend/src/router/route-manifest.ts"];
+export function collectExpenseLeaves(read = fs.readFileSync, readDir = fs.readdirSync) {
+  const leaves = [];
+  for (const file of readDir(MODULE_DIR).filter((name) => name.endsWith(".required.json")).sort()) {
+    const spec = JSON.parse(read(path.join(MODULE_DIR, file), "utf8"));
+    for (const leaf of spec.leaves || []) if ((leaf.required || []).includes("expense")) leaves.push({ module: spec.module, id: leaf.id, route: leaf.route_hint });
+  }
+  return leaves;
+}
+const contracts = [
+  ["apps/frontend/src/pages/accounting/MaintenanceShopHubPage.tsx", /<EntityLink kind="expense" id=\{row\.financial_id\}/],
+  ["apps/frontend/src/pages/banking/ReconciliationWorkspace.tsx", /<EntityLink kind="expense" id=\{tx\.matched_expense_id\}/],
+  ["apps/frontend/src/pages/home/QuickActionsBar.tsx", /<RecordExpenseModal/],
+  ["apps/frontend/src/pages/insurance/ClaimsTab.tsx", /kind="expense"/],
+  ["apps/frontend/src/pages/maintenance/MaintenanceHome.tsx", /<CreateExpenseModal/],
+  ["apps/frontend/src/pages/fuel/FuelPlannerHome.tsx", /to="\/accounting\/settings\/expense-category-map"/],
+  ["apps/frontend/src/pages/reports/ManagementReportPackagePage.tsx", /Expenses by Vendor Summary/],
+  ["apps/frontend/src/components/expenses/RecordExpenseForm.tsx", /data-testid="record-expense-form"/],
+];
+const composed = [
+  "verify-expense-column-wave.mjs", "verify-acct-expense-list-reverse.mjs", "verify-expense-bank-reverse-links.mjs",
+  "verify-home-record-expense-modal.mjs", "verify-maint-home-bill-expense-wo-link.mjs", "verify-insurance-claim-linkage.mjs",
+  "verify-expense-create-modal-catalog.mjs", "verify-expense-category-picker-canonical.mjs", "verify-unit-linked-expense-human-labels.mjs",
+  "verify-wo-linked-expense-human-labels.mjs", "verify-expenses-canonical-route-is-list.mjs",
+];
+export function auditExpenseColumn(sources, leaves) {
+  const failures = [];
+  const p10 = leaves.filter((leaf) => P10.has(leaf.module));
+  if (p10.length < 15) failures.push(`priority-10 expense inventory unexpectedly shrank to ${p10.length}`);
+  if (leaves.length < 74) failures.push(`all-module expense inventory unexpectedly shrank to ${leaves.length}`);
+  if (new Set(leaves.map((leaf) => leaf.module)).size < 14) failures.push("expense module inventory unexpectedly shrank");
+  failures.push(...auditConnectivity(sources.routes, leaves, 0));
+  for (const [file, pattern] of contracts) if (!pattern.test(sources.files[file] || "")) failures.push(`${file}: non-posting expense FE contract missing`);
+  return failures;
+}
+const leaves = collectExpenseLeaves();
+const sources = { routes: ROUTES.map((file) => fs.readFileSync(path.join(ROOT, file), "utf8")).join("\n"), files: Object.fromEntries(contracts.map(([file]) => [file, fs.readFileSync(path.join(ROOT, file), "utf8")])) };
+if (process.argv.includes("--selftest")) {
+  if (!auditExpenseColumn(sources, leaves.filter((leaf) => leaf.module !== "accounting")).some((failure) => failure.includes("priority-10"))) { console.error("verify-wave-c-expense-fe-all-modules SELFTEST FAIL — P10 mutation escaped"); process.exit(1); }
+  const mutated = structuredClone(sources);
+  mutated.files["apps/frontend/src/pages/insurance/ClaimsTab.tsx"] = mutated.files["apps/frontend/src/pages/insurance/ClaimsTab.tsx"].replaceAll('kind="expense"', 'kind="bill"');
+  if (!auditExpenseColumn(mutated, leaves).some((failure) => failure.includes("ClaimsTab"))) { console.error("verify-wave-c-expense-fe-all-modules SELFTEST FAIL — all-module mutation escaped"); process.exit(1); }
+  console.log("verify-wave-c-expense-fe-all-modules SELFTEST PASS — P10 and all-module mutations detected"); process.exit(0);
+}
+const failures = auditExpenseColumn(sources, leaves);
+for (const guard of composed) { if (!fs.existsSync(path.join(ROOT, "scripts", guard))) continue; const result = spawnSync(process.execPath, [path.join(ROOT, "scripts", guard)], { encoding: "utf8" }); if (result.status !== 0) failures.push(`${guard}: composed FE guard failed\n${result.stdout}${result.stderr}`); }
+if (failures.length) { console.error(`verify-wave-c-expense-fe-all-modules FAIL:\n${failures.map((failure) => ` - ${failure}`).join("\n")}`); process.exit(1); }
+console.log(`verify-wave-c-expense-fe-all-modules PASS — P10 first (${leaves.filter((leaf) => P10.has(leaf.module)).length}), then ${leaves.length} expense FE leaves across ${new Set(leaves.map((leaf) => leaf.module)).size} modules; GL untouched`);
