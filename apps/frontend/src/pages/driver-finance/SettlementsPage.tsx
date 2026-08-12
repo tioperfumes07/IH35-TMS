@@ -83,14 +83,21 @@ export function SettlementsPage() {
     const end = new Date(s.period_end);
     return !Number.isNaN(end.getTime()) && end.getFullYear() === ytdYear;
   };
-  const kpis = {
-    total_unpaid: kpiSettlements.filter((s) => s.status !== "paid").length,
-    this_period: kpiSettlements.filter(isInThisPeriod).length,
-    drivers_with_debt: kpiSettlements.filter((s) => typeof s.live_debt_flag === "number" && s.live_debt_flag > 0).length,
-    pending_acks: kpiSettlements.filter((s) => s.has_pending_acks).length,
-    held_deductions: kpiSettlements.filter((s) => s.status === "held").length,
-    ytd_settlements: kpiSettlements.filter(isYtd).length,
-    open_driver_bills: openBillsSummary.total_count,
+  // CLS-MONEY-KPI-FAKE-ZERO-ON-FAILURE: kpiSettlements defaults to [] the moment kpiBaseQuery
+  // errors, so every count below silently computed to a real-looking 0 instead of surfacing the
+  // failure the ListErrorBanner (below) already knows about. Same for open_driver_bills against
+  // openBillsQuery. "—" makes the failure visible on the tile itself, not just in a banner it sits
+  // next to.
+  const kpis: Record<string, number | string> = {
+    total_unpaid: kpiBaseQuery.isError ? "—" : kpiSettlements.filter((s) => s.status !== "paid").length,
+    this_period: kpiBaseQuery.isError ? "—" : kpiSettlements.filter(isInThisPeriod).length,
+    drivers_with_debt: kpiBaseQuery.isError
+      ? "—"
+      : kpiSettlements.filter((s) => typeof s.live_debt_flag === "number" && s.live_debt_flag > 0).length,
+    pending_acks: kpiBaseQuery.isError ? "—" : kpiSettlements.filter((s) => s.has_pending_acks).length,
+    held_deductions: kpiBaseQuery.isError ? "—" : kpiSettlements.filter((s) => s.status === "held").length,
+    ytd_settlements: kpiBaseQuery.isError ? "—" : kpiSettlements.filter(isYtd).length,
+    open_driver_bills: openBillsQuery.isError ? "—" : openBillsSummary.total_count,
   };
   const focusedSettlements = useMemo(() => {
     if (focusFilter === "debt") {
@@ -362,7 +369,7 @@ function KpiCard({
   disabledReason,
 }: {
   label: string;
-  value: number;
+  value: number | string;
   to?: string;
   onClick?: () => void;
   active?: boolean;
