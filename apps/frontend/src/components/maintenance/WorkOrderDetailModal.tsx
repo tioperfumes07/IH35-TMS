@@ -1,10 +1,12 @@
 import type { ReactNode } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "../Button";
 import { Modal } from "../Modal";
 import { EntityLink } from "../shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { listPartsAssignments } from "../../api/maintenance";
+import { AddPartsLinkModal } from "./AddPartsLinkModal";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(Number(cents) || 0);
@@ -44,6 +46,7 @@ function ModalSection({ title, children }: { title?: string; children: ReactNode
 }
 
 export function WorkOrderDetailModal({ open, workOrder, canRefreshDisplayId, onRefreshDisplayId, onComplete, onClose }: Props) {
+  const [addPartsLinkOpen, setAddPartsLinkOpen] = useState(false);
   const workOrderId = workOrder ? String(workOrder.id ?? "") : "";
   const operatingCompanyId = workOrder ? String(workOrder.operating_company_id ?? "") : "";
   // TASKS-STYLE WRITE-ONLY GAP: parts_invoice_links are created via other flows but this modal
@@ -151,7 +154,15 @@ export function WorkOrderDetailModal({ open, workOrder, canRefreshDisplayId, onR
             <div>R2 PDF Doc ID: {String(workOrder.external_vendor_invoice_doc_id ?? "—")}</div>
           </ModalSection>
         ) : (
-          <ModalSection title="Parts Links (IS/IT)">
+          <ModalSection>
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Parts Links (IS/IT)</p>
+              {!["complete", "completed"].includes(status) ? (
+                <Button variant="secondary" size="sm" onClick={() => setAddPartsLinkOpen(true)}>
+                  + Add parts link
+                </Button>
+              ) : null}
+            </div>
             {(() => {
               const links = (partsLinksQuery.data ?? []).filter((row) => row.work_order_id === workOrderId);
               if (partsLinksQuery.isLoading) return <div className="text-gray-500">Loading…</div>;
@@ -172,6 +183,15 @@ export function WorkOrderDetailModal({ open, workOrder, canRefreshDisplayId, onR
                 </ul>
               );
             })()}
+            <AddPartsLinkModal
+              open={addPartsLinkOpen}
+              workOrderId={workOrderId}
+              operatingCompanyId={operatingCompanyId}
+              onClose={() => {
+                setAddPartsLinkOpen(false);
+                void partsLinksQuery.refetch();
+              }}
+            />
           </ModalSection>
         )}
 

@@ -752,6 +752,25 @@ export function listPartsAssignments(operatingCompanyId: string) {
   ).then((result) => result.rows);
 }
 
+export type CreatePartsAssignmentInput = {
+  vendor_id: string;
+  vendor_invoice_number: string;
+  vendor_invoice_amount: number;
+  qty_used: number;
+  part_description: string;
+  parts_inventory_id?: string;
+};
+
+// LST-INVENTORY-WRITE-PATH: the read side (listPartsAssignments/listUnitPartsHistory) has been real
+// since BT-3-WO-FORMAT-VENDOR-INVENTORY-INTEGRITY, but no frontend caller ever POSTed to this route —
+// the only way a parts_invoice_links row could exist was a direct DB insert. This is the missing write.
+export function createPartsAssignment(workOrderId: string, operatingCompanyId: string, input: CreatePartsAssignmentInput) {
+  return apiRequest<{ link: PartsAssignmentRow; display_id: string | null }>(
+    `/api/v1/maintenance/work-orders/${encodeURIComponent(workOrderId)}/parts-invoice-links?operating_company_id=${encodeURIComponent(operatingCompanyId)}`,
+    { method: "POST", body: input }
+  );
+}
+
 /** Unit reverse drill-through — parts used on WOs for a unit via work_orders.unit_id. */
 export function listUnitPartsHistory(unitId: string, operatingCompanyId: string) {
   return apiRequest<{ rows: PartsAssignmentRow[] }>(
