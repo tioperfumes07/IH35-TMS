@@ -139,7 +139,7 @@ export async function registerCategorizationRulesRoutes(app: FastifyInstance) {
             a.account_number,
             a.account_name
           FROM banking.bank_transactions bt
-          LEFT JOIN catalogs.accounts a ON a.id = bt.coa_account_id
+          LEFT JOIN catalogs.accounts a ON a.id = bt.coa_account_id AND a.operating_company_id = bt.operating_company_id
           WHERE bt.operating_company_id = $1::uuid
           ORDER BY bt.created_at DESC
           LIMIT 50
