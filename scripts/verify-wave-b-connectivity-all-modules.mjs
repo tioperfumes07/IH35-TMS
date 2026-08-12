@@ -70,28 +70,29 @@ export function auditConnectivity(manifestSource, leaves) {
   return failures;
 }
 
-const leaves = collectRequiredConnectivity();
-const manifest = ROUTE_SOURCES.map((file) => fs.readFileSync(path.join(ROOT, file), "utf8")).join("\n");
-
-if (process.argv.includes("--selftest")) {
-  const target = leaves.find((leaf) => normalize(leaf.route) === "/users");
-  if (!target) {
-    console.error("verify-wave-b-connectivity-all-modules SELFTEST FAIL — /users fixture missing");
+const isDirectRun = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+if (isDirectRun) {
+  const leaves = collectRequiredConnectivity();
+  const manifest = ROUTE_SOURCES.map((file) => fs.readFileSync(path.join(ROOT, file), "utf8")).join("\n");
+  if (process.argv.includes("--selftest")) {
+    const target = leaves.find((leaf) => normalize(leaf.route) === "/users");
+    if (!target) {
+      console.error("verify-wave-b-connectivity-all-modules SELFTEST FAIL — /users fixture missing");
+      process.exit(1);
+    }
+    const mutated = manifest.replace('path="/users"', 'path="/users-removed"');
+    const caught = auditConnectivity(mutated, [target, ...leaves.filter((leaf) => leaf !== target)]);
+    if (!caught.some((failure) => failure.startsWith(`${target.module}:${target.id}:`))) {
+      console.error("verify-wave-b-connectivity-all-modules SELFTEST FAIL — removed /users route was not detected");
+      process.exit(1);
+    }
+    console.log("verify-wave-b-connectivity-all-modules SELFTEST PASS — removed route detected");
+    process.exit(0);
+  }
+  const failures = auditConnectivity(manifest, leaves);
+  if (failures.length) {
+    console.error(`verify-wave-b-connectivity-all-modules FAIL (${failures.length}/${leaves.length}):\n${failures.map((f) => ` - ${f}`).join("\n")}`);
     process.exit(1);
   }
-  const mutated = manifest.replace('path="/users"', 'path="/users-removed"');
-  const caught = auditConnectivity(mutated, [target, ...leaves.filter((leaf) => leaf !== target)]);
-  if (!caught.some((failure) => failure.startsWith(`${target.module}:${target.id}:`))) {
-    console.error("verify-wave-b-connectivity-all-modules SELFTEST FAIL — removed /users route was not detected");
-    process.exit(1);
-  }
-  console.log("verify-wave-b-connectivity-all-modules SELFTEST PASS — removed route detected");
-  process.exit(0);
+  console.log(`verify-wave-b-connectivity-all-modules PASS — ${leaves.length} connectivity leaves resolve across the full module inventory`);
 }
-
-const failures = auditConnectivity(manifest, leaves);
-if (failures.length) {
-  console.error(`verify-wave-b-connectivity-all-modules FAIL (${failures.length}/${leaves.length}):\n${failures.map((f) => ` - ${f}`).join("\n")}`);
-  process.exit(1);
-}
-console.log(`verify-wave-b-connectivity-all-modules PASS — ${leaves.length} connectivity leaves resolve across the full module inventory`);
