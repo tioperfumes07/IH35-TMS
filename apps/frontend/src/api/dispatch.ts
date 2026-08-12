@@ -151,6 +151,7 @@ export type DispatchBookLoadPayload = {
   requires_straps?: boolean;
   load_type?: "broker" | "direct";
   catalog_load_type_id?: string;
+  load_trailer_equipment_id?: string;
   driver_pay_rate_per_mile?: number;
   factoring_company_vendor_id?: string;
   tarp_type?: string;
@@ -176,7 +177,7 @@ export type DispatchBookLoadPayload = {
   assigned_secondary_driver_id?: string;
   team_id?: string;
   temp_fahrenheit?: number;
-  charges: Array<{ code: string; amount_cents: number }>;
+  charges: Array<{ code: string; additional_charge_id?: string; description?: string; amount_cents: number }>;
   stops: Array<{
     stop_type: "pickup" | "delivery";
     sequence_number: number;
@@ -191,6 +192,7 @@ export type DispatchBookLoadPayload = {
     appointment_start_at?: string;
     appointment_end_at?: string;
     lumper_required?: boolean;
+    lumper_provider_id?: string;
     lumper_paid_by?: "carrier" | "shipper" | "broker" | "receiver" | "unknown";
     lumper_amount_cents?: number;
     is_tarp_stop?: boolean;

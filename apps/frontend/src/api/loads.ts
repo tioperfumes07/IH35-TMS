@@ -59,6 +59,7 @@ export type LoadStop = {
   site_contact_phone?: string | null;
   gate_dock_text?: string | null;
   postal_code?: string | null;
+  lumper_provider_id?: string | null;
 };
 
 export type DispatchLoadRow = {
@@ -88,7 +89,7 @@ export type DispatchLoadRow = {
   delivery_late_vs_appt?: boolean;
   geofence_ready?: boolean;
   flag_code: string;
-  load_trailer_equipment_id: string;
+  load_trailer_equipment_id?: string | null;
   dispatch_flag_color_id: string;
   flag_display_name?: string | null;
   flag_hex_color?: string | null;

@@ -64,6 +64,8 @@ const FILES = {
   lumperProviderMigration: "db/migrations/202612502300_p44_load_stop_lumper_provider_canonical_fk.sql",
   trailerEquipmentPicker: "apps/frontend/src/pages/dispatch/components/BookLoadEquipmentSection.tsx",
   trailerEquipmentMigration: "db/migrations/202612511200_p44_load_trailer_equipment_canonical_fk.sql",
+  accidentDrawer: "apps/frontend/src/components/safety/AccidentReportDrawer.tsx",
+  accidentTypeMigration: "db/migrations/202612511400_p44_accident_report_type_canonical_fk.sql",
 };
 
 const MISSING = "MISSING";
@@ -229,6 +231,8 @@ export function contractErrors(src) {
   if (!/load_trailer_equipment_id:\s*str\(load\.load_trailer_equipment_id\)/.test(src.editMapping)) {
     errors.push("P44-FK: trailer equipment requirement must survive detail reload into Edit Book Load");
   }
+  if (!/createKind="accident_type"/.test(src.accidentDrawer) || !/accident_type_id:\s*accidentTypeId/.test(src.accidentDrawer)) errors.push("P44-FK: accident creator must select and submit canonical accident type UUID");
+  if (!/accident_reports_type_same_company_fk/.test(src.accidentTypeMigration) || !/ALTER COLUMN accident_type_id SET NOT NULL/.test(src.accidentTypeMigration)) errors.push("P44-FK: accident reports must enforce NOT NULL same-opco type FK");
 
   // ── CONFIG-DRIVEN: the pinned defect ────────────────────────────────────────────────────────
   if (/INLINE_KINDS/.test(select)) {
