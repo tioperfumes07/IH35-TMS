@@ -88,6 +88,7 @@ export type DispatchLoadRow = {
   delivery_late_vs_appt?: boolean;
   geofence_ready?: boolean;
   flag_code: string;
+  load_trailer_equipment_id: string;
   dispatch_flag_color_id: string;
   flag_display_name?: string | null;
   flag_hex_color?: string | null;

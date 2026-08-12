@@ -61,6 +61,7 @@ export type UpdateLoadStopInput = {
 export type UpdateDispatchLoadFields = Partial<{
   dispatch_flag_color_id: string;
   catalog_load_type_id: string | null;
+  load_trailer_equipment_id: string;
   customer_id: string;
   assigned_unit_id: string | null;
   assigned_primary_driver_id: string | null;
@@ -145,6 +146,7 @@ export class LoadEditLockedError extends Error {
 const SCALAR_COLUMNS: Record<keyof UpdateDispatchLoadFields, string> = {
   dispatch_flag_color_id: "dispatch_flag_color_id",
   catalog_load_type_id: "catalog_load_type_id",
+  load_trailer_equipment_id: "load_trailer_equipment_id",
   customer_id: "customer_id",
   assigned_unit_id: "assigned_unit_id",
   assigned_primary_driver_id: "assigned_primary_driver_id",

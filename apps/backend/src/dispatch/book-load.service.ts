@@ -124,6 +124,7 @@ export type BookLoadInput = {
    */
   is_sample_data?: boolean;
   trailer_type?: "refrigerated_van" | "dry_van" | "flatbed" | "lowboy" | "power_only_no_trailer" | "power_only_customer_trailer";
+  load_trailer_equipment_id?: string;
   assigned_unit_id?: string;
   // W-FIX-3b: the selected trailer (mdata.equipment id) → persisted post-insert to the real link
   // dispatch.load_assignment_history.new_trailer_id (mdata.loads has no trailer-equipment column).
@@ -286,8 +287,9 @@ async function writeC9HoldFieldsIfPresent(
         driver_pay_rate_per_mile = $7,
         factoring_company_vendor_id = $8::uuid,
         catalog_load_type_id = $9::uuid,
+        load_trailer_equipment_id = $10::uuid,
         updated_at = now()
-      WHERE id = $10::uuid
+      WHERE id = $11::uuid
     `,
     [
       Boolean(input.requires_reefer_fuel),
@@ -299,6 +301,7 @@ async function writeC9HoldFieldsIfPresent(
       input.driver_pay_rate_per_mile ?? null,
       resolvedFactoringVendorId,
       input.catalog_load_type_id ?? null,
+      input.load_trailer_equipment_id ?? null,
       loadId,
     ]
   );

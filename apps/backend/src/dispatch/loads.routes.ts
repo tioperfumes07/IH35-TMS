@@ -194,6 +194,7 @@ const createDispatchLoadBodySchema = z.object({
   // no create path ever populated it, so every TMS-native load was written as `false` regardless.
   is_sample_data: z.boolean().optional(),
   trailer_type: z.enum(["refrigerated_van", "dry_van", "flatbed", "lowboy", "power_only_no_trailer", "power_only_customer_trailer"]).optional(),
+  load_trailer_equipment_id: z.string().uuid(),
   // Trip Pairing (Block 04): optional at the API for now (Phase 1, additive — no break for in-flight
   // clients); the wizard makes it REQUIRED on the UI, and a follow-up flips this to required once the
   // selector ships on all clients. NB starts a tour; TR/SB pass the tour_id to join.
@@ -286,6 +287,7 @@ const updateDispatchLoadBodySchema = z.object({
   requires_straps: z.boolean().optional(),
   load_type: z.enum(["broker", "direct"]).nullable().optional(),
   catalog_load_type_id: z.string().uuid().nullable().optional(),
+  load_trailer_equipment_id: z.string().uuid().optional(),
   driver_pay_rate_per_mile: z.number().min(0).nullable().optional(),
   factoring_company_vendor_id: z.string().uuid().nullable().optional(),
   lumper_amount_cents: z.number().int().min(0).optional(),
@@ -735,6 +737,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
                  -- rendered "-" for a load that has one. Read from mdata.loads, entity-scoped like the
                  -- joins above; NOT added to the view, which would widen it unscoped for every consumer.
                  ml.trip_type AS trip_type,
+                 ml.load_trailer_equipment_id AS load_trailer_equipment_id,
                  ml.dispatch_flag_color_id AS dispatch_flag_color_id,
                  df.flag_code AS flag_code,
                  df.display_name AS flag_display_name,

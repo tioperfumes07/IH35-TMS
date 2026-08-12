@@ -48,7 +48,7 @@ function buildQuery(filters: DispatchCatalogListFilters) {
   return query.toString();
 }
 
-export function createDispatchCatalogClient(catalogPath: "load-types" | "detention-reasons" | "pickup-time-types" | "additional-charges" | "lumper-providers") {
+export function createDispatchCatalogClient(catalogPath: "load-types" | "detention-reasons" | "pickup-time-types" | "additional-charges" | "lumper-providers" | "load-trailer-equipment") {
   const basePath = `/api/v1/catalogs/dispatch/${catalogPath}`;
   return {
     list: (filters: DispatchCatalogListFilters) =>
@@ -77,3 +77,4 @@ export const detentionReasonsCatalogClient = createDispatchCatalogClient("detent
 export const pickupTimeTypesCatalogClient = createDispatchCatalogClient("pickup-time-types");
 export const additionalChargesCatalogClient = createDispatchCatalogClient("additional-charges");
 export const lumperProvidersCatalogClient = createDispatchCatalogClient("lumper-providers");
+export const loadTrailerEquipmentCatalogClient = createDispatchCatalogClient("load-trailer-equipment");

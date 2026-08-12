@@ -93,6 +93,7 @@ type FormValues = BookLoadFormValues & {
   trip_type: "" | "NB" | "TR" | "SB";
   tour_id: string;
   trailer_type: string;
+  load_trailer_equipment_id: string;
   assigned_unit_id: string;
   assigned_trailer_unit_id: string;
   assignment_mode: "solo" | "team";
@@ -300,6 +301,7 @@ export function BookLoadModalV4({
       fuel_surcharge_cents: 0,
       accessorial_cents: 0,
       trailer_type: "dry_van",
+      load_trailer_equipment_id: "",
       assigned_unit_id: prefillUnitId ?? "",
       assigned_trailer_unit_id: "",
       assignment_mode: "solo",
@@ -827,6 +829,7 @@ export function BookLoadModalV4({
             | "power_only_no_trailer"
             | "power_only_customer_trailer"
             | undefined,
+        load_trailer_equipment_id: values.load_trailer_equipment_id,
         assigned_unit_id: values.assigned_unit_id || undefined,
         assigned_trailer_unit_id: values.assigned_trailer_unit_id || undefined, // W-FIX-3b → mdata.loads.trailer_id
         team_id: values.assignment_mode === "team" ? values.team_id || undefined : undefined,
