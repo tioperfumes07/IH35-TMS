@@ -108,9 +108,6 @@
       "route_hint": "/accounting/bills",
       "required": [
         "vendor",
-        "load",
-        "unit",
-        "driver",
         "ap_bill",
         "gl_je",
         "connectivity",
@@ -124,7 +121,6 @@
       "route_hint": "/accounting/bills/vendor",
       "required": [
         "vendor",
-        "load",
         "unit",
         "ap_bill",
         "expense",
@@ -143,7 +139,6 @@
       "required": [
         "vendor",
         "unit",
-        "driver",
         "ap_bill",
         "gl_je",
         "inventory",
@@ -162,8 +157,6 @@
       "required": [
         "vendor",
         "unit",
-        "driver",
-        "load",
         "ap_bill",
         "gl_je",
         "picker_law",
@@ -178,8 +171,7 @@
       "sub": "+ Driver Bill",
       "route_hint": "/accounting/bills/driver",
       "required": [
-        "driver",
-        "load",
+        "vendor",
         "unit",
         "ap_bill",
         "gl_je",
@@ -250,9 +242,7 @@
       "route_hint": "/accounting/expenses",
       "required": [
         "vendor",
-        "customer",
         "unit",
-        "driver",
         "load",
         "expense",
         "gl_je",
@@ -362,8 +352,6 @@
       "required": [
         "customer",
         "load",
-        "driver",
-        "unit",
         "gl_je",
         "picker_law",
         "qbo_chrome",
@@ -402,8 +390,6 @@
       "sub": "Factoring list",
       "route_hint": "/accounting/factoring",
       "required": [
-        "customer",
-        "load",
         "gl_je",
         "liability",
         "connectivity",
@@ -430,7 +416,6 @@
       "route_hint": "/accounting/pre-settlements",
       "required": [
         "driver",
-        "load",
         "liability",
         "connectivity"
       ]
@@ -546,5 +531,82 @@
         "connectivity"
       ]
     }
-  ]
+  ],
+  "honesty_note": {
+    "as_of": "2026-08-12",
+    "finding": "ACCT-REQUIRED-LINKAGE-INFLATION",
+    "rule": "Matrix Required linkage = canonical FK on surface (submit payload or EntityLink), never memo-only / absent fields. Matches VERTICAL-COLUMN-WAVE + DoD-C.",
+    "drops_applied": [
+      {
+        "id": "bills.list",
+        "removed": [
+          "load",
+          "unit",
+          "driver"
+        ]
+      },
+      {
+        "id": "bills.create.vendor",
+        "removed": [
+          "load"
+        ]
+      },
+      {
+        "id": "bills.create.maintenance",
+        "removed": [
+          "driver"
+        ]
+      },
+      {
+        "id": "bills.create.fuel",
+        "removed": [
+          "driver",
+          "load"
+        ]
+      },
+      {
+        "id": "bills.create.driver",
+        "removed": [
+          "driver",
+          "load"
+        ]
+      },
+      {
+        "id": "expenses.create",
+        "removed": [
+          "customer",
+          "driver"
+        ]
+      },
+      {
+        "id": "invoices.create",
+        "removed": [
+          "driver",
+          "unit"
+        ]
+      },
+      {
+        "id": "factoring.list",
+        "removed": [
+          "customer",
+          "load"
+        ]
+      },
+      {
+        "id": "pre_settlements",
+        "removed": [
+          "load"
+        ]
+      }
+    ],
+    "adds": [
+      {
+        "id": "bills.create.driver",
+        "added": [
+          "vendor"
+        ],
+        "reason": "Payee is vendor_id on VendorBillForm; driver was memo-only theater"
+      }
+    ]
+  }
 }
