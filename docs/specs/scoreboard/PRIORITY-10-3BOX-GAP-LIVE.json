@@ -1,16 +1,16 @@
 {
-  "as_of": "2026-08-12T20:15:45.304Z",
-  "main_sha": "08bea9945",
+  "as_of": "2026-08-12T20:17:17.484Z",
+  "main_sha": "5d85f8a92",
   "gate": "PRIORITY_10_3BOX_100",
   "allRequired": {
     "totR": 3051,
-    "totB": 2199,
+    "totB": 2208,
     "pct": 72
   },
   "waveABC_noChrome": {
     "abcR": 2421,
-    "abcB": 1948,
-    "pct": 80
+    "abcB": 1957,
+    "pct": 81
   },
   "per_module": [
     {
@@ -61,11 +61,11 @@
     {
       "mod": "banking",
       "req": 49,
-      "built": 30,
-      "pct": 61,
+      "built": 32,
+      "pct": 65,
       "abcReq": 41,
-      "abcBuilt": 28,
-      "abcPct": 68
+      "abcBuilt": 30,
+      "abcPct": 73
     },
     {
       "mod": "customers",
@@ -97,11 +97,11 @@
     {
       "mod": "safety",
       "req": 203,
-      "built": 130,
-      "pct": 64,
+      "built": 137,
+      "pct": 67,
       "abcReq": 160,
-      "abcBuilt": 125,
-      "abcPct": 78
+      "abcBuilt": 132,
+      "abcPct": 83
     }
   ],
   "ranked_gaps": [
@@ -145,14 +145,13 @@
     },
     {
       "col": "ap_bill",
-      "cells": 99,
+      "cells": 97,
       "byMod": {
         "lists": 86,
         "accounting": 1,
         "dispatch": 3,
         "settlements": 2,
         "factoring": 1,
-        "banking": 2,
         "safety": 4
       },
       "seat": "CC-1"
@@ -173,13 +172,13 @@
     },
     {
       "col": "connectivity",
-      "cells": 57,
+      "cells": 50,
       "byMod": {
         "dispatch": 11,
         "factoring": 10,
         "banking": 8,
         "drivers": 8,
-        "safety": 20
+        "safety": 13
       },
       "seat": "CC-2"
     },
@@ -251,5 +250,5 @@
       "seat": "?"
     }
   ],
-  "entry_count": 117
+  "entry_count": 119
 }
