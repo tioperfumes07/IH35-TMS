@@ -86,6 +86,7 @@ export type BookLoadInput = {
   requires_load_locks?: boolean;
   requires_straps?: boolean;
   load_type?: "broker" | "direct";
+  catalog_load_type_id?: string;
   driver_pay_rate_per_mile?: number;
   // uuid (preferred, what the FE now sends) or a vendor display name (compatibility path).
   factoring_company_vendor_id?: string;
@@ -281,8 +282,9 @@ async function writeC9HoldFieldsIfPresent(
         load_type = $6,
         driver_pay_rate_per_mile = $7,
         factoring_company_vendor_id = $8::uuid,
+        catalog_load_type_id = $9::uuid,
         updated_at = now()
-      WHERE id = $9::uuid
+      WHERE id = $10::uuid
     `,
     [
       Boolean(input.requires_reefer_fuel),
@@ -293,6 +295,7 @@ async function writeC9HoldFieldsIfPresent(
       input.load_type ?? null,
       input.driver_pay_rate_per_mile ?? null,
       resolvedFactoringVendorId,
+      input.catalog_load_type_id ?? null,
       loadId,
     ]
   );
