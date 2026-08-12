@@ -68,8 +68,8 @@ async function persistBillsOnClient(
 ): Promise<string[]> {
   if (!input.bills.length) return [];
 
-  const vendorRes = await client.query<{ id: string }>(
-    `SELECT id::text FROM mdata.vendors
+  const vendorRes = await client.query<{ id: string; is_sample_data: boolean | null }>(
+    `SELECT id::text, is_sample_data FROM mdata.vendors
      WHERE operating_company_id = $1 AND deactivated_at IS NULL
        AND lower(trim(vendor_name)) = lower(trim($2))
      ORDER BY created_at ASC LIMIT 1`,
@@ -77,6 +77,8 @@ async function persistBillsOnClient(
   );
   const vendorId = vendorRes.rows[0]?.id;
   if (!vendorId) throw new Error("insurance_vendor_not_found");
+  // ACCT-F353 — derive from the insurer vendor being billed (same relationship the FK derives from).
+  const vendorIsSampleData = vendorRes.rows[0]?.is_sample_data === true;
 
   // BANK-ACCOUNT-HIDE: an account hidden for THIS entity must never be auto-picked to seed insurance
   // premium bill transactions (flag OFF by default — see docs/accounting/BANK-ACCOUNT-ENTITY-HIDE-DESIGN.md).
@@ -132,9 +134,11 @@ async function persistBillsOnClient(
          operating_company_id, vendor_id, vendor_uuid, mdata_vendor_id,
          bill_date, due_date, amount_cents, total_amount,
          paid_cents, paid_amount, status, memo,
-         qbo_idempotency_key, created_by_user_id, created_at, updated_at
+         qbo_idempotency_key, created_by_user_id, created_at, updated_at,
+         -- ACCT-F353 — derived from the insurer vendor above (vendorIsSampleData).
+         is_sample_data
        )
-       VALUES ($1,$2,$2,$2,$3,$3,$4,$5,0,0,'unpaid',$6,$7,$8,now(),now())
+       VALUES ($1,$2,$2,$2,$3,$3,$4,$5,0,0,'unpaid',$6,$7,$8,now(),now(),$9)
        ON CONFLICT (operating_company_id, qbo_idempotency_key)
          WHERE qbo_idempotency_key IS NOT NULL DO NOTHING
        RETURNING id::text`,
@@ -155,6 +159,7 @@ async function persistBillsOnClient(
         }),
         idempotencyKey,
         input.userId,
+        vendorIsSampleData,
       ]
     );
     const billId = billRes.rows[0]?.id;

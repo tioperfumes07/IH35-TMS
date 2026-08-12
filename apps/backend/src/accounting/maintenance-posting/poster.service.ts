@@ -3,7 +3,7 @@ import { enqueueTmsBillPushRequested } from "../../qbo/tms-bill-push-chain.servi
 import { ExpenseCategoryMapResolutionError, resolveAccountForCategory } from "../expense-category-map/resolver.service.js";
 import { PostingEngineError, postSourceTransaction } from "../posting-engine.service.js";
 import { isEnabled } from "../../lib/feature-flags/service.js";
-import { resolveMdataVendorIdBestEffort } from "../bills.service.js";
+import { resolveMdataVendorIdBestEffort, resolveVendorIsSampleDataBestEffort } from "../bills.service.js";
 
 // GL-posting kill switch for the maintenance / WO-close bill. The bill (A/P row + lines) is always
 // created below, but auto-posting it to the GL is gated PER-ENTITY via lib.feature_flags (isEnabled) —
@@ -161,6 +161,9 @@ async function getOrCreateBillForWorkOrder(
   // LV-BILL-MDATA-VENDOR-FK-OPTOUT sweep — vendorKey is a QBO external id OR an mdata.vendors uuid;
   // best-effort resolve the typed FK without blocking WO-close on an unresolvable vendor.
   const mdataVendorId = await resolveMdataVendorIdBestEffort(client, input.operating_company_id, vendorKey);
+  // ACCT-F353 — maintenance.work_orders carries no is_sample_data of its own; derive from the same
+  // vendor the FK above resolves, matching the relationship every other bill writer in this sweep uses.
+  const vendorIsSampleData = await resolveVendorIsSampleDataBestEffort(client, input.operating_company_id, vendorKey);
   // Law §9: stamp unit_id from WO (migration 202607050810). Vendor preserved via vendorKey.
   const billInsert = await client.query<{ id: string }>(
     `
@@ -182,11 +185,13 @@ async function getOrCreateBillForWorkOrder(
         qbo_sync_pending,
         created_by_user_id,
         created_at,
-        updated_at
+        updated_at,
+        -- ACCT-F353 — derived from the vendor being billed (vendorIsSampleData above).
+        is_sample_data
       )
       VALUES (
         $1::uuid, $2, $2, $9::uuid, $3::uuid, $8::uuid, 'unpaid', CURRENT_DATE, CURRENT_DATE + INTERVAL '30 days',
-        $4, $5, 0, 0, $6, true, $7::uuid, now(), now()
+        $4, $5, 0, 0, $6, true, $7::uuid, now(), now(), $10
       )
       RETURNING id::text
     `,
@@ -200,6 +205,7 @@ async function getOrCreateBillForWorkOrder(
       input.actor_user_id,
       wo.unit_id ?? null,
       mdataVendorId,
+      vendorIsSampleData,
     ]
   );
   return { bill_id: billInsert.rows[0]?.id ?? null, action: "created" };

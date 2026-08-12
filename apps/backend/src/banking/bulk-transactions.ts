@@ -5,7 +5,7 @@ import { postSourceTransaction, PostingEngineError } from "../accounting/posting
 import { postBillPaymentGlIfEnabled } from "../accounting/bill-payment-gl.service.js";
 import { withCurrentUser } from "../auth/db.js";
 import { assertBankTxnsNotInReconciledSession } from "./closed-session-immutability.js";
-import { resolveMdataVendorIdBestEffort } from "../accounting/bills.service.js";
+import { resolveMdataVendorIdBestEffort, resolveVendorIsSampleDataBestEffort } from "../accounting/bills.service.js";
 
 const BILL_GL_POSTING_FLAG_KEY = "BILL_GL_POSTING_ENABLED";
 
@@ -230,6 +230,8 @@ export async function bulkPostTransactionsAsBills(
       // an unresolvable/cross-entity id (shouldn't happen — the source columns are entity-scoped
       // FKs — but never trusted unchecked) doesn't block a bulk post.
       const mdataVendorId = await resolveMdataVendorIdBestEffort(client, input.operatingCompanyId, vendorId);
+      // ACCT-F353 — derive from the vendor being paid (same relationship the FK above resolves).
+      const vendorIsSampleData = await resolveVendorIsSampleDataBestEffort(client, input.operatingCompanyId, vendorId);
 
       // PAID-IN-FULL MODEL (owner-approved QBO parity: cash already left the bank at the moment the bank
       // feed shows the cleared transaction — this is NOT a Bill→pay-later A/P scenario). The bill is
@@ -253,9 +255,11 @@ export async function bulkPostTransactionsAsBills(
             memo,
             created_by_user_id,
             created_at,
-            updated_at
+            updated_at,
+            -- ACCT-F353 — derived from the vendor being paid (vendorIsSampleData above).
+            is_sample_data
           )
-          VALUES ($1,$2,$2,$8,$3,$3,$4,$5,$4,$5,'paid',$6,$7,now(),now())
+          VALUES ($1,$2,$2,$8,$3,$3,$4,$5,$4,$5,'paid',$6,$7,now(),now(),$9)
           RETURNING id
         `,
         [
@@ -273,6 +277,7 @@ export async function bulkPostTransactionsAsBills(
           }),
           userId,
           mdataVendorId,
+          vendorIsSampleData,
         ]
       );
       const billId = billRes.rows[0]?.id;
@@ -309,9 +314,11 @@ export async function bulkPostTransactionsAsBills(
             source_bank_transaction_id,
             created_by_user_id,
             created_at,
-            updated_at
+            updated_at,
+            -- ACCT-F353 — same derivation as the bill row two statements up (vendorIsSampleData).
+            is_sample_data
           )
-          VALUES ($1,$2,$3,$4,$5,$6,'ach',$7,$8,'posted','bank_tx_bulk_post',$9,$10,now(),now())
+          VALUES ($1,$2,$3,$4,$5,$6,'ach',$7,$8,'posted','bank_tx_bulk_post',$9,$10,now(),now(),$11)
           RETURNING id
         `,
         [
@@ -325,6 +332,7 @@ export async function bulkPostTransactionsAsBills(
           JSON.stringify({ source: "bank_tx_bulk_post", bank_transaction_id: txn.id }),
           txn.id,
           userId,
+          vendorIsSampleData,
         ]
       );
       const billPaymentId = paymentRes.rows[0]?.id;

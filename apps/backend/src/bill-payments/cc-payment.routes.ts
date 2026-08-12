@@ -33,7 +33,7 @@ function billPaidCents(row: { paid_cents: unknown; paid_amount: unknown; status:
 }
 
 export async function registerCcPaymentRoutes(app: FastifyInstance) {
-  app.post("/api/v1/bill-payments/cc", async (req, reply) => {
+  app.post("/api/v1/bill-payments/cc", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -71,10 +71,12 @@ export async function registerCcPaymentRoutes(app: FastifyInstance) {
         const qboBillId = billRaw.qbo_bill_id ? String(billRaw.qbo_bill_id) : null;
 
         const paymentRes = await client.query(
+          // ACCT-F353 — derive from the BILL being paid (billRaw.is_sample_data, already fetched
+          // above via SELECT *), matching bills.service.ts's own bill_payment writer precedent.
           `INSERT INTO accounting.bill_payments (
             operating_company_id, bill_id, vendor_id, payment_date, amount_cents, amount,
-            payment_method, cc_account_id, memo, status, created_by_user_id, created_at, updated_at, payment_source_kind
-          ) VALUES ($1,$2,$3,$4,$5,$6,'cc',$7,$8,'posted',$9,now(),now(),'cc_bill_payment') RETURNING id::text AS id`,
+            payment_method, cc_account_id, memo, status, created_by_user_id, created_at, updated_at, payment_source_kind, is_sample_data
+          ) VALUES ($1,$2,$3,$4,$5,$6,'cc',$7,$8,'posted',$9,now(),now(),'cc_bill_payment',$10) RETURNING id::text AS id`,
           [
             query.data.operating_company_id,
             body.data.bill_id,
@@ -85,6 +87,7 @@ export async function registerCcPaymentRoutes(app: FastifyInstance) {
             body.data.cc_account_id,
             body.data.memo ?? null,
             user.uuid,
+            Boolean(billRaw.is_sample_data),
           ]
         );
         const paymentId = String((paymentRes.rows[0] as { id?: string } | undefined)?.id ?? "");

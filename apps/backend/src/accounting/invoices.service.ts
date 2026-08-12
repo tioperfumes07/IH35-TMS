@@ -28,9 +28,10 @@ export async function createExpandedInvoice(client: DbClient, input: ExpandedInv
     ar_phone: string | null;
     terms_name: string | null;
     days_until_due: string | null;
+    is_sample_data: boolean | null;
   }>(
     `
-      SELECT c.id, c.payment_terms_id, c.ar_email, c.ar_phone, pt.terms_name, pt.days_until_due::text
+      SELECT c.id, c.payment_terms_id, c.ar_email, c.ar_phone, pt.terms_name, pt.days_until_due::text, c.is_sample_data
       FROM mdata.customers c
       LEFT JOIN catalogs.payment_terms pt ON pt.id = c.payment_terms_id
       WHERE c.id = $1
@@ -69,9 +70,11 @@ export async function createExpandedInvoice(client: DbClient, input: ExpandedInv
         invoice_type,
         bill_to_entity_type,
         bill_to_entity_id,
-        auto_deduct_settlement
+        auto_deduct_settlement,
+        -- ACCT-F353 — derive from the customer being invoiced.
+        is_sample_data
       ) VALUES (
-        $1,$2,$3,'draft',$4,$5,$6,$7,$8,$9,$10,$11,$12,'USD',$13,$13,$14,$15,$16,$17
+        $1,$2,$3,'draft',$4,$5,$6,$7,$8,$9,$10,$11,$12,'USD',$13,$13,$14,$15,$16,$17,$18
       )
       RETURNING id
     `,
@@ -93,6 +96,7 @@ export async function createExpandedInvoice(client: DbClient, input: ExpandedInv
       input.billToEntityType,
       input.billToEntityId,
       Boolean(input.autoDeductSettlement),
+      Boolean(customer.is_sample_data),
     ]
   );
   const invoiceId = insertRes.rows[0]?.id;
