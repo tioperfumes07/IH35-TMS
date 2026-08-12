@@ -47,6 +47,11 @@ vi.mock("../../qbo/tms-bill-push-chain.service.js", () => ({
 // Recurring generator's bill creator.
 vi.mock("../bills.service.js", () => ({
   createBill: async () => ({ id: "bill-recurring-1" }),
+  // LV-BILL-MDATA-VENDOR-FK-OPTOUT sweep (poster.service.ts) calls this best-effort during WO-close;
+  // mirror the real function's contract (null when unresolved) so it never blocks the kill-switch path.
+  resolveMdataVendorIdBestEffort: async () => null,
+  // ACCT-F353 sample-tag sweep — same best-effort call site, mirrors the real default (false) contract.
+  resolveVendorIsSampleDataBestEffort: async () => false,
 }));
 
 import { POSTING_FLAG_KEYS, resolveFlagEnabled } from "../../lib/feature-flags/service.js";
