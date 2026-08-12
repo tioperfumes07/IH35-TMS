@@ -421,7 +421,9 @@ export type Customer = {
   email: string | null;
   phone: string | null;
   billing_address: string | null;
+  billing_city?: string | null;
   billing_state: string | null;
+  billing_zip?: string | null;
   mc_number: string | null;
   dot_number: string | null;
   tax_id: string | null;

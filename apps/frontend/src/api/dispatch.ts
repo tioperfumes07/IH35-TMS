@@ -150,6 +150,7 @@ export type DispatchBookLoadPayload = {
   requires_load_locks?: boolean;
   requires_straps?: boolean;
   load_type?: "broker" | "direct";
+  catalog_load_type_id?: string;
   driver_pay_rate_per_mile?: number;
   factoring_company_vendor_id?: string;
   tarp_type?: string;
