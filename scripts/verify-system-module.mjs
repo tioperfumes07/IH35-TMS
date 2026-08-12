@@ -88,6 +88,15 @@ export function computeSystemModuleFailures(files) {
     errors.push('SystemModulePage.tsx: must state QuickBooks Reconciliation is not bank reconciliation (design law)');
   }
 
+  // P17 Wave-D chrome: the QBO reconciliation object register must retain canonical sortable,
+  // resizable, column-chooser table chrome instead of drifting back to a hand-built table.
+  if (!/import\s*\{[^}]*ParityTable[^}]*\}\s*from\s*["'][^"']*components\/parity\/ParityTable["']/.test(page)) {
+    errors.push("SystemModulePage.tsx: QBO reconciliation must import the canonical ParityTable");
+  }
+  if (!/<ParityTable<ReconObject>[\s\S]{0,500}?storageKey="system-qbo-reconciled-objects"/.test(page)) {
+    errors.push("SystemModulePage.tsx: QBO reconciliation objects must use persistent ParityTable chrome");
+  }
+
   return errors;
 }
 
@@ -106,6 +115,8 @@ if (process.argv.includes("--selftest")) {
     '<Route path="/system" element={<OwnerOnlyRoute><SystemModulePage /></OwnerOnlyRoute>} />';
   const goodPage =
     "export function SystemModulePage() { return null; }\n" +
+    'import { ParityTable } from "../../components/parity/ParityTable";\n' +
+    '<ParityTable<ReconObject> storageKey="system-qbo-reconciled-objects" />\n' +
     "// not bank reconciliation\n" +
     SYSTEM_TAB_LABELS.map((l) => `"${l}"`).join(",");
 
@@ -130,6 +141,11 @@ if (process.argv.includes("--selftest")) {
     manifest: goodManifest.replaceAll("OwnerOnlyRoute", "ProtectedRoute"),
     page: goodPage,
   });
+  const failHandBuiltQboTable = computeSystemModuleFailures({
+    sidebar: goodSidebar,
+    manifest: goodManifest,
+    page: goodPage.replace('<ParityTable<ReconObject> storageKey="system-qbo-reconciled-objects" />', "<table />"),
+  });
 
   const checks = [
     ["fully-wired inputs produce zero failures", pass.length === 0],
@@ -137,6 +153,7 @@ if (process.argv.includes("--selftest")) {
     ["non-Owner visibility is flagged", failNotOwner.some((e) => e.includes("Owner-only"))],
     ["missing tab is flagged", failMissingTab.some((e) => e.includes("Claude Coder"))],
     ["non-OwnerOnly route is flagged", failNotOwnerRoute.some((e) => e.includes("OwnerOnlyRoute"))],
+    ["hand-built QBO table is flagged", failHandBuiltQboTable.some((e) => e.includes("persistent ParityTable"))],
   ];
   const failed = checks.filter(([, ok]) => !ok);
   if (failed.length) {
