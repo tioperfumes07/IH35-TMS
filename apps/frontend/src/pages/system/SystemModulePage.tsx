@@ -5,10 +5,11 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { SecondaryNavTabs } from "../../components/shared/SecondaryNavTabs";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { resolveApiUrl } from "../../api/client";
-import { getQboReconciliation, type QboReconResponse } from "../../api/qbo-recon";
+import { getQboReconciliation, type QboReconResponse, type ReconObject } from "../../api/qbo-recon";
 import { getQboSyncHealth, type QboSyncHealthResponse } from "../../api/qbo-integration";
 import { getApAging, type ApAgingSummary } from "../../api/arApAging";
 import { getProgramTracker, type ProgramTracker } from "../../api/program-tracker";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
 /**
  * SYSTEM — Owner-only module. Single home for QuickBooks Reconciliation (TMS↔QBO tie-out — NOT bank
@@ -303,6 +304,26 @@ function QboReconTab({ data }: { data: SystemData }) {
   const { recon } = data;
   const apObj = findApObject(recon.data);
   const entities = recon.data?.objects?.map((o) => o.label).join(" · ");
+  const columns: ParityColumn<ReconObject>[] = [
+    { key: "label", label: "Object", sortable: true },
+    { key: "tms_count", label: "TMS", sortable: true, className: "text-right", cellClass: "text-right tabular-nums" },
+    {
+      key: "qbo_count",
+      label: "QBO",
+      sortable: true,
+      className: "text-right",
+      cellClass: "text-right tabular-nums",
+      sortValue: (row) => row.qbo_remote_count ?? row.qbo_mirror_count,
+      render: (row) => row.qbo_remote_count ?? row.qbo_mirror_count,
+    },
+    {
+      key: "count_in_sync",
+      label: "In sync",
+      sortable: true,
+      sortValue: (row) => (row.count_in_sync ? 1 : 0),
+      render: (row) => row.count_in_sync ? <Pill tone="ok">YES</Pill> : <Pill tone="warn">NO</Pill>,
+    },
+  ];
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
       <Card
@@ -326,32 +347,13 @@ function QboReconTab({ data }: { data: SystemData }) {
       </Card>
 
       <Card title="Reconciled objects" sub="Per-object TMS vs QBO counts and balances (live).">
-        {recon.data && recon.data.objects.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-[12px]">
-              <thead>
-                <tr className="text-[11px] uppercase tracking-wide text-slate-500">
-                  <th className="border-b border-gray-200 px-1.5 py-2 text-left">Object</th>
-                  <th className="border-b border-gray-200 px-1.5 py-2 text-right">TMS</th>
-                  <th className="border-b border-gray-200 px-1.5 py-2 text-right">QBO</th>
-                  <th className="border-b border-gray-200 px-1.5 py-2 text-left">In sync</th>
-                </tr>
-              </thead>
-              <tbody>
-                {recon.data.objects.map((o) => (
-                  <tr key={o.object}>
-                    <td className="border-b border-gray-100 px-1.5 py-2 text-slate-700">{o.label}</td>
-                    <td className="border-b border-gray-100 px-1.5 py-2 text-right tabular-nums text-slate-600">{o.tms_count}</td>
-                    <td className="border-b border-gray-100 px-1.5 py-2 text-right tabular-nums text-slate-600">{o.qbo_remote_count ?? o.qbo_mirror_count}</td>
-                    <td className="border-b border-gray-100 px-1.5 py-2">{o.count_in_sync ? <Pill tone="ok">YES</Pill> : <Pill tone="warn">NO</Pill>}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <p className="text-[12px] text-slate-500">{recon.isError ? "Reconciliation module not enabled (TMS_QBO_RECON_UI_ENABLED OFF)." : "Loading…"}</p>
-        )}
+        <ParityTable<ReconObject>
+          columns={columns}
+          rows={recon.data?.objects ?? []}
+          rowKey={(row) => row.object}
+          storageKey="system-qbo-reconciled-objects"
+          emptyText={recon.isError ? "Reconciliation unavailable." : recon.isLoading ? "Loading reconciliation…" : "No reconciled objects found."}
+        />
       </Card>
     </div>
   );
