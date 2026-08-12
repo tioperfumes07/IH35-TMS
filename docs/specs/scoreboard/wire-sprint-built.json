@@ -56,6 +56,14 @@
       "modules": ["dispatch"],
       "cols": ["customer", "driver", "unit", "trailer", "load", "connectivity", "reverse_link"],
       "leafRe": "^(secondary\\.book_load|planning\\.reserve|home\\.|load_board|load\\.detail)"
+    },
+    {
+      "task": "P33",
+      "pr": "#4278",
+      "guard": "scripts/verify-steps/1223-verify-law-claim-legal-ui-linkage.mjs",
+      "modules": ["insurance"],
+      "cols": ["driver", "unit", "load", "connectivity", "reverse_link"],
+      "leafRe": "^claims\\."
     }
   ]
 }
