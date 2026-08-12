@@ -1100,6 +1100,7 @@ export async function getBillDetail(userId: string, operatingCompanyId: string, 
         ${BILL_VENDOR_RESOLVE_JOIN_SQL}
         LEFT JOIN mdata.units u
           ON u.id = b.unit_id
+         AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = b.operating_company_id
         WHERE b.id = $1
           AND b.operating_company_id = $2
         LIMIT 1

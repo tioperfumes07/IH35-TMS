@@ -159,7 +159,9 @@ export async function listPendingForDriver(
              NULLIF(TRIM(CONCAT_WS(' ', td.first_name, td.last_name)), '') AS to_driver_name
       FROM dispatch.equipment_transfer_requests r
       LEFT JOIN mdata.drivers fd ON fd.id = r.from_driver_uuid
+                                AND fd.operating_company_id = r.operating_company_id
       LEFT JOIN mdata.drivers td ON td.id = r.to_driver_uuid
+                                AND td.operating_company_id = r.operating_company_id
       WHERE r.operating_company_id = $1::uuid
         AND r.${driverCol} = $2::uuid
         AND r.status = $3
@@ -232,7 +234,9 @@ export async function listInProgress(
              NULLIF(TRIM(CONCAT_WS(' ', td.first_name, td.last_name)), '') AS to_driver_name
       FROM dispatch.equipment_transfer_requests r
       LEFT JOIN mdata.drivers fd ON fd.id = r.from_driver_uuid
+                                AND fd.operating_company_id = r.operating_company_id
       LEFT JOIN mdata.drivers td ON td.id = r.to_driver_uuid
+                                AND td.operating_company_id = r.operating_company_id
       WHERE r.operating_company_id = $1::uuid
         AND r.status NOT IN ('completed', 'cancelled')
       ORDER BY r.created_at DESC
