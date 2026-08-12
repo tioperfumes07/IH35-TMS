@@ -558,6 +558,7 @@ export async function updateDispatchLoad(
       loadId,
       operatingCompanyId,
       newRateTotalCents: newTotal,
+      userId: requestingUserUuid,
     });
   }
 
