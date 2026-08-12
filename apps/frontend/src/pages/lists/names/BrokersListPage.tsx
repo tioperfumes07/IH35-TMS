@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { listCustomers, type Customer } from "../../../api/mdata";
 import { DataTable } from "../../../components/DataTable";
 import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
+import { EntityLink } from "../../../components/shared/EntityLink";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 
 function statusPillClass(status: string) {
@@ -34,7 +35,7 @@ export function BrokersListPage() {
 
   // TBL-STANDARD: shared DataTable columns (alignment per GLOBAL-TABLE-ALIGNMENT — text centers, numeric right).
   const columns = [
-    { key: "name", label: "Name", sortable: true, render: (row: Customer) => <span className="font-medium text-slate-800">{row.name}</span> },
+    { key: "name", label: "Name", sortable: true, render: (row: Customer) => <EntityLink kind="customer" id={row.id} label={row.name} className="font-medium text-slate-800" onClick={(event) => event.stopPropagation()} /> },
     { key: "customer_code", label: "Code", sortable: true, render: (row: Customer) => <span className="text-xs tracking-normal [font-variant-ligatures:none]">{row.customer_code ?? "—"}</span> },
     { key: "mc_number", label: "MC #", sortable: true, render: (row: Customer) => row.mc_number ?? "—" },
     { key: "email", label: "Email", sortable: true, render: (row: Customer) => <span className="text-slate-600">{row.email ?? "—"}</span> },
