@@ -1,16 +1,16 @@
 {
-  "as_of": "2026-08-12T19:33:53.867Z",
-  "main_sha": "25f7c6649",
+  "as_of": "2026-08-12T19:36:36.814Z",
+  "main_sha": "4aee5cd6d",
   "gate": "PRIORITY_10_3BOX_100",
   "allRequired": {
     "totR": 3110,
-    "totB": 1295,
-    "pct": 42
+    "totB": 1417,
+    "pct": 46
   },
   "waveABC_noChrome": {
     "abcR": 2480,
-    "abcB": 1044,
-    "pct": 42
+    "abcB": 1166,
+    "pct": 47
   },
   "per_module": [
     {
@@ -25,103 +25,86 @@
     {
       "mod": "accounting",
       "req": 185,
-      "built": 107,
-      "pct": 58,
+      "built": 127,
+      "pct": 69,
       "abcReq": 153,
-      "abcBuilt": 99,
-      "abcPct": 65
+      "abcBuilt": 119,
+      "abcPct": 78
     },
     {
       "mod": "dispatch",
       "req": 363,
-      "built": 254,
-      "pct": 70,
+      "built": 262,
+      "pct": 72,
       "abcReq": 318,
-      "abcBuilt": 244,
-      "abcPct": 77
+      "abcBuilt": 252,
+      "abcPct": 79
     },
     {
       "mod": "settlements",
       "req": 42,
-      "built": 28,
-      "pct": 67,
+      "built": 29,
+      "pct": 69,
       "abcReq": 36,
-      "abcBuilt": 28,
-      "abcPct": 78
+      "abcBuilt": 29,
+      "abcPct": 81
     },
     {
       "mod": "factoring",
       "req": 131,
-      "built": 60,
-      "pct": 46,
+      "built": 70,
+      "pct": 53,
       "abcReq": 114,
-      "abcBuilt": 60,
-      "abcPct": 53
+      "abcBuilt": 70,
+      "abcPct": 61
     },
     {
       "mod": "banking",
       "req": 49,
-      "built": 23,
-      "pct": 47,
+      "built": 26,
+      "pct": 53,
       "abcReq": 41,
-      "abcBuilt": 21,
-      "abcPct": 51
+      "abcBuilt": 24,
+      "abcPct": 59
     },
     {
       "mod": "customers",
       "req": 177,
-      "built": 125,
-      "pct": 71,
+      "built": 156,
+      "pct": 88,
       "abcReq": 149,
-      "abcBuilt": 113,
-      "abcPct": 76
+      "abcBuilt": 144,
+      "abcPct": 97
     },
     {
       "mod": "vendors",
       "req": 177,
-      "built": 81,
-      "pct": 46,
+      "built": 113,
+      "pct": 64,
       "abcReq": 147,
-      "abcBuilt": 71,
-      "abcPct": 48
+      "abcBuilt": 103,
+      "abcPct": 70
     },
     {
       "mod": "drivers",
       "req": 62,
-      "built": 29,
-      "pct": 47,
+      "built": 32,
+      "pct": 52,
       "abcReq": 50,
-      "abcBuilt": 29,
-      "abcPct": 58
+      "abcBuilt": 32,
+      "abcPct": 64
     },
     {
       "mod": "safety",
       "req": 203,
-      "built": 64,
-      "pct": 32,
+      "built": 78,
+      "pct": 38,
       "abcReq": 160,
-      "abcBuilt": 59,
-      "abcPct": 37
+      "abcBuilt": 73,
+      "abcPct": 46
     }
   ],
   "ranked_gaps": [
-    {
-      "col": "reverse_link",
-      "cells": 341,
-      "byMod": {
-        "lists": 219,
-        "accounting": 20,
-        "dispatch": 8,
-        "settlements": 1,
-        "factoring": 10,
-        "banking": 3,
-        "customers": 31,
-        "vendors": 32,
-        "drivers": 3,
-        "safety": 14
-      },
-      "seat": "Codex+CC-2 B"
-    },
     {
       "col": "qbo_chrome",
       "cells": 293,
@@ -138,6 +121,14 @@
         "safety": 11
       },
       "seat": "D LAST"
+    },
+    {
+      "col": "reverse_link",
+      "cells": 219,
+      "byMod": {
+        "lists": 219
+      },
+      "seat": "Codex+CC-2 B"
     },
     {
       "col": "vendor",
@@ -330,5 +321,5 @@
       "seat": "?"
     }
   ],
-  "entry_count": 95
+  "entry_count": 96
 }
