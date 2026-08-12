@@ -46,6 +46,7 @@ export type LoadStop = {
   updated_at: string;
   // Block 7 full-edit — editable stop columns surfaced by the enriched detail endpoint.
   time_window_type?: string | null;
+  pickup_time_type_id?: string | null;
   appointment_start_at?: string | null;
   appointment_end_at?: string | null;
   lumper_required?: boolean | null;

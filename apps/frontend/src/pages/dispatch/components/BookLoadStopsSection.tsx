@@ -1,5 +1,6 @@
 import type { JSX } from "react";
 import { useFieldArray, Controller, type Control, type UseFormRegister, type UseFormSetValue } from "react-hook-form";
+import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { StateSelect } from "../../../components/forms/StateSelect";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
@@ -9,6 +10,10 @@ import { stopGeocodePatches } from "./book-load-stop-geocode";
 import { TimeWindowDropdown } from "./book-load-v4/TimeWindowDropdown";
 
 type Props = {
+  operatingCompanyId?: string;
+  pickupTimeTypeOptions?: Array<{ value: string; label: string; type?: string }>;
+  pickupTimeTypesLoading?: boolean;
+  onPickupTimeTypeCreated?: () => void;
   control: Control<any>;
   register: UseFormRegister<any>;
   setValue?: UseFormSetValue<any>;
@@ -21,7 +26,15 @@ const CELL = "h-7 w-full rounded-sm border border-gray-300 px-2 text-xs";
 //   Row 2 (.siterow): Site contact | Site phone | Dock | Free time / lumper | Lumper amount ($)
 // then a collapsible "Customer instructions". Stop 1 = PICKUP (auto), Stop 2 = DELIVERY (auto).
 // Built field-for-field + row-for-row to load-wizard-render-v6.html (GUARD render-truth spec).
-export function BookLoadStopsSection({ control, register, setValue }: Props) {
+export function BookLoadStopsSection({
+  operatingCompanyId = "",
+  pickupTimeTypeOptions = [],
+  pickupTimeTypesLoading = false,
+  onPickupTimeTypeCreated,
+  control,
+  register,
+  setValue,
+}: Props) {
   const { fields, append, remove } = useFieldArray({ control, name: "stops" });
   const currentStops =
     ((control as unknown as { _formValues?: { stops?: Array<Record<string, unknown>> } })._formValues?.stops ?? []) as Array<
@@ -40,6 +53,7 @@ export function BookLoadStopsSection({ control, register, setValue }: Props) {
       postal_code: "",
       scheduled_arrival_at: "",
       time_window_type: "appointment",
+      pickup_time_type_id: "",
       appointment_start_at: "",
       appointment_end_at: "",
       free_time_summary: "",
@@ -191,6 +205,29 @@ export function BookLoadStopsSection({ control, register, setValue }: Props) {
                     anywhere, silently hardcoded to "appointment" for every stop. Surfacing it lets the office
                     correct a wrong OCR read or mark a customer-refused appointment before booking. */}
                 <div data-testid={`stop-timewindow-${index}`} className="grid grid-cols-1 gap-2 md:grid-cols-3">
+                  {isPickup ? (
+                    <Controller
+                      control={control}
+                      name={`stops.${index}.pickup_time_type_id`}
+                      render={({ field: pickupField }) => (
+                        <Field
+                          label="Pickup type"
+                          input={(
+                            <ReferenceSelect
+                              value={pickupField.value || null}
+                              onChange={(value) => pickupField.onChange(value ?? "")}
+                              options={pickupTimeTypeOptions}
+                              createKind="pickup_time_type"
+                              operatingCompanyId={operatingCompanyId}
+                              placeholder="Select pickup type"
+                              loading={pickupTimeTypesLoading}
+                              onOptionCreated={onPickupTimeTypeCreated}
+                            />
+                          )}
+                        />
+                      )}
+                    />
+                  ) : null}
                   <Field
                     label="Time window"
                     input={<TimeWindowDropdown register={register} name={`stops.${index}.time_window_type`} />}
