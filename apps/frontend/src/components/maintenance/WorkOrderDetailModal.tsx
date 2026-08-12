@@ -1,8 +1,14 @@
 import type { ReactNode } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "../Button";
 import { Modal } from "../Modal";
 import { EntityLink } from "../shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
+import { listPartsAssignments } from "../../api/maintenance";
+
+function money(cents: number) {
+  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(Number(cents) || 0);
+}
 
 type Props = {
   open: boolean;
@@ -38,6 +44,20 @@ function ModalSection({ title, children }: { title?: string; children: ReactNode
 }
 
 export function WorkOrderDetailModal({ open, workOrder, canRefreshDisplayId, onRefreshDisplayId, onComplete, onClose }: Props) {
+  const workOrderId = workOrder ? String(workOrder.id ?? "") : "";
+  const operatingCompanyId = workOrder ? String(workOrder.operating_company_id ?? "") : "";
+  // TASKS-STYLE WRITE-ONLY GAP: parts_invoice_links are created via other flows but this modal
+  // never read them back — the section below rendered a static placeholder string forever, no
+  // matter how many parts were actually linked. The GET route has no work_order_id filter yet
+  // (backend follow-up), so fetch the company's recent links (LIMIT 500 server-side) and filter
+  // client-side — real data, not fabricated, at the cost of one shared query instead of a
+  // per-work-order one.
+  const partsLinksQuery = useQuery({
+    queryKey: ["maintenance", "parts-assignments", operatingCompanyId],
+    queryFn: () => listPartsAssignments(operatingCompanyId),
+    enabled: open && Boolean(operatingCompanyId),
+  });
+
   if (!open || !workOrder) return null;
 
   const sourceType = String(workOrder.source_type ?? "—");
@@ -132,7 +152,26 @@ export function WorkOrderDetailModal({ open, workOrder, canRefreshDisplayId, onR
           </ModalSection>
         ) : (
           <ModalSection title="Parts Links (IS/IT)">
-            <div className="text-gray-600">Linked parts invoices render here from maintenance.parts_invoice_links.</div>
+            {(() => {
+              const links = (partsLinksQuery.data ?? []).filter((row) => row.work_order_id === workOrderId);
+              if (partsLinksQuery.isLoading) return <div className="text-gray-500">Loading…</div>;
+              if (links.length === 0) return <div className="text-gray-600">No parts invoices linked to this work order yet.</div>;
+              return (
+                <ul className="space-y-1">
+                  {links.map((link) => (
+                    <li key={link.id} className="flex flex-wrap items-center gap-1">
+                      <span>{link.part_description}</span>
+                      <span className="text-gray-500">×{link.qty_used}</span>
+                      <span className="text-gray-500">·</span>
+                      <EntityLink kind="vendor" id={link.vendor_id} label={entityLabel(link.vendor_name, link.vendor_id, "Vendor")} />
+                      <span className="text-gray-500">
+                        {link.vendor_invoice_number ? `inv ${link.vendor_invoice_number}` : ""} {money(link.vendor_invoice_amount)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              );
+            })()}
           </ModalSection>
         )}
 
