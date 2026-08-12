@@ -29,6 +29,10 @@
     "202612501800": {
       "claimed_by": "cursor",
       "purpose": "p44_load_cancellation_reason_same_opco_fk"
+    },
+    "202612502000": {
+      "claimed_by": "cursor",
+      "purpose": "p44_dispatch_flag_color_canonical_fk"
     }
   }
 }
