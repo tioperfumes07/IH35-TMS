@@ -7312,6 +7312,7 @@
       "detention_expected_hours",
       "detention_expected_y_n",
       "detention_reason_id",
+      "dispatch_flag_color_id",
       "dispatcher_eta_at",
       "dispatcher_user_id",
       "driver_instructions_file_id",
