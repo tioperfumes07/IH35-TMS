@@ -2,7 +2,7 @@
 /**
  * gl_je COLUMN-WAVE — VERTICAL-WIRING-LAW-2026-08-12.
  *
- * @matrix-built {"modules":["dispatch","factoring","banking","customers","vendors","drivers","safety"],"cols":["gl_je"],"task":"WAVE-C-gl_je","vertical":"column-wave"}
+ * @matrix-built {"modules":["dispatch","factoring","banking","customers","vendors","drivers","safety"],"cols":["gl_je"],"leafRe":".*","task":"WAVE-C-gl_je","vertical":"column-wave"}
  *
  * Audited every priority-10 module for the gl_je reverse-link (a money-affecting row must be able to
  * drill through to the accounting.journal_entries row(s) it posted). Standard: BACKEND actually
