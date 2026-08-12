@@ -406,6 +406,21 @@
           ]
         }
       ]
+    },
+    "liability_surfaces_built_2026_08_12": {
+      "finding": "LIABILITY-SURFACES-BUILT",
+      "matrix_built": [
+        {
+          "id": "home.reserve_tracker",
+          "cols": ["liability"],
+          "proof": "ReserveTracker getReserveBalances"
+        },
+        {
+          "id": "reserves.dashboard",
+          "cols": ["liability"],
+          "proof": "ReserveDashboard getReserveBalances"
+        }
+      ]
     }
   }
 }

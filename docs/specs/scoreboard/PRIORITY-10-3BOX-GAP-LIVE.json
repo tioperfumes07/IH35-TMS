@@ -1,16 +1,16 @@
 {
-  "as_of": "2026-08-12T21:05:33.645Z",
-  "main_sha": "5b789a721",
+  "as_of": "2026-08-12T21:08:28.930Z",
+  "main_sha": "84825360d",
   "gate": "PRIORITY_10_3BOX_100",
   "allRequired": {
     "totR": 2678,
-    "totB": 2278,
+    "totB": 2281,
     "pct": 85
   },
   "waveABC_noChrome": {
     "abcR": 2053,
-    "abcB": 2021,
-    "pct": 98
+    "abcB": 2024,
+    "pct": 99
   },
   "per_module": [
     {
@@ -25,11 +25,11 @@
     {
       "mod": "accounting",
       "req": 168,
-      "built": 129,
+      "built": 130,
       "pct": 77,
       "abcReq": 136,
-      "abcBuilt": 121,
-      "abcPct": 89
+      "abcBuilt": 122,
+      "abcPct": 90
     },
     {
       "mod": "dispatch",
@@ -52,11 +52,11 @@
     {
       "mod": "factoring",
       "req": 122,
-      "built": 93,
-      "pct": 76,
+      "built": 95,
+      "pct": 78,
       "abcReq": 105,
-      "abcBuilt": 93,
-      "abcPct": 89
+      "abcBuilt": 95,
+      "abcPct": 90
     },
     {
       "mod": "banking",
@@ -138,11 +138,11 @@
     },
     {
       "col": "liability",
-      "cells": 17,
+      "cells": 14,
       "byMod": {
-        "accounting": 3,
+        "accounting": 2,
         "settlements": 1,
-        "factoring": 12,
+        "factoring": 10,
         "banking": 1
       },
       "seat": "CC-1"
@@ -181,5 +181,5 @@
       "seat": "?"
     }
   ],
-  "entry_count": 134
+  "entry_count": 138
 }
