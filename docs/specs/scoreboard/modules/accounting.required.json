@@ -2,7 +2,7 @@
   "module": "accounting",
   "entity_default": "USMCA",
   "source": {
-    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md — Accounting grouped sub-nav",
+    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md \u2014 Accounting grouped sub-nav",
     "nav": "apps/frontend/src/pages/accounting/subnav-manifest.ts",
     "routes": "/accounting/*"
   },
@@ -95,10 +95,7 @@
       "sub": "Hub / KPIs",
       "route_hint": "/accounting",
       "required": [
-        "connectivity",
-        "gl_je",
-        "ap_bill",
-        "expense"
+        "connectivity"
       ]
     },
     {
@@ -484,7 +481,6 @@
       "sub": "CoA role bindings",
       "route_hint": "/accounting/coa-roles",
       "required": [
-        "gl_je",
         "connectivity"
       ]
     },
@@ -629,6 +625,62 @@
             "liability"
           ],
           "proof": "EscrowPage accounts+postings; KEEP liability required"
+        }
+      ]
+    },
+    "gl_je_honest_built_2026_08_12": {
+      "finding": "GL-JE-HONEST-BUILT",
+      "drops": [
+        {
+          "id": "home",
+          "removed": [
+            "gl_je",
+            "ap_bill",
+            "expense"
+          ]
+        },
+        {
+          "id": "coa_roles",
+          "removed": [
+            "gl_je"
+          ]
+        }
+      ],
+      "matrix_built": [
+        {
+          "id": "je.list",
+          "cols": [
+            "gl_je"
+          ],
+          "proof": "ManualJEListPage listJournalEntries + EntityLink journal_entry"
+        },
+        {
+          "id": "je.create",
+          "cols": [
+            "gl_je"
+          ],
+          "proof": "ManualJEModal create path"
+        },
+        {
+          "id": "escrow",
+          "cols": [
+            "gl_je"
+          ],
+          "proof": "EscrowPage linked_journal_entry_id EntityLink"
+        },
+        {
+          "id": "coa",
+          "cols": [
+            "gl_je"
+          ],
+          "proof": "ChartOfAccountsListPage \u2192 AccountRegisterPage journal_entry EntityLink"
+        },
+        {
+          "id": "transactions",
+          "cols": [
+            "gl_je"
+          ],
+          "proof": "covered by expenses/register JE memo guard; exact leaf id tag"
         }
       ]
     }
