@@ -233,25 +233,30 @@ export function assertScoreboardContract(sources) {
         );
       }
     }
-    // All-modules system rollup must share 4-box + dual Box 3/4 % with module boards.
+    // All-modules system rollup = module-board column set × A·B·L % per cell.
     {
       const sysRel = "apps/frontend/src/pages/program/ModuleMatrixSystemView.tsx";
       const boxesRel = "apps/frontend/src/pages/program/moduleMatrixBoxes.tsx";
+      const svcRel = "apps/backend/src/program/module-matrix.service.ts";
       const sysPage =
         sources?.[sysRel] ?? (fs.existsSync(path.join(ROOT, sysRel)) ? read(sysRel) : "");
       const boxesPage =
         sources?.[boxesRel] ?? (fs.existsSync(path.join(ROOT, boxesRel)) ? read(boxesRel) : "");
+      const svc =
+        sources?.[svcRel] ?? (fs.existsSync(path.join(ROOT, svcRel)) ? read(svcRel) : "");
       if (!sysPage) {
         problems.push(`${sysRel}: system rollup view missing`);
       } else {
         if (!/MatrixBoxTracker/.test(sysPage) && !/module-matrix-box-tracker/.test(sysPage)) {
           problems.push(`${sysRel}: All modules must use the same 4-box tracker as module boards`);
         }
-        if (!/GroupRollupTable/.test(sysPage) && !/module-matrix-group-rollups/.test(sysPage)) {
-          problems.push(`${sysRel}: All modules must show the same column-group rollup table`);
+        if (!/system-column-board/.test(sysPage) || !/TripleAbl/.test(sysPage)) {
+          problems.push(
+            `${sysRel}: All modules must render union columns like module boards with Audited%·Built%·Live% per cell`,
+          );
         }
-        if (!/Built % \(fill · wire\)/.test(sysPage) || !/Live % \(live · cert\)/.test(sysPage)) {
-          problems.push(`${sysRel}: system table must show dual Box 3/4 percentages (fill·wire / live·cert)`);
+        if (!/Audited% · Built% · Live%/.test(sysPage) && !/auditedPct/.test(sysPage)) {
+          problems.push(`${sysRel}: each column cell must expose Box 2/3/4 percentages`);
         }
         if (!/scope=system/.test(sysPage)) {
           problems.push(`${sysRel}: must fetch module-matrix?scope=system`);
@@ -264,6 +269,12 @@ export function assertScoreboardContract(sources) {
         if (!/DualPct/.test(boxesPage)) {
           problems.push(`${boxesRel}: DualPct helper required for Box 3/4 dual percentages`);
         }
+      }
+      if (svc && !/columnAbl/.test(svc)) {
+        problems.push(`${svcRel}: buildSystemModuleMatrix must emit columnAbl (A·B·L per column)`);
+      }
+      if (svc && !/boxAbl/.test(svc)) {
+        problems.push(`${svcRel}: system rollup must compute boxAbl / column Abl %`);
       }
     }
   }

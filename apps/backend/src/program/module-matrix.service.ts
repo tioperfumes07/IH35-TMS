@@ -970,11 +970,32 @@ export async function buildModuleMatrix(
 
 const MATRIX_ORDER_JSON = path.join(REPO_ROOT, "docs/specs/scoreboard/matrix-module-order.json");
 
+/** Per-column (or module-total) Box 2/3/4 cumulative fill % — same math as module board tracker. */
+export type MatrixAblPct = {
+  requiredCells: number;
+  /** Box 2 fill: audited+probe+built+live ÷ required */
+  auditedPct: number;
+  /** Box 3 fill: built+live ÷ required */
+  builtPct: number;
+  /** Box 4: live ÷ required */
+  livePct: number;
+};
+
+export type SystemMatrixColumn = {
+  id: string;
+  label: string;
+  group: string;
+};
+
 export type SystemModuleMatrixRow = {
   module: string;
   label: string;
   available: boolean;
   metrics: ModuleMatrixPayload["metrics"];
+  /** Module-total Box 2 / 3 / 4 % (cumulative fill). */
+  boxAbl: MatrixAblPct;
+  /** Same A/B/L % per matrix column (union columns; missing = required 0). */
+  columnAbl: Record<string, MatrixAblPct>;
   groupRollups?: MatrixGroupRollup[];
   probeProgress?: number | null;
   probeSource?: "neon_live" | "committed_stale";
@@ -984,16 +1005,21 @@ export type SystemModuleMatrixPayload = {
   sample: false;
   scope: "system";
   generatedAt: string;
+  /** Union of all module Required-map columns — same groups as module boards (LINK/MONEY/CHROME/WIRE/PROC). */
+  columns: SystemMatrixColumn[];
   modules: SystemModuleMatrixRow[];
-  /** Summed column-group rollups — same groups/columns as each module board. */
+  /** Software-total A/B/L % per column (sum across modules). */
+  columnAbl: Record<string, MatrixAblPct>;
+  /** Summed column-group rollups — same groups as each module board. */
   groupRollups: MatrixGroupRollup[];
   system: MatrixTierMetrics & {
     moduleCount: number;
     modulesAvailable: number;
-    /** @deprecated legacy cumulative audited path */
+    /** Box 2 cumulative fill % */
     auditedPct: number;
-    /** @deprecated use builtOnlyPct */
+    /** Box 3 cumulative fill % */
     builtPct: number;
+    boxAbl: MatrixAblPct;
   };
   meta: {
     tipSha?: string;
@@ -1002,6 +1028,94 @@ export type SystemModuleMatrixPayload = {
     probeSource?: "neon_live" | "committed_stale";
   };
 };
+
+function emptyAbl(): MatrixAblPct {
+  return { requiredCells: 0, auditedPct: 0, builtPct: 0, livePct: 0 };
+}
+
+function ablFromCounts(required: number, auditedCum: number, builtCum: number, live: number): MatrixAblPct {
+  return {
+    requiredCells: required,
+    auditedPct: matrixPct(auditedCum, required),
+    builtPct: matrixPct(builtCum, required),
+    livePct: matrixPct(live, required),
+  };
+}
+
+/** Cumulative Box 2/3/4 % from a projected module board (leaf×column cells). */
+function ablMetricsFromBoard(board: ModuleMatrixPayload): {
+  boxAbl: MatrixAblPct;
+  columnAbl: Record<string, MatrixAblPct>;
+  columns: SystemMatrixColumn[];
+  columnCounts: Record<string, { req: number; aud: number; bu: number; li: number }>;
+  boxCounts: { req: number; aud: number; bu: number; li: number };
+} {
+  type C = { req: number; aud: number; bu: number; li: number };
+  const byCol = new Map<string, C>();
+  let mReq = 0;
+  let mAud = 0;
+  let mBu = 0;
+  let mLi = 0;
+  const columns: SystemMatrixColumn[] = board.columns.map((c) => ({
+    id: c.id,
+    label: c.label,
+    group: c.group || "other",
+  }));
+  for (const col of board.columns) {
+    byCol.set(col.id, { req: 0, aud: 0, bu: 0, li: 0 });
+  }
+  for (const leaf of board.leaves) {
+    for (const col of board.columns) {
+      const cell = leaf.cells?.[col.id];
+      if (!cell || cell.tier === "na") continue;
+      const bucket = byCol.get(col.id)!;
+      bucket.req += 1;
+      mReq += 1;
+      const live = Boolean(cell.live);
+      const built = Boolean(cell.built) || live;
+      const audited = Boolean(cell.audited) || built || cell.tier === "probe";
+      if (live) {
+        bucket.li += 1;
+        bucket.bu += 1;
+        bucket.aud += 1;
+        mLi += 1;
+        mBu += 1;
+        mAud += 1;
+      } else if (built) {
+        bucket.bu += 1;
+        bucket.aud += 1;
+        mBu += 1;
+        mAud += 1;
+      } else if (audited) {
+        bucket.aud += 1;
+        mAud += 1;
+      }
+    }
+  }
+  const columnAbl: Record<string, MatrixAblPct> = {};
+  const columnCounts: Record<string, C> = {};
+  for (const [id, c] of byCol.entries()) {
+    columnCounts[id] = c;
+    columnAbl[id] = ablFromCounts(c.req, c.aud, c.bu, c.li);
+  }
+  return {
+    boxAbl: ablFromCounts(mReq, mAud, mBu, mLi),
+    columnAbl,
+    columns,
+    columnCounts,
+    boxCounts: { req: mReq, aud: mAud, bu: mBu, li: mLi },
+  };
+}
+
+function addCounts(
+  into: { req: number; aud: number; bu: number; li: number },
+  from: { req: number; aud: number; bu: number; li: number },
+): void {
+  into.req += from.req;
+  into.aud += from.aud;
+  into.bu += from.bu;
+  into.li += from.li;
+}
 
 let systemCache: { atMs: number; probeScope: string; payload: SystemModuleMatrixPayload } | null = null;
 
@@ -1036,19 +1150,33 @@ export async function buildSystemModuleMatrix(userUuid?: string): Promise<System
   const modules: SystemModuleMatrixRow[] = [];
   const systemBucket = emptyTierBucket();
   const groupBuckets = new Map<string, ReturnType<typeof emptyTierBucket>>();
+  const colMeta = new Map<string, SystemMatrixColumn>();
+  const systemColCounts = new Map<string, { req: number; aud: number; bu: number; li: number }>();
   let modulesAvailable = 0;
   let probeSource: "neon_live" | "committed_stale" = "committed_stale";
+  let sysAblCounts = { req: 0, aud: 0, bu: 0, li: 0 };
 
   for (const entry of order) {
     try {
       const board = await buildModuleMatrix(entry.id, userUuid);
       modulesAvailable += 1;
       if (board.meta.probeSource === "neon_live") probeSource = "neon_live";
+      const abl = ablMetricsFromBoard(board);
+      for (const c of abl.columns) {
+        if (!colMeta.has(c.id)) colMeta.set(c.id, c);
+        if (!systemColCounts.has(c.id)) systemColCounts.set(c.id, { req: 0, aud: 0, bu: 0, li: 0 });
+      }
+      for (const [colId, counts] of Object.entries(abl.columnCounts)) {
+        addCounts(systemColCounts.get(colId)!, counts);
+      }
+      addCounts(sysAblCounts, abl.boxCounts);
       modules.push({
         module: entry.id,
         label: entry.label,
         available: true,
         metrics: board.metrics,
+        boxAbl: abl.boxAbl,
+        columnAbl: abl.columnAbl,
         groupRollups: board.groupRollups,
         probeProgress: board.meta.probeProgress,
         probeSource: board.meta.probeSource,
@@ -1078,6 +1206,8 @@ export async function buildSystemModuleMatrix(userUuid?: string): Promise<System
         label: entry.label,
         available: false,
         metrics: emptyModuleMetrics(),
+        boxAbl: emptyAbl(),
+        columnAbl: {},
         groupRollups: [],
       });
     }
@@ -1108,27 +1238,40 @@ export async function buildSystemModuleMatrix(userUuid?: string): Promise<System
     }),
   );
 
+  const GROUP_ORDER = ["linkage", "money", "chrome", "wiring", "process", "other"];
+  const columns = [...colMeta.values()].sort((a, b) => {
+    const ga = GROUP_ORDER.indexOf(a.group);
+    const gb = GROUP_ORDER.indexOf(b.group);
+    if (ga !== gb) return (ga === -1 ? 99 : ga) - (gb === -1 ? 99 : gb);
+    return a.id.localeCompare(b.id);
+  });
+  const columnAbl: Record<string, MatrixAblPct> = {};
+  for (const [id, c] of systemColCounts.entries()) {
+    columnAbl[id] = ablFromCounts(c.req, c.aud, c.bu, c.li);
+  }
+  const boxAbl = ablFromCounts(sysAblCounts.req, sysAblCounts.aud, sysAblCounts.bu, sysAblCounts.li);
+
   const payload: SystemModuleMatrixPayload = {
     sample: false,
     scope: "system",
     generatedAt: new Date().toISOString(),
+    columns,
     modules,
+    columnAbl,
     groupRollups,
     system: {
       moduleCount: order.length,
       modulesAvailable,
       ...systemMetrics,
-      auditedPct: matrixPct(
-        systemMetrics.auditedOnlyCells + systemMetrics.probeOnlyCells,
-        systemMetrics.requiredCells,
-      ),
-      builtPct: systemMetrics.builtOnlyPct,
+      auditedPct: boxAbl.auditedPct,
+      builtPct: boxAbl.builtPct,
+      boxAbl,
     },
     meta: {
       tipSha: tipSha(),
       orderSource: "docs/specs/scoreboard/matrix-module-order.json",
       honesty:
-        "System rollup = sum of all module boards (sidebar order). Same column groups + 4-box law as each board. Box 3 fill=(Built+Live)/Req · wire=Built-only/Req. Box 4 live=cert=Live/Req.",
+        "All-modules board = same column set as module boards (LINK/MONEY/CHROME/WIRE). Each cell = Audited% · Built% · Live% (Box 2/3/4 cumulative fill ÷ Required for that module×column).",
       probeSource,
     },
   };

@@ -1,34 +1,31 @@
-# CC-1 INBOX
+# CC-1 INBOX — 2026-08-12 evening · NON-STALE
 
-**NO PAUSE** · entity=**USMCA-ONLY** · Built **~86%** (2026-08-12 evening)
+**NO PAUSE** · entity=**USMCA-ONLY** · Built **~86%** · tip on main after #6222
 
-## ★ DO NOT WAIT ON CASCADE / GUARD AUDIT
+## ★ Law pack (read once, then wire)
 
-Owner law: **NO HOLDS**. Findings flow agent→board→agent. Cascade re-verify is **AFTER** merge, never a pre-build gate.
-If you are idle “waiting on an audit” — **stop**. Pull this INBOX and wire **NOW**.
+Desktop: `HANDOFF-CC-1-NEW-SEAT-2026-08-12.md` (full paste: Law of the Land · Linkage · Vertical · Wire-first · DoD A–E · VERIFY 1–8 · FAST-MERGE)  
+Repo: `docs/specs/CODER-PASTE-INSTRUCTIONS-2026-08-12.md` · `docs/lockdown/VERTICAL-WIRING-LAW-2026-08-12.md` · `docs/specs/DEFINITION-OF-DONE.md` · Desktop `FAST-MERGE-4MIN-LAW.md`
 
-## ☐ NOW (Wave C money — serial, one PR at a time)
+**NO HOLDS / NO AUDIT WAIT.** Cascade verifies AFTER merge.
 
-Ranked Priority-10 leftovers (chrome already drained by Cursor):
+## ☐ NOW (Wave C money — SERIAL · one PR)
 
-1. **`column=liability`** — **10 cells, all `factoring`**
-   - Leaves still OPEN: `home.recourse_pipeline`, `submit.queue`, `batches.create`, `batches.detail`, `accounting.list`, `accounting.submit`, `accounting.detail`, `accounting.factor_recon`, `banking.entry`, `dispatch.queue`
-   - Wire real reserve/liability → `@matrix-built` + `leafRe` · FAST-MERGE
-   - Do **not** DROP chrome that is already honest; do **not** invent FKs
-2. Then **`column=gl_je`** — **2 cells, `accounting`**
-   - `invoices.create` · `payments.receive`
-   - JE EntityLink / poster path · `@matrix-built` · FAST-MERGE
-3. If a leaf is held phantom-view / owner-flag — **KEEP required**, document, move to next leaf (no idle)
+1. **`column=liability`** — **10 cells, factoring only**
+   - `home.recourse_pipeline` · `submit.queue` · `batches.create` · `batches.detail` · `accounting.list` · `accounting.submit` · `accounting.detail` · `accounting.factor_recon` · `banking.entry` · `dispatch.queue`
+   - Real reserve/liability wire → `@matrix-built` + `leafRe` · FAST-MERGE
+2. Then **`column=gl_je`** — **2 cells, accounting**: `invoices.create` · `payments.receive`
+
+## Truth (do not re-ask)
+
+- **Pickers NOT universal:** `picker_law` Built ~**60%** · Live **0%** across 29 modules. Many modules still 0% Built (banking/drivers/fleet/factoring/…). **Wave D** — do **not** start until A–C green.
+- Do **not** DROP honest chrome Cursor already fixed; do **not** invent FKs/reserves.
 
 ## FORBIDDEN
 
-- pause / wait for Cascade audit / wait for Jorge
-- parallel money PRs
-- Wave D (`qbo_chrome` / `picker_law`) until A–C green
-- TRANSP / QBO sync (weekend USMCA-ONLY)
-- module-deep / horizontal “finish one module”
+pause · wait Cascade · Wave D · TRANSP/QBO · parallel money PRs · module-deep · invent accounts
 
-## OUTBOX shape
+## OUTBOX
 
 ```
 CC-1 | column=liability|gl_je | SHIPPED #N @ sha | Built=… | NEXT=…
