@@ -103,7 +103,7 @@ export function OwnerApprovalPortalPage() {
                 <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Request</div>
                 <p className="mt-2 font-mono text-xs">{entityLabel(String(req?.display_id ?? ""), String(req?.id ?? ""), "Request")}</p>
                 <p className="mt-2">
-                  <strong>Driver:</strong> {entityLabel(String(req?.driver_name ?? ""), String(req?.driver_id ?? ""), "Driver")}
+                  <strong>Driver:</strong>{" "}<EntityLink kind="driver" id={String(req?.driver_id ?? "")} label={entityLabel(String(req?.driver_name ?? ""), String(req?.driver_id ?? ""), "Driver")} />
                 </p>
                 <p className="mt-1">
                   <strong>Amount:</strong> {money(Number(req?.requested_amount_cents ?? 0) / 100)}

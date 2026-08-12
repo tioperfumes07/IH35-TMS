@@ -233,7 +233,7 @@ export function TripPairingBoardPage() {
                 {unbooked.map((u) => (
                   <div key={u.unit_id} className="flex min-w-[180px] flex-col gap-1 rounded-sm border border-slate-200 bg-white px-2.5 py-2 text-xs">
                     <EntityLink kind="unit" id={u.unit_id} label={entityLabel(u.unit_number, u.unit_id, "Unit")} className="font-semibold text-slate-800" />
-                    <span className="text-slate-500">{entityLabel(u.driver_name, u.driver_id, "Driver")}</span>
+                    <span className="text-slate-500"><EntityLink kind="driver" id={u.driver_id} label={entityLabel(u.driver_name, u.driver_id, "Driver")} /></span>
                     {/* C1b: live location ("now: <city>") arrives with the backend payload — not fabricated. */}
                     <span className="text-[10px] text-slate-400">now: —</span>
                     <button
