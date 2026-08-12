@@ -9,6 +9,13 @@ export type RecordExpenseFormValues = {
   vendorId: string | null;
   vendorUuid: string | null;
   vendorDisplay: string;
+  // EXPENSE column-wave: accounting.expenses.driver_uuid has been readable/writable server-side since
+  // expenses.routes.ts's original create/list/detail (driver name joined, driver_id filter param) —
+  // this form never had a field for it, so a driver-caused general expense (distinct from fuel-card
+  // overage and reimbursement, which post through their own direct-JE leaves) could never be recorded
+  // with its driver attribution, and no Driver page could ever filter/show its expenses.
+  driverId: string | null;
+  driverDisplay: string;
   categoryId: string;
   categoryLabel: string;
   categoryQboId: string | null;
@@ -84,6 +91,7 @@ export async function submitRecordExpense(
     memo: buildRecordExpenseMemo(values, linkage),
     // Only a real local vendor uuid (picked from the list) flows; free-typed text is omitted.
     ...(values.vendorUuid && UUID_RE.test(values.vendorUuid) ? { vendor_uuid: values.vendorUuid } : {}),
+    ...(values.driverId && UUID_RE.test(values.driverId) ? { driver_id: values.driverId } : {}),
     ...(attachmentDraftId ? { attachment_draft_id: attachmentDraftId } : {}),
     // HARD cross-module FKs (maintenance): only when linkage / picker supplies them — absent = unchanged.
     ...(linkage?.workOrderId ? { work_order_id: linkage.workOrderId } : {}),
@@ -108,6 +116,8 @@ export function initialRecordExpenseFormValues(): RecordExpenseFormValues {
     vendorId: null,
     vendorUuid: null,
     vendorDisplay: "",
+    driverId: null,
+    driverDisplay: "",
     categoryId: "",
     categoryLabel: "",
     categoryQboId: null,

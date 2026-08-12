@@ -71,6 +71,14 @@ export function ExpensesListPage() {
   // (?sort=&dir=) so it survives reload / is shareable, same as the Banking register.
   const { sortKey, sortDirection, onSortChange } = useUrlSort();
   const deepLinkExpenseId = searchParams.get("expense_id");
+  // EXPENSE column-wave: LoadDetailDrawer.tsx's "Open expenses" button navigates to
+  // /accounting/expenses?load_id=<id> — this page only ever read expense_id, so the click landed on
+  // an unfiltered list, not the load's expenses. listExpenses() already accepts load_id (api/accounting.ts);
+  // only the read side of this page was missing.
+  const deepLinkLoadId = searchParams.get("load_id");
+  // EXPENSE column-wave: EarningsTab.tsx's new "Driver-attributed expenses" section links here with
+  // ?driver_id=<id> — same unfiltered-list bug as load_id above, fixed the same way.
+  const deepLinkDriverId = searchParams.get("driver_id");
   const [status, setStatus] = useState<"" | ExpenseListStatus>("");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
@@ -95,12 +103,14 @@ export function ExpensesListPage() {
   }, [deepLinkExpenseId]);
 
   const query = useQuery({
-    queryKey: ["accounting", "expenses", companyId, status, fromDate, toDate],
+    queryKey: ["accounting", "expenses", companyId, status, fromDate, toDate, deepLinkLoadId, deepLinkDriverId],
     queryFn: () =>
       listExpenses(companyId, {
         status: status || undefined,
         date_from: fromDate || undefined,
         date_to: toDate || undefined,
+        load_id: deepLinkLoadId || undefined,
+        driver_id: deepLinkDriverId || undefined,
         limit: 200,
       }).then((res) => res.rows),
     enabled: Boolean(companyId),
