@@ -1,4 +1,9 @@
 {
+  "3217": {
+    "claimed_at": "2026-08-12",
+    "claimed_by": "cc-1",
+    "purpose": "verify-settlements-gl-bills-drillthrough"
+  },
   "3213": {
     "claimed_at": "2026-08-12",
     "claimed_by": "cc-1",
