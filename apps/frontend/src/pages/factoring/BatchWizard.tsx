@@ -247,6 +247,14 @@ export function BatchWizard() {
             <div className="rounded-sm border border-gray-200 p-3 text-sm">
               <div className="text-xs uppercase tracking-wide text-gray-500">Expected Fee</div>
               <div className="font-semibold text-gray-900">{asMoney(draftBatch.expected_fee_cents)}</div>
+              {/* WAVE-C-liability-batches-create: Reserve = Net − Fee − Advance (locked Faro formula,
+                  ih35-accounting-decisions §3 "Purchase Price = Net − Fee − Reserve"), derived purely
+                  from the already-real, already-stored batch totals — no new column, no new GL math,
+                  no new box (verify-no-nested-box ratchet: fold into this tile, not a new frame). */}
+              <div className="mt-2 text-xs uppercase tracking-wide text-gray-500">Expected Reserve</div>
+              <div className="font-semibold text-gray-900" data-testid="factoring-batch-expected-reserve">
+                {asMoney(draftBatch.total_face_cents - draftBatch.expected_advance_cents - draftBatch.expected_fee_cents)}
+              </div>
             </div>
             <div className="rounded-sm border border-gray-200 p-3 text-sm">
               <div className="text-xs uppercase tracking-wide text-gray-500">Rates</div>

@@ -415,6 +415,7 @@ export type SubmissionQueueItem = {
   has_rate_confirmation: boolean;
   is_submittable: boolean;
   missing_docs: string[];
+  expected_reserve_cents: number | null;
 };
 
 export type WorkqueueItem = {

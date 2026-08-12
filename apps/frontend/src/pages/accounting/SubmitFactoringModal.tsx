@@ -88,6 +88,13 @@ export function SubmitFactoringModal({ open, operatingCompanyId, onClose, onCrea
     [selectedInvoices]
   );
 
+  // WAVE-C-liability-accounting-submit: reserve/liability this submission will create, from the
+  // SAME reservePct field the submit payload already sends (reserve_pct) — preview only, no posting.
+  const selectedExpectedReserve = useMemo(
+    () => Math.round(selectedTotal * (Number(reservePct || 0) / 100)),
+    [selectedTotal, reservePct]
+  );
+
   useEffect(() => {
     if (!open) return;
     if (!vendorId && factoringSummaryQuery.data?.active_factor_id) {
@@ -141,7 +148,9 @@ export function SubmitFactoringModal({ open, operatingCompanyId, onClose, onCrea
       }}
       footer={
         <div className="flex items-center justify-between">
-          <div className="text-xs text-gray-600">Selected total: {money(selectedTotal)}</div>
+          <div className="text-xs text-gray-600" data-testid="submit-factoring-expected-reserve">
+            Selected total: {money(selectedTotal)} · Expected reserve: {money(selectedExpectedReserve)}
+          </div>
           <div className="flex gap-2">
             <Button variant="secondary" onClick={onClose} disabled={isSubmitting}>
               Cancel
