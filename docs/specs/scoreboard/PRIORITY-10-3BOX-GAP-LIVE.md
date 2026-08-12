@@ -1,6 +1,6 @@
 # PRIORITY 10 · 3-BOX GATE — LIVE GAP
 
-**as_of:** 2026-08-12T20:57:13.983Z · **main:** `d61658c84`
+**as_of:** 2026-08-12T21:00:22.232Z · **main:** `472244f18`
 
 ## Bar
 
@@ -8,7 +8,7 @@ All 10 modules: **Required + Audited + Built = 100%** before Live. Wave **A→B�
 
 ## Built coverage
 
-- All cells: **84%** (2270/2690)
+- All cells: **85%** (2275/2689)
 - Wave A–C (no chrome): **98%** (2019/2064)
 
 | Module | Built% all | Built% A–C |
@@ -20,9 +20,9 @@ All 10 modules: **Required + Audited + Built = 100%** before Live. Wave **A→B�
 | factoring | 76% | 89% |
 | banking | 83% | 95% |
 | customers | 91% | 100% |
-| vendors | 87% | 99% |
+| vendors | 89% | 99% |
 | drivers | 80% | 100% |
-| safety | 80% | 99% |
+| safety | 81% | 99% |
 
 ## Ranked gaps
 
@@ -33,8 +33,6 @@ All 10 modules: **Required + Audited + Built = 100%** before Live. Wave **A→B�
 | `liability` | 27 | CC-1 |
 | `gl_je` | 13 | CC-1 C |
 | `ap_bill` | 3 | CC-1 |
-| `scenario.ap` | 3 | ? |
-| `scenario.insurance` | 3 | ? |
 | `expense` | 2 | CC-1 |
 | `inventory` | 1 | ? |
 | `scenario.maintenance` | 1 | ? |
