@@ -146,6 +146,14 @@
       "leafRe": "^(vendors\\.|expenses\\.|bills\\.)"
     },
     {
+      "task": "CATALOG-RLS-SCOPE",
+      "pr": "#5961",
+      "guard": "scripts/verify-steps/2992-verify-catalog-config-physical-columns.mjs",
+      "modules": ["lists"],
+      "cols": ["connectivity", "entity_scope"],
+      "leafRe": "^lists\\."
+    },
+    {
       "task": "P29",
       "pr": "#5821",
       "guard": "scripts/verify-steps/3073-verify-failed-posting-batch-is-retriable.mjs",

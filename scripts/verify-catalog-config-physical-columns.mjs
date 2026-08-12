@@ -62,6 +62,23 @@ export function findUngatedDeactivatedAtRefs(factorySource) {
   return offenders;
 }
 
+export function findEntityScopeDefaultProblems(factorySource) {
+  const problems = [];
+  if (!/GLOBAL_CATALOG_TABLES\s*=\s*new Set\(\["account_types", "audit_event_types"\]\)/.test(factorySource)) {
+    problems.push("global catalog allowlist must stay explicit and limited to account_types + audit_event_types");
+  }
+  if (!/return config\.entityScoped \?\? !GLOBAL_CATALOG_TABLES\.has\(config\.tableName\)/.test(factorySource)) {
+    problems.push("omitted entityScoped must default to company scope, never global");
+  }
+  if (!/entity_scoped_catalog_cannot_be_global/.test(factorySource)) {
+    problems.push("an explicit false on a company catalog must fail closed");
+  }
+  if (!/const entityScoped = isEntityScopedCatalog\(config\)/.test(factorySource)) {
+    problems.push("route factory must resolve the safe entity scope once per config");
+  }
+  return problems;
+}
+
 function run() {
   const failures = [];
   const routesSrc = fs.readFileSync(path.join(ROOT, ROUTES_FILE), "utf8");
@@ -76,6 +93,7 @@ function run() {
   for (const off of ungated) {
     failures.push(`${FACTORY_FILE}:${off.line} — unconditional 'deactivated_at' reference, not gated on config.hasDeactivatedAt: ${off.text}`);
   }
+  failures.push(...findEntityScopeDefaultProblems(factorySrc).map((p) => `${FACTORY_FILE}: ${p}`));
 
   return failures;
 }
@@ -98,6 +116,8 @@ if (process.argv.includes("--selftest")) {
     ["an if(hasDeactivatedAt){ ref } multi-line gate passes clean", findUngatedDeactivatedAtRefs(goodFactoryMultiline).length === 0],
     ["an unconditional deactivated_at reference is flagged (regression re-plant)", findUngatedDeactivatedAtRefs(badFactory).length === 1],
     ["a deactivated_at reference outside the gate window is still flagged", findUngatedDeactivatedAtRefs(badFactoryFarGate).length === 1],
+    ["safe entity-scope default passes", findEntityScopeDefaultProblems(`const GLOBAL_CATALOG_TABLES = new Set(["account_types", "audit_event_types"]); function isEntityScopedCatalog(config) { if (config.entityScoped === false) throw new Error("entity_scoped_catalog_cannot_be_global"); return config.entityScoped ?? !GLOBAL_CATALOG_TABLES.has(config.tableName); } const entityScoped = isEntityScopedCatalog(config);`).length === 0],
+    ["global-by-default regression is flagged", findEntityScopeDefaultProblems(`const entityScoped = config.entityScoped ?? false;`).length > 0],
   ];
   const failed = checks.filter(([, ok]) => !ok);
   if (failed.length) {
