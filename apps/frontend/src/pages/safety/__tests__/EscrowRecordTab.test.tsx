@@ -57,6 +57,7 @@ describe("EscrowRecordTab (A23-8 + ND-ESC-01)", () => {
       forfeit_attempts: [
         {
           id: "attempt-1",
+          driver_id: "d0000000-0000-0000-0000-000000000001",
           driver_name: "Alex Driver",
           amount: 100,
           reason: "Separation",
