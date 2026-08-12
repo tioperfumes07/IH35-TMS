@@ -226,6 +226,14 @@
       "leafRe": "^(lists\\.|customers\\.|vendors\\.)"
     },
     {
+      "task": "P31",
+      "pr": "#5830",
+      "guard": "scripts/verify-trailer-profile-sections-complete.mjs",
+      "modules": ["dispatch", "fleet"],
+      "cols": ["load", "connectivity", "reverse_link"],
+      "leafRe": "^(load\\.detail|fleet\\.|secondary\\.book_load)"
+    },
+    {
       "task": "F361",
       "pr": "#5919",
       "guard": "scripts/verify-steps/3129-verify-expenses-list-je-memo.mjs",
