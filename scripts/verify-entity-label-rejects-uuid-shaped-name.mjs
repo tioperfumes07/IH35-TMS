@@ -481,6 +481,16 @@ const SIBLINGS = [
     good: /entityLabel\(\s*row\.previous_driver_name\s*,\s*row\.previous_driver_id\s*,\s*"Driver"\s*\)/,
   },
   {
+    rel: "apps/frontend/src/pages/dispatch/AssignmentHistoryPage.tsx",
+    bad: /previous_unit_number\s*\?\?\s*undefined/,
+    good: /<EntityLink kind="unit" id=\{row\.previous_unit_id\} label=\{entityLabel\(row\.previous_unit_number, row\.previous_unit_id, "Unit"\)\} \/>/,
+  },
+  {
+    rel: "apps/frontend/src/pages/dispatch/AssignmentHistoryPage.tsx",
+    bad: /new_unit_number\s*\?\?\s*undefined/,
+    good: /<EntityLink kind="unit" id=\{row\.new_unit_id\} label=\{entityLabel\(row\.new_unit_number, row\.new_unit_id, "Unit"\)\} \/>/,
+  },
+  {
     rel: "apps/frontend/src/pages/maintenance/pre-flight/PreFlightDvirQueue.tsx",
     bad: /unit_number\s*\?\?\s*undefined|driver_name\s*\?\?\s*"—"/,
     good: /entityLabel\(\s*row\.unit_number\s*,\s*row\.unit_id\s*,\s*"Unit"\s*\)/,
