@@ -61,6 +61,10 @@
     "202612512000": {
       "claimed_by": "cursor",
       "purpose": "p43_load_invoice_customer_same_opco_fks"
+    },
+    "202612512200": {
+      "claimed_by": "cursor",
+      "purpose": "p42_expense_vendor_same_opco_fk"
     }
   }
 }
