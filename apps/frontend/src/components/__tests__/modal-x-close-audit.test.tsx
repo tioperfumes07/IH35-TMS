@@ -65,7 +65,7 @@ describe("modal x-close audit", () => {
         />
       )
     );
-    fireEvent.click(screen.getByRole("button", { name: "Close Create Rule" }));
+    fireEvent.click(screen.getByRole("button", { name: "Close" }));
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
