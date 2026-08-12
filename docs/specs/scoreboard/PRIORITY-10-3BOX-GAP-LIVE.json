@@ -1,16 +1,16 @@
 {
-  "as_of": "2026-08-12T20:52:02.737Z",
-  "main_sha": "6351ddac3",
+  "as_of": "2026-08-12T20:55:53.465Z",
+  "main_sha": "b4ad95b8f",
   "gate": "PRIORITY_10_3BOX_100",
   "allRequired": {
-    "totR": 2702,
+    "totR": 2694,
     "totB": 2270,
     "pct": 84
   },
   "waveABC_noChrome": {
-    "abcR": 2072,
+    "abcR": 2064,
     "abcB": 2019,
-    "pct": 97
+    "pct": 98
   },
   "per_module": [
     {
@@ -96,12 +96,12 @@
     },
     {
       "mod": "safety",
-      "req": 201,
+      "req": 193,
       "built": 154,
-      "pct": 77,
-      "abcReq": 158,
+      "pct": 80,
+      "abcReq": 150,
       "abcBuilt": 149,
-      "abcPct": 94
+      "abcPct": 99
     }
   ],
   "ranked_gaps": [
@@ -159,25 +159,6 @@
       "seat": "CC-1 C"
     },
     {
-      "col": "ap_bill",
-      "cells": 7,
-      "byMod": {
-        "accounting": 1,
-        "settlements": 2,
-        "safety": 4
-      },
-      "seat": "CC-1"
-    },
-    {
-      "col": "expense",
-      "cells": 6,
-      "byMod": {
-        "accounting": 1,
-        "safety": 5
-      },
-      "seat": "CC-1"
-    },
-    {
       "col": "scenario.maintenance",
       "cells": 5,
       "byMod": {
@@ -185,6 +166,15 @@
         "dispatch": 4
       },
       "seat": "?"
+    },
+    {
+      "col": "ap_bill",
+      "cells": 3,
+      "byMod": {
+        "accounting": 1,
+        "settlements": 2
+      },
+      "seat": "CC-1"
     },
     {
       "col": "scenario.ap",
@@ -201,6 +191,15 @@
         "safety": 3
       },
       "seat": "?"
+    },
+    {
+      "col": "expense",
+      "cells": 2,
+      "byMod": {
+        "accounting": 1,
+        "safety": 1
+      },
+      "seat": "CC-1"
     },
     {
       "col": "inventory",

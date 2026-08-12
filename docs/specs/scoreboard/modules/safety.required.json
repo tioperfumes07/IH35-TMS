@@ -300,7 +300,6 @@
         "customer",
         "vendor",
         "liability",
-        "expense",
         "gl_je",
         "scenario.insurance",
         "picker_law",
@@ -335,7 +334,6 @@
         "trailer",
         "load",
         "liability",
-        "expense",
         "gl_je",
         "picker_law",
         "qbo_chrome",
@@ -381,8 +379,6 @@
         "load",
         "driver",
         "vendor",
-        "ap_bill",
-        "expense",
         "gl_je",
         "scenario.insurance",
         "picker_law",
@@ -441,7 +437,6 @@
         "driver",
         "unit",
         "vendor",
-        "ap_bill",
         "expense",
         "connectivity",
         "picker_law"
@@ -456,8 +451,6 @@
         "driver",
         "unit",
         "vendor",
-        "ap_bill",
-        "expense",
         "gl_je",
         "picker_law",
         "qbo_chrome",
@@ -526,7 +519,6 @@
         "unit",
         "trailer",
         "vendor",
-        "ap_bill",
         "connectivity",
         "picker_law",
         "qbo_chrome"
@@ -630,6 +622,49 @@
           "id": "geofence_alerts.list",
           "removed": [
             "load"
+          ]
+        }
+      ]
+    },
+    "money_create_2026_08_12": {
+      "finding": "SAFETY-REQUIRED-MONEY-INFLATION",
+      "drops": [
+        {
+          "id": "accidents.create",
+          "removed": [
+            "expense"
+          ]
+        },
+        {
+          "id": "damage_reports.create",
+          "removed": [
+            "expense"
+          ]
+        },
+        {
+          "id": "cargo_claims.create",
+          "removed": [
+            "expense",
+            "ap_bill"
+          ]
+        },
+        {
+          "id": "external_fines.create",
+          "removed": [
+            "expense",
+            "ap_bill"
+          ]
+        },
+        {
+          "id": "external_fines.list",
+          "removed": [
+            "ap_bill"
+          ]
+        },
+        {
+          "id": "permits.list",
+          "removed": [
+            "ap_bill"
           ]
         }
       ]
