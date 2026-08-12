@@ -518,7 +518,8 @@
       "sub": "Accounting reports hub",
       "route_hint": "/accounting/reports",
       "required": [
-        "connectivity"
+        "connectivity",
+        "gl_je"
       ]
     }
   ],
