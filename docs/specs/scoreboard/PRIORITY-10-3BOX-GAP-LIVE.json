@@ -1,26 +1,26 @@
 {
-  "as_of": "2026-08-12T19:42:17.282Z",
-  "main_sha": "56c3cd5f3",
+  "as_of": "2026-08-12T19:47:39.619Z",
+  "main_sha": "eb83c58e2",
   "gate": "PRIORITY_10_3BOX_100",
   "allRequired": {
     "totR": 3110,
-    "totB": 1636,
-    "pct": 53
+    "totB": 1814,
+    "pct": 58
   },
   "waveABC_noChrome": {
     "abcR": 2480,
-    "abcB": 1385,
-    "pct": 56
+    "abcB": 1563,
+    "pct": 63
   },
   "per_module": [
     {
       "mod": "lists",
       "req": 1721,
-      "built": 743,
-      "pct": 43,
+      "built": 864,
+      "pct": 50,
       "abcReq": 1312,
-      "abcBuilt": 539,
-      "abcPct": 41
+      "abcBuilt": 660,
+      "abcPct": 50
     },
     {
       "mod": "accounting",
@@ -34,11 +34,11 @@
     {
       "mod": "dispatch",
       "req": 363,
-      "built": 262,
-      "pct": 72,
+      "built": 265,
+      "pct": 73,
       "abcReq": 318,
-      "abcBuilt": 252,
-      "abcPct": 79
+      "abcBuilt": 255,
+      "abcPct": 80
     },
     {
       "mod": "settlements",
@@ -52,11 +52,11 @@
     {
       "mod": "factoring",
       "req": 131,
-      "built": 70,
-      "pct": 53,
+      "built": 75,
+      "pct": 57,
       "abcReq": 114,
-      "abcBuilt": 70,
-      "abcPct": 61
+      "abcBuilt": 75,
+      "abcPct": 66
     },
     {
       "mod": "banking",
@@ -70,20 +70,20 @@
     {
       "mod": "customers",
       "req": 177,
-      "built": 156,
-      "pct": 88,
+      "built": 161,
+      "pct": 91,
       "abcReq": 149,
-      "abcBuilt": 144,
-      "abcPct": 97
+      "abcBuilt": 149,
+      "abcPct": 100
     },
     {
       "mod": "vendors",
       "req": 177,
-      "built": 113,
-      "pct": 64,
+      "built": 152,
+      "pct": 86,
       "abcReq": 147,
-      "abcBuilt": 103,
-      "abcPct": 70
+      "abcBuilt": 142,
+      "abcPct": 97
     },
     {
       "mod": "drivers",
@@ -97,11 +97,11 @@
     {
       "mod": "safety",
       "req": 203,
-      "built": 78,
-      "pct": 38,
+      "built": 83,
+      "pct": 41,
       "abcReq": 160,
-      "abcBuilt": 73,
-      "abcPct": 46
+      "abcBuilt": 78,
+      "abcPct": 49
     }
   ],
   "ranked_gaps": [
@@ -121,19 +121,6 @@
         "safety": 11
       },
       "seat": "D LAST"
-    },
-    {
-      "col": "vendor",
-      "cells": 178,
-      "byMod": {
-        "lists": 121,
-        "dispatch": 3,
-        "factoring": 5,
-        "customers": 5,
-        "vendors": 39,
-        "safety": 5
-      },
-      "seat": "Codex A"
     },
     {
       "col": "unit",
@@ -313,5 +300,5 @@
       "seat": "?"
     }
   ],
-  "entry_count": 97
+  "entry_count": 99
 }
