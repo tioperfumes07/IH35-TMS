@@ -153,10 +153,43 @@ async function appendWorkflowAudit(
   ]);
 }
 
+// CLS-JOIN-ENTITY-UNSCOPED fix: catalogs.account_role_bindings and catalogs.posting_templates are
+// genuinely GLOBAL tables (no operating_company_id column — role_key/template_code are UNIQUE across
+// the whole system, one binding/template applies to every entity), so a bare existence check is
+// correct for those two types. catalogs.accounts is NOT global — it carries operating_company_id and
+// is scoped everywhere else (see accounts.routes.ts). This route's WF-064-CATAL-003 (deactivate
+// account) path let a caller name ANY company's account id and had no membership check anywhere in
+// this file — an Administrator of Company A could get a colleague Administrator (of ANY company, the
+// approve route only checks role, not company) to deactivate Company B's GL account. Require real
+// org.user_company_access membership on the account's own operating_company_id, same resolver
+// pattern as MDATA-F10/F11.
+async function callerCanTargetAccount(
+  client: { query: (query: string, values?: unknown[]) => Promise<{ rows: Array<{ id: string }> }> },
+  targetResourceId: string,
+  callerUserId: string
+) {
+  const res = await client.query(
+    `
+      SELECT a.id
+        FROM catalogs.accounts a
+        JOIN org.user_company_access uca
+          ON uca.company_id = a.operating_company_id
+         AND uca.user_id = $2::uuid
+         AND uca.deactivated_at IS NULL
+        JOIN org.companies oc ON oc.id = uca.company_id AND oc.deactivated_at IS NULL
+       WHERE a.id = $1::uuid
+       LIMIT 1
+    `,
+    [targetResourceId, callerUserId]
+  );
+  return res.rows.length > 0;
+}
+
 async function resourceExists(
   client: { query: (query: string, values?: unknown[]) => Promise<{ rows: Array<{ id: string }> }> },
   targetResourceType: z.infer<typeof resourceTypeSchema>,
-  targetResourceId: string
+  targetResourceId: string,
+  callerUserId: string
 ) {
   if (targetResourceType === "account_role_binding") {
     const res = await client.query(`SELECT id FROM catalogs.account_role_bindings WHERE id = $1 LIMIT 1`, [targetResourceId]);
@@ -167,8 +200,7 @@ async function resourceExists(
     return res.rows.length > 0;
   }
   if (targetResourceType === "account") {
-    const res = await client.query(`SELECT id FROM catalogs.accounts WHERE id = $1 LIMIT 1`, [targetResourceId]);
-    return res.rows.length > 0;
+    return callerCanTargetAccount(client, targetResourceId, callerUserId);
   }
   return targetResourceId === QBO_SYNC_SENTINEL_ID;
 }
@@ -262,7 +294,7 @@ export async function registerCatalogsWorkflowRoutes(app: FastifyInstance) {
     }
 
     const created = await withCurrentUser(authUser.uuid, async (client) => {
-      const exists = await resourceExists(client, targetResourceType, targetResourceId);
+      const exists = await resourceExists(client, targetResourceType, targetResourceId, authUser.uuid);
       if (!exists) return { error: "target_resource_not_found" as const };
 
       if (actionCode === "WF-064-CATAL-001") {
@@ -462,6 +494,11 @@ export async function registerCatalogsWorkflowRoutes(app: FastifyInstance) {
         await client.query(`UPDATE catalogs.posting_templates SET ${setParts.join(", ")} WHERE id = $${idIdx}`, values);
       } else if (workflow.action_code === "WF-064-CATAL-003") {
         const payload003 = actionPayloadSchemas["WF-064-CATAL-003"].parse(workflow.payload ?? {});
+        // Re-verify at decision time, not just at create time: the approving Administrator may belong
+        // to a different company than the requester, and role alone (isAdminRole above) does not imply
+        // company membership on this specific target account.
+        const approverCanTarget = await callerCanTargetAccount(client, payload003.account_id, authUser.uuid);
+        if (!approverCanTarget) return { error: "target_resource_not_found" as const };
         const references = await checkAccountReferences(client, payload003.account_id);
         if (!payload003.force && references.total > 0) {
           return { error: "account_still_referenced", references } as const;

@@ -4,6 +4,7 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { resolveOperatingCompanyId, OperatingCompanyMembershipError } from "../auth/operating-company-scope.js";
+import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 
 type ScopeClient = { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> };
 
@@ -19,10 +20,20 @@ async function scopeToCallerCompany(client: ScopeClient, userId: string, request
   return operatingCompanyId;
 }
 
-async function scopeToDriverCompany(client: ScopeClient, driverId: string): Promise<string | null> {
+// CLS-JOIN-ENTITY-UNSCOPED fix: this read is deliberately unscoped BEFORE the GUC is set (it's how the
+// driver's company gets learned in the first place — same shape as mdata/dispatcher-safety-events.routes.ts's
+// scopeToRelatedEntity), but unlike that sibling this one never asserted the CALLER actually belongs to
+// the resolved company. Every caller in this file only checks a global role (isOwner/canReadSafetyFile),
+// never company membership, so any Owner/Admin/Manager/Safety user of Company A could read or mutate
+// Company B's driver safety file (CURP/CDL snapshots, incident/termination records) by naming Company
+// B's driver_id — the same class as MDATA-F10/F11, just on this file's own routes. assertCompanyMembership
+// throws 403 forbidden_company_membership when the caller has no real org.user_company_access row for
+// the resolved company.
+async function scopeToDriverCompany(client: ScopeClient, userId: string, driverId: string): Promise<string | null> {
   const res = await client.query(`SELECT operating_company_id FROM mdata.drivers WHERE id = $1 LIMIT 1`, [driverId]);
   const opco = res.rows[0]?.operating_company_id as string | undefined;
   if (!opco) return null;
+  await assertCompanyMembership(client, userId, opco);
   await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [opco]);
   return opco;
 }
@@ -459,7 +470,7 @@ export async function registerDriverSafetyEventsRoutes(app: FastifyInstance) {
     return reply.code(200).send({ driver: result.driver, event: result.event });
   });
 
-  app.get("/api/v1/mdata/drivers/:driver_id/safety-events", async (req, reply) => {
+  app.get("/api/v1/mdata/drivers/:driver_id/safety-events", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!canReadSafetyFile(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -472,7 +483,7 @@ export async function registerDriverSafetyEventsRoutes(app: FastifyInstance) {
     const rows = await withCurrentUser(authUser.uuid, async (client) => {
       // driver_termination_reasons is per-entity + FORCE RLS; set the GUC from the driver's company so
       // the LEFT JOIN on the reasons catalog resolves (otherwise tr.* would come back NULL).
-      await scopeToDriverCompany(client, parsedParams.data.driver_id);
+      await scopeToDriverCompany(client, authUser.uuid, parsedParams.data.driver_id);
       const filters = ["e.driver_id = $1"];
       if (!parsedQuery.data.include_voided) {
         filters.push("e.voided_at IS NULL");
@@ -518,7 +529,7 @@ export async function registerDriverSafetyEventsRoutes(app: FastifyInstance) {
     return { events: rows };
   });
 
-  app.post("/api/v1/mdata/drivers/:driver_id/safety-events", async (req, reply) => {
+  app.post("/api/v1/mdata/drivers/:driver_id/safety-events", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isOwner(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -534,6 +545,12 @@ export async function registerDriverSafetyEventsRoutes(app: FastifyInstance) {
     }
 
     const created = await withCurrentUser(authUser.uuid, async (client) => {
+      // Membership check FIRST (CLS-JOIN-ENTITY-UNSCOPED fix): also sets the GUC from the driver's
+      // company so the per-entity termination-reason lookup below resolves (driver_termination_reasons
+      // is FORCE RLS). Previously the CURP/CDL fetch below ran before this check.
+      const opco = await scopeToDriverCompany(client, authUser.uuid, parsedParams.data.driver_id);
+      if (!opco) return null;
+
       const driverRes = await client.query<{
         id: string;
         curp: string | null;
@@ -550,9 +567,6 @@ export async function registerDriverSafetyEventsRoutes(app: FastifyInstance) {
       );
       const driver = driverRes.rows[0];
       if (!driver) return null;
-      // Set the GUC from the driver's company so the per-entity termination-reason lookup below
-      // resolves in the driver's entity (driver_termination_reasons is FORCE RLS).
-      await scopeToDriverCompany(client, parsedParams.data.driver_id);
 
       let normalizedSeverity = body.severity;
       if (body.event_type === "termination") {
@@ -651,7 +665,7 @@ export async function registerDriverSafetyEventsRoutes(app: FastifyInstance) {
     return reply.code(201).send({ event: created });
   });
 
-  app.patch("/api/v1/mdata/drivers/:driver_id/safety-events/:event_id/void", async (req, reply) => {
+  app.patch("/api/v1/mdata/drivers/:driver_id/safety-events/:event_id/void", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isOwner(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -662,6 +676,13 @@ export async function registerDriverSafetyEventsRoutes(app: FastifyInstance) {
     if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
 
     const result = await withCurrentUser(authUser.uuid, async (client) => {
+      // CLS-JOIN-ENTITY-UNSCOPED fix: this route only checked isOwner() (a global role, not company
+      // membership) then mutated by id+driver_id with zero entity scope — an Owner of Company A could
+      // void Company B's driver safety event. Resolve the driver's company and assert real membership
+      // (same cross-entity write gate as the GET/POST routes above) before touching the row.
+      const opco = await scopeToDriverCompany(client, authUser.uuid, parsedParams.data.driver_id);
+      if (!opco) return { error: "mdata_driver_safety_event_not_found" as const };
+
       const currentRes = await client.query<{ id: string; voided_at: string | null }>(
         `
           SELECT id, voided_at
@@ -715,7 +736,7 @@ export async function registerDriverSafetyEventsRoutes(app: FastifyInstance) {
     return { event: result };
   });
 
-  app.patch("/api/v1/mdata/drivers/:driver_id/safety-events/:event_id", async (req, reply) => {
+  app.patch("/api/v1/mdata/drivers/:driver_id/safety-events/:event_id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isOwner(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -738,6 +759,11 @@ export async function registerDriverSafetyEventsRoutes(app: FastifyInstance) {
     sets.push("updated_by_user_id = $3");
 
     const result = await withCurrentUser(authUser.uuid, async (client) => {
+      // CLS-JOIN-ENTITY-UNSCOPED fix: same cross-entity write gate as the void route above — isOwner()
+      // alone is a global role check, not company membership.
+      const opco = await scopeToDriverCompany(client, authUser.uuid, parsedParams.data.driver_id);
+      if (!opco) return null;
+
       const currentRes = await client.query<{
         id: string;
         event_type: string;
