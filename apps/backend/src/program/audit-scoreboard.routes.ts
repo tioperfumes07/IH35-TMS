@@ -731,9 +731,20 @@ export async function registerAuditScoreboardRoutes(app: FastifyInstance) {
           });
         } catch (err) {
           req.log?.error?.({ err }, "[program] module-matrix system rollup failed");
+          let tip: string | undefined;
+          try {
+            tip = execSync("git rev-parse --short HEAD", {
+              cwd: REPO_ROOT,
+              encoding: "utf8",
+              stdio: ["ignore", "pipe", "ignore"],
+            }).trim();
+          } catch {
+            tip = undefined;
+          }
           return reply.code(503).send({
             error: "module_matrix_system_unavailable",
-            message: "Could not project system-wide matrix rollup",
+            message: err instanceof Error ? err.message : "Could not project system-wide matrix rollup",
+            tipSha: tip,
           });
         }
       }

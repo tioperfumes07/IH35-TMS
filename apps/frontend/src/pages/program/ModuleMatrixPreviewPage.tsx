@@ -6,10 +6,17 @@
  * Explicit unavailable banner only when the live API is unavailable; never sample cells.
  * Design lock: docs/specs/scoreboard/MODULE-MATRIX-SCOREBOARD-LOCKED.md
  */
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { resolveApiUrl } from "../../api/client";
+import {
+  GroupRollupTable,
+  MatrixBoxTracker,
+  pctClass,
+  type GroupRollup,
+  type TierMetrics,
+} from "./moduleMatrixBoxes";
 import maintRequired from "@scoreboard/modules/maintenance.required.json";
 import safetyRequired from "@scoreboard/modules/safety.required.json";
 import insuranceRequired from "@scoreboard/modules/insurance.required.json";
@@ -80,34 +87,6 @@ type LiveCell = {
   live?: boolean;
   done?: boolean;
 };
-
-type TierMetrics = {
-  requiredCells: number;
-  liveCells: number;
-  builtOnlyCells: number;
-  probeOnlyCells: number;
-  auditedOnlyCells: number;
-  unauditedCells: number;
-  builtCells: number;
-  auditedCells: number;
-  buildQueue: number;
-  requiredPct: number;
-  auditedOnlyPct: number;
-  probeOnlyPct: number;
-  builtOnlyPct: number;
-  livePct: number;
-  certifiedPct: number;
-  modulePct: number;
-  leafCount: number;
-  colCount: number;
-  doneCells: number;
-  /** @deprecated legacy cumulative */
-  auditedPct?: number;
-  /** @deprecated legacy — use builtOnlyPct */
-  builtPct?: number;
-};
-
-type GroupRollup = TierMetrics & { group: string; label: string };
 
 type LiveMatrix = {
   sample: false;
@@ -393,12 +372,6 @@ function buildRows(
   return rows;
 }
 
-function pctClass(n: number) {
-  if (n >= 80) return "hi";
-  if (n >= 40) return "mid";
-  return "lo";
-}
-
 function boardMetrics(map: RequiredMap, rows: Row[], live: LiveMatrix | null): TierMetrics {
   if (live?.metrics) {
     const m = live.metrics;
@@ -455,227 +428,6 @@ function boardMetrics(map: RequiredMap, rows: Row[], live: LiveMatrix | null): T
     builtPct: pct(builtOnlyCells),
     auditedPct: pct(auditedOnlyCells + probeOnlyCells),
   };
-}
-
-/** Cumulative 4-box counts (owner tracker): green = N of Required for that box. */
-type BoxCounts = {
-  required: number;
-  audited: number;
-  built: number;
-  live: number;
-};
-
-function cumulativeBoxCounts(metrics: TierMetrics): BoxCounts {
-  const req = metrics.requiredCells || 0;
-  const live = metrics.liveCells || 0;
-  const builtOnly = metrics.builtOnlyCells || 0;
-  const auditedOnly = (metrics.auditedOnlyCells || 0) + (metrics.probeOnlyCells || 0);
-  // Built includes Live; Audited includes Built+Live (cumulative fill of boxes 2–4).
-  const built = builtOnly + live;
-  const audited = auditedOnly + built;
-  return { required: req, audited: Math.min(audited, req), built: Math.min(built, req), live };
-}
-
-type BoxChange = {
-  at: number;
-  box: "Required" | "Audited" | "Built" | "Live";
-  from: number;
-  to: number;
-  of: number;
-};
-
-const BOX_CHANGE_CAP = 12;
-
-function MatrixBoxTracker({
-  moduleId,
-  metrics,
-  liveOk,
-  dataUpdatedAt,
-}: {
-  moduleId: MatrixModuleId;
-  metrics: TierMetrics;
-  liveOk: boolean;
-  dataUpdatedAt?: number;
-}) {
-  const counts = cumulativeBoxCounts(metrics);
-  const prevRef = useRef<BoxCounts | null>(null);
-  const [changes, setChanges] = useState<BoxChange[]>([]);
-
-  useEffect(() => {
-    if (!liveOk || counts.required === 0) return;
-    const prev = prevRef.current;
-    prevRef.current = counts;
-    if (!prev) return;
-    const at = dataUpdatedAt || Date.now();
-    const next: BoxChange[] = [];
-    const pairs: Array<{ box: BoxChange["box"]; from: number; to: number }> = [
-      { box: "Required", from: prev.required, to: counts.required },
-      { box: "Audited", from: prev.audited, to: counts.audited },
-      { box: "Built", from: prev.built, to: counts.built },
-      { box: "Live", from: prev.live, to: counts.live },
-    ];
-    for (const p of pairs) {
-      if (p.from !== p.to) {
-        next.push({ at, box: p.box, from: p.from, to: p.to, of: counts.required });
-      }
-    }
-    if (!next.length) return;
-    setChanges((cur) => [...next, ...cur].slice(0, BOX_CHANGE_CAP));
-  }, [liveOk, counts.required, counts.audited, counts.built, counts.live, dataUpdatedAt]);
-
-  // Reset feed when switching modules
-  useEffect(() => {
-    prevRef.current = null;
-    setChanges([]);
-  }, [moduleId]);
-
-  const tiles: Array<{
-    key: string;
-    box: string;
-    label: string;
-    count: number;
-    of: number;
-    testId: string;
-    extraClass?: string;
-  }> = [
-    {
-      key: "1",
-      box: "Box 1",
-      label: "Required",
-      count: liveOk ? counts.required : 0,
-      of: counts.required || metrics.requiredCells,
-      testId: "module-matrix-tier-req",
-    },
-    {
-      key: "2",
-      box: "Box 2",
-      label: "Audited",
-      count: liveOk ? counts.audited : 0,
-      of: counts.required || metrics.requiredCells,
-      testId: "module-matrix-tier-audit",
-    },
-    {
-      key: "3",
-      box: "Box 3",
-      label: "Built",
-      count: liveOk ? counts.built : 0,
-      of: counts.required || metrics.requiredCells,
-      testId: "module-matrix-tier-built",
-      extraClass: "module-matrix-built-cells-metric",
-    },
-    {
-      key: "4",
-      box: "Box 4",
-      label: "Live",
-      count: liveOk ? counts.live : 0,
-      of: counts.required || metrics.requiredCells,
-      testId: "module-matrix-tier-live",
-    },
-  ];
-
-  return (
-    <div className="box-tracker" data-testid="module-matrix-box-tracker">
-      <div className="metrics metrics-ribbon metrics-boxes" data-testid="module-matrix-tier-ribbon">
-        {tiles.map((t) => {
-          const pct = t.of === 0 ? 0 : Math.round((t.count / t.of) * 100);
-          const full = liveOk && t.of > 0 && t.count === t.of;
-          const cls = !liveOk ? "" : full ? "good" : pct >= 40 ? "amb" : "big";
-          return (
-            <div
-              key={t.key}
-              className={`metric ${cls}${t.extraClass ? ` ${t.extraClass}` : ""}`}
-              data-testid={t.testId}
-            >
-              <div className="box-tag">{t.box}</div>
-              <div className="n">{liveOk ? `${t.count} of ${t.of}` : "—"}</div>
-              <div className="l">
-                {t.label}
-                <br />
-                {liveOk ? `${pct}% green` : "pending feed"}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-      <div className="box-changes" data-testid="module-matrix-box-changes">
-        <div className="box-changes-hd">
-          Live changes (this board){" "}
-          <span className="sub">polls every {MATRIX_POLL_MS / 1000}s · shows count moves</span>
-        </div>
-        {changes.length === 0 ? (
-          <div className="box-changes-empty">
-            No count changes yet since you opened this module — when Built goes 49 → 50 it will
-            appear here with the time.
-          </div>
-        ) : (
-          <ul className="box-changes-list">
-            {changes.map((c, i) => (
-              <li key={`${c.at}-${c.box}-${c.to}-${i}`}>
-                <span className="t">{new Date(c.at).toLocaleTimeString()}</span>
-                <span className="b">{c.box}</span>
-                <span className="d">
-                  {c.from} → <b>{c.to}</b> of {c.of} green
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function GroupRollupTable({ rollups, liveOk }: { rollups: GroupRollup[]; liveOk: boolean }) {
-  if (!rollups.length) return null;
-  return (
-    <>
-      <h2>
-        Column groups{" "}
-        <span className="sub">same denominator per group · mutually exclusive tiers</span>
-      </h2>
-      <div className="scroll scroll-groups overflow-x-auto">
-        <table className="group-table" data-testid="module-matrix-group-rollups">
-          <thead>
-            <tr>
-              <th>Group</th>
-              <th>Required</th>
-              <th>Audited %</th>
-              <th>Probe %</th>
-              <th>Built %</th>
-              <th>Live %</th>
-              <th>Certified %</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rollups.map((g) => (
-              <tr key={g.group}>
-                <td>
-                  <b>{g.label}</b>
-                  <span className="mod-id">{g.group}</span>
-                </td>
-                <td>{g.requiredCells}</td>
-                <td>
-                  <span className={`pct ${pctClass(g.auditedOnlyPct)}`}>{liveOk ? `${g.auditedOnlyPct}%` : "—"}</span>
-                </td>
-                <td>
-                  <span className={`pct ${pctClass(g.probeOnlyPct)}`}>{liveOk ? `${g.probeOnlyPct}%` : "—"}</span>
-                </td>
-                <td>
-                  <span className={`pct ${pctClass(g.builtOnlyPct)}`}>{liveOk ? `${g.builtOnlyPct}%` : "—"}</span>
-                </td>
-                <td>
-                  <span className={`pct ${pctClass(g.livePct)}`}>{liveOk ? `${g.livePct}%` : "—"}</span>
-                </td>
-                <td>
-                  <span className={`pct ${pctClass(g.certifiedPct)}`}>{liveOk ? `${g.certifiedPct}%` : "—"}</span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </>
-  );
 }
 
 function titleCase(id: MatrixModuleId): string {
@@ -867,7 +619,7 @@ export function ModuleMatrixPreviewPage() {
       ) : (
         <>
       <MatrixBoxTracker
-        moduleId={moduleId}
+        boardKey={moduleId}
         metrics={metrics}
         liveOk={liveOk}
         dataUpdatedAt={dataUpdatedAt}
@@ -1091,6 +843,9 @@ const CSS = `
 .ih35mm .pct.hi{background:var(--green-bg);color:var(--green)}
 .ih35mm .pct.mid{background:var(--amber-bg);color:var(--amber)}
 .ih35mm .pct.lo{background:var(--red-bg);color:var(--red)}
+.ih35mm .pct-dual{display:inline-flex;align-items:center;gap:4px;flex-wrap:wrap;font-variant-numeric:tabular-nums}
+.ih35mm .pct-sep{color:var(--slate-lt);font-weight:700;font-size:11px}
+.ih35mm .dual-hint{display:block;font-size:9px;font-weight:600;letter-spacing:.2px;text-transform:none;color:var(--slate-lt);margin-top:4px}
 @media(min-width:1100px){.ih35mm .metrics:not(.metrics-ribbon):not(.metrics-secondary){grid-template-columns:repeat(8,1fr)}}
 .ih35mm .metric{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 13px}
 .ih35mm .metric .n{font-size:22px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums}
