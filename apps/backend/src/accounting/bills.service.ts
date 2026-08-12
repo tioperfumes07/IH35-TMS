@@ -242,14 +242,23 @@ const BILL_PAYMENT_JOURNAL_ENTRY_ID_SQL = `
   )
 `;
 
+// AP_BILL column-wave: this query only ever checked the manual-reconciliation reverse hop
+// (bt.matched_bill_payment_id, set by accounting/bank-recon's accept flow). A bill payment created
+// by the bank-split flow (banking/bank-transaction-splits.service.ts) instead stamps
+// bill_payments.source_bank_transaction_id directly at creation time — a column this query never
+// read, even though the sibling route (vendor-bill-payments.routes.ts) already reads it correctly.
+// Prefer the direct column; fall back to the reverse hop for manually-reconciled payments.
 const BILL_PAYMENT_BANK_TRANSACTION_ID_SQL = `
-  (
-    SELECT bt.id::text
-    FROM banking.bank_transactions bt
-    WHERE bt.operating_company_id = bp.operating_company_id
-      AND bt.matched_bill_payment_id = bp.id
-    ORDER BY bt.transaction_date DESC, bt.created_at DESC
-    LIMIT 1
+  COALESCE(
+    bp.source_bank_transaction_id::text,
+    (
+      SELECT bt.id::text
+      FROM banking.bank_transactions bt
+      WHERE bt.operating_company_id = bp.operating_company_id
+        AND bt.matched_bill_payment_id = bp.id
+      ORDER BY bt.transaction_date DESC, bt.created_at DESC
+      LIMIT 1
+    )
   )
 `;
 
@@ -1169,6 +1178,19 @@ export async function getBillDetail(userId: string, operatingCompanyId: string, 
       `,
       [billId, operatingCompanyId]
     );
+    // AP_BILL column-wave: cash-advances.routes.ts / cash-advance-create.ts already write+read
+    // driver_finance.driver_advances.linked_bill_id (forward: advance → bill, confirmed WIRED —
+    // AdvanceDetailDrawer.tsx renders it). The reverse never existed: a bill funded by a cash advance
+    // had no way to show which advance it was for.
+    const linkedCashAdvanceRes = await client.query<{ id: string }>(
+      `
+        SELECT id::text FROM driver_finance.driver_advances
+        WHERE linked_bill_id = $1::uuid AND operating_company_id = $2::uuid
+        ORDER BY created_at DESC LIMIT 1
+      `,
+      [billId, operatingCompanyId]
+    );
+    const linkedCashAdvanceId = linkedCashAdvanceRes.rows[0]?.id ? String(linkedCashAdvanceRes.rows[0].id) : null;
     const linesRes = await client.query<{
       id: string;
       line_sequence: number;
@@ -1230,6 +1252,7 @@ export async function getBillDetail(userId: string, operatingCompanyId: string, 
         unit_id: bill.unit_id ?? null,
         unit_display_id: bill.unit_display_id ?? null,
         linked_work_order_uuid: bill.linked_work_order_uuid ?? null,
+        linked_cash_advance_id: linkedCashAdvanceId,
       },
       lines: linesRes.rows.map((row) => ({
         id: row.id,

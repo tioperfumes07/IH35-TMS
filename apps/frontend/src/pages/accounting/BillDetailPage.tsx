@@ -297,6 +297,14 @@ export function BillDetailPage() {
             <EntityLink kind="work_order" id={bill.linked_work_order_uuid} label={entityLabel(null, bill.linked_work_order_uuid, "Work order")} />
           </DataPanelRow>
         ) : null}
+        {/* AP_BILL column-wave: reverse of AdvanceDetailDrawer.tsx's linked_bill_id forward link —
+            a bill funded by a cash advance previously had no way to show which advance funded it. */}
+        {bill.linked_cash_advance_id ? (
+          <DataPanelRow>
+            <span className="text-xs font-semibold text-gray-600">Cash advance</span>
+            <EntityLink kind="cash_advance" id={bill.linked_cash_advance_id} label={entityLabel(null, bill.linked_cash_advance_id, "Cash advance")} />
+          </DataPanelRow>
+        ) : null}
         {bill.insurance_claim_id ? (
           <DataPanelRow>
             <span className="text-xs font-semibold text-gray-600">Insurance claim</span>

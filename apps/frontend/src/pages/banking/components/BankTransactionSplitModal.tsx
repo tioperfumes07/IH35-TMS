@@ -28,6 +28,8 @@ import { useToast } from "../../../components/Toast";
 import { DriverAutocomplete } from "../../../components/factoring/DriverAutocomplete";
 import { UnitAutocomplete } from "../../../components/banking/UnitAutocomplete";
 import { EntityPicker } from "../../../components/parity/EntityPicker";
+import { EntityLink } from "../../../components/shared/EntityLink";
+import { entityLabel } from "../../../lib/entity-label";
 import { listVendors } from "../../../api/mdata";
 import { getCoaAccounts } from "../../../api/banking";
 import { itemsCatalogClient } from "../../../api/catalogs-accounting";
@@ -408,7 +410,15 @@ export function BankTransactionSplitModal({ open, companyId, transaction, onClos
                       {result.posted ? (
                         <>
                           Posted
-                          {result.bill_id ? " · bill created" : null}
+                          {/* AP_BILL column-wave: bank-transaction-splits.service.ts genuinely
+                              INSERTs a real accounting.bills row (source_bank_transaction_id
+                              stamped) — this only ever rendered plain text, never a drill-through. */}
+                          {result.bill_id ? (
+                            <>
+                              {" · "}
+                              <EntityLink kind="bill" id={result.bill_id} label={entityLabel(null, result.bill_id, "Bill")} />
+                            </>
+                          ) : null}
                           {result.driver_advance_id ? " · advance posted" : null}
                           {result.deduction_id ? " · recovery scheduled" : null}
                         </>
