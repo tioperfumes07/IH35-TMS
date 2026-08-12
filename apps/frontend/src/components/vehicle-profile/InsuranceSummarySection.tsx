@@ -9,10 +9,26 @@ export type InsurancePolicySummary = {
   monthly_premium?: number | null;
 };
 
+export type LinkedInsurancePolicy = InsurancePolicySummary & {
+  coverage_type?: string | null;
+  status?: string | null;
+};
+
 export type UnitInsuranceSummary = {
   us_policy?: InsurancePolicySummary | null;
   mx_policy?: InsurancePolicySummary | null;
+  /** Real FK-linked policies (insurance.policy_unit) — insurance.policy has no US/MX jurisdiction
+   *  column, so these are labelled by coverage type, not folded into us_policy/mx_policy. */
+  linked_policies?: LinkedInsurancePolicy[];
 };
+
+function coverageTypeLabel(coverageType: string | null | undefined): string {
+  if (!coverageType) return "Linked policy";
+  return coverageType
+    .split("_")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
 
 function fmtDate(value: unknown): string {
   if (value === null || value === undefined || value === "") return "—";
@@ -56,16 +72,24 @@ function PolicyCard({ label, policy }: { label: string; policy: InsurancePolicyS
 export function InsuranceSummarySection({ insuranceSummary }: { insuranceSummary: UnitInsuranceSummary | undefined }) {
   const us = insuranceSummary?.us_policy ?? null;
   const mx = insuranceSummary?.mx_policy ?? null;
+  const linked = insuranceSummary?.linked_policies ?? [];
 
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-4" data-testid="vp-insurance-summary">
       <h3 className="text-sm font-semibold text-gray-800">Insurance summary</h3>
-      {!us && !mx ? (
+      {!us && !mx && linked.length === 0 ? (
         <p className="mt-2 text-xs text-gray-500">No US or MX policy on file for this unit.</p>
       ) : (
         <div className="mt-2 grid gap-2 md:grid-cols-2">
           {us ? <PolicyCard label="US policy" policy={us} /> : null}
           {mx ? <PolicyCard label="MX policy" policy={mx} /> : null}
+          {linked.map((policy, idx) => (
+            <PolicyCard
+              key={`${policy.number ?? "policy"}-${idx}`}
+              label={`${coverageTypeLabel(policy.coverage_type)}${policy.status && policy.status !== "active" ? ` (${policy.status})` : ""}`}
+              policy={policy}
+            />
+          ))}
         </div>
       )}
     </section>

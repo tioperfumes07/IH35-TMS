@@ -97,6 +97,61 @@ async function lookupPolicyMonthlyPremiumCents(
   return Number.isFinite(n) && n > 0 ? n : null;
 }
 
+type LinkedPolicyRow = {
+  policy_number: string;
+  insurer_name: string;
+  coverage_type: string;
+  status: string;
+  expiration: string | null;
+  monthly_premium_cents: string | null;
+};
+
+/**
+ * P19-MODULE-12-INSURANCE-VEHICLE-PROFILE-REVERSE-LINK — the canonical, real FK chain
+ * (mdata.assets.unit_id -> insurance.policy_unit.asset_id -> insurance.policy) is the actual source
+ * of truth for a unit's insurance coverage, written by the Insurance module's policy-unit attach
+ * flow. Everything else on this page (us_policy/mx_policy below) reads legacy free-text columns on
+ * mdata.units that nothing auto-populates from a real policy attach — a unit can carry a genuine,
+ * active, FK-linked policy and this page would show "No US or MX policy on file" regardless, because
+ * the legacy text fields were never typed in. insurance.policy has no US/MX jurisdiction column (see
+ * db/migrations/0274_insurance.sql), so this does not attempt to guess a US/MX slot for a linked
+ * policy — it surfaces every real linked policy generically, labelled by coverage type, alongside
+ * (never replacing) the legacy us_policy/mx_policy cards.
+ */
+async function lookupLinkedPolicies(
+  client: DbClient,
+  operatingCompanyId: string,
+  unitId: string
+): Promise<LinkedPolicyRow[]> {
+  const res = await withSavepoint(
+    client,
+    "unit_aggregate_linked_policies",
+    () =>
+      client.query<LinkedPolicyRow>(
+        `
+          SELECT
+            p.policy_number,
+            p.insurer_name,
+            p.coverage_type,
+            p.status,
+            p.expiry_date::text AS expiration,
+            pu.cost_per_month_cents::text AS monthly_premium_cents
+          FROM mdata.assets a
+          JOIN insurance.policy_unit pu
+            ON pu.asset_id = a.id AND pu.removed_at IS NULL
+          JOIN insurance.policy p
+            ON p.id = pu.policy_id AND p.tenant_id = pu.tenant_id
+          WHERE a.tenant_id = $1::uuid
+            AND a.unit_id = $2::uuid
+          ORDER BY (p.status = 'active') DESC, p.expiry_date DESC
+        `,
+        [operatingCompanyId, unitId]
+      ),
+    { rows: [] as LinkedPolicyRow[] }
+  );
+  return res.rows;
+}
+
 async function mapDriverRow(row: Record<string, unknown> | undefined, extra?: Record<string, unknown>) {
   if (!row) return null;
   return {
@@ -664,9 +719,10 @@ export async function buildUnitAggregate(
     (purchase_price_cents ?? 0) + lifetime_maintenance_cents + lifetime_fuel_cents;
 
   const unitNumber = unit.unit_number != null ? String(unit.unit_number) : null;
-  const [usMonthlyPremiumCents, mxMonthlyPremiumCents] = await Promise.all([
+  const [usMonthlyPremiumCents, mxMonthlyPremiumCents, linkedPolicies] = await Promise.all([
     lookupPolicyMonthlyPremiumCents(client, operatingCompanyId, unitNumber, unit.us_insurance_policy_number as string | null),
     lookupPolicyMonthlyPremiumCents(client, operatingCompanyId, unitNumber, unit.mx_insurance_policy_number as string | null),
+    lookupLinkedPolicies(client, operatingCompanyId, unitId),
   ]);
 
   return {
@@ -708,6 +764,17 @@ export async function buildUnitAggregate(
             monthly_premium: mxMonthlyPremiumCents,
           }
         : null,
+      // Real FK-linked policies (insurance.policy_unit) — never gated on the legacy text fields
+      // above, so a policy attached through the Insurance module is visible here even when nobody
+      // has hand-typed a matching policy number into this unit's legacy us_/mx_insurance_* columns.
+      linked_policies: linkedPolicies.map((p) => ({
+        number: p.policy_number,
+        carrier: p.insurer_name,
+        expiration: p.expiration,
+        monthly_premium: p.monthly_premium_cents != null ? Number(p.monthly_premium_cents) || null : null,
+        coverage_type: p.coverage_type,
+        status: p.status,
+      })),
     },
     total_ownership_cost: {
       purchase_price_cents,
