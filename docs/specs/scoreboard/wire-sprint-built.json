@@ -384,6 +384,14 @@
       "modules": ["dispatch"],
       "cols": ["customer", "driver", "unit", "load", "connectivity", "reverse_link"],
       "leafRe": "^home\\.overview$"
+    },
+    {
+      "task": "CLS-DISPATCH-PLANNER-CUSTOMER-FK-LINKS",
+      "pr": "this PR",
+      "guard": "scripts/verify-dispatch-planner-calendar.mjs",
+      "modules": ["dispatch"],
+      "cols": ["customer", "driver", "unit", "load", "connectivity", "reverse_link"],
+      "leafRe": "^planning\\.(calendar|loads|timeline)$"
     }
   ]
 }

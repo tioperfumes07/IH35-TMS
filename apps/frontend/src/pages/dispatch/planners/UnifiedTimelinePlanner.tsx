@@ -7,6 +7,7 @@ import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { entityLabel } from "../../../lib/entity-label";
+import { EntityLink } from "../../../components/shared/EntityLink";
 import { addDaysIso } from "./planner-range";
 import { usePlannerRange } from "./PlannerRangeContext";
 import { BookLoadModalV4 } from "../components/BookLoadModalV4";
@@ -212,6 +213,7 @@ export function UnifiedTimelinePlanner() {
                         >
                           {entityLabel(load.load_number, load.id, "Load")}
                         </button>
+                        <span className="block text-[9px]"><EntityLink kind="customer" id={load.customer_id} label={entityLabel(load.customer_name, load.customer_id, "Customer")} /></span>
                       </td>
                     );
                     dayIdx += span;

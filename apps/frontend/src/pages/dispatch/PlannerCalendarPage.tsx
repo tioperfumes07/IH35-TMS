@@ -1,7 +1,7 @@
 import { DndContext, type DragEndEvent, useDraggable, useDroppable } from "@dnd-kit/core";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import {
   getDispatchPlannerWeek,
   patchDispatchPlannerLoadStartAt,
@@ -15,6 +15,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { LoadTemplateLibrary } from "./LoadTemplateLibrary";
 import { entityLabel } from "../../lib/entity-label";
+import { EntityLink } from "../../components/shared/EntityLink";
 
 function dayKey(date: Date): string {
   return date.toISOString().slice(0, 10);
@@ -44,24 +45,21 @@ function hosClass(status: PlannerDriverRow["hos_status"]): string {
 }
 
 function PlannerLoadChip({ load }: { load: PlannerLoadEvent }) {
-  const navigate = useNavigate();
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: load.id, data: { load } });
   const style = transform ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` } : undefined;
   return (
-    <button
+    <div
       ref={setNodeRef}
       style={style}
       {...listeners}
       {...attributes}
-      type="button"
       data-testid={`planner-load-${load.load_number}`}
       className={`mb-1 block w-full rounded-sm border border-slate-300 bg-slate-100 px-2 py-1 text-left text-[11px] text-slate-700 ${isDragging ? "opacity-60" : ""}`}
       title={`${entityLabel(load.load_number, load.id, "Load")} · ${entityLabel(load.customer_name, null, "Customer")} · ${load.pickup_city ?? ""}${load.pickup_state ? `, ${load.pickup_state}` : ""} — click to open detail`}
-      onClick={() => navigate(`/dispatch/loads/${encodeURIComponent(load.id)}`)}
     >
-      <span className="font-semibold">{entityLabel(load.load_number, load.id, "Load")}</span>
-      <span className="block truncate text-[10px] text-slate-700">{entityLabel(load.customer_name, null, "Customer")}</span>
-    </button>
+      <EntityLink kind="load" id={load.id} label={entityLabel(load.load_number, load.id, "Load")} className="font-semibold" />
+      <span className="block truncate text-[10px] text-slate-700"><EntityLink kind="customer" id={load.customer_id} label={entityLabel(load.customer_name, load.customer_id, "Customer")} /></span>
+    </div>
   );
 }
 
