@@ -290,8 +290,12 @@ export function ExpensesListPage() {
         </div>
       </CollapsedListFilters>
       <div className="ml-auto flex items-center gap-3 text-[11px] text-gray-600">
-        <span>Total: {money(totals.total)}</span>
-        <span>Matched: {totals.matched}</span>
+        {/* CLS-MONEY-KPI-FAKE-ZERO-REMAINDER — totals used to compute straight from query.data with
+            no isError awareness, so a failed fetch fabricated a real-looking "$0.00" here even while
+            the ListErrorBanner below correctly showed the failure. Same class already fixed for
+            Bills/Settlements (ACCT-F370, PR #6024); this generalizes it here too. */}
+        <span>Total: {query.isError ? "—" : money(totals.total)}</span>
+        <span>Matched: {query.isError ? "—" : totals.matched}</span>
         <span>Rows: {rows.length}</span>
       </div>
     </div>

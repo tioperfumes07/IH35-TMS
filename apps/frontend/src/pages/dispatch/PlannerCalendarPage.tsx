@@ -283,8 +283,8 @@ export function PlannerCalendarPage() {
                   drivers.map((driver) => (
                     <tr key={driver.id}>
                       <td className="sticky left-0 z-10 border-b bg-white px-3 py-2">
-                        <div className="font-medium">{driver.name}</div>
-                        <div className="text-xs text-slate-500">{entityLabel(driver.unit_number, driver.unit_id ?? null, "Unit")}</div>
+                        <div className="font-medium"><EntityLink kind="driver" id={driver.id} label={entityLabel(driver.name, driver.id, "Driver")} /></div>
+                        <div className="text-xs text-slate-500"><EntityLink kind="unit" id={driver.unit_id ?? null} label={entityLabel(driver.unit_number, driver.unit_id ?? null, "Unit")} /></div>
                         <span className={`mt-1 inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold ${hosClass(driver.hos_status)}`}>
                           {driver.hos_status === "violation" ? "HOS VIOL" : driver.hos_status === "ok" ? "HOS OK" : "HOS WARN"}
                         </span>
