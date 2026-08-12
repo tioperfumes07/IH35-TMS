@@ -74,7 +74,7 @@ export async function registerQboSyncAdminRoutes(app: FastifyInstance) {
     return { items: rows };
   });
 
-  app.post("/api/v1/integrations/qbo/sync-queue", async (req, reply) => {
+  app.post("/api/v1/integrations/qbo/sync-queue", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!requireOwnerOrAdmin(user, reply)) return;
@@ -93,7 +93,7 @@ export async function registerQboSyncAdminRoutes(app: FastifyInstance) {
     return reply.code(201).send({ id: row.id });
   });
 
-  app.post("/api/v1/integrations/qbo/sync-queue/:id/retry", async (req, reply) => {
+  app.post("/api/v1/integrations/qbo/sync-queue/:id/retry", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!requireOwnerOrAdmin(user, reply)) return;
@@ -105,11 +105,20 @@ export async function registerQboSyncAdminRoutes(app: FastifyInstance) {
       .safeParse(req.query ?? {});
     if (!query.success) return reply.code(400).send({ error: "validation_error", details: query.error.flatten() });
 
-    await retrySyncQueueItem(params.data.id, user.uuid, query.data.operating_company_id);
+    // CLS-GUC-BASELINE (MDATA-F09 class) — retrySyncQueueItem now asserts membership itself and
+    // throws a 403-shaped Error; this route has no other error mapping, so catch it here.
+    try {
+      await retrySyncQueueItem(params.data.id, user.uuid, query.data.operating_company_id);
+    } catch (err) {
+      if ((err as Error & { statusCode?: number })?.statusCode === 403) {
+        return reply.code(403).send({ error: "forbidden_company_membership" });
+      }
+      throw err;
+    }
     return { ok: true };
   });
 
-  app.post("/api/v1/integrations/qbo/sync-queue/:id/skip", async (req, reply) => {
+  app.post("/api/v1/integrations/qbo/sync-queue/:id/skip", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (user.role !== "Owner") return reply.code(403).send({ error: "forbidden" });
@@ -119,7 +128,15 @@ export async function registerQboSyncAdminRoutes(app: FastifyInstance) {
     const body = skipBodySchema.safeParse(req.body ?? {});
     if (!body.success) return reply.code(400).send({ error: "validation_error", details: body.error.flatten() });
 
-    await skipSyncQueueItem(params.data.id, user.uuid, body.data.operating_company_id, body.data.reason);
+    // CLS-GUC-BASELINE (MDATA-F09 class) — see /retry above.
+    try {
+      await skipSyncQueueItem(params.data.id, user.uuid, body.data.operating_company_id, body.data.reason);
+    } catch (err) {
+      if ((err as Error & { statusCode?: number })?.statusCode === 403) {
+        return reply.code(403).send({ error: "forbidden_company_membership" });
+      }
+      throw err;
+    }
     return { ok: true };
   });
 

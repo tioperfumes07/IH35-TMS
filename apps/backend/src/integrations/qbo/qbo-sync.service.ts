@@ -1,6 +1,7 @@
 import crypto from "node:crypto";
 import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { withCurrentUser, withLuciaBypass } from "../../auth/db.js";
+import { assertCompanyMembership } from "../../_helpers/company-membership-guard.js";
 import { qboSyncWithRetry } from "../../qbo/sync-with-retry.js";
 import { computeOutboundBackoffMs } from "./sync-backoff.js";
 import { sendEmail } from "../../notifications/email.service.js";
@@ -712,6 +713,9 @@ export async function listSyncQueue(params: {
 }
 
 export async function retrySyncQueueItem(queueId: string, actorUserId: string, operatingCompanyId: string) {
+  // CLS-GUC-BASELINE (MDATA-F09 class) — every caller of this function hands it a caller-supplied
+  // operating_company_id; assert membership here once so no route call site can forget it.
+  await assertCompanyMembership(actorUserId, operatingCompanyId);
   const updated = await withCurrentUser(actorUserId, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     const res = await client.query<{ id: string }>(
@@ -748,6 +752,8 @@ export async function skipSyncQueueItem(
   operatingCompanyId: string,
   reason: string
 ) {
+  // CLS-GUC-BASELINE (MDATA-F09 class) — see retrySyncQueueItem above.
+  await assertCompanyMembership(actorUserId, operatingCompanyId);
   const updated = await withCurrentUser(actorUserId, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     const res = await client.query<{ id: string }>(
@@ -781,6 +787,8 @@ export async function dismissOutboundSyncQueueItem(
   operatingCompanyId: string,
   note: string
 ) {
+  // CLS-GUC-BASELINE (MDATA-F09 class) — see retrySyncQueueItem above.
+  await assertCompanyMembership(actorUserId, operatingCompanyId);
   const updated = await withCurrentUser(actorUserId, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     const res = await client.query<{ id: string }>(
