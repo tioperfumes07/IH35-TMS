@@ -61,6 +61,8 @@ function main() {
   if (!/<EntityLink kind="customer" id=\{load\.customer_id\}/.test(page)) {
     failures.push("planner calendar must link each load customer through its canonical FK");
   }
+  if (!/<EntityLink kind="driver" id=\{driver\.id\}/.test(page)) failures.push("planner calendar must link driver rows");
+  if (!/<EntityLink kind="unit" id=\{driver\.unit_id \?\? null\}/.test(page)) failures.push("planner calendar must link assigned units");
   if (!index.includes("registerDispatchPlannerRoutes")) failures.push("backend index must register planner routes");
 
   if (!dispatchApi.includes("getDispatchPlannerWeek")) failures.push("dispatch API must export getDispatchPlannerWeek");

@@ -234,8 +234,8 @@ export function UnifiedTimelinePlanner() {
                 return (
                   <tr key={driver.id} className="border-t border-gray-100">
                     <td className="sticky left-0 z-10 border-r bg-white px-2 py-0.5 text-xs font-medium text-gray-900">
-                      <span>{driver.name}</span>
-                      <span className="ml-1 text-[10px] text-gray-500">{entityLabel(driver.unit_number, driver.unit_id, "Unit")}</span>
+                      <EntityLink kind="driver" id={driver.id} label={entityLabel(driver.name, driver.id, "Driver")} />
+                      <span className="ml-1 text-[10px] text-gray-500"><EntityLink kind="unit" id={driver.unit_id} label={entityLabel(driver.unit_number, driver.unit_id, "Unit")} /></span>
                       {status === "Available" ? (
                         <button
                           type="button"

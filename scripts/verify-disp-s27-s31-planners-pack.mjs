@@ -53,6 +53,7 @@ function assertLive() {
   if (!/ListErrorBanner/.test(loads)) problems.push("S29 missing ListErrorBanner");
   if (!/enabled:\s*Boolean\(operatingCompanyId\)/.test(loads)) problems.push("S29 not company-gated");
   if (!/<EntityLink kind="customer" id=\{load\.customer_id\}/.test(loads)) problems.push("S29 load rows missing canonical customer link");
+  if (!/<EntityLink kind="load" id=\{load\.id\}/.test(loads)) problems.push("S29 load rows missing canonical load link");
 
   const timeline = read(FILES.timeline);
   if (!/data-testid="dispatch-timeline-need-company"/.test(timeline)) problems.push("S30 missing need-company");
@@ -60,6 +61,8 @@ function assertLive() {
   if (!/ListErrorBanner/.test(timeline)) problems.push("S30 missing ListErrorBanner");
   if (!/enabled:\s*Boolean\(operatingCompanyId\)/.test(timeline)) problems.push("S30 not company-gated");
   if (!/<EntityLink kind="customer" id=\{load\.customer_id\}/.test(timeline)) problems.push("S30 timeline rows missing canonical customer link");
+  if (!/<EntityLink kind="driver" id=\{driver\.id\}/.test(timeline)) problems.push("S30 driver rows missing canonical driver link");
+  if (!/<EntityLink kind="unit" id=\{driver\.unit_id\}/.test(timeline)) problems.push("S30 driver rows missing canonical unit link");
 
   const truck = read(FILES.truck);
   if (!/data-testid="dispatch-truck-planner-need-company"/.test(truck)) problems.push("S31 missing need-company");
