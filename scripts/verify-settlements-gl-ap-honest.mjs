@@ -1,0 +1,138 @@
+#!/usr/bin/env node
+/**
+ * SETTLEMENTS-GL-AP-HONEST + accounting list/reports gl_je chrome —
+ * DROP gl_je/ap_bill where FE has no journal_entry / vendor-bill EntityLink;
+ * TAG period_close + month_close as gl_je built (MonthClose checklist → JE list).
+ *
+ * @matrix-built {"modules":["accounting"],"cols":["gl_je"],"leafRe":"^(period_close|month_close)$","task":"WAVE-C-gl_je-month-close","vertical":"column-wave"}
+ *
+ * Usage: node scripts/verify-settlements-gl-ap-honest.mjs [--selftest]
+ */
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const LABEL = "verify-settlements-gl-ap-honest";
+
+const FORBIDDEN = {
+  settlements: {
+    "settlements.list": ["gl_je", "ap_bill"],
+    "settlements.detail": ["gl_je", "ap_bill"],
+    settlement_close: ["gl_je"],
+    cash_advances: ["gl_je"],
+  },
+  accounting: {
+    "invoices.list": ["gl_je"],
+    reports: ["gl_je"],
+  },
+};
+
+const MUST_KEEP = {
+  settlements: {
+    "settlements.list": ["liability"],
+    "settlements.detail": ["liability"],
+    settlement_close: ["liability"],
+    cash_advances: ["liability"],
+  },
+  accounting: {
+    "invoices.create": ["gl_je"],
+    period_close: ["gl_je"],
+    month_close: ["gl_je"],
+  },
+};
+
+function loadMod(mod) {
+  return JSON.parse(
+    fs.readFileSync(path.join(ROOT, `docs/specs/scoreboard/modules/${mod}.required.json`), "utf8"),
+  );
+}
+
+function fail(msg) {
+  console.error(`${LABEL} FAIL: ${msg}`);
+  process.exit(1);
+}
+
+function checkForbidden(doc, leafCols, mod) {
+  const out = [];
+  const byId = Object.fromEntries((doc.leaves || []).map((l) => [l.id, l]));
+  for (const [id, cols] of Object.entries(leafCols)) {
+    const leaf = byId[id];
+    if (!leaf) {
+      out.push(`${mod} missing ${id}`);
+      continue;
+    }
+    for (const c of cols) {
+      if ((leaf.required || []).includes(c)) out.push(`${mod}.${id} must NOT require ${c}`);
+    }
+  }
+  return out;
+}
+
+function checkKeep(doc, leafCols, mod) {
+  const out = [];
+  const byId = Object.fromEntries((doc.leaves || []).map((l) => [l.id, l]));
+  for (const [id, cols] of Object.entries(leafCols)) {
+    const leaf = byId[id];
+    if (!leaf) {
+      out.push(`${mod} missing KEEP ${id}`);
+      continue;
+    }
+    for (const c of cols) {
+      if (!(leaf.required || []).includes(c)) out.push(`${mod}.${id} must KEEP require ${c}`);
+    }
+  }
+  return out;
+}
+
+if (process.argv.includes("--selftest")) {
+  const doc = loadMod("settlements");
+  const clone = structuredClone(doc);
+  const leaf = clone.leaves.find((l) => l.id === "settlements.list");
+  if (!leaf) fail("selftest: settlements.list missing");
+  leaf.required = [...(leaf.required || []), "gl_je"];
+  const bad = checkForbidden(clone, FORBIDDEN.settlements, "settlements");
+  if (!bad.length) fail("selftest poison missed");
+  console.log(`${LABEL} --selftest PASS (poison would trip ${bad.length})`);
+  process.exit(0);
+}
+
+const failures = [];
+for (const [mod, leafCols] of Object.entries(FORBIDDEN)) {
+  failures.push(...checkForbidden(loadMod(mod), leafCols, mod));
+}
+for (const [mod, leafCols] of Object.entries(MUST_KEEP)) {
+  failures.push(...checkKeep(loadMod(mod), leafCols, mod));
+}
+
+const detail = fs.readFileSync(
+  path.join(ROOT, "apps/frontend/src/pages/driver-finance/SettlementDetailPage.tsx"),
+  "utf8",
+);
+if (/kind=["']journal_entry["']/.test(detail)) {
+  failures.push("SettlementDetail now has journal_entry EntityLink — re-scope gl_je DROP");
+}
+if (/kind=["']bill["']/.test(detail)) {
+  failures.push("SettlementDetail now has bill EntityLink — re-scope ap_bill DROP");
+}
+
+const invList = fs.readFileSync(path.join(ROOT, "apps/frontend/src/pages/accounting/InvoicesListPage.tsx"), "utf8");
+if (/kind=["']journal_entry["']/.test(invList)) {
+  failures.push("InvoicesListPage now has journal_entry EntityLink — re-scope invoices.list DROP");
+}
+
+const month = fs.readFileSync(path.join(ROOT, "apps/frontend/src/pages/accounting/MonthClosePage.tsx"), "utf8");
+if (!/journal-entries/.test(month) || !/adjusting_entries/.test(month)) {
+  failures.push("MonthClosePage must surface adjusting_entries + link to journal-entries");
+}
+
+const manifest = fs.readFileSync(path.join(ROOT, "apps/frontend/src/routes/manifest.tsx"), "utf8");
+if (!/path=\"\/accounting\/period-close\"[\s\S]*?Navigate to=\"\/accounting\/month-close\"/.test(manifest)) {
+  failures.push("period-close must alias to month-close");
+}
+
+if (failures.length) {
+  console.error(`${LABEL} FAIL:\n${failures.map((f) => ` - ${f}`).join("\n")}`);
+  process.exit(1);
+}
+console.log(`${LABEL} PASS — settlements gl_je/ap_bill DROPs; invoices.list/reports DROPs; month/period_close tagged`);

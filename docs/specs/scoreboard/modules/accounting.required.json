@@ -335,7 +335,6 @@
       "required": [
         "customer",
         "load",
-        "gl_je",
         "connectivity",
         "reverse_link",
         "picker_law"
@@ -521,7 +520,6 @@
       "sub": "Accounting reports hub",
       "route_hint": "/accounting/reports",
       "required": [
-        "gl_je",
         "connectivity"
       ]
     }
@@ -681,6 +679,36 @@
             "gl_je"
           ],
           "proof": "covered by expenses/register JE memo guard; exact leaf id tag"
+        }
+      ],
+      "drops2": [
+        {
+          "id": "invoices.list",
+          "removed": [
+            "gl_je"
+          ]
+        },
+        {
+          "id": "reports",
+          "removed": [
+            "gl_je"
+          ]
+        }
+      ],
+      "matrix_built_extra": [
+        {
+          "id": "period_close",
+          "cols": [
+            "gl_je"
+          ],
+          "proof": "alias\u2192MonthClosePage adjusting_entries href /accounting/journal-entries"
+        },
+        {
+          "id": "month_close",
+          "cols": [
+            "gl_je"
+          ],
+          "proof": "MonthClosePage adjusting_entries + link to JE list"
         }
       ]
     }

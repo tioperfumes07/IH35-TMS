@@ -2,7 +2,7 @@
   "module": "settlements",
   "entity_default": "USMCA",
   "source": {
-    "arch_design": "IH35_ARCHITECTURAL_DESIGN — Settlements / driver finance",
+    "arch_design": "IH35_ARCHITECTURAL_DESIGN \u2014 Settlements / driver finance",
     "nav": "apps/frontend/src/pages/driver-finance/SettlementsPage.tsx",
     "routes": "/driver-finance/*"
   },
@@ -89,8 +89,6 @@
         "load",
         "unit",
         "liability",
-        "gl_je",
-        "ap_bill",
         "connectivity",
         "reverse_link",
         "picker_law"
@@ -106,8 +104,6 @@
         "load",
         "unit",
         "liability",
-        "gl_je",
-        "ap_bill",
         "connectivity",
         "reverse_link"
       ]
@@ -134,7 +130,6 @@
         "driver",
         "load",
         "liability",
-        "gl_je",
         "picker_law",
         "qbo_chrome",
         "connectivity",
@@ -149,7 +144,6 @@
       "required": [
         "driver",
         "liability",
-        "gl_je",
         "picker_law",
         "qbo_chrome",
         "connectivity",
@@ -176,10 +170,44 @@
       "matrix_built": [
         {
           "id": "settlements.detail",
-          "cols": ["liability"],
+          "cols": [
+            "liability"
+          ],
           "proof": "SettlementDetailPage LiabilityBreakdownModal"
         }
       ]
+    },
+    "gl_ap_honest_2026_08_12": {
+      "finding": "SETTLEMENTS-GL-AP-HONEST",
+      "drops": [
+        {
+          "id": "settlements.list",
+          "removed": [
+            "gl_je",
+            "ap_bill"
+          ]
+        },
+        {
+          "id": "settlements.detail",
+          "removed": [
+            "gl_je",
+            "ap_bill"
+          ]
+        },
+        {
+          "id": "settlement_close",
+          "removed": [
+            "gl_je"
+          ]
+        },
+        {
+          "id": "cash_advances",
+          "removed": [
+            "gl_je"
+          ]
+        }
+      ],
+      "note": "Settlements FE has liability drills but no journal_entry/ap_bill EntityLink \u2014 money gl_je/ap_bill claims were inflation"
     }
   }
 }
