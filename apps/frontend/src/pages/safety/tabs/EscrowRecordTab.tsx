@@ -204,6 +204,14 @@ export function EscrowRecordTab() {
             <div key={entry.id} className={entry.status === "blocked" ? "text-red-700" : "text-slate-700"}>
               {entry.created_at.slice(0, 16).replace("T", " ")} - <EntityLink kind="driver" id={entry.driver_id} label={entityLabel(entry.driver_name, entry.driver_id, "Driver")} /> - ${entry.amount.toFixed(2)} - {entry.reason} (
               {entry.status})
+              {/* LIABILITY column-wave: linked_liability_id already flows end-to-end
+                  (escrow-forfeit.service.ts writes it → timelineToAttempts reads it into
+                  EscrowForfeitAttempt) — this render was the only missing link in the whole chain. */}
+              {entry.linked_liability_id ? (
+                <>
+                  {" "}- <EntityLink kind="liability" id={entry.linked_liability_id} label="Liability" />
+                </>
+              ) : null}
             </div>
           ))}
           {attempts.length === 0 ? <div className="text-slate-400">No forfeiture attempts yet.</div> : null}

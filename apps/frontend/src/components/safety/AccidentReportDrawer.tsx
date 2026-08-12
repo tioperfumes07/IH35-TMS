@@ -414,6 +414,22 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
                   />
                 </p>
               ) : null}
+              {/* LIABILITY column-wave: Spawn Liability (button above) previously only toasted success —
+                  the created id was never persisted or re-rendered, so reopening the drawer showed no
+                  trace of it. GET /api/v1/safety/accidents/:id now reverse-JOINs
+                  driver_finance.driver_liabilities by origin='safety_accident'/origin_id and returns
+                  spawned_liability_id; render it the same honest-drill way as the claim link above. */}
+              {typeof accident?.spawned_liability_id === "string" && accident.spawned_liability_id ? (
+                <p className="mt-1 text-[11px] text-slate-500">
+                  Spawned liability:{" "}
+                  <EntityLink
+                    kind="liability"
+                    id={accident.spawned_liability_id}
+                    label="Liability"
+                    data-testid="accident-spawned-liability"
+                  />
+                </p>
+              ) : null}
             </Field>
 
             <Field label="Bill or Expense Number (if applicable)">

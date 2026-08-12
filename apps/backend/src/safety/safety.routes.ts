@@ -520,7 +520,19 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
       // SAF-B30 / F35: previously spawned AC work orders survived only in React state. Reload them
       // from maintenance.work_orders by the durable description token (no back-link column on prod yet).
       const wos = await listAccidentSpawnedWorkOrders(client, query.data.operating_company_id, params.data.id);
-      return { ...accident, spawned_work_orders: wos };
+      // LIABILITY column-wave: same shape as the work-order reload above — spawnSafetyLiability's
+      // result (safety.routes.ts spawn-liability route) was only ever toasted, never persisted or
+      // re-read, so the drawer had nothing to render on reload even though the liability itself was
+      // created with origin='safety_accident', origin_id=<this accident>. Reverse-JOIN instead of a
+      // new back-link column, same discipline as the WO reload just above.
+      const liabRes = await client.query(
+        `SELECT id::text FROM driver_finance.driver_liabilities
+         WHERE operating_company_id = $1::uuid AND origin = 'safety_accident' AND origin_id = $2::uuid
+         ORDER BY created_at DESC LIMIT 1`,
+        [query.data.operating_company_id, params.data.id]
+      );
+      const spawnedLiabilityId = liabRes.rows[0]?.id ? String(liabRes.rows[0].id) : null;
+      return { ...accident, spawned_work_orders: wos, spawned_liability_id: spawnedLiabilityId };
     });
     if (!row) return reply.code(404).send({ error: "accident_not_found" });
     return row;

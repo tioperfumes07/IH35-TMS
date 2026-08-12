@@ -447,6 +447,17 @@ export async function createDriverCashAdvanceCore(
   }
   if (!advanceId) return { ok: false, code: 500, error: "advance_create_failed" };
 
+  // LIABILITY column-wave: the liability row is created BEFORE the advance row exists (the advance
+  // FKs to liabilityId, not the reverse), so origin/origin_id could not be set at INSERT time —
+  // this is the one-time UPDATE that closes that gap, same origin/origin_id shape
+  // fines.routes.ts / safety-v5.routes.ts already set at their own INSERT time. reference_doc_id
+  // has no natural document here (a cash advance IS the document), so it stays NULL rather than
+  // fabricating a value.
+  await client.query(
+    `UPDATE driver_finance.driver_liabilities SET origin = 'cash_advance', origin_id = $1 WHERE id = $2`,
+    [advanceId, liabilityId]
+  );
+
   await appendCrudAudit(
     client,
     actorUserUuid,
