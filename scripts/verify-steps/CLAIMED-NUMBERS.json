@@ -1,24 +1,4 @@
 {
-  "3157": {
-    "claimed_at": "2026-08-12",
-    "claimed_by": "cc-1",
-    "purpose": "verify-void-reversal-posting-source-tagged"
-  },
-  "3153": {
-    "claimed_at": "2026-08-12",
-    "claimed_by": "cc-1",
-    "purpose": "verify-ap-bills-void-spelling"
-  },
-  "3149": {
-    "claimed_at": "2026-08-12",
-    "claimed_by": "cc-1",
-    "purpose": "verify-settlement-for-load-reverse-hop"
-  },
-  "3127": {
-    "claimed_at": "2026-08-12",
-    "claimed_by": "cc-2",
-    "purpose": "verify-expenses-list-void-affordance"
-  },
   "2912": {
     "claimed_at": "2026-08-08",
     "claimed_by": "cursor",
@@ -384,6 +364,11 @@
     "claimed_by": "cc-1",
     "purpose": "verify-qbo-sync-bill-payment-phantom-column"
   },
+  "3127": {
+    "claimed_at": "2026-08-12",
+    "claimed_by": "cc-2",
+    "purpose": "verify-expenses-list-void-affordance"
+  },
   "3129": {
     "claimed_at": "2026-08-12",
     "claimed_by": "cc-1",
@@ -408,6 +393,26 @@
     "claimed_at": "2026-08-12",
     "claimed_by": "cc-1",
     "purpose": "verify-je-memo-not-bare-uuid"
+  },
+  "3149": {
+    "claimed_at": "2026-08-12",
+    "claimed_by": "cc-1",
+    "purpose": "verify-settlement-for-load-reverse-hop"
+  },
+  "3151": {
+    "claimed_at": "2026-08-12",
+    "claimed_by": "cc-2",
+    "purpose": "verify-money-kpi-strip-no-fake-zero-on-error"
+  },
+  "3153": {
+    "claimed_at": "2026-08-12",
+    "claimed_by": "cc-1",
+    "purpose": "verify-ap-bills-void-spelling"
+  },
+  "3157": {
+    "claimed_at": "2026-08-12",
+    "claimed_by": "cc-1",
+    "purpose": "verify-void-reversal-posting-source-tagged"
   },
   "_band": {
     "cc-1": "n%4===1",
@@ -2253,5 +2258,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1124
+  "total_claimed": 1123
 }
