@@ -172,7 +172,6 @@
         "unit",
         "ap_bill",
         "gl_je",
-        "liability",
         "picker_law",
         "qbo_chrome",
         "connectivity",
@@ -412,7 +411,6 @@
       "route_hint": "/accounting/pre-settlements",
       "required": [
         "driver",
-        "liability",
         "connectivity"
       ]
     },
@@ -721,6 +719,40 @@
             "gl_je"
           ],
           "proof": "FactoringDetailPage journal_entry_id EntityLink (list\u2192:id)"
+        }
+      ]
+    },
+    "maint_bill_factoring_liab_2026_08_12": {
+      "finding": "MAINT-BILL-FACTORING-LIAB-BUILT",
+      "drops": [
+        {
+          "id": "bills.create.driver",
+          "removed": [
+            "liability"
+          ]
+        },
+        {
+          "id": "pre_settlements",
+          "removed": [
+            "liability"
+          ]
+        }
+      ],
+      "matrix_built": [
+        {
+          "id": "bills.create.maintenance",
+          "cols": [
+            "inventory",
+            "scenario.maintenance"
+          ],
+          "proof": "VendorBillForm work_order_id EntityLink + parts-and-labor lines"
+        },
+        {
+          "id": "factoring.list",
+          "cols": [
+            "liability"
+          ],
+          "proof": "FactoringListPage reserve_amount_cents column"
         }
       ]
     }

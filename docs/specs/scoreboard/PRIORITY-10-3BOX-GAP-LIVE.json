@@ -1,14 +1,14 @@
 {
-  "as_of": "2026-08-12T21:21:54.287Z",
-  "main_sha": "e5ff951b5",
+  "as_of": "2026-08-12T21:26:42.713Z",
+  "main_sha": "9ced0eec5",
   "gate": "PRIORITY_10_3BOX_100",
   "allRequired": {
-    "totR": 2664,
-    "totB": 2281,
+    "totR": 2662,
+    "totB": 2283,
     "pct": 86
   },
   "waveABC_noChrome": {
-    "abcR": 2039,
+    "abcR": 2037,
     "abcB": 2024,
     "pct": 99
   },
@@ -24,12 +24,12 @@
     },
     {
       "mod": "accounting",
-      "req": 162,
-      "built": 134,
-      "pct": 83,
-      "abcReq": 130,
+      "req": 160,
+      "built": 136,
+      "pct": 85,
+      "abcReq": 128,
       "abcBuilt": 126,
-      "abcPct": 97
+      "abcPct": 98
     },
     {
       "mod": "dispatch",
@@ -138,9 +138,8 @@
     },
     {
       "col": "liability",
-      "cells": 13,
+      "cells": 11,
       "byMod": {
-        "accounting": 2,
         "factoring": 10,
         "banking": 1
       },
@@ -153,23 +152,7 @@
         "accounting": 2
       },
       "seat": "CC-1 C"
-    },
-    {
-      "col": "inventory",
-      "cells": 1,
-      "byMod": {
-        "accounting": 1
-      },
-      "seat": "?"
-    },
-    {
-      "col": "scenario.maintenance",
-      "cells": 1,
-      "byMod": {
-        "accounting": 1
-      },
-      "seat": "?"
     }
   ],
-  "entry_count": 142
+  "entry_count": 145
 }
