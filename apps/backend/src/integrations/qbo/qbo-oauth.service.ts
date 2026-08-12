@@ -82,6 +82,9 @@ function logOauthStep(level: "info" | "error", payload: Record<string, unknown>)
   console.info("[QBO_OAUTH]", payload);
 }
 
+// CodeQL js/clear-text-logging: this function is named "redacted" and every other field here IS a
+// boolean presence flag — but it also logged the raw redirect_uri right next to its own
+// has_redirect_uri flag, defeating the redaction it claims to do. Presence-only, like the rest.
 function redactedFormMetadata(form: URLSearchParams) {
   return {
     grant_type: form.get("grant_type"),
