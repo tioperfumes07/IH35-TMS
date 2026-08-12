@@ -57,8 +57,8 @@ function exportSelectedCsv(selected: WorkOrder[]) {
       entityLabel(row.display_id, row.id, "Work order"),
       row.source_type ?? "",
       entityLabel(row.unit_number, row.unit_id, "Unit"),
-      entityLabel(null, row.driver_id, "Driver"),
-      row.external_vendor_id ?? "",
+      entityLabel(row.driver_name, row.driver_id, "Driver"),
+      entityLabel(row.external_vendor_name, row.external_vendor_id, "Vendor"),
       row.status ?? "",
       money((row as Record<string, unknown>).total_actual_cost),
       renderDuration(row),
@@ -93,7 +93,7 @@ export function WorkOrdersTable({
     const q = search.trim().toLowerCase();
     if (!q) return rows;
     return rows.filter((r) =>
-      [r.display_id, r.id, r.unit_number, r.driver_id, r.external_vendor_id, r.status, r.source_type].some((v) =>
+      [r.display_id, r.id, r.unit_number, r.driver_name, r.external_vendor_name, r.status, r.source_type].some((v) =>
         String(v ?? "").toLowerCase().includes(q),
       ),
     );
@@ -132,7 +132,7 @@ export function WorkOrdersTable({
         <EntityLink
           kind="driver"
           id={row.driver_id ?? undefined}
-          label={row.driver_id ? entityLabel(null, row.driver_id, "Driver") : undefined}
+          label={row.driver_id ? entityLabel(row.driver_name, row.driver_id, "Driver") : undefined}
         />
       ),
     },
@@ -144,7 +144,7 @@ export function WorkOrdersTable({
           <EntityLink
             kind="vendor"
             id={row.external_vendor_id}
-            label={entityLabel(null, row.external_vendor_id, "Vendor")}
+            label={entityLabel(row.external_vendor_name, row.external_vendor_id, "Vendor")}
           />
         ) : (
           "—"

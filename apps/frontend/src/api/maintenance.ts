@@ -53,6 +53,7 @@ export type WorkOrder = {
   unit_id: string;
   unit_number?: string | null;
   driver_id?: string | null;
+  driver_name?: string | null;
   load_id?: string | null;
   /** Snapshot string written at link time — EntityLink prefers load_id FK. */
   linked_load_number?: string | null;
@@ -62,6 +63,7 @@ export type WorkOrder = {
   description?: string | null;
   source_type?: "IS" | "ES" | "AC" | "ET" | "RT" | "IT" | "RS" | null;
   external_vendor_id?: string | null;
+  external_vendor_name?: string | null;
   external_vendor_wo_number?: string | null;
   external_vendor_invoice_number?: string | null;
   severity?: string | null;
