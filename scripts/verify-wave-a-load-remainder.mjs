@@ -2,7 +2,7 @@
 /**
  * WAVE-A load remainder — surfaces that already drill/submit load FKs but lacked @matrix-built.
  *
- * @matrix-built {"modules":["dispatch"],"cols":["load"],"leafRe":"^(queues\\.(trip_pairing|factoring_queue|border|alerts)$|docs\\.pod$)","task":"WAVE-A-load-remainder-dispatch","vertical":"column-wave"}
+ * @matrix-built {"modules":["dispatch"],"cols":["load"],"leafRe":"^(queues\\.(trip_pairing|factoring_queue|border|alerts|map)$|docs\\.pod$|settings\\.notify$)","task":"WAVE-A-load-remainder-dispatch","vertical":"column-wave"}
  * @matrix-built {"modules":["safety"],"cols":["load"],"leafRe":"^(safety_events\\.list$|damage_reports\\.|internal_fines\\.create$)","task":"WAVE-A-load-remainder-safety","vertical":"column-wave"}
  * @matrix-built {"modules":["factoring"],"cols":["load"],"leafRe":"^(submit\\.queue|batches\\.(create|detail)|accounting\\.(list|submit|detail)|banking\\.entry)$","task":"WAVE-A-load-remainder-factoring","vertical":"column-wave"}
  *
@@ -21,6 +21,8 @@ const CHECKS = [
   { name: "POD review load drill", file: "apps/frontend/src/pages/dispatch/PodReviewPage.tsx", pattern: /kind="load"/ },
   { name: "border history load drill", file: "apps/frontend/src/pages/dispatch/BorderCrossingHistoryPage.tsx", pattern: /kind="load"/ },
   { name: "at-risk / alerts load drill", file: "apps/frontend/src/pages/dispatch/AtRiskQueuePage.tsx", pattern: /kind="load"/ },
+  { name: "map view load_id focus", file: "apps/frontend/src/pages/dispatch/MapView.tsx", pattern: /load_id/ },
+  { name: "notify prefs load EntityLink", file: "apps/frontend/src/pages/dispatch/NotifyPreferencesPage.tsx", pattern: /kind="load"/ },
   { name: "safety events load drill", file: "apps/frontend/src/pages/safety/SafetyEventsPage.tsx", pattern: /kind="load"/ },
   { name: "incidents cluster load drill", file: "apps/frontend/src/pages/safety/components/SafetyIncidentsClusterSurface.tsx", pattern: /kind="load"/ },
   { name: "internal fine create related_load_id", file: "apps/frontend/src/pages/safety/components/FineCreateModal.tsx", pattern: /related_load_id/ },

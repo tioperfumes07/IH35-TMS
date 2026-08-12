@@ -1,16 +1,16 @@
 {
-  "as_of": "2026-08-12T20:31:03.008Z",
-  "main_sha": "c8c7ff3a7",
+  "as_of": "2026-08-12T20:34:53.572Z",
+  "main_sha": "653b15859",
   "gate": "PRIORITY_10_3BOX_100",
   "allRequired": {
-    "totR": 3051,
-    "totB": 2270,
-    "pct": 74
+    "totR": 3042,
+    "totB": 2271,
+    "pct": 75
   },
   "waveABC_noChrome": {
-    "abcR": 2421,
-    "abcB": 2019,
-    "pct": 83
+    "abcR": 2412,
+    "abcB": 2020,
+    "pct": 84
   },
   "per_module": [
     {
@@ -25,20 +25,20 @@
     {
       "mod": "accounting",
       "req": 170,
-      "built": 127,
-      "pct": 75,
+      "built": 129,
+      "pct": 76,
       "abcReq": 138,
-      "abcBuilt": 119,
-      "abcPct": 86
+      "abcBuilt": 121,
+      "abcPct": 88
     },
     {
       "mod": "dispatch",
-      "req": 363,
-      "built": 304,
-      "pct": 84,
-      "abcReq": 318,
-      "abcBuilt": 294,
-      "abcPct": 92
+      "req": 358,
+      "built": 303,
+      "pct": 85,
+      "abcReq": 313,
+      "abcBuilt": 293,
+      "abcPct": 94
     },
     {
       "mod": "settlements",
@@ -60,12 +60,12 @@
     },
     {
       "mod": "banking",
-      "req": 49,
+      "req": 48,
       "built": 40,
-      "pct": 82,
-      "abcReq": 41,
+      "pct": 83,
+      "abcReq": 40,
       "abcBuilt": 38,
-      "abcPct": 93
+      "abcPct": 95
     },
     {
       "mod": "customers",
@@ -87,21 +87,21 @@
     },
     {
       "mod": "drivers",
-      "req": 62,
+      "req": 61,
       "built": 49,
-      "pct": 79,
-      "abcReq": 50,
+      "pct": 80,
+      "abcReq": 49,
       "abcBuilt": 49,
-      "abcPct": 98
+      "abcPct": 100
     },
     {
       "mod": "safety",
-      "req": 203,
+      "req": 201,
       "built": 154,
-      "pct": 76,
-      "abcReq": 160,
+      "pct": 77,
+      "abcReq": 158,
       "abcBuilt": 149,
-      "abcPct": 93
+      "abcPct": 94
     }
   ],
   "ranked_gaps": [
@@ -124,10 +124,10 @@
     },
     {
       "col": "gl_je",
-      "cells": 127,
+      "cells": 125,
       "byMod": {
         "lists": 112,
-        "accounting": 14,
+        "accounting": 12,
         "settlements": 1
       },
       "seat": "CC-1 C"
@@ -185,13 +185,10 @@
     },
     {
       "col": "load",
-      "cells": 17,
+      "cells": 9,
       "byMod": {
-        "dispatch": 11,
-        "banking": 1,
-        "vendors": 2,
-        "drivers": 1,
-        "safety": 2
+        "dispatch": 7,
+        "vendors": 2
       },
       "seat": "Codex"
     },
@@ -237,5 +234,5 @@
       "seat": "?"
     }
   ],
-  "entry_count": 128
+  "entry_count": 129
 }

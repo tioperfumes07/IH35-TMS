@@ -193,7 +193,6 @@
       "route_hint": "/driver-finance/settlements",
       "required": [
         "driver",
-        "load",
         "customer",
         "liability",
         "gl_je",
@@ -208,7 +207,6 @@
       "route_hint": "/accounting/pre-settlements",
       "required": [
         "driver",
-        "load",
         "customer",
         "liability",
         "gl_je",
@@ -377,7 +375,6 @@
       "route_hint": "/accounting/factoring",
       "required": [
         "customer",
-        "load",
         "liability",
         "gl_je",
         "connectivity",
@@ -573,7 +570,6 @@
         "unit",
         "trailer",
         "driver",
-        "load",
         "connectivity",
         "reverse_link",
         "picker_law"
@@ -636,7 +632,6 @@
       "route_hint": "/dispatch/chat",
       "required": [
         "driver",
-        "load",
         "connectivity"
       ]
     },
@@ -858,5 +853,47 @@
         "reverse_link"
       ]
     }
-  ]
+  ],
+  "honesty_audit": {
+    "load_inflation_2026_08_12": {
+      "finding": "DISP-REQUIRED-LOAD-INFLATION",
+      "drops": [
+        {
+          "module": "dispatch",
+          "id": "secondary.settlements",
+          "removed": [
+            "load"
+          ]
+        },
+        {
+          "module": "dispatch",
+          "id": "secondary.pre_settlements",
+          "removed": [
+            "load"
+          ]
+        },
+        {
+          "module": "dispatch",
+          "id": "queues.factoring",
+          "removed": [
+            "load"
+          ]
+        },
+        {
+          "module": "dispatch",
+          "id": "misc.chat",
+          "removed": [
+            "load"
+          ]
+        },
+        {
+          "module": "dispatch",
+          "id": "docs.equipment_transfers",
+          "removed": [
+            "load"
+          ]
+        }
+      ]
+    }
+  }
 }

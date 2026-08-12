@@ -174,7 +174,6 @@
       "required": [
         "driver",
         "unit",
-        "load",
         "connectivity",
         "reverse_link",
         "picker_law"
@@ -501,7 +500,6 @@
       "required": [
         "driver",
         "unit",
-        "load",
         "connectivity"
       ]
     },
@@ -615,5 +613,26 @@
         "connectivity"
       ]
     }
-  ]
+  ],
+  "honesty_audit": {
+    "load_inflation_2026_08_12": {
+      "finding": "DISP-REQUIRED-LOAD-INFLATION",
+      "drops": [
+        {
+          "module": "safety",
+          "id": "hos_violations.list",
+          "removed": [
+            "load"
+          ]
+        },
+        {
+          "module": "safety",
+          "id": "geofence_alerts.list",
+          "removed": [
+            "load"
+          ]
+        }
+      ]
+    }
+  }
 }

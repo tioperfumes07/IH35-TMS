@@ -1,0 +1,159 @@
+#!/usr/bin/env node
+/**
+ * DISP-REQUIRED-LOAD-INFLATION — Matrix Required must not claim `load` on hop-only
+ * or driver/unit-only surfaces with no load_id / kind=load drill (DoD-C).
+ *
+ * Evidence anchors (2026-08-12):
+ * - secondary.settlements / pre_settlements / queues.factoring = Navigate hops (sub text)
+ * - misc.chat DispatchChatPage — no load_id
+ * - docs.equipment_transfers — EntityLink driver only
+ * - banking factoring entry form — no load field
+ * - drivers team_splits / safety hos_violations + geofence_alerts — no load_id
+ *
+ * KEEP load on: OCR→Book Load, planners, map (focusLoadId), notify (EntityLink kind=load).
+ *
+ * Usage: node scripts/verify-dispatch-required-load-honest.mjs [--selftest]
+ */
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const LABEL = "verify-dispatch-required-load-honest";
+
+/** module → leafId → cols that must NOT appear */
+const FORBIDDEN = {
+  dispatch: {
+    "secondary.settlements": ["load"],
+    "secondary.pre_settlements": ["load"],
+    "queues.factoring": ["load"],
+    "misc.chat": ["load"],
+    "docs.equipment_transfers": ["load"],
+  },
+  banking: {
+    factoring: ["load"],
+  },
+  drivers: {
+    team_splits: ["load"],
+  },
+  safety: {
+    "hos_violations.list": ["load"],
+    "geofence_alerts.list": ["load"],
+  },
+};
+
+/** Must KEEP load (canonical focus / Book Load / notify drill) */
+const MUST_KEEP = {
+  dispatch: {
+    "docs.ocr": ["load"],
+    "queues.map": ["load"],
+    "settings.notify": ["load"],
+  },
+};
+
+function reqPath(mod) {
+  return path.join(ROOT, `docs/specs/scoreboard/modules/${mod}.required.json`);
+}
+
+function loadMod(mod) {
+  return JSON.parse(fs.readFileSync(reqPath(mod), "utf8"));
+}
+
+function fail(msg) {
+  console.error(`${LABEL} FAIL: ${msg}`);
+  process.exit(1);
+}
+
+function offenders(doc, leafCols) {
+  const out = [];
+  const byId = Object.fromEntries((doc.leaves || []).map((l) => [l.id, l]));
+  for (const [leafId, cols] of Object.entries(leafCols)) {
+    const leaf = byId[leafId];
+    if (!leaf) {
+      out.push(`missing leaf ${leafId}`);
+      continue;
+    }
+    for (const col of cols) {
+      if ((leaf.required || []).includes(col)) out.push(`${leafId} must NOT require ${col}`);
+    }
+  }
+  return out;
+}
+
+function missingKeep(doc, leafCols) {
+  const out = [];
+  const byId = Object.fromEntries((doc.leaves || []).map((l) => [l.id, l]));
+  for (const [leafId, cols] of Object.entries(leafCols)) {
+    const leaf = byId[leafId];
+    if (!leaf) {
+      out.push(`missing KEEP leaf ${leafId}`);
+      continue;
+    }
+    for (const col of cols) {
+      if (!(leaf.required || []).includes(col)) out.push(`${leafId} must KEEP require ${col}`);
+    }
+  }
+  return out;
+}
+
+if (process.argv.includes("--selftest")) {
+  const doc = loadMod("dispatch");
+  const clone = structuredClone(doc);
+  const leaf = clone.leaves.find((l) => l.id === "misc.chat");
+  if (!leaf) fail("selftest: misc.chat missing");
+  leaf.required = [...(leaf.required || []), "load"];
+  const bad = offenders(clone, FORBIDDEN.dispatch);
+  if (!bad.length) fail("selftest: poison did not trip");
+  console.log(`${LABEL} --selftest PASS (poison would trip ${bad.length})`);
+  process.exit(0);
+}
+
+const failures = [];
+
+for (const [mod, leafCols] of Object.entries(FORBIDDEN)) {
+  failures.push(...offenders(loadMod(mod), leafCols).map((m) => `${mod}: ${m}`));
+}
+for (const [mod, leafCols] of Object.entries(MUST_KEEP)) {
+  failures.push(...missingKeep(loadMod(mod), leafCols).map((m) => `${mod}: ${m}`));
+}
+
+// Anchors: hop leaves still say Hop / accounting hop in sub
+const disp = loadMod("dispatch");
+for (const id of ["secondary.settlements", "secondary.pre_settlements", "queues.factoring"]) {
+  const leaf = disp.leaves.find((l) => l.id === id);
+  if (!leaf) {
+    failures.push(`dispatch missing ${id}`);
+    continue;
+  }
+  if (!/hop/i.test(String(leaf.sub || ""))) {
+    failures.push(`${id} expected hop language in sub (re-check before changing FORBIDDEN)`);
+  }
+}
+
+const chat = fs.readFileSync(path.join(ROOT, "apps/frontend/src/pages/chat/DispatchChatPage.tsx"), "utf8");
+if (/kind=["']load["']/.test(chat) || /\bload_id\b/.test(chat)) {
+  failures.push("DispatchChatPage now has load drill — remove misc.chat from FORBIDDEN and tag @matrix-built instead");
+}
+
+const xfer = fs.readFileSync(
+  path.join(ROOT, "apps/frontend/src/pages/dispatch/EquipmentTransferRequests.tsx"),
+  "utf8",
+);
+if (/kind=["']load["']/.test(xfer)) {
+  failures.push("EquipmentTransferRequests has load EntityLink — remove from FORBIDDEN");
+}
+
+const map = fs.readFileSync(path.join(ROOT, "apps/frontend/src/pages/dispatch/MapView.tsx"), "utf8");
+if (!/load_id/.test(map)) failures.push("MapView must keep load_id focus (MUST_KEEP queues.map)");
+
+const notify = fs.readFileSync(
+  path.join(ROOT, "apps/frontend/src/pages/dispatch/NotifyPreferencesPage.tsx"),
+  "utf8",
+);
+if (!/kind=["']load["']/.test(notify)) failures.push("NotifyPreferencesPage must keep kind=load (MUST_KEEP settings.notify)");
+
+if (failures.length) {
+  console.error(`${LABEL} FAIL:\n${failures.map((f) => ` - ${f}`).join("\n")}`);
+  process.exit(1);
+}
+console.log(`${LABEL} PASS — hop/no-FK load Required DROPs held; map+notify+ocr KEEP`);

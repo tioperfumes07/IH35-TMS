@@ -265,6 +265,8 @@ export type VendorBill = {
   linked_work_order_uuid?: string | null;
   /** ACCT-F04 reverse drill — present when accounting.bills.insurance_claim_id column exists. */
   insurance_claim_id?: string | null;
+  /** Present when bills.service resolves a cash-advance reverse link for BillDetail. */
+  linked_cash_advance_id?: string | null;
 };
 
 /** ACCT-F603 — never pass legacy QBO vendor_id text to EntityLink (404s /vendors/472). */
