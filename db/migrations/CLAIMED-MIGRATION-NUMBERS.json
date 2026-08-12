@@ -33,6 +33,10 @@
     "202612502000": {
       "claimed_by": "cursor",
       "purpose": "p44_dispatch_flag_color_canonical_fk"
+    },
+    "202612502200": {
+      "claimed_by": "cursor",
+      "purpose": "p44_load_additional_charge_lines_canonical_fk"
     }
   }
 }
