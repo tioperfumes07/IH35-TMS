@@ -643,6 +643,7 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
          AND l.operating_company_id = bt.operating_company_id
         LEFT JOIN catalogs.classes cls
           ON cls.id = bt.categorization_class_id
+         AND cls.operating_company_id = bt.operating_company_id
         WHERE ${predicates.join(" AND ")}
         ORDER BY ${sortSql}
         LIMIT $${limitIdx} OFFSET $${offsetIdx}

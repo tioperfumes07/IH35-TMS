@@ -680,7 +680,7 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
         let expenseNumber: string | null = null;
 
         if (attribution) {
-          const numbered = await generateExpenseNumber(client, attribution.loadId);
+          const numbered = await generateExpenseNumber(client, attribution.loadId, body.operating_company_id);
 
           await client.query(
             `
@@ -746,7 +746,7 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
           // so it is generated HERE from the same generator rather than invented as a second series,
           // and historical rows are NOT backfilled — a number implies an attribution event that never
           // happened for them.
-          const numbered = await generateExpenseNumber(client, body.load_id);
+          const numbered = await generateExpenseNumber(client, body.load_id, body.operating_company_id);
           await client.query(
             `
               INSERT INTO expense_attribution.expense_load_links (
@@ -934,7 +934,7 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
         const existingLink = (linkRes.rows[0] as { id: string; expense_number: string | null } | undefined) ?? null;
         const priorNumber = existingLink?.expense_number ?? null;
 
-        const numbered = await generateExpenseNumber(client, body.new_load_id);
+        const numbered = await generateExpenseNumber(client, body.new_load_id, body.operating_company_id);
 
         if (existingLink?.id) {
           await client.query(
