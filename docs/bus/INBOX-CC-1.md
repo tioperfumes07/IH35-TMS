@@ -1,24 +1,20 @@
-# CC-1 INBOX — 2026-08-12 17:30 · HARD RESET
+# CC-1 INBOX — OWNER SEQ P10→ALL · 2026-08-12 evening
 
-**Your Desktop OUTBOX was STALE (12:41 CT).** Essays about “legacy exhausted / owner-gated P24 / holding” are **VOID**. Read this file only.
+**OUTBOX essays (holding / owner-gate / legacy) = VOID.** This INBOX + paste fence win.
 
-## Law (no deviation)
+## Owner sequence (you)
 
-- Law of the Land · UNIVERSAL VERTICAL · Wire-first A→B→**C** · FAST-MERGE
-- **NO HOLDS · NO JORGE-APPROVED · NO wait Jorge · Neon apply YOURSELF**
-- Money column × **all modules that owe it** (every money leaf/drawer) in the **same PR**
+1. **FIRST** — finish money wiring still **missing on the priority 10**
+2. **THEN** — finish **those same columns** across **ALL modules** that still owe them  
+A–C money is not done on P10 % alone.
 
-## ☐ NOW (SERIAL)
+## ☐ NOW
 
-1. **`column=liability`** — factoring’s Required leaves **plus** every other owed `liability` leaf system-wide → `@matrix-built` → FAST-MERGE
-2. **`column=gl_je`** — accounting `invoices.create` · `payments.receive` + every other owed `gl_je` leaf → same
+1. Remaining **`liability`** Required on priority 10 (after #6229)
+2. **`gl_je`** on priority 10 — includes board **#6230** CLS-WAVE-C-MATRIX-GL-JE-LIABILITY-STALE
+3. Then `liability` + `gl_je` (+ other Wave C cols) across **all other owed modules**
+4. FAST-MERGE · Neon yourself · OUTBOX one line · next same turn
 
 ## FORBIDDEN
 
-holding · owner-gate · P24 wait theater · Wave D · parallel money PRs · module-deep · invent reserves · reading superseded HANDOFF/OUTBOX essays
-
-## OUTBOX (one line only)
-
-```
-CC-1 | column=liability|gl_je | SHIPPED #N @ sha | Built=<all modules> | NEXT=…
-```
+holding · owner-gate · P24 theater · Wave D · parallel money · invent reserves · P10-only done

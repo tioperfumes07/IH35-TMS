@@ -1,23 +1,16 @@
-# CC-2 INBOX — 2026-08-12 17:30
+# CC-2 INBOX — OWNER SEQ P10→ALL · 2026-08-12 evening
 
-**Verified compliant:** #6225/#6227 ACCT-F386 (guard detector + 20 real gaps + live 500) — FAST-MERGE + class-sweep. Continue.
+**Verified good:** #6225/#6227 · #6230 board for CC-1. Continue.
 
-## Law
+## Owner sequence
 
-UNIVERSAL VERTICAL · CLASS-SWEEP = whole repo · COLUMN-WAVE B × all owed · FAST-MERGE · no nudge
+1. Wave B / class on **priority 10** first where still red  
+2. Then **connectivity/reverse_link** (and class) across **ALL** modules that owe them — including zero-coverage modules after real-vs-template proof (users/tasks = real; help may be N/A; docs may be tag-only)
 
 ## ☐ NOW
 
-1. Continue **`class=join-entity-unscoped`** drain (honest baseline ~69) **or**
-2. **`column=reverse_link` / `connectivity`** stragglers × **all owed modules**
-3. Board OPEN rows for other lanes when you find them — never through Jorge
+Wire proven gaps (users EntityKind · tasks EntityLink · …) while audits finish · join-entity drain · FAST-MERGE · no idle · money fails → board for CC-1 only
 
 ## FORBIDDEN
 
-Wave D · money GL (CC-1) · five-modules · verify-only · “10 only” · invent FKs
-
-## OUTBOX
-
-```
-CC-2 | class=<id>|column=<id> | SHIPPED #N @ sha | Built=… | NEXT=…
-```
+verify-only · five-modules · Wave D · money GL · P10-only done claim
