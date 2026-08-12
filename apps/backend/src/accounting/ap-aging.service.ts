@@ -286,7 +286,13 @@ export const AP_AGING_OPEN_BILLS_SQL = `
           AND b.bill_date <= $2::date
           AND b.amount_cents IS NOT NULL
           AND (b.revoked_at IS NULL OR b.revoked_at::date > $2::date)
-          AND b.status NOT IN ('voided', 'draft')
+          -- LV-PAYABLE-SELECTOR-OFFERS-VOIDED-BILLS — accounting.bills.status carries 'void', never
+          -- 'voided' (confirmed live: DISTINCT status = paid/draft/void/partial/unpaid). This clause
+          -- was dead — no bill row has ever matched it — and the revoked_at check above is what
+          -- actually excludes voided bills today, coincidentally. 'voided' is KEPT (same precedent as
+          -- ar-aging.service.ts's identical fix) because removing it is churn with no behavioural
+          -- change; 'void' is ADDED so this clause is no longer purely decorative.
+          AND b.status NOT IN ('void', 'voided', 'draft')
           AND GREATEST(
             COALESCE(b.amount_cents, 0)
               - COALESCE((
