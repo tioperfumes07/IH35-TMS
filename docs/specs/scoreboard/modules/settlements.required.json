@@ -98,7 +98,7 @@
       "id": "settlements.detail",
       "tab": "Settlements",
       "sub": "Settlement detail",
-      "route_hint": "/driver-finance/settlements/:id",
+      "route_hint": "/driver-finance/settlements?settlement_id=:id",
       "required": [
         "driver",
         "load",

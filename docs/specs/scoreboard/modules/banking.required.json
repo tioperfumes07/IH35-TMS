@@ -166,7 +166,7 @@
       "id": "relay_card",
       "tab": "Relay Card",
       "sub": "Relay card",
-      "route_hint": "/banking/relay-card",
+      "route_hint": "/banking/relay",
       "required": [
         "driver",
         "unit",
