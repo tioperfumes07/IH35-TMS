@@ -29,6 +29,9 @@ describe("LateArrivalsPage", () => {
           id: "l1",
           load_number: "L-12047",
           status: "in_transit",
+          customer_id: "customer-1",
+          unit_id: "unit-1",
+          driver_id: "driver-1",
           customer_name: "Acme",
           unit_number: "101",
           driver_name: "Jane Driver",
@@ -47,6 +50,9 @@ describe("LateArrivalsPage", () => {
     const link = await screen.findByTestId("late-arrival-load-l1");
     expect(link.getAttribute("href")).toBe("/dispatch/loads/l1");
     expect(link.textContent).toContain("L-12047");
+    expect(screen.getByRole("link", { name: "Acme" }).getAttribute("href")).toBe("/customers/customer-1");
+    expect(screen.getByRole("link", { name: "Jane Driver" }).getAttribute("href")).toBe("/drivers/driver-1");
+    expect(screen.getByRole("link", { name: "101" }).getAttribute("href")).toBe("/fleet/units/unit-1");
   });
 
   it("surfaces query failures via ListErrorBanner (not empty-table false-empty)", async () => {

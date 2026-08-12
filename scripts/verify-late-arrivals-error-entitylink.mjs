@@ -4,7 +4,7 @@
  *
  * LateArrivalsPage must:
  *  1. Surface query failures via ListErrorBanner (not collapse to empty-table "No late arrivals").
- *  2. Drill load rows through EntityLink kind="load" (canonical /dispatch/loads/:id).
+ *  2. Drill load/customer/driver/unit rows through canonical FK-backed EntityLinks.
  *
  * Rule 17 — verify-step only (no package.json / locked-guards / ci.yml).
  */
@@ -44,6 +44,10 @@ export function checkSources({ page, test, entityLink }) {
   if (!/id\s*=\s*\{\s*load\.id\s*\}/.test(page)) {
     failures.push(`${PAGE}: EntityLink id must be load.id`);
   }
+  for (const [kind, id] of [["customer", "customer_id"], ["driver", "driver_id"], ["unit", "unit_id"]]) {
+    const linkRe = new RegExp(`kind\\s*=\\s*["']${kind}["'][\\s\\S]{0,80}id=\\{load\\.${id}\\}`);
+    if (!linkRe.test(page)) failures.push(`${PAGE}: must render EntityLink kind="${kind}" from load.${id}`);
+  }
   if (/to=\{`\/dispatch\?load_id=/.test(page) || /to=["']\/dispatch\?load_id=/.test(page)) {
     failures.push(`${PAGE}: must not use query-param /dispatch?load_id= — use EntityLink load`);
   }
@@ -79,6 +83,9 @@ if (process.argv.includes("--selftest")) {
     {lateQ.isError ? <ListErrorBanner message="Failed to load late arrivals." onRetry={() => {}} /> : null}
     {!lateQ.isError ? <ParityTable emptyText="No late arrivals right now." /> : null}
     <EntityLink kind="load" id={load.id} label={load.load_number} />
+    <EntityLink kind="customer" id={load.customer_id} label={load.customer_name} />
+    <EntityLink kind="driver" id={load.driver_id} label={load.driver_name} />
+    <EntityLink kind="unit" id={load.unit_id} label={load.unit_number} />
   `;
   const goodEntity = `case "load":\n      return \`/dispatch/loads/\${id}\`;`;
   const goodTest = `
@@ -86,6 +93,9 @@ if (process.argv.includes("--selftest")) {
     expect(screen.getByRole("button", { name: /Refresh/i })).toBeTruthy();
     expect(screen.queryByText("No late arrivals right now.")).toBeNull();
     expect(link.getAttribute("href")).toBe("/dispatch/loads/l1");
+    expect(customerLink.getAttribute("href")).toBe("/customers/customer-1");
+    expect(driverLink.getAttribute("href")).toBe("/drivers/driver-1");
+    expect(unitLink.getAttribute("href")).toBe("/fleet/units/unit-1");
     late-arrival-load-l1
   `;
   if (checkSources({ page: badPage, test: "", entityLink: goodEntity }).length === 0) {
@@ -96,6 +106,13 @@ if (process.argv.includes("--selftest")) {
   if (goodFails.length) {
     console.error(`${LABEL} --selftest FAIL: good fixture rejected:\n${goodFails.join("\n")}`);
     process.exit(1);
+  }
+  for (const kind of ["customer", "driver", "unit"]) {
+    const mutated = goodPage.replace(new RegExp(`<EntityLink kind="${kind}"[^\\n]+\\n`), "");
+    if (!checkSources({ page: mutated, test: goodTest, entityLink: goodEntity }).some((failure) => failure.includes(`kind="${kind}"`))) {
+      console.error(`${LABEL} --selftest FAIL: removing ${kind} FK link did not trip the guard`);
+      process.exit(1);
+    }
   }
   console.log(`${LABEL} --selftest OK`);
   process.exit(0);
