@@ -1,6 +1,6 @@
 # PRIORITY 10 · 3-BOX GATE — LIVE GAP
 
-**as_of:** 2026-08-12T19:33:53.867Z · **main:** `25f7c6649`
+**as_of:** 2026-08-12T19:36:36.814Z · **main:** `4aee5cd6d`
 
 ## Bar
 
@@ -8,28 +8,28 @@ All 10 modules: **Required + Audited + Built = 100%** before Live. Wave **A→B�
 
 ## Built coverage
 
-- All cells: **42%** (1295/3110)
-- Wave A–C (no chrome): **42%** (1044/2480)
+- All cells: **46%** (1417/3110)
+- Wave A–C (no chrome): **47%** (1166/2480)
 
 | Module | Built% all | Built% A–C |
 |--------|-----------:|-----------:|
 | lists | 30% | 24% |
-| accounting | 58% | 65% |
-| dispatch | 70% | 77% |
-| settlements | 67% | 78% |
-| factoring | 46% | 53% |
-| banking | 47% | 51% |
-| customers | 71% | 76% |
-| vendors | 46% | 48% |
-| drivers | 47% | 58% |
-| safety | 32% | 37% |
+| accounting | 69% | 78% |
+| dispatch | 72% | 79% |
+| settlements | 69% | 81% |
+| factoring | 53% | 61% |
+| banking | 53% | 59% |
+| customers | 88% | 97% |
+| vendors | 64% | 70% |
+| drivers | 52% | 64% |
+| safety | 38% | 46% |
 
 ## Ranked gaps
 
 | Col | Cells | Seat |
 |-----|------:|------|
-| `reverse_link` | 341 | Codex+CC-2 B |
 | `qbo_chrome` | 293 | D LAST |
+| `reverse_link` | 219 | Codex+CC-2 B |
 | `vendor` | 178 | Codex A |
 | `unit` | 144 | Codex A |
 | `expense` | 130 | CC-1 |
