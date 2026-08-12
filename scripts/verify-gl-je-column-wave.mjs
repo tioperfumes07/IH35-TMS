@@ -3,6 +3,17 @@
  * gl_je COLUMN-WAVE — VERTICAL-WIRING-LAW-2026-08-12.
  *
  * @matrix-built {"modules":["dispatch","factoring","banking","customers","vendors","drivers","safety"],"cols":["gl_je"],"leafRe":".*","task":"WAVE-C-gl_je","vertical":"column-wave"}
+ * @matrix-built {"modules":["accounting"],"cols":["gl_je"],"leafRe":"^(bills\\.|bill_payments\\.)","task":"WAVE-C-gl_je-accounting-bills","vertical":"column-wave"}
+ *
+ * The second tag above is narrowly scoped, not accounting's full 27-leaf gl_je requirement — only
+ * the bills and bill_payments leaf families are independently verified WIRED (bills.service.ts's
+ * getBillDetail exposes journal_entry_id at :1229, listBillPaymentsForBill's reverse-JOIN at
+ * :1287-1342; BillDetailPage.tsx / BillPaymentDetailPage.tsx render both, confirmed while fixing
+ * the vendors leaf of this same column-wave). The other 23 accounting gl_je leaves (invoices, je,
+ * coa, period_close, reports, factoring.list, escrow, payments.receive, home) are NOT claimed
+ * here — some are already covered by other guards' narrower tags (verify-expenses-list-je-memo.mjs
+ * covers the expenses/register/transactions leaves), the rest are genuinely unverified and left as
+ * real remaining gap rather than over-claimed.
  *
  * Audited every priority-10 module for the gl_je reverse-link (a money-affecting row must be able to
  * drill through to the accounting.journal_entries row(s) it posted). Standard: BACKEND actually
