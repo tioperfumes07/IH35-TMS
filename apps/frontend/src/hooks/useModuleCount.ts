@@ -11,6 +11,9 @@ const MODULE_SLUG: Record<ListsModule, string> = {
   FLEET: "fleet",
   ACCOUNTING: "accounting",
   NAMES_MASTER: "names_master",
+  CUSTOMERS: "customers",
+  VENDORS: "vendors",
+  REFERENCE: "reference",
 };
 
 export function useModuleCount(module: ListsModule | undefined) {
