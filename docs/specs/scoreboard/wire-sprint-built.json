@@ -296,6 +296,14 @@
       "modules": ["factoring"],
       "cols": ["customer", "connectivity", "reverse_link"],
       "leafRe": "^batches\\.detail"
+    },
+    {
+      "task": "CLS-CUSTOMER-LOAD-DRIVER-UNIT-LINKS",
+      "pr": "this PR",
+      "guard": "scripts/verify-steps/2978-verify-entity-label-rejects-uuid-shaped-name.mjs",
+      "modules": ["customers"],
+      "cols": ["driver", "unit", "connectivity", "reverse_link"],
+      "leafRe": "^detail\\.loads$"
     }
   ]
 }
