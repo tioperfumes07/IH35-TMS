@@ -451,6 +451,15 @@ export const CATALOG_PICKER_CONFIGS = {
     consumerPath: "apps/frontend/src/components/dispatch/AccessorialEditor.tsx",
   }),
 
+  lumper_provider: catalogEntry({
+    key: "lumper_provider",
+    label: "Lumper provider",
+    table: "catalogs.lumper_providers",
+    endpoint: "/api/v1/catalogs/dispatch/lumper-providers",
+    evidence: "apps/backend/src/catalogs/generic-catalog.routes.ts:162 — one GenericCatalogConfig drives SELECT and INSERT",
+    consumerPath: "apps/frontend/src/pages/dispatch/components/BookLoadModalV4.tsx",
+  }),
+
 
 
 

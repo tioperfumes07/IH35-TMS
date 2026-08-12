@@ -63,6 +63,7 @@ export function buildEditPrefill(load: LoadDetail): AnyValues {
     appointment_start_at: toLocalInput(s.appointment_start_at),
     appointment_end_at: toLocalInput(s.appointment_end_at),
     lumper_required: Boolean(s.lumper_required),
+    lumper_provider_id: str(s.lumper_provider_id),
     lumper_paid_by: str(s.lumper_paid_by),
     lumper_amount_cents: num(s.lumper_amount_cents),
     is_tarp_stop: Boolean(s.is_tarp_stop),
