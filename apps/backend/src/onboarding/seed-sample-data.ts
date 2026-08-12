@@ -183,8 +183,10 @@ async function ensureUnit(
       SELECT id::text AS id
       FROM mdata.units
       WHERE unit_number = 'TEST-001'
+        AND COALESCE(currently_leased_to_company_id, owner_company_id) = $1::uuid
       LIMIT 1
-    `
+    `,
+    [companyId]
   );
   if (existing.rows[0]) {
     await client.query(
@@ -194,8 +196,9 @@ async function ensureUnit(
             assigned_driver_id = $2,
             updated_by_user_id = $3
         WHERE id = $1
+          AND COALESCE(currently_leased_to_company_id, owner_company_id) = $4::uuid
       `,
-      [existing.rows[0].id, driverId, actorUserId]
+      [existing.rows[0].id, driverId, actorUserId, companyId]
     );
     return { id: existing.rows[0].id, created: false };
   }

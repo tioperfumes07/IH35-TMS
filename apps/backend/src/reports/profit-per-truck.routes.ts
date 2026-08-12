@@ -166,6 +166,7 @@ export async function registerProfitPerTruckRoutes(app: FastifyInstance) {
             LEFT JOIN maint ON maint.unit_id = u.id
             LEFT JOIN primary_pick pp ON pp.unit_id = u.id
             WHERE u.deactivated_at IS NULL
+              AND (u.owner_company_id = $1::uuid OR u.currently_leased_to_company_id = $1::uuid)
           `,
           [companyId, pStart, pEnd]
         );
@@ -382,6 +383,7 @@ export async function registerProfitPerTruckRoutes(app: FastifyInstance) {
           JOIN load_agg la ON la.unit_id = u.id
           LEFT JOIN wo_agg wa ON wa.unit_id = u.id
           WHERE u.deactivated_at IS NULL
+            AND (u.owner_company_id = $1::uuid OR u.currently_leased_to_company_id = $1::uuid)
             ${unitFilter}
           ORDER BY (COALESCE(la.revenue_cents, 0) - COALESCE(wa.wo_cost_cents, 0)) DESC
         `,

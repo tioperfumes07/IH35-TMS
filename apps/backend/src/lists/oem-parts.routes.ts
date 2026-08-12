@@ -4,6 +4,7 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { isCatalogWriteRole } from "../auth/role-helpers.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
+import { resolveOperatingCompanyId } from "../auth/operating-company-scope.js";
 import { FLEET_BRAND_SOURCES_SQL, fetchFleetBrands, normalizeBrandKey } from "./oem-parts.brand-match.js";
 
 type Queryable = {
@@ -20,6 +21,11 @@ const listQuerySchema = z.object({
   fleet_only: z.coerce.boolean().optional(),
   q: z.string().trim().optional(),
   include_archived: z.coerce.boolean().optional(),
+  operating_company_id: z.string().uuid().optional(),
+});
+
+const brandsQuerySchema = z.object({
+  operating_company_id: z.string().uuid().optional(),
 });
 
 const createBodySchema = z.object({
@@ -76,9 +82,13 @@ export async function registerOemPartsRoutes(app: FastifyInstance) {
   app.get(`${basePath}/brands`, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
+    const parsedQuery = brandsQuerySchema.safeParse(req.query ?? {});
+    if (!parsedQuery.success) return validationError(reply, parsedQuery.error);
 
     const payload = await withReferenceScope(authUser.uuid, async (client) => {
-      const fleetBrands = await fetchFleetBrands(client);
+      const companyId = await resolveOperatingCompanyId(client, authUser.uuid, parsedQuery.data.operating_company_id);
+      if (!companyId) return null;
+      const fleetBrands = await fetchFleetBrands(client, companyId);
       const rowsRes = await client.query<{ brand: string; total_count: string; fleet_match: boolean }>(
         `
           SELECT
@@ -103,10 +113,11 @@ export async function registerOemPartsRoutes(app: FastifyInstance) {
       };
     });
 
+    if (!payload) return reply.code(400).send({ error: "operating_company_id_required" });
     return payload;
   });
 
-  app.get(basePath, async (req, reply) => {
+  app.get(basePath, { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const parsed = listQuerySchema.safeParse(req.query ?? {});
@@ -115,7 +126,9 @@ export async function registerOemPartsRoutes(app: FastifyInstance) {
     const fleetOnly = q.fleet_only !== false;
 
     const payload = await withReferenceScope(authUser.uuid, async (client) => {
-      const fleetBrands = fleetOnly ? await fetchFleetBrands(client) : null;
+      const companyId = await resolveOperatingCompanyId(client, authUser.uuid, q.operating_company_id);
+      if (!companyId) return null;
+      const fleetBrands = fleetOnly ? await fetchFleetBrands(client, companyId) : null;
       const values: unknown[] = [];
       const where: string[] = [];
       if (!q.include_archived) where.push("archived_at IS NULL");
@@ -156,7 +169,8 @@ export async function registerOemPartsRoutes(app: FastifyInstance) {
                 )
             )::text AS fleet_count
           FROM reference.oem_parts
-        `
+        `,
+        [companyId]
       );
       const rowsRes = await client.query(
         `
@@ -179,6 +193,7 @@ export async function registerOemPartsRoutes(app: FastifyInstance) {
       };
     });
 
+    if (!payload) return reply.code(400).send({ error: "operating_company_id_required" });
     return payload;
   });
 
