@@ -202,6 +202,14 @@
       "leafRe": "^(accounts|transactions\\.)"
     },
     {
+      "task": "P17-system-qbo-recon",
+      "pr": "this PR",
+      "guard": "scripts/verify-system-module.mjs",
+      "modules": ["system"],
+      "cols": ["qbo_chrome"],
+      "leafRe": "^tab\\.qbo_recon$"
+    },
+    {
       "task": "P43",
       "pr": "#5913",
       "guard": "scripts/verify-steps/2900-verify-customer-create-invoice-email.mjs",
