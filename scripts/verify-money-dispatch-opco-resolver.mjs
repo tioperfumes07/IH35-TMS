@@ -60,6 +60,13 @@ const SYSTEM_DERIVED_ALLOWLIST = [
     fragment: "/api/v1/mdata/loads/:id/status",
     reason: "office status PATCH: cancellation reason lookup scopes by the load row's operating_company_id after user_accessible_company_ids() membership gate — not a client-supplied opco",
   },
+  {
+    file: "mdata/loads.routes.ts",
+    // Precise (not just the bare route) so this cannot also match the /status, /stops, or /audit
+    // siblings above/below it in the same file — each of those needs its own allowlist decision.
+    fragment: '"/api/v1/mdata/loads/:id", { config',
+    reason: "office load-fields PATCH: the load row is fetched via `operating_company_id IN (SELECT org.user_accessible_company_ids())` (membership gate) BEFORE any write, then the downstream hazmat-check and driver-assignment-gate queries scope on oldRow.operating_company_id — the row's own column, never a client-supplied value. Same shape as the /status sibling entry above.",
+  },
 ];
 
 function listRouteFiles() {
