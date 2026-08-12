@@ -55,6 +55,8 @@ const FILES = {
   pickupMigration: "db/migrations/202612501400_p44_load_stop_pickup_time_type_canonical_fk.sql",
   loadTypeMigration: "db/migrations/202612501600_p44_load_catalog_load_type_canonical_fk.sql",
   editMapping: "apps/frontend/src/pages/dispatch/components/book-load-v4/editLoadMapping.ts",
+  cancellationService: "apps/backend/src/dispatch/cancellation.service.ts",
+  cancellationMigration: "db/migrations/202612501800_p44_load_cancellation_reason_same_opco_fk.sql",
 };
 
 const MISSING = "MISSING";
@@ -180,6 +182,12 @@ export function contractErrors(src) {
   }
   if (!/catalog_load_type_id:\s*str\(load\.catalog_load_type_id\)/.test(src.editMapping) || !/\["catalog_load_type_id", "catalog_load_type_id"/.test(src.editMapping)) {
     errors.push("P44-FK: canonical load type selection must survive detail reload and edit");
+  }
+  if (!/reason_code_id:\s*reason\.id/.test(src.cancellationService) || !/operating_company_id = \$2/.test(src.cancellationService)) {
+    errors.push("P44-FK: cancellation writer must resolve and persist the same-opco canonical reason UUID");
+  }
+  if (!/FOREIGN KEY \(reason_code_id, operating_company_id\)/.test(src.cancellationMigration) || !/ALTER COLUMN reason_code_id SET NOT NULL/.test(src.cancellationMigration)) {
+    errors.push("P44-FK: load cancellations must enforce a NOT NULL same-opco reason FK");
   }
 
   // ── CONFIG-DRIVEN: the pinned defect ────────────────────────────────────────────────────────
@@ -438,6 +446,8 @@ function selftest() {
     pickupMigration: "FOREIGN KEY (pickup_time_type_id); enforce_load_stop_pickup_time_type_company",
     loadTypeMigration: "FOREIGN KEY (catalog_load_type_id, operating_company_id)",
     editMapping: 'catalog_load_type_id: str(load.catalog_load_type_id), ["catalog_load_type_id", "catalog_load_type_id",',
+    cancellationService: "operating_company_id = $2; reason_code_id: reason.id",
+    cancellationMigration: "FOREIGN KEY (reason_code_id, operating_company_id); ALTER COLUMN reason_code_id SET NOT NULL",
   };
   const good = { registry: GOOD_REGISTRY, select: GOOD_SELECT, drawer: GOOD_DRAWER, backendIndex: GOOD_BACKEND, ...p44 };
   const failures = [];
