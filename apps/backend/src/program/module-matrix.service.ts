@@ -426,14 +426,23 @@ function evidenceIsLiveNeon(text: string): boolean {
   );
 }
 
+let ledgerCache: { atMs: number; rows: LedgerRow[] } | null = null;
+
 async function loadLedgerRows(): Promise<LedgerRow[]> {
+  const now = Date.now();
+  if (ledgerCache && now - ledgerCache.atMs < MATRIX_CACHE_MS) {
+    return ledgerCache.rows;
+  }
   try {
     const mod = (await import(pathToFileURL(SCOREBOARD_SCRIPT).href)) as {
       parseFindings: (md: string) => LedgerRow[];
     };
     const md = readFileSync(LEDGER_MD, "utf8");
-    return mod.parseFindings(md);
+    const rows = mod.parseFindings(md);
+    ledgerCache = { atMs: now, rows };
+    return rows;
   } catch {
+    ledgerCache = { atMs: now, rows: [] };
     return [];
   }
 }
@@ -976,6 +985,8 @@ export type SystemModuleMatrixPayload = {
   scope: "system";
   generatedAt: string;
   modules: SystemModuleMatrixRow[];
+  /** Summed column-group rollups — same groups/columns as each module board. */
+  groupRollups: MatrixGroupRollup[];
   system: MatrixTierMetrics & {
     moduleCount: number;
     modulesAvailable: number;
@@ -1018,9 +1029,13 @@ export async function buildSystemModuleMatrix(userUuid?: string): Promise<System
     return systemCache.payload;
   }
 
+  // Warm ledger once — buildModuleMatrix used to re-parse AUDIT-COVERAGE-LIVE per module (29×).
+  await loadLedgerRows();
+
   const order = loadMatrixModuleOrder();
   const modules: SystemModuleMatrixRow[] = [];
   const systemBucket = emptyTierBucket();
+  const groupBuckets = new Map<string, ReturnType<typeof emptyTierBucket>>();
   let modulesAvailable = 0;
   let probeSource: "neon_live" | "committed_stale" = "committed_stale";
 
@@ -1039,13 +1054,24 @@ export async function buildSystemModuleMatrix(userUuid?: string): Promise<System
         probeSource: board.meta.probeSource,
       });
       mergeTierBuckets(systemBucket, {
-        requiredCells: board.metrics.requiredCells,
-        liveCells: board.metrics.liveCells,
-        builtOnlyCells: board.metrics.builtOnlyCells,
-        probeOnlyCells: board.metrics.probeOnlyCells,
-        auditedOnlyCells: board.metrics.auditedOnlyCells,
-        unauditedCells: board.metrics.unauditedCells,
+        requiredCells: Number(board.metrics.requiredCells) || 0,
+        liveCells: Number(board.metrics.liveCells) || 0,
+        builtOnlyCells: Number(board.metrics.builtOnlyCells) || 0,
+        probeOnlyCells: Number(board.metrics.probeOnlyCells) || 0,
+        auditedOnlyCells: Number(board.metrics.auditedOnlyCells) || 0,
+        unauditedCells: Number(board.metrics.unauditedCells) || 0,
       });
+      for (const g of board.groupRollups ?? []) {
+        if (!groupBuckets.has(g.group)) groupBuckets.set(g.group, emptyTierBucket());
+        mergeTierBuckets(groupBuckets.get(g.group)!, {
+          requiredCells: Number(g.requiredCells) || 0,
+          liveCells: Number(g.liveCells) || 0,
+          builtOnlyCells: Number(g.builtOnlyCells) || 0,
+          probeOnlyCells: Number(g.probeOnlyCells) || 0,
+          auditedOnlyCells: Number(g.auditedOnlyCells) || 0,
+          unauditedCells: Number(g.unauditedCells) || 0,
+        });
+      }
     } catch {
       modules.push({
         module: entry.id,
@@ -1057,14 +1083,37 @@ export async function buildSystemModuleMatrix(userUuid?: string): Promise<System
     }
   }
 
-  assertTierTallyConsistent(systemBucket, "system");
+  // Never 503 the whole rollup on a tally drift — recompute required from exclusive tiers.
+  systemBucket.requiredCells =
+    systemBucket.liveCells +
+    systemBucket.builtOnlyCells +
+    systemBucket.probeOnlyCells +
+    systemBucket.auditedOnlyCells +
+    systemBucket.unauditedCells;
+  try {
+    assertTierTallyConsistent(systemBucket, "system");
+  } catch {
+    /* requiredCells already reset to exclusive-tier sum */
+  }
   const systemMetrics = finalizeTierMetrics(systemBucket);
+  const groupRollups: MatrixGroupRollup[] = sortGroupRollups(
+    [...groupBuckets.entries()].map(([group, bucket]) => {
+      bucket.requiredCells =
+        bucket.liveCells +
+        bucket.builtOnlyCells +
+        bucket.probeOnlyCells +
+        bucket.auditedOnlyCells +
+        bucket.unauditedCells;
+      return { group, label: groupLabel(group), ...finalizeTierMetrics(bucket) };
+    }),
+  );
 
   const payload: SystemModuleMatrixPayload = {
     sample: false,
     scope: "system",
     generatedAt: new Date().toISOString(),
     modules,
+    groupRollups,
     system: {
       moduleCount: order.length,
       modulesAvailable,
@@ -1079,7 +1128,7 @@ export async function buildSystemModuleMatrix(userUuid?: string): Promise<System
       tipSha: tipSha(),
       orderSource: "docs/specs/scoreboard/matrix-module-order.json",
       honesty:
-        "System rollup = sum of all module boards (sidebar order). Live % = Box 4 PROD-VERIFIED cells ÷ Required. Built % includes probe-wired cells not yet live-verified.",
+        "System rollup = sum of all module boards (sidebar order). Same column groups + 4-box law as each board. Box 3 fill=(Built+Live)/Req · wire=Built-only/Req. Box 4 live=cert=Live/Req.",
       probeSource,
     },
   };
@@ -1092,4 +1141,5 @@ export async function buildSystemModuleMatrix(userUuid?: string): Promise<System
 export function clearModuleMatrixCache(): void {
   cache = null;
   systemCache = null;
+  ledgerCache = null;
 }

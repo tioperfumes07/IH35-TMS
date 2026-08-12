@@ -113,6 +113,9 @@ function repoProblems() {
     if (!svc.includes("groupRollups")) {
       problems.push("module-matrix.service.ts must expose groupRollups on payload");
     }
+    if (!/SystemModuleMatrixPayload[\s\S]*groupRollups:\s*MatrixGroupRollup/.test(svc)) {
+      problems.push("buildSystemModuleMatrix payload must include system groupRollups (parity with module boards)");
+    }
     if (!svc.includes("assertTierTallyConsistent")) {
       problems.push("module-matrix.service.ts must assert tier tally before respond");
     }

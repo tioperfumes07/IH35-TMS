@@ -221,9 +221,50 @@ export function assertScoreboardContract(sources) {
       !/module-matrix-built-cells-metric/.test(matrixPage) ||
       !/module-matrix-leaf-built-cells/.test(matrixPage)
     ) {
-      problems.push(
-        `${matrixPageRel}: individual module board must show Built cells count + per-leaf Built column (parity with system rollup)`,
-      );
+      const boxesRel = "apps/frontend/src/pages/program/moduleMatrixBoxes.tsx";
+      const boxesPage =
+        sources?.[boxesRel] ?? (fs.existsSync(path.join(ROOT, boxesRel)) ? read(boxesRel) : "");
+      const builtMetricOk =
+        /module-matrix-built-cells-metric/.test(matrixPage) ||
+        /module-matrix-built-cells-metric/.test(boxesPage);
+      if (!builtMetricOk || !/module-matrix-leaf-built-cells/.test(matrixPage)) {
+        problems.push(
+          `${matrixPageRel}: individual module board must show Built cells count + per-leaf Built column (parity with system rollup)`,
+        );
+      }
+    }
+    // All-modules system rollup must share 4-box + dual Box 3/4 % with module boards.
+    {
+      const sysRel = "apps/frontend/src/pages/program/ModuleMatrixSystemView.tsx";
+      const boxesRel = "apps/frontend/src/pages/program/moduleMatrixBoxes.tsx";
+      const sysPage =
+        sources?.[sysRel] ?? (fs.existsSync(path.join(ROOT, sysRel)) ? read(sysRel) : "");
+      const boxesPage =
+        sources?.[boxesRel] ?? (fs.existsSync(path.join(ROOT, boxesRel)) ? read(boxesRel) : "");
+      if (!sysPage) {
+        problems.push(`${sysRel}: system rollup view missing`);
+      } else {
+        if (!/MatrixBoxTracker/.test(sysPage) && !/module-matrix-box-tracker/.test(sysPage)) {
+          problems.push(`${sysRel}: All modules must use the same 4-box tracker as module boards`);
+        }
+        if (!/GroupRollupTable/.test(sysPage) && !/module-matrix-group-rollups/.test(sysPage)) {
+          problems.push(`${sysRel}: All modules must show the same column-group rollup table`);
+        }
+        if (!/Built % \(fill · wire\)/.test(sysPage) || !/Live % \(live · cert\)/.test(sysPage)) {
+          problems.push(`${sysRel}: system table must show dual Box 3/4 percentages (fill·wire / live·cert)`);
+        }
+        if (!/scope=system/.test(sysPage)) {
+          problems.push(`${sysRel}: must fetch module-matrix?scope=system`);
+        }
+      }
+      if (boxesPage) {
+        if (!/fill · wire-only/.test(boxesPage) || !/live · certified/.test(boxesPage)) {
+          problems.push(`${boxesRel}: Box 3/4 tiles must show both percentages side by side`);
+        }
+        if (!/DualPct/.test(boxesPage)) {
+          problems.push(`${boxesRel}: DualPct helper required for Box 3/4 dual percentages`);
+        }
+      }
     }
   }
 
