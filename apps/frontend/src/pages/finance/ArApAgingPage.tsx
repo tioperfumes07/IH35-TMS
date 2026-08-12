@@ -157,7 +157,7 @@ const AP_DRILL_COLUMNS: ParityColumn<ApAgingBillRow>[] = [
     label: "Bill #",
     sortable: true,
     cellClass: "whitespace-nowrap",
-    render: (b) => entityLabel(b.bill_number, b.bill_id, "Bill"),
+    render: (b) => <EntityLink kind="bill" id={b.bill_id} label={entityLabel(b.bill_number, b.bill_id, "Bill")} />,
   },
   { key: "status", label: "Status", sortable: true, cellClass: "capitalize" },
   { key: "bill_date", label: "Bill date", sortable: true, cellClass: "whitespace-nowrap", render: (b) => fmtDate(b.bill_date) },
