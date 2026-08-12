@@ -45,6 +45,12 @@ Six mutually exclusive tiers per module (same denominator = required cells):
 
 **Tally law:** `live + builtOnly + probeOnly + auditedOnly + unaudited === required` (CI: `verify-matrix-metrics-tally.mjs`).
 
+### Option B — 6 micro-columns per cell (deferred 2026-08-11)
+
+Per-cell expansion: `Req | Audit | Probe | Wire | Built | Live` (wider horizontal scroll, zero ambiguity in each cell). **Not shipped yet** — owner chose **Option A first** (ribbon + group rollups). Option B remains the follow-up if ribbon + abbreviated column headers are still too dense.
+
+**Column header abbreviations (2026-08-12):** UI shows short headers (`LIAB/ESCR`, `PICK+`, `CONN`, `REV LINK`, …) via `matrixColumnHeaderLabel()`; full names on hover (`title`) and in `columns.shared.json` long-form notes where applicable.
+
 **Insurance §B9** = **depth model** for every module (forward + reverse + economics). It is **not** the instruction to build insurance first; it defines how deep each leaf×column must be when marked Built/Live.
 
 **Weekend merge verification** = `cursor-ship-preflight` / `money-pr-local-gate` PASS + OUTBOX gate line — **not** GitHub Actions while checks are down. Admin merge is UI only. Local gate ≈ same teeth as pre-push CI; full remote `build-typecheck` resumes when Actions returns.

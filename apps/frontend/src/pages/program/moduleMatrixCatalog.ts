@@ -55,6 +55,43 @@ export function matrixModuleLabel(id: MatrixModuleId): string {
   return MATRIX_MODULES_SIDEBAR_ORDER.find((m) => m.id === id)?.label ?? id;
 }
 
+/** Short column headers for matrix grid (full label stays in JSON + title tooltip). Owner 2026-08-12. */
+const MATRIX_COLUMN_SHORT: Record<string, string> = {
+  driver: "DRIVER",
+  customer: "CUST",
+  vendor: "VEND",
+  unit: "UNIT",
+  trailer: "TRLR",
+  load: "LOAD",
+  ap_bill: "AP/BILL",
+  expense: "EXP",
+  gl_je: "GL/JE",
+  inventory: "INV",
+  liability: "LIAB/ESCR",
+  picker_law: "PICK+",
+  qbo_chrome: "QBO",
+  connectivity: "CONN",
+  reverse_link: "REV LINK",
+  "scenario.maintenance": "MAINT WO",
+  "scenario.insurance": "INS CLM",
+};
+
+const MATRIX_GROUP_SHORT: Record<string, string> = {
+  linkage: "LINK",
+  money: "MONEY",
+  chrome: "CHROME",
+  wiring: "WIRE",
+  process: "PROC",
+};
+
+export function matrixColumnHeaderLabel(columnId: string, fullLabel: string): string {
+  return MATRIX_COLUMN_SHORT[columnId] ?? fullLabel;
+}
+
+export function matrixGroupHeaderLabel(groupId: string): string {
+  return MATRIX_GROUP_SHORT[groupId] ?? groupId;
+}
+
 export function parseMatrixModule(raw: string | null): MatrixModuleId {
   if (!raw) return "home";
   const normalized = raw.trim().toLowerCase();

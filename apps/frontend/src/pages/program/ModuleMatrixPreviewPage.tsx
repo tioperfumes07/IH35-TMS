@@ -43,6 +43,8 @@ import { ProgramModuleNav } from "./ProgramModuleNav";
 import { ModuleMatrixSystemView } from "./ModuleMatrixSystemView";
 import {
   MATRIX_MODULES_SIDEBAR_ORDER,
+  matrixColumnHeaderLabel,
+  matrixGroupHeaderLabel,
   matrixModuleLabel,
   parseMatrixModule,
   type MatrixModuleId,
@@ -791,8 +793,8 @@ export function ModuleMatrixPreviewPage() {
                 Tab / sub-tab / create
               </th>
               {groupSpans.map((g) => (
-                <th key={g.group} className="grp" colSpan={g.span}>
-                  {g.group}
+                <th key={g.group} className="grp" colSpan={g.span} title={g.group}>
+                  {matrixGroupHeaderLabel(g.group)}
                 </th>
               ))}
               <th className="sum-col" rowSpan={2} data-testid="module-matrix-leaf-built-cells">
@@ -807,8 +809,8 @@ export function ModuleMatrixPreviewPage() {
             </tr>
             <tr>
               {cols.map((c) => (
-                <th key={c.id} className="col">
-                  {c.label}
+                <th key={c.id} className="col" title={c.label}>
+                  {matrixColumnHeaderLabel(c.id, c.label)}
                 </th>
               ))}
             </tr>
@@ -944,7 +946,8 @@ const CSS = `
 .ih35mm table{width:100%;border-collapse:collapse;min-width:1100px}
 .ih35mm th,.ih35mm td{padding:7px 8px;text-align:left;border-bottom:1px solid var(--line);font-size:12.5px;vertical-align:middle}
 .ih35mm th{background:#f1f5f9;font-size:10px;text-transform:uppercase;letter-spacing:.25px;color:var(--slate-lt)}
-.ih35mm th.col{text-align:center;min-width:72px;max-width:88px;white-space:normal;line-height:1.25;padding:8px 4px}
+.ih35mm th.col{text-align:center;min-width:80px;max-width:96px;white-space:normal;line-height:1.2;padding:8px 5px;font-size:9.5px;letter-spacing:.12px}
+.ih35mm th.grp{font-size:10px;letter-spacing:.35px;padding:6px 4px}
 .ih35mm th.grp{text-align:center;color:var(--navy);border-bottom:2px solid var(--line);background:var(--accent-bg)}
 .ih35mm th.leaf{min-width:220px;text-align:left}
 .ih35mm td.leaf-cell{white-space:nowrap}

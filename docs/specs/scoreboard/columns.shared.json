@@ -55,12 +55,12 @@
     {
       "id": "liability",
       "group": "money",
-      "label": "Liability / Escrow"
+      "label": "LIAB/ESCR"
     },
     {
       "id": "picker_law",
       "group": "chrome",
-      "label": "Picker +Add new"
+      "label": "PICK+"
     },
     {
       "id": "qbo_chrome",
@@ -70,12 +70,12 @@
     {
       "id": "connectivity",
       "group": "wiring",
-      "label": "Connectivity"
+      "label": "CONN"
     },
     {
       "id": "reverse_link",
       "group": "wiring",
-      "label": "Reverse link"
+      "label": "REV LINK"
     },
     {
       "id": "scenario.maintenance",
