@@ -115,6 +115,10 @@ function daysAgoIso(days: number) {
   return addDaysIso(companyToday(), -days);
 }
 
+// CLS-MONEY-KPI-FAKE-ZERO-ON-FAILURE: billKpis is a useMemo derived purely from billsQuery.data,
+// which defaults to [] the moment the query errors — so every tile silently rendered a real-looking
+// "$0.00 · 0 open" instead of surfacing the failure the list banner (line ~589) already knows about.
+// Callers must pass hasError so a failed fetch shows "—" / "Error loading", never a fabricated zero.
 function billKpiCard(label: string, value: string, sublabel: string, tone: "neutral" | "warn" | "danger" = "neutral") {
   const toneClass =
     tone === "danger" ? "border-l-4 border-l-red-500" : tone === "warn" ? "border-l-4 border-l-slate-400" : "border-l-4 border-l-slate-300";
@@ -568,10 +572,21 @@ export function BillsPage() {
       }
       kpiStrip={
         <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
-          {billKpiCard("Open Bills", money(billKpis.openAmount), `${billKpis.openCount} open`, billKpis.openCount ? "danger" : "neutral")}
-          {billKpiCard("MTD Bills", money(billKpis.mtdAmount), `${billKpis.mtdCount} bills`, "warn")}
-          {billKpiCard("Overdue Bills", money(billKpis.overdueAmount), `${billKpis.overdueCount} overdue`, billKpis.overdueCount ? "danger" : "neutral")}
-          {billKpiCard("Past 90 days", money(billKpis.past90Amount), `${billKpis.past90Count} bills`)}
+          {billsQuery.isError ? (
+            <>
+              {billKpiCard("Open Bills", "—", "Error loading")}
+              {billKpiCard("MTD Bills", "—", "Error loading")}
+              {billKpiCard("Overdue Bills", "—", "Error loading")}
+              {billKpiCard("Past 90 days", "—", "Error loading")}
+            </>
+          ) : (
+            <>
+              {billKpiCard("Open Bills", money(billKpis.openAmount), `${billKpis.openCount} open`, billKpis.openCount ? "danger" : "neutral")}
+              {billKpiCard("MTD Bills", money(billKpis.mtdAmount), `${billKpis.mtdCount} bills`, "warn")}
+              {billKpiCard("Overdue Bills", money(billKpis.overdueAmount), `${billKpis.overdueCount} overdue`, billKpis.overdueCount ? "danger" : "neutral")}
+              {billKpiCard("Past 90 days", money(billKpis.past90Amount), `${billKpis.past90Count} bills`)}
+            </>
+          )}
         </div>
       }
     >
