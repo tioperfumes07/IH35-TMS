@@ -338,7 +338,11 @@ function OpenDriverBillsPanel({
                   id={bill.load_id ?? ""}
                   label={entityLabel(bill.load_number, bill.load_id, "Load")}
                 />
-                {bill.bill_number ? <span className="text-[10px] text-gray-400">({entityLabel(bill.bill_number, bill.id, "Bill")})</span> : null}
+                {bill.bill_number ? (
+                  <span className="text-[10px] text-gray-400">
+                    (<EntityLink kind="bill" id={bill.id} label={entityLabel(bill.bill_number, bill.id, "Bill")} />)
+                  </span>
+                ) : null}
               </span>
               <span className="font-semibold">{formatUsdCents(bill.gross_amount_cents)}</span>
             </div>

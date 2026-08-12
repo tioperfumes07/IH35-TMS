@@ -285,7 +285,9 @@ export function PayRunClosePanel({ settlementId, companyId, userRole, settlement
                   <tr key={`${leg.account_id}-${idx}`} className="border-b border-gray-50">
                     <td className="py-1 pr-2 font-semibold uppercase">{leg.debit_or_credit}</td>
                     <td className="py-1 pr-2 tabular-nums">{formatCents(leg.amount_cents)}</td>
-                    <td className="py-1 pr-2 text-[10px]">{entityLabel(null, leg.account_id, "Account")}</td>
+                    <td className="py-1 pr-2 text-[10px]">
+                      <EntityLink kind="account" id={leg.account_id} label={entityLabel(null, leg.account_id, "Account")} />
+                    </td>
                     <td className="py-1 text-gray-700">{leg.description}</td>
                   </tr>
                 ))}
