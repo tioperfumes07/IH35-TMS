@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { listWorkOrdersFiltered } from "../../api/maintenance";
 import { DataPanel } from "../../components/layout/DataPanel";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { entityLabel } from "../../lib/entity-label";
@@ -37,8 +38,13 @@ export function VendorWorkOrdersReverseSection({ operatingCompanyId, vendorId }:
               <Link className="font-semibold text-slate-700 hover:underline" to={`/maintenance/work-orders/${workOrder.id}`}>
                 {entityLabel(workOrder.display_id, workOrder.id, "Work order")}
               </Link>
-              <span className="text-gray-600">
-                {[workOrder.unit_number, workOrder.status, formatDateUS(workOrder.opened_at)].filter(Boolean).join(" · ")}
+              <span className="flex items-center gap-1 text-gray-600">
+                <EntityLink
+                  kind="unit"
+                  id={workOrder.unit_id}
+                  label={entityLabel(workOrder.unit_number, workOrder.unit_id, "Unit")}
+                />
+                <span>· {[workOrder.status, formatDateUS(workOrder.opened_at)].filter(Boolean).join(" · ")}</span>
               </span>
             </div>
           ))}

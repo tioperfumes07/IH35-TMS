@@ -20,6 +20,7 @@ const BILLS = "apps/frontend/src/pages/accounting/BillsPage.tsx";
 const MAINT_WO_ROUTES = "apps/backend/src/maintenance/work-orders.routes.ts";
 const MAINT_WO_TABLE = "apps/frontend/src/pages/maintenance/components/WorkOrdersTable.tsx";
 const CUSTOMER_DETAIL = "apps/frontend/src/pages/CustomerDetail.tsx";
+const VENDOR_WORK_ORDERS = "apps/frontend/src/pages/vendors/VendorWorkOrdersReverseSection.tsx";
 
 /** Batch-2/3 drain sites — name||id / name??id paints (CLS-UUID-LABEL). */
 const SIBLINGS = [
@@ -786,7 +787,7 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/dispatch/FactoringQueuePage.tsx",
     bad: /row\.customer_name\s*\?\?\s*"—"/,
-    good: /entityLabel\(\s*row\.customer_name\s*,\s*null\s*,\s*"Customer"\s*\)/,
+    good: /entityLabel\(\s*row\.customer_name\s*,\s*row\.customer_id\s*,\s*"Customer"\s*\)/,
   },
   {
     rel: "apps/frontend/src/pages/factoring/BatchWizard.tsx",
@@ -1740,6 +1741,14 @@ export function auditCustomerLoadEntityLinks(src) {
   return problems;
 }
 
+export function auditVendorWorkOrderUnitLink(src) {
+  const problems = [];
+  if (!/<EntityLink\s+kind="unit"\s+id=\{workOrder\.unit_id\}\s+label=\{entityLabel\(workOrder\.unit_number, workOrder\.unit_id, "Unit"\)\}/.test(src)) {
+    problems.push(`${VENDOR_WORK_ORDERS}: vendor work-order rows must drill through the unit FK`);
+  }
+  return problems;
+}
+
 function auditTree() {
   const problems = [
     ...auditEntityLabel(readFileSync(join(ROOT, TARGET), "utf8")),
@@ -1749,6 +1758,7 @@ function auditTree() {
       readFileSync(join(ROOT, MAINT_WO_TABLE), "utf8"),
     ),
     ...auditCustomerLoadEntityLinks(readFileSync(join(ROOT, CUSTOMER_DETAIL), "utf8")),
+    ...auditVendorWorkOrderUnitLink(readFileSync(join(ROOT, VENDOR_WORK_ORDERS), "utf8")),
   ];
   for (const s of SIBLINGS) {
     problems.push(...auditSibling(s.rel, readFileSync(join(ROOT, s.rel), "utf8"), s.bad, s.good));
@@ -1800,6 +1810,13 @@ function selftest() {
   }
   if (!auditCustomerLoadEntityLinks(goodCustomerLoadLinks.replace('kind="unit"', 'kind="load"')).some((p) => p.includes("unit FK"))) {
     failures.push("selftest: missing customer load unit link NOT detected");
+  }
+  const goodVendorWorkOrderUnitLink = '<EntityLink kind="unit" id={workOrder.unit_id} label={entityLabel(workOrder.unit_number, workOrder.unit_id, "Unit")} />';
+  if (auditVendorWorkOrderUnitLink(goodVendorWorkOrderUnitLink).length) {
+    failures.push("selftest: good vendor work-order unit link flagged");
+  }
+  if (!auditVendorWorkOrderUnitLink(goodVendorWorkOrderUnitLink.replace('id={workOrder.unit_id}', 'id={undefined}')).length) {
+    failures.push("selftest: missing vendor work-order unit FK link NOT detected");
   }
   const sib = SIBLINGS[0];
   if (
