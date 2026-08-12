@@ -96,7 +96,7 @@ const AP_COLUMNS: ParityColumn<ApAgingVendorRow>[] = [
     label: "Vendor",
     sortable: true,
     cellClass: "whitespace-nowrap text-gray-900",
-    render: (r) => entityLabel(r.vendor_name, r.vendor_id, "Vendor"),
+    render: (r) => <EntityLink kind="vendor" id={r.vendor_id} label={entityLabel(r.vendor_name, r.vendor_id, "Vendor")} />,
   },
   {
     key: "open_bill_count",

@@ -15,6 +15,7 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { useUrlSort } from "../../hooks/useUrlSort";
 import { apAgingBillsListHref, apAgingVendorProfileHref } from "./agingDrillThrough";
 import { entityLabel } from "../../lib/entity-label";
+import { EntityLink } from "../../components/shared/EntityLink";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -95,7 +96,7 @@ export function APAgingPage() {
 
   const columns = useMemo<ParityColumn<APAgingRowWithBucket>[]>(
     () => [
-      { key: "vendor_name", label: "Vendor", sortable: true, render: (r) => <span className="font-medium text-gray-900">{entityLabel(r.vendor_name, r.vendor_id, "Vendor")}</span> },
+      { key: "vendor_name", label: "Vendor", sortable: true, render: (r) => <EntityLink kind="vendor" id={r.vendor_id} label={entityLabel(r.vendor_name, r.vendor_id, "Vendor")} className="font-medium text-gray-900" onClick={(event) => event.stopPropagation()} /> },
       { key: "total_open_cents", label: "Total", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.total_open_cents) },
       { key: "bucket_0_30_cents", label: "0–30", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.bucket_0_30_cents) },
       { key: "bucket_31_60_cents", label: "31–60", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.bucket_31_60_cents) },
