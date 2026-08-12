@@ -1,8 +1,8 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { MemoryRouter } from "react-router-dom";
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { afterEach, describe, expect, it, vi, beforeEach } from "vitest";
 import * as dispatchApi from "../../../api/dispatch";
 import { AtRiskQueuePage } from "../AtRiskQueuePage";
 import { InTransitIssuesPage } from "../InTransitIssuesPage";
@@ -22,6 +22,8 @@ function wrap(ui: ReactNode) {
 }
 
 describe("dispatch arch tab pages (B21-D2)", () => {
+  afterEach(cleanup);
+
   beforeEach(() => {
     vi.spyOn(dispatchApi, "listAtRiskDispatchLoads").mockResolvedValue({
       loads: [
@@ -101,6 +103,8 @@ describe("dispatch arch tab pages (B21-D2)", () => {
     wrap(<AssignmentHistoryPage />);
     expect(await screen.findByTestId("dispatch-assignment-history-page")).toBeTruthy();
     expect(await screen.findByText("Jane Driver")).toBeTruthy();
+    expect(screen.getByRole("link", { name: "100" }).getAttribute("href")).toBe("/fleet/units/u-prev");
+    expect(screen.getByRole("link", { name: "101" }).getAttribute("href")).toBe("/fleet/units/u-new");
   });
 
   it("shows assignment history filters", async () => {

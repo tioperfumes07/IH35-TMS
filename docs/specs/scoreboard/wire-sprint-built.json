@@ -336,6 +336,14 @@
       "modules": ["dispatch"],
       "cols": ["customer", "driver", "unit", "load", "connectivity", "reverse_link"],
       "leafRe": "^queues\\.detention$"
+    },
+    {
+      "task": "CLS-DISPATCH-ASSIGNMENT-HISTORY-UNIT-LINKS",
+      "pr": "this PR",
+      "guard": "scripts/verify-steps/2978-verify-entity-label-rejects-uuid-shaped-name.mjs",
+      "modules": ["dispatch"],
+      "cols": ["driver", "unit", "load", "connectivity", "reverse_link"],
+      "leafRe": "^secondary\\.assignments$"
     }
   ]
 }
