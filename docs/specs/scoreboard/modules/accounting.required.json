@@ -464,7 +464,7 @@
       "id": "coa",
       "tab": "Chart of Accounts",
       "sub": "CoA",
-      "route_hint": "/accounting/chart-of-accounts",
+      "route_hint": "/lists/accounting/chart-of-accounts",
       "required": [
         "gl_je",
         "connectivity",
@@ -476,7 +476,7 @@
       "id": "coa_roles",
       "tab": "CoA Roles",
       "sub": "CoA role bindings",
-      "route_hint": "/accounting/coa-roles",
+      "route_hint": "/accounting/settings/coa-roles",
       "required": [
         "connectivity"
       ]

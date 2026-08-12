@@ -120,7 +120,7 @@
       "id": "profiles.detail",
       "tab": "Profiles",
       "sub": "Driver detail",
-      "route_hint": "/drivers/profiles/:id",
+      "route_hint": "/drivers/:id/profile",
       "required": [
         "driver",
         "unit",
