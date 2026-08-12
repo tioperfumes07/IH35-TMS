@@ -24,6 +24,14 @@
       "modules": ["safety"],
       "cols": ["driver", "unit", "load", "connectivity", "reverse_link"],
       "leafRe": "^(accidents|violations|claims|driver|load)"
+    },
+    {
+      "task": "P34",
+      "pr": "#5584",
+      "guard": "scripts/verify-steps/917-verify-legal-reverse-drill-fleet-insurance.mjs",
+      "modules": ["legal"],
+      "cols": ["driver", "unit", "connectivity", "reverse_link"],
+      "leafRe": "^matters\\."
     }
   ]
 }
