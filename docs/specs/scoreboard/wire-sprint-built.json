@@ -88,6 +88,14 @@
       "modules": ["accounting"],
       "cols": ["ap_bill", "gl_je", "connectivity"],
       "leafRe": "^(bills\\.|ap\\.|account_register)"
+    },
+    {
+      "task": "P32",
+      "pr": "#5886",
+      "guard": "scripts/verify-steps/1316-verify-banking-match-entitylink-kinds.mjs",
+      "modules": ["banking"],
+      "cols": ["vendor", "driver", "connectivity", "reverse_link"],
+      "leafRe": "^(accounts|transactions\\.)"
     }
   ]
 }
