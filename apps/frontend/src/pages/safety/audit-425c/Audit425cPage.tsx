@@ -34,6 +34,7 @@ import { DatePicker } from "../../../components/forms/DatePicker";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { entityLabel } from "../../../lib/entity-label";
+import { EntityLink } from "../../../components/shared/EntityLink";
 
 /** ILIKE fragment matched against audit.audit_events.event_class by the reader. */
 const FORM_425C_EVENT_FILTER = "form_425c";
@@ -227,7 +228,11 @@ export default function Audit425cPage() {
         key: "actor_email",
         label: "Actor",
         sortable: true,
-        render: (row) => <span className="text-slate-600">{entityLabel(row.actor_email, row.actor_user_id, "User") ?? "-"}</span>,
+        render: (row) => (
+          <span className="text-slate-600">
+            <EntityLink kind="user" id={row.actor_user_id} label={entityLabel(row.actor_email, row.actor_user_id, "User")} />
+          </span>
+        ),
       },
       {
         key: "source_record",

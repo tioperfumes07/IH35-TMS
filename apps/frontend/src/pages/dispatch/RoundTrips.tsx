@@ -8,6 +8,7 @@ import { Button } from "../../components/Button";
 import { ListErrorState } from "../../components/ListErrorState";
 import type { DataTableErrorState } from "../../lib/tableError";
 import { entityLabel } from "../../lib/entity-label";
+import { EntityLink } from "../../components/shared/EntityLink";
 
 const ACTIVE_STATUSES = new Set([
   "assigned",
@@ -50,10 +51,14 @@ function TripCard({
   onClick: (loadId: string) => void;
 }) {
   return (
-    <button
-      type="button"
+    <div
+      role="button"
+      tabIndex={0}
       onClick={() => onClick(load.id)}
-      className="w-full rounded-sm border border-gray-200 bg-white p-2.5 text-left shadow-xs transition hover:border-slate-300 hover:shadow-sm"
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") onClick(load.id);
+      }}
+      className="w-full cursor-pointer rounded-sm border border-gray-200 bg-white p-2.5 text-left shadow-xs transition hover:border-slate-300 hover:shadow-sm"
       data-testid={`round-trip-load-${load.load_number}`}
     >
       <div className="flex items-center justify-between gap-2">
@@ -73,16 +78,30 @@ function TripCard({
           ) : null}
         </div>
       </div>
-      <div className="mt-1 text-xs text-gray-700">{entityLabel(load.customer_name, load.customer_id, "Customer")}</div>
+      <div className="mt-1 text-xs text-gray-700">
+        <EntityLink
+          kind="customer"
+          id={load.customer_id}
+          label={entityLabel(load.customer_name, load.customer_id, "Customer")}
+          onClick={(e) => e.stopPropagation()}
+        />
+      </div>
       <div className="mt-1 text-[11px] text-gray-500">{toRouteSummary(load.first_pickup_city, load.first_delivery_city)}</div>
       <div className="mt-1.5 flex items-center justify-between text-[10px] text-gray-600">
-        <span>{entityLabel(load.assigned_primary_driver_name, load.assigned_primary_driver_id, "Driver")}</span>
+        <span>
+          <EntityLink
+            kind="driver"
+            id={load.assigned_primary_driver_id}
+            label={entityLabel(load.assigned_primary_driver_name, load.assigned_primary_driver_id, "Driver")}
+            onClick={(e) => e.stopPropagation()}
+          />
+        </span>
         <span className="rounded-sm bg-gray-100 px-1.5 py-0.5">{STATUS_LABEL[load.status]}</span>
       </div>
       <div className="mt-1 text-[10px] font-semibold text-gray-800">
         {formatMoneyCents(load.rate_total_cents, load.currency_code)}
       </div>
-    </button>
+    </div>
   );
 }
 

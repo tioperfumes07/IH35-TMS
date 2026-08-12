@@ -394,8 +394,9 @@ export function DriverSchedulerGridPage() {
         {cancelTarget ? (
           <div className="space-y-3 text-sm">
             <p className="text-xs text-gray-600">
-              Cancel the cover assignment for {entityLabel(cancelTarget.cover_driver_name, cancelTarget.cover_driver_id, "Driver")} on{" "}
-              {entityLabel(cancelTarget.unit_number, cancelTarget.unit_id, "Unit")}?
+              Cancel the cover assignment for{" "}
+              <EntityLink kind="driver" id={cancelTarget.cover_driver_id} label={entityLabel(cancelTarget.cover_driver_name, cancelTarget.cover_driver_id, "Driver")} /> on{" "}
+              <EntityLink kind="unit" id={cancelTarget.unit_id} label={entityLabel(cancelTarget.unit_number, cancelTarget.unit_id, "Unit")} />?
             </p>
             <label className="block text-xs font-semibold uppercase text-gray-600">
               Reason

@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getDriverLoadAvailability } from "../../api/dispatch";
 import { entityLabel } from "../../lib/entity-label";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { userFacingApiError } from "../../lib/api-error-message";
 
@@ -50,8 +51,13 @@ export function LoadCreateModal({
       <div className="font-semibold">{availabilityQuery.data?.blocker ?? "Driver has active repair work order"}</div>
       <div className="mt-1">
         {/* FAIL-U1: show the WO display_id and unit number. A dispatcher cannot act on a uuid. */}
-        WO: {entityLabel(availabilityQuery.data?.work_order_display_id, availabilityQuery.data?.work_order_id, "Work order")} · Asset:{" "}
-        {entityLabel(availabilityQuery.data?.asset_label, availabilityQuery.data?.asset_id, "Asset")}
+        WO:{" "}
+        <EntityLink
+          kind="work_order"
+          id={availabilityQuery.data?.work_order_id}
+          label={entityLabel(availabilityQuery.data?.work_order_display_id, availabilityQuery.data?.work_order_id, "Work order")}
+        />{" "}
+        · Asset: {entityLabel(availabilityQuery.data?.asset_label, availabilityQuery.data?.asset_id, "Asset")}
       </div>
       <label className="mt-2 flex items-center gap-2">
         <input
