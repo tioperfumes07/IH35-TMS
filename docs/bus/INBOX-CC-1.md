@@ -1,13 +1,10 @@
-# CC-1 INBOX · sync to `/private/tmp/IH35-devin-b/INBOX-CC-1.md`
+# CC-1 INBOX · `/private/tmp/IH35-devin-b/INBOX-CC-1.md`
 
-**Law:** VERTICAL + FAST-MERGE · Built **46%**
+**NO PAUSE AFTER MERGE** · Jorge away ~90m · Built **53%**
 
 ## ☐ NOW
+1. **`column=liability`** × all owed · `@matrix-built` + **`leafRe`**
+2. FAST-MERGE → **`expense`** → **`ap_bill`** (serial) — no idle between
+3. If nudged idle: start liability **now**
 
-1. **`column=liability`** × all owed · `@matrix-built` + **`leafRe` required**
-2. Then **`expense`** → **`ap_bill`**
-3. FAST-MERGE serial
-
-**FORBIDDEN:** module-deep · parallel money · tag without leafRe
-
-OUTBOX: `CC-1 | column=<id> | SHIPPED #N @ sha | Built=… | NEXT=…`
+**FORBIDDEN:** pause after merge · parallel money PRs · module-deep

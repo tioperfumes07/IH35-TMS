@@ -1,11 +1,10 @@
-# CC-2 INBOX · sync to agent2 `INBOX.md`
+# CC-2 INBOX · agent2 `INBOX.md`
 
-**Law:** VERTICAL + FAST-MERGE · Built **46%** · reverse_link mostly drained (#6141)
+**NO PAUSE AFTER MERGE** · Jorge away ~90m · Built **53%**
 
 ## ☐ NOW
-
 1. **`column=connectivity`** — all owed · SHIP · `@matrix-built` + leafRe
-2. Help Codex **lists reverse_link** leftover if shared class
-3. Class-sweeps that unblock vendor/unit
+2. FAST-MERGE → next connectivity leftover / partner vendor if free
+3. If nudged idle: start connectivity **now**
 
-OUTBOX: `CC-2 | column=<id>|class=<id> | SHIPPED #N @ sha | Built=… | NEXT=…`
+**FORBIDDEN:** pause after merge · verify-only · module-deep
