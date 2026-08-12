@@ -77,7 +77,7 @@ export function TripProfitability() {
       key: "driver_name",
       label: "Driver",
       sortable: true,
-      render: (row) => entityLabel(row.driver_name, null, "Driver"),
+      render: (row) => <EntityLink kind="driver" id={row.driver_id} label={entityLabel(row.driver_name, row.driver_id, "Driver")} />,
     },
     {
       key: "nb_load_number",

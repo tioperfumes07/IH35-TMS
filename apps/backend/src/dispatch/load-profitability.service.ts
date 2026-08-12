@@ -23,6 +23,7 @@ export type LoadProfitabilitySnapshot = {
 export type TripProfitabilityRow = {
   settlement_id: string;
   settlement_display_id: string | null;
+  driver_id: string | null;
   driver_name: string | null;
   nb_load_id: string | null;
   nb_load_number: string | null;
@@ -259,6 +260,7 @@ export async function computeTripProfitabilityReport(
       SELECT
         s.id::text AS settlement_id,
         s.display_id::text AS settlement_display_id,
+        s.driver_id::text AS driver_id,
         NULLIF(trim(CONCAT_WS(' ', d.first_name, d.last_name)), '')  AS driver_name,
         s.first_load_id::text AS nb_load_id,
         s.first_load_number::text AS nb_load_number,
@@ -317,6 +319,7 @@ export async function computeTripProfitabilityReport(
     SELECT
       t.settlement_id,
       t.settlement_display_id,
+      t.driver_id,
       t.driver_name,
       t.nb_load_id,
       t.nb_load_number,
@@ -354,6 +357,7 @@ export async function computeTripProfitabilityReport(
     return {
       settlement_id: String(r.settlement_id),
       settlement_display_id: r.settlement_display_id ? String(r.settlement_display_id) : null,
+      driver_id: r.driver_id ? String(r.driver_id) : null,
       driver_name: r.driver_name ? String(r.driver_name) : null,
       nb_load_id: r.nb_load_id ? String(r.nb_load_id) : null,
       nb_load_number: r.nb_load_number ? String(r.nb_load_number) : null,
