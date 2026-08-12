@@ -59,6 +59,66 @@ export function pctClass(n: number): string {
   return "lo";
 }
 
+/** Same 4-box cell chrome on module boards and All-modules system board (owner lock). */
+export function MatrixCell4({
+  req,
+  audited,
+  built,
+  live,
+  title,
+  testId,
+}: {
+  req: boolean;
+  audited: boolean;
+  built: boolean;
+  live: boolean;
+  title?: string;
+  testId?: string;
+}) {
+  if (!req) {
+    return (
+      <div className="cell4" aria-label="Not applicable" title={title} data-testid={testId}>
+        <span className="bx req-n">·</span>
+        <span className="bx empty" />
+        <span className="bx empty" />
+        <span className="bx empty" />
+      </div>
+    );
+  }
+  const auditedBox = audited ? (built || live ? "map-y" : "map-w") : "map-n";
+  return (
+    <div
+      className="cell4"
+      aria-label={`Required audited built ${live ? "live" : "not-live"}`}
+      title={title}
+      data-testid={testId}
+    >
+      <span className="bx req-y">✓</span>
+      <span className={`bx ${auditedBox}`}>{audited ? (built || live ? "✓" : "●") : "✕"}</span>
+      <span className={`bx ${built ? "done-y" : "done-n"}`}>{built ? "✓" : "✕"}</span>
+      <span className={`bx ${live ? "live-y" : "done-n"}`}>{live ? "✓" : "✕"}</span>
+    </div>
+  );
+}
+
+/** Rollup Abl% → same 4-box states (100% fill = ✓ on that box; partial audit = ●). */
+export function ablPctToCell4(abl: {
+  requiredCells: number;
+  auditedPct: number;
+  builtPct: number;
+  livePct: number;
+}): { req: boolean; audited: boolean; built: boolean; live: boolean } {
+  if (!abl || abl.requiredCells <= 0) {
+    return { req: false, audited: false, built: false, live: false };
+  }
+  return {
+    req: true,
+    audited: abl.auditedPct > 0,
+    built: abl.builtPct >= 100,
+    live: abl.livePct >= 100,
+  };
+}
+
 function pctOf(count: number, of: number): number {
   if (of <= 0) return 0;
   return Math.round((count / of) * 100);

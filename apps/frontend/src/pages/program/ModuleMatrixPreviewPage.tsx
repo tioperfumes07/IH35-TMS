@@ -13,6 +13,7 @@ import { resolveApiUrl } from "../../api/client";
 import {
   GroupRollupTable,
   MatrixBoxTracker,
+  MatrixCell4,
   pctClass,
   type GroupRollup,
   type TierMetrics,
@@ -147,28 +148,6 @@ type Row =
       pct: number;
       cells: Array<{ req: boolean; audited: boolean; built: boolean; live: boolean }>;
     };
-
-function Cell4({ req, audited, built, live }: { req: boolean; audited: boolean; built: boolean; live: boolean }) {
-  if (!req) {
-    return (
-      <div className="cell4" aria-label="Not applicable">
-        <span className="bx req-n">·</span>
-        <span className="bx empty" />
-        <span className="bx empty" />
-        <span className="bx empty" />
-      </div>
-    );
-  }
-  const auditedBox = audited ? (built || live ? "map-y" : "map-w") : "map-n";
-  return (
-    <div className="cell4" aria-label={`Required audited built ${live ? "live" : "not-live"}`}>
-      <span className="bx req-y">✓</span>
-      <span className={`bx ${auditedBox}`}>{audited ? (built || live ? "✓" : "●") : "✕"}</span>
-      <span className={`bx ${built ? "done-y" : "done-n"}`}>{built ? "✓" : "✕"}</span>
-      <span className={`bx ${live ? "live-y" : "done-n"}`}>{live ? "✓" : "✕"}</span>
-    </div>
-  );
-}
 
 function cellBoxes(
   leafId: string,
@@ -563,9 +542,9 @@ export function ModuleMatrixPreviewPage() {
       <header className="hd">
         <div className="t">Program — Module matrix scoreboards</div>
         <div className="s">
-          One shell · 29 module boards + system rollup. Columns include linkage, money,{" "}
-          <b>pickers / QBO chrome</b>, and <b>connectivity / reverse link</b> — full wiring, not
-          chrome-only. Cell = Required · Audited · Built · Live (4 boxes).
+          One shell · 29 module boards + system rollup. <b>All modules</b> uses the same columns and
+          4-box ✓/●/✕ cells — priority 10 first, then the rest. Columns include linkage, money,{" "}
+          <b>pickers / QBO chrome</b>, and <b>connectivity / reverse link</b>.
         </div>
         <div className="synced">
           Active board:{" "}
@@ -583,7 +562,7 @@ export function ModuleMatrixPreviewPage() {
           ) : (
             <>
               {" "}
-              · <span className="synced-note">29 modules · sidebar order · summed Live / Built cells</span>
+              · <span className="synced-note">Priority 10 first · then remainder · same Cell4 chrome</span>
             </>
           )}
         </div>
@@ -735,7 +714,7 @@ export function ModuleMatrixPreviewPage() {
                   </td>
                   {row.cells.map((st, ci) => (
                     <td key={cols[ci].id} className="gc">
-                      <Cell4 {...st} />
+                      <MatrixCell4 {...st} />
                     </td>
                   ))}
                   <td className="sum-val amb">{leafCounts.built}</td>
@@ -893,15 +872,7 @@ const CSS = `
 .ih35mm .system-table .sticky-col{position:sticky;left:0;background:var(--card);z-index:1;min-width:140px}
 .ih35mm .system-table .mod-id{display:block;font-size:10px;color:var(--slate-lt);font-weight:400}
 .ih35mm .system-column-board{min-width:1600px}
-.ih35mm .abl-triple{display:inline-flex;align-items:center;gap:2px;flex-wrap:nowrap;font-variant-numeric:tabular-nums;font-size:10px;font-weight:800;line-height:1.2}
-.ih35mm .abl-triple.dim{color:var(--slate-lt);font-weight:600}
-.ih35mm .abl-sep{color:var(--slate-lt);font-weight:600;font-size:9px}
-.ih35mm .abl{padding:1px 3px;border-radius:4px}
-.ih35mm .abl.a.hi,.ih35mm .abl.b.hi,.ih35mm .abl.l.hi{background:var(--green-bg);color:var(--green)}
-.ih35mm .abl.a.mid,.ih35mm .abl.b.mid,.ih35mm .abl.l.mid{background:var(--amber-bg);color:var(--amber)}
-.ih35mm .abl.a.lo,.ih35mm .abl.b.lo,.ih35mm .abl.l.lo{background:var(--red-bg);color:var(--red)}
-.ih35mm td.abl-cell{text-align:center;padding:4px 3px;min-width:88px}
-.ih35mm .abl-triple.demo{margin-left:8px}
+.ih35mm .system-table .board-link{font-size:10px;font-weight:600;margin-left:4px}
 .ih35mm tr.system-total td{background:var(--accent-bg);font-weight:700}
 .ih35mm tr.dim-row td{opacity:.55}
 .ih35mm .cell3{display:inline-grid;grid-template-columns:repeat(3,16px);gap:2px;justify-content:center}
