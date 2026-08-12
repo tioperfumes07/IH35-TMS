@@ -363,6 +363,32 @@ export function SettlementDetailPage() {
           <ExtraPaySection lines={extra} />
           <ReimbursementsSection lines={reimbursements} />
           <DeductionsSection rows={deductions} onHold={(row) => setHoldTarget(row)} />
+          {/* AP_BILL / GL_JE column-wave: settlement-bill-payment-posting.service.ts (flag
+              SETTLEMENT_GL_POSTING_ENABLED, live for all 3 entities) creates a real
+              accounting.bills row + journal entry per load this settlement pays out — this
+              section was the missing drill-through into that real posting. Empty when the flag
+              posted nothing yet (honest-empty, not fabricated). */}
+          {(settlement.linked_bills as Array<Record<string, unknown>> | undefined)?.length ? (
+            <section className="rounded-sm border border-slate-200 bg-slate-50 p-2" data-testid="settlement-linked-bills">
+              <h3 className="mb-1 text-xs font-semibold uppercase text-slate-800">GL-Posted Bills</h3>
+              <div className="space-y-1">
+                {(settlement.linked_bills as Array<Record<string, unknown>>).map((row, idx) => (
+                  <div key={String(row.accounting_bill_id ?? idx)} className="flex items-center justify-between text-xs">
+                    <EntityLink
+                      kind="bill"
+                      id={row.accounting_bill_id ? String(row.accounting_bill_id) : null}
+                      label={entityLabel(row.load_number ? `Load ${row.load_number}` : null, row.accounting_bill_id ? String(row.accounting_bill_id) : null, "Bill")}
+                    />
+                    {row.bill_journal_entry_id ? (
+                      <EntityLink kind="journal_entry" id={String(row.bill_journal_entry_id)} label="Journal entry" />
+                    ) : (
+                      <span className="text-gray-400">not yet posted</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </section>
+          ) : null}
           <OpenDriverBillsSection
             loading={openBillsQuery.isPending}
             driverId={driverId}
