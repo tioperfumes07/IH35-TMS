@@ -24,6 +24,8 @@ const LABEL = "verify-dispatch-factoring-queue-deeplinks";
 const QUEUE = "apps/frontend/src/pages/dispatch/FactoringQueuePage.tsx";
 const DISPATCH = "apps/frontend/src/pages/Dispatch.tsx";
 const SUBNAV = "apps/frontend/src/components/dispatch/DispatchSubnav.tsx";
+const ROUTES = "apps/backend/src/dispatch/factoring-queue.routes.ts";
+const FACTORING_HOME = "apps/frontend/src/pages/factoring/FactoringHome.tsx";
 
 function read(rel) {
   const p = path.join(ROOT, rel);
@@ -67,6 +69,42 @@ export function checkFactoringQueueProducer(src) {
   return failures;
 }
 
+export function checkFactoringQueueApi(src) {
+  const failures = [];
+  if (!/AS customer_id/.test(src) || !/customer_id:\s*row\.customer_id/.test(src)) {
+    failures.push(`${ROUTES}: factoring-queue API must return customer_id for customer EntityLink`);
+  }
+  return failures;
+}
+
+export function checkFactoringQueueCustomerInvoiceLinks(src) {
+  const failures = [];
+  if (!/<EntityLink[^>]*kind=["']customer["'][\s\S]{0,200}?row\.customer_id/.test(src)) {
+    failures.push(`${QUEUE}: customer column must use EntityLink kind="customer" id={row.customer_id}`);
+  }
+  if (!/<EntityLink[^>]*kind=["']invoice["'][\s\S]{0,200}?row\.invoice_id/.test(src)) {
+    failures.push(`${QUEUE}: invoice column must use EntityLink kind="invoice" id={row.invoice_id}`);
+  }
+  if (/to=\{`\/accounting\/invoices\/\$\{row\.invoice_id\}`\}/.test(src)) {
+    failures.push(`${QUEUE}: must not use raw Link to invoice — use EntityLink kind="invoice"`);
+  }
+  return failures;
+}
+
+export function checkFactoringHomeHubReverseLinks(src) {
+  const failures = [];
+  for (const [testId, path] of [
+    ["factoring-hub-dispatch-queue-reverse-link", "/dispatch/factoring-queue"],
+    ["factoring-hub-accounting-advances-reverse-link", "/accounting/factoring"],
+    ["factoring-hub-banking-entry-reverse-link", "/banking/factoring"],
+  ]) {
+    if (!src.includes(`data-testid="${testId}"`) || !src.includes(`to="${path}"`)) {
+      failures.push(`${FACTORING_HOME}: missing hub reverse link ${testId} → ${path}`);
+    }
+  }
+  return failures;
+}
+
 export function checkDispatchConsumer(src) {
   const failures = [];
   // Canonical + legacy fallback so old bookmarks still open the drawer.
@@ -102,13 +140,18 @@ export function checkSubnavReserveHref(src) {
 
 export function run() {
   const failures = [];
-  for (const rel of [QUEUE, DISPATCH, SUBNAV]) {
+  for (const rel of [QUEUE, DISPATCH, SUBNAV, ROUTES, FACTORING_HOME]) {
     const { ok, src, err } = read(rel);
     if (!ok) {
       failures.push(err);
       continue;
     }
-    if (rel === QUEUE) failures.push(...checkFactoringQueueProducer(src));
+    if (rel === QUEUE) {
+      failures.push(...checkFactoringQueueProducer(src));
+      failures.push(...checkFactoringQueueCustomerInvoiceLinks(src));
+    }
+    if (rel === ROUTES) failures.push(...checkFactoringQueueApi(src));
+    if (rel === FACTORING_HOME) failures.push(...checkFactoringHomeHubReverseLinks(src));
     if (rel === DISPATCH) failures.push(...checkDispatchConsumer(src));
     if (rel === SUBNAV) failures.push(...checkSubnavReserveHref(src));
   }

@@ -248,6 +248,14 @@
       "modules": ["accounting"],
       "cols": ["gl_je", "connectivity", "reverse_link"],
       "leafRe": "^(expenses\\.|register|transactions\\.)"
+    },
+    {
+      "task": "P04-dispatch-queue",
+      "pr": "TBD",
+      "guard": "scripts/verify-dispatch-factoring-queue-deeplinks.mjs",
+      "modules": ["factoring"],
+      "cols": ["customer", "load", "connectivity", "reverse_link"],
+      "leafRe": "^(dispatch\\.queue|home\\.summary|accounting\\.list|banking\\.entry)"
     }
   ]
 }
