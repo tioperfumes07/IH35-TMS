@@ -97,6 +97,7 @@
     "verify:session-law-autoload": "node scripts/verify-session-law-autoload.mjs",
     "verify:pre-commit": "node scripts/verify-pre-commit.mjs",
     "verify:ap-aging-qbo-tie": "node scripts/verify-ap-aging-qbo-tie.mjs",
+    "verify:flag-keys-seeded": "node scripts/verify-flag-keys-seeded.mjs",
     "verify:static": "node scripts/verify-static.mjs",
     "verify:local-ci": "node scripts/verify-local-ci.mjs",
     "verify:unit-retire-open-wo-gate": "node scripts/verify-unit-retire-open-wo-gate.mjs",
