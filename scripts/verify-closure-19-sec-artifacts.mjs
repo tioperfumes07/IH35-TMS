@@ -23,4 +23,15 @@ for (const rel of REQUIRED) {
     process.exit(1);
   }
 }
+
+const qboOauth = fs.readFileSync(path.join(ROOT, "apps/backend/src/integrations/qbo/qbo-oauth.service.ts"), "utf8");
+if (/redirect_uri:\s*form\.get\("redirect_uri"\)|redirect_uri:\s*redirectUri,\s*\n\s*clientIdPrefix|\n\s*redirectUri,\s*\n\s*form:/.test(qboOauth)) {
+  console.error(`[${LABEL}] FAIL QBO OAuth logs must expose only redirect-URI presence, never its value`);
+  process.exit(1);
+}
+const authAudit = fs.readFileSync(path.join(ROOT, "scripts/sec-audit-auth-flows.mjs"), "utf8");
+if (/console\.log\(JSON\.stringify\(report\b/.test(authAudit)) {
+  console.error(`[${LABEL}] FAIL auth audit must not dump the full report into CI logs`);
+  process.exit(1);
+}
 console.log(`[${LABEL}] PASS (${REQUIRED.length} artifacts)`);
