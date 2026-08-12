@@ -7,11 +7,15 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const queryMock = vi.fn();
 const withCurrentUserMock = vi.fn();
 
-vi.mock("../../auth/db.js", () => ({
-  withCurrentUser: (userId: string, fn: (client: { query: typeof queryMock }) => Promise<unknown>) =>
-    withCurrentUserMock(userId, fn),
-  withLuciaBypass: vi.fn(),
-}));
+vi.mock("../../auth/db.js", async (orig) => {
+  const actual = (await orig()) as Record<string, unknown>;
+  return {
+    ...actual,
+    withCurrentUser: (userId: string, fn: (client: { query: typeof queryMock }) => Promise<unknown>) =>
+      withCurrentUserMock(userId, fn),
+    withLuciaBypass: vi.fn(),
+  };
+});
 
 vi.mock("../../audit/crud-audit.js", () => ({
   appendCrudAudit: vi.fn().mockResolvedValue(undefined),

@@ -4,7 +4,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { listOptimalDriversForLoad } from "../../apps/backend/src/dispatch/driver-optimizer.service";
 import { buildPgClientConfig } from "../../apps/backend/src/lib/pg-connection-options.js";
 import { TEST_OWNER_USER_ID } from "../../apps/backend/test-helpers/constants";
-import { ensureIntegrationPrerequisites } from "../../apps/backend/test-helpers/db-fixture";
+import { ensureIntegrationPrerequisites, prepareCompanyForLoadInserts } from "../../apps/backend/test-helpers/db-fixture";
 
 // CI GUARD (2026-06-24) — FIX-7, the optimal-drivers 500 (twin of #1444/#1448). The driver-suggestion
 // query SELECTed `l.hazmat` (no such column on mdata.loads — hazmat lives in the quicksave_pending_fields
@@ -35,11 +35,12 @@ describeE2E("optimal-drivers — E2E (real DB, FIX-7 l.hazmat/trailer_type 42703
       [`OptDrivers ${suffix}`, companyId]
     );
     customerId = cust.rows[0]!.id;
+    const trailerEquipmentId = await prepareCompanyForLoadInserts(client, companyId);
     // Seed a load whose hazmat lives in the quicksave_pending_fields jsonb (the real persistence path).
     const load = await client.query<{ id: string }>(
-      `INSERT INTO mdata.loads (operating_company_id, load_number, customer_id, dispatcher_user_id, quicksave_pending_fields)
-       VALUES ($1::uuid, $2, $3::uuid, $4::uuid, $5::jsonb) RETURNING id`,
-      [companyId, `OPT-${suffix}`, customerId, TEST_OWNER_USER_ID, JSON.stringify({ hazmat: true })]
+      `INSERT INTO mdata.loads (operating_company_id, load_number, customer_id, dispatcher_user_id, quicksave_pending_fields, load_trailer_equipment_id)
+       VALUES ($1::uuid, $2, $3::uuid, $4::uuid, $5::jsonb, $6::uuid) RETURNING id`,
+      [companyId, `OPT-${suffix}`, customerId, TEST_OWNER_USER_ID, JSON.stringify({ hazmat: true }), trailerEquipmentId]
     );
     loadId = load.rows[0]!.id;
     await client.query("COMMIT");

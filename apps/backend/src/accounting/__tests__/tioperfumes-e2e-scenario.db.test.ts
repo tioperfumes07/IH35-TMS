@@ -94,7 +94,7 @@ run("Tio Perfumes end-to-end money scenario (real engine)", () => {
       await db.query(`INSERT INTO mdata.vendors (id,operating_company_id,vendor_name,vendor_type) VALUES ($1::uuid,$2::uuid,'Tio Perfumes','Other')`, [ids.vendor, companyId]);
       await db.query(`INSERT INTO mdata.units (id,owner_company_id,unit_number,vin, is_sample_data) VALUES ($1::uuid,$2::uuid,$3,$4, true)`, [ids.unit, companyId, `TRK${s}`, `1TIO${s}PERFUMES0001`]);
       await db.query(`INSERT INTO mdata.drivers (id,operating_company_id,first_name,last_name,phone) VALUES ($1::uuid,$2::uuid,'Tio','Driver',$3)`, [ids.driver, companyId, `95605${s.slice(0,5)}`]);
-      await db.query(`INSERT INTO mdata.loads (id,operating_company_id,load_number,customer_id,dispatcher_user_id,status,assigned_primary_driver_id,assigned_unit_id) VALUES ($1::uuid,$2::uuid,$3,$4::uuid,$5::uuid,'delivered',$6::uuid,$7::uuid)`,
+      await db.query(`INSERT INTO mdata.loads (id,operating_company_id,load_number,customer_id,dispatcher_user_id,status,assigned_primary_driver_id,assigned_unit_id,load_trailer_equipment_id) VALUES ($1::uuid,$2::uuid,$3,$4::uuid,$5::uuid,'delivered',$6::uuid,$7::uuid,(SELECT id FROM catalogs.load_trailer_equipment WHERE operating_company_id = $2::uuid AND code = 'DRY_VAN' LIMIT 1))`,
         [ids.load, companyId, `LOAD-${s}`, ids.customer, userId, ids.driver, ids.unit]);
     });
   });

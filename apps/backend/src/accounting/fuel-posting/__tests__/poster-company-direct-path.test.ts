@@ -12,9 +12,10 @@ const { mockQuery, mockWithLuciaBypass, mockResolveAccountForCategory } = vi.hoi
   };
 });
 
-vi.mock("../../../auth/db.js", () => ({
-  withLuciaBypass: mockWithLuciaBypass,
-}));
+vi.mock("../../../auth/db.js", async (orig) => {
+  const actual = (await orig()) as Record<string, unknown>;
+  return { ...actual, withLuciaBypass: mockWithLuciaBypass };
+});
 
 vi.mock("../../expense-category-map/resolver.service.js", () => ({
   resolveAccountForCategory: mockResolveAccountForCategory,

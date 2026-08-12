@@ -149,6 +149,10 @@ export async function createIsolatedOperatingCompany(
       await grantMembership(client, actorUserId, companyId);
     }
 
+    const { seedDispatchFlagColorsForCompany, resolveLoadTrailerEquipmentIdForTests } = await import("./db-fixture.js");
+    await seedDispatchFlagColorsForCompany(client, companyId);
+    await resolveLoadTrailerEquipmentIdForTests(client, companyId);
+
     await client.query("COMMIT");
     return { companyId, code, label };
   } catch (err) {

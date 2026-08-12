@@ -29,6 +29,8 @@ describe("AssignDriverDropdown (P5-T19)", () => {
         driversOverride={[
           {
             driver_id: "00000000-0000-4000-8000-000000000010",
+            customer_id: "00000000-0000-4000-8000-000000000020",
+            unit_id: "00000000-0000-4000-8000-000000000030",
             display_name: "Safe Driver",
             display_id: "d1",
             hours_remaining_today: 8,
@@ -39,6 +41,8 @@ describe("AssignDriverDropdown (P5-T19)", () => {
           },
           {
             driver_id: "00000000-0000-4000-8000-000000000011",
+            customer_id: "00000000-0000-4000-8000-000000000021",
+            unit_id: null,
             display_name: "Tired Driver",
             display_id: "d2",
             hours_remaining_today: 0,

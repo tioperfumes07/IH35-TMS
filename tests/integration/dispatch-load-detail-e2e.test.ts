@@ -5,7 +5,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { registerDispatchLoadRoutes } from "../../apps/backend/src/dispatch/loads.routes";
 import { buildPgClientConfig } from "../../apps/backend/src/lib/pg-connection-options.js";
 import { TEST_OWNER_USER_ID } from "../../apps/backend/test-helpers/constants";
-import { ensureIntegrationPrerequisites } from "../../apps/backend/test-helpers/db-fixture";
+import { ensureIntegrationPrerequisites, prepareCompanyForLoadInserts } from "../../apps/backend/test-helpers/db-fixture";
 import { createIntegrationApp } from "../../apps/backend/test-helpers/http-app";
 import { testAuthHeaders } from "../../apps/backend/test-helpers/auth-fixture";
 
@@ -38,10 +38,11 @@ describeE2E("dispatch load-detail — E2E (real DB, Block 1 trailer_id 500 guard
       [`Block1 LoadDetail ${suffix}`, companyId]
     );
     customerId = cust.rows[0]!.id;
+    const trailerEquipmentId = await prepareCompanyForLoadInserts(client, companyId);
     const load = await client.query<{ id: string }>(
-      `INSERT INTO mdata.loads (operating_company_id, load_number, customer_id, dispatcher_user_id)
-       VALUES ($1::uuid, $2, $3::uuid, $4::uuid) RETURNING id`,
-      [companyId, `B1-${suffix}`, customerId, TEST_OWNER_USER_ID]
+      `INSERT INTO mdata.loads (operating_company_id, load_number, customer_id, dispatcher_user_id, load_trailer_equipment_id)
+       VALUES ($1::uuid, $2, $3::uuid, $4::uuid, $5::uuid) RETURNING id`,
+      [companyId, `B1-${suffix}`, customerId, TEST_OWNER_USER_ID, trailerEquipmentId]
     );
     loadId = load.rows[0]!.id;
     await client.query("COMMIT");

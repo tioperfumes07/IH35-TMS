@@ -74,6 +74,8 @@ export function AssignDriverDropdown({
 
   const rosterDrivers: AvailableDriverRow[] = (rosterQ.data?.drivers ?? []).map((d) => ({
     driver_id: d.id,
+    customer_id: "",
+    unit_id: null,
     display_name: [d.first_name, d.last_name].filter(Boolean).join(" ").trim() || d.id,
     display_id: null,
     hours_remaining_today: 0,
@@ -105,6 +107,8 @@ export function AssignDriverDropdown({
     return [
       {
         driver_id: createdOption.driver_id,
+        customer_id: "",
+        unit_id: null,
         display_name: createdOption.display_name,
         display_id: null,
         hours_remaining_today: 0,

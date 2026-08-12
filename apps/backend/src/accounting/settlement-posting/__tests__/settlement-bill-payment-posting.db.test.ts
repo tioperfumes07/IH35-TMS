@@ -256,8 +256,8 @@ describeIntegration("SETTLEMENT-BILL-PAYMENT GL posting (real Postgres)", () => 
       );
       for (let i = 0; i < 3; i += 1) {
         await db.query(
-          `INSERT INTO mdata.loads (operating_company_id, load_number, customer_id, status, rate_total_cents, dispatcher_user_id, id)
-           VALUES ($1::uuid,$2,$3::uuid,'delivered_pending_docs',$4,$5::uuid,$6::uuid)`,
+          `INSERT INTO mdata.loads (operating_company_id, load_number, customer_id, status, rate_total_cents, dispatcher_user_id, id, load_trailer_equipment_id)
+           VALUES ($1::uuid,$2,$3::uuid,'delivered_pending_docs',$4,$5::uuid,$6::uuid,(SELECT id FROM catalogs.load_trailer_equipment WHERE operating_company_id = $1::uuid AND code = 'DRY_VAN' LIMIT 1))`,
           [companyId, loadNumbers[i], customerId, grossCents[i]! * 3, userId, loadIds[i]]
         );
         await db.query(

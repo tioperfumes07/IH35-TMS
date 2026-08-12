@@ -260,6 +260,45 @@ async function resolveFactoringVendorId(
   return rows.rows[0]?.id ?? null;
 }
 
+// P44 (202612511200): load_trailer_equipment_id is NOT NULL on mdata.loads. Book-load must always
+// persist a canonical catalogs.load_trailer_equipment row for the operating company — default DRY_VAN
+// when the wizard omits an explicit pick (same default the migration backfill used).
+async function resolveLoadTrailerEquipmentIdForInsert(
+  client: { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> },
+  operatingCompanyId: string,
+  explicitId?: string | null
+): Promise<string> {
+  if (explicitId) {
+    const scoped = await client.query<{ id: string }>(
+      `
+        SELECT id::text AS id
+        FROM catalogs.load_trailer_equipment
+        WHERE id = $1::uuid
+          AND operating_company_id = $2::uuid
+          AND is_active = true
+        LIMIT 1
+      `,
+      [explicitId, operatingCompanyId]
+    );
+    if (scoped.rows[0]?.id) return scoped.rows[0].id;
+    throw Object.assign(new Error("load_trailer_equipment_not_found"), { code: "23503" });
+  }
+  const defaultRows = await client.query<{ id: string }>(
+    `
+      SELECT id::text AS id
+      FROM catalogs.load_trailer_equipment
+      WHERE operating_company_id = $1::uuid
+        AND code = 'DRY_VAN'
+        AND is_active = true
+      LIMIT 1
+    `,
+    [operatingCompanyId]
+  );
+  const defaultId = defaultRows.rows[0]?.id;
+  if (defaultId) return defaultId;
+  throw Object.assign(new Error("load_trailer_equipment_catalog_missing"), { code: "23503" });
+}
+
 // C9 (migration 202609170000, HOLD-FOR-JORGE — not yet applied to prod as of this write): persists
 // the 8 new mdata.loads columns via the SAME savepoint-guarded optionalQuery used above for the
 // trailer resolve, so booking a load NEVER breaks while the migration is held — this UPDATE is
@@ -1502,6 +1541,12 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
       trailerIdForInsert = (trailerRows[0]?.id as string | undefined) ?? null;
     }
 
+    const loadTrailerEquipmentId = await resolveLoadTrailerEquipmentIdForInsert(
+      client,
+      input.operating_company_id,
+      input.load_trailer_equipment_id
+    );
+
     const loadRes = await client.query(
       `
         INSERT INTO mdata.loads (
@@ -1516,9 +1561,10 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
           detention_bill_customer_per_hour_cents, detention_driver_pay_per_hour_cents,
           late_delivery_risk_y_n, late_delivery_est_deduction_cents, late_delivery_reason,
           ocr_source_pdf_r2_key, miles_practical, miles_shortest, miles_deadhead,
-          customer_wo_number, pickup_number, border_routing, is_sample_data, loaded_miles
+          customer_wo_number, pickup_number, border_routing, is_sample_data, loaded_miles,
+          load_trailer_equipment_id
         )
-        VALUES ($1,$2,$3,$4,$5,'USD',$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19::jsonb,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37,$38,$39,$40,$41,$42)
+        VALUES ($1,$2,$3,$4,$5,'USD',$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19::jsonb,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37,$38,$39,$40,$41,$42,$43)
         RETURNING *
       `,
       [
@@ -1571,6 +1617,7 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
         // PRACTICAL-for-routing (migration 0311's COALESCE prefers practical) is a separate, unmade ruling
         // and is deliberately NOT decided here.
         input.miles_shortest ?? null,
+        loadTrailerEquipmentId,
       ]
     );
     const load = loadRes.rows[0] as Record<string, unknown>;

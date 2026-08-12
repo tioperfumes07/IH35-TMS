@@ -5,7 +5,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { registerSettlementsMvpRoutes } from "../../apps/backend/src/driver-finance/settlements-mvp.routes";
 import { buildPgClientConfig } from "../../apps/backend/src/lib/pg-connection-options.js";
 import { TEST_OWNER_USER_ID } from "../../apps/backend/test-helpers/constants";
-import { ensureIntegrationPrerequisites } from "../../apps/backend/test-helpers/db-fixture";
+import { ensureIntegrationPrerequisites, prepareCompanyForLoadInserts } from "../../apps/backend/test-helpers/db-fixture";
 import { createIntegrationApp } from "../../apps/backend/test-helpers/http-app";
 import { testAuthHeaders } from "../../apps/backend/test-helpers/auth-fixture";
 
@@ -119,6 +119,8 @@ describeSettlementPdf("driver settlement pdf e2e — preview → commit → appr
       unitId = String(unitInsert.rows[0]?.id ?? "");
       if (!unitId) throw new Error("unit_insert_failed");
 
+      const trailerEquipmentId = await prepareCompanyForLoadInserts(pgClient, companyId);
+
       const loadInsert = await pgClient.query<{ id: string }>(
         `
           INSERT INTO mdata.loads (
@@ -129,7 +131,8 @@ describeSettlementPdf("driver settlement pdf e2e — preview → commit → appr
             rate_total_cents,
             assigned_unit_id,
             assigned_primary_driver_id,
-            dispatcher_user_id
+            dispatcher_user_id,
+            load_trailer_equipment_id
           )
           VALUES (
             $1::uuid,
@@ -139,11 +142,12 @@ describeSettlementPdf("driver settlement pdf e2e — preview → commit → appr
             450000,
             $4::uuid,
             $5::uuid,
-            $6::uuid
+            $6::uuid,
+            $7::uuid
           )
           RETURNING id
         `,
-        [companyId, `L-PDF-${suffix}`, customerId, unitId, driverId, TEST_OWNER_USER_ID]
+        [companyId, `L-PDF-${suffix}`, customerId, unitId, driverId, TEST_OWNER_USER_ID, trailerEquipmentId]
       );
       loadId = String(loadInsert.rows[0]?.id ?? "");
       if (!loadId) throw new Error("load_insert_failed");

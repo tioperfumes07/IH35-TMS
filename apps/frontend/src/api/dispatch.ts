@@ -910,6 +910,7 @@ export type PlannerLoadEvent = {
   id: string;
   load_number: string;
   driver_id: string;
+  customer_id: string | null;
   customer_name: string | null;
   status: string;
   start_at: string;
