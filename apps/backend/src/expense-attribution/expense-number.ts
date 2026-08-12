@@ -2,7 +2,8 @@ import type { PoolClient } from "pg";
 
 export async function generateExpenseNumber(
   tx: Pick<PoolClient, "query">,
-  loadId: string
+  loadId: string,
+  operatingCompanyId: string
 ): Promise<{ number: string; seq: number; loadNumber: string }> {
   await tx.query(
     `
@@ -34,9 +35,10 @@ export async function generateExpenseNumber(
       SELECT load_number
       FROM mdata.loads
       WHERE id = $1
+        AND operating_company_id = $2::uuid
       LIMIT 1
     `,
-    [loadId]
+    [loadId, operatingCompanyId]
   );
 
   const loadNumber = String(loadRow.rows[0]?.load_number ?? "");

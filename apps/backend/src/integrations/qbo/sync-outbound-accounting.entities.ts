@@ -724,7 +724,7 @@ export async function buildAccountingOutboundPayload(
         `
           SELECT pa.amount_cents::int, inv.qbo_invoice_id
           FROM accounting.payment_applications pa
-          JOIN accounting.invoices inv ON inv.id = pa.invoice_id
+          JOIN accounting.invoices inv ON inv.id = pa.invoice_id AND inv.operating_company_id = pa.operating_company_id
           WHERE pa.payment_id = $1::uuid AND pa.operating_company_id = $2::uuid
         `,
         [entityId, oc]
