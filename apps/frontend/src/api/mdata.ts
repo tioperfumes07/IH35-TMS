@@ -512,7 +512,9 @@ export type CreateCustomerInput = {
   email?: string;
   phone?: string;
   billing_address?: string;
+  billing_city?: string;
   billing_state?: string;
+  billing_zip?: string;
   mc_number?: string;
   dot_number?: string;
   tax_id?: string;
@@ -605,7 +607,9 @@ export type UpdateCustomerInput = Partial<{
   email: string | null;
   phone: string | null;
   billing_address: string | null;
+  billing_city: string | null;
   billing_state: string | null;
+  billing_zip: string | null;
   mc_number: string | null;
   dot_number: string | null;
   tax_id: string | null;
