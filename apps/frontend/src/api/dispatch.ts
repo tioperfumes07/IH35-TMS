@@ -205,6 +205,7 @@ export type DispatchBookLoadPayload = {
   anticipated_chargeback_cents?: number;
   anticipated_chargeback_reason?: string;
   detention_expected_y_n?: boolean;
+  detention_reason_id?: string;
   detention_expected_hours?: number;
   detention_bill_customer_per_hour_cents?: number;
   detention_driver_pay_per_hour_cents?: number;

@@ -82,7 +82,7 @@ const FIELD_LABELS: Record<string, string> = {
   weight_lbs: "Weight",
   trailer_type: "Trailer type",
   reefer_setpoint: "Reefer setpoint",
-  detention_reason_code: "Detention reason",
+  detention_reason_id: "Detention reason",
 };
 
 type FormValues = BookLoadFormValues & {
@@ -128,8 +128,7 @@ type FormValues = BookLoadFormValues & {
   anticipated_chargeback_cents: number;
   anticipated_chargeback_reason: string;
   detention_expected_y_n: boolean;
-  /** catalogs.detention_reasons.code — picker wired LST-PICKER-01; load column persistence REMAINING. */
-  detention_reason_code: string;
+  detention_reason_id: string;
   detention_expected_hours: number;
   detention_bill_customer_per_hour_cents: number;
   detention_driver_pay_per_hour_cents: number;
@@ -332,7 +331,7 @@ export function BookLoadModalV4({
       anticipated_chargeback_cents: 0,
       anticipated_chargeback_reason: "",
       detention_expected_y_n: false,
-      detention_reason_code: "",
+      detention_reason_id: "",
       detention_expected_hours: 0,
       detention_bill_customer_per_hour_cents: 0,
       detention_driver_pay_per_hour_cents: 0,
@@ -766,6 +765,7 @@ export function BookLoadModalV4({
         anticipated_chargeback_cents: numOrUndef(values.anticipated_chargeback_cents),
         anticipated_chargeback_reason: values.anticipated_chargeback_reason || undefined,
         detention_expected_y_n: values.detention_expected_y_n,
+        detention_reason_id: values.detention_reason_id || undefined,
         detention_expected_hours: numOrUndef(values.detention_expected_hours),
         detention_bill_customer_per_hour_cents: numOrUndef(values.detention_bill_customer_per_hour_cents),
         detention_driver_pay_per_hour_cents: numOrUndef(values.detention_driver_pay_per_hour_cents),

@@ -97,6 +97,7 @@ export type BookLoadInput = {
   anticipated_chargeback_cents?: number;
   anticipated_chargeback_reason?: string;
   detention_expected_y_n?: boolean;
+  detention_reason_id?: string;
   detention_expected_hours?: number;
   detention_bill_customer_per_hour_cents?: number;
   detention_driver_pay_per_hour_cents?: number;
@@ -1501,13 +1502,13 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
           quicksave_pending_fields, presettlement_link_id, booked_by_user_id, updated_by_user_id,
           driver_instructions_text,
           anticipated_chargeback_cents, anticipated_chargeback_reason,
-          detention_expected_y_n, detention_expected_hours,
+          detention_expected_y_n, detention_reason_id, detention_expected_hours,
           detention_bill_customer_per_hour_cents, detention_driver_pay_per_hour_cents,
           late_delivery_risk_y_n, late_delivery_est_deduction_cents, late_delivery_reason,
           ocr_source_pdf_r2_key, miles_practical, miles_shortest, miles_deadhead,
           customer_wo_number, pickup_number, border_routing, is_sample_data, loaded_miles
         )
-        VALUES ($1,$2,$3,$4,$5,'USD',$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19::jsonb,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37,$38,$39,$40,$41)
+        VALUES ($1,$2,$3,$4,$5,'USD',$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19::jsonb,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37,$38,$39,$40,$41,$42)
         RETURNING *
       `,
       [
@@ -1537,6 +1538,7 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
         input.anticipated_chargeback_cents ?? null,
         input.anticipated_chargeback_reason ?? null,
         Boolean(input.detention_expected_y_n),
+        input.detention_reason_id ?? null,
         input.detention_expected_hours ?? null,
         input.detention_bill_customer_per_hour_cents ?? null,
         input.detention_driver_pay_per_hour_cents ?? null,
