@@ -65,7 +65,13 @@ const RENDERS_A_LIST = /<table|<tbody|ParityTable|DataTable/;
  * guard I wrote to prevent it. `<query>.error ?` / `.error &&` is therefore accepted as an error branch;
  * a bare `.error` mention (e.g. inside a message string) is not.
  */
-const HAS_ERROR_BRANCH = /isError|ListErrorState|ListErrorBanner|\.error\s*(?:\?|&&)/;
+// ★ WIDENED again (CLS-LIST-ERROR-STATE-UNGUARDED vertical drain) — Documents.tsx renders
+// `<DataTable errorState={dataTableErrorState(filesQuery.error, () => void filesQuery.refetch())} .../>`,
+// DataTable's own dedicated error-state prop (confirmed it actually renders a ListErrorState-shaped
+// block when set — apps/frontend/src/components/DataTable.tsx). That is a real, working error branch;
+// it was flagged only because it spells "error" as a function ARGUMENT, not as `.error ?` / `.error &&`.
+// Same false-positive shape as the DOTComplianceTab case above, so widened the same way.
+const HAS_ERROR_BRANCH = /isError|ListErrorState|ListErrorBanner|\.error\s*(?:\?|&&)|errorState=|dataTableErrorState\(/;
 
 function walkPages(dir, out = []) {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -139,6 +145,17 @@ const REQUIRED_ERROR_STATE = [
   // Safety driver scheduler — honest isError -> ListErrorState (INBOX-312).
   "apps/frontend/src/pages/safety/driver-scheduler/DriverSchedulerGridPage.tsx",
   "apps/frontend/src/pages/safety/driver-scheduler/DriverSchedulerRequestInboxPage.tsx",
+  // CLS-LIST-ERROR-STATE-UNGUARDED vertical drain (2026-08-12) — honest isError -> ListErrorState,
+  // the last 7 of the discovered baseline that use the ListErrorState component (CreateWorkOrderModal
+  // used a lighter inline-text pattern instead — still ratchet-covered, deliberately not added here
+  // since it does not import ListErrorState).
+  "apps/frontend/src/pages/compliance/Form2290Filings.tsx",
+  "apps/frontend/src/pages/customers/components/PortalUsersTab.tsx",
+  "apps/frontend/src/pages/factoring/SubmissionWorkqueue.tsx",
+  "apps/frontend/src/pages/reports/PerTruckCpmReport.tsx",
+  "apps/frontend/src/pages/reports/ifta/IFTAStepGallons.tsx",
+  "apps/frontend/src/pages/reports/ifta/IFTAStepMiles.tsx",
+  "apps/frontend/src/pages/reports/ifta/IFTAStepTax.tsx",
 ];
 
 function stripComments(src) {

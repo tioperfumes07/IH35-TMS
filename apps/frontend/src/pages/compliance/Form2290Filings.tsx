@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateUS } from "../../lib/formatDate";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { ListErrorState } from "../../components/ListErrorState";
 import { resolveApiUrl } from "../../api/client";
 
 type Filing = Record<string, unknown>;
@@ -170,15 +171,24 @@ export function Form2290Filings() {
         </button>
       </div>
 
-      <ParityTable<Filing>
-        columns={columns}
-        rows={filings}
-        rowKey={(filing) => String(filing.id)}
-        loading={filingsQ.isLoading}
-        emptyText="No filings yet."
-        storageKey="compliance-form-2290-filings"
-        exportFilename="form-2290-filings"
-      />
+      {filingsQ.isError ? (
+        <ListErrorState
+          title="Couldn't load Form 2290 filings"
+          status={0}
+          message={(filingsQ.error as Error)?.message}
+          onRetry={() => void filingsQ.refetch()}
+        />
+      ) : (
+        <ParityTable<Filing>
+          columns={columns}
+          rows={filings}
+          rowKey={(filing) => String(filing.id)}
+          loading={filingsQ.isLoading}
+          emptyText="No filings yet."
+          storageKey="compliance-form-2290-filings"
+          exportFilename="form-2290-filings"
+        />
+      )}
     </div>
   );
 }

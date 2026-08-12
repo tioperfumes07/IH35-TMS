@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getIftaPreparation, runIftaCalculateTax, type IftaPreparation } from "../../../api/ifta";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+import { ListErrorState } from "../../../components/ListErrorState";
 import { formatUsd } from "../../../lib/money";
 
 type Props = {
@@ -121,14 +122,23 @@ export function IFTAStepTax({ operatingCompanyId, preparationId, quarter, year }
         {prepQuery.data?.tax_calculated_at ? (
           <p className="text-slate-600">Last calculated: {new Date(prepQuery.data.tax_calculated_at).toLocaleString()}</p>
         ) : null}
-        <ParityTable
-          columns={columns}
-          rows={rows}
-          rowKey={(row) => row.state}
-          loading={prepQuery.isPending || (prepQuery.isFetching && rows.length === 0)}
-          emptyText="No tax rows yet — run Step 3 after Steps 1+2."
-          storageKey="ifta-step-tax"
-        />
+        {prepQuery.isError ? (
+          <ListErrorState
+            title="Couldn't load state tax"
+            status={0}
+            message={(prepQuery.error as Error)?.message}
+            onRetry={() => void prepQuery.refetch()}
+          />
+        ) : (
+          <ParityTable
+            columns={columns}
+            rows={rows}
+            rowKey={(row) => row.state}
+            loading={prepQuery.isPending || (prepQuery.isFetching && rows.length === 0)}
+            emptyText="No tax rows yet — run Step 3 after Steps 1+2."
+            storageKey="ifta-step-tax"
+          />
+        )}
         {rows.length > 0 ? (
           <p className="text-right font-semibold text-slate-700">
             Total net tax: {fmtMoney(totalOwed)}

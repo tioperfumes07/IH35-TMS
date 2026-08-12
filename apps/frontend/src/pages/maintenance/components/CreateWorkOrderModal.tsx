@@ -1074,6 +1074,18 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
                       form.setValue("external_vendor_id", opt.value, { shouldDirty: true });
                     }}
                   />
+                  {/* CLS-LIST-ERROR-STATE-UNGUARDED — vendorsQuery.data ?? [] silently falls back to an
+                      empty picker on a failed fetch, indistinguishable from "this company has no
+                      vendors". ReferenceSelect has no error prop, so a small inline note + retry is the
+                      minimal honest fix without widening that shared component's contract. */}
+                  {vendorsQuery.isError ? (
+                    <p className="mt-1 text-[10.5px] text-red-600">
+                      Couldn't load vendors.{" "}
+                      <button type="button" className="underline" onClick={() => void vendorsQuery.refetch()}>
+                        Retry
+                      </button>
+                    </p>
+                  ) : null}
                 </FieldV5>
                 <FieldV5 label="Vendor invoice #"><input {...form.register("vendor_invoice_number")} className={FLD} /></FieldV5>
                 <FieldV5 label="Authorization #"><input {...form.register("authorization_number")} className={FLD} /></FieldV5>

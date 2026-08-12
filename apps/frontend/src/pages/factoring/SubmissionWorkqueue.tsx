@@ -2,6 +2,7 @@ import { entityLabel } from "../../lib/entity-label";
 import { useQuery } from "@tanstack/react-query";
 import { listWorkqueue, type WorkqueueItem } from "../../api/factoring";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { ListErrorState } from "../../components/ListErrorState";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateUS } from "../../lib/formatDate";
 
@@ -44,16 +45,27 @@ export function SubmissionWorkqueue() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
 
-  const { data, isLoading } = useQuery({
+  const workqueueQuery = useQuery({
     queryKey: ["factoring", "workqueue", companyId],
     queryFn: () => listWorkqueue(companyId).then((r) => r.items),
     enabled: Boolean(companyId),
   });
 
-  const items: WorkqueueItem[] = data ?? [];
+  const items: WorkqueueItem[] = workqueueQuery.data ?? [];
 
-  if (isLoading) {
+  if (workqueueQuery.isLoading) {
     return <div className="py-8 text-center text-xs text-slate-500">Loading workqueue…</div>;
+  }
+
+  if (workqueueQuery.isError) {
+    return (
+      <ListErrorState
+        title="Couldn't load the factoring workqueue"
+        status={0}
+        message={(workqueueQuery.error as Error)?.message}
+        onRetry={() => void workqueueQuery.refetch()}
+      />
+    );
   }
 
   if (items.length === 0) {

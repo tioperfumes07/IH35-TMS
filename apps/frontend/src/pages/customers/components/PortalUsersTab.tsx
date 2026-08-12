@@ -3,6 +3,7 @@ import { useState } from "react";
 import { apiRequest } from "../../../api/client";
 import { Button } from "../../../components/Button";
 import { DataPanel } from "../../../components/layout/DataPanel";
+import { ListErrorState } from "../../../components/ListErrorState";
 import { Modal } from "../../../components/Modal";
 import { ParityTable } from "../../../components/parity/ParityTable";
 import { useToast } from "../../../components/Toast";
@@ -87,27 +88,36 @@ export function PortalUsersTab({ customerId, operatingCompanyId }: Props) {
       </div>
 
       <DataPanel title="Active portal accounts">
-        <ParityTable<PortalUserRow>
-          rows={usersQuery.data ?? []}
-          rowKey={(row) => row.id}
-          loading={usersQuery.isPending}
-          storageKey="customer-portal-users"
-          emptyText="No portal users yet."
-          exportFilename="customer-portal-users"
-          rowActions={(row) =>
-            !row.archived_at ? (
-              <Button variant="secondary" onClick={() => archiveMutation.mutate(row.id)} disabled={archiveMutation.isPending}>
-                Archive
-              </Button>
-            ) : null
-          }
-          columns={[
-            { key: "email", label: "Email", sortable: true, render: (row) => row.email },
-            { key: "full_name", label: "Name", sortable: true, render: (row) => row.full_name ?? "—" },
-            { key: "last_login_at", label: "Last login", sortable: true, render: (row) => (row.last_login_at ? new Date(row.last_login_at).toLocaleString() : "—") },
-            { key: "status", label: "Status", render: (row) => (row.archived_at ? "Archived" : row.active ? "Active" : "Inactive") },
-          ]}
-        />
+        {usersQuery.isError ? (
+          <ListErrorState
+            title="Couldn't load portal users"
+            status={0}
+            message={(usersQuery.error as Error)?.message}
+            onRetry={() => void usersQuery.refetch()}
+          />
+        ) : (
+          <ParityTable<PortalUserRow>
+            rows={usersQuery.data ?? []}
+            rowKey={(row) => row.id}
+            loading={usersQuery.isPending}
+            storageKey="customer-portal-users"
+            emptyText="No portal users yet."
+            exportFilename="customer-portal-users"
+            rowActions={(row) =>
+              !row.archived_at ? (
+                <Button variant="secondary" onClick={() => archiveMutation.mutate(row.id)} disabled={archiveMutation.isPending}>
+                  Archive
+                </Button>
+              ) : null
+            }
+            columns={[
+              { key: "email", label: "Email", sortable: true, render: (row) => row.email },
+              { key: "full_name", label: "Name", sortable: true, render: (row) => row.full_name ?? "—" },
+              { key: "last_login_at", label: "Last login", sortable: true, render: (row) => (row.last_login_at ? new Date(row.last_login_at).toLocaleString() : "—") },
+              { key: "status", label: "Status", render: (row) => (row.archived_at ? "Archived" : row.active ? "Active" : "Inactive") },
+            ]}
+          />
+        )}
       </DataPanel>
 
       <Modal variant="drawer" open={open} onClose={() => setOpen(false)} title="Create portal login">

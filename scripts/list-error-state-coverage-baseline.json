@@ -1,16 +1,4 @@
 {
-  "note": "Discovered list pages (useQuery + renders a table) with NO error branch. May only SHRINK. Dead @archived forms and LIST_ERROR_DISCOVERY_EXEMPT pages are excluded at scan time (scripts/dead-form-modules.mjs). Safety and Dispatch are DRAINED and locked at zero.",
-  "offenders": [
-    "apps/frontend/src/pages/Documents.tsx",
-    "apps/frontend/src/pages/compliance/Form2290Filings.tsx",
-    "apps/frontend/src/pages/customers/CustomersListView.tsx",
-    "apps/frontend/src/pages/customers/components/PortalUsersTab.tsx",
-    "apps/frontend/src/pages/factoring/SubmissionWorkqueue.tsx",
-    "apps/frontend/src/pages/maintenance/components/CreateWorkOrderModal.tsx",
-    "apps/frontend/src/pages/reports/PerTruckCpmReport.tsx",
-    "apps/frontend/src/pages/reports/ifta/IFTAStepGallons.tsx",
-    "apps/frontend/src/pages/reports/ifta/IFTAStepMiles.tsx",
-    "apps/frontend/src/pages/reports/ifta/IFTAStepTax.tsx",
-    "apps/frontend/src/pages/vendors/VendorsListView.tsx"
-  ]
+  "note": "Discovered list pages (useQuery + renders a table) with NO error branch. May only SHRINK. Dead @archived forms and LIST_ERROR_DISCOVERY_EXEMPT pages are excluded at scan time (scripts/dead-form-modules.mjs). Safety and Dispatch are DRAINED and locked at zero. CLS-LIST-ERROR-STATE-UNGUARDED drained to zero (2026-08-12) — the class is a real hard zero now, not just a shrinking ratchet.",
+  "offenders": []
 }

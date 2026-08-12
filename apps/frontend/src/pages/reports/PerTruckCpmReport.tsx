@@ -8,6 +8,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
+import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
 type PerTruckCpmRow = {
@@ -88,15 +89,24 @@ export function PerTruckCpmReport() {
         </label>
         <Button onClick={() => setApplied(period)}>Apply</Button>
       </div>
-      <ParityTable
-        rows={rows}
-        columns={columns}
-        rowKey={(row) => row.unit_uuid}
-        loading={query.isPending || (query.isFetching && rows.length === 0)}
-        storageKey="per-truck-cpm"
-        emptyText="No units with CPM data for this period."
-        rowClassName={(row) => (row.outlier ? "bg-rose-50 text-rose-900" : "")}
-      />
+      {query.isError ? (
+        <ListErrorState
+          title="Couldn't load per-truck CPM"
+          status={0}
+          message={(query.error as Error)?.message}
+          onRetry={() => void query.refetch()}
+        />
+      ) : (
+        <ParityTable
+          rows={rows}
+          columns={columns}
+          rowKey={(row) => row.unit_uuid}
+          loading={query.isPending || (query.isFetching && rows.length === 0)}
+          storageKey="per-truck-cpm"
+          emptyText="No units with CPM data for this period."
+          rowClassName={(row) => (row.outlier ? "bg-rose-50 text-rose-900" : "")}
+        />
+      )}
     </div>
   );
 }

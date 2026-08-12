@@ -35,9 +35,20 @@ export const DEAD_FORM_BASENAMES = new Set(DEAD_FORM_MODULE_SUFFIXES.map((m) => 
 /**
  * Live pages with alternate honest outage UX — not dead, but must not enter discovery baseline.
  * LegacyAuditScoreboardPage: placeholderData + explicit stale/fallback banners (PROG-PRFEED).
+ *
+ * CustomersListView.tsx / VendorsListView.tsx (CLS-LIST-ERROR-STATE-UNGUARDED vertical drain) —
+ * both are SUBCOMPONENTS rendered by a parent (Customers.tsx / Vendors.tsx respectively) that
+ * already early-returns a `<ListErrorState .../>` BEFORE rendering the subcomponent at all when
+ * its roster query errors (Vendors.tsx:286-292 is the AUTO-13 canonical fix; Customers.tsx:475-479
+ * mirrors it). The per-file static scan cannot see that call-graph relationship, so it flags the
+ * subcomponent as having no error branch even though the actual page always shows one. Verified
+ * by reading both parents before exempting — this is the guard's own documented
+ * detector-blind-to-a-moved-control failure mode, not a real gap.
  */
 export const LIST_ERROR_DISCOVERY_EXEMPT_EXTRA = [
   "apps/frontend/src/pages/program/LegacyAuditScoreboardPage.tsx",
+  "apps/frontend/src/pages/customers/CustomersListView.tsx",
+  "apps/frontend/src/pages/vendors/VendorsListView.tsx",
 ];
 
 export const LIST_ERROR_DISCOVERY_EXEMPT_PATHS = [
