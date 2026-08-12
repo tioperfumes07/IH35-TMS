@@ -44,6 +44,9 @@ const TARGETS = [
   "apps/frontend/src/pages/accounting/SubmitFactoringModal.tsx",
   // Factoring batch advance/reserve/release/recourse/void action shell.
   "apps/frontend/src/pages/accounting/FactoringDetailPage.tsx",
+  // P17 modules 11–28: Maintenance Fault Rules create/edit is an active +Create workflow and must
+  // use the same QBO-style drawer + sticky footer as the rest of Maintenance.
+  "apps/frontend/src/components/maintenance/FaultRuleModal.tsx",
 ];
 
 function runSelftest() {

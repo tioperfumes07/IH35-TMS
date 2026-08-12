@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Button } from "../Button";
-import { Modal } from "../Modal";
+import { ParityDrawer } from "../parity/ParityDrawer";
 
 export type FaultRuleFormValues = {
   id?: string;
@@ -40,7 +40,25 @@ export function FaultRuleModal({ initial, onClose, onSave, saving }: Props) {
   }, [initial]);
 
   return (
-    <Modal variant="drawer" open title={title} onClose={onClose}>
+    <ParityDrawer
+      open
+      title={title}
+      onClose={onClose}
+      footer={
+        <div className="flex justify-end gap-2">
+          <Button size="sm" variant="tertiary" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button
+            size="sm"
+            disabled={saving || !form.fault_code.trim()}
+            onClick={() => onSave({ ...form, id: initial?.id })}
+          >
+            Save
+          </Button>
+        </div>
+      }
+    >
       <div className="space-y-3 text-sm">
         <label className="block">
           <span className="text-gray-600">Fault code</span>
@@ -125,19 +143,7 @@ export function FaultRuleModal({ initial, onClose, onSave, saving }: Props) {
             }
           />
         </label>
-        <div className="flex justify-end gap-2">
-          <Button size="sm" variant="tertiary" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button
-            size="sm"
-            disabled={saving || !form.fault_code.trim()}
-            onClick={() => onSave({ ...form, id: initial?.id })}
-          >
-            Save
-          </Button>
-        </div>
       </div>
-    </Modal>
+    </ParityDrawer>
   );
 }
