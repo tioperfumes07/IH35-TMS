@@ -408,6 +408,14 @@
       "modules": ["dispatch"],
       "cols": ["driver", "unit", "connectivity", "reverse_link"],
       "leafRe": "^planning\\.(driver|truck)$"
+    },
+    {
+      "task": "CLS-DISPATCH-TRIP-PROFIT-DRIVER-LINK",
+      "pr": "this PR",
+      "guard": "scripts/verify-trip-profitability-driver-link.mjs",
+      "modules": ["dispatch"],
+      "cols": ["driver", "load", "connectivity", "reverse_link"],
+      "leafRe": "^misc\\.trip_profit$"
     }
   ]
 }

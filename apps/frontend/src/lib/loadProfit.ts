@@ -34,6 +34,7 @@ export type LoadProfitabilitySnapshot = {
 export type TripProfitabilityRow = {
   settlement_id: string;
   settlement_display_id: string | null;
+  driver_id: string | null;
   driver_name: string | null;
   nb_load_id: string | null;
   nb_load_number: string | null;
