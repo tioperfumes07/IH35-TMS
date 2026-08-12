@@ -355,19 +355,27 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
       <div className="grid gap-2 md:grid-cols-4" data-testid="factoring-home-kpi-row">
         <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm">
           <div className="text-xs uppercase tracking-wide text-gray-500">Active Factor</div>
-          <div className="mt-1 font-semibold text-gray-900">{summary?.active_factor_name ?? "Not configured"}</div>
+          <div className="mt-1 font-semibold text-gray-900">
+            {summaryQuery.isError ? "—" : (summary?.active_factor_name ?? "Not configured")}
+          </div>
         </div>
         <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm">
           <div className="text-xs uppercase tracking-wide text-gray-500">Reserve Balance</div>
-          <div className="mt-1 font-semibold text-gray-900">{fmtCurrency(summary?.reserve_balance)}</div>
+          <div className="mt-1 font-semibold text-gray-900">
+            {summaryQuery.isError ? "—" : fmtCurrency(summary?.reserve_balance)}
+          </div>
         </div>
         <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm">
           <div className="text-xs uppercase tracking-wide text-gray-500">Chargeback Balance</div>
-          <div className="mt-1 font-semibold text-gray-900">{fmtCurrency(summary?.chargeback_balance)}</div>
+          <div className="mt-1 font-semibold text-gray-900">
+            {summaryQuery.isError ? "—" : fmtCurrency(summary?.chargeback_balance)}
+          </div>
         </div>
         <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm">
           <div className="text-xs uppercase tracking-wide text-gray-500">Recourse Days</div>
-          <div className="mt-1 font-semibold text-gray-900">{Number(summary?.recourse_days ?? 95)}</div>
+          <div className="mt-1 font-semibold text-gray-900">
+            {summaryQuery.isError ? "—" : Number(summary?.recourse_days ?? 95)}
+          </div>
         </div>
       </div>
       {activeFactor ? (

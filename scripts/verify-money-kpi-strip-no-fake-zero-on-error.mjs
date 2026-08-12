@@ -22,14 +22,20 @@
 // FIX: all four totals surfaces now branch on the same isError flag that already drives their list's
 // ListErrorBanner. On error every value shows "—" instead of a fabricated zero.
 //
-// This guard is a static source assertion — no DB needed — checking all four files render an
-// error-aware branch instead of computing straight through to money(...)/count on every tile.
+// CLS-MONEY-KPI-FAKE-ZERO-REMAINDER-FACTORING-MAINT (Cursor #this): FactoringHome summary KPI row
+// still called fmtCurrency(summary?.…) while ListErrorBanner already knew summaryQuery failed —
+// fabricated $0.00 / default recourse days. MaintenanceHome substituted a full zero KPI object on
+// missing data so Open WOs rendered 0 next to a loaded WO table (Cascade LV-MAINTENANCE-KPI).
+// Extended here rather than a new verify-step number (Rule 17 / no hotfile thrash).
 import fs from "node:fs";
 
 const BILLS_PAGE = "apps/frontend/src/pages/accounting/BillsPage.tsx";
 const SETTLEMENTS_PAGE = "apps/frontend/src/pages/driver-finance/SettlementsPage.tsx";
 const INVOICES_PAGE = "apps/frontend/src/pages/accounting/InvoicesListPage.tsx";
 const EXPENSES_PAGE = "apps/frontend/src/pages/accounting/ExpensesListPage.tsx";
+const FACTORING_HOME = "apps/frontend/src/pages/factoring/FactoringHome.tsx";
+const MAINT_HOME = "apps/frontend/src/pages/maintenance/MaintenanceHome.tsx";
+const MAINT_KPI_ROWS = "apps/frontend/src/pages/maintenance/components/MaintKpiRows.tsx";
 
 function fail(msg) {
   console.error(`FAIL verify-money-kpi-strip-no-fake-zero-on-error: ${msg}`);
@@ -90,6 +96,36 @@ function checkExpensesPage(src) {
   }
   if (!/Total:\s*\{query\.isError/.test(src)) {
     fail(`${EXPENSES_PAGE}: "Total" no longer branches directly on query.isError — will show $0.00 on a failed fetch, not an error state.`);
+  }
+}
+
+function checkFactoringHome(src) {
+  if (!src.includes('data-testid="factoring-home-kpi-row"')) {
+    fail(`${FACTORING_HOME}: factoring-home-kpi-row not found — did the summary KPI strip move?`);
+    return;
+  }
+  const start = src.indexOf('data-testid="factoring-home-kpi-row"');
+  const block = src.slice(start, start + 1600);
+  if (!block.includes("summaryQuery.isError")) {
+    fail(`${FACTORING_HOME}: KPI row does not branch on summaryQuery.isError — reserve/chargeback tiles will show fabricated currency on a failed fetch.`);
+  }
+  if (!/summaryQuery\.isError\s*\?\s*"—"\s*:\s*fmtCurrency\(summary\?\.reserve_balance\)/.test(block)) {
+    fail(`${FACTORING_HOME}: Reserve Balance tile missing summaryQuery.isError ? "—" : fmtCurrency(...) branch.`);
+  }
+}
+
+function checkMaintenanceHome(src, rowsSrc) {
+  if (/kpisQuery\.data\s*\?\?\s*\{[\s\S]{0,400}open_wos:\s*0/.test(src)) {
+    fail(`${MAINT_HOME}: still uses kpisQuery.data ?? { open_wos: 0, … } — reintroduces fake zeros on missing/error data.`);
+  }
+  if (!src.includes("kpisQuery.isError")) {
+    fail(`${MAINT_HOME}: must branch on kpisQuery.isError when building the KPI object.`);
+  }
+  if (!src.includes("isError={kpisQuery.isError}")) {
+    fail(`${MAINT_HOME}: MaintKpiRows must be passed isError={kpisQuery.isError}.`);
+  }
+  if (!rowsSrc.includes("isError ? null : pick(kpis.open_wos)")) {
+    fail(`${MAINT_KPI_ROWS}: Open WOs tile must null out when isError.`);
   }
 }
 
@@ -209,6 +245,66 @@ function selftest() {
     probesProven++;
   }
 
+  // Mutation 5: FactoringHome KPI row loses summaryQuery.isError branches.
+  {
+    const original = fs.readFileSync(FACTORING_HOME, "utf8");
+    const mutated = original
+      .replace(/summaryQuery\.isError \? "—" : \(summary\?\.active_factor_name \?\? "Not configured"\)/g, 'summary?.active_factor_name ?? "Not configured"')
+      .replace(/summaryQuery\.isError \? "—" : fmtCurrency\(summary\?\.reserve_balance\)/g, "fmtCurrency(summary?.reserve_balance)")
+      .replace(/summaryQuery\.isError \? "—" : fmtCurrency\(summary\?\.chargeback_balance\)/g, "fmtCurrency(summary?.chargeback_balance)")
+      .replace(/summaryQuery\.isError \? "—" : Number\(summary\?\.recourse_days \?\? 95\)/g, "Number(summary?.recourse_days ?? 95)");
+    if (mutated === original) {
+      console.error("SELFTEST SETUP FAILED: FactoringHome summaryQuery.isError patterns not found.");
+      process.exitCode = 1;
+      return;
+    }
+    fs.writeFileSync(FACTORING_HOME, mutated);
+    let caught = false;
+    try {
+      checkFactoringHome(mutated);
+      caught = process.exitCode === 1;
+    } finally {
+      process.exitCode = undefined;
+      fs.writeFileSync(FACTORING_HOME, original);
+    }
+    if (!caught) {
+      console.error("SELFTEST INERT: dropping FactoringHome summaryQuery.isError was not caught.");
+      process.exitCode = 1;
+      return;
+    }
+    probesProven++;
+  }
+
+  // Mutation 6: MaintenanceHome reverts to zero-object fallback.
+  {
+    const original = fs.readFileSync(MAINT_HOME, "utf8");
+    const originalRows = fs.readFileSync(MAINT_KPI_ROWS, "utf8");
+    const mutated = original.replace(
+      /kpisQuery\.isError \? \(\{\} as NonNullable<typeof kpisQuery\.data>\) : \(kpisQuery\.data \?\? \(\{\} as NonNullable<typeof kpisQuery\.data>\)\)/,
+      `kpisQuery.data ?? { open_wos: 0, in_shop: 0, past_due_pm: 0, out_of_service: 0, open_damage: 0, avg_wo_age_days: 0, mtd_repair_cost: 0, mtd_parts_cost: 0, avg_wo_cost: 0, top_vendor: null, top_failure: null, pending_qbo: 0, past_due: 0, avg_close_days: 0, open_dollars: 0, tire_alerts: 0, pm_due: 0, dot_oos: 0, in_progress: 0, waiting_parts: 0, severe_oos: 0, road_service: 0, parts_low_stock: 0 }`
+    );
+    if (mutated === original) {
+      console.error("SELFTEST SETUP FAILED: MaintenanceHome isError KPI branch not found to mutate.");
+      process.exitCode = 1;
+      return;
+    }
+    fs.writeFileSync(MAINT_HOME, mutated);
+    let caught = false;
+    try {
+      checkMaintenanceHome(mutated, originalRows);
+      caught = process.exitCode === 1;
+    } finally {
+      process.exitCode = undefined;
+      fs.writeFileSync(MAINT_HOME, original);
+    }
+    if (!caught) {
+      console.error("SELFTEST INERT: restoring MaintenanceHome zero-object fallback was not caught.");
+      process.exitCode = 1;
+      return;
+    }
+    probesProven++;
+  }
+
   console.log(`PASS verify-money-kpi-strip-no-fake-zero-on-error --selftest (mutation probes proven non-inert: ${probesProven})`);
 }
 
@@ -219,6 +315,8 @@ if (process.argv.includes("--selftest")) {
   checkSettlementsPage(fs.readFileSync(SETTLEMENTS_PAGE, "utf8"));
   checkInvoicesPage(fs.readFileSync(INVOICES_PAGE, "utf8"));
   checkExpensesPage(fs.readFileSync(EXPENSES_PAGE, "utf8"));
+  checkFactoringHome(fs.readFileSync(FACTORING_HOME, "utf8"));
+  checkMaintenanceHome(fs.readFileSync(MAINT_HOME, "utf8"), fs.readFileSync(MAINT_KPI_ROWS, "utf8"));
   if (process.exitCode !== 1) {
     console.log("PASS verify-money-kpi-strip-no-fake-zero-on-error");
   }
