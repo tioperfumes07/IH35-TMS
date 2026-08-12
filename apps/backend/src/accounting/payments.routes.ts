@@ -150,9 +150,38 @@ async function fetchPaymentDetail(
     [paymentId]
   );
 
+  // WAVE-C-gl_je-payments-receive: forward payment -> GL JE, the same read-only pattern
+  // invoices.routes.ts:fetchInvoiceDetail already uses (journal_entry_postings joined to
+  // journal_entries by source_transaction_type/source_transaction_id). Reuses the existing
+  // customer_payment posting the poster already writes (posting-engine.service.ts) — no new
+  // GL math, no new table, no posting triggered by this read.
+  const journalEntriesRes = await client.query(
+    `
+      SELECT DISTINCT ON (je.id)
+        je.id::text AS journal_entry_id,
+        je.entry_date::text AS entry_date,
+        je.status,
+        je.source,
+        je.memo,
+        jep.source_transaction_type,
+        jep.source_transaction_id,
+        jep.posting_batch_id::text AS posting_batch_id
+      FROM accounting.journal_entry_postings jep
+      JOIN accounting.journal_entries je
+        ON je.id = jep.journal_entry_uuid
+       AND je.operating_company_id = jep.operating_company_id
+      WHERE jep.operating_company_id = $2::uuid
+        AND jep.source_transaction_type = 'customer_payment'
+        AND jep.source_transaction_id = $1::text
+      ORDER BY je.id, je.entry_date DESC, jep.line_sequence ASC
+    `,
+    [paymentId, operatingCompanyId]
+  );
+
   return {
     ...payment,
     applications: applicationsRes.rows,
+    journal_entries: journalEntriesRes.rows,
   };
 }
 

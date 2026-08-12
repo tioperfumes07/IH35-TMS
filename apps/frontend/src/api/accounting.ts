@@ -196,6 +196,17 @@ export type Payment = {
   matched_bank_transaction_date?: string | null;
   matched_bank_transaction_description?: string | null;
   matched_bank_transaction_amount_cents?: number | string | null;
+  /** WAVE-C-gl_je-payments-receive: forward payment -> GL JE (customer_payment source rows). */
+  journal_entries?: Array<{
+    journal_entry_id: string;
+    entry_date: string | null;
+    status: string | null;
+    source: string | null;
+    memo: string | null;
+    source_transaction_type: string | null;
+    source_transaction_id: string | null;
+    posting_batch_id: string | null;
+  }>;
 };
 
 export type PaymentApplication = {
