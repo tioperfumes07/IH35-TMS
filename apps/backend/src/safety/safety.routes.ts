@@ -61,6 +61,7 @@ const accidentCostLineSchema = z.object({
 });
 const createAccidentBodySchema = z.object({
   operating_company_id: z.string().uuid(),
+  accident_type_id: z.string().uuid(),
   driver_id: nullableUuid,
   unit_id: nullableUuid,
   vendor_id: nullableUuid,
@@ -84,6 +85,7 @@ const createAccidentBodySchema = z.object({
   cost_lines: z.array(accidentCostLineSchema).optional().default([]),
 });
 const patchAccidentBodySchema = z.object({
+  accident_type_id: z.string().uuid().optional(),
   driver_id: nullableUuid,
   unit_id: nullableUuid,
   vendor_id: nullableUuid,
@@ -527,7 +529,7 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
   // SC1 office creator: create an accident report from the computer (safety officer / office).
   // Additive to the driver-PWA / WO-conversion origination paths — those remain intact. Persists the
   // four catalog links (driver_id / unit_id / vendor_id / load_id) captured by the office wizard.
-  app.post("/api/v1/safety/accidents", async (req, reply) => {
+  app.post("/api/v1/safety/accidents", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!isSafetyMutationAllowed(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -540,6 +542,7 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
         `
           INSERT INTO safety.accident_reports (
             operating_company_id,
+            accident_type_id,
             driver_id,
             unit_id,
             vendor_id,
@@ -557,27 +560,17 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
             bill_or_expense_ref
           )
           VALUES (
-            $1,
-            $2,
+            $1,$2,$3,
             $3,
             $4,
             $5,
-            COALESCE($6::timestamptz, now()),
-            $7,
-            $8,
-            $9,
-            $10,
-            $11,
-            $12,
-            $13,
-            $14,
-            $15,
-            $16
+            COALESCE($7::timestamptz, now()),$8,$9,$10,$11,$12,$13,$14,$15,$16,$17
           )
           RETURNING *
         `,
         [
           companyId,
+          body.data.accident_type_id,
           body.data.driver_id ?? null,
           body.data.unit_id ?? null,
           body.data.vendor_id ?? null,
@@ -673,7 +666,7 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
   });
 
   // SC1: patch an existing accident report's linked entities / core fields (company-scoped).
-  app.patch("/api/v1/safety/accidents/:id", async (req, reply) => {
+  app.patch("/api/v1/safety/accidents/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!isSafetyMutationAllowed(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -704,6 +697,7 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
       { key: "vendor_invoice_number", column: "vendor_invoice_number" },
       { key: "bill_or_expense_ref", column: "bill_or_expense_ref" },
       { key: "record_type", column: "record_type" },
+      { key: "accident_type_id", column: "accident_type_id" },
       { key: "service_type", column: "service_type" },
       { key: "report_date", column: "report_date", cast: "::date" },
       { key: "tax_rate_pct", column: "tax_rate_pct" },

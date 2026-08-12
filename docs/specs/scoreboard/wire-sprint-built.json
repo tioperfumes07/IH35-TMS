@@ -106,6 +106,38 @@
       "leafRe": "^(lists\\.|dispatch\\.|loads\\.)"
     },
     {
+      "task": "P44-accident-types",
+      "pr": "#5947",
+      "guard": "scripts/verify-lst-picker-config-driven.mjs",
+      "modules": ["lists", "safety"],
+      "cols": ["connectivity", "picker", "load"],
+      "leafRe": "^(lists\\.|safety\\.|accidents\\.)"
+    },
+    {
+      "task": "P44-complaint-types",
+      "pr": "#5949",
+      "guard": "scripts/verify-lst-picker-config-driven.mjs",
+      "modules": ["lists", "safety"],
+      "cols": ["connectivity", "picker", "load"],
+      "leafRe": "^(lists\\.|safety\\.|complaints\\.)"
+    },
+    {
+      "task": "P44-cargo-claim-reasons",
+      "pr": "#5951",
+      "guard": "scripts/verify-lst-picker-config-driven.mjs",
+      "modules": ["lists", "safety", "insurance"],
+      "cols": ["connectivity", "picker", "load"],
+      "leafRe": "^(lists\\.|safety\\.|insurance\\.|cargo_claims\\.)"
+    },
+    {
+      "task": "P43-customers",
+      "pr": "#5953",
+      "guard": "scripts/verify-lst-picker-config-driven.mjs",
+      "modules": ["customers", "dispatch", "accounting"],
+      "cols": ["connectivity", "picker", "load", "invoice"],
+      "leafRe": "^(customers\\.|loads\\.|invoices\\.)"
+    },
+    {
       "task": "P29",
       "pr": "#5821",
       "guard": "scripts/verify-steps/3073-verify-failed-posting-batch-is-retriable.mjs",

@@ -40,7 +40,7 @@ const complaintSchema = z.object({
   respondent_type: z.enum(["driver", "employee"]),
   respondent_driver_id: z.string().uuid().optional(),
   respondent_user_id: z.string().uuid().optional(),
-  complaint_type: z.string().trim().min(1),
+  complaint_type_id: z.string().uuid(),
   summary: z.string().trim().min(1),
   evidence_doc_ids: z.array(z.string().uuid()).optional(),
   severity: z.enum(["low", "medium", "high", "critical"]),
@@ -221,11 +221,12 @@ export async function registerSafetyComplaintsRoutes(app: FastifyInstance) {
             complaint_type_id
           )
           VALUES (
-            $1, COALESCE($2::timestamptz, now()), $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, COALESCE($16, 'open'), $17, $18,
+            $1, COALESCE($2::timestamptz, now()), $3, $4, $5, $6, $7, $8, $9, $10, $11,
+            (SELECT ct.type_code FROM catalogs.complaint_types ct WHERE ct.id = $12::uuid AND ct.operating_company_id = $1::uuid),
+            $13, $14, $15, COALESCE($16, 'open'), $17, $18,
             COALESCE($2::timestamptz, now())::date,
             COALESCE($10::uuid, $11::uuid),
-            (SELECT ct.id FROM catalogs.complaint_types ct
-              WHERE ct.operating_company_id = $1::uuid AND ct.type_code = $12 LIMIT 1)
+            $12::uuid
           )
           RETURNING *
         `,
@@ -241,7 +242,7 @@ export async function registerSafetyComplaintsRoutes(app: FastifyInstance) {
           body.data.respondent_type,
           body.data.respondent_driver_id ?? null,
           body.data.respondent_user_id ?? null,
-          body.data.complaint_type,
+          body.data.complaint_type_id,
           body.data.summary,
           body.data.evidence_doc_ids ?? null,
           body.data.severity,

@@ -25,6 +25,7 @@ import { useToast } from "../Toast";
 import { companyToday } from "../../lib/businessDate";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { DatePicker } from "../forms/DatePicker";
+import { apiRequest } from "../../api/client";
 
 type Props = {
   open: boolean;
@@ -97,6 +98,7 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
     const v = str(accident?.record_type);
     return v === "damage" || v === "vandalism" ? v : "accident";
   });
+  const [accidentTypeId, setAccidentTypeId] = useState(() => str(accident?.accident_type_id));
   const [serviceType, setServiceType] = useState<"repair" | "replacement" | "tow">(() => {
     const v = str(accident?.service_type);
     return v === "replacement" || v === "tow" ? v : "repair";
@@ -143,6 +145,11 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
     queryFn: () => listVendors({ operating_company_id: operatingCompanyId, limit: 200, search: vendorSearch || undefined }),
     enabled: scopeReady,
   });
+  const accidentTypesQuery = useQuery({
+    queryKey: ["accident-types", operatingCompanyId],
+    queryFn: () => apiRequest<{ rows: Array<{ id: string; code: string; display_name: string }> }>(`/api/v1/catalogs/safety/accident-types?operating_company_id=${encodeURIComponent(operatingCompanyId)}&is_active=true&limit=200`),
+    enabled: scopeReady,
+  });
 
   const vendorOptions: ReferenceOption[] = useMemo(
     () => (vendorsQuery.data?.vendors ?? []).map((row) => ({ value: String(row.id), label: entityLabel(row.name, String(row.id), "Vendor") })),
@@ -159,6 +166,7 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
   }, 0);
 
   const linkPayload = {
+    accident_type_id: accidentTypeId,
     driver_id: driverId || null,
     unit_id: unitId || null,
     vendor_id: vendorId || null,
@@ -227,14 +235,18 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
           <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-700">Accident Damage Details</div>
           <div className="grid grid-cols-2 gap-x-3 gap-y-2">
             <Field label="Record Type *">
-              <Combobox
-                options={[
-                  { value: "accident", label: "Accident" },
-                  { value: "damage", label: "Damage" },
-                  { value: "vandalism", label: "Vandalism" },
-                ]}
-                value={recordType}
-                onChange={(next) => setRecordType((next as "accident" | "damage" | "vandalism") || "accident")}
+              <ReferenceSelect
+                value={accidentTypeId || null}
+                onChange={(next) => {
+                  setAccidentTypeId(next ?? "");
+                  const row = accidentTypesQuery.data?.rows.find((item) => item.id === next);
+                  if (row && ["ACCIDENT", "DAMAGE", "VANDALISM"].includes(row.code)) setRecordType(row.code.toLowerCase() as typeof recordType);
+                }}
+                options={(accidentTypesQuery.data?.rows ?? []).map((row) => ({ value: row.id, label: row.display_name, type: row.code }))}
+                createKind="accident_type"
+                operatingCompanyId={operatingCompanyId}
+                loading={accidentTypesQuery.isLoading}
+                onOptionCreated={() => void accidentTypesQuery.refetch()}
               />
             </Field>
             <Field label="Service Type">

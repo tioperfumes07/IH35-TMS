@@ -236,6 +236,7 @@ export function getSafetyAccidentDetail(id: string, companyId: string) {
 export type AccidentFault = "yes" | "no" | "disputed";
 export type CreateAccidentInput = {
   operating_company_id: string;
+  accident_type_id: string;
   driver_id?: string | null;
   unit_id?: string | null;
   vendor_id?: string | null;
@@ -264,6 +265,7 @@ export function createSafetyAccident(body: CreateAccidentInput) {
 }
 
 export type PatchAccidentInput = {
+  accident_type_id?: string;
   driver_id?: string | null;
   unit_id?: string | null;
   vendor_id?: string | null;
@@ -1102,6 +1104,7 @@ export function createSafetyIncident(body: {
   damage_amount_cents?: number;
   // SC4 — Carmack/49 CFR 1005.2 cargo-claim fields (cargo_claim rows only).
   claim_reason_code?: string | null;
+  claim_reason_id?: string | null;
   claimant_customer_id?: string | null;
   claim_filed_at?: string | null;
 }) {

@@ -30,10 +30,11 @@ function assertPage(rel, src) {
   if (/respondent_uuid|complaint_type_uuid/.test(src)) {
     problems.push(`${rel}: still uses respondent_uuid/complaint_type_uuid — the endpoint takes respondent_driver_id/complaint_type`);
   }
-  if (!/complaint_type:\s*form\.complaint_type/.test(src) && !/complaint_type:\s*form\.complaint_type,/.test(src)) {
-    if (!/complaint_type:\s*form\.complaint_type/.test(src)) {
-      problems.push(`${rel}: payload must send complaint_type (REQUIRED by the zod schema)`);
-    }
+  const typePayload = rel === LIVE
+    ? /complaint_type_id:\s*form\.complaint_type_id/.test(src)
+    : /complaint_type:\s*form\.complaint_type/.test(src);
+  if (!typePayload) {
+    problems.push(`${rel}: payload must send the canonical complaint type field required by the route`);
   }
   if (!/complainant_driver_id/.test(src) || !/complainant_user_id/.test(src) || !/complainant_customer_id/.test(src)) {
     problems.push(`${rel}: complainant identity must cover driver/employee/customer, not just external`);
@@ -104,6 +105,10 @@ if (SELFTEST) {
     [
       "archived complaint_type dropped",
       { ...files, [ARCHIVED]: files[ARCHIVED].replace(/complaint_type:\s*form\.complaint_type,/, "") },
+    ],
+    [
+      "live complaint_type_id dropped",
+      { ...files, [LIVE]: files[LIVE].replace(/complaint_type_id:\s*form\.complaint_type_id,/, "") },
     ],
   ];
   for (const [name, planted] of checks) {

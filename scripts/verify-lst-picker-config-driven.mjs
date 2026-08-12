@@ -64,6 +64,17 @@ const FILES = {
   lumperProviderMigration: "db/migrations/202612502300_p44_load_stop_lumper_provider_canonical_fk.sql",
   trailerEquipmentPicker: "apps/frontend/src/pages/dispatch/components/BookLoadEquipmentSection.tsx",
   trailerEquipmentMigration: "db/migrations/202612511200_p44_load_trailer_equipment_canonical_fk.sql",
+  accidentDrawer: "apps/frontend/src/components/safety/AccidentReportDrawer.tsx",
+  accidentTypeMigration: "db/migrations/202612511400_p44_accident_report_type_canonical_fk.sql",
+  complaintsTab: "apps/frontend/src/pages/safety/tabs/ComplaintsTab.tsx",
+  complaintsRoute: "apps/backend/src/routes/safety/complaints.ts",
+  complaintTypeMigration: "db/migrations/202612511600_p44_complaint_type_same_opco_fk.sql",
+  cargoClaimSurface: "apps/frontend/src/pages/safety/components/CargoClaimIntakeSurface.tsx",
+  incidentsRoute: "apps/backend/src/safety/incidents.routes.ts",
+  cargoClaimReasonMigration: "db/migrations/202612511800_p44_cargo_claim_reason_same_opco_fk.sql",
+  bookLoadCustomer: "apps/frontend/src/pages/dispatch/components/BookLoadCustomerSection.tsx",
+  invoiceCustomer: "apps/frontend/src/pages/accounting/modals/InvoiceTypeModalBase.tsx",
+  customerConsumerMigration: "db/migrations/202612512000_p43_load_invoice_customer_same_opco_fks.sql",
 };
 
 const MISSING = "MISSING";
@@ -229,6 +240,17 @@ export function contractErrors(src) {
   if (!/load_trailer_equipment_id:\s*str\(load\.load_trailer_equipment_id\)/.test(src.editMapping)) {
     errors.push("P44-FK: trailer equipment requirement must survive detail reload into Edit Book Load");
   }
+  if (!/createKind="accident_type"/.test(src.accidentDrawer) || !/accident_type_id:\s*accidentTypeId/.test(src.accidentDrawer)) errors.push("P44-FK: accident creator must select and submit canonical accident type UUID");
+  if (!/accident_reports_type_same_company_fk/.test(src.accidentTypeMigration) || !/ALTER COLUMN accident_type_id SET NOT NULL/.test(src.accidentTypeMigration)) errors.push("P44-FK: accident reports must enforce NOT NULL same-opco type FK");
+  if (!/createKind="complaint_type"/.test(src.complaintsTab) || !/complaint_type_id:\s*form\.complaint_type_id/.test(src.complaintsTab)) errors.push("P44-FK: complaint creator must select and submit canonical complaint type UUID");
+  if (!/complaint_type_id:\s*z\.string\(\)\.uuid/.test(src.complaintsRoute) || !/\$12::uuid/.test(src.complaintsRoute)) errors.push("P44-FK: complaint create route must validate and persist complaint_type_id UUID");
+  if (!/complaints_complaint_type_same_company_fk/.test(src.complaintTypeMigration) || !/FOREIGN KEY \(complaint_type_id, operating_company_id\)/.test(src.complaintTypeMigration)) errors.push("P44-FK: complaints must enforce a NOT NULL same-opco type FK");
+  if (!/createKind="cargo_claim_reason"/.test(src.cargoClaimSurface) || !/claim_reason_id:\s*form\.claimReasonId/.test(src.cargoClaimSurface)) errors.push("P44-FK: cargo claim creator must select and submit canonical reason UUID");
+  if (!/claim_reason_id:\s*z\.string\(\)\.uuid/.test(src.incidentsRoute) || !/claim_reason_id,/.test(src.incidentsRoute)) errors.push("P44-FK: incident create route must validate and persist claim_reason_id UUID");
+  if (!/incidents_claim_reason_same_company_fk/.test(src.cargoClaimReasonMigration) || !/incidents_cargo_claim_reason_required/.test(src.cargoClaimReasonMigration)) errors.push("P44-FK: cargo claims must enforce a required same-opco reason FK");
+  if (!/createKind="customer"/.test(src.bookLoadCustomer) || !/customer_id/.test(src.bookLoadCustomer)) errors.push("P43-FK: Book Load must select canonical customer UUID with inline create");
+  if (!/createKind="customer"/.test(src.invoiceCustomer) || !/customer_id/.test(src.invoiceCustomer)) errors.push("P43-FK: invoice create must select canonical customer UUID with inline create");
+  if (!/loads_customer_same_company_fk/.test(src.customerConsumerMigration) || !/invoices_customer_same_company_fk/.test(src.customerConsumerMigration)) errors.push("P43-FK: loads and invoices must enforce same-opco customer FKs");
 
   // ── CONFIG-DRIVEN: the pinned defect ────────────────────────────────────────────────────────
   if (/INLINE_KINDS/.test(select)) {

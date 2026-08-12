@@ -53,7 +53,7 @@ const emptyForm = {
   incidentDate: todayISODate(),
   loadId: "",
   claimantCustomerId: "",
-  claimReasonCode: "",
+  claimReasonId: "",
   amountCents: null as number | null,
   amountUndetermined: false,
   claimFiledAt: "",
@@ -73,7 +73,7 @@ function detailToEditForm(detail: Record<string, unknown>): EditForm {
     incidentDate: incidentAt || todayISODate(),
     loadId: detail.load_id ? String(detail.load_id) : "",
     claimantCustomerId: detail.claimant_customer_id ? String(detail.claimant_customer_id) : "",
-    claimReasonCode: detail.claim_reason_code ? String(detail.claim_reason_code) : "",
+    claimReasonId: detail.claim_reason_id ? String(detail.claim_reason_id) : "",
     amountCents: cents > 0 ? cents : null,
     amountUndetermined: cents === 0,
     claimFiledAt: detail.claim_filed_at ? String(detail.claim_filed_at).slice(0, 10) : "",
@@ -172,7 +172,7 @@ export function CargoClaimIntakeSurface({
   const reasonOptions = useMemo(
     () =>
       reasons.map((r) => ({
-        value: String(r.reason_code),
+        value: String(r.id),
         label: String(r.display_name),
         type: String(r.reason_code),
       })),
@@ -282,6 +282,10 @@ export function CargoClaimIntakeSurface({
       setEditError("Description is required.");
       return;
     }
+    if (!editForm.claimReasonId) {
+      setEditError("Claim reason is required.");
+      return;
+    }
     setEditSaving(true);
     setEditError(null);
     try {
@@ -293,7 +297,7 @@ export function CargoClaimIntakeSurface({
         description: editForm.description.trim(),
         load_id: editForm.loadId || null,
         claimant_customer_id: editForm.claimantCustomerId || null,
-        claim_reason_code: editForm.claimReasonCode || null,
+        claim_reason_id: editForm.claimReasonId,
         claim_filed_at: editForm.claimFiledAt || null,
         damage_amount_cents: cents,
         driver_id: editForm.driverId || null,
@@ -330,6 +334,10 @@ export function CargoClaimIntakeSurface({
       setError("Description is required.");
       return;
     }
+    if (!form.claimReasonId) {
+      setError("Claim reason is required.");
+      return;
+    }
     const cents = form.amountCents;
     if (!form.amountUndetermined && (cents === null || cents <= 0)) {
       setError('Enter a claimed amount, or check "Amount undetermined" (49 CFR 1005.2 allows a determinable amount).');
@@ -354,7 +362,7 @@ export function CargoClaimIntakeSurface({
         description: form.description,
         load_id: form.loadId || null,
         claimant_customer_id: form.claimantCustomerId || null,
-        claim_reason_code: form.claimReasonCode || null,
+        claim_reason_id: form.claimReasonId,
         claim_filed_at: form.claimFiledAt || null,
         damage_amount_cents: form.amountUndetermined ? 0 : cents ?? 0, // dollars→cents via MoneyInput
         driver_id: form.driverId || null,
@@ -471,12 +479,11 @@ export function CargoClaimIntakeSurface({
                   Options keyed by reason_code (createdValueField=code).
                 */}
                 <ReferenceSelect
-                  value={form.claimReasonCode || null}
-                  onChange={(v) => set({ claimReasonCode: v ?? "" })}
+                  value={form.claimReasonId || null}
+                  onChange={(v) => set({ claimReasonId: v ?? "" })}
                   options={reasonOptions}
                   createKind="cargo_claim_reason"
                   operatingCompanyId={operatingCompanyId}
-                  createdValueField="code"
                   placeholder={reasonsQuery.isLoading ? "Loading reasons…" : "Select reason"}
                   loading={reasonsQuery.isLoading}
                   disabled={!operatingCompanyId || reasonsQuery.isLoading}
@@ -706,12 +713,11 @@ export function CargoClaimIntakeSurface({
                 <span className={labelSpan}>Claim reason</span>
                 <div className="mt-1">
                   <ReferenceSelect
-                    value={editForm.claimReasonCode || null}
-                    onChange={(v) => setEdit({ claimReasonCode: v ?? "" })}
+                    value={editForm.claimReasonId || null}
+                    onChange={(v) => setEdit({ claimReasonId: v ?? "" })}
                     options={reasonOptions}
                     createKind="cargo_claim_reason"
                     operatingCompanyId={operatingCompanyId}
-                    createdValueField="code"
                     placeholder="Select reason"
                     loading={reasonsQuery.isLoading}
                     disabled={!operatingCompanyId || reasonsQuery.isLoading}
