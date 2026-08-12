@@ -833,7 +833,9 @@ export function BookLoadModalV4({
             | undefined,
         load_trailer_equipment_id: values.load_trailer_equipment_id,
         assigned_unit_id: values.assigned_unit_id || undefined,
-        assigned_trailer_unit_id: values.assigned_trailer_unit_id || undefined, // W-FIX-3b → mdata.loads.trailer_id
+        // The service persists this through dispatch.load_assignment_history.new_trailer_id after
+        // creating the load; mdata.loads intentionally has no trailer FK column.
+        assigned_trailer_unit_id: values.assigned_trailer_unit_id || undefined,
         team_id: values.assignment_mode === "team" ? values.team_id || undefined : undefined,
         assigned_primary_driver_id: values.assignment_mode === "solo" ? values.assigned_primary_driver_id || undefined : undefined,
         assigned_secondary_driver_id: values.assignment_mode === "solo" ? values.assigned_secondary_driver_id || undefined : undefined,
