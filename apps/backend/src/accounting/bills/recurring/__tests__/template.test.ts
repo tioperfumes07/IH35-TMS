@@ -1,10 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-// Mock auth module
-vi.mock("../../../../auth/db.js", () => ({
-  withCurrentUser: vi.fn(async (_userId, fn) => fn({ query: mockQuery })),
-  withLuciaBypass: vi.fn(async (fn) => fn({ query: mockQuery })),
-}));
+// Mock auth module — partial so luciaPool stays real for auth/lucia adapter import chain.
+vi.mock("../../../../auth/db.js", async (orig) => {
+  const actual = (await orig()) as Record<string, unknown>;
+  return {
+    ...actual,
+    withCurrentUser: vi.fn(async (_userId, fn) => fn({ query: mockQuery })),
+    withLuciaBypass: vi.fn(async (fn) => fn({ query: mockQuery })),
+  };
+});
 
 const mockQuery = vi.fn();
 

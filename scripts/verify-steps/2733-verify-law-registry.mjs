@@ -30,6 +30,12 @@ export default {
     await ctx.run("node", ["scripts/verify-vertical-method-law-present.mjs", "--selftest"]);
     await ctx.run("node", ["scripts/verify-vertical-method-law-present.mjs"]);
 
+    await ctx.run("node", ["scripts/verify-vertical-wiring-law-present.mjs", "--selftest"]);
+    await ctx.run("node", ["scripts/verify-vertical-wiring-law-present.mjs"]);
+
+    // Codex #6108 — verify-trip-profitability-driver-link was orphan (guard-wired).
+    await ctx.run("node", ["scripts/verify-trip-profitability-driver-link.mjs"]);
+
     // LAW-2026-08-07-LANE-TERRITORY — stop the lanes colliding, enforced rather than written.
     // Measured over 60 PRs: lanes do NOT collide on domain code (dispatch/mdata/frontend are CC-2
     // only; accounting/driver-finance/migrations/.github are CC-1 only). They collide on shared entry

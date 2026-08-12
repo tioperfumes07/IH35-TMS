@@ -45,7 +45,7 @@ describe("UnifiedTimelinePlanner (Phase 1)", () => {
         { id: "d3", name: "Free Agent", unit_number: "T-103", unit_id: "unit-103", hos_status: "ok", blackouts: [] },
       ],
       loads: [
-        { id: "load-500", load_number: "L-500", driver_id: "d1", customer_name: "ACME", status: "dispatched", start_at: "2026-06-23T08:00:00Z", end_at: "2026-06-24T08:00:00Z", pickup_city: "Laredo", pickup_state: "TX" },
+        { id: "load-500", load_number: "L-500", driver_id: "d1", customer_id: "c-acme", customer_name: "ACME", status: "dispatched", start_at: "2026-06-23T08:00:00Z", end_at: "2026-06-24T08:00:00Z", pickup_city: "Laredo", pickup_state: "TX" },
       ],
     });
     vi.spyOn(driverSchedulerApi.driverSchedulerOfficeApi, "getGrid").mockResolvedValue({

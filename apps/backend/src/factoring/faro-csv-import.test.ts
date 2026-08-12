@@ -66,9 +66,10 @@ vi.mock("../accounting/factoring-posting/poster.service.js", async (importOrigin
   };
 });
 
-vi.mock("../auth/db.js", () => ({
-  withCurrentUser: withCurrentUserMock,
-}));
+vi.mock("../auth/db.js", async (orig) => {
+  const actual = (await orig()) as Record<string, unknown>;
+  return { ...actual, withCurrentUser: withCurrentUserMock };
+});
 
 function installTxnClient(opts?: { throwAfterUpsert?: Error }) {
   withCurrentUserMock.mockImplementation(

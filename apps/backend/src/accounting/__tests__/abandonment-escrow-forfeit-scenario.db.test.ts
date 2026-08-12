@@ -76,8 +76,8 @@ run("stage-3 · load abandonment → escrow forfeit (real engine)", () => {
       await db.query(`INSERT INTO mdata.units (id,owner_company_id,unit_number,vin,is_sample_data) VALUES ($1::uuid,$2::uuid,$3,$4,true)`, [id.unit, companyId, `TRK${s}`, `1ABANDON${s}TEST01`]);
       await db.query(`INSERT INTO mdata.drivers (id,operating_company_id,first_name,last_name,phone,status) VALUES ($1::uuid,$2::uuid,'Walkoff','Driver',$3,'Active')`, [id.driver, companyId, `95607${s.slice(0,5)}`]);
       await db.query(
-        `INSERT INTO mdata.loads (id,operating_company_id,load_number,customer_id,dispatcher_user_id,status,assigned_primary_driver_id,assigned_unit_id,rate_total_cents)
-         VALUES ($1::uuid,$2::uuid,$3,$4::uuid,$5::uuid,'dispatched',$6::uuid,$7::uuid,$8)`,
+        `INSERT INTO mdata.loads (id,operating_company_id,load_number,customer_id,dispatcher_user_id,status,assigned_primary_driver_id,assigned_unit_id,rate_total_cents,load_trailer_equipment_id)
+         VALUES ($1::uuid,$2::uuid,$3,$4::uuid,$5::uuid,'dispatched',$6::uuid,$7::uuid,$8,(SELECT id FROM catalogs.load_trailer_equipment WHERE operating_company_id = $2::uuid AND code = 'DRY_VAN' LIMIT 1))`,
         [id.load, companyId, `LOAD-ABD-${s}`, id.customer, userId, id.driver, id.unit, LOAD_RATE_CENTS]
       );
     });

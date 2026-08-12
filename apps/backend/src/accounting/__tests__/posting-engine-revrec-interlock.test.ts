@@ -27,7 +27,10 @@ const { mockQuery, mockWithCurrentUser, mockResolveRoleAccountOptional, mockReso
   }
 );
 
-vi.mock("../../auth/db.js", () => ({ withCurrentUser: mockWithCurrentUser }));
+vi.mock("../../auth/db.js", async (orig) => {
+  const actual = (await orig()) as Record<string, unknown>;
+  return { ...actual, withCurrentUser: mockWithCurrentUser };
+});
 vi.mock("../coa-roles/resolver.service.js", () => ({ resolveRoleAccountOptional: mockResolveRoleAccountOptional }));
 vi.mock("../expense-category-map/resolver.service.js", () => ({
   resolveAccountForCategory: mockResolveAccountForCategory,

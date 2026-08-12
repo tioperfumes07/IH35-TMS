@@ -68,7 +68,7 @@ run("cross-module scenario battery (real engine)", () => {
       await db.query(`INSERT INTO mdata.customers (id,operating_company_id,customer_name) VALUES ($1::uuid,$2::uuid,'Tio Perfumes')`,[id.customer,companyId]);
       await db.query(`INSERT INTO mdata.units (id,owner_company_id,unit_number,vin, is_sample_data) VALUES ($1::uuid,$2::uuid,$3,$4, true)`,[id.unit,companyId,`TRK${s}`,`1BAT${s}TERY000001`]);
       await db.query(`INSERT INTO mdata.drivers (id,operating_company_id,first_name,last_name,phone) VALUES ($1::uuid,$2::uuid,'Battery','Driver',$3)`,[id.driver,companyId,`95605${s.slice(0,5)}`]);
-      await db.query(`INSERT INTO mdata.loads (id,operating_company_id,load_number,customer_id,dispatcher_user_id,status,assigned_primary_driver_id,assigned_unit_id) VALUES ($1::uuid,$2::uuid,$3,$4::uuid,$5::uuid,'in_transit',$6::uuid,$7::uuid)`,[id.load,companyId,`LOAD-${s}`,id.customer,userId,id.driver,id.unit]);
+      await db.query(`INSERT INTO mdata.loads (id,operating_company_id,load_number,customer_id,dispatcher_user_id,status,assigned_primary_driver_id,assigned_unit_id,load_trailer_equipment_id) VALUES ($1::uuid,$2::uuid,$3,$4::uuid,$5::uuid,'in_transit',$6::uuid,$7::uuid,(SELECT id FROM catalogs.load_trailer_equipment WHERE operating_company_id = $2::uuid AND code = 'DRY_VAN' LIMIT 1))`,[id.load,companyId,`LOAD-${s}`,id.customer,userId,id.driver,id.unit]);
       await db.query(`INSERT INTO mdata.load_stops (id,load_id,sequence_number,stop_type) VALUES ($1::uuid,$2::uuid,2,'delivery')`,[id.stop,id.load]);
       // insurance policy for cargo claim
       await db.query(`INSERT INTO insurance.type_catalog (id,tenant_id,code,name) VALUES ($1::uuid,$2::uuid,$3,'Cargo')`,[id.covType,companyId,`CG-${s}`]);

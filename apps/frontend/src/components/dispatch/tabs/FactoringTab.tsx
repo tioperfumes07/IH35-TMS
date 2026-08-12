@@ -530,7 +530,7 @@ export function FactoringTab({ loadId, operatingCompanyId, canEdit, onPacketUpda
 
       {showAddFactorModal ? (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-3">
-          <div className="w-full max-w-md rounded-sm border border-gray-200 bg-white p-4 shadow-xl">
+          <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-sm border border-gray-200 bg-white p-4 shadow-xl">
             <div className="mb-3 text-sm font-semibold text-gray-900">Add Factor</div>
             <div className="space-y-2 text-xs">
               <label className="block">

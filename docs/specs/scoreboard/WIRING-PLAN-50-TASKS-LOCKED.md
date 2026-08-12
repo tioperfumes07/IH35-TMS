@@ -1,6 +1,7 @@
 # WIRING PLAN — 50 TASKS LOCKED · USMCA · 2026-08-11
 
 **Authority:** This file wins over chat, archived bus docs, `complete:true`, scenario dots, and stale INBOX paste files.  
+**Vertical law (2026-08-12):** `docs/lockdown/VERTICAL-WIRING-LAW-2026-08-12.md` — P-rows are **column/class examples**, not permission to finish one module horizontally. P20–P17 = column sweeps on modules 11–28.  
 **Entity:** USMCA only `5c854333-6ea5-4faa-af31-67cb272fef80`  
 **Countdown:** **NN OF 50** = tasks remaining including this one until wire sprint complete. When task ships, bump STATUS + OUTBOX with new countdown.  
 **Built:** FK write-path merged + canonical picker + guard both ways + smoke row FK **NOT NULL**.  

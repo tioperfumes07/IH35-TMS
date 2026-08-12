@@ -131,6 +131,7 @@ export function ModuleMatrixSystemView() {
       </h2>
 
       <div className="scroll scroll-system">
+        <div className="overflow-x-auto">
         <table className="system-table">
           <thead>
             <tr>
@@ -241,6 +242,7 @@ export function ModuleMatrixSystemView() {
             </tfoot>
           ) : null}
         </table>
+        </div>
       </div>
     </>
   );

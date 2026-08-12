@@ -149,8 +149,8 @@ describeIntegration("CHAIN-06 invoice→A/R kill switch (real Postgres, route le
       );
       // P-INVOICE P0: linehaul requires source_load_id (fail-closed).
       await db.query(
-        `INSERT INTO mdata.loads (id, operating_company_id, load_number, customer_id, status, rate_total_cents, dispatcher_user_id)
-         VALUES ($1::uuid,$2::uuid,$3,$4::uuid,'delivered',$5,$6::uuid)`,
+        `INSERT INTO mdata.loads (id, operating_company_id, load_number, customer_id, status, rate_total_cents, dispatcher_user_id, load_trailer_equipment_id)
+         VALUES ($1::uuid,$2::uuid,$3,$4::uuid,'delivered',$5,$6::uuid,(SELECT id FROM catalogs.load_trailer_equipment WHERE operating_company_id = $2::uuid AND code = 'DRY_VAN' LIMIT 1))`,
         [loadId, companyId, `L-${suffix}`, customerId, revenueCents, userId]
       );
       await db.query(

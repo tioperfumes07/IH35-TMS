@@ -490,7 +490,7 @@ function GroupRollupTable({ rollups, liveOk }: { rollups: GroupRollup[]; liveOk:
         Column groups{" "}
         <span className="sub">same denominator per group · mutually exclusive tiers</span>
       </h2>
-      <div className="scroll scroll-groups">
+      <div className="scroll scroll-groups overflow-x-auto">
         <table className="group-table" data-testid="module-matrix-group-rollups">
           <thead>
             <tr>
@@ -786,6 +786,7 @@ export function ModuleMatrixPreviewPage() {
       </div>
 
       <div className="scroll">
+        <div className="overflow-x-auto">
         <table>
           <thead>
             <tr>
@@ -866,6 +867,7 @@ export function ModuleMatrixPreviewPage() {
             </tr>
           </tfoot>
         </table>
+        </div>
       </div>
 
       <div className="note">
@@ -967,7 +969,7 @@ const CSS = `
 .ih35mm .tri4{display:inline-grid;grid-template-columns:repeat(4,14px);gap:2px}
 .ih35mm .cell4{display:inline-grid;grid-template-columns:repeat(4,16px);gap:2px;justify-content:center}
 .ih35mm .cell4 .bx{width:16px;height:16px;font-size:10px}
-.ih35mm .bx.live-y{background:#dbeafe;color:#1d4ed8;border-color:#93c5fd}
+.ih35mm .bx.live-y{background:#e2e8f0;color:#1F2A44;border-color:#94a3b8}
 .ih35mm .scroll-system{overflow-x:auto;max-width:100%}
 .ih35mm .system-table{min-width:1200px}
 .ih35mm .system-table .sticky-col{position:sticky;left:0;background:var(--card);z-index:1;min-width:140px}
