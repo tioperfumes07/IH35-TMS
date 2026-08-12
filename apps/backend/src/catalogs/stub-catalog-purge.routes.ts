@@ -125,7 +125,7 @@ function buildListQuery(spec: StubCatalogSpec, operatingCompanyId?: string): { s
     if (!operatingCompanyId) {
       throw new Error("operating_company_id_required");
     }
-    filters.push("operating_company_id = $1");
+    filters.push("operating_company_id = $1::uuid");
   }
   const where = filters.length > 0 ? `WHERE ${filters.join(" AND ")}` : "";
   const sql = `

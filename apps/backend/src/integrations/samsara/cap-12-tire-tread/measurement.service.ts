@@ -106,7 +106,7 @@ export async function getLatestForUnit(
         odometer_miles,
         created_at::text
       FROM maintenance.tire_tread_measurements
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
         AND unit_uuid = $2
       ORDER BY tire_position, measured_at DESC
     `,
@@ -120,7 +120,7 @@ export async function listMeasurements(
   operatingCompanyId: string,
   filters: { unit_uuid?: string; position?: string; limit?: number }
 ): Promise<TreadMeasurement[]> {
-  const clauses = ["operating_company_id = $1"];
+  const clauses = ["operating_company_id = $1::uuid"];
   const values: unknown[] = [operatingCompanyId];
   if (filters.unit_uuid) {
     values.push(filters.unit_uuid);

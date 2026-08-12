@@ -64,7 +64,7 @@ export async function registerQboForensicAdminRoutes(app: FastifyInstance) {
           SELECT *
           FROM qbo_archive.import_batches
           WHERE id = $1
-            AND ($2::uuid IS NULL OR operating_company_id = $2)
+            AND ($2::uuid IS NULL OR operating_company_id = $2::uuid)
           LIMIT 1
         `,
         [params.data.batchId, query.data.operating_company_id ?? null]
@@ -75,7 +75,7 @@ export async function registerQboForensicAdminRoutes(app: FastifyInstance) {
     return row;
   }
 
-  app.post("/api/v1/admin/qbo-forensic/start-import", async (req, reply) => {
+  app.post("/api/v1/admin/qbo-forensic/start-import", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (user.role !== "Owner") return reply.code(403).send({ error: "forbidden" });
@@ -89,7 +89,7 @@ export async function registerQboForensicAdminRoutes(app: FastifyInstance) {
         `
           SELECT id
           FROM qbo_archive.import_batches
-          WHERE operating_company_id = $1
+          WHERE operating_company_id = $1::uuid
             AND status = 'in_progress'
             AND last_heartbeat_at > now() - interval '15 minutes'
           ORDER BY started_at DESC
@@ -102,7 +102,7 @@ export async function registerQboForensicAdminRoutes(app: FastifyInstance) {
         `
           SELECT id
           FROM qbo_archive.import_batches
-          WHERE operating_company_id = $1
+          WHERE operating_company_id = $1::uuid
             AND status = 'in_progress'
             AND (last_heartbeat_at IS NULL OR last_heartbeat_at <= now() - interval '15 minutes')
         `,
@@ -206,7 +206,7 @@ export async function registerQboForensicAdminRoutes(app: FastifyInstance) {
     return getBatchById(req, reply, req.params, req.query);
   });
 
-  app.get("/api/v1/admin/qbo-forensic/batches", async (req, reply) => {
+  app.get("/api/v1/admin/qbo-forensic/batches", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (user.role !== "Owner") return reply.code(403).send({ error: "forbidden" });
@@ -220,7 +220,7 @@ export async function registerQboForensicAdminRoutes(app: FastifyInstance) {
         `
           SELECT *
           FROM qbo_archive.import_batches
-          WHERE ($1::uuid IS NULL OR operating_company_id = $1)
+          WHERE ($1::uuid IS NULL OR operating_company_id = $1::uuid)
           ORDER BY started_at DESC
           LIMIT 200
         `,

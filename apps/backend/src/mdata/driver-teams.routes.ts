@@ -84,7 +84,7 @@ async function driverBelongsToCompany(
         -- The driver ROW must belong to the company too, not merely their user account (same defect as
         -- MDATA-F02 in driver-team.service.ts): a driver in company Y whose user has access to X would
         -- otherwise pass this gate and be teamed into X.
-        AND d.operating_company_id = $2
+        AND d.operating_company_id = $2::uuid
         AND uca.deactivated_at IS NULL
       LIMIT 1
     `,
@@ -140,7 +140,7 @@ export async function registerDriverTeamRoutes(app: FastifyInstance) {
       if (!scopedCompanyId) return [];
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [scopedCompanyId]);
       values.push(scopedCompanyId);
-      filters.push(`t.operating_company_id = $${values.length}`);
+      filters.push(`t.operating_company_id = $${values.length}::uuid`);
       const whereClause = filters.length > 0 ? `WHERE ${filters.join(" AND ")}` : "";
       const res = await client.query(
         `
@@ -216,7 +216,7 @@ export async function registerDriverTeamRoutes(app: FastifyInstance) {
           JOIN mdata.drivers sd ON sd.id = t.secondary_driver_id
                                AND sd.operating_company_id = t.operating_company_id
           WHERE t.id = $1
-            AND t.operating_company_id = $2
+            AND t.operating_company_id = $2::uuid
           LIMIT 1
         `,
         [parsedParams.data.id, scopedCompanyId]
@@ -342,7 +342,7 @@ export async function registerDriverTeamRoutes(app: FastifyInstance) {
       if (!scopedCompanyId) return null;
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [scopedCompanyId]);
       const oldRes = await client.query(
-        `SELECT * FROM mdata.driver_teams WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+        `SELECT * FROM mdata.driver_teams WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
         [parsedParams.data.id, scopedCompanyId]
       );
       const oldRow = oldRes.rows[0] ?? null;
@@ -354,7 +354,7 @@ export async function registerDriverTeamRoutes(app: FastifyInstance) {
           UPDATE mdata.driver_teams
           SET ${setParts.join(", ")}
           WHERE id = $${idIdx}
-            AND operating_company_id = $${companyIdx}
+            AND operating_company_id = $${companyIdx}::uuid
           RETURNING *
         `,
         values
@@ -403,7 +403,7 @@ export async function registerDriverTeamRoutes(app: FastifyInstance) {
           SET is_active = false,
               effective_to = COALESCE(effective_to, CURRENT_DATE)
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
           RETURNING *
         `,
         [parsedParams.data.id, scopedCompanyId]
@@ -447,7 +447,7 @@ export async function registerDriverTeamRoutes(app: FastifyInstance) {
         if (!scopedCompanyId) return { error: "mdata_driver_team_not_found" as const };
         await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [scopedCompanyId]);
         const teamRes = await client.query(
-          `SELECT * FROM mdata.driver_teams WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+          `SELECT * FROM mdata.driver_teams WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
           [parsedParams.data.id, scopedCompanyId]
         );
         const team = teamRes.rows[0] ?? null;

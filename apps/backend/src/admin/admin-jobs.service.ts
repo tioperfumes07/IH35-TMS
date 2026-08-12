@@ -472,7 +472,7 @@ async function runOperation(job: AdminJobRecord): Promise<Record<string, unknown
         `
           UPDATE mdata.vendors
           SET deactivated_at = NOW(), updated_at = NOW()
-          WHERE operating_company_id = $1
+          WHERE operating_company_id = $1::uuid
             AND vendor_name ~* '^TEST[-_ ]'
             AND deactivated_at IS NULL
           RETURNING id, vendor_name

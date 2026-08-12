@@ -104,7 +104,7 @@ async function loadCategoryRules(operatingCompanyId: string) {
           created_at::text,
           updated_at::text
         FROM banking.transaction_categories
-        WHERE operating_company_id = $1
+        WHERE operating_company_id = $1::uuid
           AND is_active = true
         ORDER BY priority ASC, created_at ASC
       `,
@@ -388,7 +388,7 @@ export async function exchangePublicToken(publicToken: string, operatingCompanyI
           SELECT id
           FROM banking.bank_accounts
           WHERE plaid_account_id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
           LIMIT 1
         `,
         [account.account_id, operatingCompanyId]

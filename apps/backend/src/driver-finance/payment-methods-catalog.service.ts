@@ -45,7 +45,7 @@ function baseCode(name: string): string {
 async function deriveUniqueCode(client: QueryableClient, operatingCompanyId: string, name: string): Promise<string> {
   const base = baseCode(name);
   const { rows } = await client.query<{ code: string }>(
-    `SELECT code FROM catalogs.payment_methods WHERE operating_company_id = $1 AND (code = $2 OR code LIKE $3)`,
+    `SELECT code FROM catalogs.payment_methods WHERE operating_company_id = $1::uuid AND (code = $2 OR code LIKE $3)`,
     [operatingCompanyId, base, `${base}\\_%`]
   );
   const taken = new Set(rows.map((r) => r.code));
@@ -68,8 +68,8 @@ export async function listPaymentMethods(
   return withCurrentUser(userId, async (client) => {
     await setScope(client, operatingCompanyId);
     const where = opts.includeInactive
-      ? `operating_company_id = $1`
-      : `operating_company_id = $1 AND is_active AND voided_at IS NULL`;
+      ? `operating_company_id = $1::uuid`
+      : `operating_company_id = $1::uuid AND is_active AND voided_at IS NULL`;
     const { rows } = await client.query<PaymentMethod>(
       `SELECT ${SELECT_COLS} FROM catalogs.payment_methods WHERE ${where} ORDER BY sort_order ASC, lower(display_name) ASC`,
       [operatingCompanyId]
@@ -124,7 +124,7 @@ export async function updatePaymentMethod(
               sort_order     = COALESCE($5, sort_order),
               is_active      = COALESCE($6, is_active),
               updated_by_user_id = $7
-        WHERE id = $1 AND operating_company_id = $2 AND voided_at IS NULL
+        WHERE id = $1 AND operating_company_id = $2::uuid AND voided_at IS NULL
         RETURNING ${SELECT_COLS}`,
       [id, operatingCompanyId, patch.name?.trim() ?? null, patch.gl_account_id ?? null, patch.sort_order ?? null, patch.is_active ?? null, userId]
     );
@@ -155,7 +155,7 @@ export async function voidPaymentMethod(
     const { rows } = await client.query<PaymentMethod>(
       `UPDATE catalogs.payment_methods
           SET is_active = false, voided_at = now(), voided_by_user_id = $4, void_reason = $5, updated_by_user_id = $4
-        WHERE id = $1 AND operating_company_id = $2 AND voided_at IS NULL
+        WHERE id = $1 AND operating_company_id = $2::uuid AND voided_at IS NULL
         RETURNING ${SELECT_COLS}`,
       [id, operatingCompanyId, null, userId, reason]
     );

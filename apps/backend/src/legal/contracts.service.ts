@@ -156,7 +156,7 @@ export async function listContractInstances(
   args: { operatingCompanyId: string; status?: string; search?: string }
 ) {
   const values: unknown[] = [args.operatingCompanyId];
-  const where: string[] = ["ci.operating_company_id = $1"];
+  const where: string[] = ["ci.operating_company_id = $1::uuid"];
   if (args.status) {
     values.push(args.status);
     where.push(`ci.status = $${values.length}::legal.contract_instance_status`);
@@ -223,7 +223,7 @@ export async function createContractInstance(
         t.content_html_en,
         t.content_html_es
       FROM legal.contract_templates t
-      WHERE t.operating_company_id = $1
+      WHERE t.operating_company_id = $1::uuid
         ${templateSelectorById}
         ${templateSelectorByCode}
         AND t.status = 'active'
@@ -316,7 +316,7 @@ export async function sendContractSigningLink(
     `
       SELECT *
       FROM legal.contract_instances
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
         AND id = $2
       LIMIT 1
     `,
@@ -406,7 +406,7 @@ export async function sendContractSigningLink(
       SET status = $3::legal.contract_instance_status,
           sent_at = COALESCE(sent_at, now()),
           updated_by_user_id = $4
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
         AND id = $2
     `,
     [args.operatingCompanyId, args.contractInstanceId, status, args.actorUserId]
@@ -489,7 +489,7 @@ export async function getPublicSigningDetails(
             SET status = 'viewed',
                 viewed_at = COALESCE(viewed_at, now())
             WHERE id = $1
-              AND operating_company_id = $2
+              AND operating_company_id = $2::uuid
           `,
           [token.contract_instance_id, token.operating_company_id]
         );
@@ -548,7 +548,7 @@ export async function startPublicSigningVerification(
         SET verification_code_hash = $3,
             verification_code_expires_at = now() + interval '10 minutes'
         WHERE id = $1
-          AND operating_company_id = $2
+          AND operating_company_id = $2::uuid
       `,
       [token.id, token.operating_company_id, codeHash]
     );
@@ -612,7 +612,7 @@ export async function confirmPublicSigningVerification(
             verification_code_expires_at = NULL,
             verified_at = now()
         WHERE id = $1
-          AND operating_company_id = $2
+          AND operating_company_id = $2::uuid
       `,
       [token.id, token.operating_company_id]
     );
@@ -778,7 +778,7 @@ export async function completePublicSigning(
             signed_pdf_attachment_id = $3,
             updated_by_user_id = created_by_user_id
         WHERE id = $1
-          AND operating_company_id = $2
+          AND operating_company_id = $2::uuid
       `,
       [token.contract_instance_id, token.operating_company_id, signedAttachmentId]
     );
@@ -789,7 +789,7 @@ export async function completePublicSigning(
             consumed_ip = $3,
             consumed_user_agent = $4
         WHERE id = $1
-          AND operating_company_id = $2
+          AND operating_company_id = $2::uuid
       `,
       [token.id, token.operating_company_id, auditMeta.ipAddress ?? null, auditMeta.userAgent ?? null]
     );
@@ -855,7 +855,7 @@ export async function getContractInstanceDetail(
       FROM legal.contract_instances ci
       LEFT JOIN legal.contract_templates ct
         ON ct.id = ci.template_id
-      WHERE ci.operating_company_id = $1
+      WHERE ci.operating_company_id = $1::uuid
         AND ci.id = $2
       LIMIT 1
     `,
@@ -867,7 +867,7 @@ export async function getContractInstanceDetail(
     `
       SELECT id, signed_by_name, typed_signature, signer_language, signer_ip, signed_at
       FROM legal.signatures
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
         AND contract_instance_id = $2
       ORDER BY signed_at DESC
     `,
@@ -877,7 +877,7 @@ export async function getContractInstanceDetail(
     `
       SELECT id, event_type, event_payload, actor_user_id, actor_name, ip_address, user_agent, created_at
       FROM legal.contract_audit_log
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
         AND contract_instance_id = $2
       ORDER BY id DESC
       LIMIT 300
@@ -910,7 +910,7 @@ export async function getContractInstanceForRender(
       JOIN legal.contract_templates ct
         ON ct.id = ci.template_id
        AND ct.operating_company_id = ci.operating_company_id
-      WHERE ci.operating_company_id = $1
+      WHERE ci.operating_company_id = $1::uuid
         AND ci.id = $2
       LIMIT 1
     `,

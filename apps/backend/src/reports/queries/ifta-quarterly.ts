@@ -29,7 +29,7 @@ export async function iftaQuarterlyQuery(context: QueryContext): Promise<ReportD
           count(*)::int AS stop_events
         FROM mdata.load_stops ls
         JOIN mdata.loads l ON l.id = ls.load_id
-        WHERE l.operating_company_id = $1
+        WHERE l.operating_company_id = $1::uuid
           AND l.soft_deleted_at IS NULL
           AND l.created_at >= $2::date
           AND l.created_at < $3::date

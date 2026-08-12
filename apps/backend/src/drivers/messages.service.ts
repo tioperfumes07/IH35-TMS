@@ -73,7 +73,7 @@ export async function listDriverMessageThread(
   const res = await client.query(
     `
       ${MESSAGE_SELECT}
-      WHERE m.operating_company_id = $1
+      WHERE m.operating_company_id = $1::uuid
         AND m.driver_id = $2
       ORDER BY m.created_at ASC
     `,
@@ -109,7 +109,7 @@ export async function listOfficeInbox(
         SELECT message, created_at, channel
         FROM mdata.driver_profile_messages m
         WHERE m.driver_id = d.id
-          AND m.operating_company_id = $1
+          AND m.operating_company_id = $1::uuid
         ORDER BY m.created_at DESC
         LIMIT 1
       ) lm ON true
@@ -117,12 +117,12 @@ export async function listOfficeInbox(
         SELECT count(*)::int AS unread_count
         FROM mdata.driver_profile_messages m
         WHERE m.driver_id = d.id
-          AND m.operating_company_id = $1
+          AND m.operating_company_id = $1::uuid
           AND m.read_at IS NULL
           AND m.created_by IS NOT NULL
           AND m.created_by = d.identity_user_id
       ) uc ON true
-      WHERE d.operating_company_id = $1
+      WHERE d.operating_company_id = $1::uuid
         AND d.deactivated_at IS NULL
       ORDER BY lm.created_at DESC
     `,
@@ -145,7 +145,7 @@ export async function listUnreadMessages(
   const res = await client.query(
     `
       ${MESSAGE_SELECT}
-      WHERE m.operating_company_id = $1
+      WHERE m.operating_company_id = $1::uuid
         AND m.read_at IS NULL
         AND m.created_by IS NOT NULL
         AND m.created_by = d.identity_user_id
@@ -249,7 +249,7 @@ export async function deliverDriverProfileMessage(
   }
 
   const driverRes = await client.query<{ phone: string | null; email: string | null; identity_user_id: string | null }>(
-    `SELECT phone, email, identity_user_id::text FROM mdata.drivers WHERE id = $1 AND operating_company_id = $2`,
+    `SELECT phone, email, identity_user_id::text FROM mdata.drivers WHERE id = $1 AND operating_company_id = $2::uuid`,
     [input.driverId, input.operatingCompanyId]
   );
   const driver = driverRes.rows[0];

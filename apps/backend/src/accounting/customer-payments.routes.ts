@@ -64,13 +64,13 @@ export async function registerCustomerPaymentsRoutes(app: FastifyInstance) {
     if (!query.success) return validationError(reply, query.error);
 
     const payload = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
-      const custRes = await client.query(`SELECT id FROM mdata.customers WHERE id = $1 AND operating_company_id = $2 LIMIT 1`, [
+      const custRes = await client.query(`SELECT id FROM mdata.customers WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`, [
         params.data.id,
         query.data.operating_company_id,
       ]);
       if (!custRes.rows[0]) return { code: 404 as const, error: "customer_not_found" as const };
 
-      const whereSql = `p.customer_id = $2 AND p.operating_company_id = $1 AND p.voided_at IS NULL`;
+      const whereSql = `p.customer_id = $2 AND p.operating_company_id = $1::uuid AND p.voided_at IS NULL`;
       const values: unknown[] = [query.data.operating_company_id, params.data.id];
 
       const countRes = await client.query(`SELECT COUNT(*)::int AS total FROM accounting.payments p WHERE ${whereSql}`, values);
@@ -157,7 +157,7 @@ export async function registerCustomerPaymentsRoutes(app: FastifyInstance) {
 
     const result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       const customerRes = await client.query(
-        `SELECT id FROM mdata.customers WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+        `SELECT id FROM mdata.customers WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
         [params.data.id, query.data.operating_company_id]
       );
       if (!customerRes.rows[0]) return { code: 404 as const, error: "customer_not_found" as const };
@@ -246,7 +246,7 @@ export async function registerCustomerPaymentsRoutes(app: FastifyInstance) {
             SELECT id, amount_open_cents, status
             FROM accounting.invoices
             WHERE id = $1
-              AND operating_company_id = $2
+              AND operating_company_id = $2::uuid
               AND customer_id = $3
             LIMIT 1
           `,

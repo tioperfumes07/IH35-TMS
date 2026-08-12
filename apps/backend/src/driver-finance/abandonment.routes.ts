@@ -49,7 +49,7 @@ export async function registerAbandonmentRoutes(app: FastifyInstance) {
 
     const payload = await withCompanyScope(user.uuid, q.operating_company_id, async (client) => {
       const values: unknown[] = [q.operating_company_id];
-      const where = [`operating_company_id = $1`];
+      const where = [`operating_company_id = $1::uuid`];
       const statusFilter = q.status && q.status !== "all" ? q.status : null;
       if (statusFilter) {
         values.push(statusFilter);
@@ -97,7 +97,7 @@ export async function registerAbandonmentRoutes(app: FastifyInstance) {
               END,
               updated_at = now()
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
             AND status = 'pending'
           RETURNING *
         `,
@@ -106,7 +106,7 @@ export async function registerAbandonmentRoutes(app: FastifyInstance) {
       const updated = updateRes.rows[0];
       if (!updated) {
         const existing = await client.query(
-          `SELECT id FROM driver_finance.abandonment_chargebacks WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+          `SELECT id FROM driver_finance.abandonment_chargebacks WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
           [params.data.id, body.data.operating_company_id]
         );
         return existing.rows[0] ? { kind: "invalid_status" as const } : { kind: "missing" as const };
@@ -132,7 +132,7 @@ export async function registerAbandonmentRoutes(app: FastifyInstance) {
         `
           SELECT status
           FROM driver_finance.abandonment_chargebacks
-          WHERE id = $1 AND operating_company_id = $2
+          WHERE id = $1 AND operating_company_id = $2::uuid
           LIMIT 1
         `,
         [params.data.id, body.data.operating_company_id]
@@ -150,7 +150,7 @@ export async function registerAbandonmentRoutes(app: FastifyInstance) {
                 ELSE COALESCE(notes || E'\\n', '') || $3
               END,
               updated_at = now()
-          WHERE id = $1 AND operating_company_id = $2
+          WHERE id = $1 AND operating_company_id = $2::uuid
           RETURNING *
         `,
         [params.data.id, body.data.operating_company_id, body.data.notes ?? null]
@@ -178,7 +178,7 @@ export async function registerAbandonmentRoutes(app: FastifyInstance) {
         `
           SELECT status
           FROM driver_finance.abandonment_chargebacks
-          WHERE id = $1 AND operating_company_id = $2
+          WHERE id = $1 AND operating_company_id = $2::uuid
           LIMIT 1
         `,
         [params.data.id, body.data.operating_company_id]
@@ -193,7 +193,7 @@ export async function registerAbandonmentRoutes(app: FastifyInstance) {
           SET status = 'reversed',
               reversal_reason = $3,
               updated_at = now()
-          WHERE id = $1 AND operating_company_id = $2
+          WHERE id = $1 AND operating_company_id = $2::uuid
           RETURNING *
         `,
         [params.data.id, body.data.operating_company_id, body.data.reversal_reason]

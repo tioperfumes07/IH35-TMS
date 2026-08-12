@@ -29,7 +29,7 @@ async function loadDisputeForUpdate(client: any, disputeId: string, companyId: s
       SELECT *
       FROM driver_finance.driver_settlement_disputes
       WHERE id = $1
-        AND operating_company_id = $2
+        AND operating_company_id = $2::uuid
       FOR UPDATE
     `,
     [disputeId, companyId]
@@ -151,7 +151,7 @@ export async function listDisputes(
   return withCurrentUser(userId, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
     const values: unknown[] = [input.operating_company_id];
-    const where: string[] = [`d.operating_company_id = $1`];
+    const where: string[] = [`d.operating_company_id = $1::uuid`];
     if (input.status && input.status !== "all") {
       where.push(`d.status IN ('open', 'under_review')`);
     }
@@ -206,7 +206,7 @@ export async function getDispute(userId: string, input: { operating_company_id: 
         JOIN driver_finance.driver_settlements s ON s.id = d.settlement_id
                                                 AND s.operating_company_id = d.operating_company_id
         WHERE d.id = $2
-          AND d.operating_company_id = $1
+          AND d.operating_company_id = $1::uuid
         LIMIT 1
       `,
       [input.operating_company_id, input.dispute_id]
@@ -237,7 +237,7 @@ export async function openDispute(
         SELECT id
         FROM driver_finance.driver_settlements
         WHERE id = $1
-          AND operating_company_id = $2
+          AND operating_company_id = $2::uuid
           AND driver_id = $3
         LIMIT 1
       `,

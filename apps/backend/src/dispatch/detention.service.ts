@@ -63,7 +63,7 @@ export async function syncDetentionEventsFromStopArrivals(userId: string, operat
                           AND l.operating_company_id = sa.operating_company_id
         JOIN mdata.customers c ON c.id = l.customer_id
                               AND c.operating_company_id = l.operating_company_id
-        WHERE sa.operating_company_id = $1
+        WHERE sa.operating_company_id = $1::uuid
           AND sa.confirmed_at IS NOT NULL
           AND l.soft_deleted_at IS NULL
           AND l.status IN ('dispatched', 'at_pickup', 'in_transit', 'at_delivery')
@@ -100,7 +100,7 @@ export async function syncDetentionEventsFromStopArrivals(userId: string, operat
           )::int,
           updated_at = now()
         FROM mdata.load_stops ls
-        WHERE de.operating_company_id = $1
+        WHERE de.operating_company_id = $1::uuid
           AND de.status = 'accruing'
           AND ls.id = de.stop_id
           AND (ls.actual_departure_at IS NOT NULL OR ls.actual_arrival_at IS NOT NULL)
@@ -140,7 +140,7 @@ export async function listDetentionBoard(userId: string, operatingCompanyId: str
                                  AND d.operating_company_id = de.operating_company_id
         LEFT JOIN mdata.units u ON u.id = de.unit_id
                                AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = de.operating_company_id
-        WHERE de.operating_company_id = $1
+        WHERE de.operating_company_id = $1::uuid
           AND de.status IN ('accruing', 'closed')
         ORDER BY de.status ASC, de.started_at ASC
         LIMIT 200
@@ -178,7 +178,7 @@ export async function closeDetentionEvent(
 ) {
   return withCompany(userId, operatingCompanyId, async (client) => {
     const existing = await client.query(
-      `SELECT * FROM dispatch.detention_events WHERE id = $1 AND operating_company_id = $2`,
+      `SELECT * FROM dispatch.detention_events WHERE id = $1 AND operating_company_id = $2::uuid`,
       [eventId, operatingCompanyId]
     );
     const row = existing.rows[0];
@@ -201,7 +201,7 @@ export async function closeDetentionEvent(
             accrued_minutes = $4,
             accrued_amount_cents = $5,
             updated_at = now()
-        WHERE id = $1 AND operating_company_id = $2
+        WHERE id = $1 AND operating_company_id = $2::uuid
         RETURNING *
       `,
       [eventId, operatingCompanyId, stopAt, billable, amount]
@@ -222,7 +222,7 @@ export async function bridgeDetentionToBilling(
         FROM dispatch.detention_events de
         JOIN mdata.loads l ON l.id = de.load_id
                           AND l.operating_company_id = de.operating_company_id
-        WHERE de.id = $1 AND de.operating_company_id = $2
+        WHERE de.id = $1 AND de.operating_company_id = $2::uuid
       `,
       [eventId, operatingCompanyId]
     );
@@ -279,7 +279,7 @@ export async function bridgeDetentionToBilling(
             accrued_minutes = $4,
             accrued_amount_cents = $5,
             updated_at = now()
-        WHERE id = $1 AND operating_company_id = $2
+        WHERE id = $1 AND operating_company_id = $2::uuid
         RETURNING *
       `,
       [eventId, operatingCompanyId, JSON.stringify(bridge), billable, amount]
@@ -317,7 +317,7 @@ export async function notifyCustomerDetentionThreshold(
                           AND l.operating_company_id = de.operating_company_id
         JOIN mdata.customers c ON c.id = l.customer_id
                               AND c.operating_company_id = l.operating_company_id
-        WHERE de.id = $1 AND de.operating_company_id = $2
+        WHERE de.id = $1 AND de.operating_company_id = $2::uuid
       `,
       [eventId, operatingCompanyId]
     );

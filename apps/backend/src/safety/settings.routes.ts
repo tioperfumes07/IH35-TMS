@@ -47,7 +47,7 @@ function canMutate(role: string) {
 }
 
 export async function registerSafetySettingsRoutes(app: FastifyInstance) {
-  app.get("/api/v1/safety/settings", async (req, reply) => {
+  app.get("/api/v1/safety/settings", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -58,7 +58,7 @@ export async function registerSafetySettingsRoutes(app: FastifyInstance) {
         `
           SELECT *
           FROM safety.safety_settings
-          WHERE operating_company_id = $1
+          WHERE operating_company_id = $1::uuid
           LIMIT 1
         `,
         [query.data.operating_company_id]
@@ -69,7 +69,7 @@ export async function registerSafetySettingsRoutes(app: FastifyInstance) {
     return row;
   });
 
-  app.patch("/api/v1/safety/settings", async (req, reply) => {
+  app.patch("/api/v1/safety/settings", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canMutate(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -100,7 +100,7 @@ export async function registerSafetySettingsRoutes(app: FastifyInstance) {
         `
           UPDATE safety.safety_settings
           SET ${sets.join(", ")}
-          WHERE operating_company_id = $${values.length}
+          WHERE operating_company_id = $${values.length}::uuid
           RETURNING *
         `,
         values

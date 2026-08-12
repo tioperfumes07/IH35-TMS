@@ -72,7 +72,7 @@ export async function listForLoad(client: Queryable, input: { operating_company_
       FROM dispatch.stop_extra_rates ser
       JOIN mdata.load_stops ls
         ON ls.id = ser.stop_uuid
-      WHERE ser.operating_company_id = $1
+      WHERE ser.operating_company_id = $1::uuid
         AND ser.load_uuid = $2
         AND ser.is_active = true
       ORDER BY ls.sequence_number ASC, ser.created_at ASC
@@ -87,7 +87,7 @@ export async function totalForLoad(client: Queryable, input: { operating_company
     `
       SELECT COALESCE(SUM(amount_cents), 0)::int AS total_cents
       FROM dispatch.stop_extra_rates
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
         AND load_uuid = $2
         AND is_active = true
     `,
@@ -102,7 +102,7 @@ export async function softDelete(client: Queryable, input: SoftDeleteStopExtraIn
       UPDATE dispatch.stop_extra_rates
       SET is_active = false,
           updated_at = now()
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
         AND load_uuid = $2
         AND stop_uuid = $3
         AND uuid = $4

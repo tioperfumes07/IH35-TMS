@@ -51,7 +51,7 @@ async function withCompanyScope<T>(
 }
 
 export async function registerLiabilitiesRoutes(app: FastifyInstance) {
-  app.get("/api/v1/liabilities/dashboard/kpis", async (req, reply) => {
+  app.get("/api/v1/liabilities/dashboard/kpis", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -63,7 +63,7 @@ export async function registerLiabilitiesRoutes(app: FastifyInstance) {
           `
             SELECT *
             FROM views.liabilities_dashboard_kpis
-            WHERE operating_company_id = $1
+            WHERE operating_company_id = $1::uuid
             LIMIT 1
           `,
           [companyId]
@@ -83,7 +83,7 @@ export async function registerLiabilitiesRoutes(app: FastifyInstance) {
     );
   });
 
-  app.get("/api/v1/liabilities/active", async (req, reply) => {
+  app.get("/api/v1/liabilities/active", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -95,7 +95,7 @@ export async function registerLiabilitiesRoutes(app: FastifyInstance) {
           `
             SELECT *
             FROM views.liabilities_active_with_context
-            WHERE operating_company_id = $1
+            WHERE operating_company_id = $1::uuid
             ORDER BY created_at DESC
             LIMIT 500
           `,
@@ -107,7 +107,7 @@ export async function registerLiabilitiesRoutes(app: FastifyInstance) {
     return { liabilities: rows };
   });
 
-  app.get("/api/v1/liabilities/by-driver/:driver_id", async (req, reply) => {
+  app.get("/api/v1/liabilities/by-driver/:driver_id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const params = driverParamsSchema.safeParse(req.params ?? {});
@@ -121,7 +121,7 @@ export async function registerLiabilitiesRoutes(app: FastifyInstance) {
           `
             SELECT *
             FROM views.liabilities_active_with_context
-            WHERE operating_company_id = $1
+            WHERE operating_company_id = $1::uuid
               AND driver_id = $2
             ORDER BY created_at DESC
           `,
@@ -133,7 +133,7 @@ export async function registerLiabilitiesRoutes(app: FastifyInstance) {
     return { liabilities: rows };
   });
 
-  app.get("/api/v1/liabilities/:id", async (req, reply) => {
+  app.get("/api/v1/liabilities/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const params = idParamsSchema.safeParse(req.params ?? {});
@@ -148,7 +148,7 @@ export async function registerLiabilitiesRoutes(app: FastifyInstance) {
             SELECT *
             FROM views.liabilities_active_with_context
             WHERE id = $1
-              AND operating_company_id = $2
+              AND operating_company_id = $2::uuid
             LIMIT 1
           `,
           [params.data.id, companyId]
@@ -185,7 +185,7 @@ export async function registerLiabilitiesRoutes(app: FastifyInstance) {
     return detail;
   });
 
-  app.post("/api/v1/liabilities/:id/send-ack-request", async (req, reply) => {
+  app.post("/api/v1/liabilities/:id/send-ack-request", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const params = idParamsSchema.safeParse(req.params ?? {});
@@ -203,7 +203,7 @@ export async function registerLiabilitiesRoutes(app: FastifyInstance) {
             SELECT id, driver_id
             FROM driver_finance.driver_liabilities
             WHERE id = $1
-              AND operating_company_id = $2
+              AND operating_company_id = $2::uuid
             LIMIT 1
           `,
           [params.data.id, companyId]
@@ -330,7 +330,7 @@ export async function registerLiabilitiesRoutes(app: FastifyInstance) {
     return { ok: true };
   });
 
-  app.patch("/api/v1/liabilities/:id/mark-paid-off", async (req, reply) => {
+  app.patch("/api/v1/liabilities/:id/mark-paid-off", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (user.role !== "Owner") return reply.code(403).send({ error: "forbidden_owner_only" });
@@ -348,7 +348,7 @@ export async function registerLiabilitiesRoutes(app: FastifyInstance) {
             SET current_balance = 0,
                 paid_to_date = original_amount
             WHERE id = $1
-              AND operating_company_id = $2
+              AND operating_company_id = $2::uuid
             RETURNING id
           `,
           [params.data.id, companyId]

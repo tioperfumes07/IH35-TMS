@@ -83,7 +83,7 @@ function ensureAdmin(req: FastifyRequest, reply: FastifyReply) {
 }
 
 export async function registerDriverLoadStatusRoutes(app: FastifyInstance) {
-  app.get("/api/v1/catalogs/driver-load-statuses", async (req, reply) => {
+  app.get("/api/v1/catalogs/driver-load-statuses", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const parsedQuery = listQuerySchema.safeParse(req.query ?? {});
@@ -112,7 +112,7 @@ export async function registerDriverLoadStatusRoutes(app: FastifyInstance) {
               created_by_user_id,
               updated_by_user_id
             FROM catalogs.driver_load_statuses
-            WHERE operating_company_id = $1${activeFilter}
+            WHERE operating_company_id = $1::uuid${activeFilter}
             ORDER BY phase, sort_order, name
           `,
           [operatingCompanyId]
@@ -225,7 +225,7 @@ export async function registerDriverLoadStatusRoutes(app: FastifyInstance) {
             UPDATE catalogs.driver_load_statuses
             SET ${fields.join(", ")}
             WHERE id = $${idIdx}
-              AND operating_company_id = $${opcoIdx}
+              AND operating_company_id = $${opcoIdx}::uuid
             RETURNING id, operating_company_id, code, name, description, phase, sort_order, is_active, deactivated_at, created_at, updated_at
           `,
           values

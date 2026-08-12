@@ -86,7 +86,7 @@ export async function registerSettlementSummaryRoutes(app: FastifyInstance) {
           FROM driver_finance.driver_settlements s
           JOIN mdata.drivers d ON d.id = s.driver_id
                                AND d.operating_company_id = $1::uuid
-          WHERE s.operating_company_id = $1
+          WHERE s.operating_company_id = $1::uuid
             AND s.status IS DISTINCT FROM 'cancelled'
             AND s.period_start <= $3::date
             AND s.period_end >= $2::date
@@ -103,7 +103,7 @@ export async function registerSettlementSummaryRoutes(app: FastifyInstance) {
               `
                 SELECT deduction_type, reason, amount_cents::text AS amount_cents, applied_to_settlement_id
                 FROM driver_finance.driver_settlement_deductions
-                WHERE operating_company_id = $1
+                WHERE operating_company_id = $1::uuid
                   AND (
                     applied_to_settlement_id = ANY($2::uuid[])
                     OR (
@@ -178,7 +178,7 @@ export async function registerSettlementSummaryRoutes(app: FastifyInstance) {
         `
           SELECT assigned_primary_driver_id::text AS driver_id, COUNT(*)::text AS load_count
           FROM mdata.loads l
-          WHERE l.operating_company_id = $1
+          WHERE l.operating_company_id = $1::uuid
             AND l.soft_deleted_at IS NULL
             AND l.assigned_primary_driver_id IS NOT NULL
             AND l.created_at::date BETWEEN $2::date AND $3::date

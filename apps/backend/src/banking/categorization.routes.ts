@@ -185,7 +185,7 @@ function pendingStatusesSql(): string {
 }
 
 export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
-  app.get("/api/v1/banking/transactions/uncategorized", async (req, reply) => {
+  app.get("/api/v1/banking/transactions/uncategorized", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
 
@@ -197,7 +197,7 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
       // BANK-ACCOUNT-HIDE: excluded everywhere for THIS entity (flag OFF by default — see
       // docs/accounting/BANK-ACCOUNT-ENTITY-HIDE-DESIGN.md).
       const hideOn = await isBankAccountHideEnabled(client, q.operating_company_id);
-      const where: string[] = [`bt.operating_company_id = $1`, pendingStatusesSql()];
+      const where: string[] = [`bt.operating_company_id = $1::uuid`, pendingStatusesSql()];
       if (bankTransactionHiddenFilterSql(hideOn, "bt")) where.push(bankTransactionHiddenFilterSql(hideOn, "bt").replace(/^AND\s+/, ""));
       const values: unknown[] = [q.operating_company_id];
 
@@ -315,7 +315,7 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
           SELECT id, status
           FROM banking.bank_transactions
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
           LIMIT 1
         `,
         [params.data.id, companyId]
@@ -370,7 +370,7 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
             categorized_at = now(),
             updated_at = now()
           WHERE id = $1
-            AND operating_company_id = $12
+            AND operating_company_id = $12::uuid
         `,
         [
           params.data.id,
@@ -689,7 +689,7 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
     return { rows, total_count: rows.length };
   });
 
-  app.post("/api/v1/banking/transactions/categorize-bulk", async (req, reply) => {
+  app.post("/api/v1/banking/transactions/categorize-bulk", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
 
@@ -726,7 +726,7 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
                 skip_reason = NULL,
                 investigate_note = NULL
               WHERE id = $1
-                AND operating_company_id = $4
+                AND operating_company_id = $4::uuid
                 AND (status = 'pending_categorization' OR status = 'uncategorized')
               RETURNING id
             `,
@@ -826,7 +826,7 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
     return { categorized_count: result.categorized_count, errors: result.errors, bank_feed_gl: bankFeedGl };
   });
 
-  app.post("/api/v1/banking/transactions/:id/transfer", async (req, reply) => {
+  app.post("/api/v1/banking/transactions/:id/transfer", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
 
@@ -844,7 +844,7 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
         `
           SELECT status
           FROM banking.bank_transactions
-          WHERE id = $1 AND operating_company_id = $2
+          WHERE id = $1 AND operating_company_id = $2::uuid
           LIMIT 1
         `,
         [params.data.id, companyId]
@@ -917,7 +917,7 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
     };
   });
 
-  app.post("/api/v1/banking/transactions/:id/skip", async (req, reply) => {
+  app.post("/api/v1/banking/transactions/:id/skip", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
 
@@ -949,7 +949,7 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
             categorized_at = now(),
             updated_at = now()
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
             AND (status = 'pending_categorization' OR status = 'uncategorized')
           RETURNING id
         `,
@@ -986,7 +986,7 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
     return { ok: true };
   });
 
-  app.post("/api/v1/banking/transactions/:id/investigate", async (req, reply) => {
+  app.post("/api/v1/banking/transactions/:id/investigate", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
 
@@ -1017,7 +1017,7 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
             investigate_note = $3,
             updated_at = now()
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
             AND (status = 'pending_categorization' OR status = 'uncategorized')
           RETURNING id
         `,

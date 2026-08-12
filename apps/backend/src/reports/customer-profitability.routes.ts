@@ -79,7 +79,7 @@ export async function registerCustomerProfitabilityRoutes(app: FastifyInstance) 
             COUNT(*)::text AS load_count,
             MAX(l.created_at)::text AS last_load_at
           FROM mdata.loads l
-          WHERE l.operating_company_id = $1
+          WHERE l.operating_company_id = $1::uuid
             AND l.soft_deleted_at IS NULL
             AND l.status IS DISTINCT FROM 'cancelled'
             AND l.created_at::date BETWEEN $2::date AND $3::date
@@ -92,7 +92,7 @@ export async function registerCustomerProfitabilityRoutes(app: FastifyInstance) 
         `
           SELECT l.customer_id::text AS customer_id, COALESCE(SUM(COALESCE(l.rate_total_cents, 0)), 0)::text AS revenue_cents
           FROM mdata.loads l
-          WHERE l.operating_company_id = $1
+          WHERE l.operating_company_id = $1::uuid
             AND l.soft_deleted_at IS NULL
             AND l.status IS DISTINCT FROM 'cancelled'
             AND l.created_at::date BETWEEN $2::date AND $3::date
@@ -109,7 +109,7 @@ export async function registerCustomerProfitabilityRoutes(app: FastifyInstance) 
           FROM driver_finance.driver_bills db
           JOIN mdata.loads l ON l.id = db.load_id
                             AND l.operating_company_id = db.operating_company_id
-          WHERE db.operating_company_id = $1
+          WHERE db.operating_company_id = $1::uuid
             AND l.soft_deleted_at IS NULL
             AND l.status IS DISTINCT FROM 'cancelled'
             AND l.created_at::date BETWEEN $2::date AND $3::date
@@ -127,7 +127,7 @@ export async function registerCustomerProfitabilityRoutes(app: FastifyInstance) 
             COALESCE(SUM(i.amount_open_cents), 0)::text AS open_cents,
             BOOL_OR(i.due_date IS NOT NULL AND i.due_date < CURRENT_DATE) AS past_due
           FROM accounting.invoices i
-          WHERE i.operating_company_id = $1
+          WHERE i.operating_company_id = $1::uuid
             AND i.status IN ('sent', 'partial')
             AND i.voided_at IS NULL
             AND COALESCE(i.amount_open_cents, 0) > 0
@@ -144,7 +144,7 @@ export async function registerCustomerProfitabilityRoutes(app: FastifyInstance) 
         `
           SELECT id::text AS customer_id, customer_name
           FROM mdata.customers
-          WHERE operating_company_id = $1
+          WHERE operating_company_id = $1::uuid
         `,
         [companyId]
       );

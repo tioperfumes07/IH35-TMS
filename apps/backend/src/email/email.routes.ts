@@ -75,7 +75,7 @@ export async function registerEmailRoutes(app: FastifyInstance) {
     }
   });
 
-  app.get("/api/v1/email/queue", async (req: FastifyRequest, reply: FastifyReply) => {
+  app.get("/api/v1/email/queue", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!ownerAdministrator(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
@@ -89,7 +89,7 @@ export async function registerEmailRoutes(app: FastifyInstance) {
 
       const cursor = decodeCursor(parsed.data.cursor);
       const values: unknown[] = [parsed.data.operating_company_id];
-      const where: string[] = [`operating_company_id = $1`];
+      const where: string[] = [`operating_company_id = $1::uuid`];
 
       if (parsed.data.status) {
         values.push(parsed.data.status);

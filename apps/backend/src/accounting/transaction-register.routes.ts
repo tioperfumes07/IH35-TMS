@@ -66,7 +66,7 @@ export const TRANSACTION_REGISTER_UNION_SQL = `
          COALESCE(bt.status, 'uncategorized') AS status,
          '/banking/transactions?txn_id=' || bt.id::text AS detail_path
     FROM banking.bank_transactions bt
-   WHERE bt.operating_company_id = $1
+   WHERE bt.operating_company_id = $1::uuid
 
   UNION ALL
 
@@ -81,7 +81,7 @@ export const TRANSACTION_REGISTER_UNION_SQL = `
          '/fuel/history?transaction_id=' || ft.id::text AS detail_path
     FROM fuel.fuel_transactions ft
     LEFT JOIN mdata.vendors v ON v.id = ft.vendor_id
-   WHERE ft.operating_company_id = $1 AND ft.archived_at IS NULL
+   WHERE ft.operating_company_id = $1::uuid AND ft.archived_at IS NULL
 
   UNION ALL
 
@@ -95,7 +95,7 @@ export const TRANSACTION_REGISTER_UNION_SQL = `
          '/accounting/invoices/' || i.id::text AS detail_path
     FROM accounting.invoices i
     LEFT JOIN mdata.customers c ON c.id = i.customer_id
-   WHERE i.operating_company_id = $1
+   WHERE i.operating_company_id = $1::uuid
 
   UNION ALL
 
@@ -109,7 +109,7 @@ export const TRANSACTION_REGISTER_UNION_SQL = `
          '/accounting/bills/' || b.id::text AS detail_path
     FROM accounting.bills b
     LEFT JOIN mdata.vendors v ON v.id::text = b.vendor_uuid
-   WHERE b.operating_company_id = $1 AND b.revoked_at IS NULL
+   WHERE b.operating_company_id = $1::uuid AND b.revoked_at IS NULL
 
   UNION ALL
 
@@ -125,7 +125,7 @@ export const TRANSACTION_REGISTER_UNION_SQL = `
          '/driver-finance/settlements?settlement_id=' || s.id::text AS detail_path
     FROM driver_finance.driver_settlements s
     LEFT JOIN mdata.drivers d ON d.id = s.driver_id
-   WHERE s.operating_company_id = $1
+   WHERE s.operating_company_id = $1::uuid
 `;
 
 export async function registerTransactionRegisterRoutes(app: FastifyInstance) {

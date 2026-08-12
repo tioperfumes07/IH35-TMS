@@ -129,7 +129,7 @@ export async function registerSafetyOnboardingRoutes(app: FastifyInstance) {
         `
           SELECT *
           FROM safety.onboarding_sessions
-          WHERE id = $1 AND operating_company_id = $2
+          WHERE id = $1 AND operating_company_id = $2::uuid
         `,
         [params.data.session_id, company.data.operating_company_id]
       );
@@ -155,7 +155,7 @@ export async function registerSafetyOnboardingRoutes(app: FastifyInstance) {
         `
           SELECT step_data, current_step, status
           FROM safety.onboarding_sessions
-          WHERE id = $1 AND operating_company_id = $2
+          WHERE id = $1 AND operating_company_id = $2::uuid
         `,
         [params.data.session_id, company.data.operating_company_id]
       );
@@ -174,7 +174,7 @@ export async function registerSafetyOnboardingRoutes(app: FastifyInstance) {
           SET step_data = $3::jsonb,
               current_step = $4,
               updated_at = now()
-          WHERE id = $1 AND operating_company_id = $2
+          WHERE id = $1 AND operating_company_id = $2::uuid
           RETURNING *
         `,
         [params.data.session_id, company.data.operating_company_id, JSON.stringify(merged), nextStep]
@@ -207,7 +207,7 @@ export async function registerSafetyOnboardingRoutes(app: FastifyInstance) {
               completed_at = now(),
               updated_at = now()
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
             AND status = 'in_progress'
           RETURNING *
         `,
@@ -255,7 +255,7 @@ export async function registerSafetyOnboardingRoutes(app: FastifyInstance) {
               completed_at = now(),
               updated_at = now()
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
             AND status = 'in_progress'
           RETURNING *
         `,

@@ -135,7 +135,7 @@ async function loadRtdCase(client: Queryable, companyId: string, caseId: string)
         training_records_url,
         clearinghouse_updated
       FROM safety.rtd_case
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
         AND id = $2
         AND voided_at IS NULL
       LIMIT 1
@@ -155,7 +155,7 @@ async function validateRtdTestForAdvance(
     `
       SELECT id::text, test_type, result::text
       FROM safety.drug_test
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
         AND driver_id = $2
         AND id = $3
         AND voided_at IS NULL
@@ -204,7 +204,7 @@ export async function registerSafetyRtdRoutes(app: FastifyInstance) {
             training_records_url,
             clearinghouse_updated
           FROM safety.rtd_case
-          WHERE operating_company_id = $1
+          WHERE operating_company_id = $1::uuid
             AND voided_at IS NULL
           ORDER BY opened_at DESC, created_at DESC
           LIMIT 500
@@ -246,7 +246,7 @@ export async function registerSafetyRtdRoutes(app: FastifyInstance) {
             training_records_url,
             clearinghouse_updated
           FROM safety.rtd_case
-          WHERE operating_company_id = $1
+          WHERE operating_company_id = $1::uuid
             AND driver_id = $2
             AND voided_at IS NULL
           ORDER BY
@@ -278,7 +278,7 @@ export async function registerSafetyRtdRoutes(app: FastifyInstance) {
         `
           SELECT id::text, stage::text
           FROM safety.rtd_case
-          WHERE operating_company_id = $1
+          WHERE operating_company_id = $1::uuid
             AND driver_id = $2
             AND voided_at IS NULL
             AND stage <> 'complete'
@@ -423,7 +423,7 @@ export async function registerSafetyRtdRoutes(app: FastifyInstance) {
             training_records_url = COALESCE($11, training_records_url),
             clearinghouse_updated = $12,
             closed_at = COALESCE($13::timestamptz, closed_at)
-          WHERE operating_company_id = $1
+          WHERE operating_company_id = $1::uuid
             AND id = $2
             AND voided_at IS NULL
           RETURNING
@@ -535,7 +535,7 @@ export async function registerSafetyRtdRoutes(app: FastifyInstance) {
             reprimand_notes = COALESCE($8, reprimand_notes),
             training_records_url = COALESCE($9, training_records_url),
             clearinghouse_updated = COALESCE($10, clearinghouse_updated)
-          WHERE operating_company_id = $1
+          WHERE operating_company_id = $1::uuid
             AND id = $2
             AND voided_at IS NULL
           RETURNING

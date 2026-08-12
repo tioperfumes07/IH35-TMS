@@ -163,7 +163,7 @@ export async function fetchUnresolvedDrugAlcoholViolation(
           -- "operator does not exist: text = uuid" AT PLAN TIME — on every driver, with or without
           -- rows. Because this gate is deliberately fail-loud, that error aborted the caller's
           -- transaction, so the ENTIRE D&A + Clearinghouse gate never returned a verdict at all.
-          AND dr2.operating_company_id = $2::text
+          AND dr2.operating_company_id = $2::uuid::text
           AND dr2.result IN ('positive', 'refused')
         UNION ALL
         -- COMP-01: the third live source. A dilute result is deliberately absent here (49 CFR
@@ -190,7 +190,7 @@ export async function fetchUnresolvedDrugAlcoholViolation(
         FROM safety.da_test_records dr3
         WHERE dr3.driver_uuid = $1::uuid
           -- COMP-01-B: ::text — see the violations arm above. Same PROD column-type reality.
-          AND dr3.operating_company_id = $2::text
+          AND dr3.operating_company_id = $2::uuid::text
           AND dr3.test_type = 'return_to_duty'
           AND dr3.result = 'negative'
         UNION ALL

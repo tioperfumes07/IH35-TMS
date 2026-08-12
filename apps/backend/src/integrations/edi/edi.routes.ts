@@ -94,7 +94,7 @@ export async function registerEdiRoutes(app: FastifyInstance) {
         SELECT uuid, partner_uuid, transaction_type, direction, control_number,
                status, error_message, related_load_uuid, received_at::text, processed_at::text
         FROM integrations.edi_messages
-        WHERE operating_company_id = $1
+        WHERE operating_company_id = $1::uuid
       `;
       if (q.data.partner_uuid) {
         values.push(q.data.partner_uuid);

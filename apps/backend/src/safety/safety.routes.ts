@@ -154,7 +154,7 @@ async function listAccidentSpawnedWorkOrders(
     `
       SELECT id::text AS id, display_id
       FROM maintenance.work_orders
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
         AND source_type = 'AC'
         AND voided_at IS NULL
         AND description ILIKE '%' || $2 || '%'
@@ -202,12 +202,12 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
         `
           SELECT
             (SELECT COUNT(*)::int FROM safety.safety_events
-              WHERE operating_company_id = $1 AND status = 'open') AS open_events,
+              WHERE operating_company_id = $1::uuid AND status = 'open') AS open_events,
             (SELECT COUNT(*)::int FROM safety.safety_events
-              WHERE operating_company_id = $1
+              WHERE operating_company_id = $1::uuid
                 AND occurred_at >= date_trunc('month', now())) AS mtd_violations,
             (SELECT COUNT(*)::int FROM safety.safety_events
-              WHERE operating_company_id = $1
+              WHERE operating_company_id = $1::uuid
                 AND event_type = 'training_due'
                 AND occurred_at <= now() + INTERVAL '30 days') AS training_due_30d,
             -- Must agree with the canonical Drivers list (/api/v1/mdata/drivers?status=Active),
@@ -216,14 +216,14 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
             -- different predicate here produced 83 vs the list's 82 and would reintroduce exactly
             -- the kind of number-disagreement this fix exists to remove.
             (SELECT COUNT(*)::int FROM mdata.drivers
-              WHERE operating_company_id = $1
+              WHERE operating_company_id = $1::uuid
                 AND status = 'Active'
                 AND ${EXCLUDE_ARCHIVED_DRIVERS_SQL}
                 AND ${EXCLUDE_PSEUDO_DRIVERS_SQL}) AS active_drivers,
             (SELECT COUNT(DISTINCT driver_id)::int FROM (
                 SELECT subject_driver_id AS driver_id
                 FROM safety.civil_fines
-                WHERE operating_company_id = $1
+                WHERE operating_company_id = $1::uuid
                   AND subject_driver_id IS NOT NULL
                   AND status IN ('open', 'contested')
                   AND voided_at IS NULL
@@ -231,25 +231,25 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
                 UNION
                 SELECT driver_id
                 FROM safety.internal_fines
-                WHERE operating_company_id = $1
+                WHERE operating_company_id = $1::uuid
                   AND driver_id IS NOT NULL
                   AND status IN ('pending', 'approved', 'disputed')
                   AND voided_at IS NULL
               ) AS open_fine_drivers) AS drivers_with_open_fines,
             (SELECT COUNT(*)::int FROM safety.company_violations
-              WHERE operating_company_id = $1
+              WHERE operating_company_id = $1::uuid
                 AND status IN ('open', 'in_progress', 'escalated')
                 AND deactivated_at IS NULL) AS open_company_violations,
             (SELECT COUNT(*)::int FROM safety.integrity_alerts
-              WHERE operating_company_id = $1
+              WHERE operating_company_id = $1::uuid
                 AND lower(severity) = 'critical'
                 AND resolution_status IN ('unresolved', 'investigating')
                 AND (snoozed_until IS NULL OR snoozed_until <= now())) AS critical_integrity_alerts,
             (SELECT COUNT(*)::int FROM driver_finance.driver_liabilities
-              WHERE operating_company_id = $1
+              WHERE operating_company_id = $1::uuid
                 AND current_balance > 0) AS open_liabilities,
             (SELECT COUNT(*)::int FROM views.liabilities_active_with_context
-              WHERE operating_company_id = $1
+              WHERE operating_company_id = $1::uuid
                 AND requires_acknowledgment = true
                 AND acknowledgment_uuid IS NULL) AS pending_acknowledgments
         `,
@@ -260,7 +260,7 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
           `
             SELECT COUNT(*)::int AS count
             FROM safety.drug_test
-            WHERE operating_company_id = $1
+            WHERE operating_company_id = $1::uuid
               AND test_date >= date_trunc('year', now())
               AND voided_at IS NULL
           `,
@@ -289,7 +289,7 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
               )::numeric
             END AS score
             FROM safety.csa_scores
-            WHERE operating_company_id = $1
+            WHERE operating_company_id = $1::uuid
             ORDER BY computed_at DESC
             LIMIT 1
           `,
@@ -350,7 +350,7 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
             SELECT *
             FROM views.safety_events_with_driver
             WHERE id = $1
-              AND operating_company_id = $2
+              AND operating_company_id = $2::uuid
             LIMIT 1
           `,
           [params.data.id, query.data.operating_company_id]
@@ -379,7 +379,7 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
             LEFT JOIN mdata.drivers d
               ON d.id = tr.driver_id
              AND d.operating_company_id = tr.operating_company_id
-            WHERE tr.operating_company_id = $1
+            WHERE tr.operating_company_id = $1::uuid
             ORDER BY tr.completed_at DESC
             LIMIT 500
           `,
@@ -402,7 +402,7 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
           `
             SELECT *
             FROM safety.drug_test
-            WHERE operating_company_id = $1
+            WHERE operating_company_id = $1::uuid
               AND voided_at IS NULL
             ORDER BY test_date DESC
             LIMIT 500
@@ -483,7 +483,7 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
             ORDER BY c.created_at DESC
             LIMIT 1
           ) claim ON true
-          WHERE ar.operating_company_id = $1
+          WHERE ar.operating_company_id = $1::uuid
           ${scopeFilters.join("\n          ")}
           ORDER BY ar.accident_at DESC
           LIMIT 500
@@ -509,7 +509,7 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
             SELECT *
             FROM safety.accident_reports
             WHERE id = $1
-              AND operating_company_id = $2
+              AND operating_company_id = $2::uuid
             LIMIT 1
           `,
           [params.data.id, query.data.operating_company_id]
@@ -599,7 +599,7 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
                   service_type = $4,
                   report_date = $5::date,
                   tax_rate_pct = $6
-              WHERE id = $1 AND operating_company_id = $2
+              WHERE id = $1 AND operating_company_id = $2::uuid
             `,
             [
               inserted.id,
@@ -714,7 +714,7 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
 
     const updated = await withCompanyScope(user.uuid, companyId, async (client) => {
       const beforeRes = await client
-        .query(`SELECT * FROM safety.accident_reports WHERE id = $1 AND operating_company_id = $2 LIMIT 1`, [
+        .query(`SELECT * FROM safety.accident_reports WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`, [
           params.data.id,
           companyId,
         ])
@@ -729,7 +729,7 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
           UPDATE safety.accident_reports
           SET ${setClauses.join(", ")}, updated_at = now()
           WHERE id = $${idParamIndex}
-            AND operating_company_id = $${companyParamIndex}
+            AND operating_company_id = $${companyParamIndex}::uuid
           RETURNING *
         `,
         [...values, params.data.id, companyId]
@@ -755,7 +755,7 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
     return updated;
   });
 
-  app.patch("/api/v1/safety/accidents/:id/status", async (req, reply) => {
+  app.patch("/api/v1/safety/accidents/:id/status", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!isSafetyMutationAllowed(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -772,7 +772,7 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
           UPDATE safety.accident_reports
           SET status = $2, updated_at = now()
           WHERE id = $1
-            AND operating_company_id = $3
+            AND operating_company_id = $3::uuid
           RETURNING *
         `,
         [params.data.id, body.data.status, query.data.operating_company_id]
@@ -854,7 +854,7 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
             SELECT id, driver_id, description, load_id, unit_id
             FROM safety.accident_reports
             WHERE id = $1
-              AND operating_company_id = $2
+              AND operating_company_id = $2::uuid
             LIMIT 1
             FOR UPDATE
           `,
@@ -882,7 +882,7 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
           `
             SELECT id::text
             FROM driver_finance.driver_liabilities
-            WHERE operating_company_id = $1
+            WHERE operating_company_id = $1::uuid
               AND origin = 'safety_accident'
               AND origin_id = $2
             ORDER BY created_at ASC
@@ -901,7 +901,7 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
             SELECT COALESCE(SUM(amount_cents), 0)::bigint AS total_cents
             FROM safety.accident_cost_lines
             WHERE accident_id = $1
-              AND operating_company_id = $2
+              AND operating_company_id = $2::uuid
           `,
           [accident.id, query.data.operating_company_id]
         );
@@ -912,7 +912,7 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
         }
 
         const driverRes = await client.query(
-          `SELECT id, status FROM mdata.drivers WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+          `SELECT id, status FROM mdata.drivers WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
           [accident.driver_id, query.data.operating_company_id]
         );
         const driver = driverRes.rows[0] as { id?: string; status?: string } | undefined;
@@ -1024,7 +1024,7 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
     };
   });
 
-  app.post("/api/v1/safety/accidents/:id/spawn-wo", async (req, reply) => {
+  app.post("/api/v1/safety/accidents/:id/spawn-wo", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!isSafetyMutationAllowed(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -1039,7 +1039,7 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
           SELECT *
           FROM safety.accident_reports
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
           LIMIT 1
         `,
         [params.data.id, query.data.operating_company_id]
@@ -1168,7 +1168,7 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
     return payload;
   });
 
-  app.get("/api/v1/safety/csa/latest", async (req, reply) => {
+  app.get("/api/v1/safety/csa/latest", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -1179,7 +1179,7 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
           `
             SELECT *
             FROM safety.csa_scores
-            WHERE operating_company_id = $1
+            WHERE operating_company_id = $1::uuid
             ORDER BY computed_at DESC
             LIMIT 1
           `,

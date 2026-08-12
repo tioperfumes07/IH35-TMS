@@ -31,7 +31,7 @@ export async function resolveCompanyViolation(input: ResolveInput): Promise<{
         SELECT id, status, violation_type_uuid::text, violation_type_id::text, violation_type, fine_amount_cents_override
         FROM safety.company_violations
         WHERE id = $1
-          AND operating_company_id = $2
+          AND operating_company_id = $2::uuid
         LIMIT 1
       `,
       [input.violationUuid, input.operatingCompanyId]
@@ -50,7 +50,7 @@ export async function resolveCompanyViolation(input: ResolveInput): Promise<{
         `
           SELECT amount_cents
           FROM catalogs.company_violation_types
-          WHERE operating_company_id = $1
+          WHERE operating_company_id = $1::uuid
             AND (
               id = COALESCE($2::uuid, $3::uuid)
               OR type_code = COALESCE($4, '')
@@ -85,7 +85,7 @@ export async function resolveCompanyViolation(input: ResolveInput): Promise<{
           updated_by_user_id = $6,
           updated_at = now()
         WHERE id = $1
-          AND operating_company_id = $2
+          AND operating_company_id = $2::uuid
         RETURNING id, auto_created_internal_fine_uuid::text, fine_amount_cents_override
       `,
       [

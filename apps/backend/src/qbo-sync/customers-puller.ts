@@ -181,7 +181,7 @@ export async function pullCustomersFromQbo(operatingCompanyId: string): Promise<
           SET status = 'inactive'::mdata.customer_status,
               deactivated_at = COALESCE(deactivated_at, now()),
               updated_at = now()
-          WHERE operating_company_id = $1
+          WHERE operating_company_id = $1::uuid
             AND source = 'qbo_clone'
             AND deactivated_at IS NULL
             AND qbo_customer_id IS NOT NULL

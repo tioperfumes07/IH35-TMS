@@ -75,7 +75,7 @@ export async function registerFuelTransactionsRoutes(app: FastifyInstance) {
       if (!(tableExists.rows[0] as { ok?: boolean } | undefined)?.ok) return { unavailable: true as const };
 
       const values: unknown[] = [q.operating_company_id];
-      const filters: string[] = ["ft.operating_company_id = $1", "ft.archived_at IS NULL"];
+      const filters: string[] = ["ft.operating_company_id = $1::uuid", "ft.archived_at IS NULL"];
       if (q.driver_id) {
         values.push(q.driver_id);
         filters.push(`ft.driver_id = $${values.length}`);

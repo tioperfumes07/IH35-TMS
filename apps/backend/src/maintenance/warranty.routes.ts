@@ -168,7 +168,7 @@ export async function detectWarrantyEligiblePartsFromWorkOrder(
   const woRes = await client.query(
     `SELECT id::text, vendor_id::text, external_vendor_id::text
      FROM maintenance.work_orders
-     WHERE id = $1 AND operating_company_id = $2
+     WHERE id = $1 AND operating_company_id = $2::uuid
      LIMIT 1`,
     [workOrderId, companyId]
   );
@@ -197,7 +197,7 @@ export async function detectWarrantyEligiblePartsFromWorkOrder(
          FROM maintenance.parts_warranty pw
          LEFT JOIN mdata.vendors v ON v.id = pw.vendor_id
                                    AND v.operating_company_id = $1::uuid
-         WHERE pw.operating_company_id = $1
+         WHERE pw.operating_company_id = $1::uuid
            AND pw.parts_inventory_id = $2
            AND pw.archived_at IS NULL
            AND pw.expires_at >= $3
@@ -215,7 +215,7 @@ export async function detectWarrantyEligiblePartsFromWorkOrder(
          FROM maintenance.parts_warranty pw
          LEFT JOIN mdata.vendors v ON v.id = pw.vendor_id
                                    AND v.operating_company_id = $1::uuid
-         WHERE pw.operating_company_id = $1
+         WHERE pw.operating_company_id = $1::uuid
            AND pw.work_order_id = $2
            AND pw.archived_at IS NULL
            AND pw.expires_at >= $3
@@ -315,7 +315,7 @@ const CLAIM_SELECT = `
 `;
 
 async function fetchClaimById(client: DbClient, companyId: string, id: string) {
-  const res = await client.query(`${CLAIM_SELECT} WHERE wc.id = $1 AND wc.operating_company_id = $2`, [id, companyId]);
+  const res = await client.query(`${CLAIM_SELECT} WHERE wc.id = $1 AND wc.operating_company_id = $2::uuid`, [id, companyId]);
   return res.rows[0] ?? null;
 }
 
@@ -327,7 +327,7 @@ export async function registerMaintenanceWarrantyRoutes(app: FastifyInstance) {
     if (!parsed.success) return validationError(reply, parsed.error);
 
     const rows = await withCompany(user.uuid, parsed.data.operating_company_id, async (client) => {
-      const filters = ["pw.operating_company_id = $1"];
+      const filters = ["pw.operating_company_id = $1::uuid"];
       const values: unknown[] = [parsed.data.operating_company_id];
       if (!parsed.data.include_archived) filters.push("pw.archived_at IS NULL");
       if (parsed.data.work_order_id) {
@@ -390,7 +390,7 @@ export async function registerMaintenanceWarrantyRoutes(app: FastifyInstance) {
     if (!parsed.success) return validationError(reply, parsed.error);
 
     const rows = await withCompany(user.uuid, parsed.data.operating_company_id, async (client) => {
-      const filters = ["wc.operating_company_id = $1"];
+      const filters = ["wc.operating_company_id = $1::uuid"];
       const values: unknown[] = [parsed.data.operating_company_id];
       if (!parsed.data.include_archived) filters.push("wc.archived_at IS NULL");
       if (parsed.data.work_order_id) {
@@ -477,7 +477,7 @@ export async function registerMaintenanceWarrantyRoutes(app: FastifyInstance) {
       values.push(params.data.id, body.operating_company_id);
       await client.query(
         `UPDATE maintenance.warranty_claims SET ${sets.join(", ")}
-         WHERE id = $${values.length - 1} AND operating_company_id = $${values.length} AND archived_at IS NULL`,
+         WHERE id = $${values.length - 1} AND operating_company_id = $${values.length}::uuid AND archived_at IS NULL`,
         values
       );
       await appendCrudAudit(client, user.uuid, "maintenance.warranty_claim.updated", { id: params.data.id });
@@ -508,7 +508,7 @@ export async function registerMaintenanceWarrantyRoutes(app: FastifyInstance) {
              claim_number = COALESCE(NULLIF($3, ''), claim_number),
              notes = CASE WHEN $4 IS NULL OR $4 = '' THEN notes ELSE $4 END,
              updated_at = now()
-         WHERE id = $1 AND operating_company_id = $2 AND archived_at IS NULL`,
+         WHERE id = $1 AND operating_company_id = $2::uuid AND archived_at IS NULL`,
         [
           params.data.id,
           parsed.data.operating_company_id,
@@ -544,7 +544,7 @@ export async function registerMaintenanceWarrantyRoutes(app: FastifyInstance) {
              reimbursement_received_at = now(),
              notes = CASE WHEN $4 IS NULL OR $4 = '' THEN notes ELSE $4 END,
              updated_at = now()
-         WHERE id = $1 AND operating_company_id = $2 AND archived_at IS NULL`,
+         WHERE id = $1 AND operating_company_id = $2::uuid AND archived_at IS NULL`,
         [
           params.data.id,
           parsed.data.operating_company_id,
@@ -586,7 +586,7 @@ export async function registerMaintenanceWarrantyRoutes(app: FastifyInstance) {
       await client.query(
         `UPDATE maintenance.warranty_claims
          SET archived_at = now(), archive_reason = $3, updated_at = now()
-         WHERE id = $1 AND operating_company_id = $2 AND archived_at IS NULL`,
+         WHERE id = $1 AND operating_company_id = $2::uuid AND archived_at IS NULL`,
         [params.data.id, parsed.data.operating_company_id, parsed.data.archive_reason ?? "Archived from warranty claims"]
       );
       await appendCrudAudit(client, user.uuid, "maintenance.warranty_claim.archived", { id: params.data.id });

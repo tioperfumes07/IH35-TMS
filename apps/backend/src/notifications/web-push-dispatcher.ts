@@ -34,7 +34,7 @@ export async function dispatchDriverWebPush(input: {
       `
         SELECT endpoint, p256dh_key, auth_key
         FROM driver_pwa.push_subscriptions
-        WHERE operating_company_id = $1
+        WHERE operating_company_id = $1::uuid
           AND driver_id = $2
           AND (expires_at IS NULL OR expires_at > now())
       `,

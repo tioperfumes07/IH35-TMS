@@ -82,7 +82,7 @@ export async function registerDriverAlertRoutes(app: FastifyInstance) {
         `SELECT id, alert_type, message, severity, requires_ack, ack_deadline_at,
                 re_alarm_count, created_at
          FROM driveralert.dispatch
-         WHERE operating_company_id = $1
+         WHERE operating_company_id = $1::uuid
            AND driver_id = $2
            AND requires_ack = true
            AND acked_at IS NULL
@@ -115,7 +115,7 @@ export async function registerDriverAlertRoutes(app: FastifyInstance) {
              ack_method = $2,
              updated_at = now()
          WHERE id = $3
-           AND operating_company_id = $4
+           AND operating_company_id = $4::uuid
            AND acked_at IS NULL
          RETURNING id`,
         [user.uuid, input.ack_method, id, input.operating_company_id]
@@ -157,7 +157,7 @@ export async function registerDriverAlertRoutes(app: FastifyInstance) {
              last_re_alarmed_at = now(),
              updated_at = now()
          WHERE id = $1
-           AND operating_company_id = $2
+           AND operating_company_id = $2::uuid
            AND acked_at IS NULL
            AND is_active = true
          RETURNING id`,
@@ -197,7 +197,7 @@ export async function registerDriverAlertRoutes(app: FastifyInstance) {
                 requires_ack, acked_at, acked_by_driver_id, ack_method,
                 re_alarm_count, created_at
          FROM driveralert.dispatch
-         WHERE id = $1 AND operating_company_id = $2`,
+         WHERE id = $1 AND operating_company_id = $2::uuid`,
         [id, operating_company_id]
       );
 

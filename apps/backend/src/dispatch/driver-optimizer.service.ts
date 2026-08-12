@@ -202,7 +202,7 @@ export async function listOptimalDriversForLoad(userId: string, query: OptimalDr
           ORDER BY s.sequence_number ASC
           LIMIT 1
         ) sp ON true
-        WHERE l.id = $1 AND l.operating_company_id = $2 AND l.soft_deleted_at IS NULL
+        WHERE l.id = $1 AND l.operating_company_id = $2::uuid AND l.soft_deleted_at IS NULL
       `,
       [query.load_id, query.operating_company_id]
     );
@@ -263,10 +263,10 @@ export async function listOptimalDriversForLoad(userId: string, query: OptimalDr
             COUNT(*) FILTER (WHERE l.created_at >= now() - interval '30 days')::int AS completed_loads_30d
           FROM mdata.loads l
           WHERE l.assigned_primary_driver_id = d.id
-            AND l.operating_company_id = $1
+            AND l.operating_company_id = $1::uuid
             AND l.soft_deleted_at IS NULL
         ) perf ON true
-        WHERE d.operating_company_id = $1
+        WHERE d.operating_company_id = $1::uuid
           AND d.status = 'Active'::mdata.driver_status
           AND d.deactivated_at IS NULL
         ORDER BY d.last_name ASC, d.first_name ASC

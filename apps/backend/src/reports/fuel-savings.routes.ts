@@ -24,7 +24,7 @@ export async function registerFuelSavingsRoutes(app: FastifyInstance) {
           FROM views.fuel_savings_summary s
           LEFT JOIN mdata.drivers d ON d.id = s.driver_id
                                     AND d.operating_company_id = $1::uuid
-          WHERE s.operating_company_id = $1
+          WHERE s.operating_company_id = $1::uuid
           ORDER BY COALESCE(s.savings_ytd, 0) DESC
         `,
         [query.data.operating_company_id]

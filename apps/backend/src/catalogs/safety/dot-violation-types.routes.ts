@@ -72,7 +72,7 @@ const listQueryWithBasicSchema = listQuerySchema.extend({
 });
 
 export async function registerDotViolationTypesRoutes(app: FastifyInstance) {
-  app.get("/api/v1/catalogs/safety/dot-violation-types", async (req, reply) => {
+  app.get("/api/v1/catalogs/safety/dot-violation-types", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const parsed = listQueryWithBasicSchema.safeParse(req.query ?? {});
@@ -81,7 +81,7 @@ export async function registerDotViolationTypesRoutes(app: FastifyInstance) {
 
     const payload = await withCompanyScope(authUser.uuid, q.operating_company_id, async (client) => {
       const values: unknown[] = [q.operating_company_id];
-      const where: string[] = ["d.operating_company_id = $1"];
+      const where: string[] = ["d.operating_company_id = $1::uuid"];
       if (q.is_active === "true") where.push("d.is_active = true");
       if (q.is_active === "false") where.push("d.is_active = false");
       if (q.search) {
@@ -114,7 +114,7 @@ export async function registerDotViolationTypesRoutes(app: FastifyInstance) {
     return payload;
   });
 
-  app.get("/api/v1/catalogs/safety/dot-violation-types/:id", async (req, reply) => {
+  app.get("/api/v1/catalogs/safety/dot-violation-types/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
@@ -128,7 +128,7 @@ export async function registerDotViolationTypesRoutes(app: FastifyInstance) {
           SELECT ${SELECT_COLUMNS}
           FROM catalogs.dot_violation_types
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
           LIMIT 1
         `,
         [parsedParams.data.id, parsedQuery.data.operating_company_id]
@@ -140,7 +140,7 @@ export async function registerDotViolationTypesRoutes(app: FastifyInstance) {
     return row;
   });
 
-  app.post("/api/v1/catalogs/safety/dot-violation-types", async (req, reply) => {
+  app.post("/api/v1/catalogs/safety/dot-violation-types", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -155,7 +155,7 @@ export async function registerDotViolationTypesRoutes(app: FastifyInstance) {
         `
           SELECT id
           FROM catalogs.dot_violation_types
-          WHERE operating_company_id = $1
+          WHERE operating_company_id = $1::uuid
             AND violation_code = $2
           LIMIT 1
         `,
@@ -196,7 +196,7 @@ export async function registerDotViolationTypesRoutes(app: FastifyInstance) {
     return reply.code(201).send(created.row);
   });
 
-  app.patch("/api/v1/catalogs/safety/dot-violation-types/:id", async (req, reply) => {
+  app.patch("/api/v1/catalogs/safety/dot-violation-types/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -214,7 +214,7 @@ export async function registerDotViolationTypesRoutes(app: FastifyInstance) {
           `
             SELECT id
             FROM catalogs.dot_violation_types
-            WHERE operating_company_id = $1
+            WHERE operating_company_id = $1::uuid
               AND violation_code = $2
               AND id <> $3
             LIMIT 1
@@ -246,7 +246,7 @@ export async function registerDotViolationTypesRoutes(app: FastifyInstance) {
           UPDATE catalogs.dot_violation_types
           SET ${fields.join(", ")}
           WHERE id = $${values.length - 1}
-            AND operating_company_id = $${values.length}
+            AND operating_company_id = $${values.length}::uuid
           RETURNING ${SELECT_COLUMNS}
         `,
         values
@@ -267,7 +267,7 @@ export async function registerDotViolationTypesRoutes(app: FastifyInstance) {
     return updated.row;
   });
 
-  app.delete("/api/v1/catalogs/safety/dot-violation-types/:id", async (req, reply) => {
+  app.delete("/api/v1/catalogs/safety/dot-violation-types/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -283,7 +283,7 @@ export async function registerDotViolationTypesRoutes(app: FastifyInstance) {
           SET is_active = false,
               updated_at = now()
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
           RETURNING id, violation_code
         `,
         [parsedParams.data.id, parsedQuery.data.operating_company_id]

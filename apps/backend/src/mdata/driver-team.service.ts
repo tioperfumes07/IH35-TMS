@@ -59,7 +59,7 @@ async function assertDriverCompany(client: Queryable, driverId: string, operatin
         -- The driver ROW must belong to the company too, not merely their user account. Without this a
         -- driver whose identity_user_id has access to company X, but whose driver record lives in
         -- company Y, passes the assert and can be added to X's team.
-        AND d.operating_company_id = $2
+        AND d.operating_company_id = $2::uuid
         AND uca.deactivated_at IS NULL
       LIMIT 1
     `,
@@ -91,7 +91,7 @@ async function getTeam(client: Queryable, teamId: string, operatingCompanyId: st
       SELECT *
       FROM mdata.driver_teams
       WHERE id = $1
-        AND operating_company_id = $2
+        AND operating_company_id = $2::uuid
       LIMIT 1
     `,
     [teamId, operatingCompanyId]
@@ -115,7 +115,7 @@ export async function listDriverTeams(userId: string, operatingCompanyId: string
                              AND pd.operating_company_id = t.operating_company_id
         JOIN mdata.drivers cd ON cd.id = t.secondary_driver_id
                              AND cd.operating_company_id = t.operating_company_id
-        WHERE t.operating_company_id = $1
+        WHERE t.operating_company_id = $1::uuid
         ORDER BY t.is_active DESC, t.created_at DESC
       `,
       [operatingCompanyId]
@@ -139,7 +139,7 @@ export async function getDriverTeam(userId: string, operatingCompanyId: string, 
         JOIN mdata.drivers cd ON cd.id = t.secondary_driver_id
                              AND cd.operating_company_id = t.operating_company_id
         WHERE t.id = $2
-          AND t.operating_company_id = $1
+          AND t.operating_company_id = $1::uuid
         LIMIT 1
       `,
       [operatingCompanyId, teamId]
@@ -249,7 +249,7 @@ export async function updateTeamSplit(
         SELECT id
         FROM mdata.loads
         WHERE team_id = $1
-          AND operating_company_id = $3
+          AND operating_company_id = $3::uuid
           AND status = ANY($2::mdata.load_status_enum[])
           AND soft_deleted_at IS NULL
         LIMIT 1
@@ -327,7 +327,7 @@ export async function deactivateTeam(
         SELECT id
         FROM mdata.loads
         WHERE team_id = $1
-          AND operating_company_id = $3
+          AND operating_company_id = $3::uuid
           AND status = ANY($2::mdata.load_status_enum[])
           AND soft_deleted_at IS NULL
         LIMIT 1
@@ -342,7 +342,7 @@ export async function deactivateTeam(
             effective_to = COALESCE(effective_to, CURRENT_DATE),
             updated_at = now()
         WHERE id = $1
-          AND operating_company_id = $2
+          AND operating_company_id = $2::uuid
         RETURNING *
       `,
       [input.team_id, input.operating_company_id]
@@ -381,7 +381,7 @@ export async function assignTeamToLoad(
                COALESCE((quicksave_pending_fields->>'hazmat')::boolean, false) AS is_hazmat
         FROM mdata.loads
         WHERE id = $1
-          AND operating_company_id = $2
+          AND operating_company_id = $2::uuid
           AND soft_deleted_at IS NULL
         LIMIT 1
       `,
@@ -429,7 +429,7 @@ export async function computeTeamLoadSplit(userId: string, input: { operating_co
         SELECT id, operating_company_id, team_id, assigned_primary_driver_id, rate_total_cents
         FROM mdata.loads
         WHERE id = $1
-          AND operating_company_id = $2
+          AND operating_company_id = $2::uuid
           AND soft_deleted_at IS NULL
         LIMIT 1
       `,

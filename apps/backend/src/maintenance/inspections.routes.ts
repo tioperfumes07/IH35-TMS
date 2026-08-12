@@ -164,7 +164,7 @@ export async function registerMaintenanceInspectionsRoutes(app: FastifyInstance)
     if (!parsed.success) return validationError(reply, parsed.error);
 
     const rows = await withCompany(user.uuid, parsed.data.operating_company_id, async (client) => {
-      const filters = ["i.operating_company_id = $1"];
+      const filters = ["i.operating_company_id = $1::uuid"];
       const values: unknown[] = [parsed.data.operating_company_id];
       if (!parsed.data.include_archived) {
         filters.push("i.archived_at IS NULL");
@@ -199,7 +199,7 @@ export async function registerMaintenanceInspectionsRoutes(app: FastifyInstance)
       const res = await client.query(
         `
           ${INSPECTION_SELECT}
-          WHERE i.id = $1 AND i.operating_company_id = $2
+          WHERE i.id = $1 AND i.operating_company_id = $2::uuid
           LIMIT 1
         `,
         [params.data.id, query.data.operating_company_id]
@@ -243,7 +243,7 @@ export async function registerMaintenanceInspectionsRoutes(app: FastifyInstance)
       const created = await withCompany(user.uuid, body.operating_company_id, async (client) => {
         if (body.dvir_submission_id) {
           const dvirRes = await client.query(
-            `SELECT id FROM safety.dvir_submissions WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+            `SELECT id FROM safety.dvir_submissions WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
             [body.dvir_submission_id, body.operating_company_id]
           );
           if (!dvirRes.rows[0]) {
@@ -308,7 +308,7 @@ export async function registerMaintenanceInspectionsRoutes(app: FastifyInstance)
     try {
       const updated = await withCompany(user.uuid, body.operating_company_id, async (client) => {
         const existingRes = await client.query(
-          `SELECT * FROM maintenance.inspections WHERE id = $1 AND operating_company_id = $2 AND archived_at IS NULL LIMIT 1`,
+          `SELECT * FROM maintenance.inspections WHERE id = $1 AND operating_company_id = $2::uuid AND archived_at IS NULL LIMIT 1`,
           [params.data.id, body.operating_company_id]
         );
         const existing = existingRes.rows[0];
@@ -316,7 +316,7 @@ export async function registerMaintenanceInspectionsRoutes(app: FastifyInstance)
 
         if (body.dvir_submission_id) {
           const dvirRes = await client.query(
-            `SELECT id FROM safety.dvir_submissions WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+            `SELECT id FROM safety.dvir_submissions WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
             [body.dvir_submission_id, body.operating_company_id]
           );
           if (!dvirRes.rows[0]) throw Object.assign(new Error("dvir_not_found"), { code: "dvir_not_found" });
@@ -347,7 +347,7 @@ export async function registerMaintenanceInspectionsRoutes(app: FastifyInstance)
           `
           UPDATE maintenance.inspections
           SET ${fields.join(", ")}, updated_at = now()
-          WHERE id = $${values.length - 1} AND operating_company_id = $${values.length}
+          WHERE id = $${values.length - 1} AND operating_company_id = $${values.length}::uuid
         `,
           values
         );
@@ -386,7 +386,7 @@ export async function registerMaintenanceInspectionsRoutes(app: FastifyInstance)
         `
           UPDATE maintenance.inspections
           SET status = 'archived', archived_at = now(), archive_reason = $3, updated_at = now()
-          WHERE id = $1 AND operating_company_id = $2 AND archived_at IS NULL
+          WHERE id = $1 AND operating_company_id = $2::uuid AND archived_at IS NULL
           RETURNING id::text
         `,
         [params.data.id, parsed.data.operating_company_id, parsed.data.archive_reason ?? "Archived by user"]
@@ -415,13 +415,13 @@ export async function registerMaintenanceInspectionsRoutes(app: FastifyInstance)
     try {
       const photo = await withCompany(user.uuid, parsed.data.operating_company_id, async (client) => {
         const inspectionRes = await client.query(
-          `SELECT id FROM maintenance.inspections WHERE id = $1 AND operating_company_id = $2 AND archived_at IS NULL LIMIT 1`,
+          `SELECT id FROM maintenance.inspections WHERE id = $1 AND operating_company_id = $2::uuid AND archived_at IS NULL LIMIT 1`,
           [params.data.id, parsed.data.operating_company_id]
         );
         if (!inspectionRes.rows[0]) return null;
 
         const fileRes = await client.query(
-          `SELECT id FROM docs.files WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+          `SELECT id FROM docs.files WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
           [parsed.data.docs_file_id, parsed.data.operating_company_id]
         );
         if (!fileRes.rows[0]) throw Object.assign(new Error("docs_file_not_found"), { code: "docs_file_not_found" });

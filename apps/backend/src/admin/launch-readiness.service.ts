@@ -302,7 +302,7 @@ export async function buildLaunchReadinessPayload(
 
     const drivers_active = await safeCount(
       `SELECT COUNT(*)::text AS c FROM mdata.drivers
-       WHERE status = 'Active' AND deactivated_at IS NULL AND operating_company_id = $1`,
+       WHERE status = 'Active' AND deactivated_at IS NULL AND operating_company_id = $1::uuid`,
       companyParam
     );
     // units ownership is owner_company_id (TRK) with a lease override to currently_leased_to_company_id
@@ -314,11 +314,11 @@ export async function buildLaunchReadinessPayload(
       companyParam
     );
     const customers = await safeCount(
-      `SELECT COUNT(*)::text AS c FROM mdata.customers WHERE operating_company_id = $1`,
+      `SELECT COUNT(*)::text AS c FROM mdata.customers WHERE operating_company_id = $1::uuid`,
       companyParam
     );
     const vendors = await safeCount(
-      `SELECT COUNT(*)::text AS c FROM mdata.vendors WHERE operating_company_id = $1`,
+      `SELECT COUNT(*)::text AS c FROM mdata.vendors WHERE operating_company_id = $1::uuid`,
       companyParam
     );
 
@@ -328,7 +328,7 @@ export async function buildLaunchReadinessPayload(
         FROM banking.bank_accounts
         WHERE plaid_item_id IS NOT NULL AND TRIM(plaid_item_id) <> ''
           AND COALESCE(is_active, true) = true
-          AND operating_company_id = $1
+          AND operating_company_id = $1::uuid
       `,
       companyParam
     );
@@ -339,7 +339,7 @@ export async function buildLaunchReadinessPayload(
         FROM mdata.loads
         WHERE created_at >= now() - interval '30 days'
           AND soft_deleted_at IS NULL
-          AND operating_company_id = $1
+          AND operating_company_id = $1::uuid
       `,
       companyParam
     );
@@ -349,7 +349,7 @@ export async function buildLaunchReadinessPayload(
         SELECT COUNT(*)::text AS c
         FROM banking.bank_transactions
         WHERE created_at >= now() - interval '30 days'
-          AND operating_company_id = $1
+          AND operating_company_id = $1::uuid
       `,
       companyParam
     );
@@ -364,7 +364,7 @@ export async function buildLaunchReadinessPayload(
             SELECT COUNT(*)::text AS c
             FROM driver_finance.driver_settlements
             WHERE created_at >= now() - interval '30 days'
-              AND operating_company_id = $1
+              AND operating_company_id = $1::uuid
           `,
           companyParam
         );
@@ -385,7 +385,7 @@ export async function buildLaunchReadinessPayload(
             SELECT COUNT(*)::text AS c
             FROM driver_finance.driver_settlement_disputes
             WHERE status IN ('open','under_review')
-              AND operating_company_id = $1
+              AND operating_company_id = $1::uuid
           `,
           companyParam
         );
@@ -406,7 +406,7 @@ export async function buildLaunchReadinessPayload(
             FROM driver_finance.cash_advance_requests
             WHERE COALESCE(owner_approval_required, false) = true
               AND status IN ('pending','under_review')
-              AND operating_company_id = $1
+              AND operating_company_id = $1::uuid
           `,
           companyParam
         );
@@ -423,7 +423,7 @@ export async function buildLaunchReadinessPayload(
         const row = await singleRow<{ c: string }>(
           client,
           `SELECT COUNT(*)::text AS c FROM qbo.sync_alerts
-           WHERE resolved_at IS NULL AND operating_company_id = $1`,
+           WHERE resolved_at IS NULL AND operating_company_id = $1::uuid`,
           companyParam
         );
         qbo_sync_errors_unresolved = Number(row?.c ?? 0);

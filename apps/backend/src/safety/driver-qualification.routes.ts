@@ -96,7 +96,7 @@ export async function registerSafetyDriverQualificationRoutes(app: FastifyInstan
               ELSE (expiry_date - CURRENT_DATE)
             END AS days_to_expiry
           FROM safety.driver_qualification_files
-          WHERE operating_company_id = $1
+          WHERE operating_company_id = $1::uuid
             AND driver_id = $2
             AND voided_at IS NULL
           ORDER BY item_name ASC
@@ -189,7 +189,7 @@ export async function registerSafetyDriverQualificationRoutes(app: FastifyInstan
           SELECT *
           FROM safety.driver_qualification_files
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
             AND voided_at IS NULL
           LIMIT 1
         `,
@@ -206,7 +206,7 @@ export async function registerSafetyDriverQualificationRoutes(app: FastifyInstan
                 voided_reason = $3,
                 updated_at = now()
             WHERE id = $1
-              AND operating_company_id = $2
+              AND operating_company_id = $2::uuid
               AND voided_at IS NULL
             RETURNING *
           `,
@@ -237,7 +237,7 @@ export async function registerSafetyDriverQualificationRoutes(app: FastifyInstan
               notes = COALESCE($6, notes),
               updated_at = now()
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
             AND voided_at IS NULL
           RETURNING *
         `,

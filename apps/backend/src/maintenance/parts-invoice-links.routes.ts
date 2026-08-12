@@ -76,7 +76,7 @@ export async function registerMaintenancePartsInvoiceLinksRoutes(app: FastifyIns
                                    AND v.operating_company_id = pil.operating_company_id
           LEFT JOIN maintenance.parts_inventory pi ON pi.id = pil.parts_inventory_id
                                                            AND pi.operating_company_id = pil.operating_company_id
-          WHERE pil.operating_company_id = $1
+          WHERE pil.operating_company_id = $1::uuid
           ORDER BY pil.created_at DESC
           LIMIT 500
         `,
@@ -141,7 +141,7 @@ export async function registerMaintenancePartsInvoiceLinksRoutes(app: FastifyIns
                                      AND v.operating_company_id = pil.operating_company_id
             LEFT JOIN maintenance.parts_inventory pi ON pi.id = pil.parts_inventory_id
                                                              AND pi.operating_company_id = pil.operating_company_id
-            WHERE pil.operating_company_id = $1
+            WHERE pil.operating_company_id = $1::uuid
               AND wo.unit_id = $2
             ORDER BY pil.created_at DESC
             LIMIT 500
@@ -168,7 +168,7 @@ export async function registerMaintenancePartsInvoiceLinksRoutes(app: FastifyIns
 
     const result = await withCompany(user.uuid, query.data.operating_company_id, async (client) => {
       const woRes = await client.query(
-        `SELECT id, operating_company_id, status FROM maintenance.work_orders WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+        `SELECT id, operating_company_id, status FROM maintenance.work_orders WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
         [params.data.id, query.data.operating_company_id]
       );
       const wo = woRes.rows[0] as { id: string; status: string } | undefined;
@@ -205,7 +205,7 @@ export async function registerMaintenancePartsInvoiceLinksRoutes(app: FastifyIns
           `
             UPDATE maintenance.parts_inventory
             SET on_hand_qty = GREATEST(0, COALESCE(on_hand_qty, 0) - $2), updated_at = now()
-            WHERE id = $1 AND operating_company_id = $3
+            WHERE id = $1 AND operating_company_id = $3::uuid
           `,
           [body.data.parts_inventory_id, body.data.qty_used, query.data.operating_company_id]
         );
@@ -255,7 +255,7 @@ export async function registerMaintenancePartsInvoiceLinksRoutes(app: FastifyIns
       const deleted = await client.query(
         `
           DELETE FROM maintenance.parts_invoice_links
-          WHERE id = $1 AND operating_company_id = $2
+          WHERE id = $1 AND operating_company_id = $2::uuid
           RETURNING id, work_order_id
         `,
         [params.data.id, query.data.operating_company_id]

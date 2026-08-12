@@ -69,7 +69,7 @@ export async function manualReassignLoad(userId: string, input: ReassignBody) {
                  COALESCE((quicksave_pending_fields->>'hazmat')::boolean, false) AS is_hazmat
           FROM mdata.loads
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
             AND soft_deleted_at IS NULL
           FOR UPDATE
         `,
@@ -320,7 +320,7 @@ export async function listLoadStopsRefined(userId: string, operatingCompanyId: s
         FROM mdata.load_stops ls
         INNER JOIN mdata.loads l ON l.id = ls.load_id
         WHERE ls.load_id = $1
-          AND l.operating_company_id = $2
+          AND l.operating_company_id = $2::uuid
         ORDER BY ls.sequence_number ASC
       `,
       [loadId, operatingCompanyId]
@@ -340,7 +340,7 @@ export async function replaceLoadStopsRefined(
     await client.query("BEGIN");
     try {
       const load = await client.query(
-        `SELECT id FROM mdata.loads WHERE id = $1 AND operating_company_id = $2 AND soft_deleted_at IS NULL`,
+        `SELECT id FROM mdata.loads WHERE id = $1 AND operating_company_id = $2::uuid AND soft_deleted_at IS NULL`,
         [loadId, operatingCompanyId]
       );
       if (!load.rows[0]) throw new Error("E_LOAD_NOT_FOUND");
@@ -428,7 +428,7 @@ export async function listAvailableDriversForDispatch(
           ORDER BY s.sequence_number ASC
           LIMIT 1
         ) sp ON true
-        WHERE l.id = $1 AND l.operating_company_id = $2
+        WHERE l.id = $1 AND l.operating_company_id = $2::uuid
       `,
       [loadId, operatingCompanyId]
     );
@@ -445,7 +445,7 @@ export async function listAvailableDriversForDispatch(
           COALESCE(h.minutes_until_violation, 9999)::double precision AS minutes_until_violation
         FROM mdata.drivers d
         LEFT JOIN views.drivers_with_hos_status h ON h.id = d.id
-        WHERE d.operating_company_id = $1
+        WHERE d.operating_company_id = $1::uuid
           AND d.status = 'Active'::mdata.driver_status
           AND d.deactivated_at IS NULL
         ORDER BY d.last_name ASC, d.first_name ASC
@@ -505,7 +505,7 @@ export async function getDispatchLoadEta(userId: string, operatingCompanyId: str
         FROM mdata.loads l
         LEFT JOIN mdata.units u ON u.id = l.assigned_unit_id
                                 AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $2::uuid
-        WHERE l.id = $1 AND l.operating_company_id = $2 AND l.soft_deleted_at IS NULL
+        WHERE l.id = $1 AND l.operating_company_id = $2::uuid AND l.soft_deleted_at IS NULL
       `,
       [loadId, operatingCompanyId]
     );
@@ -535,7 +535,7 @@ export async function getDispatchLoadEta(userId: string, operatingCompanyId: str
     }
 
     const cfg = await client
-      .query(`SELECT is_enabled FROM integrations.samsara_config WHERE operating_company_id = $1 LIMIT 1`, [operatingCompanyId])
+      .query(`SELECT is_enabled FROM integrations.samsara_config WHERE operating_company_id = $1::uuid LIMIT 1`, [operatingCompanyId])
       .catch(() => ({ rows: [] as { is_enabled: boolean }[] }));
     const samsaraOn = Boolean(cfg.rows[0]?.is_enabled);
 
@@ -560,7 +560,7 @@ export async function listLoadTemplates(userId: string, operatingCompanyId: stri
       `
         SELECT id, name, template_json, created_at, updated_at
         FROM dispatch.load_templates
-        WHERE operating_company_id = $1
+        WHERE operating_company_id = $1::uuid
         ORDER BY name ASC
         LIMIT 500
       `,

@@ -91,7 +91,7 @@ async function ensureCustomerExists(
       SELECT id
       FROM mdata.customers
       WHERE id = $1
-        AND operating_company_id = $2
+        AND operating_company_id = $2::uuid
         AND deactivated_at IS NULL
       LIMIT 1
     `,

@@ -60,7 +60,7 @@ export async function registerDriverFinanceDeductionRoutes(app: FastifyInstance)
 
       const rows = await withCompany(user.uuid, operating_company_id, async (client) => {
         const values: unknown[] = [operating_company_id];
-        const where = ["d.operating_company_id = $1"];
+        const where = ["d.operating_company_id = $1::uuid"];
         if (driver_id) {
           values.push(driver_id);
           where.push(`d.driver_id = $${values.length}`);
@@ -223,7 +223,7 @@ export async function registerDriverFinanceDeductionRoutes(app: FastifyInstance)
         // so this query raised Postgres 42703 and the endpoint returned 500 on every call.
         // posted_at DOES exist — on accounting.escrow_postings (0234_block_23_escrow_posting_flow.sql:29),
         // the OTHER half of the escrow split-brain. The column name was carried across from that table.
-        `SELECT * FROM driver_finance.escrow_ledger WHERE driver_id = $1 AND operating_company_id = $2 ORDER BY created_at DESC LIMIT 200`,
+        `SELECT * FROM driver_finance.escrow_ledger WHERE driver_id = $1 AND operating_company_id = $2::uuid ORDER BY created_at DESC LIMIT 200`,
         [params.data.id, query.data.operating_company_id]
       );
       return res.rows;

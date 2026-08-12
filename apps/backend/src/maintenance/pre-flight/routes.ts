@@ -68,7 +68,7 @@ export async function registerPreFlightDvirRoutes(app: FastifyInstance) {
     if (!query.success) return sendValidationError(reply, query.error);
 
     const rows = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
-      const filters: string[] = ["dd.operating_company_id = $1"];
+      const filters: string[] = ["dd.operating_company_id = $1::uuid"];
       const values: unknown[] = [query.data.operating_company_id];
       let idx = 2;
 

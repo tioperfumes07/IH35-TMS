@@ -31,7 +31,7 @@ function legacyNumericToCents(value: unknown) {
 }
 
 export async function registerInternalFineReasonsRoutes(app: FastifyInstance) {
-  app.get("/api/v1/catalogs/safety/internal-fine-reasons", async (req, reply) => {
+  app.get("/api/v1/catalogs/safety/internal-fine-reasons", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const parsed = listQuerySchema.safeParse(req.query ?? {});
@@ -40,7 +40,7 @@ export async function registerInternalFineReasonsRoutes(app: FastifyInstance) {
 
     const payload = await withCompanyScope(authUser.uuid, q.operating_company_id, async (client) => {
       const values: unknown[] = [q.operating_company_id];
-      const where: string[] = ["r.operating_company_id = $1"];
+      const where: string[] = ["r.operating_company_id = $1::uuid"];
       if (q.is_active === "true") where.push("r.is_active = true");
       if (q.is_active === "false") where.push("r.is_active = false");
       if (q.search) {
@@ -81,7 +81,7 @@ export async function registerInternalFineReasonsRoutes(app: FastifyInstance) {
     return payload;
   });
 
-  app.get("/api/v1/catalogs/safety/internal-fine-reasons/:id", async (req, reply) => {
+  app.get("/api/v1/catalogs/safety/internal-fine-reasons/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
@@ -103,7 +103,7 @@ export async function registerInternalFineReasonsRoutes(app: FastifyInstance) {
             NULL::timestamptz AS updated_at
           FROM catalogs.internal_fine_reasons
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
           LIMIT 1
         `,
         [parsedParams.data.id, parsedQuery.data.operating_company_id]
@@ -115,7 +115,7 @@ export async function registerInternalFineReasonsRoutes(app: FastifyInstance) {
     return { ...row, default_amount: legacyNumericToCents((row as Record<string, unknown>).default_amount) };
   });
 
-  app.post("/api/v1/catalogs/safety/internal-fine-reasons", async (req, reply) => {
+  app.post("/api/v1/catalogs/safety/internal-fine-reasons", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -130,7 +130,7 @@ export async function registerInternalFineReasonsRoutes(app: FastifyInstance) {
         `
           SELECT id
           FROM catalogs.internal_fine_reasons
-          WHERE operating_company_id = $1
+          WHERE operating_company_id = $1::uuid
             AND reason_code = $2
           LIMIT 1
         `,
@@ -169,7 +169,7 @@ export async function registerInternalFineReasonsRoutes(app: FastifyInstance) {
     return reply.code(201).send({ ...created.row, default_amount: legacyNumericToCents(created.row.default_amount) });
   });
 
-  app.patch("/api/v1/catalogs/safety/internal-fine-reasons/:id", async (req, reply) => {
+  app.patch("/api/v1/catalogs/safety/internal-fine-reasons/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -187,7 +187,7 @@ export async function registerInternalFineReasonsRoutes(app: FastifyInstance) {
           `
             SELECT id
             FROM catalogs.internal_fine_reasons
-            WHERE operating_company_id = $1
+            WHERE operating_company_id = $1::uuid
               AND reason_code = $2
               AND id <> $3
             LIMIT 1
@@ -214,7 +214,7 @@ export async function registerInternalFineReasonsRoutes(app: FastifyInstance) {
           UPDATE catalogs.internal_fine_reasons
           SET ${fields.join(", ")}
           WHERE id = $${values.length - 1}
-            AND operating_company_id = $${values.length}
+            AND operating_company_id = $${values.length}::uuid
           RETURNING
             id,
             operating_company_id,
@@ -243,7 +243,7 @@ export async function registerInternalFineReasonsRoutes(app: FastifyInstance) {
     return { ...updated.row, default_amount: legacyNumericToCents(updated.row.default_amount) };
   });
 
-  app.delete("/api/v1/catalogs/safety/internal-fine-reasons/:id", async (req, reply) => {
+  app.delete("/api/v1/catalogs/safety/internal-fine-reasons/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -258,7 +258,7 @@ export async function registerInternalFineReasonsRoutes(app: FastifyInstance) {
           UPDATE catalogs.internal_fine_reasons
           SET is_active = false
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
           RETURNING id, reason_code
         `,
         [parsedParams.data.id, parsedQuery.data.operating_company_id]

@@ -155,7 +155,7 @@ async function fetchPaymentDetail(
 }
 
 export async function registerPaymentsRoutes(app: FastifyInstance) {
-  app.get("/api/v1/accounting/payments", async (req, reply) => {
+  app.get("/api/v1/accounting/payments", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
 
@@ -164,7 +164,7 @@ export async function registerPaymentsRoutes(app: FastifyInstance) {
     const q = query.data;
 
     const payload = await withCompanyScope(user.uuid, q.operating_company_id, async (client) => {
-      const where: string[] = ["p.operating_company_id = $1"];
+      const where: string[] = ["p.operating_company_id = $1::uuid"];
       const values: unknown[] = [q.operating_company_id];
 
       if (q.status === "active") where.push("p.voided_at IS NULL");
@@ -198,7 +198,7 @@ export async function registerPaymentsRoutes(app: FastifyInstance) {
           JOIN mdata.customers c
             ON c.id = p.customer_id
            AND c.operating_company_id = p.operating_company_id
-           AND c.operating_company_id = $1
+           AND c.operating_company_id = $1::uuid
           WHERE ${where.join(" AND ")}
         `,
         values
@@ -219,7 +219,7 @@ export async function registerPaymentsRoutes(app: FastifyInstance) {
           JOIN mdata.customers c
             ON c.id = p.customer_id
            AND c.operating_company_id = p.operating_company_id
-           AND c.operating_company_id = $1
+           AND c.operating_company_id = $1::uuid
           WHERE ${where.join(" AND ")}
           ORDER BY p.payment_date DESC, p.created_at DESC
           LIMIT $${limitIdx}
@@ -280,7 +280,7 @@ export async function registerPaymentsRoutes(app: FastifyInstance) {
           SELECT id
           FROM mdata.customers
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
           LIMIT 1
         `,
         [body.data.customer_id, query.data.operating_company_id]
@@ -364,7 +364,7 @@ export async function registerPaymentsRoutes(app: FastifyInstance) {
             SELECT id, amount_open_cents, status
             FROM accounting.invoices
             WHERE id = $1
-              AND operating_company_id = $2
+              AND operating_company_id = $2::uuid
               AND customer_id = $3
             LIMIT 1
           `,
@@ -521,7 +521,7 @@ export async function registerPaymentsRoutes(app: FastifyInstance) {
           SELECT *
           FROM accounting.payments
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
           LIMIT 1
         `,
         [params.data.id, query.data.operating_company_id]

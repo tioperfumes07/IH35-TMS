@@ -50,7 +50,7 @@ async function buildRows(client: any, companyId: string, report: ReportId): Prom
       return (
         await client.query(
           `SELECT unit_id::text, COUNT(*)::int AS work_orders, COALESCE(SUM(total_actual_cost),0)::numeric(12,2) AS total_cost
-           FROM maintenance.work_orders WHERE operating_company_id = $1 GROUP BY unit_id ORDER BY total_cost DESC NULLS LAST LIMIT 50`,
+           FROM maintenance.work_orders WHERE operating_company_id = $1::uuid GROUP BY unit_id ORDER BY total_cost DESC NULLS LAST LIMIT 50`,
           [companyId]
         )
       ).rows;
@@ -58,7 +58,7 @@ async function buildRows(client: any, companyId: string, report: ReportId): Prom
       return (
         await client.query(
           `SELECT unit_id::text, COALESCE(SUM(total_actual_cost),0)::numeric(12,2) AS total_cost, COUNT(*)::int AS work_orders
-           FROM maintenance.work_orders WHERE operating_company_id = $1 GROUP BY unit_id ORDER BY total_cost DESC NULLS LAST LIMIT 50`,
+           FROM maintenance.work_orders WHERE operating_company_id = $1::uuid GROUP BY unit_id ORDER BY total_cost DESC NULLS LAST LIMIT 50`,
           [companyId]
         )
       ).rows;
@@ -66,7 +66,7 @@ async function buildRows(client: any, companyId: string, report: ReportId): Prom
       return (
         await client.query(
           `SELECT source_type, COUNT(*)::int AS work_orders, COALESCE(SUM(total_actual_cost),0)::numeric(12,2) AS total_cost
-           FROM maintenance.work_orders WHERE operating_company_id = $1 GROUP BY source_type ORDER BY total_cost DESC NULLS LAST`,
+           FROM maintenance.work_orders WHERE operating_company_id = $1::uuid GROUP BY source_type ORDER BY total_cost DESC NULLS LAST`,
           [companyId]
         )
       ).rows;
@@ -76,7 +76,7 @@ async function buildRows(client: any, companyId: string, report: ReportId): Prom
           `SELECT
              COUNT(*)::int AS schedules,
              COUNT(*) FILTER (WHERE next_due_odometer IS NOT NULL)::int AS with_due_meter
-           FROM maintenance.pm_schedules WHERE operating_company_id = $1 AND is_active = true`,
+           FROM maintenance.pm_schedules WHERE operating_company_id = $1::uuid AND is_active = true`,
           [companyId]
         )
       ).rows;
@@ -96,7 +96,7 @@ async function buildRows(client: any, companyId: string, report: ReportId): Prom
       return (
         await client.query(
           `SELECT outcome, COUNT(*)::int AS inspections
-           FROM compliance.dot_inspection_events WHERE operating_company_id = $1 GROUP BY outcome`,
+           FROM compliance.dot_inspection_events WHERE operating_company_id = $1::uuid GROUP BY outcome`,
           [companyId]
         )
       ).rows;
@@ -113,7 +113,7 @@ async function buildRows(client: any, companyId: string, report: ReportId): Prom
            FROM maintenance.work_orders w
            LEFT JOIN mdata.vendors v ON v.id = w.external_vendor_id
                                      AND v.operating_company_id = $1::uuid
-           WHERE w.operating_company_id = $1
+           WHERE w.operating_company_id = $1::uuid
            GROUP BY vendor_name
            ORDER BY total_spend DESC NULLS LAST
            LIMIT 20`,
@@ -125,7 +125,7 @@ async function buildRows(client: any, companyId: string, report: ReportId): Prom
         await client.query(
           `SELECT id::text, display_id, total_actual_cost
            FROM maintenance.work_orders
-           WHERE operating_company_id = $1 AND COALESCE(total_actual_cost,0) >= 1000
+           WHERE operating_company_id = $1::uuid AND COALESCE(total_actual_cost,0) >= 1000
            ORDER BY total_actual_cost DESC NULLS LAST
            LIMIT 100`,
           [companyId]
@@ -136,7 +136,7 @@ async function buildRows(client: any, companyId: string, report: ReportId): Prom
         await client.query(
           `SELECT id::text, display_id, status, EXTRACT(day FROM now() - COALESCE(opened_at, created_at))::int AS age_days
            FROM maintenance.work_orders
-           WHERE operating_company_id = $1
+           WHERE operating_company_id = $1::uuid
              AND status NOT IN ('complete','completed','cancelled')
              AND now() - COALESCE(opened_at, created_at) > INTERVAL '7 days'
            ORDER BY age_days DESC

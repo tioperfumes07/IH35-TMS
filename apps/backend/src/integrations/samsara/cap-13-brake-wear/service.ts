@@ -156,7 +156,7 @@ export async function getLatestForUnit(
         odometer_miles,
         created_at::text
       FROM maintenance.brake_wear_measurements
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
         AND unit_uuid = $2
       ORDER BY brake_position, measured_at DESC
     `,
@@ -170,7 +170,7 @@ export async function listMeasurements(
   operatingCompanyId: string,
   filters: { unit_uuid?: string; position?: string; limit?: number }
 ): Promise<BrakeMeasurement[]> {
-  const clauses = ["operating_company_id = $1"];
+  const clauses = ["operating_company_id = $1::uuid"];
   const values: unknown[] = [operatingCompanyId];
   if (filters.unit_uuid) {
     values.push(filters.unit_uuid);
@@ -336,7 +336,7 @@ export async function projectReplacement(
         odometer_miles,
         created_at::text
       FROM maintenance.brake_wear_measurements
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
         AND unit_uuid = $2
         AND brake_position = $3
       ORDER BY measured_at ASC
@@ -405,7 +405,7 @@ export async function listProjectionsForUnit(
         projected_replacement_date::text,
         wear_rate_mm_per_day::text
       FROM maintenance.brake_projections
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
         AND unit_uuid = $2
       ORDER BY brake_position
     `,
@@ -453,7 +453,7 @@ export async function getAtRiskFleet(
       FROM maintenance.brake_projections bp
       JOIN mdata.units u ON u.id = bp.unit_uuid
                          AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $1::uuid
-      WHERE bp.operating_company_id = $1
+      WHERE bp.operating_company_id = $1::uuid
         AND bp.projected_replacement_date IS NOT NULL
         AND bp.projected_replacement_date <= (CURRENT_DATE + ($2::int * INTERVAL '1 day'))
       ORDER BY bp.projected_replacement_date ASC, u.unit_number, bp.brake_position

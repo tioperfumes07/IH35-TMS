@@ -54,7 +54,7 @@ export async function distributeLoadInstructions(input: DistributionInput) {
         LEFT JOIN mdata.drivers d ON d.id = l.assigned_primary_driver_id
                                  AND d.operating_company_id = l.operating_company_id
         WHERE l.id = $1
-          AND l.operating_company_id = $2
+          AND l.operating_company_id = $2::uuid
         LIMIT 1
       `,
       [input.load_id, input.operating_company_id]

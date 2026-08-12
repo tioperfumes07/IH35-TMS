@@ -92,7 +92,7 @@ async function withValidAttorneyReviewToken<T>(
       `
         SELECT *
         FROM legal.contract_templates
-        WHERE operating_company_id = $1
+        WHERE operating_company_id = $1::uuid
           AND id = $2
           AND status = 'pending_review'
         LIMIT 1
@@ -147,7 +147,7 @@ export async function attorneyPortalApprove(
           status = 'retired',
           retired_at = now(),
           updated_by_user_id = NULL
-        WHERE operating_company_id = $1
+        WHERE operating_company_id = $1::uuid
           AND template_code = $2
           AND status = 'active'
       `,
@@ -165,7 +165,7 @@ export async function attorneyPortalApprove(
           attorney_notes = $5,
           activated_at = now(),
           updated_by_user_id = NULL
-        WHERE operating_company_id = $1
+        WHERE operating_company_id = $1::uuid
           AND id = $2
           AND status = 'pending_review'
         RETURNING *
@@ -248,7 +248,7 @@ export async function attorneyPortalRequestChanges(
           status = 'draft',
           submitted_for_review_at = NULL,
           updated_by_user_id = NULL
-        WHERE operating_company_id = $1
+        WHERE operating_company_id = $1::uuid
           AND id = $2
           AND status = 'pending_review'
         RETURNING *
@@ -324,7 +324,7 @@ export async function attorneyPortalReject(
           status = 'draft',
           submitted_for_review_at = NULL,
           updated_by_user_id = NULL
-        WHERE operating_company_id = $1
+        WHERE operating_company_id = $1::uuid
           AND id = $2
           AND status = 'pending_review'
         RETURNING *

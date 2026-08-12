@@ -30,7 +30,7 @@ export async function registerGeofenceReconciliationRoutes(app: FastifyInstance)
     if (!q.success) return reply.code(400).send({ error: "validation_error" });
     const row = await withCurrentUser(user.uuid, async (client) => {
       const res = await client.query(
-        `SELECT * FROM safety.integrity_findings WHERE uuid = $1 AND operating_company_id = $2`,
+        `SELECT * FROM safety.integrity_findings WHERE uuid = $1 AND operating_company_id = $2::uuid`,
         [uuid, q.data.operating_company_id]
       );
       return res.rows[0] ?? null;

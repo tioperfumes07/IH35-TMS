@@ -109,7 +109,7 @@ export async function registerSafetyV5Routes(app: FastifyInstance) {
     if (!query.success) return validationError(reply, query.error);
     const inspections = await withCompany(user.uuid, user.role, query.data.operating_company_id, async (client) => {
       const res = await client.query(
-        `SELECT * FROM safety.dot_inspections WHERE operating_company_id = $1 ORDER BY inspection_date DESC, created_at DESC LIMIT 500`,
+        `SELECT * FROM safety.dot_inspections WHERE operating_company_id = $1::uuid ORDER BY inspection_date DESC, created_at DESC LIMIT 500`,
         [query.data.operating_company_id]
       );
       return res.rows;
@@ -357,7 +357,7 @@ export async function registerSafetyV5Routes(app: FastifyInstance) {
           LEFT JOIN mdata.drivers d
             ON d.id = f.driver_id
            AND d.operating_company_id = f.operating_company_id
-          WHERE f.operating_company_id = $1
+          WHERE f.operating_company_id = $1::uuid
           ${driverFilter}
           ORDER BY f.imposed_date DESC, f.created_at DESC
           LIMIT 500
@@ -396,7 +396,7 @@ export async function registerSafetyV5Routes(app: FastifyInstance) {
 
     const outcome = await withCompany(user.uuid, user.role, query.data.operating_company_id, async (client) => {
       const current = await client.query(
-        `SELECT id, status, voided_at FROM safety.internal_fines WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+        `SELECT id, status, voided_at FROM safety.internal_fines WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
         [params.data.id, query.data.operating_company_id]
       );
       const row = current.rows[0];
@@ -410,7 +410,7 @@ export async function registerSafetyV5Routes(app: FastifyInstance) {
           SET status = 'disputed',
               notes = COALESCE(notes || E'\\n', '') || 'DISPUTED: ' || $4
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
             AND voided_at IS NULL
             AND status <> 'converted_to_liability'
           RETURNING *
@@ -482,7 +482,7 @@ export async function registerSafetyV5Routes(app: FastifyInstance) {
       const current = await client.query(
         `SELECT id, status, voided_at, driver_liability_id
            FROM safety.internal_fines
-          WHERE id = $1 AND operating_company_id = $2
+          WHERE id = $1 AND operating_company_id = $2::uuid
           LIMIT 1`,
         [params.data.id, query.data.operating_company_id]
       );
@@ -500,7 +500,7 @@ export async function registerSafetyV5Routes(app: FastifyInstance) {
           UPDATE safety.internal_fines
           SET status = 'voided', voided_at = now(), voided_reason = $3
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
             AND voided_at IS NULL
             AND driver_liability_id IS NULL
             AND status <> 'converted_to_liability'
@@ -608,7 +608,7 @@ export async function registerSafetyV5Routes(app: FastifyInstance) {
           SELECT c.*, t.type_code, t.type_name
           FROM safety.complaints c
           LEFT JOIN catalogs.complaint_types t ON t.id = c.complaint_type_id
-          WHERE c.operating_company_id = $1
+          WHERE c.operating_company_id = $1::uuid
           ORDER BY c.complaint_date DESC, c.created_at DESC
           LIMIT 500
         `,

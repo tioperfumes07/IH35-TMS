@@ -52,7 +52,7 @@ async function hasRelation(client: { query: (sql: string, values?: unknown[]) =>
 }
 
 export async function registerFuelPlannerRoutes(app: FastifyInstance) {
-  app.get("/api/v1/fuel/planner/dashboard", async (req, reply) => {
+  app.get("/api/v1/fuel/planner/dashboard", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -64,7 +64,7 @@ export async function registerFuelPlannerRoutes(app: FastifyInstance) {
         `
           SELECT count(*)::int AS count
           FROM views.fuel_planner_active_routes
-          WHERE operating_company_id = $1
+          WHERE operating_company_id = $1::uuid
         `,
         [companyId]
       );
@@ -74,7 +74,7 @@ export async function registerFuelPlannerRoutes(app: FastifyInstance) {
             COALESCE(sum(total_cost), 0)::numeric AS spend,
             COALESCE(avg(price_per_gallon), 0)::numeric AS avg_price
           FROM fuel.fuel_transactions
-          WHERE operating_company_id = $1
+          WHERE operating_company_id = $1::uuid
             AND purchased_at >= date_trunc('month', now())
         `,
         [companyId]
@@ -83,7 +83,7 @@ export async function registerFuelPlannerRoutes(app: FastifyInstance) {
         `
           SELECT COALESCE(sum(savings_estimate), 0)::numeric AS savings
           FROM views.fuel_planner_active_routes
-          WHERE operating_company_id = $1
+          WHERE operating_company_id = $1::uuid
         `,
         [companyId]
       );
@@ -91,7 +91,7 @@ export async function registerFuelPlannerRoutes(app: FastifyInstance) {
         `
           SELECT COALESCE(round(avg(pct_followed), 1), 0)::numeric AS pct
           FROM views.fuel_compliance_summary
-          WHERE operating_company_id = $1
+          WHERE operating_company_id = $1::uuid
         `,
         [companyId]
       );
@@ -99,7 +99,7 @@ export async function registerFuelPlannerRoutes(app: FastifyInstance) {
         `
           SELECT COALESCE(avg(current_mpg), 0)::numeric AS mpg
           FROM views.fuel_planner_active_routes
-          WHERE operating_company_id = $1
+          WHERE operating_company_id = $1::uuid
         `,
         [companyId]
       );
@@ -107,7 +107,7 @@ export async function registerFuelPlannerRoutes(app: FastifyInstance) {
         `
           SELECT max(updated_at)::text AS synced_at
           FROM fuel.loves_prices_daily
-          WHERE operating_company_id = $1
+          WHERE operating_company_id = $1::uuid
         `,
         [companyId]
       ).catch(() => ({ rows: [{ synced_at: null }] }));
@@ -126,7 +126,7 @@ export async function registerFuelPlannerRoutes(app: FastifyInstance) {
     return payload;
   });
 
-  app.get("/api/v1/fuel/planner/active-routes", async (req, reply) => {
+  app.get("/api/v1/fuel/planner/active-routes", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -139,7 +139,7 @@ export async function registerFuelPlannerRoutes(app: FastifyInstance) {
         `
           SELECT *
           FROM views.fuel_planner_active_routes
-          WHERE operating_company_id = $1
+          WHERE operating_company_id = $1::uuid
           ORDER BY computed_at DESC
           LIMIT 100
         `,
@@ -150,7 +150,7 @@ export async function registerFuelPlannerRoutes(app: FastifyInstance) {
     return { routes };
   });
 
-  app.get("/api/v1/fuel/planner/recommendations/:id", async (req, reply) => {
+  app.get("/api/v1/fuel/planner/recommendations/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const params = recommendationIdParamsSchema.safeParse(req.params ?? {});
@@ -165,7 +165,7 @@ export async function registerFuelPlannerRoutes(app: FastifyInstance) {
           SELECT *
           FROM views.fuel_planner_active_routes
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
           LIMIT 1
         `,
         [params.data.id, companyId]
@@ -228,7 +228,7 @@ export async function registerFuelPlannerRoutes(app: FastifyInstance) {
           SELECT id, operating_company_id, driver_id, load_id, computed_at
           FROM fuel.route_recommendations
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
           LIMIT 1
         `,
         [params.data.id, companyId]
@@ -288,7 +288,7 @@ export async function registerFuelPlannerRoutes(app: FastifyInstance) {
             COALESCE(round(avg(pct_followed), 1), 0)::numeric AS pct,
             COALESCE(sum(total_recs), 0)::bigint AS total_recs
           FROM views.fuel_compliance_summary
-          WHERE operating_company_id = $1
+          WHERE operating_company_id = $1::uuid
         `,
         [companyId]
       );
@@ -303,7 +303,7 @@ export async function registerFuelPlannerRoutes(app: FastifyInstance) {
           FROM views.fuel_compliance_summary c
           LEFT JOIN mdata.drivers d ON d.id = c.driver_id
                                     AND d.operating_company_id = $1::uuid
-          WHERE c.operating_company_id = $1
+          WHERE c.operating_company_id = $1::uuid
           ORDER BY c.pct_followed DESC NULLS LAST
           LIMIT 25
         `,
@@ -332,7 +332,7 @@ export async function registerFuelPlannerRoutes(app: FastifyInstance) {
             COALESCE(sum(savings_ytd), 0)::numeric AS savings_ytd,
             COALESCE(sum(lost_savings_ytd), 0)::numeric AS lost_savings_ytd
           FROM views.fuel_savings_summary
-          WHERE operating_company_id = $1
+          WHERE operating_company_id = $1::uuid
         `,
         [companyId]
       );
@@ -345,7 +345,7 @@ export async function registerFuelPlannerRoutes(app: FastifyInstance) {
           FROM views.fuel_savings_summary s
           LEFT JOIN mdata.drivers d ON d.id = s.driver_id
                                     AND d.operating_company_id = $1::uuid
-          WHERE s.operating_company_id = $1
+          WHERE s.operating_company_id = $1::uuid
           ORDER BY s.savings_ytd DESC NULLS LAST
           LIMIT 1
         `,
@@ -383,7 +383,7 @@ export async function registerFuelPlannerRoutes(app: FastifyInstance) {
     return settings;
   });
 
-  app.patch("/api/v1/fuel/planner/settings", async (req, reply) => {
+  app.patch("/api/v1/fuel/planner/settings", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -435,7 +435,7 @@ export async function registerFuelPlannerRoutes(app: FastifyInstance) {
         `
           UPDATE fuel.fuel_planner_settings
           SET ${setClauses.join(", ")}
-          WHERE operating_company_id = $1
+          WHERE operating_company_id = $1::uuid
           RETURNING *
         `,
         values

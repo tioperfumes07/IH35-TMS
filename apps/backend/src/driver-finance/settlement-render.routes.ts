@@ -79,7 +79,7 @@ export async function registerDriverFinanceSettlementHtmlRoutes(app: FastifyInst
           FROM driver_finance.driver_settlements s
           JOIN mdata.drivers d ON d.id = s.driver_id
           WHERE s.id = $1
-            AND s.operating_company_id = $2
+            AND s.operating_company_id = $2::uuid
           LIMIT 1
         `,
         [params.data.settlementId, query.data.operating_company_id]
@@ -103,7 +103,7 @@ export async function registerDriverFinanceSettlementHtmlRoutes(app: FastifyInst
             COALESCE(SUM(deductions_total), 0)::numeric AS deductions,
             COALESCE(SUM(net_pay), 0)::numeric AS net
           FROM driver_finance.driver_settlements
-          WHERE operating_company_id = $1
+          WHERE operating_company_id = $1::uuid
             AND driver_id = $2
             AND period_start >= date_trunc('year', $3::date)
             AND period_end <= $3::date

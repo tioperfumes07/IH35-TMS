@@ -106,7 +106,7 @@ export function registerLegacyAccountingCatalogRoutes(app: FastifyInstance, conf
       let entityClause = "";
       if (config.entityScoped && q.operating_company_id) {
         values.push(q.operating_company_id);
-        entityClause = `AND t.operating_company_id = $${values.length}`;
+        entityClause = `AND t.operating_company_id = $${values.length}::uuid`;
       }
       let searchClause = "";
       if (q.search) {
@@ -170,7 +170,7 @@ export function registerLegacyAccountingCatalogRoutes(app: FastifyInstance, conf
       let entityClause = "";
       if (config.entityScoped && oc) {
         values.push(oc);
-        entityClause = `AND t.operating_company_id = $${values.length}`;
+        entityClause = `AND t.operating_company_id = $${values.length}::uuid`;
       }
       const res = await client.query(
         `
@@ -344,7 +344,7 @@ export function registerLegacyAccountingCatalogRoutes(app: FastifyInstance, conf
     let entityClause = "";
     if (config.entityScoped && oc) {
       values.push(oc);
-      entityClause = `AND operating_company_id = $${values.length}`;
+      entityClause = `AND operating_company_id = $${values.length}::uuid`;
     }
 
     const result = await withCurrentUser(authUser.uuid, async (client) => {
@@ -394,7 +394,7 @@ export function registerLegacyAccountingCatalogRoutes(app: FastifyInstance, conf
       let entityClause = "";
       if (config.entityScoped && oc) {
         values.push(oc);
-        entityClause = `AND operating_company_id = $${values.length}`;
+        entityClause = `AND operating_company_id = $${values.length}::uuid`;
       }
       const res = await client.query(
         config.activeMode === "deactivated_at"
@@ -433,7 +433,7 @@ export function registerQboCategoriesCatalogRoutes(app: FastifyInstance) {
 
     const payload = await withCurrentUser(authUser.uuid, async (client) => {
       const values: unknown[] = [q.operating_company_id];
-      const where: string[] = ["operating_company_id = $1"];
+      const where: string[] = ["operating_company_id = $1::uuid"];
       if (q.is_active === "true") where.push("is_active = true");
       if (q.is_active === "false") where.push("is_active = false");
       if (q.search) {
@@ -473,7 +473,7 @@ export function registerQboCategoriesCatalogRoutes(app: FastifyInstance) {
         `
           SELECT id, code, display_name, description, metadata, is_active, sort_order, created_at, updated_at
           FROM catalogs.qbo_categories
-          WHERE id = $1 AND operating_company_id = $2
+          WHERE id = $1 AND operating_company_id = $2::uuid
           LIMIT 1
         `,
         [parsedParams.data.id, parsedQuery.data.operating_company_id]
@@ -539,7 +539,7 @@ export function registerQboCategoriesCatalogRoutes(app: FastifyInstance) {
         `
           UPDATE catalogs.qbo_categories
           SET ${setParts.join(", ")}
-          WHERE id = $${values.length - 1} AND operating_company_id = $${values.length}
+          WHERE id = $${values.length - 1} AND operating_company_id = $${values.length}::uuid
           RETURNING id
         `,
         values
@@ -564,7 +564,7 @@ export function registerQboCategoriesCatalogRoutes(app: FastifyInstance) {
         `
           UPDATE catalogs.qbo_categories
           SET is_active = false, updated_at = now()
-          WHERE id = $1 AND operating_company_id = $2
+          WHERE id = $1 AND operating_company_id = $2::uuid
           RETURNING id
         `,
         [parsedParams.data.id, parsedQuery.data.operating_company_id]

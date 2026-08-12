@@ -44,7 +44,7 @@ export async function getOrCreateLoadThread(
   args: { operating_company_id: string; load_id: string; actor_user_id: string },
 ): Promise<{ id: string; created: boolean }> {
   const existing = await client.query<{ id: string }>(
-    `SELECT id FROM chat.threads WHERE operating_company_id = $1 AND load_id = $2 AND kind = 'load' LIMIT 1`,
+    `SELECT id FROM chat.threads WHERE operating_company_id = $1::uuid AND load_id = $2 AND kind = 'load' LIMIT 1`,
     [args.operating_company_id, args.load_id],
   );
   if (existing.rows[0]) {
@@ -59,7 +59,7 @@ export async function getOrCreateLoadThread(
   }
 
   const load = await client.query<{ load_number: string | null; assigned_primary_driver_id: string | null }>(
-    `SELECT load_number, assigned_primary_driver_id FROM mdata.loads WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+    `SELECT load_number, assigned_primary_driver_id FROM mdata.loads WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
     [args.load_id, args.operating_company_id],
   );
   if (!load.rows[0]) throw new Error("load_not_found");

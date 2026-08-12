@@ -76,7 +76,7 @@ export async function extractVendorIdFromForensic(operatingCompanyId: string, ve
       `
         SELECT qbo_entity_id
         FROM qbo_archive.entities_snapshot
-        WHERE operating_company_id = $1
+        WHERE operating_company_id = $1::uuid
           AND qbo_entity_type = 'Vendor'
           AND (
             LOWER(raw_snapshot->>'DisplayName') = LOWER($2)

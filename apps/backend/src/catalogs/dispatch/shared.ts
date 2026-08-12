@@ -112,7 +112,7 @@ export function registerDispatchCatalogCrudRoutes(app: FastifyInstance, options:
 
     const result = await withCompanyScope(user.uuid, q.operating_company_id, async (client) => {
       const values: unknown[] = [q.operating_company_id];
-      const filters: string[] = ["operating_company_id = $1"];
+      const filters: string[] = ["operating_company_id = $1::uuid"];
 
       if (q.search) {
         values.push(`%${q.search}%`);
@@ -176,7 +176,7 @@ export function registerDispatchCatalogCrudRoutes(app: FastifyInstance, options:
         `
           SELECT id, operating_company_id, code, display_name, description, metadata, is_active, sort_order, created_at, updated_at
           FROM ${tableName}
-          WHERE operating_company_id = $1
+          WHERE operating_company_id = $1::uuid
             AND id = $2
           LIMIT 1
         `,
@@ -263,7 +263,7 @@ export function registerDispatchCatalogCrudRoutes(app: FastifyInstance, options:
           `
             SELECT id, operating_company_id, code, display_name, description, metadata, is_active, sort_order, created_at, updated_at
             FROM ${tableName}
-            WHERE operating_company_id = $1
+            WHERE operating_company_id = $1::uuid
               AND id = $2
             LIMIT 1
           `,
@@ -279,7 +279,7 @@ export function registerDispatchCatalogCrudRoutes(app: FastifyInstance, options:
           `
             UPDATE ${tableName}
             SET ${fields.join(", ")}
-            WHERE operating_company_id = $${companyIdx}
+            WHERE operating_company_id = $${companyIdx}::uuid
               AND id = $${idIdx}
             RETURNING id, operating_company_id, code, display_name, description, metadata, is_active, sort_order, created_at, updated_at
           `,
@@ -327,7 +327,7 @@ export function registerDispatchCatalogCrudRoutes(app: FastifyInstance, options:
           UPDATE ${tableName}
           SET is_active = false,
               updated_at = now()
-          WHERE operating_company_id = $1
+          WHERE operating_company_id = $1::uuid
             AND id = $2
           RETURNING id, operating_company_id, code, display_name, description, metadata, is_active, sort_order, created_at, updated_at
         `,

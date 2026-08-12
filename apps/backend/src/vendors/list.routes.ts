@@ -19,7 +19,7 @@ function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
 }
 
 export async function registerVendorListRoutes(app: FastifyInstance) {
-  app.get("/api/v1/vendors", async (req, reply) => {
+  app.get("/api/v1/vendors", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
 
@@ -36,7 +36,7 @@ export async function registerVendorListRoutes(app: FastifyInstance) {
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [companyId]);
 
       const values: unknown[] = [companyId];
-      const filters = ["deactivated_at IS NULL", `operating_company_id = $1`];
+      const filters = ["deactivated_at IS NULL", `operating_company_id = $1::uuid`];
       if (search) {
         values.push(`%${search}%`);
         filters.push(`(vendor_name ILIKE $${values.length} OR vendor_code ILIKE $${values.length})`);

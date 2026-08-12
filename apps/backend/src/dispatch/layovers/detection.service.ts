@@ -98,7 +98,7 @@ export async function detectLayovers(client: PoolClient, operatingCompanyId: str
        FROM mdata.loads l
        JOIN delivered d ON d.load_id = l.id
        LEFT JOIN started st ON st.load_id = l.id
-       WHERE l.operating_company_id = $1
+       WHERE l.operating_company_id = $1::uuid
          AND l.soft_deleted_at IS NULL
          AND l.assigned_primary_driver_id IS NOT NULL
      )
@@ -121,7 +121,7 @@ export async function detectLayovers(client: PoolClient, operatingCompanyId: str
     `SELECT count(*)::text AS n
        FROM mdata.loads l
        JOIN mdata.load_stops s ON s.load_id = l.id
-      WHERE l.operating_company_id = $1
+      WHERE l.operating_company_id = $1::uuid
         AND l.soft_deleted_at IS NULL
         AND l.assigned_primary_driver_id IS NOT NULL
         AND s.stop_type = 'delivery'
@@ -171,7 +171,7 @@ export async function getLayoversForDriver(
               layover_started_at, layover_ended_at, duration_hours,
               layover_location, billable_to_customer, per_diem_eligible
        FROM dispatch.driver_layovers
-       WHERE operating_company_id = $1 AND driver_uuid = $2
+       WHERE operating_company_id = $1::uuid AND driver_uuid = $2
          ${dateFilter}
        ORDER BY layover_started_at DESC
        LIMIT 100`,
@@ -195,7 +195,7 @@ export async function getLayoverSummary(
          COUNT(*) FILTER (WHERE billable_to_customer) AS billable_count,
          COUNT(*) FILTER (WHERE per_diem_eligible) AS per_diem_count
        FROM dispatch.driver_layovers
-       WHERE operating_company_id = $1
+       WHERE operating_company_id = $1::uuid
          AND driver_uuid = $2
          AND layover_started_at >= now() - ($3 * INTERVAL '1 day')`,
       [operatingCompanyId, driverUuid, lastDays]

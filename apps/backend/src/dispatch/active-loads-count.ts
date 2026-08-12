@@ -32,7 +32,7 @@ export async function countDispatchLoadsByStatuses(
     `
       SELECT count(*)::int AS count
       FROM mdata.loads
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
         AND soft_deleted_at IS NULL
         AND status IN (${statusInClause(statuses)})
     `,
@@ -83,7 +83,7 @@ export async function getOpenLoadsBreakdown(
         count(*) FILTER (WHERE status NOT IN (${transitIn}) AND assigned_primary_driver_id IS NOT NULL)::int AS assigned,
         count(*) FILTER (WHERE status NOT IN (${transitIn}) AND assigned_primary_driver_id IS NULL)::int AS unassigned
       FROM mdata.loads
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
         AND soft_deleted_at IS NULL
         AND status IN (${activeIn})
     `,

@@ -142,7 +142,7 @@ export async function registerMaintenanceLaborRoutes(app: FastifyInstance) {
       if (!(await woTimeEntriesReady(client))) return { kind: "unavailable" as const };
 
       const wo = await client.query(
-        `SELECT id FROM maintenance.work_orders WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+        `SELECT id FROM maintenance.work_orders WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
         [params.data.woId, body.data.operating_company_id]
       );
       if (!wo.rows[0]) return { kind: "missing_wo" as const };
@@ -202,7 +202,7 @@ export async function registerMaintenanceLaborRoutes(app: FastifyInstance) {
       if (!(await woTimeEntriesReady(client))) return { kind: "unavailable" as const };
 
       const wo = await client.query(
-        `SELECT id FROM maintenance.work_orders WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+        `SELECT id FROM maintenance.work_orders WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
         [params.data.woId, query.data.operating_company_id]
       );
       if (!wo.rows[0]) return { kind: "missing_wo" as const };
@@ -212,7 +212,7 @@ export async function registerMaintenanceLaborRoutes(app: FastifyInstance) {
           SELECT *
           FROM maintenance.wo_time_entries
           WHERE work_order_id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
             AND deleted_at IS NULL
           ORDER BY started_at DESC
         `,
@@ -245,7 +245,7 @@ export async function registerMaintenanceLaborRoutes(app: FastifyInstance) {
           SET ended_at = now(),
               updated_at = now()
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
             AND deleted_at IS NULL
             AND ended_at IS NULL
           RETURNING *
@@ -277,7 +277,7 @@ export async function registerMaintenanceLaborRoutes(app: FastifyInstance) {
       if (!(await woTimeEntriesReady(client))) return { kind: "unavailable" as const };
 
       const wo = await client.query(
-        `SELECT id FROM maintenance.work_orders WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+        `SELECT id FROM maintenance.work_orders WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
         [body.data.work_order_id, body.data.operating_company_id]
       );
       if (!wo.rows[0]) return { kind: "missing_wo" as const };
@@ -346,7 +346,7 @@ export async function registerMaintenanceLaborRoutes(app: FastifyInstance) {
               notes = COALESCE($4, notes),
               updated_at = now()
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
             AND deleted_at IS NULL
           RETURNING *
         `,
@@ -381,7 +381,7 @@ export async function registerMaintenanceLaborRoutes(app: FastifyInstance) {
           SET deleted_at = now(),
               updated_at = now()
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
             AND deleted_at IS NULL
           RETURNING *
         `,

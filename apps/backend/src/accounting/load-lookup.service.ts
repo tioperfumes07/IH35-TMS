@@ -25,7 +25,7 @@ export async function suggestLoadForExpense(client: QueryClient, input: SuggestL
           FROM mdata.load_stops ls
           WHERE ls.load_id = l.id
         ) stop_window ON true
-        WHERE l.operating_company_id = $1
+        WHERE l.operating_company_id = $1::uuid
           AND l.assigned_primary_driver_id = $2
           AND l.assigned_unit_id = $3
           AND l.soft_deleted_at IS NULL
@@ -53,7 +53,7 @@ export async function suggestLoadForExpense(client: QueryClient, input: SuggestL
           FROM mdata.load_stops ls
           WHERE ls.load_id = l.id
         ) stop_window ON true
-        WHERE l.operating_company_id = $1
+        WHERE l.operating_company_id = $1::uuid
           AND l.assigned_primary_driver_id = $2
           AND l.soft_deleted_at IS NULL
           AND $3::date BETWEEN (COALESCE(stop_window.first_stop_date, l.created_at::date) - 2)

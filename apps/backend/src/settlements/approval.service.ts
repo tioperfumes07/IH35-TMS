@@ -166,7 +166,7 @@ export async function getSettlementSummary(
     JOIN mdata.drivers d ON d.id = s.driver_id
     LEFT JOIN driver_finance.escrow_balances eb
       ON eb.driver_id = s.driver_id AND eb.operating_company_id = s.operating_company_id
-    WHERE s.id = $1 AND s.operating_company_id = $2
+    WHERE s.id = $1 AND s.operating_company_id = $2::uuid
   `, [settlementId, operatingCompanyId]);
 
   if (result.rows.length === 0) return null;
@@ -233,7 +233,7 @@ export async function getSettlementLineItems(
     LEFT JOIN mdata.loads l ON l.id = li.load_id
     -- IDOR scope (xe-fin): settlement_lines RLS is role-scoped, NOT entity-scoped, so bind the
     -- caller's operating company explicitly. approve/reject scope the same way.
-    WHERE li.settlement_id = $1 AND li.operating_company_id = $2
+    WHERE li.settlement_id = $1 AND li.operating_company_id = $2::uuid
     ORDER BY
       CASE li.line_type
         WHEN 'earnings' THEN 1
@@ -279,7 +279,7 @@ export async function approveLineItem(
       approval_status = 'approved',
       approved_at = now(),
       approved_by = $1
-    WHERE id = $2 AND operating_company_id = $3 AND approval_status = 'pending'
+    WHERE id = $2 AND operating_company_id = $3::uuid AND approval_status = 'pending'
     RETURNING settlement_id, category, (amount * 100)::bigint as amount_cents
   `, [input.approvedBy, input.lineItemId, operatingCompanyId]);
 
@@ -328,7 +328,7 @@ export async function rejectLineItem(
       rejected_at = now(),
       rejected_by = $1,
       rejection_reason = $2
-    WHERE id = $3 AND operating_company_id = $4 AND approval_status = 'pending'
+    WHERE id = $3 AND operating_company_id = $4::uuid AND approval_status = 'pending'
     RETURNING settlement_id, category, (amount * 100)::bigint as amount_cents
   `, [input.rejectedBy, input.reason, input.lineItemId, operatingCompanyId]);
 
@@ -412,7 +412,7 @@ async function updateEscrowBalance(
   // Get the balance ID for ledger entry
   const balanceResult = await client.query<{ id: string; current_balance_cents: number }>(`
     SELECT id, current_balance_cents FROM driver_finance.escrow_balances
-    WHERE driver_id = $1 AND operating_company_id = $2
+    WHERE driver_id = $1 AND operating_company_id = $2::uuid
   `, [driver_id, operating_company_id]);
 
   if (balanceResult.rows.length > 0) {
@@ -470,7 +470,7 @@ export async function checkAllLinesApproved(
       COUNT(*) FILTER (WHERE approval_status = 'pending') as pending_count,
       COUNT(*) FILTER (WHERE approval_status = 'rejected') as rejected_count
     FROM driver_finance.settlement_lines
-    WHERE settlement_id = $1 AND operating_company_id = $2
+    WHERE settlement_id = $1 AND operating_company_id = $2::uuid
   `, [settlementId, operatingCompanyId]);
 
   const row = result.rows[0];
@@ -504,7 +504,7 @@ export async function approveSettlement(
       approval_status = 'approved',
       approved_at = now(),
       approved_by = $1
-    WHERE id = $2 AND operating_company_id = $3
+    WHERE id = $2 AND operating_company_id = $3::uuid
   `, [approvedBy, settlementId, operatingCompanyId]);
 }
 
@@ -523,7 +523,7 @@ export async function finalizeSettlement(
     SET
       approval_status = 'finalized',
       finalized_at = now()
-    WHERE id = $1 AND operating_company_id = $2 AND approval_status = 'approved'
+    WHERE id = $1 AND operating_company_id = $2::uuid AND approval_status = 'approved'
     RETURNING approval_status
   `, [settlementId, operatingCompanyId]);
 
@@ -545,7 +545,7 @@ export async function recordPdfGenerated(
   await client.query(`
     UPDATE driver_finance.driver_settlements
     SET pdf_generated_at = now(), pdf_generated_by = $1
-    WHERE id = $2 AND operating_company_id = $3
+    WHERE id = $2 AND operating_company_id = $3::uuid
   `, [generatedBy, settlementId, operatingCompanyId]);
 
   // Log audit event

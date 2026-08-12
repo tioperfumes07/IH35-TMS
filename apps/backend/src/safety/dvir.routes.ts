@@ -56,7 +56,7 @@ export async function registerSafetyDvirRoutes(app: FastifyInstance) {
     if (!query.success) return sendValidationError(reply, query.error);
 
     const rows = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
-      const filters: string[] = ["ds.operating_company_id = $1"];
+      const filters: string[] = ["ds.operating_company_id = $1::uuid"];
       const values: unknown[] = [query.data.operating_company_id];
       let idx = 2;
       if (query.data.driver_id) {
@@ -147,7 +147,7 @@ export async function registerSafetyDvirRoutes(app: FastifyInstance) {
           LEFT JOIN mdata.units u ON u.id = ds.unit_id
                                  AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = ds.operating_company_id
           WHERE ds.id = $1
-            AND ds.operating_company_id = $2
+            AND ds.operating_company_id = $2::uuid
           LIMIT 1
         `,
         [params.data.id, query.data.operating_company_id]

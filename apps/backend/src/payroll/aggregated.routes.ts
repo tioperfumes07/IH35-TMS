@@ -25,7 +25,7 @@ export async function fetchAggregatedPayroll(
                ROUND(net_pay * 100)::bigint AS net_cents,
                status, bank_settle_date
         FROM driver_finance.driver_settlements
-        WHERE operating_company_id = $1
+        WHERE operating_company_id = $1::uuid
         ORDER BY period_end DESC
         LIMIT 50
       `,
@@ -44,7 +44,7 @@ export async function fetchAggregatedPayroll(
         SELECT qbo_payroll_run_id, qbo_payroll_run_name, pay_period_start, pay_period_end,
                gross_cents, net_cents, employee_count, sync_state, last_synced_at
         FROM integrations.qbo_payroll_links
-        WHERE operating_company_id = $1 AND archived_at IS NULL
+        WHERE operating_company_id = $1::uuid AND archived_at IS NULL
         ORDER BY pay_period_end DESC NULLS LAST
         LIMIT 50
       `,
@@ -55,7 +55,7 @@ export async function fetchAggregatedPayroll(
       `
         SELECT sync_state, MAX(last_synced_at) AS last_synced_at
         FROM integrations.qbo_payroll_links
-        WHERE operating_company_id = $1 AND archived_at IS NULL
+        WHERE operating_company_id = $1::uuid AND archived_at IS NULL
         GROUP BY sync_state
         ORDER BY MAX(last_synced_at) DESC NULLS LAST
         LIMIT 1
@@ -86,7 +86,7 @@ export async function refreshAggregatedPayrollSync(
     `
       UPDATE integrations.qbo_payroll_links
       SET sync_state = 'polled', last_synced_at = now(), updated_at = now()
-      WHERE operating_company_id = $1 AND archived_at IS NULL
+      WHERE operating_company_id = $1::uuid AND archived_at IS NULL
       RETURNING id
     `,
     [operatingCompanyId]

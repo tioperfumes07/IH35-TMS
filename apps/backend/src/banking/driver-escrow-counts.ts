@@ -24,7 +24,7 @@ export async function countDriverEscrowKpis(client: Queryable, operatingCompanyI
     `
       SELECT count(*)::int AS count
       FROM mdata.drivers
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
         AND deactivated_at IS NULL
         AND lower(coalesce(status::text, '')) = 'active'
     `,
@@ -41,7 +41,7 @@ export async function countDriverEscrowKpis(client: Queryable, operatingCompanyI
       JOIN driver_finance.escrow_balances eb
         ON eb.driver_id = d.id
         AND eb.operating_company_id = d.operating_company_id
-      WHERE d.operating_company_id = $1
+      WHERE d.operating_company_id = $1::uuid
         AND d.deactivated_at IS NULL
         AND COALESCE(eb.current_balance_cents, 0) <> 0
     `,
@@ -54,7 +54,7 @@ export async function countDriverEscrowKpis(client: Queryable, operatingCompanyI
       JOIN driver_finance.escrow_balances eb
         ON eb.driver_id = d.id
         AND eb.operating_company_id = d.operating_company_id
-      WHERE d.operating_company_id = $1
+      WHERE d.operating_company_id = $1::uuid
         AND d.deactivated_at IS NULL
     `,
     [operatingCompanyId]

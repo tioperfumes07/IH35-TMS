@@ -64,7 +64,7 @@ export async function registerSafetyDrugPoolRoutes(app: FastifyInstance) {
         `
           SELECT id
           FROM mdata.drivers
-          WHERE operating_company_id = $1
+          WHERE operating_company_id = $1::uuid
             AND cdl_number IS NOT NULL
             AND deactivated_at IS NULL
           ORDER BY id

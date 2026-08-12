@@ -173,7 +173,7 @@ interface RevObligationDetailRow {
 
 async function registerRevenueRecognitionRoutes(app: FastifyInstance) {
   // LIST contracts
-  app.get("/api/v1/accounting/revenue-contracts", async (req, reply) => {
+  app.get("/api/v1/accounting/revenue-contracts", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!accountingRoles(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -184,7 +184,7 @@ async function registerRevenueRecognitionRoutes(app: FastifyInstance) {
     const { operating_company_id, status, limit, offset } = parsed.data;
 
     return withCompanyScope(user.uuid, operating_company_id, async (client) => {
-      const conds = ["rc.operating_company_id = $1", "rc.is_active = true"];
+      const conds = ["rc.operating_company_id = $1::uuid", "rc.is_active = true"];
       const params: unknown[] = [operating_company_id];
       let pi = 2;
       if (status) { conds.push(`rc.status = $${pi++}`); params.push(status); }
@@ -260,7 +260,7 @@ async function registerRevenueRecognitionRoutes(app: FastifyInstance) {
   });
 
   // DETAIL + obligations + computed schedules + gated JE preview
-  app.get("/api/v1/accounting/revenue-contracts/:id", async (req, reply) => {
+  app.get("/api/v1/accounting/revenue-contracts/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!accountingRoles(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -280,7 +280,7 @@ async function registerRevenueRecognitionRoutes(app: FastifyInstance) {
           rc.customer_uuid::text AS customer_uuid_s,
           rc.created_at::text AS created_at_s
          FROM accounting.revenue_contracts rc
-         WHERE rc.id = $1 AND rc.operating_company_id = $2 AND rc.is_active = true`,
+         WHERE rc.id = $1 AND rc.operating_company_id = $2::uuid AND rc.is_active = true`,
         [pp.data.id, qp.data.operating_company_id]
       );
       if (!cRes.rows[0]) return reply.code(404).send({ error: "not_found" });

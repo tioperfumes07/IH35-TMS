@@ -96,7 +96,7 @@ async function listIntegrityAlertsHandler(
   query: z.infer<typeof listQuerySchema>
 ) {
   return withCompanyScope(user.uuid, query.operating_company_id, async (client) => {
-    const filters = ["operating_company_id = $1", "(snoozed_until IS NULL OR snoozed_until <= now())"];
+    const filters = ["operating_company_id = $1::uuid", "(snoozed_until IS NULL OR snoozed_until <= now())"];
     const values: unknown[] = [query.operating_company_id];
     if (query.alert_category) {
       values.push(query.alert_category);
@@ -198,7 +198,7 @@ export async function registerSafetyIntegrityAlertsRoutes(app: FastifyInstance) 
     return reply.code(201).send(created);
   });
 
-  app.patch("/api/v1/safety/integrity-alert-rules/:id", async (req, reply) => {
+  app.patch("/api/v1/safety/integrity-alert-rules/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canMutate(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -231,7 +231,7 @@ export async function registerSafetyIntegrityAlertsRoutes(app: FastifyInstance) 
         `
           UPDATE safety.integrity_alert_rules
           SET ${sets.join(", ")}
-          WHERE id = $1 AND operating_company_id = $2
+          WHERE id = $1 AND operating_company_id = $2::uuid
           RETURNING *
         `,
         values
@@ -242,7 +242,7 @@ export async function registerSafetyIntegrityAlertsRoutes(app: FastifyInstance) 
     return updated;
   });
 
-  app.post("/api/v1/safety/integrity-alerts/evaluate", async (req, reply) => {
+  app.post("/api/v1/safety/integrity-alerts/evaluate", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canMutate(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -254,7 +254,7 @@ export async function registerSafetyIntegrityAlertsRoutes(app: FastifyInstance) 
     return result;
   });
 
-  app.get("/api/v1/safety/integrity-alerts/:id", async (req, reply) => {
+  app.get("/api/v1/safety/integrity-alerts/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const params = idParamsSchema.safeParse(req.params ?? {});
@@ -264,7 +264,7 @@ export async function registerSafetyIntegrityAlertsRoutes(app: FastifyInstance) 
 
     const row = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       const res = await client.query(
-        `SELECT * FROM safety.integrity_alerts WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+        `SELECT * FROM safety.integrity_alerts WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
         [params.data.id, query.data.operating_company_id]
       );
       return res.rows[0] ?? null;
@@ -273,7 +273,7 @@ export async function registerSafetyIntegrityAlertsRoutes(app: FastifyInstance) 
     return row;
   });
 
-  app.post("/api/v1/safety/integrity-alerts/:id/acknowledge", async (req, reply) => {
+  app.post("/api/v1/safety/integrity-alerts/:id/acknowledge", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canMutate(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -292,7 +292,7 @@ export async function registerSafetyIntegrityAlertsRoutes(app: FastifyInstance) 
               acknowledged_at = now(),
               acknowledgment_note = $4
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
           RETURNING *
         `,
         [params.data.id, query.data.operating_company_id, user.uuid, body.data.acknowledgment_note ?? null]
@@ -318,7 +318,7 @@ export async function registerSafetyIntegrityAlertsRoutes(app: FastifyInstance) 
     return updated;
   });
 
-  app.post("/api/v1/safety/integrity-alerts/:id/resolve", async (req, reply) => {
+  app.post("/api/v1/safety/integrity-alerts/:id/resolve", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canMutate(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -336,7 +336,7 @@ export async function registerSafetyIntegrityAlertsRoutes(app: FastifyInstance) 
           SET resolution_status = $3,
               resolution_action = $4
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
           RETURNING *
         `,
         [params.data.id, query.data.operating_company_id, body.data.resolution_status, body.data.resolution_action ?? null]
@@ -363,7 +363,7 @@ export async function registerSafetyIntegrityAlertsRoutes(app: FastifyInstance) 
     return updated;
   });
 
-  app.post("/api/v1/safety/integrity-alerts/:id/snooze", async (req, reply) => {
+  app.post("/api/v1/safety/integrity-alerts/:id/snooze", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canMutate(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -380,7 +380,7 @@ export async function registerSafetyIntegrityAlertsRoutes(app: FastifyInstance) 
           UPDATE safety.integrity_alerts
           SET snoozed_until = now() + ($3::int * interval '1 hour')
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
           RETURNING *
         `,
         [params.data.id, query.data.operating_company_id, body.data.snooze_hours]

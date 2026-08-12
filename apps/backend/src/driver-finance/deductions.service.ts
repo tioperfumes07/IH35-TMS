@@ -120,7 +120,7 @@ export async function createSettlementDeduction(
       `
         SELECT ${RETURNING_COLUMNS}
         FROM driver_finance.driver_settlement_deductions
-        WHERE operating_company_id = $1
+        WHERE operating_company_id = $1::uuid
           AND source_pending_id = $2
         ORDER BY created_at ASC
         LIMIT 1

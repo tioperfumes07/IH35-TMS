@@ -187,7 +187,7 @@ async function countPendingLayovers(client: DbClient, ociId: string): Promise<nu
     `
       SELECT count(*)::int AS c
       FROM dispatch.driver_layovers dl
-      WHERE dl.operating_company_id = $1::text
+      WHERE dl.operating_company_id = $1::uuid::text
         AND dl.per_diem_eligible = true
         ${pendingClause}
     `,

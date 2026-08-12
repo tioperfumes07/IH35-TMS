@@ -35,7 +35,7 @@ export async function createExpandedInvoice(client: DbClient, input: ExpandedInv
       FROM mdata.customers c
       LEFT JOIN catalogs.payment_terms pt ON pt.id = c.payment_terms_id
       WHERE c.id = $1
-        AND c.operating_company_id = $2
+        AND c.operating_company_id = $2::uuid
       LIMIT 1
     `,
     [input.customerId, input.operatingCompanyId]

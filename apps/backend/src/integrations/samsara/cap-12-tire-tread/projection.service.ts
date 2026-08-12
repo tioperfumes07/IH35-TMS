@@ -176,7 +176,7 @@ export async function projectReplacementDate(
         odometer_miles,
         created_at::text
       FROM maintenance.tire_tread_measurements
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
         AND unit_uuid = $2
         AND tire_position = $3
       ORDER BY measured_at ASC
@@ -245,7 +245,7 @@ export async function listProjectionsForUnit(
         projected_replacement_date::text,
         wear_rate_32nds_per_day::text
       FROM maintenance.tire_projections
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
         AND unit_uuid = $2
       ORDER BY tire_position
     `,
@@ -309,7 +309,7 @@ export async function listAtRiskUnits(
       FROM maintenance.tire_projections tp
       JOIN mdata.units u ON u.id = tp.unit_uuid
                          AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $1::uuid
-      WHERE tp.operating_company_id = $1
+      WHERE tp.operating_company_id = $1::uuid
         AND tp.projected_replacement_date IS NOT NULL
         AND tp.projected_replacement_date <= (CURRENT_DATE + ($2::int * INTERVAL '1 day'))
       ORDER BY tp.projected_replacement_date ASC, u.unit_number, tp.tire_position

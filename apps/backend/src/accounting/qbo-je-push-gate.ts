@@ -38,7 +38,7 @@ export async function evaluateJeQboPushGate(
   let sourceSystem: string | null = opts?.sourceSystem ?? null;
   if (opts?.sourceSystem === undefined) {
     const res = await client.query<{ source_system: string | null }>(
-      `SELECT source_system FROM accounting.journal_entries WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+      `SELECT source_system FROM accounting.journal_entries WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
       [journalEntryId, operatingCompanyId]
     );
     sourceSystem = res.rows[0]?.source_system ?? null;

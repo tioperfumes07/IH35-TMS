@@ -54,7 +54,7 @@ export default async function geofenceRoutes(fastify: FastifyInstance) {
       await setScopedCompanyContext(client, user.uuid, operating_company_id);
       const result = await (client as Queryable).query(
         `SELECT * FROM geofence.fence
-         WHERE operating_company_id = $1 AND is_active = true AND soft_deleted_at IS NULL
+         WHERE operating_company_id = $1::uuid AND is_active = true AND soft_deleted_at IS NULL
          ORDER BY name`,
         [operating_company_id]
       );
@@ -106,7 +106,7 @@ export default async function geofenceRoutes(fastify: FastifyInstance) {
       const result = await (client as Queryable).query(
         `UPDATE geofence.fence
          SET soft_deleted_at = now(), is_active = false
-         WHERE id = $1 AND operating_company_id = $2
+         WHERE id = $1 AND operating_company_id = $2::uuid
          RETURNING id`,
         [id, operating_company_id]
       );
@@ -169,7 +169,7 @@ export default async function geofenceRoutes(fastify: FastifyInstance) {
         `SELECT e.*, f.name AS fence_name
          FROM geofence.event e
          JOIN geofence.fence f ON f.id = e.fence_id
-         WHERE e.operating_company_id = $1
+         WHERE e.operating_company_id = $1::uuid
            AND ($2::uuid IS NULL OR e.unit_id = $2::uuid)
            AND ($3::uuid IS NULL OR e.fence_id = $3::uuid)
          ORDER BY e.occurred_at DESC

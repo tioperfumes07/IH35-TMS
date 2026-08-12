@@ -152,7 +152,7 @@ async function getActiveConnectionByCompany(operatingCompanyId: string) {
       `
         SELECT *
         FROM integrations.qbo_connections
-        WHERE operating_company_id = $1
+        WHERE operating_company_id = $1::uuid
           AND revoked_at IS NULL
         ORDER BY authorized_at DESC
         LIMIT 1
@@ -399,7 +399,7 @@ export async function exchangeAuthCodeForTokens(
         UPDATE integrations.qbo_connections
         SET revoked_at = now(),
             updated_at = now()
-        WHERE operating_company_id = $1
+        WHERE operating_company_id = $1::uuid
           AND id <> $2
           AND revoked_at IS NULL
       `,
@@ -468,7 +468,7 @@ async function stampRefreshFailure(
             needs_reauth_at = CASE WHEN $4::boolean THEN COALESCE(needs_reauth_at, now()) ELSE needs_reauth_at END,
             updated_at = now()
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
         `,
         [connectionId, operatingCompanyId, errorSummary, isAuthFailure]
       );
@@ -530,7 +530,7 @@ export async function refreshAccessToken(connectionId: string, operatingCompanyI
           last_refresh_error = NULL,
           updated_at = now()
         WHERE id = $1
-          AND operating_company_id = $6
+          AND operating_company_id = $6::uuid
       `,
       [connectionId, accessTokenEncrypted, refreshTokenEncrypted, accessTokenExpiresAt, refreshTokenExpiresAt, operatingCompanyId]
     );
@@ -573,7 +573,7 @@ export async function getValidAccessToken(operatingCompanyId: string) {
   await withLuciaBypass(async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     await client.query(
-      `UPDATE integrations.qbo_connections SET last_used_at = now(), updated_at = now() WHERE id = $1 AND operating_company_id = $2`,
+      `UPDATE integrations.qbo_connections SET last_used_at = now(), updated_at = now() WHERE id = $1 AND operating_company_id = $2::uuid`,
       [next.id, operatingCompanyId]
     );
   });
@@ -627,7 +627,7 @@ export async function companyHasQboConnectionRecord(operatingCompanyId: string):
   return withLuciaBypass(async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     const res = await client.query(
-      `SELECT 1 FROM integrations.qbo_connections WHERE operating_company_id = $1 LIMIT 1`,
+      `SELECT 1 FROM integrations.qbo_connections WHERE operating_company_id = $1::uuid LIMIT 1`,
       [operatingCompanyId]
     );
     return res.rows.length > 0;

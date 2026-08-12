@@ -76,7 +76,7 @@ export async function registerCustomerLanesRoutes(app: FastifyInstance) {
           SELECT *
           FROM mdata.customer_lanes
           WHERE customer_id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
             ${includeInactive ? "" : "AND deactivated_at IS NULL"}
           ORDER BY updated_at DESC
         `,
@@ -165,7 +165,7 @@ export async function registerCustomerLanesRoutes(app: FastifyInstance) {
           SET ${fields.join(", ")}
           WHERE id = $${values.length - 2}
             AND customer_id = $${values.length - 1}
-            AND operating_company_id = $${values.length}
+            AND operating_company_id = $${values.length}::uuid
           RETURNING *
         `,
         values
@@ -201,7 +201,7 @@ export async function registerCustomerLanesRoutes(app: FastifyInstance) {
           SET deactivated_at = now(), updated_at = now()
           WHERE id = $1
             AND customer_id = $2
-            AND operating_company_id = $3
+            AND operating_company_id = $3::uuid
             AND deactivated_at IS NULL
           RETURNING id
         `,

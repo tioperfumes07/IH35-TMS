@@ -143,7 +143,7 @@ export async function buildExhibitF(
     `
       SELECT i.id, i.display_id, i.total_cents, i.issue_date::text AS invoice_date
       FROM accounting.invoices i
-      WHERE i.operating_company_id = $1
+      WHERE i.operating_company_id = $1::uuid
         AND i.issue_date >= $2::date
         AND i.issue_date <= $3::date
         AND i.voided_at IS NULL
@@ -156,7 +156,7 @@ export async function buildExhibitF(
     `
       SELECT count(*)::text AS n
       FROM accounting.invoices i
-      WHERE i.operating_company_id = $1
+      WHERE i.operating_company_id = $1::uuid
         AND i.issue_date >= $2::date
         AND i.issue_date <= $3::date
         AND i.voided_at IS NULL
@@ -200,7 +200,7 @@ export async function buildExhibitF(
       LEFT JOIN mdata.qbo_vendors qv
         ON qv.qbo_id = b.vendor_id
        AND qv.operating_company_id = b.operating_company_id
-      WHERE b.operating_company_id = $1
+      WHERE b.operating_company_id = $1::uuid
         AND b.bill_date >= $2::date
         AND b.bill_date <= $3::date
         -- ACCT-F202: voidBill() writes revoked_at, never voided_at. Filtering voided_at alone put
@@ -216,7 +216,7 @@ export async function buildExhibitF(
     `
       SELECT count(*)::text AS n
       FROM accounting.bills b
-      WHERE b.operating_company_id = $1
+      WHERE b.operating_company_id = $1::uuid
         AND b.bill_date >= $2::date
         AND b.bill_date <= $3::date
         -- ACCT-F202: voidBill() writes revoked_at, never voided_at. Filtering voided_at alone put

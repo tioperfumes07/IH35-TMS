@@ -231,7 +231,7 @@ export function buildModuleCountQuery(specs: ModuleCountTableSpec[]): string {
     const schema = spec.schema ?? "catalogs";
     const alias = "t";
     const filters: string[] = [];
-    if (spec.companyScoped) filters.push(`${alias}.operating_company_id = $1`);
+    if (spec.companyScoped) filters.push(`${alias}.operating_company_id = $1::uuid`);
     if (spec.activeFilter === "is_active") filters.push(`${alias}.is_active = true`);
     if (spec.activeFilter === "deactivated_at") filters.push(`${alias}.deactivated_at IS NULL`);
     if (spec.activeFilter === "archived_at") filters.push(`${alias}.archived_at IS NULL`);

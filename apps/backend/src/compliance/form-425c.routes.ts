@@ -242,7 +242,7 @@ export async function computeBankingSummary(client: { query: <R = Record<string,
     `
       SELECT line_23_ending_cash
       FROM compliance.form_425c_reports
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
         AND reporting_month = $2::date
       ORDER BY created_at DESC
       LIMIT 1
@@ -258,7 +258,7 @@ export async function computeBankingSummary(client: { query: <R = Record<string,
         COUNT(*)::int AS in_scope_txn_count
       FROM banking.bank_transactions bt
       JOIN banking.bank_accounts a ON a.id = bt.bank_account_id
-      WHERE bt.operating_company_id = $1
+      WHERE bt.operating_company_id = $1::uuid
         AND COALESCE(a.account_type, '') NOT LIKE 'virtual_%'
         AND bt.transaction_date >= $2::date
         AND bt.transaction_date <  $3::date
@@ -330,7 +330,7 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
   await registerFmcsaSaferRoutes(app);
   await registerUsmcaCarrierBootstrapRoutes(app);
   await registerLaunchToggleRoutes(app);
-  app.get("/api/v1/form-425c", async (req, reply) => {
+  app.get("/api/v1/form-425c", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = COMPANY_QUERY.safeParse(req.query ?? {});
@@ -342,7 +342,7 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
         `
           SELECT id, reporting_month, status, petition_date, case_number, filed_at, filed_by_user_id, amended_from_uuid, created_at, updated_at
           FROM compliance.form_425c_reports
-          WHERE operating_company_id = $1
+          WHERE operating_company_id = $1::uuid
           ORDER BY reporting_month DESC, created_at DESC
         `,
         [companyId]
@@ -352,7 +352,7 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
     return { reports };
   });
 
-  app.get("/api/v1/form-425c/:id", async (req, reply) => {
+  app.get("/api/v1/form-425c/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const params = ID_PARAMS.safeParse(req.params ?? {});
@@ -367,7 +367,7 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
           SELECT *
           FROM compliance.form_425c_reports
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
           LIMIT 1
         `,
         [params.data.id, companyId]
@@ -399,7 +399,7 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
     return payload;
   });
 
-  app.get("/api/v1/form-425c/profiles", async (req, reply) => {
+  app.get("/api/v1/form-425c/profiles", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = COMPANY_QUERY.safeParse(req.query ?? {});
@@ -411,7 +411,7 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
         `
           SELECT *
           FROM catalogs.form_425c_company_profiles
-          WHERE operating_company_id = $1
+          WHERE operating_company_id = $1::uuid
           ORDER BY CASE company_key WHEN 'trucking' THEN 1 ELSE 2 END
         `,
         [companyId]
@@ -490,7 +490,7 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
     return reply.code(201).send(profile);
   });
 
-  app.post("/api/v1/form-425c", async (req, reply) => {
+  app.post("/api/v1/form-425c", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const body = createSchema.safeParse(req.body ?? {});
@@ -508,7 +508,7 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
         `
           SELECT petition_date::text AS petition_date
           FROM compliance.form_425c_reports
-          WHERE operating_company_id = $1
+          WHERE operating_company_id = $1::uuid
           ORDER BY created_at ASC
           LIMIT 1
         `,
@@ -524,7 +524,7 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
         `
           SELECT id, line_35_next_proj_receipts, line_36_next_proj_disbursements, line_37_next_proj_net_cash_flow
           FROM compliance.form_425c_reports
-          WHERE operating_company_id = $1
+          WHERE operating_company_id = $1::uuid
             AND reporting_month = $2::date
           ORDER BY created_at DESC
           LIMIT 1
@@ -593,7 +593,7 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
     return reply.code(201).send(created);
   });
 
-  app.patch("/api/v1/form-425c/:id", async (req, reply) => {
+  app.patch("/api/v1/form-425c/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const params = ID_PARAMS.safeParse(req.params ?? {});
@@ -608,7 +608,7 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
           SELECT *
           FROM compliance.form_425c_reports
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
           LIMIT 1
         `,
         [params.data.id, b.operating_company_id]
@@ -656,7 +656,7 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
           UPDATE compliance.form_425c_reports
           SET ${updates.join(", ")}, updated_at = now()
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
           RETURNING *
         `,
         values
@@ -699,7 +699,7 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
     return summary;
   });
 
-  app.post("/api/v1/form-425c/:id/import-banking", async (req, reply) => {
+  app.post("/api/v1/form-425c/:id/import-banking", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const params = ID_PARAMS.safeParse(req.params ?? {});
@@ -719,7 +719,7 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
             SELECT reporting_month::text
             FROM compliance.form_425c_reports
             WHERE id = $1
-              AND operating_company_id = $2
+              AND operating_company_id = $2::uuid
             LIMIT 1
           `,
           [params.data.id, b.operating_company_id]
@@ -739,7 +739,7 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
                 banking_imported_by_user_id = $8,
                 updated_at = now()
             WHERE id = $1
-              AND operating_company_id = $2
+              AND operating_company_id = $2::uuid
             RETURNING *
           `,
           [
@@ -782,7 +782,7 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
     return updated;
   });
 
-  app.post("/api/v1/form-425c/:id/generate-filing-pdf", async (req, reply) => {
+  app.post("/api/v1/form-425c/:id/generate-filing-pdf", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const params = ID_PARAMS.safeParse(req.params ?? {});
@@ -807,7 +807,7 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
                 status = 'ready_to_file',
                 updated_at = now()
             WHERE id = $1
-              AND operating_company_id = $2
+              AND operating_company_id = $2::uuid
             RETURNING *
           `,
           [params.data.id, b.operating_company_id, generated.fileId]
@@ -853,7 +853,7 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
     return payload;
   });
 
-  app.post("/api/v1/form-425c/:id/mark-filed", async (req, reply) => {
+  app.post("/api/v1/form-425c/:id/mark-filed", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const params = ID_PARAMS.safeParse(req.params ?? {});
@@ -864,7 +864,7 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
 
     const updated = await withCompanyScope(user.uuid, b.operating_company_id, async (client) => {
       const existingRes = await client.query(
-        `SELECT case_number FROM compliance.form_425c_reports WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+        `SELECT case_number FROM compliance.form_425c_reports WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
         [params.data.id, b.operating_company_id]
       );
       const existing = existingRes.rows[0];
@@ -880,7 +880,7 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
               filed_by_user_id = $4,
               updated_at = now()
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
             AND status IN ('draft', 'ready_to_file', 'amended')
           RETURNING *
         `,
@@ -912,7 +912,7 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
     return updated;
   });
 
-  app.post("/api/v1/form-425c/:id/amend", async (req, reply) => {
+  app.post("/api/v1/form-425c/:id/amend", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const params = ID_PARAMS.safeParse(req.params ?? {});
@@ -927,7 +927,7 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
           SELECT *
           FROM compliance.form_425c_reports
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
           LIMIT 1
         `,
         [params.data.id, b.operating_company_id]
@@ -1114,7 +1114,7 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
     return reply.code(201).send(created);
   });
 
-  app.post("/api/v1/form-425c/:id/attachments/:line", async (req, reply) => {
+  app.post("/api/v1/form-425c/:id/attachments/:line", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const params = attachmentParamsSchema.safeParse(req.params ?? {});
@@ -1138,7 +1138,7 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
           SELECT id
           FROM docs.files
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
           LIMIT 1
         `,
         [b.file_uuid, b.operating_company_id]
@@ -1155,7 +1155,7 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
               ),
               updated_at = now()
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
           RETURNING *
         `,
         [params.data.id, b.operating_company_id, b.file_uuid]

@@ -23,7 +23,7 @@ export async function listActiveCustomerClassifications(
       SELECT id, tag_key, tag_label, applied_at, applied_by_user_id
       FROM accounting.customer_classifications
       WHERE customer_id = $1
-        AND operating_company_id = $2
+        AND operating_company_id = $2::uuid
         AND archived_at IS NULL
       ORDER BY tag_label ASC
     `,
@@ -42,7 +42,7 @@ export async function listActiveVendorClassifications(
       SELECT id, tag_key, tag_label, applied_at, applied_by_user_id
       FROM accounting.vendor_classifications
       WHERE vendor_id = $1
-        AND operating_company_id = $2
+        AND operating_company_id = $2::uuid
         AND archived_at IS NULL
       ORDER BY tag_label ASC
     `,

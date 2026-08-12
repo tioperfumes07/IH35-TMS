@@ -172,7 +172,7 @@ async function upsertCatalogItem(client: PoolClient, operatingCompanyId: string,
              qbo_sync_status = 'synced',
              qbo_sync_error = NULL,
              updated_at = now()
-       WHERE operating_company_id = $1
+       WHERE operating_company_id = $1::uuid
          AND item_name = $2
          AND qbo_item_id IS NULL
          -- ACCT-F77: a hole in the first version of this adopt. If ANOTHER row already claims this
@@ -181,7 +181,7 @@ async function upsertCatalogItem(client: PoolClient, operatingCompanyId: string,
          -- correct carrier and the normal upsert below handles it — adoption must stand down.
          AND NOT EXISTS (
            SELECT 1 FROM catalogs.items other
-            WHERE other.operating_company_id = $1
+            WHERE other.operating_company_id = $1::uuid
               AND other.qbo_item_id = $3
          )
       RETURNING id::text

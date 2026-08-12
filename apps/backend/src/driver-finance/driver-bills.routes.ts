@@ -44,7 +44,7 @@ export async function registerDriverFinanceDriverBillsRoutes(app: FastifyInstanc
           LEFT JOIN mdata.drivers d2 ON d2.id = l.assigned_secondary_driver_id
                                     AND d2.operating_company_id = l.operating_company_id
           WHERE l.id = $1
-            AND l.operating_company_id = $2
+            AND l.operating_company_id = $2::uuid
             AND l.soft_deleted_at IS NULL
           LIMIT 1
         `,
@@ -68,7 +68,7 @@ export async function registerDriverFinanceDriverBillsRoutes(app: FastifyInstanc
         `
           SELECT *
           FROM driver_finance.driver_bills
-          WHERE operating_company_id = $1
+          WHERE operating_company_id = $1::uuid
             AND load_id = $2
           ORDER BY created_at ASC
         `,
@@ -129,7 +129,7 @@ export async function registerDriverFinanceDriverBillsRoutes(app: FastifyInstanc
       const countRes = await client.query(
         `SELECT count(*)::int AS cnt, COALESCE(SUM(db.gross_amount_cents), 0)::bigint AS total_gross_cents
          FROM driver_finance.driver_bills db
-         WHERE db.operating_company_id = $1 AND db.status = 'open' ${driverFilter}`,
+         WHERE db.operating_company_id = $1::uuid AND db.status = 'open' ${driverFilter}`,
         countValues
       );
 
@@ -149,7 +149,7 @@ export async function registerDriverFinanceDriverBillsRoutes(app: FastifyInstanc
             concat_ws(' ', d.first_name, d.last_name) AS driver_name
           FROM driver_finance.driver_bills db
           LEFT JOIN mdata.drivers d ON d.id = db.driver_id AND d.operating_company_id = db.operating_company_id
-          WHERE db.operating_company_id = $1 AND db.status = 'open' ${driverFilter}
+          WHERE db.operating_company_id = $1::uuid AND db.status = 'open' ${driverFilter}
           ORDER BY db.created_at DESC
           LIMIT $${queryValues.length - 1} OFFSET $${queryValues.length}
         `,

@@ -126,7 +126,7 @@ async function fetchWorkOrderEvents(
 ): Promise<ServiceTimelineEvent[]> {
   if (!(await relationExists(client, "maintenance.work_orders"))) return [];
   const values: unknown[] = [input.operating_company_id];
-  const where = ["w.operating_company_id = $1", "w.status <> 'cancelled'"];
+  const where = ["w.operating_company_id = $1::uuid", "w.status <> 'cancelled'"];
   if (input.unit_id) {
     values.push(input.unit_id);
     where.push(`w.unit_id = $${values.length}`);
@@ -192,7 +192,7 @@ async function fetchInspectionEvents(
         i.scheduled_date::text,
         i.updated_at::text
       FROM maintenance.inspections i
-      WHERE i.operating_company_id = $1
+      WHERE i.operating_company_id = $1::uuid
         AND i.unit_id = $2
         AND i.archived_at IS NULL
       ORDER BY COALESCE(i.inspection_date, i.scheduled_date, i.updated_at) DESC NULLS LAST
@@ -235,7 +235,7 @@ async function fetchPmEvents(
         ps.label AS schedule_label
       FROM maintenance.pm_auto_wo_log l
       LEFT JOIN maintenance.pm_schedules ps ON ps.id = l.pm_schedule_id
-      WHERE l.operating_company_id = $1
+      WHERE l.operating_company_id = $1::uuid
         AND l.unit_id = $2
       ORDER BY l.created_at DESC
       LIMIT 200
@@ -277,7 +277,7 @@ async function fetchFuelEvents(
         ft.location_city,
         ft.location_state
       FROM fuel.fuel_transactions ft
-      WHERE ft.operating_company_id = $1
+      WHERE ft.operating_company_id = $1::uuid
         AND ft.unit_id = $2
         AND ft.archived_at IS NULL
       ORDER BY ft.transaction_at DESC
@@ -318,7 +318,7 @@ async function fetchAccidentEvents(
           ar.accident_at::text,
           ar.description
         FROM safety.accident_reports ar
-        WHERE ar.operating_company_id = $1
+        WHERE ar.operating_company_id = $1::uuid
           AND ar.unit_id = $2
         ORDER BY ar.accident_at DESC NULLS LAST
         LIMIT 200

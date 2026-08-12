@@ -112,7 +112,7 @@ async function mintAttorneyReviewToken(
     `
       UPDATE legal.contract_attorney_review_tokens
       SET consumed_at = now()
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
         AND contract_template_id = $2
         AND consumed_at IS NULL
     `,
@@ -157,7 +157,7 @@ export async function remintAttorneyReviewLink(
     `
       SELECT id, status
       FROM legal.contract_templates
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
         AND id = $2
       LIMIT 1
     `,
@@ -195,7 +195,7 @@ export async function listTemplates(
   }
 ) {
   const values: unknown[] = [args.operatingCompanyId];
-  const where: string[] = ["operating_company_id = $1"];
+  const where: string[] = ["operating_company_id = $1::uuid"];
 
   if (args.category) {
     values.push(args.category.trim());
@@ -278,7 +278,7 @@ export async function getTemplate(
           created_at,
           updated_at
         FROM legal.contract_templates
-        WHERE operating_company_id = $1
+        WHERE operating_company_id = $1::uuid
           AND id = $2
         LIMIT 1
       `,
@@ -299,7 +299,7 @@ export async function getTemplate(
           attorney_approved_by,
           attorney_approved_at
         FROM legal.contract_templates
-        WHERE operating_company_id = $1
+        WHERE operating_company_id = $1::uuid
           AND template_code = $2
         ORDER BY version DESC
       `,
@@ -318,7 +318,7 @@ export async function getTemplate(
           user_agent,
           created_at
         FROM legal.contract_audit_log
-        WHERE operating_company_id = $1
+        WHERE operating_company_id = $1::uuid
           AND contract_template_id = $2
         ORDER BY id DESC
         LIMIT 200
@@ -359,7 +359,7 @@ export async function getTemplate(
         created_at,
         updated_at
       FROM legal.contract_templates
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
         AND id = $2
         AND version = $3
       LIMIT 1
@@ -385,7 +385,7 @@ export async function listVersions(
         attorney_approved_by,
         attorney_approved_at
       FROM legal.contract_templates
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
         AND template_code = $2
       ORDER BY version DESC
     `,
@@ -410,7 +410,7 @@ export async function createTemplate(
     `
       SELECT COALESCE(MAX(version), 0) + 1 AS next_version
       FROM legal.contract_templates
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
         AND template_code = $2
     `,
     [args.operatingCompanyId, templateCode]
@@ -496,7 +496,7 @@ export async function updateTemplate(
     `
       SELECT *
       FROM legal.contract_templates
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
         AND id = $2
       LIMIT 1
     `,
@@ -529,7 +529,7 @@ export async function updateTemplate(
     `
       UPDATE legal.contract_templates
       SET ${setParts.join(", ")}
-      WHERE operating_company_id = $${values.length - 1}
+      WHERE operating_company_id = $${values.length - 1}::uuid
         AND id = $${values.length}
       RETURNING
         id,
@@ -576,7 +576,7 @@ export async function submitForAttorneyReview(
         status = 'pending_review',
         submitted_for_review_at = now(),
         updated_by_user_id = $3
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
         AND id = $2
         AND status = 'draft'
       RETURNING id, template_code, version, status, submitted_for_review_at
@@ -632,7 +632,7 @@ export async function approveTemplate(
         attorney_approved_at = now(),
         attorney_notes = $5,
         updated_by_user_id = $6
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
         AND id = $2
         AND status = 'pending_review'
       RETURNING
@@ -671,7 +671,7 @@ export async function activateTemplate(
     `
       SELECT id, template_code, version, status
       FROM legal.contract_templates
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
         AND id = $2
       LIMIT 1
     `,
@@ -688,7 +688,7 @@ export async function activateTemplate(
         status = 'retired',
         retired_at = now(),
         updated_by_user_id = $3
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
         AND template_code = $2
         AND status = 'active'
     `,
@@ -702,7 +702,7 @@ export async function activateTemplate(
         status = 'active',
         activated_at = now(),
         updated_by_user_id = $3
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
         AND id = $2
       RETURNING id, template_code, version, status, activated_at
     `,
@@ -739,7 +739,7 @@ export async function retireTemplate(
         status = 'retired',
         retired_at = now(),
         updated_by_user_id = $3
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
         AND id = $2
         AND status <> 'retired'
       RETURNING id, template_code, version, status, retired_at
@@ -779,7 +779,7 @@ export async function createNewVersion(
       SELECT template_code, display_name_en, display_name_es, category,
              content_html_en, content_html_es, variable_schema, requires_witness
       FROM legal.contract_templates
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
         AND id = $2
       LIMIT 1
     `,
@@ -792,7 +792,7 @@ export async function createNewVersion(
     `
       SELECT COALESCE(MAX(version), 0) + 1 AS next_version
       FROM legal.contract_templates
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
         AND template_code = $2
     `,
     [args.operatingCompanyId, src.template_code]

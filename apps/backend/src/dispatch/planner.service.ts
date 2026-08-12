@@ -142,7 +142,7 @@ export async function getPlannerWeek(userId: string, operatingCompanyId: string,
         -- §4 landmine: mdata.units has NO operating_company_id (it carries owner_company_id +
         -- currently_leased_to_company_id). The old "u.operating_company_id = d.operating_company_id" join
         -- condition 42703'd → 500 → empty Timeline. Entity scoping stays via the driver filter below
-        -- (d.operating_company_id = $1); the unit attaches through the entity-scoped driver's assignment.
+        -- (d.operating_company_id = $1::uuid); the unit attaches through the entity-scoped driver's assignment.
         LEFT JOIN mdata.units u ON u.assigned_driver_id = d.id
                                 AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $1::uuid
         WHERE d.operating_company_id = $1::uuid

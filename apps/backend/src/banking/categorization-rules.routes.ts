@@ -59,7 +59,7 @@ async function withCompanyScope<T>(
 }
 
 export async function registerCategorizationRulesRoutes(app: FastifyInstance) {
-  app.get("/api/v1/banking/categorization-rules", async (req, reply) => {
+  app.get("/api/v1/banking/categorization-rules", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canManage(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -71,7 +71,7 @@ export async function registerCategorizationRulesRoutes(app: FastifyInstance) {
         `
           SELECT id, operating_company_id, plaid_category_pattern, coa_account_id, priority, is_active, created_at, updated_at
           FROM banking.transaction_categories
-          WHERE operating_company_id = $1
+          WHERE operating_company_id = $1::uuid
             AND is_active = true
           ORDER BY priority ASC, created_at ASC
         `,
@@ -82,7 +82,7 @@ export async function registerCategorizationRulesRoutes(app: FastifyInstance) {
     return { rules };
   });
 
-  app.get("/api/v1/banking/categorization-rules/stats", async (req, reply) => {
+  app.get("/api/v1/banking/categorization-rules/stats", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canManage(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -94,7 +94,7 @@ export async function registerCategorizationRulesRoutes(app: FastifyInstance) {
         `
           SELECT COUNT(*)::int AS count
           FROM banking.transaction_categories
-          WHERE operating_company_id = $1
+          WHERE operating_company_id = $1::uuid
             AND is_active = true
         `,
         [query.data.operating_company_id]
@@ -105,7 +105,7 @@ export async function registerCategorizationRulesRoutes(app: FastifyInstance) {
             COUNT(*) FILTER (WHERE coa_account_id IS NOT NULL)::int AS matched,
             COUNT(*) FILTER (WHERE coa_account_id IS NULL)::int AS unmatched
           FROM banking.bank_transactions
-          WHERE operating_company_id = $1
+          WHERE operating_company_id = $1::uuid
             AND created_at >= (now() - interval '7 day')
             AND array_length(plaid_category, 1) IS NOT NULL
         `,
@@ -120,7 +120,7 @@ export async function registerCategorizationRulesRoutes(app: FastifyInstance) {
     return stats;
   });
 
-  app.get("/api/v1/banking/categorization-rules/preview", async (req, reply) => {
+  app.get("/api/v1/banking/categorization-rules/preview", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canManage(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -140,7 +140,7 @@ export async function registerCategorizationRulesRoutes(app: FastifyInstance) {
             a.account_name
           FROM banking.bank_transactions bt
           LEFT JOIN catalogs.accounts a ON a.id = bt.coa_account_id
-          WHERE bt.operating_company_id = $1
+          WHERE bt.operating_company_id = $1::uuid
           ORDER BY bt.created_at DESC
           LIMIT 50
         `,
@@ -194,7 +194,7 @@ export async function registerCategorizationRulesRoutes(app: FastifyInstance) {
     return reply.code(201).send({ id: created });
   });
 
-  app.patch("/api/v1/banking/categorization-rules/:id", async (req, reply) => {
+  app.patch("/api/v1/banking/categorization-rules/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canManage(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -230,7 +230,7 @@ export async function registerCategorizationRulesRoutes(app: FastifyInstance) {
           UPDATE banking.transaction_categories
           SET ${updates.join(", ")}
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
           RETURNING id
         `,
         values
@@ -270,7 +270,7 @@ export async function registerCategorizationRulesRoutes(app: FastifyInstance) {
           UPDATE banking.transaction_categories
           SET is_active = false, updated_at = now()
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
           RETURNING id
         `,
         [params.data.id, query.data.operating_company_id]
@@ -326,7 +326,7 @@ export async function registerCategorizationRulesRoutes(app: FastifyInstance) {
             SELECT id
             FROM banking.transaction_categories
             WHERE id = $1
-              AND operating_company_id = $2
+              AND operating_company_id = $2::uuid
             LIMIT 1
           `,
           [params.data.id, query.data.operating_company_id]
@@ -337,7 +337,7 @@ export async function registerCategorizationRulesRoutes(app: FastifyInstance) {
           `
             SELECT id, operating_company_id, plaid_category, description
             FROM banking.bank_transactions
-            WHERE operating_company_id = $1
+            WHERE operating_company_id = $1::uuid
               AND categorization_gl_account_id IS NULL
               AND matched_journal_entry_id IS NULL
               AND COALESCE(status, 'pending_categorization') IN ('pending_categorization', 'uncategorized')

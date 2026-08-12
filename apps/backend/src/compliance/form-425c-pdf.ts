@@ -126,7 +126,7 @@ export async function generateForm425CPdf({ client, userId, reportId, operatingC
       SELECT *
       FROM compliance.form_425c_reports
       WHERE id = $1
-        AND operating_company_id = $2
+        AND operating_company_id = $2::uuid
       LIMIT 1
     `,
     [reportId, operatingCompanyId]
@@ -141,7 +141,7 @@ export async function generateForm425CPdf({ client, userId, reportId, operatingC
     `
       SELECT *
       FROM catalogs.form_425c_company_profiles
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
       ORDER BY CASE company_key WHEN 'trucking' THEN 1 ELSE 2 END
       LIMIT 1
     `,

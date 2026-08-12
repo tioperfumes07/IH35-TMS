@@ -41,7 +41,7 @@ const EMPTY_AGING_ROW = {
 };
 
 export async function registerCustomerBillingRoutes(app: FastifyInstance) {
-  app.get("/api/v1/mdata/customers/:customer_id/billing-summary", async (req, reply) => {
+  app.get("/api/v1/mdata/customers/:customer_id/billing-summary", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
 
@@ -81,7 +81,7 @@ export async function registerCustomerBillingRoutes(app: FastifyInstance) {
           FROM mdata.customers c
           LEFT JOIN catalogs.payment_terms pt ON pt.id = c.payment_terms_id
           WHERE c.id = $1
-            AND c.operating_company_id = $2
+            AND c.operating_company_id = $2::uuid
           LIMIT 1
         `,
         [customerId, operatingCompanyId]
@@ -102,7 +102,7 @@ export async function registerCustomerBillingRoutes(app: FastifyInstance) {
               total_open_cents,
               open_invoice_count
             FROM views.ar_aging
-            WHERE operating_company_id = $1
+            WHERE operating_company_id = $1::uuid
               AND customer_id = $2
             LIMIT 1
           `,
@@ -115,7 +115,7 @@ export async function registerCustomerBillingRoutes(app: FastifyInstance) {
           SELECT MAX(payment_date) AS last_payment_at
           FROM accounting.payments
           WHERE customer_id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
             AND voided_at IS NULL
         `,
         [customerId, operatingCompanyId]

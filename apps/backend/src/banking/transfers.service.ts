@@ -103,7 +103,7 @@ async function validateAccountOwnership(
         SELECT id
         FROM banking.bank_accounts
         WHERE id = $1
-          AND operating_company_id = $2
+          AND operating_company_id = $2::uuid
           AND is_active = true
           ${bankAccountHiddenFilterSql(hideOn, "banking.bank_accounts")}
         LIMIT 1
@@ -137,7 +137,7 @@ async function updateBankBalance(
       SET current_balance_cents = current_balance_cents + $3,
           updated_at = now()
       WHERE id = $1
-        AND operating_company_id = $2
+        AND operating_company_id = $2::uuid
     `,
     [accountId, operatingCompanyId, deltaCents]
   );
@@ -287,7 +287,7 @@ async function loadBankTransactionForTransfer(
              categorization_memo, description, matched_transfer_id::text AS matched_transfer_id
       FROM banking.bank_transactions
       WHERE id = $1
-        AND operating_company_id = $2
+        AND operating_company_id = $2::uuid
       LIMIT 1${forUpdate}
     `,
     [bankTransactionId, operatingCompanyId]
@@ -323,7 +323,7 @@ async function stampBankTransactionTransferLink(
         categorized_at = now(),
         updated_at = now()
       WHERE id = $1
-        AND operating_company_id = $6
+        AND operating_company_id = $6::uuid
         AND matched_transfer_id IS NULL
     `,
     [
@@ -383,7 +383,7 @@ export async function markBankFeedLineAsTransfer(input: MarkBankFeedTransferInpu
 
     if (input.existingTransferId) {
       const owned = await client.query<{ id: string }>(
-        `SELECT id FROM banking.transfers WHERE id = $1 AND operating_company_id = $2 AND revoked_at IS NULL LIMIT 1`,
+        `SELECT id FROM banking.transfers WHERE id = $1 AND operating_company_id = $2::uuid AND revoked_at IS NULL LIMIT 1`,
         [input.existingTransferId, operatingCompanyId]
       );
       if (!owned.rows[0]?.id) throw new Error("transfer_not_found");
@@ -435,7 +435,7 @@ export async function markBankFeedLineAsTransfer(input: MarkBankFeedTransferInpu
             categorized_at = now(),
             updated_at = now()
           WHERE id = $3
-            AND operating_company_id = $4
+            AND operating_company_id = $4::uuid
             AND matched_transfer_id IS NULL
         `,
         [bankTransactionId, transferId, pairedTransactionId, operatingCompanyId]
@@ -517,7 +517,7 @@ export async function revokeTransfer(transferId: string, operatingCompanyId: str
         SELECT id, operating_company_id, from_account_id, from_account_kind, to_account_id, to_account_kind, amount_cents, revoked_at
         FROM banking.transfers
         WHERE id = $1
-          AND operating_company_id = $2
+          AND operating_company_id = $2::uuid
         LIMIT 1
       `,
       [transferId, operatingCompanyId]
@@ -534,7 +534,7 @@ export async function revokeTransfer(transferId: string, operatingCompanyId: str
             revoked_reason = $4,
             updated_at = now()
         WHERE id = $1
-          AND operating_company_id = $2
+          AND operating_company_id = $2::uuid
         RETURNING id, operating_company_id, from_account_id, from_account_kind, to_account_id, to_account_kind, amount_cents, revoked_at
       `,
       [transferId, operatingCompanyId, userId, reason]
@@ -614,7 +614,7 @@ export async function listTransfers(input: {
   return withCurrentUser(input.userId, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operatingCompanyId]);
     const values: unknown[] = [input.operatingCompanyId];
-    const where: string[] = ["t.operating_company_id = $1"];
+    const where: string[] = ["t.operating_company_id = $1::uuid"];
     if (input.fromDate) {
       values.push(input.fromDate);
       where.push(`t.transfer_date >= $${values.length}`);
@@ -678,7 +678,7 @@ export async function getTransferDetail(transferId: string, operatingCompanyId: 
           ${TRANSFER_MATCHED_BANK_TRANSACTION_ID_SQL} AS matched_bank_transaction_id
         FROM banking.transfers t
         WHERE t.id = $1
-          AND t.operating_company_id = $2
+          AND t.operating_company_id = $2::uuid
         LIMIT 1
       `,
       [transferId, operatingCompanyId]
@@ -766,7 +766,7 @@ async function resolveIntercompanyAccount(
     `
       SELECT intercompany_account_id
       FROM banking.intercompany_entity_pairs
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
         AND counterparty_company_id = $2
         AND deactivated_at IS NULL
       LIMIT 1
@@ -970,7 +970,7 @@ export async function listIntercompanyPairs(operatingCompanyId: string, userId: 
           FROM banking.intercompany_entity_pairs p
           JOIN org.companies c ON c.id = p.counterparty_company_id
           LEFT JOIN catalogs.accounts a ON a.id = p.intercompany_account_id
-         WHERE p.operating_company_id = $1
+         WHERE p.operating_company_id = $1::uuid
            AND ($2::boolean = true OR p.deactivated_at IS NULL)
          ORDER BY c.code
       `,
@@ -989,7 +989,7 @@ export async function deactivateIntercompanyPair(pairId: string, operatingCompan
         UPDATE banking.intercompany_entity_pairs
            SET deactivated_at = now(), deactivated_by_user_id = $3, updated_at = now()
          WHERE id = $1
-           AND operating_company_id = $2
+           AND operating_company_id = $2::uuid
            AND deactivated_at IS NULL
         RETURNING id, deactivated_at, deactivated_by_user_id
       `,
@@ -1027,7 +1027,7 @@ export async function getIntercompanyTransferGroup(groupId: string, operatingCom
           FROM banking.transfers t
           JOIN org.companies c ON c.id = t.operating_company_id
          WHERE t.intercompany_transfer_group_id = $1
-           AND (t.operating_company_id = $2 OR t.counterparty_company_id = $2)
+           AND (t.operating_company_id = $2::uuid OR t.counterparty_company_id = $2)
          ORDER BY t.intercompany_leg
       `,
       [groupId, operatingCompanyId]

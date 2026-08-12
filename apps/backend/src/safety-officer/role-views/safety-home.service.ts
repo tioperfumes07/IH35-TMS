@@ -173,7 +173,7 @@ async function countPendingDaDraws(client: DbClient, ociId: string): Promise<Cou
              count(DISTINCT driver_uuid)::int AS distinct_drivers,
              (array_agg(DISTINCT driver_uuid) FILTER (WHERE driver_uuid IS NOT NULL))[1] AS sole_driver
       FROM safety.da_test_records
-      WHERE operating_company_id = $1::text
+      WHERE operating_company_id = $1::uuid::text
         AND result = 'pending'
     `,
     [ociId]

@@ -68,7 +68,7 @@ export async function listLateArrivalLoads(userId: string, operatingCompanyId: s
           ORDER BY scheduled_arrival_at ASC
           LIMIT 1
         ) sp ON true
-        WHERE l.operating_company_id = $1
+        WHERE l.operating_company_id = $1::uuid
           AND l.soft_deleted_at IS NULL
           AND l.status IN ('dispatched', 'at_pickup', 'in_transit', 'at_delivery')
           AND sp.scheduled_arrival_at IS NOT NULL

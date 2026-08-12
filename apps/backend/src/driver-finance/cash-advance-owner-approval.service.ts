@@ -194,7 +194,7 @@ async function loadDriverAdvanceAndSettlementHistory(
     `
       SELECT id, display_id, amount, purpose, disbursement_status, created_at
       FROM driver_finance.driver_advances
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
         AND driver_id = $2
         AND created_at >= $3
       ORDER BY created_at DESC
@@ -210,7 +210,7 @@ async function loadDriverAdvanceAndSettlementHistory(
       `
         SELECT id, display_id, status, payment_state, period_start, period_end, created_at
         FROM driver_finance.driver_settlements
-        WHERE operating_company_id = $1
+        WHERE operating_company_id = $1::uuid
           AND driver_id = $2
           AND created_at >= $3
         ORDER BY created_at DESC
@@ -255,7 +255,7 @@ export async function escalateCashAdvanceRequestToOwner(
     `
       SELECT *
       FROM driver_finance.cash_advance_requests
-      WHERE operating_company_id = $1 AND id = $2
+      WHERE operating_company_id = $1::uuid AND id = $2
       FOR UPDATE
     `,
     [args.operatingCompanyId, args.requestId]
@@ -287,7 +287,7 @@ export async function escalateCashAdvanceRequestToOwner(
         last_escalated_at = now(),
         owner_decision = 'escalated',
         owner_notes = NULL
-      WHERE operating_company_id = $1 AND id = $2
+      WHERE operating_company_id = $1::uuid AND id = $2
       RETURNING *
     `,
     [args.operatingCompanyId, args.requestId, tokenHash, expiresAt.toISOString(), escCount]
@@ -336,7 +336,7 @@ export async function escalateCashAdvanceRequestToOwner(
       FROM driver_finance.cash_advance_requests r
       JOIN mdata.drivers d ON d.id = r.driver_id
                            AND d.operating_company_id = r.operating_company_id
-      WHERE r.operating_company_id = $1 AND r.id = $2
+      WHERE r.operating_company_id = $1::uuid AND r.id = $2
       LIMIT 1
     `,
     [args.operatingCompanyId, requestId]
@@ -356,7 +356,7 @@ export async function listPendingOwnerApprovalCashAdvanceRequests(client: Querya
       FROM driver_finance.cash_advance_requests r
       JOIN mdata.drivers d ON d.id = r.driver_id
                            AND d.operating_company_id = r.operating_company_id
-      WHERE r.operating_company_id = $1
+      WHERE r.operating_company_id = $1::uuid
         AND r.owner_approval_required = true
         AND r.owner_approval_token IS NOT NULL
         AND r.owner_approval_token_expires_at > now()
@@ -515,7 +515,7 @@ export async function ownerTokenApproveCashAdvanceRequest(
             owner_notes = $4,
             owner_approval_token = NULL,
             owner_approval_token_expires_at = NULL
-          WHERE operating_company_id = $1 AND id = $2
+          WHERE operating_company_id = $1::uuid AND id = $2
           RETURNING *
         `,
       [operatingCompanyId, requestId, ownerUuid, notes, core.advanceId]
@@ -640,7 +640,7 @@ export async function ownerTokenDenyCashAdvanceRequest(
             owner_approval_token = NULL,
             owner_approval_token_expires_at = NULL,
             owner_approval_required = false
-          WHERE operating_company_id = $1 AND id = $2
+          WHERE operating_company_id = $1::uuid AND id = $2
           RETURNING *
         `,
       [operatingCompanyId, requestId, ownerUuid, notes]

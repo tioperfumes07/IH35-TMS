@@ -118,7 +118,7 @@ export async function registerDriverProfileRoutes(app: FastifyInstance) {
             et.code AS equipment_type_code,
             et.name AS equipment_type_name
           FROM mdata.driver_equipment_qualifications dq
-          JOIN mdata.drivers d ON d.id = dq.driver_id AND d.operating_company_id = $2
+          JOIN mdata.drivers d ON d.id = dq.driver_id AND d.operating_company_id = $2::uuid
           JOIN catalogs.equipment_types et ON et.id = dq.equipment_type_id
           WHERE dq.driver_id = $1
             ${includeInactive ? "" : "AND dq.deactivated_at IS NULL"}

@@ -44,7 +44,7 @@ export async function registerMaintenancePartsInventoryRoutes(app: FastifyInstan
     if (!query.success) return reply.code(400).send({ error: "validation_error", details: query.error.flatten() });
     const rows = await withCompany(user.uuid, query.data.operating_company_id, async (client) => {
       const res = await client.query(
-        `SELECT * FROM maintenance.parts_inventory WHERE operating_company_id = $1 ORDER BY updated_at DESC, created_at DESC`,
+        `SELECT * FROM maintenance.parts_inventory WHERE operating_company_id = $1::uuid ORDER BY updated_at DESC, created_at DESC`,
         [query.data.operating_company_id]
       );
       return res.rows;
@@ -114,7 +114,7 @@ export async function registerMaintenancePartsInventoryRoutes(app: FastifyInstan
         `
           UPDATE maintenance.parts_inventory
           SET on_hand_qty = GREATEST(0, COALESCE(on_hand_qty, 0) + $3), updated_at = now()
-          WHERE id = $1 AND operating_company_id = $2
+          WHERE id = $1 AND operating_company_id = $2::uuid
           RETURNING *
         `,
         [params.data.id, query.data.operating_company_id, body.data.delta_qty]

@@ -215,7 +215,7 @@ export async function registerAccountingCatalogRoutes(app: FastifyInstance) {
       ): Promise<string | null> => {
         if (!accountId) return null;
         const res = await client.query(
-          `SELECT account_type::text AS t FROM catalogs.accounts WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+          `SELECT account_type::text AS t FROM catalogs.accounts WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
           [accountId, oc]
         );
         const t = res.rows[0]?.t as string | undefined;
@@ -280,7 +280,7 @@ export async function registerAccountingCatalogRoutes(app: FastifyInstance) {
       if (idsToCheck.length) {
         const acct = await client.query(
           `SELECT id::text AS id FROM catalogs.accounts
-            WHERE operating_company_id = $1 AND deactivated_at IS NULL AND id = ANY($2::uuid[])`,
+            WHERE operating_company_id = $1::uuid AND deactivated_at IS NULL AND id = ANY($2::uuid[])`,
           [oc, idsToCheck]
         );
         const found = new Set(acct.rows.map((r) => String(r.id)));
@@ -291,7 +291,7 @@ export async function registerAccountingCatalogRoutes(app: FastifyInstance) {
       const classId = mapped.default_class_id as string | null | undefined;
       if (classId) {
         const cls = await client.query(
-          `SELECT id FROM catalogs.classes WHERE id = $1 AND operating_company_id = $2 AND deactivated_at IS NULL LIMIT 1`,
+          `SELECT id FROM catalogs.classes WHERE id = $1 AND operating_company_id = $2::uuid AND deactivated_at IS NULL LIMIT 1`,
           [classId, oc]
         );
         if (!cls.rows[0]) return "invalid_account_or_class_reference";

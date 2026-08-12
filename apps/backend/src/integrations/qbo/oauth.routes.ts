@@ -42,7 +42,7 @@ async function loadConnectionId(operatingCompanyId: string) {
       `
         SELECT id
         FROM integrations.qbo_connections
-        WHERE operating_company_id = $1
+        WHERE operating_company_id = $1::uuid
           AND revoked_at IS NULL
         ORDER BY authorized_at DESC
         LIMIT 1

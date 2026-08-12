@@ -110,7 +110,7 @@ export async function persistInsuranceDispersalBills(input: {
       `
         SELECT id::text
         FROM mdata.vendors
-        WHERE operating_company_id = $1
+        WHERE operating_company_id = $1::uuid
           AND deactivated_at IS NULL
           AND lower(trim(vendor_name)) = lower(trim($2))
         ORDER BY created_at ASC
@@ -128,7 +128,7 @@ export async function persistInsuranceDispersalBills(input: {
       `
         SELECT id::text
         FROM banking.bank_accounts
-        WHERE operating_company_id = $1
+        WHERE operating_company_id = $1::uuid
           AND is_active = true
           ${bankAccountHiddenFilterSql(hideOnInsurance, "banking.bank_accounts")}
         ORDER BY created_at ASC
@@ -199,7 +199,7 @@ export async function persistInsuranceDispersalBills(input: {
       `
         SELECT id::text AS transaction_id, linked_entity_id::text AS bill_id
         FROM banking.bank_transactions
-        WHERE operating_company_id = $1
+        WHERE operating_company_id = $1::uuid
           AND id = ANY($2::uuid[])
       `,
       [input.operatingCompanyId, seeded.map((row) => row.transaction_id)]
@@ -220,7 +220,7 @@ export async function persistInsuranceDispersalBills(input: {
               memo = $4,
               updated_at = now()
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
         `,
         [
           createdBillId,

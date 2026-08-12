@@ -277,7 +277,7 @@ async function resolveDriverId(
   if (!driverName) return null;
   const res = await client.query<{ id: string }>(
     `SELECT id::text FROM mdata.drivers
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
         AND deactivated_at IS NULL
         AND lower(concat_ws(' ', first_name, last_name)) = lower($2)
       LIMIT 1`,
@@ -295,7 +295,7 @@ export async function resolveVendorId(
   if (!merchant) return null;
   const res = await client.query<{ id: string }>(
     `SELECT id::text FROM mdata.vendors
-      WHERE operating_company_id = $1 AND lower(vendor_name) = lower($2)
+      WHERE operating_company_id = $1::uuid AND lower(vendor_name) = lower($2)
       LIMIT 1`,
     [companyId, merchant]
   );
@@ -321,7 +321,7 @@ export async function resolveLoadId(
       SELECT l.id::text
       FROM mdata.loads l
       JOIN mdata.load_stops s ON s.load_id = l.id
-      WHERE l.operating_company_id = $1
+      WHERE l.operating_company_id = $1::uuid
         AND l.soft_deleted_at IS NULL
         AND (
           ($2::uuid IS NOT NULL AND l.assigned_unit_id = $2::uuid)

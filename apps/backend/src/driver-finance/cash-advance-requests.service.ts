@@ -152,7 +152,7 @@ export async function nextCashAdvanceRequestDisplayId(client: QueryableClient, o
         0
       ) + 1 AS next_n
       FROM driver_finance.cash_advance_requests
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
     `,
     [operatingCompanyId, y]
   );
@@ -394,7 +394,7 @@ export async function listMyCashAdvanceRequests(client: QueryableClient, operati
     `
       SELECT *
       FROM driver_finance.cash_advance_requests
-      WHERE operating_company_id = $1 AND driver_id = $2
+      WHERE operating_company_id = $1::uuid AND driver_id = $2
       ORDER BY submitted_at DESC
       LIMIT 100
     `,
@@ -416,7 +416,7 @@ export async function cancelMyCashAdvanceRequest(
     `
       UPDATE driver_finance.cash_advance_requests
       SET status = 'cancelled_by_driver'
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
         AND id = $2
         AND driver_id = $3
         AND status = 'pending'
@@ -466,7 +466,7 @@ export async function listPendingCashAdvanceRequests(client: QueryableClient, op
       FROM driver_finance.cash_advance_requests r
       JOIN mdata.drivers d ON d.id = r.driver_id
                            AND d.operating_company_id = r.operating_company_id
-      WHERE r.operating_company_id = $1
+      WHERE r.operating_company_id = $1::uuid
         AND r.status IN ('pending', 'under_review')
       ORDER BY r.is_above_policy ASC, r.submitted_at ASC
       LIMIT 500
@@ -483,7 +483,7 @@ export async function listCashAdvanceRequests(
 ) {
   const status = filter.status?.trim();
   const args: unknown[] = [operatingCompanyId];
-  let where = `r.operating_company_id = $1`;
+  let where = `r.operating_company_id = $1::uuid`;
   if (
     status &&
     ["pending", "under_review", "approved", "denied", "expired", "cancelled_by_driver"].includes(status)
@@ -517,7 +517,7 @@ export async function getCashAdvanceRequestDetail(client: QueryableClient, opera
       FROM driver_finance.cash_advance_requests r
       JOIN mdata.drivers d ON d.id = r.driver_id
                            AND d.operating_company_id = r.operating_company_id
-      WHERE r.operating_company_id = $1 AND r.id = $2
+      WHERE r.operating_company_id = $1::uuid AND r.id = $2
       LIMIT 1
     `,
     [operatingCompanyId, requestId]
@@ -529,7 +529,7 @@ export async function getCashAdvanceRequestDetail(client: QueryableClient, opera
     `
       SELECT id, event_type, event_payload, actor_user_id, actor_name, created_at
       FROM driver_finance.cash_advance_request_audit
-      WHERE operating_company_id = $1 AND request_id = $2
+      WHERE operating_company_id = $1::uuid AND request_id = $2
       ORDER BY id ASC
     `,
     [operatingCompanyId, requestId]
@@ -558,7 +558,7 @@ export async function detectCashAdvanceCascadeBranch(
     `
       SELECT id::text
       FROM mdata.loads
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
         AND assigned_primary_driver_id = $2
         AND status IN ('dispatched', 'at_pickup', 'in_transit', 'at_delivery')
         AND soft_deleted_at IS NULL
@@ -574,7 +574,7 @@ export async function detectCashAdvanceCascadeBranch(
       `
         SELECT id::text
         FROM driver_finance.driver_bills
-        WHERE operating_company_id = $1 AND driver_id = $2 AND load_id = $3 AND status = 'open'
+        WHERE operating_company_id = $1::uuid AND driver_id = $2 AND load_id = $3 AND status = 'open'
         ORDER BY created_at ASC
         LIMIT 1
       `,
@@ -591,7 +591,7 @@ export async function detectCashAdvanceCascadeBranch(
       `
         SELECT id::text
         FROM driver_finance.driver_bills
-        WHERE operating_company_id = $1 AND driver_id = $2 AND status = 'open'
+        WHERE operating_company_id = $1::uuid AND driver_id = $2 AND status = 'open'
         ORDER BY created_at ASC
         LIMIT 1
       `,
@@ -627,7 +627,7 @@ export async function previewCashAdvanceCascade(
     }
 > {
   const reqRes = await client.query(
-    `SELECT driver_id::text, requested_amount_cents::bigint FROM driver_finance.cash_advance_requests WHERE operating_company_id = $1 AND id = $2 LIMIT 1`,
+    `SELECT driver_id::text, requested_amount_cents::bigint FROM driver_finance.cash_advance_requests WHERE operating_company_id = $1::uuid AND id = $2 LIMIT 1`,
     [operatingCompanyId, requestId]
   );
   const req = reqRes.rows[0] as { driver_id?: string; requested_amount_cents?: string } | undefined;
@@ -695,7 +695,7 @@ export async function approveCashAdvanceRequest(
     `
       SELECT *
       FROM driver_finance.cash_advance_requests
-      WHERE operating_company_id = $1 AND id = $2
+      WHERE operating_company_id = $1::uuid AND id = $2
       FOR UPDATE
     `,
     [args.operatingCompanyId, args.requestId]
@@ -784,7 +784,7 @@ export async function approveCashAdvanceRequest(
         approval_notes = $4,
         denial_reason = NULL,
         linked_advance_id = $5::uuid
-      WHERE operating_company_id = $1 AND id = $2
+      WHERE operating_company_id = $1::uuid AND id = $2
       RETURNING *
     `,
     // I4: reviewerToRecord is NULL for an AUTHORITY self-approval (role IS the authority), else the distinct
@@ -881,7 +881,7 @@ export async function denyCashAdvanceRequest(
     `
       SELECT *
       FROM driver_finance.cash_advance_requests
-      WHERE operating_company_id = $1 AND id = $2
+      WHERE operating_company_id = $1::uuid AND id = $2
       FOR UPDATE
     `,
     [args.operatingCompanyId, args.requestId]
@@ -904,7 +904,7 @@ export async function denyCashAdvanceRequest(
         owner_approval_token = NULL,
         owner_approval_token_expires_at = NULL,
         owner_approval_required = false
-      WHERE operating_company_id = $1 AND id = $2
+      WHERE operating_company_id = $1::uuid AND id = $2
       RETURNING *
     `,
     [args.operatingCompanyId, args.requestId, args.actorUserId, reason]

@@ -91,7 +91,7 @@ export async function listMaintenanceShopHub(
           ON wo.id = b.linked_work_order_uuid
          AND wo.operating_company_id = b.operating_company_id
         LEFT JOIN mdata.units u ON u.id = wo.unit_id
-        WHERE b.operating_company_id = $1
+        WHERE b.operating_company_id = $1::uuid
           AND b.linked_work_order_uuid IS NOT NULL
           AND b.revoked_at IS NULL
           ${woFilter}
@@ -116,7 +116,7 @@ export async function listMaintenanceShopHub(
           ON wo.id = e.linked_work_order_uuid
          AND wo.operating_company_id = e.operating_company_id
         LEFT JOIN mdata.units u ON u.id = wo.unit_id
-        WHERE e.operating_company_id = $1
+        WHERE e.operating_company_id = $1::uuid
           AND e.linked_work_order_uuid IS NOT NULL
           AND lower(coalesce(e.status, '')) <> 'void'
           ${woFilter}

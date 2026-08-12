@@ -442,7 +442,7 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
       }
 
       const values: unknown[] = [q.operating_company_id];
-      const where: string[] = ["w.operating_company_id = $1"];
+      const where: string[] = ["w.operating_company_id = $1::uuid"];
       // MAINT-1: hide DEMO-/TEST- seed work orders (e.g. DEMO-WO-001) from the live WO list. Applied
       // to the shared `where` so both the tab counts and the rows exclude them. Read-only — the WO
       // rows stay in maintenance.work_orders (void-not-delete), just hidden from operational views.
@@ -583,7 +583,7 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
 
     const payload = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       if (!(await maintenanceReady(client))) return { kind: "unavailable" as const };
-      const woRes = await client.query(`SELECT * FROM maintenance.work_orders WHERE id = $1 AND operating_company_id = $2 LIMIT 1`, [
+      const woRes = await client.query(`SELECT * FROM maintenance.work_orders WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`, [
         params.data.id,
         query.data.operating_company_id,
       ]);
@@ -596,7 +596,7 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
             SELECT COALESCE(SUM(computed_labor_cost_cents), 0)::bigint AS cents
             FROM maintenance.wo_time_entries
             WHERE work_order_id = $1
-              AND operating_company_id = $2
+              AND operating_company_id = $2::uuid
               AND deleted_at IS NULL
           `,
           [params.data.id, query.data.operating_company_id]
@@ -948,7 +948,7 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
           SET approved_at = COALESCE(approved_at, now()),
               approved_by_user_id = COALESCE(approved_by_user_id, $2),
               updated_at = now()
-          WHERE id = $1 AND operating_company_id = $3
+          WHERE id = $1 AND operating_company_id = $3::uuid
           RETURNING *
         `,
         [params.data.id, user.uuid, query.data.operating_company_id]
@@ -1008,7 +1008,7 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
           SET status = 'in_progress',
               work_started_at = COALESCE(work_started_at, now()),
               updated_at = now()
-          WHERE id = $1 AND operating_company_id = $2 AND status <> 'cancelled' AND status <> 'complete'
+          WHERE id = $1 AND operating_company_id = $2::uuid AND status <> 'cancelled' AND status <> 'complete'
           RETURNING *
         `,
         [params.data.id, query.data.operating_company_id]
@@ -1036,7 +1036,7 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
 
     const row = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       if (!(await maintenanceReady(client))) return { kind: "unavailable" as const };
-      const currentRes = await client.query(`SELECT * FROM maintenance.work_orders WHERE id = $1 AND operating_company_id = $2 LIMIT 1`, [
+      const currentRes = await client.query(`SELECT * FROM maintenance.work_orders WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`, [
         params.data.id,
         query.data.operating_company_id,
       ]);
@@ -1050,7 +1050,7 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
               work_completed_at = COALESCE(work_completed_at, now()),
               completed_by_user_id = COALESCE(completed_by_user_id, $2),
               updated_at = now()
-          WHERE id = $1 AND operating_company_id = $3 AND status <> 'cancelled'
+          WHERE id = $1 AND operating_company_id = $3::uuid AND status <> 'cancelled'
           RETURNING *
         `,
         [params.data.id, user.uuid, query.data.operating_company_id]
@@ -1138,7 +1138,7 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
       // Lock the row + read prior status BEFORE any financial reversal (idempotency + no-orphan).
       const pre = await client.query(
         `SELECT status::text AS status FROM maintenance.work_orders
-          WHERE id = $1 AND operating_company_id = $2 LIMIT 1 FOR UPDATE`,
+          WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1 FOR UPDATE`,
         [params.data.id, query.data.operating_company_id]
       );
       const priorStatus = String((pre.rows[0] as { status?: string } | undefined)?.status ?? "");
@@ -1152,7 +1152,7 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
       // re-enqueuing so a second cancel can't write a duplicate audit event / outbox row.
       if (priorStatus === "cancelled") {
         const existing = await client.query(
-          `SELECT * FROM maintenance.work_orders WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+          `SELECT * FROM maintenance.work_orders WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
           [params.data.id, query.data.operating_company_id]
         );
         return { kind: "ok" as const, wo: existing.rows[0] };
@@ -1180,7 +1180,7 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
               cancellation_reason = COALESCE(cancellation_reason, $5),
               reversing_entry_ref = COALESCE($6, reversing_entry_ref),
               updated_at = now()
-          WHERE id = $1 AND operating_company_id = $7 AND status <> 'complete'
+          WHERE id = $1 AND operating_company_id = $7::uuid AND status <> 'complete'
           RETURNING *
         `,
         [
@@ -1240,7 +1240,7 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
       // Lock + idempotency: bail BEFORE any financial reversal if the WO is missing or already voided.
       const pre = await client.query(
         `SELECT voided_at FROM maintenance.work_orders
-          WHERE id = $1 AND operating_company_id = $2 LIMIT 1 FOR UPDATE`,
+          WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1 FOR UPDATE`,
         [params.data.id, query.data.operating_company_id]
       );
       if (!pre.rows[0]) return { kind: "missing" as const };
@@ -1252,7 +1252,7 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
       if (parsed.data.reason_code) {
         const rc = await client.query(
           `SELECT reason_code, requires_note FROM catalogs.void_cancel_reasons
-            WHERE operating_company_id = $1 AND reason_code = $2 AND is_active = true LIMIT 1`,
+            WHERE operating_company_id = $1::uuid AND reason_code = $2 AND is_active = true LIMIT 1`,
           [query.data.operating_company_id, parsed.data.reason_code]
         );
         const rrow = rc.rows[0] as { reason_code: string; requires_note: boolean } | undefined;
@@ -1282,7 +1282,7 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
               void_reason_code = COALESCE($6, void_reason_code, 'manual'),
               reversing_entry_ref = COALESCE($5, reversing_entry_ref),
               updated_at = now()
-          WHERE id = $1 AND operating_company_id = $4 AND voided_at IS NULL
+          WHERE id = $1 AND operating_company_id = $4::uuid AND voided_at IS NULL
           RETURNING *
         `,
         [params.data.id, user.uuid, parsed.data.note_text?.trim() || parsed.data.reason, query.data.operating_company_id, fin.reversing_entry_ref, resolvedReasonCode]
@@ -1340,7 +1340,7 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
 
     const payload = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       if (!(await maintenanceReady(client))) return { kind: "unavailable" as const };
-      const woRes = await client.query(`SELECT id FROM maintenance.work_orders WHERE id = $1 AND operating_company_id = $2 LIMIT 1`, [
+      const woRes = await client.query(`SELECT id FROM maintenance.work_orders WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`, [
         params.data.id,
         query.data.operating_company_id,
       ]);
@@ -1378,7 +1378,7 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
           UPDATE maintenance.work_orders
           SET r2_photo_paths = COALESCE(r2_photo_paths, '{}'::text[]) || ARRAY[$2::text],
               updated_at = now()
-          WHERE id = $1 AND operating_company_id = $3
+          WHERE id = $1 AND operating_company_id = $3::uuid
           RETURNING *
         `,
         [params.data.id, parsed.data.object_key, query.data.operating_company_id]
@@ -1404,7 +1404,7 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
 
     const payload = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       if (!(await maintenanceReady(client))) return { kind: "unavailable" as const };
-      const woRes = await client.query(`SELECT * FROM maintenance.work_orders WHERE id = $1 AND operating_company_id = $2 LIMIT 1`, [
+      const woRes = await client.query(`SELECT * FROM maintenance.work_orders WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`, [
         params.data.id,
         query.data.operating_company_id,
       ]);

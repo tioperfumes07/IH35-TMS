@@ -31,7 +31,7 @@ export async function initiateTransfer(userId: string, input: InitiateTransferIn
           SELECT id
           FROM mdata.drivers
           WHERE id = ANY($1::uuid[])
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
             AND deactivated_at IS NULL
         `,
         [[input.from_driver_id, input.to_driver_id], input.operating_company_id]
@@ -143,7 +143,7 @@ export async function confirmTransfer(
           SELECT id, equipment_id, from_driver_id, to_driver_id, status, expires_at::text
           FROM mdata.equipment_transfers
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
           FOR UPDATE
         `,
         [input.transfer_id, input.operating_company_id]
@@ -228,7 +228,7 @@ export async function rejectTransfer(
             rejection_reason = $4,
             updated_at = now()
         WHERE id = $1
-          AND operating_company_id = $2
+          AND operating_company_id = $2::uuid
           AND to_driver_id = $3
           AND status = 'pending_to_confirm'
         RETURNING id, to_driver_id, status
@@ -264,7 +264,7 @@ export async function listTransfers(
     if (input.operating_company_id) {
       await setScopedCompanyContext(client, userId, input.operating_company_id);
       values.push(input.operating_company_id);
-      filters.push(`operating_company_id = $${values.length}`);
+      filters.push(`operating_company_id = $${values.length}::uuid`);
     }
     if (input.status) {
       values.push(input.status);
@@ -295,7 +295,7 @@ async function loadPendingTransfer(
     `
       SELECT id, equipment_id, from_driver_id, to_driver_id, status, expires_at::text, notes
       FROM mdata.equipment_transfers
-      WHERE id = $1 AND operating_company_id = $2
+      WHERE id = $1 AND operating_company_id = $2::uuid
       FOR UPDATE
     `,
     [input.transfer_id, input.operating_company_id]
@@ -468,7 +468,7 @@ export async function expireOldTransfers(userId: string, operatingCompanyId: str
         UPDATE mdata.equipment_transfers
         SET status = 'expired',
             updated_at = now()
-        WHERE operating_company_id = $1
+        WHERE operating_company_id = $1::uuid
           AND status = 'pending_to_confirm'
           AND expires_at < now()
         RETURNING id

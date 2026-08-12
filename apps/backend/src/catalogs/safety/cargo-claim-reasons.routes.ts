@@ -50,7 +50,7 @@ const SELECT_COLUMNS = `
 `;
 
 export async function registerCargoClaimReasonsRoutes(app: FastifyInstance) {
-  app.get("/api/v1/catalogs/safety/cargo-claim-reasons", async (req, reply) => {
+  app.get("/api/v1/catalogs/safety/cargo-claim-reasons", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const parsed = listQuerySchema.safeParse(req.query ?? {});
@@ -59,7 +59,7 @@ export async function registerCargoClaimReasonsRoutes(app: FastifyInstance) {
 
     const payload = await withCompanyScope(authUser.uuid, q.operating_company_id, async (client) => {
       const values: unknown[] = [q.operating_company_id];
-      const where: string[] = ["c.operating_company_id = $1"];
+      const where: string[] = ["c.operating_company_id = $1::uuid"];
       if (q.is_active === "true") where.push("c.is_active = true");
       if (q.is_active === "false") where.push("c.is_active = false");
       if (q.search) {
@@ -88,7 +88,7 @@ export async function registerCargoClaimReasonsRoutes(app: FastifyInstance) {
     return payload;
   });
 
-  app.get("/api/v1/catalogs/safety/cargo-claim-reasons/:id", async (req, reply) => {
+  app.get("/api/v1/catalogs/safety/cargo-claim-reasons/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
@@ -102,7 +102,7 @@ export async function registerCargoClaimReasonsRoutes(app: FastifyInstance) {
           SELECT ${SELECT_COLUMNS}
           FROM catalogs.cargo_claim_reasons
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
           LIMIT 1
         `,
         [parsedParams.data.id, parsedQuery.data.operating_company_id]
@@ -114,7 +114,7 @@ export async function registerCargoClaimReasonsRoutes(app: FastifyInstance) {
     return row;
   });
 
-  app.post("/api/v1/catalogs/safety/cargo-claim-reasons", async (req, reply) => {
+  app.post("/api/v1/catalogs/safety/cargo-claim-reasons", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -129,7 +129,7 @@ export async function registerCargoClaimReasonsRoutes(app: FastifyInstance) {
         `
           SELECT id
           FROM catalogs.cargo_claim_reasons
-          WHERE operating_company_id = $1
+          WHERE operating_company_id = $1::uuid
             AND reason_code = $2
           LIMIT 1
         `,
@@ -168,7 +168,7 @@ export async function registerCargoClaimReasonsRoutes(app: FastifyInstance) {
     return reply.code(201).send(created.row);
   });
 
-  app.patch("/api/v1/catalogs/safety/cargo-claim-reasons/:id", async (req, reply) => {
+  app.patch("/api/v1/catalogs/safety/cargo-claim-reasons/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -186,7 +186,7 @@ export async function registerCargoClaimReasonsRoutes(app: FastifyInstance) {
           `
             SELECT id
             FROM catalogs.cargo_claim_reasons
-            WHERE operating_company_id = $1
+            WHERE operating_company_id = $1::uuid
               AND reason_code = $2
               AND id <> $3
             LIMIT 1
@@ -216,7 +216,7 @@ export async function registerCargoClaimReasonsRoutes(app: FastifyInstance) {
           UPDATE catalogs.cargo_claim_reasons
           SET ${fields.join(", ")}
           WHERE id = $${values.length - 1}
-            AND operating_company_id = $${values.length}
+            AND operating_company_id = $${values.length}::uuid
           RETURNING ${SELECT_COLUMNS}
         `,
         values
@@ -237,7 +237,7 @@ export async function registerCargoClaimReasonsRoutes(app: FastifyInstance) {
     return updated.row;
   });
 
-  app.delete("/api/v1/catalogs/safety/cargo-claim-reasons/:id", async (req, reply) => {
+  app.delete("/api/v1/catalogs/safety/cargo-claim-reasons/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -253,7 +253,7 @@ export async function registerCargoClaimReasonsRoutes(app: FastifyInstance) {
           SET is_active = false,
               updated_at = now()
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
           RETURNING id, reason_code
         `,
         [parsedParams.data.id, parsedQuery.data.operating_company_id]

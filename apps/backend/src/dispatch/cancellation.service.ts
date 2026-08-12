@@ -97,7 +97,7 @@ export async function cancelLoad(
           SELECT id, status
           FROM mdata.loads
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
             AND soft_deleted_at IS NULL
           FOR UPDATE
         `,
@@ -121,7 +121,7 @@ export async function cancelLoad(
           SELECT id, reason_code, billable_to_customer_default, requires_owner_approval
           FROM catalogs.load_cancellation_reasons
           WHERE reason_code = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
             AND is_active = true
           LIMIT 1
         `,
@@ -323,7 +323,7 @@ export async function listCancellations(
   return withCurrentUser(userId, async (client) => {
     await setScopedCompanyContext(client, userId, input.operating_company_id);
     const values: unknown[] = [input.operating_company_id];
-    const filters = ["c.operating_company_id = $1"];
+    const filters = ["c.operating_company_id = $1::uuid"];
     if (input.since) {
       values.push(input.since);
       filters.push(`c.cancelled_at >= $${values.length}::timestamptz`);
@@ -356,7 +356,7 @@ export async function listCancellationReasons(userId: string, operatingCompanyId
           requires_owner_approval,
           sort_order
         FROM catalogs.load_cancellation_reasons
-        WHERE operating_company_id = $1
+        WHERE operating_company_id = $1::uuid
           AND is_active = true
         ORDER BY sort_order ASC, display_name ASC
       `,
@@ -383,7 +383,7 @@ export async function approveCancellation(
               approved_by_user_id = $2,
               approved_at = now()
           WHERE id = $1
-            AND operating_company_id = $3
+            AND operating_company_id = $3::uuid
           RETURNING id, load_id, status
         `,
         [input.cancellation_id, userId, input.operating_company_id]

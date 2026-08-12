@@ -87,7 +87,7 @@ async function loadHandoffInstance(
     `
       SELECT id, template_code, signer_type, signer_entity_id, filled_variables, created_by_user_id
       FROM legal.contract_instances
-      WHERE operating_company_id = $1 AND id = $2
+      WHERE operating_company_id = $1::uuid AND id = $2
       LIMIT 1
     `,
     [operatingCompanyId, contractInstanceId]
@@ -230,7 +230,7 @@ export async function hasSignedDeductionAuthorization(
     `
       SELECT ci.template_code
       FROM legal.contract_instances ci
-      WHERE ci.operating_company_id = $1
+      WHERE ci.operating_company_id = $1::uuid
         AND ci.signer_type = 'driver'
         AND ci.signer_entity_id = $2
         -- LEG-02 / FIN-18. This read ONLY 'signed_electronically', so a driver whose contract was

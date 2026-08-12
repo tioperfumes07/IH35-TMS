@@ -25,7 +25,7 @@ function windowStart(range: string | undefined) {
 }
 
 export async function registerQboSyncRunsListRoutes(app: FastifyInstance) {
-  app.get("/api/v1/qbo/sync/runs", async (req: FastifyRequest, reply: FastifyReply) => {
+  app.get("/api/v1/qbo/sync/runs", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!accountingRoles(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
@@ -41,7 +41,7 @@ export async function registerQboSyncRunsListRoutes(app: FastifyInstance) {
       if (!exists.rows[0]?.ok) return [];
 
       const values: unknown[] = [parsed.data.operating_company_id, startedAfter];
-      const where: string[] = [`operating_company_id = $1`, `started_at >= $2`];
+      const where: string[] = [`operating_company_id = $1::uuid`, `started_at >= $2`];
 
       if (parsed.data.status) {
         values.push(parsed.data.status);

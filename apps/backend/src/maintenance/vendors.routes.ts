@@ -201,7 +201,7 @@ async function assertMdataVendorExists(
   mdataVendorId: string
 ) {
   const res = await client.query(
-    `SELECT id FROM mdata.vendors WHERE id = $1 AND operating_company_id = $2 AND deactivated_at IS NULL LIMIT 1`,
+    `SELECT id FROM mdata.vendors WHERE id = $1 AND operating_company_id = $2::uuid AND deactivated_at IS NULL LIMIT 1`,
     [mdataVendorId, companyId]
   );
   if (!res.rows[0]) {
@@ -230,7 +230,7 @@ async function fetchVendorDetail(
              END
            )
        AND ap_vendor.operating_company_id = mvendor.operating_company_id
-      WHERE mvendor.id = $1 AND mvendor.operating_company_id = $2
+      WHERE mvendor.id = $1 AND mvendor.operating_company_id = $2::uuid
       LIMIT 1
     `,
     [vendorId, companyId]
@@ -259,7 +259,7 @@ async function fetchVendorDetail(
         wo.external_vendor_invoice_amount,
         wo.repair_location
       FROM maintenance.work_orders wo
-      WHERE wo.operating_company_id = $1
+      WHERE wo.operating_company_id = $1::uuid
         AND (
           ($2::uuid IS NOT NULL AND wo.external_vendor_id = $2::uuid)
           OR ($3::uuid IS NOT NULL AND wo.vendor_id = $3::uuid)
@@ -281,7 +281,7 @@ async function fetchVendorDetail(
         wo.closed_at::text AS invoice_date,
         wo.status
       FROM maintenance.work_orders wo
-      WHERE wo.operating_company_id = $1
+      WHERE wo.operating_company_id = $1::uuid
         AND NULLIF(trim(COALESCE(wo.external_vendor_invoice_number, '')), '') IS NOT NULL
         AND (
           ($2::uuid IS NOT NULL AND wo.external_vendor_id = $2::uuid)
@@ -309,7 +309,7 @@ export async function registerMaintenanceVendorsRoutes(app: FastifyInstance) {
     if (!parsed.success) return validationError(reply, parsed.error);
     const rows = await withCompany(user.uuid, parsed.data.operating_company_id, async (client) => {
       const values: unknown[] = [parsed.data.operating_company_id];
-      const filters = ["operating_company_id = $1"];
+      const filters = ["operating_company_id = $1::uuid"];
       if (!parsed.data.include_archived) filters.push("is_active = true");
       if (parsed.data.search) {
         values.push(`%${parsed.data.search}%`);
@@ -411,7 +411,7 @@ export async function registerMaintenanceVendorsRoutes(app: FastifyInstance) {
       const updated = await withCompany(user.uuid, body.operating_company_id, async (client) => {
         const existing = await client.query(
           `SELECT id, code, display_name, description, metadata, linked_vendor_id, is_active
-             FROM catalogs.maintenance_vendors WHERE id = $1 AND operating_company_id = $2`,
+             FROM catalogs.maintenance_vendors WHERE id = $1 AND operating_company_id = $2::uuid`,
           [params.data.id, body.operating_company_id]
         );
         if (!existing.rows[0]) return null;
@@ -438,7 +438,7 @@ export async function registerMaintenanceVendorsRoutes(app: FastifyInstance) {
             metadata = $6::jsonb,
             linked_vendor_id = CASE WHEN $7::boolean THEN $8::uuid ELSE linked_vendor_id END,
             updated_at = now()
-          WHERE id = $1 AND operating_company_id = $2
+          WHERE id = $1 AND operating_company_id = $2::uuid
           RETURNING id, operating_company_id, code, display_name, description, metadata, linked_vendor_id,
                     is_active, sort_order, created_at, updated_at
         `,
@@ -480,7 +480,7 @@ export async function registerMaintenanceVendorsRoutes(app: FastifyInstance) {
     const body = parsed.data;
     const result = await withCompany(user.uuid, body.operating_company_id, async (client) => {
       const existing = await client.query(
-        `SELECT id, metadata FROM catalogs.maintenance_vendors WHERE id = $1 AND operating_company_id = $2`,
+        `SELECT id, metadata FROM catalogs.maintenance_vendors WHERE id = $1 AND operating_company_id = $2::uuid`,
         [params.data.id, body.operating_company_id]
       );
       if (!existing.rows[0]) return null;
@@ -493,7 +493,7 @@ export async function registerMaintenanceVendorsRoutes(app: FastifyInstance) {
         `
           UPDATE catalogs.maintenance_vendors
           SET is_active = false, metadata = $3::jsonb, updated_at = now()
-          WHERE id = $1 AND operating_company_id = $2
+          WHERE id = $1 AND operating_company_id = $2::uuid
         `,
         [params.data.id, body.operating_company_id, JSON.stringify(metadata)]
       );
@@ -518,7 +518,7 @@ export async function registerMaintenanceVendorsRoutes(app: FastifyInstance) {
     const body = parsed.data;
     const result = await withCompany(user.uuid, body.operating_company_id, async (client) => {
       const existing = await client.query(
-        `SELECT id, metadata FROM catalogs.maintenance_vendors WHERE id = $1 AND operating_company_id = $2`,
+        `SELECT id, metadata FROM catalogs.maintenance_vendors WHERE id = $1 AND operating_company_id = $2::uuid`,
         [params.data.id, body.operating_company_id]
       );
       if (!existing.rows[0]) return null;
@@ -531,7 +531,7 @@ export async function registerMaintenanceVendorsRoutes(app: FastifyInstance) {
         `
           UPDATE catalogs.maintenance_vendors
           SET is_active = false, metadata = $3::jsonb, updated_at = now()
-          WHERE id = $1 AND operating_company_id = $2
+          WHERE id = $1 AND operating_company_id = $2::uuid
         `,
         [params.data.id, body.operating_company_id, JSON.stringify(metadata)]
       );

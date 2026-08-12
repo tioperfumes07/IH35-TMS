@@ -111,7 +111,7 @@ export async function registerMaintenancePartsRoutes(app: FastifyInstance) {
     if (!query.success) return reply.code(400).send({ error: "validation_error", details: query.error.flatten() });
     const rows = await withCompany(user.uuid, query.data.operating_company_id, async (client) => {
       const values: unknown[] = [query.data.operating_company_id];
-      const filters = ["operating_company_id = $1"];
+      const filters = ["operating_company_id = $1::uuid"];
       if (!query.data.include_voided) filters.push("part_description NOT LIKE '[VOID] %'");
       if (query.data.search) {
         values.push(`%${query.data.search}%`);
@@ -160,7 +160,7 @@ export async function registerMaintenancePartsRoutes(app: FastifyInstance) {
             COUNT(*) FILTER (WHERE on_hand_qty <= 2)::int AS low_stock_count,
             COALESCE(SUM(COALESCE(last_purchase_amount, 0) * COALESCE(on_hand_qty, 0)), 0)::numeric AS total_inventory_value
           FROM maintenance.parts_inventory
-          WHERE operating_company_id = $1
+          WHERE operating_company_id = $1::uuid
             AND part_description NOT LIKE '[VOID] %'
         `,
         [query.data.operating_company_id]
@@ -304,7 +304,7 @@ export async function registerMaintenancePartsRoutes(app: FastifyInstance) {
     if (!companyId) return reply.code(400).send({ error: "operating_company_id_required" });
     const result = await withCompany(user.uuid, companyId, async (client) => {
       const updated = await client.query(
-        `UPDATE maintenance.parts_inventory SET part_description = CONCAT('[VOID] ', COALESCE(part_description, ''), ' | ', $2), updated_at = now() WHERE id = $1 AND operating_company_id = $3 RETURNING id`,
+        `UPDATE maintenance.parts_inventory SET part_description = CONCAT('[VOID] ', COALESCE(part_description, ''), ' | ', $2), updated_at = now() WHERE id = $1 AND operating_company_id = $3::uuid RETURNING id`,
         [params.data.id, body.data.void_reason, companyId]
       );
       if (!updated.rows[0]) return null;

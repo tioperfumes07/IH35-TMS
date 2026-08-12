@@ -63,7 +63,7 @@ export function registerDetailTypesCatalogRoutes(app: FastifyInstance) {
     return scoped(authUser.uuid, q.operating_company_id, async (client) => {
       // System rows (opco NULL) + this entity's custom rows.
       const values: unknown[] = [q.operating_company_id];
-      const where: string[] = ["(operating_company_id IS NULL OR operating_company_id = $1)"];
+      const where: string[] = ["(operating_company_id IS NULL OR operating_company_id = $1::uuid)"];
       if (q.account_type_id) {
         values.push(q.account_type_id);
         where.push(`account_type_id = $${values.length}`);
@@ -99,7 +99,7 @@ export function registerDetailTypesCatalogRoutes(app: FastifyInstance) {
     const row = await scoped(authUser.uuid, parsedQuery.data.operating_company_id, async (client) => {
       const res = await client.query(
         `SELECT ${SELECT_COLS} FROM catalogs.detail_types
-         WHERE id = $1 AND (operating_company_id IS NULL OR operating_company_id = $2) LIMIT 1`,
+         WHERE id = $1 AND (operating_company_id IS NULL OR operating_company_id = $2::uuid) LIMIT 1`,
         [parsedParams.data.id, parsedQuery.data.operating_company_id],
       );
       return res.rows[0] ?? null;
@@ -157,7 +157,7 @@ export function registerDetailTypesCatalogRoutes(app: FastifyInstance) {
     const result = await scoped(authUser.uuid, opco, async (client) => {
       // Explicit guard for a clean error (RLS also blocks system-row writes).
       const cur = await client.query<{ is_system: boolean }>(
-        `SELECT is_system FROM catalogs.detail_types WHERE id = $1 AND (operating_company_id IS NULL OR operating_company_id = $2) LIMIT 1`,
+        `SELECT is_system FROM catalogs.detail_types WHERE id = $1 AND (operating_company_id IS NULL OR operating_company_id = $2::uuid) LIMIT 1`,
         [parsedParams.data.id, opco],
       );
       if (!cur.rows[0]) return { status: 404 as const };
@@ -177,7 +177,7 @@ export function registerDetailTypesCatalogRoutes(app: FastifyInstance) {
       values.push(parsedParams.data.id, opco);
       const res = await client.query(
         `UPDATE catalogs.detail_types SET ${setParts.join(", ")}
-         WHERE id = $${values.length - 1} AND operating_company_id = $${values.length} AND is_system = false
+         WHERE id = $${values.length - 1} AND operating_company_id = $${values.length}::uuid AND is_system = false
          RETURNING id`,
         values,
       );
@@ -209,14 +209,14 @@ export function registerDetailTypesCatalogRoutes(app: FastifyInstance) {
 
     const result = await scoped(authUser.uuid, opco, async (client) => {
       const cur = await client.query<{ is_system: boolean }>(
-        `SELECT is_system FROM catalogs.detail_types WHERE id = $1 AND (operating_company_id IS NULL OR operating_company_id = $2) LIMIT 1`,
+        `SELECT is_system FROM catalogs.detail_types WHERE id = $1 AND (operating_company_id IS NULL OR operating_company_id = $2::uuid) LIMIT 1`,
         [parsedParams.data.id, opco],
       );
       if (!cur.rows[0]) return { status: 404 as const };
       if (cur.rows[0].is_system) return { status: 409 as const };
       await client.query(
         `UPDATE catalogs.detail_types SET is_active = false, updated_at = now()
-         WHERE id = $1 AND operating_company_id = $2 AND is_system = false`,
+         WHERE id = $1 AND operating_company_id = $2::uuid AND is_system = false`,
         [parsedParams.data.id, opco],
       );
       await appendCrudAudit(client, authUser.uuid, "catalog.detail_type.deactivate", {

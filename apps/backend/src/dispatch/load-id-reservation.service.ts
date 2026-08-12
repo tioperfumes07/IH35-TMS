@@ -40,7 +40,7 @@ async function computeNextReservationSeq(client: DbClient, operatingCompanyId: s
     `
       SELECT COALESCE(MAX(COALESCE(NULLIF(substring(load_number FROM '([0-9]{4})$'), ''), '0')::int), 0) + 1 AS next_seq
       FROM mdata.loads
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
         AND load_number LIKE $2
     `,
     [operatingCompanyId, prefix]
@@ -50,7 +50,7 @@ async function computeNextReservationSeq(client: DbClient, operatingCompanyId: s
     `
       SELECT COALESCE(MAX(COALESCE(NULLIF(substring(reserved_load_number FROM '([0-9]{4})$'), ''), '0')::int), 0) + 1 AS next_seq
       FROM dispatch.load_id_reservations
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
         AND reserved_load_number LIKE $2
         AND (reserved_at AT TIME ZONE 'America/Chicago')::date = (now() AT TIME ZONE 'America/Chicago')::date
     `,
@@ -80,7 +80,7 @@ export async function expireStaleLoadIdReservations(client: DbClient, operatingC
       UPDATE dispatch.load_id_reservations
       SET status = 'expired',
           updated_at = now()
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
         AND status = 'reserved'
         AND expires_at <= now()
     `,
@@ -98,7 +98,7 @@ export async function reserveNextLoadId(client: DbClient, input: ReserveInput): 
     `
       SELECT id, reserved_load_number, expires_at::text AS expires_at
       FROM dispatch.load_id_reservations
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
         AND reserved_by_user_id = $2
         AND status = 'reserved'
         AND expires_at > now()
@@ -198,7 +198,7 @@ export async function claimReservation(client: DbClient, input: ClaimInput) {
       SELECT id, reserved_load_number, reserved_by_user_id::text AS reserved_by_user_id
       FROM dispatch.load_id_reservations
       WHERE id = $1
-        AND operating_company_id = $2
+        AND operating_company_id = $2::uuid
         AND reserved_by_user_id = $3
         AND status = 'reserved'
         AND expires_at > now()
@@ -231,7 +231,7 @@ export async function cancelLoadIdReservation(client: DbClient, input: ClaimInpu
       SET status = 'cancelled',
           updated_at = now()
       WHERE id = $1
-        AND operating_company_id = $2
+        AND operating_company_id = $2::uuid
         AND reserved_by_user_id = $3
         AND status = 'reserved'
       RETURNING id

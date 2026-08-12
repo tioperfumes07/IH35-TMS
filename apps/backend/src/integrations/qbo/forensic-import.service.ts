@@ -249,7 +249,7 @@ export async function detectAnomalies(
         `
           SELECT COUNT(*)::int AS count
           FROM qbo_archive.transactions_snapshot
-          WHERE operating_company_id = $1
+          WHERE operating_company_id = $1::uuid
             AND snapshot_batch_id = $2
             AND raw_snapshot->>'VendorRef' IS NOT NULL
             AND raw_snapshot->'VendorRef'->>'name' = $3
@@ -701,7 +701,7 @@ export async function importAttachments(actorUserId: string, batchId: string, qb
         SELECT id, qbo_txn_id, qbo_txn_type, txn_date::text, raw_snapshot
         FROM qbo_archive.transactions_snapshot
         WHERE snapshot_batch_id = $1
-          AND operating_company_id = $2
+          AND operating_company_id = $2::uuid
           AND txn_date >= $3
       `,
       [batchId, qboContext.operatingCompanyId, sinceDate]

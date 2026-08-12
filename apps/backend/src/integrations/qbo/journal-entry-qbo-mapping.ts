@@ -26,7 +26,7 @@ export async function loadJournalEntryForSync(operatingCompanyId: string, journa
         SELECT id, entry_date::text, memo, status
         FROM accounting.journal_entries
         WHERE id = $1
-          AND operating_company_id = $2
+          AND operating_company_id = $2::uuid
         LIMIT 1
       `,
       [journalEntryId, operatingCompanyId]
@@ -56,7 +56,7 @@ export async function loadJournalEntryForSync(operatingCompanyId: string, journa
         LEFT JOIN mdata.drivers d ON d.id = p.entity_uuid
                                  AND d.operating_company_id = p.operating_company_id
         WHERE p.journal_entry_uuid = $1
-          AND p.operating_company_id = $2
+          AND p.operating_company_id = $2::uuid
         ORDER BY p.line_sequence ASC
       `,
       [journalEntryId, operatingCompanyId]

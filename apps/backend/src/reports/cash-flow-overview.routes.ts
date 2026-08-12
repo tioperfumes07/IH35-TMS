@@ -87,7 +87,7 @@ export async function registerCashFlowOverviewRoutes(app: FastifyInstance) {
               )::text AS dip_cents,
               COALESCE(SUM(current_balance_cents), 0)::text AS total_cents
             FROM banking.bank_accounts
-            WHERE operating_company_id = $1
+            WHERE operating_company_id = $1::uuid
               AND is_active = true
             ${bankAccountHiddenFilterSql(hideOn, "banking.bank_accounts")}
           `,
@@ -108,7 +108,7 @@ export async function registerCashFlowOverviewRoutes(app: FastifyInstance) {
               COALESCE(mtd_advanced_total, 0)::text AS mtd_advanced_total,
               COALESCE(chargeback_balance, 0)::text AS chargeback_balance
             FROM views.factoring_summary
-            WHERE operating_company_id = $1
+            WHERE operating_company_id = $1::uuid
             LIMIT 1
           `,
           [companyId]
@@ -125,7 +125,7 @@ export async function registerCashFlowOverviewRoutes(app: FastifyInstance) {
           `
             SELECT COUNT(*)::text AS c
             FROM banking.bank_transactions t
-            WHERE t.operating_company_id = $1
+            WHERE t.operating_company_id = $1::uuid
               AND t.pending = false
               AND COALESCE(array_length(t.plaid_category, 1), 0) = 0
               AND t.matched_load_id IS NULL
@@ -145,7 +145,7 @@ export async function registerCashFlowOverviewRoutes(app: FastifyInstance) {
           `
             SELECT COALESCE(SUM(i.amount_open_cents), 0)::text AS amt
             FROM accounting.invoices i
-            WHERE i.operating_company_id = $1
+            WHERE i.operating_company_id = $1::uuid
               AND i.status IN ('sent', 'partial')
               AND i.voided_at IS NULL
               AND COALESCE(i.amount_open_cents, 0) > 0
@@ -161,7 +161,7 @@ export async function registerCashFlowOverviewRoutes(app: FastifyInstance) {
           `
             SELECT COALESCE(SUM(GREATEST(COALESCE(b.amount_cents, 0) - COALESCE(b.paid_cents, 0), 0)), 0)::text AS amt
             FROM accounting.bills b
-            WHERE b.operating_company_id = $1
+            WHERE b.operating_company_id = $1::uuid
               AND b.revoked_at IS NULL
               -- ACCT-F183: 'partially_paid' too — see accounting/fin20-aging.service.ts. Without
               -- it the cash-flow overview understates outgoing obligations.
@@ -177,7 +177,7 @@ export async function registerCashFlowOverviewRoutes(app: FastifyInstance) {
           `
             SELECT COALESCE(SUM(ROUND(s.net_pay::numeric * 100)), 0)::text AS amt
             FROM driver_finance.driver_settlements s
-            WHERE s.operating_company_id = $1
+            WHERE s.operating_company_id = $1::uuid
               AND s.payment_state <> 'cleared'
               AND s.status IN ('locked', 'final', 'approved', 'paid', 'ready')
               AND s.period_end <= ${horizonEndSql}
@@ -205,7 +205,7 @@ export async function registerCashFlowOverviewRoutes(app: FastifyInstance) {
                 0
               )::text AS outflow
             FROM banking.bank_transactions t
-            WHERE t.operating_company_id = $1
+            WHERE t.operating_company_id = $1::uuid
               AND t.pending = false
               AND t.transaction_date > ($2::date - INTERVAL '7 days')
               AND t.transaction_date <= $2::date
@@ -228,7 +228,7 @@ export async function registerCashFlowOverviewRoutes(app: FastifyInstance) {
                 0
               )::text AS outflow
             FROM banking.bank_transactions t
-            WHERE t.operating_company_id = $1
+            WHERE t.operating_company_id = $1::uuid
               AND t.pending = false
               AND t.transaction_date > ($2::date - INTERVAL '30 days')
               AND t.transaction_date <= $2::date

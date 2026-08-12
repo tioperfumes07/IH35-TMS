@@ -323,7 +323,7 @@ async function nextLoadNumber(
     `
       SELECT COALESCE(MAX(COALESCE(NULLIF(substring(load_number FROM '([0-9]{4})$'), ''), '0')::int), 0) + 1 AS next_seq
       FROM mdata.loads
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
         AND load_number LIKE $2
     `,
     [operatingCompanyId, `${prefix}%`]
@@ -358,7 +358,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
             SELECT id
             FROM mdata.customers
             WHERE id = $1
-              AND operating_company_id = $2
+              AND operating_company_id = $2::uuid
               AND deactivated_at IS NULL
             LIMIT 1
           `,
@@ -1006,7 +1006,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
             SELECT id, reason_code, requires_owner_approval, billable_to_customer_default
             FROM catalogs.load_cancellation_reasons
             WHERE reason_code = $1
-              AND operating_company_id = $2
+              AND operating_company_id = $2::uuid
               AND is_active = true
             LIMIT 1
           `,
@@ -1449,7 +1449,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
     }
   });
 
-  app.post("/api/v1/mdata/loads/:id/stops", async (req, reply) => {
+  app.post("/api/v1/mdata/loads/:id/stops", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isOfficeWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -1466,7 +1466,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
         // entity's load — mirror the operating_company_id predicate the loads GET/PATCH already use.
         const scopedCompanyId = await resolveOperatingCompanyId(client, authUser.uuid);
         const loadRes = await client.query(
-          `SELECT id FROM mdata.loads WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+          `SELECT id FROM mdata.loads WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
           [parsedParams.data.id, scopedCompanyId]
         );
         if (loadRes.rows.length === 0) return null;
@@ -1529,7 +1529,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
     }
   });
 
-  app.patch("/api/v1/mdata/loads/:id/stops/:stopId", async (req, reply) => {
+  app.patch("/api/v1/mdata/loads/:id/stops/:stopId", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isOfficeWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -1571,7 +1571,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
         // belonging to the caller's operating company (load_stops has no own operating_company_id).
         const scopedCompanyId = await resolveOperatingCompanyId(client, authUser.uuid);
         const loadOwnRes = await client.query(
-          `SELECT 1 FROM mdata.loads WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+          `SELECT 1 FROM mdata.loads WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
           [parsedParams.data.id, scopedCompanyId]
         );
         if (loadOwnRes.rows.length === 0) return null;
@@ -1655,7 +1655,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
     }
   });
 
-  app.delete("/api/v1/mdata/loads/:id/stops/:stopId", async (req, reply) => {
+  app.delete("/api/v1/mdata/loads/:id/stops/:stopId", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isOfficeWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -1667,7 +1667,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
       // caller's operating company (load_stops has no own operating_company_id).
       const scopedCompanyId = await resolveOperatingCompanyId(client, authUser.uuid);
       const loadOwnRes = await client.query(
-        `SELECT 1 FROM mdata.loads WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+        `SELECT 1 FROM mdata.loads WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
         [parsedParams.data.id, scopedCompanyId]
       );
       if (loadOwnRes.rows.length === 0) return null;

@@ -266,7 +266,7 @@ export async function assignTripLink(
       assigned_by = $2,
       status = 'assigned'
     WHERE id = $3
-      AND operating_company_id = $4
+      AND operating_company_id = $4::uuid
     RETURNING id
   `, [loadId, assignedBy, queueId, operatingCompanyId]);
   return result.rows.length > 0;

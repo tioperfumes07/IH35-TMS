@@ -32,7 +32,7 @@ export async function registerLoadSettlementSummaryRoutes(app: FastifyInstance) 
 
       const loadRes = await client.query<{ id: string }>(
         `SELECT id FROM mdata.loads
-         WHERE id = $1 AND operating_company_id = $2 AND soft_deleted_at IS NULL
+         WHERE id = $1 AND operating_company_id = $2::uuid AND soft_deleted_at IS NULL
          LIMIT 1`,
         [loadId, operating_company_id]
       );
@@ -62,7 +62,7 @@ export async function registerLoadSettlementSummaryRoutes(app: FastifyInstance) 
            s.period_end,
            s.settlement_model
          FROM driver_finance.driver_settlements s
-         WHERE s.operating_company_id = $1
+         WHERE s.operating_company_id = $1::uuid
            AND s.settlement_model = 'load_bookended'
            AND (s.first_load_id = $2 OR s.last_load_id = $2)
          ORDER BY s.created_at DESC

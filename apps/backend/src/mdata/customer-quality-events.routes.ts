@@ -112,7 +112,7 @@ function todayIsoDate() {
 }
 
 export async function registerCustomerQualityEventsRoutes(app: FastifyInstance) {
-  app.get("/api/v1/catalogs/customer-quality-event-reasons", async (req, reply) => {
+  app.get("/api/v1/catalogs/customer-quality-event-reasons", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const parsedQuery = reasonsQuerySchema.safeParse(req.query ?? {});
@@ -125,7 +125,7 @@ export async function registerCustomerQualityEventsRoutes(app: FastifyInstance) 
       if (!companyId) return null;
       await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [companyId]);
       const values: unknown[] = [companyId];
-      const filters: string[] = ["r.operating_company_id = $1"];
+      const filters: string[] = ["r.operating_company_id = $1::uuid"];
       if (!parsedQuery.data.include_inactive) filters.push("r.is_active = true", "r.deactivated_at IS NULL");
       if (parsedQuery.data.event_type) {
         values.push(parsedQuery.data.event_type);
@@ -150,7 +150,7 @@ export async function registerCustomerQualityEventsRoutes(app: FastifyInstance) 
     return { reasons };
   });
 
-  app.get("/api/v1/mdata/customers/:customer_id/quality-events", async (req, reply) => {
+  app.get("/api/v1/mdata/customers/:customer_id/quality-events", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!canRead(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -171,12 +171,12 @@ export async function registerCustomerQualityEventsRoutes(app: FastifyInstance) 
       await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [companyId]);
 
       const customerRes = await client.query(
-        `SELECT id FROM mdata.customers WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+        `SELECT id FROM mdata.customers WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
         [parsedParams.data.customer_id, companyId]
       );
       if (!customerRes.rows[0]) return { error: "mdata_customer_not_found" as const };
 
-      const filters = ["e.customer_id = $1", "c.operating_company_id = $2"];
+      const filters = ["e.customer_id = $1", "c.operating_company_id = $2::uuid"];
       if (!parsedQuery.data.include_voided) filters.push("e.voided_at IS NULL");
       const res = await client.query(
         `
@@ -203,7 +203,7 @@ export async function registerCustomerQualityEventsRoutes(app: FastifyInstance) 
     return events;
   });
 
-  app.post("/api/v1/mdata/customers/:customer_id/quality-events", async (req, reply) => {
+  app.post("/api/v1/mdata/customers/:customer_id/quality-events", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!canWrite(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -224,7 +224,7 @@ export async function registerCustomerQualityEventsRoutes(app: FastifyInstance) 
       if (!companyId) return { error: "mdata_customer_not_found" as const };
       await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [companyId]);
       const customerRes = await client.query(
-        `SELECT id FROM mdata.customers WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+        `SELECT id FROM mdata.customers WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
         [parsedParams.data.customer_id, companyId]
       );
       if (!customerRes.rows[0]) return { error: "mdata_customer_not_found" as const };

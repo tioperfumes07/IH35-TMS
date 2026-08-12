@@ -20,7 +20,7 @@ function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
 }
 
 export async function registerCustomerListRoutes(app: FastifyInstance) {
-  app.get("/api/v1/customers", async (req, reply) => {
+  app.get("/api/v1/customers", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
 
@@ -37,7 +37,7 @@ export async function registerCustomerListRoutes(app: FastifyInstance) {
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [companyId]);
 
       const values: unknown[] = [companyId];
-      const filters = [EXCLUDE_ARCHIVED_MDATA_CUSTOMERS_SQL, "deactivated_at IS NULL", `operating_company_id = $1`];
+      const filters = [EXCLUDE_ARCHIVED_MDATA_CUSTOMERS_SQL, "deactivated_at IS NULL", `operating_company_id = $1::uuid`];
       if (search) {
         values.push(`%${search}%`);
         filters.push(`(customer_name ILIKE $${values.length} OR customer_code ILIKE $${values.length})`);

@@ -172,7 +172,7 @@ export async function registerMaintenanceSettingsRoutes(app: FastifyInstance) {
         `
           UPDATE maintenance.maintenance_settings
           SET ${sets.join(", ")}
-          WHERE operating_company_id = $${values.length}
+          WHERE operating_company_id = $${values.length}::uuid
           RETURNING *
         `,
         values

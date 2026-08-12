@@ -36,7 +36,7 @@ export async function registerUtilizationRoutes(app: FastifyInstance) {
                 cents_per_productive_hr, cents_per_driving_hr, utilization_pct,
                 created_at
          FROM utilization.driver_period
-         WHERE operating_company_id = $1
+         WHERE operating_company_id = $1::uuid
            AND period_start >= $2
            AND period_end <= $3
            AND is_active = true
@@ -62,7 +62,7 @@ export async function registerUtilizationRoutes(app: FastifyInstance) {
                 total_revenue_cents, cents_per_productive_hr, utilization_pct,
                 created_at
          FROM utilization.unit_period
-         WHERE operating_company_id = $1
+         WHERE operating_company_id = $1::uuid
            AND period_start >= $2
            AND period_end <= $3
            AND is_active = true
@@ -92,7 +92,7 @@ export async function registerUtilizationRoutes(app: FastifyInstance) {
                 cents_per_productive_hr, cents_per_driving_hr, utilization_pct,
                 spine_event_id, created_at
          FROM utilization.driver_period
-         WHERE operating_company_id = $1
+         WHERE operating_company_id = $1::uuid
            AND driver_id = $2
            AND period_start >= $3
            AND period_end <= $4
@@ -120,7 +120,7 @@ export async function registerUtilizationRoutes(app: FastifyInstance) {
                 total_revenue_cents, cents_per_productive_hr, utilization_pct,
                 spine_event_id, created_at
          FROM utilization.unit_period
-         WHERE operating_company_id = $1
+         WHERE operating_company_id = $1::uuid
            AND unit_id = $2
            AND period_start >= $3
            AND period_end <= $4

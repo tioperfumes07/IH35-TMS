@@ -35,7 +35,7 @@ export async function nextCashAdvanceDisplayId(
         0
       ) + 1 AS next_number
       FROM driver_finance.driver_advances
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
         AND created_at >= make_date($3, 1, 1)
         AND created_at < make_date($3 + 1, 1, 1)
     `,

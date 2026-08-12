@@ -64,7 +64,7 @@ export async function registerAccountingP7Wave2Routes(app: FastifyInstance) {
     const offset = q.data.cursor ?? 0;
     const rows = await withCompanyScope(user.uuid, q.data.operating_company_id, async (client) => {
       const params: unknown[] = [q.data.operating_company_id];
-      let where = `operating_company_id = $1`;
+      let where = `operating_company_id = $1::uuid`;
       if (q.data.status === "unresolved") {
         where += ` AND resolved_at IS NULL`;
       } else if (q.data.status === "resolved") {
@@ -104,7 +104,7 @@ export async function registerAccountingP7Wave2Routes(app: FastifyInstance) {
     if (!params.success || !q.success) return reply.code(400).send({ error: "validation_error" });
 
     const row = await withCompanyScope(user.uuid, q.data.operating_company_id, async (client) => {
-      const res = await client.query(`SELECT * FROM integrations.qbo_sync_conflicts WHERE id = $1 AND operating_company_id = $2`, [
+      const res = await client.query(`SELECT * FROM integrations.qbo_sync_conflicts WHERE id = $1 AND operating_company_id = $2::uuid`, [
         params.data.id,
         q.data.operating_company_id,
       ]);
@@ -247,7 +247,7 @@ export async function registerAccountingP7Wave2Routes(app: FastifyInstance) {
             `
               SELECT id, period_start::text, period_end::text, fiscal_year, status::text
               FROM accounting.periods
-              WHERE id = $1 AND operating_company_id = $2
+              WHERE id = $1 AND operating_company_id = $2::uuid
               FOR UPDATE
             `,
             [params.data.id, body.data.operating_company_id]
@@ -290,7 +290,7 @@ export async function registerAccountingP7Wave2Routes(app: FastifyInstance) {
                   locks_txn_dates_le = period_end,
                   retained_earnings_entry_id = COALESCE($5::uuid, retained_earnings_entry_id),
                   updated_at = now()
-              WHERE id = $1 AND operating_company_id = $2 AND status = 'open'
+              WHERE id = $1 AND operating_company_id = $2::uuid AND status = 'open'
               RETURNING id
             `,
             [params.data.id, body.data.operating_company_id, user.uuid, body.data.closing_notes ?? null, retainedEarningsJeId]
@@ -357,7 +357,7 @@ export async function registerAccountingP7Wave2Routes(app: FastifyInstance) {
                 closed_by_user_id = NULL,
                 locks_txn_dates_le = NULL,
                 updated_at = now()
-            WHERE id = $1 AND operating_company_id = $2
+            WHERE id = $1 AND operating_company_id = $2::uuid
           `,
           [params.data.id, body.data.operating_company_id]
         );
@@ -391,7 +391,7 @@ export async function registerAccountingP7Wave2Routes(app: FastifyInstance) {
           FROM accounting.journal_entry_postings jep
           JOIN accounting.journal_entries je ON je.id = jep.journal_entry_uuid
           JOIN catalogs.accounts a ON a.id = jep.account_id
-          WHERE jep.operating_company_id = $1
+          WHERE jep.operating_company_id = $1::uuid
             AND ($2::date IS NULL OR je.entry_date <= $2::date)
           GROUP BY jep.account_id, a.account_number, a.account_name, a.account_type
           ORDER BY a.account_number NULLS LAST, a.account_name
@@ -420,7 +420,7 @@ export async function registerAccountingP7Wave2Routes(app: FastifyInstance) {
             COALESCE(SUM(inv.tax_cents), 0)::bigint AS tax_collected_cents,
             COUNT(*)::int AS invoice_count
           FROM accounting.invoices inv
-          WHERE inv.operating_company_id = $1
+          WHERE inv.operating_company_id = $1::uuid
             AND inv.issue_date BETWEEN $2::date AND $3::date
             AND inv.voided_at IS NULL
         `,
@@ -451,7 +451,7 @@ export async function registerAccountingP7Wave2Routes(app: FastifyInstance) {
           LEFT JOIN mdata.vendors v
             ON v.operating_company_id = bp.operating_company_id
             AND (v.id::text = trim(bp.vendor_id) OR v.vendor_code = trim(bp.vendor_id))
-          WHERE bp.operating_company_id = $1
+          WHERE bp.operating_company_id = $1::uuid
             AND EXTRACT(YEAR FROM bp.payment_date)::int = $2
             AND bp.revoked_at IS NULL
             AND bp.vendor_id IS NOT NULL

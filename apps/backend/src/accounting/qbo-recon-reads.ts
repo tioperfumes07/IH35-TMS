@@ -96,27 +96,27 @@ export async function fetchQboReconciliation(
     `
     SELECT
       (SELECT count(*) FROM mdata.customers
-         WHERE operating_company_id = $1 AND deactivated_at IS NULL AND archived_at IS NULL) AS tms_customers,
-      (SELECT count(*) FROM mdata.qbo_customers WHERE operating_company_id = $1)              AS mirror_customers,
+         WHERE operating_company_id = $1::uuid AND deactivated_at IS NULL AND archived_at IS NULL) AS tms_customers,
+      (SELECT count(*) FROM mdata.qbo_customers WHERE operating_company_id = $1::uuid)              AS mirror_customers,
       (SELECT count(*) FROM mdata.vendors
-         WHERE operating_company_id = $1 AND deactivated_at IS NULL)                          AS tms_vendors,
-      (SELECT count(*) FROM mdata.qbo_vendors WHERE operating_company_id = $1)                AS mirror_vendors,
+         WHERE operating_company_id = $1::uuid AND deactivated_at IS NULL)                          AS tms_vendors,
+      (SELECT count(*) FROM mdata.qbo_vendors WHERE operating_company_id = $1::uuid)                AS mirror_vendors,
       (SELECT count(*) FROM catalogs.accounts
-         WHERE operating_company_id = $1 AND deactivated_at IS NULL)                          AS tms_accounts,
-      (SELECT count(*) FROM mdata.qbo_accounts WHERE operating_company_id = $1)               AS mirror_accounts,
+         WHERE operating_company_id = $1::uuid AND deactivated_at IS NULL)                          AS tms_accounts,
+      (SELECT count(*) FROM mdata.qbo_accounts WHERE operating_company_id = $1::uuid)               AS mirror_accounts,
       (SELECT count(*) FROM accounting.invoices
-         WHERE operating_company_id = $1 AND voided_at IS NULL)                               AS tms_invoices,
-      (SELECT count(*) FROM mdata.qbo_invoices WHERE operating_company_id = $1)               AS mirror_invoices,
-      (SELECT count(*) FROM accounting.bills WHERE operating_company_id = $1)                 AS tms_bills,
-      (SELECT count(*) FROM mdata.qbo_bills WHERE operating_company_id = $1)                  AS mirror_bills,
+         WHERE operating_company_id = $1::uuid AND voided_at IS NULL)                               AS tms_invoices,
+      (SELECT count(*) FROM mdata.qbo_invoices WHERE operating_company_id = $1::uuid)               AS mirror_invoices,
+      (SELECT count(*) FROM accounting.bills WHERE operating_company_id = $1::uuid)                 AS tms_bills,
+      (SELECT count(*) FROM mdata.qbo_bills WHERE operating_company_id = $1::uuid)                  AS mirror_bills,
       (SELECT COALESCE(SUM(total_cents), 0) FROM accounting.invoices
-         WHERE operating_company_id = $1 AND voided_at IS NULL)                               AS tms_ar_cents,
+         WHERE operating_company_id = $1::uuid AND voided_at IS NULL)                               AS tms_ar_cents,
       (SELECT COALESCE(SUM(total_cents), 0) FROM mdata.qbo_invoices
-         WHERE operating_company_id = $1)                                                     AS qbo_ar_cents,
+         WHERE operating_company_id = $1::uuid)                                                     AS qbo_ar_cents,
       (SELECT COALESCE(SUM(amount_cents), 0) FROM accounting.bills
-         WHERE operating_company_id = $1)                                                     AS tms_ap_cents,
+         WHERE operating_company_id = $1::uuid)                                                     AS tms_ap_cents,
       (SELECT COALESCE(SUM(total_cents), 0) FROM mdata.qbo_bills
-         WHERE operating_company_id = $1)                                                     AS qbo_ap_cents
+         WHERE operating_company_id = $1::uuid)                                                     AS qbo_ap_cents
     `,
     [operatingCompanyId]
   );
@@ -127,7 +127,7 @@ export async function fetchQboReconciliation(
     `
     SELECT DISTINCT ON (entity_type) entity_type, remote_count, collected_at
     FROM accounting.qbo_remote_counts
-    WHERE operating_company_id = $1
+    WHERE operating_company_id = $1::uuid
     ORDER BY entity_type, collected_at DESC
     `,
     [operatingCompanyId]
@@ -199,7 +199,7 @@ export async function fetchQboReconciliation(
       resource_scope, local_value, remote_value,
       detected_at, first_seen_at, last_seen_at
     FROM _system.reconciliation_findings
-    WHERE operating_company_id = $1 AND integration = 'qbo'
+    WHERE operating_company_id = $1::uuid AND integration = 'qbo'
     ORDER BY (status = 'open') DESC, detected_at DESC
     LIMIT 200
     `,
@@ -221,7 +221,7 @@ export async function fetchQboReconciliation(
     `
     SELECT last_run_status, last_successful_tick_at, last_error_message
     FROM _system.reconciliation_state
-    WHERE operating_company_id = $1 AND integration = 'qbo'
+    WHERE operating_company_id = $1::uuid AND integration = 'qbo'
     ORDER BY last_successful_tick_at DESC NULLS LAST, updated_at DESC
     LIMIT 1
     `,
@@ -235,7 +235,7 @@ export async function fetchQboReconciliation(
     `
     SELECT last_success_at, last_failure_at, consecutive_failures
     FROM accounting.qbo_remote_count_collection_state
-    WHERE operating_company_id = $1
+    WHERE operating_company_id = $1::uuid
     LIMIT 1
     `,
     [operatingCompanyId]

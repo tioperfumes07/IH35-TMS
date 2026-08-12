@@ -82,7 +82,7 @@ export async function listSubscriptions(operatingCompanyId: string, userId: stri
   return withCurrentUser(userId, async (client) => {
     await setScopedCompanyContext(client, userId, operatingCompanyId);
     const res = await client.query(
-      `SELECT * FROM reports.scheduled_subscriptions WHERE operating_company_id = $1 ORDER BY report_slug ASC`,
+      `SELECT * FROM reports.scheduled_subscriptions WHERE operating_company_id = $1::uuid ORDER BY report_slug ASC`,
       [operatingCompanyId]
     );
     return res.rows.map((row) => mapSubscriptionRow(row as Record<string, unknown>));
@@ -139,7 +139,7 @@ export async function updateSubscription(
   return withCurrentUser(userId, async (client) => {
     await setScopedCompanyContext(client, userId, operatingCompanyId);
     const existing = await client.query(
-      `SELECT * FROM reports.scheduled_subscriptions WHERE uuid = $1::uuid AND operating_company_id = $2`,
+      `SELECT * FROM reports.scheduled_subscriptions WHERE uuid = $1::uuid AND operating_company_id = $2::uuid`,
       [uuid, operatingCompanyId]
     );
     if (!existing.rows[0]) throw new Error("scheduled_subscription_not_found");
@@ -190,7 +190,7 @@ export async function updateSubscription(
     }
 
     const res = await client.query(
-      `UPDATE reports.scheduled_subscriptions SET ${setClauses.join(", ")} WHERE uuid = $1::uuid AND operating_company_id = $2 RETURNING *`,
+      `UPDATE reports.scheduled_subscriptions SET ${setClauses.join(", ")} WHERE uuid = $1::uuid AND operating_company_id = $2::uuid RETURNING *`,
       values
     );
     if (!res.rows[0]) throw new Error("scheduled_subscription_not_found");
@@ -205,7 +205,7 @@ export async function deactivateSubscription(uuid: string, operatingCompanyId: s
       `
         UPDATE reports.scheduled_subscriptions
         SET is_active = false, updated_at = now()
-        WHERE uuid = $1::uuid AND operating_company_id = $2 AND is_active = true
+        WHERE uuid = $1::uuid AND operating_company_id = $2::uuid AND is_active = true
         RETURNING uuid
       `,
       [uuid, operatingCompanyId]
@@ -233,7 +233,7 @@ export async function listDeliveryLog(
         SELECT l.*
         FROM reports.scheduled_delivery_log l
         JOIN reports.scheduled_subscriptions s ON s.uuid = l.subscription_uuid
-        WHERE s.operating_company_id = $1
+        WHERE s.operating_company_id = $1::uuid
         ${filter}
         ORDER BY l.sent_at DESC
         LIMIT $2
@@ -288,7 +288,7 @@ export async function markSubscriptionSent(
         SET last_sent_at = $3::timestamptz,
             next_scheduled_at = $4::timestamptz,
             updated_at = now()
-        WHERE uuid = $1::uuid AND operating_company_id = $2
+        WHERE uuid = $1::uuid AND operating_company_id = $2::uuid
       `,
       [uuid, operatingCompanyId, sentAt.toISOString(), nextAt.toISOString()]
     );

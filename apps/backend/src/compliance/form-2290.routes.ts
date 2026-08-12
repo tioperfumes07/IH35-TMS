@@ -93,7 +93,7 @@ export async function registerForm2290Routes(app: FastifyInstance) {
         `
           SELECT id, filing_status, tax_period_start, tax_period_end, total_tax_due
           FROM compliance.form_2290_filings
-          WHERE operating_company_id = $1
+          WHERE operating_company_id = $1::uuid
             AND tax_period_start = (
               CASE WHEN extract(month from current_date) >= 7
                 THEN make_date(extract(year from current_date)::int, 7, 1)
@@ -168,7 +168,7 @@ export async function registerForm2290Routes(app: FastifyInstance) {
         `
           SELECT *
           FROM compliance.form_2290_filings
-          WHERE operating_company_id = $1
+          WHERE operating_company_id = $1::uuid
           ORDER BY tax_period_start DESC, created_at DESC
           LIMIT 100
         `,
@@ -195,7 +195,7 @@ export async function registerForm2290Routes(app: FastifyInstance) {
         `
           SELECT filing_status
           FROM compliance.form_2290_filings
-          WHERE operating_company_id = $1 AND tax_period_start = $2 AND tax_period_end = $3
+          WHERE operating_company_id = $1::uuid AND tax_period_start = $2 AND tax_period_end = $3
           LIMIT 1
         `,
         [body.data.operating_company_id, body.data.tax_period_start, periodEnd]
@@ -299,7 +299,7 @@ export async function registerForm2290Routes(app: FastifyInstance) {
 
     const payload = await withCompanyScope(user.uuid, company.data.operating_company_id, async (client) => {
       const filingRes = await client.query(
-        `SELECT * FROM compliance.form_2290_filings WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+        `SELECT * FROM compliance.form_2290_filings WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
         [params.data.id, company.data.operating_company_id]
       );
       const filing = filingRes.rows[0];
@@ -355,7 +355,7 @@ export async function registerForm2290Routes(app: FastifyInstance) {
               filed_at = now(),
               irs_efile_acceptance_id = COALESCE($3, irs_efile_acceptance_id),
               updated_at = now()
-          WHERE id = $1 AND operating_company_id = $2
+          WHERE id = $1 AND operating_company_id = $2::uuid
           RETURNING *
         `,
         [params.data.id, body.data.operating_company_id, body.data.irs_efile_acceptance_id ?? null]

@@ -86,7 +86,7 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
           `
             SELECT *
             FROM views.factoring_summary
-            WHERE operating_company_id = $1
+            WHERE operating_company_id = $1::uuid
             LIMIT 1
           `,
           [companyId]
@@ -139,7 +139,7 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
               ORDER BY i.created_at DESC
               LIMIT 1
             ) inv ON true
-            WHERE rr.operating_company_id = $1
+            WHERE rr.operating_company_id = $1::uuid
             ORDER BY rr.days_until_recourse_expiry ASC, rr.factored_at DESC
             LIMIT $2
           `,
@@ -166,7 +166,7 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
           `
             SELECT *
             FROM views.factoring_chargebacks_fees
-            WHERE operating_company_id = $1
+            WHERE operating_company_id = $1::uuid
             ORDER BY created_at DESC
             LIMIT 500
           `,
@@ -182,7 +182,7 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
               SUM(chargeback_amount)::numeric AS chargeback_total,
               SUM(factor_fee_amount)::numeric AS factor_fee_total
             FROM views.factoring_chargebacks_fees
-            WHERE operating_company_id = $1
+            WHERE operating_company_id = $1::uuid
             GROUP BY statement_month
             ORDER BY statement_month DESC
             LIMIT 24
@@ -217,7 +217,7 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
           `
             SELECT *
             FROM views.factoring_statements_settings
-            WHERE operating_company_id = $1
+            WHERE operating_company_id = $1::uuid
             ORDER BY statement_month DESC NULLS LAST
             LIMIT 60
           `,

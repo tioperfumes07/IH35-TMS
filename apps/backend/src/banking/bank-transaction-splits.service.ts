@@ -174,7 +174,7 @@ export async function getSplitLines(
 ): Promise<{ mode: SplitMode | null; lines: SplitLineRow[]; remaining_cents: number; total_cents: number }> {
   return withCompanyScope(actorUserUuid, companyId, async (client: Client) => {
     const txnRes = await client.query<{ amount_cents: string; split_mode: string | null }>(
-      `SELECT amount_cents::text, split_mode FROM banking.bank_transactions WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+      `SELECT amount_cents::text, split_mode FROM banking.bank_transactions WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
       [bankTransactionId, companyId]
     );
     const txn = txnRes.rows[0];
@@ -185,7 +185,7 @@ export async function getSplitLines(
       `
         SELECT ${SPLIT_LINE_SELECT_COLUMNS}
         FROM banking.bank_transaction_splits
-        WHERE bank_transaction_id = $1 AND operating_company_id = $2 AND voided_at IS NULL
+        WHERE bank_transaction_id = $1 AND operating_company_id = $2::uuid AND voided_at IS NULL
         ORDER BY line_no ASC
       `,
       [bankTransactionId, companyId]
@@ -238,7 +238,7 @@ export async function getSplitLinesByLinkage(
           s.result_journal_entry_id::text
         FROM banking.bank_transaction_splits s
         JOIN banking.bank_transactions bt ON bt.id = s.bank_transaction_id AND bt.operating_company_id = s.operating_company_id
-        WHERE s.operating_company_id = $1
+        WHERE s.operating_company_id = $1::uuid
           AND s.voided_at IS NULL
           AND (
             ($2::uuid IS NOT NULL AND s.driver_id = $2::uuid)
@@ -279,7 +279,7 @@ export async function saveSplitDraft(
     if (!flagOn) throw new SplitValidationError("feature_disabled", "Bank transaction split is not enabled for this entity yet.");
 
     const txnRes = await client.query<{ amount_cents: string; status: string | null }>(
-      `SELECT amount_cents::text, status FROM banking.bank_transactions WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+      `SELECT amount_cents::text, status FROM banking.bank_transactions WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
       [bankTransactionId, companyId]
     );
     const txn = txnRes.rows[0];
@@ -316,7 +316,7 @@ export async function saveSplitDraft(
     // Void-not-delete: retire any existing active lines, then insert the fresh set.
     await client.query(
       `UPDATE banking.bank_transaction_splits SET voided_at = now(), updated_at = now(), updated_by_user_id = $3
-       WHERE bank_transaction_id = $1 AND operating_company_id = $2 AND voided_at IS NULL`,
+       WHERE bank_transaction_id = $1 AND operating_company_id = $2::uuid AND voided_at IS NULL`,
       [bankTransactionId, companyId, actorUserUuid]
     );
 
@@ -354,7 +354,7 @@ export async function saveSplitDraft(
     }
 
     await client.query(
-      `UPDATE banking.bank_transactions SET split_mode = $2, updated_at = now() WHERE id = $1 AND operating_company_id = $3`,
+      `UPDATE banking.bank_transactions SET split_mode = $2, updated_at = now() WHERE id = $1 AND operating_company_id = $3::uuid`,
       [bankTransactionId, mode, companyId]
     );
 
@@ -417,7 +417,7 @@ export async function commitSplit(
                  bt.bank_account_id::text AS bank_account_id
           FROM banking.bank_transactions bt
           LEFT JOIN banking.bank_accounts ba ON ba.id = bt.bank_account_id AND ba.operating_company_id = bt.operating_company_id
-          WHERE bt.id = $1 AND bt.operating_company_id = $2
+          WHERE bt.id = $1 AND bt.operating_company_id = $2::uuid
           LIMIT 1
         `,
         [bankTransactionId, companyId]
@@ -442,7 +442,7 @@ export async function commitSplit(
           SELECT line_no, amount_cents::text, driver_id::text, vendor_id::text, gl_account_id::text,
                  load_id::text, category_kind, posting_status
           FROM banking.bank_transaction_splits
-          WHERE bank_transaction_id = $1 AND operating_company_id = $2 AND voided_at IS NULL
+          WHERE bank_transaction_id = $1 AND operating_company_id = $2::uuid AND voided_at IS NULL
           ORDER BY line_no ASC
         `,
         [bankTransactionId, companyId]
@@ -458,7 +458,7 @@ export async function commitSplit(
         `UPDATE banking.bank_transactions
          SET status = 'split', category = 'split_transaction', category_kind = 'split_transaction',
              categorized_at = now(), updated_at = now()
-         WHERE id = $1 AND operating_company_id = $2 AND status <> 'split'`,
+         WHERE id = $1 AND operating_company_id = $2::uuid AND status <> 'split'`,
         [bankTransactionId, companyId]
       );
 
@@ -1072,7 +1072,7 @@ async function markLineOutcomeOnClient(
           result_bill_id = COALESCE($8, result_bill_id),
           result_journal_entry_id = COALESCE($9, result_journal_entry_id),
           updated_at = now(), updated_by_user_id = $3
-      WHERE bank_transaction_id = $1 AND operating_company_id = $2 AND line_no = $10 AND voided_at IS NULL
+      WHERE bank_transaction_id = $1 AND operating_company_id = $2::uuid AND line_no = $10 AND voided_at IS NULL
     `,
     [
       bankTransactionId,
@@ -1114,14 +1114,14 @@ export async function voidSplit(companyId: string, actorUserUuid: string, bankTr
     await client.query(
       `UPDATE banking.bank_transaction_splits
        SET voided_at = now(), posting_status = 'void', updated_at = now(), updated_by_user_id = $3
-       WHERE bank_transaction_id = $1 AND operating_company_id = $2 AND voided_at IS NULL`,
+       WHERE bank_transaction_id = $1 AND operating_company_id = $2::uuid AND voided_at IS NULL`,
       [bankTransactionId, companyId, actorUserUuid]
     );
     await client.query(
       `UPDATE banking.bank_transactions
        SET status = 'pending_categorization', category = NULL, category_kind = NULL, split_mode = NULL,
            categorized_at = NULL, updated_at = now()
-       WHERE id = $1 AND operating_company_id = $2`,
+       WHERE id = $1 AND operating_company_id = $2::uuid`,
       [bankTransactionId, companyId]
     );
     await appendCrudAudit(

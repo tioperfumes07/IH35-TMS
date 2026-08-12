@@ -14,7 +14,7 @@ async function ensureQboVendorExists(client: SqlClient, operatingCompanyId: stri
     `
       SELECT qbo_entity_id AS id
       FROM qbo_archive.entities_snapshot
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
         AND qbo_entity_type = 'Vendor'
         AND qbo_entity_id = $2
       LIMIT 1
@@ -48,7 +48,7 @@ export async function createDriverVendorMerge(
         SELECT id, qbo_vendor_id
         FROM mdata.drivers
         WHERE id = $1
-          AND operating_company_id = $2
+          AND operating_company_id = $2::uuid
         LIMIT 1
       `,
       [input.driverId, input.operatingCompanyId]
@@ -128,7 +128,7 @@ export async function listDriverVendorMerges(userId: string, operatingCompanyId:
       `
         SELECT *
         FROM mdata.driver_vendor_merges
-        WHERE operating_company_id = $1
+        WHERE operating_company_id = $1::uuid
         ORDER BY merged_at DESC
         LIMIT $2
       `,
@@ -309,7 +309,7 @@ export async function listFaroDailyImports(userId: string, operatingCompanyId: s
       `
         SELECT *
         FROM factor.faro_daily_imports
-        WHERE operating_company_id = $1
+        WHERE operating_company_id = $1::uuid
         ORDER BY statement_date DESC, created_at DESC
         LIMIT $2
       `,
@@ -327,7 +327,7 @@ export async function getFaroDailyImportDetail(userId: string, operatingCompanyI
         SELECT *
         FROM factor.faro_daily_imports
         WHERE id = $1
-          AND operating_company_id = $2
+          AND operating_company_id = $2::uuid
         LIMIT 1
       `,
       [importId, operatingCompanyId]
@@ -338,7 +338,7 @@ export async function getFaroDailyImportDetail(userId: string, operatingCompanyI
         SELECT *
         FROM factor.faro_invoice_lines
         WHERE daily_import_id = $1
-          AND operating_company_id = $2
+          AND operating_company_id = $2::uuid
           AND superseded_at IS NULL
         ORDER BY invoice_number ASC
       `,
@@ -352,7 +352,7 @@ export async function listEquipmentLoans(userId: string, operatingCompanyId: str
   return withCurrentUser(userId, async (client) => {
     await setCompanyScope(client, operatingCompanyId);
     const values: unknown[] = [operatingCompanyId];
-    let whereSql = `WHERE l.operating_company_id = $1`;
+    let whereSql = `WHERE l.operating_company_id = $1::uuid`;
     if (status) {
       values.push(status);
       whereSql += ` AND l.status = $${values.length}`;
@@ -574,7 +574,7 @@ export async function getEquipmentLoanLedger(userId: string, operatingCompanyId:
         SELECT *
         FROM banking.equipment_loans
         WHERE id = $1
-          AND operating_company_id = $2
+          AND operating_company_id = $2::uuid
         LIMIT 1
       `,
       [loanId, operatingCompanyId]
@@ -585,7 +585,7 @@ export async function getEquipmentLoanLedger(userId: string, operatingCompanyId:
         SELECT *
         FROM banking.equipment_loan_attributions
         WHERE loan_id = $1
-          AND operating_company_id = $2
+          AND operating_company_id = $2::uuid
         ORDER BY attribution_date DESC, created_at DESC
       `,
       [loanId, operatingCompanyId]
@@ -595,7 +595,7 @@ export async function getEquipmentLoanLedger(userId: string, operatingCompanyId:
         SELECT *
         FROM banking.equipment_loan_payments
         WHERE loan_id = $1
-          AND operating_company_id = $2
+          AND operating_company_id = $2::uuid
         ORDER BY paid_on DESC, created_at DESC
       `,
       [loanId, operatingCompanyId]

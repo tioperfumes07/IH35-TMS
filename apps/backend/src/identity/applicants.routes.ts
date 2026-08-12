@@ -184,7 +184,7 @@ export async function registerIdentityApplicantRoutes(app: FastifyInstance) {
         `
           SELECT *
           FROM identity.driver_applicants
-          WHERE operating_company_id = $1
+          WHERE operating_company_id = $1::uuid
             AND record_kind = 'portal_config'
             AND archived_at IS NULL
           LIMIT 1
@@ -239,7 +239,7 @@ export async function registerIdentityApplicantRoutes(app: FastifyInstance) {
         `
           SELECT *
           FROM identity.driver_applicants
-          WHERE operating_company_id = $1
+          WHERE operating_company_id = $1::uuid
             AND record_kind = 'applicant'
             AND archived_at IS NULL
           ORDER BY created_at DESC
@@ -271,7 +271,7 @@ export async function registerIdentityApplicantRoutes(app: FastifyInstance) {
               reviewed_by_user_id = $5,
               updated_at = now()
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
             AND record_kind = 'applicant'
             AND archived_at IS NULL
           RETURNING *
@@ -312,7 +312,7 @@ export async function registerIdentityApplicantRoutes(app: FastifyInstance) {
           SELECT *
           FROM identity.driver_applicants
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
             AND record_kind = 'applicant'
             AND archived_at IS NULL
           LIMIT 1
@@ -449,7 +449,7 @@ export async function registerIdentityApplicantRoutes(app: FastifyInstance) {
               reviewed_by_user_id = $5,
               updated_at = now()
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
           RETURNING *
         `,
         [params.data.id, query.data.operating_company_id, driverId, sessionId, user.uuid]

@@ -89,7 +89,7 @@ export function createCatalogRoutes(app: FastifyInstance, config: CatalogFactory
       const where: string[] = [];
       if (scoped && opco) {
         values.push(opco);
-        where.push(`t.operating_company_id = $${values.length}`);
+        where.push(`t.operating_company_id = $${values.length}::uuid`);
       }
       if (q.is_active === "true") where.push("t.is_active = true AND t.deactivated_at IS NULL");
       if (q.is_active === "false") where.push("(t.is_active = false OR t.deactivated_at IS NOT NULL)");
@@ -142,7 +142,7 @@ export function createCatalogRoutes(app: FastifyInstance, config: CatalogFactory
       let where = "WHERE id = $1";
       if (scoped && opco) {
         values.push(opco);
-        where += ` AND operating_company_id = $${values.length}`;
+        where += ` AND operating_company_id = $${values.length}::uuid`;
       }
       const res = await client.query(
         `
@@ -185,7 +185,7 @@ export function createCatalogRoutes(app: FastifyInstance, config: CatalogFactory
       // Code uniqueness is per-entity when scoped, global otherwise.
       const conflict =
         scoped && opco
-          ? await client.query(`SELECT id FROM catalogs.${config.tableName} WHERE operating_company_id = $1 AND code = $2 LIMIT 1`, [opco, b.code])
+          ? await client.query(`SELECT id FROM catalogs.${config.tableName} WHERE operating_company_id = $1::uuid AND code = $2 LIMIT 1`, [opco, b.code])
           : await client.query(`SELECT id FROM catalogs.${config.tableName} WHERE code = $1 LIMIT 1`, [b.code]);
       if (conflict.rows.length > 0) return { error: `catalog_${config.tableName}_code_conflict` as const };
 
@@ -240,7 +240,7 @@ export function createCatalogRoutes(app: FastifyInstance, config: CatalogFactory
       if (b.code) {
         const conflict =
           scoped && opco
-            ? await client.query(`SELECT id FROM catalogs.${config.tableName} WHERE operating_company_id = $1 AND code = $2 AND id <> $3 LIMIT 1`, [
+            ? await client.query(`SELECT id FROM catalogs.${config.tableName} WHERE operating_company_id = $1::uuid AND code = $2 AND id <> $3 LIMIT 1`, [
                 opco,
                 b.code,
                 parsedParams.data.id,
@@ -271,7 +271,7 @@ export function createCatalogRoutes(app: FastifyInstance, config: CatalogFactory
       let where = `WHERE id = $${idIdx}`;
       if (scoped && opco) {
         values.push(opco);
-        where += ` AND operating_company_id = $${values.length}`;
+        where += ` AND operating_company_id = $${values.length}::uuid`;
       }
 
       const res = await client.query(
@@ -317,7 +317,7 @@ export function createCatalogRoutes(app: FastifyInstance, config: CatalogFactory
       let where = "WHERE id = $1";
       if (scoped && opco) {
         values.push(opco);
-        where += ` AND operating_company_id = $${values.length}`;
+        where += ` AND operating_company_id = $${values.length}::uuid`;
       }
       const res = await client.query(
         `

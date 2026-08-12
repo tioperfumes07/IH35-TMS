@@ -135,7 +135,7 @@ async function loadAccount(
   operatingCompanyId: string,
 ): Promise<AccountRow | null> {
   const res = await client.query(
-    `SELECT ${ACCOUNT_COLS} FROM catalogs.accounts WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+    `SELECT ${ACCOUNT_COLS} FROM catalogs.accounts WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
     [id, operatingCompanyId],
   );
   return (res.rows[0] as AccountRow | undefined) ?? null;
@@ -254,7 +254,7 @@ export async function mergeAccountsOnClient(
         `UPDATE ${t.schema}.${t.table}
             SET ${t.column} = $1
           WHERE ${t.column} = $2
-            AND operating_company_id = $3`,
+            AND operating_company_id = $3::uuid`,
         [target.id, source.id, input.operatingCompanyId],
       );
       const count = res.rowCount ?? 0;

@@ -162,7 +162,7 @@ export async function sumAuthoritativeDepositoryCashCents(
 
       FROM banking.bank_accounts
 
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
 
         AND account_class = 'depository'
 
@@ -203,9 +203,9 @@ export async function sumAuthoritativeDepositoryCashCents(
 
       JOIN banking.bank_accounts ba ON ba.id = bt.bank_account_id
 
-      WHERE bt.operating_company_id = $1
+      WHERE bt.operating_company_id = $1::uuid
 
-        AND ba.operating_company_id = $1
+        AND ba.operating_company_id = $1::uuid
 
         AND ba.account_class = 'depository'
 

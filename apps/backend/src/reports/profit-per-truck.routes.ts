@@ -98,7 +98,7 @@ export async function registerProfitPerTruckRoutes(app: FastifyInstance) {
                 l.trailer_type,
                 COALESCE(l.miles_practical, l.miles_shortest, 0)::bigint AS trip_miles
               FROM mdata.loads l
-              WHERE l.operating_company_id = $1
+              WHERE l.operating_company_id = $1::uuid
                 AND l.soft_deleted_at IS NULL
                 AND l.status IS DISTINCT FROM 'cancelled'
                 AND l.assigned_unit_id IS NOT NULL
@@ -134,7 +134,7 @@ export async function registerProfitPerTruckRoutes(app: FastifyInstance) {
                   0
                 )::bigint AS maintenance_cents
               FROM maintenance.work_orders wo
-              WHERE wo.operating_company_id = $1
+              WHERE wo.operating_company_id = $1::uuid
               GROUP BY wo.unit_id
             ),
             drivers AS (
@@ -177,7 +177,7 @@ export async function registerProfitPerTruckRoutes(app: FastifyInstance) {
               FROM fuel.fuel_transactions ft
               JOIN mdata.loads l ON l.id = ft.load_id
                                     AND l.operating_company_id = ft.operating_company_id
-              WHERE ft.operating_company_id = $1
+              WHERE ft.operating_company_id = $1::uuid
                 AND l.soft_deleted_at IS NULL
                 AND l.status IS DISTINCT FROM 'cancelled'
                 AND l.created_at::date BETWEEN $2::date AND $3::date
@@ -349,7 +349,7 @@ export async function registerProfitPerTruckRoutes(app: FastifyInstance) {
               l.assigned_unit_id AS unit_id,
               COALESCE(SUM(CASE WHEN l.created_at >= $2::timestamptz AND l.created_at < $3::timestamptz THEN l.rate_total_cents ELSE 0 END), 0)::bigint AS revenue_cents
             FROM mdata.loads l
-            WHERE l.operating_company_id = $1
+            WHERE l.operating_company_id = $1::uuid
               AND l.soft_deleted_at IS NULL
               AND l.status IS DISTINCT FROM 'cancelled'
               AND l.assigned_unit_id IS NOT NULL
@@ -370,7 +370,7 @@ export async function registerProfitPerTruckRoutes(app: FastifyInstance) {
                 0
               )::bigint AS wo_cost_cents
             FROM maintenance.work_orders wo
-            WHERE wo.operating_company_id = $1
+            WHERE wo.operating_company_id = $1::uuid
             GROUP BY wo.unit_id
           )
           SELECT

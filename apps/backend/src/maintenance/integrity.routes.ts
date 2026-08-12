@@ -31,7 +31,7 @@ export async function registerMaintenanceIntegrityRoutes(app: FastifyInstance) {
     if (!query.success) return reply.code(400).send({ error: "validation_error", details: query.error.flatten() });
     const rows = await withCompany(user.uuid, query.data.operating_company_id, async (client) => {
       const res = await client.query(
-        `SELECT * FROM views.maintenance_unit_history WHERE operating_company_id = $1 ORDER BY cost_90d DESC NULLS LAST LIMIT $2`,
+        `SELECT * FROM views.maintenance_unit_history WHERE operating_company_id = $1::uuid ORDER BY cost_90d DESC NULLS LAST LIMIT $2`,
         [query.data.operating_company_id, query.data.limit]
       );
       return res.rows;
@@ -48,7 +48,7 @@ export async function registerMaintenanceIntegrityRoutes(app: FastifyInstance) {
     if (!query.success) return reply.code(400).send({ error: "validation_error", details: query.error.flatten() });
     const row = await withCompany(user.uuid, query.data.operating_company_id, async (client) => {
       const res = await client.query(
-        `SELECT * FROM views.maintenance_unit_history WHERE operating_company_id = $1 AND unit_id = $2 LIMIT 1`,
+        `SELECT * FROM views.maintenance_unit_history WHERE operating_company_id = $1::uuid AND unit_id = $2 LIMIT 1`,
         [query.data.operating_company_id, params.data.unit_id]
       );
       return res.rows[0] ?? null;
@@ -64,7 +64,7 @@ export async function registerMaintenanceIntegrityRoutes(app: FastifyInstance) {
     if (!query.success) return reply.code(400).send({ error: "validation_error", details: query.error.flatten() });
     const rows = await withCompany(user.uuid, query.data.operating_company_id, async (client) => {
       const res = await client.query(
-        `SELECT * FROM views.maintenance_driver_history WHERE operating_company_id = $1 ORDER BY accidents_90d DESC, wo_count_90d DESC LIMIT $2`,
+        `SELECT * FROM views.maintenance_driver_history WHERE operating_company_id = $1::uuid ORDER BY accidents_90d DESC, wo_count_90d DESC LIMIT $2`,
         [query.data.operating_company_id, query.data.limit]
       );
       return res.rows;
@@ -81,7 +81,7 @@ export async function registerMaintenanceIntegrityRoutes(app: FastifyInstance) {
     if (!query.success) return reply.code(400).send({ error: "validation_error", details: query.error.flatten() });
     const row = await withCompany(user.uuid, query.data.operating_company_id, async (client) => {
       const res = await client.query(
-        `SELECT * FROM views.maintenance_driver_history WHERE operating_company_id = $1 AND driver_id = $2 LIMIT 1`,
+        `SELECT * FROM views.maintenance_driver_history WHERE operating_company_id = $1::uuid AND driver_id = $2 LIMIT 1`,
         [query.data.operating_company_id, params.data.driver_id]
       );
       return res.rows[0] ?? null;
@@ -97,7 +97,7 @@ export async function registerMaintenanceIntegrityRoutes(app: FastifyInstance) {
     if (!query.success) return reply.code(400).send({ error: "validation_error", details: query.error.flatten() });
     const rows = await withCompany(user.uuid, query.data.operating_company_id, async (client) => {
       const res = await client.query(
-        `SELECT * FROM views.maintenance_vendor_history WHERE operating_company_id = $1 ORDER BY spend_90d DESC NULLS LAST LIMIT $2`,
+        `SELECT * FROM views.maintenance_vendor_history WHERE operating_company_id = $1::uuid ORDER BY spend_90d DESC NULLS LAST LIMIT $2`,
         [query.data.operating_company_id, query.data.limit]
       );
       return res.rows;
@@ -114,7 +114,7 @@ export async function registerMaintenanceIntegrityRoutes(app: FastifyInstance) {
     if (!query.success) return reply.code(400).send({ error: "validation_error", details: query.error.flatten() });
     const row = await withCompany(user.uuid, query.data.operating_company_id, async (client) => {
       const res = await client.query(
-        `SELECT * FROM views.maintenance_vendor_history WHERE operating_company_id = $1 AND vendor_id = $2 LIMIT 1`,
+        `SELECT * FROM views.maintenance_vendor_history WHERE operating_company_id = $1::uuid AND vendor_id = $2 LIMIT 1`,
         [query.data.operating_company_id, params.data.vendor_id]
       );
       return res.rows[0] ?? null;
@@ -130,7 +130,7 @@ export async function registerMaintenanceIntegrityRoutes(app: FastifyInstance) {
     if (!query.success) return reply.code(400).send({ error: "validation_error", details: query.error.flatten() });
     const rows = await withCompany(user.uuid, query.data.operating_company_id, async (client) => {
       const res = await client.query(
-        `SELECT * FROM views.maintenance_fleet_baselines WHERE operating_company_id = $1 ORDER BY equipment_class ASC`,
+        `SELECT * FROM views.maintenance_fleet_baselines WHERE operating_company_id = $1::uuid ORDER BY equipment_class ASC`,
         [query.data.operating_company_id]
       );
       return res.rows;

@@ -49,7 +49,7 @@ export async function resolveEntityOrigin(
 ): Promise<"tms" | "qbo"> {
   const m = ORIGIN_MAP[entityKind];
   const res = await client.query<{ signal: string | null }>(
-    `SELECT ${m.signalCol} AS signal FROM ${m.table} WHERE ${m.idCol} = $1 AND operating_company_id = $2 LIMIT 1`,
+    `SELECT ${m.signalCol} AS signal FROM ${m.table} WHERE ${m.idCol} = $1 AND operating_company_id = $2::uuid LIMIT 1`,
     [entityId, operatingCompanyId]
   );
   if (res.rows.length === 0) return "qbo"; // unknown → fail closed (do not push)

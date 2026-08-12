@@ -70,7 +70,7 @@ async function persistBillsOnClient(
 
   const vendorRes = await client.query<{ id: string; is_sample_data: boolean | null }>(
     `SELECT id::text, is_sample_data FROM mdata.vendors
-     WHERE operating_company_id = $1 AND deactivated_at IS NULL
+     WHERE operating_company_id = $1::uuid AND deactivated_at IS NULL
        AND lower(trim(vendor_name)) = lower(trim($2))
      ORDER BY created_at ASC LIMIT 1`,
     [input.operatingCompanyId, input.insurerName]
@@ -85,7 +85,7 @@ async function persistBillsOnClient(
   const hideOnPolicy = await isBankAccountHideEnabled(client, input.operatingCompanyId);
   const bankAccountRes = await client.query<{ id: string }>(
     `SELECT id::text FROM banking.bank_accounts
-     WHERE operating_company_id = $1 AND is_active = true
+     WHERE operating_company_id = $1::uuid AND is_active = true
      ${bankAccountHiddenFilterSql(hideOnPolicy, "banking.bank_accounts")}
      ORDER BY created_at ASC LIMIT 1`,
     [input.operatingCompanyId]
@@ -168,7 +168,7 @@ async function persistBillsOnClient(
     await client.query(
       `UPDATE accounting.bills
        SET bill_number = $3, memo = $4, updated_at = now()
-       WHERE id = $1 AND operating_company_id = $2`,
+       WHERE id = $1 AND operating_company_id = $2::uuid`,
       [
         billId,
         input.operatingCompanyId,
@@ -183,7 +183,7 @@ async function persistBillsOnClient(
            category_kind = $2, linked_entity_id = $3::uuid,
            categorization_vendor_id = $4::uuid,
            categorization_memo = $5, categorized_at = now(), updated_at = now()
-       WHERE id = $1 AND operating_company_id = $6`,
+       WHERE id = $1 AND operating_company_id = $6::uuid`,
       [
         txnId,
         `${INSURANCE_PS_CATEGORY}::${psItem}`,

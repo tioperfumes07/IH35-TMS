@@ -95,7 +95,7 @@ export async function listActiveEnrolledDrivers(
       -- keeps the deterministic ordering the draw's auditability depends on.
       SELECT DISTINCT e.driver_uuid::text AS driver_uuid
       FROM safety.da_program_enrollments e
-      WHERE e.operating_company_id = $1
+      WHERE e.operating_company_id = $1::uuid
         AND e.is_active = true
       ORDER BY driver_uuid
     `,
@@ -263,7 +263,7 @@ export async function listDrawHistory(
         drawn_test_kinds,
         created_at::text
       FROM safety.da_random_pool_draws
-      WHERE operating_company_id = $1
+      WHERE operating_company_id = $1::uuid
       ORDER BY draw_date DESC, created_at DESC
       LIMIT $2
     `,

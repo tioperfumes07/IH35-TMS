@@ -64,7 +64,7 @@ async function updateBankBalance(
       SET current_balance_cents = current_balance_cents + $3,
           updated_at = now()
       WHERE id = $1
-        AND operating_company_id = $2
+        AND operating_company_id = $2::uuid
     `,
     [bankAccountId, operatingCompanyId, deltaCents]
   );
@@ -74,7 +74,7 @@ async function updateBankBalance(
 }
 
 export async function registerVendorBillPaymentsRoutes(app: FastifyInstance) {
-  app.get("/api/v1/vendors/:id/bill-payments", async (req, reply) => {
+  app.get("/api/v1/vendors/:id/bill-payments", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
 
@@ -86,7 +86,7 @@ export async function registerVendorBillPaymentsRoutes(app: FastifyInstance) {
     const payload = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       const groupedWhere = `
         bp.vendor_id = $2
-        AND bp.operating_company_id = $1
+        AND bp.operating_company_id = $1::uuid
         AND bp.revoked_at IS NULL
       `;
       const baseValues: unknown[] = [query.data.operating_company_id, params.data.id];
@@ -150,7 +150,7 @@ export async function registerVendorBillPaymentsRoutes(app: FastifyInstance) {
     return payload;
   });
 
-  app.post("/api/v1/vendors/:id/bill-payments", async (req, reply) => {
+  app.post("/api/v1/vendors/:id/bill-payments", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
 
@@ -181,7 +181,7 @@ export async function registerVendorBillPaymentsRoutes(app: FastifyInstance) {
       const result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
         if (body.data.bank_account_id) {
           const acctProbe = await client.query(
-            `SELECT id FROM banking.bank_accounts WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+            `SELECT id FROM banking.bank_accounts WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
             [body.data.bank_account_id, query.data.operating_company_id]
           );
           if (!acctProbe.rows[0]) return { code: 400 as const, error: "bank_account_not_found_for_payment" as const };
@@ -205,7 +205,7 @@ export async function registerVendorBillPaymentsRoutes(app: FastifyInstance) {
               SELECT *
               FROM accounting.bills
               WHERE id = $1
-                AND operating_company_id = $2
+                AND operating_company_id = $2::uuid
               LIMIT 1
               FOR UPDATE
             `,

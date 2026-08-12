@@ -107,7 +107,7 @@ async function enqueueDriverPushIfProjected(
   actorUserId: string
 ) {
   const row = await client.query(
-    `SELECT samsara_driver_id FROM mdata.drivers WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+    `SELECT samsara_driver_id FROM mdata.drivers WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
     [driverId, operatingCompanyId]
   );
   const samsaraDriverId = row.rows[0]?.samsara_driver_id ?? null;
@@ -133,7 +133,7 @@ export async function registerMaintenanceDriversRoutes(app: FastifyInstance) {
     if (!query.success) return reply.code(400).send({ error: "validation_error", details: query.error.flatten() });
     const rows = await withCompany(user.uuid, query.data.operating_company_id, async (client) => {
       const values: unknown[] = [query.data.operating_company_id];
-      const filters = ["d.operating_company_id = $1"];
+      const filters = ["d.operating_company_id = $1::uuid"];
       if (!query.data.include_voided) filters.push("d.deactivated_at IS NULL");
       if (query.data.search) {
         values.push(`%${query.data.search}%`);
@@ -242,7 +242,7 @@ export async function registerMaintenanceDriversRoutes(app: FastifyInstance) {
       // Cross-entity scope guard: bind operating_company_id (same as the GET at ~line 135) so an
       // Owner in one entity cannot read another entity's driver by id (mdata RLS is identity-scoped,
       // not entity-scoped, so an explicit predicate is required).
-      const oldRes = await client.query(`SELECT * FROM mdata.drivers WHERE id = $1 AND operating_company_id = $2 LIMIT 1`, [params.data.id, companyId]);
+      const oldRes = await client.query(`SELECT * FROM mdata.drivers WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`, [params.data.id, companyId]);
       const oldRow = oldRes.rows[0];
       if (!oldRow) return null;
       const setParts: string[] = [];
@@ -266,7 +266,7 @@ export async function registerMaintenanceDriversRoutes(app: FastifyInstance) {
       // belonging to another entity even when the id is known.
       values.push(companyId);
       const companyIdx = values.length;
-      const result = await client.query(`UPDATE mdata.drivers SET ${setParts.join(", ")} WHERE id = $${idIdx} AND operating_company_id = $${companyIdx} RETURNING *`, values);
+      const result = await client.query(`UPDATE mdata.drivers SET ${setParts.join(", ")} WHERE id = $${idIdx} AND operating_company_id = $${companyIdx}::uuid RETURNING *`, values);
       const newRow = result.rows[0];
       const pushed = await enqueueDriverPushIfProjected(client, params.data.id, companyId, user.uuid);
       await appendCrudAudit(client, user.uuid, "maintenance.drivers.updated", {
@@ -297,7 +297,7 @@ export async function registerMaintenanceDriversRoutes(app: FastifyInstance) {
       // Cross-entity scope guard: bind operating_company_id ($4) so an Owner cannot void a driver
       // belonging to another entity by id.
       const updated = await client.query(
-        `UPDATE mdata.drivers SET deactivated_at = now(), notes = CONCAT(COALESCE(notes, ''), CASE WHEN COALESCE(notes, '') = '' THEN '' ELSE E'\n' END, '[VOID] ', $2), updated_by_user_id = $3 WHERE id = $1 AND operating_company_id = $4 RETURNING id`,
+        `UPDATE mdata.drivers SET deactivated_at = now(), notes = CONCAT(COALESCE(notes, ''), CASE WHEN COALESCE(notes, '') = '' THEN '' ELSE E'\n' END, '[VOID] ', $2), updated_by_user_id = $3 WHERE id = $1 AND operating_company_id = $4::uuid RETURNING id`,
         [params.data.id, body.data.void_reason, user.uuid, companyId]
       );
       if (!updated.rows[0]) return null;

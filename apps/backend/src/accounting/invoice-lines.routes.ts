@@ -42,7 +42,7 @@ async function assertExplicitIncomeAccount(
       SELECT id
       FROM catalogs.accounts
       WHERE id = $1
-        AND operating_company_id = $2
+        AND operating_company_id = $2::uuid
         AND deactivated_at IS NULL
         AND is_postable = true
         AND account_type IN ('Income', 'OtherIncome')
@@ -76,7 +76,7 @@ async function ensureDraftInvoice(client: { query: (sql: string, values?: unknow
       SELECT *
       FROM accounting.invoices
       WHERE id = $1
-        AND operating_company_id = $2
+        AND operating_company_id = $2::uuid
       LIMIT 1
     `,
     [invoiceId, operatingCompanyId]

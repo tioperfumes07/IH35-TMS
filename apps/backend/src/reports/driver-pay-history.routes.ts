@@ -9,7 +9,7 @@ const querySchema = companyQuerySchema.extend({
 });
 
 export async function registerDriverPayHistoryRoutes(app: FastifyInstance) {
-  app.get("/api/v1/reports/driver-pay-history", async (req, reply) => {
+  app.get("/api/v1/reports/driver-pay-history", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = querySchema.safeParse(req.query ?? {});
@@ -30,7 +30,7 @@ export async function registerDriverPayHistoryRoutes(app: FastifyInstance) {
             COALESCE(ROUND(s.reimbursements_total::numeric * 100), 0)::bigint AS advances_cents,
             COALESCE(ROUND(s.net_pay::numeric * 100), 0)::bigint AS net_cents
           FROM driver_finance.driver_settlements s
-          WHERE s.operating_company_id = $1
+          WHERE s.operating_company_id = $1::uuid
             AND s.driver_id = $2
             AND s.period_start >= $3::date
             AND s.period_end <= $4::date

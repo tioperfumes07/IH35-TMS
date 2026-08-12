@@ -61,7 +61,7 @@ export async function renderDraftContractHtml(
     `
       SELECT t.template_code, t.version, t.content_html_en, t.content_html_es
       FROM legal.contract_templates t
-      WHERE t.operating_company_id = $1
+      WHERE t.operating_company_id = $1::uuid
         ${selectorById}
         ${selectorByCode}
         AND t.status = 'active'

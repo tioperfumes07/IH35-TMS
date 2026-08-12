@@ -37,7 +37,7 @@ export async function quickAssignLoad(userId: string, role: string, input: Quick
                  COALESCE((quicksave_pending_fields->>'hazmat')::boolean, false) AS is_hazmat
           FROM mdata.loads
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
             AND soft_deleted_at IS NULL
           FOR UPDATE
         `,
@@ -126,7 +126,7 @@ export async function quickAssignLoad(userId: string, role: string, input: Quick
             SELECT id, display_id, is_in_violation
             FROM views.drivers_with_hos_status
             WHERE id = $1
-              AND operating_company_id = $2
+              AND operating_company_id = $2::uuid
             LIMIT 1
           `,
           [input.driver_id, input.operating_company_id]
@@ -145,7 +145,7 @@ export async function quickAssignLoad(userId: string, role: string, input: Quick
           `
             SELECT result::text
             FROM safety.drug_test
-            WHERE operating_company_id = $1
+            WHERE operating_company_id = $1::uuid
               AND driver_id = $2
               AND voided_at IS NULL
             ORDER BY test_date DESC, created_at DESC
@@ -322,7 +322,7 @@ export async function completeQuicksaveDraft(
             quicksave_completed_at = CASE WHEN $4 = false THEN now() ELSE quicksave_completed_at END,
             updated_at = now()
         WHERE id = $1
-          AND operating_company_id = $2
+          AND operating_company_id = $2::uuid
         RETURNING id
       `,
       [
@@ -376,7 +376,7 @@ export async function listQuicksaveDrafts(userId: string, operatingCompanyId: st
       `
         SELECT id, load_number, assigned_primary_driver_id, assigned_unit_id, quicksave_pending_fields, updated_at
         FROM mdata.loads
-        WHERE operating_company_id = $1
+        WHERE operating_company_id = $1::uuid
           AND is_quicksave_draft = true
           AND soft_deleted_at IS NULL
         ORDER BY updated_at DESC
@@ -435,7 +435,7 @@ export async function getAssignmentHistory(userId: string, operatingCompanyId: s
               AND COALESCE(nu.currently_leased_to_company_id, nu.owner_company_id) = h.operating_company_id
         LEFT JOIN identity.users au
                ON au.id = h.assigned_by_user_id
-        WHERE h.operating_company_id = $1
+        WHERE h.operating_company_id = $1::uuid
           AND h.load_id = $2
         ORDER BY h.assigned_at DESC
       `,

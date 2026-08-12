@@ -144,7 +144,7 @@ export async function enrichInvoice(client: { query: (sql: string, values?: unkn
         ON a.id = il.account_id
        AND a.operating_company_id = i.operating_company_id
       WHERE il.invoice_id = $1
-        AND i.operating_company_id = $2
+        AND i.operating_company_id = $2::uuid
       ORDER BY il.display_order ASC, il.created_at ASC
     `,
     [invoiceId, invoice.operating_company_id]
@@ -182,7 +182,7 @@ export async function enrichInvoice(client: { query: (sql: string, values?: unkn
       JOIN accounting.journal_entries je
         ON je.id = jep.journal_entry_uuid
        AND je.operating_company_id = jep.operating_company_id
-      WHERE jep.operating_company_id = $2
+      WHERE jep.operating_company_id = $2::uuid
         AND (
           (jep.source_transaction_type = 'invoice' AND jep.source_transaction_id = $1::text)
           OR (
@@ -258,8 +258,8 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
           JOIN mdata.customers c
             ON c.id = i.customer_id
            AND c.operating_company_id = i.operating_company_id
-           AND c.operating_company_id = $1
-          WHERE i.operating_company_id = $1
+           AND c.operating_company_id = $1::uuid
+          WHERE i.operating_company_id = $1::uuid
             ${extraSql}
         `,
         values
@@ -286,7 +286,7 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
           JOIN mdata.customers c
             ON c.id = i.customer_id
            AND c.operating_company_id = i.operating_company_id
-           AND c.operating_company_id = $1
+           AND c.operating_company_id = $1::uuid
           -- ENTITY PREDICATE (CLS-JOIN-ENTITY-UNSCOPED): the invoice is scoped and its customer/load joins
       -- already pin to i.operating_company_id — this one did not, so a factoring advance from another
       -- entity could be attached to the invoice's financing view.
@@ -295,7 +295,7 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
           LEFT JOIN mdata.loads l
             ON l.id = i.source_load_id
            AND l.operating_company_id = i.operating_company_id
-          WHERE i.operating_company_id = $1
+          WHERE i.operating_company_id = $1::uuid
             ${extraSql}
           ORDER BY i.issue_date DESC, i.created_at DESC
           LIMIT $${limitIdx}
@@ -345,7 +345,7 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
           FROM mdata.customers c
           LEFT JOIN catalogs.payment_terms pt ON pt.id = c.payment_terms_id
           WHERE c.id = $1
-            AND c.operating_company_id = $2
+            AND c.operating_company_id = $2::uuid
           LIMIT 1
         `,
         [body.data.customer_id, query.data.operating_company_id]
@@ -377,14 +377,14 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
                  SELECT SUM(i.total_cents)
                  FROM accounting.invoices i
                  WHERE i.customer_id = $1
-                   AND i.operating_company_id = $2
+                   AND i.operating_company_id = $2::uuid
                    AND i.status NOT IN ('void', 'paid')
                ), 0)::bigint AS open_invoice_cents,
                COALESCE((
                  SELECT SUM(l.rate_total_cents)
                  FROM mdata.loads l
                  WHERE l.customer_id = $1
-                   AND l.operating_company_id = $2
+                   AND l.operating_company_id = $2::uuid
                    AND l.status NOT IN ('draft', 'invoiced', 'paid', 'closed', 'cancelled')
                ), 0)::bigint AS unbilled_load_cents`,
             [body.data.customer_id, query.data.operating_company_id]
@@ -566,7 +566,7 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
   });
 
   const registerExpandedRoute = (path: string, invoiceType: "driver_damage" | "driver_misc" | "vendor_chargeback" | "customer_adjustment" | "manual") => {
-    app.post(path, async (req, reply) => {
+    app.post(path, { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
       const user = currentAuthUser(req, reply);
       if (!user) return;
       const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -580,7 +580,7 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
           // CUSTVEND-PAR-1: Credit-limit enforcement for customer-facing invoice types.
           if (body.data.bill_to_entity_type === "customer") {
             const custRes = await client.query(
-              `SELECT credit_limit_cents, credit_limit_source FROM mdata.customers WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+              `SELECT credit_limit_cents, credit_limit_source FROM mdata.customers WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
               [body.data.customer_id, query.data.operating_company_id]
             );
             const cust = custRes.rows[0];
@@ -590,10 +590,10 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
                 const expRes = await client.query(
                   `SELECT
                      COALESCE((SELECT SUM(i.total_cents) FROM accounting.invoices i
-                       WHERE i.customer_id = $1 AND i.operating_company_id = $2
+                       WHERE i.customer_id = $1 AND i.operating_company_id = $2::uuid
                          AND i.status NOT IN ('void','paid')), 0)::bigint AS open_invoice_cents,
                      COALESCE((SELECT SUM(l.rate_total_cents) FROM mdata.loads l
-                       WHERE l.customer_id = $1 AND l.operating_company_id = $2
+                       WHERE l.customer_id = $1 AND l.operating_company_id = $2::uuid
                          AND l.status NOT IN ('draft','invoiced','paid','closed','cancelled')), 0)::bigint AS unbilled_load_cents`,
                   [body.data.customer_id, query.data.operating_company_id]
                 );
@@ -669,7 +669,7 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
   registerExpandedRoute("/api/v1/accounting/invoices/customer-adjustment", "customer_adjustment");
   registerExpandedRoute("/api/v1/accounting/invoices/manual", "manual");
 
-  app.patch("/api/v1/accounting/invoices/:id", async (req, reply) => {
+  app.patch("/api/v1/accounting/invoices/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const params = idParamsSchema.safeParse(req.params ?? {});
@@ -680,7 +680,7 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
     if (!body.success) return validationError(reply, body.error);
 
     const result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
-      const oldRes = await client.query(`SELECT * FROM accounting.invoices WHERE id = $1 AND operating_company_id = $2 LIMIT 1`, [
+      const oldRes = await client.query(`SELECT * FROM accounting.invoices WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`, [
         params.data.id,
         query.data.operating_company_id,
       ]);
@@ -694,7 +694,7 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
             SELECT customer_id
             FROM mdata.loads
             WHERE id = $1
-              AND operating_company_id = $2
+              AND operating_company_id = $2::uuid
               -- soft_deleted_at: an archived load must never become the revenue source of an
               -- invoice. The UI picker excludes them; the endpoint did not.
               AND soft_deleted_at IS NULL
@@ -866,7 +866,7 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
     const body = voidBodySchema.safeParse(req.body ?? {});
     if (!body.success) return validationError(reply, body.error);
     const result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
-      const currentRes = await client.query(`SELECT * FROM accounting.invoices WHERE id = $1 AND operating_company_id = $2 LIMIT 1`, [
+      const currentRes = await client.query(`SELECT * FROM accounting.invoices WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`, [
         params.data.id,
         query.data.operating_company_id,
       ]);

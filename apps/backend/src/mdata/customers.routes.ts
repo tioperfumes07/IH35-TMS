@@ -263,7 +263,7 @@ async function assertUniqueCustomerFields(
       const matchExpr = check.caseInsensitive
         ? `lower(btrim(${check.column})) = lower(btrim($1))`
         : `${check.column} = $1`;
-      let where = `${matchExpr} AND operating_company_id = $2 AND deactivated_at IS NULL`;
+      let where = `${matchExpr} AND operating_company_id = $2::uuid AND deactivated_at IS NULL`;
       if (excludeId) {
         values.push(excludeId);
         where += " AND id <> $3";
@@ -297,7 +297,7 @@ async function validateParentCustomer(
   return withCurrentUser(authUserId, async (client) => {
     await setScopedCompanyContext(client, authUserId, operatingCompanyId);
     const parentRes = await client.query<{ id: string; parent_customer_id: string | null }>(
-      `SELECT id, parent_customer_id FROM mdata.customers WHERE id = $1 AND operating_company_id = $2 AND deactivated_at IS NULL LIMIT 1`,
+      `SELECT id, parent_customer_id FROM mdata.customers WHERE id = $1 AND operating_company_id = $2::uuid AND deactivated_at IS NULL LIMIT 1`,
       [parentId, operatingCompanyId]
     );
     const parent = parentRes.rows[0];
@@ -305,7 +305,7 @@ async function validateParentCustomer(
     if (parent.parent_customer_id) return "parent_is_sub";
     if (selfId) {
       const childRes = await client.query(
-        `SELECT 1 FROM mdata.customers WHERE parent_customer_id = $1 AND operating_company_id = $2 LIMIT 1`,
+        `SELECT 1 FROM mdata.customers WHERE parent_customer_id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
         [selfId, operatingCompanyId]
       );
       if (childRes.rows.length > 0) return "has_children";
@@ -551,7 +551,7 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
         );
       }
       values.push(resolvedOperatingCompanyId);
-      filters.push(`operating_company_id = $${values.length}`);
+      filters.push(`operating_company_id = $${values.length}::uuid`);
       // ITEM 3 = B: LIST-VIEW-ONLY active-company pin. When the Customers list page opts in, additionally
       // constrain rows to the ACTIVE session company (app.operating_company_id, set above). This is layered
       // ON TOP of the existing access check so the list can never regress to a cross-entity roster; shared
@@ -805,7 +805,7 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
     const row = await withCurrentUser(authUser.uuid, async (client) => {
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [resolvedOperatingCompanyId]);
       const res = await client.query(
-        `SELECT ${CUSTOMER_SELECT_COLUMNS} FROM mdata.customers WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+        `SELECT ${CUSTOMER_SELECT_COLUMNS} FROM mdata.customers WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
         [parsedParams.data.id, resolvedOperatingCompanyId]
       );
       return res.rows[0] ?? null;
@@ -890,7 +890,7 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
             ), '[]'::json) AS contacts
           FROM mdata.customers c
           WHERE c.id = $1
-            AND c.operating_company_id = $2
+            AND c.operating_company_id = $2::uuid
           LIMIT 1
         `,
         [parsedParams.data.id, resolvedOperatingCompanyId]
@@ -953,7 +953,7 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
       if (!scopedCompanyId) return null;
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [scopedCompanyId]);
       const res = await client.query(
-        `SELECT ${CUSTOMER_SELECT_COLUMNS} FROM mdata.customers WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+        `SELECT ${CUSTOMER_SELECT_COLUMNS} FROM mdata.customers WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
         [parsedParams.data.id, scopedCompanyId]
       );
       return res.rows[0] ?? null;
@@ -1070,7 +1070,7 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
         if (!scopedCompanyId) return null;
         await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [scopedCompanyId]);
         const oldRes = await client.query(
-          `SELECT ${CUSTOMER_SELECT_COLUMNS} FROM mdata.customers WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+          `SELECT ${CUSTOMER_SELECT_COLUMNS} FROM mdata.customers WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
           [parsedParams.data.id, scopedCompanyId]
         );
         const oldRow = oldRes.rows[0] ?? null;
@@ -1247,7 +1247,7 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
       if (!operatingCompanyId) return null;
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
       const customerRes = await client.query(
-        `SELECT id FROM mdata.customers WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+        `SELECT id FROM mdata.customers WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
         [parsedParams.data.id, operatingCompanyId]
       );
       if (customerRes.rows.length === 0) return undefined;
@@ -1275,7 +1275,7 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
       if (!scopedCompanyId) return null;
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [scopedCompanyId]);
       const oldRes = await client.query(
-        `SELECT id, operating_company_id, deactivated_at FROM mdata.customers WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+        `SELECT id, operating_company_id, deactivated_at FROM mdata.customers WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
         [parsedParams.data.id, scopedCompanyId]
       );
       const oldRow = oldRes.rows[0] ?? null;
@@ -1284,7 +1284,7 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
       let wasAlreadyDeactivated = oldRow.deactivated_at !== null;
       if (!wasAlreadyDeactivated) {
         const res = await client.query(
-          `UPDATE mdata.customers SET deactivated_at = now(), updated_by_user_id = $2 WHERE id = $1 AND operating_company_id = $3 AND deactivated_at IS NULL RETURNING id, deactivated_at`,
+          `UPDATE mdata.customers SET deactivated_at = now(), updated_by_user_id = $2 WHERE id = $1 AND operating_company_id = $3::uuid AND deactivated_at IS NULL RETURNING id, deactivated_at`,
           [parsedParams.data.id, authUser.uuid, scopedCompanyId]
         );
         deactivatedAt = (res.rows[0]?.deactivated_at as string | undefined) ?? deactivatedAt;

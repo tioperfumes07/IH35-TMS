@@ -88,7 +88,7 @@ export async function registerMaintenancePartsMasterRoutes(app: FastifyInstance)
     return withCompany(user.uuid, q.operating_company_id, async (client) => {
       if (!(await partsMasterTableExists(client))) return { rows: [], total: 0, page: q.page, limit: q.limit };
       const values: unknown[] = [q.operating_company_id];
-      const where = ["operating_company_id = $1"];
+      const where = ["operating_company_id = $1::uuid"];
       if (q.search) { values.push(`%${q.search}%`); where.push(`(sku ILIKE $${values.length} OR part_name ILIKE $${values.length} OR barcode_upc ILIKE $${values.length})`); }
       if (q.manufacturer) { values.push(q.manufacturer); where.push(`manufacturer ILIKE $${values.length}`); }
       if (q.category) { values.push(q.category); where.push(`category = $${values.length}`); }

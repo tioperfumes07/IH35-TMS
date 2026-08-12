@@ -257,7 +257,7 @@ async function vendorNameConflictExists(
   return withCurrentUser(authUserId, async (client) => {
     await setScopedCompanyContext(client, authUserId, operatingCompanyId);
     const values: unknown[] = [name, operatingCompanyId];
-    let where = `lower(btrim(vendor_name)) = lower(btrim($1)) AND operating_company_id = $2 AND deactivated_at IS NULL`;
+    let where = `lower(btrim(vendor_name)) = lower(btrim($1)) AND operating_company_id = $2::uuid AND deactivated_at IS NULL`;
     if (excludeId) {
       values.push(excludeId);
       where += " AND id <> $3";
@@ -337,7 +337,7 @@ export async function registerVendorRoutes(app: FastifyInstance) {
         filters.push(`(vendor_name ILIKE $${idx} OR vendor_code ILIKE $${idx} OR email ILIKE $${idx})`);
       }
       values.push(resolvedOperatingCompanyId);
-      filters.push(`operating_company_id = $${values.length}`);
+      filters.push(`operating_company_id = $${values.length}::uuid`);
       // ITEM 3 = B: LIST-VIEW-ONLY active-company pin. When the Vendors list page opts in, additionally
       // constrain rows to the ACTIVE session company (app.operating_company_id, set above). Layered ON TOP
       // of the existing access check so the list can never regress to a cross-entity roster; shared pickers
@@ -565,7 +565,7 @@ export async function registerVendorRoutes(app: FastifyInstance) {
     }
   });
 
-  app.get("/api/v1/mdata/vendors/:id", async (req, reply) => {
+  app.get("/api/v1/mdata/vendors/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
@@ -586,7 +586,7 @@ export async function registerVendorRoutes(app: FastifyInstance) {
           SELECT ${VENDOR_SELECT_COLUMNS}
           FROM mdata.vendors
           WHERE id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
           LIMIT 1
         `,
         [parsedParams.data.id, resolvedOperatingCompanyId]
@@ -766,7 +766,7 @@ export async function registerVendorRoutes(app: FastifyInstance) {
     return deactivated;
   });
 
-  app.get("/api/v1/mdata/vendors/:id/classifications", async (req, reply) => {
+  app.get("/api/v1/mdata/vendors/:id/classifications", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
@@ -783,7 +783,7 @@ export async function registerVendorRoutes(app: FastifyInstance) {
       if (!operatingCompanyId) return null;
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
       const vendorRes = await client.query(
-        `SELECT id FROM mdata.vendors WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+        `SELECT id FROM mdata.vendors WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
         [parsedParams.data.id, operatingCompanyId]
       );
       if (vendorRes.rows.length === 0) return undefined;

@@ -55,7 +55,7 @@ interface IntegrationTransactionRow {
 }
 
 async function registerIntegrationTransactionsRoutes(app: FastifyInstance) {
-  app.get("/api/v1/accounting/integration-transactions", async (req, reply) => {
+  app.get("/api/v1/accounting/integration-transactions", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
 
@@ -66,7 +66,7 @@ async function registerIntegrationTransactionsRoutes(app: FastifyInstance) {
       parsed.data;
 
     return withCompanyScope(user.uuid, operating_company_id, async (client) => {
-      const conds: string[] = ["q.operating_company_id = $1"];
+      const conds: string[] = ["q.operating_company_id = $1::uuid"];
       const params: unknown[] = [operating_company_id];
       let pi = 2;
 

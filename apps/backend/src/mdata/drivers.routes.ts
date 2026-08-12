@@ -1228,7 +1228,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
       // do not bury operating_company_id only inside an interpolated ${whereClause}.
       const extraAnd = filters.length > 0 ? `AND ${filters.join(" AND ")}` : "";
       const countRes = await client.query<{ total: number }>(
-        `SELECT count(*)::int AS total FROM mdata.drivers WHERE operating_company_id = $${ociIdx} ${extraAnd}`,
+        `SELECT count(*)::int AS total FROM mdata.drivers WHERE operating_company_id = $${ociIdx}::uuid ${extraAnd}`,
         values
       );
       values.push(limit);
@@ -1249,7 +1249,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
             status, notes, prior_driver_id, rehire_count, is_rehire,
             created_at, updated_at, deactivated_at, created_by_user_id, updated_by_user_id
           FROM mdata.drivers
-          WHERE operating_company_id = $${ociIdx}
+          WHERE operating_company_id = $${ociIdx}::uuid
           ${extraAnd}
           ORDER BY created_at DESC
           LIMIT $${values.length - 1}
@@ -1357,7 +1357,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
           FROM mdata.drivers
           WHERE id = $1
             AND (
-              operating_company_id = $2
+              operating_company_id = $2::uuid
               OR EXISTS (
                 -- driver_company_authorizations fallback (mirrors buildDriverAggregate): a driver the
                 -- caller's company is insurance-authorized to see must not be a false 404. The dca RLS
