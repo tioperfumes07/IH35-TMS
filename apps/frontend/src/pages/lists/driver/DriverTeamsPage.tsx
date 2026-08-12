@@ -21,6 +21,7 @@ import { formatDateUS } from "../../../lib/formatDate";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { DriverTeamModal } from "./DriverTeamModal";
+import { EntityLink } from "../../../components/shared/EntityLink";
 
 type StatusFilter = "true" | "false" | "all";
 
@@ -40,14 +41,14 @@ const TEAM_COLUMNS: Array<ParityColumn<MdataDriverTeam>> = [
     label: "Primary Driver",
     sortable: true,
     sortValue: (row) => driverTeamMemberName(row, "primary"),
-    render: (row) => <>{driverTeamMemberName(row, "primary")}</>,
+    render: (row) => <EntityLink kind="driver" id={row.primary_driver_id} label={driverTeamMemberName(row, "primary")} />,
   },
   {
     key: "secondary_driver_id",
     label: "Secondary Driver",
     sortable: true,
     sortValue: (row) => driverTeamMemberName(row, "secondary"),
-    render: (row) => <>{driverTeamMemberName(row, "secondary")}</>,
+    render: (row) => <EntityLink kind="driver" id={row.secondary_driver_id} label={driverTeamMemberName(row, "secondary")} />,
   },
   {
     key: "relationship",
