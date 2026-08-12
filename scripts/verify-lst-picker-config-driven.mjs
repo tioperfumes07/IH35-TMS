@@ -405,8 +405,8 @@ function selftest() {
       /config-driven catalog\(s\) wired/,
     ],
     [
-      "a broken fleet endpoint gets wired",
-      { ...good, registry: good.registry.replace("/api/v1/catalogs/dispatch/cat-0", "/api/v1/catalogs/fleet/tractor-statuses") },
+      "a known-broken payment-terms endpoint gets wired",
+      { ...good, registry: good.registry.replace("/api/v1/catalogs/dispatch/cat-0", "/api/v1/catalogs/accounting/payment-terms") },
       /REAL-BACKEND: "cat_0" wires/,
     ],
     [
