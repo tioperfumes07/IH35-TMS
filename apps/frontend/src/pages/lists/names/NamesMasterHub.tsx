@@ -11,6 +11,7 @@ import {
 import { ListErrorState } from "../../../components/ListErrorState";
 import { PageHeader } from "../../../components/layout/PageHeader";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+import { EntityLink, type EntityKind } from "../../../components/shared/EntityLink";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { ListsSubNav } from "../ListsSubNav";
 
@@ -22,6 +23,12 @@ const TYPE_FILTERS: Array<{ key: "all" | NamesEntityType; label: string }> = [
   { key: "contact", label: "Contacts" },
   { key: "company", label: "Companies" },
 ];
+
+const LINKABLE_NAME_KINDS: Partial<Record<NamesEntityType, EntityKind>> = {
+  customer: "customer",
+  vendor: "vendor",
+  driver: "driver",
+};
 
 export function NamesMasterHub() {
   const navigate = useNavigate();
@@ -70,7 +77,14 @@ export function NamesMasterHub() {
         key: "display_name",
         label: "Name",
         sortable: true,
-        render: (row) => <span className="font-medium">{row.display_name}</span>,
+        render: (row) => {
+          const kind = LINKABLE_NAME_KINDS[row.entity_type];
+          return kind ? (
+            <EntityLink kind={kind} id={row.entity_id} label={row.display_name} className="font-medium" />
+          ) : (
+            <span className="font-medium">{row.display_name}</span>
+          );
+        },
       },
       {
         key: "primary_email",
