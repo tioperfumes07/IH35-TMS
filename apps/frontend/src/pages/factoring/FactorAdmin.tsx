@@ -23,6 +23,7 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { Combobox } from "../../components/Combobox";
 import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { formatUsdCents } from "../../lib/money";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateUS } from "../../lib/formatDate";
@@ -49,6 +50,16 @@ const FACTOR_COLUMNS: Array<ParityColumn<Factor>> = [
   { key: "advance_rate", label: "Advance Rate", sortable: true, render: (factor) => formatPct(factor.advance_rate) },
   { key: "fee_rate", label: "Fee Rate", sortable: true, render: (factor) => formatPct(factor.fee_rate) },
   { key: "reserve_rate", label: "Reserve Rate", sortable: true, render: (factor) => formatPct(factor.reserve_rate) },
+  {
+    // LIABILITY column-wave: factors.admin previously showed only contract-term percentages —
+    // never the outstanding $ reserve/liability balance Faro currently holds per factor.
+    key: "reserve_balance_cents",
+    label: "Reserve Balance",
+    sortable: true,
+    sortValue: (factor) => factor.reserve_balance_cents ?? 0,
+    render: (factor) =>
+      factor.reserve_balance_cents != null ? formatUsdCents(factor.reserve_balance_cents) : "—",
+  },
   { key: "recourse_days", label: "Recourse Days", sortable: true },
   { key: "active", label: "Active", sortable: true, render: (factor) => (factor.active ? "Yes" : "No"), sortValue: (factor) => (factor.active ? 1 : 0) },
   {
