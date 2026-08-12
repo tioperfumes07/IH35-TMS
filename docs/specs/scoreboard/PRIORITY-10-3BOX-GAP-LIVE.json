@@ -1,15 +1,15 @@
 {
-  "as_of": "2026-08-12T20:27:38.096Z",
-  "main_sha": "744ed1296",
+  "as_of": "2026-08-12T20:31:03.008Z",
+  "main_sha": "c8c7ff3a7",
   "gate": "PRIORITY_10_3BOX_100",
   "allRequired": {
     "totR": 3051,
-    "totB": 2258,
+    "totB": 2270,
     "pct": 74
   },
   "waveABC_noChrome": {
     "abcR": 2421,
-    "abcB": 2007,
+    "abcB": 2019,
     "pct": 83
   },
   "per_module": [
@@ -34,10 +34,10 @@
     {
       "mod": "dispatch",
       "req": 363,
-      "built": 303,
-      "pct": 83,
+      "built": 304,
+      "pct": 84,
       "abcReq": 318,
-      "abcBuilt": 293,
+      "abcBuilt": 294,
       "abcPct": 92
     },
     {
@@ -52,11 +52,11 @@
     {
       "mod": "factoring",
       "req": 131,
-      "built": 86,
-      "pct": 66,
+      "built": 93,
+      "pct": 71,
       "abcReq": 114,
-      "abcBuilt": 86,
-      "abcPct": 75
+      "abcBuilt": 93,
+      "abcPct": 82
     },
     {
       "mod": "banking",
@@ -97,11 +97,11 @@
     {
       "mod": "safety",
       "req": 203,
-      "built": 150,
-      "pct": 74,
+      "built": 154,
+      "pct": 76,
       "abcReq": 160,
-      "abcBuilt": 145,
-      "abcPct": 91
+      "abcBuilt": 149,
+      "abcPct": 93
     }
   ],
   "ranked_gaps": [
@@ -185,14 +185,13 @@
     },
     {
       "col": "load",
-      "cells": 29,
+      "cells": 17,
       "byMod": {
-        "dispatch": 12,
-        "factoring": 7,
+        "dispatch": 11,
         "banking": 1,
         "vendors": 2,
         "drivers": 1,
-        "safety": 6
+        "safety": 2
       },
       "seat": "Codex"
     },
@@ -238,5 +237,5 @@
       "seat": "?"
     }
   ],
-  "entry_count": 125
+  "entry_count": 128
 }

@@ -1,10 +1,10 @@
-# CC-2 INBOX · agent2 `INBOX.md`
+# CC-2 INBOX
 
-**NO PAUSE AFTER MERGE** · Built **71%** · CC-2 was idle — START NOW
+**NO PAUSE** · Wave B connectivity **DRAINED**
 
 ## ☐ NOW
-1. **`column=connectivity`** — all owed (safety 33 · accounting 13 · dispatch 11 · …) · SHIP · `@matrix-built` + leafRe
-2. FAST-MERGE → next connectivity leftover
-3. If nudged idle: start connectivity **now**
+1. Partner CC-1 on non-GL FE for **expense/ap_bill** leaves if free, OR
+2. **`column=load`** leftovers / reverse_link stragglers · FAST-MERGE
+3. Never idle — OUTBOX then next
 
-**FORBIDDEN:** pause after merge · verify-only · module-deep
+**FORBIDDEN:** pause · Wave D · module-deep
