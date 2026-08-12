@@ -1,5 +1,8 @@
 import { Modal } from "../../../components/Modal";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+import { EntityLink } from "../../../components/shared/EntityLink";
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 type Liability = {
   id: string;
@@ -21,7 +24,16 @@ type Props = {
 // Display-only migration to shared ParityTable grammar — amounts render exactly as before
 // (`$` + toFixed(2)); totals footer + pending-ack note preserved 1:1 outside the table.
 const COLUMNS: Array<ParityColumn<Liability>> = [
-  { key: "type", label: "Type", sortable: true },
+  {
+    // LIABILITY column-wave: settlements had the REVERSE direction (liability→settlement) wired
+    // in an earlier audit this session, but the forward direction (settlement's own deduction
+    // breakdown → the liability record it's paying down) had zero EntityLink anywhere. `id` falls
+    // back to the array index when the source row has no real id — only link the real UUID case.
+    key: "type",
+    label: "Type",
+    sortable: true,
+    render: (item) => (UUID_RE.test(item.id) ? <EntityLink kind="liability" id={item.id} label={item.type} /> : item.type),
+  },
   { key: "source_description", label: "Source", sortable: true },
   {
     key: "original",
