@@ -125,13 +125,16 @@ async function persistBillsOnClient(
     if (!txnId) throw new Error("insurance_seed_transaction_insert_failed");
 
     const billRes = await client.query<{ id: string }>(
+      // LV-BILL-MDATA-VENDOR-FK-OPTOUT sweep — vendorId is already a resolved, entity-scoped
+      // mdata.vendors.id (looked up above by name), so it stamps the typed FK directly — no
+      // separate resolution needed, unlike the other 5 writers in the sweep.
       `INSERT INTO accounting.bills (
-         operating_company_id, vendor_id, vendor_uuid,
+         operating_company_id, vendor_id, vendor_uuid, mdata_vendor_id,
          bill_date, due_date, amount_cents, total_amount,
          paid_cents, paid_amount, status, memo,
          qbo_idempotency_key, created_by_user_id, created_at, updated_at
        )
-       VALUES ($1,$2,$2,$3,$3,$4,$5,0,0,'unpaid',$6,$7,$8,now(),now())
+       VALUES ($1,$2,$2,$2,$3,$3,$4,$5,0,0,'unpaid',$6,$7,$8,now(),now())
        ON CONFLICT (operating_company_id, qbo_idempotency_key)
          WHERE qbo_idempotency_key IS NOT NULL DO NOTHING
        RETURNING id::text`,

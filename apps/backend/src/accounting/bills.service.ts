@@ -329,6 +329,36 @@ type BillVendorWriteColumns = {
   mdataVendorId: string | null;
 };
 
+/**
+ * LV-BILL-MDATA-VENDOR-FK-OPTOUT sweep — best-effort mdata_vendor_id resolution for bill writers
+ * OTHER than createBill(). Non-throwing ON PURPOSE: createBill() fails closed (ACCT-F158) because a
+ * human is present at the API boundary to see the 400 and fix the input, but these callers are
+ * automated writers (recurring-bill generation, WO-close postings, bank-split bills, insurance
+ * premium bills) where a hard throw would abort an unrelated batch/cron run over one unresolved
+ * vendor. Returns null when the vendor cannot be resolved inside the caller's own entity — the
+ * caller keeps writing its existing vendor_id/vendor_uuid text columns exactly as before; this only
+ * ADDS the typed, entity-consistent FK when it's safely resolvable. Same resolution predicate as
+ * resolveBillVendorWriteColumns (entity-scoped match on either mdata.vendors.id or qbo_vendor_id) so
+ * a bill resolved this way and one resolved via createBill() never disagree.
+ */
+export async function resolveMdataVendorIdBestEffort(
+  client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: Array<{ id: string }> }> },
+  operatingCompanyId: string,
+  vendorIdOrExternalId: string | null | undefined
+): Promise<string | null> {
+  const trimmed = String(vendorIdOrExternalId ?? "").trim();
+  if (!trimmed) return null;
+  const res = await client.query(
+    `SELECT v.id::text
+       FROM mdata.vendors v
+      WHERE v.operating_company_id = $1::uuid
+        AND (v.id::text = $2::text OR v.qbo_vendor_id = $2::text)
+      LIMIT 1`,
+    [operatingCompanyId, trimmed]
+  );
+  return res.rows[0]?.id ?? null;
+}
+
 /** ACCT-F603 — write vendor_id (QBO text), vendor_uuid (mdata uuid text), mdata_vendor_id (uuid FK). */
 async function resolveBillVendorWriteColumns(
   client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: Array<{ id: string; qbo_vendor_id: string | null }> }> },

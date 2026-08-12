@@ -5,6 +5,7 @@ import { postSourceTransaction, PostingEngineError } from "../accounting/posting
 import { postBillPaymentGlIfEnabled } from "../accounting/bill-payment-gl.service.js";
 import { withCurrentUser } from "../auth/db.js";
 import { assertBankTxnsNotInReconciledSession } from "./closed-session-immutability.js";
+import { resolveMdataVendorIdBestEffort } from "../accounting/bills.service.js";
 
 const BILL_GL_POSTING_FLAG_KEY = "BILL_GL_POSTING_ENABLED";
 
@@ -224,6 +225,12 @@ export async function bulkPostTransactionsAsBills(
         throw new Error("bulk_post_amount_invalid");
       }
 
+      // LV-BILL-MDATA-VENDOR-FK-OPTOUT sweep — vendorId here is already an mdata.vendors uuid
+      // (categorization/suggested vendor or an explicit input); best-effort resolve the typed FK so
+      // an unresolvable/cross-entity id (shouldn't happen — the source columns are entity-scoped
+      // FKs — but never trusted unchecked) doesn't block a bulk post.
+      const mdataVendorId = await resolveMdataVendorIdBestEffort(client, input.operatingCompanyId, vendorId);
+
       // PAID-IN-FULL MODEL (owner-approved QBO parity: cash already left the bank at the moment the bank
       // feed shows the cleared transaction — this is NOT a Bill→pay-later A/P scenario). The bill is
       // created ALREADY paid + a matching accounting.bill_payments row credits the real source bank
@@ -235,6 +242,7 @@ export async function bulkPostTransactionsAsBills(
             operating_company_id,
             vendor_id,
             vendor_uuid,
+            mdata_vendor_id,
             bill_date,
             due_date,
             amount_cents,
@@ -247,7 +255,7 @@ export async function bulkPostTransactionsAsBills(
             created_at,
             updated_at
           )
-          VALUES ($1,$2,$2,$3,$3,$4,$5,$4,$5,'paid',$6,$7,now(),now())
+          VALUES ($1,$2,$2,$8,$3,$3,$4,$5,$4,$5,'paid',$6,$7,now(),now())
           RETURNING id
         `,
         [
@@ -264,6 +272,7 @@ export async function bulkPostTransactionsAsBills(
             description: txn.description,
           }),
           userId,
+          mdataVendorId,
         ]
       );
       const billId = billRes.rows[0]?.id;
