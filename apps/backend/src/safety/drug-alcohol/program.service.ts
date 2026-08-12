@@ -95,7 +95,7 @@ export async function listEnrollments(
       LEFT JOIN mdata.drivers d
         ON d.id = e.driver_uuid
        AND d.operating_company_id = e.operating_company_id
-      WHERE e.operating_company_id = $1
+      WHERE e.operating_company_id = $1::uuid
         AND ($2 = false OR e.is_active = true)
       ORDER BY e.enrolled_at DESC, e.created_at DESC
     `,
@@ -114,7 +114,7 @@ export async function deactivateEnrollment(
       UPDATE safety.da_program_enrollments
       SET is_active = false
       WHERE uuid = $1::uuid
-        AND operating_company_id = $2
+        AND operating_company_id = $2::uuid
         AND is_active = true
       RETURNING uuid::text
     `,
@@ -163,7 +163,7 @@ export async function listTestRecords(
   operatingCompanyId: string,
   options: { driverUuid?: string; result?: TestResult; limit?: number } = {}
 ): Promise<DaTestRecord[]> {
-  const conditions: string[] = ["t.operating_company_id = $1"];
+  const conditions: string[] = ["t.operating_company_id = $1::uuid"];
   const values: unknown[] = [operatingCompanyId];
   let idx = 2;
 
@@ -227,7 +227,7 @@ export async function recordResult(
         chain_of_custody_id = COALESCE($4, chain_of_custody_id),
         collected_at        = COALESCE($5::timestamptz, collected_at)
       WHERE uuid = $1::uuid
-        AND operating_company_id = $2
+        AND operating_company_id = $2::uuid
       RETURNING
         uuid::text,
         operating_company_id,
@@ -265,7 +265,7 @@ export async function flagPositive(
         result            = 'positive',
         sap_referral_uuid = COALESCE($3::uuid, sap_referral_uuid)
       WHERE uuid = $1::uuid
-        AND operating_company_id = $2
+        AND operating_company_id = $2::uuid
       RETURNING
         uuid::text,
         operating_company_id,
