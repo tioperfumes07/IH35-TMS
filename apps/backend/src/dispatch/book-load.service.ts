@@ -1614,12 +1614,40 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
           `
         );
         if (Boolean(col.rows[0]?.ok)) {
-          await buildInvoiceFromLoad(client, {
-            userId: input.requestingUserUuid,
-            operatingCompanyId: input.operating_company_id,
-            loadId: String(load.id),
-            asProforma: true,
-          });
+          // ACCT-F289 — buildInvoiceFromLoad (ACCT-F267) throws `load_has_no_rate` on purpose for a
+          // load booked before its rate is typed in, refusing to mint a permanently-$0 invoice. That
+          // refusal must never roll back the booking itself: dispatch books the real load regardless
+          // of whether the accounting projection can be produced yet. Narrow catch — only
+          // load_has_no_rate is swallowed (and made COUNTABLE via the same audit pattern WIRE-01 uses
+          // for the missing-column skip above); anything else re-throws, because "failures are loud"
+          // must still hold for a real accounting-layer bug, not just for this one expected refusal.
+          try {
+            await buildInvoiceFromLoad(client, {
+              userId: input.requestingUserUuid,
+              operatingCompanyId: input.operating_company_id,
+              loadId: String(load.id),
+              asProforma: true,
+            });
+          } catch (error) {
+            if ((error as { code?: string }).code !== "load_has_no_rate") throw error;
+            await appendCrudAudit(
+              client,
+              input.requestingUserUuid,
+              "accounting.invoice.proforma_skipped_zero_rate",
+              {
+                load_id: String(load.id),
+                operating_company_id: input.operating_company_id,
+                flag: "INVOICE_PROFORMA_PIPELINE_ENABLED",
+                reason: "load_has_no_rate",
+              },
+              "warning",
+              "ACCT-F289"
+            );
+            console.error(
+              { load_id: String(load.id), operating_company_id: input.operating_company_id },
+              "acct_f289_proforma_skipped_zero_rate"
+            );
+          }
         } else {
           // WIRE-01 — this branch used to be an empty `if`, so when the column was absent the
           // proforma was skipped with NO log, NO error and NO record, directly contradicting the
