@@ -1,4 +1,9 @@
 {
+  "3183": {
+    "claimed_at": "2026-08-12",
+    "claimed_by": "cc-2",
+    "purpose": "verify-no-uncast-operating-company-id"
+  },
   "3177": {
     "claimed_at": "2026-08-12",
     "claimed_by": "cc-1",
