@@ -236,6 +236,7 @@ export function getSafetyAccidentDetail(id: string, companyId: string) {
 export type AccidentFault = "yes" | "no" | "disputed";
 export type CreateAccidentInput = {
   operating_company_id: string;
+  accident_type_id: string;
   driver_id?: string | null;
   unit_id?: string | null;
   vendor_id?: string | null;
@@ -264,6 +265,7 @@ export function createSafetyAccident(body: CreateAccidentInput) {
 }
 
 export type PatchAccidentInput = {
+  accident_type_id?: string;
   driver_id?: string | null;
   unit_id?: string | null;
   vendor_id?: string | null;

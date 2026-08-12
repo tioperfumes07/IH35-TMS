@@ -467,6 +467,14 @@ export const CATALOG_PICKER_CONFIGS = {
     evidence: "apps/backend/src/catalogs/generic-catalog.routes.ts:549 — one GenericCatalogConfig drives SELECT and INSERT",
     consumerPath: "apps/frontend/src/pages/dispatch/components/BookLoadEquipmentSection.tsx",
   }),
+  accident_type: catalogEntry({
+    key: "accident_type",
+    label: "Accident type",
+    table: "catalogs.accident_types",
+    endpoint: "/api/v1/catalogs/safety/accident-types",
+    evidence: "apps/backend/src/catalogs/generic-catalog.routes.ts:197 — one GenericCatalogConfig drives SELECT and INSERT",
+    consumerPath: "apps/frontend/src/components/safety/AccidentReportDrawer.tsx",
+  }),
 
 
 

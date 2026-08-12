@@ -211,6 +211,7 @@ function rateConAccessorialRows(json: Record<string, unknown>): AccessorialRow[]
   if (valid.length > 0) {
     return valid.map((l) => ({
       id: `acc-${crypto.randomUUID()}`,
+      additional_charge_id: "",
       code: String(l.code || "ACCESSORIAL"),
       description: String(l.description || "Accessorial"),
       amount_cents: Number(l.amount_cents),
