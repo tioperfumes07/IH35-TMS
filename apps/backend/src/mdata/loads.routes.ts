@@ -168,6 +168,7 @@ const createLoadBodySchema = z.object({
 
 const updateLoadBodySchema = z
   .object({
+    dispatch_flag_color_id: z.string().uuid().optional(),
     customer_id: z.string().uuid().optional(),
     status: loadStatusSchema.optional(),
     rate_total_cents: z.coerce.number().int().min(0).optional(),
@@ -708,7 +709,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
           SELECT
             l.id, l.operating_company_id, l.load_number, l.customer_id, l.status, l.rate_total_cents, l.currency_code,
             l.assigned_unit_id, l.assigned_primary_driver_id, l.assigned_secondary_driver_id, l.team_id,
-            l.dispatcher_user_id, l.notes, l.created_at, l.updated_at, l.soft_deleted_at, l.deleted_by_user_id,
+            l.dispatcher_user_id, l.notes, l.dispatch_flag_color_id, l.created_at, l.updated_at, l.soft_deleted_at, l.deleted_by_user_id,
             c.customer_name AS customer_name,
             u.unit_number AS assigned_unit_number,
             CASE
@@ -718,6 +719,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
             sp.city AS first_pickup_city,
             sd.city AS first_delivery_city,
             ${effectiveDeliverySelectSql("l", "sd")},
+            df.flag_code, df.display_name AS flag_display_name, df.hex_color AS flag_hex_color,
             EXISTS (
               SELECT 1
               FROM geo.geofences g
@@ -733,6 +735,8 @@ export async function registerLoadRoutes(app: FastifyInstance) {
                                  AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = l.operating_company_id
           LEFT JOIN mdata.drivers d ON d.id = l.assigned_primary_driver_id
                                    AND d.operating_company_id = l.operating_company_id
+          JOIN catalogs.dispatch_flag_colors df ON df.id = l.dispatch_flag_color_id
+                                                AND df.operating_company_id = l.operating_company_id
           LEFT JOIN LATERAL (
             SELECT city, scheduled_arrival_at
             FROM mdata.load_stops
@@ -759,10 +763,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
         `,
         values
       );
-      const rows = res.rows.map((row) => ({
-        ...row,
-        flag_code: statusToFlagCode(row.status as z.infer<typeof loadStatusSchema>),
-      }));
+      const rows = res.rows;
 
       if (!include_progress) {
         return { rows, totalCount: Number(countRes.rows[0]?.total_count ?? 0) };
@@ -1226,6 +1227,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
       setParts.push(`${col} = $${values.length}`);
     };
 
+    if ("dispatch_flag_color_id" in b) add("dispatch_flag_color_id", b.dispatch_flag_color_id);
     if ("customer_id" in b) add("customer_id", b.customer_id);
     if ("status" in b) add("status", b.status);
     if ("rate_total_cents" in b) add("rate_total_cents", b.rate_total_cents);
