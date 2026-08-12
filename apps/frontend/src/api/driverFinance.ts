@@ -597,6 +597,27 @@ export function addLoadToPreSettlement(
   );
 }
 
+/** LOAD-SETTLEMENT-TAB-SHOWS-OPEN-NOT-SETTLING / ACCT-F367 — the settlement(s) that actually cover
+ * a given load, resolved the canonical bill-first way (COALESCE(db.load_id, sl.load_id)), NOT the
+ * driver's currently-open pre-settlement cycle. Ordered locked/paid-first server-side so callers can
+ * take [0] as "the settlement that settled this load" when one exists. */
+export type SettlementForLoad = {
+  settlement_id: string;
+  display_id: string | null;
+  status: string;
+  gross_pay: number;
+  net_pay: number;
+  locked_at: string | null;
+  paid_at: string | null;
+};
+
+/** Drawer: load-aware reverse hop — which settlement(s) actually cover this load. */
+export function getSettlementsForLoad(loadId: string, companyId: string) {
+  return apiRequest<{ settlements: SettlementForLoad[] }>(
+    `/api/v1/driver-finance/settlements/for-load/${encodeURIComponent(loadId)}?${q(companyId)}`
+  );
+}
+
 /** Drawer: finalises the closed pre-settlement — PDF, email, driver notification. */
 export function settleAndPay(settlementId: string, operatingCompanyId: string) {
   return apiRequest<{ ok: boolean; settlement_id: string; net_pay: number }>(
