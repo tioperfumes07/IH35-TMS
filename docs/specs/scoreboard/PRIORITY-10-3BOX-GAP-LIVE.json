@@ -1,15 +1,15 @@
 {
-  "as_of": "2026-08-12T21:26:42.713Z",
-  "main_sha": "9ced0eec5",
+  "as_of": "2026-08-12T21:31:14.089Z",
+  "main_sha": "b674aa935",
   "gate": "PRIORITY_10_3BOX_100",
   "allRequired": {
     "totR": 2662,
-    "totB": 2283,
+    "totB": 2284,
     "pct": 86
   },
   "waveABC_noChrome": {
     "abcR": 2037,
-    "abcB": 2024,
+    "abcB": 2025,
     "pct": 99
   },
   "per_module": [
@@ -61,11 +61,11 @@
     {
       "mod": "banking",
       "req": 48,
-      "built": 41,
-      "pct": 85,
+      "built": 42,
+      "pct": 88,
       "abcReq": 40,
-      "abcBuilt": 39,
-      "abcPct": 98
+      "abcBuilt": 40,
+      "abcPct": 100
     },
     {
       "mod": "customers",
@@ -138,10 +138,9 @@
     },
     {
       "col": "liability",
-      "cells": 11,
+      "cells": 10,
       "byMod": {
-        "factoring": 10,
-        "banking": 1
+        "factoring": 10
       },
       "seat": "CC-1"
     },
@@ -154,5 +153,5 @@
       "seat": "CC-1 C"
     }
   ],
-  "entry_count": 145
+  "entry_count": 146
 }
