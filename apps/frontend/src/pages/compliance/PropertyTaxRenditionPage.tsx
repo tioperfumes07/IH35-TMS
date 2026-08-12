@@ -7,6 +7,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateUS } from "../../lib/formatDate";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { Combobox } from "../../components/Combobox";
+import { EntityLink } from "../../components/shared/EntityLink";
 import {
   addRenditionLine,
   createAppraisalDistrict,
@@ -416,7 +417,15 @@ function RenditionDetailView({ companyId, renditionId }: { companyId: string; re
             ) : (
               lines.map((l) => (
                 <tr key={l.id} className="border-t border-slate-100">
-                  <td className="px-2 py-1.5">{l.asset_description}</td>
+                  <td className="px-2 py-1.5">
+                    {l.unit_id ? (
+                      <EntityLink kind="unit" id={l.unit_id} label={l.asset_description} />
+                    ) : l.equipment_id ? (
+                      <EntityLink kind="trailer" id={l.equipment_id} label={l.asset_description} />
+                    ) : (
+                      l.asset_description
+                    )}
+                  </td>
                   <td className="px-2 py-1.5">{l.asset_category ?? "—"}</td>
                   <td className="px-2 py-1.5">{l.acquisition_date ? formatDateUS(l.acquisition_date) : "—"}</td>
                   <td className="px-2 py-1.5">{centsToUSD(l.acquisition_cost_cents)}</td>
