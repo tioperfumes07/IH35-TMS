@@ -25,6 +25,8 @@ export function run(root = process.cwd()) {
     `${root}/apps/frontend/src/pages/dispatch/LoadBankingLinkagePage.tsx`,
     "utf8"
   );
+  const vendor = fs.readFileSync(`${root}/apps/frontend/src/pages/VendorDetail.tsx`, "utf8");
+  const customer = fs.readFileSync(`${root}/apps/frontend/src/pages/CustomerDetail.tsx`, "utf8");
   const manifest = fs.readFileSync(`${root}/apps/frontend/src/routes/manifest.tsx`, "utf8");
   const entityLink = fs.readFileSync(`${root}/apps/frontend/src/components/shared/EntityLink.tsx`, "utf8");
   const backendRoute = fs.readFileSync(
@@ -77,6 +79,12 @@ export function run(root = process.cwd()) {
   if (!load.includes("LinkedBankTransactionsPanel") || !load.includes("load_id")) {
     failures.push("LoadBankingLinkagePage must mount panel with load_id");
   }
+  if (!/LinkedBankTransactionsPanel[\s\S]{0,220}?kind:\s*"vendor_id"/.test(vendor)) {
+    failures.push("VendorDetail must mount LinkedBankTransactionsPanel with vendor_id");
+  }
+  if (!/LinkedBankTransactionsPanel[\s\S]{0,220}?kind:\s*"customer_id"/.test(customer)) {
+    failures.push("CustomerDetail must mount LinkedBankTransactionsPanel with customer_id");
+  }
   if (!manifest.includes("LoadBankingLinkagePage") || !manifest.includes('/dispatch/loads/:id/banking')) {
     failures.push("manifest must route /dispatch/loads/:id/banking to LoadBankingLinkagePage");
   }
@@ -121,6 +129,8 @@ if (process.argv.includes("--selftest")) {
     "apps/frontend/src/pages/dispatch/LoadBankingLinkagePage.tsx",
     "LinkedBankTransactionsPanel\nload_id\n"
   );
+  mk("apps/frontend/src/pages/VendorDetail.tsx", '<LinkedBankTransactionsPanel linkage={{ kind: "vendor_id", id }} />\n');
+  mk("apps/frontend/src/pages/CustomerDetail.tsx", '<LinkedBankTransactionsPanel linkage={{ kind: "customer_id", id }} />\n');
   mk(
     "apps/backend/src/banking/categorization.routes.ts",
     [
@@ -178,6 +188,11 @@ if (process.argv.includes("--selftest")) {
   if (!run(tmp).some((f) => f.includes("must accept vendor_id and customer_id"))) {
     throw new Error("FAIL fail: dropping vendor_id from api client should trip");
   }
+  mk("apps/frontend/src/pages/VendorDetail.tsx", "vendor detail without reverse panel\n");
+  if (!run(tmp).some((f) => f.includes("VendorDetail must mount"))) {
+    throw new Error("FAIL fail: dropping VendorDetail reverse panel should trip");
+  }
+  mk("apps/frontend/src/pages/VendorDetail.tsx", '<LinkedBankTransactionsPanel linkage={{ kind: "vendor_id", id }} />\n');
   mk(
     "apps/frontend/src/api/banking.ts",
     "export function getBankTransactionsByLinkage(linkage) { linkage.vendor_id; linkage.customer_id; }\n"

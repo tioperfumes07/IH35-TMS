@@ -65,6 +65,7 @@ import { TasksTab } from "../components/tasks/TasksTab";
 import { EntityAuditHistoryTab } from "../components/audit/EntityAuditHistoryTab";
 import { CustomerContractsTab } from "../components/customers/CustomerContractsTab";
 import { ErrorBoundary } from "../components/ErrorBoundary";
+import { LinkedBankTransactionsPanel } from "../components/banking/LinkedBankTransactionsPanel";
 import { Modal } from "../components/Modal";
 import { CoiRequestsTab } from "./customers/tabs/CoiRequestsTab";
 import { PortalUsersTab } from "./customers/components/PortalUsersTab";
@@ -1552,6 +1553,13 @@ export function CustomerDetailPage() {
                 ))}
               </div>
             </DataPanel>
+          </div>
+          <div className="lg:col-span-2">
+            <LinkedBankTransactionsPanel
+              companyId={operatingCompanyId!}
+              linkage={{ kind: "customer_id", id: customer.id }}
+              entityLabel={customer.name}
+            />
           </div>
         </div>
       ) : null}
