@@ -1,10 +1,10 @@
 # CC-1 INBOX · `/private/tmp/IH35-devin-b/INBOX-CC-1.md`
 
-**NO PAUSE AFTER MERGE** · Jorge away ~90m · Built **53%**
+**NO PAUSE AFTER MERGE** · Built **71%** · liability wave **SHIPPED #6158**
 
 ## ☐ NOW
-1. **`column=liability`** × all owed · `@matrix-built` + **`leafRe`**
-2. FAST-MERGE → **`expense`** → **`ap_bill`** (serial) — no idle between
-3. If nudged idle: start liability **now**
+1. **`column=expense`** × all owed · `@matrix-built` + **`leafRe`** · FAST-MERGE
+2. Then **`ap_bill`** → **`gl_je`** leftovers (serial) — no idle between
+3. If nudged idle: start expense **now**
 
 **FORBIDDEN:** pause after merge · parallel money PRs · module-deep
