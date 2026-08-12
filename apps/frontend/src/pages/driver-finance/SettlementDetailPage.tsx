@@ -363,11 +363,9 @@ export function SettlementDetailPage() {
           <ExtraPaySection lines={extra} />
           <ReimbursementsSection lines={reimbursements} />
           <DeductionsSection rows={deductions} onHold={(row) => setHoldTarget(row)} />
-          {/* AP_BILL / GL_JE column-wave: settlement-bill-payment-posting.service.ts (flag
-              SETTLEMENT_GL_POSTING_ENABLED, live for all 3 entities) creates a real
-              accounting.bills row + journal entry per load this settlement pays out — this
-              section was the missing drill-through into that real posting. Empty when the flag
-              posted nothing yet (honest-empty, not fabricated). */}
+          {/* Settlement payout poster creates a real accounting.bills row + journal entry per
+              load this settlement pays out — drill-through into that posting. Empty when no
+              bills were posted yet (honest-empty, not fabricated). */}
           {(settlement.linked_bills as Array<Record<string, unknown>> | undefined)?.length ? (
             <section className="rounded-sm border border-slate-200 bg-slate-50 p-2" data-testid="settlement-linked-bills">
               <h3 className="mb-1 text-xs font-semibold uppercase text-slate-800">GL-Posted Bills</h3>
