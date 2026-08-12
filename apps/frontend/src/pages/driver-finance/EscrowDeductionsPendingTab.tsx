@@ -16,6 +16,8 @@ import { MoneyInput } from "../../components/forms/MoneyInput";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatUsdCents } from "../../lib/money";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { ListErrorState } from "../../components/ListErrorState";
+import { formatQueryErrorDetail } from "../../lib/tableError";
 
 function formatMoney(cents: number) {
   return formatUsdCents(cents);
@@ -115,6 +117,14 @@ export function EscrowDeductionsPendingTab() {
         </div>
       ) : null}
 
+      {pendingQuery.isError ? (
+        <ListErrorState
+          title="Couldn't load pending escrow deductions"
+          {...formatQueryErrorDetail(pendingQuery.error)}
+          onRetry={() => void pendingQuery.refetch()}
+        />
+      ) : null}
+
       <div className="rounded-sm border border-gray-200 bg-white">
         <div className="overflow-x-auto">
           <table className="min-w-full text-left text-sm">
@@ -175,7 +185,7 @@ export function EscrowDeductionsPendingTab() {
                   </tr>
                 );
               })}
-              {rows.length === 0 ? (
+              {!pendingQuery.isError && rows.length === 0 ? (
                 <tr>
                   <td className="px-3 py-8 text-center text-sm text-gray-500" colSpan={7}>
                     No pending escrow deductions
