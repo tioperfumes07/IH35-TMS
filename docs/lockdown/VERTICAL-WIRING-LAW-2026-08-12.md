@@ -12,7 +12,7 @@
 
 ## 1. The one-line law
 
-> **Vertical = one matrix COLUMN ID (or one CODEBASE CLASS) swept across every module that owes it — priority 10 first, code extends to all 28 sidebar modules in the same wave. Never a module-deep slice unless it closes the last hotfile of an in-flight column wave already green on the other nine priority modules.**
+> **Vertical = one matrix COLUMN ID (or one CODEBASE CLASS) swept across every module that owes it — priority 10 first as the gate, then mandatory same-PR extend to all 28 sidebar modules on every owed tab/leaf/drawer/popup. Never a module-deep slice unless it closes the last hotfile of an in-flight column wave already green on the other nine priority modules.**
 
 If coders wire vertically, **the same column group rises together** on the scoreboard — not dispatch wiring +20% while safety wiring stays flat.
 
@@ -29,13 +29,17 @@ If coders wire vertically, **the same column group rises together** on the score
 
 ---
 
-## 3. Priority 10 gate · extend to 28
+## 3. Priority 10 gate · UNIVERSAL extend to all 28 (every leaf)
 
 | Layer | Done bar |
 |-------|----------|
 | **P21** — priority 10 | Box 1+2+3 = **100%** Built on every Required cell |
 | **P16** — all 28 modules | Same bar on every sidebar module |
-| **Code in one wave** | Tag **every module touched** in `@matrix-built` — extend column to maintenance · insurance · fleet · … in the **same PR** when pattern is shared |
+| **Code in one wave (MANDATORY)** | Sweeping a column on the urgent 10 **MUST** ship the **same wiring pattern** on **every other module that owes that column** in the **same PR** — every tab · sub-tab · create · drawer · popup · wizard leaf. Tag **every module touched** in `@matrix-built`. |
+
+**Owner clarification 2026-08-12 (answered=closed):** Vertical work is **global**. Fixing `connectivity` / `reverse_link` / `driver` / money columns / etc. on the priority 10 is **not** “those 10 only.” Shared helpers, EntityLink, posters, pickers, FKs — land once and cover **all owed leaves system-wide**. After the priority-10 columns are green everywhere they apply, leftover work is **only** columns that were **never required** on the first 10 (module-unique Required cells on modules 11–28).
+
+**Forbidden soft-reading:** “extend when convenient” · “priority-10-only PR then later extend” · horizontal finish-one-module.
 
 **Sequence:** Wave **A → B → C → D** — within each wave, **one column id at a time across modules**, not one module through A–D.
 
