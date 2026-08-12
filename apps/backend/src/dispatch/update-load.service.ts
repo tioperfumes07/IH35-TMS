@@ -58,6 +58,7 @@ export type UpdateLoadStopInput = {
 // Scalar load fields editable via the wizard. Status is intentionally EXCLUDED — it flows through the
 // dedicated /transition state machine. load_number / booking provenance are immutable.
 export type UpdateDispatchLoadFields = Partial<{
+  catalog_load_type_id: string | null;
   customer_id: string;
   assigned_unit_id: string | null;
   assigned_primary_driver_id: string | null;
@@ -140,6 +141,7 @@ export class LoadEditLockedError extends Error {
 
 // Map our scalar field -> mdata.loads column. (Names verified against the bookLoad INSERT.)
 const SCALAR_COLUMNS: Record<keyof UpdateDispatchLoadFields, string> = {
+  catalog_load_type_id: "catalog_load_type_id",
   customer_id: "customer_id",
   assigned_unit_id: "assigned_unit_id",
   assigned_primary_driver_id: "assigned_primary_driver_id",

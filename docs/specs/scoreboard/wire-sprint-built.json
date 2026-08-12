@@ -112,6 +112,14 @@
       "modules": ["lists", "maintenance"],
       "cols": ["connectivity"],
       "leafRe": "^(lists\\.|maintenance\\.)"
+    },
+    {
+      "task": "P22",
+      "pr": "#5897",
+      "guard": "scripts/verify-steps/3119-verify-banking-matchdrawer-uses-paritydrawer.mjs",
+      "modules": ["banking"],
+      "cols": ["qbo_chrome", "connectivity"],
+      "leafRe": "^(accounts|transactions\\.|match|categorize)"
     }
   ]
 }

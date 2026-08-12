@@ -53,6 +53,10 @@ const FILES = {
   migration: "db/migrations/202612501200_p44_load_detention_reason_canonical_fk.sql",
   pickupPicker: "apps/frontend/src/pages/dispatch/components/BookLoadStopsSection.tsx",
   pickupMigration: "db/migrations/202612501400_p44_load_stop_pickup_time_type_canonical_fk.sql",
+  loadTypeMigration: "db/migrations/202612501600_p44_load_catalog_load_type_canonical_fk.sql",
+  editMapping: "apps/frontend/src/pages/dispatch/components/book-load-v4/editLoadMapping.ts",
+  cancellationService: "apps/backend/src/dispatch/cancellation.service.ts",
+  cancellationMigration: "db/migrations/202612501800_p44_load_cancellation_reason_same_opco_fk.sql",
 };
 
 const MISSING = "MISSING";
@@ -163,6 +167,27 @@ export function contractErrors(src) {
   }
   if (!/FOREIGN KEY \(pickup_time_type_id\)/.test(src.pickupMigration) || !/enforce_load_stop_pickup_time_type_company/.test(src.pickupMigration)) {
     errors.push("P44-FK: pickup-time migration must enforce canonical FK plus same-opco constraint");
+  }
+  if (!/createKind="load_type"/.test(src.bookLoad) || !/catalog_load_type_id:\s*values\.catalog_load_type_id/.test(src.bookLoad)) {
+    errors.push("P44-FK: Book Load must select and submit the distinct canonical catalog_load_type_id");
+  }
+  if (!/catalog_load_type_id:\s*z\.string\(\)\.uuid/.test(src.loadRoutes)) {
+    errors.push("P44-FK: backend schemas must accept catalog_load_type_id UUID");
+  }
+  if (!/catalog_load_type_id = \$9::uuid/.test(src.bookService)) {
+    errors.push("P44-FK: Book Load create service must persist catalog_load_type_id");
+  }
+  if (!/FOREIGN KEY \(catalog_load_type_id, operating_company_id\)/.test(src.loadTypeMigration)) {
+    errors.push("P44-FK: load-types migration must enforce same-opco canonical FK");
+  }
+  if (!/catalog_load_type_id:\s*str\(load\.catalog_load_type_id\)/.test(src.editMapping) || !/\["catalog_load_type_id", "catalog_load_type_id"/.test(src.editMapping)) {
+    errors.push("P44-FK: canonical load type selection must survive detail reload and edit");
+  }
+  if (!/reason_code_id:\s*reason\.id/.test(src.cancellationService) || !/operating_company_id = \$2/.test(src.cancellationService)) {
+    errors.push("P44-FK: cancellation writer must resolve and persist the same-opco canonical reason UUID");
+  }
+  if (!/FOREIGN KEY \(reason_code_id, operating_company_id\)/.test(src.cancellationMigration) || !/ALTER COLUMN reason_code_id SET NOT NULL/.test(src.cancellationMigration)) {
+    errors.push("P44-FK: load cancellations must enforce a NOT NULL same-opco reason FK");
   }
 
   // ── CONFIG-DRIVEN: the pinned defect ────────────────────────────────────────────────────────
@@ -413,12 +438,16 @@ const GOOD_BACKEND = `
 function selftest() {
   const p44 = {
     detentionPicker: "const options = rows.map((row) => ({ value: row.id }));",
-    bookLoad: "detention_reason_id: values.detention_reason_id || undefined, pickup_time_type_id: stop.pickup_time_type_id || undefined, const options = rows.map((row) => ({ value: row.id }));",
-    loadRoutes: "detention_reason_id: z.string().uuid().optional(), pickup_time_type_id: z.string().uuid().optional(),",
-    bookService: "detention_expected_y_n, detention_reason_id, detention_expected_hours, time_window_type, pickup_time_type_id, appointment_start_at,",
+    bookLoad: 'detention_reason_id: values.detention_reason_id || undefined, pickup_time_type_id: stop.pickup_time_type_id || undefined, catalog_load_type_id: values.catalog_load_type_id || undefined, createKind="load_type", const options = rows.map((row) => ({ value: row.id }));',
+    loadRoutes: "detention_reason_id: z.string().uuid().optional(), pickup_time_type_id: z.string().uuid().optional(), catalog_load_type_id: z.string().uuid().optional(),",
+    bookService: "detention_expected_y_n, detention_reason_id, detention_expected_hours, time_window_type, pickup_time_type_id, appointment_start_at, catalog_load_type_id = $9::uuid,",
     migration: "FOREIGN KEY (detention_reason_id, operating_company_id)",
     pickupPicker: 'createKind="pickup_time_type"; const options = rows.map((row) => ({ value: row.id }));',
     pickupMigration: "FOREIGN KEY (pickup_time_type_id); enforce_load_stop_pickup_time_type_company",
+    loadTypeMigration: "FOREIGN KEY (catalog_load_type_id, operating_company_id)",
+    editMapping: 'catalog_load_type_id: str(load.catalog_load_type_id), ["catalog_load_type_id", "catalog_load_type_id",',
+    cancellationService: "operating_company_id = $2; reason_code_id: reason.id",
+    cancellationMigration: "FOREIGN KEY (reason_code_id, operating_company_id); ALTER COLUMN reason_code_id SET NOT NULL",
   };
   const good = { registry: GOOD_REGISTRY, select: GOOD_SELECT, drawer: GOOD_DRAWER, backendIndex: GOOD_BACKEND, ...p44 };
   const failures = [];
