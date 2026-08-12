@@ -848,10 +848,8 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
                 <div key={row.id} className="rounded-sm border border-gray-200 p-2 text-xs">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div>
-                      <span className="font-semibold">
-                        {entityLabel(row.equipment_number, row.equipment_id, "Equipment")}
-                      </span>{" "}
-                      · {entityLabel(row.lender_vendor_name, row.lender_vendor_id, "Vendor")} ·{" "}
+                      <EntityLink kind="unit" id={row.equipment_id} label={entityLabel(row.equipment_number, row.equipment_id, "Equipment")} className="font-semibold" />{" "}
+                      · <EntityLink kind="vendor" id={row.lender_vendor_id} label={entityLabel(row.lender_vendor_name, row.lender_vendor_id, "Vendor")} /> ·{" "}
                       {fmtCurrency(Number(row.principal_cents ?? 0) / 100)}
                     </div>
                     <div className="flex items-center gap-2">

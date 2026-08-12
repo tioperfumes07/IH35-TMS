@@ -23,6 +23,7 @@ import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { coaAccountReferenceOption } from "../../components/parity/referenceOptionLabels";
 import { DatePicker } from "../../components/forms/DatePicker";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { StatementUpload } from "../../components/banking/StatementUpload";
 import { useToast } from "../../components/Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
@@ -397,7 +398,7 @@ export function BankReconciliationPage() {
             <div className="max-h-[180px] space-y-1 overflow-auto">
               {(worklistQuery.data?.variance_resolved_entries ?? []).map((entry) => (
                 <div key={entry.journal_entry_id} className="rounded-sm border border-gray-100 px-2 py-1 text-xs text-gray-700">
-                  {entry.entry_date} · {entityLabel(entry.reference_no, entry.journal_entry_id, "Journal entry")} · {money(entry.variance_cents)}
+                  {entry.entry_date} · <EntityLink kind="journal_entry" id={entry.journal_entry_id} label={entityLabel(entry.reference_no, entry.journal_entry_id, "Journal entry")} /> · {money(entry.variance_cents)}
                 </div>
               ))}
               {(worklistQuery.data?.variance_resolved_entries ?? []).length === 0 ? <div className="text-xs text-gray-500">No variance entries in this period.</div> : null}
