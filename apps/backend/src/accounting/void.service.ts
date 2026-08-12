@@ -305,8 +305,8 @@ export async function postVoidReversal(
     const lineRes = await client.query<{ id: string }>(
       `
         INSERT INTO accounting.journal_entry_postings
-          (operating_company_id, journal_entry_uuid, line_sequence, account_id, class_id, entity_uuid, debit_or_credit, amount_cents, description, idempotency_key)
-        VALUES ($1::uuid, $2::uuid, $3, $4::uuid, $5::uuid, $6, $7, $8::bigint, $9, $10)
+          (operating_company_id, journal_entry_uuid, line_sequence, account_id, class_id, entity_uuid, debit_or_credit, amount_cents, description, idempotency_key, source_transaction_type, source_transaction_id)
+        VALUES ($1::uuid, $2::uuid, $3, $4::uuid, $5::uuid, $6, $7, $8::bigint, $9, $10, $11, $12)
         ON CONFLICT (operating_company_id, idempotency_key, line_sequence)
           WHERE idempotency_key IS NOT NULL DO NOTHING
         RETURNING id::text
@@ -324,6 +324,16 @@ export async function postVoidReversal(
         // BLOCK 2: deterministic key per voided entity so a second void of the same entity cannot
         // double-post a reversing JE (uq_jep_company_idempotency_line). Shared across reversal lines.
         `void:${params.entityType}:${params.entityId}`,
+        // LV-BILLPAY-VOID-NO-REVERSAL sub-finding — a reversal posting previously carried
+        // source_transaction_type/id = NULL, so any source-typed report (revenue-by-type, P&L
+        // drill-through, this exact class' subledger-vs-GL tie-out) summed the ORIGINAL posting into
+        // its type bucket and never saw the reversal, overstating that bucket by the full reversed
+        // amount even though the trial balance (which sums by account only, not by source type)
+        // stayed correct. Tagging the reversal with the SAME source_transaction_type/id as what it
+        // reverses (not inventing a new "reversal" type) means a source-typed sum sees BOTH legs and
+        // nets to zero, matching how the account-level total already behaves.
+        params.entityType,
+        params.entityId,
       ]
     );
     // CODER-12 audit-spine: link each reversal posting line back to the ORIGINAL entity
