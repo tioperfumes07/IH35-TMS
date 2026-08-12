@@ -616,11 +616,19 @@ export async function autoCreateBillFromWO(
   const billRes = await client.query<{ id: string }>(
     `
       INSERT INTO accounting.bills (
-        operating_company_id, vendor_uuid, linked_work_order_uuid, unit_id, status, bill_date, due_date, amount_cents, total_amount, qbo_sync_pending
+        operating_company_id, vendor_uuid, mdata_vendor_id, linked_work_order_uuid, unit_id, status, bill_date, due_date, amount_cents, total_amount, qbo_sync_pending
       )
       SELECT
         w.operating_company_id,
         COALESCE(w.external_vendor_id, w.vendor_id),
+        -- LV-BILL-MDATA-VENDOR-FK-OPTOUT sweep — external_vendor_id/vendor_id are already typed uuid
+        -- FKs into mdata.vendors, so resolve the canonical FK directly rather than leave it NULL;
+        -- entity-scoped so a cross-entity id (should be structurally impossible given the FK, but
+        -- never trusted unchecked) resolves to nothing rather than another entity's vendor.
+        (SELECT v.id FROM mdata.vendors v
+          WHERE v.id = COALESCE(w.external_vendor_id, w.vendor_id)
+            AND v.operating_company_id = w.operating_company_id
+          LIMIT 1),
         w.id,
         w.unit_id,
         'draft',

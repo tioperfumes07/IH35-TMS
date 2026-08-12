@@ -9,6 +9,7 @@ import { writeTransactionSourceLink } from "./accounting-spine-emit.js";
 import { nextInvoiceDisplayId } from "./display-id.js";
 import { recomputeInvoiceTotals } from "./shared.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
+import { resolveMdataVendorIdBestEffort } from "./bills.service.js";
 
 export function computeNextRecurringRunUtc(fromIso: string, cadence: string, cronExpr: string | null): string {
   const dt = DateTime.fromISO(fromIso, { zone: "utc" });
@@ -169,12 +170,18 @@ async function materializeBill(client: PoolClient, tmpl: Record<string, unknown>
   const amountCents = Number(body.amount_cents ?? 0);
   if (!vendorId || !billDate || amountCents <= 0) throw new Error("recurring_bill_invalid_payload");
 
+  // LV-BILL-MDATA-VENDOR-FK-OPTOUT sweep — this template's vendor_id is already an mdata.vendors
+  // uuid (cast ::uuid below), not a QBO external id, so resolve it against the entity-scoped table
+  // rather than trust it unchecked; best-effort (never blocks a scheduled materialization run).
+  const mdataVendorId = await resolveMdataVendorIdBestEffort(client, oc, vendorId);
+
   const ins = await client.query<{ id: string }>(
     `
       INSERT INTO accounting.bills (
         operating_company_id,
         vendor_id,
         vendor_uuid,
+        mdata_vendor_id,
         bill_number,
         bill_date,
         due_date,
@@ -190,7 +197,7 @@ async function materializeBill(client: PoolClient, tmpl: Record<string, unknown>
         updated_at
       )
       VALUES (
-        $1::uuid,$2::uuid,$2::uuid,$3,$4::date,$5::date,$6,$7,0,0,'unpaid',$8,$9,$10::uuid,now(),now()
+        $1::uuid,$2::uuid,$2::uuid,$11::uuid,$3,$4::date,$5::date,$6,$7,0,0,'unpaid',$8,$9,$10::uuid,now(),now()
       )
       RETURNING id::text
     `,
@@ -205,6 +212,7 @@ async function materializeBill(client: PoolClient, tmpl: Record<string, unknown>
       body.memo ?? null,
       body.coa_account_id ?? null,
       actorId,
+      mdataVendorId,
     ]
   );
   const billId = ins.rows[0]?.id;
