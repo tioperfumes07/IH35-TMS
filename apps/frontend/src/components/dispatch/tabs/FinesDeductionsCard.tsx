@@ -13,6 +13,7 @@ import { EntityLink } from "../../shared/EntityLink";
 import {
   approvePendingEscrowDeduction,
   getPreSettlementForDriver,
+  getSettlementsForLoad,
   listPendingEscrowDeductions,
   rejectPendingEscrowDeduction,
   type EscrowPendingDeduction,
@@ -22,7 +23,7 @@ import { useAuth } from "../../../auth/useAuth";
 import { listAutoDeductionPolicies, type AutoDeductionPolicy } from "../../../hooks/useAutoDeductionPolicies";
 import { Button } from "../../Button";
 import { Modal } from "../../Modal";
-import { formatUsdCents } from "../../../lib/money";
+import { formatUsd, formatUsdCents } from "../../../lib/money";
 import { userFacingApiError } from "../../../lib/api-error-message";
 
 export type FinesDeductionsCardProps = {
@@ -77,6 +78,21 @@ export function FinesDeductionsCard({ loadId, operatingCompanyId, canEdit }: Fin
     enabled: Boolean(driverId && operatingCompanyId),
     retry: false,
   });
+
+  // LOAD-SETTLEMENT-TAB-SHOWS-OPEN-NOT-SETTLING / ACCT-F367 — this section's header used to name
+  // ONLY the driver's currently-open pre-settlement (preSettlementQ above), even when THIS load was
+  // actually paid on a different, already-locked settlement. Resolve the load-aware answer first
+  // (bill-first COALESCE, same shape as the settlement DETAIL route) and prefer it whenever it
+  // exists; the open pre-settlement is now shown ONLY as a fallback and labelled distinctly so an
+  // empty open cycle can never again be mistaken for "this load was never settled".
+  const settlementForLoadQ = useQuery({
+    queryKey: ["settlement-for-load", loadId, operatingCompanyId],
+    queryFn: () => getSettlementsForLoad(loadId, operatingCompanyId),
+    enabled: Boolean(loadId && operatingCompanyId),
+    retry: false,
+  });
+  const resolvedSettlement = settlementForLoadQ.data?.settlements?.[0] ?? null;
+  const resolvedSettlementIsSettled = Boolean(resolvedSettlement && resolvedSettlement.status !== "open");
 
   const loadPendingRows = useMemo(
     () => (pendingEscrowQ.data?.data ?? []).filter((row) => row.load_id === loadId && row.status === "pending"),
@@ -245,12 +261,38 @@ export function FinesDeductionsCard({ loadId, operatingCompanyId, canEdit }: Fin
         </div>
       </section>
 
-      {/* Current settlement fine lines */}
-      {preSettlementQ.data?.settlement ? (
+      {/* Settlement that actually covers this load — load-aware resolution wins over the driver's
+          open pre-settlement cycle, per LOAD-SETTLEMENT-TAB-SHOWS-OPEN-NOT-SETTLING. */}
+      {resolvedSettlementIsSettled && resolvedSettlement ? (
+        <section className="rounded-sm border border-gray-200 bg-white p-3" data-testid="load-settlement-resolved">
+          <h4 className="mb-2 text-xs font-semibold uppercase text-gray-600">
+            Settlement for this load (
+            <EntityLink
+              kind="settlement"
+              id={resolvedSettlement.settlement_id}
+              label={entityLabel(resolvedSettlement.display_id, resolvedSettlement.settlement_id, "Record")}
+            />
+            )
+          </h4>
+          <div className="flex items-center justify-between text-xs">
+            <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 font-semibold uppercase text-slate-700">
+              {resolvedSettlement.status}
+            </span>
+            <span className="font-semibold text-gray-900">Net {formatUsd(resolvedSettlement.net_pay)}</span>
+          </div>
+          <p className="mt-2 text-xs text-gray-500">
+            This load's pay was settled here — open the settlement record above for full line detail.
+          </p>
+        </section>
+      ) : preSettlementQ.data?.settlement ? (
         <section className="rounded-sm border border-gray-200 bg-white p-3">
           <h4 className="mb-2 text-xs font-semibold uppercase text-gray-600">
-            This settlement (<EntityLink kind="settlement" id={preSettlementQ.data.settlement.id} label={entityLabel(preSettlementQ.data.settlement.display_id, preSettlementQ.data.settlement.id, "Record")} />)
+            Open pre-settlement, no lines yet (<EntityLink kind="settlement" id={preSettlementQ.data.settlement.id} label={entityLabel(preSettlementQ.data.settlement.display_id, preSettlementQ.data.settlement.id, "Record")} />)
           </h4>
+          <p className="mb-2 text-xs text-slate-700">
+            This is the driver's current open cycle — it does not necessarily mean this load is unpaid; check the
+            load-settlement link above once it settles.
+          </p>
           <div className="space-y-1">
             {fineDeductionLines.map((line) => (
               <div key={line.id} className="flex justify-between text-xs">
