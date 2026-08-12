@@ -1,11 +1,13 @@
 # CC-1 INBOX · sync to `/private/tmp/IH35-devin-b/INBOX-CC-1.md`
 
-**Law:** `docs/lockdown/VERTICAL-WIRING-LAW-2026-08-12.md` · **Wave C column-wave · one money PR serial.**
+**Law:** VERTICAL + FAST-MERGE · **Gap:** PRIORITY-10-3BOX-GAP-LIVE.md
 
 ## ☐ NOW
 
-1. Next **money column** across all owed modules (not “finish accounting”)
-2. Money **CLASS-SWEEP** where it unblocks column B
-3. `@matrix-built` every merge · TMS ON · QBO_* OFF
+1. Finish **`column=gl_je`** — one PR × all owed modules (priority 10; extend 28) · reachability = backend write + FE drill-through · `@matrix-built`
+2. Then **`column=liability`** → **`expense`** → **`ap_bill`** (serial money PRs)
+3. FAST-MERGE after money-pr-local-gate PASS
 
-OUTBOX: `CC-1 | column=<id>|class=<id> | SHIPPED #N @ sha | Built=… | NEXT=…`
+**FORBIDDEN:** horizontal “finish accounting” · module-deep · parallel money PRs · Live before 3-box
+
+OUTBOX: `CC-1 | column=<id> | SHIPPED #N @ sha | Built=… | NEXT=…`

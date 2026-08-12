@@ -1,0 +1,363 @@
+{
+  "as_of": "2026-08-12T19:27:12.093Z",
+  "main_sha": "5048fea8f",
+  "gate": "PRIORITY_10_3BOX_100",
+  "allRequired": {
+    "totR": 3110,
+    "totB": 1194,
+    "pct": 38
+  },
+  "waveABC_noChrome": {
+    "abcR": 2480,
+    "abcB": 943,
+    "pct": 38
+  },
+  "per_module": [
+    {
+      "mod": "lists",
+      "req": 1721,
+      "built": 524,
+      "pct": 30,
+      "abcReq": 1312,
+      "abcBuilt": 320,
+      "abcPct": 24
+    },
+    {
+      "mod": "accounting",
+      "req": 185,
+      "built": 104,
+      "pct": 56,
+      "abcReq": 153,
+      "abcBuilt": 96,
+      "abcPct": 63
+    },
+    {
+      "mod": "dispatch",
+      "req": 363,
+      "built": 224,
+      "pct": 62,
+      "abcReq": 318,
+      "abcBuilt": 214,
+      "abcPct": 67
+    },
+    {
+      "mod": "settlements",
+      "req": 42,
+      "built": 28,
+      "pct": 67,
+      "abcReq": 36,
+      "abcBuilt": 28,
+      "abcPct": 78
+    },
+    {
+      "mod": "factoring",
+      "req": 131,
+      "built": 33,
+      "pct": 25,
+      "abcReq": 114,
+      "abcBuilt": 33,
+      "abcPct": 29
+    },
+    {
+      "mod": "banking",
+      "req": 49,
+      "built": 12,
+      "pct": 24,
+      "abcReq": 41,
+      "abcBuilt": 10,
+      "abcPct": 24
+    },
+    {
+      "mod": "customers",
+      "req": 177,
+      "built": 115,
+      "pct": 65,
+      "abcReq": 149,
+      "abcBuilt": 103,
+      "abcPct": 69
+    },
+    {
+      "mod": "vendors",
+      "req": 177,
+      "built": 72,
+      "pct": 41,
+      "abcReq": 147,
+      "abcBuilt": 62,
+      "abcPct": 42
+    },
+    {
+      "mod": "drivers",
+      "req": 62,
+      "built": 25,
+      "pct": 40,
+      "abcReq": 50,
+      "abcBuilt": 25,
+      "abcPct": 50
+    },
+    {
+      "mod": "safety",
+      "req": 203,
+      "built": 57,
+      "pct": 28,
+      "abcReq": 160,
+      "abcBuilt": 52,
+      "abcPct": 33
+    }
+  ],
+  "ranked_column_gaps": [
+    {
+      "col": "reverse_link",
+      "total": 341,
+      "mods": {
+        "lists": 219,
+        "accounting": 20,
+        "dispatch": 8,
+        "settlements": 1,
+        "factoring": 10,
+        "banking": 3,
+        "customers": 31,
+        "vendors": 32,
+        "drivers": 3,
+        "safety": 14
+      }
+    },
+    {
+      "col": "qbo_chrome",
+      "total": 293,
+      "mods": {
+        "lists": 205,
+        "accounting": 15,
+        "dispatch": 10,
+        "settlements": 2,
+        "factoring": 10,
+        "banking": 4,
+        "customers": 15,
+        "vendors": 17,
+        "drivers": 4,
+        "safety": 11
+      }
+    },
+    {
+      "col": "gl_je",
+      "total": 197,
+      "mods": {
+        "lists": 112,
+        "accounting": 14,
+        "dispatch": 15,
+        "settlements": 1,
+        "factoring": 17,
+        "banking": 8,
+        "customers": 10,
+        "vendors": 9,
+        "drivers": 4,
+        "safety": 7
+      }
+    },
+    {
+      "col": "vendor",
+      "total": 178,
+      "mods": {
+        "lists": 121,
+        "dispatch": 3,
+        "factoring": 5,
+        "customers": 5,
+        "vendors": 39,
+        "safety": 5
+      }
+    },
+    {
+      "col": "unit",
+      "total": 144,
+      "mods": {
+        "lists": 110,
+        "dispatch": 10,
+        "settlements": 2,
+        "factoring": 1,
+        "banking": 1,
+        "drivers": 3,
+        "safety": 17
+      }
+    },
+    {
+      "col": "expense",
+      "total": 130,
+      "mods": {
+        "lists": 116,
+        "accounting": 1,
+        "dispatch": 4,
+        "factoring": 1,
+        "banking": 3,
+        "safety": 5
+      }
+    },
+    {
+      "col": "customer",
+      "total": 103,
+      "mods": {
+        "lists": 67,
+        "accounting": 3,
+        "dispatch": 15,
+        "factoring": 10,
+        "banking": 3,
+        "safety": 5
+      }
+    },
+    {
+      "col": "ap_bill",
+      "total": 99,
+      "mods": {
+        "lists": 86,
+        "accounting": 1,
+        "dispatch": 3,
+        "settlements": 2,
+        "factoring": 1,
+        "banking": 2,
+        "safety": 4
+      }
+    },
+    {
+      "col": "driver",
+      "total": 97,
+      "mods": {
+        "lists": 97
+      }
+    },
+    {
+      "col": "liability",
+      "total": 93,
+      "mods": {
+        "lists": 44,
+        "accounting": 3,
+        "dispatch": 10,
+        "settlements": 1,
+        "factoring": 19,
+        "banking": 2,
+        "vendors": 3,
+        "drivers": 6,
+        "safety": 5
+      }
+    },
+    {
+      "col": "connectivity",
+      "total": 84,
+      "mods": {
+        "accounting": 13,
+        "dispatch": 11,
+        "settlements": 1,
+        "factoring": 10,
+        "banking": 8,
+        "drivers": 8,
+        "safety": 33
+      }
+    },
+    {
+      "col": "picker_law",
+      "total": 73,
+      "mods": {
+        "accounting": 7,
+        "dispatch": 21,
+        "settlements": 4,
+        "factoring": 7,
+        "banking": 2,
+        "drivers": 8,
+        "safety": 24
+      }
+    },
+    {
+      "col": "trailer",
+      "total": 40,
+      "mods": {
+        "lists": 20,
+        "dispatch": 13,
+        "safety": 7
+      }
+    },
+    {
+      "col": "load",
+      "total": 31,
+      "mods": {
+        "accounting": 2,
+        "dispatch": 12,
+        "factoring": 7,
+        "banking": 1,
+        "vendors": 2,
+        "drivers": 1,
+        "safety": 6
+      }
+    },
+    {
+      "col": "scenario.maintenance",
+      "total": 5,
+      "mods": {
+        "accounting": 1,
+        "dispatch": 4
+      }
+    },
+    {
+      "col": "scenario.ap",
+      "total": 3,
+      "mods": {
+        "vendors": 3
+      }
+    },
+    {
+      "col": "scenario.insurance",
+      "total": 3,
+      "mods": {
+        "safety": 3
+      }
+    },
+    {
+      "col": "inventory",
+      "total": 1,
+      "mods": {
+        "accounting": 1
+      }
+    },
+    {
+      "col": "scenario.dispatch",
+      "total": 1,
+      "mods": {
+        "customers": 1
+      }
+    }
+  ],
+  "next_waves": [
+    {
+      "seat": "Codex",
+      "column": "reverse_link",
+      "wave": "B",
+      "cells": 341
+    },
+    {
+      "seat": "CC-2",
+      "column": "connectivity",
+      "wave": "B",
+      "cells": 84
+    },
+    {
+      "seat": "CC-1",
+      "column": "gl_je",
+      "wave": "C",
+      "cells": 197
+    },
+    {
+      "seat": "CC-1",
+      "column": "liability",
+      "wave": "C",
+      "cells": 93
+    },
+    {
+      "seat": "Codex",
+      "column": "vendor",
+      "wave": "A",
+      "cells": 178
+    },
+    {
+      "seat": "Codex",
+      "column": "unit",
+      "wave": "A",
+      "cells": 144
+    }
+  ]
+}
