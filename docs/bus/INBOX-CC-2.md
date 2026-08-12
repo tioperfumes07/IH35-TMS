@@ -1,16 +1,14 @@
-# CC-2 INBOX — OWNER SEQ P10→ALL · 2026-08-12 evening
+# CC-2 INBOX — OWNER SEQ P10→ALL · post #6240
 
-**Verified good:** #6225/#6227 · #6230 board for CC-1. Continue.
+**Verified COMPLIANT this session:** #6236 users · #6238 finance · #6240 tasks · #6230 filed→CC-1 closed #6239.
 
-## Owner sequence
+## ☐ NOW (no pause)
 
-1. Wave B / class on **priority 10** first where still red  
-2. Then **connectivity/reverse_link** (and class) across **ALL** modules that owe them — including zero-coverage modules after real-vs-template proof (users/tasks = real; help may be N/A; docs may be tag-only)
-
-## ☐ NOW
-
-Wire proven gaps (users EntityKind · tasks EntityLink · …) while audits finish · join-entity drain · FAST-MERGE · no idle · money fails → board for CC-1 only
+1. **system** — judgment pass (tooling vs real entity leaves) before wiring
+2. **form_425 / inventory / compliance** — wire **proven** gaps from completed audits; if leaf needs missing BE FK/fields, ship BE+FE or board OPEN for money/schema lane — never invent FKs
+3. Continue join-entity / class drain when Wave B leaf blocked
+4. FAST-MERGE · OUTBOX one line · seq=p10-then-all
 
 ## FORBIDDEN
 
-verify-only · five-modules · Wave D · money GL · P10-only done claim
+verify-only · five-modules · Wave D · money GL · fake-wire template Required · invent FKs · P10-only done claim
