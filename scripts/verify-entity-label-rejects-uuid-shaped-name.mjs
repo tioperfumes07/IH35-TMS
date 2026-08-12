@@ -19,6 +19,7 @@ const TARGET = "apps/frontend/src/lib/entity-label.ts";
 const BILLS = "apps/frontend/src/pages/accounting/BillsPage.tsx";
 const MAINT_WO_ROUTES = "apps/backend/src/maintenance/work-orders.routes.ts";
 const MAINT_WO_TABLE = "apps/frontend/src/pages/maintenance/components/WorkOrdersTable.tsx";
+const CUSTOMER_DETAIL = "apps/frontend/src/pages/CustomerDetail.tsx";
 
 /** Batch-2/3 drain sites — name||id / name??id paints (CLS-UUID-LABEL). */
 const SIBLINGS = [
@@ -1728,6 +1729,17 @@ export function auditMaintenanceWorkOrderLabels(routesSrc, tableSrc) {
   return problems;
 }
 
+export function auditCustomerLoadEntityLinks(src) {
+  const problems = [];
+  if (!/<EntityLink\s+kind="driver"\s+id=\{load\.assigned_primary_driver_id\}\s+label=\{entityLabel\(load\.assigned_primary_driver_name, load\.assigned_primary_driver_id, "Driver"\)\}/.test(src)) {
+    problems.push(`${CUSTOMER_DETAIL}: customer load rows must drill through the driver FK`);
+  }
+  if (!/<EntityLink\s+kind="unit"\s+id=\{load\.assigned_unit_id\}\s+label=\{entityLabel\(load\.assigned_unit_number, load\.assigned_unit_id, "Unit"\)\}/.test(src)) {
+    problems.push(`${CUSTOMER_DETAIL}: customer load rows must drill through the unit FK`);
+  }
+  return problems;
+}
+
 function auditTree() {
   const problems = [
     ...auditEntityLabel(readFileSync(join(ROOT, TARGET), "utf8")),
@@ -1736,6 +1748,7 @@ function auditTree() {
       readFileSync(join(ROOT, MAINT_WO_ROUTES), "utf8"),
       readFileSync(join(ROOT, MAINT_WO_TABLE), "utf8"),
     ),
+    ...auditCustomerLoadEntityLinks(readFileSync(join(ROOT, CUSTOMER_DETAIL), "utf8")),
   ];
   for (const s of SIBLINGS) {
     problems.push(...auditSibling(s.rel, readFileSync(join(ROOT, s.rel), "utf8"), s.bad, s.good));
@@ -1774,6 +1787,19 @@ function selftest() {
   }
   if (!auditMaintenanceWorkOrderLabels(goodMaintRoutes.replace(" AS driver_name", ""), goodMaintTable).length) {
     failures.push("selftest: missing maintenance WO driver label alias NOT detected");
+  }
+  const goodCustomerLoadLinks = `
+    <EntityLink kind="driver" id={load.assigned_primary_driver_id} label={entityLabel(load.assigned_primary_driver_name, load.assigned_primary_driver_id, "Driver")} />
+    <EntityLink kind="unit" id={load.assigned_unit_id} label={entityLabel(load.assigned_unit_number, load.assigned_unit_id, "Unit")} />
+  `;
+  if (auditCustomerLoadEntityLinks(goodCustomerLoadLinks).length) {
+    failures.push("selftest: good customer load driver/unit links flagged");
+  }
+  if (!auditCustomerLoadEntityLinks(goodCustomerLoadLinks.replace('kind="driver"', 'kind="load"')).some((p) => p.includes("driver FK"))) {
+    failures.push("selftest: missing customer load driver link NOT detected");
+  }
+  if (!auditCustomerLoadEntityLinks(goodCustomerLoadLinks.replace('kind="unit"', 'kind="load"')).some((p) => p.includes("unit FK"))) {
+    failures.push("selftest: missing customer load unit link NOT detected");
   }
   const sib = SIBLINGS[0];
   if (

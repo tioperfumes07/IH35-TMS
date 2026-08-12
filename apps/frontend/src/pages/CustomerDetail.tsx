@@ -1776,14 +1776,25 @@ export function CustomerDetailPage() {
                 key: "assigned_primary_driver_name",
                 label: "Driver",
                 sortable: true,
-                render: (load) =>
-                  entityLabel(load.assigned_primary_driver_name, load.assigned_primary_driver_id, "Driver"),
+                render: (load) => (
+                  <EntityLink
+                    kind="driver"
+                    id={load.assigned_primary_driver_id}
+                    label={entityLabel(load.assigned_primary_driver_name, load.assigned_primary_driver_id, "Driver")}
+                  />
+                ),
               },
               {
                 key: "assigned_unit_number",
                 label: "Unit",
                 sortable: true,
-                render: (load) => entityLabel(load.assigned_unit_number, load.assigned_unit_id, "Unit"),
+                render: (load) => (
+                  <EntityLink
+                    kind="unit"
+                    id={load.assigned_unit_id}
+                    label={entityLabel(load.assigned_unit_number, load.assigned_unit_id, "Unit")}
+                  />
+                ),
               },
               {
                 key: "rate_total_cents",
