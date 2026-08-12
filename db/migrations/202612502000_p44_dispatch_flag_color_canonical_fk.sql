@@ -1,9 +1,27 @@
 BEGIN;
 
 DO $$ BEGIN
-  ALTER TABLE catalogs.dispatch_flag_colors
-    ADD CONSTRAINT dispatch_flag_colors_company_id_id_key UNIQUE (operating_company_id, id);
-EXCEPTION WHEN duplicate_object THEN NULL;
+  -- Idempotent vs live-prod state: a UNIQUE add throws 42P07 (duplicate_table, from the backing
+  -- index), NOT duplicate_object — so an exception-catch guard is the wrong tool. Check catalogs.
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conname = 'dispatch_flag_colors_company_id_id_key'
+      AND conrelid = 'catalogs.dispatch_flag_colors'::regclass
+  ) THEN
+    IF EXISTS (
+      SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+      WHERE c.relname = 'dispatch_flag_colors_company_id_id_key'
+        AND n.nspname = 'catalogs' AND c.relkind = 'i'
+    ) THEN
+      -- orphan unique index with the reserved name: attach it as the constraint (no rebuild)
+      ALTER TABLE catalogs.dispatch_flag_colors
+        ADD CONSTRAINT dispatch_flag_colors_company_id_id_key
+        UNIQUE USING INDEX dispatch_flag_colors_company_id_id_key;
+    ELSE
+      ALTER TABLE catalogs.dispatch_flag_colors
+        ADD CONSTRAINT dispatch_flag_colors_company_id_id_key UNIQUE (operating_company_id, id);
+    END IF;
+  END IF;
 END $$;
 
 ALTER TABLE mdata.loads
