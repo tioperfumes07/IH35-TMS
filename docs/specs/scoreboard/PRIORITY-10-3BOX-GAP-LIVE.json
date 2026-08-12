@@ -1,26 +1,26 @@
 {
-  "as_of": "2026-08-12T19:36:36.814Z",
-  "main_sha": "4aee5cd6d",
+  "as_of": "2026-08-12T19:42:17.282Z",
+  "main_sha": "56c3cd5f3",
   "gate": "PRIORITY_10_3BOX_100",
   "allRequired": {
     "totR": 3110,
-    "totB": 1417,
-    "pct": 46
+    "totB": 1636,
+    "pct": 53
   },
   "waveABC_noChrome": {
     "abcR": 2480,
-    "abcB": 1166,
-    "pct": 47
+    "abcB": 1385,
+    "pct": 56
   },
   "per_module": [
     {
       "mod": "lists",
       "req": 1721,
-      "built": 524,
-      "pct": 30,
+      "built": 743,
+      "pct": 43,
       "abcReq": 1312,
-      "abcBuilt": 320,
-      "abcPct": 24
+      "abcBuilt": 539,
+      "abcPct": 41
     },
     {
       "mod": "accounting",
@@ -121,14 +121,6 @@
         "safety": 11
       },
       "seat": "D LAST"
-    },
-    {
-      "col": "reverse_link",
-      "cells": 219,
-      "byMod": {
-        "lists": 219
-      },
-      "seat": "Codex+CC-2 B"
     },
     {
       "col": "vendor",
@@ -321,5 +313,5 @@
       "seat": "?"
     }
   ],
-  "entry_count": 96
+  "entry_count": 97
 }

@@ -1,6 +1,6 @@
 # PRIORITY 10 · 3-BOX GATE — LIVE GAP
 
-**as_of:** 2026-08-12T19:36:36.814Z · **main:** `4aee5cd6d`
+**as_of:** 2026-08-12T19:42:17.282Z · **main:** `56c3cd5f3`
 
 ## Bar
 
@@ -8,12 +8,12 @@ All 10 modules: **Required + Audited + Built = 100%** before Live. Wave **A→B�
 
 ## Built coverage
 
-- All cells: **46%** (1417/3110)
-- Wave A–C (no chrome): **47%** (1166/2480)
+- All cells: **53%** (1636/3110)
+- Wave A–C (no chrome): **56%** (1385/2480)
 
 | Module | Built% all | Built% A–C |
 |--------|-----------:|-----------:|
-| lists | 30% | 24% |
+| lists | 43% | 41% |
 | accounting | 69% | 78% |
 | dispatch | 72% | 79% |
 | settlements | 69% | 81% |
@@ -29,7 +29,6 @@ All 10 modules: **Required + Audited + Built = 100%** before Live. Wave **A→B�
 | Col | Cells | Seat |
 |-----|------:|------|
 | `qbo_chrome` | 293 | D LAST |
-| `reverse_link` | 219 | Codex+CC-2 B |
 | `vendor` | 178 | Codex A |
 | `unit` | 144 | Codex A |
 | `expense` | 130 | CC-1 |
@@ -42,6 +41,7 @@ All 10 modules: **Required + Audited + Built = 100%** before Live. Wave **A→B�
 | `customer` | 72 | Codex |
 | `trailer` | 40 | Codex |
 | `load` | 31 | Codex |
+| `scenario.maintenance` | 5 | ? |
 
 ## Seat NOW
 
