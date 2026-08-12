@@ -130,6 +130,14 @@
       "leafRe": "^(lists\\.|safety\\.|insurance\\.|cargo_claims\\.)"
     },
     {
+      "task": "P43-customers",
+      "pr": "#5953",
+      "guard": "scripts/verify-lst-picker-config-driven.mjs",
+      "modules": ["customers", "dispatch", "accounting"],
+      "cols": ["connectivity", "picker", "load", "invoice"],
+      "leafRe": "^(customers\\.|loads\\.|invoices\\.)"
+    },
+    {
       "task": "P29",
       "pr": "#5821",
       "guard": "scripts/verify-steps/3073-verify-failed-posting-batch-is-retriable.mjs",
