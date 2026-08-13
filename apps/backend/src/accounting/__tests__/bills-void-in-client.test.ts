@@ -33,6 +33,11 @@ function paymentClient() {
         }] };
       }
       if (sql.includes("UPDATE banking.bank_accounts")) return { rows: [], rowCount: 1 };
+      // ACCT-F327 (PR #5739) added this EXISTS check so voidBillPaymentInClientTx only reverses a GL
+      // posting that actually exists — without it, hasPostedBatch reads false here (the generic
+      // fallback below returns no rows), reversePostedGl silently becomes false regardless of the
+      // caller's intent, and the reversal never runs — exactly the bug these two tests exist to catch.
+      if (sql.includes("FROM accounting.journal_entry_postings")) return { rows: [{ exists: true }] };
       return { rows: [], rowCount: 1 };
     }),
   };
