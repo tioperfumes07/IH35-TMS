@@ -33,6 +33,7 @@ import { formatDateUS } from "../../lib/formatDate";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { RoadServiceReverseSection } from "../../components/maintenance/RoadServiceReverseSection";
 import { ExpensesReverseSection } from "../../components/accounting/ExpensesReverseSection";
+import { WarrantyClaimsReverseSection } from "../../components/maintenance/WarrantyClaimsReverseSection";
 
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
 /** Matches apps/backend/src/maintenance/wo-oos-estimator.ts DEFAULT_DAILY_LOSS_CENTS */
@@ -701,6 +702,14 @@ export function WorkOrderDetailPage() {
             contextLabel="this work order"
             data-testid="work-order-detail-road-service-reverse"
           />
+          {id && companyId ? (
+            <WarrantyClaimsReverseSection
+              operatingCompanyId={companyId}
+              filter={{ work_order_id: id }}
+              contextLabel="this work order"
+              data-testid="work-order-warranty-claims-reverse"
+            />
+          ) : null}
           <div
             className="rounded-sm border border-gray-200 bg-white p-4 text-sm text-gray-700"
             data-testid="wo-detail-linkage-section"

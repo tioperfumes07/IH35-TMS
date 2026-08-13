@@ -157,6 +157,9 @@ describe("maintenance warranty routes (B33)", () => {
   it("POST /api/v1/maintenance/warranty/claims creates draft claim", async () => {
     mockQuery.mockImplementation(async (sql: string) => {
       if (sql.includes("set_config")) return { rows: [] };
+      if (sql.includes("AS warranty_ok") && sql.includes("AS work_order_ok") && sql.includes("AS vendor_ok")) {
+        return { rows: [{ warranty_ok: true, work_order_ok: true, vendor_ok: true }] };
+      }
       if (sql.includes("INSERT INTO maintenance.warranty_claims")) return { rows: [{ id: CLAIM_ID }] };
       return { rows: [sampleClaim()], rowCount: 1 };
     });
@@ -176,6 +179,29 @@ describe("maintenance warranty routes (B33)", () => {
       "maintenance.warranty_claim.created",
       expect.objectContaining({ part_description: "Alternator" })
     );
+  });
+
+  it("rejects claim links outside the operating company before insert", async () => {
+    mockQuery.mockImplementation(async (sql: string) => {
+      if (sql.includes("set_config")) return { rows: [] };
+      if (sql.includes("AS warranty_ok") && sql.includes("AS work_order_ok") && sql.includes("AS vendor_ok")) {
+        return { rows: [{ warranty_ok: true, work_order_ok: false, vendor_ok: true }] };
+      }
+      return { rows: [] };
+    });
+    const res = await app.inject({
+      method: "POST",
+      url: "/api/v1/maintenance/warranty/claims",
+      payload: {
+        operating_company_id: COMPANY,
+        part_description: "Alternator",
+        work_order_id: WO_ID,
+        claim_amount_cents: 45000,
+      },
+    });
+    expect(res.statusCode).toBe(400);
+    expect(res.json()).toEqual({ error: "linked_entity_not_in_operating_company" });
+    expect(mockQuery.mock.calls.some((call) => String(call[0]).includes("INSERT INTO maintenance.warranty_claims"))).toBe(false);
   });
 
   it("POST /api/v1/maintenance/warranty/claims/:id/file marks claim filed", async () => {

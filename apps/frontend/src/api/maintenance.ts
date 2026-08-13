@@ -1340,10 +1340,11 @@ export function createMaintenanceWarrantyPart(body: Record<string, unknown>) {
 
 export function listMaintenanceWarrantyClaims(
   operatingCompanyId: string,
-  params: { work_order_id?: string; status?: string; include_archived?: boolean } = {}
+  params: { work_order_id?: string; vendor_id?: string; status?: string; include_archived?: boolean } = {}
 ) {
   const q = new URLSearchParams({ operating_company_id: operatingCompanyId });
   if (params.work_order_id) q.set("work_order_id", params.work_order_id);
+  if (params.vendor_id) q.set("vendor_id", params.vendor_id);
   if (params.status) q.set("status", params.status);
   if (params.include_archived != null) q.set("include_archived", String(params.include_archived));
   return apiRequest<{ rows: MaintenanceWarrantyClaimRow[] }>(`/api/v1/maintenance/warranty/claims?${q.toString()}`);
