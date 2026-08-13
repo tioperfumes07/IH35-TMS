@@ -145,6 +145,24 @@ describe("insurance coi request routes", () => {
     expect(body.requests[0]?.policy_number).toBe("POL-100");
   });
 
+  it("applies the exact policy reverse filter", async () => {
+    const app = await buildApp();
+    const response = await app.inject({
+      method: "GET",
+      url: "/api/v1/insurance/coi-requests?operating_company_id=11111111-1111-4111-8111-111111111111&policy_id=33333333-3333-4333-8333-333333333333",
+    });
+
+    expect(response.statusCode).toBe(200);
+    const listCall = queryMock.mock.calls.find(([sql]) =>
+      String(sql).includes("FROM insurance.coi_request"),
+    );
+    expect(String(listCall?.[0])).toContain("r.policy_id = $2::uuid");
+    expect(listCall?.[1]).toEqual([
+      "11111111-1111-4111-8111-111111111111",
+      "33333333-3333-4333-8333-333333333333",
+    ]);
+  });
+
   it("creates a new coi request", async () => {
     const app = await buildApp();
     const response = await app.inject({

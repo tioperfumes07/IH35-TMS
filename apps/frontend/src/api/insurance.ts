@@ -159,6 +159,7 @@ export type InsuranceCoiRequest = {
   requested_by: string | null;
   requested_by_name?: string | null;
   policy_number?: string | null;
+  customer_name?: string | null;
   status: CoiRequestStatus;
   notes: string | null;
   document_url: string | null;
@@ -445,6 +446,7 @@ export const insuranceCoiApi = {
   list(params: {
     operating_company_id: string;
     customer_id?: string;
+    policy_id?: string;
     status?: CoiRequestStatus;
   }) {
     return apiRequest<{ requests: InsuranceCoiRequest[] }>(`/api/v1/insurance/coi-requests?${toInsuranceQuery(params)}`);
@@ -639,6 +641,7 @@ export function getInsuranceCoverageGaps(operatingCompanyId: string) {
 export function listInsuranceCoiRequests(params: {
   operating_company_id: string;
   customer_id?: string;
+  policy_id?: string;
   status?: CoiRequestStatus;
 }) {
   return insuranceCoiApi.list(params);
