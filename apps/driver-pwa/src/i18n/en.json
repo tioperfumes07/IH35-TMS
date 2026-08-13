@@ -584,6 +584,7 @@
     "itp_stale_warning": "Offline data may be cleared soon. Open the app daily to keep your upload queue."
   },
   "dispatch": {
+    "open_actions": "Open Dispatch Actions",
     "delivery_title": "Delivery Stop {{sequence}}",
     "pickup_title": "Pickup Stop {{sequence}}",
     "status_label": "Status: {{status}} · {{geofence}}",

@@ -30,6 +30,7 @@ import { SchedulerHomePage } from "./pages/SchedulerHome";
 import { StopActionPage } from "./pages/StopAction";
 import { TodayPage } from "./pages/Today";
 import { MyPositionScreen } from "./screens/MyPosition";
+import { DispatchViewScreen } from "./screens/DispatchView";
 import { startSyncService, stopSyncService } from "./lib/upload-sync";
 import { initDB } from "./lib/upload-queue";
 
@@ -151,6 +152,14 @@ export default function App() {
         element={
           <ProtectedRoute>
             <LoadDetailPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/dispatch/:load_uuid"
+        element={
+          <ProtectedRoute>
+            <DispatchViewScreen />
           </ProtectedRoute>
         }
       />

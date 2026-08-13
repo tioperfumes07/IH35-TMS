@@ -8,6 +8,7 @@ describe("DispatchView screen (GAP-34)", () => {
   const deliveryPath = resolve(import.meta.dirname, "../../components/dispatch/DeliveryCard.tsx");
   const drawerPath = resolve(import.meta.dirname, "../../components/dispatch/DocUploadDrawer.tsx");
   const appPath = resolve(import.meta.dirname, "../../App.tsx");
+  const loadDetailPath = resolve(import.meta.dirname, "../../pages/LoadDetail.tsx");
 
   it("DispatchView renders pickup/delivery cards and doc drawer", () => {
     const src = readFileSync(screenPath, "utf8");
@@ -38,12 +39,13 @@ describe("DispatchView screen (GAP-34)", () => {
     expect(drawer).toContain('capture="environment"');
   });
 
-  it("App routes StopActionPage for stop actions; DispatchViewScreen is intentionally unrouted", () => {
+  it("mounts DispatchViewScreen and links it from the canonical load detail", () => {
     const app = readFileSync(appPath, "utf8");
-    // Path B (DispatchViewScreen via /dispatch/:load_uuid) is intentionally NOT mounted.
-    expect(app).not.toContain('path="/dispatch/:load_uuid"');
-    expect(app).not.toContain("DispatchViewScreen");
-    // Live path: StopActionPage on /loads/:id/stops/:stopId (App.tsx import + route).
+    const loadDetail = readFileSync(loadDetailPath, "utf8");
+    expect(app).toContain('path="/dispatch/:load_uuid"');
+    expect(app).toContain("DispatchViewScreen");
+    expect(loadDetail).toContain('navigate(`/dispatch/${load.id}`)');
+    expect(loadDetail).toContain('data-testid="dispatch-actions-card"');
     expect(app).toContain("StopActionPage");
     expect(app).toContain('path="/loads/:id/stops/:stopId"');
   });

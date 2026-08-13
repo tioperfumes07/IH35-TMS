@@ -1,16 +1,22 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["dispatch","driver-hub"],"cols":["connectivity","reverse_link"],"task":"GAP-34-DRIVER-PWA-DISPATCH-VIEW","leafRe":".*"} */
 import fs from "node:fs";
 import path from "node:path";
 
 const ROOT = process.cwd();
+const SELFTEST = process.argv.includes("--selftest");
 // Rule 17 (no-guard-hotfile-thrash): a guard must NOT require a package.json / ci.yml edit —
 // those are the shared hot files every lane contends on, and Rule 17 forbids a new guard from touching
 // them. What actually makes a guard run in CI is a verify-step, so check for that and report its
 // absence as a NOTE, never as a failure.
-const wiredStep__driver_pwa_dispatch_view = fs
+const wiredDirectStep = fs
   .readdirSync(path.join(ROOT, "scripts/verify-steps"))
   .some((f) => /^\d+-verify-driver-pwa-dispatch-view\.mjs$/.test(f));
-if (!wiredStep__driver_pwa_dispatch_view) {
+const wiredViaPwaLiveData = fs
+  .readdirSync(path.join(ROOT, "scripts/verify-steps"))
+  .some((f) => /^\d+-verify-drivers-pwa-live-data\.mjs$/.test(f)) &&
+  fs.readFileSync(path.join(ROOT, "scripts/verify-drivers-pwa-live-data.mjs"), "utf8").includes('path="/dispatch/:load_uuid"');
+if (!wiredDirectStep && !wiredViaPwaLiveData) {
   console.warn(
     "verify-driver-pwa-dispatch-view: NOTE — no scripts/verify-steps/NNNN-verify-driver-pwa-dispatch-view.mjs, so this guard does not execute in CI. Wiring it requires a claimed step number (Rule 37); a package.json script does not wire it."
   );
@@ -54,9 +60,6 @@ contains("apps/backend/src/dispatch/driver-pwa/dispatch-view.routes.ts", routes,
 read("apps/backend/src/dispatch/driver-pwa/__tests__/dispatch-view.test.ts");
 
 const indexTs = read("apps/backend/src/index.ts");
-contains("apps/backend/src/index.ts", indexTs, [
-  { pattern: /registerDispatchViewRoutes/, label: "dispatch-view routes registered in index" },
-]);
 
 const screen = read("apps/driver-pwa/src/screens/DispatchView.tsx");
 contains("apps/driver-pwa/src/screens/DispatchView.tsx", screen, [
@@ -73,10 +76,35 @@ read("apps/driver-pwa/src/lib/dispatch-api-client.ts");
 read("apps/driver-pwa/src/screens/__tests__/dispatch-view.test.ts");
 
 const appTsx = read("apps/driver-pwa/src/App.tsx");
-contains("apps/driver-pwa/src/App.tsx", appTsx, [
-  { pattern: /path="\/dispatch\/:load_uuid"/, label: "PWA /dispatch/:load_uuid route" },
-  { pattern: /DispatchViewScreen/, label: "DispatchView screen wired" },
-]);
+const loadDetail = read("apps/driver-pwa/src/pages/LoadDetail.tsx");
+
+function mountProblems(indexSource, appSource, detailSource) {
+  const problems = [];
+  if (!/await registerDispatchViewRoutes\(app\);/.test(indexSource)) problems.push("backend route mount");
+  if (!/path="\/dispatch\/:load_uuid"/.test(appSource)) problems.push("PWA route mount");
+  if (!/DispatchViewScreen/.test(appSource)) problems.push("PWA screen mount");
+  if (!/navigate\(`\/dispatch\/\$\{load\.id\}`\)/.test(detailSource)) problems.push("load-detail forward link");
+  if (!/dispatch-actions-card/.test(detailSource)) problems.push("operator-visible dispatch action");
+  return problems;
+}
+
+for (const problem of mountProblems(indexTs, appTsx, loadDetail)) fail(`connectivity missing ${problem}`);
+
+if (SELFTEST) {
+  const mutations = [
+    ["backend mount", indexTs.replace(/await registerDispatchViewRoutes\(app\);/, ""), appTsx, loadDetail],
+    ["PWA route", indexTs, appTsx.replace(/path="\/dispatch\/:load_uuid"/, 'path="/dispatch-disabled/:load_uuid"'), loadDetail],
+    ["load-detail forward link", indexTs, appTsx, loadDetail.replace(/navigate\(`\/dispatch\/\$\{load\.id\}`\)/, "navigate(`/loads/${load.id}`)")],
+  ];
+  for (const [label, plantedIndex, plantedApp, plantedDetail] of mutations) {
+    if (mountProblems(plantedIndex, plantedApp, plantedDetail).length === 0) {
+      console.error(`verify:driver-pwa-dispatch-view SELFTEST FAILED — ${label} mutation was not caught`);
+      process.exit(1);
+    }
+  }
+  console.log(`verify:driver-pwa-dispatch-view SELFTEST PASS — ${mutations.length} mount/link mutations caught`);
+  process.exit(0);
+}
 
 const docs = read("docs/specs/gap-34-driver-pwa-dispatch.md");
 contains("docs/specs/gap-34-driver-pwa-dispatch.md", docs, [

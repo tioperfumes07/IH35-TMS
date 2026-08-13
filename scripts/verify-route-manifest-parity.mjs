@@ -140,13 +140,6 @@ export const REFUSED_MOUNTS = new Map([
       "consolidation decision, not a mount.",
   ],
 
-  // ── PHANTOM SCHEMA: mounting would surface a 500, not a working endpoint ──────────────────────
-  [
-    "dispatch/driver-pwa/dispatch-view.routes.ts",
-    "References a non-existent evidence table (finding recorded in scripts/verify-no-orphan-routes.mjs). " +
-      "Mounting it turns a 404 into a 500 on the driver PWA. Fix the schema reference first.",
-  ],
-
   // ── FINANCIAL SURFACE: reachability is the owner's call, not a coder's (CLAUDE.md §1.3) ───────
   // Each of these is READY — auth-gated, entity-scoped, no collision, no RETIRE write — and each is a
   // ONE-LINE mount once labelled. They are held because mounting makes an accounting.* / banking /
