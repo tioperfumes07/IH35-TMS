@@ -33,6 +33,7 @@ type Props = {
   // REQUIRED, not optional: ListErrorState needs a retry, and an error state you cannot retry is a
   // dead end. Making it optional would have let a future caller wire isError without a way out.
   onRetry: () => void;
+  highlightedRowId?: string;
 };
 
 type PurchaseForm = {
@@ -53,7 +54,7 @@ const EMPTY_PURCHASE: PurchaseForm = {
   location: "",
 };
 
-export function PartsInventoryTable({ companyId, rows, loading = false, isError = false, onRetry }: Props) {
+export function PartsInventoryTable({ companyId, rows, loading = false, isError = false, onRetry, highlightedRowId = "" }: Props) {
   const queryClient = useQueryClient();
   const [openPurchase, setOpenPurchase] = useState(false);
   const [search, setSearch] = useState("");
@@ -147,7 +148,7 @@ export function PartsInventoryTable({ companyId, rows, loading = false, isError 
       sortable: true,
       render: (row) =>
         row.vendor_id ? (
-          <EntityLink kind="vendor" id={row.vendor_id} label={entityLabel(vendorNameById.get(row.vendor_id), row.vendor_id, "Vendor")} />
+          <EntityLink kind="vendor" id={row.vendor_id} label={entityLabel(row.vendor_name ?? vendorNameById.get(row.vendor_id), row.vendor_id, "Vendor")} />
         ) : (
           "—"
         ),
@@ -183,6 +184,7 @@ export function PartsInventoryTable({ companyId, rows, loading = false, isError 
         columns={columns}
         rows={filteredRows}
         rowKey={(row) => row.id}
+        rowClassName={(row) => highlightedRowId && row.id === highlightedRowId ? "bg-slate-100 ring-1 ring-slate-400" : ""}
         loading={loading}
         emptyText="No parts on hand. Click + Record Purchase to track daily purchases. Anti-theft pattern: minimal stock kept on hand."
         storageKey="maint-parts-inventory"

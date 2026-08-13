@@ -8,7 +8,10 @@ import { assertCompanyMembership } from "../_helpers/company-membership-guard.js
 // postSourceTransaction / createJournalEntry). Flag OFF => inventory write only.
 import { postPartsInventoryPurchase } from "../accounting/parts-inventory-posting/poster.service.js";
 
-const querySchema = z.object({ operating_company_id: z.string().uuid() });
+const querySchema = z.object({
+  operating_company_id: z.string().uuid(),
+  vendor_id: z.string().uuid().optional(),
+});
 const idParamsSchema = z.object({ id: z.string().uuid() });
 const purchaseSchema = z.object({
   part_description: z.string().trim().min(1).max(250),
@@ -43,9 +46,19 @@ export async function registerMaintenancePartsInventoryRoutes(app: FastifyInstan
     const query = querySchema.safeParse(req.query ?? {});
     if (!query.success) return reply.code(400).send({ error: "validation_error", details: query.error.flatten() });
     const rows = await withCompany(user.uuid, query.data.operating_company_id, async (client) => {
+      const values: unknown[] = [query.data.operating_company_id];
+      const vendorFilter = query.data.vendor_id ? "AND pi.vendor_id = $2::uuid" : "";
+      if (query.data.vendor_id) values.push(query.data.vendor_id);
       const res = await client.query(
-        `SELECT * FROM maintenance.parts_inventory WHERE operating_company_id = $1::uuid ORDER BY updated_at DESC, created_at DESC`,
-        [query.data.operating_company_id]
+        `SELECT pi.*, v.name AS vendor_name
+         FROM maintenance.parts_inventory pi
+         LEFT JOIN mdata.vendors v
+           ON v.id = pi.vendor_id
+          AND v.operating_company_id = pi.operating_company_id
+         WHERE pi.operating_company_id = $1::uuid
+           ${vendorFilter}
+         ORDER BY pi.updated_at DESC, pi.created_at DESC`,
+        values
       );
       return res.rows;
     });

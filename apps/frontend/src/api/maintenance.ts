@@ -158,6 +158,7 @@ export type PartsInventoryRow = {
   part_number: string | null;
   part_description: string;
   vendor_id: string | null;
+  vendor_name?: string | null;
   last_purchase_invoice_number: string | null;
   last_purchase_amount: number | null;
   last_purchase_date: string | null;
@@ -726,9 +727,11 @@ export function logArrivingSoonView(companyId: string) {
   });
 }
 
-export function listPartsInventory(operatingCompanyId: string) {
+export function listPartsInventory(operatingCompanyId: string, filters: { vendor_id?: string } = {}) {
+  const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  if (filters.vendor_id) query.set("vendor_id", filters.vendor_id);
   return apiRequest<{ rows: PartsInventoryRow[] }>(
-    `/api/v1/maintenance/parts-inventory?operating_company_id=${encodeURIComponent(operatingCompanyId)}`
+    `/api/v1/maintenance/parts-inventory?${query.toString()}`
   ).then((result) => result.rows);
 }
 

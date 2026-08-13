@@ -114,6 +114,7 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
   const [searchParams] = useSearchParams();
   const locationFilter = searchParams.get("location") ?? "";
   const bucketFilter = searchParams.get("bucket") ?? "";
+  const partInventoryId = searchParams.get("part_inventory_id")?.trim() ?? "";
 
   const kpisQuery = useQuery({
     queryKey: ["maintenance", "dashboard", "kpis", companyId],
@@ -412,6 +413,7 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
             }
             isError={partsInventoryRowsQuery.isError}
             onRetry={() => void partsInventoryRowsQuery.refetch()}
+            highlightedRowId={partInventoryId}
           />
           <div className="rounded-sm border border-gray-200 bg-white p-3">
             <div className="mb-2 flex items-center justify-between">
