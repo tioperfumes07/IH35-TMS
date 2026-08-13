@@ -570,6 +570,38 @@ export function filterText(src) {
   return text;
 }
 
+/**
+ * Query controls commonly stage operator text (`draftQ`) and copy it into an applied state
+ * (`searchQ`) only on Enter/Apply. The applied getter appears in useQuery; the draft getter appears
+ * only inside `setSearchQ(draftQ.trim())`. Follow that state-to-state edge transitively so an Apply
+ * search box is not misclassified as a persisted form field merely because it lives in a drawer
+ * that also contains a real mutation form.
+ */
+export function filterStateClosure(src, closure) {
+  const consumed = new Set(closure(filterText(src)));
+  const states = [...src.matchAll(
+    /\bconst\s*\[\s*([A-Za-z_$][\w$]*)\s*,\s*(set[A-Za-z_$][\w$]*)\s*\]\s*=\s*useState/g
+  )].map((m) => ({ getter: m[1], setter: m[2] }));
+
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (const target of states) {
+      if (!consumed.has(target.getter)) continue;
+      const setterCall = new RegExp(`\\b${target.setter}\\s*\\(`, "g");
+      for (const call of src.matchAll(setterCall)) {
+        const args = sliceBalanced(src, call.index + call[0].length - 1, "(", ")");
+        for (const name of closure(args)) {
+          if (consumed.has(name)) continue;
+          consumed.add(name);
+          changed = true;
+        }
+      }
+    }
+  }
+  return consumed;
+}
+
 // =================================================================================================
 // detectors
 // =================================================================================================
@@ -623,7 +655,7 @@ export function findOrphanFieldState(rel, src, raw = src) {
   if (!payload.trim()) return { problems, blocked, isForm: false };
   const { closure } = buildFlow(src);
   const PAYLOAD = closure(payload);
-  const FILTERS = closure(filterText(src));
+  const FILTERS = filterStateClosure(src, closure);
   const spans = formSurfaceSpans(src);
   const inSurface = (i) => spans.some(([a, b]) => i >= a && i <= b);
 
@@ -879,6 +911,26 @@ function selftest() {
   // --- D2 -----------------------------------------------------------------------------------
   const clean = blankComments(CONTROL_CLEAN);
   expectClean("D2 control: wired field is not flagged", findOrphanFieldState("clean.tsx", clean));
+
+  const appliedSearch = blankComments(`
+import { useState } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { ParityDrawer } from "../components/ParityDrawer";
+export function AppliedSearchDrawer() {
+  const [draftQ, setDraftQ] = useState("");
+  const [searchQ, setSearchQ] = useState("");
+  useQuery({ queryKey: ["rows", searchQ], queryFn: () => listRows({ q: searchQ }) });
+  const save = useMutation({ mutationFn: () => createThing({ name: "x" }) });
+  return (<ParityDrawer open onClose={close}>
+    <input value={draftQ} onChange={(e) => setDraftQ(e.target.value)} />
+    <button onClick={() => setSearchQ(draftQ.trim())}>Apply search</button>
+  </ParityDrawer>);
+}
+`);
+  expectClean(
+    "D2 control: draft state carried into an applied useQuery state is a filter",
+    findOrphanFieldState("applied-search.tsx", appliedSearch)
+  );
 
   const planted = blankComments(
     CONTROL_CLEAN.replace(
