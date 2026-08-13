@@ -28,6 +28,17 @@ if (!wiredDirectStep && !wiredViaLateArrivals) {
 
 const failures = [];
 
+const retiredPerRowComponents = [
+  "apps/frontend/src/components/dispatch/InTransitEtaChip.tsx",
+  "apps/frontend/src/pages/dispatch/components/DriverStatusCell.tsx",
+];
+function retiredComponentFailures(exists = fs.existsSync) {
+  return retiredPerRowComponents
+    .filter((relativePath) => exists(path.join(ROOT, relativePath)))
+    .map((relativePath) => `${relativePath}: obsolete per-row component must remain consolidated into LiveEtaColumns`);
+}
+failures.push(...retiredComponentFailures());
+
 function fail(message) {
   failures.push(message);
 }
@@ -120,7 +131,12 @@ if (SELFTEST) {
       process.exit(1);
     }
   }
-  console.log(`verify:dispatch-eta-columns SELFTEST PASS — ${mutations.length} wiring mutations caught`);
+  const plantedRetiredFailures = retiredComponentFailures(() => true);
+  if (plantedRetiredFailures.length !== retiredPerRowComponents.length) {
+    console.error("verify:dispatch-eta-columns SELFTEST FAIL — planted retired components were not caught");
+    process.exit(1);
+  }
+  console.log(`verify:dispatch-eta-columns SELFTEST PASS — ${mutations.length + retiredPerRowComponents.length} wiring mutations caught`);
   process.exit(0);
 }
 
