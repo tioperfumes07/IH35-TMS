@@ -14,6 +14,9 @@ import { Modal } from "../Modal";
 import { useToast } from "../Toast";
 import { UploadModal } from "../documents/UploadModal";
 import { DataTable } from "../DataTable";
+import { legalContractsApi } from "../../api/legal-contracts";
+import { Link } from "react-router-dom";
+import { ListErrorState } from "../ListErrorState";
 
 type Props = {
   customerId: string;
@@ -71,6 +74,11 @@ export function CustomerContractsTab({ customerId, customerName, operatingCompan
         (r) => r.contracts
       ),
     enabled: Boolean(customerId && operatingCompanyId),
+  });
+  const legalContractsQuery = useQuery({
+    queryKey: ["legal", "contracts", "customer", operatingCompanyId, customerId],
+    enabled: Boolean(customerId && operatingCompanyId),
+    queryFn: () => legalContractsApi.list({ operating_company_id: operatingCompanyId, signer_type: "customer", signer_entity_id: customerId }),
   });
 
   const createMutation = useMutation({
@@ -200,6 +208,22 @@ export function CustomerContractsTab({ customerId, customerName, operatingCompan
           rowKey={(row: CustomerContract) => row.id}
         />
       )}
+
+      <section className="space-y-2 border-t border-gray-200 pt-3" data-testid="customer-legal-contracts-reverse">
+        <div className="flex items-center justify-between gap-2">
+          <h3 className="text-sm font-semibold text-slate-900">E-signature contracts</h3>
+          <Link className="text-xs font-semibold text-slate-700 underline" to={`/legal/contracts?signer_type=customer&signer_entity_id=${encodeURIComponent(customerId)}`}>Open Legal Contracts</Link>
+        </div>
+        {legalContractsQuery.isError ? <ListErrorState title="Couldn't load this customer's legal contracts" status={0} message={(legalContractsQuery.error as Error)?.message} onRetry={() => void legalContractsQuery.refetch()} /> : null}
+        {legalContractsQuery.isLoading ? <p className="text-xs text-gray-500">Loading e-signature contracts…</p> : null}
+        {!legalContractsQuery.isLoading && !legalContractsQuery.isError && (legalContractsQuery.data?.contracts.length ?? 0) === 0 ? <p className="text-xs text-gray-500">No e-signature contracts linked to this customer.</p> : null}
+        {(legalContractsQuery.data?.contracts ?? []).map((contract) => (
+          <div key={contract.id} className="rounded-sm border border-gray-200 p-2 text-xs">
+            <Link className="font-semibold text-slate-700 underline" to={`/legal/contracts?contract_id=${contract.id}`}>{contract.display_name_en ?? contract.template_code}</Link>
+            <div className="text-gray-500">{contract.status} · {contract.signer_name}</div>
+          </div>
+        ))}
+      </section>
 
       {uploadOpen && (
         <UploadModal

@@ -14,12 +14,15 @@ import { ListErrorState } from "../../../components/ListErrorState";
 import { useToast } from "../../../components/Toast";
 import { entityLabel } from "../../../lib/entity-label";
 import { Combobox } from "../../../components/Combobox";
+import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
+import { CappedListNotice } from "../../../components/CappedListNotice";
+import { getCustomerDetail, listCustomers } from "../../../api/mdata";
 
 type Props = {
   open: boolean;
   operatingCompanyId: string;
   onClose: () => void;
-  onSaved: () => Promise<void> | void;
+  onSaved: (contractId: string) => Promise<void> | void;
 };
 
 type TruckTerms = { lienholder: string; balance_owed: string; monthly_lease_amount: string; payment_due_date: string };
@@ -52,6 +55,8 @@ export function LeaseToOwnCreatorModal({ open, operatingCompanyId, onClose, onSa
   // deal-level
   const [ownerCompanyId, setOwnerCompanyId] = useState<string>("");
   const [lessee, setLessee] = useState({ name: "", entity_type: "Inc.", signer: "", title: "", address: "" });
+  const [lesseeCustomerId, setLesseeCustomerId] = useState("");
+  const [customerSearch, setCustomerSearch] = useState("");
   const [terms, setTerms] = useState({
     term_months: "60", use_charge_pct: "10", governing_law: "Texas", venue_county: "Webb",
     execution_date: "", reference_no: "",
@@ -68,6 +73,12 @@ export function LeaseToOwnCreatorModal({ open, operatingCompanyId, onClose, onSa
   });
   const seller = ensureQuery.data?.seller_default ?? null;
   const templateId = ensureQuery.data?.template.id ?? "";
+  const customersQuery = useQuery({
+    queryKey: ["legal", "lease-to-own", "customers", operatingCompanyId, customerSearch],
+    enabled: open && Boolean(operatingCompanyId),
+    queryFn: () => listCustomers({ operating_company_id: operatingCompanyId, status: "active", limit: customerSearch ? 200 : 500, search: customerSearch || undefined }),
+  });
+  const customerOptions = (customersQuery.data?.customers ?? []).map((customer) => ({ value: customer.id, label: customer.name }));
 
   useEffect(() => {
     if (seller?.id && !ownerCompanyId) setOwnerCompanyId(seller.id); // default owner = TRK, selectable
@@ -215,13 +226,14 @@ export function LeaseToOwnCreatorModal({ open, operatingCompanyId, onClose, onSa
       legalContractsApi.create(operatingCompanyId, {
         template_code: "lease_to_own",
         signer_type: "customer",
+        signer_entity_id: lesseeCustomerId,
         signer_name: lessee.name || "Lessee",
         language: "en",
         filled_variables: filledVariables,
       }),
-    onSuccess: async () => {
+    onSuccess: async (created) => {
       pushToast("Lease-to-own draft saved", "success");
-      await onSaved();
+      await onSaved(created.id);
       onClose();
     },
     onError: (e) => pushToast(`Save failed: ${String((e as Error)?.message ?? e)}`, "error"),
@@ -239,7 +251,7 @@ export function LeaseToOwnCreatorModal({ open, operatingCompanyId, onClose, onSa
     setSelected((prev) => ({ ...prev, [id]: { ...prev[id], [key]: value } }));
   }
 
-  const canSave = Boolean(lessee.name.trim()) && selectedList.length > 0 && Boolean(seller);
+  const canSave = Boolean(lesseeCustomerId && lessee.name.trim()) && selectedList.length > 0 && Boolean(seller);
 
   return (
     <ParityDrawer open={open} onClose={onClose} title="New Lease-to-Own Contract" size="wide">
@@ -278,6 +290,29 @@ export function LeaseToOwnCreatorModal({ open, operatingCompanyId, onClose, onSa
                 loading={fleetQuery.isLoading || ensureQuery.isLoading}
                 allowClear={false}
               />
+            </div>
+            <div className="flex flex-col gap-1 text-sm md:col-span-2">
+              <label>Lessee customer *</label>
+              <ReferenceSelect
+                value={lesseeCustomerId || null}
+                onChange={(id) => {
+                  setLesseeCustomerId(id ?? "");
+                  if (id) {
+                    void getCustomerDetail(id, operatingCompanyId).then(({ customer }) => setLessee((current) => ({
+                      ...current,
+                      name: customer.name,
+                      address: [customer.billing_address, customer.billing_city, customer.billing_state, customer.billing_zip].filter(Boolean).join(", "),
+                    })));
+                  }
+                }}
+                options={customerOptions.map(({ value, label }) => ({ value, label, type: value }))}
+                createKind="customer"
+                operatingCompanyId={operatingCompanyId}
+                placeholder="Search customer…"
+                onSearch={setCustomerSearch}
+                loading={customersQuery.isLoading}
+              />
+              <CappedListNotice shown={customerOptions.length} limit={customerSearch ? 200 : 500} total={customersQuery.data?.total ?? null} hint="Type to search for a customer not listed." />
             </div>
             <label className="flex flex-col gap-1 text-sm">Lessee (Buyer) legal name
               <input className="rounded-sm border px-2 py-1" value={lessee.name} onChange={(e) => setLessee({ ...lessee, name: e.target.value })} placeholder="Acme Transportation, Inc." />
@@ -353,7 +388,7 @@ export function LeaseToOwnCreatorModal({ open, operatingCompanyId, onClose, onSa
         {/* Step 4 — Preview & Save */}
         {stepIdx === 3 && (
           <div className="space-y-2">
-            {!canSave && <p className="text-xs text-crit">Need a lessee name and at least one vehicle to save.</p>}
+            {!canSave && <p className="text-xs text-crit">Need a linked lessee customer and at least one vehicle to save.</p>}
             <div className="max-h-96 overflow-auto rounded-sm border bg-white p-4 text-sm" dangerouslySetInnerHTML={{ __html: previewHtml || "<p>Loading preview…</p>" }} />
           </div>
         )}

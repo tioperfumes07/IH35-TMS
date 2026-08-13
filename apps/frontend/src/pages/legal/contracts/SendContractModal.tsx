@@ -9,7 +9,7 @@ import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { CappedListNotice } from "../../../components/CappedListNotice";
-import { getVendor, listVendors } from "../../../api/mdata";
+import { getCustomerDetail, getVendor, listCustomers, listVendors } from "../../../api/mdata";
 
 type Props = {
   open: boolean;
@@ -38,6 +38,7 @@ export function SendContractModal({ open, operatingCompanyId, onClose, onSent }:
   const [signerType, setSignerType] = useState<"driver" | "employee" | "customer" | "vendor" | "other">("driver");
   const [signerEntityId, setSignerEntityId] = useState("");
   const [vendorSearch, setVendorSearch] = useState("");
+  const [customerSearch, setCustomerSearch] = useState("");
   const [signerName, setSignerName] = useState("");
   const [signerEmail, setSignerEmail] = useState("");
   const [signerPhone, setSignerPhone] = useState("");
@@ -75,6 +76,17 @@ export function SendContractModal({ open, operatingCompanyId, onClose, onSent }:
     email: vendor.email ?? "",
     phone: vendor.phone ?? "",
   })), [vendorsQuery.data]);
+  const customersQuery = useQuery({
+    queryKey: ["legal", "send-modal", "customers", operatingCompanyId, customerSearch],
+    enabled: open && signerType === "customer" && Boolean(operatingCompanyId),
+    queryFn: () => listCustomers({ operating_company_id: operatingCompanyId, status: "active", limit: customerSearch ? 200 : 500, search: customerSearch || undefined }),
+  });
+  const customerOptions = useMemo(() => (customersQuery.data?.customers ?? []).map((customer) => ({
+    value: customer.id,
+    label: customer.name,
+    email: customer.email ?? customer.ar_email ?? "",
+    phone: customer.phone ?? customer.office_phone ?? "",
+  })), [customersQuery.data]);
 
   const createMutation = useMutation({
     mutationFn: async () => {
@@ -137,7 +149,7 @@ export function SendContractModal({ open, operatingCompanyId, onClose, onSent }:
 
   const canGoNext = (() => {
     if (stepIdx === 0) return Boolean(templateId);
-    if (stepIdx === 1) return Boolean(signerName.trim()) && (signerType !== "vendor" || Boolean(signerEntityId)) && (Boolean(signerEmail.trim()) || Boolean(signerPhone.trim()));
+    if (stepIdx === 1) return Boolean(signerName.trim()) && (!["vendor", "customer"].includes(signerType) || Boolean(signerEntityId)) && (Boolean(signerEmail.trim()) || Boolean(signerPhone.trim()));
     return true;
   })();
 
@@ -222,6 +234,36 @@ export function SendContractModal({ open, operatingCompanyId, onClose, onSent }:
                   loading={vendorsQuery.isLoading}
                 />
                 <CappedListNotice shown={vendorOptions.length} limit={vendorSearch ? 200 : 500} total={vendorsQuery.data?.total ?? null} hint="Type to search for a vendor not listed." />
+              </div>
+            ) : null}
+            {signerType === "customer" ? (
+              <div className="flex flex-col gap-1 md:col-span-2">
+                <label className="text-xs font-semibold text-gray-600">Customer signer *</label>
+                <ReferenceSelect
+                  value={signerEntityId || null}
+                  onChange={(id) => {
+                    setSignerEntityId(id ?? "");
+                    const selected = customerOptions.find((customer) => customer.value === id);
+                    if (selected) {
+                      setSignerName(selected.label);
+                      setSignerEmail(selected.email);
+                      setSignerPhone(selected.phone);
+                    } else if (id) {
+                      void getCustomerDetail(id, operatingCompanyId).then(({ customer }) => {
+                        setSignerName(customer.name);
+                        setSignerEmail(customer.email ?? customer.ar_email ?? "");
+                        setSignerPhone(customer.phone ?? customer.office_phone ?? "");
+                      });
+                    }
+                  }}
+                  options={customerOptions.map(({ value, label }) => ({ value, label, type: value }))}
+                  createKind="customer"
+                  operatingCompanyId={operatingCompanyId}
+                  placeholder="Search customer…"
+                  onSearch={setCustomerSearch}
+                  loading={customersQuery.isLoading}
+                />
+                <CappedListNotice shown={customerOptions.length} limit={customerSearch ? 200 : 500} total={customersQuery.data?.total ?? null} hint="Type to search for a customer not listed." />
               </div>
             ) : null}
             <div className="flex flex-col gap-1">

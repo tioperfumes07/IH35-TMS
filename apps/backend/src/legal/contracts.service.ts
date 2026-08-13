@@ -263,6 +263,19 @@ export async function createContractInstance(
     );
     if (!signerRes.rows[0]) throw new Error("legal_signer_entity_not_found");
   }
+  if (input.signer_type === "customer") {
+    if (!input.signer_entity_id) throw new Error("legal_signer_entity_required");
+    const signerRes = await client.query(
+      `SELECT 1
+         FROM mdata.customers
+        WHERE id = $1::uuid
+          AND operating_company_id = $2::uuid
+          AND deactivated_at IS NULL
+        LIMIT 1`,
+      [input.signer_entity_id, args.operatingCompanyId]
+    );
+    if (!signerRes.rows[0]) throw new Error("legal_signer_entity_not_found");
+  }
 
   const insertRes = await client.query(
     `
