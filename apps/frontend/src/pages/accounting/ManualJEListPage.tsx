@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { formatDateUS } from "../../lib/formatDate";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -49,6 +49,7 @@ function journalEntryListLabel(entry: {
 
 export function ManualJEListPage() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const { user } = useAuth();
@@ -72,7 +73,19 @@ export function ManualJEListPage() {
     () => (accountsQuery.data?.accounts ?? []).map(coaAccountReferenceOption),
     [accountsQuery.data?.accounts],
   );
-  const [createOpen, setCreateOpen] = useState(false);
+  // ACCT-F5056 — Topbar Create→Journal entry uses ?create=1 (money create deep-link class).
+  const createOpen = searchParams.get("create") === "1";
+  function setCreateOpen(next: boolean) {
+    setSearchParams(
+      (prev) => {
+        const params = new URLSearchParams(prev);
+        if (next) params.set("create", "1");
+        else params.delete("create");
+        return params;
+      },
+      { replace: true }
+    );
+  }
   const [voidTarget, setVoidTarget] = useState<JournalEntry | null>(null);
   const [page, setPage] = useState(0);
   const PAGE_SIZE = 200;
