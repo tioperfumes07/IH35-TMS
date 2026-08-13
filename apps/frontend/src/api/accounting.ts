@@ -642,6 +642,8 @@ export type ExpenseListRow = {
   work_order_display_id: string | null;
   /** ACCT-F17 — reverse bank hop when matched_expense_id is stamped. */
   matched_bank_transaction_id?: string | null;
+  trailer_id: string | null;
+  trailer_display_id: string | null;
 };
 
 export function listExpenses(
@@ -653,6 +655,7 @@ export function listExpenses(
     vendor_uuid?: string;
     load_id?: string;
     driver_id?: string;
+    trailer_id?: string;
     limit?: number;
     offset?: number;
   } = {}
@@ -664,6 +667,7 @@ export function listExpenses(
   if (params.vendor_uuid) query.set("vendor_uuid", params.vendor_uuid);
   if (params.load_id) query.set("load_id", params.load_id);
   if (params.driver_id) query.set("driver_id", params.driver_id);
+  if (params.trailer_id) query.set("trailer_id", params.trailer_id);
   if (params.limit !== undefined) query.set("limit", String(params.limit));
   if (params.offset !== undefined) query.set("offset", String(params.offset));
   const qs = query.toString();
