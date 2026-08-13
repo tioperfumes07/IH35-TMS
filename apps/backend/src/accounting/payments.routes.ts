@@ -245,12 +245,18 @@ export async function registerPaymentsRoutes(app: FastifyInstance) {
           SELECT
             p.*,
             c.customer_name,
-            ${PAYMENT_MATCHED_BANK_TRANSACTION_ID_SQL} AS matched_bank_transaction_id
+            ${PAYMENT_MATCHED_BANK_TRANSACTION_ID_SQL} AS matched_bank_transaction_id,
+            bt.transaction_date AS matched_bank_transaction_date,
+            bt.description AS matched_bank_transaction_description,
+            bt.amount_cents::text AS matched_bank_transaction_amount_cents
           FROM accounting.payments p
           JOIN mdata.customers c
             ON c.id = p.customer_id
            AND c.operating_company_id = p.operating_company_id
            AND c.operating_company_id = $1::uuid
+          LEFT JOIN banking.bank_transactions bt
+            ON bt.id = ${PAYMENT_MATCHED_BANK_TRANSACTION_ID_SQL}::uuid
+           AND bt.operating_company_id = p.operating_company_id
           WHERE ${where.join(" AND ")}
           ORDER BY p.payment_date DESC, p.created_at DESC
           LIMIT $${limitIdx}
