@@ -41,6 +41,8 @@ export type VendorBillFormSubmitPayload = {
   unit_id?: string;
   /** Claim→Bill reverse density — only when linkedClaimId prop set. */
   insurance_claim_id?: string;
+  /** ACCT-F5043 — Legal Matter → cost forward FK (accounting.bills.legal_matter_id). */
+  legal_matter_id?: string;
   /** QBO Class reporting dimension on bill header. */
   class_id?: string;
   /** Real bill lines — required for vendor create; createBill persists these in the same txn. */
@@ -60,6 +62,8 @@ type Props = {
   linkedUnitId?: string;
   /** Optional insurance.claim id — stamps insurance_claim_id on create (ACCT-F04 reverse density). */
   linkedClaimId?: string;
+  /** Optional legal.matters id — stamps legal_matter_id on create (ACCT-F5043). */
+  linkedLegalMatterId?: string;
   /** Human-readable WO id for memo + banner (maintenance linkage). */
   linkedWoDisplayId?: string;
   /** Pre-select bill type tab (maintenance | repair | fuel | driver | vendor). */
@@ -119,6 +123,7 @@ export function VendorBillForm({
   linkedWoId,
   linkedUnitId,
   linkedClaimId,
+  linkedLegalMatterId,
   linkedWoDisplayId,
   initialBillType,
   submitLabel = "Create bill",
@@ -143,6 +148,7 @@ export function VendorBillForm({
   const [loadNumber, setLoadNumber] = useState("");
   const [driverId, setDriverId] = useState("");
   const [unitId, setUnitId] = useState(linkedUnitId ?? "");
+  const [legalMatterId, setLegalMatterId] = useState(linkedLegalMatterId ?? "");
   const [classId, setClassId] = useState<string | null>(null);
   const [className, setClassName] = useState("");
   const [accountId, setAccountId] = useState<string | null>(null);
@@ -154,6 +160,11 @@ export function VendorBillForm({
     if (!linkedUnitId) return;
     setUnitId((prev) => prev || linkedUnitId);
   }, [linkedUnitId]);
+
+  useEffect(() => {
+    if (!linkedLegalMatterId) return;
+    setLegalMatterId((prev) => prev || linkedLegalMatterId);
+  }, [linkedLegalMatterId]);
 
   useEffect(() => {
     if (!initialBillType || !BILL_TYPE_TABS.some((tab) => tab.id === initialBillType)) return;
@@ -287,6 +298,7 @@ export function VendorBillForm({
     }
 
     const resolvedUnitId = unitId || linkedUnitId || undefined;
+    const resolvedLegalMatterId = legalMatterId || linkedLegalMatterId || undefined;
 
     await onSubmit({
       vendor_id: vendorKey,
@@ -314,6 +326,7 @@ export function VendorBillForm({
       ...(linkedWoId ? { work_order_id: linkedWoId } : {}),
       ...(resolvedUnitId ? { unit_id: resolvedUnitId } : {}),
       ...(linkedClaimId ? { insurance_claim_id: linkedClaimId } : {}),
+      ...(resolvedLegalMatterId ? { legal_matter_id: resolvedLegalMatterId } : {}),
       ...(classId ? { class_id: classId } : {}),
     });
   }
@@ -332,6 +345,19 @@ export function VendorBillForm({
           data-testid="vendor-bill-linked-claim"
         >
           Linked claim — <EntityLink kind="claim" id={linkedClaimId} label={entityLabel(null, linkedClaimId, "Claim")} />
+        </div>
+      ) : null}
+      {linkedLegalMatterId ? (
+        <div
+          className="rounded-sm border border-slate-200 bg-slate-100 px-2 py-1 text-xs text-slate-700"
+          data-testid="vendor-bill-linked-legal-matter"
+        >
+          Linked matter —{" "}
+          <EntityLink
+            kind="matter"
+            id={linkedLegalMatterId}
+            label={entityLabel(null, linkedLegalMatterId, "Matter")}
+          />
         </div>
       ) : null}
       <TypeTabBar
@@ -482,7 +508,18 @@ export function VendorBillForm({
             nestedInDrawer={Boolean(linkedWoId)}
           />
         </Field>
-        <div className="md:col-span-3" />
+        <Field label="Legal matter">
+          <EntityPicker
+            kind="legal_matter"
+            operatingCompanyId={operatingCompanyId}
+            value={legalMatterId || null}
+            onChange={(next) => setLegalMatterId(next ?? "")}
+            placeholder="Select legal matter..."
+            nestedInDrawer={Boolean(linkedWoId || linkedLegalMatterId)}
+            dataTestId="vendor-bill-legal-matter-picker"
+          />
+        </Field>
+        <div className="md:col-span-2" />
         <Field label="Class">
           <ReferenceSelect
             value={classId}

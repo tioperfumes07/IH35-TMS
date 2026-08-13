@@ -29,6 +29,7 @@ import {
 } from "./LegalMatterFormFields";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { LegalMatterCostsReverseSection } from "../../../components/accounting/LegalMatterCostsReverseSection";
+import { CreateBillModal } from "../../maintenance/components/CreateBillModal";
 
 type Tab = "overview" | "timeline" | "documents" | "deadlines" | "notes";
 const LEGAL_MATTER_TAB_IDS = new Set<string>(["overview", "timeline", "documents", "deadlines", "notes"]);
@@ -71,6 +72,7 @@ export function LegalMatterDetailPage() {
   const [docFile, setDocFile] = useState<File | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState<LegalMatterFormState | null>(null);
+  const [createBillOpen, setCreateBillOpen] = useState(false);
 
   const detailQuery = useQuery({
     queryKey: ["legal", "matter", companyId, id],
@@ -175,6 +177,15 @@ export function LegalMatterDetailPage() {
         subtitle={matter ? String(matter.type ?? "") : ""}
         actions={
           <div className="flex flex-wrap gap-2">
+            {companyId && id ? (
+              <Button
+                type="button"
+                onClick={() => setCreateBillOpen(true)}
+                data-testid="legal-matter-create-bill"
+              >
+                + Create Bill
+              </Button>
+            ) : null}
             {admin && matter && !isEditing ? (
               <Button
                 variant="secondary"
@@ -522,6 +533,18 @@ export function LegalMatterDetailPage() {
           ) : null}
         </>
       )}
+      {companyId && id ? (
+        <CreateBillModal
+          open={createBillOpen}
+          operatingCompanyId={companyId}
+          linkedLegalMatterId={id}
+          onClose={() => setCreateBillOpen(false)}
+          onCreated={() => {
+            void qc.invalidateQueries({ queryKey: ["accounting", "legal-matter-linked-costs", companyId, id] });
+            void qc.invalidateQueries({ queryKey: ["accounting", "bills"] });
+          }}
+        />
+      ) : null}
     </div>
   );
 }

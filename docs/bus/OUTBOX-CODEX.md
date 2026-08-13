@@ -19,3 +19,5 @@
 2026-08-13T09:12CT | Cursor | SHIPPING ACCT-F5041 legal matter linked-costs reverse FE | NEXT=rank6 reverse
 2026-08-13T09:13CT | Cursor | SHIPPED #6423 ACCT-F5041 legal matter linked-costs reverse | NEXT=rank6 reverse Built
 2026-08-13T09:16CT | Cursor | SHIPPING ACCT-F5042 bill legal_matter_id forward write | NEXT=rank6 reverse
+2026-08-13T09:17CT | Cursor | SHIPPED #6425 ACCT-F5042 bill legal_matter_id forward | NEXT=rank6 reverse Built
+2026-08-13T09:10CT | Cursor | SHIPPING ACCT-F5043 bill create legal_matter picker | NEXT=rank6 reverse Built
