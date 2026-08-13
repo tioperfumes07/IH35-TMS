@@ -106,6 +106,7 @@ export function ReferenceSelect({
   const [createOpen, setCreateOpen] = useState(false);
   const [created, setCreated] = useState<ReferenceOption[]>([]);
   const rosterScope = useRef({ createKind, operatingCompanyId });
+  const [invalidatedValue, setInvalidatedValue] = useState<string | null>(null);
 
   // The server-backed options refetch when the owner changes company, but locally created rows do
   // not belong to that cache. Bind them—and the committed FK—to the same kind+company scope so a
@@ -116,8 +117,13 @@ export function ReferenceSelect({
     rosterScope.current = { createKind, operatingCompanyId };
     setCreated([]);
     setCreateOpen(false);
-    if (value) onChange(null);
+    if (value) {
+      setInvalidatedValue(value);
+      onChange(null);
+    }
   }, [createKind, onChange, operatingCompanyId, value]);
+
+  const scopedValue = value === invalidatedValue ? null : value;
 
   // The single dispatch decision, read from config instead of a hardcoded Set in this file.
   const config = getCatalogPickerConfig(createKind as CatalogPickerKey);
@@ -135,6 +141,7 @@ export function ReferenceSelect({
     // resolves after the parent refetches the canonical list.
     const selected = createdValueField === "code" && rec.code ? rec.code : rec.id;
     const opt: ReferenceOption = { value: selected, label: rec.label };
+    setInvalidatedValue(null);
     setCreated((prev) => [...prev, opt]);
     onOptionCreated?.(opt);
     onChange(selected); // return to parent with the new value selected
@@ -150,8 +157,11 @@ export function ReferenceSelect({
           id={id}
           options={comboOptions}
           onSearch={onSearch}
-          value={value}
-          onChange={onChange}
+          value={scopedValue}
+          onChange={(next) => {
+            setInvalidatedValue(null);
+            onChange(next);
+          }}
           // This wrapper IS the reference/FK picker, so the committed id must never survive its text being
           // edited (Book Load booked against an invisible customer that way).
           clearCommittedOnEdit

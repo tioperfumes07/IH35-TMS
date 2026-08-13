@@ -94,6 +94,26 @@ describe("ReferenceSelect (A2)", () => {
     openDropdown();
     expect(screen.queryByRole("option", { name: "New Vendor" })).toBeNull();
   });
+
+  it("suppresses the prior-company FK when a controlled parent ignores null", () => {
+    const onChange = vi.fn();
+    const renderPicker = (operatingCompanyId: string) => (
+      <ReferenceSelect
+        value="vendor-company-a"
+        onChange={onChange}
+        options={operatingCompanyId === "co-1" ? [{ value: "vendor-company-a", label: "Company A Vendor" }] : []}
+        createKind="vendor"
+        operatingCompanyId={operatingCompanyId}
+        placeholder="Stubborn scoped vendor"
+      />
+    );
+    const view = render(renderPicker("co-1"));
+    expect(screen.getByRole("combobox")).toHaveValue("Company A Vendor");
+
+    view.rerender(renderPicker("co-2"));
+    expect(onChange).toHaveBeenLastCalledWith(null);
+    expect(screen.getByRole("combobox")).toHaveValue("");
+  });
 });
 
 // LST-PICKER-01/03 — the config-driven path. These assert the DEFECT is gone: a catalog outside the

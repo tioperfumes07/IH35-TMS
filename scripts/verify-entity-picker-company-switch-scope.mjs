@@ -38,11 +38,16 @@ export function collectProblems({ picker, test, referenceSelect, referenceTest }
     [/rosterScope\.current = \{ createKind, operatingCompanyId \}/, "ReferenceSelect must advance its remembered scope after a company change"],
     [/setCreated\(\[\]\)/, "ReferenceSelect company switch must evict locally-created cross-company options"],
     [/setCreateOpen\(false\)/, "ReferenceSelect company switch must close the prior company's create drawer"],
-    [/if \(value\) onChange\(null\)/, "ReferenceSelect company switch must clear the committed foreign key"],
+    [/if \(value\)[\s\S]{0,100}onChange\(null\)/, "ReferenceSelect company switch must clear the committed foreign key"],
+    [/setInvalidatedValue\(value\)/, "ReferenceSelect must suppress a prior-company FK when a controlled parent ignores null"],
+    [/const scopedValue = value === invalidatedValue \? null : value/, "ReferenceSelect rendering must consume the company-safe value", referenceSelect],
   ];
   for (const [pattern, message, source = referenceEffect] of referenceChecks) if (!pattern.test(source)) problems.push(message);
   if (!/evicts a locally created row and committed FK when the company changes/.test(referenceTest)) {
     problems.push("ReferenceSelect runtime company-switch regression test is missing");
+  }
+  if (!/suppresses the prior-company FK when a controlled parent ignores null/.test(referenceTest)) {
+    problems.push("ReferenceSelect stubborn-parent company-switch regression test is missing");
   }
   return problems;
 }
@@ -68,9 +73,12 @@ if (process.argv.includes("--selftest")) {
     { ...sources, referenceSelect: sources.referenceSelect.replace("rosterScope.current = { createKind, operatingCompanyId };", "") },
     { ...sources, referenceSelect: sources.referenceSelect.replace("setCreated([]);", "") },
     { ...sources, referenceSelect: sources.referenceSelect.replace("setCreateOpen(false);", "") },
-    { ...sources, referenceSelect: sources.referenceSelect.replace("if (value) onChange(null);", "") },
+    { ...sources, referenceSelect: sources.referenceSelect.replace("onChange(null);", "") },
     { ...sources, referenceSelect: sources.referenceSelect.replace("previous.operatingCompanyId === operatingCompanyId", "true") },
     { ...sources, referenceTest: sources.referenceTest.replace("evicts a locally created row and committed FK when the company changes", "deleted regression") },
+    { ...sources, referenceSelect: sources.referenceSelect.replace("setInvalidatedValue(value);", "") },
+    { ...sources, referenceSelect: sources.referenceSelect.replace("value === invalidatedValue ? null : value", "value") },
+    { ...sources, referenceTest: sources.referenceTest.replace("suppresses the prior-company FK when a controlled parent ignores null", "deleted regression") },
   ];
   const escaped = mutations.flatMap((mutation, index) => collectProblems(mutation).length ? [] : [index + 1]);
   if (escaped.length) {
@@ -85,4 +93,4 @@ if (problems.length) {
   for (const problem of problems) console.error(`  - ${problem}`);
   process.exit(1);
 }
-console.log(`verify-entity-picker-company-switch-scope PASS — EntityPicker + ReferenceSelect state is company-bound${process.argv.includes("--selftest") ? "; 15 mutations caught" : ""}`);
+console.log(`verify-entity-picker-company-switch-scope PASS — EntityPicker + ReferenceSelect state is company-bound${process.argv.includes("--selftest") ? "; 18 mutations caught" : ""}`);
