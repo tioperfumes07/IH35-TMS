@@ -129,7 +129,6 @@
       "required": [
         "vendor",
         "ap_bill",
-        "gl_je",
         "connectivity",
         "reverse_link",
         "picker_law"
@@ -282,7 +281,6 @@
       "required": [
         "vendor",
         "ap_bill",
-        "gl_je",
         "connectivity",
         "reverse_link",
         "qbo_chrome"
@@ -331,7 +329,6 @@
       "required": [
         "vendor",
         "ap_bill",
-        "gl_je",
         "connectivity",
         "reverse_link",
         "qbo_chrome",
@@ -411,7 +408,6 @@
       "required": [
         "vendor",
         "expense",
-        "gl_je",
         "picker_law",
         "connectivity",
         "reverse_link"
@@ -485,7 +481,6 @@
         "vendor",
         "ap_bill",
         "expense",
-        "gl_je",
         "connectivity",
         "reverse_link",
         "qbo_chrome"
@@ -499,7 +494,6 @@
       "required": [
         "vendor",
         "ap_bill",
-        "gl_je",
         "picker_law",
         "qbo_chrome",
         "connectivity",
@@ -515,7 +509,6 @@
       "required": [
         "vendor",
         "ap_bill",
-        "gl_je",
         "connectivity",
         "reverse_link"
       ]
@@ -528,7 +521,6 @@
       "required": [
         "vendor",
         "expense",
-        "gl_je",
         "connectivity",
         "reverse_link"
       ]
@@ -553,7 +545,6 @@
       "required": [
         "vendor",
         "ap_bill",
-        "gl_je",
         "connectivity",
         "reverse_link",
         "scenario.ap"

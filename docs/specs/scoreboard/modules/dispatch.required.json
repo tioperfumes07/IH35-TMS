@@ -201,7 +201,6 @@
         "unit",
         "trailer",
         "load",
-        "gl_je",
         "expense",
         "picker_law",
         "qbo_chrome",
@@ -272,7 +271,6 @@
         "unit",
         "load",
         "expense",
-        "gl_je",
         "connectivity",
         "reverse_link",
         "picker_law"
@@ -537,7 +535,6 @@
         "unit",
         "trailer",
         "load",
-        "gl_je",
         "expense",
         "picker_law",
         "qbo_chrome",
@@ -624,7 +621,6 @@
         "load",
         "customer",
         "driver",
-        "gl_je",
         "connectivity",
         "reverse_link"
       ]
@@ -674,7 +670,6 @@
         "unit",
         "trailer",
         "load",
-        "gl_je",
         "connectivity",
         "reverse_link",
         "picker_law",
@@ -689,7 +684,6 @@
       "required": [
         "load",
         "customer",
-        "gl_je",
         "connectivity",
         "reverse_link",
         "bank"
@@ -706,7 +700,6 @@
         "unit",
         "trailer",
         "load",
-        "gl_je",
         "connectivity",
         "reverse_link",
         "picker_law",
@@ -736,7 +729,6 @@
       "required": [
         "driver",
         "load",
-        "gl_je",
         "connectivity",
         "reverse_link"
       ]
@@ -765,7 +757,6 @@
       "required": [
         "customer",
         "load",
-        "gl_je",
         "connectivity",
         "reverse_link"
       ]
