@@ -43,6 +43,7 @@ import { DriverSafetyReverseSection } from "../components/safety/DriverSafetyRev
 import { DriverWorkOrdersReverseSection } from "../components/maintenance/DriverWorkOrdersReverseSection";
 import { DriverTempCoverReverseSection } from "../components/safety/DriverTempCoverReverseSection";
 import { DriverEquipmentTransfersReverseSection } from "../components/dispatch/DriverEquipmentTransfersReverseSection";
+import { DriverHosViolationsReverseSection } from "../components/safety/DriverHosViolationsReverseSection";
 import { Button } from "../components/Button";
 import { ListErrorState } from "../components/ListErrorState";
 import { EntityLink } from "../components/shared/EntityLink";
@@ -1520,6 +1521,7 @@ export function DriverDetailPage() {
                   />
                   <DriverTempCoverReverseSection operatingCompanyId={String(driver.operating_company_id)} driverId={id} />
                   <DriverEquipmentTransfersReverseSection operatingCompanyId={String(driver.operating_company_id)} driverId={id} />
+                  <DriverHosViolationsReverseSection operatingCompanyId={String(driver.operating_company_id)} driverId={id} />
                 </>
               ) : null}
             </>
