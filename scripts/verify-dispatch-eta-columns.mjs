@@ -87,6 +87,11 @@ mustNotContain("apps/frontend/src/pages/dispatch/DispatchBoard.tsx", dispatchLis
   { pattern: /InTransitEtaChip/, label: "per-row InTransitEtaChip" },
   { pattern: /getDispatchLoadEta/, label: "per-row getDispatchLoadEta" },
 ]);
+const archivedDispatchList = read("apps/frontend/src/components/dispatch/DispatchList.tsx");
+mustNotContain("apps/frontend/src/components/dispatch/DispatchList.tsx", archivedDispatchList, [
+  { pattern: /InTransitEtaChip/, label: "reference to retired per-row InTransitEtaChip" },
+  { pattern: /getDispatchLoadEta/, label: "per-row getDispatchLoadEta" },
+]);
 
 const liveEtaColumns = read("apps/frontend/src/components/dispatch/LiveEtaColumns.tsx");
 contains("apps/frontend/src/components/dispatch/LiveEtaColumns.tsx", liveEtaColumns, [

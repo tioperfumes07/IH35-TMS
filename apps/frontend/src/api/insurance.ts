@@ -326,6 +326,10 @@ export type InsuranceLawsuit = {
   filed_date: string;
   status: InsuranceLawsuitStatus;
   claim_id: string | null;
+  /** Resolved through lawsuit.claim_id -> insurance.claim.driver_id. */
+  driver_id: string | null;
+  /** Resolved through lawsuit.claim_id -> claim.asset_id -> mdata.assets.unit_id. */
+  unit_id: string | null;
   demand_cents: number;
   settlement_cents: number;
   attorney_name: string | null;

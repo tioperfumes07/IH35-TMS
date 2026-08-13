@@ -284,6 +284,19 @@ export function buildEdgeGraph(sqlFiles) {
  */
 const POLYMORPHIC_GL_EDGES = new Set(["gl", "source"]);
 
+/**
+ * Declared two-hop schema chains. These are intentionally explicit: accepting arbitrary graph
+ * reachability would let a wide operational table accidentally satisfy an economic obligation.
+ * A lawsuit inherits driver/unit identity from its required claim FK; duplicating those FKs on
+ * lawsuit would create two writable truths that can drift.
+ */
+const DECLARED_TWO_HOP_EDGES = {
+  "insurance.lawsuit": {
+    driver: ["insurance.claim"],
+    unit: ["insurance.claim"],
+  },
+};
+
 export function discoverPolymorphicSourceTypes(sourceText) {
   const types = new Set();
   for (const field of ["linked_object_type", "source_transaction_type"]) {
@@ -325,6 +338,11 @@ export function findMissingEdges({ graph, created }, required = REQUIRED_EDGES, 
     const have = graph.get(tbl) ?? new Set();
     for (const [edgeName, targets] of Object.entries(edges)) {
       if (targets.some((t) => have.has(t))) continue;
+      const declaredIntermediates = DECLARED_TWO_HOP_EDGES[tbl]?.[edgeName] ?? [];
+      const viaDeclaredTwoHop = declaredIntermediates.some(
+        (middle) => have.has(middle) && targets.some((target) => (graph.get(middle) ?? new Set()).has(target))
+      );
+      if (viaDeclaredTwoHop) continue;
       if (POLYMORPHIC_GL_EDGES.has(edgeName) && satisfiesPolymorphic(tbl, polyTypes)) continue;
       // JUNCTION: a real link table joining this record to the target (e.g.
       // driver_finance.driver_settlement_gl_runs joins driver_settlements <-> journal_entries).
@@ -453,6 +471,31 @@ function selftest() {
     { "insurance.claim": REQUIRED_EDGES["insurance.claim"] }
   );
   if (alt.length > 0) failures.push("alternative-target satisfaction not honored: " + alt.map((a) => a.edge).join(","));
+
+  // DECLARED TWO-HOP: lawsuit -> claim -> driver/unit is one canonical truth. The guard must
+  // recognize that explicit chain without granting arbitrary transitive reachability.
+  const lawsuitChain = findMissingEdges(
+    {
+      graph: new Map([
+        ["insurance.lawsuit", new Set(["insurance.claim", "legal.matters"])],
+        ["insurance.claim", new Set(["mdata.drivers", "mdata.assets"])],
+      ]),
+      created: new Set(["insurance.lawsuit"]),
+    },
+    { "insurance.lawsuit": { driver: ["mdata.drivers"], unit: ["mdata.units", "mdata.assets"] } }
+  );
+  if (lawsuitChain.length > 0) failures.push("declared lawsuit -> claim -> driver/unit chain was not recognized");
+  const undeclaredChain = findMissingEdges(
+    {
+      graph: new Map([
+        ["insurance.lawsuit", new Set(["legal.matters"])],
+        ["legal.matters", new Set(["mdata.drivers"])],
+      ]),
+      created: new Set(["insurance.lawsuit"]),
+    },
+    { "insurance.lawsuit": { driver: ["mdata.drivers"] } }
+  );
+  if (undeclaredChain.length === 0) failures.push("undeclared arbitrary two-hop chain silenced a real break");
 
   // ZERO-FK REGRESSION LOCK: a table with no outbound FK at all is the WORST break. A prior
   // revision skipped it (`if (have.size === 0) continue`), exempting the most orphaned tables.

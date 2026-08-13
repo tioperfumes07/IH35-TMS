@@ -7,7 +7,7 @@ const requireAuthState = { allowed: true };
 const queryMock = vi.fn(async (sql: string, values?: unknown[]) => {
   if (sql.includes("SET LOCAL app.operating_company_id")) return { rows: [] };
 
-  if (sql.includes("FROM insurance.lawsuit") && sql.includes("ORDER BY filed_date DESC")) {
+  if (sql.includes("FROM insurance.lawsuit") && sql.includes("ORDER BY lawsuit.filed_date DESC")) {
     return {
       rows: [
         {
@@ -20,6 +20,8 @@ const queryMock = vi.fn(async (sql: string, values?: unknown[]) => {
           filed_date: "2026-05-01",
           status: String(values?.[1] ?? "filed"),
           claim_id: String(values?.[2] ?? "11111111-1111-4111-8111-111111111111"),
+          driver_id: "22222222-2222-4222-8222-222222222222",
+          unit_id: "33333333-3333-4333-8333-333333333333",
           demand_cents: 500000,
           settlement_cents: 0,
           attorney_name: "Taylor Counsel",
@@ -149,9 +151,16 @@ describe("insurance lawsuit routes", () => {
     });
 
     expect(response.statusCode).toBe(200);
-    const body = response.json() as { lawsuits: Array<{ id: string }> };
+    const body = response.json() as { lawsuits: Array<{ id: string; driver_id: string; unit_id: string }> };
     expect(body.lawsuits).toHaveLength(1);
     expect(body.lawsuits[0]?.id).toBe("aaaaaaaa-1111-4111-8111-111111111111");
+    expect(body.lawsuits[0]).toMatchObject({
+      driver_id: "22222222-2222-4222-8222-222222222222",
+      unit_id: "33333333-3333-4333-8333-333333333333",
+    });
+    const listSql = queryMock.mock.calls.find(([sql]) => String(sql).includes("ORDER BY lawsuit.filed_date DESC"))?.[0];
+    expect(listSql).toContain("LEFT JOIN insurance.claim AS claim");
+    expect(listSql).toContain("asset.unit_id::text AS unit_id");
   });
 
   it("POST creates lawsuit and links claim", async () => {

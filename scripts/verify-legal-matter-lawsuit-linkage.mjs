@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["insurance","legal","drivers","fleet"],"cols":["driver","unit","connectivity","reverse_link"],"task":"INSURANCE-LAWSUIT-CLAIM-IDENTITY","leafRe":"lawsuits\\.(list|create)|insurance\\.modal\\.lawsuit_create"} */
 /**
  * Law §9 reverse drill-through — Legal matter → insurance lawsuit → back to lawsuit row.
  *
@@ -28,12 +29,12 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-legal-matter-lawsuit-linkage";
 
 /**
- * @param {{ entityLink: string, matterDetail: string, lawsuitsTab: string }} sources
+ * @param {{ entityLink: string, matterDetail: string, lawsuitsTab: string, lawsuitRoutes: string, insuranceApi: string }} sources
  * @returns {string[]}
  */
 export function assertLegalMatterLawsuitLinkage(sources) {
   const errors = [];
-  const { entityLink, matterDetail, lawsuitsTab } = sources;
+  const { entityLink, matterDetail, lawsuitsTab, lawsuitRoutes, insuranceApi } = sources;
 
   if (!/\|\s*"lawsuit"/.test(entityLink)) {
     errors.push('EntityLink: EntityKind union must declare "lawsuit"');
@@ -66,6 +67,20 @@ export function assertLegalMatterLawsuitLinkage(sources) {
   }
   if (!/setSelectedLawsuitId\(deepLinkLawsuitId\)/.test(lawsuitsTab)) {
     errors.push("LawsuitsTab: deep-linked lawsuit_id must seed/select selectedLawsuitId (row highlight)");
+  }
+  for (const kind of ["driver", "unit"]) {
+    if (!new RegExp(`kind=["']${kind}["']`).test(lawsuitsTab)) {
+      errors.push(`LawsuitsTab: linked claim ${kind}_id must render through EntityLink`);
+    }
+    if (!new RegExp(`${kind}_id: string \\| null`).test(insuranceApi)) {
+      errors.push(`insurance API: InsuranceLawsuit must expose resolved ${kind}_id`);
+    }
+  }
+  if (!/LEFT JOIN insurance\.claim AS claim/.test(lawsuitRoutes) || !/claim\.driver_id::text AS driver_id/.test(lawsuitRoutes)) {
+    errors.push("lawsuit route: must resolve driver_id through the entity-scoped linked claim");
+  }
+  if (!/LEFT JOIN mdata\.assets AS asset/.test(lawsuitRoutes) || !/asset\.unit_id::text AS unit_id/.test(lawsuitRoutes)) {
+    errors.push("lawsuit route: must resolve unit_id through claim.asset_id");
   }
 
   return errors;
@@ -103,7 +118,14 @@ const [selectedLawsuitId, setSelectedLawsuitId] = useState(deepLinkLawsuitId);
 useEffect(() => {
   if (deepLinkLawsuitId) setSelectedLawsuitId(deepLinkLawsuitId);
 }, [deepLinkLawsuitId]);
+<EntityLink kind="driver" id={lawsuit.driver_id} />
+<EntityLink kind="unit" id={lawsuit.unit_id} />
 `,
+    lawsuitRoutes: `SELECT claim.driver_id::text AS driver_id, asset.unit_id::text AS unit_id
+FROM insurance.lawsuit AS lawsuit
+LEFT JOIN insurance.claim AS claim ON claim.tenant_id = lawsuit.tenant_id AND claim.id = lawsuit.claim_id
+LEFT JOIN mdata.assets AS asset ON asset.tenant_id = lawsuit.tenant_id AND asset.id = claim.asset_id`,
+    insuranceApi: `type InsuranceLawsuit = { driver_id: string | null; unit_id: string | null }`,
   };
 
   // [name, mutatedField, sources]. `mutatedField` is null for cases that supply a wholesale-distinct
@@ -127,6 +149,8 @@ useEffect(() => {
     ["no-search-params-hook", "lawsuitsTab", { ...good, lawsuitsTab: good.lawsuitsTab.replace("useSearchParams", "useState") }],
     ["no-param-read", "lawsuitsTab", { ...good, lawsuitsTab: good.lawsuitsTab.replace('searchParams.get("lawsuit_id")', '""') }],
     ["dead-deep-link", "lawsuitsTab", { ...good, lawsuitsTab: good.lawsuitsTab.replace("setSelectedLawsuitId(deepLinkLawsuitId)", "doNothing()") }],
+    ["missing-driver-link", "lawsuitsTab", { ...good, lawsuitsTab: good.lawsuitsTab.replace('kind="driver"', 'kind="claim"') }],
+    ["missing-unit-route-join", "lawsuitRoutes", { ...good, lawsuitRoutes: good.lawsuitRoutes.replace("LEFT JOIN mdata.assets AS asset", "LEFT JOIN mdata.parts AS asset") }],
   ];
 
   const problems = [];
@@ -163,6 +187,8 @@ function main() {
     entityLink: read("apps/frontend/src/components/shared/EntityLink.tsx"),
     matterDetail: read("apps/frontend/src/pages/legal/matters/LegalMatterDetailPage.tsx"),
     lawsuitsTab: read("apps/frontend/src/pages/insurance/LawsuitsTab.tsx"),
+    lawsuitRoutes: read("apps/backend/src/insurance/lawsuit.routes.ts"),
+    insuranceApi: read("apps/frontend/src/api/insurance.ts"),
   };
 
   const failures = assertLegalMatterLawsuitLinkage(sources);
