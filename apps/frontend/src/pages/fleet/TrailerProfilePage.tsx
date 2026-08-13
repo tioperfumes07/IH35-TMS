@@ -25,6 +25,7 @@ import { LegalMattersReverseSection } from "../../components/legal/LegalMattersR
 import { FuelTransactionsReverseSection } from "../../components/fuel/FuelTransactionsReverseSection";
 import { ExpensesReverseSection } from "../../components/accounting/ExpensesReverseSection";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { TrailerTiresReverseSection } from "../../components/maintenance/TrailerTiresReverseSection";
 import { entityLabel } from "../../lib/entity-label";
 
 export type TrailerProfileAggregate = {
@@ -149,6 +150,9 @@ export function TrailerProfilePage() {
         <div className="mt-3">
           <ServiceTimeline companyId={companyId} equipmentId={id} showUnitEventTypes={false} />
         </div>
+      </div>
+      <div data-testid="tp-section-5b-tires">
+        <TrailerTiresReverseSection operatingCompanyId={companyId} equipmentId={id} />
       </div>
       <div data-testid="tp-section-6-compliance">
         <ComplianceSection compliance={aggregate.compliance} plates={aggregate.plates} />

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   auditMaintenanceTireTread,
@@ -22,6 +22,7 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { EntityPicker } from "../../components/parity/EntityPicker";
 import { formatDateTimeUS } from "../../lib/formatDate";
+import { useSearchParams } from "react-router-dom";
 
 type MountDraft = {
   position_code: string;
@@ -46,7 +47,9 @@ export function TireProgramPage() {
   const companyId = selectedCompanyId ?? "";
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
-  const [unitId, setUnitId] = useState("");
+  const [searchParams] = useSearchParams();
+  const [assetKind, setAssetKind] = useState<"unit" | "trailer">("unit");
+  const [assetId, setAssetId] = useState("");
   const [selectedRecord, setSelectedRecord] = useState<MaintenanceTireRecordRow | null>(null);
   const [mountOpen, setMountOpen] = useState(false);
   const [brandOpen, setBrandOpen] = useState(false);
@@ -56,6 +59,20 @@ export function TireProgramPage() {
   const [toPosition, setToPosition] = useState("");
   const [treadDepth, setTreadDepth] = useState("");
 
+  useEffect(() => {
+    const trailerId = searchParams.get("equipment_id")?.trim();
+    const unitId = searchParams.get("unit_id")?.trim();
+    if (trailerId) {
+      setAssetKind("trailer");
+      setAssetId(trailerId);
+    } else if (unitId) {
+      setAssetKind("unit");
+      setAssetId(unitId);
+    }
+  }, [searchParams]);
+
+  const assetParams = assetKind === "trailer" ? { equipment_id: assetId } : { unit_id: assetId };
+
   const brandsQ = useQuery({
     queryKey: ["maintenance", "tire-brands", companyId],
     queryFn: () => listMaintenanceTireBrands(companyId),
@@ -63,15 +80,15 @@ export function TireProgramPage() {
   });
 
   const layoutQ = useQuery({
-    queryKey: ["maintenance", "tire-layout", companyId, unitId],
-    queryFn: () => getMaintenanceTireLayout(companyId, { unit_id: unitId }),
-    enabled: Boolean(companyId && unitId),
+    queryKey: ["maintenance", "tire-layout", companyId, assetKind, assetId],
+    queryFn: () => getMaintenanceTireLayout(companyId, assetParams),
+    enabled: Boolean(companyId && assetId),
   });
 
   const eventsQ = useQuery({
-    queryKey: ["maintenance", "tire-events", companyId, unitId],
-    queryFn: () => listMaintenanceTireEvents(companyId, { unit_id: unitId }),
-    enabled: Boolean(companyId && unitId),
+    queryKey: ["maintenance", "tire-events", companyId, assetKind, assetId],
+    queryFn: () => listMaintenanceTireEvents(companyId, assetParams),
+    enabled: Boolean(companyId && assetId),
   });
 
   const alertsQ = useQuery({
@@ -82,8 +99,8 @@ export function TireProgramPage() {
 
   const refresh = async () => {
     await Promise.all([
-      queryClient.invalidateQueries({ queryKey: ["maintenance", "tire-layout", companyId, unitId] }),
-      queryClient.invalidateQueries({ queryKey: ["maintenance", "tire-events", companyId, unitId] }),
+      queryClient.invalidateQueries({ queryKey: ["maintenance", "tire-layout", companyId, assetKind, assetId] }),
+      queryClient.invalidateQueries({ queryKey: ["maintenance", "tire-events", companyId, assetKind, assetId] }),
       queryClient.invalidateQueries({ queryKey: ["maintenance", "tire-alerts", companyId] }),
     ]);
   };
@@ -92,7 +109,7 @@ export function TireProgramPage() {
     mutationFn: () =>
       createMaintenanceTireRecord({
         operating_company_id: companyId,
-        unit_id: unitId,
+        ...assetParams,
         position_code: mountDraft.position_code,
         brand_id: mountDraft.brand_id || undefined,
         brand_name: mountDraft.brand_name,
@@ -282,7 +299,7 @@ export function TireProgramPage() {
           </Button>
           <Button
             type="button"
-            disabled={!companyId || !unitId}
+            disabled={!companyId || !assetId}
             onClick={() => {
               setMountDraft(EMPTY_MOUNT);
               setMountOpen(true);
@@ -293,18 +310,30 @@ export function TireProgramPage() {
         </div>
       </div>
 
-      <div className="grid gap-3 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-[1fr_auto]">
+      <div className="grid gap-3 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-[auto_1fr_auto]">
+        <div className="flex self-end rounded-sm border border-gray-200 p-1" aria-label="Tire asset type">
+          {(["unit", "trailer"] as const).map((kind) => (
+            <button
+              key={kind}
+              type="button"
+              className={`rounded-sm px-3 py-1 text-xs font-medium ${assetKind === kind ? "bg-slate-800 text-white" : "text-gray-600"}`}
+              onClick={() => { setAssetKind(kind); setAssetId(""); }}
+            >
+              {kind === "unit" ? "Unit" : "Trailer"}
+            </button>
+          ))}
+        </div>
         <label className="text-xs text-gray-700">
-          Vehicle
+          {assetKind === "unit" ? "Unit" : "Trailer"}
           <EntityPicker
-            kind="unit"
+            kind={assetKind}
             operatingCompanyId={companyId}
-            value={unitId || null}
-            onChange={(next) => setUnitId(next ?? "")}
-            placeholder="Select unit…"
+            value={assetId || null}
+            onChange={(next) => setAssetId(next ?? "")}
+            placeholder={assetKind === "unit" ? "Select unit…" : "Select trailer…"}
             enabled={Boolean(companyId)}
             className="mt-1 block w-full"
-            dataTestId="tire-program-unit-select"
+            dataTestId={`tire-program-${assetKind}-select`}
           />
         </label>
         <div className="self-end text-xs text-gray-600" data-testid="tire-program-alert-count">
@@ -312,7 +341,7 @@ export function TireProgramPage() {
         </div>
       </div>
 
-      {unitId ? (
+      {assetId ? (
         <div className="space-y-4">
           {renderPositionGrid("Steer", groupedPositions.steer)}
           {renderPositionGrid("Drive", groupedPositions.drive)}
@@ -336,14 +365,14 @@ export function TireProgramPage() {
               rowKey={(row) => row.id}
               loading={eventsQ.isPending}
               storageKey="maintenance-tire-events"
-              emptyText="No tire events yet for this unit."
+              emptyText={`No tire events yet for this ${assetKind}.`}
             />
             )}
           </section>
         </div>
       ) : (
         <div className="rounded-sm border border-dashed border-gray-300 p-6 text-sm text-gray-500">
-          Select a vehicle to view steer/drive tire layout and history.
+          Select a unit or trailer to view its tire layout and history.
         </div>
       )}
 
