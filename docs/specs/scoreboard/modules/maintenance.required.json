@@ -670,6 +670,21 @@
       ]
     },
     {
+      "id": "maintenance.panel.pm_alerts",
+      "tab": "Panels",
+      "sub": "Panel: PM Alerts work-order scheduler",
+      "route_hint": "surface://pages/maintenance/components/MaintenanceAlertsCard.tsx",
+      "surface_kind": "panel",
+      "surface_path": "pages/maintenance/components/MaintenanceAlertsCard.tsx",
+      "required": [
+        "work_order",
+        "unit",
+        "picker_law",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
       "id": "maintenance.modal.fault_rule",
       "tab": "Modals",
       "sub": "Modal: Fault Rule",
