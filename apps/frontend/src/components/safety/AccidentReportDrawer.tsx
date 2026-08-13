@@ -65,6 +65,7 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
   // Derive initial state from accident prop to avoid useEffect setState warning
   const initialDriverId = accident ? String(accident.driver_id ?? "") : "";
   const initialUnitId = accident ? String(accident.unit_id ?? "") : "";
+  const initialTrailerId = accident ? String(accident.trailer_id ?? "") : "";
   const initialVendorId = accident ? String(accident.vendor_id ?? "") : "";
   const initialLoadId = accident ? String(accident.load_id ?? "") : "";
   const initialIncidentDate = accident ? String(accident.accident_at ?? "").slice(0, 10) : "";
@@ -77,6 +78,7 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
 
   const [driverId, setDriverId] = useState(initialDriverId);
   const [unitId, setUnitId] = useState(initialUnitId);
+  const [trailerId, setTrailerId] = useState(initialTrailerId);
   const [vendorId, setVendorId] = useState(initialVendorId);
   const [loadId, setLoadId] = useState(initialLoadId);
   const [incidentDate, setIncidentDate] = useState(initialIncidentDate);
@@ -110,6 +112,7 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
   useEffect(() => {
     setDriverId(initialDriverId);
     setUnitId(initialUnitId);
+    setTrailerId(initialTrailerId);
     setVendorId(initialVendorId);
     setLoadId(initialLoadId);
     setIncidentDate(initialIncidentDate);
@@ -117,29 +120,30 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
     setAtFault(initialAtFault);
     setPreventable(initialPreventable);
     setSuggestionPinned(false);
-  }, [accidentId, initialDriverId, initialUnitId, initialVendorId, initialLoadId, initialIncidentDate, initialMemo, initialAtFault, initialPreventable]);
+  }, [accidentId, initialDriverId, initialUnitId, initialTrailerId, initialVendorId, initialLoadId, initialIncidentDate, initialMemo, initialAtFault, initialPreventable]);
 
   const scopeReady = open && Boolean(operatingCompanyId);
   const detailReady = scopeReady && !createMode && Boolean(accidentId) && accidentId !== "__create__";
 
-  // Create-path trip wiring: stamp active load from driver/unit + incident date (same resolver as
+  // Create-path trip wiring: stamp active load from driver/unit/trailer + incident date (same resolver as
   // expense/fine/claim). Never overwrite an operator-selected load (suggestionPinned).
   const suggestionQuery = useQuery({
-    queryKey: ["safety", "accident-create", "suggest-load", operatingCompanyId, driverId, unitId, incidentDate],
+    queryKey: ["safety", "accident-create", "suggest-load", operatingCompanyId, driverId, unitId, trailerId, incidentDate],
     queryFn: () =>
       suggestExpenseLoad({
         operating_company_id: operatingCompanyId,
         driver_id: driverId || undefined,
         unit_id: unitId || undefined,
+        trailer_id: trailerId || undefined,
         transaction_date: incidentDate,
       }),
-    enabled: open && createMode && Boolean(operatingCompanyId && incidentDate && (driverId || unitId)),
+    enabled: open && createMode && Boolean(operatingCompanyId && incidentDate && (driverId || unitId || trailerId)),
   });
 
   useEffect(() => {
     if (!createMode) return;
     setSuggestionPinned(false);
-  }, [createMode, driverId, unitId, incidentDate]);
+  }, [createMode, driverId, unitId, trailerId, incidentDate]);
 
   useEffect(() => {
     if (!createMode) return;
@@ -201,6 +205,7 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
     accident_type_id: accidentTypeId,
     driver_id: driverId || null,
     unit_id: unitId || null,
+    trailer_id: trailerId || null,
     vendor_id: vendorId || null,
     load_id: loadId || null,
     accident_at: incidentDate || null,
@@ -336,6 +341,25 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
                   className="w-full"
                   dataField="accident-unit"
                   dataTestId="accident-unit"
+                />
+              </div>
+            </Field>
+
+            <Field label="Trailer">
+              <div data-testid="accident-trailer-picker">
+                <EntityPicker
+                  kind="trailer"
+                  operatingCompanyId={operatingCompanyId}
+                  value={trailerId || null}
+                  onChange={(next) => setTrailerId(next ?? "")}
+                  allowCreate
+                  nestedInDrawer
+                  enabled={open && scopeReady}
+                  placeholder="Search trailer…"
+                  className="w-full"
+                  dataField="accident-trailer"
+                  dataTestId="accident-trailer"
+                  allowClear
                 />
               </div>
             </Field>

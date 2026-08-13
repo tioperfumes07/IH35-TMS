@@ -239,6 +239,8 @@ export type CreateAccidentInput = {
   accident_type_id: string;
   driver_id?: string | null;
   unit_id?: string | null;
+  /** RANK5 — trailer FK → mdata.equipment (accepted since #6324). */
+  trailer_id?: string | null;
   vendor_id?: string | null;
   load_id?: string | null;
   accident_at?: string | null;
@@ -268,6 +270,8 @@ export type PatchAccidentInput = {
   accident_type_id?: string;
   driver_id?: string | null;
   unit_id?: string | null;
+  /** RANK5 — trailer FK → mdata.equipment (accepted since #6324). */
+  trailer_id?: string | null;
   vendor_id?: string | null;
   load_id?: string | null;
   accident_at?: string | null;
