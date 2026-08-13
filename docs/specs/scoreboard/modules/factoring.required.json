@@ -172,7 +172,6 @@
       "required": [
         "vendor",
         "customer",
-        "picker_law",
         "qbo_chrome",
         "connectivity",
         "reverse_link"
@@ -211,8 +210,7 @@
         "driver",
         "vendor",
         "connectivity",
-        "reverse_link",
-        "picker_law"
+        "reverse_link"
       ]
     },
     {
@@ -306,7 +304,6 @@
         "liability",
         "connectivity",
         "reverse_link",
-        "picker_law",
         "qbo_chrome"
       ]
     },
@@ -612,6 +609,30 @@
           "id": "factoring.parity.driver_autocomplete",
           "removed": [
             "reverse_link"
+          ]
+        }
+      ]
+    },
+    "picker_law_2026_08_13_remainder_batch": {
+      "finding": "VERTICAL-PICKER-LAW-REMAINDER-BATCH",
+      "note": "List/chrome/portal leaves without EntityPicker/+Add new. Built separately: FactorAdmin, SubmitFactoringModal, AutoDeductionPolicies.",
+      "drops": [
+        {
+          "id": "home.statements_settings",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "home.vendor_merges",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "accounting.list",
+          "removed": [
+            "picker_law"
           ]
         }
       ]

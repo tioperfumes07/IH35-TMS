@@ -194,7 +194,6 @@
       "route_hint": "/safety/insurance/type-catalog",
       "required": [
         "connectivity",
-        "picker_law",
         "qbo_chrome"
       ]
     },
@@ -278,7 +277,6 @@
         "vendor",
         "connectivity",
         "reverse_link",
-        "picker_law",
         "scenario.insurance",
         "legal_matter"
       ]
@@ -510,6 +508,24 @@
           "id": "insurance.parity.policy_create",
           "removed": [
             "reverse_link"
+          ]
+        }
+      ]
+    },
+    "picker_law_2026_08_13_remainder_batch": {
+      "finding": "VERTICAL-PICKER-LAW-REMAINDER-BATCH",
+      "note": "List/chrome/portal leaves without EntityPicker/+Add new. Built separately: FactorAdmin, SubmitFactoringModal, AutoDeductionPolicies.",
+      "drops": [
+        {
+          "id": "type_catalog.list",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "lawsuits.list",
+          "removed": [
+            "picker_law"
           ]
         }
       ]
