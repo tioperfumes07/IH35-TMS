@@ -120,6 +120,19 @@ export async function quickAssignLoad(userId: string, role: string, input: Quick
         }
       }
 
+      if (input.trailer_id) {
+        const trailer = await client.query<{ id: string }>(
+          `SELECT id::text
+           FROM mdata.equipment
+           WHERE id = $1::uuid
+             AND COALESCE(currently_leased_to_company_id, owner_company_id) = $2::uuid
+             AND deactivated_at IS NULL
+           LIMIT 1`,
+          [input.trailer_id, input.operating_company_id]
+        );
+        if (!trailer.rows[0]?.id) throw new Error("E_TRAILER_NOT_FOUND");
+      }
+
       const driver = await client
         .query(
           `
@@ -306,6 +319,22 @@ export async function completeQuicksaveDraft(
         );
       }
     }
+    let resolvedTrailerId: string | null = null;
+    if (trailerId) {
+      const trailerRes = await client.query<{ id: string }>(
+        `
+          SELECT id::text
+          FROM mdata.equipment
+          WHERE id = $1::uuid
+            AND COALESCE(currently_leased_to_company_id, owner_company_id) = $2::uuid
+            AND deactivated_at IS NULL
+          LIMIT 1
+        `,
+        [trailerId, input.operating_company_id]
+      );
+      resolvedTrailerId = trailerRes.rows[0]?.id ?? null;
+      if (!resolvedTrailerId) throw new Error("E_TRAILER_NOT_FOUND");
+    }
     const pendingFields: string[] = [];
     if (!unitId) pendingFields.push("assigned_unit_id");
     if (!trailerId) pendingFields.push("assigned_secondary_driver_id");
@@ -337,31 +366,18 @@ export async function completeQuicksaveDraft(
 
     // Persist the trailer on the real link (mdata.equipment id -> new_trailer_id). Resolve entity-scoped
     // first (same as book-load W-FIX-3b) so we never attach a foreign company's trailer or FK-violate.
-    if (trailerId) {
-      const trailerRes = await client.query<{ id: string }>(
+    if (resolvedTrailerId) {
+      await client.query(
         `
-          SELECT id::text
-          FROM mdata.equipment
-          WHERE id = $1::uuid
-            AND COALESCE(currently_leased_to_company_id, owner_company_id) = $2::uuid
-            AND deactivated_at IS NULL
-          LIMIT 1
+          INSERT INTO dispatch.load_assignment_history (
+            operating_company_id, load_id, assignment_method,
+            previous_trailer_id, new_trailer_id,
+            assigned_by_user_id, warnings_acknowledged
+          )
+          VALUES ($1::uuid, $2::uuid, 'quicksave', NULL, $3::uuid, $4::uuid, '[]'::jsonb)
         `,
-        [trailerId, input.operating_company_id]
+        [input.operating_company_id, input.load_id, resolvedTrailerId, userId]
       );
-      if (trailerRes.rows[0]?.id) {
-        await client.query(
-          `
-            INSERT INTO dispatch.load_assignment_history (
-              operating_company_id, load_id, assignment_method,
-              previous_trailer_id, new_trailer_id,
-              assigned_by_user_id, warnings_acknowledged
-            )
-            VALUES ($1::uuid, $2::uuid, 'quicksave', NULL, $3::uuid, $4::uuid, '[]'::jsonb)
-          `,
-          [input.operating_company_id, input.load_id, trailerRes.rows[0].id, userId]
-        );
-      }
     }
     return { load_id: input.load_id, pending_fields: pendingFields, is_quicksave_draft: pendingFields.length > 0 };
   });

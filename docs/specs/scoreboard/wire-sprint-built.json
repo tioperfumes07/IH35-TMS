@@ -792,6 +792,14 @@
       "modules": ["safety", "fleet", "dispatch"],
       "cols": ["unit", "connectivity", "reverse_link", "picker_law"],
       "leafRe": "^(temporary|cover|assignment|unit|scheduler|profile|detail|create)"
+    },
+    {
+      "task": "QUICK-ASSIGN-TRAILER-LINKAGE",
+      "pr": "this PR",
+      "guard": "scripts/verify-quick-assign-trailer-linkage.mjs",
+      "modules": ["dispatch", "fleet", "drivers"],
+      "cols": ["trailer", "connectivity", "reverse_link", "picker_law"],
+      "leafRe": "^(quick.?assign|assignment|trailer|load|profile|dispatch|create)"
     }
   ]
 }
