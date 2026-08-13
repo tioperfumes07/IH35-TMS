@@ -22,6 +22,7 @@ const createTicketSchema = z.object({
   vendor_id: z.string().uuid(),
   unit_id: z.string().uuid(),
   driver_id: z.string().uuid().optional(),
+  vendor_id: z.string().uuid().optional(),
   call_time: z.string().datetime({ offset: true }).optional(),
   location_address: z.string().trim().max(1000).optional(),
   location_lat: z.coerce.number().optional(),
@@ -89,6 +90,10 @@ export async function registerRoadServiceTicketRoutes(app: FastifyInstance) {
       if (query.data.driver_id) {
         values.push(query.data.driver_id);
         filters.push(`t.driver_id = $${values.length}::uuid`);
+      }
+      if (query.data.vendor_id) {
+        values.push(query.data.vendor_id);
+        filters.push(`t.vendor_id = $${values.length}::uuid`);
       }
       if (query.data.date_from) {
         values.push(query.data.date_from);
