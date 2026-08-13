@@ -10,10 +10,13 @@ import { COLLECTIONS_SUBNAV_ITEM } from "./subnav-collections";
  * outside-click / Escape — NOT hover). Recorded in `docs/lockdown/00_LOCKED_DECISIONS.md`.
  *
  * The approved top row is exactly:
- *   Accounting · Bills ▾ · Expenses ▾ · Bill payment ▾ · Maintenance & shop ▾ · Vendors · Customers · Reports
- * plus an overflow **More ▾** for back-office / AR / factoring / catalog / settings routes the PNG
- * does not surface as top nodes (so every routed accounting page is reachable by a click — many were
- * URL-only under the previous flat `ACCOUNTING_CLEAN_TABS` render).
+ *   Accounting · Bills ▾ · Expenses ▾ · Bill payment ▾ · Invoices ▾ · Maintenance & shop ▾ ·
+ *   Vendors · Customers · Reports · More ▾
+ * **ACCT-F5050 (owner 2026-08-13):** Invoices ▾ promoted from More overflow to a first-class top
+ * node (peer of Bills / Expenses / Bill payment) — operators could not find the AR list when it was
+ * buried in the alphabetized More ▾. Receive Payment / Undeposited Funds / AR Aging / Collections
+ * travel with that group. Overflow **More ▾** keeps factoring / ledger / period / back-office /
+ * catalogs so every routed accounting page stays reachable by a click.
  *
  * This grouped model SUPERSEDES the flat `ACCOUNTING_CLEAN_TABS` / `ACCOUNTING_MORE_TABS` tab bar that
  * the nav-unification (undocumented drift, PR #1552) rendered. Per CLAUDE.md §7/§9 the approved screen
@@ -32,6 +35,7 @@ export type AccountingSubNavSection =
   | "bills"
   | "expenses"
   | "billpay"
+  | "invoices"
   | "maint_shop"
   | "vendors"
   | "customers"
@@ -50,6 +54,7 @@ export const GROUP_LABELS = {
   bills: "Bills",
   expenses: "Expenses",
   billpay: "Bill payment",
+  invoices: "Invoices",
   maint_shop: "Maintenance & shop",
   vendors: "Vendors",
   customers: "Customers",
@@ -95,11 +100,11 @@ export const SUBNAV_ITEMS: readonly AccountingSubNavItem[] = [
   { label: "Customers", path: "/accounting/customers", section: "customers" },
   { label: "Reports", path: "/accounting/reports", section: "reports" },
 
-  // More ▾ — AR / receivables
-  { label: "Invoices", path: "/accounting/invoices", section: "more" },
-  { label: "Receive Payment", path: "/accounting/payments", section: "more" },
-  { label: "Undeposited Funds", path: "/accounting/undeposited-funds", section: "more" },
-  { label: "AR Aging", path: "/reports/ar-aging", section: "more" },
+  // Invoices ▾ — AR / receivables (ACCT-F5050 — promoted from More ▾)
+  { label: "Invoices", path: "/accounting/invoices", section: "invoices" },
+  { label: "Receive Payment", path: "/accounting/payments", section: "invoices" },
+  { label: "Undeposited Funds", path: "/accounting/undeposited-funds", section: "invoices" },
+  { label: "AR Aging", path: "/reports/ar-aging", section: "invoices" },
   COLLECTIONS_SUBNAV_ITEM,
 
   // More ▾ — factoring
@@ -240,6 +245,8 @@ export const ACCOUNTING_SUB_NAV_ITEMS: readonly NavItem[] = [
   { label: GROUP_LABELS.bills, href: "/accounting/bills", children: childrenOf("bills") },
   { label: GROUP_LABELS.expenses, href: "/accounting/expenses/list", children: childrenOf("expenses") },
   { label: GROUP_LABELS.billpay, href: "/accounting/bill-payments", children: childrenOf("billpay") },
+  // ACCT-F5050 — Invoices ▾ peer of Bills / Expenses / Bill payment (group label → list).
+  { label: GROUP_LABELS.invoices, href: "/accounting/invoices", children: childrenOf("invoices") },
   {
     label: GROUP_LABELS.maint_shop,
     href: "/accounting/maintenance-shop",

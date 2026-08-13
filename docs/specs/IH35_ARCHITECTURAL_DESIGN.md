@@ -209,7 +209,7 @@ Rule 05: the approved PNG/nav wins. **NEVER-DELETE (§F.24):** every routed surf
 reachable; nothing is removed to “match” an older flat tab table.
 
 **Live top row (exact):**
-Accounting · Bills ▾ · Expenses ▾ · Bill payment ▾ · Maintenance & shop ▾ · Vendors · Customers · Reports · More ▾
+Accounting · Bills ▾ · Expenses ▾ · Bill payment ▾ · Invoices ▾ · Maintenance & shop ▾ · Vendors · Customers · Reports · More ▾
 
 | Group | Leaves (routes stay mounted) | Notes |
 |-------|------------------------------|-------|
@@ -217,9 +217,9 @@ Accounting · Bills ▾ · Expenses ▾ · Bill payment ▾ · Maintenance & sho
 | **Bills ▾** | Bill, Maintenance/Repair/Fuel/Driver/Vendor bill, Multiple, Recurring | PNG Bills family |
 | **Expenses ▾** | Expenses List, Expenses (creator hub), Receipts | Receipts = attachment proof |
 | **Bill payment ▾** | Bill payment, Vendor balances/credits, Accounts payable, AP Aging | AP side |
+| **Invoices ▾** | Invoices list, Receive Payment, Undeposited Funds, AR Aging, Collections | ACCT-F5050 — promoted from More ▾ so AR is peer to Bills / Expenses / Bill payment (owner 2026-08-13); route `/accounting/invoices` unchanged |
 | **Maintenance & shop ▾** | Maintenance & shop hub + shop-cost bill shortcuts | Cross-link to Bills ▾ |
 | **Vendors / Customers / Reports** | Top-level leaves | PNG top nodes |
-| **More ▾ — AR** | Invoices, Receive Payment, Undeposited Funds, AR Aging, Collections | Former flat “Invoices (AR)” |
 | **More ▾ — Factoring / settlements** | Factoring, Faro CSV, Factor recon, Settlements, Pre-settlements, Escrow, queues | Cross-module |
 | **More ▾ — Ledger** | Journal entries, Account Register, All Transactions, Recurring / Integration txns | Former flat JE / Register |
 | **More ▾ — Period / analysis** | Sales tax, Month close, Period close, Period comparison, Cash forecast, Multi-entity | Period Close + analysis |
