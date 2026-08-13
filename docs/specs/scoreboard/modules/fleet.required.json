@@ -251,7 +251,6 @@
       "route_hint": "/fleet?status=InMaintenance",
       "required": [
         "unit",
-        "scenario.maintenance",
         "connectivity",
         "reverse_link"
       ]
@@ -421,10 +420,8 @@
         "unit",
         "vendor",
         "ap_bill",
-        "scenario.maintenance",
         "connectivity",
-        "reverse_link",
-        "work_order"
+        "reverse_link"
       ]
     },
     {
@@ -459,9 +456,7 @@
         "unit",
         "liability",
         "connectivity",
-        "reverse_link",
-        "claim",
-        "policy"
+        "reverse_link"
       ]
     },
     {
@@ -508,8 +503,7 @@
       "required": [
         "unit",
         "connectivity",
-        "reverse_link",
-        "legal_matter"
+        "reverse_link"
       ]
     },
     {
@@ -521,9 +515,7 @@
         "unit",
         "liability",
         "connectivity",
-        "reverse_link",
-        "claim",
-        "policy"
+        "reverse_link"
       ]
     },
     {
@@ -535,9 +527,7 @@
         "unit",
         "driver",
         "connectivity",
-        "reverse_link",
-        "accident",
-        "claim"
+        "reverse_link"
       ]
     },
     {
@@ -613,9 +603,7 @@
         "unit",
         "liability",
         "connectivity",
-        "reverse_link",
-        "claim",
-        "policy"
+        "reverse_link"
       ]
     },
     {
@@ -731,7 +719,6 @@
       "route_hint": "/fleet/units/:id/detail?tab=brakes",
       "required": [
         "unit",
-        "scenario.maintenance",
         "connectivity",
         "reverse_link"
       ]
@@ -743,7 +730,6 @@
       "route_hint": "/fleet/units/:id/detail?tab=tires",
       "required": [
         "unit",
-        "scenario.maintenance",
         "connectivity",
         "reverse_link"
       ]
@@ -821,10 +807,8 @@
         "unit",
         "vendor",
         "ap_bill",
-        "scenario.maintenance",
         "connectivity",
-        "reverse_link",
-        "work_order"
+        "reverse_link"
       ]
     },
     {
@@ -847,9 +831,7 @@
         "trailer",
         "liability",
         "connectivity",
-        "reverse_link",
-        "claim",
-        "policy"
+        "reverse_link"
       ]
     },
     {
@@ -896,8 +878,7 @@
       "required": [
         "trailer",
         "connectivity",
-        "reverse_link",
-        "legal_matter"
+        "reverse_link"
       ]
     },
     {
@@ -1216,6 +1197,156 @@
           "id": "unit.detail.finance_linkage",
           "removed": [
             "liability"
+          ]
+        }
+      ]
+    },
+    "work_order_2026_08_13_remainder": {
+      "finding": "VERTICAL-OPS-COLS-REMAINDER-HONESTY",
+      "note": "work_order Required on chrome/create/catalog/hop without EntityLink kind drill. Built keep=[].",
+      "drops": [
+        {
+          "id": "unit.profile.maintenance",
+          "removed": [
+            "work_order"
+          ]
+        },
+        {
+          "id": "trailer.profile.maintenance",
+          "removed": [
+            "work_order"
+          ]
+        }
+      ]
+    },
+    "claim_2026_08_13_remainder": {
+      "finding": "VERTICAL-OPS-COLS-REMAINDER-HONESTY",
+      "note": "claim Required on chrome/create/catalog/hop without EntityLink kind drill. Built keep=[].",
+      "drops": [
+        {
+          "id": "unit.profile.insurance_summary",
+          "removed": [
+            "claim"
+          ]
+        },
+        {
+          "id": "unit.profile.insurance_claims_reverse",
+          "removed": [
+            "claim"
+          ]
+        },
+        {
+          "id": "unit.profile.safety_reverse",
+          "removed": [
+            "claim"
+          ]
+        },
+        {
+          "id": "unit.edit.insurance",
+          "removed": [
+            "claim"
+          ]
+        },
+        {
+          "id": "trailer.profile.insurance_claims_reverse",
+          "removed": [
+            "claim"
+          ]
+        }
+      ]
+    },
+    "accident_2026_08_13_remainder": {
+      "finding": "VERTICAL-OPS-COLS-REMAINDER-HONESTY",
+      "note": "accident Required on chrome/create/catalog/hop without EntityLink kind drill. Built keep=[].",
+      "drops": [
+        {
+          "id": "unit.profile.safety_reverse",
+          "removed": [
+            "accident"
+          ]
+        }
+      ]
+    },
+    "legal_matter_2026_08_13_remainder": {
+      "finding": "VERTICAL-OPS-COLS-REMAINDER-HONESTY",
+      "note": "legal_matter Required on chrome/create/catalog/hop without EntityLink kind drill. Built keep=[].",
+      "drops": [
+        {
+          "id": "unit.profile.legal_reverse",
+          "removed": [
+            "legal_matter"
+          ]
+        },
+        {
+          "id": "trailer.profile.legal_reverse",
+          "removed": [
+            "legal_matter"
+          ]
+        }
+      ]
+    },
+    "policy_2026_08_13_remainder": {
+      "finding": "VERTICAL-OPS-COLS-REMAINDER-HONESTY",
+      "note": "policy Required on chrome/create/catalog/hop without EntityLink kind drill. Built keep=[].",
+      "drops": [
+        {
+          "id": "unit.profile.insurance_summary",
+          "removed": [
+            "policy"
+          ]
+        },
+        {
+          "id": "unit.profile.insurance_claims_reverse",
+          "removed": [
+            "policy"
+          ]
+        },
+        {
+          "id": "unit.edit.insurance",
+          "removed": [
+            "policy"
+          ]
+        },
+        {
+          "id": "trailer.profile.insurance_claims_reverse",
+          "removed": [
+            "policy"
+          ]
+        }
+      ]
+    },
+    "scenario.maintenance_2026_08_13_remainder": {
+      "finding": "VERTICAL-OPS-COLS-REMAINDER-HONESTY",
+      "note": "scenario.maintenance Required on chrome/create/catalog/hop without EntityLink kind drill. Built keep=[].",
+      "drops": [
+        {
+          "id": "roster.filter.status_inshop",
+          "removed": [
+            "scenario.maintenance"
+          ]
+        },
+        {
+          "id": "unit.profile.maintenance",
+          "removed": [
+            "scenario.maintenance"
+          ]
+        },
+        {
+          "id": "unit.detail.brakes",
+          "removed": [
+            "scenario.maintenance"
+          ]
+        },
+        {
+          "id": "unit.detail.tires",
+          "removed": [
+            "scenario.maintenance"
+          ]
+        },
+        {
+          "id": "trailer.profile.maintenance",
+          "removed": [
+            "scenario.maintenance"
           ]
         }
       ]

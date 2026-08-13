@@ -267,8 +267,7 @@
       "required": [
         "unit",
         "vendor",
-        "connectivity",
-        "work_order"
+        "connectivity"
       ]
     },
     {
@@ -788,6 +787,18 @@
           "id": "chrome.toolbar_filter",
           "removed": [
             "qbo_chrome"
+          ]
+        }
+      ]
+    },
+    "work_order_2026_08_13_remainder": {
+      "finding": "VERTICAL-OPS-COLS-REMAINDER-HONESTY",
+      "note": "work_order Required on chrome/create/catalog/hop without EntityLink kind drill. Built keep=[].",
+      "drops": [
+        {
+          "id": "jump.maintenance",
+          "removed": [
+            "work_order"
           ]
         }
       ]

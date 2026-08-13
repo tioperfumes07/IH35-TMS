@@ -74,3 +74,5 @@
 2026-08-13T22:28Z Cursor | SHIPPED reverse+picker drain wave (#6573–#6581) | Live=BLOCKED | NEXT=secondary picker_law + liability/expense honesty
 2026-08-13T22:35Z Cursor | shipping VERTICAL-REVERSE-LINK-SECONDARY-BATCH | Live=BLOCKED | NEXT=picker/qbo/liability/expense secondary
 2026-08-13T22:40Z Cursor | shipping VERTICAL-SECONDARY-COLS-HONESTY — picker/qbo/liability/expense Gap→0 | Live=BLOCKED
+2026-08-13T22:45Z Cursor | SCOREBOARD COL Gaps→0 (reverse/picker/qbo/money) via #6573–#6584 weekend fast-push | Live=BLOCKED — FULLY-WIRED item 12 NOT done | NEXT=recensus other Required cols / Live Chrome gate
+2026-08-13T22:50Z Cursor | shipping VERTICAL-OPS-COLS-REMAINDER-HONESTY | work_order/claim/accident/… Gap→0 | Live=BLOCKED

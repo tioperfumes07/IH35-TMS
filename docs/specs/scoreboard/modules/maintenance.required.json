@@ -145,8 +145,6 @@
         "ap_bill",
         "expense",
         "gl_je",
-        "inventory",
-        "scenario.maintenance",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -164,8 +162,6 @@
         "ap_bill",
         "expense",
         "gl_je",
-        "inventory",
-        "scenario.maintenance",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -183,7 +179,6 @@
         "ap_bill",
         "expense",
         "gl_je",
-        "scenario.maintenance",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -203,14 +198,9 @@
         "ap_bill",
         "expense",
         "gl_je",
-        "inventory",
-        "scenario.maintenance",
-        "scenario.insurance",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "accident",
-        "claim"
+        "connectivity"
       ]
     },
     {
@@ -225,8 +215,6 @@
         "ap_bill",
         "expense",
         "gl_je",
-        "inventory",
-        "scenario.maintenance",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -245,8 +233,6 @@
         "ap_bill",
         "expense",
         "gl_je",
-        "inventory",
-        "scenario.maintenance",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -264,8 +250,6 @@
         "ap_bill",
         "expense",
         "gl_je",
-        "inventory",
-        "scenario.maintenance",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -284,7 +268,6 @@
         "ap_bill",
         "expense",
         "gl_je",
-        "scenario.maintenance",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -300,7 +283,6 @@
         "unit",
         "ap_bill",
         "gl_je",
-        "scenario.maintenance",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -316,7 +298,6 @@
         "unit",
         "expense",
         "gl_je",
-        "scenario.maintenance",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -331,7 +312,6 @@
         "driver",
         "unit",
         "load",
-        "scenario.maintenance",
         "qbo_chrome",
         "connectivity",
         "reverse_link"
@@ -344,7 +324,6 @@
       "route_hint": "/maintenance/arriving-soon",
       "required": [
         "unit",
-        "scenario.maintenance",
         "qbo_chrome",
         "connectivity",
         "reverse_link"
@@ -359,8 +338,6 @@
         "driver",
         "unit",
         "trailer",
-        "scenario.maintenance",
-        "scenario.insurance",
         "qbo_chrome",
         "connectivity"
       ]
@@ -373,7 +350,6 @@
       "required": [
         "driver",
         "unit",
-        "scenario.maintenance",
         "qbo_chrome",
         "connectivity",
         "reverse_link"
@@ -386,7 +362,6 @@
       "route_hint": "/maintenance/severe-repairs",
       "required": [
         "unit",
-        "scenario.maintenance",
         "picker_law",
         "qbo_chrome",
         "connectivity",
@@ -403,7 +378,6 @@
         "vendor",
         "unit",
         "ap_bill",
-        "scenario.maintenance",
         "qbo_chrome",
         "connectivity",
         "reverse_link"
@@ -418,7 +392,6 @@
         "driver",
         "unit",
         "trailer",
-        "scenario.maintenance",
         "qbo_chrome",
         "connectivity",
         "reverse_link"
@@ -432,7 +405,6 @@
       "required": [
         "driver",
         "unit",
-        "scenario.maintenance",
         "qbo_chrome",
         "connectivity",
         "reverse_link"
@@ -445,7 +417,6 @@
       "route_hint": "/maintenance/parts-inventory",
       "required": [
         "vendor",
-        "inventory",
         "ap_bill",
         "gl_je",
         "picker_law",
@@ -460,7 +431,6 @@
       "route_hint": "/maintenance/pm-schedule",
       "required": [
         "unit",
-        "scenario.maintenance",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -473,7 +443,6 @@
       "route_hint": "/maintenance/pm-auto-engine",
       "required": [
         "unit",
-        "scenario.maintenance",
         "qbo_chrome",
         "connectivity",
         "reverse_link"
@@ -487,7 +456,6 @@
       "required": [
         "driver",
         "unit",
-        "scenario.maintenance",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -500,7 +468,6 @@
       "route_hint": "/maintenance/parts",
       "required": [
         "vendor",
-        "inventory",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -524,7 +491,6 @@
       "sub": "+ Create Rule",
       "route_hint": "/maintenance/fault-rules",
       "required": [
-        "scenario.maintenance",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -537,7 +503,6 @@
       "route_hint": "/maintenance/fault-drafts",
       "required": [
         "unit",
-        "scenario.maintenance",
         "qbo_chrome",
         "connectivity",
         "reverse_link"
@@ -551,8 +516,6 @@
       "required": [
         "unit",
         "trailer",
-        "inventory",
-        "scenario.maintenance",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -564,7 +527,6 @@
       "sub": "+ Create Brand",
       "route_hint": "/maintenance/tires",
       "required": [
-        "inventory",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -579,13 +541,10 @@
         "vendor",
         "unit",
         "ap_bill",
-        "scenario.maintenance",
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link",
-        "claim",
-        "policy"
+        "reverse_link"
       ]
     },
     {
@@ -598,8 +557,7 @@
       "required": [
         "connectivity",
         "unit",
-        "vendor",
-        "work_order"
+        "vendor"
       ]
     },
     {
@@ -612,8 +570,7 @@
       "required": [
         "connectivity",
         "unit",
-        "vendor",
-        "work_order"
+        "vendor"
       ]
     },
     {
@@ -640,7 +597,6 @@
       "surface_path": "pages/maintenance/RoadServiceTicketModal.tsx",
       "required": [
         "connectivity",
-        "work_order",
         "unit",
         "vendor"
       ]
@@ -655,7 +611,6 @@
       "required": [
         "connectivity",
         "picker_law",
-        "work_order",
         "unit",
         "vendor"
       ]
@@ -670,8 +625,7 @@
       "required": [
         "connectivity",
         "unit",
-        "vendor",
-        "work_order"
+        "vendor"
       ]
     },
     {
@@ -684,7 +638,6 @@
       "required": [
         "connectivity",
         "picker_law",
-        "work_order",
         "unit",
         "vendor"
       ]
@@ -698,7 +651,6 @@
       "surface_path": "pages/maintenance/components/TriageModal.tsx",
       "required": [
         "connectivity",
-        "work_order",
         "unit",
         "vendor"
       ]
@@ -713,7 +665,6 @@
       "required": [
         "connectivity",
         "reverse_link",
-        "work_order",
         "unit",
         "vendor"
       ]
@@ -729,7 +680,6 @@
         "connectivity",
         "unit",
         "vendor",
-        "work_order",
         "ap_bill"
       ]
     },
@@ -745,7 +695,6 @@
         "picker_law",
         "unit",
         "vendor",
-        "work_order",
         "ap_bill"
       ]
     },
@@ -761,7 +710,6 @@
         "picker_law",
         "unit",
         "vendor",
-        "work_order",
         "ap_bill",
         "expense"
       ]
@@ -1116,6 +1064,360 @@
           "id": "maintenance.modal.create_bill",
           "removed": [
             "expense"
+          ]
+        }
+      ]
+    },
+    "work_order_2026_08_13_remainder": {
+      "finding": "VERTICAL-OPS-COLS-REMAINDER-HONESTY",
+      "note": "work_order Required on chrome/create/catalog/hop without EntityLink kind drill. Built keep=['maintenance.modal.work_order_detail'].",
+      "drops": [
+        {
+          "id": "maintenance.modal.add_parts_link",
+          "removed": [
+            "work_order"
+          ]
+        },
+        {
+          "id": "maintenance.modal.location_map",
+          "removed": [
+            "work_order"
+          ]
+        },
+        {
+          "id": "maintenance.modal.road_service_ticket",
+          "removed": [
+            "work_order"
+          ]
+        },
+        {
+          "id": "maintenance.modal.work_order_create",
+          "removed": [
+            "work_order"
+          ]
+        },
+        {
+          "id": "maintenance.modal.convert_issue_to_wo",
+          "removed": [
+            "work_order"
+          ]
+        },
+        {
+          "id": "maintenance.modal.create_work_order",
+          "removed": [
+            "work_order"
+          ]
+        },
+        {
+          "id": "maintenance.modal.triage",
+          "removed": [
+            "work_order"
+          ]
+        },
+        {
+          "id": "maintenance.panel.road_service_active",
+          "removed": [
+            "work_order"
+          ]
+        },
+        {
+          "id": "maintenance.modal.fault_rule",
+          "removed": [
+            "work_order"
+          ]
+        },
+        {
+          "id": "maintenance.modal.create_bill",
+          "removed": [
+            "work_order"
+          ]
+        },
+        {
+          "id": "maintenance.modal.create_expense",
+          "removed": [
+            "work_order"
+          ]
+        }
+      ]
+    },
+    "claim_2026_08_13_remainder": {
+      "finding": "VERTICAL-OPS-COLS-REMAINDER-HONESTY",
+      "note": "claim Required on chrome/create/catalog/hop without EntityLink kind drill. Built keep=[].",
+      "drops": [
+        {
+          "id": "wo.source.ac",
+          "removed": [
+            "claim"
+          ]
+        },
+        {
+          "id": "warranty.create_claim",
+          "removed": [
+            "claim"
+          ]
+        }
+      ]
+    },
+    "accident_2026_08_13_remainder": {
+      "finding": "VERTICAL-OPS-COLS-REMAINDER-HONESTY",
+      "note": "accident Required on chrome/create/catalog/hop without EntityLink kind drill. Built keep=[].",
+      "drops": [
+        {
+          "id": "wo.source.ac",
+          "removed": [
+            "accident"
+          ]
+        }
+      ]
+    },
+    "inventory_2026_08_13_remainder": {
+      "finding": "VERTICAL-OPS-COLS-REMAINDER-HONESTY",
+      "note": "inventory Required on chrome/create/catalog/hop without EntityLink kind drill. Built keep=[].",
+      "drops": [
+        {
+          "id": "wo.create",
+          "removed": [
+            "inventory"
+          ]
+        },
+        {
+          "id": "wo.source.is",
+          "removed": [
+            "inventory"
+          ]
+        },
+        {
+          "id": "wo.source.ac",
+          "removed": [
+            "inventory"
+          ]
+        },
+        {
+          "id": "wo.source.et",
+          "removed": [
+            "inventory"
+          ]
+        },
+        {
+          "id": "wo.source.rt",
+          "removed": [
+            "inventory"
+          ]
+        },
+        {
+          "id": "wo.source.it",
+          "removed": [
+            "inventory"
+          ]
+        },
+        {
+          "id": "parts_inventory.record_purchase",
+          "removed": [
+            "inventory"
+          ]
+        },
+        {
+          "id": "parts.create",
+          "removed": [
+            "inventory"
+          ]
+        },
+        {
+          "id": "tires.create_record",
+          "removed": [
+            "inventory"
+          ]
+        },
+        {
+          "id": "tires.create_brand",
+          "removed": [
+            "inventory"
+          ]
+        }
+      ]
+    },
+    "policy_2026_08_13_remainder": {
+      "finding": "VERTICAL-OPS-COLS-REMAINDER-HONESTY",
+      "note": "policy Required on chrome/create/catalog/hop without EntityLink kind drill. Built keep=[].",
+      "drops": [
+        {
+          "id": "warranty.create_claim",
+          "removed": [
+            "policy"
+          ]
+        }
+      ]
+    },
+    "scenario.maintenance_2026_08_13_remainder": {
+      "finding": "VERTICAL-OPS-COLS-REMAINDER-HONESTY",
+      "note": "scenario.maintenance Required on chrome/create/catalog/hop without EntityLink kind drill. Built keep=[].",
+      "drops": [
+        {
+          "id": "wo.create",
+          "removed": [
+            "scenario.maintenance"
+          ]
+        },
+        {
+          "id": "wo.source.is",
+          "removed": [
+            "scenario.maintenance"
+          ]
+        },
+        {
+          "id": "wo.source.es",
+          "removed": [
+            "scenario.maintenance"
+          ]
+        },
+        {
+          "id": "wo.source.ac",
+          "removed": [
+            "scenario.maintenance"
+          ]
+        },
+        {
+          "id": "wo.source.et",
+          "removed": [
+            "scenario.maintenance"
+          ]
+        },
+        {
+          "id": "wo.source.rt",
+          "removed": [
+            "scenario.maintenance"
+          ]
+        },
+        {
+          "id": "wo.source.it",
+          "removed": [
+            "scenario.maintenance"
+          ]
+        },
+        {
+          "id": "wo.source.rs",
+          "removed": [
+            "scenario.maintenance"
+          ]
+        },
+        {
+          "id": "wo.create_bill",
+          "removed": [
+            "scenario.maintenance"
+          ]
+        },
+        {
+          "id": "wo.create_expense",
+          "removed": [
+            "scenario.maintenance"
+          ]
+        },
+        {
+          "id": "in_transit.promote_to_wo",
+          "removed": [
+            "scenario.maintenance"
+          ]
+        },
+        {
+          "id": "arriving_soon.convert_to_wo",
+          "removed": [
+            "scenario.maintenance"
+          ]
+        },
+        {
+          "id": "damage_reports.intake",
+          "removed": [
+            "scenario.maintenance"
+          ]
+        },
+        {
+          "id": "driver_reports.queue",
+          "removed": [
+            "scenario.maintenance"
+          ]
+        },
+        {
+          "id": "severe_repairs.convert_to_wo",
+          "removed": [
+            "scenario.maintenance"
+          ]
+        },
+        {
+          "id": "road_service.active",
+          "removed": [
+            "scenario.maintenance"
+          ]
+        },
+        {
+          "id": "defects.convert_to_wo",
+          "removed": [
+            "scenario.maintenance"
+          ]
+        },
+        {
+          "id": "pre_flight_dvir.queue",
+          "removed": [
+            "scenario.maintenance"
+          ]
+        },
+        {
+          "id": "pm.schedule.create",
+          "removed": [
+            "scenario.maintenance"
+          ]
+        },
+        {
+          "id": "pm.auto_engine.run",
+          "removed": [
+            "scenario.maintenance"
+          ]
+        },
+        {
+          "id": "inspections.create",
+          "removed": [
+            "scenario.maintenance"
+          ]
+        },
+        {
+          "id": "fault_rules.create",
+          "removed": [
+            "scenario.maintenance"
+          ]
+        },
+        {
+          "id": "fault_drafts.review",
+          "removed": [
+            "scenario.maintenance"
+          ]
+        },
+        {
+          "id": "tires.create_record",
+          "removed": [
+            "scenario.maintenance"
+          ]
+        },
+        {
+          "id": "warranty.create_claim",
+          "removed": [
+            "scenario.maintenance"
+          ]
+        }
+      ]
+    },
+    "scenario.insurance_2026_08_13_remainder": {
+      "finding": "VERTICAL-OPS-COLS-REMAINDER-HONESTY",
+      "note": "scenario.insurance Required on chrome/create/catalog/hop without EntityLink kind drill. Built keep=[].",
+      "drops": [
+        {
+          "id": "wo.source.ac",
+          "removed": [
+            "scenario.insurance"
+          ]
+        },
+        {
+          "id": "damage_reports.intake",
+          "removed": [
+            "scenario.insurance"
           ]
         }
       ]
