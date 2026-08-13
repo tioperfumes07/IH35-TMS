@@ -270,10 +270,12 @@ export function AssetSafetyReverseSection({
       >
         {dvirs.map((dvir) => (
           <li key={s(dvir.id)} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-sm">
-            {/* No EntityLink kind: the DVIR list has no per-record drill target to open. */}
-            <span className="font-semibold text-slate-700">
-              {s(dvir.type) || "DVIR"} · {s(dvir.defect_severity) || "none"}
-            </span>
+            <EntityLink
+              kind="dvir"
+              id={s(dvir.id) || null}
+              label={`${s(dvir.type) || "DVIR"} · ${s(dvir.defect_severity) || "none"}`}
+              className="font-semibold text-slate-700"
+            />
             <span className="ml-2 text-gray-600">{s(dvir.driver_name)}</span>
             <div className="mt-1 text-xs text-gray-600">
               {formatDateUS(s(dvir.submitted_at))} · {s(dvir.defect_count) || "0"} defect(s)

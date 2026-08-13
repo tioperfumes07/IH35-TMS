@@ -5,6 +5,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { DvirMaintenanceInspectionsReverseSection } from "../../components/maintenance/DvirMaintenanceInspectionsReverseSection";
 
 type DefectRow = Record<string, unknown>;
 
@@ -126,6 +127,8 @@ export function IdvrDetailPage() {
         storageKey="safety-idvr-detail-defects"
         tableTestId="idvr-detail-defects-table"
       />
+
+      <DvirMaintenanceInspectionsReverseSection operatingCompanyId={companyId} dvirSubmissionId={id} />
     </div>
   );
 }
