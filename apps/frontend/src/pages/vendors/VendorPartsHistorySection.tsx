@@ -21,15 +21,14 @@ function formatMoney(value: number | null | undefined) {
 // and vehicle-profile/UnitPartsHistorySection.tsx already read — this vendor's own profile just never
 // surfaced it. The GET route has no vendor_id filter yet, so this fetches the company's recent links
 // (server-side LIMIT 500) and filters client-side; a dedicated /vendors/:vendorId/parts-history
-// endpoint mirroring listUnitPartsHistory() is a real backend follow-up, not fabricated here.
 export function VendorPartsHistorySection({ operatingCompanyId, vendorId }: Props) {
   const query = useQuery({
     queryKey: ["vendor-parts-history", operatingCompanyId, vendorId],
-    queryFn: () => listPartsAssignments(operatingCompanyId),
+    queryFn: () => listPartsAssignments(operatingCompanyId, { vendor_id: vendorId }),
     enabled: Boolean(operatingCompanyId && vendorId),
   });
 
-  const rows = (query.data ?? []).filter((row) => row.vendor_id === vendorId);
+  const rows = query.data ?? [];
 
   return (
     <DataPanel title="Parts Invoiced">

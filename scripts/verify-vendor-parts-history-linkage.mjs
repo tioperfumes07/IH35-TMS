@@ -1,0 +1,58 @@
+#!/usr/bin/env node
+import fs from "node:fs";
+
+const LABEL = "verify-vendor-parts-history-linkage";
+const files = {
+  route: "apps/backend/src/maintenance/parts-invoice-links.routes.ts",
+  api: "apps/frontend/src/api/maintenance.ts",
+  creator: "apps/frontend/src/components/maintenance/AddPartsLinkModal.tsx",
+  reverse: "apps/frontend/src/pages/vendors/VendorPartsHistorySection.tsx",
+  link: "apps/frontend/src/components/shared/EntityLink.tsx",
+};
+const source = Object.fromEntries(Object.entries(files).map(([key, file]) => [key, fs.readFileSync(file, "utf8")]));
+
+function audit(s) {
+  const failures = [];
+  if (!/ReferenceSelect[\s\S]{0,180}createKind="vendor"/.test(s.creator) || !/vendor_id:\s*vendorId/.test(s.creator)) failures.push("creator must pick and submit canonical vendor FK");
+  if (!/EXISTS \([\s\S]{0,160}FROM mdata\.vendors[\s\S]{0,160}deactivated_at IS NULL/.test(s.route)) failures.push("writer must validate active tenant vendor");
+  if (!/FROM maintenance\.parts_inventory[\s\S]{0,100}operating_company_id = \$2::uuid/.test(s.route)) failures.push("writer must validate optional tenant part FK");
+  if (!/linked_entity_not_in_operating_company/.test(s.route)) failures.push("invalid links must fail before insert");
+  if (!/vendor_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)/.test(s.route) || !/pil\.vendor_id = \$\$\{values\.length\}::uuid/.test(s.route)) failures.push("list route must apply exact vendor predicate");
+  if (!/filters\?: \{ vendor_id\?: string \}/.test(s.api) || !/query\.set\("vendor_id", filters\.vendor_id\)/.test(s.api)) failures.push("client must forward vendor reverse filter");
+  if (!/listPartsAssignments\(operatingCompanyId, \{ vendor_id: vendorId \}\)/.test(s.reverse)) failures.push("vendor profile must request exact reverse set");
+  if (/\.filter\(\(row\) => row\.vendor_id === vendorId\)/.test(s.reverse)) failures.push("vendor profile must not browser-filter capped company response");
+  if (!/ListErrorBanner/.test(s.reverse) || !/No parts invoices are linked/.test(s.reverse)) failures.push("reverse surface must preserve honest states");
+  if (!/kind="work_order"[\s\S]{0,100}work_order_id/.test(s.reverse)) failures.push("reverse rows must drill to canonical work order");
+  if (!/case "work_order":[\s\S]{0,100}maintenance\/work-orders/.test(s.link)) failures.push("work order route must be canonical");
+  return failures;
+}
+
+if (process.argv.includes("--selftest")) {
+  const mutations = [
+    ["picker", "creator", /createKind="vendor"/, 'createKind="customer"'],
+    ["payload", "creator", /vendor_id:\s*vendorId/, "vendor_id: undefined"],
+    ["vendor validation", "route", /deactivated_at IS NULL/, "TRUE"],
+    ["part validation", "route", /FROM maintenance\.parts_inventory/, "FROM maintenance.parts_catalog"],
+    ["reject", "route", /linked_entity_not_in_operating_company/, "invalid_link"],
+    ["schema", "route", /vendor_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)/, ""],
+    ["filter", "route", /pil\.vendor_id = \$\$\{values\.length\}::uuid/, "TRUE"],
+    ["api", "api", /query\.set\("vendor_id", filters\.vendor_id\)/, 'query.set("status", filters.vendor_id)'],
+    ["reverse", "reverse", /listPartsAssignments\(operatingCompanyId, \{ vendor_id: vendorId \}\)/, "listPartsAssignments(operatingCompanyId)"],
+    ["error", "reverse", /ListErrorBanner/g, "MissingError"],
+    ["drill", "reverse", /kind="work_order"/, 'kind="vendor"'],
+    ["route", "link", /case "work_order":/, 'case "work_order_missing":'],
+  ];
+  for (const [name, key, pattern, replacement] of mutations) {
+    const changed = { ...source, [key]: source[key].replace(pattern, replacement) };
+    if (changed[key] === source[key] || audit(changed).length === 0) {
+      console.error(`${LABEL} SELFTEST FAIL — ${name} mutation escaped or was inert`);
+      process.exit(1);
+    }
+  }
+  console.log(`${LABEL} SELFTEST PASS — ${mutations.length} linkage mutations detected`);
+  process.exit(0);
+}
+
+const failures = audit(source);
+if (failures.length) { console.error(`${LABEL} FAIL\n- ${failures.join("\n- ")}`); process.exit(1); }
+console.log(`${LABEL} PASS — canonical vendor create→tenant validation→exact vendor reverse→WO drill`);
