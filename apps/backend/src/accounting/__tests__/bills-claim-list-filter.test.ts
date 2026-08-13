@@ -42,3 +42,27 @@ describe("accounting/bills ACCT-F5035-CLAIM-LIST-FILTER-REVERSE", () => {
     expect(reverse).toMatch(/listBills\(operatingCompanyId,\s*\{\s*\.\.\.filter/);
   });
 });
+
+describe("accounting/bills ACCT-F5036-UNIT-LIST-FILTER-REVERSE", () => {
+  it("GET list accepts optional unit_id", () => {
+    expect(routes).toMatch(
+      /listBillsQuerySchema = companyQuerySchema\.extend\(\{[\s\S]*?unit_id: z\.string\(\)\.uuid\(\)\.optional\(\),/
+    );
+  });
+
+  it("passes unitId into listBills and filters b.unit_id", () => {
+    expect(routes).toContain("unitId: query.data.unit_id");
+    expect(service).toContain("if (options.unitId) {");
+    expect(service).toContain("where.push(`b.unit_id = $${values.length}::uuid`);");
+    const hits = service.split("if (options.unitId) {").length - 1;
+    expect(hits).toBeGreaterThanOrEqual(2);
+  });
+
+  it("VehicleProfile mounts BillsReverseSection with unit_id", () => {
+    const page = fs.readFileSync(
+      path.join(here, "../../../../frontend/src/pages/fleet/VehicleProfilePage.tsx"),
+      "utf8"
+    );
+    expect(page).toMatch(/BillsReverseSection[\s\S]{0,280}?filter=\{\{\s*unit_id:/);
+  });
+});

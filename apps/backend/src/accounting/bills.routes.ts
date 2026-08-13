@@ -42,6 +42,8 @@ const listBillsQuerySchema = companyQuerySchema.extend({
   date_to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   // ACCT-F5035 — claim→bill reverse (create stamps insurance_claim_id; list never filtered).
   insurance_claim_id: z.string().uuid().optional(),
+  // ACCT-F5036 — unit→bill reverse (create stamps unit_id; list never filtered).
+  unit_id: z.string().uuid().optional(),
   limit: z.coerce.number().int().min(1).max(500).default(100),
   offset: z.coerce.number().int().min(0).default(0),
 });
@@ -149,6 +151,7 @@ export async function registerBillsRoutes(app: FastifyInstance) {
       offset: query.data.offset,
       hasBalance: query.data.has_balance,
       insuranceClaimId: query.data.insurance_claim_id,
+      unitId: query.data.unit_id,
     });
     return { rows };
   });

@@ -789,6 +789,7 @@ export function listBills(
     date_from?: string;
     date_to?: string;
     insurance_claim_id?: string;
+    unit_id?: string;
     limit?: number;
     offset?: number;
   } = {}
@@ -801,6 +802,7 @@ export function listBills(
   if (params.date_from) query.set("date_from", params.date_from);
   if (params.date_to) query.set("date_to", params.date_to);
   if (params.insurance_claim_id) query.set("insurance_claim_id", params.insurance_claim_id);
+  if (params.unit_id) query.set("unit_id", params.unit_id);
   if (params.limit !== undefined) query.set("limit", String(params.limit));
   if (params.offset !== undefined) query.set("offset", String(params.offset));
   const qs = query.toString();
