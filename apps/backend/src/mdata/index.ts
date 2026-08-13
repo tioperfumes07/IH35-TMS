@@ -4,6 +4,7 @@ import { registerCustomerFinancialSummaryRoutes } from "./customer-financial.rou
 import { registerCustomerInvoicesRoutes } from "./customer-invoices.routes.js";
 import { registerDriversBulkRoutes } from "../drivers/drivers-bulk.routes.js";
 import { registerDriverRoutes } from "./drivers.routes.js";
+import { registerDriverLabelsRoutes } from "./driver-labels.routes.js";
 import { registerDriversImportRoutes } from "./drivers-import.routes.js";
 import { registerDriverHireDateApplyRoutes } from "./driver-hire-date-apply.routes.js";
 import { registerMdataAccountsRoutes } from "./accounts.routes.js";
@@ -25,6 +26,7 @@ import { registerVendorRoutes } from "./vendors.routes.js";
 
 export async function registerMdataRoutes(app: FastifyInstance) {
   await registerDriverRoutes(app);
+  await registerDriverLabelsRoutes(app);
   await registerDriversBulkRoutes(app);
   await registerDriversImportRoutes(app);
   await registerDriverHireDateApplyRoutes(app);

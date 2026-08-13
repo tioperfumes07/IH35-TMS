@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
+import { useDriverLabels } from "../../../hooks/useDriverLabels";
 import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { listDrivers } from "../../../api/mdata";
@@ -100,21 +101,7 @@ export function DrugAlcoholTab() {
       ),
   });
 
-  // SAF-B24-residual: DriverPickerWithCreate's onChange only returns the id, so the "Selected:"
-  // preview line below rendered an unlabeled EntityLink — the raw uuid was the visible link text.
-  const allDriversQ = useQuery({
-    queryKey: ["mdata", "drivers", "all", companyId],
-    queryFn: () => listDrivers({ operating_company_id: companyId, include_system: true, limit: 500 }),
-    enabled: Boolean(companyId),
-  });
-  const driverNameById = useMemo(() => {
-    const map = new Map<string, string>();
-    for (const driver of allDriversQ.data?.drivers ?? []) {
-      const name = [driver.first_name, driver.last_name].filter(Boolean).join(" ").trim();
-      if (name) map.set(driver.id, name);
-    }
-    return map;
-  }, [allDriversQ.data]);
+  const { byId: driverNameById } = useDriverLabels(companyId, [driverId]);
 
   const testsQ = useQuery({
     queryKey: ["safety", "drug-program", "tests", companyId],
