@@ -12,6 +12,7 @@ import { AuditEventCard } from "../../../components/audit/AuditEventCard";
 import { SuperAdminNav } from "../../../components/admin/SuperAdminNav";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+import { EntityLink } from "../../../components/shared/EntityLink";
 
 const PAGE_SIZE = 100;
 
@@ -59,11 +60,7 @@ const COLUMNS: Array<ParityColumn<AuditViewerEvent>> = [
     label: "Actor",
     sortable: true,
     sortValue: (row) => entityLabel(row.actor_email, row.actor_user_id, "User") ?? "",
-    render: (row) => (
-      <span className="text-gray-600">
-        {row.actor_email ?? (row.actor_user_id ? entityLabel(null, row.actor_user_id, "User") : "—")}
-      </span>
-    ),
+    render: (row) => <EntityLink kind="user" id={row.actor_user_id} label={row.actor_email ?? (row.actor_user_id ? entityLabel(null, row.actor_user_id, "User") : "—")} className="text-gray-600" />,
   },
   {
     key: "source",

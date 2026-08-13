@@ -8,6 +8,7 @@ import { Button } from "../../../components/Button";
 import { fetchAuditReport, type AuditReportParams, type AuditReportRow } from "../../../api/auditReports";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { EntityPicker } from "../../../components/parity/EntityPicker";
+import { EntityLink } from "../../../components/shared/EntityLink";
 
 const PAGE_SIZE = 100;
 
@@ -48,7 +49,7 @@ const AUDIT_REPORT_COLUMNS: Array<ParityColumn<AuditReportTableRow>> = [
     label: "Actor",
     sortable: true,
     sortValue: (row) => entityLabel(row.actor_email, row.actor_user_id, "User"),
-    render: (row) => <span className="text-gray-500">{entityLabel(row.actor_email, row.actor_user_id, "User") ?? "—"}</span>,
+    render: (row) => <EntityLink kind="user" id={row.actor_user_id} label={entityLabel(row.actor_email, row.actor_user_id, "User") ?? "—"} className="text-gray-500" />,
   },
   {
     key: "source",

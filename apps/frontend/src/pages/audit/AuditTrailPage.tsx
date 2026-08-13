@@ -8,6 +8,7 @@ import { DateTimePicker } from "../../components/forms/DateTimePicker";
 import { isoToDateTimeLocalValue } from "../../lib/formatDate";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { EntityLink } from "../../components/shared/EntityLink";
 
 const PAGE_SIZE = 100;
 
@@ -74,11 +75,7 @@ const COLUMNS: Array<ParityColumn<SpineEvent>> = [
     label: "Actor",
     sortable: true,
     sortValue: (row) => entityLabel(row.actor_email, row.actor_user_id, "User"),
-    render: (row) => (
-      <span className="text-gray-600">
-        {entityLabel(row.actor_email, row.actor_user_id, "User") || "—"}
-      </span>
-    ),
+    render: (row) => <EntityLink kind="user" id={row.actor_user_id} label={entityLabel(row.actor_email, row.actor_user_id, "User") || "—"} className="text-gray-600" />,
   },
   {
     key: "subject_type",

@@ -16,6 +16,7 @@ import {
 } from "../../api/dailyTasks";
 import { listUsers } from "../../api/identity";
 import { useAuth } from "../../auth/useAuth";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { Button } from "../../components/Button";
 import { ListErrorState } from "../../components/ListErrorState";
 import { Modal } from "../../components/Modal";
@@ -258,7 +259,7 @@ export function DailyTasksPage() {
         render: (task) => (
           <div className="inline-flex items-center gap-1 text-slate-700">
             <UserRound className="h-3.5 w-3.5" />
-            <span>{entityLabel(task.assigned_to_email, task.assigned_to_user_id, "User")}</span>
+            <EntityLink kind="user" id={task.assigned_to_user_id} label={entityLabel(task.assigned_to_email, task.assigned_to_user_id, "User")} />
           </div>
         ),
       },
@@ -515,7 +516,7 @@ function TaskDetailDrawer({
                 <div>Status: {task.status}</div>
                 <div>Progress: {STATUS_STEPS[task.status]}</div>
                 <div>Priority: {task.priority}</div>
-                <div>Assignee: {entityLabel(task.assigned_to_email, task.assigned_to_user_id, "User")}</div>
+                <div>Assignee: <EntityLink kind="user" id={task.assigned_to_user_id} label={entityLabel(task.assigned_to_email, task.assigned_to_user_id, "User")} /></div>
                 <div>Due: {formatDateTime(task.due_at)}</div>
                 <div>Created: {formatDateTime(task.created_at)}</div>
                 <div>Accepted: {formatDateTime(task.accepted_at)}</div>

@@ -9,6 +9,7 @@ import { useListState } from "../../components/list-state";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { CappedListNotice } from "../../components/CappedListNotice";
+import { EntityLink } from "../../components/shared/EntityLink";
 
 function bulkCallPreview(id: string | null | undefined): string {
   if (!id) return "—";
@@ -70,7 +71,7 @@ export function AuditEventsList() {
         label: "Actor",
         sortable: true,
         sortValue: (row) => entityLabel(row.actor_email, row.actor_user_id, "User") ?? "",
-        render: (row) => entityLabel(row.actor_email, row.actor_user_id, "User") ?? "—",
+        render: (row) => <EntityLink kind="user" id={row.actor_user_id} label={entityLabel(row.actor_email, row.actor_user_id, "User") ?? "—"} />,
       },
       {
         key: "bulk_call_id",
