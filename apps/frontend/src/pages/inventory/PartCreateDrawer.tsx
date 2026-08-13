@@ -128,6 +128,7 @@ export function PartCreateDrawer({ isOpen, onClose, operatingCompanyId }: PartCr
         <form
           onSubmit={(e) => {
             e.preventDefault();
+            e.stopPropagation();
             if (!formData.category.trim()) return;
             createMutation.mutate(formData);
           }}

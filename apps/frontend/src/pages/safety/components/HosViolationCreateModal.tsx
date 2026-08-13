@@ -155,6 +155,7 @@ export function HosViolationCreateModal({ open, operatingCompanyId, onClose, onC
         data-testid="hos-violation-create-modal"
         onSubmit={(event) => {
           event.preventDefault();
+          event.stopPropagation();
           if (!canSubmit) return;
           mutation.mutate();
         }}

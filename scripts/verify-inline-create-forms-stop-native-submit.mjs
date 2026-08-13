@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["home","tasks","fuel","dispatch","driver-hub","maintenance","safety","compliance","drivers","fleet","insurance","legal","eld","cash-flow","settlements","accounting","banking","factoring","finance","customers","vendors","inventory","form_425","lists","reports","docs","users","help","program","system"],"cols":["picker_law","qbo_chrome"],"leafRe":".*(create|modal|drawer|wizard).*","task":"CLS-NESTED-CREATOR-SUBMIT","vertical":"all-frontend-create-surfaces"} */
 /**
  * GUARD: every modal/drawer <form> must intercept submit — no native GET.
  *
@@ -13,7 +14,7 @@
  * stops the class returning: a create form that forgets to intercept looks like success and silently
  * loses the record — the worst failure shape there is.
  *
- * ASSERTS, per <form> opening tag under components/: an `onSubmit` handler is present.
+ * ASSERTS, per <form> opening tag under all frontend source: an `onSubmit` handler is present.
  * Two further rules on inline creators specifically, because preventDefault alone was NOT enough here:
  * they must also `stopPropagation` (React bubbles across the portal into the wizard's outer form).
  *
@@ -24,7 +25,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
-const DIR = path.join(root, "apps/frontend/src/components");
+const DIR = path.join(root, "apps/frontend/src");
 const LABEL = "verify-inline-create-forms-stop-native-submit";
 
 /** Files whose <form> is illustrative/among comments only, or which render no real create form. */
@@ -34,7 +35,7 @@ const NOT_A_CREATE_FORM = new Set([
 ]);
 
 /**
- * KIND-SWEEP QUEUE — creators that intercept the browser but NOT the React portal.
+ * KIND-SWEEP QUEUE — must remain empty. Creators may not defer React-portal interception.
  *
  * Row 113 was fixed on the two files that were reported (CreateDriverModal, CreateUnitModal). This
  * guard swept the class and found NINE MORE inline creators with the same latent shape: they call
@@ -42,21 +43,11 @@ const NOT_A_CREATE_FORM = new Set([
  * the Book Load wizard, React still bubbles the submit across the portal into the wizard's outer
  * <form>. That is the half of the defect that made row 113 look like success.
  *
- * These are LATENT, not confirmed-broken: each only misfires where it is rendered inside another
- * form. Listing rather than failing red so the sweep is a work queue instead of a blocked build.
- * The list may only shrink; adding to it is a deliberate act visible in review.
+ * The full source sweep is now drained; every discovered create Modal/Drawer blocks both browser
+ * default submission and React propagation. New exceptions fail the build rather than joining a
+ * deferred queue.
  */
-const KIND_SWEEP_QUEUE = new Map([
-  ["apps/frontend/src/components/forms/shared/QuickCreateEntityModal.tsx", "no preventDefault AND no stopPropagation — the shared quick-create used by pickers; highest blast radius"],
-  ["apps/frontend/src/components/vendors/VendorCreateModal.tsx", "preventDefault only"],
-  ["apps/frontend/src/components/tasks/CreateTaskModal.tsx", "preventDefault only"],
-  ["apps/frontend/src/components/fleet/CreateTrailerModal.tsx", "preventDefault only"],
-  ["apps/frontend/src/components/drivers/AddTrainingModal.tsx", "preventDefault only"],
-  ["apps/frontend/src/components/insurance/ClaimCreateModal.tsx", "preventDefault only"],
-  ["apps/frontend/src/components/insurance/LawsuitCreateModal.tsx", "preventDefault only"],
-  ["apps/frontend/src/components/insurance/PolicyCreateModal.tsx", "preventDefault only"],
-  ["apps/frontend/src/components/parity/CatalogQuickCreateDrawer.tsx", "preventDefault only"],
-]);
+const KIND_SWEEP_QUEUE = new Map();
 
 const strip = (s) => s.replace(/\/\/[^\n]*/g, "").replace(/\/\*[\s\S]*?\*\//g, "");
 
@@ -85,10 +76,14 @@ export function formTags(code) {
 
 export function collectProblems(files) {
   const problems = [];
+  let formCount = 0;
+  let creatorCount = 0;
   for (const { rel, src } of files) {
     if (NOT_A_CREATE_FORM.has(rel)) continue;
     const code = strip(src);
-    for (const tag of formTags(code)) {
+    const tags = formTags(code);
+    formCount += tags.length;
+    for (const tag of tags) {
       if (!/onSubmit/.test(tag)) {
         problems.push(
           `${rel}: a <form> has no onSubmit handler. Nested inside the Book Load wizard's outer <form> this ` +
@@ -98,7 +93,8 @@ export function collectProblems(files) {
     }
     // Inline creators rendered inside the wizard need stopPropagation too, not just preventDefault.
     const isInlineCreator = /Modal|Drawer/.test(path.basename(rel)) && /Create|New|Add/.test(path.basename(rel));
-    if (isInlineCreator && formTags(code).length > 0) {
+    if (isInlineCreator && tags.length > 0) {
+      creatorCount += 1;
       const queued = KIND_SWEEP_QUEUE.has(rel);
       const clean = code.includes("preventDefault") && code.includes("stopPropagation");
       if (!clean && !queued) {
@@ -113,6 +109,9 @@ export function collectProblems(files) {
       }
     }
   }
+  if (files.length > 100 && formCount < 86) problems.push(`frontend form inventory shrank to ${formCount}; audit removals before lowering the ratchet`);
+  if (files.length > 100 && creatorCount < 21) problems.push(`nested creator inventory shrank to ${creatorCount}; audit removals before lowering the ratchet`);
+  if (KIND_SWEEP_QUEUE.size !== 0) problems.push("KIND_SWEEP_QUEUE must remain empty — nested creator submit defects cannot be deferred");
   return problems;
 }
 
