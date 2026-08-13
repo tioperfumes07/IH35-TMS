@@ -63,6 +63,9 @@ export function collectProblems(root = ROOT) {
   if (!/app\.post\("\/api\/v1\/safety\/training-records", RL_WRITE/.test(sources.training)) failures.push("training-record writer must be explicitly rate-limited");
   if (!/SELECT id FROM mdata\.drivers WHERE id = \$1::uuid AND operating_company_id = \$2::uuid/.test(sources.training) ||
       !/driver_not_in_operating_company/.test(sources.training)) failures.push("training-record writer must reject drivers outside the selected company");
+  if (!/app\.post\("\/api\/v1\/safety\/driver-qualification\/items", RL_WRITE/.test(sources.dq)) failures.push("DQF writer must be explicitly rate-limited");
+  if (!/SELECT id FROM mdata\.drivers WHERE id = \$1::uuid AND operating_company_id = \$2::uuid/.test(sources.dq) ||
+      !/driver_not_in_operating_company/.test(sources.dq)) failures.push("DQF writer must reject drivers outside the selected company");
   return failures;
 }
 
@@ -93,6 +96,8 @@ function selftest() {
       [REL.driver, '<MedicalCardsHistorySection operatingCompanyId={companyId} driverId={id}', '<MedicalCardsHistorySection operatingCompanyId={companyId} driverId={undefined}'],
       [REL.training, 'app.post("/api/v1/safety/training-records", RL_WRITE', 'app.post("/api/v1/safety/training-records", {}'],
       [REL.training, "operating_company_id = $2::uuid", "TRUE"],
+      [REL.dq, 'app.post("/api/v1/safety/driver-qualification/items", RL_WRITE', 'app.post("/api/v1/safety/driver-qualification/items", {}'],
+      [REL.dq, "operating_company_id = $2::uuid", "TRUE"],
     ];
     for (const [rel, before, after] of mutations) {
       const target = path.join(temp, rel);
@@ -114,4 +119,4 @@ if (failures.length) {
   for (const failure of failures) console.error(` - ${failure}`);
   process.exit(1);
 }
-console.log(`verify:safety-expiry-tracking-coverage OK${process.argv.includes("--selftest") ? " — 16/16 mutations killed" : ""}`);
+console.log(`verify:safety-expiry-tracking-coverage OK${process.argv.includes("--selftest") ? " — 18/18 mutations killed" : ""}`);
