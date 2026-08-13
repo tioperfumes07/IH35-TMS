@@ -13,15 +13,16 @@ import { entityLabel } from "../../lib/entity-label";
  * trailer-profile surface to show it — mirrors FuelTransactionsReverseSection.tsx's filter-union
  * convention. trailer_id mounted on TrailerProfilePage (#6343); driver_id on DriverProfilePage and
  * load_id on LoadDetailDrawer (ACCT-F5031); unit_id on VehicleProfilePage (ACCT-F5032);
- * work_order_id on WorkOrderDetailPage (ACCT-F5033).
+ * work_order_id on WorkOrderDetailPage (ACCT-F5033); insurance_claim_id on ClaimsTab (ACCT-F5034).
  */
 
 type Filter =
-  | { driver_id: string; load_id?: never; trailer_id?: never; unit_id?: never; work_order_id?: never }
-  | { load_id: string; driver_id?: never; trailer_id?: never; unit_id?: never; work_order_id?: never }
-  | { trailer_id: string; driver_id?: never; load_id?: never; unit_id?: never; work_order_id?: never }
-  | { unit_id: string; driver_id?: never; load_id?: never; trailer_id?: never; work_order_id?: never }
-  | { work_order_id: string; driver_id?: never; load_id?: never; trailer_id?: never; unit_id?: never };
+  | { driver_id: string; load_id?: never; trailer_id?: never; unit_id?: never; work_order_id?: never; insurance_claim_id?: never }
+  | { load_id: string; driver_id?: never; trailer_id?: never; unit_id?: never; work_order_id?: never; insurance_claim_id?: never }
+  | { trailer_id: string; driver_id?: never; load_id?: never; unit_id?: never; work_order_id?: never; insurance_claim_id?: never }
+  | { unit_id: string; driver_id?: never; load_id?: never; trailer_id?: never; work_order_id?: never; insurance_claim_id?: never }
+  | { work_order_id: string; driver_id?: never; load_id?: never; trailer_id?: never; unit_id?: never; insurance_claim_id?: never }
+  | { insurance_claim_id: string; driver_id?: never; load_id?: never; trailer_id?: never; unit_id?: never; work_order_id?: never };
 
 type Props = {
   operatingCompanyId: string;

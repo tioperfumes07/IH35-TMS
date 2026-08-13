@@ -92,3 +92,18 @@ describe("accounting/expenses.routes ACCT-F5033-WO-LIST-FILTER", () => {
     expect(routes).toContain('where.push(`e.linked_work_order_uuid = $${values.length}::uuid`);');
   });
 });
+
+describe("accounting/expenses.routes ACCT-F5034-CLAIM-LIST-FILTER", () => {
+  it("GET list accepts optional insurance_claim_id filter", () => {
+    expect(routes).toMatch(
+      /listExpensesQuerySchema = companyQuerySchema\.extend\(\{[\s\S]*?insurance_claim_id: z\.string\(\)\.uuid\(\)\.optional\(\),/
+    );
+  });
+
+  it("passes insuranceClaimId through and filters e.insurance_claim_id", () => {
+    expect(routes).toContain("insuranceClaimId?: string;");
+    expect(routes).toContain("insuranceClaimId: q.insurance_claim_id,");
+    expect(routes).toContain("if (filters.insuranceClaimId) {");
+    expect(routes).toContain('where.push(`e.insurance_claim_id = $${values.length}::uuid`);');
+  });
+});
