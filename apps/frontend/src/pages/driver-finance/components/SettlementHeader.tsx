@@ -3,6 +3,7 @@ import { entityLabel } from "../../../lib/entity-label";
 import { formatDateUS } from "../../../lib/formatDate";
 
 type Props = {
+  settlementId?: string | null;
   settlementDisplayId?: string | null;
   driverId: string | null;
   driverName: string;
@@ -18,6 +19,7 @@ type Props = {
 };
 
 export function SettlementHeader({
+  settlementId,
   settlementDisplayId,
   driverId,
   driverName,
@@ -30,10 +32,21 @@ export function SettlementHeader({
 }: Props) {
   return (
     <div className="grid grid-cols-1 gap-2 rounded-sm border border-gray-200 bg-white p-3 lg:grid-cols-5">
-      {settlementDisplayId ? (
+      {settlementId || settlementDisplayId ? (
         <div>
           <div className="text-[10px] uppercase text-gray-500">Settlement No</div>
-          <div className="text-sm font-semibold">{settlementDisplayId}</div>
+          <div className="text-sm font-semibold">
+            {settlementId ? (
+              <EntityLink
+                kind="settlement"
+                id={settlementId}
+                label={entityLabel(settlementDisplayId, settlementId, "Settlement")}
+                data-testid="settlement-header-settlement-link"
+              />
+            ) : (
+              settlementDisplayId
+            )}
+          </div>
         </div>
       ) : null}
       <div>

@@ -237,6 +237,7 @@ export function SettlementDetailPage() {
         </div>
       ) : null}
       <SettlementHeader
+        settlementId={settlementId}
         settlementDisplayId={settlementDisplayId}
         driverId={driverId}
         driverName={String(settlement.driver_full_name ?? "-")}
