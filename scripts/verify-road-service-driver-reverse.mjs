@@ -1,4 +1,8 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["maintenance"],"cols":["reverse_link"],"leafRe":"^road_service\\.active$","task":"ROAD-SERVICE-REVERSE-LEAVES","vertical":"column-wave"} */
+/** @matrix-built {"modules":["drivers"],"cols":["reverse_link"],"leafRe":"^profiles\\.detail$","task":"ROAD-SERVICE-REVERSE-LEAVES","vertical":"column-wave"} */
+/** @matrix-built {"modules":["fleet"],"cols":["reverse_link"],"leafRe":"^unit\\.profile\\.maintenance$","task":"ROAD-SERVICE-REVERSE-LEAVES","vertical":"column-wave"} */
+/** @matrix-built {"modules":["vendors"],"cols":["reverse_link"],"leafRe":"^detail\\.profile$","task":"ROAD-SERVICE-REVERSE-LEAVES","vertical":"column-wave"} */
 import fs from "node:fs";
 
 const LABEL = "verify-road-service-driver-reverse";
