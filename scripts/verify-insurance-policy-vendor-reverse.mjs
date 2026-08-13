@@ -1,5 +1,7 @@
 #!/usr/bin/env node
-/** @matrix-built modules=insurance,vendors,safety cols=vendor,connectivity,reverse_link,picker_law */
+/** @matrix-built {"modules":["insurance"],"cols":["vendor","connectivity","reverse_link","picker_law"],"leafRe":"^(policies\\.(list|create)|insurance\\.modal\\.policy_create)$","task":"INSURANCE-POLICY-VENDOR-REVERSE","vertical":"column-wave"} */
+/** @matrix-built {"modules":["vendors"],"cols":["vendor","connectivity","reverse_link"],"leafRe":"^detail\\.profile$","task":"INSURANCE-POLICY-VENDOR-REVERSE","vertical":"column-wave"} */
+/** @matrix-built {"modules":["safety"],"cols":["vendor","connectivity","reverse_link"],"leafRe":"^insurance_tab\\.list$","task":"INSURANCE-POLICY-VENDOR-REVERSE","vertical":"column-wave"} */
 import fs from "node:fs";
 const LABEL = "verify-insurance-policy-vendor-reverse";
 const files = {
