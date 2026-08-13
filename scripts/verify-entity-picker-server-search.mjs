@@ -12,7 +12,7 @@
  * is part of the query key, and Combobox reports typing via onSearch — for every kind that
  * declares serverSearch: true in the registry.
  */
-import { readFileSync, writeFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
 const ROOT = new URL("..", import.meta.url).pathname.replace(/\/$/, "");
@@ -30,16 +30,12 @@ const PICKER_CHECKS = [
   {
     id: "term-reaches-list",
     describe: "serverSearch kinds must pass search into config.list",
-    test: (s) =>
-      /config\.list\(operatingCompanyId,\s*config\.serverSearch \? \{ search: rosterSearch \|\| undefined \} : undefined\)/.test(
-        s
-      ),
+    test: (s) => /config\.list\(operatingCompanyId,\s*\{[\s\S]{0,300}?config\.serverSearch \? \{ search: rosterSearch \|\| undefined \} : \{\}/.test(s),
   },
   {
     id: "term-in-query-key",
     describe: "the term must be part of the react-query key when serverSearch is on",
-    test: (s) =>
-      /queryKey:\s*\["entity-picker",\s*kind,\s*operatingCompanyId,\s*config\.serverSearch \? rosterSearch : ""\]/.test(s),
+    test: (s) => /queryKey:\s*\[[\s\S]{0,220}?"entity-picker",[\s\S]{0,220}?kind,[\s\S]{0,220}?operatingCompanyId,[\s\S]{0,220}?config\.serverSearch \? rosterSearch : ""/.test(s),
   },
   {
     id: "combobox-reports-typing",
@@ -50,9 +46,9 @@ const PICKER_CHECKS = [
 
 const REQUIRED_SERVER_SEARCH_KINDS = ["driver", "unit", "trailer", "load", "vendor", "factoring_advance"];
 
-export function run() {
-  const pickerSrc = stripComments(readFileSync(PICKER, "utf8"));
-  const registrySrc = stripComments(readFileSync(REGISTRY, "utf8"));
+export function auditServerSearch(pickerInput, registryInput) {
+  const pickerSrc = stripComments(pickerInput);
+  const registrySrc = stripComments(registryInput);
   const failed = [];
 
   for (const c of PICKER_CHECKS) {
@@ -105,8 +101,13 @@ export function run() {
   };
 }
 
+export function run() {
+  return auditServerSearch(readFileSync(PICKER, "utf8"), readFileSync(REGISTRY, "utf8"));
+}
+
 function selftest() {
   const original = readFileSync(PICKER, "utf8");
+  const registry = readFileSync(REGISTRY, "utf8");
   const baseline = run();
   if (!baseline.ok) {
     console.error(`SELFTEST FAIL: repository already red.\n${baseline.message}`);
@@ -125,25 +126,41 @@ function selftest() {
       replace: "",
       expect: "combobox-reports-typing",
     },
+    {
+      name: "term dropped from list request",
+      find: '...(config.serverSearch ? { search: rosterSearch || undefined } : {})',
+      replace: "",
+      expect: "term-reaches-list",
+    },
   ];
   for (const c of cases) {
     if (!original.includes(c.find)) {
       console.error(`SELFTEST FAIL: anchor for "${c.name}" not found.`);
       process.exit(1);
     }
-    try {
-      writeFileSync(PICKER, original.replace(c.find, c.replace), "utf8");
-      const caught = run();
-      if (caught.ok || !caught.failed.includes(c.expect)) {
-        console.error(`SELFTEST FAIL: "${c.name}" was NOT caught.\n${caught.message}`);
-        process.exit(1);
-      }
-      console.log(`  caught: ${c.name}`);
-    } finally {
-      writeFileSync(PICKER, original, "utf8");
+    const caught = auditServerSearch(original.replace(c.find, c.replace), registry);
+    if (caught.ok || !caught.failed.includes(c.expect)) {
+      console.error(`SELFTEST FAIL: "${c.name}" was NOT caught.\n${caught.message}`);
+      process.exit(1);
     }
+    console.log(`  caught: ${c.name}`);
   }
-  console.log(`SELFTEST PASS: ${cases.length} planted defects caught.`);
+  for (const kind of REQUIRED_SERVER_SEARCH_KINDS) {
+    const kindPattern = new RegExp(`(\\b${kind}:\\s*\\{[\\s\\S]*?serverSearch:\\s*)true`);
+    if (!kindPattern.test(registry)) {
+      console.error(`SELFTEST FAIL: registry anchor for ${kind} not found.`);
+      process.exit(1);
+    }
+    const mutatedRegistry = registry.replace(kindPattern, "$1false");
+    const caught = auditServerSearch(original, mutatedRegistry);
+    const expected = `registry-${kind}-serverSearch`;
+    if (caught.ok || !caught.failed.includes(expected)) {
+      console.error(`SELFTEST FAIL: ${kind} server-search disable was NOT caught.\n${caught.message}`);
+      process.exit(1);
+    }
+    console.log(`  caught: ${kind} server-search disabled`);
+  }
+  console.log(`SELFTEST PASS: ${cases.length + REQUIRED_SERVER_SEARCH_KINDS.length} planted defects caught.`);
 }
 
 if (process.argv.includes("--selftest")) {
