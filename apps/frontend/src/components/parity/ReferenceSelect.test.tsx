@@ -68,6 +68,32 @@ describe("ReferenceSelect (A2)", () => {
     expect(onChange).toHaveBeenCalledWith("new-1");
     expect(screen.queryByTestId("inline-create")).toBeNull();
   });
+
+  it("evicts a locally created row and committed FK when the company changes", () => {
+    const onChange = vi.fn();
+    const renderPicker = (operatingCompanyId: string, value: string | null) => (
+      <ReferenceSelect
+        value={value}
+        onChange={onChange}
+        options={[]}
+        createKind="vendor"
+        operatingCompanyId={operatingCompanyId}
+        placeholder="Select scoped vendor"
+      />
+    );
+    const view = render(renderPicker("co-1", null));
+    openDropdown();
+    fireEvent.click(screen.getByRole("option", { name: /\+ Add new vendor/i }));
+    fireEvent.click(screen.getByText("mock-create"));
+    view.rerender(renderPicker("co-1", "new-1"));
+    openDropdown();
+    expect(screen.getByRole("option", { name: "New Vendor" })).toBeInTheDocument();
+
+    view.rerender(renderPicker("co-2", "new-1"));
+    expect(onChange).toHaveBeenLastCalledWith(null);
+    openDropdown();
+    expect(screen.queryByRole("option", { name: "New Vendor" })).toBeNull();
+  });
 });
 
 // LST-PICKER-01/03 — the config-driven path. These assert the DEFECT is gone: a catalog outside the
