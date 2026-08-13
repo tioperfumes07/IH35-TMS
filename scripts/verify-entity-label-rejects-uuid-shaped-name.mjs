@@ -1363,8 +1363,8 @@ const SIBLINGS = [
   },
   {
     rel: "apps/frontend/src/pages/maintenance/WorkOrderDetailPage.tsx",
-    bad: /label=\{typeof wo\.external_vendor_name === "string" \? wo\.external_vendor_name : undefined\}/,
-    good: /entityLabel\(\s*typeof wo\.external_vendor_name === "string" \? wo\.external_vendor_name : null\s*,\s*wo\.external_vendor_id\s*,\s*"Vendor"\s*\)/,
+    bad: /label=\{typeof wo\.resolved_vendor_name === "string" \? wo\.resolved_vendor_name : undefined\}/,
+    good: /entityLabel\(\s*typeof wo\.resolved_vendor_name === "string" \? wo\.resolved_vendor_name : null\s*,\s*wo\.resolved_vendor_id\s*,\s*"Vendor"\s*\)/,
   },
   {
     rel: "apps/frontend/src/pages/safety/Permits.tsx",
@@ -1747,17 +1747,17 @@ export function auditMaintenanceWorkOrderLabels(routesSrc, tableSrc) {
   const problems = [];
   const listQuery = routesSrc.match(/SELECT w\.\*, u\.unit_number,[\s\S]*?ORDER BY w\.opened_at DESC NULLS LAST/)?.[0] ?? "";
   if (!/LEFT JOIN mdata\.drivers d ON d\.id = w\.driver_id AND d\.operating_company_id = w\.operating_company_id/.test(listQuery)
-    || !/LEFT JOIN mdata\.vendors v ON v\.id = w\.external_vendor_id AND v\.operating_company_id = w\.operating_company_id/.test(listQuery)) {
+    || !/LEFT JOIN mdata\.vendors v ON v\.id = COALESCE\(w\.external_vendor_id, w\.vendor_id\) AND v\.operating_company_id = w\.operating_company_id/.test(listQuery)) {
     problems.push(`${MAINT_WO_ROUTES}: list serializer missing entity-scoped driver/vendor label join`);
   }
-  if (!/AS driver_name/.test(listQuery) || !/AS external_vendor_name/.test(listQuery)) {
-    problems.push(`${MAINT_WO_ROUTES}: list payload must ship driver_name and external_vendor_name`);
+  if (!/AS driver_name/.test(listQuery) || !/AS resolved_vendor_id/.test(listQuery) || !/AS resolved_vendor_name/.test(listQuery)) {
+    problems.push(`${MAINT_WO_ROUTES}: list payload must ship driver_name and resolved vendor id/name`);
   }
   if (!/entityLabel\(row\.driver_name, row\.driver_id, "Driver"\)/.test(tableSrc)) {
     problems.push(`${MAINT_WO_TABLE}: driver link must consume resolved driver_name`);
   }
-  if (!/entityLabel\(row\.external_vendor_name, row\.external_vendor_id, "Vendor"\)/.test(tableSrc)) {
-    problems.push(`${MAINT_WO_TABLE}: vendor link must consume resolved external_vendor_name`);
+  if (!/entityLabel\(row\.resolved_vendor_name, row\.resolved_vendor_id, "Vendor"\)/.test(tableSrc)) {
+    problems.push(`${MAINT_WO_TABLE}: vendor link must consume resolved vendor id/name`);
   }
   return problems;
 }
@@ -1833,11 +1833,11 @@ function selftest() {
   if (!auditBillsPage(badBills).some((p) => p.includes("vendor_name ||"))) {
     failures.push("selftest: BillsPage uuid fallback NOT detected");
   }
-  const goodMaintRoutes = `SELECT w.*, u.unit_number, NULLIF(TRIM('x'), '') AS driver_name, v.vendor_name AS external_vendor_name
-    LEFT JOIN mdata.drivers d ON d.id = w.driver_id AND d.operating_company_id = w.operating_company_id
-    LEFT JOIN mdata.vendors v ON v.id = w.external_vendor_id AND v.operating_company_id = w.operating_company_id
-    ORDER BY w.opened_at DESC NULLS LAST`;
-  const goodMaintTable = `entityLabel(row.driver_name, row.driver_id, "Driver"); entityLabel(row.external_vendor_name, row.external_vendor_id, "Vendor")`;
+  const goodMaintRoutes = `SELECT w.*, u.unit_number, NULLIF(TRIM('x'), '') AS driver_name, COALESCE(w.external_vendor_id, w.vendor_id)::text AS resolved_vendor_id, v.vendor_name AS resolved_vendor_name
+LEFT JOIN mdata.drivers d ON d.id = w.driver_id AND d.operating_company_id = w.operating_company_id
+LEFT JOIN mdata.vendors v ON v.id = COALESCE(w.external_vendor_id, w.vendor_id) AND v.operating_company_id = w.operating_company_id
+ORDER BY w.opened_at DESC NULLS LAST`;
+  const goodMaintTable = `entityLabel(row.driver_name, row.driver_id, "Driver"); entityLabel(row.resolved_vendor_name, row.resolved_vendor_id, "Vendor")`;
   if (auditMaintenanceWorkOrderLabels(goodMaintRoutes, goodMaintTable).length) {
     failures.push("selftest: good maintenance WO label serializer flagged");
   }
