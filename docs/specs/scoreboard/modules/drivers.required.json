@@ -199,7 +199,6 @@
       "required": [
         "driver",
         "liability",
-        "gl_je",
         "picker_law",
         "qbo_chrome",
         "connectivity",
@@ -224,7 +223,6 @@
       "route_hint": "/drivers/pay-rate-templates",
       "required": [
         "driver",
-        "gl_je",
         "connectivity",
         "picker_law",
         "qbo_chrome"
@@ -238,7 +236,6 @@
       "required": [
         "driver",
         "liability",
-        "gl_je",
         "picker_law",
         "qbo_chrome",
         "connectivity",
