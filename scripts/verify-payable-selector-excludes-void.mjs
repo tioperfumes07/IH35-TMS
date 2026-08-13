@@ -14,16 +14,27 @@ const root = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const serviceRel = "apps/backend/src/accounting/bills.service.ts";
 const pageRel = "apps/frontend/src/pages/accounting/BillPaymentsListPage.tsx";
 
+const VOID_STATUS_PUSH = /where\.push\(\s*["']b\.status NOT IN \('void', 'voided'\)["']\s*\)/;
+
 function checkService(src, label = serviceRel) {
   const findings = [];
-  const hasBalanceBlocks = [...src.matchAll(/if\s*\(\s*options\.hasBalance\s*\)\s*\{([\s\S]*?)\}/g)];
-  if (hasBalanceBlocks.length < 2) {
-    findings.push(`${label}: expected ≥2 options.hasBalance blocks (vendor + company list)`);
+  const hasBalanceHits = [...src.matchAll(/if\s*\(\s*options\.hasBalance\s*\)/g)];
+  if (hasBalanceHits.length < 2) {
+    findings.push(`${label}: expected ≥2 options.hasBalance sites (vendor + company list)`);
   }
-  for (const [i, m] of hasBalanceBlocks.entries()) {
-    const body = m[1];
-    if (!/b\.status\s+NOT IN\s*\(\s*'void'\s*,\s*'voided'\s*\)/.test(body)) {
-      findings.push(`${label}: hasBalance block #${i + 1} must push b.status NOT IN ('void', 'voided')`);
+  const voidPushes = [...src.matchAll(new RegExp(VOID_STATUS_PUSH.source, "g"))];
+  if (voidPushes.length < 2) {
+    findings.push(
+      `${label}: expected ≥2 where.push("b.status NOT IN ('void', 'voided')") next to has_balance (found ${voidPushes.length})`
+    );
+  }
+  // Each hasBalance site's following ~400 chars must include the void status push
+  // (avoid matching unrelated status filters elsewhere).
+  for (const [i, m] of hasBalanceHits.entries()) {
+    const start = m.index ?? 0;
+    const window = src.slice(start, start + 400);
+    if (!VOID_STATUS_PUSH.test(window)) {
+      findings.push(`${label}: hasBalance site #${i + 1} window missing b.status NOT IN ('void', 'voided')`);
     }
   }
   return findings;
@@ -66,8 +77,10 @@ function selftest() {
       where.push("b.status NOT IN ('void', 'voided')");
     }
   `;
-  if (checkService(goodSvc, "selftest-good-svc").length > 0) {
+  const goodSvcFindings = checkService(goodSvc, "selftest-good-svc");
+  if (goodSvcFindings.length > 0) {
     console.error("verify-payable-selector-excludes-void --selftest FAIL: good service reddened");
+    for (const f of goodSvcFindings) console.error(`  - ${f}`);
     process.exit(1);
   }
   const badPage = `
@@ -87,8 +100,10 @@ function selftest() {
       <option key={bill.id}>{bill.id}</option>
     ))}
   `;
-  if (checkPage(goodPage, "selftest-good-page").length > 0) {
+  const goodPageFindings = checkPage(goodPage, "selftest-good-page");
+  if (goodPageFindings.length > 0) {
     console.error("verify-payable-selector-excludes-void --selftest FAIL: good page reddened");
+    for (const f of goodPageFindings) console.error(`  - ${f}`);
     process.exit(1);
   }
   console.log("verify-payable-selector-excludes-void --selftest PASS");
