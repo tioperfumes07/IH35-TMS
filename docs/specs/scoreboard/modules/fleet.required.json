@@ -758,7 +758,6 @@
         "vendor",
         "ap_bill",
         "expense",
-        "liability",
         "connectivity",
         "reverse_link"
       ]
@@ -1205,6 +1204,18 @@
           "id": "trailer.edit",
           "removed": [
             "picker_law"
+          ]
+        }
+      ]
+    },
+    "liability_2026_08_13_secondary": {
+      "finding": "VERTICAL-LIABILITY-SECONDARY-HONESTY",
+      "note": "Liability Required on hub/chrome without liability EntityLink/poster surface.",
+      "drops": [
+        {
+          "id": "unit.detail.finance_linkage",
+          "removed": [
+            "liability"
           ]
         }
       ]

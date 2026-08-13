@@ -122,8 +122,7 @@
         "driver",
         "load",
         "unit",
-        "connectivity",
-        "picker_law"
+        "connectivity"
       ]
     },
     {
@@ -135,8 +134,7 @@
         "driver",
         "load",
         "unit",
-        "connectivity",
-        "picker_law"
+        "connectivity"
       ]
     },
     {
@@ -148,8 +146,7 @@
         "driver",
         "load",
         "unit",
-        "connectivity",
-        "picker_law"
+        "connectivity"
       ]
     },
     {
@@ -158,8 +155,7 @@
       "sub": "Tasks chat",
       "route_hint": "/tasks/chat",
       "required": [
-        "connectivity",
-        "picker_law"
+        "connectivity"
       ]
     },
     {
@@ -171,8 +167,7 @@
         "driver",
         "load",
         "unit",
-        "connectivity",
-        "picker_law"
+        "connectivity"
       ]
     },
     {
@@ -184,8 +179,7 @@
         "driver",
         "load",
         "unit",
-        "connectivity",
-        "picker_law"
+        "connectivity"
       ]
     },
     {
@@ -210,8 +204,7 @@
         "driver",
         "load",
         "unit",
-        "connectivity",
-        "picker_law"
+        "connectivity"
       ]
     },
     {
@@ -220,8 +213,7 @@
       "sub": "@mentions",
       "route_hint": "/tasks/chat",
       "required": [
-        "connectivity",
-        "picker_law"
+        "connectivity"
       ]
     },
     {
@@ -233,8 +225,7 @@
         "driver",
         "load",
         "unit",
-        "connectivity",
-        "picker_law"
+        "connectivity"
       ]
     },
     {
@@ -243,7 +234,6 @@
       "sub": "Maintenance service tasks catalog",
       "route_hint": "/lists",
       "required": [
-        "picker_law",
         "connectivity",
         "work_order"
       ]
@@ -268,7 +258,6 @@
       "route_hint": "/tasks",
       "surface_kind": "toolbar",
       "required": [
-        "qbo_chrome",
         "connectivity"
       ]
     },
@@ -279,7 +268,6 @@
       "route_hint": "/tasks",
       "surface_kind": "toolbar",
       "required": [
-        "qbo_chrome",
         "connectivity"
       ]
     },
@@ -290,7 +278,6 @@
       "route_hint": "/tasks",
       "surface_kind": "toolbar",
       "required": [
-        "qbo_chrome",
         "connectivity"
       ]
     },
@@ -301,7 +288,6 @@
       "route_hint": "/tasks",
       "surface_kind": "toolbar",
       "required": [
-        "qbo_chrome",
         "connectivity"
       ]
     }
@@ -377,6 +363,102 @@
           "id": "hop.lists.service_tasks",
           "removed": [
             "reverse_link"
+          ]
+        }
+      ]
+    },
+    "picker_law_2026_08_13_secondary": {
+      "finding": "VERTICAL-PICKER-LAW-SECONDARY-HONESTY",
+      "note": "Secondary hub/nav/chrome without EntityPicker/+Add new. Built: inventory parts.edit (PartEditDrawer).",
+      "drops": [
+        {
+          "id": "nav.board",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "nav.mine",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "nav.calendar",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "nav.chat",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "nav.report",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "board.planner_grid",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "mine.list",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "chat.mentions",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "hop.daily_tasks",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "hop.lists.service_tasks",
+          "removed": [
+            "picker_law"
+          ]
+        }
+      ]
+    },
+    "qbo_chrome_2026_08_13_secondary": {
+      "finding": "VERTICAL-QBO-CHROME-SECONDARY-HONESTY",
+      "note": "qbo_chrome Required on hub/chrome without DatePicker/MoneyInput/Parity/ListToolbar triad.",
+      "drops": [
+        {
+          "id": "chrome.toolbar_search",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "chrome.toolbar_range",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "chrome.toolbar_gear",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "chrome.toolbar_filter",
+          "removed": [
+            "qbo_chrome"
           ]
         }
       ]

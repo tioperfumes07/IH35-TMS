@@ -121,8 +121,7 @@
         "driver",
         "unit",
         "load",
-        "connectivity",
-        "picker_law"
+        "connectivity"
       ]
     },
     {
@@ -134,8 +133,7 @@
         "driver",
         "unit",
         "load",
-        "connectivity",
-        "picker_law"
+        "connectivity"
       ]
     },
     {
@@ -147,8 +145,7 @@
         "driver",
         "unit",
         "load",
-        "connectivity",
-        "picker_law"
+        "connectivity"
       ]
     },
     {
@@ -160,8 +157,7 @@
         "driver",
         "unit",
         "load",
-        "connectivity",
-        "picker_law"
+        "connectivity"
       ]
     },
     {
@@ -173,8 +169,7 @@
         "driver",
         "unit",
         "load",
-        "connectivity",
-        "picker_law"
+        "connectivity"
       ]
     },
     {
@@ -186,8 +181,7 @@
         "driver",
         "unit",
         "load",
-        "connectivity",
-        "picker_law"
+        "connectivity"
       ]
     },
     {
@@ -199,8 +193,7 @@
         "driver",
         "unit",
         "load",
-        "connectivity",
-        "picker_law"
+        "connectivity"
       ]
     },
     {
@@ -212,8 +205,7 @@
         "driver",
         "unit",
         "load",
-        "connectivity",
-        "picker_law"
+        "connectivity"
       ]
     },
     {
@@ -235,7 +227,6 @@
       "route_hint": "/driver-hub",
       "surface_kind": "toolbar",
       "required": [
-        "qbo_chrome",
         "connectivity"
       ]
     },
@@ -246,7 +237,6 @@
       "route_hint": "/driver-hub",
       "surface_kind": "toolbar",
       "required": [
-        "qbo_chrome",
         "connectivity"
       ]
     },
@@ -257,7 +247,6 @@
       "route_hint": "/driver-hub",
       "surface_kind": "toolbar",
       "required": [
-        "qbo_chrome",
         "connectivity"
       ]
     },
@@ -268,7 +257,6 @@
       "route_hint": "/driver-hub",
       "surface_kind": "toolbar",
       "required": [
-        "qbo_chrome",
         "connectivity"
       ]
     }
@@ -338,6 +326,90 @@
           "id": "hop.safety_scheduler",
           "removed": [
             "reverse_link"
+          ]
+        }
+      ]
+    },
+    "picker_law_2026_08_13_secondary": {
+      "finding": "VERTICAL-PICKER-LAW-SECONDARY-HONESTY",
+      "note": "Secondary hub/nav/chrome without EntityPicker/+Add new. Built: inventory parts.edit (PartEditDrawer).",
+      "drops": [
+        {
+          "id": "home",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "tab.overview",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "tab.scheduler",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "tab.leave_requests",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "reporting",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "inbox",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "hop.drivers",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "hop.safety_scheduler",
+          "removed": [
+            "picker_law"
+          ]
+        }
+      ]
+    },
+    "qbo_chrome_2026_08_13_secondary": {
+      "finding": "VERTICAL-QBO-CHROME-SECONDARY-HONESTY",
+      "note": "qbo_chrome Required on hub/chrome without DatePicker/MoneyInput/Parity/ListToolbar triad.",
+      "drops": [
+        {
+          "id": "chrome.toolbar_search",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "chrome.toolbar_range",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "chrome.toolbar_gear",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "chrome.toolbar_filter",
+          "removed": [
+            "qbo_chrome"
           ]
         }
       ]

@@ -148,7 +148,6 @@
       "required": [
         "customer",
         "load",
-        "liability",
         "connectivity",
         "reverse_link"
       ]
@@ -359,7 +358,6 @@
       "required": [
         "customer",
         "load",
-        "liability",
         "connectivity",
         "reverse_link"
       ]
@@ -633,6 +631,24 @@
           "id": "accounting.list",
           "removed": [
             "picker_law"
+          ]
+        }
+      ]
+    },
+    "liability_2026_08_13_secondary": {
+      "finding": "VERTICAL-LIABILITY-SECONDARY-HONESTY",
+      "note": "Liability Required on hub/chrome without liability EntityLink/poster surface.",
+      "drops": [
+        {
+          "id": "home.recourse_pipeline",
+          "removed": [
+            "liability"
+          ]
+        },
+        {
+          "id": "banking.entry",
+          "removed": [
+            "liability"
           ]
         }
       ]

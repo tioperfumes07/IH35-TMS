@@ -123,8 +123,7 @@
         "vendor",
         "gl_je",
         "liability",
-        "connectivity",
-        "qbo_chrome"
+        "connectivity"
       ]
     },
     {
@@ -137,8 +136,7 @@
         "vendor",
         "gl_je",
         "liability",
-        "connectivity",
-        "qbo_chrome"
+        "connectivity"
       ]
     },
     {
@@ -151,8 +149,7 @@
         "vendor",
         "gl_je",
         "liability",
-        "connectivity",
-        "qbo_chrome"
+        "connectivity"
       ]
     },
     {
@@ -163,8 +160,7 @@
       "required": [
         "customer",
         "vendor",
-        "connectivity",
-        "qbo_chrome"
+        "connectivity"
       ]
     },
     {
@@ -174,7 +170,6 @@
       "route_hint": "/banking",
       "required": [
         "connectivity",
-        "qbo_chrome",
         "bank"
       ]
     },
@@ -186,8 +181,7 @@
       "required": [
         "customer",
         "vendor",
-        "connectivity",
-        "qbo_chrome"
+        "connectivity"
       ]
     },
     {
@@ -198,8 +192,7 @@
       "required": [
         "customer",
         "vendor",
-        "connectivity",
-        "qbo_chrome"
+        "connectivity"
       ]
     },
     {
@@ -210,8 +203,7 @@
       "required": [
         "customer",
         "vendor",
-        "connectivity",
-        "qbo_chrome"
+        "connectivity"
       ]
     },
     {
@@ -242,7 +234,6 @@
       "route_hint": "/cash-flow",
       "surface_kind": "toolbar",
       "required": [
-        "qbo_chrome",
         "connectivity"
       ]
     },
@@ -253,7 +244,6 @@
       "route_hint": "/cash-flow",
       "surface_kind": "toolbar",
       "required": [
-        "qbo_chrome",
         "connectivity"
       ]
     },
@@ -264,7 +254,6 @@
       "route_hint": "/cash-flow",
       "surface_kind": "toolbar",
       "required": [
-        "qbo_chrome",
         "connectivity"
       ]
     },
@@ -275,7 +264,6 @@
       "route_hint": "/cash-flow",
       "surface_kind": "toolbar",
       "required": [
-        "qbo_chrome",
         "connectivity"
       ]
     }
@@ -351,6 +339,84 @@
           "id": "hop.cash_advances",
           "removed": [
             "reverse_link"
+          ]
+        }
+      ]
+    },
+    "qbo_chrome_2026_08_13_secondary": {
+      "finding": "VERTICAL-QBO-CHROME-SECONDARY-HONESTY",
+      "note": "qbo_chrome Required on hub/chrome without DatePicker/MoneyInput/Parity/ListToolbar triad.",
+      "drops": [
+        {
+          "id": "home",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "tab.daily_prediction",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "tab.actual_vs_projected",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "tab.manual_daily_projections",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "hop.banking",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "hop.reports.cash_flow_statement",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "hop.reports.cash_flow",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "hop.reports.cash_flow_overview",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "chrome.toolbar_search",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "chrome.toolbar_range",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "chrome.toolbar_gear",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "chrome.toolbar_filter",
+          "removed": [
+            "qbo_chrome"
           ]
         }
       ]

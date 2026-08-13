@@ -187,8 +187,7 @@
         "driver",
         "qbo_chrome",
         "connectivity",
-        "reverse_link",
-        "liability"
+        "reverse_link"
       ]
     },
     {
@@ -217,8 +216,7 @@
         "reverse_link",
         "picker_law",
         "driver",
-        "load",
-        "liability"
+        "load"
       ]
     },
     {
@@ -232,8 +230,7 @@
         "connectivity",
         "reverse_link",
         "driver",
-        "load",
-        "liability"
+        "load"
       ]
     },
     {
@@ -278,7 +275,6 @@
       "required": [
         "connectivity",
         "reverse_link",
-        "liability",
         "driver",
         "load"
       ]
@@ -343,8 +339,7 @@
         "reverse_link",
         "picker_law",
         "driver",
-        "load",
-        "liability"
+        "load"
       ]
     },
     {
@@ -511,6 +506,42 @@
           "id": "cash_advances",
           "removed": [
             "picker_law"
+          ]
+        }
+      ]
+    },
+    "liability_2026_08_13_secondary": {
+      "finding": "VERTICAL-LIABILITY-SECONDARY-HONESTY",
+      "note": "Liability Required on hub/chrome without liability EntityLink/poster surface.",
+      "drops": [
+        {
+          "id": "cash_advances",
+          "removed": [
+            "liability"
+          ]
+        },
+        {
+          "id": "settlements.modal.create_advance",
+          "removed": [
+            "liability"
+          ]
+        },
+        {
+          "id": "settlements.modal.mark_disbursed",
+          "removed": [
+            "liability"
+          ]
+        },
+        {
+          "id": "settlements.modal.send_ack_request",
+          "removed": [
+            "liability"
+          ]
+        },
+        {
+          "id": "settlements.parity.create_advance",
+          "removed": [
+            "liability"
           ]
         }
       ]

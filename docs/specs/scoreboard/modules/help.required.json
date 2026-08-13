@@ -209,7 +209,6 @@
       "route_hint": "/help",
       "surface_kind": "toolbar",
       "required": [
-        "qbo_chrome",
         "connectivity"
       ]
     },
@@ -220,7 +219,6 @@
       "route_hint": "/help",
       "surface_kind": "toolbar",
       "required": [
-        "qbo_chrome",
         "connectivity"
       ]
     },
@@ -231,7 +229,6 @@
       "route_hint": "/help",
       "surface_kind": "toolbar",
       "required": [
-        "qbo_chrome",
         "connectivity"
       ]
     },
@@ -242,7 +239,6 @@
       "route_hint": "/help",
       "surface_kind": "toolbar",
       "required": [
-        "qbo_chrome",
         "connectivity"
       ]
     }
@@ -261,6 +257,36 @@
         "bank"
       ],
       "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; \u00a7B9 link columns added."
+    },
+    "qbo_chrome_2026_08_13_secondary": {
+      "finding": "VERTICAL-QBO-CHROME-SECONDARY-HONESTY",
+      "note": "qbo_chrome Required on hub/chrome without DatePicker/MoneyInput/Parity/ListToolbar triad.",
+      "drops": [
+        {
+          "id": "chrome.toolbar_search",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "chrome.toolbar_range",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "chrome.toolbar_gear",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "chrome.toolbar_filter",
+          "removed": [
+            "qbo_chrome"
+          ]
+        }
+      ]
     }
   }
 }

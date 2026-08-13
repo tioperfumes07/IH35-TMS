@@ -119,8 +119,7 @@
       "sub": "System module home",
       "route_hint": "/system",
       "required": [
-        "connectivity",
-        "qbo_chrome"
+        "connectivity"
       ]
     },
     {
@@ -129,8 +128,7 @@
       "sub": "Overview tab",
       "route_hint": "/system",
       "required": [
-        "connectivity",
-        "qbo_chrome"
+        "connectivity"
       ]
     },
     {
@@ -189,7 +187,6 @@
       "route_hint": "/banking",
       "required": [
         "connectivity",
-        "qbo_chrome",
         "bank"
       ]
     },
@@ -209,8 +206,7 @@
       "route_hint": "/system?tab=qbo-sync",
       "required": [
         "gl_je",
-        "connectivity",
-        "qbo_chrome"
+        "connectivity"
       ]
     },
     {
@@ -233,8 +229,7 @@
       "surface_kind": "panel",
       "surface_path": "pages/admin/USMCAActivationPanel.tsx",
       "required": [
-        "connectivity",
-        "qbo_chrome"
+        "connectivity"
       ]
     },
     {
@@ -244,7 +239,6 @@
       "route_hint": "/system",
       "surface_kind": "toolbar",
       "required": [
-        "qbo_chrome",
         "connectivity"
       ]
     },
@@ -255,7 +249,6 @@
       "route_hint": "/system",
       "surface_kind": "toolbar",
       "required": [
-        "qbo_chrome",
         "connectivity"
       ]
     },
@@ -266,7 +259,6 @@
       "route_hint": "/system",
       "surface_kind": "toolbar",
       "required": [
-        "qbo_chrome",
         "connectivity"
       ]
     },
@@ -277,7 +269,6 @@
       "route_hint": "/system",
       "surface_kind": "toolbar",
       "required": [
-        "qbo_chrome",
         "connectivity"
       ]
     }
@@ -353,6 +344,66 @@
           "id": "system.wizard.edi_setup",
           "removed": [
             "reverse_link"
+          ]
+        }
+      ]
+    },
+    "qbo_chrome_2026_08_13_secondary": {
+      "finding": "VERTICAL-QBO-CHROME-SECONDARY-HONESTY",
+      "note": "qbo_chrome Required on hub/chrome without DatePicker/MoneyInput/Parity/ListToolbar triad.",
+      "drops": [
+        {
+          "id": "home",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "tab.overview",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "hop.banking_recon",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "law.no_tms_qbo_writeback",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "system.panel.usmcaactivation",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "chrome.toolbar_search",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "chrome.toolbar_range",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "chrome.toolbar_gear",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "chrome.toolbar_filter",
+          "removed": [
+            "qbo_chrome"
           ]
         }
       ]

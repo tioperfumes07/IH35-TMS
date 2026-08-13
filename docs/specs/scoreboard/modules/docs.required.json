@@ -124,7 +124,6 @@
         "unit",
         "load",
         "connectivity",
-        "picker_law",
         "reverse_link"
       ]
     },
@@ -139,8 +138,7 @@
         "vendor",
         "unit",
         "load",
-        "connectivity",
-        "picker_law"
+        "connectivity"
       ]
     },
     {
@@ -204,8 +202,7 @@
         "vendor",
         "unit",
         "load",
-        "connectivity",
-        "picker_law"
+        "connectivity"
       ]
     },
     {
@@ -228,8 +225,7 @@
         "vendor",
         "unit",
         "load",
-        "connectivity",
-        "picker_law"
+        "connectivity"
       ]
     },
     {
@@ -428,6 +424,36 @@
           "id": "docs.modal.version_history",
           "removed": [
             "reverse_link"
+          ]
+        }
+      ]
+    },
+    "picker_law_2026_08_13_secondary": {
+      "finding": "VERTICAL-PICKER-LAW-SECONDARY-HONESTY",
+      "note": "Secondary hub/nav/chrome without EntityPicker/+Add new. Built: inventory parts.edit (PartEditDrawer).",
+      "drops": [
+        {
+          "id": "home",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "tab.all",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "upload",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "table.entity_link",
+          "removed": [
+            "picker_law"
           ]
         }
       ]

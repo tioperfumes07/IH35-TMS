@@ -148,8 +148,7 @@
       "route_hint": "/reports",
       "required": [
         "connectivity",
-        "qbo_chrome",
-        "picker_law"
+        "qbo_chrome"
       ]
     },
     {
@@ -446,8 +445,7 @@
         "unit",
         "customer",
         "connectivity",
-        "qbo_chrome",
-        "expense"
+        "qbo_chrome"
       ]
     },
     {
@@ -461,8 +459,7 @@
         "unit",
         "customer",
         "connectivity",
-        "qbo_chrome",
-        "expense"
+        "qbo_chrome"
       ]
     },
     {
@@ -475,7 +472,6 @@
         "vendor",
         "gl_je",
         "ap_bill",
-        "expense",
         "connectivity",
         "reverse_link",
         "qbo_chrome",
@@ -493,7 +489,6 @@
         "vendor",
         "gl_je",
         "ap_bill",
-        "expense",
         "connectivity",
         "reverse_link",
         "qbo_chrome",
@@ -510,7 +505,6 @@
         "vendor",
         "gl_je",
         "ap_bill",
-        "expense",
         "connectivity",
         "qbo_chrome"
       ]
@@ -525,7 +519,6 @@
         "vendor",
         "gl_je",
         "ap_bill",
-        "expense",
         "connectivity",
         "qbo_chrome"
       ]
@@ -540,7 +533,6 @@
         "vendor",
         "gl_je",
         "ap_bill",
-        "expense",
         "connectivity",
         "qbo_chrome"
       ]
@@ -555,7 +547,6 @@
         "vendor",
         "gl_je",
         "ap_bill",
-        "expense",
         "connectivity",
         "qbo_chrome"
       ]
@@ -570,7 +561,6 @@
         "vendor",
         "gl_je",
         "ap_bill",
-        "expense",
         "connectivity",
         "qbo_chrome"
       ]
@@ -601,7 +591,6 @@
         "vendor",
         "gl_je",
         "ap_bill",
-        "expense",
         "connectivity",
         "qbo_chrome"
       ]
@@ -615,7 +604,6 @@
         "customer",
         "vendor",
         "ap_bill",
-        "expense",
         "connectivity",
         "qbo_chrome",
         "driver",
@@ -632,7 +620,6 @@
         "customer",
         "vendor",
         "ap_bill",
-        "expense",
         "connectivity",
         "reverse_link",
         "qbo_chrome",
@@ -734,7 +721,6 @@
         "reverse_link",
         "qbo_chrome",
         "load",
-        "expense",
         "vendor"
       ]
     },
@@ -909,7 +895,6 @@
         "customer",
         "vendor",
         "ap_bill",
-        "expense",
         "connectivity",
         "qbo_chrome"
       ]
@@ -972,8 +957,7 @@
         "unit",
         "customer",
         "connectivity",
-        "qbo_chrome",
-        "expense"
+        "qbo_chrome"
       ]
     },
     {
@@ -987,8 +971,7 @@
         "unit",
         "customer",
         "connectivity",
-        "qbo_chrome",
-        "expense"
+        "qbo_chrome"
       ]
     },
     {
@@ -1031,8 +1014,7 @@
         "unit",
         "customer",
         "connectivity",
-        "qbo_chrome",
-        "expense"
+        "qbo_chrome"
       ]
     },
     {
@@ -1713,6 +1695,126 @@
           "id": "reports.panel.scheduled_reports",
           "removed": [
             "reverse_link"
+          ]
+        }
+      ]
+    },
+    "expense_2026_08_13_secondary": {
+      "finding": "VERTICAL-EXPENSE-SECONDARY-HONESTY",
+      "note": "Expense Required on report/inventory/maint chrome without expense EntityLink create.",
+      "drops": [
+        {
+          "id": "report.ifta",
+          "removed": [
+            "expense"
+          ]
+        },
+        {
+          "id": "report.ifta_preparer",
+          "removed": [
+            "expense"
+          ]
+        },
+        {
+          "id": "report.ar_aging",
+          "removed": [
+            "expense"
+          ]
+        },
+        {
+          "id": "report.ap_aging",
+          "removed": [
+            "expense"
+          ]
+        },
+        {
+          "id": "report.trial_balance",
+          "removed": [
+            "expense"
+          ]
+        },
+        {
+          "id": "report.profit_loss",
+          "removed": [
+            "expense"
+          ]
+        },
+        {
+          "id": "report.balance_sheet",
+          "removed": [
+            "expense"
+          ]
+        },
+        {
+          "id": "report.cash_flow_statement",
+          "removed": [
+            "expense"
+          ]
+        },
+        {
+          "id": "report.cash_flow",
+          "removed": [
+            "expense"
+          ]
+        },
+        {
+          "id": "report.cash_flow_overview",
+          "removed": [
+            "expense"
+          ]
+        },
+        {
+          "id": "report.settlement_summary",
+          "removed": [
+            "expense"
+          ]
+        },
+        {
+          "id": "report.customer_profitability",
+          "removed": [
+            "expense"
+          ]
+        },
+        {
+          "id": "report.fuel_reconciliation",
+          "removed": [
+            "expense"
+          ]
+        },
+        {
+          "id": "runner.cash_position",
+          "removed": [
+            "expense"
+          ]
+        },
+        {
+          "id": "runner.fuel_savings",
+          "removed": [
+            "expense"
+          ]
+        },
+        {
+          "id": "runner.fuel_price_variance",
+          "removed": [
+            "expense"
+          ]
+        },
+        {
+          "id": "runner.ifta_quarterly",
+          "removed": [
+            "expense"
+          ]
+        }
+      ]
+    },
+    "picker_law_2026_08_13_custom_builder": {
+      "finding": "VERTICAL-PICKER-LAW-SECONDARY-HONESTY",
+      "note": "Custom report builder chrome \u2014 no EntityPicker/+Add new.",
+      "drops": [
+        {
+          "id": "home.custom_builder",
+          "removed": [
+            "picker_law"
           ]
         }
       ]

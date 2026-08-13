@@ -123,8 +123,7 @@
         "driver",
         "unit",
         "vendor",
-        "connectivity",
-        "qbo_chrome"
+        "connectivity"
       ]
     },
     {
@@ -135,7 +134,6 @@
       "required": [
         "driver",
         "unit",
-        "picker_law",
         "connectivity"
       ]
     },
@@ -196,7 +194,6 @@
       "required": [
         "driver",
         "unit",
-        "picker_law",
         "connectivity"
       ]
     },
@@ -208,7 +205,6 @@
       "required": [
         "driver",
         "unit",
-        "picker_law",
         "connectivity"
       ]
     },
@@ -220,7 +216,6 @@
       "required": [
         "driver",
         "unit",
-        "picker_law",
         "connectivity"
       ]
     },
@@ -230,8 +225,7 @@
       "sub": "Notification rules panel",
       "route_hint": "/compliance?tab=overview",
       "required": [
-        "connectivity",
-        "picker_law"
+        "connectivity"
       ]
     },
     {
@@ -266,7 +260,6 @@
         "vendor",
         "ap_bill",
         "connectivity",
-        "picker_law",
         "reverse_link"
       ]
     },
@@ -292,7 +285,6 @@
         "unit",
         "ap_bill",
         "connectivity",
-        "qbo_chrome",
         "reverse_link"
       ]
     },
@@ -316,7 +308,6 @@
       "required": [
         "driver",
         "unit",
-        "picker_law",
         "connectivity"
       ]
     },
@@ -326,8 +317,7 @@
       "sub": "Form 425C exhibits",
       "route_hint": "/425c",
       "required": [
-        "connectivity",
-        "qbo_chrome"
+        "connectivity"
       ]
     },
     {
@@ -371,8 +361,7 @@
       "surface_kind": "panel",
       "surface_path": "components/compliance/NotificationLogPanel.tsx",
       "required": [
-        "connectivity",
-        "qbo_chrome"
+        "connectivity"
       ]
     },
     {
@@ -383,8 +372,7 @@
       "surface_kind": "panel",
       "surface_path": "components/compliance/NotificationRulesPanel.tsx",
       "required": [
-        "connectivity",
-        "qbo_chrome"
+        "connectivity"
       ]
     },
     {
@@ -394,7 +382,6 @@
       "route_hint": "/compliance",
       "surface_kind": "toolbar",
       "required": [
-        "qbo_chrome",
         "connectivity"
       ]
     },
@@ -405,7 +392,6 @@
       "route_hint": "/compliance",
       "surface_kind": "toolbar",
       "required": [
-        "qbo_chrome",
         "connectivity"
       ]
     },
@@ -416,7 +402,6 @@
       "route_hint": "/compliance",
       "surface_kind": "toolbar",
       "required": [
-        "qbo_chrome",
         "connectivity"
       ]
     },
@@ -427,7 +412,6 @@
       "route_hint": "/compliance",
       "surface_kind": "toolbar",
       "required": [
-        "qbo_chrome",
         "connectivity"
       ]
     }
@@ -533,6 +517,114 @@
           "id": "hop.reports_ifta",
           "removed": [
             "reverse_link"
+          ]
+        }
+      ]
+    },
+    "picker_law_2026_08_13_secondary": {
+      "finding": "VERTICAL-PICKER-LAW-SECONDARY-HONESTY",
+      "note": "Secondary hub/nav/chrome without EntityPicker/+Add new. Built: inventory parts.edit (PartEditDrawer).",
+      "drops": [
+        {
+          "id": "tab.overview",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "tab.required_docs",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "overview.summary_cards",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "overview.credentials_table",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "overview.notification_rules",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "property_tax.list",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "hop.safety_dot",
+          "removed": [
+            "picker_law"
+          ]
+        }
+      ]
+    },
+    "qbo_chrome_2026_08_13_secondary": {
+      "finding": "VERTICAL-QBO-CHROME-SECONDARY-HONESTY",
+      "note": "qbo_chrome Required on hub/chrome without DatePicker/MoneyInput/Parity/ListToolbar triad.",
+      "drops": [
+        {
+          "id": "tab.filings",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "form2290",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "hop.form425c",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "compliance.panel.notification_log",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "compliance.panel.notification_rules",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "chrome.toolbar_search",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "chrome.toolbar_range",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "chrome.toolbar_gear",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "chrome.toolbar_filter",
+          "removed": [
+            "qbo_chrome"
           ]
         }
       ]

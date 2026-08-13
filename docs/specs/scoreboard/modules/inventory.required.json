@@ -120,8 +120,7 @@
       "route_hint": "/inventory",
       "required": [
         "inventory",
-        "connectivity",
-        "qbo_chrome"
+        "connectivity"
       ]
     },
     {
@@ -140,7 +139,6 @@
       "sub": "Purchase History tab",
       "route_hint": "/inventory/purchases",
       "required": [
-        "expense",
         "connectivity"
       ]
     },
@@ -153,7 +151,6 @@
         "vendor",
         "inventory",
         "connectivity",
-        "qbo_chrome",
         "work_order",
         "reverse_link"
       ]
@@ -231,7 +228,6 @@
       "sub": "Create \u00b7 unit cost MoneyInput",
       "route_hint": "/inventory",
       "required": [
-        "expense",
         "inventory",
         "qbo_chrome",
         "connectivity"
@@ -246,7 +242,6 @@
         "vendor",
         "inventory",
         "picker_law",
-        "qbo_chrome",
         "connectivity"
       ]
     },
@@ -283,9 +278,7 @@
         "unit",
         "scenario.maintenance",
         "inventory",
-        "expense",
-        "connectivity",
-        "qbo_chrome"
+        "connectivity"
       ]
     },
     {
@@ -328,7 +321,6 @@
       "required": [
         "vendor",
         "ap_bill",
-        "expense",
         "connectivity",
         "invoice",
         "reverse_link"
@@ -350,7 +342,6 @@
       "sub": "Cross-link \u2192 Purchase History",
       "route_hint": "/inventory/assignments",
       "required": [
-        "expense",
         "connectivity"
       ]
     },
@@ -370,9 +361,7 @@
       "sub": "Honest empty \u00b7 purchase SoR not built (HOLD)",
       "route_hint": "/inventory/purchases",
       "required": [
-        "expense",
-        "connectivity",
-        "qbo_chrome"
+        "connectivity"
       ]
     },
     {
@@ -414,7 +403,6 @@
       "route_hint": "/inventory",
       "surface_kind": "toolbar",
       "required": [
-        "qbo_chrome",
         "connectivity"
       ]
     },
@@ -425,7 +413,6 @@
       "route_hint": "/inventory",
       "surface_kind": "toolbar",
       "required": [
-        "qbo_chrome",
         "connectivity"
       ]
     },
@@ -436,7 +423,6 @@
       "route_hint": "/inventory",
       "surface_kind": "toolbar",
       "required": [
-        "qbo_chrome",
         "connectivity"
       ]
     },
@@ -447,7 +433,6 @@
       "route_hint": "/inventory",
       "surface_kind": "toolbar",
       "required": [
-        "qbo_chrome",
         "connectivity"
       ]
     }
@@ -595,6 +580,113 @@
           "id": "inventory.drawer.part_create",
           "removed": [
             "reverse_link"
+          ]
+        }
+      ]
+    },
+    "picker_law_2026_08_13_secondary": {
+      "finding": "VERTICAL-PICKER-LAW-SECONDARY-HONESTY",
+      "note": "Secondary hub/nav/chrome without EntityPicker/+Add new. Built: inventory parts.edit (PartEditDrawer).",
+      "drops": []
+    },
+    "expense_2026_08_13_secondary": {
+      "finding": "VERTICAL-EXPENSE-SECONDARY-HONESTY",
+      "note": "Expense Required on report/inventory/maint chrome without expense EntityLink create.",
+      "drops": [
+        {
+          "id": "nav.purchases_tab",
+          "removed": [
+            "expense"
+          ]
+        },
+        {
+          "id": "parts.create.money",
+          "removed": [
+            "expense"
+          ]
+        },
+        {
+          "id": "assignments.trail",
+          "removed": [
+            "expense"
+          ]
+        },
+        {
+          "id": "assignments.vendor_link",
+          "removed": [
+            "expense"
+          ]
+        },
+        {
+          "id": "assignments.crosslink_purchases",
+          "removed": [
+            "expense"
+          ]
+        },
+        {
+          "id": "purchases.honest_empty",
+          "removed": [
+            "expense"
+          ]
+        }
+      ]
+    },
+    "qbo_chrome_2026_08_13_secondary": {
+      "finding": "VERTICAL-QBO-CHROME-SECONDARY-HONESTY",
+      "note": "qbo_chrome Required on hub/chrome without DatePicker/MoneyInput/Parity/ListToolbar triad.",
+      "drops": [
+        {
+          "id": "nav.parts_tab",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "parts.roster",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "parts.edit",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "assignments.trail",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "purchases.honest_empty",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "chrome.toolbar_search",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "chrome.toolbar_range",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "chrome.toolbar_gear",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "chrome.toolbar_filter",
+          "removed": [
+            "qbo_chrome"
           ]
         }
       ]
