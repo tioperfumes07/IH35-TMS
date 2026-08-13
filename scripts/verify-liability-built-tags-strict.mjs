@@ -18,6 +18,9 @@ export function audit(entries) {
 
 function scan() {
   const entries = [];
+  const feedFile = "docs/specs/scoreboard/wire-sprint-built.json";
+  const feed = JSON.parse(fs.readFileSync(path.join(ROOT, feedFile), "utf8"));
+  for (const tag of feed.entries || []) entries.push({ file: feedFile, tag });
   for (const file of fs.readdirSync(path.join(ROOT, "scripts")).filter((name) => name.startsWith("verify-") && name.endsWith(".mjs"))) {
     const source = fs.readFileSync(path.join(ROOT, "scripts", file), "utf8");
     for (const match of source.matchAll(TAG_RE)) {
@@ -49,4 +52,4 @@ if (failures.length) {
   console.error(`${LABEL} FAIL\n- ${failures.join("\n- ")}`);
   process.exit(1);
 }
-console.log(`${LABEL} PASS — every liability Built tag is leaf-specific`);
+console.log(`${LABEL} PASS — every liability Built tag/feed entry is leaf-specific`);
