@@ -50,7 +50,7 @@ const ENFORCEMENT_CHECKS = [
     id: "edit-refuses-voided",
     describe: "PATCH must not edit a voided incident",
     test: (src) =>
-      /UPDATE safety\.incidents\s*\n\s*SET \$\{sets\.join\(", "\)\}[\s\S]{0,400}?WHERE id = \$1 AND operating_company_id = \$2 AND voided_at IS NULL/.test(
+      /UPDATE safety\.incidents\s*\n\s*SET \$\{sets\.join\(", "\)\}[\s\S]{0,400}?WHERE id = \$1 AND operating_company_id = \$2(?:::uuid)? AND voided_at IS NULL/.test(
         src
       ),
   },
@@ -191,8 +191,8 @@ function selftest() {
     {
       name: "PATCH stops refusing a voided incident",
       files: [INCIDENTS],
-      find: "WHERE id = $1 AND operating_company_id = $2 AND voided_at IS NULL\n          RETURNING *",
-      replace: "WHERE id = $1 AND operating_company_id = $2\n          RETURNING *",
+      find: "WHERE id = $1 AND operating_company_id = $2::uuid AND voided_at IS NULL\n          RETURNING *",
+      replace: "WHERE id = $1 AND operating_company_id = $2::uuid\n          RETURNING *",
       expect: /edit-refuses-voided/,
     },
     {
