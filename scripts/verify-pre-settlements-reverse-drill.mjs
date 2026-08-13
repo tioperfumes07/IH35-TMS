@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /**
- * @matrix-built {"modules":["settlements","accounting","dispatch"],"cols":["settlement","driver","load","connectivity","reverse_link","liability"],"leafRe":"^(settlements\\.(list|detail|disputes)|settlement_close|pre_settlements|settlements\\.panel\\.(pre_settlements|pay_run_close)|settlements\\.drawer\\.(advance_detail|liability_detail)|settlements\\.modal\\.(hold_deduction|liability_breakdown)|escrow|owner_approval|secondary\\.pre_settlements|dispatch\\.panel\\.pre_settlement|load\\.drawer\\.(settlement|pre_settlement))$","task":"WAVE-A-settlement-column","vertical":"column-wave"}
+ * @matrix-built {"modules":["settlements","accounting","dispatch","drivers"],"cols":["settlement","driver","load","connectivity","reverse_link","liability"],"leafRe":"^(settlements\\.(list|detail|disputes)|settlement_close|pre_settlements|settlements\\.panel\\.(pre_settlements|pay_run_close)|settlements\\.drawer\\.(advance_detail|liability_detail)|settlements\\.modal\\.(hold_deduction|liability_breakdown)|escrow|owner_approval|secondary\\.pre_settlements|dispatch\\.panel\\.pre_settlement|load\\.drawer\\.(settlement|pre_settlement))$","task":"WAVE-A-settlement-column","vertical":"column-wave"}
  * Rule-17: pre-settlements reverse drill-through (Law §9).
- * Accounting + Settlements + Dispatch surfaces must EntityLink canonical settlement rows (Wave A `settlement`).
+ * Accounting + Settlements + Dispatch + Drivers surfaces must EntityLink canonical settlement rows (Wave A `settlement`).
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -109,6 +109,10 @@ function assertPreSettlementsReverse() {
   }
   if (!/PreSettlementsPanel/.test(dispatchPage) || !/subTab === "pre_settlements"/.test(dispatchPage)) {
     errors.push("Dispatch.tsx: pre_settlements subTab must mount PreSettlementsPanel");
+  }
+  const driversPage = read("apps/frontend/src/pages/Drivers.tsx");
+  if (!/subnavTab === "pre_settlements"/.test(driversPage) || !/PreSettlementsPanel/.test(driversPage)) {
+    errors.push("Drivers.tsx: pre_settlements tab must mount PreSettlementsPanel");
   }
   return errors;
 }

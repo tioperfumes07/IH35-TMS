@@ -1,7 +1,9 @@
 #!/usr/bin/env node
 /**
+ * @matrix-built {"modules":["drivers"],"cols":["settlement","driver","connectivity","reverse_link","picker_law"],"leafRe":"^drivers\\.modal\\.settlement_dispute$","task":"WAVE-A-drivers-settlement-dispute","vertical":"column-wave"}
  * SettlementDisputeModal — DriverPickerWithCreate (not silent listDrivers 200).
  * SETL-PICK-03 — modal + detail share settlementDisputeCategories + openSettlementDispute.
+ * Wave A: selected settlement must EntityLink for reverse hop.
  * Claim 2152.
  */
 import fs from "node:fs";
@@ -29,6 +31,9 @@ export function collectProblems(root = ROOT) {
   }
   if (/<select[\s\S]*?value=\{settlement_id\}/.test(code)) {
     problems.push(`${MODAL}: settlement must not regress to a native ID-valued select`);
+  }
+  if (!/kind="settlement"/.test(code) || !/settlement-dispute-settlement-link/.test(code)) {
+    problems.push(`${MODAL}: selected settlement must EntityLink (Wave A settlement reverse hop)`);
   }
 
   // SETL-PICK-03

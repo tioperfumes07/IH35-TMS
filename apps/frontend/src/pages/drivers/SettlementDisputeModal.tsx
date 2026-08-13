@@ -11,6 +11,7 @@ import { useToast } from "../../components/Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { Combobox } from "../../components/Combobox";
+import { EntityLink } from "../../components/shared/EntityLink";
 import {
   SETTLEMENT_DISPUTE_CATEGORY_OPTIONS,
   type SettlementDisputeCategoryOption,
@@ -135,6 +136,20 @@ export function SettlementDisputeModal({ open, onClose }: SettlementDisputeModal
               loading={settlementsQuery.isLoading}
               error={settlementsQuery.isError ? "Couldn't load settlements" : undefined}
             />
+            {settlement_id ? (
+              <p className="text-xs text-gray-700" data-testid="settlement-dispute-settlement-link">
+                Settlement:{" "}
+                <EntityLink
+                  kind="settlement"
+                  id={settlement_id}
+                  label={entityLabel(
+                    (settlementsQuery.data ?? []).find((s) => s.id === settlement_id)?.display_id,
+                    settlement_id,
+                    "Settlement"
+                  )}
+                />
+              </p>
+            ) : null}
           </div>
 
           <label className="block space-y-1">
