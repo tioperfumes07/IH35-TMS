@@ -38,6 +38,17 @@ function runGuard() {
     if (UTC_DATEONLY_RE.test(src)) {
       violations.push(`${rel}: contains new Date().toISOString().slice(0,10) — reintroduces the cash-position "today = tomorrow" bug.`);
     }
+    if (rel.endsWith("ActualVsProjectedTab.tsx")) {
+      if (!src.includes("appliedFrom") || !src.includes("appliedTo")) {
+        violations.push(`${rel}: must stage date range (appliedFrom/appliedTo) before refetch (CLS-FILTER-GEAR-APPLY).`);
+      }
+      if (!src.includes('queryKey: ["cash-flow-avp", operatingCompanyId, appliedFrom, appliedTo]')) {
+        violations.push(`${rel}: queryKey must use appliedFrom/appliedTo, not draft DatePicker values.`);
+      }
+      if (!src.includes("setAppliedFrom(from)") || !src.includes("setAppliedTo(to)")) {
+        violations.push(`${rel}: Apply must commit draft from/to into appliedFrom/appliedTo.`);
+      }
+    }
   }
 
   if (violations.length > 0) {

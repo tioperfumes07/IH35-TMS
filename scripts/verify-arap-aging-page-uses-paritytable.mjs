@@ -78,6 +78,19 @@ function assertMigrated(src) {
   if (!src.includes("Export CSV")) {
     errors.push(`${PAGE}: must keep the page-level Export CSV action`);
   }
+  // CLS-FILTER-GEAR-APPLY — as-of DatePicker drafts; query uses appliedAsOf after Apply.
+  if (!src.includes("appliedAsOf")) {
+    errors.push(`${PAGE}: must stage as-of date (appliedAsOf) before refetch`);
+  }
+  if (!src.includes("setAppliedAsOf(asOfDate)")) {
+    errors.push(`${PAGE}: must Apply staged as-of via setAppliedAsOf(asOfDate)`);
+  }
+  if (!src.includes('queryKey: ["fin20-ar-aging", operatingCompanyId, appliedAsOf]')) {
+    errors.push(`${PAGE}: AR queryKey must use appliedAsOf, not the draft DatePicker value`);
+  }
+  if (!src.includes('queryKey: ["fin20-ap-aging", operatingCompanyId, appliedAsOf]')) {
+    errors.push(`${PAGE}: AP queryKey must use appliedAsOf, not the draft DatePicker value`);
+  }
   if (src.includes("useMutation")) {
     errors.push(`${PAGE}: read-only report — must not add mutations`);
   }
