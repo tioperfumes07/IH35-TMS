@@ -140,7 +140,7 @@ export async function listPendingForDriver(
   client: Queryable,
   operatingCompanyId: string,
   driverUuid?: string,
-  direction?: "outbound" | "inbound",
+  direction?: "outbound" | "inbound" | "both",
   equipmentUuid?: string
 ): Promise<TransferRequestRow[]> {
   if (equipmentUuid) {
@@ -165,6 +165,26 @@ export async function listPendingForDriver(
   }
   if (!driverUuid) {
     return listInProgress(client, operatingCompanyId);
+  }
+
+  if (direction === "both") {
+    const res = await client.query(
+      `
+        SELECT r.uuid::text, r.operating_company_id::text, r.equipment_uuid::text, r.equipment_kind,
+               r.from_driver_uuid::text, r.to_driver_uuid::text, r.status, r.transfer_location,
+               r.outbound_confirmed_at::text, r.inbound_confirmed_at::text, r.created_at::text,
+               NULLIF(TRIM(CONCAT_WS(' ', fd.first_name, fd.last_name)), '') AS from_driver_name,
+               NULLIF(TRIM(CONCAT_WS(' ', td.first_name, td.last_name)), '') AS to_driver_name
+        FROM dispatch.equipment_transfer_requests r
+        LEFT JOIN mdata.drivers fd ON fd.id = r.from_driver_uuid AND fd.operating_company_id = r.operating_company_id
+        LEFT JOIN mdata.drivers td ON td.id = r.to_driver_uuid AND td.operating_company_id = r.operating_company_id
+        WHERE r.operating_company_id = $1::uuid
+          AND (r.from_driver_uuid = $2::uuid OR r.to_driver_uuid = $2::uuid)
+        ORDER BY r.created_at DESC
+      `,
+      [operatingCompanyId, driverUuid]
+    );
+    return res.rows as TransferRequestRow[];
   }
 
   const dir = direction ?? "outbound";
@@ -285,7 +305,7 @@ export async function listPendingForDriverForUser(
   userId: string,
   operatingCompanyId: string,
   driverUuid?: string,
-  direction?: "outbound" | "inbound",
+  direction?: "outbound" | "inbound" | "both",
   equipmentUuid?: string
 ) {
   return withCurrentUser(userId, async (client) => {

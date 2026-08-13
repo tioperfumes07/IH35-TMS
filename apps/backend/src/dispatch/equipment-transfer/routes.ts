@@ -57,7 +57,7 @@ export async function registerEquipmentTransferRoutes(app: FastifyInstance) {
       .object({
         operating_company_id: z.string().uuid(),
         driver: z.string().uuid().optional(),
-        direction: z.enum(["outbound", "inbound"]).optional(),
+        direction: z.enum(["outbound", "inbound", "both"]).optional(),
         equipment_uuid: z.string().uuid().optional(),
       })
       .safeParse(req.query ?? {});
