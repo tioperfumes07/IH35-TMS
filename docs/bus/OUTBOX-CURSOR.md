@@ -32,3 +32,5 @@
 2026-08-13T19:45Z Cursor | shipping VERTICAL-LOAD-PRIORITY14 | Live=BLOCKED | NEXT=qbo_chrome/picker + Codex reverse_link
 2026-08-13T19:48Z Cursor | SHIPPED VERTICAL-LOAD-PRIORITY14 (PR#6543) | load Gap=4 WIRE_GAP | Live=BLOCKED | NEXT=qbo_chrome factoring + Codex reverse_link
 2026-08-13T19:52Z Cursor | locking FULLY-WIRED-COMPLETE-BAR law everywhere | Live=BLOCKED | NEXT=merge then column drain
+2026-08-13T20:00Z Cursor | SHIPPED FULLY-WIRED-COMPLETE-BAR-LAW (PR#6545) | Live=BLOCKED | NEXT=column drain under 12-item bar
+2026-08-13T20:05Z Cursor | shipping VERTICAL-QBO-CHROME-FACTORING | Gap→4 toolbar WIRE | Live=BLOCKED | NEXT=ListToolbar wire OR reverse_link absorb
