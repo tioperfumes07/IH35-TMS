@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -57,11 +57,11 @@ export function SevereRepairOosTab({ operatingCompanyId }: Props) {
   const [oosLocation, setOosLocation] = useState("");
   const [returnNotes, setReturnNotes] = useState("");
   const [returnEstimate, setReturnEstimate] = useState<SevereRepairEstimate | null>(null);
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(""), unitId = useSearchParams()[0].get("unit_id") ?? undefined;
 
   const estimatesQuery = useQuery({
-    queryKey: ["maintenance", "severe-estimates", operatingCompanyId],
-    queryFn: () => listSevereRepairEstimates(operatingCompanyId),
+    queryKey: ["maintenance", "severe-estimates", operatingCompanyId, unitId],
+    queryFn: () => listSevereRepairEstimates(operatingCompanyId, { unit_id: unitId }),
     enabled: Boolean(operatingCompanyId),
   });
   const rollupQuery = useQuery({

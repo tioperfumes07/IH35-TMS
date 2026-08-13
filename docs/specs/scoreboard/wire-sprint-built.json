@@ -752,6 +752,14 @@
       "modules": ["maintenance", "fleet", "inventory"],
       "cols": ["unit", "connectivity", "reverse_link", "picker_law"],
       "leafRe": "^(tire|mount|unit|profile|detail|inventory|create)"
+    },
+    {
+      "task": "SEVERE-REPAIR-UNIT-REVERSE",
+      "pr": "this PR",
+      "guard": "scripts/verify-severe-repair-unit-reverse.mjs",
+      "modules": ["maintenance", "fleet", "safety"],
+      "cols": ["unit", "connectivity", "reverse_link", "picker_law"],
+      "leafRe": "^(severe|repair|oos|unit|profile|detail|create)"
     }
   ]
 }

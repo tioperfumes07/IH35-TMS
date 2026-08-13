@@ -457,9 +457,11 @@ export function getMaintenanceSevereAlerts(companyId: string) {
   );
 }
 
-export function listSevereRepairEstimates(companyId: string) {
+export function listSevereRepairEstimates(companyId: string, filters: { unit_id?: string } = {}) {
+  const params = new URLSearchParams({ operating_company_id: companyId });
+  if (filters.unit_id) params.set("unit_id", filters.unit_id);
   return apiRequest<{ data: SevereRepairEstimate[] }>(
-    `/api/v1/maintenance/severe-repair-estimates?${query(companyId)}`
+    `/api/v1/maintenance/severe-repair-estimates?${params.toString()}`
   );
 }
 
