@@ -14,7 +14,7 @@ import { RecordPaymentModal } from "./RecordPaymentModal";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
-import { CollapsedListFilters } from "../../components/table";
+import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { useUrlSort } from "../../hooks/useUrlSort";
 
 function money(cents: number) {
@@ -62,6 +62,7 @@ export function PaymentsListPage() {
   const [search, setSearch] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
+  const staged = useStagedListFilters({ applied: { status, method, dateFrom, dateTo }, empty: { status: "all" as const, method: "" as const, dateFrom: "", dateTo: "" }, onApply: (next) => { setStatus(next.status); setMethod(next.method); setDateFrom(next.dateFrom); setDateTo(next.dateTo); } });
   const [recordOpen, setRecordOpen] = useState(false);
 
   const query = useQuery({
@@ -176,6 +177,7 @@ export function PaymentsListPage() {
     <div className="space-y-2 w-full">
       <CollapsedListFilters
         activeFilterCount={paymentsActiveFilterCount}
+        onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}
         testIdPrefix="payments"
         dataAttributes={{ "data-payments-filter-toolbar": "collapsed" }}
         searchSlot={
@@ -191,7 +193,7 @@ export function PaymentsListPage() {
         <div className="grid gap-2 md:grid-cols-4">
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
             Status
-            <SelectCombobox value={status} onChange={(event) => setStatus(event.target.value as "all" | "active" | "voided")} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]">
+            <SelectCombobox value={staged.draft.status} onChange={(event) => staged.setDraft({ ...staged.draft, status: event.target.value as "all" | "active" | "voided" })} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]">
               <option value="all">All</option>
               <option value="active">Active</option>
               <option value="voided">Voided</option>
@@ -200,7 +202,7 @@ export function PaymentsListPage() {
 
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
             Method
-            <SelectCombobox value={method} onChange={(event) => setMethod(event.target.value as "" | PaymentMethod | "factoring")} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]">
+            <SelectCombobox value={staged.draft.method} onChange={(event) => staged.setDraft({ ...staged.draft, method: event.target.value as "" | PaymentMethod | "factoring" })} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]">
               {METHOD_OPTIONS.map((option) => (
                 <option key={option.label} value={option.value}>
                   {option.label}
@@ -211,11 +213,11 @@ export function PaymentsListPage() {
 
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
             From
-            <DatePicker value={dateFrom} onChange={(next) => setDateFrom(next)} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" />
+            <DatePicker value={staged.draft.dateFrom} onChange={(next) => staged.setDraft({ ...staged.draft, dateFrom: next })} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" />
           </label>
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
             To
-            <DatePicker value={dateTo} onChange={(next) => setDateTo(next)} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" />
+            <DatePicker value={staged.draft.dateTo} onChange={(next) => staged.setDraft({ ...staged.draft, dateTo: next })} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" />
           </label>
         </div>
       </CollapsedListFilters>

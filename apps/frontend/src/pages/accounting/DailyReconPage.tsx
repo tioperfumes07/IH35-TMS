@@ -10,7 +10,7 @@ import { useListState } from "../../components/list-state";
 import { formatUsdCents } from "../../lib/money";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { DatePicker } from "../../components/forms/DatePicker";
-import { CollapsedListFilters } from "../../components/table";
+import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { companyToday, addDaysIso } from "../../lib/businessDate";
 
 const ENTITY_TYPE_OPTIONS = [
@@ -103,6 +103,7 @@ export function DailyReconPage() {
   const [toDate, setToDate] = useState(today);
   const [entityType, setEntityType] = useState("");
   const [matchStatus, setMatchStatus] = useState<DailyReconMatchStatus | "all">("all");
+  const staged = useStagedListFilters({ applied: { fromDate, toDate, entityType, matchStatus }, empty: { fromDate: thirtyDaysAgo, toDate: today, entityType: "", matchStatus: "all" as const }, onApply: (next) => { setFromDate(next.fromDate); setToDate(next.toDate); setEntityType(next.entityType); setMatchStatus(next.matchStatus); } });
 
   const query = useQuery({
     queryKey: ["daily-recon", companyId, fromDate, toDate, entityType, matchStatus],
@@ -168,6 +169,7 @@ export function DailyReconPage() {
           {/* Filters */}
           <CollapsedListFilters
             activeFilterCount={(fromDate || toDate ? 1 : 0) + (entityType ? 1 : 0) + (matchStatus !== "all" ? 1 : 0)}
+            onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}
             testIdPrefix="daily-recon"
             dataAttributes={{ "data-daily-recon-filter-toolbar": "collapsed" }}
           >
@@ -175,24 +177,24 @@ export function DailyReconPage() {
               <div className="flex flex-col gap-0.5">
                 <label className="text-[10px] font-semibold uppercase text-gray-500">From</label>
                 <DatePicker
-                  value={fromDate}
-                  onChange={setFromDate}
+                  value={staged.draft.fromDate}
+                  onChange={(next) => staged.setDraft({ ...staged.draft, fromDate: next })}
                   className="h-10 rounded-sm border border-gray-300 px-2 text-sm"
                 />
               </div>
               <div className="flex flex-col gap-0.5">
                 <label className="text-[10px] font-semibold uppercase text-gray-500">To</label>
                 <DatePicker
-                  value={toDate}
-                  onChange={setToDate}
+                  value={staged.draft.toDate}
+                  onChange={(next) => staged.setDraft({ ...staged.draft, toDate: next })}
                   className="h-10 rounded-sm border border-gray-300 px-2 text-sm"
                 />
               </div>
               <div className="flex flex-col gap-0.5">
                 <label className="text-[10px] font-semibold uppercase text-gray-500">Type</label>
                 <select
-                  value={entityType}
-                  onChange={(e) => setEntityType(e.target.value)}
+                  value={staged.draft.entityType}
+                  onChange={(e) => staged.setDraft({ ...staged.draft, entityType: e.target.value })}
                   className="h-10 rounded-sm border border-gray-300 px-2 text-sm"
                 >
                   {ENTITY_TYPE_OPTIONS.map((o) => (
@@ -203,8 +205,8 @@ export function DailyReconPage() {
               <div className="flex flex-col gap-0.5">
                 <label className="text-[10px] font-semibold uppercase text-gray-500">Status</label>
                 <select
-                  value={matchStatus}
-                  onChange={(e) => setMatchStatus(e.target.value as DailyReconMatchStatus | "all")}
+                  value={staged.draft.matchStatus}
+                  onChange={(e) => staged.setDraft({ ...staged.draft, matchStatus: e.target.value as DailyReconMatchStatus | "all" })}
                   className="h-10 rounded-sm border border-gray-300 px-2 text-sm"
                 >
                   {MATCH_STATUS_OPTIONS.map((o) => (

@@ -1,5 +1,5 @@
 import type { AssetLifecycle } from "./types";
-import { CollapsedListFilters } from "../table";
+import { CollapsedListFilters, useStagedListFilters } from "../table";
 
 type Props = {
   lifecycle: AssetLifecycle | "all";
@@ -16,11 +16,20 @@ const LIFECYCLE_OPTIONS: Array<{ value: AssetLifecycle | "all"; label: string }>
 ];
 
 export function AssetFiltersBar({ lifecycle, search, onLifecycleChange, onSearchChange }: Props) {
+  const staged = useStagedListFilters({
+    applied: { lifecycle },
+    empty: { lifecycle: "all" as const },
+    onApply: (next) => onLifecycleChange(next.lifecycle),
+  });
   return (
     <section data-asset-filter-toolbar="collapsed">
       <CollapsedListFilters
         activeFilterCount={lifecycle !== "all" ? 1 : 0}
         testIdPrefix="assets"
+        onApply={staged.apply}
+        onReset={staged.reset}
+        onCancel={staged.cancel}
+        applyDisabled={!staged.dirty}
         searchSlot={
           <input
             value={search}
@@ -34,8 +43,8 @@ export function AssetFiltersBar({ lifecycle, search, onLifecycleChange, onSearch
         <label className="space-y-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
           Lifecycle
           <select
-            value={lifecycle}
-            onChange={(event) => onLifecycleChange(event.target.value as AssetLifecycle | "all")}
+            value={staged.draft.lifecycle}
+            onChange={(event) => staged.setDraft({ lifecycle: event.target.value as AssetLifecycle | "all" })}
             className="w-full rounded-sm border border-gray-300 px-2 py-1 text-sm font-normal text-gray-900"
           >
             {LIFECYCLE_OPTIONS.map((option) => (

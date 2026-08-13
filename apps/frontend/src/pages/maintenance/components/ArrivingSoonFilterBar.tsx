@@ -1,5 +1,5 @@
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
-import { CollapsedListFilters } from "../../../components/table";
+import { CollapsedListFilters, useStagedListFilters } from "../../../components/table";
 
 type Props = {
   withinHours: number;
@@ -24,6 +24,17 @@ export function ArrivingSoonFilterBar({
   onIncludeAlreadyArrivedChange,
   onIncludeNonYardChange,
 }: Props) {
+  const staged = useStagedListFilters({
+    applied: { withinHours, severityMin, includeAlreadyArrived, includeNonYard },
+    empty: { withinHours: 48, severityMin: "info" as const, includeAlreadyArrived: false, includeNonYard: false },
+    onApply: (next) => {
+      onWithinHoursChange(next.withinHours);
+      onSeverityMinChange(next.severityMin);
+      onIncludeAlreadyArrivedChange(next.includeAlreadyArrived);
+      onIncludeNonYardChange(next.includeNonYard);
+    },
+  });
+  const draft = staged.draft;
   const activeFilterCount =
     (withinHours !== 48 ? 1 : 0) +
     (severityMin !== "info" ? 1 : 0) +
@@ -32,11 +43,11 @@ export function ArrivingSoonFilterBar({
 
   return (
     <div className="space-y-2 text-xs" data-arriving-soon-filter-toolbar="collapsed">
-      <CollapsedListFilters activeFilterCount={activeFilterCount} testIdPrefix="arriving-soon">
+      <CollapsedListFilters activeFilterCount={activeFilterCount} testIdPrefix="arriving-soon" onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}>
         <div className="grid grid-cols-1 gap-2 md:grid-cols-4">
           <label className="space-y-1">
             <span className="text-gray-600">Within next</span>
-            <SelectCombobox className="h-8 w-full rounded-sm border border-gray-300 px-2 text-sm" value={withinHours} onChange={(e) => onWithinHoursChange(Number(e.target.value))}>
+            <SelectCombobox className="h-8 w-full rounded-sm border border-gray-300 px-2 text-sm" value={draft.withinHours} onChange={(e) => staged.setDraft({ ...draft, withinHours: Number(e.target.value) })}>
               <option value={24}>24h</option>
               <option value={48}>48h</option>
               <option value={168}>7 days</option>
@@ -46,8 +57,8 @@ export function ArrivingSoonFilterBar({
             <span className="text-gray-600">Severity</span>
             <SelectCombobox
               className="h-8 w-full rounded-sm border border-gray-300 px-2 text-sm"
-              value={severityMin}
-              onChange={(e) => onSeverityMinChange(e.target.value as "info" | "warning" | "severe")}
+              value={draft.severityMin}
+              onChange={(e) => staged.setDraft({ ...draft, severityMin: e.target.value as "info" | "warning" | "severe" })}
             >
               <option value="info">All</option>
               <option value="warning">Warning+</option>
@@ -55,11 +66,11 @@ export function ArrivingSoonFilterBar({
             </SelectCombobox>
           </label>
           <label className="flex items-center gap-2 text-sm">
-            <input type="checkbox" checked={includeAlreadyArrived} onChange={(e) => onIncludeAlreadyArrivedChange(e.target.checked)} />
+            <input type="checkbox" checked={draft.includeAlreadyArrived} onChange={(e) => staged.setDraft({ ...draft, includeAlreadyArrived: e.target.checked })} />
             Include already-arrived
           </label>
           <label className="flex items-center gap-2 text-sm">
-            <input type="checkbox" checked={includeNonYard} onChange={(e) => onIncludeNonYardChange(e.target.checked)} />
+            <input type="checkbox" checked={draft.includeNonYard} onChange={(e) => staged.setDraft({ ...draft, includeNonYard: e.target.checked })} />
             Include non-yard destinations
           </label>
         </div>

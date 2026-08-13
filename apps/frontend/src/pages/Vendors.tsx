@@ -14,7 +14,7 @@ import { ActionButton } from "../components/shared/ActionButton";
 import { SelectCombobox } from "../components/shared/SelectCombobox";
 import { SecondaryNavTabs } from "../components/shared/SecondaryNavTabs";
 import { PageHeader } from "../components/layout/PageHeader";
-import { CollapsedListFilters } from "../components/table";
+import { CollapsedListFilters, useStagedListFilters } from "../components/table";
 import { useCompanyContext } from "../contexts/CompanyContext";
 import { parseVendorNotes } from "../lib/vendorProfileMeta";
 import { VendorsListView } from "./vendors/VendorsListView";
@@ -114,6 +114,10 @@ export function VendorsPage() {
   const [txnCategoryFilter, setTxnCategoryFilter] = useState("");
   // V8 — roster-level Category filter for the LEFT vendor list (distinct from By Category tab).
   const [rosterCategory, setRosterCategory] = useState("");
+  const rosterFilters = useStagedListFilters({
+    applied: { listStatus, rosterCategory }, empty: { listStatus: "active" as const, rosterCategory: "" },
+    onApply: (next) => { setListStatus(next.listStatus); setRosterCategory(next.rosterCategory); },
+  });
   const [showFilterBox, setShowFilterBox] = useState(false);
   const [sidebarPage, setSidebarPage] = useState(1);
   const [sidebarPageSize, setSidebarPageSize] = useState(50);
@@ -320,6 +324,7 @@ export function VendorsPage() {
                 Filters the left vendor list in BOTH list and master-detail view modes. */}
             <CollapsedListFilters
               activeFilterCount={(listStatus !== "active" ? 1 : 0) + (rosterCategory ? 1 : 0)}
+              onApply={rosterFilters.apply} onReset={rosterFilters.reset} onCancel={rosterFilters.cancel} applyDisabled={!rosterFilters.dirty}
               testIdPrefix="vendors-roster"
               dataAttributes={{ "data-vendors-roster-filter-toolbar": "collapsed" }}
             >
@@ -330,8 +335,8 @@ export function VendorsPage() {
                     <button
                       key={value}
                       type="button"
-                      className={`rounded-sm px-2 py-1 font-medium capitalize ${listStatus === value ? "bg-[#1F2A44] text-white" : "text-gray-700 hover:bg-gray-50"}`}
-                      onClick={() => setListStatus(value)}
+                      className={`rounded-sm px-2 py-1 font-medium capitalize ${rosterFilters.draft.listStatus === value ? "bg-[#1F2A44] text-white" : "text-gray-700 hover:bg-gray-50"}`}
+                      onClick={() => rosterFilters.setDraft({ ...rosterFilters.draft, listStatus: value })}
                     >
                       {value}
                     </button>
@@ -343,8 +348,8 @@ export function VendorsPage() {
                 <div className="space-y-1.5">
                   <div className="text-xs font-semibold text-gray-600">Category</div>
                   <SelectCombobox
-                    value={rosterCategory}
-                    onChange={(event) => setRosterCategory(event.target.value)}
+                    value={rosterFilters.draft.rosterCategory}
+                    onChange={(event) => rosterFilters.setDraft({ ...rosterFilters.draft, rosterCategory: event.target.value })}
                     className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
                     aria-label="Filter vendors by category"
                   >

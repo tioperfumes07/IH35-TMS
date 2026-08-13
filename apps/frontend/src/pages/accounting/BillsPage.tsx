@@ -19,7 +19,7 @@ import { useToast } from "../../components/Toast";
 import { TasksTab } from "../../components/tasks/TasksTab";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
-import { CollapsedListFilters } from "../../components/table";
+import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { useUrlSort } from "../../hooks/useUrlSort";
 import { CappedListNotice } from "../../components/CappedListNotice";
 import { CreateBillModal } from "../maintenance/components/CreateBillModal";
@@ -348,6 +348,11 @@ export function BillsPage() {
       { replace: false }
     );
   }
+  const staged = useStagedListFilters({
+    applied: { category, status, vendorId, dateFrom, dateTo },
+    empty: { category: "" as const, status: "" as const, vendorId: "", dateFrom: "", dateTo: "" },
+    onApply: (next) => { setCategory(next.category); setStatus(next.status); setVendorId(next.vendorId); setDateFrom(next.dateFrom); setDateTo(next.dateTo); },
+  });
 
   function setCreateOpen(next: boolean) {
     setSearchParams(
@@ -475,6 +480,7 @@ export function BillsPage() {
       ) : null}
       <CollapsedListFilters
         activeFilterCount={billsActiveFilterCount}
+        onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}
         testIdPrefix="bills"
         dataAttributes={{ "data-bills-filter-toolbar": "collapsed" }}
       >
@@ -482,8 +488,8 @@ export function BillsPage() {
           <span className="text-gray-600">Category:</span>
           <button
             type="button"
-            className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${!category ? "border-slate-300 bg-slate-100 text-slate-700" : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"}`}
-            onClick={() => setCategory("")}
+            className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${!staged.draft.category ? "border-slate-300 bg-slate-100 text-slate-700" : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"}`}
+            onClick={() => staged.setDraft({ ...staged.draft, category: "" })}
           >
             All
           </button>
@@ -492,9 +498,9 @@ export function BillsPage() {
               key={cat}
               type="button"
               className={`rounded-full border px-2.5 py-0.5 text-xs font-medium capitalize ${
-                category === cat ? "border-slate-300 bg-slate-100 text-slate-700" : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+                staged.draft.category === cat ? "border-slate-300 bg-slate-100 text-slate-700" : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
               }`}
-              onClick={() => setCategory(cat)}
+              onClick={() => staged.setDraft({ ...staged.draft, category: cat })}
             >
               {cat}
             </button>
@@ -503,7 +509,7 @@ export function BillsPage() {
 
         <div className="flex flex-wrap items-center gap-2 text-sm">
           <span className="text-gray-600">Status:</span>
-          <SelectCombobox className="rounded-sm border border-gray-300 px-2 py-1" value={status} onChange={(e) => setStatus(e.target.value as typeof status)}>
+          <SelectCombobox className="rounded-sm border border-gray-300 px-2 py-1" value={staged.draft.status} onChange={(e) => staged.setDraft({ ...staged.draft, status: e.target.value as typeof status })}>
             <option value="">All open items</option>
             <option value="unpaid">Unpaid</option>
             <option value="partial">Partial</option>
@@ -515,8 +521,8 @@ export function BillsPage() {
               too (writes to canonical mdata.vendors — same table vendorOptions reads from). */}
           <div className="w-56">
             <ReferenceSelect
-              value={vendorId || null}
-              onChange={(next) => setVendorId(next ?? "")}
+              value={staged.draft.vendorId || null}
+              onChange={(next) => staged.setDraft({ ...staged.draft, vendorId: next ?? "" })}
               options={vendorFilterOptions}
               createKind="vendor"
               operatingCompanyId={companyId}
@@ -535,16 +541,15 @@ export function BillsPage() {
 
         <div className="flex flex-wrap items-center gap-2 text-sm">
           <span className="text-gray-600">From:</span>
-          <DatePicker value={dateFrom} onChange={setDateFrom} max={dateTo || undefined} className="w-36" />
+          <DatePicker value={staged.draft.dateFrom} onChange={(next) => staged.setDraft({ ...staged.draft, dateFrom: next })} max={staged.draft.dateTo || undefined} className="w-36" />
           <span className="text-gray-600">To:</span>
-          <DatePicker value={dateTo} onChange={setDateTo} min={dateFrom || undefined} className="w-36" />
-          {dateFrom || dateTo ? (
+          <DatePicker value={staged.draft.dateTo} onChange={(next) => staged.setDraft({ ...staged.draft, dateTo: next })} min={staged.draft.dateFrom || undefined} className="w-36" />
+          {staged.draft.dateFrom || staged.draft.dateTo ? (
             <button
               type="button"
               className="rounded-full border border-gray-300 bg-white px-2.5 py-0.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
               onClick={() => {
-                setDateFrom("");
-                setDateTo("");
+                staged.setDraft({ ...staged.draft, dateFrom: "", dateTo: "" });
               }}
             >
               Clear dates

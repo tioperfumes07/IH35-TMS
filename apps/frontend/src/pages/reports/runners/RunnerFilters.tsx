@@ -4,7 +4,7 @@ import type { RunnerFilter } from "./runner-config";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { EntityPicker } from "../../../components/parity/EntityPicker";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
-import { CollapsedListFilters } from "../../../components/table";
+import { CollapsedListFilters, useStagedListFilters } from "../../../components/table";
 
 type Props = {
   filters: RunnerFilter[];
@@ -32,6 +32,14 @@ export function defaultFilterValues(filters: RunnerFilter[]) {
 
 export function RunnerFilters({ filters, values, onChange, onRun, isRunning }: Props) {
   const { selectedCompanyId, companies } = useCompanyContext();
+  const staged = useStagedListFilters({
+    applied: values,
+    empty: defaultFilterValues(filters),
+    onApply: (next) => {
+      for (const key of new Set([...Object.keys(values), ...Object.keys(next)])) onChange(key, next[key] ?? "");
+    },
+  });
+  const draft = staged.draft;
 
   const requiredMissing = useMemo(() => {
     return filters.some((filter) => {
@@ -50,7 +58,7 @@ export function RunnerFilters({ filters, values, onChange, onRun, isRunning }: P
 
   return (
     <section className="space-y-2" data-runner-filter-toolbar="collapsed">
-      <CollapsedListFilters activeFilterCount={activeFilterCount} testIdPrefix="runner">
+      <CollapsedListFilters activeFilterCount={activeFilterCount} testIdPrefix="runner" onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}>
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {filters.map((filter) => {
             if (filter.type === "date_range") {
@@ -58,9 +66,9 @@ export function RunnerFilters({ filters, values, onChange, onRun, isRunning }: P
                 <div key={filter.key} className="md:col-span-2 xl:col-span-2">
                   <div className="mb-1 text-xs font-semibold text-slate-600">{filter.label}</div>
                   <div className="flex items-center gap-2">
-                    <DatePicker className="rounded-sm border border-slate-300 px-2 py-1.5 text-sm" value={String(values.from ?? "")} onChange={(next) => onChange("from", next)} />
+                    <DatePicker className="rounded-sm border border-slate-300 px-2 py-1.5 text-sm" value={String(draft.from ?? "")} onChange={(next) => staged.setDraft({ ...draft, from: next })} />
                     <span className="text-slate-500">to</span>
-                    <DatePicker className="rounded-sm border border-slate-300 px-2 py-1.5 text-sm" value={String(values.to ?? "")} onChange={(next) => onChange("to", next)} />
+                    <DatePicker className="rounded-sm border border-slate-300 px-2 py-1.5 text-sm" value={String(draft.to ?? "")} onChange={(next) => staged.setDraft({ ...draft, to: next })} />
                   </div>
                 </div>
               );
@@ -69,7 +77,7 @@ export function RunnerFilters({ filters, values, onChange, onRun, isRunning }: P
               return (
                 <label key={filter.key} className="block">
                   <div className="mb-1 text-xs font-semibold text-slate-600">{filter.label}</div>
-                  <input type="month" className="w-full rounded-sm border border-slate-300 px-2 py-1.5 text-sm" value={String(values[filter.key] ?? "")} onChange={(e) => onChange(filter.key, e.target.value)} />
+                  <input type="month" className="w-full rounded-sm border border-slate-300 px-2 py-1.5 text-sm" value={String(draft[filter.key] ?? "")} onChange={(e) => staged.setDraft({ ...draft, [filter.key]: e.target.value })} />
                 </label>
               );
             }
@@ -80,8 +88,8 @@ export function RunnerFilters({ filters, values, onChange, onRun, isRunning }: P
                   <EntityPicker
                     kind="unit"
                     operatingCompanyId={selectedCompanyId ?? ""}
-                    value={String(values[filter.key] ?? "") || null}
-                    onChange={(next) => onChange(filter.key, next ?? "")}
+                    value={String(draft[filter.key] ?? "") || null}
+                    onChange={(next) => staged.setDraft({ ...draft, [filter.key]: next ?? "" })}
                     enabled={Boolean(selectedCompanyId)}
                     placeholder="Select unit"
                     className="h-9 w-full text-sm"
@@ -98,8 +106,8 @@ export function RunnerFilters({ filters, values, onChange, onRun, isRunning }: P
                   <EntityPicker
                     kind="driver"
                     operatingCompanyId={selectedCompanyId ?? ""}
-                    value={String(values[filter.key] ?? "") || null}
-                    onChange={(next) => onChange(filter.key, next ?? "")}
+                    value={String(draft[filter.key] ?? "") || null}
+                    onChange={(next) => staged.setDraft({ ...draft, [filter.key]: next ?? "" })}
                     enabled={Boolean(selectedCompanyId)}
                     placeholder="Search driver…"
                     className="h-9 w-full text-sm"
@@ -114,7 +122,7 @@ export function RunnerFilters({ filters, values, onChange, onRun, isRunning }: P
             return (
               <label key={filter.key} className="block">
                 <div className="mb-1 text-xs font-semibold text-slate-600">{filter.label}</div>
-                <SelectCombobox className="w-full rounded-sm border border-slate-300 px-2 py-1.5 text-sm" value={String(values[filter.key] ?? selectedCompanyId ?? "")} onChange={(e) => onChange(filter.key, e.target.value)}>
+                <SelectCombobox className="w-full rounded-sm border border-slate-300 px-2 py-1.5 text-sm" value={String(draft[filter.key] ?? selectedCompanyId ?? "")} onChange={(e) => staged.setDraft({ ...draft, [filter.key]: e.target.value })}>
                   {companies.map((company) => (
                     <option key={company.id} value={company.id}>
                       {company.legal_name}

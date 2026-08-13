@@ -14,7 +14,7 @@ import { useListState } from "../../components/list-state";
 import { PolicyCreateModal } from "../../components/insurance/PolicyCreateModal";
 import { PolicyCreateWizard } from "../../components/insurance/PolicyCreateWizard";
 import { TaskLinkPicker } from "../../components/tasks/TaskLinkPicker";
-import { CollapsedListFilters } from "../../components/table";
+import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { formatDateUS } from "../../lib/formatDate";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatUsdCents } from "../../lib/money";
@@ -52,6 +52,11 @@ export function PoliciesList() {
   const [typeFilter, setTypeFilter] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<"" | InsurancePolicyStatus>("");
   const [expiringSoonOnly, setExpiringSoonOnly] = useState(false);
+  const staged = useStagedListFilters({
+    applied: { typeFilter, statusFilter, expiringSoonOnly },
+    empty: { typeFilter: "", statusFilter: "" as const, expiringSoonOnly: false },
+    onApply: (next) => { setTypeFilter(next.typeFilter); setStatusFilter(next.statusFilter); setExpiringSoonOnly(next.expiringSoonOnly); },
+  });
   const canCreatePolicy = user?.role === "Owner" || user?.role === "Administrator" || user?.role === "Accountant";
 
   const policiesQuery = useQuery({
@@ -129,6 +134,10 @@ export function PoliciesList() {
 
       <CollapsedListFilters
         activeFilterCount={(typeFilter ? 1 : 0) + (statusFilter ? 1 : 0) + (expiringSoonOnly ? 1 : 0)}
+        onApply={staged.apply}
+        onReset={staged.reset}
+        onCancel={staged.cancel}
+        applyDisabled={!staged.dirty}
         testIdPrefix="insurance-policies"
         dataAttributes={{ "data-insurance-policies-filter-toolbar": "collapsed" }}
         className="rounded-sm border border-gray-200 bg-white p-2"
@@ -138,8 +147,8 @@ export function PoliciesList() {
             Type
             <select
               className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
-              value={typeFilter}
-              onChange={(event) => setTypeFilter(event.target.value)}
+              value={staged.draft.typeFilter}
+              onChange={(event) => staged.setDraft({ ...staged.draft, typeFilter: event.target.value })}
             >
               <option value="">All types</option>
               {(typesQuery.data ?? []).map((type) => (
@@ -154,8 +163,8 @@ export function PoliciesList() {
             Status
             <select
               className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
-              value={statusFilter}
-              onChange={(event) => setStatusFilter((event.target.value || "") as "" | InsurancePolicyStatus)}
+              value={staged.draft.statusFilter}
+              onChange={(event) => staged.setDraft({ ...staged.draft, statusFilter: (event.target.value || "") as "" | InsurancePolicyStatus })}
             >
               <option value="">All statuses</option>
               <option value="active">Active</option>
@@ -168,8 +177,8 @@ export function PoliciesList() {
           <label className="col-span-2 flex items-center gap-2 pt-5 text-xs font-semibold text-slate-700">
             <input
               type="checkbox"
-              checked={expiringSoonOnly}
-              onChange={(event) => setExpiringSoonOnly(event.target.checked)}
+              checked={staged.draft.expiringSoonOnly}
+              onChange={(event) => staged.setDraft({ ...staged.draft, expiringSoonOnly: event.target.checked })}
               className="h-4 w-4 rounded-sm border border-gray-300"
             />
             Expiring soon (next 30 days)

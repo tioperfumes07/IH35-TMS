@@ -18,7 +18,7 @@ import { BillDetailPanel } from "./BillDetailPanel";
 import { PayBillModal } from "./PayBillModal";
 import { CCPaymentModal } from "./bill-payments/CCPaymentModal";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
-import { CollapsedListFilters } from "../../components/table";
+import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { useUrlSort } from "../../hooks/useUrlSort";
 import { EntityPicker } from "../../components/parity/EntityPicker";
 import { userFacingApiError } from "../../lib/api-error-message";
@@ -62,6 +62,7 @@ export function BillPaymentsListPage() {
   const [vendorId, setVendorId] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
+  const staged = useStagedListFilters({ applied: { vendorId, dateFrom, dateTo }, empty: { vendorId: "", dateFrom: "", dateTo: "" }, onApply: (next) => { setVendorId(next.vendorId); setDateFrom(next.dateFrom); setDateTo(next.dateTo); } });
   const [search, setSearch] = useState("");
   const [selectedBillId, setSelectedBillId] = useState("");
   const [payModalOpen, setPayModalOpen] = useState(false);
@@ -215,6 +216,7 @@ export function BillPaymentsListPage() {
         </label>
         <CollapsedListFilters
           activeFilterCount={billPayActiveFilterCount}
+          onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}
           testIdPrefix="bill-payments"
           dataAttributes={{ "data-bill-payments-filter-toolbar": "collapsed" }}
           searchSlot={
@@ -236,8 +238,8 @@ export function BillPaymentsListPage() {
               <EntityPicker
                 kind="vendor"
                 operatingCompanyId={companyId}
-                value={vendorId || null}
-                onChange={(next) => setVendorId(next ?? "")}
+                value={staged.draft.vendorId || null}
+                onChange={(next) => staged.setDraft({ ...staged.draft, vendorId: next ?? "" })}
                 allowCreate={false}
                 placeholder="All vendors"
               />
@@ -246,16 +248,16 @@ export function BillPaymentsListPage() {
               From
               <DatePicker
                 className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]"
-                value={dateFrom}
-                onChange={(next) => setDateFrom(next)}
+                value={staged.draft.dateFrom}
+                onChange={(next) => staged.setDraft({ ...staged.draft, dateFrom: next })}
               />
             </label>
             <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
               To
               <DatePicker
                 className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]"
-                value={dateTo}
-                onChange={(next) => setDateTo(next)}
+                value={staged.draft.dateTo}
+                onChange={(next) => staged.setDraft({ ...staged.draft, dateTo: next })}
               />
             </label>
           </div>

@@ -10,7 +10,7 @@ import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
-import { CollapsedListFilters } from "../../components/table";
+import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { userFacingApiError } from "../../lib/api-error-message";
 
 export function AbandonmentQueuePage() {
@@ -19,6 +19,7 @@ export function AbandonmentQueuePage() {
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
   const [status, setStatus] = useState<"pending" | "all">("pending");
+  const staged = useStagedListFilters({ applied: { status }, empty: { status: "pending" as const }, onApply: (next) => setStatus(next.status) });
 
   const listQuery = useQuery({
     queryKey: ["abandonment-chargebacks", companyId, status],
@@ -118,10 +119,11 @@ export function AbandonmentQueuePage() {
         filterBar={
           <CollapsedListFilters
             activeFilterCount={status !== "pending" ? 1 : 0}
+            onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}
             testIdPrefix="abandonment"
             dataAttributes={{ "data-abandonment-filter-toolbar": "collapsed" }}
           >
-            <SelectCombobox className="h-9 rounded-sm border border-gray-300 px-2 text-xs" value={status} onChange={(e) => setStatus(e.target.value as typeof status)}>
+            <SelectCombobox className="h-9 rounded-sm border border-gray-300 px-2 text-xs" value={staged.draft.status} onChange={(e) => staged.setDraft({ status: e.target.value as typeof status })}>
               <option value="pending">Pending</option>
               <option value="all">All</option>
             </SelectCombobox>

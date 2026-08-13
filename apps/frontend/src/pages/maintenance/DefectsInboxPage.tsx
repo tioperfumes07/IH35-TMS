@@ -15,7 +15,7 @@ import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { PageHeader } from "../../components/forms/shared/PageHeader";
 import { entityLabel } from "../../lib/entity-label";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
-import { CollapsedListFilters } from "../../components/table";
+import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { ListErrorState } from "../../components/ListErrorState";
 
 export function DefectsInboxPage() {
@@ -24,6 +24,7 @@ export function DefectsInboxPage() {
   const { pushToast } = useToast();
   const qc = useQueryClient();
   const [statusFilter, setStatusFilter] = useState<"pending" | DvirDefectTriageStatus | "all">("pending");
+  const staged = useStagedListFilters({ applied: { statusFilter }, empty: { statusFilter: "pending" as const }, onApply: (next) => setStatusFilter(next.statusFilter) });
 
   const q = useQuery({
     queryKey: ["maintenance", "dvir-defects", operatingCompanyId, statusFilter],
@@ -108,14 +109,15 @@ export function DefectsInboxPage() {
       <div className="flex items-center justify-end" data-defects-inbox-filter-toolbar="collapsed">
         <CollapsedListFilters
           activeFilterCount={statusFilter !== "pending" ? 1 : 0}
+          onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}
           testIdPrefix="defects-inbox"
         >
           <label className="space-y-1 text-xs text-gray-600">
             <span>Triage status</span>
             <SelectCombobox
               className="h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
-              value={statusFilter}
-              onChange={(event) => setStatusFilter(event.target.value as typeof statusFilter)}
+              value={staged.draft.statusFilter}
+              onChange={(event) => staged.setDraft({ statusFilter: event.target.value as typeof statusFilter })}
               aria-label="Triage status filter"
             >
               <option value="pending">Pending</option>

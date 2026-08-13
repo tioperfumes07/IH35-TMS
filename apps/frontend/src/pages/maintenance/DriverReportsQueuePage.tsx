@@ -8,7 +8,7 @@ import { useToast } from "../../components/Toast";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
-import { CollapsedListFilters } from "../../components/table";
+import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 
@@ -20,6 +20,7 @@ export function DriverReportsQueuePage() {
   const { pushToast } = useToast();
   const qc = useQueryClient();
   const [statusFilter, setStatusFilter] = useState<"" | DriverReportRow["status"]>("");
+  const staged = useStagedListFilters({ applied: { statusFilter }, empty: { statusFilter: "" as const }, onApply: (next) => setStatusFilter(next.statusFilter) });
   const [search, setSearch] = useState("");
   const [resolutionDraft, setResolutionDraft] = useState<Record<string, string>>({});
 
@@ -159,6 +160,7 @@ export function DriverReportsQueuePage() {
           <div data-driver-reports-filter-toolbar="collapsed">
             <CollapsedListFilters
               activeFilterCount={statusFilter ? 1 : 0}
+              onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}
               testIdPrefix="driver-reports"
               searchSlot={
                 <input
@@ -173,8 +175,8 @@ export function DriverReportsQueuePage() {
                 <span>Status</span>
                 <SelectCombobox
                   className="min-h-12 w-full rounded-sm border border-gray-300 px-2 text-sm sm:h-9 sm:min-h-0"
-                  value={statusFilter}
-                  onChange={(event) => setStatusFilter(event.target.value as "" | DriverReportRow["status"])}
+                  value={staged.draft.statusFilter}
+                  onChange={(event) => staged.setDraft({ statusFilter: event.target.value as "" | DriverReportRow["status"] })}
                 >
                   <option value="">All statuses</option>
                   <option value="submitted">submitted</option>

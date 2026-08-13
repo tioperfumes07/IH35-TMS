@@ -3,7 +3,7 @@ import { DatePicker } from "../../../components/forms/DatePicker";
 import { useQuery } from "@tanstack/react-query";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
-import { CollapsedListFilters } from "../../../components/table";
+import { CollapsedListFilters, useStagedListFilters } from "../../../components/table";
 import { formatDateTimeUS } from "../../../lib/formatDate";
 import { resolveApiUrl } from "../../../api/client";
 // NOTE (EntityLink adoption sweep): `vehicle_id` here is the raw Samsara external vehicle id
@@ -37,6 +37,11 @@ export function BorderCrossingHistory() {
   const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10);
   const [from, setFrom] = useState(weekAgo);
   const [to, setTo] = useState(today);
+  const staged = useStagedListFilters({
+    applied: { from, to },
+    empty: { from: weekAgo, to: today },
+    onApply: (next) => { setFrom(next.from); setTo(next.to); },
+  });
 
   const { data, isLoading, isError, error, refetch } = useQuery<{ data: CrossingEvent[] }>({
     queryKey: ["border-crossings-history", operatingCompanyId, from, to],
@@ -88,6 +93,10 @@ export function BorderCrossingHistory() {
   const filterBar = (
     <CollapsedListFilters
       activeFilterCount={from || to ? 1 : 0}
+      onApply={staged.apply}
+      onReset={staged.reset}
+      onCancel={staged.cancel}
+      applyDisabled={!staged.dirty}
       testIdPrefix="border-crossing"
       dataAttributes={{ "data-border-crossing-filter-toolbar": "collapsed" }}
     >
@@ -95,16 +104,16 @@ export function BorderCrossingHistory() {
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">From</label>
           <DatePicker
-            value={from}
-            onChange={(next) => setFrom(next)}
+            value={staged.draft.from}
+            onChange={(next) => staged.setDraft({ ...staged.draft, from: next })}
             className="border rounded-sm px-3 py-1.5 text-sm"
           />
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">To</label>
           <DatePicker
-            value={to}
-            onChange={(next) => setTo(next)}
+            value={staged.draft.to}
+            onChange={(next) => staged.setDraft({ ...staged.draft, to: next })}
             className="border rounded-sm px-3 py-1.5 text-sm"
           />
         </div>

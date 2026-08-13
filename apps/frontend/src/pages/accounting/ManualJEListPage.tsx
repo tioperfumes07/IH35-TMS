@@ -13,7 +13,7 @@ import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { ManualJEModal } from "./ManualJEModal";
 import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
-import { CollapsedListFilters } from "../../components/table";
+import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { useUrlSort } from "../../hooks/useUrlSort";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { EntityLink } from "../../components/shared/EntityLink";
@@ -61,6 +61,7 @@ export function ManualJEListPage() {
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [accountId, setAccountId] = useState("");
+  const staged = useStagedListFilters({ applied: { source, status, fromDate, toDate, accountId }, empty: { source: "all" as const, status: "all" as const, fromDate: "", toDate: "", accountId: "" }, onApply: (next) => { setSource(next.source); setStatus(next.status); setFromDate(next.fromDate); setToDate(next.toDate); setAccountId(next.accountId); setPage(0); } });
   const accountsQuery = useQuery({
     queryKey: ["manual-je-list", "accounts", companyId],
     queryFn: () => listCoaAccountsForJe(companyId, { postableOnly: true }),
@@ -181,25 +182,26 @@ export function ManualJEListPage() {
   const filterBar = (
     <CollapsedListFilters
       activeFilterCount={jeActiveFilterCount}
+      onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}
       testIdPrefix="manual-je"
       dataAttributes={{ "data-manual-je-filter-toolbar": "collapsed" }}
     >
       <div className="grid grid-cols-2 gap-2 w-full text-xs md:grid-cols-5">
-        <SelectCombobox className="h-8 rounded-sm border border-gray-300 px-2" value={source} onChange={(e) => setSource(e.target.value as JournalEntrySource | "all")}>
+        <SelectCombobox className="h-8 rounded-sm border border-gray-300 px-2" value={staged.draft.source} onChange={(e) => staged.setDraft({ ...staged.draft, source: e.target.value as JournalEntrySource | "all" })}>
           <option value="all">All sources</option>
           <option value="manual">Manual</option>
           <option value="auto">Auto</option>
         </SelectCombobox>
-        <SelectCombobox className="h-8 rounded-sm border border-gray-300 px-2" value={status} onChange={(e) => setStatus(e.target.value as JournalEntryStatus | "all")}>
+        <SelectCombobox className="h-8 rounded-sm border border-gray-300 px-2" value={staged.draft.status} onChange={(e) => staged.setDraft({ ...staged.draft, status: e.target.value as JournalEntryStatus | "all" })}>
           <option value="all">All statuses</option>
           <option value="posted">Posted</option>
           <option value="voided">Voided</option>
         </SelectCombobox>
-        <DatePicker className="h-8 rounded-sm border border-gray-300 px-2" value={fromDate} onChange={(next) => setFromDate(next)} />
-        <DatePicker className="h-8 rounded-sm border border-gray-300 px-2" value={toDate} onChange={(next) => setToDate(next)} />
+        <DatePicker className="h-8 rounded-sm border border-gray-300 px-2" value={staged.draft.fromDate} onChange={(next) => staged.setDraft({ ...staged.draft, fromDate: next })} />
+        <DatePicker className="h-8 rounded-sm border border-gray-300 px-2" value={staged.draft.toDate} onChange={(next) => staged.setDraft({ ...staged.draft, toDate: next })} />
         <ReferenceSelect
-          value={accountId || null}
-          onChange={(next) => setAccountId(next ?? "")}
+          value={staged.draft.accountId || null}
+          onChange={(next) => staged.setDraft({ ...staged.draft, accountId: next ?? "" })}
           options={accountOptions}
           createKind="account"
           operatingCompanyId={companyId}

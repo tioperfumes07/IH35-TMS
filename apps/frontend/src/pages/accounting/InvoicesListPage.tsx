@@ -25,7 +25,7 @@ import { BulkActionModal, BulkProgressDialog } from "../../components/bulk";
 import { useEntityBulkAction } from "../../components/bulk/useEntityBulkAction";
 import { useToast } from "../../components/Toast";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
-import { CollapsedListFilters } from "../../components/table";
+import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { useUrlSort } from "../../hooks/useUrlSort";
 import { EntityPicker } from "../../components/parity/EntityPicker";
 import { userFacingApiError } from "../../lib/api-error-message";
@@ -136,6 +136,10 @@ export function InvoicesListPage() {
       { replace: true }
     );
   }
+  const staged = useStagedListFilters({
+    applied: { status, customerId, fromDate, toDate }, empty: { status: "" as InvoiceListFilter, customerId: "", fromDate: "", toDate: "" },
+    onApply: (next) => { setStatus(next.status); setCustomerId(next.customerId); setFromDate(next.fromDate); setToDate(next.toDate); },
+  });
 
   // Customer picker options — pass limit:200 (endpoint defaults to 50, would silently truncate).
   const customersQuery = useQuery({
@@ -313,6 +317,7 @@ export function InvoicesListPage() {
       ) : null}
       <CollapsedListFilters
         activeFilterCount={invoicesActiveFilterCount}
+        onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}
         testIdPrefix="invoices"
         dataAttributes={{ "data-invoices-filter-toolbar": "collapsed" }}
         searchSlot={
@@ -328,7 +333,7 @@ export function InvoicesListPage() {
         <div className="grid gap-2 md:grid-cols-4">
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
             Status
-            <SelectCombobox value={status} onChange={(event) => setStatus(event.target.value as InvoiceListFilter)} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]">
+            <SelectCombobox value={staged.draft.status} onChange={(event) => staged.setDraft({ ...staged.draft, status: event.target.value as InvoiceListFilter })} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]">
               {STATUS_OPTIONS.map((option) => (
                 <option key={option.label} value={option.value}>
                   {option.label}
@@ -342,8 +347,8 @@ export function InvoicesListPage() {
                 customer" row too (writes to canonical mdata.customers — same table customerOptions
                 reads from). */}
             <ReferenceSelect
-              value={customerId || null}
-              onChange={(next) => setCustomerId(next ?? "")}
+              value={staged.draft.customerId || null}
+              onChange={(next) => staged.setDraft({ ...staged.draft, customerId: next ?? "" })}
               options={customerFilterOptions}
               createKind="customer"
               operatingCompanyId={selectedCompanyId ?? ""}
@@ -353,11 +358,11 @@ export function InvoicesListPage() {
           </label>
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
             From issue date
-            <DatePicker value={fromDate} onChange={(next) => setFromDate(next)} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" />
+            <DatePicker value={staged.draft.fromDate} onChange={(next) => staged.setDraft({ ...staged.draft, fromDate: next })} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" />
           </label>
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
             To issue date
-            <DatePicker value={toDate} onChange={(next) => setToDate(next)} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" />
+            <DatePicker value={staged.draft.toDate} onChange={(next) => staged.setDraft({ ...staged.draft, toDate: next })} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" />
           </label>
         </div>
       </CollapsedListFilters>

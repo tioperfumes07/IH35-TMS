@@ -3,7 +3,7 @@ import { Button } from "../../components/Button";
 import { DataTable } from "../../components/DataTable";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { StatusBadge } from "../../components/StatusBadge";
-import { CollapsedListFilters } from "../../components/table";
+import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { entityLabel } from "../../lib/entity-label";
 import { useSettlementDisputes, type SettlementDisputeStatus } from "../../hooks/useSettlementDisputes";
 import { SettlementDisputeModal } from "./SettlementDisputeModal";
@@ -23,6 +23,7 @@ function money(cents: number | null | undefined) {
 
 export function SettlementDisputeList() {
   const [statusFilter, setStatusFilter] = useState<SettlementDisputeStatus | "all">("all");
+  const staged = useStagedListFilters({ applied: { statusFilter }, empty: { statusFilter: "all" as const }, onApply: (next) => setStatusFilter(next.statusFilter) });
   const [createOpen, setCreateOpen] = useState(false);
   const { disputes, isLoading, reviewDispute } = useSettlementDisputes({
     status: statusFilter === "all" ? undefined : statusFilter,
@@ -35,6 +36,10 @@ export function SettlementDisputeList() {
       <div className="flex flex-wrap items-center justify-between gap-2">
         <CollapsedListFilters
           activeFilterCount={statusFilter !== "all" ? 1 : 0}
+          onApply={staged.apply}
+          onReset={staged.reset}
+          onCancel={staged.cancel}
+          applyDisabled={!staged.dirty}
           testIdPrefix="dispute"
           dataAttributes={{ "data-settlement-dispute-filter-toolbar": "collapsed" }}
         >
@@ -44,9 +49,9 @@ export function SettlementDisputeList() {
                 key={filter.id}
                 type="button"
                 data-testid={`dispute-status-filter-${filter.id}`}
-                onClick={() => setStatusFilter(filter.id)}
+                onClick={() => staged.setDraft({ statusFilter: filter.id })}
                 className={`rounded border px-2 py-1 text-xs font-medium ${
-                  statusFilter === filter.id ? "border-slate-300 bg-slate-100 text-slate-700" : "border-gray-300 bg-white text-gray-700"
+                  staged.draft.statusFilter === filter.id ? "border-slate-300 bg-slate-100 text-slate-700" : "border-gray-300 bg-white text-gray-700"
                 }`}
               >
                 {filter.label}

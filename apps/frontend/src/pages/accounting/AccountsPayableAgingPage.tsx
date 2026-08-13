@@ -6,7 +6,7 @@ import { Button } from "../../components/Button";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
-import { CollapsedListFilters, TableSearch } from "../../components/table";
+import { CollapsedListFilters, TableSearch, useStagedListFilters } from "../../components/table";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { getApAgingByVendor, type ApAgingVendor, type ApAgingDisplayGroup } from "../../api/accounting";
 import { formatDateUS } from "../../lib/formatDate";
@@ -176,6 +176,7 @@ export function AccountsPayableAgingPage() {
     setSearchParams(params, { replace: true });
   };
   const [typeFilter, setTypeFilter] = useState<ApAgingDisplayGroup | "all">("all");  const [search, setSearch] = useState("");
+  const staged = useStagedListFilters({ applied: { asOf, typeFilter }, empty: { asOf: today(), typeFilter: "all" as const }, onApply: (next) => { setAsOf(next.asOf); setTypeFilter(next.typeFilter); } });
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set(GROUP_ORDER));
 
   const query = useQuery({
@@ -287,16 +288,17 @@ export function AccountsPayableAgingPage() {
 
         <CollapsedListFilters
           activeFilterCount={(asOf !== today() ? 1 : 0) + (typeFilter !== "all" ? 1 : 0)}
+          onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}
           testIdPrefix="ap-aging"
         >
           <div className="flex flex-wrap items-end gap-3">
             <label className="text-xs font-semibold text-slate-600">
               As of
-              <div className="mt-1"><DatePicker value={asOf} onChange={(d) => setAsOf(d || today())} /></div>
+              <div className="mt-1"><DatePicker value={staged.draft.asOf} onChange={(d) => staged.setDraft({ ...staged.draft, asOf: d || today() })} /></div>
             </label>
             <label className="text-xs font-semibold text-slate-600">
               Vendor type
-              <select className="mt-1 block h-9 rounded-sm border border-slate-300 px-2 text-sm" value={typeFilter} onChange={(e) => setTypeFilter(e.target.value as ApAgingDisplayGroup | "all")}>
+              <select className="mt-1 block h-9 rounded-sm border border-slate-300 px-2 text-sm" value={staged.draft.typeFilter} onChange={(e) => staged.setDraft({ ...staged.draft, typeFilter: e.target.value as ApAgingDisplayGroup | "all" })}>
                 <option value="all">All types</option>
                 {GROUP_ORDER.map((g) => <option key={g} value={g}>{g}</option>)}
               </select>

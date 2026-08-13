@@ -20,7 +20,7 @@ import { useToast } from "../../components/Toast";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { entityLabel } from "../../lib/entity-label";
 import { formatDateUS } from "../../lib/formatDate";
-import { CollapsedListFilters } from "../../components/table";
+import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { useUrlSort } from "../../hooks/useUrlSort";
 
 const STATUS_OPTIONS: Array<{ value: "" | ExpenseListStatus; label: string }> = [
@@ -82,6 +82,7 @@ export function ExpensesListPage() {
   const [status, setStatus] = useState<"" | ExpenseListStatus>("");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
+  const staged = useStagedListFilters({ applied: { status, fromDate, toDate }, empty: { status: "" as const, fromDate: "", toDate: "" }, onApply: (next) => { setStatus(next.status); setFromDate(next.fromDate); setToDate(next.toDate); } });
   const [createOpen, setCreateOpen] = useState(false);
   const [voidOpen, setVoidOpen] = useState(false);
   const [voidTarget, setVoidTarget] = useState<{ id: string; displayId: string } | null>(null);
@@ -271,6 +272,7 @@ export function ExpensesListPage() {
     <div className="flex flex-wrap items-end gap-3">
       <CollapsedListFilters
         activeFilterCount={expensesActiveFilterCount}
+        onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}
         testIdPrefix="expenses"
         dataAttributes={{ "data-expenses-filter-toolbar": "collapsed" }}
       >
@@ -278,8 +280,8 @@ export function ExpensesListPage() {
           <label className="flex flex-col gap-1 text-[11px] font-semibold text-gray-600">
             Status
             <SelectCombobox
-              value={status}
-              onChange={(e) => setStatus(e.target.value as "" | ExpenseListStatus)}
+              value={staged.draft.status}
+              onChange={(e) => staged.setDraft({ ...staged.draft, status: e.target.value as "" | ExpenseListStatus })}
               className="h-8 rounded-sm border border-gray-300 px-2 text-[13px]"
             >
               {STATUS_OPTIONS.map((o) => (
@@ -291,11 +293,11 @@ export function ExpensesListPage() {
           </label>
           <label className="flex flex-col gap-1 text-[11px] font-semibold text-gray-600">
             From date
-            <DatePicker value={fromDate} onChange={(next) => setFromDate(next)} className="h-8 rounded-sm border border-gray-300 px-2 text-[13px]" />
+            <DatePicker value={staged.draft.fromDate} onChange={(next) => staged.setDraft({ ...staged.draft, fromDate: next })} className="h-8 rounded-sm border border-gray-300 px-2 text-[13px]" />
           </label>
           <label className="flex flex-col gap-1 text-[11px] font-semibold text-gray-600">
             To date
-            <DatePicker value={toDate} onChange={(next) => setToDate(next)} className="h-8 rounded-sm border border-gray-300 px-2 text-[13px]" />
+            <DatePicker value={staged.draft.toDate} onChange={(next) => staged.setDraft({ ...staged.draft, toDate: next })} className="h-8 rounded-sm border border-gray-300 px-2 text-[13px]" />
           </label>
         </div>
       </CollapsedListFilters>

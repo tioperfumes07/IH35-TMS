@@ -5,7 +5,7 @@ import { entityLabel } from "../../../lib/entity-label";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { Button } from "../../../components/Button";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
-import { CollapsedListFilters } from "../../../components/table";
+import { CollapsedListFilters, useStagedListFilters } from "../../../components/table";
 import { EntityPicker } from "../../../components/parity/EntityPicker";
 import { useToast } from "../../../components/Toast";
 
@@ -88,6 +88,10 @@ export function WorkOrdersTable({
 }: Props) {
   const { pushToast } = useToast();
   const [search, setSearch] = useState("");
+  const staged = useStagedListFilters({
+    applied: { sourceTypeFilter, externalVendorFilter }, empty: { sourceTypeFilter: "", externalVendorFilter: "" },
+    onApply: (next) => { onSourceTypeChange(next.sourceTypeFilter); onExternalVendorChange(next.externalVendorFilter); },
+  });
 
   const filteredRows = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -194,6 +198,7 @@ export function WorkOrdersTable({
           <div data-wo-filter-toolbar="collapsed">
             <CollapsedListFilters
               activeFilterCount={(sourceTypeFilter ? 1 : 0) + (externalVendorFilter ? 1 : 0)}
+              onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}
               testIdPrefix="work-orders"
               searchSlot={
                 <input
@@ -210,8 +215,8 @@ export function WorkOrdersTable({
                   <span>Source type</span>
                   <SelectCombobox
                     className="min-h-12 w-full rounded-sm border border-gray-300 px-2 text-sm sm:h-9 sm:min-h-0"
-                    value={sourceTypeFilter}
-                    onChange={(e) => onSourceTypeChange(e.target.value)}
+                    value={staged.draft.sourceTypeFilter}
+                    onChange={(e) => staged.setDraft({ ...staged.draft, sourceTypeFilter: e.target.value })}
                   >
                     <option value="">All</option>
                     <option value="IS">IS</option>
@@ -228,8 +233,8 @@ export function WorkOrdersTable({
                   <EntityPicker
                     kind="vendor"
                     operatingCompanyId={operatingCompanyId}
-                    value={externalVendorFilter || null}
-                    onChange={(next) => onExternalVendorChange(next ?? "")}
+                    value={staged.draft.externalVendorFilter || null}
+                    onChange={(next) => staged.setDraft({ ...staged.draft, externalVendorFilter: next ?? "" })}
                     placeholder="All external vendors"
                     className="min-h-12 w-full sm:h-9 sm:min-h-0"
                   />

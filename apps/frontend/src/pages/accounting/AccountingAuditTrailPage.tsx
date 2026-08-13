@@ -16,7 +16,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { ReportBlockVPendingBanner } from "../reports/ReportBlockVPendingBanner";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
-import { CollapsedListFilters } from "../../components/table";
+import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { useUrlSort } from "../../hooks/useUrlSort";
 import { formatUsdCents } from "../../lib/money";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
@@ -107,6 +107,7 @@ export function AccountingAuditTrailPage() {
   const [sourceType, setSourceType] = useState(() => sourceTypeParam ?? "");
   const [sourceId, setSourceId] = useState(() => sourceIdParam ?? "");
   const [accountId, setAccountId] = useState("");
+  const staged = useStagedListFilters({ applied: { sourceType, sourceId, accountId }, empty: { sourceType: "", sourceId: "", accountId: "" }, onApply: (next) => { setSourceType(next.sourceType); setSourceId(next.sourceId); setAccountId(next.accountId); } });
   const [lineageRows, setLineageRows] = useState<AccountingSourceLineageRow[] | null>(null);
   const [lineageKey, setLineageKey] = useState<{ source_transaction_type: string; source_transaction_id: string } | null>(null);
   // BANK-SORT-ROLLOUT-ACCT — audit event list sort persists in ?sort=&dir= via useUrlSort.
@@ -271,6 +272,7 @@ export function AccountingAuditTrailPage() {
   const filterBar = (
     <CollapsedListFilters
       activeFilterCount={(sourceType ? 1 : 0) + (sourceId ? 1 : 0) + (accountId ? 1 : 0)}
+      onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}
       testIdPrefix="audit-trail"
       dataAttributes={{ "data-audit-trail-filter-toolbar": "collapsed" }}
     >
@@ -279,8 +281,8 @@ export function AccountingAuditTrailPage() {
           Source type
           <input
             className="mt-1 block h-9 w-full rounded-sm border border-slate-300 px-2 text-sm"
-            value={sourceType}
-            onChange={(e) => setSourceType(e.target.value)}
+            value={staged.draft.sourceType}
+            onChange={(e) => staged.setDraft({ ...staged.draft, sourceType: e.target.value })}
             placeholder="invoice | bill | payment"
           />
         </label>
@@ -288,8 +290,8 @@ export function AccountingAuditTrailPage() {
           Source id
           <input
             className="mt-1 block h-9 w-full rounded-sm border border-slate-300 px-2 text-sm"
-            value={sourceId}
-            onChange={(e) => setSourceId(e.target.value)}
+            value={staged.draft.sourceId}
+            onChange={(e) => staged.setDraft({ ...staged.draft, sourceId: e.target.value })}
             placeholder="uuid or display id"
           />
         </label>
@@ -297,8 +299,8 @@ export function AccountingAuditTrailPage() {
           Account
           <SelectCombobox
             className="mt-1 block h-9 w-full rounded-sm border border-slate-300 px-2 text-sm"
-            value={accountId}
-            onChange={(e) => setAccountId(e.target.value)}
+            value={staged.draft.accountId}
+            onChange={(e) => staged.setDraft({ ...staged.draft, accountId: e.target.value })}
           >
             <option value="">All accounts</option>
             {accountOptions.map((account) => (
@@ -308,19 +310,6 @@ export function AccountingAuditTrailPage() {
             ))}
           </SelectCombobox>
         </label>
-        <div className="flex items-end">
-          <Button
-            variant="secondary"
-            onClick={() => {
-              setSourceType("");
-              setSourceId("");
-              setAccountId("");
-              void eventQuery.refetch();
-            }}
-          >
-            Reset filters
-          </Button>
-        </div>
       </div>
     </CollapsedListFilters>
   );

@@ -5,7 +5,7 @@ import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { AnomalyDetailDrawer } from "./AnomalyDetailDrawer";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
-import { CollapsedListFilters } from "../../../components/table";
+import { CollapsedListFilters, useStagedListFilters } from "../../../components/table";
 import { EntityLink, type EntityKind } from "../../../components/shared/EntityLink";
 
 const SEVERITY_FILTERS: Array<SafetyAnomalySeverity | "all"> = ["all", "low", "medium", "high", "critical"];
@@ -39,6 +39,11 @@ export function AnomaliesTab() {
   const queryClient = useQueryClient();
   const [severity, setSeverity] = useState<SafetyAnomalySeverity | "all">("all");
   const [status, setStatus] = useState<SafetyAnomalyStatus | "all">("all");
+  const staged = useStagedListFilters({
+    applied: { severity, status },
+    empty: { severity: "all" as const, status: "all" as const },
+    onApply: (next) => { setSeverity(next.severity); setStatus(next.status); },
+  });
   const [selected, setSelected] = useState<SafetyAnomaly | null>(null);
 
   const anomaliesQuery = useQuery({
@@ -107,6 +112,10 @@ export function AnomaliesTab() {
   const filterBar = (
     <CollapsedListFilters
       activeFilterCount={(severity !== "all" ? 1 : 0) + (status !== "all" ? 1 : 0)}
+      onApply={staged.apply}
+      onReset={staged.reset}
+      onCancel={staged.cancel}
+      applyDisabled={!staged.dirty}
       testIdPrefix="anomalies"
       dataAttributes={{ "data-anomalies-filter-toolbar": "collapsed" }}
     >
@@ -116,8 +125,8 @@ export function AnomaliesTab() {
           <button
             key={item}
             type="button"
-            className={`rounded-sm px-2 py-1 text-xs ${severity === item ? "bg-slate-800 text-white" : "bg-slate-100 text-slate-700"}`}
-            onClick={() => setSeverity(item)}
+            className={`rounded-sm px-2 py-1 text-xs ${staged.draft.severity === item ? "bg-slate-800 text-white" : "bg-slate-100 text-slate-700"}`}
+            onClick={() => staged.setDraft({ ...staged.draft, severity: item })}
           >
             {item}
           </button>
@@ -127,8 +136,8 @@ export function AnomaliesTab() {
           <button
             key={item}
             type="button"
-            className={`rounded-sm px-2 py-1 text-xs ${status === item ? "bg-slate-800 text-white" : "bg-slate-100 text-slate-700"}`}
-            onClick={() => setStatus(item)}
+          className={`rounded-sm px-2 py-1 text-xs ${staged.draft.status === item ? "bg-slate-800 text-white" : "bg-slate-100 text-slate-700"}`}
+            onClick={() => staged.setDraft({ ...staged.draft, status: item })}
           >
             {item}
           </button>

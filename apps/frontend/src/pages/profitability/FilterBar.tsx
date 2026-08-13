@@ -1,5 +1,5 @@
 import { DatePicker } from "../../components/forms/DatePicker";
-import { CollapsedListFilters } from "../../components/table";
+import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 
 interface FilterBarProps {
   filters: {
@@ -21,18 +21,24 @@ const EQUIPMENT_TYPES = [
 ];
 
 export function FilterBar({ filters, onChange }: FilterBarProps) {
+  const staged = useStagedListFilters({
+    applied: filters,
+    empty: { ...filters, dateFrom: "", dateTo: "", equipmentType: undefined },
+    onApply: onChange,
+  });
+  const draft = staged.draft;
   const activeFilterCount =
     (filters.dateFrom || filters.dateTo ? 1 : 0) + (filters.equipmentType ? 1 : 0);
 
   return (
     <div className="flex flex-wrap items-end gap-3" data-profitability-filter-toolbar="collapsed">
-      <CollapsedListFilters activeFilterCount={activeFilterCount} testIdPrefix="profitability">
+      <CollapsedListFilters activeFilterCount={activeFilterCount} testIdPrefix="profitability" onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}>
         <div className="flex flex-wrap items-end gap-3">
           <div className="flex flex-col gap-1">
             <label className="text-xs text-gray-600">From</label>
             <DatePicker
-              value={filters.dateFrom}
-              onChange={(next) => onChange({ ...filters, dateFrom: next })}
+              value={draft.dateFrom}
+              onChange={(next) => staged.setDraft({ ...draft, dateFrom: next })}
               className="w-[130px] min-h-11 text-sm border rounded-sm px-2"
             />
           </div>
@@ -40,8 +46,8 @@ export function FilterBar({ filters, onChange }: FilterBarProps) {
           <div className="flex flex-col gap-1">
             <label className="text-xs text-gray-600">To</label>
             <DatePicker
-              value={filters.dateTo}
-              onChange={(next) => onChange({ ...filters, dateTo: next })}
+              value={draft.dateTo}
+              onChange={(next) => staged.setDraft({ ...draft, dateTo: next })}
               className="w-[130px] min-h-11 text-sm border rounded-sm px-2"
             />
           </div>
@@ -49,8 +55,8 @@ export function FilterBar({ filters, onChange }: FilterBarProps) {
           <div className="flex flex-col gap-1">
             <label className="text-xs text-gray-600">Equipment</label>
             <select
-              value={filters.equipmentType || ""}
-              onChange={(e) => onChange({ ...filters, equipmentType: e.target.value || undefined })}
+              value={draft.equipmentType || ""}
+              onChange={(e) => staged.setDraft({ ...draft, equipmentType: e.target.value || undefined })}
               className="w-[120px] min-h-11 text-sm border rounded-sm px-2"
             >
               {EQUIPMENT_TYPES.map((t) => (

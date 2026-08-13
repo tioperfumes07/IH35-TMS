@@ -10,7 +10,6 @@ import { getAllocations, type AllocationListItem } from "../../api/allocations";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
-import { CollapsedListFilters } from "../../components/table";
 import { useUrlSort } from "../../hooks/useUrlSort";
 import { BillAllocationPanel } from "../../components/allocation/BillAllocationPanel";
 
@@ -215,13 +214,11 @@ export function AllocationsPage() {
 
   const filterBar = (
     <div className="flex flex-wrap items-center gap-2" data-allocations-filter-toolbar="collapsed">
-      <CollapsedListFilters activeFilterCount={hasFilter ? 1 : 0} testIdPrefix="allocations">
-        <p className="px-2 py-1 text-xs text-gray-500">
+      <div className="px-2 py-1 text-xs text-gray-500">
           {hasFilter
             ? "Scoped by the bill or unit you drilled in from. Clear to see every allocation."
             : "Open a bill or a unit and use its Allocations link to scope this list."}
-        </p>
-      </CollapsedListFilters>
+      </div>
       {hasFilter ? (
         <button
           onClick={clearFilter}

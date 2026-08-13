@@ -11,7 +11,7 @@ import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { formatCurrencyFromCents } from "../lists/accounting/coa-list-utils";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
-import { CollapsedListFilters } from "../../components/table";
+import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 
 const PAGE_SIZE = 100;
 
@@ -74,6 +74,7 @@ export function TransactionRegisterPage() {
   const [search, setSearch] = useState("");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
+  const staged = useStagedListFilters({ applied: { sources, direction, status, fromDate, toDate }, empty: { sources: [] as TransactionSource[], direction: "all" as const, status: "", fromDate: "", toDate: "" }, onApply: (next) => { setSources(next.sources); setDirection(next.direction); setStatus(next.status); setFromDate(next.fromDate); setToDate(next.toDate); setPage(0); } });
   const [page, setPage] = useState(0);
 
   const query = useQuery({
@@ -105,11 +106,6 @@ export function TransactionRegisterPage() {
     }
     return { inSum, outSum };
   }, [rows]);
-
-  function toggleSource(value: TransactionSource) {
-    setPage(0);
-    setSources((current) => (current.includes(value) ? current.filter((s) => s !== value) : [...current, value]));
-  }
 
   // Display-only ParityTable migration: same columns, same order, same cell renders
   // (badge, formatCurrencyFromCents amounts, em-dash blanks, Open link) as the former
@@ -231,6 +227,7 @@ export function TransactionRegisterPage() {
             (status ? 1 : 0) +
             (fromDate || toDate ? 1 : 0)
           }
+          onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}
           testIdPrefix="transaction-register"
           searchSlot={
             <input
@@ -247,12 +244,12 @@ export function TransactionRegisterPage() {
         >
           <div className="flex flex-wrap items-center gap-1.5">
             {SOURCE_OPTIONS.map((opt) => {
-              const active = sources.includes(opt.value);
+              const active = staged.draft.sources.includes(opt.value);
               return (
                 <button
                   key={opt.value}
                   type="button"
-                  onClick={() => toggleSource(opt.value)}
+                  onClick={() => staged.setDraft({ ...staged.draft, sources: active ? staged.draft.sources.filter((source) => source !== opt.value) : [...staged.draft.sources, opt.value] })}
                   className={`rounded-full border px-3 py-0.5 text-[12px] ${
                     active ? "border-[#1f2a44] bg-[#1f2a44] text-white" : "border-slate-300 bg-white text-slate-600"
                   }`}
@@ -267,11 +264,8 @@ export function TransactionRegisterPage() {
             <label className="flex flex-col gap-1 text-xs font-semibold text-slate-600">
               Direction
               <select
-                value={direction}
-                onChange={(event) => {
-                  setPage(0);
-                  setDirection(event.target.value as "all" | "in" | "out");
-                }}
+                value={staged.draft.direction}
+                onChange={(event) => staged.setDraft({ ...staged.draft, direction: event.target.value as "all" | "in" | "out" })}
                 className="h-9 rounded-sm border border-slate-300 px-2 text-[13px]"
               >
                 <option value="all">All</option>
@@ -282,22 +276,19 @@ export function TransactionRegisterPage() {
             <label className="flex flex-col gap-1 text-xs font-semibold text-slate-600">
               Status
               <input
-                value={status}
-                onChange={(event) => {
-                  setPage(0);
-                  setStatus(event.target.value);
-                }}
+                value={staged.draft.status}
+                onChange={(event) => staged.setDraft({ ...staged.draft, status: event.target.value })}
                 placeholder="e.g. paid, uncategorized"
                 className="h-9 rounded-sm border border-slate-300 px-2 text-[13px]"
               />
             </label>
             <label className="flex flex-col gap-1 text-xs font-semibold text-slate-600">
               From
-              <DatePicker value={fromDate} onChange={(next) => { setPage(0); setFromDate(next); }} className="h-9 rounded-sm border border-slate-300 px-2 text-[13px]" />
+              <DatePicker value={staged.draft.fromDate} onChange={(next) => staged.setDraft({ ...staged.draft, fromDate: next })} className="h-9 rounded-sm border border-slate-300 px-2 text-[13px]" />
             </label>
             <label className="flex flex-col gap-1 text-xs font-semibold text-slate-600">
               To
-              <DatePicker value={toDate} onChange={(next) => { setPage(0); setToDate(next); }} className="h-9 rounded-sm border border-slate-300 px-2 text-[13px]" />
+              <DatePicker value={staged.draft.toDate} onChange={(next) => staged.setDraft({ ...staged.draft, toDate: next })} className="h-9 rounded-sm border border-slate-300 px-2 text-[13px]" />
             </label>
           </div>
         </CollapsedListFilters>

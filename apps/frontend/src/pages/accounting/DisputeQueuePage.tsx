@@ -15,7 +15,7 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
-import { CollapsedListFilters } from "../../components/table";
+import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateUS } from "../../lib/formatDate";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
@@ -174,6 +174,7 @@ export function DisputeQueuePage() {
   const companyId = selectedCompanyId ?? "";
   const canDecide = DECIDE_ROLES.has(String(auth.user?.role ?? ""));
   const [status, setStatus] = useState<string>("submitted");
+  const staged = useStagedListFilters({ applied: { status }, empty: { status: "submitted" }, onApply: (next) => setStatus(next.status) });
   const [decideRow, setDecideRow] = useState<SettlementDisputeQueueRow | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
 
@@ -323,14 +324,15 @@ export function DisputeQueuePage() {
       <div className="flex flex-wrap items-end gap-3">
         <CollapsedListFilters
           activeFilterCount={status !== "submitted" ? 1 : 0}
+          onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}
           testIdPrefix="dispute-queue"
           dataAttributes={{ "data-dispute-queue-filter-toolbar": "collapsed" }}
         >
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
             Status
             <SelectCombobox
-              value={status}
-              onChange={(e) => setStatus(e.target.value)}
+              value={staged.draft.status}
+              onChange={(e) => staged.setDraft({ status: e.target.value })}
               className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]"
               aria-label="Dispute status filter"
             >

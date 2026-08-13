@@ -10,7 +10,7 @@ import { useBulkPermission } from "../../hooks/useBulkPermission";
 import { useToast } from "../../components/Toast";
 import { useListState, type ListQueryStatus } from "../../components/list-state";
 import { formatUsdCents } from "../../lib/money";
-import { CollapsedListFilters, TableSearch } from "../../components/table";
+import { CollapsedListFilters, TableSearch, useStagedListFilters } from "../../components/table";
 import { useUrlSort } from "../../hooks/useUrlSort";
 
 function fmtMoney(cents: number) {
@@ -96,6 +96,11 @@ export function VendorsListView({ companyId, vendors, status, openByVendorId, on
   const [activeOnly, setActiveOnly] = useState(false);
   const [only1099, setOnly1099] = useState(false);
   const [withOpen, setWithOpen] = useState(false);
+  const staged = useStagedListFilters({
+    applied: { activeOnly, only1099, withOpen },
+    empty: { activeOnly: false, only1099: false, withOpen: false },
+    onApply: (next) => { setActiveOnly(next.activeOnly); setOnly1099(next.only1099); setWithOpen(next.withOpen); },
+  });
   // Remount key: bumping this after a successful bulk mutation resets ParityTable's internal
   // selection state (mirrors the old selection.clear() call — ParityTable has no controlled/
   // external selection API to clear imperatively).
@@ -166,6 +171,10 @@ export function VendorsListView({ companyId, vendors, status, openByVendorId, on
         filterBar={
           <CollapsedListFilters
             activeFilterCount={(activeOnly ? 1 : 0) + (only1099 ? 1 : 0) + (withOpen ? 1 : 0)}
+            onApply={staged.apply}
+            onReset={staged.reset}
+            onCancel={staged.cancel}
+            applyDisabled={!staged.dirty}
             testIdPrefix="vendors"
             dataAttributes={{ "data-vendors-filter-toolbar": "collapsed" }}
             searchSlot={
@@ -177,9 +186,9 @@ export function VendorsListView({ companyId, vendors, status, openByVendorId, on
               <div className="inline-flex flex-wrap items-center gap-1" data-vendor-filter-chips="true">
                 {(
                   [
-                    { key: "active", label: "Active", on: activeOnly, toggle: () => setActiveOnly((v) => !v) },
-                    { key: "1099", label: "1099-eligible", on: only1099, toggle: () => setOnly1099((v) => !v) },
-                    { key: "with-open", label: "With open", on: withOpen, toggle: () => setWithOpen((v) => !v) },
+                    { key: "active", label: "Active", on: staged.draft.activeOnly, toggle: () => staged.setDraft({ ...staged.draft, activeOnly: !staged.draft.activeOnly }) },
+                    { key: "1099", label: "1099-eligible", on: staged.draft.only1099, toggle: () => staged.setDraft({ ...staged.draft, only1099: !staged.draft.only1099 }) },
+                    { key: "with-open", label: "With open", on: staged.draft.withOpen, toggle: () => staged.setDraft({ ...staged.draft, withOpen: !staged.draft.withOpen }) },
                   ] as const
                 ).map((chip) => (
                   <button

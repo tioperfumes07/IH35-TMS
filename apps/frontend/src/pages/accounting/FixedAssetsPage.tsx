@@ -13,7 +13,7 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
-import { CollapsedListFilters } from "../../components/table";
+import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import {
   getFixedAssets, getFixedAssetDetail, registerTrkOwnedUnits,
   type FixedAssetListItem, type FixedAssetDetail, type RegisterTrkUnitsResult,
@@ -295,6 +295,7 @@ export function FixedAssetsPage() {
   const { enabled, loading: flagLoading } = useFeatureFlag("FIXED_ASSETS_ENABLED", operatingCompanyId || undefined);
   const [searchParams, setSearchParams] = useSearchParams();
   const [statusFilter, setStatusFilter] = useState("");
+  const staged = useStagedListFilters({ applied: { statusFilter }, empty: { statusFilter: "" }, onApply: (next) => { setStatusFilter(next.statusFilter); setOffset(0); } });
   const [offset, setOffset] = useState(0);
   const [detailId, setDetailId] = useState<string | null>(searchParams.get("asset_id"));
   const [registerOpen, setRegisterOpen] = useState(false);
@@ -397,13 +398,10 @@ export function FixedAssetsPage() {
 
   const filterBar = (
     <div className="flex flex-wrap gap-2 items-center" data-fixed-assets-filter-toolbar="collapsed">
-      <CollapsedListFilters activeFilterCount={statusFilter ? 1 : 0} testIdPrefix="fixed-assets">
+      <CollapsedListFilters activeFilterCount={statusFilter ? 1 : 0} testIdPrefix="fixed-assets" onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}>
         <select
-          value={statusFilter}
-          onChange={(e) => {
-            setStatusFilter(e.target.value);
-            setOffset(0);
-          }}
+          value={staged.draft.statusFilter}
+          onChange={(e) => staged.setDraft({ statusFilter: e.target.value })}
           className="rounded-sm border border-gray-300 px-3 py-1.5 text-sm focus:outline-hidden focus:ring-1 focus:ring-slate-500"
         >
           <option value="">All statuses</option>

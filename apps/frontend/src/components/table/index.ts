@@ -3,6 +3,7 @@
 export { TableControls } from "./TableControls";
 export { TableSearch } from "./TableSearch";
 export { CollapsedListFilters } from "./CollapsedListFilters";
+export { useStagedListFilters } from "./useStagedListFilters";
 export { Paginator } from "./Paginator";
 export { ColumnChooser, type TableColumn } from "./ColumnChooser";
 export { TableHeaderCell } from "./TableHeaderCell";
