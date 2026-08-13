@@ -159,7 +159,7 @@ export function SalesTaxPage() {
         sortable: true,
         render: (row) =>
           row.paid_bill_id ? (
-            <EntityLink kind="bill" id={row.paid_bill_id} label={entityLabel(null, row.paid_bill_id, "Bill")} />
+            <EntityLink kind="bill" id={row.paid_bill_id} label={entityLabel(row.paid_bill_number, row.paid_bill_id, "Bill")} />
           ) : (
             "—"
           ),

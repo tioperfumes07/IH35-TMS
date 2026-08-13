@@ -156,9 +156,15 @@ export async function registerSalesTaxRoutes(app: FastifyInstance) {
             r.status::text,
             r.filed_at::text,
             r.paid_bill_id::text,
+            b.bill_number AS paid_bill_number,
             r.created_at::text
           FROM accounting.sales_tax_returns r
-          JOIN accounting.sales_tax_agencies a ON a.id = r.agency_id
+          JOIN accounting.sales_tax_agencies a
+            ON a.id = r.agency_id
+           AND a.operating_company_id = r.operating_company_id
+          LEFT JOIN accounting.bills b
+            ON b.id = r.paid_bill_id
+           AND b.operating_company_id = r.operating_company_id
           WHERE ${where.join(" AND ")}
           ORDER BY r.period_end DESC, r.created_at DESC
           LIMIT $${limitIndex}
