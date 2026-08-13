@@ -9,6 +9,8 @@ export type PrepaidAmortRow = {
   posted: boolean;
   posted_at: string | null;
   posted_journal_entry_id: string | null;
+  journal_entry_memo?: string | null;
+  journal_entry_date?: string | null;
 };
 
 export type PrepaidJeLine = { account_id: string; debit_cents: number; credit_cents: number; memo: string };
@@ -43,6 +45,14 @@ export type PrepaidAssetDetail = PrepaidAssetListItem & {
   expense_account_id: string | null;
   payment_account_id: string | null;
   purchase_je_id: string | null;
+  purchase_je_memo?: string | null;
+  purchase_je_date?: string | null;
+  asset_account_number?: string | null;
+  asset_account_name?: string | null;
+  expense_account_number?: string | null;
+  expense_account_name?: string | null;
+  payment_account_number?: string | null;
+  payment_account_name?: string | null;
   schedule: PrepaidAmortRow[];
   je_preview: PrepaidJePreview;
 };

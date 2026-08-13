@@ -21,6 +21,20 @@ import { useUrlSort } from "../../hooks/useUrlSort";
 const fmtCents = (c: number) => formatUsdCents(c);
 const fmtDate = (s: string | null) => formatDateUS(s) || "—";
 
+function jeHumanLabel(memo: string | null | undefined, date: string | null | undefined, id: string | null | undefined) {
+  if (!id) return undefined;
+  if (date) {
+    return `${formatDateUS(date)}${memo ? ` — ${memo}` : ""}`;
+  }
+  return entityLabel(memo ?? null, id, "Journal entry");
+}
+
+function accountHumanLabel(number: string | null | undefined, name: string | null | undefined, id: string | null | undefined) {
+  if (!id) return undefined;
+  if (number && name) return `${number} - ${name}`;
+  return entityLabel(name ?? null, id, "Account");
+}
+
 const STATUS_COLOR: Record<string, string> = {
   active: "bg-slate-100 text-slate-700",
   fully_amortized: "bg-slate-100 text-slate-700",
@@ -50,7 +64,11 @@ const SCHEDULE_COLUMNS: ParityColumn<PrepaidAmortRow>[] = [
     sortable: true,
     cellClass: "font-mono text-gray-400",
     render: (row) => (
-      <EntityLink kind="journal_entry" id={row.posted_journal_entry_id} label={row.posted_journal_entry_id ? entityLabel(null, row.posted_journal_entry_id, "Journal entry") : undefined} />
+      <EntityLink
+        kind="journal_entry"
+        id={row.posted_journal_entry_id}
+        label={jeHumanLabel(row.journal_entry_memo, row.journal_entry_date, row.posted_journal_entry_id)}
+      />
     ),
   },
 ];
@@ -86,7 +104,11 @@ function SchedulePanel({ detail, onClose }: { detail: PrepaidAssetDetail; onClos
           {detail.purchase_je_id ? (
             <p>
               Purchase JE:{" "}
-              <EntityLink kind="journal_entry" id={detail.purchase_je_id} label={entityLabel(null, detail.purchase_je_id, "Journal entry")} />
+              <EntityLink
+                kind="journal_entry"
+                id={detail.purchase_je_id}
+                label={jeHumanLabel(detail.purchase_je_memo, detail.purchase_je_date, detail.purchase_je_id)}
+              />
             </p>
           ) : null}
           {detail.asset_account_id ? (
@@ -95,7 +117,7 @@ function SchedulePanel({ detail, onClose }: { detail: PrepaidAssetDetail; onClos
               <EntityLink
                 kind="account"
                 id={detail.asset_account_id}
-                label={entityLabel(null, detail.asset_account_id, "Account")}
+                label={accountHumanLabel(detail.asset_account_number, detail.asset_account_name, detail.asset_account_id)}
               />
             </p>
           ) : null}
@@ -105,7 +127,7 @@ function SchedulePanel({ detail, onClose }: { detail: PrepaidAssetDetail; onClos
               <EntityLink
                 kind="account"
                 id={detail.expense_account_id}
-                label={entityLabel(null, detail.expense_account_id, "Account")}
+                label={accountHumanLabel(detail.expense_account_number, detail.expense_account_name, detail.expense_account_id)}
               />
             </p>
           ) : null}
@@ -115,7 +137,7 @@ function SchedulePanel({ detail, onClose }: { detail: PrepaidAssetDetail; onClos
               <EntityLink
                 kind="account"
                 id={detail.payment_account_id}
-                label={entityLabel(null, detail.payment_account_id, "Account")}
+                label={accountHumanLabel(detail.payment_account_number, detail.payment_account_name, detail.payment_account_id)}
               />
             </p>
           ) : null}
