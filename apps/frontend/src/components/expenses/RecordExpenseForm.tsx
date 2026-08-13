@@ -92,6 +92,7 @@ export function RecordExpenseForm({
       operatingCompanyId,
       values.driverId,
       values.unitId,
+      values.trailerId,
       values.billDate,
     ],
     queryFn: () =>
@@ -99,14 +100,19 @@ export function RecordExpenseForm({
         operating_company_id: operatingCompanyId,
         driver_id: values.driverId || undefined,
         unit_id: values.unitId || undefined,
+        trailer_id: values.trailerId || undefined,
         transaction_date: values.billDate,
       }),
-    enabled: Boolean(operatingCompanyId && values.billDate && (values.driverId || values.unitId)),
+    enabled: Boolean(
+      operatingCompanyId &&
+        values.billDate &&
+        (values.driverId || values.unitId || values.trailerId)
+    ),
   });
 
   useEffect(() => {
     setSuggestionPinned(false);
-  }, [values.driverId, values.unitId, values.billDate]);
+  }, [values.driverId, values.unitId, values.trailerId, values.billDate]);
 
   useEffect(() => {
     if (values.loadId || suggestionPinned) return;
@@ -371,26 +377,49 @@ export function RecordExpenseForm({
         </label>
       </div>
 
-      <label className="text-xs font-semibold text-gray-700" htmlFor={fieldId("unit")}>
-        Truck/Unit (optional)
-        <div className="mt-1">
-          <EntityPicker
-            kind="unit"
-            operatingCompanyId={operatingCompanyId}
-            value={values.unitId || null}
-            onChange={(next) =>
-              setValues((prev) => ({
-                ...prev,
-                unitId: next ?? "",
-                unitLabel: next ?? "",
-              }))
-            }
-            placeholder="Select unit…"
-            dataField={fieldId("unit")}
-            dataTestId={fieldId("unit")}
-          />
-        </div>
-      </label>
+      <div className="grid gap-3 md:grid-cols-2">
+        <label className="text-xs font-semibold text-gray-700" htmlFor={fieldId("unit")}>
+          Truck/Unit (optional)
+          <div className="mt-1">
+            <EntityPicker
+              kind="unit"
+              operatingCompanyId={operatingCompanyId}
+              value={values.unitId || null}
+              onChange={(next) =>
+                setValues((prev) => ({
+                  ...prev,
+                  unitId: next ?? "",
+                  unitLabel: next ?? "",
+                }))
+              }
+              placeholder="Select unit…"
+              dataField={fieldId("unit")}
+              dataTestId={fieldId("unit")}
+            />
+          </div>
+        </label>
+        <label className="text-xs font-semibold text-gray-700" htmlFor={fieldId("trailer")}>
+          Trailer (optional)
+          <div className="mt-1">
+            <EntityPicker
+              kind="trailer"
+              operatingCompanyId={operatingCompanyId}
+              value={values.trailerId || null}
+              onChange={(next) =>
+                setValues((prev) => ({
+                  ...prev,
+                  trailerId: next ?? "",
+                  trailerLabel: next ?? "",
+                }))
+              }
+              placeholder="Select trailer…"
+              dataField={fieldId("trailer")}
+              dataTestId={fieldId("trailer")}
+              allowClear
+            />
+          </div>
+        </label>
+      </div>
 
       <label className="text-xs font-semibold text-gray-700" htmlFor={fieldId("load")}>
         Trip / Load {/(?:fuel|diesel|gas|roadside|ifta)/i.test(values.categoryLabel) ? "*" : "(optional)"}

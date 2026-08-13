@@ -945,6 +945,8 @@ export function createExpense(
     // HARD cross-module link (maintenance): real FK to the WO + unit, persisted server-side (not just memo).
     work_order_id?: string;
     unit_id?: string;
+    /** RANK4 — optional trailer FK → mdata.equipment (accepted since #6322). */
+    trailer_id?: string;
     /** WAVE-H2 — optional ops load FK (not silently dropped server-side). */
     load_id?: string;
     /**

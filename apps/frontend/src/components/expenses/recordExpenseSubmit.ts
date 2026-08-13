@@ -21,6 +21,9 @@ export type RecordExpenseFormValues = {
   categoryQboId: string | null;
   unitId: string;
   unitLabel: string;
+  /** RANK4 FE — accounting.expenses.trailer_id → mdata.equipment (API accepts since #6322). */
+  trailerId: string;
+  trailerLabel: string;
   loadId: string;
   loadLabel: string;
   paymentAccountId: string;
@@ -51,6 +54,7 @@ export function buildRecordExpenseMemo(values: RecordExpenseFormValues, linkage?
   if (values.description.trim()) parts.push(values.description.trim());
   if (values.categoryLabel) parts.push(`Category: ${values.categoryLabel}`);
   if (values.unitLabel) parts.push(`Unit: ${values.unitLabel}`);
+  if (values.trailerLabel) parts.push(`Trailer: ${values.trailerLabel}`);
   if (values.loadLabel) parts.push(`Load: ${values.loadLabel}`);
   if (values.paymentAccountLabel) parts.push(`Paid from: ${values.paymentAccountLabel}`);
   if (values.paymentMethod) parts.push(`Payment: ${values.paymentMethod.toUpperCase()}`);
@@ -96,6 +100,7 @@ export async function submitRecordExpense(
     // HARD cross-module FKs (maintenance): only when linkage / picker supplies them — absent = unchanged.
     ...(linkage?.workOrderId ? { work_order_id: linkage.workOrderId } : {}),
     ...(resolvedUnitId ? { unit_id: resolvedUnitId } : {}),
+    ...(values.trailerId && UUID_RE.test(values.trailerId) ? { trailer_id: values.trailerId } : {}),
     ...(values.loadId ? { load_id: values.loadId } : {}),
     // FAIL-F2 class-B: always SUPPLIED, never omitted — an absent field is what left the merged writer inert.
     is_sample_data: values.isSampleData === true,
@@ -123,6 +128,8 @@ export function initialRecordExpenseFormValues(): RecordExpenseFormValues {
     categoryQboId: null,
     unitId: "",
     unitLabel: "",
+    trailerId: "",
+    trailerLabel: "",
     loadId: "",
     loadLabel: "",
     paymentAccountId: "",
