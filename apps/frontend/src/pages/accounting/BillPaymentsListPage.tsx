@@ -91,6 +91,11 @@ export function BillPaymentsListPage() {
     enabled: Boolean(companyId),
   });
 
+  /** LV-PAYABLE-SELECTOR-OFFERS-VOIDED-BILLS — never offer void paper for payment (belt after API). */
+  const unpaidBillsForSelector = useMemo(() => {
+    return (unpaidBillsQuery.data?.rows ?? []).filter((bill) => bill.status !== "voided");
+  }, [unpaidBillsQuery.data?.rows]);
+
   const rows = useMemo(() => {
     const base = paymentsQuery.data?.rows ?? [];
     const needle = search.trim().toLowerCase();
@@ -110,8 +115,8 @@ export function BillPaymentsListPage() {
 
   const selectedBill = useMemo(() => {
     if (!selectedBillId) return null;
-    return (unpaidBillsQuery.data?.rows ?? []).find((bill) => bill.id === selectedBillId) ?? null;
-  }, [selectedBillId, unpaidBillsQuery.data?.rows]);
+    return unpaidBillsForSelector.find((bill) => bill.id === selectedBillId) ?? null;
+  }, [selectedBillId, unpaidBillsForSelector]);
 
   const voidMutation = useMutation({
     mutationFn: ({ paymentId, reason }: { paymentId: string; reason: string }) => voidVendorBillPayment(paymentId, companyId, reason),
@@ -207,7 +212,7 @@ export function BillPaymentsListPage() {
             onChange={(event) => setSelectedBillId(event.target.value)}
           >
             <option value="">Select bill to pay...</option>
-            {(unpaidBillsQuery.data?.rows ?? []).map((bill) => (
+            {(unpaidBillsForSelector).map((bill) => (
               <option key={bill.id} value={bill.id}>
                 {displayBillLabel(bill)}
               </option>
