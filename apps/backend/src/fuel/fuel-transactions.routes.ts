@@ -4,6 +4,7 @@ import { withCurrentUser } from "../auth/db.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
+import { flushFuelGlPostsAfterCommit } from "../accounting/fuel-posting/maybe-post-from-fuel-transaction.service.js";
 
 // A10 — GET list read-model for the frontend FuelTransactionsTable
 // (apps/frontend/src/pages/fuel/FuelTransactionsTable.tsx), which takes a `rows: FuelTransactionRow[]`
@@ -26,6 +27,42 @@ const listFuelTransactionsQuerySchema = z.object({
 });
 
 const idParamSchema = z.object({ id: z.string().uuid() });
+
+/**
+ * RANK3-FUEL-OFFICE-POST-CREATE — manual office entry of a single fuel purchase. Mirrors the bulk
+ * importer's shape (fuel-transaction-import.ts INSERT column list, verified live) but for one
+ * office-keyed row instead of a spreadsheet: same fuel_type/source CHECK constraints (verified live
+ * on prod), same G18 load-attribution discipline as the PATCH /:id/load endpoint below (a load OR a
+ * stated exemption reason — never a silent unattributed row), same cash_advance -> driver_advance
+ * GL posting-path signal already established in maybe-post-from-fuel-transaction.service.ts.
+ * source is always 'manual' — this is the office-entry path, never labeled as an import.
+ */
+const createFuelTransactionBodySchema = z
+  .object({
+    operating_company_id: z.string().uuid(),
+    transaction_at: z.string().datetime({ offset: true }).or(z.string().date()),
+    driver_id: z.string().uuid().nullable().optional(),
+    unit_id: z.string().uuid().nullable().optional(),
+    trailer_id: z.string().uuid().nullable().optional(),
+    vendor_id: z.string().uuid().nullable().optional(),
+    fuel_card_id: z.string().uuid().nullable().optional(),
+    fuel_type: z.enum(["diesel", "def", "gas", "reefer_diesel", "other"]).default("diesel"),
+    gallons: z.coerce.number().positive().optional(),
+    price_per_gallon: z.coerce.number().positive().optional(),
+    total_cost: z.coerce.number().positive(),
+    location_city: z.string().trim().max(200).optional(),
+    location_state: z.string().trim().max(10).optional(),
+    transaction_reference: z.string().trim().max(200).optional(),
+    notes: z.string().trim().max(2000).optional(),
+    load_id: z.string().uuid().nullable().optional(),
+    load_exemption_reason: z.string().trim().min(3).max(200).optional(),
+    /** True when this purchase draws down a driver's fuel cash advance rather than company-direct. */
+    cash_advance: z.boolean().default(false),
+  })
+  .refine((v) => Boolean(v.load_id) || Boolean(v.load_exemption_reason), {
+    message: "load_id or load_exemption_reason is required — an unattributed fuel purchase needs a stated reason (G18)",
+    path: ["load_exemption_reason"],
+  });
 /**
  * `load_id: null` DETACHES, and then an exemption_reason is REQUIRED — an unattributed fuel expense
  * with no stated reason is exactly the silent gap G18 exists to prevent.
@@ -194,6 +231,162 @@ export async function registerFuelTransactionsRoutes(app: FastifyInstance) {
       has_more: q.offset + q.limit < result.total,
     };
   });
+  /**
+   * RANK3-FUEL-OFFICE-POST-CREATE — manual office entry of a single fuel purchase. Until this route,
+   * fuel.fuel_transactions had a bulk-import writer (POST /api/v1/fuel/transactions/import) and a
+   * load-assignment writer (PATCH /:id/load below) but no way for an office user to key in ONE
+   * purchase by hand — verified live before building (grepped this file: GET + PATCH only).
+   */
+  app.post("/api/v1/fuel/transactions", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) return;
+    const body = createFuelTransactionBodySchema.safeParse(req.body ?? {});
+    if (!body.success) return sendValidationError(reply, body.error);
+    const b = body.data;
+    const amountCents = Math.round(b.total_cost * 100);
+
+    const result = await withCompanyScope(authUser.uuid, b.operating_company_id, async (client) => {
+      const tableExists = await client.query(`SELECT to_regclass('fuel.fuel_transactions') IS NOT NULL AS ok`);
+      if (!(tableExists.rows[0] as { ok?: boolean } | undefined)?.ok) return { unavailable: true as const };
+
+      if (b.load_id) {
+        const loadRes = (await client.query(
+          `SELECT id::text AS id FROM mdata.loads
+            WHERE id = $1::uuid AND operating_company_id = $2::uuid AND soft_deleted_at IS NULL
+            LIMIT 1`,
+          [b.load_id, b.operating_company_id]
+        )) as { rows: Array<{ id: string }> };
+        if (!loadRes.rows[0]) return { error: "load_not_found_for_company" as const };
+      }
+
+      if (b.trailer_id) {
+        const trailerRes = (await client.query(
+          `SELECT id::text AS id FROM mdata.equipment
+            WHERE id = $1::uuid
+              AND (owner_company_id = $2::uuid OR currently_leased_to_company_id = $2::uuid)
+            LIMIT 1`,
+          [b.trailer_id, b.operating_company_id]
+        )) as { rows: Array<{ id: string }> };
+        if (!trailerRes.rows[0]) return { error: "trailer_not_found_for_company" as const };
+      }
+
+      const insertRes = (await client.query(
+        `
+          INSERT INTO fuel.fuel_transactions (
+            operating_company_id,
+            transaction_at,
+            purchased_at,
+            load_id,
+            driver_id,
+            unit_id,
+            trailer_id,
+            vendor_id,
+            fuel_card_id,
+            fuel_type,
+            gallons,
+            price_per_gallon,
+            total_cost,
+            location_city,
+            location_state,
+            transaction_reference,
+            source,
+            notes,
+            load_required,
+            load_exemption_reason,
+            created_by_user_id
+          )
+          VALUES (
+            $1::uuid, $2::timestamptz, $2::timestamptz, $3, $4, $5, $6, $7, $8, $9,
+            $10, $11, $12, $13, $14, $15, 'manual', $16, true, $17, $18::uuid
+          )
+          RETURNING id::text AS id
+        `,
+        [
+          b.operating_company_id,
+          b.transaction_at,
+          b.load_id ?? null,
+          b.driver_id ?? null,
+          b.unit_id ?? null,
+          b.trailer_id ?? null,
+          b.vendor_id ?? null,
+          b.fuel_card_id ?? null,
+          b.fuel_type,
+          b.gallons ?? null,
+          b.price_per_gallon ?? null,
+          b.total_cost,
+          b.location_city ?? null,
+          b.location_state ?? null,
+          b.transaction_reference ?? null,
+          b.notes ?? null,
+          b.load_id ? null : b.load_exemption_reason,
+          authUser.uuid,
+        ]
+      )) as { rows: Array<{ id: string }> };
+      const fuelTransactionId = insertRes.rows[0]?.id;
+      if (!fuelTransactionId) return { error: "fuel_transaction_create_failed" as const };
+
+      await appendCrudAudit(
+        client,
+        authUser.uuid,
+        "fuel.transaction.manual_create",
+        {
+          resource_type: "fuel.fuel_transactions",
+          resource_id: fuelTransactionId,
+          operating_company_id: b.operating_company_id,
+          amount_cents: amountCents,
+          fuel_type: b.fuel_type,
+          load_id: b.load_id ?? null,
+          load_exemption_reason: b.load_id ? null : b.load_exemption_reason ?? null,
+        },
+        "info",
+        "RANK3-FUEL-OFFICE-POST-CREATE"
+      );
+
+      return {
+        row: {
+          id: fuelTransactionId,
+          operating_company_id: b.operating_company_id,
+          driver_id: b.driver_id ?? null,
+          fuel_type: b.fuel_type,
+          transaction_at: b.transaction_at,
+          amount_cents: amountCents,
+          location_state: b.location_state ?? null,
+          gallons: b.gallons ?? null,
+          cash_advance: b.cash_advance,
+        },
+      };
+    });
+
+    if ("unavailable" in result) return reply.code(501).send({ error: "fuel_transactions_unavailable" });
+    if ("error" in result) {
+      const status = result.error === "fuel_transaction_create_failed" ? 500 : 400;
+      return reply.code(status).send({ error: result.error });
+    }
+
+    // AFTER COMMIT — TMS GL only (EXPENSE_GL_POSTING_ENABLED), same as the bulk importer. Class-by-
+    // unit/trailer is resolved inside the poster (RANK2-FUEL-JE-CLASS) from the row just written.
+    await flushFuelGlPostsAfterCommit(
+      [
+        {
+          operating_company_id: b.operating_company_id,
+          actor_user_id: authUser.uuid,
+          fuel_transaction_id: result.row.id,
+          fuel_type: b.fuel_type,
+          transaction_at: b.transaction_at,
+          amount_cents: amountCents,
+          driver_id: b.driver_id ?? null,
+          location_state: b.location_state ?? null,
+          gallons: b.gallons ?? null,
+          cash_advance: b.cash_advance,
+          fuel_card_id: b.fuel_card_id ?? null,
+        },
+      ],
+      req.log
+    );
+
+    return reply.code(201).send(result.row);
+  });
+
   /**
    * G18 — attribute a fuel transaction to a load, or detach it with a recorded reason.
    *
