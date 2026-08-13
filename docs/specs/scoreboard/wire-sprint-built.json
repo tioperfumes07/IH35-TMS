@@ -848,6 +848,14 @@
       "modules": ["drivers", "dispatch", "fleet"],
       "cols": ["trailer", "connectivity", "reverse_link"],
       "leafRe": "^(equipment|transfer|trailer|driver|profile|detail)"
+    },
+    {
+      "task": "DRIVER-INCIDENTS-REVERSE",
+      "pr": "this PR",
+      "guard": "scripts/verify-driver-incidents-reverse.mjs",
+      "modules": ["safety", "drivers", "dispatch"],
+      "cols": ["driver", "load", "connectivity", "reverse_link", "picker_law"],
+      "leafRe": "^(damage|trailer|cargo|incident|driver|load|profile|create)"
     }
   ]
 }
