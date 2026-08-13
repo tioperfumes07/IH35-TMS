@@ -128,7 +128,6 @@
         "driver",
         "unit",
         "load",
-        "expense",
         "connectivity"
       ]
     },
@@ -141,7 +140,6 @@
         "driver",
         "unit",
         "load",
-        "expense",
         "connectivity",
         "picker_law"
       ]
@@ -154,7 +152,6 @@
       "required": [
         "driver",
         "unit",
-        "expense",
         "connectivity",
         "reverse_link",
         "picker_law",
@@ -194,7 +191,6 @@
         "driver",
         "unit",
         "load",
-        "expense",
         "connectivity",
         "reverse_link"
       ]
@@ -230,8 +226,7 @@
         "connectivity",
         "reverse_link",
         "driver",
-        "unit",
-        "expense"
+        "unit"
       ]
     },
     {
@@ -250,7 +245,6 @@
         "trailer",
         "load",
         "vendor",
-        "expense",
         "gl_je"
       ]
     },
@@ -266,8 +260,7 @@
         "reverse_link",
         "load",
         "driver",
-        "unit",
-        "expense"
+        "unit"
       ]
     },
     {
@@ -281,8 +274,7 @@
         "connectivity",
         "reverse_link",
         "driver",
-        "unit",
-        "expense"
+        "unit"
       ]
     },
     {
