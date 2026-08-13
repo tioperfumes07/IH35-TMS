@@ -13,6 +13,8 @@ import { ReportsSubNav } from "./ReportsSubNav";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { arAgingCustomerProfileHref, arAgingInvoiceListHref } from "./agingDrillThrough";
 import { entityLabel } from "../../lib/entity-label";
+import { EntityLink } from "../../components/shared/EntityLink";
+import { ListErrorState } from "../../components/ListErrorState";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -74,7 +76,7 @@ export function ARAgingPage() {
 
   const columns = useMemo<ParityColumn<ARAgingRowWithBucket>[]>(
     () => [
-      { key: "customer_name", label: "Customer", sortable: true, render: (r) => <span className="font-medium text-gray-900">{entityLabel(r.customer_name, r.customer_id, "Customer")}</span> },
+      { key: "customer_name", label: "Customer", sortable: true, render: (r) => <EntityLink kind="customer" id={r.customer_id} label={entityLabel(r.customer_name, r.customer_id, "Customer")} className="font-medium text-gray-900" /> },
       { key: "total_open_cents", label: "Total", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.total_open_cents) },
       { key: "bucket_0_30_cents", label: "0–30", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.bucket_0_30_cents) },
       { key: "bucket_31_60_cents", label: "31–60", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.bucket_31_60_cents) },
@@ -164,7 +166,7 @@ export function ARAgingPage() {
       <p className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
         This report is always accrual basis per CPA sign-off.
       </p>
-      {query.isError ? <p className="text-sm text-red-600">Failed to load report.</p> : null}
+      {query.isError ? <ListErrorState title="Couldn't load A/R aging" status={0} message={(query.error as Error)?.message} onRetry={() => void query.refetch()} /> : null}
 
       <div className="no-print grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-4 lg:grid-cols-5">
         <label className="text-xs text-gray-600">

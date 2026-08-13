@@ -16,6 +16,7 @@ import { useUrlSort } from "../../hooks/useUrlSort";
 import { apAgingBillsListHref, apAgingVendorProfileHref } from "./agingDrillThrough";
 import { entityLabel } from "../../lib/entity-label";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { ListErrorState } from "../../components/ListErrorState";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -166,7 +167,7 @@ export function APAgingPage() {
       <p className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
         This report is always accrual basis per CPA sign-off.
       </p>
-      {query.isError ? <p className="text-sm text-red-600">Failed to load report.</p> : null}
+      {query.isError ? <ListErrorState title="Couldn't load A/P aging" status={0} message={(query.error as Error)?.message} onRetry={() => void query.refetch()} /> : null}
 
       <div className="no-print grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-4 lg:grid-cols-5">
         <label className="text-xs text-gray-600">
