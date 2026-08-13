@@ -3,16 +3,22 @@ import { useRoadServiceTickets } from "../../hooks/useRoadServiceTickets";
 import { entityLabel } from "../../lib/entity-label";
 import { ListErrorBanner } from "../shared/ListErrorBanner";
 
+type Filter =
+  | { driver_id: string; unit_id?: never }
+  | { unit_id: string; driver_id?: never };
+
 type Props = {
-  driverId: string;
+  filter: Filter;
+  contextLabel: string;
   "data-testid"?: string;
 };
 
-export function DriverRoadServiceReverseSection({
-  driverId,
-  "data-testid": testId = "driver-road-service-reverse-section",
+export function RoadServiceReverseSection({
+  filter,
+  contextLabel,
+  "data-testid": testId = "road-service-reverse-section",
 }: Props) {
-  const { tickets, isLoading, isError } = useRoadServiceTickets({ driver_id: driverId });
+  const { tickets, isLoading, isError } = useRoadServiceTickets(filter);
 
   return (
     <section className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid={testId}>
@@ -20,9 +26,9 @@ export function DriverRoadServiceReverseSection({
         <h2 className="text-sm font-semibold text-slate-900">Road Service</h2>
         <span className="text-xs text-gray-500">{isLoading ? "Loading…" : tickets.length}</span>
       </div>
-      {isError ? <ListErrorBanner message="Couldn't load road-service tickets for this driver." /> : null}
+      {isError ? <ListErrorBanner message={`Couldn't load road-service tickets for ${contextLabel}.`} /> : null}
       {!isLoading && !isError && tickets.length === 0 ? (
-        <p className="text-xs text-gray-500">No road-service tickets linked to this driver.</p>
+        <p className="text-xs text-gray-500">No road-service tickets linked to {contextLabel}.</p>
       ) : null}
       {tickets.map((ticket) => (
         <div key={ticket.id} className="flex items-center justify-between gap-3 rounded-sm border border-gray-100 px-2 py-1.5 text-xs">

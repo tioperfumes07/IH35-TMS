@@ -41,6 +41,7 @@ import { InsuranceClaimsReverseSection } from "../../components/insurance/Insura
 import { AssetSafetyReverseSection } from "../../components/safety/AssetSafetyReverseSection";
 import { FuelTransactionsReverseSection } from "../../components/fuel/FuelTransactionsReverseSection";
 import { UnitPermitsReverseSection } from "../../components/safety/UnitPermitsReverseSection";
+import { RoadServiceReverseSection } from "../../components/maintenance/RoadServiceReverseSection";
 import { LinkedBankTransactionsPanel } from "../../components/banking/LinkedBankTransactionsPanel";
 
 export type UnitProfileAggregate = {
@@ -347,6 +348,13 @@ export function VehicleProfilePage() {
               operatingCompanyId={companyId}
               unitId={id}
               data-testid="vehicle-profile-permits"
+            />
+          </div>
+          <div data-testid="vp-section-10g-road-service">
+            <RoadServiceReverseSection
+              filter={{ unit_id: id }}
+              contextLabel="this unit"
+              data-testid="vehicle-profile-road-service-reverse"
             />
           </div>
           <div data-testid="vp-section-11-action-bar">
