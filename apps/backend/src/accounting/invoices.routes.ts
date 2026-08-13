@@ -10,7 +10,7 @@ import { sendDraftInvoice } from "./invoice-send.service.js";
 import { createExpandedInvoice } from "./invoices.service.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope, recomputeInvoiceTotals } from "./shared.js";
 import { emitAccountingSpineEvent } from "./accounting-spine-emit.js";
-import { auditVoid, isVoidEnforcementEnabled, postVoidReversal, type VoidReversalResult } from "./void.service.js";
+import { auditVoid, isVoidEnforcementEnabled, pgDateColumnToIsoDay, postVoidReversal, type VoidReversalResult } from "./void.service.js";
 import { requireVoidCancelExecutor } from "../lib/authz/void-cancel-authz.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
 
@@ -872,10 +872,13 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
     const body = voidBodySchema.safeParse(req.body ?? {});
     if (!body.success) return validationError(reply, body.error);
     const result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
-      const currentRes = await client.query(`SELECT * FROM accounting.invoices WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`, [
-        params.data.id,
-        query.data.operating_company_id,
-      ]);
+      const currentRes = await client.query(
+        `SELECT *, issue_date::text AS issue_date_iso
+           FROM accounting.invoices
+          WHERE id = $1 AND operating_company_id = $2::uuid
+          LIMIT 1`,
+        [params.data.id, query.data.operating_company_id]
+      );
       const current = currentRes.rows[0] ?? null;
       if (!current) return { code: 404 as const, error: "invoice_not_found" };
       if (String(current.status) === "paid") return { code: 409 as const, error: "invoice_paid_cannot_void" };
@@ -895,9 +898,10 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
         // Executor role already enforced above (requireVoidCancelExecutor, OUTSIDE the flag). The flag-ON
         // path only adds the reversing-JE + required-reason obligations.
         if (!body.data.reason || !body.data.reason.trim()) return { code: 400 as const, error: "void_reason_required" };
-        const rawDate = current.issue_date as unknown;
-        const originalDate =
-          typeof rawDate === "string" ? rawDate.slice(0, 10) : new Date(rawDate as string).toISOString().slice(0, 10);
+        // ACCT-F5029 / LV-BILLVOID class: pg Date objects stringify as "Thu Aug 06…"; toISOString can TZ-shift.
+        const originalDate = pgDateColumnToIsoDay(
+          (current as { issue_date_iso?: string | null }).issue_date_iso ?? current.issue_date
+        );
         reversal = await postVoidReversal(
           client,
           {
