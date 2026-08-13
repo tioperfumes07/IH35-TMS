@@ -259,6 +259,19 @@
       ]
     },
     {
+      "id": "tasks.modal.create_task",
+      "tab": "Modals",
+      "sub": "Modal: Create Task Modal",
+      "route_hint": "surface://components/tasks/CreateTaskModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "components/tasks/CreateTaskModal.tsx",
+      "required": [
+        "connectivity",
+        "qbo_chrome",
+        "picker_law"
+      ]
+    },
+    {
       "id": "chrome.toolbar_search",
       "tab": "Chrome controls",
       "sub": "List toolbar — Search (CLS-LIST-TOOLBAR)",

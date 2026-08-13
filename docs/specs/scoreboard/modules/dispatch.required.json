@@ -1170,6 +1170,18 @@
       ]
     },
     {
+      "id": "dispatch.modal.abandonment_report",
+      "tab": "Modals",
+      "sub": "Modal: Abandonment Report Modal",
+      "route_hint": "surface://pages/loads/AbandonmentReportModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "pages/loads/AbandonmentReportModal.tsx",
+      "required": [
+        "connectivity",
+        "qbo_chrome"
+      ]
+    },
+    {
       "id": "chrome.toolbar_search",
       "tab": "Chrome controls",
       "sub": "List toolbar — Search (CLS-LIST-TOOLBAR)",

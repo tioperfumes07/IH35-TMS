@@ -620,6 +620,31 @@
       ]
     },
     {
+      "id": "vendors.modal.vendor_linkage",
+      "tab": "Modals",
+      "sub": "Modal: Vendor Linkage Modal",
+      "route_hint": "surface://components/qbo/VendorLinkageModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "components/qbo/VendorLinkageModal.tsx",
+      "required": [
+        "connectivity",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "vendors.modal.vendor_create",
+      "tab": "Modals",
+      "sub": "Modal: Vendor Create Modal",
+      "route_hint": "surface://components/vendors/VendorCreateModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "components/vendors/VendorCreateModal.tsx",
+      "required": [
+        "connectivity",
+        "qbo_chrome",
+        "picker_law"
+      ]
+    },
+    {
       "id": "chrome.toolbar_search",
       "tab": "Chrome controls",
       "sub": "List toolbar — Search (CLS-LIST-TOOLBAR)",

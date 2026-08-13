@@ -674,6 +674,43 @@
       ]
     },
     {
+      "id": "customers.modal.customer_drill",
+      "tab": "Modals",
+      "sub": "Modal: Customer Drill Modal",
+      "route_hint": "surface://components/customers/CustomerDrillModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "components/customers/CustomerDrillModal.tsx",
+      "required": [
+        "connectivity",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "customers.modal.customer_edit",
+      "tab": "Modals",
+      "sub": "Modal: Customer Edit Modal",
+      "route_hint": "surface://components/customers/CustomerEditModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "components/customers/CustomerEditModal.tsx",
+      "required": [
+        "connectivity",
+        "qbo_chrome",
+        "picker_law"
+      ]
+    },
+    {
+      "id": "customers.modal.fmcsaverification",
+      "tab": "Modals",
+      "sub": "Modal: FMCSAVerification Modal",
+      "route_hint": "surface://components/customers/FMCSAVerificationModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "components/customers/FMCSAVerificationModal.tsx",
+      "required": [
+        "connectivity",
+        "qbo_chrome"
+      ]
+    },
+    {
       "id": "chrome.toolbar_search",
       "tab": "Chrome controls",
       "sub": "List toolbar — Search (CLS-LIST-TOOLBAR)",
