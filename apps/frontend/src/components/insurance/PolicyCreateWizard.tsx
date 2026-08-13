@@ -329,6 +329,7 @@ export function PolicyCreateWizard({ open, operatingCompanyId, onClose, onCreate
     mutationFn: () =>
       createPolicyWithBills({
         operating_company_id: operatingCompanyId,
+        vendor_id: step1.insurer_vendor_id,
         insurer_name: step1.insurer_name.trim(),
         policy_number: step1.policy_number.trim(),
         coverage_type: step1.coverage_type as InsuranceCoverageType,

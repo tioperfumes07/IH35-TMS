@@ -24,7 +24,9 @@ vi.mock("../../auth/db.js", async (importOriginal) => {
             unitSeq += 1;
             return { rows: [{ id: `unit-${unitSeq}` }] };
           }
-          if (sql.includes("FROM mdata.vendors")) return { rows: [{ id: "vendor-1" }] };
+          if (sql.includes("FROM mdata.vendors")) {
+            return { rows: [{ id: "00000000-0000-4000-8000-0000000000f1", vendor_name: "Test Insurer", is_sample_data: false }] };
+          }
           if (sql.includes("FROM banking.bank_accounts")) return { rows: [{ id: "bank-1" }] };
           if (sql.includes("INSERT INTO banking.bank_transactions")) {
             txnSeq += 1;
@@ -56,6 +58,7 @@ vi.mock("../../audit/crud-audit.js", () => ({
 describe("createInsurancePolicyWithBills", () => {
   const baseInput = {
     operatingCompanyId: "00000000-0000-0000-0000-000000000001",
+    vendorId: "00000000-0000-4000-8000-0000000000f1",
     userId: "00000000-0000-0000-0000-000000000002",
     insurerName: "Test Insurer",
     policyNumber: "POL-001",

@@ -82,6 +82,7 @@ export type InsurancePolicyDetail = InsurancePolicy & {
 
 export type CreateInsurancePolicyPayload = {
   operating_company_id: string;
+  vendor_id: string;
   insurer_name: string;
   policy_number: string;
   coverage_type: InsuranceCoverageType;
@@ -733,6 +734,7 @@ export type AllocationMethod = "equal_split" | "pro_rata" | "weighted";
 
 export type CreatePolicyWithBillsPayload = {
   operating_company_id: string;
+  vendor_id: string;
   insurer_name: string;
   policy_number: string;
   coverage_type: InsuranceCoverageType;

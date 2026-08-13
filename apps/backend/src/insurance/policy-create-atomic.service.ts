@@ -24,6 +24,7 @@ export type AllocationMethod = "equal_split" | "pro_rata" | "weighted";
 
 export type CreatePolicyWithBillsInput = {
   operatingCompanyId: string;
+  vendorId: string;
   userId: string;
   insurerName: string;
   policyNumber: string;
@@ -62,18 +63,19 @@ async function persistBillsOnClient(
     userId: string;
     policyId: string;
     policyNumber: string;
+    vendorId: string;
     insurerName: string;
     bills: InsuranceDispersalBill[];
   }
 ): Promise<string[]> {
   if (!input.bills.length) return [];
 
-  const vendorRes = await client.query<{ id: string; is_sample_data: boolean | null }>(
+  const vendorRes = await client.query<{ id: string; vendor_name: string; is_sample_data: boolean | null }>(
     `SELECT id::text, is_sample_data FROM mdata.vendors
      WHERE operating_company_id = $1::uuid AND deactivated_at IS NULL
-       AND lower(trim(vendor_name)) = lower(trim($2))
+       AND id = $2::uuid
      ORDER BY created_at ASC LIMIT 1`,
-    [input.operatingCompanyId, input.insurerName]
+    [input.operatingCompanyId, input.vendorId]
   );
   const vendorId = vendorRes.rows[0]?.id;
   if (!vendorId) throw new Error("insurance_vendor_not_found");
@@ -254,22 +256,32 @@ export async function createInsurancePolicyWithBills(
     if (!coverageTypeRes.rows[0]) throw new Error("coverage_type_not_found");
     const coverageTypeId = coverageTypeRes.rows[0].id;
 
+    const vendorRes = await client.query<{ vendor_name: string }>(
+      `SELECT vendor_name FROM mdata.vendors
+       WHERE id = $1::uuid AND operating_company_id = $2::uuid AND deactivated_at IS NULL
+       LIMIT 1`,
+      [input.vendorId, input.operatingCompanyId]
+    );
+    const vendorName = vendorRes.rows[0]?.vendor_name;
+    if (!vendorName) throw new Error("insurance_vendor_not_found");
+
     const policyRes = await client.query<{ id: string }>(
       `INSERT INTO insurance.policy (
-         tenant_id, operating_company_id, insurer_name, policy_number, coverage_type, coverage_type_id,
+         tenant_id, operating_company_id, vendor_id, insurer_name, policy_number, coverage_type, coverage_type_id,
          effective_date, expiry_date, total_premium_cents, down_payment_cents,
          installment_count, due_day, pay_day, late_fee_pct,
          insurer_email, agent_contact, status, allocation_method
        )
        VALUES (
-         $1::uuid,$1::uuid,$2,$3,$4,$5::uuid,
-         $6::date,$7::date,$8,$9,
-         $10,$11,$12,$13,$14,$15,$16,$17
+         $1::uuid,$1::uuid,$2,$3,$4,$5,$6::uuid,
+         $7::date,$8::date,$9,$10,
+         $11,$12,$13,$14,$15,$16,$17,$18
        )
        RETURNING id::text`,
       [
         input.operatingCompanyId,
-        input.insurerName,
+        input.vendorId,
+        vendorName,
         input.policyNumber,
         input.coverageType,
         coverageTypeId,
@@ -354,7 +366,8 @@ export async function createInsurancePolicyWithBills(
       userId: input.userId,
       policyId,
       policyNumber: input.policyNumber,
-      insurerName: input.insurerName,
+      vendorId: input.vendorId,
+      insurerName: vendorName,
       bills: dispersal.bills,
     });
 

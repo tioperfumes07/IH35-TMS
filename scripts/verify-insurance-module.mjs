@@ -70,6 +70,7 @@ contains("apps/backend/src/insurance/policy.routes.ts", policyRoutes, [
   { pattern: /policy-bill-schedule\.service/, label: "imports policy-bill-schedule service" },
   { pattern: /createPolicyBillSchedule/, label: "calls createPolicyBillSchedule" },
   { pattern: /vendor_id/, label: "vendor_id in createPolicySchema" },
+  { pattern: /id = \$1::uuid[\s\S]{0,160}operating_company_id = \$2::uuid[\s\S]{0,160}deactivated_at IS NULL/, label: "entity-scoped active vendor validation" },
 ]);
 if (policyRoutes && /X-Bill-Schedule-Warning/.test(policyRoutes)) {
   fail("apps/backend/src/insurance/policy.routes.ts: non-fatal X-Bill-Schedule-Warning path must be removed (atomic hard-fail required)");
@@ -84,15 +85,34 @@ contains("apps/backend/src/middleware/idempotency.ts", idempotency, [
 // 4 — Frontend: vendor picker added to modal
 const policyModal = read("apps/frontend/src/components/insurance/PolicyCreateModal.tsx");
 contains("apps/frontend/src/components/insurance/PolicyCreateModal.tsx", policyModal, [
-  { pattern: /selectedVendorId/, label: "selectedVendorId state" },
-  { pattern: /accounting\/vendors/, label: "accounting vendors API call" },
-  { pattern: /vendor_id.*vendorId|vendorId.*vendor_id/, label: "vendor_id passed in mutation" },
+  { pattern: /insurer_vendor_id/, label: "canonical insurer vendor state" },
+  { pattern: /listVendors/, label: "entity-scoped mdata vendor API call" },
+  { pattern: /vendor_id:\s*next\.payload\.insurer_vendor_id/, label: "vendor_id passed in mutation" },
 ]);
 
 // 5 — Frontend API type: vendor_id
 const insuranceApi = read("apps/frontend/src/api/insurance.ts");
 contains("apps/frontend/src/api/insurance.ts", insuranceApi, [
-  { pattern: /vendor_id.*string.*null|vendor_id\?.*string/, label: "vendor_id in CreateInsurancePolicyPayload" },
+  { pattern: /CreateInsurancePolicyPayload[\s\S]{0,200}vendor_id:\s*string/, label: "vendor_id in CreateInsurancePolicyPayload" },
+  { pattern: /CreatePolicyWithBillsPayload[\s\S]{0,200}vendor_id:\s*string/, label: "vendor_id in CreatePolicyWithBillsPayload" },
+]);
+
+const policyWizard = read("apps/frontend/src/components/insurance/PolicyCreateWizard.tsx");
+contains("apps/frontend/src/components/insurance/PolicyCreateWizard.tsx", policyWizard, [
+  { pattern: /vendor_id:\s*step1\.insurer_vendor_id/, label: "wizard passes vendor_id to atomic writer" },
+]);
+
+const atomicRoute = read("apps/backend/src/insurance/policy-create-atomic.routes.ts");
+contains("apps/backend/src/insurance/policy-create-atomic.routes.ts", atomicRoute, [
+  { pattern: /vendor_id:\s*z\.string\(\)\.uuid\(\)/, label: "atomic route requires vendor UUID" },
+  { pattern: /vendorId:\s*body\.vendor_id/, label: "atomic route forwards vendor UUID" },
+]);
+
+const atomicService = read("apps/backend/src/insurance/policy-create-atomic.service.ts");
+contains("apps/backend/src/insurance/policy-create-atomic.service.ts", atomicService, [
+  { pattern: /operating_company_id = \$2::uuid[\s\S]{0,80}deactivated_at IS NULL/, label: "atomic writer validates entity-scoped active vendor" },
+  { pattern: /operating_company_id, vendor_id, insurer_name/, label: "atomic writer stamps policy vendor FK" },
+  { pattern: /vendorId:\s*input\.vendorId/, label: "bill writer reuses selected vendor FK" },
 ]);
 
 // 6 — Block manifest
