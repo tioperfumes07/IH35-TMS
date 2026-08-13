@@ -6,7 +6,8 @@
 **Quality:** `/Users/jorgemunoz/Desktop/Claude.docx`  
 **Canon folder:** `FINAL-WEEKEND-FULL-WIRING-2026-08-12/`  
 **Mode:** Fast weekend merge · non-stop continuous · no deviation · Wire Built 100% → then Live  
-**Law:** Full linkage · multilayer · FE+BE · reverse · double-routed · accounting/economics · every leaf/modal/panel/picker
+**Law:** Full linkage · multilayer · FE+BE · reverse · double-routed · accounting/economics · every leaf/modal/panel/picker  
+**Fully wired:** `docs/lockdown/FULLY-WIRED-COMPLETE-BAR-2026-08-13.md` (12 items — surface bar — Live Chrome **last**)
 
 Also open: `00-CODER-START-HERE.md` · `STATUS-NOW.md`
 

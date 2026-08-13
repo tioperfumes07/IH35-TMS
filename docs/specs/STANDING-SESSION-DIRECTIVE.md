@@ -90,5 +90,15 @@ To exercise a skeleton hop before real operational values exist, use a **clearly
 - **Do not re-ask** the owner to flip USMCA posting flags. **Do not** enable QBO sync for USMCA.
 - **Migration:** `db/migrations/202608121800_usmca_posting_on_qbo_off.sql` — CC-1 applies on Neon on merge.
 
+## 10. FULLY WIRED = COMPLETE BAR (owner-locked 2026-08-13 — answered=closed)
+
+**Canonical:** `docs/lockdown/FULLY-WIRED-COMPLETE-BAR-2026-08-13.md`  
+**Cursor rule:** `.cursor/rules/38-fully-wired-complete-bar.mdc`
+
+**“Wired” / “includes all” / “done” means ALL of:**
+1. Real tab/leaf/route · 2. Create→canonical table · 3. Money/economics when owed · 4. Forward FKs · 5. Reverse links · 6. Matrix columns Built (leaf-specific) · 7. **Surface bar** (tab/sub-tab/leaf · search/filter/gear/range/picker/Combobox · modal/popup/side panel/drawer/ParityDrawer · wizard/nested create — every control→matrix) · 8. Chrome law · 9. Universal picker+creator · 10. Entity/RLS/audit · 11. Guard+evidence · 12. **Live check in Chrome LAST** (only after Built=100% for the scope).
+
+Forbidden: saying yes to “includes all” when only chrome or only money was built. Wire sprint may report `Built` / `Live=BLOCKED` — never “fully wired” before item 12.
+
 ---
-*Permanent. Loaded at every session boot alongside `DELIVERY-METHOD-LOCKED.md`, `OWNER-QUALITY-COMPACT.md`, and `ih35-tms-standards`. The `verify-no-approval-holds` guard protects §4; `verify-standing-directive-present` + `verify-owner-quality-compact-present` protect the always-read set.*
+*Permanent. Loaded at every session boot alongside `DELIVERY-METHOD-LOCKED.md`, `OWNER-QUALITY-COMPACT.md`, `FULLY-WIRED-COMPLETE-BAR-2026-08-13.md`, and `ih35-tms-standards`. The `verify-no-approval-holds` guard protects §4; `verify-standing-directive-present` + `verify-owner-quality-compact-present` protect the always-read set.*

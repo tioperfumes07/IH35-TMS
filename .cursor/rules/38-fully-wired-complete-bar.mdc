@@ -1,0 +1,17 @@
+---
+description: FULLY WIRED complete bar — mandatory 12-item list; Live Chrome last
+alwaysApply: true
+---
+
+# RULE — FULLY WIRED COMPLETE BAR (owner 2026-08-13 · PERMANENT)
+
+**Canonical:** `docs/lockdown/FULLY-WIRED-COMPLETE-BAR-2026-08-13.md`
+
+When the owner asks “does this include all?” or any coder claims wired / done / complete:
+
+1. **Yes means the entire numbered list in that file** (create→canonical → money → F+R → matrix columns → **surface bar** → chrome law → pickers → RLS → guard → **Live Chrome LAST**).
+2. Surface bar alone (tabs, search, filter, gear, range, picker, Combobox, modal/drawer/ParityDrawer, wizard, nested create) is **necessary but not sufficient**.
+3. Scoreboard Built / CI-green / `@matrix-built` / N-of-M **≠** fully wired until Live Chrome (item 12) after Built = 100% for the scope.
+4. During wire sprint: say `Built` / `Live=BLOCKED` — never “fully wired” early.
+
+Presence enforced with STANDING-SESSION pointers via `scripts/verify-standing-directive-present.mjs`.

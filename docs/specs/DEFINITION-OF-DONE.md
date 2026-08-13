@@ -2,6 +2,8 @@
 
 **Status: BINDING. Owner-agreed. This file is the single canonical statement of "done."**
 
+**FULLY WIRED (owner 2026-08-13):** for product / module / “includes all” claims, also obey the plain 12-item list in `docs/lockdown/FULLY-WIRED-COMPLETE-BAR-2026-08-13.md` (surface bar + Live Chrome **last**). DoD A–E + VERIFY 1–8 remain binding; the Fully-Wired bar makes the owner meaning non-skippable.
+
 **OWNER LAW (2026-08-03, FINAL) governs §6 Merge gates below: NO HOLDS, NO `JORGE-APPROVED` LABEL — every
 coder merges on green in every lane, including financial. See `.cursor/rules/00-operating-method-LAW.mdc`.**
 

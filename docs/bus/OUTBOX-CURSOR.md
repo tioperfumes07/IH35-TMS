@@ -30,3 +30,5 @@
 2026-08-13T10:55CT | Cursor | #6446 ACCT-F5050 done — Invoices ▾ promoted to Accounting top row (peer Bills/Expenses/Bill payment) | NEXT=money
 - 2026-08-13T19:13Z Cursor | SHIPPED VERTICAL-MONEY-FACTORING-GL-JE (PR#6532) detail Built + chrome honesty | Live=BLOCKED | NEXT=expense/ap_bill/liability broad-tag honesty OR Live gate
 2026-08-13T19:45Z Cursor | shipping VERTICAL-LOAD-PRIORITY14 | Live=BLOCKED | NEXT=qbo_chrome/picker + Codex reverse_link
+2026-08-13T19:48Z Cursor | SHIPPED VERTICAL-LOAD-PRIORITY14 (PR#6543) | load Gap=4 WIRE_GAP | Live=BLOCKED | NEXT=qbo_chrome factoring + Codex reverse_link
+2026-08-13T19:52Z Cursor | locking FULLY-WIRED-COMPLETE-BAR law everywhere | Live=BLOCKED | NEXT=merge then column drain

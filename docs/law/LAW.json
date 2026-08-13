@@ -551,5 +551,12 @@
     "source_file": "docs/lockdown/VERTICAL-WIRING-LAW-2026-08-12.md",
     "guard": "scripts/verify-vertical-wiring-law-present.mjs",
     "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-13-FULLY-WIRED-COMPLETE-BAR",
+    "title": "FULLY WIRED = complete 12-item bar (create→canonical · money · F+R · matrix · surface bar every control→matrix · chrome · pickers · RLS · guard · Live Chrome LAST) — soft yes to owner without this list is a defect",
+    "source_file": "docs/lockdown/FULLY-WIRED-COMPLETE-BAR-2026-08-13.md",
+    "guard": "scripts/verify-fully-wired-complete-bar-present.mjs",
+    "type": "enforced"
   }
 ]

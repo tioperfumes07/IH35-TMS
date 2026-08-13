@@ -13,6 +13,8 @@ Every module, tab, motion, and transaction connects to BOTH:
 
 Forward **AND** reverse drill-through, on every entity and every tab. From a bill → the load, driver, customer, JE, payment. From a driver → their loads, settlements, bills, escrow/advance accounts, safety events, maintenance, legal, insurance. **A screen or record missing a link is NOT done.**
 
+**Owner-plain complete bar (2026-08-13):** `docs/lockdown/FULLY-WIRED-COMPLETE-BAR-2026-08-13.md` — create→canonical · money · F+R · matrix · **surface bar** (every control→matrix) · chrome · pickers · RLS · guard · **Live Chrome LAST**. That is what “fully wired” means.
+
 ---
 
 ## 1. HARDLINE QUALITY RULE

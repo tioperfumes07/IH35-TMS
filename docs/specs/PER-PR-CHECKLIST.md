@@ -14,6 +14,8 @@ auto-loaded entry point, and why §3/§4 below are **machine-enforced** rather t
 > the PR, can confirm the defect is gone and nothing else broke — **without trusting the author.**
 > CI-green is the floor, not the verdict. "Merged" is not done. "The API accepted it" is not done.
 
+> **Fully wired (owner 2026-08-13):** `docs/lockdown/FULLY-WIRED-COMPLETE-BAR-2026-08-13.md` — create→canonical · money · F+R · matrix · **surface bar** (every control→matrix) · chrome · pickers · RLS · guard · **Live Chrome LAST**. Saying “includes all” without that whole list is a defect.
+
 ---
 
 ## 0 · Before writing a line
