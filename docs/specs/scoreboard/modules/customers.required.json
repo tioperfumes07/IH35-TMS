@@ -2,7 +2,7 @@
   "module": "customers",
   "entity_default": "USMCA",
   "source": {
-    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md — Module 8 CUSTOMERS",
+    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md \u2014 Module 8 CUSTOMERS",
     "nav": "apps/frontend/src/pages/Customers.tsx list segments + CUSTOMER_TABS",
     "detail": "apps/frontend/src/pages/CustomerDetail.tsx tabs",
     "routes": "apps/frontend/src/routes/manifest.tsx /customers, /customers/:id"
@@ -166,7 +166,7 @@
     {
       "id": "list.segment.all",
       "tab": "All Customers",
-      "sub": "Segment · All",
+      "sub": "Segment \u00b7 All",
       "route_hint": "/customers?listTab=all",
       "required": [
         "customer",
@@ -176,7 +176,7 @@
     {
       "id": "list.segment.preferred",
       "tab": "By Quality Flag",
-      "sub": "Segment · Preferred",
+      "sub": "Segment \u00b7 Preferred",
       "route_hint": "/customers?listTab=preferred",
       "required": [
         "customer",
@@ -187,7 +187,7 @@
     {
       "id": "list.segment.watch",
       "tab": "By Quality Flag",
-      "sub": "Segment · Watch",
+      "sub": "Segment \u00b7 Watch",
       "route_hint": "/customers?listTab=watch",
       "required": [
         "customer",
@@ -198,7 +198,7 @@
     {
       "id": "list.segment.active",
       "tab": "All Customers",
-      "sub": "Segment · Active",
+      "sub": "Segment \u00b7 Active",
       "route_hint": "/customers?listTab=active",
       "required": [
         "customer",
@@ -208,7 +208,7 @@
     {
       "id": "list.segment.inactive",
       "tab": "All Customers",
-      "sub": "Segment · Inactive",
+      "sub": "Segment \u00b7 Inactive",
       "route_hint": "/customers?listTab=inactive",
       "required": [
         "customer",
@@ -218,7 +218,7 @@
     {
       "id": "list.segment.factored",
       "tab": "Factoring Config",
-      "sub": "Segment · Factored",
+      "sub": "Segment \u00b7 Factored",
       "route_hint": "/customers?listTab=factored",
       "required": [
         "customer",
@@ -248,14 +248,13 @@
       "route_hint": "/customers",
       "required": [
         "customer",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
       "id": "list.filters",
       "tab": "All Customers",
-      "sub": "Roster filters (type · credit status)",
+      "sub": "Roster filters (type \u00b7 credit status)",
       "route_hint": "/customers",
       "required": [
         "customer",
@@ -442,14 +441,13 @@
         "customer",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
       "id": "detail.billing",
       "tab": "Billing & Receivables",
-      "sub": "AR aging · invoices · payments",
+      "sub": "AR aging \u00b7 invoices \u00b7 payments",
       "route_hint": "/customers/:id?tab=billing",
       "required": [
         "customer",
@@ -470,14 +468,13 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link",
         "invoice"
       ]
     },
     {
       "id": "detail.quality",
       "tab": "Quality & History",
-      "sub": "Scoring · quality events",
+      "sub": "Scoring \u00b7 quality events",
       "route_hint": "/customers/:id?tab=quality",
       "required": [
         "customer",
@@ -495,8 +492,7 @@
         "customer",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -522,8 +518,7 @@
         "load",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -533,8 +528,7 @@
       "route_hint": "/customers/:id?tab=documents",
       "required": [
         "customer",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -571,8 +565,7 @@
       "route_hint": "/customers/:id?tab=portal",
       "required": [
         "customer",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -582,8 +575,7 @@
       "route_hint": "/customers/:id?tab=tasks",
       "required": [
         "customer",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -620,8 +612,7 @@
       "route_hint": "/customers/:id?tab=audit",
       "required": [
         "customer",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -634,8 +625,7 @@
         "vendor",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -646,7 +636,6 @@
       "required": [
         "customer",
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -659,7 +648,6 @@
       "surface_path": "pages/customers/CustomersSyncPanel.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "customer"
       ]
     },
@@ -703,7 +691,7 @@
     {
       "id": "chrome.toolbar_search",
       "tab": "Chrome controls",
-      "sub": "List toolbar — Search (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar \u2014 Search (CLS-LIST-TOOLBAR)",
       "route_hint": "/customers",
       "surface_kind": "toolbar",
       "required": [
@@ -714,7 +702,7 @@
     {
       "id": "chrome.toolbar_range",
       "tab": "Chrome controls",
-      "sub": "List toolbar — date/amount range (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar \u2014 date/amount range (CLS-LIST-TOOLBAR)",
       "route_hint": "/customers",
       "surface_kind": "toolbar",
       "required": [
@@ -725,7 +713,7 @@
     {
       "id": "chrome.toolbar_gear",
       "tab": "Chrome controls",
-      "sub": "List toolbar — column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
+      "sub": "List toolbar \u2014 column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
       "route_hint": "/customers",
       "surface_kind": "toolbar",
       "required": [
@@ -736,7 +724,7 @@
     {
       "id": "chrome.toolbar_filter",
       "tab": "Chrome controls",
-      "sub": "List toolbar — Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
+      "sub": "List toolbar \u2014 Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
       "route_hint": "/customers",
       "surface_kind": "toolbar",
       "required": [
@@ -758,7 +746,85 @@
         "invoice",
         "bank"
       ],
-      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; §B9 link columns added."
+      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; \u00a7B9 link columns added."
+    },
+    "reverse_link_2026_08_13_remainder": {
+      "finding": "VERTICAL-REVERSE-LINK-CUSTOMERS-REMAINDER",
+      "note": "Sync/create/edit/verify/portal/docs/tasks/audit chrome are not reverse EntityLink surfaces. Built: detail.profile/contacts/billing/quality/lanes/pnl via CustomerDetail EntityLinks.",
+      "drops": [
+        {
+          "id": "list.sync",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "detail.contacts.create",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "detail.billing.record_payment",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "detail.quality.create_event",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "detail.lanes.create",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "detail.documents",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "detail.portal_users",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "detail.tasks",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "detail.audit",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "detail.edit",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "detail.fmcsa_verify",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "customers.panel.customers_sync",
+          "removed": [
+            "reverse_link"
+          ]
+        }
+      ]
     }
   }
 }
