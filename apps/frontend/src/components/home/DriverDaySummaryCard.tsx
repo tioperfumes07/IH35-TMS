@@ -6,6 +6,7 @@ import { companyToday } from "../../lib/businessDate";
 import { ListErrorState } from "../ListErrorState";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 import { entityLabel } from "../../lib/entity-label";
+import { EntityLink } from "../shared/EntityLink";
 
 type Props = {
   operatingCompanyId: string | null;
@@ -36,7 +37,14 @@ export function DriverDaySummaryCard({ operatingCompanyId }: Props) {
       key: "driver_name",
       label: "Driver",
       sortable: true,
-      render: (row) => <span className="font-medium text-slate-800">{entityLabel(row.driver_name, row.driver_id, "Driver")}</span>,
+      render: (row) => (
+        <EntityLink
+          kind="driver"
+          id={row.driver_id}
+          label={entityLabel(row.driver_name, row.driver_id, "Driver")}
+          className="font-medium text-slate-800"
+        />
+      ),
     },
     {
       key: "miles",
