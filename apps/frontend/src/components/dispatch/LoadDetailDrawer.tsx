@@ -33,6 +33,7 @@ import { LoadWorkOrdersReverseSection } from "./LoadWorkOrdersReverseSection";
 import { FuelTransactionsReverseSection } from "../fuel/FuelTransactionsReverseSection";
 import { ExpensesReverseSection } from "../accounting/ExpensesReverseSection";
 import { BillsReverseSection } from "../accounting/BillsReverseSection";
+import { InvoicesReverseSection } from "../accounting/InvoicesReverseSection";
 import { BookLoadModalV4 } from "../../pages/dispatch/components/BookLoadModalV4";
 import { CargoSensorTimeline } from "../../pages/dispatch/cargo-sensors/CargoSensorTimeline";
 import { EntityLink } from "../shared/EntityLink";
@@ -650,6 +651,14 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
                     filter={{ load_id: load.id }}
                     contextLabel="this load"
                     data-testid="load-detail-bills-reverse"
+                  />
+                ) : null}
+                {load.operating_company_id ? (
+                  <InvoicesReverseSection
+                    operatingCompanyId={load.operating_company_id}
+                    filter={{ source_load_id: load.id }}
+                    contextLabel="this load"
+                    data-testid="load-detail-invoices-reverse"
                   />
                 ) : null}
               </div>
