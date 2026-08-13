@@ -180,6 +180,8 @@ export type FuelTransactionListItem = {
   driver_id: string | null;
   unit_id: string | null;
   unit_number: string | null;
+  trailer_id: string | null;
+  trailer_number: string | null;
   load_id: string | null;
   load_number: string | null;
   vendor_id: string | null;
@@ -193,7 +195,16 @@ export type FuelTransactionListResponse = {
 
 export function getFuelTransactions(
   companyId: string,
-  params: { limit?: number; offset?: number; driver_id?: string; unit_id?: string; load_id?: string; from?: string; to?: string } = {}
+  params: {
+    limit?: number;
+    offset?: number;
+    driver_id?: string;
+    unit_id?: string;
+    load_id?: string;
+    trailer_id?: string;
+    from?: string;
+    to?: string;
+  } = {}
 ) {
   const search = new URLSearchParams({ operating_company_id: companyId });
   if (params.limit !== undefined) search.set("limit", String(params.limit));
@@ -201,6 +212,7 @@ export function getFuelTransactions(
   if (params.driver_id) search.set("driver_id", params.driver_id);
   if (params.unit_id) search.set("unit_id", params.unit_id);
   if (params.load_id) search.set("load_id", params.load_id);
+  if (params.trailer_id) search.set("trailer_id", params.trailer_id);
   if (params.from) search.set("from", params.from);
   if (params.to) search.set("to", params.to);
   return apiRequest<FuelTransactionListResponse>(`/api/v1/fuel/transactions?${search.toString()}`);

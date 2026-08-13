@@ -22,6 +22,8 @@ import { AssetSafetyReverseSection } from "../../components/safety/AssetSafetyRe
 import { LinkedBankTransactionsPanel } from "../../components/banking/LinkedBankTransactionsPanel";
 import { EntityAuditHistoryTab } from "../../components/audit/EntityAuditHistoryTab";
 import { LegalMattersReverseSection } from "../../components/legal/LegalMattersReverseSection";
+import { FuelTransactionsReverseSection } from "../../components/fuel/FuelTransactionsReverseSection";
+import { ExpensesReverseSection } from "../../components/accounting/ExpensesReverseSection";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 
@@ -159,15 +161,34 @@ export function TrailerProfilePage() {
           data-testid="trailer-profile-insurance-claims"
         />
       </div>
-      {/* SAF-F17 — reverse linkage. DOT inspections, DVIRs and incidents (trailer interchanges
-          especially) all carry this trailer's id; none of it was readable from the trailer.
-          Accidents are unit-only: safety.accident_reports has no trailer column. */}
+      {/* SAF-F17 — reverse linkage. DOT inspections, DVIRs, incidents (trailer interchanges
+          especially), and — since RANK5-ACCIDENT-TRAILER-ID (#6324) — accidents too, all carry this
+          trailer's id; none of it was readable from the trailer before this. */}
       <div data-testid="tp-section-6c-safety-records">
         <AssetSafetyReverseSection
           operatingCompanyId={companyId}
           assetKind="trailer"
           assetId={id}
           data-testid="trailer-profile-safety-records"
+        />
+      </div>
+      {/* EXPENSE-FUEL-TRAILER-LIST-FILTER-MISSING — fuel and expenses both carry this trailer's id
+          (populated going-forward since #6316) but had no list-level filter until this session, and
+          no reverse surface on the trailer profile at all (unlike claims/legal/safety above). */}
+      <div data-testid="tp-section-6d-fuel-transactions">
+        <FuelTransactionsReverseSection
+          operatingCompanyId={companyId}
+          filter={{ trailer_id: id }}
+          contextLabel="this trailer"
+          data-testid="trailer-profile-fuel-transactions"
+        />
+      </div>
+      <div data-testid="tp-section-6e-expenses">
+        <ExpensesReverseSection
+          operatingCompanyId={companyId}
+          filter={{ trailer_id: id }}
+          contextLabel="this trailer"
+          data-testid="trailer-profile-expenses"
         />
       </div>
       <div data-testid="tp-section-7-documents">

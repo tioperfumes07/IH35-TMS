@@ -13,13 +13,17 @@ import { entityLabel } from "../../lib/entity-label";
  * unit detail never surfaced it (driver detail already had one via FuelHistoryView) — the other
  * trip-cost reverse hops (expenses, WOs, claims, accidents) were all built on all three entity pages,
  * fuel was the one silent gap on load + unit. Embedded list (not link-out), matching the
- * InsuranceClaimsReverseSection filter-union convention so one component serves all three entities.
+ * InsuranceClaimsReverseSection filter-union convention so one component serves all four entities.
+ * trailer_id added once the list endpoint accepted it (EXPENSE-FUEL-TRAILER-LIST-FILTER-MISSING,
+ * closed same session — the column and create path existed since #6316, only the list filter was
+ * missing, mirroring what #6324 shipped for accidents).
  */
 
 type Filter =
-  | { driver_id: string; unit_id?: never; load_id?: never }
-  | { unit_id: string; driver_id?: never; load_id?: never }
-  | { load_id: string; driver_id?: never; unit_id?: never };
+  | { driver_id: string; unit_id?: never; load_id?: never; trailer_id?: never }
+  | { unit_id: string; driver_id?: never; load_id?: never; trailer_id?: never }
+  | { load_id: string; driver_id?: never; unit_id?: never; trailer_id?: never }
+  | { trailer_id: string; driver_id?: never; unit_id?: never; load_id?: never };
 
 type Props = {
   operatingCompanyId: string;
@@ -83,6 +87,12 @@ export function FuelTransactionsReverseSection({
                   <>
                     {" · "}
                     <EntityLink kind="load" id={row.load_id} label={entityLabel(row.load_number, row.load_id, "Load")} />
+                  </>
+                ) : null}
+                {filterKey !== "trailer_id" && row.trailer_id ? (
+                  <>
+                    {" · "}
+                    <EntityLink kind="trailer" id={row.trailer_id} label={entityLabel(row.trailer_number, row.trailer_id, "Trailer")} />
                   </>
                 ) : null}
                 {row.vendor_id ? (
