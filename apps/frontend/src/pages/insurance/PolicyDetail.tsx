@@ -69,7 +69,10 @@ export function PolicyDetail() {
   const lawsuitsQuery = useQuery({
     queryKey: ["insurance", "policy", "lawsuits", companyId, policyId],
     enabled: Boolean(companyId && policyId),
-    queryFn: () => listInsuranceLawsuits({ operating_company_id: companyId }).then((result) => result.lawsuits),
+    queryFn: () =>
+      listInsuranceLawsuits({ operating_company_id: companyId, policy_id: policyId }).then(
+        (result) => result.lawsuits,
+      ),
   });
 
   const updateMutation = useMutation({
@@ -95,12 +98,8 @@ export function PolicyDetail() {
   });
 
   const claims = claimsQuery.data ?? [];
-  const claimIds = useMemo(() => new Set(claims.map((claim) => claim.id)), [claims]);
   const coiRows = coiQuery.data ?? [];
-  const lawsuitRows = useMemo(
-    () => (lawsuitsQuery.data ?? []).filter((lawsuit) => lawsuit.claim_id && claimIds.has(lawsuit.claim_id)),
-    [claimIds, lawsuitsQuery.data]
-  );
+  const lawsuitRows = lawsuitsQuery.data ?? [];
 
   const unitColumns = useMemo<ParityColumn<InsurancePolicyUnit>[]>(
     () => [
@@ -335,14 +334,23 @@ export function PolicyDetail() {
         <div className="rounded-sm border border-gray-200 bg-white p-4">
           <h3 className="text-sm font-semibold text-slate-900">Lawsuits (INS-06)</h3>
           <div className="mt-2">
-            <ParityTable
-              rows={lawsuitRows}
-              columns={lawsuitColumns}
-              rowKey={(row) => row.id}
-              loading={lawsuitsQuery.isPending || (lawsuitsQuery.isFetching && lawsuitRows.length === 0)}
-              storageKey="insurance-policy-lawsuits"
-              emptyText="No lawsuits linked to this policy's claims."
-            />
+            {lawsuitsQuery.isError ? (
+              <ListErrorState
+                title="Couldn't load this policy's lawsuits"
+                status={lawsuitsQuery.error instanceof ApiError ? lawsuitsQuery.error.status : 0}
+                message={(lawsuitsQuery.error as Error)?.message}
+                onRetry={() => void lawsuitsQuery.refetch()}
+              />
+            ) : (
+              <ParityTable
+                rows={lawsuitRows}
+                columns={lawsuitColumns}
+                rowKey={(row) => row.id}
+                loading={lawsuitsQuery.isPending || (lawsuitsQuery.isFetching && lawsuitRows.length === 0)}
+                storageKey="insurance-policy-lawsuits"
+                emptyText="No lawsuits linked to this policy's claims."
+              />
+            )}
           </div>
         </div>
       </section>

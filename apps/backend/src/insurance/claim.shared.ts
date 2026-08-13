@@ -108,6 +108,7 @@ export const updateClaimBodySchema = z
 export const listLawsuitsQuerySchema = operatingCompanySchema.extend({
   status: z.enum(INSURANCE_LAWSUIT_STATUSES).optional(),
   claim_id: z.string().uuid().optional(),
+  policy_id: z.string().uuid().optional(),
 });
 
 export const createLawsuitBodySchema = z.object({

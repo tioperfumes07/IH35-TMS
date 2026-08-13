@@ -85,6 +85,10 @@ export async function registerInsuranceLawsuitRoutes(app: FastifyInstance) {
         values.push(parsed.data.claim_id);
         filters.push(`lawsuit.claim_id = $${values.length}::uuid`);
       }
+      if (parsed.data.policy_id) {
+        values.push(parsed.data.policy_id);
+        filters.push(`claim.policy_id = $${values.length}::uuid`);
+      }
       const result = await client.query(
         `
           SELECT ${lawsuitSelectColumns("lawsuit", true)}

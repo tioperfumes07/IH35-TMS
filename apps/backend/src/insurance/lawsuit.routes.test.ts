@@ -163,6 +163,22 @@ describe("insurance lawsuit routes", () => {
     expect(listSql).toContain("asset.unit_id::text AS unit_id");
   });
 
+  it("GET applies the exact policy reverse filter through the tenant-matched claim", async () => {
+    const app = await buildApp();
+    const response = await app.inject({
+      method: "GET",
+      url: "/api/v1/insurance/lawsuits?operating_company_id=11111111-1111-4111-8111-111111111111&policy_id=44444444-4444-4444-8444-444444444444",
+    });
+
+    expect(response.statusCode).toBe(200);
+    const listCall = queryMock.mock.calls.find(([sql]) => String(sql).includes("ORDER BY lawsuit.filed_date DESC"));
+    expect(String(listCall?.[0])).toContain("claim.policy_id = $2::uuid");
+    expect(listCall?.[1]).toEqual([
+      "11111111-1111-4111-8111-111111111111",
+      "44444444-4444-4444-8444-444444444444",
+    ]);
+  });
+
   it("POST creates lawsuit and links claim", async () => {
     const app = await buildApp();
     const response = await app.inject({

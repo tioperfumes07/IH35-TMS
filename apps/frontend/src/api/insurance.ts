@@ -534,6 +534,7 @@ export const insuranceLawsuitsApi = {
     operating_company_id: string;
     status?: InsuranceLawsuitStatus;
     claim_id?: string;
+    policy_id?: string;
   }) {
     return apiRequest<{ lawsuits: InsuranceLawsuit[] }>(`/api/v1/insurance/lawsuits?${toInsuranceQuery(params)}`);
   },
@@ -702,6 +703,7 @@ export function listInsuranceLawsuits(params: {
   operating_company_id: string;
   status?: InsuranceLawsuitStatus;
   claim_id?: string;
+  policy_id?: string;
 }) {
   return insuranceLawsuitsApi.list(params);
 }
