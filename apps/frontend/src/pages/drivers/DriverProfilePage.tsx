@@ -30,6 +30,7 @@ import { ExpensesReverseSection } from "../../components/accounting/ExpensesReve
 import { FuelTransactionsReverseSection } from "../../components/fuel/FuelTransactionsReverseSection";
 import { DriverFinesReverseSection } from "../../components/safety/DriverFinesReverseSection";
 import { DriverSafetyReverseSection } from "../../components/safety/DriverSafetyReverseSection";
+import { BackgroundChecksSection } from "../../components/safety/BackgroundChecksSection";
 import { RoadServiceReverseSection } from "../../components/maintenance/RoadServiceReverseSection";
 import { W8BenModal } from "../../components/drivers/W8BenModal";
 import { KpiCard } from "../../components/layout/KpiCard";
@@ -362,6 +363,7 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
         <LayoverSummaryCard driverId={id} companyId={companyId} />
       </div>
       <div data-testid="dp-section-9-training">
+        <BackgroundChecksSection operatingCompanyId={companyId} driverId={id} />
         <TrainingRecordsSection
           records={aggregate.training_records ?? []}
           onAddTraining={() => setAddTrainingOpen(true)}

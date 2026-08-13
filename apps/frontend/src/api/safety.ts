@@ -365,6 +365,40 @@ export function createSafetyTrainingRecord(
   });
 }
 
+export type SafetyBackgroundCheckRow = {
+  id: string;
+  driver_id: string;
+  driver_name: string | null;
+  check_type: "psp" | "mvr" | "drug" | "employment_verify";
+  result: "pass" | "fail";
+  checked_at: string;
+  expiry_date: string | null;
+  notes: string | null;
+};
+
+export function listSafetyBackgroundChecks(companyId: string, driverId?: string) {
+  const params = new URLSearchParams({ operating_company_id: companyId });
+  if (driverId) params.set("driver_id", driverId);
+  return apiRequest<{ background_checks: SafetyBackgroundCheckRow[] }>(`/api/v1/safety/background-checks?${params.toString()}`);
+}
+
+export function createSafetyBackgroundCheck(
+  companyId: string,
+  body: {
+    driver_id: string;
+    check_type: SafetyBackgroundCheckRow["check_type"];
+    result: SafetyBackgroundCheckRow["result"];
+    checked_at: string;
+    expiry_date?: string;
+    notes?: string;
+  }
+) {
+  return apiRequest<SafetyBackgroundCheckRow>(`/api/v1/safety/background-checks?${q(companyId)}`, {
+    method: "POST",
+    body,
+  });
+}
+
 export type SafetyMeetingRow = SafetyEventLogRow & {
   required_attendees?: string[];
   attendance?: Record<string, boolean>;
