@@ -3,6 +3,9 @@ import { MoneyInput } from "../../components/forms/MoneyInput";
 import { resolveApiUrl } from "../../api/client";
 import { getValidDriverAccessToken } from "../../lib/auth-token";
 import { driverFetch } from "../../lib/driver-offline-queue";
+import { useQuery } from "@tanstack/react-query";
+import { listDriverFuelUnits } from "../../api/driver";
+import { Combobox } from "../../components/Combobox";
 
 export function FuelReceiptPage() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -16,6 +19,15 @@ export function FuelReceiptPage() {
   const [station, setStation] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const unitsQuery = useQuery({
+    queryKey: ["driver", "fuel", "units"],
+    queryFn: listDriverFuelUnits,
+  });
+  const unitOptions = (unitsQuery.data?.units ?? []).map((unit) => ({
+    value: unit.id,
+    label: unit.unit_number || unit.display_id || unit.id,
+    sublabel: unit.display_id && unit.display_id !== unit.unit_number ? unit.display_id : undefined,
+  }));
 
   const stopCamera = useCallback(() => {
     stream?.getTracks().forEach((t) => t.stop());
@@ -140,8 +152,18 @@ export function FuelReceiptPage() {
       {previewUrl ? <img src={previewUrl} alt="Receipt preview" className="w-full rounded-sm border" /> : null}
 
       <label className="block text-xs font-medium text-slate-600">
-        Truck (unit) ID
-        <input className="mt-1 w-full rounded-sm border px-2 py-1" value={truckId} onChange={(e) => setTruckId(e.target.value)} />
+        Truck (unit)
+        <Combobox
+          options={unitOptions}
+          value={truckId || null}
+          onChange={(next) => setTruckId(next ?? "")}
+          placeholder={unitsQuery.isLoading ? "Loading assigned units…" : "Select truck"}
+          loading={unitsQuery.isLoading}
+          error={unitsQuery.isError ? "Could not load assigned units" : undefined}
+          clearCommittedOnEdit
+          className="mt-1 w-full"
+          dataTestId="driver-fuel-unit-picker"
+        />
       </label>
       <label className="block text-xs font-medium text-slate-600">
         Odometer
