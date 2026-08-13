@@ -35,7 +35,7 @@ const PKG = "package.json";
  * A GLOBAL FE component ratchet: enforces "use the shared component / helper, not the raw element"
  * across all of apps/frontend/src. Per-page guards (`<page>-uses-paritytable`) are excluded.
  */
-const GLOBAL_FE_RATCHET = /^verify-(no-raw-|no-native-|money-fields-use-|referenceselect-|no-internal-language-)/;
+const GLOBAL_FE_RATCHET = /^verify-(no-raw-|no-native-|combobox-outside-dismiss|money-fields-use-|referenceselect-|no-internal-language-)/;
 const PER_PAGE_EXCLUDE = /-uses-paritytable$/;
 
 export function isGlobalFeRatchet(scriptName) {

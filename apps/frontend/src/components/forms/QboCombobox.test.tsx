@@ -46,4 +46,54 @@ describe("QboCombobox", () => {
       expect(screen.queryByText(/Type at least 2 letters to search/)).not.toBeInTheDocument();
     });
   });
+
+  it("Escape closes suggestions without forcing the highlighted row", async () => {
+    const user = userEvent.setup({ delay: null });
+    const onChange = vi.fn();
+    render(
+      wrap(
+        <QboCombobox
+          entityType="vendor"
+          value={null}
+          displayValue=""
+          onChange={onChange}
+          operatingCompanyId="00000000-0000-4000-8000-000000000001"
+          allowFreeText={false}
+        />,
+      ),
+    );
+
+    const input = screen.getByPlaceholderText(/Type to search QuickBooks/);
+    await user.click(input);
+    await user.keyboard("{Escape}");
+
+    expect(screen.queryByText(/Type at least 2 letters to search/)).not.toBeInTheDocument();
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it("outside click closes suggestions without forcing the highlighted row", async () => {
+    const user = userEvent.setup({ delay: null });
+    const onChange = vi.fn();
+    render(
+      wrap(
+        <div>
+          <QboCombobox
+            entityType="vendor"
+            value={null}
+            displayValue=""
+            onChange={onChange}
+            operatingCompanyId="00000000-0000-4000-8000-000000000001"
+            allowFreeText={false}
+          />
+          <button type="button">Outside</button>
+        </div>,
+      ),
+    );
+
+    await user.click(screen.getByPlaceholderText(/Type to search QuickBooks/));
+    await user.click(screen.getByRole("button", { name: "Outside" }));
+
+    expect(screen.queryByText(/Type at least 2 letters to search/)).not.toBeInTheDocument();
+    expect(onChange).not.toHaveBeenCalled();
+  });
 });
