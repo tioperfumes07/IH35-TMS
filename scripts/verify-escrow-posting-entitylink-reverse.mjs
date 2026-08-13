@@ -36,6 +36,17 @@ export function assertEscrowPostingEntitylinkReverse() {
   if (!/linked_journal_entry_id/.test(escrow) || !/kind=["']journal_entry["']/.test(escrow)) {
     errors.push(`${ESCROW_PAGE}: postings must EntityLink linked_journal_entry_id → journal_entry`);
   }
+  // ACCT-F5065 — CLS-LINKAGE-ONEWAY: JE label must use joined memo/date.
+  if (/entityLabel\(\s*null\s*,\s*row\.linked_journal_entry_id/.test(escrow)) {
+    errors.push(`${ESCROW_PAGE}: must not entityLabel(null, linked_journal_entry_id) — UUID chrome`);
+  }
+  if (!/journal_entry_memo/.test(escrow) || !/journal_entry_date/.test(escrow)) {
+    errors.push(`${ESCROW_PAGE}: JE EntityLink must prefer journal_entry_date/memo`);
+  }
+  const service = read("apps/backend/src/accounting/escrow/service.ts");
+  if (!/je\.memo AS journal_entry_memo/.test(service) || !/LEFT JOIN accounting\.journal_entries je/.test(service)) {
+    errors.push("escrow/service listEscrowPostings must JOIN journal_entries for memo/date");
+  }
   return errors;
 }
 
