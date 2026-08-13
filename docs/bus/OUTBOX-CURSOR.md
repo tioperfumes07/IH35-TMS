@@ -57,3 +57,6 @@
 2026-08-13T20:55Z Cursor | SHIPPED VERTICAL-REVERSE-LINK-FACTORING-REMAINDER (PR#6565) | factoring reverse Gap=0 | Live=BLOCKED | NEXT=vendors reverse
 2026-08-13T20:55Z Cursor | SHIPPED VERTICAL-REVERSE-LINK-FACTORING-REMAINDER (PR#6565) | factoring reverse Gap=0 | Live=BLOCKED | NEXT=vendors reverse
 2026-08-13T21:00Z Cursor | shipping VERTICAL-REVERSE-LINK-VENDORS-REMAINDER | AP EntityLink + chrome honesty | Live=BLOCKED | NEXT=customers reverse
+2026-08-13T21:05Z Cursor | SHIPPED VERTICAL-REVERSE-LINK-VENDORS-REMAINDER (PR#6566) | vendors reverse Gap=0 | Live=BLOCKED | NEXT=customers reverse
+2026-08-13T21:05Z Cursor | SHIPPED VERTICAL-REVERSE-LINK-VENDORS-REMAINDER (PR#6566) | vendors reverse Gap=0 | Live=BLOCKED | NEXT=customers reverse
+2026-08-13T21:08Z Cursor | shipping VERTICAL-REVERSE-LINK-CUSTOMERS-REMAINDER | detail Built + chrome honesty | Live=BLOCKED | NEXT=dispatch reverse
