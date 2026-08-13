@@ -12,23 +12,45 @@ export type VendorBillFormLinePayload = {
   service_item_uuid?: string;
 };
 
+export type ExpenseCategoryMapMeta = {
+  category_kind?: string;
+  category_code?: string;
+};
+
 /**
- * Map catalogs.expense_categories.code → expense_category_account_map keys.
- * Only codes with a real Neon map entry are translated. Unknown codes keep
- * expense_category_uuid only (poster → uncategorized) — never invent a GL account.
+ * Map catalogs.expense_categories.code (+ optional metadata) → expense_category_account_map keys.
+ * Prefer metadata written by ECON-012 seed (exact kind/code). Legacy aliases kept for FUEL/REPAIR/PERMIT.
+ * Never invent a GL account — unknown codes return null (poster → uncategorized).
  */
 export function mapExpenseCatalogCodeToBillCategory(
-  catalogCode: string | undefined
+  catalogCode: string | undefined,
+  meta?: ExpenseCategoryMapMeta | null
 ): { category_kind: string; category_code: string } | null {
+  const metaKind = String(meta?.category_kind ?? "")
+    .trim()
+    .toLowerCase();
+  const metaCode = String(meta?.category_code ?? "")
+    .trim()
+    .toLowerCase();
+  if (metaKind && metaCode) {
+    return { category_kind: metaKind, category_code: metaCode };
+  }
+
   const code = String(catalogCode ?? "")
     .trim()
     .toUpperCase();
+  if (!code) return null;
   if (code === "FUEL") return { category_kind: "fuel", category_code: "fuel" };
   if (code === "REPAIR") return { category_kind: "maintenance", category_code: "maintenance" };
   // ECON-012 / CLS-ECON-EMPTY — PERMIT is a live catalogs.expense_categories code with a
-  // real expense_category_account_map row (kind/code = permit). Without this translation the
-  // bill line kept expense_category_uuid only and the poster fell through to uncategorized.
+  // real expense_category_account_map row (kind/code = permit).
   if (code === "PERMIT") return { category_kind: "permit", category_code: "permit" };
+
+  // Seeded ECON-012 rows use UPPER(category_code) when no legacy alias applies.
+  const lower = code.toLowerCase();
+  if (/^[a-z][a-z0-9_]*$/.test(lower)) {
+    return { category_kind: lower, category_code: lower };
+  }
   return null;
 }
 
@@ -46,7 +68,10 @@ export function buildVendorBillLinePayloads(lines: TwoSectionLine[]): VendorBill
       const cents = Math.round(Number(line.amount || 0) * 100);
       if (cents <= 0) continue;
       const categoryId = String(line.expense_category_uuid ?? "").trim();
-      const mapped = mapExpenseCatalogCodeToBillCategory(line.expense_category_code);
+      const mapped = mapExpenseCatalogCodeToBillCategory(line.expense_category_code, {
+        category_kind: line.expense_category_kind,
+        category_code: line.expense_category_map_code,
+      });
       out.push({
         section: "A",
         amount_cents: cents,
