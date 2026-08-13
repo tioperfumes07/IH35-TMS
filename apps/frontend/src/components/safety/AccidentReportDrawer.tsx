@@ -15,6 +15,8 @@ import { listVendors } from "../../api/mdata";
 import { suggestExpenseLoad } from "../../api/maintenance";
 import { Button } from "../Button";
 import { EntityLink } from "../shared/EntityLink";
+import { ExpensesReverseSection } from "../accounting/ExpensesReverseSection";
+import { BillsReverseSection } from "../accounting/BillsReverseSection";
 import { ParityDrawer } from "../parity/ParityDrawer";
 import { DriverPickerWithCreate } from "../drivers/DriverPickerWithCreate";
 import { TwoSectionLineEditor, type TwoSectionLine } from "../forms/TwoSectionLineEditor";
@@ -682,6 +684,24 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
                 </li>
               ))}
             </ul>
+          </div>
+        ) : null}
+        {/* ACCT-F5040 — when a real insurance.claim is linked (claim_id), reverse_link expenses+bills
+            already stamped with insurance_claim_id. Free-text claim number alone never invents a FK. */}
+        {typeof accident?.claim_id === "string" && accident.claim_id && operatingCompanyId ? (
+          <div className="mt-3 space-y-2" data-testid="accident-claim-financial-reverse">
+            <ExpensesReverseSection
+              operatingCompanyId={operatingCompanyId}
+              filter={{ insurance_claim_id: String(accident.claim_id) }}
+              contextLabel="the linked claim"
+              data-testid="accident-claim-expenses-reverse"
+            />
+            <BillsReverseSection
+              operatingCompanyId={operatingCompanyId}
+              filter={{ insurance_claim_id: String(accident.claim_id) }}
+              contextLabel="the linked claim"
+              data-testid="accident-claim-bills-reverse"
+            />
           </div>
         ) : null}
         <div className="mt-3">
