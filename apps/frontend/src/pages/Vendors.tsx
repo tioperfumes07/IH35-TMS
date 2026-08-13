@@ -485,7 +485,9 @@ export function VendorsPage() {
               <SecondaryNavTabs tabs={VENDOR_TABS} activeId={activeTab} onChange={(id) => setActiveTab(id as VendorTabId)} />
 
               {activeTab === "transaction_list" ? (
-                <ParityTable
+                billsQuery.isError ? (
+                  <ListErrorState title="Couldn't load vendor transactions" status={0} message={(billsQuery.error as Error)?.message} onRetry={() => void billsQuery.refetch()} />
+                ) : <ParityTable
                   rows={txRows}
                   columns={txColumns}
                   rowKey={(bill) => bill.id}
