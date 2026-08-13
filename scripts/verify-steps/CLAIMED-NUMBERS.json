@@ -451,6 +451,14 @@
     "note": "CLAIM-RESERVE: expense+accident create trailer EntityPicker after #6322/#6324",
     "purpose": "verify-expense-accident-create-trailer-picker"
   },
+  "3140": {
+    "claimed_at": "2026-08-12",
+    "claimed_by": "cursor",
+    "guard": "verify-fuel-office-create-modal",
+    "lane": "cursor",
+    "note": "CLAIM-RESERVE: FuelPlanner History + Create modal \u2192 POST /api/v1/fuel/transactions",
+    "purpose": "verify-fuel-office-create-modal"
+  },
   "3141": {
     "claimed_at": "2026-08-12",
     "claimed_by": "cc-1",
