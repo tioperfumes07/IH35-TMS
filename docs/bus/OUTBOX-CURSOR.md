@@ -36,3 +36,5 @@
 2026-08-13T20:05Z Cursor | shipping VERTICAL-QBO-CHROME-FACTORING | Gap→4 toolbar WIRE | Live=BLOCKED | NEXT=ListToolbar wire OR reverse_link absorb
 2026-08-13T20:08Z Cursor | SHIPPED VERTICAL-QBO-CHROME-FACTORING (PR#6548) | Gap=4 toolbar | Live=BLOCKED | NEXT=reverse_link absorb + ListToolbar
 2026-08-13T20:12Z Cursor | shipping VERTICAL-REVERSE-LINK-ACCOUNTING-LISTS | Live=BLOCKED | NEXT=banking/safety reverse or connectivity
+2026-08-13T20:15Z Cursor | SHIPPED VERTICAL-REVERSE-LINK-ACCOUNTING-LISTS (PR#6550) | accounting reverse Gap=0 | Live=BLOCKED | NEXT=banking/safety reverse
+2026-08-13T20:05Z Cursor | tick→shipping VERTICAL-REVERSE-LINK-BANKING-LISTS | Live=BLOCKED | NEXT=safety reverse
