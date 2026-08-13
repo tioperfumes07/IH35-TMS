@@ -27,6 +27,8 @@ import { formatUsdCents } from "../../lib/money";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateUS } from "../../lib/formatDate";
+import { EntityLink } from "../../components/shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 import { useListState } from "../../components/list-state";
 import { companyToday } from "../../lib/businessDate";
 
@@ -72,6 +74,14 @@ const FACTOR_COLUMNS: Array<ParityColumn<Factor>> = [
 ];
 
 const ASSIGNMENT_COLUMNS: Array<ParityColumn<CustomerFactorAssignment>> = [
+  {
+    key: "customer_id",
+    label: "Customer",
+    sortable: true,
+    render: (row) => (
+      <EntityLink kind="customer" id={row.customer_id} label={entityLabel(undefined, row.customer_id, "Customer")} />
+    ),
+  },
   { key: "factor_name", label: "Factor", sortable: true },
   { key: "effective_from", label: "Effective From", sortable: true },
   {
@@ -83,7 +93,14 @@ const ASSIGNMENT_COLUMNS: Array<ParityColumn<CustomerFactorAssignment>> = [
 ];
 
 const BATCH_COLUMNS: Array<ParityColumn<FactorBatchHistoryRow>> = [
-  { key: "batch_number", label: "Batch", sortable: true },
+  {
+    key: "batch_number",
+    label: "Batch",
+    sortable: true,
+    render: (row) => (
+      <EntityLink kind="factoring_advance" id={row.id} label={entityLabel(row.batch_number, row.id, "Batch")} />
+    ),
+  },
   { key: "status", label: "Status", sortable: true, render: (row) => <span className="capitalize">{row.status}</span> },
   {
     key: "submitted_at",
