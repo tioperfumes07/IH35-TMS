@@ -657,6 +657,7 @@ export function listExpenses(
     driver_id?: string;
     trailer_id?: string;
     unit_id?: string;
+    work_order_id?: string;
     limit?: number;
     offset?: number;
   } = {}
@@ -670,6 +671,7 @@ export function listExpenses(
   if (params.driver_id) query.set("driver_id", params.driver_id);
   if (params.trailer_id) query.set("trailer_id", params.trailer_id);
   if (params.unit_id) query.set("unit_id", params.unit_id);
+  if (params.work_order_id) query.set("work_order_id", params.work_order_id);
   if (params.limit !== undefined) query.set("limit", String(params.limit));
   if (params.offset !== undefined) query.set("offset", String(params.offset));
   const qs = query.toString();

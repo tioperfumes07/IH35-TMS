@@ -32,6 +32,7 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { formatDateUS } from "../../lib/formatDate";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { RoadServiceReverseSection } from "../../components/maintenance/RoadServiceReverseSection";
+import { ExpensesReverseSection } from "../../components/accounting/ExpensesReverseSection";
 
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
 /** Matches apps/backend/src/maintenance/wo-oos-estimator.ts DEFAULT_DAILY_LOSS_CENTS */
@@ -687,8 +688,16 @@ export function WorkOrderDetailPage() {
 
       <div className="grid grid-cols-1 gap-3 xl:grid-cols-[2fr_1fr]">
         <div className="space-y-3">
+          {id && companyId ? (
+            <ExpensesReverseSection
+              operatingCompanyId={companyId}
+              filter={{ work_order_id: id }}
+              contextLabel="this work order"
+              data-testid="work-order-detail-expenses-reverse"
+            />
+          ) : null}
           <RoadServiceReverseSection
-            filter={{ wo_id: id }}
+            filter={{ wo_id: id! }}
             contextLabel="this work order"
             data-testid="work-order-detail-road-service-reverse"
           />

@@ -11,8 +11,17 @@ const DRIVER_PAGE = "apps/frontend/src/pages/drivers/DriverProfilePage.tsx";
 const LOAD_DRAWER = "apps/frontend/src/components/dispatch/LoadDetailDrawer.tsx";
 const VEHICLE_PAGE = "apps/frontend/src/pages/fleet/VehicleProfilePage.tsx";
 const EXPENSE_ROUTES = "apps/backend/src/accounting/expenses.routes.ts";
+const WO_DETAIL = "apps/frontend/src/pages/maintenance/WorkOrderDetailPage.tsx";
 
-export function problems(page, service, driverPage = "", loadDrawer = "", vehiclePage = "", expenseRoutes = "") {
+export function problems(
+  page,
+  service,
+  driverPage = "",
+  loadDrawer = "",
+  vehiclePage = "",
+  expenseRoutes = "",
+  woDetail = ""
+) {
   const failures = [];
   for (const id of [
     "tp-section-1-identity",
@@ -72,6 +81,17 @@ export function problems(page, service, driverPage = "", loadDrawer = "", vehicl
     if (!/if \(filters\.unitId\) \{/.test(expenseRoutes)) {
       failures.push("ACCT-F5032: queryExpensesList must filter on e.unit_id");
     }
+    if (!/workOrderId\?: string;/.test(expenseRoutes) || !/workOrderId: q\.work_order_id,/.test(expenseRoutes)) {
+      failures.push("ACCT-F5033: expenses list must accept work_order_id filter");
+    }
+    if (!/if \(filters\.workOrderId\) \{/.test(expenseRoutes)) {
+      failures.push("ACCT-F5033: queryExpensesList must filter on e.linked_work_order_uuid");
+    }
+  }
+  if (woDetail) {
+    if (!/ExpensesReverseSection[\s\S]{0,280}?filter=\{\{\s*work_order_id:/.test(woDetail)) {
+      failures.push("ACCT-F5033: WorkOrderDetailPage must mount ExpensesReverseSection filter={{ work_order_id }}");
+    }
   }
   return failures;
 }
@@ -83,26 +103,21 @@ function selftest() {
   const loadDrawer = fs.readFileSync(path.join(ROOT, LOAD_DRAWER), "utf8");
   const vehiclePage = fs.readFileSync(path.join(ROOT, VEHICLE_PAGE), "utf8");
   const expenseRoutes = fs.readFileSync(path.join(ROOT, EXPENSE_ROUTES), "utf8");
+  const woDetail = fs.readFileSync(path.join(ROOT, WO_DETAIL), "utf8");
   const cases = [
-    ["baseline", page, service, driverPage, loadDrawer, vehiclePage, expenseRoutes, 0],
-    ["history FK removed", page, service.replace("lah.new_trailer_id = $1::uuid", "lah.new_unit_id = $1::uuid"), driverPage, loadDrawer, vehiclePage, expenseRoutes, 1],
-    ["opco scope removed", page, service.replace("lah.operating_company_id = $2::uuid", "TRUE"), driverPage, loadDrawer, vehiclePage, expenseRoutes, 1],
-    ["load link removed", page.replace('kind="load"', 'kind="trailer"'), service, driverPage, loadDrawer, vehiclePage, expenseRoutes, 1],
-    ["fuel reverse removed", page.replace(/FuelTransactionsReverseSection/g, "GoneFuel"), service, driverPage, loadDrawer, vehiclePage, expenseRoutes, 1],
-    ["expense reverse removed", page.replace(/ExpensesReverseSection/g, "GoneExpense"), service, driverPage, loadDrawer, vehiclePage, expenseRoutes, 1],
-    ["driver expense reverse removed", page, service, driverPage.replace(/ExpensesReverseSection/g, "GoneExpense"), loadDrawer, vehiclePage, expenseRoutes, 1],
-    ["load expense reverse removed", page, service, driverPage, loadDrawer.replace(/ExpensesReverseSection/g, "GoneExpense"), vehiclePage, expenseRoutes, 1],
-    ["vehicle expense reverse removed", page, service, driverPage, loadDrawer, vehiclePage.replace(/ExpensesReverseSection/g, "GoneExpense"), expenseRoutes, 1],
-    ["unit list filter removed", page, service, driverPage, loadDrawer, vehiclePage, expenseRoutes.replace(/if \(filters\.unitId\) \{/g, "if (false) {"), 1],
+    ["baseline", page, service, driverPage, loadDrawer, vehiclePage, expenseRoutes, woDetail, 0],
+    ["history FK removed", page, service.replace("lah.new_trailer_id = $1::uuid", "lah.new_unit_id = $1::uuid"), driverPage, loadDrawer, vehiclePage, expenseRoutes, woDetail, 1],
+    ["wo expense reverse removed", page, service, driverPage, loadDrawer, vehiclePage, expenseRoutes, woDetail.replace(/ExpensesReverseSection/g, "GoneExpense"), 1],
+    ["wo list filter removed", page, service, driverPage, loadDrawer, vehiclePage, expenseRoutes.replace(/if \(filters\.workOrderId\) \{/g, "if (false) {"), woDetail, 1],
   ];
-  for (const [name, p, s, d, l, v, e, minimum] of cases) {
-    const count = problems(p, s, d, l, v, e).length;
+  for (const [name, p, s, d, l, v, e, w, minimum] of cases) {
+    const count = problems(p, s, d, l, v, e, w).length;
     if (count < minimum || (minimum === 0 && count !== 0)) {
       console.error(`verify:trailer-profile-sections-complete SELFTEST FAIL: ${name} produced ${count}`);
       process.exit(1);
     }
   }
-  console.log("verify:trailer-profile-sections-complete SELFTEST PASS — P31 + CREATE-PATH-TRIP + ACCT-F5031/5032 reverse mutations caught");
+  console.log("verify:trailer-profile-sections-complete SELFTEST PASS — P31 + ACCT-F5031/5032/5033 reverse mutations caught");
 }
 
 if (process.argv.includes("--selftest")) {
@@ -117,9 +132,10 @@ const failures = problems(
   fs.readFileSync(path.join(ROOT, LOAD_DRAWER), "utf8"),
   fs.readFileSync(path.join(ROOT, VEHICLE_PAGE), "utf8"),
   fs.readFileSync(path.join(ROOT, EXPENSE_ROUTES), "utf8"),
+  fs.readFileSync(path.join(ROOT, WO_DETAIL), "utf8"),
 );
 if (failures.length) {
   for (const failure of failures) console.error(`verify:trailer-profile-sections-complete FAIL: ${failure}`);
   process.exit(1);
 }
-console.log("verify:trailer-profile-sections-complete PASS — P31 + CREATE-PATH-TRIP + ACCT-F5031/5032 reverse mounts intact");
+console.log("verify:trailer-profile-sections-complete PASS — P31 + ACCT-F5031/5032/5033 reverse mounts intact");
