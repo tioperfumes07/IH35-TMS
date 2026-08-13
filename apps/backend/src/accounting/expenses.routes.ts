@@ -149,6 +149,8 @@ const listExpensesQuerySchema = companyQuerySchema.extend({
   // ACCT-F5032 — unit_id is written on create and returned on detail, but list had no filter so
   // VehicleProfile could not mount ExpensesReverseSection (fuel already filters by unit_id).
   unit_id: z.string().uuid().optional(),
+  // ACCT-F5033 — linked_work_order_uuid written on create; list filter required for WO reverse.
+  work_order_id: z.string().uuid().optional(),
   limit: z.coerce.number().int().min(1).max(200).default(50),
   offset: z.coerce.number().int().min(0).default(0),
 });
@@ -164,6 +166,7 @@ export type ExpenseListFilters = {
   vendorUuid?: string;
   trailerId?: string;
   unitId?: string;
+  workOrderId?: string;
   limit: number;
   offset: number;
 };
@@ -260,6 +263,10 @@ export async function queryExpensesList(
     values.push(filters.unitId);
     where.push(`e.unit_id = $${values.length}::uuid`);
   }
+  if (filters.workOrderId) {
+    values.push(filters.workOrderId);
+    where.push(`e.linked_work_order_uuid = $${values.length}::uuid`);
+  }
   values.push(filters.limit);
   const limitIdx = values.length;
   values.push(filters.offset);
@@ -355,6 +362,7 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
         vendorUuid: q.vendor_uuid,
         trailerId: q.trailer_id,
         unitId: q.unit_id,
+        workOrderId: q.work_order_id,
         limit: q.limit,
         offset: q.offset,
       });

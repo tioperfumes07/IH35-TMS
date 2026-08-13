@@ -77,3 +77,18 @@ describe("accounting/expenses.routes ACCT-F5032-UNIT-LIST-FILTER", () => {
     expect(routes).toContain('where.push(`e.unit_id = $${values.length}::uuid`);');
   });
 });
+
+describe("accounting/expenses.routes ACCT-F5033-WO-LIST-FILTER", () => {
+  it("GET list accepts optional work_order_id filter", () => {
+    expect(routes).toMatch(
+      /listExpensesQuerySchema = companyQuerySchema\.extend\(\{[\s\S]*?work_order_id: z\.string\(\)\.uuid\(\)\.optional\(\),/
+    );
+  });
+
+  it("passes workOrderId through and filters linked_work_order_uuid", () => {
+    expect(routes).toContain("workOrderId?: string;");
+    expect(routes).toContain("workOrderId: q.work_order_id,");
+    expect(routes).toContain("if (filters.workOrderId) {");
+    expect(routes).toContain('where.push(`e.linked_work_order_uuid = $${values.length}::uuid`);');
+  });
+});

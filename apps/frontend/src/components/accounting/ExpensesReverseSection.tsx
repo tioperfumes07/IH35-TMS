@@ -12,14 +12,16 @@ import { entityLabel } from "../../lib/entity-label";
  * no list-level filter (closed same session, EXPENSE-FUEL-TRAILER-LIST-FILTER-MISSING) and no
  * trailer-profile surface to show it — mirrors FuelTransactionsReverseSection.tsx's filter-union
  * convention. trailer_id mounted on TrailerProfilePage (#6343); driver_id on DriverProfilePage and
- * load_id on LoadDetailDrawer (ACCT-F5031); unit_id on VehicleProfilePage (ACCT-F5032).
+ * load_id on LoadDetailDrawer (ACCT-F5031); unit_id on VehicleProfilePage (ACCT-F5032);
+ * work_order_id on WorkOrderDetailPage (ACCT-F5033).
  */
 
 type Filter =
-  | { driver_id: string; load_id?: never; trailer_id?: never; unit_id?: never }
-  | { load_id: string; driver_id?: never; trailer_id?: never; unit_id?: never }
-  | { trailer_id: string; driver_id?: never; load_id?: never; unit_id?: never }
-  | { unit_id: string; driver_id?: never; load_id?: never; trailer_id?: never };
+  | { driver_id: string; load_id?: never; trailer_id?: never; unit_id?: never; work_order_id?: never }
+  | { load_id: string; driver_id?: never; trailer_id?: never; unit_id?: never; work_order_id?: never }
+  | { trailer_id: string; driver_id?: never; load_id?: never; unit_id?: never; work_order_id?: never }
+  | { unit_id: string; driver_id?: never; load_id?: never; trailer_id?: never; work_order_id?: never }
+  | { work_order_id: string; driver_id?: never; load_id?: never; trailer_id?: never; unit_id?: never };
 
 type Props = {
   operatingCompanyId: string;
