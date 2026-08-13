@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 /**
+ * @matrix-built {"modules":["banking"],"cols":["picker_law","connectivity","bank"],"leafRe":"^(transactions\\.(list|categorize)|accounts)$","task":"BANK-TXN-PICKER-LAW","vertical":"column-wave"}
  * verify-banking-register-categorize-capable.mjs  (Doc-18 KEYSTONE guard)
  *
  * Root cause it locks: clicking a bank account on Banking Home used to land the operator on a plain
@@ -14,6 +15,7 @@
  *   3. That register is genuinely categorize-capable: From/To column, resizable header, inline
  *      categorize/post, and a row → detail (match/categorize) drawer.
  *   4. Only ONE live categorize table exists across the banking pages — no divergent second grid.
+ *   5. Picker law: categorize register keeps EntityPicker + inline "+ Add new …" for class/product.
  *
  * Self-test (pure logic against synthetic inputs): node scripts/verify-banking-register-categorize-capable.mjs --selftest
  * LINKAGE: banking register ↔ categorize grid (single surface). Additive only.
@@ -80,6 +82,14 @@ export function evaluate({ detailSrc, designViewSrc, bankingFiles }) {
     );
   }
 
+  // (3b) Picker law on the categorize register (Wave D / matrix picker_law).
+  if (!designViewSrc.includes("EntityPicker")) {
+    failures.push(`${DESIGN_VIEW_REL} — categorize register must keep EntityPicker (picker law)`);
+  }
+  if (!designViewSrc.includes('addNewLabel="+ Add new')) {
+    failures.push(`${DESIGN_VIEW_REL} — categorize register must keep inline "+ Add new …" first-row create`);
+  }
+
   // (4) Exactly ONE live categorize grid across the banking pages.
   const liveGrids = bankingFiles.filter((f) => hostsLiveCategorizeGrid(f.src)).map((f) => f.rel);
   if (liveGrids.length !== 1) {
@@ -127,7 +137,7 @@ function runReal() {
 
 function runSelftest() {
   const goodDesignView =
-    'key: "fromTo" enableColumnResize categorizeBankTransaction( expandedTxId';
+    'key: "fromTo" enableColumnResize categorizeBankTransaction( expandedTxId EntityPicker addNewLabel="+ Add new class"';
   const goodDetail =
     '<BankingTransactionsDesignView selectedAccountId={id} /> // @archived ArchivedBankAccountDetailTable';
   const cases = [
@@ -170,6 +180,18 @@ function runSelftest() {
         detailSrc: "<BankingTransactionsDesignView selectedAccountId={id} />",
         designViewSrc: goodDesignView,
         bankingFiles: [{ rel: "components/BankingTransactionsDesignView.tsx", src: goodDesignView }],
+      },
+      expectPass: false,
+    },
+    {
+      name: "regression: picker law stripped from categorize register",
+      input: {
+        detailSrc: goodDetail,
+        designViewSrc: 'key: "fromTo" enableColumnResize categorizeBankTransaction( expandedTxId',
+        bankingFiles: [
+          { rel: "components/BankingTransactionsDesignView.tsx", src: 'key: "fromTo" enableColumnResize categorizeBankTransaction( expandedTxId' },
+          { rel: "BankAccountDetail.tsx", src: goodDetail + " categorizeBankTransaction( // @archived" },
+        ],
       },
       expectPass: false,
     },

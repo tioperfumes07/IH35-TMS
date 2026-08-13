@@ -133,6 +133,14 @@ export function PayRunClosePanel({ settlementId, companyId, userRole, settlement
           <span className="text-[10px] text-slate-600">Finalize/lock settlement before close</span>
         ) : null}
       </div>
+      <p className="mb-2 text-xs text-gray-700" data-testid="payrun-settlement-link">
+        Settlement:{" "}
+        <EntityLink
+          kind="settlement"
+          id={settlementId}
+          label={entityLabel(null, settlementId, "Settlement")}
+        />
+      </p>
       <p className="mb-2 text-xs text-gray-600">
         Preview computes balanced JE legs. Close posts only when{" "}
         <code className="rounded bg-slate-100 px-1">SETTLEMENT_GL_POSTING_ENABLED</code> is ON for this

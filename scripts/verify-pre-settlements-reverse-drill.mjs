@@ -1,8 +1,8 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["settlements"],"cols":["driver","load","connectivity","reverse_link"],"leafRe":"^(settlement_close|pre_settlements|escrow|owner_approval)","task":"SETT-FE-REVERSE-02","pr":"pending"} */
 /**
+ * @matrix-built {"modules":["settlements","accounting"],"cols":["settlement","driver","load","connectivity","reverse_link"],"leafRe":"^(settlements\\.(list|detail|disputes)|settlement_close|pre_settlements|settlements\\.panel\\.(pre_settlements|pay_run_close)|escrow|owner_approval)$","task":"WAVE-A-settlement-column","vertical":"column-wave"}
  * Rule-17: pre-settlements reverse drill-through (Law §9).
- * Accounting + Dispatch pre-settlement rows must EntityLink driver + settlement.
+ * Accounting + Settlements surfaces must EntityLink canonical settlement rows (Wave A `settlement`).
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -40,6 +40,11 @@ function assertPreSettlementsReverse() {
   const errors = [];
   const panel = read("apps/frontend/src/components/driver-finance/PreSettlementsPanel.tsx");
   const accountingPage = read("apps/frontend/src/pages/accounting/AccountingPreSettlementsPage.tsx");
+  const table = read("apps/frontend/src/pages/driver-finance/components/SettlementsTable.tsx");
+  const disputes = read("apps/frontend/src/pages/driver-finance/components/SettlementDisputesTab.tsx");
+  const header = read("apps/frontend/src/pages/driver-finance/components/SettlementHeader.tsx");
+  const detail = read("apps/frontend/src/pages/driver-finance/SettlementDetailPage.tsx");
+  const payRun = read("apps/frontend/src/pages/driver-finance/components/PayRunClosePanel.tsx");
 
   if (!/from "\.\.\/shared\/EntityLink"/.test(panel) && !/from '\.\.\/shared\/EntityLink'/.test(panel)) {
     errors.push("PreSettlementsPanel: must import EntityLink");
@@ -58,6 +63,21 @@ function assertPreSettlementsReverse() {
   }
   if (!/\/accounting\/pre-settlements/.test(read("apps/frontend/src/routes/manifest.tsx"))) {
     errors.push("manifest: /accounting/pre-settlements route missing");
+  }
+  if (!/kind="settlement"/.test(table) || !/row\.id/.test(table)) {
+    errors.push("SettlementsTable: must EntityLink settlement via row.id");
+  }
+  if (!/kind="settlement"/.test(disputes) || !/settlement_id/.test(disputes)) {
+    errors.push("SettlementDisputesTab: must EntityLink settlement via settlement_id");
+  }
+  if (!/kind="settlement"/.test(header) || !/settlementId/.test(header)) {
+    errors.push("SettlementHeader: must EntityLink settlement via settlementId");
+  }
+  if (!/settlementId=\{settlementId\}/.test(detail) && !/settlementId={settlementId}/.test(detail)) {
+    errors.push("SettlementDetailPage: must pass settlementId into SettlementHeader");
+  }
+  if (!/kind="settlement"/.test(payRun) || !/settlementId/.test(payRun)) {
+    errors.push("PayRunClosePanel: must EntityLink settlementId");
   }
   return errors;
 }
