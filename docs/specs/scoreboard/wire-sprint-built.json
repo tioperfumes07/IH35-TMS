@@ -704,6 +704,14 @@
       "modules": ["dispatch", "vendors", "compliance"],
       "cols": ["vendor", "connectivity", "reverse_link", "picker_law"],
       "leafRe": "^(border|crossing|wizard|history|vendor|profile|broker|create)"
+    },
+    {
+      "task": "INTRANSIT-ISSUE-LOAD-CREATE-REVERSE",
+      "pr": "this PR",
+      "guard": "scripts/verify-intransit-issue-load-linkage.mjs",
+      "modules": ["dispatch", "maintenance"],
+      "cols": ["load", "connectivity", "reverse_link", "picker_law"],
+      "leafRe": "^(in.?transit|issue|load|drawer|triage|create)"
     }
   ]
 }

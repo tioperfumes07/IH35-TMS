@@ -64,14 +64,22 @@ export async function listAtRiskLoads(userId: string, operatingCompanyId: string
   });
 }
 
-export async function listIntransitIssues(userId: string, operatingCompanyId: string, status?: string) {
+export async function listIntransitIssues(
+  userId: string,
+  operatingCompanyId: string,
+  filters: { status?: string; load_id?: string } = {}
+) {
   return withCurrentUser(userId, async (client) => {
     await setScopedCompanyContext(client, userId, operatingCompanyId);
     const values: unknown[] = [operatingCompanyId];
-    let statusFilter = "";
-    if (status) {
-      values.push(status);
-      statusFilter = `AND i.status = $${values.length}`;
+    const clauses = ["i.operating_company_id = $1::uuid", "l.operating_company_id = $1::uuid", "l.soft_deleted_at IS NULL"];
+    if (filters.status) {
+      values.push(filters.status);
+      clauses.push(`i.status = $${values.length}`);
+    }
+    if (filters.load_id) {
+      values.push(filters.load_id);
+      clauses.push(`i.load_id = $${values.length}::uuid`);
     }
     const res = await client.query(
       `
@@ -95,9 +103,7 @@ export async function listIntransitIssues(userId: string, operatingCompanyId: st
                                AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = i.operating_company_id
         LEFT JOIN mdata.drivers d ON d.id = i.driver_id
                                  AND d.operating_company_id = i.operating_company_id
-        WHERE l.operating_company_id = $1::uuid
-          AND l.soft_deleted_at IS NULL
-          ${statusFilter}
+        WHERE ${clauses.join(" AND ")}
         ORDER BY i.reported_at DESC
         LIMIT 200
       `,
@@ -228,12 +234,12 @@ export async function createOfficeIntransitIssue(
     const insertRes = await client.query<{ id: string; reported_at: string }>(
       `
         INSERT INTO dispatch.intransit_issues (
-          load_id, driver_id, unit_id, issue_category, issue_description, severity, status, reported_at
+          operating_company_id, load_id, driver_id, unit_id, issue_category, issue_description, severity, status, reported_at
         )
-        VALUES ($1, $2, $3, $4, $5, $6, 'open', now())
+        VALUES ($1::uuid, $2, $3, $4, $5, $6, $7, 'open', now())
         RETURNING id, reported_at
       `,
-      [body.load_id, driverId, unitId, body.issue_category, body.issue_description, body.severity]
+      [operatingCompanyId, body.load_id, driverId, unitId, body.issue_category, body.issue_description, body.severity]
     );
     return { ok: true as const, issue: insertRes.rows[0] };
   });

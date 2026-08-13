@@ -844,9 +844,10 @@ export type DispatchIntransitIssueRow = {
   driver_name: string | null;
 };
 
-export function listDispatchIntransitIssues(operatingCompanyId: string, status?: string) {
+export function listDispatchIntransitIssues(operatingCompanyId: string, filters: { status?: string; load_id?: string } = {}) {
   const q = new URLSearchParams({ operating_company_id: operatingCompanyId });
-  if (status) q.set("status", status);
+  if (filters.status) q.set("status", filters.status);
+  if (filters.load_id) q.set("load_id", filters.load_id);
   return apiRequest<{ issues: DispatchIntransitIssueRow[] }>(`/api/v1/dispatch/intransit-issues?${q.toString()}`);
 }
 

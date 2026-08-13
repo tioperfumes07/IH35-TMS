@@ -12,6 +12,7 @@ import {
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
   status: z.string().trim().optional(),
+  load_id: z.string().uuid().optional(),
   driver_id: z.string().uuid().optional(),
   from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
@@ -54,7 +55,10 @@ export async function registerDispatchArchTabsRoutes(app: FastifyInstance) {
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return reply.code(400).send({ error: "validation_error", details: query.error.flatten() });
-    return listIntransitIssues(user.uuid, query.data.operating_company_id, query.data.status);
+    return listIntransitIssues(user.uuid, query.data.operating_company_id, {
+      status: query.data.status,
+      load_id: query.data.load_id,
+    });
   });
 
   app.get("/api/v1/dispatch/assignment-history", async (req, reply) => {
