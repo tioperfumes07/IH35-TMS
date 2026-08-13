@@ -317,7 +317,6 @@
         "vendor",
         "ap_bill",
         "expense",
-        "gl_je",
         "picker_law",
         "qbo_chrome",
         "connectivity",
@@ -418,7 +417,6 @@
         "unit",
         "load",
         "expense",
-        "gl_je",
         "connectivity",
         "reverse_link"
       ]
@@ -575,7 +573,6 @@
       "required": [
         "unit",
         "vendor",
-        "gl_je",
         "picker_law",
         "qbo_chrome",
         "connectivity",
@@ -657,7 +654,6 @@
         "unit",
         "vendor",
         "expense",
-        "gl_je",
         "connectivity",
         "reverse_link"
       ]
