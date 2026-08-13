@@ -8,6 +8,9 @@ import { registerSafetyRoutes } from "../safety.routes.js";
 
 const COMPANY = "11111111-1111-4111-8111-111111111111";
 const ACCIDENT = "33333333-3333-4333-8333-333333333333";
+// P44-ACCIDENT-TYPE-FK (PR #5947, migration 202612511400) made accident_type_id a NOT NULL
+// same-opco FK on safety.accident_reports — every POST create payload needs one.
+const ACCIDENT_TYPE = "66666666-6666-4666-8666-666666666666";
 
 const { mockQuery, mockWithCurrentUser } = vi.hoisted(() => {
   const query = vi.fn();
@@ -64,7 +67,7 @@ describe("SAFE-1 accident At-Fault + Preventable persistence", () => {
     const res = await app.inject({
       method: "POST",
       url: "/api/v1/safety/accidents",
-      payload: { operating_company_id: COMPANY, at_fault: "disputed", preventable: true },
+      payload: { operating_company_id: COMPANY, accident_type_id: ACCIDENT_TYPE, at_fault: "disputed", preventable: true },
     });
     expect(res.statusCode).toBe(201);
     const insert = findCall("INSERT INTO safety.accident_reports");
@@ -82,7 +85,7 @@ describe("SAFE-1 accident At-Fault + Preventable persistence", () => {
     const res = await app.inject({
       method: "POST",
       url: "/api/v1/safety/accidents",
-      payload: { operating_company_id: COMPANY },
+      payload: { operating_company_id: COMPANY, accident_type_id: ACCIDENT_TYPE },
     });
     expect(res.statusCode).toBe(201);
     const params = findCall("INSERT INTO safety.accident_reports")?.[1] as unknown[];
