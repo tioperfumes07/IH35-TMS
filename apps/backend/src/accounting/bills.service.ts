@@ -1166,7 +1166,10 @@ export async function listBillPayments(
                je_link.journal_entry_id,
                je.entry_date::text AS journal_entry_date,
                je.memo AS journal_entry_memo,
-               ${BILL_PAYMENT_BANK_TRANSACTION_ID_SQL} AS matched_bank_transaction_id
+               ${BILL_PAYMENT_BANK_TRANSACTION_ID_SQL} AS matched_bank_transaction_id,
+               bt.transaction_date AS matched_bank_transaction_date,
+               bt.description AS matched_bank_transaction_description,
+               bt.amount_cents::text AS matched_bank_transaction_amount_cents
         FROM accounting.bill_payments bp
         LEFT JOIN accounting.bills b
           ON b.id = bp.bill_id
@@ -1183,6 +1186,9 @@ export async function listBillPayments(
         LEFT JOIN accounting.journal_entries je
           ON je.id = je_link.journal_entry_id::uuid
          AND je.operating_company_id = bp.operating_company_id
+        LEFT JOIN banking.bank_transactions bt
+          ON bt.id = ${BILL_PAYMENT_BANK_TRANSACTION_ID_SQL}::uuid
+         AND bt.operating_company_id = bp.operating_company_id
         WHERE bp.operating_company_id = $1::uuid AND ${where.join(" AND ")}
         ORDER BY bp.payment_date DESC, bp.created_at DESC
         LIMIT $${values.length - 1}

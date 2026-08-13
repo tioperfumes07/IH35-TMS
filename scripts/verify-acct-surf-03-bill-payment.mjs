@@ -129,6 +129,13 @@ function contractErrors(src) {
   if (/entityLabel\(\s*null\s*,\s*row\.bill_id\s*,\s*["']Bill["']\s*\)/.test(src.list)) {
     errors.push("VERIFY-4: BillPaymentsListPage must not entityLabel(null, bill_id) — UUID chrome");
   }
+  // ACCT-F5073 — bank txn human labels on list (connectivity).
+  if (/entityLabel\(\s*null\s*,\s*row\.matched_bank_transaction_id/.test(src.list)) {
+    errors.push("VERIFY-4: BillPaymentsListPage must not entityLabel(null, matched_bank_transaction_id)");
+  }
+  if (!/matched_bank_transaction_date/.test(src.list) || !/matched_bank_transaction_description/.test(src.list)) {
+    errors.push("VERIFY-4: BillPaymentsListPage bank EntityLink must prefer date/description");
+  }
 
   const service = read("apps/backend/src/accounting/bills.service.ts");
   if (!service.includes("INSERT INTO accounting.bill_payments")) {
@@ -140,6 +147,9 @@ function contractErrors(src) {
   // ACCT-F5060 — listBillPayments must join bill_number + JE memo/date (detail already did).
   if (!/b\.bill_number/.test(service) || !/AS journal_entry_memo/.test(service) || !/AS journal_entry_date/.test(service)) {
     errors.push("VERIFY-4: bills.service list/detail must SELECT b.bill_number + journal_entry_date/memo");
+  }
+  if (!/AS matched_bank_transaction_date/.test(service) || !/AS matched_bank_transaction_description/.test(service)) {
+    errors.push("VERIFY-4: bills.service listBillPayments must JOIN bank_transactions date/description");
   }
 
   const billDetail = read("apps/frontend/src/pages/accounting/BillDetailPage.tsx");
@@ -158,7 +168,7 @@ function selftest() {
     map: "ACCT-SURF-03 `/accounting/bill-payments`",
     manifest: 'path="/accounting/bill-payments"\n<BillPaymentsListPage />\n',
     subnav: "/accounting/bill-payments",
-    list: 'PayBillModal\nkind="journal_entry"\nkind="bill"\nkind="vendor"\nsearchParams.get("create") === "1"\nparams.set("create", "1")\nparams.delete("create")\nentityLabel(row.bill_number, row.bill_id, "Bill")\njournal_entry_date\njournal_entry_memo\n',
+    list: 'PayBillModal\nkind="journal_entry"\nkind="bill"\nkind="vendor"\nsearchParams.get("create") === "1"\nparams.set("create", "1")\nparams.delete("create")\nentityLabel(row.bill_number, row.bill_id, "Bill")\njournal_entry_date\njournal_entry_memo\nmatched_bank_transaction_date\nmatched_bank_transaction_description\n',
     pay: [
       "ParityDrawer",
       "<ParityDrawer",

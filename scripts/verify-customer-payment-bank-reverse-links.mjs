@@ -50,6 +50,16 @@ export function contractErrors(sources) {
       errors.push(`${surface}: must reference matched_bank_transaction_id`);
     }
   }
+  // ACCT-F5073 — list must project bank date/description and not UUID-fallback.
+  if (!/matched_bank_transaction_date/.test(routes) || !/matched_bank_transaction_description/.test(routes)) {
+    errors.push("backend: list+detail must expose matched_bank_transaction_date/description");
+  }
+  if (/entityLabel\(\s*null\s*,\s*row\.matched_bank_transaction_id/.test(listPage)) {
+    errors.push("list: must not entityLabel(null, matched_bank_transaction_id)");
+  }
+  if (!/matched_bank_transaction_date/.test(listPage) || !/matched_bank_transaction_description/.test(listPage)) {
+    errors.push("list: must prefer matched_bank_transaction_date/description for EntityLink label");
+  }
   return errors;
 }
 
@@ -72,9 +82,12 @@ if (process.argv.includes("--selftest")) {
       "   AND bt.matched_payment_id = p.id))",
       "AS matched_bank_transaction_id",
       "AS matched_bank_transaction_id",
+      "matched_bank_transaction_date",
+      "matched_bank_transaction_description",
     ].join("\n"),
     api: "matched_bank_transaction_id?: string | null",
-    listPage: 'kind="bank_transaction" matched_bank_transaction_id',
+    listPage:
+      'kind="bank_transaction" matched_bank_transaction_id matched_bank_transaction_date matched_bank_transaction_description',
     detailPage: 'kind="bank_transaction" matched_bank_transaction_id',
   };
   const errs = contractErrors(good);

@@ -201,7 +201,19 @@ export function BillPaymentsListPage() {
           <EntityLink
             kind="bank_transaction"
             id={row.matched_bank_transaction_id ?? undefined}
-            label={row.matched_bank_transaction_id ? entityLabel(null, row.matched_bank_transaction_id, "Bank transaction") : undefined}
+            label={
+              row.matched_bank_transaction_id
+                ? row.matched_bank_transaction_date
+                  ? `${formatDateUS(row.matched_bank_transaction_date)}${
+                      row.matched_bank_transaction_description ? ` — ${row.matched_bank_transaction_description}` : ""
+                    }`
+                  : entityLabel(
+                      row.matched_bank_transaction_description ?? null,
+                      row.matched_bank_transaction_id,
+                      "Bank transaction",
+                    )
+                : undefined
+            }
           />
         ),
       },
