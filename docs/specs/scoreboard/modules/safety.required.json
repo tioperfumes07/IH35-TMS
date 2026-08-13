@@ -132,8 +132,7 @@
       "required": [
         "driver",
         "connectivity",
-        "reverse_link",
-        "picker_law"
+        "reverse_link"
       ]
     },
     {
@@ -190,7 +189,6 @@
       "required": [
         "driver",
         "connectivity",
-        "picker_law",
         "reverse_link"
       ]
     },
@@ -282,8 +280,7 @@
       "required": [
         "driver",
         "unit",
-        "connectivity",
-        "picker_law"
+        "connectivity"
       ]
     },
     {
@@ -294,8 +291,7 @@
       "required": [
         "driver",
         "unit",
-        "connectivity",
-        "picker_law"
+        "connectivity"
       ]
     },
     {
@@ -362,8 +358,7 @@
         "trailer",
         "load",
         "connectivity",
-        "reverse_link",
-        "picker_law"
+        "reverse_link"
       ]
     },
     {
@@ -391,7 +386,6 @@
         "customer",
         "driver",
         "connectivity",
-        "picker_law",
         "reverse_link"
       ]
     },
@@ -477,8 +471,7 @@
         "unit",
         "vendor",
         "expense",
-        "connectivity",
-        "picker_law"
+        "connectivity"
       ]
     },
     {
@@ -517,7 +510,6 @@
         "liability",
         "connectivity",
         "reverse_link",
-        "picker_law",
         "qbo_chrome"
       ]
     },
@@ -543,7 +535,6 @@
         "scenario.insurance",
         "connectivity",
         "reverse_link",
-        "picker_law",
         "claim",
         "policy"
       ]
@@ -619,7 +610,6 @@
       "required": [
         "driver",
         "connectivity",
-        "picker_law",
         "qbo_chrome"
       ]
     },
@@ -1062,6 +1052,72 @@
           "id": "safety.panel.driver_safety_profile",
           "removed": [
             "reverse_link"
+          ]
+        }
+      ]
+    },
+    "picker_law_2026_08_13_safety_lists": {
+      "finding": "VERTICAL-PICKER-LAW-SAFETY-LISTS",
+      "note": "List/chrome tabs without EntityPicker/+Add new inflated picker_law. Built: HOS/IDVR/DOT inspections/safety events/internal fines/permits/driver scheduler grid.",
+      "drops": [
+        {
+          "id": "driver_files.list",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "training_records.list",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "dot_compliance.list",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "cert_expiry.list",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "damage_reports.list",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "trailer_interchanges.list",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "external_fines.list",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "escrow_record.list",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "insurance_tab.list",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "leave_requests.list",
+          "removed": [
+            "picker_law"
           ]
         }
       ]
