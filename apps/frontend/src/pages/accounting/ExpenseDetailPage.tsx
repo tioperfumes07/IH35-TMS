@@ -246,6 +246,16 @@ export function ExpenseDetailPage() {
             />
           </DataPanelRow>
         ) : null}
+        {expense.trailer_id ? (
+          <DataPanelRow>
+            <span className="text-xs font-semibold text-gray-600">Trailer</span>
+            <EntityLink
+              kind="trailer"
+              id={expense.trailer_id}
+              label={entityLabel(expense.trailer_display_id, expense.trailer_id, "Trailer")}
+            />
+          </DataPanelRow>
+        ) : null}
         {expense.linked_work_order_uuid ? (
           <DataPanelRow>
             <span className="text-xs font-semibold text-gray-600">Work order</span>
