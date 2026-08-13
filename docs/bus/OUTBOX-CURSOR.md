@@ -25,3 +25,4 @@
 2026-08-13T10:05CT | Cursor | #6433 F5044 done | NEXT=vertical all-28
 2026-08-13T10:06CT | Cursor | #6433 F5044 Neon APPLIED | load_null_number=0 links=9 numbered_tms=9 | NEXT=vertical gl_je Wave A-C accounting + all-28
 2026-08-13T10:09CT | Cursor | ACCT-F5045 shipping gl_je P10 Wave A-C=100% | BillDetailPanel JE + honest Required drops | NEXT=all-28 column extend
+2026-08-13T10:40CT | Cursor | #6442 ACCT-F5048 done — expense/fuel reverse Open keeps money filters + Trailer cols | NEXT=money econ/linkage (not scoreboard Required)
