@@ -1031,7 +1031,7 @@ export async function getFleetSchedule(
   };
 }
 
-export async function listTempAssignments(client: QueryableClient, operatingCompanyId: string) {
+export async function listTempAssignments(client: QueryableClient, operatingCompanyId: string, filters: { driverId?: string } = {}) {
   // SAFETY-TEMP-COVER-ASSIGNMENTS-ZERO-FE-CALLERS — this used to be SELECT * with no joins (unusable
   // for a UI — raw driver/unit uuids, no names) and operating_company_id compared with no ::uuid
   // cast (the same DA-PROGRAM-ROUTES-500 shape: safety.temp_unit_assignments.operating_company_id is
@@ -1050,10 +1050,11 @@ export async function listTempAssignments(client: QueryableClient, operatingComp
       LEFT JOIN mdata.drivers cd ON cd.id = t.cover_driver_id AND cd.operating_company_id = t.operating_company_id
       WHERE t.operating_company_id = $1::uuid
         AND t.voided_at IS NULL
+        AND ($2::uuid IS NULL OR t.primary_driver_id = $2::uuid OR t.cover_driver_id = $2::uuid)
       ORDER BY t.start_date DESC
       LIMIT 200
     `,
-    [operatingCompanyId]
+    [operatingCompanyId, filters.driverId ?? null]
   );
   return res.rows;
 }
@@ -1069,6 +1070,20 @@ export async function assignTempCover(
   const input = assignTempCoverSchema.parse(args.body);
   if (daysInclusive(input.start_date, input.end_date) < 1) {
     return { error: "temp_cover_invalid_dates" as const };
+  }
+  if (input.primary_driver_id === input.cover_driver_id) {
+    return { error: "temp_cover_drivers_must_differ" as const };
+  }
+  const drivers = await client.query(
+    `SELECT id::text
+     FROM mdata.drivers
+     WHERE operating_company_id = $1::uuid
+       AND id = ANY($2::uuid[])
+       AND deactivated_at IS NULL`,
+    [args.operatingCompanyId, [input.primary_driver_id, input.cover_driver_id]]
+  );
+  if (new Set(drivers.rows.map((row) => String(row.id))).size !== 2) {
+    return { error: "temp_cover_driver_not_found" as const };
   }
   const ins = await client.query(
     `

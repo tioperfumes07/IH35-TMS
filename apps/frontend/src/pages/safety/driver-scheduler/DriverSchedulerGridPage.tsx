@@ -16,6 +16,7 @@ import { DatePicker } from "../../../components/forms/DatePicker";
 import { formatDateUS } from "../../../lib/formatDate";
 import { useToast } from "../../../components/Toast";
 import { userFacingApiError } from "../../../lib/api-error-message";
+import { useSearchParams } from "react-router-dom";
 
 function addDaysIso(iso: string, days: number): string {
   const [y, m, d] = iso.split("-").map(Number);
@@ -37,6 +38,7 @@ const EMPTY_TEMP_COVER_FORM = {
 };
 
 export function DriverSchedulerGridPage() {
+  const driverId = useSearchParams()[0].get("driver_id") ?? undefined;
   const { selectedCompanyId } = useCompanyContext();
   const operatingCompanyId = selectedCompanyId ?? "";
   const { pushToast } = useToast();
@@ -85,8 +87,8 @@ export function DriverSchedulerGridPage() {
   // a cancel affordance with a required reason, matching the void/cancel pattern used everywhere
   // else in this app.
   const tempAssignmentsQuery = useQuery({
-    queryKey: ["driver-scheduler", "temp-assignments", operatingCompanyId],
-    queryFn: () => driverSchedulerOfficeApi.listTempAssignments(operatingCompanyId),
+    queryKey: ["driver-scheduler", "temp-assignments", operatingCompanyId, driverId],
+    queryFn: () => driverSchedulerOfficeApi.listTempAssignments(operatingCompanyId, { driver_id: driverId }),
     enabled: Boolean(operatingCompanyId),
   });
   const tempAssignments = tempAssignmentsQuery.data?.assignments ?? [];
