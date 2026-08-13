@@ -1017,9 +1017,11 @@ export type PmScheduleRow = {
   status: "current" | "due_soon" | "overdue";
 };
 
-export function listMaintenancePmSchedules(operatingCompanyId: string) {
+export function listMaintenancePmSchedules(operatingCompanyId: string, params: { unit_id?: string } = {}) {
+  const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  if (params.unit_id) query.set("unit_id", params.unit_id);
   return apiRequest<{ rows: PmScheduleRow[] }>(
-    `/api/v1/maintenance/pm-schedule?operating_company_id=${encodeURIComponent(operatingCompanyId)}`
+    `/api/v1/maintenance/pm-schedule?${query.toString()}`
   );
 }
 

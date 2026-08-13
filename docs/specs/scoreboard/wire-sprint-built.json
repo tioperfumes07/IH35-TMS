@@ -664,6 +664,14 @@
       "modules": ["maintenance", "vendors"],
       "cols": ["vendor", "connectivity", "reverse_link", "picker_law"],
       "leafRe": "^(warranty|claims|vendor|profile|create|update)"
+    },
+    {
+      "task": "PM-SCHEDULE-UNIT-CREATE-REVERSE",
+      "pr": "this PR",
+      "guard": "scripts/verify-pm-schedule-unit-linkage.mjs",
+      "modules": ["maintenance", "fleet"],
+      "cols": ["unit", "connectivity", "reverse_link", "picker_law"],
+      "leafRe": "^(pm|schedule|unit|profile|create)"
     }
   ]
 }

@@ -124,6 +124,16 @@ export async function registerMaintenancePmScheduleRoutes(app: FastifyInstance) 
     const body = parsed.data;
 
     const created = await withCompany(user.uuid, body.operating_company_id, async (client) => {
+      const unit = await client.query(
+        `SELECT id
+           FROM mdata.units
+          WHERE id = $1::uuid
+            AND COALESCE(currently_leased_to_company_id, owner_company_id) = $2::uuid
+            AND deactivated_at IS NULL
+          LIMIT 1`,
+        [body.unit_id, body.operating_company_id]
+      );
+      if (!unit.rows[0]) return null;
       const nextDue = body.last_service_odometer != null ? body.last_service_odometer + body.interval_value : null;
       const res = await client.query(
         `
@@ -150,6 +160,7 @@ export async function registerMaintenancePmScheduleRoutes(app: FastifyInstance) 
       return res.rows[0];
     });
 
+    if (!created) return reply.code(400).send({ error: "linked_entity_not_in_operating_company" });
     return reply.code(201).send(created);
   });
 
