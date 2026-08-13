@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createEquipment, type CreateEquipmentInput } from "../../api/mdata";
 import { useToast } from "../Toast";
@@ -22,11 +22,19 @@ const EQUIPMENT_TYPES = [
   "Other",
 ] as const;
 
+export function equipmentTypesForPickerKind(equipmentKind?: "trailer" | "chassis") {
+  if (equipmentKind === "chassis") return ["Chassis"] as const;
+  if (equipmentKind === "trailer") return EQUIPMENT_TYPES.filter((type) => type !== "Chassis");
+  return EQUIPMENT_TYPES;
+}
+
 type Props = {
   open: boolean;
   operatingCompanyId: string;
   onClose: () => void;
   onCreated?: (equipmentId: string) => void;
+  /** Constrain nested picker create so the created row remains visible after roster reload. */
+  equipmentKind?: "trailer" | "chassis";
 };
 
 const inputClass = "min-h-12 w-full rounded-sm border border-gray-300 px-2 text-xs";
@@ -46,10 +54,19 @@ const EMPTY = {
  * Wires to POST /api/v1/mdata/equipment. Scopes via currently_leased_to_company_id
  * so the new trailer appears in the selected company's roster.
  */
-export function CreateTrailerModal({ open, operatingCompanyId, onClose, onCreated }: Props) {
+export function CreateTrailerModal({ open, operatingCompanyId, onClose, onCreated, equipmentKind }: Props) {
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
   const [draft, setDraft] = useState(EMPTY);
+  const allowedTypes = useMemo(() => equipmentTypesForPickerKind(equipmentKind), [equipmentKind]);
+
+  useEffect(() => {
+    if (!open || !equipmentKind) return;
+    setDraft((current) => ({
+      ...current,
+      equipment_type: equipmentKind === "chassis" ? "Chassis" : current.equipment_type === "Chassis" ? "DryVan" : current.equipment_type,
+    }));
+  }, [equipmentKind, open]);
 
   const set = <K extends keyof typeof EMPTY>(key: K, value: (typeof EMPTY)[K]) =>
     setDraft((d) => ({ ...d, [key]: value }));
@@ -133,7 +150,7 @@ export function CreateTrailerModal({ open, operatingCompanyId, onClose, onCreate
               onChange={(e) => set("equipment_type", e.target.value as CreateEquipmentInput["equipment_type"])}
               required
             >
-              {EQUIPMENT_TYPES.map((t) => (
+              {allowedTypes.map((t) => (
                 <option key={t} value={t}>
                   {t === "DryVan" ? "Dry Van" : t === "StepDeck" ? "Step Deck" : t}
                 </option>

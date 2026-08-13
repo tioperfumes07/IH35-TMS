@@ -114,6 +114,9 @@ export function EntityPicker({
 
   const queryEnabled = enabled && Boolean(operatingCompanyId);
   const driverRosterKey = kind === "driver" ? driverRoster : "n/a";
+  // `trailer` is the product entity, not an alias for every row in mdata.equipment. Chassis are
+  // selectable only where a parent explicitly opts into that subtype (equipment transfer).
+  const effectiveEquipmentKind = kind === "trailer" ? equipmentKind ?? "trailer" : undefined;
 
   const rosterQuery = useQuery({
     queryKey: [
@@ -122,13 +125,13 @@ export function EntityPicker({
       operatingCompanyId,
       config.serverSearch ? rosterSearch : "",
       driverRosterKey,
-      equipmentKind ?? "all-equipment",
+      effectiveEquipmentKind ?? "all-equipment",
     ],
     queryFn: () =>
       config.list(operatingCompanyId, {
         ...(config.serverSearch ? { search: rosterSearch || undefined } : {}),
         ...(kind === "driver" ? { driverRoster } : {}),
-        ...(kind === "trailer" && equipmentKind ? { equipmentKind } : {}),
+        ...(effectiveEquipmentKind ? { equipmentKind: effectiveEquipmentKind } : {}),
       }),
     enabled: queryEnabled,
   });
@@ -215,6 +218,7 @@ export function EntityPicker({
         <CreateTrailerModal
           open={createOpen}
           operatingCompanyId={operatingCompanyId}
+          equipmentKind={effectiveEquipmentKind}
           onClose={() => setCreateOpen(false)}
           onCreated={(id) => handleCreated(id)}
         />
