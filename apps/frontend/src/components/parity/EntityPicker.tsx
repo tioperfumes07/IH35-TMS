@@ -113,6 +113,7 @@ export function EntityPicker({
   // that page — drivers/units/loads past page 1 were unselectable on every Safety call site.
   const [rosterSearch, setRosterSearch] = useState("");
   const rosterScope = useRef({ kind, operatingCompanyId });
+  const [invalidatedValue, setInvalidatedValue] = useState<string | null>(null);
 
   // Owner sessions can switch companies without remounting the surrounding form. Locally-created
   // options are not React Query data and therefore are not evicted by the company-scoped query key.
@@ -125,8 +126,13 @@ export function EntityPicker({
     setCreated([]);
     setRosterSearch("");
     setCreateOpen(false);
-    if (value) onChange(null);
+    if (value) {
+      setInvalidatedValue(value);
+      onChange(null);
+    }
   }, [kind, onChange, operatingCompanyId, value]);
+
+  const scopedValue = value === invalidatedValue ? null : value;
 
   const queryEnabled = enabled && Boolean(operatingCompanyId);
   const driverRosterKey = kind === "driver" ? driverRoster : "n/a";
@@ -157,11 +163,11 @@ export function EntityPicker({
     // A value that is not in the roster (an archived driver still referenced by an old record, a
     // load outside the 200-row page) must stay VISIBLE and selected rather than silently blanking
     // the field — a picker that drops the value it was handed is worse than the text box it replaced.
-    if (value && !rows.some((r) => r.value === value)) {
-      rows.unshift({ value, label: value, sublabel: "not in the current list" });
+    if (scopedValue && !rows.some((r) => r.value === scopedValue)) {
+      rows.unshift({ value: scopedValue, label: scopedValue, sublabel: "not in the current list" });
     }
     return rows;
-  }, [rosterQuery.data, created, value]);
+  }, [rosterQuery.data, created, scopedValue]);
 
   // A kind may refuse inline create for a stated reason (transactions and money documents do).
   const createOffered = allowCreate && config.inlineCreate.available;
@@ -172,6 +178,7 @@ export function EntityPicker({
   });
 
   function handleCreated(id: string, label?: string) {
+    setInvalidatedValue(null);
     const option: EntityPickerOption = { value: id, label: label ?? id };
     setCreated((prev) => [...prev, option]);
     onChange(id); // return to the parent with the new record already selected
@@ -196,8 +203,11 @@ export function EntityPicker({
           dataField={dataField}
           dataTestId={dataTestId}
           options={options}
-          value={value}
-          onChange={onChange}
+          value={scopedValue}
+          onChange={(next) => {
+            setInvalidatedValue(null);
+            onChange(next);
+          }}
           onSearch={config.serverSearch ? setRosterSearch : undefined}
           placeholder={placeholder ?? `Select ${config.label}`}
           loading={rosterQuery.isLoading}

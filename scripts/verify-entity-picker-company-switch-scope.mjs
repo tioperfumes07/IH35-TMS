@@ -19,11 +19,16 @@ export function collectProblems({ picker, test, referenceSelect, referenceTest }
     [/setCreated\(\[\]\)/, "company switch must evict locally-created cross-company options"],
     [/setRosterSearch\(""\)/, "company switch must clear the prior company's search term"],
     [/setCreateOpen\(false\)/, "company switch must close any create surface opened under the prior company"],
-    [/if \(value\) onChange\(null\)/, "company switch must clear the committed foreign key"],
+    [/if \(value\)[\s\S]{0,100}onChange\(null\)/, "company switch must clear the committed foreign key"],
+    [/setInvalidatedValue\(value\)/, "picker must suppress a prior-company FK even if a legacy parent ignores null"],
+    [/const scopedValue = value === invalidatedValue \? null : value/, "picker rendering must consume the company-safe value", picker],
   ];
   for (const [pattern, message, source = scopeEffect] of checks) if (!pattern.test(source)) problems.push(message);
   if (!/clears a locally created selection when the operating-company roster changes/.test(test)) {
     problems.push("runtime company-switch regression test is missing");
+  }
+  if (!/suppresses the prior-company FK even when a legacy parent ignores the null callback/.test(test)) {
+    problems.push("stubborn-parent company-switch regression test is missing");
   }
 
   const referenceEffect = referenceSelect.match(/useEffect\(\(\) => \{[\s\S]*?\}, \[createKind, onChange, operatingCompanyId, value\]\);/)?.[0] ?? "";
@@ -54,9 +59,12 @@ if (process.argv.includes("--selftest")) {
     { ...sources, picker: sources.picker.replace("setCreated([]);", "") },
     { ...sources, picker: sources.picker.replace('setRosterSearch("");', "") },
     { ...sources, picker: sources.picker.replace("setCreateOpen(false);", "") },
-    { ...sources, picker: sources.picker.replace("if (value) onChange(null);", "") },
+    { ...sources, picker: sources.picker.replace("onChange(null);", "") },
     { ...sources, picker: sources.picker.replace("previous.operatingCompanyId === operatingCompanyId", "true") },
     { ...sources, test: sources.test.replace("clears a locally created selection when the operating-company roster changes", "deleted regression") },
+    { ...sources, picker: sources.picker.replace("setInvalidatedValue(value);", "") },
+    { ...sources, picker: sources.picker.replace("value === invalidatedValue ? null : value", "value") },
+    { ...sources, test: sources.test.replace("suppresses the prior-company FK even when a legacy parent ignores the null callback", "deleted regression") },
     { ...sources, referenceSelect: sources.referenceSelect.replace("rosterScope.current = { createKind, operatingCompanyId };", "") },
     { ...sources, referenceSelect: sources.referenceSelect.replace("setCreated([]);", "") },
     { ...sources, referenceSelect: sources.referenceSelect.replace("setCreateOpen(false);", "") },
@@ -77,4 +85,4 @@ if (problems.length) {
   for (const problem of problems) console.error(`  - ${problem}`);
   process.exit(1);
 }
-console.log(`verify-entity-picker-company-switch-scope PASS — EntityPicker + ReferenceSelect state is company-bound${process.argv.includes("--selftest") ? "; 12 mutations caught" : ""}`);
+console.log(`verify-entity-picker-company-switch-scope PASS — EntityPicker + ReferenceSelect state is company-bound${process.argv.includes("--selftest") ? "; 15 mutations caught" : ""}`);
