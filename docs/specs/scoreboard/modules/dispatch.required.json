@@ -1034,7 +1034,6 @@
         "connectivity",
         "reverse_link",
         "driver",
-        "load",
         "unit",
         "trailer",
         "customer"
@@ -1051,7 +1050,6 @@
         "connectivity",
         "reverse_link",
         "picker_law",
-        "load",
         "driver",
         "unit",
         "trailer",
@@ -1122,7 +1120,6 @@
         "connectivity",
         "reverse_link",
         "driver",
-        "load",
         "unit",
         "trailer"
       ]

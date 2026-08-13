@@ -5,6 +5,9 @@
  * @matrix-built {"modules":["dispatch"],"cols":["load"],"leafRe":"^(queues\\.(trip_pairing|factoring_queue|border|alerts|map)$|docs\\.(pod|ocr)$|settings\\.notify$|misc\\.layover$)","task":"WAVE-A-load-remainder-dispatch","vertical":"column-wave"}
  * @matrix-built {"modules":["safety"],"cols":["load"],"leafRe":"^(safety_events\\.list$|damage_reports\\.|internal_fines\\.create$)","task":"WAVE-A-load-remainder-safety","vertical":"column-wave"}
  * @matrix-built {"modules":["factoring"],"cols":["load"],"leafRe":"^(submit\\.queue|batches\\.(create|detail)|accounting\\.(list|submit|detail)|banking\\.entry)$","task":"WAVE-A-load-remainder-factoring","vertical":"column-wave"}
+ * @matrix-built {"modules":["dispatch"],"cols":["load"],"leafRe":"^(dispatch\\.modal\\.(cancel_load|load_reassign|book_load_modal_v4|quick_assign)$|dispatch\\.drawer\\.load_detail$|dispatch\\.panel\\.(auth_gate|deadhead_optimizer|load_bol|optimal_drivers)$|dispatch\\.wizard\\.border_crossing_wizard_page$|dispatch\\.parity\\.(assign_driver_dropdown|book_load_equipment_section)$)","task":"WAVE-A-load-priority14-dispatch-surfaces","vertical":"column-wave"}
+ * @matrix-built {"modules":["maintenance"],"cols":["load"],"leafRe":"^wo\\.source\\.(ac|rt|rs)$","task":"WAVE-A-load-priority14-maint-wo-source","vertical":"column-wave"}
+ * @matrix-built {"modules":["fleet"],"cols":["load"],"leafRe":"^map\\.redirect$","task":"WAVE-A-load-priority14-fleet-map","vertical":"column-wave"}
  *
  * Self-test: node scripts/verify-wave-a-load-remainder.mjs --selftest
  */
@@ -31,6 +34,10 @@ const CHECKS = [
   { name: "factoring submission queue", file: "apps/frontend/src/pages/factoring/SubmissionQueue.tsx", pattern: /EntityLink/ },
   { name: "factoring batch detail", file: "apps/frontend/src/pages/factoring/BatchDetail.tsx", pattern: /EntityLink/ },
   { name: "factoring home load drill", file: "apps/frontend/src/pages/factoring/FactoringHome.tsx", pattern: /kind="load"/ },
+  { name: "book load modal creates mdata.loads", file: "apps/frontend/src/pages/dispatch/components/BookLoadModalV4.tsx", pattern: /createDispatchLoad/ },
+  { name: "load detail drawer EntityLink load", file: "apps/frontend/src/components/dispatch/LoadDetailDrawer.tsx", pattern: /kind="load"/ },
+  { name: "WO create load EntityPicker", file: "apps/frontend/src/pages/maintenance/components/CreateWOSectionIdentification.tsx", pattern: /kind="load"/ },
+  { name: "fleet map redirect preserves search", file: "apps/frontend/src/routes/manifest.tsx", pattern: /path="\/fleet\/map"[\s\S]*PreserveSearchNavigate to="\/dispatch\/map"/ },
 ];
 
 function checkAll(readFile) {

@@ -3332,8 +3332,7 @@
       "surface_path": "components/catalogs/CatalogExcelUploadModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
-        "load"
+        "reverse_link"
       ]
     },
     {
