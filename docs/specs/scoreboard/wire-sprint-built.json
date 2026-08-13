@@ -544,6 +544,38 @@
       "modules": ["docs"],
       "cols": ["connectivity", "reverse_link"],
       "leafRe": ".*"
+    },
+    {
+      "task": "CREATE-PATH-TRIP-TRAILER-PICKER",
+      "pr": "#6328",
+      "guard": "scripts/verify-expense-accident-create-trailer-picker.mjs",
+      "modules": ["accounting", "safety", "fleet"],
+      "cols": ["trailer", "connectivity", "picker_law", "reverse_link"],
+      "leafRe": "^(expenses\\.|accident|trailer\\.|create)"
+    },
+    {
+      "task": "CREATE-PATH-TRIP-FUEL-OFFICE-CREATE",
+      "pr": "#6330",
+      "guard": "scripts/verify-fuel-office-create-modal.mjs",
+      "modules": ["fuel", "fleet", "dispatch"],
+      "cols": ["trailer", "unit", "load", "connectivity", "picker_law"],
+      "leafRe": "^(history|transactions|trailer\\.|unit\\.|load\\.|create)"
+    },
+    {
+      "task": "CREATE-PATH-TRIP-EXPENSE-DETAIL-TRAILER",
+      "pr": "#6332",
+      "guard": "scripts/verify-expense-detail-trailer-link.mjs",
+      "modules": ["accounting", "fleet"],
+      "cols": ["trailer", "connectivity", "reverse_link"],
+      "leafRe": "^(expenses\\.|trailer\\.|detail)"
+    },
+    {
+      "task": "CREATE-PATH-TRIP-TRAILER-FUEL-EXPENSE-REVERSE",
+      "pr": "#6343",
+      "guard": "scripts/verify-trailer-profile-sections-complete.mjs",
+      "modules": ["fleet", "fuel", "accounting"],
+      "cols": ["trailer", "connectivity", "reverse_link", "load"],
+      "leafRe": "^(trailer\\.|expenses\\.|fuel|history)"
     }
   ]
 }
