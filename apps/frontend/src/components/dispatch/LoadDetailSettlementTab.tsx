@@ -59,9 +59,7 @@ function LegRow({ label, leg, isCurrent }: { label: string; leg: SettlementLeg |
   return (
     <div className="flex items-center gap-2 text-sm">
       <span className={`w-5 text-xs font-bold ${isCurrent ? "text-slate-700" : "text-gray-500"}`}>{label}</span>
-      <span className={`font-mono text-xs ${isCurrent ? "font-bold text-slate-700" : "text-gray-700"}`}>
-        {entityLabel(leg.load_number, leg.load_id, "Load")}
-      </span>
+      <EntityLink kind="load" id={leg.load_id} label={entityLabel(leg.load_number, leg.load_id, "Load")} className={`font-mono text-xs ${isCurrent ? "font-bold text-slate-700" : "text-gray-700"}`} />
       {isCurrent && (
         <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-700">
           this load
