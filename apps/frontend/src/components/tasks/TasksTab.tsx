@@ -58,6 +58,10 @@ export function TasksTab({ operatingCompanyId, targetType, targetId, targetLabel
 
       {tasksQuery.isLoading ? (
         <p className="text-xs text-gray-500">Loading tasks…</p>
+      ) : tasksQuery.isError ? (
+        <div className="rounded-sm border border-red-200 bg-red-50 p-2 text-xs text-red-700">
+          Could not load linked tasks. <button type="button" className="font-semibold underline" onClick={() => void tasksQuery.refetch()}>Retry</button>
+        </div>
       ) : tasks.length === 0 ? (
         <p className="text-xs text-gray-500">No tasks linked to this record yet.</p>
       ) : (
