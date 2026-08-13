@@ -196,7 +196,7 @@ export function DocumentsPage() {
           <DatePicker
             value={dateFrom}
             onChange={setDateFrom}
-            className="h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
+            className="h-9 w-full"
           />
         </div>
         <div className="space-y-1">
@@ -204,7 +204,7 @@ export function DocumentsPage() {
           <DatePicker
             value={dateTo}
             onChange={setDateTo}
-            className="h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
+            className="h-9 w-full"
           />
         </div>
         <div className="space-y-1 md:col-span-2">

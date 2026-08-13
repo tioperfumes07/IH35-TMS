@@ -341,7 +341,7 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
                       <DatePicker
                         value={filled[name] ?? ""}
                         onChange={(value) => setFilled((prev) => ({ ...prev, [name]: value }))}
-                        className="rounded-sm border border-slate-300 px-2 py-1"
+                        className=""
                         placeholder={def.description ?? ""}
                       />
                     ) : (

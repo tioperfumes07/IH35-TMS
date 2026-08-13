@@ -119,7 +119,7 @@ export function PlatesTable({ unitId, companyId, plates }: { unitId: string; com
           </select>
           <input className="w-full border px-2 py-1" placeholder="Jurisdiction" value={jurisdiction} onChange={(e) => setJurisdiction(e.target.value)} />
           <input className="w-full border px-2 py-1" placeholder="Plate number" value={plateNumber} onChange={(e) => setPlateNumber(e.target.value)} />
-          <DatePicker className="w-full border px-2 py-1" value={expiration} onChange={(next) => setExpiration(next)} />
+          <DatePicker className="w-full" value={expiration} onChange={(next) => setExpiration(next)} />
           <Button size="sm" loading={createMutation.isPending} onClick={() => createMutation.mutate()}>
             Save plate
           </Button>

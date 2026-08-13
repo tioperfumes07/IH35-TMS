@@ -443,7 +443,7 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
           <label className="space-y-1">
             <span className="text-xs font-semibold text-slate-700">Accident Date *</span>
             <DatePicker
-              className="w-full rounded-sm border border-gray-300 px-2 py-1"
+              className="w-full"
               value={form.accident_date}
               onChange={(next) => updateField("accident_date", next)}
             />
@@ -453,7 +453,7 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
           <label className="space-y-1">
             <span className="text-xs font-semibold text-slate-700">Reported Date *</span>
             <DatePicker
-              className="w-full rounded-sm border border-gray-300 px-2 py-1"
+              className="w-full"
               value={form.reported_date}
               onChange={(next) => updateField("reported_date", next)}
             />

@@ -99,7 +99,7 @@ export function CreateExpenseForm({ value, onChange, operatingCompanyId }: Props
       <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-2 md:grid-cols-6">
         <Field label="Expense Date">
           <DatePicker
-            className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs"
+            className="h-8 w-full"
             value={String(value.expense_date ?? "")}
             onChange={(next) => onChange({ ...value, expense_date: next })}
           />

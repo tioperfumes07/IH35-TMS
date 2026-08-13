@@ -233,7 +233,7 @@ export function RecurringBillCreate() {
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700">First Generation Date *</label>
             <DatePicker
-              className="w-full rounded-sm border border-gray-300 px-3 py-2 text-sm focus:border-slate-300 focus:outline-hidden"
+              className="w-full"
               value={nextGenerationDate}
               min={today()}
               onChange={setNextGenerationDate}
@@ -244,7 +244,7 @@ export function RecurringBillCreate() {
         <div>
           <label className="mb-1 block text-sm font-medium text-gray-700">End Date (optional)</label>
           <DatePicker
-            className="w-full rounded-sm border border-gray-300 px-3 py-2 text-sm focus:border-slate-300 focus:outline-hidden"
+            className="w-full"
             value={endDate}
             min={nextGenerationDate}
             onChange={setEndDate}

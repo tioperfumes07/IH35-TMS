@@ -45,7 +45,7 @@ export function BillPaymentForm({ value, onChange, operatingCompanyId }: Props) 
       <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-2 md:grid-cols-6">
         <Field label="Payment Date">
           <DatePicker
-            className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs"
+            className="h-8 w-full"
             value={String(value.payment_date ?? "")}
             onChange={(next) => onChange({ ...value, payment_date: next })}
           />

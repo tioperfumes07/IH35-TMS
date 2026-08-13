@@ -307,7 +307,7 @@ export function LeaseToOwnCreatorModal({ open, operatingCompanyId, onClose, onSa
               <input className="rounded-sm border px-2 py-1" value={terms.venue_county} onChange={(e) => setTerms({ ...terms, venue_county: e.target.value })} />
             </label>
             <label className="flex flex-col gap-1 text-sm">Execution date
-              <DatePicker className="rounded-sm border px-2 py-1" value={terms.execution_date} onChange={(next) => setTerms({ ...terms, execution_date: next })} />
+              <DatePicker className="" value={terms.execution_date} onChange={(next) => setTerms({ ...terms, execution_date: next })} />
             </label>
             <label className="flex flex-col gap-1 text-sm">Reference # (optional)
               <input className="rounded-sm border px-2 py-1" value={terms.reference_no} onChange={(e) => setTerms({ ...terms, reference_no: e.target.value })} />

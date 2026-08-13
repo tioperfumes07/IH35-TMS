@@ -99,7 +99,7 @@ export function LateArrivalReport() {
         <label className="text-xs text-slate-600">
           From
           <DatePicker
-            className="mt-1 block rounded-sm border border-slate-300 px-2 py-1 text-sm"
+            className="mt-1 block"
             value={from}
             onChange={(next) => setFrom(next)}
           />
@@ -107,7 +107,7 @@ export function LateArrivalReport() {
         <label className="text-xs text-slate-600">
           To
           <DatePicker
-            className="mt-1 block rounded-sm border border-slate-300 px-2 py-1 text-sm"
+            className="mt-1 block"
             value={to}
             onChange={(next) => setTo(next)}
           />

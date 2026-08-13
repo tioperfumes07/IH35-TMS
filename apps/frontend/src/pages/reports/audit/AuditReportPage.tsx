@@ -160,12 +160,12 @@ export function AuditReportPage({ title, subtitle, endpoint, extraParams, showMo
               <div className="flex flex-col gap-1">
                 <label className="text-xs text-gray-500">From</label>
                 <DatePicker value={from} onChange={(next) => { setFrom(next); setOffset(0); }}
-                  className="rounded-sm border border-gray-300 px-2 py-1 text-sm" />
+                  className="" />
               </div>
               <div className="flex flex-col gap-1">
                 <label className="text-xs text-gray-500">To</label>
                 <DatePicker value={to} onChange={(next) => { setTo(next); setOffset(0); }}
-                  className="rounded-sm border border-gray-300 px-2 py-1 text-sm" />
+                  className="" />
               </div>
               {showModuleFilter && (
                 <div className="flex flex-col gap-1">

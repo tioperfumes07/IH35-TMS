@@ -81,11 +81,11 @@ export function PerTruckCpmReport() {
       <div className="flex flex-wrap items-end gap-3 rounded-sm border bg-white p-4">
         <label className="text-sm">
           From
-          <DatePicker className="ml-2 rounded-sm border px-2 py-1" value={period.from} onChange={(next) => setPeriod((p) => ({ ...p, from: next }))} />
+          <DatePicker className="ml-2" value={period.from} onChange={(next) => setPeriod((p) => ({ ...p, from: next }))} />
         </label>
         <label className="text-sm">
           To
-          <DatePicker className="ml-2 rounded-sm border px-2 py-1" value={period.to} onChange={(next) => setPeriod((p) => ({ ...p, to: next }))} />
+          <DatePicker className="ml-2" value={period.to} onChange={(next) => setPeriod((p) => ({ ...p, to: next }))} />
         </label>
         <Button onClick={() => setApplied(period)}>Apply</Button>
       </div>

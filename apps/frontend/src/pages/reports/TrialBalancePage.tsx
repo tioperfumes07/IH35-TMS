@@ -164,7 +164,7 @@ export function TrialBalancePage() {
         <label className="text-xs text-gray-600">
           From
           <DatePicker
-            className="mt-1 block h-9 rounded-sm border border-gray-300 px-2"
+            className="mt-1 block h-9"
             value={period.start}
             onChange={(next) => setPeriod((previous) => ({ ...previous, start: next }))}
           />
@@ -172,7 +172,7 @@ export function TrialBalancePage() {
         <label className="text-xs text-gray-600">
           To
           <DatePicker
-            className="mt-1 block h-9 rounded-sm border border-gray-300 px-2"
+            className="mt-1 block h-9"
             value={period.end}
             onChange={(next) => setPeriod((previous) => ({ ...previous, end: next }))}
           />

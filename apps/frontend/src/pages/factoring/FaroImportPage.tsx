@@ -149,7 +149,7 @@ export function FaroImportPage() {
         <label className="block text-xs text-slate-300">
           Statement date
           <DatePicker
-            className="mt-1 block w-full max-w-xs rounded-sm border border-[#2A3150] bg-[#0B1020] px-2 py-1 text-sm text-white"
+            className="mt-1 block w-full max-w-xs bg-[#0B1020]"
             value={statementDate}
             onChange={setStatementDate}
           />

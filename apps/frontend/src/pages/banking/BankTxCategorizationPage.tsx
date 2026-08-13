@@ -345,11 +345,11 @@ export function BankTxCategorizationPage() {
           </div>
           <label className="block text-xs">
             From
-            <DatePicker className="mt-0.5 w-full rounded-sm border border-gray-300 px-1 py-1" value={dateFrom} onChange={(next) => setDateFrom(next)} />
+            <DatePicker className="mt-0.5 w-full" value={dateFrom} onChange={(next) => setDateFrom(next)} />
           </label>
           <label className="block text-xs">
             To
-            <DatePicker className="mt-0.5 w-full rounded-sm border border-gray-300 px-1 py-1" value={dateTo} onChange={(next) => setDateTo(next)} />
+            <DatePicker className="mt-0.5 w-full" value={dateTo} onChange={(next) => setDateTo(next)} />
           </label>
           <label className="block text-xs">
             Amount min (USD)

@@ -106,7 +106,7 @@ export function BorderCrossingHistory() {
           <DatePicker
             value={staged.draft.from}
             onChange={(next) => staged.setDraft({ ...staged.draft, from: next })}
-            className="border rounded-sm px-3 py-1.5 text-sm"
+            className=""
           />
         </div>
         <div>
@@ -114,7 +114,7 @@ export function BorderCrossingHistory() {
           <DatePicker
             value={staged.draft.to}
             onChange={(next) => staged.setDraft({ ...staged.draft, to: next })}
-            className="border rounded-sm px-3 py-1.5 text-sm"
+            className=""
           />
         </div>
       </div>

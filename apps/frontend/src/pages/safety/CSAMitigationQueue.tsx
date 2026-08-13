@@ -196,7 +196,7 @@ export function CSAMitigationQueuePage() {
             <span>Due date</span>
             <DatePicker
               value={dueDate}
-              className="rounded-sm border border-gray-300 px-2 py-1"
+              className=""
               onChange={(next) => setDueDate(next)}
             />
           </label>

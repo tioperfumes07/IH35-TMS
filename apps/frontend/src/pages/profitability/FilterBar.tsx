@@ -39,7 +39,7 @@ export function FilterBar({ filters, onChange }: FilterBarProps) {
             <DatePicker
               value={draft.dateFrom}
               onChange={(next) => staged.setDraft({ ...draft, dateFrom: next })}
-              className="w-[130px] min-h-11 text-sm border rounded-sm px-2"
+              className="w-[130px] min-h-11"
             />
           </div>
 
@@ -48,7 +48,7 @@ export function FilterBar({ filters, onChange }: FilterBarProps) {
             <DatePicker
               value={draft.dateTo}
               onChange={(next) => staged.setDraft({ ...draft, dateTo: next })}
-              className="w-[130px] min-h-11 text-sm border rounded-sm px-2"
+              className="w-[130px] min-h-11"
             />
           </div>
 

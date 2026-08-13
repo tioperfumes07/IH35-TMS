@@ -12,7 +12,7 @@ export function ManualJEForm({ value, onChange }: Props) {
       <label className="block">
         JE Date
         <DatePicker
-          className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2"
+          className="mt-1 h-8 w-full"
           value={String(value.date ?? "")}
           onChange={(next) => onChange({ ...value, date: next })}
         />

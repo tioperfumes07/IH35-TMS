@@ -167,7 +167,7 @@ export function ARAgingPage() {
       <div className="no-print grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-4">
         <label className="text-xs text-gray-600">
           As-of date
-          <DatePicker className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2" value={asOf} onChange={(next) => setAsOf(next)} />
+          <DatePicker className="mt-1 h-9 w-full" value={asOf} onChange={(next) => setAsOf(next)} />
         </label>
         <label className="text-xs text-gray-600">
           Customer contains

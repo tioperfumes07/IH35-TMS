@@ -75,13 +75,13 @@ export function PayrollIntegrationPage() {
         <DatePicker
           value={period.start}
           onChange={(next) => setPeriod((p) => ({ ...p, start: next }))}
-          className="rounded-sm border border-gray-300 px-2 py-1 text-sm"
+          className=""
         />
         <span className="text-gray-400">→</span>
         <DatePicker
           value={period.end}
           onChange={(next) => setPeriod((p) => ({ ...p, end: next }))}
-          className="rounded-sm border border-gray-300 px-2 py-1 text-sm"
+          className=""
         />
       </div>
 

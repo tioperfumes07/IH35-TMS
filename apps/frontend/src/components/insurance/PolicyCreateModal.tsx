@@ -435,7 +435,7 @@ export function PolicyCreateModal({ open, operatingCompanyId, onClose, onCreated
           <label className="space-y-1">
             <span className="text-xs font-semibold text-slate-700">Effective Date *</span>
             <DatePicker
-              className="w-full rounded-sm border border-gray-300 px-2 py-1"
+              className="w-full"
               value={form.effective_date}
               onChange={(next) => updateField("effective_date", next)}
             />
@@ -445,7 +445,7 @@ export function PolicyCreateModal({ open, operatingCompanyId, onClose, onCreated
           <label className="space-y-1">
             <span className="text-xs font-semibold text-slate-700">Expiry Date *</span>
             <DatePicker
-              className="w-full rounded-sm border border-gray-300 px-2 py-1"
+              className="w-full"
               value={form.expiry_date}
               onChange={(next) => updateField("expiry_date", next)}
             />

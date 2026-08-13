@@ -154,7 +154,7 @@ export function EldAuditTrailViewer() {
           <label className="text-sm text-gray-700">
             From
             <DatePicker
-              className="mt-1 w-full rounded-sm border border-gray-300 px-2 text-sm py-2"
+              className="mt-1 w-full"
               value={from}
               onChange={(next) => setFrom(next)}
             />
@@ -162,7 +162,7 @@ export function EldAuditTrailViewer() {
           <label className="text-sm text-gray-700">
             To
             <DatePicker
-              className="mt-1 w-full rounded-sm border border-gray-300 px-2 text-sm py-2"
+              className="mt-1 w-full"
               value={to}
               onChange={(next) => setTo(next)}
             />

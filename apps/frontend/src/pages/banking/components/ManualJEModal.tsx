@@ -254,7 +254,7 @@ export function ManualJEModal({ open, operatingCompanyId, onClose, onSaved, pref
             </div>
             <label className="block">
               Journal date
-              <DatePicker className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2" value={date} onChange={setDate} />
+              <DatePicker className="mt-1 h-8 w-full" value={date} onChange={setDate} />
             </label>
             <label className="block">
               Reference number (optional)

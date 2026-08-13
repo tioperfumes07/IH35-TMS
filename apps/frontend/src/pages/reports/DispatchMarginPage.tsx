@@ -71,11 +71,11 @@ export function DispatchMarginPage() {
       <section className="flex flex-wrap items-end gap-3 rounded-sm border border-slate-200 bg-white p-3">
         <label className="text-sm">
           From
-          <DatePicker className="ml-2 rounded-sm border px-2 py-1" value={period.start} onChange={(next) => setPeriod((p) => ({ ...p, start: next }))} />
+          <DatePicker className="ml-2" value={period.start} onChange={(next) => setPeriod((p) => ({ ...p, start: next }))} />
         </label>
         <label className="text-sm">
           To
-          <DatePicker className="ml-2 rounded-sm border px-2 py-1" value={period.end} onChange={(next) => setPeriod((p) => ({ ...p, end: next }))} />
+          <DatePicker className="ml-2" value={period.end} onChange={(next) => setPeriod((p) => ({ ...p, end: next }))} />
         </label>
         <label className="text-sm">
           Basis

@@ -136,7 +136,7 @@ export function GeofenceDwellReport() {
           <label className="text-xs text-slate-700">
             Start
             <DatePicker
-              className="mt-1 block h-9 w-full rounded-sm border border-slate-300 px-2 text-sm"
+              className="mt-1 block h-9 w-full"
               value={periodStart}
               onChange={(next) => setPeriodStart(next)}
             />
@@ -144,7 +144,7 @@ export function GeofenceDwellReport() {
           <label className="text-xs text-slate-700">
             End
             <DatePicker
-              className="mt-1 block h-9 w-full rounded-sm border border-slate-300 px-2 text-sm"
+              className="mt-1 block h-9 w-full"
               value={periodEnd}
               onChange={(next) => setPeriodEnd(next)}
             />

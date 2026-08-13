@@ -172,7 +172,7 @@ export function CreateWOSectionIdentification({
             <DatePicker
               value={watch("service_date") || ""}
               onChange={(v) => setValue("service_date", v, { shouldDirty: true })}
-              className="h-8 w-full rounded-sm border border-gray-300 px-2 text-sm"
+              className="h-8 w-full"
             />
           ) : (
             <input {...register("service_date")} className="h-8 w-full rounded-sm border border-gray-300 px-2 text-sm" />

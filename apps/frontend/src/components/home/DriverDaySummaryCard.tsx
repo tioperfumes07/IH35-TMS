@@ -80,7 +80,7 @@ export function DriverDaySummaryCard({ operatingCompanyId }: Props) {
         <DatePicker
           value={date}
           onChange={(next) => setDate(next)}
-          className="rounded-sm border border-slate-300 px-2 py-1 text-xs"
+          className=""
         />
       </div>
       {query.isLoading ? (

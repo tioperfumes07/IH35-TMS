@@ -363,7 +363,7 @@ export function LegalMatterFormFields({ form, setForm, mode, operatingCompanyId 
       <label className="text-xs text-gray-600">
         Next hearing (date)
         <DatePicker
-          className="mt-1 w-full rounded-sm border border-gray-200 px-2 py-1 text-sm"
+          className="mt-1 w-full"
           value={form.next_hearing_date}
           onChange={(next) => setForm((f) => ({ ...f, next_hearing_date: next }))}
         />
@@ -371,7 +371,7 @@ export function LegalMatterFormFields({ form, setForm, mode, operatingCompanyId 
       <label className="text-xs text-gray-600">
         Statute of limitations (date)
         <DatePicker
-          className="mt-1 w-full rounded-sm border border-gray-200 px-2 py-1 text-sm"
+          className="mt-1 w-full"
           value={form.statute_of_limitations_at}
           onChange={(next) => setForm((f) => ({ ...f, statute_of_limitations_at: next }))}
         />

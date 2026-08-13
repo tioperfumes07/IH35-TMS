@@ -137,11 +137,11 @@ export function MaintenanceCostPerUnitPage() {
       <div className="no-print flex flex-wrap items-end gap-3 rounded-sm border border-gray-200 bg-white p-3">
         <label className="text-xs text-gray-600">
           From
-          <DatePicker className="mt-1 block h-9 rounded-sm border px-2" value={period.start} onChange={(next) => setPeriod((p) => ({ ...p, start: next }))} />
+          <DatePicker className="mt-1 block h-9" value={period.start} onChange={(next) => setPeriod((p) => ({ ...p, start: next }))} />
         </label>
         <label className="text-xs text-gray-600">
           To
-          <DatePicker className="mt-1 block h-9 rounded-sm border px-2" value={period.end} onChange={(next) => setPeriod((p) => ({ ...p, end: next }))} />
+          <DatePicker className="mt-1 block h-9" value={period.end} onChange={(next) => setPeriod((p) => ({ ...p, end: next }))} />
         </label>
         <Button size="sm" onClick={() => setApplied({ ...period })}>
           Apply

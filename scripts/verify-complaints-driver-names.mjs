@@ -21,8 +21,7 @@ if (!/respondent_driver_name/.test(api)) fail.push(`${API}: list query does not 
 
 const tab = readFileSync(TAB, "utf8");
 // Every driver EntityLink in this grid must carry a label — that is the whole defect.
-const entityLinks = tab.match(/<EntityLink\b[\s\S]*?\/>/g) ?? [];
-const driverLinks = entityLinks.filter((link) => /kind="driver"/.test(link));
+const driverLinks = tab.match(/<EntityLink[\s\S]{0,240}?kind="driver"[\s\S]{0,240}?\/>/g) ?? [];
 if (driverLinks.length < 2)
   fail.push(`${TAB}: expected complainant + respondent driver EntityLinks, found ${driverLinks.length}`);
 for (const link of driverLinks) {

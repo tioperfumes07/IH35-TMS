@@ -172,7 +172,7 @@ export function TrainingRecordsPage({ operatingCompanyId }: Props) {
             <DatePicker
               value={expiryDate}
               onChange={(next) => setExpiryDate(next)}
-              className="mt-1 block h-8 w-full rounded-sm border border-gray-200 px-2 text-xs"
+              className="mt-1 block h-8 w-full"
               data-testid="training-record-expiry"
             />
           </label>

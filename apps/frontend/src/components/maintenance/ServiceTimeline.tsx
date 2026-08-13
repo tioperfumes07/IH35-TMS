@@ -73,7 +73,7 @@ export function ServiceTimeline({ companyId, unitId, equipmentId, showUnitEventT
           <label className="text-gray-600">
             From
             <DatePicker
-              className="ml-1 rounded-sm border border-gray-300 px-1 py-0.5"
+              className="ml-1"
               value={fromDate}
               onChange={(next) => setFromDate(next)}
               data-testid="service-timeline-from-date"
@@ -82,7 +82,7 @@ export function ServiceTimeline({ companyId, unitId, equipmentId, showUnitEventT
           <label className="text-gray-600">
             To
             <DatePicker
-              className="ml-1 rounded-sm border border-gray-300 px-1 py-0.5"
+              className="ml-1"
               value={toDate}
               onChange={(next) => setToDate(next)}
               data-testid="service-timeline-to-date"

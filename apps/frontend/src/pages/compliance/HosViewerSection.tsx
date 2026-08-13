@@ -151,7 +151,7 @@ export function HosViewerSection({ operatingCompanyId }: { operatingCompanyId: s
             value={selectedDate}
             max={today}
             onChange={(next) => next && setSelectedDate(next)}
-            className="h-[34px] rounded-sm border border-slate-300 px-2 text-[12px] text-slate-800"
+            className="h-[34px]"
             data-testid="hos-viewer-date"
           />
         </div>

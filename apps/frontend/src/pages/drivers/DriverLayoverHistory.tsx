@@ -126,10 +126,10 @@ export function DriverLayoverHistory({ driverUuid, operatingCompanyId }: Props) 
     <div>
       <div className="flex gap-3 mb-4">
         <DatePicker value={from} onChange={(next) => setFrom(next)}
-          className="border rounded-sm px-2 py-1 text-sm" />
+          className="" />
         <span className="self-center text-gray-400">—</span>
         <DatePicker value={to} onChange={(next) => setTo(next)}
-          className="border rounded-sm px-2 py-1 text-sm" />
+          className="" />
       </div>
       {isError && (
         <ListErrorState

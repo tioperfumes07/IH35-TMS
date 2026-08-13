@@ -366,7 +366,7 @@ export function FinancialStatementsPage() {
             <label className="text-xs text-slate-600">
               From
               <DatePicker
-                className="mt-1 block h-9 rounded-sm border border-slate-300 px-2"
+                className="mt-1 block h-9"
                 value={period.start}
                 onChange={(next) => setPeriod((p) => ({ ...p, start: next }))}
               />
@@ -374,7 +374,7 @@ export function FinancialStatementsPage() {
             <label className="text-xs text-slate-600">
               To
               <DatePicker
-                className="mt-1 block h-9 rounded-sm border border-slate-300 px-2"
+                className="mt-1 block h-9"
                 value={period.end}
                 onChange={(next) => setPeriod((p) => ({ ...p, end: next }))}
               />
@@ -387,7 +387,7 @@ export function FinancialStatementsPage() {
           <>
             <label className="text-xs text-slate-600">
               As-of date
-              <DatePicker className="mt-1 block h-9 rounded-sm border border-slate-300 px-2" value={asOf} onChange={(next) => setAsOf(next)} />
+              <DatePicker className="mt-1 block h-9" value={asOf} onChange={(next) => setAsOf(next)} />
             </label>
             <Button size="sm" onClick={() => setAppliedAsOf(asOf)}>
               Apply

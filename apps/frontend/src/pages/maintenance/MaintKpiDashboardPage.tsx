@@ -202,7 +202,7 @@ export function MaintKpiDashboardPage() {
               <label className="flex flex-col gap-0.5">
                 <span className="text-[10px] uppercase text-slate-500">From</span>
                 <DatePicker
-                  className="rounded-sm border border-gray-300 px-2 py-1"
+                  className=""
                   value={staged.draft.periodStart}
                   onChange={(next) => staged.setDraft({ ...staged.draft, periodStart: next })}
                   data-testid="maint-kpi-filter-start"
@@ -211,7 +211,7 @@ export function MaintKpiDashboardPage() {
               <label className="flex flex-col gap-0.5">
                 <span className="text-[10px] uppercase text-slate-500">To</span>
                 <DatePicker
-                  className="rounded-sm border border-gray-300 px-2 py-1"
+                  className=""
                   value={staged.draft.periodEnd}
                   onChange={(next) => staged.setDraft({ ...staged.draft, periodEnd: next })}
                   data-testid="maint-kpi-filter-end"

@@ -369,11 +369,11 @@ export function TransfersListPage() {
         <div className="grid grid-cols-1 gap-3 md:grid-cols-5">
           <label className="text-xs text-gray-600">
             From
-            <DatePicker value={staged.draft.fromDate} onChange={(next) => staged.setDraft({ ...staged.draft, fromDate: next })} className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2 text-sm" />
+            <DatePicker value={staged.draft.fromDate} onChange={(next) => staged.setDraft({ ...staged.draft, fromDate: next })} className="mt-1 h-8 w-full" />
           </label>
           <label className="text-xs text-gray-600">
             To
-            <DatePicker value={staged.draft.toDate} onChange={(next) => staged.setDraft({ ...staged.draft, toDate: next })} className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2 text-sm" />
+            <DatePicker value={staged.draft.toDate} onChange={(next) => staged.setDraft({ ...staged.draft, toDate: next })} className="mt-1 h-8 w-full" />
           </label>
           <label className="text-xs text-gray-600">
             Type

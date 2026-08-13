@@ -909,7 +909,7 @@ export function VendorDetailPage() {
                 <div className="grid gap-2 md:grid-cols-2">
                   <label className="block">
                     Payment date
-                    <DatePicker className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1" value={billPayDate} onChange={setBillPayDate} />
+                    <DatePicker className="mt-0.5 w-full" value={billPayDate} onChange={setBillPayDate} />
                   </label>
                   <label className="block">
                     Amount (USD)

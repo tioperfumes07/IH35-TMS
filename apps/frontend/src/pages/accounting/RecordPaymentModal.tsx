@@ -329,7 +329,7 @@ export function RecordPaymentModal({
 
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
             Payment date
-            <DatePicker value={paymentDate} onChange={setPaymentDate} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" />
+            <DatePicker value={paymentDate} onChange={setPaymentDate} className="h-9" />
           </label>
 
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">

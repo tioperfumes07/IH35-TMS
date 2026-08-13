@@ -197,8 +197,8 @@ export function ManualJEListPage() {
           <option value="posted">Posted</option>
           <option value="voided">Voided</option>
         </SelectCombobox>
-        <DatePicker className="h-8 rounded-sm border border-gray-300 px-2" value={staged.draft.fromDate} onChange={(next) => staged.setDraft({ ...staged.draft, fromDate: next })} />
-        <DatePicker className="h-8 rounded-sm border border-gray-300 px-2" value={staged.draft.toDate} onChange={(next) => staged.setDraft({ ...staged.draft, toDate: next })} />
+        <DatePicker className="h-8" value={staged.draft.fromDate} onChange={(next) => staged.setDraft({ ...staged.draft, fromDate: next })} />
+        <DatePicker className="h-8" value={staged.draft.toDate} onChange={(next) => staged.setDraft({ ...staged.draft, toDate: next })} />
         <ReferenceSelect
           value={staged.draft.accountId || null}
           onChange={(next) => staged.setDraft({ ...staged.draft, accountId: next ?? "" })}

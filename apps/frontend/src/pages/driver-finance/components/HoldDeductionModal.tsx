@@ -66,7 +66,7 @@ export function HoldDeductionModal({ open, deduction, operatingCompanyId, onClos
             <DatePicker
               value={holdUntil}
               onChange={setHoldUntil}
-              className="h-8 w-full rounded-sm border border-gray-300 px-2 text-sm"
+              className="h-8 w-full"
             />
           </div>
           <div className="flex gap-2">

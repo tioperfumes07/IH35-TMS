@@ -327,8 +327,8 @@ export function LegalContractInstancesPage() {
                 <option value="other">Other</option>
               </SelectCombobox>
               <div className="grid grid-cols-2 gap-2">
-                <DatePicker value={staged.draft.dateFrom} onChange={(next) => staged.setDraft({ ...staged.draft, dateFrom: next })} className="h-9 rounded-sm border border-gray-300 px-2 text-sm" />
-                <DatePicker value={staged.draft.dateTo} onChange={(next) => staged.setDraft({ ...staged.draft, dateTo: next })} className="h-9 rounded-sm border border-gray-300 px-2 text-sm" />
+                <DatePicker value={staged.draft.dateFrom} onChange={(next) => staged.setDraft({ ...staged.draft, dateFrom: next })} className="h-9" />
+                <DatePicker value={staged.draft.dateTo} onChange={(next) => staged.setDraft({ ...staged.draft, dateTo: next })} className="h-9" />
               </div>
             </div>
           </CollapsedListFilters>

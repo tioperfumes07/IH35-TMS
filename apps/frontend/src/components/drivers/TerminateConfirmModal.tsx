@@ -111,7 +111,7 @@ export function TerminateConfirmModal({
             max={todayIso()}
             value={eventDate}
             onChange={setEventDate}
-            className="rounded-sm border border-gray-300 h-9 px-2 text-[13px]"
+            className="h-9"
           />
         </div>
         <div className="flex flex-col gap-1">

@@ -167,7 +167,7 @@ export function BreakEvenPage() {
               value={fromDate}
               max={toDate}
               onChange={setFromDate}
-              className="mt-1 rounded-sm border border-slate-300 px-2 py-1 text-sm text-slate-900"
+              className="mt-1"
             />
           </label>
           <label className="flex flex-col text-xs font-medium text-slate-600">
@@ -177,7 +177,7 @@ export function BreakEvenPage() {
               min={fromDate}
               max={todayIso()}
               onChange={setToDate}
-              className="mt-1 rounded-sm border border-slate-300 px-2 py-1 text-sm text-slate-900"
+              className="mt-1"
             />
           </label>
           <Button size="sm" onClick={() => setAppliedRange({ from: fromDate, to: toDate })}>

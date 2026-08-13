@@ -184,7 +184,7 @@ export function DOTInspectionsTab() {
         <InspectionScoreBadge companyId={companyId} />
       </div>
       <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-9">
-        <DatePicker className="rounded-sm border border-gray-300 px-2 py-1 text-xs" value={form.inspection_date} onChange={(next) => setForm((v) => ({ ...v, inspection_date: next }))} />
+        <DatePicker className="" value={form.inspection_date} onChange={(next) => setForm((v) => ({ ...v, inspection_date: next }))} />
         <div data-testid="dot-inspection-driver-picker">
           <DriverPickerWithCreate
             operatingCompanyId={companyId}

@@ -48,7 +48,7 @@ export function CashFlowReport() {
       <div className="flex flex-wrap items-end gap-3 rounded-sm border bg-white p-4">
         <label className="text-sm">
           As of
-          <DatePicker className="ml-2 rounded-sm border px-2 py-1" value={asOf} onChange={(next) => setAsOf(next)} />
+          <DatePicker className="ml-2" value={asOf} onChange={(next) => setAsOf(next)} />
         </label>
         <Button onClick={() => setApplied(asOf)}>Apply</Button>
       </div>

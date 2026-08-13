@@ -38,7 +38,7 @@ export function ProfilesTab({ profiles, activeCompany, setActiveCompany, onChang
             <DatePicker
               value={profile.petitionDate ?? ""}
               onChange={(value) => onChange(activeCompany, (draft) => ({ ...draft, petitionDate: value }))}
-              className="w-full rounded-sm border px-2 py-1.5 text-sm"
+              className="w-full"
               data-testid="form425c-petition-date"
             />
           </div>

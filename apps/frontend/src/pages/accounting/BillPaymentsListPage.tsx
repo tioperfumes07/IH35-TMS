@@ -252,7 +252,7 @@ export function BillPaymentsListPage() {
             <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
               From
               <DatePicker
-                className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]"
+                className="h-9"
                 value={staged.draft.dateFrom}
                 onChange={(next) => staged.setDraft({ ...staged.draft, dateFrom: next })}
               />
@@ -260,7 +260,7 @@ export function BillPaymentsListPage() {
             <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
               To
               <DatePicker
-                className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]"
+                className="h-9"
                 value={staged.draft.dateTo}
                 onChange={(next) => staged.setDraft({ ...staged.draft, dateTo: next })}
               />

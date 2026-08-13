@@ -178,7 +178,7 @@ export function UserActivityTab({ operatingCompanyId, userId }: UserActivityTabP
         <label className="text-xs text-gray-600">
           From
           <DatePicker
-            className="mt-1 block rounded-sm border border-gray-300 px-2 py-1 text-sm"
+            className="mt-1 block"
             value={fromDate}
             onChange={(next) => setFromDate(next)}
           />
@@ -186,7 +186,7 @@ export function UserActivityTab({ operatingCompanyId, userId }: UserActivityTabP
         <label className="text-xs text-gray-600">
           To
           <DatePicker
-            className="mt-1 block rounded-sm border border-gray-300 px-2 py-1 text-sm"
+            className="mt-1 block"
             value={toDate}
             onChange={(next) => setToDate(next)}
           />

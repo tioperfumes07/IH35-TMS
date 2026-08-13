@@ -169,7 +169,7 @@ export function CashFlowOverviewPage() {
             <label className="text-xs text-gray-600">
               As-of date
               <DatePicker
-                className="mt-1 h-9 rounded-sm border border-gray-300 px-2"
+                className="mt-1 h-9"
                 value={asOf}
                 onChange={(next) => setAsOf(next)}
               />

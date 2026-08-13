@@ -516,8 +516,8 @@ export function VendorsPage() {
                           </SelectCombobox>
                           <label className="mb-1 block text-xs font-semibold text-gray-600">Date range</label>
                           <div className="mb-2 grid grid-cols-2 gap-2">
-                            <DatePicker value={dateFrom} onChange={setDateFrom} className="rounded-sm border border-gray-300 px-2 py-1 text-sm" />
-                            <DatePicker value={dateTo} onChange={setDateTo} className="rounded-sm border border-gray-300 px-2 py-1 text-sm" />
+                            <DatePicker value={dateFrom} onChange={setDateFrom} className="" />
+                            <DatePicker value={dateTo} onChange={setDateTo} className="" />
                           </div>
                           <label className="mb-1 block text-xs font-semibold text-gray-600">Category</label>
                           <input value={txnCategoryFilter} onChange={(event) => setTxnCategoryFilter(event.target.value)} className="w-full rounded-sm border border-gray-300 px-2 py-1 text-sm" placeholder="Category text" />
