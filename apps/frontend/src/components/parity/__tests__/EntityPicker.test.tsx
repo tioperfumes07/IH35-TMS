@@ -181,6 +181,28 @@ describe("EntityPicker (C1 picker law)", () => {
     expect(screen.queryByText("Created Vendor")).toBeNull();
   });
 
+  it("suppresses the prior-company FK even when a legacy parent ignores the null callback", async () => {
+    const onChange = vi.fn();
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const renderPicker = (companyId: string) => (
+      <QueryClientProvider client={qc}>
+        <EntityPicker
+          kind="vendor"
+          operatingCompanyId={companyId}
+          value="vendor-company-a"
+          onChange={onChange}
+          dataTestId="stubborn-parent-picker"
+        />
+      </QueryClientProvider>
+    );
+    const view = render(renderPicker(COMPANY));
+    await waitFor(() => expect((screen.getByTestId("stubborn-parent-picker") as HTMLInputElement).value).toBe("vendor-company-a"));
+
+    view.rerender(renderPicker("22222222-2222-4222-8222-222222222222"));
+    await waitFor(() => expect(onChange).toHaveBeenCalledWith(null));
+    expect((screen.getByTestId("stubborn-parent-picker") as HTMLInputElement).value).toBe("");
+  });
+
   it("stacks as a ParityDrawer when nested inside an open money drawer (CHROME-11)", async () => {
     const user = userEvent.setup();
     wrap(<EntityPicker kind="driver" operatingCompanyId={COMPANY} value={null} onChange={vi.fn()} nestedInDrawer />);
