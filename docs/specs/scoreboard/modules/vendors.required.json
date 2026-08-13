@@ -249,8 +249,7 @@
       "required": [
         "vendor",
         "connectivity",
-        "reverse_link",
-        "bank"
+        "reverse_link"
       ]
     },
     {

@@ -32,8 +32,9 @@
  *
  * No code change in this pass — pure verification + tagging.
  *
- * @matrix-built {"modules":["reports"],"cols":["gl_je"],"leafRe":"^(report\\.ar_aging|report\\.ap_aging|report\\.trial_balance|report\\.profit_loss|report\\.balance_sheet|audit\\.financial_change_log|audit\\.void_reversal|audit\\.deduction_trail|audit\\.period_close_history)$","task":"WAVE-C-gl_je-reports","vertical":"column-wave"}
+ * @matrix-built {"modules":["reports"],"cols":["gl_je"],"leafRe":"^(report\\.ar_aging|report\\.ap_aging|report\\.trial_balance|report\\.profit_loss|report\\.balance_sheet|report\\.management|audit\\.financial_change_log|audit\\.void_reversal|audit\\.deduction_trail|audit\\.period_close_history)$","task":"WAVE-C-gl_je-reports","vertical":"column-wave"}
  * @matrix-built {"modules":["reports"],"cols":["liability"],"leafRe":"^report\\.settlement_summary$","task":"WAVE-C-liability-reports-settlement-summary","vertical":"column-wave"}
+ * @matrix-built {"modules":["reports"],"cols":["settlement"],"leafRe":"^(report\\.settlement_summary|runner\\.driver_pay_history|runner\\.driver_settlement)$","task":"WAVE-C-settlement-reports","vertical":"column-wave"}
  *
  * Self-test: node scripts/verify-wave-c-gl-je-reports.mjs --selftest
  */
@@ -95,6 +96,31 @@ const CHECKS = [
     file: "apps/frontend/src/pages/reports/SettlementSummaryPage.tsx",
     pattern: /deduction_cents/,
   },
+  {
+    name: "ManagementReportPackagePage.tsx wires real P&L + Balance Sheet APIs",
+    file: "apps/frontend/src/pages/reports/ManagementReportPackagePage.tsx",
+    pattern: /getProfitLossReport[\s\S]*getBalanceSheetReport/,
+  },
+  {
+    name: "runner-config.ts driver-pay-history hits driver settlements API",
+    file: "apps/frontend/src/pages/reports/runners/runner-config.ts",
+    pattern: /"driver-pay-history"[\s\S]*\/api\/v1\/reports\/driver-pay-history/,
+  },
+  {
+    name: "runner-config.ts driver-settlement hits driver-settlement-summary API",
+    file: "apps/frontend/src/pages/reports/runners/runner-config.ts",
+    pattern: /"driver-settlement"[\s\S]*\/api\/v1\/reports\/driver-settlement-summary/,
+  },
+  {
+    name: "driver-pay-history.routes.ts sources driver_finance.driver_settlements",
+    file: "apps/backend/src/reports/driver-pay-history.routes.ts",
+    pattern: /driver_finance\.driver_settlements/,
+  },
+  {
+    name: "driver-settlement-summary.routes.ts sources driver_finance.driver_settlements",
+    file: "apps/backend/src/reports/driver-settlement-summary.routes.ts",
+    pattern: /driver_finance\.driver_settlements/,
+  },
 ];
 
 export function checkAll(readFile) {
@@ -122,6 +148,12 @@ if (process.argv.includes("--selftest")) {
     "apps/backend/src/audit/audit-reports.routes.ts":
       "app.get(\"/api/v1/audit/reports/financial-change-log\" ... '%journal%' ... FROM events.event_log el ... FROM audit.audit_events ae ... \"/api/v1/audit/reports/deduction-trail\" ... chargeback ... \"/api/v1/audit/reports/period-close-history\" ... period%close",
     "apps/frontend/src/pages/reports/SettlementSummaryPage.tsx": "r.deduction_cents",
+    "apps/frontend/src/pages/reports/ManagementReportPackagePage.tsx":
+      "getProfitLossReport(...)\ngetBalanceSheetReport(...)",
+    "apps/frontend/src/pages/reports/runners/runner-config.ts":
+      '"driver-pay-history": { apiPath: "/api/v1/reports/driver-pay-history" }\n"driver-settlement": { apiPath: "/api/v1/reports/driver-settlement-summary" }',
+    "apps/backend/src/reports/driver-pay-history.routes.ts": "FROM driver_finance.driver_settlements s",
+    "apps/backend/src/reports/driver-settlement-summary.routes.ts": "FROM driver_finance.driver_settlements s",
   };
   const goodFailures = checkAll((f) => GOOD_FIXTURES[f] ?? null);
   if (goodFailures.length) {

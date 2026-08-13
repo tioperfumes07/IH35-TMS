@@ -151,7 +151,6 @@
       "required": [
         "customer",
         "vendor",
-        "gl_je",
         "liability",
         "connectivity",
         "reverse_link",
@@ -242,7 +241,6 @@
       "required": [
         "customer",
         "vendor",
-        "gl_je",
         "liability",
         "connectivity",
         "reverse_link",
@@ -257,7 +255,6 @@
       "required": [
         "customer",
         "vendor",
-        "gl_je",
         "liability",
         "connectivity",
         "reverse_link",
@@ -298,7 +295,6 @@
       "route_hint": "/finance/amortization",
       "required": [
         "liability",
-        "gl_je",
         "connectivity",
         "reverse_link",
         "picker_law"

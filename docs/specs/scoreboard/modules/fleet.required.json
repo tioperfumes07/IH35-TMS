@@ -483,7 +483,6 @@
         "unit",
         "load",
         "expense",
-        "gl_je",
         "connectivity",
         "reverse_link"
       ]
@@ -548,7 +547,6 @@
       "required": [
         "unit",
         "expense",
-        "gl_je",
         "connectivity",
         "reverse_link",
         "bank"
@@ -588,8 +586,7 @@
         "unit",
         "connectivity",
         "reverse_link",
-        "qbo_chrome",
-        "invoice"
+        "qbo_chrome"
       ]
     },
     {
@@ -765,7 +762,6 @@
         "vendor",
         "ap_bill",
         "expense",
-        "gl_je",
         "liability",
         "connectivity",
         "reverse_link"
@@ -894,7 +890,6 @@
       "required": [
         "trailer",
         "expense",
-        "gl_je",
         "connectivity",
         "reverse_link",
         "bank"
@@ -932,8 +927,7 @@
         "trailer",
         "connectivity",
         "reverse_link",
-        "qbo_chrome",
-        "invoice"
+        "qbo_chrome"
       ]
     },
     {

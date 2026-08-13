@@ -651,7 +651,6 @@
       "required": [
         "customer",
         "vendor",
-        "gl_je",
         "ap_bill",
         "expense",
         "connectivity",
@@ -776,8 +775,7 @@
         "qbo_chrome",
         "load",
         "expense",
-        "vendor",
-        "bank"
+        "vendor"
       ]
     },
     {
@@ -843,8 +841,7 @@
         "customer",
         "connectivity",
         "reverse_link",
-        "qbo_chrome",
-        "bank"
+        "qbo_chrome"
       ]
     },
     {
@@ -963,8 +960,7 @@
         "expense",
         "connectivity",
         "reverse_link",
-        "qbo_chrome",
-        "invoice"
+        "qbo_chrome"
       ]
     },
     {
