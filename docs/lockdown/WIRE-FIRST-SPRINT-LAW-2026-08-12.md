@@ -2,11 +2,13 @@
 
 **Answered = closed. Do not re-ask.**
 
+**★ AMENDMENT 2026-08-12 19:43 CT (owner):** Create-path **trip FK wiring** (accident/expense/claim/WO/fuel trailer+load stamps) is **ahead of** matrix Required-density / inventory theater. Scoreboard Required cells are **not** Built. Canonical seat packet: `docs/bus/FINAL-CREATE-PATH-TRIP-WIRING-2026-08-12/`. PR #6290 CLOSED as theater. Quality bar: `docs/specs/OWNER-QUALITY-COMPACT.md` (Desktop `Claude.docx`).
+
 **Vertical companion (supreme for work shape):** `docs/lockdown/VERTICAL-WIRING-LAW-2026-08-12.md`
 
 ## The one-line law
 
-> **WIRE FIRST · VERTICALLY · TEST LATER.** Complete wiring on **all 10 priority modules** (Box 3 **Built** = 100%) by **column waves A→D** extending to **all 28 modules**. **No Chrome / Box 4 Live** until 3-box gate — then test.
+> **WIRE FIRST · VERTICALLY · TEST LATER.** Complete wiring on **all 10 priority modules** (Box 3 **Built** = 100%) by **column waves A→D** extending to **all 28 modules**. **No Chrome / Box 4 Live** until 3-box gate — then test. **Within that:** create-path trip FKs before Required-map expansion.
 
 ## The 10 priority modules (USMCA · owner locked)
 

@@ -71,11 +71,12 @@ To exercise a skeleton hop before real operational values exist, use a **clearly
 
 ## 8. WIRE-FIRST SPRINT + VERTICAL WIRING (owner-locked 2026-08-12)
 
-**Canonical:** `docs/lockdown/VERTICAL-WIRING-LAW-2026-08-12.md` · `docs/lockdown/WIRE-FIRST-SPRINT-LAW-2026-08-12.md`
+**Canonical:** `docs/lockdown/VERTICAL-WIRING-LAW-2026-08-12.md` · `docs/lockdown/WIRE-FIRST-SPRINT-LAW-2026-08-12.md`  
+**Seat packet (2026-08-12 19:43):** `docs/bus/FINAL-CREATE-PATH-TRIP-WIRING-2026-08-12/` — create-path trip FKs **before** matrix Required-density theater (PR #6290 CLOSED). Scoreboard Required ≠ Built. Quality: `OWNER-QUALITY-COMPACT.md` / Desktop `Claude.docx`.
 
 - **Vertical = one matrix column id (or CLASS-SWEEP) × every module that owes it** — priority 10 gate; extend to all 28 modules. **No seat module subsets. No module-deep slices.**
 - **10 priority modules:** lists · accounting · dispatch · settlements · factoring · banking · customers · vendors · drivers · safety (USMCA).
-- **Wire until 3 boxes green** on every Required cell. **Box 4 Live = after gate only.**
+- **Wire until 3 boxes green** on every Required cell. **Box 4 Live = after gate only.** Within that: **create-path trip stamps first.**
 - **Four seats:** Cursor · Codex · CC-1 · CC-2. **No CC-3.** CC-2 **ships** vertical PRs.
 - **Paste:** `docs/specs/CODER-PASTE-INSTRUCTIONS-2026-08-12.md` · **INBOX:** `docs/bus/INBOX-*.md`
 
