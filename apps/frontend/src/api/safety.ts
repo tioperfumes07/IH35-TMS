@@ -223,9 +223,10 @@ export function getSafetyDvirDetail(id: string, companyId: string) {
 
 export function getSafetyAccidents(
   companyId: string,
-  params: { unit_id?: string; load_id?: string; trailer_id?: string } = {}
+  params: { driver_id?: string; unit_id?: string; load_id?: string; trailer_id?: string } = {}
 ) {
   const qs = new URLSearchParams({ operating_company_id: companyId });
+  if (params.driver_id) qs.set("driver_id", params.driver_id);
   // SAF-F17 / SAF-C01: server-side unit/load/trailer scoping (the route caps at LIMIT 500).
   // trailer_id landed in RANK5-ACCIDENT-TRAILER-ID (PR #6324) — safety.accident_reports.trailer_id
   // (mdata.equipment, PR #6316) is now filterable, not just storable.
