@@ -110,6 +110,8 @@ type ListBillsOptions = {
   insuranceClaimId?: string;
   /** ACCT-F5036 — unit→bill reverse list filter (accounting.bills.unit_id). */
   unitId?: string;
+  /** ACCT-F5037 — load→bill reverse via EXISTS on accounting.bill_lines.load_id. */
+  loadId?: string;
   limit: number;
   offset: number;
 };
@@ -678,6 +680,16 @@ export async function listBillsByVendor(
       values.push(options.unitId);
       where.push(`b.unit_id = $${values.length}::uuid`);
     }
+    if (options.loadId) {
+      values.push(options.loadId);
+      where.push(
+        `EXISTS (
+           SELECT 1 FROM accounting.bill_lines bl
+            WHERE bl.bill_id = b.id
+              AND bl.load_id = $${values.length}::uuid
+         )`
+      );
+    }
     values.push(options.limit, options.offset);
     const res = await client.query<BillRow>(
       `
@@ -733,6 +745,16 @@ export async function listAllBillsForCompany(
     if (options.unitId) {
       values.push(options.unitId);
       where.push(`b.unit_id = $${values.length}::uuid`);
+    }
+    if (options.loadId) {
+      values.push(options.loadId);
+      where.push(
+        `EXISTS (
+           SELECT 1 FROM accounting.bill_lines bl
+            WHERE bl.bill_id = b.id
+              AND bl.load_id = $${values.length}::uuid
+         )`
+      );
     }
     values.push(options.limit, options.offset);
     const res = await client.query<BillRow>(
@@ -1057,17 +1079,7 @@ export async function listUnitLinkedFinancials(
 export async function listBills(
   userId: string,
   operatingCompanyId: string,
-  options: {
-    vendorId?: string;
-    status?: BillStatus;
-    fromDate?: string;
-    toDate?: string;
-    hasBalance?: boolean;
-    insuranceClaimId?: string;
-    unitId?: string;
-    limit: number;
-    offset: number;
-  }
+  options: ListBillsOptions & { vendorId?: string }
 ) {
   if (!options.vendorId) {
     return listAllBillsForCompany(userId, operatingCompanyId, options);

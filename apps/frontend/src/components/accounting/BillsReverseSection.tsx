@@ -10,9 +10,13 @@ import { entityLabel } from "../../lib/entity-label";
  * FINAL-WEEKEND-FULL-WIRING-2026-08-12 rank 6 — Built reverse_link for bills.
  * ACCT-F5035: insurance_claim_id on ClaimsTab.
  * ACCT-F5036: unit_id on VehicleProfilePage (create already stamps unit_id).
+ * ACCT-F5037: load_id via bill_lines on LoadDetailDrawer.
  */
 
-type Filter = { insurance_claim_id: string; unit_id?: never } | { unit_id: string; insurance_claim_id?: never };
+type Filter =
+  | { insurance_claim_id: string; unit_id?: never; load_id?: never }
+  | { unit_id: string; insurance_claim_id?: never; load_id?: never }
+  | { load_id: string; insurance_claim_id?: never; unit_id?: never };
 
 type Props = {
   operatingCompanyId: string;

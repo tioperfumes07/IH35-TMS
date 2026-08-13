@@ -5,3 +5,6 @@
 2026-08-13T08:42CT | Cursor | #6410+#6411 ACCT-F5033 | NEXT=rank6 claim expense reverse
 2026-08-13T08:50CT | Cursor | #6412 done | NEXT=F5035 bills claim reverse
 2026-08-13T08:55CT | Cursor | ACCT-F5036 shipping | NEXT=rank6 reverse Built
+2026-08-13T08:56CT | Cursor | #6416 F5036 done | NEXT=rank6 reverse
+2026-08-13T08:57CT | Cursor | ACCT-F5037 shipping | NEXT=rank6 reverse
+2026-08-13T08:58CT | Cursor | # F5037 done | NEXT=rank6 reverse

@@ -66,3 +66,27 @@ describe("accounting/bills ACCT-F5036-UNIT-LIST-FILTER-REVERSE", () => {
     expect(page).toMatch(/BillsReverseSection[\s\S]{0,280}?filter=\{\{\s*unit_id:/);
   });
 });
+
+describe("accounting/bills ACCT-F5037-LOAD-LINE-LIST-FILTER-REVERSE", () => {
+  it("GET list accepts optional load_id", () => {
+    expect(routes).toMatch(
+      /listBillsQuerySchema = companyQuerySchema\.extend\(\{[\s\S]*?load_id: z\.string\(\)\.uuid\(\)\.optional\(\),/
+    );
+  });
+
+  it("passes loadId and filters via EXISTS on bill_lines.load_id", () => {
+    expect(routes).toContain("loadId: query.data.load_id");
+    expect(service).toContain("if (options.loadId) {");
+    expect(service).toContain("AND bl.load_id = $${values.length}::uuid");
+    const hits = service.split("if (options.loadId) {").length - 1;
+    expect(hits).toBeGreaterThanOrEqual(2);
+  });
+
+  it("LoadDetailDrawer mounts BillsReverseSection with load_id", () => {
+    const drawer = fs.readFileSync(
+      path.join(here, "../../../../frontend/src/components/dispatch/LoadDetailDrawer.tsx"),
+      "utf8"
+    );
+    expect(drawer).toMatch(/BillsReverseSection[\s\S]{0,280}?filter=\{\{\s*load_id:/);
+  });
+});
