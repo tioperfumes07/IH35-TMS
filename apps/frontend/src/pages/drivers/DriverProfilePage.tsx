@@ -28,7 +28,7 @@ import { LegalMattersReverseSection } from "../../components/legal/LegalMattersR
 import { InsuranceClaimsReverseSection } from "../../components/insurance/InsuranceClaimsReverseSection";
 import { DriverFinesReverseSection } from "../../components/safety/DriverFinesReverseSection";
 import { DriverSafetyReverseSection } from "../../components/safety/DriverSafetyReverseSection";
-import { DriverRoadServiceReverseSection } from "../../components/maintenance/DriverRoadServiceReverseSection";
+import { RoadServiceReverseSection } from "../../components/maintenance/RoadServiceReverseSection";
 import { W8BenModal } from "../../components/drivers/W8BenModal";
 import { KpiCard } from "../../components/layout/KpiCard";
 import { KpiStrip } from "../../components/layout/KpiStrip";
@@ -544,8 +544,9 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
         />
       </div>
       <div data-testid="dp-section-road-service-reverse">
-        <DriverRoadServiceReverseSection
-          driverId={id}
+        <RoadServiceReverseSection
+          filter={{ driver_id: id }}
+          contextLabel="this driver"
           data-testid="driver-profile-road-service-reverse"
         />
       </div>
