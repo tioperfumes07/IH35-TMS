@@ -1,7 +1,7 @@
 import type { FormEvent } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { getWoCostContext } from "../../api/maintenance";
+import { getWoCostContext, suggestExpenseLoad } from "../../api/maintenance";
 import { ensureDriverVendors, listVendors } from "../../api/mdata";
 import { DriverPickerWithCreate } from "../drivers/DriverPickerWithCreate";
 import { listCatalogAccounts } from "../../api/catalog-accounts";
@@ -67,6 +67,8 @@ export function RecordExpenseForm({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [draftAttachmentEntityId, setDraftAttachmentEntityId] = useState(() => crypto.randomUUID());
+  /** Once auto-filled from suggest-load, do not clobber an operator override until driver/unit/date change. */
+  const [suggestionPinned, setSuggestionPinned] = useState(false);
 
   // Prefill unit from WO context without clobbering a user picker change.
   useEffect(() => {
@@ -80,6 +82,43 @@ export function RecordExpenseForm({
     enabled: Boolean(operatingCompanyId),
     staleTime: 60_000,
   });
+  // Going-forward trip linkage (Rule 32 / G18): same resolver CreateWorkOrderModal uses — when driver
+  // or unit is set for the payment date, stamp the active load. Historical QBO import rows stay
+  // load-null exempt; this only affects NEW create paths.
+  const suggestionQuery = useQuery({
+    queryKey: [
+      "record-expense",
+      "suggest-load",
+      operatingCompanyId,
+      values.driverId,
+      values.unitId,
+      values.billDate,
+    ],
+    queryFn: () =>
+      suggestExpenseLoad({
+        operating_company_id: operatingCompanyId,
+        driver_id: values.driverId || undefined,
+        unit_id: values.unitId || undefined,
+        transaction_date: values.billDate,
+      }),
+    enabled: Boolean(operatingCompanyId && values.billDate && (values.driverId || values.unitId)),
+  });
+
+  useEffect(() => {
+    setSuggestionPinned(false);
+  }, [values.driverId, values.unitId, values.billDate]);
+
+  useEffect(() => {
+    if (values.loadId || suggestionPinned) return;
+    const suggested = suggestionQuery.data?.data;
+    if (!suggested?.load_id) return;
+    setValues((prev) => ({
+      ...prev,
+      loadId: suggested.load_id,
+      loadLabel: suggested.load_number || suggested.load_id,
+    }));
+    setSuggestionPinned(true);
+  }, [suggestionPinned, suggestionQuery.data, values.loadId]);
   const vendorsQuery = useQuery({
     queryKey: ["record-expense", "vendors", operatingCompanyId],
     queryFn: async () => {
@@ -372,6 +411,11 @@ export function RecordExpenseForm({
             dataTestId={fieldId("load")}
             allowClear
           />
+          {suggestionPinned && values.loadId && suggestionQuery.data?.data?.load_id === values.loadId ? (
+            <p className="mt-1 text-[11px] text-slate-600" data-testid="record-expense-load-suggested">
+              Auto-filled from active trip for this driver/unit on the payment date (same as work orders).
+            </p>
+          ) : null}
         </div>
       </label>
 
