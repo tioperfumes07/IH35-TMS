@@ -16,6 +16,8 @@ const insuranceApiMocks = {
         case_number: "CASE-1001",
         status: "active",
         claim_id: "clm-9999",
+        driver_id: "driver-9999",
+        unit_id: "unit-9999",
         court_name: "State Court",
         filed_date: "2026-01-01",
         demand_cents: 100000,
@@ -26,6 +28,8 @@ const insuranceApiMocks = {
         case_number: "CASE-2002",
         status: "filed",
         claim_id: null,
+        driver_id: null,
+        unit_id: null,
         court_name: "Other Court",
         filed_date: "2026-02-01",
         demand_cents: 0,
@@ -114,6 +118,14 @@ describe("LawsuitsTab ?lawsuit_id= reverse drill-through (Law §9)", () => {
     await waitFor(() => {
       expect(screen.getByTestId("insurance-lawsuit-legal-matters")).toBeInTheDocument();
     });
+  });
+
+  it("renders direct driver and unit drill-through resolved through the linked claim", async () => {
+    render(wrap(<LawsuitsTab />, "/safety/insurance/lawsuits"));
+
+    await screen.findByText("CASE-1001");
+    expect(screen.getByRole("link", { name: /Driver/ })).toHaveAttribute("href", expect.stringContaining("driver-9999"));
+    expect(screen.getByRole("link", { name: /Unit/ })).toHaveAttribute("href", expect.stringContaining("unit-9999"));
   });
 
   it("renders with no selection when lawsuit_id is absent (unchanged default behavior)", async () => {

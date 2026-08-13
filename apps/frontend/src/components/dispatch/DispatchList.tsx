@@ -6,7 +6,6 @@ import "../../design/design-tokens.css";
 import { Button } from "../Button";
 import { ListErrorState } from "../ListErrorState";
 import { flagDotColor, flagDotLabel, flagDotTag, hasVisibleFlag, STATUS_LABEL, formatMoneyCents } from "./constants";
-import { InTransitEtaChip } from "./InTransitEtaChip";
 import { DriverHosPill } from "../../pages/dispatch/DriverHosPill";
 import { DriverHosClockCells, DriverHosStatusDot } from "./hos/DriverHosClocks";
 import { HOS_COLUMNS } from "./hos/hosClocks";
@@ -323,11 +322,11 @@ export function DispatchList({
                     </td>
                     {showEtaColumn ? (
                       <td className="px-3 py-2 align-middle">
-                        {load.status === "in_transit" ? (
-                          <InTransitEtaChip loadId={load.id} operatingCompanyId={load.operating_company_id} />
-                        ) : (
-                          <span className="text-[11px] text-gray-300">—</span>
-                        )}
+                        <span className="text-[11px] text-gray-600">
+                          {load.status === "in_transit" && load.samsara_eta_at
+                            ? new Date(load.samsara_eta_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+                            : "—"}
+                        </span>
                       </td>
                     ) : null}
                     <td className="px-3 py-2">{formatMoneyCents(load.rate_total_cents, load.currency_code)}</td>
@@ -426,9 +425,9 @@ export function DispatchList({
                   <span className="ml-2 rounded-sm bg-red-100 px-2 py-0.5 text-[10px] font-semibold text-red-700">Geofence alert</span>
                 ) : null}
               </div>
-              {showEtaColumn && load.status === "in_transit" ? (
+              {showEtaColumn && load.status === "in_transit" && load.samsara_eta_at ? (
                 <div className="mt-2">
-                  <InTransitEtaChip loadId={load.id} operatingCompanyId={load.operating_company_id} />
+                  ETA {new Date(load.samsara_eta_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                 </div>
               ) : null}
             </button>

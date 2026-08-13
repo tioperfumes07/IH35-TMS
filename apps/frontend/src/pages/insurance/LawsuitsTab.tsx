@@ -114,6 +114,20 @@ export function LawsuitsTab({ operatingCompanyId, claimId }: Props) {
             "-"
           ),
       },
+      {
+        key: "driver_id",
+        label: "Driver",
+        render: (lawsuit) => (
+          <EntityLink kind="driver" id={lawsuit.driver_id ?? undefined} label={entityLabel(null, lawsuit.driver_id, "Driver")} />
+        ),
+      },
+      {
+        key: "unit_id",
+        label: "Unit",
+        render: (lawsuit) => (
+          <EntityLink kind="unit" id={lawsuit.unit_id ?? undefined} label={entityLabel(null, lawsuit.unit_id, "Unit")} />
+        ),
+      },
       { key: "court_name", label: "Court", sortable: true },
       { key: "filed_date", label: "Filed", sortable: true, render: (lawsuit) => formatDateUS(lawsuit.filed_date) },
       { key: "demand_cents", label: "Demand", sortable: true, render: (lawsuit) => formatMoney(lawsuit.demand_cents) },

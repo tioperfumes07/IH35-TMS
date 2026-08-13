@@ -41,23 +41,24 @@ async function withCompanyScope<T>(userId: string, operatingCompanyId: string, f
   });
 }
 
-function lawsuitSelectColumns() {
+function lawsuitSelectColumns(alias = "", includeClaimLinks = false) {
+  const p = alias ? `${alias}.` : "";
   return `
-    id::text,
-    tenant_id::text,
-    case_number,
-    plaintiff,
-    defendant,
-    court_name,
-    filed_date::text,
-    status,
-    claim_id::text,
-    demand_cents::bigint,
-    settlement_cents::bigint,
-    attorney_name,
-    attorney_email,
-    notes,
-    created_at::text
+    ${p}id::text,
+    ${p}tenant_id::text,
+    ${p}case_number,
+    ${p}plaintiff,
+    ${p}defendant,
+    ${p}court_name,
+    ${p}filed_date::text,
+    ${p}status,
+    ${p}claim_id::text,
+    ${p}demand_cents::bigint,
+    ${p}settlement_cents::bigint,
+    ${p}attorney_name,
+    ${p}attorney_email,
+    ${p}notes,
+    ${p}created_at::text${includeClaimLinks ? ",\n    claim.driver_id::text AS driver_id,\n    asset.unit_id::text AS unit_id" : ""}
   `;
 }
 
@@ -75,21 +76,27 @@ export async function registerInsuranceLawsuitRoutes(app: FastifyInstance) {
 
     const rows = await withCompanyScope(user.uuid, parsed.data.operating_company_id, async (client) => {
       const values: unknown[] = [parsed.data.operating_company_id];
-      const filters = ["tenant_id = $1::uuid"];
+      const filters = ["lawsuit.tenant_id = $1::uuid"];
       if (parsed.data.status) {
         values.push(parsed.data.status);
-        filters.push(`status = $${values.length}`);
+        filters.push(`lawsuit.status = $${values.length}`);
       }
       if (parsed.data.claim_id) {
         values.push(parsed.data.claim_id);
-        filters.push(`claim_id = $${values.length}::uuid`);
+        filters.push(`lawsuit.claim_id = $${values.length}::uuid`);
       }
       const result = await client.query(
         `
-          SELECT ${lawsuitSelectColumns()}
-          FROM insurance.lawsuit
+          SELECT ${lawsuitSelectColumns("lawsuit", true)}
+          FROM insurance.lawsuit AS lawsuit
+          LEFT JOIN insurance.claim AS claim
+            ON claim.tenant_id = lawsuit.tenant_id
+           AND claim.id = lawsuit.claim_id
+          LEFT JOIN mdata.assets AS asset
+            ON asset.tenant_id = lawsuit.tenant_id
+           AND asset.id = claim.asset_id
           WHERE ${filters.join(" AND ")}
-          ORDER BY filed_date DESC, created_at DESC
+          ORDER BY lawsuit.filed_date DESC, lawsuit.created_at DESC
         `,
         values
       );
