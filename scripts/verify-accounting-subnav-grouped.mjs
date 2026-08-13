@@ -26,12 +26,13 @@ const LABEL = "verify-accounting-subnav-grouped";
 const WRAPPER_FILE = "apps/frontend/src/pages/accounting/AccountingSubNavWrapper.tsx";
 const MANIFEST_FILE = "apps/frontend/src/pages/accounting/subnav-manifest.ts";
 
-/** Approved top-node group labels (PNG source-of-truth). "More" is the authorized overflow node. */
+/** Approved top-node group labels (PNG + ACCT-F5050 Invoices ▾ promotion). "More" is the overflow. */
 const APPROVED_GROUP_LABELS = [
   "Accounting",
   "Bills",
   "Expenses",
   "Bill payment",
+  "Invoices",
   "Maintenance & shop",
   "Vendors",
   "Customers",
@@ -87,7 +88,7 @@ export function checkManifest(src) {
     failures.push("manifest missing ACCOUNTING_SUB_NAV_ITEMS export array");
   } else {
     const block = modelBlock[0];
-    for (const g of ["bills", "expenses", "billpay", "maint_shop", "more"]) {
+    for (const g of ["bills", "expenses", "billpay", "invoices", "maint_shop", "more"]) {
       if (!block.includes(`GROUP_LABELS.${g}`)) {
         failures.push(`ACCOUNTING_SUB_NAV_ITEMS missing group GROUP_LABELS.${g}`);
       }
@@ -139,6 +140,7 @@ function selftest() {
   const goodManifest = `
     export const GROUP_LABELS = {
       home: "Accounting", bills: "Bills", expenses: "Expenses", billpay: "Bill payment",
+      invoices: "Invoices",
       maint_shop: "Maintenance & shop", vendors: "Vendors", customers: "Customers",
       reports: "Reports", more: "More",
     } as const;
@@ -154,6 +156,7 @@ function selftest() {
       { label: GROUP_LABELS.bills, children: childrenOf("bills") },
       { label: GROUP_LABELS.expenses, children: childrenOf("expenses") },
       { label: GROUP_LABELS.billpay, children: childrenOf("billpay") },
+      { label: GROUP_LABELS.invoices, children: childrenOf("invoices") },
       { label: GROUP_LABELS.maint_shop, children: [] },
       leafOf("/accounting/vendors"),
       leafOf("/accounting/customers"),
