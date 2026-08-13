@@ -32,6 +32,20 @@ const LIST_LOADS_ALLOW = new Set([
   "apps/frontend/src/pages/dispatch/DispatchOverview.tsx",
 ]);
 
+/** Read-only reverse/list surfaces may query loads, but must prove canonical drill-through and scope. */
+const TABLE_ONLY_LOAD_READS = new Map([
+  [
+    "apps/frontend/src/components/driver-profile/LoadsSection.tsx",
+    [
+      /listDispatchLoads\(\{[\s\S]*?operating_company_id:\s*operatingCompanyId[\s\S]*?driver:\s*driverId/,
+      /<EntityLink\s+kind="load"\s+id=\{row\.id\}/,
+      /<EntityLink[\s\S]{0,120}?kind="customer"[\s\S]{0,120}?id=\{row\.customer_id\}/,
+      /<ListErrorBanner/,
+      /emptyText="No loads found for this driver\."/,
+    ],
+  ],
+]);
+
 function readRel(root, rel) {
   const p = path.join(root, rel);
   if (!fs.existsSync(p)) return null;
@@ -112,6 +126,13 @@ export function collectProblems(root = ROOT) {
       if (LIST_LOADS_ALLOW.has(rel) || /\.(test|spec)\./.test(rel)) continue;
       const code = stripComments(fs.readFileSync(abs, "utf8"));
       if (/listLoads\(|listDispatchLoads\(/.test(code)) {
+        const tableContract = TABLE_ONLY_LOAD_READS.get(rel);
+        if (tableContract) {
+          for (const pattern of tableContract) {
+            if (!pattern.test(code)) problems.push(`${rel}: table-only load read lost scope, honest state, or canonical drill-through (${pattern})`);
+          }
+          continue;
+        }
         problems.push(`${rel}: listLoads/listDispatchLoads outside allowlist — migrate to EntityPicker kind=load or add honest table-only allow`);
       }
     }
@@ -171,8 +192,13 @@ listLoads({ limit: 200 })
     );
     fs.mkdirSync(path.join(stubRoot, "apps/frontend/src/components/banking"), { recursive: true });
     fs.writeFileSync(path.join(stubRoot, "apps/frontend/src/components/banking/LoadAutocomplete.tsx"), "export {}");
+    fs.mkdirSync(path.join(stubRoot, "apps/frontend/src/components/driver-profile"), { recursive: true });
+    fs.writeFileSync(
+      path.join(stubRoot, "apps/frontend/src/components/driver-profile/LoadsSection.tsx"),
+      `listDispatchLoads({ operating_company_id: operatingCompanyId, driver: driverId })\n<EntityLink kind="load" id={row.id} />`
+    );
     const planted = collectProblems(stubRoot);
-    if (planted.length < 4) {
+    if (planted.length < 5 || !planted.some((problem) => problem.includes("table-only load read lost"))) {
       console.error(`${LABEL} SELFTEST FAIL: planted stub did not FAIL hard enough`, planted);
       process.exit(1);
     }
