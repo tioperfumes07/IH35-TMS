@@ -5,6 +5,7 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser, withLuciaBypass } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
+import { ensureDriverVendor } from "../mdata/ensure-driver-vendor.shared.js";
 
 export const APPLICANT_STATUSES = ["new", "screening", "interview", "offer", "hired", "declined", "withdrawn"] as const;
 export type ApplicantStatus = (typeof APPLICANT_STATUSES)[number];
@@ -409,6 +410,18 @@ export async function registerIdentityApplicantRoutes(app: FastifyInstance) {
       );
       const driverId = driverRes.rows[0]?.id;
       if (!driverId) throw new Error("failed_to_create_driver");
+
+      // DRIVER→VENDOR: applicant conversion is an operator hire path, so the new 1099 contractor
+      // must enter A/P in the same transaction as the driver row. This is deliberately not a later
+      // reconciliation button: a successfully converted driver must be immediately billable/payable.
+      await ensureDriverVendor(client, {
+        operatingCompanyId: query.data.operating_company_id,
+        driverId,
+        displayName: `${String(applicant.first_name ?? "")} ${String(applicant.last_name ?? "")}`.trim(),
+        phone: applicant.phone ? String(applicant.phone) : null,
+        email: normalizedEmail,
+        actorUserId: user.uuid,
+      });
 
       const onboardingRes = await client.query<{ id: string }>(
         `
