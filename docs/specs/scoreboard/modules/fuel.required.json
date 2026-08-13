@@ -140,8 +140,7 @@
         "driver",
         "unit",
         "load",
-        "connectivity",
-        "picker_law"
+        "connectivity"
       ]
     },
     {
@@ -152,9 +151,7 @@
       "required": [
         "driver",
         "unit",
-        "connectivity",
-        "picker_law",
-        "qbo_chrome"
+        "connectivity"
       ]
     },
     {
@@ -163,8 +160,7 @@
       "sub": "Fuel settings",
       "route_hint": "/fuel/settings",
       "required": [
-        "connectivity",
-        "qbo_chrome"
+        "connectivity"
       ]
     },
     {
@@ -176,9 +172,7 @@
         "expense",
         "gl_je",
         "vendor",
-        "connectivity",
-        "picker_law",
-        "qbo_chrome"
+        "connectivity"
       ]
     },
     {
@@ -283,7 +277,6 @@
       "route_hint": "/fuel",
       "surface_kind": "toolbar",
       "required": [
-        "qbo_chrome",
         "connectivity"
       ]
     },
@@ -294,7 +287,6 @@
       "route_hint": "/fuel",
       "surface_kind": "toolbar",
       "required": [
-        "qbo_chrome",
         "connectivity"
       ]
     },
@@ -305,7 +297,6 @@
       "route_hint": "/fuel",
       "surface_kind": "toolbar",
       "required": [
-        "qbo_chrome",
         "connectivity"
       ]
     },
@@ -316,7 +307,6 @@
       "route_hint": "/fuel",
       "surface_kind": "toolbar",
       "required": [
-        "qbo_chrome",
         "connectivity"
       ]
     }
@@ -344,6 +334,78 @@
           "id": "relay_inbox",
           "removed": [
             "reverse_link"
+          ]
+        }
+      ]
+    },
+    "picker_law_2026_08_13_remainder_batch": {
+      "finding": "VERTICAL-PICKER-LAW-REMAINDER-BATCH",
+      "note": "List/chrome/portal leaves without EntityPicker/+Add new. Built separately: FactorAdmin, SubmitFactoringModal, AutoDeductionPolicies.",
+      "drops": [
+        {
+          "id": "planner",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "relay_inbox",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "expense_mapping",
+          "removed": [
+            "picker_law"
+          ]
+        }
+      ]
+    },
+    "qbo_chrome_2026_08_13_fuel_chrome": {
+      "finding": "VERTICAL-QBO-CHROME-FUEL-HONESTY",
+      "note": "Relay/settings/expense_mapping + chrome.toolbar_* lack ListToolbar/QBO triad on those tabs \u2014 Required was inflation (transactions list already Built elsewhere).",
+      "drops": [
+        {
+          "id": "relay_inbox",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "settings",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "expense_mapping",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "chrome.toolbar_search",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "chrome.toolbar_range",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "chrome.toolbar_gear",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "chrome.toolbar_filter",
+          "removed": [
+            "qbo_chrome"
           ]
         }
       ]

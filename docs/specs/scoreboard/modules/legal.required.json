@@ -145,7 +145,6 @@
         "driver",
         "connectivity",
         "reverse_link",
-        "picker_law",
         "legal_matter"
       ]
     },
@@ -172,7 +171,6 @@
       "route_hint": "/legal/templates",
       "required": [
         "connectivity",
-        "picker_law",
         "qbo_chrome"
       ]
     },
@@ -203,8 +201,7 @@
       "sub": "Attorney review queue",
       "route_hint": "/legal/attorney-review",
       "required": [
-        "connectivity",
-        "picker_law"
+        "connectivity"
       ]
     },
     {
@@ -219,7 +216,6 @@
         "unit",
         "connectivity",
         "reverse_link",
-        "picker_law",
         "scenario.insurance",
         "legal_matter"
       ]
@@ -398,7 +394,6 @@
       "surface_path": "pages/legal/templates/LegalTemplateNewModal.tsx",
       "required": [
         "connectivity",
-        "picker_law",
         "legal_matter"
       ]
     },
@@ -512,6 +507,42 @@
           "id": "legal.parity.legal_template_new",
           "removed": [
             "reverse_link"
+          ]
+        }
+      ]
+    },
+    "picker_law_2026_08_13_remainder_batch": {
+      "finding": "VERTICAL-PICKER-LAW-REMAINDER-BATCH",
+      "note": "List/chrome/portal leaves without EntityPicker/+Add new. Built separately: FactorAdmin, SubmitFactoringModal, AutoDeductionPolicies.",
+      "drops": [
+        {
+          "id": "contracts.list",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "templates.list",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "attorney_review",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "matters.list",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "legal.parity.legal_template_new",
+          "removed": [
+            "picker_law"
           ]
         }
       ]

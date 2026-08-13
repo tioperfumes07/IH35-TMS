@@ -2,7 +2,7 @@
   "module": "drivers",
   "entity_default": "USMCA",
   "source": {
-    "arch_design": "IH35_ARCHITECTURAL_DESIGN — Drivers",
+    "arch_design": "IH35_ARCHITECTURAL_DESIGN \u2014 Drivers",
     "nav": "DRIVERS_SUBTAB_PATH",
     "routes": "/drivers/*"
   },
@@ -138,8 +138,7 @@
         "driver",
         "unit",
         "connectivity",
-        "reverse_link",
-        "picker_law"
+        "reverse_link"
       ]
     },
     {
@@ -199,7 +198,6 @@
       "required": [
         "driver",
         "liability",
-        "picker_law",
         "qbo_chrome",
         "connectivity",
         "reverse_link"
@@ -212,8 +210,7 @@
       "route_hint": "/drivers/permits",
       "required": [
         "driver",
-        "connectivity",
-        "picker_law"
+        "connectivity"
       ]
     },
     {
@@ -224,7 +221,6 @@
       "required": [
         "driver",
         "connectivity",
-        "picker_law",
         "qbo_chrome"
       ]
     },
@@ -249,8 +245,7 @@
       "route_hint": "/drivers/team-splits",
       "required": [
         "driver",
-        "connectivity",
-        "picker_law"
+        "connectivity"
       ]
     },
     {
@@ -272,8 +267,7 @@
       "route_hint": "/drivers/leave",
       "required": [
         "driver",
-        "connectivity",
-        "picker_law"
+        "connectivity"
       ]
     },
     {
@@ -481,7 +475,7 @@
     {
       "id": "chrome.toolbar_search",
       "tab": "Chrome controls",
-      "sub": "List toolbar — Search (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar \u2014 Search (CLS-LIST-TOOLBAR)",
       "route_hint": "/drivers",
       "surface_kind": "toolbar",
       "required": [
@@ -492,7 +486,7 @@
     {
       "id": "chrome.toolbar_range",
       "tab": "Chrome controls",
-      "sub": "List toolbar — date/amount range (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar \u2014 date/amount range (CLS-LIST-TOOLBAR)",
       "route_hint": "/drivers",
       "surface_kind": "toolbar",
       "required": [
@@ -503,7 +497,7 @@
     {
       "id": "chrome.toolbar_gear",
       "tab": "Chrome controls",
-      "sub": "List toolbar — column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
+      "sub": "List toolbar \u2014 column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
       "route_hint": "/drivers",
       "surface_kind": "toolbar",
       "required": [
@@ -514,7 +508,7 @@
     {
       "id": "chrome.toolbar_filter",
       "tab": "Chrome controls",
-      "sub": "List toolbar — Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
+      "sub": "List toolbar \u2014 Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
       "route_hint": "/drivers",
       "surface_kind": "toolbar",
       "required": [
@@ -548,7 +542,49 @@
         "invoice",
         "bank"
       ],
-      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; §B9 link columns added."
+      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; \u00a7B9 link columns added."
+    },
+    "picker_law_2026_08_13_remainder_batch": {
+      "finding": "VERTICAL-PICKER-LAW-REMAINDER-BATCH",
+      "note": "List/chrome/portal leaves without EntityPicker/+Add new. Built separately: FactorAdmin, SubmitFactoringModal, AutoDeductionPolicies.",
+      "drops": [
+        {
+          "id": "profiles.list",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "cash_advances",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "permits",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "pay_rate_templates",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "team_splits",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "leave",
+          "removed": [
+            "picker_law"
+          ]
+        }
+      ]
     }
   }
 }
