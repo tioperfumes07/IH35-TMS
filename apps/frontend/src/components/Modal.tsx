@@ -30,6 +30,12 @@ type ModalProps = {
   /** Opt-in wide layout (~1140px) for two-column form modals (e.g. Create Work Order render-v5). */
   wide?: boolean;
   /**
+   * NAV-BACK-NESTED-CREATE — optional explicit back handler. On `variant="drawer"`, a ← affordance
+   * always appears (ParityDrawer parity); when omitted it uses the same confirm-aware close as ✕.
+   * Centered cards never show ← (confirm/detail dialogs stay chrome-unchanged).
+   */
+  onBack?: () => void;
+  /**
    * C7 — dialog shape.
    *
    * `"center"` (default, unchanged) keeps the historic centered card. Every non-create dialog in
@@ -60,6 +66,7 @@ export function Modal({
   sizePreset,
   resizable = false,
   wide = false,
+  onBack,
   variant = "center",
 }: ModalProps) {
   const panelRef = useRef<HTMLDivElement>(null);
@@ -220,12 +227,25 @@ export function Modal({
             className="flex shrink-0 items-center justify-between border-b border-gray-200 px-4 py-3"
             data-proportion-chrome-header=""
           >
-            <h2
-              className="uppercase"
-              style={{ fontSize: typography.panelHeader, color: colors.bodyText, letterSpacing: typography.tightUpper }}
-            >
-              {title}
-            </h2>
+            <div className="flex min-w-0 items-center gap-2">
+              {isDrawer ? (
+                <button
+                  type="button"
+                  aria-label="Back to previous surface"
+                  data-testid="modal-drawer-back"
+                  onClick={onBack ?? attemptClose}
+                  className="min-h-11 shrink-0 rounded-sm px-2 text-lg text-gray-600 hover:bg-gray-100 sm:min-h-0"
+                >
+                  ←
+                </button>
+              ) : null}
+              <h2
+                className="min-w-0 truncate uppercase"
+                style={{ fontSize: typography.panelHeader, color: colors.bodyText, letterSpacing: typography.tightUpper }}
+              >
+                {title}
+              </h2>
+            </div>
             <ModalCloseButton title={title} onClose={attemptClose} />
           </div>
           <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3">{children}</div>

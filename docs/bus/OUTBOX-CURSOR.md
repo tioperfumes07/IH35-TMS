@@ -1,3 +1,4 @@
+2026-08-13T23:05Z Cursor | shipping NAV-BACK-NESTED-CREATE — Modal drawer ← always | Live=BLOCKED | NEXT=Cursor FE OPEN / Live Chrome gate
 2026-08-13 | shipped LST-F5009 vendor_type R=W (PR #6398) · Neon CHECK applied · NEXT=board next OPEN (Cursor=ex-CC1/CC2)
 2026-08-13T08:32CT | Cursor | ACCT-F5030 #6406 settlement HTML load COALESCE | NEXT=Built reverse/connectivity gap
 2026-08-13T08:40CT | Cursor | ACCT-F5031 #6407 expense/fuel reverse driver+load | NEXT=rank6 reverse Built
@@ -76,3 +77,4 @@
 2026-08-13T22:40Z Cursor | shipping VERTICAL-SECONDARY-COLS-HONESTY — picker/qbo/liability/expense Gap→0 | Live=BLOCKED
 2026-08-13T22:45Z Cursor | SCOREBOARD COL Gaps→0 (reverse/picker/qbo/money) via #6573–#6584 weekend fast-push | Live=BLOCKED — FULLY-WIRED item 12 NOT done | NEXT=recensus other Required cols / Live Chrome gate
 2026-08-13T22:50Z Cursor | shipping VERTICAL-OPS-COLS-REMAINDER-HONESTY | work_order/claim/accident/… Gap→0 | Live=BLOCKED
+2026-08-13T22:57Z Cursor | 5m loop aborted by user — re-arming | Live=BLOCKED | main tip synced

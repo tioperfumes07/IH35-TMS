@@ -79,6 +79,18 @@ describe("Modal variant=\"drawer\" (C7 create surface chrome)", () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
+  it("drawer variant always shows ← back (NAV-BACK-NESTED-CREATE)", () => {
+    const onClose = vi.fn();
+    render(wrap(<Modal open onClose={onClose} title="Create Vendor" variant="drawer">body</Modal>));
+    fireEvent.click(screen.getByRole("button", { name: "Back to previous surface" }));
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it("centered card does NOT show ← back (confirm/detail chrome unchanged)", () => {
+    render(wrap(<Modal open onClose={() => {}} title="Void this row?">body</Modal>));
+    expect(screen.queryByRole("button", { name: "Back to previous surface" })).toBeNull();
+  });
+
   it("inherits the unsaved-changes guard: a dirty drawer confirms before discarding", () => {
     const onClose = vi.fn();
     render(

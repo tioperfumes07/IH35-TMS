@@ -28,6 +28,8 @@ const FILES = {
   catalogQuickCreate: "apps/frontend/src/components/parity/CatalogQuickCreateDrawer.tsx",
   createDriverModal: "apps/frontend/src/components/drivers/CreateDriverModal.tsx",
   vendorBillForm: "apps/frontend/src/components/accounting/VendorBillForm.tsx",
+  // NAV-BACK-NESTED-CREATE — shared Modal drawer shell (Create Vendor etc.) must show ← like ParityDrawer
+  modal: "apps/frontend/src/components/Modal.tsx",
 };
 
 function read(relPath) {
@@ -45,8 +47,23 @@ export function checkChrome11({
   catalogQuickCreate,
   createDriverModal,
   vendorBillForm,
+  modal,
 }) {
   const failures = [];
+
+  // 0) NAV-BACK-NESTED-CREATE — Modal variant="drawer" always exposes ← (Create Vendor / fuel / safety
+  //    creates). Centered cards must not gain the affordance (confirm dialogs stay unchanged).
+  if (modal) {
+    if (!/aria-label="Back to previous surface"/.test(modal)) {
+      failures.push("Modal.tsx drawer must expose aria-label=\"Back to previous surface\" (NAV-BACK-NESTED-CREATE)");
+    }
+    if (!/isDrawer\s*\?\s*\(/.test(modal) && !/\{isDrawer \? \(/.test(modal)) {
+      failures.push("Modal.tsx back affordance must be gated on isDrawer (center cards unchanged)");
+    }
+    if (!/data-testid="modal-drawer-back"/.test(modal)) {
+      failures.push("Modal.tsx missing data-testid=\"modal-drawer-back\"");
+    }
+  }
 
   // 1) ReferenceSelect (A2) must keep routing every createKind through InlineCreateDrawer or
   //    QuickCreateEntityModal — both ParityDrawer-shell chrome — never a bare centered Modal.
@@ -128,6 +145,9 @@ export function CreateDriverModal({ shell = "modal" }: Props) {
   return <Modal />;
 }`,
     vendorBillForm: `<EntityPicker kind="driver" nestedInDrawer operatingCompanyId={id} />`,
+    modal: `{isDrawer ? (
+  <button type="button" aria-label="Back to previous surface" data-testid="modal-drawer-back">←</button>
+) : null}`,
   };
 }
 
@@ -156,6 +176,9 @@ function selftest() {
     ["createDriverModal", (f) => { f.createDriverModal = f.createDriverModal.replace('shell === "drawer"', 'shell === "sheet"'); }, "no longer branches"],
     ["vendorBillForm", (f) => { f.vendorBillForm = `<CreateDriverModal open={x} onClose={y} />`; }, "Modal-on-drawer regression on Bill create"],
     ["vendorBillForm", (f) => { f.vendorBillForm = `<EntityPicker kind="driver" value={null} />`; }, "Modal-on-drawer regression on Bill create"],
+    ["modal", (f) => { f.modal = f.modal.replace('aria-label="Back to previous surface"', ""); }, "Back to previous surface"],
+    ["modal", (f) => { f.modal = f.modal.replace("isDrawer ?", "alwaysShow ?"); }, "gated on isDrawer"],
+    ["modal", (f) => { f.modal = f.modal.replace('data-testid="modal-drawer-back"', ""); }, "modal-drawer-back"],
   ];
 
   for (const [name, mutate, expectFragment] of cases) {
