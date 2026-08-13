@@ -206,22 +206,27 @@ export async function listEscrowPostings(input: { operating_company_id: string; 
     const res = await client.query<EscrowPosting>(
       `
         SELECT
-          id::text,
-          operating_company_id::text,
-          escrow_account_id::text,
-          posting_type::text,
-          amount_cents::bigint,
-          source_type::text,
-          source_id::text,
-          note,
-          posted_at::text,
-          posted_by_user_id::text,
-          linked_journal_entry_id::text,
-          created_at::text
-        FROM accounting.escrow_postings
-        WHERE operating_company_id = $1::uuid
-          AND escrow_account_id = $2::uuid
-        ORDER BY posted_at DESC, created_at DESC
+          ep.id::text,
+          ep.operating_company_id::text,
+          ep.escrow_account_id::text,
+          ep.posting_type::text,
+          ep.amount_cents::bigint,
+          ep.source_type::text,
+          ep.source_id::text,
+          ep.note,
+          ep.posted_at::text,
+          ep.posted_by_user_id::text,
+          ep.linked_journal_entry_id::text,
+          je.entry_date::text AS journal_entry_date,
+          je.memo AS journal_entry_memo,
+          ep.created_at::text
+        FROM accounting.escrow_postings ep
+        LEFT JOIN accounting.journal_entries je
+          ON je.id = ep.linked_journal_entry_id
+         AND je.operating_company_id = ep.operating_company_id
+        WHERE ep.operating_company_id = $1::uuid
+          AND ep.escrow_account_id = $2::uuid
+        ORDER BY ep.posted_at DESC, ep.created_at DESC
         LIMIT $3::int
       `,
       [input.operating_company_id, input.escrow_account_id, input.limit]
