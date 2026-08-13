@@ -47,6 +47,7 @@ import { VendorWorkOrdersReverseSection } from "./vendors/VendorWorkOrdersRevers
 import { VendorPartsHistorySection } from "./vendors/VendorPartsHistorySection";
 import { VendorApAgingSection } from "./vendors/VendorApAgingSection";
 import { RoadServiceReverseSection } from "../components/maintenance/RoadServiceReverseSection";
+import { WarrantyClaimsReverseSection } from "../components/maintenance/WarrantyClaimsReverseSection";
 import { LinkedBankTransactionsPanel } from "../components/banking/LinkedBankTransactionsPanel";
 
 type SaferEntityStatus = {
@@ -877,6 +878,12 @@ export function VendorDetailPage() {
           filter={{ vendor_id: vendor.id }}
           contextLabel="this vendor"
           data-testid="vendor-profile-road-service-reverse"
+        />
+        <WarrantyClaimsReverseSection
+          operatingCompanyId={companyId}
+          filter={{ vendor_id: vendor.id }}
+          contextLabel="this vendor"
+          data-testid="vendor-warranty-claims-reverse"
         />
         <VendorPartsHistorySection operatingCompanyId={companyId} vendorId={vendor.id} />
         <VendorApAgingSection operatingCompanyId={companyId} vendorId={vendor.id} />

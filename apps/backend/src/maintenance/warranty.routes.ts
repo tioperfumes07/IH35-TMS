@@ -11,6 +11,7 @@ import { postWarrantyReimbursement } from "../accounting/warranty-posting/poster
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
   work_order_id: z.string().uuid().optional(),
+  vendor_id: z.string().uuid().optional(),
   include_archived: z.coerce.boolean().optional().default(false),
   status: z.string().trim().optional(),
 });
@@ -336,6 +337,10 @@ export async function registerMaintenanceWarrantyRoutes(app: FastifyInstance) {
         values.push(parsed.data.work_order_id);
         filters.push(`pw.work_order_id = $${values.length}`);
       }
+      if (parsed.data.vendor_id) {
+        values.push(parsed.data.vendor_id);
+        filters.push(`pw.vendor_id = $${values.length}`);
+      }
       const res = await client.query(
         `${PART_SELECT} WHERE ${filters.join(" AND ")} ORDER BY pw.expires_at DESC, pw.created_at DESC`,
         values
@@ -399,6 +404,10 @@ export async function registerMaintenanceWarrantyRoutes(app: FastifyInstance) {
         values.push(parsed.data.work_order_id);
         filters.push(`wc.work_order_id = $${values.length}`);
       }
+      if (parsed.data.vendor_id) {
+        values.push(parsed.data.vendor_id);
+        filters.push(`wc.vendor_id = $${values.length}`);
+      }
       if (parsed.data.status) {
         values.push(parsed.data.status);
         filters.push(`wc.status = $${values.length}`);
@@ -420,6 +429,24 @@ export async function registerMaintenanceWarrantyRoutes(app: FastifyInstance) {
     const body = parsed.data;
 
     const row = await withCompany(user.uuid, body.operating_company_id, async (client) => {
+      const links = await client.query(
+        `SELECT
+           ($2::uuid IS NULL OR EXISTS (
+             SELECT 1 FROM maintenance.parts_warranty pw
+             WHERE pw.id = $2::uuid AND pw.operating_company_id = $1::uuid AND pw.archived_at IS NULL
+           )) AS warranty_ok,
+           ($3::uuid IS NULL OR EXISTS (
+             SELECT 1 FROM maintenance.work_orders wo
+             WHERE wo.id = $3::uuid AND wo.operating_company_id = $1::uuid
+           )) AS work_order_ok,
+           ($4::uuid IS NULL OR EXISTS (
+             SELECT 1 FROM mdata.vendors v
+             WHERE v.id = $4::uuid AND v.operating_company_id = $1::uuid AND v.deactivated_at IS NULL
+           )) AS vendor_ok`,
+        [body.operating_company_id, body.parts_warranty_id ?? null, body.work_order_id ?? null, body.vendor_id ?? null]
+      );
+      const integrity = links.rows[0] as { warranty_ok?: boolean; work_order_ok?: boolean; vendor_ok?: boolean } | undefined;
+      if (!integrity || Object.values(integrity).some((value) => value !== true)) return null;
       const res = await client.query(
         `INSERT INTO maintenance.warranty_claims (
           operating_company_id, parts_warranty_id, work_order_id, vendor_id, claim_number,
@@ -446,7 +473,8 @@ export async function registerMaintenanceWarrantyRoutes(app: FastifyInstance) {
       });
       return fetched;
     });
-    return reply.code(201).send(mapWarrantyClaimRow(row ?? {}));
+    if (!row) return reply.code(400).send({ error: "linked_entity_not_in_operating_company" });
+    return reply.code(201).send(mapWarrantyClaimRow(row));
   });
 
   app.patch("/api/v1/maintenance/warranty/claims/:id", async (req, reply) => {

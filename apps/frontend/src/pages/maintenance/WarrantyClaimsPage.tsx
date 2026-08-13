@@ -20,6 +20,7 @@ import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { vendorReferenceOption } from "../../components/parity/referenceOptionLabels";
 import { entityLabel } from "../../lib/entity-label";
 import { ListErrorState } from "../../components/ListErrorState";
+import { useSearchParams } from "react-router-dom";
 
 type ClaimDraft = {
   part_description: string;
@@ -38,6 +39,8 @@ const EMPTY_CLAIM: ClaimDraft = {
 };
 
 export function WarrantyClaimsPage() {
+  const [searchParams] = useSearchParams();
+  const highlightedClaimId = searchParams.get("claim_id")?.trim() || "";
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const { pushToast } = useToast();
@@ -136,6 +139,7 @@ export function WarrantyClaimsPage() {
     () => [
       { key: "part_description", label: "Part", sortable: true, render: (row) => row.part_description },
       { key: "vendor_name", label: "Vendor", sortable: true, render: (row) => <EntityLink kind="vendor" id={row.vendor_id ?? undefined} label={entityLabel(row.vendor_name, row.vendor_id, "Vendor")} /> },
+      { key: "work_order_id", label: "Work order", render: (row) => <EntityLink kind="work_order" id={row.work_order_id ?? undefined} label={entityLabel(null, row.work_order_id, "Work order")} /> },
       { key: "claim_number", label: "Claim #", sortable: true, render: (row) => row.claim_number || "—" },
       { key: "status", label: "Status", sortable: true, render: (row) => row.status_label ?? row.status },
       { key: "claim_amount_cents", label: "Amount", render: (row) => `$${((row.claim_amount_cents ?? 0) / 100).toFixed(2)}` },
@@ -214,6 +218,7 @@ export function WarrantyClaimsPage() {
             rows={claims}
             columns={columns}
             rowKey={(row) => row.id}
+            rowClassName={(row) => (row.id === highlightedClaimId ? "bg-slate-100 ring-1 ring-slate-400" : "")}
             loading={claimsQ.isPending}
             storageKey="maintenance-warranty-claims"
             emptyText="No warranty claims yet."
@@ -263,11 +268,16 @@ export function WarrantyClaimsPage() {
             />
           </label>
           <label className="block text-xs">
-            Work order ID (optional)
-            <input
-              className="mt-1 block w-full rounded-sm border border-gray-300 px-2 py-1"
-              value={claimDraft.work_order_id}
-              onChange={(e) => setClaimDraft((d) => ({ ...d, work_order_id: e.target.value }))}
+            Work order (optional)
+            <EntityPicker
+              kind="work_order"
+              operatingCompanyId={companyId}
+              value={claimDraft.work_order_id || null}
+              onChange={(next) => setClaimDraft((d) => ({ ...d, work_order_id: next ?? "" }))}
+              allowCreate={false}
+              placeholder="Select work order"
+              className="mt-1"
+              dataField="warranty-claim-work-order"
             />
           </label>
           <Button

@@ -47,6 +47,7 @@ export type EntityKind =
   | "insurance_policy"
   | "dvir"
   | "maintenance_inspection"
+  | "warranty_claim"
   | "safety_event"
   // SAF-F33: safety records were undrillable — no module could link INTO an accident, fine,
   // complaint, DOT inspection, escrow record, or permit. These resolve to the record's list surface
@@ -169,6 +170,8 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
       return `/safety/idvr/${id}`;
     case "maintenance_inspection":
       return `/maintenance/inspections?inspection_id=${id}`;
+    case "warranty_claim":
+      return `/maintenance/warranty-claims?claim_id=${id}`;
     case "safety_event":
       return `/safety/safety-events?event_id=${id}`;
     // SAF-F33 safety drill-through — each target list page reads the param and opens/highlights the row.
