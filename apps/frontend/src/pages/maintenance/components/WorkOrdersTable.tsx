@@ -58,7 +58,7 @@ function exportSelectedCsv(selected: WorkOrder[]) {
       row.source_type ?? "",
       entityLabel(row.unit_number, row.unit_id, "Unit"),
       entityLabel(row.driver_name, row.driver_id, "Driver"),
-      entityLabel(row.external_vendor_name, row.external_vendor_id, "Vendor"),
+      entityLabel(row.resolved_vendor_name, row.resolved_vendor_id, "Vendor"),
       row.status ?? "",
       money((row as Record<string, unknown>).total_actual_cost),
       renderDuration(row),
@@ -93,7 +93,7 @@ export function WorkOrdersTable({
     const q = search.trim().toLowerCase();
     if (!q) return rows;
     return rows.filter((r) =>
-      [r.display_id, r.id, r.unit_number, r.driver_name, r.external_vendor_name, r.status, r.source_type].some((v) =>
+      [r.display_id, r.id, r.unit_number, r.driver_name, r.resolved_vendor_name, r.status, r.source_type].some((v) =>
         String(v ?? "").toLowerCase().includes(q),
       ),
     );
@@ -137,14 +137,14 @@ export function WorkOrdersTable({
       ),
     },
     {
-      key: "external_vendor_id",
+      key: "resolved_vendor_id",
       label: "Vendor",
       render: (row) =>
-        row.external_vendor_id ? (
+        row.resolved_vendor_id ? (
           <EntityLink
             kind="vendor"
-            id={row.external_vendor_id}
-            label={entityLabel(row.external_vendor_name, row.external_vendor_id, "Vendor")}
+            id={row.resolved_vendor_id}
+            label={entityLabel(row.resolved_vendor_name, row.resolved_vendor_id, "Vendor")}
           />
         ) : (
           "—"

@@ -64,6 +64,8 @@ export type WorkOrder = {
   source_type?: "IS" | "ES" | "AC" | "ET" | "RT" | "IT" | "RS" | null;
   external_vendor_id?: string | null;
   external_vendor_name?: string | null;
+  resolved_vendor_id?: string | null;
+  resolved_vendor_name?: string | null;
   external_vendor_wo_number?: string | null;
   external_vendor_invoice_number?: string | null;
   severity?: string | null;

@@ -691,6 +691,11 @@ jobs:
       - name: verify:driver-fuel-unit-picker
         run: node scripts/verify-driver-fuel-unit-picker.mjs
 
+      - name: verify:maint-wo-resolved-vendor-label --selftest
+        run: node scripts/verify-maint-wo-resolved-vendor-label.mjs --selftest
+      - name: verify:maint-wo-resolved-vendor-label
+        run: node scripts/verify-maint-wo-resolved-vendor-label.mjs
+
       - name: verify:no-dead-clicks --selftest
         run: node scripts/verify-no-dead-clicks.mjs --selftest
       - name: verify:no-dead-clicks
