@@ -332,7 +332,6 @@
         "unit",
         "load",
         "scenario.maintenance",
-        "picker_law",
         "qbo_chrome",
         "connectivity",
         "reverse_link"
@@ -346,7 +345,6 @@
       "required": [
         "unit",
         "scenario.maintenance",
-        "picker_law",
         "qbo_chrome",
         "connectivity",
         "reverse_link"
@@ -363,7 +361,6 @@
         "trailer",
         "scenario.maintenance",
         "scenario.insurance",
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -377,7 +374,6 @@
         "driver",
         "unit",
         "scenario.maintenance",
-        "picker_law",
         "qbo_chrome",
         "connectivity",
         "reverse_link"
@@ -409,7 +405,6 @@
         "ap_bill",
         "expense",
         "scenario.maintenance",
-        "picker_law",
         "qbo_chrome",
         "connectivity",
         "reverse_link"
@@ -425,7 +420,6 @@
         "unit",
         "trailer",
         "scenario.maintenance",
-        "picker_law",
         "qbo_chrome",
         "connectivity",
         "reverse_link"
@@ -440,7 +434,6 @@
         "driver",
         "unit",
         "scenario.maintenance",
-        "picker_law",
         "qbo_chrome",
         "connectivity",
         "reverse_link"
@@ -483,7 +476,6 @@
       "required": [
         "unit",
         "scenario.maintenance",
-        "picker_law",
         "qbo_chrome",
         "connectivity",
         "reverse_link"
@@ -548,7 +540,6 @@
       "required": [
         "unit",
         "scenario.maintenance",
-        "picker_law",
         "qbo_chrome",
         "connectivity",
         "reverse_link"
@@ -1039,6 +1030,66 @@
           "id": "maintenance.modal.create_expense",
           "removed": [
             "reverse_link"
+          ]
+        }
+      ]
+    },
+    "picker_law_2026_08_13_maint_queues": {
+      "finding": "VERTICAL-PICKER-LAW-MAINTENANCE-QUEUES",
+      "note": "Queue/intake chrome without EntityPicker inflated picker_law. Built: PartsInventoryTable + SevereRepairOosTab.",
+      "drops": [
+        {
+          "id": "in_transit.promote_to_wo",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "arriving_soon.convert_to_wo",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "damage_reports.intake",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "driver_reports.queue",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "road_service.active",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "defects.convert_to_wo",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "pre_flight_dvir.queue",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "pm.auto_engine.run",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "fault_drafts.review",
+          "removed": [
+            "picker_law"
           ]
         }
       ]
