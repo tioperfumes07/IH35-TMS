@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["dispatch"],"cols":["connectivity"],"task":"DISPATCH-LIVE-ETA","leafRe":".*"} */
 /**
  * DISPATCH-LIVE-ETA: CI guard — live ETA columns wired without per-row fetches.
  */
@@ -7,14 +8,19 @@ import path from "node:path";
 import process from "node:process";
 
 const ROOT = process.cwd();
+const SELFTEST = process.argv.includes("--selftest");
 // Rule 17 (no-guard-hotfile-thrash): a guard must NOT require a package.json / ci.yml edit —
 // those are the shared hot files every lane contends on, and Rule 17 forbids a new guard from touching
 // them. What actually makes a guard run in CI is a verify-step, so check for that and report its
 // absence as a NOTE, never as a failure.
-const wiredStep__dispatch_eta_columns = fs
+const wiredDirectStep = fs
   .readdirSync(path.join(ROOT, "scripts/verify-steps"))
   .some((f) => /^\d+-verify-dispatch-eta-columns\.mjs$/.test(f));
-if (!wiredStep__dispatch_eta_columns) {
+const wiredViaLateArrivals = fs
+  .readdirSync(path.join(ROOT, "scripts/verify-steps"))
+  .some((f) => /^\d+-verify-dispatch-late-arrivals-alerts\.mjs$/.test(f)) &&
+  fs.readFileSync(path.join(ROOT, "scripts/verify-dispatch-late-arrivals-alerts.mjs"), "utf8").includes("include_live_eta");
+if (!wiredDirectStep && !wiredViaLateArrivals) {
   console.warn(
     "verify-dispatch-eta-columns: NOTE — no scripts/verify-steps/NNNN-verify-dispatch-eta-columns.mjs, so this guard does not execute in CI. Wiring it requires a claimed step number (Rule 37); a package.json script does not wire it."
   );
@@ -55,8 +61,8 @@ function mustNotContain(relativePath, content, checks) {
   }
 }
 
-const dispatchList = read("apps/frontend/src/components/dispatch/DispatchList.tsx");
-contains("apps/frontend/src/components/dispatch/DispatchList.tsx", dispatchList, [
+const dispatchList = read("apps/frontend/src/pages/dispatch/DispatchBoard.tsx");
+contains("apps/frontend/src/pages/dispatch/DispatchBoard.tsx", dispatchList, [
   { pattern: /DriverStatusColumn/, label: "DriverStatusColumn import/usage" },
   { pattern: /SamsaraEtaColumn/, label: "SamsaraEtaColumn import/usage" },
   { pattern: /OnTimePredictionColumn/, label: "OnTimePredictionColumn import/usage" },
@@ -66,7 +72,7 @@ contains("apps/frontend/src/components/dispatch/DispatchList.tsx", dispatchList,
   { pattern: /On-time/, label: "On-time column header" },
   { pattern: /Freshness/, label: "Freshness column header" },
 ]);
-mustNotContain("apps/frontend/src/components/dispatch/DispatchList.tsx", dispatchList, [
+mustNotContain("apps/frontend/src/pages/dispatch/DispatchBoard.tsx", dispatchList, [
   { pattern: /InTransitEtaChip/, label: "per-row InTransitEtaChip" },
   { pattern: /getDispatchLoadEta/, label: "per-row getDispatchLoadEta" },
 ]);
@@ -101,6 +107,22 @@ contains("apps/backend/src/mdata/loads.routes.ts", loadsRoutes, [
   { pattern: /include_live_eta/, label: "include_live_eta query param" },
   { pattern: /enrichLoadsLiveEta/, label: "enrichLoadsLiveEta enrichment" },
 ]);
+
+if (SELFTEST) {
+  const mutations = [
+    ["board ETA column", dispatchList.replaceAll("SamsaraEtaColumn", "RemovedEtaColumn"), /SamsaraEtaColumn/],
+    ["board request flag", dispatchPage.replace(/include_live_eta:\s*true/, "include_live_eta: false"), /include_live_eta:\s*true/],
+    ["backend enrichment", loadsRoutes.replaceAll("enrichLoadsLiveEta", "disabledLiveEta"), /enrichLoadsLiveEta/],
+  ];
+  for (const [label, planted, expected] of mutations) {
+    if (expected.test(planted)) {
+      console.error(`verify:dispatch-eta-columns SELFTEST FAIL — ${label} mutation survived`);
+      process.exit(1);
+    }
+  }
+  console.log(`verify:dispatch-eta-columns SELFTEST PASS — ${mutations.length} wiring mutations caught`);
+  process.exit(0);
+}
 
 const manifest = read(".block-ready/DISPATCH-LIVE-ETA.json");
 contains(".block-ready/DISPATCH-LIVE-ETA.json", manifest, [
