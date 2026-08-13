@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["dispatch","driver-hub"],"cols":["connectivity","reverse_link"],"task":"GAP-34-DRIVER-PWA-DISPATCH-VIEW","leafRe":".*"} */
 import fs from "node:fs";
 import path from "node:path";
 

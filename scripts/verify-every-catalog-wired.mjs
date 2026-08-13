@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["lists","customers","vendors"],"cols":["connectivity","reverse_link"],"leafRe":".*","task":"CLS-LISTS-MASTER-ROSTER-CONNECTIVITY","vertical":"class-sweep"} */
 /**
  * COMPLETENESS GATE — every wireable catalogs.* table must be reachable and editable.
  *

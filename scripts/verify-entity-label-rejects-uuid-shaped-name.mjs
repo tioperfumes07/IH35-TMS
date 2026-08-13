@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["home","dispatch","safety","reports","factoring","driver-hub"],"cols":["reverse_link"],"leafRe":".*","task":"CLS-ENTITY-LABEL-FK-GUARD-DRIFT","vertical":"class-sweep"} */
 /** @matrix-built {"modules":["customers"],"cols":["driver","unit","connectivity","reverse_link"],"leafRe":"^detail\\.loads$","task":"CLS-CUSTOMER-LOAD-DRIVER-UNIT-LINKS"} */
 /** @matrix-built {"modules":["vendors"],"cols":["unit","connectivity","reverse_link"],"leafRe":"^detail\\.profile$","task":"CLS-VENDOR-WO-UNIT-LINK"} */
 /** @matrix-built {"modules":["dispatch"],"cols":["customer","driver","unit","load","connectivity","reverse_link"],"leafRe":"^queues\\.detention$","task":"CLS-DISPATCH-DETENTION-FK-LINKS"} */
@@ -1379,7 +1378,7 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/accounting/RevenueRecognitionPage.tsx",
     bad: /label=\{detail\.customer_uuid \? undefined : "—"\}/,
-    good: /entityLabel\(\s*null\s*,\s*detail\.customer_uuid\s*,\s*"Customer"\s*\)/,
+    good: /entityLabel\(\s*detail\.customer_name \?\? null\s*,\s*detail\.customer_uuid\s*,\s*"Customer"\s*\)/,
   },
   {
     rel: "apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx",
@@ -1424,17 +1423,17 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/accounting/PrepaidExpensesPage.tsx",
     bad: /<EntityLink kind="account" id=\{detail\.asset_account_id\} \/>/,
-    good: /entityLabel\(null, detail\.asset_account_id, "Account"\)/,
+    good: /accountHumanLabel\(detail\.asset_account_number, detail\.asset_account_name, detail\.asset_account_id\)/,
   },
   {
     rel: "apps/frontend/src/pages/accounting/EscrowPage.tsx",
     bad: /<EntityLink kind="driver" id=\{row\.holder_id\} \/>/,
-    good: /entityLabel\(null, row\.holder_id, escrowHolderNoun\(row\.holder_type\)\)/,
+    good: /entityLabel\(row\.holder_label \?\? null, row\.holder_id, escrowHolderNoun\(row\.holder_type\)\)/,
   },
   {
     rel: "apps/frontend/src/pages/accounting/VendorCreditsPage.tsx",
     bad: /<EntityLink kind="vendor" id=\{row\.vendor_id\} \/>/,
-    good: /entityLabel\(null, row\.vendor_id, "Vendor"\)/,
+    good: /entityLabel\(row\.vendor_name, row\.vendor_id, "Vendor"\)/,
   },
   {
     rel: "apps/frontend/src/components/maintenance/WorkOrderDetailModal.tsx",
@@ -1449,7 +1448,7 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/accounting/RevenueRecognitionPage.tsx",
     bad: /label="Earn JE"/,
-    good: /entityLabel\(null, row\.earn_journal_entry_id, "Journal entry"\)/,
+    good: /entityLabel\(row\.earn_journal_entry_memo \?\? null, row\.earn_journal_entry_id, "Journal entry"\)/,
   },
   {
     rel: "apps/frontend/src/pages/insurance/ClaimsTab.tsx",

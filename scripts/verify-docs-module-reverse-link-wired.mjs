@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["docs"],"cols":["connectivity","reverse_link"],"task":"WAVE-B-docs-module","leafRe":".*"} */
 // CLASS-WAVE B (reverse_link/connectivity) — the docs module (docs/specs/scoreboard/modules/docs.required.json)
 // had ZERO Wave B guard coverage before this: its 10 leaves all require driver/customer/vendor/unit/load
 // connectivity+reverse_link, and direct investigation (2026-08-12) found it fully built on both sides —

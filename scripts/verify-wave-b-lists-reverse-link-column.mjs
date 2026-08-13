@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["lists"],"cols":["reverse_link"],"leafRe":".*","task":"WAVE-B-lists-reverse_link","vertical":"column-wave"} */
 import fs from "node:fs";
 
 const checks = [

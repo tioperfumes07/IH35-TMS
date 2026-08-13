@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["accounting","banking","cash-flow","compliance","customers","dispatch","docs","driver-hub","drivers","factoring","finance","fleet","form_425","fuel","home","insurance","inventory","legal","lists","maintenance","program","reports","safety","settlements","system","tasks","users","vendors"],"cols":["reverse_link"],"leafRe":".*","task":"CLS-ORPHAN-SURFACE-ALL-MODULES","vertical":"class-sweep"} */
 /**
  * CLS-ORPHAN-SURFACE / LINKAGE LAW §10 — a detail page must embed a way BACK.
  *

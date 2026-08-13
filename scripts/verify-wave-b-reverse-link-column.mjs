@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["home","dispatch","reports","accounting","banking","factoring","customers","vendors","drivers","safety","settlements","maintenance","insurance","legal","fleet","fuel","driver-hub","cash-flow"],"cols":["reverse_link"],"leafRe":".*","task":"WAVE-B-reverse_link","vertical":"column-wave"} */
 import fs from "node:fs";
 
 const checks = [

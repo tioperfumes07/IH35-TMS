@@ -5,7 +5,7 @@
  *
  * 0441-mod12-legal-no-reverse-drill-through (fleet + insurance + driver half):
  *  1. VehicleProfilePage mounts LegalMattersReverseSection / unit_id filter
- *  2. ClaimsTab + LawsuitsTab mount insurance_claim_id reverse section
+ *  2. ClaimsTab mounts insurance_claim_id and LawsuitsTab mounts insurance_lawsuit_id reverse sections
  *  3. DriverProfilePage mounts LegalMattersReverseSection / related_driver_id filter
  *     (P34/WIRING-PLAN-50 — this side of the double-linkage had real, working code on
  *     origin/main but no guard asserted it, so a future edit could silently drop the
@@ -69,8 +69,8 @@ export function check(texts) {
     if (!/LegalMattersReverseSection/.test(texts.lawsuits)) {
       f.push(`${FILES.lawsuits}: must mount LegalMattersReverseSection`);
     }
-    if (!/insurance_claim_id/.test(texts.lawsuits)) {
-      f.push(`${FILES.lawsuits}: must filter by insurance_claim_id`);
+    if (!/insurance_lawsuit_id/.test(texts.lawsuits)) {
+      f.push(`${FILES.lawsuits}: must filter by insurance_lawsuit_id`);
     }
   }
 
@@ -170,7 +170,7 @@ function selftest() {
   const good = {
     vehicle: `import { LegalMattersReverseSection } from "...";\nfilter={{ unit_id: id }}`,
     claims: `LegalMattersReverseSection\ninsurance_claim_id`,
-    lawsuits: `LegalMattersReverseSection\ninsurance_claim_id`,
+    lawsuits: `LegalMattersReverseSection\ninsurance_lawsuit_id`,
     driver: `import { LegalMattersReverseSection } from "...";\nfilter={{ related_driver_id: id }}`,
     section: `Owner Administrator legalMattersApi.list\n<EntityLink kind="matter" id={id} />`,
     api: `unit_id insurance_claim_id related_driver_id`,

@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["accounting","banking","cash-flow","compliance","customers","dispatch","docs","driver-hub","drivers","factoring","finance","fleet","form_425","fuel","home","insurance","inventory","legal","lists","maintenance","program","reports","safety","settlements","system","tasks","users","vendors"],"cols":["reverse_link"],"leafRe":".*","task":"WAVE-B-reverse-link-all-modules","vertical":"column-wave"} */
 /** Full-product reverse-link column: route reachability + canonical FK/label/panel ratchets. */
 import fs from "node:fs";
 import { spawnSync } from "node:child_process";
