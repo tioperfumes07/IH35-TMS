@@ -2,34 +2,45 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { getFuelTransactions } from "../../api/fuelPlanner";
 import { formatDateUS } from "../../lib/formatDate";
-import { formatMoneyCents } from "./constants";
+import { formatMoneyCents } from "../dispatch/constants";
 import { EntityLink } from "../shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 
 /**
  * FINAL-WEEKEND-FULL-WIRING-2026-08-12 rank 6 (CC-2) — Built reverse_link on create-path surfaces.
- * fuel.fuel_transactions.load_id has existed since P5-D5 (Load FK Invariant) and GET
- * /api/v1/fuel/transactions?load_id=... has worked since FUEL-4, but LoadDetailDrawer never
- * surfaced it — the load's other trip-cost reverse hops (expenses, WOs, claims, accidents) were all
- * built, fuel was the one silent gap. Embedded list (not link-out), matching the LoadSafetyReverseSection
- * pattern: real EntityLinks for driver/unit/vendor, both-ways drill.
+ * fuel.fuel_transactions.load_id/driver_id/unit_id have existed since P5-D5 (Load FK Invariant) and
+ * GET /api/v1/fuel/transactions?load_id=|driver_id=|unit_id=... has worked since FUEL-4, but load and
+ * unit detail never surfaced it (driver detail already had one via FuelHistoryView) — the other
+ * trip-cost reverse hops (expenses, WOs, claims, accidents) were all built on all three entity pages,
+ * fuel was the one silent gap on load + unit. Embedded list (not link-out), matching the
+ * InsuranceClaimsReverseSection filter-union convention so one component serves all three entities.
  */
+
+type Filter =
+  | { driver_id: string; unit_id?: never; load_id?: never }
+  | { unit_id: string; driver_id?: never; load_id?: never }
+  | { load_id: string; driver_id?: never; unit_id?: never };
 
 type Props = {
   operatingCompanyId: string;
-  loadId: string;
+  filter: Filter;
+  /** Short context phrase, e.g. "this load" / "this unit". */
+  contextLabel: string;
   "data-testid"?: string;
 };
 
-export function LoadFuelReverseSection({
+export function FuelTransactionsReverseSection({
   operatingCompanyId,
-  loadId,
-  "data-testid": testId = "load-detail-fuel-transactions",
+  filter,
+  contextLabel,
+  "data-testid": testId = "fuel-transactions-reverse",
 }: Props) {
+  const filterKey = Object.keys(filter)[0] as keyof Filter;
+  const filterValue = Object.values(filter)[0] as string;
   const fuelQ = useQuery({
-    queryKey: ["fuel", "reverse", "transactions", "load", operatingCompanyId, loadId],
-    queryFn: () => getFuelTransactions(operatingCompanyId, { load_id: loadId }),
-    enabled: Boolean(operatingCompanyId) && Boolean(loadId),
+    queryKey: ["fuel", "reverse", "transactions", operatingCompanyId, filter],
+    queryFn: () => getFuelTransactions(operatingCompanyId, { ...filter }),
+    enabled: Boolean(operatingCompanyId) && Boolean(filterValue),
   });
   const rows = fuelQ.data?.transactions ?? [];
 
@@ -45,27 +56,33 @@ export function LoadFuelReverseSection({
         </Link>
       </div>
       {fuelQ.isLoading ? <p className="text-sm text-gray-500">Loading…</p> : null}
-      {fuelQ.isError ? <p className="text-sm text-red-600">Could not load fuel transactions for this load.</p> : null}
+      {fuelQ.isError ? <p className="text-sm text-red-600">Could not load fuel transactions for {contextLabel}.</p> : null}
       {!fuelQ.isLoading && !fuelQ.isError && rows.length === 0 ? (
-        <p className="text-sm text-gray-500">No fuel transactions linked to this load.</p>
+        <p className="text-sm text-gray-500">No fuel transactions linked to {contextLabel}.</p>
       ) : null}
       {rows.length > 0 ? (
         <ul className="space-y-2">
           {rows.map((row) => (
-            <li key={row.id} className="text-sm text-slate-700" data-testid={`load-fuel-transaction-${row.id}`}>
+            <li key={row.id} className="text-sm text-slate-700" data-testid={`fuel-transaction-${row.id}`}>
               <span className="font-medium text-slate-900">{row.station || "Fuel stop"}</span>
               <span className="ml-2 text-xs text-gray-500">
                 {formatDateUS(row.transaction_date)} · {row.gallons.toLocaleString()} gal · {formatMoneyCents(row.amount_cents, "USD")}
-                {row.driver_id ? (
+                {filterKey !== "driver_id" && row.driver_id ? (
                   <>
                     {" · "}
                     <EntityLink kind="driver" id={row.driver_id} label={entityLabel(row.driver_name, row.driver_id, "Driver")} />
                   </>
                 ) : null}
-                {row.unit_id ? (
+                {filterKey !== "unit_id" && row.unit_id ? (
                   <>
                     {" · "}
                     <EntityLink kind="unit" id={row.unit_id} label={entityLabel(row.unit_number, row.unit_id, "Unit")} />
+                  </>
+                ) : null}
+                {filterKey !== "load_id" && row.load_id ? (
+                  <>
+                    {" · "}
+                    <EntityLink kind="load" id={row.load_id} label={entityLabel(row.load_number, row.load_id, "Load")} />
                   </>
                 ) : null}
                 {row.vendor_id ? (
