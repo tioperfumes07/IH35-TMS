@@ -58,6 +58,7 @@ export function RoadServiceTicketModal({ open, onClose, operatingCompanyId }: Pr
   const [vendorId, setVendorId] = useState("");
   const [vendorName, setVendorName] = useState("");
   const [unitId, setUnitId] = useState("");
+  const [driverId, setDriverId] = useState("");
   const [serviceType, setServiceType] = useState<RoadServiceType>("tire_change");
   const [locationAddress, setLocationAddress] = useState("");
   const [initialComplaint, setInitialComplaint] = useState("");
@@ -80,6 +81,7 @@ export function RoadServiceTicketModal({ open, onClose, operatingCompanyId }: Pr
         vendor_name: vendorName.trim(),
         vendor_id: vendorId,
         unit_id: unitId,
+        driver_id: driverId || undefined,
         service_type: serviceType,
         location_address: locationAddress || undefined,
         initial_complaint: initialComplaint || undefined,
@@ -89,6 +91,7 @@ export function RoadServiceTicketModal({ open, onClose, operatingCompanyId }: Pr
       setVendorId("");
       setVendorName("");
       setUnitId("");
+      setDriverId("");
       setLocationAddress("");
       setInitialComplaint("");
     } catch (err) {
@@ -146,6 +149,20 @@ export function RoadServiceTicketModal({ open, onClose, operatingCompanyId }: Pr
               enabled={open}
               placeholder="Select unit…"
               dataField="road-service-unit"
+            />
+          </div>
+        </label>
+        <label className="block text-xs font-medium text-gray-700">
+          Driver
+          <div className="mt-1">
+            <EntityPicker
+              kind="driver"
+              operatingCompanyId={operatingCompanyId}
+              value={driverId || null}
+              onChange={(next) => setDriverId(next ?? "")}
+              enabled={open}
+              placeholder="Select driver…"
+              dataField="road-service-driver"
             />
           </div>
         </label>
