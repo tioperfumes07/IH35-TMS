@@ -8,6 +8,7 @@ import { assertCompanyMembership } from "../_helpers/company-membership-guard.js
 const querySchema = z.object({
   operating_company_id: z.string().uuid(),
   vendor_id: z.string().uuid().optional(),
+  work_order_id: z.string().uuid().optional(),
 });
 const woParamsSchema = z.object({ id: z.string().uuid() });
 const unitParamsSchema = z.object({ unitId: z.string().uuid() });
@@ -55,6 +56,10 @@ export async function registerMaintenancePartsInvoiceLinksRoutes(app: FastifyIns
       if (query.data.vendor_id) {
         values.push(query.data.vendor_id);
         filters.push(`pil.vendor_id = $${values.length}::uuid`);
+      }
+      if (query.data.work_order_id) {
+        values.push(query.data.work_order_id);
+        filters.push(`pil.work_order_id = $${values.length}::uuid`);
       }
       const res = await client.query(
         `
