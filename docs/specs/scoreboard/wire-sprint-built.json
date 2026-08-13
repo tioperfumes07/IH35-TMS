@@ -904,6 +904,14 @@
       "modules": ["driver-hub", "maintenance", "dispatch"],
       "cols": ["load", "driver", "connectivity", "reverse_link"],
       "leafRe": "^(driver|report|load|drawer|detail|create)"
+    },
+    {
+      "task": "INTERNAL-FINE-LOAD-REVERSE",
+      "pr": "this PR",
+      "guard": "scripts/verify-internal-fine-load-reverse.mjs",
+      "modules": ["safety", "dispatch", "drivers"],
+      "cols": ["load", "driver", "connectivity", "reverse_link", "picker_law"],
+      "leafRe": "^(internal|fine|load|driver|drawer|create)"
     }
   ]
 }

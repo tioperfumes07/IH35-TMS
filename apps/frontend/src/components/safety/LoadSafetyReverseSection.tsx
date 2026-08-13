@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import {
   getSafetyAccidents,
+  getInternalFines,
   listSafetyEventLog,
   listSafetyIncidents,
   type SafetyIncidentType,
@@ -51,6 +52,12 @@ export function LoadSafetyReverseSection({
     enabled: Boolean(operatingCompanyId) && Boolean(loadId),
   });
   const hosViolations: Row[] = hosViolationsQ.data?.hos_violations ?? [];
+  const internalFinesQ = useQuery({
+    queryKey: ["safety", "reverse", "internal-fines", "load", operatingCompanyId, loadId],
+    queryFn: () => getInternalFines(operatingCompanyId, { load_id: loadId }),
+    enabled: Boolean(operatingCompanyId) && Boolean(loadId),
+  });
+  const internalFines: Row[] = internalFinesQ.data?.fines ?? [];
 
   return (
     <div className="space-y-3" data-testid={testId}>
@@ -112,6 +119,13 @@ export function LoadSafetyReverseSection({
         ))}
       </div>
       <CivilFinesReverseBlock companyId={operatingCompanyId} related="load" entityId={loadId} />
+      <div className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid="load-safety-reverse-internal-fines">
+        <div className="flex items-center justify-between gap-2"><h3 className="text-sm font-semibold text-slate-900">Internal Fines{internalFines.length ? ` (${internalFines.length})` : ""}</h3><Link className="text-xs font-semibold text-slate-700 underline" to="/safety/internal-fines">Open Internal Fines</Link></div>
+        {internalFinesQ.isLoading ? <p className="text-sm text-gray-500">Loading internal fines…</p> : null}
+        {internalFinesQ.isError ? <p className="text-sm text-red-600">Could not load internal fines for this load.</p> : null}
+        {!internalFinesQ.isLoading && !internalFinesQ.isError && internalFines.length === 0 ? <p className="text-sm text-gray-500">No internal fines linked to this load.</p> : null}
+        {internalFines.map((row) => <div key={s(row.id)} className="text-sm text-slate-700"><EntityLink kind="internal_fine" id={s(row.id)} label={entityLabel(s(row.reason_name) || s(row.reason_code), row.id, "Internal fine")} /><span className="ml-2 text-xs text-gray-500">{row.imposed_date ? formatDateUS(String(row.imposed_date)) : "—"}</span>{row.driver_id ? <span className="ml-2"><EntityLink kind="driver" id={s(row.driver_id)} label={entityLabel(row.driver_name, row.driver_id, "Driver")} /></span> : null}</div>)}
+      </div>
       <DispatcherSafetyEventsReverseBlock
         operatingCompanyId={operatingCompanyId}
         related="load"
