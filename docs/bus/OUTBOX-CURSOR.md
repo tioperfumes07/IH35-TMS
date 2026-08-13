@@ -52,3 +52,5 @@
 2026-08-13T20:30Z Cursor | shipping VERTICAL-REVERSE-LINK-SAFETY-REMAINDER | +fix load tag JSON | Live=BLOCKED | NEXT=connectivity/absorb Codex
 2026-08-13T20:35Z Cursor | SHIPPED VERTICAL-REVERSE-LINK-SAFETY-REMAINDER (PR#6562) | safety reverse Gap=0 | Live=BLOCKED | NEXT=Codex reverse absorb / connectivity
 2026-08-13T20:40Z Cursor | shipping VERTICAL-REVERSE-LINK-INSURANCE-REMAINDER | detail Built + create honesty | Live=BLOCKED | NEXT=factoring/vendors reverse
+2026-08-13T20:45Z Cursor | SHIPPED VERTICAL-REVERSE-LINK-INSURANCE-REMAINDER (PR#6563) | insurance reverse Gap=0 | Live=BLOCKED | NEXT=factoring reverse
+2026-08-13T20:50Z Cursor | shipping VERTICAL-REVERSE-LINK-FACTORING-REMAINDER | FactorAdmin EntityLink + Built/honesty | Live=BLOCKED | NEXT=vendors reverse
