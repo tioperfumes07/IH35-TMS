@@ -840,6 +840,14 @@
       "modules": ["safety", "customers", "dispatch"],
       "cols": ["customer", "load", "connectivity", "reverse_link", "picker_law"],
       "leafRe": "^(cargo|claim|customer|load|profile|detail|create)"
+    },
+    {
+      "task": "EQUIPMENT-TRANSFER-HUMAN-LABEL",
+      "pr": "this PR",
+      "guard": "scripts/verify-equipment-transfer-human-label.mjs",
+      "modules": ["drivers", "dispatch", "fleet"],
+      "cols": ["trailer", "connectivity", "reverse_link"],
+      "leafRe": "^(equipment|transfer|trailer|driver|profile|detail)"
     }
   ]
 }

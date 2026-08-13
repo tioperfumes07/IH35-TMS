@@ -11,6 +11,7 @@ export type TransferRequestRow = {
   operating_company_id: string;
   equipment_uuid: string;
   equipment_kind: string;
+  equipment_number?: string | null;
   from_driver_uuid: string | null;
   to_driver_uuid: string | null;
   status: string;
@@ -147,6 +148,7 @@ export async function listPendingForDriver(
     const res = await client.query(
       `
         SELECT r.uuid::text, r.operating_company_id::text, r.equipment_uuid::text, r.equipment_kind,
+               e.equipment_number,
                r.from_driver_uuid::text, r.to_driver_uuid::text, r.status, r.transfer_location,
                r.outbound_confirmed_at::text, r.outbound_evidence_uuid::text,
                r.inbound_confirmed_at::text, r.inbound_evidence_uuid::text, r.created_at::text,
@@ -155,6 +157,8 @@ export async function listPendingForDriver(
         FROM dispatch.equipment_transfer_requests r
         LEFT JOIN mdata.drivers fd ON fd.id = r.from_driver_uuid AND fd.operating_company_id = r.operating_company_id
         LEFT JOIN mdata.drivers td ON td.id = r.to_driver_uuid AND td.operating_company_id = r.operating_company_id
+        LEFT JOIN mdata.equipment e ON e.id = r.equipment_uuid
+                                   AND (e.owner_company_id = r.operating_company_id OR e.currently_leased_to_company_id = r.operating_company_id)
         WHERE r.operating_company_id = $1::uuid
           AND r.equipment_uuid = $2::uuid
         ORDER BY r.created_at DESC
@@ -171,6 +175,7 @@ export async function listPendingForDriver(
     const res = await client.query(
       `
         SELECT r.uuid::text, r.operating_company_id::text, r.equipment_uuid::text, r.equipment_kind,
+               e.equipment_number,
                r.from_driver_uuid::text, r.to_driver_uuid::text, r.status, r.transfer_location,
                r.outbound_confirmed_at::text, r.inbound_confirmed_at::text, r.created_at::text,
                NULLIF(TRIM(CONCAT_WS(' ', fd.first_name, fd.last_name)), '') AS from_driver_name,
@@ -178,6 +183,8 @@ export async function listPendingForDriver(
         FROM dispatch.equipment_transfer_requests r
         LEFT JOIN mdata.drivers fd ON fd.id = r.from_driver_uuid AND fd.operating_company_id = r.operating_company_id
         LEFT JOIN mdata.drivers td ON td.id = r.to_driver_uuid AND td.operating_company_id = r.operating_company_id
+        LEFT JOIN mdata.equipment e ON e.id = r.equipment_uuid
+                                   AND (e.owner_company_id = r.operating_company_id OR e.currently_leased_to_company_id = r.operating_company_id)
         WHERE r.operating_company_id = $1::uuid
           AND (r.from_driver_uuid = $2::uuid OR r.to_driver_uuid = $2::uuid)
         ORDER BY r.created_at DESC
