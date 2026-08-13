@@ -1,6 +1,7 @@
 import { Modal } from "../../../components/Modal";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { entityLabel } from "../../../lib/entity-label";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -19,6 +20,9 @@ type Props = {
   open: boolean;
   liabilities: Liability[];
   onClose: () => void;
+  /** Settlement this breakdown is opened from — Wave A settlement reverse hop. */
+  settlementId?: string | null;
+  settlementDisplayId?: string | null;
 };
 
 // Display-only migration to shared ParityTable grammar — amounts render exactly as before
@@ -56,11 +60,27 @@ const COLUMNS: Array<ParityColumn<Liability>> = [
   { key: "schedule", label: "Schedule", sortable: true },
 ];
 
-export function LiabilityBreakdownModal({ open, liabilities, onClose }: Props) {
+export function LiabilityBreakdownModal({
+  open,
+  liabilities,
+  onClose,
+  settlementId,
+  settlementDisplayId,
+}: Props) {
   const total = liabilities.reduce((sum, item) => sum + item.balance, 0);
   const excludingPending = liabilities.reduce((sum, item) => sum + (item.pending_ack ? 0 : item.balance), 0);
   return (
     <Modal open={open} onClose={onClose} title="Liability Breakdown">
+      {settlementId ? (
+        <p className="mb-2 text-xs text-gray-700" data-testid="liability-breakdown-settlement-link">
+          Settlement:{" "}
+          <EntityLink
+            kind="settlement"
+            id={settlementId}
+            label={entityLabel(settlementDisplayId, settlementId, "Settlement")}
+          />
+        </p>
+      ) : null}
       <ParityTable<Liability>
         columns={COLUMNS}
         rows={liabilities}

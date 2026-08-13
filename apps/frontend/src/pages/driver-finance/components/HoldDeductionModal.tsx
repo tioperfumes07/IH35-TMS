@@ -3,8 +3,10 @@ import { holdDeduction } from "../../../api/driverFinance";
 import { Button } from "../../../components/Button";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { Modal } from "../../../components/Modal";
+import { EntityLink } from "../../../components/shared/EntityLink";
 import { useToast } from "../../../components/Toast";
 import { companyToday } from "../../../lib/businessDate";
+import { entityLabel } from "../../../lib/entity-label";
 import type { DeductionRow } from "./DeductionsSection";
 
 type Props = {
@@ -13,9 +15,20 @@ type Props = {
   operatingCompanyId: string;
   onClose: () => void;
   onHeld: () => void;
+  /** Settlement this hold is opened from — Wave A settlement reverse hop. */
+  settlementId?: string | null;
+  settlementDisplayId?: string | null;
 };
 
-export function HoldDeductionModal({ open, deduction, operatingCompanyId, onClose, onHeld }: Props) {
+export function HoldDeductionModal({
+  open,
+  deduction,
+  operatingCompanyId,
+  onClose,
+  onHeld,
+  settlementId,
+  settlementDisplayId,
+}: Props) {
   const { pushToast } = useToast();
   const [reason, setReason] = useState("");
   const [holdUntil, setHoldUntil] = useState("");
@@ -47,6 +60,16 @@ export function HoldDeductionModal({ open, deduction, operatingCompanyId, onClos
     <Modal open={open} onClose={onClose} title="Hold Deduction">
       {!deduction ? null : (
         <div className="space-y-2 text-xs">
+          {settlementId ? (
+            <p className="text-xs text-gray-700" data-testid="hold-deduction-settlement-link">
+              Settlement:{" "}
+              <EntityLink
+                kind="settlement"
+                id={settlementId}
+                label={entityLabel(settlementDisplayId, settlementId, "Settlement")}
+              />
+            </p>
+          ) : null}
           <div className="rounded-sm border border-gray-200 bg-gray-50 p-2">
             <div className="font-semibold">{deduction.description}</div>
             <div>Balance left: ${deduction.balance_left.toFixed(2)}</div>

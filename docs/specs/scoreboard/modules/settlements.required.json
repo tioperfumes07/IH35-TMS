@@ -222,7 +222,6 @@
         "picker_law",
         "driver",
         "load",
-        "settlement",
         "liability"
       ]
     },
@@ -238,7 +237,6 @@
         "reverse_link",
         "driver",
         "load",
-        "settlement",
         "liability"
       ]
     },
@@ -286,8 +284,7 @@
         "reverse_link",
         "liability",
         "driver",
-        "load",
-        "settlement"
+        "load"
       ]
     },
     {
@@ -351,7 +348,6 @@
         "picker_law",
         "driver",
         "load",
-        "settlement",
         "liability"
       ]
     },
