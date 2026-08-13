@@ -721,6 +721,27 @@ function ledgerGitOr(fmt, fb) {
 }
 
 /**
+ * Prefer env, then a short live healthz probe, then prior JSON tip.
+ * Never blocks emit on network failure.
+ */
+function resolveDeployedSha(prior) {
+  const fromEnv = String(process.env.IH35_DEPLOYED_SHA || "").trim();
+  if (/^[0-9a-f]{7,40}$/i.test(fromEnv)) return fromEnv.slice(0, 9);
+  try {
+    const raw = execSync(
+      "curl -fsS --max-time 4 https://api.ih35dispatch.com/api/v1/healthz/shallow",
+      { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] },
+    );
+    const v = JSON.parse(raw)?.version;
+    if (typeof v === "string" && /^[0-9a-f]{7,40}$/i.test(v)) return v.slice(0, 9);
+  } catch {
+    /* offline / CI without egress — keep prior */
+  }
+  const p = String(prior || "").trim();
+  return /^[0-9a-f]{7,40}$/i.test(p) ? p.slice(0, 9) : "";
+}
+
+/**
  * Emit docs/audit/program-scoreboard.json for the Program Audit Scoreboard page.
  * Shape = PROGRAM_SCOREBOARD (meta, modules[], prod[], chain[], chainMoney, chainReverse, guard[]).
  * Preserves Cascade-authored prod/chain/guard/V1–V8 from the prior JSON; refreshes meta + A–E
@@ -827,7 +848,9 @@ export function emitProgramJson(rows, metrics, sidebarIds, opts = {}) {
       // Deterministic from the ledger's own last commit — not wall clock / CI HEAD.
       generatedAt: ledgerGeneratedAt,
       sourceSha: ledgerSourceSha,
-      deployedSha: String(prev.meta.deployedSha || sha).slice(0, 9),
+      // Prefer live healthz / IH35_DEPLOYED_SHA so the board does not forever pin an ancient deploy tip.
+      // Falls back to prior JSON, then this checkout SHA. Never invents PROD-VERIFIED gates.
+      deployedSha: String(resolveDeployedSha(prev.meta.deployedSha) || sha).slice(0, 9),
       // prodReadAt stays from Cascade live-read snapshot — CI must not pretend it re-read prod
       ledgerRows: metrics.rowsTotal,
       failOpen: metrics.failOpen,

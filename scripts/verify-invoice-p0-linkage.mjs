@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 /**
+ * @matrix-built {"modules":["accounting"],"cols":["load","driver","unit","connectivity","reverse_link"],"leafRe":"^(invoices\\.(list|create|detail)|invoice)","task":"ACCT-F5053-INVOICE-P0-LINKAGE","pr":"#6455"}
  * P-INVOICE P0 (#3177) — Law §9 invoice linkage fail-closed + EntityLink drill.
  *
  * 1) Posting engine refuses null income account (no invented CoA).

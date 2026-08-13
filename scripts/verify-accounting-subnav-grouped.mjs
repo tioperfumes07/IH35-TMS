@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 /**
+ * @matrix-built {"modules":["accounting"],"cols":["connectivity"],"leafRe":"^(home|invoices\\.|bills\\.|expenses\\.|payments|je\\.|bill_payments)","task":"ACCT-SUBNAV-GROUPED-MONEY-CREATE","pr":"#6455+#6462"}
  * CI guard: Accounting top-bar sub-nav = APPROVED grouped click-open dropdowns.
  *
  * Source of truth (LOCKED): docs/approved-screens/3-Accounting-Dropdown.png +

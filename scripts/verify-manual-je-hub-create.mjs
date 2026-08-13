@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 /**
+ * @matrix-built {"modules":["accounting"],"cols":["connectivity","picker_law"],"leafRe":"^(je\\.(list|create)|je)$","task":"ACCT-F5056-MANUAL-JE-CREATE-URL","pr":"#6460"}
  * ACCT-PR-4/6 — Manual JE create on the Accounting Hub.
  *
  * Guards the audit requirement:

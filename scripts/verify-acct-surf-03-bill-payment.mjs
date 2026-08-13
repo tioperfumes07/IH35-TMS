@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 /**
+ * @matrix-built {"modules":["accounting"],"cols":["connectivity","picker_law"],"leafRe":"^(bill_payments\\.(list|create)|bill_payments)$","task":"ACCT-F5057-BILL-PAYMENT-CREATE-URL","pr":"#6462"}
  * ACCT-SURF-03 — Bill payment deep structural DoD.
  *
  * Frozen map: docs/trackers/ACCT-08-SURF-SURFACE-MAP-2026-07-25.md

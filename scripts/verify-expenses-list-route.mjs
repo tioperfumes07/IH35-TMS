@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 /**
+ * @matrix-built {"modules":["accounting"],"cols":["connectivity","picker_law"],"leafRe":"^(expenses\\.(list|create)|expenses)$","task":"ACCT-F5054-EXPENSE-CREATE-URL","pr":"#6456"}
  * verify-expenses-list-route — lock the owner-approved browse/create route split.
  *
  * Canonical contract (browse-first):

@@ -3,9 +3,13 @@
  *
  * Sources (union, deduped):
  *  1. docs/specs/scoreboard/wire-sprint-built.json (legacy manual feed)
- *  2. @matrix-built JSON tags in scripts/verify-*.mjs headers (preferred for new merges)
+ *  2. @matrix-built tags in scripts/verify-*.mjs headers (preferred for new merges):
+ *     - JSON:  @matrix-built { "modules":[…], "cols":[…], "leafRe":"…", "task":"…" }
+ *     - shorthand: @matrix-built modules=a,b cols=x,y leafRe=^foo$ task=NAME
+ *     - csv-only: @matrix-built maintenance,fleet  (cols default connectivity,reverse_link)
  *
  * Built greens when the guard file exists on the deployed SHA (request-time read).
+ * Live (Box 4) is Cascade PROD-VERIFIED ledger only — merges never auto-green Live.
  */
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
@@ -20,7 +24,13 @@ export type WireSprintBuiltEntry = {
   source?: string;
 };
 
-const MATRIX_BUILT_RE = /@matrix-built\s+(\{[\s\S]*?\})/g;
+const MATRIX_BUILT_JSON_RE = /@matrix-built\s+(\{[\s\S]*?\})/g;
+/** Codex/Cursor shorthand: @matrix-built modules=a,b cols=x,y leafRe=^foo$ task=NAME */
+const MATRIX_BUILT_SHORTHAND_RE =
+  /@matrix-built\s+modules=([^\s]+)(?:\s+cols=([^\s]+))?(?:\s+leafRe=([^\s]+))?(?:\s+task=([^\s]+))?(?:\s+pr=([^\s]+))?/g;
+/** Bare module list: @matrix-built maintenance,fleet (no modules= / no JSON). */
+const MATRIX_BUILT_CSV_RE =
+  /@matrix-built\s+(?!modules=|\{)([a-z][a-z0-9_-]*(?:,[a-z][a-z0-9_-]*)+)(?=\s|\*|\/|$)/gi;
 
 function readJson<T>(abs: string): T | null {
   try {
@@ -55,9 +65,10 @@ function entryKey(e: WireSprintBuiltEntry): string {
   return `${e.guard}|${e.modules.join(",")}|${e.cols.join(",")}|${e.leafRe}`;
 }
 
-function parseMatrixBuiltTags(guardRel: string, content: string): WireSprintBuiltEntry[] {
+/** Exported for verify-matrix-built-tag-present selftest (parse parity). */
+export function parseMatrixBuiltTags(guardRel: string, content: string): WireSprintBuiltEntry[] {
   const out: WireSprintBuiltEntry[] = [];
-  for (const m of content.matchAll(MATRIX_BUILT_RE)) {
+  for (const m of content.matchAll(MATRIX_BUILT_JSON_RE)) {
     try {
       const j = JSON.parse(m[1]!) as Partial<WireSprintBuiltEntry>;
       if (!j.modules?.length || !j.cols?.length || !j.leafRe) continue;
@@ -73,6 +84,43 @@ function parseMatrixBuiltTags(guardRel: string, content: string): WireSprintBuil
     } catch {
       /* skip malformed tag */
     }
+  }
+  // SCOREBOARD-MATRIX-BUILT-SHORTHAND — Codex ships `modules=a,b cols=x,y` (no JSON). Ignoring
+  // those tags left Built cells stuck unaudited after merge+deploy (measured: 8+ verify-*.mjs).
+  for (const m of content.matchAll(MATRIX_BUILT_SHORTHAND_RE)) {
+    const modules = String(m[1] ?? "")
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+    const cols = String(m[2] ?? "connectivity,reverse_link")
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+    if (!modules.length || !cols.length) continue;
+    out.push({
+      task: String(m[4] ?? path.basename(guardRel, ".mjs")),
+      pr: m[5],
+      guard: guardRel,
+      modules,
+      cols,
+      leafRe: String(m[3] ?? ".*"),
+      source: "@matrix-built",
+    });
+  }
+  for (const m of content.matchAll(MATRIX_BUILT_CSV_RE)) {
+    const modules = String(m[1] ?? "")
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+    if (modules.length < 2) continue;
+    out.push({
+      task: path.basename(guardRel, ".mjs"),
+      guard: guardRel,
+      modules,
+      cols: ["connectivity", "reverse_link"],
+      leafRe: ".*",
+      source: "@matrix-built",
+    });
   }
   return out;
 }

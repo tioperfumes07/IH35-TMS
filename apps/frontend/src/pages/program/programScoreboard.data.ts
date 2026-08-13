@@ -30,7 +30,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
   "meta": {
     "generatedAt": "2026-08-12T06:21:50-05:00",
     "sourceSha": "0735373d4",
-    "deployedSha": "308bc66",
+    "deployedSha": "b985418",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 705,
     "failOpen": 14,
