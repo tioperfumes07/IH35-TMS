@@ -34,6 +34,7 @@ import { BackgroundChecksSection } from "../../components/safety/BackgroundCheck
 import { MedicalCardsHistorySection } from "../../components/safety/MedicalCardsHistorySection";
 import { RoadServiceReverseSection } from "../../components/maintenance/RoadServiceReverseSection";
 import { DriverBorderCrossingsReverseSection } from "../../components/dispatch/DriverBorderCrossingsReverseSection";
+import { DriverInTransitIssuesReverseSection } from "../../components/dispatch/DriverInTransitIssuesReverseSection";
 import { W8BenModal } from "../../components/drivers/W8BenModal";
 import { KpiCard } from "../../components/layout/KpiCard";
 import { KpiStrip } from "../../components/layout/KpiStrip";
@@ -567,6 +568,7 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
           driverId={id}
           data-testid="driver-profile-safety-reverse"
         />
+        <DriverInTransitIssuesReverseSection operatingCompanyId={companyId} driverId={id} />
       </div>
       <div data-testid="dp-section-road-service-reverse">
         <RoadServiceReverseSection
