@@ -39,6 +39,7 @@ import { EntityAuditHistoryTab } from "../../components/audit/EntityAuditHistory
 import { LegalMattersReverseSection } from "../../components/legal/LegalMattersReverseSection";
 import { InsuranceClaimsReverseSection } from "../../components/insurance/InsuranceClaimsReverseSection";
 import { AssetSafetyReverseSection } from "../../components/safety/AssetSafetyReverseSection";
+import { FuelTransactionsReverseSection } from "../../components/fuel/FuelTransactionsReverseSection";
 import { LinkedBankTransactionsPanel } from "../../components/banking/LinkedBankTransactionsPanel";
 
 export type UnitProfileAggregate = {
@@ -326,6 +327,18 @@ export function VehicleProfilePage() {
               assetKind="unit"
               assetId={id}
               data-testid="vehicle-profile-safety-records"
+            />
+          </div>
+          {/* RANK6-FUEL-LOAD-REVERSE-FORWARD follow-up — units had zero fuel reverse linkage despite
+              fuel.fuel_transactions.unit_id existing and GET /fuel/transactions?unit_id=... working
+              since FUEL-4; drivers already had this via FuelHistoryView, loads got it this same class
+              of fix. DEFINITION-OF-DONE §1.C: forward without reverse is not done. */}
+          <div data-testid="vp-section-10e-fuel-transactions">
+            <FuelTransactionsReverseSection
+              operatingCompanyId={companyId}
+              filter={{ unit_id: id }}
+              contextLabel="this unit"
+              data-testid="vehicle-profile-fuel-transactions"
             />
           </div>
           <div data-testid="vp-section-11-action-bar">
