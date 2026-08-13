@@ -135,9 +135,18 @@ export async function registerBorderCrossingWizardRoutes(app: FastifyInstance) {
       let fastVerified = false;
       if (data.driver_id) {
         const driverRes = await client.query(
-          `SELECT fast_card_expiration FROM mdata.drivers WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+          `SELECT id, fast_card_expiration
+             FROM mdata.drivers
+            WHERE id = $1::uuid
+              AND operating_company_id = $2::uuid
+              AND deactivated_at IS NULL
+              AND archived_at IS NULL
+            LIMIT 1`,
           [data.driver_id, data.operating_company_id]
         );
+        if (!driverRes.rows[0]) {
+          throw Object.assign(new Error("linked_entity_not_in_operating_company"), { statusCode: 400 });
+        }
         const check = parseFastCardWarning(
           (driverRes.rows[0] as { fast_card_expiration: string | null } | undefined)?.fast_card_expiration
         );
