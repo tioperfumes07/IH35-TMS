@@ -37,6 +37,7 @@ import { CappedListNotice } from "../CappedListNotice";
 import { Combobox } from "../Combobox";
 import { CreateDriverModal } from "../drivers/CreateDriverModal";
 import { CreateTrailerModal } from "../fleet/CreateTrailerModal";
+import { InlineCreateDrawer } from "./InlineCreateDrawer";
 import { CreateUnitModal } from "../fleet/CreateUnitModal";
 import { PolicyCreateModal } from "../insurance/PolicyCreateModal";
 import {
@@ -230,6 +231,16 @@ export function EntityPicker({
           operatingCompanyId={operatingCompanyId}
           onClose={() => setCreateOpen(false)}
           onCreated={(id) => (id ? handleCreated(id) : setCreateOpen(false))}
+        />
+      ) : null}
+
+      {createOffered && kind === "vendor" ? (
+        <InlineCreateDrawer
+          open={createOpen}
+          kind="vendor"
+          operatingCompanyId={operatingCompanyId}
+          onClose={() => setCreateOpen(false)}
+          onCreated={(record) => handleCreated(record.id, record.label)}
         />
       ) : null}
     </>

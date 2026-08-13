@@ -168,6 +168,7 @@ export function CreateFuelTransactionModal({ open, operatingCompanyId, onClose, 
                 onChange={(next) => setVendorId(next ?? "")}
                 placeholder="Search vendor…"
                 dataTestId="fuel-create-vendor"
+                allowCreate
                 allowClear
               />
             </div>

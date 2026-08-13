@@ -19,11 +19,12 @@ import { EntityPicker } from "../EntityPicker";
 
 const listDrivers = vi.fn();
 const listLoads = vi.fn();
+const listVendors = vi.fn();
 
 vi.mock("../../../api/mdata", () => ({
   listDrivers: (...args: unknown[]) => listDrivers(...args),
   listUnits: vi.fn().mockResolvedValue({ units: [] }),
-  listVendors: vi.fn().mockResolvedValue({ vendors: [] }),
+  listVendors: (...args: unknown[]) => listVendors(...args),
 }));
 vi.mock("../../../api/loads", () => ({ listLoads: (...args: unknown[]) => listLoads(...args) }));
 vi.mock("../../../api/maintenance", () => ({ listWorkOrders: vi.fn().mockResolvedValue({ work_orders: [] }) }));
@@ -39,6 +40,10 @@ vi.mock("../../drivers/CreateDriverModal", () => ({
 }));
 vi.mock("../../fleet/CreateUnitModal", () => ({ CreateUnitModal: () => null }));
 vi.mock("../../insurance/PolicyCreateModal", () => ({ PolicyCreateModal: () => null }));
+vi.mock("../InlineCreateDrawer", () => ({
+  InlineCreateDrawer: ({ open, kind }: { open: boolean; kind: string }) =>
+    open ? <div data-testid={`inline-create-${kind}`} /> : null,
+}));
 
 const COMPANY = "11111111-1111-4111-8111-111111111111";
 
@@ -60,6 +65,8 @@ describe("EntityPicker (C1 picker law)", () => {
     listLoads.mockResolvedValue({
       loads: [{ id: "load-1", load_number: "LD-100", customer_name: "ACME", first_pickup_city: "Laredo" }],
     });
+    listVendors.mockReset();
+    listVendors.mockResolvedValue({ vendors: [{ id: "vendor-1", name: "Roadside Supply", vendor_type: "Shop" }] });
   });
 
   it("reads the canonical roster company-scoped", async () => {
@@ -117,6 +124,19 @@ describe("EntityPicker (C1 picker law)", () => {
     // drawer with focus trap + Escape + unsaved guard). shell="drawer" is CHROME-11's ParityDrawer,
     // used only when the picker is already inside an open money drawer.
     expect(surface.getAttribute("data-shell")).toBe("modal");
+  });
+
+  it("reuses the canonical vendor drawer and keeps + Create as the first roster row", async () => {
+    const user = userEvent.setup();
+    wrap(<EntityPicker kind="vendor" operatingCompanyId={COMPANY} value={null} onChange={vi.fn()} allowCreate />);
+    await user.click(await screen.findByPlaceholderText("Select vendor"));
+
+    const createRow = await screen.findByText("+ Create vendor");
+    const vendorRow = await screen.findByText("Roadside Supply");
+    expect(createRow.compareDocumentPosition(vendorRow) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+
+    await user.click(createRow);
+    expect(await screen.findByTestId("inline-create-vendor")).toBeTruthy();
   });
 
   it("stacks as a ParityDrawer when nested inside an open money drawer (CHROME-11)", async () => {

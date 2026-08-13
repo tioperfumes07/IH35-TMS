@@ -266,11 +266,9 @@ const ENTITY_PICKERS: Record<EntityPickerKind, EntityPickerConfig> = {
     writeEndpoint: "POST /api/v1/mdata/vendors",
     entityScoped: true,
     evidence: "apps/backend/src/mdata/vendors.routes.ts:267 (SELECT) / :413 (INSERT)",
-    inlineCreate: {
-      available: false,
-      reason:
-        "Vendor inline create ALREADY exists and is already picker-law compliant: <ReferenceSelect createKind=\"vendor\"> routes to InlineCreateDrawer at ~42 call sites. C1's rule is to extend the #3550 mechanism, not duplicate it — a second vendor creator here would be exactly the fork this block forbids. Use ReferenceSelect when a vendor field needs create; use this picker when it only needs to SELECT (e.g. a list filter).",
-    },
+    // Reuse ReferenceSelect's canonical vendor drawer. EntityPicker must not suppress + Create on
+    // create leaves merely because the same writer is owned by another shared picker primitive.
+    inlineCreate: { available: true },
     serverSearch: true,
     async list(operatingCompanyId, opts) {
       // Prod TRANSP vendors ~950: with search, a 200 page is correct; without search keep 1000 so
