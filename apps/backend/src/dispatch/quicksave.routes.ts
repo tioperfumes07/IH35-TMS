@@ -53,6 +53,9 @@ function mapQuickAssignError(error: unknown) {
   }
   const code = String((error as Error)?.message ?? "");
   if (code === "E_LOAD_NOT_FOUND") return { status: 404, payload: { error: code } };
+  if (code === "E_UNIT_NOT_FOUND") {
+    return { status: 404, payload: { error: code, message: "Unit is not active in this operating company." } };
+  }
   if (code === "E_TRAILER_NOT_FOUND") {
     return {
       status: 404,

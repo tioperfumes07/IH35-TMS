@@ -69,6 +69,7 @@ export async function quickAssignLoad(userId: string, role: string, input: Quick
               -- to notice. Driven from mdata.units with the view LEFT JOINed for its advisory columns.
               SELECT u.id,
                      COALESCE(u.unit_number, v.display_id, u.id::text) AS display_id,
+                     COALESCE(u.is_oos, false) AS is_oos,
                      COALESCE(v.is_dispatch_blocked, false) AS is_dispatch_blocked,
                      v.dispatch_block_reason,
                      COALESCE(v.has_open_pm_due_wo, false) AS has_open_pm_due_wo
@@ -76,12 +77,13 @@ export async function quickAssignLoad(userId: string, role: string, input: Quick
               LEFT JOIN views.units_with_dispatch_status v ON v.id = u.id
               WHERE u.id = $1
                 AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $2
+                AND u.deactivated_at IS NULL
               LIMIT 1
             `,
             [input.unit_id, input.operating_company_id]
-          )
-          .catch(() => ({ rows: [] as Record<string, unknown>[] }));
+          );
         const row = unit.rows[0];
+        if (!row) throw new Error("E_UNIT_NOT_FOUND");
         if (row?.has_open_pm_due_wo) {
           warnings.push({
             code: "WF044_PM_DUE",
@@ -96,26 +98,11 @@ export async function quickAssignLoad(userId: string, role: string, input: Quick
             message: String(row.dispatch_block_reason ?? "Unit is dispatch-blocked"),
           });
         }
-        // 0441-mod2: hard-block OOS units (same severity class as WF-050 / is_dispatch_blocked).
-        // Queried from mdata.units directly — views.units_with_dispatch_status does not expose is_oos.
-        const oosRes = await client
-          .query<{ is_oos: boolean; display_id: string }>(
-            `
-              SELECT COALESCE(is_oos, false) AS is_oos,
-                     COALESCE(unit_number, id::text) AS display_id
-              FROM mdata.units
-              WHERE id = $1::uuid
-                AND COALESCE(currently_leased_to_company_id, owner_company_id) = $2::uuid
-              LIMIT 1
-            `,
-            [input.unit_id, input.operating_company_id]
-          )
-          .catch(() => ({ rows: [] as { is_oos: boolean; display_id: string }[] }));
-        if (oosRes.rows[0]?.is_oos) {
+        if (row.is_oos) {
           warnings.push({
             code: "UNIT_OOS",
             severity: "hard_block",
-            message: `Unit ${String(oosRes.rows[0].display_id ?? input.unit_id)} is out of service (OOS) and cannot be assigned.`,
+            message: `Unit ${String(row.display_id ?? input.unit_id)} is out of service (OOS) and cannot be assigned.`,
           });
         }
       }
@@ -302,20 +289,23 @@ export async function completeQuicksaveDraft(
     const unitId = typeof patch.assigned_unit_id === "string" ? patch.assigned_unit_id : null;
     const trailerId = typeof patch.assigned_secondary_driver_id === "string" ? patch.assigned_secondary_driver_id : null;
     if (unitId) {
-      const oosRes = await client.query<{ is_oos: boolean; display_id: string }>(
+      const unitRes = await client.query<{ id: string; is_oos: boolean; display_id: string }>(
         `
-          SELECT COALESCE(is_oos, false) AS is_oos,
+          SELECT id::text,
+                 COALESCE(is_oos, false) AS is_oos,
                  COALESCE(unit_number, id::text) AS display_id
           FROM mdata.units
           WHERE id = $1::uuid
             AND COALESCE(currently_leased_to_company_id, owner_company_id) = $2::uuid
+            AND deactivated_at IS NULL
           LIMIT 1
         `,
         [unitId, input.operating_company_id]
       );
-      if (oosRes.rows[0]?.is_oos) {
+      if (!unitRes.rows[0]?.id) throw new Error("E_UNIT_NOT_FOUND");
+      if (unitRes.rows[0].is_oos) {
         throw new Error(
-          `E_UNIT_OOS:Unit ${oosRes.rows[0].display_id ?? unitId} is out of service (OOS) and cannot be assigned.`
+          `E_UNIT_OOS:Unit ${unitRes.rows[0].display_id ?? unitId} is out of service (OOS) and cannot be assigned.`
         );
       }
     }
