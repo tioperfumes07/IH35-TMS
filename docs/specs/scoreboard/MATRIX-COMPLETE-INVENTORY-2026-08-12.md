@@ -69,3 +69,9 @@
 | `00-README.md` | this file |
 
 Generated: 2026-08-12T23:47:47.129082+00:00
+
+## Linkage parity (owner 2026-08-12)
+- **Trailer ≡ unit** on every Required leaf that lists `unit`.
+- **Load ↔ trip events** — leaves that Require `work_order` / `accident` / `claim` / `scenario.maintenance` / `scenario.insurance` also Require `load` (repairs/maint/safety/insurance while on a trip).
+- **Reefer fuel** — `fuel.reefer` + `fleet.trailer.profile.reefer` Require trailer · load · expense.
+- Guard: `verify-trailer-unit-linkage-parity` (step **3126**).

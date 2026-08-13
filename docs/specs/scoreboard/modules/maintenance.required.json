@@ -2,7 +2,7 @@
   "module": "maintenance",
   "entity_default": "USMCA",
   "source": {
-    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md §Module 2 — MAINTENANCE",
+    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md \u00a7Module 2 \u2014 MAINTENANCE",
     "nav": "apps/frontend/src/components/maintenance/MAINTENANCE_NAV_CONFIG.ts",
     "home_tabs": "apps/frontend/src/pages/maintenance/MaintenanceHome.tsx SUBNAV",
     "routes": "apps/frontend/src/routes/manifest.tsx /maintenance/*"
@@ -156,12 +156,14 @@
     {
       "id": "wo.source.is",
       "tab": "Work Orders",
-      "sub": "IS — Internal shop",
+      "sub": "IS \u2014 Internal shop",
       "route_hint": "/maintenance",
       "required": [
         "driver",
         "vendor",
         "unit",
+        "trailer",
+        "load",
         "ap_bill",
         "expense",
         "gl_je",
@@ -176,12 +178,14 @@
     {
       "id": "wo.source.es",
       "tab": "Work Orders",
-      "sub": "ES — External shop",
+      "sub": "ES \u2014 External shop",
       "route_hint": "/maintenance",
       "required": [
         "driver",
         "vendor",
         "unit",
+        "trailer",
+        "load",
         "ap_bill",
         "expense",
         "gl_je",
@@ -195,7 +199,7 @@
     {
       "id": "wo.source.ac",
       "tab": "Work Orders",
-      "sub": "AC — Accident repair",
+      "sub": "AC \u2014 Accident repair",
       "route_hint": "/maintenance",
       "required": [
         "driver",
@@ -220,12 +224,14 @@
     {
       "id": "wo.source.et",
       "tab": "Work Orders",
-      "sub": "ET — External tires",
+      "sub": "ET \u2014 External tires",
       "route_hint": "/maintenance",
       "required": [
         "driver",
         "vendor",
         "unit",
+        "trailer",
+        "load",
         "ap_bill",
         "expense",
         "gl_je",
@@ -240,12 +246,13 @@
     {
       "id": "wo.source.rt",
       "tab": "Work Orders",
-      "sub": "RT — Roadside tires",
+      "sub": "RT \u2014 Roadside tires",
       "route_hint": "/maintenance",
       "required": [
         "driver",
         "vendor",
         "unit",
+        "trailer",
         "load",
         "ap_bill",
         "expense",
@@ -261,12 +268,14 @@
     {
       "id": "wo.source.it",
       "tab": "Work Orders",
-      "sub": "IT — Internal tires",
+      "sub": "IT \u2014 Internal tires",
       "route_hint": "/maintenance",
       "required": [
         "driver",
         "vendor",
         "unit",
+        "trailer",
+        "load",
         "ap_bill",
         "expense",
         "gl_je",
@@ -281,12 +290,13 @@
     {
       "id": "wo.source.rs",
       "tab": "Work Orders",
-      "sub": "RS — Roadside service",
+      "sub": "RS \u2014 Roadside service",
       "route_hint": "/maintenance/road-service",
       "required": [
         "driver",
         "vendor",
         "unit",
+        "trailer",
         "load",
         "ap_bill",
         "expense",
@@ -306,6 +316,8 @@
       "required": [
         "vendor",
         "unit",
+        "trailer",
+        "load",
         "ap_bill",
         "gl_je",
         "scenario.maintenance",
@@ -323,6 +335,8 @@
       "required": [
         "vendor",
         "unit",
+        "trailer",
+        "load",
         "expense",
         "gl_je",
         "scenario.maintenance",
@@ -340,6 +354,7 @@
       "required": [
         "driver",
         "unit",
+        "trailer",
         "load",
         "scenario.maintenance",
         "picker_law",
@@ -355,6 +370,8 @@
       "route_hint": "/maintenance/arriving-soon",
       "required": [
         "unit",
+        "trailer",
+        "load",
         "scenario.maintenance",
         "picker_law",
         "qbo_chrome",
@@ -371,6 +388,7 @@
         "driver",
         "unit",
         "trailer",
+        "load",
         "scenario.maintenance",
         "scenario.insurance",
         "picker_law",
@@ -387,6 +405,8 @@
       "required": [
         "driver",
         "unit",
+        "trailer",
+        "load",
         "scenario.maintenance",
         "picker_law",
         "qbo_chrome",
@@ -401,6 +421,8 @@
       "route_hint": "/maintenance/severe-repairs",
       "required": [
         "unit",
+        "trailer",
+        "load",
         "scenario.maintenance",
         "picker_law",
         "qbo_chrome",
@@ -417,6 +439,7 @@
         "driver",
         "vendor",
         "unit",
+        "trailer",
         "load",
         "ap_bill",
         "expense",
@@ -437,6 +460,7 @@
         "driver",
         "unit",
         "trailer",
+        "load",
         "scenario.maintenance",
         "picker_law",
         "qbo_chrome",
@@ -452,6 +476,8 @@
       "required": [
         "driver",
         "unit",
+        "trailer",
+        "load",
         "scenario.maintenance",
         "picker_law",
         "qbo_chrome",
@@ -483,6 +509,8 @@
       "route_hint": "/maintenance/pm-schedule",
       "required": [
         "unit",
+        "trailer",
+        "load",
         "scenario.maintenance",
         "picker_law",
         "qbo_chrome",
@@ -497,6 +525,8 @@
       "route_hint": "/maintenance/pm-auto-engine",
       "required": [
         "unit",
+        "trailer",
+        "load",
         "scenario.maintenance",
         "picker_law",
         "qbo_chrome",
@@ -512,6 +542,8 @@
       "required": [
         "driver",
         "unit",
+        "trailer",
+        "load",
         "scenario.maintenance",
         "picker_law",
         "qbo_chrome",
@@ -552,6 +584,7 @@
       "sub": "+ Create Rule",
       "route_hint": "/maintenance/fault-rules",
       "required": [
+        "load",
         "scenario.maintenance",
         "picker_law",
         "qbo_chrome",
@@ -566,6 +599,8 @@
       "route_hint": "/maintenance/fault-drafts",
       "required": [
         "unit",
+        "trailer",
+        "load",
         "scenario.maintenance",
         "picker_law",
         "qbo_chrome",
@@ -581,6 +616,7 @@
       "required": [
         "unit",
         "trailer",
+        "load",
         "inventory",
         "scenario.maintenance",
         "picker_law",
@@ -610,6 +646,8 @@
       "required": [
         "vendor",
         "unit",
+        "trailer",
+        "load",
         "ap_bill",
         "scenario.maintenance",
         "picker_law",
@@ -631,6 +669,8 @@
         "connectivity",
         "reverse_link",
         "unit",
+        "trailer",
+        "load",
         "vendor",
         "work_order"
       ]
@@ -646,6 +686,8 @@
         "connectivity",
         "reverse_link",
         "unit",
+        "trailer",
+        "load",
         "vendor",
         "work_order"
       ]
@@ -662,6 +704,8 @@
         "reverse_link",
         "work_order",
         "unit",
+        "trailer",
+        "load",
         "vendor"
       ]
     },
@@ -677,6 +721,8 @@
         "reverse_link",
         "work_order",
         "unit",
+        "trailer",
+        "load",
         "vendor"
       ]
     },
@@ -693,6 +739,8 @@
         "picker_law",
         "work_order",
         "unit",
+        "trailer",
+        "load",
         "vendor"
       ]
     },
@@ -707,6 +755,8 @@
         "connectivity",
         "reverse_link",
         "unit",
+        "trailer",
+        "load",
         "vendor",
         "work_order"
       ]
@@ -724,6 +774,8 @@
         "picker_law",
         "work_order",
         "unit",
+        "trailer",
+        "load",
         "vendor"
       ]
     },
@@ -739,6 +791,8 @@
         "reverse_link",
         "work_order",
         "unit",
+        "trailer",
+        "load",
         "vendor"
       ]
     },
@@ -754,6 +808,8 @@
         "reverse_link",
         "work_order",
         "unit",
+        "trailer",
+        "load",
         "vendor"
       ]
     },
@@ -768,6 +824,8 @@
         "connectivity",
         "reverse_link",
         "unit",
+        "trailer",
+        "load",
         "vendor",
         "work_order",
         "ap_bill",
@@ -786,6 +844,8 @@
         "reverse_link",
         "picker_law",
         "unit",
+        "trailer",
+        "load",
         "vendor",
         "work_order",
         "ap_bill",
@@ -804,6 +864,8 @@
         "reverse_link",
         "picker_law",
         "unit",
+        "trailer",
+        "load",
         "vendor",
         "work_order",
         "ap_bill",
@@ -813,7 +875,7 @@
     {
       "id": "chrome.toolbar_search",
       "tab": "Chrome controls",
-      "sub": "List toolbar — Search (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar \u2014 Search (CLS-LIST-TOOLBAR)",
       "route_hint": "chrome://toolbar/search",
       "surface_kind": "toolbar",
       "required": [
@@ -824,7 +886,7 @@
     {
       "id": "chrome.toolbar_range",
       "tab": "Chrome controls",
-      "sub": "List toolbar — date/amount range (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar \u2014 date/amount range (CLS-LIST-TOOLBAR)",
       "route_hint": "chrome://toolbar/range",
       "surface_kind": "toolbar",
       "required": [
@@ -835,7 +897,7 @@
     {
       "id": "chrome.toolbar_gear",
       "tab": "Chrome controls",
-      "sub": "List toolbar — column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
+      "sub": "List toolbar \u2014 column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
       "route_hint": "chrome://toolbar/gear",
       "surface_kind": "toolbar",
       "required": [
@@ -857,7 +919,7 @@
         "invoice",
         "bank"
       ],
-      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; §B9 link columns added."
+      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; \u00a7B9 link columns added."
     }
   }
 }

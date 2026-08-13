@@ -2,7 +2,7 @@
   "module": "insurance",
   "entity_default": "USMCA",
   "source": {
-    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md — Insurance (under Safety nav)",
+    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md \u2014 Insurance (under Safety nav)",
     "nav": "apps/frontend/src/pages/safety/tabs/InsuranceTab.tsx",
     "routes": "/safety/insurance/*"
   },
@@ -130,6 +130,7 @@
       "sub": "Insurance home",
       "route_hint": "/safety/insurance",
       "required": [
+        "load",
         "connectivity",
         "scenario.insurance",
         "claim",
@@ -145,6 +146,7 @@
         "vendor",
         "unit",
         "trailer",
+        "load",
         "driver",
         "connectivity",
         "reverse_link",
@@ -161,6 +163,7 @@
         "vendor",
         "unit",
         "trailer",
+        "load",
         "driver",
         "ap_bill",
         "expense",
@@ -182,6 +185,7 @@
         "vendor",
         "unit",
         "trailer",
+        "load",
         "driver",
         "ap_bill",
         "connectivity",
@@ -219,6 +223,7 @@
       "required": [
         "unit",
         "trailer",
+        "load",
         "driver",
         "connectivity",
         "reverse_link",
@@ -275,6 +280,7 @@
       "sub": "Lawsuits list",
       "route_hint": "/safety/insurance/lawsuits",
       "required": [
+        "load",
         "driver",
         "customer",
         "vendor",
@@ -291,6 +297,7 @@
       "sub": "+ Create Lawsuit",
       "route_hint": "/safety/insurance/lawsuits",
       "required": [
+        "load",
         "driver",
         "customer",
         "vendor",
@@ -320,7 +327,9 @@
         "claim",
         "policy",
         "driver",
-        "unit"
+        "unit",
+        "trailer",
+        "load"
       ]
     },
     {
@@ -338,6 +347,8 @@
         "policy",
         "driver",
         "unit",
+        "trailer",
+        "load",
         "legal_matter"
       ]
     },
@@ -355,7 +366,9 @@
         "policy",
         "claim",
         "driver",
-        "unit"
+        "unit",
+        "trailer",
+        "load"
       ]
     },
     {
@@ -372,7 +385,9 @@
         "policy",
         "claim",
         "driver",
-        "unit"
+        "unit",
+        "trailer",
+        "load"
       ]
     },
     {
@@ -389,7 +404,9 @@
         "claim",
         "policy",
         "driver",
-        "unit"
+        "unit",
+        "trailer",
+        "load"
       ]
     },
     {
@@ -407,6 +424,8 @@
         "policy",
         "driver",
         "unit",
+        "trailer",
+        "load",
         "legal_matter"
       ]
     },
@@ -424,13 +443,15 @@
         "policy",
         "claim",
         "driver",
-        "unit"
+        "unit",
+        "trailer",
+        "load"
       ]
     },
     {
       "id": "chrome.toolbar_search",
       "tab": "Chrome controls",
-      "sub": "List toolbar — Search (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar \u2014 Search (CLS-LIST-TOOLBAR)",
       "route_hint": "chrome://toolbar/search",
       "surface_kind": "toolbar",
       "required": [
@@ -441,7 +462,7 @@
     {
       "id": "chrome.toolbar_range",
       "tab": "Chrome controls",
-      "sub": "List toolbar — date/amount range (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar \u2014 date/amount range (CLS-LIST-TOOLBAR)",
       "route_hint": "chrome://toolbar/range",
       "surface_kind": "toolbar",
       "required": [
@@ -452,7 +473,7 @@
     {
       "id": "chrome.toolbar_gear",
       "tab": "Chrome controls",
-      "sub": "List toolbar — column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
+      "sub": "List toolbar \u2014 column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
       "route_hint": "chrome://toolbar/gear",
       "surface_kind": "toolbar",
       "required": [
@@ -474,7 +495,7 @@
         "invoice",
         "bank"
       ],
-      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; §B9 link columns added."
+      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; \u00a7B9 link columns added."
     }
   }
 }

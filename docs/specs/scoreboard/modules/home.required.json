@@ -28,6 +28,11 @@
       "label": "Unit"
     },
     {
+      "id": "trailer",
+      "group": "linkage",
+      "label": "Trailer"
+    },
+    {
       "id": "load",
       "group": "linkage",
       "label": "Load"
@@ -170,6 +175,7 @@
         "customer",
         "driver",
         "unit",
+        "trailer",
         "load",
         "connectivity",
         "reverse_link"
@@ -199,6 +205,7 @@
       "required": [
         "driver",
         "unit",
+        "trailer",
         "connectivity",
         "reverse_link"
       ]
@@ -256,6 +263,7 @@
         "customer",
         "driver",
         "unit",
+        "trailer",
         "load",
         "connectivity",
         "reverse_link"
@@ -280,6 +288,7 @@
       "route_hint": "/home",
       "required": [
         "unit",
+        "trailer",
         "connectivity",
         "reverse_link"
       ]
@@ -287,10 +296,12 @@
     {
       "id": "jump.maintenance",
       "tab": "Quick jumps",
-      "sub": "→ Maintenance",
+      "sub": "\u2192 Maintenance",
       "route_hint": "/maintenance",
       "required": [
         "unit",
+        "trailer",
+        "load",
         "vendor",
         "connectivity",
         "reverse_link",
@@ -300,7 +311,7 @@
     {
       "id": "jump.accounting",
       "tab": "Quick jumps",
-      "sub": "→ Accounting",
+      "sub": "\u2192 Accounting",
       "route_hint": "/accounting/invoices",
       "required": [
         "customer",
@@ -313,7 +324,7 @@
     {
       "id": "jump.banking",
       "tab": "Quick jumps",
-      "sub": "→ Banking",
+      "sub": "\u2192 Banking",
       "route_hint": "/banking",
       "required": [
         "gl_je",
@@ -326,10 +337,11 @@
     {
       "id": "jump.fuel",
       "tab": "Quick jumps",
-      "sub": "→ Fuel",
+      "sub": "\u2192 Fuel",
       "route_hint": "/fuel",
       "required": [
         "unit",
+        "trailer",
         "load",
         "expense",
         "connectivity",
@@ -339,11 +351,12 @@
     {
       "id": "jump.safety",
       "tab": "Quick jumps",
-      "sub": "→ Safety",
+      "sub": "\u2192 Safety",
       "route_hint": "/safety",
       "required": [
         "driver",
         "unit",
+        "trailer",
         "connectivity",
         "reverse_link"
       ]
@@ -351,7 +364,7 @@
     {
       "id": "jump.drivers",
       "tab": "Quick jumps",
-      "sub": "→ Drivers",
+      "sub": "\u2192 Drivers",
       "route_hint": "/drivers",
       "required": [
         "driver",
@@ -362,12 +375,13 @@
     {
       "id": "jump.dispatch",
       "tab": "Quick jumps",
-      "sub": "→ Dispatch",
+      "sub": "\u2192 Dispatch",
       "route_hint": "/dispatch",
       "required": [
         "customer",
         "driver",
         "unit",
+        "trailer",
         "load",
         "connectivity",
         "reverse_link"
@@ -376,7 +390,7 @@
     {
       "id": "jump.lists",
       "tab": "Quick jumps",
-      "sub": "→ Lists",
+      "sub": "\u2192 Lists",
       "route_hint": "/lists",
       "required": [
         "picker_law",
@@ -409,7 +423,7 @@
     {
       "id": "hop.program",
       "tab": "Program hop",
-      "sub": "Scenario tracker → Program",
+      "sub": "Scenario tracker \u2192 Program",
       "route_hint": "/program",
       "required": [
         "connectivity",
@@ -420,7 +434,7 @@
     {
       "id": "chrome.toolbar_search",
       "tab": "Chrome controls",
-      "sub": "List toolbar — Search (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar \u2014 Search (CLS-LIST-TOOLBAR)",
       "route_hint": "chrome://toolbar/search",
       "surface_kind": "toolbar",
       "required": [
@@ -431,7 +445,7 @@
     {
       "id": "chrome.toolbar_range",
       "tab": "Chrome controls",
-      "sub": "List toolbar — date/amount range (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar \u2014 date/amount range (CLS-LIST-TOOLBAR)",
       "route_hint": "chrome://toolbar/range",
       "surface_kind": "toolbar",
       "required": [
@@ -442,7 +456,7 @@
     {
       "id": "chrome.toolbar_gear",
       "tab": "Chrome controls",
-      "sub": "List toolbar — column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
+      "sub": "List toolbar \u2014 column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
       "route_hint": "chrome://toolbar/gear",
       "surface_kind": "toolbar",
       "required": [
@@ -464,7 +478,7 @@
         "invoice",
         "bank"
       ],
-      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; §B9 link columns added."
+      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; \u00a7B9 link columns added."
     }
   }
 }

@@ -50,6 +50,10 @@ From every `*.required.json` — subset per module, **same column ids**:
 | Wave order | Group | Column ids | Wiring bar (create paths — schema assumed done) |
 |------------|-------|------------|--------------------------------------------------|
 | **A** | **linkage** | `driver` · `customer` · `vendor` · `unit` · `trailer` · `load` · **`claim` · `work_order` · `accident` · `policy` · `settlement` · `legal_matter`** (owner 2026-08-12 — §B9 link types as matrix columns) | Every picker/submit on applicable leaves writes **canonical FK** (not memo-only). Forward path: UI field → API payload → `mdata.*` / hub table. |
+
+**TRAILER ≡ UNIT (owner 2026-08-12):** Any leaf that Requires `unit` **MUST** also Require `trailer`. Trailers (including reefers) follow the same multilayered bar as trucks — loads, maintenance, safety, accidents, insurance, documents, banking reverse, and (for reefers) **fuel/expense**. Guard: `verify-trailer-unit-linkage-parity` (step **3126**).
+
+**LOAD ↔ TRIP EVENTS (owner 2026-08-12):** When equipment is on a trip, **`load` MUST link** to repairs / maintenance WOs / safety incidents / accidents / insurance claims (and reverse). Any leaf that Requires `work_order` · `accident` · `claim` · `scenario.maintenance` · `scenario.insurance` **MUST** also Require `load`. Same guard (**3126**).
 | **B** | **wiring (double linkage)** | `connectivity` · `reverse_link` | **Forward:** nav → route → component → API → canonical row. **Reverse:** EntityLink / graph / profile tab clicks **back** to source with live data. Code trace alone = not Built. |
 | **C** | **money / economics** | `ap_bill` · `expense` · **`invoice` · `bank`** · `gl_je` · `liability` · `inventory` | Purpose picks money object; poster path exists; balanced JE when posting flag ON (CC-1). Header **and** lines; no silent skip. AR invoice + bank match are first-class columns (owner 2026-08-12). |
 | **D** | **chrome** | `picker_law` · `qbo_chrome` | V2: `+ Add new` first row → module creator → same table R=W → selected → reload. V1: ParityDrawer, calendar, `+ Create`. |

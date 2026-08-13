@@ -2,7 +2,7 @@
   "module": "fuel",
   "entity_default": "USMCA",
   "source": {
-    "arch_design": "IH35_ARCHITECTURAL_DESIGN — Fuel",
+    "arch_design": "IH35_ARCHITECTURAL_DESIGN \u2014 Fuel",
     "nav": "apps/frontend/src/pages/fuel/FUEL_TABS_CONFIG.ts",
     "routes": "/fuel/*"
   },
@@ -127,6 +127,7 @@
       "required": [
         "driver",
         "unit",
+        "trailer",
         "load",
         "expense",
         "connectivity"
@@ -140,6 +141,7 @@
       "required": [
         "driver",
         "unit",
+        "trailer",
         "load",
         "expense",
         "connectivity",
@@ -154,6 +156,7 @@
       "required": [
         "driver",
         "unit",
+        "trailer",
         "expense",
         "connectivity",
         "reverse_link",
@@ -174,7 +177,7 @@
     {
       "id": "expense_mapping",
       "tab": "Expense mapping",
-      "sub": "Fuel→expense map",
+      "sub": "Fuel\u2192expense map",
       "route_hint": "/fuel/expense-mapping",
       "required": [
         "expense",
@@ -193,6 +196,7 @@
       "required": [
         "driver",
         "unit",
+        "trailer",
         "load",
         "expense",
         "connectivity",
@@ -215,6 +219,7 @@
       "route_hint": "/fuel/compliance",
       "required": [
         "unit",
+        "trailer",
         "driver",
         "connectivity"
       ]
@@ -231,6 +236,7 @@
         "reverse_link",
         "driver",
         "unit",
+        "trailer",
         "expense"
       ]
     },
@@ -247,6 +253,7 @@
         "load",
         "driver",
         "unit",
+        "trailer",
         "expense"
       ]
     },
@@ -262,13 +269,14 @@
         "reverse_link",
         "driver",
         "unit",
+        "trailer",
         "expense"
       ]
     },
     {
       "id": "chrome.toolbar_search",
       "tab": "Chrome controls",
-      "sub": "List toolbar — Search (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar \u2014 Search (CLS-LIST-TOOLBAR)",
       "route_hint": "chrome://toolbar/search",
       "surface_kind": "toolbar",
       "required": [
@@ -279,7 +287,7 @@
     {
       "id": "chrome.toolbar_range",
       "tab": "Chrome controls",
-      "sub": "List toolbar — date/amount range (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar \u2014 date/amount range (CLS-LIST-TOOLBAR)",
       "route_hint": "chrome://toolbar/range",
       "surface_kind": "toolbar",
       "required": [
@@ -290,12 +298,30 @@
     {
       "id": "chrome.toolbar_gear",
       "tab": "Chrome controls",
-      "sub": "List toolbar — column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
+      "sub": "List toolbar \u2014 column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
       "route_hint": "chrome://toolbar/gear",
       "surface_kind": "toolbar",
       "required": [
         "qbo_chrome",
         "connectivity"
+      ]
+    },
+    {
+      "id": "reefer",
+      "tab": "Reefer fuel",
+      "sub": "Reefer / trailer fuel (same linkage depth as tractor fuel: load \u00b7 trailer \u00b7 expense \u00b7 reverse)",
+      "route_hint": "/fuel",
+      "required": [
+        "trailer",
+        "unit",
+        "load",
+        "driver",
+        "expense",
+        "vendor",
+        "connectivity",
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome"
       ]
     }
   ],
@@ -312,7 +338,7 @@
         "invoice",
         "bank"
       ],
-      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; §B9 link columns added."
+      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; \u00a7B9 link columns added."
     }
   }
 }

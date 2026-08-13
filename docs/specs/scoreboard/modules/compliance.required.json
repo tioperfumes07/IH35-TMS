@@ -28,6 +28,11 @@
       "label": "Unit"
     },
     {
+      "id": "trailer",
+      "group": "linkage",
+      "label": "Trailer"
+    },
+    {
       "id": "load",
       "group": "linkage",
       "label": "Load"
@@ -122,6 +127,7 @@
       "required": [
         "driver",
         "unit",
+        "trailer",
         "vendor",
         "connectivity",
         "reverse_link",
@@ -136,6 +142,7 @@
       "required": [
         "driver",
         "unit",
+        "trailer",
         "picker_law",
         "connectivity",
         "reverse_link"
@@ -149,6 +156,7 @@
       "required": [
         "driver",
         "unit",
+        "trailer",
         "load",
         "connectivity",
         "reverse_link"
@@ -162,6 +170,7 @@
       "required": [
         "driver",
         "unit",
+        "trailer",
         "load",
         "connectivity",
         "reverse_link"
@@ -175,6 +184,7 @@
       "required": [
         "driver",
         "unit",
+        "trailer",
         "load",
         "connectivity",
         "reverse_link"
@@ -188,6 +198,7 @@
       "required": [
         "driver",
         "unit",
+        "trailer",
         "load",
         "connectivity",
         "reverse_link"
@@ -201,6 +212,7 @@
       "required": [
         "driver",
         "unit",
+        "trailer",
         "picker_law",
         "connectivity",
         "reverse_link"
@@ -214,6 +226,7 @@
       "required": [
         "driver",
         "unit",
+        "trailer",
         "picker_law",
         "connectivity",
         "reverse_link"
@@ -227,6 +240,7 @@
       "required": [
         "driver",
         "unit",
+        "trailer",
         "picker_law",
         "connectivity",
         "reverse_link"
@@ -259,6 +273,7 @@
       "required": [
         "driver",
         "unit",
+        "trailer",
         "load",
         "connectivity",
         "reverse_link"
@@ -271,6 +286,7 @@
       "route_hint": "/compliance/property-tax",
       "required": [
         "unit",
+        "trailer",
         "vendor",
         "expense",
         "ap_bill",
@@ -286,6 +302,7 @@
       "route_hint": "/compliance/property-tax/:id",
       "required": [
         "unit",
+        "trailer",
         "vendor",
         "expense",
         "ap_bill",
@@ -300,6 +317,7 @@
       "route_hint": "/compliance",
       "required": [
         "unit",
+        "trailer",
         "expense",
         "ap_bill",
         "connectivity",
@@ -315,6 +333,7 @@
       "required": [
         "driver",
         "unit",
+        "trailer",
         "load",
         "connectivity",
         "reverse_link"
@@ -328,6 +347,7 @@
       "required": [
         "driver",
         "unit",
+        "trailer",
         "picker_law",
         "connectivity",
         "reverse_link"
@@ -351,6 +371,8 @@
       "route_hint": "/maintenance/compliance",
       "required": [
         "unit",
+        "trailer",
+        "load",
         "connectivity",
         "reverse_link",
         "work_order"
@@ -363,6 +385,7 @@
       "route_hint": "/fuel/compliance",
       "required": [
         "unit",
+        "trailer",
         "load",
         "expense",
         "connectivity",
@@ -376,6 +399,7 @@
       "route_hint": "/reports/ifta-preparer",
       "required": [
         "unit",
+        "trailer",
         "load",
         "connectivity",
         "reverse_link"
@@ -384,7 +408,7 @@
     {
       "id": "chrome.toolbar_search",
       "tab": "Chrome controls",
-      "sub": "List toolbar — Search (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar \u2014 Search (CLS-LIST-TOOLBAR)",
       "route_hint": "chrome://toolbar/search",
       "surface_kind": "toolbar",
       "required": [
@@ -395,7 +419,7 @@
     {
       "id": "chrome.toolbar_range",
       "tab": "Chrome controls",
-      "sub": "List toolbar — date/amount range (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar \u2014 date/amount range (CLS-LIST-TOOLBAR)",
       "route_hint": "chrome://toolbar/range",
       "surface_kind": "toolbar",
       "required": [
@@ -406,7 +430,7 @@
     {
       "id": "chrome.toolbar_gear",
       "tab": "Chrome controls",
-      "sub": "List toolbar — column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
+      "sub": "List toolbar \u2014 column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
       "route_hint": "chrome://toolbar/gear",
       "surface_kind": "toolbar",
       "required": [
@@ -428,7 +452,7 @@
         "invoice",
         "bank"
       ],
-      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; §B9 link columns added."
+      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; \u00a7B9 link columns added."
     }
   }
 }

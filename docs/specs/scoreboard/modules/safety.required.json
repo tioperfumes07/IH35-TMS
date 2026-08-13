@@ -2,7 +2,7 @@
   "module": "safety",
   "entity_default": "USMCA",
   "source": {
-    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md — Safety module",
+    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md \u2014 Safety module",
     "nav": "apps/frontend/src/components/safety/SAFETY_TABS_CONFIG.ts",
     "routes": "apps/frontend/src/routes/manifest.tsx /safety/*"
   },
@@ -202,6 +202,7 @@
       "required": [
         "driver",
         "unit",
+        "trailer",
         "connectivity",
         "reverse_link"
       ]
@@ -214,6 +215,7 @@
       "required": [
         "driver",
         "unit",
+        "trailer",
         "connectivity",
         "reverse_link",
         "picker_law"
@@ -237,6 +239,7 @@
       "required": [
         "driver",
         "unit",
+        "trailer",
         "connectivity",
         "reverse_link",
         "picker_law"
@@ -250,6 +253,7 @@
       "required": [
         "driver",
         "unit",
+        "trailer",
         "connectivity",
         "picker_law",
         "qbo_chrome"
@@ -282,6 +286,7 @@
       "required": [
         "driver",
         "unit",
+        "trailer",
         "connectivity",
         "picker_law"
       ]
@@ -294,6 +299,7 @@
       "required": [
         "driver",
         "unit",
+        "trailer",
         "connectivity",
         "picker_law"
       ]
@@ -306,6 +312,7 @@
       "required": [
         "driver",
         "unit",
+        "trailer",
         "load",
         "connectivity",
         "reverse_link",
@@ -467,6 +474,7 @@
         "driver",
         "load",
         "unit",
+        "trailer",
         "liability",
         "gl_je",
         "picker_law",
@@ -483,6 +491,7 @@
       "required": [
         "driver",
         "unit",
+        "trailer",
         "vendor",
         "expense",
         "connectivity",
@@ -497,6 +506,7 @@
       "required": [
         "driver",
         "unit",
+        "trailer",
         "vendor",
         "gl_je",
         "picker_law",
@@ -540,6 +550,7 @@
       "required": [
         "driver",
         "unit",
+        "trailer",
         "connectivity"
       ]
     },
@@ -551,6 +562,8 @@
       "required": [
         "driver",
         "unit",
+        "trailer",
+        "load",
         "scenario.insurance",
         "connectivity",
         "reverse_link",
@@ -589,6 +602,7 @@
       "route_hint": "/safety/position-history",
       "required": [
         "unit",
+        "trailer",
         "driver",
         "connectivity"
       ]
@@ -662,6 +676,7 @@
       "surface_kind": "modal",
       "surface_path": "pages/lists/safety/CompanyViolationTypeModal.tsx",
       "required": [
+        "load",
         "connectivity",
         "reverse_link",
         "driver",
@@ -676,6 +691,7 @@
       "surface_kind": "modal",
       "surface_path": "pages/safety/components/CompanyViolationCreateModal.tsx",
       "required": [
+        "load",
         "connectivity",
         "reverse_link",
         "picker_law",
@@ -691,6 +707,7 @@
       "surface_kind": "modal",
       "surface_path": "pages/safety/components/EscrowForfeitModal.tsx",
       "required": [
+        "load",
         "connectivity",
         "reverse_link",
         "liability",
@@ -706,6 +723,7 @@
       "surface_kind": "modal",
       "surface_path": "pages/safety/components/FineConvertConfirmModal.tsx",
       "required": [
+        "load",
         "connectivity",
         "reverse_link",
         "liability",
@@ -721,6 +739,7 @@
       "surface_kind": "modal",
       "surface_path": "pages/safety/components/FineCreateModal.tsx",
       "required": [
+        "load",
         "connectivity",
         "reverse_link",
         "picker_law",
@@ -737,6 +756,7 @@
       "surface_kind": "modal",
       "surface_path": "pages/safety/components/HosViolationCreateModal.tsx",
       "required": [
+        "load",
         "connectivity",
         "reverse_link",
         "picker_law",
@@ -752,6 +772,7 @@
       "surface_kind": "drawer",
       "surface_path": "components/safety/AccidentReportDrawer.tsx",
       "required": [
+        "load",
         "connectivity",
         "reverse_link",
         "accident",
@@ -767,6 +788,7 @@
       "surface_kind": "drawer",
       "surface_path": "pages/safety/components/CompanyViolationDetailDrawer.tsx",
       "required": [
+        "load",
         "connectivity",
         "reverse_link",
         "driver",
@@ -781,6 +803,7 @@
       "surface_kind": "drawer",
       "surface_path": "pages/safety/components/FineDetailDrawer.tsx",
       "required": [
+        "load",
         "connectivity",
         "reverse_link",
         "liability",
@@ -796,6 +819,7 @@
       "surface_kind": "drawer",
       "surface_path": "pages/safety/components/IntegrityAlertDetailDrawer.tsx",
       "required": [
+        "load",
         "connectivity",
         "reverse_link",
         "driver",
@@ -810,6 +834,7 @@
       "surface_kind": "drawer",
       "surface_path": "pages/safety/tabs/AnomalyDetailDrawer.tsx",
       "required": [
+        "load",
         "connectivity",
         "reverse_link",
         "driver",
@@ -824,6 +849,7 @@
       "surface_kind": "panel",
       "surface_path": "components/safety/driver-safety/DriverSafetyProfilePanel.tsx",
       "required": [
+        "load",
         "connectivity",
         "reverse_link",
         "driver",
@@ -838,6 +864,7 @@
       "surface_kind": "panel",
       "surface_path": "pages/safety/drug-alcohol/TestSchedulingPanel.tsx",
       "required": [
+        "load",
         "connectivity",
         "reverse_link",
         "driver",
@@ -852,6 +879,7 @@
       "surface_kind": "parity_site",
       "surface_path": "components/safety/AccidentReportDrawer.tsx",
       "required": [
+        "load",
         "connectivity",
         "reverse_link",
         "accident",
@@ -867,6 +895,7 @@
       "surface_kind": "parity_site",
       "surface_path": "pages/safety/components/CompanyViolationDetailDrawer.tsx",
       "required": [
+        "load",
         "connectivity",
         "reverse_link",
         "driver",
@@ -881,6 +910,7 @@
       "surface_kind": "parity_site",
       "surface_path": "pages/safety/components/EscrowForfeitModal.tsx",
       "required": [
+        "load",
         "connectivity",
         "reverse_link",
         "liability",
@@ -896,6 +926,7 @@
       "surface_kind": "parity_site",
       "surface_path": "pages/safety/components/FineCreateModal.tsx",
       "required": [
+        "load",
         "connectivity",
         "reverse_link",
         "picker_law",
@@ -912,6 +943,7 @@
       "surface_kind": "parity_site",
       "surface_path": "pages/safety/components/FineDetailDrawer.tsx",
       "required": [
+        "load",
         "connectivity",
         "reverse_link",
         "liability",
@@ -927,6 +959,7 @@
       "surface_kind": "parity_site",
       "surface_path": "pages/safety/components/IntegrityAlertDetailDrawer.tsx",
       "required": [
+        "load",
         "connectivity",
         "reverse_link",
         "driver",
@@ -941,6 +974,7 @@
       "surface_kind": "parity_site",
       "surface_path": "pages/safety/tabs/AnomalyDetailDrawer.tsx",
       "required": [
+        "load",
         "connectivity",
         "reverse_link",
         "driver",
@@ -950,7 +984,7 @@
     {
       "id": "chrome.toolbar_search",
       "tab": "Chrome controls",
-      "sub": "List toolbar — Search (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar \u2014 Search (CLS-LIST-TOOLBAR)",
       "route_hint": "chrome://toolbar/search",
       "surface_kind": "toolbar",
       "required": [
@@ -961,7 +995,7 @@
     {
       "id": "chrome.toolbar_range",
       "tab": "Chrome controls",
-      "sub": "List toolbar — date/amount range (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar \u2014 date/amount range (CLS-LIST-TOOLBAR)",
       "route_hint": "chrome://toolbar/range",
       "surface_kind": "toolbar",
       "required": [
@@ -972,7 +1006,7 @@
     {
       "id": "chrome.toolbar_gear",
       "tab": "Chrome controls",
-      "sub": "List toolbar — column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
+      "sub": "List toolbar \u2014 column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
       "route_hint": "chrome://toolbar/gear",
       "surface_kind": "toolbar",
       "required": [
@@ -1063,7 +1097,7 @@
         "invoice",
         "bank"
       ],
-      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; §B9 link columns added."
+      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; \u00a7B9 link columns added."
     }
   }
 }
