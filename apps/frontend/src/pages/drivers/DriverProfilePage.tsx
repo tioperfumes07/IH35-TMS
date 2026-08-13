@@ -33,6 +33,7 @@ import { DriverSafetyReverseSection } from "../../components/safety/DriverSafety
 import { BackgroundChecksSection } from "../../components/safety/BackgroundChecksSection";
 import { MedicalCardsHistorySection } from "../../components/safety/MedicalCardsHistorySection";
 import { RoadServiceReverseSection } from "../../components/maintenance/RoadServiceReverseSection";
+import { DriverReportsReverseSection } from "../../components/maintenance/DriverReportsReverseSection";
 import { DriverBorderCrossingsReverseSection } from "../../components/dispatch/DriverBorderCrossingsReverseSection";
 import { DriverInTransitIssuesReverseSection } from "../../components/dispatch/DriverInTransitIssuesReverseSection";
 import { DriverTempCoverReverseSection } from "../../components/safety/DriverTempCoverReverseSection";
@@ -575,6 +576,7 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
         <DriverTempCoverReverseSection operatingCompanyId={companyId} driverId={id} />
         <DriverEquipmentTransfersReverseSection operatingCompanyId={companyId} driverId={id} />
         <DriverHosViolationsReverseSection operatingCompanyId={companyId} driverId={id} />
+        <DriverReportsReverseSection operatingCompanyId={companyId} driverId={id} />
       </div>
       <div data-testid="dp-section-road-service-reverse">
         <RoadServiceReverseSection

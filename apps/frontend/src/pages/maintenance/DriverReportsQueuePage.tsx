@@ -14,7 +14,7 @@ import { entityLabel } from "../../lib/entity-label";
 
 const LINK = "text-slate-700 hover:underline";
 
-export function DriverReportsQueuePage() {
+export function DriverReportsQueuePage({ highlightedReportId = "" }: { highlightedReportId?: string } = {}) {
   const { selectedCompanyId, companies } = useCompanyContext();
   const operatingCompanyId = selectedCompanyId ?? companies[0]?.id ?? "";
   const { pushToast } = useToast();
@@ -151,6 +151,7 @@ export function DriverReportsQueuePage() {
         columns={columns}
         rows={rows}
         rowKey={(row) => row.id}
+        rowClassName={(row) => highlightedReportId && row.id === highlightedReportId ? "bg-slate-100 ring-1 ring-slate-400" : ""}
         loading={q.isLoading}
         emptyText="No driver reports found."
         storageKey="maint-damage-reports"

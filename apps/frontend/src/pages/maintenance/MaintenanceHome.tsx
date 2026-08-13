@@ -115,6 +115,7 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
   const locationFilter = searchParams.get("location") ?? "";
   const bucketFilter = searchParams.get("bucket") ?? "";
   const partInventoryId = searchParams.get("part_inventory_id")?.trim() ?? "";
+  const driverReportId = searchParams.get("driver_report_id")?.trim() ?? "";
 
   const kpisQuery = useQuery({
     queryKey: ["maintenance", "dashboard", "kpis", companyId],
@@ -374,7 +375,7 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
           moved to its own "Driver Reports" tab below — additive, nothing removed. */}
       {tab === "damage_reports" ? <MaintenanceDamageRegisterTab operatingCompanyId={companyId} /> : null}
 
-      {tab === "driver_reports" ? <DriverReportsQueuePage /> : null}
+      {tab === "driver_reports" ? <DriverReportsQueuePage highlightedReportId={driverReportId} /> : null}
 
       {tab === "severe_repairs" ? <SevereRepairOosTab operatingCompanyId={companyId} /> : null}
 

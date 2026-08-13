@@ -888,6 +888,14 @@
       "modules": ["maintenance", "lists", "vendors"],
       "cols": ["vendor", "connectivity", "reverse_link", "picker_law"],
       "leafRe": "^(maintenance|vendor|catalog|profile|detail|create)"
+    },
+    {
+      "task": "DRIVER-REPORT-DRIVER-REVERSE",
+      "pr": "this PR",
+      "guard": "scripts/verify-driver-report-driver-reverse.mjs",
+      "modules": ["driver-hub", "maintenance", "drivers"],
+      "cols": ["driver", "connectivity", "reverse_link"],
+      "leafRe": "^(driver|report|maintenance|profile|detail|create)"
     }
   ]
 }
