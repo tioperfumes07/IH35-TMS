@@ -54,3 +54,6 @@
 2026-08-13T20:40Z Cursor | shipping VERTICAL-REVERSE-LINK-INSURANCE-REMAINDER | detail Built + create honesty | Live=BLOCKED | NEXT=factoring/vendors reverse
 2026-08-13T20:45Z Cursor | SHIPPED VERTICAL-REVERSE-LINK-INSURANCE-REMAINDER (PR#6563) | insurance reverse Gap=0 | Live=BLOCKED | NEXT=factoring reverse
 2026-08-13T20:50Z Cursor | shipping VERTICAL-REVERSE-LINK-FACTORING-REMAINDER | FactorAdmin EntityLink + Built/honesty | Live=BLOCKED | NEXT=vendors reverse
+2026-08-13T20:55Z Cursor | SHIPPED VERTICAL-REVERSE-LINK-FACTORING-REMAINDER (PR#6565) | factoring reverse Gap=0 | Live=BLOCKED | NEXT=vendors reverse
+2026-08-13T20:55Z Cursor | SHIPPED VERTICAL-REVERSE-LINK-FACTORING-REMAINDER (PR#6565) | factoring reverse Gap=0 | Live=BLOCKED | NEXT=vendors reverse
+2026-08-13T21:00Z Cursor | shipping VERTICAL-REVERSE-LINK-VENDORS-REMAINDER | AP EntityLink + chrome honesty | Live=BLOCKED | NEXT=customers reverse

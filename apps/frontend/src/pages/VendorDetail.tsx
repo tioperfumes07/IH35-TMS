@@ -1052,6 +1052,14 @@ export function VendorDetailPage() {
                 sortDirection={paySortDirection}
                 onSortChange={onPaySortChange}
                 columns={[
+                  {
+                    key: "id",
+                    label: "Payment",
+                    sortable: true,
+                    render: (p) => (
+                      <EntityLink kind="bill_payment" id={p.id} label={entityLabel(p.reference, p.id, "Payment")} />
+                    ),
+                  },
                   { key: "payment_date", label: "Date", sortable: true, render: (p) => formatDateUS(p.payment_date) },
                   { key: "amount_cents", label: "Amount", sortable: true, cellClass: "text-right tabular-nums", render: (p) => money.format(p.amount_cents / 100) },
                   { key: "payment_method", label: "Method", sortable: true, render: (p) => p.payment_method ?? p.method ?? "—" },
