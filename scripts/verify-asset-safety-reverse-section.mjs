@@ -26,6 +26,7 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const SECTION = "apps/frontend/src/components/safety/AssetSafetyReverseSection.tsx";
+const ARCHIVED_DOT_PAGE = "apps/frontend/src/pages/safety/DotInspectionsPage.tsx";
 const UNIT_PAGE = "apps/frontend/src/pages/fleet/VehicleProfilePage.tsx";
 const TRAILER_PAGE = "apps/frontend/src/pages/fleet/TrailerProfilePage.tsx";
 const API = "apps/frontend/src/api/safety.ts";
@@ -33,7 +34,7 @@ const ACCIDENTS_ROUTE = "apps/backend/src/safety/safety.routes.ts";
 const DOT_ROUTE = "apps/backend/src/routes/safety/dot-inspections.ts";
 const DVIR_ROUTE = "apps/backend/src/safety/dvir.routes.ts";
 const INCIDENTS_ROUTE = "apps/backend/src/safety/incidents.routes.ts";
-const FILES = [SECTION, UNIT_PAGE, TRAILER_PAGE, API, ACCIDENTS_ROUTE, DOT_ROUTE, DVIR_ROUTE, INCIDENTS_ROUTE];
+const FILES = [SECTION, ARCHIVED_DOT_PAGE, UNIT_PAGE, TRAILER_PAGE, API, ACCIDENTS_ROUTE, DOT_ROUTE, DVIR_ROUTE, INCIDENTS_ROUTE];
 const LABEL = "verify-asset-safety-reverse-section";
 const SELFTEST = process.argv.includes("--selftest");
 
@@ -60,6 +61,9 @@ export function assertAssetSafetyReverse(sources) {
   }
   if (!/data\?\.dot_inspections/.test(src[SECTION])) {
     problems.push(`${SECTION}: reads the wrong DOT response key — API returns dot_inspections, so the mounted asset reverse section renders empty.`);
+  }
+  if (!/data\?\.dot_inspections/.test(src[ARCHIVED_DOT_PAGE])) {
+    problems.push(`${ARCHIVED_DOT_PAGE}: archived consumer must retain the canonical dot_inspections response contract so typecheck cannot drift.`);
   }
   // Asset scoping is passed on every read.
   if (!src[SECTION].includes("unit_id: assetId") || !src[SECTION].includes("trailer_id: assetId")) {
@@ -139,6 +143,11 @@ if (SELFTEST) {
     "reads the wrong DOT response key"
   );
   expectCaught(
+    "archived-dot-response-key-drift",
+    { ...live, [ARCHIVED_DOT_PAGE]: live[ARCHIVED_DOT_PAGE].replace(/data\?\.dot_inspections/g, "data?.inspections") },
+    "archived consumer must retain"
+  );
+  expectCaught(
     "unit-page-not-mounted",
     { ...live, [UNIT_PAGE]: live[UNIT_PAGE].replace(/AssetSafetyReverseSection/g, "SomethingElse") },
     "does not mount AssetSafetyReverseSection"
@@ -193,7 +202,7 @@ if (SELFTEST) {
     for (const f of failures) console.error(`  ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — 11 planted defects caught, live sources clean`);
+  console.log(`${LABEL} SELFTEST PASS — 12 planted defects caught, live sources clean`);
   process.exit(0);
 }
 

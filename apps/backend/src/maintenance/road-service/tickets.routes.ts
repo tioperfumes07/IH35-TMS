@@ -145,14 +145,26 @@ export async function registerRoadServiceTicketRoutes(app: FastifyInstance) {
     if (!body.success) return reply.code(400).send({ error: "validation_error" });
 
     const row = await withCompany(user.uuid, body.data.operating_company_id, async (client) => {
-      const vendorCheck = await client.query(
-        `SELECT id FROM mdata.vendors
-          WHERE id = $1::uuid AND operating_company_id = $2::uuid AND deactivated_at IS NULL
-          LIMIT 1`,
-        [body.data.vendor_id, body.data.operating_company_id]
+      const links = await client.query<{ vendor_ok: boolean; unit_ok: boolean; driver_ok: boolean }>(
+        `SELECT
+           EXISTS (
+             SELECT 1 FROM mdata.vendors v
+             WHERE v.id = $2::uuid AND v.operating_company_id = $1::uuid AND v.deactivated_at IS NULL
+           ) AS vendor_ok,
+           EXISTS (
+             SELECT 1 FROM mdata.units u
+             WHERE u.id = $3::uuid
+               AND (u.owner_company_id = $1::uuid OR u.currently_leased_to_company_id = $1::uuid)
+           ) AS unit_ok,
+           ($4::uuid IS NULL OR EXISTS (
+             SELECT 1 FROM mdata.drivers d
+             WHERE d.id = $4::uuid AND d.operating_company_id = $1::uuid
+           )) AS driver_ok`,
+        [body.data.operating_company_id, body.data.vendor_id, body.data.unit_id, body.data.driver_id ?? null]
       );
-      if (!vendorCheck.rows[0]) {
-        return { __error: "invalid_vendor_id" as const };
+      const integrity = links.rows[0];
+      if (!integrity?.vendor_ok || !integrity.unit_ok || !integrity.driver_ok) {
+        return { __error: "linked_entity_not_in_operating_company" as const };
       }
       const res = await client.query(
         `
@@ -210,10 +222,10 @@ export async function registerRoadServiceTicketRoutes(app: FastifyInstance) {
       return ticket;
     });
 
-    if (row && typeof row === "object" && "__error" in row && row.__error === "invalid_vendor_id") {
+    if (row && typeof row === "object" && "__error" in row && row.__error === "linked_entity_not_in_operating_company") {
       return reply.code(400).send({
-        error: "invalid_vendor_id",
-        message: "vendor_id must reference an active mdata.vendors AP vendor for this entity",
+        error: "linked_entity_not_in_operating_company",
+        message: "vendor_id, unit_id, and driver_id must reference active records for this entity",
       });
     }
 

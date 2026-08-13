@@ -46,8 +46,8 @@ describe("road service tickets routes (CLOSURE-7)", () => {
           if (sql.includes("org.user_company_access")) {
             return { rows: [{ "?column?": 1 }], rowCount: 1 };
           }
-          if (sql.includes("FROM mdata.vendors")) {
-            return { rows: [{ id: vendorId }], rowCount: 1 };
+          if (sql.includes("AS vendor_ok") && sql.includes("AS unit_ok") && sql.includes("AS driver_ok")) {
+            return { rows: [{ vendor_ok: true, unit_ok: true, driver_ok: true }], rowCount: 1 };
           }
           if (sql.includes("INSERT INTO maintenance.road_service_tickets")) {
             return { rows: [{ id: ticketId, status: "open", ticket_number: "RS-1001" }] };
@@ -99,6 +99,38 @@ describe("road service tickets routes (CLOSURE-7)", () => {
     expect(res.statusCode).toBe(201);
     const body = res.json() as { ticket: { status: string } };
     expect(body.ticket.status).toBe("open");
+  });
+
+  it("rejects a unit or driver outside the operating company before insert", async () => {
+    const query = vi.fn().mockImplementation(async (sql: string) => {
+      if (sql.includes("org.user_company_access")) {
+        return { rows: [{ "?column?": 1 }], rowCount: 1 };
+      }
+      if (sql.includes("AS vendor_ok") && sql.includes("AS unit_ok") && sql.includes("AS driver_ok")) {
+        return { rows: [{ vendor_ok: true, unit_ok: false, driver_ok: true }], rowCount: 1 };
+      }
+      return { rows: [] };
+    });
+    mocked.withCurrentUserMock.mockImplementation(async (_userId: string, fn: (client: unknown) => Promise<unknown>) =>
+      fn({ query })
+    );
+
+    const res = await app.inject({
+      method: "POST",
+      url: "/api/v1/road-service-tickets",
+      payload: {
+        operating_company_id: companyId,
+        ticket_number: "RS-FOREIGN",
+        vendor_name: "FleetNet",
+        vendor_id: vendorId,
+        unit_id: unitId,
+        service_type: "tow",
+      },
+    });
+
+    expect(res.statusCode).toBe(400);
+    expect(res.json()).toMatchObject({ error: "linked_entity_not_in_operating_company" });
+    expect(query.mock.calls.some((call) => String(call[0]).includes("INSERT INTO maintenance.road_service_tickets"))).toBe(false);
   });
 
   it("completes ticket with cost", async () => {

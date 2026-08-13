@@ -29,6 +29,13 @@ function audit(s) {
   if (!/ticket_id=\$\{ticket\.id\}/.test(s.section)) failures.push("reverse row must drill to ticket list target");
   if (!/isError:\s*listQuery\.isError/.test(s.hook) || !/ListErrorBanner/.test(s.section)) failures.push("reverse section must expose query errors");
   if (!/highlightedTicketId === row\.id/.test(s.list)) failures.push("ticket list must honor deep-link highlight");
+  for (const kind of ["unit", "driver", "vendor"]) {
+    if (!new RegExp(`<EntityLink[^>]+kind=["']${kind}["']`).test(s.list)) failures.push(`ticket list must use canonical EntityLink kind=${kind}`);
+  }
+  if (!/AS vendor_ok/.test(s.route) || !/AS unit_ok/.test(s.route) || !/AS driver_ok/.test(s.route) ||
+      !/linked_entity_not_in_operating_company/.test(s.route)) {
+    failures.push("create writer must validate vendor, unit, and optional driver against the operating company before insert");
+  }
   if (!/<RoadServiceReverseSection[\s\S]*filter=\{\{ driver_id: id \}\}/.test(s.driverProfile)) failures.push("driver profile must mount reverse section");
   if (!/<RoadServiceReverseSection[\s\S]*filter=\{\{ unit_id: id \}\}/.test(s.unitProfile)) failures.push("unit profile must mount reverse section");
   if (!/<RoadServiceReverseSection[\s\S]*filter=\{\{ vendor_id: vendor\.id \}\}/.test(s.vendorProfile)) failures.push("vendor profile must mount reverse section");
@@ -44,6 +51,8 @@ if (process.argv.includes("--selftest")) {
     ["unit mount", { ...source, unitProfile: source.unitProfile.replace("<RoadServiceReverseSection", "<div") }],
     ["vendor mount", { ...source, vendorProfile: source.vendorProfile.replace("<RoadServiceReverseSection", "<div") }],
     ["work-order mount", { ...source, workOrderDetail: source.workOrderDetail.replace("<RoadServiceReverseSection", "<div") }],
+    ["canonical unit drill", { ...source, list: source.list.replace(/kind="unit"/, 'kind="load"') }],
+    ["writer unit membership", { ...source, route: source.route.replace(/AS unit_ok/, "AS asset_ok") }],
   ];
   for (const [name, changed] of mutations) {
     if (audit(changed).length === 0) {

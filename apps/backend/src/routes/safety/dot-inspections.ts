@@ -206,7 +206,7 @@ export async function registerSafetyDotInspectionsRoutes(app: FastifyInstance) {
     const payload = await withCompany(user.uuid, user.role, query.data.operating_company_id, async (client) => {
       await client.query("BEGIN");
       try {
-        const links = await client.query<{ driver_ok: boolean; unit_ok: boolean }>(
+        const links = await client.query(
           `SELECT
              ($2::uuid IS NULL OR EXISTS (
                SELECT 1 FROM mdata.drivers d
@@ -219,7 +219,7 @@ export async function registerSafetyDotInspectionsRoutes(app: FastifyInstance) {
              )) AS unit_ok`,
           [query.data.operating_company_id, body.data.driver_id ?? null, body.data.unit_id ?? null]
         );
-        const integrity = links.rows[0];
+        const integrity = links.rows[0] as { driver_ok?: boolean; unit_ok?: boolean } | undefined;
         if (!integrity?.driver_ok || !integrity.unit_ok) {
           await client.query("ROLLBACK");
           return null;
