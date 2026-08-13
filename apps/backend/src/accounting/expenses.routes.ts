@@ -116,6 +116,10 @@ const createExpenseBodySchema = z.object({
   // HARD cross-module link (maintenance): persist the WO + unit id as a real FK, not just a memo string.
   work_order_id: z.string().uuid().optional().nullable(),
   unit_id: z.string().uuid().optional().nullable(),
+  // RANK4-EXPENSE-TRAILER-ID — trip-wiring rank 4: physical trailer (mdata.equipment) this expense
+  // is attributable to, independent of the tractor (unit_id). Same optional/columnExists-guarded
+  // treatment as unit_id above.
+  trailer_id: z.string().uuid().optional().nullable(),
   insurance_claim_id: z.string().uuid().optional().nullable(),
   // WAVE-H2: optional explicit load FK (TMS create). When set, stamped on INSERT; attribution only fills when absent.
   load_id: z.string().uuid().optional().nullable(),
@@ -376,6 +380,7 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
       if (!(await relationExists(client, "accounting.expenses"))) return { unavailable: true as const };
 
       const hasUnitId = await columnExists(client, "accounting", "expenses", "unit_id");
+      const hasTrailerId = await columnExists(client, "accounting", "expenses", "trailer_id");
       const hasWorkOrderId = await columnExists(client, "accounting", "expenses", "linked_work_order_uuid");
       const hasPaymentAccount = await columnExists(client, "accounting", "expenses", "payment_account_uuid");
       const hasExpenseAccount = await columnExists(client, "accounting", "expense_lines", "expense_account_uuid");
@@ -400,12 +405,14 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
             e.created_at::text                           AS created_at,
             ${hasPaymentAccount ? "e.payment_account_uuid::text" : "NULL::text"} AS payment_account_uuid,
             ${hasUnitId ? "e.unit_id::text" : "NULL::text"} AS unit_id,
+            ${hasTrailerId ? "e.trailer_id::text" : "NULL::text"} AS trailer_id,
             ${hasWorkOrderId ? "e.linked_work_order_uuid::text" : "NULL::text"} AS linked_work_order_uuid,
             v.vendor_name                                AS vendor_name,
             dr.first_name                                AS driver_first_name,
             dr.last_name                                 AS driver_last_name,
             l.load_number                                AS load_number,
             ${hasUnitId ? "u.unit_number" : "NULL::text"}  AS unit_display_id,
+            ${hasTrailerId ? "tr.equipment_number" : "NULL::text"} AS trailer_display_id,
             ${hasWorkOrderId ? "wo.display_id" : "NULL::text"} AS work_order_display_id,
             pay_acct.account_number                      AS payment_account_number,
             pay_acct.account_name                        AS payment_account_name,
@@ -422,6 +429,7 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
           LEFT JOIN accounting.journal_entries je ON je.id = e.journal_entry_id AND je.operating_company_id = e.operating_company_id
           LEFT JOIN banking.bank_transactions bt ON bt.matched_expense_id = e.id AND bt.operating_company_id = e.operating_company_id
           ${hasUnitId ? "LEFT JOIN mdata.units u ON u.id = e.unit_id AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = e.operating_company_id" : ""}
+          ${hasTrailerId ? "LEFT JOIN mdata.equipment tr ON tr.id = e.trailer_id AND COALESCE(tr.currently_leased_to_company_id, tr.owner_company_id) = e.operating_company_id" : ""}
           ${hasWorkOrderId ? "LEFT JOIN maintenance.work_orders wo ON wo.id = e.linked_work_order_uuid" : ""}
           ${hasPaymentAccount ? "LEFT JOIN catalogs.accounts pay_acct ON pay_acct.id = e.payment_account_uuid AND pay_acct.operating_company_id = e.operating_company_id" : "LEFT JOIN catalogs.accounts pay_acct ON false"}
           WHERE e.id = $1::uuid
@@ -505,6 +513,7 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
         const hasPaymentAccount = await columnExists(client, "accounting", "expenses", "payment_account_uuid");
         const hasWorkOrderId = await columnExists(client, "accounting", "expenses", "linked_work_order_uuid");
         const hasUnitId = await columnExists(client, "accounting", "expenses", "unit_id");
+        const hasTrailerId = await columnExists(client, "accounting", "expenses", "trailer_id");
 
         if (body.vendor_uuid) {
           const vendorRes = await client.query(
@@ -608,6 +617,11 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
         if (hasUnitId) {
           columns.push(`unit_id`);
           values.push(body.unit_id ?? null);
+        }
+
+        if (hasTrailerId) {
+          columns.push(`trailer_id`);
+          values.push(body.trailer_id ?? null);
         }
 
         const hasInsuranceClaimId = await columnExists(client, "accounting", "expenses", "insurance_claim_id");
