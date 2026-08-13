@@ -1,13 +1,15 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createHosViolation } from "../../../api/safetyV64";
 import { listDotViolationTypes } from "../../../api/catalogs-safety";
+import { suggestExpenseLoad } from "../../../api/maintenance";
 import { Button } from "../../../components/Button";
 import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
 import { Modal } from "../../../components/Modal";
 import { DateTimePicker } from "../../../components/forms/DateTimePicker";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
+import { EntityPicker } from "../../../components/parity/EntityPicker";
 
 type Source = "samsara_auto" | "manual_office" | "dot_citation";
 
@@ -36,6 +38,12 @@ function fromDatetimeLocalValue(local: string): string {
   return d.toISOString();
 }
 
+function occurredDateYmd(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toISOString().slice(0, 10);
+}
+
 export function HosViolationCreateModal({ open, operatingCompanyId, onClose, onCreated }: Props) {
   const queryClient = useQueryClient();
   const [form, setForm] = useState({
@@ -45,7 +53,10 @@ export function HosViolationCreateModal({ open, operatingCompanyId, onClose, onC
     duration_minutes: "",
     source: "manual_office" as Source,
     notes: "",
+    related_load_id: "" as string,
   });
+  /** Once the active-trip resolver fills the load, preserve an operator override. */
+  const [suggestionPinned, setSuggestionPinned] = useState(false);
 
   // DUAL_PATH_OLD_ACTIVE: HoursOfServicePage drawer still took free-text violation_type while
   // HOSViolationsTab already catalogs via ReferenceSelect. Same catalog + FK + CSA weight.
@@ -77,6 +88,30 @@ export function HosViolationCreateModal({ open, operatingCompanyId, onClose, onC
 
   const selectedViolationType = violationTypeRows.find((row) => row.violation_code === form.violation_type);
 
+  const occurredYmd = occurredDateYmd(form.occurred_at);
+  const suggestionQuery = useQuery({
+    queryKey: ["safety", "hos-violation-create", "suggest-load", operatingCompanyId, form.driver_id, occurredYmd],
+    queryFn: () =>
+      suggestExpenseLoad({
+        operating_company_id: operatingCompanyId,
+        driver_id: form.driver_id || undefined,
+        transaction_date: occurredYmd,
+      }),
+    enabled: open && Boolean(operatingCompanyId && occurredYmd && form.driver_id),
+  });
+
+  useEffect(() => {
+    setSuggestionPinned(false);
+  }, [form.driver_id, occurredYmd]);
+
+  useEffect(() => {
+    if (form.related_load_id || suggestionPinned) return;
+    const suggested = suggestionQuery.data?.data;
+    if (!suggested?.load_id) return;
+    setForm((v) => ({ ...v, related_load_id: suggested.load_id }));
+    setSuggestionPinned(true);
+  }, [form.related_load_id, suggestionPinned, suggestionQuery.data]);
+
   const mutation = useMutation({
     mutationFn: () =>
       createHosViolation(operatingCompanyId, {
@@ -92,6 +127,7 @@ export function HosViolationCreateModal({ open, operatingCompanyId, onClose, onC
         notes: form.notes.trim() || null,
         csa_points: selectedViolationType?.severity_weight ?? null,
         dot_violation_type_id: selectedViolationType?.id ?? null,
+        related_load_id: form.related_load_id.trim() || null,
       }),
     onSuccess: () => {
       setForm({
@@ -101,7 +137,9 @@ export function HosViolationCreateModal({ open, operatingCompanyId, onClose, onC
         duration_minutes: "",
         source: "manual_office",
         notes: "",
+        related_load_id: "",
       });
+      setSuggestionPinned(false);
       onCreated();
       onClose();
     },
@@ -171,6 +209,30 @@ export function HosViolationCreateModal({ open, operatingCompanyId, onClose, onC
               value={toDatetimeLocalValue(form.occurred_at)}
               onChange={(v) => setForm((prev) => ({ ...prev, occurred_at: fromDatetimeLocalValue(v) }))}
             />
+          </div>
+          <div className="flex flex-col gap-1" data-testid="hos-vio-load-picker">
+            <label className="text-xs font-semibold text-gray-600">Related load</label>
+            <EntityPicker
+              kind="load"
+              operatingCompanyId={operatingCompanyId}
+              value={form.related_load_id || null}
+              onChange={(next) => {
+                setForm((v) => ({ ...v, related_load_id: next ?? "" }));
+                setSuggestionPinned(true);
+              }}
+              allowCreate={false}
+              nestedInDrawer
+              enabled={open && Boolean(operatingCompanyId)}
+              placeholder="Search load…"
+              className="w-full"
+              dataField="hos-vio-load"
+              dataTestId="hos-vio-load-entity-picker"
+            />
+            {suggestionPinned && form.related_load_id && suggestionQuery.data?.data?.load_id === form.related_load_id ? (
+              <p className="text-[11px] text-slate-600" data-testid="hos-vio-load-suggested">
+                Auto-filled from the active trip for this driver on the occurrence date.
+              </p>
+            ) : null}
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-gray-600" htmlFor="hos-vio-source">
