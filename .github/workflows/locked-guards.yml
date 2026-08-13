@@ -671,6 +671,11 @@ jobs:
       - name: verify:safety-event-create-suggest-load
         run: node scripts/verify-safety-event-create-suggest-load.mjs
 
+      - name: verify:cargo-claim-create-suggest-load --selftest
+        run: node scripts/verify-cargo-claim-create-suggest-load.mjs --selftest
+      - name: verify:cargo-claim-create-suggest-load
+        run: node scripts/verify-cargo-claim-create-suggest-load.mjs
+
       - name: verify:no-dead-clicks --selftest
         run: node scripts/verify-no-dead-clicks.mjs --selftest
       - name: verify:no-dead-clicks

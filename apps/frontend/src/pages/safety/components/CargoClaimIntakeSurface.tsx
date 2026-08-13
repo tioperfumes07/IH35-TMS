@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createSafetyIncident,
@@ -27,6 +27,7 @@ import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
 import { CappedListNotice } from "../../../components/CappedListNotice";
 import { userFacingApiError } from "../../../lib/api-error-message";
+import { suggestExpenseLoad } from "../../../api/maintenance";
 
 type Props = {
   operatingCompanyId: string;
@@ -97,6 +98,7 @@ export function CargoClaimIntakeSurface({
   const { user } = useAuth();
   const [creating, setCreating] = useState(false);
   const [form, setForm] = useState({ ...emptyForm });
+  const [suggestionPinned, setSuggestionPinned] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -121,6 +123,42 @@ export function CargoClaimIntakeSurface({
 
   const companyEnabled = Boolean(operatingCompanyId);
   const pickersEnabled = companyEnabled && (creating || Boolean(selectedId));
+
+  const suggestionQuery = useQuery({
+    queryKey: [
+      "safety",
+      "cargo-claim-create",
+      "suggest-load",
+      operatingCompanyId,
+      form.driverId,
+      form.unitId,
+      form.trailerId,
+      form.incidentDate,
+    ],
+    queryFn: () =>
+      suggestExpenseLoad({
+        operating_company_id: operatingCompanyId,
+        driver_id: form.driverId || undefined,
+        unit_id: form.unitId || undefined,
+        trailer_id: form.trailerId || undefined,
+        transaction_date: form.incidentDate,
+      }),
+    enabled: Boolean(
+      creating && operatingCompanyId && form.incidentDate && (form.driverId || form.unitId || form.trailerId)
+    ),
+  });
+
+  useEffect(() => {
+    setSuggestionPinned(false);
+  }, [form.driverId, form.unitId, form.trailerId, form.incidentDate]);
+
+  useEffect(() => {
+    if (form.loadId || suggestionPinned) return;
+    const suggested = suggestionQuery.data?.data;
+    if (!suggested?.load_id) return;
+    setForm((previous) => ({ ...previous, loadId: suggested.load_id }));
+    setSuggestionPinned(true);
+  }, [form.loadId, suggestionPinned, suggestionQuery.data]);
 
   const listQuery = useQuery({
     queryKey: ["safety", "incidents", "cargo_claim", operatingCompanyId],
