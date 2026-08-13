@@ -39,6 +39,8 @@ export default {
   name: "verify-picker-law-no-raw-uuid",
   async run(ctx) {
     await ctx.run("node", ["scripts/verify-picker-law-no-raw-uuid.mjs", "--selftest"]);
-    return ctx.run("node", ["scripts/verify-picker-law-no-raw-uuid.mjs"]);
+    await ctx.run("node", ["scripts/verify-picker-law-no-raw-uuid.mjs"]);
+    await ctx.run("node", ["scripts/verify-entity-picker-company-switch-scope.mjs", "--selftest"]);
+    return ctx.run("node", ["scripts/verify-entity-picker-company-switch-scope.mjs"]);
   },
 };
