@@ -80,6 +80,7 @@ const STEPS = [
   ["verify-combobox-outside-dismiss", "scripts/verify-combobox-outside-dismiss.mjs"],
   ["verify-fine-create-suggest-load", "scripts/verify-fine-create-suggest-load.mjs"],
   ["verify-internal-fine-create-suggest-load", "scripts/verify-internal-fine-create-suggest-load.mjs"],
+  ["verify-safety-event-create-suggest-load", "scripts/verify-safety-event-create-suggest-load.mjs"],
   ["verify-money-fields-use-moneyinput", "scripts/verify-money-fields-use-moneyinput.mjs"],
   ["verify-referenceselect-qbo-standard", "scripts/verify-referenceselect-qbo-standard.mjs"],
   ["verify-referenceselect-coverage-ratchet", "scripts/verify-referenceselect-coverage-ratchet.mjs"],
