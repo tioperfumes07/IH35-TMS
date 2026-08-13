@@ -56,6 +56,7 @@ export type EntityKind =
   | "safety_fine"
   | "internal_fine"
   | "complaint"
+  | "hos_violation"
   | "dot_inspection"
   | "escrow_record"
   | "permit"
@@ -186,6 +187,8 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
       return `/safety/internal-fines?fine_id=${id}`;
     case "complaint":
       return `/safety/complaints?complaint_id=${id}`;
+    case "hos_violation":
+      return `/safety/hos-violations?violation_id=${id}`;
     case "dot_inspection":
       return `/safety/dot-inspections?inspection_id=${id}`;
     case "escrow_record":

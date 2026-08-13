@@ -146,7 +146,7 @@ export function HosViolationCreateModal({ open, operatingCompanyId, onClose, onC
   });
 
   const canSubmit =
-    Boolean(form.driver_id.trim() && form.violation_type.trim() && form.occurred_at) && !mutation.isPending;
+    Boolean(form.driver_id.trim() && selectedViolationType?.id && form.occurred_at) && !mutation.isPending;
 
   return (
     <Modal variant="drawer" open={open} onClose={onClose} title="Create HOS Violation">

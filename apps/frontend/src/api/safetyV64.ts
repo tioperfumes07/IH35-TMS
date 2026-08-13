@@ -7,10 +7,11 @@ function companyQuery(companyId: string) {
 
 export function listHosViolations(
   companyId: string,
-  filters: { driver_id?: string; from?: string; to?: string; source?: string } = {}
+  filters: { driver_id?: string; load_id?: string; from?: string; to?: string; source?: string } = {}
 ) {
   const qs = new URLSearchParams({ operating_company_id: companyId });
   if (filters.driver_id) qs.set("driver_id", filters.driver_id);
+  if (filters.load_id) qs.set("load_id", filters.load_id);
   if (filters.from) qs.set("from", filters.from);
   if (filters.to) qs.set("to", filters.to);
   if (filters.source) qs.set("source", filters.source);

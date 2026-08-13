@@ -8,6 +8,7 @@ import { assertCompanyMembership } from "../../_helpers/company-membership-guard
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
   driver_id: z.string().uuid().optional(),
+  load_id: z.string().uuid().optional(),
   from: z.string().optional(),
   to: z.string().optional(),
   source: z.enum(["samsara_auto", "manual_office", "dot_citation"]).optional(),
@@ -20,7 +21,7 @@ const createHosViolationSchema = z.object({
   violation_type: z.string().trim().min(1).max(200),
   // LST-LINK-02: the real reference. violation_type stays as the FMCSA code string; this is the join
   // key, so catalogs.dot_violation_types stops being an FK island.
-  dot_violation_type_id: z.string().uuid().nullable().optional(),
+  dot_violation_type_id: z.string().uuid(),
   occurred_at: z.string().datetime({ offset: true }),
   duration_minutes: z.number().int().nonnegative().optional().nullable(),
   source: z.enum(["samsara_auto", "manual_office", "dot_citation"]).default("manual_office"),
@@ -74,6 +75,10 @@ export async function registerSafetyHosViolationsRoutes(app: FastifyInstance) {
       if (query.data.driver_id) {
         values.push(query.data.driver_id);
         filters.push(`driver_id = $${values.length}`);
+      }
+      if (query.data.load_id) {
+        values.push(query.data.load_id);
+        filters.push(`related_load_id = $${values.length}`);
       }
       if (query.data.from) {
         values.push(query.data.from);
@@ -146,6 +151,38 @@ export async function registerSafetyHosViolationsRoutes(app: FastifyInstance) {
     if (!body.success) return validationError(reply, body.error);
 
     const created = await withCompany(user.uuid, user.role, query.data.operating_company_id, async (client) => {
+      const linked = await client.query(
+        `SELECT
+           EXISTS (
+             SELECT 1 FROM mdata.drivers d
+             WHERE d.id = $2::uuid AND d.operating_company_id = $1::uuid
+               AND d.status = 'Active' AND d.deactivated_at IS NULL AND d.archived_at IS NULL
+           ) AS driver_ok,
+           EXISTS (
+             SELECT 1 FROM catalogs.dot_violation_types vt
+             WHERE vt.id = $3::uuid AND vt.operating_company_id = $1::uuid
+               AND vt.is_active = true AND vt.basic_category = 'hours_of_service'
+               AND vt.violation_code = $4
+           ) AS violation_type_ok,
+           ($5::uuid IS NULL OR EXISTS (
+             SELECT 1 FROM mdata.loads l
+             WHERE l.id = $5::uuid AND l.operating_company_id = $1::uuid
+           )) AS load_ok,
+           ($6::uuid IS NULL OR EXISTS (
+             SELECT 1 FROM safety.dot_inspections di
+             WHERE di.id = $6::uuid AND di.operating_company_id = $1::uuid
+           )) AS dot_inspection_ok`,
+        [
+          query.data.operating_company_id,
+          body.data.driver_id,
+          body.data.dot_violation_type_id ?? null,
+          body.data.violation_type,
+          body.data.related_load_id ?? null,
+          body.data.related_dot_inspection_id ?? null,
+        ]
+      );
+      const validity = linked.rows[0];
+      if (!validity?.driver_ok || !validity?.violation_type_ok || !validity?.load_ok || !validity?.dot_inspection_ok) return null;
       const res = await client.query(
         `
           INSERT INTO safety.hos_violations (
@@ -197,6 +234,13 @@ export async function registerSafetyHosViolationsRoutes(app: FastifyInstance) {
       );
       return row;
     });
+
+    if (!created) {
+      return reply.code(400).send({
+        error: "linked_entity_not_in_operating_company",
+        message: "Select an active driver and HOS violation type from the current operating company.",
+      });
+    }
 
     return reply.code(201).send({ hos_violation: created });
   });

@@ -14,6 +14,7 @@ import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
 import { CappedListNotice } from "../../../components/CappedListNotice";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
+import { useSearchParams } from "react-router-dom";
 
 type HosViolationRow = Record<string, unknown>;
 type Source = "samsara_auto" | "manual_office" | "dot_citation";
@@ -30,6 +31,8 @@ function toDatetimeLocalValue(iso: string): string {
 }
 
 export function HOSViolationsTab() {
+  const [searchParams] = useSearchParams();
+  const highlightedViolationId = searchParams.get("violation_id")?.trim() ?? "";
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const queryClient = useQueryClient();
@@ -248,7 +251,7 @@ export function HOSViolationsTab() {
         <button
           type="button"
           className="rounded-sm bg-[#1f2a44] px-2 py-1 text-xs font-semibold text-white disabled:opacity-60"
-          disabled={!form.driver_id || !form.violation_type || createMutation.isPending}
+          disabled={!form.driver_id || !selectedViolationType?.id || createMutation.isPending}
           onClick={() => createMutation.mutate()}
         >
           + Create
@@ -277,6 +280,11 @@ export function HOSViolationsTab() {
         emptyText="No HOS violations found."
         storageKey="safety-hos-violations"
         exportFilename="hos-violations"
+        rowClassName={(row) =>
+          highlightedViolationId && String(row.id) === highlightedViolationId
+            ? "bg-slate-100 ring-1 ring-inset ring-slate-300"
+            : ""
+        }
       />
 
       <VoidReasonModal
