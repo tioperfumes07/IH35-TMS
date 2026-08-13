@@ -21,6 +21,7 @@ import { useToast } from "../../../components/Toast";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { Combobox } from "../../../components/Combobox";
+import { useSearchParams } from "react-router-dom";
 
 type InspectionDraft = {
   unit_id: string;
@@ -84,6 +85,8 @@ export function InspectionsPage() {
   const [editing, setEditing] = useState<MaintenanceInspectionRow | null>(null);
   const [draft, setDraft] = useState<InspectionDraft>(EMPTY_DRAFT);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [searchParams] = useSearchParams();
+  const deepLinkInspectionId = searchParams.get("inspection_id")?.trim() ?? "";
 
   const listQ = useQuery({
     queryKey: ["maintenance", "inspections", companyId],
@@ -214,7 +217,23 @@ export function InspectionsPage() {
       { key: "unit_number", label: "Unit", sortable: true, render: (row) => <EntityLink kind="unit" id={row.unit_id ?? undefined} label={entityLabel(row.unit_number, row.unit_id, "Unit")} /> },
       { key: "inspector_name", label: "Inspector", sortable: true, render: (row) => String(row.inspector_name ?? "—") },
       { key: "outcome", label: "Outcome", sortable: true, render: (row) => humanizeEnumLabel(row.outcome ?? row.status ?? "—") },
-      { key: "dvir_submission_id", label: "DVIR", render: (row) => (row.dvir_submission_id ? "Linked" : "—") },
+      {
+        key: "dvir_submission_id",
+        label: "DVIR",
+        render: (row) => (
+          <EntityLink
+            kind="dvir"
+            id={row.dvir_submission_id}
+            label={entityLabel(
+              row.dvir_type && row.dvir_submitted_at
+                ? `${humanizeEnumLabel(row.dvir_type)} · ${String(row.dvir_submitted_at).slice(0, 10)}`
+                : row.dvir_type,
+              row.dvir_submission_id,
+              "DVIR"
+            )}
+          />
+        ),
+      },
       { key: "photo_count", label: "Photos", render: (row) => String(row.photo_count ?? 0) },
       {
         key: "actions",
@@ -249,6 +268,7 @@ export function InspectionsPage() {
           rows={rows}
           columns={columns}
           rowKey={(row) => String(row.id)}
+          rowClassName={(row) => deepLinkInspectionId === String(row.id) ? "bg-slate-100 ring-1 ring-slate-400" : ""}
           loading={listQ.isPending}
           storageKey="maintenance-inspections"
           emptyText="No inspections logged yet."

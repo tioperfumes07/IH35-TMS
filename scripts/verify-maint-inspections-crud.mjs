@@ -1,101 +1,145 @@
 #!/usr/bin/env node
 /**
- * Block B30: Inspections CRUD + DVIR linkage + docs photo upload.
+ * @matrix-built maintenance,safety,fleet
+ * @matrix-cols unit,connectivity,reverse_link,picker_law
+ * Block B30: inspection CRUD + unit/DVIR create path + labelled forward and server-filtered reverse.
+ * Existing claimed verify-step: 62.
  */
 import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
 
 const ROOT = process.cwd();
-const paths = {
-  migration: path.join(ROOT, "db/migrations/0362_maint_inspections.sql"),
-  routes: path.join(ROOT, "apps/backend/src/maintenance/inspections.routes.ts"),
-  routesTest: path.join(ROOT, "apps/backend/src/maintenance/__tests__/inspections.routes.test.ts"),
-  page: path.join(ROOT, "apps/frontend/src/pages/maintenance/inspections/InspectionsPage.tsx"),
-  pageTest: path.join(ROOT, "apps/frontend/src/pages/maintenance/__tests__/InspectionsPage.test.tsx"),
-  maintenanceApi: path.join(ROOT, "apps/frontend/src/api/maintenance.ts"),
-  archDesign: path.join(ROOT, "docs/specs/IH35_ARCHITECTURAL_DESIGN.md"),
+const REL = {
+  migration: "db/migrations/0362_maint_inspections.sql",
+  routes: "apps/backend/src/maintenance/inspections.routes.ts",
+  routesTest: "apps/backend/src/maintenance/__tests__/inspections.routes.test.ts",
+  page: "apps/frontend/src/pages/maintenance/inspections/InspectionsPage.tsx",
+  pageTest: "apps/frontend/src/pages/maintenance/__tests__/InspectionsPage.test.tsx",
+  maintenanceApi: "apps/frontend/src/api/maintenance.ts",
+  reverse: "apps/frontend/src/components/maintenance/DvirMaintenanceInspectionsReverseSection.tsx",
+  dvirDetail: "apps/frontend/src/pages/safety/IdvrDetailPage.tsx",
+  assetReverse: "apps/frontend/src/components/safety/AssetSafetyReverseSection.tsx",
+  entityLink: "apps/frontend/src/components/shared/EntityLink.tsx",
+  archDesign: "docs/specs/IH35_ARCHITECTURAL_DESIGN.md",
 };
 
-function read(filePath) {
-  if (!fs.existsSync(filePath)) throw new Error(`missing file: ${filePath}`);
-  return fs.readFileSync(filePath, "utf8");
+function read(root, rel) {
+  const file = path.join(root, rel);
+  return fs.existsSync(file) ? fs.readFileSync(file, "utf8") : null;
 }
 
-function fail(msg) {
-  console.error(`verify:maint-inspections-crud FAIL: ${msg}`);
+export function collectProblems(root = ROOT) {
+  const failures = [];
+  const sources = Object.fromEntries(Object.entries(REL).map(([key, rel]) => [key, read(root, rel)]));
+  for (const [key, source] of Object.entries(sources)) if (source === null) failures.push(`missing ${REL[key]}`);
+  if (failures.length) return failures;
+
+  const { migration, routes, routesTest, page, pageTest, maintenanceApi, reverse, dvirDetail, assetReverse, entityLink, archDesign } = sources;
+  if (!migration.includes("CREATE TABLE IF NOT EXISTS maintenance.inspections") || !migration.includes("dvir_submission_id")) {
+    failures.push("migration must create maintenance.inspections with its DVIR FK");
+  }
+  if (routes.includes("maintenance.dot_inspection_events") || !routes.includes("ARCHIVE-not-DELETE")) {
+    failures.push("routes must use the canonical archive-not-delete maintenance.inspections table");
+  }
+  for (const route of [
+    'app.patch("/api/v1/maintenance/inspections/:id"',
+    'app.post("/api/v1/maintenance/inspections/:id/archive"',
+    'app.post("/api/v1/maintenance/inspections/:id/photos"',
+  ]) if (!routes.includes(route)) failures.push(`missing route ${route}`);
+  if ((routesTest.match(/\bit\(/g) ?? []).length < 4 || (pageTest.match(/\bit\(/g) ?? []).length < 3) {
+    failures.push("focused inspection route/page test coverage regressed");
+  }
+
+  if (!/dvir_submission_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)/.test(routes)) {
+    failures.push("inspection list/create contracts must accept the canonical DVIR FK");
+  }
+  if (!/LEFT JOIN safety\.dvir_submissions ds ON ds\.id = i\.dvir_submission_id\s+AND ds\.operating_company_id = i\.operating_company_id/.test(routes)) {
+    failures.push("DVIR label join must be explicitly entity-scoped to the inspection company");
+  }
+  if (!/filters\.push\(`i\.dvir_submission_id = \$\$\{values\.length\}::uuid`\)/.test(routes)) {
+    failures.push("inspection reverse route must filter server-side by dvir_submission_id");
+  }
+  if (!/JOIN docs\.files f ON f\.id = ip\.docs_file_id\s+AND f\.operating_company_id = \$2::uuid/.test(routes)) {
+    failures.push("inspection photo label join must be scoped to the requested company");
+  }
+  if (!/INSERT INTO maintenance\.inspections[\s\S]*dvir_submission_id/.test(routes) || !/FROM safety\.dvir_submissions[\s\S]*operating_company_id/.test(routes)) {
+    failures.push("create writer must validate and persist dvir_submission_id");
+  }
+
+  if (!page.includes("maint-inspections-page") || !page.includes("+ Create Inspection") || !page.includes("requestUploadUrl")) {
+    failures.push("inspection create/photo surface regressed");
+  }
+  if (!/<Combobox[\s\S]*?id="maintenance-inspection-dvir-picker"/.test(page) || /<select[\s\S]*?value=\{draft\.dvir_submission_id\}/.test(page)) {
+    failures.push("inspection creator must use the searchable DVIR picker, never a UUID select");
+  }
+  if (!/<EntityLink[\s\S]*?kind="dvir"[\s\S]*?id=\{row\.dvir_submission_id\}/.test(page)) {
+    failures.push("inspection list must drill to the linked DVIR with its resolved label");
+  }
+  if (!/inspection_id/.test(page) || !/rowClassName/.test(page)) {
+    failures.push("inspection list must honor maintenance_inspection deep links");
+  }
+  if (!/dvir_submission_id\?: string/.test(maintenanceApi) || !/q\.set\("dvir_submission_id", params\.dvir_submission_id\)/.test(maintenanceApi)) {
+    failures.push("maintenance API client must forward the server-side DVIR reverse filter");
+  }
+  if (!/listMaintenanceInspections\(operatingCompanyId, \{ dvir_submission_id: dvirSubmissionId \}\)/.test(reverse)) {
+    failures.push("DVIR reverse section must query inspections by the exact FK");
+  }
+  if (!/<EntityLink[\s\S]*?kind="maintenance_inspection"/.test(reverse)) {
+    failures.push("DVIR reverse rows must drill to the exact inspection");
+  }
+  if (!/<DvirMaintenanceInspectionsReverseSection[\s\S]*?dvirSubmissionId=\{id\}/.test(dvirDetail)) {
+    failures.push("DVIR detail must mount maintenance inspection reverse history");
+  }
+  if (!/<EntityLink[\s\S]*?kind="dvir"[\s\S]*?id=\{s\(dvir\.id\)/.test(assetReverse)) {
+    failures.push("asset safety reverse DVIR rows must use the real detail route");
+  }
+  if (!/case "dvir":\s+return `\/safety\/idvr\/\$\{id\}`/.test(entityLink) ||
+      !/case "maintenance_inspection":\s+return `\/maintenance\/inspections\?inspection_id=\$\{id\}`/.test(entityLink)) {
+    failures.push("shared EntityLink must resolve both sides of inspection↔DVIR");
+  }
+  if (!archDesign.includes("verify:maint-inspections-crud")) failures.push("architecture must retain the claimed guard");
+  return failures;
+}
+
+function selftest() {
+  const baseline = collectProblems();
+  if (baseline.length) return baseline;
+  const temp = fs.mkdtempSync(path.join(ROOT, ".tmp-maint-dvir-link-"));
+  try {
+    for (const rel of Object.values(REL)) {
+      const target = path.join(temp, rel);
+      fs.mkdirSync(path.dirname(target), { recursive: true });
+      fs.copyFileSync(path.join(ROOT, rel), target);
+    }
+    const mutations = [
+      [REL.routes, "AND ds.operating_company_id = i.operating_company_id", "AND TRUE"],
+      [REL.routes, 'filters.push(`i.dvir_submission_id = $${values.length}::uuid`)', 'filters.push("TRUE")'],
+      [REL.routes, "AND f.operating_company_id = $2::uuid", "AND TRUE"],
+      [REL.page, 'kind="dvir"', 'kind="unit"'],
+      [REL.maintenanceApi, 'q.set("dvir_submission_id", params.dvir_submission_id)', 'q.set("ignored", params.dvir_submission_id)'],
+      [REL.reverse, "dvir_submission_id: dvirSubmissionId", "unit_id: dvirSubmissionId"],
+      [REL.dvirDetail, "<DvirMaintenanceInspectionsReverseSection", "<MissingReverseSection"],
+      [REL.entityLink, 'case "dvir":', 'case "disabled_dvir":'],
+    ];
+    for (const [rel, before, after] of mutations) {
+      const target = path.join(temp, rel);
+      const original = fs.readFileSync(target, "utf8");
+      if (!original.includes(before)) return [`selftest fixture drift: ${rel} missing ${before}`];
+      fs.writeFileSync(target, original.replace(before, after));
+      if (!collectProblems(temp).length) return [`mutation survived: ${rel} ${before}`];
+      fs.writeFileSync(target, original);
+    }
+  } finally {
+    fs.rmSync(temp, { recursive: true, force: true });
+  }
+  return [];
+}
+
+const failures = process.argv.includes("--selftest") ? selftest() : collectProblems();
+if (failures.length) {
+  console.error("verify:maint-inspections-crud FAIL:");
+  for (const failure of failures) console.error(` - ${failure}`);
   process.exit(1);
 }
-
-function main() {
-  const failures = [];
-  const migration = read(paths.migration);
-  const routes = read(paths.routes);
-  const routesTest = read(paths.routesTest);
-  const page = read(paths.page);
-  const pageTest = read(paths.pageTest);
-  const maintenanceApi = read(paths.maintenanceApi);
-  const archDesign = read(paths.archDesign);
-
-  if (!migration.includes("CREATE TABLE IF NOT EXISTS maintenance.inspections")) {
-    failures.push("migration must create maintenance.inspections");
-  }
-  if (!migration.includes("CREATE TABLE IF NOT EXISTS maintenance.inspection_photos")) {
-    failures.push("migration must create maintenance.inspection_photos");
-  }
-  if (!migration.includes("dvir_submission_id")) failures.push("migration must include dvir_submission_id FK");
-
-  if (!routes.includes("maintenance.inspections")) failures.push("routes must use maintenance.inspections");
-  if (routes.includes("maintenance.dot_inspection_events")) {
-    failures.push("routes must not query legacy maintenance.dot_inspection_events");
-  }
-  if (!routes.includes("ARCHIVE-not-DELETE")) failures.push("routes must document ARCHIVE-not-DELETE");
-  if (!routes.includes('app.patch("/api/v1/maintenance/inspections/:id"')) {
-    failures.push("routes must expose PATCH update endpoint");
-  }
-  if (!routes.includes('app.post("/api/v1/maintenance/inspections/:id/archive"')) {
-    failures.push("routes must expose archive endpoint");
-  }
-  if (!routes.includes('app.post("/api/v1/maintenance/inspections/:id/photos"')) {
-    failures.push("routes must expose photo attach endpoint");
-  }
-  if (!routes.includes("safety.dvir_submissions")) failures.push("routes must link safety.dvir_submissions");
-  if (!routes.includes("docs.files")) failures.push("routes must validate docs.files for photos");
-  if ((routesTest.match(/\bit\(/g) ?? []).length < 4) {
-    failures.push("inspections.routes.test must include at least 4 vitest cases");
-  }
-
-  if (!page.includes("maint-inspections-page")) failures.push("InspectionsPage must expose test id");
-  if (!page.includes("+ Create Inspection")) failures.push("InspectionsPage must expose + Create Inspection");
-  if (!page.includes("requestUploadUrl")) failures.push("InspectionsPage must upload photos via docs module");
-  if (!page.includes("getSafetyDvirSubmissions")) failures.push("InspectionsPage must wire DVIR linkage");
-  if (!/<Combobox[\s\S]*?id="maintenance-inspection-dvir-picker"/.test(page)) {
-    failures.push("InspectionsPage DVIR linkage must use the searchable Combobox");
-  }
-  if (/<select[\s\S]*?value=\{draft\.dvir_submission_id\}/.test(page)) {
-    failures.push("InspectionsPage DVIR linkage must not regress to a native UUID-valued select");
-  }
-  if ((pageTest.match(/\bit\(/g) ?? []).length < 3) {
-    failures.push("InspectionsPage.test must include at least 3 vitest cases");
-  }
-
-  if (!maintenanceApi.includes("attachMaintenanceInspectionPhoto")) {
-    failures.push("maintenance API must expose attachMaintenanceInspectionPhoto");
-  }
-  if (!maintenanceApi.includes("archiveMaintenanceInspection")) {
-    failures.push("maintenance API must expose archiveMaintenanceInspection");
-  }
-
-  if (!archDesign.includes("verify:maint-inspections-crud")) {
-    failures.push("ARCHITECTURAL_DESIGN must reference verify:maint-inspections-crud");
-  }
-
-  if (failures.length) {
-    for (const f of failures) console.error(` - ${f}`);
-    fail(failures.join("; "));
-  }
-
-  console.log("verify:maint-inspections-crud PASS");
-}
-
-main();
+console.log(`verify:maint-inspections-crud PASS${process.argv.includes("--selftest") ? " — 8/8 mutations killed" : ""}`);

@@ -1069,11 +1069,12 @@ export type MaintenanceInspectionRow = {
 
 export function listMaintenanceInspections(
   operatingCompanyId: string,
-  params: { include_archived?: boolean; unit_id?: string } = {}
+  params: { include_archived?: boolean; unit_id?: string; dvir_submission_id?: string } = {}
 ) {
   const q = new URLSearchParams({ operating_company_id: operatingCompanyId });
   if (params.include_archived != null) q.set("include_archived", String(params.include_archived));
   if (params.unit_id) q.set("unit_id", params.unit_id);
+  if (params.dvir_submission_id) q.set("dvir_submission_id", params.dvir_submission_id);
   return apiRequest<{ rows: MaintenanceInspectionRow[] }>(`/api/v1/maintenance/inspections?${q.toString()}`);
 }
 

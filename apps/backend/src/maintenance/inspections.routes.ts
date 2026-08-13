@@ -6,6 +6,9 @@ import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 
+const RL_READ = { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } } as const;
+const RL_WRITE = { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } } as const;
+
 const INSPECTION_TYPES = ["annual_dot", "pre_trip", "post_trip", "custom"] as const;
 const INSPECTION_STATUSES = ["scheduled", "in_progress", "completed", "archived"] as const;
 const INSPECTION_OUTCOMES = ["pass", "fail", "pending"] as const;
@@ -14,6 +17,7 @@ const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
   include_archived: z.coerce.boolean().optional().default(false),
   unit_id: z.string().uuid().optional(),
+  dvir_submission_id: z.string().uuid().optional(),
 });
 
 const idParamsSchema = z.object({ id: z.string().uuid() });
@@ -147,6 +151,7 @@ const INSPECTION_SELECT = `
   LEFT JOIN mdata.units u ON u.id = i.unit_id
                          AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = i.operating_company_id
   LEFT JOIN safety.dvir_submissions ds ON ds.id = i.dvir_submission_id
+                                      AND ds.operating_company_id = i.operating_company_id
   LEFT JOIN LATERAL (
     SELECT count(*)::int AS photo_count
     FROM maintenance.inspection_photos ip
@@ -157,7 +162,7 @@ const INSPECTION_SELECT = `
 export async function registerMaintenanceInspectionsRoutes(app: FastifyInstance) {
   // ARCHIVE-not-DELETE Sunset: legacy dot inspection events read-only stub replaced by maintenance.inspections (B30).
 
-  app.get("/api/v1/maintenance/inspections", async (req, reply) => {
+  app.get("/api/v1/maintenance/inspections", RL_READ, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const parsed = companyQuerySchema.safeParse(req.query ?? {});
@@ -173,6 +178,10 @@ export async function registerMaintenanceInspectionsRoutes(app: FastifyInstance)
         values.push(parsed.data.unit_id);
         filters.push(`i.unit_id = $${values.length}`);
       }
+      if (parsed.data.dvir_submission_id) {
+        values.push(parsed.data.dvir_submission_id);
+        filters.push(`i.dvir_submission_id = $${values.length}::uuid`);
+      }
       const res = await client.query(
         `
           ${INSPECTION_SELECT}
@@ -187,7 +196,7 @@ export async function registerMaintenanceInspectionsRoutes(app: FastifyInstance)
     return { rows };
   });
 
-  app.get("/api/v1/maintenance/inspections/:id", async (req, reply) => {
+  app.get("/api/v1/maintenance/inspections/:id", RL_READ, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = idParamsSchema.safeParse(req.params ?? {});
@@ -220,10 +229,11 @@ export async function registerMaintenanceInspectionsRoutes(app: FastifyInstance)
             f.upload_completed_at::text
           FROM maintenance.inspection_photos ip
           JOIN docs.files f ON f.id = ip.docs_file_id
+                           AND f.operating_company_id = $2::uuid
           WHERE ip.inspection_id = $1
           ORDER BY ip.sort_order ASC, ip.created_at ASC
         `,
-        [params.data.id]
+        [params.data.id, query.data.operating_company_id]
       );
       return { inspection: mapInspectionRow(inspection), photos: photosRes.rows };
     });
@@ -232,7 +242,7 @@ export async function registerMaintenanceInspectionsRoutes(app: FastifyInstance)
     return payload;
   });
 
-  app.post("/api/v1/maintenance/inspections", async (req, reply) => {
+  app.post("/api/v1/maintenance/inspections", RL_WRITE, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const parsed = createSchema.safeParse(req.body ?? {});
@@ -296,7 +306,7 @@ export async function registerMaintenanceInspectionsRoutes(app: FastifyInstance)
     }
   });
 
-  app.patch("/api/v1/maintenance/inspections/:id", async (req, reply) => {
+  app.patch("/api/v1/maintenance/inspections/:id", RL_WRITE, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = idParamsSchema.safeParse(req.params ?? {});
@@ -373,7 +383,7 @@ export async function registerMaintenanceInspectionsRoutes(app: FastifyInstance)
     }
   });
 
-  app.post("/api/v1/maintenance/inspections/:id/archive", async (req, reply) => {
+  app.post("/api/v1/maintenance/inspections/:id/archive", RL_WRITE, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = idParamsSchema.safeParse(req.params ?? {});
@@ -404,7 +414,7 @@ export async function registerMaintenanceInspectionsRoutes(app: FastifyInstance)
     return archived;
   });
 
-  app.post("/api/v1/maintenance/inspections/:id/photos", async (req, reply) => {
+  app.post("/api/v1/maintenance/inspections/:id/photos", RL_WRITE, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = idParamsSchema.safeParse(req.params ?? {});
