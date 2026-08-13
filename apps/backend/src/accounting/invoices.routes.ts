@@ -111,7 +111,13 @@ export async function enrichInvoice(client: { query: (sql: string, values?: unkn
         fa.display_id AS factoring_display_id,
         COALESCE(l.customer_chargeback_requested, false) AS source_load_chargeback_requested,
         l.customer_chargeback_reason AS source_load_chargeback_reason,
-        l.load_number AS source_load_number
+        l.load_number AS source_load_number,
+        CASE i.bill_to_entity_type
+          WHEN 'customer' THEN COALESCE(btc.customer_name, c.customer_name)
+          WHEN 'driver' THEN NULLIF(TRIM(COALESCE(btd.first_name, '') || ' ' || COALESCE(btd.last_name, '')), '')
+          WHEN 'vendor' THEN btv.vendor_name
+          ELSE NULL
+        END AS bill_to_entity_label
       FROM accounting.invoices i
       JOIN mdata.customers c
         ON c.id = i.customer_id
@@ -124,6 +130,18 @@ export async function enrichInvoice(client: { query: (sql: string, values?: unkn
       LEFT JOIN mdata.loads l
         ON l.id = i.source_load_id
        AND l.operating_company_id = i.operating_company_id
+      LEFT JOIN mdata.customers btc
+        ON i.bill_to_entity_type = 'customer'
+       AND btc.id = i.bill_to_entity_id
+       AND btc.operating_company_id = i.operating_company_id
+      LEFT JOIN mdata.drivers btd
+        ON i.bill_to_entity_type = 'driver'
+       AND btd.id = i.bill_to_entity_id
+       AND btd.operating_company_id = i.operating_company_id
+      LEFT JOIN mdata.vendors btv
+        ON i.bill_to_entity_type = 'vendor'
+       AND btv.id = i.bill_to_entity_id
+       AND btv.operating_company_id = i.operating_company_id
       -- CLS-JOIN-ENTITY-UNSCOPED: i itself was read by bare id ($1) with no company predicate at all —
       -- every downstream join pins to i.operating_company_id, but nothing pinned i.operating_company_id
       -- to the CALLER's company, so an id from another entity would render fully (customer, factoring,
