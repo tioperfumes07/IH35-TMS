@@ -38,3 +38,5 @@
 2026-08-13T20:12Z Cursor | shipping VERTICAL-REVERSE-LINK-ACCOUNTING-LISTS | Live=BLOCKED | NEXT=banking/safety reverse or connectivity
 2026-08-13T20:15Z Cursor | SHIPPED VERTICAL-REVERSE-LINK-ACCOUNTING-LISTS (PR#6550) | accounting reverse Gap=0 | Live=BLOCKED | NEXT=banking/safety reverse
 2026-08-13T20:05Z Cursor | tick→shipping VERTICAL-REVERSE-LINK-BANKING-LISTS | Live=BLOCKED | NEXT=safety reverse
+2026-08-13T20:08Z Cursor | SHIPPED VERTICAL-REVERSE-LINK-BANKING-LISTS (PR#6553) | banking reverse Gap=0 | Live=BLOCKED | NEXT=safety reverse
+2026-08-13T20:10Z Cursor | shipping VERTICAL-REVERSE-LINK-SAFETY-LISTS | Gap→9 WIRE EntityLink | Live=BLOCKED | NEXT=fleet/factoring reverse or wire safety lists
