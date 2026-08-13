@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * @matrix-built {"modules":["settlements","accounting"],"cols":["settlement","driver","load","connectivity","reverse_link"],"leafRe":"^(settlements\\.(list|detail|disputes)|settlement_close|pre_settlements|settlements\\.panel\\.(pre_settlements|pay_run_close)|escrow|owner_approval)$","task":"WAVE-A-settlement-column","vertical":"column-wave"}
+ * @matrix-built {"modules":["settlements","accounting"],"cols":["settlement","driver","load","connectivity","reverse_link"],"leafRe":"^(settlements\\.(list|detail|disputes)|settlement_close|pre_settlements|settlements\\.panel\\.(pre_settlements|pay_run_close)|settlements\\.drawer\\.(advance_detail|liability_detail)|escrow|owner_approval)$","task":"WAVE-A-settlement-column","vertical":"column-wave"}
  * Rule-17: pre-settlements reverse drill-through (Law §9).
  * Accounting + Settlements surfaces must EntityLink canonical settlement rows (Wave A `settlement`).
  */
@@ -45,6 +45,8 @@ function assertPreSettlementsReverse() {
   const header = read("apps/frontend/src/pages/driver-finance/components/SettlementHeader.tsx");
   const detail = read("apps/frontend/src/pages/driver-finance/SettlementDetailPage.tsx");
   const payRun = read("apps/frontend/src/pages/driver-finance/components/PayRunClosePanel.tsx");
+  const advanceDrawer = read("apps/frontend/src/pages/cash-advances/components/AdvanceDetailDrawer.tsx");
+  const liabilityDrawer = read("apps/frontend/src/pages/liabilities/components/LiabilityDetailDrawer.tsx");
 
   if (!/from "\.\.\/shared\/EntityLink"/.test(panel) && !/from '\.\.\/shared\/EntityLink'/.test(panel)) {
     errors.push("PreSettlementsPanel: must import EntityLink");
@@ -78,6 +80,12 @@ function assertPreSettlementsReverse() {
   }
   if (!/kind="settlement"/.test(payRun) || !/settlementId/.test(payRun)) {
     errors.push("PayRunClosePanel: must EntityLink settlementId");
+  }
+  if (!/kind="settlement"/.test(advanceDrawer) || !/settlement_id/.test(advanceDrawer)) {
+    errors.push("AdvanceDetailDrawer: must EntityLink settlement_history settlement_id");
+  }
+  if (!/kind="settlement"/.test(liabilityDrawer) || !/settlement_id/.test(liabilityDrawer)) {
+    errors.push("LiabilityDetailDrawer: must EntityLink settlement_history settlement_id");
   }
   return errors;
 }
