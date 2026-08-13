@@ -10,6 +10,7 @@ import { ConfirmDiscardDialog } from "./dialogs/ConfirmDiscardDialog";
 import { ModalCloseButton } from "./ModalCloseButton";
 import { PARITY_CREATE_DRAWER_WIDTH } from "./parity/sizing";
 import { ResizeHandle } from "./ui/ResizeHandle";
+import "../styles/proportion-chrome.css";
 
 type ModalProps = {
   open: boolean;
@@ -212,9 +213,13 @@ export function Modal({
           aria-modal="true"
           aria-label={title}
           data-modal-variant={variant}
+          data-proportion-chrome="qbo-compact"
           onMouseDown={(event) => event.stopPropagation()}
         >
-          <div className="flex shrink-0 items-center justify-between border-b border-gray-200 px-4 py-3">
+          <div
+            className="flex shrink-0 items-center justify-between border-b border-gray-200 px-4 py-3"
+            data-proportion-chrome-header=""
+          >
             <h2
               className="uppercase"
               style={{ fontSize: typography.panelHeader, color: colors.bodyText, letterSpacing: typography.tightUpper }}
