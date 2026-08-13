@@ -30,9 +30,11 @@ import { entityLabel } from "../../lib/entity-label";
  *   - `mdata.units` has NO `operating_company_id` (owner_company_id / currently_leased_to_company_id),
  *     which is why company scoping here comes from the selected-company context, exactly as the
  *     existing Legal/Insurance reverse sections on these same pages do.
- *   - `safety.accident_reports` has NO `trailer_id` column at all, so the Accidents block is
- *     deliberately UNIT-ONLY. Rendering an always-empty "Accidents" block on a trailer would assert
- *     a clean accident history that was never actually recorded anywhere.
+ *   - `safety.accident_reports.trailer_id` (mdata.equipment FK) shipped in RANK5-ACCIDENT-TRAILER-ID
+ *     (PR #6324, on top of the PR #6316 schema migration) — the list endpoint accepts a `trailer_id`
+ *     filter, matching the existing `unit_id` shape. The Accidents block was UNIT-ONLY before this;
+ *     rendering an always-empty "Accidents" block on a trailer used to be structurally correct
+ *     (there was no column to query), not just an omission — that is no longer true.
  */
 
 type Row = Record<string, unknown>;
@@ -168,10 +170,11 @@ export function AssetSafetyReverseSection({
   const isUnit = assetKind === "unit";
 
   const accidentsQuery = useQuery({
-    queryKey: ["safety", "reverse", "accidents", operatingCompanyId, assetId],
-    queryFn: () => getSafetyAccidents(operatingCompanyId, { unit_id: assetId }),
-    // Unit-only: safety.accident_reports has no trailer column (see file header).
-    enabled: enabled && isUnit,
+    queryKey: ["safety", "reverse", "accidents", assetKind, operatingCompanyId, assetId],
+    queryFn: () =>
+      getSafetyAccidents(operatingCompanyId, isUnit ? { unit_id: assetId } : { trailer_id: assetId }),
+    // RANK5-ACCIDENT-TRAILER-ID (PR #6324): trailer_id is now a real, filterable column (see file header).
+    enabled,
   });
 
   const inspectionsQuery = useQuery({
@@ -199,34 +202,32 @@ export function AssetSafetyReverseSection({
     <div className="space-y-3" data-testid={testId}>
       <h2 className="text-sm font-semibold text-gray-900">Safety records linked to this {contextLabel}</h2>
 
-      {isUnit ? (
-        <SectionShell
-          title="Accidents"
-          to="/safety/accidents"
-          linkLabel="Open Accidents"
-          testId="asset-safety-reverse-accidents"
-          isLoading={accidentsQuery.isLoading}
-          isError={accidentsQuery.isError}
-          errorText="Failed to load accidents for this unit."
-          emptyText="No accidents recorded for this unit."
-          count={accidents.length}
-        >
-          {accidents.map((accident) => (
-            <li key={s(accident.id)} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-sm">
-              <EntityLink
-                kind="accident"
-                id={s(accident.id) || null}
-                label={entityLabel(s(accident.description) || null, s(accident.id), "Accident")}
-                className="font-semibold text-slate-700"
-              />
-              <div className="mt-1 text-xs text-gray-600">
-                {formatDateUS(s(accident.accident_at))}
-                {accident.driver_name ? ` · ${s(accident.driver_name)}` : ""}
-              </div>
-            </li>
-          ))}
-        </SectionShell>
-      ) : null}
+      <SectionShell
+        title="Accidents"
+        to="/safety/accidents"
+        linkLabel="Open Accidents"
+        testId="asset-safety-reverse-accidents"
+        isLoading={accidentsQuery.isLoading}
+        isError={accidentsQuery.isError}
+        errorText={`Failed to load accidents for this ${contextLabel}.`}
+        emptyText={`No accidents recorded for this ${contextLabel}.`}
+        count={accidents.length}
+      >
+        {accidents.map((accident) => (
+          <li key={s(accident.id)} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-sm">
+            <EntityLink
+              kind="accident"
+              id={s(accident.id) || null}
+              label={entityLabel(s(accident.description) || null, s(accident.id), "Accident")}
+              className="font-semibold text-slate-700"
+            />
+            <div className="mt-1 text-xs text-gray-600">
+              {formatDateUS(s(accident.accident_at))}
+              {accident.driver_name ? ` · ${s(accident.driver_name)}` : ""}
+            </div>
+          </li>
+        ))}
+      </SectionShell>
 
       <SectionShell
         title="DOT Inspections"

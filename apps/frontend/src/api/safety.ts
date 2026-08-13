@@ -217,11 +217,17 @@ export function getSafetyDvirDetail(id: string, companyId: string) {
   );
 }
 
-export function getSafetyAccidents(companyId: string, params: { unit_id?: string; load_id?: string } = {}) {
+export function getSafetyAccidents(
+  companyId: string,
+  params: { unit_id?: string; load_id?: string; trailer_id?: string } = {}
+) {
   const qs = new URLSearchParams({ operating_company_id: companyId });
-  // SAF-F17 / SAF-C01: server-side unit/load scoping (the route caps at LIMIT 500).
+  // SAF-F17 / SAF-C01: server-side unit/load/trailer scoping (the route caps at LIMIT 500).
+  // trailer_id landed in RANK5-ACCIDENT-TRAILER-ID (PR #6324) — safety.accident_reports.trailer_id
+  // (mdata.equipment, PR #6316) is now filterable, not just storable.
   if (params.unit_id) qs.set("unit_id", params.unit_id);
   if (params.load_id) qs.set("load_id", params.load_id);
+  if (params.trailer_id) qs.set("trailer_id", params.trailer_id);
   return apiRequest<{ accidents: Array<Record<string, unknown>> }>(`/api/v1/safety/accidents?${qs.toString()}`);
 }
 
