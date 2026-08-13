@@ -612,6 +612,11 @@
     "claimed_by": "cursor",
     "purpose": "ACCT-F5029 invoice void originalDate ISO (LV-BILLVOID class)"
   },
+  "3226": {
+    "claimed_at": "2026-08-13",
+    "claimed_by": "codex",
+    "purpose": "verify-finance-aging-drill-reverse-links"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
