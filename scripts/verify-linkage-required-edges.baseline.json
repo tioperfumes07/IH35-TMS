@@ -4,18 +4,8 @@
   "_captured": "2026-07-21",
   "_scope": "SCHEMA REACHABILITY ONLY. It cannot prove rows are populated, that a poster runs, or that reverse drill-through exists in the UI. LAW 0: prod wins over migrations, and prod has diverged — a pass here is not a statement about prod's FK graph. Never cite this guard as proof the books are wired.",
   "_corrected": "2026-07-21 review: (1) the unenforced-pointer detector was defined but NEVER CALLED while three real findings (settlement_lines.posting_account_id, fuel_transactions.vendor_id, accident_reports.driver_id) were removed in deference to it — it now runs and is baselined; (2) `if (have.size===0) continue` exempted zero-FK tables, the worst break, by construction — removed, which surfaced insurance.lawsuit driver+unit; (3) polymorphic gl/source satisfaction was a hardcoded table list — now derived from the linked_object_type / source_transaction_type literals that actually appear in backend source; (4) junction satisfaction accepted ANY table referencing both sides — now requires a genuine narrow link table; (5) dollar-quoted DO bodies were discarded, hiding maintenance.work_orders and safety.accident_reports entirely.",
-  "count": 9,
+  "count": 6,
   "entries": [
-    {
-      "table": "accounting.expenses",
-      "edge": "claim_or_matter",
-      "reason": "WO-CLAIM-MONEY — no claim_id/matter_id on an expense, so a deductible or legal fee cannot be traced to the claim that caused it."
-    },
-    {
-      "table": "insurance.claim",
-      "edge": "money",
-      "reason": "WO-CLAIM-MONEY — claim generates no expense/bill/JE. Deductible, legal fees, repairs never reach the books from the claim."
-    },
     {
       "table": "insurance.lawsuit",
       "edge": "driver",
@@ -30,11 +20,6 @@
       "table": "insurance.lawsuit",
       "edge": "money",
       "reason": "WO-CLAIM-MONEY — lawsuit has no cost leg; cannot answer what a suit cost."
-    },
-    {
-      "table": "legal.matters",
-      "edge": "money",
-      "reason": "WO-CLAIM-MONEY — matter reaches claim/driver/unit but never the money."
     },
     {
       "table": "fuel.fuel_transactions",
@@ -52,7 +37,7 @@
       "reason": "WO-CLAIM-MONEY — accident generates no cost record (driver_id exists but UNENFORCED, see pointer register)."
     }
   ],
-  "unenforced_pointers_count": 49,
+  "unenforced_pointers_count": 45,
   "_pointer_doc": "A money-critical uuid declared with NO FOREIGN KEY. It accepts any value and dangles when its target is removed: wired in a column list, not in the database. Fixing these is additive-migration work (ADD CONSTRAINT ... NOT VALID, then VALIDATE after an orphan sweep) and is FINANCIAL CLUSTER — owner-approved, never self-merged.",
   "unenforced_pointers": [
     {
@@ -80,10 +65,6 @@
       "column": "payment_term_id"
     },
     {
-      "table": "accounting.expenses",
-      "column": "vendor_uuid"
-    },
-    {
       "table": "accounting.invoices",
       "column": "bill_to_entity_id"
     },
@@ -109,15 +90,7 @@
     },
     {
       "table": "banking.bank_transactions",
-      "column": "categorization_customer_id"
-    },
-    {
-      "table": "banking.bank_transactions",
       "column": "categorization_gl_account_id"
-    },
-    {
-      "table": "banking.bank_transactions",
-      "column": "categorization_vendor_id"
     },
     {
       "table": "banking.bank_transactions",
@@ -198,10 +171,6 @@
     {
       "table": "safety.compliance_reminders",
       "column": "driver_id"
-    },
-    {
-      "table": "safety.damage_continuity_chains",
-      "column": "insurance_claim_id"
     },
     {
       "table": "safety.document_alert_events",
