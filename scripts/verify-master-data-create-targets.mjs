@@ -25,15 +25,15 @@ import path from "node:path";
 
 const ROOT = process.cwd();
 
-const INLINE_CUSTOMER_CREATORS = [
+const CUSTOMER_CREATORS = [
+  "apps/frontend/src/pages/Customers.tsx",
   "apps/frontend/src/components/parity/drawers/NewCustomerDrawerForm.tsx",
   "apps/frontend/src/components/forms/shared/QuickCreateEntityModal.tsx",
 ];
+const CUSTOMER_PAYLOAD_HELPER = "apps/frontend/src/components/customers/CustomerProfileForm.tsx";
 const PART_CREATE_DRAWER = "apps/frontend/src/pages/inventory/PartCreateDrawer.tsx";
 
-const errors = [];
-
-function read(rel) {
+function read(rel, errors) {
   const abs = path.join(ROOT, rel);
   if (!fs.existsSync(abs)) {
     errors.push(`MISSING FILE: ${rel} — the guard cannot verify it. Update this script if the file moved.`);
@@ -42,38 +42,45 @@ function read(rel) {
   return fs.readFileSync(abs, "utf8");
 }
 
-// D1-1: neither inline customer creator may reference the qbo-mirror create fn.
-for (const rel of INLINE_CUSTOMER_CREATORS) {
-  const src = read(rel);
-  if (src == null) continue;
-  if (/createQboCustomer/.test(src)) {
-    errors.push(
-      `D1-1 REGRESSION: ${rel} still references createQboCustomer (writes to the mdata.qbo_customers ` +
-        `MIRROR that no picker reads). Inline customer creators must call createCustomer ` +
-        `(POST /api/v1/mdata/customers) so the returned id is a real, bookable mdata.customers FK.`
-    );
-  }
-  if (!/createCustomer\s*\(/.test(src)) {
-    errors.push(
-      `D1-1 REGRESSION: ${rel} no longer calls createCustomer(...). The inline customer create must ` +
-        `target the real mdata.customers endpoint.`
-    );
-  }
-  // LV-CUSTOMER-CREATE-INVOICE-EMAIL (Cascade #9): invoice-send COALESCE is
-  // ap_email → billing_email → ar_email. `email` maps to billing_email on the API, but
-  // ar_email/ap_email were never stamped from the create drawer — so quick-created customers
-  // were undeliverable until someone edited CustomerDetail. Require both keys on createCustomer.
-  if (!/\bar_email\s*:/.test(src) || !/\bap_email\s*:/.test(src)) {
-    errors.push(
-      `LV-CUSTOMER-CREATE-INVOICE-EMAIL: ${rel} createCustomer(...) must pass ar_email and ap_email ` +
-        `(same value as email) so invoice send can resolve a recipient without a CustomerDetail edit.`
-    );
-  }
-}
+export function auditMasterDataCreateTargets(sources) {
+  const errors = [];
+  const helper = sources[CUSTOMER_PAYLOAD_HELPER] ?? "";
+  const helperCarriesInvoiceEmail =
+    /const arEmail = trimOrUndef\(v\.ar_email\) \?\? email/.test(helper) &&
+    /const apEmail = trimOrUndef\(v\.ap_email\) \?\? email/.test(helper) &&
+    /\bar_email:\s*arEmail/.test(helper) &&
+    /\bap_email:\s*apEmail/.test(helper);
 
-// D5-1: PartCreateDrawer must not use a raw fetch(resolveApiUrl(...)) for its mutation.
-const partSrc = read(PART_CREATE_DRAWER);
-if (partSrc != null) {
+  // D1-1: no customer creator may reference the qbo-mirror create fn.
+  for (const rel of CUSTOMER_CREATORS) {
+    const src = sources[rel] ?? "";
+    if (/createQboCustomer/.test(src)) {
+      errors.push(
+        `D1-1 REGRESSION: ${rel} still references createQboCustomer (writes to the mdata.qbo_customers ` +
+          `MIRROR that no picker reads). Customer creators must call createCustomer ` +
+          `(POST /api/v1/mdata/customers) so the returned id is a real, bookable mdata.customers FK.`
+      );
+    }
+    if (!/createCustomer\s*\(/.test(src)) {
+      errors.push(
+        `D1-1 REGRESSION: ${rel} no longer calls createCustomer(...). The customer create must ` +
+          `target the real mdata.customers endpoint.`
+      );
+    }
+    // LV-CUSTOMER-CREATE-INVOICE-EMAIL (Cascade #9): invoice-send COALESCE is
+    // ap_email → billing_email → ar_email. Follow direct payloads or the shared helper.
+    const composesHelper = /createCustomer\(profileValuesToCreatePayload\(/.test(src);
+    const carriesDirectly = /\bar_email\s*:/.test(src) && /\bap_email\s*:/.test(src);
+    if (!(carriesDirectly || (composesHelper && helperCarriesInvoiceEmail))) {
+      errors.push(
+        `LV-CUSTOMER-CREATE-INVOICE-EMAIL: ${rel} createCustomer(...) must pass ar_email and ap_email ` +
+          `(same value as email) so invoice send can resolve a recipient without a CustomerDetail edit.`
+      );
+    }
+  }
+
+  // D5-1: PartCreateDrawer must not use a raw fetch(resolveApiUrl(...)) for its mutation.
+  const partSrc = sources[PART_CREATE_DRAWER] ?? "";
   if (/fetch\s*\(\s*resolveApiUrl/.test(partSrc)) {
     errors.push(
       `D5-1 REGRESSION: ${PART_CREATE_DRAWER} uses a raw fetch(resolveApiUrl(...)) which omits ` +
@@ -87,6 +94,33 @@ if (partSrc != null) {
         `through the shared helper (credentials + idempotency + base URL).`
     );
   }
+  return errors;
+}
+
+const FILES = [...CUSTOMER_CREATORS, CUSTOMER_PAYLOAD_HELPER, PART_CREATE_DRAWER];
+const readErrors = [];
+const sources = Object.fromEntries(FILES.map((rel) => [rel, read(rel, readErrors) ?? ""]));
+const errors = [...readErrors, ...auditMasterDataCreateTargets(sources)];
+
+if (process.argv.includes("--selftest")) {
+  if (errors.length) {
+    console.error(`verify-master-data-create-targets SELFTEST FAIL — live tree red:\n${errors.join("\n")}`);
+    process.exit(1);
+  }
+  const cases = [
+    ["shared invoice email removed", CUSTOMER_PAYLOAD_HELPER, /\bap_email:\s*apEmail/, "ap_email"],
+    ["quick create targets mirror", CUSTOMER_CREATORS[2], /createCustomer\s*\(/, "createQboCustomer("],
+    ["part create bypasses helper", PART_CREATE_DRAWER, /apiRequest\s*[<(]/, "fetch(resolveApiUrl("],
+  ];
+  for (const [name, rel, find, replacement] of cases) {
+    const mutated = { ...sources, [rel]: sources[rel].replace(find, replacement) };
+    if (mutated[rel] === sources[rel] || auditMasterDataCreateTargets(mutated).length === 0) {
+      console.error(`verify-master-data-create-targets SELFTEST FAIL — ${name} escaped`);
+      process.exit(1);
+    }
+  }
+  console.log(`verify-master-data-create-targets SELFTEST PASS — ${cases.length} planted creator defects caught`);
+  process.exit(0);
 }
 
 if (errors.length > 0) {
@@ -95,4 +129,4 @@ if (errors.length > 0) {
   process.exit(1);
 }
 
-console.log("verify-master-data-create-targets: OK — inline customer creators target mdata.customers; PartCreateDrawer uses apiRequest.");
+console.log("verify-master-data-create-targets: OK — all customer creators target mdata.customers with invoice email; PartCreateDrawer uses apiRequest.");

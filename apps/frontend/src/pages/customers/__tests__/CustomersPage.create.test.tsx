@@ -96,6 +96,8 @@ describe("CustomersPage create validation", () => {
     await user.type(document.querySelector('[data-field="legal_name"]')!, "Acme Logistics");
     // customer_type is now required client-side (D1-5) — select one so we reach the create request.
     await user.selectOptions(document.querySelector('select[name="customer_type"]')!, "broker");
+    // CUSTOMER-EMAIL-REQUIRED: invoice-deliverable creates require email before the API call.
+    await user.type(document.querySelector('input[name="email"]')!, "billing@acme.test");
     await user.click(screen.getByRole("button", { name: /^Save$/i }));
     await waitFor(() => {
       // The form error banner and the toast both carry role="alert"; assert one of them shows the message.
