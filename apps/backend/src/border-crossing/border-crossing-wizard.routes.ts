@@ -124,6 +124,20 @@ export async function registerBorderCrossingWizardRoutes(app: FastifyInstance) {
       if (!unitRes.rows[0]) {
         throw Object.assign(new Error("linked_entity_not_in_operating_company"), { statusCode: 400 });
       }
+      if (data.load_id) {
+        const loadRes = await client.query(
+          `SELECT id
+             FROM mdata.loads
+            WHERE id = $1::uuid
+              AND operating_company_id = $2::uuid
+              AND soft_deleted_at IS NULL
+            LIMIT 1`,
+          [data.load_id, data.operating_company_id]
+        );
+        if (!loadRes.rows[0]) {
+          throw Object.assign(new Error("linked_entity_not_in_operating_company"), { statusCode: 400 });
+        }
+      }
       const portRes = await client.query(
         `SELECT name, cbp_port_code FROM reference.ports_of_entry WHERE id = $1::uuid`,
         [data.port_of_entry_id]
