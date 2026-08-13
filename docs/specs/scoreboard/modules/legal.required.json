@@ -273,7 +273,6 @@
       "route_hint": "/legal/reports",
       "required": [
         "connectivity",
-        "liability",
         "legal_matter"
       ]
     },
