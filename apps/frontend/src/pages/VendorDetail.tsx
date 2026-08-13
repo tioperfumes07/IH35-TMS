@@ -45,6 +45,7 @@ import { formatDateUS } from "../lib/formatDate";
 import { userFacingApiError } from "../lib/api-error-message";
 import { VendorWorkOrdersReverseSection } from "./vendors/VendorWorkOrdersReverseSection";
 import { VendorPartsHistorySection } from "./vendors/VendorPartsHistorySection";
+import { VendorPreferredPartsReverseSection } from "./vendors/VendorPreferredPartsReverseSection";
 import { VendorApAgingSection } from "./vendors/VendorApAgingSection";
 import { RoadServiceReverseSection } from "../components/maintenance/RoadServiceReverseSection";
 import { WarrantyClaimsReverseSection } from "../components/maintenance/WarrantyClaimsReverseSection";
@@ -886,6 +887,7 @@ export function VendorDetailPage() {
           data-testid="vendor-warranty-claims-reverse"
         />
         <VendorPartsHistorySection operatingCompanyId={companyId} vendorId={vendor.id} />
+        <VendorPreferredPartsReverseSection operatingCompanyId={companyId} vendorId={vendor.id} />
         <VendorApAgingSection operatingCompanyId={companyId} vendorId={vendor.id} />
         <LinkedBankTransactionsPanel companyId={companyId} linkage={{ kind: "vendor_id", id: vendor.id }} entityLabel={vendor.name} />
         </div>

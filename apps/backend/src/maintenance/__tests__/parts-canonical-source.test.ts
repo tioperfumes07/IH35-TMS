@@ -83,5 +83,21 @@ describe("maintenance parts canonical source (B23)", () => {
       expect(source).toMatch(/add\("vendor_id"/);
       expect(source).not.toMatch(/NULL::text AS vendor_default/);
     });
+
+    it("validates the preferred vendor inside the operating company before create or update", () => {
+      expect(source).toMatch(/FROM mdata\.vendors[\s\S]*operating_company_id = \$2::uuid[\s\S]*deactivated_at IS NULL/);
+      expect(source.match(/vendorBelongsToCompany\(/g)?.length).toBeGreaterThanOrEqual(3);
+      expect(source).toMatch(/linked_entity_not_in_operating_company/);
+    });
+
+    it("supports an exact tenant-scoped vendor reverse query", () => {
+      expect(source).toMatch(/vendor_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)/);
+      expect(source).toMatch(/filters\.push\(`vendor_id = \$\$\{values\.length\}::uuid`\)/);
+    });
+
+    it("tenant-scopes the update lookup and write independently of RLS", () => {
+      expect(source).toMatch(/SELECT \* FROM maintenance\.parts_inventory WHERE id = \$1::uuid AND operating_company_id = \$2::uuid/);
+      expect(source).toMatch(/WHERE id = \$\$\{values\.length - 1\}::uuid AND operating_company_id = \$\$\{values\.length\}::uuid/);
+    });
   });
 });

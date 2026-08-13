@@ -1770,11 +1770,12 @@ export function importMaintenanceDrivers(operatingCompanyId: string, file: File)
 
 export function listMaintenanceParts(
   operatingCompanyId: string,
-  params: { search?: string; include_voided?: boolean } = {}
+  params: { search?: string; include_voided?: boolean; vendor_id?: string } = {}
 ) {
   const q = new URLSearchParams({ operating_company_id: operatingCompanyId });
   if (params.search) q.set("search", params.search);
   if (params.include_voided != null) q.set("include_voided", String(params.include_voided));
+  if (params.vendor_id) q.set("vendor_id", params.vendor_id);
   return apiRequest<{ rows: MaintenancePartRow[] }>(`/api/v1/maintenance/parts?${q.toString()}`);
 }
 

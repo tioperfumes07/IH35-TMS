@@ -12,6 +12,7 @@ const partCategorySchema = z.enum(PART_INVENTORY_CATEGORY_VALUES);
 const querySchema = z.object({
   operating_company_id: z.string().uuid(),
   search: z.string().trim().optional(),
+  vendor_id: z.string().uuid().optional(),
   include_voided: z.coerce.boolean().optional().default(false),
 });
 
@@ -95,6 +96,23 @@ function parsePartsCsv(text: string): CsvPartRow[] {
   });
 }
 
+async function vendorBelongsToCompany(
+  client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: any[] }> },
+  vendorId: string,
+  companyId: string,
+) {
+  const result = await client.query(
+    `SELECT id
+       FROM mdata.vendors
+      WHERE id = $1::uuid
+        AND operating_company_id = $2::uuid
+        AND deactivated_at IS NULL
+      LIMIT 1`,
+    [vendorId, companyId],
+  );
+  return Boolean(result.rows[0]);
+}
+
 async function withCompany<T>(userId: string, companyId: string, fn: (client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: any[] }> }) => Promise<T>) {
   await assertCompanyMembership(userId, companyId);
   return withCurrentUser(userId, async (client) => {
@@ -113,6 +131,10 @@ export async function registerMaintenancePartsRoutes(app: FastifyInstance) {
       const values: unknown[] = [query.data.operating_company_id];
       const filters = ["operating_company_id = $1::uuid"];
       if (!query.data.include_voided) filters.push("part_description NOT LIKE '[VOID] %'");
+      if (query.data.vendor_id) {
+        values.push(query.data.vendor_id);
+        filters.push(`vendor_id = $${values.length}::uuid`);
+      }
       if (query.data.search) {
         values.push(`%${query.data.search}%`);
         const idx = values.length;
@@ -178,6 +200,9 @@ export async function registerMaintenancePartsRoutes(app: FastifyInstance) {
     const companyId = (req.query as { operating_company_id?: string })?.operating_company_id;
     if (!companyId) return reply.code(400).send({ error: "operating_company_id_required" });
     const created = await withCompany(user.uuid, companyId, async (client) => {
+      if (body.data.vendor_id && !(await vendorBelongsToCompany(client, body.data.vendor_id, companyId))) {
+        return { __error: "linked_entity_not_in_operating_company" as const };
+      }
       const result = await client.query(
         `
           INSERT INTO maintenance.parts_inventory (
@@ -222,6 +247,7 @@ export async function registerMaintenancePartsRoutes(app: FastifyInstance) {
       });
       return result.rows[0];
     });
+    if ("__error" in created) return reply.code(400).send({ error: created.__error });
     return reply.code(201).send(created);
   });
 
@@ -235,7 +261,13 @@ export async function registerMaintenancePartsRoutes(app: FastifyInstance) {
     const companyId = (req.query as { operating_company_id?: string })?.operating_company_id;
     if (!companyId) return reply.code(400).send({ error: "operating_company_id_required" });
     const updated = await withCompany(user.uuid, companyId, async (client) => {
-      const oldRes = await client.query(`SELECT * FROM maintenance.parts_inventory WHERE id = $1 LIMIT 1`, [params.data.id]);
+      if (body.data.vendor_id && !(await vendorBelongsToCompany(client, body.data.vendor_id, companyId))) {
+        return { __error: "linked_entity_not_in_operating_company" as const };
+      }
+      const oldRes = await client.query(
+        `SELECT * FROM maintenance.parts_inventory WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
+        [params.data.id, companyId],
+      );
       const oldRow = oldRes.rows[0];
       if (!oldRow) return null;
       const setParts: string[] = [];
@@ -256,8 +288,11 @@ export async function registerMaintenancePartsRoutes(app: FastifyInstance) {
       if ("notes" in body.data) add("notes", body.data.notes ?? null);
       if ("vendor_id" in body.data) add("vendor_id", body.data.vendor_id ?? null);
       values.push(params.data.id);
+      values.push(companyId);
       const result = await client.query(
-        `UPDATE maintenance.parts_inventory SET ${setParts.join(", ")}, updated_at = now() WHERE id = $${values.length} RETURNING *`,
+        `UPDATE maintenance.parts_inventory SET ${setParts.join(", ")}, updated_at = now()
+          WHERE id = $${values.length - 1}::uuid AND operating_company_id = $${values.length}::uuid
+          RETURNING *`,
         values
       );
       const newRow = result.rows[0];
@@ -289,6 +324,7 @@ export async function registerMaintenancePartsRoutes(app: FastifyInstance) {
           voided_reason: null,
       };
     });
+    if (updated && "__error" in updated) return reply.code(400).send({ error: updated.__error });
     if (!updated) return reply.code(404).send({ error: "maintenance_part_not_found" });
     return updated;
   });
