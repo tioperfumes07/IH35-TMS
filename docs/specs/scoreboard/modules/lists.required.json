@@ -191,8 +191,7 @@
       "route_hint": "/lists/hub/maintenance",
       "required": [
         "connectivity",
-        "reverse_link",
-        "work_order"
+        "reverse_link"
       ]
     },
     {
@@ -276,9 +275,7 @@
         "unit",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "accident",
-        "claim"
+        "connectivity"
       ]
     },
     {
@@ -292,9 +289,7 @@
         "unit",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "accident",
-        "claim"
+        "connectivity"
       ]
     },
     {
@@ -308,9 +303,7 @@
         "unit",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "accident",
-        "claim"
+        "connectivity"
       ]
     },
     {
@@ -324,9 +317,7 @@
         "unit",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "accident",
-        "claim"
+        "connectivity"
       ]
     },
     {
@@ -340,9 +331,7 @@
         "unit",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "accident",
-        "claim"
+        "connectivity"
       ]
     },
     {
@@ -356,9 +345,7 @@
         "unit",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "accident",
-        "claim"
+        "connectivity"
       ]
     },
     {
@@ -372,9 +359,7 @@
         "unit",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "accident",
-        "claim"
+        "connectivity"
       ]
     },
     {
@@ -388,9 +373,7 @@
         "unit",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "accident",
-        "claim"
+        "connectivity"
       ]
     },
     {
@@ -488,9 +471,7 @@
         "unit",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "claim",
-        "policy"
+        "connectivity"
       ]
     },
     {
@@ -504,9 +485,7 @@
         "unit",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "claim",
-        "policy"
+        "connectivity"
       ]
     },
     {
@@ -1136,8 +1115,7 @@
         "vendor",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "work_order"
+        "connectivity"
       ]
     },
     {
@@ -1150,8 +1128,7 @@
         "vendor",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "work_order"
+        "connectivity"
       ]
     },
     {
@@ -1164,8 +1141,7 @@
         "vendor",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "work_order"
+        "connectivity"
       ]
     },
     {
@@ -1178,8 +1154,7 @@
         "vendor",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "work_order"
+        "connectivity"
       ]
     },
     {
@@ -1192,8 +1167,7 @@
         "vendor",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "work_order"
+        "connectivity"
       ]
     },
     {
@@ -1206,8 +1180,7 @@
         "vendor",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "work_order"
+        "connectivity"
       ]
     },
     {
@@ -1220,8 +1193,7 @@
         "vendor",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "work_order"
+        "connectivity"
       ]
     },
     {
@@ -1234,8 +1206,7 @@
         "vendor",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "work_order"
+        "connectivity"
       ]
     },
     {
@@ -1248,8 +1219,7 @@
         "vendor",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "work_order"
+        "connectivity"
       ]
     },
     {
@@ -1262,8 +1232,7 @@
         "vendor",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "work_order"
+        "connectivity"
       ]
     },
     {
@@ -1276,8 +1245,7 @@
         "vendor",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "work_order"
+        "connectivity"
       ]
     },
     {
@@ -1290,8 +1258,7 @@
         "vendor",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "work_order"
+        "connectivity"
       ]
     },
     {
@@ -1304,8 +1271,7 @@
         "vendor",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "work_order"
+        "connectivity"
       ]
     },
     {
@@ -1318,8 +1284,7 @@
         "vendor",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "work_order"
+        "connectivity"
       ]
     },
     {
@@ -1332,8 +1297,7 @@
         "vendor",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "work_order"
+        "connectivity"
       ]
     },
     {
@@ -1346,8 +1310,7 @@
         "vendor",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "work_order"
+        "connectivity"
       ]
     },
     {
@@ -1360,8 +1323,7 @@
         "vendor",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "work_order"
+        "connectivity"
       ]
     },
     {
@@ -1374,8 +1336,7 @@
         "vendor",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "work_order"
+        "connectivity"
       ]
     },
     {
@@ -1388,8 +1349,7 @@
         "vendor",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "work_order"
+        "connectivity"
       ]
     },
     {
@@ -1402,8 +1362,7 @@
         "vendor",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "work_order"
+        "connectivity"
       ]
     },
     {
@@ -1416,8 +1375,7 @@
         "vendor",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "work_order"
+        "connectivity"
       ]
     },
     {
@@ -1430,8 +1388,7 @@
         "vendor",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "work_order"
+        "connectivity"
       ]
     },
     {
@@ -1444,8 +1401,7 @@
         "vendor",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "work_order"
+        "connectivity"
       ]
     },
     {
@@ -1458,8 +1414,7 @@
         "vendor",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "work_order"
+        "connectivity"
       ]
     },
     {
@@ -1472,8 +1427,7 @@
         "vendor",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "work_order"
+        "connectivity"
       ]
     },
     {
@@ -1486,8 +1440,7 @@
         "vendor",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "work_order"
+        "connectivity"
       ]
     },
     {
@@ -1500,8 +1453,7 @@
         "vendor",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "work_order"
+        "connectivity"
       ]
     },
     {
@@ -1514,8 +1466,7 @@
         "vendor",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "work_order"
+        "connectivity"
       ]
     },
     {
@@ -1528,8 +1479,7 @@
         "vendor",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "work_order"
+        "connectivity"
       ]
     },
     {
@@ -1542,8 +1492,7 @@
         "vendor",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "work_order"
+        "connectivity"
       ]
     },
     {
@@ -1556,8 +1505,7 @@
         "vendor",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "work_order"
+        "connectivity"
       ]
     },
     {
@@ -1570,8 +1518,7 @@
         "vendor",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "work_order"
+        "connectivity"
       ]
     },
     {
@@ -1584,8 +1531,7 @@
         "vendor",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "work_order"
+        "connectivity"
       ]
     },
     {
@@ -1598,8 +1544,7 @@
         "vendor",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "work_order"
+        "connectivity"
       ]
     },
     {
@@ -1612,8 +1557,7 @@
         "vendor",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "work_order"
+        "connectivity"
       ]
     },
     {
@@ -1626,8 +1570,7 @@
         "vendor",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "work_order"
+        "connectivity"
       ]
     },
     {
@@ -1640,8 +1583,7 @@
         "vendor",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "work_order"
+        "connectivity"
       ]
     },
     {
@@ -1654,8 +1596,7 @@
         "vendor",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "work_order"
+        "connectivity"
       ]
     },
     {
@@ -1668,8 +1609,7 @@
         "vendor",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "work_order"
+        "connectivity"
       ]
     },
     {
@@ -1682,8 +1622,7 @@
         "vendor",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "work_order"
+        "connectivity"
       ]
     },
     {
@@ -1696,8 +1635,7 @@
         "vendor",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "work_order"
+        "connectivity"
       ]
     },
     {
@@ -1710,8 +1648,7 @@
         "vendor",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "work_order"
+        "connectivity"
       ]
     },
     {
@@ -3230,8 +3167,7 @@
       "surface_kind": "modal",
       "surface_path": "pages/lists/maintenance/MaintenanceCatalogModal.tsx",
       "required": [
-        "connectivity",
-        "work_order"
+        "connectivity"
       ]
     },
     {
@@ -5246,6 +5182,414 @@
           "id": "lists.modal.internal_fine_reason",
           "removed": [
             "reverse_link"
+          ]
+        }
+      ]
+    },
+    "work_order_2026_08_13_remainder": {
+      "finding": "VERTICAL-OPS-COLS-REMAINDER-HONESTY",
+      "note": "work_order Required on chrome/create/catalog/hop without EntityLink kind drill. Built keep=[].",
+      "drops": [
+        {
+          "id": "hub.domain.maintenance",
+          "removed": [
+            "work_order"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.labor_rates.list",
+          "removed": [
+            "work_order"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.labor_rates.create",
+          "removed": [
+            "work_order"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.part_locations.list",
+          "removed": [
+            "work_order"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.part_locations.create",
+          "removed": [
+            "work_order"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.air_bag_catalog.list",
+          "removed": [
+            "work_order"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.air_bag_catalog.create",
+          "removed": [
+            "work_order"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.battery_catalog.list",
+          "removed": [
+            "work_order"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.battery_catalog.create",
+          "removed": [
+            "work_order"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.pm_intervals.list",
+          "removed": [
+            "work_order"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.pm_intervals.create",
+          "removed": [
+            "work_order"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.repair_locations.list",
+          "removed": [
+            "work_order"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.repair_locations.create",
+          "removed": [
+            "work_order"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.tire_catalog.list",
+          "removed": [
+            "work_order"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.tire_catalog.create",
+          "removed": [
+            "work_order"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.trailer_parts.list",
+          "removed": [
+            "work_order"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.trailer_parts.create",
+          "removed": [
+            "work_order"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.truck_parts.list",
+          "removed": [
+            "work_order"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.truck_parts.create",
+          "removed": [
+            "work_order"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.work_order_templates.list",
+          "removed": [
+            "work_order"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.work_order_templates.create",
+          "removed": [
+            "work_order"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.failure_codes.list",
+          "removed": [
+            "work_order"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.failure_codes.create",
+          "removed": [
+            "work_order"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.labor_codes.list",
+          "removed": [
+            "work_order"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.labor_codes.create",
+          "removed": [
+            "work_order"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.parts.list",
+          "removed": [
+            "work_order"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.parts.create",
+          "removed": [
+            "work_order"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.parts_catalog.list",
+          "removed": [
+            "work_order"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.parts_catalog.create",
+          "removed": [
+            "work_order"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.oem_parts_reference.list",
+          "removed": [
+            "work_order"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.oem_parts_reference.create",
+          "removed": [
+            "work_order"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.priority_levels.list",
+          "removed": [
+            "work_order"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.priority_levels.create",
+          "removed": [
+            "work_order"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.service_tasks.list",
+          "removed": [
+            "work_order"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.service_tasks.create",
+          "removed": [
+            "work_order"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.services_catalog.list",
+          "removed": [
+            "work_order"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.services_catalog.create",
+          "removed": [
+            "work_order"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.shop_locations.list",
+          "removed": [
+            "work_order"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.shop_locations.create",
+          "removed": [
+            "work_order"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.vendors.list",
+          "removed": [
+            "work_order"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.vendors.create",
+          "removed": [
+            "work_order"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.work_order_statuses.list",
+          "removed": [
+            "work_order"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.work_order_statuses.create",
+          "removed": [
+            "work_order"
+          ]
+        },
+        {
+          "id": "lists.modal.maintenance_catalog",
+          "removed": [
+            "work_order"
+          ]
+        }
+      ]
+    },
+    "claim_2026_08_13_remainder": {
+      "finding": "VERTICAL-OPS-COLS-REMAINDER-HONESTY",
+      "note": "claim Required on chrome/create/catalog/hop without EntityLink kind drill. Built keep=[].",
+      "drops": [
+        {
+          "id": "catalog.safety.accident_types.list",
+          "removed": [
+            "claim"
+          ]
+        },
+        {
+          "id": "catalog.safety.accident_types.create",
+          "removed": [
+            "claim"
+          ]
+        },
+        {
+          "id": "catalog.safety.workplace_incident_types.list",
+          "removed": [
+            "claim"
+          ]
+        },
+        {
+          "id": "catalog.safety.workplace_incident_types.create",
+          "removed": [
+            "claim"
+          ]
+        },
+        {
+          "id": "catalog.safety.internal_fine_reasons.list",
+          "removed": [
+            "claim"
+          ]
+        },
+        {
+          "id": "catalog.safety.internal_fine_reasons.create",
+          "removed": [
+            "claim"
+          ]
+        },
+        {
+          "id": "catalog.safety.civil_fine_types.list",
+          "removed": [
+            "claim"
+          ]
+        },
+        {
+          "id": "catalog.safety.civil_fine_types.create",
+          "removed": [
+            "claim"
+          ]
+        },
+        {
+          "id": "catalog.safety.cargo_claim_reasons.list",
+          "removed": [
+            "claim"
+          ]
+        },
+        {
+          "id": "catalog.safety.cargo_claim_reasons.create",
+          "removed": [
+            "claim"
+          ]
+        }
+      ]
+    },
+    "accident_2026_08_13_remainder": {
+      "finding": "VERTICAL-OPS-COLS-REMAINDER-HONESTY",
+      "note": "accident Required on chrome/create/catalog/hop without EntityLink kind drill. Built keep=[].",
+      "drops": [
+        {
+          "id": "catalog.safety.accident_types.list",
+          "removed": [
+            "accident"
+          ]
+        },
+        {
+          "id": "catalog.safety.accident_types.create",
+          "removed": [
+            "accident"
+          ]
+        },
+        {
+          "id": "catalog.safety.workplace_incident_types.list",
+          "removed": [
+            "accident"
+          ]
+        },
+        {
+          "id": "catalog.safety.workplace_incident_types.create",
+          "removed": [
+            "accident"
+          ]
+        },
+        {
+          "id": "catalog.safety.internal_fine_reasons.list",
+          "removed": [
+            "accident"
+          ]
+        },
+        {
+          "id": "catalog.safety.internal_fine_reasons.create",
+          "removed": [
+            "accident"
+          ]
+        },
+        {
+          "id": "catalog.safety.civil_fine_types.list",
+          "removed": [
+            "accident"
+          ]
+        },
+        {
+          "id": "catalog.safety.civil_fine_types.create",
+          "removed": [
+            "accident"
+          ]
+        }
+      ]
+    },
+    "policy_2026_08_13_remainder": {
+      "finding": "VERTICAL-OPS-COLS-REMAINDER-HONESTY",
+      "note": "policy Required on chrome/create/catalog/hop without EntityLink kind drill. Built keep=[].",
+      "drops": [
+        {
+          "id": "catalog.safety.cargo_claim_reasons.list",
+          "removed": [
+            "policy"
+          ]
+        },
+        {
+          "id": "catalog.safety.cargo_claim_reasons.create",
+          "removed": [
+            "policy"
           ]
         }
       ]

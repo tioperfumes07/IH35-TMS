@@ -539,9 +539,7 @@
       "required": [
         "customer",
         "connectivity",
-        "reverse_link",
-        "claim",
-        "policy"
+        "reverse_link"
       ]
     },
     {
@@ -554,8 +552,7 @@
         "load",
         "connectivity",
         "reverse_link",
-        "picker_law",
-        "legal_matter"
+        "picker_law"
       ]
     },
     {
@@ -822,6 +819,42 @@
           "id": "customers.panel.customers_sync",
           "removed": [
             "reverse_link"
+          ]
+        }
+      ]
+    },
+    "claim_2026_08_13_remainder": {
+      "finding": "VERTICAL-OPS-COLS-REMAINDER-HONESTY",
+      "note": "claim Required on chrome/create/catalog/hop without EntityLink kind drill. Built keep=[].",
+      "drops": [
+        {
+          "id": "detail.coi",
+          "removed": [
+            "claim"
+          ]
+        }
+      ]
+    },
+    "legal_matter_2026_08_13_remainder": {
+      "finding": "VERTICAL-OPS-COLS-REMAINDER-HONESTY",
+      "note": "legal_matter Required on chrome/create/catalog/hop without EntityLink kind drill. Built keep=[].",
+      "drops": [
+        {
+          "id": "detail.contracts",
+          "removed": [
+            "legal_matter"
+          ]
+        }
+      ]
+    },
+    "policy_2026_08_13_remainder": {
+      "finding": "VERTICAL-OPS-COLS-REMAINDER-HONESTY",
+      "note": "policy Required on chrome/create/catalog/hop without EntityLink kind drill. Built keep=[].",
+      "drops": [
+        {
+          "id": "detail.coi",
+          "removed": [
+            "policy"
           ]
         }
       ]

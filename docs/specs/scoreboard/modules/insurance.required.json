@@ -130,10 +130,7 @@
       "sub": "Insurance home",
       "route_hint": "/safety/insurance",
       "required": [
-        "connectivity",
-        "scenario.insurance",
-        "claim",
-        "policy"
+        "connectivity"
       ]
     },
     {
@@ -148,8 +145,7 @@
         "driver",
         "connectivity",
         "reverse_link",
-        "picker_law",
-        "scenario.insurance"
+        "picker_law"
       ]
     },
     {
@@ -164,7 +160,6 @@
         "driver",
         "ap_bill",
         "liability",
-        "scenario.insurance",
         "picker_law",
         "qbo_chrome",
         "connectivity",
@@ -183,8 +178,7 @@
         "driver",
         "ap_bill",
         "connectivity",
-        "reverse_link",
-        "scenario.insurance"
+        "reverse_link"
       ]
     },
     {
@@ -218,8 +212,7 @@
         "trailer",
         "driver",
         "connectivity",
-        "reverse_link",
-        "scenario.insurance"
+        "reverse_link"
       ]
     },
     {
@@ -235,10 +228,7 @@
         "customer",
         "connectivity",
         "reverse_link",
-        "picker_law",
-        "scenario.insurance",
-        "claim",
-        "policy"
+        "picker_law"
       ]
     },
     {
@@ -257,13 +247,10 @@
         "expense",
         "gl_je",
         "ap_bill",
-        "scenario.insurance",
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link",
-        "claim",
-        "policy"
+        "reverse_link"
       ]
     },
     {
@@ -276,9 +263,7 @@
         "customer",
         "vendor",
         "connectivity",
-        "reverse_link",
-        "scenario.insurance",
-        "legal_matter"
+        "reverse_link"
       ]
     },
     {
@@ -292,12 +277,10 @@
         "vendor",
         "liability",
         "ap_bill",
-        "scenario.insurance",
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link",
-        "legal_matter"
+        "reverse_link"
       ]
     },
     {
@@ -310,8 +293,6 @@
       "required": [
         "connectivity",
         "picker_law",
-        "claim",
-        "policy",
         "driver",
         "unit"
       ]
@@ -327,11 +308,8 @@
         "connectivity",
         "reverse_link",
         "picker_law",
-        "claim",
-        "policy",
         "driver",
-        "unit",
-        "legal_matter"
+        "unit"
       ]
     },
     {
@@ -345,8 +323,6 @@
         "connectivity",
         "reverse_link",
         "picker_law",
-        "policy",
-        "claim",
         "driver",
         "unit"
       ]
@@ -361,8 +337,6 @@
       "required": [
         "connectivity",
         "picker_law",
-        "policy",
-        "claim",
         "driver",
         "unit"
       ]
@@ -377,8 +351,6 @@
       "required": [
         "connectivity",
         "picker_law",
-        "claim",
-        "policy",
         "driver",
         "unit"
       ]
@@ -393,11 +365,8 @@
       "required": [
         "connectivity",
         "picker_law",
-        "claim",
-        "policy",
         "driver",
-        "unit",
-        "legal_matter"
+        "unit"
       ]
     },
     {
@@ -410,8 +379,6 @@
       "required": [
         "connectivity",
         "picker_law",
-        "policy",
-        "claim",
         "driver",
         "unit"
       ]
@@ -526,6 +493,228 @@
           "id": "lawsuits.list",
           "removed": [
             "picker_law"
+          ]
+        }
+      ]
+    },
+    "claim_2026_08_13_remainder": {
+      "finding": "VERTICAL-OPS-COLS-REMAINDER-HONESTY",
+      "note": "claim Required on chrome/create/catalog/hop without EntityLink kind drill. Built keep=[].",
+      "drops": [
+        {
+          "id": "landing",
+          "removed": [
+            "claim"
+          ]
+        },
+        {
+          "id": "claims.list",
+          "removed": [
+            "claim"
+          ]
+        },
+        {
+          "id": "claims.create",
+          "removed": [
+            "claim"
+          ]
+        },
+        {
+          "id": "insurance.modal.claim_create",
+          "removed": [
+            "claim"
+          ]
+        },
+        {
+          "id": "insurance.modal.lawsuit_create",
+          "removed": [
+            "claim"
+          ]
+        },
+        {
+          "id": "insurance.modal.policy_create",
+          "removed": [
+            "claim"
+          ]
+        },
+        {
+          "id": "insurance.wizard.policy_create",
+          "removed": [
+            "claim"
+          ]
+        },
+        {
+          "id": "insurance.parity.claim_create",
+          "removed": [
+            "claim"
+          ]
+        },
+        {
+          "id": "insurance.parity.lawsuit_create",
+          "removed": [
+            "claim"
+          ]
+        },
+        {
+          "id": "insurance.parity.policy_create",
+          "removed": [
+            "claim"
+          ]
+        }
+      ]
+    },
+    "legal_matter_2026_08_13_remainder": {
+      "finding": "VERTICAL-OPS-COLS-REMAINDER-HONESTY",
+      "note": "legal_matter Required on chrome/create/catalog/hop without EntityLink kind drill. Built keep=[].",
+      "drops": [
+        {
+          "id": "lawsuits.list",
+          "removed": [
+            "legal_matter"
+          ]
+        },
+        {
+          "id": "lawsuits.create",
+          "removed": [
+            "legal_matter"
+          ]
+        },
+        {
+          "id": "insurance.modal.lawsuit_create",
+          "removed": [
+            "legal_matter"
+          ]
+        },
+        {
+          "id": "insurance.parity.lawsuit_create",
+          "removed": [
+            "legal_matter"
+          ]
+        }
+      ]
+    },
+    "policy_2026_08_13_remainder": {
+      "finding": "VERTICAL-OPS-COLS-REMAINDER-HONESTY",
+      "note": "policy Required on chrome/create/catalog/hop without EntityLink kind drill. Built keep=[].",
+      "drops": [
+        {
+          "id": "landing",
+          "removed": [
+            "policy"
+          ]
+        },
+        {
+          "id": "claims.list",
+          "removed": [
+            "policy"
+          ]
+        },
+        {
+          "id": "claims.create",
+          "removed": [
+            "policy"
+          ]
+        },
+        {
+          "id": "insurance.modal.claim_create",
+          "removed": [
+            "policy"
+          ]
+        },
+        {
+          "id": "insurance.modal.lawsuit_create",
+          "removed": [
+            "policy"
+          ]
+        },
+        {
+          "id": "insurance.modal.policy_create",
+          "removed": [
+            "policy"
+          ]
+        },
+        {
+          "id": "insurance.wizard.policy_create",
+          "removed": [
+            "policy"
+          ]
+        },
+        {
+          "id": "insurance.parity.claim_create",
+          "removed": [
+            "policy"
+          ]
+        },
+        {
+          "id": "insurance.parity.lawsuit_create",
+          "removed": [
+            "policy"
+          ]
+        },
+        {
+          "id": "insurance.parity.policy_create",
+          "removed": [
+            "policy"
+          ]
+        }
+      ]
+    },
+    "scenario.insurance_2026_08_13_remainder": {
+      "finding": "VERTICAL-OPS-COLS-REMAINDER-HONESTY",
+      "note": "scenario.insurance Required on chrome/create/catalog/hop without EntityLink kind drill. Built keep=[].",
+      "drops": [
+        {
+          "id": "landing",
+          "removed": [
+            "scenario.insurance"
+          ]
+        },
+        {
+          "id": "policies.list",
+          "removed": [
+            "scenario.insurance"
+          ]
+        },
+        {
+          "id": "policies.create",
+          "removed": [
+            "scenario.insurance"
+          ]
+        },
+        {
+          "id": "policies.detail",
+          "removed": [
+            "scenario.insurance"
+          ]
+        },
+        {
+          "id": "coverage_gaps",
+          "removed": [
+            "scenario.insurance"
+          ]
+        },
+        {
+          "id": "claims.list",
+          "removed": [
+            "scenario.insurance"
+          ]
+        },
+        {
+          "id": "claims.create",
+          "removed": [
+            "scenario.insurance"
+          ]
+        },
+        {
+          "id": "lawsuits.list",
+          "removed": [
+            "scenario.insurance"
+          ]
+        },
+        {
+          "id": "lawsuits.create",
+          "removed": [
+            "scenario.insurance"
           ]
         }
       ]

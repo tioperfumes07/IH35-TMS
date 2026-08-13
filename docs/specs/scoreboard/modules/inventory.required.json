@@ -119,7 +119,6 @@
       "sub": "Parts & Stock tab",
       "route_hint": "/inventory",
       "required": [
-        "inventory",
         "connectivity"
       ]
     },
@@ -129,7 +128,6 @@
       "sub": "Assignments tab",
       "route_hint": "/inventory/assignments",
       "required": [
-        "scenario.maintenance",
         "connectivity"
       ]
     },
@@ -151,7 +149,6 @@
         "vendor",
         "inventory",
         "connectivity",
-        "work_order",
         "reverse_link"
       ]
     },
@@ -171,7 +168,6 @@
       "sub": "Category column \u00b7 N/A honest for legacy blank",
       "route_hint": "/inventory",
       "required": [
-        "inventory",
         "connectivity"
       ]
     },
@@ -181,7 +177,6 @@
       "sub": "Low stock / REORDER badge",
       "route_hint": "/inventory",
       "required": [
-        "inventory",
         "connectivity"
       ]
     },
@@ -192,7 +187,6 @@
       "route_hint": "/inventory",
       "required": [
         "vendor",
-        "inventory",
         "picker_law",
         "qbo_chrome",
         "connectivity",
@@ -205,7 +199,6 @@
       "sub": "Create \u00b7 category SelectCombobox (PART_INVENTORY_CATEGORIES)",
       "route_hint": "/inventory",
       "required": [
-        "inventory",
         "picker_law",
         "connectivity"
       ]
@@ -228,7 +221,6 @@
       "sub": "Create \u00b7 unit cost MoneyInput",
       "route_hint": "/inventory",
       "required": [
-        "inventory",
         "qbo_chrome",
         "connectivity"
       ]
@@ -240,7 +232,6 @@
       "route_hint": "/inventory",
       "required": [
         "vendor",
-        "inventory",
         "picker_law",
         "connectivity"
       ]
@@ -262,8 +253,6 @@
       "sub": "Honest SoR banner (parts_invoice_links)",
       "route_hint": "/inventory/assignments",
       "required": [
-        "scenario.maintenance",
-        "inventory",
         "connectivity",
         "invoice"
       ]
@@ -276,8 +265,6 @@
       "required": [
         "vendor",
         "unit",
-        "scenario.maintenance",
-        "inventory",
         "connectivity"
       ]
     },
@@ -297,7 +284,6 @@
       "sub": "Work order EntityLink",
       "route_hint": "/inventory/assignments",
       "required": [
-        "scenario.maintenance",
         "connectivity",
         "reverse_link"
       ]
@@ -332,7 +318,6 @@
       "sub": "Cross-link \u2192 Parts & Stock",
       "route_hint": "/inventory/assignments",
       "required": [
-        "inventory",
         "connectivity"
       ]
     },
@@ -351,7 +336,6 @@
       "sub": "Honest empty when no WO part links",
       "route_hint": "/inventory/assignments",
       "required": [
-        "scenario.maintenance",
         "connectivity"
       ]
     },
@@ -370,7 +354,6 @@
       "sub": "Cross-link \u2192 Parts & Stock",
       "route_hint": "/inventory/purchases",
       "required": [
-        "inventory",
         "connectivity"
       ]
     },
@@ -380,7 +363,6 @@
       "sub": "Cross-link \u2192 Assignments",
       "route_hint": "/inventory/purchases",
       "required": [
-        "scenario.maintenance",
         "connectivity"
       ]
     },
@@ -687,6 +669,132 @@
           "id": "chrome.toolbar_filter",
           "removed": [
             "qbo_chrome"
+          ]
+        }
+      ]
+    },
+    "work_order_2026_08_13_remainder": {
+      "finding": "VERTICAL-OPS-COLS-REMAINDER-HONESTY",
+      "note": "work_order Required on chrome/create/catalog/hop without EntityLink kind drill. Built keep=[].",
+      "drops": [
+        {
+          "id": "parts.roster",
+          "removed": [
+            "work_order"
+          ]
+        }
+      ]
+    },
+    "inventory_2026_08_13_remainder": {
+      "finding": "VERTICAL-OPS-COLS-REMAINDER-HONESTY",
+      "note": "inventory Required on chrome/create/catalog/hop without EntityLink kind drill. Built keep=['parts.roster'].",
+      "drops": [
+        {
+          "id": "nav.parts_tab",
+          "removed": [
+            "inventory"
+          ]
+        },
+        {
+          "id": "parts.column.category",
+          "removed": [
+            "inventory"
+          ]
+        },
+        {
+          "id": "parts.column.low_stock",
+          "removed": [
+            "inventory"
+          ]
+        },
+        {
+          "id": "parts.create",
+          "removed": [
+            "inventory"
+          ]
+        },
+        {
+          "id": "parts.create.category",
+          "removed": [
+            "inventory"
+          ]
+        },
+        {
+          "id": "parts.create.money",
+          "removed": [
+            "inventory"
+          ]
+        },
+        {
+          "id": "parts.edit",
+          "removed": [
+            "inventory"
+          ]
+        },
+        {
+          "id": "assignments.banner",
+          "removed": [
+            "inventory"
+          ]
+        },
+        {
+          "id": "assignments.trail",
+          "removed": [
+            "inventory"
+          ]
+        },
+        {
+          "id": "assignments.crosslink_parts",
+          "removed": [
+            "inventory"
+          ]
+        },
+        {
+          "id": "purchases.crosslink_parts",
+          "removed": [
+            "inventory"
+          ]
+        }
+      ]
+    },
+    "scenario.maintenance_2026_08_13_remainder": {
+      "finding": "VERTICAL-OPS-COLS-REMAINDER-HONESTY",
+      "note": "scenario.maintenance Required on chrome/create/catalog/hop without EntityLink kind drill. Built keep=[].",
+      "drops": [
+        {
+          "id": "nav.assignments_tab",
+          "removed": [
+            "scenario.maintenance"
+          ]
+        },
+        {
+          "id": "assignments.banner",
+          "removed": [
+            "scenario.maintenance"
+          ]
+        },
+        {
+          "id": "assignments.trail",
+          "removed": [
+            "scenario.maintenance"
+          ]
+        },
+        {
+          "id": "assignments.wo_link",
+          "removed": [
+            "scenario.maintenance"
+          ]
+        },
+        {
+          "id": "assignments.honest_empty",
+          "removed": [
+            "scenario.maintenance"
+          ]
+        },
+        {
+          "id": "purchases.crosslink_assignments",
+          "removed": [
+            "scenario.maintenance"
           ]
         }
       ]

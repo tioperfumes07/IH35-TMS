@@ -320,9 +320,7 @@
         "load",
         "connectivity",
         "reverse_link",
-        "picker_law",
-        "accident",
-        "claim"
+        "picker_law"
       ]
     },
     {
@@ -342,9 +340,7 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link",
-        "accident",
-        "claim"
+        "reverse_link"
       ]
     },
     {
@@ -400,9 +396,7 @@
         "driver",
         "connectivity",
         "reverse_link",
-        "picker_law",
-        "claim",
-        "policy"
+        "picker_law"
       ]
     },
     {
@@ -417,9 +411,7 @@
         "vendor",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "claim",
-        "policy"
+        "connectivity"
       ]
     },
     {
@@ -534,9 +526,7 @@
         "unit",
         "scenario.insurance",
         "connectivity",
-        "reverse_link",
-        "claim",
-        "policy"
+        "reverse_link"
       ]
     },
     {
@@ -641,8 +631,7 @@
       "surface_path": "pages/lists/safety/CompanyViolationTypeModal.tsx",
       "required": [
         "connectivity",
-        "driver",
-        "accident"
+        "driver"
       ]
     },
     {
@@ -655,8 +644,7 @@
       "required": [
         "connectivity",
         "picker_law",
-        "driver",
-        "accident"
+        "driver"
       ]
     },
     {
@@ -669,8 +657,7 @@
       "required": [
         "connectivity",
         "liability",
-        "driver",
-        "accident"
+        "driver"
       ]
     },
     {
@@ -683,8 +670,7 @@
       "required": [
         "connectivity",
         "liability",
-        "driver",
-        "accident"
+        "driver"
       ]
     },
     {
@@ -697,8 +683,7 @@
       "required": [
         "connectivity",
         "picker_law",
-        "driver",
-        "accident"
+        "driver"
       ]
     },
     {
@@ -711,8 +696,7 @@
       "required": [
         "connectivity",
         "picker_law",
-        "driver",
-        "accident"
+        "driver"
       ]
     },
     {
@@ -725,9 +709,7 @@
       "required": [
         "connectivity",
         "reverse_link",
-        "accident",
-        "driver",
-        "claim"
+        "driver"
       ]
     },
     {
@@ -740,8 +722,7 @@
       "required": [
         "connectivity",
         "reverse_link",
-        "driver",
-        "accident"
+        "driver"
       ]
     },
     {
@@ -756,7 +737,6 @@
         "reverse_link",
         "liability",
         "driver",
-        "accident",
         "gl_je"
       ]
     },
@@ -770,8 +750,7 @@
       "required": [
         "connectivity",
         "reverse_link",
-        "driver",
-        "accident"
+        "driver"
       ]
     },
     {
@@ -784,8 +763,7 @@
       "required": [
         "connectivity",
         "reverse_link",
-        "driver",
-        "accident"
+        "driver"
       ]
     },
     {
@@ -797,8 +775,7 @@
       "surface_path": "components/safety/driver-safety/DriverSafetyProfilePanel.tsx",
       "required": [
         "connectivity",
-        "driver",
-        "accident"
+        "driver"
       ]
     },
     {
@@ -810,8 +787,7 @@
       "surface_path": "pages/safety/drug-alcohol/TestSchedulingPanel.tsx",
       "required": [
         "connectivity",
-        "driver",
-        "accident"
+        "driver"
       ]
     },
     {
@@ -824,9 +800,7 @@
       "required": [
         "connectivity",
         "reverse_link",
-        "accident",
-        "driver",
-        "claim"
+        "driver"
       ]
     },
     {
@@ -839,8 +813,7 @@
       "required": [
         "connectivity",
         "reverse_link",
-        "driver",
-        "accident"
+        "driver"
       ]
     },
     {
@@ -853,8 +826,7 @@
       "required": [
         "connectivity",
         "liability",
-        "driver",
-        "accident"
+        "driver"
       ]
     },
     {
@@ -867,8 +839,7 @@
       "required": [
         "connectivity",
         "picker_law",
-        "driver",
-        "accident"
+        "driver"
       ]
     },
     {
@@ -883,7 +854,6 @@
         "reverse_link",
         "liability",
         "driver",
-        "accident",
         "gl_je"
       ]
     },
@@ -897,8 +867,7 @@
       "required": [
         "connectivity",
         "reverse_link",
-        "driver",
-        "accident"
+        "driver"
       ]
     },
     {
@@ -911,8 +880,7 @@
       "required": [
         "connectivity",
         "reverse_link",
-        "driver",
-        "accident"
+        "driver"
       ]
     },
     {
@@ -1118,6 +1086,216 @@
           "id": "leave_requests.list",
           "removed": [
             "picker_law"
+          ]
+        }
+      ]
+    },
+    "claim_2026_08_13_remainder": {
+      "finding": "VERTICAL-OPS-COLS-REMAINDER-HONESTY",
+      "note": "claim Required on chrome/create/catalog/hop without EntityLink kind drill. Built keep=[].",
+      "drops": [
+        {
+          "id": "accidents.list",
+          "removed": [
+            "claim"
+          ]
+        },
+        {
+          "id": "accidents.create",
+          "removed": [
+            "claim"
+          ]
+        },
+        {
+          "id": "cargo_claims.list",
+          "removed": [
+            "claim"
+          ]
+        },
+        {
+          "id": "cargo_claims.create",
+          "removed": [
+            "claim"
+          ]
+        },
+        {
+          "id": "insurance_tab.list",
+          "removed": [
+            "claim"
+          ]
+        },
+        {
+          "id": "safety.drawer.accident_report",
+          "removed": [
+            "claim"
+          ]
+        },
+        {
+          "id": "safety.parity.accident_report",
+          "removed": [
+            "claim"
+          ]
+        }
+      ]
+    },
+    "accident_2026_08_13_remainder": {
+      "finding": "VERTICAL-OPS-COLS-REMAINDER-HONESTY",
+      "note": "accident Required on chrome/create/catalog/hop without EntityLink kind drill. Built keep=[].",
+      "drops": [
+        {
+          "id": "accidents.list",
+          "removed": [
+            "accident"
+          ]
+        },
+        {
+          "id": "accidents.create",
+          "removed": [
+            "accident"
+          ]
+        },
+        {
+          "id": "safety.modal.company_violation_type",
+          "removed": [
+            "accident"
+          ]
+        },
+        {
+          "id": "safety.modal.company_violation_create",
+          "removed": [
+            "accident"
+          ]
+        },
+        {
+          "id": "safety.modal.escrow_forfeit",
+          "removed": [
+            "accident"
+          ]
+        },
+        {
+          "id": "safety.modal.fine_convert_confirm",
+          "removed": [
+            "accident"
+          ]
+        },
+        {
+          "id": "safety.modal.fine_create",
+          "removed": [
+            "accident"
+          ]
+        },
+        {
+          "id": "safety.modal.hos_violation_create",
+          "removed": [
+            "accident"
+          ]
+        },
+        {
+          "id": "safety.drawer.accident_report",
+          "removed": [
+            "accident"
+          ]
+        },
+        {
+          "id": "safety.drawer.company_violation_detail",
+          "removed": [
+            "accident"
+          ]
+        },
+        {
+          "id": "safety.drawer.fine_detail",
+          "removed": [
+            "accident"
+          ]
+        },
+        {
+          "id": "safety.drawer.integrity_alert_detail",
+          "removed": [
+            "accident"
+          ]
+        },
+        {
+          "id": "safety.drawer.anomaly_detail",
+          "removed": [
+            "accident"
+          ]
+        },
+        {
+          "id": "safety.panel.driver_safety_profile",
+          "removed": [
+            "accident"
+          ]
+        },
+        {
+          "id": "safety.panel.test_scheduling",
+          "removed": [
+            "accident"
+          ]
+        },
+        {
+          "id": "safety.parity.accident_report",
+          "removed": [
+            "accident"
+          ]
+        },
+        {
+          "id": "safety.parity.company_violation_detail",
+          "removed": [
+            "accident"
+          ]
+        },
+        {
+          "id": "safety.parity.escrow_forfeit",
+          "removed": [
+            "accident"
+          ]
+        },
+        {
+          "id": "safety.parity.fine_create",
+          "removed": [
+            "accident"
+          ]
+        },
+        {
+          "id": "safety.parity.fine_detail",
+          "removed": [
+            "accident"
+          ]
+        },
+        {
+          "id": "safety.parity.integrity_alert_detail",
+          "removed": [
+            "accident"
+          ]
+        },
+        {
+          "id": "safety.parity.anomaly_detail",
+          "removed": [
+            "accident"
+          ]
+        }
+      ]
+    },
+    "policy_2026_08_13_remainder": {
+      "finding": "VERTICAL-OPS-COLS-REMAINDER-HONESTY",
+      "note": "policy Required on chrome/create/catalog/hop without EntityLink kind drill. Built keep=[].",
+      "drops": [
+        {
+          "id": "cargo_claims.list",
+          "removed": [
+            "policy"
+          ]
+        },
+        {
+          "id": "cargo_claims.create",
+          "removed": [
+            "policy"
+          ]
+        },
+        {
+          "id": "insurance_tab.list",
+          "removed": [
+            "policy"
           ]
         }
       ]

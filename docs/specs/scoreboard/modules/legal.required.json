@@ -130,8 +130,7 @@
       "sub": "Legal home",
       "route_hint": "/legal",
       "required": [
-        "connectivity",
-        "legal_matter"
+        "connectivity"
       ]
     },
     {
@@ -144,8 +143,7 @@
         "vendor",
         "driver",
         "connectivity",
-        "reverse_link",
-        "legal_matter"
+        "reverse_link"
       ]
     },
     {
@@ -160,8 +158,7 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link",
-        "legal_matter"
+        "reverse_link"
       ]
     },
     {
@@ -191,8 +188,7 @@
       "route_hint": "/legal/policies",
       "required": [
         "connectivity",
-        "qbo_chrome",
-        "legal_matter"
+        "qbo_chrome"
       ]
     },
     {
@@ -215,9 +211,7 @@
         "vendor",
         "unit",
         "connectivity",
-        "reverse_link",
-        "scenario.insurance",
-        "legal_matter"
+        "reverse_link"
       ]
     },
     {
@@ -233,12 +227,10 @@
         "load",
         "liability",
         "ap_bill",
-        "scenario.insurance",
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link",
-        "legal_matter"
+        "reverse_link"
       ]
     },
     {
@@ -253,9 +245,7 @@
         "unit",
         "liability",
         "connectivity",
-        "reverse_link",
-        "scenario.insurance",
-        "legal_matter"
+        "reverse_link"
       ]
     },
     {
@@ -264,8 +254,7 @@
       "sub": "Legal reports",
       "route_hint": "/legal/reports",
       "required": [
-        "connectivity",
-        "legal_matter"
+        "connectivity"
       ]
     },
     {
@@ -276,8 +265,7 @@
       "surface_kind": "modal",
       "surface_path": "pages/legal/contracts/LeaseToOwnCreatorModal.tsx",
       "required": [
-        "connectivity",
-        "legal_matter"
+        "connectivity"
       ]
     },
     {
@@ -289,8 +277,7 @@
       "surface_path": "pages/legal/contracts/SendContractModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
-        "legal_matter"
+        "reverse_link"
       ]
     },
     {
@@ -303,8 +290,7 @@
       "required": [
         "connectivity",
         "reverse_link",
-        "unit",
-        "legal_matter"
+        "unit"
       ]
     },
     {
@@ -316,8 +302,7 @@
       "surface_path": "pages/legal/contracts/UnifiedContractCreatorModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
-        "legal_matter"
+        "reverse_link"
       ]
     },
     {
@@ -329,8 +314,7 @@
       "surface_path": "pages/legal/templates/LegalTemplateNewModal.tsx",
       "required": [
         "connectivity",
-        "picker_law",
-        "legal_matter"
+        "picker_law"
       ]
     },
     {
@@ -341,8 +325,7 @@
       "surface_kind": "parity_site",
       "surface_path": "pages/legal/contracts/LeaseToOwnCreatorModal.tsx",
       "required": [
-        "connectivity",
-        "legal_matter"
+        "connectivity"
       ]
     },
     {
@@ -354,8 +337,7 @@
       "surface_path": "pages/legal/contracts/SendContractModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
-        "legal_matter"
+        "reverse_link"
       ]
     },
     {
@@ -368,8 +350,7 @@
       "required": [
         "connectivity",
         "reverse_link",
-        "unit",
-        "legal_matter"
+        "unit"
       ]
     },
     {
@@ -381,8 +362,7 @@
       "surface_path": "pages/legal/contracts/UnifiedContractCreatorModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
-        "legal_matter"
+        "reverse_link"
       ]
     },
     {
@@ -393,8 +373,7 @@
       "surface_kind": "parity_site",
       "surface_path": "pages/legal/templates/LegalTemplateNewModal.tsx",
       "required": [
-        "connectivity",
-        "legal_matter"
+        "connectivity"
       ]
     },
     {
@@ -543,6 +522,144 @@
           "id": "legal.parity.legal_template_new",
           "removed": [
             "picker_law"
+          ]
+        }
+      ]
+    },
+    "legal_matter_2026_08_13_remainder": {
+      "finding": "VERTICAL-OPS-COLS-REMAINDER-HONESTY",
+      "note": "legal_matter Required on chrome/create/catalog/hop without EntityLink kind drill. Built keep=[].",
+      "drops": [
+        {
+          "id": "landing",
+          "removed": [
+            "legal_matter"
+          ]
+        },
+        {
+          "id": "contracts.list",
+          "removed": [
+            "legal_matter"
+          ]
+        },
+        {
+          "id": "contracts.create",
+          "removed": [
+            "legal_matter"
+          ]
+        },
+        {
+          "id": "policies",
+          "removed": [
+            "legal_matter"
+          ]
+        },
+        {
+          "id": "matters.list",
+          "removed": [
+            "legal_matter"
+          ]
+        },
+        {
+          "id": "matters.create",
+          "removed": [
+            "legal_matter"
+          ]
+        },
+        {
+          "id": "matters.detail",
+          "removed": [
+            "legal_matter"
+          ]
+        },
+        {
+          "id": "reports",
+          "removed": [
+            "legal_matter"
+          ]
+        },
+        {
+          "id": "legal.modal.lease_to_own_creator",
+          "removed": [
+            "legal_matter"
+          ]
+        },
+        {
+          "id": "legal.modal.send_contract",
+          "removed": [
+            "legal_matter"
+          ]
+        },
+        {
+          "id": "legal.modal.truck_lease_creator",
+          "removed": [
+            "legal_matter"
+          ]
+        },
+        {
+          "id": "legal.modal.unified_contract_creator",
+          "removed": [
+            "legal_matter"
+          ]
+        },
+        {
+          "id": "legal.modal.legal_template_new",
+          "removed": [
+            "legal_matter"
+          ]
+        },
+        {
+          "id": "legal.parity.lease_to_own_creator",
+          "removed": [
+            "legal_matter"
+          ]
+        },
+        {
+          "id": "legal.parity.send_contract",
+          "removed": [
+            "legal_matter"
+          ]
+        },
+        {
+          "id": "legal.parity.truck_lease_creator",
+          "removed": [
+            "legal_matter"
+          ]
+        },
+        {
+          "id": "legal.parity.unified_contract_creator",
+          "removed": [
+            "legal_matter"
+          ]
+        },
+        {
+          "id": "legal.parity.legal_template_new",
+          "removed": [
+            "legal_matter"
+          ]
+        }
+      ]
+    },
+    "scenario.insurance_2026_08_13_remainder": {
+      "finding": "VERTICAL-OPS-COLS-REMAINDER-HONESTY",
+      "note": "scenario.insurance Required on chrome/create/catalog/hop without EntityLink kind drill. Built keep=[].",
+      "drops": [
+        {
+          "id": "matters.list",
+          "removed": [
+            "scenario.insurance"
+          ]
+        },
+        {
+          "id": "matters.create",
+          "removed": [
+            "scenario.insurance"
+          ]
+        },
+        {
+          "id": "matters.detail",
+          "removed": [
+            "scenario.insurance"
           ]
         }
       ]

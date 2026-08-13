@@ -738,8 +738,7 @@
         "qbo_chrome",
         "unit",
         "vendor",
-        "ap_bill",
-        "work_order"
+        "ap_bill"
       ]
     },
     {
@@ -881,9 +880,7 @@
         "customer",
         "connectivity",
         "qbo_chrome",
-        "load",
-        "claim",
-        "policy"
+        "load"
       ]
     },
     {
@@ -1063,8 +1060,7 @@
         "customer",
         "connectivity",
         "qbo_chrome",
-        "unit",
-        "work_order"
+        "unit"
       ]
     },
     {
@@ -1101,8 +1097,7 @@
       "sub": "Maintenance decision log",
       "route_hint": "/reports/audit/maintenance-decision-log",
       "required": [
-        "connectivity",
-        "work_order"
+        "connectivity"
       ]
     },
     {
@@ -1815,6 +1810,54 @@
           "id": "home.custom_builder",
           "removed": [
             "picker_law"
+          ]
+        }
+      ]
+    },
+    "work_order_2026_08_13_remainder": {
+      "finding": "VERTICAL-OPS-COLS-REMAINDER-HONESTY",
+      "note": "work_order Required on chrome/create/catalog/hop without EntityLink kind drill. Built keep=[].",
+      "drops": [
+        {
+          "id": "report.maintenance_cost_per_unit",
+          "removed": [
+            "work_order"
+          ]
+        },
+        {
+          "id": "runner.maint_cost_unit",
+          "removed": [
+            "work_order"
+          ]
+        },
+        {
+          "id": "audit.maintenance_decision_log",
+          "removed": [
+            "work_order"
+          ]
+        }
+      ]
+    },
+    "claim_2026_08_13_remainder": {
+      "finding": "VERTICAL-OPS-COLS-REMAINDER-HONESTY",
+      "note": "claim Required on chrome/create/catalog/hop without EntityLink kind drill. Built keep=[].",
+      "drops": [
+        {
+          "id": "runner.detention_claims",
+          "removed": [
+            "claim"
+          ]
+        }
+      ]
+    },
+    "policy_2026_08_13_remainder": {
+      "finding": "VERTICAL-OPS-COLS-REMAINDER-HONESTY",
+      "note": "policy Required on chrome/create/catalog/hop without EntityLink kind drill. Built keep=[].",
+      "drops": [
+        {
+          "id": "runner.detention_claims",
+          "removed": [
+            "policy"
           ]
         }
       ]
