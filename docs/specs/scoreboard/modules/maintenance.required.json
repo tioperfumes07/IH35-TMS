@@ -2,7 +2,7 @@
   "module": "maintenance",
   "entity_default": "USMCA",
   "source": {
-    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md §Module 2 — MAINTENANCE",
+    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md \u00a7Module 2 \u2014 MAINTENANCE",
     "nav": "apps/frontend/src/components/maintenance/MAINTENANCE_NAV_CONFIG.ts",
     "home_tabs": "apps/frontend/src/pages/maintenance/MaintenanceHome.tsx SUBNAV",
     "routes": "apps/frontend/src/routes/manifest.tsx /maintenance/*"
@@ -156,7 +156,7 @@
     {
       "id": "wo.source.is",
       "tab": "Work Orders",
-      "sub": "IS — Internal shop",
+      "sub": "IS \u2014 Internal shop",
       "route_hint": "/maintenance",
       "required": [
         "driver",
@@ -176,7 +176,7 @@
     {
       "id": "wo.source.es",
       "tab": "Work Orders",
-      "sub": "ES — External shop",
+      "sub": "ES \u2014 External shop",
       "route_hint": "/maintenance",
       "required": [
         "driver",
@@ -195,7 +195,7 @@
     {
       "id": "wo.source.ac",
       "tab": "Work Orders",
-      "sub": "AC — Accident repair",
+      "sub": "AC \u2014 Accident repair",
       "route_hint": "/maintenance",
       "required": [
         "driver",
@@ -220,7 +220,7 @@
     {
       "id": "wo.source.et",
       "tab": "Work Orders",
-      "sub": "ET — External tires",
+      "sub": "ET \u2014 External tires",
       "route_hint": "/maintenance",
       "required": [
         "driver",
@@ -240,7 +240,7 @@
     {
       "id": "wo.source.rt",
       "tab": "Work Orders",
-      "sub": "RT — Roadside tires",
+      "sub": "RT \u2014 Roadside tires",
       "route_hint": "/maintenance",
       "required": [
         "driver",
@@ -261,7 +261,7 @@
     {
       "id": "wo.source.it",
       "tab": "Work Orders",
-      "sub": "IT — Internal tires",
+      "sub": "IT \u2014 Internal tires",
       "route_hint": "/maintenance",
       "required": [
         "driver",
@@ -281,7 +281,7 @@
     {
       "id": "wo.source.rs",
       "tab": "Work Orders",
-      "sub": "RS — Roadside service",
+      "sub": "RS \u2014 Roadside service",
       "route_hint": "/maintenance/road-service",
       "required": [
         "driver",
@@ -417,7 +417,6 @@
         "driver",
         "vendor",
         "unit",
-        "load",
         "ap_bill",
         "expense",
         "scenario.maintenance",
@@ -824,7 +823,7 @@
     {
       "id": "chrome.toolbar_search",
       "tab": "Chrome controls",
-      "sub": "List toolbar — Search (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar \u2014 Search (CLS-LIST-TOOLBAR)",
       "route_hint": "/maintenance",
       "surface_kind": "toolbar",
       "required": [
@@ -835,7 +834,7 @@
     {
       "id": "chrome.toolbar_range",
       "tab": "Chrome controls",
-      "sub": "List toolbar — date/amount range (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar \u2014 date/amount range (CLS-LIST-TOOLBAR)",
       "route_hint": "/maintenance",
       "surface_kind": "toolbar",
       "required": [
@@ -846,7 +845,7 @@
     {
       "id": "chrome.toolbar_gear",
       "tab": "Chrome controls",
-      "sub": "List toolbar — column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
+      "sub": "List toolbar \u2014 column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
       "route_hint": "/maintenance",
       "surface_kind": "toolbar",
       "required": [
@@ -857,7 +856,7 @@
     {
       "id": "chrome.toolbar_filter",
       "tab": "Chrome controls",
-      "sub": "List toolbar — Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
+      "sub": "List toolbar \u2014 Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
       "route_hint": "/maintenance",
       "surface_kind": "toolbar",
       "required": [
@@ -879,7 +878,19 @@
         "invoice",
         "bank"
       ],
-      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; §B9 link columns added."
+      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; \u00a7B9 link columns added."
+    },
+    "load_column_2026_08_13": {
+      "finding": "VERTICAL-LOAD-REMAINDER-WIRE-GAPS",
+      "note": "road_service.active tickets have no load_id on maintenance.road_service_tickets \u2014 Required load was inflation. in_transit.promote_to_wo keeps load (EntityLink on InTransitIssuesTable).",
+      "drops": [
+        {
+          "id": "road_service.active",
+          "removed": [
+            "load"
+          ]
+        }
+      ]
     }
   }
 }

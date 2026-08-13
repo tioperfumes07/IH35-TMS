@@ -8,6 +8,7 @@
  * @matrix-built {"modules":["dispatch"],"cols":["load"],"leafRe":"^(dispatch\\.modal\\.(cancel_load|load_reassign|book_load_modal_v4|quick_assign)$|dispatch\\.drawer\\.load_detail$|dispatch\\.panel\\.(auth_gate|deadhead_optimizer|load_bol|optimal_drivers)$|dispatch\\.wizard\\.border_crossing_wizard_page$|dispatch\\.parity\\.(assign_driver_dropdown|book_load_equipment_section)$)","task":"WAVE-A-load-priority14-dispatch-surfaces","vertical":"column-wave"}
  * @matrix-built {"modules":["maintenance"],"cols":["load"],"leafRe":"^wo\\.source\\.(ac|rt|rs)$","task":"WAVE-A-load-priority14-maint-wo-source","vertical":"column-wave"}
  * @matrix-built {"modules":["fleet"],"cols":["load"],"leafRe":"^map\\.redirect$","task":"WAVE-A-load-priority14-fleet-map","vertical":"column-wave"}
+ * @matrix-built {"modules":["maintenance"],"cols":["load"],"leafRe":"^in_transit\.promote_to_wo$","task":"VERTICAL-LOAD-REMAINDER-in-transit-promote","vertical":"column-wave"}
  *
  * Self-test: node scripts/verify-wave-a-load-remainder.mjs --selftest
  */
@@ -37,6 +38,7 @@ const CHECKS = [
   { name: "book load modal creates mdata.loads", file: "apps/frontend/src/pages/dispatch/components/BookLoadModalV4.tsx", pattern: /createDispatchLoad/ },
   { name: "load detail drawer EntityLink load", file: "apps/frontend/src/components/dispatch/LoadDetailDrawer.tsx", pattern: /kind="load"/ },
   { name: "WO create load EntityPicker", file: "apps/frontend/src/pages/maintenance/components/CreateWOSectionIdentification.tsx", pattern: /kind="load"/ },
+  { name: "in-transit promote load EntityLink", file: "apps/frontend/src/pages/maintenance/components/InTransitIssuesTable.tsx", pattern: /kind="load"/ },
   { name: "fleet map redirect preserves search", file: "apps/frontend/src/routes/manifest.tsx", pattern: /path="\/fleet\/map"[\s\S]*PreserveSearchNavigate to="\/dispatch\/map"/ },
 ];
 
