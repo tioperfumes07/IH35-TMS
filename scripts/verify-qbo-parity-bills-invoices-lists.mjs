@@ -38,6 +38,13 @@ export function check({ bills, invoices }) {
   // ---- Invoices list ----
   if (!/label:\s*"Load #"/.test(invoices)) f.push(`${INVOICES}: Invoices list must have a "Load #" column`);
   if (!/kind="load"/.test(invoices)) f.push(`${INVOICES}: Invoices list "Load #" column must link the load (kind="load")`);
+  // ACCT-F5062 — CLS-LINKAGE-ONEWAY: Load # must use joined source_load_number, not null→UUID chrome.
+  if (!/entityLabel\(\s*row\.source_load_number\s*,\s*row\.source_load_id\s*,\s*["']Load["']\s*\)/.test(invoices)) {
+    f.push(`${INVOICES}: Load # EntityLink must entityLabel(row.source_load_number, …)`);
+  }
+  if (/entityLabel\(\s*null\s*,\s*row\.source_load_id\s*,\s*["']Load["']\s*\)/.test(invoices)) {
+    f.push(`${INVOICES}: must not entityLabel(null, source_load_id) — UUID chrome`);
+  }
   if (!/label:\s*"Memo"/.test(invoices)) f.push(`${INVOICES}: Invoices list must have a "Memo" column`);
   if (!/value:\s*"not_sent"/.test(invoices)) f.push(`${INVOICES}: Invoices list must offer the "Not sent" (not_sent) status filter`);
   if (!/value:\s*"with_balance"/.test(invoices)) f.push(`${INVOICES}: Invoices list must offer the "With balance" (with_balance) status filter`);
@@ -83,7 +90,7 @@ if (process.argv.includes("--selftest")) {
     import { listCustomers } from "../../api/mdata";
     const STATUS_OPTIONS = [{ value: "not_sent", label: "Not sent" }, { value: "with_balance", label: "With balance" }];
     const columns = [
-      { key: "source_load_id", label: "Load #", render: (r) => <EntityLink kind="load" id={r.source_load_id} /> },
+      { key: "source_load_id", label: "Load #", render: (r) => <EntityLink kind="load" id={r.source_load_id} label={entityLabel(row.source_load_number, row.source_load_id, "Load")} /> },
       { key: "memo", label: "Memo" },
     ];
     listInvoices(id, { customer_id: customerId || undefined });
@@ -96,6 +103,7 @@ if (process.argv.includes("--selftest")) {
     ["missing bills Overdue badge caught", check({ bills: goodBills.replace(">Overdue<", ">ok<").replace("function billDueStatus", "function nope"), invoices: goodInvoices }).some((x) => x.includes("Overdue badge"))],
     ["missing bills Vendor filter caught", check({ bills: goodBills.replace("vendor_id: vendorId || undefined", ""), invoices: goodInvoices }).some((x) => x.includes("vendor_id"))],
     ["missing invoices Load # column caught", check({ bills: goodBills, invoices: goodInvoices.replace('label: "Load #"', 'label: "Nope"') }).some((x) => x.includes("Load #"))],
+    ["null load label chrome caught", check({ bills: goodBills, invoices: goodInvoices.replace("row.source_load_number", "null") }).some((x) => /source_load_number|UUID chrome/.test(x))],
     ["missing invoices not_sent option caught", check({ bills: goodBills, invoices: goodInvoices.replace('value: "not_sent"', 'value: "x"') }).some((x) => x.includes("Not sent"))],
     ["missing invoices Customer filter caught", check({ bills: goodBills, invoices: goodInvoices.replace("customer_id: customerId || undefined", "") }).some((x) => x.includes("customer_id"))],
   ];

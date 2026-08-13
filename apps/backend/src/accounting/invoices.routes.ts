@@ -281,6 +281,7 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
             i.*,
             c.customer_name,
             fa.display_id AS factoring_display_id,
+            l.load_number AS source_load_number,
             COALESCE(l.customer_chargeback_requested, false) AS source_load_chargeback_requested,
             l.customer_chargeback_reason AS source_load_chargeback_reason,
             (

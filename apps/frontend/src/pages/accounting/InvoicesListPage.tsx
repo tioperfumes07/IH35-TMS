@@ -346,7 +346,15 @@ export function InvoicesListPage() {
         sortable: true,
         sortValue: (row) => row.source_load_id ?? "",
         render: (row) =>
-          row.source_load_id ? <EntityLink kind="load" id={row.source_load_id} label={entityLabel(null, row.source_load_id, "Load")} /> : "—",
+          row.source_load_id ? (
+            <EntityLink
+              kind="load"
+              id={row.source_load_id}
+              label={entityLabel(row.source_load_number, row.source_load_id, "Load")}
+            />
+          ) : (
+            "—"
+          ),
       },
       {
         key: "memo",
