@@ -2,7 +2,7 @@
 /**
  * @matrix-built safety,drivers
  * @matrix-cols driver,connectivity,reverse_link,picker_law
- * Existing claimed verify-step 31. Ratchets background-check create/read/reverse linkage.
+ * Existing claimed verify-step 31. Ratchets background-check and medical-card create/read/reverse linkage.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -16,6 +16,7 @@ const REL = {
   training: "apps/backend/src/safety/training-records.routes.ts",
   api: "apps/frontend/src/api/safety.ts",
   section: "apps/frontend/src/components/safety/BackgroundChecksSection.tsx",
+  medicalSection: "apps/frontend/src/components/safety/MedicalCardsHistorySection.tsx",
   dot: "apps/frontend/src/pages/safety/tabs/DOTComplianceTab.tsx",
   driver: "apps/frontend/src/pages/drivers/DriverProfilePage.tsx",
 };
@@ -49,6 +50,16 @@ export function collectProblems(root = ROOT) {
   if (!/listSafetyBackgroundChecks\(operatingCompanyId, driverId\)/.test(sources.section) || !/<EntityLink kind="driver"/.test(sources.section)) failures.push("background list must use exact reverse filtering and canonical driver drill-through");
   if (!/<BackgroundChecksSection operatingCompanyId=\{companyId\}/.test(sources.dot)) failures.push("DOT compliance must mount the all-driver background-check surface");
   if (!/<BackgroundChecksSection operatingCompanyId=\{companyId\} driverId=\{id\}/.test(sources.driver)) failures.push("driver profile must mount exact background-check reverse history");
+  if (!/app\.get\("\/api\/v1\/safety\/medical-cards", RL_READ/.test(sources.medical) ||
+      !/mc\.driver_id = \$\$\{values\.length\}::uuid/.test(sources.medical)) failures.push("medical-card read must provide company-scoped exact-driver reverse filtering");
+  if (!/JOIN mdata\.drivers d[\s\S]*d\.operating_company_id = mc\.operating_company_id/.test(sources.medical)) failures.push("medical-card read must resolve labels through an entity-scoped driver join");
+  if (!/SELECT id FROM mdata\.drivers WHERE id = \$1::uuid AND operating_company_id = \$2::uuid/.test(sources.medical)) failures.push("medical-card writer must validate the driver belongs to the selected company");
+  if (!/listSafetyMedicalCards\(companyId: string, driverId\?: string\)/.test(sources.api)) failures.push("frontend client must expose the exact medical-card reverse filter");
+  if (!/DriverPickerWithCreate[\s\S]*dataField="medical-card-driver"/.test(sources.medicalSection)) failures.push("medical-card creator must use the canonical company-scoped driver picker");
+  if (!/createSafetyMedicalCard\(operatingCompanyId[\s\S]*driver_id: selectedDriverId/.test(sources.medicalSection)) failures.push("medical-card creator must submit the selected driver FK");
+  if (!/listSafetyMedicalCards\(operatingCompanyId, driverId\)/.test(sources.medicalSection) || !/<EntityLink kind="driver"/.test(sources.medicalSection)) failures.push("medical-card list must use exact reverse filtering and canonical driver drill-through");
+  if (!/<MedicalCardsHistorySection operatingCompanyId=\{companyId\}/.test(sources.dot)) failures.push("DOT compliance must mount the all-driver medical-card surface");
+  if (!/<MedicalCardsHistorySection operatingCompanyId=\{companyId\} driverId=\{id\}/.test(sources.driver)) failures.push("driver profile must mount exact medical-card reverse history");
   return failures;
 }
 
@@ -66,10 +77,17 @@ function selftest() {
       [REL.background, "d.operating_company_id = bc.operating_company_id", "TRUE"],
       [REL.background, "bc.driver_id = $${values.length}::uuid", "TRUE"],
       [REL.background, "operating_company_id = $2::uuid", "TRUE"],
-      [REL.api, 'params.set("driver_id", driverId)', 'params.set("ignored", driverId)'],
+      [REL.api, "listSafetyBackgroundChecks(companyId: string, driverId?: string)", "listSafetyBackgroundChecks(companyId: string)"],
       [REL.section, 'dataField="background-check-driver"', 'dataField="free-text-driver"'],
       [REL.dot, "<BackgroundChecksSection", "<MissingBackgroundChecksSection"],
       [REL.driver, '<BackgroundChecksSection operatingCompanyId={companyId} driverId={id}', '<BackgroundChecksSection operatingCompanyId={companyId} driverId={undefined}'],
+      [REL.medical, "d.operating_company_id = mc.operating_company_id", "TRUE"],
+      [REL.medical, "mc.driver_id = $${values.length}::uuid", "TRUE"],
+      [REL.medical, 'app.get("/api/v1/safety/medical-cards", RL_READ', 'app.get("/api/v1/safety/medical-cards", {}'],
+      [REL.api, "listSafetyMedicalCards(companyId: string, driverId?: string)", "listSafetyMedicalCards(companyId: string)"],
+      [REL.medicalSection, 'dataField="medical-card-driver"', 'dataField="free-text-driver"'],
+      [REL.dot, "<MedicalCardsHistorySection", "<MissingMedicalCardsHistorySection"],
+      [REL.driver, '<MedicalCardsHistorySection operatingCompanyId={companyId} driverId={id}', '<MedicalCardsHistorySection operatingCompanyId={companyId} driverId={undefined}'],
     ];
     for (const [rel, before, after] of mutations) {
       const target = path.join(temp, rel);
@@ -91,4 +109,4 @@ if (failures.length) {
   for (const failure of failures) console.error(` - ${failure}`);
   process.exit(1);
 }
-console.log(`verify:safety-expiry-tracking-coverage OK${process.argv.includes("--selftest") ? " — 7/7 mutations killed" : ""}`);
+console.log(`verify:safety-expiry-tracking-coverage OK${process.argv.includes("--selftest") ? " — 14/14 mutations killed" : ""}`);
