@@ -192,7 +192,14 @@ export function PolicyDetail() {
   }
 
   if (policyQuery.isError || !policyQuery.data) {
-    return <div className="rounded-sm border border-red-200 bg-red-50 p-3 text-sm text-red-700">Failed to load policy details.</div>;
+    return (
+      <ListErrorState
+        title="Couldn't load policy details"
+        status={policyQuery.error instanceof ApiError ? policyQuery.error.status : 0}
+        message={(policyQuery.error as Error | null)?.message}
+        onRetry={() => void policyQuery.refetch()}
+      />
+    );
   }
 
   const policy = policyQuery.data;

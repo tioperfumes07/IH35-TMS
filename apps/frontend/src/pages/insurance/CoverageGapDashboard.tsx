@@ -10,6 +10,8 @@ import {
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { ListErrorState } from "../../components/ListErrorState";
+import { ApiError } from "../../api/client";
 
 function toDate(value: string) {
   return new Date(`${value}T00:00:00.000Z`);
@@ -85,6 +87,22 @@ export function CoverageGapDashboard() {
     return <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">Select an operating company to view coverage gap dashboard.</div>;
   }
 
+  const failedQuery = coverageGapsQuery.isError ? coverageGapsQuery : policiesQuery.isError ? policiesQuery : null;
+
+  if (failedQuery) {
+    return (
+      <ListErrorState
+        title="Couldn't load coverage gap dashboard"
+        status={failedQuery.error instanceof ApiError ? failedQuery.error.status : 0}
+        message={(failedQuery.error as Error | null)?.message}
+        onRetry={() => {
+          void coverageGapsQuery.refetch();
+          void policiesQuery.refetch();
+        }}
+      />
+    );
+  }
+
   return (
     <div className="space-y-4">
       <header className="rounded-sm border border-gray-200 bg-white p-4">
@@ -94,10 +112,6 @@ export function CoverageGapDashboard() {
 
       {coverageGapsQuery.isLoading || policiesQuery.isLoading ? (
         <div className="text-sm text-slate-500">Loading coverage gap dashboard...</div>
-      ) : null}
-
-      {coverageGapsQuery.isError || policiesQuery.isError ? (
-        <div className="rounded-sm border border-red-200 bg-red-50 p-3 text-sm text-red-700">Failed to load coverage gap dashboard data.</div>
       ) : null}
 
       <section className="grid gap-3 md:grid-cols-3">
