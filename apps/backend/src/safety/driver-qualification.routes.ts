@@ -9,6 +9,9 @@ const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
 });
 
+const RL_READ = { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } };
+const RL_WRITE = { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } };
+
 const driverParamsSchema = z.object({
   driver_id: z.string().uuid(),
 });
@@ -67,7 +70,7 @@ function expiryPill(daysToExpiry: number | null) {
 }
 
 export async function registerSafetyDriverQualificationRoutes(app: FastifyInstance) {
-  app.get("/api/v1/safety/driver-qualification/drivers/:driver_id/items", async (req, reply) => {
+  app.get("/api/v1/safety/driver-qualification/drivers/:driver_id/items", RL_READ, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const company = companyQuerySchema.safeParse(req.query ?? {});
@@ -118,7 +121,7 @@ export async function registerSafetyDriverQualificationRoutes(app: FastifyInstan
     return { items };
   });
 
-  app.post("/api/v1/safety/driver-qualification/items", async (req, reply) => {
+  app.post("/api/v1/safety/driver-qualification/items", RL_WRITE, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     if (!canMutate(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -128,6 +131,11 @@ export async function registerSafetyDriverQualificationRoutes(app: FastifyInstan
     if (!body.success) return reply.code(400).send({ error: "validation_error", details: body.error.flatten() });
 
     const created = await withCompanyScope(user.uuid, company.data.operating_company_id, async (client) => {
+      const driver = await client.query(
+        `SELECT id FROM mdata.drivers WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
+        [body.data.driver_id, company.data.operating_company_id]
+      );
+      if (!driver.rows[0]) return null;
       const insertRes = await client.query(
         `
           INSERT INTO safety.driver_qualification_files (
@@ -169,10 +177,12 @@ export async function registerSafetyDriverQualificationRoutes(app: FastifyInstan
       return insertRes.rows[0];
     });
 
+    if (!created) return reply.code(400).send({ error: "driver_not_in_operating_company" });
+
     return reply.code(201).send(created);
   });
 
-  app.patch("/api/v1/safety/driver-qualification/items/:id", async (req, reply) => {
+  app.patch("/api/v1/safety/driver-qualification/items/:id", RL_WRITE, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     if (!canMutate(user.role)) return reply.code(403).send({ error: "forbidden" });
