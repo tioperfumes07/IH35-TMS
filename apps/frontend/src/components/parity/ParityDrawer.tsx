@@ -10,7 +10,7 @@
 import { useEffect, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { PARITY_DRAWER_WIDTH, PARITY_DRAWER_WIDTH_WIDE } from "./sizing";
-import "../styles/proportion-chrome.css";
+import "../../styles/proportion-chrome.css";
 
 export type ParityDrawerProps = {
   open: boolean;
