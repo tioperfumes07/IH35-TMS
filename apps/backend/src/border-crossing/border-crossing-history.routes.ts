@@ -7,6 +7,7 @@ const historyQuerySchema = companyQuerySchema.extend({
   offset: z.coerce.number().int().min(0).default(0),
   direction: z.enum(["northbound", "southbound"]).optional(),
   unit_id: z.string().uuid().optional(),
+  driver_id: z.string().uuid().optional(),
 });
 
 const idParamsSchema = z.object({ id: z.string().uuid() });
@@ -28,6 +29,10 @@ export async function registerBorderCrossingHistoryRoutes(app: FastifyInstance) 
       if (parsed.data.unit_id) {
         values.push(parsed.data.unit_id);
         filters.push(`ubc.unit_id = $${values.length}::uuid`);
+      }
+      if (parsed.data.driver_id) {
+        values.push(parsed.data.driver_id);
+        filters.push(`ubc.driver_id = $${values.length}::uuid`);
       }
       values.push(parsed.data.limit, parsed.data.offset);
 

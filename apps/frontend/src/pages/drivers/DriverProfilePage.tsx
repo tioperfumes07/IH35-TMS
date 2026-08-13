@@ -33,6 +33,7 @@ import { DriverSafetyReverseSection } from "../../components/safety/DriverSafety
 import { BackgroundChecksSection } from "../../components/safety/BackgroundChecksSection";
 import { MedicalCardsHistorySection } from "../../components/safety/MedicalCardsHistorySection";
 import { RoadServiceReverseSection } from "../../components/maintenance/RoadServiceReverseSection";
+import { DriverBorderCrossingsReverseSection } from "../../components/dispatch/DriverBorderCrossingsReverseSection";
 import { W8BenModal } from "../../components/drivers/W8BenModal";
 import { KpiCard } from "../../components/layout/KpiCard";
 import { KpiStrip } from "../../components/layout/KpiStrip";
@@ -573,6 +574,7 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
           contextLabel="this driver"
           data-testid="driver-profile-road-service-reverse"
         />
+        <DriverBorderCrossingsReverseSection operatingCompanyId={companyId} driverId={id} />
       </div>
 
       <section data-testid="dp-section-audit-history" className="rounded-sm border border-gray-200 bg-white p-3">
