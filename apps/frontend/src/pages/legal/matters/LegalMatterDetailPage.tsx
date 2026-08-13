@@ -28,6 +28,7 @@ import {
   type LegalMatterFormState,
 } from "./LegalMatterFormFields";
 import { userFacingApiError } from "../../../lib/api-error-message";
+import { LegalMatterCostsReverseSection } from "../../../components/accounting/LegalMatterCostsReverseSection";
 
 type Tab = "overview" | "timeline" | "documents" | "deadlines" | "notes";
 const LEGAL_MATTER_TAB_IDS = new Set<string>(["overview", "timeline", "documents", "deadlines", "notes"]);
@@ -345,6 +346,16 @@ export function LegalMatterDetailPage() {
                 <div className="mt-3 border-t border-gray-100 pt-3">
                   <div className="text-xs font-semibold uppercase text-gray-500">Outcome summary</div>
                   <p className="mt-1 whitespace-pre-wrap">{String(matter.outcome_summary)}</p>
+                </div>
+              ) : null}
+
+              {companyId && id ? (
+                <div className="mt-3 border-t border-gray-100 pt-3">
+                  <LegalMatterCostsReverseSection
+                    operatingCompanyId={companyId}
+                    legalMatterId={id}
+                    data-testid="legal-matter-costs-reverse"
+                  />
                 </div>
               ) : null}
 
