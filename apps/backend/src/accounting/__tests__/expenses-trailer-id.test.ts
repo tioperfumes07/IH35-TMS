@@ -60,3 +60,20 @@ describe("accounting/expenses.routes EXPENSE-FUEL-TRAILER-LIST-FILTER-MISSING", 
     expect(routes).toContain("trailer_display_id: string | null;");
   });
 });
+
+// ACCT-F5032 — unit_id create/detail existed; list filter missing so VehicleProfile reverse could not mount.
+describe("accounting/expenses.routes ACCT-F5032-UNIT-LIST-FILTER", () => {
+  it("GET list accepts an optional unit_id filter", () => {
+    expect(routes).toMatch(/listExpensesQuerySchema = companyQuerySchema\.extend\(\{[\s\S]*?unit_id: z\.string\(\)\.uuid\(\)\.optional\(\),/);
+  });
+
+  it("ExpenseListFilters carries unitId and the route passes q.unit_id through", () => {
+    expect(routes).toContain("unitId?: string;");
+    expect(routes).toContain("unitId: q.unit_id,");
+  });
+
+  it("queryExpensesList applies the unit_id filter as a bound WHERE predicate", () => {
+    expect(routes).toContain("if (filters.unitId) {");
+    expect(routes).toContain('where.push(`e.unit_id = $${values.length}::uuid`);');
+  });
+});

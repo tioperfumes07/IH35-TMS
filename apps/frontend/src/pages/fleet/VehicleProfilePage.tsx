@@ -40,6 +40,7 @@ import { LegalMattersReverseSection } from "../../components/legal/LegalMattersR
 import { InsuranceClaimsReverseSection } from "../../components/insurance/InsuranceClaimsReverseSection";
 import { AssetSafetyReverseSection } from "../../components/safety/AssetSafetyReverseSection";
 import { FuelTransactionsReverseSection } from "../../components/fuel/FuelTransactionsReverseSection";
+import { ExpensesReverseSection } from "../../components/accounting/ExpensesReverseSection";
 import { UnitPermitsReverseSection } from "../../components/safety/UnitPermitsReverseSection";
 import { RoadServiceReverseSection } from "../../components/maintenance/RoadServiceReverseSection";
 import { LinkedBankTransactionsPanel } from "../../components/banking/LinkedBankTransactionsPanel";
@@ -341,6 +342,15 @@ export function VehicleProfilePage() {
               filter={{ unit_id: id }}
               contextLabel="this unit"
               data-testid="vehicle-profile-fuel-transactions"
+            />
+          </div>
+          {/* ACCT-F5032 — expenses.unit_id create/detail existed; list filter + profile reverse were missing. */}
+          <div data-testid="vp-section-10e2-expenses-reverse">
+            <ExpensesReverseSection
+              operatingCompanyId={companyId}
+              filter={{ unit_id: id }}
+              contextLabel="this unit"
+              data-testid="vehicle-profile-expenses-reverse"
             />
           </div>
           <div data-testid="vp-section-10f-permits">
