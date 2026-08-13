@@ -62,6 +62,7 @@ import { FreeTimeDetentionEditor } from "../components/customers/FreeTimeDetenti
 import { CustomerRelationshipScore } from "../components/customers/CustomerRelationshipScore";
 import { DispatcherSafetyEventsReverseBlock } from "../components/safety/DispatcherSafetyEventsReverseBlock";
 import { ComplaintsReverseSection } from "../components/safety/ComplaintsReverseSection";
+import { CustomerCargoClaimsReverseSection } from "../components/safety/CustomerCargoClaimsReverseSection";
 import { DocumentsTab } from "../components/documents/DocumentsTab";
 import { TasksTab } from "../components/tasks/TasksTab";
 import { EntityAuditHistoryTab } from "../components/audit/EntityAuditHistoryTab";
@@ -1150,6 +1151,7 @@ export function CustomerDetailPage() {
             data-testid="customer-complaints-reverse"
           />
           <CustomerNotifyReverseSection operatingCompanyId={operatingCompanyId} customerId={id} />
+          <CustomerCargoClaimsReverseSection operatingCompanyId={operatingCompanyId} customerId={id} />
         </>
       ) : null}
 
