@@ -85,6 +85,8 @@ const createBillBodySchema = z.object({
   work_order_id: z.string().uuid().optional().nullable(),
   unit_id: z.string().uuid().optional().nullable(),
   insurance_claim_id: z.string().uuid().optional().nullable(),
+  // ACCT-F5042 — Legal Matter → cost forward FK (reverse API already filtered on this column).
+  legal_matter_id: z.string().uuid().optional().nullable(),
   class_id: z.string().uuid().optional().nullable(),
   attachment_draft_id: z.string().uuid().optional().nullable(),
   // LAW-E2E #3167 — vendor Bill create must send real lines (not memo-only). When present, createBill
@@ -299,6 +301,7 @@ export async function registerBillsRoutes(app: FastifyInstance) {
           workOrderId: body.data.work_order_id,
           unitId: body.data.unit_id,
           insuranceClaimId: body.data.insurance_claim_id,
+          legalMatterId: body.data.legal_matter_id,
           classId: body.data.class_id,
           attachmentDraftId: body.data.attachment_draft_id,
           duplicateOverrideReason: body.data.duplicate_override_reason,

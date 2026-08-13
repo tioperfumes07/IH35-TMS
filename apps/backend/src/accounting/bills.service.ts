@@ -62,6 +62,11 @@ type CreateBillInput = {
   // Claim→Bill hop (held migration 202607740000). Only persisted when the column exists on the
   // connected DB (colExists) — Neon may not have owner-applied the held DDL yet.
   insuranceClaimId?: string | null;
+  /**
+   * ACCT-F5042 — Legal Matter → cost forward write. Column exists on prod; reverse listLegalMatterLinkedCosts
+   * already reads it. Stamp via UPDATE-after-INSERT (same landmine avoidance as ACCT-F186 / is_sample_data).
+   */
+  legalMatterId?: string | null;
   /** QBO Class reporting dimension — persisted on accounting.bills.class_id when column present. */
   classId?: string | null;
   // Draft id used by UploadZone for create-time bill attachments; reconciled onto the real bill id in
@@ -1762,6 +1767,25 @@ export async function createBill(input: CreateBillInput, userId: string) {
         `,
         [insertedId, input.operatingCompanyId]
       );
+    }
+
+    // ACCT-F5042 — stamp legal_matter_id when present (UPDATE-after-INSERT; avoid 4-way INSERT explosion).
+    if (insertedId && input.legalMatterId) {
+      const legalCol = await client.query(
+        `SELECT 1 FROM information_schema.columns
+          WHERE table_schema='accounting' AND table_name='bills' AND column_name='legal_matter_id'`
+      );
+      if ((legalCol.rowCount ?? 0) > 0) {
+        await client.query(
+          `
+            UPDATE accounting.bills
+               SET legal_matter_id = $3::uuid
+             WHERE id = $1::uuid
+               AND operating_company_id = $2::uuid
+          `,
+          [insertedId, input.operatingCompanyId, input.legalMatterId]
+        );
+      }
     }
 
     if (insertedId) {
