@@ -39,6 +39,7 @@ const FILES = {
   modal: "apps/frontend/src/pages/accounting/RecordPaymentModal.tsx",
   api: "apps/frontend/src/api/accounting.ts",
   service: "apps/backend/src/accounting/payments.routes.ts",
+  topbar: "apps/frontend/src/components/Topbar.tsx",
 };
 
 function read(rel) {
@@ -77,6 +78,16 @@ function contractErrors(src) {
   }
   if (!src.list.includes("RecordPaymentModal")) {
     errors.push("DOD-A: PaymentsListPage must mount RecordPaymentModal");
+  }
+  // ACCT-F5055 — Topbar Create→Receive payment must open the drawer via ?create=1.
+  if (!src.topbar.includes("/accounting/payments?create=1")) {
+    errors.push("VERIFY-1: Topbar Create→Receive payment must navigate to /accounting/payments?create=1");
+  }
+  if (!/searchParams\.get\(["']create["']\)\s*===\s*["']1["']/.test(src.list)) {
+    errors.push("VERIFY-1: PaymentsListPage must honor ?create=1 for RecordPaymentModal");
+  }
+  if (!/params\.delete\(["']create["']\)/.test(src.list) || !/params\.set\(["']create["'],\s*["']1["']\)/.test(src.list)) {
+    errors.push("VERIFY-1: PaymentsListPage must URL-sync create open/close");
   }
 
   if (!src.modal.includes('createKind="customer"')) {
@@ -140,7 +151,7 @@ function selftest() {
     map: "ACCT-SURF-04 `/accounting/payments`",
     manifest: 'path="/accounting/payments"\n<PaymentsListPage />\n',
     subnav: "/accounting/payments",
-    list: 'RecordPaymentModal\nkind="customer"\n',
+    list: 'RecordPaymentModal\nkind="customer"\nsearchParams.get("create") === "1"\nparams.set("create", "1")\nparams.delete("create")\n',
     detail: 'kind="customer"\nkind="invoice"\nkind="account"\n',
     modal: [
       "ParityDrawer",
@@ -156,6 +167,7 @@ function selftest() {
     ].join("\n"),
     api: 'export function createPayment(){ return apiRequest("/api/v1/accounting/payments", { method: "POST", body: { apply_to } }) }',
     service: 'app.post("/api/v1/accounting/payments", async (req, reply) => {});\nINSERT INTO accounting.payments (operating_company_id)',
+    topbar: '[t("topbar.create_receive_payment", "Receive payment"), "/accounting/payments?create=1"]',
   };
   if (contractErrors(good).length) {
     console.error(`${LABEL} --selftest FAIL good:`, contractErrors(good));
@@ -171,9 +183,17 @@ function selftest() {
     console.error(`${LABEL} --selftest FAIL ComingSoon twin not caught`);
     process.exit(1);
   }
-  const noCustomerLink = { ...good, list: "RecordPaymentModal" };
+  const noCustomerLink = {
+    ...good,
+    list: 'RecordPaymentModal\nsearchParams.get("create") === "1"\nparams.set("create", "1")\nparams.delete("create")\n',
+  };
   if (!contractErrors(noCustomerLink).some((e) => e.includes("PaymentsListPage must EntityLink customer"))) {
     console.error(`${LABEL} --selftest FAIL missing customer EntityLink on list not caught`);
+    process.exit(1);
+  }
+  const noCreateDeepLink = { ...good, topbar: '[t("topbar.create_receive_payment", "Receive payment"), "/accounting/payments"]' };
+  if (!contractErrors(noCreateDeepLink).some((e) => e.includes("?create=1"))) {
+    console.error(`${LABEL} --selftest FAIL Topbar create deep-link not caught`);
     process.exit(1);
   }
   console.log(`${LABEL}: selftest PASS`);
