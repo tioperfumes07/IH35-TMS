@@ -377,7 +377,6 @@
       "required": [
         "customer",
         "load",
-        "liability",
         "connectivity",
         "reverse_link"
       ]
@@ -393,8 +392,7 @@
         "connectivity",
         "reverse_link",
         "qbo_chrome",
-        "customer",
-        "liability"
+        "customer"
       ]
     },
     {
@@ -408,8 +406,7 @@
         "connectivity",
         "reverse_link",
         "qbo_chrome",
-        "customer",
-        "liability"
+        "customer"
       ]
     },
     {
@@ -423,8 +420,7 @@
         "connectivity",
         "reverse_link",
         "qbo_chrome",
-        "customer",
-        "liability"
+        "customer"
       ]
     },
     {
@@ -440,8 +436,7 @@
         "picker_law",
         "qbo_chrome",
         "customer",
-        "invoice",
-        "liability"
+        "invoice"
       ]
     },
     {
@@ -456,8 +451,7 @@
         "reverse_link",
         "qbo_chrome",
         "driver",
-        "customer",
-        "liability"
+        "customer"
       ]
     },
     {

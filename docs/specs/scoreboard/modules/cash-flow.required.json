@@ -177,7 +177,6 @@
       "sub": "Banking home cash position",
       "route_hint": "/banking",
       "required": [
-        "liability",
         "connectivity",
         "reverse_link",
         "qbo_chrome",
@@ -192,7 +191,6 @@
       "required": [
         "customer",
         "vendor",
-        "liability",
         "connectivity",
         "reverse_link",
         "qbo_chrome"
@@ -206,7 +204,6 @@
       "required": [
         "customer",
         "vendor",
-        "liability",
         "connectivity",
         "reverse_link",
         "qbo_chrome"
@@ -220,7 +217,6 @@
       "required": [
         "customer",
         "vendor",
-        "liability",
         "connectivity",
         "reverse_link",
         "qbo_chrome"
@@ -233,7 +229,6 @@
       "route_hint": "/cash-advances",
       "required": [
         "driver",
-        "liability",
         "connectivity",
         "reverse_link"
       ]

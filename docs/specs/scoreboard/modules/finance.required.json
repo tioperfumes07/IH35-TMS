@@ -122,7 +122,6 @@
         "customer",
         "vendor",
         "gl_je",
-        "liability",
         "connectivity",
         "reverse_link",
         "qbo_chrome"
@@ -137,7 +136,6 @@
         "customer",
         "vendor",
         "gl_je",
-        "liability",
         "connectivity",
         "reverse_link",
         "qbo_chrome"

@@ -3,7 +3,7 @@
  * liability COLUMN-WAVE — VERTICAL-WIRING-LAW-2026-08-12.
  *
  * @matrix-built {"modules":["drivers"],"cols":["liability"],"task":"WAVE-C-liability-driver-cash-advance","vertical":"column-wave","leafRe":"^cash_advances$"}
- * @matrix-built {"modules":["safety"],"cols":["liability"],"task":"WAVE-C-liability-safety-origins","vertical":"column-wave","leafRe":"^(accidents\\.create|internal_fines\\.create|escrow_record\\.list|safety\\.drawer\\.fine_detail)$"}
+ * @matrix-built {"modules":["safety"],"cols":["liability"],"task":"WAVE-C-liability-safety-origins","vertical":"column-wave","leafRe":"^(accidents\\.create|internal_fines\\.(list|create)|escrow_record\\.list|safety\\.modal\\.(escrow_forfeit|fine_convert_confirm)|safety\\.(drawer\\.fine_detail|parity\\.(escrow_forfeit|fine_detail)))$"}
  *
  * Root cause (cross-cutting, blocked EVERY leaf in EVERY module): views.liabilities_active_with_context
  * dropped origin/origin_id/reference_doc_id/status from its SELECT list even though the base table
@@ -80,6 +80,21 @@ const CHECKS = [
     file: "apps/frontend/src/pages/safety/tabs/EscrowRecordTab.tsx",
     pattern: /entry\.linked_liability_id \?/,
   },
+  {
+    name: "frontend: internal-fine list renders its created liability",
+    file: "apps/frontend/src/pages/safety/InternalFinesPage.tsx",
+    pattern: /kind="liability" id=\{String\(row\.driver_liability_id\)\}/,
+  },
+  {
+    name: "frontend: fine conversion confirms liability creation",
+    file: "apps/frontend/src/pages/safety/components/FineConvertConfirmModal.tsx",
+    pattern: /create a driver liability/,
+  },
+  {
+    name: "frontend: escrow forfeit submits the selected liability",
+    file: "apps/frontend/src/pages/safety/components/EscrowForfeitModal.tsx",
+    pattern: /linked_liability_id: linkedLiabilityId/,
+  },
 ];
 
 export function checkAll(readFile) {
@@ -110,6 +125,9 @@ if (process.argv.includes("--selftest")) {
     "apps/backend/src/safety/safety.routes.ts": "return { ...accident, spawned_liability_id: spawnedLiabilityId };",
     "apps/frontend/src/components/safety/AccidentReportDrawer.tsx": 'data-testid="accident-spawned-liability"',
     "apps/frontend/src/pages/safety/tabs/EscrowRecordTab.tsx": "{entry.linked_liability_id ? (",
+    "apps/frontend/src/pages/safety/InternalFinesPage.tsx": '<EntityLink kind="liability" id={String(row.driver_liability_id)} />',
+    "apps/frontend/src/pages/safety/components/FineConvertConfirmModal.tsx": "This will create a driver liability",
+    "apps/frontend/src/pages/safety/components/EscrowForfeitModal.tsx": "linked_liability_id: linkedLiabilityId",
   };
   const goodFailures = checkAll((f) => GOOD_FIXTURES[f] ?? null);
   if (goodFailures.length) {
