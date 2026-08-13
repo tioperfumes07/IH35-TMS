@@ -35,6 +35,9 @@ export type TwoSectionLine = {
   amount: number;
   expense_category_uuid?: string;
   expense_category_code?: string;
+  /** ECON-012 — map keys from catalogs.expense_categories.metadata */
+  expense_category_kind?: string;
+  expense_category_map_code?: string;
   service_item_uuid?: string;
   location_label?: string;
   sub_rows?: ItemSubRow[];
@@ -123,12 +126,20 @@ export function TwoSectionLineEditor({
   const sectionB = useMemo(() => lines.filter((line) => line.section === "B"), [lines]) as ItemLine[];
   const expenseCategoryOptions = useMemo<CostContextOption[]>(() => {
     if (mode === "bill") {
-      const fromCatalog = (expenseCategoriesQuery.data?.rows ?? []).map((row) => ({
-        id: String(row.id ?? ""),
-        label: `${row.display_name ?? row.code ?? ""}`.trim() || String(row.id ?? ""),
-        // Carry code so bill line payloads can set category_kind/code without a second lookup.
-        code: String(row.code ?? ""),
-      }));
+      const fromCatalog = (expenseCategoriesQuery.data?.rows ?? []).map((row) => {
+        const meta =
+          row.metadata && typeof row.metadata === "object" && !Array.isArray(row.metadata)
+            ? (row.metadata as Record<string, unknown>)
+            : {};
+        return {
+          id: String(row.id ?? ""),
+          label: `${row.display_name ?? row.code ?? ""}`.trim() || String(row.id ?? ""),
+          // Carry code so bill line payloads can set category_kind/code without a second lookup.
+          code: String(row.code ?? ""),
+          category_kind: String(meta.category_kind ?? "").trim() || undefined,
+          category_map_code: String(meta.category_code ?? "").trim() || undefined,
+        };
+      });
       const merged = new Map<string, CostContextOption>();
       for (const row of fromCatalog) {
         if (row.id) merged.set(row.id, row);

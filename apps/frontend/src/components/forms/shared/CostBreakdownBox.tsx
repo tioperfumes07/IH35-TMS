@@ -7,6 +7,10 @@ export type CategoryLine = {
   expense_category_uuid?: string;
   /** catalogs.expense_categories.code — used to set bill category_kind/code (WAVE-H1). */
   expense_category_code?: string;
+  /** ECON-012 — expense_category_account_map.category_kind from catalog metadata. */
+  expense_category_kind?: string;
+  /** ECON-012 — expense_category_account_map.category_code from catalog metadata. */
+  expense_category_map_code?: string;
   description: string;
   quantity: number;
   unit_cost: number;
@@ -40,6 +44,9 @@ export type CostContextOption = {
   id: string;
   label: string;
   code?: string;
+  /** ECON-012 map keys carried from catalogs.expense_categories.metadata */
+  category_kind?: string;
+  category_map_code?: string;
 };
 
 type Props = {
@@ -163,6 +170,8 @@ export function CostBreakdownBox({
                                         ...entry,
                                         expense_category_uuid: next ?? undefined,
                                         expense_category_code: match?.code,
+                                        expense_category_kind: match?.category_kind,
+                                        expense_category_map_code: match?.category_map_code,
                                       }
                                     : entry
                                 )
