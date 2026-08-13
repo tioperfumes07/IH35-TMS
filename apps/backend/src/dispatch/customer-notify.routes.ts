@@ -58,7 +58,12 @@ export async function registerDispatchCustomerNotifyRoutes(app: FastifyInstance)
     if (!params.success || !query.success) {
       return reply.code(400).send({ error: "validation_error" });
     }
-    return getCustomerNotifyPreferences(user.uuid, query.data.operating_company_id, params.data.customerId);
+    try {
+      return await getCustomerNotifyPreferences(user.uuid, query.data.operating_company_id, params.data.customerId);
+    } catch (error) {
+      if ((error as Error).message === "E_CUSTOMER_NOT_FOUND") return reply.code(404).send({ error: "customer_not_found" });
+      throw error;
+    }
   });
 
   app.put("/api/v1/dispatch/customer-notify/preferences/:customerId", async (req, reply) => {
@@ -70,7 +75,12 @@ export async function registerDispatchCustomerNotifyRoutes(app: FastifyInstance)
       return reply.code(400).send({ error: "validation_error", details: body.error?.flatten() });
     }
     const { operating_company_id, ...patch } = body.data;
-    return upsertCustomerNotifyPreferences(user.uuid, operating_company_id, params.data.customerId, patch);
+    try {
+      return await upsertCustomerNotifyPreferences(user.uuid, operating_company_id, params.data.customerId, patch);
+    } catch (error) {
+      if ((error as Error).message === "E_CUSTOMER_NOT_FOUND") return reply.code(404).send({ error: "customer_not_found" });
+      throw error;
+    }
   });
 
   app.post("/api/v1/dispatch/customer-notify/sync", async (req, reply) => {
