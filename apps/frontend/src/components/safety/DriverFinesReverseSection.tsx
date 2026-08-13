@@ -97,12 +97,7 @@ export function DriverFinesReverseSection({
               const label = String(f.reason_name ?? entityLabel(f.reason_code, id, "Record"));
               return (
                 <li key={id} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-sm">
-                  {/* Deliberately NOT an EntityLink: /safety/internal-fines does not honour a
-                      per-id query param, so a drill-through here would land on an unfiltered list
-                      and read as a working link that goes nowhere. EntityLink's contract is that
-                      every declared kind resolves to a real route - fabricating one to satisfy this
-                      panel would break that for every other caller. */}
-                  <span className="font-semibold text-slate-700">{label}</span>
+                  <EntityLink kind="internal_fine" id={id} label={label} className="font-semibold text-slate-700" />
                   <span className="ml-2 text-gray-600">{String(f.status ?? "")}</span>
                 </li>
               );

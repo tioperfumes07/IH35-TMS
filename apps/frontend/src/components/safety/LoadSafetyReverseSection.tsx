@@ -180,13 +180,7 @@ function LoadSafetyEventsBlock({ companyId, loadId }: { companyId: string; loadI
         <ul className="space-y-2">
           {rows.map((row) => (
             <li key={row.id} className="text-sm text-slate-700" data-testid={`load-safety-event-${row.id}`}>
-              {/* Deliberately NOT an EntityLink. There is no `safety_event` kind, and adding one
-                  would point at /safety/safety-events?event_id=… — a param that page does not read,
-                  so the link would navigate to an unfiltered list and look like a drill that worked.
-                  EntityLink's contract is that every declared kind resolves to a real route, so the
-                  honest render is the title plus the list link in this block's header. The missing
-                  deep-link is filed rather than faked. */}
-              <span className="font-medium text-slate-900">{entityLabel(row.title || null, row.id, "Safety event")}</span>
+              <EntityLink kind="safety_event" id={row.id} label={entityLabel(row.title || null, row.id, "Safety event")} className="font-medium text-slate-900" />
               <span className="ml-2 text-xs text-gray-500">
                 {row.occurred_at ? formatDateUS(String(row.occurred_at).slice(0, 10)) : "—"}
                 {` · ${row.severity} · ${row.status}`}

@@ -18,6 +18,7 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { CappedListNotice } from "../../components/CappedListNotice";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { suggestExpenseLoad } from "../../api/maintenance";
+import { useSearchParams } from "react-router-dom";
 
 type InternalFineRow = Record<string, unknown>;
 
@@ -28,6 +29,8 @@ type Props = {
 export function InternalFinesPage({ operatingCompanyId }: Props) {
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const [searchParams] = useSearchParams();
+  const linkedFineId = searchParams.get("fine_id");
   // SAF-F12: which fine a lifecycle action is open for, and which action.
   const [lifecycleTarget, setLifecycleTarget] = useState<{ row: InternalFineRow; action: "dispute" | "void" } | null>(null);
   const [form, setForm] = useState({
@@ -307,6 +310,8 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
           emptyText="No internal fines found."
           storageKey="safety-internal-fines"
           exportFilename="internal-fines"
+          rowClassName={(row) => String(row.id ?? "") === linkedFineId ? "bg-slate-100 ring-1 ring-inset ring-slate-300" : ""}
+          rowTestId={(row) => String(row.id ?? "") === linkedFineId ? "linked-internal-fine" : `internal-fine-${String(row.id ?? "")}`}
         />
       )}
 

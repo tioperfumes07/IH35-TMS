@@ -10,6 +10,7 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { entityLabel } from "../../lib/entity-label";
 import { ListErrorState } from "../../components/ListErrorState";
 import { formatQueryErrorDetail } from "../../lib/tableError";
+import { EntityLink } from "../../components/shared/EntityLink";
 
 type DeadheadPeriod = "last_4_weeks" | "last_12_weeks" | "YTD";
 
@@ -91,7 +92,7 @@ export function DeadheadReportPage() {
 
   const columns = useMemo<ParityColumn<DeadheadUnitRow>[]>(
     () => [
-      { key: "unit_number", label: "Truck", sortable: true, render: (row) => <span className="font-medium">{entityLabel(row.unit_number, row.unit_id, "Unit")}</span> },
+      { key: "unit_number", label: "Truck", sortable: true, render: (row) => <EntityLink kind="unit" id={row.unit_id} label={entityLabel(row.unit_number, row.unit_id, "Unit")} className="font-medium" /> },
       { key: "deadhead_pct", label: "Deadhead %", sortable: true, render: (row) => pct(row.deadhead_pct) },
       { key: "deadhead_miles", label: "Deadhead mi", sortable: true, render: (row) => row.deadhead_miles.toLocaleString() },
       { key: "loaded_miles", label: "Loaded mi", sortable: true, render: (row) => row.loaded_miles.toLocaleString() },
@@ -160,10 +161,10 @@ export function DeadheadReportPage() {
           {best && worst && best.unit_id !== worst.unit_id ? (
             <div className="grid gap-3 md:grid-cols-2">
               <div className="rounded-sm border border-emerald-200 bg-emerald-50 p-3 text-sm">
-                Best performer: <strong>{entityLabel(best.unit_number, best.unit_id, "Unit")}</strong> at {pct(best.deadhead_pct)} deadhead
+                Best performer: <EntityLink kind="unit" id={best.unit_id} label={entityLabel(best.unit_number, best.unit_id, "Unit")} className="font-semibold" /> at {pct(best.deadhead_pct)} deadhead
               </div>
               <div className="rounded-sm border border-rose-200 bg-rose-50 p-3 text-sm">
-                Needs attention: <strong>{entityLabel(worst.unit_number, worst.unit_id, "Unit")}</strong> at {pct(worst.deadhead_pct)} deadhead
+                Needs attention: <EntityLink kind="unit" id={worst.unit_id} label={entityLabel(worst.unit_number, worst.unit_id, "Unit")} className="font-semibold" /> at {pct(worst.deadhead_pct)} deadhead
               </div>
             </div>
           ) : null}

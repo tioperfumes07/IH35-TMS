@@ -63,7 +63,8 @@ export function CurrentAssignmentSection({
       </div>
       {onSetDefault ? (
         <p className="mt-2 text-xs text-slate-500">
-          Set default truck from fleet unit profile or POST default-truck for driver {entityLabel(null, driverId, "Driver")}
+          Set default truck from fleet unit profile or POST default-truck for driver{" "}
+          <EntityLink kind="driver" id={driverId} label={entityLabel(null, driverId, "Driver")} />
         </p>
       ) : null}
     </section>
