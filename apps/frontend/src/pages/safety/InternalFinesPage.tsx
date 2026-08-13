@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { formatDateUS } from "../../lib/formatDate";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { DatePicker } from "../../components/forms/DatePicker";
@@ -17,6 +17,7 @@ import { useAuth } from "../../auth/useAuth";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { CappedListNotice } from "../../components/CappedListNotice";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
+import { suggestExpenseLoad } from "../../api/maintenance";
 
 type InternalFineRow = Record<string, unknown>;
 
@@ -38,6 +39,31 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
     status: "pending",
     notes: "",
   });
+  /** Preserve an operator-selected load after the active-trip resolver has populated the field. */
+  const [suggestionPinned, setSuggestionPinned] = useState(false);
+
+  const suggestionQuery = useQuery({
+    queryKey: ["safety", "internal-fine-create", "suggest-load", operatingCompanyId, form.driver_uuid, form.imposed_date],
+    queryFn: () =>
+      suggestExpenseLoad({
+        operating_company_id: operatingCompanyId,
+        driver_id: form.driver_uuid || undefined,
+        transaction_date: form.imposed_date,
+      }),
+    enabled: Boolean(operatingCompanyId && form.driver_uuid && form.imposed_date),
+  });
+
+  useEffect(() => {
+    setSuggestionPinned(false);
+  }, [form.driver_uuid, form.imposed_date]);
+
+  useEffect(() => {
+    if (form.related_load_uuid || suggestionPinned) return;
+    const suggested = suggestionQuery.data?.data;
+    if (!suggested?.load_id) return;
+    setForm((previous) => ({ ...previous, related_load_uuid: suggested.load_id }));
+    setSuggestionPinned(true);
+  }, [form.related_load_uuid, suggestionPinned, suggestionQuery.data]);
 
   const query = useQuery({
     queryKey: ["safety", "internal-fines", operatingCompanyId],
