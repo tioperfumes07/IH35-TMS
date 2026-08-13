@@ -66,7 +66,7 @@ export function ExpensesListPage() {
   const { selectedCompanyId } = useCompanyContext();
   const { pushToast } = useToast();
   const companyId = selectedCompanyId ?? "";
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   // BANK-SORT-ROLLOUT-ACCT: every visible column header sorts ASC/DESC; sort persists in the URL
   // (?sort=&dir=) so it survives reload / is shareable, same as the Banking register.
   const { sortKey, sortDirection, onSortChange } = useUrlSort();
@@ -89,7 +89,19 @@ export function ExpensesListPage() {
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const staged = useStagedListFilters({ applied: { status, fromDate, toDate }, empty: { status: "" as const, fromDate: "", toDate: "" }, onApply: (next) => { setStatus(next.status); setFromDate(next.fromDate); setToDate(next.toDate); } });
-  const [createOpen, setCreateOpen] = useState(false);
+  // ACCT-F5054 — Topbar Create→Expense uses ?create=1 (Bills/Invoices parity).
+  const createOpen = searchParams.get("create") === "1";
+  function setCreateOpen(next: boolean) {
+    setSearchParams(
+      (prev) => {
+        const params = new URLSearchParams(prev);
+        if (next) params.set("create", "1");
+        else params.delete("create");
+        return params;
+      },
+      { replace: true }
+    );
+  }
   const [voidOpen, setVoidOpen] = useState(false);
   const [voidTarget, setVoidTarget] = useState<{ id: string; displayId: string } | null>(null);
   const [highlightedExpenseId, setHighlightedExpenseId] = useState<string | null>(deepLinkExpenseId);

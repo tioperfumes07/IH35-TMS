@@ -239,7 +239,7 @@ export function assertExpensesListRoute({
   const errors = manifestRouteErrors(manifest);
 
   const createTargets = [
-    ["Topbar", topbar, /create_expense[^]*?["']\/accounting\/expenses["']/],
+    ["Topbar", topbar, /create_expense[^]*?["']\/accounting\/expenses\?create=1["']/],
     ["QboStyleHomePage CREATE_ACTIONS", home, /label:\s*["']Record expense["'],\s*to:\s*["']\/accounting\/expenses["']/],
     ["AccountingSubNavWrapper CREATE_MENU", subnavWrapper, /label:\s*["']Expense["'],\s*to:\s*["']\/accounting\/expenses["']/],
   ];
@@ -249,12 +249,27 @@ export function assertExpensesListRoute({
       continue;
     }
     if (!okRe.test(src)) {
-      errors.push(`${name}: create entry must target canonical list /accounting/expenses`);
+      errors.push(
+        name === "Topbar"
+          ? `${name}: create entry must target /accounting/expenses?create=1 (drawer deep-link)`
+          : `${name}: create entry must target canonical list /accounting/expenses`
+      );
     }
     if (/create_expense[^]*?["']\/accounting\/expenses\/new["']/.test(src)
       || /label:\s*["'](?:Record expense|Expense)["'],\s*to:\s*["']\/accounting\/expenses\/new["']/.test(src)) {
       errors.push(`${name}: create entry must not use the /new wizard deep-link`);
     }
+  }
+
+  if (expensesList) {
+    if (!/searchParams\.get\(["']create["']\)\s*===\s*["']1["']/.test(expensesList)) {
+      errors.push("ExpensesListPage: must honor ?create=1 deep link for RecordExpenseModal");
+    }
+    if (!/params\.delete\(["']create["']\)/.test(expensesList) && !/params\.set\(["']create["'],\s*["']1["']\)/.test(expensesList)) {
+      errors.push("ExpensesListPage: must URL-sync create open/close via create search param");
+    }
+  } else {
+    errors.push("ExpensesListPage: file missing");
   }
 
   if (subnavManifest) {
@@ -347,14 +362,14 @@ function selftest() {
   const groupEntry = `{ label: GROUP_LABELS.expenses, href: "/accounting/expenses/list" }`;
   const good = {
     manifest: goodManifest,
-    topbar: `[t("topbar.create_expense", "Expense"), "/accounting/expenses"]`,
+    topbar: `[t("topbar.create_expense", "Expense"), "/accounting/expenses?create=1"]`,
     home: `{ label: "Record expense", to: "/accounting/expenses" } <Link to="/accounting/expenses/list">View →</Link>`,
     subnavWrapper: `{ label: "Expense", to: "/accounting/expenses" }`,
     subnavManifest: `${childrenBlock}${flatBlock}${groupEntry}`,
     accountingHub: `{ id: "expenses", label: "Expenses", to: "/accounting/expenses/list" }`,
     accountRegister: `if (t === "expense" && reference) return \`/accounting/expenses/\${reference}\`; if (t === "expense") return "/accounting/expenses/list";`,
     expenseCreate: `navigate("/accounting/expenses/list"); navigate("/accounting/expenses/list");`,
-    expensesList: `navigate("/accounting/expenses/list?expense_id=1");`,
+    expensesList: `searchParams.get("create") === "1"; params.set("create", "1"); params.delete("create"); navigate("/accounting/expenses/list?expense_id=1");`,
     entityLink: "return `/accounting/expenses/${id}`;",
     recordExpenseModal: `<Link to="/accounting/expenses/list">View all expenses</Link>`,
   };
@@ -378,7 +393,7 @@ function selftest() {
       { ...good, manifest: bareOnlyManifest },
       "/accounting/expenses must render ExpensesListPage",
     ],
-    ["Topbar create alias", { ...good, topbar: good.topbar.replace('expenses"]', 'expenses/new"]') }, "Topbar"],
+    ["Topbar create alias", { ...good, topbar: good.topbar.replace("/accounting/expenses?create=1", "/accounting/expenses/new") }, "Topbar"],
     ["home create alias", { ...good, home: good.home.replace('to: "/accounting/expenses"', 'to: "/accounting/expenses/new"') }, "CREATE_ACTIONS"],
     ["wrapper create list", { ...good, subnavWrapper: good.subnavWrapper.replace('expenses"', 'expenses/list"') }, "CREATE_MENU"],
     ["group reversed", { ...good, subnavManifest: `${childrenBlock}${flatBlock}{ label: GROUP_LABELS.expenses, href: "/accounting/expenses" }` }, "group href"],
