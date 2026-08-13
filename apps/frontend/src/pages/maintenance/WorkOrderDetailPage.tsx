@@ -70,7 +70,7 @@ const POSTING_PREVIEW_COLUMNS: Array<ParityColumn<PostingPreviewTableRow>> = [
     label: "Asset",
     sortable: true,
     sortValue: (row) => entityLabel(row.asset_unit_code, row.asset_id, "Unit"),
-    render: (row) => entityLabel(row.asset_unit_code, row.asset_id, "Unit") || "—",
+    render: (row) => <EntityLink kind="unit" id={row.asset_id} label={entityLabel(row.asset_unit_code, row.asset_id, "Unit") || "—"} />,
   },
   {
     key: "amount_cents",

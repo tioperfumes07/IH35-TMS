@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { listSafetyIncidents } from "../../../api/safety";
+import { EntityLink } from "../../../components/shared/EntityLink";
 
 type Props = {
   operatingCompanyId: string;
@@ -69,7 +70,7 @@ export function MaintenanceDamageRegisterTab({ operatingCompanyId }: Props) {
       key: "unit_number",
       label: "Unit",
       sortable: true,
-      render: (row) => entityLabel(row.unit_number, row.unit_id, "Unit"),
+      render: (row) => <EntityLink kind="unit" id={row.unit_id} label={entityLabel(row.unit_number, row.unit_id, "Unit")} />,
     },
     {
       key: "incident_at",
