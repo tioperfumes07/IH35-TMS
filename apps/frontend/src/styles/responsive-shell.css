@@ -1,0 +1,50 @@
+/* CLS-RESPONSIVE-SHELL — laptop → desktop → TV (owner chrome law 2026-08-12)
+ *
+ * Companion to responsive-breakpoints.css (topbar stack) and breakpoints-edge.css (TV cap).
+ * Named shell tiers so chrome cannot clip between 1024 and ultrawide.
+ */
+
+.ih35-responsive-shell {
+  min-width: 0;
+  width: 100%;
+}
+
+.ih35-responsive-shell main {
+  min-width: 0;
+}
+
+/* Laptop / mid desktop: keep module chrome wrapping; tables scroll inside, not the viewport */
+@media (min-width: 1024px) and (max-width: 1439px) {
+  .ih35-responsive-shell[data-ih35-shell="laptop-desktop-tv"] {
+    --ih35-shell-tier: laptop;
+  }
+
+  .ih35-responsive-shell .ih35-module-header-actions {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .ih35-responsive-shell [data-table-controls] {
+    flex-wrap: wrap;
+  }
+}
+
+/* Desktop workstation */
+@media (min-width: 1440px) and (max-width: 1919px) {
+  .ih35-responsive-shell[data-ih35-shell="laptop-desktop-tv"] {
+    --ih35-shell-tier: desktop;
+  }
+}
+
+/* TV / ultrawide — content width capped via .edge-ultrawide-shell (breakpoints-edge.css) */
+@media (min-width: 1920px) {
+  .ih35-responsive-shell[data-ih35-shell="laptop-desktop-tv"] {
+    --ih35-shell-tier: tv;
+  }
+
+  /* Side panels / modals stay inside the viewport even on wall displays */
+  .ih35-responsive-shell [data-parity-drawer],
+  .ih35-responsive-shell [role="dialog"] {
+    max-width: min(100vw, 100%);
+  }
+}

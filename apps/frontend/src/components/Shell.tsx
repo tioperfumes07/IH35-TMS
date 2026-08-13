@@ -9,6 +9,8 @@ import { Sidebar } from "./Sidebar";
 import { Topbar } from "./Topbar";
 import { OnboardingTourHost } from "./onboarding/OnboardingTourHost";
 import { AppLayout } from "../layouts/AppLayout";
+import "../styles/responsive-breakpoints.css";
+import "../styles/responsive-shell.css";
 
 type Props = {
   auth: AuthMeResponse["user"];
@@ -20,13 +22,17 @@ export function Shell({ auth, children }: Props) {
 
   return (
     <AppLayout>
-      <div className="flex min-h-screen flex-col" style={{ backgroundColor: colors.bodyBg, fontFamily: typography.fontSans }}>
+      <div
+        className="ih35-responsive-shell flex min-h-screen flex-col"
+        data-ih35-shell="laptop-desktop-tv"
+        style={{ backgroundColor: colors.bodyBg, fontFamily: typography.fontSans }}
+      >
         <PostReloadToastHost />
         <Topbar auth={auth} onOpenMobileNav={() => setMobileNavOpen(true)} />
         <div className="relative flex min-h-0 flex-1">
           <Sidebar role={auth.role} mobileOpen={mobileNavOpen} onMobileClose={() => setMobileNavOpen(false)} />
           <main
-            className="min-w-0 flex-1 overflow-x-hidden px-2 py-3 sm:px-3 md:px-4"
+            className="ih35-main-shell min-w-0 flex-1 overflow-x-hidden px-2 py-3 sm:px-3 md:px-4"
             style={{ backgroundColor: colors.bodyBg, paddingTop: spacing.pageContentPadding, paddingBottom: spacing.pageContentPadding }}
           >
             <OnboardingTourHost role={auth.role} />

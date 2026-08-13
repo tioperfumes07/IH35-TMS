@@ -90,6 +90,7 @@ export function ParityDrawer({
       <aside
         role="dialog"
         aria-label={title}
+        data-parity-drawer=""
         className={`absolute right-0 top-0 flex h-full max-h-screen flex-col border-l border-gray-200 bg-white shadow-xl ${widthClass}`}
       >
         <header className="flex items-start justify-between gap-2 border-b border-gray-200 px-4 py-3">
