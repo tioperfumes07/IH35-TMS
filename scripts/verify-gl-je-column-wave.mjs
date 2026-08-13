@@ -2,31 +2,14 @@
 /**
  * gl_je COLUMN-WAVE — VERTICAL-WIRING-LAW-2026-08-12.
  *
- * @matrix-built {"modules":["dispatch","factoring","banking","customers","vendors","drivers","safety"],"cols":["gl_je"],"leafRe":".*","task":"WAVE-C-gl_je","vertical":"column-wave"}
+ * @matrix-built {"modules":["factoring","drivers","safety"],"cols":["gl_je"],"leafRe":".*","task":"WAVE-C-gl_je","vertical":"column-wave"}
  * @matrix-built {"modules":["accounting"],"cols":["gl_je"],"leafRe":"^(bills\\.|bill_payments\\.)","task":"WAVE-C-gl_je-accounting-bills","vertical":"column-wave"}
  *
- * The second tag above is narrowly scoped, not accounting's full 27-leaf gl_je requirement — only
- * the bills and bill_payments leaf families are independently verified WIRED (bills.service.ts's
- * getBillDetail exposes journal_entry_id at :1229, listBillPaymentsForBill's reverse-JOIN at
- * :1287-1342; BillDetailPage.tsx / BillPaymentDetailPage.tsx render both, confirmed while fixing
- * the vendors leaf of this same column-wave). The other 23 accounting gl_je leaves (invoices, je,
- * coa, period_close, reports, factoring.list, escrow, payments.receive, home) are NOT claimed
- * here — some are already covered by other guards' narrower tags (verify-expenses-list-je-memo.mjs
- * covers the expenses/register/transactions leaves), the rest are genuinely unverified and left as
- * real remaining gap rather than over-claimed.
- *
- * Audited every priority-10 module for the gl_je reverse-link (a money-affecting row must be able to
- * drill through to the accounting.journal_entries row(s) it posted). Standard: BACKEND actually
- * SELECTs the journal_entry_id back (not just writes it once at posting time) AND FRONTEND renders it
- * as a real EntityLink, not fetch-and-discard.
- *
- * Result (2026-08-12): dispatch, factoring, banking, customers, vendors, drivers were ALREADY wired —
- * this guard locks them so they can't regress. `lists` is a legitimate N/A (pure catalog module, no
- * money-posting leaf exists — see this file's own header, not repeated here as a check since there is
- * nothing to assert). `safety` (company-paid civil-fine expense posting) was the one real gap:
- * accounting.civil_fine_postings.expense_je_id was written once by the poster and never joined back
- * into any GET — fixed in the same commit as this guard (fines.routes.ts list+detail queries now
- * LEFT JOIN accounting.civil_fine_postings; FineDetailDrawer.tsx renders the journal_entry EntityLink).
+ * HONESTY 2026-08-13: removed dispatch/customers/vendors/banking from the broad leafRe=.* tag.
+ * Those modules either have leaf-specific Built tags (banking transactions/recon/escrow) or had
+ * Required gl_je on chrome without a local journal_entry EntityLink (customers/vendors/dispatch
+ * surfaces) — InvoiceDetail/BillDetail/RevenueRecognition live under accounting, not those modules.
+ * LEAVES[] below still regression-locks the accounting/safety surfaces that WERE the real proof.
  *
  * Self-test: node scripts/verify-gl-je-column-wave.mjs --selftest
  */

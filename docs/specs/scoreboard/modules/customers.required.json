@@ -133,7 +133,6 @@
       "required": [
         "customer",
         "load",
-        "gl_je",
         "connectivity",
         "reverse_link",
         "picker_law"
@@ -224,7 +223,6 @@
       "required": [
         "customer",
         "vendor",
-        "gl_je",
         "connectivity",
         "reverse_link"
       ]
@@ -273,7 +271,6 @@
       "required": [
         "customer",
         "load",
-        "gl_je",
         "connectivity",
         "reverse_link",
         "qbo_chrome"
@@ -311,7 +308,6 @@
       "required": [
         "customer",
         "load",
-        "gl_je",
         "connectivity",
         "reverse_link",
         "qbo_chrome",
@@ -335,7 +331,6 @@
       "route_hint": "/customers?tab=statements",
       "required": [
         "customer",
-        "gl_je",
         "connectivity"
       ]
     },
@@ -346,7 +341,6 @@
       "route_hint": "/customers?tab=recurring_transactions",
       "required": [
         "customer",
-        "gl_je",
         "connectivity"
       ]
     },
@@ -368,7 +362,6 @@
       "route_hint": "/customers?tab=late_fees",
       "required": [
         "customer",
-        "gl_je",
         "connectivity"
       ]
     },
@@ -461,7 +454,6 @@
       "required": [
         "customer",
         "load",
-        "gl_je",
         "connectivity",
         "reverse_link",
         "qbo_chrome",
@@ -475,7 +467,6 @@
       "route_hint": "/customers/:id",
       "required": [
         "customer",
-        "gl_je",
         "picker_law",
         "qbo_chrome",
         "connectivity",
@@ -618,7 +609,6 @@
       "required": [
         "customer",
         "load",
-        "gl_je",
         "connectivity",
         "reverse_link"
       ]
