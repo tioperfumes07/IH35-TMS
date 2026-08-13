@@ -271,6 +271,9 @@ export type VendorBill = {
   is_reconciled?: boolean;
   /** Law §9 — resolved from journal_entry_postings (bills have no journal_entry_id column). */
   journal_entry_id?: string | null;
+  /** ACCT-F5060 — human JE label on bill detail (date + memo). */
+  journal_entry_date?: string | null;
+  journal_entry_memo?: string | null;
   unit_id?: string | null;
   unit_display_id?: string | null;
   linked_work_order_uuid?: string | null;

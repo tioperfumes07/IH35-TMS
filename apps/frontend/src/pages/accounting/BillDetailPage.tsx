@@ -282,7 +282,15 @@ export function BillDetailPage() {
         {bill.journal_entry_id ? (
           <DataPanelRow>
             <span className="text-xs font-semibold text-gray-600">Journal entry</span>
-            <EntityLink kind="journal_entry" id={bill.journal_entry_id} label={entityLabel(null, bill.journal_entry_id, "Journal entry")} />
+            <EntityLink
+              kind="journal_entry"
+              id={bill.journal_entry_id}
+              label={
+                bill.journal_entry_date
+                  ? `${formatDateUS(bill.journal_entry_date)}${bill.journal_entry_memo ? ` — ${bill.journal_entry_memo}` : ""}`
+                  : entityLabel(bill.journal_entry_memo, bill.journal_entry_id, "Journal entry")
+              }
+            />
           </DataPanelRow>
         ) : null}
         {bill.unit_id ? (
