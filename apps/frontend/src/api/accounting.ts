@@ -946,6 +946,26 @@ export function listUnitLinkedFinancials(unitId: string, operatingCompanyId: str
   );
 }
 
+export type LegalMatterLinkedCosts = {
+  bills: Array<{
+    id: string;
+    bill_number: string | null;
+    bill_date: string | null;
+    amount_cents: number;
+    status: string | null;
+    memo: string | null;
+  }>;
+  total_cost_cents: number;
+  columns_present: { bills: boolean };
+};
+
+/** ACCT-F5041 — Legal Matter → cost reverse (accounting.bills.legal_matter_id). */
+export function listLegalMatterLinkedCosts(legalMatterId: string, operatingCompanyId: string) {
+  return apiRequest<LegalMatterLinkedCosts>(
+    withCompany(`/api/v1/accounting/legal-matters/${legalMatterId}/linked-costs`, operatingCompanyId)
+  );
+}
+
 // Driverless, categorized cash-out expense → accounting.expenses (NOT a bill). category_qbo_id is the
 // form's QBO expense account; the backend resolves it to a catalogs.accounts GL id (entity-scoped) and
 // posts DR category / CR payment account through the existing engine (when EXPENSE_GL_POSTING_ENABLED).
