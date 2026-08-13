@@ -32,6 +32,7 @@ import { CustomerCOITab } from "./customers/CustomerCOITab";
 import { CustomerListSidebar } from "./customers/CustomerListSidebar";
 import { CustomersListView } from "./customers/CustomersListView";
 import { CustomersSyncPanel } from "./customers/CustomersSyncPanel";
+import { TasksTab } from "../components/tasks/TasksTab";
 import { useViewModePref } from "../hooks/useViewModePref";
 import { useUrlSort } from "../hooks/useUrlSort";
 import { formatDateUS } from "../lib/formatDate";
@@ -746,6 +747,13 @@ export function CustomersPage() {
                   customer={selectedCustomer}
                   summary={summaryQuery.data}
                   onEdit={() => navigate(`/customers/${selectedCustomer.id}`)}
+                />
+              ) : activeTab === "tasks" ? (
+                <TasksTab
+                  operatingCompanyId={companyId}
+                  targetType="customer"
+                  targetId={selectedCustomer.id}
+                  targetLabel={selectedCustomer.name}
                 />
               ) : (
                 <CustomerTabComingState
