@@ -26,13 +26,9 @@ OUTBOX one-liner each ship:
 
 ## REWAKE 2026-08-13T19:46Z — KEEP BUILDING (Cursor lead)
 
-Cursor shipping `load` Built for priority-14 (honesty + leaf-specific tags). **4 WIRE_GAP leave load Required** (do NOT honesty-drop — wire `load_id` or board OPEN):
-- maintenance.in_transit.promote_to_wo
-- maintenance.road_service.active
-- legal.matters.list
-- legal.matters.detail
+Cursor closed load WIRE remainder (#6560 Built in_transit + honesty road/legal). Safety reverse Gap=0 (#6561).
 
-**YOUR TOP:** `reverse_link` leaf-specific Built across priority-14 (then connectivity). One column / PR. FAST-MERGE. Live=BLOCKED.
+**YOUR TOP (after Claude weekly limit ~18:00 CT):** `reverse_link` on lists/maintenance/dispatch/vendors/customers. Cursor absorbing insurance/factoring meanwhile. Live=BLOCKED.
 OUTBOX: `Codex | column=reverse_link | SHIPPED #N @ sha | Live=BLOCKED | NEXT=…`
 
 ## LAW LOCK 2026-08-13T19:52Z — FULLY WIRED COMPLETE BAR (mandatory)
