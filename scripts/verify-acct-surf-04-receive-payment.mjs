@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 /**
+ * @matrix-built {"modules":["accounting"],"cols":["connectivity","picker_law"],"leafRe":"^(payments\\.receive|payments)$","task":"ACCT-F5055-RECEIVE-PAYMENT-CREATE-URL","pr":"#6459"}
  * ACCT-SURF-04 — Receive Payment deep structural DoD.
  *
  * Frozen map: docs/trackers/ACCT-08-SURF-SURFACE-MAP-2026-07-25.md

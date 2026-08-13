@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 /**
+ * @matrix-built {"modules":["accounting"],"cols":["connectivity","picker_law"],"leafRe":"^(invoices\\.create|invoices\\.list)$","task":"ACCT-F5052-INVOICE-CREATE-COA","pr":"#6453"}
  * Guard: Invoice create uses income CoA ReferenceSelect + optional load linkage (15/22).
  * Proves PATCH source_load_id uniqueness (load_already_invoiced) mirrors from-load idempotency.
  *
