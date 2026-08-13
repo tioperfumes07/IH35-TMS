@@ -9,6 +9,7 @@ import { UnitFinanceLinkageTab } from "./UnitFinanceLinkageTab";
 import { TasksTab } from "../../components/tasks/TasksTab";
 import { UnitBrakesTab } from "../maintenance/units/UnitBrakesTab";
 import { UnitTiresTab } from "../maintenance/units/UnitTiresTab";
+import { UnitMaintenanceInspectionsReverseSection } from "../../components/maintenance/UnitMaintenanceInspectionsReverseSection";
 
 type UnitDetailTab = "permits" | "toll-tags" | "tasks" | "brakes" | "tires" | "finance";
 
@@ -42,6 +43,7 @@ export function UnitDetail() {
         subtitle="Permits, toll tags, and finance linkage"
       />
       {!companyId ? <p className="text-sm text-red-600">Select operating company.</p> : null}
+      {companyId ? <UnitMaintenanceInspectionsReverseSection operatingCompanyId={companyId} unitId={id} data-testid="unit-detail-maintenance-inspections" /> : null}
       <div className="flex flex-wrap gap-1 rounded-sm border border-gray-200 bg-white p-1">
         {(["permits", "toll-tags", "tasks", "brakes", "tires", "finance"] as const).map((tab) => (
           <button

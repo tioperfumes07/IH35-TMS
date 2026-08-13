@@ -120,6 +120,30 @@ async function withCompany<T>(
   });
 }
 
+async function validateInspectionLinks(
+  client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: Record<string, unknown>[] }> },
+  companyId: string,
+  unitId: string,
+  dvirSubmissionId?: string | null
+) {
+  const result = await client.query(
+    `SELECT
+       EXISTS (
+         SELECT 1 FROM mdata.units u
+         WHERE u.id = $2::uuid
+           AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $1::uuid
+           AND u.archived_at IS NULL
+       ) AS unit_ok,
+       ($3::uuid IS NULL OR EXISTS (
+         SELECT 1 FROM safety.dvir_submissions ds
+         WHERE ds.id = $3::uuid AND ds.operating_company_id = $1::uuid AND ds.unit_id = $2::uuid
+       )) AS dvir_ok`,
+    [companyId, unitId, dvirSubmissionId ?? null]
+  );
+  const validity = result.rows[0] as { unit_ok?: boolean; dvir_ok?: boolean } | undefined;
+  return Boolean(validity?.unit_ok && validity?.dvir_ok);
+}
+
 const INSPECTION_SELECT = `
   SELECT
     i.id::text,
@@ -251,14 +275,8 @@ export async function registerMaintenanceInspectionsRoutes(app: FastifyInstance)
 
     try {
       const created = await withCompany(user.uuid, body.operating_company_id, async (client) => {
-        if (body.dvir_submission_id) {
-          const dvirRes = await client.query(
-            `SELECT id FROM safety.dvir_submissions WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
-            [body.dvir_submission_id, body.operating_company_id]
-          );
-          if (!dvirRes.rows[0]) {
-            throw Object.assign(new Error("dvir_not_found"), { code: "dvir_not_found" });
-          }
+        if (!(await validateInspectionLinks(client, body.operating_company_id, body.unit_id, body.dvir_submission_id))) {
+          throw Object.assign(new Error("linked_entity_not_in_operating_company"), { code: "linked_entity_not_in_operating_company" });
         }
 
         const res = await client.query(
@@ -301,7 +319,7 @@ export async function registerMaintenanceInspectionsRoutes(app: FastifyInstance)
       return reply.code(201).send(created);
     } catch (err) {
       const coded = err as Error & { code?: string };
-      if (coded.code === "dvir_not_found") return reply.code(400).send({ error: "dvir_not_found" });
+      if (coded.code === "linked_entity_not_in_operating_company") return reply.code(400).send({ error: coded.code });
       throw err;
     }
   });
@@ -324,12 +342,12 @@ export async function registerMaintenanceInspectionsRoutes(app: FastifyInstance)
         const existing = existingRes.rows[0];
         if (!existing) return null;
 
-        if (body.dvir_submission_id) {
-          const dvirRes = await client.query(
-            `SELECT id FROM safety.dvir_submissions WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
-            [body.dvir_submission_id, body.operating_company_id]
-          );
-          if (!dvirRes.rows[0]) throw Object.assign(new Error("dvir_not_found"), { code: "dvir_not_found" });
+        const effectiveUnitId = String(body.unit_id ?? existing.unit_id);
+        const effectiveDvirId = body.dvir_submission_id === undefined
+          ? (existing.dvir_submission_id ? String(existing.dvir_submission_id) : null)
+          : body.dvir_submission_id;
+        if (!(await validateInspectionLinks(client, body.operating_company_id, effectiveUnitId, effectiveDvirId))) {
+          throw Object.assign(new Error("linked_entity_not_in_operating_company"), { code: "linked_entity_not_in_operating_company" });
         }
 
         const fields: string[] = [];
@@ -378,7 +396,7 @@ export async function registerMaintenanceInspectionsRoutes(app: FastifyInstance)
       return updated;
     } catch (err) {
       const coded = err as Error & { code?: string };
-      if (coded.code === "dvir_not_found") return reply.code(400).send({ error: "dvir_not_found" });
+      if (coded.code === "linked_entity_not_in_operating_company") return reply.code(400).send({ error: coded.code });
       throw err;
     }
   });
