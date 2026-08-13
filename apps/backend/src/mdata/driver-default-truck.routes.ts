@@ -7,6 +7,7 @@ import { requireAuth } from "../auth/session-middleware.js";
 
 const companyQuerySchema = z.object({ operating_company_id: z.string().uuid() });
 const driverParamsSchema = z.object({ id: z.string().uuid() });
+const unitParamsSchema = z.object({ id: z.string().uuid() });
 const setDefaultSchema = z.object({ unit_id: z.string().uuid() });
 
 function authed(req: FastifyRequest, reply: FastifyReply) {
@@ -102,6 +103,41 @@ async function fetchTruckAssignments(
 }
 
 export async function registerDriverDefaultTruckRoutes(app: FastifyInstance) {
+  app.get("/api/v1/mdata/units/:id/default-drivers", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const user = authed(req, reply);
+    if (!user) return;
+    const params = unitParamsSchema.safeParse(req.params ?? {});
+    const query = companyQuerySchema.safeParse(req.query ?? {});
+    if (!params.success || !query.success) return reply.code(400).send({ error: "validation_error" });
+    const payload = await withCurrentUser(user.uuid, async (client) => {
+      await setScopedCompanyContext(client, user.uuid, query.data.operating_company_id);
+      const unitOk = await assertUnitScope(client, params.data.id, query.data.operating_company_id);
+      if (!unitOk) return null;
+      const rows = await client.query(
+        `SELECT vda.driver_id::text,
+                NULLIF(TRIM(COALESCE(d.first_name, '') || ' ' || COALESCE(d.last_name, '')), '') AS driver_name,
+                vda.started_at::text,
+                vda.source
+         FROM telematics.vehicle_driver_assignments vda
+         JOIN mdata.drivers d ON d.id = vda.driver_id
+                             AND (d.operating_company_id = $2::uuid OR EXISTS (
+                               SELECT 1 FROM mdata.driver_company_authorizations dca
+                               WHERE dca.driver_id = d.id AND dca.company_id = $2::uuid
+                                 AND dca.is_authorized = true AND dca.deactivated_at IS NULL
+                             ))
+         WHERE vda.unit_id = $1::uuid
+           AND vda.operating_company_id = $2::uuid
+           AND vda.is_default = true
+           AND vda.ended_at IS NULL
+         ORDER BY vda.started_at DESC`,
+        [params.data.id, query.data.operating_company_id]
+      );
+      return { drivers: rows.rows };
+    });
+    if (!payload) return reply.code(404).send({ error: "mdata_unit_not_found" });
+    return payload;
+  });
+
   app.get("/api/v1/mdata/drivers/:id/truck-assignments", async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
