@@ -1,55 +1,57 @@
-# FINAL — CREATE-PATH TRIP WIRING · 2026-08-12 19:43 CT (CANONICAL)
+# FINAL — CREATE-PATH TRIP WIRING · 2026-08-12 20:15 CT (CANONICAL)
 
 **SUPERSEDES (do not open):**
+- Prior 19:43 reading of this folder that put **CC-2 Live prove in parallel with unfinished wiring** (owner correction 20:12 — that was a plan drift)
 - `_SUPERSEDED-2026-08-12/round7-trip-wiring-1943/FINAL-ALL-CODERS-2026-08-12/`
-- `_SUPERSEDED-…/MATRIX-COMPLETE-INVENTORY-2026-08-12/`
-- `_SUPERSEDED-…/OWNER-CHROME-AND-INVENTORY-LAW-2026-08-12/`
-- PR **#6290** (scoreboard Required density — CLOSED)
-- Any paste that says “extend Required inventory” / “matrix leaves first” as primary work
+- MATRIX-COMPLETE-INVENTORY · OWNER-CHROME packets · PR **#6290**
 
-**Quality bar (owner Desktop `Claude.docx` = repo `docs/specs/OWNER-QUALITY-COMPACT.md`):**
-never guess · never patch · never defer · never claim done without verified wiring · match/surpass QBO/NetSuite/McLeod/Alvys · research + live/repo evidence before recommend.
+**Quality bar:** Desktop `Claude.docx` = `docs/specs/OWNER-QUALITY-COMPACT.md`
 
 ---
 
-## Product bar (standing)
+## ★ OWNER SEQUENCE (LOCKED — do not re-order)
+
+> **Finish ALL true create-path trip wiring first (Built = 100% for this class).**  
+> **Live verify ONLY AFTER that gate — not interleaved.**
+
+This is Wire-First law. Scoreboard Required ≠ Built. Chrome (Wave D) last.
+
+---
+
+## Product bar
 
 Trailers (incl. reefers) follow trucks → load · maint · safety · accidents · insurance · docs · reverse.  
-On a trip → **load** must link repairs/WO · maintenance · safety/accidents · insurance · fines · fuel · expenses.  
-Fuel/trip-cost events cross-link: driver · customer · vendor · unit · trailer · load · AP/bill · expense · GL/JE · invoice · bank · reverse.  
-Goal: **P&L by truck** / **cost per trip**.  
-
-**Historical QBO fuel/expense `load_id=NULL` = pre-operational EXEMPT** — never invent FKs. Going-forward create paths must stamp load when on trip.
+On a trip → load links repairs/WO · maint · safety · insurance · fines · fuel · expenses.  
+Fuel/trip-cost ↔ driver · customer · vendor · unit · trailer · load · AP · expense · GL/JE · invoice · bank · reverse.  
+Historical QBO `load_id=NULL` = EXEMPT — never invent FKs.
 
 ---
 
-## Correct sequence (ALL SEATS — no deviation)
+## Ranked work (wire phase → then Live gate)
 
 | Rank | Work | Who | Status |
 |------|------|-----|--------|
-| **0** | Quality bar + this folder | all | LAW |
-| **1** | Accident CREATE param scramble (`$3`→unit) + expense `suggest-load` | Cursor | **DONE #6296** |
+| **0** | This sequence + Claude.docx | all | LAW |
+| **1** | Accident CREATE `$1…$6` + expense `suggest-load` | Cursor | **DONE #6296** |
 | **2** | ClaimCreate `suggest-load` | Cursor | **DONE #6300** |
-| **3** | **WO create** submit `trailer_id` / `equipment_id` (+ picker if missing; tires/reefer) | **Cursor** | **NOW** |
-| **4** | Schema/API: `fuel.trailer_id` · fuel JE class by unit/load · fuel office POST · `expense.trailer_id` · `accident.trailer_id` · unify active-load resolver | **CC-1** | **NOW** |
-| **5** | Live-verify create-path stamps on USMCA after deploy · reverse_link when FKs set · board OPEN for real gaps | **CC-2** | **NOW** |
-| **6** | Chrome only on surfaces you touch / non-hotfile classes — **Wave D NOT primary** while 3–5 open | **Codex** | support |
-| **7** | Matrix Required density / inventory expansion | — | **FORBIDDEN as primary** until create-paths green |
+| **3** | WO create `equipment_id` (trailer picker) | Cursor | **DONE #6303** |
+| **4** | `fuel.trailer_id` · fuel JE unit/load · fuel office POST · `expense.trailer_id` · `accident.trailer_id` · unify suggest-load | **CC-1** | **WIRE NOW** |
+| **5** | Cursor FE after CC-1 schema: expense/accident trailer pickers + any remaining create-path FE | **Cursor** | after #4 lands |
+| **6** | Wave B reverse_link / connectivity **Built** on create-path surfaces (code+API+guards — not Live certify) | **CC-2** | **WIRE NOW** (support) |
+| **7** | Codex: create-surface / non-hotfile FE only | Codex | support |
+| **8** | **LIVE VERIFY GATE** — USMCA create→stamp→Neon→reverse for full create-path class | **CC-2** | **BLOCKED until ranks 1–7 Built 100%** |
+| **9** | Matrix Required density as primary | — | **FORBIDDEN** |
 
-Waves A→B→C still apply **inside** a real create-path fix (FK + payload + reverse).  
-**Scoreboard Required cells ≠ implementation.** Built tags after the write path works.
+**Forbidden drift:** starting Live prove / Box-4 certification while fuel/expense/accident trailer schema or remaining Built reverse hops are still open.
 
 ---
 
 ## Read order
 
 1. This README  
-2. Your `PASTE-*.md` in this folder  
-3. `STATUS-NOW.md` (bus root)  
+2. Your `PASTE-*.md`  
+3. `STATUS-NOW.md`  
 4. Worktree INBOX  
-5. Ship (Claude-green + FAST-MERGE)
+5. Ship
 
-**Repo mirror:** `docs/bus/FINAL-CREATE-PATH-TRIP-WIRING-2026-08-12/`
-
-## Ping
-15m seat ping only · nudge=OFF while Jorge present · OUTBOX = **one line**.
+Repo: `docs/bus/FINAL-CREATE-PATH-TRIP-WIRING-2026-08-12/`

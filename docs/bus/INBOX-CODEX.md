@@ -1,1 +1,1 @@
-NOW 2026-08-12 19:43 CT · CANON=FINAL-CREATE-PATH-TRIP-WIRING-2026-08-12 · SUPPORT create-path FE / non-hotfile columns · NOT Required JSON · NOT Wave D primary · serialize Combobox with Cursor WO PR
+NOW 2026-08-12 20:13 CT · WIRE support FE only · Live after Built gate · not Required JSON
