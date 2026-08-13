@@ -751,6 +751,9 @@ export type ExpenseDetail = {
   payment_account_name: string | null;
   unit_id: string | null;
   unit_display_id: string | null;
+  /** RANK4 — trailer FK → mdata.equipment (#6322). */
+  trailer_id?: string | null;
+  trailer_display_id?: string | null;
   linked_work_order_uuid: string | null;
   work_order_display_id: string | null;
   /** ACCT-F17 — reverse bank hop when matched_expense_id is stamped. */
