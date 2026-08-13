@@ -72,6 +72,18 @@ function audit() {
     problems.push("explicit-load branch appears to compose an expense number literally — reuse generateExpenseNumber, never a second series");
   }
 
+  // ACCT-F5044 — CHECK-compatible literals on the link INSERT only (outbox may still say explicit_load).
+  if (!/VALUES\s*\([^)]*'user_assigned'\s*,\s*'high'/s.test(branch)) {
+    problems.push(
+      "explicit-load branch must INSERT expense_load_links VALUES with attribution_method='user_assigned' and attribution_confidence='high' (CHECK-compatible)"
+    );
+  }
+  if (/VALUES\s*\([^)]*'explicit_load'/s.test(branch)) {
+    problems.push(
+      "explicit-load branch INSERT still uses CHECK-illegal attribution_method 'explicit_load'"
+    );
+  }
+
   return problems;
 }
 
@@ -97,7 +109,12 @@ function selftest() {
   const mutations = [
     [
       "generator call removed (the original defect)",
-      inBranch((b) => b.replace(/const numbered = await generateExpenseNumber\(client, body\.load_id\);/, "const numbered = { number: 'X', seq: 1, loadNumber: 'L' };")),
+      inBranch((b) =>
+        b.replace(
+          /const numbered = await generateExpenseNumber\(client, body\.load_id, body\.operating_company_id\);/,
+          "const numbered = { number: 'X', seq: 1, loadNumber: 'L' };"
+        )
+      ),
     ],
     [
       "link-row insert removed",
@@ -106,6 +123,10 @@ function selftest() {
     [
       "expense_number stamp removed",
       inBranch((b) => b.replace(/UPDATE accounting\.expenses SET expense_number/, "UPDATE accounting.expenses SET updated_at_noop")),
+    ],
+    [
+      "CHECK-illegal attribution_method restored",
+      inBranch((b) => b.replace(/'user_assigned','high'/, "'explicit_load',1")),
     ],
     ["branch renamed away (inert-guard detection)", (s) => s.replace("} else if (body.load_id) {", "} else if (body.some_other_field) {")],
   ];

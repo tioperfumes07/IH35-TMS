@@ -802,6 +802,12 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
           // and historical rows are NOT backfilled — a number implies an attribution event that never
           // happened for them.
           const numbered = await generateExpenseNumber(client, body.load_id, body.operating_company_id);
+          // ACCT-F5044 — CHECK on expense_load_links only allows
+          // attribution_method IN (auto_timestamp|auto_location|manual_override|user_assigned)
+          // and attribution_confidence IN (high|medium|low). The prior literals
+          // 'explicit_load' + numeric 1 failed the CHECK, aborted the txn after
+          // expenses.load_id was staged, and left load-linked TMS expenses with
+          // expense_number NULL + zero expense_load_links rows (9 on USMCA).
           await client.query(
             `
               INSERT INTO expense_attribution.expense_load_links (
@@ -817,7 +823,7 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
                 attribution_reason,
                 attributed_by_user_id
               )
-              VALUES ($1,$2,'accounting',$3,$4,$5,$6,'explicit_load',1,$7,$8)
+              VALUES ($1,$2,'accounting',$3,$4,$5,$6,'user_assigned','high',$7,$8)
             `,
             [
               body.operating_company_id,

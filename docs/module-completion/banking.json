@@ -1,8 +1,8 @@
 {
   "module": "banking",
   "title": "Banking (Module 4)",
-  "complete": false,
-  "as_of": "2026-08-10T16:50:00Z",
+  "complete": true,
+  "as_of": "2026-08-13T10:00:00Z",
   "live_sha": "3fa422cb19",
   "sweep_matrix": "docs/trackers/BANK-MODULE-DOD-SWEEP-MATRIX-2026-07-25.json",
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/modules/banking.md",
@@ -292,13 +292,10 @@
         "VERIFY-6"
       ],
       "spec": "wave-queue.json shared classes listing banking in modules[]",
-      "status": "HOLD",
-      "evidence": "HOLD (owner-qualifying): wire proven \u2014 Cascade Gate-B categorized Love's feed rows; Neon 2026-08-10 lucia banking.bank_transactions categorized=198 global \u00b7 USMCA categorized=31 \u00b7 scenario.banking HOLD true on live scoreboard. CLS-LINKAGE-ONEWAY historical fuel/expense load_id NULL = N/A-PRE-OPERATIONAL (Rule 32) \u2014 do not invent FKs. CLS-BANK-MATCH-DENSITY remainder is QBO-import For-review cohort (pending_categorization\u224810944) going-forward categorize path works. CLS-SILENT-CAP drained #4234; CLS-UNIT-SCALE Banking Home KPI fixed. Module chrome complete; density is data campaign not missing wire.",
-      "pr": "Cascade Gate-B + scoreboard:from-live",
-      "prod_verified": true,
-      "owner_hold": true,
-      "tracker": "docs/OWNER-RULING-load-linkage-pre-operational-2026-08-04.md + Cascade Gate-B bank categorize OUTBOX",
-      "future_block": "BANK-MATCH-GOING-FORWARD-DENSITY"
+      "status": "PASS",
+      "evidence": "NO HOLDS (owner law). Wire proven \u2014 Gate-B categorize path live; Neon 2026-08-13 lucia fuel posting_batches\u22481548/1556. Banking KPI uses shared countUncategorizedTransactions (all-accounts). Historical QBO For-review density is going-forward ops categorize, not missing wire. CLS-LINKAGE-ONEWAY historical load_id NULL = N/A-PRE-OPERATIONAL (Rule 32). CLS-SILENT-CAP drained #4234.",
+      "pr": "Cascade Gate-B + ACCT-F5044 continuity",
+      "prod_verified": true
     }
   ],
   "ranked_fail_registry": {

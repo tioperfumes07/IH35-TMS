@@ -21,3 +21,5 @@
 2026-08-13T09:16CT | Cursor | SHIPPING ACCT-F5042 bill legal_matter_id forward write | NEXT=rank6 reverse
 2026-08-13T09:17CT | Cursor | SHIPPED #6425 ACCT-F5042 bill legal_matter_id forward | NEXT=rank6 reverse Built
 2026-08-13T09:10CT | Cursor | SHIPPING ACCT-F5043 bill create legal_matter picker | NEXT=rank6 reverse Built
+2026-08-13T09:11CT | Cursor | SHIPPED #6426 ACCT-F5043 bill legal_matter picker | NEXT=rank6 reverse Built
+2026-08-13T10:02CT | Cursor(CC1absorb) | column=load|connectivity | SHIPPING ACCT-F5044 expense_load_links CHECK fix + number repair | NEXT=vertical Wire A-C all-28
