@@ -42,6 +42,7 @@ import { listLoads } from "../../api/loads";
 import { listWorkOrders } from "../../api/maintenance";
 import { listInsuranceClaims, listInsuranceLawsuits, listInsurancePolicies } from "../../api/insurance";
 import { listFactoringAdvances } from "../../api/accounting";
+import { legalMattersApi } from "../../api/legal-matters";
 
 export type EntityPickerKind =
   | "driver"
@@ -53,6 +54,7 @@ export type EntityPickerKind =
   | "insurance_policy"
   | "insurance_claim"
   | "insurance_lawsuit"
+  | "legal_matter"
   | "factoring_advance";
 
 export type EntityPickerOption = {
@@ -375,6 +377,36 @@ const ENTITY_PICKERS: Record<EntityPickerKind, EntityPickerConfig> = {
         label: lawsuit.case_number,
         sublabel: lawsuit.status,
       }));
+    },
+  },
+
+  legal_matter: {
+    kind: "legal_matter",
+    label: "legal matter",
+    readTable: "legal.matters",
+    writeTable: "legal.matters",
+    readEndpoint: "GET /api/v1/legal/matters",
+    writeEndpoint: "POST /api/v1/legal/matters",
+    entityScoped: true,
+    evidence: "apps/backend/src/legal/matters.routes.ts (company-scoped SELECT / INSERT)",
+    inlineCreate: {
+      available: false,
+      reason:
+        "A legal matter is an audited case record with parties, deadlines and reserve fields; create it in Legal, then link it here (ACCT-F5043).",
+    },
+    serverSearch: false,
+    async list(operatingCompanyId) {
+      const res = await legalMattersApi.list(operatingCompanyId, { limit: 200 });
+      return (res.matters ?? []).map((matter) => {
+        const id = String(matter.id ?? "");
+        const number = String(matter.matter_number ?? matter.case_number ?? "").trim();
+        const status = String(matter.status ?? "").trim();
+        return {
+          value: id,
+          label: number || id,
+          sublabel: status || undefined,
+        };
+      }).filter((o) => o.value);
     },
   },
 

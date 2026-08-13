@@ -51,3 +51,37 @@ describe("accounting/bills ACCT-F5042-LEGAL-MATTER-FORWARD-WRITE", () => {
     expect(service).toContain("SET legal_matter_id = $3::uuid");
   });
 });
+
+describe("accounting/bills ACCT-F5043-LEGAL-MATTER-PICKER-ON-CREATE", () => {
+  const form = fs.readFileSync(
+    path.join(here, "../../../../frontend/src/components/accounting/VendorBillForm.tsx"),
+    "utf8"
+  );
+  const registry = fs.readFileSync(
+    path.join(here, "../../../../frontend/src/components/parity/entityPickerRegistry.ts"),
+    "utf8"
+  );
+  const modal = fs.readFileSync(
+    path.join(here, "../../../../frontend/src/pages/maintenance/components/CreateBillModal.tsx"),
+    "utf8"
+  );
+
+  it("EntityPicker registry has legal_matter kind reading legal.matters", () => {
+    expect(registry).toContain('kind: "legal_matter"');
+    expect(registry).toContain('readTable: "legal.matters"');
+    expect(registry).toContain("legalMattersApi.list");
+  });
+
+  it("VendorBillForm stamps legal_matter_id from picker or linkedLegalMatterId", () => {
+    expect(form).toContain('kind="legal_matter"');
+    expect(form).toContain("legal_matter_id: resolvedLegalMatterId");
+    expect(form).toContain("linkedLegalMatterId");
+  });
+
+  it("LegalMatterDetail Create Bill opens CreateBillModal with linkedLegalMatterId", () => {
+    expect(page).toContain("CreateBillModal");
+    expect(page).toContain("linkedLegalMatterId={id}");
+    expect(page).toContain("+ Create Bill");
+    expect(modal).toContain("linkedLegalMatterId");
+  });
+});

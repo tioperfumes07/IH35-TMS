@@ -20,6 +20,8 @@ type Props = {
   linkedWoId?: string;
   /** When present (WO context), the created bill persists a HARD FK to this unit. Falls back to the picker. */
   linkedUnitId?: string;
+  /** When present (Legal Matter context), stamps accounting.bills.legal_matter_id (ACCT-F5043). */
+  linkedLegalMatterId?: string;
   /**
    * M-21: Maintenance Home header opens this drawer with no WO context. Require WO + unit pickers
    * so a money event from Maintenance always carries maintenance linkage.
@@ -43,6 +45,7 @@ export function CreateBillModal({
   linkedWoDisplayId,
   linkedWoId,
   linkedUnitId,
+  linkedLegalMatterId,
   requireWoLink = false,
   initialBillType,
   onClose,
@@ -129,6 +132,7 @@ export function CreateBillModal({
           submitting={createMutation.isPending}
           linkedWoId={linkedWoId ?? pickedWoId ?? undefined}
           linkedUnitId={linkedUnitId ?? pickedUnitId ?? undefined}
+          linkedLegalMatterId={linkedLegalMatterId}
           linkedWoDisplayId={linkedWoDisplayId}
           initialBillType={initialBillType}
           submitLabel="Create Bill"
@@ -141,6 +145,7 @@ export function CreateBillModal({
               ...payload,
               work_order_id: payload.work_order_id ?? pickedWoId ?? linkedWoId ?? undefined,
               unit_id: payload.unit_id ?? pickedUnitId ?? linkedUnitId ?? undefined,
+              legal_matter_id: payload.legal_matter_id ?? linkedLegalMatterId ?? undefined,
             });
           }}
         />
