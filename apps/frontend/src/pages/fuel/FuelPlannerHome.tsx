@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   getFuelActiveRoutes,
@@ -53,6 +53,7 @@ type Props = {
 export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
   const location = useLocation();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { selectedCompanyId } = useCompanyContext();
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
@@ -61,6 +62,11 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
   const [importOpen, setImportOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [tab, setTab] = useState<FuelTabId>(initialTab);
+  // ACCT-F5048 — reverse "Open Fuel History" carries ?trailer_id=|unit_id=|load_id=|driver_id=
+  const deepLinkDriverId = searchParams.get("driver_id");
+  const deepLinkUnitId = searchParams.get("unit_id");
+  const deepLinkLoadId = searchParams.get("load_id");
+  const deepLinkTrailerId = searchParams.get("trailer_id");
 
   useEffect(() => {
     setTab(fuelTabFromPath(location.pathname) as FuelTabId);
@@ -100,9 +106,25 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
   });
   // FUEL-4: History tab real data — GET /api/v1/fuel/transactions (already existed on the
   // backend; the tab previously hardcoded `rows={[]}`). Only fetched while the History tab is active.
+  // ACCT-F5048: honor reverse deep-links so Trailer/Unit/Load/Driver "Open Fuel History" stays filtered.
   const fuelTransactionsQuery = useQuery({
-    queryKey: ["fuel", "transactions", companyId],
-    queryFn: () => getFuelTransactions(companyId, { limit: 200 }),
+    queryKey: [
+      "fuel",
+      "transactions",
+      companyId,
+      deepLinkDriverId,
+      deepLinkUnitId,
+      deepLinkLoadId,
+      deepLinkTrailerId,
+    ],
+    queryFn: () =>
+      getFuelTransactions(companyId, {
+        limit: 200,
+        driver_id: deepLinkDriverId || undefined,
+        unit_id: deepLinkUnitId || undefined,
+        load_id: deepLinkLoadId || undefined,
+        trailer_id: deepLinkTrailerId || undefined,
+      }),
     enabled: Boolean(companyId) && tab === "history",
   });
 

@@ -19,6 +19,8 @@ export type FuelTransactionRow = {
   unit_number?: string | null;
   load_id?: string | null;
   load_number?: string | null;
+  trailer_id?: string | null;
+  trailer_number?: string | null;
 };
 
 type Props = {
@@ -135,6 +137,21 @@ export function FuelTransactionsTable({ rows }: Props) {
           render: (row) =>
             row.load_id ? (
               <EntityLink kind="load" id={row.load_id} label={entityLabel(row.load_number ?? null, row.load_id, "Load")} />
+            ) : (
+              "—"
+            ),
+        },
+        {
+          key: "trailer_number",
+          label: "Trailer",
+          sortable: true,
+          render: (row) =>
+            row.trailer_id ? (
+              <EntityLink
+                kind="trailer"
+                id={row.trailer_id}
+                label={entityLabel(row.trailer_number ?? null, row.trailer_id, "Trailer")}
+              />
             ) : (
               "—"
             ),

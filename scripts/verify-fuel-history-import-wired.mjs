@@ -29,6 +29,8 @@ const repoRoot = process.cwd();
 const PLANNER_HOME = "apps/frontend/src/pages/fuel/FuelPlannerHome.tsx";
 const API_CLIENT = "apps/frontend/src/api/fuelPlanner.ts";
 const IMPORT_MODAL = "apps/frontend/src/pages/fuel/components/ImportFuelTransactionsModal.tsx";
+const REVERSE_SECTION = "apps/frontend/src/components/fuel/FuelTransactionsReverseSection.tsx";
+const TX_TABLE = "apps/frontend/src/pages/fuel/FuelTransactionsTable.tsx";
 const BACKEND_LIST_ROUTE = "apps/backend/src/fuel/fuel-transactions.routes.ts";
 const BACKEND_IMPORT_ROUTE = "apps/backend/src/fuel/fuel-transaction-import.routes.ts";
 const BACKEND_INDEX = "apps/backend/src/index.ts";
@@ -57,6 +59,24 @@ function checkHistoryFetchWired(plannerSrc, apiClientSrc) {
   // The historical dead state: hardcoded empty rows with no query gating it.
   if (/<FuelTransactionsTable\s+rows=\{\[\]\}\s*\/>/.test(plannerSrc)) {
     failures.push("FuelPlannerHome.tsx still renders <FuelTransactionsTable rows={[]} /> (hardcoded empty — the unwired defect)");
+  }
+  return failures;
+}
+
+/** ACCT-F5048 — reverse Open Fuel History must stay filtered on the money list. */
+function checkDeepLinkFilters(plannerSrc, reverseSrc, tableSrc) {
+  const failures = [];
+  if (!/searchParams\.get\("trailer_id"\)/.test(plannerSrc)) {
+    failures.push("FuelPlannerHome.tsx must read trailer_id from the URL (reverse deep-link)");
+  }
+  if (!/trailer_id:\s*deepLinkTrailerId/.test(plannerSrc) && !/trailer_id:\s*deepLinkTrailerId\s*\|\|/.test(plannerSrc)) {
+    failures.push("FuelPlannerHome.tsx must pass trailer_id into getFuelTransactions()");
+  }
+  if (!/to=\{`\/fuel\/history\?\$\{filterKey\}=/.test(reverseSrc ?? "")) {
+    failures.push("FuelTransactionsReverseSection Open Fuel History must keep ?filterKey=query");
+  }
+  if (!/kind="trailer"[\s\S]{0,120}?row\.trailer_id/.test(tableSrc ?? "")) {
+    failures.push("FuelTransactionsTable must render Trailer EntityLink column");
   }
   return failures;
 }
@@ -103,6 +123,8 @@ function scan() {
   const plannerSrc = read(PLANNER_HOME);
   const apiClientSrc = read(API_CLIENT);
   const importModalSrc = read(IMPORT_MODAL);
+  const reverseSrc = read(REVERSE_SECTION);
+  const tableSrc = read(TX_TABLE);
   const listRouteSrc = read(BACKEND_LIST_ROUTE);
   const importRouteSrc = read(BACKEND_IMPORT_ROUTE);
   const indexSrc = read(BACKEND_INDEX);
@@ -118,6 +140,7 @@ function scan() {
   }
 
   failures.push(...checkHistoryFetchWired(plannerSrc, apiClientSrc));
+  failures.push(...checkDeepLinkFilters(plannerSrc, reverseSrc, tableSrc));
   failures.push(...checkImportButtonWired(plannerSrc, importModalSrc));
   failures.push(...checkBackendEndpointsExist(listRouteSrc, importRouteSrc, indexSrc));
   return failures;
@@ -145,7 +168,8 @@ function selftest() {
   const goodPlanner = `
     import { getFuelTransactions } from "../../api/fuelPlanner";
     import { ImportFuelTransactionsModal } from "./components/ImportFuelTransactionsModal";
-    const fuelTransactionsQuery = useQuery({ queryFn: () => getFuelTransactions(companyId) });
+    const deepLinkTrailerId = searchParams.get("trailer_id");
+    const fuelTransactionsQuery = useQuery({ queryFn: () => getFuelTransactions(companyId, { trailer_id: deepLinkTrailerId || undefined }) });
     <ActionButton onClick={() => setImportOpen(true)}>Import Fuel Transactions</ActionButton>
     <FuelTransactionsTable rows={fuelTransactionsQuery.data?.transactions ?? []} />
     <ImportFuelTransactionsModal open={importOpen} />
@@ -156,6 +180,10 @@ function selftest() {
     </ActionButton>
     <FuelTransactionsTable rows={[]} />
   `;
+  const goodReverse = 'to={`/fuel/history?${filterKey}=${encodeURIComponent(filterValue)}`}';
+  const goodTable = 'kind="trailer" id={row.trailer_id} label={entityLabel(row.trailer_number';
+  const badReverse = 'to="/fuel/history"';
+  const badTable = 'kind="load" id={row.load_id}';
 
   const goodImportModal = `import { importFuelTransactions } from "../../../api/fuelPlanner";`;
 
@@ -180,6 +208,10 @@ function selftest() {
   expectPass("good history fetch", checkHistoryFetchWired(goodPlanner, goodApiClient));
   expectFail("bad api client (no getFuelTransactions)", checkHistoryFetchWired(goodPlanner, badApiClientMissing));
   expectFail("dead rows={[]} planner", checkHistoryFetchWired(badPlannerDeadButton, goodApiClient));
+
+  expectPass("good deeplink filters", checkDeepLinkFilters(goodPlanner, goodReverse, goodTable));
+  expectFail("unfiltered Open Fuel History", checkDeepLinkFilters(goodPlanner, badReverse, goodTable));
+  expectFail("missing trailer column", checkDeepLinkFilters(goodPlanner, goodReverse, badTable));
 
   expectPass("good import button", checkImportButtonWired(goodPlanner, goodImportModal));
   expectFail("disabled + coming-soon import button", checkImportButtonWired(badPlannerDeadButton, goodImportModal));
