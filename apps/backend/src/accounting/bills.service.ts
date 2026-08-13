@@ -661,7 +661,10 @@ export async function listBillsByVendor(
       where.push("b.revoked_at IS NULL");
     }
     if (options.hasBalance) {
+      // LV-PAYABLE-SELECTOR-OFFERS-VOIDED-BILLS / ACCT-F5028: dollar open ≠ payable.
+      // status 'void' can exist with revoked_at NULL (legacy/partial void) and still amount-paid > 0.
       where.push(`${BILL_OPEN_BALANCE_SQL} > 0`);
+      where.push("b.status NOT IN ('void', 'voided')");
     }
     values.push(options.limit, options.offset);
     const res = await client.query<BillRow>(
@@ -707,7 +710,9 @@ export async function listAllBillsForCompany(
       where.push("b.revoked_at IS NULL");
     }
     if (options.hasBalance) {
+      // LV-PAYABLE-SELECTOR-OFFERS-VOIDED-BILLS / ACCT-F5028: dollar open ≠ payable.
       where.push(`${BILL_OPEN_BALANCE_SQL} > 0`);
+      where.push("b.status NOT IN ('void', 'voided')");
     }
     values.push(options.limit, options.offset);
     const res = await client.query<BillRow>(
