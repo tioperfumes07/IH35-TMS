@@ -204,7 +204,6 @@
       "route_hint": "/legal/attorney-review",
       "required": [
         "connectivity",
-        "reverse_link",
         "picker_law"
       ]
     },
@@ -282,7 +281,6 @@
       "surface_path": "pages/legal/contracts/LeaseToOwnCreatorModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "legal_matter"
       ]
     },
@@ -335,7 +333,6 @@
       "surface_path": "pages/legal/templates/LegalTemplateNewModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "picker_law",
         "legal_matter"
       ]
@@ -349,7 +346,6 @@
       "surface_path": "pages/legal/contracts/LeaseToOwnCreatorModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "legal_matter"
       ]
     },
@@ -402,7 +398,6 @@
       "surface_path": "pages/legal/templates/LegalTemplateNewModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "picker_law",
         "legal_matter"
       ]
@@ -481,6 +476,42 @@
           "id": "matters.detail",
           "removed": [
             "load"
+          ]
+        }
+      ]
+    },
+    "reverse_link_2026_08_13_remainder": {
+      "finding": "VERTICAL-REVERSE-LINK-LEGAL-FUEL-REMAINDER",
+      "note": "Attorney public portal + lease/template create chrome have no reverse EntityLink. Built templates.detail (audit actor user EntityLink).",
+      "drops": [
+        {
+          "id": "attorney_review",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "legal.modal.lease_to_own_creator",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "legal.modal.legal_template_new",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "legal.parity.lease_to_own_creator",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "legal.parity.legal_template_new",
+          "removed": [
+            "reverse_link"
           ]
         }
       ]

@@ -64,3 +64,4 @@
 2026-08-13T21:12Z Cursor | SHIPPED VERTICAL-REVERSE-LINK-CUSTOMERS-REMAINDER (PR#6567) | customers reverse Gap=0 | Live=BLOCKED | NEXT=dispatch reverse
 2026-08-13T21:15Z Cursor | shipping VERTICAL-REVERSE-LINK-DISPATCH-QUEUES | queues Built + modal honesty | Live=BLOCKED | NEXT=maintenance reverse
 2026-08-13T21:45Z Cursor | shipping VERTICAL-REVERSE-LINK-LISTS-REMAINDER | teams/brokers Built + catalog honesty | Live=BLOCKED | NEXT=connectivity/picker census
+2026-08-13T21:55Z Cursor | shipping VERTICAL-REVERSE-LINK-LEGAL-FUEL-REMAINDER | Live=BLOCKED | NEXT=picker_law dispatch
