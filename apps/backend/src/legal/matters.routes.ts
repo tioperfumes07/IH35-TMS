@@ -171,7 +171,10 @@ export async function registerLegalMattersRoutes(app: FastifyInstance) {
     return result;
   });
 
-  app.post("/api/v1/legal/matters", async (req, reply) => {
+  app.post(
+    "/api/v1/legal/matters",
+    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
+    async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!requireRole(reply, String(authUser.role ?? ""), LEGAL_MATTERS_MANAGE_ROLES)) return;
@@ -189,15 +192,22 @@ export async function registerLegalMattersRoutes(app: FastifyInstance) {
       );
       return reply.code(201).send({ matter: row });
     } catch (err: unknown) {
+      if ((err as { code?: string }).code === "linked_entity_not_in_operating_company") {
+        return reply.code(400).send({ error: "linked_entity_not_in_operating_company" });
+      }
       const msg = err instanceof Error ? err.message : "";
       if (msg.includes("unique") || msg.includes("duplicate")) {
         return reply.code(409).send({ error: "matter_number_conflict" });
       }
       throw err;
     }
-  });
+    }
+  );
 
-  app.patch("/api/v1/legal/matters/:id", async (req, reply) => {
+  app.patch(
+    "/api/v1/legal/matters/:id",
+    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
+    async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!requireRole(reply, String(authUser.role ?? ""), LEGAL_MATTERS_MANAGE_ROLES)) return;
@@ -207,17 +217,26 @@ export async function registerLegalMattersRoutes(app: FastifyInstance) {
     if (!q.success) return sendValidationError(reply, q.error);
     const body = matterUpdateSchema.safeParse(req.body ?? {});
     if (!body.success) return sendValidationError(reply, body.error);
-    const row = await withCompanyScope(authUser.uuid, q.data.operating_company_id, async (client) =>
-      updateMatter(client, {
-        operatingCompanyId: q.data.operating_company_id,
-        matterId: p.data.id,
-        actorUserId: authUser.uuid,
-        body: body.data,
-      })
-    );
+    let row: Awaited<ReturnType<typeof updateMatter>> | undefined;
+    try {
+      row = await withCompanyScope(authUser.uuid, q.data.operating_company_id, async (client) =>
+        updateMatter(client, {
+          operatingCompanyId: q.data.operating_company_id,
+          matterId: p.data.id,
+          actorUserId: authUser.uuid,
+          body: body.data,
+        })
+      );
+    } catch (err: unknown) {
+      if ((err as { code?: string }).code === "linked_entity_not_in_operating_company") {
+        return reply.code(400).send({ error: "linked_entity_not_in_operating_company" });
+      }
+      throw err;
+    }
     if (!row) return reply.code(404).send({ error: "matter_not_found" });
     return { matter: row };
-  });
+    }
+  );
 
   app.post("/api/v1/legal/matters/:id/close", async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
