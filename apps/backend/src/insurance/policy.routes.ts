@@ -19,6 +19,7 @@ const companyQuerySchema = z.object({
 const listPoliciesQuerySchema = companyQuerySchema.extend({
   coverage_type: z.enum(INSURANCE_COVERAGE_TYPES).optional(),
   status: z.enum(INSURANCE_POLICY_STATUSES).optional(),
+  vendor_id: z.string().uuid().optional(),
 });
 
 const idParamsSchema = z.object({
@@ -141,6 +142,7 @@ function policySelectColumns() {
     insurer_email,
     agent_contact,
     status,
+    vendor_id::text,
     created_at::text,
     updated_at::text
   `;
@@ -191,6 +193,10 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
         // surfaces them for audit/evidence review. Keeps the DELETE→soft-cancel change invisible to
         // the active-policy list while preserving the row and its linked claims/lawsuits.
         filters.push(`status <> 'cancelled'`);
+      }
+      if (parsed.data.vendor_id) {
+        values.push(parsed.data.vendor_id);
+        filters.push(`vendor_id = $${values.length}::uuid`);
       }
       const result = await client.query(
         `

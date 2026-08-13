@@ -50,6 +50,7 @@ import { VendorApAgingSection } from "./vendors/VendorApAgingSection";
 import { RoadServiceReverseSection } from "../components/maintenance/RoadServiceReverseSection";
 import { VendorBorderCrossingsReverseSection } from "../components/dispatch/VendorBorderCrossingsReverseSection";
 import { WarrantyClaimsReverseSection } from "../components/maintenance/WarrantyClaimsReverseSection";
+import { VendorInsurancePoliciesReverseSection } from "../components/insurance/VendorInsurancePoliciesReverseSection";
 import { LinkedBankTransactionsPanel } from "../components/banking/LinkedBankTransactionsPanel";
 
 type SaferEntityStatus = {
@@ -887,6 +888,7 @@ export function VendorDetailPage() {
           contextLabel="this vendor"
           data-testid="vendor-warranty-claims-reverse"
         />
+        <VendorInsurancePoliciesReverseSection operatingCompanyId={companyId} vendorId={vendor.id} />
         <VendorBorderCrossingsReverseSection operatingCompanyId={companyId} vendorId={vendor.id} />
         <VendorPartsHistorySection operatingCompanyId={companyId} vendorId={vendor.id} />
         <VendorPreferredPartsReverseSection operatingCompanyId={companyId} vendorId={vendor.id} />

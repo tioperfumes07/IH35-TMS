@@ -46,6 +46,7 @@ export type InsuranceClaimRepairBooksTreatment = "expense" | "capitalize" | "ask
 
 export type InsurancePolicy = {
   id: string;
+  vendor_id: string;
   insurer_name: string;
   policy_number: string;
   coverage_type: InsuranceCoverageType;
@@ -384,6 +385,7 @@ export const insurancePoliciesApi = {
     operating_company_id: string;
     coverage_type?: InsuranceCoverageType;
     status?: InsurancePolicyStatus;
+    vendor_id?: string;
   }) {
     return apiRequest<{ policies: InsurancePolicy[] }>(`/api/v1/insurance/policies?${toInsuranceQuery(params)}`);
   },
@@ -560,6 +562,7 @@ export function listInsurancePolicies(params: {
   operating_company_id: string;
   coverage_type?: InsuranceCoverageType;
   status?: InsurancePolicyStatus;
+  vendor_id?: string;
 }) {
   return insurancePoliciesApi.list(params);
 }
