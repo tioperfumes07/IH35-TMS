@@ -640,6 +640,14 @@
       "modules": ["legal", "fleet"],
       "cols": ["unit", "connectivity", "reverse_link", "picker_law"],
       "leafRe": "^(matters|unit|profile|detail|create)"
+    },
+    {
+      "task": "LEGAL-MATTER-LAWSUIT-WRITER-REVERSE",
+      "pr": "this PR",
+      "guard": "scripts/verify-legal-matter-lawsuit-writer-reverse.mjs",
+      "modules": ["legal", "insurance"],
+      "cols": ["connectivity", "reverse_link", "picker_law"],
+      "leafRe": "^(matters|lawsuit|detail|create)"
     }
   ]
 }

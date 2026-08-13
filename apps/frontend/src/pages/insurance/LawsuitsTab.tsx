@@ -78,9 +78,6 @@ export function LawsuitsTab({ operatingCompanyId, claimId }: Props) {
   }
 
   const rows = query.data ?? [];
-  const selectedLawsuit = rows.find((r) => r.id === selectedLawsuitId) ?? null;
-  // Prefer explicit claimId prop (filtered tab), else the selected lawsuit's claim.
-  const legalClaimId = claimId || selectedLawsuit?.claim_id || null;
 
   const columns = useMemo<ParityColumn<InsuranceLawsuit>[]>(
     () => [
@@ -147,17 +144,15 @@ export function LawsuitsTab({ operatingCompanyId, claimId }: Props) {
         </Button>
       </div>
 
-      {legalClaimId ? (
+      {selectedLawsuitId ? (
         <div className="mb-3">
           <LegalMattersReverseSection
             operatingCompanyId={companyId}
-            filter={{ insurance_claim_id: legalClaimId }}
-            contextLabel="this lawsuit's claim"
+            filter={{ insurance_lawsuit_id: selectedLawsuitId }}
+            contextLabel="this lawsuit"
             data-testid="insurance-lawsuit-legal-matters"
           />
         </div>
-      ) : selectedLawsuitId ? (
-        <p className="mb-3 text-xs text-gray-500">Selected lawsuit has no linked claim — cannot reverse-link legal matters.</p>
       ) : null}
 
       {query.isError ? (

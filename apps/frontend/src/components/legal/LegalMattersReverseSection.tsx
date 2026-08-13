@@ -8,6 +8,7 @@ import { EntityLink } from "../shared/EntityLink";
 type Filter =
   | { unit_id: string; insurance_claim_id?: never; related_driver_id?: never; equipment_id?: never }
   | { insurance_claim_id: string; unit_id?: never; related_driver_id?: never; equipment_id?: never }
+  | { insurance_lawsuit_id: string; insurance_claim_id?: never; unit_id?: never; related_driver_id?: never; equipment_id?: never }
   | { related_driver_id: string; unit_id?: never; insurance_claim_id?: never; equipment_id?: never }
   // Trailers are mdata.equipment rows, not mdata.units - passing a trailer id as unit_id would
   // query the wrong key space and render a permanently-empty panel that looks correctly wired.
