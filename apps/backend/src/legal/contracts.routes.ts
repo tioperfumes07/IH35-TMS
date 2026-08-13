@@ -34,6 +34,8 @@ const operatingCompanyQuerySchema = z.object({
 const listQuerySchema = operatingCompanyQuerySchema.extend({
   status: z.enum(["draft", "sent", "viewed", "signed_electronically", "voided", "expired"]).optional(),
   search: z.string().trim().min(1).max(120).optional(),
+  signer_type: z.enum(["driver", "employee", "customer", "vendor", "other"]).optional(),
+  signer_entity_id: z.string().uuid().optional(),
 });
 
 const idParamSchema = z.object({
@@ -79,7 +81,7 @@ function getAuditContext(req: FastifyRequest, authUser: NonNullable<FastifyReque
 }
 
 export async function registerLegalContractRoutes(app: FastifyInstance) {
-  app.get("/api/v1/legal/contracts", async (req, reply) => {
+  app.get("/api/v1/legal/contracts", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!requireOfficeRole(reply, String(authUser.role ?? ""))) return;
@@ -91,6 +93,8 @@ export async function registerLegalContractRoutes(app: FastifyInstance) {
         operatingCompanyId: parsed.data.operating_company_id,
         status: parsed.data.status,
         search: parsed.data.search,
+        signerType: parsed.data.signer_type,
+        signerEntityId: parsed.data.signer_entity_id,
       });
     });
     return { contracts: rows };
@@ -210,7 +214,7 @@ export async function registerLegalContractRoutes(app: FastifyInstance) {
     }
   });
 
-  app.post("/api/v1/legal/contracts", async (req, reply) => {
+  app.post("/api/v1/legal/contracts", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!requireWriteRole(reply, String(authUser.role ?? ""))) return;
@@ -235,6 +239,9 @@ export async function registerLegalContractRoutes(app: FastifyInstance) {
       if (message === "legal_missing_required_variables") {
         const details = (error as Error & { details?: unknown }).details ?? [];
         return reply.code(400).send({ error: message, missing_required: details });
+      }
+      if (message === "legal_signer_entity_required" || message === "legal_signer_entity_not_found") {
+        return reply.code(400).send({ error: message });
       }
       return reply.code(500).send({ error: "legal_contract_create_failed" });
     }

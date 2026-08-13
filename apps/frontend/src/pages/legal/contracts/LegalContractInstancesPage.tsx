@@ -1,7 +1,7 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { legalContractsApi, type LegalContractStatus, type LegalContractSummary } from "../../../api/legal-contracts";
 import { Button } from "../../../components/Button";
 import { PageHeader } from "../../../components/layout/PageHeader";
@@ -18,6 +18,7 @@ import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { CollapsedListFilters, TableSearch, useStagedListFilters } from "../../../components/table";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { ListErrorState } from "../../../components/ListErrorState";
+import { EntityLink, type EntityKind } from "../../../components/shared/EntityLink";
 
 const STATUS_OPTIONS: Array<{ value: "all" | LegalContractStatus; label: string }> = [
   { value: "all", label: "All statuses" },
@@ -44,6 +45,8 @@ export function LegalContractInstancesPage() {
   const operatingCompanyId = selectedCompanyId ?? "";
   const [searchParams, setSearchParams] = useSearchParams();
   const [search, setSearch] = useState("");
+  const signerTypeParam = searchParams.get("signer_type") as LegalContractSummary["signer_type"] | null;
+  const signerEntityIdParam = searchParams.get("signer_entity_id") ?? undefined;
   const [statusFilter, setStatusFilter] = useState<"all" | LegalContractStatus>("all");
   const [templateFilter, setTemplateFilter] = useState("");
   const [signerTypeFilter, setSignerTypeFilter] = useState("all");
@@ -54,7 +57,9 @@ export function LegalContractInstancesPage() {
     empty: { statusFilter: "all" as const, templateFilter: "", signerTypeFilter: "all", dateFrom: "", dateTo: "" },
     onApply: (next) => { setStatusFilter(next.statusFilter); setTemplateFilter(next.templateFilter); setSignerTypeFilter(next.signerTypeFilter); setDateFrom(next.dateFrom); setDateTo(next.dateTo); },
   });
-  const [activeDetailId, setActiveDetailId] = useState<string | null>(null);
+  const linkedContractId = searchParams.get("contract_id");
+  const [activeDetailId, setActiveDetailId] = useState<string | null>(linkedContractId);
+  useEffect(() => setActiveDetailId(linkedContractId), [linkedContractId]);
   const openSend = searchParams.get("openSend") === "1";
   const openCreate = searchParams.get("openCreate") === "1";
   const { enabled: leaseToOwnEnabled } = useFeatureFlag("LEGAL_CONTRACTS_ENABLED", operatingCompanyId || undefined);
@@ -70,13 +75,15 @@ export function LegalContractInstancesPage() {
   });
 
   const listQuery = useQuery({
-    queryKey: ["legal", "contracts", operatingCompanyId, statusFilter, search],
+    queryKey: ["legal", "contracts", operatingCompanyId, statusFilter, search, signerTypeParam, signerEntityIdParam],
     enabled: Boolean(operatingCompanyId),
     queryFn: async () =>
       legalContractsApi.list({
         operating_company_id: operatingCompanyId,
         status: statusFilter === "all" ? undefined : statusFilter,
         search: search.trim() || undefined,
+        signer_type: signerTypeParam ?? undefined,
+        signer_entity_id: signerEntityIdParam,
       }),
     refetchInterval: 30_000,
   });
@@ -166,6 +173,12 @@ export function LegalContractInstancesPage() {
     ],
     [],
   );
+
+  const signerKind = (type: LegalContractSummary["signer_type"]): EntityKind | null => {
+    if (type === "driver" || type === "customer" || type === "vendor") return type;
+    if (type === "employee") return "user";
+    return null;
+  };
 
   return (
     <div className="space-y-3">
@@ -340,17 +353,31 @@ export function LegalContractInstancesPage() {
         <div className="rounded-sm border border-gray-200 bg-white p-3">
           <div className="mb-2 flex items-center justify-between">
             <div className="text-sm font-semibold text-gray-900">Instance Detail</div>
-            <Button size="sm" variant="secondary" onClick={() => setActiveDetailId(null)}>
+            <Button size="sm" variant="secondary" onClick={() => {
+              const next = new URLSearchParams(searchParams);
+              next.delete("contract_id");
+              setSearchParams(next);
+              setActiveDetailId(null);
+            }}>
               Close
             </Button>
           </div>
-          {!detailQuery.data ? (
+          {detailQuery.isError ? (
+            <ListErrorState
+              title="Couldn't load contract detail"
+              status={0}
+              message={(detailQuery.error as Error)?.message}
+              onRetry={() => void detailQuery.refetch()}
+            />
+          ) : !detailQuery.data ? (
             <div className="text-sm text-gray-500">Loading contract detail...</div>
           ) : (
             <div className="space-y-3 text-sm">
               <div className="grid gap-2 md:grid-cols-2">
-                <div><span className="font-semibold">Signer:</span> {detailQuery.data.signer_name}</div>
-                <div><span className="font-semibold">Template:</span> {detailQuery.data.template_code} v{detailQuery.data.template_version}</div>
+                <div><span className="font-semibold">Signer:</span>{" "}{signerKind(detailQuery.data.signer_type) ? (
+                  <EntityLink kind={signerKind(detailQuery.data.signer_type)!} id={detailQuery.data.signer_entity_id} label={detailQuery.data.signer_name} />
+                ) : detailQuery.data.signer_name}</div>
+                <div><span className="font-semibold">Template:</span>{" "}<Link className="text-slate-700 underline" to={`/legal/templates/${detailQuery.data.template_id}`}>{detailQuery.data.template_code} v{detailQuery.data.template_version}</Link></div>
                 <div><span className="font-semibold">Status:</span> {detailQuery.data.status}</div>
                 <div><span className="font-semibold">Language:</span> {detailQuery.data.language}</div>
               </div>
@@ -392,7 +419,11 @@ export function LegalContractInstancesPage() {
         open={openCreate}
         operatingCompanyId={operatingCompanyId}
         onClose={() => setSearchParams({})}
-        onSaved={refresh}
+        onSaved={async (contractId) => {
+          await refresh();
+          setActiveDetailId(contractId);
+          setSearchParams({ contract_id: contractId });
+        }}
       />
       <SendContractModal
         open={openSend}

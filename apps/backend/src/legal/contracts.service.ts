@@ -153,7 +153,7 @@ async function enqueueOutboxEvent(client: QueryableClient, eventType: string, pa
 
 export async function listContractInstances(
   client: QueryableClient,
-  args: { operatingCompanyId: string; status?: string; search?: string }
+  args: { operatingCompanyId: string; status?: string; search?: string; signerType?: string; signerEntityId?: string }
 ) {
   const values: unknown[] = [args.operatingCompanyId];
   const where: string[] = ["ci.operating_company_id = $1::uuid"];
@@ -164,6 +164,14 @@ export async function listContractInstances(
   if (args.search) {
     values.push(`%${args.search.trim()}%`);
     where.push(`(ci.signer_name ILIKE $${values.length} OR ci.template_code ILIKE $${values.length})`);
+  }
+  if (args.signerType) {
+    values.push(args.signerType);
+    where.push(`ci.signer_type = $${values.length}`);
+  }
+  if (args.signerEntityId) {
+    values.push(args.signerEntityId);
+    where.push(`ci.signer_entity_id = $${values.length}::uuid`);
   }
   const res = await client.query(
     `
@@ -240,6 +248,20 @@ export async function createContractInstance(
     const err = new Error("legal_missing_required_variables");
     (err as Error & { details?: unknown }).details = validation.missing_required;
     throw err;
+  }
+
+  if (input.signer_type === "vendor") {
+    if (!input.signer_entity_id) throw new Error("legal_signer_entity_required");
+    const signerRes = await client.query(
+      `SELECT 1
+         FROM mdata.vendors
+        WHERE id = $1::uuid
+          AND operating_company_id = $2::uuid
+          AND deactivated_at IS NULL
+        LIMIT 1`,
+      [input.signer_entity_id, args.operatingCompanyId]
+    );
+    if (!signerRes.rows[0]) throw new Error("legal_signer_entity_not_found");
   }
 
   const insertRes = await client.query(

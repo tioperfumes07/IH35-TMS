@@ -7,7 +7,7 @@ import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { useToast } from "../../../components/Toast";
 import { legalContractsApi, type LegalContractLanguage, type LegalSignerType } from "../../../api/legal-contracts";
 import { legalTemplatesApi, type LegalTemplateSummary } from "../../../api/legal-templates";
-import { getDriver, listCustomers } from "../../../api/mdata";
+import { getDriver, getVendor, listCustomers, listVendors } from "../../../api/mdata";
 import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { CappedListNotice } from "../../../components/CappedListNotice";
@@ -23,7 +23,7 @@ type Props = {
   open: boolean;
   operatingCompanyId: string;
   onClose: () => void;
-  onSaved: () => void | Promise<void>;
+  onSaved: (contractId: string) => void | Promise<void>;
 };
 
 type Party = { id: string; label: string; email?: string | null; phone?: string | null };
@@ -121,6 +121,18 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
         search: customerSearch || undefined,
       }),
   });
+  const [vendorSearch, setVendorSearch] = useState("");
+  const vendorsQuery = useQuery({
+    queryKey: ["legal", "party", "vendors", operatingCompanyId, vendorSearch],
+    enabled: open && signerType === "vendor" && Boolean(operatingCompanyId),
+    queryFn: () =>
+      listVendors({
+        operating_company_id: operatingCompanyId,
+        status: "active",
+        limit: vendorSearch ? 200 : 500,
+        search: vendorSearch || undefined,
+      }),
+  });
   const unitsQuery = useQuery({
     queryKey: ["legal", "party", "units", operatingCompanyId],
     enabled: open && Boolean(operatingCompanyId) && selectedTemplate?.category === "lease",
@@ -136,6 +148,15 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
       phone: (c as { phone?: string | null }).phone ?? null,
     }));
   }, [signerType, customersQuery.data]);
+  const vendorPartyOptions: Party[] = useMemo(() => {
+    if (signerType !== "vendor") return [];
+    return (vendorsQuery.data?.vendors ?? []).map((vendor) => ({
+      id: String(vendor.id),
+      label: vendor.name,
+      email: vendor.email ?? null,
+      phone: vendor.phone ?? null,
+    }));
+  }, [signerType, vendorsQuery.data]);
 
   const isLease = selectedTemplate?.category === "lease";
   const leaseUnits = unitsQuery.data?.units ?? [];
@@ -201,9 +222,9 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
       }
       return { created, sent: Boolean(deliveryChannel) };
     },
-    onSuccess: async ({ sent }) => {
+    onSuccess: async ({ created, sent }) => {
       pushToast(sent ? "Contract created and sent for signature" : "Contract draft created", "success");
-      await onSaved();
+      await onSaved(created.id);
       onClose();
     },
     onError: (error) => pushToast(userFacingApiError(error, "Create failed"), "error"),
@@ -213,7 +234,7 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
 
   const canGoStep2 = Boolean(templateCode);
   const canGoStep3 = canGoStep2 && missingRequired.length === 0;
-  const canSubmit = canGoStep3 && signerName.trim().length >= 2 && (signerType === "other" || signerEntityId || signerType === "vendor");
+  const canSubmit = canGoStep3 && signerName.trim().length >= 2 && (signerType === "other" || Boolean(signerEntityId));
 
   return (
     <ParityDrawer open={open} onClose={onClose} title="Create contract" size="wide">
@@ -458,7 +479,7 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
               </SelectCombobox>
             </label>
 
-            {(signerType === "driver" || signerType === "customer") && (
+            {(signerType === "driver" || signerType === "customer" || signerType === "vendor") && (
               <label className="flex flex-col gap-1 text-sm">
                 <span className="font-semibold text-slate-700">
                   Select {signerType}
@@ -493,7 +514,7 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
                         });
                     }}
                   />
-                ) : (
+                ) : signerType === "customer" ? (
                   <ReferenceSelect
                     value={signerEntityId || null}
                     onChange={(id) => {
@@ -516,6 +537,35 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
                     onSearch={setCustomerSearch}
                     loading={customersQuery.isLoading}
                   />
+                ) : (
+                  <ReferenceSelect
+                    value={signerEntityId || null}
+                    onChange={(id) => {
+                      setSignerEntityId(id ?? "");
+                      const selected = vendorPartyOptions.find((option) => option.id === (id ?? ""));
+                      if (selected) {
+                        setSignerName(selected.label);
+                        setSignerEmail(selected.email ?? "");
+                        setSignerPhone(selected.phone ?? "");
+                      } else if (id) {
+                        void getVendor(id, operatingCompanyId).then((vendor) => {
+                          setSignerName(vendor.name);
+                          setSignerEmail(vendor.email ?? "");
+                          setSignerPhone(vendor.phone ?? "");
+                        });
+                      } else {
+                        setSignerName("");
+                        setSignerEmail("");
+                        setSignerPhone("");
+                      }
+                    }}
+                    options={vendorPartyOptions.map((vendor) => ({ value: vendor.id, label: vendor.label, type: vendor.id }))}
+                    createKind="vendor"
+                    operatingCompanyId={operatingCompanyId}
+                    placeholder="Search vendor…"
+                    onSearch={setVendorSearch}
+                    loading={vendorsQuery.isLoading}
+                  />
                 )}
                 {signerType === "customer" ? (
                   <CappedListNotice
@@ -523,6 +573,15 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
                     limit={customerSearch ? 200 : 500}
                     total={customersQuery.data?.total ?? null}
                     hint="Type to search for a customer not listed."
+                    className="text-[11px] text-slate-600"
+                  />
+                ) : null}
+                {signerType === "vendor" ? (
+                  <CappedListNotice
+                    shown={vendorPartyOptions.length}
+                    limit={vendorSearch ? 200 : 500}
+                    total={vendorsQuery.data?.total ?? null}
+                    hint="Type to search for a vendor not listed."
                     className="text-[11px] text-slate-600"
                   />
                 ) : null}
