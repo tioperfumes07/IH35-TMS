@@ -44,6 +44,7 @@ import { ExpensesReverseSection } from "../../components/accounting/ExpensesReve
 import { BillsReverseSection } from "../../components/accounting/BillsReverseSection";
 import { UnitPermitsReverseSection } from "../../components/safety/UnitPermitsReverseSection";
 import { RoadServiceReverseSection } from "../../components/maintenance/RoadServiceReverseSection";
+import { UnitMaintenanceInspectionsReverseSection } from "../../components/maintenance/UnitMaintenanceInspectionsReverseSection";
 import { LinkedBankTransactionsPanel } from "../../components/banking/LinkedBankTransactionsPanel";
 
 export type UnitProfileAggregate = {
@@ -375,6 +376,9 @@ export function VehicleProfilePage() {
               contextLabel="this unit"
               data-testid="vehicle-profile-road-service-reverse"
             />
+          </div>
+          <div data-testid="vp-section-10h-maintenance-inspections">
+            <UnitMaintenanceInspectionsReverseSection operatingCompanyId={companyId} unitId={id} />
           </div>
           <div data-testid="vp-section-11-action-bar">
             <ActionBar

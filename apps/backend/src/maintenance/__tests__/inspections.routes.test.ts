@@ -123,7 +123,7 @@ describe("maintenance inspection routes (B30)", () => {
   it("POST /api/v1/maintenance/inspections creates inspection with DVIR link", async () => {
     mockQuery.mockImplementation(async (sql: string) => {
       if (sql.includes("set_config")) return { rows: [] };
-      if (sql.includes("FROM safety.dvir_submissions")) return { rows: [{ id: DVIR_ID }] };
+      if (sql.includes("AS unit_ok")) return { rows: [{ unit_ok: true, dvir_ok: true }] };
       if (sql.includes("INSERT INTO maintenance.inspections")) return { rows: [{ id: INSPECTION_ID }] };
       return { rows: [sampleRow()], rowCount: 1 };
     });
@@ -154,6 +154,7 @@ describe("maintenance inspection routes (B30)", () => {
     mockQuery.mockImplementation(async (sql: string) => {
       if (sql.includes("set_config")) return { rows: [] };
       if (sql.includes("SELECT * FROM maintenance.inspections")) return { rows: [sampleRow({ status: "scheduled" })] };
+      if (sql.includes("AS unit_ok")) return { rows: [{ unit_ok: true, dvir_ok: true }] };
       return { rows: [sampleRow({ status: "completed" })], rowCount: 1 };
     });
     const res = await app.inject({
@@ -167,6 +168,27 @@ describe("maintenance inspection routes (B30)", () => {
     });
     expect(res.statusCode).toBe(200);
     expect(res.json()).toMatchObject({ status: "completed" });
+  });
+
+  it("rejects a unit or DVIR outside the selected unit/company before insert", async () => {
+    mockQuery.mockImplementation(async (sql: string) => {
+      if (sql.includes("set_config")) return { rows: [] };
+      if (sql.includes("AS unit_ok")) return { rows: [{ unit_ok: false, dvir_ok: true }] };
+      return { rows: [] };
+    });
+    const res = await app.inject({
+      method: "POST",
+      url: "/api/v1/maintenance/inspections",
+      payload: {
+        operating_company_id: COMPANY,
+        unit_id: UNIT_ID,
+        inspection_type: "pre_trip",
+        dvir_submission_id: DVIR_ID,
+      },
+    });
+    expect(res.statusCode).toBe(400);
+    expect(res.json()).toMatchObject({ error: "linked_entity_not_in_operating_company" });
+    expect(mockQuery.mock.calls.some((call) => String(call[0]).includes("INSERT INTO maintenance.inspections"))).toBe(false);
   });
 
   it("POST /api/v1/maintenance/inspections/:id/photos attaches docs file", async () => {
