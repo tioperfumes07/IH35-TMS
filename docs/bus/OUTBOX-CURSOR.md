@@ -20,3 +20,5 @@
 2026-08-13T09:16CT | Cursor | ACCT-F5042 shipping | NEXT=rank6 reverse
 2026-08-13T09:17CT | Cursor | #6425 F5042 done | NEXT=rank6 reverse
 2026-08-13T09:10CT | Cursor | ACCT-F5043 shipping | NEXT=rank6 reverse
+2026-08-13T09:11CT | Cursor | #6426 F5043 done | NEXT=rank6 reverse
+2026-08-13T10:02CT | Cursor | ACCT-F5044 shipping load↔expense number | NEXT=vertical all-28
