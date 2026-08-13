@@ -176,13 +176,8 @@
       "sub": "Drivers settlements hop",
       "route_hint": "/drivers/settlements",
       "required": [
-        "driver",
-        "load",
-        "liability",
-        "gl_je",
         "connectivity",
-        "reverse_link",
-        "settlement"
+        "reverse_link"
       ]
     },
     {
@@ -192,8 +187,6 @@
       "route_hint": "/drivers/pre-settlements",
       "required": [
         "driver",
-        "load",
-        "liability",
         "connectivity",
         "settlement"
       ]
@@ -390,7 +383,7 @@
         "reverse_link",
         "driver",
         "settlement",
-        "gl_je"
+        "picker_law"
       ]
     },
     {
@@ -404,9 +397,7 @@
         "connectivity",
         "reverse_link",
         "driver",
-        "settlement",
-        "liability",
-        "gl_je"
+        "liability"
       ]
     },
     {
