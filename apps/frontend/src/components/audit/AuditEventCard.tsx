@@ -1,5 +1,6 @@
 import type { AuditViewerEvent } from "../../api/audit";
 import { entityLabel } from "../../lib/entity-label";
+import { EntityLink } from "../shared/EntityLink";
 
 const SEVERITY_COLORS: Record<string, string> = {
   info: "bg-slate-100 text-slate-700",
@@ -56,11 +57,7 @@ export function AuditEventCard({ event, onClose }: Props) {
           </div>
           <div className="text-xs text-gray-500">
             {fmtDate(event.created_at)}
-            {event.actor_email
-              ? ` · ${event.actor_email}`
-              : event.actor_user_id
-                ? ` · ${entityLabel(null, event.actor_user_id, "User")}`
-                : ""}
+            {event.actor_user_id ? <>{" · "}<EntityLink kind="user" id={event.actor_user_id} label={entityLabel(event.actor_email, event.actor_user_id, "User")} /></> : event.actor_email ? ` · ${event.actor_email}` : ""}
             {event.source ? ` · source: ${event.source}` : ""}
           </div>
           <div className="text-[11px] font-mono text-gray-400">id: {event.id}</div>
