@@ -217,6 +217,7 @@ function run() {
     "chrome.toolbar_search",
     "chrome.toolbar_range",
     "chrome.toolbar_gear",
+    "chrome.toolbar_filter",
   ];
   for (const [mod, doc] of byMod) {
     const leafIds = new Set((doc.leaves || []).map((l) => l.id));
@@ -232,7 +233,7 @@ function run() {
     process.exit(1);
   }
   console.log(
-    `verify-required-surface-inventory-complete OK — ${rows.length} surfaces covered; §B9 columns + toolbar triad on ${byMod.size} modules`,
+    `verify-required-surface-inventory-complete OK — ${rows.length} surfaces covered; §B9 columns + toolbar search/range/gear/filter on ${byMod.size} modules`,
   );
 }
 
