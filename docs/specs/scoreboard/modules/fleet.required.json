@@ -996,8 +996,7 @@
         "driver",
         "unit",
         "load",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -1009,7 +1008,6 @@
       "surface_path": "components/fleet/EditVehicleModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "unit"
       ]
     },
@@ -1022,7 +1020,6 @@
       "surface_path": "components/fleet/CreateTrailerModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "picker_law",
         "unit",
         "trailer",
@@ -1038,7 +1035,6 @@
       "surface_path": "components/fleet/CreateUnitModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "picker_law",
         "unit",
         "trailer",
@@ -1054,7 +1050,6 @@
       "surface_path": "components/fleet/EditTrailerModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "picker_law",
         "unit",
         "trailer",
@@ -1070,7 +1065,6 @@
       "surface_path": "components/fleet/QuickAssignModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "picker_law",
         "unit",
         "trailer",
