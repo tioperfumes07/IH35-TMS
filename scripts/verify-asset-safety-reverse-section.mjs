@@ -16,8 +16,8 @@
  *      A component that exists but is not mounted is the classic fake fix.
  *   3. Scoping is SERVER-SIDE SQL on all four routes (each caps at LIMIT 500 / max 500, so a
  *      client-side filter silently under-reports an asset's compliance history past that cap).
- *   4. Accidents stay UNIT-ONLY. `safety.accident_reports` has NO trailer column, so an Accidents
- *      block on a trailer would assert a clean accident history that was never recorded anywhere.
+ *   4. Accidents scope by unit OR trailer. `safety.accident_reports.trailer_id` landed in the
+ *      RANK5/RANK6 create+reverse wave, so suppressing trailer history is now a compliance defect.
  *   5. The client actually sends the params — a server filter nothing reaches is dead code.
  */
 import fs from "node:fs";
@@ -89,12 +89,12 @@ export function assertAssetSafetyReverse(sources) {
     problems.push(`${INCIDENTS_ROUTE}: GET incidents has no trailer_id filter — trailer interchanges stay unreachable from the trailer they concern.`);
   }
 
-  // 4. Accidents stay unit-only (safety.accident_reports has no trailer column).
-  if (/getSafetyAccidents\([^)]*trailer_id/.test(src[SECTION]) || /trailer_id/.test(src[ACCIDENTS_ROUTE])) {
-    problems.push(`${ACCIDENTS_ROUTE}/${SECTION}: accidents must stay UNIT-ONLY — safety.accident_reports has no trailer column, so a trailer accident filter would always return empty and assert a false clean history.`);
+  // 4. Accidents scope by the active asset kind; both FKs exist on safety.accident_reports.
+  if (!/getSafetyAccidents\(operatingCompanyId, isUnit \? \{ unit_id: assetId \} : \{ trailer_id: assetId \}\)/.test(src[SECTION])) {
+    problems.push(`${SECTION}: accidents query must send the active unit_id or trailer_id FK.`);
   }
-  if (!/enabled: enabled && isUnit/.test(src[SECTION])) {
-    problems.push(`${SECTION}: the accidents query must be gated to units (\`enabled: enabled && isUnit\`) so a trailer never renders an always-empty Accidents block.`);
+  if (!/ar\.trailer_id = \$/.test(src[ACCIDENTS_ROUTE])) {
+    problems.push(`${ACCIDENTS_ROUTE}: GET accidents does not filter by trailer in SQL.`);
   }
 
   // 5. The client sends the params.
@@ -147,7 +147,7 @@ if (SELFTEST) {
   );
   expectCaught(
     "dot-trailer-filter-removed",
-    { ...live, [DOT_ROUTE]: live[DOT_ROUTE].replace(/AND trailer_id = \$\$\{values\.length\}/g, "") },
+    { ...live, [DOT_ROUTE]: live[DOT_ROUTE].replace(/AND di\.trailer_id = \$\$\{values\.length\}/g, "") },
     "must filter by BOTH unit_id and trailer_id"
   );
   expectCaught(
@@ -161,9 +161,14 @@ if (SELFTEST) {
     "trailer interchanges stay unreachable"
   );
   expectCaught(
-    "accidents-ungated-on-trailer",
-    { ...live, [SECTION]: live[SECTION].replace(/enabled: enabled && isUnit/g, "enabled") },
-    "must be gated to units"
+    "accidents-trailer-client-filter-removed",
+    { ...live, [SECTION]: live[SECTION].replace(/: \{ trailer_id: assetId \}/g, ": {}") },
+    "active unit_id or trailer_id"
+  );
+  expectCaught(
+    "accidents-trailer-server-filter-removed",
+    { ...live, [ACCIDENTS_ROUTE]: live[ACCIDENTS_ROUTE].replace(/AND ar\.trailer_id = \$\$\{values\.length\}/g, "") },
+    "does not filter by trailer"
   );
   expectCaught(
     "client-param-not-sent",
@@ -180,7 +185,7 @@ if (SELFTEST) {
     for (const f of failures) console.error(`  ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — 9 planted defects caught, live sources clean`);
+  console.log(`${LABEL} SELFTEST PASS — 10 planted defects caught, live sources clean`);
   process.exit(0);
 }
 
@@ -191,5 +196,5 @@ if (problems.length) {
   process.exit(1);
 }
 console.log(
-  `${LABEL} OK — unit + trailer profiles surface accidents (unit-only), DOT inspections, DVIRs and incidents, asset-scoped in SQL`
+  `${LABEL} OK — unit + trailer profiles surface accidents, DOT inspections, DVIRs and incidents, asset-scoped in SQL`
 );
