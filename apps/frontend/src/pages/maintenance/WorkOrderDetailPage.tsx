@@ -31,6 +31,7 @@ import { useToast } from "../../components/Toast";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { formatDateUS } from "../../lib/formatDate";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { RoadServiceReverseSection } from "../../components/maintenance/RoadServiceReverseSection";
 
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
 /** Matches apps/backend/src/maintenance/wo-oos-estimator.ts DEFAULT_DAILY_LOSS_CENTS */
@@ -686,6 +687,11 @@ export function WorkOrderDetailPage() {
 
       <div className="grid grid-cols-1 gap-3 xl:grid-cols-[2fr_1fr]">
         <div className="space-y-3">
+          <RoadServiceReverseSection
+            filter={{ wo_id: id }}
+            contextLabel="this work order"
+            data-testid="work-order-detail-road-service-reverse"
+          />
           <div
             className="rounded-sm border border-gray-200 bg-white p-4 text-sm text-gray-700"
             data-testid="wo-detail-linkage-section"

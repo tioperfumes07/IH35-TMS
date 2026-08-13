@@ -113,7 +113,12 @@ export function QboSyncDetailPage() {
 
   return (
     <div className="space-y-4 p-4">
-      <PageHeader title="QBO Sync Event Log" subtitle="Read-only tenant-scoped observability across runs, alerts, and outbox events" />
+      <PageHeader
+        backHref="/integrations"
+        breadcrumb={["Integrations", "QBO event log"]}
+        title="QBO Sync Event Log"
+        subtitle="Read-only tenant-scoped observability across runs, alerts, and outbox events"
+      />
 
       {!companyId ? <p className="text-sm text-red-600">Select an operating company.</p> : null}
       {eventLogQuery.isError ? <ReportBlockVPendingBanner error={eventLogQuery.error} onRetry={() => void eventLogQuery.refetch()} /> : null}

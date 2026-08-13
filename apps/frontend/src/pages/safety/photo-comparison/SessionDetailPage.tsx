@@ -1,6 +1,7 @@
 import { useParams } from "react-router-dom";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { SessionDetail } from "./SessionDetail";
+import { PageHeader } from "../../../components/layout/PageHeader";
 
 export function SessionDetailPage() {
   const { sessionUuid } = useParams<{ sessionUuid: string }>();
@@ -11,5 +12,15 @@ export function SessionDetailPage() {
     return <div className="p-4 text-sm text-red-600">Session UUID required.</div>;
   }
 
-  return <SessionDetail sessionUuid={sessionUuid} operatingCompanyId={companyId} />;
+  return (
+    <div className="space-y-3 p-4">
+      <PageHeader
+        backHref="/safety"
+        breadcrumb={["Safety", "Photo comparison"]}
+        title="Photo comparison"
+        subtitle={`Session ${sessionUuid}`}
+      />
+      <SessionDetail sessionUuid={sessionUuid} operatingCompanyId={companyId} />
+    </div>
+  );
 }

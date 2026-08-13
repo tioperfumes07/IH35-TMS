@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["accounting","banking","cash-flow","compliance","customers","dispatch","docs","driver-hub","drivers","factoring","finance","fleet","form_425","fuel","home","insurance","inventory","legal","lists","maintenance","program","reports","safety","settlements","system","tasks","users","vendors"],"cols":["reverse_link"],"leafRe":".*","task":"CLS-ORPHAN-SURFACE-ALL-MODULES","vertical":"class-sweep"} */
 /**
  * CLS-ORPHAN-SURFACE / LINKAGE LAW §10 — a detail page must embed a way BACK.
  *
@@ -31,6 +32,7 @@ const ROOT = fileURLToPath(new URL("..", import.meta.url));
 const LABEL = "verify-reverse-linkage-embedded";
 const SRC = "apps/frontend/src/pages";
 const BASELINE_PATH = "scripts/reverse-linkage-baseline.json";
+const ROUTE_MANIFEST_PATH = "apps/frontend/src/routes/manifest.tsx";
 
 /** Pages whose whole job is to be a drill TARGET. */
 const DETAIL_PAGE = /(DetailPage|DetailView|Detail)\.tsx$/;
@@ -39,6 +41,7 @@ const REVERSE_MARKERS = [
   /\bbackHref\s*=/,
   /\bonBack\s*=/,
   /\bbreadcrumb\s*=/,
+  /<Breadcrumb\b/,
   /data-testid=["'][^"']*reverse-drill["']/,
   /<EntityLink\b/,
   /<Link\b/,
@@ -65,9 +68,16 @@ function walk(rel, out) {
 function collectOffenders() {
   const files = [];
   walk(SRC, files);
+  const routeManifest = readFileSync(join(ROOT, ROUTE_MANIFEST_PATH), "utf8");
   const offenders = [];
   for (const rel of files) {
-    if (!hasReverseLink(readFileSync(join(ROOT, rel), "utf8"))) offenders.push(rel);
+    const source = readFileSync(join(ROOT, rel), "utf8");
+    const exportedComponent = source.match(/export function\s+([A-Z][A-Za-z0-9_]*)\s*\(/)?.[1];
+    // Embedded detail fragments (hover cards, evidence panels, nested tabs) inherit navigation from
+    // their routed owner. Auditing them as standalone pages creates fake reverse-link debt. Route
+    // targets are the actual escapable-surface contract.
+    if (!exportedComponent || !new RegExp(`\\b${exportedComponent}\\b`).test(routeManifest)) continue;
+    if (!hasReverseLink(source)) offenders.push(rel);
   }
   return { offenders, fileCount: files.length };
 }
@@ -108,9 +118,11 @@ function selftest() {
     failures.push("case4 FAIL — the reverse-drill marker was not accepted");
   if (!hasReverseLink('<EntityLink kind="vendor" id={x} />'))
     failures.push("case5 FAIL — an EntityLink back to the owner was not accepted");
+  if (!hasReverseLink('<Breadcrumb items={[{ label: "Loads", href: "/dispatch" }]} />'))
+    failures.push("case6 FAIL — a navigable Breadcrumb was not accepted");
 
   const tree = auditTree();
-  if (tree.length !== 0) failures.push(`case6 FAIL — real tree flagged against baseline: ${tree.join(" | ")}`);
+  if (tree.length !== 0) failures.push(`case7 FAIL — real tree flagged against baseline: ${tree.join(" | ")}`);
 
   if (failures.length) {
     for (const f of failures) console.error(`  ✗ ${LABEL}: ${f}`);
