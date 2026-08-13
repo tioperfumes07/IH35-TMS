@@ -26,6 +26,8 @@ type CrossingRow = {
   unit_number: string | null;
   driver_name: string | null;
   load_number: string | null;
+  customs_broker_id: string | null;
+  customs_broker_name: string | null;
 };
 
 export function BorderCrossingHistoryPage() {
@@ -146,6 +148,10 @@ export function BorderCrossingHistoryPage() {
               </p>
               <p>
                 <span className="text-gray-500">Broker status:</span> {selected.customs_broker_status ?? "—"}
+              </p>
+              <p>
+                <span className="text-gray-500">Customs broker:</span>{" "}
+                <EntityLink kind="vendor" id={selected.customs_broker_id} label={entityLabel(selected.customs_broker_name, selected.customs_broker_id, "Vendor")} />
               </p>
               {pdfUrl ? (
                 <a href={pdfUrl} className="inline-block rounded-sm border px-3 py-1.5" target="_blank" rel="noreferrer">

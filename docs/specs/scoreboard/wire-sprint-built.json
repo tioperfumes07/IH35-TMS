@@ -696,6 +696,14 @@
       "modules": ["dispatch", "compliance"],
       "cols": ["load", "connectivity", "reverse_link", "picker_law"],
       "leafRe": "^(border|crossing|wizard|history|load|drawer|customs|create)"
+    },
+    {
+      "task": "BORDER-CROSSING-BROKER-VENDOR-REVERSE",
+      "pr": "this PR",
+      "guard": "scripts/verify-border-crossing-broker-linkage.mjs",
+      "modules": ["dispatch", "vendors", "compliance"],
+      "cols": ["vendor", "connectivity", "reverse_link", "picker_law"],
+      "leafRe": "^(border|crossing|wizard|history|vendor|profile|broker|create)"
     }
   ]
 }
