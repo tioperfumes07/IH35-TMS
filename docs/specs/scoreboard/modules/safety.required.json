@@ -2,7 +2,7 @@
   "module": "safety",
   "entity_default": "USMCA",
   "source": {
-    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md — Safety module",
+    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md \u2014 Safety module",
     "nav": "apps/frontend/src/components/safety/SAFETY_TABS_CONFIG.ts",
     "routes": "apps/frontend/src/routes/manifest.tsx /safety/*"
   },
@@ -807,7 +807,6 @@
       "surface_path": "components/safety/driver-safety/DriverSafetyProfilePanel.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "driver",
         "accident"
       ]
@@ -929,7 +928,7 @@
     {
       "id": "chrome.toolbar_search",
       "tab": "Chrome controls",
-      "sub": "List toolbar — Search (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar \u2014 Search (CLS-LIST-TOOLBAR)",
       "route_hint": "/safety",
       "surface_kind": "toolbar",
       "required": [
@@ -940,7 +939,7 @@
     {
       "id": "chrome.toolbar_range",
       "tab": "Chrome controls",
-      "sub": "List toolbar — date/amount range (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar \u2014 date/amount range (CLS-LIST-TOOLBAR)",
       "route_hint": "/safety",
       "surface_kind": "toolbar",
       "required": [
@@ -951,7 +950,7 @@
     {
       "id": "chrome.toolbar_gear",
       "tab": "Chrome controls",
-      "sub": "List toolbar — column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
+      "sub": "List toolbar \u2014 column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
       "route_hint": "/safety",
       "surface_kind": "toolbar",
       "required": [
@@ -962,7 +961,7 @@
     {
       "id": "chrome.toolbar_filter",
       "tab": "Chrome controls",
-      "sub": "List toolbar — Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
+      "sub": "List toolbar \u2014 Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
       "route_hint": "/safety",
       "surface_kind": "toolbar",
       "required": [
@@ -1053,7 +1052,19 @@
         "invoice",
         "bank"
       ],
-      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; §B9 link columns added."
+      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; \u00a7B9 link columns added."
+    },
+    "reverse_link_2026_08_13_panel": {
+      "finding": "VERTICAL-REVERSE-LINK-SAFETY-REMAINDER",
+      "note": "DriverSafetyProfilePanel is placeholder chrome (DRV-0000) without a live driver FK \u2014 reverse_link Required was inflation until profile is load-bearing.",
+      "drops": [
+        {
+          "id": "safety.panel.driver_safety_profile",
+          "removed": [
+            "reverse_link"
+          ]
+        }
+      ]
     }
   }
 }

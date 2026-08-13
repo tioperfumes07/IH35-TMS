@@ -3,7 +3,7 @@
  * Safety reverse_link — leaf-specific Built for list/detail surfaces with EntityLink.
  * Create-only modals/pages honesty-dropped in required.json. Lists without EntityLink stay Gap (WIRE).
  *
- * @matrix-built {"modules":["safety"],"cols":["reverse_link"],"leafRe":"^(training_records\\.list|hos\\.list|hos_violations\\.list|idvr\\.list|safety_events\\.list|internal_fines\\.list|safety\\.drawer\\.(accident_report|fine_detail)|safety\\.parity\\.(accident_report|fine_detail)|safety\\.drawer\\.anomaly_detail|safety\\.parity\\.anomaly_detail)$","task":"VERTICAL-REVERSE-LINK-safety-lists","vertical":"column-wave"}
+ * @matrix-built {"modules":["safety"],"cols":["reverse_link"],"leafRe":"^(training_records\\.list|hos\\.list|hos_violations\\.list|idvr\\.list|safety_events\\.list|internal_fines\\.list|damage_reports\\.list|trailer_interchanges\\.list|cargo_claims\\.list|driver_files\\.list|safety\\.drawer\\.(accident_report|fine_detail|company_violation_detail|integrity_alert_detail)|safety\\.parity\\.(accident_report|fine_detail|company_violation_detail|integrity_alert_detail)|safety\\.drawer\\.anomaly_detail|safety\\.parity\\.anomaly_detail)$","task":"VERTICAL-REVERSE-LINK-safety-lists","vertical":"column-wave"}
  *
  * Self-test: node scripts/verify-safety-reverse-link-list-surfaces.mjs --selftest
  */
@@ -24,6 +24,10 @@ const CHECKS = [
   { name: "AccidentReportDrawer EntityLink", file: "apps/frontend/src/components/safety/AccidentReportDrawer.tsx", pattern: /EntityLink/ },
   { name: "FineDetailDrawer EntityLink", file: "apps/frontend/src/pages/safety/components/FineDetailDrawer.tsx", pattern: /EntityLink/ },
   { name: "AnomalyDetailDrawer EntityLink", file: "apps/frontend/src/pages/safety/tabs/AnomalyDetailDrawer.tsx", pattern: /EntityLink/ },
+  { name: "SafetyIncidentsCluster EntityLink", file: "apps/frontend/src/pages/safety/components/SafetyIncidentsClusterSurface.tsx", pattern: /EntityLink/ },
+  { name: "DriverFiles TrainingTable EntityLink", file: "apps/frontend/src/pages/safety/components/TrainingTable.tsx", pattern: /EntityLink/ },
+  { name: "CompanyViolationDetailDrawer EntityLink", file: "apps/frontend/src/pages/safety/components/CompanyViolationDetailDrawer.tsx", pattern: /EntityLink/ },
+  { name: "IntegrityAlertDetailDrawer EntityLink", file: "apps/frontend/src/pages/safety/components/IntegrityAlertDetailDrawer.tsx", pattern: /EntityLink/ },
 ];
 
 function run(root = ROOT) {

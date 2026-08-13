@@ -11,6 +11,8 @@ import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { useEscapeKey } from "../../../hooks/useEscapeKey";
 import { CompanyViolationCorrectiveActionForm } from "./CompanyViolationCorrectiveActionForm";
+import { EntityLink } from "../../../components/shared/EntityLink";
+import { entityLabel } from "../../../lib/entity-label";
 
 type Props = {
   open: boolean;
@@ -107,6 +109,21 @@ export function CompanyViolationDetailDrawer({ open, violation, operatingCompany
           <div><strong>Type:</strong> {String(violation.violation_type ?? "—")}</div>
           <div><strong>Severity:</strong> {String(violation.violation_severity ?? "—")}</div>
           <div><strong>Description:</strong> {String(violation.description ?? "—")}</div>
+          <div>
+            <strong>Related drivers:</strong>{" "}
+            {Array.isArray(violation.related_driver_ids) && (violation.related_driver_ids as unknown[]).length > 0
+              ? (violation.related_driver_ids as unknown[]).map((id, idx) => {
+                  const driverId = String(id ?? "");
+                  if (!driverId) return null;
+                  return (
+                    <span key={driverId}>
+                      {idx > 0 ? ", " : ""}
+                      <EntityLink kind="driver" id={driverId} label={entityLabel(undefined, driverId, "Driver")} />
+                    </span>
+                  );
+                })
+              : "—"}
+          </div>
         </div>
 
         <div className="mt-4 flex flex-wrap gap-2">
