@@ -138,4 +138,76 @@ describe("fuel-posting poster.service class resolution (unit/trailer)", () => {
     expect(postingLineCalls[0]?.[1]).toContain(null);
     expect(result.account_resolution_trace[0]).toMatchObject({ class_id: null, class_resolution: "unresolved" });
   });
+
+  it("scopes unit/equipment class lookups by owner/lease (never operating_company_id)", async () => {
+    mockQuery.mockReset();
+    mockResolveAccountForCategory.mockReset();
+    mockResolveAccountForCategory.mockResolvedValue({ account_id: "expense-acct", posting_side: "debit" });
+    mockQuery.mockImplementation(baseImpl({ unitQboClassId: "QBO-CLASS-UNIT-1" }));
+
+    await postFuelExpenseFromEvent({
+      operating_company_id: OPCO,
+      actor_user_id: "22222222-2222-4222-8222-222222222222",
+      fuel_event_id: "evt-fuel-class-scope-unit",
+      fuel_kind: "diesel",
+      posted_at: "2026-05-23T12:00:00.000Z",
+      amount_cents: 5000,
+      posting_path: "company_direct",
+      company_direct_credit: "cash",
+      unit_id: UNIT_ID,
+    });
+
+    const unitSql = String(mockQuery.mock.calls.find(([sql]) => String(sql).includes("FROM mdata.units"))?.[0] ?? "");
+    expect(unitSql).toMatch(/owner_company_id/);
+    expect(unitSql).toMatch(/currently_leased_to_company_id/);
+    expect(unitSql).not.toMatch(/operating_company_id/);
+
+    mockQuery.mockReset();
+    mockQuery.mockImplementation(baseImpl({ trailerQboClassId: "QBO-CLASS-TRAILER-1" }));
+    await postFuelExpenseFromEvent({
+      operating_company_id: OPCO,
+      actor_user_id: "22222222-2222-4222-8222-222222222222",
+      fuel_event_id: "evt-fuel-class-scope-trailer",
+      fuel_kind: "diesel",
+      posted_at: "2026-05-23T12:00:00.000Z",
+      amount_cents: 5000,
+      posting_path: "company_direct",
+      company_direct_credit: "cash",
+      trailer_id: TRAILER_ID,
+    });
+
+    const equipSql = String(
+      mockQuery.mock.calls.find(([sql]) => String(sql).includes("FROM mdata.equipment"))?.[0] ?? ""
+    );
+    expect(equipSql).toMatch(/owner_company_id/);
+    expect(equipSql).toMatch(/currently_leased_to_company_id/);
+    expect(equipSql).not.toMatch(/operating_company_id/);
+  });
+
+  it("still posts the JE when class lookup throws (ACCT-F5024 never abort)", async () => {
+    mockQuery.mockReset();
+    mockResolveAccountForCategory.mockReset();
+    mockResolveAccountForCategory.mockResolvedValue({ account_id: "expense-acct", posting_side: "debit" });
+    mockQuery.mockImplementation(async (sql: string) => {
+      if (String(sql).includes("FROM mdata.units") || String(sql).includes("FROM mdata.equipment")) {
+        throw new Error('column "operating_company_id" does not exist');
+      }
+      return baseImpl({})(sql);
+    });
+
+    const result = await postFuelExpenseFromEvent({
+      operating_company_id: OPCO,
+      actor_user_id: "22222222-2222-4222-8222-222222222222",
+      fuel_event_id: "evt-fuel-class-throw",
+      fuel_kind: "diesel",
+      posted_at: "2026-05-23T12:00:00.000Z",
+      amount_cents: 5000,
+      posting_path: "company_direct",
+      company_direct_credit: "cash",
+      trailer_id: TRAILER_ID,
+    });
+
+    expect(result.result).toBe("posted");
+    expect(result.account_resolution_trace[0]).toMatchObject({ class_id: null, class_resolution: "unresolved" });
+  });
 });

@@ -576,6 +576,14 @@
       "modules": ["fleet", "fuel", "accounting"],
       "cols": ["trailer", "connectivity", "reverse_link", "load"],
       "leafRe": "^(trailer\\.|expenses\\.|fuel|history)"
+    },
+    {
+      "task": "ACCT-F5024-FUEL-CLASS-OWNER-LEASE",
+      "pr": "this PR",
+      "guard": "scripts/verify-fuel-gl-map-codes-no-silent-alias.mjs",
+      "modules": ["fuel", "accounting", "fleet"],
+      "cols": ["unit", "trailer", "connectivity"],
+      "leafRe": "^(history|transactions|trailer\\.|unit\\.|expenses\\.|create|gl)"
     }
   ]
 }
