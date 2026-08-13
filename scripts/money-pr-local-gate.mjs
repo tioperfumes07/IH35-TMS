@@ -87,6 +87,7 @@ const STEPS = [
   ["verify-driver-fuel-unit-picker", "scripts/verify-driver-fuel-unit-picker.mjs"],
   ["verify-maint-wo-resolved-vendor-label", "scripts/verify-maint-wo-resolved-vendor-label.mjs"],
   ["verify-road-service-driver-picker", "scripts/verify-road-service-driver-picker.mjs"],
+  ["verify-safety-permit-unit-picker", "scripts/verify-safety-permit-unit-picker.mjs"],
   ["verify-money-fields-use-moneyinput", "scripts/verify-money-fields-use-moneyinput.mjs"],
   ["verify-referenceselect-qbo-standard", "scripts/verify-referenceselect-qbo-standard.mjs"],
   ["verify-referenceselect-coverage-ratchet", "scripts/verify-referenceselect-coverage-ratchet.mjs"],
