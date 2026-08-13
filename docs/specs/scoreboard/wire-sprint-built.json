@@ -632,6 +632,14 @@
       "modules": ["legal", "drivers"],
       "cols": ["driver", "connectivity", "reverse_link", "picker_law"],
       "leafRe": "^(matters|driver|profile|detail|create)"
+    },
+    {
+      "task": "LEGAL-MATTER-UNIT-WRITER-INTEGRITY",
+      "pr": "this PR",
+      "guard": "scripts/verify-legal-matter-unit-linkage.mjs",
+      "modules": ["legal", "fleet"],
+      "cols": ["unit", "connectivity", "reverse_link", "picker_law"],
+      "leafRe": "^(matters|unit|profile|detail|create)"
     }
   ]
 }
