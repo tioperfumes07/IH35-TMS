@@ -676,6 +676,8 @@ export function SettlementDetailPage() {
 
       <LiabilityBreakdownModal
         open={liabilityOpen}
+        settlementId={settlementId}
+        settlementDisplayId={settlementDisplayId}
         liabilities={(debt.debt?.source_liabilities as Array<any> | undefined)?.map((item, idx) => ({
           id: String(item.id ?? idx),
           type: String(item.type ?? "Liability"),
@@ -693,6 +695,8 @@ export function SettlementDetailPage() {
         open={Boolean(holdTarget)}
         deduction={holdTarget}
         operatingCompanyId={companyId}
+        settlementId={settlementId}
+        settlementDisplayId={settlementDisplayId}
         onClose={() => setHoldTarget(null)}
         onHeld={() => {
           void queryClient.invalidateQueries({ queryKey: ["driver-finance", "settlement-detail", settlementId, companyId] });

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * @matrix-built {"modules":["settlements","accounting"],"cols":["settlement","driver","load","connectivity","reverse_link"],"leafRe":"^(settlements\\.(list|detail|disputes)|settlement_close|pre_settlements|settlements\\.panel\\.(pre_settlements|pay_run_close)|settlements\\.drawer\\.(advance_detail|liability_detail)|escrow|owner_approval)$","task":"WAVE-A-settlement-column","vertical":"column-wave"}
+ * @matrix-built {"modules":["settlements","accounting"],"cols":["settlement","driver","load","connectivity","reverse_link","liability"],"leafRe":"^(settlements\\.(list|detail|disputes)|settlement_close|pre_settlements|settlements\\.panel\\.(pre_settlements|pay_run_close)|settlements\\.drawer\\.(advance_detail|liability_detail)|settlements\\.modal\\.(hold_deduction|liability_breakdown)|escrow|owner_approval)$","task":"WAVE-A-settlement-column","vertical":"column-wave"}
  * Rule-17: pre-settlements reverse drill-through (Law §9).
  * Accounting + Settlements surfaces must EntityLink canonical settlement rows (Wave A `settlement`).
  */
@@ -86,6 +86,14 @@ function assertPreSettlementsReverse() {
   }
   if (!/kind="settlement"/.test(liabilityDrawer) || !/settlement_id/.test(liabilityDrawer)) {
     errors.push("LiabilityDetailDrawer: must EntityLink settlement_history settlement_id");
+  }
+  const holdModal = read("apps/frontend/src/pages/driver-finance/components/HoldDeductionModal.tsx");
+  const liabilityModal = read("apps/frontend/src/pages/driver-finance/components/LiabilityBreakdownModal.tsx");
+  if (!/kind="settlement"/.test(holdModal) || !/settlementId/.test(holdModal)) {
+    errors.push("HoldDeductionModal: must EntityLink settlementId from settlement detail");
+  }
+  if (!/kind="settlement"/.test(liabilityModal) || !/settlementId/.test(liabilityModal)) {
+    errors.push("LiabilityBreakdownModal: must EntityLink settlementId from settlement detail");
   }
   return errors;
 }
