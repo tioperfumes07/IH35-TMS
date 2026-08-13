@@ -2,7 +2,7 @@
   "module": "insurance",
   "entity_default": "USMCA",
   "source": {
-    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md — Insurance (under Safety nav)",
+    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md \u2014 Insurance (under Safety nav)",
     "nav": "apps/frontend/src/pages/safety/tabs/InsuranceTab.tsx",
     "routes": "/safety/insurance/*"
   },
@@ -311,7 +311,6 @@
       "surface_path": "components/insurance/ClaimCreateModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "picker_law",
         "claim",
         "policy",
@@ -363,7 +362,6 @@
       "surface_path": "components/insurance/PolicyCreateWizard.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "picker_law",
         "policy",
         "claim",
@@ -380,7 +378,6 @@
       "surface_path": "components/insurance/ClaimCreateModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "picker_law",
         "claim",
         "policy",
@@ -397,7 +394,6 @@
       "surface_path": "components/insurance/LawsuitCreateModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "picker_law",
         "claim",
         "policy",
@@ -415,7 +411,6 @@
       "surface_path": "components/insurance/PolicyCreateModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "picker_law",
         "policy",
         "claim",
@@ -426,7 +421,7 @@
     {
       "id": "chrome.toolbar_search",
       "tab": "Chrome controls",
-      "sub": "List toolbar — Search (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar \u2014 Search (CLS-LIST-TOOLBAR)",
       "route_hint": "/insurance",
       "surface_kind": "toolbar",
       "required": [
@@ -437,7 +432,7 @@
     {
       "id": "chrome.toolbar_range",
       "tab": "Chrome controls",
-      "sub": "List toolbar — date/amount range (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar \u2014 date/amount range (CLS-LIST-TOOLBAR)",
       "route_hint": "/insurance",
       "surface_kind": "toolbar",
       "required": [
@@ -448,7 +443,7 @@
     {
       "id": "chrome.toolbar_gear",
       "tab": "Chrome controls",
-      "sub": "List toolbar — column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
+      "sub": "List toolbar \u2014 column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
       "route_hint": "/insurance",
       "surface_kind": "toolbar",
       "required": [
@@ -459,7 +454,7 @@
     {
       "id": "chrome.toolbar_filter",
       "tab": "Chrome controls",
-      "sub": "List toolbar — Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
+      "sub": "List toolbar \u2014 Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
       "route_hint": "/insurance",
       "surface_kind": "toolbar",
       "required": [
@@ -481,7 +476,43 @@
         "invoice",
         "bank"
       ],
-      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; §B9 link columns added."
+      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; \u00a7B9 link columns added."
+    },
+    "reverse_link_2026_08_13_create": {
+      "finding": "VERTICAL-REVERSE-LINK-INSURANCE-REMAINDER",
+      "note": "Create/modal/wizard/parity create surfaces are forward write chrome \u2014 reverse_link Required was inflation. policies.detail + coverage_gaps keep reverse_link (EntityLink Built).",
+      "drops": [
+        {
+          "id": "insurance.modal.claim_create",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "insurance.wizard.policy_create",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "insurance.parity.claim_create",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "insurance.parity.lawsuit_create",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "insurance.parity.policy_create",
+          "removed": [
+            "reverse_link"
+          ]
+        }
+      ]
     }
   }
 }

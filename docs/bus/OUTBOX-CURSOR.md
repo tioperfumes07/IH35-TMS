@@ -50,3 +50,5 @@
 2026-08-13T20:25Z Cursor | shipping VERTICAL-LOAD-REMAINDER-WIRE-GAPS | Built in_transit.promote + honesty road/legal | Live=BLOCKED | NEXT=safety reverse WIRE lists
 2026-08-13T20:28Z Cursor | SHIPPED VERTICAL-LOAD-REMAINDER-WIRE-GAPS (PR#6560) | load WIRE→0 | Live=BLOCKED | NEXT=safety reverse EntityLink lists
 2026-08-13T20:30Z Cursor | shipping VERTICAL-REVERSE-LINK-SAFETY-REMAINDER | +fix load tag JSON | Live=BLOCKED | NEXT=connectivity/absorb Codex
+2026-08-13T20:35Z Cursor | SHIPPED VERTICAL-REVERSE-LINK-SAFETY-REMAINDER (PR#6562) | safety reverse Gap=0 | Live=BLOCKED | NEXT=Codex reverse absorb / connectivity
+2026-08-13T20:40Z Cursor | shipping VERTICAL-REVERSE-LINK-INSURANCE-REMAINDER | detail Built + create honesty | Live=BLOCKED | NEXT=factoring/vendors reverse

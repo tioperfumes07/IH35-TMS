@@ -3,16 +3,11 @@
 **Owner:** First-10 + vendors/customers/drivers/fleet. Shared cols vertical → 3-box 100% on first 10.
 
 ## ☐ NOW
-1. **`load`** column gaps on priority 14 (dispatch modals / maintenance WO / legal / fleet) — Built tag OR honesty drop  
-2. **`qbo_chrome`** factoring remainder  
-3. Then help Codex: **`picker_law`** / **`driver`** FE EntityPicker leaves  
-4. Never `leafRe=.*`. Live=BLOCKED until Built=100% then Live gate.
+1. Absorb Codex `reverse_link` leftovers (lists / maintenance / dispatch / vendors / customers) when Codex limited
+2. Help `connectivity` / `picker_law` FE leaves as capacity allows
+3. Never `leafRe=.*`. Live=BLOCKED until Built=100% then Live gate.
 
 OUTBOX: `Cursor | column=<id> | SHIPPED #N | Live=BLOCKED | NEXT=…`
 
-## LAW LOCK 2026-08-13T19:52Z — FULLY WIRED COMPLETE BAR (mandatory)
-
-Canonical: `docs/lockdown/FULLY-WIRED-COMPLETE-BAR-2026-08-13.md`
-“Wired / includes all / done” = **all 12 items** (surface bar + **Live Chrome last**). Soft yes = defect.
-Continue column drain with `Live=BLOCKED` until Built gate then item 12.
-
+## LAW LOCK — FULLY WIRED COMPLETE BAR
+Canonical: `docs/lockdown/FULLY-WIRED-COMPLETE-BAR-2026-08-13.md` — all 12 items; Live Chrome last.
