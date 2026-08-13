@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * LIABILITY-CHROME-HONEST-2 — DROP liability on factoring packet queue / vendor A/P chrome
- * with no driver_liabilities path; DROP expense|ap_bill on accounting reports hub (keep gl_je).
+ * with no driver_liabilities path; accounting reports hub is connectivity-only.
  * Tag banking driver_escrow as liability (escrow virtual bank).
  *
  * @matrix-built {"modules":["banking"],"cols":["liability"],"leafRe":"^driver_escrow$","task":"BANK-escrow-liability","vertical":"column-wave"}
@@ -19,11 +19,10 @@ const FORBIDDEN = {
     "detail.ap": ["liability"],
     "detail.ap.record_bill_payment": ["liability"],
   },
-  accounting: { reports: ["expense", "ap_bill"] },
+  accounting: { reports: ["expense", "ap_bill", "gl_je"] },
 };
 
 const MUST_KEEP = {
-  accounting: { reports: ["gl_je"] },
   banking: { driver_escrow: ["liability"] },
 };
 
@@ -73,6 +72,12 @@ if (process.argv.includes("--selftest")) {
     console.error(`${LABEL} --selftest FAIL`);
     process.exit(1);
   }
+  const accounting = structuredClone(loadMod("accounting"));
+  accounting.leaves.find((l) => l.id === "reports").required.push("gl_je");
+  if (!checkForbidden(accounting, FORBIDDEN.accounting, "accounting").some((failure) => failure.includes("gl_je"))) {
+    console.error(`${LABEL} --selftest FAIL — stale reports gl_je mutation escaped`);
+    process.exit(1);
+  }
   console.log(`${LABEL} --selftest PASS`);
   process.exit(0);
 }
@@ -103,4 +108,4 @@ if (failures.length) {
   console.error(`${LABEL} FAIL:\n${failures.map((f) => ` - ${f}`).join("\n")}`);
   process.exit(1);
 }
-console.log(`${LABEL} PASS — liability chrome DROPs + reports expense/ap DROP + escrow liability tag`);
+console.log(`${LABEL} PASS — liability chrome DROPs + connectivity-only reports hub + escrow liability tag`);

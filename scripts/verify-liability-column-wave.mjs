@@ -2,7 +2,8 @@
 /**
  * liability COLUMN-WAVE — VERTICAL-WIRING-LAW-2026-08-12.
  *
- * @matrix-built {"modules":["drivers","safety"],"cols":["liability"],"task":"WAVE-C-liability","vertical":"column-wave","leafRe":".*"}
+ * @matrix-built {"modules":["drivers"],"cols":["liability"],"task":"WAVE-C-liability-driver-cash-advance","vertical":"column-wave","leafRe":"^cash_advances$"}
+ * @matrix-built {"modules":["safety"],"cols":["liability"],"task":"WAVE-C-liability-safety-origins","vertical":"column-wave","leafRe":"^(accidents\\.create|internal_fines\\.create|escrow_record\\.list|safety\\.drawer\\.fine_detail)$"}
  *
  * Root cause (cross-cutting, blocked EVERY leaf in EVERY module): views.liabilities_active_with_context
  * dropped origin/origin_id/reference_doc_id/status from its SELECT list even though the base table

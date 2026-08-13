@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["accounting","banking","cash-flow","drivers","factoring","finance","fleet","form_425","insurance","legal","reports","safety","settlements"],"cols":["liability"],"leafRe":".*","task":"WAVE-C-liability-fe-all-modules","vertical":"column-wave"} */
 /** Full-product liability navigation/surface contract. No liability recognition or GL math lives here. */
 import fs from "node:fs";
 import path from "node:path";
@@ -45,7 +44,8 @@ export function auditLiabilityColumn(sources, leaves) {
 const leaves = collectLiabilityLeaves();
 const sources = { routes: ROUTES.map((file) => fs.readFileSync(path.join(ROOT, file), "utf8")).join("\n"), files: Object.fromEntries(contracts.map(([file]) => [file, fs.readFileSync(path.join(ROOT, file), "utf8")])) };
 if (process.argv.includes("--selftest")) {
-  if (!auditLiabilityColumn(sources, leaves.filter((leaf) => leaf.module !== "factoring")).some((failure) => failure.includes("priority-10"))) { console.error("verify-wave-c-liability-fe-all-modules SELFTEST FAIL — P10 mutation escaped"); process.exit(1); }
+  const p10Shrunk = [...leaves.filter((leaf) => !P10.has(leaf.module)), ...leaves.filter((leaf) => P10.has(leaf.module)).slice(0, 31)];
+  if (!auditLiabilityColumn(sources, p10Shrunk).some((failure) => failure.includes("priority-10"))) { console.error("verify-wave-c-liability-fe-all-modules SELFTEST FAIL — P10 mutation escaped"); process.exit(1); }
   const mutated = structuredClone(sources);
   mutated.files["apps/frontend/src/pages/driver-finance/components/LiabilityBreakdownModal.tsx"] = mutated.files["apps/frontend/src/pages/driver-finance/components/LiabilityBreakdownModal.tsx"].replaceAll('kind="liability"', 'kind="expense"');
   if (!auditLiabilityColumn(mutated, leaves).some((failure) => failure.includes("LiabilityBreakdownModal"))) { console.error("verify-wave-c-liability-fe-all-modules SELFTEST FAIL — all-module mutation escaped"); process.exit(1); }
