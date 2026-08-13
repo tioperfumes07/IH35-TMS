@@ -70,6 +70,16 @@ function assertInvoiceP0() {
   if (!/invoice-journal-entry-links/.test(invoiceDetail)) {
     errors.push("InvoiceDetailPage: must expose invoice-journal-entry-links test id");
   }
+  // ACCT-F5053 — forward hops from source_load_id via getLoad (no invented invoice FKs).
+  if (!/\bgetLoad\b/.test(invoiceDetail)) {
+    errors.push("InvoiceDetailPage: must getLoad when source_load_id is set");
+  }
+  if (!/invoice-source-load-driver/.test(invoiceDetail) || !/kind=\"driver\"/.test(invoiceDetail)) {
+    errors.push("InvoiceDetailPage: must expose load→driver hop from getLoad");
+  }
+  if (!/invoice-source-load-unit/.test(invoiceDetail) || !/kind=\"unit\"/.test(invoiceDetail)) {
+    errors.push("InvoiceDetailPage: must expose load→unit hop from getLoad");
+  }
   if (!/export function getJournalEntrySourceLinks\(/.test(api) || !/source-links/.test(api)) {
     errors.push("api: getJournalEntrySourceLinks client must hit .../source-links");
   }
