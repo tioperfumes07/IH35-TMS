@@ -676,6 +676,11 @@ jobs:
       - name: verify:cargo-claim-create-suggest-load
         run: node scripts/verify-cargo-claim-create-suggest-load.mjs
 
+      - name: verify:incidents-cluster-create-suggest-load --selftest
+        run: node scripts/verify-incidents-cluster-create-suggest-load.mjs --selftest
+      - name: verify:incidents-cluster-create-suggest-load
+        run: node scripts/verify-incidents-cluster-create-suggest-load.mjs
+
       - name: verify:no-dead-clicks --selftest
         run: node scripts/verify-no-dead-clicks.mjs --selftest
       - name: verify:no-dead-clicks

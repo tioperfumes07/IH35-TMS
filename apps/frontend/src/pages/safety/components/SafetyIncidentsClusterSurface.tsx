@@ -27,6 +27,7 @@ import { ParityTable, type ParityColumn } from "../../../components/parity/Parit
 import { formatUsdCents } from "../../../lib/money";
 import { DamageReportDetail } from "../damage-reports/DamageReportDetail";
 import { userFacingApiError } from "../../../lib/api-error-message";
+import { suggestExpenseLoad } from "../../../api/maintenance";
 
 // Declarative per-incident-type field keys. The COMMON set renders for every type;
 // `typedFields` on each config adds the type-specific inputs (root-fix: one surface,
@@ -159,6 +160,45 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
   });
 
   const createMode = String(selected?.id ?? "") === "__create__";
+  const [suggestionPinned, setSuggestionPinned] = useState(false);
+  const suggestionQuery = useQuery({
+    queryKey: [
+      "safety",
+      "incidents-cluster-create",
+      "suggest-load",
+      operatingCompanyId,
+      selected?.driver_id,
+      selected?.unit_id,
+      selected?.trailer_id,
+      selected?.incident_date,
+    ],
+    queryFn: () =>
+      suggestExpenseLoad({
+        operating_company_id: operatingCompanyId,
+        driver_id: str(selected?.driver_id) || undefined,
+        unit_id: str(selected?.unit_id) || undefined,
+        trailer_id: str(selected?.trailer_id) || undefined,
+        transaction_date: str(selected?.incident_date),
+      }),
+    enabled: Boolean(
+      createMode &&
+        operatingCompanyId &&
+        str(selected?.incident_date) &&
+        (str(selected?.driver_id) || str(selected?.unit_id) || str(selected?.trailer_id))
+    ),
+  });
+
+  useEffect(() => {
+    setSuggestionPinned(false);
+  }, [selected?.driver_id, selected?.unit_id, selected?.trailer_id, selected?.incident_date]);
+
+  useEffect(() => {
+    if (str(selected?.load_id) || suggestionPinned) return;
+    const suggested = suggestionQuery.data?.data;
+    if (!suggested?.load_id) return;
+    setSelected((previous) => ({ ...(previous ?? {}), load_id: suggested.load_id }));
+    setSuggestionPinned(true);
+  }, [selected?.load_id, suggestionPinned, suggestionQuery.data]);
   // SAF-F20: these three surfaces were CREATE-ONLY — every field was disabled once the record
   // existed, so an incident filed with the wrong amount, unit or description could never be
   // corrected, and one filed in error stayed "open" forever. `formEditable` is what the FIELDS gate
