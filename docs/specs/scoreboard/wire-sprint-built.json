@@ -656,6 +656,14 @@
       "modules": ["legal", "insurance"],
       "cols": ["connectivity", "reverse_link", "picker_law"],
       "leafRe": "^(matters|claim|detail|create)"
+    },
+    {
+      "task": "WARRANTY-CLAIM-VENDOR-UPDATE-INTEGRITY",
+      "pr": "this PR",
+      "guard": "scripts/verify-warranty-claim-linkage.mjs",
+      "modules": ["maintenance", "vendors"],
+      "cols": ["vendor", "connectivity", "reverse_link", "picker_law"],
+      "leafRe": "^(warranty|claims|vendor|profile|create|update)"
     }
   ]
 }
