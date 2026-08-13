@@ -34,6 +34,8 @@ const CARRIER_DEFAULT_INCOME_NAME = "Sales of Service Income";
 const invoiceModalSchema = z
   .object({
     customer_id: z.string().min(1, "Customer is required").uuid("Customer is required"),
+    bill_to_entity_type: z.enum(["customer", "driver", "vendor", "other"]),
+    bill_to_entity_id: z.string(),
     issue_date: z.string(),
     due_date: z.string(),
     notes: z.string(),
@@ -43,6 +45,16 @@ const invoiceModalSchema = z
     load_id: z.string(),
   })
   .superRefine((value, ctx) => {
+    // ACCT-F5051 — driver/vendor typed creates must stamp the real bill-to entity, not the customer.
+    if (value.bill_to_entity_type === "driver" || value.bill_to_entity_type === "vendor") {
+      if (!z.string().uuid().safeParse(value.bill_to_entity_id.trim()).success) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: value.bill_to_entity_type === "driver" ? "Driver is required" : "Vendor is required",
+          path: ["bill_to_entity_id"],
+        });
+      }
+    }
     if (value.line_amount_cents > 0) {
       if (!value.income_account_id.trim()) {
         ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Income account is required when line amount is set", path: ["income_account_id"] });
@@ -81,6 +93,7 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
   const auth = useAuth();
   const queryClient = useQueryClient();
   const [customerId, setCustomerId] = useState<string | null>(null);
+  const [billToEntityId, setBillToEntityId] = useState<string | null>(null);
   const [showCustomerRefPicker, setShowCustomerRefPicker] = useState(false);
   const [loadId, setLoadId] = useState<string | null>(null);
   const [incomeAccountId, setIncomeAccountId] = useState<string | null>(null);
@@ -159,6 +172,8 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
   const formSnapshot = useMemo(
     () => ({
       customer_id: customerId ?? "",
+      bill_to_entity_type: billToEntityType,
+      bill_to_entity_id: billToEntityId ?? "",
       issue_date: issueDate,
       due_date: dueDate,
       notes,
@@ -167,7 +182,7 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
       line_amount_cents: lineAmountCents ?? 0,
       load_id: loadId ?? "",
     }),
-    [customerId, issueDate, dueDate, notes, incomeAccountId, lineDescription, lineAmountCents, loadId]
+    [customerId, billToEntityType, billToEntityId, issueDate, dueDate, notes, incomeAccountId, lineDescription, lineAmountCents, loadId]
   );
 
   const {
@@ -183,7 +198,11 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
         const created = await createInvoice({
           customer_id: parsed.customer_id,
           bill_to_entity_type: billToEntityType,
-          bill_to_entity_id: parsed.customer_id,
+          // ACCT-F5051 — customer types bill-to themselves; driver/vendor types use the dedicated picker.
+          bill_to_entity_id:
+            billToEntityType === "customer" || billToEntityType === "other"
+              ? parsed.customer_id
+              : parsed.bill_to_entity_id.trim() || null,
           issue_date: parsed.issue_date || undefined,
           due_date: parsed.due_date || undefined,
           internal_notes: parsed.notes || undefined,
@@ -231,6 +250,7 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
   useEffect(() => {
     if (!open) return;
     setCustomerId(null);
+    setBillToEntityId(null);
     setShowCustomerRefPicker(false);
     setLoadId(null);
     setIncomeAccountId(null);
@@ -304,6 +324,9 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
                 setCustomerId(next);
                 setLoadId(null);
                 setIncomeAccountId(null);
+                if (billToEntityType === "customer" || billToEntityType === "other") {
+                  setBillToEntityId(next);
+                }
                 const record = next ? customersById.get(next) : undefined;
                 if (next && record) {
                   setNotes((prev) => {
@@ -323,10 +346,35 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
                 void queryClient.invalidateQueries({ queryKey: ["invoice-type-modal", "customers"] });
                 clearInvoiceFieldError("customer_id");
                 setCustomerId(opt.value);
+                if (billToEntityType === "customer" || billToEntityType === "other") {
+                  setBillToEntityId(opt.value);
+                }
               }}
             />
             <FieldError id="customer_id" message={invoiceFieldErrors.customer_id} />
           </div>
+          {billToEntityType === "driver" || billToEntityType === "vendor" ? (
+            <div className="space-y-1" data-testid="invoice-type-bill-to-picker">
+              <label className="text-xs font-semibold text-slate-600">
+                {billToEntityType === "driver" ? "Bill-to driver *" : "Bill-to vendor *"}
+              </label>
+              <EntityPicker
+                kind={billToEntityType}
+                operatingCompanyId={operatingCompanyId}
+                value={billToEntityId}
+                onChange={(next) => {
+                  clearInvoiceFieldError("bill_to_entity_id");
+                  setBillToEntityId(next);
+                }}
+                enabled={open && Boolean(operatingCompanyId)}
+                nestedInDrawer
+                placeholder={billToEntityType === "driver" ? "Select driver…" : "Select vendor…"}
+                dataField="bill_to_entity_id"
+                allowClear
+              />
+              <FieldError id="bill_to_entity_id" message={invoiceFieldErrors.bill_to_entity_id} />
+            </div>
+          ) : null}
           <div className="space-y-1" data-testid="invoice-type-load-picker">
             <label className="text-xs font-semibold text-slate-600">Load (optional)</label>
             <EntityPicker
