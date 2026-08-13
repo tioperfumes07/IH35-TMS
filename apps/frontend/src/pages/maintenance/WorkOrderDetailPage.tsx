@@ -697,7 +697,7 @@ export function WorkOrderDetailPage() {
             />
           ) : null}
           <RoadServiceReverseSection
-            filter={{ wo_id: id! }}
+            filter={{ wo_id: id }}
             contextLabel="this work order"
             data-testid="work-order-detail-road-service-reverse"
           />
