@@ -20,6 +20,8 @@ function audit(s) {
   if (!/<EntityLink kind="work_order"[^>]+row\.work_order_id/.test(s.page)) failures.push("claim list must drill to its work order");
   if (!/row\.id === highlightedClaimId/.test(s.page)) failures.push("claim list must honor warranty_claim deep links");
   if (!/AS warranty_ok/.test(s.route) || !/AS work_order_ok/.test(s.route) || !/AS vendor_ok/.test(s.route) || !/linked_entity_not_in_operating_company/.test(s.route)) failures.push("claim writer must validate warranty/work-order/vendor before insert");
+  if (!/if \(body\.vendor_id\)[\s\S]{0,500}FROM mdata\.vendors[\s\S]{0,250}operating_company_id = \$2::uuid[\s\S]{0,180}deactivated_at IS NULL[\s\S]{0,250}invalid_vendor/.test(s.route)) failures.push("claim update must validate an active tenant vendor before replacing vendor_id");
+  if (!/outcome\.kind === "invalid_vendor"[\s\S]{0,180}reply\.code\(400\)[\s\S]{0,120}linked_entity_not_in_operating_company/.test(s.route)) failures.push("invalid update vendor must return an honest 400");
   if (!/filters\.push\(`wc\.vendor_id = \$\$\{values\.length\}`\)/.test(s.route)) failures.push("claim list must filter vendor_id in SQL");
   if (!/params\.vendor_id\) q\.set\("vendor_id", params\.vendor_id\)/.test(s.api)) failures.push("client must forward vendor_id reverse filter");
   if (!/listMaintenanceWarrantyClaims\(operatingCompanyId, filter\)/.test(s.reverse) || !/ListErrorBanner/.test(s.reverse)) failures.push("shared reverse section must read exact filters and show failures");
@@ -34,8 +36,10 @@ if (process.argv.includes("--selftest")) {
     ["picker", "page", /kind="work_order"/, 'kind="unit"'],
     ["payload", "page", /work_order_id:\s*claimDraft\.work_order_id \|\| undefined/, "work_order_id: undefined"],
     ["writer", "route", /AS work_order_ok/, "AS wo_ok"],
+    ["update writer", "route", /(if \(body\.vendor_id\)[\s\S]{0,500})operating_company_id = \$2::uuid/, "$1TRUE"],
+    ["update error", "route", /outcome\.kind === "invalid_vendor"/, 'outcome.kind === "ok"'],
     ["vendor filter", "route", /filters\.push\(`wc\.vendor_id = \$\$\{values\.length\}`\)/, "void values"],
-    ["api filter", "api", /q\.set\("vendor_id", params\.vendor_id\)/, 'q.set("status", params.vendor_id)'],
+    ["api filter", "api", /q\.set\("vendor_id", params\.vendor_id\)/g, 'q.set("status", params.vendor_id)'],
     ["reverse read", "reverse", /listMaintenanceWarrantyClaims\(operatingCompanyId, filter\)/, "listMaintenanceWarrantyClaims(operatingCompanyId)"],
     ["wo mount", "wo", /WarrantyClaimsReverseSection/g, "MissingWarrantySection"],
     ["vendor mount", "vendor", /WarrantyClaimsReverseSection/g, "MissingWarrantySection"],
@@ -49,7 +53,7 @@ if (process.argv.includes("--selftest")) {
       process.exit(1);
     }
   }
-  console.log(`${LABEL} SELFTEST PASS — 10 linkage mutations detected`);
+  console.log(`${LABEL} SELFTEST PASS — 12 linkage mutations detected`);
   process.exit(0);
 }
 

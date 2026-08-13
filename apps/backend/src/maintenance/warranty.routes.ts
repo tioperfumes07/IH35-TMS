@@ -487,9 +487,22 @@ export async function registerMaintenanceWarrantyRoutes(app: FastifyInstance) {
     }
     const body = parsed.data;
 
-    const row = await withCompany(user.uuid, body.operating_company_id, async (client) => {
+    const outcome = await withCompany(user.uuid, body.operating_company_id, async (client) => {
       const existing = await fetchClaimById(client, body.operating_company_id, params.data.id);
-      if (!existing || existing.archived_at) return null;
+      if (!existing || existing.archived_at) return { kind: "not_found" as const };
+
+      if (body.vendor_id) {
+        const vendor = await client.query(
+          `SELECT id
+             FROM mdata.vendors
+            WHERE id = $1::uuid
+              AND operating_company_id = $2::uuid
+              AND deactivated_at IS NULL
+            LIMIT 1`,
+          [body.vendor_id, body.operating_company_id]
+        );
+        if (!vendor.rows[0]) return { kind: "invalid_vendor" as const };
+      }
 
       const sets: string[] = ["updated_at = now()"];
       const values: unknown[] = [];
@@ -511,11 +524,14 @@ export async function registerMaintenanceWarrantyRoutes(app: FastifyInstance) {
         values
       );
       await appendCrudAudit(client, user.uuid, "maintenance.warranty_claim.updated", { id: params.data.id });
-      return fetchClaimById(client, body.operating_company_id, params.data.id);
+      return { kind: "ok" as const, row: await fetchClaimById(client, body.operating_company_id, params.data.id) };
     });
 
-    if (!row) return reply.code(404).send({ error: "not_found" });
-    return reply.send(mapWarrantyClaimRow(row));
+    if (outcome.kind === "not_found") return reply.code(404).send({ error: "not_found" });
+    if (outcome.kind === "invalid_vendor") {
+      return reply.code(400).send({ error: "linked_entity_not_in_operating_company" });
+    }
+    return reply.send(mapWarrantyClaimRow(outcome.row ?? {}));
   });
 
   app.post("/api/v1/maintenance/warranty/claims/:id/file", async (req, reply) => {
