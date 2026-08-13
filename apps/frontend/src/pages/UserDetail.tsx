@@ -33,6 +33,7 @@ import { useToast } from "../components/Toast";
 import { useAuth } from "../auth/useAuth";
 import { useCompanyContext } from "../contexts/CompanyContext";
 import { UserActivityTab } from "../components/users/UserActivityTab";
+import { ComplaintsReverseSection } from "../components/safety/ComplaintsReverseSection";
 
 type Tab = "profile" | "companies" | "safety" | "activity";
 
@@ -287,6 +288,15 @@ export function UserDetailPage() {
           Activity
         </Button>
       </div>
+
+      {selectedCompanyId ? (
+        <ComplaintsReverseSection
+          operatingCompanyId={selectedCompanyId}
+          filter={{ user_id: userId }}
+          contextLabel="this employee"
+          data-testid="user-complaints-reverse"
+        />
+      ) : null}
 
       {tab === "profile" ? (
         <DataPanel title="Profile">

@@ -15,6 +15,8 @@ const companyQuerySchema = z.object({
 // Optional; absent = the existing company-wide list. The privacy gate is unchanged.
 const complaintsQuerySchema = companyQuerySchema.extend({
   driver_id: z.string().uuid().optional(),
+  customer_id: z.string().uuid().optional(),
+  user_id: z.string().uuid().optional(),
 });
 
 const idParamsSchema = z.object({
@@ -117,13 +119,22 @@ export async function registerSafetyComplaintsRoutes(app: FastifyInstance) {
 
     const rows = await withCompany(user.uuid, appRole, query.data.operating_company_id, async (client) => {
       const values: unknown[] = [query.data.operating_company_id];
-      let driverFilter = "";
+      const filters: string[] = [];
       if (query.data.driver_id) {
         values.push(query.data.driver_id);
         // SAF-F16: filtered in SQL because this list is capped at LIMIT 500 — filtering
         // client-side would silently drop a driver's complaints past that cap.
-        driverFilter = `AND (complainant_driver_id = $${values.length} OR respondent_driver_id = $${values.length})`;
+        filters.push(`(c.complainant_driver_id = $${values.length} OR c.respondent_driver_id = $${values.length})`);
       }
+      if (query.data.customer_id) {
+        values.push(query.data.customer_id);
+        filters.push(`c.complainant_customer_id = $${values.length}`);
+      }
+      if (query.data.user_id) {
+        values.push(query.data.user_id);
+        filters.push(`(c.complainant_user_id = $${values.length} OR c.respondent_user_id = $${values.length})`);
+      }
+      const reverseFilter = filters.length > 0 ? `AND ${filters.join(" AND ")}` : "";
       // FAIL-CP1: the grid rendered raw driver uuids because the row carried only ids and
       // EntityLink falls back to printing `id` when given no label. On a privacy-gated discipline
       // record, "who complained about whom" is the entire content of the row — so resolve both
@@ -135,13 +146,17 @@ export async function registerSafetyComplaintsRoutes(app: FastifyInstance) {
         `SELECT c.*,
                 TRIM(CONCAT(cd.first_name, ' ', cd.last_name)) AS complainant_driver_name,
                 TRIM(CONCAT(rd.first_name, ' ', rd.last_name)) AS respondent_driver_name,
-                cc.customer_name AS complainant_customer_name
+                cc.customer_name AS complainant_customer_name,
+                TRIM(CONCAT(cu.first_name, ' ', cu.last_name)) AS complainant_user_name,
+                TRIM(CONCAT(ru.first_name, ' ', ru.last_name)) AS respondent_user_name
          FROM safety.complaints c
          LEFT JOIN mdata.drivers cd ON cd.id = c.complainant_driver_id AND cd.operating_company_id = c.operating_company_id
          LEFT JOIN mdata.drivers rd ON rd.id = c.respondent_driver_id AND rd.operating_company_id = c.operating_company_id
          LEFT JOIN mdata.customers cc ON cc.id = c.complainant_customer_id AND cc.operating_company_id = c.operating_company_id
+         LEFT JOIN identity.users cu ON cu.id = c.complainant_user_id
+         LEFT JOIN identity.users ru ON ru.id = c.respondent_user_id
          WHERE c.operating_company_id = $1::uuid
-         ${driverFilter.replace(/complainant_driver_id/g, "c.complainant_driver_id").replace(/respondent_driver_id/g, "c.respondent_driver_id")}
+         ${reverseFilter}
          ORDER BY c.filed_at DESC LIMIT 500`,
         values
       );
@@ -194,6 +209,47 @@ export async function registerSafetyComplaintsRoutes(app: FastifyInstance) {
     }
 
     const created = await withCompany(user.uuid, appRole, query.data.operating_company_id, async (client) => {
+      const linked = await client.query(
+        `SELECT
+           ($2::uuid IS NULL OR EXISTS (
+             SELECT 1 FROM mdata.drivers d WHERE d.id = $2::uuid AND d.operating_company_id = $1::uuid
+           )) AS complainant_driver_ok,
+           ($3::uuid IS NULL OR EXISTS (
+             SELECT 1 FROM mdata.drivers d WHERE d.id = $3::uuid AND d.operating_company_id = $1::uuid
+           )) AS respondent_driver_ok,
+           ($4::uuid IS NULL OR EXISTS (
+             SELECT 1 FROM mdata.customers c WHERE c.id = $4::uuid AND c.operating_company_id = $1::uuid
+           )) AS customer_ok,
+           ($5::uuid IS NULL OR EXISTS (
+             SELECT 1 FROM identity.users u
+             WHERE u.id = $5::uuid AND u.deactivated_at IS NULL
+               AND (u.default_company_id = $1::uuid OR EXISTS (
+                 SELECT 1 FROM org.user_company_access uca WHERE uca.user_id = u.id AND uca.company_id = $1::uuid
+               ))
+           )) AS complainant_user_ok,
+           ($6::uuid IS NULL OR EXISTS (
+             SELECT 1 FROM identity.users u
+             WHERE u.id = $6::uuid AND u.deactivated_at IS NULL
+               AND (u.default_company_id = $1::uuid OR EXISTS (
+                 SELECT 1 FROM org.user_company_access uca WHERE uca.user_id = u.id AND uca.company_id = $1::uuid
+               ))
+           )) AS respondent_user_ok,
+           EXISTS (
+             SELECT 1 FROM catalogs.complaint_types ct
+             WHERE ct.id = $7::uuid AND ct.operating_company_id = $1::uuid AND ct.is_active = true
+           ) AS complaint_type_ok`,
+        [
+          query.data.operating_company_id,
+          body.data.complainant_driver_id ?? null,
+          body.data.respondent_driver_id ?? null,
+          body.data.complainant_customer_id ?? null,
+          body.data.complainant_user_id ?? null,
+          body.data.respondent_user_id ?? null,
+          body.data.complaint_type_id,
+        ]
+      );
+      const validity = linked.rows[0];
+      if (!validity || Object.values(validity).some((value) => value !== true)) return null;
       const res = await client.query(
         `
           INSERT INTO safety.complaints (
@@ -255,6 +311,12 @@ export async function registerSafetyComplaintsRoutes(app: FastifyInstance) {
       await appendCrudAudit(client, user.uuid, "safety.complaint.filed", { complaint_id: row.id, severity: row.severity }, "warning", "P3-T11.17.2-SAFETY-V6.4");
       return row;
     });
+    if (!created) {
+      return reply.code(400).send({
+        error: "linked_entity_not_in_operating_company",
+        message: "Select active complaint links from the current operating company.",
+      });
+    }
     return reply.code(201).send({ complaint: created });
   });
 
