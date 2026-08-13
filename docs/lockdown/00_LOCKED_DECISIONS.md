@@ -7,6 +7,10 @@ Last locked: 2026-06-08 by Jorge. Repo doc WINS over any handoff/STATUS/memory. 
 > file remain locked and unchanged; only "never self-merge" / "owner applies" / "owner sign-off to merge"
 > mechanics are superseded.
 
+> **FULLY WIRED (2026-08-13, FINAL):** `docs/lockdown/FULLY-WIRED-COMPLETE-BAR-2026-08-13.md` — mandatory
+> 12-item meaning of wired/done (includes surface bar; **Live Chrome last**). Soft “includes all” without
+> that list is a process defect. Guard: `scripts/verify-fully-wired-complete-bar-present.mjs`.
+
 ## 1. SIDEBAR — FINAL ORDER (additive, owner-locked)
 > **Count source of truth = `apps/frontend/src/components/layout/sidebar-config.ts` (`SIDEBAR_ITEM_IDS`),
 > enforced by `scripts/verify-sidebar-contract.mjs`. Live count is **30** (render count is role-dependent;

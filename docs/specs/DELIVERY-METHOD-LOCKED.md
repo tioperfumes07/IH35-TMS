@@ -4,10 +4,10 @@
 **Date:** 2026-08-05 (rev **H** — Rule 37 claim→merge→author hardline · close claim-reserve same-PR bypass · §9.0 item 17 + Claude serial)  
 **Authority:** This committed file wins over any chat summary, agent memory, or stale paste.  
 **Supersedes as primary queue:** 400+ block pile, breadth-first 30×13 certify-everything, multi-agent sprawl  
-**Does not supersede:** Law of the Land · Rule 16/21/23/24 · `00-operating-method-LAW.mdc` (OWNER LAW 2026-08-03) · parallel books (no TMS→QBO write-back)
+**Does not supersede:** Law of the Land · Rule 16/21/23/24 · `00-operating-method-LAW.mdc` (OWNER LAW 2026-08-03) · parallel books (no TMS→QBO write-back) · **`docs/lockdown/FULLY-WIRED-COMPLETE-BAR-2026-08-13.md`** (owner-plain fully-wired list)
 
 **Remind every session:**  
-`Execute docs/specs/DELIVERY-METHOD-LOCKED.md — USMCA WIRE-FIRST sprint (wire ≥20 PRs or 400 rows, test later) — do not invent a fourth method. Obey §9 coder instructions + docs/specs/CODER-PASTE-INSTRUCTIONS-2026-08-12.md exactly.`
+`Execute docs/specs/DELIVERY-METHOD-LOCKED.md — USMCA WIRE-FIRST sprint (wire ≥20 PRs or 400 rows, test later) — do not invent a fourth method. Obey §9 coder instructions + docs/specs/CODER-PASTE-INSTRUCTIONS-2026-08-12.md exactly. Fully wired = FULLY-WIRED-COMPLETE-BAR 1–12 (Live Chrome last).`
 
 Companion: `docs/trackers/OWNER-EXECUTION-PLAN-2026-07-22.md` (module order + audit depth).  
 **Reservation protocol (before starting any class-drain wave):** `docs/audit/RESERVATION-LEDGER-PROTOCOL-2026-08-05.md` — reserve class-id **+ files** (as ONE reservation when two classes share a hotfile); draw verify-step numbers from your own CLAIM-BLOCK band and land the claim on `main` first (Rule 25/37); Scoreboard conflicts = union the Findings rows and **regenerate**, never hand-merge a generated file.  

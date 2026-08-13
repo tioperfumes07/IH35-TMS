@@ -29,6 +29,8 @@ Every recommendation and every change is made **as if it will be reviewed by a C
 
 Quality means, non-negotiably: correct accounting · honest financial reporting · traceable numbers · reliable dispatch · strong audit trails · no silent failures · no skipped migrations · no fake green checks · no unverified production claims · no unsafe financial writes · no guessed mappings · no hidden assumptions · no shortcuts that reduce trust · no design changes without approval · **no "done" without proof.**
 
+**FULLY WIRED (owner 2026-08-13):** `docs/lockdown/FULLY-WIRED-COMPLETE-BAR-2026-08-13.md` — create→canonical · money · F+R · matrix · surface bar (every control→matrix) · chrome · pickers · RLS · guard · **Live Chrome LAST**. Never tell the owner “includes all” for a subset.
+
 ---
 
 ## 1. CANONICAL SOURCES — read before acting, in this precedence

@@ -6,7 +6,9 @@
 
 **Authority:** This file wins over chat and stale INBOX/OUTBOX.
 
-**Companion:** `docs/specs/scoreboard/VERTICAL-COLUMN-WAVE-METHOD-LOCKED.md` · `docs/lockdown/WIRE-FIRST-SPRINT-LAW-2026-08-12.md` · `docs/specs/CODER-PASTE-INSTRUCTIONS-2026-08-12.md`
+**Companion:** `docs/specs/scoreboard/VERTICAL-COLUMN-WAVE-METHOD-LOCKED.md` · `docs/lockdown/WIRE-FIRST-SPRINT-LAW-2026-08-12.md` · `docs/specs/CODER-PASTE-INSTRUCTIONS-2026-08-12.md` · **`docs/lockdown/FULLY-WIRED-COMPLETE-BAR-2026-08-13.md`** (owner-plain 12-item “fully wired” list — Live Chrome last)
+
+**Complete ≠ A–C Built alone.** Product “fully wired” = FULLY-WIRED-COMPLETE-BAR items 1–12 for the scope.
 
 ---
 

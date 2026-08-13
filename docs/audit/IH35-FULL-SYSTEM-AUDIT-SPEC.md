@@ -5,10 +5,12 @@
 until it is fully performed, and (B) the full spec. **"Complete" is NOT five layers.** A module is complete only
 when the repo's committed bar — **DoD A–E + VERIFY 1–8** — is PROD-VERIFIED per entity (TRANSP & USMCA; TRK where
 relevant). That bar explicitly includes **connectivity & wiring (V3)**, the **universal picker + creator law (V2)**,
-and **deep cross-module linkage forward+reverse (V4)** — not just "the table exists." The owner lifted the approval
+and **deep cross-module linkage forward+reverse (V4)** — not just "the table exists." Owner-plain checklist:
+`docs/lockdown/FULLY-WIRED-COMPLETE-BAR-2026-08-13.md` (surface bar + **Live Chrome last**). The owner lifted the approval
 holds for verification (no JORGE-APPROVED gate, no asking). The owner did NOT lift honesty. A guess is a defect.
 
 > **CHANGE LOG**
+> **v3.2 (2026-08-13):** Owner locked FULLY-WIRED-COMPLETE-BAR — 12-item plain list; Live Chrome last; soft “includes all” forbidden.
 > **v3.1 (2026-08-03):** Rule **13 — SCOPE-MATCHED TIE-OUT**. Never publish a money finding (esp. `CLS-*-DOUBLE-POST`)
 > from comparing a source-specific subledger to an all-sources GL account. Folded after CLS-FUEL-DOUBLE-POST false
 > premise (row 673): $47.7K was scope mismatch; real residual ~$4,594 tires/tolls → `CLS-CATEGORY-MAP-COHERENCE`.

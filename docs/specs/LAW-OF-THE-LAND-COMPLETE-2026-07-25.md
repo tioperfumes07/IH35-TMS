@@ -22,6 +22,17 @@ owner ruling.
 
 ---
 
+## §0.1 — FULLY WIRED = COMPLETE BAR (owner-locked 2026-08-13 — PERMANENT)
+
+**Canonical owner-plain list:** `docs/lockdown/FULLY-WIRED-COMPLETE-BAR-2026-08-13.md`  
+**Always-apply rule:** `.cursor/rules/38-fully-wired-complete-bar.mdc`
+
+Any claim of **wired / fully wired / includes all / module done / product ready** requires **all 12 items** in that file for the scope: create→canonical · money when owed · forward+reverse · matrix columns · **surface bar** (every tab/control/modal/drawer/wizard→matrix) · chrome law · picker+creator · RLS · guard · **Live Chrome check LAST**.
+
+Scoreboard Built · CI-green · `@matrix-built` · N-of-M **alone are not fully wired.** Surface bar alone is not fully wired. Soft-answering the owner “yes” without building the full list is a **process defect**.
+
+---
+
 ## §1 — PERMISSIONS & MERGE GATES — OWNER LAW (2026-08-03, FINAL; supersedes every earlier wording below)
 
 > **NO HOLDS. NO `JORGE-APPROVED` LABEL. Claude and all coders (Cursor / Cascade / Devin / Claude Coder)

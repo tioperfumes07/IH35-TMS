@@ -5,12 +5,15 @@ description: The durable operating standards for the IH35-TMS repository — per
 
 # IH35-TMS — Operating Standards
 
-**★★ SESSION BOOT (every agent):** load `docs/specs/STANDING-SESSION-DIRECTIVE.md` (§0–§7 · §6 SEARCH BEFORE YOU ASK · §7 TEST WITH PLACEHOLDER NUMBERS),
-`docs/specs/OWNER-QUALITY-COMPACT.md` (ALL QUESTIONS HAVE BEEN ASKED AND ANSWERED · Claude.docx permanized), then
-`docs/specs/DELIVERY-METHOD-LOCKED.md` before other work. Cursor = screens/janitor; Claude Coder = money/Neon;
+**★★ SESSION BOOT (every agent):** load `docs/specs/STANDING-SESSION-DIRECTIVE.md` (§0–§10 · §6 SEARCH BEFORE YOU ASK · §7 TEST WITH PLACEHOLDER NUMBERS · §10 FULLY WIRED),
+`docs/specs/OWNER-QUALITY-COMPACT.md` (ALL QUESTIONS HAVE BEEN ASKED AND ANSWERED · Claude.docx permanized),
+`docs/specs/DELIVERY-METHOD-LOCKED.md`, and `docs/lockdown/FULLY-WIRED-COMPLETE-BAR-2026-08-13.md` before other work.
+Cursor = screens/janitor; Claude Coder = money/Neon;
 Cascade = active-slice auditor. **Every Cursor PR title MUST begin with `Cursor-`** (rule 34 · verify-step 2377).
 Presence ratchet: `scripts/verify-standing-directive-present.mjs` (2374) ·
 `scripts/verify-owner-quality-compact-present.mjs` (2380) · `scripts/verify-cursor-pr-title-prefix.mjs` (2377).
+
+**Fully wired** = the 12-item list in `FULLY-WIRED-COMPLETE-BAR-2026-08-13.md` (surface bar + Live Chrome last). Never soft-answer “includes all.”
 
 This system holds **live financial and legal-evidence data** for a real operating carrier (IH35 Dispatch /
 IH35 Trucking, Laredo TX ↔ Mexico). Treat every change as production-affecting. **§1 (permissions) overrides

@@ -34,3 +34,10 @@ Cursor shipping `load` Built for priority-14 (honesty + leaf-specific tags). **4
 
 **YOUR TOP:** `reverse_link` leaf-specific Built across priority-14 (then connectivity). One column / PR. FAST-MERGE. Live=BLOCKED.
 OUTBOX: `Codex | column=reverse_link | SHIPPED #N @ sha | Live=BLOCKED | NEXT=…`
+
+## LAW LOCK 2026-08-13T19:52Z — FULLY WIRED COMPLETE BAR (mandatory)
+
+Canonical: `docs/lockdown/FULLY-WIRED-COMPLETE-BAR-2026-08-13.md`
+“Wired / includes all / done” = **all 12 items** (surface bar + **Live Chrome last**). Soft yes = defect.
+Continue column drain with `Live=BLOCKED` until Built gate then item 12.
+

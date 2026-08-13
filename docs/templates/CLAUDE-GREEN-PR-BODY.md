@@ -8,6 +8,8 @@ Do **not** wrap it in `## Summary`. Start with `FINDING:`.
 
 **Ship sequence:** branch from tip `origin/main` → one commit → `cursor-ship-preflight --body-file` → fetch + rebase if behind → one push. **Max one Cursor CLAIMED/verify-step PR open at a time.**
 
+**Fully wired claims:** if the PR claims module/product “complete” / “fully wired”, it must satisfy `docs/lockdown/FULLY-WIRED-COMPLETE-BAR-2026-08-13.md` (Live Chrome last). Otherwise `REMAINING:` must say `Live=BLOCKED` / not fully wired yet.
+
 ```
 FINDING: SAF-C01
 LANE: NON-FINANCIAL

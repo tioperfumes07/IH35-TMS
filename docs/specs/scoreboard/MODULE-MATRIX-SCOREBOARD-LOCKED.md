@@ -18,8 +18,8 @@ These resolve scoreboard dishonesty. **When sources disagree, this table wins.**
 | **`live_scenario_probe` / scenario dot** | TMS-native **row count** (e.g. “2 claims”) | **NO** for deep linkage | Green `scenario.insurance` while claim hub FKs all NULL |
 | **Matrix Box 1 Required** | Column applies to leaf (`*.required.json`) | N/A — applicability only | — |
 | **Matrix Box 2 Audited** | Ledger/GUARD/wave row exists for leaf×column | **NO** — mapping only (yellow ●) | Treating audit FAIL as fixed |
-| **Matrix Box 3 Built** | **Wire sprint target:** guard shipped in `wire-sprint-built.json` + guard file on disk; forward writer + reverse nav assumed by guard | **YES for “wired”** during build phase | Scenario row-count probe · checklist PASS without guard |
-| **Matrix Box 4 Live** | **After system test:** PROD-VERIFIED click + Neon on deployed SHA | **YES for “certified”** | CI green · merge · Built mistaken for Live |
+| **Matrix Box 3 Built** | **Wire sprint target:** guard shipped in `wire-sprint-built.json` + guard file on disk; forward writer + reverse nav assumed by guard | **YES for sprint “Built” only** — **NOT** owner “fully wired” (see `FULLY-WIRED-COMPLETE-BAR-2026-08-13.md`) | Scenario row-count probe · checklist PASS without guard · calling Built “complete” |
+| **Matrix Box 4 Live** | **After system test:** PROD-VERIFIED click + Neon on deployed SHA (**FULLY-WIRED item 12 — Live Chrome last**) | **YES for “certified / fully wired”** | CI green · merge · Built mistaken for Live |
 | **Desktop audit packs** | Owner click-through inventory | Input to Required map · **not** auto-green matrix | Re-auditing during wire sprint |
 
 **Certification % (honest)** = Box 4 Live ÷ Box 1 Required (per module or system rollup).  

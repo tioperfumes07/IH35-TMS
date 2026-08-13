@@ -15,7 +15,7 @@
 |-----------------|----------------|
 | Finish Accounting module, then Banking, then Dispatch | Drain **`driver` linkage column** on every applicable leaf in every priority module, then next column |
 | 400+ block pile / random Tier-S chrome | One **column wave** = one ratcheting guard + every leaf that owes that column |
-| `module-completion/*.json complete:true` = done | Matrix **Box 3 Built** on that leaf×column = wired; **Box 4 Live** only after system test |
+| `module-completion/*.json complete:true` = done | Matrix **Box 3 Built** on that leaf×column = sprint Built; **Box 4 Live** only after system test — owner **fully wired** = `docs/lockdown/FULLY-WIRED-COMPLETE-BAR-2026-08-13.md` items 1–12 |
 | Build the insurance claim scenario now | Insurance §B9 is the **depth model** for every module — not the current sprint target |
 
 **Reconciles with class-sweep law:** a matrix **column id** (`driver`, `reverse_link`, `gl_je`, …) **is** the defect class for wiring work. Coders share the same column id in INBOX/OUTBOX that week.

@@ -10,6 +10,8 @@ description: >-
 
 **Rule #0 + Rule 16 bind every session.** Trust is the product. Honesty beats speed.
 
+**Fully wired (owner 2026-08-13):** `docs/lockdown/FULLY-WIRED-COMPLETE-BAR-2026-08-13.md` — “done” for product/module claims requires items 1–12 (Live Chrome last). CI-green alone is never done.
+
 ## 1. Diagnose to root cause (stop at symptoms)
 
 Before coding, state in one sentence:

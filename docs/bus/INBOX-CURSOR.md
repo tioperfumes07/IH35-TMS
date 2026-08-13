@@ -9,3 +9,10 @@
 4. Never `leafRe=.*`. Live=BLOCKED until Built=100% then Live gate.
 
 OUTBOX: `Cursor | column=<id> | SHIPPED #N | Live=BLOCKED | NEXT=…`
+
+## LAW LOCK 2026-08-13T19:52Z — FULLY WIRED COMPLETE BAR (mandatory)
+
+Canonical: `docs/lockdown/FULLY-WIRED-COMPLETE-BAR-2026-08-13.md`
+“Wired / includes all / done” = **all 12 items** (surface bar + **Live Chrome last**). Soft yes = defect.
+Continue column drain with `Live=BLOCKED` until Built gate then item 12.
+

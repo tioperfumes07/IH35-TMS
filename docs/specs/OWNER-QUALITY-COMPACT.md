@@ -2,8 +2,12 @@
 
 **Source artifact (binary):** `docs/specs/OWNER-QUALITY-COMPACT-Claude.docx`  
 **Origin:** Owner Desktop `Claude.docx` (2026-07-31) — permanized into git by Cursor 2026-08-04.  
-**Load every session (every agent)** alongside `STANDING-SESSION-DIRECTIVE.md` and `QUALITY-STANDARD-LOCKED.md`.  
+**Load every session (every agent)** alongside `STANDING-SESSION-DIRECTIVE.md`, `QUALITY-STANDARD-LOCKED.md`, and **`docs/lockdown/FULLY-WIRED-COMPLETE-BAR-2026-08-13.md`**.  
 **On conflict:** the more protective reading wins.
+
+### Fully wired (mandatory meaning — owner 2026-08-13)
+
+**“Includes all” / “wired” / “done” = the entire 12-item list** in `FULLY-WIRED-COMPLETE-BAR-2026-08-13.md`: create→canonical → money → F+R → matrix → **surface bar** (tab/sub-tab/leaf · search/filter/gear/range/picker/Combobox · modal/drawer/ParityDrawer · wizard/nested create) → chrome law → pickers → RLS → guard → **Live Chrome LAST**. Never answer yes to the owner for a subset.
 
 ---
 

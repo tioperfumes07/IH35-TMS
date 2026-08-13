@@ -10,6 +10,8 @@
 This is **everything that applies to every money PR** — Cursor and Claude same list.  
 **Module COMPLETE ≠ PR count.** COMPLETE = every checklist item PASS (or owner HOLD).
 
+**Fully wired (owner 2026-08-13):** also `docs/lockdown/FULLY-WIRED-COMPLETE-BAR-2026-08-13.md` — surface bar + Live Chrome last. Do not claim “includes all” for a subset.
+
 ---
 
 ## 0 · Before writing a line
