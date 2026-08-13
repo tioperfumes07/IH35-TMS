@@ -1,7 +1,7 @@
 import { entityLabel } from "../../lib/entity-label";
 import { formatDateUS } from "../../lib/formatDate";
 import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -53,6 +53,7 @@ function displayBillLabel(bill: VendorBill) {
 
 export function BillPaymentsListPage() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { selectedCompanyId } = useCompanyContext();
   const { user } = useAuth();
   const { pushToast } = useToast();
@@ -65,7 +66,19 @@ export function BillPaymentsListPage() {
   const staged = useStagedListFilters({ applied: { vendorId, dateFrom, dateTo }, empty: { vendorId: "", dateFrom: "", dateTo: "" }, onApply: (next) => { setVendorId(next.vendorId); setDateFrom(next.dateFrom); setDateTo(next.dateTo); } });
   const [search, setSearch] = useState("");
   const [selectedBillId, setSelectedBillId] = useState("");
-  const [payModalOpen, setPayModalOpen] = useState(false);
+  // ACCT-F5057 — Topbar Create→Bill payment uses ?create=1 (opens PayBillModal; select unpaid bill on page).
+  const payModalOpen = searchParams.get("create") === "1";
+  function setPayModalOpen(next: boolean) {
+    setSearchParams(
+      (prev) => {
+        const params = new URLSearchParams(prev);
+        if (next) params.set("create", "1");
+        else params.delete("create");
+        return params;
+      },
+      { replace: true }
+    );
+  }
   const [ccModalOpen, setCcModalOpen] = useState(false);
 
   const paymentsQuery = useQuery({

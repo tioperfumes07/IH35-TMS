@@ -23,6 +23,7 @@ const FILES = {
   pay: "apps/frontend/src/pages/accounting/PayBillModal.tsx",
   api: "apps/frontend/src/api/accounting.ts",
   reverseGuard: "scripts/verify-bill-payment-list-reverse-links.mjs",
+  topbar: "apps/frontend/src/components/Topbar.tsx",
 };
 
 function read(rel) {
@@ -61,6 +62,16 @@ function contractErrors(src) {
   }
   if (!src.list.includes("PayBillModal")) {
     errors.push("DOD-A: BillPaymentsListPage must mount PayBillModal");
+  }
+  // ACCT-F5057 — Topbar Create→Bill payment must open PayBillModal via ?create=1.
+  if (!src.topbar?.includes("/accounting/bill-payments?create=1")) {
+    errors.push("VERIFY-1: Topbar Create→Bill payment must navigate to /accounting/bill-payments?create=1");
+  }
+  if (!/searchParams\.get\(["']create["']\)\s*===\s*["']1["']/.test(src.list)) {
+    errors.push("VERIFY-1: BillPaymentsListPage must honor ?create=1 for PayBillModal");
+  }
+  if (!/params\.delete\(["']create["']\)/.test(src.list) || !/params\.set\(["']create["'],\s*["']1["']\)/.test(src.list)) {
+    errors.push("VERIFY-1: BillPaymentsListPage must URL-sync create open/close");
   }
 
   for (const needle of [
@@ -124,7 +135,7 @@ function selftest() {
     map: "ACCT-SURF-03 `/accounting/bill-payments`",
     manifest: 'path="/accounting/bill-payments"\n<BillPaymentsListPage />\n',
     subnav: "/accounting/bill-payments",
-    list: 'PayBillModal\nkind="journal_entry"\nkind="bill"\nkind="vendor"\n',
+    list: 'PayBillModal\nkind="journal_entry"\nkind="bill"\nkind="vendor"\nsearchParams.get("create") === "1"\nparams.set("create", "1")\nparams.delete("create")\n',
     pay: [
       "ParityDrawer",
       "<ParityDrawer",
@@ -138,6 +149,7 @@ function selftest() {
     ].join("\n"),
     api: 'export function payVendorBill(){ return apiRequest(`/api/v1/accounting/bills/${id}/pay`, { method: "POST" }) }',
     reverseGuard: "journal_entry_id matched_bank_transaction_id",
+    topbar: '[t("topbar.create_bill_payment", "Bill payment"), "/accounting/bill-payments?create=1"]',
   };
   if (contractErrors(good).length) {
     console.error(`${LABEL} --selftest FAIL good:`, contractErrors(good));
@@ -146,6 +158,11 @@ function selftest() {
   const thin = { ...good, pay: "export function PayBillModal(){ return <div>thin</div> }" };
   if (!contractErrors(thin).some((e) => e.includes("ParityDrawer"))) {
     console.error(`${LABEL} --selftest FAIL thin pay modal not caught`);
+    process.exit(1);
+  }
+  const noCreate = { ...good, topbar: '[t("topbar.create_bill_payment", "Bill payment"), "/accounting/bill-payments"]' };
+  if (!contractErrors(noCreate).some((e) => e.includes("?create=1"))) {
+    console.error(`${LABEL} --selftest FAIL Topbar create deep-link not caught`);
     process.exit(1);
   }
   console.log(`${LABEL}: selftest PASS`);
