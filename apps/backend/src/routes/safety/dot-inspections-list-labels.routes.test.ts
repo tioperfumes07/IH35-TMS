@@ -96,4 +96,17 @@ describe("GET /api/v1/safety/dot-inspections joins human labels", () => {
     expect(sqlText).toMatch(/LEFT JOIN mdata\.units u/);
     expect(sqlText).toMatch(/LEFT JOIN maintenance\.work_orders wo/);
   });
+
+  it("filters the driver reverse read in SQL before the list limit", async () => {
+    const driverId = "22222222-2222-4222-8222-222222222222";
+    const response = await app.inject({
+      method: "GET",
+      url: `/api/v1/safety/dot-inspections?operating_company_id=${COMPANY}&driver_id=${driverId}`,
+    });
+
+    expect(response.statusCode).toBe(200);
+    const listCall = mockQuery.mock.calls.find((call) => String(call[0]).includes("FROM safety.dot_inspections di"));
+    expect(String(listCall?.[0])).toContain("AND di.driver_id = $2");
+    expect(listCall?.[1]).toEqual([COMPANY, driverId]);
+  });
 });

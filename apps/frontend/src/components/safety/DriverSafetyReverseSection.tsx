@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import {
   getComplaints,
+  getDotInspections,
   getDriverDrugAlcoholTests,
   getInternalFines,
   getSafetyFines,
@@ -125,12 +126,19 @@ export function DriverSafetyReverseSection({
     enabled,
   });
 
+  const dotInspectionsQuery = useQuery({
+    queryKey: ["safety", "reverse", "dot-inspections", operatingCompanyId, driverId],
+    queryFn: () => getDotInspections(operatingCompanyId, { driver_id: driverId }),
+    enabled,
+  });
+
   if (!canViewSafety) return null;
 
   const civilFines: Row[] = civilFinesQuery.data?.fines ?? [];
   const internalFines: Row[] = internalFinesQuery.data?.fines ?? [];
   const complaints: Row[] = complaintsQuery.data?.complaints ?? [];
   const tests: Row[] = testsQuery.data?.tests ?? [];
+  const dotInspections: Row[] = dotInspectionsQuery.data?.dot_inspections ?? [];
 
   return (
     <div className="space-y-3" data-testid={testId}>
@@ -154,6 +162,34 @@ export function DriverSafetyReverseSection({
         data-testid="driver-dispatcher-safety-events-reverse"
       />
       <SafetyEventsReverseBlock companyId={operatingCompanyId} subject="driver" entityId={driverId} />
+
+      <SectionShell
+        title="DOT Inspections"
+        to="/safety/dot-inspections"
+        linkLabel="Open DOT Inspections"
+        testId="driver-safety-reverse-dot-inspections"
+        isLoading={dotInspectionsQuery.isLoading}
+        isError={dotInspectionsQuery.isError}
+        errorText="Failed to load this driver's DOT inspections."
+        emptyText="No DOT inspections for this driver."
+        count={dotInspections.length}
+      >
+        {dotInspections.map((inspection) => (
+          <li key={s(inspection.id)} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-sm">
+            <EntityLink
+              kind="dot_inspection"
+              id={s(inspection.id) || null}
+              label={`Level ${s(inspection.fmcsa_level) || "—"} · ${s(inspection.outcome) || "—"}`}
+              className="font-semibold text-slate-700"
+            />
+            <div className="mt-1 text-xs text-gray-600">
+              {formatDateUS(s(inspection.inspection_date))}
+              {inspection.inspector_name ? ` · ${s(inspection.inspector_name)}` : ""}
+              {inspection.location ? ` · ${s(inspection.location)}` : ""}
+            </div>
+          </li>
+        ))}
+      </SectionShell>
 
       <SectionShell
         title="External Fines"

@@ -31,6 +31,9 @@ describe("DOT inspection CSA canonical rollup", () => {
   beforeEach(async () => {
     mockQuery.mockReset();
     mockQuery.mockImplementation(async (sql: string, values?: unknown[]) => {
+      if (sql.includes("AS driver_ok") && sql.includes("AS unit_ok")) {
+        return { rows: [{ driver_ok: true, unit_ok: true }], rowCount: 1 };
+      }
       if (sql.includes("INSERT INTO safety.dot_inspections")) {
         return {
           rows: [{ id: "inspection-1", outcome: "PASS", unit_id: null, csa_points: values?.[9] }],
@@ -123,5 +126,30 @@ describe("DOT inspection CSA canonical rollup", () => {
         hos_compliance: 3,
       },
     });
+  });
+
+  it("rejects a driver or unit outside the selected operating company before insert", async () => {
+    mockQuery.mockImplementation(async (sql: string) => {
+      if (sql.includes("AS driver_ok") && sql.includes("AS unit_ok")) {
+        return { rows: [{ driver_ok: false, unit_ok: true }], rowCount: 1 };
+      }
+      return { rows: [], rowCount: 0 };
+    });
+
+    const response = await app.inject({
+      method: "POST",
+      url: `/api/v1/safety/dot-inspections?operating_company_id=${COMPANY}`,
+      payload: {
+        inspection_date: "2026-07-17T12:00:00Z",
+        driver_id: "22222222-2222-4222-8222-222222222222",
+        inspector_name: "Officer Test",
+        inspection_level: 1,
+        outcome: "PASS",
+      },
+    });
+
+    expect(response.statusCode).toBe(400);
+    expect(response.json()).toEqual({ error: "linked_entity_not_in_operating_company" });
+    expect(mockQuery.mock.calls.some((call) => String(call[0]).includes("INSERT INTO safety.dot_inspections"))).toBe(false);
   });
 });

@@ -196,7 +196,7 @@ export function AssetSafetyReverseSection({
   if (!canViewSafety) return null;
 
   const accidents: Row[] = accidentsQuery.data?.accidents ?? [];
-  const inspections: Row[] = inspectionsQuery.data?.inspections ?? [];
+  const inspections: Row[] = inspectionsQuery.data?.dot_inspections ?? [];
   const dvirs: Row[] = dvirQuery.data?.submissions ?? [];
   const contextLabel = isUnit ? "unit" : "trailer";
 

@@ -58,6 +58,9 @@ export function assertAssetSafetyReverse(sources) {
       problems.push(`${SECTION}: does not read ${label} (${needle}) — that record type stays invisible on the asset profile.`);
     }
   }
+  if (!/data\?\.dot_inspections/.test(src[SECTION])) {
+    problems.push(`${SECTION}: reads the wrong DOT response key — API returns dot_inspections, so the mounted asset reverse section renders empty.`);
+  }
   // Asset scoping is passed on every read.
   if (!src[SECTION].includes("unit_id: assetId") || !src[SECTION].includes("trailer_id: assetId")) {
     problems.push(`${SECTION}: reads are not scoped to the asset (expected both \`unit_id: assetId\` and \`trailer_id: assetId\`).`);
@@ -131,6 +134,11 @@ if (SELFTEST) {
     "does not read DVIRs"
   );
   expectCaught(
+    "dot-response-key-drift",
+    { ...live, [SECTION]: live[SECTION].replace(/data\?\.dot_inspections/g, "data?.inspections") },
+    "reads the wrong DOT response key"
+  );
+  expectCaught(
     "unit-page-not-mounted",
     { ...live, [UNIT_PAGE]: live[UNIT_PAGE].replace(/AssetSafetyReverseSection/g, "SomethingElse") },
     "does not mount AssetSafetyReverseSection"
@@ -185,7 +193,7 @@ if (SELFTEST) {
     for (const f of failures) console.error(`  ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — 10 planted defects caught, live sources clean`);
+  console.log(`${LABEL} SELFTEST PASS — 11 planted defects caught, live sources clean`);
   process.exit(0);
 }
 

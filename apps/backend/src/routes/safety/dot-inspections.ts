@@ -14,6 +14,7 @@ const companyQuerySchema = z.object({
 
 // SAF-F17 — unit / trailer profile reverse view. Both optional; absent = company-wide list.
 const dotInspectionsListQuerySchema = companyQuerySchema.extend({
+  driver_id: z.string().uuid().optional(),
   unit_id: z.string().uuid().optional(),
   trailer_id: z.string().uuid().optional(),
 });
@@ -124,6 +125,10 @@ export async function registerSafetyDotInspectionsRoutes(app: FastifyInstance) {
     const rows = await withCompany(user.uuid, user.role, query.data.operating_company_id, async (client) => {
       const values: unknown[] = [query.data.operating_company_id];
       const filters: string[] = [];
+      if (query.data.driver_id) {
+        values.push(query.data.driver_id);
+        filters.push(`AND di.driver_id = $${values.length}`);
+      }
       if (query.data.unit_id) {
         values.push(query.data.unit_id);
         filters.push(`AND di.unit_id = $${values.length}`);
@@ -201,6 +206,24 @@ export async function registerSafetyDotInspectionsRoutes(app: FastifyInstance) {
     const payload = await withCompany(user.uuid, user.role, query.data.operating_company_id, async (client) => {
       await client.query("BEGIN");
       try {
+        const links = await client.query<{ driver_ok: boolean; unit_ok: boolean }>(
+          `SELECT
+             ($2::uuid IS NULL OR EXISTS (
+               SELECT 1 FROM mdata.drivers d
+               WHERE d.id = $2::uuid AND d.operating_company_id = $1::uuid
+             )) AS driver_ok,
+             ($3::uuid IS NULL OR EXISTS (
+               SELECT 1 FROM mdata.units u
+               WHERE u.id = $3::uuid
+                 AND (u.owner_company_id = $1::uuid OR u.currently_leased_to_company_id = $1::uuid)
+             )) AS unit_ok`,
+          [query.data.operating_company_id, body.data.driver_id ?? null, body.data.unit_id ?? null]
+        );
+        const integrity = links.rows[0];
+        if (!integrity?.driver_ok || !integrity.unit_ok) {
+          await client.query("ROLLBACK");
+          return null;
+        }
         const csaPointBreakdown = Object.fromEntries(
           Object.entries({
             unsafe_driving: body.data.csa_points_unsafe_driving,
@@ -317,6 +340,7 @@ export async function registerSafetyDotInspectionsRoutes(app: FastifyInstance) {
       }
     });
 
+    if (!payload) return reply.code(400).send({ error: "linked_entity_not_in_operating_company" });
     return reply.code(201).send(payload);
   });
 
