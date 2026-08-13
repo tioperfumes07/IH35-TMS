@@ -1147,11 +1147,12 @@ export type SafetyPermitType =
 
 export function getSafetyPermits(
   companyId: string,
-  params: { include_archived?: boolean; permit_type?: SafetyPermitType } = {}
+  params: { include_archived?: boolean; permit_type?: SafetyPermitType; unit_id?: string } = {}
 ) {
   const qs = new URLSearchParams({ operating_company_id: companyId });
   if (params.include_archived) qs.set("include_archived", "true");
   if (params.permit_type) qs.set("permit_type", params.permit_type);
+  if (params.unit_id) qs.set("unit_id", params.unit_id);
   return apiRequest<{
     permits: Array<Record<string, unknown>>;
     renewal_alerts: Array<Record<string, unknown>>;

@@ -40,6 +40,7 @@ import { LegalMattersReverseSection } from "../../components/legal/LegalMattersR
 import { InsuranceClaimsReverseSection } from "../../components/insurance/InsuranceClaimsReverseSection";
 import { AssetSafetyReverseSection } from "../../components/safety/AssetSafetyReverseSection";
 import { FuelTransactionsReverseSection } from "../../components/fuel/FuelTransactionsReverseSection";
+import { UnitPermitsReverseSection } from "../../components/safety/UnitPermitsReverseSection";
 import { LinkedBankTransactionsPanel } from "../../components/banking/LinkedBankTransactionsPanel";
 
 export type UnitProfileAggregate = {
@@ -339,6 +340,13 @@ export function VehicleProfilePage() {
               filter={{ unit_id: id }}
               contextLabel="this unit"
               data-testid="vehicle-profile-fuel-transactions"
+            />
+          </div>
+          <div data-testid="vp-section-10f-permits">
+            <UnitPermitsReverseSection
+              operatingCompanyId={companyId}
+              unitId={id}
+              data-testid="vehicle-profile-permits"
             />
           </div>
           <div data-testid="vp-section-11-action-bar">
