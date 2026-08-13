@@ -31,6 +31,7 @@ import { FuelTransactionsReverseSection } from "../../components/fuel/FuelTransa
 import { DriverFinesReverseSection } from "../../components/safety/DriverFinesReverseSection";
 import { DriverSafetyReverseSection } from "../../components/safety/DriverSafetyReverseSection";
 import { BackgroundChecksSection } from "../../components/safety/BackgroundChecksSection";
+import { MedicalCardsHistorySection } from "../../components/safety/MedicalCardsHistorySection";
 import { RoadServiceReverseSection } from "../../components/maintenance/RoadServiceReverseSection";
 import { W8BenModal } from "../../components/drivers/W8BenModal";
 import { KpiCard } from "../../components/layout/KpiCard";
@@ -305,6 +306,7 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
       </div>
       <div data-testid="dp-section-3-medical">
         <MedicalCardSection medical={aggregate.medical_card} />
+        <MedicalCardsHistorySection operatingCompanyId={companyId} driverId={id} />
       </div>
       <div data-testid="dp-section-4-drug">
         <DrugProgramSection drug={aggregate.drug_program} />

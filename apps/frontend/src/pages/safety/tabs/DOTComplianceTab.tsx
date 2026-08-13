@@ -8,6 +8,7 @@ import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { BackgroundChecksSection } from "../../../components/safety/BackgroundChecksSection";
+import { MedicalCardsHistorySection } from "../../../components/safety/MedicalCardsHistorySection";
 
 type DotReferenceCard = {
   cfr: string;
@@ -143,6 +144,7 @@ export function DOTComplianceTab() {
   return (
     <div className="space-y-4">
       <ExpiryDashboard />
+      <MedicalCardsHistorySection operatingCompanyId={companyId} />
       <BackgroundChecksSection operatingCompanyId={companyId} />
 
       <div className="rounded-sm border border-gray-200 bg-white p-4">

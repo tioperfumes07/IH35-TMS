@@ -399,6 +399,34 @@ export function createSafetyBackgroundCheck(
   });
 }
 
+export type SafetyMedicalCardRow = {
+  id: string;
+  driver_id: string;
+  driver_name: string | null;
+  card_number: string;
+  issued_date: string;
+  expiry_date: string;
+  notes: string | null;
+  days_to_expiry: number | null;
+  expiry_pill: "red" | "amber" | "green" | "unknown";
+};
+
+export function listSafetyMedicalCards(companyId: string, driverId?: string) {
+  const params = new URLSearchParams({ operating_company_id: companyId });
+  if (driverId) params.set("driver_id", driverId);
+  return apiRequest<{ cards: SafetyMedicalCardRow[] }>(`/api/v1/safety/medical-cards?${params.toString()}`);
+}
+
+export function createSafetyMedicalCard(companyId: string, body: {
+  driver_id: string;
+  card_number: string;
+  issued_date: string;
+  expiry_date: string;
+  notes?: string;
+}) {
+  return apiRequest<SafetyMedicalCardRow>(`/api/v1/safety/medical-cards?${q(companyId)}`, { method: "POST", body });
+}
+
 export type SafetyMeetingRow = SafetyEventLogRow & {
   required_attendees?: string[];
   attendance?: Record<string, boolean>;

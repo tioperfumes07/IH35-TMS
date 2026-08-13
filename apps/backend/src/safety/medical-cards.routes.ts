@@ -7,7 +7,11 @@ import { assertCompanyMembership } from "../_helpers/company-membership-guard.js
 
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
+  driver_id: z.string().uuid().optional(),
 });
+
+const RL_READ = { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } };
+const RL_WRITE = { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } };
 
 const driverParamsSchema = z.object({
   driver_id: z.string().uuid(),
@@ -74,7 +78,39 @@ function mapMedicalCardRow(row: Record<string, unknown>) {
 }
 
 export async function registerSafetyMedicalCardsRoutes(app: FastifyInstance) {
-  app.get("/api/v1/safety/medical-cards/drivers/:driver_id", async (req, reply) => {
+  app.get("/api/v1/safety/medical-cards", RL_READ, async (req, reply) => {
+    const user = authUser(req, reply);
+    if (!user) return;
+    const company = companyQuerySchema.safeParse(req.query ?? {});
+    if (!company.success) return reply.code(400).send({ error: "validation_error", details: company.error.flatten() });
+    const cards = await withCompanyScope(user.uuid, company.data.operating_company_id, async (client) => {
+      const values: unknown[] = [company.data.operating_company_id];
+      const driverFilter = company.data.driver_id
+        ? (values.push(company.data.driver_id), `AND mc.driver_id = $${values.length}::uuid`)
+        : "";
+      const res = await client.query(
+        `
+          SELECT mc.*,
+                 NULLIF(TRIM(COALESCE(d.first_name, '') || ' ' || COALESCE(d.last_name, '')), '') AS driver_name,
+                 CASE WHEN mc.expiry_date IS NULL THEN NULL ELSE (mc.expiry_date - CURRENT_DATE) END AS days_to_expiry
+          FROM safety.medical_cards mc
+          JOIN mdata.drivers d
+            ON d.id = mc.driver_id
+           AND d.operating_company_id = mc.operating_company_id
+          WHERE mc.operating_company_id = $1::uuid
+            AND mc.voided_at IS NULL
+            ${driverFilter}
+          ORDER BY mc.expiry_date ASC, mc.created_at DESC
+          LIMIT 500
+        `,
+        values
+      );
+      return res.rows.map((row) => mapMedicalCardRow(row as Record<string, unknown>));
+    });
+    return { cards };
+  });
+
+  app.get("/api/v1/safety/medical-cards/drivers/:driver_id", RL_READ, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const company = companyQuerySchema.safeParse(req.query ?? {});
@@ -115,7 +151,7 @@ export async function registerSafetyMedicalCardsRoutes(app: FastifyInstance) {
     return { cards };
   });
 
-  app.post("/api/v1/safety/medical-cards", async (req, reply) => {
+  app.post("/api/v1/safety/medical-cards", RL_WRITE, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     if (!canMutate(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -125,6 +161,11 @@ export async function registerSafetyMedicalCardsRoutes(app: FastifyInstance) {
     if (!body.success) return reply.code(400).send({ error: "validation_error", details: body.error.flatten() });
 
     const created = await withCompanyScope(user.uuid, company.data.operating_company_id, async (client) => {
+      const driver = await client.query(
+        `SELECT id FROM mdata.drivers WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
+        [body.data.driver_id, company.data.operating_company_id]
+      );
+      if (!driver.rows[0]) return null;
       const res = await client.query(
         `
           INSERT INTO safety.medical_cards (
@@ -163,6 +204,8 @@ export async function registerSafetyMedicalCardsRoutes(app: FastifyInstance) {
       );
       return res.rows[0];
     });
+
+    if (!created) return reply.code(400).send({ error: "driver_not_in_operating_company" });
 
     return reply.code(201).send(created);
   });
