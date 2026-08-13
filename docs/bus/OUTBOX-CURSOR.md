@@ -45,3 +45,6 @@
 2026-08-13T20:18Z Cursor | SHIPPED VERTICAL-REVERSE-LINK-FLEET-TRANSFERS (PR#6557) | fleet reverse Gap=0 | Live=BLOCKED | NEXT=factoring/insurance reverse
 2026-08-13T20:18Z Cursor | SHIPPED VERTICAL-REVERSE-LINK-FLEET-TRANSFERS (PR#6557) | fleet reverse Gap=0 | Live=BLOCKED | NEXT=safety/factoring reverse
 2026-08-13T20:20Z Cursor | shipping VERTICAL-QBO-CHROME-FACTORING-TOOLBAR | Built chrome.toolbar_* via FactoringListPage triad | Live=BLOCKED | NEXT=load remainder 4 WIRE
+2026-08-13T20:22Z Cursor | SHIPPED VERTICAL-QBO-CHROME-FACTORING-TOOLBAR (PR#6559) | factoring qbo toolbar Gap=0 | Live=BLOCKED | NEXT=load remainder WIRE
+2026-08-13T20:22Z Cursor | SHIPPED VERTICAL-QBO-CHROME-FACTORING-TOOLBAR (PR#6559) | factoring qbo toolbar Gap=0 | Live=BLOCKED | NEXT=load remainder WIRE
+2026-08-13T20:25Z Cursor | shipping VERTICAL-LOAD-REMAINDER-WIRE-GAPS | Built in_transit.promote + honesty road/legal | Live=BLOCKED | NEXT=safety reverse WIRE lists
