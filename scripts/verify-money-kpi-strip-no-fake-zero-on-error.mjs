@@ -25,7 +25,10 @@
 // CLS-MONEY-KPI-FAKE-ZERO-REMAINDER-FACTORING-MAINT (Cursor #6254): FactoringHome + MaintenanceHome.
 // CLS-MONEY-KPI-FAKE-ZERO-REMAINDER-MAINT-TABS (Cursor #this): ServiceLocationPage zero-object fallback
 // + SevereRepairOosTab rollup tiles still money()/open_count with no rollupQuery.isError branch.
-// Extended here rather than a new verify-step number (Rule 17 / no hotfile thrash).
+// CLS-MONEY-KPI-FAKE-ZERO-REMAINDER-HUB (Cursor ACCT-F5025): AccountingHubPage kpiStrip still
+// painted $0.00 from billsQ/invoicesQ ?? [] with no isError branch — extended here.
+//
+// @matrix-built {"modules":["accounting"],"cols":["connectivity"],"leafRe":"^(home|bills|invoices|expenses)","task":"ACCT-F5025-HUB-KPI-NO-FAKE-ZERO","pr":"this PR"}
 import fs from "node:fs";
 
 const BILLS_PAGE = "apps/frontend/src/pages/accounting/BillsPage.tsx";
@@ -39,6 +42,7 @@ const SERVICE_LOCATION = "apps/frontend/src/pages/maintenance/ServiceLocationPag
 const SEVERE_OOS = "apps/frontend/src/pages/maintenance/components/SevereRepairOosTab.tsx";
 const SAFETY_EVENTS = "apps/frontend/src/pages/safety/SafetyEventsPage.tsx";
 const DISPATCH_OVERVIEW = "apps/frontend/src/pages/dispatch/DispatchOverview.tsx";
+const ACCOUNTING_HUB = "apps/frontend/src/pages/accounting/AccountingHubPage.tsx";
 
 function fail(msg) {
   console.error(`FAIL verify-money-kpi-strip-no-fake-zero-on-error: ${msg}`);
@@ -99,6 +103,27 @@ function checkExpensesPage(src) {
   }
   if (!/Total:\s*\{query\.isError/.test(src)) {
     fail(`${EXPENSES_PAGE}: "Total" no longer branches directly on query.isError — will show $0.00 on a failed fetch, not an error state.`);
+  }
+}
+
+function checkAccountingHub(src) {
+  const start = src.indexOf("const kpiStrip = (");
+  if (start === -1) {
+    fail(`${ACCOUNTING_HUB}: kpiStrip not found — did the hub KPI strip move?`);
+    return;
+  }
+  const block = src.slice(start, start + 2200);
+  if (!block.includes("billsQ.isError")) {
+    fail(`${ACCOUNTING_HUB}: kpiStrip does not branch on billsQ.isError — Open Bills/MTD tiles will show $0.00 on a failed bills fetch.`);
+  }
+  if (!block.includes("invoicesQ.isError")) {
+    fail(`${ACCOUNTING_HUB}: kpiStrip does not branch on invoicesQ.isError — Open Invoices/Overdue A/R will show $0.00 on a failed invoices fetch.`);
+  }
+  if (!/kpiCard\(\s*"Open Bills"\s*,\s*"—"/.test(block)) {
+    fail(`${ACCOUNTING_HUB}: no "—" fallback for Open Bills on billsQ.isError.`);
+  }
+  if (!/kpiCard\(\s*"Open Invoices"\s*,\s*"—"/.test(block)) {
+    fail(`${ACCOUNTING_HUB}: no "—" fallback for Open Invoices on invoicesQ.isError.`);
   }
 }
 
@@ -469,6 +494,32 @@ function selftest() {
     probesProven++;
   }
 
+  // Mutation: AccountingHub kpiStrip loses billsQ.isError branch.
+  {
+    const original = fs.readFileSync(ACCOUNTING_HUB, "utf8");
+    const mutated = original.replace(/billsQ\.isError/g, "false /* mutated */");
+    if (mutated === original) {
+      console.error("SELFTEST SETUP FAILED: AccountingHub billsQ.isError pattern not found.");
+      process.exitCode = 1;
+      return;
+    }
+    fs.writeFileSync(ACCOUNTING_HUB, mutated);
+    let caught = false;
+    try {
+      checkAccountingHub(mutated);
+      caught = process.exitCode === 1;
+    } finally {
+      process.exitCode = undefined;
+      fs.writeFileSync(ACCOUNTING_HUB, original);
+    }
+    if (!caught) {
+      console.error("SELFTEST INERT: dropping AccountingHub billsQ.isError was not caught.");
+      process.exitCode = 1;
+      return;
+    }
+    probesProven++;
+  }
+
   console.log(`PASS verify-money-kpi-strip-no-fake-zero-on-error --selftest (mutation probes proven non-inert: ${probesProven})`);
 }
 
@@ -479,6 +530,7 @@ if (process.argv.includes("--selftest")) {
   checkSettlementsPage(fs.readFileSync(SETTLEMENTS_PAGE, "utf8"));
   checkInvoicesPage(fs.readFileSync(INVOICES_PAGE, "utf8"));
   checkExpensesPage(fs.readFileSync(EXPENSES_PAGE, "utf8"));
+  checkAccountingHub(fs.readFileSync(ACCOUNTING_HUB, "utf8"));
   checkFactoringHome(fs.readFileSync(FACTORING_HOME, "utf8"));
   checkMaintenanceHome(fs.readFileSync(MAINT_HOME, "utf8"), fs.readFileSync(MAINT_KPI_ROWS, "utf8"));
   checkServiceLocationPage(fs.readFileSync(SERVICE_LOCATION, "utf8"));

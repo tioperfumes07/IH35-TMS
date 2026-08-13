@@ -391,12 +391,26 @@ export function AccountingHubPage() {
 
   const kpiStrip = (
     <div className="grid gap-2 md:grid-cols-3 xl:grid-cols-6">
-        {kpiCard("Open Bills", money.format(openBillsAmountCents / 100), `${openBills.length} open`, openBills.length ? "danger" : "neutral")}
-        {kpiCard("MTD Expenses", money.format(expensesMtdCents / 100), `${billsMtd.length} bills`, "warn")}
-        {kpiCard("Open Invoices", money.format(openInvoicesCents / 100), `${openInvoices.length} open`)}
-        {kpiCard("Overdue A/R", money.format(overdueInvoiceCents / 100), `${overdueInvoices.length} overdue`, overdueInvoices.length ? "danger" : "neutral")}
-        {kpiCard("Unmatched", String(unmatchedItems.length), "failed / blocked queue")}
-        {kpiCard("QBO Sync", `${qboPending} pending`, qboFailed ? `${qboFailed} failed` : "queue healthy", qboFailed ? "danger" : qboPending ? "warn" : "neutral")}
+        {/* CLS-MONEY-KPI-FAKE-ZERO-REMAINDER-HUB — hub strip used billsQ.data?.rows ?? [] / invoicesQ.data
+            without isError, so a failed bills/invoices/QBO fetch still painted $0.00 / 0 open. */}
+        {billsQ.isError
+          ? kpiCard("Open Bills", "—", "Error loading")
+          : kpiCard("Open Bills", money.format(openBillsAmountCents / 100), `${openBills.length} open`, openBills.length ? "danger" : "neutral")}
+        {billsQ.isError
+          ? kpiCard("MTD Expenses", "—", "Error loading")
+          : kpiCard("MTD Expenses", money.format(expensesMtdCents / 100), `${billsMtd.length} bills`, "warn")}
+        {invoicesQ.isError
+          ? kpiCard("Open Invoices", "—", "Error loading")
+          : kpiCard("Open Invoices", money.format(openInvoicesCents / 100), `${openInvoices.length} open`)}
+        {invoicesQ.isError
+          ? kpiCard("Overdue A/R", "—", "Error loading")
+          : kpiCard("Overdue A/R", money.format(overdueInvoiceCents / 100), `${overdueInvoices.length} overdue`, overdueInvoices.length ? "danger" : "neutral")}
+        {qboQueueQ.isError
+          ? kpiCard("Unmatched", "—", "Error loading")
+          : kpiCard("Unmatched", String(unmatchedItems.length), "failed / blocked queue")}
+        {qboStatsQ.isError
+          ? kpiCard("QBO Sync", "—", "Error loading")
+          : kpiCard("QBO Sync", `${qboPending} pending`, qboFailed ? `${qboFailed} failed` : "queue healthy", qboFailed ? "danger" : qboPending ? "warn" : "neutral")}
       </div>
   );
 
