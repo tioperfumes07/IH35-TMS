@@ -26,6 +26,8 @@ import { DriverCommunicationsTab } from "../../components/drivers/DriverCommunic
 import { EntityAuditHistoryTab } from "../../components/audit/EntityAuditHistoryTab";
 import { LegalMattersReverseSection } from "../../components/legal/LegalMattersReverseSection";
 import { InsuranceClaimsReverseSection } from "../../components/insurance/InsuranceClaimsReverseSection";
+import { ExpensesReverseSection } from "../../components/accounting/ExpensesReverseSection";
+import { FuelTransactionsReverseSection } from "../../components/fuel/FuelTransactionsReverseSection";
 import { DriverFinesReverseSection } from "../../components/safety/DriverFinesReverseSection";
 import { DriverSafetyReverseSection } from "../../components/safety/DriverSafetyReverseSection";
 import { RoadServiceReverseSection } from "../../components/maintenance/RoadServiceReverseSection";
@@ -524,6 +526,24 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
           filter={{ driver_id: id }}
           contextLabel="this driver"
           data-testid="driver-profile-insurance-claims"
+        />
+      </div>
+      {/* ACCT-F5031 / rank 6 — ExpensesReverseSection already filtered by driver_id but was only
+          mounted on TrailerProfile. Same create-path reverse bar as claims/fuel. */}
+      <div data-testid="dp-section-expenses-reverse">
+        <ExpensesReverseSection
+          operatingCompanyId={companyId}
+          filter={{ driver_id: id }}
+          contextLabel="this driver"
+          data-testid="driver-profile-expenses-reverse"
+        />
+      </div>
+      <div data-testid="dp-section-fuel-reverse">
+        <FuelTransactionsReverseSection
+          operatingCompanyId={companyId}
+          filter={{ driver_id: id }}
+          contextLabel="this driver"
+          data-testid="driver-profile-fuel-reverse"
         />
       </div>
       {/* SAF-F16 — fines had no reverse surface on the driver they were imposed on. Reads BOTH

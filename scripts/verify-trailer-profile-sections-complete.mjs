@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["dispatch","fleet","fuel","accounting"],"cols":["load","trailer","connectivity","reverse_link"],"leafRe":"^(load\\.|secondary\\.book_load|home\\.|roster\\.|unit\\.|trailer\\.|expenses\\.|fuel|history)","task":"P31+CREATE-PATH-TRIP-TRAILER-REVERSE","pr":"#5830+#6343"} */
+/** @matrix-built {"modules":["dispatch","fleet","fuel","accounting","drivers"],"cols":["load","trailer","connectivity","reverse_link"],"leafRe":"^(load\\.|secondary\\.book_load|home\\.|roster\\.|unit\\.|trailer\\.|expenses\\.|fuel|history|driver)","task":"P31+CREATE-PATH-TRIP-TRAILER-REVERSE+ACCT-F5031","pr":"#5830+#6343+#6407"} */
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -7,8 +7,10 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const PAGE = "apps/frontend/src/pages/fleet/TrailerProfilePage.tsx";
 const SERVICE = "apps/backend/src/mdata/equipment-aggregate.service.ts";
+const DRIVER_PAGE = "apps/frontend/src/pages/drivers/DriverProfilePage.tsx";
+const LOAD_DRAWER = "apps/frontend/src/components/dispatch/LoadDetailDrawer.tsx";
 
-export function problems(page, service) {
+export function problems(page, service, driverPage = "", loadDrawer = "") {
   const failures = [];
   for (const id of [
     "tp-section-1-identity",
@@ -41,28 +43,47 @@ export function problems(page, service) {
   if (!/ExpensesReverseSection[\s\S]{0,220}?filter=\{\{\s*trailer_id:/.test(page)) {
     failures.push("CREATE-PATH-TRIP: TrailerProfile must mount ExpensesReverseSection filter={{ trailer_id }}");
   }
+
+  // ACCT-F5031 — same ExpensesReverseSection filter-union must be mounted on driver + load surfaces.
+  if (driverPage) {
+    if (!/ExpensesReverseSection[\s\S]{0,220}?filter=\{\{\s*driver_id:/.test(driverPage)) {
+      failures.push("ACCT-F5031: DriverProfile must mount ExpensesReverseSection filter={{ driver_id }}");
+    }
+    if (!/FuelTransactionsReverseSection[\s\S]{0,220}?filter=\{\{\s*driver_id:/.test(driverPage)) {
+      failures.push("ACCT-F5031: DriverProfile must mount FuelTransactionsReverseSection filter={{ driver_id }}");
+    }
+  }
+  if (loadDrawer) {
+    if (!/ExpensesReverseSection[\s\S]{0,220}?filter=\{\{\s*load_id:/.test(loadDrawer)) {
+      failures.push("ACCT-F5031: LoadDetailDrawer must mount ExpensesReverseSection filter={{ load_id }}");
+    }
+  }
   return failures;
 }
 
 function selftest() {
   const page = fs.readFileSync(path.join(ROOT, PAGE), "utf8");
   const service = fs.readFileSync(path.join(ROOT, SERVICE), "utf8");
+  const driverPage = fs.readFileSync(path.join(ROOT, DRIVER_PAGE), "utf8");
+  const loadDrawer = fs.readFileSync(path.join(ROOT, LOAD_DRAWER), "utf8");
   const cases = [
-    ["baseline", page, service, 0],
-    ["history FK removed", page, service.replace("lah.new_trailer_id = $1::uuid", "lah.new_unit_id = $1::uuid"), 1],
-    ["opco scope removed", page, service.replace("lah.operating_company_id = $2::uuid", "TRUE"), 1],
-    ["load link removed", page.replace('kind="load"', 'kind="trailer"'), service, 1],
-    ["fuel reverse removed", page.replace(/FuelTransactionsReverseSection/g, "GoneFuel"), service, 1],
-    ["expense reverse removed", page.replace(/ExpensesReverseSection/g, "GoneExpense"), service, 1],
+    ["baseline", page, service, driverPage, loadDrawer, 0],
+    ["history FK removed", page, service.replace("lah.new_trailer_id = $1::uuid", "lah.new_unit_id = $1::uuid"), driverPage, loadDrawer, 1],
+    ["opco scope removed", page, service.replace("lah.operating_company_id = $2::uuid", "TRUE"), driverPage, loadDrawer, 1],
+    ["load link removed", page.replace('kind="load"', 'kind="trailer"'), service, driverPage, loadDrawer, 1],
+    ["fuel reverse removed", page.replace(/FuelTransactionsReverseSection/g, "GoneFuel"), service, driverPage, loadDrawer, 1],
+    ["expense reverse removed", page.replace(/ExpensesReverseSection/g, "GoneExpense"), service, driverPage, loadDrawer, 1],
+    ["driver expense reverse removed", page, service, driverPage.replace(/ExpensesReverseSection/g, "GoneExpense"), loadDrawer, 1],
+    ["load expense reverse removed", page, service, driverPage, loadDrawer.replace(/ExpensesReverseSection/g, "GoneExpense"), 1],
   ];
-  for (const [name, p, s, minimum] of cases) {
-    const count = problems(p, s).length;
+  for (const [name, p, s, d, l, minimum] of cases) {
+    const count = problems(p, s, d, l).length;
     if (count < minimum || (minimum === 0 && count !== 0)) {
       console.error(`verify:trailer-profile-sections-complete SELFTEST FAIL: ${name} produced ${count}`);
       process.exit(1);
     }
   }
-  console.log("verify:trailer-profile-sections-complete SELFTEST PASS — P31 + CREATE-PATH-TRIP reverse mutations caught");
+  console.log("verify:trailer-profile-sections-complete SELFTEST PASS — P31 + CREATE-PATH-TRIP + ACCT-F5031 reverse mutations caught");
 }
 
 if (process.argv.includes("--selftest")) {
@@ -73,9 +94,11 @@ if (process.argv.includes("--selftest")) {
 const failures = problems(
   fs.readFileSync(path.join(ROOT, PAGE), "utf8"),
   fs.readFileSync(path.join(ROOT, SERVICE), "utf8"),
+  fs.readFileSync(path.join(ROOT, DRIVER_PAGE), "utf8"),
+  fs.readFileSync(path.join(ROOT, LOAD_DRAWER), "utf8"),
 );
 if (failures.length) {
   for (const failure of failures) console.error(`verify:trailer-profile-sections-complete FAIL: ${failure}`);
   process.exit(1);
 }
-console.log("verify:trailer-profile-sections-complete PASS — P31 trailer↔historical-load reverse link ratcheted");
+console.log("verify:trailer-profile-sections-complete PASS — P31 + CREATE-PATH-TRIP + ACCT-F5031 reverse mounts intact");

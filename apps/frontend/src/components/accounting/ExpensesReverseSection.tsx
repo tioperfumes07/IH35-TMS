@@ -11,8 +11,8 @@ import { entityLabel } from "../../lib/entity-label";
  * accounting.expenses.trailer_id (mdata.equipment, #6316) had create+detail acceptance (#6322) but
  * no list-level filter (closed same session, EXPENSE-FUEL-TRAILER-LIST-FILTER-MISSING) and no
  * trailer-profile surface to show it — mirrors FuelTransactionsReverseSection.tsx's filter-union
- * convention. driver_id/load_id supported for future reuse on driver/load detail pages, not mounted
- * anywhere yet — this PR only mounts trailer_id on TrailerProfilePage.
+ * convention. trailer_id mounted on TrailerProfilePage (#6343); driver_id on DriverProfilePage and
+ * load_id on LoadDetailDrawer (ACCT-F5031).
  */
 
 type Filter =
