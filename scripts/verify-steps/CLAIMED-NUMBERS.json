@@ -597,6 +597,11 @@
     "claimed_by": "cursor",
     "purpose": "ACCT-F5026 void originalDate ISO for customer_payment (LV-BILLVOID class remainder)"
   },
+  "3220": {
+    "claimed_at": "2026-08-13",
+    "claimed_by": "cursor",
+    "purpose": "ACCT-F5027 LV-AR-OPEN-INCLUDES-VOIDED invoices list Open/Total exclude void"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
