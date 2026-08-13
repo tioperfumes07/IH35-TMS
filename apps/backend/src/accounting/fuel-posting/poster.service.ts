@@ -27,6 +27,10 @@ export type FuelPostingInput = {
   amount_cents: number;
   posting_path: FuelPostingPath;
   driver_id?: string | null;
+  /** RANK2-FUEL-JE-CLASS — tractor pulling the load at fuel-purchase time; drives the QBO Class dimension. */
+  unit_id?: string | null;
+  /** RANK2-FUEL-JE-CLASS — physical trailer (mdata.equipment), fuel.fuel_transactions.trailer_id. */
+  trailer_id?: string | null;
   ifta_state?: string | null;
   ifta_gallons?: number | null;
   memo?: string | null;
@@ -162,6 +166,65 @@ async function resolveCompanyDirectCreditAccount(
   throw new Error("Cash credit account mapping is missing for company-direct fuel posting");
 }
 
+/**
+ * RANK2-FUEL-JE-CLASS — QBO Class dimension by unit/trailer, going-forward only.
+ *
+ * Mechanism (verified live on prod, not invented): accounting.journal_entry_postings.class_id (uuid)
+ * -> catalogs.classes.id, matched via catalogs.classes.qbo_class_id (text) = mdata.units.qbo_class_id
+ * or mdata.equipment.qbo_class_id (text). Unit takes precedence over trailer (the tractor is the
+ * primary cost-center dimension QBO classes track for a fuel purchase); trailer is the fallback when
+ * only a trailer is known. Best-effort: returns null (no class tagged) rather than throwing when
+ * neither resolves, an equipment/unit row carries no qbo_class_id, or no catalogs.classes row matches
+ * — a fuel JE must still post and balance even when the class dimension cannot be resolved.
+ */
+async function resolveFuelPostingClassId(
+  client: DbClient,
+  operatingCompanyId: string,
+  unitId?: string | null,
+  trailerId?: string | null
+): Promise<{ class_id: string | null; source: string }> {
+  const lookupByQboClassId = async (qboClassId: string): Promise<string | null> => {
+    const res = await client.query<{ id: string }>(
+      `
+        SELECT id::text
+        FROM catalogs.classes
+        WHERE operating_company_id = $1::uuid
+          AND qbo_class_id = $2
+          AND deactivated_at IS NULL
+        LIMIT 1
+      `,
+      [operatingCompanyId, qboClassId]
+    );
+    return res.rows[0]?.id ?? null;
+  };
+
+  if (unitId) {
+    const unit = await client.query<{ qbo_class_id: string | null }>(
+      `SELECT qbo_class_id FROM mdata.units WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
+      [unitId, operatingCompanyId]
+    );
+    const qboClassId = unit.rows[0]?.qbo_class_id;
+    if (qboClassId) {
+      const classId = await lookupByQboClassId(qboClassId);
+      if (classId) return { class_id: classId, source: "unit.qbo_class_id" };
+    }
+  }
+
+  if (trailerId) {
+    const equipment = await client.query<{ qbo_class_id: string | null }>(
+      `SELECT qbo_class_id FROM mdata.equipment WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
+      [trailerId, operatingCompanyId]
+    );
+    const qboClassId = equipment.rows[0]?.qbo_class_id;
+    if (qboClassId) {
+      const classId = await lookupByQboClassId(qboClassId);
+      if (classId) return { class_id: classId, source: "trailer.qbo_class_id" };
+    }
+  }
+
+  return { class_id: null, source: "unresolved" };
+}
+
 async function resolveExistingPostedResult(
   client: DbClient,
   operatingCompanyId: string,
@@ -233,6 +296,8 @@ export async function postFuelExpenseFromEvent(input: FuelPostingInput): Promise
       creditResolutionSource = companyDirect.source;
     }
 
+    const classResolution = await resolveFuelPostingClassId(client, input.operating_company_id, input.unit_id, input.trailer_id);
+
     const accountResolutionTrace: Array<Record<string, unknown>> = [
       {
         fuel_event_id: input.fuel_event_id,
@@ -244,6 +309,8 @@ export async function postFuelExpenseFromEvent(input: FuelPostingInput): Promise
         posting_path: input.posting_path,
         ifta_state: input.ifta_state ?? null,
         ifta_gallons: input.ifta_gallons ?? null,
+        class_id: classResolution.class_id,
+        class_resolution: classResolution.source,
       },
     ];
 
@@ -338,10 +405,11 @@ export async function postFuelExpenseFromEvent(input: FuelPostingInput): Promise
             source_transaction_line_id,
             posting_batch_id,
             idempotency_key,
+            class_id,
             created_at,
             updated_at
           )
-          VALUES ($1::uuid, $2::uuid, $3, $4::uuid, $5, $6, $7, 'fuel_event', $8, NULL, $9::uuid, $10, now(), now())
+          VALUES ($1::uuid, $2::uuid, $3, $4::uuid, $5, $6, $7, 'fuel_event', $8, NULL, $9::uuid, $10, $11::uuid, now(), now())
           RETURNING id::text
         `,
         [
@@ -355,6 +423,7 @@ export async function postFuelExpenseFromEvent(input: FuelPostingInput): Promise
           input.fuel_event_id,
           postingBatchId,
           idempotencyKey,
+          classResolution.class_id,
         ]
       );
       const postingId = postingInsert.rows[0]?.id;
