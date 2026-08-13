@@ -2,14 +2,17 @@
 /**
  * gl_je COLUMN-WAVE — VERTICAL-WIRING-LAW-2026-08-12.
  *
- * @matrix-built {"modules":["factoring","drivers","safety"],"cols":["gl_je"],"leafRe":".*","task":"WAVE-C-gl_je","vertical":"column-wave"}
+ * @matrix-built {"modules":["factoring"],"cols":["gl_je"],"leafRe":".*","task":"WAVE-C-gl_je","vertical":"column-wave"}
  * @matrix-built {"modules":["accounting"],"cols":["gl_je"],"leafRe":"^(bills\\.|bill_payments\\.)","task":"WAVE-C-gl_je-accounting-bills","vertical":"column-wave"}
+ * @matrix-built {"modules":["safety"],"cols":["gl_je"],"leafRe":"^(safety\\.drawer\\.fine_detail|safety\\.parity\\.fine_detail)$","task":"WAVE-C-gl_je-safety-fine-detail","vertical":"column-wave"}
  *
  * HONESTY 2026-08-13: removed dispatch/customers/vendors/banking from the broad leafRe=.* tag.
  * Those modules either have leaf-specific Built tags (banking transactions/recon/escrow) or had
  * Required gl_je on chrome without a local journal_entry EntityLink (customers/vendors/dispatch
  * surfaces) — InvoiceDetail/BillDetail/RevenueRecognition live under accounting, not those modules.
  * LEAVES[] below still regression-locks the accounting/safety surfaces that WERE the real proof.
+ * HONESTY 2026-08-13b: removed drivers/safety from broad .* — safety fine detail is leaf-tagged;
+ * create/escrow/audit chrome Required gl_je dropped.
  *
  * Self-test: node scripts/verify-gl-je-column-wave.mjs --selftest
  */

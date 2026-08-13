@@ -342,7 +342,6 @@
         "customer",
         "vendor",
         "liability",
-        "gl_je",
         "scenario.insurance",
         "picker_law",
         "qbo_chrome",
@@ -378,7 +377,6 @@
         "trailer",
         "load",
         "liability",
-        "gl_je",
         "picker_law",
         "qbo_chrome",
         "connectivity",
@@ -425,7 +423,6 @@
         "load",
         "driver",
         "vendor",
-        "gl_je",
         "picker_law",
         "qbo_chrome",
         "connectivity",
@@ -468,7 +465,6 @@
         "load",
         "unit",
         "liability",
-        "gl_je",
         "picker_law",
         "qbo_chrome",
         "connectivity",
@@ -498,7 +494,6 @@
         "driver",
         "unit",
         "vendor",
-        "gl_je",
         "picker_law",
         "qbo_chrome",
         "connectivity",
@@ -525,7 +520,6 @@
       "required": [
         "driver",
         "liability",
-        "gl_je",
         "connectivity",
         "reverse_link",
         "picker_law",
@@ -599,8 +593,7 @@
       "sub": "425C",
       "route_hint": "/safety/audit-425c",
       "required": [
-        "connectivity",
-        "gl_je"
+        "connectivity"
       ]
     },
     {
@@ -785,8 +778,9 @@
         "reverse_link",
         "liability",
         "driver",
-        "accident"
-      ]
+        "accident",
+              "gl_je"
+]
     },
     {
       "id": "safety.drawer.integrity_alert_detail",
@@ -916,8 +910,9 @@
         "reverse_link",
         "liability",
         "driver",
-        "accident"
-      ]
+        "accident",
+              "gl_je"
+]
     },
     {
       "id": "safety.parity.integrity_alert_detail",
