@@ -132,6 +132,52 @@ describe("maybePostFuelExpenseFromCanonicalTxn", () => {
     );
   });
 
+  it("RANK2-FUEL-JE-CLASS: threads unit_id/trailer_id read from fuel.fuel_transactions into the poster", async () => {
+    mockIsEnabled.mockResolvedValue(true);
+    mockPostFuelExpenseFromEvent.mockResolvedValue({
+      result: "posted",
+      posting_batch_id: "batch-1",
+      journal_entry_id: "je-1",
+      journal_entry_posting_ids: ["jep-1", "jep-2"],
+      idempotency_key: "k",
+      account_resolution_trace: [],
+    });
+    mockWithLuciaBypass.mockImplementationOnce(async (fn: (client: { query: (sql: string) => Promise<{ rows: unknown[] }> }) => unknown) =>
+      fn({
+        query: async () => ({ rows: [] }),
+      })
+    );
+    mockWithLuciaBypass.mockImplementationOnce(async (fn: (client: { query: (sql: string) => Promise<{ rows: unknown[] }> }) => unknown) =>
+      fn({
+        query: async (sql: string) => {
+          if (sql.includes("FROM fuel.fuel_transactions")) {
+            return {
+              rows: [
+                {
+                  fuel_card_id: null,
+                  notes: null,
+                  source: "relay_ingest",
+                  unit_id: "77777777-7777-4777-8777-777777777777",
+                  trailer_id: "88888888-8888-4888-8888-888888888888",
+                },
+              ],
+            };
+          }
+          return { rows: [] };
+        },
+      })
+    );
+
+    await maybePostFuelExpenseFromCanonicalTxn(BASE);
+
+    expect(mockPostFuelExpenseFromEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        unit_id: "77777777-7777-4777-8777-777777777777",
+        trailer_id: "88888888-8888-4888-8888-888888888888",
+      })
+    );
+  });
+
   it("FUEL-08: Relay / fleet-card company_direct does NOT credit cash", async () => {
     mockIsEnabled.mockResolvedValue(true);
     mockPostFuelExpenseFromEvent.mockResolvedValue({

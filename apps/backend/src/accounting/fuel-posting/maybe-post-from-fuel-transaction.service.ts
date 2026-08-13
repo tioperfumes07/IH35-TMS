@@ -108,12 +108,26 @@ async function loadFuelTxnCreditSignals(
   client: DbClient,
   operatingCompanyId: string,
   fuelTransactionId: string
-): Promise<{ fuel_card_id: string | null; notes: string | null; source: string | null }> {
-  const res = await client.query<{ fuel_card_id: string | null; notes: string | null; source: string | null }>(
+): Promise<{
+  fuel_card_id: string | null;
+  notes: string | null;
+  source: string | null;
+  unit_id: string | null;
+  trailer_id: string | null;
+}> {
+  const res = await client.query<{
+    fuel_card_id: string | null;
+    notes: string | null;
+    source: string | null;
+    unit_id: string | null;
+    trailer_id: string | null;
+  }>(
     `
       SELECT fuel_card_id::text AS fuel_card_id,
              notes,
-             source::text AS source
+             source::text AS source,
+             unit_id::text AS unit_id,
+             trailer_id::text AS trailer_id
         FROM fuel.fuel_transactions
        WHERE id = $1::uuid
          AND operating_company_id = $2::uuid
@@ -126,6 +140,8 @@ async function loadFuelTxnCreditSignals(
     fuel_card_id: row?.fuel_card_id ?? null,
     notes: row?.notes ?? null,
     source: row?.source ?? null,
+    unit_id: row?.unit_id ?? null,
+    trailer_id: row?.trailer_id ?? null,
   };
 }
 
@@ -179,16 +195,16 @@ export async function maybePostFuelExpenseFromCanonicalTxn(
 
   try {
     const postingPath = resolvePostingPath(candidate);
-    let companyDirectCredit: CompanyDirectCredit | undefined;
-    if (postingPath === "company_direct") {
-      const txnSignals = await withLuciaBypass(async (client: DbClient) => {
-        await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [
-          candidate.operating_company_id,
-        ]);
-        return loadFuelTxnCreditSignals(client, candidate.operating_company_id, candidate.fuel_transaction_id);
-      }).catch(() => null);
-      companyDirectCredit = resolveCompanyDirectCreditPreference(candidate, txnSignals);
-    }
+    // RANK2-FUEL-JE-CLASS — loaded unconditionally (not just for the company_direct credit
+    // preference below): the class dimension applies to a driver_advance-path JE too.
+    const txnSignals = await withLuciaBypass(async (client: DbClient) => {
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [
+        candidate.operating_company_id,
+      ]);
+      return loadFuelTxnCreditSignals(client, candidate.operating_company_id, candidate.fuel_transaction_id);
+    }).catch(() => null);
+    const companyDirectCredit =
+      postingPath === "company_direct" ? resolveCompanyDirectCreditPreference(candidate, txnSignals) : undefined;
 
     const posting = await postFuelExpenseFromEvent({
       operating_company_id: candidate.operating_company_id,
@@ -199,6 +215,8 @@ export async function maybePostFuelExpenseFromCanonicalTxn(
       amount_cents: amountCents,
       posting_path: postingPath,
       driver_id: candidate.driver_id ?? null,
+      unit_id: txnSignals?.unit_id ?? null,
+      trailer_id: txnSignals?.trailer_id ?? null,
       ifta_state: candidate.location_state ?? null,
       ifta_gallons: candidate.gallons ?? null,
       company_direct_credit: companyDirectCredit,
