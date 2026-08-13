@@ -31,6 +31,7 @@ export function BillsReverseSection({
   contextLabel,
   "data-testid": testId = "bills-reverse",
 }: Props) {
+  const filterKey = Object.keys(filter)[0] as keyof Filter;
   const filterValue = Object.values(filter)[0] as string;
   const billsQ = useQuery({
     queryKey: ["accounting", "bills", "reverse", operatingCompanyId, filter],
@@ -46,7 +47,10 @@ export function BillsReverseSection({
           Bills
           {rows.length > 0 ? <span className="ml-2 text-xs font-normal text-gray-600">({rows.length})</span> : null}
         </h3>
-        <Link className="text-xs font-semibold text-slate-700 underline" to="/accounting/bills">
+        <Link
+          className="text-xs font-semibold text-slate-700 underline"
+          to={`/accounting/bills?${filterKey}=${encodeURIComponent(filterValue)}`}
+        >
           Open Bills
         </Link>
       </div>

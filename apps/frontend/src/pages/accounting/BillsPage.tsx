@@ -218,6 +218,10 @@ export function BillsPage() {
   // BILLS-VENDORFILTER-01: server-side vendor filter (listBills already accepts vendor_id).
   // Keep vendor_id URL-synced for aging drill same-route / back-forward.
   const vendorId = searchParams.get("vendor_id") ?? "";
+  // ACCT-F5049 — reverse Open Bills carries claim/unit/load; listBills already accepts these.
+  const deepLinkInsuranceClaimId = searchParams.get("insurance_claim_id");
+  const deepLinkUnitId = searchParams.get("unit_id");
+  const deepLinkLoadId = searchParams.get("load_id");
   const [allocationBillId, setAllocationBillId] = useState<string | null>(() => deepLinkBillId);
 
   function setVendorId(next: string) {
@@ -253,7 +257,20 @@ export function BillsPage() {
   );
 
   const billsQuery = useQuery({
-    queryKey: ["accounting", "bills", companyId, status, hasBalance, category, dateFrom, dateTo, vendorId],
+    queryKey: [
+      "accounting",
+      "bills",
+      companyId,
+      status,
+      hasBalance,
+      category,
+      dateFrom,
+      dateTo,
+      vendorId,
+      deepLinkInsuranceClaimId,
+      deepLinkUnitId,
+      deepLinkLoadId,
+    ],
     queryFn: () =>
       listBills(companyId, {
         include_balance: true,
@@ -262,6 +279,9 @@ export function BillsPage() {
         vendor_id: vendorId || undefined,
         date_from: dateFrom || undefined,
         date_to: dateTo || undefined,
+        insurance_claim_id: deepLinkInsuranceClaimId || undefined,
+        unit_id: deepLinkUnitId || undefined,
+        load_id: deepLinkLoadId || undefined,
         limit: 200,
       }),
     enabled: Boolean(companyId),

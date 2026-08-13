@@ -57,6 +57,36 @@ const CHECKS = [
     file: "apps/frontend/src/pages/accounting/BillDetailPage.tsx",
     pattern: /kind="cash_advance" id=\{bill\.linked_cash_advance_id\}/,
   },
+  {
+    name: "ACCT-F5049: BillsPage reads insurance_claim_id from the URL",
+    file: "apps/frontend/src/pages/accounting/BillsPage.tsx",
+    pattern: /searchParams\.get\("insurance_claim_id"\)/,
+  },
+  {
+    name: "ACCT-F5049: BillsPage reads unit_id from the URL",
+    file: "apps/frontend/src/pages/accounting/BillsPage.tsx",
+    pattern: /searchParams\.get\("unit_id"\)/,
+  },
+  {
+    name: "ACCT-F5049: BillsPage reads load_id from the URL",
+    file: "apps/frontend/src/pages/accounting/BillsPage.tsx",
+    pattern: /searchParams\.get\("load_id"\)/,
+  },
+  {
+    name: "ACCT-F5049: BillsReverseSection Open Bills keeps filter query",
+    file: "apps/frontend/src/components/accounting/BillsReverseSection.tsx",
+    pattern: /to=\{`\/accounting\/bills\?\$\{filterKey\}=/,
+  },
+  {
+    name: "ACCT-F5049: InvoicesListPage reads source_load_id from the URL",
+    file: "apps/frontend/src/pages/accounting/InvoicesListPage.tsx",
+    pattern: /searchParams\.get\("source_load_id"\)/,
+  },
+  {
+    name: "ACCT-F5049: InvoicesReverseSection Open Invoices keeps filter query",
+    file: "apps/frontend/src/components/accounting/InvoicesReverseSection.tsx",
+    pattern: /to=\{`\/accounting\/invoices\?\$\{filterKey\}=/,
+  },
 ];
 
 export function checkAll(readFile) {
@@ -81,6 +111,12 @@ if (process.argv.includes("--selftest")) {
       "linked_cash_advance_id: linkedCashAdvanceId,",
     "apps/frontend/src/pages/banking/components/BankTransactionSplitModal.tsx": '<EntityLink kind="bill" id={result.bill_id} />',
     "apps/frontend/src/pages/accounting/BillDetailPage.tsx": '<EntityLink kind="cash_advance" id={bill.linked_cash_advance_id} />',
+    "apps/frontend/src/pages/accounting/BillsPage.tsx":
+      'searchParams.get("insurance_claim_id") searchParams.get("unit_id") searchParams.get("load_id")',
+    "apps/frontend/src/components/accounting/BillsReverseSection.tsx": "to={`/accounting/bills?${filterKey}=",
+    "apps/frontend/src/pages/accounting/InvoicesListPage.tsx": 'searchParams.get("source_load_id")',
+    "apps/frontend/src/components/accounting/InvoicesReverseSection.tsx":
+      "to={`/accounting/invoices?${filterKey}=",
   };
   const goodFailures = checkAll((f) => GOOD_FIXTURES[f] ?? null);
   if (goodFailures.length) {

@@ -106,6 +106,8 @@ export function InvoicesListPage() {
   // Bidirectional URL sync: customer_id / status / has_balance are searchParams-driven so
   // same-route updates and browser back/forward stay truthful (no local-only stale seed).
   const { customerId, status, hasBalance } = invoiceFilterFromSearchParams(searchParams);
+  // ACCT-F5049 — reverse Open Invoices keeps source_load_id (listInvoices already filters).
+  const deepLinkSourceLoadId = searchParams.get("source_load_id");
   const [search, setSearch] = useState("");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
@@ -181,7 +183,18 @@ export function InvoicesListPage() {
   const [tableResetKey, setTableResetKey] = useState(0);
 
   const query = useQuery({
-    queryKey: ["accounting", "invoices", selectedCompanyId, status, hasBalance, customerId, search, fromDate, toDate],
+    queryKey: [
+      "accounting",
+      "invoices",
+      selectedCompanyId,
+      status,
+      hasBalance,
+      customerId,
+      search,
+      fromDate,
+      toDate,
+      deepLinkSourceLoadId,
+    ],
     queryFn: () =>
       listInvoices(selectedCompanyId!, {
         status: isRealInvoiceStatus(status) ? status : undefined,
@@ -190,6 +203,7 @@ export function InvoicesListPage() {
         search: search || undefined,
         from_date: fromDate || undefined,
         to_date: toDate || undefined,
+        source_load_id: deepLinkSourceLoadId || undefined,
       }),
     enabled: Boolean(selectedCompanyId),
   });
