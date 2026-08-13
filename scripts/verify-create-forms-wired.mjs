@@ -15,9 +15,9 @@
  *   - a direct API write:    fetch/apiClient/axios with POST, or a create/save-style API call
  *   - a create-callback:     receives or passes onSubmit/onSave/onCreate(d)/onComplete/onSuccess
  *     and invokes it (the controlled-subform pattern used across the codebase)
- * Files with none of these are offenders. Current offenders are baselined into
- * scripts/.create-forms-wired-baseline.json (orphan/archived stubs) so today is
- * green; CI FAILS only on a NEW unwired create form.
+ * Files with none of these are offenders. The only non-live create-shaped file is a declared
+ * archived Workflow-B subform whose marker and live successor are checked below. There is no dead
+ * form baseline: every executable create surface must be wired now.
  *
  * Usage:
  *   node scripts/verify-create-forms-wired.mjs            # scan vs baseline
@@ -31,6 +31,14 @@ import process from "node:process";
 const repoRoot = process.cwd();
 const SCAN_ROOT = "apps/frontend/src";
 const BASELINE_PATH = "scripts/.create-forms-wired-baseline.json";
+
+const ARCHIVED_CREATE_FORMS = new Map([
+  [
+    "apps/frontend/src/pages/banking/components/forms/CreateExpenseForm.tsx",
+    "apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx",
+  ],
+]);
+const ARCHIVE_MARKER = "@archived — Workflow-B";
 
 const CREATE_FILE = /(Create|New|Add)[A-Z][A-Za-z0-9]*(Modal|Form|Page|Drawer)\.tsx$/;
 
@@ -60,6 +68,11 @@ function isWired(src) {
   return WIRE_SIGNALS.some((re) => re.test(s));
 }
 
+export function isExplicitlyArchived(rel, src, successorExists = (successor) => fs.existsSync(path.join(repoRoot, successor))) {
+  const successor = ARCHIVED_CREATE_FORMS.get(rel);
+  return Boolean(successor && src.includes(ARCHIVE_MARKER) && successorExists(successor));
+}
+
 function listCreateFiles(dir, out) {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     const full = path.join(dir, entry.name);
@@ -79,7 +92,8 @@ function scanOffenders() {
   const offenders = [];
   for (const full of files) {
     const rel = path.relative(repoRoot, full);
-    if (!isWired(fs.readFileSync(full, "utf8"))) offenders.push(rel);
+    const src = fs.readFileSync(full, "utf8");
+    if (!isWired(src) && !isExplicitlyArchived(rel, src)) offenders.push(rel);
   }
   return offenders.sort();
 }
@@ -96,14 +110,24 @@ function loadBaseline() {
 
 export function run() {
   const offenders = scanOffenders();
-  const baseline = new Set(loadBaseline());
+  const baselineEntries = loadBaseline();
+  if (baselineEntries.length > 0) {
+    console.error(
+      `[verify-create-forms-wired] FAIL — dead-form baseline must be empty; found ${baselineEntries.length}:\n` +
+        baselineEntries.map((rel) => `  - ${rel}`).join("\n")
+    );
+    return { ok: false, offenders: baselineEntries };
+  }
+  const baseline = new Set(baselineEntries);
   const fresh = offenders.filter((o) => !baseline.has(o));
   if (fresh.length > 0) {
     console.error("[verify-create-forms-wired] FAIL — NEW dead Create form(s) (no mutation/API/save-callback):");
     for (const rel of fresh) console.error(`  - ${rel}`);
     return { ok: false, offenders: fresh };
   }
-  console.log(`[verify-create-forms-wired] PASS — no new dead create forms (${offenders.length} baselined stubs)`);
+  console.log(
+    `[verify-create-forms-wired] PASS — zero dead create forms; ${ARCHIVED_CREATE_FORMS.size} declared archived subform(s) have live successors`
+  );
   return { ok: true, offenders: [] };
 }
 
@@ -131,7 +155,22 @@ function selftest() {
       process.exit(1);
     }
   }
-  console.log("[verify-create-forms-wired] SELFTEST PASS — dead stub detected; mutation + callback wiring recognized");
+  const archivedRel = "apps/frontend/src/pages/banking/components/forms/CreateExpenseForm.tsx";
+  if (!isExplicitlyArchived(archivedRel, `// ${ARCHIVE_MARKER}`, () => true)) {
+    console.error("[verify-create-forms-wired] SELFTEST FAIL — declared archive with successor rejected");
+    process.exit(1);
+  }
+  if (isExplicitlyArchived("apps/frontend/src/pages/fake/AddFakeModal.tsx", `// ${ARCHIVE_MARKER}`, () => true)) {
+    console.error("[verify-create-forms-wired] SELFTEST FAIL — undeclared archive marker bypassed the guard");
+    process.exit(1);
+  }
+  if (isExplicitlyArchived(archivedRel, `// ${ARCHIVE_MARKER}`, () => false)) {
+    console.error("[verify-create-forms-wired] SELFTEST FAIL — archived form passed without its live successor");
+    process.exit(1);
+  }
+  console.log(
+    "[verify-create-forms-wired] SELFTEST PASS — dead stub detected; mutation + callback + closed archive wiring recognized"
+  );
 }
 
 const isMain = path.resolve(process.argv[1] ?? "") === path.resolve(new URL(import.meta.url).pathname);
