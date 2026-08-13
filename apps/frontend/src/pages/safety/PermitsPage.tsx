@@ -14,6 +14,7 @@ import {
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ListErrorState } from "../../components/ListErrorState";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { EntityPicker } from "../../components/parity/EntityPicker";
 
 type Props = {
   operatingCompanyId: string;
@@ -51,6 +52,7 @@ const emptyDraft = {
   holder_name: "",
   issued_date: "",
   expiry_date: "",
+  unit_id: "",
   notes: "",
 };
 
@@ -91,6 +93,7 @@ export function PermitsPage({ operatingCompanyId }: Props) {
         holder_name: draft.holder_name,
         issued_date: draft.issued_date || null,
         expiry_date: draft.expiry_date,
+        unit_id: draft.unit_id || null,
         notes: draft.notes || null,
       }),
     onSuccess: async () => {
@@ -307,6 +310,21 @@ export function PermitsPage({ operatingCompanyId }: Props) {
                   onChange={(event) => setDraft((prev) => ({ ...prev, holder_name: event.target.value }))}
                   className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1"
                 />
+              </label>
+              <label className="text-xs">
+                Unit (optional)
+                <div className="mt-1">
+                  <EntityPicker
+                    kind="unit"
+                    operatingCompanyId={operatingCompanyId}
+                    value={draft.unit_id || null}
+                    onChange={(next) => setDraft((prev) => ({ ...prev, unit_id: next ?? "" }))}
+                    enabled={createOpen && Boolean(operatingCompanyId)}
+                    allowCreate={false}
+                    placeholder="Company-wide permit"
+                    dataField="safety-permit-unit"
+                  />
+                </div>
               </label>
               <label className="text-xs">
                 Expiry date
