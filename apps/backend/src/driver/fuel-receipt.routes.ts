@@ -35,9 +35,9 @@ export async function registerDriverFuelReceiptRoutes(app: FastifyInstance) {
       const operatingCompanyId = driverCtx.rows[0]?.operating_company_id ?? null;
       if (!operatingCompanyId) throw new Error("driver_company_missing");
       await setScopedCompanyContext(client, user.uuid, operatingCompanyId);
-      const result = await client.query<{ id: string; unit_number: string | null; display_id: string | null }>(
+      const result = await client.query<{ id: string; unit_number: string | null }>(
         `
-          SELECT id, unit_number, display_id
+          SELECT id, unit_number
           FROM mdata.units
           WHERE COALESCE(currently_leased_to_company_id, owner_company_id) = $1::uuid
             AND deactivated_at IS NULL
