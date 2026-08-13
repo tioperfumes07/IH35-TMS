@@ -43,6 +43,14 @@ export function LoadDetailPage() {
           <div className="mt-3 grid gap-2">
             <button
               type="button"
+              data-testid="dispatch-actions-card"
+              className="min-h-11 rounded-sm border border-pwa-border px-3 text-left text-xs font-semibold text-pwa-text-secondary"
+              onClick={() => navigate(`/dispatch/${load.id}`)}
+            >
+              {t("dispatch.open_actions")}
+            </button>
+            <button
+              type="button"
               data-testid="dvir-pre-trip-card"
               className="min-h-11 rounded-sm border border-pwa-border px-3 text-left text-xs font-semibold text-pwa-text-secondary"
               onClick={() => navigate(`/dvir/pre/${load.id}`)}

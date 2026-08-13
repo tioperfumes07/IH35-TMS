@@ -584,6 +584,7 @@
     "itp_stale_warning": "Los datos sin conexión pueden borrarse pronto. Abra la app a diario para conservar su cola de subidas."
   },
   "dispatch": {
+    "open_actions": "Abrir Acciones de Despacho",
     "delivery_title": "Entrega {{sequence}}",
     "pickup_title": "Recolección {{sequence}}",
     "status_label": "Estado: {{status}} · {{geofence}}",

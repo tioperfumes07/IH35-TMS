@@ -17,6 +17,8 @@ const paths = {
   pwaLiveApi: path.join(ROOT, "apps/driver-pwa/src/api/pwa-live.ts"),
   pwaApp: path.join(ROOT, "apps/driver-pwa/src/App.tsx"),
   pwaTest: path.join(ROOT, "apps/driver-pwa/src/pages/__tests__/HomeLiveData.test.ts"),
+  dispatchViewGuard: path.join(ROOT, "scripts/verify-driver-pwa-dispatch-view.mjs"),
+  backendIndex: path.join(ROOT, "apps/backend/src/index.ts"),
   archDesign: path.join(ROOT, "docs/specs/IH35_ARCHITECTURAL_DESIGN.md"),
 };
 
@@ -40,6 +42,8 @@ function main() {
   const pwaLiveApi = read(paths.pwaLiveApi);
   const pwaApp = read(paths.pwaApp);
   const pwaTest = read(paths.pwaTest);
+  const dispatchViewGuard = read(paths.dispatchViewGuard);
+  const backendIndex = read(paths.backendIndex);
   const archDesign = read(paths.archDesign);
   const failures = [];
 
@@ -56,6 +60,10 @@ function main() {
   if (!bottomNav.includes('to: "/documents"')) failures.push("Bottom nav Documents shortcut required");
   if (!pwaLiveApi.includes("getPwaHosClocks")) failures.push("PWA live API client required");
   if (!pwaApp.includes('path="/equipment"')) failures.push("App must register /equipment route");
+  if (!pwaApp.includes('path="/dispatch/:load_uuid"')) failures.push("App must register the driver dispatch-view route");
+  if (!pwaApp.includes("DispatchViewScreen")) failures.push("App must mount DispatchViewScreen");
+  if (!dispatchViewGuard.includes("registerDispatchViewRoutes")) failures.push("Dispatch-view full-stack ratchet required");
+  if (!backendIndex.includes('registerDispatchViewRoutes(app)')) failures.push("Backend must mount dispatch-view routes");
   if (!backendTest.includes("A24-11")) failures.push("Backend vitest must reference A24-11");
   if (!pwaTest.includes("A24-11")) failures.push("PWA vitest must reference A24-11");
 

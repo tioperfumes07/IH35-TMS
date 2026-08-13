@@ -29,17 +29,9 @@ const ALLOWLIST = new Map([
   ["registerBankingManualJeRoutes", "ARCHIVED 2026-06-24 (Tier-1 H-1) — dead path, unmounted; original in manual-je.routes.deprecated.ts. Canonical JE = /api/v1/accounting/journal-entries."],
   ["registerDeepHealthRoutes", "ARCHIVED 2026-07-26 — was never mounted (GET /api/v1/healthz/deep 404s in prod), and its handler reads tables that do not exist. Deliberately NOT given auth: adding a guard would have resurrected dead code against a phantom schema. Unmounted + archived is the safe state; verify-step 1590 asserts it stays unauthenticated-unreachable."],
   ["registerAccountingReconciliationRoutes", "dead code — no frontend caller (2026-06 sweep)"],
-  ["registerBrokerUpdateRoutes", "dead code — no frontend caller"],
-  ["registerDamageContinuityRoutes", "dead code — no frontend caller"],
-  ["registerDispatchOverrideAuditRoutes", "dead code — no frontend caller"],
   ["registerSafetyDrugPoolRoutes", "dead code — no frontend caller"],
   ["registerSamsaraMasterSyncRoutes", "dead code / admin-only — no frontend caller"],
   ["registerScheduledReportsRoutes", "dead code — no frontend caller"],
-  ["registerUserLocalePreferenceRoutes", "dead code — no frontend caller"],
-  ["registerUtilizationRoutes", "dead code — no frontend caller"],
-  ["registerDispatchViewRoutes", "dead code — driver-PWA view; also references a non-existent evidence table (separate finding)"],
-  // --- Held: money-moving / financial surface, awaiting explicit owner approval before mounting ---
-  ["registerSettlementPaymentRoutes", "HELD financial — moves settlement payments; needs owner OK"],
   // registerCategorizationRulesRoutes — MOUNTED 2026-07-30 (ACCT-LINK-06 apply-historical live ops).
   // --- Collision/unsafe: mounting duplicates an existing route -> boot crash. Do NOT mount. ---
   // ACCT-R-13 (2026-07-25): registerSettlementApprovalRoutes is now MOUNTED (index.ts) — removed
