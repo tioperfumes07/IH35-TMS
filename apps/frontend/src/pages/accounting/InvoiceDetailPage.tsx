@@ -398,22 +398,26 @@ export function InvoiceDetailPage() {
                   <EntityLink
                     kind="driver"
                     id={invoice.bill_to_entity_id}
-                    label={entityLabel(null, invoice.bill_to_entity_id, "Driver")}
+                    label={entityLabel(invoice.bill_to_entity_label ?? null, invoice.bill_to_entity_id, "Driver")}
                   />
                 ) : invoice.bill_to_entity_type === "vendor" ? (
                   <EntityLink
                     kind="vendor"
                     id={invoice.bill_to_entity_id}
-                    label={entityLabel(null, invoice.bill_to_entity_id, "Vendor")}
+                    label={entityLabel(invoice.bill_to_entity_label ?? null, invoice.bill_to_entity_id, "Vendor")}
                   />
                 ) : invoice.bill_to_entity_type === "customer" ? (
                   <EntityLink
                     kind="customer"
                     id={invoice.bill_to_entity_id}
-                    label={entityLabel(invoice.customer_name, invoice.bill_to_entity_id, "Customer")}
+                    label={entityLabel(
+                      invoice.bill_to_entity_label ?? invoice.customer_name,
+                      invoice.bill_to_entity_id,
+                      "Customer",
+                    )}
                   />
                 ) : (
-                  entityLabel(null, invoice.bill_to_entity_id, "Bill-to")
+                  entityLabel(invoice.bill_to_entity_label ?? null, invoice.bill_to_entity_id, "Bill-to")
                 )}
               </span>
             </DataPanelRow>

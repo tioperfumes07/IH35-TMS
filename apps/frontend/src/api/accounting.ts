@@ -67,6 +67,8 @@ export type Invoice = {
   invoice_type?: "from_load" | "driver_damage" | "driver_misc" | "vendor_chargeback" | "customer_adjustment" | "manual";
   bill_to_entity_type?: "customer" | "driver" | "vendor" | "other" | null;
   bill_to_entity_id?: string | null;
+  /** ACCT-F5070 — resolved bill-to display name (driver/vendor/customer). */
+  bill_to_entity_label?: string | null;
   internal_notes: string | null;
   customer_notes: string | null;
   created_at: string;

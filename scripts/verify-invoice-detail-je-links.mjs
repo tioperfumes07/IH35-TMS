@@ -39,6 +39,13 @@ function assertInvoiceDetailJeLinks() {
   if (!/source_load_number/.test(routes)) {
     errors.push("backend: enrichInvoice must expose source_load_number for load reverse label");
   }
+  // ACCT-F5070 — bill-to driver/vendor/customer human label (customer · driver · vendor columns).
+  if (!/bill_to_entity_label/.test(routes) || !/LEFT JOIN mdata\.drivers btd/.test(routes)) {
+    errors.push("backend: enrichInvoice must JOIN bill-to driver/vendor/customer → bill_to_entity_label");
+  }
+  if (!/bill_to_entity_label/.test(detailPage) || /entityLabel\(\s*null\s*,\s*invoice\.bill_to_entity_id/.test(detailPage)) {
+    errors.push("InvoiceDetailPage: must use bill_to_entity_label (not entityLabel(null, bill_to_entity_id))");
+  }
   // ACCT-F5062 — list path must project the same load number the FE EntityLink consumes.
   if (!/l\.load_number AS source_load_number/.test(routes)) {
     errors.push("backend: invoices LIST must SELECT l.load_number AS source_load_number");
