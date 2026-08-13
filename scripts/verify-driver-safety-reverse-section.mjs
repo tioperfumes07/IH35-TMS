@@ -35,7 +35,8 @@ const DRIVER_PROFILE = "apps/frontend/src/pages/drivers/DriverProfilePage.tsx";
 const API = "apps/frontend/src/api/safety.ts";
 const INTERNAL_FINES_ROUTE = "apps/backend/src/safety/safety-v5.routes.ts";
 const COMPLAINTS_ROUTE = "apps/backend/src/routes/safety/complaints.ts";
-const FILES = [SECTION, DRIVER_DETAIL, DRIVER_PROFILE, API, INTERNAL_FINES_ROUTE, COMPLAINTS_ROUTE];
+const DOT_ROUTE = "apps/backend/src/routes/safety/dot-inspections.ts";
+const FILES = [SECTION, DRIVER_DETAIL, DRIVER_PROFILE, API, INTERNAL_FINES_ROUTE, COMPLAINTS_ROUTE, DOT_ROUTE];
 const LABEL = "verify-driver-safety-reverse-section";
 const SELFTEST = process.argv.includes("--selftest");
 
@@ -44,6 +45,7 @@ const stripComments = (s) => s.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^[ \t]*
 
 /** The four record types the driver's safety file must surface, and the read that proves it. */
 const REQUIRED_READS = [
+  { label: "DOT inspections", needle: "getDotInspections(", scope: "driver_id: driverId" },
   { label: "external/civil fines", needle: "getSafetyFines(", scope: "subject_driver_id: driverId" },
   { label: "internal fines", needle: "getInternalFines(", scope: "driver_id: driverId" },
   { label: "complaints", needle: "getComplaints(", scope: "driver_id: driverId" },
@@ -85,6 +87,17 @@ export function assertDriverSafetyReverse(sources) {
   if (!src[API].includes(`qs.set("driver_id", params.driver_id)`)) {
     problems.push(`${API}: driver_id is not sent to the internal-fines/complaints routes — the server filter is unreachable.`);
   }
+  if (!/di\.driver_id = \$/.test(src[DOT_ROUTE])) {
+    problems.push(`${DOT_ROUTE}: GET dot-inspections does not filter by driver in SQL — the reverse hub can under-report past LIMIT 500.`);
+  }
+  if (!/dot_inspections: Array/.test(src[API]) || !/data\?\.dot_inspections/.test(src[SECTION])) {
+    problems.push(`${API}: DOT inspection response contract must be dot_inspections end-to-end — mismatched keys render an empty reverse hub.`);
+  }
+  if (!/mdata\.drivers[\s\S]{0,220}operating_company_id = \$1::uuid/.test(src[DOT_ROUTE]) ||
+      !/mdata\.units[\s\S]{0,260}owner_company_id = \$1::uuid OR u\.currently_leased_to_company_id = \$1::uuid/.test(src[DOT_ROUTE]) ||
+      !/linked_entity_not_in_operating_company/.test(src[DOT_ROUTE])) {
+    problems.push(`${DOT_ROUTE}: POST must reject driver/unit ids that are not linked to the selected operating company before insert.`);
+  }
 
   // 4. Complaints match either side of the record.
   const complaintsSql = src[COMPLAINTS_ROUTE];
@@ -122,6 +135,26 @@ if (SELFTEST) {
     "record-type-dropped",
     { ...live, [SECTION]: live[SECTION].replace(/getDriverDrugAlcoholTests\(/g, "noopRemoved(") },
     "does not read drug & alcohol tests"
+  );
+  expectCaught(
+    "dot-inspections-read-dropped",
+    { ...live, [SECTION]: live[SECTION].replace(/getDotInspections\(/g, "noopRemoved(") },
+    "does not read DOT inspections"
+  );
+  expectCaught(
+    "dot-driver-filter-removed",
+    { ...live, [DOT_ROUTE]: live[DOT_ROUTE].replace(/AND di\.driver_id = \$\$\{values\.length\}/g, "") },
+    "does not filter by driver in SQL"
+  );
+  expectCaught(
+    "dot-response-key-drift",
+    { ...live, [SECTION]: live[SECTION].replace(/data\?\.dot_inspections/g, "data?.inspections") },
+    "response contract must be dot_inspections"
+  );
+  expectCaught(
+    "dot-writer-membership-removed",
+    { ...live, [DOT_ROUTE]: live[DOT_ROUTE].replace(/linked_entity_not_in_operating_company/g, "invalid_link") },
+    "POST must reject driver/unit ids"
   );
   // 2. a read stops being driver-scoped (shows the whole company on one driver's page).
   expectCaught(
@@ -174,7 +207,7 @@ if (SELFTEST) {
     for (const f of failures) console.error(`  ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — 8 planted defects caught, live sources clean`);
+  console.log(`${LABEL} SELFTEST PASS — 12 planted defects caught, live sources clean`);
   process.exit(0);
 }
 
@@ -185,5 +218,5 @@ if (problems.length) {
   process.exit(1);
 }
 console.log(
-  `${LABEL} OK — driver profile surfaces external fines, internal fines, complaints and D&A tests, driver-scoped in SQL`
+  `${LABEL} OK — driver profile surfaces DOT inspections, fines, complaints and D&A tests with tenant-safe forward/reverse linkage`
 );
