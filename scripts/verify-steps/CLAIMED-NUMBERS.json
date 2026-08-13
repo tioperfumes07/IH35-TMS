@@ -411,6 +411,12 @@
     "claimed_at": "2026-08-12",
     "note": "CLAIM-RESERVE: ClaimCreateModal suggestExpenseLoad auto-stamp"
   },
+  "3132": {
+    "guard": "verify-wo-create-equipment-id",
+    "lane": "cursor",
+    "claimed_at": "2026-08-12",
+    "note": "CLAIM-RESERVE: WO create equipment_id/trailer submit"
+  },
   "3133": {
     "claimed_at": "2026-08-12",
     "claimed_by": "cc-1",
