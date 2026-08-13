@@ -18,6 +18,8 @@ const listQuerySchema = companyQuerySchema.extend({
   // THIS load". The column and the join were already here — only the filter was missing, so the
   // reverse direction had no server-side question to ask and the load looked clean.
   related_load_id: z.string().uuid().optional(),
+  subject_driver_id: z.string().uuid().optional(),
+  subject_unit_id: z.string().uuid().optional(),
   limit: z.coerce.number().int().min(1).max(500).default(200),
 });
 
@@ -94,6 +96,14 @@ export async function registerSafetyEventsRoutes(app: FastifyInstance) {
       if (query.data.related_load_id) {
         values.push(query.data.related_load_id);
         filters.push(`e.related_load_id = $${values.length}::uuid`);
+      }
+      if (query.data.subject_driver_id) {
+        values.push(query.data.subject_driver_id);
+        filters.push(`e.subject_driver_id = $${values.length}::uuid`);
+      }
+      if (query.data.subject_unit_id) {
+        values.push(query.data.subject_unit_id);
+        filters.push(`e.subject_unit_id = $${values.length}::uuid`);
       }
       values.push(query.data.limit);
       const limitParam = values.length;
@@ -281,7 +291,7 @@ export async function registerSafetyEventsRoutes(app: FastifyInstance) {
     return { notes };
   });
 
-  app.post("/api/v1/safety/events-log", async (req, reply) => {
+  app.post("/api/v1/safety/events-log", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentUser(req, reply);
     if (!user) return;
     if (!canMutate(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -297,6 +307,15 @@ export async function registerSafetyEventsRoutes(app: FastifyInstance) {
     }
 
     const event = await withCompanyScope(user.uuid, body.data.operating_company_id, async (client) => {
+      const links = await client.query(
+        `SELECT
+           ($2::uuid IS NULL OR EXISTS (SELECT 1 FROM mdata.drivers d WHERE d.id = $2::uuid AND d.operating_company_id = $1::uuid)) AS driver_ok,
+           ($3::uuid IS NULL OR EXISTS (SELECT 1 FROM mdata.units u WHERE u.id = $3::uuid AND (u.owner_company_id = $1::uuid OR u.currently_leased_to_company_id = $1::uuid))) AS unit_ok,
+           ($4::uuid IS NULL OR EXISTS (SELECT 1 FROM mdata.loads l WHERE l.id = $4::uuid AND l.operating_company_id = $1::uuid)) AS load_ok`,
+        [body.data.operating_company_id, body.data.subject_driver_id ?? null, body.data.subject_unit_id ?? null, body.data.related_load_id ?? null]
+      );
+      const integrity = links.rows[0] as { driver_ok?: boolean; unit_ok?: boolean; load_ok?: boolean } | undefined;
+      if (!integrity || Object.values(integrity).some((value) => value !== true)) return null;
       const inserted = await client.query(
         `
           INSERT INTO safety.safety_events (
@@ -393,6 +412,9 @@ export async function registerSafetyEventsRoutes(app: FastifyInstance) {
           operating_company_id: body.data.operating_company_id,
           event_type: body.data.event_type,
           severity: body.data.severity,
+          subject_driver_id: body.data.subject_driver_id ?? null,
+          subject_unit_id: body.data.subject_unit_id ?? null,
+          related_load_id: body.data.related_load_id ?? null,
         },
         "info",
         "P7-SAFETY-EVENTS"
@@ -456,7 +478,7 @@ export async function registerSafetyEventsRoutes(app: FastifyInstance) {
       return createdEvent;
     });
 
-    if (!event) return reply.code(500).send({ error: "safety_event_create_failed" });
+    if (!event) return reply.code(400).send({ error: "related_entity_not_in_operating_company" });
     return reply.code(201).send({ event });
   });
 }

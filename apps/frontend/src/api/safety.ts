@@ -68,6 +68,8 @@ export function listSafetyEventLog(
     search?: string;
     /** SAF-C01-REVERSE: server-side load filter for the load drawer's reverse block. */
     related_load_id?: string;
+    subject_driver_id?: string;
+    subject_unit_id?: string;
   } = {}
 ) {
   const qs = new URLSearchParams({ operating_company_id: companyId });
@@ -75,6 +77,8 @@ export function listSafetyEventLog(
   if (params.severity) qs.set("severity", params.severity);
   if (params.search) qs.set("search", params.search);
   if (params.related_load_id) qs.set("related_load_id", params.related_load_id);
+  if (params.subject_driver_id) qs.set("subject_driver_id", params.subject_driver_id);
+  if (params.subject_unit_id) qs.set("subject_unit_id", params.subject_unit_id);
   return apiRequest<{ events: SafetyEventLogRow[] }>(`/api/v1/safety/events-log?${qs.toString()}`);
 }
 
