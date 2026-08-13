@@ -2019,6 +2019,9 @@ export type EscrowPosting = {
   posted_at: string;
   posted_by_user_id: string;
   linked_journal_entry_id: string | null;
+  /** ACCT-F5065 — joined from accounting.journal_entries for EntityLink label. */
+  journal_entry_date?: string | null;
+  journal_entry_memo?: string | null;
   created_at: string;
 };
 

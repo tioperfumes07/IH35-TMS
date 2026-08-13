@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { EntityLink, type EntityKind } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
+import { formatDateUS } from "../../lib/formatDate";
 import { listEscrowAccounts, listEscrowPostings, type EscrowAccount, type EscrowPosting } from "../../api/accounting";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ListErrorState } from "../../components/ListErrorState";
@@ -191,7 +192,13 @@ export function EscrowPage() {
           <EntityLink
             kind="journal_entry"
             id={row.linked_journal_entry_id ?? undefined}
-            label={row.linked_journal_entry_id ? entityLabel(null, row.linked_journal_entry_id, "Journal entry") : "—"}
+            label={
+              row.linked_journal_entry_id
+                ? row.journal_entry_date
+                  ? `${formatDateUS(row.journal_entry_date)}${row.journal_entry_memo ? ` — ${row.journal_entry_memo}` : ""}`
+                  : entityLabel(row.journal_entry_memo, row.linked_journal_entry_id, "Journal entry")
+                : "—"
+            }
           />
         ),
       },
