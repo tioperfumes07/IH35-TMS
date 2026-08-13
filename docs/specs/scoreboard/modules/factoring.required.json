@@ -2,9 +2,9 @@
   "module": "factoring",
   "entity_default": "USMCA",
   "source": {
-    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md — Banking Factoring (Faro) + Accounting More Factoring/settlements + Dispatch packets/queue",
+    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md \u2014 Banking Factoring (Faro) + Accounting More Factoring/settlements + Dispatch packets/queue",
     "nav": "apps/frontend/src/pages/factoring/FactoringHome.tsx SUBNAV + sidebar-config FACT/flyouts",
-    "routes": "/factoring* · /accounting/factoring* · /banking/factoring · /dispatch/factoring-queue"
+    "routes": "/factoring* \u00b7 /accounting/factoring* \u00b7 /banking/factoring \u00b7 /dispatch/factoring-queue"
   },
   "columns": [
     {
@@ -379,11 +379,9 @@
       "required": [
         "customer",
         "load",
-        "gl_je",
         "liability",
         "connectivity",
-        "reverse_link",
-        "bank"
+        "reverse_link"
       ]
     },
     {
@@ -410,9 +408,7 @@
         "connectivity",
         "reverse_link",
         "qbo_chrome",
-        "gl_je",
         "customer",
-        "invoice",
         "liability"
       ]
     },
@@ -427,9 +423,7 @@
         "connectivity",
         "reverse_link",
         "qbo_chrome",
-        "gl_je",
         "customer",
-        "invoice",
         "liability"
       ]
     },
@@ -444,9 +438,7 @@
         "connectivity",
         "reverse_link",
         "qbo_chrome",
-        "gl_je",
         "customer",
-        "invoice",
         "liability"
       ]
     },
@@ -480,16 +472,14 @@
         "reverse_link",
         "qbo_chrome",
         "driver",
-        "gl_je",
         "customer",
-        "invoice",
         "liability"
       ]
     },
     {
       "id": "chrome.toolbar_search",
       "tab": "Chrome controls",
-      "sub": "List toolbar — Search (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar \u2014 Search (CLS-LIST-TOOLBAR)",
       "route_hint": "/factoring",
       "surface_kind": "toolbar",
       "required": [
@@ -500,7 +490,7 @@
     {
       "id": "chrome.toolbar_range",
       "tab": "Chrome controls",
-      "sub": "List toolbar — date/amount range (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar \u2014 date/amount range (CLS-LIST-TOOLBAR)",
       "route_hint": "/factoring",
       "surface_kind": "toolbar",
       "required": [
@@ -511,7 +501,7 @@
     {
       "id": "chrome.toolbar_gear",
       "tab": "Chrome controls",
-      "sub": "List toolbar — column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
+      "sub": "List toolbar \u2014 column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
       "route_hint": "/factoring",
       "surface_kind": "toolbar",
       "required": [
@@ -522,7 +512,7 @@
     {
       "id": "chrome.toolbar_filter",
       "tab": "Chrome controls",
-      "sub": "List toolbar — Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
+      "sub": "List toolbar \u2014 Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
       "route_hint": "/factoring",
       "surface_kind": "toolbar",
       "required": [
@@ -612,7 +602,7 @@
         "invoice",
         "bank"
       ],
-      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; §B9 link columns added."
+      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; \u00a7B9 link columns added."
     }
   }
 }
