@@ -464,6 +464,14 @@
     "claimed_by": "cc-1",
     "purpose": "verify-ap-bill-number-not-load-number"
   },
+  "3142": {
+    "claimed_at": "2026-08-12",
+    "claimed_by": "cursor",
+    "guard": "verify-expense-detail-trailer-link",
+    "lane": "cursor",
+    "note": "CLAIM-RESERVE: ExpenseDetailPage EntityLink trailer after #6322/#6328",
+    "purpose": "verify-expense-detail-trailer-link"
+  },
   "3145": {
     "claimed_at": "2026-08-12",
     "claimed_by": "cc-1",
