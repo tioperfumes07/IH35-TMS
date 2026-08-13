@@ -7,7 +7,11 @@ import { assertCompanyMembership } from "../_helpers/company-membership-guard.js
 
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
+  driver_id: z.string().uuid().optional(),
 });
+
+const RL_READ = { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } };
+const RL_WRITE = { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } };
 
 const createBackgroundCheckSchema = z.object({
   driver_id: z.string().uuid(),
@@ -40,7 +44,38 @@ async function withCompanyScope<T>(
 }
 
 export async function registerSafetyBackgroundChecksRoutes(app: FastifyInstance) {
-  app.post("/api/v1/safety/background-checks", async (req, reply) => {
+  app.get("/api/v1/safety/background-checks", RL_READ, async (req, reply) => {
+    const user = authUser(req, reply);
+    if (!user) return;
+    const query = companyQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return reply.code(400).send({ error: "validation_error", details: query.error.flatten() });
+
+    const rows = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
+      const values: unknown[] = [query.data.operating_company_id];
+      const driverFilter = query.data.driver_id
+        ? (values.push(query.data.driver_id), `AND bc.driver_id = $${values.length}::uuid`)
+        : "";
+      const res = await client.query(
+        `
+          SELECT bc.*,
+                 NULLIF(TRIM(COALESCE(d.first_name, '') || ' ' || COALESCE(d.last_name, '')), '') AS driver_name
+          FROM safety.background_checks bc
+          JOIN mdata.drivers d
+            ON d.id = bc.driver_id
+           AND d.operating_company_id = bc.operating_company_id
+          WHERE bc.operating_company_id = $1::uuid
+            ${driverFilter}
+          ORDER BY bc.checked_at DESC, bc.id DESC
+          LIMIT 500
+        `,
+        values
+      );
+      return res.rows;
+    });
+    return { background_checks: rows };
+  });
+
+  app.post("/api/v1/safety/background-checks", RL_WRITE, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const company = companyQuerySchema.safeParse(req.query ?? {});
@@ -49,6 +84,11 @@ export async function registerSafetyBackgroundChecksRoutes(app: FastifyInstance)
     if (!body.success) return reply.code(400).send({ error: "validation_error", details: body.error.flatten() });
 
     const created = await withCompanyScope(user.uuid, company.data.operating_company_id, async (client) => {
+      const driver = await client.query(
+        `SELECT id FROM mdata.drivers WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
+        [body.data.driver_id, company.data.operating_company_id]
+      );
+      if (!driver.rows[0]) return null;
       const res = await client.query(
         `
           INSERT INTO safety.background_checks (
@@ -88,6 +128,7 @@ export async function registerSafetyBackgroundChecksRoutes(app: FastifyInstance)
       );
       return res.rows[0];
     });
+    if (!created) return reply.code(400).send({ error: "driver_not_in_operating_company" });
     return reply.code(201).send(created);
   });
 }
