@@ -602,6 +602,11 @@
     "claimed_by": "cursor",
     "purpose": "ACCT-F5027 LV-AR-OPEN-INCLUDES-VOIDED invoices list Open/Total exclude void"
   },
+  "3222": {
+    "claimed_at": "2026-08-13",
+    "claimed_by": "cursor",
+    "purpose": "ACCT-F5028 LV-PAYABLE-SELECTOR-OFFERS-VOIDED-BILLS has_balance exclude void status"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
