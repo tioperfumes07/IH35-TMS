@@ -201,7 +201,6 @@
         "unit",
         "trailer",
         "load",
-        "expense",
         "picker_law",
         "qbo_chrome",
         "connectivity",
@@ -270,7 +269,6 @@
         "customer",
         "unit",
         "load",
-        "expense",
         "connectivity",
         "reverse_link",
         "picker_law"
@@ -535,7 +533,6 @@
         "unit",
         "trailer",
         "load",
-        "expense",
         "picker_law",
         "qbo_chrome",
         "connectivity",

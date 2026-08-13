@@ -213,7 +213,6 @@
       "required": [
         "driver",
         "unit",
-        "expense",
         "connectivity"
       ]
     },
