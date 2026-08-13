@@ -656,6 +656,11 @@ jobs:
       - name: verify:combobox-outside-dismiss
         run: node scripts/verify-combobox-outside-dismiss.mjs
 
+      - name: verify:fine-create-suggest-load --selftest
+        run: node scripts/verify-fine-create-suggest-load.mjs --selftest
+      - name: verify:fine-create-suggest-load
+        run: node scripts/verify-fine-create-suggest-load.mjs
+
       - name: verify:no-dead-clicks --selftest
         run: node scripts/verify-no-dead-clicks.mjs --selftest
       - name: verify:no-dead-clicks

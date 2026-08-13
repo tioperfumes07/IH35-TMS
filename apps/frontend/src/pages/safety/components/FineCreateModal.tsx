@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createSafetyFine } from "../../../api/safety";
 import { listCivilFineTypes } from "../../../api/catalogs-safety";
@@ -12,6 +12,7 @@ import { DatePicker } from "../../../components/forms/DatePicker";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { companyToday } from "../../../lib/businessDate";
 import { CappedListNotice } from "../../../components/CappedListNotice";
+import { suggestExpenseLoad } from "../../../api/maintenance";
 
 type Props = {
   open: boolean;
@@ -44,6 +45,32 @@ export function FineCreateModal({ open, operatingCompanyId, onClose, onCreated }
   // specific load and truck was stored as if it belonged to nothing.
   const [relatedLoadId, setRelatedLoadId] = useState<string | null>(null);
   const [relatedUnitId, setRelatedUnitId] = useState<string | null>(null);
+  /** Once the active-trip resolver fills the load, preserve an operator override. */
+  const [suggestionPinned, setSuggestionPinned] = useState(false);
+
+  const suggestionQuery = useQuery({
+    queryKey: ["safety", "fine-create", "suggest-load", operatingCompanyId, subjectDriverId, relatedUnitId, issuedDate],
+    queryFn: () =>
+      suggestExpenseLoad({
+        operating_company_id: operatingCompanyId,
+        driver_id: subjectDriverId || undefined,
+        unit_id: relatedUnitId || undefined,
+        transaction_date: issuedDate,
+      }),
+    enabled: open && Boolean(operatingCompanyId && issuedDate && (subjectDriverId || relatedUnitId)),
+  });
+
+  useEffect(() => {
+    setSuggestionPinned(false);
+  }, [subjectDriverId, relatedUnitId, issuedDate]);
+
+  useEffect(() => {
+    if (relatedLoadId || suggestionPinned) return;
+    const suggested = suggestionQuery.data?.data;
+    if (!suggested?.load_id) return;
+    setRelatedLoadId(suggested.load_id);
+    setSuggestionPinned(true);
+  }, [relatedLoadId, suggestionPinned, suggestionQuery.data]);
 
   const civilFineTypesQuery = useQuery({
     queryKey: ["safety", "fine-create", "civil-fine-types", operatingCompanyId, civilFineTypeSearch],
@@ -298,6 +325,11 @@ export function FineCreateModal({ open, operatingCompanyId, onClose, onCreated }
                 nestedInDrawer
                 dataTestId="fine-create-load-entity-picker"
               />
+              {suggestionPinned && relatedLoadId && suggestionQuery.data?.data?.load_id === relatedLoadId ? (
+                <p className="text-[11px] text-slate-600" data-testid="fine-create-load-suggested">
+                  Auto-filled from the active trip for this driver/unit on the issued date.
+                </p>
+              ) : null}
             </div>
             <div className="flex flex-col gap-1">
               <label className="text-xs font-semibold text-gray-600">Issued date</label>

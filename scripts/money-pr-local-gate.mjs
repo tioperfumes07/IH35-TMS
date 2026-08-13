@@ -78,6 +78,7 @@ const STEPS = [
   ["verify-no-raw-date-input", "scripts/verify-no-raw-date-input.mjs"],
   ["verify-no-native-datetime-input", "scripts/verify-no-native-datetime-input.mjs"],
   ["verify-combobox-outside-dismiss", "scripts/verify-combobox-outside-dismiss.mjs"],
+  ["verify-fine-create-suggest-load", "scripts/verify-fine-create-suggest-load.mjs"],
   ["verify-money-fields-use-moneyinput", "scripts/verify-money-fields-use-moneyinput.mjs"],
   ["verify-referenceselect-qbo-standard", "scripts/verify-referenceselect-qbo-standard.mjs"],
   ["verify-referenceselect-coverage-ratchet", "scripts/verify-referenceselect-coverage-ratchet.mjs"],
