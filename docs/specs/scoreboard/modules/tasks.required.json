@@ -27,11 +27,6 @@
       "label": "Unit"
     },
     {
-      "id": "trailer",
-      "group": "linkage",
-      "label": "Trailer"
-    },
-    {
       "id": "load",
       "group": "linkage",
       "label": "Load"
@@ -115,6 +110,11 @@
       "id": "bank",
       "group": "money",
       "label": "Bank / Match"
+    },
+    {
+      "id": "trailer",
+      "group": "linkage",
+      "label": "Trailer"
     }
   ],
   "leaves": [
@@ -265,11 +265,11 @@
       "sub": "Maintenance service tasks catalog",
       "route_hint": "/lists",
       "required": [
-        "load",
         "picker_law",
         "connectivity",
         "reverse_link",
-        "work_order"
+        "work_order",
+        "load"
       ]
     },
     {

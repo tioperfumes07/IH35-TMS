@@ -154,16 +154,21 @@
       "sub": "Match / Categorize",
       "route_hint": "/banking/transactions",
       "required": [
-        "vendor",
+        "driver",
         "customer",
-        "gl_je",
-        "expense",
+        "vendor",
+        "unit",
+        "trailer",
+        "load",
         "ap_bill",
-        "picker_law",
-        "qbo_chrome",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
         "reverse_link",
-        "bank"
+        "picker_law",
+        "qbo_chrome"
       ]
     },
     {
@@ -214,10 +219,20 @@
       "route_hint": "/banking/relay",
       "required": [
         "driver",
+        "customer",
+        "vendor",
         "unit",
         "trailer",
+        "load",
+        "ap_bill",
         "expense",
-        "connectivity"
+        "gl_je",
+        "invoice",
+        "bank",
+        "connectivity",
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome"
       ]
     },
     {
@@ -271,11 +286,21 @@
       "surface_kind": "modal",
       "surface_path": "pages/banking/RecordCCPaymentModal.tsx",
       "required": [
+        "driver",
+        "customer",
+        "vendor",
+        "unit",
+        "trailer",
+        "load",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
         "reverse_link",
-        "qbo_chrome",
-        "bank",
-        "gl_je"
+        "picker_law",
+        "qbo_chrome"
       ]
     },
     {
@@ -412,11 +437,21 @@
       "surface_kind": "parity_site",
       "surface_path": "pages/banking/RecordCCPaymentModal.tsx",
       "required": [
+        "driver",
+        "customer",
+        "vendor",
+        "unit",
+        "trailer",
+        "load",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
         "reverse_link",
-        "qbo_chrome",
-        "bank",
-        "gl_je"
+        "picker_law",
+        "qbo_chrome"
       ]
     },
     {

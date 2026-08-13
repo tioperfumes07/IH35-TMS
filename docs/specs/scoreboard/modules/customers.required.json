@@ -131,12 +131,21 @@
       "sub": "Customer roster home",
       "route_hint": "/customers",
       "required": [
+        "driver",
         "customer",
+        "vendor",
+        "unit",
+        "trailer",
         "load",
+        "ap_bill",
+        "expense",
         "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
         "reverse_link",
-        "picker_law"
+        "picker_law",
+        "qbo_chrome"
       ]
     },
     {
@@ -235,12 +244,21 @@
       "sub": "+ Create Customer",
       "route_hint": "/customers",
       "required": [
+        "driver",
         "customer",
         "vendor",
-        "picker_law",
-        "qbo_chrome",
+        "unit",
+        "trailer",
+        "load",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome"
       ]
     },
     {
@@ -271,11 +289,20 @@
       "sub": "Transaction List tab",
       "route_hint": "/customers?tab=transaction_list",
       "required": [
+        "driver",
         "customer",
+        "vendor",
+        "unit",
+        "trailer",
         "load",
+        "ap_bill",
+        "expense",
         "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
         "reverse_link",
+        "picker_law",
         "qbo_chrome"
       ]
     },
@@ -309,13 +336,21 @@
       "sub": "New transaction (invoice hop)",
       "route_hint": "/accounting/invoices?customer_id=",
       "required": [
+        "driver",
         "customer",
+        "vendor",
+        "unit",
+        "trailer",
         "load",
+        "ap_bill",
+        "expense",
         "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
         "reverse_link",
-        "qbo_chrome",
-        "invoice"
+        "picker_law",
+        "qbo_chrome"
       ]
     },
     {
@@ -446,11 +481,21 @@
       "sub": "+ Create Contact",
       "route_hint": "/customers/:id",
       "required": [
+        "driver",
         "customer",
-        "picker_law",
-        "qbo_chrome",
+        "vendor",
+        "unit",
+        "trailer",
+        "load",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome"
       ]
     },
     {
@@ -459,13 +504,21 @@
       "sub": "AR aging \u00b7 invoices \u00b7 payments",
       "route_hint": "/customers/:id?tab=billing",
       "required": [
+        "driver",
         "customer",
+        "vendor",
+        "unit",
+        "trailer",
         "load",
+        "ap_bill",
+        "expense",
         "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
         "reverse_link",
-        "qbo_chrome",
-        "invoice"
+        "picker_law",
+        "qbo_chrome"
       ]
     },
     {
@@ -474,13 +527,21 @@
       "sub": "Record customer payment",
       "route_hint": "/customers/:id",
       "required": [
+        "driver",
         "customer",
+        "vendor",
+        "unit",
+        "trailer",
+        "load",
+        "ap_bill",
+        "expense",
         "gl_je",
-        "picker_law",
-        "qbo_chrome",
+        "invoice",
+        "bank",
         "connectivity",
         "reverse_link",
-        "invoice"
+        "picker_law",
+        "qbo_chrome"
       ]
     },
     {
@@ -501,11 +562,21 @@
       "sub": "+ Create Event",
       "route_hint": "/customers/:id",
       "required": [
+        "driver",
         "customer",
-        "picker_law",
-        "qbo_chrome",
+        "vendor",
+        "unit",
+        "trailer",
+        "load",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome"
       ]
     },
     {
@@ -527,12 +598,21 @@
       "sub": "+ Create Lane",
       "route_hint": "/customers/:id",
       "required": [
+        "driver",
         "customer",
+        "vendor",
+        "unit",
+        "trailer",
         "load",
-        "picker_law",
-        "qbo_chrome",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome"
       ]
     },
     {
@@ -618,11 +698,21 @@
       "sub": "Profitability report hop",
       "route_hint": "/customers/:id?tab=pnl",
       "required": [
+        "driver",
         "customer",
+        "vendor",
+        "unit",
+        "trailer",
         "load",
+        "ap_bill",
+        "expense",
         "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome"
       ]
     },
     {

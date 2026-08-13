@@ -144,11 +144,21 @@
       "sub": "Bills list",
       "route_hint": "/accounting/bills",
       "required": [
+        "driver",
+        "customer",
         "vendor",
+        "unit",
+        "trailer",
+        "load",
         "ap_bill",
+        "expense",
         "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome"
       ]
     },
     {
@@ -157,16 +167,21 @@
       "sub": "+ Create Vendor Bill",
       "route_hint": "/accounting/bills/vendor",
       "required": [
+        "driver",
+        "customer",
         "vendor",
         "unit",
         "trailer",
+        "load",
         "ap_bill",
         "expense",
         "gl_je",
-        "picker_law",
-        "qbo_chrome",
+        "invoice",
+        "bank",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome"
       ]
     },
     {
@@ -175,18 +190,23 @@
       "sub": "+ Maintenance Bill",
       "route_hint": "/accounting/bills/maintenance",
       "required": [
+        "driver",
+        "customer",
         "vendor",
         "unit",
         "trailer",
         "load",
         "ap_bill",
+        "expense",
         "gl_je",
-        "inventory",
-        "scenario.maintenance",
-        "picker_law",
-        "qbo_chrome",
+        "invoice",
+        "bank",
         "connectivity",
         "reverse_link",
+        "picker_law",
+        "qbo_chrome",
+        "inventory",
+        "scenario.maintenance",
         "work_order"
       ]
     },
@@ -196,15 +216,21 @@
       "sub": "+ Fuel Bill",
       "route_hint": "/accounting/bills/fuel",
       "required": [
+        "driver",
+        "customer",
         "vendor",
         "unit",
         "trailer",
+        "load",
         "ap_bill",
+        "expense",
         "gl_je",
-        "picker_law",
-        "qbo_chrome",
+        "invoice",
+        "bank",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome"
       ]
     },
     {
@@ -213,15 +239,21 @@
       "sub": "+ Driver Bill",
       "route_hint": "/accounting/bills/driver",
       "required": [
+        "driver",
+        "customer",
         "vendor",
         "unit",
         "trailer",
+        "load",
         "ap_bill",
+        "expense",
         "gl_je",
-        "picker_law",
-        "qbo_chrome",
+        "invoice",
+        "bank",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome"
       ]
     },
     {
@@ -230,13 +262,21 @@
       "sub": "Create Multiple Bills",
       "route_hint": "/accounting/bills/multiple",
       "required": [
+        "driver",
+        "customer",
         "vendor",
+        "unit",
+        "trailer",
+        "load",
         "ap_bill",
+        "expense",
         "gl_je",
-        "picker_law",
-        "qbo_chrome",
+        "invoice",
+        "bank",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome"
       ]
     },
     {
@@ -245,9 +285,20 @@
       "sub": "Recurring Bills",
       "route_hint": "/accounting/bills/recurring",
       "required": [
+        "driver",
+        "customer",
         "vendor",
+        "unit",
+        "trailer",
+        "load",
         "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
+        "reverse_link",
+        "picker_law",
         "qbo_chrome"
       ]
     },
@@ -257,11 +308,21 @@
       "sub": "Bill detail",
       "route_hint": "/accounting/bills/:id",
       "required": [
+        "driver",
+        "customer",
         "vendor",
+        "unit",
+        "trailer",
+        "load",
         "ap_bill",
+        "expense",
         "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome"
       ]
     },
     {
@@ -270,11 +331,21 @@
       "sub": "Expenses list",
       "route_hint": "/accounting/expenses/list",
       "required": [
+        "driver",
+        "customer",
         "vendor",
+        "unit",
+        "trailer",
+        "load",
+        "ap_bill",
         "expense",
         "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome"
       ]
     },
     {
@@ -283,16 +354,21 @@
       "sub": "+ Create Expense",
       "route_hint": "/accounting/expenses",
       "required": [
+        "driver",
+        "customer",
         "vendor",
         "unit",
         "trailer",
         "load",
+        "ap_bill",
         "expense",
         "gl_je",
-        "picker_law",
-        "qbo_chrome",
+        "invoice",
+        "bank",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome"
       ]
     },
     {
@@ -301,11 +377,21 @@
       "sub": "Expense detail",
       "route_hint": "/accounting/expenses/:id",
       "required": [
+        "driver",
+        "customer",
         "vendor",
+        "unit",
+        "trailer",
+        "load",
+        "ap_bill",
         "expense",
         "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome"
       ]
     },
     {
@@ -314,11 +400,21 @@
       "sub": "Bill payments list",
       "route_hint": "/accounting/bill-payments",
       "required": [
+        "driver",
+        "customer",
         "vendor",
+        "unit",
+        "trailer",
+        "load",
         "ap_bill",
+        "expense",
         "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome"
       ]
     },
     {
@@ -327,13 +423,21 @@
       "sub": "+ Create Bill Payment",
       "route_hint": "/accounting/bill-payments",
       "required": [
+        "driver",
+        "customer",
         "vendor",
+        "unit",
+        "trailer",
+        "load",
         "ap_bill",
+        "expense",
         "gl_je",
-        "picker_law",
-        "qbo_chrome",
+        "invoice",
+        "bank",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome"
       ]
     },
     {
@@ -342,9 +446,21 @@
       "sub": "AP Aging",
       "route_hint": "/accounting/accounts-payable",
       "required": [
+        "driver",
+        "customer",
         "vendor",
+        "unit",
+        "trailer",
+        "load",
         "ap_bill",
-        "connectivity"
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank",
+        "connectivity",
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome"
       ]
     },
     {
@@ -353,11 +469,21 @@
       "sub": "Vendors list / create",
       "route_hint": "/accounting/vendors",
       "required": [
+        "driver",
+        "customer",
         "vendor",
+        "unit",
+        "trailer",
+        "load",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
+        "reverse_link",
         "picker_law",
-        "qbo_chrome",
-        "reverse_link"
+        "qbo_chrome"
       ]
     },
     {
@@ -366,11 +492,21 @@
       "sub": "Customers list / create",
       "route_hint": "/accounting/customers",
       "required": [
+        "driver",
         "customer",
+        "vendor",
+        "unit",
+        "trailer",
+        "load",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
+        "reverse_link",
         "picker_law",
-        "qbo_chrome",
-        "reverse_link"
+        "qbo_chrome"
       ]
     },
     {
@@ -393,14 +529,21 @@
       "sub": "+ Create Invoice",
       "route_hint": "/accounting/invoices",
       "required": [
+        "driver",
         "customer",
+        "vendor",
+        "unit",
+        "trailer",
         "load",
+        "ap_bill",
+        "expense",
         "gl_je",
-        "picker_law",
-        "qbo_chrome",
+        "invoice",
+        "bank",
         "connectivity",
         "reverse_link",
-        "invoice"
+        "picker_law",
+        "qbo_chrome"
       ]
     },
     {
@@ -409,12 +552,21 @@
       "sub": "+ Receive Payment",
       "route_hint": "/accounting/payments",
       "required": [
+        "driver",
         "customer",
+        "vendor",
+        "unit",
+        "trailer",
+        "load",
+        "ap_bill",
+        "expense",
         "gl_je",
-        "picker_law",
-        "qbo_chrome",
+        "invoice",
+        "bank",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome"
       ]
     },
     {
@@ -460,7 +612,20 @@
       "route_hint": "/accounting/pre-settlements",
       "required": [
         "driver",
+        "customer",
+        "vendor",
+        "unit",
+        "trailer",
+        "load",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome",
         "settlement"
       ]
     },
@@ -481,11 +646,21 @@
       "sub": "+ Create Manual JE",
       "route_hint": "/accounting/journal-entries",
       "required": [
+        "driver",
+        "customer",
+        "vendor",
+        "unit",
+        "trailer",
+        "load",
+        "ap_bill",
+        "expense",
         "gl_je",
-        "picker_law",
-        "qbo_chrome",
+        "invoice",
+        "bank",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome"
       ]
     },
     {
@@ -580,12 +755,21 @@
       "surface_kind": "modal",
       "surface_path": "pages/accounting/InvoiceCreateModal.tsx",
       "required": [
+        "driver",
+        "customer",
+        "vendor",
+        "unit",
+        "trailer",
+        "load",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
         "reverse_link",
         "picker_law",
-        "qbo_chrome",
-        "invoice",
-        "gl_je"
+        "qbo_chrome"
       ]
     },
     {
@@ -610,11 +794,21 @@
       "surface_kind": "modal",
       "surface_path": "pages/accounting/PayBillModal.tsx",
       "required": [
+        "driver",
+        "customer",
+        "vendor",
+        "unit",
+        "trailer",
+        "load",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
         "reverse_link",
-        "qbo_chrome",
-        "ap_bill",
-        "gl_je"
+        "picker_law",
+        "qbo_chrome"
       ]
     },
     {
@@ -625,10 +819,21 @@
       "surface_kind": "modal",
       "surface_path": "pages/accounting/PaymentApplyModal.tsx",
       "required": [
+        "driver",
+        "customer",
+        "vendor",
+        "unit",
+        "trailer",
+        "load",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
         "reverse_link",
-        "qbo_chrome",
-        "gl_je"
+        "picker_law",
+        "qbo_chrome"
       ]
     },
     {
@@ -639,10 +844,21 @@
       "surface_kind": "modal",
       "surface_path": "pages/accounting/RecordPaymentModal.tsx",
       "required": [
+        "driver",
+        "customer",
+        "vendor",
+        "unit",
+        "trailer",
+        "load",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
         "reverse_link",
-        "qbo_chrome",
-        "gl_je"
+        "picker_law",
+        "qbo_chrome"
       ]
     },
     {
@@ -667,11 +883,21 @@
       "surface_kind": "modal",
       "surface_path": "pages/accounting/bill-payments/CCPaymentModal.tsx",
       "required": [
+        "driver",
+        "customer",
+        "vendor",
+        "unit",
+        "trailer",
+        "load",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
         "reverse_link",
-        "qbo_chrome",
-        "ap_bill",
-        "gl_je"
+        "picker_law",
+        "qbo_chrome"
       ]
     },
     {
@@ -804,11 +1030,21 @@
       "surface_kind": "panel",
       "surface_path": "pages/accounting/BillDetailPanel.tsx",
       "required": [
+        "driver",
+        "customer",
+        "vendor",
+        "unit",
+        "trailer",
+        "load",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
         "reverse_link",
-        "qbo_chrome",
-        "ap_bill",
-        "gl_je"
+        "picker_law",
+        "qbo_chrome"
       ]
     },
     {
@@ -862,12 +1098,21 @@
       "surface_kind": "parity_site",
       "surface_path": "pages/accounting/ExpenseCreatePage.tsx",
       "required": [
+        "driver",
+        "customer",
+        "vendor",
+        "unit",
+        "trailer",
+        "load",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
         "reverse_link",
         "picker_law",
-        "qbo_chrome",
-        "expense",
-        "gl_je"
+        "qbo_chrome"
       ]
     },
     {
@@ -878,11 +1123,21 @@
       "surface_kind": "parity_site",
       "surface_path": "pages/accounting/ExpensesListPage.tsx",
       "required": [
+        "driver",
+        "customer",
+        "vendor",
+        "unit",
+        "trailer",
+        "load",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
         "reverse_link",
-        "qbo_chrome",
-        "expense",
-        "gl_je"
+        "picker_law",
+        "qbo_chrome"
       ]
     },
     {
@@ -907,12 +1162,21 @@
       "surface_kind": "parity_site",
       "surface_path": "pages/accounting/InvoiceCreateModal.tsx",
       "required": [
+        "driver",
+        "customer",
+        "vendor",
+        "unit",
+        "trailer",
+        "load",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
         "reverse_link",
         "picker_law",
-        "qbo_chrome",
-        "invoice",
-        "gl_je"
+        "qbo_chrome"
       ]
     },
     {
@@ -923,11 +1187,21 @@
       "surface_kind": "parity_site",
       "surface_path": "pages/accounting/PayBillModal.tsx",
       "required": [
+        "driver",
+        "customer",
+        "vendor",
+        "unit",
+        "trailer",
+        "load",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
         "reverse_link",
-        "qbo_chrome",
-        "ap_bill",
-        "gl_je"
+        "picker_law",
+        "qbo_chrome"
       ]
     },
     {
@@ -938,10 +1212,21 @@
       "surface_kind": "parity_site",
       "surface_path": "pages/accounting/PaymentApplyModal.tsx",
       "required": [
+        "driver",
+        "customer",
+        "vendor",
+        "unit",
+        "trailer",
+        "load",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
         "reverse_link",
-        "qbo_chrome",
-        "gl_je"
+        "picker_law",
+        "qbo_chrome"
       ]
     },
     {
@@ -966,10 +1251,21 @@
       "surface_kind": "parity_site",
       "surface_path": "pages/accounting/RecordPaymentModal.tsx",
       "required": [
+        "driver",
+        "customer",
+        "vendor",
+        "unit",
+        "trailer",
+        "load",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
         "reverse_link",
-        "qbo_chrome",
-        "gl_je"
+        "picker_law",
+        "qbo_chrome"
       ]
     },
     {
@@ -994,13 +1290,21 @@
       "surface_kind": "parity_site",
       "surface_path": "pages/accounting/VendorBillCreatePage.tsx",
       "required": [
+        "driver",
+        "customer",
+        "vendor",
+        "unit",
+        "trailer",
+        "load",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
         "reverse_link",
         "picker_law",
-        "qbo_chrome",
-        "vendor",
-        "ap_bill",
-        "gl_je"
+        "qbo_chrome"
       ]
     },
     {
@@ -1026,11 +1330,21 @@
       "surface_kind": "parity_site",
       "surface_path": "pages/accounting/bill-payments/CCPaymentModal.tsx",
       "required": [
+        "driver",
+        "customer",
+        "vendor",
+        "unit",
+        "trailer",
+        "load",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
         "reverse_link",
-        "qbo_chrome",
-        "ap_bill",
-        "gl_je"
+        "picker_law",
+        "qbo_chrome"
       ]
     },
     {
@@ -1056,14 +1370,21 @@
       "surface_kind": "modal",
       "surface_path": "components/ap/BillPaymentModal.tsx",
       "required": [
+        "driver",
+        "customer",
+        "vendor",
+        "unit",
+        "trailer",
+        "load",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
         "reverse_link",
         "picker_law",
-        "gl_je",
-        "ap_bill",
-        "qbo_chrome",
-        "invoice",
-        "bank"
+        "qbo_chrome"
       ]
     },
     {

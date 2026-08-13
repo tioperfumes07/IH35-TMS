@@ -125,11 +125,20 @@
       "sub": "KPI strip + sub-nav hub",
       "route_hint": "/factoring",
       "required": [
+        "driver",
         "customer",
+        "vendor",
+        "unit",
+        "trailer",
         "load",
+        "ap_bill",
+        "expense",
         "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
         "reverse_link",
+        "picker_law",
         "qbo_chrome"
       ]
     },
@@ -139,12 +148,22 @@
       "sub": "Reserve balance movements",
       "route_hint": "/factoring/reserve-tracker",
       "required": [
+        "driver",
         "customer",
+        "vendor",
+        "unit",
+        "trailer",
         "load",
-        "liability",
+        "ap_bill",
+        "expense",
         "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome",
+        "liability"
       ]
     },
     {
@@ -153,12 +172,22 @@
       "sub": "Recourse returns queue",
       "route_hint": "/factoring/recourse-pipeline",
       "required": [
+        "driver",
         "customer",
+        "vendor",
+        "unit",
+        "trailer",
         "load",
+        "ap_bill",
+        "expense",
         "gl_je",
-        "liability",
+        "invoice",
+        "bank",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome",
+        "liability"
       ]
     },
     {
@@ -207,12 +236,21 @@
       "sub": "CCG equipment loan ledger",
       "route_hint": "/factoring/equipment-loans",
       "required": [
+        "driver",
+        "customer",
         "vendor",
         "unit",
         "trailer",
+        "load",
+        "ap_bill",
+        "expense",
         "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome"
       ]
     },
     {
@@ -234,15 +272,22 @@
       "sub": "Eligible invoice batch submit",
       "route_hint": "/factoring/submit",
       "required": [
+        "driver",
         "customer",
+        "vendor",
+        "unit",
+        "trailer",
         "load",
+        "ap_bill",
+        "expense",
         "gl_je",
-        "liability",
-        "picker_law",
-        "qbo_chrome",
+        "invoice",
+        "bank",
         "connectivity",
         "reverse_link",
-        "invoice"
+        "picker_law",
+        "qbo_chrome",
+        "liability"
       ]
     },
     {
@@ -251,14 +296,22 @@
       "sub": "Create factoring batch",
       "route_hint": "/factoring/batches/new",
       "required": [
+        "driver",
         "customer",
+        "vendor",
+        "unit",
+        "trailer",
         "load",
+        "ap_bill",
+        "expense",
         "gl_je",
-        "liability",
+        "invoice",
+        "bank",
+        "connectivity",
+        "reverse_link",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "reverse_link"
+        "liability"
       ]
     },
     {
@@ -267,12 +320,22 @@
       "sub": "Submitted batch drill-down",
       "route_hint": "/factoring/batches/:id",
       "required": [
+        "driver",
         "customer",
+        "vendor",
+        "unit",
+        "trailer",
         "load",
+        "ap_bill",
+        "expense",
         "gl_je",
-        "liability",
+        "invoice",
+        "bank",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome",
+        "liability"
       ]
     },
     {
@@ -320,14 +383,22 @@
       "sub": "Factoring advances list",
       "route_hint": "/accounting/factoring",
       "required": [
+        "driver",
         "customer",
+        "vendor",
+        "unit",
+        "trailer",
         "load",
+        "ap_bill",
+        "expense",
         "gl_je",
-        "liability",
+        "invoice",
+        "bank",
         "connectivity",
         "reverse_link",
         "picker_law",
-        "qbo_chrome"
+        "qbo_chrome",
+        "liability"
       ]
     },
     {
@@ -336,14 +407,22 @@
       "sub": "Submit factoring modal",
       "route_hint": "/accounting/factoring",
       "required": [
+        "driver",
         "customer",
+        "vendor",
+        "unit",
+        "trailer",
         "load",
+        "ap_bill",
+        "expense",
         "gl_je",
-        "liability",
+        "invoice",
+        "bank",
+        "connectivity",
+        "reverse_link",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "reverse_link"
+        "liability"
       ]
     },
     {
@@ -352,13 +431,22 @@
       "sub": "Advance lifecycle + packet",
       "route_hint": "/accounting/factoring/:id",
       "required": [
+        "driver",
         "customer",
+        "vendor",
+        "unit",
+        "trailer",
         "load",
+        "ap_bill",
+        "expense",
         "gl_je",
-        "liability",
+        "invoice",
+        "bank",
         "connectivity",
         "reverse_link",
-        "qbo_chrome"
+        "picker_law",
+        "qbo_chrome",
+        "liability"
       ]
     },
     {
@@ -383,13 +471,22 @@
       "sub": "Banking virtual factoring entry",
       "route_hint": "/banking/factoring",
       "required": [
+        "driver",
         "customer",
+        "vendor",
+        "unit",
+        "trailer",
         "load",
+        "ap_bill",
+        "expense",
         "gl_je",
-        "liability",
+        "invoice",
+        "bank",
         "connectivity",
         "reverse_link",
-        "bank"
+        "picker_law",
+        "qbo_chrome",
+        "liability"
       ]
     },
     {

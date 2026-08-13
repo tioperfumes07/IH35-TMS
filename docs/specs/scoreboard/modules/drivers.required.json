@@ -150,12 +150,20 @@
       "route_hint": "/drivers/profiles",
       "required": [
         "driver",
+        "customer",
+        "vendor",
         "unit",
         "trailer",
-        "picker_law",
-        "qbo_chrome",
+        "load",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome"
       ]
     },
     {
@@ -180,11 +188,21 @@
       "route_hint": "/drivers/settlements",
       "required": [
         "driver",
+        "customer",
+        "vendor",
+        "unit",
+        "trailer",
         "load",
-        "liability",
+        "ap_bill",
+        "expense",
         "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
         "reverse_link",
+        "picker_law",
+        "qbo_chrome",
+        "liability",
         "settlement"
       ]
     },
@@ -195,9 +213,21 @@
       "route_hint": "/drivers/pre-settlements",
       "required": [
         "driver",
+        "customer",
+        "vendor",
+        "unit",
+        "trailer",
         "load",
-        "liability",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome",
+        "liability",
         "settlement"
       ]
     },
@@ -310,10 +340,21 @@
       "surface_kind": "modal",
       "surface_path": "components/drivers/CreateDriverModal.tsx",
       "required": [
+        "driver",
+        "customer",
+        "vendor",
+        "unit",
+        "trailer",
+        "load",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
         "reverse_link",
         "picker_law",
-        "driver"
+        "qbo_chrome"
       ]
     },
     {
@@ -389,11 +430,22 @@
       "surface_kind": "modal",
       "surface_path": "pages/drivers/SettlementDisputeModal.tsx",
       "required": [
+        "driver",
+        "customer",
+        "vendor",
+        "unit",
+        "trailer",
+        "load",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
         "reverse_link",
-        "driver",
-        "settlement",
-        "gl_je"
+        "picker_law",
+        "qbo_chrome",
+        "settlement"
       ]
     },
     {
@@ -404,12 +456,23 @@
       "surface_kind": "panel",
       "surface_path": "pages/drivers/PendingSettlementDeductionsPanel.tsx",
       "required": [
+        "driver",
+        "customer",
+        "vendor",
+        "unit",
+        "trailer",
+        "load",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
         "reverse_link",
-        "driver",
+        "picker_law",
+        "qbo_chrome",
         "settlement",
-        "liability",
-        "gl_je"
+        "liability"
       ]
     },
     {
@@ -460,10 +523,21 @@
       "surface_kind": "parity_site",
       "surface_path": "components/drivers/CreateDriverModal.tsx",
       "required": [
+        "driver",
+        "customer",
+        "vendor",
+        "unit",
+        "trailer",
+        "load",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
         "reverse_link",
         "picker_law",
-        "driver"
+        "qbo_chrome"
       ]
     },
     {
@@ -474,10 +548,21 @@
       "surface_kind": "parity_site",
       "surface_path": "components/drivers/DriverPickerWithCreate.tsx",
       "required": [
+        "driver",
+        "customer",
+        "vendor",
+        "unit",
+        "trailer",
+        "load",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
         "reverse_link",
         "picker_law",
-        "driver"
+        "qbo_chrome"
       ]
     },
     {

@@ -28,11 +28,6 @@
       "label": "Unit"
     },
     {
-      "id": "trailer",
-      "group": "linkage",
-      "label": "Trailer"
-    },
-    {
       "id": "load",
       "group": "linkage",
       "label": "Load"
@@ -116,6 +111,11 @@
       "id": "bank",
       "group": "money",
       "label": "Bank / Match"
+    },
+    {
+      "id": "trailer",
+      "group": "linkage",
+      "label": "Trailer"
     }
   ],
   "leaves": [
@@ -301,11 +301,11 @@
       "required": [
         "unit",
         "trailer",
-        "load",
         "vendor",
         "connectivity",
         "reverse_link",
-        "work_order"
+        "work_order",
+        "load"
       ]
     },
     {

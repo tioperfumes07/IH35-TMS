@@ -285,14 +285,21 @@
       "sub": "Property tax renditions list",
       "route_hint": "/compliance/property-tax",
       "required": [
+        "driver",
+        "customer",
+        "vendor",
         "unit",
         "trailer",
-        "vendor",
-        "expense",
+        "load",
         "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
         "reverse_link",
-        "picker_law"
+        "picker_law",
+        "qbo_chrome"
       ]
     },
     {
@@ -301,13 +308,21 @@
       "sub": "Property tax rendition detail",
       "route_hint": "/compliance/property-tax/:id",
       "required": [
+        "driver",
+        "customer",
+        "vendor",
         "unit",
         "trailer",
-        "vendor",
-        "expense",
+        "load",
         "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome"
       ]
     },
     {
@@ -316,12 +331,20 @@
       "sub": "Form 2290 filings",
       "route_hint": "/compliance",
       "required": [
+        "driver",
+        "customer",
+        "vendor",
         "unit",
         "trailer",
-        "expense",
+        "load",
         "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
         "reverse_link",
+        "picker_law",
         "qbo_chrome"
       ]
     },
@@ -384,12 +407,21 @@
       "sub": "Fuel compliance panel",
       "route_hint": "/fuel/compliance",
       "required": [
+        "driver",
+        "customer",
+        "vendor",
         "unit",
         "trailer",
         "load",
+        "ap_bill",
         "expense",
+        "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome"
       ]
     },
     {

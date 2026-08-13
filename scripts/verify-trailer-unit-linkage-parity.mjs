@@ -102,7 +102,27 @@ function run() {
       }
     }
 
-    if (doc.module === "fleet") {
+    
+    // Trip-cost event surfaces (architecture: per-truck / per-trip P&L)
+    const TRIP_COST_ID = /(create|expense|bill|fuel|claim|accident|incident|fine|wo\.|work_order|repair|roadside)/i;
+    const TRIP_COST_HUB = [
+      "driver", "unit", "trailer", "load", "expense", "ap_bill", "gl_je",
+      "connectivity", "reverse_link",
+    ];
+    if (["accounting", "maintenance", "safety", "insurance", "fuel", "dispatch"].includes(doc.module)) {
+      for (const leaf of doc.leaves || []) {
+        const lid = leaf.id || "";
+        if (lid.startsWith("chrome.toolbar") || lid === "settings") continue;
+        if (!TRIP_COST_ID.test(lid) && !TRIP_COST_ID.test(leaf.sub || "")) continue;
+        const req = new Set(leaf.required || []);
+        const miss = TRIP_COST_HUB.filter((c) => !req.has(c));
+        if (miss.length) {
+          errors.push(`${doc.module}.${lid}: trip-cost event leaf missing hub cols: ${miss.join(",")}`);
+        }
+      }
+    }
+
+if (doc.module === "fleet") {
       const reefer = (doc.leaves || []).find((l) => l.id === "trailer.profile.reefer");
       if (!reefer) {
         errors.push("fleet.required.json missing trailer.profile.reefer");

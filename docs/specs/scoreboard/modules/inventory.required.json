@@ -185,9 +185,22 @@
       "sub": "Category column \u00b7 N/A honest for legacy blank",
       "route_hint": "/inventory",
       "required": [
-        "inventory",
+        "driver",
+        "customer",
+        "vendor",
+        "unit",
+        "trailer",
+        "load",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome",
+        "inventory"
       ]
     },
     {
@@ -207,12 +220,22 @@
       "sub": "+ Create part drawer",
       "route_hint": "/inventory",
       "required": [
+        "driver",
+        "customer",
         "vendor",
-        "inventory",
+        "unit",
+        "trailer",
+        "load",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank",
+        "connectivity",
+        "reverse_link",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "reverse_link"
+        "inventory"
       ]
     },
     {
@@ -221,10 +244,22 @@
       "sub": "Create \u00b7 category SelectCombobox (PART_INVENTORY_CATEGORIES)",
       "route_hint": "/inventory",
       "required": [
-        "inventory",
-        "picker_law",
+        "driver",
+        "customer",
+        "vendor",
+        "unit",
+        "trailer",
+        "load",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome",
+        "inventory"
       ]
     },
     {
@@ -233,11 +268,21 @@
       "sub": "Create \u00b7 preferred vendor ReferenceSelect (+Add new)",
       "route_hint": "/inventory",
       "required": [
+        "driver",
+        "customer",
         "vendor",
-        "picker_law",
-        "qbo_chrome",
+        "unit",
+        "trailer",
+        "load",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome"
       ]
     },
     {
@@ -246,12 +291,22 @@
       "sub": "Create \u00b7 unit cost MoneyInput",
       "route_hint": "/inventory",
       "required": [
+        "driver",
+        "customer",
+        "vendor",
+        "unit",
+        "trailer",
+        "load",
+        "ap_bill",
         "expense",
         "gl_je",
-        "inventory",
-        "qbo_chrome",
+        "invoice",
+        "bank",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome",
+        "inventory"
       ]
     },
     {
@@ -300,16 +355,23 @@
       "sub": "Assignment trail ParityTable",
       "route_hint": "/inventory/assignments",
       "required": [
+        "driver",
+        "customer",
         "vendor",
         "unit",
         "trailer",
         "load",
-        "scenario.maintenance",
-        "inventory",
+        "ap_bill",
         "expense",
+        "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
         "reverse_link",
-        "qbo_chrome"
+        "picker_law",
+        "qbo_chrome",
+        "scenario.maintenance",
+        "inventory"
       ]
     },
     {
@@ -438,9 +500,21 @@
       "surface_kind": "drawer",
       "surface_path": "pages/inventory/PartCreateDrawer.tsx",
       "required": [
+        "driver",
+        "customer",
+        "vendor",
+        "unit",
+        "trailer",
+        "load",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
         "reverse_link",
-        "picker_law"
+        "picker_law",
+        "qbo_chrome"
       ]
     },
     {

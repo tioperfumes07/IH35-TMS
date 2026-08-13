@@ -193,7 +193,19 @@
         "load",
         "connectivity",
         "reverse_link",
-        "work_order"
+        "work_order",
+        "driver",
+        "customer",
+        "vendor",
+        "unit",
+        "trailer",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank",
+        "picker_law",
+        "qbo_chrome"
       ]
     },
     {
@@ -203,7 +215,20 @@
       "route_hint": "/lists/hub/fuel",
       "required": [
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "driver",
+        "customer",
+        "vendor",
+        "unit",
+        "trailer",
+        "load",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank",
+        "picker_law",
+        "qbo_chrome"
       ]
     },
     {
@@ -213,7 +238,20 @@
       "route_hint": "/lists/hub/fleet",
       "required": [
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "driver",
+        "customer",
+        "vendor",
+        "unit",
+        "trailer",
+        "load",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank",
+        "picker_law",
+        "qbo_chrome"
       ]
     },
     {
@@ -281,7 +319,14 @@
         "connectivity",
         "reverse_link",
         "accident",
-        "claim"
+        "claim",
+        "customer",
+        "vendor",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -299,7 +344,14 @@
         "connectivity",
         "reverse_link",
         "accident",
-        "claim"
+        "claim",
+        "customer",
+        "vendor",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -317,7 +369,14 @@
         "connectivity",
         "reverse_link",
         "accident",
-        "claim"
+        "claim",
+        "customer",
+        "vendor",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -335,7 +394,14 @@
         "connectivity",
         "reverse_link",
         "accident",
-        "claim"
+        "claim",
+        "customer",
+        "vendor",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -353,7 +419,14 @@
         "connectivity",
         "reverse_link",
         "accident",
-        "claim"
+        "claim",
+        "customer",
+        "vendor",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -371,7 +444,14 @@
         "connectivity",
         "reverse_link",
         "accident",
-        "claim"
+        "claim",
+        "customer",
+        "vendor",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -389,7 +469,14 @@
         "connectivity",
         "reverse_link",
         "accident",
-        "claim"
+        "claim",
+        "customer",
+        "vendor",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -407,7 +494,14 @@
         "connectivity",
         "reverse_link",
         "accident",
-        "claim"
+        "claim",
+        "customer",
+        "vendor",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -423,7 +517,14 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "customer",
+        "vendor",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -439,7 +540,14 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "customer",
+        "vendor",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -455,7 +563,14 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "customer",
+        "vendor",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -471,7 +586,14 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "customer",
+        "vendor",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -487,7 +609,14 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "customer",
+        "vendor",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -503,7 +632,14 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "customer",
+        "vendor",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -521,7 +657,14 @@
         "connectivity",
         "reverse_link",
         "claim",
-        "policy"
+        "policy",
+        "customer",
+        "vendor",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -539,7 +682,14 @@
         "connectivity",
         "reverse_link",
         "claim",
-        "policy"
+        "policy",
+        "customer",
+        "vendor",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -584,7 +734,15 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "vendor",
+        "unit",
+        "trailer",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -599,7 +757,15 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "vendor",
+        "unit",
+        "trailer",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -674,7 +840,15 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "vendor",
+        "unit",
+        "trailer",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -689,7 +863,15 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "vendor",
+        "unit",
+        "trailer",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -1218,7 +1400,14 @@
         "qbo_chrome",
         "connectivity",
         "reverse_link",
-        "work_order"
+        "work_order",
+        "driver",
+        "customer",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -1235,7 +1424,14 @@
         "qbo_chrome",
         "connectivity",
         "reverse_link",
-        "work_order"
+        "work_order",
+        "driver",
+        "customer",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -1252,7 +1448,14 @@
         "qbo_chrome",
         "connectivity",
         "reverse_link",
-        "work_order"
+        "work_order",
+        "driver",
+        "customer",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -1269,7 +1472,14 @@
         "qbo_chrome",
         "connectivity",
         "reverse_link",
-        "work_order"
+        "work_order",
+        "driver",
+        "customer",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -1286,7 +1496,14 @@
         "qbo_chrome",
         "connectivity",
         "reverse_link",
-        "work_order"
+        "work_order",
+        "driver",
+        "customer",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -1303,7 +1520,14 @@
         "qbo_chrome",
         "connectivity",
         "reverse_link",
-        "work_order"
+        "work_order",
+        "driver",
+        "customer",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -1320,7 +1544,14 @@
         "qbo_chrome",
         "connectivity",
         "reverse_link",
-        "work_order"
+        "work_order",
+        "driver",
+        "customer",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -1337,7 +1568,14 @@
         "qbo_chrome",
         "connectivity",
         "reverse_link",
-        "work_order"
+        "work_order",
+        "driver",
+        "customer",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -1354,7 +1592,14 @@
         "qbo_chrome",
         "connectivity",
         "reverse_link",
-        "work_order"
+        "work_order",
+        "driver",
+        "customer",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -1371,7 +1616,14 @@
         "qbo_chrome",
         "connectivity",
         "reverse_link",
-        "work_order"
+        "work_order",
+        "driver",
+        "customer",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -1388,7 +1640,14 @@
         "qbo_chrome",
         "connectivity",
         "reverse_link",
-        "work_order"
+        "work_order",
+        "driver",
+        "customer",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -1405,7 +1664,14 @@
         "qbo_chrome",
         "connectivity",
         "reverse_link",
-        "work_order"
+        "work_order",
+        "driver",
+        "customer",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -1422,7 +1688,14 @@
         "qbo_chrome",
         "connectivity",
         "reverse_link",
-        "work_order"
+        "work_order",
+        "driver",
+        "customer",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -1439,7 +1712,14 @@
         "qbo_chrome",
         "connectivity",
         "reverse_link",
-        "work_order"
+        "work_order",
+        "driver",
+        "customer",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -1456,7 +1736,14 @@
         "qbo_chrome",
         "connectivity",
         "reverse_link",
-        "work_order"
+        "work_order",
+        "driver",
+        "customer",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -1473,7 +1760,14 @@
         "qbo_chrome",
         "connectivity",
         "reverse_link",
-        "work_order"
+        "work_order",
+        "driver",
+        "customer",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -1490,7 +1784,14 @@
         "qbo_chrome",
         "connectivity",
         "reverse_link",
-        "work_order"
+        "work_order",
+        "driver",
+        "customer",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -1507,7 +1808,14 @@
         "qbo_chrome",
         "connectivity",
         "reverse_link",
-        "work_order"
+        "work_order",
+        "driver",
+        "customer",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -1524,7 +1832,14 @@
         "qbo_chrome",
         "connectivity",
         "reverse_link",
-        "work_order"
+        "work_order",
+        "driver",
+        "customer",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -1541,7 +1856,14 @@
         "qbo_chrome",
         "connectivity",
         "reverse_link",
-        "work_order"
+        "work_order",
+        "driver",
+        "customer",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -1558,7 +1880,14 @@
         "qbo_chrome",
         "connectivity",
         "reverse_link",
-        "work_order"
+        "work_order",
+        "driver",
+        "customer",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -1575,7 +1904,14 @@
         "qbo_chrome",
         "connectivity",
         "reverse_link",
-        "work_order"
+        "work_order",
+        "driver",
+        "customer",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -1592,7 +1928,14 @@
         "qbo_chrome",
         "connectivity",
         "reverse_link",
-        "work_order"
+        "work_order",
+        "driver",
+        "customer",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -1609,7 +1952,14 @@
         "qbo_chrome",
         "connectivity",
         "reverse_link",
-        "work_order"
+        "work_order",
+        "driver",
+        "customer",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -1626,7 +1976,14 @@
         "qbo_chrome",
         "connectivity",
         "reverse_link",
-        "work_order"
+        "work_order",
+        "driver",
+        "customer",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -1643,7 +2000,14 @@
         "qbo_chrome",
         "connectivity",
         "reverse_link",
-        "work_order"
+        "work_order",
+        "driver",
+        "customer",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -1660,7 +2024,14 @@
         "qbo_chrome",
         "connectivity",
         "reverse_link",
-        "work_order"
+        "work_order",
+        "driver",
+        "customer",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -1677,7 +2048,14 @@
         "qbo_chrome",
         "connectivity",
         "reverse_link",
-        "work_order"
+        "work_order",
+        "driver",
+        "customer",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -1694,7 +2072,14 @@
         "qbo_chrome",
         "connectivity",
         "reverse_link",
-        "work_order"
+        "work_order",
+        "driver",
+        "customer",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -1711,7 +2096,14 @@
         "qbo_chrome",
         "connectivity",
         "reverse_link",
-        "work_order"
+        "work_order",
+        "driver",
+        "customer",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -1728,7 +2120,14 @@
         "qbo_chrome",
         "connectivity",
         "reverse_link",
-        "work_order"
+        "work_order",
+        "driver",
+        "customer",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -1745,7 +2144,14 @@
         "qbo_chrome",
         "connectivity",
         "reverse_link",
-        "work_order"
+        "work_order",
+        "driver",
+        "customer",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -1762,7 +2168,14 @@
         "qbo_chrome",
         "connectivity",
         "reverse_link",
-        "work_order"
+        "work_order",
+        "driver",
+        "customer",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -1779,7 +2192,14 @@
         "qbo_chrome",
         "connectivity",
         "reverse_link",
-        "work_order"
+        "work_order",
+        "driver",
+        "customer",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -1796,7 +2216,14 @@
         "qbo_chrome",
         "connectivity",
         "reverse_link",
-        "work_order"
+        "work_order",
+        "driver",
+        "customer",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -1813,7 +2240,14 @@
         "qbo_chrome",
         "connectivity",
         "reverse_link",
-        "work_order"
+        "work_order",
+        "driver",
+        "customer",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -1830,7 +2264,14 @@
         "qbo_chrome",
         "connectivity",
         "reverse_link",
-        "work_order"
+        "work_order",
+        "driver",
+        "customer",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -1847,7 +2288,14 @@
         "qbo_chrome",
         "connectivity",
         "reverse_link",
-        "work_order"
+        "work_order",
+        "driver",
+        "customer",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -1864,7 +2312,14 @@
         "qbo_chrome",
         "connectivity",
         "reverse_link",
-        "work_order"
+        "work_order",
+        "driver",
+        "customer",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -1881,7 +2336,14 @@
         "qbo_chrome",
         "connectivity",
         "reverse_link",
-        "work_order"
+        "work_order",
+        "driver",
+        "customer",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -1898,7 +2360,14 @@
         "qbo_chrome",
         "connectivity",
         "reverse_link",
-        "work_order"
+        "work_order",
+        "driver",
+        "customer",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -1915,7 +2384,14 @@
         "qbo_chrome",
         "connectivity",
         "reverse_link",
-        "work_order"
+        "work_order",
+        "driver",
+        "customer",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -1932,7 +2408,13 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "customer",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -1949,7 +2431,13 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "customer",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -1966,7 +2454,13 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "customer",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -1983,7 +2477,13 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "customer",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -2000,7 +2500,13 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "customer",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -2017,7 +2523,13 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "customer",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -2034,7 +2546,13 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "customer",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -2051,7 +2569,13 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "customer",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -2068,7 +2592,13 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "customer",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -2085,7 +2615,13 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "customer",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -2102,7 +2638,13 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "customer",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -2119,7 +2661,13 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "customer",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -2136,7 +2684,13 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "customer",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -2153,7 +2707,13 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "customer",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -2170,7 +2730,13 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "customer",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -2187,7 +2753,13 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "customer",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -2204,7 +2776,13 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "customer",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -2221,7 +2799,13 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "customer",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -2238,7 +2822,13 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "customer",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -2255,7 +2845,13 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "customer",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -2272,7 +2868,13 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "customer",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -2289,7 +2891,13 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "customer",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -2306,7 +2914,13 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "customer",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -2323,7 +2937,13 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "customer",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -2340,7 +2960,13 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "customer",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -2357,7 +2983,13 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "customer",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -2374,7 +3006,13 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "customer",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -2391,7 +3029,13 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "customer",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -2408,7 +3052,13 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "customer",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -2425,7 +3075,13 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "customer",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -2442,7 +3098,13 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "customer",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -2459,7 +3121,13 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "customer",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -2473,7 +3141,16 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "driver",
+        "customer",
+        "vendor",
+        "load",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -2487,7 +3164,16 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "driver",
+        "customer",
+        "vendor",
+        "load",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -2501,7 +3187,16 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "driver",
+        "customer",
+        "vendor",
+        "load",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -2515,7 +3210,16 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "driver",
+        "customer",
+        "vendor",
+        "load",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -2529,7 +3233,16 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "driver",
+        "customer",
+        "vendor",
+        "load",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -2543,7 +3256,16 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "driver",
+        "customer",
+        "vendor",
+        "load",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -2557,7 +3279,16 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "driver",
+        "customer",
+        "vendor",
+        "load",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -2571,7 +3302,16 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "driver",
+        "customer",
+        "vendor",
+        "load",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -2585,7 +3325,16 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "driver",
+        "customer",
+        "vendor",
+        "load",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -2599,7 +3348,16 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "driver",
+        "customer",
+        "vendor",
+        "load",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -2613,7 +3371,16 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "driver",
+        "customer",
+        "vendor",
+        "load",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -2627,7 +3394,16 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "driver",
+        "customer",
+        "vendor",
+        "load",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -2641,7 +3417,16 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "driver",
+        "customer",
+        "vendor",
+        "load",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -2655,7 +3440,16 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "driver",
+        "customer",
+        "vendor",
+        "load",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -2669,7 +3463,16 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "driver",
+        "customer",
+        "vendor",
+        "load",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -2683,7 +3486,16 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "driver",
+        "customer",
+        "vendor",
+        "load",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -2697,7 +3509,16 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "driver",
+        "customer",
+        "vendor",
+        "load",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -2711,7 +3532,16 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "driver",
+        "customer",
+        "vendor",
+        "load",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -2725,7 +3555,16 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "driver",
+        "customer",
+        "vendor",
+        "load",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -2739,7 +3578,16 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "driver",
+        "customer",
+        "vendor",
+        "load",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -3173,7 +4021,16 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "driver",
+        "unit",
+        "trailer",
+        "load",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -3187,7 +4044,16 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "driver",
+        "unit",
+        "trailer",
+        "load",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -3257,7 +4123,16 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "driver",
+        "unit",
+        "trailer",
+        "load",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -3271,7 +4146,16 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "driver",
+        "unit",
+        "trailer",
+        "load",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank"
       ]
     },
     {
@@ -3554,7 +4438,20 @@
       "surface_path": "pages/lists/fleet/FleetCatalogModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "driver",
+        "customer",
+        "vendor",
+        "unit",
+        "trailer",
+        "load",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank",
+        "picker_law",
+        "qbo_chrome"
       ]
     },
     {
@@ -3566,7 +4463,20 @@
       "surface_path": "pages/lists/fuel/FuelCatalogModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "driver",
+        "customer",
+        "vendor",
+        "unit",
+        "trailer",
+        "load",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank",
+        "picker_law",
+        "qbo_chrome"
       ]
     },
     {
@@ -3580,7 +4490,19 @@
         "load",
         "connectivity",
         "reverse_link",
-        "work_order"
+        "work_order",
+        "driver",
+        "customer",
+        "vendor",
+        "unit",
+        "trailer",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank",
+        "picker_law",
+        "qbo_chrome"
       ]
     },
     {
@@ -3711,7 +4633,19 @@
       "required": [
         "connectivity",
         "reverse_link",
-        "picker_law"
+        "picker_law",
+        "driver",
+        "customer",
+        "vendor",
+        "unit",
+        "trailer",
+        "load",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank",
+        "qbo_chrome"
       ]
     },
     {
@@ -3724,7 +4658,19 @@
       "required": [
         "connectivity",
         "reverse_link",
-        "picker_law"
+        "picker_law",
+        "driver",
+        "customer",
+        "vendor",
+        "unit",
+        "trailer",
+        "load",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank",
+        "qbo_chrome"
       ]
     },
     {
@@ -3763,7 +4709,19 @@
       "required": [
         "connectivity",
         "reverse_link",
-        "picker_law"
+        "picker_law",
+        "driver",
+        "customer",
+        "vendor",
+        "unit",
+        "trailer",
+        "load",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank",
+        "qbo_chrome"
       ]
     },
     {

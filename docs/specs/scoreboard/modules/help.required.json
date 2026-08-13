@@ -26,11 +26,6 @@
       "label": "Unit"
     },
     {
-      "id": "trailer",
-      "group": "linkage",
-      "label": "Trailer"
-    },
-    {
       "id": "load",
       "group": "linkage",
       "label": "Load"
@@ -114,6 +109,11 @@
       "id": "bank",
       "group": "money",
       "label": "Bank / Match"
+    },
+    {
+      "id": "trailer",
+      "group": "linkage",
+      "label": "Trailer"
     }
   ],
   "leaves": [

@@ -198,15 +198,19 @@
       "required": [
         "driver",
         "customer",
+        "vendor",
         "unit",
         "trailer",
         "load",
-        "gl_je",
+        "ap_bill",
         "expense",
-        "picker_law",
-        "qbo_chrome",
+        "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome"
       ]
     },
     {
@@ -232,9 +236,19 @@
       "required": [
         "driver",
         "customer",
+        "vendor",
+        "unit",
+        "trailer",
+        "load",
+        "ap_bill",
+        "expense",
         "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
         "reverse_link",
+        "picker_law",
+        "qbo_chrome",
         "settlement"
       ]
     },
@@ -246,9 +260,19 @@
       "required": [
         "driver",
         "customer",
+        "vendor",
+        "unit",
+        "trailer",
+        "load",
+        "ap_bill",
+        "expense",
         "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
         "reverse_link",
+        "picker_law",
+        "qbo_chrome",
         "settlement"
       ]
     },
@@ -276,14 +300,19 @@
       "required": [
         "driver",
         "customer",
+        "vendor",
         "unit",
         "trailer",
         "load",
+        "ap_bill",
         "expense",
         "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
         "reverse_link",
-        "picker_law"
+        "picker_law",
+        "qbo_chrome"
       ]
     },
     {
@@ -548,15 +577,19 @@
       "required": [
         "driver",
         "customer",
+        "vendor",
         "unit",
         "trailer",
         "load",
-        "gl_je",
+        "ap_bill",
         "expense",
-        "picker_law",
-        "qbo_chrome",
+        "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome"
       ]
     },
     {
@@ -636,12 +669,21 @@
       "sub": "Trip Profitability",
       "route_hint": "/dispatch/trip-profitability",
       "required": [
-        "load",
-        "customer",
         "driver",
+        "customer",
+        "vendor",
+        "unit",
+        "trailer",
+        "load",
+        "ap_bill",
+        "expense",
         "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome"
       ]
     },
     {
@@ -687,10 +729,15 @@
       "required": [
         "driver",
         "customer",
+        "vendor",
         "unit",
         "trailer",
         "load",
+        "ap_bill",
+        "expense",
         "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
         "reverse_link",
         "picker_law",
@@ -703,12 +750,21 @@
       "sub": "Load \u2194 Banking linkage",
       "route_hint": "/dispatch/loads/:id/banking",
       "required": [
-        "load",
+        "driver",
         "customer",
+        "vendor",
+        "unit",
+        "trailer",
+        "load",
+        "ap_bill",
+        "expense",
         "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
         "reverse_link",
-        "bank"
+        "picker_law",
+        "qbo_chrome"
       ]
     },
     {
@@ -719,10 +775,15 @@
       "required": [
         "driver",
         "customer",
+        "vendor",
         "unit",
         "trailer",
         "load",
+        "ap_bill",
+        "expense",
         "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
         "reverse_link",
         "picker_law",
@@ -752,10 +813,20 @@
       "route_hint": "/dispatch/loads/:id?tab=Driver%20Pay",
       "required": [
         "driver",
+        "customer",
+        "vendor",
+        "unit",
+        "trailer",
         "load",
+        "ap_bill",
+        "expense",
         "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome"
       ]
     },
     {
@@ -781,11 +852,21 @@
       "sub": "Drawer \u00b7 Factoring",
       "route_hint": "/dispatch/loads/:id?tab=Factoring",
       "required": [
+        "driver",
         "customer",
+        "vendor",
+        "unit",
+        "trailer",
         "load",
+        "ap_bill",
+        "expense",
         "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome"
       ]
     },
     {
@@ -825,11 +906,20 @@
       "route_hint": "/dispatch/loads/:id?tab=Settlement",
       "required": [
         "driver",
-        "load",
         "customer",
+        "vendor",
+        "unit",
+        "trailer",
+        "load",
+        "ap_bill",
+        "expense",
         "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
         "reverse_link",
+        "picker_law",
+        "qbo_chrome",
         "settlement"
       ]
     },
@@ -879,11 +969,20 @@
       "route_hint": "/dispatch/loads/:id?tab=Pre-Settlement",
       "required": [
         "driver",
-        "load",
         "customer",
+        "vendor",
+        "unit",
+        "trailer",
+        "load",
+        "ap_bill",
+        "expense",
         "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
         "reverse_link",
+        "picker_law",
+        "qbo_chrome",
         "settlement"
       ]
     },
@@ -912,14 +1011,21 @@
       "surface_kind": "modal",
       "surface_path": "pages/dispatch/LoadCreateModal.tsx",
       "required": [
+        "driver",
+        "customer",
+        "vendor",
+        "unit",
+        "trailer",
+        "load",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
         "reverse_link",
         "picker_law",
-        "load",
-        "driver",
-        "unit",
-        "trailer",
-        "customer"
+        "qbo_chrome"
       ]
     },
     {
@@ -1173,12 +1279,21 @@
       "surface_kind": "panel",
       "surface_path": "components/dispatch/PreSettlementPanel.tsx",
       "required": [
-        "connectivity",
-        "reverse_link",
         "driver",
-        "load",
+        "customer",
+        "vendor",
         "unit",
         "trailer",
+        "load",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank",
+        "connectivity",
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome",
         "settlement"
       ]
     },

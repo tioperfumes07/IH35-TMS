@@ -149,13 +149,20 @@
       "route_hint": "/fleet",
       "required": [
         "driver",
+        "customer",
+        "vendor",
         "unit",
         "trailer",
-        "vendor",
-        "picker_law",
-        "qbo_chrome",
+        "load",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome"
       ]
     },
     {
@@ -165,13 +172,20 @@
       "route_hint": "/fleet",
       "required": [
         "driver",
+        "customer",
+        "vendor",
         "unit",
         "trailer",
-        "vendor",
-        "picker_law",
-        "qbo_chrome",
+        "load",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome"
       ]
     },
     {
@@ -317,16 +331,20 @@
       "route_hint": "/fleet",
       "required": [
         "driver",
+        "customer",
+        "vendor",
         "unit",
         "trailer",
-        "vendor",
+        "load",
         "ap_bill",
         "expense",
         "gl_je",
-        "picker_law",
-        "qbo_chrome",
+        "invoice",
+        "bank",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome"
       ]
     },
     {
@@ -423,13 +441,21 @@
       "sub": "Trip cost calculator",
       "route_hint": "/fleet/units/:id",
       "required": [
+        "driver",
+        "customer",
+        "vendor",
         "unit",
         "trailer",
         "load",
+        "ap_bill",
         "expense",
         "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome"
       ]
     },
     {
@@ -438,15 +464,22 @@
       "sub": "Maintenance snapshot + ServiceTimeline + parts history",
       "route_hint": "/fleet/units/:id",
       "required": [
+        "driver",
+        "customer",
+        "vendor",
         "unit",
         "trailer",
         "load",
-        "vendor",
         "ap_bill",
         "expense",
-        "scenario.maintenance",
+        "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
         "reverse_link",
+        "picker_law",
+        "qbo_chrome",
+        "scenario.maintenance",
         "work_order"
       ]
     },
@@ -484,12 +517,21 @@
       "sub": "Reefer section (conditional trailer linkage)",
       "route_hint": "/fleet/units/:id",
       "required": [
+        "driver",
+        "customer",
+        "vendor",
         "unit",
         "trailer",
+        "load",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
         "reverse_link",
-        "load",
-        "expense"
+        "picker_law",
+        "qbo_chrome"
       ]
     },
     {
@@ -498,13 +540,21 @@
       "sub": "Financial P&L \u00b7 ownership cost \u00b7 comparables",
       "route_hint": "/fleet/units/:id",
       "required": [
+        "driver",
+        "customer",
+        "vendor",
         "unit",
         "trailer",
         "load",
+        "ap_bill",
         "expense",
         "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome"
       ]
     },
     {
@@ -539,12 +589,22 @@
       "sub": "Insurance claims reverse section",
       "route_hint": "/fleet/units/:id",
       "required": [
+        "driver",
+        "customer",
+        "vendor",
         "unit",
         "trailer",
         "load",
-        "liability",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
         "reverse_link",
+        "picker_law",
+        "qbo_chrome",
+        "liability",
         "claim",
         "policy"
       ]
@@ -555,12 +615,21 @@
       "sub": "Safety records reverse (DOT \u00b7 DVIR \u00b7 accidents)",
       "route_hint": "/fleet/units/:id",
       "required": [
+        "driver",
+        "customer",
+        "vendor",
         "unit",
         "trailer",
         "load",
-        "driver",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
         "reverse_link",
+        "picker_law",
+        "qbo_chrome",
         "accident",
         "claim"
       ]
@@ -571,13 +640,21 @@
       "sub": "Linked bank transactions",
       "route_hint": "/fleet/units/:id",
       "required": [
+        "driver",
+        "customer",
+        "vendor",
         "unit",
         "trailer",
+        "load",
+        "ap_bill",
         "expense",
         "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
         "reverse_link",
-        "bank"
+        "picker_law",
+        "qbo_chrome"
       ]
     },
     {
@@ -598,14 +675,21 @@
       "sub": "QBO vendor + Class mapping",
       "route_hint": "/fleet/units/:id",
       "required": [
+        "driver",
+        "customer",
+        "vendor",
         "unit",
         "trailer",
-        "vendor",
+        "load",
+        "ap_bill",
+        "expense",
         "gl_je",
-        "picker_law",
-        "qbo_chrome",
+        "invoice",
+        "bank",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome"
       ]
     },
     {
@@ -684,13 +768,21 @@
       "sub": "Modal tab \u00b7 Financial",
       "route_hint": "/fleet/units/:id",
       "required": [
+        "driver",
+        "customer",
+        "vendor",
         "unit",
         "trailer",
-        "vendor",
+        "load",
+        "ap_bill",
         "expense",
         "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome"
       ]
     },
     {
@@ -752,11 +844,21 @@
       "sub": "Toll Tags tab",
       "route_hint": "/fleet/units/:id/detail?tab=toll-tags",
       "required": [
+        "driver",
+        "customer",
+        "vendor",
         "unit",
         "trailer",
+        "load",
+        "ap_bill",
         "expense",
+        "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome"
       ]
     },
     {
@@ -806,15 +908,22 @@
       "sub": "Loan / Lease / Depr. finance linkage",
       "route_hint": "/fleet/units/:id/detail?tab=finance",
       "required": [
+        "driver",
+        "customer",
+        "vendor",
         "unit",
         "trailer",
-        "vendor",
+        "load",
         "ap_bill",
         "expense",
         "gl_je",
-        "liability",
+        "invoice",
+        "bank",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome",
+        "liability"
       ]
     },
     {
@@ -861,13 +970,21 @@
       "sub": "Reefer telemetry + reefer hours (conditional)",
       "route_hint": "/fleet/trailers/:id",
       "required": [
-        "trailer",
+        "driver",
+        "customer",
+        "vendor",
         "unit",
+        "trailer",
+        "load",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
         "reverse_link",
-        "load",
-        "expense",
-        "driver"
+        "picker_law",
+        "qbo_chrome"
       ]
     },
     {
@@ -876,14 +993,22 @@
       "sub": "Maintenance snapshot + ServiceTimeline",
       "route_hint": "/fleet/trailers/:id",
       "required": [
+        "driver",
+        "customer",
+        "vendor",
+        "unit",
         "trailer",
         "load",
-        "unit",
-        "vendor",
         "ap_bill",
-        "scenario.maintenance",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
         "reverse_link",
+        "picker_law",
+        "qbo_chrome",
+        "scenario.maintenance",
         "work_order"
       ]
     },
@@ -904,11 +1029,22 @@
       "sub": "Insurance claims reverse section",
       "route_hint": "/fleet/trailers/:id",
       "required": [
+        "driver",
+        "customer",
+        "vendor",
+        "unit",
         "trailer",
         "load",
-        "liability",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
         "reverse_link",
+        "picker_law",
+        "qbo_chrome",
+        "liability",
         "claim",
         "policy"
       ]
@@ -944,12 +1080,21 @@
       "sub": "Linked bank transactions",
       "route_hint": "/fleet/trailers/:id",
       "required": [
+        "driver",
+        "customer",
+        "vendor",
+        "unit",
         "trailer",
+        "load",
+        "ap_bill",
         "expense",
         "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
         "reverse_link",
-        "bank"
+        "picker_law",
+        "qbo_chrome"
       ]
     },
     {
@@ -1065,12 +1210,21 @@
       "surface_kind": "modal",
       "surface_path": "components/fleet/CreateTrailerModal.tsx",
       "required": [
+        "driver",
+        "customer",
+        "vendor",
+        "unit",
+        "trailer",
+        "load",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
         "reverse_link",
         "picker_law",
-        "unit",
-        "trailer",
-        "driver"
+        "qbo_chrome"
       ]
     },
     {
@@ -1081,12 +1235,21 @@
       "surface_kind": "modal",
       "surface_path": "components/fleet/CreateUnitModal.tsx",
       "required": [
+        "driver",
+        "customer",
+        "vendor",
+        "unit",
+        "trailer",
+        "load",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
         "reverse_link",
         "picker_law",
-        "unit",
-        "trailer",
-        "driver"
+        "qbo_chrome"
       ]
     },
     {

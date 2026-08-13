@@ -215,8 +215,20 @@
       "sub": "Roster collapsed filters (status \u00b7 category)",
       "route_hint": "/vendors",
       "required": [
+        "driver",
+        "customer",
         "vendor",
+        "unit",
+        "trailer",
+        "load",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
+        "reverse_link",
+        "picker_law",
         "qbo_chrome"
       ]
     },
@@ -238,12 +250,21 @@
       "sub": "+ Create Vendor",
       "route_hint": "/vendors",
       "required": [
-        "vendor",
         "driver",
-        "picker_law",
-        "qbo_chrome",
+        "customer",
+        "vendor",
+        "unit",
+        "trailer",
+        "load",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome"
       ]
     },
     {
@@ -335,11 +356,20 @@
       "sub": "New transaction (bill create hop)",
       "route_hint": "/accounting/bills?vendor_id=",
       "required": [
+        "driver",
+        "customer",
         "vendor",
+        "unit",
+        "trailer",
+        "load",
         "ap_bill",
+        "expense",
         "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
         "reverse_link",
+        "picker_law",
         "qbo_chrome",
         "scenario.ap"
       ]
@@ -350,9 +380,20 @@
       "sub": "Transaction list filters (status \u00b7 date \u00b7 category)",
       "route_hint": "/vendors?tab=transaction_list",
       "required": [
+        "driver",
+        "customer",
         "vendor",
+        "unit",
+        "trailer",
+        "load",
         "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
+        "reverse_link",
+        "picker_law",
         "qbo_chrome"
       ]
     },
@@ -416,12 +457,21 @@
       "sub": "Default expense account (+ Create account)",
       "route_hint": "/vendors/:id",
       "required": [
+        "driver",
+        "customer",
         "vendor",
+        "unit",
+        "trailer",
+        "load",
+        "ap_bill",
         "expense",
         "gl_je",
-        "picker_law",
+        "invoice",
+        "bank",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome"
       ]
     },
     {
@@ -430,11 +480,21 @@
       "sub": "Payment terms picker",
       "route_hint": "/vendors/:id",
       "required": [
+        "driver",
+        "customer",
         "vendor",
+        "unit",
+        "trailer",
+        "load",
         "ap_bill",
-        "picker_law",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome"
       ]
     },
     {
@@ -443,10 +503,21 @@
       "sub": "Accounting category chip + lock",
       "route_hint": "/vendors/:id",
       "required": [
+        "driver",
+        "customer",
         "vendor",
+        "unit",
+        "trailer",
+        "load",
+        "ap_bill",
         "expense",
+        "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome"
       ]
     },
     {
@@ -504,13 +575,21 @@
       "sub": "Record Bill Payment panel",
       "route_hint": "/vendors/:id?tab=ap",
       "required": [
+        "driver",
+        "customer",
         "vendor",
+        "unit",
+        "trailer",
+        "load",
         "ap_bill",
+        "expense",
         "gl_je",
-        "picker_law",
-        "qbo_chrome",
+        "invoice",
+        "bank",
         "connectivity",
         "reverse_link",
+        "picker_law",
+        "qbo_chrome",
         "scenario.ap"
       ]
     },
@@ -520,11 +599,21 @@
       "sub": "Open bills table (EntityLink drill)",
       "route_hint": "/vendors/:id?tab=ap",
       "required": [
+        "driver",
+        "customer",
         "vendor",
+        "unit",
+        "trailer",
+        "load",
         "ap_bill",
+        "expense",
         "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome"
       ]
     },
     {
@@ -533,11 +622,21 @@
       "sub": "Vendor expenses table",
       "route_hint": "/vendors/:id?tab=ap",
       "required": [
+        "driver",
+        "customer",
         "vendor",
+        "unit",
+        "trailer",
+        "load",
+        "ap_bill",
         "expense",
         "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome"
       ]
     },
     {
@@ -558,11 +657,21 @@
       "sub": "Recent bill payments history",
       "route_hint": "/vendors/:id?tab=ap",
       "required": [
+        "driver",
+        "customer",
         "vendor",
+        "unit",
+        "trailer",
+        "load",
         "ap_bill",
+        "expense",
         "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
         "reverse_link",
+        "picker_law",
+        "qbo_chrome",
         "scenario.ap"
       ]
     },
