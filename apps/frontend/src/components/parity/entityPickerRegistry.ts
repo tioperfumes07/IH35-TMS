@@ -96,6 +96,7 @@ export type EntityPickerConfig = {
        * Dispatch/Book Load keep default `active_only` so DQF gates stay on Active roster.
        */
       driverRoster?: "active_only" | "active_or_probation";
+      equipmentKind?: "trailer" | "chassis";
     }
   ) => Promise<EntityPickerOption[]>;
 };
@@ -171,6 +172,7 @@ const ENTITY_PICKERS: Record<EntityPickerKind, EntityPickerConfig> = {
         operating_company_id: operatingCompanyId,
         limit: 200,
         search: opts?.search || undefined,
+        equipment_kind: opts?.equipmentKind,
       });
       return (res.equipment ?? []).map((row) => {
         const e = row as {

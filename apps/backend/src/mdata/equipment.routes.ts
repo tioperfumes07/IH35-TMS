@@ -38,6 +38,7 @@ const listQuerySchema = z.object({
   offset: z.coerce.number().int().min(0).default(0),
   status: equipmentStatusSchema.optional(),
   search: z.string().trim().min(1).max(100).optional(),
+  equipment_kind: z.enum(["trailer", "chassis"]).optional(),
   operating_company_id: z.string().uuid().optional(),
 });
 
@@ -130,12 +131,15 @@ export async function registerEquipmentRoutes(app: FastifyInstance) {
   await registerEquipmentPlatesRoutes(app);
   await registerEquipmentPdfExportRoutes(app);
 
-  app.get("/api/v1/mdata/equipment", async (req, reply) => {
+  app.get(
+    "/api/v1/mdata/equipment",
+    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
+    async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const parsedQuery = listQuerySchema.safeParse(req.query ?? {});
     if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
-    const { limit, offset, status, search, operating_company_id } = parsedQuery.data;
+    const { limit, offset, status, search, equipment_kind, operating_company_id } = parsedQuery.data;
 
     // 0091-g9-h6 (trailer follow-up): COUNT(*) over the same filtered/scoped set so the trailer
     // management list can page past limit=50. Additive response — `equipment` unchanged for
@@ -167,6 +171,13 @@ export async function registerEquipmentRoutes(app: FastifyInstance) {
         const idx = values.length;
         optionalFilters.push(
           `(equipment_number ILIKE $${idx} OR vin ILIKE $${idx} OR make ILIKE $${idx} OR model ILIKE $${idx})`
+        );
+      }
+      if (equipment_kind) {
+        values.push(equipment_kind);
+        const idx = values.length;
+        optionalFilters.push(
+          `($${idx} = 'chassis' AND equipment_type = 'Chassis' OR $${idx} = 'trailer' AND equipment_type <> 'Chassis')`
         );
       }
       const optionalAnd =
@@ -226,7 +237,8 @@ export async function registerEquipmentRoutes(app: FastifyInstance) {
       offset,
       has_more: offset + result.rows.length < result.total,
     };
-  });
+    }
+  );
 
   app.post("/api/v1/mdata/equipment", async (req, reply) => {
     const authUser = currentAuthUser(req, reply);

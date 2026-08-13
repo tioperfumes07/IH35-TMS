@@ -83,6 +83,8 @@ export type EntityPickerProps = {
    * Active-only. Ignored for non-driver kinds.
    */
   driverRoster?: "active_only" | "active_or_probation";
+  /** Restrict mdata.equipment to the transfer/assignment subtype selected by the parent. */
+  equipmentKind?: "trailer" | "chassis";
 };
 
 export function EntityPicker({
@@ -101,6 +103,7 @@ export function EntityPicker({
   dataTestId,
   onCreated,
   driverRoster = "active_only",
+  equipmentKind,
 }: EntityPickerProps) {
   const config = getEntityPickerConfig(kind);
   const [createOpen, setCreateOpen] = useState(false);
@@ -119,11 +122,13 @@ export function EntityPicker({
       operatingCompanyId,
       config.serverSearch ? rosterSearch : "",
       driverRosterKey,
+      equipmentKind ?? "all-equipment",
     ],
     queryFn: () =>
       config.list(operatingCompanyId, {
         ...(config.serverSearch ? { search: rosterSearch || undefined } : {}),
         ...(kind === "driver" ? { driverRoster } : {}),
+        ...(kind === "trailer" && equipmentKind ? { equipmentKind } : {}),
       }),
     enabled: queryEnabled,
   });

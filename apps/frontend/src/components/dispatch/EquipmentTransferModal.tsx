@@ -46,12 +46,20 @@ export function EquipmentTransferModal({ open, operatingCompanyId, onCreated, on
   return (
     <Modal open={open} onClose={onClose} title="Initiate equipment transfer">
       <div data-testid="equipment-transfer-modal" className="grid gap-2">
-        <select className="rounded-sm border px-2 py-1" value={kind} onChange={(e) => setKind(e.target.value as typeof kind)}>
+        <select
+          className="rounded-sm border px-2 py-1"
+          value={kind}
+          onChange={(e) => {
+            setKind(e.target.value as typeof kind);
+            setEquipmentUuid("");
+          }}
+        >
           <option value="trailer">Trailer</option>
           <option value="chassis">Chassis</option>
         </select>
         <EntityPicker
           kind="trailer"
+          equipmentKind={kind}
           operatingCompanyId={operatingCompanyId}
           value={equipmentUuid || null}
           onChange={(next) => setEquipmentUuid(next ?? "")}
