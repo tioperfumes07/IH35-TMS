@@ -102,11 +102,13 @@ export type LeaseToOwnFleetUnit = {
 };
 
 export const legalContractsApi = {
-  list(input: { operating_company_id: string; status?: LegalContractStatus; search?: string }) {
+  list(input: { operating_company_id: string; status?: LegalContractStatus; search?: string; signer_type?: LegalSignerType; signer_entity_id?: string }) {
     const params = new URLSearchParams();
     params.set("operating_company_id", input.operating_company_id);
     if (input.status) params.set("status", input.status);
     if (input.search) params.set("search", input.search);
+    if (input.signer_type) params.set("signer_type", input.signer_type);
+    if (input.signer_entity_id) params.set("signer_entity_id", input.signer_entity_id);
     return apiRequest<{ contracts: LegalContractSummary[] }>(`/api/v1/legal/contracts?${params.toString()}`);
   },
 
