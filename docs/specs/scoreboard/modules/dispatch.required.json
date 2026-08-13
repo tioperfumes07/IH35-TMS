@@ -2,10 +2,10 @@
   "module": "dispatch",
   "entity_default": "USMCA",
   "source": {
-    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md \u2014 Module 9 DISPATCH + Dispatch (2026-06-08 update)",
+    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md — Module 9 DISPATCH + Dispatch (2026-06-08 update)",
     "nav": "apps/frontend/src/components/dispatch/DispatchSubnav.tsx DISPATCH_NAV_ITEMS",
     "home_views": "apps/frontend/src/pages/Dispatch.tsx view=overview|kanban|list|units (Round Trips)",
-    "secondary": "DISPATCH_SUB_TABS Load board \u00b7 Book load \u00b7 Assignments \u00b7 Settlements \u00b7 Pre-settlements",
+    "secondary": "DISPATCH_SUB_TABS Load board · Book load · Assignments · Settlements · Pre-settlements",
     "drawer": "apps/frontend/src/components/dispatch/LoadDetailDrawer.tsx tabs",
     "routes": "apps/frontend/src/routes/manifest.tsx /dispatch/*"
   },
@@ -146,7 +146,7 @@
     {
       "id": "home.kanban",
       "tab": "Home",
-      "sub": "Load Board \u00b7 Kanban (7-state)",
+      "sub": "Load Board · Kanban (7-state)",
       "route_hint": "/dispatch?view=kanban",
       "required": [
         "driver",
@@ -162,7 +162,7 @@
     {
       "id": "home.list",
       "tab": "Home",
-      "sub": "Load Board \u00b7 List / Table",
+      "sub": "Load Board · List / Table",
       "route_hint": "/dispatch?view=list",
       "required": [
         "driver",
@@ -227,7 +227,7 @@
     {
       "id": "secondary.settlements",
       "tab": "Settlements",
-      "sub": "Hop \u2192 driver-finance settlements",
+      "sub": "Hop → driver-finance settlements",
       "route_hint": "/driver-finance/settlements",
       "required": [
         "driver",
@@ -241,7 +241,7 @@
     {
       "id": "secondary.pre_settlements",
       "tab": "Pre-settlements",
-      "sub": "Hop \u2192 accounting pre-settlements",
+      "sub": "Hop → accounting pre-settlements",
       "route_hint": "/accounting/pre-settlements",
       "required": [
         "driver",
@@ -572,7 +572,7 @@
     {
       "id": "docs.ocr",
       "tab": "Documents",
-      "sub": "OCR Queue \u2192 Book Load",
+      "sub": "OCR Queue → Book Load",
       "route_hint": "/dispatch/ocr-queue",
       "required": [
         "driver",
@@ -692,7 +692,7 @@
     {
       "id": "load.banking",
       "tab": "Load detail",
-      "sub": "Load \u2194 Banking linkage",
+      "sub": "Load ↔ Banking linkage",
       "route_hint": "/dispatch/loads/:id/banking",
       "required": [
         "load",
@@ -706,7 +706,7 @@
     {
       "id": "load.drawer.overview",
       "tab": "Load detail",
-      "sub": "Drawer \u00b7 Overview",
+      "sub": "Drawer · Overview",
       "route_hint": "/dispatch/loads/:id?tab=Overview",
       "required": [
         "driver",
@@ -724,7 +724,7 @@
     {
       "id": "load.drawer.stops",
       "tab": "Load detail",
-      "sub": "Drawer \u00b7 Stops",
+      "sub": "Drawer · Stops",
       "route_hint": "/dispatch/loads/:id?tab=Stops",
       "required": [
         "load",
@@ -739,7 +739,7 @@
     {
       "id": "load.drawer.driver_pay",
       "tab": "Load detail",
-      "sub": "Drawer \u00b7 Driver Pay",
+      "sub": "Drawer · Driver Pay",
       "route_hint": "/dispatch/loads/:id?tab=Driver%20Pay",
       "required": [
         "driver",
@@ -752,7 +752,7 @@
     {
       "id": "load.drawer.documents",
       "tab": "Load detail",
-      "sub": "Drawer \u00b7 Documents",
+      "sub": "Drawer · Documents",
       "route_hint": "/dispatch/loads/:id?tab=Documents",
       "required": [
         "driver",
@@ -768,7 +768,7 @@
     {
       "id": "load.drawer.factoring",
       "tab": "Load detail",
-      "sub": "Drawer \u00b7 Factoring",
+      "sub": "Drawer · Factoring",
       "route_hint": "/dispatch/loads/:id?tab=Factoring",
       "required": [
         "customer",
@@ -781,7 +781,7 @@
     {
       "id": "load.drawer.customs",
       "tab": "Load detail",
-      "sub": "Drawer \u00b7 Customs",
+      "sub": "Drawer · Customs",
       "route_hint": "/dispatch/loads/:id?tab=Customs",
       "required": [
         "driver",
@@ -798,7 +798,7 @@
     {
       "id": "load.drawer.cargo",
       "tab": "Load detail",
-      "sub": "Drawer \u00b7 Cargo Sensors",
+      "sub": "Drawer · Cargo Sensors",
       "route_hint": "/dispatch/loads/:id?tab=Cargo%20Sensors",
       "required": [
         "load",
@@ -810,7 +810,7 @@
     {
       "id": "load.drawer.settlement",
       "tab": "Load detail",
-      "sub": "Drawer \u00b7 Settlement profitability",
+      "sub": "Drawer · Settlement profitability",
       "route_hint": "/dispatch/loads/:id?tab=Settlement",
       "required": [
         "driver",
@@ -825,7 +825,7 @@
     {
       "id": "load.drawer.geofence",
       "tab": "Load detail",
-      "sub": "Drawer \u00b7 Geofence Timeline",
+      "sub": "Drawer · Geofence Timeline",
       "route_hint": "/dispatch/loads/:id?tab=Geofence%20Timeline",
       "required": [
         "load",
@@ -838,7 +838,7 @@
     {
       "id": "load.drawer.assignment_history",
       "tab": "Load detail",
-      "sub": "Drawer \u00b7 Assignment History",
+      "sub": "Drawer · Assignment History",
       "route_hint": "/dispatch/loads/:id?tab=Assignment%20History",
       "required": [
         "driver",
@@ -851,7 +851,7 @@
     {
       "id": "load.drawer.audit",
       "tab": "Load detail",
-      "sub": "Drawer \u00b7 Audit",
+      "sub": "Drawer · Audit",
       "route_hint": "/dispatch/loads/:id?tab=Audit",
       "required": [
         "load",
@@ -862,7 +862,7 @@
     {
       "id": "load.drawer.pre_settlement",
       "tab": "Load detail",
-      "sub": "Drawer \u00b7 Pre-Settlement",
+      "sub": "Drawer · Pre-Settlement",
       "route_hint": "/dispatch/loads/:id?tab=Pre-Settlement",
       "required": [
         "driver",
@@ -1168,6 +1168,39 @@
         "trailer",
         "settlement"
       ]
+    },
+    {
+      "id": "chrome.toolbar_search",
+      "tab": "Chrome controls",
+      "sub": "List toolbar — Search (CLS-LIST-TOOLBAR)",
+      "route_hint": "chrome://toolbar/search",
+      "surface_kind": "toolbar",
+      "required": [
+        "qbo_chrome",
+        "connectivity"
+      ]
+    },
+    {
+      "id": "chrome.toolbar_range",
+      "tab": "Chrome controls",
+      "sub": "List toolbar — date/amount range (CLS-LIST-TOOLBAR)",
+      "route_hint": "chrome://toolbar/range",
+      "surface_kind": "toolbar",
+      "required": [
+        "qbo_chrome",
+        "connectivity"
+      ]
+    },
+    {
+      "id": "chrome.toolbar_gear",
+      "tab": "Chrome controls",
+      "sub": "List toolbar — column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
+      "route_hint": "chrome://toolbar/gear",
+      "surface_kind": "toolbar",
+      "required": [
+        "qbo_chrome",
+        "connectivity"
+      ]
     }
   ],
   "honesty_audit": {
@@ -1293,7 +1326,7 @@
         "planning.reserve",
         "docs.ocr"
       ],
-      "note": "scenario.maintenance=Maint WO; Book Load/OCR/reserve/in-transit \u2260 WO create"
+      "note": "scenario.maintenance=Maint WO; Book Load/OCR/reserve/in-transit ≠ WO create"
     },
     "load_liability_2026_08_12": {
       "finding": "LOAD-LIABILITY-SCENARIO-DISPATCH-HONEST",
@@ -1329,7 +1362,7 @@
         "invoice",
         "bank"
       ],
-      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; \u00a7B9 link columns added."
+      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; §B9 link columns added."
     }
   }
 }

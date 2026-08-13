@@ -2,7 +2,7 @@
   "module": "reports",
   "entity_default": "USMCA",
   "source": {
-    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md \u2014 Module 13 REPORTS",
+    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md — Module 13 REPORTS",
     "nav": "apps/frontend/src/pages/reports/ReportsSubNav.tsx REPORTS_SUB_NAV_ITEMS",
     "flyout": "apps/frontend/src/components/reports/CategoryHoverNav.tsx REPORT_CATEGORY_FLYOUT_ITEMS",
     "dedicated": "apps/frontend/src/components/reports/phase6ReportLinks.ts PHASE_6_REPORT_HREFS",
@@ -173,7 +173,7 @@
     {
       "id": "subnav.reports",
       "tab": "Sub-nav",
-      "sub": "Reports \u00b7 home link",
+      "sub": "Reports · home link",
       "route_hint": "/reports",
       "required": [
         "connectivity",
@@ -909,7 +909,7 @@
     },
     {
       "id": "runner.profit_truck_mtd",
-      "tab": "Profit per truck \u00b7 MTD",
+      "tab": "Profit per truck · MTD",
       "sub": "Runner MTD margin",
       "route_hint": "/reports/run/profit-truck-mtd",
       "required": [
@@ -1303,6 +1303,39 @@
       "required": [
         "connectivity"
       ]
+    },
+    {
+      "id": "chrome.toolbar_search",
+      "tab": "Chrome controls",
+      "sub": "List toolbar — Search (CLS-LIST-TOOLBAR)",
+      "route_hint": "chrome://toolbar/search",
+      "surface_kind": "toolbar",
+      "required": [
+        "qbo_chrome",
+        "connectivity"
+      ]
+    },
+    {
+      "id": "chrome.toolbar_range",
+      "tab": "Chrome controls",
+      "sub": "List toolbar — date/amount range (CLS-LIST-TOOLBAR)",
+      "route_hint": "chrome://toolbar/range",
+      "surface_kind": "toolbar",
+      "required": [
+        "qbo_chrome",
+        "connectivity"
+      ]
+    },
+    {
+      "id": "chrome.toolbar_gear",
+      "tab": "Chrome controls",
+      "sub": "List toolbar — column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
+      "route_hint": "chrome://toolbar/gear",
+      "surface_kind": "toolbar",
+      "required": [
+        "qbo_chrome",
+        "connectivity"
+      ]
     }
   ],
   "honesty_audit": {
@@ -1318,7 +1351,7 @@
         "invoice",
         "bank"
       ],
-      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; \u00a7B9 link columns added."
+      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; §B9 link columns added."
     }
   }
 }

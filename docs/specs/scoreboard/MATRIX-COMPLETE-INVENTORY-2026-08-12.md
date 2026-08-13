@@ -8,42 +8,45 @@
 
 | Item | Value |
 |------|-------|
-| Required leaves | **1057** (was ~864) |
+| Required leaves | **1144** (was ~1057; +87 Search/range/gear toolbar leaves 2026-08-12) |
 | New columns | `claim` · `work_order` · `accident` · `policy` · `settlement` · `legal_matter` · `invoice` · `bank` |
 | Guard | `scripts/verify-required-surface-inventory-complete.mjs` · step **3118** |
 | Claim | PR #6269 merged |
 | View | `/program/matrix` · open each module · also All-modules system board |
 
 ## Leaves per module
-- **lists**: 246
-- **reports**: 86
-- **fleet**: 71
-- **dispatch**: 68
-- **accounting**: 67
-- **safety**: 61
-- **customers**: 45
-- **maintenance**: 41
-- **vendors**: 40
-- **banking**: 27
-- **drivers**: 27
-- **inventory**: 26
-- **factoring**: 25
-- **home**: 25
-- **compliance**: 21
-- **legal**: 21
-- **finance**: 18
-- **insurance**: 18
-- **settlements**: 16
-- **docs**: 15
-- **program**: 13
-- **form_425**: 12
-- **fuel**: 11
-- **system**: 11
-- **tasks**: 11
-- **cash-flow**: 10
-- **help**: 10
-- **driver-hub**: 8
-- **users**: 7
+- **lists**: 249
+- **reports**: 89
+- **fleet**: 74
+- **dispatch**: 71
+- **accounting**: 70
+- **safety**: 64
+- **customers**: 48
+- **maintenance**: 44
+- **vendors**: 43
+- **banking**: 30
+- **drivers**: 30
+- **inventory**: 29
+- **factoring**: 28
+- **home**: 28
+- **compliance**: 24
+- **legal**: 24
+- **finance**: 21
+- **insurance**: 21
+- **settlements**: 19
+- **docs**: 18
+- **program**: 16
+- **form_425**: 15
+- **fuel**: 14
+- **system**: 14
+- **tasks**: 14
+- **cash-flow**: 13
+- **help**: 13
+- **driver-hub**: 11
+- **users**: 10
+
+### Toolbar triad (every module)
+`chrome.toolbar_search` · `chrome.toolbar_range` · `chrome.toolbar_gear` — CLS-LIST-TOOLBAR inventory leaves (Wave D).
 
 ## Full column set
 `driver · customer · vendor · unit · trailer · load · claim · work_order · accident · policy · settlement · legal_matter · ap_bill · expense · invoice · bank · gl_je · inventory · liability · picker_law · qbo_chrome · connectivity · reverse_link · scenario.maintenance · scenario.insurance`

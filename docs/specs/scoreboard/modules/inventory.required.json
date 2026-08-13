@@ -2,13 +2,13 @@
   "module": "inventory",
   "entity_default": "USMCA",
   "source": {
-    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md \u2014 INVENTORY sidebar (Parts & Stock \u00b7 Assignments \u00b7 Purchase History)",
+    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md — INVENTORY sidebar (Parts & Stock · Assignments · Purchase History)",
     "nav": "apps/frontend/src/pages/inventory/InventoryModuleTabs.tsx",
     "parts": "apps/frontend/src/pages/inventory/InventoryPartsStockPage.tsx + PartCreateDrawer + PartEditDrawer",
     "assignments": "apps/frontend/src/pages/inventory/InventoryAssignmentsPage.tsx",
     "purchases": "apps/frontend/src/pages/inventory/InventoryPurchasesPage.tsx",
     "routes": "apps/frontend/src/routes/manifest.tsx /inventory, /inventory/assignments, /inventory/purchases",
-    "canonical": "maintenance.parts_inventory (stock) \u00b7 maintenance.parts_invoice_links (assignments)"
+    "canonical": "maintenance.parts_inventory (stock) · maintenance.parts_invoice_links (assignments)"
   },
   "columns": [
     {
@@ -150,7 +150,7 @@
     {
       "id": "parts.roster",
       "tab": "Parts & Stock",
-      "sub": "Roster \u00b7 ParityTable from maintenance.parts_inventory",
+      "sub": "Roster · ParityTable from maintenance.parts_inventory",
       "route_hint": "/inventory",
       "required": [
         "vendor",
@@ -175,7 +175,7 @@
     {
       "id": "parts.column.category",
       "tab": "Parts & Stock",
-      "sub": "Category column \u00b7 N/A honest for legacy blank",
+      "sub": "Category column · N/A honest for legacy blank",
       "route_hint": "/inventory",
       "required": [
         "inventory",
@@ -211,7 +211,7 @@
     {
       "id": "parts.create.category",
       "tab": "Parts & Stock",
-      "sub": "Create \u00b7 category SelectCombobox (PART_INVENTORY_CATEGORIES)",
+      "sub": "Create · category SelectCombobox (PART_INVENTORY_CATEGORIES)",
       "route_hint": "/inventory",
       "required": [
         "inventory",
@@ -223,7 +223,7 @@
     {
       "id": "parts.create.vendor_picker",
       "tab": "Parts & Stock",
-      "sub": "Create \u00b7 preferred vendor ReferenceSelect (+Add new)",
+      "sub": "Create · preferred vendor ReferenceSelect (+Add new)",
       "route_hint": "/inventory",
       "required": [
         "vendor",
@@ -236,7 +236,7 @@
     {
       "id": "parts.create.money",
       "tab": "Parts & Stock",
-      "sub": "Create \u00b7 unit cost MoneyInput",
+      "sub": "Create · unit cost MoneyInput",
       "route_hint": "/inventory",
       "required": [
         "expense",
@@ -250,7 +250,7 @@
     {
       "id": "parts.edit",
       "tab": "Parts & Stock",
-      "sub": "Row Edit \u00b7 PartEditDrawer",
+      "sub": "Row Edit · PartEditDrawer",
       "route_hint": "/inventory",
       "required": [
         "vendor",
@@ -264,7 +264,7 @@
     {
       "id": "parts.edit.vendor_picker",
       "tab": "Parts & Stock",
-      "sub": "Edit \u00b7 preferred vendor ReferenceSelect",
+      "sub": "Edit · preferred vendor ReferenceSelect",
       "route_hint": "/inventory",
       "required": [
         "vendor",
@@ -352,7 +352,7 @@
     {
       "id": "assignments.crosslink_parts",
       "tab": "Assignments",
-      "sub": "Cross-link \u2192 Parts & Stock",
+      "sub": "Cross-link → Parts & Stock",
       "route_hint": "/inventory/assignments",
       "required": [
         "inventory",
@@ -363,7 +363,7 @@
     {
       "id": "assignments.crosslink_purchases",
       "tab": "Assignments",
-      "sub": "Cross-link \u2192 Purchase History",
+      "sub": "Cross-link → Purchase History",
       "route_hint": "/inventory/assignments",
       "required": [
         "expense",
@@ -385,7 +385,7 @@
     {
       "id": "purchases.honest_empty",
       "tab": "Purchase History",
-      "sub": "Honest empty \u00b7 purchase SoR not built (HOLD)",
+      "sub": "Honest empty · purchase SoR not built (HOLD)",
       "route_hint": "/inventory/purchases",
       "required": [
         "expense",
@@ -397,7 +397,7 @@
     {
       "id": "purchases.crosslink_parts",
       "tab": "Purchase History",
-      "sub": "Cross-link \u2192 Parts & Stock",
+      "sub": "Cross-link → Parts & Stock",
       "route_hint": "/inventory/purchases",
       "required": [
         "inventory",
@@ -408,7 +408,7 @@
     {
       "id": "purchases.crosslink_assignments",
       "tab": "Purchase History",
-      "sub": "Cross-link \u2192 Assignments",
+      "sub": "Cross-link → Assignments",
       "route_hint": "/inventory/purchases",
       "required": [
         "scenario.maintenance",
@@ -428,6 +428,39 @@
         "reverse_link",
         "picker_law"
       ]
+    },
+    {
+      "id": "chrome.toolbar_search",
+      "tab": "Chrome controls",
+      "sub": "List toolbar — Search (CLS-LIST-TOOLBAR)",
+      "route_hint": "chrome://toolbar/search",
+      "surface_kind": "toolbar",
+      "required": [
+        "qbo_chrome",
+        "connectivity"
+      ]
+    },
+    {
+      "id": "chrome.toolbar_range",
+      "tab": "Chrome controls",
+      "sub": "List toolbar — date/amount range (CLS-LIST-TOOLBAR)",
+      "route_hint": "chrome://toolbar/range",
+      "surface_kind": "toolbar",
+      "required": [
+        "qbo_chrome",
+        "connectivity"
+      ]
+    },
+    {
+      "id": "chrome.toolbar_gear",
+      "tab": "Chrome controls",
+      "sub": "List toolbar — column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
+      "route_hint": "chrome://toolbar/gear",
+      "surface_kind": "toolbar",
+      "required": [
+        "qbo_chrome",
+        "connectivity"
+      ]
     }
   ],
   "honesty_audit": {
@@ -443,7 +476,7 @@
         "invoice",
         "bank"
       ],
-      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; \u00a7B9 link columns added."
+      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; §B9 link columns added."
     }
   }
 }

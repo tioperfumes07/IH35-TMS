@@ -287,7 +287,7 @@
     {
       "id": "jump.maintenance",
       "tab": "Quick jumps",
-      "sub": "\u2192 Maintenance",
+      "sub": "→ Maintenance",
       "route_hint": "/maintenance",
       "required": [
         "unit",
@@ -300,7 +300,7 @@
     {
       "id": "jump.accounting",
       "tab": "Quick jumps",
-      "sub": "\u2192 Accounting",
+      "sub": "→ Accounting",
       "route_hint": "/accounting/invoices",
       "required": [
         "customer",
@@ -313,7 +313,7 @@
     {
       "id": "jump.banking",
       "tab": "Quick jumps",
-      "sub": "\u2192 Banking",
+      "sub": "→ Banking",
       "route_hint": "/banking",
       "required": [
         "gl_je",
@@ -326,7 +326,7 @@
     {
       "id": "jump.fuel",
       "tab": "Quick jumps",
-      "sub": "\u2192 Fuel",
+      "sub": "→ Fuel",
       "route_hint": "/fuel",
       "required": [
         "unit",
@@ -339,7 +339,7 @@
     {
       "id": "jump.safety",
       "tab": "Quick jumps",
-      "sub": "\u2192 Safety",
+      "sub": "→ Safety",
       "route_hint": "/safety",
       "required": [
         "driver",
@@ -351,7 +351,7 @@
     {
       "id": "jump.drivers",
       "tab": "Quick jumps",
-      "sub": "\u2192 Drivers",
+      "sub": "→ Drivers",
       "route_hint": "/drivers",
       "required": [
         "driver",
@@ -362,7 +362,7 @@
     {
       "id": "jump.dispatch",
       "tab": "Quick jumps",
-      "sub": "\u2192 Dispatch",
+      "sub": "→ Dispatch",
       "route_hint": "/dispatch",
       "required": [
         "customer",
@@ -376,7 +376,7 @@
     {
       "id": "jump.lists",
       "tab": "Quick jumps",
-      "sub": "\u2192 Lists",
+      "sub": "→ Lists",
       "route_hint": "/lists",
       "required": [
         "picker_law",
@@ -409,12 +409,45 @@
     {
       "id": "hop.program",
       "tab": "Program hop",
-      "sub": "Scenario tracker \u2192 Program",
+      "sub": "Scenario tracker → Program",
       "route_hint": "/program",
       "required": [
         "connectivity",
         "reverse_link",
         "qbo_chrome"
+      ]
+    },
+    {
+      "id": "chrome.toolbar_search",
+      "tab": "Chrome controls",
+      "sub": "List toolbar — Search (CLS-LIST-TOOLBAR)",
+      "route_hint": "chrome://toolbar/search",
+      "surface_kind": "toolbar",
+      "required": [
+        "qbo_chrome",
+        "connectivity"
+      ]
+    },
+    {
+      "id": "chrome.toolbar_range",
+      "tab": "Chrome controls",
+      "sub": "List toolbar — date/amount range (CLS-LIST-TOOLBAR)",
+      "route_hint": "chrome://toolbar/range",
+      "surface_kind": "toolbar",
+      "required": [
+        "qbo_chrome",
+        "connectivity"
+      ]
+    },
+    {
+      "id": "chrome.toolbar_gear",
+      "tab": "Chrome controls",
+      "sub": "List toolbar — column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
+      "route_hint": "chrome://toolbar/gear",
+      "surface_kind": "toolbar",
+      "required": [
+        "qbo_chrome",
+        "connectivity"
       ]
     }
   ],
@@ -431,7 +464,7 @@
         "invoice",
         "bank"
       ],
-      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; \u00a7B9 link columns added."
+      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; §B9 link columns added."
     }
   }
 }

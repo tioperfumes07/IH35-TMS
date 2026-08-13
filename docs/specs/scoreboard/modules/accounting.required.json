@@ -2,7 +2,7 @@
   "module": "accounting",
   "entity_default": "USMCA",
   "source": {
-    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md \u2014 Accounting grouped sub-nav",
+    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md — Accounting grouped sub-nav",
     "nav": "apps/frontend/src/pages/accounting/subnav-manifest.ts",
     "routes": "/accounting/*"
   },
@@ -1059,6 +1059,39 @@
         "invoice",
         "bank"
       ]
+    },
+    {
+      "id": "chrome.toolbar_search",
+      "tab": "Chrome controls",
+      "sub": "List toolbar — Search (CLS-LIST-TOOLBAR)",
+      "route_hint": "chrome://toolbar/search",
+      "surface_kind": "toolbar",
+      "required": [
+        "qbo_chrome",
+        "connectivity"
+      ]
+    },
+    {
+      "id": "chrome.toolbar_range",
+      "tab": "Chrome controls",
+      "sub": "List toolbar — date/amount range (CLS-LIST-TOOLBAR)",
+      "route_hint": "chrome://toolbar/range",
+      "surface_kind": "toolbar",
+      "required": [
+        "qbo_chrome",
+        "connectivity"
+      ]
+    },
+    {
+      "id": "chrome.toolbar_gear",
+      "tab": "Chrome controls",
+      "sub": "List toolbar — column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
+      "route_hint": "chrome://toolbar/gear",
+      "surface_kind": "toolbar",
+      "required": [
+        "qbo_chrome",
+        "connectivity"
+      ]
     }
   ],
   "honesty_note": {
@@ -1208,7 +1241,7 @@
           "cols": [
             "gl_je"
           ],
-          "proof": "ChartOfAccountsListPage \u2192 AccountRegisterPage journal_entry EntityLink"
+          "proof": "ChartOfAccountsListPage → AccountRegisterPage journal_entry EntityLink"
         },
         {
           "id": "transactions",
@@ -1238,7 +1271,7 @@
           "cols": [
             "gl_je"
           ],
-          "proof": "alias\u2192MonthClosePage adjusting_entries href /accounting/journal-entries"
+          "proof": "alias→MonthClosePage adjusting_entries href /accounting/journal-entries"
         },
         {
           "id": "month_close",
@@ -1257,7 +1290,7 @@
           "cols": [
             "gl_je"
           ],
-          "proof": "FactoringDetailPage journal_entry_id EntityLink (list\u2192:id)"
+          "proof": "FactoringDetailPage journal_entry_id EntityLink (list→:id)"
         }
       ]
     },
@@ -1307,7 +1340,7 @@
         "invoice",
         "bank"
       ],
-      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; \u00a7B9 link columns added."
+      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; §B9 link columns added."
     }
   }
 }

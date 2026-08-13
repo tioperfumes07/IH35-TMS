@@ -2,7 +2,7 @@
   "module": "settlements",
   "entity_default": "USMCA",
   "source": {
-    "arch_design": "IH35_ARCHITECTURAL_DESIGN \u2014 Settlements / driver finance",
+    "arch_design": "IH35_ARCHITECTURAL_DESIGN — Settlements / driver finance",
     "nav": "apps/frontend/src/pages/driver-finance/SettlementsPage.tsx",
     "routes": "/driver-finance/*"
   },
@@ -370,6 +370,39 @@
         "load",
         "liability"
       ]
+    },
+    {
+      "id": "chrome.toolbar_search",
+      "tab": "Chrome controls",
+      "sub": "List toolbar — Search (CLS-LIST-TOOLBAR)",
+      "route_hint": "chrome://toolbar/search",
+      "surface_kind": "toolbar",
+      "required": [
+        "qbo_chrome",
+        "connectivity"
+      ]
+    },
+    {
+      "id": "chrome.toolbar_range",
+      "tab": "Chrome controls",
+      "sub": "List toolbar — date/amount range (CLS-LIST-TOOLBAR)",
+      "route_hint": "chrome://toolbar/range",
+      "surface_kind": "toolbar",
+      "required": [
+        "qbo_chrome",
+        "connectivity"
+      ]
+    },
+    {
+      "id": "chrome.toolbar_gear",
+      "tab": "Chrome controls",
+      "sub": "List toolbar — column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
+      "route_hint": "chrome://toolbar/gear",
+      "surface_kind": "toolbar",
+      "required": [
+        "qbo_chrome",
+        "connectivity"
+      ]
     }
   ],
   "honesty_audit": {
@@ -415,7 +448,7 @@
           ]
         }
       ],
-      "note": "Settlements FE has liability drills but no journal_entry/ap_bill EntityLink \u2014 money gl_je/ap_bill claims were inflation"
+      "note": "Settlements FE has liability drills but no journal_entry/ap_bill EntityLink — money gl_je/ap_bill claims were inflation"
     },
     "liability_chrome_disputes_ca_2026_08_12": {
       "finding": "SETTLEMENTS-LIABILITY-CHROME",
@@ -447,7 +480,7 @@
         "invoice",
         "bank"
       ],
-      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; \u00a7B9 link columns added."
+      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; §B9 link columns added."
     }
   }
 }

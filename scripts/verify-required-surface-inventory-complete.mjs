@@ -212,13 +212,27 @@ function run() {
     }
   }
 
+  // Owner 2026-08-12 — Search + range + gear must be Required leaves (CLS-LIST-TOOLBAR).
+  const TOOLBAR_LEAF_IDS = [
+    "chrome.toolbar_search",
+    "chrome.toolbar_range",
+    "chrome.toolbar_gear",
+  ];
+  for (const [mod, doc] of byMod) {
+    const leafIds = new Set((doc.leaves || []).map((l) => l.id));
+    const missTb = TOOLBAR_LEAF_IDS.filter((id) => !leafIds.has(id));
+    if (missTb.length) {
+      errors.push(`${mod}.required.json missing toolbar control leaves: ${missTb.join(", ")}`);
+    }
+  }
+
   if (errors.length) {
     console.error("verify-required-surface-inventory-complete FAIL:");
     for (const e of errors) console.error(" -", e);
     process.exit(1);
   }
   console.log(
-    `verify-required-surface-inventory-complete OK — ${rows.length} surfaces covered; §B9 columns present on shared + ${byMod.size} modules`,
+    `verify-required-surface-inventory-complete OK — ${rows.length} surfaces covered; §B9 columns + toolbar triad on ${byMod.size} modules`,
   );
 }
 
