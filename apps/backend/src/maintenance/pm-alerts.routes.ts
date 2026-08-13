@@ -143,6 +143,29 @@ export async function registerMaintenancePmAlertsRoutes(app: FastifyInstance) {
 
     const updated = await withCompany(user.uuid, body.data.operating_company_id, async (client) => {
       if (!(await relationExists(client, "maintenance.pm_alerts"))) return null;
+      const alert = await client.query(
+        `SELECT unit_id::text
+           FROM maintenance.pm_alerts
+          WHERE id = $1::uuid
+            AND operating_company_id = $2::uuid
+            AND state IN ('open', 'acknowledged')
+          FOR UPDATE`,
+        [params.data.id, body.data.operating_company_id]
+      );
+      if (alert.rows.length === 0) return null;
+
+      const workOrder = await client.query(
+        `SELECT unit_id::text
+           FROM maintenance.work_orders
+          WHERE id = $1::uuid
+            AND operating_company_id = $2::uuid`,
+        [body.data.work_order_id, body.data.operating_company_id]
+      );
+      if (workOrder.rows.length === 0) return { error: "work_order_not_found_for_company" as const };
+      if (alert.rows[0]?.unit_id && workOrder.rows[0]?.unit_id !== alert.rows[0].unit_id) {
+        return { error: "work_order_unit_mismatch" as const };
+      }
+
       const res = await client.query(
         `
           UPDATE maintenance.pm_alerts
@@ -174,6 +197,7 @@ export async function registerMaintenancePmAlertsRoutes(app: FastifyInstance) {
     });
 
     if (!updated) return reply.code(404).send({ error: "pm_alert_not_found" });
+    if ("error" in updated) return reply.code(400).send(updated);
     return updated;
   });
 }
