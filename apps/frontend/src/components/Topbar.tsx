@@ -271,7 +271,7 @@ export function Topbar({ auth, onOpenMobileNav }: Props) {
                 {([
                   [t("topbar.create_invoice", "Invoice"), "/accounting/invoices?create=1"],
                   [t("topbar.create_bill", "Bill"), "/accounting/bills/vendor?create=1"],
-                  [t("topbar.create_expense", "Expense"), "/accounting/expenses"],
+                  [t("topbar.create_expense", "Expense"), "/accounting/expenses?create=1"],
                   [t("topbar.create_receive_payment", "Receive payment"), "/accounting/payments"],
                   [t("topbar.create_journal_entry", "Journal entry"), "/accounting/journal-entries"],
                   [t("topbar.create_bill_payment", "Bill payment"), "/accounting/bill-payments"],
