@@ -1,0 +1,74 @@
+#!/usr/bin/env node
+/**
+ * Maintenance reverse_link remainder — Built for list/detail EntityLink surfaces.
+ * Create/source/modal chrome honesty-dropped in required.json.
+ *
+ * @matrix-built {"modules":["maintenance"],"cols":["reverse_link"],"leafRe":"^(in_transit\\.promote_to_wo|arriving_soon\\.convert_to_wo|driver_reports\\.queue|severe_repairs\\.convert_to_wo|defects\\.convert_to_wo|pre_flight_dvir\\.queue|pm\\.auto_engine\\.run|fault_drafts\\.review|warranty\\.create_claim|maintenance\\.panel\\.road_service_active|maintenance\\.modal\\.work_order_detail)$","task":"VERTICAL-REVERSE-LINK-maintenance-remainder","vertical":"column-wave"}
+ *
+ * Self-test: node scripts/verify-maintenance-reverse-link-remainder.mjs --selftest
+ */
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const LABEL = "verify-maintenance-reverse-link-remainder";
+
+const CHECKS = [
+  { name: "InTransitIssuesTable", file: "apps/frontend/src/pages/maintenance/components/InTransitIssuesTable.tsx" },
+  { name: "ArrivingSoonPage", file: "apps/frontend/src/pages/maintenance/ArrivingSoonPage.tsx" },
+  { name: "DriverReportsQueuePage", file: "apps/frontend/src/pages/maintenance/DriverReportsQueuePage.tsx" },
+  { name: "SevereRepairOosTab", file: "apps/frontend/src/pages/maintenance/components/SevereRepairOosTab.tsx" },
+  { name: "DefectsInboxPage", file: "apps/frontend/src/pages/maintenance/DefectsInboxPage.tsx" },
+  { name: "PreFlightDvirQueue", file: "apps/frontend/src/pages/maintenance/pre-flight/PreFlightDvirQueue.tsx" },
+  { name: "PmAutoEnginePage", file: "apps/frontend/src/pages/maintenance/PmAutoEnginePage.tsx" },
+  { name: "FaultDraftsPage", file: "apps/frontend/src/pages/maintenance/FaultDraftsPage.tsx" },
+  { name: "WarrantyClaimsPage", file: "apps/frontend/src/pages/maintenance/WarrantyClaimsPage.tsx" },
+  { name: "RoadServiceList", file: "apps/frontend/src/pages/maintenance/RoadServiceList.tsx" },
+  { name: "WorkOrderDetailPage", file: "apps/frontend/src/pages/maintenance/WorkOrderDetailPage.tsx" },
+];
+
+function run(root = ROOT) {
+  const fails = [];
+  for (const c of CHECKS) {
+    const abs = path.join(root, c.file);
+    if (!fs.existsSync(abs)) {
+      fails.push(`${c.name}: missing`);
+      continue;
+    }
+    if (!/EntityLink/.test(fs.readFileSync(abs, "utf8"))) fails.push(`${c.name}: no EntityLink`);
+  }
+  return fails;
+}
+
+if (process.argv.includes("--selftest")) {
+  const live = run();
+  const tmp = fs.mkdtempSync(path.join(ROOT, "scripts", ".maint-reverse-selftest-"));
+  try {
+    for (const c of CHECKS) {
+      const abs = path.join(tmp, c.file);
+      fs.mkdirSync(path.dirname(abs), { recursive: true });
+      fs.writeFileSync(abs, "// poison\n");
+    }
+    const planted = run(tmp);
+    if (planted.length < CHECKS.length) {
+      console.error(`${LABEL} SELFTEST FAIL (${planted.length})`);
+      process.exit(1);
+    }
+    console.log(`${LABEL} SELFTEST PASS (poison trips ${planted.length})`);
+  } finally {
+    fs.rmSync(tmp, { recursive: true, force: true });
+  }
+  if (live.length) {
+    console.error(`${LABEL} FAIL live:\n- ${live.join("\n- ")}`);
+    process.exit(1);
+  }
+  process.exit(0);
+}
+
+const fails = run();
+if (fails.length) {
+  console.error(`${LABEL} FAIL:\n- ${fails.join("\n- ")}`);
+  process.exit(1);
+}
+console.log(`${LABEL} PASS — maintenance reverse_link remainder ratcheted`);
