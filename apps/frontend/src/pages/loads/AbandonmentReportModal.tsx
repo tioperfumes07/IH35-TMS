@@ -5,6 +5,7 @@ import { Button } from "../../components/Button";
 import { Modal } from "../../components/Modal";
 import { DateTimePicker } from "../../components/forms/DateTimePicker";
 import { useToast } from "../../components/Toast";
+import { DriverPickerWithCreate } from "../../components/drivers/DriverPickerWithCreate";
 
 type Props = {
   loadId: string;
@@ -46,8 +47,14 @@ export function AbandonmentReportModal({ loadId, operatingCompanyId, defaultDriv
       <p className="mb-3 text-xs text-slate-500">Creates a chargeback line and marks the load abandoned.</p>
       <div className="space-y-3 text-sm">
         <label className="block text-xs font-semibold text-slate-600">
-          Driver ID (uuid)
-          <input className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-2 font-mono text-[12px]" value={driverId} onChange={(e) => setDriverId(e.target.value)} />
+          Driver
+          <DriverPickerWithCreate
+            operatingCompanyId={operatingCompanyId}
+            value={driverId || null}
+            onChange={(next) => setDriverId(next ?? "")}
+            placeholder="Search driver…"
+            className="mt-1 w-full"
+          />
         </label>
         <label className="block text-xs font-semibold text-slate-600">
           Abandonment time (local)
