@@ -18,6 +18,8 @@ const companyQuerySchema = z.object({
 // SAF-C01 — load-detail reverse view: filter by load_id in SQL (LIMIT 500 — never client-filter).
 const accidentsQuerySchema = companyQuerySchema.extend({
   unit_id: z.string().uuid().optional(),
+  // RANK5-ACCIDENT-TRAILER-ID — safety.accident_reports.trailer_id, live since rank 1 (PR #6316).
+  trailer_id: z.string().uuid().optional(),
   load_id: z.string().uuid().optional(),
 });
 
@@ -64,6 +66,9 @@ const createAccidentBodySchema = z.object({
   accident_type_id: z.string().uuid(),
   driver_id: nullableUuid,
   unit_id: nullableUuid,
+  // RANK5-ACCIDENT-TRAILER-ID — trip-wiring rank 5: physical trailer (mdata.equipment) involved,
+  // independent of the tractor (unit_id). Live FK since rank 1 (PR #6316).
+  trailer_id: nullableUuid,
   vendor_id: nullableUuid,
   load_id: nullableUuid,
   accident_at: z.string().min(1).nullish(),
@@ -88,6 +93,7 @@ const patchAccidentBodySchema = z.object({
   accident_type_id: z.string().uuid().optional(),
   driver_id: nullableUuid,
   unit_id: nullableUuid,
+  trailer_id: nullableUuid,
   vendor_id: nullableUuid,
   load_id: nullableUuid,
   accident_at: z.string().min(1).nullish(),
@@ -423,8 +429,8 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
     if (!user) return;
     // SAF-F17: optional unit scoping for the unit profile's reverse safety section. Filtered in SQL
     // because this list is capped at LIMIT 500 — a client-side filter would silently omit a unit's
-    // accidents once the company crosses that cap. `safety.accident_reports` has a `unit_id` column
-    // and NO `trailer_id` column, so there is deliberately no trailer filter here.
+    // accidents once the company crosses that cap. `safety.accident_reports` gained `trailer_id` in
+    // rank 1 (PR #6316) — mirrored below with the same filter/join/display-column treatment as unit_id.
     const query = accidentsQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return sendValidationError(reply, query.error);
     const rows = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
@@ -439,6 +445,10 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
         values.push(query.data.unit_id);
         scopeFilters.push(`AND ar.unit_id = $${values.length}`);
       }
+      if (query.data.trailer_id) {
+        values.push(query.data.trailer_id);
+        scopeFilters.push(`AND ar.trailer_id = $${values.length}`);
+      }
       if (query.data.load_id) {
         values.push(query.data.load_id);
         scopeFilters.push(`AND ar.load_id = $${values.length}`);
@@ -448,6 +458,7 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
           SELECT ar.*,
                  NULLIF(TRIM(COALESCE(d.first_name, '') || ' ' || COALESCE(d.last_name, '')), '') AS driver_name,
                  u.unit_number AS unit_number,
+                 tr.equipment_number AS trailer_number,
                  l.load_number AS load_number,
                  v.vendor_name AS vendor_name,
                  claim.claim_id,
@@ -460,6 +471,10 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
             ON u.id = ar.unit_id
            AND (u.owner_company_id = ar.operating_company_id
                 OR u.currently_leased_to_company_id = ar.operating_company_id)
+          LEFT JOIN mdata.equipment tr
+            ON tr.id = ar.trailer_id
+           AND (tr.owner_company_id = ar.operating_company_id
+                OR tr.currently_leased_to_company_id = ar.operating_company_id)
           -- SAF-B25: safety.accident_reports.load_id has FKed mdata.loads since it was created, and
           -- the list never joined it — so an accident could not be read against the trip it happened
           -- on. Entity-scoped like the driver join. A soft-deleted load still resolves its number:
@@ -557,6 +572,7 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
             accident_type_id,
             driver_id,
             unit_id,
+            trailer_id,
             vendor_id,
             load_id,
             accident_at,
@@ -572,8 +588,8 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
             bill_or_expense_ref
           )
           VALUES (
-            $1,$2,$3,$4,$5,$6,
-            COALESCE($7::timestamptz, now()),$8,$9,$10,$11,$12,$13,$14,$15,$16,$17
+            $1,$2,$3,$4,$5,$6,$7,
+            COALESCE($8::timestamptz, now()),$9,$10,$11,$12,$13,$14,$15,$16,$17,$18
           )
           RETURNING *
         `,
@@ -582,6 +598,7 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
           body.data.accident_type_id,
           body.data.driver_id ?? null,
           body.data.unit_id ?? null,
+          body.data.trailer_id ?? null,
           body.data.vendor_id ?? null,
           body.data.load_id ?? null,
           body.data.accident_at ?? null,
@@ -658,6 +675,7 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
           resource_id: inserted?.id,
           driver_id: body.data.driver_id ?? null,
           unit_id: body.data.unit_id ?? null,
+          trailer_id: body.data.trailer_id ?? null,
           vendor_id: body.data.vendor_id ?? null,
           load_id: body.data.load_id ?? null,
           at_fault: body.data.at_fault ?? null,
@@ -692,6 +710,7 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
     const patchable: Array<{ key: keyof typeof body.data; column: string; cast?: string }> = [
       { key: "driver_id", column: "driver_id" },
       { key: "unit_id", column: "unit_id" },
+      { key: "trailer_id", column: "trailer_id" },
       { key: "vendor_id", column: "vendor_id" },
       { key: "load_id", column: "load_id" },
       { key: "accident_at", column: "accident_at", cast: "::timestamptz" },
