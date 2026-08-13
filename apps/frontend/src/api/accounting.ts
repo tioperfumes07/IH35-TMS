@@ -1662,6 +1662,8 @@ export type SalesTaxReturn = {
   status: "open" | "filed" | "paid";
   filed_at?: string | null;
   paid_bill_id?: string | null;
+  /** ACCT-F5063 — joined from accounting.bills for EntityLink label. */
+  paid_bill_number?: string | null;
   created_at: string;
 };
 

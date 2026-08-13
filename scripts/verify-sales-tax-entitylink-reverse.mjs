@@ -31,6 +31,17 @@ export function assertSalesTaxEntitylinkReverse() {
   if (!/paid_bill_id/.test(salesTax) || !/kind=["']bill["']/.test(salesTax)) {
     errors.push(`${SALES_TAX_PAGE}: paid returns must EntityLink paid_bill_id → bill`);
   }
+  // ACCT-F5063 — CLS-LINKAGE-ONEWAY: paid bill label must use joined paid_bill_number.
+  if (!/entityLabel\(\s*row\.paid_bill_number\s*,\s*row\.paid_bill_id\s*,\s*["']Bill["']\s*\)/.test(salesTax)) {
+    errors.push(`${SALES_TAX_PAGE}: paid bill EntityLink must entityLabel(row.paid_bill_number, …)`);
+  }
+  if (/entityLabel\(\s*null\s*,\s*row\.paid_bill_id\s*,\s*["']Bill["']\s*\)/.test(salesTax)) {
+    errors.push(`${SALES_TAX_PAGE}: must not entityLabel(null, paid_bill_id) — UUID chrome`);
+  }
+  const routes = read("apps/backend/src/accounting/sales-tax/routes.ts");
+  if (!/b\.bill_number AS paid_bill_number/.test(routes) || !/LEFT JOIN accounting\.bills b/.test(routes)) {
+    errors.push("sales-tax/routes: returns list must LEFT JOIN bills for paid_bill_number");
+  }
   if (!/case ["']sales_tax_return["']:/.test(jeDetail)) {
     errors.push(`${JE_DETAIL}: postingEntityKind must map sales_tax_return for JE reverse drill`);
   }
