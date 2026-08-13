@@ -27,6 +27,7 @@ import { ExpensesReverseSection } from "../../components/accounting/ExpensesReve
 import { EntityLink } from "../../components/shared/EntityLink";
 import { TrailerTiresReverseSection } from "../../components/maintenance/TrailerTiresReverseSection";
 import { entityLabel } from "../../lib/entity-label";
+import { EquipmentTransfersReverseSection } from "../../components/dispatch/EquipmentTransfersReverseSection";
 
 export type TrailerProfileAggregate = {
   equipment: Record<string, unknown>;
@@ -137,6 +138,7 @@ export function TrailerProfilePage() {
           {(aggregate.loads ?? []).length === 0 ? <p className="text-gray-500">No linked loads.</p> : null}
         </div>
       </section>
+      <EquipmentTransfersReverseSection companyId={companyId} equipmentId={id} />
       {isReefer ? (
         <>
           <div data-testid="tp-section-4-reefer">
