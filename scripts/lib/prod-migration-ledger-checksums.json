@@ -386,6 +386,7 @@
     "202609050000_mnt_econ_04_warranty_reimburse_gl_hop.sql": "1805a11d96d593aaf25caeedb95ff3c547f2a3b7be3eb47032330991ba42434e",
     "202609200000_set_02_driver_netpay_clearing_liability.sql": "80bd3835d9efbc663158f74ed7505c9ecec5223e0d84f8b29fad44b5f84603b9",
     "202609210000_intercompany_coa_8000_block_seed.sql": "cd80a3958ec823df787b957ca3d98d08fd8bf155a12b9ceaba375d0658f11c2e",
-    "202609130000_saf_dom_02_company_violation_jsonb_archive.sql": "896dbc341393b9806f1e524243d20f7a7efd2ee3d193f749839dd352198c3f54"
+    "202609130000_saf_dom_02_company_violation_jsonb_archive.sql": "896dbc341393b9806f1e524243d20f7a7efd2ee3d193f749839dd352198c3f54",
+    "202611021200_vendors_vendor_type_check_relax.sql": "92a4520874bd6414c27883b29f9a5f21737a4efc71b7ca8c2e5e4a270a85e815"
   }
 }
