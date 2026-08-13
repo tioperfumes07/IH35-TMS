@@ -382,6 +382,30 @@
       ]
     },
     {
+      "id": "compliance.panel.notification_log",
+      "tab": "Panels",
+      "sub": "Panel: Notification Log Panel",
+      "route_hint": "surface://components/compliance/NotificationLogPanel.tsx",
+      "surface_kind": "panel",
+      "surface_path": "components/compliance/NotificationLogPanel.tsx",
+      "required": [
+        "connectivity",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "compliance.panel.notification_rules",
+      "tab": "Panels",
+      "sub": "Panel: Notification Rules Panel",
+      "route_hint": "surface://components/compliance/NotificationRulesPanel.tsx",
+      "surface_kind": "panel",
+      "surface_path": "components/compliance/NotificationRulesPanel.tsx",
+      "required": [
+        "connectivity",
+        "qbo_chrome"
+      ]
+    },
+    {
       "id": "chrome.toolbar_search",
       "tab": "Chrome controls",
       "sub": "List toolbar — Search (CLS-LIST-TOOLBAR)",

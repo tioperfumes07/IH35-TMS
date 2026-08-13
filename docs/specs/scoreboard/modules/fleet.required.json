@@ -1072,6 +1072,18 @@
       ]
     },
     {
+      "id": "fleet.modal.status_change",
+      "tab": "Modals",
+      "sub": "Modal: Status Change Modal",
+      "route_hint": "surface://components/trailer-profile/StatusChangeModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "components/trailer-profile/StatusChangeModal.tsx",
+      "required": [
+        "connectivity",
+        "qbo_chrome"
+      ]
+    },
+    {
       "id": "chrome.toolbar_search",
       "tab": "Chrome controls",
       "sub": "List toolbar — Search (CLS-LIST-TOOLBAR)",

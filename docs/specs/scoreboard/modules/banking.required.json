@@ -491,6 +491,30 @@
       ]
     },
     {
+      "id": "banking.panel.linked_bank_transactions",
+      "tab": "Panels",
+      "sub": "Panel: Linked Bank Transactions Panel",
+      "route_hint": "surface://components/banking/LinkedBankTransactionsPanel.tsx",
+      "surface_kind": "panel",
+      "surface_path": "components/banking/LinkedBankTransactionsPanel.tsx",
+      "required": [
+        "connectivity",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "banking.panel.plaid_sync_status",
+      "tab": "Panels",
+      "sub": "Panel: Plaid Sync Status Panel",
+      "route_hint": "surface://components/banking/PlaidSyncStatusPanel.tsx",
+      "surface_kind": "panel",
+      "surface_path": "components/banking/PlaidSyncStatusPanel.tsx",
+      "required": [
+        "connectivity",
+        "qbo_chrome"
+      ]
+    },
+    {
       "id": "chrome.toolbar_search",
       "tab": "Chrome controls",
       "sub": "List toolbar — Search (CLS-LIST-TOOLBAR)",

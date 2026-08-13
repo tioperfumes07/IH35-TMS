@@ -1061,6 +1061,31 @@
       ]
     },
     {
+      "id": "accounting.modal.void_reason",
+      "tab": "Modals",
+      "sub": "Modal: Void Reason Modal",
+      "route_hint": "surface://components/accounting/VoidReasonModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "components/accounting/VoidReasonModal.tsx",
+      "required": [
+        "connectivity",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "accounting.modal.record_expense",
+      "tab": "Modals",
+      "sub": "Modal: Record Expense Modal",
+      "route_hint": "surface://components/expenses/RecordExpenseModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "components/expenses/RecordExpenseModal.tsx",
+      "required": [
+        "connectivity",
+        "qbo_chrome",
+        "picker_law"
+      ]
+    },
+    {
       "id": "chrome.toolbar_search",
       "tab": "Chrome controls",
       "sub": "List toolbar — Search (CLS-LIST-TOOLBAR)",

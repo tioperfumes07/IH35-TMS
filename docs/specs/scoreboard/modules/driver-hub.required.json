@@ -225,6 +225,18 @@
       ]
     },
     {
+      "id": "driver-hub.modal.report_issue",
+      "tab": "Modals",
+      "sub": "Modal: Report Issue Modal",
+      "route_hint": "surface://pages/driver/ReportIssueModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "pages/driver/ReportIssueModal.tsx",
+      "required": [
+        "connectivity",
+        "qbo_chrome"
+      ]
+    },
+    {
       "id": "chrome.toolbar_search",
       "tab": "Chrome controls",
       "sub": "List toolbar — Search (CLS-LIST-TOOLBAR)",

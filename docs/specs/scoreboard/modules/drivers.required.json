@@ -478,6 +478,19 @@
       ]
     },
     {
+      "id": "drivers.modal.assign_truck",
+      "tab": "Modals",
+      "sub": "Modal: Assign Truck Modal",
+      "route_hint": "surface://components/driver-profile/AssignTruckModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "components/driver-profile/AssignTruckModal.tsx",
+      "required": [
+        "connectivity",
+        "qbo_chrome",
+        "picker_law"
+      ]
+    },
+    {
       "id": "chrome.toolbar_search",
       "tab": "Chrome controls",
       "sub": "List toolbar — Search (CLS-LIST-TOOLBAR)",

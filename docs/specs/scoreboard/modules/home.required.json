@@ -418,6 +418,78 @@
       ]
     },
     {
+      "id": "home.panel.accounting_pending_approvals",
+      "tab": "Panels",
+      "sub": "Panel: Accounting Pending Approvals Panel",
+      "route_hint": "surface://components/home/AccountingPendingApprovalsPanel.tsx",
+      "surface_kind": "panel",
+      "surface_path": "components/home/AccountingPendingApprovalsPanel.tsx",
+      "required": [
+        "connectivity",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "home.panel.dispatcher_active_loads",
+      "tab": "Panels",
+      "sub": "Panel: Dispatcher Active Loads Panel",
+      "route_hint": "surface://components/home/DispatcherActiveLoadsPanel.tsx",
+      "surface_kind": "panel",
+      "surface_path": "components/home/DispatcherActiveLoadsPanel.tsx",
+      "required": [
+        "connectivity",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "home.panel.dispatcher_pending_actions",
+      "tab": "Panels",
+      "sub": "Panel: Dispatcher Pending Actions Panel",
+      "route_hint": "surface://components/home/DispatcherPendingActionsPanel.tsx",
+      "surface_kind": "panel",
+      "surface_path": "components/home/DispatcherPendingActionsPanel.tsx",
+      "required": [
+        "connectivity",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "home.panel.driver_manager_attention",
+      "tab": "Panels",
+      "sub": "Panel: Driver Manager Attention Panel",
+      "route_hint": "surface://components/home/DriverManagerAttentionPanel.tsx",
+      "surface_kind": "panel",
+      "surface_path": "components/home/DriverManagerAttentionPanel.tsx",
+      "required": [
+        "connectivity",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "home.panel.fleet_snapshot",
+      "tab": "Panels",
+      "sub": "Panel: Fleet Snapshot Panel",
+      "route_hint": "surface://components/home/FleetSnapshotPanel.tsx",
+      "surface_kind": "panel",
+      "surface_path": "components/home/FleetSnapshotPanel.tsx",
+      "required": [
+        "connectivity",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "home.panel.safety_alerts",
+      "tab": "Panels",
+      "sub": "Panel: Safety Alerts Panel",
+      "route_hint": "surface://components/home/SafetyAlertsPanel.tsx",
+      "surface_kind": "panel",
+      "surface_path": "components/home/SafetyAlertsPanel.tsx",
+      "required": [
+        "connectivity",
+        "qbo_chrome"
+      ]
+    },
+    {
       "id": "chrome.toolbar_search",
       "tab": "Chrome controls",
       "sub": "List toolbar — Search (CLS-LIST-TOOLBAR)",
