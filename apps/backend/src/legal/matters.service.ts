@@ -210,6 +210,27 @@ async function assertInsuranceLawsuitInCompany(
   }
 }
 
+async function assertInsuranceClaimInCompany(
+  client: QueryableClient,
+  claimId: string | null | undefined,
+  operatingCompanyId: string,
+) {
+  if (!claimId) return;
+  const result = await client.query(
+    `SELECT id
+       FROM insurance.claim
+      WHERE id = $1::uuid
+        AND operating_company_id = $2::uuid
+      LIMIT 1`,
+    [claimId, operatingCompanyId],
+  );
+  if (!result.rows[0]) {
+    throw Object.assign(new Error("linked_entity_not_in_operating_company"), {
+      code: "linked_entity_not_in_operating_company",
+    });
+  }
+}
+
 function severityRankSql() {
   return `CASE m.severity
     WHEN 'critical' THEN 1
@@ -343,6 +364,7 @@ export async function listMatters(
     LEFT JOIN mdata.equipment eq ON eq.id = m.equipment_id
                                 AND COALESCE(eq.currently_leased_to_company_id, eq.owner_company_id) = m.operating_company_id
     LEFT JOIN insurance.claim ic ON ic.id = m.insurance_claim_id
+                                AND ic.operating_company_id = m.operating_company_id
     LEFT JOIN insurance.lawsuit lw ON lw.id = m.insurance_lawsuit_id
                                   AND lw.operating_company_id = m.operating_company_id`;
 
@@ -408,6 +430,7 @@ export async function getMatter(
       LEFT JOIN mdata.equipment eq ON eq.id = m.equipment_id
                                   AND COALESCE(eq.currently_leased_to_company_id, eq.owner_company_id) = m.operating_company_id
       LEFT JOIN insurance.claim ic ON ic.id = m.insurance_claim_id
+                                  AND ic.operating_company_id = m.operating_company_id
       LEFT JOIN insurance.lawsuit lw ON lw.id = m.insurance_lawsuit_id
                                     AND lw.operating_company_id = m.operating_company_id
       WHERE m.operating_company_id = $1::uuid AND m.id = $2
@@ -475,6 +498,7 @@ export async function createMatter(
   await assertEquipmentInCompany(client, input.equipment_id, args.operatingCompanyId);
   await assertDriverInCompany(client, input.related_driver_id, args.operatingCompanyId);
   await assertUnitInCompany(client, input.unit_id, args.operatingCompanyId);
+  await assertInsuranceClaimInCompany(client, input.insurance_claim_id, args.operatingCompanyId);
   await assertInsuranceLawsuitInCompany(client, input.insurance_lawsuit_id, args.operatingCompanyId);
   const ins = await client.query(
     `
@@ -579,6 +603,7 @@ export async function updateMatter(
   await assertEquipmentInCompany(client, input.equipment_id, args.operatingCompanyId);
   await assertDriverInCompany(client, input.related_driver_id, args.operatingCompanyId);
   await assertUnitInCompany(client, input.unit_id, args.operatingCompanyId);
+  await assertInsuranceClaimInCompany(client, input.insurance_claim_id, args.operatingCompanyId);
   await assertInsuranceLawsuitInCompany(client, input.insurance_lawsuit_id, args.operatingCompanyId);
   const fields: string[] = [];
   const values: unknown[] = [];
