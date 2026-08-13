@@ -15,6 +15,7 @@ import { Modal } from "../../../components/Modal";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { ListErrorState } from "../../../components/ListErrorState";
+import { useSearchParams } from "react-router-dom";
 
 const NIL_UUID = "00000000-0000-0000-0000-000000000000";
 
@@ -51,6 +52,8 @@ const EMPTY_DRAFT: CreateDraft = {
 };
 
 export function PmSchedulePage() {
+  const [searchParams] = useSearchParams();
+  const highlightedScheduleId = searchParams.get("schedule_id")?.trim() || "";
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const qc = useQueryClient();
@@ -183,6 +186,7 @@ export function PmSchedulePage() {
             rows={rows}
             columns={columns}
             rowKey={(row) => row.id}
+            rowClassName={(row) => (row.id === highlightedScheduleId ? "bg-slate-100 ring-1 ring-slate-400" : "")}
             loading={listQ.isLoading}
             storageKey="maintenance-pm-schedule"
             emptyText="No PM schedules yet."
