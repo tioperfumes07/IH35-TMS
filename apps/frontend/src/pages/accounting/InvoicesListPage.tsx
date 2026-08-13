@@ -58,6 +58,22 @@ function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
 }
 
+/** LV-AR-OPEN-INCLUDES-VOIDED / ACCT-F5027 — void paper is not billed A/R. */
+export function isVoidInvoice(row: Pick<Invoice, "status" | "voided_at">): boolean {
+  return row.status === "void" || Boolean(row.voided_at);
+}
+
+/** amount_open_cents is GENERATED (total − paid) and stays non-zero after void — UI must force $0. */
+export function invoiceOpenCentsForDisplay(row: Pick<Invoice, "status" | "voided_at" | "amount_open_cents">): number {
+  if (isVoidInvoice(row)) return 0;
+  return Number(row.amount_open_cents ?? 0) || 0;
+}
+
+export function invoiceTotalCentsForAggregate(row: Pick<Invoice, "status" | "voided_at" | "total_cents">): number {
+  if (isVoidInvoice(row)) return 0;
+  return Number(row.total_cents ?? 0) || 0;
+}
+
 function invoiceFilterFromSearchParams(searchParams: URLSearchParams): {
   customerId: string;
   status: InvoiceListFilter;
@@ -224,8 +240,9 @@ export function InvoicesListPage() {
   const totals = useMemo(() => {
     return invoices.reduce(
       (acc, row) => {
-        acc.total += Number(row.total_cents ?? 0);
-        acc.open += Number(row.amount_open_cents ?? 0);
+        // LV-AR-OPEN-INCLUDES-VOIDED: exclude void from both "Total billed" and "Open".
+        acc.total += invoiceTotalCentsForAggregate(row);
+        acc.open += invoiceOpenCentsForDisplay(row);
         return acc;
       },
       { total: 0, open: 0 }
@@ -277,7 +294,15 @@ export function InvoicesListPage() {
           ),
       },
       { key: "total_cents", label: "Total", sortable: true, className: "text-right", cellClass: "text-right tabular-nums", render: (row) => money(row.total_cents) },
-      { key: "amount_open_cents", label: "Open", sortable: true, className: "text-right", cellClass: "text-right tabular-nums", render: (row) => money(row.amount_open_cents) },
+      {
+        key: "amount_open_cents",
+        label: "Open",
+        sortable: true,
+        className: "text-right",
+        cellClass: "text-right tabular-nums",
+        sortValue: (row) => invoiceOpenCentsForDisplay(row),
+        render: (row) => money(invoiceOpenCentsForDisplay(row)),
+      },
       {
         key: "source_load_id",
         label: "Load #",

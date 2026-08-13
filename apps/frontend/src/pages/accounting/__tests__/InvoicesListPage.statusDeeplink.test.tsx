@@ -266,3 +266,58 @@ describe("InvoicesListPage has_balance deep-link + URL sync (A/R aging contract)
     expect(screen.getByTestId("location-search").textContent).toContain("status=partial");
   });
 });
+
+describe("InvoicesListPage LV-AR-OPEN-INCLUDES-VOIDED (ACCT-F5027)", () => {
+  beforeEach(() => {
+    vi.spyOn(mdataApi, "listCustomers").mockResolvedValue({
+      customers: [{ id: CUSTOMER_ID, customer_name: "Acme Freight" }],
+    } as never);
+  });
+
+  it("excludes void invoices from Total billed / Open and shows $0.00 Open on void rows", async () => {
+    vi.spyOn(accountingApi, "listInvoices").mockResolvedValue({
+      invoices: [
+        invoice({
+          id: "inv-live",
+          display_id: "INV-LIVE",
+          status: "partial",
+          total_cents: 120_000,
+          amount_open_cents: 95_000,
+        }),
+        invoice({
+          id: "inv-void",
+          display_id: "INV-VOID",
+          status: "void",
+          voided_at: "2026-08-07T00:00:00.000Z",
+          total_cents: 245_000,
+          amount_open_cents: 245_000,
+        }),
+        invoice({
+          id: "inv-void-stamp",
+          display_id: "INV-VOID2",
+          status: "sent",
+          voided_at: "2026-08-07T12:00:00.000Z",
+          total_cents: 100,
+          amount_open_cents: 100,
+        }),
+      ],
+      total: 3,
+      limit: 100,
+      offset: 0,
+      has_more: false,
+    } as never);
+
+    render(wrap(<InvoicesListPage />, "/accounting/invoices"));
+
+    await waitFor(() => expect(screen.getByText("INV-LIVE")).toBeInTheDocument());
+
+    // Live open $950 + live total $1,200 — voids contribute $0 to both aggregates
+    // (board live proof: void $2,450 must not inflate Open / Total billed).
+    expect(screen.getByText(/Total billed:\s*\$1,200\.00/)).toBeInTheDocument();
+    expect(screen.getByText(/Open:\s*\$950\.00/)).toBeInTheDocument();
+
+    // Document Total column may still show historical $2,450.00; Open cells for voids are $0.00.
+    expect(screen.getByText("$2,450.00")).toBeInTheDocument();
+    expect(screen.getAllByText("$0.00").length).toBeGreaterThanOrEqual(2);
+  });
+});
