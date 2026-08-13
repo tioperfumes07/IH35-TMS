@@ -196,6 +196,27 @@ export function CreateWOSectionIdentification({
             <input {...register("unit_id", { required: true })} className="h-8 w-full rounded-sm border border-gray-300 px-2 text-sm" />
           )}
         </Field>
+        <Field label="Trailer / equipment">
+          {/* CREATE-PATH TRIP: trailers/reefers use mdata.equipment → work_orders.equipment_id (no trailer_id col). */}
+          {operatingCompanyId && setValue ? (
+            <div data-testid="wo-equipment-entity-picker">
+              <input type="hidden" {...register("equipment_id")} />
+              <EntityPicker
+                kind="trailer"
+                operatingCompanyId={operatingCompanyId}
+                value={watch("equipment_id") || null}
+                onChange={(value) => setValue("equipment_id", value ?? "", { shouldDirty: true })}
+                placeholder="Select trailer…"
+                dataField="equipment_id"
+                dataTestId="wo-create-equipment-picker"
+                className="h-8 w-full text-sm"
+                allowClear
+              />
+            </div>
+          ) : (
+            <input {...register("equipment_id")} className="h-8 w-full rounded-sm border border-gray-300 px-2 text-sm" />
+          )}
+        </Field>
         <Field label="Driver locked — assigned to this trip">
           {operatingCompanyId && setValue ? (
             <>

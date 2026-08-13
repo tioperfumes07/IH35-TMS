@@ -239,6 +239,8 @@ export type CreateWorkOrderTwoSectionPayload = {
     wo_type: WorkOrderType;
     source_type?: "IS" | "ES" | "AC" | "ET" | "RT" | "IT" | "RS";
     unit_id: string;
+    /** Trailer / reefer / equipment — canonical maintenance.work_orders.equipment_id (mdata.equipment). */
+    equipment_id?: string;
     driver_id?: string;
     load_id?: string;
     load_exemption_reason?: string;
