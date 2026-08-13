@@ -7,6 +7,8 @@ import { resolveOperatingCompanyId } from "../auth/operating-company-scope.js";
 import { requireAuth } from "../auth/session-middleware.js";
 
 type ScopeClient = { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> };
+const RL_READ = { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } } as const;
+const RL_WRITE = { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } } as const;
 
 // LST-CAT-06 — catalogs.dispatcher_error_reasons is per-entity + FORCE RLS company_scope.
 // Prefer related LOAD's operating_company_id (owner ruling); else driver/customer; else caller.
@@ -126,6 +128,17 @@ const listQuerySchema = z.object({
     .transform((value) => value === true || value === "true"),
   operating_company_id: uuidSchema.optional(),
 });
+const reverseListQuerySchema = z
+  .object({
+    operating_company_id: uuidSchema,
+    related_load_id: uuidSchema.optional(),
+    related_customer_id: uuidSchema.optional(),
+    related_driver_id: uuidSchema.optional(),
+  })
+  .refine(
+    (value) => [value.related_load_id, value.related_customer_id, value.related_driver_id].filter(Boolean).length === 1,
+    { message: "exactly one related entity filter is required" }
+  );
 
 const createDispatcherSafetyEventBodySchema = z
   .object({
@@ -292,7 +305,7 @@ async function findReturningDispatcherMatches(
 }
 
 export async function registerDispatcherSafetyEventsRoutes(app: FastifyInstance) {
-  app.get("/api/v1/catalogs/dispatcher-error-reasons", async (req, reply) => {
+  app.get("/api/v1/catalogs/dispatcher-error-reasons", RL_READ, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!canReadDispatcherSafety(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -331,7 +344,7 @@ export async function registerDispatcherSafetyEventsRoutes(app: FastifyInstance)
     return { reasons };
   });
 
-  app.get("/api/v1/identity/users/:user_id/safety-events", async (req, reply) => {
+  app.get("/api/v1/identity/users/:user_id/safety-events", RL_READ, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!canReadDispatcherSafety(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -345,7 +358,7 @@ export async function registerDispatcherSafetyEventsRoutes(app: FastifyInstance)
       const trackable = await ensureTrackableDispatcherUser(client, parsedParams.data.user_id);
       if ("error" in trackable) return trackable;
       // Reason JOIN is FORCE RLS — set GUC so labels resolve for the active entity context.
-      await scopeToCallerCompany(client, authUser.uuid, parsedQuery.data.operating_company_id ?? null);
+      const opco = await scopeToCallerCompany(client, authUser.uuid, parsedQuery.data.operating_company_id ?? null);
       const filters = ["e.dispatcher_user_id = $1"];
       if (!parsedQuery.data.include_voided) {
         filters.push("e.voided_at IS NULL");
@@ -368,8 +381,11 @@ export async function registerDispatcherSafetyEventsRoutes(app: FastifyInstance)
             e.cost_recovered_amount,
             e.cost_recovery_status,
             e.related_load_id,
+            rl.load_number AS related_load_number,
             e.related_customer_id,
+            rc.name AS related_customer_name,
             e.related_driver_id,
+            concat_ws(' ', rd.first_name, rd.last_name) AS related_driver_name,
             e.document_ids,
             e.dispatcher_email_snapshot,
             e.voided_at,
@@ -381,10 +397,13 @@ export async function registerDispatcherSafetyEventsRoutes(app: FastifyInstance)
           FROM mdata.dispatcher_safety_events e
           LEFT JOIN catalogs.dispatcher_error_reasons r ON r.id = e.error_reason_id
           LEFT JOIN identity.users vu ON vu.id = e.voided_by_user_id
+          LEFT JOIN mdata.loads rl ON rl.id = e.related_load_id AND rl.operating_company_id = $2
+          LEFT JOIN mdata.customers rc ON rc.id = e.related_customer_id AND rc.operating_company_id = $2
+          LEFT JOIN mdata.drivers rd ON rd.id = e.related_driver_id AND rd.operating_company_id = $2
           WHERE ${filters.join(" AND ")}
           ORDER BY e.event_date DESC, e.created_at DESC
         `,
-        [parsedParams.data.user_id]
+        [parsedParams.data.user_id, opco]
       );
       return { events: res.rows };
     });
@@ -398,7 +417,48 @@ export async function registerDispatcherSafetyEventsRoutes(app: FastifyInstance)
     return rows;
   });
 
-  app.post("/api/v1/identity/users/:user_id/safety-events", async (req, reply) => {
+  app.get("/api/v1/mdata/dispatcher-safety-events", RL_READ, async (req, reply) => {
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) return;
+    if (!canReadDispatcherSafety(authUser.role)) return reply.code(403).send({ error: "forbidden" });
+    const parsedQuery = reverseListQuerySchema.safeParse(req.query ?? {});
+    if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
+
+    const events = await withCurrentUser(authUser.uuid, async (client) => {
+      const query = parsedQuery.data;
+      const opco = await scopeToCallerCompany(client, authUser.uuid, query.operating_company_id);
+      const filter = query.related_load_id
+        ? { sql: "e.related_load_id = $2 AND rl.id IS NOT NULL", value: query.related_load_id }
+        : query.related_customer_id
+          ? { sql: "e.related_customer_id = $2 AND rc.id IS NOT NULL", value: query.related_customer_id }
+          : { sql: "e.related_driver_id = $2 AND rd.id IS NOT NULL", value: query.related_driver_id! };
+      const res = await client.query(
+        `
+          SELECT
+            e.id, e.dispatcher_user_id, du.email AS dispatcher_email, e.event_type, e.event_date,
+            e.severity, e.summary, e.details, e.cost_amount, e.cost_currency,
+            e.cost_recovered_amount, e.cost_recovery_status,
+            e.related_load_id, rl.load_number AS related_load_number,
+            e.related_customer_id, rc.name AS related_customer_name,
+            e.related_driver_id, concat_ws(' ', rd.first_name, rd.last_name) AS related_driver_name,
+            e.created_at, e.updated_at
+          FROM mdata.dispatcher_safety_events e
+          JOIN identity.users du ON du.id = e.dispatcher_user_id
+          LEFT JOIN mdata.loads rl ON rl.id = e.related_load_id AND rl.operating_company_id = $1
+          LEFT JOIN mdata.customers rc ON rc.id = e.related_customer_id AND rc.operating_company_id = $1
+          LEFT JOIN mdata.drivers rd ON rd.id = e.related_driver_id AND rd.operating_company_id = $1
+          WHERE e.voided_at IS NULL AND ${filter.sql}
+          ORDER BY e.event_date DESC, e.created_at DESC
+          LIMIT 200
+        `,
+        [opco, filter.value]
+      );
+      return res.rows;
+    });
+    return { events };
+  });
+
+  app.post("/api/v1/identity/users/:user_id/safety-events", RL_WRITE, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isOwner(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -492,6 +552,9 @@ export async function registerDispatcherSafetyEventsRoutes(app: FastifyInstance)
           event_type: row.event_type,
           severity: row.severity,
           cost_amount: row.cost_amount,
+          related_load_id: row.related_load_id,
+          related_customer_id: row.related_customer_id,
+          related_driver_id: row.related_driver_id,
         },
         row.severity === "severe" ? "critical" : row.severity,
         "BT-1-DISPATCHER-SAFETY-FILE"
@@ -521,7 +584,7 @@ export async function registerDispatcherSafetyEventsRoutes(app: FastifyInstance)
     return reply.code(201).send({ event: created });
   });
 
-  app.patch("/api/v1/identity/users/:user_id/safety-events/:event_id/void", async (req, reply) => {
+  app.patch("/api/v1/identity/users/:user_id/safety-events/:event_id/void", RL_WRITE, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isOwner(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -580,7 +643,7 @@ export async function registerDispatcherSafetyEventsRoutes(app: FastifyInstance)
     return { event: result };
   });
 
-  app.patch("/api/v1/identity/users/:user_id/safety-events/:event_id", async (req, reply) => {
+  app.patch("/api/v1/identity/users/:user_id/safety-events/:event_id", RL_WRITE, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isOwner(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -654,7 +717,7 @@ export async function registerDispatcherSafetyEventsRoutes(app: FastifyInstance)
     return { event: updated };
   });
 
-  app.post("/api/v1/identity/users/check-returning-dispatcher", async (req, reply) => {
+  app.post("/api/v1/identity/users/check-returning-dispatcher", RL_WRITE, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!canReadDispatcherSafety(authUser.role)) return reply.code(403).send({ error: "forbidden" });

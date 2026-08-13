@@ -25,6 +25,7 @@ export type DispatcherErrorReason = {
 export type DispatcherSafetyEvent = {
   id: string;
   dispatcher_user_id: string;
+  dispatcher_email?: string | null;
   event_type: DispatcherErrorReason["event_type"];
   event_date: string;
   severity: DispatcherErrorReason["severity"];
@@ -38,8 +39,11 @@ export type DispatcherSafetyEvent = {
   cost_recovered_amount: number | null;
   cost_recovery_status: "pending" | "partial" | "recovered" | "waived" | "absorbed" | null;
   related_load_id: string | null;
+  related_load_number?: string | null;
   related_customer_id: string | null;
+  related_customer_name?: string | null;
   related_driver_id: string | null;
+  related_driver_name?: string | null;
   document_ids: string[] | null;
   dispatcher_email_snapshot: string | null;
   voided_at: string | null;
@@ -170,9 +174,18 @@ export function rejectIdentityWorkflow(id: string, reason?: string) {
   });
 }
 
-export function listDispatcherSafetyEvents(userId: string, includeVoided = false) {
-  const query = includeVoided ? "?include_voided=true" : "";
-  return apiRequest<{ events: DispatcherSafetyEvent[] }>(`/api/v1/identity/users/${userId}/safety-events${query}`);
+export function listDispatcherSafetyEvents(userId: string, operatingCompanyId: string, includeVoided = false) {
+  const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  if (includeVoided) query.set("include_voided", "true");
+  return apiRequest<{ events: DispatcherSafetyEvent[] }>(`/api/v1/identity/users/${userId}/safety-events?${query}`);
+}
+
+export function listDispatcherSafetyEventsByRelatedEntity(
+  operatingCompanyId: string,
+  filter: { related_load_id: string } | { related_customer_id: string } | { related_driver_id: string }
+) {
+  const query = new URLSearchParams({ operating_company_id: operatingCompanyId, ...filter });
+  return apiRequest<{ events: DispatcherSafetyEvent[] }>(`/api/v1/mdata/dispatcher-safety-events?${query}`);
 }
 
 export function createDispatcherSafetyEvent(

@@ -60,6 +60,7 @@ import { CustomerEditModal, type CustomerEditFormValues } from "../components/cu
 import { FMCSAVerificationModal } from "../components/customers/FMCSAVerificationModal";
 import { FreeTimeDetentionEditor } from "../components/customers/FreeTimeDetentionEditor";
 import { CustomerRelationshipScore } from "../components/customers/CustomerRelationshipScore";
+import { DispatcherSafetyEventsReverseBlock } from "../components/safety/DispatcherSafetyEventsReverseBlock";
 import { DocumentsTab } from "../components/documents/DocumentsTab";
 import { TasksTab } from "../components/tasks/TasksTab";
 import { EntityAuditHistoryTab } from "../components/audit/EntityAuditHistoryTab";
@@ -1131,6 +1132,15 @@ export function CustomerDetailPage() {
         loading={relationshipScoreQuery.isLoading}
         error={relationshipScoreQuery.isError ? "Could not load relationship score." : null}
       />
+
+      {operatingCompanyId ? (
+        <DispatcherSafetyEventsReverseBlock
+          operatingCompanyId={operatingCompanyId}
+          related="customer"
+          entityId={id}
+          data-testid="customer-dispatcher-safety-events-reverse"
+        />
+      ) : null}
 
       <CustomerFinancialOverviewSection summary={financialSummaryQuery.data} loading={financialSummaryQuery.isLoading} error={financialSummaryQuery.isError} />
 
