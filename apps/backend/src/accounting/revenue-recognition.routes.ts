@@ -152,6 +152,9 @@ interface RevContractDetailRow {
   end_date_s: string | null;
   customer_uuid_s: string | null;
   created_at_s: string;
+  customer_name?: string | null;
+  source_invoice_display_id?: string | null;
+  source_load_number?: string | null;
 }
 
 /** Row shape returned by the DETAIL obligation query. */
@@ -278,8 +281,20 @@ async function registerRevenueRecognitionRoutes(app: FastifyInstance) {
           rc.start_date::text AS start_date_s,
           rc.end_date::text AS end_date_s,
           rc.customer_uuid::text AS customer_uuid_s,
-          rc.created_at::text AS created_at_s
+          rc.created_at::text AS created_at_s,
+          cust.customer_name AS customer_name,
+          inv.display_id AS source_invoice_display_id,
+          ld.load_number AS source_load_number
          FROM accounting.revenue_contracts rc
+         LEFT JOIN mdata.customers cust
+           ON cust.id = rc.customer_uuid
+          AND cust.operating_company_id = rc.operating_company_id
+         LEFT JOIN accounting.invoices inv
+           ON inv.id = rc.source_invoice_id
+          AND inv.operating_company_id = rc.operating_company_id
+         LEFT JOIN mdata.loads ld
+           ON ld.id = rc.source_load_id
+          AND ld.operating_company_id = rc.operating_company_id
          WHERE rc.id = $1 AND rc.operating_company_id = $2::uuid AND rc.is_active = true`,
         [pp.data.id, qp.data.operating_company_id]
       );
@@ -356,6 +371,9 @@ async function registerRevenueRecognitionRoutes(app: FastifyInstance) {
         source_load_id: c.source_load_id,
         source_invoice_id: c.source_invoice_id,
         customer_uuid: c.customer_uuid_s,
+        customer_name: c.customer_name ?? null,
+        source_invoice_display_id: c.source_invoice_display_id ?? null,
+        source_load_number: c.source_load_number ?? null,
         transaction_price_cents: price,
         currency_code: c.currency_code,
         contract_date: c.contract_date_s,

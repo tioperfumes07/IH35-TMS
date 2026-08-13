@@ -25,6 +25,8 @@ export type RevenueLeakageRow = {
   customer_id: string | null;
   gap: "missing_earn" | "earn_missing_bill";
   earn_journal_entry_id: string | null;
+  earn_journal_entry_memo?: string | null;
+  earn_journal_entry_date?: string | null;
   earn_amount_cents: number | null;
 };
 
@@ -94,6 +96,8 @@ export async function getRevenueLeakage(
     customer_id: string | null;
     gap: "missing_earn" | "earn_missing_bill";
     earn_journal_entry_id: string | null;
+    earn_journal_entry_memo: string | null;
+    earn_journal_entry_date: string | null;
     earn_amount_cents: string | null;
   }>(
     `
@@ -106,6 +110,8 @@ export async function getRevenueLeakage(
           l.customer_id::text AS customer_id,
           'missing_earn'::text AS gap,
           NULL::text AS earn_journal_entry_id,
+          NULL::text AS earn_journal_entry_memo,
+          NULL::text AS earn_journal_entry_date,
           NULL::text AS earn_amount_cents
         FROM mdata.loads l
         WHERE l.operating_company_id = $1::uuid
@@ -131,11 +137,16 @@ export async function getRevenueLeakage(
           l.customer_id::text AS customer_id,
           'earn_missing_bill'::text AS gap,
           e.journal_entry_id::text AS earn_journal_entry_id,
+          je.memo AS earn_journal_entry_memo,
+          je.entry_date::text AS earn_journal_entry_date,
           e.amount_cents::text AS earn_amount_cents
         FROM accounting.load_revenue_recognition_postings e
         JOIN mdata.loads l
           ON l.id = e.load_id
          AND l.operating_company_id = e.operating_company_id
+        LEFT JOIN accounting.journal_entries je
+          ON je.id = e.journal_entry_id
+         AND je.operating_company_id = e.operating_company_id
         WHERE e.operating_company_id = $1::uuid
           AND e.event = 'earn'
           AND coalesce(e.is_active, true) = true
@@ -172,6 +183,8 @@ export async function getRevenueLeakage(
       customer_id: r.customer_id,
       gap: r.gap,
       earn_journal_entry_id: r.earn_journal_entry_id,
+      earn_journal_entry_memo: r.earn_journal_entry_memo ?? null,
+      earn_journal_entry_date: r.earn_journal_entry_date ?? null,
       earn_amount_cents: r.earn_amount_cents != null ? Number(r.earn_amount_cents) : null,
     })),
   };
