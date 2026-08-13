@@ -600,6 +600,14 @@
       "modules": ["accounting"],
       "cols": ["connectivity"],
       "leafRe": "^(payments|void|customer)"
+    },
+    {
+      "task": "INV-LINK-PREFERRED-VENDOR-REVERSE",
+      "pr": "this PR",
+      "guard": "scripts/verify-vendor-preferred-parts-linkage.mjs",
+      "modules": ["inventory", "maintenance", "vendors"],
+      "cols": ["vendor", "connectivity", "reverse_link"],
+      "leafRe": "^(parts|parts_inventory|detail|profile)"
     }
   ]
 }

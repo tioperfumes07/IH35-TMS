@@ -1,5 +1,5 @@
 import { entityLabel } from "../../lib/entity-label";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { listMaintenanceParts, type MaintenancePartRow } from "../../api/maintenance";
 import { listVendors } from "../../api/mdata";
 import { useQuery } from "@tanstack/react-query";
@@ -12,6 +12,7 @@ import { InventoryModuleTabs } from "./InventoryModuleTabs";
 import { PartCreateDrawer } from "./PartCreateDrawer";
 import { PartEditDrawer } from "./PartEditDrawer";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { useSearchParams } from "react-router-dom";
 import { partNeedsReorder } from "../maintenance/parts-low-stock";
 import { displayPartInventoryCategory } from "./partInventoryCategories";
 import { CappedListNotice } from "../../components/CappedListNotice";
@@ -135,6 +136,7 @@ export function InventoryPartsStockPage() {
   const operatingCompanyId = selectedCompanyId ?? "";
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingPart, setEditingPart] = useState<MaintenancePartRow | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const vendorsQuery = useQuery({
     queryKey: ["mdata", "vendors", operatingCompanyId, "inventory-parts-stock"],
@@ -164,6 +166,12 @@ export function InventoryPartsStockPage() {
   });
 
   const rawParts = useMemo(() => partsQuery.data?.rawParts ?? [], [partsQuery.data?.rawParts]);
+  useEffect(() => {
+    const requestedPartId = searchParams.get("part_id");
+    if (!requestedPartId || rawParts.length === 0) return;
+    const requestedPart = rawParts.find((part) => part.id === requestedPartId);
+    if (requestedPart) setEditingPart(requestedPart);
+  }, [rawParts, searchParams]);
   const rows = useMemo(
     () => mapMaintenancePartsToInventoryRows(rawParts, vendorNameById),
     [rawParts, vendorNameById],
@@ -225,7 +233,14 @@ export function InventoryPartsStockPage() {
       />
       <PartEditDrawer
         part={editingPart}
-        onClose={() => setEditingPart(null)}
+        onClose={() => {
+          setEditingPart(null);
+          if (searchParams.has("part_id")) {
+            const next = new URLSearchParams(searchParams);
+            next.delete("part_id");
+            setSearchParams(next, { replace: true });
+          }
+        }}
         operatingCompanyId={operatingCompanyId}
       />
     </div>
