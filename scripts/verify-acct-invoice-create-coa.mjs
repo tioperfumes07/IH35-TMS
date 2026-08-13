@@ -27,6 +27,7 @@ function read(rel) {
 function checkInvoiceCreateCoa(files) {
   const byRel = Object.fromEntries(files.map(({ rel, source }) => [rel, source]));
   const base = byRel["apps/frontend/src/pages/accounting/modals/InvoiceTypeModalBase.tsx"] ?? "";
+  const detail = byRel["apps/frontend/src/pages/accounting/InvoiceDetailPage.tsx"] ?? "";
   const linesRoute = byRel["apps/backend/src/accounting/invoice-lines.routes.ts"] ?? "";
   const invoicesRoute = byRel["apps/backend/src/accounting/invoices.routes.ts"] ?? "";
   const fromLoad = byRel["apps/backend/src/accounting/from-load.ts"] ?? "";
@@ -53,6 +54,20 @@ function checkInvoiceCreateCoa(files) {
   if (!base.includes("addInvoiceLine")) violations.push("InvoiceTypeModalBase must persist line with income account at create");
   if (!base.includes("patchInvoice")) violations.push("InvoiceTypeModalBase must patch source_load_id when load linked");
   if (!base.includes('createKind="customer"')) violations.push("InvoiceTypeModalBase must keep customer ReferenceSelect");
+
+  // ACCT-F5052 — draft detail +Create Line must stamp income account_id (same bar as typed create).
+  if (!detail.includes('createKind="account"')) {
+    violations.push("InvoiceDetailPage must use ReferenceSelect createKind=account for detail +Create Line income CoA");
+  }
+  if (!detail.includes("listCatalogAccounts")) {
+    violations.push("InvoiceDetailPage must load income CoA via listCatalogAccounts");
+  }
+  if (!detail.includes("account_id: newLineAccountId") && !detail.includes("account_id: payload.account_id")) {
+    violations.push("InvoiceDetailPage addLineMutation must pass account_id to addInvoiceLine");
+  }
+  if (!detail.includes("INCOME_TYPES") && !detail.includes('"Income"')) {
+    violations.push("InvoiceDetailPage must filter income account types for detail line CoA");
+  }
 
   if (!linesRoute.includes("account_id: z.string().uuid().optional()")) {
     violations.push("invoice-lines create schema must accept optional account_id");
@@ -88,6 +103,10 @@ function loadRepositoryFixture() {
     {
       rel: "apps/frontend/src/pages/accounting/modals/InvoiceTypeModalBase.tsx",
       source: read("apps/frontend/src/pages/accounting/modals/InvoiceTypeModalBase.tsx"),
+    },
+    {
+      rel: "apps/frontend/src/pages/accounting/InvoiceDetailPage.tsx",
+      source: read("apps/frontend/src/pages/accounting/InvoiceDetailPage.tsx"),
     },
     {
       rel: "apps/backend/src/accounting/invoice-lines.routes.ts",
@@ -138,6 +157,15 @@ const goodFixture = [
     ].join("\n"),
   },
   {
+    rel: "apps/frontend/src/pages/accounting/InvoiceDetailPage.tsx",
+    source: [
+      `createKind="account"`,
+      `listCatalogAccounts`,
+      `account_id: payload.account_id`,
+      `INCOME_TYPES`,
+    ].join("\n"),
+  },
+  {
     rel: "apps/backend/src/accounting/invoice-lines.routes.ts",
     source: [`account_id: z.string().uuid().optional()`, `assertExplicitIncomeAccount`].join("\n"),
   },
@@ -162,6 +190,10 @@ const badFixture = [
   {
     rel: "apps/frontend/src/pages/accounting/modals/InvoiceTypeModalBase.tsx",
     source: `createKind="category"`,
+  },
+  {
+    rel: "apps/frontend/src/pages/accounting/InvoiceDetailPage.tsx",
+    source: `// no income CoA on detail add line`,
   },
   {
     rel: "apps/backend/src/accounting/invoice-lines.routes.ts",
