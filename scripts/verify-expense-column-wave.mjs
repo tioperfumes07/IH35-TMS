@@ -37,6 +37,26 @@ const CHECKS = [
     pattern: /searchParams\.get\("load_id"\)/,
   },
   {
+    name: "ACCT-F5048: ExpensesListPage reads trailer_id from the URL",
+    file: "apps/frontend/src/pages/accounting/ExpensesListPage.tsx",
+    pattern: /searchParams\.get\("trailer_id"\)/,
+  },
+  {
+    name: "ACCT-F5048: ExpensesListPage reads unit_id from the URL",
+    file: "apps/frontend/src/pages/accounting/ExpensesListPage.tsx",
+    pattern: /searchParams\.get\("unit_id"\)/,
+  },
+  {
+    name: "ACCT-F5048: ExpensesListPage Trailer column EntityLink",
+    file: "apps/frontend/src/pages/accounting/ExpensesListPage.tsx",
+    pattern: /kind="trailer"[\s\S]{0,80}?r\.trailer_id/,
+  },
+  {
+    name: "ACCT-F5048: ExpensesReverseSection Open Expenses keeps filter query",
+    file: "apps/frontend/src/components/accounting/ExpensesReverseSection.tsx",
+    pattern: /to=\{`\/accounting\/expenses\?\$\{filterKey\}=/,
+  },
+  {
     name: "banking: reconciliation.routes.ts counts matched_expense_id",
     file: "apps/backend/src/banking/reconciliation.routes.ts",
     pattern: /matched_settlement_id \|\| t\.matched_expense_id/,
@@ -80,7 +100,10 @@ export function checkAll(readFile) {
 
 if (process.argv.includes("--selftest")) {
   const GOOD_FIXTURES = {
-    "apps/frontend/src/pages/accounting/ExpensesListPage.tsx": 'searchParams.get("load_id")',
+    "apps/frontend/src/pages/accounting/ExpensesListPage.tsx":
+      'searchParams.get("load_id") searchParams.get("trailer_id") searchParams.get("unit_id") kind="trailer" id={r.trailer_id}',
+    "apps/frontend/src/components/accounting/ExpensesReverseSection.tsx":
+      "to={`/accounting/expenses?${filterKey}=",
     "apps/backend/src/banking/reconciliation.routes.ts": "t.matched_settlement_id || t.matched_expense_id",
     "apps/frontend/src/pages/banking/ReconciliationWorkspace.tsx": 'kind="expense" id={tx.matched_expense_id}',
     "apps/frontend/src/components/expenses/RecordExpenseForm.tsx": 'data-testid="record-expense-driver-picker"',

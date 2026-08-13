@@ -79,6 +79,12 @@ export function ExpensesListPage() {
   // EXPENSE column-wave: EarningsTab.tsx's new "Driver-attributed expenses" section links here with
   // ?driver_id=<id> — same unfiltered-list bug as load_id above, fixed the same way.
   const deepLinkDriverId = searchParams.get("driver_id");
+  // ACCT-F5048 — TrailerProfile / VehicleProfile / WO / Claim reverse "Open Expenses" must keep
+  // the money filter; API already accepts these (listExpensesQuerySchema) — only the list page ignored them.
+  const deepLinkTrailerId = searchParams.get("trailer_id");
+  const deepLinkUnitId = searchParams.get("unit_id");
+  const deepLinkWorkOrderId = searchParams.get("work_order_id");
+  const deepLinkInsuranceClaimId = searchParams.get("insurance_claim_id");
   const [status, setStatus] = useState<"" | ExpenseListStatus>("");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
@@ -104,7 +110,20 @@ export function ExpensesListPage() {
   }, [deepLinkExpenseId]);
 
   const query = useQuery({
-    queryKey: ["accounting", "expenses", companyId, status, fromDate, toDate, deepLinkLoadId, deepLinkDriverId],
+    queryKey: [
+      "accounting",
+      "expenses",
+      companyId,
+      status,
+      fromDate,
+      toDate,
+      deepLinkLoadId,
+      deepLinkDriverId,
+      deepLinkTrailerId,
+      deepLinkUnitId,
+      deepLinkWorkOrderId,
+      deepLinkInsuranceClaimId,
+    ],
     queryFn: () =>
       listExpenses(companyId, {
         status: status || undefined,
@@ -112,6 +131,10 @@ export function ExpensesListPage() {
         date_to: toDate || undefined,
         load_id: deepLinkLoadId || undefined,
         driver_id: deepLinkDriverId || undefined,
+        trailer_id: deepLinkTrailerId || undefined,
+        unit_id: deepLinkUnitId || undefined,
+        work_order_id: deepLinkWorkOrderId || undefined,
+        insurance_claim_id: deepLinkInsuranceClaimId || undefined,
         limit: 200,
       }).then((res) => res.rows),
     enabled: Boolean(companyId),
@@ -169,6 +192,18 @@ export function ExpensesListPage() {
       label: "Load",
       sortable: true,
       render: (r) => <EntityLink kind="load" id={r.load_id} label={entityLabel(r.load_number, r.load_id, "Load")} />,
+    },
+    {
+      key: "trailer_display_id",
+      label: "Trailer",
+      sortable: true,
+      sortValue: (r) => r.trailer_display_id ?? "",
+      render: (r) =>
+        r.trailer_id ? (
+          <EntityLink kind="trailer" id={r.trailer_id} label={entityLabel(r.trailer_display_id, r.trailer_id, "Trailer")} />
+        ) : (
+          <span className="text-gray-400">—</span>
+        ),
     },
     {
       key: "linked_work_order_uuid",

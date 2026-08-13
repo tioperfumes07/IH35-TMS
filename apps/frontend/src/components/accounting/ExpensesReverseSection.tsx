@@ -54,7 +54,10 @@ export function ExpensesReverseSection({
           Expenses
           {rows.length > 0 ? <span className="ml-2 text-xs font-normal text-gray-600">({rows.length})</span> : null}
         </h3>
-        <Link className="text-xs font-semibold text-slate-700 underline" to="/accounting/expenses">
+        <Link
+          className="text-xs font-semibold text-slate-700 underline"
+          to={`/accounting/expenses?${filterKey}=${encodeURIComponent(filterValue)}`}
+        >
           Open Expenses
         </Link>
       </div>
