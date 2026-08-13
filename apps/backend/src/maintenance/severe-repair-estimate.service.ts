@@ -31,7 +31,7 @@ type SevereEstimateRow = {
   days_oos: number;
 };
 
-export async function listOpenEstimates(client: PoolClient, operating_company_id: string) {
+export async function listOpenEstimates(client: PoolClient, operating_company_id: string, unit_id?: string) {
   const res = await client.query<SevereEstimateRow>(
     `
       SELECT
@@ -61,9 +61,10 @@ export async function listOpenEstimates(client: PoolClient, operating_company_id
                                AND d.operating_company_id = e.operating_company_id
       WHERE e.operating_company_id = $1::uuid
         AND e.estimate_status IN ('open', 'awaiting_approval', 'approved')
+        AND ($2::uuid IS NULL OR e.unit_id = $2::uuid)
       ORDER BY e.estimated_total_cents DESC
     `,
-    [operating_company_id]
+    [operating_company_id, unit_id ?? null]
   );
   return res.rows;
 }

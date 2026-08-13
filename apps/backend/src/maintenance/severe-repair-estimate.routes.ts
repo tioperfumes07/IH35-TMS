@@ -16,6 +16,7 @@ import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
+  unit_id: z.string().uuid().optional(),
 });
 
 const estimateIdSchema = z.object({ id: z.string().uuid() });
@@ -62,7 +63,7 @@ export async function registerMaintenanceSevereRepairEstimateRoutes(app: Fastify
 
     const rows = await withCurrentUser(user.uuid, async (client) => {
       await setScopedCompanyContext(client, user.uuid, query.data.operating_company_id);
-      return listOpenEstimates(client, query.data.operating_company_id);
+      return listOpenEstimates(client, query.data.operating_company_id, query.data.unit_id);
     });
     return reply.send({ data: rows });
   });
