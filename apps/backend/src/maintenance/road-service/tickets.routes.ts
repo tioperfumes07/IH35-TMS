@@ -36,6 +36,7 @@ const listQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
   status: statusSchema.optional(),
   unit_id: z.string().uuid().optional(),
+  driver_id: z.string().uuid().optional(),
   date_from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   date_to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   limit: z.coerce.number().int().min(1).max(200).default(50),
@@ -84,6 +85,10 @@ export async function registerRoadServiceTicketRoutes(app: FastifyInstance) {
       if (query.data.unit_id) {
         values.push(query.data.unit_id);
         filters.push(`t.unit_id = $${values.length}::uuid`);
+      }
+      if (query.data.driver_id) {
+        values.push(query.data.driver_id);
+        filters.push(`t.driver_id = $${values.length}::uuid`);
       }
       if (query.data.date_from) {
         values.push(query.data.date_from);

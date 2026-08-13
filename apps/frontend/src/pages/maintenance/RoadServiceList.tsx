@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { Button } from "../../components/Button";
 import { StatusBadge } from "../../components/StatusBadge";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
@@ -35,6 +35,8 @@ type Props = {
 };
 
 export function RoadServiceList({ operatingCompanyId }: Props) {
+  const [searchParams] = useSearchParams();
+  const highlightedTicketId = searchParams.get("ticket_id")?.trim() || "";
   const [statusFilter, setStatusFilter] = useState<RoadServiceStatus | "all">("all");
   const [search, setSearch] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
@@ -162,6 +164,7 @@ export function RoadServiceList({ operatingCompanyId }: Props) {
         columns={columns}
         rows={rows}
         rowKey={(row) => row.id}
+        rowClassName={(row) => (highlightedTicketId === row.id ? "bg-slate-100 ring-1 ring-slate-400" : "")}
         loading={isLoading}
         emptyText="No roadside tickets found."
         storageKey="maint-road-service"
