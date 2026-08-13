@@ -30,6 +30,7 @@ export type LegalMatterFormState = {
   insurance_lawsuit_id: string;
   related_driver_id: string;
   unit_id: string;
+  equipment_id: string;
 };
 
 export const EMPTY_LEGAL_MATTER_FORM: LegalMatterFormState = {
@@ -56,6 +57,7 @@ export const EMPTY_LEGAL_MATTER_FORM: LegalMatterFormState = {
   insurance_lawsuit_id: "",
   related_driver_id: "",
   unit_id: "",
+  equipment_id: "",
 };
 
 export function matterRowToFormState(matter: Record<string, unknown>): LegalMatterFormState {
@@ -91,6 +93,7 @@ export function matterRowToFormState(matter: Record<string, unknown>): LegalMatt
     insurance_lawsuit_id: matter.insurance_lawsuit_id ? String(matter.insurance_lawsuit_id) : "",
     related_driver_id: matter.related_driver_id ? String(matter.related_driver_id) : "",
     unit_id: matter.unit_id ? String(matter.unit_id) : "",
+    equipment_id: matter.equipment_id ? String(matter.equipment_id) : "",
   };
 }
 
@@ -143,6 +146,7 @@ export function formStateToUpdatePayload(form: LegalMatterFormState): Record<str
     insurance_lawsuit_id: optionalUuidOrNull(form.insurance_lawsuit_id),
     related_driver_id: optionalUuidOrNull(form.related_driver_id),
     unit_id: optionalUuidOrNull(form.unit_id),
+    equipment_id: optionalUuidOrNull(form.equipment_id),
   };
 }
 
@@ -325,6 +329,23 @@ export function LegalMatterFormFields({ form, setForm, mode, operatingCompanyId 
             className="w-full"
             dataField="legal-matter-unit"
             dataTestId="legal-matter-unit"
+          />
+        </div>
+      </label>
+
+      <label className="text-xs text-gray-600" data-testid="legal-matter-trailer-picker">
+        Trailer
+        <div className="mt-1">
+          <EntityPicker
+            kind="trailer"
+            operatingCompanyId={operatingCompanyId}
+            value={form.equipment_id || null}
+            onChange={(next) => setForm((f) => ({ ...f, equipment_id: next ?? "" }))}
+            allowCreate={false}
+            placeholder="None"
+            className="w-full"
+            dataField="legal-matter-trailer"
+            dataTestId="legal-matter-trailer"
           />
         </div>
       </label>

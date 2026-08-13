@@ -328,6 +328,18 @@ export function LegalMatterDetailPage() {
                   )}
                 </div>
                 <div>
+                  <strong>Trailer:</strong>{" "}
+                  {matter?.equipment_id ? (
+                    <EntityLink
+                      kind="trailer"
+                      id={String(matter.equipment_id)}
+                      label={entityLabel(matter.equipment_number, matter.equipment_id, "Trailer")}
+                    />
+                  ) : (
+                    "—"
+                  )}
+                </div>
+                <div>
                   <strong>Incident:</strong>{" "}
                   {matter?.incident_id ? (
                     <EntityLink

@@ -122,6 +122,28 @@ async function setOperatingCompany(client: QueryableClient, operatingCompanyId: 
   await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
 }
 
+async function assertEquipmentInCompany(
+  client: QueryableClient,
+  equipmentId: string | null | undefined,
+  operatingCompanyId: string,
+) {
+  if (!equipmentId) return;
+  const result = await client.query(
+    `SELECT id
+       FROM mdata.equipment
+      WHERE id = $1::uuid
+        AND COALESCE(currently_leased_to_company_id, owner_company_id) = $2::uuid
+        AND deactivated_at IS NULL
+      LIMIT 1`,
+    [equipmentId, operatingCompanyId],
+  );
+  if (!result.rows[0]) {
+    throw Object.assign(new Error("linked_entity_not_in_operating_company"), {
+      code: "linked_entity_not_in_operating_company",
+    });
+  }
+}
+
 function severityRankSql() {
   return `CASE m.severity
     WHEN 'critical' THEN 1
@@ -233,6 +255,7 @@ export async function listMatters(
   const displaySelect = `
       NULLIF(CONCAT_WS(' ', d.first_name, d.last_name), '') AS related_driver_name,
       u.unit_number                                          AS unit_number,
+      eq.equipment_number                                    AS equipment_number,
       ic.claim_number                                        AS insurance_claim_number,
       lw.case_number                                         AS insurance_lawsuit_case_number`;
   // ENTITY PREDICATE ON THE JOIN ITSELF (verify-mdata-entity-scope). The matter is scoped by
@@ -246,6 +269,8 @@ export async function listMatters(
                                 AND d.operating_company_id = m.operating_company_id
     LEFT JOIN mdata.units     u  ON u.id  = m.unit_id
                                 AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = m.operating_company_id
+    LEFT JOIN mdata.equipment eq ON eq.id = m.equipment_id
+                                AND COALESCE(eq.currently_leased_to_company_id, eq.owner_company_id) = m.operating_company_id
     LEFT JOIN insurance.claim ic ON ic.id = m.insurance_claim_id
     LEFT JOIN insurance.lawsuit lw ON lw.id = m.insurance_lawsuit_id`;
 
@@ -296,6 +321,7 @@ export async function getMatter(
       SELECT m.*,
              NULLIF(CONCAT_WS(' ', d.first_name, d.last_name), '') AS related_driver_name,
              u.unit_number                                          AS unit_number,
+             eq.equipment_number                                    AS equipment_number,
              ic.claim_number                                        AS insurance_claim_number,
                     lw.case_number                                         AS insurance_lawsuit_case_number
       FROM legal.matters m
@@ -307,6 +333,8 @@ export async function getMatter(
                                   AND d.operating_company_id = m.operating_company_id
       LEFT JOIN mdata.units     u  ON u.id  = m.unit_id
                                   AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = m.operating_company_id
+      LEFT JOIN mdata.equipment eq ON eq.id = m.equipment_id
+                                  AND COALESCE(eq.currently_leased_to_company_id, eq.owner_company_id) = m.operating_company_id
       LEFT JOIN insurance.claim ic ON ic.id = m.insurance_claim_id
         LEFT JOIN insurance.lawsuit lw ON lw.id = m.insurance_lawsuit_id
       WHERE m.operating_company_id = $1::uuid AND m.id = $2
@@ -371,6 +399,7 @@ export async function createMatter(
 ) {
   const input = matterCreateSchema.parse(args.body);
   await setOperatingCompany(client, args.operatingCompanyId);
+  await assertEquipmentInCompany(client, input.equipment_id, args.operatingCompanyId);
   const ins = await client.query(
     `
       INSERT INTO legal.matters (
@@ -400,6 +429,7 @@ export async function createMatter(
         insurance_lawsuit_id,
         incident_id,
         unit_id,
+        equipment_id,
         created_by_user_id,
         updated_by_user_id
       ) VALUES (
@@ -408,8 +438,8 @@ export async function createMatter(
         COALESCE($5, 'medium'),
         COALESCE($6, 'defendant'),
         $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22,
-        $23, $24, $25, $26,
-        $27, $27
+        $23, $24, $25, $26, $27,
+        $28, $28
       )
       RETURNING *
     `,
@@ -440,6 +470,7 @@ export async function createMatter(
       input.insurance_lawsuit_id ?? null,
       input.incident_id ?? null,
       input.unit_id ?? null,
+      input.equipment_id ?? null,
       args.actorUserId,
     ]
   );
@@ -469,6 +500,7 @@ export async function updateMatter(
 ) {
   const input = matterUpdateSchema.parse(args.body);
   await setOperatingCompany(client, args.operatingCompanyId);
+  await assertEquipmentInCompany(client, input.equipment_id, args.operatingCompanyId);
   const fields: string[] = [];
   const values: unknown[] = [];
   let i = 1;
