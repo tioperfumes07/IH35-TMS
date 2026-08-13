@@ -1,4 +1,10 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["accounting"],"cols":["expense"],"leafRe":"^accounting\\.parity\\.(expense_create_page|expenses_list_page)$","task":"WAVE-C-expense-accounting-parity","vertical":"column-wave"} */
+/** @matrix-built {"modules":["home"],"cols":["expense"],"leafRe":"^role\\.accountant$","task":"WAVE-C-expense-home-record","vertical":"column-wave"} */
+/** @matrix-built {"modules":["insurance"],"cols":["expense"],"leafRe":"^claims\\.create$","task":"WAVE-C-expense-insurance-claim","vertical":"column-wave"} */
+/** @matrix-built {"modules":["maintenance"],"cols":["expense"],"leafRe":"^maintenance\\.modal\\.create_expense$","task":"WAVE-C-expense-maintenance-create","vertical":"column-wave"} */
+/** @matrix-built {"modules":["fuel"],"cols":["expense"],"leafRe":"^expense_mapping$","task":"WAVE-C-expense-fuel-mapping","vertical":"column-wave"} */
+/** @matrix-built {"modules":["reports"],"cols":["expense"],"leafRe":"^report\\.management$","task":"WAVE-C-expense-management-report","vertical":"column-wave"} */
 /** Non-posting expense FE contract. This guard never validates or changes GL math. */
 import fs from "node:fs";
 import path from "node:path";
@@ -18,6 +24,7 @@ export function collectExpenseLeaves(read = fs.readFileSync, readDir = fs.readdi
   return leaves;
 }
 const contracts = [
+  ["apps/frontend/src/pages/accounting/ExpensesListPage.tsx", /label: "Vendor"[\s\S]*kind="vendor"[\s\S]*label: "JE"[\s\S]*kind="journal_entry"/],
   ["apps/frontend/src/pages/accounting/MaintenanceShopHubPage.tsx", /<EntityLink kind="expense" id=\{row\.financial_id\}/],
   ["apps/frontend/src/pages/banking/ReconciliationWorkspace.tsx", /<EntityLink kind="expense" id=\{tx\.matched_expense_id\}/],
   ["apps/frontend/src/pages/home/QuickActionsBar.tsx", /<RecordExpenseModal/],
@@ -36,9 +43,11 @@ const composed = [
 export function auditExpenseColumn(sources, leaves) {
   const failures = [];
   const p10 = leaves.filter((leaf) => P10.has(leaf.module));
-  if (p10.length < 15) failures.push(`priority-10 expense inventory unexpectedly shrank to ${p10.length}`);
+  // ACCT-F5083 removed four proven-false P10 cells (Book/Reserve/Detention/Relay); 13 is the honest floor.
+  if (p10.length < 13) failures.push(`priority-10 expense inventory unexpectedly shrank to ${p10.length}`);
   if (leaves.length < 74) failures.push(`all-module expense inventory unexpectedly shrank to ${leaves.length}`);
-  if (new Set(leaves.map((leaf) => leaf.module)).size < 14) failures.push("expense module inventory unexpectedly shrank");
+  // Dispatch left the expense inventory once its three navigation-only cells were removed.
+  if (new Set(leaves.map((leaf) => leaf.module)).size < 13) failures.push("expense module inventory unexpectedly shrank");
   failures.push(...auditConnectivity(sources.routes, leaves, 0));
   for (const [file, pattern] of contracts) if (!pattern.test(sources.files[file] || "")) failures.push(`${file}: non-posting expense FE contract missing`);
   return failures;
