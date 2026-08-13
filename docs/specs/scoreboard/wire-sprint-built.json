@@ -688,6 +688,14 @@
       "modules": ["dispatch", "drivers", "compliance"],
       "cols": ["driver", "connectivity", "reverse_link", "picker_law"],
       "leafRe": "^(border|crossing|wizard|history|driver|profile|create)"
+    },
+    {
+      "task": "BORDER-CROSSING-LOAD-CREATE-REVERSE",
+      "pr": "this PR",
+      "guard": "scripts/verify-border-crossing-load-linkage.mjs",
+      "modules": ["dispatch", "compliance"],
+      "cols": ["load", "connectivity", "reverse_link", "picker_law"],
+      "leafRe": "^(border|crossing|wizard|history|load|drawer|customs|create)"
     }
   ]
 }
