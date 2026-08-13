@@ -19,6 +19,7 @@ import { useToast } from "../../components/Toast";
 import { formatDateTimeUS } from "../../lib/formatDate";
 import { EntityPicker } from "../../components/parity/EntityPicker";
 import { entityLabel } from "../../lib/entity-label";
+import { EntityLink } from "../../components/shared/EntityLink";
 
 export type CoiTabVariant = "list-preview" | "full-page";
 
@@ -307,7 +308,12 @@ export function CoiTab({ customerId, customerName, operatingCompanyId, variant }
                 {
                   key: "requested_by",
                   label: "Requester User",
-                  render: (request) => entityLabel(null, request.requested_by, "User"),
+                  render: (request) =>
+                    request.requested_by ? (
+                      <EntityLink kind="user" id={request.requested_by} label={entityLabel(null, request.requested_by, "User")} />
+                    ) : (
+                      entityLabel(null, request.requested_by, "User")
+                    ),
                 },
                 {
                   key: "policy_id",
