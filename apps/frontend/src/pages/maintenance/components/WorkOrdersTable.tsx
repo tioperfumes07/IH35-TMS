@@ -235,6 +235,7 @@ export function WorkOrdersTable({
                     operatingCompanyId={operatingCompanyId}
                     value={staged.draft.externalVendorFilter || null}
                     onChange={(next) => staged.setDraft({ ...staged.draft, externalVendorFilter: next ?? "" })}
+                    allowCreate={false}
                     placeholder="All external vendors"
                     className="min-h-12 w-full sm:h-9 sm:min-h-0"
                   />
