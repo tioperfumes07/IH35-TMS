@@ -100,7 +100,7 @@ export function DotInspectionsPage({ operatingCompanyId }: Props) {
       ) : (
         <ParityTable<DotInspectionRow>
           columns={columns}
-          rows={query.data?.inspections ?? []}
+          rows={query.data?.dot_inspections ?? []}
           rowKey={(row) => String(row.id)}
           rowClassName={(row) =>
             deepLinkInspectionId && String(row.id) === deepLinkInspectionId ? "bg-slate-100 ring-1 ring-slate-400" : ""
