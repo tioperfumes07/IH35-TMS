@@ -28,3 +28,5 @@
 2026-08-13T10:40CT | Cursor | #6442 ACCT-F5048 done — expense/fuel reverse Open keeps money filters + Trailer cols | NEXT=money econ/linkage (not scoreboard Required)
 2026-08-13T10:45CT | Cursor | #6444 ACCT-F5049 done — bills/invoices reverse Open keeps money filters | NEXT=money econ/linkage
 2026-08-13T10:55CT | Cursor | #6446 ACCT-F5050 done — Invoices ▾ promoted to Accounting top row (peer Bills/Expenses/Bill payment) | NEXT=money
+- 2026-08-13T19:13Z Cursor | SHIPPED VERTICAL-MONEY-FACTORING-GL-JE (PR#6532) detail Built + chrome honesty | Live=BLOCKED | NEXT=expense/ap_bill/liability broad-tag honesty OR Live gate
+2026-08-13T19:45Z Cursor | shipping VERTICAL-LOAD-PRIORITY14 | Live=BLOCKED | NEXT=qbo_chrome/picker + Codex reverse_link
