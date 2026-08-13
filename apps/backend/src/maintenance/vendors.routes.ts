@@ -11,6 +11,7 @@ const VENDOR_CODE_REGEX = /^[A-Z][A-Z0-9-]+$/;
 const querySchema = z.object({
   operating_company_id: z.string().uuid(),
   search: z.string().trim().optional(),
+  mdata_vendor_id: z.string().uuid().optional(),
   include_archived: z.coerce.boolean().optional().default(false),
 });
 
@@ -311,6 +312,10 @@ export async function registerMaintenanceVendorsRoutes(app: FastifyInstance) {
       const values: unknown[] = [parsed.data.operating_company_id];
       const filters = ["operating_company_id = $1::uuid"];
       if (!parsed.data.include_archived) filters.push("is_active = true");
+      if (parsed.data.mdata_vendor_id) {
+        values.push(parsed.data.mdata_vendor_id);
+        filters.push(`linked_vendor_id = $${values.length}::uuid`);
+      }
       if (parsed.data.search) {
         values.push(`%${parsed.data.search}%`);
         const idx = values.length;
