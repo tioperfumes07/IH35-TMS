@@ -7,7 +7,6 @@ import {
   type TrainingProgramCategory,
   type TrainingProgramFrequency,
 } from "../../api/safety";
-import { listDrivers } from "../../api/mdata";
 import { Button } from "../../components/Button";
 import { Modal } from "../../components/Modal";
 import { EntityPicker } from "../../components/parity/EntityPicker";
@@ -15,7 +14,7 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
-import { CappedListNotice } from "../../components/CappedListNotice";
+import { useDriverLabels } from "../../hooks/useDriverLabels";
 
 type Props = {
   operatingCompanyId: string;
@@ -65,22 +64,7 @@ export function TrainingProgramsPage({ operatingCompanyId }: Props) {
     enabled: Boolean(operatingCompanyId),
   });
 
-  // SAF-B24-residual: assignDriverIds is bare uuids from EntityPicker's onChange (id only, no
-  // label), so the "Assign Drivers" chip list rendered an unlabeled EntityLink — the raw uuid was
-  // the visible link text. Same fix as SafetyMeetingsPage's required-attendees chip list.
-  const driversQuery = useQuery({
-    queryKey: ["mdata", "drivers", "all", operatingCompanyId],
-    queryFn: () => listDrivers({ operating_company_id: operatingCompanyId, include_system: true, limit: 500 }),
-    enabled: Boolean(operatingCompanyId),
-  });
-  const driverNameById = useMemo(() => {
-    const map = new Map<string, string>();
-    for (const driver of driversQuery.data?.drivers ?? []) {
-      const name = [driver.first_name, driver.last_name].filter(Boolean).join(" ").trim();
-      if (name) map.set(driver.id, name);
-    }
-    return map;
-  }, [driversQuery.data]);
+  const { byId: driverNameById } = useDriverLabels(operatingCompanyId, assignDriverIds);
 
   const addAssignDriver = (driverId: string | null) => {
     if (!driverId) {
@@ -325,13 +309,6 @@ export function TrainingProgramsPage({ operatingCompanyId }: Props) {
               dataTestId="training-program-driver-picker"
             />
           </div>
-          <CappedListNotice
-            shown={(driversQuery.data?.drivers ?? []).length}
-            limit={500}
-            total={driversQuery.data?.total}
-            hint="Assigned-driver name lookup may be incomplete — use the picker search for drivers beyond the first page."
-            className="text-xs text-slate-600"
-          />
           {assignDriverIds.length > 0 ? (
             <ul className="max-h-48 space-y-1 overflow-y-auto rounded-sm border border-gray-200 p-2">
               {assignDriverIds.map((driverId) => (

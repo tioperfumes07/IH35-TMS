@@ -34,6 +34,18 @@ export function listDrivers(params: {
   }));
 }
 
+export type DriverLabel = { id: string; label: string };
+
+/** Resolve persisted driver FKs exactly; unlike a roster page this never drops older/archived IDs. */
+export function getDriverLabels(operatingCompanyId: string, ids: string[]) {
+  const uniqueIds = [...new Set(ids.filter(Boolean))];
+  if (uniqueIds.length === 0 || uniqueIds.length > 200) {
+    throw new Error("getDriverLabels requires 1–200 unique driver IDs");
+  }
+  const query = new URLSearchParams({ operating_company_id: operatingCompanyId, ids: uniqueIds.join(",") });
+  return apiRequest<{ labels: DriverLabel[] }>(`/api/v1/mdata/driver-labels?${query.toString()}`);
+}
+
 /** Canonical assigned loads reverse for a driver (primary OR secondary). Not the assignment-change log. */
 export type DriverAssignedLoad = {
   id: string;

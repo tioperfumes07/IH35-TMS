@@ -8,7 +8,6 @@ import {
   syncSafetyMeetingAttendance,
   type SafetyMeetingRow,
 } from "../../api/safety";
-import { listDrivers } from "../../api/mdata";
 import { Button } from "../../components/Button";
 import { Modal } from "../../components/Modal";
 import { EntityPicker } from "../../components/parity/EntityPicker";
@@ -17,7 +16,7 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { companyToday } from "../../lib/businessDate";
-import { CappedListNotice } from "../../components/CappedListNotice";
+import { useDriverLabels } from "../../hooks/useDriverLabels";
 
 type Props = {
   operatingCompanyId: string;
@@ -37,23 +36,6 @@ export function SafetyMeetingsPage({ operatingCompanyId }: Props) {
     queryFn: () => listSafetyMeetings(operatingCompanyId),
     enabled: Boolean(operatingCompanyId),
   });
-
-  // SAF-B24-residual: required_attendees / attendance keys are bare driver uuids (no name column —
-  // they live in an event_log description JSON blob, not a joined table). Without this lookup every
-  // EntityLink below rendered the raw uuid as its own label.
-  const driversQuery = useQuery({
-    queryKey: ["mdata", "drivers", "all", operatingCompanyId],
-    queryFn: () => listDrivers({ operating_company_id: operatingCompanyId, include_system: true, limit: 500 }),
-    enabled: Boolean(operatingCompanyId),
-  });
-  const driverNameById = useMemo(() => {
-    const map = new Map<string, string>();
-    for (const driver of driversQuery.data?.drivers ?? []) {
-      const name = [driver.first_name, driver.last_name].filter(Boolean).join(" ").trim();
-      if (name) map.set(driver.id, name);
-    }
-    return map;
-  }, [driversQuery.data]);
 
   const createMutation = useMutation({
     mutationFn: () =>
@@ -85,6 +67,13 @@ export function SafetyMeetingsPage({ operatingCompanyId }: Props) {
   });
 
   const meetings = meetingsQuery.data?.meetings ?? [];
+  const linkedDriverIds = useMemo(
+    () => [...new Set([...meetings.flatMap((meeting) => meeting.required_attendees ?? []), ...requiredAttendees])],
+    [meetings, requiredAttendees],
+  );
+  // Reverse labels resolve the exact persisted FKs, including archived drivers; a paged picker
+  // roster is never used as a historical-link resolver.
+  const { byId: driverNameById } = useDriverLabels(operatingCompanyId, linkedDriverIds);
 
   const addAttendee = (driverId: string | null) => {
     if (!driverId) {
@@ -246,13 +235,6 @@ export function SafetyMeetingsPage({ operatingCompanyId }: Props) {
                 dataTestId="safety-meeting-driver-picker"
               />
             </div>
-            <CappedListNotice
-              shown={(driversQuery.data?.drivers ?? []).length}
-              limit={500}
-              total={driversQuery.data?.total}
-              hint="Attendee name lookup may be incomplete — use the picker search for drivers beyond the first page."
-              className="mt-1 text-xs text-slate-600"
-            />
             {requiredAttendees.length > 0 ? (
               <ul className="mt-2 space-y-1 rounded-sm border border-gray-200 p-2">
                 {requiredAttendees.map((driverId) => (
