@@ -744,6 +744,14 @@
       "modules": ["drivers", "fleet", "dispatch"],
       "cols": ["driver", "unit", "connectivity", "reverse_link", "picker_law"],
       "leafRe": "^(default|truck|assignment|driver|unit|profile|detail)"
+    },
+    {
+      "task": "TIRE-PROGRAM-UNIT-REVERSE",
+      "pr": "this PR",
+      "guard": "scripts/verify-tire-program-unit-reverse.mjs",
+      "modules": ["maintenance", "fleet", "inventory"],
+      "cols": ["unit", "connectivity", "reverse_link", "picker_law"],
+      "leafRe": "^(tire|mount|unit|profile|detail|inventory|create)"
     }
   ]
 }

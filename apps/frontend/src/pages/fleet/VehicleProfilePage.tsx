@@ -49,6 +49,7 @@ import { UnitPmSchedulesReverseSection } from "../../components/maintenance/Unit
 import { UnitBorderCrossingsReverseSection } from "../../components/dispatch/UnitBorderCrossingsReverseSection";
 import { UnitInTransitIssuesReverseSection } from "../../components/dispatch/UnitInTransitIssuesReverseSection";
 import { UnitDefaultDriversReverseSection } from "../../components/fleet/UnitDefaultDriversReverseSection";
+import { UnitTireProgramReverseSection } from "../../components/maintenance/UnitTireProgramReverseSection";
 import { LinkedBankTransactionsPanel } from "../../components/banking/LinkedBankTransactionsPanel";
 
 export type UnitProfileAggregate = {
@@ -395,6 +396,9 @@ export function VehicleProfilePage() {
           </div>
           <div data-testid="vp-section-10l-default-drivers">
             <UnitDefaultDriversReverseSection operatingCompanyId={companyId} unitId={id} />
+          </div>
+          <div data-testid="vp-section-10m-tire-program">
+            <UnitTireProgramReverseSection operatingCompanyId={companyId} unitId={id} />
           </div>
           <div data-testid="vp-section-11-action-bar">
             <ActionBar
