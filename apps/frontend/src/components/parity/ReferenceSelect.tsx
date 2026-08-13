@@ -21,7 +21,7 @@
  *   - "catalog"            every config-driven catalog → CatalogQuickCreateDrawer (generic, no new
  *                          component per catalog; the config supplies fields + the create call)
  */
-import { useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Combobox, type ComboboxOption } from "../Combobox";
 import { QuickCreateEntityModal, type QuickCreateKind } from "../forms/shared/QuickCreateEntityModal";
 import { InlineCreateDrawer, type InlineCreateKind } from "./InlineCreateDrawer";
@@ -105,6 +105,19 @@ export function ReferenceSelect({
 }: ReferenceSelectProps) {
   const [createOpen, setCreateOpen] = useState(false);
   const [created, setCreated] = useState<ReferenceOption[]>([]);
+  const rosterScope = useRef({ createKind, operatingCompanyId });
+
+  // The server-backed options refetch when the owner changes company, but locally created rows do
+  // not belong to that cache. Bind them—and the committed FK—to the same kind+company scope so a
+  // vendor/customer/catalog row created under one company cannot leak into another company's form.
+  useEffect(() => {
+    const previous = rosterScope.current;
+    if (previous.createKind === createKind && previous.operatingCompanyId === operatingCompanyId) return;
+    rosterScope.current = { createKind, operatingCompanyId };
+    setCreated([]);
+    setCreateOpen(false);
+    if (value) onChange(null);
+  }, [createKind, onChange, operatingCompanyId, value]);
 
   // The single dispatch decision, read from config instead of a hardcoded Set in this file.
   const config = getCatalogPickerConfig(createKind as CatalogPickerKey);
