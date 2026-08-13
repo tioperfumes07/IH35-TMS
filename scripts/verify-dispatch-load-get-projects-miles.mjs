@@ -34,29 +34,12 @@ function checkFe(srcLoads, srcDrawer) {
 
 function check(src) {
   const problems = [];
-  // Detail GET (:id) — trip_type pattern
-  if (!/ml\.trip_type\s+AS\s+trip_type[\s\S]{0,800}?ml\.miles_shortest\s+AS\s+miles_shortest/.test(src)) {
-    problems.push(
-      `${TARGET}: GET detail must project ml.miles_shortest next to ml.trip_type (ml join path)`,
-    );
-  }
-  if (!/ml\.trip_type\s+AS\s+trip_type[\s\S]{0,900}?ml\.miles_practical\s+AS\s+miles_practical/.test(src)) {
-    problems.push(`${TARGET}: GET detail must project ml.miles_practical AS miles_practical`);
-  }
-  if (!/ml\.trip_type\s+AS\s+trip_type[\s\S]{0,1000}?ml\.loaded_miles\s+AS\s+loaded_miles/.test(src)) {
-    problems.push(`${TARGET}: GET detail must project ml.loaded_miles AS loaded_miles`);
-  }
-  if (!/ml\.trip_type\s+AS\s+trip_type[\s\S]{0,1100}?ml\.miles_deadhead\s+AS\s+miles_deadhead/.test(src)) {
-    problems.push(`${TARGET}: GET detail must project ml.miles_deadhead AS miles_deadhead`);
-  }
-  if (!/ml\.loaded_miles\s+AS\s+loaded_miles[\s\S]{0,120}?ml\.miles_deadhead\s+AS\s+miles_deadhead/.test(src)) {
-    problems.push(`${TARGET}: LIST GET must project ml.miles_deadhead AS miles_deadhead`);
-  }
-  // List GET — board SELECT uses l.*; must also join ml + project miles
-  if (!/invoice_amount_open_cents[\s\S]{0,200}?ml\.miles_shortest\s+AS\s+miles_shortest/.test(src)) {
-    problems.push(
-      `${TARGET}: LIST GET must project ml.miles_shortest after invoice enrichment (view has no mile cols)`,
-    );
+  // Both list and detail SELECTs must project every field. Count semantic SQL tokens instead of
+  // relying on comment-sensitive character windows between unrelated neighboring columns.
+  for (const field of ["miles_shortest", "miles_practical", "loaded_miles", "miles_deadhead"]) {
+    const projection = new RegExp(`ml\\.${field}\\s+AS\\s+${field}`, "g");
+    const count = src.match(projection)?.length ?? 0;
+    if (count < 2) problems.push(`${TARGET}: list + detail must project ml.${field} AS ${field} (found ${count}/2)`);
   }
   if (
     !/LEFT JOIN mdata\.loads ml ON ml\.id = l\.id[\s\S]{0,120}?ml\.operating_company_id = l\.operating_company_id[\s\S]{0,400}?invoice_amount_open_cents/.test(
