@@ -5,6 +5,7 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { addInvoiceLine, deleteInvoiceLine, getAccountingSourceLineage, getInvoice, patchInvoiceLine, sendInvoice, voidInvoice, type InvoiceLine } from "../../api/accounting";
+import { listCatalogAccounts } from "../../api/catalog-accounts";
 import { resolveApiUrl } from "../../api/client";
 import { Button } from "../../components/Button";
 import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
@@ -17,9 +18,12 @@ import { useToast } from "../../components/Toast";
 import { RecordPaymentModal } from "./RecordPaymentModal";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { MoneyInput } from "../../components/forms/MoneyInput";
+import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useUrlSort } from "../../hooks/useUrlSort";
 import { userFacingApiError } from "../../lib/api-error-message";
+
+const INCOME_TYPES = ["Income", "OtherIncome"];
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -50,6 +54,8 @@ export function InvoiceDetailPage() {
   // M-1: inline QBO money entry for invoice lines (replaces window.prompt). unit_amount stays CENTS.
   const [newLineDesc, setNewLineDesc] = useState("");
   const [newLineCents, setNewLineCents] = useState<number | null>(null);
+  // ACCT-F5052 — detail +Create Line must stamp income account_id (same bar as typed create wizard).
+  const [newLineAccountId, setNewLineAccountId] = useState<string | null>(null);
   const [editingLineId, setEditingLineId] = useState<string | null>(null);
   const [editingCents, setEditingCents] = useState<number | null>(null);
 
@@ -92,18 +98,32 @@ export function InvoiceDetailPage() {
   const [voidOpen, setVoidOpen] = useState(false);
 
   const addLineMutation = useMutation({
-    mutationFn: (payload: { description: string; unit_amount_cents: number }) =>
+    mutationFn: (payload: { description: string; unit_amount_cents: number; account_id: string }) =>
       addInvoiceLine(id, selectedCompanyId!, {
         line_type: "linehaul",
         quantity: 1,
         description: payload.description,
         unit_amount_cents: payload.unit_amount_cents,
+        account_id: payload.account_id,
       }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["accounting", "invoice", selectedCompanyId, id] });
       void queryClient.invalidateQueries({ queryKey: ["accounting", "invoices"] });
     },
     onError: (error) => pushToast(userFacingApiError(error, "Failed to add invoice line"), "error"),
+  });
+
+  const incomeAccountsQuery = useQuery({
+    queryKey: ["accounting", "invoice-detail", "income-accounts", selectedCompanyId],
+    // ACCT-F5052 — same catalog path as InvoiceTypeModalBase (is_postable + Income/OtherIncome).
+    queryFn: () =>
+      listCatalogAccounts({
+        status: "active",
+        operating_company_id: selectedCompanyId!,
+        postable_only: true,
+      }),
+    enabled: Boolean(selectedCompanyId),
+    staleTime: 60_000,
   });
 
   const patchLineMutation = useMutation({
@@ -129,6 +149,18 @@ export function InvoiceDetailPage() {
   const isDraft = invoice?.status === "draft";
   const canRecordPayment = invoice?.status === "sent" || invoice?.status === "partial";
   const lineCount = invoice?.lines?.length ?? 0;
+
+  const incomeAccountOptions = useMemo(
+    () =>
+      (incomeAccountsQuery.data?.accounts ?? [])
+        .filter((a) => a.is_postable && !a.deactivated_at && a.account_type && INCOME_TYPES.includes(a.account_type))
+        .map((a) => ({
+          value: a.id,
+          label: a.account_name,
+          type: a.account_type ?? undefined,
+        })),
+    [incomeAccountsQuery.data?.accounts]
+  );
 
   // LV-SEND-NOREASON: a disabled primary action must announce why to users and assistive tech.
   const sendDisabledReason = (() => {
@@ -521,7 +553,8 @@ export function InvoiceDetailPage() {
           {isDraft ? (
             // M-1: replace the window.prompt("…cents") with an inline QBO MoneyInput (cents-mode — the user
             // types dollars, unit_amount_cents stored stays cents; no money-math change vs the prompt).
-            <div className="flex items-end gap-2">
+            // ACCT-F5052: income CoA required on detail +Create Line (parity with typed create wizard).
+            <div className="flex flex-wrap items-end gap-2">
               <label className="text-xs text-gray-600">
                 Description
                 <input
@@ -531,18 +564,41 @@ export function InvoiceDetailPage() {
                   className="mt-1 h-9 w-48 rounded-sm border border-gray-300 px-2 text-xs"
                 />
               </label>
+              <div className="w-56 space-y-1">
+                <label className="text-xs text-gray-600">Income account *</label>
+                <ReferenceSelect
+                  value={newLineAccountId}
+                  onChange={setNewLineAccountId}
+                  options={incomeAccountOptions}
+                  createKind="account"
+                  operatingCompanyId={selectedCompanyId!}
+                  placeholder="Select income account…"
+                  disabled={!selectedCompanyId || incomeAccountsQuery.isLoading}
+                  onOptionCreated={() => {
+                    void queryClient.invalidateQueries({
+                      queryKey: ["accounting", "invoice-detail", "income-accounts", selectedCompanyId],
+                    });
+                  }}
+                />
+              </div>
               <label className="text-xs text-gray-600">
                 Unit amount
                 <MoneyInput valueCents={newLineCents} onChangeCents={setNewLineCents} className="mt-1 w-28" ariaLabel="Unit amount" />
               </label>
               <Button
                 size="sm"
-                disabled={!newLineDesc.trim() || newLineCents == null}
+                disabled={!newLineDesc.trim() || newLineCents == null || !newLineAccountId}
                 loading={addLineMutation.isPending}
                 onClick={() => {
-                  addLineMutation.mutate({ description: newLineDesc.trim(), unit_amount_cents: Math.trunc(newLineCents ?? 0) });
+                  if (!newLineAccountId) return;
+                  addLineMutation.mutate({
+                    description: newLineDesc.trim(),
+                    unit_amount_cents: Math.trunc(newLineCents ?? 0),
+                    account_id: newLineAccountId,
+                  });
                   setNewLineDesc("");
                   setNewLineCents(null);
+                  setNewLineAccountId(null);
                 }}
               >
                 + Create Line
