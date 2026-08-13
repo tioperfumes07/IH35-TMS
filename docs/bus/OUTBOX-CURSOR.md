@@ -34,3 +34,5 @@
 2026-08-13T19:52Z Cursor | locking FULLY-WIRED-COMPLETE-BAR law everywhere | Live=BLOCKED | NEXT=merge then column drain
 2026-08-13T20:00Z Cursor | SHIPPED FULLY-WIRED-COMPLETE-BAR-LAW (PR#6545) | Live=BLOCKED | NEXT=column drain under 12-item bar
 2026-08-13T20:05Z Cursor | shipping VERTICAL-QBO-CHROME-FACTORING | Gap→4 toolbar WIRE | Live=BLOCKED | NEXT=ListToolbar wire OR reverse_link absorb
+2026-08-13T20:08Z Cursor | SHIPPED VERTICAL-QBO-CHROME-FACTORING (PR#6548) | Gap=4 toolbar | Live=BLOCKED | NEXT=reverse_link absorb + ListToolbar
+2026-08-13T20:12Z Cursor | shipping VERTICAL-REVERSE-LINK-ACCOUNTING-LISTS | Live=BLOCKED | NEXT=banking/safety reverse or connectivity
