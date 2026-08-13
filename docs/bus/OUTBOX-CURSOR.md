@@ -27,3 +27,4 @@
 2026-08-13T10:09CT | Cursor | ACCT-F5045 shipping gl_je P10 Wave A-C=100% | BillDetailPanel JE + honest Required drops | NEXT=all-28 column extend
 2026-08-13T10:40CT | Cursor | #6442 ACCT-F5048 done — expense/fuel reverse Open keeps money filters + Trailer cols | NEXT=money econ/linkage (not scoreboard Required)
 2026-08-13T10:45CT | Cursor | #6444 ACCT-F5049 done — bills/invoices reverse Open keeps money filters | NEXT=money econ/linkage
+2026-08-13T10:55CT | Cursor | #6446 ACCT-F5050 done — Invoices ▾ promoted to Accounting top row (peer Bills/Expenses/Bill payment) | NEXT=money
