@@ -230,12 +230,8 @@
       "sub": "Hop → driver-finance settlements",
       "route_hint": "/driver-finance/settlements",
       "required": [
-        "driver",
-        "customer",
-        "gl_je",
         "connectivity",
-        "reverse_link",
-        "settlement"
+        "reverse_link"
       ]
     },
     {
@@ -245,8 +241,6 @@
       "route_hint": "/accounting/pre-settlements",
       "required": [
         "driver",
-        "customer",
-        "gl_je",
         "connectivity",
         "reverse_link",
         "settlement"
@@ -815,8 +809,6 @@
       "required": [
         "driver",
         "load",
-        "customer",
-        "gl_je",
         "connectivity",
         "reverse_link",
         "settlement"
@@ -867,8 +859,6 @@
       "required": [
         "driver",
         "load",
-        "customer",
-        "gl_je",
         "connectivity",
         "reverse_link",
         "settlement"
@@ -1148,8 +1138,7 @@
         "driver",
         "load",
         "unit",
-        "trailer",
-        "settlement"
+        "trailer"
       ]
     },
     {
@@ -1164,8 +1153,6 @@
         "reverse_link",
         "driver",
         "load",
-        "unit",
-        "trailer",
         "settlement"
       ]
     },
