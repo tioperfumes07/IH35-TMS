@@ -41,3 +41,7 @@ Canonical: `docs/lockdown/FULLY-WIRED-COMPLETE-BAR-2026-08-13.md`
 “Wired / includes all / done” = **all 12 items** (surface bar + **Live Chrome last**). Soft yes = defect.
 Continue column drain with `Live=BLOCKED` until Built gate then item 12.
 
+## REWAKE 2026-08-13T19:59Z — Codex weekly limit until ~6pm CT; Cursor absorbing
+Cursor: factoring qbo_chrome Built (toolbar ListToolbar still OPEN WIRE).  
+**YOUR TOP when limit clears:** reverse_link leaf-specific across priority-14. Live=BLOCKED.
+
