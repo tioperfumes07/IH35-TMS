@@ -202,7 +202,7 @@ function ArInvoicesDrill({ operatingCompanyId, customer, asOfDate }: { operating
   return (
     <div className="rounded-sm border border-gray-200 bg-white">
       <div className="border-b border-gray-100 px-3 py-1.5 text-xs font-semibold text-gray-600">
-        Open invoices — {entityLabel(customer.customer_name, customer.customer_id, "Customer")}
+        Open invoices — <EntityLink kind="customer" id={customer.customer_id} label={entityLabel(customer.customer_name, customer.customer_id, "Customer")} />
       </div>
       {query.isError ? (
         <ListErrorState
@@ -234,7 +234,7 @@ function ApBillsDrill({ operatingCompanyId, vendor, asOfDate }: { operatingCompa
   return (
     <div className="rounded-sm border border-gray-200 bg-white">
       <div className="border-b border-gray-100 px-3 py-1.5 text-xs font-semibold text-gray-600">
-        Open bills — {entityLabel(vendor.vendor_name, vendor.vendor_id, "Vendor")}
+        Open bills — <EntityLink kind="vendor" id={vendor.vendor_id} label={entityLabel(vendor.vendor_name, vendor.vendor_id, "Vendor")} />
       </div>
       {query.isError ? (
         <ListErrorState
