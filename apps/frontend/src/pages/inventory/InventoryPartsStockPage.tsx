@@ -229,6 +229,11 @@ export function InventoryPartsStockPage() {
       <PartCreateDrawer
         isOpen={isCreateOpen}
         onClose={() => setIsCreateOpen(false)}
+        onCreated={(id) => {
+          const next = new URLSearchParams(searchParams);
+          next.set("part_id", id);
+          setSearchParams(next, { replace: true });
+        }}
         operatingCompanyId={operatingCompanyId}
       />
       <PartEditDrawer

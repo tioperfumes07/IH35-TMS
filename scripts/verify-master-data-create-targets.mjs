@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["customers"],"cols":["reverse_link"],"leafRe":"^list\\.create$","task":"MASTER-DATA-CREATE-RW-REVERSE","vertical":"column-wave"} */
+/** @matrix-built {"modules":["lists"],"cols":["reverse_link"],"leafRe":"^lists\\.drawer\\.new_customer_drawer_form$","task":"MASTER-DATA-CREATE-RW-REVERSE","vertical":"column-wave"} */
+/** @matrix-built {"modules":["inventory"],"cols":["reverse_link"],"leafRe":"^parts\\.create$","task":"MASTER-DATA-CREATE-RW-REVERSE","vertical":"column-wave"} */
 /**
  * verify-master-data-create-targets.mjs
  *
@@ -32,6 +35,7 @@ const CUSTOMER_CREATORS = [
 ];
 const CUSTOMER_PAYLOAD_HELPER = "apps/frontend/src/components/customers/CustomerProfileForm.tsx";
 const PART_CREATE_DRAWER = "apps/frontend/src/pages/inventory/PartCreateDrawer.tsx";
+const PARTS_PAGE = "apps/frontend/src/pages/inventory/InventoryPartsStockPage.tsx";
 
 function read(rel, errors) {
   const abs = path.join(ROOT, rel);
@@ -91,13 +95,28 @@ export function auditMasterDataCreateTargets(sources) {
   if (!/apiRequest\s*[<(]/.test(partSrc)) {
     errors.push(
       `D5-1 REGRESSION: ${PART_CREATE_DRAWER} no longer calls apiRequest(...). The part create must go ` +
-        `through the shared helper (credentials + idempotency + base URL).`
+      `through the shared helper (credentials + idempotency + base URL).`
     );
+  }
+  if (!/onSuccess:\s*async \(created\)/.test(partSrc) || !/await queryClient\.invalidateQueries/.test(partSrc) || !/onCreated\?\.\(created\.id\)/.test(partSrc)) {
+    errors.push("D5-1 REGRESSION: PartCreateDrawer must reload then forward the returned part id (R=W).");
+  }
+  const partsPageSrc = sources[PARTS_PAGE] ?? "";
+  if (!/onCreated=\{\(id\) => \{[\s\S]{0,180}next\.set\("part_id", id\)/.test(partsPageSrc)) {
+    errors.push("D5-1 REGRESSION: InventoryPartsStockPage must route the created part id to ?part_id= for row selection.");
+  }
+  const customersPage = sources[CUSTOMER_CREATORS[0]] ?? "";
+  if (!/await queryClient\.invalidateQueries\(\{ queryKey: \["customers", "page", companyId\]/.test(customersPage) || !/navigate\(`\/customers\/\$\{customer\.id\}`\)/.test(customersPage)) {
+    errors.push("D1-1 REGRESSION: Customers create must reload then navigate to the returned customer id.");
+  }
+  const customerDrawer = sources[CUSTOMER_CREATORS[1]] ?? "";
+  if (!/await queryClient\.invalidateQueries\(\{ queryKey: \["customers"\]/.test(customerDrawer) || !/onCreated\(\{ id: customer\.id, label \}\)/.test(customerDrawer)) {
+    errors.push("D1-1 REGRESSION: NewCustomerDrawerForm must reload then return the canonical customer id.");
   }
   return errors;
 }
 
-const FILES = [...CUSTOMER_CREATORS, CUSTOMER_PAYLOAD_HELPER, PART_CREATE_DRAWER];
+const FILES = [...CUSTOMER_CREATORS, CUSTOMER_PAYLOAD_HELPER, PART_CREATE_DRAWER, PARTS_PAGE];
 const readErrors = [];
 const sources = Object.fromEntries(FILES.map((rel) => [rel, read(rel, readErrors) ?? ""]));
 const errors = [...readErrors, ...auditMasterDataCreateTargets(sources)];
@@ -111,6 +130,8 @@ if (process.argv.includes("--selftest")) {
     ["shared invoice email removed", CUSTOMER_PAYLOAD_HELPER, /\bap_email:\s*apEmail/, "ap_email"],
     ["quick create targets mirror", CUSTOMER_CREATORS[2], /createCustomer\s*\(/, "createQboCustomer("],
     ["part create bypasses helper", PART_CREATE_DRAWER, /apiRequest\s*[<(]/, "fetch(resolveApiUrl("],
+    ["part returned id dropped", PART_CREATE_DRAWER, /onCreated\?\.\(created\.id\)/, "void created.id"],
+    ["part reverse route dropped", PARTS_PAGE, /next\.set\("part_id", id\)/, "void id"],
   ];
   for (const [name, rel, find, replacement] of cases) {
     const mutated = { ...sources, [rel]: sources[rel].replace(find, replacement) };
