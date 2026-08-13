@@ -2,10 +2,10 @@
   "module": "dispatch",
   "entity_default": "USMCA",
   "source": {
-    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md — Module 9 DISPATCH + Dispatch (2026-06-08 update)",
+    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md \u2014 Module 9 DISPATCH + Dispatch (2026-06-08 update)",
     "nav": "apps/frontend/src/components/dispatch/DispatchSubnav.tsx DISPATCH_NAV_ITEMS",
     "home_views": "apps/frontend/src/pages/Dispatch.tsx view=overview|kanban|list|units (Round Trips)",
-    "secondary": "DISPATCH_SUB_TABS Load board · Book load · Assignments · Settlements · Pre-settlements",
+    "secondary": "DISPATCH_SUB_TABS Load board \u00b7 Book load \u00b7 Assignments \u00b7 Settlements \u00b7 Pre-settlements",
     "drawer": "apps/frontend/src/components/dispatch/LoadDetailDrawer.tsx tabs",
     "routes": "apps/frontend/src/routes/manifest.tsx /dispatch/*"
   },
@@ -84,6 +84,46 @@
       "id": "scenario.maintenance",
       "group": "process",
       "label": "Maint WO"
+    },
+    {
+      "id": "claim",
+      "group": "linkage",
+      "label": "Claim"
+    },
+    {
+      "id": "work_order",
+      "group": "linkage",
+      "label": "Work order"
+    },
+    {
+      "id": "accident",
+      "group": "linkage",
+      "label": "Accident"
+    },
+    {
+      "id": "policy",
+      "group": "linkage",
+      "label": "Policy"
+    },
+    {
+      "id": "settlement",
+      "group": "linkage",
+      "label": "Settlement"
+    },
+    {
+      "id": "legal_matter",
+      "group": "linkage",
+      "label": "Legal matter"
+    },
+    {
+      "id": "invoice",
+      "group": "money",
+      "label": "AR / Invoice"
+    },
+    {
+      "id": "bank",
+      "group": "money",
+      "label": "Bank / Match"
     }
   ],
   "leaves": [
@@ -106,7 +146,7 @@
     {
       "id": "home.kanban",
       "tab": "Home",
-      "sub": "Load Board · Kanban (7-state)",
+      "sub": "Load Board \u00b7 Kanban (7-state)",
       "route_hint": "/dispatch?view=kanban",
       "required": [
         "driver",
@@ -122,7 +162,7 @@
     {
       "id": "home.list",
       "tab": "Home",
-      "sub": "Load Board · List / Table",
+      "sub": "Load Board \u00b7 List / Table",
       "route_hint": "/dispatch?view=list",
       "required": [
         "driver",
@@ -187,27 +227,29 @@
     {
       "id": "secondary.settlements",
       "tab": "Settlements",
-      "sub": "Hop → driver-finance settlements",
+      "sub": "Hop \u2192 driver-finance settlements",
       "route_hint": "/driver-finance/settlements",
       "required": [
         "driver",
         "customer",
         "gl_je",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "settlement"
       ]
     },
     {
       "id": "secondary.pre_settlements",
       "tab": "Pre-settlements",
-      "sub": "Hop → accounting pre-settlements",
+      "sub": "Hop \u2192 accounting pre-settlements",
       "route_hint": "/accounting/pre-settlements",
       "required": [
         "driver",
         "customer",
         "gl_je",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "settlement"
       ]
     },
     {
@@ -461,7 +503,8 @@
         "customer",
         "connectivity",
         "reverse_link",
-        "picker_law"
+        "picker_law",
+        "invoice"
       ]
     },
     {
@@ -529,7 +572,7 @@
     {
       "id": "docs.ocr",
       "tab": "Documents",
-      "sub": "OCR Queue → Book Load",
+      "sub": "OCR Queue \u2192 Book Load",
       "route_hint": "/dispatch/ocr-queue",
       "required": [
         "driver",
@@ -649,20 +692,21 @@
     {
       "id": "load.banking",
       "tab": "Load detail",
-      "sub": "Load ↔ Banking linkage",
+      "sub": "Load \u2194 Banking linkage",
       "route_hint": "/dispatch/loads/:id/banking",
       "required": [
         "load",
         "customer",
         "gl_je",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "bank"
       ]
     },
     {
       "id": "load.drawer.overview",
       "tab": "Load detail",
-      "sub": "Drawer · Overview",
+      "sub": "Drawer \u00b7 Overview",
       "route_hint": "/dispatch/loads/:id?tab=Overview",
       "required": [
         "driver",
@@ -680,7 +724,7 @@
     {
       "id": "load.drawer.stops",
       "tab": "Load detail",
-      "sub": "Drawer · Stops",
+      "sub": "Drawer \u00b7 Stops",
       "route_hint": "/dispatch/loads/:id?tab=Stops",
       "required": [
         "load",
@@ -695,7 +739,7 @@
     {
       "id": "load.drawer.driver_pay",
       "tab": "Load detail",
-      "sub": "Drawer · Driver Pay",
+      "sub": "Drawer \u00b7 Driver Pay",
       "route_hint": "/dispatch/loads/:id?tab=Driver%20Pay",
       "required": [
         "driver",
@@ -708,7 +752,7 @@
     {
       "id": "load.drawer.documents",
       "tab": "Load detail",
-      "sub": "Drawer · Documents",
+      "sub": "Drawer \u00b7 Documents",
       "route_hint": "/dispatch/loads/:id?tab=Documents",
       "required": [
         "driver",
@@ -724,7 +768,7 @@
     {
       "id": "load.drawer.factoring",
       "tab": "Load detail",
-      "sub": "Drawer · Factoring",
+      "sub": "Drawer \u00b7 Factoring",
       "route_hint": "/dispatch/loads/:id?tab=Factoring",
       "required": [
         "customer",
@@ -737,7 +781,7 @@
     {
       "id": "load.drawer.customs",
       "tab": "Load detail",
-      "sub": "Drawer · Customs",
+      "sub": "Drawer \u00b7 Customs",
       "route_hint": "/dispatch/loads/:id?tab=Customs",
       "required": [
         "driver",
@@ -754,7 +798,7 @@
     {
       "id": "load.drawer.cargo",
       "tab": "Load detail",
-      "sub": "Drawer · Cargo Sensors",
+      "sub": "Drawer \u00b7 Cargo Sensors",
       "route_hint": "/dispatch/loads/:id?tab=Cargo%20Sensors",
       "required": [
         "load",
@@ -766,7 +810,7 @@
     {
       "id": "load.drawer.settlement",
       "tab": "Load detail",
-      "sub": "Drawer · Settlement profitability",
+      "sub": "Drawer \u00b7 Settlement profitability",
       "route_hint": "/dispatch/loads/:id?tab=Settlement",
       "required": [
         "driver",
@@ -774,13 +818,14 @@
         "customer",
         "gl_je",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "settlement"
       ]
     },
     {
       "id": "load.drawer.geofence",
       "tab": "Load detail",
-      "sub": "Drawer · Geofence Timeline",
+      "sub": "Drawer \u00b7 Geofence Timeline",
       "route_hint": "/dispatch/loads/:id?tab=Geofence%20Timeline",
       "required": [
         "load",
@@ -793,7 +838,7 @@
     {
       "id": "load.drawer.assignment_history",
       "tab": "Load detail",
-      "sub": "Drawer · Assignment History",
+      "sub": "Drawer \u00b7 Assignment History",
       "route_hint": "/dispatch/loads/:id?tab=Assignment%20History",
       "required": [
         "driver",
@@ -806,7 +851,7 @@
     {
       "id": "load.drawer.audit",
       "tab": "Load detail",
-      "sub": "Drawer · Audit",
+      "sub": "Drawer \u00b7 Audit",
       "route_hint": "/dispatch/loads/:id?tab=Audit",
       "required": [
         "load",
@@ -817,7 +862,7 @@
     {
       "id": "load.drawer.pre_settlement",
       "tab": "Load detail",
-      "sub": "Drawer · Pre-Settlement",
+      "sub": "Drawer \u00b7 Pre-Settlement",
       "route_hint": "/dispatch/loads/:id?tab=Pre-Settlement",
       "required": [
         "driver",
@@ -825,7 +870,303 @@
         "customer",
         "gl_je",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "settlement"
+      ]
+    },
+    {
+      "id": "dispatch.modal.cancel_load",
+      "tab": "Modals",
+      "sub": "Modal: Cancel Load",
+      "route_hint": "surface://components/dispatch/CancelLoadModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "components/dispatch/CancelLoadModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "load",
+        "driver",
+        "unit",
+        "trailer",
+        "customer"
+      ]
+    },
+    {
+      "id": "dispatch.modal.load_create",
+      "tab": "Modals",
+      "sub": "Modal: Load Create",
+      "route_hint": "surface://pages/dispatch/LoadCreateModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "pages/dispatch/LoadCreateModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "picker_law",
+        "load",
+        "driver",
+        "unit",
+        "trailer",
+        "customer"
+      ]
+    },
+    {
+      "id": "dispatch.modal.load_reassign",
+      "tab": "Modals",
+      "sub": "Modal: Load Reassign",
+      "route_hint": "surface://pages/dispatch/LoadReassignModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "pages/dispatch/LoadReassignModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "picker_law",
+        "load",
+        "driver",
+        "unit",
+        "trailer",
+        "customer"
+      ]
+    },
+    {
+      "id": "dispatch.modal.book_load_modal_v4",
+      "tab": "Modals",
+      "sub": "Modal: Book Load Modal V4",
+      "route_hint": "surface://pages/dispatch/components/BookLoadModalV4.tsx",
+      "surface_kind": "modal",
+      "surface_path": "pages/dispatch/components/BookLoadModalV4.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "picker_law",
+        "load",
+        "driver",
+        "unit",
+        "trailer",
+        "customer"
+      ]
+    },
+    {
+      "id": "dispatch.modal.quick_assign",
+      "tab": "Modals",
+      "sub": "Modal: Quick Assign",
+      "route_hint": "surface://pages/dispatch/components/QuickAssignModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "pages/dispatch/components/QuickAssignModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "driver",
+        "load",
+        "unit",
+        "trailer",
+        "customer"
+      ]
+    },
+    {
+      "id": "dispatch.drawer.load_detail",
+      "tab": "Drawers",
+      "sub": "Drawer: Load Detail",
+      "route_hint": "surface://components/dispatch/LoadDetailDrawer.tsx",
+      "surface_kind": "drawer",
+      "surface_path": "components/dispatch/LoadDetailDrawer.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "load",
+        "driver",
+        "unit",
+        "trailer",
+        "customer"
+      ]
+    },
+    {
+      "id": "dispatch.panel.auth_gate",
+      "tab": "Panels",
+      "sub": "Panel: Auth Gate",
+      "route_hint": "surface://components/dispatch/AuthGatePanel.tsx",
+      "surface_kind": "panel",
+      "surface_path": "components/dispatch/AuthGatePanel.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "driver",
+        "load",
+        "unit",
+        "trailer",
+        "customer"
+      ]
+    },
+    {
+      "id": "dispatch.panel.deadhead_optimizer",
+      "tab": "Panels",
+      "sub": "Panel: Deadhead Optimizer",
+      "route_hint": "surface://components/dispatch/DeadheadOptimizerPanel.tsx",
+      "surface_kind": "panel",
+      "surface_path": "components/dispatch/DeadheadOptimizerPanel.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "driver",
+        "load",
+        "unit",
+        "trailer",
+        "customer"
+      ]
+    },
+    {
+      "id": "dispatch.panel.load_bol",
+      "tab": "Panels",
+      "sub": "Panel: Load Bol",
+      "route_hint": "surface://components/dispatch/LoadBolPanel.tsx",
+      "surface_kind": "panel",
+      "surface_path": "components/dispatch/LoadBolPanel.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "load",
+        "driver",
+        "unit",
+        "trailer",
+        "customer"
+      ]
+    },
+    {
+      "id": "dispatch.panel.optimal_drivers",
+      "tab": "Panels",
+      "sub": "Panel: Optimal Drivers",
+      "route_hint": "surface://components/dispatch/OptimalDriversPanel.tsx",
+      "surface_kind": "panel",
+      "surface_path": "components/dispatch/OptimalDriversPanel.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "driver",
+        "load",
+        "unit",
+        "trailer",
+        "customer"
+      ]
+    },
+    {
+      "id": "dispatch.panel.pre_dispatch_validation",
+      "tab": "Panels",
+      "sub": "Panel: Pre Dispatch Validation",
+      "route_hint": "surface://components/dispatch/PreDispatchValidationPanel.tsx",
+      "surface_kind": "panel",
+      "surface_path": "components/dispatch/PreDispatchValidationPanel.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "driver",
+        "load",
+        "unit",
+        "trailer",
+        "customer"
+      ]
+    },
+    {
+      "id": "dispatch.panel.rate_con_upload",
+      "tab": "Panels",
+      "sub": "Panel: Rate Con Upload",
+      "route_hint": "surface://pages/dispatch/components/book-load-v4/RateConUploadPanel.tsx",
+      "surface_kind": "panel",
+      "surface_path": "pages/dispatch/components/book-load-v4/RateConUploadPanel.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "picker_law",
+        "load",
+        "driver",
+        "unit",
+        "trailer",
+        "customer"
+      ]
+    },
+    {
+      "id": "dispatch.wizard.border_crossing_wizard_page",
+      "tab": "Wizards",
+      "sub": "Wizard: Border Crossing Wizard Page",
+      "route_hint": "surface://pages/dispatch/BorderCrossingWizardPage.tsx",
+      "surface_kind": "wizard",
+      "surface_path": "pages/dispatch/BorderCrossingWizardPage.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "picker_law",
+        "driver",
+        "load",
+        "unit",
+        "trailer",
+        "customer"
+      ]
+    },
+    {
+      "id": "dispatch.parity.assign_driver_dropdown",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Assign Driver Dropdown",
+      "route_hint": "surface://pages/dispatch/AssignDriverDropdown.tsx",
+      "surface_kind": "parity_site",
+      "surface_path": "pages/dispatch/AssignDriverDropdown.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "driver",
+        "load",
+        "unit",
+        "trailer",
+        "customer"
+      ]
+    },
+    {
+      "id": "dispatch.parity.book_load_equipment_section",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Book Load Equipment Section",
+      "route_hint": "surface://pages/dispatch/components/BookLoadEquipmentSection.tsx",
+      "surface_kind": "parity_site",
+      "surface_path": "pages/dispatch/components/BookLoadEquipmentSection.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "picker_law",
+        "load",
+        "driver",
+        "unit",
+        "trailer",
+        "customer"
+      ]
+    },
+    {
+      "id": "dispatch.modal.equipment_transfer",
+      "tab": "Modals",
+      "sub": "Modal: Equipment Transfer",
+      "route_hint": "surface://components/dispatch/EquipmentTransferModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "components/dispatch/EquipmentTransferModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "driver",
+        "load",
+        "unit",
+        "trailer",
+        "settlement"
+      ]
+    },
+    {
+      "id": "dispatch.panel.pre_settlement",
+      "tab": "Panels",
+      "sub": "Panel: Pre Settlement",
+      "route_hint": "surface://components/dispatch/PreSettlementPanel.tsx",
+      "surface_kind": "panel",
+      "surface_path": "components/dispatch/PreSettlementPanel.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "driver",
+        "load",
+        "unit",
+        "trailer",
+        "settlement"
       ]
     }
   ],
@@ -952,7 +1293,7 @@
         "planning.reserve",
         "docs.ocr"
       ],
-      "note": "scenario.maintenance=Maint WO; Book Load/OCR/reserve/in-transit ≠ WO create"
+      "note": "scenario.maintenance=Maint WO; Book Load/OCR/reserve/in-transit \u2260 WO create"
     },
     "load_liability_2026_08_12": {
       "finding": "LOAD-LIABILITY-SCENARIO-DISPATCH-HONEST",
@@ -975,6 +1316,20 @@
           ]
         }
       ]
+    },
+    "surface_inventory_2026_08_12": {
+      "added_leaves": 15,
+      "new_columns": [
+        "claim",
+        "work_order",
+        "accident",
+        "policy",
+        "settlement",
+        "legal_matter",
+        "invoice",
+        "bank"
+      ],
+      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; \u00a7B9 link columns added."
     }
   }
 }

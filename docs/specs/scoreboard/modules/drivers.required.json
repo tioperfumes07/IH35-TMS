@@ -2,7 +2,7 @@
   "module": "drivers",
   "entity_default": "USMCA",
   "source": {
-    "arch_design": "IH35_ARCHITECTURAL_DESIGN — Drivers",
+    "arch_design": "IH35_ARCHITECTURAL_DESIGN \u2014 Drivers",
     "nav": "DRIVERS_SUBTAB_PATH",
     "routes": "/drivers/*"
   },
@@ -76,6 +76,46 @@
       "id": "reverse_link",
       "group": "wiring",
       "label": "Reverse link"
+    },
+    {
+      "id": "claim",
+      "group": "linkage",
+      "label": "Claim"
+    },
+    {
+      "id": "work_order",
+      "group": "linkage",
+      "label": "Work order"
+    },
+    {
+      "id": "accident",
+      "group": "linkage",
+      "label": "Accident"
+    },
+    {
+      "id": "policy",
+      "group": "linkage",
+      "label": "Policy"
+    },
+    {
+      "id": "settlement",
+      "group": "linkage",
+      "label": "Settlement"
+    },
+    {
+      "id": "legal_matter",
+      "group": "linkage",
+      "label": "Legal matter"
+    },
+    {
+      "id": "invoice",
+      "group": "money",
+      "label": "AR / Invoice"
+    },
+    {
+      "id": "bank",
+      "group": "money",
+      "label": "Bank / Match"
     }
   ],
   "leaves": [
@@ -141,7 +181,8 @@
         "liability",
         "gl_je",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "settlement"
       ]
     },
     {
@@ -153,7 +194,8 @@
         "driver",
         "load",
         "liability",
-        "connectivity"
+        "connectivity",
+        "settlement"
       ]
     },
     {
@@ -243,6 +285,197 @@
         "connectivity",
         "picker_law"
       ]
+    },
+    {
+      "id": "drivers.modal.add_training",
+      "tab": "Modals",
+      "sub": "Modal: Add Training",
+      "route_hint": "surface://components/drivers/AddTrainingModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "components/drivers/AddTrainingModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "driver"
+      ]
+    },
+    {
+      "id": "drivers.modal.create_driver",
+      "tab": "Modals",
+      "sub": "Modal: Create Driver",
+      "route_hint": "surface://components/drivers/CreateDriverModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "components/drivers/CreateDriverModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "picker_law",
+        "driver"
+      ]
+    },
+    {
+      "id": "drivers.modal.send_message",
+      "tab": "Modals",
+      "sub": "Modal: Send Message",
+      "route_hint": "surface://components/drivers/SendMessageModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "components/drivers/SendMessageModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "driver"
+      ]
+    },
+    {
+      "id": "drivers.modal.suspend_confirm",
+      "tab": "Modals",
+      "sub": "Modal: Suspend Confirm",
+      "route_hint": "surface://components/drivers/SuspendConfirmModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "components/drivers/SuspendConfirmModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "driver"
+      ]
+    },
+    {
+      "id": "drivers.modal.terminate_confirm",
+      "tab": "Modals",
+      "sub": "Modal: Terminate Confirm",
+      "route_hint": "surface://components/drivers/TerminateConfirmModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "components/drivers/TerminateConfirmModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "driver"
+      ]
+    },
+    {
+      "id": "drivers.modal.w8ben",
+      "tab": "Modals",
+      "sub": "Modal: W8Ben",
+      "route_hint": "surface://components/drivers/W8BenModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "components/drivers/W8BenModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "driver"
+      ]
+    },
+    {
+      "id": "drivers.modal.driver_import",
+      "tab": "Modals",
+      "sub": "Modal: Driver Import",
+      "route_hint": "surface://pages/drivers/DriverImportModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "pages/drivers/DriverImportModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "driver"
+      ]
+    },
+    {
+      "id": "drivers.modal.settlement_dispute",
+      "tab": "Modals",
+      "sub": "Modal: Settlement Dispute",
+      "route_hint": "surface://pages/drivers/SettlementDisputeModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "pages/drivers/SettlementDisputeModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "driver",
+        "settlement",
+        "gl_je"
+      ]
+    },
+    {
+      "id": "drivers.panel.pending_settlement_deductions",
+      "tab": "Panels",
+      "sub": "Panel: Pending Settlement Deductions",
+      "route_hint": "surface://pages/drivers/PendingSettlementDeductionsPanel.tsx",
+      "surface_kind": "panel",
+      "surface_path": "pages/drivers/PendingSettlementDeductionsPanel.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "driver",
+        "settlement",
+        "liability",
+        "gl_je"
+      ]
+    },
+    {
+      "id": "drivers.panel.driver_dqf",
+      "tab": "Panels",
+      "sub": "Panel: Driver Dqf",
+      "route_hint": "surface://pages/drivers/components/DriverDqfPanel.tsx",
+      "surface_kind": "panel",
+      "surface_path": "pages/drivers/components/DriverDqfPanel.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "driver"
+      ]
+    },
+    {
+      "id": "drivers.wizard.onboarding_wizard_page",
+      "tab": "Wizards",
+      "sub": "Wizard: Onboarding Wizard Page",
+      "route_hint": "surface://pages/drivers/OnboardingWizardPage.tsx",
+      "surface_kind": "wizard",
+      "surface_path": "pages/drivers/OnboardingWizardPage.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "picker_law",
+        "driver"
+      ]
+    },
+    {
+      "id": "drivers.wizard.onboarding",
+      "tab": "Wizards",
+      "sub": "Wizard: Onboarding",
+      "route_hint": "surface://pages/onboarding/OnboardingWizard.tsx",
+      "surface_kind": "wizard",
+      "surface_path": "pages/onboarding/OnboardingWizard.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ]
+    },
+    {
+      "id": "drivers.parity.create_driver",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Create Driver",
+      "route_hint": "surface://components/drivers/CreateDriverModal.tsx",
+      "surface_kind": "parity_site",
+      "surface_path": "components/drivers/CreateDriverModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "picker_law",
+        "driver"
+      ]
+    },
+    {
+      "id": "drivers.parity.driver_picker_with_create",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Driver Picker With Create",
+      "route_hint": "surface://components/drivers/DriverPickerWithCreate.tsx",
+      "surface_kind": "parity_site",
+      "surface_path": "components/drivers/DriverPickerWithCreate.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "picker_law",
+        "driver"
+      ]
     }
   ],
   "honesty_audit": {
@@ -257,6 +490,20 @@
           ]
         }
       ]
+    },
+    "surface_inventory_2026_08_12": {
+      "added_leaves": 14,
+      "new_columns": [
+        "claim",
+        "work_order",
+        "accident",
+        "policy",
+        "settlement",
+        "legal_matter",
+        "invoice",
+        "bank"
+      ],
+      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; \u00a7B9 link columns added."
     }
   }
 }

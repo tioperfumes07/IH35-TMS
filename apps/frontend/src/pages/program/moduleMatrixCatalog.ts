@@ -74,6 +74,14 @@ const MATRIX_COLUMN_SHORT: Record<string, string> = {
   reverse_link: "REV LINK",
   "scenario.maintenance": "MAINT WO",
   "scenario.insurance": "INS CLM",
+  claim: "CLAIM",
+  work_order: "WO",
+  accident: "ACCDNT",
+  policy: "POLICY",
+  settlement: "SETL",
+  legal_matter: "LEGAL",
+  invoice: "AR/INV",
+  bank: "BANK",
 };
 
 const MATRIX_GROUP_SHORT: Record<string, string> = {

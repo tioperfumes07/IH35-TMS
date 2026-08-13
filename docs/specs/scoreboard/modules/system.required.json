@@ -70,6 +70,46 @@
       "id": "reverse_link",
       "group": "wiring",
       "label": "Reverse link"
+    },
+    {
+      "id": "claim",
+      "group": "linkage",
+      "label": "Claim"
+    },
+    {
+      "id": "work_order",
+      "group": "linkage",
+      "label": "Work order"
+    },
+    {
+      "id": "accident",
+      "group": "linkage",
+      "label": "Accident"
+    },
+    {
+      "id": "policy",
+      "group": "linkage",
+      "label": "Policy"
+    },
+    {
+      "id": "settlement",
+      "group": "linkage",
+      "label": "Settlement"
+    },
+    {
+      "id": "legal_matter",
+      "group": "linkage",
+      "label": "Legal matter"
+    },
+    {
+      "id": "invoice",
+      "group": "money",
+      "label": "AR / Invoice"
+    },
+    {
+      "id": "bank",
+      "group": "money",
+      "label": "Bank / Match"
     }
   ],
   "leaves": [
@@ -100,13 +140,14 @@
     {
       "id": "tab.qbo_recon",
       "tab": "QuickBooks Reconciliation",
-      "sub": "TMS↔QBO tie-out (not bank recon)",
+      "sub": "TMS\u2194QBO tie-out (not bank recon)",
       "route_hint": "/system?tab=qbo-recon",
       "required": [
         "gl_je",
         "connectivity",
         "reverse_link",
-        "qbo_chrome"
+        "qbo_chrome",
+        "bank"
       ]
     },
     {
@@ -158,7 +199,8 @@
         "gl_je",
         "connectivity",
         "reverse_link",
-        "qbo_chrome"
+        "qbo_chrome",
+        "bank"
       ]
     },
     {
@@ -174,7 +216,7 @@
     {
       "id": "law.no_tms_qbo_writeback",
       "tab": "Law",
-      "sub": "No TMS→QBO write-back",
+      "sub": "No TMS\u2192QBO write-back",
       "route_hint": "/system?tab=qbo-sync",
       "required": [
         "gl_je",
@@ -182,6 +224,35 @@
         "reverse_link",
         "qbo_chrome"
       ]
+    },
+    {
+      "id": "system.wizard.edi_setup",
+      "tab": "Wizards",
+      "sub": "Wizard: Edi Setup",
+      "route_hint": "surface://pages/integrations/edi/EdiSetupWizard.tsx",
+      "surface_kind": "wizard",
+      "surface_path": "pages/integrations/edi/EdiSetupWizard.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ]
     }
-  ]
+  ],
+  "honesty_audit": {
+    "surface_inventory_2026_08_12": {
+      "added_leaves": 1,
+      "new_columns": [
+        "claim",
+        "work_order",
+        "accident",
+        "policy",
+        "settlement",
+        "legal_matter",
+        "invoice",
+        "bank"
+      ],
+      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; \u00a7B9 link columns added."
+    }
+  }
 }

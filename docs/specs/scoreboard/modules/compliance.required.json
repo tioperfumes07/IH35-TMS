@@ -71,6 +71,46 @@
       "id": "reverse_link",
       "group": "wiring",
       "label": "Reverse link"
+    },
+    {
+      "id": "claim",
+      "group": "linkage",
+      "label": "Claim"
+    },
+    {
+      "id": "work_order",
+      "group": "linkage",
+      "label": "Work order"
+    },
+    {
+      "id": "accident",
+      "group": "linkage",
+      "label": "Accident"
+    },
+    {
+      "id": "policy",
+      "group": "linkage",
+      "label": "Policy"
+    },
+    {
+      "id": "settlement",
+      "group": "linkage",
+      "label": "Settlement"
+    },
+    {
+      "id": "legal_matter",
+      "group": "linkage",
+      "label": "Legal matter"
+    },
+    {
+      "id": "invoice",
+      "group": "money",
+      "label": "AR / Invoice"
+    },
+    {
+      "id": "bank",
+      "group": "money",
+      "label": "Bank / Match"
     }
   ],
   "leaves": [
@@ -312,7 +352,8 @@
       "required": [
         "unit",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "work_order"
       ]
     },
     {
@@ -340,5 +381,21 @@
         "reverse_link"
       ]
     }
-  ]
+  ],
+  "honesty_audit": {
+    "surface_inventory_2026_08_12": {
+      "added_leaves": 0,
+      "new_columns": [
+        "claim",
+        "work_order",
+        "accident",
+        "policy",
+        "settlement",
+        "legal_matter",
+        "invoice",
+        "bank"
+      ],
+      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; \u00a7B9 link columns added."
+    }
+  }
 }

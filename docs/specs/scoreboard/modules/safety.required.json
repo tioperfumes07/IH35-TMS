@@ -2,7 +2,7 @@
   "module": "safety",
   "entity_default": "USMCA",
   "source": {
-    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md — Safety module",
+    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md \u2014 Safety module",
     "nav": "apps/frontend/src/components/safety/SAFETY_TABS_CONFIG.ts",
     "routes": "apps/frontend/src/routes/manifest.tsx /safety/*"
   },
@@ -81,6 +81,46 @@
       "id": "scenario.insurance",
       "group": "process",
       "label": "Insurance claim"
+    },
+    {
+      "id": "claim",
+      "group": "linkage",
+      "label": "Claim"
+    },
+    {
+      "id": "work_order",
+      "group": "linkage",
+      "label": "Work order"
+    },
+    {
+      "id": "accident",
+      "group": "linkage",
+      "label": "Accident"
+    },
+    {
+      "id": "policy",
+      "group": "linkage",
+      "label": "Policy"
+    },
+    {
+      "id": "settlement",
+      "group": "linkage",
+      "label": "Settlement"
+    },
+    {
+      "id": "legal_matter",
+      "group": "linkage",
+      "label": "Legal matter"
+    },
+    {
+      "id": "invoice",
+      "group": "money",
+      "label": "AR / Invoice"
+    },
+    {
+      "id": "bank",
+      "group": "money",
+      "label": "Bank / Match"
     }
   ],
   "leaves": [
@@ -284,7 +324,9 @@
         "load",
         "connectivity",
         "reverse_link",
-        "picker_law"
+        "picker_law",
+        "accident",
+        "claim"
       ]
     },
     {
@@ -305,7 +347,9 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "accident",
+        "claim"
       ]
     },
     {
@@ -366,7 +410,9 @@
         "driver",
         "connectivity",
         "reverse_link",
-        "picker_law"
+        "picker_law",
+        "claim",
+        "policy"
       ]
     },
     {
@@ -383,7 +429,9 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "claim",
+        "policy"
       ]
     },
     {
@@ -506,7 +554,9 @@
         "scenario.insurance",
         "connectivity",
         "reverse_link",
-        "picker_law"
+        "picker_law",
+        "claim",
+        "policy"
       ]
     },
     {
@@ -603,6 +653,299 @@
       "required": [
         "connectivity"
       ]
+    },
+    {
+      "id": "safety.modal.company_violation_type",
+      "tab": "Modals",
+      "sub": "Modal: Company Violation Type",
+      "route_hint": "surface://pages/lists/safety/CompanyViolationTypeModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "pages/lists/safety/CompanyViolationTypeModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "driver",
+        "accident"
+      ]
+    },
+    {
+      "id": "safety.modal.company_violation_create",
+      "tab": "Modals",
+      "sub": "Modal: Company Violation Create",
+      "route_hint": "surface://pages/safety/components/CompanyViolationCreateModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "pages/safety/components/CompanyViolationCreateModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "picker_law",
+        "driver",
+        "accident"
+      ]
+    },
+    {
+      "id": "safety.modal.escrow_forfeit",
+      "tab": "Modals",
+      "sub": "Modal: Escrow Forfeit",
+      "route_hint": "surface://pages/safety/components/EscrowForfeitModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "pages/safety/components/EscrowForfeitModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "liability",
+        "driver",
+        "accident"
+      ]
+    },
+    {
+      "id": "safety.modal.fine_convert_confirm",
+      "tab": "Modals",
+      "sub": "Modal: Fine Convert Confirm",
+      "route_hint": "surface://pages/safety/components/FineConvertConfirmModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "pages/safety/components/FineConvertConfirmModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "liability",
+        "driver",
+        "accident"
+      ]
+    },
+    {
+      "id": "safety.modal.fine_create",
+      "tab": "Modals",
+      "sub": "Modal: Fine Create",
+      "route_hint": "surface://pages/safety/components/FineCreateModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "pages/safety/components/FineCreateModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "picker_law",
+        "liability",
+        "driver",
+        "accident"
+      ]
+    },
+    {
+      "id": "safety.modal.hos_violation_create",
+      "tab": "Modals",
+      "sub": "Modal: Hos Violation Create",
+      "route_hint": "surface://pages/safety/components/HosViolationCreateModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "pages/safety/components/HosViolationCreateModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "picker_law",
+        "driver",
+        "accident"
+      ]
+    },
+    {
+      "id": "safety.drawer.accident_report",
+      "tab": "Drawers",
+      "sub": "Drawer: Accident Report",
+      "route_hint": "surface://components/safety/AccidentReportDrawer.tsx",
+      "surface_kind": "drawer",
+      "surface_path": "components/safety/AccidentReportDrawer.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "accident",
+        "driver",
+        "claim"
+      ]
+    },
+    {
+      "id": "safety.drawer.company_violation_detail",
+      "tab": "Drawers",
+      "sub": "Drawer: Company Violation Detail",
+      "route_hint": "surface://pages/safety/components/CompanyViolationDetailDrawer.tsx",
+      "surface_kind": "drawer",
+      "surface_path": "pages/safety/components/CompanyViolationDetailDrawer.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "driver",
+        "accident"
+      ]
+    },
+    {
+      "id": "safety.drawer.fine_detail",
+      "tab": "Drawers",
+      "sub": "Drawer: Fine Detail",
+      "route_hint": "surface://pages/safety/components/FineDetailDrawer.tsx",
+      "surface_kind": "drawer",
+      "surface_path": "pages/safety/components/FineDetailDrawer.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "liability",
+        "driver",
+        "accident"
+      ]
+    },
+    {
+      "id": "safety.drawer.integrity_alert_detail",
+      "tab": "Drawers",
+      "sub": "Drawer: Integrity Alert Detail",
+      "route_hint": "surface://pages/safety/components/IntegrityAlertDetailDrawer.tsx",
+      "surface_kind": "drawer",
+      "surface_path": "pages/safety/components/IntegrityAlertDetailDrawer.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "driver",
+        "accident"
+      ]
+    },
+    {
+      "id": "safety.drawer.anomaly_detail",
+      "tab": "Drawers",
+      "sub": "Drawer: Anomaly Detail",
+      "route_hint": "surface://pages/safety/tabs/AnomalyDetailDrawer.tsx",
+      "surface_kind": "drawer",
+      "surface_path": "pages/safety/tabs/AnomalyDetailDrawer.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "driver",
+        "accident"
+      ]
+    },
+    {
+      "id": "safety.panel.driver_safety_profile",
+      "tab": "Panels",
+      "sub": "Panel: Driver Safety Profile",
+      "route_hint": "surface://components/safety/driver-safety/DriverSafetyProfilePanel.tsx",
+      "surface_kind": "panel",
+      "surface_path": "components/safety/driver-safety/DriverSafetyProfilePanel.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "driver",
+        "accident"
+      ]
+    },
+    {
+      "id": "safety.panel.test_scheduling",
+      "tab": "Panels",
+      "sub": "Panel: Test Scheduling",
+      "route_hint": "surface://pages/safety/drug-alcohol/TestSchedulingPanel.tsx",
+      "surface_kind": "panel",
+      "surface_path": "pages/safety/drug-alcohol/TestSchedulingPanel.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "driver",
+        "accident"
+      ]
+    },
+    {
+      "id": "safety.parity.accident_report",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Accident Report",
+      "route_hint": "surface://components/safety/AccidentReportDrawer.tsx",
+      "surface_kind": "parity_site",
+      "surface_path": "components/safety/AccidentReportDrawer.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "accident",
+        "driver",
+        "claim"
+      ]
+    },
+    {
+      "id": "safety.parity.company_violation_detail",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Company Violation Detail",
+      "route_hint": "surface://pages/safety/components/CompanyViolationDetailDrawer.tsx",
+      "surface_kind": "parity_site",
+      "surface_path": "pages/safety/components/CompanyViolationDetailDrawer.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "driver",
+        "accident"
+      ]
+    },
+    {
+      "id": "safety.parity.escrow_forfeit",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Escrow Forfeit",
+      "route_hint": "surface://pages/safety/components/EscrowForfeitModal.tsx",
+      "surface_kind": "parity_site",
+      "surface_path": "pages/safety/components/EscrowForfeitModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "liability",
+        "driver",
+        "accident"
+      ]
+    },
+    {
+      "id": "safety.parity.fine_create",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Fine Create",
+      "route_hint": "surface://pages/safety/components/FineCreateModal.tsx",
+      "surface_kind": "parity_site",
+      "surface_path": "pages/safety/components/FineCreateModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "picker_law",
+        "liability",
+        "driver",
+        "accident"
+      ]
+    },
+    {
+      "id": "safety.parity.fine_detail",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Fine Detail",
+      "route_hint": "surface://pages/safety/components/FineDetailDrawer.tsx",
+      "surface_kind": "parity_site",
+      "surface_path": "pages/safety/components/FineDetailDrawer.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "liability",
+        "driver",
+        "accident"
+      ]
+    },
+    {
+      "id": "safety.parity.integrity_alert_detail",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Integrity Alert Detail",
+      "route_hint": "surface://pages/safety/components/IntegrityAlertDetailDrawer.tsx",
+      "surface_kind": "parity_site",
+      "surface_path": "pages/safety/components/IntegrityAlertDetailDrawer.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "driver",
+        "accident"
+      ]
+    },
+    {
+      "id": "safety.parity.anomaly_detail",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Anomaly Detail",
+      "route_hint": "surface://pages/safety/tabs/AnomalyDetailDrawer.tsx",
+      "surface_kind": "parity_site",
+      "surface_path": "pages/safety/tabs/AnomalyDetailDrawer.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "driver",
+        "accident"
+      ]
     }
   ],
   "honesty_audit": {
@@ -674,6 +1017,20 @@
       "drops": [
         "cargo_claims.create"
       ]
+    },
+    "surface_inventory_2026_08_12": {
+      "added_leaves": 20,
+      "new_columns": [
+        "claim",
+        "work_order",
+        "accident",
+        "policy",
+        "settlement",
+        "legal_matter",
+        "invoice",
+        "bank"
+      ],
+      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; \u00a7B9 link columns added."
     }
   }
 }

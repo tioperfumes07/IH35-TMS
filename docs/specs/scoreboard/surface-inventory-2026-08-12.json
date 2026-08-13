@@ -1,0 +1,2169 @@
+{
+  "generated": "2026-08-12",
+  "row_count": 203,
+  "rows": [
+    {
+      "path": "components/ap/BillPaymentModal.tsx",
+      "kind": "modal",
+      "stem": "BillPaymentModal",
+      "module": "accounting",
+      "id": "accounting.modal.bill_payment",
+      "tab": "Modals",
+      "sub": "Modal: Bill Payment",
+      "route_hint": "surface://components/ap/BillPaymentModal.tsx"
+    },
+    {
+      "path": "components/catalogs/CatalogExcelUploadModal.tsx",
+      "kind": "modal",
+      "stem": "CatalogExcelUploadModal",
+      "module": "lists",
+      "id": "lists.modal.catalog_excel_upload",
+      "tab": "Modals",
+      "sub": "Modal: Catalog Excel Upload",
+      "route_hint": "surface://components/catalogs/CatalogExcelUploadModal.tsx"
+    },
+    {
+      "path": "components/dispatch/CancelLoadModal.tsx",
+      "kind": "modal",
+      "stem": "CancelLoadModal",
+      "module": "dispatch",
+      "id": "dispatch.modal.cancel_load",
+      "tab": "Modals",
+      "sub": "Modal: Cancel Load",
+      "route_hint": "surface://components/dispatch/CancelLoadModal.tsx"
+    },
+    {
+      "path": "components/dispatch/EquipmentTransferModal.tsx",
+      "kind": "modal",
+      "stem": "EquipmentTransferModal",
+      "module": "dispatch",
+      "id": "dispatch.modal.equipment_transfer",
+      "tab": "Modals",
+      "sub": "Modal: Equipment Transfer",
+      "route_hint": "surface://components/dispatch/EquipmentTransferModal.tsx"
+    },
+    {
+      "path": "components/documents/EditMetadataModal.tsx",
+      "kind": "modal",
+      "stem": "EditMetadataModal",
+      "module": "docs",
+      "id": "docs.modal.edit_metadata",
+      "tab": "Modals",
+      "sub": "Modal: Edit Metadata",
+      "route_hint": "surface://components/documents/EditMetadataModal.tsx"
+    },
+    {
+      "path": "components/documents/PreviewModal.tsx",
+      "kind": "modal",
+      "stem": "PreviewModal",
+      "module": "docs",
+      "id": "docs.modal.preview",
+      "tab": "Modals",
+      "sub": "Modal: Preview",
+      "route_hint": "surface://components/documents/PreviewModal.tsx"
+    },
+    {
+      "path": "components/documents/SoftDeleteModal.tsx",
+      "kind": "modal",
+      "stem": "SoftDeleteModal",
+      "module": "docs",
+      "id": "docs.modal.soft_delete",
+      "tab": "Modals",
+      "sub": "Modal: Soft Delete",
+      "route_hint": "surface://components/documents/SoftDeleteModal.tsx"
+    },
+    {
+      "path": "components/documents/UploadModal.tsx",
+      "kind": "modal",
+      "stem": "UploadModal",
+      "module": "docs",
+      "id": "docs.modal.upload",
+      "tab": "Modals",
+      "sub": "Modal: Upload",
+      "route_hint": "surface://components/documents/UploadModal.tsx"
+    },
+    {
+      "path": "components/documents/VersionHistoryModal.tsx",
+      "kind": "modal",
+      "stem": "VersionHistoryModal",
+      "module": "docs",
+      "id": "docs.modal.version_history",
+      "tab": "Modals",
+      "sub": "Modal: Version History",
+      "route_hint": "surface://components/documents/VersionHistoryModal.tsx"
+    },
+    {
+      "path": "components/drivers/AddTrainingModal.tsx",
+      "kind": "modal",
+      "stem": "AddTrainingModal",
+      "module": "drivers",
+      "id": "drivers.modal.add_training",
+      "tab": "Modals",
+      "sub": "Modal: Add Training",
+      "route_hint": "surface://components/drivers/AddTrainingModal.tsx"
+    },
+    {
+      "path": "components/drivers/CreateDriverModal.tsx",
+      "kind": "modal",
+      "stem": "CreateDriverModal",
+      "module": "drivers",
+      "id": "drivers.modal.create_driver",
+      "tab": "Modals",
+      "sub": "Modal: Create Driver",
+      "route_hint": "surface://components/drivers/CreateDriverModal.tsx"
+    },
+    {
+      "path": "components/drivers/SendMessageModal.tsx",
+      "kind": "modal",
+      "stem": "SendMessageModal",
+      "module": "drivers",
+      "id": "drivers.modal.send_message",
+      "tab": "Modals",
+      "sub": "Modal: Send Message",
+      "route_hint": "surface://components/drivers/SendMessageModal.tsx"
+    },
+    {
+      "path": "components/drivers/SuspendConfirmModal.tsx",
+      "kind": "modal",
+      "stem": "SuspendConfirmModal",
+      "module": "drivers",
+      "id": "drivers.modal.suspend_confirm",
+      "tab": "Modals",
+      "sub": "Modal: Suspend Confirm",
+      "route_hint": "surface://components/drivers/SuspendConfirmModal.tsx"
+    },
+    {
+      "path": "components/drivers/TerminateConfirmModal.tsx",
+      "kind": "modal",
+      "stem": "TerminateConfirmModal",
+      "module": "drivers",
+      "id": "drivers.modal.terminate_confirm",
+      "tab": "Modals",
+      "sub": "Modal: Terminate Confirm",
+      "route_hint": "surface://components/drivers/TerminateConfirmModal.tsx"
+    },
+    {
+      "path": "components/drivers/W8BenModal.tsx",
+      "kind": "modal",
+      "stem": "W8BenModal",
+      "module": "drivers",
+      "id": "drivers.modal.w8ben",
+      "tab": "Modals",
+      "sub": "Modal: W8Ben",
+      "route_hint": "surface://components/drivers/W8BenModal.tsx"
+    },
+    {
+      "path": "components/factoring/DeactivateFactorConfirmModal.tsx",
+      "kind": "modal",
+      "stem": "DeactivateFactorConfirmModal",
+      "module": "factoring",
+      "id": "factoring.modal.deactivate_factor_confirm",
+      "tab": "Modals",
+      "sub": "Modal: Deactivate Factor Confirm",
+      "route_hint": "surface://components/factoring/DeactivateFactorConfirmModal.tsx"
+    },
+    {
+      "path": "components/fleet/CreateTrailerModal.tsx",
+      "kind": "modal",
+      "stem": "CreateTrailerModal",
+      "module": "fleet",
+      "id": "fleet.modal.create_trailer",
+      "tab": "Modals",
+      "sub": "Modal: Create Trailer",
+      "route_hint": "surface://components/fleet/CreateTrailerModal.tsx"
+    },
+    {
+      "path": "components/fleet/CreateUnitModal.tsx",
+      "kind": "modal",
+      "stem": "CreateUnitModal",
+      "module": "fleet",
+      "id": "fleet.modal.create_unit",
+      "tab": "Modals",
+      "sub": "Modal: Create Unit",
+      "route_hint": "surface://components/fleet/CreateUnitModal.tsx"
+    },
+    {
+      "path": "components/fleet/EditTrailerModal.tsx",
+      "kind": "modal",
+      "stem": "EditTrailerModal",
+      "module": "fleet",
+      "id": "fleet.modal.edit_trailer",
+      "tab": "Modals",
+      "sub": "Modal: Edit Trailer",
+      "route_hint": "surface://components/fleet/EditTrailerModal.tsx"
+    },
+    {
+      "path": "components/fleet/EditVehicleModal.tsx",
+      "kind": "modal",
+      "stem": "EditVehicleModal",
+      "module": "fleet",
+      "id": "fleet.modal.edit_vehicle",
+      "tab": "Modals",
+      "sub": "Modal: Edit Vehicle",
+      "route_hint": "surface://components/fleet/EditVehicleModal.tsx"
+    },
+    {
+      "path": "components/fleet/QuickAssignModal.tsx",
+      "kind": "modal",
+      "stem": "QuickAssignModal",
+      "module": "fleet",
+      "id": "fleet.modal.quick_assign",
+      "tab": "Modals",
+      "sub": "Modal: Quick Assign",
+      "route_hint": "surface://components/fleet/QuickAssignModal.tsx"
+    },
+    {
+      "path": "components/insurance/ClaimCreateModal.tsx",
+      "kind": "modal",
+      "stem": "ClaimCreateModal",
+      "module": "insurance",
+      "id": "insurance.modal.claim_create",
+      "tab": "Modals",
+      "sub": "Modal: Claim Create",
+      "route_hint": "surface://components/insurance/ClaimCreateModal.tsx"
+    },
+    {
+      "path": "components/insurance/LawsuitCreateModal.tsx",
+      "kind": "modal",
+      "stem": "LawsuitCreateModal",
+      "module": "insurance",
+      "id": "insurance.modal.lawsuit_create",
+      "tab": "Modals",
+      "sub": "Modal: Lawsuit Create",
+      "route_hint": "surface://components/insurance/LawsuitCreateModal.tsx"
+    },
+    {
+      "path": "components/insurance/PolicyCreateModal.tsx",
+      "kind": "modal",
+      "stem": "PolicyCreateModal",
+      "module": "insurance",
+      "id": "insurance.modal.policy_create",
+      "tab": "Modals",
+      "sub": "Modal: Policy Create",
+      "route_hint": "surface://components/insurance/PolicyCreateModal.tsx"
+    },
+    {
+      "path": "components/maintenance/AddPartsLinkModal.tsx",
+      "kind": "modal",
+      "stem": "AddPartsLinkModal",
+      "module": "maintenance",
+      "id": "maintenance.modal.add_parts_link",
+      "tab": "Modals",
+      "sub": "Modal: Add Parts Link",
+      "route_hint": "surface://components/maintenance/AddPartsLinkModal.tsx"
+    },
+    {
+      "path": "components/maintenance/FaultRuleModal.tsx",
+      "kind": "modal",
+      "stem": "FaultRuleModal",
+      "module": "maintenance",
+      "id": "maintenance.modal.fault_rule",
+      "tab": "Modals",
+      "sub": "Modal: Fault Rule",
+      "route_hint": "surface://components/maintenance/FaultRuleModal.tsx"
+    },
+    {
+      "path": "components/maintenance/LocationMapModal.tsx",
+      "kind": "modal",
+      "stem": "LocationMapModal",
+      "module": "maintenance",
+      "id": "maintenance.modal.location_map",
+      "tab": "Modals",
+      "sub": "Modal: Location Map",
+      "route_hint": "surface://components/maintenance/LocationMapModal.tsx"
+    },
+    {
+      "path": "components/maintenance/WorkOrderDetailModal.tsx",
+      "kind": "modal",
+      "stem": "WorkOrderDetailModal",
+      "module": "maintenance",
+      "id": "maintenance.modal.work_order_detail",
+      "tab": "Modals",
+      "sub": "Modal: Work Order Detail",
+      "route_hint": "surface://components/maintenance/WorkOrderDetailModal.tsx"
+    },
+    {
+      "path": "components/reports/LaneDetailModal.tsx",
+      "kind": "modal",
+      "stem": "LaneDetailModal",
+      "module": "reports",
+      "id": "reports.modal.lane_detail",
+      "tab": "Modals",
+      "sub": "Modal: Lane Detail",
+      "route_hint": "surface://components/reports/LaneDetailModal.tsx"
+    },
+    {
+      "path": "pages/accounting/InvoiceCreateModal.tsx",
+      "kind": "modal",
+      "stem": "InvoiceCreateModal",
+      "module": "accounting",
+      "id": "accounting.modal.invoice_create",
+      "tab": "Modals",
+      "sub": "Modal: Invoice Create",
+      "route_hint": "surface://pages/accounting/InvoiceCreateModal.tsx"
+    },
+    {
+      "path": "pages/accounting/ManualJEModal.tsx",
+      "kind": "modal",
+      "stem": "ManualJEModal",
+      "module": "accounting",
+      "id": "accounting.modal.manual_je",
+      "tab": "Modals",
+      "sub": "Modal: Manual JE",
+      "route_hint": "surface://pages/accounting/ManualJEModal.tsx"
+    },
+    {
+      "path": "pages/accounting/PayBillModal.tsx",
+      "kind": "modal",
+      "stem": "PayBillModal",
+      "module": "accounting",
+      "id": "accounting.modal.pay_bill",
+      "tab": "Modals",
+      "sub": "Modal: Pay Bill",
+      "route_hint": "surface://pages/accounting/PayBillModal.tsx"
+    },
+    {
+      "path": "pages/accounting/PaymentApplyModal.tsx",
+      "kind": "modal",
+      "stem": "PaymentApplyModal",
+      "module": "accounting",
+      "id": "accounting.modal.payment_apply",
+      "tab": "Modals",
+      "sub": "Modal: Payment Apply",
+      "route_hint": "surface://pages/accounting/PaymentApplyModal.tsx"
+    },
+    {
+      "path": "pages/accounting/RecordPaymentModal.tsx",
+      "kind": "modal",
+      "stem": "RecordPaymentModal",
+      "module": "accounting",
+      "id": "accounting.modal.record_payment",
+      "tab": "Modals",
+      "sub": "Modal: Record Payment",
+      "route_hint": "surface://pages/accounting/RecordPaymentModal.tsx"
+    },
+    {
+      "path": "pages/accounting/SubmitFactoringModal.tsx",
+      "kind": "modal",
+      "stem": "SubmitFactoringModal",
+      "module": "accounting",
+      "id": "accounting.modal.submit_factoring",
+      "tab": "Modals",
+      "sub": "Modal: Submit Factoring",
+      "route_hint": "surface://pages/accounting/SubmitFactoringModal.tsx"
+    },
+    {
+      "path": "pages/accounting/bill-payments/CCPaymentModal.tsx",
+      "kind": "modal",
+      "stem": "CCPaymentModal",
+      "module": "accounting",
+      "id": "accounting.modal.ccpayment",
+      "tab": "Modals",
+      "sub": "Modal: CCPayment",
+      "route_hint": "surface://pages/accounting/bill-payments/CCPaymentModal.tsx"
+    },
+    {
+      "path": "pages/accounting/modals/CustomerAdjustmentModal.tsx",
+      "kind": "modal",
+      "stem": "CustomerAdjustmentModal",
+      "module": "accounting",
+      "id": "accounting.modal.customer_adjustment",
+      "tab": "Modals",
+      "sub": "Modal: Customer Adjustment",
+      "route_hint": "surface://pages/accounting/modals/CustomerAdjustmentModal.tsx"
+    },
+    {
+      "path": "pages/accounting/modals/DriverDamageInvoiceModal.tsx",
+      "kind": "modal",
+      "stem": "DriverDamageInvoiceModal",
+      "module": "accounting",
+      "id": "accounting.modal.driver_damage_invoice",
+      "tab": "Modals",
+      "sub": "Modal: Driver Damage Invoice",
+      "route_hint": "surface://pages/accounting/modals/DriverDamageInvoiceModal.tsx"
+    },
+    {
+      "path": "pages/accounting/modals/DriverMiscInvoiceModal.tsx",
+      "kind": "modal",
+      "stem": "DriverMiscInvoiceModal",
+      "module": "accounting",
+      "id": "accounting.modal.driver_misc_invoice",
+      "tab": "Modals",
+      "sub": "Modal: Driver Misc Invoice",
+      "route_hint": "surface://pages/accounting/modals/DriverMiscInvoiceModal.tsx"
+    },
+    {
+      "path": "pages/accounting/modals/ManualInvoiceModal.tsx",
+      "kind": "modal",
+      "stem": "ManualInvoiceModal",
+      "module": "accounting",
+      "id": "accounting.modal.manual_invoice",
+      "tab": "Modals",
+      "sub": "Modal: Manual Invoice",
+      "route_hint": "surface://pages/accounting/modals/ManualInvoiceModal.tsx"
+    },
+    {
+      "path": "pages/accounting/modals/VendorChargebackModal.tsx",
+      "kind": "modal",
+      "stem": "VendorChargebackModal",
+      "module": "accounting",
+      "id": "accounting.modal.vendor_chargeback",
+      "tab": "Modals",
+      "sub": "Modal: Vendor Chargeback",
+      "route_hint": "surface://pages/accounting/modals/VendorChargebackModal.tsx"
+    },
+    {
+      "path": "pages/banking/RecordCCPaymentModal.tsx",
+      "kind": "modal",
+      "stem": "RecordCCPaymentModal",
+      "module": "banking",
+      "id": "banking.modal.record_ccpayment",
+      "tab": "Modals",
+      "sub": "Modal: Record CCPayment",
+      "route_hint": "surface://pages/banking/RecordCCPaymentModal.tsx"
+    },
+    {
+      "path": "pages/banking/RecordTransferModal.tsx",
+      "kind": "modal",
+      "stem": "RecordTransferModal",
+      "module": "banking",
+      "id": "banking.modal.record_transfer",
+      "tab": "Modals",
+      "sub": "Modal: Record Transfer",
+      "route_hint": "surface://pages/banking/RecordTransferModal.tsx"
+    },
+    {
+      "path": "pages/banking/TransferModal.tsx",
+      "kind": "modal",
+      "stem": "TransferModal",
+      "module": "banking",
+      "id": "banking.modal.transfer",
+      "tab": "Modals",
+      "sub": "Modal: Transfer",
+      "route_hint": "surface://pages/banking/TransferModal.tsx"
+    },
+    {
+      "path": "pages/banking/components/BankTransactionSplitModal.tsx",
+      "kind": "modal",
+      "stem": "BankTransactionSplitModal",
+      "module": "banking",
+      "id": "banking.modal.bank_transaction_split",
+      "tab": "Modals",
+      "sub": "Modal: Bank Transaction Split",
+      "route_hint": "surface://pages/banking/components/BankTransactionSplitModal.tsx"
+    },
+    {
+      "path": "pages/banking/components/ManageAccountsModal.tsx",
+      "kind": "modal",
+      "stem": "ManageAccountsModal",
+      "module": "banking",
+      "id": "banking.modal.manage_accounts",
+      "tab": "Modals",
+      "sub": "Modal: Manage Accounts",
+      "route_hint": "surface://pages/banking/components/ManageAccountsModal.tsx"
+    },
+    {
+      "path": "pages/banking/components/ManualJEModal.tsx",
+      "kind": "modal",
+      "stem": "ManualJEModal",
+      "module": "banking",
+      "id": "banking.modal.manual_je",
+      "tab": "Modals",
+      "sub": "Modal: Manual JE",
+      "route_hint": "surface://pages/banking/components/ManualJEModal.tsx"
+    },
+    {
+      "path": "pages/banking/components/forms/SplitTransactionModal.tsx",
+      "kind": "modal",
+      "stem": "SplitTransactionModal",
+      "module": "banking",
+      "id": "banking.modal.split_transaction",
+      "tab": "Modals",
+      "sub": "Modal: Split Transaction",
+      "route_hint": "surface://pages/banking/components/forms/SplitTransactionModal.tsx"
+    },
+    {
+      "path": "pages/cash-advances/components/CreateAdvanceModal.tsx",
+      "kind": "modal",
+      "stem": "CreateAdvanceModal",
+      "module": "settlements",
+      "id": "settlements.modal.create_advance",
+      "tab": "Modals",
+      "sub": "Modal: Create Advance",
+      "route_hint": "surface://pages/cash-advances/components/CreateAdvanceModal.tsx"
+    },
+    {
+      "path": "pages/cash-advances/components/MarkDisbursedModal.tsx",
+      "kind": "modal",
+      "stem": "MarkDisbursedModal",
+      "module": "settlements",
+      "id": "settlements.modal.mark_disbursed",
+      "tab": "Modals",
+      "sub": "Modal: Mark Disbursed",
+      "route_hint": "surface://pages/cash-advances/components/MarkDisbursedModal.tsx"
+    },
+    {
+      "path": "pages/dispatch/LoadCreateModal.tsx",
+      "kind": "modal",
+      "stem": "LoadCreateModal",
+      "module": "dispatch",
+      "id": "dispatch.modal.load_create",
+      "tab": "Modals",
+      "sub": "Modal: Load Create",
+      "route_hint": "surface://pages/dispatch/LoadCreateModal.tsx"
+    },
+    {
+      "path": "pages/dispatch/LoadReassignModal.tsx",
+      "kind": "modal",
+      "stem": "LoadReassignModal",
+      "module": "dispatch",
+      "id": "dispatch.modal.load_reassign",
+      "tab": "Modals",
+      "sub": "Modal: Load Reassign",
+      "route_hint": "surface://pages/dispatch/LoadReassignModal.tsx"
+    },
+    {
+      "path": "pages/dispatch/components/BookLoadModal.tsx",
+      "kind": "modal",
+      "stem": "BookLoadModal",
+      "module": "dispatch",
+      "id": "dispatch.modal.book_load",
+      "tab": "Modals",
+      "sub": "Modal: Book Load",
+      "route_hint": "surface://pages/dispatch/components/BookLoadModal.tsx"
+    },
+    {
+      "path": "pages/dispatch/components/BookLoadModalV4.tsx",
+      "kind": "modal",
+      "stem": "BookLoadModalV4",
+      "module": "dispatch",
+      "id": "dispatch.modal.book_load_modal_v4",
+      "tab": "Modals",
+      "sub": "Modal: Book Load Modal V4",
+      "route_hint": "surface://pages/dispatch/components/BookLoadModalV4.tsx"
+    },
+    {
+      "path": "pages/dispatch/components/QuickAssignModal.tsx",
+      "kind": "modal",
+      "stem": "QuickAssignModal",
+      "module": "dispatch",
+      "id": "dispatch.modal.quick_assign",
+      "tab": "Modals",
+      "sub": "Modal: Quick Assign",
+      "route_hint": "surface://pages/dispatch/components/QuickAssignModal.tsx"
+    },
+    {
+      "path": "pages/driver-finance/components/HoldDeductionModal.tsx",
+      "kind": "modal",
+      "stem": "HoldDeductionModal",
+      "module": "settlements",
+      "id": "settlements.modal.hold_deduction",
+      "tab": "Modals",
+      "sub": "Modal: Hold Deduction",
+      "route_hint": "surface://pages/driver-finance/components/HoldDeductionModal.tsx"
+    },
+    {
+      "path": "pages/driver-finance/components/LiabilityBreakdownModal.tsx",
+      "kind": "modal",
+      "stem": "LiabilityBreakdownModal",
+      "module": "settlements",
+      "id": "settlements.modal.liability_breakdown",
+      "tab": "Modals",
+      "sub": "Modal: Liability Breakdown",
+      "route_hint": "surface://pages/driver-finance/components/LiabilityBreakdownModal.tsx"
+    },
+    {
+      "path": "pages/drivers/DriverImportModal.tsx",
+      "kind": "modal",
+      "stem": "DriverImportModal",
+      "module": "drivers",
+      "id": "drivers.modal.driver_import",
+      "tab": "Modals",
+      "sub": "Modal: Driver Import",
+      "route_hint": "surface://pages/drivers/DriverImportModal.tsx"
+    },
+    {
+      "path": "pages/drivers/SettlementDisputeModal.tsx",
+      "kind": "modal",
+      "stem": "SettlementDisputeModal",
+      "module": "drivers",
+      "id": "drivers.modal.settlement_dispute",
+      "tab": "Modals",
+      "sub": "Modal: Settlement Dispute",
+      "route_hint": "surface://pages/drivers/SettlementDisputeModal.tsx"
+    },
+    {
+      "path": "pages/factoring/ReserveDashboardAddFactorModal.tsx",
+      "kind": "modal",
+      "stem": "ReserveDashboardAddFactorModal",
+      "module": "factoring",
+      "id": "factoring.modal.reserve_dashboard_add_factor",
+      "tab": "Modals",
+      "sub": "Modal: Reserve Dashboard Add Factor",
+      "route_hint": "surface://pages/factoring/ReserveDashboardAddFactorModal.tsx"
+    },
+    {
+      "path": "pages/fuel/components/ImportFuelTransactionsModal.tsx",
+      "kind": "modal",
+      "stem": "ImportFuelTransactionsModal",
+      "module": "fuel",
+      "id": "fuel.modal.import_fuel_transactions",
+      "tab": "Modals",
+      "sub": "Modal: Import Fuel Transactions",
+      "route_hint": "surface://pages/fuel/components/ImportFuelTransactionsModal.tsx"
+    },
+    {
+      "path": "pages/fuel/components/UploadLovesPricesModal.tsx",
+      "kind": "modal",
+      "stem": "UploadLovesPricesModal",
+      "module": "fuel",
+      "id": "fuel.modal.upload_loves_prices",
+      "tab": "Modals",
+      "sub": "Modal: Upload Loves Prices",
+      "route_hint": "surface://pages/fuel/components/UploadLovesPricesModal.tsx"
+    },
+    {
+      "path": "pages/legal/contracts/LeaseToOwnCreatorModal.tsx",
+      "kind": "modal",
+      "stem": "LeaseToOwnCreatorModal",
+      "module": "legal",
+      "id": "legal.modal.lease_to_own_creator",
+      "tab": "Modals",
+      "sub": "Modal: Lease To Own Creator",
+      "route_hint": "surface://pages/legal/contracts/LeaseToOwnCreatorModal.tsx"
+    },
+    {
+      "path": "pages/legal/contracts/SendContractModal.tsx",
+      "kind": "modal",
+      "stem": "SendContractModal",
+      "module": "legal",
+      "id": "legal.modal.send_contract",
+      "tab": "Modals",
+      "sub": "Modal: Send Contract",
+      "route_hint": "surface://pages/legal/contracts/SendContractModal.tsx"
+    },
+    {
+      "path": "pages/legal/contracts/TruckLeaseCreatorModal.tsx",
+      "kind": "modal",
+      "stem": "TruckLeaseCreatorModal",
+      "module": "legal",
+      "id": "legal.modal.truck_lease_creator",
+      "tab": "Modals",
+      "sub": "Modal: Truck Lease Creator",
+      "route_hint": "surface://pages/legal/contracts/TruckLeaseCreatorModal.tsx"
+    },
+    {
+      "path": "pages/legal/contracts/UnifiedContractCreatorModal.tsx",
+      "kind": "modal",
+      "stem": "UnifiedContractCreatorModal",
+      "module": "legal",
+      "id": "legal.modal.unified_contract_creator",
+      "tab": "Modals",
+      "sub": "Modal: Unified Contract Creator",
+      "route_hint": "surface://pages/legal/contracts/UnifiedContractCreatorModal.tsx"
+    },
+    {
+      "path": "pages/legal/templates/LegalTemplateNewModal.tsx",
+      "kind": "modal",
+      "stem": "LegalTemplateNewModal",
+      "module": "legal",
+      "id": "legal.modal.legal_template_new",
+      "tab": "Modals",
+      "sub": "Modal: Legal Template New",
+      "route_hint": "surface://pages/legal/templates/LegalTemplateNewModal.tsx"
+    },
+    {
+      "path": "pages/liabilities/components/SendAckRequestModal.tsx",
+      "kind": "modal",
+      "stem": "SendAckRequestModal",
+      "module": "settlements",
+      "id": "settlements.modal.send_ack_request",
+      "tab": "Modals",
+      "sub": "Modal: Send Ack Request",
+      "route_hint": "surface://pages/liabilities/components/SendAckRequestModal.tsx"
+    },
+    {
+      "path": "pages/lists/accounting/AccountingCatalogModal.tsx",
+      "kind": "modal",
+      "stem": "AccountingCatalogModal",
+      "module": "lists",
+      "id": "lists.modal.accounting_catalog",
+      "tab": "Modals",
+      "sub": "Modal: Accounting Catalog",
+      "route_hint": "surface://pages/lists/accounting/AccountingCatalogModal.tsx"
+    },
+    {
+      "path": "pages/lists/accounting/ItemEditorModal.tsx",
+      "kind": "modal",
+      "stem": "ItemEditorModal",
+      "module": "lists",
+      "id": "lists.modal.item_editor",
+      "tab": "Modals",
+      "sub": "Modal: Item Editor",
+      "route_hint": "surface://pages/lists/accounting/ItemEditorModal.tsx"
+    },
+    {
+      "path": "pages/lists/accounting/PostingTemplateModal.tsx",
+      "kind": "modal",
+      "stem": "PostingTemplateModal",
+      "module": "lists",
+      "id": "lists.modal.posting_template",
+      "tab": "Modals",
+      "sub": "Modal: Posting Template",
+      "route_hint": "surface://pages/lists/accounting/PostingTemplateModal.tsx"
+    },
+    {
+      "path": "pages/lists/dispatch/CatalogEntryModal.tsx",
+      "kind": "modal",
+      "stem": "CatalogEntryModal",
+      "module": "lists",
+      "id": "lists.modal.catalog_entry",
+      "tab": "Modals",
+      "sub": "Modal: Catalog Entry",
+      "route_hint": "surface://pages/lists/dispatch/CatalogEntryModal.tsx"
+    },
+    {
+      "path": "pages/lists/driver/DriverCatalogModal.tsx",
+      "kind": "modal",
+      "stem": "DriverCatalogModal",
+      "module": "lists",
+      "id": "lists.modal.driver_catalog",
+      "tab": "Modals",
+      "sub": "Modal: Driver Catalog",
+      "route_hint": "surface://pages/lists/driver/DriverCatalogModal.tsx"
+    },
+    {
+      "path": "pages/lists/driver/DriverTeamModal.tsx",
+      "kind": "modal",
+      "stem": "DriverTeamModal",
+      "module": "lists",
+      "id": "lists.modal.driver_team",
+      "tab": "Modals",
+      "sub": "Modal: Driver Team",
+      "route_hint": "surface://pages/lists/driver/DriverTeamModal.tsx"
+    },
+    {
+      "path": "pages/lists/drivers/DriversReferenceCatalogModal.tsx",
+      "kind": "modal",
+      "stem": "DriversReferenceCatalogModal",
+      "module": "lists",
+      "id": "lists.modal.drivers_reference_catalog",
+      "tab": "Modals",
+      "sub": "Modal: Drivers Reference Catalog",
+      "route_hint": "surface://pages/lists/drivers/DriversReferenceCatalogModal.tsx"
+    },
+    {
+      "path": "pages/lists/fleet/FleetCatalogModal.tsx",
+      "kind": "modal",
+      "stem": "FleetCatalogModal",
+      "module": "lists",
+      "id": "lists.modal.fleet_catalog",
+      "tab": "Modals",
+      "sub": "Modal: Fleet Catalog",
+      "route_hint": "surface://pages/lists/fleet/FleetCatalogModal.tsx"
+    },
+    {
+      "path": "pages/lists/fuel/FuelCatalogModal.tsx",
+      "kind": "modal",
+      "stem": "FuelCatalogModal",
+      "module": "lists",
+      "id": "lists.modal.fuel_catalog",
+      "tab": "Modals",
+      "sub": "Modal: Fuel Catalog",
+      "route_hint": "surface://pages/lists/fuel/FuelCatalogModal.tsx"
+    },
+    {
+      "path": "pages/lists/maintenance/MaintenanceCatalogModal.tsx",
+      "kind": "modal",
+      "stem": "MaintenanceCatalogModal",
+      "module": "lists",
+      "id": "lists.modal.maintenance_catalog",
+      "tab": "Modals",
+      "sub": "Modal: Maintenance Catalog",
+      "route_hint": "surface://pages/lists/maintenance/MaintenanceCatalogModal.tsx"
+    },
+    {
+      "path": "pages/lists/safety/CargoClaimReasonModal.tsx",
+      "kind": "modal",
+      "stem": "CargoClaimReasonModal",
+      "module": "lists",
+      "id": "lists.modal.cargo_claim_reason",
+      "tab": "Modals",
+      "sub": "Modal: Cargo Claim Reason",
+      "route_hint": "surface://pages/lists/safety/CargoClaimReasonModal.tsx"
+    },
+    {
+      "path": "pages/lists/safety/CivilFineTypeModal.tsx",
+      "kind": "modal",
+      "stem": "CivilFineTypeModal",
+      "module": "lists",
+      "id": "lists.modal.civil_fine_type",
+      "tab": "Modals",
+      "sub": "Modal: Civil Fine Type",
+      "route_hint": "surface://pages/lists/safety/CivilFineTypeModal.tsx"
+    },
+    {
+      "path": "pages/lists/safety/CompanyViolationTypeModal.tsx",
+      "kind": "modal",
+      "stem": "CompanyViolationTypeModal",
+      "module": "safety",
+      "id": "safety.modal.company_violation_type",
+      "tab": "Modals",
+      "sub": "Modal: Company Violation Type",
+      "route_hint": "surface://pages/lists/safety/CompanyViolationTypeModal.tsx"
+    },
+    {
+      "path": "pages/lists/safety/ComplaintTypeModal.tsx",
+      "kind": "modal",
+      "stem": "ComplaintTypeModal",
+      "module": "lists",
+      "id": "lists.modal.complaint_type",
+      "tab": "Modals",
+      "sub": "Modal: Complaint Type",
+      "route_hint": "surface://pages/lists/safety/ComplaintTypeModal.tsx"
+    },
+    {
+      "path": "pages/lists/safety/DotViolationTypeModal.tsx",
+      "kind": "modal",
+      "stem": "DotViolationTypeModal",
+      "module": "lists",
+      "id": "lists.modal.dot_violation_type",
+      "tab": "Modals",
+      "sub": "Modal: Dot Violation Type",
+      "route_hint": "surface://pages/lists/safety/DotViolationTypeModal.tsx"
+    },
+    {
+      "path": "pages/lists/safety/InternalFineReasonModal.tsx",
+      "kind": "modal",
+      "stem": "InternalFineReasonModal",
+      "module": "lists",
+      "id": "lists.modal.internal_fine_reason",
+      "tab": "Modals",
+      "sub": "Modal: Internal Fine Reason",
+      "route_hint": "surface://pages/lists/safety/InternalFineReasonModal.tsx"
+    },
+    {
+      "path": "pages/maintenance/RoadServiceTicketModal.tsx",
+      "kind": "modal",
+      "stem": "RoadServiceTicketModal",
+      "module": "maintenance",
+      "id": "maintenance.modal.road_service_ticket",
+      "tab": "Modals",
+      "sub": "Modal: Road Service Ticket",
+      "route_hint": "surface://pages/maintenance/RoadServiceTicketModal.tsx"
+    },
+    {
+      "path": "pages/maintenance/WorkOrderCreateModal.tsx",
+      "kind": "modal",
+      "stem": "WorkOrderCreateModal",
+      "module": "maintenance",
+      "id": "maintenance.modal.work_order_create",
+      "tab": "Modals",
+      "sub": "Modal: Work Order Create",
+      "route_hint": "surface://pages/maintenance/WorkOrderCreateModal.tsx"
+    },
+    {
+      "path": "pages/maintenance/components/ConvertIssueToWOModal.tsx",
+      "kind": "modal",
+      "stem": "ConvertIssueToWOModal",
+      "module": "maintenance",
+      "id": "maintenance.modal.convert_issue_to_wo",
+      "tab": "Modals",
+      "sub": "Modal: Convert Issue To WO",
+      "route_hint": "surface://pages/maintenance/components/ConvertIssueToWOModal.tsx"
+    },
+    {
+      "path": "pages/maintenance/components/CreateBillModal.tsx",
+      "kind": "modal",
+      "stem": "CreateBillModal",
+      "module": "maintenance",
+      "id": "maintenance.modal.create_bill",
+      "tab": "Modals",
+      "sub": "Modal: Create Bill",
+      "route_hint": "surface://pages/maintenance/components/CreateBillModal.tsx"
+    },
+    {
+      "path": "pages/maintenance/components/CreateExpenseModal.tsx",
+      "kind": "modal",
+      "stem": "CreateExpenseModal",
+      "module": "maintenance",
+      "id": "maintenance.modal.create_expense",
+      "tab": "Modals",
+      "sub": "Modal: Create Expense",
+      "route_hint": "surface://pages/maintenance/components/CreateExpenseModal.tsx"
+    },
+    {
+      "path": "pages/maintenance/components/CreateWorkOrderModal.tsx",
+      "kind": "modal",
+      "stem": "CreateWorkOrderModal",
+      "module": "maintenance",
+      "id": "maintenance.modal.create_work_order",
+      "tab": "Modals",
+      "sub": "Modal: Create Work Order",
+      "route_hint": "surface://pages/maintenance/components/CreateWorkOrderModal.tsx"
+    },
+    {
+      "path": "pages/maintenance/components/TriageModal.tsx",
+      "kind": "modal",
+      "stem": "TriageModal",
+      "module": "maintenance",
+      "id": "maintenance.modal.triage",
+      "tab": "Modals",
+      "sub": "Modal: Triage",
+      "route_hint": "surface://pages/maintenance/components/TriageModal.tsx"
+    },
+    {
+      "path": "pages/reports/ScheduleReportModal.tsx",
+      "kind": "modal",
+      "stem": "ScheduleReportModal",
+      "module": "reports",
+      "id": "reports.modal.schedule_report",
+      "tab": "Modals",
+      "sub": "Modal: Schedule Report",
+      "route_hint": "surface://pages/reports/ScheduleReportModal.tsx"
+    },
+    {
+      "path": "pages/safety/components/CompanyViolationCreateModal.tsx",
+      "kind": "modal",
+      "stem": "CompanyViolationCreateModal",
+      "module": "safety",
+      "id": "safety.modal.company_violation_create",
+      "tab": "Modals",
+      "sub": "Modal: Company Violation Create",
+      "route_hint": "surface://pages/safety/components/CompanyViolationCreateModal.tsx"
+    },
+    {
+      "path": "pages/safety/components/EscrowForfeitModal.tsx",
+      "kind": "modal",
+      "stem": "EscrowForfeitModal",
+      "module": "safety",
+      "id": "safety.modal.escrow_forfeit",
+      "tab": "Modals",
+      "sub": "Modal: Escrow Forfeit",
+      "route_hint": "surface://pages/safety/components/EscrowForfeitModal.tsx"
+    },
+    {
+      "path": "pages/safety/components/FineConvertConfirmModal.tsx",
+      "kind": "modal",
+      "stem": "FineConvertConfirmModal",
+      "module": "safety",
+      "id": "safety.modal.fine_convert_confirm",
+      "tab": "Modals",
+      "sub": "Modal: Fine Convert Confirm",
+      "route_hint": "surface://pages/safety/components/FineConvertConfirmModal.tsx"
+    },
+    {
+      "path": "pages/safety/components/FineCreateModal.tsx",
+      "kind": "modal",
+      "stem": "FineCreateModal",
+      "module": "safety",
+      "id": "safety.modal.fine_create",
+      "tab": "Modals",
+      "sub": "Modal: Fine Create",
+      "route_hint": "surface://pages/safety/components/FineCreateModal.tsx"
+    },
+    {
+      "path": "pages/safety/components/HosViolationCreateModal.tsx",
+      "kind": "modal",
+      "stem": "HosViolationCreateModal",
+      "module": "safety",
+      "id": "safety.modal.hos_violation_create",
+      "tab": "Modals",
+      "sub": "Modal: Hos Violation Create",
+      "route_hint": "surface://pages/safety/components/HosViolationCreateModal.tsx"
+    },
+    {
+      "path": "components/dispatch/LoadDetailDrawer.tsx",
+      "kind": "drawer",
+      "stem": "LoadDetailDrawer",
+      "module": "dispatch",
+      "id": "dispatch.drawer.load_detail",
+      "tab": "Drawers",
+      "sub": "Drawer: Load Detail",
+      "route_hint": "surface://components/dispatch/LoadDetailDrawer.tsx"
+    },
+    {
+      "path": "components/parity/CatalogQuickCreateDrawer.tsx",
+      "kind": "drawer",
+      "stem": "CatalogQuickCreateDrawer",
+      "module": "lists",
+      "id": "lists.drawer.catalog_quick_create",
+      "tab": "Drawers",
+      "sub": "Drawer: Catalog Quick Create",
+      "route_hint": "surface://components/parity/CatalogQuickCreateDrawer.tsx"
+    },
+    {
+      "path": "components/parity/InlineCreateDrawer.tsx",
+      "kind": "drawer",
+      "stem": "InlineCreateDrawer",
+      "module": "lists",
+      "id": "lists.drawer.inline_create",
+      "tab": "Drawers",
+      "sub": "Drawer: Inline Create",
+      "route_hint": "surface://components/parity/InlineCreateDrawer.tsx"
+    },
+    {
+      "path": "components/parity/drawers/NewAccountDrawerForm.tsx",
+      "kind": "drawer",
+      "stem": "NewAccountDrawerForm",
+      "module": "accounting",
+      "id": "accounting.drawer.new_account_drawer_form",
+      "tab": "Drawers",
+      "sub": "Drawer: New Account Drawer Form",
+      "route_hint": "surface://components/parity/drawers/NewAccountDrawerForm.tsx"
+    },
+    {
+      "path": "components/parity/drawers/NewClassDrawerForm.tsx",
+      "kind": "drawer",
+      "stem": "NewClassDrawerForm",
+      "module": "accounting",
+      "id": "accounting.drawer.new_class_drawer_form",
+      "tab": "Drawers",
+      "sub": "Drawer: New Class Drawer Form",
+      "route_hint": "surface://components/parity/drawers/NewClassDrawerForm.tsx"
+    },
+    {
+      "path": "components/parity/drawers/NewCustomerDrawerForm.tsx",
+      "kind": "drawer",
+      "stem": "NewCustomerDrawerForm",
+      "module": "lists",
+      "id": "lists.drawer.new_customer_drawer_form",
+      "tab": "Drawers",
+      "sub": "Drawer: New Customer Drawer Form",
+      "route_hint": "surface://components/parity/drawers/NewCustomerDrawerForm.tsx"
+    },
+    {
+      "path": "components/parity/drawers/NewServiceDrawerForm.tsx",
+      "kind": "drawer",
+      "stem": "NewServiceDrawerForm",
+      "module": "accounting",
+      "id": "accounting.drawer.new_service_drawer_form",
+      "tab": "Drawers",
+      "sub": "Drawer: New Service Drawer Form",
+      "route_hint": "surface://components/parity/drawers/NewServiceDrawerForm.tsx"
+    },
+    {
+      "path": "components/parity/drawers/NewVendorDrawerForm.tsx",
+      "kind": "drawer",
+      "stem": "NewVendorDrawerForm",
+      "module": "lists",
+      "id": "lists.drawer.new_vendor_drawer_form",
+      "tab": "Drawers",
+      "sub": "Drawer: New Vendor Drawer Form",
+      "route_hint": "surface://components/parity/drawers/NewVendorDrawerForm.tsx"
+    },
+    {
+      "path": "components/safety/AccidentReportDrawer.tsx",
+      "kind": "drawer",
+      "stem": "AccidentReportDrawer",
+      "module": "safety",
+      "id": "safety.drawer.accident_report",
+      "tab": "Drawers",
+      "sub": "Drawer: Accident Report",
+      "route_hint": "surface://components/safety/AccidentReportDrawer.tsx"
+    },
+    {
+      "path": "pages/banking/components/CategorizeDrawer.tsx",
+      "kind": "drawer",
+      "stem": "CategorizeDrawer",
+      "module": "banking",
+      "id": "banking.drawer.categorize",
+      "tab": "Drawers",
+      "sub": "Drawer: Categorize",
+      "route_hint": "surface://pages/banking/components/CategorizeDrawer.tsx"
+    },
+    {
+      "path": "pages/banking/components/MatchDrawer.tsx",
+      "kind": "drawer",
+      "stem": "MatchDrawer",
+      "module": "banking",
+      "id": "banking.drawer.match",
+      "tab": "Drawers",
+      "sub": "Drawer: Match",
+      "route_hint": "surface://pages/banking/components/MatchDrawer.tsx"
+    },
+    {
+      "path": "pages/cash-advances/components/AdvanceDetailDrawer.tsx",
+      "kind": "drawer",
+      "stem": "AdvanceDetailDrawer",
+      "module": "settlements",
+      "id": "settlements.drawer.advance_detail",
+      "tab": "Drawers",
+      "sub": "Drawer: Advance Detail",
+      "route_hint": "surface://pages/cash-advances/components/AdvanceDetailDrawer.tsx"
+    },
+    {
+      "path": "pages/inventory/PartCreateDrawer.tsx",
+      "kind": "drawer",
+      "stem": "PartCreateDrawer",
+      "module": "inventory",
+      "id": "inventory.drawer.part_create",
+      "tab": "Drawers",
+      "sub": "Drawer: Part Create",
+      "route_hint": "surface://pages/inventory/PartCreateDrawer.tsx"
+    },
+    {
+      "path": "pages/inventory/PartEditDrawer.tsx",
+      "kind": "drawer",
+      "stem": "PartEditDrawer",
+      "module": "inventory",
+      "id": "inventory.drawer.part_edit",
+      "tab": "Drawers",
+      "sub": "Drawer: Part Edit",
+      "route_hint": "surface://pages/inventory/PartEditDrawer.tsx"
+    },
+    {
+      "path": "pages/liabilities/components/LiabilityDetailDrawer.tsx",
+      "kind": "drawer",
+      "stem": "LiabilityDetailDrawer",
+      "module": "settlements",
+      "id": "settlements.drawer.liability_detail",
+      "tab": "Drawers",
+      "sub": "Drawer: Liability Detail",
+      "route_hint": "surface://pages/liabilities/components/LiabilityDetailDrawer.tsx"
+    },
+    {
+      "path": "pages/lists/accounting/AccountDrawer.tsx",
+      "kind": "drawer",
+      "stem": "AccountDrawer",
+      "module": "lists",
+      "id": "lists.drawer.account",
+      "tab": "Drawers",
+      "sub": "Drawer: Account",
+      "route_hint": "surface://pages/lists/accounting/AccountDrawer.tsx"
+    },
+    {
+      "path": "pages/lists/accounting/AccountingCatalogProfileDrawer.tsx",
+      "kind": "drawer",
+      "stem": "AccountingCatalogProfileDrawer",
+      "module": "lists",
+      "id": "lists.drawer.accounting_catalog_profile",
+      "tab": "Drawers",
+      "sub": "Drawer: Accounting Catalog Profile",
+      "route_hint": "surface://pages/lists/accounting/AccountingCatalogProfileDrawer.tsx"
+    },
+    {
+      "path": "pages/safety/components/CompanyViolationDetailDrawer.tsx",
+      "kind": "drawer",
+      "stem": "CompanyViolationDetailDrawer",
+      "module": "safety",
+      "id": "safety.drawer.company_violation_detail",
+      "tab": "Drawers",
+      "sub": "Drawer: Company Violation Detail",
+      "route_hint": "surface://pages/safety/components/CompanyViolationDetailDrawer.tsx"
+    },
+    {
+      "path": "pages/safety/components/FineDetailDrawer.tsx",
+      "kind": "drawer",
+      "stem": "FineDetailDrawer",
+      "module": "safety",
+      "id": "safety.drawer.fine_detail",
+      "tab": "Drawers",
+      "sub": "Drawer: Fine Detail",
+      "route_hint": "surface://pages/safety/components/FineDetailDrawer.tsx"
+    },
+    {
+      "path": "pages/safety/components/IntegrityAlertDetailDrawer.tsx",
+      "kind": "drawer",
+      "stem": "IntegrityAlertDetailDrawer",
+      "module": "safety",
+      "id": "safety.drawer.integrity_alert_detail",
+      "tab": "Drawers",
+      "sub": "Drawer: Integrity Alert Detail",
+      "route_hint": "surface://pages/safety/components/IntegrityAlertDetailDrawer.tsx"
+    },
+    {
+      "path": "pages/safety/tabs/AnomalyDetailDrawer.tsx",
+      "kind": "drawer",
+      "stem": "AnomalyDetailDrawer",
+      "module": "safety",
+      "id": "safety.drawer.anomaly_detail",
+      "tab": "Drawers",
+      "sub": "Drawer: Anomaly Detail",
+      "route_hint": "surface://pages/safety/tabs/AnomalyDetailDrawer.tsx"
+    },
+    {
+      "path": "components/dispatch/AuthGatePanel.tsx",
+      "kind": "panel",
+      "stem": "AuthGatePanel",
+      "module": "dispatch",
+      "id": "dispatch.panel.auth_gate",
+      "tab": "Panels",
+      "sub": "Panel: Auth Gate",
+      "route_hint": "surface://components/dispatch/AuthGatePanel.tsx"
+    },
+    {
+      "path": "components/dispatch/DeadheadOptimizerPanel.tsx",
+      "kind": "panel",
+      "stem": "DeadheadOptimizerPanel",
+      "module": "dispatch",
+      "id": "dispatch.panel.deadhead_optimizer",
+      "tab": "Panels",
+      "sub": "Panel: Deadhead Optimizer",
+      "route_hint": "surface://components/dispatch/DeadheadOptimizerPanel.tsx"
+    },
+    {
+      "path": "components/dispatch/LoadBolPanel.tsx",
+      "kind": "panel",
+      "stem": "LoadBolPanel",
+      "module": "dispatch",
+      "id": "dispatch.panel.load_bol",
+      "tab": "Panels",
+      "sub": "Panel: Load Bol",
+      "route_hint": "surface://components/dispatch/LoadBolPanel.tsx"
+    },
+    {
+      "path": "components/dispatch/OptimalDriversPanel.tsx",
+      "kind": "panel",
+      "stem": "OptimalDriversPanel",
+      "module": "dispatch",
+      "id": "dispatch.panel.optimal_drivers",
+      "tab": "Panels",
+      "sub": "Panel: Optimal Drivers",
+      "route_hint": "surface://components/dispatch/OptimalDriversPanel.tsx"
+    },
+    {
+      "path": "components/dispatch/PreDispatchValidationPanel.tsx",
+      "kind": "panel",
+      "stem": "PreDispatchValidationPanel",
+      "module": "dispatch",
+      "id": "dispatch.panel.pre_dispatch_validation",
+      "tab": "Panels",
+      "sub": "Panel: Pre Dispatch Validation",
+      "route_hint": "surface://components/dispatch/PreDispatchValidationPanel.tsx"
+    },
+    {
+      "path": "components/dispatch/PreSettlementPanel.tsx",
+      "kind": "panel",
+      "stem": "PreSettlementPanel",
+      "module": "dispatch",
+      "id": "dispatch.panel.pre_settlement",
+      "tab": "Panels",
+      "sub": "Panel: Pre Settlement",
+      "route_hint": "surface://components/dispatch/PreSettlementPanel.tsx"
+    },
+    {
+      "path": "components/driver-finance/PreSettlementsPanel.tsx",
+      "kind": "panel",
+      "stem": "PreSettlementsPanel",
+      "module": "settlements",
+      "id": "settlements.panel.pre_settlements",
+      "tab": "Panels",
+      "sub": "Panel: Pre Settlements",
+      "route_hint": "surface://components/driver-finance/PreSettlementsPanel.tsx"
+    },
+    {
+      "path": "components/reports/ReportFlyoutPanel.tsx",
+      "kind": "panel",
+      "stem": "ReportFlyoutPanel",
+      "module": "reports",
+      "id": "reports.panel.report_flyout",
+      "tab": "Panels",
+      "sub": "Panel: Report Flyout",
+      "route_hint": "surface://components/reports/ReportFlyoutPanel.tsx"
+    },
+    {
+      "path": "components/safety/driver-safety/DriverSafetyProfilePanel.tsx",
+      "kind": "panel",
+      "stem": "DriverSafetyProfilePanel",
+      "module": "safety",
+      "id": "safety.panel.driver_safety_profile",
+      "tab": "Panels",
+      "sub": "Panel: Driver Safety Profile",
+      "route_hint": "surface://components/safety/driver-safety/DriverSafetyProfilePanel.tsx"
+    },
+    {
+      "path": "pages/accounting/BillDetailPanel.tsx",
+      "kind": "panel",
+      "stem": "BillDetailPanel",
+      "module": "accounting",
+      "id": "accounting.panel.bill_detail",
+      "tab": "Panels",
+      "sub": "Panel: Bill Detail",
+      "route_hint": "surface://pages/accounting/BillDetailPanel.tsx"
+    },
+    {
+      "path": "pages/accounting/ChartOfAccountsSyncPanel.tsx",
+      "kind": "panel",
+      "stem": "ChartOfAccountsSyncPanel",
+      "module": "accounting",
+      "id": "accounting.panel.chart_of_accounts_sync",
+      "tab": "Panels",
+      "sub": "Panel: Chart Of Accounts Sync",
+      "route_hint": "surface://pages/accounting/ChartOfAccountsSyncPanel.tsx"
+    },
+    {
+      "path": "pages/accounting/CoaAsymmetryReportPanel.tsx",
+      "kind": "panel",
+      "stem": "CoaAsymmetryReportPanel",
+      "module": "accounting",
+      "id": "accounting.panel.coa_asymmetry_report",
+      "tab": "Panels",
+      "sub": "Panel: Coa Asymmetry Report",
+      "route_hint": "surface://pages/accounting/CoaAsymmetryReportPanel.tsx"
+    },
+    {
+      "path": "pages/banking/components/BankingPlaidConnectionsPanel.tsx",
+      "kind": "panel",
+      "stem": "BankingPlaidConnectionsPanel",
+      "module": "banking",
+      "id": "banking.panel.banking_plaid_connections",
+      "tab": "Panels",
+      "sub": "Panel: Banking Plaid Connections",
+      "route_hint": "surface://pages/banking/components/BankingPlaidConnectionsPanel.tsx"
+    },
+    {
+      "path": "pages/customers/CustomersSyncPanel.tsx",
+      "kind": "panel",
+      "stem": "CustomersSyncPanel",
+      "module": "customers",
+      "id": "customers.panel.customers_sync",
+      "tab": "Panels",
+      "sub": "Panel: Customers Sync",
+      "route_hint": "surface://pages/customers/CustomersSyncPanel.tsx"
+    },
+    {
+      "path": "pages/dispatch/components/book-load-v4/RateConUploadPanel.tsx",
+      "kind": "panel",
+      "stem": "RateConUploadPanel",
+      "module": "dispatch",
+      "id": "dispatch.panel.rate_con_upload",
+      "tab": "Panels",
+      "sub": "Panel: Rate Con Upload",
+      "route_hint": "surface://pages/dispatch/components/book-load-v4/RateConUploadPanel.tsx"
+    },
+    {
+      "path": "pages/driver-finance/components/PayRunClosePanel.tsx",
+      "kind": "panel",
+      "stem": "PayRunClosePanel",
+      "module": "settlements",
+      "id": "settlements.panel.pay_run_close",
+      "tab": "Panels",
+      "sub": "Panel: Pay Run Close",
+      "route_hint": "surface://pages/driver-finance/components/PayRunClosePanel.tsx"
+    },
+    {
+      "path": "pages/drivers/PendingSettlementDeductionsPanel.tsx",
+      "kind": "panel",
+      "stem": "PendingSettlementDeductionsPanel",
+      "module": "drivers",
+      "id": "drivers.panel.pending_settlement_deductions",
+      "tab": "Panels",
+      "sub": "Panel: Pending Settlement Deductions",
+      "route_hint": "surface://pages/drivers/PendingSettlementDeductionsPanel.tsx"
+    },
+    {
+      "path": "pages/drivers/components/DriverDqfPanel.tsx",
+      "kind": "panel",
+      "stem": "DriverDqfPanel",
+      "module": "drivers",
+      "id": "drivers.panel.driver_dqf",
+      "tab": "Panels",
+      "sub": "Panel: Driver Dqf",
+      "route_hint": "surface://pages/drivers/components/DriverDqfPanel.tsx"
+    },
+    {
+      "path": "pages/factoring/FactoringProfilePanel.tsx",
+      "kind": "panel",
+      "stem": "FactoringProfilePanel",
+      "module": "factoring",
+      "id": "factoring.panel.factoring_profile",
+      "tab": "Panels",
+      "sub": "Panel: Factoring Profile",
+      "route_hint": "surface://pages/factoring/FactoringProfilePanel.tsx"
+    },
+    {
+      "path": "pages/fuel/components/CompliancePanel.tsx",
+      "kind": "panel",
+      "stem": "CompliancePanel",
+      "module": "fuel",
+      "id": "fuel.panel.compliance",
+      "tab": "Panels",
+      "sub": "Panel: Compliance",
+      "route_hint": "surface://pages/fuel/components/CompliancePanel.tsx"
+    },
+    {
+      "path": "pages/fuel/components/SavingsPanel.tsx",
+      "kind": "panel",
+      "stem": "SavingsPanel",
+      "module": "fuel",
+      "id": "fuel.panel.savings",
+      "tab": "Panels",
+      "sub": "Panel: Savings",
+      "route_hint": "surface://pages/fuel/components/SavingsPanel.tsx"
+    },
+    {
+      "path": "pages/maintenance/components/RoadServiceActivePanel.tsx",
+      "kind": "panel",
+      "stem": "RoadServiceActivePanel",
+      "module": "maintenance",
+      "id": "maintenance.panel.road_service_active",
+      "tab": "Panels",
+      "sub": "Panel: Road Service Active",
+      "route_hint": "surface://pages/maintenance/components/RoadServiceActivePanel.tsx"
+    },
+    {
+      "path": "pages/reports/ScheduledReportsPanel.tsx",
+      "kind": "panel",
+      "stem": "ScheduledReportsPanel",
+      "module": "reports",
+      "id": "reports.panel.scheduled_reports",
+      "tab": "Panels",
+      "sub": "Panel: Scheduled Reports",
+      "route_hint": "surface://pages/reports/ScheduledReportsPanel.tsx"
+    },
+    {
+      "path": "pages/safety/drug-alcohol/TestSchedulingPanel.tsx",
+      "kind": "panel",
+      "stem": "TestSchedulingPanel",
+      "module": "safety",
+      "id": "safety.panel.test_scheduling",
+      "tab": "Panels",
+      "sub": "Panel: Test Scheduling",
+      "route_hint": "surface://pages/safety/drug-alcohol/TestSchedulingPanel.tsx"
+    },
+    {
+      "path": "pages/vendors/VendorsSyncPanel.tsx",
+      "kind": "panel",
+      "stem": "VendorsSyncPanel",
+      "module": "vendors",
+      "id": "vendors.panel.vendors_sync",
+      "tab": "Panels",
+      "sub": "Panel: Vendors Sync",
+      "route_hint": "surface://pages/vendors/VendorsSyncPanel.tsx"
+    },
+    {
+      "path": "components/insurance/PolicyCreateWizard.tsx",
+      "kind": "wizard",
+      "stem": "PolicyCreateWizard",
+      "module": "insurance",
+      "id": "insurance.wizard.policy_create",
+      "tab": "Wizards",
+      "sub": "Wizard: Policy Create",
+      "route_hint": "surface://components/insurance/PolicyCreateWizard.tsx"
+    },
+    {
+      "path": "pages/accounting/loans/LoanApplicationWizard.tsx",
+      "kind": "wizard",
+      "stem": "LoanApplicationWizard",
+      "module": "accounting",
+      "id": "accounting.wizard.loan_application",
+      "tab": "Wizards",
+      "sub": "Wizard: Loan Application",
+      "route_hint": "surface://pages/accounting/loans/LoanApplicationWizard.tsx"
+    },
+    {
+      "path": "pages/dispatch/BorderCrossingWizardPage.tsx",
+      "kind": "wizard",
+      "stem": "BorderCrossingWizardPage",
+      "module": "dispatch",
+      "id": "dispatch.wizard.border_crossing_wizard_page",
+      "tab": "Wizards",
+      "sub": "Wizard: Border Crossing Wizard Page",
+      "route_hint": "surface://pages/dispatch/BorderCrossingWizardPage.tsx"
+    },
+    {
+      "path": "pages/drivers/OnboardingWizardPage.tsx",
+      "kind": "wizard",
+      "stem": "OnboardingWizardPage",
+      "module": "drivers",
+      "id": "drivers.wizard.onboarding_wizard_page",
+      "tab": "Wizards",
+      "sub": "Wizard: Onboarding Wizard Page",
+      "route_hint": "surface://pages/drivers/OnboardingWizardPage.tsx"
+    },
+    {
+      "path": "pages/factoring/BatchWizard.tsx",
+      "kind": "wizard",
+      "stem": "BatchWizard",
+      "module": "factoring",
+      "id": "factoring.wizard.batch",
+      "tab": "Wizards",
+      "sub": "Wizard: Batch",
+      "route_hint": "surface://pages/factoring/BatchWizard.tsx"
+    },
+    {
+      "path": "pages/finance/LoanWizardPage.tsx",
+      "kind": "wizard",
+      "stem": "LoanWizardPage",
+      "module": "finance",
+      "id": "finance.wizard.loan_wizard_page",
+      "tab": "Wizards",
+      "sub": "Wizard: Loan Wizard Page",
+      "route_hint": "surface://pages/finance/LoanWizardPage.tsx"
+    },
+    {
+      "path": "pages/integrations/edi/EdiSetupWizard.tsx",
+      "kind": "wizard",
+      "stem": "EdiSetupWizard",
+      "module": "system",
+      "id": "system.wizard.edi_setup",
+      "tab": "Wizards",
+      "sub": "Wizard: Edi Setup",
+      "route_hint": "surface://pages/integrations/edi/EdiSetupWizard.tsx"
+    },
+    {
+      "path": "pages/onboarding/OnboardingWizard.tsx",
+      "kind": "wizard",
+      "stem": "OnboardingWizard",
+      "module": "drivers",
+      "id": "drivers.wizard.onboarding",
+      "tab": "Wizards",
+      "sub": "Wizard: Onboarding",
+      "route_hint": "surface://pages/onboarding/OnboardingWizard.tsx"
+    },
+    {
+      "path": "pages/reports/BalanceSheetPage.tsx",
+      "kind": "sheet",
+      "stem": "BalanceSheetPage",
+      "module": "reports",
+      "id": "reports.sheet.balance_sheet_page",
+      "tab": "Sheets",
+      "sub": "Sheet: Balance Sheet Page",
+      "route_hint": "surface://pages/reports/BalanceSheetPage.tsx"
+    },
+    {
+      "path": "pages/banking/components/PrintOrientationDialog.tsx",
+      "kind": "dialog",
+      "stem": "PrintOrientationDialog",
+      "module": "banking",
+      "id": "banking.dialog.print_orientation",
+      "tab": "Dialogs",
+      "sub": "Dialog: Print Orientation",
+      "route_hint": "surface://pages/banking/components/PrintOrientationDialog.tsx"
+    },
+    {
+      "path": "components/reports/ReportFlyoutPanel.tsx",
+      "kind": "flyout",
+      "stem": "ReportFlyoutPanel",
+      "module": "reports",
+      "id": "reports.flyout.report_flyout",
+      "tab": "Flyouts",
+      "sub": "Flyout: Report Flyout",
+      "route_hint": "surface://components/reports/ReportFlyoutPanel.tsx"
+    },
+    {
+      "path": "pages/lists/components/DomainFlyout.tsx",
+      "kind": "flyout",
+      "stem": "DomainFlyout",
+      "module": "lists",
+      "id": "lists.flyout.domain",
+      "tab": "Flyouts",
+      "sub": "Flyout: Domain",
+      "route_hint": "surface://pages/lists/components/DomainFlyout.tsx"
+    },
+    {
+      "path": "components/ap/BillPaymentModal.tsx",
+      "kind": "parity_site",
+      "stem": "BillPaymentModal",
+      "module": "accounting",
+      "id": "accounting.parity.bill_payment",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Bill Payment",
+      "route_hint": "surface://components/ap/BillPaymentModal.tsx"
+    },
+    {
+      "path": "components/drivers/CreateDriverModal.tsx",
+      "kind": "parity_site",
+      "stem": "CreateDriverModal",
+      "module": "drivers",
+      "id": "drivers.parity.create_driver",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Create Driver",
+      "route_hint": "surface://components/drivers/CreateDriverModal.tsx"
+    },
+    {
+      "path": "components/drivers/DriverPickerWithCreate.tsx",
+      "kind": "parity_site",
+      "stem": "DriverPickerWithCreate",
+      "module": "drivers",
+      "id": "drivers.parity.driver_picker_with_create",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Driver Picker With Create",
+      "route_hint": "surface://components/drivers/DriverPickerWithCreate.tsx"
+    },
+    {
+      "path": "components/factoring/DriverAutocomplete.tsx",
+      "kind": "parity_site",
+      "stem": "DriverAutocomplete",
+      "module": "factoring",
+      "id": "factoring.parity.driver_autocomplete",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Driver Autocomplete",
+      "route_hint": "surface://components/factoring/DriverAutocomplete.tsx"
+    },
+    {
+      "path": "components/fleet/CreateTrailerModal.tsx",
+      "kind": "parity_site",
+      "stem": "CreateTrailerModal",
+      "module": "fleet",
+      "id": "fleet.parity.create_trailer",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Create Trailer",
+      "route_hint": "surface://components/fleet/CreateTrailerModal.tsx"
+    },
+    {
+      "path": "components/fleet/CreateUnitModal.tsx",
+      "kind": "parity_site",
+      "stem": "CreateUnitModal",
+      "module": "fleet",
+      "id": "fleet.parity.create_unit",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Create Unit",
+      "route_hint": "surface://components/fleet/CreateUnitModal.tsx"
+    },
+    {
+      "path": "components/insurance/ClaimCreateModal.tsx",
+      "kind": "parity_site",
+      "stem": "ClaimCreateModal",
+      "module": "insurance",
+      "id": "insurance.parity.claim_create",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Claim Create",
+      "route_hint": "surface://components/insurance/ClaimCreateModal.tsx"
+    },
+    {
+      "path": "components/insurance/LawsuitCreateModal.tsx",
+      "kind": "parity_site",
+      "stem": "LawsuitCreateModal",
+      "module": "insurance",
+      "id": "insurance.parity.lawsuit_create",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Lawsuit Create",
+      "route_hint": "surface://components/insurance/LawsuitCreateModal.tsx"
+    },
+    {
+      "path": "components/insurance/PolicyCreateModal.tsx",
+      "kind": "parity_site",
+      "stem": "PolicyCreateModal",
+      "module": "insurance",
+      "id": "insurance.parity.policy_create",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Policy Create",
+      "route_hint": "surface://components/insurance/PolicyCreateModal.tsx"
+    },
+    {
+      "path": "components/maintenance/FaultRuleModal.tsx",
+      "kind": "parity_site",
+      "stem": "FaultRuleModal",
+      "module": "maintenance",
+      "id": "maintenance.parity.fault_rule",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Fault Rule",
+      "route_hint": "surface://components/maintenance/FaultRuleModal.tsx"
+    },
+    {
+      "path": "components/safety/AccidentReportDrawer.tsx",
+      "kind": "parity_site",
+      "stem": "AccidentReportDrawer",
+      "module": "safety",
+      "id": "safety.parity.accident_report",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Accident Report",
+      "route_hint": "surface://components/safety/AccidentReportDrawer.tsx"
+    },
+    {
+      "path": "pages/accounting/ExpenseCreatePage.tsx",
+      "kind": "parity_site",
+      "stem": "ExpenseCreatePage",
+      "module": "accounting",
+      "id": "accounting.parity.expense_create_page",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Expense Create Page",
+      "route_hint": "surface://pages/accounting/ExpenseCreatePage.tsx"
+    },
+    {
+      "path": "pages/accounting/ExpensesListPage.tsx",
+      "kind": "parity_site",
+      "stem": "ExpensesListPage",
+      "module": "accounting",
+      "id": "accounting.parity.expenses_list_page",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Expenses List Page",
+      "route_hint": "surface://pages/accounting/ExpensesListPage.tsx"
+    },
+    {
+      "path": "pages/accounting/FactoringDetailPage.tsx",
+      "kind": "parity_site",
+      "stem": "FactoringDetailPage",
+      "module": "accounting",
+      "id": "accounting.parity.factoring_detail_page",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Factoring Detail Page",
+      "route_hint": "surface://pages/accounting/FactoringDetailPage.tsx"
+    },
+    {
+      "path": "pages/accounting/InvoiceCreateModal.tsx",
+      "kind": "parity_site",
+      "stem": "InvoiceCreateModal",
+      "module": "accounting",
+      "id": "accounting.parity.invoice_create",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Invoice Create",
+      "route_hint": "surface://pages/accounting/InvoiceCreateModal.tsx"
+    },
+    {
+      "path": "pages/accounting/PayBillModal.tsx",
+      "kind": "parity_site",
+      "stem": "PayBillModal",
+      "module": "accounting",
+      "id": "accounting.parity.pay_bill",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Pay Bill",
+      "route_hint": "surface://pages/accounting/PayBillModal.tsx"
+    },
+    {
+      "path": "pages/accounting/PaymentApplyModal.tsx",
+      "kind": "parity_site",
+      "stem": "PaymentApplyModal",
+      "module": "accounting",
+      "id": "accounting.parity.payment_apply",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Payment Apply",
+      "route_hint": "surface://pages/accounting/PaymentApplyModal.tsx"
+    },
+    {
+      "path": "pages/accounting/ReceiptsPage.tsx",
+      "kind": "parity_site",
+      "stem": "ReceiptsPage",
+      "module": "accounting",
+      "id": "accounting.parity.receipts_page",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Receipts Page",
+      "route_hint": "surface://pages/accounting/ReceiptsPage.tsx"
+    },
+    {
+      "path": "pages/accounting/RecordPaymentModal.tsx",
+      "kind": "parity_site",
+      "stem": "RecordPaymentModal",
+      "module": "accounting",
+      "id": "accounting.parity.record_payment",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Record Payment",
+      "route_hint": "surface://pages/accounting/RecordPaymentModal.tsx"
+    },
+    {
+      "path": "pages/accounting/SubmitFactoringModal.tsx",
+      "kind": "parity_site",
+      "stem": "SubmitFactoringModal",
+      "module": "accounting",
+      "id": "accounting.parity.submit_factoring",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Submit Factoring",
+      "route_hint": "surface://pages/accounting/SubmitFactoringModal.tsx"
+    },
+    {
+      "path": "pages/accounting/VendorBillCreatePage.tsx",
+      "kind": "parity_site",
+      "stem": "VendorBillCreatePage",
+      "module": "accounting",
+      "id": "accounting.parity.vendor_bill_create_page",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Vendor Bill Create Page",
+      "route_hint": "surface://pages/accounting/VendorBillCreatePage.tsx"
+    },
+    {
+      "path": "pages/accounting/VendorCreditsPage.tsx",
+      "kind": "parity_site",
+      "stem": "VendorCreditsPage",
+      "module": "accounting",
+      "id": "accounting.parity.vendor_credits_page",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Vendor Credits Page",
+      "route_hint": "surface://pages/accounting/VendorCreditsPage.tsx"
+    },
+    {
+      "path": "pages/accounting/bill-payments/CCPaymentModal.tsx",
+      "kind": "parity_site",
+      "stem": "CCPaymentModal",
+      "module": "accounting",
+      "id": "accounting.parity.ccpayment",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: CCPayment",
+      "route_hint": "surface://pages/accounting/bill-payments/CCPaymentModal.tsx"
+    },
+    {
+      "path": "pages/accounting/modals/InvoiceTypeModalBase.tsx",
+      "kind": "parity_site",
+      "stem": "InvoiceTypeModalBase",
+      "module": "accounting",
+      "id": "accounting.parity.invoice_type_modal_base",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Invoice Type Modal Base",
+      "route_hint": "surface://pages/accounting/modals/InvoiceTypeModalBase.tsx"
+    },
+    {
+      "path": "pages/banking/RecordCCPaymentModal.tsx",
+      "kind": "parity_site",
+      "stem": "RecordCCPaymentModal",
+      "module": "banking",
+      "id": "banking.parity.record_ccpayment",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Record CCPayment",
+      "route_hint": "surface://pages/banking/RecordCCPaymentModal.tsx"
+    },
+    {
+      "path": "pages/banking/RecordTransferModal.tsx",
+      "kind": "parity_site",
+      "stem": "RecordTransferModal",
+      "module": "banking",
+      "id": "banking.parity.record_transfer",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Record Transfer",
+      "route_hint": "surface://pages/banking/RecordTransferModal.tsx"
+    },
+    {
+      "path": "pages/banking/TransferModal.tsx",
+      "kind": "parity_site",
+      "stem": "TransferModal",
+      "module": "banking",
+      "id": "banking.parity.transfer",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Transfer",
+      "route_hint": "surface://pages/banking/TransferModal.tsx"
+    },
+    {
+      "path": "pages/banking/components/BankTransactionSplitModal.tsx",
+      "kind": "parity_site",
+      "stem": "BankTransactionSplitModal",
+      "module": "banking",
+      "id": "banking.parity.bank_transaction_split",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Bank Transaction Split",
+      "route_hint": "surface://pages/banking/components/BankTransactionSplitModal.tsx"
+    },
+    {
+      "path": "pages/banking/components/ManualJEModal.tsx",
+      "kind": "parity_site",
+      "stem": "ManualJEModal",
+      "module": "banking",
+      "id": "banking.parity.manual_je",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Manual JE",
+      "route_hint": "surface://pages/banking/components/ManualJEModal.tsx"
+    },
+    {
+      "path": "pages/banking/components/MatchDrawer.tsx",
+      "kind": "parity_site",
+      "stem": "MatchDrawer",
+      "module": "banking",
+      "id": "banking.parity.match",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Match",
+      "route_hint": "surface://pages/banking/components/MatchDrawer.tsx"
+    },
+    {
+      "path": "pages/cash-advances/components/CreateAdvanceModal.tsx",
+      "kind": "parity_site",
+      "stem": "CreateAdvanceModal",
+      "module": "settlements",
+      "id": "settlements.parity.create_advance",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Create Advance",
+      "route_hint": "surface://pages/cash-advances/components/CreateAdvanceModal.tsx"
+    },
+    {
+      "path": "pages/dispatch/AssignDriverDropdown.tsx",
+      "kind": "parity_site",
+      "stem": "AssignDriverDropdown",
+      "module": "dispatch",
+      "id": "dispatch.parity.assign_driver_dropdown",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Assign Driver Dropdown",
+      "route_hint": "surface://pages/dispatch/AssignDriverDropdown.tsx"
+    },
+    {
+      "path": "pages/dispatch/components/BookLoadEquipmentSection.tsx",
+      "kind": "parity_site",
+      "stem": "BookLoadEquipmentSection",
+      "module": "dispatch",
+      "id": "dispatch.parity.book_load_equipment_section",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Book Load Equipment Section",
+      "route_hint": "surface://pages/dispatch/components/BookLoadEquipmentSection.tsx"
+    },
+    {
+      "path": "pages/legal/contracts/LeaseToOwnCreatorModal.tsx",
+      "kind": "parity_site",
+      "stem": "LeaseToOwnCreatorModal",
+      "module": "legal",
+      "id": "legal.parity.lease_to_own_creator",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Lease To Own Creator",
+      "route_hint": "surface://pages/legal/contracts/LeaseToOwnCreatorModal.tsx"
+    },
+    {
+      "path": "pages/legal/contracts/SendContractModal.tsx",
+      "kind": "parity_site",
+      "stem": "SendContractModal",
+      "module": "legal",
+      "id": "legal.parity.send_contract",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Send Contract",
+      "route_hint": "surface://pages/legal/contracts/SendContractModal.tsx"
+    },
+    {
+      "path": "pages/legal/contracts/TruckLeaseCreatorModal.tsx",
+      "kind": "parity_site",
+      "stem": "TruckLeaseCreatorModal",
+      "module": "legal",
+      "id": "legal.parity.truck_lease_creator",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Truck Lease Creator",
+      "route_hint": "surface://pages/legal/contracts/TruckLeaseCreatorModal.tsx"
+    },
+    {
+      "path": "pages/legal/contracts/UnifiedContractCreatorModal.tsx",
+      "kind": "parity_site",
+      "stem": "UnifiedContractCreatorModal",
+      "module": "legal",
+      "id": "legal.parity.unified_contract_creator",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Unified Contract Creator",
+      "route_hint": "surface://pages/legal/contracts/UnifiedContractCreatorModal.tsx"
+    },
+    {
+      "path": "pages/legal/templates/LegalTemplateNewModal.tsx",
+      "kind": "parity_site",
+      "stem": "LegalTemplateNewModal",
+      "module": "legal",
+      "id": "legal.parity.legal_template_new",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Legal Template New",
+      "route_hint": "surface://pages/legal/templates/LegalTemplateNewModal.tsx"
+    },
+    {
+      "path": "pages/lists/accounting/AccountingCatalogProfileDrawer.tsx",
+      "kind": "parity_site",
+      "stem": "AccountingCatalogProfileDrawer",
+      "module": "lists",
+      "id": "lists.parity.accounting_catalog_profile",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Accounting Catalog Profile",
+      "route_hint": "surface://pages/lists/accounting/AccountingCatalogProfileDrawer.tsx"
+    },
+    {
+      "path": "pages/maintenance/components/CreateBillModal.tsx",
+      "kind": "parity_site",
+      "stem": "CreateBillModal",
+      "module": "maintenance",
+      "id": "maintenance.parity.create_bill",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Create Bill",
+      "route_hint": "surface://pages/maintenance/components/CreateBillModal.tsx"
+    },
+    {
+      "path": "pages/maintenance/components/CreateExpenseModal.tsx",
+      "kind": "parity_site",
+      "stem": "CreateExpenseModal",
+      "module": "maintenance",
+      "id": "maintenance.parity.create_expense",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Create Expense",
+      "route_hint": "surface://pages/maintenance/components/CreateExpenseModal.tsx"
+    },
+    {
+      "path": "pages/program/LegacyAuditScoreboardPage.tsx",
+      "kind": "parity_site",
+      "stem": "LegacyAuditScoreboardPage",
+      "module": "program",
+      "id": "program.parity.legacy_audit_scoreboard_page",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Legacy Audit Scoreboard Page",
+      "route_hint": "surface://pages/program/LegacyAuditScoreboardPage.tsx"
+    },
+    {
+      "path": "pages/safety/components/CompanyViolationDetailDrawer.tsx",
+      "kind": "parity_site",
+      "stem": "CompanyViolationDetailDrawer",
+      "module": "safety",
+      "id": "safety.parity.company_violation_detail",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Company Violation Detail",
+      "route_hint": "surface://pages/safety/components/CompanyViolationDetailDrawer.tsx"
+    },
+    {
+      "path": "pages/safety/components/EscrowForfeitModal.tsx",
+      "kind": "parity_site",
+      "stem": "EscrowForfeitModal",
+      "module": "safety",
+      "id": "safety.parity.escrow_forfeit",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Escrow Forfeit",
+      "route_hint": "surface://pages/safety/components/EscrowForfeitModal.tsx"
+    },
+    {
+      "path": "pages/safety/components/FineCreateModal.tsx",
+      "kind": "parity_site",
+      "stem": "FineCreateModal",
+      "module": "safety",
+      "id": "safety.parity.fine_create",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Fine Create",
+      "route_hint": "surface://pages/safety/components/FineCreateModal.tsx"
+    },
+    {
+      "path": "pages/safety/components/FineDetailDrawer.tsx",
+      "kind": "parity_site",
+      "stem": "FineDetailDrawer",
+      "module": "safety",
+      "id": "safety.parity.fine_detail",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Fine Detail",
+      "route_hint": "surface://pages/safety/components/FineDetailDrawer.tsx"
+    },
+    {
+      "path": "pages/safety/components/IntegrityAlertDetailDrawer.tsx",
+      "kind": "parity_site",
+      "stem": "IntegrityAlertDetailDrawer",
+      "module": "safety",
+      "id": "safety.parity.integrity_alert_detail",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Integrity Alert Detail",
+      "route_hint": "surface://pages/safety/components/IntegrityAlertDetailDrawer.tsx"
+    },
+    {
+      "path": "pages/safety/tabs/AnomalyDetailDrawer.tsx",
+      "kind": "parity_site",
+      "stem": "AnomalyDetailDrawer",
+      "module": "safety",
+      "id": "safety.parity.anomaly_detail",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Anomaly Detail",
+      "route_hint": "surface://pages/safety/tabs/AnomalyDetailDrawer.tsx"
+    }
+  ],
+  "stats": {
+    "added": 176,
+    "skipped_existing": 27,
+    "skipped_unmapped_module": 0,
+    "modules": {
+      "accounting": {
+        "leaves": 66,
+        "added": 32
+      },
+      "banking": {
+        "leaves": 27,
+        "added": 16
+      },
+      "cash-flow": {
+        "leaves": 10,
+        "added": 0
+      },
+      "compliance": {
+        "leaves": 21,
+        "added": 0
+      },
+      "customers": {
+        "leaves": 45,
+        "added": 1
+      },
+      "dispatch": {
+        "leaves": 66,
+        "added": 15
+      },
+      "docs": {
+        "leaves": 15,
+        "added": 5
+      },
+      "driver-hub": {
+        "leaves": 8,
+        "added": 0
+      },
+      "drivers": {
+        "leaves": 27,
+        "added": 14
+      },
+      "factoring": {
+        "leaves": 25,
+        "added": 5
+      },
+      "finance": {
+        "leaves": 18,
+        "added": 1
+      },
+      "fleet": {
+        "leaves": 67,
+        "added": 1
+      },
+      "form_425": {
+        "leaves": 12,
+        "added": 0
+      },
+      "fuel": {
+        "leaves": 11,
+        "added": 3
+      },
+      "help": {
+        "leaves": 10,
+        "added": 0
+      },
+      "home": {
+        "leaves": 25,
+        "added": 0
+      },
+      "insurance": {
+        "leaves": 18,
+        "added": 7
+      },
+      "inventory": {
+        "leaves": 26,
+        "added": 1
+      },
+      "legal": {
+        "leaves": 21,
+        "added": 10
+      },
+      "lists": {
+        "leaves": 240,
+        "added": 18
+      },
+      "maintenance": {
+        "leaves": 38,
+        "added": 9
+      },
+      "program": {
+        "leaves": 13,
+        "added": 1
+      },
+      "reports": {
+        "leaves": 86,
+        "added": 6
+      },
+      "safety": {
+        "leaves": 61,
+        "added": 20
+      },
+      "settlements": {
+        "leaves": 15,
+        "added": 9
+      },
+      "system": {
+        "leaves": 11,
+        "added": 1
+      },
+      "tasks": {
+        "leaves": 11,
+        "added": 0
+      },
+      "users": {
+        "leaves": 7,
+        "added": 0
+      },
+      "vendors": {
+        "leaves": 40,
+        "added": 1
+      }
+    }
+  },
+  "new_columns": [
+    "claim",
+    "work_order",
+    "accident",
+    "policy",
+    "settlement",
+    "legal_matter",
+    "invoice",
+    "bank"
+  ]
+}

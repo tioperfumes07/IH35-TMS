@@ -86,6 +86,46 @@
       "id": "scenario.maintenance",
       "group": "process",
       "label": "Maint WO"
+    },
+    {
+      "id": "claim",
+      "group": "linkage",
+      "label": "Claim"
+    },
+    {
+      "id": "work_order",
+      "group": "linkage",
+      "label": "Work order"
+    },
+    {
+      "id": "accident",
+      "group": "linkage",
+      "label": "Accident"
+    },
+    {
+      "id": "policy",
+      "group": "linkage",
+      "label": "Policy"
+    },
+    {
+      "id": "settlement",
+      "group": "linkage",
+      "label": "Settlement"
+    },
+    {
+      "id": "legal_matter",
+      "group": "linkage",
+      "label": "Legal matter"
+    },
+    {
+      "id": "invoice",
+      "group": "money",
+      "label": "AR / Invoice"
+    },
+    {
+      "id": "bank",
+      "group": "money",
+      "label": "Bank / Match"
     }
   ],
   "leaves": [
@@ -143,7 +183,8 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "work_order"
       ]
     },
     {
@@ -336,7 +377,8 @@
         "load",
         "connectivity",
         "reverse_link",
-        "picker_law"
+        "picker_law",
+        "invoice"
       ]
     },
     {
@@ -351,7 +393,8 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "invoice"
       ]
     },
     {
@@ -411,7 +454,8 @@
       "route_hint": "/accounting/pre-settlements",
       "required": [
         "driver",
-        "connectivity"
+        "connectivity",
+        "settlement"
       ]
     },
     {
@@ -520,6 +564,500 @@
       "required": [
         "connectivity",
         "gl_je"
+      ]
+    },
+    {
+      "id": "accounting.modal.invoice_create",
+      "tab": "Modals",
+      "sub": "Modal: Invoice Create",
+      "route_hint": "surface://pages/accounting/InvoiceCreateModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "pages/accounting/InvoiceCreateModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome",
+        "invoice",
+        "gl_je"
+      ]
+    },
+    {
+      "id": "accounting.modal.manual_je",
+      "tab": "Modals",
+      "sub": "Modal: Manual JE",
+      "route_hint": "surface://pages/accounting/ManualJEModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "pages/accounting/ManualJEModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "gl_je",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "accounting.modal.pay_bill",
+      "tab": "Modals",
+      "sub": "Modal: Pay Bill",
+      "route_hint": "surface://pages/accounting/PayBillModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "pages/accounting/PayBillModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome",
+        "ap_bill",
+        "gl_je"
+      ]
+    },
+    {
+      "id": "accounting.modal.payment_apply",
+      "tab": "Modals",
+      "sub": "Modal: Payment Apply",
+      "route_hint": "surface://pages/accounting/PaymentApplyModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "pages/accounting/PaymentApplyModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome",
+        "gl_je"
+      ]
+    },
+    {
+      "id": "accounting.modal.record_payment",
+      "tab": "Modals",
+      "sub": "Modal: Record Payment",
+      "route_hint": "surface://pages/accounting/RecordPaymentModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "pages/accounting/RecordPaymentModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome",
+        "gl_je"
+      ]
+    },
+    {
+      "id": "accounting.modal.submit_factoring",
+      "tab": "Modals",
+      "sub": "Modal: Submit Factoring",
+      "route_hint": "surface://pages/accounting/SubmitFactoringModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "pages/accounting/SubmitFactoringModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome",
+        "gl_je"
+      ]
+    },
+    {
+      "id": "accounting.modal.ccpayment",
+      "tab": "Modals",
+      "sub": "Modal: CCPayment",
+      "route_hint": "surface://pages/accounting/bill-payments/CCPaymentModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "pages/accounting/bill-payments/CCPaymentModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome",
+        "ap_bill",
+        "gl_je"
+      ]
+    },
+    {
+      "id": "accounting.modal.customer_adjustment",
+      "tab": "Modals",
+      "sub": "Modal: Customer Adjustment",
+      "route_hint": "surface://pages/accounting/modals/CustomerAdjustmentModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "pages/accounting/modals/CustomerAdjustmentModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "customer",
+        "gl_je",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "accounting.modal.driver_damage_invoice",
+      "tab": "Modals",
+      "sub": "Modal: Driver Damage Invoice",
+      "route_hint": "surface://pages/accounting/modals/DriverDamageInvoiceModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "pages/accounting/modals/DriverDamageInvoiceModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome",
+        "driver",
+        "invoice",
+        "gl_je"
+      ]
+    },
+    {
+      "id": "accounting.modal.driver_misc_invoice",
+      "tab": "Modals",
+      "sub": "Modal: Driver Misc Invoice",
+      "route_hint": "surface://pages/accounting/modals/DriverMiscInvoiceModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "pages/accounting/modals/DriverMiscInvoiceModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome",
+        "driver",
+        "invoice",
+        "gl_je"
+      ]
+    },
+    {
+      "id": "accounting.modal.manual_invoice",
+      "tab": "Modals",
+      "sub": "Modal: Manual Invoice",
+      "route_hint": "surface://pages/accounting/modals/ManualInvoiceModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "pages/accounting/modals/ManualInvoiceModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome",
+        "invoice",
+        "gl_je"
+      ]
+    },
+    {
+      "id": "accounting.modal.vendor_chargeback",
+      "tab": "Modals",
+      "sub": "Modal: Vendor Chargeback",
+      "route_hint": "surface://pages/accounting/modals/VendorChargebackModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "pages/accounting/modals/VendorChargebackModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "vendor",
+        "gl_je",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "accounting.drawer.new_account_drawer_form",
+      "tab": "Drawers",
+      "sub": "Drawer: New Account Drawer Form",
+      "route_hint": "surface://components/parity/drawers/NewAccountDrawerForm.tsx",
+      "surface_kind": "drawer",
+      "surface_path": "components/parity/drawers/NewAccountDrawerForm.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome",
+        "gl_je"
+      ]
+    },
+    {
+      "id": "accounting.drawer.new_class_drawer_form",
+      "tab": "Drawers",
+      "sub": "Drawer: New Class Drawer Form",
+      "route_hint": "surface://components/parity/drawers/NewClassDrawerForm.tsx",
+      "surface_kind": "drawer",
+      "surface_path": "components/parity/drawers/NewClassDrawerForm.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome",
+        "gl_je"
+      ]
+    },
+    {
+      "id": "accounting.drawer.new_service_drawer_form",
+      "tab": "Drawers",
+      "sub": "Drawer: New Service Drawer Form",
+      "route_hint": "surface://components/parity/drawers/NewServiceDrawerForm.tsx",
+      "surface_kind": "drawer",
+      "surface_path": "components/parity/drawers/NewServiceDrawerForm.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome",
+        "gl_je"
+      ]
+    },
+    {
+      "id": "accounting.panel.bill_detail",
+      "tab": "Panels",
+      "sub": "Panel: Bill Detail",
+      "route_hint": "surface://pages/accounting/BillDetailPanel.tsx",
+      "surface_kind": "panel",
+      "surface_path": "pages/accounting/BillDetailPanel.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome",
+        "ap_bill",
+        "gl_je"
+      ]
+    },
+    {
+      "id": "accounting.panel.chart_of_accounts_sync",
+      "tab": "Panels",
+      "sub": "Panel: Chart Of Accounts Sync",
+      "route_hint": "surface://pages/accounting/ChartOfAccountsSyncPanel.tsx",
+      "surface_kind": "panel",
+      "surface_path": "pages/accounting/ChartOfAccountsSyncPanel.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "gl_je",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "accounting.panel.coa_asymmetry_report",
+      "tab": "Panels",
+      "sub": "Panel: Coa Asymmetry Report",
+      "route_hint": "surface://pages/accounting/CoaAsymmetryReportPanel.tsx",
+      "surface_kind": "panel",
+      "surface_path": "pages/accounting/CoaAsymmetryReportPanel.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "gl_je",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "accounting.wizard.loan_application",
+      "tab": "Wizards",
+      "sub": "Wizard: Loan Application",
+      "route_hint": "surface://pages/accounting/loans/LoanApplicationWizard.tsx",
+      "surface_kind": "wizard",
+      "surface_path": "pages/accounting/loans/LoanApplicationWizard.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "picker_law",
+        "gl_je",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "accounting.parity.expense_create_page",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Expense Create Page",
+      "route_hint": "surface://pages/accounting/ExpenseCreatePage.tsx",
+      "surface_kind": "parity_site",
+      "surface_path": "pages/accounting/ExpenseCreatePage.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome",
+        "expense",
+        "gl_je"
+      ]
+    },
+    {
+      "id": "accounting.parity.expenses_list_page",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Expenses List Page",
+      "route_hint": "surface://pages/accounting/ExpensesListPage.tsx",
+      "surface_kind": "parity_site",
+      "surface_path": "pages/accounting/ExpensesListPage.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome",
+        "expense",
+        "gl_je"
+      ]
+    },
+    {
+      "id": "accounting.parity.factoring_detail_page",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Factoring Detail Page",
+      "route_hint": "surface://pages/accounting/FactoringDetailPage.tsx",
+      "surface_kind": "parity_site",
+      "surface_path": "pages/accounting/FactoringDetailPage.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome",
+        "gl_je"
+      ]
+    },
+    {
+      "id": "accounting.parity.invoice_create",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Invoice Create",
+      "route_hint": "surface://pages/accounting/InvoiceCreateModal.tsx",
+      "surface_kind": "parity_site",
+      "surface_path": "pages/accounting/InvoiceCreateModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome",
+        "invoice",
+        "gl_je"
+      ]
+    },
+    {
+      "id": "accounting.parity.pay_bill",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Pay Bill",
+      "route_hint": "surface://pages/accounting/PayBillModal.tsx",
+      "surface_kind": "parity_site",
+      "surface_path": "pages/accounting/PayBillModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome",
+        "ap_bill",
+        "gl_je"
+      ]
+    },
+    {
+      "id": "accounting.parity.payment_apply",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Payment Apply",
+      "route_hint": "surface://pages/accounting/PaymentApplyModal.tsx",
+      "surface_kind": "parity_site",
+      "surface_path": "pages/accounting/PaymentApplyModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome",
+        "gl_je"
+      ]
+    },
+    {
+      "id": "accounting.parity.receipts_page",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Receipts Page",
+      "route_hint": "surface://pages/accounting/ReceiptsPage.tsx",
+      "surface_kind": "parity_site",
+      "surface_path": "pages/accounting/ReceiptsPage.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "gl_je",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "accounting.parity.record_payment",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Record Payment",
+      "route_hint": "surface://pages/accounting/RecordPaymentModal.tsx",
+      "surface_kind": "parity_site",
+      "surface_path": "pages/accounting/RecordPaymentModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome",
+        "gl_je"
+      ]
+    },
+    {
+      "id": "accounting.parity.submit_factoring",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Submit Factoring",
+      "route_hint": "surface://pages/accounting/SubmitFactoringModal.tsx",
+      "surface_kind": "parity_site",
+      "surface_path": "pages/accounting/SubmitFactoringModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome",
+        "gl_je"
+      ]
+    },
+    {
+      "id": "accounting.parity.vendor_bill_create_page",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Vendor Bill Create Page",
+      "route_hint": "surface://pages/accounting/VendorBillCreatePage.tsx",
+      "surface_kind": "parity_site",
+      "surface_path": "pages/accounting/VendorBillCreatePage.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome",
+        "vendor",
+        "ap_bill",
+        "gl_je"
+      ]
+    },
+    {
+      "id": "accounting.parity.vendor_credits_page",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Vendor Credits Page",
+      "route_hint": "surface://pages/accounting/VendorCreditsPage.tsx",
+      "surface_kind": "parity_site",
+      "surface_path": "pages/accounting/VendorCreditsPage.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "vendor",
+        "gl_je",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "accounting.parity.ccpayment",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: CCPayment",
+      "route_hint": "surface://pages/accounting/bill-payments/CCPaymentModal.tsx",
+      "surface_kind": "parity_site",
+      "surface_path": "pages/accounting/bill-payments/CCPaymentModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome",
+        "ap_bill",
+        "gl_je"
+      ]
+    },
+    {
+      "id": "accounting.parity.invoice_type_modal_base",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Invoice Type Modal Base",
+      "route_hint": "surface://pages/accounting/modals/InvoiceTypeModalBase.tsx",
+      "surface_kind": "parity_site",
+      "surface_path": "pages/accounting/modals/InvoiceTypeModalBase.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome",
+        "invoice",
+        "gl_je"
+      ]
+    },
+    {
+      "id": "accounting.modal.bill_payment",
+      "tab": "Modals",
+      "sub": "Modal: Bill Payment",
+      "route_hint": "surface://components/ap/BillPaymentModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "components/ap/BillPaymentModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "picker_law",
+        "gl_je",
+        "ap_bill",
+        "qbo_chrome",
+        "invoice",
+        "bank"
       ]
     }
   ],
@@ -756,6 +1294,20 @@
           "proof": "FactoringListPage reserve_amount_cents column"
         }
       ]
+    },
+    "surface_inventory_2026_08_12": {
+      "added_leaves": 32,
+      "new_columns": [
+        "claim",
+        "work_order",
+        "accident",
+        "policy",
+        "settlement",
+        "legal_matter",
+        "invoice",
+        "bank"
+      ],
+      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; \u00a7B9 link columns added."
     }
   }
 }

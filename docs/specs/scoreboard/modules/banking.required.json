@@ -76,6 +76,46 @@
       "id": "reverse_link",
       "group": "wiring",
       "label": "Reverse link"
+    },
+    {
+      "id": "claim",
+      "group": "linkage",
+      "label": "Claim"
+    },
+    {
+      "id": "work_order",
+      "group": "linkage",
+      "label": "Work order"
+    },
+    {
+      "id": "accident",
+      "group": "linkage",
+      "label": "Accident"
+    },
+    {
+      "id": "policy",
+      "group": "linkage",
+      "label": "Policy"
+    },
+    {
+      "id": "settlement",
+      "group": "linkage",
+      "label": "Settlement"
+    },
+    {
+      "id": "legal_matter",
+      "group": "linkage",
+      "label": "Legal matter"
+    },
+    {
+      "id": "invoice",
+      "group": "money",
+      "label": "AR / Invoice"
+    },
+    {
+      "id": "bank",
+      "group": "money",
+      "label": "Bank / Match"
     }
   ],
   "leaves": [
@@ -88,7 +128,8 @@
         "gl_je",
         "connectivity",
         "reverse_link",
-        "qbo_chrome"
+        "qbo_chrome",
+        "bank"
       ]
     },
     {
@@ -121,7 +162,8 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "bank"
       ]
     },
     {
@@ -133,7 +175,8 @@
         "gl_je",
         "connectivity",
         "qbo_chrome",
-        "reverse_link"
+        "reverse_link",
+        "bank"
       ]
     },
     {
@@ -146,7 +189,8 @@
         "gl_je",
         "liability",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "bank"
       ]
     },
     {
@@ -159,7 +203,8 @@
         "liability",
         "gl_je",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "bank"
       ]
     },
     {
@@ -181,7 +226,8 @@
       "route_hint": "/banking/reports",
       "required": [
         "gl_je",
-        "connectivity"
+        "connectivity",
+        "bank"
       ]
     },
     {
@@ -212,7 +258,236 @@
       "route_hint": "/banking/settings",
       "required": [
         "connectivity",
+        "qbo_chrome",
+        "bank"
+      ]
+    },
+    {
+      "id": "banking.modal.record_ccpayment",
+      "tab": "Modals",
+      "sub": "Modal: Record CCPayment",
+      "route_hint": "surface://pages/banking/RecordCCPaymentModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "pages/banking/RecordCCPaymentModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome",
+        "bank",
+        "gl_je"
+      ]
+    },
+    {
+      "id": "banking.modal.record_transfer",
+      "tab": "Modals",
+      "sub": "Modal: Record Transfer",
+      "route_hint": "surface://pages/banking/RecordTransferModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "pages/banking/RecordTransferModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "picker_law",
+        "bank",
         "qbo_chrome"
+      ]
+    },
+    {
+      "id": "banking.modal.transfer",
+      "tab": "Modals",
+      "sub": "Modal: Transfer",
+      "route_hint": "surface://pages/banking/TransferModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "pages/banking/TransferModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "picker_law",
+        "bank",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "banking.modal.bank_transaction_split",
+      "tab": "Modals",
+      "sub": "Modal: Bank Transaction Split",
+      "route_hint": "surface://pages/banking/components/BankTransactionSplitModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "pages/banking/components/BankTransactionSplitModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "bank",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "banking.modal.manage_accounts",
+      "tab": "Modals",
+      "sub": "Modal: Manage Accounts",
+      "route_hint": "surface://pages/banking/components/ManageAccountsModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "pages/banking/components/ManageAccountsModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "bank",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "banking.modal.manual_je",
+      "tab": "Modals",
+      "sub": "Modal: Manual JE",
+      "route_hint": "surface://pages/banking/components/ManualJEModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "pages/banking/components/ManualJEModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "bank",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "banking.modal.split_transaction",
+      "tab": "Modals",
+      "sub": "Modal: Split Transaction",
+      "route_hint": "surface://pages/banking/components/forms/SplitTransactionModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "pages/banking/components/forms/SplitTransactionModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "bank",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "banking.drawer.match",
+      "tab": "Drawers",
+      "sub": "Drawer: Match",
+      "route_hint": "surface://pages/banking/components/MatchDrawer.tsx",
+      "surface_kind": "drawer",
+      "surface_path": "pages/banking/components/MatchDrawer.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome",
+        "bank"
+      ]
+    },
+    {
+      "id": "banking.panel.banking_plaid_connections",
+      "tab": "Panels",
+      "sub": "Panel: Banking Plaid Connections",
+      "route_hint": "surface://pages/banking/components/BankingPlaidConnectionsPanel.tsx",
+      "surface_kind": "panel",
+      "surface_path": "pages/banking/components/BankingPlaidConnectionsPanel.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "bank",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "banking.dialog.print_orientation",
+      "tab": "Dialogs",
+      "sub": "Dialog: Print Orientation",
+      "route_hint": "surface://pages/banking/components/PrintOrientationDialog.tsx",
+      "surface_kind": "dialog",
+      "surface_path": "pages/banking/components/PrintOrientationDialog.tsx",
+      "required": [
+        "connectivity",
+        "bank"
+      ]
+    },
+    {
+      "id": "banking.parity.record_ccpayment",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Record CCPayment",
+      "route_hint": "surface://pages/banking/RecordCCPaymentModal.tsx",
+      "surface_kind": "parity_site",
+      "surface_path": "pages/banking/RecordCCPaymentModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome",
+        "bank",
+        "gl_je"
+      ]
+    },
+    {
+      "id": "banking.parity.record_transfer",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Record Transfer",
+      "route_hint": "surface://pages/banking/RecordTransferModal.tsx",
+      "surface_kind": "parity_site",
+      "surface_path": "pages/banking/RecordTransferModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "picker_law",
+        "bank",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "banking.parity.transfer",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Transfer",
+      "route_hint": "surface://pages/banking/TransferModal.tsx",
+      "surface_kind": "parity_site",
+      "surface_path": "pages/banking/TransferModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "picker_law",
+        "bank",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "banking.parity.bank_transaction_split",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Bank Transaction Split",
+      "route_hint": "surface://pages/banking/components/BankTransactionSplitModal.tsx",
+      "surface_kind": "parity_site",
+      "surface_path": "pages/banking/components/BankTransactionSplitModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "bank",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "banking.parity.manual_je",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Manual JE",
+      "route_hint": "surface://pages/banking/components/ManualJEModal.tsx",
+      "surface_kind": "parity_site",
+      "surface_path": "pages/banking/components/ManualJEModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "bank",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "banking.parity.match",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Match",
+      "route_hint": "surface://pages/banking/components/MatchDrawer.tsx",
+      "surface_kind": "parity_site",
+      "surface_path": "pages/banking/components/MatchDrawer.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome",
+        "bank"
       ]
     }
   ],
@@ -240,6 +515,20 @@
           "proof": "BankingHome factoring tab Reserves held from factoringVirtualSummary.reserve"
         }
       ]
+    },
+    "surface_inventory_2026_08_12": {
+      "added_leaves": 16,
+      "new_columns": [
+        "claim",
+        "work_order",
+        "accident",
+        "policy",
+        "settlement",
+        "legal_matter",
+        "invoice",
+        "bank"
+      ],
+      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; \u00a7B9 link columns added."
     }
   }
 }

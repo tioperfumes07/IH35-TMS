@@ -2,7 +2,7 @@
   "module": "maintenance",
   "entity_default": "USMCA",
   "source": {
-    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md §Module 2 — MAINTENANCE",
+    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md \u00a7Module 2 \u2014 MAINTENANCE",
     "nav": "apps/frontend/src/components/maintenance/MAINTENANCE_NAV_CONFIG.ts",
     "home_tabs": "apps/frontend/src/pages/maintenance/MaintenanceHome.tsx SUBNAV",
     "routes": "apps/frontend/src/routes/manifest.tsx /maintenance/*"
@@ -87,6 +87,46 @@
       "id": "reverse_link",
       "group": "wiring",
       "label": "Reverse link"
+    },
+    {
+      "id": "claim",
+      "group": "linkage",
+      "label": "Claim"
+    },
+    {
+      "id": "work_order",
+      "group": "linkage",
+      "label": "Work order"
+    },
+    {
+      "id": "accident",
+      "group": "linkage",
+      "label": "Accident"
+    },
+    {
+      "id": "policy",
+      "group": "linkage",
+      "label": "Policy"
+    },
+    {
+      "id": "settlement",
+      "group": "linkage",
+      "label": "Settlement"
+    },
+    {
+      "id": "legal_matter",
+      "group": "linkage",
+      "label": "Legal matter"
+    },
+    {
+      "id": "invoice",
+      "group": "money",
+      "label": "AR / Invoice"
+    },
+    {
+      "id": "bank",
+      "group": "money",
+      "label": "Bank / Match"
     }
   ],
   "leaves": [
@@ -116,7 +156,7 @@
     {
       "id": "wo.source.is",
       "tab": "Work Orders",
-      "sub": "IS — Internal shop",
+      "sub": "IS \u2014 Internal shop",
       "route_hint": "/maintenance",
       "required": [
         "driver",
@@ -136,7 +176,7 @@
     {
       "id": "wo.source.es",
       "tab": "Work Orders",
-      "sub": "ES — External shop",
+      "sub": "ES \u2014 External shop",
       "route_hint": "/maintenance",
       "required": [
         "driver",
@@ -155,7 +195,7 @@
     {
       "id": "wo.source.ac",
       "tab": "Work Orders",
-      "sub": "AC — Accident repair",
+      "sub": "AC \u2014 Accident repair",
       "route_hint": "/maintenance",
       "required": [
         "driver",
@@ -172,13 +212,15 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "accident",
+        "claim"
       ]
     },
     {
       "id": "wo.source.et",
       "tab": "Work Orders",
-      "sub": "ET — External tires",
+      "sub": "ET \u2014 External tires",
       "route_hint": "/maintenance",
       "required": [
         "driver",
@@ -198,7 +240,7 @@
     {
       "id": "wo.source.rt",
       "tab": "Work Orders",
-      "sub": "RT — Roadside tires",
+      "sub": "RT \u2014 Roadside tires",
       "route_hint": "/maintenance",
       "required": [
         "driver",
@@ -219,7 +261,7 @@
     {
       "id": "wo.source.it",
       "tab": "Work Orders",
-      "sub": "IT — Internal tires",
+      "sub": "IT \u2014 Internal tires",
       "route_hint": "/maintenance",
       "required": [
         "driver",
@@ -239,7 +281,7 @@
     {
       "id": "wo.source.rs",
       "tab": "Work Orders",
-      "sub": "RS — Roadside service",
+      "sub": "RS \u2014 Roadside service",
       "route_hint": "/maintenance/road-service",
       "required": [
         "driver",
@@ -573,8 +615,216 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "claim",
+        "policy"
+      ]
+    },
+    {
+      "id": "maintenance.modal.add_parts_link",
+      "tab": "Modals",
+      "sub": "Modal: Add Parts Link",
+      "route_hint": "surface://components/maintenance/AddPartsLinkModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "components/maintenance/AddPartsLinkModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "unit",
+        "vendor",
+        "work_order"
+      ]
+    },
+    {
+      "id": "maintenance.modal.location_map",
+      "tab": "Modals",
+      "sub": "Modal: Location Map",
+      "route_hint": "surface://components/maintenance/LocationMapModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "components/maintenance/LocationMapModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "unit",
+        "vendor",
+        "work_order"
+      ]
+    },
+    {
+      "id": "maintenance.modal.work_order_detail",
+      "tab": "Modals",
+      "sub": "Modal: Work Order Detail",
+      "route_hint": "surface://components/maintenance/WorkOrderDetailModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "components/maintenance/WorkOrderDetailModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "work_order",
+        "unit",
+        "vendor"
+      ]
+    },
+    {
+      "id": "maintenance.modal.road_service_ticket",
+      "tab": "Modals",
+      "sub": "Modal: Road Service Ticket",
+      "route_hint": "surface://pages/maintenance/RoadServiceTicketModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "pages/maintenance/RoadServiceTicketModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "work_order",
+        "unit",
+        "vendor"
+      ]
+    },
+    {
+      "id": "maintenance.modal.work_order_create",
+      "tab": "Modals",
+      "sub": "Modal: Work Order Create",
+      "route_hint": "surface://pages/maintenance/WorkOrderCreateModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "pages/maintenance/WorkOrderCreateModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "picker_law",
+        "work_order",
+        "unit",
+        "vendor"
+      ]
+    },
+    {
+      "id": "maintenance.modal.convert_issue_to_wo",
+      "tab": "Modals",
+      "sub": "Modal: Convert Issue To WO",
+      "route_hint": "surface://pages/maintenance/components/ConvertIssueToWOModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "pages/maintenance/components/ConvertIssueToWOModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "unit",
+        "vendor",
+        "work_order"
+      ]
+    },
+    {
+      "id": "maintenance.modal.create_work_order",
+      "tab": "Modals",
+      "sub": "Modal: Create Work Order",
+      "route_hint": "surface://pages/maintenance/components/CreateWorkOrderModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "pages/maintenance/components/CreateWorkOrderModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "picker_law",
+        "work_order",
+        "unit",
+        "vendor"
+      ]
+    },
+    {
+      "id": "maintenance.modal.triage",
+      "tab": "Modals",
+      "sub": "Modal: Triage",
+      "route_hint": "surface://pages/maintenance/components/TriageModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "pages/maintenance/components/TriageModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "work_order",
+        "unit",
+        "vendor"
+      ]
+    },
+    {
+      "id": "maintenance.panel.road_service_active",
+      "tab": "Panels",
+      "sub": "Panel: Road Service Active",
+      "route_hint": "surface://pages/maintenance/components/RoadServiceActivePanel.tsx",
+      "surface_kind": "panel",
+      "surface_path": "pages/maintenance/components/RoadServiceActivePanel.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "work_order",
+        "unit",
+        "vendor"
+      ]
+    },
+    {
+      "id": "maintenance.modal.fault_rule",
+      "tab": "Modals",
+      "sub": "Modal: Fault Rule",
+      "route_hint": "surface://components/maintenance/FaultRuleModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "components/maintenance/FaultRuleModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "unit",
+        "vendor",
+        "work_order",
+        "ap_bill",
+        "expense"
+      ]
+    },
+    {
+      "id": "maintenance.modal.create_bill",
+      "tab": "Modals",
+      "sub": "Modal: Create Bill",
+      "route_hint": "surface://pages/maintenance/components/CreateBillModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "pages/maintenance/components/CreateBillModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "picker_law",
+        "unit",
+        "vendor",
+        "work_order",
+        "ap_bill",
+        "expense"
+      ]
+    },
+    {
+      "id": "maintenance.modal.create_expense",
+      "tab": "Modals",
+      "sub": "Modal: Create Expense",
+      "route_hint": "surface://pages/maintenance/components/CreateExpenseModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "pages/maintenance/components/CreateExpenseModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "picker_law",
+        "unit",
+        "vendor",
+        "work_order",
+        "ap_bill",
+        "expense"
       ]
     }
-  ]
+  ],
+  "honesty_audit": {
+    "surface_inventory_2026_08_12": {
+      "added_leaves": 9,
+      "new_columns": [
+        "claim",
+        "work_order",
+        "accident",
+        "policy",
+        "settlement",
+        "legal_matter",
+        "invoice",
+        "bank"
+      ],
+      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; \u00a7B9 link columns added."
+    }
+  }
 }

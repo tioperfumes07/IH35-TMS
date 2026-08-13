@@ -1,6 +1,6 @@
 {
-  "version": 1,
-  "note": "Modules pick a subset. chrome/wiring are part of full linkage — owner 2026-08-08.",
+  "version": 2,
+  "note": "Modules pick a subset. chrome/wiring part of full linkage \u2014 owner 2026-08-08. 2026-08-12 owner: added claim/work_order/accident/policy/settlement/legal_matter/invoice/bank + full surface inventory leaves (modal/drawer/panel/wizard/popup/parity).",
   "columns": [
     {
       "id": "driver",
@@ -33,6 +33,36 @@
       "label": "Load"
     },
     {
+      "id": "claim",
+      "group": "linkage",
+      "label": "Claim"
+    },
+    {
+      "id": "work_order",
+      "group": "linkage",
+      "label": "Work order"
+    },
+    {
+      "id": "accident",
+      "group": "linkage",
+      "label": "Accident"
+    },
+    {
+      "id": "policy",
+      "group": "linkage",
+      "label": "Policy"
+    },
+    {
+      "id": "settlement",
+      "group": "linkage",
+      "label": "Settlement"
+    },
+    {
+      "id": "legal_matter",
+      "group": "linkage",
+      "label": "Legal matter"
+    },
+    {
       "id": "ap_bill",
       "group": "money",
       "label": "AP / Bill"
@@ -41,6 +71,16 @@
       "id": "expense",
       "group": "money",
       "label": "Expense"
+    },
+    {
+      "id": "invoice",
+      "group": "money",
+      "label": "AR / Invoice"
+    },
+    {
+      "id": "bank",
+      "group": "money",
+      "label": "Bank / Match"
     },
     {
       "id": "gl_je",

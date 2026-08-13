@@ -70,6 +70,46 @@
       "id": "reverse_link",
       "group": "wiring",
       "label": "Reverse link"
+    },
+    {
+      "id": "claim",
+      "group": "linkage",
+      "label": "Claim"
+    },
+    {
+      "id": "work_order",
+      "group": "linkage",
+      "label": "Work order"
+    },
+    {
+      "id": "accident",
+      "group": "linkage",
+      "label": "Accident"
+    },
+    {
+      "id": "policy",
+      "group": "linkage",
+      "label": "Policy"
+    },
+    {
+      "id": "settlement",
+      "group": "linkage",
+      "label": "Settlement"
+    },
+    {
+      "id": "legal_matter",
+      "group": "linkage",
+      "label": "Legal matter"
+    },
+    {
+      "id": "invoice",
+      "group": "money",
+      "label": "AR / Invoice"
+    },
+    {
+      "id": "bank",
+      "group": "money",
+      "label": "Bank / Match"
     }
   ],
   "leaves": [
@@ -190,7 +230,8 @@
         "liability",
         "connectivity",
         "reverse_link",
-        "qbo_chrome"
+        "qbo_chrome",
+        "invoice"
       ]
     },
     {
@@ -324,6 +365,35 @@
         "reverse_link",
         "qbo_chrome"
       ]
+    },
+    {
+      "id": "finance.wizard.loan_wizard_page",
+      "tab": "Wizards",
+      "sub": "Wizard: Loan Wizard Page",
+      "route_hint": "surface://pages/finance/LoanWizardPage.tsx",
+      "surface_kind": "wizard",
+      "surface_path": "pages/finance/LoanWizardPage.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ]
     }
-  ]
+  ],
+  "honesty_audit": {
+    "surface_inventory_2026_08_12": {
+      "added_leaves": 1,
+      "new_columns": [
+        "claim",
+        "work_order",
+        "accident",
+        "policy",
+        "settlement",
+        "legal_matter",
+        "invoice",
+        "bank"
+      ],
+      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; \u00a7B9 link columns added."
+    }
+  }
 }

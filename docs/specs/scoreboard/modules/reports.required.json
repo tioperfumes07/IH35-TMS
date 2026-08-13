@@ -2,7 +2,7 @@
   "module": "reports",
   "entity_default": "USMCA",
   "source": {
-    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md — Module 13 REPORTS",
+    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md \u2014 Module 13 REPORTS",
     "nav": "apps/frontend/src/pages/reports/ReportsSubNav.tsx REPORTS_SUB_NAV_ITEMS",
     "flyout": "apps/frontend/src/components/reports/CategoryHoverNav.tsx REPORT_CATEGORY_FLYOUT_ITEMS",
     "dedicated": "apps/frontend/src/components/reports/phase6ReportLinks.ts PHASE_6_REPORT_HREFS",
@@ -78,6 +78,46 @@
       "id": "reverse_link",
       "group": "wiring",
       "label": "Reverse link"
+    },
+    {
+      "id": "claim",
+      "group": "linkage",
+      "label": "Claim"
+    },
+    {
+      "id": "work_order",
+      "group": "linkage",
+      "label": "Work order"
+    },
+    {
+      "id": "accident",
+      "group": "linkage",
+      "label": "Accident"
+    },
+    {
+      "id": "policy",
+      "group": "linkage",
+      "label": "Policy"
+    },
+    {
+      "id": "settlement",
+      "group": "linkage",
+      "label": "Settlement"
+    },
+    {
+      "id": "legal_matter",
+      "group": "linkage",
+      "label": "Legal matter"
+    },
+    {
+      "id": "invoice",
+      "group": "money",
+      "label": "AR / Invoice"
+    },
+    {
+      "id": "bank",
+      "group": "money",
+      "label": "Bank / Match"
     }
   ],
   "leaves": [
@@ -133,7 +173,7 @@
     {
       "id": "subnav.reports",
       "tab": "Sub-nav",
-      "sub": "Reports · home link",
+      "sub": "Reports \u00b7 home link",
       "route_hint": "/reports",
       "required": [
         "connectivity",
@@ -472,7 +512,8 @@
         "connectivity",
         "reverse_link",
         "qbo_chrome",
-        "customer"
+        "customer",
+        "invoice"
       ]
     },
     {
@@ -620,7 +661,8 @@
         "reverse_link",
         "qbo_chrome",
         "driver",
-        "liability"
+        "liability",
+        "settlement"
       ]
     },
     {
@@ -739,7 +781,8 @@
         "qbo_chrome",
         "load",
         "expense",
-        "vendor"
+        "vendor",
+        "bank"
       ]
     },
     {
@@ -757,7 +800,8 @@
         "qbo_chrome",
         "unit",
         "vendor",
-        "ap_bill"
+        "ap_bill",
+        "work_order"
       ]
     },
     {
@@ -804,7 +848,8 @@
         "customer",
         "connectivity",
         "reverse_link",
-        "qbo_chrome"
+        "qbo_chrome",
+        "bank"
       ]
     },
     {
@@ -864,7 +909,7 @@
     },
     {
       "id": "runner.profit_truck_mtd",
-      "tab": "Profit per truck · MTD",
+      "tab": "Profit per truck \u00b7 MTD",
       "sub": "Runner MTD margin",
       "route_hint": "/reports/run/profit-truck-mtd",
       "required": [
@@ -906,7 +951,9 @@
         "connectivity",
         "reverse_link",
         "qbo_chrome",
-        "load"
+        "load",
+        "claim",
+        "policy"
       ]
     },
     {
@@ -922,7 +969,8 @@
         "expense",
         "connectivity",
         "reverse_link",
-        "qbo_chrome"
+        "qbo_chrome",
+        "invoice"
       ]
     },
     {
@@ -938,7 +986,8 @@
         "connectivity",
         "reverse_link",
         "qbo_chrome",
-        "driver"
+        "driver",
+        "settlement"
       ]
     },
     {
@@ -954,7 +1003,8 @@
         "connectivity",
         "reverse_link",
         "qbo_chrome",
-        "driver"
+        "driver",
+        "settlement"
       ]
     },
     {
@@ -1102,7 +1152,8 @@
         "connectivity",
         "reverse_link",
         "qbo_chrome",
-        "unit"
+        "unit",
+        "work_order"
       ]
     },
     {
@@ -1146,7 +1197,8 @@
       "required": [
         "gl_je",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "work_order"
       ]
     },
     {
@@ -1181,6 +1233,92 @@
         "connectivity",
         "reverse_link"
       ]
+    },
+    {
+      "id": "reports.modal.lane_detail",
+      "tab": "Modals",
+      "sub": "Modal: Lane Detail",
+      "route_hint": "surface://components/reports/LaneDetailModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "components/reports/LaneDetailModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "reports.modal.schedule_report",
+      "tab": "Modals",
+      "sub": "Modal: Schedule Report",
+      "route_hint": "surface://pages/reports/ScheduleReportModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "pages/reports/ScheduleReportModal.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "reports.panel.report_flyout",
+      "tab": "Panels",
+      "sub": "Panel: Report Flyout",
+      "route_hint": "surface://components/reports/ReportFlyoutPanel.tsx",
+      "surface_kind": "panel",
+      "surface_path": "components/reports/ReportFlyoutPanel.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "reports.panel.scheduled_reports",
+      "tab": "Panels",
+      "sub": "Panel: Scheduled Reports",
+      "route_hint": "surface://pages/reports/ScheduledReportsPanel.tsx",
+      "surface_kind": "panel",
+      "surface_path": "pages/reports/ScheduledReportsPanel.tsx",
+      "required": [
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "reports.sheet.balance_sheet_page",
+      "tab": "Sheets",
+      "sub": "Sheet: Balance Sheet Page",
+      "route_hint": "surface://pages/reports/BalanceSheetPage.tsx",
+      "surface_kind": "sheet",
+      "surface_path": "pages/reports/BalanceSheetPage.tsx",
+      "required": [
+        "connectivity"
+      ]
+    },
+    {
+      "id": "reports.flyout.report_flyout",
+      "tab": "Flyouts",
+      "sub": "Flyout: Report Flyout",
+      "route_hint": "surface://components/reports/ReportFlyoutPanel.tsx",
+      "surface_kind": "flyout",
+      "surface_path": "components/reports/ReportFlyoutPanel.tsx",
+      "required": [
+        "connectivity"
+      ]
     }
-  ]
+  ],
+  "honesty_audit": {
+    "surface_inventory_2026_08_12": {
+      "added_leaves": 6,
+      "new_columns": [
+        "claim",
+        "work_order",
+        "accident",
+        "policy",
+        "settlement",
+        "legal_matter",
+        "invoice",
+        "bank"
+      ],
+      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; \u00a7B9 link columns added."
+    }
+  }
 }

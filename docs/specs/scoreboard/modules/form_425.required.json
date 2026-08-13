@@ -3,7 +3,7 @@
   "entity_default": "USMCA",
   "source": {
     "pages": "apps/frontend/src/pages/form425c/*",
-    "sidebar": "form_425 → /425c"
+    "sidebar": "form_425 \u2192 /425c"
   },
   "columns": [
     {
@@ -70,6 +70,46 @@
       "id": "reverse_link",
       "group": "wiring",
       "label": "Reverse link"
+    },
+    {
+      "id": "claim",
+      "group": "linkage",
+      "label": "Claim"
+    },
+    {
+      "id": "work_order",
+      "group": "linkage",
+      "label": "Work order"
+    },
+    {
+      "id": "accident",
+      "group": "linkage",
+      "label": "Accident"
+    },
+    {
+      "id": "policy",
+      "group": "linkage",
+      "label": "Policy"
+    },
+    {
+      "id": "settlement",
+      "group": "linkage",
+      "label": "Settlement"
+    },
+    {
+      "id": "legal_matter",
+      "group": "linkage",
+      "label": "Legal matter"
+    },
+    {
+      "id": "invoice",
+      "group": "money",
+      "label": "AR / Invoice"
+    },
+    {
+      "id": "bank",
+      "group": "money",
+      "label": "Bank / Match"
     }
   ],
   "leaves": [
@@ -167,7 +207,7 @@
     {
       "id": "redirect.form425c",
       "tab": "Routes",
-      "sub": "/form-425c → /425c",
+      "sub": "/form-425c \u2192 /425c",
       "route_hint": "/form-425c",
       "required": [
         "gl_je",
@@ -198,7 +238,8 @@
       "required": [
         "unit",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "work_order"
       ]
     },
     {
@@ -222,8 +263,25 @@
         "liability",
         "gl_je",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "bank"
       ]
     }
-  ]
+  ],
+  "honesty_audit": {
+    "surface_inventory_2026_08_12": {
+      "added_leaves": 0,
+      "new_columns": [
+        "claim",
+        "work_order",
+        "accident",
+        "policy",
+        "settlement",
+        "legal_matter",
+        "invoice",
+        "bank"
+      ],
+      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; \u00a7B9 link columns added."
+    }
+  }
 }
