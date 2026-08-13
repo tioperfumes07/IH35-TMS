@@ -41,6 +41,7 @@ import { legalMattersApi } from "../api/legal-matters";
 import { InsuranceClaimsReverseSection } from "../components/insurance/InsuranceClaimsReverseSection";
 import { DriverSafetyReverseSection } from "../components/safety/DriverSafetyReverseSection";
 import { DriverWorkOrdersReverseSection } from "../components/maintenance/DriverWorkOrdersReverseSection";
+import { DriverTempCoverReverseSection } from "../components/safety/DriverTempCoverReverseSection";
 import { Button } from "../components/Button";
 import { ListErrorState } from "../components/ListErrorState";
 import { EntityLink } from "../components/shared/EntityLink";
@@ -1510,11 +1511,14 @@ export function DriverDetailPage() {
                 />
               ) : null}
               {driver?.operating_company_id ? (
-                <DriverWorkOrdersReverseSection
-                  operatingCompanyId={String(driver.operating_company_id)}
-                  driverId={id}
-                  data-testid="driver-detail-work-orders-reverse"
-                />
+                <>
+                  <DriverWorkOrdersReverseSection
+                    operatingCompanyId={String(driver.operating_company_id)}
+                    driverId={id}
+                    data-testid="driver-detail-work-orders-reverse"
+                  />
+                  <DriverTempCoverReverseSection operatingCompanyId={String(driver.operating_company_id)} driverId={id} />
+                </>
               ) : null}
             </>
           )}

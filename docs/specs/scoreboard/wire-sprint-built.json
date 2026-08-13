@@ -776,6 +776,14 @@
       "modules": ["dispatch", "customers", "notifications"],
       "cols": ["customer", "connectivity", "reverse_link", "picker_law"],
       "leafRe": "^(customer|notify|eta|preference|log|profile|create)"
+    },
+    {
+      "task": "TEMP-COVER-DRIVER-LINKAGE",
+      "pr": "this PR",
+      "guard": "scripts/verify-temp-cover-driver-linkage.mjs",
+      "modules": ["safety", "drivers", "dispatch"],
+      "cols": ["driver", "connectivity", "reverse_link", "picker_law"],
+      "leafRe": "^(temporary|cover|assignment|driver|scheduler|profile|create)"
     }
   ]
 }

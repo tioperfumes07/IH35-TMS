@@ -33,6 +33,10 @@ const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
 });
 
+const tempAssignmentsQuerySchema = companyQuerySchema.extend({
+  driver_id: z.string().uuid().optional(),
+});
+
 const dateRangeQuerySchema = companyQuerySchema.extend({
   start_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   end_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
@@ -355,7 +359,7 @@ export async function registerDriverSchedulerRoutes(app: FastifyInstance) {
     return policy;
   });
 
-  app.patch("/api/v1/safety/scheduler/policy/:op_company_id", async (req, reply) => {
+  app.patch("/api/v1/safety/scheduler/policy/:op_company_id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!isPolicyAdminRole(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
@@ -374,14 +378,14 @@ export async function registerDriverSchedulerRoutes(app: FastifyInstance) {
     return result.policy;
   });
 
-  app.get("/api/v1/safety/scheduler/temp-assignments", async (req, reply) => {
+  app.get("/api/v1/safety/scheduler/temp-assignments", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!isSchedulerOfficeRole(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
-    const parsed = companyQuerySchema.safeParse(req.query ?? {});
+    const parsed = tempAssignmentsQuerySchema.safeParse(req.query ?? {});
     if (!parsed.success) return sendValidationError(reply, parsed.error);
     const rows = await withCompanyScope(user.uuid, parsed.data.operating_company_id, (client) =>
-      listTempAssignments(client, parsed.data.operating_company_id)
+      listTempAssignments(client, parsed.data.operating_company_id, { driverId: parsed.data.driver_id })
     );
     return { assignments: rows };
   });
