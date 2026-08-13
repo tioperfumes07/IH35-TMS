@@ -545,7 +545,7 @@ function TaskDetailDrawer({
                       </span>
                       <span className="text-[10px] text-slate-500">{formatDateTime(event.created_at)}</span>
                     </div>
-                    <div className="text-[11px] text-slate-700">Actor: {entityLabel(null, event.actor_user_id, "User")}</div>
+                    <div className="text-[11px] text-slate-700">Actor: <EntityLink kind="user" id={event.actor_user_id} label={entityLabel(null, event.actor_user_id, "User")} /></div>
                     {Object.keys(event.payload ?? {}).length > 0 ? (
                       <pre className="mt-2 overflow-x-auto rounded-sm bg-slate-50 p-2 text-[10px] text-slate-600">
                         {JSON.stringify(event.payload, null, 2)}
