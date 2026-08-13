@@ -47,10 +47,6 @@ const KNOWN_GAPS = new Map([
     "Samsara master sync: telematics-derived units. Asset minting belongs to the operator create path, not to a device projection.",
   ],
   [
-    "apps/backend/src/maintenance/vehicles.routes.ts",
-    "Maintenance vehicle create — SECOND operator surface for units. OPEN: should mint like mdata/units.routes.ts. Owner: fleet lane.",
-  ],
-  [
     "apps/backend/src/onboarding/seed-sample-data.ts",
     "Sample-data seeder; rows it writes are fixtures by construction. Found by THIS guard, not by the hand grep that scoped the work — which is the point of writing it.",
   ],
@@ -81,7 +77,7 @@ export function collectProblems(files) {
     const code = strip(src);
     if (!insertsInto(code, "mdata.units")) continue;
 
-    const mintsAsset = insertsInto(code, "mdata.assets");
+    const mintsAsset = insertsInto(code, "mdata.assets") || /\bensureUnitAsset\s*\(/.test(code);
     const listed = KNOWN_GAPS.has(rel);
 
     if (!mintsAsset && !listed) {

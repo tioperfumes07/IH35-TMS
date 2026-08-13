@@ -4,6 +4,7 @@ import { appendCrudAudit, buildPatchChanges } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
+import { ensureUnitAsset } from "../mdata/ensure-unit-asset.shared.js";
 
 const querySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -215,6 +216,15 @@ export async function registerMaintenanceVehiclesRoutes(app: FastifyInstance) {
         ]
       );
       const created = inserted.rows[0];
+      await ensureUnitAsset(client, {
+        tenantId: companyId,
+        unitId: String(created.id),
+        unitCode: String(created.unit_display_id),
+        vin: String(created.vin),
+        make: (created.make as string | null) ?? null,
+        model: (created.model as string | null) ?? null,
+        year: (created.year as number | null) ?? null,
+      });
       await appendCrudAudit(client, user.uuid, "maintenance.vehicles.created", {
         resource_id: created.id,
         unit_display_id: created.unit_display_id,
