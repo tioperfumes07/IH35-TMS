@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["lists","customers","vendors"],"cols":["connectivity","reverse_link"],"leafRe":".*","task":"CLS-LISTS-MASTER-ROSTER-CONNECTIVITY","vertical":"class-sweep"} */
 /**
  * COMPLETENESS GATE — every wireable catalogs.* table must be reachable and editable.
  *
@@ -46,6 +47,46 @@ const HUB = join(ROOT, "apps", "frontend", "src", "pages", "lists", "components"
 const MANIFEST = join(ROOT, "apps", "frontend", "src", "routes", "manifest.tsx");
 const FE_REGISTRY = join(ROOT, "apps", "frontend", "src", "hooks", "useCatalogQuery.ts");
 const BACKEND_DIR = join(ROOT, "apps", "backend", "src");
+
+// Master rosters are intentionally not catalogs.* factory tables. Their Lists cards delegate to the
+// complete customer/vendor modules, whose entity-scoped GET + POST routes preserve the richer profile
+// and nested-create contracts. Treating these cards as generic catalogs would create a second writer.
+// Each exception is therefore proven end-to-end here: shared card resolver -> mounted FE route ->
+// canonical backend read/write route. This is a closed declaration, not a suffix inference.
+const MASTER_ROSTER_TARGETS = [
+  {
+    catalogKey: "customers-master",
+    resolver: 'if (domain === "customers" && catalogKey === "customers-master") return "/customers";',
+    frontendRoute: 'path="/customers"',
+    backendFile: join(BACKEND_DIR, "mdata", "customers.routes.ts"),
+    backendRead: 'app.get("/api/v1/mdata/customers"',
+    backendWrite: 'app.post("/api/v1/mdata/customers"',
+  },
+  {
+    catalogKey: "vendors-master",
+    resolver: 'if (domain === "vendors" && catalogKey === "vendors-master") return "/vendors";',
+    frontendRoute: 'path="/vendors"',
+    backendFile: join(BACKEND_DIR, "mdata", "vendors.routes.ts"),
+    backendRead: 'app.get("/api/v1/mdata/vendors"',
+    backendWrite: '"/api/v1/mdata/vendors",',
+  },
+];
+
+export function masterRosterBackedKeys({ hubSrc, manifestSrc, backendSourceFor }) {
+  const backed = new Set();
+  const defects = [];
+  for (const target of MASTER_ROSTER_TARGETS) {
+    const backendSrc = backendSourceFor(target.backendFile);
+    const missing = [];
+    if (!hubSrc.includes(target.resolver)) missing.push("shared card resolver");
+    if (!manifestSrc.includes(target.frontendRoute)) missing.push("mounted frontend route");
+    if (!backendSrc.includes(target.backendRead)) missing.push("canonical backend GET");
+    if (!backendSrc.includes(target.backendWrite)) missing.push("canonical backend POST");
+    if (missing.length) defects.push(`${target.catalogKey}: missing ${missing.join(", ")}`);
+    else backed.add(target.catalogKey);
+  }
+  return { backed, defects };
+}
 
 /**
  * Bespoke catalogs whose AllCatalogsMap `catalogKey` is NOT the kebab-cased table name.
@@ -269,6 +310,11 @@ function main() {
   const bespoke = bespokeRouteTables(backendFiles);
   const hub = hubEntries(hubSrc);
   const hubByKey = new Map(hub.map((h) => [h.catalogKey, h]));
+  const masterRosters = masterRosterBackedKeys({
+    hubSrc,
+    manifestSrc,
+    backendSourceFor: (file) => readFileSync(file, "utf8"),
+  });
 
   const problems = { unclassified: [], orphan: [], lieLive: [], missingHub: [], missingFeRegistry: [] };
 
@@ -379,12 +425,14 @@ function main() {
     ...backendSegments,
     ...[...bespoke].map((t) => t.replace(/_/g, "-")),
     ...dedicatedRouteKeys,
+    ...masterRosters.backed,
   ]);
   for (const h of hub) {
     if (h.live && !backedKeys.has(h.catalogKey)) {
       problems.lieLive.push(`"${h.name}" (catalogKey ${h.catalogKey}) — live:true but no backend route; the tile opens and the API 404s`);
     }
   }
+  problems.lieLive.push(...masterRosters.defects.map((defect) => `master roster ${defect}`));
 
   const otherLane = [];
   for (const key of Object.keys(problems)) {
@@ -462,6 +510,32 @@ function selftest() {
     } else {
       console.log(`  selftest OK — ${c.name}`);
     }
+  }
+
+  const completeMaster = masterRosterBackedKeys({
+    hubSrc: MASTER_ROSTER_TARGETS.map((target) => target.resolver).join("\n"),
+    manifestSrc: MASTER_ROSTER_TARGETS.map((target) => target.frontendRoute).join("\n"),
+    backendSourceFor: (file) => {
+      const target = MASTER_ROSTER_TARGETS.find((candidate) => candidate.backendFile === file);
+      return target ? `${target.backendRead}\n${target.backendWrite}` : "";
+    },
+  });
+  if (completeMaster.backed.size === MASTER_ROSTER_TARGETS.length && completeMaster.defects.length === 0) {
+    console.log("  selftest OK — complete master-roster delegation is backed");
+  } else {
+    console.error("  selftest FAIL — complete master-roster delegation rejected");
+    bad += 1;
+  }
+  const brokenMaster = masterRosterBackedKeys({
+    hubSrc: MASTER_ROSTER_TARGETS.map((target) => target.resolver).join("\n"),
+    manifestSrc: MASTER_ROSTER_TARGETS.map((target) => target.frontendRoute).join("\n"),
+    backendSourceFor: () => "",
+  });
+  if (brokenMaster.backed.size === 0 && brokenMaster.defects.length === MASTER_ROSTER_TARGETS.length) {
+    console.log("  selftest OK — missing canonical APIs fail master-roster delegation");
+  } else {
+    console.error("  selftest FAIL — missing canonical APIs passed master-roster delegation");
+    bad += 1;
   }
 
   // Hub extraction: live flag must be read from the SAME entry as the key.
