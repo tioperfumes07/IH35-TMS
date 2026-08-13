@@ -287,7 +287,6 @@
       "required": [
         "connectivity",
         "reverse_link",
-        "picker_law",
         "bank",
         "qbo_chrome"
       ]
@@ -302,7 +301,6 @@
       "required": [
         "connectivity",
         "reverse_link",
-        "picker_law",
         "bank",
         "qbo_chrome"
       ]
@@ -428,7 +426,6 @@
       "required": [
         "connectivity",
         "reverse_link",
-        "picker_law",
         "bank",
         "qbo_chrome"
       ]
@@ -443,7 +440,6 @@
       "required": [
         "connectivity",
         "reverse_link",
-        "picker_law",
         "bank",
         "qbo_chrome"
       ]
