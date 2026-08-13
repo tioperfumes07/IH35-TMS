@@ -46,6 +46,7 @@ import { userFacingApiError } from "../lib/api-error-message";
 import { VendorWorkOrdersReverseSection } from "./vendors/VendorWorkOrdersReverseSection";
 import { VendorPartsHistorySection } from "./vendors/VendorPartsHistorySection";
 import { VendorApAgingSection } from "./vendors/VendorApAgingSection";
+import { RoadServiceReverseSection } from "../components/maintenance/RoadServiceReverseSection";
 import { LinkedBankTransactionsPanel } from "../components/banking/LinkedBankTransactionsPanel";
 
 type SaferEntityStatus = {
@@ -872,6 +873,11 @@ export function VendorDetailPage() {
           {/* Edit/Save/Cancel moved to the top of the panel (discoverable). */}
         </DataPanel>
         <VendorWorkOrdersReverseSection operatingCompanyId={companyId} vendorId={vendor.id} />
+        <RoadServiceReverseSection
+          filter={{ vendor_id: vendor.id }}
+          contextLabel="this vendor"
+          data-testid="vendor-profile-road-service-reverse"
+        />
         <VendorPartsHistorySection operatingCompanyId={companyId} vendorId={vendor.id} />
         <VendorApAgingSection operatingCompanyId={companyId} vendorId={vendor.id} />
         <LinkedBankTransactionsPanel companyId={companyId} linkage={{ kind: "vendor_id", id: vendor.id }} entityLabel={vendor.name} />
