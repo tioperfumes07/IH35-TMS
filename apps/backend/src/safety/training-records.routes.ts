@@ -9,6 +9,8 @@ const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
 });
 
+const RL_WRITE = { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } };
+
 const createTrainingRecordSchema = z.object({
   driver_id: z.string().uuid(),
   training_name: z.string().trim().min(1),
@@ -39,7 +41,7 @@ async function withCompanyScope<T>(
 }
 
 export async function registerSafetyTrainingRecordsRoutes(app: FastifyInstance) {
-  app.post("/api/v1/safety/training-records", async (req, reply) => {
+  app.post("/api/v1/safety/training-records", RL_WRITE, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const company = companyQuerySchema.safeParse(req.query ?? {});
@@ -48,6 +50,11 @@ export async function registerSafetyTrainingRecordsRoutes(app: FastifyInstance) 
     if (!body.success) return reply.code(400).send({ error: "validation_error", details: body.error.flatten() });
 
     const created = await withCompanyScope(user.uuid, company.data.operating_company_id, async (client) => {
+      const driver = await client.query(
+        `SELECT id FROM mdata.drivers WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
+        [body.data.driver_id, company.data.operating_company_id]
+      );
+      if (!driver.rows[0]) return null;
       const res = await client.query(
         `
           INSERT INTO safety.training_records (
@@ -85,6 +92,8 @@ export async function registerSafetyTrainingRecordsRoutes(app: FastifyInstance) 
       );
       return res.rows[0];
     });
+
+    if (!created) return reply.code(400).send({ error: "driver_not_in_operating_company" });
 
     return reply.code(201).send(created);
   });

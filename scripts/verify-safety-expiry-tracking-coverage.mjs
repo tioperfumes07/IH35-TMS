@@ -60,6 +60,9 @@ export function collectProblems(root = ROOT) {
   if (!/listSafetyMedicalCards\(operatingCompanyId, driverId\)/.test(sources.medicalSection) || !/<EntityLink kind="driver"/.test(sources.medicalSection)) failures.push("medical-card list must use exact reverse filtering and canonical driver drill-through");
   if (!/<MedicalCardsHistorySection operatingCompanyId=\{companyId\}/.test(sources.dot)) failures.push("DOT compliance must mount the all-driver medical-card surface");
   if (!/<MedicalCardsHistorySection operatingCompanyId=\{companyId\} driverId=\{id\}/.test(sources.driver)) failures.push("driver profile must mount exact medical-card reverse history");
+  if (!/app\.post\("\/api\/v1\/safety\/training-records", RL_WRITE/.test(sources.training)) failures.push("training-record writer must be explicitly rate-limited");
+  if (!/SELECT id FROM mdata\.drivers WHERE id = \$1::uuid AND operating_company_id = \$2::uuid/.test(sources.training) ||
+      !/driver_not_in_operating_company/.test(sources.training)) failures.push("training-record writer must reject drivers outside the selected company");
   return failures;
 }
 
@@ -88,6 +91,8 @@ function selftest() {
       [REL.medicalSection, 'dataField="medical-card-driver"', 'dataField="free-text-driver"'],
       [REL.dot, "<MedicalCardsHistorySection", "<MissingMedicalCardsHistorySection"],
       [REL.driver, '<MedicalCardsHistorySection operatingCompanyId={companyId} driverId={id}', '<MedicalCardsHistorySection operatingCompanyId={companyId} driverId={undefined}'],
+      [REL.training, 'app.post("/api/v1/safety/training-records", RL_WRITE', 'app.post("/api/v1/safety/training-records", {}'],
+      [REL.training, "operating_company_id = $2::uuid", "TRUE"],
     ];
     for (const [rel, before, after] of mutations) {
       const target = path.join(temp, rel);
@@ -109,4 +114,4 @@ if (failures.length) {
   for (const failure of failures) console.error(` - ${failure}`);
   process.exit(1);
 }
-console.log(`verify:safety-expiry-tracking-coverage OK${process.argv.includes("--selftest") ? " — 14/14 mutations killed" : ""}`);
+console.log(`verify:safety-expiry-tracking-coverage OK${process.argv.includes("--selftest") ? " — 16/16 mutations killed" : ""}`);
