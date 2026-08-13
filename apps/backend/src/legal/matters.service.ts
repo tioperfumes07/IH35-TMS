@@ -144,6 +144,29 @@ async function assertEquipmentInCompany(
   }
 }
 
+async function assertDriverInCompany(
+  client: QueryableClient,
+  driverId: string | null | undefined,
+  operatingCompanyId: string,
+) {
+  if (!driverId) return;
+  const result = await client.query(
+    `SELECT id
+       FROM mdata.drivers
+      WHERE id = $1::uuid
+        AND operating_company_id = $2::uuid
+        AND deactivated_at IS NULL
+        AND archived_at IS NULL
+      LIMIT 1`,
+    [driverId, operatingCompanyId],
+  );
+  if (!result.rows[0]) {
+    throw Object.assign(new Error("linked_entity_not_in_operating_company"), {
+      code: "linked_entity_not_in_operating_company",
+    });
+  }
+}
+
 function severityRankSql() {
   return `CASE m.severity
     WHEN 'critical' THEN 1
@@ -400,6 +423,7 @@ export async function createMatter(
   const input = matterCreateSchema.parse(args.body);
   await setOperatingCompany(client, args.operatingCompanyId);
   await assertEquipmentInCompany(client, input.equipment_id, args.operatingCompanyId);
+  await assertDriverInCompany(client, input.related_driver_id, args.operatingCompanyId);
   const ins = await client.query(
     `
       INSERT INTO legal.matters (
@@ -501,6 +525,7 @@ export async function updateMatter(
   const input = matterUpdateSchema.parse(args.body);
   await setOperatingCompany(client, args.operatingCompanyId);
   await assertEquipmentInCompany(client, input.equipment_id, args.operatingCompanyId);
+  await assertDriverInCompany(client, input.related_driver_id, args.operatingCompanyId);
   const fields: string[] = [];
   const values: unknown[] = [];
   let i = 1;

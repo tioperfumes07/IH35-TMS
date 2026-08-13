@@ -624,6 +624,14 @@
       "modules": ["maintenance", "fleet"],
       "cols": ["trailer", "connectivity", "reverse_link", "picker_law"],
       "leafRe": "^(tires|trailer|profile|create)"
+    },
+    {
+      "task": "LEGAL-MATTER-DRIVER-WRITER-INTEGRITY",
+      "pr": "this PR",
+      "guard": "scripts/verify-legal-matter-driver-linkage.mjs",
+      "modules": ["legal", "drivers"],
+      "cols": ["driver", "connectivity", "reverse_link", "picker_law"],
+      "leafRe": "^(matters|driver|profile|detail|create)"
     }
   ]
 }
