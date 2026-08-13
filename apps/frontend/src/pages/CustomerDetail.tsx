@@ -61,6 +61,7 @@ import { FMCSAVerificationModal } from "../components/customers/FMCSAVerificatio
 import { FreeTimeDetentionEditor } from "../components/customers/FreeTimeDetentionEditor";
 import { CustomerRelationshipScore } from "../components/customers/CustomerRelationshipScore";
 import { DispatcherSafetyEventsReverseBlock } from "../components/safety/DispatcherSafetyEventsReverseBlock";
+import { ComplaintsReverseSection } from "../components/safety/ComplaintsReverseSection";
 import { DocumentsTab } from "../components/documents/DocumentsTab";
 import { TasksTab } from "../components/tasks/TasksTab";
 import { EntityAuditHistoryTab } from "../components/audit/EntityAuditHistoryTab";
@@ -1134,12 +1135,20 @@ export function CustomerDetailPage() {
       />
 
       {operatingCompanyId ? (
-        <DispatcherSafetyEventsReverseBlock
-          operatingCompanyId={operatingCompanyId}
-          related="customer"
-          entityId={id}
-          data-testid="customer-dispatcher-safety-events-reverse"
-        />
+        <>
+          <DispatcherSafetyEventsReverseBlock
+            operatingCompanyId={operatingCompanyId}
+            related="customer"
+            entityId={id}
+            data-testid="customer-dispatcher-safety-events-reverse"
+          />
+          <ComplaintsReverseSection
+            operatingCompanyId={operatingCompanyId}
+            filter={{ customer_id: id }}
+            contextLabel="this customer"
+            data-testid="customer-complaints-reverse"
+          />
+        </>
       ) : null}
 
       <CustomerFinancialOverviewSection summary={financialSummaryQuery.data} loading={financialSummaryQuery.isLoading} error={financialSummaryQuery.isError} />

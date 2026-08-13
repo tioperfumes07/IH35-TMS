@@ -1,5 +1,5 @@
 import { Lock } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { formatDateUS } from "../../../lib/formatDate";
 import { entityLabel } from "../../../lib/entity-label";
@@ -30,6 +30,8 @@ type ComplainantType = "external" | "driver" | "employee" | "customer" | "anonym
 type RespondentType = "driver" | "employee";
 
 export function ComplaintsTab() {
+  const [searchParams] = useSearchParams();
+  const highlightedComplaintId = searchParams.get("complaint_id")?.trim() ?? "";
   const { selectedCompanyId } = useCompanyContext();
   const auth = useAuth();
   const companyId = selectedCompanyId ?? "";
@@ -72,7 +74,7 @@ export function ComplaintsTab() {
 
   const usersQuery = useQuery({
     queryKey: ["identity", "assignable-users", "complaints"],
-    queryFn: () => listAssignableUsers(),
+    queryFn: () => listAssignableUsers(companyId),
     enabled: canCreate,
     staleTime: 60_000,
   });
@@ -510,6 +512,11 @@ export function ComplaintsTab() {
         emptyText="No complaints found."
         storageKey="safety-complaints"
         exportFilename="complaints"
+        rowClassName={(row) =>
+          highlightedComplaintId && String(row.id) === highlightedComplaintId
+            ? "bg-slate-100 ring-1 ring-inset ring-slate-300"
+            : ""
+        }
       />
       <VoidReasonModal
         open={voidTargetId !== null}
