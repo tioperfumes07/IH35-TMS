@@ -800,6 +800,14 @@
       "modules": ["dispatch", "fleet", "drivers"],
       "cols": ["trailer", "connectivity", "reverse_link", "picker_law"],
       "leafRe": "^(quick.?assign|assignment|trailer|load|profile|dispatch|create)"
+    },
+    {
+      "task": "QUICK-ASSIGN-UNIT-LINKAGE",
+      "pr": "this PR",
+      "guard": "scripts/verify-quick-assign-unit-linkage.mjs",
+      "modules": ["dispatch", "fleet", "drivers"],
+      "cols": ["unit", "connectivity", "reverse_link", "picker_law"],
+      "leafRe": "^(quick.?assign|assignment|unit|load|profile|dispatch|create)"
     }
   ]
 }
