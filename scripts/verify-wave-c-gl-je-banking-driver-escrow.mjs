@@ -21,6 +21,7 @@
  * forced.
  *
  * @matrix-built {"modules":["banking"],"cols":["gl_je"],"leafRe":"^driver_escrow$","task":"WAVE-C-gl_je-banking-driver-escrow","vertical":"column-wave"}
+ * @matrix-built {"modules":["banking"],"cols":["gl_je"],"leafRe":"^(transactions\\.list|transactions\\.categorize|reconciliation)$","task":"WAVE-C-gl_je-banking-transactions-recon","vertical":"column-wave"}
  *
  * Self-test: node scripts/verify-wave-c-gl-je-banking-driver-escrow.mjs --selftest
  */
@@ -47,6 +48,16 @@ const CHECKS = [
     file: "apps/frontend/src/pages/banking/components/DriverEscrowTabContent.tsx",
     pattern: /banking-escrow-journal-entry-link/,
   },
+  {
+    name: "BankingTransactionsDesignView.tsx EntityLinks matched_journal_entry_id",
+    file: "apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx",
+    pattern: /kind=\"journal_entry\"[\s\S]*matched_journal_entry_id/,
+  },
+  {
+    name: "BankReconciliationPage.tsx EntityLinks journal_entry_id",
+    file: "apps/frontend/src/pages/banking/BankReconciliationPage.tsx",
+    pattern: /kind=\"journal_entry\"[\s\S]*journal_entry_id/,
+  },
 ];
 
 export function checkAll(readFile) {
@@ -69,6 +80,10 @@ if (process.argv.includes("--selftest")) {
     "apps/backend/src/banking/escrow-visualizer.routes.ts":
       "LEFT JOIN driver_finance.driver_settlement_gl_runs sgr ON sgr.settlement_id = el.settlement_id ... je.id = sgr.deduction_journal_entry_id",
     "apps/frontend/src/pages/banking/components/DriverEscrowTabContent.tsx": 'data-testid="banking-escrow-journal-entry-link"',
+    "apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx":
+      'kind="journal_entry"\nid={tx.matched_journal_entry_id}',
+    "apps/frontend/src/pages/banking/BankReconciliationPage.tsx":
+      'kind="journal_entry" id={entry.journal_entry_id}',
   };
   const goodFailures = checkAll((f) => GOOD_FIXTURES[f] ?? null);
   if (goodFailures.length) {
