@@ -768,6 +768,14 @@
       "modules": ["insurance", "vendors", "safety"],
       "cols": ["vendor", "connectivity", "reverse_link", "picker_law"],
       "leafRe": "^(insurance|policy|vendor|profile|list|create)"
+    },
+    {
+      "task": "CUSTOMER-NOTIFY-LINKAGE",
+      "pr": "this PR",
+      "guard": "scripts/verify-customer-notify-linkage.mjs",
+      "modules": ["dispatch", "customers", "notifications"],
+      "cols": ["customer", "connectivity", "reverse_link", "picker_law"],
+      "leafRe": "^(customer|notify|eta|preference|log|profile|create)"
     }
   ]
 }

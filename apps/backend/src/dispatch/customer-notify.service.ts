@@ -116,6 +116,19 @@ async function fetchPreferences(client: DbClient, operatingCompanyId: string, cu
   return res.rows[0] ?? { customer_id: customerId, ...DEFAULT_PREFS };
 }
 
+async function customerBelongsToCompany(client: DbClient, operatingCompanyId: string, customerId: string) {
+  const result = await client.query<{ exists: boolean }>(
+    `SELECT EXISTS (
+       SELECT 1 FROM mdata.customers
+       WHERE id = $2::uuid
+         AND operating_company_id = $1::uuid
+         AND deactivated_at IS NULL
+     ) AS exists`,
+    [operatingCompanyId, customerId]
+  );
+  return result.rows[0]?.exists === true;
+}
+
 async function alreadyLogged(
   client: DbClient,
   input: {
@@ -531,6 +544,9 @@ export async function syncCustomerNotifyFromEvents(userId: string, operatingComp
 
 export async function getCustomerNotifyPreferences(userId: string, operatingCompanyId: string, customerId: string) {
   return withCompany(userId, operatingCompanyId, async (client) => {
+    if (!(await customerBelongsToCompany(client, operatingCompanyId, customerId))) {
+      throw new Error("E_CUSTOMER_NOT_FOUND");
+    }
     const prefs = await fetchPreferences(client, operatingCompanyId, customerId);
     return { preferences: prefs };
   });
@@ -543,6 +559,9 @@ export async function upsertCustomerNotifyPreferences(
   patch: Partial<Omit<CustomerNotifyPreferences, "customer_id">>
 ) {
   return withCompany(userId, operatingCompanyId, async (client) => {
+    if (!(await customerBelongsToCompany(client, operatingCompanyId, customerId))) {
+      throw new Error("E_CUSTOMER_NOT_FOUND");
+    }
     const res = await client.query<CustomerNotifyPreferences>(
       `
         INSERT INTO dispatch.customer_notify_preferences (

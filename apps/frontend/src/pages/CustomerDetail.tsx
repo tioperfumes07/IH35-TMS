@@ -68,6 +68,7 @@ import { EntityAuditHistoryTab } from "../components/audit/EntityAuditHistoryTab
 import { CustomerContractsTab } from "../components/customers/CustomerContractsTab";
 import { ErrorBoundary } from "../components/ErrorBoundary";
 import { LinkedBankTransactionsPanel } from "../components/banking/LinkedBankTransactionsPanel";
+import { CustomerNotifyReverseSection } from "../components/dispatch/CustomerNotifyReverseSection";
 import { Modal } from "../components/Modal";
 import { CoiRequestsTab } from "./customers/tabs/CoiRequestsTab";
 import { PortalUsersTab } from "./customers/components/PortalUsersTab";
@@ -1148,6 +1149,7 @@ export function CustomerDetailPage() {
             contextLabel="this customer"
             data-testid="customer-complaints-reverse"
           />
+          <CustomerNotifyReverseSection operatingCompanyId={operatingCompanyId} customerId={id} />
         </>
       ) : null}
 

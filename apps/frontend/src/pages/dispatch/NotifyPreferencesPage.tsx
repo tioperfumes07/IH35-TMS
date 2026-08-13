@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   getCustomerNotifyLog,
   getCustomerNotifyPreferences,
@@ -126,7 +127,8 @@ export function NotifyPreferencesPage() {
   const companyId = selectedCompanyId ?? "";
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
-  const [customerId, setCustomerId] = useState("");
+  const initialCustomerId = useSearchParams()[0].get("customer_id") ?? "";
+  const [customerId, setCustomerId] = useState(initialCustomerId);
   const [customerSearch, setCustomerSearch] = useState("");
 
   const customersQuery = useQuery({

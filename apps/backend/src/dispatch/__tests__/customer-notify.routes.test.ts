@@ -44,6 +44,14 @@ describe("dispatch customer-notify routes (B21-D9)", () => {
     expect(src).toContain("syncCustomerNotifyFromEvents");
   });
 
+  it("rejects cross-tenant or inactive customers before preferences read/write", () => {
+    const src = readFileSync(servicePath, "utf8");
+    expect(src).toContain("customerBelongsToCompany");
+    expect(src).toContain("operating_company_id = $1::uuid");
+    expect(src).toContain("deactivated_at IS NULL");
+    expect(src.match(/E_CUSTOMER_NOT_FOUND/g)?.length).toBeGreaterThanOrEqual(2);
+  });
+
   it("renders portal-based templates and respects per-customer opt-in", () => {
     expect(templateKeyForMilestone("departed")).toBe("portal-dispatched");
     expect(templateKeyForMilestone("arrived", "delivery")).toBe("portal-delivered");
