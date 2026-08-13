@@ -607,6 +607,11 @@
     "claimed_by": "cursor",
     "purpose": "ACCT-F5028 LV-PAYABLE-SELECTOR-OFFERS-VOIDED-BILLS has_balance exclude void status"
   },
+  "3224": {
+    "claimed_at": "2026-08-13",
+    "claimed_by": "cursor",
+    "purpose": "ACCT-F5029 invoice void originalDate ISO (LV-BILLVOID class)"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
