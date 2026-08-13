@@ -342,6 +342,40 @@ export function InvoiceDetailPage() {
               />
             </span>
           </DataPanelRow>
+          {invoice.invoice_type ? (
+            <DataPanelRow>
+              <span className="text-xs text-gray-600">Invoice type</span>
+              <span className="text-sm text-gray-900">{invoice.invoice_type.replaceAll("_", " ")}</span>
+            </DataPanelRow>
+          ) : null}
+          {invoice.bill_to_entity_type && invoice.bill_to_entity_id ? (
+            <DataPanelRow>
+              <span className="text-xs text-gray-600">Bill-to</span>
+              <span className="text-sm text-gray-900" data-testid="invoice-bill-to-link">
+                {invoice.bill_to_entity_type === "driver" ? (
+                  <EntityLink
+                    kind="driver"
+                    id={invoice.bill_to_entity_id}
+                    label={entityLabel(null, invoice.bill_to_entity_id, "Driver")}
+                  />
+                ) : invoice.bill_to_entity_type === "vendor" ? (
+                  <EntityLink
+                    kind="vendor"
+                    id={invoice.bill_to_entity_id}
+                    label={entityLabel(null, invoice.bill_to_entity_id, "Vendor")}
+                  />
+                ) : invoice.bill_to_entity_type === "customer" ? (
+                  <EntityLink
+                    kind="customer"
+                    id={invoice.bill_to_entity_id}
+                    label={entityLabel(invoice.customer_name, invoice.bill_to_entity_id, "Customer")}
+                  />
+                ) : (
+                  entityLabel(null, invoice.bill_to_entity_id, "Bill-to")
+                )}
+              </span>
+            </DataPanelRow>
+          ) : null}
           <DataPanelRow>
             <span className="text-xs text-gray-600">Status</span>
             <span className="text-sm font-semibold text-gray-900">{invoice.status}</span>
