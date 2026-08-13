@@ -129,8 +129,7 @@
       "required": [
         "connectivity",
         "reverse_link",
-        "qbo_chrome",
-        "gl_je"
+        "qbo_chrome"
       ]
     },
     {
@@ -236,7 +235,6 @@
       "sub": "Audit reports cluster",
       "route_hint": "/reports/audit/activity-by-user",
       "required": [
-        "gl_je",
         "connectivity",
         "reverse_link"
       ]
@@ -1162,7 +1160,6 @@
       "sub": "Activity by user",
       "route_hint": "/reports/audit/activity-by-user",
       "required": [
-        "gl_je",
         "connectivity",
         "reverse_link"
       ]
@@ -1173,7 +1170,6 @@
       "sub": "Activity by module",
       "route_hint": "/reports/audit/activity-by-module",
       "required": [
-        "gl_je",
         "connectivity",
         "reverse_link"
       ]
@@ -1195,7 +1191,6 @@
       "sub": "Maintenance decision log",
       "route_hint": "/reports/audit/maintenance-decision-log",
       "required": [
-        "gl_je",
         "connectivity",
         "reverse_link",
         "work_order"
