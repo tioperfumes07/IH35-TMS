@@ -24,7 +24,14 @@ function assertAll(srcs) {
   const problems = [];
   for (const [file, src] of Object.entries(srcs)) {
     if (/\.slice\(0,\s*8\)/.test(src)) problems.push(`${file}: still UUID-slices`);
-    if (!/entityLabel\(/.test(src)) problems.push(`${file}: missing entityLabel`);
+    if (file.endsWith("ClaimCreateModal.tsx")) {
+      for (const kind of ["insurance_policy", "load", "trailer"]) {
+        if (!new RegExp(`kind=["']${kind}["']`).test(src)) problems.push(`${file}: missing canonical ${kind} EntityPicker`);
+      }
+      if (!/Accident — \$\{when\}/.test(src)) problems.push(`${file}: accident options need a human date label`);
+    } else if (!/entityLabel\(/.test(src)) {
+      problems.push(`${file}: missing entityLabel`);
+    }
   }
   const assign = srcs["apps/frontend/src/pages/dispatch/AssignDriverDropdown.tsx"];
   if (!assign.includes('userFacingApiError(activeQuery.error, "Could not load available drivers")')) {
