@@ -41,3 +41,33 @@ describe("fuel/fuel-transactions.routes (A10)", () => {
     expect(routes).toContain("amount_cents: Math.round(Number(row.total_cost ?? 0) * 100)");
   });
 });
+
+// RANK3-FUEL-OFFICE-POST-CREATE (2026-08-12) — before this route, fuel.fuel_transactions had a
+// bulk-import writer and a load-assignment writer but no manual single-row office-entry create.
+describe("fuel/fuel-transactions.routes RANK3-FUEL-OFFICE-POST-CREATE", () => {
+  it("registers POST /api/v1/fuel/transactions", () => {
+    expect(routes).toContain('app.post("/api/v1/fuel/transactions"');
+  });
+
+  it("enforces G18 load attribution — load_id OR a stated load_exemption_reason, never neither", () => {
+    expect(routes).toContain("Boolean(v.load_id) || Boolean(v.load_exemption_reason)");
+  });
+
+  it("only writes the live CHECK-constrained fuel_type values", () => {
+    expect(routes).toContain('z.enum(["diesel", "def", "gas", "reefer_diesel", "other"])');
+  });
+
+  it("always stamps source='manual' — never disguised as an import", () => {
+    expect(routes).toContain("'manual', $16, true, $17, $18::uuid");
+  });
+
+  it("writes trailer_id (rank 1) scoped to the requesting company via mdata.equipment ownership", () => {
+    expect(routes).toContain("trailer_id");
+    expect(routes).toContain("owner_company_id = $2::uuid OR currently_leased_to_company_id = $2::uuid");
+  });
+
+  it("flushes the fuel GL poster after commit, reusing the existing poster (no new GL math)", () => {
+    expect(routes).toContain("flushFuelGlPostsAfterCommit");
+    expect(routes).toContain('import { flushFuelGlPostsAfterCommit } from "../accounting/fuel-posting/maybe-post-from-fuel-transaction.service.js"');
+  });
+});
