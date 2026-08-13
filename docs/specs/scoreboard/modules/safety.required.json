@@ -378,8 +378,7 @@
         "load",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -425,7 +424,6 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link",
         "claim",
         "policy"
       ]
@@ -466,8 +464,7 @@
         "liability",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -495,8 +492,7 @@
         "vendor",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -655,7 +651,6 @@
       "surface_path": "pages/lists/safety/CompanyViolationTypeModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "driver",
         "accident"
       ]
@@ -669,7 +664,6 @@
       "surface_path": "pages/safety/components/CompanyViolationCreateModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "picker_law",
         "driver",
         "accident"
@@ -684,7 +678,6 @@
       "surface_path": "pages/safety/components/EscrowForfeitModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "liability",
         "driver",
         "accident"
@@ -699,7 +692,6 @@
       "surface_path": "pages/safety/components/FineConvertConfirmModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "liability",
         "driver",
         "accident"
@@ -714,7 +706,6 @@
       "surface_path": "pages/safety/components/FineCreateModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "picker_law",
         "driver",
         "accident"
@@ -729,7 +720,6 @@
       "surface_path": "pages/safety/components/HosViolationCreateModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "picker_law",
         "driver",
         "accident"
@@ -777,8 +767,8 @@
         "liability",
         "driver",
         "accident",
-              "gl_je"
-]
+        "gl_je"
+      ]
     },
     {
       "id": "safety.drawer.integrity_alert_detail",
@@ -831,7 +821,6 @@
       "surface_path": "pages/safety/drug-alcohol/TestSchedulingPanel.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "driver",
         "accident"
       ]
@@ -874,7 +863,6 @@
       "surface_path": "pages/safety/components/EscrowForfeitModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "liability",
         "driver",
         "accident"
@@ -889,7 +877,6 @@
       "surface_path": "pages/safety/components/FineCreateModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "picker_law",
         "driver",
         "accident"
@@ -908,8 +895,8 @@
         "liability",
         "driver",
         "accident",
-              "gl_je"
-]
+        "gl_je"
+      ]
     },
     {
       "id": "safety.parity.integrity_alert_detail",
