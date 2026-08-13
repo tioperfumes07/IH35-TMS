@@ -59,9 +59,12 @@ export function check(src) {
     errors.push(`${PAGE}: queue row must be a div with role="button" (keyboard-activatable) so the customer link can nest legally`);
   }
 
-  // Detail panel Customer label present
-  if (!src.includes(">Customer<") && !src.includes("Customer</div>")) {
-    errors.push(`${PAGE}: detail panel must label Customer`);
+  // ACCT-F5059 — invoice EntityLink must use display_id from the list/detail payload (not null name → UUID chrome).
+  if (!/invoice_display_id/.test(src)) {
+    errors.push(`${PAGE}: must entityLabel invoice_display_id for Invoice EntityLink`);
+  }
+  if (/entityLabel\(\s*null\s*,\s*detailQuery\.data\.task\.invoice_id/.test(src)) {
+    errors.push(`${PAGE}: must not pass null name for invoice EntityLink when display_id is available`);
   }
   return errors;
 }
@@ -78,6 +81,8 @@ function selftest() {
     </div>
     <div className="text-xs">Customer</div>
     <EntityLink kind="customer" id={detailQuery.data?.task.customer_id} />
+    <EntityLink kind="invoice" id={detailQuery.data?.task.invoice_id}
+      label={entityLabel(detailQuery.data.task.invoice_display_id, detailQuery.data.task.invoice_id, "Invoice")} />
   `;
   if (check(good).length) {
     console.error(`${LABEL} SELFTEST FAILED on good: ${check(good).join("; ")}`);
@@ -86,6 +91,12 @@ function selftest() {
   const bad = `<div>{task.customer_name ?? "Unknown customer"}</div>`;
   if (check(bad).length < 2) {
     console.error(`${LABEL} SELFTEST FAILED: planted gap must fail`);
+    process.exit(1);
+  }
+  // Backend must JOIN invoices.display_id into the payload (CLS-LINKAGE-ONEWAY).
+  const service = read("apps/backend/src/accounting/collections.service.ts");
+  if (!/invoice_display_id/.test(service) || !/LEFT JOIN accounting\.invoices i/.test(service)) {
+    console.error(`${LABEL} SELFTEST FAILED: collections.service must select invoice_display_id via invoices join`);
     process.exit(1);
   }
 }
@@ -97,6 +108,10 @@ if (process.argv.includes("--selftest")) {
 }
 
 const errors = check(read(PAGE));
+const service = read("apps/backend/src/accounting/collections.service.ts");
+if (!/invoice_display_id/.test(service) || !/LEFT JOIN accounting\.invoices i/.test(service)) {
+  errors.push("collections.service.ts: must SELECT i.display_id AS invoice_display_id with same-opco invoices join");
+}
 if (errors.length) {
   for (const e of errors) console.error(`FAIL: ${e}`);
   process.exit(1);

@@ -36,6 +36,8 @@ export type CollectionTaskRow = {
   customer_id: string;
   customer_name: string | null;
   invoice_id: string;
+  /** accounting.invoices.display_id — CLS-LINKAGE-ONEWAY fix for Collections invoice EntityLink */
+  invoice_display_id: string | null;
   owed_cents: number;
   days_overdue: number;
   aging_bucket: CollectionAgingBucket;
@@ -325,6 +327,7 @@ export async function listCollectionTasks(input: {
           t.customer_id::text,
           c.customer_name,
           t.invoice_id::text,
+          i.display_id::text AS invoice_display_id,
           t.owed_cents::bigint,
           t.days_overdue::int,
           t.aging_bucket::text,
@@ -338,6 +341,7 @@ export async function listCollectionTasks(input: {
           t.closed_at::text
         FROM accounting.ar_collection_tasks t
         LEFT JOIN mdata.customers c ON c.id = t.customer_id AND c.operating_company_id = t.operating_company_id
+        LEFT JOIN accounting.invoices i ON i.id = t.invoice_id AND i.operating_company_id = t.operating_company_id
         WHERE ${where.join(" AND ")}
         ORDER BY
           CASE t.status
@@ -374,6 +378,7 @@ export async function getCollectionTask(input: {
           t.customer_id::text,
           c.customer_name,
           t.invoice_id::text,
+          i.display_id::text AS invoice_display_id,
           t.owed_cents::bigint,
           t.days_overdue::int,
           t.aging_bucket::text,
@@ -387,6 +392,7 @@ export async function getCollectionTask(input: {
           t.closed_at::text
         FROM accounting.ar_collection_tasks t
         LEFT JOIN mdata.customers c ON c.id = t.customer_id AND c.operating_company_id = t.operating_company_id
+        LEFT JOIN accounting.invoices i ON i.id = t.invoice_id AND i.operating_company_id = t.operating_company_id
         WHERE t.operating_company_id = $1::uuid
           AND t.id = $2::uuid
         LIMIT 1
@@ -539,6 +545,7 @@ function normalizeTaskRow(row: CollectionTaskRow): CollectionTaskRow {
     owed_cents: toInt(row.owed_cents),
     days_overdue: toInt(row.days_overdue),
     customer_name: row.customer_name ?? null,
+    invoice_display_id: row.invoice_display_id ?? null,
     resolution: row.resolution ?? null,
     assigned_to_user_id: row.assigned_to_user_id ?? null,
     last_contact_at: row.last_contact_at ?? null,
