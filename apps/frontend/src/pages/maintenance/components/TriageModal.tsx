@@ -19,7 +19,7 @@ export function TriageModal({ open, issue, onClose, onConvertToWo, onConvertToDa
         <div className="space-y-3 text-sm">
           <div className="rounded-sm border border-gray-200 bg-gray-50 p-2">
             <div><span className="font-semibold">Unit:</span> <EntityLink kind="unit" id={issue.unit_id} label={entityLabel(issue.unit_display_id, issue.unit_id, "Unit")} /></div>
-            <div><span className="font-semibold">Driver:</span> {issue.driver_full_name}</div>
+            <div><span className="font-semibold">Driver:</span> <EntityLink kind="driver" id={issue.driver_id} label={entityLabel(issue.driver_full_name, issue.driver_id, "Driver")} /></div>
             <div><span className="font-semibold">Category:</span> {issue.issue_category}</div>
             <div><span className="font-semibold">Description:</span> {issue.issue_description}</div>
             <div><span className="font-semibold">GPS:</span> {issue.gps_lat ?? "-"}, {issue.gps_lng ?? "-"} {issue.gps_label ?? ""}</div>

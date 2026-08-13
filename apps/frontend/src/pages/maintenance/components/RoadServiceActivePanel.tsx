@@ -1,5 +1,6 @@
 import type { WorkOrder } from "../../../api/maintenance";
 import { entityLabel } from "../../../lib/entity-label";
+import { EntityLink } from "../../../components/shared/EntityLink";
 
 type Props = {
   roadside: WorkOrder[];
@@ -28,19 +29,14 @@ export function RoadServiceActivePanel({ roadside, onOpen }: Props) {
             const eta =
               wo.roadside_response_minutes != null ? `ETA ${wo.roadside_response_minutes} min` : null;
             return (
-              <li key={wo.id} className="border-t border-gray-100 first:border-t-0">
-                <button
-                  type="button"
-                  onClick={() => onOpen(wo.id)}
-                  className="block w-full px-2 py-1.5 text-left hover:bg-gray-50"
-                >
+              <li key={wo.id} className="border-t border-gray-100 px-2 py-1.5 first:border-t-0 hover:bg-gray-50">
                   <div className="flex items-center justify-between gap-1">
-                    <span
+                    <EntityLink
+                      kind="unit"
+                      id={wo.unit_id}
+                      label={entityLabel(wo.unit_number ?? wo.display_id, wo.unit_id, "Unit")}
                       className="text-[11px] font-semibold"
-                      style={{ color: isOos ? "#A32D2D" : "#1F2A44" }}
-                    >
-                      {entityLabel(wo.unit_number ?? wo.display_id, wo.unit_id, "Unit")}
-                    </span>
+                    />
                     {isOos ? (
                       <span className="text-[9px] font-bold tracking-wide" style={{ color: "#A32D2D" }}>
                         OOS
@@ -52,7 +48,13 @@ export function RoadServiceActivePanel({ roadside, onOpen }: Props) {
                     <span>{wo.status}</span>
                     {eta ? <span>{eta}</span> : null}
                   </div>
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => onOpen(wo.id)}
+                    className="mt-1 text-[10px] font-semibold text-slate-700 hover:underline"
+                  >
+                    Open work order
+                  </button>
               </li>
             );
           })}
