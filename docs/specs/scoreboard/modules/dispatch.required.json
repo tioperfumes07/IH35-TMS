@@ -228,8 +228,7 @@
       "sub": "Hop \u2192 driver-finance settlements",
       "route_hint": "/driver-finance/settlements",
       "required": [
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -347,8 +346,7 @@
         "driver",
         "unit",
         "trailer",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -360,8 +358,7 @@
         "driver",
         "unit",
         "load",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -504,8 +501,7 @@
         "customer",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -518,7 +514,6 @@
         "trailer",
         "driver",
         "connectivity",
-        "reverse_link",
         "picker_law"
       ]
     },
@@ -630,8 +625,7 @@
       "required": [
         "driver",
         "unit",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -859,7 +853,6 @@
       "surface_path": "components/dispatch/CancelLoadModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "load",
         "driver",
         "unit",
@@ -876,7 +869,6 @@
       "surface_path": "pages/dispatch/LoadCreateModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "picker_law",
         "load",
         "driver",
@@ -894,7 +886,6 @@
       "surface_path": "pages/dispatch/LoadReassignModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "picker_law",
         "load",
         "driver",
@@ -912,7 +903,6 @@
       "surface_path": "pages/dispatch/components/BookLoadModalV4.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "picker_law",
         "load",
         "driver",
@@ -930,7 +920,6 @@
       "surface_path": "pages/dispatch/components/QuickAssignModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "driver",
         "load",
         "unit",
@@ -947,7 +936,6 @@
       "surface_path": "components/dispatch/LoadDetailDrawer.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "load",
         "driver",
         "unit",
@@ -964,7 +952,6 @@
       "surface_path": "components/dispatch/AuthGatePanel.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "driver",
         "load",
         "unit",
@@ -981,7 +968,6 @@
       "surface_path": "components/dispatch/DeadheadOptimizerPanel.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "driver",
         "load",
         "unit",
@@ -998,7 +984,6 @@
       "surface_path": "components/dispatch/LoadBolPanel.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "load",
         "driver",
         "unit",
@@ -1015,7 +1000,6 @@
       "surface_path": "components/dispatch/OptimalDriversPanel.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "driver",
         "load",
         "unit",
@@ -1032,7 +1016,6 @@
       "surface_path": "components/dispatch/PreDispatchValidationPanel.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "driver",
         "unit",
         "trailer",
@@ -1048,7 +1031,6 @@
       "surface_path": "pages/dispatch/components/book-load-v4/RateConUploadPanel.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "picker_law",
         "driver",
         "unit",
@@ -1065,7 +1047,6 @@
       "surface_path": "pages/dispatch/BorderCrossingWizardPage.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "picker_law",
         "driver",
         "load",
@@ -1083,7 +1064,6 @@
       "surface_path": "pages/dispatch/AssignDriverDropdown.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "driver",
         "load",
         "unit",
@@ -1100,7 +1080,6 @@
       "surface_path": "pages/dispatch/components/BookLoadEquipmentSection.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "picker_law",
         "load",
         "driver",
@@ -1118,7 +1097,6 @@
       "surface_path": "components/dispatch/EquipmentTransferModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "driver",
         "unit",
         "trailer"
@@ -1356,6 +1334,144 @@
         "bank"
       ],
       "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; \u00a7B9 link columns added."
+    },
+    "reverse_link_2026_08_13_queues": {
+      "finding": "VERTICAL-REVERSE-LINK-DISPATCH-QUEUES",
+      "note": "Modals/panels/wizards/parity + map/geofence/planner chrome honesty-dropped. Built: border/alerts/trip_pairing/factoring_queue/ocr/equipment_transfers/layover (+ accounting factoring redirect covered elsewhere).",
+      "drops": [
+        {
+          "id": "secondary.settlements",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "queues.live_map",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "queues.map",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "planning.templates",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "planning.unassigned",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "misc.geofence_history",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "dispatch.modal.cancel_load",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "dispatch.modal.load_create",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "dispatch.modal.load_reassign",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "dispatch.modal.book_load_modal_v4",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "dispatch.modal.quick_assign",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "dispatch.drawer.load_detail",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "dispatch.panel.auth_gate",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "dispatch.panel.deadhead_optimizer",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "dispatch.panel.load_bol",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "dispatch.panel.optimal_drivers",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "dispatch.panel.pre_dispatch_validation",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "dispatch.panel.rate_con_upload",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "dispatch.wizard.border_crossing_wizard_page",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "dispatch.parity.assign_driver_dropdown",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "dispatch.parity.book_load_equipment_section",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "dispatch.modal.equipment_transfer",
+          "removed": [
+            "reverse_link"
+          ]
+        }
+      ]
     }
   }
 }

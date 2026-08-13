@@ -60,3 +60,6 @@
 2026-08-13T21:05Z Cursor | SHIPPED VERTICAL-REVERSE-LINK-VENDORS-REMAINDER (PR#6566) | vendors reverse Gap=0 | Live=BLOCKED | NEXT=customers reverse
 2026-08-13T21:05Z Cursor | SHIPPED VERTICAL-REVERSE-LINK-VENDORS-REMAINDER (PR#6566) | vendors reverse Gap=0 | Live=BLOCKED | NEXT=customers reverse
 2026-08-13T21:08Z Cursor | shipping VERTICAL-REVERSE-LINK-CUSTOMERS-REMAINDER | detail Built + chrome honesty | Live=BLOCKED | NEXT=dispatch reverse
+2026-08-13T21:12Z Cursor | SHIPPED VERTICAL-REVERSE-LINK-CUSTOMERS-REMAINDER (PR#6567) | customers reverse Gap=0 | Live=BLOCKED | NEXT=dispatch reverse
+2026-08-13T21:12Z Cursor | SHIPPED VERTICAL-REVERSE-LINK-CUSTOMERS-REMAINDER (PR#6567) | customers reverse Gap=0 | Live=BLOCKED | NEXT=dispatch reverse
+2026-08-13T21:15Z Cursor | shipping VERTICAL-REVERSE-LINK-DISPATCH-QUEUES | queues Built + modal honesty | Live=BLOCKED | NEXT=maintenance reverse
