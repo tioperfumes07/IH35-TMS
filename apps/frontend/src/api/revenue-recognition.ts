@@ -52,6 +52,9 @@ export type RevenueContractDetail = {
   source_load_id: string | null;
   source_invoice_id: string | null;
   customer_uuid: string | null;
+  customer_name?: string | null;
+  source_invoice_display_id?: string | null;
+  source_load_number?: string | null;
   transaction_price_cents: number;
   currency_code: string;
   contract_date: string;
@@ -89,6 +92,8 @@ export type RevenueLeakageRow = {
   customer_id: string | null;
   gap: "missing_earn" | "earn_missing_bill";
   earn_journal_entry_id: string | null;
+  earn_journal_entry_memo?: string | null;
+  earn_journal_entry_date?: string | null;
   earn_amount_cents: number | null;
 };
 

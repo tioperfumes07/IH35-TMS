@@ -99,7 +99,7 @@ function DetailPanel({ detail, onClose }: { detail: RevenueContractDetail; onClo
               <EntityLink
                 kind="customer"
                 id={detail.customer_uuid}
-                label={entityLabel(null, detail.customer_uuid, "Customer")}
+                label={entityLabel(detail.customer_name ?? null, detail.customer_uuid, "Customer")}
               />
             </span>
             <span>
@@ -107,7 +107,7 @@ function DetailPanel({ detail, onClose }: { detail: RevenueContractDetail; onClo
               <EntityLink
                 kind="invoice"
                 id={detail.source_invoice_id}
-                label={entityLabel(null, detail.source_invoice_id, "Invoice")}
+                label={entityLabel(detail.source_invoice_display_id ?? null, detail.source_invoice_id, "Invoice")}
               />
             </span>
             <span>
@@ -115,7 +115,7 @@ function DetailPanel({ detail, onClose }: { detail: RevenueContractDetail; onClo
               <EntityLink
                 kind="load"
                 id={detail.source_load_id}
-                label={entityLabel(null, detail.source_load_id, "Load")}
+                label={entityLabel(detail.source_load_number ?? null, detail.source_load_id, "Load")}
               />
             </span>
           </div>
@@ -189,7 +189,11 @@ function LeakagePanel({ operatingCompanyId }: { operatingCompanyId: string }) {
             <EntityLink
               kind="journal_entry"
               id={row.earn_journal_entry_id}
-              label={entityLabel(null, row.earn_journal_entry_id, "Journal entry")}
+              label={
+                row.earn_journal_entry_date
+                  ? `${formatDateUS(row.earn_journal_entry_date)}${row.earn_journal_entry_memo ? ` — ${row.earn_journal_entry_memo}` : ""}`
+                  : entityLabel(row.earn_journal_entry_memo ?? null, row.earn_journal_entry_id, "Journal entry")
+              }
             />
           ) : (
             <span className="text-gray-400">—</span>

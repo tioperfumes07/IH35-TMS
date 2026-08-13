@@ -35,6 +35,27 @@ function assertRevenueRecognitionReverse(sources) {
   if (!/kind="customer"/.test(page) || !/detail\.customer_uuid/.test(page)) {
     errors.push(`${PAGE}: must EntityLink detail.customer_uuid`);
   }
+  // ACCT-F5069 — customer/load/invoice/JE human labels (not UUID chrome).
+  if (/entityLabel\(\s*null\s*,\s*detail\.(customer_uuid|source_invoice_id|source_load_id)/.test(page)) {
+    errors.push(`${PAGE}: must not entityLabel(null, customer/invoice/load) — use API labels`);
+  }
+  if (!/customer_name/.test(page) || !/source_invoice_display_id/.test(page) || !/source_load_number/.test(page)) {
+    errors.push(`${PAGE}: must render customer_name + source_invoice_display_id + source_load_number`);
+  }
+  if (/entityLabel\(\s*null\s*,\s*row\.earn_journal_entry_id/.test(page)) {
+    errors.push(`${PAGE}: leakage JE must not entityLabel(null, earn_journal_entry_id)`);
+  }
+  if (!/earn_journal_entry_memo/.test(page)) {
+    errors.push(`${PAGE}: leakage JE must prefer earn_journal_entry_memo/date`);
+  }
+  const routes = read("apps/backend/src/accounting/revenue-recognition.routes.ts");
+  if (!/customer_name/.test(routes) || !/LEFT JOIN mdata\.customers/.test(routes)) {
+    errors.push("revenue-recognition.routes detail must JOIN customers/invoices/loads for labels");
+  }
+  const leakage = read("apps/backend/src/accounting/revenue-leakage.service.ts");
+  if (!/earn_journal_entry_memo/.test(leakage) || !/LEFT JOIN accounting\.journal_entries je/.test(leakage)) {
+    errors.push("revenue-leakage.service must JOIN journal_entries for earn JE labels");
+  }
   if (!/source_invoice_id/.test(api) || !/source_load_id/.test(api)) {
     errors.push("revenue-recognition API types must expose source_invoice_id + source_load_id");
   }
