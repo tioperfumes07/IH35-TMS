@@ -71,3 +71,28 @@ describe("fuel/fuel-transactions.routes RANK3-FUEL-OFFICE-POST-CREATE", () => {
     expect(routes).toContain('import { flushFuelGlPostsAfterCommit } from "../accounting/fuel-posting/maybe-post-from-fuel-transaction.service.js"');
   });
 });
+
+// EXPENSE-FUEL-TRAILER-LIST-FILTER-MISSING (CC-2 finding #6337, 2026-08-12) — trailer_id has been a
+// real, populated column since rank 1 (PR #6316) and the create path already accepted it (rank 3,
+// PR #6319), but the GET list endpoint never did — mirrors #6324's accident list filter exactly.
+describe("fuel/fuel-transactions.routes EXPENSE-FUEL-TRAILER-LIST-FILTER-MISSING", () => {
+  it("GET list accepts an optional trailer_id filter", () => {
+    expect(routes).toMatch(/listFuelTransactionsQuerySchema = z\.object\(\{[\s\S]*?trailer_id: z\.string\(\)\.uuid\(\)\.optional\(\),/);
+  });
+
+  it("applies the trailer_id filter as a bound WHERE predicate", () => {
+    expect(routes).toContain("filters.push(`ft.trailer_id = $${values.length}`);");
+  });
+
+  it("joins mdata.equipment for a trailer_number display column, company-scoped like unit_id", () => {
+    expect(routes).toContain("tr.equipment_number AS trailer_number");
+    expect(routes).toContain(
+      "LEFT JOIN mdata.equipment tr ON tr.id = ft.trailer_id\n            AND (tr.owner_company_id = ft.operating_company_id OR tr.currently_leased_to_company_id = ft.operating_company_id)"
+    );
+  });
+
+  it("returns trailer_id + trailer_number on every row (drill-through parity with unit_id)", () => {
+    expect(routes).toContain("trailer_id: row.trailer_id,");
+    expect(routes).toContain("trailer_number: row.trailer_number,");
+  });
+});
