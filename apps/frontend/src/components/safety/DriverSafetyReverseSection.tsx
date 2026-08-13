@@ -15,6 +15,7 @@ import { entityLabel } from "../../lib/entity-label";
 import { DispatcherSafetyEventsReverseBlock } from "./DispatcherSafetyEventsReverseBlock";
 import { SafetyEventsReverseBlock } from "./SafetyEventsReverseBlock";
 import { listHosViolations } from "../../api/safetyV64";
+import { DriverIncidentsReverseSection } from "./DriverIncidentsReverseSection";
 
 /**
  * SAF-F16 — the REVERSE half of the driver↔safety link.
@@ -170,6 +171,7 @@ export function DriverSafetyReverseSection({
         data-testid="driver-dispatcher-safety-events-reverse"
       />
       <SafetyEventsReverseBlock companyId={operatingCompanyId} subject="driver" entityId={driverId} />
+      <DriverIncidentsReverseSection operatingCompanyId={operatingCompanyId} driverId={driverId} />
 
       <SectionShell
         title="HOS Violations"
