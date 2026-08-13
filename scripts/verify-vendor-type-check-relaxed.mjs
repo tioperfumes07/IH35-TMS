@@ -97,11 +97,13 @@ function checkBackendSchema(read) {
     problems.push(`${BACKEND_ROUTES_REL} is missing`);
     return problems;
   }
-  if (!/vendorTypeSchema\s*=\s*z\.string\(\)\.trim\(\)\.min\(1\)\.max\(100\)/.test(src)) {
+  const narrowed = /export const VENDOR_TYPE_VALUES\s*=\s*\["Fuel",\s*"Repair",\s*"Tires",\s*"Towing",\s*"Insurance",\s*"Permit",\s*"Toll",\s*"Other"\]/.test(src) &&
+    /const vendorTypeWriteSchema\s*=\s*z[\s\S]{0,500}?canonicalVendorType/.test(src);
+  const widened = /vendorTypeSchema\s*=\s*z\.string\(\)\.trim\(\)\.min\(1\)\.max\(100\)/.test(src);
+  if (!narrowed && !widened) {
     problems.push(
-      `${BACKEND_ROUTES_REL} vendorTypeSchema no longer matches z.string().trim().min(1).max(100) — ` +
-        `it must stay in lockstep with the DB CHECK this migration establishes (both sides re-narrowed ` +
-        `together, or one becomes theater relative to the other)`
+      `${BACKEND_ROUTES_REL} must either validate the live 8-value DB CHECK with case normalization, ` +
+        `or use the widened string schema when the held migration is released`
     );
   }
   const enumMatch = src.match(/vendorTypeSchema\s*=\s*z\.enum\(\s*\[[\s\S]{0,300}?\]\s*\)/);
@@ -157,7 +159,7 @@ function selftest() {
         [BACKEND_ROUTES_REL]:
           "const vendorTypeSchema = z.enum(['Fuel','Repair','Tires','Towing','Insurance','Permit','Toll','Other']);\n",
       },
-      expect: 2, // both the max(100) mismatch AND the frozen-enum hit fire
+      expect: 2,
     },
     {
       name: "migration file deleted caught",
@@ -204,7 +206,7 @@ function main() {
     for (const p of problems) console.error(`  ✗ ${p}`);
     process.exit(1);
   }
-  console.log("verify-vendor-type-check-relaxed OK — HELD migration, registry entry, and backend schema stay in lockstep");
+  console.log("verify-vendor-type-check-relaxed OK — held widening remains registered and backend rejects values the live DB CHECK rejects");
 }
 
 main();
