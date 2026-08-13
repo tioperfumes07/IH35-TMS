@@ -19,6 +19,8 @@ const finesQuerySchema = companyQuerySchema.extend({
   status: z.string().optional(),
   subject_type: z.enum(["driver", "company"]).optional(),
   subject_driver_id: z.string().uuid().optional(),
+  related_load_id: z.string().uuid().optional(),
+  related_unit_id: z.string().uuid().optional(),
   issued_date_from: z.string().optional(),
   issued_date_to: z.string().optional(),
 });
@@ -122,6 +124,14 @@ export async function registerSafetyFinesRoutes(app: FastifyInstance) {
         values.push(q.subject_driver_id);
         filters.push(`cf.subject_driver_id = $${values.length}`);
       }
+      if (q.related_load_id) {
+        values.push(q.related_load_id);
+        filters.push(`cf.related_load_id = $${values.length}`);
+      }
+      if (q.related_unit_id) {
+        values.push(q.related_unit_id);
+        filters.push(`cf.related_unit_id = $${values.length}`);
+      }
       if (q.issued_date_from) {
         values.push(q.issued_date_from);
         filters.push(`cf.issued_date >= $${values.length}::date`);
@@ -190,11 +200,19 @@ export async function registerSafetyFinesRoutes(app: FastifyInstance) {
         // list query above — see that comment for why this can't be a stored FK on civil_fines.
         `SELECT cf.*,
                 NULLIF(TRIM(COALESCE(d.first_name, '') || ' ' || COALESCE(d.last_name, '')), '') AS subject_driver_name,
+                u.unit_number AS related_unit_number,
+                l.load_number AS related_load_number,
                 cfp.expense_je_id::text AS journal_entry_id
          FROM safety.civil_fines cf
          LEFT JOIN mdata.drivers d
            ON d.id = cf.subject_driver_id
           AND d.operating_company_id = cf.operating_company_id
+         LEFT JOIN mdata.units u
+           ON u.id = cf.related_unit_id
+          AND (u.owner_company_id = cf.operating_company_id OR u.currently_leased_to_company_id = cf.operating_company_id)
+         LEFT JOIN mdata.loads l
+           ON l.id = cf.related_load_id
+          AND l.operating_company_id = cf.operating_company_id
          LEFT JOIN accounting.civil_fine_postings cfp
            ON cfp.fine_id = cf.id
           AND cfp.operating_company_id = cf.operating_company_id
@@ -208,7 +226,7 @@ export async function registerSafetyFinesRoutes(app: FastifyInstance) {
     return row;
   });
 
-  app.post("/api/v1/safety/fines", async (req, reply) => {
+  app.post("/api/v1/safety/fines", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canMutate(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -218,6 +236,30 @@ export async function registerSafetyFinesRoutes(app: FastifyInstance) {
     if (!body.success) return sendValidationError(reply, body.error);
 
     const fine = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
+      const links = await client.query<{
+        driver_ok: boolean;
+        load_ok: boolean;
+        unit_ok: boolean;
+        type_ok: boolean;
+        document_ok: boolean;
+      }>(
+        `SELECT
+           ($2::uuid IS NULL OR EXISTS (SELECT 1 FROM mdata.drivers d WHERE d.id = $2::uuid AND d.operating_company_id = $1::uuid)) AS driver_ok,
+           ($3::uuid IS NULL OR EXISTS (SELECT 1 FROM mdata.loads l WHERE l.id = $3::uuid AND l.operating_company_id = $1::uuid)) AS load_ok,
+           ($4::uuid IS NULL OR EXISTS (SELECT 1 FROM mdata.units u WHERE u.id = $4::uuid AND (u.owner_company_id = $1::uuid OR u.currently_leased_to_company_id = $1::uuid))) AS unit_ok,
+           ($5::uuid IS NULL OR EXISTS (SELECT 1 FROM catalogs.civil_fine_types cft WHERE cft.id = $5::uuid AND cft.operating_company_id = $1::uuid)) AS type_ok,
+           ($6::uuid IS NULL OR EXISTS (SELECT 1 FROM docs.files f WHERE f.id = $6::uuid AND f.operating_company_id = $1::uuid)) AS document_ok`,
+        [
+          query.data.operating_company_id,
+          body.data.subject_driver_id ?? null,
+          body.data.related_load_id ?? null,
+          body.data.related_unit_id ?? null,
+          body.data.civil_fine_type_id ?? null,
+          body.data.source_doc_id ?? null,
+        ]
+      );
+      const integrity = links.rows[0];
+      if (!integrity || Object.values(integrity).some((value) => value !== true)) return null;
       const res = await client.query(
         `
           INSERT INTO safety.civil_fines (
@@ -259,6 +301,11 @@ export async function registerSafetyFinesRoutes(app: FastifyInstance) {
             operating_company_id: query.data.operating_company_id,
             subject_type: created.subject_type,
             amount_cents: created.amount_cents,
+            subject_driver_id: created.subject_driver_id,
+            related_load_id: created.related_load_id,
+            related_unit_id: created.related_unit_id,
+            civil_fine_type_id: created.civil_fine_type_id,
+            source_doc_id: created.source_doc_id,
           },
           "info",
           "BT-3-SAFETY-GAPS-FILL"
@@ -266,6 +313,7 @@ export async function registerSafetyFinesRoutes(app: FastifyInstance) {
       }
       return created;
     });
+    if (!fine) return reply.code(400).send({ error: "related_entity_not_in_operating_company" });
     return reply.code(201).send(fine);
   });
 

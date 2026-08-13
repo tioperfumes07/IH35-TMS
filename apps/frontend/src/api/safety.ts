@@ -745,12 +745,14 @@ export function listDriverSafetyTrend(companyId: string, driverUuid: string, per
 
 export function getSafetyFines(
   companyId: string,
-  params: { status?: string; subject_type?: "driver" | "company"; subject_driver_id?: string } = {}
+  params: { status?: string; subject_type?: "driver" | "company"; subject_driver_id?: string; related_load_id?: string; related_unit_id?: string } = {}
 ) {
   const qs = new URLSearchParams({ operating_company_id: companyId });
   if (params.status) qs.set("status", params.status);
   if (params.subject_type) qs.set("subject_type", params.subject_type);
   if (params.subject_driver_id) qs.set("subject_driver_id", params.subject_driver_id);
+  if (params.related_load_id) qs.set("related_load_id", params.related_load_id);
+  if (params.related_unit_id) qs.set("related_unit_id", params.related_unit_id);
   return apiRequest<{ fines: Array<Record<string, unknown>> }>(`/api/v1/safety/fines?${qs.toString()}`);
 }
 
