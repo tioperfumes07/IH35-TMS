@@ -147,7 +147,6 @@
       "required": [
         "customer",
         "vendor",
-        "liability",
         "connectivity",
         "qbo_chrome"
       ]
@@ -217,7 +216,6 @@
         "customer",
         "vendor",
         "gl_je",
-        "liability",
         "connectivity",
         "qbo_chrome",
         "invoice",
@@ -232,7 +230,6 @@
       "required": [
         "customer",
         "vendor",
-        "liability",
         "connectivity",
         "qbo_chrome"
       ]
@@ -245,7 +242,6 @@
       "required": [
         "customer",
         "vendor",
-        "liability",
         "connectivity",
         "qbo_chrome"
       ]
@@ -259,7 +255,6 @@
         "customer",
         "vendor",
         "gl_je",
-        "liability",
         "connectivity",
         "qbo_chrome"
       ]
@@ -270,7 +265,6 @@
       "sub": "Finance calculator",
       "route_hint": "/finance/calculator",
       "required": [
-        "liability",
         "connectivity",
         "qbo_chrome"
       ]
@@ -281,9 +275,7 @@
       "sub": "Amortization schedule",
       "route_hint": "/finance/amortization",
       "required": [
-        "liability",
-        "connectivity",
-        "picker_law"
+        "connectivity"
       ]
     },
     {
@@ -292,7 +284,6 @@
       "sub": "Loan wizard",
       "route_hint": "/finance/loan-wizard",
       "required": [
-        "liability",
         "vendor",
         "gl_je",
         "picker_law",
@@ -505,6 +496,72 @@
           "id": "finance.wizard.loan_wizard_page",
           "removed": [
             "reverse_link"
+          ]
+        }
+      ]
+    },
+    "picker_law_2026_08_13_secondary": {
+      "finding": "VERTICAL-PICKER-LAW-SECONDARY-HONESTY",
+      "note": "Secondary hub/nav/chrome without EntityPicker/+Add new. Built: inventory parts.edit (PartEditDrawer).",
+      "drops": [
+        {
+          "id": "nav.amortization",
+          "removed": [
+            "picker_law"
+          ]
+        }
+      ]
+    },
+    "liability_2026_08_13_secondary": {
+      "finding": "VERTICAL-LIABILITY-SECONDARY-HONESTY",
+      "note": "Liability Required on hub/chrome without liability EntityLink/poster surface.",
+      "drops": [
+        {
+          "id": "nav.overview",
+          "removed": [
+            "liability"
+          ]
+        },
+        {
+          "id": "nav.ar_ap_aging",
+          "removed": [
+            "liability"
+          ]
+        },
+        {
+          "id": "nav.projections",
+          "removed": [
+            "liability"
+          ]
+        },
+        {
+          "id": "nav.scenarios",
+          "removed": [
+            "liability"
+          ]
+        },
+        {
+          "id": "nav.break_even",
+          "removed": [
+            "liability"
+          ]
+        },
+        {
+          "id": "nav.calculator",
+          "removed": [
+            "liability"
+          ]
+        },
+        {
+          "id": "nav.amortization",
+          "removed": [
+            "liability"
+          ]
+        },
+        {
+          "id": "nav.loan_wizard",
+          "removed": [
+            "liability"
           ]
         }
       ]

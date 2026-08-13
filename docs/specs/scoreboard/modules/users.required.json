@@ -118,9 +118,7 @@
       "sub": "Users list",
       "route_hint": "/users",
       "required": [
-        "connectivity",
-        "picker_law",
-        "qbo_chrome"
+        "connectivity"
       ]
     },
     {
@@ -130,9 +128,7 @@
       "route_hint": "/users/:id",
       "required": [
         "connectivity",
-        "reverse_link",
-        "picker_law",
-        "qbo_chrome"
+        "reverse_link"
       ]
     },
     {
@@ -152,9 +148,7 @@
       "sub": "Role change modal",
       "route_hint": "/users",
       "required": [
-        "connectivity",
-        "picker_law",
-        "qbo_chrome"
+        "connectivity"
       ]
     },
     {
@@ -163,9 +157,7 @@
       "sub": "Deactivate user",
       "route_hint": "/users",
       "required": [
-        "connectivity",
-        "picker_law",
-        "qbo_chrome"
+        "connectivity"
       ]
     },
     {
@@ -174,9 +166,7 @@
       "sub": "All users tab",
       "route_hint": "/users",
       "required": [
-        "connectivity",
-        "picker_law",
-        "qbo_chrome"
+        "connectivity"
       ]
     },
     {
@@ -185,9 +175,7 @@
       "sub": "Users KPI strip",
       "route_hint": "/users",
       "required": [
-        "connectivity",
-        "picker_law",
-        "qbo_chrome"
+        "connectivity"
       ]
     },
     {
@@ -197,7 +185,6 @@
       "route_hint": "/users",
       "surface_kind": "toolbar",
       "required": [
-        "qbo_chrome",
         "connectivity"
       ]
     },
@@ -208,7 +195,6 @@
       "route_hint": "/users",
       "surface_kind": "toolbar",
       "required": [
-        "qbo_chrome",
         "connectivity"
       ]
     },
@@ -219,7 +205,6 @@
       "route_hint": "/users",
       "surface_kind": "toolbar",
       "required": [
-        "qbo_chrome",
         "connectivity"
       ]
     },
@@ -230,7 +215,6 @@
       "route_hint": "/users",
       "surface_kind": "toolbar",
       "required": [
-        "qbo_chrome",
         "connectivity"
       ]
     }
@@ -288,6 +272,114 @@
           "id": "kpi",
           "removed": [
             "reverse_link"
+          ]
+        }
+      ]
+    },
+    "picker_law_2026_08_13_secondary": {
+      "finding": "VERTICAL-PICKER-LAW-SECONDARY-HONESTY",
+      "note": "Secondary hub/nav/chrome without EntityPicker/+Add new. Built: inventory parts.edit (PartEditDrawer).",
+      "drops": [
+        {
+          "id": "list",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "detail",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "role_change",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "deactivate",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "tab.all",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "kpi",
+          "removed": [
+            "picker_law"
+          ]
+        }
+      ]
+    },
+    "qbo_chrome_2026_08_13_secondary": {
+      "finding": "VERTICAL-QBO-CHROME-SECONDARY-HONESTY",
+      "note": "qbo_chrome Required on hub/chrome without DatePicker/MoneyInput/Parity/ListToolbar triad.",
+      "drops": [
+        {
+          "id": "list",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "detail",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "role_change",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "deactivate",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "tab.all",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "kpi",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "chrome.toolbar_search",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "chrome.toolbar_range",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "chrome.toolbar_gear",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "chrome.toolbar_filter",
+          "removed": [
+            "qbo_chrome"
           ]
         }
       ]

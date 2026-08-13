@@ -164,7 +164,6 @@
         "driver",
         "unit",
         "load",
-        "liability",
         "connectivity",
         "reverse_link"
       ]
@@ -231,7 +230,6 @@
       "route_hint": "/drivers/deductions",
       "required": [
         "driver",
-        "liability",
         "picker_law",
         "qbo_chrome",
         "connectivity",
@@ -255,7 +253,6 @@
       "route_hint": "/drivers/disputes",
       "required": [
         "driver",
-        "liability",
         "connectivity",
         "reverse_link"
       ]
@@ -387,8 +384,7 @@
       "required": [
         "connectivity",
         "reverse_link",
-        "driver",
-        "liability"
+        "driver"
       ]
     },
     {
@@ -582,6 +578,36 @@
           "id": "leave",
           "removed": [
             "picker_law"
+          ]
+        }
+      ]
+    },
+    "liability_2026_08_13_secondary": {
+      "finding": "VERTICAL-LIABILITY-SECONDARY-HONESTY",
+      "note": "Liability Required on hub/chrome without liability EntityLink/poster surface.",
+      "drops": [
+        {
+          "id": "profiles.detail",
+          "removed": [
+            "liability"
+          ]
+        },
+        {
+          "id": "deductions",
+          "removed": [
+            "liability"
+          ]
+        },
+        {
+          "id": "disputes",
+          "removed": [
+            "liability"
+          ]
+        },
+        {
+          "id": "drivers.panel.pending_settlement_deductions",
+          "removed": [
+            "liability"
           ]
         }
       ]

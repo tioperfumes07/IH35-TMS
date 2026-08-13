@@ -120,9 +120,7 @@
       "route_hint": "/425c",
       "required": [
         "gl_je",
-        "liability",
-        "connectivity",
-        "qbo_chrome"
+        "connectivity"
       ]
     },
     {
@@ -131,9 +129,7 @@
       "sub": "Company profiles tab",
       "route_hint": "/425c",
       "required": [
-        "liability",
-        "connectivity",
-        "qbo_chrome"
+        "connectivity"
       ]
     },
     {
@@ -142,9 +138,7 @@
       "sub": "QuickBooks import tab",
       "route_hint": "/425c?tab=qb",
       "required": [
-        "liability",
-        "connectivity",
-        "qbo_chrome"
+        "connectivity"
       ]
     },
     {
@@ -154,9 +148,7 @@
       "route_hint": "/425c?tab=form",
       "required": [
         "gl_je",
-        "liability",
-        "connectivity",
-        "qbo_chrome"
+        "connectivity"
       ]
     },
     {
@@ -165,9 +157,7 @@
       "sub": "Merge export tab",
       "route_hint": "/425c?tab=merge",
       "required": [
-        "liability",
-        "connectivity",
-        "qbo_chrome"
+        "connectivity"
       ]
     },
     {
@@ -177,9 +167,7 @@
       "route_hint": "/425c?tab=history",
       "required": [
         "gl_je",
-        "liability",
-        "connectivity",
-        "qbo_chrome"
+        "connectivity"
       ]
     },
     {
@@ -188,9 +176,7 @@
       "sub": "Exhibits viewer",
       "route_hint": "/425c/exhibits",
       "required": [
-        "liability",
-        "connectivity",
-        "qbo_chrome"
+        "connectivity"
       ]
     },
     {
@@ -199,8 +185,7 @@
       "sub": "/form-425c \u2192 /425c",
       "route_hint": "/form-425c",
       "required": [
-        "connectivity",
-        "qbo_chrome"
+        "connectivity"
       ]
     },
     {
@@ -209,8 +194,7 @@
       "sub": "Safety audit-425c",
       "route_hint": "/safety/audit-425c",
       "required": [
-        "connectivity",
-        "qbo_chrome"
+        "connectivity"
       ]
     },
     {
@@ -241,7 +225,6 @@
       "sub": "Factoring/Escrow excluded from main bank totals (lines 19-23)",
       "route_hint": "/425c",
       "required": [
-        "liability",
         "gl_je",
         "connectivity",
         "bank"
@@ -254,7 +237,6 @@
       "route_hint": "/425c",
       "surface_kind": "toolbar",
       "required": [
-        "qbo_chrome",
         "connectivity"
       ]
     },
@@ -265,7 +247,6 @@
       "route_hint": "/425c",
       "surface_kind": "toolbar",
       "required": [
-        "qbo_chrome",
         "connectivity"
       ]
     },
@@ -276,7 +257,6 @@
       "route_hint": "/425c",
       "surface_kind": "toolbar",
       "required": [
-        "qbo_chrome",
         "connectivity"
       ]
     },
@@ -287,7 +267,6 @@
       "route_hint": "/425c",
       "surface_kind": "toolbar",
       "required": [
-        "qbo_chrome",
         "connectivity"
       ]
     }
@@ -381,6 +360,144 @@
           "id": "law.virtual_banks_excluded",
           "removed": [
             "reverse_link"
+          ]
+        }
+      ]
+    },
+    "liability_2026_08_13_secondary": {
+      "finding": "VERTICAL-LIABILITY-SECONDARY-HONESTY",
+      "note": "Liability Required on hub/chrome without liability EntityLink/poster surface.",
+      "drops": [
+        {
+          "id": "home",
+          "removed": [
+            "liability"
+          ]
+        },
+        {
+          "id": "tab.profile",
+          "removed": [
+            "liability"
+          ]
+        },
+        {
+          "id": "tab.qb",
+          "removed": [
+            "liability"
+          ]
+        },
+        {
+          "id": "tab.form",
+          "removed": [
+            "liability"
+          ]
+        },
+        {
+          "id": "tab.merge",
+          "removed": [
+            "liability"
+          ]
+        },
+        {
+          "id": "tab.history",
+          "removed": [
+            "liability"
+          ]
+        },
+        {
+          "id": "exhibits",
+          "removed": [
+            "liability"
+          ]
+        },
+        {
+          "id": "law.virtual_banks_excluded",
+          "removed": [
+            "liability"
+          ]
+        }
+      ]
+    },
+    "qbo_chrome_2026_08_13_secondary": {
+      "finding": "VERTICAL-QBO-CHROME-SECONDARY-HONESTY",
+      "note": "qbo_chrome Required on hub/chrome without DatePicker/MoneyInput/Parity/ListToolbar triad.",
+      "drops": [
+        {
+          "id": "home",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "tab.profile",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "tab.qb",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "tab.form",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "tab.merge",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "tab.history",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "exhibits",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "redirect.form425c",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "hop.safety_audit",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "chrome.toolbar_search",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "chrome.toolbar_range",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "chrome.toolbar_gear",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "chrome.toolbar_filter",
+          "removed": [
+            "qbo_chrome"
           ]
         }
       ]

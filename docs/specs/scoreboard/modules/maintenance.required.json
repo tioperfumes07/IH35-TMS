@@ -403,7 +403,6 @@
         "vendor",
         "unit",
         "ap_bill",
-        "expense",
         "scenario.maintenance",
         "qbo_chrome",
         "connectivity",
@@ -448,7 +447,6 @@
         "vendor",
         "inventory",
         "ap_bill",
-        "expense",
         "gl_je",
         "picker_law",
         "qbo_chrome",
@@ -732,8 +730,7 @@
         "unit",
         "vendor",
         "work_order",
-        "ap_bill",
-        "expense"
+        "ap_bill"
       ]
     },
     {
@@ -749,8 +746,7 @@
         "unit",
         "vendor",
         "work_order",
-        "ap_bill",
-        "expense"
+        "ap_bill"
       ]
     },
     {
@@ -1090,6 +1086,36 @@
           "id": "fault_drafts.review",
           "removed": [
             "picker_law"
+          ]
+        }
+      ]
+    },
+    "expense_2026_08_13_secondary": {
+      "finding": "VERTICAL-EXPENSE-SECONDARY-HONESTY",
+      "note": "Expense Required on report/inventory/maint chrome without expense EntityLink create.",
+      "drops": [
+        {
+          "id": "road_service.active",
+          "removed": [
+            "expense"
+          ]
+        },
+        {
+          "id": "parts_inventory.record_purchase",
+          "removed": [
+            "expense"
+          ]
+        },
+        {
+          "id": "maintenance.modal.fault_rule",
+          "removed": [
+            "expense"
+          ]
+        },
+        {
+          "id": "maintenance.modal.create_bill",
+          "removed": [
+            "expense"
           ]
         }
       ]

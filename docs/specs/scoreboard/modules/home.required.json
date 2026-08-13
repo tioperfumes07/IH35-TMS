@@ -120,8 +120,7 @@
       "sub": "App root /",
       "route_hint": "/",
       "required": [
-        "connectivity",
-        "qbo_chrome"
+        "connectivity"
       ]
     },
     {
@@ -130,8 +129,7 @@
       "sub": "/home role router",
       "route_hint": "/home",
       "required": [
-        "connectivity",
-        "qbo_chrome"
+        "connectivity"
       ]
     },
     {
@@ -140,8 +138,7 @@
       "sub": "/home/ops role dashboards",
       "route_hint": "/home/ops",
       "required": [
-        "connectivity",
-        "qbo_chrome"
+        "connectivity"
       ]
     },
     {
@@ -151,7 +148,6 @@
       "route_hint": "/home",
       "required": [
         "connectivity",
-        "qbo_chrome",
         "load",
         "driver"
       ]
@@ -179,8 +175,7 @@
         "vendor",
         "ap_bill",
         "expense",
-        "connectivity",
-        "qbo_chrome"
+        "connectivity"
       ]
     },
     {
@@ -210,8 +205,7 @@
       "sub": "Default home",
       "route_hint": "/home",
       "required": [
-        "connectivity",
-        "qbo_chrome"
+        "connectivity"
       ]
     },
     {
@@ -220,7 +214,6 @@
       "sub": "QBO-style home",
       "route_hint": "/home",
       "required": [
-        "qbo_chrome",
         "connectivity"
       ]
     },
@@ -230,8 +223,7 @@
       "sub": "Home KPI cards + range toggle",
       "route_hint": "/home",
       "required": [
-        "connectivity",
-        "qbo_chrome"
+        "connectivity"
       ]
     },
     {
@@ -254,7 +246,6 @@
       "route_hint": "/home",
       "required": [
         "connectivity",
-        "qbo_chrome",
         "invoice"
       ]
     },
@@ -298,7 +289,6 @@
       "route_hint": "/banking",
       "required": [
         "connectivity",
-        "qbo_chrome",
         "bank"
       ]
     },
@@ -353,7 +343,6 @@
       "sub": "\u2192 Lists",
       "route_hint": "/lists",
       "required": [
-        "picker_law",
         "connectivity"
       ]
     },
@@ -384,8 +373,7 @@
       "sub": "Scenario tracker \u2192 Program",
       "route_hint": "/program",
       "required": [
-        "connectivity",
-        "qbo_chrome"
+        "connectivity"
       ]
     },
     {
@@ -396,8 +384,7 @@
       "surface_kind": "panel",
       "surface_path": "components/home/AccountingPendingApprovalsPanel.tsx",
       "required": [
-        "connectivity",
-        "qbo_chrome"
+        "connectivity"
       ]
     },
     {
@@ -408,8 +395,7 @@
       "surface_kind": "panel",
       "surface_path": "components/home/DispatcherActiveLoadsPanel.tsx",
       "required": [
-        "connectivity",
-        "qbo_chrome"
+        "connectivity"
       ]
     },
     {
@@ -420,8 +406,7 @@
       "surface_kind": "panel",
       "surface_path": "components/home/DispatcherPendingActionsPanel.tsx",
       "required": [
-        "connectivity",
-        "qbo_chrome"
+        "connectivity"
       ]
     },
     {
@@ -432,8 +417,7 @@
       "surface_kind": "panel",
       "surface_path": "components/home/DriverManagerAttentionPanel.tsx",
       "required": [
-        "connectivity",
-        "qbo_chrome"
+        "connectivity"
       ]
     },
     {
@@ -444,8 +428,7 @@
       "surface_kind": "panel",
       "surface_path": "components/home/FleetSnapshotPanel.tsx",
       "required": [
-        "connectivity",
-        "qbo_chrome"
+        "connectivity"
       ]
     },
     {
@@ -456,8 +439,7 @@
       "surface_kind": "panel",
       "surface_path": "components/home/SafetyAlertsPanel.tsx",
       "required": [
-        "connectivity",
-        "qbo_chrome"
+        "connectivity"
       ]
     },
     {
@@ -467,7 +449,6 @@
       "route_hint": "/home",
       "surface_kind": "toolbar",
       "required": [
-        "qbo_chrome",
         "connectivity"
       ]
     },
@@ -478,7 +459,6 @@
       "route_hint": "/home",
       "surface_kind": "toolbar",
       "required": [
-        "qbo_chrome",
         "connectivity"
       ]
     },
@@ -489,7 +469,6 @@
       "route_hint": "/home",
       "surface_kind": "toolbar",
       "required": [
-        "qbo_chrome",
         "connectivity"
       ]
     },
@@ -500,7 +479,6 @@
       "route_hint": "/home",
       "surface_kind": "toolbar",
       "required": [
-        "qbo_chrome",
         "connectivity"
       ]
     }
@@ -666,6 +644,150 @@
           "id": "hop.program",
           "removed": [
             "reverse_link"
+          ]
+        }
+      ]
+    },
+    "picker_law_2026_08_13_secondary": {
+      "finding": "VERTICAL-PICKER-LAW-SECONDARY-HONESTY",
+      "note": "Secondary hub/nav/chrome without EntityPicker/+Add new. Built: inventory parts.edit (PartEditDrawer).",
+      "drops": [
+        {
+          "id": "jump.lists",
+          "removed": [
+            "picker_law"
+          ]
+        }
+      ]
+    },
+    "qbo_chrome_2026_08_13_secondary": {
+      "finding": "VERTICAL-QBO-CHROME-SECONDARY-HONESTY",
+      "note": "qbo_chrome Required on hub/chrome without DatePicker/MoneyInput/Parity/ListToolbar triad.",
+      "drops": [
+        {
+          "id": "route.root",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "route.home",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "route.home_ops",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "role.owner",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "role.accountant",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "role.default",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "surface.qbo_style",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "surface.kpi_cards",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "surface.quick_actions",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "jump.banking",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "hop.program",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "home.panel.accounting_pending_approvals",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "home.panel.dispatcher_active_loads",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "home.panel.dispatcher_pending_actions",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "home.panel.driver_manager_attention",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "home.panel.fleet_snapshot",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "home.panel.safety_alerts",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "chrome.toolbar_search",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "chrome.toolbar_range",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "chrome.toolbar_gear",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "chrome.toolbar_filter",
+          "removed": [
+            "qbo_chrome"
           ]
         }
       ]

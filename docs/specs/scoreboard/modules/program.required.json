@@ -119,8 +119,7 @@
       "sub": "Program landing / scenario tracker",
       "route_hint": "/program",
       "required": [
-        "connectivity",
-        "qbo_chrome"
+        "connectivity"
       ]
     },
     {
@@ -129,8 +128,7 @@
       "sub": "Module matrix board",
       "route_hint": "/program/matrix",
       "required": [
-        "connectivity",
-        "qbo_chrome"
+        "connectivity"
       ]
     },
     {
@@ -139,8 +137,7 @@
       "sub": "Legacy audit scoreboard",
       "route_hint": "/program/legacy-scoreboard",
       "required": [
-        "connectivity",
-        "qbo_chrome"
+        "connectivity"
       ]
     },
     {
@@ -149,8 +146,7 @@
       "sub": "Program tracker / board",
       "route_hint": "/program/tracker",
       "required": [
-        "connectivity",
-        "qbo_chrome"
+        "connectivity"
       ]
     },
     {
@@ -159,8 +155,7 @@
       "sub": "Module completion N of M",
       "route_hint": "/program/modules",
       "required": [
-        "connectivity",
-        "qbo_chrome"
+        "connectivity"
       ]
     },
     {
@@ -169,8 +164,7 @@
       "sub": "Final additions page",
       "route_hint": "/program/final-additions",
       "required": [
-        "connectivity",
-        "qbo_chrome"
+        "connectivity"
       ]
     },
     {
@@ -179,8 +173,7 @@
       "sub": "Module pill switcher",
       "route_hint": "/program/matrix",
       "required": [
-        "connectivity",
-        "qbo_chrome"
+        "connectivity"
       ]
     },
     {
@@ -189,8 +182,7 @@
       "sub": "REQUEST-TIME FEED banner",
       "route_hint": "/program/matrix",
       "required": [
-        "connectivity",
-        "qbo_chrome"
+        "connectivity"
       ]
     },
     {
@@ -199,8 +191,7 @@
       "sub": "GET module-matrix API wire",
       "route_hint": "/program/matrix",
       "required": [
-        "connectivity",
-        "qbo_chrome"
+        "connectivity"
       ]
     },
     {
@@ -210,7 +201,6 @@
       "route_hint": "/program/legacy-board",
       "required": [
         "connectivity",
-        "qbo_chrome",
         "reverse_link"
       ]
     },
@@ -220,8 +210,7 @@
       "sub": "/home/scenario-tracker \u2192 /program",
       "route_hint": "/home/scenario-tracker",
       "required": [
-        "connectivity",
-        "qbo_chrome"
+        "connectivity"
       ]
     },
     {
@@ -230,8 +219,7 @@
       "sub": "AUDIT-COVERAGE-LIVE ledger",
       "route_hint": "/program",
       "required": [
-        "connectivity",
-        "qbo_chrome"
+        "connectivity"
       ]
     },
     {
@@ -253,7 +241,6 @@
       "route_hint": "/program",
       "surface_kind": "toolbar",
       "required": [
-        "qbo_chrome",
         "connectivity"
       ]
     },
@@ -264,7 +251,6 @@
       "route_hint": "/program",
       "surface_kind": "toolbar",
       "required": [
-        "qbo_chrome",
         "connectivity"
       ]
     },
@@ -275,7 +261,6 @@
       "route_hint": "/program",
       "surface_kind": "toolbar",
       "required": [
-        "qbo_chrome",
         "connectivity"
       ]
     },
@@ -286,7 +271,6 @@
       "route_hint": "/program",
       "surface_kind": "toolbar",
       "required": [
-        "qbo_chrome",
         "connectivity"
       ]
     }
@@ -374,6 +358,108 @@
           "id": "hop.audit_coverage",
           "removed": [
             "reverse_link"
+          ]
+        }
+      ]
+    },
+    "qbo_chrome_2026_08_13_secondary": {
+      "finding": "VERTICAL-QBO-CHROME-SECONDARY-HONESTY",
+      "note": "qbo_chrome Required on hub/chrome without DatePicker/MoneyInput/Parity/ListToolbar triad.",
+      "drops": [
+        {
+          "id": "nav.scenario",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "nav.matrix",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "nav.legacy",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "nav.tracker",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "nav.modules",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "nav.final",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "matrix.module_pill",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "matrix.request_time_feed",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "matrix.live_api",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "legacy.board",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "scenario.redirect",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "hop.audit_coverage",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "chrome.toolbar_search",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "chrome.toolbar_range",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "chrome.toolbar_gear",
+          "removed": [
+            "qbo_chrome"
+          ]
+        },
+        {
+          "id": "chrome.toolbar_filter",
+          "removed": [
+            "qbo_chrome"
           ]
         }
       ]
