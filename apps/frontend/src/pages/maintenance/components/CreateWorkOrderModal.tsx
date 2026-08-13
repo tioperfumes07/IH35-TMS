@@ -157,6 +157,8 @@ export type CreateWOFormValues = {
   bucket: "in_house" | "external" | "roadside";
   service_date: string;
   unit_id: string;
+  /** Trailer/reefer — maps to maintenance.work_orders.equipment_id (EntityPicker kind=trailer → mdata.equipment). */
+  equipment_id: string;
   driver_id: string;
   class_hint: string;
   repair_location: string;
@@ -301,6 +303,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
       bucket: "in_house",
       service_date: companyToday(),
       unit_id: "",
+      equipment_id: "",
       driver_id: "",
       class_hint: "",
       repair_location: "in_house",
@@ -416,6 +419,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
   const paymentTiming = form.watch("payment_timing");
   const driverId = form.watch("driver_id");
   const unitId = form.watch("unit_id");
+  const equipmentId = form.watch("equipment_id");
   const serviceDate = form.watch("service_date");
   const selectedLoad = form.watch("load_id");
   const [backendLoadError, setBackendLoadError] = useState<string | null>(null);
@@ -549,15 +553,17 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
     paymentTiming === "paid_same_day" &&
     sectionALines.some((line) => G18_EXPENSE_REGEX.test(line.description));
   const suggestionQuery = useQuery({
-    queryKey: ["maintenance", "suggest-load", operatingCompanyId, driverId, unitId, serviceDate],
+    queryKey: ["maintenance", "suggest-load", operatingCompanyId, driverId, unitId, equipmentId, serviceDate],
     queryFn: () =>
       suggestExpenseLoad({
         operating_company_id: operatingCompanyId,
         driver_id: driverId || undefined,
         unit_id: unitId || undefined,
+        // API accepts trailer_id; WO stores trailers as equipment_id (mdata.equipment).
+        trailer_id: equipmentId || undefined,
         transaction_date: serviceDate,
       }),
-    enabled: Boolean(operatingCompanyId && serviceDate && (driverId || unitId)),
+    enabled: Boolean(operatingCompanyId && serviceDate && (driverId || unitId || equipmentId)),
   });
   const vendorsQuery = useQuery({
     queryKey: ["maintenance", "vendors", operatingCompanyId, vendorSearch],
@@ -612,6 +618,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
           wo_type: values.wo_type,
           source_type: values.source_type,
           unit_id: values.unit_id,
+          equipment_id: values.equipment_id || undefined,
           driver_id: values.driver_id || undefined,
           load_id: values.load_id || undefined,
           service_date: values.service_date || undefined,
