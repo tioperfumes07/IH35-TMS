@@ -11,78 +11,41 @@ import { listActiveVendorClassifications } from "./classification-queries.js";
 import { isTestVendorFixtureName } from "./fixture-vendor-name-pattern.js";
 import { searchVendorsForAutocomplete } from "./vendor-autocomplete.shared.js";
 
-// LST-PICKER-01 (guard 1852) — vendor_type is CATALOG-BACKED (catalogs.vendor_types), per entity, with an
-// inline "+ Add new vendor type" row (VendorCreateModal / VendorDetail). It was once a frozen z.enum of
-// the 8 legacy values, which 400'd on PATCH/POST the moment an owner added a new vendor type from the
-// catalog picker, so PR #3884 widened it to a free-form `z.string().trim().min(1).max(100)`. The COLUMN is
-// `text` (0008_mdata_init.sql), so free-form looked right at the app layer — but the TABLE also carries a
-// CHECK constraint that was never widened to match, which is the defect below.
+// LST-PICKER-01 / LST-F5009 (LST-VENDOR-TYPE-CREATE-RW-MISMATCH) — vendor_type is CATALOG-BACKED
+// (catalogs.vendor_types), per entity, with inline "+ Add new vendor type". App + DB must share the same
+// 1–100 non-blank contract so a catalog-created type round-trips on POST/PATCH (R=W).
 //
-// LV-TXN-017 — the app layer and the DATABASE held different contracts, and the database won with a 500.
+// History: PR #3884 widened Zod; LV-TXN-017 temporarily re-narrowed the writer to the live 8-value CHECK
+// so lowercase 'other' stopped 500ing while 202611021200 stayed held. OWNER LAW 2026-08-03 — NO HOLDS —
+// Cursor (absorbing retired CC-1) RELEASES + APPLIES 202611021200 and restores the catalog-backed writer.
 //
-// PROD-VERIFIED 2026-08-08 on br-fancy-credit-akjnd07a (pg_constraint, RLS-immune):
-//   vendors_vendor_type_check = CHECK (vendor_type = ANY (ARRAY['Fuel','Repair','Tires','Towing',
-//   'Insurance','Permit','Toll','Other'])), convalidated = true.
-// The relax migration 202611021200 that would widen this is marked HOLD-FOR-JORGE / "DO NOT RUN ON PROD"
-// and is NOT applied, so the closed 8-value list is what production actually enforces TODAY.
-//
-// The zod above accepts ANY string up to 100 chars, so anything outside those 8 reached Postgres and
-// aborted as HTTP 500 / PG 23514 instead of a 400. The constraint is CASE-SENSITIVE, so the single most
-// likely human or import input — lowercase 'other', 'fuel', 'repair' — produced an opaque Internal Server
-// Error that named neither the field, the legal values, nor the fact that only capitalisation was wrong.
-// CC-3 proved it live on USMCA (deploy e6343f4): 'Other' -> 201, 'other' -> 500 23514, 'NotAType123' -> 500.
-//
-// WHY TIGHTENING IS SAFE HERE, measured rather than assumed: the comment above warns that a frozen enum
-// once 400'd when an owner added a vendor type via the catalogs.vendor_types picker. On prod TODAY that
-// scenario does not exist — catalogs.vendor_types holds 24 rows across the three entities with ZERO
-// distinct names outside these 8, and all 2837 mdata.vendors rows (visible == n_live_tup, so no RLS
-// masking) use 'Other'. Nothing live is rejected by this list that the DATABASE was not already rejecting
-// with a 500. A catalog type outside the 8 still cannot be saved — but it now fails as an honest 400 that
-// names the legal values instead of a 500, and the real unblock is applying that held migration.
-//
-// We also NORMALISE case, which the card recommends: 'other' now round-trips as 'Other' (201) rather than
-// 500ing on a capitalisation difference no UI ever surfaced.
-export const VENDOR_TYPE_VALUES = ["Fuel", "Repair", "Tires", "Towing", "Insurance", "Permit", "Toll", "Other"] as const;
+// DB CHECK (post-apply): vendor_type IS NOT NULL AND length(btrim(vendor_type)) > 0 AND length <= 100.
+// Legacy 8 names remain valid; any catalogs.vendor_types name also persists.
+const LEGACY_VENDOR_TYPE_CASE = new Map(
+  ["Fuel", "Repair", "Tires", "Towing", "Insurance", "Permit", "Toll", "Other"].map((v) => [
+    v.toLowerCase(),
+    v,
+  ]),
+);
 
-const VENDOR_TYPE_BY_LOWER = new Map(VENDOR_TYPE_VALUES.map((v) => [v.toLowerCase(), v]));
-
-/** Canonical form for a caller-supplied vendor type, or null when it is not one of the 8. */
-function canonicalVendorType(raw: string): string | null {
-  return VENDOR_TYPE_BY_LOWER.get(raw.trim().toLowerCase()) ?? null;
+/** Prefer legacy Title-Case when the caller used a known legacy spelling; otherwise keep trimmed catalog text. */
+function normalizeVendorType(raw: string): string {
+  const trimmed = raw.trim();
+  return LEGACY_VENDOR_TYPE_CASE.get(trimmed.toLowerCase()) ?? trimmed;
 }
 
 /**
- * WRITE paths (create/update). Rejects with a 400 naming the legal values instead of letting the DB CHECK
- * raise a 23514, and normalises case so only genuinely unknown types fail.
+ * WRITE paths — catalog R=W: any non-blank ≤100 char type (matches vendors_vendor_type_check after
+ * 202611021200). Name `vendorTypeSchema` is the LST-PICKER-01 / guard 1852 contract.
  */
-const vendorTypeWriteSchema = z
-  .string()
-  .trim()
-  .min(1)
-  .max(100)
-  .transform((v, ctx) => {
-    const canonical = canonicalVendorType(v);
-    if (!canonical) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: `vendor_type must be one of: ${VENDOR_TYPE_VALUES.join(", ")} (case-insensitive)`,
-      });
-      return z.NEVER;
-    }
-    return canonical;
-  });
+const vendorTypeSchema = z.string().trim().min(1).max(100).transform((v) => normalizeVendorType(v));
+const vendorTypeWriteSchema = vendorTypeSchema;
 
 /**
- * READ filter. Canonicalises case so `?vendor_type=other` matches the stored 'Other', but deliberately
- * does NOT reject an unknown value — a filter that matches nothing should return an empty list, not a 400.
- * Tightening a read is a behaviour change nobody asked for; the 500 this card is about is on the WRITES.
+ * READ filter. Canonicalises legacy case so `?vendor_type=other` matches stored 'Other'; unknown values
+ * pass through (empty list, not 400).
  */
-const vendorTypeFilterSchema = z
-  .string()
-  .trim()
-  .min(1)
-  .max(100)
-  .transform((v) => canonicalVendorType(v) ?? v);
+const vendorTypeFilterSchema = z.string().trim().min(1).max(100).transform((v) => normalizeVendorType(v));
 const QBO_ARCHIVE_PROJECTION_SOURCE_RE = /Projected from qbo_archive\.entities_snapshot[^\n]*/gi;
 
 // VENDOR-CUSTOMER-QBO-PARITY (migration 202607110230, HELD): the vendor row shape returned by every

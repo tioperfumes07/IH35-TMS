@@ -127,13 +127,9 @@ export const EXPECTED_HELD = [
   // mdata.qbo_vendors=2744 / accounting.qbo_vendors=2780 (Δ≈36 residual). Leaves this list only
   // after owner Neon-apply + ledger-backfill and GUARD re-proves both ledger rows.
   "202610121800_acct_econ_05_qbo_vendors_canonical_backfill.sql",
-  // LST-PICKER-01 vendor_type CHECK relax (companion to PR #3884 / guard 1852). Authored on this
-  // branch 2026-07-31; NEVER applied anywhere — unapplied by construction, not "GUARD re-proved
-  // unapplied". Live cross-check on br-fancy-credit-akjnd07a 2026-07-31 (lucia): pg_get_constraintdef
-  // for vendors_vendor_type_check is still the closed 8-value ARRAY on prod, so this migration has
-  // not run. Leaves this list only after the owner Neon-applies + ledger-backfills and GUARD re-proves
-  // the constraint definition live.
-  "202611021200_vendors_vendor_type_check_relax.sql",
+  // 202611021200 vendors_vendor_type_check_relax — left EXPECTED_HELD 2026-08-13 after Cursor
+  // Neon-apply (LST-F5009 / OWNER LAW NO HOLDS): length/btrim CHECK live on prod; dual-ledger
+  // stamped; applied_held[]. Not listed here.
   // LEASE-BRIDGE rent_expense CoA soft-bind (#3901 / guard 1880). Authored 2026-07-31; NEVER
   // Neon-applied — unapplied by construction. Soft-binds TRANSP/USMCA rent_expense role to
   // "Leased Trucks from IH35 TRUCKING"; seeds USMCA account if missing. Leaves this list only after
