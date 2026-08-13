@@ -2,7 +2,7 @@
   "module": "customers",
   "entity_default": "USMCA",
   "source": {
-    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md \u2014 Module 8 CUSTOMERS",
+    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md — Module 8 CUSTOMERS",
     "nav": "apps/frontend/src/pages/Customers.tsx list segments + CUSTOMER_TABS",
     "detail": "apps/frontend/src/pages/CustomerDetail.tsx tabs",
     "routes": "apps/frontend/src/routes/manifest.tsx /customers, /customers/:id"
@@ -167,7 +167,7 @@
     {
       "id": "list.segment.all",
       "tab": "All Customers",
-      "sub": "Segment \u00b7 All",
+      "sub": "Segment · All",
       "route_hint": "/customers?listTab=all",
       "required": [
         "customer",
@@ -177,7 +177,7 @@
     {
       "id": "list.segment.preferred",
       "tab": "By Quality Flag",
-      "sub": "Segment \u00b7 Preferred",
+      "sub": "Segment · Preferred",
       "route_hint": "/customers?listTab=preferred",
       "required": [
         "customer",
@@ -188,7 +188,7 @@
     {
       "id": "list.segment.watch",
       "tab": "By Quality Flag",
-      "sub": "Segment \u00b7 Watch",
+      "sub": "Segment · Watch",
       "route_hint": "/customers?listTab=watch",
       "required": [
         "customer",
@@ -199,7 +199,7 @@
     {
       "id": "list.segment.active",
       "tab": "All Customers",
-      "sub": "Segment \u00b7 Active",
+      "sub": "Segment · Active",
       "route_hint": "/customers?listTab=active",
       "required": [
         "customer",
@@ -209,7 +209,7 @@
     {
       "id": "list.segment.inactive",
       "tab": "All Customers",
-      "sub": "Segment \u00b7 Inactive",
+      "sub": "Segment · Inactive",
       "route_hint": "/customers?listTab=inactive",
       "required": [
         "customer",
@@ -219,7 +219,7 @@
     {
       "id": "list.segment.factored",
       "tab": "Factoring Config",
-      "sub": "Segment \u00b7 Factored",
+      "sub": "Segment · Factored",
       "route_hint": "/customers?listTab=factored",
       "required": [
         "customer",
@@ -257,7 +257,7 @@
     {
       "id": "list.filters",
       "tab": "All Customers",
-      "sub": "Roster filters (type \u00b7 credit status)",
+      "sub": "Roster filters (type · credit status)",
       "route_hint": "/customers",
       "required": [
         "customer",
@@ -456,7 +456,7 @@
     {
       "id": "detail.billing",
       "tab": "Billing & Receivables",
-      "sub": "AR aging \u00b7 invoices \u00b7 payments",
+      "sub": "AR aging · invoices · payments",
       "route_hint": "/customers/:id?tab=billing",
       "required": [
         "customer",
@@ -486,7 +486,7 @@
     {
       "id": "detail.quality",
       "tab": "Quality & History",
-      "sub": "Scoring \u00b7 quality events",
+      "sub": "Scoring · quality events",
       "route_hint": "/customers/:id?tab=quality",
       "required": [
         "customer",
@@ -672,6 +672,39 @@
         "reverse_link",
         "customer"
       ]
+    },
+    {
+      "id": "chrome.toolbar_search",
+      "tab": "Chrome controls",
+      "sub": "List toolbar — Search (CLS-LIST-TOOLBAR)",
+      "route_hint": "chrome://toolbar/search",
+      "surface_kind": "toolbar",
+      "required": [
+        "qbo_chrome",
+        "connectivity"
+      ]
+    },
+    {
+      "id": "chrome.toolbar_range",
+      "tab": "Chrome controls",
+      "sub": "List toolbar — date/amount range (CLS-LIST-TOOLBAR)",
+      "route_hint": "chrome://toolbar/range",
+      "surface_kind": "toolbar",
+      "required": [
+        "qbo_chrome",
+        "connectivity"
+      ]
+    },
+    {
+      "id": "chrome.toolbar_gear",
+      "tab": "Chrome controls",
+      "sub": "List toolbar — column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
+      "route_hint": "chrome://toolbar/gear",
+      "surface_kind": "toolbar",
+      "required": [
+        "qbo_chrome",
+        "connectivity"
+      ]
     }
   ],
   "honesty_audit": {
@@ -687,7 +720,7 @@
         "invoice",
         "bank"
       ],
-      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; \u00a7B9 link columns added."
+      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; §B9 link columns added."
     }
   }
 }

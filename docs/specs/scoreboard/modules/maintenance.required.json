@@ -2,7 +2,7 @@
   "module": "maintenance",
   "entity_default": "USMCA",
   "source": {
-    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md \u00a7Module 2 \u2014 MAINTENANCE",
+    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md §Module 2 — MAINTENANCE",
     "nav": "apps/frontend/src/components/maintenance/MAINTENANCE_NAV_CONFIG.ts",
     "home_tabs": "apps/frontend/src/pages/maintenance/MaintenanceHome.tsx SUBNAV",
     "routes": "apps/frontend/src/routes/manifest.tsx /maintenance/*"
@@ -156,7 +156,7 @@
     {
       "id": "wo.source.is",
       "tab": "Work Orders",
-      "sub": "IS \u2014 Internal shop",
+      "sub": "IS — Internal shop",
       "route_hint": "/maintenance",
       "required": [
         "driver",
@@ -176,7 +176,7 @@
     {
       "id": "wo.source.es",
       "tab": "Work Orders",
-      "sub": "ES \u2014 External shop",
+      "sub": "ES — External shop",
       "route_hint": "/maintenance",
       "required": [
         "driver",
@@ -195,7 +195,7 @@
     {
       "id": "wo.source.ac",
       "tab": "Work Orders",
-      "sub": "AC \u2014 Accident repair",
+      "sub": "AC — Accident repair",
       "route_hint": "/maintenance",
       "required": [
         "driver",
@@ -220,7 +220,7 @@
     {
       "id": "wo.source.et",
       "tab": "Work Orders",
-      "sub": "ET \u2014 External tires",
+      "sub": "ET — External tires",
       "route_hint": "/maintenance",
       "required": [
         "driver",
@@ -240,7 +240,7 @@
     {
       "id": "wo.source.rt",
       "tab": "Work Orders",
-      "sub": "RT \u2014 Roadside tires",
+      "sub": "RT — Roadside tires",
       "route_hint": "/maintenance",
       "required": [
         "driver",
@@ -261,7 +261,7 @@
     {
       "id": "wo.source.it",
       "tab": "Work Orders",
-      "sub": "IT \u2014 Internal tires",
+      "sub": "IT — Internal tires",
       "route_hint": "/maintenance",
       "required": [
         "driver",
@@ -281,7 +281,7 @@
     {
       "id": "wo.source.rs",
       "tab": "Work Orders",
-      "sub": "RS \u2014 Roadside service",
+      "sub": "RS — Roadside service",
       "route_hint": "/maintenance/road-service",
       "required": [
         "driver",
@@ -809,6 +809,39 @@
         "ap_bill",
         "expense"
       ]
+    },
+    {
+      "id": "chrome.toolbar_search",
+      "tab": "Chrome controls",
+      "sub": "List toolbar — Search (CLS-LIST-TOOLBAR)",
+      "route_hint": "chrome://toolbar/search",
+      "surface_kind": "toolbar",
+      "required": [
+        "qbo_chrome",
+        "connectivity"
+      ]
+    },
+    {
+      "id": "chrome.toolbar_range",
+      "tab": "Chrome controls",
+      "sub": "List toolbar — date/amount range (CLS-LIST-TOOLBAR)",
+      "route_hint": "chrome://toolbar/range",
+      "surface_kind": "toolbar",
+      "required": [
+        "qbo_chrome",
+        "connectivity"
+      ]
+    },
+    {
+      "id": "chrome.toolbar_gear",
+      "tab": "Chrome controls",
+      "sub": "List toolbar — column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
+      "route_hint": "chrome://toolbar/gear",
+      "surface_kind": "toolbar",
+      "required": [
+        "qbo_chrome",
+        "connectivity"
+      ]
     }
   ],
   "honesty_audit": {
@@ -824,7 +857,7 @@
         "invoice",
         "bank"
       ],
-      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; \u00a7B9 link columns added."
+      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; §B9 link columns added."
     }
   }
 }

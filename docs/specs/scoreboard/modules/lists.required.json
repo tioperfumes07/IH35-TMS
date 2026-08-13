@@ -2,7 +2,7 @@
   "module": "lists",
   "entity_default": "USMCA",
   "source": {
-    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md \u2014 Module 12 LISTS / CATALOGS",
+    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md — Module 12 LISTS / CATALOGS",
     "hub": "apps/frontend/src/pages/lists/components/AllCatalogsMap.tsx DOMAIN_CONFIG",
     "hub_page": "apps/frontend/src/pages/lists/ListsHubPage.tsx",
     "routes": "apps/frontend/src/routes/manifest.tsx /lists/*",
@@ -285,7 +285,7 @@
     {
       "id": "catalog.safety.accident_types.create",
       "tab": "Safety",
-      "sub": "+ Create \u2014 Accident Types",
+      "sub": "+ Create — Accident Types",
       "route_hint": "/lists/safety/accident-types",
       "required": [
         "driver",
@@ -319,7 +319,7 @@
     {
       "id": "catalog.safety.workplace_incident_types.create",
       "tab": "Safety",
-      "sub": "+ Create \u2014 Accident Types",
+      "sub": "+ Create — Accident Types",
       "route_hint": "/lists/safety/workplace-incident-types",
       "required": [
         "driver",
@@ -353,7 +353,7 @@
     {
       "id": "catalog.safety.internal_fine_reasons.create",
       "tab": "Safety",
-      "sub": "+ Create \u2014 Accident Types",
+      "sub": "+ Create — Accident Types",
       "route_hint": "/lists/safety/internal-fine-reasons",
       "required": [
         "driver",
@@ -387,7 +387,7 @@
     {
       "id": "catalog.safety.civil_fine_types.create",
       "tab": "Safety",
-      "sub": "+ Create \u2014 Accident Types",
+      "sub": "+ Create — Accident Types",
       "route_hint": "/lists/safety/civil-fine-types",
       "required": [
         "driver",
@@ -419,7 +419,7 @@
     {
       "id": "catalog.safety.company_violation_types.create",
       "tab": "Safety",
-      "sub": "+ Create \u2014 Workplace Incident Types",
+      "sub": "+ Create — Workplace Incident Types",
       "route_hint": "/lists/safety/company-violation-types",
       "required": [
         "driver",
@@ -449,7 +449,7 @@
     {
       "id": "catalog.safety.complaint_types.create",
       "tab": "Safety",
-      "sub": "+ Create \u2014 Internal Fine Reasons",
+      "sub": "+ Create — Internal Fine Reasons",
       "route_hint": "/lists/safety/complaint-types",
       "required": [
         "driver",
@@ -479,7 +479,7 @@
     {
       "id": "catalog.safety.dot_violation_types.create",
       "tab": "Safety",
-      "sub": "+ Create \u2014 Civil Fine Types",
+      "sub": "+ Create — Civil Fine Types",
       "route_hint": "/lists/safety/dot-violation-types",
       "required": [
         "driver",
@@ -511,7 +511,7 @@
     {
       "id": "catalog.safety.cargo_claim_reasons.create",
       "tab": "Safety",
-      "sub": "+ Create \u2014 Company Violation Types",
+      "sub": "+ Create — Company Violation Types",
       "route_hint": "/lists/safety/cargo-claim-reasons",
       "required": [
         "driver",
@@ -543,7 +543,7 @@
     {
       "id": "catalog.dispatch.dispatch_flag_colors.create",
       "tab": "Dispatch",
-      "sub": "+ Create \u2014 Dispatch Flag Colors",
+      "sub": "+ Create — Dispatch Flag Colors",
       "route_hint": "/lists/dispatch/dispatch-flag-colors",
       "required": [
         "load",
@@ -573,7 +573,7 @@
     {
       "id": "catalog.dispatch.load_trailer_equipment.create",
       "tab": "Dispatch",
-      "sub": "+ Create \u2014 Dispatch Flag Colors",
+      "sub": "+ Create — Dispatch Flag Colors",
       "route_hint": "/lists/dispatch/load-trailer-equipment",
       "required": [
         "load",
@@ -603,7 +603,7 @@
     {
       "id": "catalog.dispatch.load_types.create",
       "tab": "Dispatch",
-      "sub": "+ Create \u2014 Dispatch Flag Colors",
+      "sub": "+ Create — Dispatch Flag Colors",
       "route_hint": "/lists/dispatch/load-types",
       "required": [
         "load",
@@ -633,7 +633,7 @@
     {
       "id": "catalog.dispatch.detention_reasons.create",
       "tab": "Dispatch",
-      "sub": "+ Create \u2014 Dispatch Flag Colors",
+      "sub": "+ Create — Dispatch Flag Colors",
       "route_hint": "/lists/dispatch/detention-reasons",
       "required": [
         "load",
@@ -663,7 +663,7 @@
     {
       "id": "catalog.dispatch.pickup_time_types.create",
       "tab": "Dispatch",
-      "sub": "+ Create \u2014 Load Trailer Equipment",
+      "sub": "+ Create — Load Trailer Equipment",
       "route_hint": "/lists/dispatch/pickup-time-types",
       "required": [
         "load",
@@ -693,7 +693,7 @@
     {
       "id": "catalog.dispatch.additional_charges.create",
       "tab": "Dispatch",
-      "sub": "+ Create \u2014 Load Types",
+      "sub": "+ Create — Load Types",
       "route_hint": "/lists/dispatch/additional-charges",
       "required": [
         "load",
@@ -723,7 +723,7 @@
     {
       "id": "catalog.dispatch.load_cancellation_reasons.create",
       "tab": "Dispatch",
-      "sub": "+ Create \u2014 Detention Reasons",
+      "sub": "+ Create — Detention Reasons",
       "route_hint": "/lists/dispatch/load-cancellation-reasons",
       "required": [
         "load",
@@ -753,7 +753,7 @@
     {
       "id": "catalog.dispatch.dispatcher_error_reasons.create",
       "tab": "Dispatch",
-      "sub": "+ Create \u2014 Load Cancellation Reasons",
+      "sub": "+ Create — Load Cancellation Reasons",
       "route_hint": "/lists/dispatch/dispatcher-error-reasons",
       "required": [
         "load",
@@ -783,7 +783,7 @@
     {
       "id": "catalog.dispatch.lumper_providers.create",
       "tab": "Dispatch",
-      "sub": "+ Create \u2014 Dispatcher Error Reasons",
+      "sub": "+ Create — Dispatcher Error Reasons",
       "route_hint": "/lists/dispatch/lumper-providers",
       "required": [
         "load",
@@ -812,7 +812,7 @@
     {
       "id": "catalog.drivers.termination_reasons.create",
       "tab": "Drivers",
-      "sub": "+ Create \u2014 Termination Reasons",
+      "sub": "+ Create — Termination Reasons",
       "route_hint": "/lists/drivers/termination-reasons",
       "required": [
         "driver",
@@ -840,7 +840,7 @@
     {
       "id": "catalog.drivers.cash_advance_types.create",
       "tab": "Drivers",
-      "sub": "+ Create \u2014 Termination Reasons",
+      "sub": "+ Create — Termination Reasons",
       "route_hint": "/lists/driver/cash-advance-types",
       "required": [
         "driver",
@@ -868,7 +868,7 @@
     {
       "id": "catalog.drivers.endorsements.create",
       "tab": "Drivers",
-      "sub": "+ Create \u2014 Termination Reasons",
+      "sub": "+ Create — Termination Reasons",
       "route_hint": "/lists/drivers/endorsements",
       "required": [
         "driver",
@@ -896,7 +896,7 @@
     {
       "id": "catalog.drivers.restrictions.create",
       "tab": "Drivers",
-      "sub": "+ Create \u2014 Termination Reasons",
+      "sub": "+ Create — Termination Reasons",
       "route_hint": "/lists/drivers/restrictions",
       "required": [
         "driver",
@@ -924,7 +924,7 @@
     {
       "id": "catalog.drivers.employment_status.create",
       "tab": "Drivers",
-      "sub": "+ Create \u2014 Cash Advance Types",
+      "sub": "+ Create — Cash Advance Types",
       "route_hint": "/lists/drivers/employment-status",
       "required": [
         "driver",
@@ -952,7 +952,7 @@
     {
       "id": "catalog.drivers.leave_types.create",
       "tab": "Drivers",
-      "sub": "+ Create \u2014 CDL Endorsements",
+      "sub": "+ Create — CDL Endorsements",
       "route_hint": "/lists/driver/leave-types",
       "required": [
         "driver",
@@ -980,7 +980,7 @@
     {
       "id": "catalog.drivers.medical_card_status.create",
       "tab": "Drivers",
-      "sub": "+ Create \u2014 CDL Restrictions",
+      "sub": "+ Create — CDL Restrictions",
       "route_hint": "/lists/drivers/medical-card-status",
       "required": [
         "driver",
@@ -1008,7 +1008,7 @@
     {
       "id": "catalog.drivers.pay_rate_templates.create",
       "tab": "Drivers",
-      "sub": "+ Create \u2014 Employment Statuses",
+      "sub": "+ Create — Employment Statuses",
       "route_hint": "/lists/driver/pay-rate-templates",
       "required": [
         "driver",
@@ -1036,7 +1036,7 @@
     {
       "id": "catalog.drivers.deduction_types.create",
       "tab": "Drivers",
-      "sub": "+ Create \u2014 Leave Types",
+      "sub": "+ Create — Leave Types",
       "route_hint": "/lists/driver/deduction-types",
       "required": [
         "driver",
@@ -1064,7 +1064,7 @@
     {
       "id": "catalog.drivers.pay_types.create",
       "tab": "Drivers",
-      "sub": "+ Create \u2014 Medical Card Statuses",
+      "sub": "+ Create — Medical Card Statuses",
       "route_hint": "/lists/driver/pay-types",
       "required": [
         "driver",
@@ -1092,7 +1092,7 @@
     {
       "id": "catalog.drivers.escrow_types.create",
       "tab": "Drivers",
-      "sub": "+ Create \u2014 Pay Rate Templates",
+      "sub": "+ Create — Pay Rate Templates",
       "route_hint": "/lists/driver/escrow-types",
       "required": [
         "driver",
@@ -1120,7 +1120,7 @@
     {
       "id": "catalog.drivers.license_classes.create",
       "tab": "Drivers",
-      "sub": "+ Create \u2014 Driver Deduction Types",
+      "sub": "+ Create — Driver Deduction Types",
       "route_hint": "/lists/drivers/license-classes",
       "required": [
         "driver",
@@ -1148,7 +1148,7 @@
     {
       "id": "catalog.drivers.driver_load_statuses.create",
       "tab": "Drivers",
-      "sub": "+ Create \u2014 Medical Card Status",
+      "sub": "+ Create — Medical Card Status",
       "route_hint": "/lists/drivers/driver-load-statuses",
       "required": [
         "driver",
@@ -1176,7 +1176,7 @@
     {
       "id": "catalog.drivers.teams.create",
       "tab": "Drivers",
-      "sub": "+ Create \u2014 Termination Reasons",
+      "sub": "+ Create — Termination Reasons",
       "route_hint": "/lists/driver/teams",
       "required": [
         "driver",
@@ -1205,7 +1205,7 @@
     {
       "id": "catalog.maintenance.labor_rates.create",
       "tab": "Maintenance",
-      "sub": "+ Create \u2014 Labor Rates",
+      "sub": "+ Create — Labor Rates",
       "route_hint": "/lists/maintenance/labor-rates",
       "required": [
         "unit",
@@ -1235,7 +1235,7 @@
     {
       "id": "catalog.maintenance.part_locations.create",
       "tab": "Maintenance",
-      "sub": "+ Create \u2014 Labor Rates",
+      "sub": "+ Create — Labor Rates",
       "route_hint": "/lists/maintenance/part-locations",
       "required": [
         "unit",
@@ -1265,7 +1265,7 @@
     {
       "id": "catalog.maintenance.air_bag_catalog.create",
       "tab": "Maintenance",
-      "sub": "+ Create \u2014 Labor Rates",
+      "sub": "+ Create — Labor Rates",
       "route_hint": "/lists/maintenance/air-bag-catalog",
       "required": [
         "unit",
@@ -1295,7 +1295,7 @@
     {
       "id": "catalog.maintenance.battery_catalog.create",
       "tab": "Maintenance",
-      "sub": "+ Create \u2014 Labor Rates",
+      "sub": "+ Create — Labor Rates",
       "route_hint": "/lists/maintenance/battery-catalog",
       "required": [
         "unit",
@@ -1325,7 +1325,7 @@
     {
       "id": "catalog.maintenance.pm_intervals.create",
       "tab": "Maintenance",
-      "sub": "+ Create \u2014 Part Locations",
+      "sub": "+ Create — Part Locations",
       "route_hint": "/lists/maintenance/pm-intervals",
       "required": [
         "unit",
@@ -1355,7 +1355,7 @@
     {
       "id": "catalog.maintenance.repair_locations.create",
       "tab": "Maintenance",
-      "sub": "+ Create \u2014 Air Bag Catalog",
+      "sub": "+ Create — Air Bag Catalog",
       "route_hint": "/lists/maintenance/repair-locations",
       "required": [
         "unit",
@@ -1385,7 +1385,7 @@
     {
       "id": "catalog.maintenance.tire_catalog.create",
       "tab": "Maintenance",
-      "sub": "+ Create \u2014 Battery Catalog",
+      "sub": "+ Create — Battery Catalog",
       "route_hint": "/lists/maintenance/tire-catalog",
       "required": [
         "unit",
@@ -1415,7 +1415,7 @@
     {
       "id": "catalog.maintenance.trailer_parts.create",
       "tab": "Maintenance",
-      "sub": "+ Create \u2014 PM Intervals",
+      "sub": "+ Create — PM Intervals",
       "route_hint": "/lists/maintenance/trailer-parts",
       "required": [
         "unit",
@@ -1445,7 +1445,7 @@
     {
       "id": "catalog.maintenance.truck_parts.create",
       "tab": "Maintenance",
-      "sub": "+ Create \u2014 Repair Locations",
+      "sub": "+ Create — Repair Locations",
       "route_hint": "/lists/maintenance/truck-parts",
       "required": [
         "unit",
@@ -1475,7 +1475,7 @@
     {
       "id": "catalog.maintenance.work_order_templates.create",
       "tab": "Maintenance",
-      "sub": "+ Create \u2014 Tire Catalog",
+      "sub": "+ Create — Tire Catalog",
       "route_hint": "/lists/maintenance/work-order-templates",
       "required": [
         "unit",
@@ -1505,7 +1505,7 @@
     {
       "id": "catalog.maintenance.failure_codes.create",
       "tab": "Maintenance",
-      "sub": "+ Create \u2014 Trailer Parts",
+      "sub": "+ Create — Trailer Parts",
       "route_hint": "/lists/maintenance/failure-codes",
       "required": [
         "unit",
@@ -1535,7 +1535,7 @@
     {
       "id": "catalog.maintenance.labor_codes.create",
       "tab": "Maintenance",
-      "sub": "+ Create \u2014 Truck Parts",
+      "sub": "+ Create — Truck Parts",
       "route_hint": "/lists/maintenance/labor-codes",
       "required": [
         "unit",
@@ -1565,7 +1565,7 @@
     {
       "id": "catalog.maintenance.parts.create",
       "tab": "Maintenance",
-      "sub": "+ Create \u2014 Work Order Templates",
+      "sub": "+ Create — Work Order Templates",
       "route_hint": "/lists/maintenance/parts",
       "required": [
         "unit",
@@ -1595,7 +1595,7 @@
     {
       "id": "catalog.maintenance.parts_catalog.create",
       "tab": "Maintenance",
-      "sub": "+ Create \u2014 Maintenance Parts",
+      "sub": "+ Create — Maintenance Parts",
       "route_hint": "/lists/maintenance/parts-catalog",
       "required": [
         "unit",
@@ -1625,7 +1625,7 @@
     {
       "id": "catalog.maintenance.oem_parts_reference.create",
       "tab": "Maintenance",
-      "sub": "+ Create \u2014 Parts Catalog",
+      "sub": "+ Create — Parts Catalog",
       "route_hint": "/lists/maintenance/oem-parts-reference",
       "required": [
         "unit",
@@ -1655,7 +1655,7 @@
     {
       "id": "catalog.maintenance.priority_levels.create",
       "tab": "Maintenance",
-      "sub": "+ Create \u2014 Parts Catalog",
+      "sub": "+ Create — Parts Catalog",
       "route_hint": "/lists/maintenance/priority-levels",
       "required": [
         "unit",
@@ -1685,7 +1685,7 @@
     {
       "id": "catalog.maintenance.service_tasks.create",
       "tab": "Maintenance",
-      "sub": "+ Create \u2014 Parts Catalog",
+      "sub": "+ Create — Parts Catalog",
       "route_hint": "/lists/maintenance/service-tasks",
       "required": [
         "unit",
@@ -1715,7 +1715,7 @@
     {
       "id": "catalog.maintenance.services_catalog.create",
       "tab": "Maintenance",
-      "sub": "+ Create \u2014 OEM Parts Reference",
+      "sub": "+ Create — OEM Parts Reference",
       "route_hint": "/lists/maintenance/services-catalog",
       "required": [
         "unit",
@@ -1745,7 +1745,7 @@
     {
       "id": "catalog.maintenance.shop_locations.create",
       "tab": "Maintenance",
-      "sub": "+ Create \u2014 Maintenance Priority Levels",
+      "sub": "+ Create — Maintenance Priority Levels",
       "route_hint": "/lists/maintenance/shop-locations",
       "required": [
         "unit",
@@ -1775,7 +1775,7 @@
     {
       "id": "catalog.maintenance.vendors.create",
       "tab": "Maintenance",
-      "sub": "+ Create \u2014 Maintenance Service Tasks",
+      "sub": "+ Create — Maintenance Service Tasks",
       "route_hint": "/lists/maintenance/vendors",
       "required": [
         "unit",
@@ -1805,7 +1805,7 @@
     {
       "id": "catalog.maintenance.work_order_statuses.create",
       "tab": "Maintenance",
-      "sub": "+ Create \u2014 Maintenance Services Catalog",
+      "sub": "+ Create — Maintenance Services Catalog",
       "route_hint": "/lists/maintenance/work-order-statuses",
       "required": [
         "unit",
@@ -1836,7 +1836,7 @@
     {
       "id": "catalog.fuel.def_stations.create",
       "tab": "Fuel",
-      "sub": "+ Create \u2014 DEF Stations",
+      "sub": "+ Create — DEF Stations",
       "route_hint": "/lists/fuel/def-stations",
       "required": [
         "driver",
@@ -1868,7 +1868,7 @@
     {
       "id": "catalog.fuel.fuel_stations.create",
       "tab": "Fuel",
-      "sub": "+ Create \u2014 DEF Stations",
+      "sub": "+ Create — DEF Stations",
       "route_hint": "/lists/fuel/fuel-stations",
       "required": [
         "driver",
@@ -1900,7 +1900,7 @@
     {
       "id": "catalog.fuel.relay_accounts.create",
       "tab": "Fuel",
-      "sub": "+ Create \u2014 DEF Stations",
+      "sub": "+ Create — DEF Stations",
       "route_hint": "/lists/fuel/relay-accounts",
       "required": [
         "driver",
@@ -1932,7 +1932,7 @@
     {
       "id": "catalog.fuel.toll_providers.create",
       "tab": "Fuel",
-      "sub": "+ Create \u2014 DEF Stations",
+      "sub": "+ Create — DEF Stations",
       "route_hint": "/lists/fuel/toll-providers",
       "required": [
         "driver",
@@ -1964,7 +1964,7 @@
     {
       "id": "catalog.fuel.card_types.create",
       "tab": "Fuel",
-      "sub": "+ Create \u2014 Fuel Stations",
+      "sub": "+ Create — Fuel Stations",
       "route_hint": "/lists/fuel/card-types",
       "required": [
         "driver",
@@ -1996,7 +1996,7 @@
     {
       "id": "catalog.fuel.exception_types.create",
       "tab": "Fuel",
-      "sub": "+ Create \u2014 Relay Accounts",
+      "sub": "+ Create — Relay Accounts",
       "route_hint": "/lists/fuel/exception-types",
       "required": [
         "driver",
@@ -2028,7 +2028,7 @@
     {
       "id": "catalog.fuel.station_brands.create",
       "tab": "Fuel",
-      "sub": "+ Create \u2014 Toll Providers",
+      "sub": "+ Create — Toll Providers",
       "route_hint": "/lists/fuel/station-brands",
       "required": [
         "driver",
@@ -2060,7 +2060,7 @@
     {
       "id": "catalog.fuel.stop_reason_codes.create",
       "tab": "Fuel",
-      "sub": "+ Create \u2014 Fuel Card Types",
+      "sub": "+ Create — Fuel Card Types",
       "route_hint": "/lists/fuel/stop-reason-codes",
       "required": [
         "driver",
@@ -2092,7 +2092,7 @@
     {
       "id": "catalog.fuel.mpg_bands.create",
       "tab": "Fuel",
-      "sub": "+ Create \u2014 Fuel Exception Types",
+      "sub": "+ Create — Fuel Exception Types",
       "route_hint": "/lists/fuel/mpg-bands",
       "required": [
         "driver",
@@ -2124,7 +2124,7 @@
     {
       "id": "catalog.fuel.expensive_states.create",
       "tab": "Fuel",
-      "sub": "+ Create \u2014 Fuel Station Brands",
+      "sub": "+ Create — Fuel Station Brands",
       "route_hint": "/lists/fuel/expensive-states",
       "required": [
         "driver",
@@ -2156,7 +2156,7 @@
     {
       "id": "catalog.fuel.tax_jurisdictions.create",
       "tab": "Fuel",
-      "sub": "+ Create \u2014 Fuel Stop Reason Codes",
+      "sub": "+ Create — Fuel Stop Reason Codes",
       "route_hint": "/lists/fuel/tax-jurisdictions",
       "required": [
         "driver",
@@ -2188,7 +2188,7 @@
     {
       "id": "catalog.fuel.brands.create",
       "tab": "Fuel",
-      "sub": "+ Create \u2014 MPG Bands",
+      "sub": "+ Create — MPG Bands",
       "route_hint": "/lists/fuel/brands",
       "required": [
         "driver",
@@ -2220,7 +2220,7 @@
     {
       "id": "catalog.fuel.station_states.create",
       "tab": "Fuel",
-      "sub": "+ Create \u2014 Expensive States",
+      "sub": "+ Create — Expensive States",
       "route_hint": "/lists/fuel/station-states",
       "required": [
         "driver",
@@ -2252,7 +2252,7 @@
     {
       "id": "catalog.fuel.pump_types.create",
       "tab": "Fuel",
-      "sub": "+ Create \u2014 Fuel Tax Jurisdictions",
+      "sub": "+ Create — Fuel Tax Jurisdictions",
       "route_hint": "/lists/fuel/pump-types",
       "required": [
         "driver",
@@ -2284,7 +2284,7 @@
     {
       "id": "catalog.fuel.grades.create",
       "tab": "Fuel",
-      "sub": "+ Create \u2014 Fuel Brands",
+      "sub": "+ Create — Fuel Brands",
       "route_hint": "/lists/fuel/grades",
       "required": [
         "driver",
@@ -2316,7 +2316,7 @@
     {
       "id": "catalog.fuel.dispatch_routes.create",
       "tab": "Fuel",
-      "sub": "+ Create \u2014 Fuel Station States",
+      "sub": "+ Create — Fuel Station States",
       "route_hint": "/lists/fuel/dispatch-routes",
       "required": [
         "driver",
@@ -2346,7 +2346,7 @@
     {
       "id": "catalog.fleet.tractor_statuses.create",
       "tab": "Fleet",
-      "sub": "+ Create \u2014 Tractor Statuses",
+      "sub": "+ Create — Tractor Statuses",
       "route_hint": "/lists/fleet/tractor-statuses",
       "required": [
         "unit",
@@ -2374,7 +2374,7 @@
     {
       "id": "catalog.fleet.trailer_statuses.create",
       "tab": "Fleet",
-      "sub": "+ Create \u2014 Tractor Statuses",
+      "sub": "+ Create — Tractor Statuses",
       "route_hint": "/lists/fleet/trailer-statuses",
       "required": [
         "unit",
@@ -2402,7 +2402,7 @@
     {
       "id": "catalog.fleet.condition_codes.create",
       "tab": "Fleet",
-      "sub": "+ Create \u2014 Tractor Statuses",
+      "sub": "+ Create — Tractor Statuses",
       "route_hint": "/lists/fleet/condition-codes",
       "required": [
         "unit",
@@ -2430,7 +2430,7 @@
     {
       "id": "catalog.fleet.equipment_types.create",
       "tab": "Fleet",
-      "sub": "+ Create \u2014 Tractor Statuses",
+      "sub": "+ Create — Tractor Statuses",
       "route_hint": "/lists/fleet/equipment-types",
       "required": [
         "unit",
@@ -2458,7 +2458,7 @@
     {
       "id": "catalog.fleet.tire_positions.create",
       "tab": "Fleet",
-      "sub": "+ Create \u2014 Trailer Statuses",
+      "sub": "+ Create — Trailer Statuses",
       "route_hint": "/lists/fleet/tire-positions",
       "required": [
         "unit",
@@ -2486,7 +2486,7 @@
     {
       "id": "catalog.fleet.ownership_types.create",
       "tab": "Fleet",
-      "sub": "+ Create \u2014 Condition Codes",
+      "sub": "+ Create — Condition Codes",
       "route_hint": "/lists/fleet/ownership-types",
       "required": [
         "unit",
@@ -2514,7 +2514,7 @@
     {
       "id": "catalog.fleet.trailer_types.create",
       "tab": "Fleet",
-      "sub": "+ Create \u2014 Equipment Types",
+      "sub": "+ Create — Equipment Types",
       "route_hint": "/lists/fleet/trailer-types",
       "required": [
         "unit",
@@ -2542,7 +2542,7 @@
     {
       "id": "catalog.fleet.lease_terms.create",
       "tab": "Fleet",
-      "sub": "+ Create \u2014 Tire Positions",
+      "sub": "+ Create — Tire Positions",
       "route_hint": "/lists/fleet/lease-terms",
       "required": [
         "unit",
@@ -2570,7 +2570,7 @@
     {
       "id": "catalog.fleet.asset_statuses.create",
       "tab": "Fleet",
-      "sub": "+ Create \u2014 Ownership Types",
+      "sub": "+ Create — Ownership Types",
       "route_hint": "/lists/fleet/asset-statuses",
       "required": [
         "unit",
@@ -2598,7 +2598,7 @@
     {
       "id": "catalog.fleet.asset_locations.create",
       "tab": "Fleet",
-      "sub": "+ Create \u2014 Trailer Types",
+      "sub": "+ Create — Trailer Types",
       "route_hint": "/lists/fleet/asset-locations",
       "required": [
         "unit",
@@ -2626,7 +2626,7 @@
     {
       "id": "catalog.accounting.account_types_lookup.create",
       "tab": "Accounting",
-      "sub": "+ Create \u2014 Account Types",
+      "sub": "+ Create — Account Types",
       "route_hint": "/lists/accounting/account-types-lookup",
       "required": [
         "customer",
@@ -2654,7 +2654,7 @@
     {
       "id": "catalog.accounting.detail_types_lookup.create",
       "tab": "Accounting",
-      "sub": "+ Create \u2014 Account Types",
+      "sub": "+ Create — Account Types",
       "route_hint": "/lists/accounting/detail-types-lookup",
       "required": [
         "customer",
@@ -2682,7 +2682,7 @@
     {
       "id": "catalog.accounting.audit_event_types.create",
       "tab": "Accounting",
-      "sub": "+ Create \u2014 Account Types",
+      "sub": "+ Create — Account Types",
       "route_hint": "/lists/accounting/audit-event-types",
       "required": [
         "customer",
@@ -2710,7 +2710,7 @@
     {
       "id": "catalog.accounting.chart_of_accounts.create",
       "tab": "Accounting",
-      "sub": "+ Create \u2014 Account Types",
+      "sub": "+ Create — Account Types",
       "route_hint": "/lists/accounting/chart-of-accounts",
       "required": [
         "customer",
@@ -2738,7 +2738,7 @@
     {
       "id": "catalog.accounting.account_types.create",
       "tab": "Accounting",
-      "sub": "+ Create \u2014 Detail Types",
+      "sub": "+ Create — Detail Types",
       "route_hint": "/lists/accounting/account-types",
       "required": [
         "customer",
@@ -2766,7 +2766,7 @@
     {
       "id": "catalog.accounting.detail_types.create",
       "tab": "Accounting",
-      "sub": "+ Create \u2014 Audit Event Types",
+      "sub": "+ Create — Audit Event Types",
       "route_hint": "/lists/accounting/detail-types",
       "required": [
         "customer",
@@ -2794,7 +2794,7 @@
     {
       "id": "catalog.accounting.classes.create",
       "tab": "Accounting",
-      "sub": "+ Create \u2014 Chart of Accounts",
+      "sub": "+ Create — Chart of Accounts",
       "route_hint": "/lists/accounting/classes",
       "required": [
         "customer",
@@ -2822,7 +2822,7 @@
     {
       "id": "catalog.accounting.payment_terms.create",
       "tab": "Accounting",
-      "sub": "+ Create \u2014 Account Type",
+      "sub": "+ Create — Account Type",
       "route_hint": "/lists/accounting/payment-terms",
       "required": [
         "customer",
@@ -2850,7 +2850,7 @@
     {
       "id": "catalog.accounting.posting_templates.create",
       "tab": "Accounting",
-      "sub": "+ Create \u2014 Detail Type",
+      "sub": "+ Create — Detail Type",
       "route_hint": "/lists/accounting/posting-templates",
       "required": [
         "customer",
@@ -2878,7 +2878,7 @@
     {
       "id": "catalog.accounting.journal_entry_types.create",
       "tab": "Accounting",
-      "sub": "+ Create \u2014 Classes",
+      "sub": "+ Create — Classes",
       "route_hint": "/lists/accounting/journal-entry-types",
       "required": [
         "customer",
@@ -2906,7 +2906,7 @@
     {
       "id": "catalog.accounting.qbo_bulk_link.create",
       "tab": "Accounting",
-      "sub": "+ Create \u2014 Payment Terms",
+      "sub": "+ Create — Payment Terms",
       "route_hint": "/lists/accounting/qbo-bulk-link",
       "required": [
         "customer",
@@ -2934,7 +2934,7 @@
     {
       "id": "catalog.accounting.qbo_categories.create",
       "tab": "Accounting",
-      "sub": "+ Create \u2014 Posting Templates",
+      "sub": "+ Create — Posting Templates",
       "route_hint": "/lists/accounting/qbo-categories",
       "required": [
         "customer",
@@ -2962,7 +2962,7 @@
     {
       "id": "catalog.accounting.items.create",
       "tab": "Accounting",
-      "sub": "+ Create \u2014 Journal Entry Types",
+      "sub": "+ Create — Journal Entry Types",
       "route_hint": "/lists/accounting/items",
       "required": [
         "customer",
@@ -2990,7 +2990,7 @@
     {
       "id": "catalog.accounting.account_role_bindings.create",
       "tab": "Accounting",
-      "sub": "+ Create \u2014 QBO bulk-link",
+      "sub": "+ Create — QBO bulk-link",
       "route_hint": "/lists/accounting/account-role-bindings",
       "required": [
         "customer",
@@ -3018,7 +3018,7 @@
     {
       "id": "catalog.accounting.chart_of_accounts_seeds.create",
       "tab": "Accounting",
-      "sub": "+ Create \u2014 Product & Service Categories",
+      "sub": "+ Create — Product & Service Categories",
       "route_hint": "/lists/accounting/chart-of-accounts-seeds",
       "required": [
         "customer",
@@ -3046,7 +3046,7 @@
     {
       "id": "catalog.accounting.expense_categories.create",
       "tab": "Accounting",
-      "sub": "+ Create \u2014 Items",
+      "sub": "+ Create — Items",
       "route_hint": "/lists/accounting/expense-categories",
       "required": [
         "customer",
@@ -3074,7 +3074,7 @@
     {
       "id": "catalog.accounting.payment_methods.create",
       "tab": "Accounting",
-      "sub": "+ Create \u2014 Account Role Bindings",
+      "sub": "+ Create — Account Role Bindings",
       "route_hint": "/lists/accounting/payment-methods",
       "required": [
         "customer",
@@ -3102,7 +3102,7 @@
     {
       "id": "catalog.accounting.tax_codes.create",
       "tab": "Accounting",
-      "sub": "+ Create \u2014 Chart of Accounts Seeds",
+      "sub": "+ Create — Chart of Accounts Seeds",
       "route_hint": "/lists/accounting/tax-codes",
       "required": [
         "customer",
@@ -3130,7 +3130,7 @@
     {
       "id": "catalog.accounting.currency_codes.create",
       "tab": "Accounting",
-      "sub": "+ Create \u2014 Expense Categories",
+      "sub": "+ Create — Expense Categories",
       "route_hint": "/lists/accounting/currency-codes",
       "required": [
         "customer",
@@ -3158,7 +3158,7 @@
     {
       "id": "catalog.accounting.void_cancel_reasons.create",
       "tab": "Accounting",
-      "sub": "+ Create \u2014 Payment Methods",
+      "sub": "+ Create — Payment Methods",
       "route_hint": "/lists/accounting/void-cancel-reasons",
       "required": [
         "customer",
@@ -3186,7 +3186,7 @@
     {
       "id": "catalog.accounting.abandonment_defaults.create",
       "tab": "Accounting",
-      "sub": "+ Create \u2014 Currency Codes",
+      "sub": "+ Create — Currency Codes",
       "route_hint": "/lists/accounting/abandonment-defaults",
       "required": [
         "customer",
@@ -3214,7 +3214,7 @@
     {
       "id": "catalog.customers.customer_types.create",
       "tab": "Customers",
-      "sub": "+ Create \u2014 Customer Types",
+      "sub": "+ Create — Customer Types",
       "route_hint": "/lists/customers/customer-types",
       "required": [
         "customer",
@@ -3242,7 +3242,7 @@
     {
       "id": "catalog.customers.customer_quality_event_reasons.create",
       "tab": "Customers",
-      "sub": "+ Create \u2014 Customer Types",
+      "sub": "+ Create — Customer Types",
       "route_hint": "/lists/customers/customer-quality-event-reasons",
       "required": [
         "customer",
@@ -3269,7 +3269,7 @@
     {
       "id": "catalog.vendors.vendor_types.create",
       "tab": "Vendors",
-      "sub": "+ Create \u2014 Vendor Types",
+      "sub": "+ Create — Vendor Types",
       "route_hint": "/lists/vendors/vendor-types",
       "required": [
         "vendor",
@@ -3295,7 +3295,7 @@
     {
       "id": "catalog.names_master.brokers.create",
       "tab": "Names master",
-      "sub": "+ Create \u2014 Shippers",
+      "sub": "+ Create — Shippers",
       "route_hint": "/lists/names/brokers",
       "required": [
         "customer",
@@ -3631,12 +3631,45 @@
         "reverse_link",
         "picker_law"
       ]
+    },
+    {
+      "id": "chrome.toolbar_search",
+      "tab": "Chrome controls",
+      "sub": "List toolbar — Search (CLS-LIST-TOOLBAR)",
+      "route_hint": "chrome://toolbar/search",
+      "surface_kind": "toolbar",
+      "required": [
+        "qbo_chrome",
+        "connectivity"
+      ]
+    },
+    {
+      "id": "chrome.toolbar_range",
+      "tab": "Chrome controls",
+      "sub": "List toolbar — date/amount range (CLS-LIST-TOOLBAR)",
+      "route_hint": "chrome://toolbar/range",
+      "surface_kind": "toolbar",
+      "required": [
+        "qbo_chrome",
+        "connectivity"
+      ]
+    },
+    {
+      "id": "chrome.toolbar_gear",
+      "tab": "Chrome controls",
+      "sub": "List toolbar — column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
+      "route_hint": "chrome://toolbar/gear",
+      "surface_kind": "toolbar",
+      "required": [
+        "qbo_chrome",
+        "connectivity"
+      ]
     }
   ],
   "honesty_note": {
     "as_of": "2026-08-12",
     "finding": "LISTS-REQUIRED-LIABILITY-INFLATION",
-    "rule": "Matrix Required liability = surface creates/links driver_finance.driver_liabilities or escrow money \u2014 never catalog type CRUD. Matches WAVE-C-liability #6158 lists=N/A audit.",
+    "rule": "Matrix Required liability = surface creates/links driver_finance.driver_liabilities or escrow money — never catalog type CRUD. Matches WAVE-C-liability #6158 lists=N/A audit.",
     "drops_applied": [
       {
         "id": "catalog.safety.accident_types.list",
@@ -3912,7 +3945,7 @@
         "ap_bill",
         "gl_je"
       ],
-      "note": "catalog.* type CRUD \u2260 expense/ap_bill/gl_je money surfaces; qbo_chrome left for Wave D",
+      "note": "catalog.* type CRUD ≠ expense/ap_bill/gl_je money surfaces; qbo_chrome left for Wave D",
       "leaves_touched": 146,
       "sample": [
         {
@@ -3959,7 +3992,7 @@
         "invoice",
         "bank"
       ],
-      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; \u00a7B9 link columns added."
+      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; §B9 link columns added."
     }
   }
 }
