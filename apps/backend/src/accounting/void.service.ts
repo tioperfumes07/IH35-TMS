@@ -117,6 +117,39 @@ export function todayIso(): string {
   return companyBusinessDate();
 }
 
+/**
+ * ACCT-F5026 / LV-BILLVOID class — coerce a pg DATE/timestamp column into ISO `YYYY-MM-DD`.
+ *
+ * node-postgres returns DATE as a JS `Date`. `String(date).slice(0, 10)` yields `"Thu Aug 06"` and
+ * that string reaches `$2::date` as a literal → Postgres `invalid input syntax for type date`.
+ * Prefer selecting `col::text` at the SQL boundary; this helper is the fail-closed fallback when a
+ * caller still has a Date/string mix (payment void, prepaid, invoice send).
+ */
+export function pgDateColumnToIsoDay(value: unknown): string {
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    const y = value.getFullYear();
+    const m = String(value.getMonth() + 1).padStart(2, "0");
+    const d = String(value.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+  }
+  const raw = String(value ?? "").trim();
+  if (/^\d{4}-\d{2}-\d{2}/.test(raw)) return raw.slice(0, 10);
+  throw Object.assign(new Error(`void_original_date_unreadable: ${raw.slice(0, 40)}`), {
+    code: "void_original_date_unreadable",
+  });
+}
+
+/** Fail closed before any ::date bind — never hand Postgres `"Thu Aug 06"`. */
+export function assertIsoDay(originalDate: string, label = "originalDate"): string {
+  const day = String(originalDate ?? "").trim().slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) {
+    throw Object.assign(new Error(`void_original_date_unreadable: ${label}=${day.slice(0, 40)}`), {
+      code: "void_original_date_unreadable",
+    });
+  }
+  return day;
+}
+
 // ---------------------------------------------------------------------------
 // DB orchestration (runs on the caller's transaction client -> atomic).
 // ---------------------------------------------------------------------------
@@ -280,10 +313,13 @@ export async function postVoidReversal(
     params.entityId
   );
 
+  // ACCT-F5026 — refuse non-ISO originalDate before any `$n::date` bind (LV-BILLVOID class).
+  const originalDateIso = assertIsoDay(params.originalDate, `${params.entityType}.originalDate`);
+
   const cutoff = await closedPeriodCutoff(client, params.operatingCompanyId);
   const currentDate = params.currentDate ?? todayIso();
-  const reversalDate = resolveReversalDate(params.originalDate, cutoff, currentDate);
-  const closedPeriod = isClosedPeriodReversal(params.originalDate, reversalDate);
+  const reversalDate = resolveReversalDate(originalDateIso, cutoff, currentDate);
+  const closedPeriod = isClosedPeriodReversal(originalDateIso, reversalDate);
 
   const reversalLines = flipPostingsForReversal(originalLines);
   assertBalanced(reversalLines);

@@ -11,7 +11,7 @@ import { resolveRoleAccountOptional } from "./coa-roles/resolver.service.js";
 import { postSourceTransactionInClientTx } from "./posting-engine.service.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { recordPostingFlagSkip } from "./posting-flag-skip-audit.js";
-import { postVoidReversal } from "./void.service.js";
+import { pgDateColumnToIsoDay, postVoidReversal } from "./void.service.js";
 
 const paymentMethodSchema = z.enum([
   "ach",
@@ -547,9 +547,12 @@ export async function registerPaymentsRoutes(app: FastifyInstance) {
     if (!body.success) return validationError(reply, body.error);
 
     const result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
+      // ACCT-F5026 — payment_date::text alias (same LV-BILLVOID class as bill void). SELECT *
+      // hands node-postgres a JS Date; String(date).slice(0,10) → "Thu Aug 06" → ::date 500.
       const paymentRes = await client.query(
         `
-          SELECT *
+          SELECT *,
+                 payment_date::text AS payment_date_iso
           FROM accounting.payments
           WHERE id = $1
             AND operating_company_id = $2::uuid
@@ -602,7 +605,9 @@ export async function registerPaymentsRoutes(app: FastifyInstance) {
           operatingCompanyId: query.data.operating_company_id,
           entityType: "customer_payment",
           entityId: params.data.id,
-          originalDate: String(payment.payment_date ?? "").slice(0, 10),
+          originalDate: pgDateColumnToIsoDay(
+            (payment as { payment_date_iso?: string | null }).payment_date_iso ?? payment.payment_date
+          ),
           memo: `Void reversal: payment ${payment.display_id ?? params.data.id}`,
         },
         { userId: user.uuid }

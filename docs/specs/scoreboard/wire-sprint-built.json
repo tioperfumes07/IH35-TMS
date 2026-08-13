@@ -587,11 +587,19 @@
     },
     {
       "task": "ACCT-F5025-HUB-KPI-NO-FAKE-ZERO",
-      "pr": "this PR",
+      "pr": "#6357",
       "guard": "scripts/verify-money-kpi-strip-no-fake-zero-on-error.mjs",
       "modules": ["accounting"],
       "cols": ["connectivity"],
       "leafRe": "^(home|bills|invoices|expenses)"
+    },
+    {
+      "task": "ACCT-F5026-VOID-ORIGINAL-DATE-ISO",
+      "pr": "this PR",
+      "guard": "scripts/verify-void-original-date-iso.mjs",
+      "modules": ["accounting"],
+      "cols": ["connectivity"],
+      "leafRe": "^(payments|void|customer)"
     }
   ]
 }
