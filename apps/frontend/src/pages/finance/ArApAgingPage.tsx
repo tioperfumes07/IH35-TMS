@@ -269,20 +269,22 @@ export function ArApAgingPage() {
   // invoice/bill's open balance AS OF that date via accounting.ar_aging_as_of / ap_aging_as_of
   // (migration 202606290040). Future dates are clamped to today.
   const today = todayIso();
+  // CLS-FILTER-GEAR-APPLY — DatePicker drafts; query only after Apply.
   const [asOfDate, setAsOfDate] = useState<string>(today);
-  const isHistorical = asOfDate < today;
+  const [appliedAsOf, setAppliedAsOf] = useState<string>(today);
+  const isHistorical = appliedAsOf < today;
 
   const queryReady = Boolean(operatingCompanyId) && enabled;
 
   const arQuery = useQuery({
-    queryKey: ["fin20-ar-aging", operatingCompanyId, asOfDate],
-    queryFn: () => getArAging(operatingCompanyId, asOfDate),
+    queryKey: ["fin20-ar-aging", operatingCompanyId, appliedAsOf],
+    queryFn: () => getArAging(operatingCompanyId, appliedAsOf),
     enabled: queryReady && mode === "ar",
   });
 
   const apQuery = useQuery({
-    queryKey: ["fin20-ap-aging", operatingCompanyId, asOfDate],
-    queryFn: () => getApAging(operatingCompanyId, asOfDate),
+    queryKey: ["fin20-ap-aging", operatingCompanyId, appliedAsOf],
+    queryFn: () => getApAging(operatingCompanyId, appliedAsOf),
     enabled: queryReady && mode === "ap",
   });
 
@@ -318,9 +320,9 @@ export function ArApAgingPage() {
       if (totals) {
         lines.push(["TOTAL", "", ...BUCKET_COLS.map((c) => (totals[c.key] / 100).toFixed(2))]);
       }
-      downloadCsv(`${mode}-aging-${asOfDate}.csv`, lines);
+      downloadCsv(`${mode}-aging-${appliedAsOf}.csv`, lines);
     },
-    [mode, arRows, apRows, totals, asOfDate]
+    [mode, arRows, apRows, totals, appliedAsOf]
   );
 
   if (!flagLoading && !enabled) {
@@ -355,6 +357,14 @@ export function ArApAgingPage() {
                 className="h-9 bg-white tabular-nums"
               />
             </div>
+            <button
+              type="button"
+              onClick={() => setAppliedAsOf(asOfDate)}
+              disabled={asOfDate === appliedAsOf}
+              className="h-9 px-3 text-[13px] rounded-sm border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+            >
+              Apply
+            </button>
             <button
               type="button"
               onClick={handleExport}
@@ -400,8 +410,8 @@ export function ArApAgingPage() {
 
       <p className="text-xs text-gray-400">
         {isHistorical
-          ? `Historical aging as of ${fmtDate(asOfDate)} — each ${mode === "ar" ? "invoice" : "bill"}'s open balance reconstructed from payments dated on or before that date.`
-          : `Aging as of today (${fmtDate(asOfDate)}), computed live from the canonical ledger views.`}{" "}
+          ? `Historical aging as of ${fmtDate(appliedAsOf)} — each ${mode === "ar" ? "invoice" : "bill"}'s open balance reconstructed from payments dated on or before that date.`
+          : `Aging as of today (${fmtDate(appliedAsOf)}), computed live from the canonical ledger views.`}{" "}
         Expand a row (▸) to drill into open {mode === "ar" ? "invoices" : "bills"}.
       </p>
 
@@ -420,7 +430,7 @@ export function ArApAgingPage() {
         <div className="space-y-2">
           {mode === "ar" ? (
             <ParityTable
-              key={asOfDate}
+              key={appliedAsOf}
               columns={AR_COLUMNS}
               rows={arRows}
               rowKey={(r) => r.customer_id}
@@ -429,12 +439,12 @@ export function ArApAgingPage() {
               storageKey="ar-aging-by-customer"
               tableTestId="ar-aging-table"
               renderExpanded={(r) => (
-                <ArInvoicesDrill operatingCompanyId={operatingCompanyId} customer={r} asOfDate={asOfDate} />
+                <ArInvoicesDrill operatingCompanyId={operatingCompanyId} customer={r} asOfDate={appliedAsOf} />
               )}
             />
           ) : (
             <ParityTable
-              key={asOfDate}
+              key={appliedAsOf}
               columns={AP_COLUMNS}
               rows={apRows}
               rowKey={(r) => r.vendor_id}
@@ -443,7 +453,7 @@ export function ArApAgingPage() {
               storageKey="ap-aging-by-vendor"
               tableTestId="ap-aging-table"
               renderExpanded={(r) => (
-                <ApBillsDrill operatingCompanyId={operatingCompanyId} vendor={r} asOfDate={asOfDate} />
+                <ApBillsDrill operatingCompanyId={operatingCompanyId} vendor={r} asOfDate={appliedAsOf} />
               )}
             />
           )}

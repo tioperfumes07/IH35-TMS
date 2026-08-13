@@ -40,13 +40,15 @@ export function GeofenceReconciliationReport() {
   const [operatingCompanyId] = useState(() => sessionStorage.getItem("operating_company_id") ?? "");
   const today = new Date().toISOString().slice(0, 10);
   const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+  // CLS-FILTER-GEAR-APPLY — DatePicker drafts; query only after Apply.
   const [date, setDate] = useState(yesterday);
+  const [appliedDate, setAppliedDate] = useState(yesterday);
   const qc = useQueryClient();
 
   const { data, isLoading, isError, error, refetch } = useQuery<{ data: Finding[] }>({
-    queryKey: ["geofence-recon", operatingCompanyId, date],
+    queryKey: ["geofence-recon", operatingCompanyId, appliedDate],
     queryFn: async () => {
-      const res = await fetch(resolveApiUrl(`/api/v1/integrations/samsara/geofences/reconciliation?operating_company_id=${encodeURIComponent(operatingCompanyId)}&date=${date}`),
+      const res = await fetch(resolveApiUrl(`/api/v1/integrations/samsara/geofences/reconciliation?operating_company_id=${encodeURIComponent(operatingCompanyId)}&date=${appliedDate}`),
         { credentials: "include" }
       );
       if (!res.ok) throw new Error("Failed to load reconciliation");
@@ -93,9 +95,9 @@ export function GeofenceReconciliationReport() {
         breadcrumb={["Reports", "Geofence Reconciliation Report"]}
         title="Geofence Reconciliation Report"
       />
-      <div className="flex items-center gap-4 mb-6">
+      <div className="mb-6 flex flex-wrap items-end gap-3">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Report Date</label>
+          <label className="mb-1 block text-sm font-medium text-gray-700">Report Date</label>
           <DatePicker
             value={date}
             onChange={setDate}
@@ -103,6 +105,14 @@ export function GeofenceReconciliationReport() {
             className=""
           />
         </div>
+        <button
+          type="button"
+          className="h-9 rounded-sm border border-gray-300 bg-white px-3 text-sm font-medium text-slate-700 hover:bg-gray-50 disabled:opacity-50"
+          onClick={() => setAppliedDate(date)}
+          disabled={date === appliedDate}
+        >
+          Apply
+        </button>
       </div>
       {isLoading && <p className="text-gray-500">Loading...</p>}
       {isError && (
@@ -115,7 +125,7 @@ export function GeofenceReconciliationReport() {
       )}
       {!isLoading && !isError && findings.length === 0 && (
         <div className="bg-green-50 border border-green-200 rounded-sm p-4 text-green-700">
-          No anomalies found for {date}.
+          No anomalies found for {appliedDate}.
         </div>
       )}
       {Object.entries(byClass).map(([cls, items]) => (

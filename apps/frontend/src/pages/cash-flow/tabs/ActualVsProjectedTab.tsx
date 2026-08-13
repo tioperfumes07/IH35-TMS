@@ -149,13 +149,16 @@ const COLUMNS: Array<ParityColumn<RowGroup>> = [
 ];
 
 export function ActualVsProjectedTab({ operatingCompanyId }: Props) {
+  // CLS-FILTER-GEAR-APPLY — DatePicker drafts; query only after Apply.
   const [from, setFrom] = useState<string>(sevenDaysAgoIso());
   const [to, setTo] = useState<string>(todayIso());
+  const [appliedFrom, setAppliedFrom] = useState<string>(sevenDaysAgoIso());
+  const [appliedTo, setAppliedTo] = useState<string>(todayIso());
 
   const avpQ = useQuery<ActualVsProjectedResult>({
-    queryKey: ["cash-flow-avp", operatingCompanyId, from, to],
-    queryFn: () => getActualVsProjected(operatingCompanyId, from, to),
-    enabled: !!operatingCompanyId && from <= to,
+    queryKey: ["cash-flow-avp", operatingCompanyId, appliedFrom, appliedTo],
+    queryFn: () => getActualVsProjected(operatingCompanyId, appliedFrom, appliedTo),
+    enabled: !!operatingCompanyId && appliedFrom <= appliedTo,
   });
   const { data, isLoading, isError } = avpQ;
 
@@ -182,6 +185,17 @@ export function ActualVsProjectedTab({ operatingCompanyId }: Props) {
             className=""
           />
         </label>
+        <button
+          type="button"
+          className="h-9 rounded-sm border border-gray-300 bg-white px-3 text-sm font-medium text-slate-700 hover:bg-gray-50 disabled:opacity-50"
+          onClick={() => {
+            setAppliedFrom(from);
+            setAppliedTo(to);
+          }}
+          disabled={from === appliedFrom && to === appliedTo}
+        >
+          Apply
+        </button>
         {from > to && (
           <span className="text-xs text-red-600">From date must be before or equal to To date.</span>
         )}

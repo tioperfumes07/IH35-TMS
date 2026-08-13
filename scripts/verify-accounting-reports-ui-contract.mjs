@@ -120,6 +120,11 @@ try {
   const cashFlowOverview = read(cashFlowOverviewPath);
   assertIncludes(cashFlowOverview, "appliedAsOf", "Cash flow overview must stage as-of date (appliedAsOf)");
   assertIncludes(cashFlowOverview, "setAppliedAsOf(asOf)", "Cash flow overview must Apply staged as-of date");
+
+  const geofenceReconPath = "apps/frontend/src/pages/reports/GeofenceReconciliationReport.tsx";
+  const geofenceRecon = read(geofenceReconPath);
+  assertIncludes(geofenceRecon, "appliedDate", "Geofence recon must stage report date (appliedDate)");
+  assertIncludes(geofenceRecon, "setAppliedDate(date)", "Geofence recon must Apply staged report date");
   assertIncludes(scheduleModal, "option.name", "ScheduleReportModal must render report name, not raw id");
   assertIncludes(scheduleModal, "selectedReportName", "ScheduleReportModal must submit a human-readable report name");
   assertIncludes(geofenceReport, "entityLabel(null, f.geofence_id", "GeofenceReconciliationReport must label geofence_id, not render raw UUID");
