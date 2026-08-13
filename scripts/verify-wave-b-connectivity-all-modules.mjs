@@ -34,7 +34,13 @@ export function collectRequiredConnectivity(readDir = fs.readdirSync, read = fs.
     const spec = JSON.parse(read(path.join(MODULE_DIR, file), "utf8"));
     for (const leaf of spec.leaves || []) {
       if (!(leaf.required || []).includes("connectivity")) continue;
-      leaves.push({ module: spec.module || file.replace(".required.json", ""), id: leaf.id, route: leaf.route_hint });
+      leaves.push({
+        module: spec.module || file.replace(".required.json", ""),
+        id: leaf.id,
+        route: leaf.route_hint,
+        surfaceKind: leaf.surface_kind,
+        surfacePath: leaf.surface_path,
+      });
     }
   }
   return leaves;
@@ -50,6 +56,14 @@ export function auditConnectivity(manifestSource, leaves, minimumInventory = 800
     .filter((route) => route !== "*" && route !== "/*");
   const absoluteParents = mounted.filter((route) => route.startsWith("/") && !route.includes("?"));
   for (const leaf of leaves) {
+    if (String(leaf.route || "").startsWith("surface://")) {
+      const expectedRoute = `surface://${String(leaf.surfacePath || "").replace(/^\/+/, "")}`;
+      const surfaceFile = path.join(ROOT, "apps/frontend/src", String(leaf.surfacePath || ""));
+      if (!leaf.surfaceKind || leaf.route !== expectedRoute || !fs.existsSync(surfaceFile)) {
+        failures.push(`${leaf.module}:${leaf.id}: surface route_hint must resolve to its inventoried component`);
+      }
+      continue;
+    }
     if (!leaf.route || !String(leaf.route).startsWith("/")) {
       failures.push(`${leaf.module}:${leaf.id}: missing absolute route_hint`);
       continue;
@@ -84,6 +98,17 @@ if (isDirectRun) {
     const caught = auditConnectivity(mutated, [target, ...leaves.filter((leaf) => leaf !== target)]);
     if (!caught.some((failure) => failure.startsWith(`${target.module}:${target.id}:`))) {
       console.error("verify-wave-b-connectivity-all-modules SELFTEST FAIL — removed /users route was not detected");
+      process.exit(1);
+    }
+    const missingSurface = auditConnectivity(manifest, [{
+      module: "fuel",
+      id: "fuel.modal.missing",
+      route: "surface://pages/fuel/components/MissingModal.tsx",
+      surfaceKind: "modal",
+      surfacePath: "pages/fuel/components/MissingModal.tsx",
+    }], 0);
+    if (!missingSurface.some((failure) => failure.includes("inventoried component"))) {
+      console.error("verify-wave-b-connectivity-all-modules SELFTEST FAIL — missing surface component escaped");
       process.exit(1);
     }
     console.log("verify-wave-b-connectivity-all-modules SELFTEST PASS — removed route detected");

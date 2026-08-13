@@ -37,7 +37,7 @@
       "task": "WAVE-A-trailer-all-modules",
       "pr": "this PR",
       "guard": "scripts/verify-wave-a-trailer-all-modules.mjs",
-      "modules": ["dispatch", "fleet", "insurance", "lists", "maintenance", "safety"],
+      "modules": ["dispatch", "fleet", "fuel", "insurance", "lists", "maintenance", "safety"],
       "cols": ["trailer"],
       "leafRe": ".*"
     },

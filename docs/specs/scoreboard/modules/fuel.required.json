@@ -235,6 +235,26 @@
       ]
     },
     {
+      "id": "fuel.modal.create_fuel_transaction",
+      "tab": "Modals",
+      "sub": "Modal: Create Fuel Transaction",
+      "route_hint": "surface://pages/fuel/components/CreateFuelTransactionModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "pages/fuel/components/CreateFuelTransactionModal.tsx",
+      "required": [
+        "driver",
+        "vendor",
+        "unit",
+        "trailer",
+        "load",
+        "expense",
+        "picker_law",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
       "id": "fuel.modal.upload_loves_prices",
       "tab": "Modals",
       "sub": "Modal: Upload Loves Prices",
@@ -301,7 +321,7 @@
   ],
   "honesty_audit": {
     "surface_inventory_2026_08_12": {
-      "added_leaves": 3,
+      "added_leaves": 4,
       "new_columns": [
         "claim",
         "work_order",

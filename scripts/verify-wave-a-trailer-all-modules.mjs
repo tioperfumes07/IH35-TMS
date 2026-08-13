@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["dispatch","fleet","insurance","lists","maintenance","safety"],"cols":["trailer"],"leafRe":".*","task":"WAVE-A-trailer-all-modules","vertical":"column-wave"} */
+/** @matrix-built {"modules":["dispatch","fleet","fuel","insurance","lists","maintenance","safety"],"cols":["trailer"],"leafRe":".*","task":"WAVE-A-trailer-all-modules","vertical":"column-wave"} */
 /** Full-product trailer contract. Canonical dispatch persistence is assignment history, never loads.trailer_id. */
 import fs from "node:fs";
 import path from "node:path";
@@ -14,7 +14,13 @@ export function collectTrailerLeaves(read = fs.readFileSync, readDir = fs.readdi
   const leaves = [];
   for (const file of readDir(MODULE_DIR).filter((name) => name.endsWith(".required.json")).sort()) {
     const spec = JSON.parse(read(path.join(MODULE_DIR, file), "utf8"));
-    for (const leaf of spec.leaves || []) if ((leaf.required || []).includes("trailer")) leaves.push({ module: spec.module, id: leaf.id, route: leaf.route_hint });
+    for (const leaf of spec.leaves || []) if ((leaf.required || []).includes("trailer")) leaves.push({
+      module: spec.module,
+      id: leaf.id,
+      route: leaf.route_hint,
+      surfaceKind: leaf.surface_kind,
+      surfacePath: leaf.surface_path,
+    });
   }
   return leaves;
 }
@@ -23,6 +29,8 @@ const contracts = [
   ["apps/frontend/src/components/insurance/ClaimCreateModal.tsx", /trailer_id:\s*form\.trailer_id \|\| null/],
   ["apps/frontend/src/components/insurance/ClaimCreateModal.tsx", /kind="trailer"/],
   ["apps/frontend/src/components/insurance/InsuranceClaimsReverseSection.tsx", /trailer_id:\s*string/],
+  ["apps/frontend/src/pages/fuel/components/CreateFuelTransactionModal.tsx", /trailer_id:\s*trailerId \|\| null/],
+  ["apps/frontend/src/pages/fuel/components/CreateFuelTransactionModal.tsx", /kind="trailer"/],
   ["apps/frontend/src/pages/maintenance/FleetTablePage.tsx", /\{ key: "trailer", label: "Trailers" \}/],
 ];
 const composed = ["verify-wave-a-trailer-column.mjs", "verify-bookload-equipment-entitypicker-search.mjs", "verify-claim-load-reverse-and-driver-create.mjs", "verify-safety-incidents-reverse-link-wired.mjs"];
