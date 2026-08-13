@@ -10,6 +10,7 @@ type Queryable = {
 type ListCoiRequestsInput = {
   operating_company_id: string;
   customer_id?: string;
+  policy_id?: string;
   status?: CoiRequestStatus;
 };
 
@@ -58,6 +59,10 @@ export async function listCoiRequests(client: Queryable, input: ListCoiRequestsI
     values.push(input.customer_id);
     clauses.push(`r.customer_id = $${values.length}::uuid`);
   }
+  if (input.policy_id) {
+    values.push(input.policy_id);
+    clauses.push(`r.policy_id = $${values.length}::uuid`);
+  }
   if (input.status) {
     values.push(input.status);
     clauses.push(`r.status = $${values.length}`);
@@ -66,7 +71,8 @@ export async function listCoiRequests(client: Queryable, input: ListCoiRequestsI
     `
       SELECT ${selectColumns("r.")},
              COALESCE(NULLIF(TRIM(CONCAT_WS(' ', u.first_name, u.last_name)), ''), u.email) AS requested_by_name,
-             p.policy_number
+             p.policy_number,
+             c.legal_name AS customer_name
       FROM insurance.coi_request r
       LEFT JOIN org.user_company_access uca
         ON uca.user_id = r.requested_by
@@ -78,6 +84,9 @@ export async function listCoiRequests(client: Queryable, input: ListCoiRequestsI
       LEFT JOIN insurance.policy p
         ON p.id = r.policy_id
        AND p.tenant_id = r.tenant_id
+      LEFT JOIN mdata.customers c
+        ON c.id = r.customer_id
+       AND c.operating_company_id = r.tenant_id
       WHERE ${clauses.join(" AND ")}
       ORDER BY r.requested_at DESC, r.created_at DESC
     `,

@@ -8,6 +8,7 @@ export const operatingCompanySchema = z.object({
 
 export const listCoiRequestsQuerySchema = operatingCompanySchema.extend({
   customer_id: z.string().uuid().optional(),
+  policy_id: z.string().uuid().optional(),
   status: z.enum(INSURANCE_COI_STATUSES).optional(),
 });
 

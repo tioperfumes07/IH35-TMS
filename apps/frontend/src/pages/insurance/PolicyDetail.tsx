@@ -25,6 +25,8 @@ import { PaymentScheduleTab } from "./PaymentScheduleTab";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
+import { ListErrorState } from "../../components/ListErrorState";
+import { ApiError } from "../../api/client";
 
 function formatMoney(cents: number) {
   return formatUsdCents(cents);
@@ -58,7 +60,10 @@ export function PolicyDetail() {
   const coiQuery = useQuery({
     queryKey: ["insurance", "policy", "coi", companyId, policyId],
     enabled: Boolean(companyId && policyId),
-    queryFn: () => listInsuranceCoiRequests({ operating_company_id: companyId }).then((result) => result.requests),
+    queryFn: () =>
+      listInsuranceCoiRequests({ operating_company_id: companyId, policy_id: policyId }).then(
+        (result) => result.requests,
+      ),
   });
 
   const lawsuitsQuery = useQuery({
@@ -91,7 +96,7 @@ export function PolicyDetail() {
 
   const claims = claimsQuery.data ?? [];
   const claimIds = useMemo(() => new Set(claims.map((claim) => claim.id)), [claims]);
-  const coiRows = useMemo(() => (coiQuery.data ?? []).filter((row) => row.policy_id === policyId), [coiQuery.data, policyId]);
+  const coiRows = coiQuery.data ?? [];
   const lawsuitRows = useMemo(
     () => (lawsuitsQuery.data ?? []).filter((lawsuit) => lawsuit.claim_id && claimIds.has(lawsuit.claim_id)),
     [claimIds, lawsuitsQuery.data]
@@ -121,6 +126,17 @@ export function PolicyDetail() {
 
   const coiColumns = useMemo<ParityColumn<InsuranceCoiRequest>[]>(
     () => [
+      {
+        key: "customer_id",
+        label: "Customer",
+        render: (row) => (
+          <EntityLink
+            kind="customer"
+            id={row.customer_id}
+            label={entityLabel(row.customer_name, row.customer_id, "Customer")}
+          />
+        ),
+      },
       { key: "requested_at", label: "Requested", sortable: true, render: (row) => formatDateUS(row.requested_at) },
       { key: "status", label: "Status", sortable: true },
       { key: "document_url", label: "Document", render: (row) => (row.document_url ? <a href={row.document_url} className="text-slate-700 underline">View</a> : "-") },
@@ -281,14 +297,23 @@ export function PolicyDetail() {
       <section className="rounded-sm border border-gray-200 bg-white p-4">
         <h3 className="text-sm font-semibold text-slate-900">COI History (INS-04)</h3>
         <div className="mt-2">
-          <ParityTable
-            rows={coiRows}
-            columns={coiColumns}
-            rowKey={(row) => row.id}
-            loading={coiQuery.isPending || (coiQuery.isFetching && coiRows.length === 0)}
-            storageKey="insurance-policy-coi"
-            emptyText="No COI requests linked to this policy."
-          />
+          {coiQuery.isError ? (
+            <ListErrorState
+              title="Couldn't load this policy's COI history"
+              status={coiQuery.error instanceof ApiError ? coiQuery.error.status : 0}
+              message={(coiQuery.error as Error)?.message}
+              onRetry={() => void coiQuery.refetch()}
+            />
+          ) : (
+            <ParityTable
+              rows={coiRows}
+              columns={coiColumns}
+              rowKey={(row) => row.id}
+              loading={coiQuery.isPending || (coiQuery.isFetching && coiRows.length === 0)}
+              storageKey="insurance-policy-coi"
+              emptyText="No COI requests linked to this policy."
+            />
+          )}
         </div>
       </section>
 
