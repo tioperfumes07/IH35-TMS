@@ -1308,7 +1308,7 @@
       "id": "chrome.toolbar_search",
       "tab": "Chrome controls",
       "sub": "List toolbar — Search (CLS-LIST-TOOLBAR)",
-      "route_hint": "chrome://toolbar/search",
+      "route_hint": "/reports",
       "surface_kind": "toolbar",
       "required": [
         "qbo_chrome",
@@ -1319,7 +1319,7 @@
       "id": "chrome.toolbar_range",
       "tab": "Chrome controls",
       "sub": "List toolbar — date/amount range (CLS-LIST-TOOLBAR)",
-      "route_hint": "chrome://toolbar/range",
+      "route_hint": "/reports",
       "surface_kind": "toolbar",
       "required": [
         "qbo_chrome",
@@ -1330,7 +1330,7 @@
       "id": "chrome.toolbar_gear",
       "tab": "Chrome controls",
       "sub": "List toolbar — column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
-      "route_hint": "chrome://toolbar/gear",
+      "route_hint": "/reports",
       "surface_kind": "toolbar",
       "required": [
         "qbo_chrome",
