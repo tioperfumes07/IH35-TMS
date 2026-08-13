@@ -33,10 +33,14 @@ function read(rel) {
 }
 
 const HUB_PATH = "apps/frontend/src/pages/accounting/AccountingHubPage.tsx";
+const LIST_PATH = "apps/frontend/src/pages/accounting/ManualJEListPage.tsx";
+const TOPBAR_PATH = "apps/frontend/src/components/Topbar.tsx";
 const SERVICE_PATH = "apps/backend/src/accounting/journal-entries.service.ts";
 const ROUTES_PATH = "apps/backend/src/accounting/journal-entries.routes.ts";
 
 const hub = read(HUB_PATH);
+const list = read(LIST_PATH);
+const topbar = read(TOPBAR_PATH);
 const service = read(SERVICE_PATH);
 const routes = read(ROUTES_PATH);
 
@@ -64,6 +68,17 @@ if (!/import\s*\{\s*ManualJEModal\s*\}\s*from\s*["']\.\/ManualJEModal["']/.test(
 }
 if (/from\s*["'][^"']*banking\/components\/ManualJEModal["']/.test(hub)) {
   failures.push(`${HUB_PATH}: must NOT import the Banking ManualJEModal`);
+}
+
+// ACCT-F5056 — Topbar Create→Journal entry must open ManualJEModal via ?create=1.
+if (!topbar.includes("/accounting/journal-entries?create=1")) {
+  failures.push(`${TOPBAR_PATH}: Create→Journal entry must navigate to /accounting/journal-entries?create=1`);
+}
+if (!/searchParams\.get\(["']create["']\)\s*===\s*["']1["']/.test(list)) {
+  failures.push(`${LIST_PATH}: must honor ?create=1 for ManualJEModal`);
+}
+if (!/params\.delete\(["']create["']\)/.test(list) || !/params\.set\(["']create["'],\s*["']1["']\)/.test(list)) {
+  failures.push(`${LIST_PATH}: must URL-sync create open/close`);
 }
 
 // 4/5. Backend: NO amount threshold anywhere on the manual-JE create path (owner ruling
