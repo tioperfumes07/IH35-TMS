@@ -35,14 +35,16 @@ export function APAgingPage() {
   // BANK-SORT-ROLLOUT-ACCT (A/P Aging follow-up): every visible column header sorts ASC/DESC;
   // sort persists in the URL (?sort=&dir=) so it survives reload / is shareable.
   const { sortKey, sortDirection, onSortChange } = useUrlSort();
+  // CLS-FILTER-GEAR-APPLY — DatePicker drafts; query only after Apply (BalanceSheet pattern).
   const [asOf, setAsOf] = useState(() => new Date().toISOString().slice(0, 10));
+  const [appliedAsOf, setAppliedAsOf] = useState(() => new Date().toISOString().slice(0, 10));
   const [search, setSearch] = useState("");
   const [minBal, setMinBal] = useState("");
   const [bucketFilter, setBucketFilter] = useState<"all" | "61+">("all");
 
   const query = useQuery({
-    queryKey: ["reports", "ap-aging", companyId, asOf],
-    queryFn: () => getApAgingReport(companyId, asOf),
+    queryKey: ["reports", "ap-aging", companyId, appliedAsOf],
+    queryFn: () => getApAgingReport(companyId, appliedAsOf),
     enabled: Boolean(companyId),
   });
 
@@ -89,7 +91,7 @@ export function APAgingPage() {
     const ur = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = ur;
-    a.download = `ap-aging-${asOf}.csv`;
+    a.download = `ap-aging-${appliedAsOf}.csv`;
     a.click();
     URL.revokeObjectURL(ur);
   }
@@ -118,7 +120,7 @@ export function APAgingPage() {
       <ReportsSubNav />
       <PageHeader
         title="A/P aging"
-        subtitle={`As of ${formatDateUS(asOf)} · open bills by vendor · Accrual basis`}
+        subtitle={`As of ${formatDateUS(appliedAsOf)} · open bills by vendor · Accrual basis`}
         backHref="/reports"
         breadcrumb={["Reports", "A/P Aging"]}
         actions={
@@ -136,7 +138,7 @@ export function APAgingPage() {
               onClick={() =>
                 exportApAging({
                   operating_company_id: companyId,
-                  as_of_date: asOf,
+                  as_of_date: appliedAsOf,
                   format: "pdf",
                 })
               }
@@ -150,7 +152,7 @@ export function APAgingPage() {
               onClick={() =>
                 exportApAging({
                   operating_company_id: companyId,
-                  as_of_date: asOf,
+                  as_of_date: appliedAsOf,
                   format: "xlsx",
                 })
               }
@@ -166,7 +168,7 @@ export function APAgingPage() {
       </p>
       {query.isError ? <p className="text-sm text-red-600">Failed to load report.</p> : null}
 
-      <div className="no-print grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-4">
+      <div className="no-print grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-4 lg:grid-cols-5">
         <label className="text-xs text-gray-600">
           As-of date
           <DatePicker className="mt-1 h-9 w-full" value={asOf} onChange={(next) => setAsOf(next)} />
@@ -187,6 +189,11 @@ export function APAgingPage() {
             <option value="61+">61+ days past due portion</option>
           </SelectCombobox>
         </label>
+        <div className="flex items-end">
+          <Button size="sm" className="h-9 w-full" onClick={() => setAppliedAsOf(asOf)} disabled={asOf === appliedAsOf}>
+            Apply
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-2 md:grid-cols-4">

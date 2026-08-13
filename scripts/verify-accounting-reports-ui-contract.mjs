@@ -109,9 +109,17 @@ try {
   for (const page of [arAging, apAging]) {
     assertIncludes(page, "Export PDF", "AR/AP aging page must include Export PDF action");
     assertIncludes(page, "Export XLSX", "AR/AP aging page must include Export XLSX action");
+    // CLS-FILTER-GEAR-APPLY — as-of DatePicker must draft; queryKey uses appliedAsOf only after Apply.
+    assertIncludes(page, "appliedAsOf", "AR/AP aging must stage as-of date (appliedAsOf) before refetch");
+    assertIncludes(page, "setAppliedAsOf(asOf)", "AR/AP aging must Apply staged as-of date");
   }
   assertIncludes(arAging, "exportArAging(", "AR aging page must call exportArAging");
   assertIncludes(apAging, "exportApAging(", "AP aging page must call exportApAging");
+
+  const cashFlowOverviewPath = "apps/frontend/src/pages/reports/CashFlowOverviewPage.tsx";
+  const cashFlowOverview = read(cashFlowOverviewPath);
+  assertIncludes(cashFlowOverview, "appliedAsOf", "Cash flow overview must stage as-of date (appliedAsOf)");
+  assertIncludes(cashFlowOverview, "setAppliedAsOf(asOf)", "Cash flow overview must Apply staged as-of date");
   assertIncludes(scheduleModal, "option.name", "ScheduleReportModal must render report name, not raw id");
   assertIncludes(scheduleModal, "selectedReportName", "ScheduleReportModal must submit a human-readable report name");
   assertIncludes(geofenceReport, "entityLabel(null, f.geofence_id", "GeofenceReconciliationReport must label geofence_id, not render raw UUID");

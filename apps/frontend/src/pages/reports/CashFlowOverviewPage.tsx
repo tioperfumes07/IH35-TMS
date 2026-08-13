@@ -87,11 +87,13 @@ function MiniSparkline({ values }: { values: number[] }) {
 export function CashFlowOverviewPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
+  // CLS-FILTER-GEAR-APPLY — DatePicker drafts; query only after Apply (BalanceSheet pattern).
   const [asOf, setAsOf] = useState(() => new Date().toISOString().slice(0, 10));
+  const [appliedAsOf, setAppliedAsOf] = useState(() => new Date().toISOString().slice(0, 10));
 
   const query = useQuery({
-    queryKey: ["reports", "cash-flow-overview", companyId, asOf],
-    queryFn: () => getCashFlowOverview({ operating_company_id: companyId, as_of_date: asOf }),
+    queryKey: ["reports", "cash-flow-overview", companyId, appliedAsOf],
+    queryFn: () => getCashFlowOverview({ operating_company_id: companyId, as_of_date: appliedAsOf }),
     enabled: Boolean(companyId),
     retry: false,
   });
@@ -129,7 +131,7 @@ export function CashFlowOverviewPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `cash-flow-overview-${asOf}.csv`;
+    a.download = `cash-flow-overview-${appliedAsOf}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   }
@@ -161,21 +163,24 @@ export function CashFlowOverviewPage() {
 
       {query.isError ? <ReportBlockTPendingBanner error={query.error} onRetry={() => void query.refetch()} /> : null}
 
+      <div className="no-print flex flex-wrap items-end gap-3 rounded-sm border border-gray-200 bg-white p-3">
+        <label className="text-xs text-gray-600">
+          As-of date
+          <DatePicker
+            className="mt-1 h-9"
+            value={asOf}
+            onChange={(next) => setAsOf(next)}
+          />
+        </label>
+        <Button size="sm" className="h-9" onClick={() => setAppliedAsOf(asOf)} disabled={asOf === appliedAsOf}>
+          Apply
+        </Button>
+      </div>
+
       {query.isLoading ? <p className="text-sm text-gray-500">Loading…</p> : null}
 
       {query.data ? (
         <>
-          <div className="no-print">
-            <label className="text-xs text-gray-600">
-              As-of date
-              <DatePicker
-                className="mt-1 h-9"
-                value={asOf}
-                onChange={(next) => setAsOf(next)}
-              />
-            </label>
-          </div>
-
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
             <div className="rounded-sm border border-gray-200 bg-white p-3">
               <div className="text-[11px] font-semibold uppercase text-gray-500">Operating balance</div>
