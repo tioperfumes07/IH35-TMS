@@ -124,7 +124,6 @@
         "unit",
         "vendor",
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -137,8 +136,7 @@
         "driver",
         "unit",
         "picker_law",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -163,8 +161,7 @@
         "driver",
         "unit",
         "load",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -176,8 +173,7 @@
         "driver",
         "unit",
         "load",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -189,8 +185,7 @@
         "driver",
         "unit",
         "load",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -202,8 +197,7 @@
         "driver",
         "unit",
         "picker_law",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -215,8 +209,7 @@
         "driver",
         "unit",
         "picker_law",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -228,8 +221,7 @@
         "driver",
         "unit",
         "picker_law",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -274,8 +266,8 @@
         "vendor",
         "ap_bill",
         "connectivity",
-        "reverse_link",
-        "picker_law"
+        "picker_law",
+        "reverse_link"
       ]
     },
     {
@@ -300,8 +292,8 @@
         "unit",
         "ap_bill",
         "connectivity",
-        "reverse_link",
-        "qbo_chrome"
+        "qbo_chrome",
+        "reverse_link"
       ]
     },
     {
@@ -313,8 +305,7 @@
         "driver",
         "unit",
         "load",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -326,8 +317,7 @@
         "driver",
         "unit",
         "picker_law",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -337,7 +327,6 @@
       "route_hint": "/425c",
       "required": [
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -349,7 +338,6 @@
       "required": [
         "unit",
         "connectivity",
-        "reverse_link",
         "work_order"
       ]
     },
@@ -361,8 +349,7 @@
       "required": [
         "unit",
         "load",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -373,8 +360,7 @@
       "required": [
         "unit",
         "load",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -404,7 +390,7 @@
     {
       "id": "chrome.toolbar_search",
       "tab": "Chrome controls",
-      "sub": "List toolbar — Search (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar \u2014 Search (CLS-LIST-TOOLBAR)",
       "route_hint": "/compliance",
       "surface_kind": "toolbar",
       "required": [
@@ -415,7 +401,7 @@
     {
       "id": "chrome.toolbar_range",
       "tab": "Chrome controls",
-      "sub": "List toolbar — date/amount range (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar \u2014 date/amount range (CLS-LIST-TOOLBAR)",
       "route_hint": "/compliance",
       "surface_kind": "toolbar",
       "required": [
@@ -426,7 +412,7 @@
     {
       "id": "chrome.toolbar_gear",
       "tab": "Chrome controls",
-      "sub": "List toolbar — column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
+      "sub": "List toolbar \u2014 column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
       "route_hint": "/compliance",
       "surface_kind": "toolbar",
       "required": [
@@ -437,7 +423,7 @@
     {
       "id": "chrome.toolbar_filter",
       "tab": "Chrome controls",
-      "sub": "List toolbar — Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
+      "sub": "List toolbar \u2014 Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
       "route_hint": "/compliance",
       "surface_kind": "toolbar",
       "required": [
@@ -459,7 +445,97 @@
         "invoice",
         "bank"
       ],
-      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; §B9 link columns added."
+      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; \u00a7B9 link columns added."
+    },
+    "reverse_link_2026_08_13_secondary": {
+      "finding": "VERTICAL-REVERSE-LINK-SECONDARY-HONESTY",
+      "note": "Secondary module reverse_link Required on hub/chrome/nav leaves without reverse EntityLink drill \u2014 honesty drop. Built stays on money/ops modules already drained. Built restored for EntityLink surfaces: fleet.hos_board, form2290, property_tax.detail, property_tax.list, tab.hos_tracker.",
+      "drops": [
+        {
+          "id": "tab.filings",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "tab.overview",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "tab.hos_viewer",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "tab.violations",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "tab.hos_history",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "tab.required_docs",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "overview.summary_cards",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "overview.credentials_table",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "hop.safety_hos",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "hop.safety_dot",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "hop.form425c",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "hop.maint_compliance",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "hop.fuel_compliance",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "hop.reports_ifta",
+          "removed": [
+            "reverse_link"
+          ]
+        }
+      ]
     }
   }
 }

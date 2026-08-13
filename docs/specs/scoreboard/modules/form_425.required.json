@@ -122,7 +122,6 @@
         "gl_je",
         "liability",
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -134,7 +133,6 @@
       "required": [
         "liability",
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -146,7 +144,6 @@
       "required": [
         "liability",
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -159,7 +156,6 @@
         "gl_je",
         "liability",
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -171,7 +167,6 @@
       "required": [
         "liability",
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -184,7 +179,6 @@
         "gl_je",
         "liability",
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -196,7 +190,6 @@
       "required": [
         "liability",
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -207,7 +200,6 @@
       "route_hint": "/form-425c",
       "required": [
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -218,7 +210,6 @@
       "route_hint": "/safety/audit-425c",
       "required": [
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -230,7 +221,6 @@
       "required": [
         "unit",
         "connectivity",
-        "reverse_link",
         "work_order"
       ]
     },
@@ -242,8 +232,7 @@
       "required": [
         "driver",
         "unit",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -255,7 +244,6 @@
         "liability",
         "gl_je",
         "connectivity",
-        "reverse_link",
         "bank"
       ]
     },
@@ -318,6 +306,84 @@
         "bank"
       ],
       "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; \u00a7B9 link columns added."
+    },
+    "reverse_link_2026_08_13_secondary": {
+      "finding": "VERTICAL-REVERSE-LINK-SECONDARY-HONESTY",
+      "note": "Secondary module reverse_link Required on hub/chrome/nav leaves without reverse EntityLink drill \u2014 honesty drop. Built stays on money/ops modules already drained.",
+      "drops": [
+        {
+          "id": "home",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "tab.profile",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "tab.qb",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "tab.form",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "tab.merge",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "tab.history",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "exhibits",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "redirect.form425c",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "hop.safety_audit",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "hop.maint_compliance",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "hop.compliance",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "law.virtual_banks_excluded",
+          "removed": [
+            "reverse_link"
+          ]
+        }
+      ]
     }
   }
 }

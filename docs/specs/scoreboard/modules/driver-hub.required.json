@@ -122,7 +122,6 @@
         "unit",
         "load",
         "connectivity",
-        "reverse_link",
         "picker_law"
       ]
     },
@@ -136,7 +135,6 @@
         "unit",
         "load",
         "connectivity",
-        "reverse_link",
         "picker_law"
       ]
     },
@@ -150,7 +148,6 @@
         "unit",
         "load",
         "connectivity",
-        "reverse_link",
         "picker_law"
       ]
     },
@@ -164,7 +161,6 @@
         "unit",
         "load",
         "connectivity",
-        "reverse_link",
         "picker_law"
       ]
     },
@@ -178,7 +174,6 @@
         "unit",
         "load",
         "connectivity",
-        "reverse_link",
         "picker_law"
       ]
     },
@@ -192,7 +187,6 @@
         "unit",
         "load",
         "connectivity",
-        "reverse_link",
         "picker_law"
       ]
     },
@@ -206,7 +200,6 @@
         "unit",
         "load",
         "connectivity",
-        "reverse_link",
         "picker_law"
       ]
     },
@@ -220,7 +213,6 @@
         "unit",
         "load",
         "connectivity",
-        "reverse_link",
         "picker_law"
       ]
     },
@@ -239,7 +231,7 @@
     {
       "id": "chrome.toolbar_search",
       "tab": "Chrome controls",
-      "sub": "List toolbar — Search (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar \u2014 Search (CLS-LIST-TOOLBAR)",
       "route_hint": "/driver-hub",
       "surface_kind": "toolbar",
       "required": [
@@ -250,7 +242,7 @@
     {
       "id": "chrome.toolbar_range",
       "tab": "Chrome controls",
-      "sub": "List toolbar — date/amount range (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar \u2014 date/amount range (CLS-LIST-TOOLBAR)",
       "route_hint": "/driver-hub",
       "surface_kind": "toolbar",
       "required": [
@@ -261,7 +253,7 @@
     {
       "id": "chrome.toolbar_gear",
       "tab": "Chrome controls",
-      "sub": "List toolbar — column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
+      "sub": "List toolbar \u2014 column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
       "route_hint": "/driver-hub",
       "surface_kind": "toolbar",
       "required": [
@@ -272,7 +264,7 @@
     {
       "id": "chrome.toolbar_filter",
       "tab": "Chrome controls",
-      "sub": "List toolbar — Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
+      "sub": "List toolbar \u2014 Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
       "route_hint": "/driver-hub",
       "surface_kind": "toolbar",
       "required": [
@@ -294,7 +286,61 @@
         "invoice",
         "bank"
       ],
-      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; §B9 link columns added."
+      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; \u00a7B9 link columns added."
+    },
+    "reverse_link_2026_08_13_secondary": {
+      "finding": "VERTICAL-REVERSE-LINK-SECONDARY-HONESTY",
+      "note": "Secondary module reverse_link Required on hub/chrome/nav leaves without reverse EntityLink drill \u2014 honesty drop. Built stays on money/ops modules already drained.",
+      "drops": [
+        {
+          "id": "home",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "tab.overview",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "tab.scheduler",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "tab.leave_requests",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "reporting",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "inbox",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "hop.drivers",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "hop.safety_scheduler",
+          "removed": [
+            "reverse_link"
+          ]
+        }
+      ]
     }
   }
 }

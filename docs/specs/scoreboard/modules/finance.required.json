@@ -123,7 +123,6 @@
         "vendor",
         "gl_je",
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -137,7 +136,6 @@
         "vendor",
         "gl_je",
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -151,7 +149,6 @@
         "vendor",
         "liability",
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -166,7 +163,6 @@
         "gl_je",
         "liability",
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -181,7 +177,6 @@
         "gl_je",
         "liability",
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -196,7 +191,6 @@
         "gl_je",
         "liability",
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -211,7 +205,6 @@
         "gl_je",
         "liability",
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -226,9 +219,9 @@
         "gl_je",
         "liability",
         "connectivity",
-        "reverse_link",
         "qbo_chrome",
-        "invoice"
+        "invoice",
+        "reverse_link"
       ]
     },
     {
@@ -241,7 +234,6 @@
         "vendor",
         "liability",
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -255,7 +247,6 @@
         "vendor",
         "liability",
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -270,7 +261,6 @@
         "gl_je",
         "liability",
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -282,7 +272,6 @@
       "required": [
         "liability",
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -294,7 +283,6 @@
       "required": [
         "liability",
         "connectivity",
-        "reverse_link",
         "picker_law"
       ]
     },
@@ -308,8 +296,7 @@
         "vendor",
         "gl_je",
         "picker_law",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -319,7 +306,6 @@
       "route_hint": "/accounting",
       "required": [
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -330,7 +316,6 @@
       "route_hint": "/cash-flow",
       "required": [
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -341,7 +326,6 @@
       "route_hint": "/reports/profit-loss",
       "required": [
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -354,7 +338,6 @@
       "surface_path": "pages/finance/LoanWizardPage.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "picker_law"
       ]
     },
@@ -417,6 +400,114 @@
         "bank"
       ],
       "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; \u00a7B9 link columns added."
+    },
+    "reverse_link_2026_08_13_secondary": {
+      "finding": "VERTICAL-REVERSE-LINK-SECONDARY-HONESTY",
+      "note": "Secondary module reverse_link Required on hub/chrome/nav leaves without reverse EntityLink drill \u2014 honesty drop. Built stays on money/ops modules already drained. Built restored for EntityLink surfaces: nav.ar_ap_aging.",
+      "drops": [
+        {
+          "id": "hub",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "hub.alias",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "nav.overview",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "nav.statements",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "statements.pl",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "statements.bs",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "statements.tb",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "nav.projections",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "nav.scenarios",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "nav.break_even",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "nav.calculator",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "nav.amortization",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "nav.loan_wizard",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "hop.accounting",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "hop.cash_flow",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "hop.reports",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "finance.wizard.loan_wizard_page",
+          "removed": [
+            "reverse_link"
+          ]
+        }
+      ]
     }
   }
 }

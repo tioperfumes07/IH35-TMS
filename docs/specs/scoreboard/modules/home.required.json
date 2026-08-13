@@ -121,7 +121,6 @@
       "route_hint": "/",
       "required": [
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -132,7 +131,6 @@
       "route_hint": "/home",
       "required": [
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -143,7 +141,6 @@
       "route_hint": "/home/ops",
       "required": [
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -154,7 +151,6 @@
       "route_hint": "/home",
       "required": [
         "connectivity",
-        "reverse_link",
         "qbo_chrome",
         "load",
         "driver"
@@ -170,8 +166,7 @@
         "driver",
         "unit",
         "load",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -185,7 +180,6 @@
         "ap_bill",
         "expense",
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -197,8 +191,7 @@
       "required": [
         "driver",
         "unit",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -208,8 +201,7 @@
       "route_hint": "/home",
       "required": [
         "driver",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -219,7 +211,6 @@
       "route_hint": "/home",
       "required": [
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -230,8 +221,7 @@
       "route_hint": "/home",
       "required": [
         "qbo_chrome",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -241,7 +231,6 @@
       "route_hint": "/home",
       "required": [
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -255,8 +244,7 @@
         "driver",
         "unit",
         "load",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -266,7 +254,6 @@
       "route_hint": "/home",
       "required": [
         "connectivity",
-        "reverse_link",
         "qbo_chrome",
         "invoice"
       ]
@@ -278,8 +265,7 @@
       "route_hint": "/home",
       "required": [
         "unit",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -291,7 +277,6 @@
         "unit",
         "vendor",
         "connectivity",
-        "reverse_link",
         "work_order"
       ]
     },
@@ -303,8 +288,7 @@
       "required": [
         "customer",
         "ap_bill",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -314,7 +298,6 @@
       "route_hint": "/banking",
       "required": [
         "connectivity",
-        "reverse_link",
         "qbo_chrome",
         "bank"
       ]
@@ -327,8 +310,7 @@
       "required": [
         "unit",
         "load",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -339,8 +321,7 @@
       "required": [
         "driver",
         "unit",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -350,8 +331,7 @@
       "route_hint": "/drivers",
       "required": [
         "driver",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -364,8 +344,7 @@
         "driver",
         "unit",
         "load",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -375,8 +354,7 @@
       "route_hint": "/lists",
       "required": [
         "picker_law",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -386,8 +364,7 @@
       "route_hint": "/driver-hub",
       "required": [
         "driver",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -408,7 +385,6 @@
       "route_hint": "/program",
       "required": [
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -543,6 +519,156 @@
         "bank"
       ],
       "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; \u00a7B9 link columns added."
+    },
+    "reverse_link_2026_08_13_secondary": {
+      "finding": "VERTICAL-REVERSE-LINK-SECONDARY-HONESTY",
+      "note": "Secondary module reverse_link Required on hub/chrome/nav leaves without reverse EntityLink drill \u2014 honesty drop. Built stays on money/ops modules already drained. Built restored for EntityLink surfaces: hub.driver_reporting.",
+      "drops": [
+        {
+          "id": "route.root",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "route.home",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "route.home_ops",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "role.owner",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "role.dispatcher",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "role.accountant",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "role.safety",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "role.manager",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "role.default",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "surface.qbo_style",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "surface.kpi_cards",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "surface.attention_list",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "surface.quick_actions",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "surface.fleet_restore",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "jump.maintenance",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "jump.accounting",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "jump.banking",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "jump.fuel",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "jump.safety",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "jump.drivers",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "jump.dispatch",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "jump.lists",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "hub.driver",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "hop.program",
+          "removed": [
+            "reverse_link"
+          ]
+        }
+      ]
     }
   }
 }
