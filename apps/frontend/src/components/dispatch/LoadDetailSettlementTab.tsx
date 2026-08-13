@@ -112,8 +112,14 @@ export function LoadDetailSettlementTab({ loadId, operatingCompanyId, currencyCo
         <div>
           <div className="text-xs text-gray-500">Settlement</div>
           <div className="font-semibold text-gray-900"><EntityLink kind="settlement" id={settlement.id} label={entityLabel(settlement.display_id, settlement.id, "Record")} /></div>
-          {settlement.driver_name ? (
-            <div className="text-xs text-gray-600">{entityLabel(settlement.driver_name, settlement.driver_id, "Driver")}</div>
+          {settlement.driver_id ? (
+            <div className="text-xs text-gray-600">
+              <EntityLink
+                kind="driver"
+                id={settlement.driver_id}
+                label={entityLabel(settlement.driver_name, settlement.driver_id, "Driver")}
+              />
+            </div>
           ) : null}
         </div>
         <div className="flex flex-col items-end gap-1">

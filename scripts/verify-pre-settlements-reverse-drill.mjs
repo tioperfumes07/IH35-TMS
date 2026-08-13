@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /**
- * @matrix-built {"modules":["settlements","accounting"],"cols":["settlement","driver","load","connectivity","reverse_link","liability"],"leafRe":"^(settlements\\.(list|detail|disputes)|settlement_close|pre_settlements|settlements\\.panel\\.(pre_settlements|pay_run_close)|settlements\\.drawer\\.(advance_detail|liability_detail)|settlements\\.modal\\.(hold_deduction|liability_breakdown)|escrow|owner_approval)$","task":"WAVE-A-settlement-column","vertical":"column-wave"}
+ * @matrix-built {"modules":["settlements","accounting","dispatch"],"cols":["settlement","driver","load","connectivity","reverse_link","liability"],"leafRe":"^(settlements\\.(list|detail|disputes)|settlement_close|pre_settlements|settlements\\.panel\\.(pre_settlements|pay_run_close)|settlements\\.drawer\\.(advance_detail|liability_detail)|settlements\\.modal\\.(hold_deduction|liability_breakdown)|escrow|owner_approval|secondary\\.pre_settlements|dispatch\\.panel\\.pre_settlement|load\\.drawer\\.(settlement|pre_settlement))$","task":"WAVE-A-settlement-column","vertical":"column-wave"}
  * Rule-17: pre-settlements reverse drill-through (Law §9).
- * Accounting + Settlements surfaces must EntityLink canonical settlement rows (Wave A `settlement`).
+ * Accounting + Settlements + Dispatch surfaces must EntityLink canonical settlement rows (Wave A `settlement`).
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -94,6 +94,21 @@ function assertPreSettlementsReverse() {
   }
   if (!/kind="settlement"/.test(liabilityModal) || !/settlementId/.test(liabilityModal)) {
     errors.push("LiabilityBreakdownModal: must EntityLink settlementId from settlement detail");
+  }
+  const dispatchPrePanel = read("apps/frontend/src/components/dispatch/PreSettlementPanel.tsx");
+  const loadSettlementTab = read("apps/frontend/src/components/dispatch/LoadDetailSettlementTab.tsx");
+  const dispatchPage = read("apps/frontend/src/pages/Dispatch.tsx");
+  if (!/kind="settlement"/.test(dispatchPrePanel) || !/settlement\.id/.test(dispatchPrePanel)) {
+    errors.push("dispatch PreSettlementPanel: must EntityLink settlement.id");
+  }
+  if (!/kind="settlement"/.test(loadSettlementTab) || !/settlement\.id/.test(loadSettlementTab)) {
+    errors.push("LoadDetailSettlementTab: must EntityLink settlement.id");
+  }
+  if (!/kind="driver"/.test(loadSettlementTab) || !/settlement\.driver_id/.test(loadSettlementTab)) {
+    errors.push("LoadDetailSettlementTab: must EntityLink settlement.driver_id");
+  }
+  if (!/PreSettlementsPanel/.test(dispatchPage) || !/subTab === "pre_settlements"/.test(dispatchPage)) {
+    errors.push("Dispatch.tsx: pre_settlements subTab must mount PreSettlementsPanel");
   }
   return errors;
 }
