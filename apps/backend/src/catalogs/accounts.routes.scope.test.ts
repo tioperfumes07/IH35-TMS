@@ -36,6 +36,11 @@ describe("catalogs.accounts read routes are entity-scoped (A1 / af1 RLS)", () =>
     expect(handler).toContain('filters.push("is_postable = true")');
   });
 
+  it("GET list casts its explicit entity predicate for pooled Postgres connections", () => {
+    const handler = sliceBetween(SRC, 'app.get("/api/v1/catalogs/accounts"', 'app.post("/api/v1/catalogs/accounts"');
+    expect(handler).toMatch(/operating_company_id = \$\$\{values\.length \+ 1\}::uuid/);
+  });
+
   it("GET /api/v1/catalogs/accounts/:id reads under withScopedCompany", () => {
     const handler = sliceBetween(SRC, 'app.get("/api/v1/catalogs/accounts/:id"', 'app.patch("/api/v1/catalogs/accounts/:id"');
     expect(handler).toContain("withScopedCompany");

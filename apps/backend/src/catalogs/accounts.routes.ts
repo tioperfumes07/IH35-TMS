@@ -198,7 +198,7 @@ export async function registerAccountRoutes(app: FastifyInstance) {
       // ENTITY PREDICATE (CLS-JOIN-ENTITY-UNSCOPED): RLS alone is not a backstop here — the af1 policy
       // admits org.user_accessible_company_ids(), which returns EVERY active company for an Owner role.
       // Scope explicitly to the resolved entity rather than relying on RLS alone.
-      filters.push(`operating_company_id = $${values.length + 1}`);
+      filters.push(`operating_company_id = $${values.length + 1}::uuid`);
       values.push(operatingCompanyId);
       const whereClause = `WHERE ${filters.join(" AND ")}`;
 
