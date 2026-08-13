@@ -562,8 +562,7 @@
       "sub": "Accounting reports hub",
       "route_hint": "/accounting/reports",
       "required": [
-        "connectivity",
-        "gl_je"
+        "connectivity"
       ]
     },
     {
@@ -756,8 +755,7 @@
         "connectivity",
         "reverse_link",
         "picker_law",
-        "qbo_chrome",
-        "gl_je"
+        "qbo_chrome"
       ]
     },
     {
@@ -771,8 +769,7 @@
         "connectivity",
         "reverse_link",
         "picker_law",
-        "qbo_chrome",
-        "gl_je"
+        "qbo_chrome"
       ]
     },
     {
@@ -786,8 +783,7 @@
         "connectivity",
         "reverse_link",
         "picker_law",
-        "qbo_chrome",
-        "gl_je"
+        "qbo_chrome"
       ]
     },
     {
@@ -815,7 +811,6 @@
       "required": [
         "connectivity",
         "reverse_link",
-        "gl_je",
         "qbo_chrome"
       ]
     },
@@ -829,7 +824,6 @@
       "required": [
         "connectivity",
         "reverse_link",
-        "gl_je",
         "qbo_chrome"
       ]
     },
@@ -844,7 +838,6 @@
         "connectivity",
         "reverse_link",
         "picker_law",
-        "gl_je",
         "qbo_chrome"
       ]
     },
@@ -948,7 +941,6 @@
       "required": [
         "connectivity",
         "reverse_link",
-        "gl_je",
         "qbo_chrome"
       ]
     },
@@ -1008,7 +1000,6 @@
         "connectivity",
         "reverse_link",
         "vendor",
-        "gl_je",
         "qbo_chrome"
       ]
     },

@@ -253,6 +253,19 @@ const BILL_PAYMENT_JOURNAL_ENTRY_ID_SQL = `
   )
 `;
 
+/** ACCT-F5045 — bill list/panel JE drill (same scalar as getBillDetail; no new GL math). */
+const BILL_JOURNAL_ENTRY_ID_SQL = `
+  (
+    SELECT jep.journal_entry_uuid::text
+    FROM accounting.journal_entry_postings jep
+    WHERE jep.operating_company_id = b.operating_company_id
+      AND jep.source_transaction_type = 'bill'
+      AND jep.source_transaction_id = b.id::text
+    ORDER BY jep.created_at ASC
+    LIMIT 1
+  )
+`;
+
 // AP_BILL column-wave: this query only ever checked the manual-reconciliation reverse hop
 // (bt.matched_bill_payment_id, set by accounting/bank-recon's accept flow). A bill payment created
 // by the bank-split flow (banking/bank-transaction-splits.service.ts) instead stamps
@@ -698,7 +711,8 @@ export async function listBillsByVendor(
     values.push(options.limit, options.offset);
     const res = await client.query<BillRow>(
       `
-        SELECT b.*, ${BILL_IS_RECONCILED_SQL} AS is_reconciled
+        SELECT b.*, ${BILL_IS_RECONCILED_SQL} AS is_reconciled,
+               ${BILL_JOURNAL_ENTRY_ID_SQL} AS journal_entry_id
         FROM accounting.bills b
         WHERE b.operating_company_id = $1::uuid AND ${where.join(" AND ")}
         ORDER BY b.bill_date DESC, b.created_at DESC
@@ -764,7 +778,8 @@ export async function listAllBillsForCompany(
     values.push(options.limit, options.offset);
     const res = await client.query<BillRow>(
       `
-        SELECT b.*, ${BILL_IS_RECONCILED_SQL} AS is_reconciled
+        SELECT b.*, ${BILL_IS_RECONCILED_SQL} AS is_reconciled,
+               ${BILL_JOURNAL_ENTRY_ID_SQL} AS journal_entry_id
         FROM accounting.bills b
         WHERE b.operating_company_id = $1::uuid AND ${where.join(" AND ")}
         ORDER BY b.bill_date DESC, b.created_at DESC

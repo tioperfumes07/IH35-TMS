@@ -22,3 +22,6 @@
 2026-08-13T09:10CT | Cursor | ACCT-F5043 shipping | NEXT=rank6 reverse
 2026-08-13T09:11CT | Cursor | #6426 F5043 done | NEXT=rank6 reverse
 2026-08-13T10:02CT | Cursor | ACCT-F5044 shipping load↔expense number | NEXT=vertical all-28
+2026-08-13T10:05CT | Cursor | #6433 F5044 done | NEXT=vertical all-28
+2026-08-13T10:06CT | Cursor | #6433 F5044 Neon APPLIED | load_null_number=0 links=9 numbered_tms=9 | NEXT=vertical gl_je Wave A-C accounting + all-28
+2026-08-13T10:09CT | Cursor | ACCT-F5045 shipping gl_je P10 Wave A-C=100% | BillDetailPanel JE + honest Required drops | NEXT=all-28 column extend
