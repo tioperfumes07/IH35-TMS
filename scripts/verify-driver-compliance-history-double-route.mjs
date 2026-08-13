@@ -1,0 +1,60 @@
+#!/usr/bin/env node
+/** @matrix-built modules=safety,drivers,compliance cols=driver,connectivity,reverse_link,picker_law */
+import fs from "node:fs";
+
+const LABEL = "verify-driver-compliance-history-double-route";
+const files = {
+  background: "apps/frontend/src/components/safety/BackgroundChecksSection.tsx",
+  medical: "apps/frontend/src/components/safety/MedicalCardsHistorySection.tsx",
+  backgroundRoute: "apps/backend/src/safety/background-checks.routes.ts",
+  medicalRoute: "apps/backend/src/safety/medical-cards.routes.ts",
+  detail: "apps/frontend/src/pages/DriverDetail.tsx",
+  profile: "apps/frontend/src/pages/drivers/DriverProfilePage.tsx",
+};
+const source = Object.fromEntries(Object.entries(files).map(([key, file]) => [key, fs.readFileSync(file, "utf8")]));
+
+function audit(s) {
+  const failures = [];
+  if (!/DriverPickerWithCreate/.test(s.background) || !/driver_id: selectedDriverId/.test(s.background)) failures.push("background-check creator driver FK missing");
+  if (!/DriverPickerWithCreate/.test(s.medical) || !/driver_id: selectedDriverId/.test(s.medical)) failures.push("medical-card creator driver FK missing");
+  if (!/bc\.driver_id = \$\$\{values\.length\}::uuid/.test(s.backgroundRoute) || !/d\.operating_company_id = bc\.operating_company_id/.test(s.backgroundRoute)) failures.push("background-check exact scoped reverse missing");
+  if (!/mc\.driver_id = \$\$\{values\.length\}::uuid/.test(s.medicalRoute) || !/d\.operating_company_id = mc\.operating_company_id/.test(s.medicalRoute)) failures.push("medical-card exact scoped reverse missing");
+  if (!/listSafetyBackgroundChecks\(operatingCompanyId, driverId\)/.test(s.background) || !/query\.isError/.test(s.background) || !/No background checks found/.test(s.background)) failures.push("background-check reverse states missing");
+  if (!/listSafetyMedicalCards\(operatingCompanyId, driverId\)/.test(s.medical) || !/query\.isError/.test(s.medical) || !/No medical cards found/.test(s.medical)) failures.push("medical-card reverse states missing");
+  for (const [route, text] of [["detail", s.detail], ["profile", s.profile]]) {
+    if (!/MedicalCardsHistorySection[\s\S]{0,140}driverId=\{id\}/.test(text)) failures.push(`${route} medical-card mount missing`);
+    if (!/BackgroundChecksSection[\s\S]{0,140}driverId=\{id\}/.test(text)) failures.push(`${route} background-check mount missing`);
+  }
+  return failures;
+}
+
+if (process.argv.includes("--selftest")) {
+  const mutations = [
+    ["background-picker", "background", /DriverPickerWithCreate/g, "MissingDriverPicker"],
+    ["background-payload", "background", /driver_id: selectedDriverId/, "driver_id: ''"],
+    ["medical-picker", "medical", /DriverPickerWithCreate/g, "MissingDriverPicker"],
+    ["medical-payload", "medical", /driver_id: selectedDriverId/, "driver_id: ''"],
+    ["background-filter", "backgroundRoute", /bc\.driver_id = \$\$\{values\.length\}::uuid/, "TRUE"],
+    ["medical-filter", "medicalRoute", /mc\.driver_id = \$\$\{values\.length\}::uuid/, "TRUE"],
+    ["detail-medical", "detail", /MedicalCardsHistorySection/g, "MissingMedicalCards"],
+    ["detail-background", "detail", /BackgroundChecksSection/g, "MissingBackgroundChecks"],
+    ["profile-medical", "profile", /MedicalCardsHistorySection/g, "MissingMedicalCards"],
+    ["profile-background", "profile", /BackgroundChecksSection/g, "MissingBackgroundChecks"],
+  ];
+  for (const [name, key, pattern, replacement] of mutations) {
+    const candidate = { ...source, [key]: source[key].replace(pattern, replacement) };
+    if (candidate[key] === source[key] || audit(candidate).length === 0) {
+      console.error(`${LABEL} SELFTEST FAIL — ${name}`);
+      process.exit(1);
+    }
+  }
+  console.log(`${LABEL} SELFTEST PASS — ${mutations.length} mutations detected`);
+  process.exit(0);
+}
+
+const failures = audit(source);
+if (failures.length) {
+  console.error(`${LABEL} FAIL\n- ${failures.join("\n- ")}`);
+  process.exit(1);
+}
+console.log(`${LABEL} PASS — driver compliance creators/FKs→exact scoped reverse→both canonical driver routes`);
