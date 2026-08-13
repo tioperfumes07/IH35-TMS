@@ -2,7 +2,7 @@
   "module": "reports",
   "entity_default": "USMCA",
   "source": {
-    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md — Module 13 REPORTS",
+    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md \u2014 Module 13 REPORTS",
     "nav": "apps/frontend/src/pages/reports/ReportsSubNav.tsx REPORTS_SUB_NAV_ITEMS",
     "flyout": "apps/frontend/src/components/reports/CategoryHoverNav.tsx REPORT_CATEGORY_FLYOUT_ITEMS",
     "dedicated": "apps/frontend/src/components/reports/phase6ReportLinks.ts PHASE_6_REPORT_HREFS",
@@ -128,7 +128,6 @@
       "route_hint": "/reports",
       "required": [
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -139,7 +138,6 @@
       "route_hint": "/reports/hub",
       "required": [
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -150,7 +148,6 @@
       "route_hint": "/reports",
       "required": [
         "connectivity",
-        "reverse_link",
         "qbo_chrome",
         "picker_law"
       ]
@@ -162,7 +159,6 @@
       "route_hint": "/reports",
       "required": [
         "connectivity",
-        "reverse_link",
         "qbo_chrome",
         "load",
         "customer",
@@ -172,11 +168,10 @@
     {
       "id": "subnav.reports",
       "tab": "Sub-nav",
-      "sub": "Reports · home link",
+      "sub": "Reports \u00b7 home link",
       "route_hint": "/reports",
       "required": [
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -187,7 +182,6 @@
       "route_hint": "/reports/hub",
       "required": [
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -198,7 +192,6 @@
       "route_hint": "/reports/hub",
       "required": [
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -213,7 +206,6 @@
         "unit",
         "customer",
         "connectivity",
-        "reverse_link",
         "qbo_chrome",
         "load"
       ]
@@ -225,7 +217,6 @@
       "route_hint": "/reports/scheduled-custom",
       "required": [
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -235,8 +226,7 @@
       "sub": "Audit reports cluster",
       "route_hint": "/reports/audit/activity-by-user",
       "required": [
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -246,7 +236,6 @@
       "route_hint": "/reports",
       "required": [
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -257,7 +246,6 @@
       "route_hint": "/reports",
       "required": [
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -268,7 +256,6 @@
       "route_hint": "/reports",
       "required": [
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -279,7 +266,6 @@
       "route_hint": "/reports",
       "required": [
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -290,7 +276,6 @@
       "route_hint": "/reports",
       "required": [
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -301,7 +286,6 @@
       "route_hint": "/reports",
       "required": [
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -312,7 +296,6 @@
       "route_hint": "/reports",
       "required": [
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -323,7 +306,6 @@
       "route_hint": "/reports",
       "required": [
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -334,7 +316,6 @@
       "route_hint": "/reports",
       "required": [
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -345,7 +326,6 @@
       "route_hint": "/reports",
       "required": [
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -356,7 +336,6 @@
       "route_hint": "/reports/categories/ops-dispatch",
       "required": [
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -367,7 +346,6 @@
       "route_hint": "/reports/categories/driver-perf",
       "required": [
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -378,7 +356,6 @@
       "route_hint": "/reports/categories/equipment",
       "required": [
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -389,7 +366,6 @@
       "route_hint": "/reports/categories/safety",
       "required": [
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -400,7 +376,6 @@
       "route_hint": "/reports/categories/customers",
       "required": [
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -411,7 +386,6 @@
       "route_hint": "/reports/categories/vendors",
       "required": [
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -422,7 +396,6 @@
       "route_hint": "/reports/categories/accounting",
       "required": [
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -433,7 +406,6 @@
       "route_hint": "/reports/categories/tax-reg",
       "required": [
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -444,7 +416,6 @@
       "route_hint": "/reports/categories/multi-company",
       "required": [
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -475,7 +446,6 @@
         "unit",
         "customer",
         "connectivity",
-        "reverse_link",
         "qbo_chrome",
         "expense"
       ]
@@ -491,7 +461,6 @@
         "unit",
         "customer",
         "connectivity",
-        "reverse_link",
         "qbo_chrome",
         "expense"
       ]
@@ -543,7 +512,6 @@
         "ap_bill",
         "expense",
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -559,7 +527,6 @@
         "ap_bill",
         "expense",
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -575,7 +542,6 @@
         "ap_bill",
         "expense",
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -591,7 +557,6 @@
         "ap_bill",
         "expense",
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -607,7 +572,6 @@
         "ap_bill",
         "expense",
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -639,7 +603,6 @@
         "ap_bill",
         "expense",
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -654,7 +617,6 @@
         "ap_bill",
         "expense",
         "connectivity",
-        "reverse_link",
         "qbo_chrome",
         "driver",
         "liability",
@@ -722,7 +684,6 @@
         "unit",
         "customer",
         "connectivity",
-        "reverse_link",
         "qbo_chrome",
         "load"
       ]
@@ -738,7 +699,6 @@
         "unit",
         "customer",
         "connectivity",
-        "reverse_link",
         "qbo_chrome",
         "load",
         "driver"
@@ -789,7 +749,6 @@
         "unit",
         "customer",
         "connectivity",
-        "reverse_link",
         "qbo_chrome",
         "unit",
         "vendor",
@@ -855,7 +814,6 @@
         "unit",
         "customer",
         "connectivity",
-        "reverse_link",
         "qbo_chrome",
         "load"
       ]
@@ -871,7 +829,6 @@
         "unit",
         "customer",
         "connectivity",
-        "reverse_link",
         "qbo_chrome",
         "load",
         "unit"
@@ -884,7 +841,6 @@
       "route_hint": "/reports/scheduled",
       "required": [
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -895,13 +851,12 @@
       "route_hint": "/reports/scheduled-custom",
       "required": [
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
     {
       "id": "runner.profit_truck_mtd",
-      "tab": "Profit per truck · MTD",
+      "tab": "Profit per truck \u00b7 MTD",
       "sub": "Runner MTD margin",
       "route_hint": "/reports/run/profit-truck-mtd",
       "required": [
@@ -910,7 +865,6 @@
         "unit",
         "customer",
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -925,7 +879,6 @@
         "unit",
         "customer",
         "connectivity",
-        "reverse_link",
         "qbo_chrome",
         "load"
       ]
@@ -941,7 +894,6 @@
         "unit",
         "customer",
         "connectivity",
-        "reverse_link",
         "qbo_chrome",
         "load",
         "claim",
@@ -959,7 +911,6 @@
         "ap_bill",
         "expense",
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -974,7 +925,6 @@
         "unit",
         "customer",
         "connectivity",
-        "reverse_link",
         "qbo_chrome",
         "driver",
         "settlement"
@@ -991,7 +941,6 @@
         "unit",
         "customer",
         "connectivity",
-        "reverse_link",
         "qbo_chrome",
         "driver",
         "settlement"
@@ -1008,7 +957,6 @@
         "unit",
         "customer",
         "connectivity",
-        "reverse_link",
         "qbo_chrome",
         "unit"
       ]
@@ -1024,7 +972,6 @@
         "unit",
         "customer",
         "connectivity",
-        "reverse_link",
         "qbo_chrome",
         "expense"
       ]
@@ -1040,7 +987,6 @@
         "unit",
         "customer",
         "connectivity",
-        "reverse_link",
         "qbo_chrome",
         "expense"
       ]
@@ -1056,7 +1002,6 @@
         "unit",
         "customer",
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -1071,7 +1016,6 @@
         "unit",
         "customer",
         "connectivity",
-        "reverse_link",
         "qbo_chrome",
         "driver"
       ]
@@ -1087,7 +1031,6 @@
         "unit",
         "customer",
         "connectivity",
-        "reverse_link",
         "qbo_chrome",
         "expense"
       ]
@@ -1103,7 +1046,6 @@
         "unit",
         "customer",
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -1114,7 +1056,6 @@
       "route_hint": "/reports/run/saved-owner-pack",
       "required": [
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -1125,7 +1066,6 @@
       "route_hint": "/reports/run/saved-quarter-close",
       "required": [
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -1140,7 +1080,6 @@
         "unit",
         "customer",
         "connectivity",
-        "reverse_link",
         "qbo_chrome",
         "unit",
         "work_order"
@@ -1152,8 +1091,7 @@
       "sub": "Activity by user",
       "route_hint": "/reports/audit/activity-by-user",
       "required": [
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -1162,8 +1100,7 @@
       "sub": "Activity by module",
       "route_hint": "/reports/audit/activity-by-module",
       "required": [
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -1173,8 +1110,7 @@
       "route_hint": "/reports/audit/financial-change-log",
       "required": [
         "gl_je",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -1184,7 +1120,6 @@
       "route_hint": "/reports/audit/maintenance-decision-log",
       "required": [
         "connectivity",
-        "reverse_link",
         "work_order"
       ]
     },
@@ -1195,8 +1130,7 @@
       "route_hint": "/reports/audit/deduction-trail",
       "required": [
         "gl_je",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -1206,8 +1140,7 @@
       "route_hint": "/reports/audit/void-reversal",
       "required": [
         "gl_je",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -1217,8 +1150,7 @@
       "route_hint": "/reports/audit/period-close-history",
       "required": [
         "gl_je",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -1229,8 +1161,7 @@
       "surface_kind": "modal",
       "surface_path": "components/reports/LaneDetailModal.tsx",
       "required": [
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -1241,8 +1172,7 @@
       "surface_kind": "modal",
       "surface_path": "pages/reports/ScheduleReportModal.tsx",
       "required": [
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -1253,8 +1183,7 @@
       "surface_kind": "panel",
       "surface_path": "components/reports/ReportFlyoutPanel.tsx",
       "required": [
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -1265,8 +1194,7 @@
       "surface_kind": "panel",
       "surface_path": "pages/reports/ScheduledReportsPanel.tsx",
       "required": [
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -1294,7 +1222,7 @@
     {
       "id": "chrome.toolbar_search",
       "tab": "Chrome controls",
-      "sub": "List toolbar — Search (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar \u2014 Search (CLS-LIST-TOOLBAR)",
       "route_hint": "/reports",
       "surface_kind": "toolbar",
       "required": [
@@ -1305,7 +1233,7 @@
     {
       "id": "chrome.toolbar_range",
       "tab": "Chrome controls",
-      "sub": "List toolbar — date/amount range (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar \u2014 date/amount range (CLS-LIST-TOOLBAR)",
       "route_hint": "/reports",
       "surface_kind": "toolbar",
       "required": [
@@ -1316,7 +1244,7 @@
     {
       "id": "chrome.toolbar_gear",
       "tab": "Chrome controls",
-      "sub": "List toolbar — column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
+      "sub": "List toolbar \u2014 column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
       "route_hint": "/reports",
       "surface_kind": "toolbar",
       "required": [
@@ -1327,7 +1255,7 @@
     {
       "id": "chrome.toolbar_filter",
       "tab": "Chrome controls",
-      "sub": "List toolbar — Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
+      "sub": "List toolbar \u2014 Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
       "route_hint": "/reports",
       "surface_kind": "toolbar",
       "required": [
@@ -1349,7 +1277,445 @@
         "invoice",
         "bank"
       ],
-      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; §B9 link columns added."
+      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; \u00a7B9 link columns added."
+    },
+    "reverse_link_2026_08_13_reports": {
+      "finding": "VERTICAL-REVERSE-LINK-REPORTS-BATCH",
+      "note": "Home/subnav/category chrome + reports without EntityLink inflated reverse_link. Built EntityLink report pages.",
+      "drops": [
+        {
+          "id": "home.reports",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "home.hub",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "home.custom_builder",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "home.kpi_strip",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "subnav.reports",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "subnav.category_hub",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "subnav.run_report",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "subnav.cancellations",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "subnav.scheduled_custom",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "subnav.audit",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "filter.all",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "filter.operations",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "filter.financial",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "filter.drivers",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "filter.fleet",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "filter.fuel",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "filter.safety",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "filter.compliance",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "filter.automation",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "filter.saved",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "cat.ops_dispatch",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "cat.driver_perf",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "cat.equipment",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "cat.safety",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "cat.customers",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "cat.vendors",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "cat.accounting",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "cat.tax_reg",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "cat.multi_company",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "report.ifta",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "report.ifta_preparer",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "report.trial_balance",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "report.profit_loss",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "report.balance_sheet",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "report.cash_flow_statement",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "report.cash_flow",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "report.cash_flow_overview",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "report.settlement_summary",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "report.cancellations",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "report.late_arrival",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "report.maintenance_cost_per_unit",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "report.booking_gap",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "report.deadhead",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "report.scheduled",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "report.scheduled_custom",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "runner.profit_truck_mtd",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "runner.dispatch_board",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "runner.detention_claims",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "runner.cash_position",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "runner.driver_pay_history",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "runner.driver_settlement",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "runner.fleet_utilization",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "runner.fuel_savings",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "runner.fuel_price_variance",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "runner.csa_fleet",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "runner.hos_violations",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "runner.ifta_quarterly",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "runner.dot_audit_pack",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "runner.saved_owner_pack",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "runner.saved_quarter_close",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "runner.maint_cost_unit",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "audit.activity_by_user",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "audit.activity_by_module",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "audit.financial_change_log",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "audit.maintenance_decision_log",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "audit.deduction_trail",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "audit.void_reversal",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "audit.period_close_history",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "reports.modal.lane_detail",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "reports.modal.schedule_report",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "reports.panel.report_flyout",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "reports.panel.scheduled_reports",
+          "removed": [
+            "reverse_link"
+          ]
+        }
+      ]
     }
   }
 }
