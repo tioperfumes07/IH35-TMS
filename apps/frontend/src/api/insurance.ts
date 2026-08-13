@@ -71,6 +71,7 @@ export type InsurancePolicyUnit = {
   asset_id: string;
   /** Resolved mdata.units.id for fleet drill-through (from assets registry). */
   unit_id?: string | null;
+  unit_number?: string | null;
   insured_value_cents: number;
   created_at: string;
   updated_at: string;

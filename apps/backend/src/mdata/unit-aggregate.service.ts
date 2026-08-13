@@ -98,6 +98,7 @@ async function lookupPolicyMonthlyPremiumCents(
 }
 
 type LinkedPolicyRow = {
+  policy_id: string;
   policy_number: string;
   insurer_name: string;
   coverage_type: string;
@@ -130,6 +131,7 @@ async function lookupLinkedPolicies(
       client.query<LinkedPolicyRow>(
         `
           SELECT
+            p.id::text AS policy_id,
             p.policy_number,
             p.insurer_name,
             p.coverage_type,
@@ -768,6 +770,7 @@ export async function buildUnitAggregate(
       // above, so a policy attached through the Insurance module is visible here even when nobody
       // has hand-typed a matching policy number into this unit's legacy us_/mx_insurance_* columns.
       linked_policies: linkedPolicies.map((p) => ({
+        policy_id: p.policy_id,
         number: p.policy_number,
         carrier: p.insurer_name,
         expiration: p.expiration,

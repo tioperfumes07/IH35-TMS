@@ -112,7 +112,7 @@ export function PolicyDetail() {
             <EntityLink
               kind="unit"
               id={unitId}
-              label={entityLabel(null, unitId, "Unit")}
+              label={entityLabel(unit.unit_number, unitId, "Unit")}
             />
           );
         },
