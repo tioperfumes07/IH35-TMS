@@ -5,3 +5,4 @@
 2026-08-13T08:42CT | Cursor | SHIPPED #6410 ACCT-F5033 WO expense reverse + hotfix RoadService mount | NEXT=claim expense reverse Built
 2026-08-13T08:42CT | Cursor | SHIPPED #6410+#6411 ACCT-F5033 WO expense reverse + RoadService mount hotfix | NEXT=claim↔expense reverse Built
 2026-08-13T08:50CT | Cursor | SHIPPED #6412 ACCT-F5034 claim expense reverse | NEXT=ACCT-F5035 bills claim reverse
+2026-08-13T08:55CT | Cursor | SHIPPING ACCT-F5036 unit→bill reverse | NEXT=rank6 remaining reverse

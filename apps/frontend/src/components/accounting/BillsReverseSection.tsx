@@ -8,12 +8,11 @@ import { entityLabel } from "../../lib/entity-label";
 
 /**
  * FINAL-WEEKEND-FULL-WIRING-2026-08-12 rank 6 — Built reverse_link for bills.
- * ACCT-F5035: accounting.bills.insurance_claim_id is stamped on create and claim graph SQL lists
- * bills, but GET /accounting/bills had no insurance_claim_id filter and ClaimsTab never mounted a
- * BillsReverseSection (ExpensesReverseSection shipped in ACCT-F5034).
+ * ACCT-F5035: insurance_claim_id on ClaimsTab.
+ * ACCT-F5036: unit_id on VehicleProfilePage (create already stamps unit_id).
  */
 
-type Filter = { insurance_claim_id: string };
+type Filter = { insurance_claim_id: string; unit_id?: never } | { unit_id: string; insurance_claim_id?: never };
 
 type Props = {
   operatingCompanyId: string;
@@ -28,7 +27,7 @@ export function BillsReverseSection({
   contextLabel,
   "data-testid": testId = "bills-reverse",
 }: Props) {
-  const filterValue = filter.insurance_claim_id;
+  const filterValue = Object.values(filter)[0] as string;
   const billsQ = useQuery({
     queryKey: ["accounting", "bills", "reverse", operatingCompanyId, filter],
     queryFn: () => listBills(operatingCompanyId, { ...filter, limit: 200 }),

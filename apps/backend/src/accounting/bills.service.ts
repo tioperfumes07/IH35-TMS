@@ -108,6 +108,8 @@ type ListBillsOptions = {
   hasBalance?: boolean;
   /** ACCT-F5035 — claim→bill reverse list filter (accounting.bills.insurance_claim_id). */
   insuranceClaimId?: string;
+  /** ACCT-F5036 — unit→bill reverse list filter (accounting.bills.unit_id). */
+  unitId?: string;
   limit: number;
   offset: number;
 };
@@ -672,6 +674,10 @@ export async function listBillsByVendor(
       values.push(options.insuranceClaimId);
       where.push(`b.insurance_claim_id = $${values.length}::uuid`);
     }
+    if (options.unitId) {
+      values.push(options.unitId);
+      where.push(`b.unit_id = $${values.length}::uuid`);
+    }
     values.push(options.limit, options.offset);
     const res = await client.query<BillRow>(
       `
@@ -723,6 +729,10 @@ export async function listAllBillsForCompany(
     if (options.insuranceClaimId) {
       values.push(options.insuranceClaimId);
       where.push(`b.insurance_claim_id = $${values.length}::uuid`);
+    }
+    if (options.unitId) {
+      values.push(options.unitId);
+      where.push(`b.unit_id = $${values.length}::uuid`);
     }
     values.push(options.limit, options.offset);
     const res = await client.query<BillRow>(
@@ -1054,6 +1064,7 @@ export async function listBills(
     toDate?: string;
     hasBalance?: boolean;
     insuranceClaimId?: string;
+    unitId?: string;
     limit: number;
     offset: number;
   }
