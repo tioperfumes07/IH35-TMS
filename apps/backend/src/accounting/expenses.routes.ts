@@ -146,6 +146,9 @@ const listExpensesQuerySchema = companyQuerySchema.extend({
   // column since rank 1 (PR #6316) and the create/detail paths already accept it (rank 4, PR #6322);
   // the list endpoint never did. Mirrors #6324's accident list filter exactly.
   trailer_id: z.string().uuid().optional(),
+  // ACCT-F5032 — unit_id is written on create and returned on detail, but list had no filter so
+  // VehicleProfile could not mount ExpensesReverseSection (fuel already filters by unit_id).
+  unit_id: z.string().uuid().optional(),
   limit: z.coerce.number().int().min(1).max(200).default(50),
   offset: z.coerce.number().int().min(0).default(0),
 });
@@ -160,6 +163,7 @@ export type ExpenseListFilters = {
   driverId?: string;
   vendorUuid?: string;
   trailerId?: string;
+  unitId?: string;
   limit: number;
   offset: number;
 };
@@ -251,6 +255,10 @@ export async function queryExpensesList(
   if (filters.trailerId) {
     values.push(filters.trailerId);
     where.push(`e.trailer_id = $${values.length}::uuid`);
+  }
+  if (filters.unitId) {
+    values.push(filters.unitId);
+    where.push(`e.unit_id = $${values.length}::uuid`);
   }
   values.push(filters.limit);
   const limitIdx = values.length;
@@ -346,6 +354,7 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
         driverId: q.driver_id,
         vendorUuid: q.vendor_uuid,
         trailerId: q.trailer_id,
+        unitId: q.unit_id,
         limit: q.limit,
         offset: q.offset,
       });
