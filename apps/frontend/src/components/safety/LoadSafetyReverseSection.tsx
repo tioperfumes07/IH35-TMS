@@ -9,6 +9,7 @@ import {
 import { formatDateUS } from "../../lib/formatDate";
 import { EntityLink } from "../shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
+import { DispatcherSafetyEventsReverseBlock } from "./DispatcherSafetyEventsReverseBlock";
 
 /**
  * SAF-C01 — REVERSE load↔safety. Accident reports and incidents already store load_id;
@@ -87,6 +88,12 @@ export function LoadSafetyReverseSection({
       </div>
 
       <LoadSafetyEventsBlock companyId={operatingCompanyId} loadId={loadId} />
+      <DispatcherSafetyEventsReverseBlock
+        operatingCompanyId={operatingCompanyId}
+        related="load"
+        entityId={loadId}
+        data-testid="load-dispatcher-safety-events-reverse"
+      />
 
       {INCIDENT_KINDS.map((kind) => (
         <LoadIncidentBlock

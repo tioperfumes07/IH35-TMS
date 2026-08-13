@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Link, useParams, useSearchParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import { EntityLink } from "../components/shared/EntityLink";
 import { entityLabel } from "../lib/entity-label";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -20,6 +20,7 @@ import { Button } from "../components/Button";
 import { ListErrorState } from "../components/ListErrorState";
 import { Combobox, type ComboboxOption } from "../components/Combobox";
 import { ReferenceSelect } from "../components/parity/ReferenceSelect";
+import { EntityPicker } from "../components/parity/EntityPicker";
 import { DriverPickerWithCreate } from "../components/drivers/DriverPickerWithCreate";
 import { MoneyInput } from "../components/forms/MoneyInput";
 import { DatePicker } from "../components/forms/DatePicker";
@@ -110,7 +111,8 @@ export function UserDetailPage() {
   const [costRecoveredAmount, setCostRecoveredAmount] = useState("");
   const [enableRelated, setEnableRelated] = useState(false);
   const [relatedCustomerId, setRelatedCustomerId] = useState<string | null>(null);
-  const [relatedDriverId, setRelatedDriverId] = useState<string | null>(null);
+  const [relatedDriverId, setRelatedDriverId] = useState<string | null>(null),
+    [relatedLoadId, setRelatedLoadId] = useState<string | null>(null);
   const [editEventId, setEditEventId] = useState<string | null>(null);
   const [editDetails, setEditDetails] = useState("");
   const [editRecoveryStatus, setEditRecoveryStatus] = useState<DispatcherSafetyEvent["cost_recovery_status"]>(null);
@@ -141,9 +143,9 @@ export function UserDetailPage() {
   });
 
   const safetyEventsQuery = useQuery({
-    queryKey: ["dispatcher-safety-events", userId, showVoided],
-    enabled: Boolean(userId),
-    queryFn: () => listDispatcherSafetyEvents(userId, showVoided).then((result) => result.events),
+    queryKey: ["dispatcher-safety-events", userId, selectedCompanyId, showVoided],
+    enabled: Boolean(userId && selectedCompanyId),
+    queryFn: () => listDispatcherSafetyEvents(userId, selectedCompanyId!, showVoided).then((result) => result.events),
   });
 
   const selectedReason = useMemo(
@@ -208,6 +210,10 @@ export function UserDetailPage() {
       setCostAmount("");
       setCostRecoveryStatus(null);
       setCostRecoveredAmount("");
+      setEnableRelated(false);
+      setRelatedCustomerId(null);
+      setRelatedDriverId(null);
+      setRelatedLoadId(null);
       queryClient.invalidateQueries({ queryKey: ["dispatcher-safety-events", userId] });
       pushToast("Safety event created", "success");
     },
@@ -407,9 +413,9 @@ export function UserDetailPage() {
                     <div>Recovered amount: {money(event.cost_recovered_amount)}</div>
                     <div>
                       Related:{" "}
-                      {event.related_customer_id ? <Link to={`/customers/${event.related_customer_id}`} className="text-slate-700">Customer</Link> : "Customer —"} |{" "}
-                      {event.related_driver_id ? <Link to={`/drivers/${event.related_driver_id}`} className="text-slate-700">Driver</Link> : "Driver —"} | Load:{" "}
-                      {event.related_load_id ? <EntityLink kind="load" id={event.related_load_id} label={entityLabel(null, event.related_load_id, "Load")} /> : "Load link pending"}
+                      {event.related_customer_id ? <EntityLink kind="customer" id={event.related_customer_id} label={entityLabel(event.related_customer_name, event.related_customer_id, "Customer")} /> : "Customer —"} |{" "}
+                      {event.related_driver_id ? <EntityLink kind="driver" id={event.related_driver_id} label={entityLabel(event.related_driver_name, event.related_driver_id, "Driver")} /> : "Driver —"} | Load:{" "}
+                      {event.related_load_id ? <EntityLink kind="load" id={event.related_load_id} label={entityLabel(event.related_load_number, event.related_load_id, "Load")} /> : "—"}
                     </div>
                     {event.voided_at ? (
                       <div className="font-semibold">
@@ -466,6 +472,7 @@ export function UserDetailPage() {
                   cost_recovered_amount: enableCost && costRecoveredAmount ? Number(costRecoveredAmount) : undefined,
                   related_customer_id: enableRelated ? relatedCustomerId ?? undefined : undefined,
                   related_driver_id: enableRelated ? relatedDriverId ?? undefined : undefined,
+                  related_load_id: enableRelated ? relatedLoadId ?? undefined : undefined,
                 },
               });
             } catch (error) {
@@ -640,7 +647,18 @@ export function UserDetailPage() {
                 ) : (
                   <Combobox options={[]} value={relatedDriverId} onChange={setRelatedDriverId} placeholder="Select company first" disabled />
                 )}
-                <div className="text-xs text-gray-500">Related load: optional until dispatch load linking is enabled.</div>
+                {selectedCompanyId ? (
+                  <EntityPicker
+                    kind="load"
+                    operatingCompanyId={selectedCompanyId}
+                    value={relatedLoadId}
+                    onChange={setRelatedLoadId}
+                    allowCreate={false}
+                    placeholder="Related load"
+                  />
+                ) : (
+                  <Combobox options={[]} value={relatedLoadId} onChange={setRelatedLoadId} placeholder="Select company first" disabled />
+                )}
               </div>
             ) : null}
           </div>
