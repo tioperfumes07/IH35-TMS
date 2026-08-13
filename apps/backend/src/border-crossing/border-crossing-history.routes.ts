@@ -9,6 +9,7 @@ const historyQuerySchema = companyQuerySchema.extend({
   unit_id: z.string().uuid().optional(),
   driver_id: z.string().uuid().optional(),
   load_id: z.string().uuid().optional(),
+  customs_broker_id: z.string().uuid().optional(),
 });
 
 const idParamsSchema = z.object({ id: z.string().uuid() });
@@ -39,6 +40,10 @@ export async function registerBorderCrossingHistoryRoutes(app: FastifyInstance) 
         values.push(parsed.data.load_id);
         filters.push(`ubc.load_id = $${values.length}::uuid`);
       }
+      if (parsed.data.customs_broker_id) {
+        values.push(parsed.data.customs_broker_id);
+        filters.push(`ubc.customs_broker_id = $${values.length}::uuid`);
+      }
       values.push(parsed.data.limit, parsed.data.offset);
 
       const res = await client.query(
@@ -46,9 +51,9 @@ export async function registerBorderCrossingHistoryRoutes(app: FastifyInstance) 
           SELECT ubc.id::text, ubc.crossing_date, ubc.planned_crossing_date, ubc.direction,
                  ubc.port_of_entry, ubc.commodity, ubc.emanifest_reference, ubc.emanifest_status,
                  ubc.customs_broker_status, ubc.wizard_completed_at,
-                 ubc.unit_id::text, ubc.driver_id::text, ubc.load_id::text,
+                 ubc.unit_id::text, ubc.driver_id::text, ubc.load_id::text, ubc.customs_broker_id::text,
                  u.unit_number, d.first_name || ' ' || d.last_name AS driver_name,
-                 l.load_number
+                 l.load_number, v.vendor_name AS customs_broker_name
           FROM mdata.unit_border_crossings ubc
           LEFT JOIN mdata.units u ON u.id = ubc.unit_id
                                  AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = ubc.operating_company_id
@@ -56,6 +61,8 @@ export async function registerBorderCrossingHistoryRoutes(app: FastifyInstance) 
                                    AND d.operating_company_id = ubc.operating_company_id
           LEFT JOIN mdata.loads l ON l.id = ubc.load_id
                                  AND l.operating_company_id = ubc.operating_company_id
+          LEFT JOIN mdata.vendors v ON v.id = ubc.customs_broker_id
+                                   AND v.operating_company_id = ubc.operating_company_id
           WHERE ${filters.join(" AND ")}
           ORDER BY ubc.wizard_completed_at DESC NULLS LAST, ubc.crossing_date DESC
           LIMIT $${values.length - 1}
