@@ -824,6 +824,14 @@
       "modules": ["drivers", "dispatch", "fleet"],
       "cols": ["driver", "trailer", "connectivity", "reverse_link"],
       "leafRe": "^(equipment|transfer|trailer|driver|profile|detail|dispatch)"
+    },
+    {
+      "task": "HOS-VIOLATION-DRIVER-REVERSE",
+      "pr": "this PR",
+      "guard": "scripts/verify-hos-violation-driver-reverse.mjs",
+      "modules": ["safety", "drivers", "dispatch"],
+      "cols": ["driver", "load", "connectivity", "reverse_link", "picker_law"],
+      "leafRe": "^(hos|violation|driver|load|profile|detail|create)"
     }
   ]
 }
