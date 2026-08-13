@@ -1,7 +1,5 @@
 #!/usr/bin/env node
 /**
- * @matrix-built {"modules":["lists"],"cols":["reverse_link"],"leafRe":".*","task":"WAVE-B-lists-reverse_link","vertical":"column-wave"}
- *
  * Lists reverse_link: every domain hub/map must drill to the LIVE operating module
  * (Safety/Dispatch/Drivers/…) — not catalog-only dead ends.
  */
