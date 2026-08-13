@@ -166,8 +166,6 @@
       "required": [
         "customer",
         "vendor",
-        "gl_je",
-        "liability",
         "connectivity",
         "reverse_link",
         "qbo_chrome"
@@ -179,7 +177,6 @@
       "sub": "Banking home cash position",
       "route_hint": "/banking",
       "required": [
-        "gl_je",
         "liability",
         "connectivity",
         "reverse_link",
@@ -195,7 +192,6 @@
       "required": [
         "customer",
         "vendor",
-        "gl_je",
         "liability",
         "connectivity",
         "reverse_link",
@@ -210,7 +206,6 @@
       "required": [
         "customer",
         "vendor",
-        "gl_je",
         "liability",
         "connectivity",
         "reverse_link",
@@ -225,7 +220,6 @@
       "required": [
         "customer",
         "vendor",
-        "gl_je",
         "liability",
         "connectivity",
         "reverse_link",
@@ -240,7 +234,6 @@
       "required": [
         "driver",
         "liability",
-        "gl_je",
         "connectivity",
         "reverse_link"
       ]
@@ -253,14 +246,13 @@
       "required": [
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "gl_je"
+        "connectivity"
       ]
     },
     {
       "id": "chrome.toolbar_search",
       "tab": "Chrome controls",
-      "sub": "List toolbar — Search (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar \u2014 Search (CLS-LIST-TOOLBAR)",
       "route_hint": "/cash-flow",
       "surface_kind": "toolbar",
       "required": [
@@ -271,7 +263,7 @@
     {
       "id": "chrome.toolbar_range",
       "tab": "Chrome controls",
-      "sub": "List toolbar — date/amount range (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar \u2014 date/amount range (CLS-LIST-TOOLBAR)",
       "route_hint": "/cash-flow",
       "surface_kind": "toolbar",
       "required": [
@@ -282,7 +274,7 @@
     {
       "id": "chrome.toolbar_gear",
       "tab": "Chrome controls",
-      "sub": "List toolbar — column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
+      "sub": "List toolbar \u2014 column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
       "route_hint": "/cash-flow",
       "surface_kind": "toolbar",
       "required": [
@@ -293,7 +285,7 @@
     {
       "id": "chrome.toolbar_filter",
       "tab": "Chrome controls",
-      "sub": "List toolbar — Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
+      "sub": "List toolbar \u2014 Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
       "route_hint": "/cash-flow",
       "surface_kind": "toolbar",
       "required": [
@@ -315,7 +307,7 @@
         "invoice",
         "bank"
       ],
-      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; §B9 link columns added."
+      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; \u00a7B9 link columns added."
     }
   }
 }
