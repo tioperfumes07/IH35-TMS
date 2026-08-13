@@ -25,14 +25,16 @@ export function ARAgingPage() {
   const [searchParams] = useSearchParams();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
+  // CLS-FILTER-GEAR-APPLY — DatePicker drafts; query only after Apply (BalanceSheet pattern).
   const [asOf, setAsOf] = useState(() => new Date().toISOString().slice(0, 10));
+  const [appliedAsOf, setAppliedAsOf] = useState(() => new Date().toISOString().slice(0, 10));
   const [search, setSearch] = useState("");
   const [minBal, setMinBal] = useState("");
   const [bucketFilter, setBucketFilter] = useState<"all" | "61+">("all");
 
   const query = useQuery({
-    queryKey: ["reports", "ar-aging", companyId, asOf],
-    queryFn: () => getArAgingReport(companyId, asOf),
+    queryKey: ["reports", "ar-aging", companyId, appliedAsOf],
+    queryFn: () => getArAgingReport(companyId, appliedAsOf),
     enabled: Boolean(companyId),
   });
 
@@ -100,7 +102,7 @@ export function ARAgingPage() {
     const ur = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = ur;
-    a.download = `ar-aging-${asOf}.csv`;
+    a.download = `ar-aging-${appliedAsOf}.csv`;
     a.click();
     URL.revokeObjectURL(ur);
   }
@@ -116,7 +118,7 @@ export function ARAgingPage() {
       <ReportsSubNav />
       <PageHeader
         title="A/R aging"
-        subtitle={`As of ${formatDateUS(asOf)} · open invoices by customer · Accrual basis`}
+        subtitle={`As of ${formatDateUS(appliedAsOf)} · open invoices by customer · Accrual basis`}
         backHref="/reports"
         breadcrumb={["Reports", "A/R Aging"]}
         actions={
@@ -134,7 +136,7 @@ export function ARAgingPage() {
               onClick={() =>
                 exportArAging({
                   operating_company_id: companyId,
-                  as_of_date: asOf,
+                  as_of_date: appliedAsOf,
                   format: "pdf",
                 })
               }
@@ -148,7 +150,7 @@ export function ARAgingPage() {
               onClick={() =>
                 exportArAging({
                   operating_company_id: companyId,
-                  as_of_date: asOf,
+                  as_of_date: appliedAsOf,
                   format: "xlsx",
                 })
               }
@@ -164,7 +166,7 @@ export function ARAgingPage() {
       </p>
       {query.isError ? <p className="text-sm text-red-600">Failed to load report.</p> : null}
 
-      <div className="no-print grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-4">
+      <div className="no-print grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-4 lg:grid-cols-5">
         <label className="text-xs text-gray-600">
           As-of date
           <DatePicker className="mt-1 h-9 w-full" value={asOf} onChange={(next) => setAsOf(next)} />
@@ -185,6 +187,11 @@ export function ARAgingPage() {
             <option value="61+">61+ days past due portion</option>
           </SelectCombobox>
         </label>
+        <div className="flex items-end">
+          <Button size="sm" className="h-9 w-full" onClick={() => setAppliedAsOf(asOf)} disabled={asOf === appliedAsOf}>
+            Apply
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-2 md:grid-cols-4">
