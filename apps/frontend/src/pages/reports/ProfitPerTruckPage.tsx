@@ -94,7 +94,14 @@ export function ProfitPerTruckPage() {
         key: "primary_driver_name",
         label: "Driver",
         sortable: true,
-        render: (r) => entityLabel(r.primary_driver_name, r.primary_driver_id, "Driver"),
+        render: (r) => (
+          <EntityLink
+            kind="driver"
+            id={r.primary_driver_id}
+            label={entityLabel(r.primary_driver_name, r.primary_driver_id, "Driver")}
+            onClick={(event) => event.stopPropagation()}
+          />
+        ),
       },
       { key: "load_count", label: "Loads", sortable: true, className: "text-right", cellClass: "text-right" },
       { key: "miles_driven", label: "Miles", sortable: true, className: "text-right", cellClass: "text-right" },

@@ -17,6 +17,7 @@ import { ReportsSubNav } from "./ReportsSubNav";
 import { formatChartLegendLabel } from "../../lib/chartLegend";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { entityLabel } from "../../lib/entity-label";
+import { EntityLink } from "../../components/shared/EntityLink";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -70,7 +71,20 @@ export function MaintenanceCostPerUnitPage() {
 
   const columns = useMemo<ParityColumn<MaintenanceCostUnitRow>[]>(
     () => [
-      { key: "unit_number", label: "Unit #", sortable: true, render: (r) => <span className="font-medium">{entityLabel(r.unit_number, r.unit_id, "Unit")}</span> },
+      {
+        key: "unit_number",
+        label: "Unit #",
+        sortable: true,
+        render: (r) => (
+          <EntityLink
+            kind="unit"
+            id={r.unit_id}
+            label={entityLabel(r.unit_number, r.unit_id, "Unit")}
+            className="font-medium"
+            onClick={(event) => event.stopPropagation()}
+          />
+        ),
+      },
       { key: "wo_count", label: "WO count", sortable: true, className: "text-right", cellClass: "text-right" },
       { key: "parts_cents", label: "Parts", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.parts_cents) },
       { key: "labor_cents", label: "Labor", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.labor_cents) },
