@@ -73,6 +73,18 @@ export function check({ pageSrc, testSrc }) {
     }
   }
 
+  // ACCT-F5064 — CLS-LINKAGE-ONEWAY: reserve/interest JE EntityLinks must use memo/date, not null→UUID.
+  if (/entityLabel\(\s*null\s*,\s*row\.journal_entry_id\s*,\s*["']Journal entry["']\s*\)/.test(pageSrc)) {
+    failures.push(`${PAGE_FILE} — must not entityLabel(null, journal_entry_id) on packet JE hops`);
+  }
+  if (!/journal_entry_memo/.test(pageSrc) || !/journal_entry_date/.test(pageSrc)) {
+    failures.push(`${PAGE_FILE} — reserve/interest JE labels must prefer journal_entry_date/memo`);
+  }
+  const tracker = readFile("apps/backend/src/accounting/factoring-posting/reserve-tracker.service.ts") ?? "";
+  if (!/je\.memo AS journal_entry_memo/.test(tracker) || !/LEFT JOIN accounting\.journal_entries je/.test(tracker)) {
+    failures.push("reserve-tracker.service: packet movements/accruals must JOIN JE memo/date");
+  }
+
   return failures;
 }
 

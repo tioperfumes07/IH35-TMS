@@ -118,21 +118,49 @@ export async function getFactoringAdvancePacket(
 
     const movementsRes = await client.query(
       `
-        SELECT id, movement_type, amount_cents, movement_date, journal_entry_id, notes, created_at
-        FROM accounting.factoring_reserve_movements
-        WHERE factoring_advance_id = $1::uuid AND operating_company_id = $2::uuid AND is_active
-        ORDER BY movement_date ASC, created_at ASC
+        SELECT
+          rm.id,
+          rm.movement_type,
+          rm.amount_cents,
+          rm.movement_date,
+          rm.journal_entry_id,
+          je.entry_date::text AS journal_entry_date,
+          je.memo AS journal_entry_memo,
+          rm.notes,
+          rm.created_at
+        FROM accounting.factoring_reserve_movements rm
+        LEFT JOIN accounting.journal_entries je
+          ON je.id = rm.journal_entry_id
+         AND je.operating_company_id = rm.operating_company_id
+        WHERE rm.factoring_advance_id = $1::uuid
+          AND rm.operating_company_id = $2::uuid
+          AND rm.is_active
+        ORDER BY rm.movement_date ASC, rm.created_at ASC
       `,
       [factoringAdvanceId, operatingCompanyId]
     );
 
     const interestRes = await client.query(
       `
-        SELECT id, accrual_date, day_index, daily_rate, opening_balance_cents, interest_cents,
-               closing_balance_cents, journal_entry_id
-        FROM accounting.factoring_default_interest_accruals
-        WHERE factoring_advance_id = $1::uuid AND operating_company_id = $2::uuid AND is_active
-        ORDER BY accrual_date ASC
+        SELECT
+          a.id,
+          a.accrual_date,
+          a.day_index,
+          a.daily_rate,
+          a.opening_balance_cents,
+          a.interest_cents,
+          a.closing_balance_cents,
+          a.journal_entry_id,
+          je.entry_date::text AS journal_entry_date,
+          je.memo AS journal_entry_memo
+        FROM accounting.factoring_default_interest_accruals a
+        LEFT JOIN accounting.journal_entries je
+          ON je.id = a.journal_entry_id
+         AND je.operating_company_id = a.operating_company_id
+        WHERE a.factoring_advance_id = $1::uuid
+          AND a.operating_company_id = $2::uuid
+          AND a.is_active
+        ORDER BY a.accrual_date ASC
       `,
       [factoringAdvanceId, operatingCompanyId]
     );

@@ -298,7 +298,15 @@ export function FactoringDetailPage() {
                       <span>{money(Number(row.amount_cents ?? 0))}</span>
                       <span className="text-slate-500">{row.movement_date ? formatDateUS(String(row.movement_date)) : "—"}</span>
                       {row.journal_entry_id ? (
-                        <EntityLink kind="journal_entry" id={row.journal_entry_id} label={entityLabel(null, row.journal_entry_id, "Journal entry")} />
+                        <EntityLink
+                          kind="journal_entry"
+                          id={row.journal_entry_id}
+                          label={
+                            row.journal_entry_date
+                              ? `${formatDateUS(String(row.journal_entry_date))}${row.journal_entry_memo ? ` — ${row.journal_entry_memo}` : ""}`
+                              : entityLabel(row.journal_entry_memo, row.journal_entry_id, "Journal entry")
+                          }
+                        />
                       ) : (
                         <span className="text-slate-400">JE —</span>
                       )}
@@ -318,7 +326,15 @@ export function FactoringDetailPage() {
                       <span>{row.accrual_date ? formatDateUS(String(row.accrual_date)) : "—"}</span>
                       <span>{money(Number(row.interest_cents ?? 0))}</span>
                       {row.journal_entry_id ? (
-                        <EntityLink kind="journal_entry" id={row.journal_entry_id} label={entityLabel(null, row.journal_entry_id, "Journal entry")} />
+                        <EntityLink
+                          kind="journal_entry"
+                          id={row.journal_entry_id}
+                          label={
+                            row.journal_entry_date
+                              ? `${formatDateUS(String(row.journal_entry_date))}${row.journal_entry_memo ? ` — ${row.journal_entry_memo}` : ""}`
+                              : entityLabel(row.journal_entry_memo, row.journal_entry_id, "Journal entry")
+                          }
+                        />
                       ) : (
                         <span className="text-slate-400">JE —</span>
                       )}

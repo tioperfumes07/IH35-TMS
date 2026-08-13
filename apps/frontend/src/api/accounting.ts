@@ -1111,6 +1111,8 @@ export type FactoringAdvancePacket = {
     amount_cents?: number;
     movement_date?: string;
     journal_entry_id?: string | null;
+    journal_entry_date?: string | null;
+    journal_entry_memo?: string | null;
     notes?: string | null;
   }>;
   interest_accruals: Array<{
@@ -1118,6 +1120,8 @@ export type FactoringAdvancePacket = {
     accrual_date?: string;
     interest_cents?: number;
     journal_entry_id?: string | null;
+    journal_entry_date?: string | null;
+    journal_entry_memo?: string | null;
   }>;
 };
 
