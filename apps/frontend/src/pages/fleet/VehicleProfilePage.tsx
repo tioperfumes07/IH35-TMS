@@ -46,6 +46,7 @@ import { UnitPermitsReverseSection } from "../../components/safety/UnitPermitsRe
 import { RoadServiceReverseSection } from "../../components/maintenance/RoadServiceReverseSection";
 import { UnitMaintenanceInspectionsReverseSection } from "../../components/maintenance/UnitMaintenanceInspectionsReverseSection";
 import { UnitPmSchedulesReverseSection } from "../../components/maintenance/UnitPmSchedulesReverseSection";
+import { UnitBorderCrossingsReverseSection } from "../../components/dispatch/UnitBorderCrossingsReverseSection";
 import { LinkedBankTransactionsPanel } from "../../components/banking/LinkedBankTransactionsPanel";
 
 export type UnitProfileAggregate = {
@@ -383,6 +384,9 @@ export function VehicleProfilePage() {
           </div>
           <div data-testid="vp-section-10i-pm-schedules">
             <UnitPmSchedulesReverseSection operatingCompanyId={companyId} unitId={id} />
+          </div>
+          <div data-testid="vp-section-10j-border-crossings">
+            <UnitBorderCrossingsReverseSection operatingCompanyId={companyId} unitId={id} />
           </div>
           <div data-testid="vp-section-11-action-bar">
             <ActionBar

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -29,6 +29,8 @@ type CrossingRow = {
 };
 
 export function BorderCrossingHistoryPage() {
+  const [searchParams] = useSearchParams();
+  const deepLinkCrossingId = searchParams.get("crossing_id")?.trim() || "";
   const { selectedCompanyId } = useCompanyContext();
   const [rows, setRows] = useState<CrossingRow[]>([]);
   const [selected, setSelected] = useState<CrossingRow | null>(null);
@@ -49,13 +51,17 @@ export function BorderCrossingHistoryPage() {
         }
         return res.json() as Promise<{ crossings?: CrossingRow[] }>;
       })
-      .then((data) => setRows(data.crossings ?? []))
+      .then((data) => {
+        const nextRows = data.crossings ?? [];
+        setRows(nextRows);
+        if (deepLinkCrossingId) setSelected(nextRows.find((row) => row.id === deepLinkCrossingId) ?? null);
+      })
       .catch((err: unknown) => {
         setRows([]);
         setLoadError(err instanceof Error ? err.message : "Failed to load border crossing history");
       })
       .finally(() => setLoading(false));
-  }, [selectedCompanyId]);
+  }, [deepLinkCrossingId, selectedCompanyId]);
 
   const pdfUrl =
     selected && selectedCompanyId
@@ -114,6 +120,7 @@ export function BorderCrossingHistoryPage() {
           columns={columns}
           rows={rows}
           rowKey={(row) => row.id}
+          rowClassName={(row) => (row.id === deepLinkCrossingId ? "bg-slate-100 ring-1 ring-slate-400" : "")}
           loading={loading}
           emptyText="No completed crossings yet."
           onRowClick={(row) => setSelected(row)}

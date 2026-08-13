@@ -672,6 +672,14 @@
       "modules": ["maintenance", "fleet"],
       "cols": ["unit", "connectivity", "reverse_link", "picker_law"],
       "leafRe": "^(pm|schedule|unit|profile|create)"
+    },
+    {
+      "task": "BORDER-CROSSING-UNIT-CREATE-REVERSE",
+      "pr": "this PR",
+      "guard": "scripts/verify-border-crossing-unit-linkage.mjs",
+      "modules": ["dispatch", "fleet", "compliance"],
+      "cols": ["unit", "connectivity", "reverse_link", "picker_law"],
+      "leafRe": "^(border|crossing|wizard|history|unit|profile|create)"
     }
   ]
 }

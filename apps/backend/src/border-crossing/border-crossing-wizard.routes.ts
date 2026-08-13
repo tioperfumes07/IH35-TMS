@@ -48,7 +48,7 @@ function parseFastCardWarning(fastCardExpiration: string | null | undefined) {
 }
 
 export async function registerBorderCrossingWizardRoutes(app: FastifyInstance) {
-  app.get("/api/v1/border-crossing/ports-of-entry", async (req, reply) => {
+  app.get("/api/v1/border-crossing/ports-of-entry", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
 
@@ -66,7 +66,7 @@ export async function registerBorderCrossingWizardRoutes(app: FastifyInstance) {
     return reply.send({ ports: rows });
   });
 
-  app.get("/api/v1/border-crossing/wait-times", async (req, reply) => {
+  app.get("/api/v1/border-crossing/wait-times", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const parsed = waitTimesQuerySchema.safeParse(req.query ?? {});
@@ -78,7 +78,7 @@ export async function registerBorderCrossingWizardRoutes(app: FastifyInstance) {
     return reply.send(payload);
   });
 
-  app.get("/api/v1/border-crossing/customs-brokers", async (req, reply) => {
+  app.get("/api/v1/border-crossing/customs-brokers", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -101,7 +101,7 @@ export async function registerBorderCrossingWizardRoutes(app: FastifyInstance) {
     return reply.send({ brokers: rows });
   });
 
-  app.post("/api/v1/border-crossing/wizard", async (req, reply) => {
+  app.post("/api/v1/border-crossing/wizard", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const parsed = wizardBodySchema.safeParse(req.body ?? {});
@@ -112,6 +112,18 @@ export async function registerBorderCrossingWizardRoutes(app: FastifyInstance) {
       data.commodity_value != null ? Math.round(data.commodity_value * 100) : null;
 
     const result = await withCompanyScope(user.uuid, data.operating_company_id, async (client) => {
+      const unitRes = await client.query(
+        `SELECT id
+           FROM mdata.units
+          WHERE id = $1::uuid
+            AND COALESCE(currently_leased_to_company_id, owner_company_id) = $2::uuid
+            AND deactivated_at IS NULL
+          LIMIT 1`,
+        [data.unit_id, data.operating_company_id]
+      );
+      if (!unitRes.rows[0]) {
+        throw Object.assign(new Error("linked_entity_not_in_operating_company"), { statusCode: 400 });
+      }
       const portRes = await client.query(
         `SELECT name, cbp_port_code FROM reference.ports_of_entry WHERE id = $1::uuid`,
         [data.port_of_entry_id]
