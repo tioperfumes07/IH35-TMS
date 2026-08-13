@@ -18,6 +18,7 @@ import { useSafetyUiContext } from "./SafetyLayout";
 import { SafetyEventsTable } from "./components/SafetyEventsTable";
 import { NOT_AVAILABLE_YET } from "../../lib/prodEmptyStateCopy";
 import { EntityPicker } from "../../components/parity/EntityPicker";
+import { suggestExpenseLoad } from "../../api/maintenance";
 
 type Props = {
   operatingCompanyId: string;
@@ -112,9 +113,44 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
   const [logModalOpen, setLogModalOpen] = useState(false);
   const [draft, setDraft] = useState<EventDraft>(initialEventDraft);
   const [logDraftBaseline, setLogDraftBaseline] = useState<EventDraft | null>(null);
+  const [suggestionPinned, setSuggestionPinned] = useState(false);
   // S-04: shared From/To date range from the Safety layout's date-range bar (additive to the existing
   // activity-window toggle), applied here against occurred_at.
   const { fromDate, toDate } = useSafetyUiContext();
+
+  const suggestionQuery = useQuery({
+    queryKey: [
+      "safety",
+      "event-create",
+      "suggest-load",
+      operatingCompanyId,
+      draft.subject_driver_id,
+      draft.subject_unit_id,
+      draft.occurred_at,
+    ],
+    queryFn: () =>
+      suggestExpenseLoad({
+        operating_company_id: operatingCompanyId,
+        driver_id: draft.subject_driver_id || undefined,
+        unit_id: draft.subject_unit_id || undefined,
+        transaction_date: draft.occurred_at.slice(0, 10),
+      }),
+    enabled: Boolean(
+      logModalOpen && operatingCompanyId && draft.occurred_at && (draft.subject_driver_id || draft.subject_unit_id)
+    ),
+  });
+
+  useEffect(() => {
+    setSuggestionPinned(false);
+  }, [draft.subject_driver_id, draft.subject_unit_id, draft.occurred_at]);
+
+  useEffect(() => {
+    if (draft.related_load_id || suggestionPinned) return;
+    const suggested = suggestionQuery.data?.data;
+    if (!suggested?.load_id) return;
+    setDraft((previous) => ({ ...previous, related_load_id: suggested.load_id }));
+    setSuggestionPinned(true);
+  }, [draft.related_load_id, suggestionPinned, suggestionQuery.data]);
 
   const eventsQuery = useQuery({
     queryKey: ["safety", "events-v2", operatingCompanyId, statusFilter, severityFilter, search],
