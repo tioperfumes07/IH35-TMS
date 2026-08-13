@@ -2849,11 +2849,12 @@ function Field({
     <div className="mb-2 flex flex-col gap-1">
       <label className="text-xs font-semibold text-gray-600">{label}</label>
       {type === "date" ? (
+        // Layout-only className — DatePicker owns the single QBO border (CLS-QBO-DATEPICKER-BOX-IN-BOX).
         <DatePicker
           value={value ?? ""}
           onChange={onChange}
           disabled={disabled}
-          className="h-9 rounded-sm border border-gray-300 px-2 py-1.5 text-[13px] disabled:bg-gray-100"
+          className="h-9 w-full"
         />
       ) : (
         <input
