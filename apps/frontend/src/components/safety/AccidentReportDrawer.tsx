@@ -12,6 +12,7 @@ import {
   type AccidentFault,
 } from "../../api/safety";
 import { listVendors } from "../../api/mdata";
+import { suggestExpenseLoad } from "../../api/maintenance";
 import { Button } from "../Button";
 import { EntityLink } from "../shared/EntityLink";
 import { ParityDrawer } from "../parity/ParityDrawer";
@@ -79,6 +80,8 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
   const [vendorId, setVendorId] = useState(initialVendorId);
   const [loadId, setLoadId] = useState(initialLoadId);
   const [incidentDate, setIncidentDate] = useState(initialIncidentDate);
+  /** Once the active-trip resolver fills the load, preserve an operator override. */
+  const [suggestionPinned, setSuggestionPinned] = useState(false);
   const [memo, setMemo] = useState(initialMemo);
   // SAF-F05: these fields rendered as uncontrolled <input>s and were discarded on save. Controlled +
   // seeded from the existing record (patch mode) so they persist. accident.* reads are cast to string.
@@ -113,10 +116,39 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
     setMemo(initialMemo);
     setAtFault(initialAtFault);
     setPreventable(initialPreventable);
+    setSuggestionPinned(false);
   }, [accidentId, initialDriverId, initialUnitId, initialVendorId, initialLoadId, initialIncidentDate, initialMemo, initialAtFault, initialPreventable]);
 
   const scopeReady = open && Boolean(operatingCompanyId);
   const detailReady = scopeReady && !createMode && Boolean(accidentId) && accidentId !== "__create__";
+
+  // Create-path trip wiring: stamp active load from driver/unit + incident date (same resolver as
+  // expense/fine/claim). Never overwrite an operator-selected load (suggestionPinned).
+  const suggestionQuery = useQuery({
+    queryKey: ["safety", "accident-create", "suggest-load", operatingCompanyId, driverId, unitId, incidentDate],
+    queryFn: () =>
+      suggestExpenseLoad({
+        operating_company_id: operatingCompanyId,
+        driver_id: driverId || undefined,
+        unit_id: unitId || undefined,
+        transaction_date: incidentDate,
+      }),
+    enabled: open && createMode && Boolean(operatingCompanyId && incidentDate && (driverId || unitId)),
+  });
+
+  useEffect(() => {
+    if (!createMode) return;
+    setSuggestionPinned(false);
+  }, [createMode, driverId, unitId, incidentDate]);
+
+  useEffect(() => {
+    if (!createMode) return;
+    if (loadId || suggestionPinned) return;
+    const suggested = suggestionQuery.data?.data;
+    if (!suggested?.load_id) return;
+    setLoadId(suggested.load_id);
+    setSuggestionPinned(true);
+  }, [createMode, loadId, suggestionPinned, suggestionQuery.data]);
 
   // Hydrate previously spawned WOs from GET detail (server lists by description token).
   const detailQuery = useQuery({
@@ -327,7 +359,10 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
                   kind="load"
                   operatingCompanyId={operatingCompanyId}
                   value={loadId || null}
-                  onChange={(next) => setLoadId(next ?? "")}
+                  onChange={(next) => {
+                    setLoadId(next ?? "");
+                    setSuggestionPinned(true);
+                  }}
                   allowCreate={false}
                   nestedInDrawer
                   enabled={open && scopeReady}
@@ -336,6 +371,11 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
                   dataField="accident-load"
                   dataTestId="accident-load"
                 />
+                {createMode && suggestionPinned && loadId && suggestionQuery.data?.data?.load_id === loadId ? (
+                  <p className="mt-1 text-[11px] text-slate-600" data-testid="accident-create-load-suggested">
+                    Auto-filled from the active trip for this driver/unit on the incident date.
+                  </p>
+                ) : null}
               </div>
             </Field>
 
