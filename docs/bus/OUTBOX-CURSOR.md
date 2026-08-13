@@ -71,3 +71,5 @@
 2026-08-13T22:15Z Cursor | shipping VERTICAL-PICKER-LAW-MAINTENANCE-QUEUES | Live=BLOCKED | NEXT=drivers/factoring picker
 2026-08-13T22:20Z Cursor | shipping VERTICAL-PICKER-LAW-REMAINDER-BATCH + fuel qbo honesty | Live=BLOCKED | NEXT=priority14 recensus
 2026-08-13T22:25Z Cursor | shipping VERTICAL-REVERSE-LINK-REPORTS-BATCH | Live=BLOCKED | NEXT=picker_law secondary modules
+2026-08-13T22:28Z Cursor | SHIPPED reverse+picker drain wave (#6573–#6581) | Live=BLOCKED | NEXT=secondary picker_law + liability/expense honesty
+2026-08-13T22:35Z Cursor | shipping VERTICAL-REVERSE-LINK-SECONDARY-BATCH | Live=BLOCKED | NEXT=picker/qbo/liability/expense secondary

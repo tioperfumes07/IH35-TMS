@@ -124,7 +124,6 @@
         "gl_je",
         "liability",
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -139,7 +138,6 @@
         "gl_je",
         "liability",
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -154,7 +152,6 @@
         "gl_je",
         "liability",
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -167,7 +164,6 @@
         "customer",
         "vendor",
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -178,7 +174,6 @@
       "route_hint": "/banking",
       "required": [
         "connectivity",
-        "reverse_link",
         "qbo_chrome",
         "bank"
       ]
@@ -192,7 +187,6 @@
         "customer",
         "vendor",
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -205,7 +199,6 @@
         "customer",
         "vendor",
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -218,7 +211,6 @@
         "customer",
         "vendor",
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -229,8 +221,7 @@
       "route_hint": "/cash-advances",
       "required": [
         "driver",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -303,6 +294,66 @@
         "bank"
       ],
       "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; \u00a7B9 link columns added."
+    },
+    "reverse_link_2026_08_13_secondary": {
+      "finding": "VERTICAL-REVERSE-LINK-SECONDARY-HONESTY",
+      "note": "Secondary module reverse_link Required on hub/chrome/nav leaves without reverse EntityLink drill \u2014 honesty drop. Built stays on money/ops modules already drained.",
+      "drops": [
+        {
+          "id": "home",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "tab.daily_prediction",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "tab.actual_vs_projected",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "tab.manual_daily_projections",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "hop.banking",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "hop.reports.cash_flow_statement",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "hop.reports.cash_flow",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "hop.reports.cash_flow_overview",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "hop.cash_advances",
+          "removed": [
+            "reverse_link"
+          ]
+        }
+      ]
     }
   }
 }

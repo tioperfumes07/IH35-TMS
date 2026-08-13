@@ -124,8 +124,8 @@
         "unit",
         "load",
         "connectivity",
-        "reverse_link",
-        "picker_law"
+        "picker_law",
+        "reverse_link"
       ]
     },
     {
@@ -140,7 +140,6 @@
         "unit",
         "load",
         "connectivity",
-        "reverse_link",
         "picker_law"
       ]
     },
@@ -151,8 +150,7 @@
       "route_hint": "/docs?entity=driver",
       "required": [
         "driver",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -162,8 +160,7 @@
       "route_hint": "/docs?entity=customer",
       "required": [
         "customer",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -173,8 +170,7 @@
       "route_hint": "/docs?entity=vendor",
       "required": [
         "vendor",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -184,8 +180,7 @@
       "route_hint": "/docs?entity=unit",
       "required": [
         "unit",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -195,8 +190,7 @@
       "route_hint": "/docs?entity=equipment",
       "required": [
         "unit",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -211,7 +205,6 @@
         "unit",
         "load",
         "connectivity",
-        "reverse_link",
         "picker_law"
       ]
     },
@@ -236,7 +229,6 @@
         "unit",
         "load",
         "connectivity",
-        "reverse_link",
         "picker_law"
       ]
     },
@@ -248,8 +240,7 @@
       "surface_kind": "modal",
       "surface_path": "components/documents/EditMetadataModal.tsx",
       "required": [
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -260,8 +251,7 @@
       "surface_kind": "modal",
       "surface_path": "components/documents/PreviewModal.tsx",
       "required": [
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -272,8 +262,7 @@
       "surface_kind": "modal",
       "surface_path": "components/documents/SoftDeleteModal.tsx",
       "required": [
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -285,7 +274,6 @@
       "surface_path": "components/documents/UploadModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "load"
       ]
     },
@@ -297,14 +285,13 @@
       "surface_kind": "modal",
       "surface_path": "components/documents/VersionHistoryModal.tsx",
       "required": [
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
       "id": "chrome.toolbar_search",
       "tab": "Chrome controls",
-      "sub": "List toolbar — Search (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar \u2014 Search (CLS-LIST-TOOLBAR)",
       "route_hint": "/docs",
       "surface_kind": "toolbar",
       "required": [
@@ -315,7 +302,7 @@
     {
       "id": "chrome.toolbar_range",
       "tab": "Chrome controls",
-      "sub": "List toolbar — date/amount range (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar \u2014 date/amount range (CLS-LIST-TOOLBAR)",
       "route_hint": "/docs",
       "surface_kind": "toolbar",
       "required": [
@@ -326,7 +313,7 @@
     {
       "id": "chrome.toolbar_gear",
       "tab": "Chrome controls",
-      "sub": "List toolbar — column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
+      "sub": "List toolbar \u2014 column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
       "route_hint": "/docs",
       "surface_kind": "toolbar",
       "required": [
@@ -337,7 +324,7 @@
     {
       "id": "chrome.toolbar_filter",
       "tab": "Chrome controls",
-      "sub": "List toolbar — Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
+      "sub": "List toolbar \u2014 Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
       "route_hint": "/docs",
       "surface_kind": "toolbar",
       "required": [
@@ -359,7 +346,91 @@
         "invoice",
         "bank"
       ],
-      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; §B9 link columns added."
+      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; \u00a7B9 link columns added."
+    },
+    "reverse_link_2026_08_13_secondary": {
+      "finding": "VERTICAL-REVERSE-LINK-SECONDARY-HONESTY",
+      "note": "Secondary module reverse_link Required on hub/chrome/nav leaves without reverse EntityLink drill \u2014 honesty drop. Built stays on money/ops modules already drained. Built restored for EntityLink surfaces: home.",
+      "drops": [
+        {
+          "id": "tab.all",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "tab.driver",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "tab.customer",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "tab.vendor",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "tab.unit",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "tab.equipment",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "upload",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "table.entity_link",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "docs.modal.edit_metadata",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "docs.modal.preview",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "docs.modal.soft_delete",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "docs.modal.upload",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "docs.modal.version_history",
+          "removed": [
+            "reverse_link"
+          ]
+        }
+      ]
     }
   }
 }

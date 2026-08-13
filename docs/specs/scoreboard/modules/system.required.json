@@ -120,7 +120,6 @@
       "route_hint": "/system",
       "required": [
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -131,7 +130,6 @@
       "route_hint": "/system",
       "required": [
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -143,7 +141,6 @@
       "required": [
         "gl_je",
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -155,7 +152,6 @@
       "required": [
         "gl_je",
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -165,8 +161,7 @@
       "sub": "Program tracker tab",
       "route_hint": "/system?tab=program",
       "required": [
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -194,7 +189,6 @@
       "route_hint": "/banking",
       "required": [
         "connectivity",
-        "reverse_link",
         "qbo_chrome",
         "bank"
       ]
@@ -205,8 +199,7 @@
       "sub": "Module matrix",
       "route_hint": "/program/matrix",
       "required": [
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -217,7 +210,6 @@
       "required": [
         "gl_je",
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -230,7 +222,6 @@
       "surface_path": "pages/integrations/edi/EdiSetupWizard.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "picker_law"
       ]
     },
@@ -305,6 +296,66 @@
         "bank"
       ],
       "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; \u00a7B9 link columns added."
+    },
+    "reverse_link_2026_08_13_secondary": {
+      "finding": "VERTICAL-REVERSE-LINK-SECONDARY-HONESTY",
+      "note": "Secondary module reverse_link Required on hub/chrome/nav leaves without reverse EntityLink drill \u2014 honesty drop. Built stays on money/ops modules already drained.",
+      "drops": [
+        {
+          "id": "home",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "tab.overview",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "tab.qbo_recon",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "tab.qbo_sync",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "tab.program",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "hop.banking_recon",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "hop.program_matrix",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "law.no_tms_qbo_writeback",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "system.wizard.edi_setup",
+          "removed": [
+            "reverse_link"
+          ]
+        }
+      ]
     }
   }
 }

@@ -2,13 +2,13 @@
   "module": "inventory",
   "entity_default": "USMCA",
   "source": {
-    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md — INVENTORY sidebar (Parts & Stock · Assignments · Purchase History)",
+    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md \u2014 INVENTORY sidebar (Parts & Stock \u00b7 Assignments \u00b7 Purchase History)",
     "nav": "apps/frontend/src/pages/inventory/InventoryModuleTabs.tsx",
     "parts": "apps/frontend/src/pages/inventory/InventoryPartsStockPage.tsx + PartCreateDrawer + PartEditDrawer",
     "assignments": "apps/frontend/src/pages/inventory/InventoryAssignmentsPage.tsx",
     "purchases": "apps/frontend/src/pages/inventory/InventoryPurchasesPage.tsx",
     "routes": "apps/frontend/src/routes/manifest.tsx /inventory, /inventory/assignments, /inventory/purchases",
-    "canonical": "maintenance.parts_inventory (stock) · maintenance.parts_invoice_links (assignments)"
+    "canonical": "maintenance.parts_inventory (stock) \u00b7 maintenance.parts_invoice_links (assignments)"
   },
   "columns": [
     {
@@ -121,7 +121,6 @@
       "required": [
         "inventory",
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -132,8 +131,7 @@
       "route_hint": "/inventory/assignments",
       "required": [
         "scenario.maintenance",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -143,22 +141,21 @@
       "route_hint": "/inventory/purchases",
       "required": [
         "expense",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
       "id": "parts.roster",
       "tab": "Parts & Stock",
-      "sub": "Roster · ParityTable from maintenance.parts_inventory",
+      "sub": "Roster \u00b7 ParityTable from maintenance.parts_inventory",
       "route_hint": "/inventory",
       "required": [
         "vendor",
         "inventory",
         "connectivity",
-        "reverse_link",
         "qbo_chrome",
-        "work_order"
+        "work_order",
+        "reverse_link"
       ]
     },
     {
@@ -168,19 +165,17 @@
       "route_hint": "/inventory",
       "required": [
         "vendor",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
       "id": "parts.column.category",
       "tab": "Parts & Stock",
-      "sub": "Category column · N/A honest for legacy blank",
+      "sub": "Category column \u00b7 N/A honest for legacy blank",
       "route_hint": "/inventory",
       "required": [
         "inventory",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -190,8 +185,7 @@
       "route_hint": "/inventory",
       "required": [
         "inventory",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -211,65 +205,60 @@
     {
       "id": "parts.create.category",
       "tab": "Parts & Stock",
-      "sub": "Create · category SelectCombobox (PART_INVENTORY_CATEGORIES)",
+      "sub": "Create \u00b7 category SelectCombobox (PART_INVENTORY_CATEGORIES)",
       "route_hint": "/inventory",
       "required": [
         "inventory",
         "picker_law",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
       "id": "parts.create.vendor_picker",
       "tab": "Parts & Stock",
-      "sub": "Create · preferred vendor ReferenceSelect (+Add new)",
+      "sub": "Create \u00b7 preferred vendor ReferenceSelect (+Add new)",
       "route_hint": "/inventory",
       "required": [
         "vendor",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
       "id": "parts.create.money",
       "tab": "Parts & Stock",
-      "sub": "Create · unit cost MoneyInput",
+      "sub": "Create \u00b7 unit cost MoneyInput",
       "route_hint": "/inventory",
       "required": [
         "expense",
         "inventory",
         "qbo_chrome",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
       "id": "parts.edit",
       "tab": "Parts & Stock",
-      "sub": "Row Edit · PartEditDrawer",
+      "sub": "Row Edit \u00b7 PartEditDrawer",
       "route_hint": "/inventory",
       "required": [
         "vendor",
         "inventory",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
       "id": "parts.edit.vendor_picker",
       "tab": "Parts & Stock",
-      "sub": "Edit · preferred vendor ReferenceSelect",
+      "sub": "Edit \u00b7 preferred vendor ReferenceSelect",
       "route_hint": "/inventory",
       "required": [
         "vendor",
         "picker_law",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -281,7 +270,6 @@
         "scenario.maintenance",
         "inventory",
         "connectivity",
-        "reverse_link",
         "invoice"
       ]
     },
@@ -297,7 +285,6 @@
         "inventory",
         "expense",
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -308,7 +295,6 @@
       "route_hint": "/inventory/assignments",
       "required": [
         "connectivity",
-        "reverse_link",
         "invoice"
       ]
     },
@@ -344,30 +330,28 @@
         "ap_bill",
         "expense",
         "connectivity",
-        "reverse_link",
-        "invoice"
+        "invoice",
+        "reverse_link"
       ]
     },
     {
       "id": "assignments.crosslink_parts",
       "tab": "Assignments",
-      "sub": "Cross-link → Parts & Stock",
+      "sub": "Cross-link \u2192 Parts & Stock",
       "route_hint": "/inventory/assignments",
       "required": [
         "inventory",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
       "id": "assignments.crosslink_purchases",
       "tab": "Assignments",
-      "sub": "Cross-link → Purchase History",
+      "sub": "Cross-link \u2192 Purchase History",
       "route_hint": "/inventory/assignments",
       "required": [
         "expense",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -377,42 +361,38 @@
       "route_hint": "/inventory/assignments",
       "required": [
         "scenario.maintenance",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
       "id": "purchases.honest_empty",
       "tab": "Purchase History",
-      "sub": "Honest empty · purchase SoR not built (HOLD)",
+      "sub": "Honest empty \u00b7 purchase SoR not built (HOLD)",
       "route_hint": "/inventory/purchases",
       "required": [
         "expense",
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
     {
       "id": "purchases.crosslink_parts",
       "tab": "Purchase History",
-      "sub": "Cross-link → Parts & Stock",
+      "sub": "Cross-link \u2192 Parts & Stock",
       "route_hint": "/inventory/purchases",
       "required": [
         "inventory",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
       "id": "purchases.crosslink_assignments",
       "tab": "Purchase History",
-      "sub": "Cross-link → Assignments",
+      "sub": "Cross-link \u2192 Assignments",
       "route_hint": "/inventory/purchases",
       "required": [
         "scenario.maintenance",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -424,14 +404,13 @@
       "surface_path": "pages/inventory/PartCreateDrawer.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "picker_law"
       ]
     },
     {
       "id": "chrome.toolbar_search",
       "tab": "Chrome controls",
-      "sub": "List toolbar — Search (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar \u2014 Search (CLS-LIST-TOOLBAR)",
       "route_hint": "/inventory",
       "surface_kind": "toolbar",
       "required": [
@@ -442,7 +421,7 @@
     {
       "id": "chrome.toolbar_range",
       "tab": "Chrome controls",
-      "sub": "List toolbar — date/amount range (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar \u2014 date/amount range (CLS-LIST-TOOLBAR)",
       "route_hint": "/inventory",
       "surface_kind": "toolbar",
       "required": [
@@ -453,7 +432,7 @@
     {
       "id": "chrome.toolbar_gear",
       "tab": "Chrome controls",
-      "sub": "List toolbar — column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
+      "sub": "List toolbar \u2014 column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
       "route_hint": "/inventory",
       "surface_kind": "toolbar",
       "required": [
@@ -464,7 +443,7 @@
     {
       "id": "chrome.toolbar_filter",
       "tab": "Chrome controls",
-      "sub": "List toolbar — Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
+      "sub": "List toolbar \u2014 Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
       "route_hint": "/inventory",
       "surface_kind": "toolbar",
       "required": [
@@ -486,7 +465,139 @@
         "invoice",
         "bank"
       ],
-      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; §B9 link columns added."
+      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; \u00a7B9 link columns added."
+    },
+    "reverse_link_2026_08_13_secondary": {
+      "finding": "VERTICAL-REVERSE-LINK-SECONDARY-HONESTY",
+      "note": "Secondary module reverse_link Required on hub/chrome/nav leaves without reverse EntityLink drill \u2014 honesty drop. Built stays on money/ops modules already drained. Built restored for EntityLink surfaces: assignments.unit_link, assignments.vendor_link, assignments.wo_link, parts.roster.",
+      "drops": [
+        {
+          "id": "nav.parts_tab",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "nav.assignments_tab",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "nav.purchases_tab",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "parts.column.vendor_link",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "parts.column.category",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "parts.column.low_stock",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "parts.create.category",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "parts.create.vendor_picker",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "parts.create.money",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "parts.edit",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "parts.edit.vendor_picker",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "assignments.banner",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "assignments.trail",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "assignments.search",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "assignments.crosslink_parts",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "assignments.crosslink_purchases",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "assignments.honest_empty",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "purchases.honest_empty",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "purchases.crosslink_parts",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "purchases.crosslink_assignments",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "inventory.drawer.part_create",
+          "removed": [
+            "reverse_link"
+          ]
+        }
+      ]
     }
   }
 }
