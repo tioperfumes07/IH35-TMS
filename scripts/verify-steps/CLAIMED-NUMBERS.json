@@ -430,6 +430,14 @@
     "note": "CLAIM-RESERVE: AccidentReportDrawer suggestExpenseLoad active-trip stamp",
     "purpose": "verify-accident-create-suggest-load"
   },
+  "3136": {
+    "claimed_at": "2026-08-12",
+    "claimed_by": "cursor",
+    "guard": "verify-hos-violation-create-suggest-load",
+    "lane": "cursor",
+    "note": "CLAIM-RESERVE: HosViolationCreateModal suggestExpenseLoad + related_load_id",
+    "purpose": "verify-hos-violation-create-suggest-load"
+  },
   "3137": {
     "claimed_at": "2026-08-12",
     "claimed_by": "cc-1",
