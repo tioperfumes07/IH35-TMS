@@ -9,6 +9,7 @@ import {
   type InsuranceClaimRepairBooksTreatment,
   type InsuranceClaimStatus,
 } from "../../api/insurance";
+import { suggestExpenseLoad } from "../../api/maintenance";
 import { getSafetyAccidents } from "../../api/safety";
 import { DriverPickerWithCreate } from "../drivers/DriverPickerWithCreate";
 import { EntityPicker } from "../parity/EntityPicker";
@@ -117,6 +118,8 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof FormState, string>>>({});
   const [formError, setFormError] = useState("");
   const [serverError, setServerError] = useState("");
+  /** Once auto-filled from suggest-load, do not clobber an operator override until driver/unit/trailer/date change. */
+  const [suggestionPinned, setSuggestionPinned] = useState(false);
   // SAF-B29 / picker law: load + trailer → EntityPicker (server search + nested create).
 
   // Policies load via EntityPicker kind=insurance_policy (no local listInsurancePolicies query).
@@ -128,6 +131,31 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
     queryFn: () => getSafetyAccidents(operatingCompanyId).then((r) => r.accidents ?? []),
   });
 
+  // Going-forward trip linkage: same suggest-load resolver as WO / RecordExpense — stamp active load
+  // when driver or unit (asset) is set for the accident date. Do not invent FKs on empty history.
+  const suggestionQuery = useQuery({
+    queryKey: [
+      "insurance",
+      "claim-create",
+      "suggest-load",
+      operatingCompanyId,
+      form.driver_id,
+      form.asset_id,
+      form.trailer_id,
+      form.accident_date,
+    ],
+    queryFn: () =>
+      suggestExpenseLoad({
+        operating_company_id: operatingCompanyId,
+        driver_id: form.driver_id || undefined,
+        unit_id: form.asset_id || undefined,
+        trailer_id: form.trailer_id || undefined,
+        transaction_date: form.accident_date,
+      }),
+    enabled:
+      open &&
+      Boolean(operatingCompanyId && form.accident_date && (form.driver_id || form.asset_id || form.trailer_id)),
+  });
 
   const accidentOptions = useMemo(
     () =>
@@ -145,7 +173,21 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
     setFieldErrors({});
     setFormError("");
     setServerError("");
+    setSuggestionPinned(false);
   }, [open]);
+
+  useEffect(() => {
+    setSuggestionPinned(false);
+  }, [form.driver_id, form.asset_id, form.trailer_id, form.accident_date]);
+
+  useEffect(() => {
+    if (!open) return;
+    if (form.load_id || suggestionPinned) return;
+    const suggested = suggestionQuery.data?.data;
+    if (!suggested?.load_id) return;
+    setForm((prev) => ({ ...prev, load_id: suggested.load_id }));
+    setSuggestionPinned(true);
+  }, [form.load_id, open, suggestionPinned, suggestionQuery.data]);
 
   const createMutation = useMutation({
     mutationFn: (payload: { amountClaimedCents?: number; amountPaidCents?: number; deductibleCents?: number }) =>
@@ -320,6 +362,11 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
               nestedInDrawer
               dataTestId="claim-create-load-picker"
             />
+            {suggestionPinned && form.load_id && suggestionQuery.data?.data?.load_id === form.load_id ? (
+              <span className="text-[11px] text-slate-600" data-testid="claim-create-load-suggested">
+                Auto-filled from active trip for this driver/unit/trailer on the accident date.
+              </span>
+            ) : null}
           </label>
 
           <label className="space-y-1" data-testid="claim-create-trailer-field">
