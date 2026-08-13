@@ -11,11 +11,19 @@ import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { LegalModuleTabs } from "../LegalModuleTabs";
 import { formatDateTimeUS } from "../../../lib/formatDate";
 import { entityLabel } from "../../../lib/entity-label";
+import { EntityLink } from "../../../components/shared/EntityLink";
 
 function auditActorLabel(row: TemplateAuditEvent): string {
   if (row.actor_user_id) return entityLabel(row.actor_name, row.actor_user_id, "User");
   const name = row.actor_name != null ? String(row.actor_name).trim() : "";
   return name !== "" ? name : "system";
+}
+
+function auditActorCell(row: TemplateAuditEvent) {
+  if (row.actor_user_id) {
+    return <EntityLink kind="user" id={row.actor_user_id} label={auditActorLabel(row)} />;
+  }
+  return auditActorLabel(row);
 }
 
 type TemplateVersion = NonNullable<LegalTemplateDetail["versions"]>[number];
@@ -56,7 +64,7 @@ const AUDIT_LOG_COLUMNS: Array<ParityColumn<TemplateAuditEvent>> = [
     label: "Actor",
     sortable: true,
     sortValue: (row) => auditActorLabel(row),
-    render: (row) => auditActorLabel(row),
+    render: (row) => auditActorCell(row),
   },
 ];
 
