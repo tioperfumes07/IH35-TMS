@@ -2,7 +2,7 @@
   "module": "banking",
   "entity_default": "USMCA",
   "source": {
-    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md \u2014 Banking",
+    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md — Banking",
     "nav": "apps/frontend/src/pages/banking/BANKING_NAV_CONFIG.ts",
     "routes": "/banking/*"
   },
@@ -266,7 +266,6 @@
       "surface_path": "pages/banking/RecordCCPaymentModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "qbo_chrome",
         "bank"
       ]
@@ -280,7 +279,6 @@
       "surface_path": "pages/banking/RecordTransferModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "bank",
         "qbo_chrome"
       ]
@@ -294,7 +292,6 @@
       "surface_path": "pages/banking/TransferModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "bank",
         "qbo_chrome"
       ]
@@ -308,7 +305,6 @@
       "surface_path": "pages/banking/components/BankTransactionSplitModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "bank",
         "qbo_chrome"
       ]
@@ -322,7 +318,6 @@
       "surface_path": "pages/banking/components/ManageAccountsModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "bank",
         "qbo_chrome"
       ]
@@ -336,7 +331,6 @@
       "surface_path": "pages/banking/components/ManualJEModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "bank",
         "qbo_chrome"
       ]
@@ -349,8 +343,7 @@
       "surface_kind": "modal",
       "surface_path": "pages/banking/components/forms/SplitTransactionModal.tsx",
       "required": [
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -401,7 +394,6 @@
       "surface_path": "pages/banking/RecordCCPaymentModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "qbo_chrome",
         "bank"
       ]
@@ -415,7 +407,6 @@
       "surface_path": "pages/banking/RecordTransferModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "bank",
         "qbo_chrome"
       ]
@@ -429,7 +420,6 @@
       "surface_path": "pages/banking/TransferModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "bank",
         "qbo_chrome"
       ]
@@ -443,7 +433,6 @@
       "surface_path": "pages/banking/components/BankTransactionSplitModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "bank",
         "qbo_chrome"
       ]
@@ -457,7 +446,6 @@
       "surface_path": "pages/banking/components/ManualJEModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "bank",
         "qbo_chrome"
       ]
@@ -503,7 +491,7 @@
     {
       "id": "chrome.toolbar_search",
       "tab": "Chrome controls",
-      "sub": "List toolbar \u2014 Search (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar — Search (CLS-LIST-TOOLBAR)",
       "route_hint": "/banking",
       "surface_kind": "toolbar",
       "required": [
@@ -514,7 +502,7 @@
     {
       "id": "chrome.toolbar_range",
       "tab": "Chrome controls",
-      "sub": "List toolbar \u2014 date/amount range (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar — date/amount range (CLS-LIST-TOOLBAR)",
       "route_hint": "/banking",
       "surface_kind": "toolbar",
       "required": [
@@ -525,7 +513,7 @@
     {
       "id": "chrome.toolbar_gear",
       "tab": "Chrome controls",
-      "sub": "List toolbar \u2014 column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
+      "sub": "List toolbar — column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
       "route_hint": "/banking",
       "surface_kind": "toolbar",
       "required": [
@@ -536,7 +524,7 @@
     {
       "id": "chrome.toolbar_filter",
       "tab": "Chrome controls",
-      "sub": "List toolbar \u2014 Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
+      "sub": "List toolbar — Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
       "route_hint": "/banking",
       "surface_kind": "toolbar",
       "required": [
@@ -582,7 +570,7 @@
         "invoice",
         "bank"
       ],
-      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; \u00a7B9 link columns added."
+      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; §B9 link columns added."
     }
   }
 }
