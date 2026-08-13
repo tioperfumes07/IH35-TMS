@@ -6,6 +6,7 @@ import {
   getDriverDrugAlcoholTests,
   getInternalFines,
   getSafetyFines,
+  getSafetyAccidents,
 } from "../../api/safety";
 import { useAuth } from "../../auth/useAuth";
 import { formatDateUS } from "../../lib/formatDate";
@@ -134,6 +135,12 @@ export function DriverSafetyReverseSection({
     enabled,
   });
 
+  const accidentsQuery = useQuery({
+    queryKey: ["safety", "reverse", "accidents", operatingCompanyId, driverId],
+    queryFn: () => getSafetyAccidents(operatingCompanyId, { driver_id: driverId }),
+    enabled,
+  });
+
   const hosViolationsQuery = useQuery({
     queryKey: ["safety", "reverse", "hos-violations", operatingCompanyId, driverId],
     queryFn: () => listHosViolations(operatingCompanyId, { driver_id: driverId }),
@@ -147,6 +154,7 @@ export function DriverSafetyReverseSection({
   const complaints: Row[] = complaintsQuery.data?.complaints ?? [];
   const tests: Row[] = testsQuery.data?.tests ?? [];
   const dotInspections: Row[] = dotInspectionsQuery.data?.dot_inspections ?? [];
+  const accidents: Row[] = accidentsQuery.data?.accidents ?? [];
   const hosViolations: Row[] = hosViolationsQuery.data?.hos_violations ?? [];
 
   return (
@@ -172,6 +180,25 @@ export function DriverSafetyReverseSection({
       />
       <SafetyEventsReverseBlock companyId={operatingCompanyId} subject="driver" entityId={driverId} />
       <DriverIncidentsReverseSection operatingCompanyId={operatingCompanyId} driverId={driverId} />
+
+      <SectionShell
+        title="Accidents"
+        to="/safety/accidents"
+        linkLabel="Open Accidents"
+        testId="driver-safety-reverse-accidents"
+        isLoading={accidentsQuery.isLoading}
+        isError={accidentsQuery.isError}
+        errorText="Failed to load this driver's accidents."
+        emptyText="No accident reports for this driver."
+        count={accidents.length}
+      >
+        {accidents.map((accident) => (
+          <li key={s(accident.id)} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-sm">
+            <EntityLink kind="accident" id={s(accident.id)} label={entityLabel(accident.description, accident.id, "Accident")} className="font-semibold" />
+            {accident.load_id ? <span className="ml-2"><EntityLink kind="load" id={s(accident.load_id)} label={entityLabel(accident.load_number, accident.load_id, "Load")} /></span> : null}
+          </li>
+        ))}
+      </SectionShell>
 
       <SectionShell
         title="HOS Violations"

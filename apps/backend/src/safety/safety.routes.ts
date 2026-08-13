@@ -17,6 +17,7 @@ const companyQuerySchema = z.object({
 // SAF-F17 — unit-profile reverse view. Optional; absent = the existing company-wide list.
 // SAF-C01 — load-detail reverse view: filter by load_id in SQL (LIMIT 500 — never client-filter).
 const accidentsQuerySchema = companyQuerySchema.extend({
+  driver_id: z.string().uuid().optional(),
   unit_id: z.string().uuid().optional(),
   // RANK5-ACCIDENT-TRAILER-ID — safety.accident_reports.trailer_id, live since rank 1 (PR #6316).
   trailer_id: z.string().uuid().optional(),
@@ -441,6 +442,10 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
       // empty "no accidents" all-clear on a safety screen (the same fake-green class as SAF-F06).
       const values: unknown[] = [query.data.operating_company_id];
       const scopeFilters: string[] = [];
+      if (query.data.driver_id) {
+        values.push(query.data.driver_id);
+        scopeFilters.push(`AND ar.driver_id = $${values.length}`);
+      }
       if (query.data.unit_id) {
         values.push(query.data.unit_id);
         scopeFilters.push(`AND ar.unit_id = $${values.length}`);
