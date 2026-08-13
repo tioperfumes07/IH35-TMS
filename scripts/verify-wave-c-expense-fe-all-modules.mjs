@@ -46,7 +46,9 @@ export function auditExpenseColumn(sources, leaves) {
   // ACCT-F5083 removed four proven-false P10 cells (Book/Reserve/Detention/Relay); 13 is the honest floor.
   if (p10.length < 13) failures.push(`priority-10 expense inventory unexpectedly shrank to ${p10.length}`);
   // ACCT-F5085/F5086 removed sixteen proven-false compliance/home/insurance/legal/fuel identity cells.
-  if (leaves.length < 63) failures.push(`all-module expense inventory unexpectedly shrank to ${leaves.length}`);
+  // Fleet's eight unrelated trip-cost/edit/toll/bank leaves were removed and two explicit
+  // unit/trailer expense-reverse leaves were added by FLEET-EXPENSE-REVERSE-LEAVES.
+  if (leaves.length < 57) failures.push(`all-module expense inventory unexpectedly shrank to ${leaves.length}`);
   // Dispatch, compliance, and legal left the expense inventory after their navigation/GL-only cells were removed.
   if (new Set(leaves.map((leaf) => leaf.module)).size < 11) failures.push("expense module inventory unexpectedly shrank");
   failures.push(...auditConnectivity(sources.routes, leaves, 0));

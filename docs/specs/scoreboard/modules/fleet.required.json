@@ -316,7 +316,6 @@
         "trailer",
         "vendor",
         "ap_bill",
-        "expense",
         "picker_law",
         "qbo_chrome",
         "connectivity",
@@ -416,7 +415,6 @@
       "required": [
         "unit",
         "load",
-        "expense",
         "connectivity",
         "reverse_link"
       ]
@@ -430,7 +428,6 @@
         "unit",
         "vendor",
         "ap_bill",
-        "expense",
         "scenario.maintenance",
         "connectivity",
         "reverse_link",
@@ -444,6 +441,18 @@
       "route_hint": "/fleet/units/:id",
       "required": [
         "unit",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "unit.profile.expenses_reverse",
+      "tab": "Vehicle Profile",
+      "sub": "Expenses reverse · unit_id filter",
+      "route_hint": "/fleet/units/:id",
+      "required": [
+        "unit",
+        "expense",
         "connectivity",
         "reverse_link"
       ]
@@ -482,7 +491,6 @@
       "required": [
         "unit",
         "load",
-        "expense",
         "connectivity",
         "reverse_link"
       ]
@@ -546,7 +554,6 @@
       "route_hint": "/fleet/units/:id",
       "required": [
         "unit",
-        "expense",
         "connectivity",
         "reverse_link",
         "bank"
@@ -650,7 +657,6 @@
       "required": [
         "unit",
         "vendor",
-        "expense",
         "connectivity",
         "reverse_link"
       ]
@@ -711,7 +717,6 @@
       "route_hint": "/fleet/units/:id/detail?tab=toll-tags",
       "required": [
         "unit",
-        "expense",
         "connectivity",
         "reverse_link"
       ]
@@ -889,7 +894,6 @@
       "route_hint": "/fleet/trailers/:id",
       "required": [
         "trailer",
-        "expense",
         "connectivity",
         "reverse_link",
         "bank"
@@ -905,6 +909,18 @@
         "connectivity",
         "reverse_link",
         "legal_matter"
+      ]
+    },
+    {
+      "id": "trailer.profile.expenses_reverse",
+      "tab": "Trailer Profile",
+      "sub": "Expenses reverse · trailer_id filter",
+      "route_hint": "/fleet/trailers/:id",
+      "required": [
+        "trailer",
+        "expense",
+        "connectivity",
+        "reverse_link"
       ]
     },
     {
