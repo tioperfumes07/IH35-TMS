@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["accounting","banking","compliance","dispatch","fleet","fuel","home","insurance","inventory","legal","maintenance","reports","safety","vendors"],"cols":["expense"],"leafRe":".*","task":"WAVE-C-expense-fe-all-modules","vertical":"column-wave"} */
 /** Non-posting expense FE contract. This guard never validates or changes GL math. */
 import fs from "node:fs";
 import path from "node:path";

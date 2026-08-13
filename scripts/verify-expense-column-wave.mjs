@@ -2,7 +2,7 @@
 /**
  * expense COLUMN-WAVE — VERTICAL-WIRING-LAW-2026-08-12.
  *
- * @matrix-built {"modules":["dispatch","banking","drivers"],"cols":["expense"],"task":"WAVE-C-expense","vertical":"column-wave","leafRe":".*"}
+ * @matrix-built {"modules":["banking"],"cols":["expense"],"task":"WAVE-C-expense-banking-transactions","vertical":"column-wave","leafRe":"^transactions\\.(list|categorize)$"}
  *
  * Audited every priority-10 module for the expense reverse-link. accounting (hub), settlements
  * (own GL machinery, no accounting.expenses touch), factoring (fee posts directly to GL, documented
