@@ -405,6 +405,12 @@
     "claimed_by": "cc-1",
     "purpose": "verify-expenses-list-je-memo"
   },
+  "3130": {
+    "guard": "verify-claim-create-suggest-load",
+    "lane": "cursor",
+    "claimed_at": "2026-08-12",
+    "note": "CLAIM-RESERVE: ClaimCreateModal suggestExpenseLoad auto-stamp"
+  },
   "3133": {
     "claimed_at": "2026-08-12",
     "claimed_by": "cc-1",
