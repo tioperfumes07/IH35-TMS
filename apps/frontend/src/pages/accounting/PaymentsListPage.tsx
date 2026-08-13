@@ -2,7 +2,7 @@ import { formatDateUS } from "../../lib/formatDate";
 import { useMemo, useState } from "react";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { listPayments, type Payment, type PaymentMethod } from "../../api/accounting";
 import { Button } from "../../components/Button";
 import { EntityLink } from "../../components/shared/EntityLink";
@@ -53,6 +53,7 @@ const METHOD_OPTIONS: Array<{ value: "" | PaymentMethod | "factoring"; label: st
 
 export function PaymentsListPage() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { selectedCompanyId } = useCompanyContext();
   // BANK-SORT-ROLLOUT-ACCT: every visible column header sorts ASC/DESC; sort persists in the URL
   // (?sort=&dir=) so it survives reload / is shareable, same as Bills / Expenses.
@@ -63,7 +64,19 @@ export function PaymentsListPage() {
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const staged = useStagedListFilters({ applied: { status, method, dateFrom, dateTo }, empty: { status: "all" as const, method: "" as const, dateFrom: "", dateTo: "" }, onApply: (next) => { setStatus(next.status); setMethod(next.method); setDateFrom(next.dateFrom); setDateTo(next.dateTo); } });
-  const [recordOpen, setRecordOpen] = useState(false);
+  // ACCT-F5055 — Topbar Create→Receive payment uses ?create=1 (Bills/Expenses/Invoices parity).
+  const recordOpen = searchParams.get("create") === "1";
+  function setRecordOpen(next: boolean) {
+    setSearchParams(
+      (prev) => {
+        const params = new URLSearchParams(prev);
+        if (next) params.set("create", "1");
+        else params.delete("create");
+        return params;
+      },
+      { replace: true }
+    );
+  }
 
   const query = useQuery({
     queryKey: ["accounting", "payments", selectedCompanyId, status, method, search, dateFrom, dateTo],
