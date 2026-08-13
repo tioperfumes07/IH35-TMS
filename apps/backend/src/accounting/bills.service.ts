@@ -106,6 +106,8 @@ type ListBillsOptions = {
   fromDate?: string;
   toDate?: string;
   hasBalance?: boolean;
+  /** ACCT-F5035 — claim→bill reverse list filter (accounting.bills.insurance_claim_id). */
+  insuranceClaimId?: string;
   limit: number;
   offset: number;
 };
@@ -666,6 +668,10 @@ export async function listBillsByVendor(
       where.push(`${BILL_OPEN_BALANCE_SQL} > 0`);
       where.push("b.status NOT IN ('void', 'voided')");
     }
+    if (options.insuranceClaimId) {
+      values.push(options.insuranceClaimId);
+      where.push(`b.insurance_claim_id = $${values.length}::uuid`);
+    }
     values.push(options.limit, options.offset);
     const res = await client.query<BillRow>(
       `
@@ -713,6 +719,10 @@ export async function listAllBillsForCompany(
       // LV-PAYABLE-SELECTOR-OFFERS-VOIDED-BILLS / ACCT-F5028: dollar open ≠ payable.
       where.push(`${BILL_OPEN_BALANCE_SQL} > 0`);
       where.push("b.status NOT IN ('void', 'voided')");
+    }
+    if (options.insuranceClaimId) {
+      values.push(options.insuranceClaimId);
+      where.push(`b.insurance_claim_id = $${values.length}::uuid`);
     }
     values.push(options.limit, options.offset);
     const res = await client.query<BillRow>(
@@ -1043,6 +1053,7 @@ export async function listBills(
     fromDate?: string;
     toDate?: string;
     hasBalance?: boolean;
+    insuranceClaimId?: string;
     limit: number;
     offset: number;
   }
