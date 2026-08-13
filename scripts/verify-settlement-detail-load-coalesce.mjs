@@ -13,14 +13,12 @@
  * source_driver_bill_id set, sl.load_id NULL, bill resolves to load L-20260810-0003 — the list counted
  * it, the detail could not join to it.
  *
- * This guard is the invariant that stops a THIRD call site (or a regression of this one) from
- * silently reintroducing the drift: every settlement-lines-to-loads join in this route file must use
- * the bill-first COALESCE shape, not `sl.load_id` alone.
+ * ACCT-F5030 closes the THIRD call site: settlement-render.routes.ts (HTML/print) used bare
+ * `SELECT * FROM settlement_lines` and regex-parsed L-* from description. Same COALESCE join now.
  *
- * INVARIANT (static — no database, runs in every CI context including fresh-DB): the settlement
- * DETAIL route's line query in settlements.routes.ts joins `driver_finance.driver_bills` on
- * `sl.source_driver_bill_id` AND joins `mdata.loads` on `COALESCE(db.load_id, sl.load_id)` — not on
- * `sl.load_id` alone.
+ * INVARIANT (static — no database, runs in every CI context including fresh-DB):
+ * 1) settlements.routes.ts DETAIL line query joins bills + COALESCE load join
+ * 2) settlement-render.routes.ts HTML line query uses the same shape (not bare SELECT *)
  *
  * Self-test: node scripts/verify-settlement-detail-load-coalesce.mjs --selftest
  */
@@ -29,7 +27,8 @@ import path from "node:path";
 
 const LABEL = "verify-settlement-detail-load-coalesce";
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
-const TARGET = "apps/backend/src/driver-finance/settlements.routes.ts";
+const TARGET_DETAIL = "apps/backend/src/driver-finance/settlements.routes.ts";
+const TARGET_HTML = "apps/backend/src/driver-finance/settlement-render.routes.ts";
 
 function fail(msg) {
   console.error(`[${LABEL}] FAIL: ${msg}`);
@@ -75,6 +74,25 @@ export function checkDetailQuery(src) {
   if (!hasCoalesceLoadJoin) return { ok: false, reason: "detail query's mdata.loads join is not COALESCE(db.load_id, sl.load_id)" };
   if (hasBareLoadJoin) return { ok: false, reason: "detail query still joins mdata.loads on sl.load_id alone somewhere (regressed or duplicated join)" };
 
+  return { ok: true };
+}
+
+/**
+ * HTML/print path (settlement-render.routes.ts) — must not bare-SELECT settlement_lines.
+ * Same bill-first COALESCE shape as DETAIL.
+ */
+export function checkHtmlRenderQuery(src) {
+  const code = stripComments(src);
+  const hasBareSelect = /SELECT\s+\*\s+FROM\s+driver_finance\.settlement_lines/i.test(code);
+  if (hasBareSelect) {
+    return { ok: false, reason: "HTML render still SELECT * FROM driver_finance.settlement_lines (no bill-first COALESCE)" };
+  }
+  const hasBillJoin = /LEFT JOIN\s+driver_finance\.driver_bills\s+db\s+ON\s+db\.id\s*=\s*sl\.source_driver_bill_id/i.test(
+    code
+  );
+  const hasCoalesceLoadJoin = /ON\s+l\.id\s*=\s*COALESCE\(\s*db\.load_id\s*,\s*sl\.load_id\s*\)/i.test(code);
+  if (!hasBillJoin) return { ok: false, reason: "HTML render query does not LEFT JOIN driver_finance.driver_bills on sl.source_driver_bill_id" };
+  if (!hasCoalesceLoadJoin) return { ok: false, reason: "HTML render query's mdata.loads join is not COALESCE(db.load_id, sl.load_id)" };
   return { ok: true };
 }
 
@@ -131,15 +149,39 @@ if (isEntryPoint && process.argv.includes("--selftest")) {
   const trapResult = checkDetailQuery(commentTrap);
   if (trapResult.ok) fail("selftest: comment-trap fixture (COALESCE mentioned only in a comment) should FAIL but the guard matched its own prose");
 
-  console.log(`[${LABEL}] selftest: PASS — good/regressed/comment-trap fixtures all classify correctly`);
+  const htmlGood = `
+    SELECT sl.*, l.load_number, COALESCE(db.load_id, sl.load_id) AS load_id
+    FROM driver_finance.settlement_lines sl
+    LEFT JOIN driver_finance.driver_bills db ON db.id = sl.source_driver_bill_id
+    LEFT JOIN mdata.loads l
+      ON l.id = COALESCE(db.load_id, sl.load_id)
+     AND l.operating_company_id = $2::uuid
+  `;
+  const htmlGoodResult = checkHtmlRenderQuery(htmlGood);
+  if (!htmlGoodResult.ok) fail(`selftest: HTML known-good should pass — ${htmlGoodResult.reason}`);
+
+  const htmlBare = `SELECT * FROM driver_finance.settlement_lines WHERE settlement_id = $1`;
+  const htmlBareResult = checkHtmlRenderQuery(htmlBare);
+  if (htmlBareResult.ok) fail("selftest: HTML bare SELECT * fixture should FAIL but passed");
+
+  console.log(`[${LABEL}] selftest: PASS — good/regressed/comment-trap/html fixtures all classify correctly`);
   process.exit(0);
 }
 
 if (isEntryPoint) {
-  const filePath = path.join(ROOT, TARGET);
-  if (!fs.existsSync(filePath)) fail(`${TARGET}: file not found`);
-  const src = fs.readFileSync(filePath, "utf8");
-  const result = checkDetailQuery(src);
-  if (!result.ok) fail(`${TARGET}: ${result.reason}`);
-  console.log(`[${LABEL}] PASS — settlement detail route resolves each line's load bill-first (COALESCE(db.load_id, sl.load_id)), matching the list query's ACCT-F275 rule`);
+  const detailPath = path.join(ROOT, TARGET_DETAIL);
+  if (!fs.existsSync(detailPath)) fail(`${TARGET_DETAIL}: file not found`);
+  const detailSrc = fs.readFileSync(detailPath, "utf8");
+  const detailResult = checkDetailQuery(detailSrc);
+  if (!detailResult.ok) fail(`${TARGET_DETAIL}: ${detailResult.reason}`);
+
+  const htmlPath = path.join(ROOT, TARGET_HTML);
+  if (!fs.existsSync(htmlPath)) fail(`${TARGET_HTML}: file not found`);
+  const htmlSrc = fs.readFileSync(htmlPath, "utf8");
+  const htmlResult = checkHtmlRenderQuery(htmlSrc);
+  if (!htmlResult.ok) fail(`${TARGET_HTML}: ${htmlResult.reason}`);
+
+  console.log(
+    `[${LABEL}] PASS — detail + HTML render resolve each line's load bill-first (COALESCE(db.load_id, sl.load_id)), matching list ACCT-F275`
+  );
 }

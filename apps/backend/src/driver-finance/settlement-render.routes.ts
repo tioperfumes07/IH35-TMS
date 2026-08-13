@@ -91,9 +91,22 @@ export async function registerDriverFinanceSettlementHtmlRoutes(app: FastifyInst
       const allowedDriver = String(settlement.identity_user_id ?? "") === user.uuid;
       if (!allowedOffice && !allowedDriver) return { kind: "forbidden" as const };
 
+      // ACCT-F5030 — HTML/print path must resolve covered loads with the SAME bill-first rule as
+      // settlements DETAIL (ACCT-F275 / SETTLEMENT-DETAIL-LOAD-COALESCE-DRIFT). Bare SELECT * left
+      // load_number unresolved, so the renderer fell back to regex-parsing L-* out of description —
+      // a third call site that drifted from list+detail. One COALESCE join, three surfaces.
       const linesRes = await client.query(
-        `SELECT * FROM driver_finance.settlement_lines WHERE settlement_id = $1 ORDER BY created_at ASC`,
-        [params.data.settlementId]
+        `
+          SELECT sl.*, l.load_number, COALESCE(db.load_id, sl.load_id) AS load_id
+          FROM driver_finance.settlement_lines sl
+          LEFT JOIN driver_finance.driver_bills db ON db.id = sl.source_driver_bill_id
+          LEFT JOIN mdata.loads l
+            ON l.id = COALESCE(db.load_id, sl.load_id)
+           AND l.operating_company_id = $2::uuid
+          WHERE sl.settlement_id = $1
+          ORDER BY sl.created_at ASC
+        `,
+        [params.data.settlementId, query.data.operating_company_id]
       );
 
       const ytdRes = await client.query(
@@ -130,9 +143,13 @@ export async function registerDriverFinanceSettlementHtmlRoutes(app: FastifyInst
           continue;
         }
 
-        const loadMatch = description.match(/L-[A-Z0-9-]+/i);
+        const joinedLoad =
+          typeof line.load_number === "string" && line.load_number.trim().length > 0
+            ? String(line.load_number).trim()
+            : null;
+        const loadMatch = joinedLoad ? null : description.match(/L-[A-Z0-9-]+/i);
         lineDerivedLoads.push({
-          loadNum: loadMatch?.[0]?.toUpperCase() ?? "—",
+          loadNum: (joinedLoad ?? loadMatch?.[0] ?? "—").toUpperCase(),
           lane: description,
           shortMi: "—",
           ratePerMi: "—",
