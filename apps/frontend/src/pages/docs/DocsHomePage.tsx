@@ -244,7 +244,7 @@ export function DocsHomePage() {
           <DatePicker
             value={staged.draft.expiresBefore}
             onChange={(next) => staged.setDraft({ ...staged.draft, expiresBefore: next })}
-            className="h-9 w-full rounded-sm border border-gray-300 px-2 text-sm font-normal"
+            className="h-9 w-full font-normal"
           />
         </label>
         <div className="flex items-end gap-2">

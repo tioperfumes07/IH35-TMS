@@ -25,7 +25,7 @@ export function OnboardingStepMedicalCard({
       <label className="block text-sm">
         <span className="mb-1 block font-medium text-slate-700">Medical card expiry</span>
         <DatePicker
-          className="w-full rounded-sm border border-gray-300 px-3 py-2 text-sm"
+          className="w-full"
           value={expiresAt}
           disabled={disabled}
           onChange={(next) => onChangeExpiry(next)}

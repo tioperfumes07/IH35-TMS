@@ -293,11 +293,11 @@ export function ExpensesListPage() {
           </label>
           <label className="flex flex-col gap-1 text-[11px] font-semibold text-gray-600">
             From date
-            <DatePicker value={staged.draft.fromDate} onChange={(next) => staged.setDraft({ ...staged.draft, fromDate: next })} className="h-8 rounded-sm border border-gray-300 px-2 text-[13px]" />
+            <DatePicker value={staged.draft.fromDate} onChange={(next) => staged.setDraft({ ...staged.draft, fromDate: next })} className="h-8" />
           </label>
           <label className="flex flex-col gap-1 text-[11px] font-semibold text-gray-600">
             To date
-            <DatePicker value={staged.draft.toDate} onChange={(next) => staged.setDraft({ ...staged.draft, toDate: next })} className="h-8 rounded-sm border border-gray-300 px-2 text-[13px]" />
+            <DatePicker value={staged.draft.toDate} onChange={(next) => staged.setDraft({ ...staged.draft, toDate: next })} className="h-8" />
           </label>
         </div>
       </CollapsedListFilters>

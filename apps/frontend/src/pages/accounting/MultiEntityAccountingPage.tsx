@@ -146,9 +146,9 @@ export function MultiEntityAccountingPage() {
           </div>
           <div className="space-y-2">
             <label className="block text-xs text-gray-500">Start</label>
-            <DatePicker value={start} onChange={(next) => setStart(next)} className="w-full rounded-sm border border-gray-300 px-2 py-1 text-sm" />
+            <DatePicker value={start} onChange={(next) => setStart(next)} className="w-full" />
             <label className="block text-xs text-gray-500">End</label>
-            <DatePicker value={end} onChange={(next) => setEnd(next)} className="w-full rounded-sm border border-gray-300 px-2 py-1 text-sm" />
+            <DatePicker value={end} onChange={(next) => setEnd(next)} className="w-full" />
           </div>
           <div className="flex items-end">
             <Button

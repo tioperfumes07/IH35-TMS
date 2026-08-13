@@ -1135,12 +1135,12 @@ export function BankingHomePage({ initialTab }: Props = {}) {
               <DatePicker
                 value={reconPeriodStart}
                 onChange={(next) => setReconPeriodStart(next)}
-                className="rounded-sm border border-gray-300 px-2 py-1 text-sm"
+                className=""
               />
               <DatePicker
                 value={reconPeriodEnd}
                 onChange={(next) => setReconPeriodEnd(next)}
-                className="rounded-sm border border-gray-300 px-2 py-1 text-sm"
+                className=""
               />
               {/* M-1: dollars-mode QBO money entry; bridged so Math.round(*100) seam is byte-for-byte. */}
               <MoneyInput

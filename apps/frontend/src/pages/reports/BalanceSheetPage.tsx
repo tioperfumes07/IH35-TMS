@@ -123,7 +123,7 @@ export function BalanceSheetPage() {
         <BasisSelector value={basis} onChange={setBasis} />
         <label className="text-xs text-gray-600">
           As-of date
-          <DatePicker className="mt-1 block h-9 rounded-sm border border-gray-300 px-2" value={asOf} onChange={(next) => setAsOf(next)} />
+          <DatePicker className="mt-1 block h-9" value={asOf} onChange={(next) => setAsOf(next)} />
         </label>
         <Button size="sm" onClick={() => setAppliedAsOf(asOf)}>
           Apply

@@ -1704,7 +1704,7 @@ export function DriverDetailPage() {
             <DatePicker
               value={newQualificationForm.qualified_at}
               onChange={(value) => setNewQualificationForm((current) => ({ ...current, qualified_at: value }))}
-              className="rounded-sm border border-gray-300 px-2 text-sm py-2"
+              className=""
             />
           </div>
           <div className="flex flex-col gap-1">
@@ -1933,7 +1933,7 @@ export function DriverDetailPage() {
             <DatePicker
               value={rateChangeForm.effective_from}
               onChange={(value) => setRateChangeForm((current) => ({ ...current, effective_from: value }))}
-              className="rounded-sm border border-gray-300 px-2 text-sm py-2"
+              className=""
             />
           </div>
           <div className="flex flex-col gap-1">

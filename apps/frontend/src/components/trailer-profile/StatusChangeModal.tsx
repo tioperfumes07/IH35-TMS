@@ -136,7 +136,7 @@ export function StatusChangeModal({ open, trailerId, companyId, currentStatus, o
         <label className="block">
           Effective date
           <DatePicker
-            className="mt-1 w-full rounded-sm border px-2 py-1"
+            className="mt-1 w-full"
             value={effectiveDate}
             onChange={(next) => setEffectiveDate(next)}
           />
@@ -145,7 +145,7 @@ export function StatusChangeModal({ open, trailerId, companyId, currentStatus, o
           <>
             <label className="block">
               Sold date *
-              <DatePicker className="mt-1 w-full rounded-sm border px-2 py-1" value={soldDate} onChange={(next) => setSoldDate(next)} />
+              <DatePicker className="mt-1 w-full" value={soldDate} onChange={(next) => setSoldDate(next)} />
             </label>
             <label className="block">
               Sold to
@@ -162,7 +162,7 @@ export function StatusChangeModal({ open, trailerId, companyId, currentStatus, o
           <>
             <label className="block">
               Transferred date *
-              <DatePicker className="mt-1 w-full border px-2 py-1" value={transferredDate} onChange={(next) => setTransferredDate(next)} />
+              <DatePicker className="mt-1 w-full" value={transferredDate} onChange={(next) => setTransferredDate(next)} />
             </label>
             <label className="block">
               Entity *
@@ -178,7 +178,7 @@ export function StatusChangeModal({ open, trailerId, companyId, currentStatus, o
           <>
             <label className="block">
               Damage date *
-              <DatePicker className="mt-1 w-full border px-2 py-1" value={damageDate} onChange={(next) => setDamageDate(next)} />
+              <DatePicker className="mt-1 w-full" value={damageDate} onChange={(next) => setDamageDate(next)} />
             </label>
             <label className="block">
               Description *
@@ -190,7 +190,7 @@ export function StatusChangeModal({ open, trailerId, companyId, currentStatus, o
           <>
             <label className="block">
               OOS date *
-              <DatePicker className="mt-1 w-full border px-2 py-1" value={oosDate} onChange={(next) => setOosDate(next)} />
+              <DatePicker className="mt-1 w-full" value={oosDate} onChange={(next) => setOosDate(next)} />
             </label>
             <label className="block">
               OOS reason *

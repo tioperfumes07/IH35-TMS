@@ -161,7 +161,7 @@ export function TripProfitability() {
         <label className="text-sm">
           From
           <DatePicker
-            className="ml-2 rounded-sm border px-2 py-1"
+            className="ml-2"
             value={period.start}
             onChange={(next) => setPeriod((p) => ({ ...p, start: next }))}
           />
@@ -169,7 +169,7 @@ export function TripProfitability() {
         <label className="text-sm">
           To
           <DatePicker
-            className="ml-2 rounded-sm border px-2 py-1"
+            className="ml-2"
             value={period.end}
             onChange={(next) => setPeriod((p) => ({ ...p, end: next }))}
           />

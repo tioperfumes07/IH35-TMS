@@ -98,7 +98,7 @@ function FieldInput({
         value={String(value ?? "")}
         disabled={disabled}
         onChange={(next) => onChange(next)}
-        className="h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
+        className="h-9 w-full"
       />
     );
   }

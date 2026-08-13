@@ -285,8 +285,8 @@ export function SalesTaxPage() {
               </option>
             ))}
           </SelectCombobox>
-          <DatePicker value={periodStart} onChange={(next) => setPeriodStart(next)} className="rounded-sm border border-gray-300 px-2 py-1 text-sm" />
-          <DatePicker value={periodEnd} onChange={(next) => setPeriodEnd(next)} className="rounded-sm border border-gray-300 px-2 py-1 text-sm" />
+          <DatePicker value={periodStart} onChange={(next) => setPeriodStart(next)} className="" />
+          <DatePicker value={periodEnd} onChange={(next) => setPeriodEnd(next)} className="" />
           <Button
             disabled={!companyId || !selectedAgencyId || !periodStart || !periodEnd}
             loading={prepareReturnMutation.isPending}

@@ -230,14 +230,14 @@ export function UniversalFilterBar({ value, onChange, summaryText, defaultPeriod
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-xs text-gray-500">From</span>
             <DatePicker
-              className="h-[28px] w-32 px-2 text-xs"
+              className="h-[28px] w-32"
               value={draft.from}
               onChange={(next) => handleFrom(next)}
               max={draft.to || undefined}
             />
             <span className="text-xs text-gray-500">To</span>
             <DatePicker
-              className="h-[28px] w-32 px-2 text-xs"
+              className="h-[28px] w-32"
               value={draft.to}
               onChange={(next) => handleTo(next)}
               min={draft.from || undefined}

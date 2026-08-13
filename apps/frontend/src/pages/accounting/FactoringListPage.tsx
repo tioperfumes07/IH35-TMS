@@ -141,11 +141,11 @@ export function FactoringListPage() {
         </label>
         <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
           Date from
-          <DatePicker value={staged.draft.fromDate} onChange={(next) => staged.setDraft({ ...staged.draft, fromDate: next })} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" />
+          <DatePicker value={staged.draft.fromDate} onChange={(next) => staged.setDraft({ ...staged.draft, fromDate: next })} className="h-9" />
         </label>
         <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
           Date to
-          <DatePicker value={staged.draft.toDate} onChange={(next) => staged.setDraft({ ...staged.draft, toDate: next })} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" />
+          <DatePicker value={staged.draft.toDate} onChange={(next) => staged.setDraft({ ...staged.draft, toDate: next })} className="h-9" />
         </label>
       </div>
     </CollapsedListFilters>

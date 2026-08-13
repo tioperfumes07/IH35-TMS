@@ -968,7 +968,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
             <DatePicker
               value={teamForm.effective_from}
               onChange={(value) => setTeamForm((current) => ({ ...current, effective_from: value }))}
-              className="rounded-sm border border-gray-300 px-2 text-sm py-2"
+              className=""
             />
           </div>
           <div className="md:col-span-2 flex flex-col gap-1">
@@ -1050,7 +1050,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
                 <DatePicker
                   value={teamForm.effective_from}
                   onChange={(value) => setTeamForm((current) => ({ ...current, effective_from: value }))}
-                  className="rounded-sm border border-gray-300 px-2 py-1"
+                  className=""
                 />
                 <SelectCombobox
                   value={teamForm.split_method}

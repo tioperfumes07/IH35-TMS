@@ -155,7 +155,7 @@ export function CompanyViolationCreateModal({ open, operatingCompanyId, onClose,
             <DatePicker
               value={reportedDate}
               onChange={(next) => setReportedDate(next)}
-              className="rounded-sm border border-gray-300 px-2 text-sm py-2"
+              className=""
             />
           </div>
           <div className="md:col-span-2 flex flex-col gap-1">

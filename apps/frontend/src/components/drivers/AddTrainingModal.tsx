@@ -158,7 +158,7 @@ export function AddTrainingModal({ open, driverId, companyId, driverName, onClos
           <DatePicker
             value={completedAt}
             onChange={setCompletedAt}
-            className="rounded-sm border border-gray-300 h-9 px-2 text-[13px]"
+            className="h-9"
             data-testid="add-training-completed"
           />
         </div>
@@ -168,7 +168,7 @@ export function AddTrainingModal({ open, driverId, companyId, driverName, onClos
             value={expiryDate}
             onChange={setExpiryDate}
             min={completedAt}
-            className="rounded-sm border border-gray-300 h-9 px-2 text-[13px]"
+            className="h-9"
             data-testid="add-training-expiry"
           />
         </div>

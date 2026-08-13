@@ -66,9 +66,9 @@ export function RunnerFilters({ filters, values, onChange, onRun, isRunning }: P
                 <div key={filter.key} className="md:col-span-2 xl:col-span-2">
                   <div className="mb-1 text-xs font-semibold text-slate-600">{filter.label}</div>
                   <div className="flex items-center gap-2">
-                    <DatePicker className="rounded-sm border border-slate-300 px-2 py-1.5 text-sm" value={String(draft.from ?? "")} onChange={(next) => staged.setDraft({ ...draft, from: next })} />
+                    <DatePicker className="" value={String(draft.from ?? "")} onChange={(next) => staged.setDraft({ ...draft, from: next })} />
                     <span className="text-slate-500">to</span>
-                    <DatePicker className="rounded-sm border border-slate-300 px-2 py-1.5 text-sm" value={String(draft.to ?? "")} onChange={(next) => staged.setDraft({ ...draft, to: next })} />
+                    <DatePicker className="" value={String(draft.to ?? "")} onChange={(next) => staged.setDraft({ ...draft, to: next })} />
                   </div>
                 </div>
               );

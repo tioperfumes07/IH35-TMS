@@ -300,7 +300,7 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
 
             <Field label="Incident Date *">
               <DatePicker
-                className="h-8 w-full rounded-sm border border-gray-300 px-2"
+                className="h-8 w-full"
                 data-testid="accident-incident-date"
                 value={incidentDate}
                 onChange={setIncidentDate}
@@ -308,7 +308,7 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
             </Field>
             <Field label="Report Date">
               <DatePicker
-                className="h-8 w-full rounded-sm border border-gray-300 px-2"
+                className="h-8 w-full"
                 data-testid="accident-report-date"
                 value={reportDate}
                 onChange={setReportDate}

@@ -462,14 +462,14 @@ export function PolicyCreateWizard({ open, operatingCompanyId, onClose, onCreate
             </Field>
             <Field label="Effective Date *" error={step1Errors.effective_date}>
               <DatePicker
-                className="w-full rounded-sm border border-gray-300 px-2 py-1"
+                className="w-full"
                 value={step1.effective_date}
                 onChange={(next) => setStep1((s) => ({ ...s, effective_date: next }))}
               />
             </Field>
             <Field label="Expiry Date *" error={step1Errors.expiry_date}>
               <DatePicker
-                className="w-full rounded-sm border border-gray-300 px-2 py-1"
+                className="w-full"
                 value={step1.expiry_date}
                 onChange={(next) => setStep1((s) => ({ ...s, expiry_date: next }))}
               />

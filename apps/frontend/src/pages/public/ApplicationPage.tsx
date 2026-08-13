@@ -158,7 +158,7 @@ export function ApplicationPage() {
           <span>Date of birth</span>
           {/* required removed: DatePicker has no native required attr */}
           <DatePicker
-            className="rounded-sm border px-3 py-2"
+            className=""
             data-testid="application-dob"
             value={dateOfBirth}
             onChange={setDateOfBirth}

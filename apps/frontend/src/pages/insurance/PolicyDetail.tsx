@@ -233,7 +233,7 @@ export function PolicyDetail() {
           <label className="text-xs font-semibold text-slate-600">
             Effective date
             <DatePicker
-              className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
+              className="mt-1 w-full"
               value={effectiveDate}
               onChange={(next) => setEffectiveDate(next)}
             />
@@ -241,7 +241,7 @@ export function PolicyDetail() {
           <label className="text-xs font-semibold text-slate-600">
             Expiry date
             <DatePicker
-              className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
+              className="mt-1 w-full"
               value={expiryDate}
               onChange={(next) => setExpiryDate(next)}
             />

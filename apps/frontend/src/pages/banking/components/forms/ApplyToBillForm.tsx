@@ -128,7 +128,7 @@ export function ApplyToBillForm({ value, onChange, operatingCompanyId }: Props) 
       <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-2 md:grid-cols-6">
         <Field label="Bill Date">
           <DatePicker
-            className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs"
+            className="h-8 w-full"
             value={String(value.bill_date ?? "")}
             onChange={(next) => onChange({ ...value, bill_date: next })}
           />
@@ -143,7 +143,7 @@ export function ApplyToBillForm({ value, onChange, operatingCompanyId }: Props) 
         </Field>
         <Field label="Due Date">
           <DatePicker
-            className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs"
+            className="h-8 w-full"
             value={String(value.due_date ?? "")}
             onChange={(next) => onChange({ ...value, due_date: next })}
           />

@@ -159,7 +159,7 @@ export function DocumentsTab({ entityType, entityId, entityName, operatingCompan
           <DatePicker
             value={dateFrom}
             onChange={(next) => setDateFrom(next)}
-            className="h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
+            className="h-9 w-full"
           />
         </div>
         <div className="space-y-1">
@@ -167,7 +167,7 @@ export function DocumentsTab({ entityType, entityId, entityName, operatingCompan
           <DatePicker
             value={dateTo}
             onChange={(next) => setDateTo(next)}
-            className="h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
+            className="h-9 w-full"
           />
         </div>
         <div className="space-y-1">

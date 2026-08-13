@@ -248,7 +248,7 @@ export function LawsuitCreateModal({ open, operatingCompanyId, onClose, onCreate
           <label className="space-y-1">
             <span className="text-xs font-semibold text-slate-700">Filed Date *</span>
             <DatePicker
-              className="w-full rounded-sm border border-gray-300 px-2 py-1"
+              className="w-full"
               value={form.filed_date}
               onChange={(next) => updateField("filed_date", next)}
             />

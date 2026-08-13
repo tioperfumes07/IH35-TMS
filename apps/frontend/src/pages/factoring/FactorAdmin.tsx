@@ -585,7 +585,7 @@ export function FactorAdmin() {
                 <DatePicker
                   value={assignEffectiveFrom}
                   onChange={setAssignEffectiveFrom}
-                  className="w-full rounded-sm border border-gray-300 px-2 py-1"
+                  className="w-full"
                 />
               </label>
             </div>
@@ -681,7 +681,7 @@ export function FactorAdmin() {
                 <DatePicker
                   value={lorForm.issued_date}
                   onChange={(next) => setLorForm((current) => ({ ...current, issued_date: next }))}
-                  className="w-full rounded-sm border border-gray-300 px-2 py-1"
+                  className="w-full"
                 />
               </label>
               <label className="block">
@@ -689,7 +689,7 @@ export function FactorAdmin() {
                 <DatePicker
                   value={lorForm.effective_release_date}
                   onChange={(next) => setLorForm((current) => ({ ...current, effective_release_date: next }))}
-                  className="w-full rounded-sm border border-gray-300 px-2 py-1"
+                  className="w-full"
                 />
               </label>
               <label className="block">

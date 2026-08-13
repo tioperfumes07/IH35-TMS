@@ -331,7 +331,7 @@ export function PermitsPage({ operatingCompanyId }: Props) {
                 <DatePicker
                   value={draft.expiry_date}
                   onChange={(next) => setDraft((prev) => ({ ...prev, expiry_date: next }))}
-                  className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1"
+                  className="mt-1 w-full"
                 />
               </label>
               <label className="text-xs">

@@ -352,7 +352,7 @@ export function ArApAgingPage() {
                   // Clamp to today; ignore empties so the report always has a valid as-of.
                   setAsOfDate(next && next <= today ? next : today);
                 }}
-                className="h-9 px-2 text-[13px] rounded-sm border border-gray-300 bg-white text-gray-700 tabular-nums"
+                className="h-9 bg-white tabular-nums"
               />
             </div>
             <button

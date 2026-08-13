@@ -318,7 +318,7 @@ export function RecordTransferModal({
           </label>
           <label className="block">
             Date
-            <DatePicker className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2" value={transferDate} onChange={setTransferDate} />
+            <DatePicker className="mt-1 h-9 w-full" value={transferDate} onChange={setTransferDate} />
           </label>
         </div>
         <label className="block">

@@ -125,7 +125,7 @@ export function IdvrPage({ operatingCompanyId }: Props) {
               <DatePicker
                 value={fromDate}
                 onChange={(next) => setFromDate(next)}
-                className="mt-1 block h-8 w-full rounded-sm border border-gray-200 px-2 text-xs"
+                className="mt-1 block h-8 w-full"
                 data-testid="idvr-filter-from"
               />
             </label>
@@ -134,7 +134,7 @@ export function IdvrPage({ operatingCompanyId }: Props) {
               <DatePicker
                 value={toDate}
                 onChange={(next) => setToDate(next)}
-                className="mt-1 block h-8 w-full rounded-sm border border-gray-200 px-2 text-xs"
+                className="mt-1 block h-8 w-full"
                 data-testid="idvr-filter-to"
               />
             </label>

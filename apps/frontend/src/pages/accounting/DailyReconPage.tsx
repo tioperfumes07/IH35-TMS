@@ -179,7 +179,7 @@ export function DailyReconPage() {
                 <DatePicker
                   value={staged.draft.fromDate}
                   onChange={(next) => staged.setDraft({ ...staged.draft, fromDate: next })}
-                  className="h-10 rounded-sm border border-gray-300 px-2 text-sm"
+                  className="h-10"
                 />
               </div>
               <div className="flex flex-col gap-0.5">
@@ -187,7 +187,7 @@ export function DailyReconPage() {
                 <DatePicker
                   value={staged.draft.toDate}
                   onChange={(next) => staged.setDraft({ ...staged.draft, toDate: next })}
-                  className="h-10 rounded-sm border border-gray-300 px-2 text-sm"
+                  className="h-10"
                 />
               </div>
               <div className="flex flex-col gap-0.5">

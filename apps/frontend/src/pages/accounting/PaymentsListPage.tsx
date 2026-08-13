@@ -213,11 +213,11 @@ export function PaymentsListPage() {
 
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
             From
-            <DatePicker value={staged.draft.dateFrom} onChange={(next) => staged.setDraft({ ...staged.draft, dateFrom: next })} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" />
+            <DatePicker value={staged.draft.dateFrom} onChange={(next) => staged.setDraft({ ...staged.draft, dateFrom: next })} className="h-9" />
           </label>
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
             To
-            <DatePicker value={staged.draft.dateTo} onChange={(next) => staged.setDraft({ ...staged.draft, dateTo: next })} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" />
+            <DatePicker value={staged.draft.dateTo} onChange={(next) => staged.setDraft({ ...staged.draft, dateTo: next })} className="h-9" />
           </label>
         </div>
       </CollapsedListFilters>

@@ -498,7 +498,7 @@ export function UserDetailPage() {
               value={eventDate}
               max={new Date().toISOString().slice(0, 10)}
               onChange={setEventDate}
-              className="w-full rounded-sm border border-gray-300 h-9 px-2 text-[13px]"
+              className="w-full h-9"
             />
           </div>
           <div>

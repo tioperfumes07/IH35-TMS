@@ -337,7 +337,7 @@ export function FineCreateModal({ open, operatingCompanyId, onClose, onCreated }
               <DatePicker
                 value={issuedDate}
                 onChange={setIssuedDate}
-                className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]"
+                className="h-9"
               />
             </div>
             <div className="flex flex-col gap-1">

@@ -85,7 +85,7 @@ export function ExhibitsViewer() {
           <label className="text-xs font-semibold text-slate-600">
             Period start
             <DatePicker
-              className="mt-1 block rounded-sm border border-slate-300 px-2 py-1 text-sm"
+              className="mt-1 block"
               value={period.period_start}
               onChange={(next) => setPeriod((p) => ({ ...p, period_start: next }))}
             />
@@ -93,7 +93,7 @@ export function ExhibitsViewer() {
           <label className="text-xs font-semibold text-slate-600">
             Period end
             <DatePicker
-              className="mt-1 block rounded-sm border border-slate-300 px-2 py-1 text-sm"
+              className="mt-1 block"
               value={period.period_end}
               onChange={(next) => setPeriod((p) => ({ ...p, period_end: next }))}
             />

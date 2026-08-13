@@ -194,7 +194,7 @@ export function PayBillModal({ open, operatingCompanyId, vendorName, bill, onClo
               </div>
               <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
                 Payment date
-                <DatePicker value={paymentDate} onChange={setPaymentDate} className="text-[13px]" />
+                <DatePicker value={paymentDate} onChange={setPaymentDate} className="" />
               </label>
               <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
                 Payment method

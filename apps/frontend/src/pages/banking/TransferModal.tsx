@@ -301,7 +301,7 @@ export function TransferModal({ open, operatingCompanyId, onClose, onSaved, pref
             <DatePicker
               min={minD}
               max={todayIsoDate()}
-              className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2"
+              className="mt-1 h-9 w-full"
               value={transferDate}
               onChange={setTransferDate}
             />

@@ -81,7 +81,7 @@ export function HosHistorySection({ operatingCompanyId }: { operatingCompanyId: 
             value={fromDate}
             max={toDate}
             onChange={(next) => next && setFromDate(next)}
-            className="h-[34px] rounded-sm border border-slate-300 px-2 text-[12px] text-slate-800"
+            className="h-[34px]"
             data-testid="hos-history-from"
           />
         </div>
@@ -92,7 +92,7 @@ export function HosHistorySection({ operatingCompanyId }: { operatingCompanyId: 
             min={fromDate}
             max={today}
             onChange={(next) => next && setToDate(next)}
-            className="h-[34px] rounded-sm border border-slate-300 px-2 text-[12px] text-slate-800"
+            className="h-[34px]"
             data-testid="hos-history-to"
           />
         </div>

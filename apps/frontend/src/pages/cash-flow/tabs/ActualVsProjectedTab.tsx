@@ -171,7 +171,7 @@ export function ActualVsProjectedTab({ operatingCompanyId }: Props) {
           <DatePicker
             value={from}
             onChange={(next) => setFrom(next)}
-            className="rounded-sm border border-gray-200 px-2 py-1 text-sm focus:border-slate-300 focus:outline-hidden"
+            className=""
           />
         </label>
         <label className="flex items-center gap-2 text-sm text-gray-600">
@@ -179,7 +179,7 @@ export function ActualVsProjectedTab({ operatingCompanyId }: Props) {
           <DatePicker
             value={to}
             onChange={(next) => setTo(next)}
-            className="rounded-sm border border-gray-200 px-2 py-1 text-sm focus:border-slate-300 focus:outline-hidden"
+            className=""
           />
         </label>
         {from > to && (

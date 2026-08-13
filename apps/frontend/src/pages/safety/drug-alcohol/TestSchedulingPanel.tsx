@@ -133,7 +133,7 @@ export function TestSchedulingPanel({ companyId }: Props) {
         <label className="block text-xs text-slate-600">
           Scheduled Date (optional)
           <DatePicker
-            className="mt-1 block w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
+            className="mt-1 block w-full"
             value={scheduledAt}
             onChange={(next) => setScheduledAt(next)}
           />

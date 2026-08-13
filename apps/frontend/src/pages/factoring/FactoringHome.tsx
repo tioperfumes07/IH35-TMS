@@ -686,7 +686,7 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
             <div className="mb-2 text-sm font-medium text-gray-900">Upsert Faro daily import batch</div>
             <div className="grid gap-2 md:grid-cols-3 mb-3">
               <DatePicker
-                className="rounded-sm border border-gray-300 px-2 py-1 text-sm"
+                className=""
                 value={faroStatementDate}
                 onChange={setFaroStatementDate}
               />
@@ -815,7 +815,7 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
                 onChange={(event) => setLoanAprPercent(event.target.value)}
                 placeholder="apr percent"
               />
-              <DatePicker className="rounded-sm border border-gray-300 px-2 py-1 text-xs" value={loanStartedOn} onChange={setLoanStartedOn} />
+              <DatePicker className="" value={loanStartedOn} onChange={setLoanStartedOn} />
             </div>
             <div className="mt-2">
               <Button

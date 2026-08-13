@@ -322,7 +322,7 @@ export function InspectionsPage() {
             <label className="block">
               <span className="text-xs text-gray-600">Scheduled date</span>
               <DatePicker
-                className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1"
+                className="mt-1 w-full"
                 value={draft.scheduled_date}
                 onChange={(next) => setDraft((d) => ({ ...d, scheduled_date: next }))}
               />
@@ -330,7 +330,7 @@ export function InspectionsPage() {
             <label className="block">
               <span className="text-xs text-gray-600">Inspection date</span>
               <DatePicker
-                className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1"
+                className="mt-1 w-full"
                 value={draft.inspection_date}
                 onChange={(next) => setDraft((d) => ({ ...d, inspection_date: next }))}
               />

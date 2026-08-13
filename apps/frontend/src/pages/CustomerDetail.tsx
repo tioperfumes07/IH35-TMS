@@ -1822,7 +1822,7 @@ export function CustomerDetailPage() {
               <label className="text-xs font-semibold text-gray-600">
                 From
                 <DatePicker
-                  className="mt-1 block h-9 rounded-sm border border-gray-300 px-2"
+                  className="mt-1 block h-9"
                   value={pnlRange.start}
                   onChange={(next) => setPnlRange((p) => ({ ...p, start: next }))}
                 />
@@ -1830,7 +1830,7 @@ export function CustomerDetailPage() {
               <label className="text-xs font-semibold text-gray-600">
                 To
                 <DatePicker
-                  className="mt-1 block h-9 rounded-sm border border-gray-300 px-2"
+                  className="mt-1 block h-9"
                   value={pnlRange.end}
                   onChange={(next) => setPnlRange((p) => ({ ...p, end: next }))}
                 />
@@ -2046,7 +2046,7 @@ export function CustomerDetailPage() {
                 <div className="grid gap-2 md:grid-cols-2">
                   <label className="block">
                     Payment date
-                    <DatePicker className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1" value={payDate} onChange={setPayDate} />
+                    <DatePicker className="mt-0.5 w-full" value={payDate} onChange={setPayDate} />
                   </label>
                   <label className="block">
                     Amount (USD)

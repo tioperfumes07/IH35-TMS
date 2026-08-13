@@ -25,7 +25,7 @@ export function CompanyViolationCorrectiveActionForm({ loading, onComplete }: Pr
         <DatePicker
           value={completedDate}
           onChange={(next) => setCompletedDate(next)}
-          className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
+          className=""
         />
         <input
           value={notes}

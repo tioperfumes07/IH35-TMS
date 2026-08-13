@@ -206,7 +206,7 @@ export function CoiTab({ customerId, customerName, operatingCompanyId, variant }
         <label className="block text-xs">
           Expires At (optional)
           <DatePicker
-            className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
+            className="mt-0.5 w-full"
             value={requestExpiresAt}
             onChange={(next) => setRequestExpiresAt(next)}
           />
@@ -419,7 +419,7 @@ export function CoiTab({ customerId, customerName, operatingCompanyId, variant }
           <label className="block text-xs">
             Expires At
             <DatePicker
-              className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
+              className="mt-0.5 w-full"
               value={editExpiresAt}
               onChange={(next) => setEditExpiresAt(next)}
             />

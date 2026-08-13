@@ -353,12 +353,12 @@ export function ReconciliationWorkspacePage() {
             <DatePicker
               value={periodStart}
               onChange={setPeriodStart}
-              className="rounded-sm border border-gray-300 px-2 py-1 text-sm"
+              className=""
             />
             <DatePicker
               value={periodEnd}
               onChange={setPeriodEnd}
-              className="rounded-sm border border-gray-300 px-2 py-1 text-sm"
+              className=""
             />
             {/* M-1: dollars-mode QBO money entry; balance stays a DOLLAR number → *_cents byte-for-byte. */}
             <MoneyInput

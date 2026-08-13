@@ -510,7 +510,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
           <DatePicker
             value={fromDate}
             onChange={setFromDate}
-            className="mt-1 block min-h-12 w-full rounded-sm border border-gray-200 px-2 text-xs"
+            className="mt-1 block min-h-12 w-full"
             max={toDate || undefined}
             data-testid="safety-incidents-from-date"
           />
@@ -520,7 +520,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
           <DatePicker
             value={toDate}
             onChange={setToDate}
-            className="mt-1 block min-h-12 w-full rounded-sm border border-gray-200 px-2 text-xs"
+            className="mt-1 block min-h-12 w-full"
             min={fromDate || undefined}
             data-testid="safety-incidents-to-date"
           />

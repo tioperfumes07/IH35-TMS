@@ -86,7 +86,7 @@ export function EditMetadataModal({ file, entityType, onClose, onSaveSuccess }: 
             <DatePicker
               value={documentDate}
               onChange={(next) => setDocumentDate(next)}
-              className="h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
+              className="h-9 w-full"
             />
           </div>
           <div className="space-y-1">
@@ -96,7 +96,7 @@ export function EditMetadataModal({ file, entityType, onClose, onSaveSuccess }: 
             <DatePicker
               value={expirationDate}
               onChange={setExpirationDate}
-              className="h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
+              className="h-9 w-full"
             />
           </div>
         </div>

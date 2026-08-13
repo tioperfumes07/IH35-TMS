@@ -244,7 +244,7 @@ export function CustomerContractsTab({ customerId, customerName, operatingCompan
                 <DatePicker
                   value={meta.effective_date}
                   onChange={(next) => setMeta((m) => ({ ...m, effective_date: next }))}
-                  className="h-9 w-full rounded-sm border border-gray-300 px-2 text-[13px]"
+                  className="h-9 w-full"
                 />
               </label>
               <label className="block text-sm">
@@ -252,7 +252,7 @@ export function CustomerContractsTab({ customerId, customerName, operatingCompan
                 <DatePicker
                   value={meta.expiration_date}
                   onChange={(next) => setMeta((m) => ({ ...m, expiration_date: next }))}
-                  className="h-9 w-full rounded-sm border border-gray-300 px-2 text-[13px]"
+                  className="h-9 w-full"
                 />
               </label>
             </div>

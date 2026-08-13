@@ -198,12 +198,12 @@ function CreateModal({ companyId, onClose, onCreated }: { companyId: string; onC
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-0.5">Purchase Date *</label>
-              <DatePicker className="w-full rounded-sm border border-gray-300 px-3 py-1.5 focus:outline-hidden focus:ring-1 focus:ring-slate-500"
+              <DatePicker className="w-full"
                 value={form.purchase_date} onChange={(next) => setForm({ ...form, purchase_date: next })} />
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-0.5">Amortization Start *</label>
-              <DatePicker className="w-full rounded-sm border border-gray-300 px-3 py-1.5 focus:outline-hidden focus:ring-1 focus:ring-slate-500"
+              <DatePicker className="w-full"
                 value={form.start_date} onChange={(next) => setForm({ ...form, start_date: next })} />
             </div>
           </div>

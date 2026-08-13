@@ -245,7 +245,7 @@ export function CollectionsPage() {
                 </label>
                 <label className="text-xs text-gray-600">
                   Next action date
-                  <DatePicker value={nextActionDate} onChange={(next) => setNextActionDate(next)} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm" />
+                  <DatePicker value={nextActionDate} onChange={(next) => setNextActionDate(next)} className="mt-1 h-9 w-full" />
                 </label>
                 <div className="flex items-end justify-end">
                   <Button size="sm" onClick={() => logContactMutation.mutate()} disabled={!companyId || !selectedTask || !contactNotes.trim() || logContactMutation.isPending}>

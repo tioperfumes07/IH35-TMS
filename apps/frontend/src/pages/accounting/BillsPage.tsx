@@ -678,7 +678,7 @@ export function BillsPage() {
           <label className="block text-sm text-gray-700">
             Scheduled date
             <DatePicker
-              className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
+              className="mt-1 w-full"
               value={scheduledDate}
               onChange={(next) => setScheduledDate(next)}
             />

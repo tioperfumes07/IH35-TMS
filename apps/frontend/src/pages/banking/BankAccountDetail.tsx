@@ -376,7 +376,7 @@ export function ArchivedBankAccountDetailTable() {
               setOffset(0);
               setStartDate(next);
             }}
-            className="mt-0.5 w-full text-sm"
+            className="mt-0.5 w-full"
           />
         </div>
         <div className="flex flex-col gap-1">
@@ -387,7 +387,7 @@ export function ArchivedBankAccountDetailTable() {
               setOffset(0);
               setEndDate(next);
             }}
-            className="mt-0.5 w-full text-sm"
+            className="mt-0.5 w-full"
           />
         </div>
         <ActionButton

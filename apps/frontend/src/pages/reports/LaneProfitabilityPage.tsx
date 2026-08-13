@@ -211,7 +211,7 @@ export function LaneProfitabilityPage() {
             <label className="text-xs text-slate-600">
               Start
               <DatePicker
-                className="mt-1 block rounded-sm border border-slate-300 px-2 py-1 text-sm"
+                className="mt-1 block"
                 value={customStart}
                 onChange={(next) => setCustomStart(next)}
               />
@@ -219,7 +219,7 @@ export function LaneProfitabilityPage() {
             <label className="text-xs text-slate-600">
               End
               <DatePicker
-                className="mt-1 block rounded-sm border border-slate-300 px-2 py-1 text-sm"
+                className="mt-1 block"
                 value={customEnd}
                 onChange={(next) => setCustomEnd(next)}
               />
