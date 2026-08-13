@@ -26,6 +26,7 @@ import { Combobox, type ComboboxOption } from "../Combobox";
 import { QuickCreateEntityModal, type QuickCreateKind } from "../forms/shared/QuickCreateEntityModal";
 import { InlineCreateDrawer, type InlineCreateKind } from "./InlineCreateDrawer";
 import { CatalogQuickCreateDrawer } from "./CatalogQuickCreateDrawer";
+import { mergePickerOptionsByValue } from "./mergePickerOptionsByValue";
 import {
   catalogAddNewLabel,
   getCatalogPickerConfig,
@@ -128,7 +129,7 @@ export function ReferenceSelect({
   // The single dispatch decision, read from config instead of a hardcoded Set in this file.
   const config = getCatalogPickerConfig(createKind as CatalogPickerKey);
 
-  const comboOptions: ComboboxOption[] = [...options, ...created].map((o) => ({
+  const comboOptions: ComboboxOption[] = mergePickerOptionsByValue(options, created).map((o) => ({
     value: o.value,
     label: o.label,
     sublabel: o.type,
