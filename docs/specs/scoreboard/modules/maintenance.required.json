@@ -149,8 +149,7 @@
         "scenario.maintenance",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -169,8 +168,7 @@
         "scenario.maintenance",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -188,8 +186,7 @@
         "scenario.maintenance",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -212,7 +209,6 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link",
         "accident",
         "claim"
       ]
@@ -233,8 +229,7 @@
         "scenario.maintenance",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -254,8 +249,7 @@
         "scenario.maintenance",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -274,8 +268,7 @@
         "scenario.maintenance",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -294,8 +287,7 @@
         "scenario.maintenance",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -311,8 +303,7 @@
         "scenario.maintenance",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -328,8 +319,7 @@
         "scenario.maintenance",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -375,8 +365,7 @@
         "scenario.insurance",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -470,8 +459,7 @@
         "gl_je",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -484,8 +472,7 @@
         "scenario.maintenance",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -513,8 +500,7 @@
         "scenario.maintenance",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -527,8 +513,7 @@
         "inventory",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -540,8 +525,7 @@
         "vendor",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -553,8 +537,7 @@
         "scenario.maintenance",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -583,8 +566,7 @@
         "scenario.maintenance",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -596,8 +578,7 @@
         "inventory",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -627,7 +608,6 @@
       "surface_path": "components/maintenance/AddPartsLinkModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "unit",
         "vendor",
         "work_order"
@@ -642,7 +622,6 @@
       "surface_path": "components/maintenance/LocationMapModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "unit",
         "vendor",
         "work_order"
@@ -672,7 +651,6 @@
       "surface_path": "pages/maintenance/RoadServiceTicketModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "work_order",
         "unit",
         "vendor"
@@ -687,7 +665,6 @@
       "surface_path": "pages/maintenance/WorkOrderCreateModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "picker_law",
         "work_order",
         "unit",
@@ -703,7 +680,6 @@
       "surface_path": "pages/maintenance/components/ConvertIssueToWOModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "unit",
         "vendor",
         "work_order"
@@ -718,7 +694,6 @@
       "surface_path": "pages/maintenance/components/CreateWorkOrderModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "picker_law",
         "work_order",
         "unit",
@@ -734,7 +709,6 @@
       "surface_path": "pages/maintenance/components/TriageModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "work_order",
         "unit",
         "vendor"
@@ -764,7 +738,6 @@
       "surface_path": "components/maintenance/FaultRuleModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "unit",
         "vendor",
         "work_order",
@@ -781,7 +754,6 @@
       "surface_path": "pages/maintenance/components/CreateBillModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "picker_law",
         "unit",
         "vendor",
@@ -799,7 +771,6 @@
       "surface_path": "pages/maintenance/components/CreateExpenseModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "picker_law",
         "unit",
         "vendor",
@@ -888,6 +859,186 @@
           "id": "road_service.active",
           "removed": [
             "load"
+          ]
+        }
+      ]
+    },
+    "reverse_link_2026_08_13_remainder": {
+      "finding": "VERTICAL-REVERSE-LINK-MAINTENANCE-REMAINDER",
+      "note": "WO create/source/bill/expense + intake/create/modals (except work_order_detail) are create chrome \u2014 reverse_link inflation. Built: in_transit/arriving_soon/driver_reports/severe/defects/dvir/pm_auto/fault_drafts/warranty/road_service_active/work_order_detail.",
+      "drops": [
+        {
+          "id": "wo.create",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "wo.source.is",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "wo.source.es",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "wo.source.ac",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "wo.source.et",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "wo.source.rt",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "wo.source.it",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "wo.source.rs",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "wo.create_bill",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "wo.create_expense",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "damage_reports.intake",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "parts_inventory.record_purchase",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "pm.schedule.create",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "inspections.create",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "parts.create",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "vendors.create",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "fault_rules.create",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "tires.create_record",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "tires.create_brand",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "maintenance.modal.add_parts_link",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "maintenance.modal.location_map",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "maintenance.modal.road_service_ticket",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "maintenance.modal.work_order_create",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "maintenance.modal.convert_issue_to_wo",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "maintenance.modal.create_work_order",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "maintenance.modal.triage",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "maintenance.modal.fault_rule",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "maintenance.modal.create_bill",
+          "removed": [
+            "reverse_link"
+          ]
+        },
+        {
+          "id": "maintenance.modal.create_expense",
+          "removed": [
+            "reverse_link"
           ]
         }
       ]
