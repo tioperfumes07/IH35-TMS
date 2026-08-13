@@ -6,6 +6,7 @@ import { driverFetch } from "../../lib/driver-offline-queue";
 import { useQuery } from "@tanstack/react-query";
 import { listDriverFuelUnits } from "../../api/driver";
 import { Combobox } from "../../components/Combobox";
+import { entityLabel } from "../../lib/entity-label";
 
 export function FuelReceiptPage() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -25,8 +26,7 @@ export function FuelReceiptPage() {
   });
   const unitOptions = (unitsQuery.data?.units ?? []).map((unit) => ({
     value: unit.id,
-    label: unit.unit_number || unit.display_id || unit.id,
-    sublabel: unit.display_id && unit.display_id !== unit.unit_number ? unit.display_id : undefined,
+    label: entityLabel(unit.unit_number, unit.id, "Unit"),
   }));
 
   const stopCamera = useCallback(() => {

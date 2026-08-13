@@ -8,6 +8,12 @@ const source = fs.readFileSync(REL, "utf8");
 function audit(body) {
   const failures = [];
   if (!/queryFn:\s*listDriverFuelUnits/.test(body)) failures.push("fuel receipt must read the driver-scoped unit roster");
+  if (!/label:\s*entityLabel\(unit\.unit_number,\s*unit\.id,\s*"Unit"\)/.test(body)) {
+    failures.push("unit options must render the canonical unit number with an honest non-UUID fallback");
+  }
+  if (/unit\.display_id|unit\.unit_number\s*\|\|\s*unit\.id/.test(body)) {
+    failures.push("unit options must not read phantom display_id or expose the UUID as a label");
+  }
   const picker = body.match(/<Combobox([\s\S]*?)\/>/)?.[1] ?? "";
   if (!/options=\{unitOptions\}/.test(picker)) failures.push("unit roster must feed the picker");
   if (!/value=\{truckId \|\| null\}/.test(picker)) failures.push("picker must control submitted truck state");
@@ -24,6 +30,7 @@ if (process.argv.includes("--selftest")) {
     ["options={unitOptions}", "options={[]}"],
     ["setTruckId(next ?? \"\")", "void next"],
     ["fd.set(\"truck_id\", truckId)", "fd.set(\"truck_id\", \"\")"],
+    ['label: entityLabel(unit.unit_number, unit.id, "Unit")', 'label: unit.id'],
   ];
   for (const [from, to] of mutations) {
     const changed = source.replace(from, to);

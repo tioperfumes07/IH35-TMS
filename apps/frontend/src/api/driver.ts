@@ -66,7 +66,6 @@ export async function getDriverMe() {
 export type DriverFuelUnit = {
   id: string;
   unit_number: string | null;
-  display_id: string | null;
 };
 
 export async function listDriverFuelUnits() {
