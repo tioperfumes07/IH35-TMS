@@ -25,6 +25,7 @@ const listQuerySchema = companyQuerySchema.extend({
     .optional()
     .transform((v) => v === "true"),
   permit_type: permitTypeSchema.optional(),
+  unit_id: z.string().uuid().optional(),
 });
 
 const idParamsSchema = z.object({
@@ -148,6 +149,10 @@ export async function registerSafetyPermitsRoutes(app: FastifyInstance) {
         values.push(query.data.permit_type);
         filters.push(`p.permit_type = $${values.length}`);
       }
+      if (query.data.unit_id) {
+        values.push(query.data.unit_id);
+        filters.push(`p.unit_id = $${values.length}::uuid`);
+      }
 
       const res = await client.query(
         `
@@ -164,6 +169,10 @@ export async function registerSafetyPermitsRoutes(app: FastifyInstance) {
 
       let renewal_alerts: Record<string, unknown>[] = [];
       if (reminderEnabled) {
+        const alertValues: unknown[] = [query.data.operating_company_id, daysBefore];
+        const alertUnitFilter = query.data.unit_id
+          ? (alertValues.push(query.data.unit_id), `AND p.unit_id = $${alertValues.length}::uuid`)
+          : "";
         const alertRes = await client.query(
           `
             SELECT
@@ -173,9 +182,10 @@ export async function registerSafetyPermitsRoutes(app: FastifyInstance) {
             WHERE p.operating_company_id = $1::uuid
               AND p.archived_at IS NULL
               AND (p.expiry_date - CURRENT_DATE) <= $2
+              ${alertUnitFilter}
             ORDER BY p.expiry_date ASC
           `,
-          [query.data.operating_company_id, daysBefore]
+          alertValues
         );
         renewal_alerts = alertRes.rows.map((row) => mapPermitRow(row as Record<string, unknown>));
       }

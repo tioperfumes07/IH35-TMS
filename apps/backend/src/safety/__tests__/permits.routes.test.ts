@@ -96,6 +96,35 @@ describe("safety permits routes (A23-13)", () => {
     expect(body.renewal_reminder).toMatchObject({ days_before_expiry: 30 });
   });
 
+  it("GET /api/v1/safety/permits scopes both rows and renewal alerts by unit", async () => {
+    const unitId = "33333333-3333-4333-8333-333333333333";
+    const permitQueries: Array<{ sql: string; values: unknown[] }> = [];
+    mockQuery.mockImplementation(async (sql: string, values: unknown[] = []) => {
+      if (sql.includes("permit_renewal_reminders")) {
+        return { rows: [{ id: "rem-1", days_before_expiry: 30, enabled: true }], rowCount: 1 };
+      }
+      if (sql.includes("FROM safety.permits p")) {
+        permitQueries.push({ sql, values });
+        return { rows: [], rowCount: 0 };
+      }
+      return { rows: [], rowCount: 0 };
+    });
+
+    const res = await app.inject({
+      method: "GET",
+      url: `/api/v1/safety/permits?operating_company_id=${COMPANY}&unit_id=${unitId}`,
+    });
+
+    expect(res.statusCode).toBe(200);
+    expect(permitQueries).toHaveLength(2);
+    const listQuery = permitQueries.find((query) => !query.sql.includes("<="));
+    const alertQuery = permitQueries.find((query) => query.sql.includes("<="));
+    expect(listQuery?.sql).toContain("p.unit_id = $2::uuid");
+    expect(listQuery?.values).toEqual([COMPANY, unitId]);
+    expect(alertQuery?.sql).toContain("p.unit_id = $3::uuid");
+    expect(alertQuery?.values).toEqual([COMPANY, 30, unitId]);
+  });
+
   it("POST /api/v1/safety/permits creates permit", async () => {
     mockQuery.mockImplementation(async (sql: string) => {
       if (sql.includes("SET LOCAL")) return { rows: [], rowCount: 0 };
