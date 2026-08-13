@@ -14,6 +14,7 @@ import { UnitInTransitIssuesReverseSection } from "../../components/dispatch/Uni
 import { UnitDefaultDriversReverseSection } from "../../components/fleet/UnitDefaultDriversReverseSection";
 import { UnitTireProgramReverseSection } from "../../components/maintenance/UnitTireProgramReverseSection";
 import { UnitSevereRepairsReverseSection } from "../../components/maintenance/UnitSevereRepairsReverseSection";
+import { UnitTempCoverReverseSection } from "../../components/safety/UnitTempCoverReverseSection";
 
 type UnitDetailTab = "permits" | "toll-tags" | "tasks" | "brakes" | "tires" | "finance";
 
@@ -52,6 +53,7 @@ export function UnitDetail() {
       {companyId ? <UnitDefaultDriversReverseSection operatingCompanyId={companyId} unitId={id} /> : null}
       {companyId ? <UnitTireProgramReverseSection operatingCompanyId={companyId} unitId={id} /> : null}
       {companyId ? <UnitSevereRepairsReverseSection operatingCompanyId={companyId} unitId={id} /> : null}
+      {companyId ? <UnitTempCoverReverseSection operatingCompanyId={companyId} unitId={id} /> : null}
       <div className="flex flex-wrap gap-1 rounded-sm border border-gray-200 bg-white p-1">
         {(["permits", "toll-tags", "tasks", "brakes", "tires", "finance"] as const).map((tab) => (
           <button

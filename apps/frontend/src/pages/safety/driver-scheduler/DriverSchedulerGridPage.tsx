@@ -39,6 +39,7 @@ const EMPTY_TEMP_COVER_FORM = {
 
 export function DriverSchedulerGridPage() {
   const driverId = useSearchParams()[0].get("driver_id") ?? undefined;
+  const unitId = useSearchParams()[0].get("unit_id") ?? undefined;
   const { selectedCompanyId } = useCompanyContext();
   const operatingCompanyId = selectedCompanyId ?? "";
   const { pushToast } = useToast();
@@ -87,8 +88,8 @@ export function DriverSchedulerGridPage() {
   // a cancel affordance with a required reason, matching the void/cancel pattern used everywhere
   // else in this app.
   const tempAssignmentsQuery = useQuery({
-    queryKey: ["driver-scheduler", "temp-assignments", operatingCompanyId, driverId],
-    queryFn: () => driverSchedulerOfficeApi.listTempAssignments(operatingCompanyId, { driver_id: driverId }),
+    queryKey: ["driver-scheduler", "temp-assignments", operatingCompanyId, driverId, unitId],
+    queryFn: () => driverSchedulerOfficeApi.listTempAssignments(operatingCompanyId, { driver_id: driverId, unit_id: unitId }),
     enabled: Boolean(operatingCompanyId),
   });
   const tempAssignments = tempAssignmentsQuery.data?.assignments ?? [];

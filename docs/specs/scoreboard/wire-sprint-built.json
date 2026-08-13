@@ -784,6 +784,14 @@
       "modules": ["safety", "drivers", "dispatch"],
       "cols": ["driver", "connectivity", "reverse_link", "picker_law"],
       "leafRe": "^(temporary|cover|assignment|driver|scheduler|profile|create)"
+    },
+    {
+      "task": "TEMP-COVER-UNIT-LINKAGE",
+      "pr": "this PR",
+      "guard": "scripts/verify-temp-cover-unit-linkage.mjs",
+      "modules": ["safety", "fleet", "dispatch"],
+      "cols": ["unit", "connectivity", "reverse_link", "picker_law"],
+      "leafRe": "^(temporary|cover|assignment|unit|scheduler|profile|detail|create)"
     }
   ]
 }
