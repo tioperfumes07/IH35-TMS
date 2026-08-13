@@ -14,6 +14,7 @@ const companyQuerySchema = z.object({
 // SAF-F16 — driver-profile reverse view. Optional; absent = the existing company-wide list.
 const internalFinesQuerySchema = companyQuerySchema.extend({
   driver_id: z.string().uuid().optional(),
+  load_id: z.string().uuid().optional(),
 });
 
 // SAF-F12 — internal fines had ONLY GET + POST, so a fine could be imposed on a driver and then
@@ -345,6 +346,11 @@ export async function registerSafetyV5Routes(app: FastifyInstance) {
         values.push(query.data.driver_id);
         driverFilter = `AND f.driver_id = $${values.length}`;
       }
+      let loadFilter = "";
+      if (query.data.load_id) {
+        values.push(query.data.load_id);
+        loadFilter = `AND f.related_load_id = $${values.length}`;
+      }
       // CLS-UUID-LABEL: no driver join — InternalFinesPage's EntityLink rendered f.driver_id as a
       // raw full uuid with no label (same class as CLS-DOT-INSPECTIONS-UUID-LABEL). Mirrors the
       // safety.accident_reports/safety.dot_inspections driver join.
@@ -359,6 +365,7 @@ export async function registerSafetyV5Routes(app: FastifyInstance) {
            AND d.operating_company_id = f.operating_company_id
           WHERE f.operating_company_id = $1::uuid
           ${driverFilter}
+          ${loadFilter}
           ORDER BY f.imposed_date DESC, f.created_at DESC
           LIMIT 500
         `,

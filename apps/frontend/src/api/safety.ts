@@ -869,10 +869,11 @@ export function followUpDotInspectionEvent(
   });
 }
 
-export function getInternalFines(companyId: string, params: { driver_id?: string } = {}) {
+export function getInternalFines(companyId: string, params: { driver_id?: string; load_id?: string } = {}) {
   const qs = new URLSearchParams({ operating_company_id: companyId });
   // SAF-F16: server-side driver scoping (the route caps at LIMIT 500).
   if (params.driver_id) qs.set("driver_id", params.driver_id);
+  if (params.load_id) qs.set("load_id", params.load_id);
   return apiRequest<{ fines: Array<Record<string, unknown>> }>(`/api/v1/safety/internal-fines?${qs.toString()}`);
 }
 
