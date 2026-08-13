@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["fuel","fleet","dispatch"],"cols":["trailer","unit","load","connectivity","picker_law"],"leafRe":"^(history|transactions|trailer\.|unit\.|load\.|create)","task":"CREATE-PATH-TRIP-FUEL-OFFICE-CREATE","pr":"#6330"} */
 /**
  * Fuel History must offer office create → POST /api/v1/fuel/transactions with
  * EntityPicker unit/trailer/load + G18 exemption. Cursor EVEN claim: 3140.

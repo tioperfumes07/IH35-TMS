@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["accounting","safety","fleet"],"cols":["trailer","connectivity","picker_law","reverse_link"],"leafRe":"^(expenses\.|accident|trailer\.|create)","task":"CREATE-PATH-TRIP-TRAILER-PICKER","pr":"#6328"} */
 /**
  * Expense + Accident create paths must stamp trailer_id via EntityPicker kind=trailer
  * after API ranks #6322 / #6324. Cursor EVEN claim: 3138.

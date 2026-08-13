@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["accounting","fleet"],"cols":["trailer","connectivity","reverse_link"],"leafRe":"^(expenses\.|trailer\.|detail)","task":"CREATE-PATH-TRIP-EXPENSE-DETAIL-TRAILER","pr":"#6332"} */
 /** ExpenseDetailPage must EntityLink trailer when API returns trailer_id. Cursor EVEN: 3142. */
 import fs from "node:fs";
 import path from "node:path";
