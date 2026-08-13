@@ -1,4 +1,9 @@
 {
+  "3126": {
+    "claimed_at": "2026-08-12",
+    "claimed_by": "cursor",
+    "purpose": "verify-trailer-unit-linkage-parity"
+  },
   "3124": {
     "claimed_at": "2026-08-12",
     "claimed_by": "cursor",
