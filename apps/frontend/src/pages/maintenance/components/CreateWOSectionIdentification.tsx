@@ -12,6 +12,7 @@ import { Combobox } from "../../../components/shared/Combobox";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { capNotice, listCapInfo } from "../../../lib/list-cap";
 import { entityLabel } from "../../../lib/entity-label";
+import { EntityLink } from "../../../components/shared/EntityLink";
 
 // CLS-SILENT-CAP: named so the fetch and the truncation check read the SAME number.
 // 2,836 vendors exist on prod, so an unsearched 200-row fetch hides 2,636 of them.
@@ -484,7 +485,8 @@ export function CreateWOSectionIdentification({
       </div>
       {suggestedLoad ? (
         <div className="mt-2 rounded-sm border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs text-emerald-900">
-          Suggested load: <span className="font-semibold">{entityLabel(suggestedLoad.load_number, suggestedLoad.load_id, "Load")}</span>{" "}
+          Suggested load:{" "}
+          <EntityLink kind="load" id={suggestedLoad.load_id} label={entityLabel(suggestedLoad.load_number, suggestedLoad.load_id, "Load")} className="font-semibold" />{" "}
           <span className="rounded-sm bg-emerald-100 px-1 py-0.5 uppercase">{suggestedLoad.confidence}</span>
         </div>
       ) : null}

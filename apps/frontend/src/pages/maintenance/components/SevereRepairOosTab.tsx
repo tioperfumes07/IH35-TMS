@@ -362,7 +362,8 @@ export function SevereRepairOosTab({ operatingCompanyId }: Props) {
       <Modal open={returnOpen} onClose={() => setReturnOpen(false)} title="Return Unit to Service">
         <div className="space-y-3">
           <div className="text-sm text-gray-700">
-            Unit: <span className="font-semibold">{entityLabel(returnEstimate?.unit_number, returnEstimate?.unit_id, "Unit")}</span>
+            Unit:{" "}
+            <EntityLink kind="unit" id={returnEstimate?.unit_id} label={entityLabel(returnEstimate?.unit_number, returnEstimate?.unit_id, "Unit")} className="font-semibold" />
           </div>
           <div className="text-xs text-gray-500">
             Disabled if open estimates exist. Open count: <span className="font-semibold">{returnEstimate ? openByUnit.get(returnEstimate.unit_id) ?? 0 : 0}</span>

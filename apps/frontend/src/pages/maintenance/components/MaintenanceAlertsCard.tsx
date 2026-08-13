@@ -64,7 +64,7 @@ export function MaintenanceAlertsCard({ operatingCompanyId, compact = false }: P
             {alerts.map((alert: MaintenancePmAlert) => (
               <li key={alert.id} className="border-t border-gray-100 px-2 py-1 first:border-t-0 text-[10px]">
                 <div className="font-semibold" style={{ color: "#1F2A44" }}>
-                  {entityLabel(alert.unit_number, alert.unit_id, "Unit")} · {alert.schedule_label}
+                  <EntityLink kind="unit" id={alert.unit_id} label={entityLabel(alert.unit_number, alert.unit_id, "Unit")} /> · {alert.schedule_label}
                 </div>
                 <div className="text-gray-500">Due @ {alert.trigger_odometer.toLocaleString()} mi</div>
               </li>
