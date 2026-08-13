@@ -1106,6 +1106,7 @@ export type SafetyIncidentListFilters = {
   trailer_id?: string;
   /** SAF-C01 — load-detail reverse view (safety.incidents.load_id). */
   load_id?: string;
+  claimant_customer_id?: string;
   date_from?: string;
   date_to?: string;
 };
@@ -1121,6 +1122,7 @@ export function listSafetyIncidents(
   if (filters.unit_id) qs.set("unit_id", filters.unit_id);
   if (filters.trailer_id) qs.set("trailer_id", filters.trailer_id);
   if (filters.load_id) qs.set("load_id", filters.load_id);
+  if (filters.claimant_customer_id) qs.set("claimant_customer_id", filters.claimant_customer_id);
   if (filters.date_from) qs.set("date_from", filters.date_from);
   if (filters.date_to) qs.set("date_to", filters.date_to);
   const extra = qs.toString();

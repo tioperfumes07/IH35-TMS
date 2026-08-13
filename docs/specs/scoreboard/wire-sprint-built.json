@@ -832,6 +832,14 @@
       "modules": ["safety", "drivers", "dispatch"],
       "cols": ["driver", "load", "connectivity", "reverse_link", "picker_law"],
       "leafRe": "^(hos|violation|driver|load|profile|detail|create)"
+    },
+    {
+      "task": "CARGO-CLAIM-CUSTOMER-REVERSE",
+      "pr": "this PR",
+      "guard": "scripts/verify-cargo-claim-customer-reverse.mjs",
+      "modules": ["safety", "customers", "dispatch"],
+      "cols": ["customer", "load", "connectivity", "reverse_link", "picker_law"],
+      "leafRe": "^(cargo|claim|customer|load|profile|detail|create)"
     }
   ]
 }
