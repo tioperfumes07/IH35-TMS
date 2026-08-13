@@ -624,8 +624,7 @@
         "connectivity",
         "reverse_link",
         "qbo_chrome",
-        "unit",
-        "gl_je"
+        "unit"
       ]
     },
     {
@@ -671,7 +670,6 @@
       "required": [
         "customer",
         "vendor",
-        "gl_je",
         "ap_bill",
         "expense",
         "connectivity",
@@ -694,8 +692,7 @@
         "connectivity",
         "reverse_link",
         "qbo_chrome",
-        "unit",
-        "gl_je"
+        "unit"
       ]
     },
     {
@@ -962,7 +959,6 @@
       "required": [
         "customer",
         "vendor",
-        "gl_je",
         "ap_bill",
         "expense",
         "connectivity",
