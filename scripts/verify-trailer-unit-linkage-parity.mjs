@@ -67,12 +67,37 @@ function run() {
       if (!ids.has("reefer") && !ids.has("fuel.reefer")) {
         errors.push("fuel.required.json missing reefer fuel leaf (trailer fuel parity)");
       }
-      const reefer = (doc.leaves || []).find((l) => l.id === "reefer" || l.id === "fuel.reefer");
-      if (reefer) {
-        for (const col of ["trailer", "load", "expense"]) {
-          if (!(reefer.required || []).includes(col)) {
-            errors.push(`fuel.${reefer.id} missing required ${col}`);
-          }
+      // Owner 2026-08-12 — fuel EVENT surfaces link to the FULL hub (not a thin subset).
+      const FUEL_FULL_HUB = [
+        "driver",
+        "customer",
+        "vendor",
+        "unit",
+        "trailer",
+        "load",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank",
+        "connectivity",
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome",
+      ];
+      const FUEL_CHROME_ONLY = new Set([
+        "settings",
+        "loves_prices",
+        "chrome.toolbar_search",
+        "chrome.toolbar_range",
+        "chrome.toolbar_gear",
+      ]);
+      for (const leaf of doc.leaves || []) {
+        if (FUEL_CHROME_ONLY.has(leaf.id)) continue;
+        const req = new Set(leaf.required || []);
+        const miss = FUEL_FULL_HUB.filter((c) => !req.has(c));
+        if (miss.length) {
+          errors.push(`fuel.${leaf.id}: ops fuel leaf missing full hub cols: ${miss.join(",")}`);
         }
       }
     }

@@ -126,11 +126,20 @@
       "route_hint": "/fuel",
       "required": [
         "driver",
+        "customer",
+        "vendor",
         "unit",
         "trailer",
         "load",
+        "ap_bill",
         "expense",
-        "connectivity"
+        "gl_je",
+        "invoice",
+        "bank",
+        "connectivity",
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome"
       ]
     },
     {
@@ -140,12 +149,20 @@
       "route_hint": "/fuel/planner",
       "required": [
         "driver",
+        "customer",
+        "vendor",
         "unit",
         "trailer",
         "load",
+        "ap_bill",
         "expense",
+        "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
-        "picker_law"
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome"
       ]
     },
     {
@@ -155,9 +172,16 @@
       "route_hint": "/fuel/inbox",
       "required": [
         "driver",
+        "customer",
+        "vendor",
         "unit",
         "trailer",
+        "load",
+        "ap_bill",
         "expense",
+        "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
         "reverse_link",
         "picker_law",
@@ -180,10 +204,19 @@
       "sub": "Fuel\u2192expense map",
       "route_hint": "/fuel/expense-mapping",
       "required": [
+        "driver",
+        "customer",
+        "vendor",
+        "unit",
+        "trailer",
+        "load",
+        "ap_bill",
         "expense",
         "gl_je",
-        "vendor",
+        "invoice",
+        "bank",
         "connectivity",
+        "reverse_link",
         "picker_law",
         "qbo_chrome"
       ]
@@ -195,12 +228,20 @@
       "route_hint": "/fuel/history",
       "required": [
         "driver",
+        "customer",
+        "vendor",
         "unit",
         "trailer",
         "load",
+        "ap_bill",
         "expense",
+        "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome"
       ]
     },
     {
@@ -218,10 +259,21 @@
       "sub": "Fuel compliance",
       "route_hint": "/fuel/compliance",
       "required": [
+        "driver",
+        "customer",
+        "vendor",
         "unit",
         "trailer",
-        "driver",
-        "connectivity"
+        "load",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank",
+        "connectivity",
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome"
       ]
     },
     {
@@ -232,12 +284,21 @@
       "surface_kind": "modal",
       "surface_path": "pages/fuel/components/ImportFuelTransactionsModal.tsx",
       "required": [
-        "connectivity",
-        "reverse_link",
         "driver",
+        "customer",
+        "vendor",
         "unit",
         "trailer",
-        "expense"
+        "load",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank",
+        "connectivity",
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome"
       ]
     },
     {
@@ -248,13 +309,21 @@
       "surface_kind": "modal",
       "surface_path": "pages/fuel/components/UploadLovesPricesModal.tsx",
       "required": [
-        "connectivity",
-        "reverse_link",
-        "load",
         "driver",
+        "customer",
+        "vendor",
         "unit",
         "trailer",
-        "expense"
+        "load",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank",
+        "connectivity",
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome"
       ]
     },
     {
@@ -265,12 +334,21 @@
       "surface_kind": "panel",
       "surface_path": "pages/fuel/components/SavingsPanel.tsx",
       "required": [
-        "connectivity",
-        "reverse_link",
         "driver",
+        "customer",
+        "vendor",
         "unit",
         "trailer",
-        "expense"
+        "load",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank",
+        "connectivity",
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome"
       ]
     },
     {
@@ -312,12 +390,17 @@
       "sub": "Reefer / trailer fuel (same linkage depth as tractor fuel: load \u00b7 trailer \u00b7 expense \u00b7 reverse)",
       "route_hint": "/fuel",
       "required": [
-        "trailer",
-        "unit",
-        "load",
         "driver",
-        "expense",
+        "customer",
         "vendor",
+        "unit",
+        "trailer",
+        "load",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "invoice",
+        "bank",
         "connectivity",
         "reverse_link",
         "picker_law",
