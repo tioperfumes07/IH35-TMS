@@ -42,3 +42,6 @@
 2026-08-13T20:10Z Cursor | shipping VERTICAL-REVERSE-LINK-SAFETY-LISTS | Gap→9 WIRE EntityLink | Live=BLOCKED | NEXT=fleet/factoring reverse or wire safety lists
 2026-08-13T20:12Z Cursor | SHIPPED VERTICAL-REVERSE-LINK-SAFETY-LISTS (PR#6555) | Gap=9 WIRE | Live=BLOCKED | NEXT=wire safety EntityLink OR fleet reverse
 2026-08-13T20:15Z Cursor | shipping VERTICAL-REVERSE-LINK-FLEET-TRANSFERS | wire EntityLink + honesty | Live=BLOCKED | NEXT=factoring/insurance reverse
+2026-08-13T20:18Z Cursor | SHIPPED VERTICAL-REVERSE-LINK-FLEET-TRANSFERS (PR#6557) | fleet reverse Gap=0 | Live=BLOCKED | NEXT=factoring/insurance reverse
+2026-08-13T20:18Z Cursor | SHIPPED VERTICAL-REVERSE-LINK-FLEET-TRANSFERS (PR#6557) | fleet reverse Gap=0 | Live=BLOCKED | NEXT=safety/factoring reverse
+2026-08-13T20:20Z Cursor | shipping VERTICAL-QBO-CHROME-FACTORING-TOOLBAR | Built chrome.toolbar_* via FactoringListPage triad | Live=BLOCKED | NEXT=load remainder 4 WIRE

@@ -6,6 +6,7 @@
  *
  * @matrix-built {"modules":["factoring"],"cols":["qbo_chrome"],"leafRe":"^(home\\.(summary|statements_settings|faro_imports)|factors\\.admin)$","task":"VERTICAL-QBO-CHROME-factoring-home-admin","vertical":"column-wave"}
  * @matrix-built {"modules":["factoring"],"cols":["qbo_chrome"],"leafRe":"^(accounting\\.(list|submit|detail|factor_recon)|submit\\.queue)$","task":"VERTICAL-QBO-CHROME-factoring-accounting","vertical":"column-wave"}
+ * @matrix-built {"modules":["factoring"],"cols":["qbo_chrome"],"leafRe":"^chrome\\.toolbar_(search|range|gear|filter)$","task":"VERTICAL-QBO-CHROME-factoring-toolbar","vertical":"column-wave"}
  *
  * Self-test: node scripts/verify-factoring-qbo-chrome-surfaces.mjs --selftest
  */
@@ -51,6 +52,26 @@ const CHECKS = [
     name: "FactorReconciliationPage ParityTable",
     file: "apps/frontend/src/pages/accounting/FactorReconciliationPage.tsx",
     pattern: /ParityTable/,
+  },
+  {
+    name: "FactoringListPage toolbar searchSlot",
+    file: "apps/frontend/src/pages/accounting/FactoringListPage.tsx",
+    pattern: /searchSlot=[\s\S]*aria-label="Search factoring advances"/,
+  },
+  {
+    name: "FactoringListPage toolbar date range DatePicker",
+    file: "apps/frontend/src/pages/accounting/FactoringListPage.tsx",
+    pattern: /Date from[\s\S]*DatePicker[\s\S]*Date to[\s\S]*DatePicker/,
+  },
+  {
+    name: "FactoringListPage CollapsedListFilters Apply triad",
+    file: "apps/frontend/src/pages/accounting/FactoringListPage.tsx",
+    pattern: /CollapsedListFilters[\s\S]*onApply=\{staged\.apply\}[\s\S]*onReset=\{staged\.reset\}[\s\S]*onCancel=\{staged\.cancel\}/,
+  },
+  {
+    name: "FactoringListPage ParityTable column gear storageKey",
+    file: "apps/frontend/src/pages/accounting/FactoringListPage.tsx",
+    pattern: /ParityTable[\s\S]*storageKey="factoring-list"/,
   },
 ];
 
