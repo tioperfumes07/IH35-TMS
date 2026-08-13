@@ -23,6 +23,9 @@ const accidentsQuerySchema = companyQuerySchema.extend({
   trailer_id: z.string().uuid().optional(),
   load_id: z.string().uuid().optional(),
 });
+const trainingCompletionsQuerySchema = companyQuerySchema.extend({
+  driver_id: z.string().uuid().optional(),
+});
 
 const eventsQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -372,11 +375,14 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
   app.get("/api/v1/safety/training/completions", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
-    const query = companyQuerySchema.safeParse(req.query ?? {});
+    const query = trainingCompletionsQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return sendValidationError(reply, query.error);
     const rows = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       // CLS-UUID-LABEL: no driver join — TrainingRecordsPage's EntityLink rendered tr.driver_id
       // as a raw full uuid with no label (same class fixed on accidents/dot_inspections/internal_fines).
+      const values: unknown[] = [query.data.operating_company_id];
+      const driverFilter = query.data.driver_id ? "AND tr.driver_id = $2::uuid" : "";
+      if (query.data.driver_id) values.push(query.data.driver_id);
       const res = await client
         .query(
           `
@@ -387,10 +393,11 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
               ON d.id = tr.driver_id
              AND d.operating_company_id = tr.operating_company_id
             WHERE tr.operating_company_id = $1::uuid
+              ${driverFilter}
             ORDER BY tr.completed_at DESC
             LIMIT 500
           `,
-          [query.data.operating_company_id]
+          values
         )
         .catch(() => ({ rows: [] as Record<string, unknown>[] }));
       return res.rows;
