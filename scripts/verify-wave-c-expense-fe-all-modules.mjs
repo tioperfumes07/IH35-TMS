@@ -45,9 +45,10 @@ export function auditExpenseColumn(sources, leaves) {
   const p10 = leaves.filter((leaf) => P10.has(leaf.module));
   // ACCT-F5083 removed four proven-false P10 cells (Book/Reserve/Detention/Relay); 13 is the honest floor.
   if (p10.length < 13) failures.push(`priority-10 expense inventory unexpectedly shrank to ${p10.length}`);
-  if (leaves.length < 74) failures.push(`all-module expense inventory unexpectedly shrank to ${leaves.length}`);
-  // Dispatch left the expense inventory once its three navigation-only cells were removed.
-  if (new Set(leaves.map((leaf) => leaf.module)).size < 13) failures.push("expense module inventory unexpectedly shrank");
+  // ACCT-F5085 removed eight proven-false compliance/home/insurance/legal identity cells.
+  if (leaves.length < 71) failures.push(`all-module expense inventory unexpectedly shrank to ${leaves.length}`);
+  // Dispatch, compliance, and legal left the expense inventory after their navigation/GL-only cells were removed.
+  if (new Set(leaves.map((leaf) => leaf.module)).size < 11) failures.push("expense module inventory unexpectedly shrank");
   failures.push(...auditConnectivity(sources.routes, leaves, 0));
   for (const [file, pattern] of contracts) if (!pattern.test(sources.files[file] || "")) failures.push(`${file}: non-posting expense FE contract missing`);
   return failures;

@@ -327,7 +327,6 @@
       "required": [
         "unit",
         "load",
-        "expense",
         "connectivity",
         "reverse_link"
       ]
