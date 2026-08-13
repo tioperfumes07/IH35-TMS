@@ -35,6 +35,7 @@ const companyQuerySchema = z.object({
 
 const tempAssignmentsQuerySchema = companyQuerySchema.extend({
   driver_id: z.string().uuid().optional(),
+  unit_id: z.string().uuid().optional(),
 });
 
 const dateRangeQuerySchema = companyQuerySchema.extend({
@@ -385,7 +386,7 @@ export async function registerDriverSchedulerRoutes(app: FastifyInstance) {
     const parsed = tempAssignmentsQuerySchema.safeParse(req.query ?? {});
     if (!parsed.success) return sendValidationError(reply, parsed.error);
     const rows = await withCompanyScope(user.uuid, parsed.data.operating_company_id, (client) =>
-      listTempAssignments(client, parsed.data.operating_company_id, { driverId: parsed.data.driver_id })
+      listTempAssignments(client, parsed.data.operating_company_id, { driverId: parsed.data.driver_id, unitId: parsed.data.unit_id })
     );
     return { assignments: rows };
   });

@@ -1031,7 +1031,7 @@ export async function getFleetSchedule(
   };
 }
 
-export async function listTempAssignments(client: QueryableClient, operatingCompanyId: string, filters: { driverId?: string } = {}) {
+export async function listTempAssignments(client: QueryableClient, operatingCompanyId: string, filters: { driverId?: string; unitId?: string } = {}) {
   // SAFETY-TEMP-COVER-ASSIGNMENTS-ZERO-FE-CALLERS — this used to be SELECT * with no joins (unusable
   // for a UI — raw driver/unit uuids, no names) and operating_company_id compared with no ::uuid
   // cast (the same DA-PROGRAM-ROUTES-500 shape: safety.temp_unit_assignments.operating_company_id is
@@ -1051,10 +1051,11 @@ export async function listTempAssignments(client: QueryableClient, operatingComp
       WHERE t.operating_company_id = $1::uuid
         AND t.voided_at IS NULL
         AND ($2::uuid IS NULL OR t.primary_driver_id = $2::uuid OR t.cover_driver_id = $2::uuid)
+        AND ($3::uuid IS NULL OR t.unit_id = $3::uuid)
       ORDER BY t.start_date DESC
       LIMIT 200
     `,
-    [operatingCompanyId, filters.driverId ?? null]
+    [operatingCompanyId, filters.driverId ?? null, filters.unitId ?? null]
   );
   return res.rows;
 }
@@ -1085,6 +1086,16 @@ export async function assignTempCover(
   if (new Set(drivers.rows.map((row) => String(row.id))).size !== 2) {
     return { error: "temp_cover_driver_not_found" as const };
   }
+  const unit = await client.query(
+    `SELECT id::text
+     FROM mdata.units
+     WHERE id = $2::uuid
+       AND COALESCE(currently_leased_to_company_id, owner_company_id) = $1::uuid
+       AND deactivated_at IS NULL
+     LIMIT 1`,
+    [args.operatingCompanyId, input.unit_id]
+  );
+  if (!unit.rows[0]) return { error: "temp_cover_unit_not_found" as const };
   const ins = await client.query(
     `
       INSERT INTO safety.temp_unit_assignments (

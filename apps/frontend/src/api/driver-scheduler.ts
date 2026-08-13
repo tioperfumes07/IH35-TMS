@@ -93,9 +93,12 @@ export const driverSchedulerOfficeApi = {
     }>(withCompanyQuery("/api/v1/safety/scheduler/balances", operatingCompanyId, params));
   },
 
-  listTempAssignments(operatingCompanyId: string, filters: { driver_id?: string } = {}) {
+  listTempAssignments(operatingCompanyId: string, filters: { driver_id?: string; unit_id?: string } = {}) {
     return apiRequest<{ assignments: TempAssignment[] }>(
-      withCompanyQuery("/api/v1/safety/scheduler/temp-assignments", operatingCompanyId, filters.driver_id ? { driver_id: filters.driver_id } : {})
+      withCompanyQuery("/api/v1/safety/scheduler/temp-assignments", operatingCompanyId, {
+        ...(filters.driver_id ? { driver_id: filters.driver_id } : {}),
+        ...(filters.unit_id ? { unit_id: filters.unit_id } : {}),
+      })
     );
   },
 
