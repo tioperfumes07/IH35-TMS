@@ -682,7 +682,9 @@ export function CustomersPage() {
               <SecondaryNavTabs tabs={CUSTOMER_TABS} activeId={activeTab} onChange={(id) => setActiveTab(id as CustomerTabId)} />
 
               {activeTab === "transaction_list" ? (
-                <ParityTable
+                invoicesQuery.isError ? (
+                  <ListErrorState title="Couldn't load customer transactions" status={0} message={(invoicesQuery.error as Error)?.message} onRetry={() => void invoicesQuery.refetch()} />
+                ) : <ParityTable
                   rows={txRows}
                   columns={txColumns}
                   rowKey={(invoice) => invoice.id}
