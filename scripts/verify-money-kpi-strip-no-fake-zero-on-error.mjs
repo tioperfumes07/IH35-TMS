@@ -27,6 +27,8 @@
 // + SevereRepairOosTab rollup tiles still money()/open_count with no rollupQuery.isError branch.
 // CLS-MONEY-KPI-FAKE-ZERO-REMAINDER-HUB (Cursor ACCT-F5025): AccountingHubPage kpiStrip still
 // painted $0.00 from billsQ/invoicesQ ?? [] with no isError branch — extended here.
+// CLS-MONEY-KPI-FAKE-ZERO-REMAINDER-PAYMENTS (Cursor ACCT-F5038): PaymentsListPage +
+// BillPaymentsListPage totals strips still money(totals) with no isError branch — extended here.
 //
 // @matrix-built {"modules":["accounting"],"cols":["connectivity"],"leafRe":"^(home|bills|invoices|expenses)","task":"ACCT-F5025-HUB-KPI-NO-FAKE-ZERO","pr":"this PR"}
 import fs from "node:fs";
@@ -43,6 +45,8 @@ const SEVERE_OOS = "apps/frontend/src/pages/maintenance/components/SevereRepairO
 const SAFETY_EVENTS = "apps/frontend/src/pages/safety/SafetyEventsPage.tsx";
 const DISPATCH_OVERVIEW = "apps/frontend/src/pages/dispatch/DispatchOverview.tsx";
 const ACCOUNTING_HUB = "apps/frontend/src/pages/accounting/AccountingHubPage.tsx";
+const PAYMENTS_PAGE = "apps/frontend/src/pages/accounting/PaymentsListPage.tsx";
+const BILL_PAYMENTS_PAGE = "apps/frontend/src/pages/accounting/BillPaymentsListPage.tsx";
 
 function fail(msg) {
   console.error(`FAIL verify-money-kpi-strip-no-fake-zero-on-error: ${msg}`);
@@ -103,6 +107,32 @@ function checkExpensesPage(src) {
   }
   if (!/Total:\s*\{query\.isError/.test(src)) {
     fail(`${EXPENSES_PAGE}: "Total" no longer branches directly on query.isError — will show $0.00 on a failed fetch, not an error state.`);
+  }
+}
+
+function checkPaymentsPage(src) {
+  if (!src.includes("Amount:")) {
+    fail(`${PAYMENTS_PAGE}: Amount totals strip not found — did it move?`);
+    return;
+  }
+  if (!/Amount:\s*\{query\.isError/.test(src)) {
+    fail(`${PAYMENTS_PAGE}: Amount no longer branches on query.isError — will show $0.00 on a failed fetch.`);
+  }
+  if (!/Applied:\s*\{query\.isError/.test(src)) {
+    fail(`${PAYMENTS_PAGE}: Applied no longer branches on query.isError.`);
+  }
+  if (!/Unapplied:\s*\{query\.isError/.test(src)) {
+    fail(`${PAYMENTS_PAGE}: Unapplied no longer branches on query.isError.`);
+  }
+}
+
+function checkBillPaymentsPage(src) {
+  if (!src.includes("Total rows amount:")) {
+    fail(`${BILL_PAYMENTS_PAGE}: Total rows amount strip not found — did it move?`);
+    return;
+  }
+  if (!/paymentsQuery\.isError \? "—" : money\(totals\)/.test(src)) {
+    fail(`${BILL_PAYMENTS_PAGE}: Total rows amount no longer branches on paymentsQuery.isError — will show $0.00 on a failed fetch.`);
   }
 }
 
@@ -520,6 +550,64 @@ function selftest() {
     probesProven++;
   }
 
+  // Mutation: PaymentsListPage drops query.isError from Amount strip.
+  {
+    const original = fs.readFileSync(PAYMENTS_PAGE, "utf8");
+    const mutated = original.replace(
+      'Amount: {query.isError ? "—" : money(totals.amount)}',
+      "Amount: {money(totals.amount)}"
+    );
+    if (mutated === original) {
+      console.error("SELFTEST SETUP FAILED: PaymentsListPage Amount isError pattern not found.");
+      process.exitCode = 1;
+      return;
+    }
+    fs.writeFileSync(PAYMENTS_PAGE, mutated);
+    let caught = false;
+    try {
+      checkPaymentsPage(mutated);
+      caught = process.exitCode === 1;
+    } finally {
+      process.exitCode = undefined;
+      fs.writeFileSync(PAYMENTS_PAGE, original);
+    }
+    if (!caught) {
+      console.error("SELFTEST INERT: dropping PaymentsListPage query.isError was not caught.");
+      process.exitCode = 1;
+      return;
+    }
+    probesProven++;
+  }
+
+  // Mutation: BillPaymentsListPage drops paymentsQuery.isError from totals.
+  {
+    const original = fs.readFileSync(BILL_PAYMENTS_PAGE, "utf8");
+    const mutated = original.replace(
+      '{paymentsQuery.isError ? "—" : money(totals)}',
+      "{money(totals)}"
+    );
+    if (mutated === original) {
+      console.error("SELFTEST SETUP FAILED: BillPaymentsListPage paymentsQuery.isError pattern not found.");
+      process.exitCode = 1;
+      return;
+    }
+    fs.writeFileSync(BILL_PAYMENTS_PAGE, mutated);
+    let caught = false;
+    try {
+      checkBillPaymentsPage(mutated);
+      caught = process.exitCode === 1;
+    } finally {
+      process.exitCode = undefined;
+      fs.writeFileSync(BILL_PAYMENTS_PAGE, original);
+    }
+    if (!caught) {
+      console.error("SELFTEST INERT: dropping BillPaymentsListPage paymentsQuery.isError was not caught.");
+      process.exitCode = 1;
+      return;
+    }
+    probesProven++;
+  }
+
   console.log(`PASS verify-money-kpi-strip-no-fake-zero-on-error --selftest (mutation probes proven non-inert: ${probesProven})`);
 }
 
@@ -530,6 +618,8 @@ if (process.argv.includes("--selftest")) {
   checkSettlementsPage(fs.readFileSync(SETTLEMENTS_PAGE, "utf8"));
   checkInvoicesPage(fs.readFileSync(INVOICES_PAGE, "utf8"));
   checkExpensesPage(fs.readFileSync(EXPENSES_PAGE, "utf8"));
+  checkPaymentsPage(fs.readFileSync(PAYMENTS_PAGE, "utf8"));
+  checkBillPaymentsPage(fs.readFileSync(BILL_PAYMENTS_PAGE, "utf8"));
   checkAccountingHub(fs.readFileSync(ACCOUNTING_HUB, "utf8"));
   checkFactoringHome(fs.readFileSync(FACTORING_HOME, "utf8"));
   checkMaintenanceHome(fs.readFileSync(MAINT_HOME, "utf8"), fs.readFileSync(MAINT_KPI_ROWS, "utf8"));

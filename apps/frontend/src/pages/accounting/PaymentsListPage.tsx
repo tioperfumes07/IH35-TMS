@@ -223,9 +223,11 @@ export function PaymentsListPage() {
       </CollapsedListFilters>
 
       <div className="flex items-center gap-3 text-xs text-gray-600">
-        <span>Amount: {money(totals.amount)}</span>
-        <span>Applied: {money(totals.applied)}</span>
-        <span>Unapplied: {money(totals.unapplied)}</span>
+        {/* CLS-MONEY-KPI-FAKE-ZERO-REMAINDER-PAYMENTS — Amount/Applied/Unapplied used to render
+            money(totals.*) with no isError awareness next to ListErrorBanner (ACCT-F5038). */}
+        <span>Amount: {query.isError ? "—" : money(totals.amount)}</span>
+        <span>Applied: {query.isError ? "—" : money(totals.applied)}</span>
+        <span>Unapplied: {query.isError ? "—" : money(totals.unapplied)}</span>
       </div>
     </div>
   );
