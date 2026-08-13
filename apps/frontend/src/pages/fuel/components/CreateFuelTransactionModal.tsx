@@ -134,7 +134,7 @@ export function CreateFuelTransactionModal({ open, operatingCompanyId, onClose, 
   };
 
   return (
-    <Modal open={open} onClose={onClose} title="Create Fuel Purchase">
+    <Modal open={open} onClose={onClose} title="Create Fuel Purchase" variant="drawer">
       <div className="space-y-3 text-xs" data-testid="create-fuel-transaction-modal">
         <label className="block font-semibold text-gray-700">
           Purchase date *
