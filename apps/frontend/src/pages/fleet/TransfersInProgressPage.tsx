@@ -3,6 +3,8 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { apiRequest } from "../../api/client";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ListErrorState } from "../../components/ListErrorState";
+import { EntityLink } from "../../components/shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 
 type TransferRow = {
   id: string;
@@ -52,8 +54,24 @@ export function TransfersInProgressPage() {
         </div>
       ) : (
         (query.data ?? []).map((row) => (
-          <div key={row.id} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-sm">
-            Dropoff: {row.dual_ack?.dropoff_ack_at ? "✓" : "pending"} · Pickup: {row.dual_ack?.pickup_ack_at ? "✓" : "pending"}
+          <div key={row.id} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-sm space-y-1">
+            <div className="flex flex-wrap gap-x-3 gap-y-1">
+              <span>
+                Unit:{" "}
+                <EntityLink kind="unit" id={row.equipment_id} label={entityLabel(null, row.equipment_id, "Unit")} />
+              </span>
+              <span>
+                From:{" "}
+                <EntityLink kind="driver" id={row.from_driver_id} label={entityLabel(null, row.from_driver_id, "Driver")} />
+              </span>
+              <span>
+                To:{" "}
+                <EntityLink kind="driver" id={row.to_driver_id} label={entityLabel(null, row.to_driver_id, "Driver")} />
+              </span>
+            </div>
+            <div className="text-xs text-gray-600">
+              Dropoff: {row.dual_ack?.dropoff_ack_at ? "✓" : "pending"} · Pickup: {row.dual_ack?.pickup_ack_at ? "✓" : "pending"}
+            </div>
           </div>
         ))
       )}
