@@ -5,7 +5,10 @@ import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 
-const querySchema = z.object({ operating_company_id: z.string().uuid() });
+const querySchema = z.object({
+  operating_company_id: z.string().uuid(),
+  vendor_id: z.string().uuid().optional(),
+});
 const woParamsSchema = z.object({ id: z.string().uuid() });
 const unitParamsSchema = z.object({ unitId: z.string().uuid() });
 const linkParamsSchema = z.object({ id: z.string().uuid() });
@@ -47,6 +50,12 @@ export async function registerMaintenancePartsInvoiceLinksRoutes(app: FastifyIns
     if (!query.success) return reply.code(400).send({ error: "validation_error", details: query.error.flatten() });
 
     const rows = await withCompany(user.uuid, query.data.operating_company_id, async (client) => {
+      const values: unknown[] = [query.data.operating_company_id];
+      const filters = ["pil.operating_company_id = $1::uuid"];
+      if (query.data.vendor_id) {
+        values.push(query.data.vendor_id);
+        filters.push(`pil.vendor_id = $${values.length}::uuid`);
+      }
       const res = await client.query(
         `
           SELECT
@@ -76,11 +85,11 @@ export async function registerMaintenancePartsInvoiceLinksRoutes(app: FastifyIns
                                    AND v.operating_company_id = pil.operating_company_id
           LEFT JOIN maintenance.parts_inventory pi ON pi.id = pil.parts_inventory_id
                                                            AND pi.operating_company_id = pil.operating_company_id
-          WHERE pil.operating_company_id = $1::uuid
+          WHERE ${filters.join(" AND ")}
           ORDER BY pil.created_at DESC
           LIMIT 500
         `,
-        [query.data.operating_company_id]
+        values
       );
       return res.rows;
     });
@@ -177,6 +186,26 @@ export async function registerMaintenancePartsInvoiceLinksRoutes(app: FastifyIns
         return { locked: true as const };
       }
 
+      const linkedEntities = await client.query(
+        `SELECT
+           EXISTS (
+             SELECT 1 FROM mdata.vendors v
+             WHERE v.id = $1::uuid
+               AND v.operating_company_id = $2::uuid
+               AND v.deactivated_at IS NULL
+           ) AS vendor_ok,
+           ($3::uuid IS NULL OR EXISTS (
+             SELECT 1 FROM maintenance.parts_inventory pi
+             WHERE pi.id = $3::uuid
+               AND pi.operating_company_id = $2::uuid
+           )) AS part_ok`,
+        [body.data.vendor_id, query.data.operating_company_id, body.data.parts_inventory_id ?? null],
+      );
+      const linkState = linkedEntities.rows[0] as { vendor_ok?: boolean; part_ok?: boolean } | undefined;
+      if (!linkState?.vendor_ok || !linkState?.part_ok) {
+        return { invalidLink: true as const };
+      }
+
       const inserted = await client.query(
         `
           INSERT INTO maintenance.parts_invoice_links (
@@ -232,6 +261,10 @@ export async function registerMaintenancePartsInvoiceLinksRoutes(app: FastifyIns
       );
       return { link, display_id: displayId };
     });
+
+    if ("invalidLink" in result) {
+      return reply.code(400).send({ error: "linked_entity_not_in_operating_company" });
+    }
 
     if ("notFound" in result) return reply.code(404).send({ error: "work_order_not_found" });
     if ("locked" in result) {

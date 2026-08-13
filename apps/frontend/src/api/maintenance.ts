@@ -750,9 +750,11 @@ export type PartsAssignmentRow = {
   created_by_user_id: string | null;
 };
 
-export function listPartsAssignments(operatingCompanyId: string) {
+export function listPartsAssignments(operatingCompanyId: string, filters?: { vendor_id?: string }) {
+  const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  if (filters?.vendor_id) query.set("vendor_id", filters.vendor_id);
   return apiRequest<{ rows: PartsAssignmentRow[] }>(
-    `/api/v1/maintenance/parts-invoice-links?operating_company_id=${encodeURIComponent(operatingCompanyId)}`
+    `/api/v1/maintenance/parts-invoice-links?${query.toString()}`
   ).then((result) => result.rows);
 }
 
