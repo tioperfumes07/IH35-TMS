@@ -3,7 +3,8 @@
 /**
  * Full-product connectivity contract.
  * Every leaf that requires connectivity declares route_hint in its required.json. This guard proves
- * that hint resolves to a mounted route (absolute, nested, parameterized, or explicit redirect).
+ * that a URL hint resolves to a mounted route (absolute, nested, parameterized, or explicit redirect),
+ * or that an embedded `surface://` hint resolves to a real frontend component.
  * It scans the inventory dynamically, so adding a module/leaf without a real route fails the wave.
  */
 import fs from "node:fs";
@@ -50,8 +51,17 @@ export function auditConnectivity(manifestSource, leaves, minimumInventory = 800
     .filter((route) => route !== "*" && route !== "/*");
   const absoluteParents = mounted.filter((route) => route.startsWith("/") && !route.includes("?"));
   for (const leaf of leaves) {
+    if (String(leaf.route || "").startsWith("surface://")) {
+      const relative = String(leaf.route).slice("surface://".length);
+      const frontendRoot = path.join(ROOT, "apps/frontend/src");
+      const resolved = path.resolve(frontendRoot, relative);
+      if (!relative || !resolved.startsWith(`${frontendRoot}${path.sep}`) || !fs.existsSync(resolved)) {
+        failures.push(`${leaf.module}:${leaf.id}: ${leaf.route} has no frontend surface`);
+      }
+      continue;
+    }
     if (!leaf.route || !String(leaf.route).startsWith("/")) {
-      failures.push(`${leaf.module}:${leaf.id}: missing absolute route_hint`);
+      failures.push(`${leaf.module}:${leaf.id}: route_hint is neither an absolute route nor a surface:// component`);
       continue;
     }
     const target = String(leaf.route).split("?")[0];
@@ -86,7 +96,18 @@ if (isDirectRun) {
       console.error("verify-wave-b-connectivity-all-modules SELFTEST FAIL — removed /users route was not detected");
       process.exit(1);
     }
-    console.log("verify-wave-b-connectivity-all-modules SELFTEST PASS — removed route detected");
+    const surface = leaves.find((leaf) => String(leaf.route || "").startsWith("surface://"));
+    if (!surface) {
+      console.error("verify-wave-b-connectivity-all-modules SELFTEST FAIL — surface:// fixture missing");
+      process.exit(1);
+    }
+    const missingSurface = { ...surface, route: "surface://components/__planted_missing_surface__.tsx" };
+    const surfaceCaught = auditConnectivity(manifest, [missingSurface], 0);
+    if (!surfaceCaught.some((failure) => failure.startsWith(`${surface.module}:${surface.id}:`))) {
+      console.error("verify-wave-b-connectivity-all-modules SELFTEST FAIL — removed embedded surface was not detected");
+      process.exit(1);
+    }
+    console.log("verify-wave-b-connectivity-all-modules SELFTEST PASS — removed route and embedded surface detected");
     process.exit(0);
   }
   const failures = auditConnectivity(manifest, leaves);
