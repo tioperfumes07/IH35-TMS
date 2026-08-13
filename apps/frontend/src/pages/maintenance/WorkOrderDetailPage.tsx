@@ -767,13 +767,13 @@ export function WorkOrderDetailPage() {
               <div>
                 <div className="text-[11px] text-gray-500">Vendor</div>
                 <p>
-                  {wo.external_vendor_id ? (
+                  {wo.resolved_vendor_id ? (
                     <EntityLink
                       kind="vendor"
-                      id={String(wo.external_vendor_id)}
+                      id={String(wo.resolved_vendor_id)}
                       label={entityLabel(
-                        typeof wo.external_vendor_name === "string" ? wo.external_vendor_name : null,
-                        wo.external_vendor_id,
+                        typeof wo.resolved_vendor_name === "string" ? wo.resolved_vendor_name : null,
+                        wo.resolved_vendor_id,
                         "Vendor"
                       )}
                     />
