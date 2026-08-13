@@ -30,7 +30,7 @@ describe("equipment transfer request service (GAP-37)", () => {
   it("initiateTransfer inserts pending_outbound row, audits, and notifies to_driver", async () => {
     const client = mockClient([
       ["FROM mdata.drivers", [{ id: FROM_DRIVER }, { id: TO_DRIVER }]],
-      ["FROM mdata.equipment", [{ id: EQUIPMENT }]],
+      ["FROM mdata.equipment", [{ id: EQUIPMENT, equipment_type: "DryVan" }]],
       ["FROM dispatch.equipment_transfer_requests", []],
       ["INSERT INTO dispatch.equipment_transfer_requests", [{ uuid: REQUEST_UUID }]],
       ["audit.append_event", []],
@@ -59,7 +59,7 @@ describe("equipment transfer request service (GAP-37)", () => {
   it("initiateTransfer rejects duplicate active transfer", async () => {
     const client = mockClient([
       ["FROM mdata.drivers", [{ id: FROM_DRIVER }, { id: TO_DRIVER }]],
-      ["FROM mdata.equipment", [{ id: EQUIPMENT }]],
+      ["FROM mdata.equipment", [{ id: EQUIPMENT, equipment_type: "DryVan" }]],
       ["FROM dispatch.equipment_transfer_requests", [{ uuid: REQUEST_UUID }]],
     ]);
 
@@ -73,6 +73,24 @@ describe("equipment transfer request service (GAP-37)", () => {
         transfer_location: "Yard A",
       })
     ).rejects.toThrow("transfer_already_active");
+  });
+
+  it("initiateTransfer rejects a selected equipment row whose type contradicts the payload kind", async () => {
+    const client = mockClient([
+      ["FROM mdata.drivers", [{ id: FROM_DRIVER }, { id: TO_DRIVER }]],
+      ["FROM mdata.equipment", [{ id: EQUIPMENT, equipment_type: "Chassis" }]],
+    ]);
+
+    await expect(
+      initiateTransfer(client, USER, {
+        operating_company_id: COMPANY,
+        equipment_uuid: EQUIPMENT,
+        equipment_kind: "trailer",
+        from_driver_uuid: FROM_DRIVER,
+        to_driver_uuid: TO_DRIVER,
+        transfer_location: "Yard A",
+      })
+    ).rejects.toThrow("equipment_kind_mismatch");
   });
 
   it("listPendingForDriver scopes outbound drop confirmations", async () => {

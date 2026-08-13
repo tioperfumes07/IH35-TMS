@@ -47,7 +47,7 @@ export async function initiateTransfer(
 ): Promise<string> {
   const drivers = await client.query(
     `
-      SELECT id::text
+      SELECT id::text, equipment_type
       FROM mdata.drivers
       WHERE id = ANY($1::uuid[])
         AND operating_company_id = $2::uuid
@@ -68,6 +68,8 @@ export async function initiateTransfer(
     [input.equipment_uuid, input.operating_company_id]
   );
   if (!equipment.rows[0]) throw new Error("equipment_not_found");
+  const actualKind = String(equipment.rows[0].equipment_type ?? "") === "Chassis" ? "chassis" : "trailer";
+  if (actualKind !== input.equipment_kind) throw new Error("equipment_kind_mismatch");
 
   const pending = await client.query(
     `

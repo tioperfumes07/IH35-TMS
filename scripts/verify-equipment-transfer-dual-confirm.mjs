@@ -1,10 +1,26 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["dispatch","fleet","drivers"],"cols":["driver","trailer","connectivity","reverse_link"],"task":"DISPATCH-EQUIPMENT-TRANSFER-KIND","leafRe":"equipment.transfer.*"} */
 // GAP-37 / G14 / WF-047 — CI guard for dispatch equipment dual-confirm transfer.
 import fs from "node:fs";
 import path from "node:path";
 
 const ROOT = process.cwd();
 const failures = [];
+
+function transferKindFailures({ modal, pickerRegistry, equipmentRoutes, requestService, routes }) {
+  const out = [];
+  const requirePattern = (source, pattern, message) => {
+    if (!pattern.test(source)) out.push(message);
+  };
+  requirePattern(modal, /equipmentKind=\{kind\}/, "modal must pass selected subtype into the canonical equipment picker");
+  requirePattern(modal, /setKind\([\s\S]{0,160}setEquipmentUuid\(""\)/, "changing subtype must clear the prior equipment selection");
+  requirePattern(pickerRegistry, /equipment_kind:\s*opts\?\.equipmentKind/, "picker registry must send subtype to the server roster");
+  requirePattern(equipmentRoutes, /equipment_kind:\s*z\.enum\(\["trailer",\s*"chassis"\]\)/, "equipment list must validate the subtype query");
+  requirePattern(equipmentRoutes, /equipment_type = 'Chassis'[\s\S]{0,120}equipment_type <> 'Chassis'/, "equipment list must filter chassis and trailers distinctly");
+  requirePattern(requestService, /actualKind[\s\S]{0,160}equipment_kind_mismatch/, "writer must reject an equipment row whose stored type contradicts the payload kind");
+  requirePattern(routes, /equipment_kind_mismatch/, "route must expose a typed mismatch response");
+  return out;
+}
 
 function fail(message) {
   failures.push(message);
@@ -79,7 +95,24 @@ contains("apps/backend/src/index.ts", indexTs, [
   { pattern: /dispatch\/equipment-transfer\/routes/, label: "dispatch equipment-transfer import" },
 ]);
 
-read("apps/frontend/src/components/dispatch/EquipmentTransferModal.tsx");
+const transferModal = read("apps/frontend/src/components/dispatch/EquipmentTransferModal.tsx");
+const pickerRegistry = read("apps/frontend/src/components/parity/entityPickerRegistry.ts");
+const equipmentRoutes = read("apps/backend/src/mdata/equipment.routes.ts");
+failures.push(...transferKindFailures({ modal: transferModal, pickerRegistry, equipmentRoutes, requestService, routes }));
+
+if (process.argv.includes("--selftest")) {
+  const good = { modal: transferModal, pickerRegistry, equipmentRoutes, requestService, routes };
+  const mutations = [
+    { ...good, modal: good.modal.replace("equipmentKind={kind}", "") },
+    { ...good, modal: good.modal.replace('setEquipmentUuid("");', "") },
+    { ...good, pickerRegistry: good.pickerRegistry.replace("equipment_kind: opts?.equipmentKind", "") },
+    { ...good, equipmentRoutes: good.equipmentRoutes.replace("equipment_type <> 'Chassis'", "equipment_type = 'Chassis'") },
+    { ...good, requestService: good.requestService.replace('throw new Error("equipment_kind_mismatch")', "return input.equipment_uuid") },
+  ];
+  for (const [index, mutation] of mutations.entries()) {
+    if (transferKindFailures(mutation).length === 0) fail(`selftest mutation ${index + 1} escaped the subtype guard`);
+  }
+}
 const transfersPage = read("apps/frontend/src/pages/dispatch/EquipmentTransferRequests.tsx");
 contains("apps/frontend/src/pages/dispatch/EquipmentTransferRequests.tsx", transfersPage, [
   { pattern: /query\.isError/, label: "failed-list branch" },
@@ -130,4 +163,4 @@ if (failures.length > 0) {
   process.exit(1);
 }
 
-console.log("verify:equipment-transfer-dual-confirm — OK");
+console.log(`verify:equipment-transfer-dual-confirm — OK${process.argv.includes("--selftest") ? "; 5 subtype mutations caught" : ""}`);

@@ -1696,6 +1696,7 @@ export type ListEquipmentParams = {
   offset?: number;
   status?: string;
   search?: string;
+  equipment_kind?: "trailer" | "chassis";
 };
 
 export type ListEquipmentResponse = {
@@ -1714,6 +1715,7 @@ export function listEquipment(params: ListEquipmentParams) {
   if (params.offset != null) qs.set("offset", String(params.offset));
   if (params.status) qs.set("status", params.status);
   if (params.search) qs.set("search", params.search);
+  if (params.equipment_kind) qs.set("equipment_kind", params.equipment_kind);
   return apiRequest<ListEquipmentResponse>(`/api/v1/mdata/equipment?${qs.toString()}`);
 }
 

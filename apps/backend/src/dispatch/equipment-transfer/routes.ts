@@ -17,7 +17,7 @@ const companyBody = z.object({ operating_company_id: z.string().uuid() });
 
 function mapInitiateError(error: unknown) {
   const code = String((error as Error)?.message ?? "");
-  if (code === "driver_not_in_company" || code === "transfer_already_active") {
+  if (code === "driver_not_in_company" || code === "transfer_already_active" || code === "equipment_kind_mismatch") {
     return { status: 422, payload: { error: code } };
   }
   if (code === "equipment_not_found") return { status: 404, payload: { error: code } };
