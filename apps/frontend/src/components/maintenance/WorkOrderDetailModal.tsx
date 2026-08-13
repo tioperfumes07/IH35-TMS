@@ -6,6 +6,8 @@ import { Modal } from "../Modal";
 import { EntityLink } from "../shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { listPartsAssignments } from "../../api/maintenance";
+import { ListErrorBanner } from "../shared/ListErrorBanner";
+import { userFacingApiError } from "../../lib/api-error-message";
 import { AddPartsLinkModal } from "./AddPartsLinkModal";
 
 function money(cents: number) {
@@ -57,7 +59,7 @@ export function WorkOrderDetailModal({ open, workOrder, canRefreshDisplayId, onR
   // per-work-order one.
   const partsLinksQuery = useQuery({
     queryKey: ["maintenance", "parts-assignments", operatingCompanyId],
-    queryFn: () => listPartsAssignments(operatingCompanyId),
+    queryFn: () => listPartsAssignments(operatingCompanyId, { work_order_id: workOrderId }),
     enabled: open && Boolean(operatingCompanyId),
   });
 
@@ -164,8 +166,16 @@ export function WorkOrderDetailModal({ open, workOrder, canRefreshDisplayId, onR
               ) : null}
             </div>
             {(() => {
-              const links = (partsLinksQuery.data ?? []).filter((row) => row.work_order_id === workOrderId);
+              const links = partsLinksQuery.data ?? [];
               if (partsLinksQuery.isLoading) return <div className="text-gray-500">Loading…</div>;
+              if (partsLinksQuery.isError) {
+                return (
+                  <ListErrorBanner
+                    message={userFacingApiError(partsLinksQuery.error, "Couldn't load parts linked to this work order")}
+                    onRetry={() => void partsLinksQuery.refetch()}
+                  />
+                );
+              }
               if (links.length === 0) return <div className="text-gray-600">No parts invoices linked to this work order yet.</div>;
               return (
                 <ul className="space-y-1">

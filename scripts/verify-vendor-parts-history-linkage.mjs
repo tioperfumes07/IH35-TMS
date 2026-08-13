@@ -18,7 +18,7 @@ function audit(s) {
   if (!/FROM maintenance\.parts_inventory[\s\S]{0,100}operating_company_id = \$2::uuid/.test(s.route)) failures.push("writer must validate optional tenant part FK");
   if (!/linked_entity_not_in_operating_company/.test(s.route)) failures.push("invalid links must fail before insert");
   if (!/vendor_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)/.test(s.route) || !/pil\.vendor_id = \$\$\{values\.length\}::uuid/.test(s.route)) failures.push("list route must apply exact vendor predicate");
-  if (!/filters\?: \{ vendor_id\?: string \}/.test(s.api) || !/query\.set\("vendor_id", filters\.vendor_id\)/.test(s.api)) failures.push("client must forward vendor reverse filter");
+  if (!/filters\?: \{ vendor_id\?: string; work_order_id\?: string \}/.test(s.api) || !/query\.set\("vendor_id", filters\.vendor_id\)/.test(s.api)) failures.push("client must forward vendor reverse filter");
   if (!/listPartsAssignments\(operatingCompanyId, \{ vendor_id: vendorId \}\)/.test(s.reverse)) failures.push("vendor profile must request exact reverse set");
   if (/\.filter\(\(row\) => row\.vendor_id === vendorId\)/.test(s.reverse)) failures.push("vendor profile must not browser-filter capped company response");
   if (!/ListErrorBanner/.test(s.reverse) || !/No parts invoices are linked/.test(s.reverse)) failures.push("reverse surface must preserve honest states");
