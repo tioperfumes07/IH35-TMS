@@ -872,6 +872,14 @@
       "modules": ["safety", "drivers"],
       "cols": ["driver", "connectivity", "reverse_link", "picker_law"],
       "leafRe": "^(training|driver|profile|detail|create)"
+    },
+    {
+      "task": "PARTS-INVENTORY-VENDOR-REVERSE",
+      "pr": "this PR",
+      "guard": "scripts/verify-parts-inventory-vendor-reverse.mjs",
+      "modules": ["maintenance", "inventory", "vendors"],
+      "cols": ["vendor", "connectivity", "reverse_link", "picker_law"],
+      "leafRe": "^(parts|inventory|vendor|profile|purchase|create)"
     }
   ]
 }
