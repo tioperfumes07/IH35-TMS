@@ -51,8 +51,6 @@ import {
   type TriSignalRow,
   type UnitsWithoutLoad,
   type DispatchInShopUnit,
-  type DispatchLifecycleStage,
-  type DispatchConfidenceClass,
 } from "../../api/dispatch";
 import { getFleetLocationHos } from "../../api/reports";
 import type { DispatchListProps } from "../../components/dispatch/dispatchListTypes";
@@ -70,18 +68,21 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { useToast } from "../../components/Toast";
 import { addLoadToPreSettlement, listOpenPreSettlements, type OpenPreSettlement } from "../../api/driverFinance";
 import { STATUS_LABEL, formatMoneyCents, toRouteSummary } from "../../components/dispatch/constants";
-import { InTransitEtaChip } from "../../components/dispatch/InTransitEtaChip";
 import { InlineDriverPicker } from "../../components/dispatch/InlineDriverPicker";
 import { InlineUnitPicker } from "../../components/dispatch/InlineUnitPicker";
 import { InlineTrailerPicker } from "../../components/dispatch/InlineTrailerPicker";
-import { OnTimePredictionColumn } from "../../components/dispatch/LiveEtaColumns";
+import {
+  DriverStatusColumn,
+  LiveEtaFreshnessColumn,
+  OnTimePredictionColumn,
+  SamsaraEtaColumn,
+} from "../../components/dispatch/LiveEtaColumns";
 import { CargoTempBadge, isReeferCommodity } from "../../components/dispatch/CargoTempBadge";
 import { DriverHosClockValue } from "../../components/dispatch/hos/DriverHosClocks";
 import { formatInCompanyTimeZone } from "../../lib/businessDate";
 import { HOS_COLUMNS } from "../../components/dispatch/hos/hosClocks";
 import { LoadLivePositionCell } from "../../components/dispatch/LoadLivePositionCell";
 import { TriSignalPill } from "../../components/dispatch/TriSignalPill";
-import { DriverStatusCell } from "./components/DriverStatusCell";
 import { UnitsWithoutLoadTable } from "./components/UnitsWithoutLoadTable";
 import { QuickAssignModal } from "./components/QuickAssignModal";
 import { TableHeaderCell, useTablePref } from "../../components/table";
@@ -355,10 +356,6 @@ function RiskCell({ load }: { load: DispatchLoadRow }) {
       >
         {riskTierLabel(load)}
       </span>
-      <OnTimePredictionColumn load={load} />
-      {load.status === "in_transit" ? (
-        <InTransitEtaChip loadId={load.id} operatingCompanyId={load.operating_company_id} />
-      ) : null}
     </div>
   );
 }
@@ -747,28 +744,6 @@ export function DispatchBoard({
     </div>
   );
 
-  // Driver lifecycle sub-stage (pretrip/at_shipper/loading/detention/hos_break/accident/... — finer-
-  // grained than the load-level `status` chip above, and NOT covered by the Risk column's on-time
-  // prediction). driver_lifecycle_stage is a loose string server-side; guard against unlisted values
-  // so an unrecognized stage renders "—" instead of crashing the lookup.
-  const KNOWN_LIFECYCLE_STAGES = new Set<string>([
-    "pretrip", "enroute_pu", "at_shipper", "loading", "loaded", "enroute_del", "at_receiver",
-    "unloading", "unloaded", "detention", "hos_break", "off_duty", "accident", "breakdown", "no_gps",
-  ]);
-  const onTimeToConfidence: Record<string, DispatchConfidenceClass> = { green: "on_time", amber: "tight", red: "late" };
-  const renderDriverStatusCell = (load: BoardLoad) => {
-    const stage = load.driver_lifecycle_stage;
-    if (!stage || !KNOWN_LIFECYCLE_STAGES.has(stage)) return <span className="text-[10px] text-slate-400">—</span>;
-    const confidence = load.on_time_prediction ? onTimeToConfidence[load.on_time_prediction] : null;
-    return (
-      <DriverStatusCell
-        lifecycle={stage as DispatchLifecycleStage}
-        etaConfidence={confidence}
-        onClick={() => onRowClick(load.id)}
-      />
-    );
-  };
-
   const renderPreSettlementPrompt = (load: DispatchLoadRow, colSpan: number) => {
     const effectiveDriverId = rowOverrides[load.id]?.driverId ?? load.assigned_primary_driver_id;
     const openPreSettlement = effectiveDriverId ? openPreSettlementsMap.get(effectiveDriverId) : undefined;
@@ -908,7 +883,10 @@ export function DispatchBoard({
     { key: "live_gps", header: "Live GPS", cell: (load) => <LoadLivePositionCell position={positionByLoad[load.id] ?? null} loadId={load.id} /> },
     { key: "risk", header: "Risk", cell: (load) => <RiskCell load={load} /> },
     { key: "status", header: "Status", cell: (load) => renderStatusCell(load) },
-    { key: "driver_status", header: "Driver Status", cell: (load) => renderDriverStatusCell(load) },
+    { key: "driver_status", header: "Driver Status", cell: (load) => <DriverStatusColumn load={load} /> },
+    { key: "samsara_eta", header: "Samsara ETA", cell: (load) => <SamsaraEtaColumn load={load} /> },
+    { key: "on_time", header: "On-time", cell: (load) => <OnTimePredictionColumn load={load} /> },
+    { key: "eta_freshness", header: "Freshness", cell: (load) => <LiveEtaFreshnessColumn load={load} /> },
   ];
 
   // List and Table share the same column model (the grid look is identical).

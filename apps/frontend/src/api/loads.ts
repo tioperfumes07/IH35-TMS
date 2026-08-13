@@ -201,6 +201,7 @@ export type LoadsListFilters = {
   status?: LoadStatus[];
   operating_company_id?: string[];
   include_progress?: boolean;
+  include_live_eta?: boolean;
 };
 
 type CreateLoadWizardBody = {
@@ -246,6 +247,7 @@ export function listLoads(filters: LoadsListFilters) {
   encodeMulti(query, "status", filters.status);
   encodeMulti(query, "operating_company_id", filters.operating_company_id);
   if (filters.include_progress !== undefined) query.set("include_progress", String(filters.include_progress));
+  if (filters.include_live_eta !== undefined) query.set("include_live_eta", String(filters.include_live_eta));
   const qs = query.toString();
   return apiRequest<LoadsListResponse>(`/api/v1/mdata/loads${qs ? `?${qs}` : ""}`);
 }

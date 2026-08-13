@@ -161,6 +161,7 @@ export function DispatchPage({
     delivery_date_from: filters.dateMode === "delivery" ? filters.dateFrom || undefined : undefined,
     delivery_date_to: filters.dateMode === "delivery" ? filters.dateTo || undefined : undefined,
     include_progress: true,
+    include_live_eta: true,
   });
 
   const preSettlementsQuery = useQuery({

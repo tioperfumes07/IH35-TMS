@@ -9,6 +9,7 @@ import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { emitAutoProposedEscrowEvents } from "../driver-finance/escrow-deduction-pending.service.js";
 import { computeProgressStatus } from "../telematics/load-progress.service.js";
+import { enrichLoadsLiveEta } from "../telematics/dispatch-live-eta.service.js";
 import { effectiveDeliverySelectSql } from "../dispatch/effective-delivery.js";
 import { resolveOperatingCompanyId } from "../auth/operating-company-scope.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
@@ -115,6 +116,7 @@ const listLoadsQuerySchema = z.object({
       .catch("created_at:desc")
   ),
   include_progress: z.coerce.boolean().default(false),
+  include_live_eta: z.coerce.boolean().default(false),
 });
 
 const loadStatusTransitionBodySchema = z.object({
@@ -588,6 +590,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
       search,
       sort,
       include_progress,
+      include_live_eta,
     } = parsedQuery.data;
     // DISP-FILTER-01: FE URL uses `statuses=` (plural); API historically only documented `status=`.
     // Accept both and merge (dedupe) so pending-docs filters do not 400 or no-op.
@@ -763,24 +766,38 @@ export async function registerLoadRoutes(app: FastifyInstance) {
         `,
         values
       );
-      const rows = res.rows;
+      let enrichedRows = res.rows as Array<Record<string, unknown>>;
 
-      if (!include_progress) {
-        return { rows, totalCount: Number(countRes.rows[0]?.total_count ?? 0) };
+      if (include_progress) {
+        enrichedRows = await Promise.all(
+          enrichedRows.map(async (row) => {
+            const progress = await computeProgressStatus(client, {
+              operating_company_id: String(row.operating_company_id),
+              load_id: String(row.id),
+              assigned_unit_id: row.assigned_unit_id ? String(row.assigned_unit_id) : null,
+            });
+            return {
+              ...row,
+              progress_status: progress.progress_status,
+              progress_eta_delta_minutes: progress.eta_delta_minutes,
+            };
+          })
+        );
       }
 
-      const enrichedRows = [];
-      for (const row of rows as Array<Record<string, unknown>>) {
-        const progress = await computeProgressStatus(client, {
-          operating_company_id: String(row.operating_company_id),
-          load_id: String(row.id),
-          assigned_unit_id: row.assigned_unit_id ? String(row.assigned_unit_id) : null,
-        });
-        enrichedRows.push({
-          ...row,
-          progress_status: progress.progress_status,
-          progress_eta_delta_minutes: progress.eta_delta_minutes,
-        });
+      if (include_live_eta) {
+        const etaByLoad = await enrichLoadsLiveEta(
+          client,
+          enrichedRows.map((row) => ({
+            id: String(row.id),
+            operating_company_id: String(row.operating_company_id),
+            status: String(row.status),
+            assigned_primary_driver_id: row.assigned_primary_driver_id ? String(row.assigned_primary_driver_id) : null,
+            assigned_unit_id: row.assigned_unit_id ? String(row.assigned_unit_id) : null,
+            delivery_scheduled_at: row.delivery_scheduled_at ? String(row.delivery_scheduled_at) : null,
+          }))
+        );
+        enrichedRows = enrichedRows.map((row) => ({ ...row, ...(etaByLoad.get(String(row.id)) ?? {}) }));
       }
 
       return {

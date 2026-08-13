@@ -16,6 +16,8 @@ const paths = {
   dispatchApi: path.join(ROOT, "apps/frontend/src/api/dispatch.ts"),
   manifest: path.join(ROOT, "apps/frontend/src/routes/manifest.tsx"),
   archDesign: path.join(ROOT, "docs/specs/IH35_ARCHITECTURAL_DESIGN.md"),
+  dispatchPage: path.join(ROOT, "apps/frontend/src/pages/Dispatch.tsx"),
+  loadsRoute: path.join(ROOT, "apps/backend/src/mdata/loads.routes.ts"),
 };
 
 function read(filePath) {
@@ -37,6 +39,8 @@ function main() {
   const dispatchApi = read(paths.dispatchApi);
   const manifest = read(paths.manifest);
   const archDesign = read(paths.archDesign);
+  const dispatchPage = read(paths.dispatchPage);
+  const loadsRoute = read(paths.loadsRoute);
   const failures = [];
 
   if (!routes.includes("/api/v1/dispatch/alerts/late-arrivals")) {
@@ -65,6 +69,10 @@ function main() {
   }
   if (!archDesign.includes("verify:dispatch-late-arrivals-alerts")) {
     failures.push("ARCHITECTURAL_DESIGN must reference verify:dispatch-late-arrivals-alerts");
+  }
+  if (!dispatchPage.includes("include_live_eta: true")) failures.push("Dispatch board must request batched live ETA");
+  if (!loadsRoute.includes("include_live_eta") || !loadsRoute.includes("enrichLoadsLiveEta")) {
+    failures.push("load list must return batched live ETA enrichment");
   }
 
   if (failures.length) {
