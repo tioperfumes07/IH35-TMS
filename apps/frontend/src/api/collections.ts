@@ -11,6 +11,7 @@ export type CollectionTask = {
   customer_id: string;
   customer_name: string | null;
   invoice_id: string;
+  invoice_display_id: string | null;
   owed_cents: number;
   days_overdue: number;
   aging_bucket: CollectionAgingBucket;

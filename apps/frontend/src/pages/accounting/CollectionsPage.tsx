@@ -221,7 +221,11 @@ export function CollectionsPage() {
                       id={detailQuery.data?.task.invoice_id ?? undefined}
                       label={
                         detailQuery.data?.task.invoice_id
-                          ? entityLabel(null, detailQuery.data.task.invoice_id, "Invoice")
+                          ? entityLabel(
+                              detailQuery.data.task.invoice_display_id,
+                              detailQuery.data.task.invoice_id,
+                              "Invoice",
+                            )
                           : "-"
                       }
                     />
