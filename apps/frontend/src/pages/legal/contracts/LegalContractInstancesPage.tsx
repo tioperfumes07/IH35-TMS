@@ -429,7 +429,11 @@ export function LegalContractInstancesPage() {
         open={openSend}
         operatingCompanyId={operatingCompanyId}
         onClose={() => setSearchParams({})}
-        onSent={refresh}
+        onSent={async (contractId) => {
+          await refresh();
+          setActiveDetailId(contractId);
+          setSearchParams({ contract_id: contractId });
+        }}
       />
       <LeaseToOwnCreatorModal
         open={openLeaseToOwn}
@@ -441,7 +445,11 @@ export function LegalContractInstancesPage() {
         open={openTruckLease}
         operatingCompanyId={operatingCompanyId}
         onClose={() => setSearchParams({})}
-        onSaved={refresh}
+        onSaved={(contractId) => {
+          void refresh();
+          setActiveDetailId(contractId);
+          setSearchParams({ contract_id: contractId });
+        }}
       />
     </div>
   );

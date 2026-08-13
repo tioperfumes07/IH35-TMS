@@ -7,12 +7,15 @@ import { ParityDrawer } from "../../../components/parity/ParityDrawer";
 import { useToast } from "../../../components/Toast";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { userFacingApiError } from "../../../lib/api-error-message";
+import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
+import { CappedListNotice } from "../../../components/CappedListNotice";
+import { getVendor, listVendors } from "../../../api/mdata";
 
 type Props = {
   open: boolean;
   operatingCompanyId: string;
   onClose: () => void;
-  onSent: () => Promise<void> | void;
+  onSent: (contractId: string) => Promise<void> | void;
 };
 
 type VariableRow = {
@@ -33,6 +36,8 @@ export function SendContractModal({ open, operatingCompanyId, onClose, onSent }:
   const [stepIdx, setStepIdx] = useState(0);
   const [templateId, setTemplateId] = useState("");
   const [signerType, setSignerType] = useState<"driver" | "employee" | "customer" | "vendor" | "other">("driver");
+  const [signerEntityId, setSignerEntityId] = useState("");
+  const [vendorSearch, setVendorSearch] = useState("");
   const [signerName, setSignerName] = useState("");
   const [signerEmail, setSignerEmail] = useState("");
   const [signerPhone, setSignerPhone] = useState("");
@@ -59,6 +64,17 @@ export function SendContractModal({ open, operatingCompanyId, onClose, onSent }:
     () => templates.find((row) => row.id === templateId) ?? null,
     [templateId, templates]
   );
+  const vendorsQuery = useQuery({
+    queryKey: ["legal", "send-modal", "vendors", operatingCompanyId, vendorSearch],
+    enabled: open && signerType === "vendor" && Boolean(operatingCompanyId),
+    queryFn: () => listVendors({ operating_company_id: operatingCompanyId, status: "active", limit: vendorSearch ? 200 : 500, search: vendorSearch || undefined }),
+  });
+  const vendorOptions = useMemo(() => (vendorsQuery.data?.vendors ?? []).map((vendor) => ({
+    value: vendor.id,
+    label: vendor.name,
+    email: vendor.email ?? "",
+    phone: vendor.phone ?? "",
+  })), [vendorsQuery.data]);
 
   const createMutation = useMutation({
     mutationFn: async () => {
@@ -76,6 +92,7 @@ export function SendContractModal({ open, operatingCompanyId, onClose, onSent }:
       const created = await legalContractsApi.create(operatingCompanyId, {
         template_id: templateId,
         signer_type: signerType,
+        signer_entity_id: signerEntityId || undefined,
         signer_name: signerName.trim(),
         signer_email: signerEmail.trim() || undefined,
         signer_phone: signerPhone.trim() || undefined,
@@ -96,13 +113,14 @@ export function SendContractModal({ open, operatingCompanyId, onClose, onSent }:
       }
       return created;
     },
-    onSuccess: async () => {
+    onSuccess: async (created) => {
       pushToast("Contract created and sent", "success");
-      await onSent();
+      await onSent(created.id);
       onClose();
       setStepIdx(0);
       setTemplateId("");
       setSignerName("");
+      setSignerEntityId("");
       setSignerEmail("");
       setSignerPhone("");
       setVariableRows([]);
@@ -119,7 +137,7 @@ export function SendContractModal({ open, operatingCompanyId, onClose, onSent }:
 
   const canGoNext = (() => {
     if (stepIdx === 0) return Boolean(templateId);
-    if (stepIdx === 1) return Boolean(signerName.trim()) && (Boolean(signerEmail.trim()) || Boolean(signerPhone.trim()));
+    if (stepIdx === 1) return Boolean(signerName.trim()) && (signerType !== "vendor" || Boolean(signerEntityId)) && (Boolean(signerEmail.trim()) || Boolean(signerPhone.trim()));
     return true;
   })();
 
@@ -163,7 +181,10 @@ export function SendContractModal({ open, operatingCompanyId, onClose, onSent }:
               <label className="text-xs font-semibold text-gray-600">Signer type</label>
               <SelectCombobox
                 value={signerType}
-                onChange={(event) => setSignerType(event.target.value as typeof signerType)}
+                onChange={(event) => {
+                  setSignerType(event.target.value as typeof signerType);
+                  setSignerEntityId("");
+                }}
                 className="h-9 rounded-sm border border-gray-300 px-2 text-sm"
               >
                 <option value="driver">Driver</option>
@@ -173,6 +194,36 @@ export function SendContractModal({ open, operatingCompanyId, onClose, onSent }:
                 <option value="other">Other</option>
               </SelectCombobox>
             </div>
+            {signerType === "vendor" ? (
+              <div className="flex flex-col gap-1 md:col-span-2">
+                <label className="text-xs font-semibold text-gray-600">Vendor signer *</label>
+                <ReferenceSelect
+                  value={signerEntityId || null}
+                  onChange={(id) => {
+                    setSignerEntityId(id ?? "");
+                    const selected = vendorOptions.find((vendor) => vendor.value === id);
+                    if (selected) {
+                      setSignerName(selected.label);
+                      setSignerEmail(selected.email);
+                      setSignerPhone(selected.phone);
+                    } else if (id) {
+                      void getVendor(id, operatingCompanyId).then((vendor) => {
+                        setSignerName(vendor.name);
+                        setSignerEmail(vendor.email ?? "");
+                        setSignerPhone(vendor.phone ?? "");
+                      });
+                    }
+                  }}
+                  options={vendorOptions.map(({ value, label }) => ({ value, label, type: value }))}
+                  createKind="vendor"
+                  operatingCompanyId={operatingCompanyId}
+                  placeholder="Search vendor…"
+                  onSearch={setVendorSearch}
+                  loading={vendorsQuery.isLoading}
+                />
+                <CappedListNotice shown={vendorOptions.length} limit={vendorSearch ? 200 : 500} total={vendorsQuery.data?.total ?? null} hint="Type to search for a vendor not listed." />
+              </div>
+            ) : null}
             <div className="flex flex-col gap-1">
               <label className="text-xs font-semibold text-gray-600">Language</label>
               <SelectCombobox

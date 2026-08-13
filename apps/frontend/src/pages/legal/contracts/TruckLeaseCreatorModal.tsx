@@ -6,12 +6,15 @@ import { Button } from "../../../components/Button";
 import { ParityDrawer } from "../../../components/parity/ParityDrawer";
 import { useToast } from "../../../components/Toast";
 import { userFacingApiError } from "../../../lib/api-error-message";
+import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
+import { CappedListNotice } from "../../../components/CappedListNotice";
+import { getVendor, listVendors } from "../../../api/mdata";
 
 type Props = {
   open: boolean;
   operatingCompanyId: string;
   onClose: () => void;
-  onSaved: () => void;
+  onSaved: (contractId: string) => void;
 };
 
 type VehicleRow = {
@@ -46,6 +49,8 @@ export function TruckLeaseCreatorModal({ open, operatingCompanyId, onClose, onSa
 
   const [lessor, setLessor] = useState({ legal_name: "", address: "", city_state_zip: "", contact_name: "", contact_title: "Manager", contact_email: "" });
   const [lessee, setLessee] = useState({ legal_name: "", entity_type: "LLC", address: "", city_state_zip: "", signer_name: "", signer_title: "", signer_email: "" });
+  const [lesseeVendorId, setLesseeVendorId] = useState("");
+  const [vendorSearch, setVendorSearch] = useState("");
   const [terms, setTerms] = useState({
     execution_date: "",
     start_date: "",
@@ -70,10 +75,17 @@ export function TruckLeaseCreatorModal({ open, operatingCompanyId, onClose, onSa
     queryFn: () => truckLeaseApi.ensureTemplate(operatingCompanyId),
   });
   const templateId = ensureQuery.data?.template.id ?? "";
+  const vendorsQuery = useQuery({
+    queryKey: ["legal", "truck-lease", "vendors", operatingCompanyId, vendorSearch],
+    enabled: open && Boolean(operatingCompanyId),
+    queryFn: () => listVendors({ operating_company_id: operatingCompanyId, status: "active", limit: vendorSearch ? 200 : 500, search: vendorSearch || undefined }),
+  });
+  const vendorOptions = (vendorsQuery.data?.vendors ?? []).map((vendor) => ({ value: vendor.id, label: vendor.name }));
 
   const saveMutation = useMutation({
     mutationFn: async () => {
       if (!templateId) throw new Error("Template not ready. Please try again.");
+      if (!lesseeVendorId) throw new Error("Lessee vendor is required.");
       if (!lessee.signer_email.trim()) throw new Error("Lessee signer email is required.");
 
       const monthlyAmountCents = parseDollars(terms.monthly_lease_amount);
@@ -103,14 +115,15 @@ export function TruckLeaseCreatorModal({ open, operatingCompanyId, onClose, onSa
         signer_name: lessee.signer_name,
         signer_email: lessee.signer_email,
         signer_type: "vendor",
+        signer_entity_id: lesseeVendorId,
         language: "en",
         filled_variables: filledVariables,
       });
     },
-    onSuccess: async () => {
+    onSuccess: async (created) => {
       pushToast("Truck lease agreement created as draft.", "success");
       await queryClient.invalidateQueries({ queryKey: ["legal", "contracts"] });
-      onSaved();
+      onSaved(created.id);
       onClose();
     },
     onError: (error) => pushToast(userFacingApiError(error, "Failed to create lease"), "error"),
@@ -155,6 +168,31 @@ export function TruckLeaseCreatorModal({ open, operatingCompanyId, onClose, onSa
             <section>
               <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Lessee (operator)</h3>
               <div className="grid gap-2 sm:grid-cols-2">
+                <div className="sm:col-span-2">
+                  <label className="mb-0.5 block text-[10px] font-semibold text-gray-500">Lessee vendor *</label>
+                  <ReferenceSelect
+                    value={lesseeVendorId || null}
+                    onChange={(id) => {
+                      setLesseeVendorId(id ?? "");
+                      if (id) {
+                        void getVendor(id, operatingCompanyId).then((vendor) => setLessee((current) => ({
+                          ...current,
+                          legal_name: vendor.name,
+                          address: vendor.address ?? "",
+                          city_state_zip: [vendor.city, vendor.state, vendor.postal_code].filter(Boolean).join(", "),
+                          signer_email: vendor.email ?? current.signer_email,
+                        })));
+                      }
+                    }}
+                    options={vendorOptions.map(({ value, label }) => ({ value, label, type: value }))}
+                    createKind="vendor"
+                    operatingCompanyId={operatingCompanyId}
+                    placeholder="Search vendor…"
+                    onSearch={setVendorSearch}
+                    loading={vendorsQuery.isLoading}
+                  />
+                  <CappedListNotice shown={vendorOptions.length} limit={vendorSearch ? 200 : 500} total={vendorsQuery.data?.total ?? null} hint="Type to search for a vendor not listed." />
+                </div>
                 <div>
                   <label className="block text-[10px] font-semibold text-gray-500 mb-0.5">Legal Name *</label>
                   <input value={lessee.legal_name} onChange={(e) => setLessee((p) => ({ ...p, legal_name: e.target.value }))}
