@@ -11,6 +11,7 @@ import { EntityLink } from "../shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { DispatcherSafetyEventsReverseBlock } from "./DispatcherSafetyEventsReverseBlock";
 import { CivilFinesReverseBlock } from "./CivilFinesReverseBlock";
+import { listHosViolations } from "../../api/safetyV64";
 
 /**
  * SAF-C01 — REVERSE load↔safety. Accident reports and incidents already store load_id;
@@ -44,6 +45,12 @@ export function LoadSafetyReverseSection({
     enabled: Boolean(operatingCompanyId) && Boolean(loadId),
   });
   const accidents: Row[] = accidentsQ.data?.accidents ?? [];
+  const hosViolationsQ = useQuery({
+    queryKey: ["safety", "reverse", "hos-violations", "load", operatingCompanyId, loadId],
+    queryFn: () => listHosViolations(operatingCompanyId, { load_id: loadId }),
+    enabled: Boolean(operatingCompanyId) && Boolean(loadId),
+  });
+  const hosViolations: Row[] = hosViolationsQ.data?.hos_violations ?? [];
 
   return (
     <div className="space-y-3" data-testid={testId}>
@@ -89,6 +96,21 @@ export function LoadSafetyReverseSection({
       </div>
 
       <LoadSafetyEventsBlock companyId={operatingCompanyId} loadId={loadId} />
+      <div className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid="load-safety-reverse-hos-violations">
+        <div className="flex items-center justify-between gap-2">
+          <h3 className="text-sm font-semibold text-slate-900">HOS Violations{hosViolations.length ? ` (${hosViolations.length})` : ""}</h3>
+          <Link className="text-xs font-semibold text-slate-700 underline" to="/safety/hos-violations">Open HOS Violations</Link>
+        </div>
+        {hosViolationsQ.isLoading ? <p className="text-sm text-gray-500">Loading…</p> : null}
+        {hosViolationsQ.isError ? <p className="text-sm text-red-600">Could not load HOS violations for this load.</p> : null}
+        {!hosViolationsQ.isLoading && !hosViolationsQ.isError && hosViolations.length === 0 ? <p className="text-sm text-gray-500">No HOS violations linked to this load.</p> : null}
+        {hosViolations.map((row) => (
+          <div key={s(row.id)} className="text-sm text-slate-700">
+            <EntityLink kind="hos_violation" id={s(row.id)} label={s(row.violation_type) || "HOS violation"} />
+            <span className="ml-2 text-xs text-gray-500">{row.occurred_at ? formatDateUS(String(row.occurred_at).slice(0, 10)) : "—"}</span>
+          </div>
+        ))}
+      </div>
       <CivilFinesReverseBlock companyId={operatingCompanyId} related="load" entityId={loadId} />
       <DispatcherSafetyEventsReverseBlock
         operatingCompanyId={operatingCompanyId}

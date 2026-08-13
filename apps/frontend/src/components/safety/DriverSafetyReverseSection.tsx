@@ -14,6 +14,7 @@ import { EntityLink } from "../shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { DispatcherSafetyEventsReverseBlock } from "./DispatcherSafetyEventsReverseBlock";
 import { SafetyEventsReverseBlock } from "./SafetyEventsReverseBlock";
+import { listHosViolations } from "../../api/safetyV64";
 
 /**
  * SAF-F16 — the REVERSE half of the driver↔safety link.
@@ -132,6 +133,12 @@ export function DriverSafetyReverseSection({
     enabled,
   });
 
+  const hosViolationsQuery = useQuery({
+    queryKey: ["safety", "reverse", "hos-violations", operatingCompanyId, driverId],
+    queryFn: () => listHosViolations(operatingCompanyId, { driver_id: driverId }),
+    enabled,
+  });
+
   if (!canViewSafety) return null;
 
   const civilFines: Row[] = civilFinesQuery.data?.fines ?? [];
@@ -139,6 +146,7 @@ export function DriverSafetyReverseSection({
   const complaints: Row[] = complaintsQuery.data?.complaints ?? [];
   const tests: Row[] = testsQuery.data?.tests ?? [];
   const dotInspections: Row[] = dotInspectionsQuery.data?.dot_inspections ?? [];
+  const hosViolations: Row[] = hosViolationsQuery.data?.hos_violations ?? [];
 
   return (
     <div className="space-y-3" data-testid={testId}>
@@ -162,6 +170,34 @@ export function DriverSafetyReverseSection({
         data-testid="driver-dispatcher-safety-events-reverse"
       />
       <SafetyEventsReverseBlock companyId={operatingCompanyId} subject="driver" entityId={driverId} />
+
+      <SectionShell
+        title="HOS Violations"
+        to="/safety/hos-violations"
+        linkLabel="Open HOS Violations"
+        testId="driver-safety-reverse-hos-violations"
+        isLoading={hosViolationsQuery.isLoading}
+        isError={hosViolationsQuery.isError}
+        errorText="Failed to load this driver's HOS violations."
+        emptyText="No HOS violations for this driver."
+        count={hosViolations.length}
+      >
+        {hosViolations.map((violation) => (
+          <li key={s(violation.id)} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-sm">
+            <EntityLink
+              kind="hos_violation"
+              id={s(violation.id) || null}
+              label={s(violation.violation_type) || "HOS violation"}
+              className="font-semibold text-slate-700"
+            />
+            <span className="ml-2 text-gray-600">{s(violation.source) || "manual_office"}</span>
+            <div className="mt-1 text-xs text-gray-600">
+              {formatDateUS(s(violation.occurred_at))}
+              {violation.duration_minutes != null ? ` · ${s(violation.duration_minutes)} min` : ""}
+            </div>
+          </li>
+        ))}
+      </SectionShell>
 
       <SectionShell
         title="DOT Inspections"

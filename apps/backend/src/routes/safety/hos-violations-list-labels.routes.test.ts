@@ -86,4 +86,66 @@ describe("GET /api/v1/safety/hos-violations joins the driver name", () => {
     expect(sqlText).toMatch(/hv\.voided_at IS NULL/);
     expect(sqlText).toMatch(/hv\.driver_id = \$2/);
   });
+
+  it("creates only after every submitted linkage is validated in the selected company", async () => {
+    mockQuery.mockImplementation(async (sql: string) => {
+      if (sql.includes("set_config")) return { rows: [], rowCount: 0 };
+      if (sql.includes("AS driver_ok")) {
+        return { rows: [{ driver_ok: true, violation_type_ok: true, load_ok: true, dot_inspection_ok: true }], rowCount: 1 };
+      }
+      if (sql.includes("INSERT INTO safety.hos_violations")) {
+        return { rows: [{ id: "55555555-5555-4555-8555-555555555555", violation_type: "395.3", source: "manual_office" }], rowCount: 1 };
+      }
+      return { rows: [], rowCount: 0 };
+    });
+
+    const response = await app.inject({
+      method: "POST",
+      url: `/api/v1/safety/hos-violations?operating_company_id=${COMPANY}`,
+      payload: {
+        driver_id: "22222222-2222-4222-8222-222222222222",
+        violation_type: "395.3",
+        dot_violation_type_id: "33333333-3333-4333-8333-333333333333",
+        occurred_at: "2026-08-12T12:00:00.000Z",
+        source: "manual_office",
+        related_load_id: "44444444-4444-4444-8444-444444444444",
+      },
+    });
+
+    expect(response.statusCode).toBe(201);
+    const validationCall = mockQuery.mock.calls.find((call) => String(call[0]).includes("AS driver_ok"));
+    expect(validationCall?.[1]).toEqual([
+      COMPANY,
+      "22222222-2222-4222-8222-222222222222",
+      "33333333-3333-4333-8333-333333333333",
+      "395.3",
+      "44444444-4444-4444-8444-444444444444",
+      null,
+    ]);
+  });
+
+  it("rejects a cross-company driver before the insert", async () => {
+    mockQuery.mockImplementation(async (sql: string) => {
+      if (sql.includes("set_config")) return { rows: [], rowCount: 0 };
+      if (sql.includes("AS driver_ok")) {
+        return { rows: [{ driver_ok: false, violation_type_ok: true, load_ok: true, dot_inspection_ok: true }], rowCount: 1 };
+      }
+      return { rows: [], rowCount: 0 };
+    });
+
+    const response = await app.inject({
+      method: "POST",
+      url: `/api/v1/safety/hos-violations?operating_company_id=${COMPANY}`,
+      payload: {
+        driver_id: "22222222-2222-4222-8222-222222222222",
+        violation_type: "395.3",
+        dot_violation_type_id: "33333333-3333-4333-8333-333333333333",
+        occurred_at: "2026-08-12T12:00:00.000Z",
+      },
+    });
+
+    expect(response.statusCode).toBe(400);
+    expect(response.json()).toMatchObject({ error: "linked_entity_not_in_operating_company" });
+    expect(mockQuery.mock.calls.some((call) => String(call[0]).includes("INSERT INTO safety.hos_violations"))).toBe(false);
+  });
 });
