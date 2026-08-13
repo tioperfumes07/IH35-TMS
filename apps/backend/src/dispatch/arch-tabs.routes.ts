@@ -14,6 +14,7 @@ const companyQuerySchema = z.object({
   status: z.string().trim().optional(),
   load_id: z.string().uuid().optional(),
   issue_driver_id: z.string().uuid().optional(),
+  issue_unit_id: z.string().uuid().optional(),
   driver_id: z.string().uuid().optional(),
   from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
@@ -60,6 +61,7 @@ export async function registerDispatchArchTabsRoutes(app: FastifyInstance) {
       status: query.data.status,
       load_id: query.data.load_id,
       driver_id: query.data.issue_driver_id,
+      unit_id: query.data.issue_unit_id,
     });
   });
 

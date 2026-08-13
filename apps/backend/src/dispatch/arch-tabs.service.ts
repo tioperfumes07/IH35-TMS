@@ -67,7 +67,7 @@ export async function listAtRiskLoads(userId: string, operatingCompanyId: string
 export async function listIntransitIssues(
   userId: string,
   operatingCompanyId: string,
-  filters: { status?: string; load_id?: string; driver_id?: string } = {}
+  filters: { status?: string; load_id?: string; driver_id?: string; unit_id?: string } = {}
 ) {
   return withCurrentUser(userId, async (client) => {
     await setScopedCompanyContext(client, userId, operatingCompanyId);
@@ -84,6 +84,10 @@ export async function listIntransitIssues(
     if (filters.driver_id) {
       values.push(filters.driver_id);
       clauses.push(`i.driver_id = $${values.length}::uuid`);
+    }
+    if (filters.unit_id) {
+      values.push(filters.unit_id);
+      clauses.push(`i.unit_id = $${values.length}::uuid`);
     }
     const res = await client.query(
       `
