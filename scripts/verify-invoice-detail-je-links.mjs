@@ -39,6 +39,10 @@ function assertInvoiceDetailJeLinks() {
   if (!/source_load_number/.test(routes)) {
     errors.push("backend: enrichInvoice must expose source_load_number for load reverse label");
   }
+  // ACCT-F5062 — list path must project the same load number the FE EntityLink consumes.
+  if (!/l\.load_number AS source_load_number/.test(routes)) {
+    errors.push("backend: invoices LIST must SELECT l.load_number AS source_load_number");
+  }
 
   if (!/journal_entries\?:/.test(api) && !/journal_entries\?: InvoiceJournalEntryLink/.test(api)) {
     errors.push("api: Invoice type must include journal_entries");
