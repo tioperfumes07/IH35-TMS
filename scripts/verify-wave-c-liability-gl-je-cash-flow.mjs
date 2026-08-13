@@ -17,6 +17,8 @@
  * with no journal_entry_id / GL posting (by design: these are manual guesses, not transactions).
  * hop.banking, hop.reports.*, and hop.cash_advances are NOT tagged — each hops to a different
  * module whose own leaf must be independently verified, not inherited from this one.
+ * ACCT-F5046: those leaves must NOT Required gl_je (or liability on forecasting-only) in
+ * docs/specs/scoreboard/modules/cash-flow.required.json — false Required is scoreboard theater.
  *
  * No code change in this pass — pure verification + tagging.
  *
@@ -30,6 +32,17 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-wave-c-liability-gl-je-cash-flow";
+
+const NO_GL_JE_LEAF_IDS = [
+  "tab.manual_daily_projections",
+  "create.manual_projection",
+  "hop.banking",
+  "hop.reports.cash_flow_statement",
+  "hop.reports.cash_flow",
+  "hop.reports.cash_flow_overview",
+  "hop.cash_advances",
+];
+const NO_LIABILITY_LEAF_IDS = ["tab.manual_daily_projections", "create.manual_projection"];
 
 const CHECKS = [
   {
@@ -105,4 +118,23 @@ if (failures.length) {
   for (const f of failures) console.error("  ✗", f);
   process.exit(1);
 }
+
+const reqPath = path.join(ROOT, "docs/specs/scoreboard/modules/cash-flow.required.json");
+const req = JSON.parse(fs.readFileSync(reqPath, "utf8"));
+const honestyFails = [];
+for (const leaf of req.leaves || []) {
+  const cols = leaf.required || [];
+  if (NO_GL_JE_LEAF_IDS.includes(leaf.id) && cols.includes("gl_je")) {
+    honestyFails.push(`${leaf.id} must not Required gl_je (ACCT-F5046)`);
+  }
+  if (NO_LIABILITY_LEAF_IDS.includes(leaf.id) && cols.includes("liability")) {
+    honestyFails.push(`${leaf.id} must not Required liability (forecasting-only)`);
+  }
+}
+if (honestyFails.length) {
+  console.error(`[${LABEL}] FAILED — required.json honesty:`);
+  for (const f of honestyFails) console.error("  ✗", f);
+  process.exit(1);
+}
+
 console.log(`[${LABEL}] PASS — cash-flow home/daily_prediction/actual_vs_projected liability+gl_je wiring present`);
