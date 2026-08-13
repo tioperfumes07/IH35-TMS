@@ -35,3 +35,19 @@ describe("accounting/legal-matters ACCT-F5041-LINKED-COSTS-REVERSE", () => {
     expect(section).toContain("listLegalMatterLinkedCosts");
   });
 });
+
+describe("accounting/bills ACCT-F5042-LEGAL-MATTER-FORWARD-WRITE", () => {
+  const service = fs.readFileSync(path.join(here, "../bills.service.ts"), "utf8");
+
+  it("createBillBodySchema accepts legal_matter_id", () => {
+    expect(routes).toMatch(
+      /createBillBodySchema = z\.object\(\{[\s\S]*?legal_matter_id: z\.string\(\)\.uuid\(\)\.optional\(\)\.nullable\(\),/
+    );
+  });
+
+  it("passes legalMatterId into createBill and UPDATE-stamps legal_matter_id", () => {
+    expect(routes).toContain("legalMatterId: body.data.legal_matter_id");
+    expect(service).toContain("input.legalMatterId");
+    expect(service).toContain("SET legal_matter_id = $3::uuid");
+  });
+});
