@@ -880,6 +880,14 @@
       "modules": ["maintenance", "inventory", "vendors"],
       "cols": ["vendor", "connectivity", "reverse_link", "picker_law"],
       "leafRe": "^(parts|inventory|vendor|profile|purchase|create)"
+    },
+    {
+      "task": "MAINTENANCE-VENDOR-AP-VENDOR-REVERSE",
+      "pr": "this PR",
+      "guard": "scripts/verify-maintenance-vendor-ap-reverse.mjs",
+      "modules": ["maintenance", "lists", "vendors"],
+      "cols": ["vendor", "connectivity", "reverse_link", "picker_law"],
+      "leafRe": "^(maintenance|vendor|catalog|profile|detail|create)"
     }
   ]
 }

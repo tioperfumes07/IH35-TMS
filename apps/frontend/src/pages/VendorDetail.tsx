@@ -47,6 +47,7 @@ import { VendorWorkOrdersReverseSection } from "./vendors/VendorWorkOrdersRevers
 import { VendorPartsHistorySection } from "./vendors/VendorPartsHistorySection";
 import { VendorPreferredPartsReverseSection } from "./vendors/VendorPreferredPartsReverseSection";
 import { VendorPartsInventoryReverseSection } from "./vendors/VendorPartsInventoryReverseSection";
+import { VendorMaintenanceCatalogReverseSection } from "./vendors/VendorMaintenanceCatalogReverseSection";
 import { VendorApAgingSection } from "./vendors/VendorApAgingSection";
 import { RoadServiceReverseSection } from "../components/maintenance/RoadServiceReverseSection";
 import { VendorBorderCrossingsReverseSection } from "../components/dispatch/VendorBorderCrossingsReverseSection";
@@ -894,6 +895,7 @@ export function VendorDetailPage() {
         <VendorPartsHistorySection operatingCompanyId={companyId} vendorId={vendor.id} />
         <VendorPreferredPartsReverseSection operatingCompanyId={companyId} vendorId={vendor.id} />
         <VendorPartsInventoryReverseSection operatingCompanyId={companyId} vendorId={vendor.id} />
+        <VendorMaintenanceCatalogReverseSection operatingCompanyId={companyId} vendorId={vendor.id} />
         <VendorApAgingSection operatingCompanyId={companyId} vendorId={vendor.id} />
         <LinkedBankTransactionsPanel companyId={companyId} linkage={{ kind: "vendor_id", id: vendor.id }} entityLabel={vendor.name} />
         </div>

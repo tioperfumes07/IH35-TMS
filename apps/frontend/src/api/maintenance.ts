@@ -1490,11 +1490,12 @@ export function listMaintenanceReeferHoursPmDue(operatingCompanyId: string) {
 
 export function listMaintenanceVendors(
   operatingCompanyId: string,
-  params: { search?: string; include_archived?: boolean } = {}
+  params: { search?: string; include_archived?: boolean; mdata_vendor_id?: string } = {}
 ) {
   const q = new URLSearchParams({ operating_company_id: operatingCompanyId });
   if (params.search) q.set("search", params.search);
   if (params.include_archived != null) q.set("include_archived", String(params.include_archived));
+  if (params.mdata_vendor_id) q.set("mdata_vendor_id", params.mdata_vendor_id);
   return apiRequest<{ rows: MaintenanceVendorRow[]; csv_import_enabled: boolean }>(
     `/api/v1/maintenance/vendors?${q.toString()}`
   );

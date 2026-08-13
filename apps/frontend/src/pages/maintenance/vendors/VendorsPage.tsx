@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   archiveMaintenanceVendor,
@@ -53,6 +53,8 @@ const EMPTY_DRAFT: VendorDraft = {
 };
 
 export function VendorsPage() {
+  const [searchParams] = useSearchParams();
+  const highlightedVendorId = searchParams.get("maintenance_vendor_id")?.trim() ?? "";
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const { pushToast } = useToast();
@@ -286,6 +288,7 @@ export function VendorsPage() {
           columns={columns}
           rows={rows}
           rowKey={(row) => String(row.id)}
+          rowClassName={(row) => highlightedVendorId && row.id === highlightedVendorId ? "bg-slate-100 ring-1 ring-slate-400" : ""}
           loading={listQ.isLoading}
           emptyText="No vendors available."
           storageKey="maint-master-data-vendors"
