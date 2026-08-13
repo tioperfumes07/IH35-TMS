@@ -816,6 +816,14 @@
       "modules": ["dispatch", "fleet", "drivers"],
       "cols": ["trailer", "driver", "connectivity", "reverse_link", "picker_law"],
       "leafRe": "^(equipment|transfer|trailer|driver|profile|dispatch|create)"
+    },
+    {
+      "task": "EQUIPMENT-TRANSFER-DRIVER-REVERSE",
+      "pr": "this PR",
+      "guard": "scripts/verify-equipment-transfer-driver-reverse.mjs",
+      "modules": ["drivers", "dispatch", "fleet"],
+      "cols": ["driver", "trailer", "connectivity", "reverse_link"],
+      "leafRe": "^(equipment|transfer|trailer|driver|profile|detail|dispatch)"
     }
   ]
 }

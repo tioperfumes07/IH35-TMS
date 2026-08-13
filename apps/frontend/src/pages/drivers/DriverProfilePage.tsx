@@ -36,6 +36,7 @@ import { RoadServiceReverseSection } from "../../components/maintenance/RoadServ
 import { DriverBorderCrossingsReverseSection } from "../../components/dispatch/DriverBorderCrossingsReverseSection";
 import { DriverInTransitIssuesReverseSection } from "../../components/dispatch/DriverInTransitIssuesReverseSection";
 import { DriverTempCoverReverseSection } from "../../components/safety/DriverTempCoverReverseSection";
+import { DriverEquipmentTransfersReverseSection } from "../../components/dispatch/DriverEquipmentTransfersReverseSection";
 import { W8BenModal } from "../../components/drivers/W8BenModal";
 import { KpiCard } from "../../components/layout/KpiCard";
 import { KpiStrip } from "../../components/layout/KpiStrip";
@@ -571,6 +572,7 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
         />
         <DriverInTransitIssuesReverseSection operatingCompanyId={companyId} driverId={id} />
         <DriverTempCoverReverseSection operatingCompanyId={companyId} driverId={id} />
+        <DriverEquipmentTransfersReverseSection operatingCompanyId={companyId} driverId={id} />
       </div>
       <div data-testid="dp-section-road-service-reverse">
         <RoadServiceReverseSection
