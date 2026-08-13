@@ -35,7 +35,12 @@ export function UnitDetail() {
 
   return (
     <div className="space-y-3 p-4" data-testid="unit-detail-page">
-      <PageHeader title={entityLabel(null, id, "Unit")} subtitle="Permits, toll tags, and finance linkage" />
+      <PageHeader
+        backHref="/units"
+        breadcrumb={["Fleet", "Units", entityLabel(null, id, "Unit")]}
+        title={entityLabel(null, id, "Unit")}
+        subtitle="Permits, toll tags, and finance linkage"
+      />
       {!companyId ? <p className="text-sm text-red-600">Select operating company.</p> : null}
       <div className="flex flex-wrap gap-1 rounded-sm border border-gray-200 bg-white p-1">
         {(["permits", "toll-tags", "tasks", "brakes", "tires", "finance"] as const).map((tab) => (

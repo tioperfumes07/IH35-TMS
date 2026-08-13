@@ -4,9 +4,10 @@ import { entityLabel } from "../../lib/entity-label";
 import { ListErrorBanner } from "../shared/ListErrorBanner";
 
 type Filter =
-  | { driver_id: string; unit_id?: never; vendor_id?: never }
-  | { unit_id: string; driver_id?: never; vendor_id?: never }
-  | { vendor_id: string; driver_id?: never; unit_id?: never };
+  | { driver_id: string; unit_id?: never; vendor_id?: never; wo_id?: never }
+  | { unit_id: string; driver_id?: never; vendor_id?: never; wo_id?: never }
+  | { vendor_id: string; driver_id?: never; unit_id?: never; wo_id?: never }
+  | { wo_id: string; driver_id?: never; unit_id?: never; vendor_id?: never };
 
 type Props = {
   filter: Filter;
