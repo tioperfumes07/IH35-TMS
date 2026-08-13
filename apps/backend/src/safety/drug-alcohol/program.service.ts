@@ -137,7 +137,13 @@ export async function scheduleTest(
     `
       INSERT INTO safety.da_test_records
         (operating_company_id, driver_uuid, test_type, test_kind, scheduled_at, result)
-      VALUES ($1, $2::uuid, $3, $4, $5::timestamptz, 'pending')
+      SELECT $1::uuid, d.id, $3, $4, $5::timestamptz, 'pending'
+      FROM mdata.drivers d
+      WHERE d.id = $2::uuid
+        AND d.operating_company_id = $1::uuid
+        AND d.status = 'Active'
+        AND d.deactivated_at IS NULL
+        AND d.archived_at IS NULL
       RETURNING
         uuid::text,
         operating_company_id,
@@ -154,7 +160,7 @@ export async function scheduleTest(
     [operatingCompanyId, driverUuid, testType, testKind, scheduledAt ?? null]
   );
   const row = res.rows[0];
-  if (!row) throw new Error("test_record_insert_failed");
+  if (!row) throw new Error("active_driver_not_in_operating_company");
   return row;
 }
 

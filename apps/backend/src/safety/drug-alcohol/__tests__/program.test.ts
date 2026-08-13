@@ -103,7 +103,7 @@ describe("scheduleTest", () => {
   it("throws if DB returns no row", async () => {
     const client = mockClient([]);
     await expect(scheduleTest(client, "co-1", "drv-1", "random", "drug")).rejects.toThrow(
-      "test_record_insert_failed"
+      "active_driver_not_in_operating_company"
     );
   });
 });

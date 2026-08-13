@@ -728,6 +728,14 @@
       "modules": ["dispatch", "fleet", "maintenance"],
       "cols": ["unit", "connectivity", "reverse_link"],
       "leafRe": "^(in.?transit|issue|unit|profile|detail|triage|create)"
+    },
+    {
+      "task": "DA-TEST-ACTIVE-DRIVER-WRITER-INTEGRITY",
+      "pr": "this PR",
+      "guard": "scripts/verify-da-test-driver-linkage.mjs",
+      "modules": ["safety", "drivers", "compliance"],
+      "cols": ["driver", "connectivity", "reverse_link", "picker_law"],
+      "leafRe": "^(drug|alcohol|test|schedule|driver|profile|create)"
     }
   ]
 }
