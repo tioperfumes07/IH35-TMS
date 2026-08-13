@@ -235,6 +235,26 @@
       ]
     },
     {
+      "id": "fuel.modal.create_fuel_transaction",
+      "tab": "Modals",
+      "sub": "Modal: Create Fuel Transaction",
+      "route_hint": "surface://pages/fuel/components/CreateFuelTransactionModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "pages/fuel/components/CreateFuelTransactionModal.tsx",
+      "required": [
+        "connectivity",
+        "picker_law",
+        "qbo_chrome",
+        "driver",
+        "unit",
+        "trailer",
+        "load",
+        "vendor",
+        "expense",
+        "gl_je"
+      ]
+    },
+    {
       "id": "fuel.modal.upload_loves_prices",
       "tab": "Modals",
       "sub": "Modal: Upload Loves Prices",
