@@ -20,6 +20,7 @@ import { formatUsdCents } from "../../lib/money";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { LegalMattersReverseSection } from "../../components/legal/LegalMattersReverseSection";
 import { ExpensesReverseSection } from "../../components/accounting/ExpensesReverseSection";
+import { BillsReverseSection } from "../../components/accounting/BillsReverseSection";
 
 type Props = {
   operatingCompanyId?: string;
@@ -397,6 +398,12 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
             filter={{ insurance_claim_id: highlightedClaimId }}
             contextLabel="this claim"
             data-testid="insurance-claim-expenses-reverse"
+          />
+          <BillsReverseSection
+            operatingCompanyId={companyId}
+            filter={{ insurance_claim_id: highlightedClaimId }}
+            contextLabel="this claim"
+            data-testid="insurance-claim-bills-reverse"
           />
         </div>
       ) : null}
