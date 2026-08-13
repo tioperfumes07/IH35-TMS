@@ -140,6 +140,14 @@ export function setDriverDefaultTruck(driverId: string, operatingCompanyId: stri
   );
 }
 
+export type UnitDefaultDriver = { driver_id: string; driver_name: string | null; started_at: string; source: string };
+
+export function listUnitDefaultDrivers(unitId: string, operatingCompanyId: string) {
+  return apiRequest<{ drivers: UnitDefaultDriver[] }>(
+    `/api/v1/mdata/units/${unitId}/default-drivers?operating_company_id=${encodeURIComponent(operatingCompanyId)}`,
+  );
+}
+
 export type DriverTeamSplitMethod = "50_50" | "60_40" | "70_30" | "mileage_prorated" | "hours_prorated" | "custom";
 
 export type DriverTeam = {

@@ -736,6 +736,14 @@
       "modules": ["safety", "drivers", "compliance"],
       "cols": ["driver", "connectivity", "reverse_link", "picker_law"],
       "leafRe": "^(drug|alcohol|test|schedule|driver|profile|create)"
+    },
+    {
+      "task": "DEFAULT-TRUCK-UNIT-DRIVER-REVERSE",
+      "pr": "this PR",
+      "guard": "scripts/verify-default-truck-unit-reverse.mjs",
+      "modules": ["drivers", "fleet", "dispatch"],
+      "cols": ["driver", "unit", "connectivity", "reverse_link", "picker_law"],
+      "leafRe": "^(default|truck|assignment|driver|unit|profile|detail)"
     }
   ]
 }
