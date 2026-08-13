@@ -28,6 +28,23 @@ export function assertPrepaidExpensesEntitylinkReverse() {
   if (!/purchase_je_id/.test(prepaid) || !/kind=["']journal_entry["']/.test(prepaid)) {
     errors.push(`${PREPAID_PAGE}: detail must EntityLink purchase_je_id → journal_entry`);
   }
+  // ACCT-F5067: CLS-LINKAGE-ONEWAY — API must resolve JE/account human labels; FE must not entityLabel(null, id).
+  if (!/purchase_je_memo/.test(prepaid) || !/journal_entry_memo/.test(prepaid)) {
+    errors.push(`${PREPAID_PAGE}: must render purchase_je_memo + schedule journal_entry_memo (not UUID-only)`);
+  }
+  if (/entityLabel\(\s*null\s*,\s*(?:detail\.|row\.)?(?:purchase_je_id|posted_journal_entry_id|asset_account_id)/.test(prepaid)) {
+    errors.push(`${PREPAID_PAGE}: must not entityLabel(null, …) for JE/GL ids — resolve human labels from API`);
+  }
+  if (!/asset_account_number/.test(prepaid) || !/asset_account_name/.test(prepaid)) {
+    errors.push(`${PREPAID_PAGE}: must render asset_account_number/name from detail API`);
+  }
+  const routes = read("apps/backend/src/accounting/prepaid-expenses.routes.ts");
+  if (!/purchase_je_memo/.test(routes) || !/journal_entry_memo/.test(routes)) {
+    errors.push("prepaid-expenses.routes.ts: detail/schedule must JOIN journal_entries for memo/date labels");
+  }
+  if (!/asset_account_number/.test(routes) || !/LEFT JOIN catalogs\.accounts/.test(routes)) {
+    errors.push("prepaid-expenses.routes.ts: detail must JOIN catalogs.accounts for GL labels");
+  }
   if (!/asset_account_id/.test(prepaid) || !/kind=["']account["']/.test(prepaid)) {
     errors.push(`${PREPAID_PAGE}: detail must EntityLink GL accounts (asset/expense/payment)`);
   }

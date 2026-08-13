@@ -109,6 +109,14 @@ interface PrepaidDetailRow {
   expense_account_id: string | null;
   payment_account_id: string | null;
   purchase_je_id: string | null;
+  purchase_je_memo?: string | null;
+  purchase_je_date?: string | null;
+  asset_account_number?: string | null;
+  asset_account_name?: string | null;
+  expense_account_number?: string | null;
+  expense_account_name?: string | null;
+  payment_account_number?: string | null;
+  payment_account_name?: string | null;
   purchase_date_s: string;
   start_date_s: string;
   end_date_s: string;
@@ -131,6 +139,8 @@ interface PrepaidScheduleRow {
   posted: boolean;
   posted_at: string | null;
   posted_journal_entry_id: string | null;
+  journal_entry_memo?: string | null;
+  journal_entry_date?: string | null;
 }
 
 /** Row shape returned by the CREATE INSERT ... RETURNING. */
@@ -252,26 +262,53 @@ async function registerPrepaidExpensesRoutes(app: FastifyInstance) {
           pa.remainder_cents::text AS remainder_s, pa.posted_at::text AS posted_at_s,
           pa.created_at::text AS created_at_s,
           COALESCE(SUM(CASE WHEN r.posted THEN r.amount_cents ELSE 0 END), 0)::text AS amortized_cents,
-          COUNT(r.id) FILTER (WHERE r.posted = false AND r.is_active)::text AS pending_periods
+          COUNT(r.id) FILTER (WHERE r.posted = false AND r.is_active)::text AS pending_periods,
+          pje.memo AS purchase_je_memo,
+          pje.entry_date::text AS purchase_je_date,
+          aa.account_number AS asset_account_number,
+          aa.account_name AS asset_account_name,
+          ea.account_number AS expense_account_number,
+          ea.account_name AS expense_account_name,
+          paya.account_number AS payment_account_number,
+          paya.account_name AS payment_account_name
         FROM accounting.prepaid_assets pa
         LEFT JOIN accounting.prepaid_amortization_rows r ON r.asset_id = pa.id AND r.is_active = true
+        LEFT JOIN accounting.journal_entries pje
+          ON pje.id = pa.purchase_je_id
+         AND pje.operating_company_id = pa.operating_company_id
+        LEFT JOIN catalogs.accounts aa
+          ON aa.id = pa.asset_account_id
+         AND aa.operating_company_id = pa.operating_company_id
+        LEFT JOIN catalogs.accounts ea
+          ON ea.id = pa.expense_account_id
+         AND ea.operating_company_id = pa.operating_company_id
+        LEFT JOIN catalogs.accounts paya
+          ON paya.id = pa.payment_account_id
+         AND paya.operating_company_id = pa.operating_company_id
         WHERE pa.id = $1 AND pa.operating_company_id = $2::uuid AND pa.is_active = true
-        GROUP BY pa.id`,
+        GROUP BY pa.id, pje.memo, pje.entry_date,
+          aa.account_number, aa.account_name, ea.account_number, ea.account_name,
+          paya.account_number, paya.account_name`,
         [pp.data.id, qp.data.operating_company_id]
       );
       if (!assetRes.rows[0]) return reply.code(404).send({ error: "not_found" });
       const a = assetRes.rows[0] as PrepaidDetailRow;
 
       const schedRes = await client.query(
-        `SELECT id, period_number, period_date::text AS period_date,
-                amount_cents::text AS amount_cents,
-                remaining_balance_cents::text AS remaining_balance_cents,
-                posted, posted_at::text AS posted_at,
-                posted_journal_entry_id::text AS posted_journal_entry_id
-         FROM accounting.prepaid_amortization_rows
-         WHERE asset_id = $1 AND is_active = true
-         ORDER BY period_number`,
-        [pp.data.id]
+        `SELECT r.id, r.period_number, r.period_date::text AS period_date,
+                r.amount_cents::text AS amount_cents,
+                r.remaining_balance_cents::text AS remaining_balance_cents,
+                r.posted, r.posted_at::text AS posted_at,
+                r.posted_journal_entry_id::text AS posted_journal_entry_id,
+                je.memo AS journal_entry_memo,
+                je.entry_date::text AS journal_entry_date
+         FROM accounting.prepaid_amortization_rows r
+         LEFT JOIN accounting.journal_entries je
+           ON je.id = r.posted_journal_entry_id
+          AND je.operating_company_id = $2::uuid
+         WHERE r.asset_id = $1 AND r.is_active = true
+         ORDER BY r.period_number`,
+        [pp.data.id, qp.data.operating_company_id]
       );
 
       // Entity-scoped: PREPAID_EXPENSES_POST_ENABLED is a per-entity override (ACCT-F43 arms TRK and
@@ -310,6 +347,14 @@ async function registerPrepaidExpensesRoutes(app: FastifyInstance) {
         status: a.status, posting_status: a.posting_status, posted_at: a.posted_at_s,
         asset_account_id: a.asset_account_id, expense_account_id: a.expense_account_id,
         payment_account_id: a.payment_account_id, purchase_je_id: a.purchase_je_id,
+        purchase_je_memo: a.purchase_je_memo ?? null,
+        purchase_je_date: a.purchase_je_date ?? null,
+        asset_account_number: a.asset_account_number ?? null,
+        asset_account_name: a.asset_account_name ?? null,
+        expense_account_number: a.expense_account_number ?? null,
+        expense_account_name: a.expense_account_name ?? null,
+        payment_account_number: a.payment_account_number ?? null,
+        payment_account_name: a.payment_account_name ?? null,
         created_at: a.created_at_s,
         amortized_cents: Number(a.amortized_cents),
         pending_periods: Number(a.pending_periods),
@@ -322,6 +367,8 @@ async function registerPrepaidExpensesRoutes(app: FastifyInstance) {
           posted: r.posted as boolean,
           posted_at: r.posted_at as string | null,
           posted_journal_entry_id: r.posted_journal_entry_id as string | null,
+          journal_entry_memo: r.journal_entry_memo ?? null,
+          journal_entry_date: r.journal_entry_date ?? null,
         })),
         je_preview,
       };
