@@ -268,7 +268,12 @@ export function BillPaymentsListPage() {
           </div>
         </CollapsedListFilters>
         <div className="flex items-end text-xs text-gray-600 pb-1">
-          Total rows amount: <span className="ml-1 font-semibold text-gray-900">{money(totals)}</span>
+          {/* CLS-MONEY-KPI-FAKE-ZERO-REMAINDER-BILL-PAYMENTS — totals used paymentsQuery.data ?? []
+              with no isError branch (ACCT-F5038). */}
+          Total rows amount:{" "}
+          <span className="ml-1 font-semibold text-gray-900">
+            {paymentsQuery.isError ? "—" : money(totals)}
+          </span>
         </div>
       </div>
     </div>
