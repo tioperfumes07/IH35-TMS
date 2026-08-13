@@ -1032,8 +1032,8 @@ export async function listUnitLinkedFinancials(
   operatingCompanyId: string,
   unitId: string
 ): Promise<{
-  bills: Array<{ id: string; bill_number: string | null; bill_date: string | null; amount_cents: number; status: string | null; memo: string | null }>;
-  expenses: Array<{ id: string; transaction_date: string | null; total_amount_cents: number; status: string | null; memo: string | null }>;
+  bills: Array<{ id: string; bill_number: string | null; bill_date: string | null; amount_cents: number; status: string | null; memo: string | null; journal_entry_id: string | null; journal_entry_memo: string | null }>;
+  expenses: Array<{ id: string; transaction_date: string | null; total_amount_cents: number; status: string | null; memo: string | null; journal_entry_id: string | null; journal_entry_memo: string | null }>;
   columns_present: { bills: boolean; expenses: boolean };
 }> {
   return withCurrentUser(userId, async (client) => {
@@ -1049,12 +1049,25 @@ export async function listUnitLinkedFinancials(
     const hasBillCol = await colExists("accounting", "bills", "unit_id");
     const hasExpenseCol = await colExists("accounting", "expenses", "unit_id");
 
-    let bills: Array<{ id: string; bill_number: string | null; bill_date: string | null; amount_cents: number; status: string | null; memo: string | null }> = [];
+    let bills: Array<{ id: string; bill_number: string | null; bill_date: string | null; amount_cents: number; status: string | null; memo: string | null; journal_entry_id: string | null; journal_entry_memo: string | null }> = [];
     if (hasBillCol) {
       const res = await client.query(
         `SELECT b.id::text AS id, b.bill_number, b.bill_date::text AS bill_date,
-                COALESCE(b.amount_cents, 0)::bigint AS amount_cents, b.status, b.memo
+                COALESCE(b.amount_cents, 0)::bigint AS amount_cents, b.status, b.memo,
+                je_link.journal_entry_id, je.memo AS journal_entry_memo
            FROM accounting.bills b
+          LEFT JOIN LATERAL (
+            SELECT jep.journal_entry_uuid::text AS journal_entry_id
+              FROM accounting.journal_entry_postings jep
+             WHERE jep.operating_company_id = b.operating_company_id
+               AND jep.source_transaction_type = 'bill'
+               AND jep.source_transaction_id = b.id::text
+             ORDER BY jep.created_at ASC
+             LIMIT 1
+          ) je_link ON true
+          LEFT JOIN accounting.journal_entries je
+            ON je.id = je_link.journal_entry_id::uuid
+           AND je.operating_company_id = b.operating_company_id
           WHERE b.operating_company_id = $1::uuid
             AND b.unit_id = $2
             AND b.revoked_at IS NULL
@@ -1068,17 +1081,24 @@ export async function listUnitLinkedFinancials(
         amount_cents: Number(r.amount_cents ?? 0),
         status: (r.status as string) ?? null,
         memo: (r.memo as string) ?? null,
+        journal_entry_id: (r.journal_entry_id as string) ?? null,
+        journal_entry_memo: (r.journal_entry_memo as string) ?? null,
       }));
     }
 
-    let expenses: Array<{ id: string; transaction_date: string | null; total_amount_cents: number; status: string | null; memo: string | null }> = [];
+    let expenses: Array<{ id: string; transaction_date: string | null; total_amount_cents: number; status: string | null; memo: string | null; journal_entry_id: string | null; journal_entry_memo: string | null }> = [];
     if (hasExpenseCol) {
       const hasMemo = await colExists("accounting", "expenses", "memo");
       const res = await client.query(
         `SELECT e.id::text AS id, e.transaction_date::text AS transaction_date,
                 COALESCE(e.total_amount_cents, 0)::bigint AS total_amount_cents, e.status,
-                ${hasMemo ? "e.memo" : "NULL::text AS memo"}
+                ${hasMemo ? "e.memo" : "NULL::text AS memo"},
+                e.journal_entry_id::text AS journal_entry_id,
+                je.memo AS journal_entry_memo
            FROM accounting.expenses e
+          LEFT JOIN accounting.journal_entries je
+            ON je.id = e.journal_entry_id
+           AND je.operating_company_id = e.operating_company_id
           WHERE e.operating_company_id = $1::uuid
             AND e.unit_id = $2
             AND e.status <> 'void'
@@ -1091,6 +1111,8 @@ export async function listUnitLinkedFinancials(
         total_amount_cents: Number(r.total_amount_cents ?? 0),
         status: (r.status as string) ?? null,
         memo: (r.memo as string) ?? null,
+        journal_entry_id: (r.journal_entry_id as string) ?? null,
+        journal_entry_memo: (r.journal_entry_memo as string) ?? null,
       }));
     }
 

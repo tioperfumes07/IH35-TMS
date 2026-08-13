@@ -920,6 +920,14 @@
       "modules": ["safety", "drivers", "compliance"],
       "cols": ["driver", "connectivity", "reverse_link", "picker_law"],
       "leafRe": "^(background|medical|driver|profile|detail|safety|compliance|create)"
+    },
+    {
+      "task": "UNIT-FINANCE-LINKAGE-GL-JE-REVERSE",
+      "pr": "this PR",
+      "guard": "scripts/verify-unit-finance-gl-je-reverse.mjs",
+      "modules": ["fleet", "accounting"],
+      "cols": ["unit", "ap_bill", "expense", "gl_je", "connectivity", "reverse_link"],
+      "leafRe": "^unit\\.detail\\.finance_linkage$"
     }
   ]
 }
