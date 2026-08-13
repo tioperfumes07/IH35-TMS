@@ -156,6 +156,8 @@ export type InsuranceCoiRequest = {
   policy_id: string | null;
   requested_at: string;
   requested_by: string | null;
+  requested_by_name?: string | null;
+  policy_number?: string | null;
   status: CoiRequestStatus;
   notes: string | null;
   document_url: string | null;

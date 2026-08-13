@@ -17,6 +17,7 @@ describe("resolveEntityRoute", () => {
     expect(resolveEntityRoute("factoring_advance", "id1")).toBe("/accounting/factoring/id1");
     expect(resolveEntityRoute("bill", "id1")).toBe("/accounting/bills/id1");
     expect(resolveEntityRoute("matter", "id1")).toBe("/legal/matters/id1");
+    expect(resolveEntityRoute("insurance_policy", "id1")).toBe("/safety/insurance/policies/id1");
   });
 
   it("resolves settlement, claim, and lawsuit to query-param drill-through", () => {

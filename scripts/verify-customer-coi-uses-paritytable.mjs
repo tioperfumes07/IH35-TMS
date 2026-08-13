@@ -13,10 +13,11 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-customer-coi-uses-paritytable";
 const PAGE = "apps/frontend/src/pages/customers/CoiTab.tsx";
+const SERVICE = "apps/backend/src/insurance/coi.service.ts";
 
 const REQUIRED_LABELS = ["Requested", "Status", "Date", "Requester User", "Policy Reference"];
 
-function assertMigrated(src) {
+function assertMigrated(src, service = "") {
   const errors = [];
   if (
     !src.includes('from "../../components/parity/ParityTable"') &&
@@ -62,11 +63,22 @@ function assertMigrated(src) {
   if (src.includes("Failed to load COI requests.")) {
     errors.push(`${PAGE}: must not use bare red outage banner (use ListErrorState)`);
   }
-  if (!/key:\s*"requested_by"[\s\S]{0,180}?render:\s*\(request\)\s*=>\s*entityLabel\(null,\s*request\.requested_by,\s*"User"\)/.test(src)) {
-    errors.push(`${PAGE}: requester column must suppress raw user ids with entityLabel`);
+  if (!/kind="user"[\s\S]{0,180}?label=\{entityLabel\(request\.requested_by_name,\s*request\.requested_by,\s*"User"\)\}/.test(src)) {
+    errors.push(`${PAGE}: requester column must drill to the user with its entity-scoped human label`);
   }
-  if (!/key:\s*"policy_id"[\s\S]{0,180}?render:\s*\(request\)\s*=>\s*entityLabel\(null,\s*request\.policy_id,\s*"Policy"\)/.test(src)) {
-    errors.push(`${PAGE}: policy column must suppress raw policy ids with entityLabel`);
+  if (!/kind="insurance_policy"[\s\S]{0,180}?label=\{entityLabel\(request\.policy_number,\s*request\.policy_id,\s*"Policy"\)\}/.test(src)) {
+    errors.push(`${PAGE}: policy column must drill to the policy with its entity-scoped human label`);
+  }
+  if (service) {
+    if (!/JOIN org\.user_company_access uca[\s\S]{0,220}?uca\.company_id = r\.tenant_id/.test(service)) {
+      errors.push(`${SERVICE}: requester label join must be scoped through company membership`);
+    }
+    if (!/JOIN identity\.users u[\s\S]{0,180}?u\.id = uca\.user_id/.test(service) || !/AS requested_by_name/.test(service)) {
+      errors.push(`${SERVICE}: list query must resolve requested_by_name`);
+    }
+    if (!/JOIN insurance\.policy p[\s\S]{0,180}?p\.tenant_id = r\.tenant_id/.test(service) || !/p\.policy_number/.test(service)) {
+      errors.push(`${SERVICE}: list query must resolve policy_number with tenant scope`);
+    }
   }
   return errors;
 }
@@ -84,8 +96,8 @@ function selftest() {
         { key: "requested_at", label: "Requested" },
         { key: "status", label: "Status" },
         { key: "requested_at", label: "Date" },
-        { key: "requested_by", label: "Requester User", render: (request) => entityLabel(null, request.requested_by, "User") },
-        { key: "policy_id", label: "Policy Reference", render: (request) => entityLabel(null, request.policy_id, "Policy") },
+        { key: "requested_by", label: "Requester User", render: (request) => <EntityLink kind="user" id={request.requested_by} label={entityLabel(request.requested_by_name, request.requested_by, "User")} /> },
+        { key: "policy_id", label: "Policy Reference", render: (request) => <EntityLink kind="insurance_policy" id={request.policy_id} label={entityLabel(request.policy_number, request.policy_id, "Policy")} /> },
       ]}
     />
     + Create COI
@@ -103,12 +115,12 @@ function selftest() {
   const goodErrors = assertMigrated(good);
   const badErrors = assertMigrated(bad);
   const rawRequesterErrors = assertMigrated(good.replace(
-    'render: (request) => entityLabel(null, request.requested_by, "User")',
-    'render: (request) => request.requested_by || "-"'
+    'label={entityLabel(request.requested_by_name, request.requested_by, "User")}',
+    'label={request.requested_by}'
   ));
   const rawPolicyErrors = assertMigrated(good.replace(
-    'render: (request) => entityLabel(null, request.policy_id, "Policy")',
-    'render: (request) => request.policy_id || "-"'
+    'label={entityLabel(request.policy_number, request.policy_id, "Policy")}',
+    'label={request.policy_id}'
   ));
   if (goodErrors.length) {
     console.error(`${LABEL} --selftest FAIL good fixture:`, goodErrors);
@@ -135,7 +147,8 @@ function main() {
     return;
   }
   const src = fs.readFileSync(path.join(ROOT, PAGE), "utf8");
-  const errors = assertMigrated(src);
+  const service = fs.readFileSync(path.join(ROOT, SERVICE), "utf8");
+  const errors = assertMigrated(src, service);
   if (errors.length) {
     console.error(`FAIL ${LABEL}:`);
     for (const e of errors) console.error(`  - ${e}`);
