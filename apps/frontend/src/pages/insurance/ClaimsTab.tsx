@@ -19,6 +19,7 @@ import { useListState } from "../../components/list-state";
 import { formatUsdCents } from "../../lib/money";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { LegalMattersReverseSection } from "../../components/legal/LegalMattersReverseSection";
+import { ExpensesReverseSection } from "../../components/accounting/ExpensesReverseSection";
 
 type Props = {
   operatingCompanyId?: string;
@@ -384,12 +385,18 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
       ) : null}
 
       {highlightedClaimId ? (
-        <div className="mb-3">
+        <div className="mb-3 space-y-3">
           <LegalMattersReverseSection
             operatingCompanyId={companyId}
             filter={{ insurance_claim_id: highlightedClaimId }}
             contextLabel="this claim"
             data-testid="insurance-claim-legal-matters"
+          />
+          <ExpensesReverseSection
+            operatingCompanyId={companyId}
+            filter={{ insurance_claim_id: highlightedClaimId }}
+            contextLabel="this claim"
+            data-testid="insurance-claim-expenses-reverse"
           />
         </div>
       ) : null}

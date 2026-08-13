@@ -151,6 +151,8 @@ const listExpensesQuerySchema = companyQuerySchema.extend({
   unit_id: z.string().uuid().optional(),
   // ACCT-F5033 — linked_work_order_uuid written on create; list filter required for WO reverse.
   work_order_id: z.string().uuid().optional(),
+  // ACCT-F5034 — insurance_claim_id written on create; list filter for ClaimsTab ExpensesReverseSection.
+  insurance_claim_id: z.string().uuid().optional(),
   limit: z.coerce.number().int().min(1).max(200).default(50),
   offset: z.coerce.number().int().min(0).default(0),
 });
@@ -167,6 +169,7 @@ export type ExpenseListFilters = {
   trailerId?: string;
   unitId?: string;
   workOrderId?: string;
+  insuranceClaimId?: string;
   limit: number;
   offset: number;
 };
@@ -267,6 +270,10 @@ export async function queryExpensesList(
     values.push(filters.workOrderId);
     where.push(`e.linked_work_order_uuid = $${values.length}::uuid`);
   }
+  if (filters.insuranceClaimId) {
+    values.push(filters.insuranceClaimId);
+    where.push(`e.insurance_claim_id = $${values.length}::uuid`);
+  }
   values.push(filters.limit);
   const limitIdx = values.length;
   values.push(filters.offset);
@@ -363,6 +370,7 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
         trailerId: q.trailer_id,
         unitId: q.unit_id,
         workOrderId: q.work_order_id,
+        insuranceClaimId: q.insurance_claim_id,
         limit: q.limit,
         offset: q.offset,
       });
