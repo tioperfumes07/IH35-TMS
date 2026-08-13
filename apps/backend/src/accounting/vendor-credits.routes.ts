@@ -76,6 +76,7 @@ export async function registerVendorCreditsRoutes(app: FastifyInstance) {
         `SELECT
            vc.id,
            vc.vendor_id,
+           v.vendor_name,
            vc.display_id,
            vc.status,
            vc.issue_date,
@@ -86,6 +87,9 @@ export async function registerVendorCreditsRoutes(app: FastifyInstance) {
            vc.created_at,
            vc.created_by_user_id
          FROM accounting.vendor_credits vc
+         LEFT JOIN mdata.vendors v
+           ON v.id = vc.vendor_id
+          AND v.operating_company_id = vc.operating_company_id
          WHERE ${conditions.join(" AND ")}
          ORDER BY vc.issue_date DESC, vc.created_at DESC
          LIMIT 500`,
@@ -110,20 +114,24 @@ export async function registerVendorCreditsRoutes(app: FastifyInstance) {
     const detail = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       const creditRes = await client.query(
         `SELECT
-           id,
-           vendor_id,
-           display_id,
-           status,
-           issue_date,
-           amount_cents,
-           amount_applied_cents,
-           amount_unapplied_cents,
-           notes,
-           created_at,
-           created_by_user_id
-         FROM accounting.vendor_credits
-         WHERE id = $1
-           AND operating_company_id = $2::uuid
+           vc.id,
+           vc.vendor_id,
+           v.vendor_name,
+           vc.display_id,
+           vc.status,
+           vc.issue_date,
+           vc.amount_cents,
+           vc.amount_applied_cents,
+           vc.amount_unapplied_cents,
+           vc.notes,
+           vc.created_at,
+           vc.created_by_user_id
+         FROM accounting.vendor_credits vc
+         LEFT JOIN mdata.vendors v
+           ON v.id = vc.vendor_id
+          AND v.operating_company_id = vc.operating_company_id
+         WHERE vc.id = $1
+           AND vc.operating_company_id = $2::uuid
          LIMIT 1`,
         [params.data.id, query.data.operating_company_id]
       );

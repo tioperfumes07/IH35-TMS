@@ -5,6 +5,8 @@ export type VendorCreditStatus = "open" | "applied" | "voided";
 export type VendorCredit = {
   id: string;
   vendor_id: string;
+  /** ACCT-F5061 — joined from mdata.vendors (same-opco); list/detail EntityLink label. */
+  vendor_name?: string | null;
   display_id: string;
   status: VendorCreditStatus;
   issue_date: string;

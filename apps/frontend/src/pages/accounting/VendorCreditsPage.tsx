@@ -160,7 +160,7 @@ export function VendorCreditsPage() {
         label: "Vendor",
         sortable: true,
         render: (row) => (
-          <EntityLink kind="vendor" id={row.vendor_id} label={entityLabel(null, row.vendor_id, "Vendor")} />
+          <EntityLink kind="vendor" id={row.vendor_id} label={entityLabel(row.vendor_name, row.vendor_id, "Vendor")} />
         ),
       },
       {
@@ -190,6 +190,11 @@ export function VendorCreditsPage() {
     [],
   );
 
+  const filterVendorName = useMemo(() => {
+    if (!vendorFilter) return null;
+    return (creditsQuery.data?.credits ?? []).find((c) => c.vendor_id === vendorFilter)?.vendor_name ?? null;
+  }, [creditsQuery.data?.credits, vendorFilter]);
+
   const filterBar = (
     <div className="flex flex-wrap items-center gap-2" data-vendor-credits-filter-toolbar="collapsed">
       <CollapsedListFilters activeFilterCount={(statusFilter ? 1 : 0) + (vendorFilter ? 1 : 0)} testIdPrefix="vendor-credits" onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}>
@@ -207,7 +212,8 @@ export function VendorCreditsPage() {
       </CollapsedListFilters>
       {vendorFilter ? (
         <span className="text-xs text-gray-600">
-          Filtered to vendor <EntityLink kind="vendor" id={vendorFilter} label={entityLabel(null, vendorFilter, "Vendor")} />
+          Filtered to vendor{" "}
+          <EntityLink kind="vendor" id={vendorFilter} label={entityLabel(filterVendorName, vendorFilter, "Vendor")} />
         </span>
       ) : null}
     </div>
@@ -359,7 +365,7 @@ export function VendorCreditsPage() {
                   <EntityLink
                     kind="vendor"
                     id={credit.vendor_id}
-                    label={entityLabel(null, credit.vendor_id, "Vendor")}
+                    label={entityLabel(credit.vendor_name, credit.vendor_id, "Vendor")}
                   />
                 </dd>
               </div>
