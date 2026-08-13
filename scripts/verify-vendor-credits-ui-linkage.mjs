@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 /**
+ * @matrix-built {"modules":["accounting"],"cols":["connectivity"],"leafRe":"^(vendor_credits\\.(list|detail)|vendor_credits)$","task":"ACCT-F5061-VENDOR-CREDIT-VENDOR-NAME","pr":"#PENDING"}
  * Rule-17 guard: vendor credits UI mounted + vendor/bill reverse drill (Law §9).
  * Backend + api client existed without any accounting surface — orphan API defect.
  */
@@ -39,6 +40,17 @@ export function assertVendorCreditsUiLinkage() {
   }
   if (!/kind=["']vendor["']/.test(page)) {
     errors.push(`${PAGE}: credits list must EntityLink vendor`);
+  }
+  // ACCT-F5061 — CLS-LINKAGE-ONEWAY: vendor EntityLink must use joined vendor_name, not null→UUID chrome.
+  if (!/entityLabel\(\s*(?:row|credit)\.vendor_name\s*,\s*(?:row|credit)\.vendor_id\s*,\s*["']Vendor["']\s*\)/.test(page)) {
+    errors.push(`${PAGE}: vendor EntityLink must entityLabel(….vendor_name, ….vendor_id, "Vendor")`);
+  }
+  if (/entityLabel\(\s*null\s*,\s*(?:row|credit)\.vendor_id\s*,\s*["']Vendor["']\s*\)/.test(page)) {
+    errors.push(`${PAGE}: must not entityLabel(null, vendor_id) — UUID chrome`);
+  }
+  const routes = read("apps/backend/src/accounting/vendor-credits.routes.ts");
+  if (!/v\.vendor_name/.test(routes) || !/LEFT JOIN mdata\.vendors/.test(routes)) {
+    errors.push("vendor-credits.routes: list/detail must LEFT JOIN mdata.vendors for vendor_name");
   }
   if (!page.includes("ReferenceSelect") || !page.includes('createKind="vendor"')) {
     errors.push(`${PAGE}: create flow must use ReferenceSelect createKind=vendor (+ Create)`);
