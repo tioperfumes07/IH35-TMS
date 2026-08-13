@@ -7,6 +7,7 @@ import {
   getInternalFines,
   getSafetyFines,
   getSafetyAccidents,
+  getTrainingCompletions,
 } from "../../api/safety";
 import { useAuth } from "../../auth/useAuth";
 import { formatDateUS } from "../../lib/formatDate";
@@ -141,6 +142,12 @@ export function DriverSafetyReverseSection({
     enabled,
   });
 
+  const trainingQuery = useQuery({
+    queryKey: ["safety", "reverse", "training-records", operatingCompanyId, driverId],
+    queryFn: () => getTrainingCompletions(operatingCompanyId, { driver_id: driverId }),
+    enabled,
+  });
+
   const hosViolationsQuery = useQuery({
     queryKey: ["safety", "reverse", "hos-violations", operatingCompanyId, driverId],
     queryFn: () => listHosViolations(operatingCompanyId, { driver_id: driverId }),
@@ -155,6 +162,7 @@ export function DriverSafetyReverseSection({
   const tests: Row[] = testsQuery.data?.tests ?? [];
   const dotInspections: Row[] = dotInspectionsQuery.data?.dot_inspections ?? [];
   const accidents: Row[] = accidentsQuery.data?.accidents ?? [];
+  const trainingRecords: Row[] = trainingQuery.data?.training_completions ?? [];
   const hosViolations: Row[] = hosViolationsQuery.data?.hos_violations ?? [];
 
   return (
@@ -180,6 +188,27 @@ export function DriverSafetyReverseSection({
       />
       <SafetyEventsReverseBlock companyId={operatingCompanyId} subject="driver" entityId={driverId} />
       <DriverIncidentsReverseSection operatingCompanyId={operatingCompanyId} driverId={driverId} />
+
+      <SectionShell
+        title="Training Records"
+        to="/safety/training-records"
+        linkLabel="Open Training Records"
+        testId="driver-safety-reverse-training-records"
+        isLoading={trainingQuery.isLoading}
+        isError={trainingQuery.isError}
+        errorText="Failed to load this driver's training records."
+        emptyText="No training records for this driver."
+        count={trainingRecords.length}
+      >
+        {trainingRecords.map((record) => (
+          <li key={s(record.id)} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-sm">
+            <Link className="font-semibold text-slate-700 underline" to={`/safety/training-records?training_id=${encodeURIComponent(s(record.id))}`}>
+              {entityLabel(record.training_name ?? record.training_type, record.id, "Training")}
+            </Link>
+            <span className="ml-2 text-gray-600">{formatDateUS(record.completed_at)}</span>
+          </li>
+        ))}
+      </SectionShell>
 
       <SectionShell
         title="Accidents"

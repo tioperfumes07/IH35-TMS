@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { formatDateUS } from "../../lib/formatDate";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -27,6 +28,8 @@ function expiryLabel(expiryDate: string | null | undefined) {
 }
 
 export function TrainingRecordsPage({ operatingCompanyId }: Props) {
+  const [searchParams] = useSearchParams();
+  const deepLinkTrainingId = searchParams.get("training_id")?.trim() || "";
   const queryClient = useQueryClient();
   const [createOpen, setCreateOpen] = useState(false);
   const [driverId, setDriverId] = useState("");
@@ -116,6 +119,7 @@ export function TrainingRecordsPage({ operatingCompanyId }: Props) {
           columns={recordColumns}
           rows={rows}
           rowKey={(row) => String(row.id)}
+          rowClassName={(row) => deepLinkTrainingId && String(row.id) === deepLinkTrainingId ? "bg-slate-100 ring-1 ring-slate-400" : ""}
           loading={recordsQuery.isLoading}
           emptyText="No training records found."
           storageKey="safety-training-records"
