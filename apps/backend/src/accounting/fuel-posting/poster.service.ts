@@ -183,46 +183,65 @@ async function resolveFuelPostingClassId(
   unitId?: string | null,
   trailerId?: string | null
 ): Promise<{ class_id: string | null; source: string }> {
-  const lookupByQboClassId = async (qboClassId: string): Promise<string | null> => {
-    const res = await client.query<{ id: string }>(
-      `
-        SELECT id::text
-        FROM catalogs.classes
-        WHERE operating_company_id = $1::uuid
-          AND qbo_class_id = $2
-          AND deactivated_at IS NULL
-        LIMIT 1
-      `,
-      [operatingCompanyId, qboClassId]
-    );
-    return res.rows[0]?.id ?? null;
-  };
+  // ACCT-F5024 — mdata.units / mdata.equipment have NO operating_company_id (owner/lease only).
+  // A 42703 on that column aborted the entire fuel JE while create still returned 201 (silent noop).
+  // Class is a reporting dimension only: any resolution failure must return unresolved, never throw.
+  try {
+    const lookupByQboClassId = async (qboClassId: string): Promise<string | null> => {
+      const res = await client.query<{ id: string }>(
+        `
+          SELECT id::text
+          FROM catalogs.classes
+          WHERE operating_company_id = $1::uuid
+            AND qbo_class_id = $2
+            AND deactivated_at IS NULL
+          LIMIT 1
+        `,
+        [operatingCompanyId, qboClassId]
+      );
+      return res.rows[0]?.id ?? null;
+    };
 
-  if (unitId) {
-    const unit = await client.query<{ qbo_class_id: string | null }>(
-      `SELECT qbo_class_id FROM mdata.units WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
-      [unitId, operatingCompanyId]
-    );
-    const qboClassId = unit.rows[0]?.qbo_class_id;
-    if (qboClassId) {
-      const classId = await lookupByQboClassId(qboClassId);
-      if (classId) return { class_id: classId, source: "unit.qbo_class_id" };
+    if (unitId) {
+      const unit = await client.query<{ qbo_class_id: string | null }>(
+        `
+          SELECT qbo_class_id
+          FROM mdata.units
+          WHERE id = $1::uuid
+            AND (owner_company_id = $2::uuid OR currently_leased_to_company_id = $2::uuid)
+          LIMIT 1
+        `,
+        [unitId, operatingCompanyId]
+      );
+      const qboClassId = unit.rows[0]?.qbo_class_id;
+      if (qboClassId) {
+        const classId = await lookupByQboClassId(qboClassId);
+        if (classId) return { class_id: classId, source: "unit.qbo_class_id" };
+      }
     }
-  }
 
-  if (trailerId) {
-    const equipment = await client.query<{ qbo_class_id: string | null }>(
-      `SELECT qbo_class_id FROM mdata.equipment WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
-      [trailerId, operatingCompanyId]
-    );
-    const qboClassId = equipment.rows[0]?.qbo_class_id;
-    if (qboClassId) {
-      const classId = await lookupByQboClassId(qboClassId);
-      if (classId) return { class_id: classId, source: "trailer.qbo_class_id" };
+    if (trailerId) {
+      const equipment = await client.query<{ qbo_class_id: string | null }>(
+        `
+          SELECT qbo_class_id
+          FROM mdata.equipment
+          WHERE id = $1::uuid
+            AND (owner_company_id = $2::uuid OR currently_leased_to_company_id = $2::uuid)
+          LIMIT 1
+        `,
+        [trailerId, operatingCompanyId]
+      );
+      const qboClassId = equipment.rows[0]?.qbo_class_id;
+      if (qboClassId) {
+        const classId = await lookupByQboClassId(qboClassId);
+        if (classId) return { class_id: classId, source: "trailer.qbo_class_id" };
+      }
     }
-  }
 
-  return { class_id: null, source: "unresolved" };
+    return { class_id: null, source: "unresolved" };
+  } catch {
+    return { class_id: null, source: "unresolved" };
+  }
 }
 
 async function resolveExistingPostedResult(
