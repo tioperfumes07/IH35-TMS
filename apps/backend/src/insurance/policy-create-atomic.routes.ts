@@ -9,6 +9,7 @@ const ALLOCATION_METHODS = ["equal_split", "pro_rata", "weighted"] as const;
 
 const createWithBillsSchema = z.object({
   operating_company_id: z.string().uuid(),
+  vendor_id: z.string().uuid(),
   insurer_name: z.string().trim().min(1).max(250),
   policy_number: z.string().trim().min(1).max(120),
   coverage_type: z.enum(INSURANCE_COVERAGE_TYPES),
@@ -60,6 +61,7 @@ export async function registerInsurancePolicyCreateAtomicRoutes(app: FastifyInst
     try {
       const result = await createInsurancePolicyWithBills({
         operatingCompanyId: body.operating_company_id,
+        vendorId: body.vendor_id,
         userId: user.uuid,
         insurerName: body.insurer_name,
         policyNumber: body.policy_number,

@@ -35,6 +35,7 @@ const assetIdParamsSchema = z.object({
 
 const createPolicySchema = z.object({
   operating_company_id: z.string().uuid(),
+  vendor_id: z.string().uuid(),
   insurer_name: z.string().trim().min(1).max(250),
   policy_number: z.string().trim().min(1).max(120),
   coverage_type: z.enum(INSURANCE_COVERAGE_TYPES),
@@ -248,6 +249,18 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
     const body = parsed.data;
 
     const created = await withCompanyScope(user.uuid, body.operating_company_id, async (client) => {
+      const vendorRes = await client.query<{ vendor_name: string }>(
+        `SELECT vendor_name
+         FROM mdata.vendors
+         WHERE id = $1::uuid
+           AND operating_company_id = $2::uuid
+           AND deactivated_at IS NULL
+         LIMIT 1`,
+        [body.vendor_id, body.operating_company_id]
+      );
+      const vendorName = vendorRes.rows[0]?.vendor_name;
+      if (!vendorName) return { kind: "vendor_not_found" as const };
+
       const coverageTypeRes = await client.query<{ id: string }>(
         `
           SELECT id::text
@@ -259,13 +272,14 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
         `,
         [body.operating_company_id, body.coverage_type]
       );
-      if (!coverageTypeRes.rows[0]) return null;
+      if (!coverageTypeRes.rows[0]) return { kind: "coverage_type_not_found" as const };
 
       const result = await client.query(
         `
           INSERT INTO insurance.policy (
             tenant_id,
             operating_company_id,
+            vendor_id,
             insurer_name,
             policy_number,
             coverage_type,
@@ -283,13 +297,14 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
             status
           )
           VALUES (
-            $1::uuid, $1::uuid, $2, $3, $4, $5::uuid, $6::date, $7::date, $8, $9, $10, $11, $12, $13, $14, $15, $16
+            $1::uuid, $1::uuid, $2, $3, $4, $5, $6::uuid, $7::date, $8::date, $9, $10, $11, $12, $13, $14, $15, $16, $17
           )
           RETURNING ${policySelectColumns()}
         `,
         [
           body.operating_company_id,
-          body.insurer_name,
+          body.vendor_id,
+          vendorName,
           body.policy_number,
           body.coverage_type,
           coverageTypeRes.rows[0].id,
@@ -310,11 +325,12 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
         resource_id: result.rows[0]?.id,
         operating_company_id: body.operating_company_id,
       });
-      return result.rows[0];
+      return { kind: "created" as const, policy: result.rows[0] };
     });
 
-    if (!created) return reply.code(400).send({ error: "coverage_type_not_found" });
-    return reply.code(201).send(created);
+    if (created.kind === "vendor_not_found") return reply.code(400).send({ error: "insurance_vendor_not_found" });
+    if (created.kind === "coverage_type_not_found") return reply.code(400).send({ error: "coverage_type_not_found" });
+    return reply.code(201).send(created.policy);
   });
 
   app.patch("/api/v1/insurance/policies/:id", async (req, reply) => {

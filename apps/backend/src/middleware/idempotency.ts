@@ -46,6 +46,7 @@ const REQUIRED_MATCHERS: RegExp[] = [
   /^\/api\/v1\/accounting\/factoring-advances(\/|$)/i,
   /^\/api\/v1\/banking\/transactions(\/|$)/i,
   /^\/api\/v1\/banking\/manual-je(\/|$)/i,
+  /^\/api\/v1\/insurance\/policies(\/|$)/i,
   /^\/api\/v1\/qbo-sync\//i,
 ];
 

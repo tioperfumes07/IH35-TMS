@@ -195,6 +195,7 @@ export function PolicyCreateModal({ open, operatingCompanyId, onClose, onCreated
     mutationFn: async (next: { payload: Omit<FormState, "total_premium" | "down_payment">; totalPremiumCents?: number; downPaymentCents?: number; unitIds: string[] }) => {
       const created = await insurancePoliciesApi.create({
         operating_company_id: operatingCompanyId,
+        vendor_id: next.payload.insurer_vendor_id,
         insurer_name: next.payload.insurer_name.trim(),
         policy_number: next.payload.policy_number.trim(),
         coverage_type: next.payload.coverage_type as Parameters<typeof insurancePoliciesApi.create>[0]["coverage_type"],
