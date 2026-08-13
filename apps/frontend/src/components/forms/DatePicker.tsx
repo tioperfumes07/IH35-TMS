@@ -31,8 +31,34 @@ function parseISO(v: string): { y: number; m: number; d: number } | null {
   return { y: Number(mt[1]), m: Number(mt[2]) - 1, d: Number(mt[3]) };
 }
 
+/**
+ * className is LAYOUT ONLY (width / margin / display). The button owns the single
+ * QBO border chrome. Callers that pass `border` / `rounded` / `px-*` / `py-*` used to
+ * paint a second box around the control (Assignment History From/To — CLS box-in-box).
+ */
+function partitionDatePickerClassName(className: string): { shell: string; buttonHeight: string } {
+  const shell: string[] = [];
+  let buttonHeight = "";
+  for (const token of className.trim().split(/\s+/).filter(Boolean)) {
+    if (
+      /^(rounded|border|px-|py-|p-|pt-|pb-|pl-|pr-|text-|focus:|hover:border)/.test(token) ||
+      token.startsWith("border-") ||
+      token.startsWith("rounded-")
+    ) {
+      continue;
+    }
+    if (/^h-/.test(token)) {
+      buttonHeight = token;
+      continue;
+    }
+    shell.push(token);
+  }
+  return { shell: shell.join(" "), buttonHeight };
+}
+
 export function DatePicker({ value, onChange, className = "", disabled, id, placeholder, max, min, "data-testid": dataTestId }: Props) {
   const isOutOfRange = (iso: string) => Boolean((max && iso > max) || (min && iso < min));
+  const { shell, buttonHeight } = partitionDatePickerClassName(className);
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const parsed = parseISO(value);
@@ -77,13 +103,13 @@ export function DatePicker({ value, onChange, className = "", disabled, id, plac
   };
 
   return (
-    <div className={`relative ${className}`} ref={ref} data-testid={dataTestId}>
+    <div className={`relative ${shell}`.trim()} ref={ref} data-testid={dataTestId}>
       <button
         id={id}
         type="button"
         disabled={disabled}
         onClick={() => setOpen((o) => !o)}
-        className="flex h-7 w-full items-center justify-between gap-1 rounded-sm border border-gray-300 px-2 text-left text-xs"
+        className={`flex ${buttonHeight || "h-9"} w-full items-center justify-between gap-1 rounded-sm border border-gray-300 px-2 text-left text-[13px]`}
       >
         <span className={value ? "" : "text-gray-400"}>{value ? formatDateUS(value) : placeholder || DATE_PLACEHOLDER_US}</span>
         <Calendar className="h-3.5 w-3.5 text-gray-400" />

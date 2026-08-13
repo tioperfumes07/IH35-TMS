@@ -13,22 +13,38 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { EntityPicker } from "../../components/parity/EntityPicker";
 import { formatQueryErrorDetail } from "../../lib/tableError";
 
+type Filters = {
+  driverId: string;
+  from: string;
+  to: string;
+  reason: string;
+};
+
+const EMPTY_FILTERS: Filters = { driverId: "", from: "", to: "", reason: "" };
+
 export function AssignmentHistoryPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
-  const [driverId, setDriverId] = useState("");
-  const [from, setFrom] = useState("");
-  const [to, setTo] = useState("");
-  const [reason, setReason] = useState("");
+  // Draft vs applied — filter/gear law: change fields freely; query runs only after Apply.
+  const [draft, setDraft] = useState<Filters>(EMPTY_FILTERS);
+  const [applied, setApplied] = useState<Filters>(EMPTY_FILTERS);
 
   const historyQ = useQuery({
-    queryKey: ["dispatch", "assignment-history-global", companyId, driverId, from, to, reason],
+    queryKey: [
+      "dispatch",
+      "assignment-history-global",
+      companyId,
+      applied.driverId,
+      applied.from,
+      applied.to,
+      applied.reason,
+    ],
     queryFn: () =>
       listDispatchAssignmentHistory(companyId, {
-        driver_id: driverId.trim() || undefined,
-        from: from || undefined,
-        to: to || undefined,
-        reason: reason.trim() || undefined,
+        driver_id: applied.driverId.trim() || undefined,
+        from: applied.from || undefined,
+        to: applied.to || undefined,
+        reason: applied.reason.trim() || undefined,
       }),
     enabled: Boolean(companyId),
   });
@@ -40,8 +56,6 @@ export function AssignmentHistoryPage() {
   const rows = historyQ.data?.rows ?? [];
   type AssignmentHistoryRow = (typeof rows)[number];
 
-  // Migrated to the shared QBO-parity grid — columns/order preserved; id cells use EntityLink
-  // (Law of the Land reverse drill-through) instead of plain text / ad-hoc Link.
   const columns: Array<ParityColumn<AssignmentHistoryRow>> = [
     { key: "assigned_at", label: "Assigned at", sortable: true, render: (row) => new Date(row.assigned_at).toLocaleString() },
     {
@@ -96,36 +110,69 @@ export function AssignmentHistoryPage() {
         }
       />
 
-      <section className="grid gap-3 rounded-sm border bg-white p-4 md:grid-cols-4">
+      <section
+        data-testid="assignment-history-filters"
+        className="grid gap-3 rounded-sm border bg-white p-4 md:grid-cols-4"
+      >
         <div className="flex flex-col gap-1">
           <label className="text-xs font-semibold text-gray-600">Driver</label>
-          {/* C1 PICKER LAW: was a raw-UUID box. allowCreate={false} — a FILTER narrows rows that
-              already exist; offering to create a driver from a filter is nonsense, and no reference
-              product (QBO, NetSuite, McLeod, Alvys) does it. */}
           <EntityPicker
             kind="driver"
             operatingCompanyId={companyId}
-            value={driverId || null}
-            onChange={(next) => setDriverId(next ?? "")}
+            value={draft.driverId || null}
+            onChange={(next) => setDraft((d) => ({ ...d, driverId: next ?? "" }))}
             allowCreate={false}
             placeholder="All drivers"
           />
         </div>
         <div className="flex flex-col gap-1">
           <label className="text-xs font-semibold text-gray-600">From</label>
-          <DatePicker value={from} onChange={(next) => setFrom(next)} className="rounded-sm border px-2 text-sm py-2" />
+          {/* Layout-only className — DatePicker owns the single border (no box-in-box). */}
+          <DatePicker
+            value={draft.from}
+            onChange={(next) => setDraft((d) => ({ ...d, from: next }))}
+            className="w-full"
+            data-testid="assignment-history-from-date"
+          />
         </div>
         <div className="flex flex-col gap-1">
           <label className="text-xs font-semibold text-gray-600">To</label>
-          <DatePicker value={to} onChange={(next) => setTo(next)} className="rounded-sm border px-2 text-sm py-2" />
+          <DatePicker
+            value={draft.to}
+            onChange={(next) => setDraft((d) => ({ ...d, to: next }))}
+            className="w-full"
+            data-testid="assignment-history-to-date"
+          />
         </div>
         <div className="flex flex-col gap-1">
           <label className="text-xs font-semibold text-gray-600">Reason contains</label>
           <input
-            value={reason}
-            onChange={(event) => setReason(event.target.value)}
-            className="rounded-sm border border-gray-300 h-9 px-2 text-[13px]"
+            value={draft.reason}
+            onChange={(event) => setDraft((d) => ({ ...d, reason: event.target.value }))}
+            className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]"
           />
+        </div>
+        <div className="md:col-span-4 flex flex-wrap items-center justify-end gap-2 border-t border-slate-100 pt-3">
+          <Button
+            type="button"
+            size="sm"
+            variant="secondary"
+            data-testid="assignment-history-filter-reset"
+            onClick={() => {
+              setDraft(EMPTY_FILTERS);
+              setApplied(EMPTY_FILTERS);
+            }}
+          >
+            Reset
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            data-testid="assignment-history-filter-apply"
+            onClick={() => setApplied(draft)}
+          >
+            Apply
+          </Button>
         </div>
       </section>
 
