@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   listInsurancePolicies,
   listInsuranceTypeCatalog,
@@ -43,6 +43,7 @@ export function PoliciesList() {
   const { selectedCompanyId } = useCompanyContext();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const vendorId = useSearchParams()[0].get("vendor_id") ?? undefined;
   const companyId = selectedCompanyId ?? "";
   const [createOpen, setCreateOpen] = useState(false);
   const [wizardOpen, setWizardOpen] = useState(false);
@@ -60,13 +61,14 @@ export function PoliciesList() {
   const canCreatePolicy = user?.role === "Owner" || user?.role === "Administrator" || user?.role === "Accountant";
 
   const policiesQuery = useQuery({
-    queryKey: ["insurance", "policies", companyId, typeFilter || "all", statusFilter || "all"],
+    queryKey: ["insurance", "policies", companyId, typeFilter || "all", statusFilter || "all", vendorId],
     enabled: Boolean(companyId),
     queryFn: () =>
       listInsurancePolicies({
         operating_company_id: companyId,
         coverage_type: typeFilter ? (typeFilter as InsurancePolicy["coverage_type"]) : undefined,
         status: statusFilter || undefined,
+        vendor_id: vendorId,
       }).then((result) => result.policies),
   });
 

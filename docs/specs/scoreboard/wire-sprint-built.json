@@ -760,6 +760,14 @@
       "modules": ["maintenance", "fleet", "safety"],
       "cols": ["unit", "connectivity", "reverse_link", "picker_law"],
       "leafRe": "^(severe|repair|oos|unit|profile|detail|create)"
+    },
+    {
+      "task": "INSURANCE-POLICY-VENDOR-REVERSE",
+      "pr": "this PR",
+      "guard": "scripts/verify-insurance-policy-vendor-reverse.mjs",
+      "modules": ["insurance", "vendors", "safety"],
+      "cols": ["vendor", "connectivity", "reverse_link", "picker_law"],
+      "leafRe": "^(insurance|policy|vendor|profile|list|create)"
     }
   ]
 }
