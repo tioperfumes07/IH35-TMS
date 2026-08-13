@@ -188,7 +188,7 @@ export function ExpenseDetailPage() {
               label={
                 expense.journal_entry_date
                   ? `${formatDateUS(expense.journal_entry_date)}${expense.journal_entry_memo ? ` — ${expense.journal_entry_memo}` : ""}`
-                  : entityLabel(null, expense.journal_entry_id, "Journal entry")
+                  : entityLabel(expense.journal_entry_memo ?? null, expense.journal_entry_id, "Journal entry")
               }
             />
           </DataPanelRow>
@@ -210,7 +210,11 @@ export function ExpenseDetailPage() {
                         ? ` (${money(expense.matched_bank_transaction_amount_cents)})`
                         : ""
                     }`
-                  : entityLabel(null, expense.matched_bank_transaction_id, "Bank transaction")
+                  : entityLabel(
+                      expense.matched_bank_transaction_description ?? null,
+                      expense.matched_bank_transaction_id,
+                      "Bank transaction",
+                    )
               }
             />
           </DataPanelRow>

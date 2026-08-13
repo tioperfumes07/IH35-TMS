@@ -460,6 +460,7 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
             ${EXPENSE_MATCHED_BANK_TRANSACTION_ID_SQL}   AS matched_bank_transaction_id,
             je.entry_date                                  AS journal_entry_date,
             je.memo                                        AS journal_entry_memo,
+            -- ACCT-F5072: matched bank date/description are the EntityLink human labels (never UUID chrome).
             bt.transaction_date                            AS matched_bank_transaction_date,
             bt.description                                 AS matched_bank_transaction_description,
             bt.amount_cents::text                          AS matched_bank_transaction_amount_cents
