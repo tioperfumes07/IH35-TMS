@@ -32,26 +32,16 @@ export function DtcAutoWorkOrdersCard({ operatingCompanyId, compact = false, onO
         ) : (
           <ul className="flex flex-col">
             {rows.slice(0, 10).map((row) => {
-              const label = (
-                <>
+              return (
+                <li key={row.id} className="border-t border-gray-100 px-2 py-1 first:border-t-0 text-[10px]">
                   <div className="flex items-center justify-between gap-1">
-                    <span className="font-semibold" style={{ color: "#1F2A44" }}>
-                      {entityLabel(row.unit_number, row.unit_id, "Unit") ?? "N/A"}
-                    </span>
+                    <span className="font-semibold" style={{ color: "#1F2A44" }}><EntityLink kind="unit" id={row.unit_id} label={entityLabel(row.unit_number, row.unit_id, "Unit") ?? "N/A"} /></span>
                     <span className="text-[9px]" style={{ color: "#854F0B" }}>{row.status}</span>
                   </div>
                   <div className="truncate text-gray-500">{row.description ?? "DTC fault"}</div>
-                </>
-              );
-              return (
-                <li key={row.id} className="border-t border-gray-100 first:border-t-0 text-[10px]">
                   {onOpen ? (
-                    <button type="button" onClick={() => onOpen(row.id)} className="block w-full px-2 py-1 text-left hover:bg-gray-50">
-                      {label}
-                    </button>
-                  ) : (
-                    <div className="px-2 py-1">{label}</div>
-                  )}
+                    <button type="button" onClick={() => onOpen(row.id)} className="mt-1 font-semibold text-slate-700 hover:underline">Open work order</button>
+                  ) : <EntityLink kind="work_order" id={row.id} label={entityLabel(row.display_id, row.id, "Record")} className="mt-1 inline-block font-semibold" />}
                 </li>
               );
             })}
@@ -75,7 +65,7 @@ export function DtcAutoWorkOrdersCard({ operatingCompanyId, compact = false, onO
             <div key={row.id} className="rounded-sm border border-gray-200 p-2 text-xs">
               <div className="flex items-center justify-between">
                 <span className="font-semibold text-gray-900">
-                  <EntityLink kind="work_order" id={row.id} label={entityLabel(row.display_id, row.id, "Record")} /> · Unit {entityLabel(row.unit_number, row.unit_id, "Unit") ?? "N/A"}
+                  <EntityLink kind="work_order" id={row.id} label={entityLabel(row.display_id, row.id, "Record")} /> · Unit <EntityLink kind="unit" id={row.unit_id} label={entityLabel(row.unit_number, row.unit_id, "Unit") ?? "N/A"} />
                 </span>
                 <span className="rounded-sm bg-amber-100 px-2 py-0.5 text-amber-800">{row.status}</span>
               </div>
