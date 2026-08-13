@@ -2,7 +2,7 @@
 /**
  * gl_je COLUMN-WAVE — VERTICAL-WIRING-LAW-2026-08-12.
  *
- * @matrix-built {"modules":["factoring"],"cols":["gl_je"],"leafRe":".*","task":"WAVE-C-gl_je","vertical":"column-wave"}
+ * @matrix-built {"modules":["factoring"],"cols":["gl_je"],"leafRe":"^home\\.reserve_tracker$","task":"WAVE-C-gl_je-factoring-reserve-tracker","vertical":"column-wave"}
  * @matrix-built {"modules":["accounting"],"cols":["gl_je"],"leafRe":"^(bills\\.|bill_payments\\.)","task":"WAVE-C-gl_je-accounting-bills","vertical":"column-wave"}
  * @matrix-built {"modules":["safety"],"cols":["gl_je"],"leafRe":"^(safety\\.drawer\\.fine_detail|safety\\.parity\\.fine_detail)$","task":"WAVE-C-gl_je-safety-fine-detail","vertical":"column-wave"}
  *
@@ -22,6 +22,21 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-gl-je-column-wave";
+const SELF_SOURCE = fs.readFileSync(fileURLToPath(import.meta.url), "utf8");
+
+export function checkStrictMatrixTags(src) {
+  const failures = [];
+  const tags = [...src.matchAll(/@matrix-built\s+(\{[^\n]+\})/g)].map((match) => JSON.parse(match[1]));
+  if (tags.some((tag) => tag.leafRe === ".*")) failures.push("broad leafRe=.* Built claim is forbidden");
+  for (const leafRe of [
+    "^home\\.reserve_tracker$",
+    "^(bills\\.|bill_payments\\.)",
+    "^(safety\\.drawer\\.fine_detail|safety\\.parity\\.fine_detail)$",
+  ]) {
+    if (!tags.some((tag) => tag.leafRe === leafRe)) failures.push(`missing strict Built tag ${leafRe}`);
+  }
+  return failures;
+}
 
 const LEAVES = [
   {
@@ -109,11 +124,17 @@ if (process.argv.includes("--selftest")) {
     process.exit(1);
   }
 
+  if (checkStrictMatrixTags(SELF_SOURCE.replace('"leafRe":"^home\\\\.reserve_tracker$"', '"leafRe":".*"')).length === 0) {
+    console.error(`[${LABEL}] selftest FAIL: broad Built tag mutation should FAIL but passed`);
+    process.exit(1);
+  }
+
   console.log(`[${LABEL}] selftest: PASS — good/regressed-backend/regressed-frontend fixtures classify correctly`);
   process.exit(0);
 }
 
 let failures = [];
+failures.push(...checkStrictMatrixTags(SELF_SOURCE));
 for (const leaf of LEAVES) {
   const backendPath = path.join(ROOT, leaf.backend);
   const frontendPath = path.join(ROOT, leaf.frontend);
@@ -136,4 +157,4 @@ if (failures.length) {
   for (const f of failures) console.error("  ✗", f);
   process.exit(1);
 }
-console.log(`[${LABEL}] PASS — all ${LEAVES.length} priority-10 modules with a money-posting leaf carry the gl_je reverse-link (lists is N/A, no posting leaf exists)`);
+console.log(`[${LABEL}] PASS — ${LEAVES.length} representative gl_je reverse-link paths hold; Built tags remain leaf-specific`);
