@@ -3774,6 +3774,17 @@
         "qbo_chrome",
         "connectivity"
       ]
+    },
+    {
+      "id": "chrome.toolbar_filter",
+      "tab": "Chrome controls",
+      "sub": "List toolbar — Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
+      "route_hint": "/lists",
+      "surface_kind": "toolbar",
+      "required": [
+        "qbo_chrome",
+        "connectivity"
+      ]
     }
   ],
   "honesty_note": {
