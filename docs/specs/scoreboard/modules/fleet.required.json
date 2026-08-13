@@ -2,10 +2,10 @@
   "module": "fleet",
   "entity_default": "USMCA",
   "source": {
-    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md — Vehicle Profile · Trailer Profile (Fleet module)",
+    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md \u2014 Vehicle Profile \u00b7 Trailer Profile (Fleet module)",
     "nav": "apps/frontend/src/pages/fleet/FleetHomePage.tsx + FleetTablePage kind/status sub-tabs",
-    "profiles": "VehicleProfilePage · TrailerProfilePage · UnitDetail (permits/toll-tags/tasks/brakes/tires/finance)",
-    "modals": "CreateUnitModal · CreateTrailerModal · EditVehicleModal (8 tabs) · EditTrailerModal · QuickAssignModal · StatusChangeModal",
+    "profiles": "VehicleProfilePage \u00b7 TrailerProfilePage \u00b7 UnitDetail (permits/toll-tags/tasks/brakes/tires/finance)",
+    "modals": "CreateUnitModal \u00b7 CreateTrailerModal \u00b7 EditVehicleModal (8 tabs) \u00b7 EditTrailerModal \u00b7 QuickAssignModal \u00b7 StatusChangeModal",
     "routes": "apps/frontend/src/routes/manifest.tsx /fleet/*"
   },
   "columns": [
@@ -138,7 +138,6 @@
         "vendor",
         "connectivity",
         "reverse_link",
-        "picker_law",
         "qbo_chrome"
       ]
     },
@@ -177,7 +176,7 @@
     {
       "id": "roster.kind.all",
       "tab": "Roster",
-      "sub": "Kind filter · All",
+      "sub": "Kind filter \u00b7 All",
       "route_hint": "/fleet?kind=",
       "required": [
         "unit",
@@ -189,7 +188,7 @@
     {
       "id": "roster.kind.trucks",
       "tab": "Roster",
-      "sub": "Kind filter · Trucks",
+      "sub": "Kind filter \u00b7 Trucks",
       "route_hint": "/fleet?kind=truck",
       "required": [
         "driver",
@@ -201,7 +200,7 @@
     {
       "id": "roster.kind.trailers",
       "tab": "Roster",
-      "sub": "Kind filter · Trailers",
+      "sub": "Kind filter \u00b7 Trailers",
       "route_hint": "/fleet?kind=trailer",
       "required": [
         "trailer",
@@ -213,7 +212,7 @@
     {
       "id": "roster.kind.company",
       "tab": "Roster",
-      "sub": "Kind filter · Company Vehicles",
+      "sub": "Kind filter \u00b7 Company Vehicles",
       "route_hint": "/fleet?kind=company",
       "required": [
         "unit",
@@ -224,7 +223,7 @@
     {
       "id": "roster.filter.type",
       "tab": "Roster",
-      "sub": "Type filter (Truck · Tractor · Reefer · …)",
+      "sub": "Type filter (Truck \u00b7 Tractor \u00b7 Reefer \u00b7 \u2026)",
       "route_hint": "/fleet?type=",
       "required": [
         "unit",
@@ -236,7 +235,7 @@
     {
       "id": "roster.filter.status_active",
       "tab": "Roster",
-      "sub": "KPI filter · Active (InService)",
+      "sub": "KPI filter \u00b7 Active (InService)",
       "route_hint": "/fleet?status=InService",
       "required": [
         "unit",
@@ -248,7 +247,7 @@
     {
       "id": "roster.filter.status_inshop",
       "tab": "Roster",
-      "sub": "KPI filter · In-Shop",
+      "sub": "KPI filter \u00b7 In-Shop",
       "route_hint": "/fleet?status=InMaintenance",
       "required": [
         "unit",
@@ -260,7 +259,7 @@
     {
       "id": "roster.filter.status_oos",
       "tab": "Roster",
-      "sub": "KPI filter · Out-of-Service",
+      "sub": "KPI filter \u00b7 Out-of-Service",
       "route_hint": "/fleet?status=OutOfService",
       "required": [
         "unit",
@@ -271,20 +270,19 @@
     {
       "id": "roster.bulk.status",
       "tab": "Roster",
-      "sub": "Bulk · Change Status",
+      "sub": "Bulk \u00b7 Change Status",
       "route_hint": "/fleet",
       "required": [
         "unit",
         "trailer",
         "connectivity",
-        "reverse_link",
-        "picker_law"
+        "reverse_link"
       ]
     },
     {
       "id": "roster.bulk.type",
       "tab": "Roster",
-      "sub": "Bulk · Change Type",
+      "sub": "Bulk \u00b7 Change Type",
       "route_hint": "/fleet",
       "required": [
         "unit",
@@ -296,7 +294,7 @@
     {
       "id": "roster.bulk.inactivate",
       "tab": "Roster",
-      "sub": "Bulk · Inactivate / Reactivate",
+      "sub": "Bulk \u00b7 Inactivate / Reactivate",
       "route_hint": "/fleet",
       "required": [
         "unit",
@@ -308,7 +306,7 @@
     {
       "id": "roster.row.edit_unit",
       "tab": "Roster",
-      "sub": "Row Edit · truck/tractor",
+      "sub": "Row Edit \u00b7 truck/tractor",
       "route_hint": "/fleet",
       "required": [
         "driver",
@@ -325,13 +323,12 @@
     {
       "id": "roster.row.edit_trailer",
       "tab": "Roster",
-      "sub": "Row Edit · trailer",
+      "sub": "Row Edit \u00b7 trailer",
       "route_hint": "/fleet",
       "required": [
         "trailer",
         "unit",
         "vendor",
-        "picker_law",
         "qbo_chrome",
         "connectivity",
         "reverse_link"
@@ -340,7 +337,7 @@
     {
       "id": "unit.profile.identity",
       "tab": "Vehicle Profile",
-      "sub": "Identity · status · plates · quick availability",
+      "sub": "Identity \u00b7 status \u00b7 plates \u00b7 quick availability",
       "route_hint": "/fleet/units/:id",
       "required": [
         "driver",
@@ -349,7 +346,6 @@
         "vendor",
         "connectivity",
         "reverse_link",
-        "picker_law",
         "qbo_chrome"
       ]
     },
@@ -373,8 +369,7 @@
         "driver",
         "unit",
         "connectivity",
-        "reverse_link",
-        "picker_law"
+        "reverse_link"
       ]
     },
     {
@@ -385,7 +380,6 @@
       "required": [
         "driver",
         "unit",
-        "picker_law",
         "qbo_chrome",
         "connectivity",
         "reverse_link"
@@ -403,8 +397,7 @@
         "trailer",
         "load",
         "connectivity",
-        "reverse_link",
-        "picker_law"
+        "reverse_link"
       ]
     },
     {
@@ -448,7 +441,7 @@
     {
       "id": "unit.profile.expenses_reverse",
       "tab": "Vehicle Profile",
-      "sub": "Expenses reverse · unit_id filter",
+      "sub": "Expenses reverse \u00b7 unit_id filter",
       "route_hint": "/fleet/units/:id",
       "required": [
         "unit",
@@ -486,7 +479,7 @@
     {
       "id": "unit.profile.financial_pl",
       "tab": "Vehicle Profile",
-      "sub": "Financial P&L · ownership cost · comparables",
+      "sub": "Financial P&L \u00b7 ownership cost \u00b7 comparables",
       "route_hint": "/fleet/units/:id",
       "required": [
         "unit",
@@ -536,7 +529,7 @@
     {
       "id": "unit.profile.safety_reverse",
       "tab": "Vehicle Profile",
-      "sub": "Safety records reverse (DOT · DVIR · accidents)",
+      "sub": "Safety records reverse (DOT \u00b7 DVIR \u00b7 accidents)",
       "route_hint": "/fleet/units/:id",
       "required": [
         "unit",
@@ -578,7 +571,6 @@
       "required": [
         "unit",
         "vendor",
-        "picker_law",
         "qbo_chrome",
         "connectivity",
         "reverse_link"
@@ -587,7 +579,7 @@
     {
       "id": "unit.profile.action_bar",
       "tab": "Vehicle Profile",
-      "sub": "Action bar (Edit · Archive · PDF export)",
+      "sub": "Action bar (Edit \u00b7 Archive \u00b7 PDF export)",
       "route_hint": "/fleet/units/:id",
       "required": [
         "unit",
@@ -599,7 +591,7 @@
     {
       "id": "unit.edit.identity",
       "tab": "Edit Vehicle",
-      "sub": "Modal tab · Identity",
+      "sub": "Modal tab \u00b7 Identity",
       "route_hint": "/fleet/units/:id",
       "required": [
         "driver",
@@ -615,7 +607,7 @@
     {
       "id": "unit.edit.insurance",
       "tab": "Edit Vehicle",
-      "sub": "Modal tab · Insurance",
+      "sub": "Modal tab \u00b7 Insurance",
       "route_hint": "/fleet/units/:id",
       "required": [
         "unit",
@@ -629,7 +621,7 @@
     {
       "id": "unit.edit.irp_plates",
       "tab": "Edit Vehicle",
-      "sub": "Modal tab · IRP / Plates",
+      "sub": "Modal tab \u00b7 IRP / Plates",
       "route_hint": "/fleet/units/:id",
       "required": [
         "unit",
@@ -640,7 +632,7 @@
     {
       "id": "unit.edit.reefer",
       "tab": "Edit Vehicle",
-      "sub": "Modal tab · Reefer (conditional)",
+      "sub": "Modal tab \u00b7 Reefer (conditional)",
       "route_hint": "/fleet/units/:id",
       "required": [
         "unit",
@@ -652,7 +644,7 @@
     {
       "id": "unit.edit.financial",
       "tab": "Edit Vehicle",
-      "sub": "Modal tab · Financial",
+      "sub": "Modal tab \u00b7 Financial",
       "route_hint": "/fleet/units/:id",
       "required": [
         "unit",
@@ -664,7 +656,7 @@
     {
       "id": "unit.edit.lifecycle",
       "tab": "Edit Vehicle",
-      "sub": "Modal tab · Lifecycle (Sold · Transferred · Damaged · OOS)",
+      "sub": "Modal tab \u00b7 Lifecycle (Sold \u00b7 Transferred \u00b7 Damaged \u00b7 OOS)",
       "route_hint": "/fleet/units/:id",
       "required": [
         "unit",
@@ -675,7 +667,7 @@
     {
       "id": "unit.edit.quick_availability",
       "tab": "Edit Vehicle",
-      "sub": "Modal tab · Quick-availability + default driver",
+      "sub": "Modal tab \u00b7 Quick-availability + default driver",
       "route_hint": "/fleet/units/:id",
       "required": [
         "driver",
@@ -689,7 +681,7 @@
     {
       "id": "unit.edit.documents",
       "tab": "Edit Vehicle",
-      "sub": "Modal tab · Documents",
+      "sub": "Modal tab \u00b7 Documents",
       "route_hint": "/fleet/units/:id",
       "required": [
         "unit",
@@ -706,8 +698,7 @@
       "required": [
         "unit",
         "connectivity",
-        "reverse_link",
-        "picker_law"
+        "reverse_link"
       ]
     },
     {
@@ -775,14 +766,13 @@
     {
       "id": "trailer.profile.identity",
       "tab": "Trailer Profile",
-      "sub": "Identity · status badge · status change entry",
+      "sub": "Identity \u00b7 status badge \u00b7 status change entry",
       "route_hint": "/fleet/trailers/:id",
       "required": [
         "trailer",
         "unit",
         "connectivity",
         "reverse_link",
-        "picker_law",
         "qbo_chrome"
       ]
     },
@@ -866,7 +856,7 @@
     {
       "id": "trailer.profile.safety_reverse",
       "tab": "Trailer Profile",
-      "sub": "Safety records reverse (DOT · interchange)",
+      "sub": "Safety records reverse (DOT \u00b7 interchange)",
       "route_hint": "/fleet/trailers/:id",
       "required": [
         "trailer",
@@ -914,7 +904,7 @@
     {
       "id": "trailer.profile.expenses_reverse",
       "tab": "Trailer Profile",
-      "sub": "Expenses reverse · trailer_id filter",
+      "sub": "Expenses reverse \u00b7 trailer_id filter",
       "route_hint": "/fleet/trailers/:id",
       "required": [
         "trailer",
@@ -937,7 +927,7 @@
     {
       "id": "trailer.profile.action_bar",
       "tab": "Trailer Profile",
-      "sub": "Action bar (Edit · Status · Archive · PDF)",
+      "sub": "Action bar (Edit \u00b7 Status \u00b7 Archive \u00b7 PDF)",
       "route_hint": "/fleet/trailers/:id",
       "required": [
         "trailer",
@@ -955,8 +945,7 @@
         "trailer",
         "unit",
         "connectivity",
-        "reverse_link",
-        "picker_law"
+        "reverse_link"
       ]
     },
     {
@@ -968,7 +957,6 @@
         "trailer",
         "unit",
         "vendor",
-        "picker_law",
         "qbo_chrome",
         "connectivity",
         "reverse_link"
@@ -990,7 +978,7 @@
     {
       "id": "map.redirect",
       "tab": "Map",
-      "sub": "Fleet map → Dispatch map (driver/unit hop)",
+      "sub": "Fleet map \u2192 Dispatch map (driver/unit hop)",
       "route_hint": "/fleet/map",
       "required": [
         "driver",
@@ -1086,7 +1074,7 @@
     {
       "id": "chrome.toolbar_search",
       "tab": "Chrome controls",
-      "sub": "List toolbar — Search (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar \u2014 Search (CLS-LIST-TOOLBAR)",
       "route_hint": "/fleet",
       "surface_kind": "toolbar",
       "required": [
@@ -1097,7 +1085,7 @@
     {
       "id": "chrome.toolbar_range",
       "tab": "Chrome controls",
-      "sub": "List toolbar — date/amount range (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar \u2014 date/amount range (CLS-LIST-TOOLBAR)",
       "route_hint": "/fleet",
       "surface_kind": "toolbar",
       "required": [
@@ -1108,7 +1096,7 @@
     {
       "id": "chrome.toolbar_gear",
       "tab": "Chrome controls",
-      "sub": "List toolbar — column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
+      "sub": "List toolbar \u2014 column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
       "route_hint": "/fleet",
       "surface_kind": "toolbar",
       "required": [
@@ -1119,7 +1107,7 @@
     {
       "id": "chrome.toolbar_filter",
       "tab": "Chrome controls",
-      "sub": "List toolbar — Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
+      "sub": "List toolbar \u2014 Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
       "route_hint": "/fleet",
       "surface_kind": "toolbar",
       "required": [
@@ -1141,7 +1129,85 @@
         "invoice",
         "bank"
       ],
-      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; §B9 link columns added."
+      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; \u00a7B9 link columns added."
+    },
+    "picker_law_2026_08_13_fleet": {
+      "finding": "VERTICAL-PICKER-LAW-FLEET-EDIT",
+      "note": "Roster/profile/trailer chrome without EntityPicker inflated picker_law. Built: EditVehicleModal leaves (roster.row.edit_unit + unit.edit.*).",
+      "drops": [
+        {
+          "id": "home.roster",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "roster.bulk.status",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "roster.row.edit_trailer",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "unit.profile.identity",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "unit.profile.driver_assign",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "unit.profile.quick_assign",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "unit.profile.current_load",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "unit.profile.qbo_mapping",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "unit.detail.permits",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "trailer.profile.identity",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "trailer.status_change",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "trailer.edit",
+          "removed": [
+            "picker_law"
+          ]
+        }
+      ]
     }
   }
 }
