@@ -1,1 +1,1 @@
-NOW 2026-08-12 19:43 CT · CANON=FINAL-CREATE-PATH-TRIP-WIRING-2026-08-12 · DO: WO create trailer_id/equipment_id submit (+picker) · FORBIDDEN: matrix Required primary (#6290 CLOSED) · DONE: #6296 #6300
+NOW 2026-08-12 20:13 CT · bus keep 20:15 canon · FE after CC-1 schema · Live after Built 100%
