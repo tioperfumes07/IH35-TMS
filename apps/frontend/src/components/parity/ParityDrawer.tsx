@@ -10,6 +10,7 @@
 import { useEffect, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { PARITY_DRAWER_WIDTH, PARITY_DRAWER_WIDTH_WIDE } from "./sizing";
+import "../styles/proportion-chrome.css";
 
 export type ParityDrawerProps = {
   open: boolean;
@@ -91,9 +92,13 @@ export function ParityDrawer({
         role="dialog"
         aria-label={title}
         data-parity-drawer=""
+        data-proportion-chrome="qbo-compact"
         className={`absolute right-0 top-0 flex h-full max-h-screen flex-col border-l border-gray-200 bg-white shadow-xl ${widthClass}`}
       >
-        <header className="flex items-start justify-between gap-2 border-b border-gray-200 px-4 py-3">
+        <header
+          className="flex items-start justify-between gap-2 border-b border-gray-200 px-4 py-3"
+          data-proportion-chrome-header=""
+        >
           <div className="flex min-w-0 items-start gap-2">
             {onBack ? (
               <button

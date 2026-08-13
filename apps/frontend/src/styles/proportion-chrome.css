@@ -1,0 +1,25 @@
+/* CLS-PROPORTION-CHROME — modal / side-panel density vs QBO approved chrome (2026-08-12)
+ *
+ * Approved density: compact fields (~36–40px), header/body padding px-4 py-3,
+ * no balloon padding (p-8 / py-8) on shared shells.
+ */
+
+[data-proportion-chrome="qbo-compact"] {
+  --ih35-field-height: 38px;
+  --ih35-chrome-pad-x: 1rem; /* px-4 */
+  --ih35-chrome-pad-y: 0.75rem; /* py-3 */
+}
+
+[data-proportion-chrome="qbo-compact"] input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
+[data-proportion-chrome="qbo-compact"] select,
+[data-proportion-chrome="qbo-compact"] [data-proportion-field] {
+  min-height: var(--ih35-field-height);
+}
+
+/* Keep title row compact — match ParityDrawer / Modal shared chrome */
+[data-proportion-chrome="qbo-compact"] [data-proportion-chrome-header] {
+  padding-left: var(--ih35-chrome-pad-x);
+  padding-right: var(--ih35-chrome-pad-x);
+  padding-top: var(--ih35-chrome-pad-y);
+  padding-bottom: var(--ih35-chrome-pad-y);
+}

@@ -79,7 +79,7 @@ export function AddPartsLinkModal({ open, workOrderId, operatingCompanyId, onClo
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-      <div className="relative flex w-full max-w-md flex-col rounded-sm bg-white shadow-xl">
+      <div className="relative flex max-h-[min(90vh,calc(100dvh-2rem))] w-full max-w-md flex-col overflow-y-auto rounded-sm bg-white shadow-xl">
         <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3">
           <h2 className="text-sm font-semibold">+ Add parts link</h2>
           <button type="button" onClick={onClose} className="rounded-sm p-1 hover:bg-gray-100" aria-label="Close">
