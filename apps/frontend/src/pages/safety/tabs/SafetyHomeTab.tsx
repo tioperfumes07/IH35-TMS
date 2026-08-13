@@ -12,6 +12,7 @@ import {
 } from "../../../api/safety";
 import { SAFETY_ALIAS_TABS, SAFETY_GROUPS } from "../../../components/safety/SAFETY_TABS_CONFIG";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { entityLabel } from "../../../lib/entity-label";
 import { formatDateUS } from "../../../lib/formatDate";
 
 // S-11: Safety previously had no dedicated landing dashboard — `/safety` redirected straight into the
@@ -84,7 +85,9 @@ type DrillRecord = {
   when: string;
   label: string;
   driverId: string | null;
+  driverLabel: string;
   unitId: string | null;
+  unitLabel: string;
   detailTo: string | null;
 };
 
@@ -98,11 +101,21 @@ function DrillRow({ record }: { record: DrillRecord }) {
       <span className="min-w-[8rem] flex-1 text-slate-700">{record.label}</span>
       <span className="flex items-center gap-2">
         <span className="text-[10px] uppercase text-slate-400">Driver</span>
-        <EntityLink kind="driver" id={record.driverId} data-testid="safety-home-drill-driver" />
+        <EntityLink
+          kind="driver"
+          id={record.driverId}
+          label={record.driverLabel}
+          data-testid="safety-home-drill-driver"
+        />
       </span>
       <span className="flex items-center gap-2">
         <span className="text-[10px] uppercase text-slate-400">Unit</span>
-        <EntityLink kind="unit" id={record.unitId} data-testid="safety-home-drill-unit" />
+        <EntityLink
+          kind="unit"
+          id={record.unitId}
+          label={record.unitLabel}
+          data-testid="safety-home-drill-unit"
+        />
       </span>
       {record.detailTo ? (
         <Link
@@ -164,7 +177,9 @@ export function SafetyHomeTab() {
           when: formatDateUS(row.accident_at),
           label: `Accident${row.location ? ` · ${String(row.location)}` : ""}`,
           driverId: (row.driver_id as string | null) ?? null,
+          driverLabel: entityLabel(row.driver_name, row.driver_id, "Driver"),
           unitId: (row.unit_id as string | null) ?? null,
+          unitLabel: entityLabel(row.unit_number, row.unit_id, "Unit"),
           // C-13 / LST-F104: AccidentsPage already honors ?accident_id= (opens drawer). Leaving
           // detailTo null was a dead "Open record" affordance — driver/unit links alone are not enough.
           detailTo: id ? `/safety/accidents?accident_id=${encodeURIComponent(id)}` : null,
@@ -179,7 +194,9 @@ export function SafetyHomeTab() {
       when: formatDateUS(row.occurred_at),
       label: row.title || `${row.event_type} (${row.severity})`,
       driverId: row.subject_driver_id ?? null,
+      driverLabel: entityLabel(row.subject_driver_name, row.subject_driver_id, "Driver"),
       unitId: row.subject_unit_id ?? null,
+      unitLabel: entityLabel(row.subject_unit_number, row.subject_unit_id, "Unit"),
       // C-13 / LST-F106: SafetyEventsPage honors ?event_id= (opens detail panel).
       detailTo: row.id ? `/safety/safety-events?event_id=${encodeURIComponent(row.id)}` : null,
     }));
