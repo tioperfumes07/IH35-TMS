@@ -58,6 +58,7 @@ export async function registerEquipmentTransferRoutes(app: FastifyInstance) {
         operating_company_id: z.string().uuid(),
         driver: z.string().uuid().optional(),
         direction: z.enum(["outbound", "inbound"]).optional(),
+        equipment_uuid: z.string().uuid().optional(),
       })
       .safeParse(req.query ?? {});
     if (!q.success) return reply.code(400).send({ error: "validation_error", details: q.error.flatten() });
@@ -66,7 +67,8 @@ export async function registerEquipmentTransferRoutes(app: FastifyInstance) {
       user.uuid,
       q.data.operating_company_id,
       q.data.driver,
-      q.data.direction
+      q.data.direction,
+      q.data.equipment_uuid
     );
     return reply.send(result);
   });

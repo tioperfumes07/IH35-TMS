@@ -808,6 +808,14 @@
       "modules": ["dispatch", "fleet", "drivers"],
       "cols": ["unit", "connectivity", "reverse_link", "picker_law"],
       "leafRe": "^(quick.?assign|assignment|unit|load|profile|dispatch|create)"
+    },
+    {
+      "task": "EQUIPMENT-TRANSFER-TRAILER-LINKAGE",
+      "pr": "this PR",
+      "guard": "scripts/verify-equipment-transfer-trailer-linkage.mjs",
+      "modules": ["dispatch", "fleet", "drivers"],
+      "cols": ["trailer", "driver", "connectivity", "reverse_link", "picker_law"],
+      "leafRe": "^(equipment|transfer|trailer|driver|profile|dispatch|create)"
     }
   ]
 }
