@@ -648,6 +648,14 @@
       "modules": ["legal", "insurance"],
       "cols": ["connectivity", "reverse_link", "picker_law"],
       "leafRe": "^(matters|lawsuit|detail|create)"
+    },
+    {
+      "task": "LEGAL-MATTER-CLAIM-WRITER-INTEGRITY",
+      "pr": "this PR",
+      "guard": "scripts/verify-legal-matter-claim-linkage.mjs",
+      "modules": ["legal", "insurance"],
+      "cols": ["connectivity", "reverse_link", "picker_law"],
+      "leafRe": "^(matters|claim|detail|create)"
     }
   ]
 }
