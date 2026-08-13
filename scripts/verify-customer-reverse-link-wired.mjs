@@ -33,7 +33,7 @@ function checkContracts(src) {
 }
 
 function checkCoi(src) {
-  if (!src.includes("clauses.push(`customer_id = $${values.length}::uuid`)")) {
+  if (!src.includes("clauses.push(`r.customer_id = $${values.length}::uuid`)")) {
     fail(`${COI_SERVICE}: customer_id filter (customer -> COI requests reverse read) not found.`);
   }
 }
@@ -51,7 +51,7 @@ function checkProfitability(src) {
 function selftest() {
   const cases = [
     [CONTRACT_ROUTES, checkContracts, "WHERE c.customer_id = $1", "WHERE 1=1 /* customer_id filter removed */"],
-    [COI_SERVICE, checkCoi, "clauses.push(`customer_id = $${values.length}::uuid`)", "// customer_id filter removed"],
+    [COI_SERVICE, checkCoi, "clauses.push(`r.customer_id = $${values.length}::uuid`)", "// customer_id filter removed"],
     [
       PROFITABILITY_ROUTES,
       checkProfitability,

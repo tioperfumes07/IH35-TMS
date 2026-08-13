@@ -5,7 +5,7 @@ import { registerInsuranceCoiRequestRoutes } from "./coi-request.routes.js";
 const queryMock = vi.fn(async (sql: string, values?: unknown[]) => {
   if (sql.includes("SET LOCAL app.operating_company_id")) return { rows: [] };
 
-  if (sql.includes("FROM insurance.coi_request") && sql.includes("ORDER BY requested_at DESC")) {
+  if (sql.includes("FROM insurance.coi_request") && sql.includes("ORDER BY r.requested_at DESC")) {
     return {
       rows: [
         {
@@ -15,6 +15,8 @@ const queryMock = vi.fn(async (sql: string, values?: unknown[]) => {
           policy_id: "33333333-3333-4333-8333-333333333333",
           requested_at: "2026-05-30T12:00:00.000Z",
           requested_by: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+          requested_by_name: "Alex Requester",
+          policy_number: "POL-100",
           status: "pending",
           notes: "Need updated COI",
           document_url: null,
@@ -134,9 +136,13 @@ describe("insurance coi request routes", () => {
     });
 
     expect(response.statusCode).toBe(200);
-    const body = response.json() as { requests: Array<{ id: string }> };
+    const body = response.json() as {
+      requests: Array<{ id: string; requested_by_name: string; policy_number: string }>;
+    };
     expect(body.requests).toHaveLength(1);
     expect(body.requests[0]?.id).toBe("11111111-1111-4111-8111-111111111111");
+    expect(body.requests[0]?.requested_by_name).toBe("Alex Requester");
+    expect(body.requests[0]?.policy_number).toBe("POL-100");
   });
 
   it("creates a new coi request", async () => {

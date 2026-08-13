@@ -1,7 +1,7 @@
 import { entityLabel } from "../../lib/entity-label";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import {
   getInsuranceClaimGraph,
   listInsuranceClaims,
@@ -123,9 +123,11 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
         key: "policy_id",
         label: "Policy",
         render: (claim) => (
-          <Link className="text-slate-700 underline" to={`/safety/insurance/policies/${claim.policy_id}`}>
-            {entityLabel(claim.policy_display_id, claim.policy_id, "Policy")}
-          </Link>
+          <EntityLink
+            kind="insurance_policy"
+            id={claim.policy_id}
+            label={entityLabel(claim.policy_display_id, claim.policy_id, "Policy")}
+          />
         ),
       },
       {

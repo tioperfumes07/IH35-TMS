@@ -310,7 +310,11 @@ export function CoiTab({ customerId, customerName, operatingCompanyId, variant }
                   label: "Requester User",
                   render: (request) =>
                     request.requested_by ? (
-                      <EntityLink kind="user" id={request.requested_by} label={entityLabel(null, request.requested_by, "User")} />
+                      <EntityLink
+                        kind="user"
+                        id={request.requested_by}
+                        label={entityLabel(request.requested_by_name, request.requested_by, "User")}
+                      />
                     ) : (
                       entityLabel(null, request.requested_by, "User")
                     ),
@@ -318,7 +322,13 @@ export function CoiTab({ customerId, customerName, operatingCompanyId, variant }
                 {
                   key: "policy_id",
                   label: "Policy Reference",
-                  render: (request) => entityLabel(null, request.policy_id, "Policy"),
+                  render: (request) => (
+                    <EntityLink
+                      kind="insurance_policy"
+                      id={request.policy_id}
+                      label={entityLabel(request.policy_number, request.policy_id, "Policy")}
+                    />
+                  ),
                 },
                 {
                   key: "insurer_email",

@@ -33,41 +33,53 @@ type UpdateCoiRequestInput = {
   policy_id?: string | null;
 };
 
-function selectColumns() {
+function selectColumns(prefix = "") {
   return `
-    id::text,
-    tenant_id::text,
-    customer_id::text,
-    policy_id::text,
-    requested_at::text,
-    requested_by::text,
-    status,
-    notes,
-    document_url,
-    expires_at::text,
-    responded_at::text,
-    created_at::text,
-    updated_at::text
+    ${prefix}id::text AS id,
+    ${prefix}tenant_id::text AS tenant_id,
+    ${prefix}customer_id::text AS customer_id,
+    ${prefix}policy_id::text AS policy_id,
+    ${prefix}requested_at::text AS requested_at,
+    ${prefix}requested_by::text AS requested_by,
+    ${prefix}status,
+    ${prefix}notes,
+    ${prefix}document_url,
+    ${prefix}expires_at::text AS expires_at,
+    ${prefix}responded_at::text AS responded_at,
+    ${prefix}created_at::text AS created_at,
+    ${prefix}updated_at::text AS updated_at
   `;
 }
 
 export async function listCoiRequests(client: Queryable, input: ListCoiRequestsInput) {
   const values: unknown[] = [input.operating_company_id];
-  const clauses = ["tenant_id = $1::uuid"];
+  const clauses = ["r.tenant_id = $1::uuid"];
   if (input.customer_id) {
     values.push(input.customer_id);
-    clauses.push(`customer_id = $${values.length}::uuid`);
+    clauses.push(`r.customer_id = $${values.length}::uuid`);
   }
   if (input.status) {
     values.push(input.status);
-    clauses.push(`status = $${values.length}`);
+    clauses.push(`r.status = $${values.length}`);
   }
   const result = await client.query(
     `
-      SELECT ${selectColumns()}
-      FROM insurance.coi_request
+      SELECT ${selectColumns("r.")},
+             COALESCE(NULLIF(TRIM(CONCAT_WS(' ', u.first_name, u.last_name)), ''), u.email) AS requested_by_name,
+             p.policy_number
+      FROM insurance.coi_request r
+      LEFT JOIN org.user_company_access uca
+        ON uca.user_id = r.requested_by
+       AND uca.company_id = r.tenant_id
+       AND uca.deactivated_at IS NULL
+      LEFT JOIN identity.users u
+        ON u.id = uca.user_id
+       AND u.deactivated_at IS NULL
+      LEFT JOIN insurance.policy p
+        ON p.id = r.policy_id
+       AND p.tenant_id = r.tenant_id
       WHERE ${clauses.join(" AND ")}
-      ORDER BY requested_at DESC, created_at DESC
+      ORDER BY r.requested_at DESC, r.created_at DESC
     `,
     values
   );
