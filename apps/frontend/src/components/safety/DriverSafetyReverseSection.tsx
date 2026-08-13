@@ -12,6 +12,7 @@ import { formatUsd, formatUsdCents } from "../../lib/money";
 import { EntityLink } from "../shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { DispatcherSafetyEventsReverseBlock } from "./DispatcherSafetyEventsReverseBlock";
+import { SafetyEventsReverseBlock } from "./SafetyEventsReverseBlock";
 
 /**
  * SAF-F16 — the REVERSE half of the driver↔safety link.
@@ -152,6 +153,7 @@ export function DriverSafetyReverseSection({
         entityId={driverId}
         data-testid="driver-dispatcher-safety-events-reverse"
       />
+      <SafetyEventsReverseBlock companyId={operatingCompanyId} subject="driver" entityId={driverId} />
 
       <SectionShell
         title="External Fines"
