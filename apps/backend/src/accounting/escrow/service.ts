@@ -26,6 +26,8 @@ type EscrowAccount = {
   status: "active" | "closed";
   created_at: string;
   updated_at: string;
+  /** ACCT-F5068 — resolved holder display name (driver/vendor/factor). */
+  holder_label?: string | null;
 };
 
 type EscrowPosting = {
@@ -41,6 +43,10 @@ type EscrowPosting = {
   posted_by_user_id: string;
   linked_journal_entry_id: string | null;
   created_at: string;
+  journal_entry_date?: string | null;
+  journal_entry_memo?: string | null;
+  /** ACCT-F5068 — settlement/bill/advance display id for EntityLink. */
+  source_label?: string | null;
 };
 
 function cents(value: unknown) {
@@ -140,19 +146,33 @@ export async function listEscrowAccounts(operatingCompanyId: string, actorUserId
     const res = await client.query<EscrowAccount>(
       `
         SELECT
-          id::text,
-          operating_company_id::text,
-          holder_id::text,
-          holder_type::text,
-          purpose::text,
-          coa_account_id::text,
-          balance_cents::bigint,
-          status::text,
-          created_at::text,
-          updated_at::text
-        FROM accounting.escrow_accounts
-        WHERE operating_company_id = $1::uuid
-        ORDER BY updated_at DESC, created_at DESC
+          ea.id::text,
+          ea.operating_company_id::text,
+          ea.holder_id::text,
+          ea.holder_type::text,
+          ea.purpose::text,
+          ea.coa_account_id::text,
+          ea.balance_cents::bigint,
+          ea.status::text,
+          ea.created_at::text,
+          ea.updated_at::text,
+          CASE ea.holder_type
+            WHEN 'driver' THEN NULLIF(TRIM(COALESCE(d.first_name, '') || ' ' || COALESCE(d.last_name, '')), '')
+            WHEN 'vendor' THEN v.vendor_name
+            WHEN 'factor' THEN v.vendor_name
+            ELSE NULL
+          END AS holder_label
+        FROM accounting.escrow_accounts ea
+        LEFT JOIN mdata.drivers d
+          ON ea.holder_type = 'driver'
+         AND d.id = ea.holder_id
+         AND d.operating_company_id = ea.operating_company_id
+        LEFT JOIN mdata.vendors v
+          ON ea.holder_type IN ('vendor', 'factor')
+         AND v.id = ea.holder_id
+         AND v.operating_company_id = ea.operating_company_id
+        WHERE ea.operating_company_id = $1::uuid
+        ORDER BY ea.updated_at DESC, ea.created_at DESC
       `,
       [operatingCompanyId]
     );
@@ -219,11 +239,29 @@ export async function listEscrowPostings(input: { operating_company_id: string; 
           ep.linked_journal_entry_id::text,
           je.entry_date::text AS journal_entry_date,
           je.memo AS journal_entry_memo,
+          CASE ep.source_type
+            WHEN 'driver_settlement' THEN ds.display_id
+            WHEN 'vendor_bill' THEN b.bill_number
+            WHEN 'factoring_advance' THEN fa.display_id
+            ELSE NULL
+          END AS source_label,
           ep.created_at::text
         FROM accounting.escrow_postings ep
         LEFT JOIN accounting.journal_entries je
           ON je.id = ep.linked_journal_entry_id
          AND je.operating_company_id = ep.operating_company_id
+        LEFT JOIN driver_finance.driver_settlements ds
+          ON ep.source_type = 'driver_settlement'
+         AND ds.id = ep.source_id
+         AND ds.operating_company_id = ep.operating_company_id
+        LEFT JOIN accounting.bills b
+          ON ep.source_type = 'vendor_bill'
+         AND b.id = ep.source_id
+         AND b.operating_company_id = ep.operating_company_id
+        LEFT JOIN accounting.factoring_advances fa
+          ON ep.source_type = 'factoring_advance'
+         AND fa.id = ep.source_id
+         AND fa.operating_company_id = ep.operating_company_id
         WHERE ep.operating_company_id = $1::uuid
           AND ep.escrow_account_id = $2::uuid
         ORDER BY ep.posted_at DESC, ep.created_at DESC

@@ -43,9 +43,22 @@ export function assertEscrowPostingEntitylinkReverse() {
   if (!/journal_entry_memo/.test(escrow) || !/journal_entry_date/.test(escrow)) {
     errors.push(`${ESCROW_PAGE}: JE EntityLink must prefer journal_entry_date/memo`);
   }
+  // ACCT-F5068 — holder + source human labels (driver/vendor/settlement/bill/advance columns).
+  if (/entityLabel\(\s*null\s*,\s*row\.holder_id/.test(escrow) || /entityLabel\(\s*null\s*,\s*row\.source_id/.test(escrow)) {
+    errors.push(`${ESCROW_PAGE}: must not entityLabel(null, holder_id|source_id) — use holder_label/source_label`);
+  }
+  if (!/holder_label/.test(escrow) || !/source_label/.test(escrow)) {
+    errors.push(`${ESCROW_PAGE}: must render holder_label + source_label from API`);
+  }
   const service = read("apps/backend/src/accounting/escrow/service.ts");
   if (!/je\.memo AS journal_entry_memo/.test(service) || !/LEFT JOIN accounting\.journal_entries je/.test(service)) {
     errors.push("escrow/service listEscrowPostings must JOIN journal_entries for memo/date");
+  }
+  if (!/holder_label/.test(service) || !/LEFT JOIN mdata\.drivers/.test(service)) {
+    errors.push("escrow/service listEscrowAccounts must JOIN drivers/vendors for holder_label");
+  }
+  if (!/source_label/.test(service) || !/driver_finance\.driver_settlements/.test(service)) {
+    errors.push("escrow/service listEscrowPostings must JOIN settlements/bills/advances for source_label");
   }
   return errors;
 }
