@@ -19,6 +19,10 @@ const listFuelTransactionsQuerySchema = z.object({
   offset: z.coerce.number().int().min(0).default(0),
   driver_id: z.string().uuid().optional(),
   unit_id: z.string().uuid().optional(),
+  // EXPENSE-FUEL-TRAILER-LIST-FILTER-MISSING (CC-2 finding #6337) — trailer_id is a real, populated
+  // column since rank 1 (PR #6316) and the create path already accepts it (rank 3, PR #6319); the
+  // list endpoint never did. Mirrors #6324's accident list filter exactly.
+  trailer_id: z.string().uuid().optional(),
   load_id: z.string().uuid().optional(),
   /** G18 worklist: only transactions with NO load attributed. */
   unlinked: z.coerce.boolean().optional(),
@@ -121,6 +125,10 @@ export async function registerFuelTransactionsRoutes(app: FastifyInstance) {
         values.push(q.unit_id);
         filters.push(`ft.unit_id = $${values.length}`);
       }
+      if (q.trailer_id) {
+        values.push(q.trailer_id);
+        filters.push(`ft.trailer_id = $${values.length}`);
+      }
       if (q.load_id) {
         values.push(q.load_id);
         filters.push(`ft.load_id = $${values.length}`);
@@ -162,6 +170,8 @@ export async function registerFuelTransactionsRoutes(app: FastifyInstance) {
             NULLIF(TRIM(CONCAT(COALESCE(d.first_name, ''), ' ', COALESCE(d.last_name, ''))), '') AS driver_name,
             ft.unit_id,
             u.unit_number,
+            ft.trailer_id,
+            tr.equipment_number AS trailer_number,
             ft.vendor_id,
             v.vendor_name,
             ft.fuel_type,
@@ -181,6 +191,8 @@ export async function registerFuelTransactionsRoutes(app: FastifyInstance) {
           LEFT JOIN mdata.drivers d ON d.id = ft.driver_id AND d.operating_company_id = ft.operating_company_id
           LEFT JOIN mdata.units u ON u.id = ft.unit_id
             AND (u.owner_company_id = ft.operating_company_id OR u.currently_leased_to_company_id = ft.operating_company_id)
+          LEFT JOIN mdata.equipment tr ON tr.id = ft.trailer_id
+            AND (tr.owner_company_id = ft.operating_company_id OR tr.currently_leased_to_company_id = ft.operating_company_id)
           LEFT JOIN mdata.vendors v ON v.id = ft.vendor_id
                                     AND v.operating_company_id = l.operating_company_id
           ${whereClause}
@@ -207,6 +219,8 @@ export async function registerFuelTransactionsRoutes(app: FastifyInstance) {
           driver_id: row.driver_id,
           unit_id: row.unit_id,
           unit_number: row.unit_number,
+          trailer_id: row.trailer_id,
+          trailer_number: row.trailer_number,
           load_id: row.load_id,
           load_number: row.load_number,
           vendor_id: row.vendor_id,

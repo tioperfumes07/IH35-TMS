@@ -29,3 +29,34 @@ describe("accounting/expenses.routes RANK4-EXPENSE-TRAILER-ID", () => {
     );
   });
 });
+
+// EXPENSE-FUEL-TRAILER-LIST-FILTER-MISSING (CC-2 finding #6337, 2026-08-12) — trailer_id was
+// accepted on create/detail (rank 4 above) but the GET list endpoint (listExpensesQuerySchema /
+// queryExpensesList) never accepted or returned it — mirrors #6324's accident list filter exactly.
+describe("accounting/expenses.routes EXPENSE-FUEL-TRAILER-LIST-FILTER-MISSING", () => {
+  it("GET list accepts an optional trailer_id filter", () => {
+    expect(routes).toMatch(/listExpensesQuerySchema = companyQuerySchema\.extend\(\{[\s\S]*?trailer_id: z\.string\(\)\.uuid\(\)\.optional\(\),/);
+  });
+
+  it("ExpenseListFilters carries trailerId and the route passes q.trailer_id through", () => {
+    expect(routes).toContain("trailerId?: string;");
+    expect(routes).toContain("trailerId: q.trailer_id,");
+  });
+
+  it("queryExpensesList applies the trailer_id filter as a bound WHERE predicate", () => {
+    expect(routes).toContain("if (filters.trailerId) {");
+    expect(routes).toContain('where.push(`e.trailer_id = $${values.length}::uuid`);');
+  });
+
+  it("queryExpensesList joins mdata.equipment for a trailer_display_id, company-scoped like unit_id's join", () => {
+    expect(routes).toContain("tr.equipment_number                          AS trailer_display_id");
+    expect(routes).toContain(
+      "LEFT JOIN mdata.equipment tr ON tr.id = e.trailer_id\n        AND (tr.owner_company_id = e.operating_company_id OR tr.currently_leased_to_company_id = e.operating_company_id)"
+    );
+  });
+
+  it("ExpenseListRow carries trailer_id + trailer_display_id (drill-through parity)", () => {
+    expect(routes).toContain("trailer_id: string | null;");
+    expect(routes).toContain("trailer_display_id: string | null;");
+  });
+});

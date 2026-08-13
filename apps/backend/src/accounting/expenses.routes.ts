@@ -142,6 +142,10 @@ const listExpensesQuerySchema = companyQuerySchema.extend({
   load_id: z.string().uuid().optional(),
   driver_id: z.string().uuid().optional(),
   vendor_uuid: z.string().uuid().optional(),
+  // EXPENSE-FUEL-TRAILER-LIST-FILTER-MISSING (CC-2 finding #6337) — trailer_id is a real, populated
+  // column since rank 1 (PR #6316) and the create/detail paths already accept it (rank 4, PR #6322);
+  // the list endpoint never did. Mirrors #6324's accident list filter exactly.
+  trailer_id: z.string().uuid().optional(),
   limit: z.coerce.number().int().min(1).max(200).default(50),
   offset: z.coerce.number().int().min(0).default(0),
 });
@@ -155,6 +159,7 @@ export type ExpenseListFilters = {
   loadId?: string;
   driverId?: string;
   vendorUuid?: string;
+  trailerId?: string;
   limit: number;
   offset: number;
 };
@@ -170,6 +175,8 @@ export type ExpenseListRow = {
   load_id: string | null;
   vendor_uuid: string | null;
   driver_uuid: string | null;
+  trailer_id: string | null;
+  trailer_display_id: string | null;
   created_at: string;
   vendor_name: string | null;
   driver_first_name: string | null;
@@ -241,6 +248,10 @@ export async function queryExpensesList(
     values.push(filters.vendorUuid);
     where.push(`e.vendor_uuid = $${values.length}::uuid`);
   }
+  if (filters.trailerId) {
+    values.push(filters.trailerId);
+    where.push(`e.trailer_id = $${values.length}::uuid`);
+  }
   values.push(filters.limit);
   const limitIdx = values.length;
   values.push(filters.offset);
@@ -259,6 +270,8 @@ export async function queryExpensesList(
         e.load_id::text                              AS load_id,
         e.vendor_uuid::text                          AS vendor_uuid,
         e.driver_uuid::text                          AS driver_uuid,
+        e.trailer_id::text                           AS trailer_id,
+        tr.equipment_number                          AS trailer_display_id,
         e.journal_entry_id::text                     AS journal_entry_id,
         je.memo                                       AS journal_entry_memo,
         e.linked_work_order_uuid::text               AS linked_work_order_uuid,
@@ -288,6 +301,8 @@ export async function queryExpensesList(
       LEFT JOIN mdata.vendors v ON v.id = e.vendor_uuid AND v.operating_company_id = e.operating_company_id
       LEFT JOIN mdata.drivers dr ON dr.id = e.driver_uuid AND dr.operating_company_id = e.operating_company_id
       LEFT JOIN mdata.loads l ON l.id = e.load_id AND l.operating_company_id = e.operating_company_id
+      LEFT JOIN mdata.equipment tr ON tr.id = e.trailer_id
+        AND (tr.owner_company_id = e.operating_company_id OR tr.currently_leased_to_company_id = e.operating_company_id)
       LEFT JOIN maintenance.work_orders wo ON wo.id = e.linked_work_order_uuid
       LEFT JOIN accounting.journal_entries je ON je.id = e.journal_entry_id AND je.operating_company_id = e.operating_company_id
       WHERE ${where.join(" AND ")}
@@ -330,6 +345,7 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
         loadId: q.load_id,
         driverId: q.driver_id,
         vendorUuid: q.vendor_uuid,
+        trailerId: q.trailer_id,
         limit: q.limit,
         offset: q.offset,
       });
