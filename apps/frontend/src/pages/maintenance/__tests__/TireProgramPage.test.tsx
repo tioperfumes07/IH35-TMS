@@ -30,11 +30,13 @@ vi.mock("../../../api/maintenance", () => ({
 
 vi.mock("../../../components/parity/EntityPicker", () => ({
   EntityPicker: ({
+    kind,
     value,
     onChange,
     dataTestId,
     placeholder,
   }: {
+    kind: "unit" | "trailer";
     value: string | null;
     onChange: (v: string | null) => void;
     dataTestId?: string;
@@ -48,6 +50,7 @@ vi.mock("../../../components/parity/EntityPicker", () => ({
     >
       <option value="">Select unit…</option>
       <option value="unit-1">T-101</option>
+      {kind === "trailer" ? <option value="trailer-1">TRL-101</option> : null}
     </select>
   ),
 }));
@@ -67,11 +70,11 @@ vi.mock("../../../components/Toast", () => ({
   useToast: () => ({ pushToast: vi.fn() }),
 }));
 
-function renderPage() {
+function renderPage(initialEntry = "/maintenance/tires") {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={qc}>
-      <MemoryRouter>
+      <MemoryRouter initialEntries={[initialEntry]}>
         <TireProgramPage />
       </MemoryRouter>
     </QueryClientProvider>
@@ -143,6 +146,21 @@ describe("Maintenance TireProgramPage (B32)", () => {
     renderPage();
     await waitFor(() => {
       expect(screen.getByTestId("tire-program-alert-count")).toHaveTextContent("Low tread alerts: 2");
+    });
+  });
+
+  it("loads the exact trailer tire layout from an equipment deep-link", async () => {
+    renderPage("/maintenance/tires?equipment_id=trailer-1");
+    expect(await screen.findByTestId("tire-program-trailer-select")).toHaveValue("trailer-1");
+    await waitFor(() => {
+      expect(getMaintenanceTireLayout).toHaveBeenCalledWith(
+        "11111111-1111-4111-8111-111111111111",
+        { equipment_id: "trailer-1" },
+      );
+      expect(listMaintenanceTireEvents).toHaveBeenCalledWith(
+        "11111111-1111-4111-8111-111111111111",
+        { equipment_id: "trailer-1" },
+      );
     });
   });
 });

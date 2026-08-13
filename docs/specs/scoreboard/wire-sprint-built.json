@@ -616,6 +616,14 @@
       "modules": ["legal", "fleet"],
       "cols": ["trailer", "connectivity", "reverse_link", "picker_law"],
       "leafRe": "^(matters|trailer|detail|profile|create)"
+    },
+    {
+      "task": "MAINT-TRAILER-TIRE-PROGRAM-LINKAGE",
+      "pr": "this PR",
+      "guard": "scripts/verify-trailer-tire-program-linkage.mjs",
+      "modules": ["maintenance", "fleet"],
+      "cols": ["trailer", "connectivity", "reverse_link", "picker_law"],
+      "leafRe": "^(tires|trailer|profile|create)"
     }
   ]
 }

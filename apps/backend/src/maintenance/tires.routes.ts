@@ -268,6 +268,30 @@ async function fetchRecordById(
   return res.rows[0] ?? null;
 }
 
+async function assetBelongsToCompany(
+  client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: Record<string, unknown>[] }> },
+  companyId: string,
+  unitId?: string,
+  equipmentId?: string,
+) {
+  const result = unitId
+    ? await client.query(
+        `SELECT id FROM mdata.units
+          WHERE id = $1::uuid
+            AND COALESCE(currently_leased_to_company_id, owner_company_id) = $2::uuid
+            AND deactivated_at IS NULL LIMIT 1`,
+        [unitId, companyId],
+      )
+    : await client.query(
+        `SELECT id FROM mdata.equipment
+          WHERE id = $1::uuid
+            AND COALESCE(currently_leased_to_company_id, owner_company_id) = $2::uuid
+            AND deactivated_at IS NULL LIMIT 1`,
+        [equipmentId, companyId],
+      );
+  return Boolean(result.rows[0]);
+}
+
 export async function registerMaintenanceTiresRoutes(app: FastifyInstance) {
   app.get("/api/v1/maintenance/tires/brands", async (req, reply) => {
     const user = authed(req, reply);
@@ -379,8 +403,14 @@ export async function registerMaintenanceTiresRoutes(app: FastifyInstance) {
     const body = parsed.data;
     const group = positionGroupForCode(body.position_code);
     if (!group) return reply.code(400).send({ error: "invalid_position_code" });
+    if ((body.equipment_id && group !== "trailer") || (body.unit_id && group === "trailer")) {
+      return reply.code(400).send({ error: "position_asset_mismatch" });
+    }
 
     const row = await withCompany(user.uuid, body.operating_company_id, async (client) => {
+      if (!(await assetBelongsToCompany(client, body.operating_company_id, body.unit_id, body.equipment_id))) {
+        return { __error: "linked_entity_not_in_operating_company" as const };
+      }
       const brandName = await resolveBrandName(client, body.operating_company_id, body.brand_id, body.brand_name);
       const res = await client.query(
         `INSERT INTO maintenance.tire_records (
@@ -417,6 +447,7 @@ export async function registerMaintenanceTiresRoutes(app: FastifyInstance) {
       });
       return created;
     });
+    if (row && "__error" in row) return reply.code(400).send({ error: row.__error });
     return reply.code(201).send(mapTireRecordRow(row ?? {}));
   });
 
