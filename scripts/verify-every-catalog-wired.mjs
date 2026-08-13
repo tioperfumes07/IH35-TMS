@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["lists"],"cols":["connectivity","reverse_link"],"leafRe":"^hub\\.(home|domain\\.(safety|dispatch|drivers|maintenance|fuel|fleet|accounting|customers|vendors|names_master|reference))$","task":"LISTS-CATALOG-HUB-REVERSE-LEAVES","vertical":"column-wave"} */
+/** @matrix-built {"modules":["customers"],"cols":["connectivity","reverse_link"],"leafRe":"^home\\.roster$","task":"LISTS-CATALOG-HUB-REVERSE-LEAVES","vertical":"column-wave"} */
+/** @matrix-built {"modules":["vendors"],"cols":["connectivity","reverse_link"],"leafRe":"^home\\.roster$","task":"LISTS-CATALOG-HUB-REVERSE-LEAVES","vertical":"column-wave"} */
 /**
  * COMPLETENESS GATE — every wireable catalogs.* table must be reachable and editable.
  *
