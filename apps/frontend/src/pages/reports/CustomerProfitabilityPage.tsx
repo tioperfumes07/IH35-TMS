@@ -27,6 +27,7 @@ import { ReportBlockTPendingBanner } from "./ReportBlockTPendingBanner";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { entityLabel } from "../../lib/entity-label";
+import { EntityLink } from "../../components/shared/EntityLink";
 
 const DEFAULT_MIN_REVENUE_CENTS = 100_000; // $1,000
 
@@ -80,7 +81,7 @@ export function CustomerProfitabilityPage() {
 
   const profitabilityColumns = useMemo<ParityColumn<CustomerProfitabilityRow>[]>(
     () => [
-      { key: "customer_name", label: "Customer", sortable: true, render: (r) => <span className="font-medium text-gray-900">{entityLabel(r.customer_name, r.customer_id, "Customer")}</span> },
+      { key: "customer_name", label: "Customer", sortable: true, render: (r) => <EntityLink kind="customer" id={r.customer_id} label={entityLabel(r.customer_name, r.customer_id, "Customer")} className="font-medium text-gray-900" /> },
       { key: "load_count", label: "Loads", sortable: true, className: "text-right", cellClass: "text-right" },
       { key: "revenue_cents", label: "Revenue", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.revenue_cents) },
       { key: "direct_cost_cents", label: "Direct cost", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.direct_cost_cents) },

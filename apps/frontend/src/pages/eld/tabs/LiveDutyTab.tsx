@@ -5,6 +5,7 @@ import { DUTY_LABEL, fetchEldLiveDutyRoster, type HosRosterDriver } from "../../
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { companyToday } from "../../../lib/businessDate";
 import { entityLabel } from "../../../lib/entity-label";
+import { EntityLink } from "../../../components/shared/EntityLink";
 
 function formatMinutes(min: number | null | undefined): string {
   if (min == null || Number.isNaN(min)) return "—";
@@ -34,7 +35,7 @@ export function LiveDutyTab({ operatingCompanyId }: Props) {
         label: "Driver",
         sortable: true,
         cellClass: "font-medium",
-        render: (row) => entityLabel(row.driver_name, row.driver_id, "Driver"),
+        render: (row) => <EntityLink kind="driver" id={row.driver_id} label={entityLabel(row.driver_name, row.driver_id, "Driver")} />,
       },
       {
         key: "unit_number",
