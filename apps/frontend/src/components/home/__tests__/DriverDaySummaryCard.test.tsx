@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
+import { MemoryRouter } from "react-router-dom";
 import { DriverDaySummaryCard } from "../DriverDaySummaryCard";
 
 const fetchDriverDaySummary = vi.fn();
@@ -15,7 +16,9 @@ function renderCard() {
   });
   return render(
     <QueryClientProvider client={client}>
-      <DriverDaySummaryCard operatingCompanyId="11111111-1111-4111-8111-111111111111" />
+      <MemoryRouter>
+        <DriverDaySummaryCard operatingCompanyId="11111111-1111-4111-8111-111111111111" />
+      </MemoryRouter>
     </QueryClientProvider>
   );
 }
@@ -39,6 +42,10 @@ describe("DriverDaySummaryCard", () => {
     });
     renderCard();
     expect(await screen.findByText("Alex Driver")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Alex Driver" })).toHaveAttribute(
+      "href",
+      "/drivers/22222222-2222-4222-8222-222222222222",
+    );
     expect(screen.getByText("8.50")).toBeInTheDocument();
     expect(screen.getByText("120.4")).toBeInTheDocument();
   });
