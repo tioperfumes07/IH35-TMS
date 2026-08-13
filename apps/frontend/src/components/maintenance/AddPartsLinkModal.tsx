@@ -89,6 +89,7 @@ export function AddPartsLinkModal({ open, workOrderId, operatingCompanyId, onClo
         <form
           onSubmit={(e) => {
             e.preventDefault();
+            e.stopPropagation();
             if (canSubmit) createMutation.mutate();
           }}
           className="space-y-3 p-4"

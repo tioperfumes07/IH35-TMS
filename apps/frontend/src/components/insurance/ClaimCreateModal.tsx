@@ -281,6 +281,7 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
         data-testid="claim-create-form"
         onSubmit={(event) => {
           event.preventDefault();
+          event.stopPropagation();
           onSubmit();
         }}
       >

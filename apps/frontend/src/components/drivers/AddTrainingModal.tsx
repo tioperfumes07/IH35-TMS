@@ -115,6 +115,7 @@ export function AddTrainingModal({ open, driverId, companyId, driverName, onClos
         data-testid="add-training-modal"
         onSubmit={(event) => {
           event.preventDefault();
+          event.stopPropagation();
           void submit();
         }}
       >

@@ -79,6 +79,7 @@ export function CompanyViolationCreateModal({ open, operatingCompanyId, onClose,
         data-testid="company-violation-create-modal"
         onSubmit={(event) => {
           event.preventDefault();
+          event.stopPropagation();
           mutation.mutate();
         }}
       >

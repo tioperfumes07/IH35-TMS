@@ -226,6 +226,7 @@ export function CreateTaskModal({ open, operatingCompanyId, defaultDate, presetL
         className="space-y-3"
         onSubmit={(e) => {
           e.preventDefault();
+          e.stopPropagation();
           if (canSubmit) mutation.mutate();
         }}
       >

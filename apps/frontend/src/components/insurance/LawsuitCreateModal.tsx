@@ -174,6 +174,7 @@ export function LawsuitCreateModal({ open, operatingCompanyId, onClose, onCreate
         className="space-y-4 text-sm"
         onSubmit={(event) => {
           event.preventDefault();
+          event.stopPropagation();
           onSubmit();
         }}
       >

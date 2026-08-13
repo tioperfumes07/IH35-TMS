@@ -210,6 +210,7 @@ export function FineCreateModal({ open, operatingCompanyId, onClose, onCreated }
           data-testid="safety-fine-create-drawer"
           onSubmit={(event) => {
             event.preventDefault();
+            event.stopPropagation();
             createMutation.mutate();
           }}
         >

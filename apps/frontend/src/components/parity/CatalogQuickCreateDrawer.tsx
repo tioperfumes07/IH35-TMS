@@ -103,7 +103,15 @@ export function CatalogQuickCreateDrawer({
 
   return (
     <ParityDrawer open={open} onClose={onClose} onBack={onClose} title={`Create ${config.label}`} stackAboveModal>
-      <form className="space-y-3 text-sm" onSubmit={submit} data-testid="catalog-quick-create-drawer">
+      <form
+        className="space-y-3 text-sm"
+        onSubmit={(event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          void submit(event);
+        }}
+        data-testid="catalog-quick-create-drawer"
+      >
         {/* Provenance, visible to the operator: this create writes the same table the list reads. */}
         <p className="text-[10px] text-[#64748b]" data-testid="catalog-quick-create-target">
           Saves to {config.writeTable}

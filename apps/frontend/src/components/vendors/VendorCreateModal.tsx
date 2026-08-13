@@ -272,6 +272,7 @@ export function VendorCreateModal({ open, onClose, operatingCompanyId }: Props) 
         className="space-y-4"
         onSubmit={(event) => {
           event.preventDefault();
+          event.stopPropagation();
           setFormError("");
           setFieldErrors({});
           createMutation.mutate();

@@ -324,6 +324,7 @@ export function PolicyCreateModal({ open, operatingCompanyId, onClose, onCreated
         className="space-y-4 text-sm"
         onSubmit={(event) => {
           event.preventDefault();
+          event.stopPropagation();
           onSubmit();
         }}
       >
