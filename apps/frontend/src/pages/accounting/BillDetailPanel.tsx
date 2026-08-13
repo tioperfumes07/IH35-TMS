@@ -1,6 +1,7 @@
 import { FlatFieldGrid } from "../../components/layout/FlatFieldGrid";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
+import { formatDateUS } from "../../lib/formatDate";
 
 type BillSummary = {
   bill_number?: string | null;
@@ -12,6 +13,8 @@ type BillSummary = {
   due_date?: string | null;
   /** Law §9 — resolved from journal_entry_postings when the bill has posted. */
   journal_entry_id?: string | null;
+  journal_entry_date?: string | null;
+  journal_entry_memo?: string | null;
 };
 
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
@@ -46,7 +49,11 @@ export function BillDetailPanel({ bill }: Props) {
               <EntityLink
                 kind="journal_entry"
                 id={bill.journal_entry_id}
-                label={entityLabel(null, bill.journal_entry_id, "Journal entry")}
+                label={
+                  bill.journal_entry_date
+                    ? `${formatDateUS(bill.journal_entry_date)}${bill.journal_entry_memo ? ` — ${bill.journal_entry_memo}` : ""}`
+                    : entityLabel(bill.journal_entry_memo, bill.journal_entry_id, "Journal entry")
+                }
               />
             ) : (
               "—"

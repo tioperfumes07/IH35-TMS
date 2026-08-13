@@ -114,7 +114,18 @@ export function BillPaymentsListPage() {
     const needle = search.trim().toLowerCase();
     if (!needle) return base;
     return base.filter((row) => {
-      const haystack = [row.id, row.bill_id, row.vendor_id, row.payment_method, row.reference_number, row.check_number, row.memo]
+      const haystack = [
+        row.id,
+        row.bill_id,
+        row.bill_number,
+        row.vendor_id,
+        row.vendor_name,
+        row.payment_method,
+        row.reference_number,
+        row.check_number,
+        row.memo,
+        row.journal_entry_memo,
+      ]
         .map((part) => String(part ?? "").toLowerCase())
         .join(" ");
       return haystack.includes(needle);
@@ -153,7 +164,14 @@ export function BillPaymentsListPage() {
       { key: "payment_date", label: "Payment date", sortable: true, render: (row) => formatDateUS(row.payment_date) },
       { key: "amount_cents", label: "Amount", sortable: true, className: "text-right", cellClass: "text-right tabular-nums", render: (row) => money(row.amount_cents) },
       { key: "payment_method", label: "Method", sortable: true },
-      { key: "bill_id", label: "Bill ID", sortable: true, render: (row) => <EntityLink kind="bill" id={row.bill_id} label={entityLabel(null, row.bill_id, "Bill")} /> },
+      {
+        key: "bill_id",
+        label: "Bill ID",
+        sortable: true,
+        render: (row) => (
+          <EntityLink kind="bill" id={row.bill_id} label={entityLabel(row.bill_number, row.bill_id, "Bill")} />
+        ),
+      },
       { key: "vendor_id", label: "Vendor ID", sortable: true, render: (row) => <EntityLink kind="vendor" id={row.mdata_vendor_id} label={entityLabel(row.vendor_name, row.vendor_id, "Vendor")} /> },
       { key: "reference_number", label: "Reference", sortable: true, sortValue: (row) => row.reference_number ?? row.check_number ?? "", render: (row) => row.reference_number ?? row.check_number ?? "-" },
       { key: "memo", label: "Memo", sortable: true, sortValue: (row) => row.memo ?? "", render: (row) => row.memo ?? "-" },
@@ -165,7 +183,13 @@ export function BillPaymentsListPage() {
           <EntityLink
             kind="journal_entry"
             id={row.journal_entry_id ?? undefined}
-            label={row.journal_entry_id ? entityLabel(null, row.journal_entry_id, "Journal entry") : undefined}
+            label={
+              row.journal_entry_id
+                ? row.journal_entry_date
+                  ? `${formatDateUS(row.journal_entry_date)}${row.journal_entry_memo ? ` — ${row.journal_entry_memo}` : ""}`
+                  : entityLabel(row.journal_entry_memo, row.journal_entry_id, "Journal entry")
+                : undefined
+            }
           />
         ),
       },

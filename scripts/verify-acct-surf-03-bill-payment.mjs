@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * @matrix-built {"modules":["accounting"],"cols":["connectivity","picker_law"],"leafRe":"^(bill_payments\\.(list|create)|bill_payments)$","task":"ACCT-F5057-BILL-PAYMENT-CREATE-URL","pr":"#6462"}
+ * @matrix-built {"modules":["accounting"],"cols":["connectivity","picker_law"],"leafRe":"^(bill_payments\\.(list|create)|bill_payments|bills\\.detail)$","task":"ACCT-F5060-BILL-PAYMENT-HUMAN-LABELS","pr":"#PENDING"}
  * ACCT-SURF-03 — Bill payment deep structural DoD.
  *
  * Frozen map: docs/trackers/ACCT-08-SURF-SURFACE-MAP-2026-07-25.md
@@ -119,6 +119,16 @@ function contractErrors(src) {
   if (!src.list.includes('kind="vendor"')) {
     errors.push("VERIFY-4: BillPaymentsListPage must EntityLink vendor");
   }
+  // ACCT-F5060 — CLS-LINKAGE-ONEWAY: list must use joined bill_number / JE memo+date, not null→UUID chrome.
+  if (!/entityLabel\(\s*row\.bill_number\s*,\s*row\.bill_id\s*,\s*["']Bill["']\s*\)/.test(src.list)) {
+    errors.push("VERIFY-4: BillPaymentsListPage bill EntityLink must entityLabel(row.bill_number, …)");
+  }
+  if (!/journal_entry_date/.test(src.list) || !/journal_entry_memo/.test(src.list)) {
+    errors.push("VERIFY-4: BillPaymentsListPage JE EntityLink must prefer journal_entry_date/memo");
+  }
+  if (/entityLabel\(\s*null\s*,\s*row\.bill_id\s*,\s*["']Bill["']\s*\)/.test(src.list)) {
+    errors.push("VERIFY-4: BillPaymentsListPage must not entityLabel(null, bill_id) — UUID chrome");
+  }
 
   const service = read("apps/backend/src/accounting/bills.service.ts");
   if (!service.includes("INSERT INTO accounting.bill_payments")) {
@@ -126,6 +136,18 @@ function contractErrors(src) {
   }
   if (/INSERT INTO\s+bank\.bill_payments|INSERT INTO\s+payroll\./i.test(service)) {
     errors.push("VERIFY-3: payBill must not write RETIRE schemas");
+  }
+  // ACCT-F5060 — listBillPayments must join bill_number + JE memo/date (detail already did).
+  if (!/b\.bill_number/.test(service) || !/AS journal_entry_memo/.test(service) || !/AS journal_entry_date/.test(service)) {
+    errors.push("VERIFY-4: bills.service list/detail must SELECT b.bill_number + journal_entry_date/memo");
+  }
+
+  const billDetail = read("apps/frontend/src/pages/accounting/BillDetailPage.tsx");
+  if (!/journal_entry_date/.test(billDetail) || !/journal_entry_memo/.test(billDetail)) {
+    errors.push("VERIFY-4: BillDetailPage JE EntityLink must prefer journal_entry_date/memo");
+  }
+  if (/entityLabel\(\s*null\s*,\s*bill\.journal_entry_id/.test(billDetail)) {
+    errors.push("VERIFY-4: BillDetailPage must not entityLabel(null, journal_entry_id) when memo/date exist");
   }
 
   return errors;
@@ -136,7 +158,7 @@ function selftest() {
     map: "ACCT-SURF-03 `/accounting/bill-payments`",
     manifest: 'path="/accounting/bill-payments"\n<BillPaymentsListPage />\n',
     subnav: "/accounting/bill-payments",
-    list: 'PayBillModal\nkind="journal_entry"\nkind="bill"\nkind="vendor"\nsearchParams.get("create") === "1"\nparams.set("create", "1")\nparams.delete("create")\n',
+    list: 'PayBillModal\nkind="journal_entry"\nkind="bill"\nkind="vendor"\nsearchParams.get("create") === "1"\nparams.set("create", "1")\nparams.delete("create")\nentityLabel(row.bill_number, row.bill_id, "Bill")\njournal_entry_date\njournal_entry_memo\n',
     pay: [
       "ParityDrawer",
       "<ParityDrawer",
@@ -152,8 +174,18 @@ function selftest() {
     reverseGuard: "journal_entry_id matched_bank_transaction_id",
     topbar: '[t("topbar.create_bill_payment", "Bill payment"), "/accounting/bill-payments?create=1"]',
   };
+  // Plant service + bill detail via monkey-patch of read is unavailable; contractErrors reads
+  // live files for service/billDetail — selftest only covers the injected src fields above.
   if (contractErrors(good).length) {
     console.error(`${LABEL} --selftest FAIL good:`, contractErrors(good));
+    process.exit(1);
+  }
+  const thinList = {
+    ...good,
+    list: 'PayBillModal\nkind="journal_entry"\nkind="bill"\nkind="vendor"\nsearchParams.get("create") === "1"\nparams.set("create", "1")\nparams.delete("create")\nentityLabel(null, row.bill_id, "Bill")\n',
+  };
+  if (!contractErrors(thinList).some((e) => /bill_number|UUID chrome/.test(e))) {
+    console.error(`${LABEL} --selftest FAIL: must catch null bill_number label`);
     process.exit(1);
   }
   const thin = { ...good, pay: "export function PayBillModal(){ return <div>thin</div> }" };

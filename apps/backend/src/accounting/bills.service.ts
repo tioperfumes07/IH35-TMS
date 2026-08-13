@@ -212,6 +212,12 @@ type BillPaymentRow = {
   is_reconciled: boolean;
   /** Law §9 — resolved from the existing bill_payment posting; no new JE is created here. */
   journal_entry_id?: string | null;
+  /** ACCT-F5060 — human JE label (same shape as getBillPaymentDetail). */
+  journal_entry_date?: string | null;
+  journal_entry_memo?: string | null;
+  /** Joined from accounting.bills for list/detail EntityLink labels (not a column on bill_payments). */
+  bill_number?: string | null;
+  vendor_name?: string | null;
   /** Law §9 reverse drill from a bill payment to its canonical bank-feed transaction. */
   matched_bank_transaction_id?: string | null;
 };
@@ -1150,10 +1156,33 @@ export async function listBillPayments(
                  WHERE v.qbo_vendor_id = bp.vendor_id
                    AND v.operating_company_id = bp.operating_company_id
                  LIMIT 1) AS mdata_vendor_id,
+               (SELECT v.vendor_name
+                  FROM mdata.vendors v
+                 WHERE v.qbo_vendor_id = bp.vendor_id
+                   AND v.operating_company_id = bp.operating_company_id
+                 LIMIT 1) AS vendor_name,
+               b.bill_number,
                ${BILL_PAYMENT_IS_RECONCILED_SQL} AS is_reconciled,
-               ${BILL_PAYMENT_JOURNAL_ENTRY_ID_SQL} AS journal_entry_id,
+               je_link.journal_entry_id,
+               je.entry_date::text AS journal_entry_date,
+               je.memo AS journal_entry_memo,
                ${BILL_PAYMENT_BANK_TRANSACTION_ID_SQL} AS matched_bank_transaction_id
         FROM accounting.bill_payments bp
+        LEFT JOIN accounting.bills b
+          ON b.id = bp.bill_id
+         AND b.operating_company_id = bp.operating_company_id
+        LEFT JOIN LATERAL (
+          SELECT jep.journal_entry_uuid::text AS journal_entry_id
+          FROM accounting.journal_entry_postings jep
+          WHERE jep.operating_company_id = bp.operating_company_id
+            AND jep.source_transaction_type = 'bill_payment'
+            AND jep.source_transaction_id = bp.id::text
+          ORDER BY jep.created_at ASC
+          LIMIT 1
+        ) je_link ON true
+        LEFT JOIN accounting.journal_entries je
+          ON je.id = je_link.journal_entry_id::uuid
+         AND je.operating_company_id = bp.operating_company_id
         WHERE bp.operating_company_id = $1::uuid AND ${where.join(" AND ")}
         ORDER BY bp.payment_date DESC, bp.created_at DESC
         LIMIT $${values.length - 1}
@@ -1185,7 +1214,31 @@ export async function getBillDetail(userId: string, operatingCompanyId: string, 
               AND jep.source_transaction_id = b.id::text
             ORDER BY jep.created_at ASC
             LIMIT 1
-          ) AS journal_entry_id
+          ) AS journal_entry_id,
+          (
+            SELECT je.entry_date::text
+            FROM accounting.journal_entry_postings jep
+            JOIN accounting.journal_entries je
+              ON je.id = jep.journal_entry_uuid
+             AND je.operating_company_id = jep.operating_company_id
+            WHERE jep.operating_company_id = b.operating_company_id
+              AND jep.source_transaction_type = 'bill'
+              AND jep.source_transaction_id = b.id::text
+            ORDER BY jep.created_at ASC
+            LIMIT 1
+          ) AS journal_entry_date,
+          (
+            SELECT je.memo
+            FROM accounting.journal_entry_postings jep
+            JOIN accounting.journal_entries je
+              ON je.id = jep.journal_entry_uuid
+             AND je.operating_company_id = jep.operating_company_id
+            WHERE jep.operating_company_id = b.operating_company_id
+              AND jep.source_transaction_type = 'bill'
+              AND jep.source_transaction_id = b.id::text
+            ORDER BY jep.created_at ASC
+            LIMIT 1
+          ) AS journal_entry_memo
         FROM accounting.bills b
         ${BILL_VENDOR_RESOLVE_JOIN_SQL}
         LEFT JOIN mdata.units u
