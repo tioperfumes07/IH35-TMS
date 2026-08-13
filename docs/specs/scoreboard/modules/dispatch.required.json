@@ -254,8 +254,7 @@
         "unit",
         "load",
         "connectivity",
-        "reverse_link",
-        "picker_law"
+        "reverse_link"
       ]
     },
     {
@@ -269,8 +268,7 @@
         "unit",
         "load",
         "connectivity",
-        "reverse_link",
-        "picker_law"
+        "reverse_link"
       ]
     },
     {
@@ -286,8 +284,7 @@
         "load",
         "vendor",
         "connectivity",
-        "reverse_link",
-        "picker_law"
+        "reverse_link"
       ]
     },
     {
@@ -303,8 +300,7 @@
         "load",
         "vendor",
         "connectivity",
-        "reverse_link",
-        "picker_law"
+        "reverse_link"
       ]
     },
     {
@@ -318,8 +314,7 @@
         "unit",
         "load",
         "connectivity",
-        "reverse_link",
-        "picker_law"
+        "reverse_link"
       ]
     },
     {
@@ -333,8 +328,7 @@
         "unit",
         "load",
         "connectivity",
-        "reverse_link",
-        "picker_law"
+        "reverse_link"
       ]
     },
     {
@@ -373,8 +367,7 @@
         "load",
         "customer",
         "connectivity",
-        "reverse_link",
-        "picker_law"
+        "reverse_link"
       ]
     },
     {
@@ -426,8 +419,7 @@
         "load",
         "customer",
         "connectivity",
-        "reverse_link",
-        "picker_law"
+        "reverse_link"
       ]
     },
     {
@@ -441,8 +433,7 @@
         "trailer",
         "customer",
         "connectivity",
-        "reverse_link",
-        "picker_law"
+        "reverse_link"
       ]
     },
     {
@@ -456,8 +447,7 @@
         "trailer",
         "customer",
         "connectivity",
-        "reverse_link",
-        "picker_law"
+        "reverse_link"
       ]
     },
     {
@@ -472,8 +462,7 @@
         "load",
         "customer",
         "connectivity",
-        "reverse_link",
-        "picker_law"
+        "reverse_link"
       ]
     },
     {
@@ -488,8 +477,7 @@
         "load",
         "customer",
         "connectivity",
-        "reverse_link",
-        "picker_law"
+        "reverse_link"
       ]
     },
     {
@@ -499,7 +487,6 @@
       "route_hint": "/dispatch/planner?panel=templates",
       "required": [
         "customer",
-        "picker_law",
         "qbo_chrome",
         "connectivity"
       ]
@@ -513,8 +500,7 @@
         "unit",
         "trailer",
         "driver",
-        "connectivity",
-        "picker_law"
+        "connectivity"
       ]
     },
     {
@@ -528,7 +514,6 @@
         "unit",
         "trailer",
         "load",
-        "picker_law",
         "qbo_chrome",
         "connectivity",
         "reverse_link"
@@ -561,7 +546,6 @@
         "unit",
         "trailer",
         "load",
-        "picker_law",
         "qbo_chrome",
         "connectivity",
         "reverse_link"
@@ -577,8 +561,7 @@
         "trailer",
         "driver",
         "connectivity",
-        "reverse_link",
-        "picker_law"
+        "reverse_link"
       ]
     },
     {
@@ -1031,7 +1014,6 @@
       "surface_path": "pages/dispatch/components/book-load-v4/RateConUploadPanel.tsx",
       "required": [
         "connectivity",
-        "picker_law",
         "driver",
         "unit",
         "trailer",
@@ -1469,6 +1451,120 @@
           "id": "dispatch.modal.equipment_transfer",
           "removed": [
             "reverse_link"
+          ]
+        }
+      ]
+    },
+    "picker_law_2026_08_13_dispatch_queues": {
+      "finding": "VERTICAL-PICKER-LAW-DISPATCH-QUEUES",
+      "note": "Queue/planning/docs/settings chrome without EntityPicker/+Add new inflated picker_law. Built: assignment-history, in-transit, pod-review, notify-preferences, BookLoadEquipmentSection.",
+      "drops": [
+        {
+          "id": "queues.at_risk",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "queues.detention",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "queues.border",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "queues.border_history",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "queues.late",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "queues.alerts",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "queues.trip_pairing",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "planning.timeline",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "planning.driver",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "planning.truck",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "planning.loads",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "planning.calendar",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "planning.templates",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "planning.unassigned",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "planning.reserve",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "docs.ocr",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "docs.equipment_transfers",
+          "removed": [
+            "picker_law"
+          ]
+        },
+        {
+          "id": "dispatch.panel.rate_con_upload",
+          "removed": [
+            "picker_law"
           ]
         }
       ]
