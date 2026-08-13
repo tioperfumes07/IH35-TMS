@@ -34,8 +34,18 @@ export function collectProblems(root = ROOT) {
   if (!/driver_name/.test(pageCode)) {
     problems.push(`${PAGE}: must use driver_name from open-by-driver payload`);
   }
+  // ACCT-F5071 — by-driver detail must carry driver_name; FE must not UUID-fallback.
+  if (!/settlement\.driver_name/.test(pageCode)) {
+    problems.push(`${PAGE}: detail EntityLink must prefer settlement.driver_name`);
+  }
+  if (/entityLabel\(\s*null\s*,\s*settlement\.driver_id/.test(pageCode)) {
+    problems.push(`${PAGE}: must not entityLabel(null, settlement.driver_id)`);
+  }
   if (!/AS driver_name/.test(route) || !/JOIN mdata\.drivers/.test(route)) {
     problems.push(`${ROUTE}: open-by-driver must JOIN mdata.drivers AS driver_name`);
+  }
+  if (!/by-driver\/:driverId/.test(route) || (route.match(/AS driver_name/g) || []).length < 2) {
+    problems.push(`${ROUTE}: by-driver detail must also JOIN mdata.drivers AS driver_name`);
   }
   return problems;
 }

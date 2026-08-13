@@ -188,10 +188,13 @@ export function SettlementCloseArrivalPage() {
                     <EntityLink
                       kind="driver"
                       id={settlement.driver_id}
-                      label={
-                        (openQuery.data?.pre_settlements ?? []).find((r) => r.driver_id === settlement.driver_id)?.driver_name?.trim() ||
-                        entityLabel(null, settlement.driver_id, "Driver")
-                      }
+                      label={entityLabel(
+                        settlement.driver_name?.trim() ||
+                          (openQuery.data?.pre_settlements ?? []).find((r) => r.driver_id === settlement.driver_id)?.driver_name?.trim() ||
+                          null,
+                        settlement.driver_id,
+                        "Driver",
+                      )}
                     />{" "}
                     —{" "}
                     <EntityLink

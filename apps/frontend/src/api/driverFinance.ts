@@ -558,6 +558,8 @@ export type PreSettlementDetail = {
     id: string;
     display_id: string | null;
     driver_id: string;
+    /** ACCT-F5071 — joined from mdata.drivers on by-driver detail. */
+    driver_name?: string | null;
     status: string;
     gross_pay: number;
     deductions_total: number;
