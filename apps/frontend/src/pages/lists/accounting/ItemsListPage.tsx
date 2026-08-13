@@ -14,7 +14,7 @@ import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
 import { Button } from "../../../components/Button";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
-import { CollapsedListFilters } from "../../../components/table";
+import { CollapsedListFilters, useStagedListFilters } from "../../../components/table";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { useUrlSort } from "../../../hooks/useUrlSort";
 import { ItemEditorModal } from "./ItemEditorModal";
@@ -40,6 +40,11 @@ export function ItemsListPage() {
   const { sortKey, sortDirection, onSortChange } = useUrlSort();
   const [search, setSearch] = useState("");
   const [groupByCategory, setGroupByCategory] = useState(true);
+  const staged = useStagedListFilters({
+    applied: { groupByCategory },
+    empty: { groupByCategory: true },
+    onApply: (next) => setGroupByCategory(next.groupByCategory),
+  });
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
   const [modalOpen, setModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<"create" | "edit">("create");
@@ -136,6 +141,10 @@ export function ItemsListPage() {
   const filterBar = (
     <CollapsedListFilters
       activeFilterCount={groupByCategory ? 0 : 1}
+      onApply={staged.apply}
+      onReset={staged.reset}
+      onCancel={staged.cancel}
+      applyDisabled={!staged.dirty}
       testIdPrefix="items"
       dataAttributes={{ "data-items-filter-toolbar": "collapsed" }}
       searchSlot={
@@ -151,8 +160,8 @@ export function ItemsListPage() {
       <label className="flex items-center gap-2 text-xs text-gray-700">
         <input
           type="checkbox"
-          checked={groupByCategory}
-          onChange={(e) => setGroupByCategory(e.target.checked)}
+          checked={staged.draft.groupByCategory}
+          onChange={(e) => staged.setDraft({ groupByCategory: e.target.checked })}
           className="h-4 w-4 rounded-sm border-gray-300"
         />
         Group by category

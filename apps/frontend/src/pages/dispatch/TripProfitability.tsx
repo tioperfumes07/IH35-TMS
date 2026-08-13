@@ -150,6 +150,10 @@ export function TripProfitability() {
   const filterBar = (
     <CollapsedListFilters
       activeFilterCount={period.start || period.end ? 1 : 0}
+      onApply={() => setApplied(period)}
+      onReset={() => setPeriod(currentQuarterRange)}
+      onCancel={() => setPeriod(applied)}
+      applyDisabled={period.start === applied.start && period.end === applied.end}
       testIdPrefix="trip-profit"
       dataAttributes={{ "data-trip-profit-filter-toolbar": "collapsed" }}
     >
@@ -170,13 +174,6 @@ export function TripProfitability() {
             onChange={(next) => setPeriod((p) => ({ ...p, end: next }))}
           />
         </label>
-        <button
-          type="button"
-          className="rounded-sm bg-[#1F2A44] px-3 py-1.5 text-sm font-medium text-white hover:bg-[#1F2A44]"
-          onClick={() => setApplied(period)}
-        >
-          Apply
-        </button>
       </div>
     </CollapsedListFilters>
   );

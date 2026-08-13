@@ -23,7 +23,7 @@ import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
-import { CollapsedListFilters } from "../../components/table";
+import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { useToast } from "../../components/Toast";
 import { CappedListNotice } from "../../components/CappedListNotice";
 import { useAuth } from "../../auth/useAuth";
@@ -49,6 +49,7 @@ export function VendorCreditsPage() {
   const vendorFilter = searchParams.get("vendor_id") ?? "";
   const deepLinkCreditId = searchParams.get("credit_id");
   const [statusFilter, setStatusFilter] = useState<VendorCreditStatus | "">("");
+  const staged = useStagedListFilters({ applied: { statusFilter }, empty: { statusFilter: "" as const }, onApply: (next) => setStatusFilter(next.statusFilter) });
   const [createOpen, setCreateOpen] = useState(false);
   const [selectedCreditId, setSelectedCreditId] = useState<string | null>(deepLinkCreditId);
   const [applyOpen, setApplyOpen] = useState(false);
@@ -191,10 +192,10 @@ export function VendorCreditsPage() {
 
   const filterBar = (
     <div className="flex flex-wrap items-center gap-2" data-vendor-credits-filter-toolbar="collapsed">
-      <CollapsedListFilters activeFilterCount={(statusFilter ? 1 : 0) + (vendorFilter ? 1 : 0)} testIdPrefix="vendor-credits">
+      <CollapsedListFilters activeFilterCount={(statusFilter ? 1 : 0) + (vendorFilter ? 1 : 0)} testIdPrefix="vendor-credits" onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}>
         <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value as VendorCreditStatus | "")}
+          value={staged.draft.statusFilter}
+          onChange={(e) => staged.setDraft({ statusFilter: e.target.value as VendorCreditStatus | "" })}
           className="rounded-sm border border-gray-300 px-3 py-1.5 text-sm"
           aria-label="Vendor credit status filter"
         >

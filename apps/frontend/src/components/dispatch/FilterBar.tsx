@@ -4,7 +4,7 @@ import { listCustomers } from "../../api/mdata";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { EntityPicker } from "../parity/EntityPicker";
 import { ReferenceSelect } from "../parity/ReferenceSelect";
-import { CollapsedListFilters, TableSearch, ColumnChooser, type TableColumn } from "../../components/table";
+import { CollapsedListFilters, TableSearch, ColumnChooser, useStagedListFilters, type TableColumn } from "../../components/table";
 import { Button } from "../Button";
 import { Combobox } from "../Combobox";
 import type { LoadStatus } from "../../api/loads";
@@ -68,7 +68,6 @@ export function FilterBar({
   onChange,
   companies,
   operatingCompanyId,
-  onClearAll,
   columns,
   hiddenColumns,
   onToggleColumn,
@@ -76,6 +75,12 @@ export function FilterBar({
   onPageSizeChange,
 }: Props) {
   const [customerSearch, setCustomerSearch] = useState("");
+  const staged = useStagedListFilters({
+    applied: value,
+    empty: { ...value, companyIds: [], statuses: [], customerId: null, driverId: null, dateMode: "pickup", dateFrom: "", dateTo: "" },
+    onApply: onChange,
+  });
+  const draft = staged.draft;
 
   const customersQuery = useQuery({
     queryKey: ["dispatch-filter", "customers", operatingCompanyId, customerSearch],
@@ -107,13 +112,17 @@ export function FilterBar({
     (value.dateFrom ? 1 : 0) +
     (value.dateTo ? 1 : 0);
 
-  const customerOption = customerOptions.find((item) => item.value === value.customerId) ?? null;
+  const customerOption = customerOptions.find((item) => item.value === draft.customerId) ?? null;
 
   return (
     <div className="flex flex-wrap items-center gap-2" data-dispatch-toolbar="true">
       <CollapsedListFilters
         activeFilterCount={activeCount}
         testIdPrefix="dispatch"
+        onApply={staged.apply}
+        onReset={staged.reset}
+        onCancel={staged.cancel}
+        applyDisabled={!staged.dirty}
         searchSlot={
           <TableSearch
             value={value.search}
@@ -128,8 +137,8 @@ export function FilterBar({
             <label className="text-xs font-semibold text-gray-600">Operating Company</label>
             <Combobox
               options={companies.map((company) => ({ value: company.id, label: company.label, sublabel: company.shortName ?? undefined }))}
-              value={value.companyIds[0] ?? null}
-              onChange={(nextCompanyId) => onChange({ ...value, companyIds: nextCompanyId ? [nextCompanyId] : [] })}
+              value={draft.companyIds[0] ?? null}
+              onChange={(nextCompanyId) => staged.setDraft({ ...draft, companyIds: nextCompanyId ? [nextCompanyId] : [] })}
               placeholder="Select company"
               allowClear
             />
@@ -138,16 +147,16 @@ export function FilterBar({
             <label className="text-xs font-semibold text-gray-600">Status</label>
             <Combobox
               options={ALL_LOAD_STATUSES.map((status) => ({ value: status, label: STATUS_LABEL[status] }))}
-              value={value.statuses[0] ?? null}
+              value={draft.statuses[0] ?? null}
               onChange={(nextStatus) => {
                 if (!nextStatus) {
-                  onChange({ ...value, statuses: [] });
+                  staged.setDraft({ ...draft, statuses: [] });
                   return;
                 }
                 const statusValue = nextStatus as LoadStatus;
-                const exists = value.statuses.includes(statusValue);
-                const statuses = exists ? value.statuses.filter((status) => status !== statusValue) : [...value.statuses, statusValue];
-                onChange({ ...value, statuses });
+                const exists = draft.statuses.includes(statusValue);
+                const statuses = exists ? draft.statuses.filter((status) => status !== statusValue) : [...draft.statuses, statusValue];
+                staged.setDraft({ ...draft, statuses });
               }}
               placeholder="Select status (multi)"
               allowClear
@@ -156,8 +165,8 @@ export function FilterBar({
           <div className="space-y-1">
             <label className="text-xs font-semibold text-gray-600">Customer</label>
             <ReferenceSelect
-              value={value.customerId}
-              onChange={(customerId) => onChange({ ...value, customerId })}
+              value={draft.customerId}
+              onChange={(customerId) => staged.setDraft({ ...draft, customerId })}
               options={customerOptions}
               createKind="customer"
               operatingCompanyId={operatingCompanyId}
@@ -172,8 +181,8 @@ export function FilterBar({
             <EntityPicker
               kind="driver"
               operatingCompanyId={operatingCompanyId}
-              value={value.driverId}
-              onChange={(driverId) => onChange({ ...value, driverId })}
+              value={draft.driverId}
+              onChange={(driverId) => staged.setDraft({ ...draft, driverId })}
               allowCreate={false}
               placeholder="Search driver"
               disabled={!operatingCompanyId}
@@ -190,8 +199,8 @@ export function FilterBar({
                   key={mode}
                   type="button"
                   size="sm"
-                  variant={value.dateMode === mode ? "primary" : "secondary"}
-                  onClick={() => onChange({ ...value, dateMode: mode })}
+                  variant={draft.dateMode === mode ? "primary" : "secondary"}
+                  onClick={() => staged.setDraft({ ...draft, dateMode: mode })}
                 >
                   {mode === "pickup" ? "Pickup" : "Delivery"}
                 </Button>
@@ -200,50 +209,50 @@ export function FilterBar({
           </div>
           <div className="space-y-1">
             <label className="text-xs font-semibold text-gray-600">Date From</label>
-            <DatePicker value={value.dateFrom} onChange={(next) => onChange({ ...value, dateFrom: next })} className="w-full" />
+            <DatePicker value={draft.dateFrom} onChange={(next) => staged.setDraft({ ...draft, dateFrom: next })} className="w-full" />
           </div>
           <div className="space-y-1">
             <label className="text-xs font-semibold text-gray-600">Date To</label>
-            <DatePicker value={value.dateTo} onChange={(next) => onChange({ ...value, dateTo: next })} className="w-full" />
+            <DatePicker value={draft.dateTo} onChange={(next) => staged.setDraft({ ...draft, dateTo: next })} className="w-full" />
           </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-2 border-t border-gray-100 pt-2 text-xs">
           <span className="rounded-sm bg-gray-100 px-2 py-1 text-gray-700">Active filters: {activeCount}</span>
-          {value.companyIds.map((id) => {
+          {draft.companyIds.map((id) => {
             const company = companies.find((item) => item.id === id);
             return (
               <button
                 key={id}
                 type="button"
-                onClick={() => onChange({ ...value, companyIds: value.companyIds.filter((companyId) => companyId !== id) })}
+                onClick={() => staged.setDraft({ ...draft, companyIds: draft.companyIds.filter((companyId) => companyId !== id) })}
                 className="rounded-sm border border-gray-300 px-2 py-1 hover:bg-gray-50"
               >
                 Company: {company?.label ?? id} ×
               </button>
             );
           })}
-          {value.statuses.map((status) => (
+          {draft.statuses.map((status) => (
             <button
               key={status}
               type="button"
-              onClick={() => onChange({ ...value, statuses: value.statuses.filter((item) => item !== status) })}
+              onClick={() => staged.setDraft({ ...draft, statuses: draft.statuses.filter((item) => item !== status) })}
               className="rounded-sm border border-gray-300 px-2 py-1 hover:bg-gray-50"
             >
               Status: {STATUS_LABEL[status]} ×
             </button>
           ))}
           {customerOption ? (
-            <button type="button" onClick={() => onChange({ ...value, customerId: null })} className="rounded-sm border border-gray-300 px-2 py-1 hover:bg-gray-50">
+            <button type="button" onClick={() => staged.setDraft({ ...draft, customerId: null })} className="rounded-sm border border-gray-300 px-2 py-1 hover:bg-gray-50">
               Customer: {customerOption.label} ×
             </button>
           ) : null}
-          {value.driverId ? (
-            <button type="button" onClick={() => onChange({ ...value, driverId: null })} className="rounded-sm border border-gray-300 px-2 py-1 hover:bg-gray-50">
+          {draft.driverId ? (
+            <button type="button" onClick={() => staged.setDraft({ ...draft, driverId: null })} className="rounded-sm border border-gray-300 px-2 py-1 hover:bg-gray-50">
               Driver filter ×
             </button>
           ) : null}
-          <Button type="button" size="sm" variant="secondary" onClick={onClearAll}>
+          <Button type="button" size="sm" variant="secondary" onClick={staged.reset}>
             Clear All Filters
           </Button>
         </div>

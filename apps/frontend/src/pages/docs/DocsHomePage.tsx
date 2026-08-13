@@ -6,7 +6,7 @@ import { getDocsFoundationDetail, getDocsFoundationKpis, listDocsFoundation, typ
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
-import { CollapsedListFilters } from "../../components/table";
+import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { SecondaryNavTabs } from "../../components/shared/SecondaryNavTabs";
 import { UploadModal } from "../../components/documents/UploadModal";
 import { PreviewModal } from "../../components/documents/PreviewModal";
@@ -171,6 +171,10 @@ export function DocsHomePage() {
   const [expiresBefore, setExpiresBefore] = useState("");
   /** KPI drill-down filters — lockstep with GET /api/v1/docs/kpis predicates (server-side; list is paginated). */
   const [kpiFilter, setKpiFilter] = useState<"none" | "missing_required" | "recent_uploads">("none");
+  const staged = useStagedListFilters({
+    applied: { typeFilter, expiresBefore }, empty: { typeFilter: "", expiresBefore: "" },
+    onApply: (next) => { setTypeFilter(next.typeFilter); setExpiresBefore(next.expiresBefore); setPage(1); },
+  });
   const [page, setPage] = useState(1);
   const [uploadOpen, setUploadOpen] = useState(false);
   const [previewFileId, setPreviewFileId] = useState<string | null>(null);
@@ -221,6 +225,7 @@ export function DocsHomePage() {
   const filterBar = (
     <CollapsedListFilters
       activeFilterCount={(typeFilter ? 1 : 0) + (expiresBefore ? 1 : 0) + (kpiFilter !== "none" ? 1 : 0)}
+      onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}
       testIdPrefix="docs"
       dataAttributes={{ "data-docs-filter-toolbar": "collapsed" }}
     >
@@ -228,11 +233,8 @@ export function DocsHomePage() {
         <label className="space-y-1 text-xs font-semibold text-gray-600">
           Type filter
           <input
-            value={typeFilter}
-            onChange={(event) => {
-              setTypeFilter(event.target.value);
-              setPage(1);
-            }}
+            value={staged.draft.typeFilter}
+            onChange={(event) => staged.setDraft({ ...staged.draft, typeFilter: event.target.value })}
             className="h-9 w-full rounded-sm border border-gray-300 px-2 text-sm font-normal"
             placeholder="Category code, label, mime type"
           />
@@ -240,11 +242,8 @@ export function DocsHomePage() {
         <label className="space-y-1 text-xs font-semibold text-gray-600">
           Expiration before
           <DatePicker
-            value={expiresBefore}
-            onChange={(next) => {
-              setExpiresBefore(next);
-              setPage(1);
-            }}
+            value={staged.draft.expiresBefore}
+            onChange={(next) => staged.setDraft({ ...staged.draft, expiresBefore: next })}
             className="h-9 w-full rounded-sm border border-gray-300 px-2 text-sm font-normal"
           />
         </label>
@@ -256,13 +255,6 @@ export function DocsHomePage() {
                 : "Recent uploads (last 7 days)"}
             </span>
           ) : null}
-          <button
-            type="button"
-            className="h-9 rounded-sm border border-gray-300 bg-white px-3 text-sm font-semibold text-gray-700 hover:bg-gray-50"
-            onClick={clearListFilters}
-          >
-            Reset filters
-          </button>
         </div>
       </div>
     </CollapsedListFilters>

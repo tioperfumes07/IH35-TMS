@@ -10,7 +10,7 @@ import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { ParityDrawer } from "../../components/parity/ParityDrawer";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
-import { CollapsedListFilters } from "../../components/table";
+import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { useUrlSort } from "../../hooks/useUrlSort";
 
 const fmtCents = (c: number | null) => (c == null ? "—" : formatUsdCents(c));
@@ -96,6 +96,7 @@ export function ReceiptsPage() {
   const { selectedCompanyId } = useCompanyContext();
   const operatingCompanyId = selectedCompanyId ?? "";
   const [entityType, setEntityType] = useState<"" | "expense" | "bill" | "payment">("");
+  const staged = useStagedListFilters({ applied: { entityType }, empty: { entityType: "" as const }, onApply: (next) => { setEntityType(next.entityType); setOffset(0); } });
   const [search, setSearch] = useState("");
   const [offset, setOffset] = useState(0);
   const [detailId, setDetailId] = useState<string | null>(null);
@@ -187,6 +188,7 @@ export function ReceiptsPage() {
     <div className="flex flex-wrap gap-2 items-center" data-receipts-filter-toolbar="collapsed">
       <CollapsedListFilters
         activeFilterCount={entityType ? 1 : 0}
+        onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}
         testIdPrefix="receipts"
         searchSlot={
           <input
@@ -204,11 +206,8 @@ export function ReceiptsPage() {
       >
         <select
           aria-label="Filter receipts by source"
-          value={entityType}
-          onChange={(e) => {
-            setEntityType(e.target.value as "" | "expense" | "bill" | "payment");
-            setOffset(0);
-          }}
+          value={staged.draft.entityType}
+          onChange={(e) => staged.setDraft({ entityType: e.target.value as "" | "expense" | "bill" | "payment" })}
           className="rounded-sm border border-gray-300 px-3 py-1.5 text-sm focus:outline-hidden focus:ring-1 focus:ring-slate-500"
         >
           <option value="">All sources</option>

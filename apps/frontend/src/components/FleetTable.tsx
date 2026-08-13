@@ -9,7 +9,7 @@ import { BulkActionBar, TableSelection, TableSelectionHeader, useBulkSelection }
 import { useToast } from "./Toast";
 import { FleetBulkControls, type BulkApplyPayload } from "./fleet/BulkActionBar";
 import { EditVehicleModal } from "./fleet/EditVehicleModal";
-import { TableControls, Paginator, TableHeaderCell, useTableController, CollapsedListFilters, type TableColumn } from "./table";
+import { TableControls, Paginator, TableHeaderCell, useTableController, CollapsedListFilters, useStagedListFilters, type TableColumn } from "./table";
 import { patchUnit } from "../api/mdata";
 import { patchTrailer } from "../api/fleet-trailers";
 import { useUrlSort } from "../hooks/useUrlSort";
@@ -151,6 +151,11 @@ export function FleetTable({
   // List-filter dropdowns (separate from the bulk-EDIT dropdowns of the same name).
   const [statusFilter, setStatusFilter] = useState("");
   const [typeListFilter, setTypeListFilter] = useState("");
+  const staged = useStagedListFilters({
+    applied: { softDeleteFilter, statusFilter, typeListFilter },
+    empty: { softDeleteFilter: "active" as const, statusFilter: "", typeListFilter: "" },
+    onApply: (next) => { onSoftDeleteFilterChange(next.softDeleteFilter); setStatusFilter(next.statusFilter); setTypeListFilter(next.typeListFilter); },
+  });
 
   const statusOptions = useMemo(
     () => Array.from(new Set(rows.map((r) => String(r.status ?? "")).filter(Boolean))).sort(),
@@ -410,6 +415,10 @@ export function FleetTable({
       >
         <CollapsedListFilters
           activeFilterCount={(softDeleteFilter !== "active" ? 1 : 0) + (statusFilter ? 1 : 0) + (typeListFilter ? 1 : 0)}
+          onApply={staged.apply}
+          onReset={staged.reset}
+          onCancel={staged.cancel}
+          applyDisabled={!staged.dirty}
           testIdPrefix="fleet"
           dataAttributes={{ "data-fleet-filter-toolbar": "collapsed" }}
         >
@@ -419,8 +428,8 @@ export function FleetTable({
                 <button
                   key={value}
                   type="button"
-                  className={`rounded-sm px-2 py-1 font-medium capitalize ${softDeleteFilter === value ? "bg-[#1F2A44] text-white" : "text-gray-700 hover:bg-gray-50"}`}
-                  onClick={() => onSoftDeleteFilterChange(value)}
+                  className={`rounded-sm px-2 py-1 font-medium capitalize ${staged.draft.softDeleteFilter === value ? "bg-[#1F2A44] text-white" : "text-gray-700 hover:bg-gray-50"}`}
+                  onClick={() => staged.setDraft({ ...staged.draft, softDeleteFilter: value })}
                 >
                   {value}
                 </button>
@@ -429,8 +438,8 @@ export function FleetTable({
             <select
               aria-label="Filter by status"
               className="h-8 w-full rounded-sm border border-gray-300 px-2 text-[12px]"
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
+              value={staged.draft.statusFilter}
+              onChange={(e) => staged.setDraft({ ...staged.draft, statusFilter: e.target.value })}
             >
               <option value="">All statuses</option>
               {statusOptions.map((s) => (
@@ -440,8 +449,8 @@ export function FleetTable({
             <select
               aria-label="Filter by type"
               className="h-8 w-full rounded-sm border border-gray-300 px-2 text-[12px]"
-              value={typeListFilter}
-              onChange={(e) => setTypeListFilter(e.target.value)}
+              value={staged.draft.typeListFilter}
+              onChange={(e) => staged.setDraft({ ...staged.draft, typeListFilter: e.target.value })}
             >
               <option value="">All types</option>
               {typeOptions.map((t) => (

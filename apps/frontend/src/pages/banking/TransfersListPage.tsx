@@ -9,7 +9,7 @@ import { ActionButton } from "../../components/shared/ActionButton";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useFeatureFlag } from "../../hooks/useFeatureFlag";
-import { CollapsedListFilters } from "../../components/table";
+import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
@@ -49,6 +49,7 @@ export function TransfersListPage() {
   const [type, setType] = useState<TransferType | "">("");
   const [status, setStatus] = useState<"active" | "revoked" | "">("active");
   const [accountId, setAccountId] = useState("");
+  const staged = useStagedListFilters({ applied: { fromDate, toDate, type, status, accountId }, empty: { fromDate: "", toDate: "", type: "" as const, status: "" as const, accountId: "" }, onApply: (next) => { setFromDate(next.fromDate); setToDate(next.toDate); setType(next.type); setStatus(next.status); setAccountId(next.accountId); setOffset(0); } });
   const [offset, setOffset] = useState(0);
   const [revokingId, setRevokingId] = useState("");
   const [transferModalOpen, setTransferModalOpen] = useState(false);
@@ -361,21 +362,22 @@ export function TransfersListPage() {
         activeFilterCount={
           (fromDate || toDate ? 1 : 0) + (type ? 1 : 0) + (accountId ? 1 : 0) + (status ? 1 : 0)
         }
+        onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}
         testIdPrefix="transfers"
         dataAttributes={{ "data-transfers-filter-toolbar": "collapsed" }}
       >
         <div className="grid grid-cols-1 gap-3 md:grid-cols-5">
           <label className="text-xs text-gray-600">
             From
-            <DatePicker value={fromDate} onChange={(next) => setFromDate(next)} className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2 text-sm" />
+            <DatePicker value={staged.draft.fromDate} onChange={(next) => staged.setDraft({ ...staged.draft, fromDate: next })} className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2 text-sm" />
           </label>
           <label className="text-xs text-gray-600">
             To
-            <DatePicker value={toDate} onChange={(next) => setToDate(next)} className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2 text-sm" />
+            <DatePicker value={staged.draft.toDate} onChange={(next) => staged.setDraft({ ...staged.draft, toDate: next })} className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2 text-sm" />
           </label>
           <label className="text-xs text-gray-600">
             Type
-            <SelectCombobox value={type} onChange={(e) => setType(e.target.value as TransferType | "")} className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2 text-sm">
+            <SelectCombobox value={staged.draft.type} onChange={(e) => staged.setDraft({ ...staged.draft, type: e.target.value as TransferType | "" })} className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2 text-sm">
               <option value="">All</option>
               <option value="bank_to_bank">Bank-to-Bank</option>
               <option value="cc_payment">CC Payment</option>
@@ -386,7 +388,7 @@ export function TransfersListPage() {
           </label>
           <label className="text-xs text-gray-600">
             Account
-            <SelectCombobox value={accountId} onChange={(e) => setAccountId(e.target.value)} className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2 text-sm">
+            <SelectCombobox value={staged.draft.accountId} onChange={(e) => staged.setDraft({ ...staged.draft, accountId: e.target.value })} className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2 text-sm">
               <option value="">All</option>
               {(bankAccountsQuery.data?.accounts ?? []).map((account) => (
                 <option key={account.id} value={account.id}>
@@ -397,22 +399,12 @@ export function TransfersListPage() {
           </label>
           <label className="text-xs text-gray-600">
             Status
-            <SelectCombobox value={status} onChange={(e) => setStatus(e.target.value as "active" | "revoked" | "")} className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2 text-sm">
+            <SelectCombobox value={staged.draft.status} onChange={(e) => staged.setDraft({ ...staged.draft, status: e.target.value as "active" | "revoked" | "" })} className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2 text-sm">
               <option value="">All</option>
               <option value="active">Active</option>
               <option value="revoked">Revoked</option>
             </SelectCombobox>
           </label>
-        </div>
-        <div className="mt-2">
-          <ActionButton
-            onClick={() => {
-              setOffset(0);
-              void transfersQuery.refetch();
-            }}
-          >
-            Apply
-          </ActionButton>
         </div>
       </CollapsedListFilters>
 
@@ -463,4 +455,3 @@ export function TransfersListPage() {
     </div>
   );
 }
-

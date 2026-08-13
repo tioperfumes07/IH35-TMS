@@ -9,7 +9,6 @@ import { formatUsdCents } from "../../lib/money";
 import { getMaintenanceShopHub, type MaintenanceShopHubRow } from "../../api/maintenance-shop";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
-import { CollapsedListFilters } from "../../components/table";
 import { useUrlSort } from "../../hooks/useUrlSort";
 
 const fmtCents = (c: number) => formatUsdCents(c);
@@ -125,13 +124,11 @@ export function MaintenanceShopHubPage() {
 
   const filterBar = (
     <div className="flex flex-wrap items-center gap-2" data-maintenance-shop-filter-toolbar="collapsed">
-      <CollapsedListFilters activeFilterCount={hasFilter ? 1 : 0} testIdPrefix="maintenance-shop">
-        <p className="px-2 py-1 text-xs text-gray-500">
+      <div className="px-2 py-1 text-xs text-gray-500">
           {hasFilter
             ? "Scoped to one work order. Clear to see every linked shop bill and expense."
             : "Work orders linked to vendor bills and shop expenses across Maintenance & shop."}
-        </p>
-      </CollapsedListFilters>
+      </div>
       {hasFilter ? (
         <button
           onClick={clearFilter}

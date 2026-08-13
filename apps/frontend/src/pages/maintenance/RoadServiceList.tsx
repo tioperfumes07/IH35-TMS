@@ -3,7 +3,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import { Button } from "../../components/Button";
 import { StatusBadge } from "../../components/StatusBadge";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
-import { CollapsedListFilters } from "../../components/table";
+import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { useRoadServiceTickets, type RoadServiceStatus, type RoadServiceTicket } from "../../hooks/useRoadServiceTickets";
 import { RoadServiceTicketModal } from "./RoadServiceTicketModal";
 import { entityLabel } from "../../lib/entity-label";
@@ -38,6 +38,7 @@ export function RoadServiceList({ operatingCompanyId }: Props) {
   const [searchParams] = useSearchParams();
   const highlightedTicketId = searchParams.get("ticket_id")?.trim() || "";
   const [statusFilter, setStatusFilter] = useState<RoadServiceStatus | "all">("all");
+  const staged = useStagedListFilters({ applied: { statusFilter }, empty: { statusFilter: "all" as const }, onApply: (next) => setStatusFilter(next.statusFilter) });
   const [search, setSearch] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
   const { tickets, isLoading, createWo } = useRoadServiceTickets({
@@ -132,6 +133,7 @@ export function RoadServiceList({ operatingCompanyId }: Props) {
       <div className="flex flex-wrap items-center justify-between gap-2" data-road-service-filter-toolbar="collapsed">
         <CollapsedListFilters
           activeFilterCount={statusFilter !== "all" ? 1 : 0}
+          onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}
           testIdPrefix="road-service"
         >
           <div className="flex flex-wrap gap-2" data-testid="road-service-status-filter">
@@ -140,7 +142,7 @@ export function RoadServiceList({ operatingCompanyId }: Props) {
                 key={filter.id}
                 type="button"
                 data-testid={`road-service-status-filter-${filter.id}`}
-                onClick={() => setStatusFilter(filter.id)}
+                onClick={() => staged.setDraft({ statusFilter: filter.id })}
                 className={`rounded border px-2 py-1 text-xs font-medium ${
                   statusFilter === filter.id
                     ? "border-slate-600 bg-slate-50 text-slate-800"

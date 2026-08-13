@@ -15,7 +15,7 @@ import { TruckLeaseCreatorModal } from "./TruckLeaseCreatorModal";
 import { UnifiedContractCreatorModal } from "./UnifiedContractCreatorModal";
 import { useFeatureFlag } from "../../../hooks/useFeatureFlag";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
-import { CollapsedListFilters, TableSearch } from "../../../components/table";
+import { CollapsedListFilters, TableSearch, useStagedListFilters } from "../../../components/table";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { ListErrorState } from "../../../components/ListErrorState";
 
@@ -49,6 +49,11 @@ export function LegalContractInstancesPage() {
   const [signerTypeFilter, setSignerTypeFilter] = useState("all");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
+  const staged = useStagedListFilters({
+    applied: { statusFilter, templateFilter, signerTypeFilter, dateFrom, dateTo },
+    empty: { statusFilter: "all" as const, templateFilter: "", signerTypeFilter: "all", dateFrom: "", dateTo: "" },
+    onApply: (next) => { setStatusFilter(next.statusFilter); setTemplateFilter(next.templateFilter); setSignerTypeFilter(next.signerTypeFilter); setDateFrom(next.dateFrom); setDateTo(next.dateTo); },
+  });
   const [activeDetailId, setActiveDetailId] = useState<string | null>(null);
   const openSend = searchParams.get("openSend") === "1";
   const openCreate = searchParams.get("openCreate") === "1";
@@ -272,6 +277,7 @@ export function LegalContractInstancesPage() {
               (dateFrom ? 1 : 0) +
               (dateTo ? 1 : 0)
             }
+            onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}
             testIdPrefix="legal-contracts"
             dataAttributes={{ "data-legal-contracts-filter-toolbar": "collapsed" }}
             searchSlot={
@@ -286,8 +292,8 @@ export function LegalContractInstancesPage() {
           >
             <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
               <SelectCombobox
-                value={statusFilter}
-                onChange={(event) => setStatusFilter(event.target.value as "all" | LegalContractStatus)}
+                value={staged.draft.statusFilter}
+                onChange={(event) => staged.setDraft({ ...staged.draft, statusFilter: event.target.value as "all" | LegalContractStatus })}
                 className="h-9 rounded-sm border border-gray-300 px-2 text-sm"
               >
                 {STATUS_OPTIONS.map((option) => (
@@ -297,8 +303,8 @@ export function LegalContractInstancesPage() {
                 ))}
               </SelectCombobox>
               <SelectCombobox
-                value={templateFilter}
-                onChange={(event) => setTemplateFilter(event.target.value)}
+                value={staged.draft.templateFilter}
+                onChange={(event) => staged.setDraft({ ...staged.draft, templateFilter: event.target.value })}
                 className="h-9 rounded-sm border border-gray-300 px-2 text-sm"
               >
                 <option value="">All templates</option>
@@ -309,8 +315,8 @@ export function LegalContractInstancesPage() {
                 ))}
               </SelectCombobox>
               <SelectCombobox
-                value={signerTypeFilter}
-                onChange={(event) => setSignerTypeFilter(event.target.value)}
+                value={staged.draft.signerTypeFilter}
+                onChange={(event) => staged.setDraft({ ...staged.draft, signerTypeFilter: event.target.value })}
                 className="h-9 rounded-sm border border-gray-300 px-2 text-sm"
               >
                 <option value="all">All signer types</option>
@@ -321,8 +327,8 @@ export function LegalContractInstancesPage() {
                 <option value="other">Other</option>
               </SelectCombobox>
               <div className="grid grid-cols-2 gap-2">
-                <DatePicker value={dateFrom} onChange={(next) => setDateFrom(next)} className="h-9 rounded-sm border border-gray-300 px-2 text-sm" />
-                <DatePicker value={dateTo} onChange={(next) => setDateTo(next)} className="h-9 rounded-sm border border-gray-300 px-2 text-sm" />
+                <DatePicker value={staged.draft.dateFrom} onChange={(next) => staged.setDraft({ ...staged.draft, dateFrom: next })} className="h-9 rounded-sm border border-gray-300 px-2 text-sm" />
+                <DatePicker value={staged.draft.dateTo} onChange={(next) => staged.setDraft({ ...staged.draft, dateTo: next })} className="h-9 rounded-sm border border-gray-300 px-2 text-sm" />
               </div>
             </div>
           </CollapsedListFilters>

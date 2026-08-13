@@ -5,7 +5,7 @@ import { LoadBolPanel } from "../../components/dispatch/LoadBolPanel";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { EntityPicker } from "../../components/parity/EntityPicker";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
-import { CollapsedListFilters } from "../../components/table";
+import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
@@ -61,6 +61,11 @@ export function PodReviewPage() {
   const queryClient = useQueryClient();
   const [loadId, setLoadId] = useState("");
   const [statusFilter, setStatusFilter] = useState<"pending_review" | "approved" | "rejected" | "">("pending_review");
+  const staged = useStagedListFilters({
+    applied: { loadId, statusFilter },
+    empty: { loadId: "", statusFilter: "pending_review" as const },
+    onApply: (next) => { setLoadId(next.loadId); setStatusFilter(next.statusFilter); },
+  });
 
   const podsQuery = useQuery({
     queryKey: ["pod-documents", companyId, statusFilter, loadId],
@@ -125,6 +130,10 @@ export function PodReviewPage() {
   const filterBar = (
     <CollapsedListFilters
       activeFilterCount={(loadId ? 1 : 0) + (statusFilter !== "pending_review" ? 1 : 0)}
+      onApply={staged.apply}
+      onReset={staged.reset}
+      onCancel={staged.cancel}
+      applyDisabled={!staged.dirty}
       testIdPrefix="pod"
       dataAttributes={{ "data-pod-filter-toolbar": "collapsed" }}
     >
@@ -135,8 +144,8 @@ export function PodReviewPage() {
             <EntityPicker
               kind="load"
               operatingCompanyId={companyId}
-              value={loadId || null}
-              onChange={(v) => setLoadId(v ?? "")}
+              value={staged.draft.loadId || null}
+              onChange={(v) => staged.setDraft({ ...staged.draft, loadId: v ?? "" })}
               enabled={Boolean(companyId)}
               allowCreate={false}
               allowClear
@@ -147,8 +156,8 @@ export function PodReviewPage() {
         <label className="text-sm">
           POD status
           <select
-            value={statusFilter}
-            onChange={(event) => setStatusFilter(event.target.value as typeof statusFilter)}
+            value={staged.draft.statusFilter}
+            onChange={(event) => staged.setDraft({ ...staged.draft, statusFilter: event.target.value as typeof statusFilter })}
             className="mt-1 h-10 w-full rounded-sm border px-2"
             data-testid="pod-status-filter"
           >

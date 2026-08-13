@@ -23,7 +23,7 @@ import { ActionButton } from "../components/shared/ActionButton";
 import { SelectCombobox } from "../components/shared/SelectCombobox";
 import { SecondaryNavTabs } from "../components/shared/SecondaryNavTabs";
 import { PageHeader } from "../components/layout/PageHeader";
-import { CollapsedListFilters } from "../components/table";
+import { CollapsedListFilters, useStagedListFilters } from "../components/table";
 import { Modal } from "../components/Modal";
 import { useToast } from "../components/Toast";
 import { useCompanyContext } from "../contexts/CompanyContext";
@@ -233,6 +233,11 @@ export function CustomersPage() {
   // Active/Inactive soft-delete tabs (deactivated_at). Both default to "" = no filter.
   const [rosterType, setRosterType] = useState<"" | "broker" | "direct_shipper">("");
   const [rosterCreditStatus, setRosterCreditStatus] = useState<"" | "active" | "inactive" | "credit_hold" | "blacklist">("");
+  const rosterFilters = useStagedListFilters({
+    applied: { listTab, rosterType, rosterCreditStatus },
+    empty: { listTab: "active" as const, rosterType: "" as const, rosterCreditStatus: "" as const },
+    onApply: (next) => { setListTab(next.listTab); setRosterType(next.rosterType); setRosterCreditStatus(next.rosterCreditStatus); },
+  });
   const [showFilterBox, setShowFilterBox] = useState(false);
   const [sidebarPage, setSidebarPage] = useState(1);
   const [sidebarPageSize, setSidebarPageSize] = useState(50);
@@ -508,6 +513,7 @@ export function CustomersPage() {
                 Filters the left customer list in BOTH list and master-detail view modes. */}
             <CollapsedListFilters
               activeFilterCount={(listStatus !== "active" ? 1 : 0) + (rosterType ? 1 : 0) + (rosterCreditStatus ? 1 : 0)}
+              onApply={rosterFilters.apply} onReset={rosterFilters.reset} onCancel={rosterFilters.cancel} applyDisabled={!rosterFilters.dirty}
               testIdPrefix="customers-roster"
               dataAttributes={{ "data-customers-roster-filter-toolbar": "collapsed" }}
             >
@@ -518,10 +524,10 @@ export function CustomersPage() {
                     <button
                       key={value}
                       type="button"
-                      className={`rounded-sm px-2 py-1 font-medium capitalize ${listStatus === value ? "bg-[#1F2A44] text-white" : "text-gray-700 hover:bg-gray-50"}`}
+                      className={`rounded-sm px-2 py-1 font-medium capitalize ${rosterFilters.draft.listTab === value ? "bg-[#1F2A44] text-white" : "text-gray-700 hover:bg-gray-50"}`}
                       // Same single source of truth as the segment tabs — this older Filters control now
                       // writes the same `listTab` param, so the two can never disagree.
-                      onClick={() => setListTab(value)}
+                      onClick={() => rosterFilters.setDraft({ ...rosterFilters.draft, listTab: value })}
                     >
                       {value}
                     </button>
@@ -532,8 +538,8 @@ export function CustomersPage() {
               <div className="space-y-1.5">
                 <div className="text-xs font-semibold text-gray-600">Type</div>
                 <SelectCombobox
-                  value={rosterType}
-                  onChange={(event) => setRosterType(event.target.value as typeof rosterType)}
+                  value={rosterFilters.draft.rosterType}
+                  onChange={(event) => rosterFilters.setDraft({ ...rosterFilters.draft, rosterType: event.target.value as typeof rosterType })}
                   className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
                   aria-label="Filter customers by type"
                 >
@@ -545,8 +551,8 @@ export function CustomersPage() {
               <div className="space-y-1.5">
                 <div className="text-xs font-semibold text-gray-600">Credit status</div>
                 <SelectCombobox
-                  value={rosterCreditStatus}
-                  onChange={(event) => setRosterCreditStatus(event.target.value as typeof rosterCreditStatus)}
+                  value={rosterFilters.draft.rosterCreditStatus}
+                  onChange={(event) => rosterFilters.setDraft({ ...rosterFilters.draft, rosterCreditStatus: event.target.value as typeof rosterCreditStatus })}
                   className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
                   aria-label="Filter customers by credit status"
                 >

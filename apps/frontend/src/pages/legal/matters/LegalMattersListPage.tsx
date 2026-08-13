@@ -10,7 +10,7 @@ import { entityLabel } from "../../../lib/entity-label";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { LegalModuleTabs } from "../LegalModuleTabs";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
-import { CollapsedListFilters } from "../../../components/table";
+import { CollapsedListFilters, useStagedListFilters } from "../../../components/table";
 import { formatDateUS } from "../../../lib/formatDate";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { userFacingApiError } from "../../../lib/api-error-message";
@@ -37,6 +37,10 @@ export function LegalMattersListPage() {
   const [status, setStatus] = useState("");
   const [severity, setSeverity] = useState("");
   const [type, setType] = useState("");
+  const staged = useStagedListFilters({
+    applied: { status, severity, type }, empty: { status: "", severity: "", type: "" },
+    onApply: (next) => { setStatus(next.status); setSeverity(next.severity); setType(next.type); resetPage(); },
+  });
   // CLS-SILENT-CAP — this list was capped at 500 server-side with no offset and no total, so matter
   // 501 vanished and the screen had no way to say so. Page size is explicit and the server's own
   // `total` drives the range label, so a truncated view is now visible instead of silent.
@@ -169,14 +173,15 @@ export function LegalMattersListPage() {
           filterBar={
             <CollapsedListFilters
               activeFilterCount={(status ? 1 : 0) + (severity ? 1 : 0) + (type ? 1 : 0)}
+              onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}
               testIdPrefix="legal-matters"
               dataAttributes={{ "data-legal-matters-filter-toolbar": "collapsed" }}
             >
               <div className="flex flex-wrap gap-2">
                 <SelectCombobox
                   className="rounded-sm border border-gray-200 px-2 py-1 text-sm"
-                  value={status}
-                  onChange={(e) => { setStatus(e.target.value); resetPage(); }}
+                  value={staged.draft.status}
+                  onChange={(e) => staged.setDraft({ ...staged.draft, status: e.target.value })}
                 >
                   <option value="">All statuses</option>
                   {["open", "investigating", "litigation", "settled", "dismissed", "judgment", "closed"].map((s) => (
@@ -187,8 +192,8 @@ export function LegalMattersListPage() {
                 </SelectCombobox>
                 <SelectCombobox
                   className="rounded-sm border border-gray-200 px-2 py-1 text-sm"
-                  value={severity}
-                  onChange={(e) => { setSeverity(e.target.value); resetPage(); }}
+                  value={staged.draft.severity}
+                  onChange={(e) => staged.setDraft({ ...staged.draft, severity: e.target.value })}
                 >
                   <option value="">All severity</option>
                   {["critical", "high", "medium", "low"].map((s) => (
@@ -197,7 +202,7 @@ export function LegalMattersListPage() {
                     </option>
                   ))}
                 </SelectCombobox>
-                <SelectCombobox className="rounded-sm border border-gray-200 px-2 py-1 text-sm" value={type} onChange={(e) => { setType(e.target.value); resetPage(); }}>
+                <SelectCombobox className="rounded-sm border border-gray-200 px-2 py-1 text-sm" value={staged.draft.type} onChange={(e) => staged.setDraft({ ...staged.draft, type: e.target.value })}>
                   <option value="">All types</option>
                   {["lawsuit", "claim", "demand_letter", "settlement", "regulatory", "other"].map((s) => (
                     <option key={s} value={s}>

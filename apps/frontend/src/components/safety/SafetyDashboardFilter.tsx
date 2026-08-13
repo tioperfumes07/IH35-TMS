@@ -1,5 +1,6 @@
 import { DatePicker } from "../forms/DatePicker";
 import { CollapsedListFilters } from "../table/CollapsedListFilters";
+import { useStagedListFilters } from "../table/useStagedListFilters";
 
 export type SafetyDriverFilter = "active" | "resolved" | "all";
 export type SafetyActivityWindow = "7d" | "10d" | "30d" | "90d" | "all";
@@ -60,6 +61,17 @@ export function SafetyDashboardFilter({
   onFromDateChange,
   onToDateChange,
 }: Props) {
+  const staged = useStagedListFilters({
+    applied: { value, activityWindow, fromDate: fromDate ?? "", toDate: toDate ?? "" },
+    empty: { value: "active" as SafetyDriverFilter, activityWindow: "7d" as SafetyActivityWindow, fromDate: "", toDate: "" },
+    onApply: (next) => {
+      onChange(next.value);
+      onActivityWindowChange(next.activityWindow);
+      onFromDateChange?.(next.fromDate);
+      onToDateChange?.(next.toDate);
+    },
+  });
+  const draft = staged.draft;
   const hidden = Math.max(0, total - shown);
   const showDateRange = Boolean(onFromDateChange && onToDateChange);
 
@@ -74,18 +86,18 @@ export function SafetyDashboardFilter({
       className="flex flex-wrap items-center gap-2 border-b border-gray-200 bg-white px-[22px] py-2 text-[11px]"
       data-safety-filter-toolbar="collapsed"
     >
-      <CollapsedListFilters activeFilterCount={activeCount} testIdPrefix="safety">
+      <CollapsedListFilters activeFilterCount={activeCount} testIdPrefix="safety" onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}>
           <div className="space-y-1.5">
             <div className="text-xs font-semibold text-gray-600">Activity window</div>
             <div className="flex flex-wrap items-center gap-2">
               {WINDOW_OPTIONS.map((option) => {
-                const active = option.id === activityWindow;
+                const active = option.id === draft.activityWindow;
                 return (
                   <button
                     key={option.id}
                     type="button"
                     data-testid={`safety-window-${option.id}`}
-                    onClick={() => onActivityWindowChange(option.id)}
+                    onClick={() => staged.setDraft({ ...draft, activityWindow: option.id })}
                     className="rounded-full border px-2.5 py-0.5"
                     style={pill(active)}
                   >
@@ -100,13 +112,13 @@ export function SafetyDashboardFilter({
             <div className="text-xs font-semibold text-gray-600">Status</div>
             <div className="flex flex-wrap items-center gap-2">
               {STATUS_OPTIONS.map((option) => {
-                const active = option.id === value;
+                const active = option.id === draft.value;
                 return (
                   <button
                     key={option.id}
                     type="button"
                     data-testid={`safety-status-${option.id}`}
-                    onClick={() => onChange(option.id)}
+                    onClick={() => staged.setDraft({ ...draft, value: option.id })}
                     className="rounded-full border px-2.5 py-0.5"
                     style={pill(active)}
                   >
@@ -123,27 +135,26 @@ export function SafetyDashboardFilter({
               <div className="flex flex-wrap items-center gap-2">
                 <span className="text-slate-500">From</span>
                 <DatePicker
-                  value={fromDate ?? ""}
-                  onChange={(next) => onFromDateChange?.(next)}
+                  value={draft.fromDate}
+                  onChange={(next) => staged.setDraft({ ...draft, fromDate: next })}
                   className="w-32"
-                  max={toDate || undefined}
+                  max={draft.toDate || undefined}
                   data-testid="safety-from-date"
                 />
                 <span className="text-slate-500">To</span>
                 <DatePicker
-                  value={toDate ?? ""}
-                  onChange={(next) => onToDateChange?.(next)}
+                  value={draft.toDate}
+                  onChange={(next) => staged.setDraft({ ...draft, toDate: next })}
                   className="w-32"
-                  min={fromDate || undefined}
+                  min={draft.fromDate || undefined}
                   data-testid="safety-to-date"
                 />
-                {fromDate || toDate ? (
+                {draft.fromDate || draft.toDate ? (
                   <button
                     type="button"
                     className="rounded-full border border-gray-300 px-2 py-0.5 text-slate-500 hover:bg-gray-100"
                     onClick={() => {
-                      onFromDateChange?.("");
-                      onToDateChange?.("");
+                      staged.setDraft({ ...draft, fromDate: "", toDate: "" });
                     }}
                   >
                     Clear dates

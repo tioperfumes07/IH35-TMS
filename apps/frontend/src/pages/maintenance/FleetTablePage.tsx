@@ -4,7 +4,7 @@ import { useSearchParams } from "react-router-dom";
 import { apiRequest } from "../../api/client";
 import { FleetTable, type FleetRow, type SoftDeleteFilter } from "../../components/FleetTable";
 import { FLEET_TYPE_FILTER_OPTIONS, parseFleetTypeFilter } from "../../components/fleet/fleetTypeFilter";
-import { CollapsedListFilters } from "../../components/table";
+import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { downloadFleetLocationHosXlsx, getFleetLocationHos } from "../../api/reports";
 import { useListState } from "../../components/list-state";
 import { NOT_AVAILABLE_YET } from "../../lib/prodEmptyStateCopy";
@@ -223,6 +223,10 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, 
   const setKind = (nextKind: string) =>
     patchParams((params) => (nextKind ? params.set("kind", nextKind) : params.delete("kind")));
   const setStatus = (nextStatus: string) => patchParams((params) => params.set("status", nextStatus));
+  const staged = useStagedListFilters({
+    applied: { activeOnly, typeFilter }, empty: { activeOnly: defaultActiveOnly, typeFilter: "" },
+    onApply: (next) => { setStatus(next.activeOnly ? "InService" : "all"); setTypeFilter(next.typeFilter); },
+  });
   const clearFilters = () =>
     patchParams((params) => {
       params.delete("type");
@@ -281,11 +285,12 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, 
       >
         <CollapsedListFilters
           activeFilterCount={(typeFilter ? 1 : 0) + (rawStatus != null && rawStatus !== "all" ? 1 : 0)}
+          onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}
           testIdPrefix="fleet-page"
         >
           <div className="space-y-2">
             <label className="flex items-center gap-1 font-semibold text-gray-700">
-              <input type="checkbox" checked={activeOnly} onChange={(e) => setStatus(e.target.checked ? "InService" : "all")} />
+              <input type="checkbox" checked={staged.draft.activeOnly} onChange={(e) => staged.setDraft({ ...staged.draft, activeOnly: e.target.checked })} />
               Active only
             </label>
             <label htmlFor="fleet-type-filter" className="block font-semibold text-gray-700">
@@ -294,8 +299,8 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, 
                 id="fleet-type-filter"
                 aria-label="Filter fleet by type"
                 className="mt-1 w-full rounded-sm border border-gray-300 bg-white px-2 py-1 text-xs"
-                value={typeFilter}
-                onChange={(event) => setTypeFilter(event.target.value)}
+                value={staged.draft.typeFilter}
+                onChange={(event) => staged.setDraft({ ...staged.draft, typeFilter: event.target.value })}
               >
                 {FLEET_TYPE_FILTER_OPTIONS.map((option) => (
                   <option key={option.label} value={option.value}>

@@ -10,7 +10,7 @@ import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { LegalModuleTabs } from "../LegalModuleTabs";
 import { LegalTemplateNewModal } from "./LegalTemplateNewModal";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
-import { CollapsedListFilters, TableSearch } from "../../../components/table";
+import { CollapsedListFilters, TableSearch, useStagedListFilters } from "../../../components/table";
 
 const STATUS_OPTIONS = ["draft", "pending_review", "approved", "active", "retired"] as const;
 
@@ -31,6 +31,7 @@ export function LegalTemplatesListPage() {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<(typeof STATUS_OPTIONS)[number] | "all">("all");
   const [category, setCategory] = useState("");
+  const staged = useStagedListFilters({ applied: { status, category }, empty: { status: "all" as const, category: "" }, onApply: (next) => { setStatus(next.status); setCategory(next.category); } });
   const [newOpen, setNewOpen] = useState(false);
 
   const query = useQuery({
@@ -98,6 +99,7 @@ export function LegalTemplatesListPage() {
         filterBar={
           <CollapsedListFilters
             activeFilterCount={(status !== "all" ? 1 : 0) + (category ? 1 : 0)}
+            onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}
             testIdPrefix="legal-templates"
             dataAttributes={{ "data-legal-templates-filter-toolbar": "collapsed" }}
             searchSlot={
@@ -112,14 +114,14 @@ export function LegalTemplatesListPage() {
           >
             <div className="grid gap-2 md:grid-cols-2">
               <input
-                value={category}
-                onChange={(event) => setCategory(event.target.value)}
+                value={staged.draft.category}
+                onChange={(event) => staged.setDraft({ ...staged.draft, category: event.target.value })}
                 placeholder="Category"
                 className="h-9 rounded-sm border border-gray-300 px-2 text-sm"
               />
               <SelectCombobox
-                value={status}
-                onChange={(event) => setStatus(event.target.value as (typeof STATUS_OPTIONS)[number] | "all")}
+                value={staged.draft.status}
+                onChange={(event) => staged.setDraft({ ...staged.draft, status: event.target.value as (typeof STATUS_OPTIONS)[number] | "all" })}
                 className="h-9 rounded-sm border border-gray-300 px-2 text-sm"
               >
                 <option value="all">All statuses</option>

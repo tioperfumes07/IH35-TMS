@@ -220,6 +220,7 @@ export function IntegrationTransactionsPage() {
     <div className="flex flex-wrap gap-2 items-center" data-integration-tx-filter-toolbar="collapsed">
       <CollapsedListFilters
         activeFilterCount={(syncStatus ? 1 : 0) + (entityType ? 1 : 0)}
+        applyLawExemptReason="QBO_SYNC_OUT_OF_SCOPE"
         testIdPrefix="integration-tx"
         searchSlot={
           <input

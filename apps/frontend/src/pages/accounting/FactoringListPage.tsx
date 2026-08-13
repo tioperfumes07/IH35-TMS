@@ -13,7 +13,7 @@ import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
-import { CollapsedListFilters } from "../../components/table";
+import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { useUrlSort } from "../../hooks/useUrlSort";
 
 const STATUS_OPTIONS: Array<{ value: "all" | FactoringAdvance["status"]; label: string }> = [
@@ -50,6 +50,7 @@ export function FactoringListPage() {
   const [search, setSearch] = useState("");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
+  const staged = useStagedListFilters({ applied: { status, fromDate, toDate }, empty: { status: "all" as const, fromDate: "", toDate: "" }, onApply: (next) => { setStatus(next.status); setFromDate(next.fromDate); setToDate(next.toDate); } });
   const [submitOpen, setSubmitOpen] = useState(false);
 
   const query = useQuery({
@@ -114,6 +115,7 @@ export function FactoringListPage() {
   const filterBar = (
     <CollapsedListFilters
       activeFilterCount={factoringActiveFilterCount}
+      onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}
       testIdPrefix="factoring"
       dataAttributes={{ "data-factoring-filter-toolbar": "collapsed" }}
       searchSlot={
@@ -129,7 +131,7 @@ export function FactoringListPage() {
       <div className="grid gap-2 md:grid-cols-3 w-full">
         <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
           Status
-          <SelectCombobox value={status} onChange={(event) => setStatus(event.target.value as "all" | FactoringAdvance["status"])} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]">
+          <SelectCombobox value={staged.draft.status} onChange={(event) => staged.setDraft({ ...staged.draft, status: event.target.value as "all" | FactoringAdvance["status"] })} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]">
             {STATUS_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.label}
@@ -139,11 +141,11 @@ export function FactoringListPage() {
         </label>
         <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
           Date from
-          <DatePicker value={fromDate} onChange={(next) => setFromDate(next)} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" />
+          <DatePicker value={staged.draft.fromDate} onChange={(next) => staged.setDraft({ ...staged.draft, fromDate: next })} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" />
         </label>
         <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
           Date to
-          <DatePicker value={toDate} onChange={(next) => setToDate(next)} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" />
+          <DatePicker value={staged.draft.toDate} onChange={(next) => staged.setDraft({ ...staged.draft, toDate: next })} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" />
         </label>
       </div>
     </CollapsedListFilters>

@@ -12,7 +12,7 @@ import {
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityPicker } from "../../components/parity/EntityPicker";
-import { CollapsedListFilters } from "../../components/table";
+import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { ListErrorState } from "../../components/ListErrorState";
 
 type KpiTileId = MaintKpiDrilldownKind | "pm_compliance";
@@ -92,6 +92,10 @@ export function MaintKpiDashboardPage() {
   const [periodStart, setPeriodStart] = useState(defaults.start);
   const [periodEnd, setPeriodEnd] = useState(defaults.end);
   const [unitId, setUnitId] = useState("");
+  const staged = useStagedListFilters({
+    applied: { periodStart, periodEnd, unitId }, empty: { periodStart: defaults.start, periodEnd: defaults.end, unitId: "" },
+    onApply: (next) => { setPeriodStart(next.periodStart); setPeriodEnd(next.periodEnd); setUnitId(next.unitId); },
+  });
   const [activeKpi, setActiveKpi] = useState<KpiTileId>("downtime");
 
   const summaryQ = useQuery({
@@ -192,14 +196,15 @@ export function MaintKpiDashboardPage() {
               (periodStart !== defaults.start ? 1 : 0) + (periodEnd !== defaults.end ? 1 : 0) + (unitId ? 1 : 0)
             }
             testIdPrefix="maint-kpi"
+            onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}
           >
             <div className="flex flex-wrap items-end gap-2 text-xs">
               <label className="flex flex-col gap-0.5">
                 <span className="text-[10px] uppercase text-slate-500">From</span>
                 <DatePicker
                   className="rounded-sm border border-gray-300 px-2 py-1"
-                  value={periodStart}
-                  onChange={(next) => setPeriodStart(next)}
+                  value={staged.draft.periodStart}
+                  onChange={(next) => staged.setDraft({ ...staged.draft, periodStart: next })}
                   data-testid="maint-kpi-filter-start"
                 />
               </label>
@@ -207,8 +212,8 @@ export function MaintKpiDashboardPage() {
                 <span className="text-[10px] uppercase text-slate-500">To</span>
                 <DatePicker
                   className="rounded-sm border border-gray-300 px-2 py-1"
-                  value={periodEnd}
-                  onChange={(next) => setPeriodEnd(next)}
+                  value={staged.draft.periodEnd}
+                  onChange={(next) => staged.setDraft({ ...staged.draft, periodEnd: next })}
                   data-testid="maint-kpi-filter-end"
                 />
               </label>
@@ -217,8 +222,8 @@ export function MaintKpiDashboardPage() {
                 <EntityPicker
                   kind="unit"
                   operatingCompanyId={companyId}
-                  value={unitId || null}
-                  onChange={(next) => setUnitId(next ?? "")}
+                  value={staged.draft.unitId || null}
+                  onChange={(next) => staged.setDraft({ ...staged.draft, unitId: next ?? "" })}
                   allowCreate={false}
                   placeholder="All fleet"
                   dataTestId="maint-kpi-filter-unit"

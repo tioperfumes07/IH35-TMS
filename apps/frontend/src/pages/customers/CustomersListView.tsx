@@ -9,7 +9,7 @@ import { useBulkPermission } from "../../hooks/useBulkPermission";
 import { useToast } from "../../components/Toast";
 import { useListState, type ListQueryStatus } from "../../components/list-state";
 import { formatUsdCents } from "../../lib/money";
-import { CollapsedListFilters, TableSearch } from "../../components/table";
+import { CollapsedListFilters, TableSearch, useStagedListFilters } from "../../components/table";
 import { CustomerDrillModal } from "../../components/customers/CustomerDrillModal";
 import { useUrlSort } from "../../hooks/useUrlSort";
 import { userFacingApiError } from "../../lib/api-error-message";
@@ -69,6 +69,7 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
   // contract as Bills/Expenses.
   const { sortKey, sortDirection, onSortChange } = useUrlSort();
   const [filter, setFilter] = useState<FilterChip>("all");
+  const staged = useStagedListFilters({ applied: { filter }, empty: { filter: "all" as FilterChip }, onApply: (next) => setFilter(next.filter) });
   const [search, setSearch] = useState("");
   // Remount key: bumping this after a successful bulk mutation resets ParityTable's internal
   // selection state (mirrors the old selection.clear() call — ParityTable has no controlled/
@@ -220,6 +221,10 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
           <CollapsedListFilters
             activeFilterCount={filter !== "all" ? 1 : 0}
             testIdPrefix="customers"
+            onApply={staged.apply}
+            onReset={staged.reset}
+            onCancel={staged.cancel}
+            applyDisabled={!staged.dirty}
             dataAttributes={{ "data-customers-filter-toolbar": "collapsed" }}
             searchSlot={
               <TableSearch value={search} onChange={setSearch} placeholder="Search name, code, contact…" className="w-56" />
@@ -233,9 +238,9 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
                     key={chip.id}
                     type="button"
                     className={`rounded-full px-3 py-1 text-xs font-medium ${
-                      filter === chip.id ? "bg-[#1F2A44] text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                      staged.draft.filter === chip.id ? "bg-[#1F2A44] text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                     }`}
-                    onClick={() => setFilter(chip.id)}
+                    onClick={() => staged.setDraft({ filter: chip.id })}
                   >
                     {chip.label}
                   </button>
