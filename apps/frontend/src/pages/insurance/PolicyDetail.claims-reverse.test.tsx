@@ -38,7 +38,18 @@ const insuranceApiMocks = {
     status: "active",
     created_at: "2026-01-01T00:00:00.000Z",
     updated_at: "2026-01-01T00:00:00.000Z",
-    units: [],
+    units: [
+      {
+        id: "pu-1",
+        policy_id: policyId,
+        asset_id: "asset-1",
+        unit_id: "00000000-0000-4000-8000-000000000777",
+        unit_number: "T777",
+        insured_value_cents: 8000000,
+        created_at: "2026-01-01T00:00:00.000Z",
+        updated_at: "2026-01-01T00:00:00.000Z",
+      },
+    ],
   }),
   listInsuranceClaims: vi.fn().mockResolvedValue({
     claims: [{ id: claimId, claim_number: "CLM-0042", status: "open", amount_claimed_cents: 100000 }],
@@ -103,6 +114,11 @@ function wrap(ui: ReactElement) {
 }
 
 describe("PolicyDetail claims/lawsuits reverse chrome (C-16)", () => {
+  it("renders the policy unit as a resolved canonical unit drill", async () => {
+    render(wrap(<PolicyDetail />));
+    const link = await screen.findByRole("link", { name: "T777" });
+    expect(link.getAttribute("href")).toBe("/fleet/units/00000000-0000-4000-8000-000000000777");
+  });
   it("renders the claim number as a real EntityLink to the claim, not plain text", async () => {
     render(wrap(<PolicyDetail />));
     const link = await screen.findByRole("link", { name: "CLM-0042" });

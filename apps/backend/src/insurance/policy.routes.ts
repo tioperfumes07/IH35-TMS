@@ -152,6 +152,7 @@ function policyUnitSelectColumns() {
     pu.policy_id::text,
     pu.asset_id::text,
     COALESCE(a.unit_id::text, u.id::text) AS unit_id,
+    u.unit_number,
     pu.insured_value_cents::bigint,
     pu.created_at::text,
     pu.updated_at::text
@@ -163,7 +164,7 @@ function policyUnitFromClause() {
     FROM insurance.policy_unit pu
     LEFT JOIN mdata.assets a ON a.id = pu.asset_id AND a.tenant_id = pu.tenant_id
     LEFT JOIN mdata.units u
-      ON u.unit_number = a.unit_code
+      ON (u.id = a.unit_id OR (a.unit_id IS NULL AND u.unit_number = a.unit_code))
      AND (u.owner_company_id = pu.tenant_id OR u.currently_leased_to_company_id = pu.tenant_id)
   `;
 }

@@ -1,5 +1,7 @@
 import { formatDateUS } from "../../lib/formatDate";
 import { formatUsdCents } from "../../lib/money";
+import { EntityLink } from "../shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 
 export type InsurancePolicySummary = {
   number?: string;
@@ -10,6 +12,7 @@ export type InsurancePolicySummary = {
 };
 
 export type LinkedInsurancePolicy = InsurancePolicySummary & {
+  policy_id: string;
   coverage_type?: string | null;
   status?: string | null;
 };
@@ -42,7 +45,7 @@ function fmtPremium(cents: unknown): string {
   return formatUsdCents(n);
 }
 
-function PolicyCard({ label, policy }: { label: string; policy: InsurancePolicySummary }) {
+function PolicyCard({ label, policy }: { label: string; policy: InsurancePolicySummary & { policy_id?: string } }) {
   const testKey = label.toLowerCase().replace(/\s+/g, "-");
   return (
     <div className="rounded-sm border border-gray-200 p-3" data-testid={`vp-insurance-${testKey}`}>
@@ -50,7 +53,17 @@ function PolicyCard({ label, policy }: { label: string; policy: InsurancePolicyS
       <dl className="mt-2 grid gap-1 text-xs text-gray-600">
         <div className="flex justify-between gap-2">
           <dt>Policy #</dt>
-          <dd>{String(policy.number ?? "—")}</dd>
+          <dd>
+            {policy.policy_id ? (
+              <EntityLink
+                kind="insurance_policy"
+                id={policy.policy_id}
+                label={entityLabel(policy.number, policy.policy_id, "Policy")}
+              />
+            ) : (
+              String(policy.number ?? "—")
+            )}
+          </dd>
         </div>
         <div className="flex justify-between gap-2">
           <dt>Carrier</dt>
