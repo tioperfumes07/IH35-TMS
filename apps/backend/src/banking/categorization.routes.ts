@@ -655,11 +655,16 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
             bt.categorization_customer_id::text AS customer_id,
             bt.categorization_recover_from_driver AS recover_from_driver,
             bt.categorization_deduction_id::text AS deduction_id,
+            bt.matched_journal_entry_id::text AS matched_journal_entry_id,
+            je.memo AS matched_journal_entry_memo,
             ded.amount_cents::bigint AS deduction_amount_cents,
             ded.status AS deduction_status,
             ded.deduction_type AS deduction_type
           FROM banking.bank_transactions bt
           LEFT JOIN driver_finance.driver_settlement_deductions ded ON ded.id = bt.categorization_deduction_id
+          LEFT JOIN accounting.journal_entries je
+            ON je.id = bt.matched_journal_entry_id
+           AND je.operating_company_id = bt.operating_company_id
           WHERE bt.operating_company_id = $1::uuid
             AND (
               ($2::uuid IS NOT NULL AND bt.categorization_driver_id = $2::uuid)

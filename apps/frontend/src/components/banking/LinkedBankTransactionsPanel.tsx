@@ -22,6 +22,8 @@ type LinkageRow = {
   amount_cents: number | string | null;
   is_credit: boolean | null;
   category_kind: string | null;
+  matched_journal_entry_id: string | null;
+  matched_journal_entry_memo: string | null;
   deduction_id: string | null;
   deduction_amount_cents: number | string | null;
   deduction_status: string | null;
@@ -91,6 +93,16 @@ export function LinkedBankTransactionsPanel({ companyId, linkage, entityLabel }:
                   <div className="mt-0.5 text-[11px] text-gray-500">
                     {formatDateUS(row.transaction_date) || "—"}
                     {row.category_kind ? ` · ${row.category_kind}` : ""}
+                    {row.matched_journal_entry_id ? (
+                      <>
+                        {" · "}
+                        <EntityLink
+                          kind="journal_entry"
+                          id={row.matched_journal_entry_id}
+                          label={formatEntityLabel(row.matched_journal_entry_memo, row.matched_journal_entry_id, "Journal entry")}
+                        />
+                      </>
+                    ) : null}
                     {row.deduction_id
                       ? ` · deduction ${row.deduction_type || ""} ${
                           row.deduction_amount_cents != null

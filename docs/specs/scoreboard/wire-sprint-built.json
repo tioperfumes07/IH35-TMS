@@ -928,6 +928,14 @@
       "modules": ["fleet", "accounting"],
       "cols": ["unit", "ap_bill", "expense", "gl_je", "connectivity", "reverse_link"],
       "leafRe": "^unit\\.detail\\.finance_linkage$"
+    },
+    {
+      "task": "BANK-LINKAGE-GL-JE-REVERSE",
+      "pr": "this PR",
+      "guard": "scripts/verify-bank-linkage-gl-je-reverse.mjs",
+      "modules": ["banking", "accounting", "drivers", "dispatch", "fleet", "vendors", "customers"],
+      "cols": ["bank", "gl_je", "driver", "unit", "trailer", "load", "vendor", "customer", "connectivity", "reverse_link"],
+      "leafRe": "^(unit\\.profile\\.bank_txns|trailer\\.profile\\.bank_txns|.*bank.*|.*linked.*transaction.*)$"
     }
   ]
 }
