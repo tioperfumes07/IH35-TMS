@@ -2,7 +2,7 @@
   "module": "accounting",
   "entity_default": "USMCA",
   "source": {
-    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md \u2014 Accounting grouped sub-nav",
+    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md — Accounting grouped sub-nav",
     "nav": "apps/frontend/src/pages/accounting/subnav-manifest.ts",
     "routes": "/accounting/*"
   },
@@ -326,8 +326,7 @@
         "gl_je",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -478,8 +477,7 @@
         "gl_je",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -574,7 +572,6 @@
       "surface_path": "pages/accounting/InvoiceCreateModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "picker_law",
         "qbo_chrome",
         "invoice",
@@ -590,7 +587,6 @@
       "surface_path": "pages/accounting/ManualJEModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "gl_je",
         "qbo_chrome"
       ]
@@ -604,7 +600,6 @@
       "surface_path": "pages/accounting/PayBillModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "qbo_chrome",
         "ap_bill",
         "gl_je"
@@ -619,7 +614,6 @@
       "surface_path": "pages/accounting/PaymentApplyModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "qbo_chrome",
         "gl_je"
       ]
@@ -633,7 +627,6 @@
       "surface_path": "pages/accounting/RecordPaymentModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "qbo_chrome",
         "gl_je"
       ]
@@ -647,7 +640,6 @@
       "surface_path": "pages/accounting/SubmitFactoringModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "qbo_chrome",
         "gl_je"
       ]
@@ -661,7 +653,6 @@
       "surface_path": "pages/accounting/bill-payments/CCPaymentModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "qbo_chrome",
         "ap_bill",
         "gl_je"
@@ -676,7 +667,6 @@
       "surface_path": "pages/accounting/modals/CustomerAdjustmentModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "customer",
         "gl_je",
         "qbo_chrome"
@@ -691,7 +681,6 @@
       "surface_path": "pages/accounting/modals/DriverDamageInvoiceModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "qbo_chrome",
         "driver",
         "invoice",
@@ -707,7 +696,6 @@
       "surface_path": "pages/accounting/modals/DriverMiscInvoiceModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "qbo_chrome",
         "driver",
         "invoice",
@@ -723,7 +711,6 @@
       "surface_path": "pages/accounting/modals/ManualInvoiceModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "qbo_chrome",
         "invoice",
         "gl_je"
@@ -738,7 +725,6 @@
       "surface_path": "pages/accounting/modals/VendorChargebackModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "vendor",
         "gl_je",
         "qbo_chrome"
@@ -753,7 +739,6 @@
       "surface_path": "components/parity/drawers/NewAccountDrawerForm.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "picker_law",
         "qbo_chrome"
       ]
@@ -767,7 +752,6 @@
       "surface_path": "components/parity/drawers/NewClassDrawerForm.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "picker_law",
         "qbo_chrome"
       ]
@@ -781,7 +765,6 @@
       "surface_path": "components/parity/drawers/NewServiceDrawerForm.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "picker_law",
         "qbo_chrome"
       ]
@@ -810,7 +793,6 @@
       "surface_path": "pages/accounting/ChartOfAccountsSyncPanel.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -823,7 +805,6 @@
       "surface_path": "pages/accounting/CoaAsymmetryReportPanel.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -836,7 +817,6 @@
       "surface_path": "pages/accounting/loans/LoanApplicationWizard.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "picker_law",
         "qbo_chrome"
       ]
@@ -850,7 +830,6 @@
       "surface_path": "pages/accounting/ExpenseCreatePage.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "picker_law",
         "qbo_chrome",
         "expense",
@@ -895,7 +874,6 @@
       "surface_path": "pages/accounting/InvoiceCreateModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "picker_law",
         "qbo_chrome",
         "invoice",
@@ -911,7 +889,6 @@
       "surface_path": "pages/accounting/PayBillModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "qbo_chrome",
         "ap_bill",
         "gl_je"
@@ -926,7 +903,6 @@
       "surface_path": "pages/accounting/PaymentApplyModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "qbo_chrome",
         "gl_je"
       ]
@@ -953,7 +929,6 @@
       "surface_path": "pages/accounting/RecordPaymentModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "qbo_chrome",
         "gl_je"
       ]
@@ -967,7 +942,6 @@
       "surface_path": "pages/accounting/SubmitFactoringModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "qbo_chrome",
         "gl_je"
       ]
@@ -981,7 +955,6 @@
       "surface_path": "pages/accounting/VendorBillCreatePage.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "picker_law",
         "qbo_chrome",
         "vendor",
@@ -1012,7 +985,6 @@
       "surface_path": "pages/accounting/bill-payments/CCPaymentModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "qbo_chrome",
         "ap_bill",
         "gl_je"
@@ -1027,7 +999,6 @@
       "surface_path": "pages/accounting/modals/InvoiceTypeModalBase.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "qbo_chrome",
         "invoice",
         "gl_je"
@@ -1042,7 +1013,6 @@
       "surface_path": "components/ap/BillPaymentModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "picker_law",
         "gl_je",
         "ap_bill",
@@ -1077,7 +1047,7 @@
     {
       "id": "chrome.toolbar_search",
       "tab": "Chrome controls",
-      "sub": "List toolbar \u2014 Search (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar — Search (CLS-LIST-TOOLBAR)",
       "route_hint": "/accounting",
       "surface_kind": "toolbar",
       "required": [
@@ -1088,7 +1058,7 @@
     {
       "id": "chrome.toolbar_range",
       "tab": "Chrome controls",
-      "sub": "List toolbar \u2014 date/amount range (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar — date/amount range (CLS-LIST-TOOLBAR)",
       "route_hint": "/accounting",
       "surface_kind": "toolbar",
       "required": [
@@ -1099,7 +1069,7 @@
     {
       "id": "chrome.toolbar_gear",
       "tab": "Chrome controls",
-      "sub": "List toolbar \u2014 column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
+      "sub": "List toolbar — column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
       "route_hint": "/accounting",
       "surface_kind": "toolbar",
       "required": [
@@ -1110,7 +1080,7 @@
     {
       "id": "chrome.toolbar_filter",
       "tab": "Chrome controls",
-      "sub": "List toolbar \u2014 Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
+      "sub": "List toolbar — Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
       "route_hint": "/accounting",
       "surface_kind": "toolbar",
       "required": [
@@ -1266,7 +1236,7 @@
           "cols": [
             "gl_je"
           ],
-          "proof": "ChartOfAccountsListPage \u2192 AccountRegisterPage journal_entry EntityLink"
+          "proof": "ChartOfAccountsListPage → AccountRegisterPage journal_entry EntityLink"
         },
         {
           "id": "transactions",
@@ -1296,7 +1266,7 @@
           "cols": [
             "gl_je"
           ],
-          "proof": "alias\u2192MonthClosePage adjusting_entries href /accounting/journal-entries"
+          "proof": "alias→MonthClosePage adjusting_entries href /accounting/journal-entries"
         },
         {
           "id": "month_close",
@@ -1315,7 +1285,7 @@
           "cols": [
             "gl_je"
           ],
-          "proof": "FactoringDetailPage journal_entry_id EntityLink (list\u2192:id)"
+          "proof": "FactoringDetailPage journal_entry_id EntityLink (list→:id)"
         }
       ]
     },
@@ -1365,7 +1335,7 @@
         "invoice",
         "bank"
       ],
-      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; \u00a7B9 link columns added."
+      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; §B9 link columns added."
     }
   }
 }
