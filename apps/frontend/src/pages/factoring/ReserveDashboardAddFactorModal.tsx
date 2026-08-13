@@ -51,7 +51,7 @@ export function ReserveDashboardAddFactorModal({
   if (!open) return null;
 
   return (
-    <Modal open={open} onClose={onClose} title="Add Factor">
+    <Modal open={open} onClose={onClose} title="Add Factor" variant="drawer">
       <div className="space-y-2 text-xs">
           <label className="block">
             <div className="mb-1">Name</div>
