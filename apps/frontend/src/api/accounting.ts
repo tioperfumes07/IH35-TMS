@@ -2005,6 +2005,8 @@ export type EscrowAccount = {
   status: "active" | "closed";
   created_at: string;
   updated_at: string;
+  /** ACCT-F5068 — API-resolved holder display name. */
+  holder_label?: string | null;
 };
 
 export type EscrowPosting = {
@@ -2022,6 +2024,8 @@ export type EscrowPosting = {
   /** ACCT-F5065 — joined from accounting.journal_entries for EntityLink label. */
   journal_entry_date?: string | null;
   journal_entry_memo?: string | null;
+  /** ACCT-F5068 — settlement/bill/advance display id. */
+  source_label?: string | null;
   created_at: string;
 };
 

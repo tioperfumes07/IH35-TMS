@@ -68,18 +68,19 @@ function escrowSourceNoun(sourceType: EscrowPosting["source_type"]): string {
 function EscrowPostingSourceLink({ row }: { row: EscrowPosting }) {
   const kind = escrowSourceEntityKind(row.source_type);
   const noun = escrowSourceNoun(row.source_type);
+  const label = entityLabel(row.source_label ?? null, row.source_id, noun);
   if (!kind || !row.source_id) {
     return (
       <>
         {row.source_type}
-        {row.source_id ? ` / ${entityLabel(null, row.source_id, noun)}` : ""}
+        {row.source_id ? ` / ${label}` : ""}
       </>
     );
   }
   return (
     <>
       {row.source_type}{" "}
-      <EntityLink kind={kind} id={row.source_id} label={entityLabel(null, row.source_id, noun)} />
+      <EntityLink kind={kind} id={row.source_id} label={label} />
     </>
   );
 }
@@ -151,16 +152,16 @@ export function EscrowPage() {
             <EntityLink
               kind="driver"
               id={row.holder_id}
-              label={entityLabel(null, row.holder_id, escrowHolderNoun(row.holder_type))}
+              label={entityLabel(row.holder_label ?? null, row.holder_id, escrowHolderNoun(row.holder_type))}
             />
           ) : row.holder_type === "vendor" ? (
             <EntityLink
               kind="vendor"
               id={row.holder_id}
-              label={entityLabel(null, row.holder_id, escrowHolderNoun(row.holder_type))}
+              label={entityLabel(row.holder_label ?? null, row.holder_id, escrowHolderNoun(row.holder_type))}
             />
           ) : (
-            entityLabel(null, row.holder_id, escrowHolderNoun(row.holder_type))
+            entityLabel(row.holder_label ?? null, row.holder_id, escrowHolderNoun(row.holder_type))
           ),
       },
       { key: "holder_type", label: "Type", sortable: true },
