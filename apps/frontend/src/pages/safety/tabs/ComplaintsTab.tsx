@@ -236,7 +236,7 @@ export function ComplaintsTab() {
       );
     if (row.complainant_user_id) {
       const employeeLabel = resolveUserLabel(String(row.complainant_user_id));
-      return <span>{employeeLabel}</span>;
+      return <EntityLink kind="user" id={String(row.complainant_user_id)} label={employeeLabel} />;
     }
     if (row.complainant_external_name) return <span>{String(row.complainant_external_name)}</span>;
     return <span>{String(row.complainant_type ?? "—")}</span>;
@@ -259,7 +259,7 @@ export function ComplaintsTab() {
       );
     if (row.respondent_user_id) {
       const employeeLabel = resolveUserLabel(String(row.respondent_user_id));
-      return <span>{employeeLabel}</span>;
+      return <EntityLink kind="user" id={String(row.respondent_user_id)} label={employeeLabel} />;
     }
     return <span>—</span>;
   }

@@ -8,6 +8,7 @@ import { Button } from "../Button";
 import { ListErrorState } from "../ListErrorState";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 import { formatQueryErrorDetail } from "../../lib/tableError";
+import { EntityLink } from "../shared/EntityLink";
 
 interface EntityAuditHistoryTabProps {
   operatingCompanyId: string;
@@ -77,7 +78,7 @@ const COLUMNS: Array<ParityColumn<EventWithPayload>> = [
     label: "Who",
     sortable: true,
     sortValue: (row) => entityLabel(row.actor_email, row.actor_user_id, "User"),
-    render: (row) => <>{entityLabel(row.actor_email, row.actor_user_id, "User") || "—"}</>,
+    render: (row) => <EntityLink kind="user" id={row.actor_user_id} label={entityLabel(row.actor_email, row.actor_user_id, "User") || "—"} />,
   },
   {
     key: "event_type",
