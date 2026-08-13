@@ -11,6 +11,7 @@ import { useAuth } from "../../auth/useAuth";
 import { formatDateUS } from "../../lib/formatDate";
 import { EntityLink } from "../shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
+import { CivilFinesReverseBlock } from "./CivilFinesReverseBlock";
 
 /**
  * SAF-F17 — the REVERSE half of the asset↔safety link (unit and trailer profiles).
@@ -294,6 +295,8 @@ export function AssetSafetyReverseSection({
           </li>
         ))}
       </SectionShell>
+
+      {isUnit ? <CivilFinesReverseBlock companyId={operatingCompanyId} related="unit" entityId={assetId} /> : null}
 
       {INCIDENT_KINDS.map((kind) => (
         <IncidentsBlock

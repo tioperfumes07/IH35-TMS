@@ -30,7 +30,11 @@ const FINE_DRAWER = "apps/frontend/src/pages/safety/components/FineDetailDrawer.
 const FINE_ROUTES = "apps/backend/src/safety/fines.routes.ts";
 const VIOLATION_MODAL = "apps/frontend/src/pages/safety/components/CompanyViolationCreateModal.tsx";
 const VIOLATION_ROUTES = "apps/backend/src/safety/company-violations.routes.ts";
-const FILES = [FINE_CREATE, FINE_DRAWER, FINE_ROUTES, VIOLATION_MODAL, VIOLATION_ROUTES];
+const FINES_API = "apps/frontend/src/api/safety.ts";
+const REVERSE_BLOCK = "apps/frontend/src/components/safety/CivilFinesReverseBlock.tsx";
+const LOAD_REVERSE = "apps/frontend/src/components/safety/LoadSafetyReverseSection.tsx";
+const ASSET_REVERSE = "apps/frontend/src/components/safety/AssetSafetyReverseSection.tsx";
+const FILES = [FINE_CREATE, FINE_DRAWER, FINE_ROUTES, VIOLATION_MODAL, VIOLATION_ROUTES, FINES_API, REVERSE_BLOCK, LOAD_REVERSE, ASSET_REVERSE];
 const LABEL = "verify-fine-links-and-violation-catalog";
 const SELFTEST = process.argv.includes("--selftest");
 
@@ -69,6 +73,21 @@ export function assertFineLinksAndViolationCatalog(sources) {
   if (/LEFT JOIN mdata\.units/.test(src[FINE_ROUTES]) && !/owner_company_id|currently_leased_to_company_id/.test(src[FINE_ROUTES])) {
     problems.push(`${FINE_ROUTES}: the mdata.units join is not scoped by owner_company_id / currently_leased_to_company_id — units have no operating_company_id, so this would cross entities.`);
   }
+  for (const filter of ["related_load_id", "related_unit_id"]) {
+    if (!new RegExp(`cf\\.${filter} = \\$\\$\\{values\\.length\\}`).test(src[FINE_ROUTES])) problems.push(`${FINE_ROUTES}: list route must filter server-side by ${filter} for reverse profiles.`);
+    if (!new RegExp(`qs\\.set\\("${filter}"`).test(src[FINES_API])) problems.push(`${FINES_API}: getSafetyFines must forward ${filter}.`);
+  }
+  if (!/related_entity_not_in_operating_company/.test(src[FINE_ROUTES]) || !/catalogs\.civil_fine_types/.test(src[FINE_ROUTES]) || !/docs\.files/.test(src[FINE_ROUTES])) {
+    problems.push(`${FINE_ROUTES}: create must reject cross-company driver/load/unit/type/document FKs.`);
+  }
+  if (!/u\.unit_number AS related_unit_number/.test(src[FINE_ROUTES]) || !/l\.load_number AS related_load_number/.test(src[FINE_ROUTES])) {
+    problems.push(`${FINE_ROUTES}: direct detail must preserve unit/load labels.`);
+  }
+  if (!/getSafetyFines\(companyId, related === "load" \? \{ related_load_id: entityId \} : \{ related_unit_id: entityId \}\)/.test(src[REVERSE_BLOCK]) || !/kind="safety_fine"/.test(src[REVERSE_BLOCK])) {
+    problems.push(`${REVERSE_BLOCK}: shared load/unit fines reverse block must use exact server filters and canonical drill-through.`);
+  }
+  if (!/<CivilFinesReverseBlock[^>]*related="load"/.test(src[LOAD_REVERSE])) problems.push(`${LOAD_REVERSE}: load detail must mount civil-fine reverse history.`);
+  if (!/isUnit \? <CivilFinesReverseBlock[^>]*related="unit"/.test(src[ASSET_REVERSE])) problems.push(`${ASSET_REVERSE}: unit profile must mount civil-fine reverse history without inventing trailer linkage.`);
 
   // --- F15: the catalog FK is accepted AND persisted ---
   if (!/violation_type_uuid/.test(src[VIOLATION_ROUTES])) {
@@ -170,6 +189,13 @@ if (SELFTEST) {
     },
     "opens an external page"
   );
+  expectCaught("load-filter-dropped", { ...live, [FINE_ROUTES]: live[FINE_ROUTES].replace("cf.related_load_id = $${values.length}", "TRUE") }, "related_load_id");
+  expectCaught("unit-filter-dropped", { ...live, [FINES_API]: live[FINES_API].replace('qs.set("related_unit_id"', 'qs.set("ignored"') }, "related_unit_id");
+  expectCaught("writer-integrity-dropped", { ...live, [FINE_ROUTES]: live[FINE_ROUTES].replace("related_entity_not_in_operating_company", "invalid") }, "cross-company");
+  expectCaught("detail-label-dropped", { ...live, [FINE_ROUTES]: live[FINE_ROUTES].replace("u.unit_number AS related_unit_number", "NULL AS related_unit_number") }, "direct detail");
+  expectCaught("reverse-drill-dropped", { ...live, [REVERSE_BLOCK]: live[REVERSE_BLOCK].replace('kind="safety_fine"', 'kind="driver"') }, "canonical drill-through");
+  expectCaught("load-reverse-unmounted", { ...live, [LOAD_REVERSE]: live[LOAD_REVERSE].replace("<CivilFinesReverseBlock", "<MissingCivilFinesReverseBlock") }, "load detail");
+  expectCaught("unit-reverse-unmounted", { ...live, [ASSET_REVERSE]: live[ASSET_REVERSE].replace("<CivilFinesReverseBlock", "<MissingCivilFinesReverseBlock") }, "unit profile");
 
   const liveProblems = assertFineLinksAndViolationCatalog(live);
   if (liveProblems.length) failures.push(`live sources FAIL (false positive): ${liveProblems.join(" | ")}`);
@@ -179,7 +205,7 @@ if (SELFTEST) {
     for (const f of failures) console.error(`  ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — 7 planted defects caught, live sources clean`);
+  console.log(`${LABEL} SELFTEST PASS — 14 planted defects caught, live sources clean`);
   process.exit(0);
 }
 
