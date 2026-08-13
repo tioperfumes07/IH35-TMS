@@ -11,6 +11,9 @@ import { registerSafetyRoutes } from "../safety.routes.js";
  */
 const COMPANY = "11111111-1111-4111-8111-111111111111";
 const ACCIDENT_ID = "22222222-2222-4222-8222-222222222222";
+// P44-ACCIDENT-TYPE-FK (PR #5947, migration 202612511400) made accident_type_id a NOT NULL
+// same-opco FK on safety.accident_reports — every POST create payload needs one.
+const ACCIDENT_TYPE = "66666666-6666-4666-8666-666666666666";
 
 const { mockQuery } = vi.hoisted(() => ({ mockQuery: vi.fn() }));
 
@@ -61,7 +64,7 @@ describe("accident create/patch persists the 7 evidence fields (SAF-F05)", () =>
     const res = await app.inject({
       method: "POST",
       url: "/api/v1/safety/accidents",
-      payload: { operating_company_id: COMPANY, ...FIELDS },
+      payload: { operating_company_id: COMPANY, accident_type_id: ACCIDENT_TYPE, ...FIELDS },
     });
     expect(res.statusCode).toBe(201); // create → 201 Created
 
