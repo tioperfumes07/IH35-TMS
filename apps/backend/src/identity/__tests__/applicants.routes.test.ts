@@ -186,9 +186,11 @@ describe("identity applicant routes (A24-12)", () => {
   });
 
   it("POST /api/v1/identity/applicants/:id/convert-to-driver bridges onboarding wizard", async () => {
+    const sqlSeen: string[] = [];
     mockWithCurrentUser.mockImplementation(async (_uid: string, fn: (client: { query: ReturnType<typeof vi.fn> }) => Promise<unknown>) =>
       fn(
         officeClient((sql) => {
+          sqlSeen.push(sql);
           if (sql.includes("FROM identity.driver_applicants") && sql.includes("LIMIT 1")) {
             return {
               rows: [
@@ -247,5 +249,6 @@ describe("identity applicant routes (A24-12)", () => {
     expect(body.driver_id).toBe(DRIVER);
     expect(body.onboarding_session_id).toBe(SESSION);
     expect(body.onboarding_path).toBe(`/drivers/onboarding/${SESSION}`);
+    expect(sqlSeen.some((sql) => sql.includes("INSERT INTO mdata.vendors"))).toBe(true);
   });
 });

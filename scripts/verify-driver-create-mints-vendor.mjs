@@ -48,14 +48,6 @@ const KNOWN_GAPS = new Map([
     "apps/backend/src/integrations/samsara/samsara-master-sync.service.ts",
     "Samsara master sync: telematics-derived drivers. A device projection is not a hire, and it carries no pay relationship.",
   ],
-  [
-    "apps/backend/src/maintenance/drivers.routes.ts",
-    "Maintenance driver create — SECOND operator surface. OPEN: should call ensureDriverVendor like mdata/drivers.routes.ts. Owner: fleet lane.",
-  ],
-  [
-    "apps/backend/src/identity/applicants.routes.ts",
-    "Applicant→driver conversion. OPEN and arguably the MOST load-bearing hire path of all, since it is the real onboarding funnel. Left listed rather than silently fixed: the conversion runs in its own transaction shape and needs its own verification. Owner: onboarding lane.",
-  ],
 ]);
 
 const strip = (s) => s.replace(/\/\/[^\n]*/g, "").replace(/\/\*[\s\S]*?\*\//g, "");
@@ -78,7 +70,7 @@ export function insertsInto(code, relation) {
 }
 
 export function mintsPayee(code) {
-  return insertsInto(code, "mdata.vendors") || /\bensureDriverVendor\s*\(/.test(code);
+  return insertsInto(code, "mdata.vendors") || /\bensureDriverVendor\s*\(/.test(code) || /\bcreateDriverCanonical\s*\(/.test(code);
 }
 
 export function collectProblems(files) {
@@ -140,7 +132,7 @@ function selftest() {
     },
     {
       name: "a stale KNOWN_GAPS entry is caught",
-      files: [mk("apps/backend/src/maintenance/drivers.routes.ts", "INSERT INTO mdata.drivers (a); await ensureDriverVendor(c, {});")],
+      files: [mk("apps/backend/src/mdata/drivers-import.routes.ts", "INSERT INTO mdata.drivers (a); await ensureDriverVendor(c, {});")],
       expectAtLeast: 1,
     },
   ];
