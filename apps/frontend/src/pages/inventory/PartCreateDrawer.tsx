@@ -22,10 +22,11 @@ const VENDOR_PICKER_CAP = 200;
 interface PartCreateDrawerProps {
   isOpen: boolean;
   onClose: () => void;
+  onCreated?: (id: string) => void;
   operatingCompanyId: string;
 }
 
-export function PartCreateDrawer({ isOpen, onClose, operatingCompanyId }: PartCreateDrawerProps) {
+export function PartCreateDrawer({ isOpen, onClose, onCreated, operatingCompanyId }: PartCreateDrawerProps) {
   const queryClient = useQueryClient();
   const [vendorSearch, setVendorSearch] = useState("");
   const [formData, setFormData] = useState({
@@ -96,8 +97,9 @@ export function PartCreateDrawer({ isOpen, onClose, operatingCompanyId }: PartCr
         }
       );
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["inventory", "parts", operatingCompanyId] });
+    onSuccess: async (created) => {
+      await queryClient.invalidateQueries({ queryKey: ["inventory", "parts", operatingCompanyId] });
+      onCreated?.(created.id);
       onClose();
       setFormData({
         name: "",
