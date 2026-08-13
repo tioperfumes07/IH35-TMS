@@ -1,157 +1,210 @@
 {
-  "as_of": "2026-08-12T21:31:14.089Z",
-  "main_sha": "b674aa935",
+  "as_of": "2026-08-13T15:09:09.775Z",
+  "main_sha": "c616cf0b0",
   "gate": "PRIORITY_10_3BOX_100",
   "allRequired": {
-    "totR": 2662,
-    "totB": 2284,
-    "pct": 86
+    "totR": 3565,
+    "totB": 3347,
+    "pct": 94
   },
   "waveABC_noChrome": {
-    "abcR": 2037,
-    "abcB": 2025,
-    "pct": 99
+    "abcR": 2602,
+    "abcB": 2602,
+    "pct": 100
   },
   "per_module": [
     {
       "mod": "lists",
-      "req": 1363,
-      "built": 1158,
-      "pct": 85,
-      "abcReq": 954,
-      "abcBuilt": 954,
+      "req": 1523,
+      "built": 1459,
+      "pct": 96,
+      "abcReq": 1020,
+      "abcBuilt": 1020,
       "abcPct": 100
     },
     {
       "mod": "accounting",
-      "req": 160,
-      "built": 136,
-      "pct": 85,
-      "abcReq": 128,
-      "abcBuilt": 126,
-      "abcPct": 98
+      "req": 333,
+      "built": 324,
+      "pct": 97,
+      "abcReq": 240,
+      "abcBuilt": 240,
+      "abcPct": 100
     },
     {
       "mod": "dispatch",
-      "req": 333,
-      "built": 302,
-      "pct": 91,
-      "abcReq": 292,
-      "abcBuilt": 292,
+      "req": 474,
+      "built": 444,
+      "pct": 94,
+      "abcReq": 414,
+      "abcBuilt": 414,
       "abcPct": 100
     },
     {
       "mod": "settlements",
-      "req": 34,
-      "built": 28,
-      "pct": 82,
-      "abcReq": 28,
-      "abcBuilt": 28,
+      "req": 112,
+      "built": 93,
+      "pct": 83,
+      "abcReq": 85,
+      "abcBuilt": 85,
       "abcPct": 100
     },
     {
       "mod": "factoring",
-      "req": 122,
-      "built": 95,
-      "pct": 78,
-      "abcReq": 105,
-      "abcBuilt": 95,
-      "abcPct": 90
+      "req": 170,
+      "built": 144,
+      "pct": 85,
+      "abcReq": 135,
+      "abcBuilt": 135,
+      "abcPct": 100
     },
     {
       "mod": "banking",
-      "req": 48,
-      "built": 42,
-      "pct": 88,
-      "abcReq": 40,
-      "abcBuilt": 40,
+      "req": 135,
+      "built": 129,
+      "pct": 96,
+      "abcReq": 79,
+      "abcBuilt": 79,
       "abcPct": 100
     },
     {
       "mod": "customers",
-      "req": 177,
-      "built": 162,
-      "pct": 92,
-      "abcReq": 149,
-      "abcBuilt": 149,
+      "req": 201,
+      "built": 198,
+      "pct": 99,
+      "abcReq": 159,
+      "abcBuilt": 159,
       "abcPct": 100
     },
     {
       "mod": "vendors",
-      "req": 172,
-      "built": 155,
-      "pct": 90,
-      "abcReq": 142,
-      "abcBuilt": 142,
+      "req": 189,
+      "built": 188,
+      "pct": 99,
+      "abcReq": 151,
+      "abcBuilt": 151,
       "abcPct": 100
     },
     {
       "mod": "drivers",
-      "req": 61,
-      "built": 49,
-      "pct": 80,
-      "abcReq": 49,
-      "abcBuilt": 49,
+      "req": 125,
+      "built": 114,
+      "pct": 91,
+      "abcReq": 98,
+      "abcBuilt": 98,
       "abcPct": 100
     },
     {
       "mod": "safety",
-      "req": 192,
-      "built": 157,
-      "pct": 82,
-      "abcReq": 150,
-      "abcBuilt": 150,
+      "req": 303,
+      "built": 254,
+      "pct": 84,
+      "abcReq": 221,
+      "abcBuilt": 221,
       "abcPct": 100
     }
   ],
   "ranked_gaps": [
     {
-      "col": "qbo_chrome",
-      "cells": 293,
-      "byMod": {
-        "lists": 205,
-        "accounting": 15,
-        "dispatch": 10,
-        "settlements": 2,
-        "factoring": 10,
-        "banking": 4,
-        "customers": 15,
-        "vendors": 17,
-        "drivers": 4,
-        "safety": 11
-      },
-      "seat": "D LAST"
-    },
-    {
       "col": "picker_law",
-      "cells": 73,
+      "cells": 66,
       "byMod": {
-        "accounting": 7,
-        "dispatch": 21,
+        "accounting": 5,
+        "dispatch": 23,
         "settlements": 4,
-        "factoring": 7,
-        "banking": 2,
-        "drivers": 8,
-        "safety": 24
+        "factoring": 6,
+        "banking": 4,
+        "drivers": 7,
+        "safety": 17
       },
       "seat": "D LAST"
     },
     {
-      "col": "liability",
-      "cells": 10,
+      "col": "work_order",
+      "cells": 45,
       "byMod": {
-        "factoring": 10
+        "lists": 44,
+        "accounting": 1
       },
-      "seat": "CC-1"
+      "seat": "?"
     },
     {
-      "col": "gl_je",
-      "cells": 2,
+      "col": "accident",
+      "cells": 30,
       "byMod": {
-        "accounting": 2
+        "lists": 8,
+        "safety": 22
       },
-      "seat": "CC-1 C"
+      "seat": "?"
+    },
+    {
+      "col": "settlement",
+      "cells": 26,
+      "byMod": {
+        "accounting": 1,
+        "dispatch": 6,
+        "settlements": 15,
+        "drivers": 4
+      },
+      "seat": "?"
+    },
+    {
+      "col": "claim",
+      "cells": 18,
+      "byMod": {
+        "lists": 10,
+        "customers": 1,
+        "safety": 7
+      },
+      "seat": "?"
+    },
+    {
+      "col": "qbo_chrome",
+      "cells": 15,
+      "byMod": {
+        "factoring": 15
+      },
+      "seat": "D LAST"
+    },
+    {
+      "col": "policy",
+      "cells": 6,
+      "byMod": {
+        "lists": 2,
+        "customers": 1,
+        "safety": 3
+      },
+      "seat": "?"
+    },
+    {
+      "col": "invoice",
+      "cells": 6,
+      "byMod": {
+        "accounting": 1,
+        "dispatch": 1,
+        "factoring": 4
+      },
+      "seat": "?"
+    },
+    {
+      "col": "bank",
+      "cells": 5,
+      "byMod": {
+        "accounting": 1,
+        "factoring": 1,
+        "banking": 2,
+        "vendors": 1
+      },
+      "seat": "?"
+    },
+    {
+      "col": "legal_matter",
+      "cells": 1,
+      "byMod": {
+        "customers": 1
+      },
+      "seat": "?"
     }
   ],
-  "entry_count": 146
+  "entry_count": 233
 }
