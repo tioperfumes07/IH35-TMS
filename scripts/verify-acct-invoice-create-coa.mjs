@@ -95,6 +95,19 @@ function checkInvoiceCreateCoa(files) {
   if (!api.includes("account_id?: string")) violations.push("addInvoiceLine API must expose account_id");
   if (!api.includes("source_load_id: string | null")) violations.push("patchInvoice API must expose source_load_id");
 
+  // ACCT-F5053 — Topbar Create→Invoice must deep-link create wizard (Bills ?create=1 parity).
+  const topbar = byRel["apps/frontend/src/components/Topbar.tsx"] ?? "";
+  const list = byRel["apps/frontend/src/pages/accounting/InvoicesListPage.tsx"] ?? "";
+  if (!topbar.includes("/accounting/invoices?create=1")) {
+    violations.push("Topbar Create→Invoice must navigate to /accounting/invoices?create=1");
+  }
+  if (!list.includes('searchParams.get("create") === "1"') && !list.includes("createDeepLink")) {
+    violations.push("InvoicesListPage must honor ?create=1 deep link");
+  }
+  if (!list.includes("clearCreateDeepLink") && !list.includes('params.delete("create")')) {
+    violations.push("InvoicesListPage must clear create=1 when create modal closes");
+  }
+
   return violations;
 }
 
@@ -107,6 +120,14 @@ function loadRepositoryFixture() {
     {
       rel: "apps/frontend/src/pages/accounting/InvoiceDetailPage.tsx",
       source: read("apps/frontend/src/pages/accounting/InvoiceDetailPage.tsx"),
+    },
+    {
+      rel: "apps/frontend/src/pages/accounting/InvoicesListPage.tsx",
+      source: read("apps/frontend/src/pages/accounting/InvoicesListPage.tsx"),
+    },
+    {
+      rel: "apps/frontend/src/components/Topbar.tsx",
+      source: read("apps/frontend/src/components/Topbar.tsx"),
     },
     {
       rel: "apps/backend/src/accounting/invoice-lines.routes.ts",
@@ -166,6 +187,14 @@ const goodFixture = [
     ].join("\n"),
   },
   {
+    rel: "apps/frontend/src/pages/accounting/InvoicesListPage.tsx",
+    source: [`createDeepLink`, `clearCreateDeepLink`, `params.delete("create")`].join("\n"),
+  },
+  {
+    rel: "apps/frontend/src/components/Topbar.tsx",
+    source: `/accounting/invoices?create=1`,
+  },
+  {
     rel: "apps/backend/src/accounting/invoice-lines.routes.ts",
     source: [`account_id: z.string().uuid().optional()`, `assertExplicitIncomeAccount`].join("\n"),
   },
@@ -194,6 +223,14 @@ const badFixture = [
   {
     rel: "apps/frontend/src/pages/accounting/InvoiceDetailPage.tsx",
     source: `// no income CoA on detail add line`,
+  },
+  {
+    rel: "apps/frontend/src/pages/accounting/InvoicesListPage.tsx",
+    source: `// no create deep link`,
+  },
+  {
+    rel: "apps/frontend/src/components/Topbar.tsx",
+    source: `/accounting/invoices`,
   },
   {
     rel: "apps/backend/src/accounting/invoice-lines.routes.ts",

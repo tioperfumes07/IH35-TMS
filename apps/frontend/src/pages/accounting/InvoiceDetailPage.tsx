@@ -6,6 +6,7 @@ import { useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { addInvoiceLine, deleteInvoiceLine, getAccountingSourceLineage, getInvoice, patchInvoiceLine, sendInvoice, voidInvoice, type InvoiceLine } from "../../api/accounting";
 import { listCatalogAccounts } from "../../api/catalog-accounts";
+import { getLoad } from "../../api/loads";
 import { resolveApiUrl } from "../../api/client";
 import { Button } from "../../components/Button";
 import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
@@ -63,6 +64,15 @@ export function InvoiceDetailPage() {
     queryKey: ["accounting", "invoice", selectedCompanyId, id],
     queryFn: () => getInvoice(id, selectedCompanyId!),
     enabled: Boolean(id && selectedCompanyId),
+  });
+
+  // ACCT-F5053 — when invoice.source_load_id is set, hop to load's driver/unit (do not invent invoice FKs).
+  const sourceLoadId = detailQuery.data?.source_load_id ?? null;
+  const sourceLoadQuery = useQuery({
+    queryKey: ["accounting", "invoice", "source-load", sourceLoadId],
+    queryFn: () => getLoad(String(sourceLoadId)),
+    enabled: Boolean(sourceLoadId),
+    staleTime: 60_000,
   });
 
   // Law §9 / P-INVOICE P0: Invoice → JE forward EntityLink via source lineage.
@@ -434,6 +444,50 @@ export function InvoiceDetailPage() {
               />
             </span>
           </DataPanelRow>
+          {invoice.source_load_id ? (
+            <>
+              <DataPanelRow>
+                <span className="text-xs text-gray-600">Load driver</span>
+                <span className="text-sm text-gray-900" data-testid="invoice-source-load-driver">
+                  {sourceLoadQuery.isError ? (
+                    <span className="text-red-600">Could not load driver</span>
+                  ) : sourceLoadQuery.data?.assigned_primary_driver_id ? (
+                    <EntityLink
+                      kind="driver"
+                      id={sourceLoadQuery.data.assigned_primary_driver_id}
+                      label={entityLabel(
+                        sourceLoadQuery.data.assigned_primary_driver_name ?? null,
+                        sourceLoadQuery.data.assigned_primary_driver_id,
+                        "Driver"
+                      )}
+                    />
+                  ) : (
+                    <span className="text-gray-500">—</span>
+                  )}
+                </span>
+              </DataPanelRow>
+              <DataPanelRow>
+                <span className="text-xs text-gray-600">Load unit</span>
+                <span className="text-sm text-gray-900" data-testid="invoice-source-load-unit">
+                  {sourceLoadQuery.isError ? (
+                    <span className="text-red-600">Could not load unit</span>
+                  ) : sourceLoadQuery.data?.assigned_unit_id ? (
+                    <EntityLink
+                      kind="unit"
+                      id={sourceLoadQuery.data.assigned_unit_id}
+                      label={entityLabel(
+                        sourceLoadQuery.data.assigned_unit_number ?? null,
+                        sourceLoadQuery.data.assigned_unit_id,
+                        "Unit"
+                      )}
+                    />
+                  ) : (
+                    <span className="text-gray-500">—</span>
+                  )}
+                </span>
+              </DataPanelRow>
+            </>
+          ) : null}
           <DataPanelRow>
             <span className="text-xs text-gray-600">Journal Entry</span>
             <span className="text-sm text-gray-900" data-testid="invoice-journal-entry-links">

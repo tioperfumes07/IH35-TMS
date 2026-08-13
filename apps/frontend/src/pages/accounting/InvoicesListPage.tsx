@@ -182,6 +182,29 @@ export function InvoicesListPage() {
   const [createFlowOpen, setCreateFlowOpen] = useState(false);
   const [tableResetKey, setTableResetKey] = useState(0);
 
+  // ACCT-F5053 — Topbar Create→Invoice lands with ?create=1 (Bills parity); open the active create path.
+  const createDeepLink = searchParams.get("create") === "1";
+
+  function clearCreateDeepLink() {
+    setSearchParams(
+      (prev) => {
+        const params = new URLSearchParams(prev);
+        params.delete("create");
+        return params;
+      },
+      { replace: true }
+    );
+  }
+
+  useEffect(() => {
+    if (!createDeepLink) return;
+    if (createType === "from_load") {
+      setCreateFlowOpen(true);
+      return;
+    }
+    setOpenModalType(createType);
+  }, [createDeepLink, createType]);
+
   const query = useQuery({
     queryKey: [
       "accounting",
@@ -553,9 +576,13 @@ export function InvoicesListPage() {
           <DriverDamageInvoiceModal
             open={openModalType === "driver_damage"}
             operatingCompanyId={selectedCompanyId}
-            onClose={() => setOpenModalType(null)}
+            onClose={() => {
+              setOpenModalType(null);
+              clearCreateDeepLink();
+            }}
             onCreated={(invoiceId) => {
               setOpenModalType(null);
+              clearCreateDeepLink();
               void query.refetch();
               navigate(`/accounting/invoices/${invoiceId}`);
             }}
@@ -563,9 +590,13 @@ export function InvoicesListPage() {
           <DriverMiscInvoiceModal
             open={openModalType === "driver_misc"}
             operatingCompanyId={selectedCompanyId}
-            onClose={() => setOpenModalType(null)}
+            onClose={() => {
+              setOpenModalType(null);
+              clearCreateDeepLink();
+            }}
             onCreated={(invoiceId) => {
               setOpenModalType(null);
+              clearCreateDeepLink();
               void query.refetch();
               navigate(`/accounting/invoices/${invoiceId}`);
             }}
@@ -573,9 +604,13 @@ export function InvoicesListPage() {
           <VendorChargebackModal
             open={openModalType === "vendor_chargeback"}
             operatingCompanyId={selectedCompanyId}
-            onClose={() => setOpenModalType(null)}
+            onClose={() => {
+              setOpenModalType(null);
+              clearCreateDeepLink();
+            }}
             onCreated={(invoiceId) => {
               setOpenModalType(null);
+              clearCreateDeepLink();
               void query.refetch();
               navigate(`/accounting/invoices/${invoiceId}`);
             }}
@@ -583,9 +618,13 @@ export function InvoicesListPage() {
           <CustomerAdjustmentModal
             open={openModalType === "customer_adjustment"}
             operatingCompanyId={selectedCompanyId}
-            onClose={() => setOpenModalType(null)}
+            onClose={() => {
+              setOpenModalType(null);
+              clearCreateDeepLink();
+            }}
             onCreated={(invoiceId) => {
               setOpenModalType(null);
+              clearCreateDeepLink();
               void query.refetch();
               navigate(`/accounting/invoices/${invoiceId}`);
             }}
@@ -593,14 +632,25 @@ export function InvoicesListPage() {
           <ManualInvoiceModal
             open={openModalType === "manual"}
             operatingCompanyId={selectedCompanyId}
-            onClose={() => setOpenModalType(null)}
+            onClose={() => {
+              setOpenModalType(null);
+              clearCreateDeepLink();
+            }}
             onCreated={(invoiceId) => {
               setOpenModalType(null);
+              clearCreateDeepLink();
               void query.refetch();
               navigate(`/accounting/invoices/${invoiceId}`);
             }}
           />
-          <InvoiceCreateModal open={createFlowOpen} operatingCompanyId={selectedCompanyId} onClose={() => setCreateFlowOpen(false)} />
+          <InvoiceCreateModal
+            open={createFlowOpen}
+            operatingCompanyId={selectedCompanyId}
+            onClose={() => {
+              setCreateFlowOpen(false);
+              clearCreateDeepLink();
+            }}
+          />
         </>
       ) : null}
     </AccountingSubNavWrapper>
