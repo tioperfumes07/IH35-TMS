@@ -44,17 +44,18 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   return res.json() as Promise<T>;
 }
 
-export function useRoadServiceTickets(filters?: { status?: RoadServiceStatus; unit_id?: string }) {
+export function useRoadServiceTickets(filters?: { status?: RoadServiceStatus; unit_id?: string; driver_id?: string }) {
   const { selectedCompanyId } = useCompanyContext();
   const queryClient = useQueryClient();
   const operatingCompanyId = selectedCompanyId ?? "";
 
   const listQuery = useQuery({
-    queryKey: ["maintenance", "road-service", operatingCompanyId, filters?.status, filters?.unit_id],
+    queryKey: ["maintenance", "road-service", operatingCompanyId, filters?.status, filters?.unit_id, filters?.driver_id],
     queryFn: () => {
       const params = new URLSearchParams({ operating_company_id: operatingCompanyId });
       if (filters?.status) params.set("status", filters.status);
       if (filters?.unit_id) params.set("unit_id", filters.unit_id);
+      if (filters?.driver_id) params.set("driver_id", filters.driver_id);
       return apiFetch<{ tickets: RoadServiceTicket[] }>(`/api/v1/road-service-tickets?${params.toString()}`);
     },
     enabled: Boolean(operatingCompanyId),
@@ -95,6 +96,7 @@ export function useRoadServiceTickets(filters?: { status?: RoadServiceStatus; un
   return {
     tickets: listQuery.data?.tickets ?? [],
     isLoading: listQuery.isLoading,
+    isError: listQuery.isError,
     createTicket,
     completeTicket,
     createWo,
