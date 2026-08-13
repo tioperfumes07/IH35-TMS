@@ -1,4 +1,9 @@
 {
+  "3120": {
+    "claimed_at": "2026-08-12",
+    "claimed_by": "cursor",
+    "purpose": "verify-datepicker-classname-no-box-in-box"
+  },
   "3118": {
     "claimed_at": "2026-08-12",
     "claimed_by": "cursor",
