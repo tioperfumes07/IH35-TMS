@@ -361,7 +361,13 @@ export function AccountRegisterPage() {
     {
       key: "journal_entry_id",
       label: "Journal entry",
-      render: (e) => <EntityLink kind="journal_entry" id={e.journal_entry_id} label={entityLabel(null, e.journal_entry_id, "Journal entry")} />,
+      render: (e) => (
+        <EntityLink
+          kind="journal_entry"
+          id={e.journal_entry_id}
+          label={entityLabel(e.memo, e.journal_entry_id, "Journal entry")}
+        />
+      ),
     },
     { key: "debit_or_credit", label: "Dr/Cr", render: (e) => e.debit_or_credit },
     {

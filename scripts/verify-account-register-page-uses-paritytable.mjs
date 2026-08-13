@@ -72,6 +72,13 @@ function assertMigrated(src) {
   if (src.includes("useMutation")) {
     errors.push(`${PAGE}: display-only ledger surface — must not add mutations`);
   }
+  // ACCT-F5066 — audit JE hop must use event memo, not null→UUID chrome.
+  if (!/entityLabel\(\s*e\.memo\s*,\s*e\.journal_entry_id\s*,\s*["']Journal entry["']\s*\)/.test(src)) {
+    errors.push(`${PAGE}: audit JE EntityLink must entityLabel(e.memo, …)`);
+  }
+  if (/entityLabel\(\s*null\s*,\s*e\.journal_entry_id\s*,\s*["']Journal entry["']\s*\)/.test(src)) {
+    errors.push(`${PAGE}: must not entityLabel(null, journal_entry_id) on audit JE hop`);
+  }
   return errors;
 }
 
@@ -96,7 +103,7 @@ function selftest() {
     const auditColumns = [
       { key: "occurred_at", label: "When" },
       { key: "event_class", label: "Action" },
-      { key: "journal_entry_id", label: "Journal entry" },
+      { key: "journal_entry_id", label: "Journal entry", render: (e) => entityLabel(e.memo, e.journal_entry_id, "Journal entry") },
       { key: "debit_or_credit", label: "Dr/Cr" },
       { key: "amount_cents", label: "Amount" },
     ];
