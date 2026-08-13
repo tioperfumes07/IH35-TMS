@@ -912,6 +912,14 @@
       "modules": ["safety", "dispatch", "drivers"],
       "cols": ["load", "driver", "connectivity", "reverse_link", "picker_law"],
       "leafRe": "^(internal|fine|load|driver|drawer|create)"
+    },
+    {
+      "task": "DRIVER-COMPLIANCE-HISTORY-DOUBLE-ROUTE",
+      "pr": "this PR",
+      "guard": "scripts/verify-driver-compliance-history-double-route.mjs",
+      "modules": ["safety", "drivers", "compliance"],
+      "cols": ["driver", "connectivity", "reverse_link", "picker_law"],
+      "leafRe": "^(background|medical|driver|profile|detail|safety|compliance|create)"
     }
   ]
 }

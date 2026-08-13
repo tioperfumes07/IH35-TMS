@@ -45,6 +45,8 @@ import { DriverReportsReverseSection } from "../components/maintenance/DriverRep
 import { DriverTempCoverReverseSection } from "../components/safety/DriverTempCoverReverseSection";
 import { DriverEquipmentTransfersReverseSection } from "../components/dispatch/DriverEquipmentTransfersReverseSection";
 import { DriverHosViolationsReverseSection } from "../components/safety/DriverHosViolationsReverseSection";
+import { BackgroundChecksSection } from "../components/safety/BackgroundChecksSection";
+import { MedicalCardsHistorySection } from "../components/safety/MedicalCardsHistorySection";
 import { Button } from "../components/Button";
 import { ListErrorState } from "../components/ListErrorState";
 import { EntityLink } from "../components/shared/EntityLink";
@@ -1524,6 +1526,8 @@ export function DriverDetailPage() {
                   <DriverTempCoverReverseSection operatingCompanyId={String(driver.operating_company_id)} driverId={id} />
                   <DriverEquipmentTransfersReverseSection operatingCompanyId={String(driver.operating_company_id)} driverId={id} />
                   <DriverHosViolationsReverseSection operatingCompanyId={String(driver.operating_company_id)} driverId={id} />
+                  <MedicalCardsHistorySection operatingCompanyId={String(driver.operating_company_id)} driverId={id} />
+                  <BackgroundChecksSection operatingCompanyId={String(driver.operating_company_id)} driverId={id} />
                 </>
               ) : null}
             </>
