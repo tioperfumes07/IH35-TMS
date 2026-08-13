@@ -29,6 +29,7 @@ import { FuelGlMappingCoverage } from "./components/FuelGlMappingCoverage";
 import { FuelKpiRow } from "./components/FuelKpiRow";
 import { HosRulesBox } from "./components/HosRulesBox";
 import { ImportFuelTransactionsModal } from "./components/ImportFuelTransactionsModal";
+import { CreateFuelTransactionModal } from "./components/CreateFuelTransactionModal";
 import { RelayDepositReview } from "./components/RelayDepositReview";
 import { RouteDiagramSvg } from "./components/RouteDiagramSvg";
 import { SavingsPanel } from "./components/SavingsPanel";
@@ -58,6 +59,7 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
   const companyId = selectedCompanyId ?? "";
   const [uploadOpen, setUploadOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
   const [tab, setTab] = useState<FuelTabId>(initialTab);
 
   useEffect(() => {
@@ -229,12 +231,15 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
             topDriverAmount={Number((savingsQuery.data?.top_driver?.savings_ytd as number | undefined) ?? 0)}
           />
           <section className="rounded-sm border border-gray-200 bg-white p-4">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-2">
               <h3 className="text-sm font-semibold text-gray-900">Fuel Transactions</h3>
-              <ActionButton onClick={() => setImportOpen(true)}>Import Fuel Transactions</ActionButton>
+              <div className="flex items-center gap-2">
+                <ActionButton onClick={() => setCreateOpen(true)}>+ Create</ActionButton>
+                <ActionButton onClick={() => setImportOpen(true)}>Import Fuel Transactions</ActionButton>
+              </div>
             </div>
             <p className="mt-2 text-xs text-gray-600">
-              Fuel transaction history from fleet-card imports (Love&apos;s / WEX / EFS / Comdata).
+              Fleet-card imports and office-keyed fuel purchases (manual create stamps unit / trailer / load).
             </p>
             <div className="mt-3">
               {fuelTransactionsQuery.isLoading ? (
@@ -243,8 +248,9 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
                 <ListErrorBanner onRetry={() => void fuelTransactionsQuery.refetch()} />
               ) : (fuelTransactionsQuery.data?.transactions ?? []).length === 0 ? (
                 <p className="text-xs text-gray-600">
-                  No fuel transactions for USMCA yet — use Import Fuel Transactions to load fleet-card history
-                  (Love&apos;s / WEX / EFS / Comdata). Manual entry is import-only today; no TMS-native rows expected until dispatch is live.
+                  No fuel transactions yet — use + Create for a manual office purchase, or Import Fuel Transactions
+                  for fleet-card history (Love&apos;s / WEX / EFS / Comdata). Historical import rows may be load-null
+                  (pre-dispatch / G18 exempt); new creates must link a trip or state an exemption.
                 </p>
               ) : (
                 <>
@@ -391,6 +397,14 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
         operatingCompanyId={companyId}
         onClose={() => setImportOpen(false)}
         onImported={() => {
+          void queryClient.invalidateQueries({ queryKey: ["fuel", "transactions", companyId] });
+        }}
+      />
+      <CreateFuelTransactionModal
+        open={createOpen}
+        operatingCompanyId={companyId}
+        onClose={() => setCreateOpen(false)}
+        onCreated={() => {
           void queryClient.invalidateQueries({ queryKey: ["fuel", "transactions", companyId] });
         }}
       />

@@ -227,3 +227,33 @@ export function importFuelTransactions(companyId: string, file: File): Promise<F
     form
   );
 }
+
+/** RANK3 FE — office manual create (POST /api/v1/fuel/transactions, #6319). */
+export type FuelType = "diesel" | "def" | "gas" | "reefer_diesel" | "other";
+
+export type CreateFuelTransactionInput = {
+  transaction_at: string;
+  driver_id?: string | null;
+  unit_id?: string | null;
+  trailer_id?: string | null;
+  vendor_id?: string | null;
+  fuel_card_id?: string | null;
+  fuel_type?: FuelType;
+  gallons?: number;
+  price_per_gallon?: number;
+  total_cost: number;
+  location_city?: string;
+  location_state?: string;
+  transaction_reference?: string;
+  notes?: string;
+  load_id?: string | null;
+  load_exemption_reason?: string;
+  cash_advance?: boolean;
+};
+
+export function createFuelTransaction(companyId: string, body: CreateFuelTransactionInput) {
+  return apiRequest<{ id: string }>("/api/v1/fuel/transactions", {
+    method: "POST",
+    body: { operating_company_id: companyId, ...body },
+  });
+}
