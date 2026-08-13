@@ -579,11 +579,19 @@
     },
     {
       "task": "ACCT-F5024-FUEL-CLASS-OWNER-LEASE",
-      "pr": "this PR",
+      "pr": "#6354",
       "guard": "scripts/verify-fuel-gl-map-codes-no-silent-alias.mjs",
       "modules": ["fuel", "accounting", "fleet"],
       "cols": ["unit", "trailer", "connectivity"],
       "leafRe": "^(history|transactions|trailer\\.|unit\\.|expenses\\.|create|gl)"
+    },
+    {
+      "task": "ACCT-F5025-HUB-KPI-NO-FAKE-ZERO",
+      "pr": "this PR",
+      "guard": "scripts/verify-money-kpi-strip-no-fake-zero-on-error.mjs",
+      "modules": ["accounting"],
+      "cols": ["connectivity"],
+      "leafRe": "^(home|bills|invoices|expenses)"
     }
   ]
 }
