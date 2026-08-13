@@ -272,7 +272,6 @@
       "required": [
         "unit",
         "vendor",
-        "expense",
         "ap_bill",
         "connectivity",
         "reverse_link",
@@ -287,7 +286,6 @@
       "required": [
         "unit",
         "vendor",
-        "expense",
         "ap_bill",
         "connectivity",
         "reverse_link"
@@ -300,7 +298,6 @@
       "route_hint": "/compliance",
       "required": [
         "unit",
-        "expense",
         "ap_bill",
         "connectivity",
         "reverse_link",
@@ -364,7 +361,6 @@
       "required": [
         "unit",
         "load",
-        "expense",
         "connectivity",
         "reverse_link"
       ]
