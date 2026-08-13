@@ -122,7 +122,6 @@
       "required": [
         "customer",
         "load",
-        "gl_je",
         "connectivity",
         "reverse_link",
         "qbo_chrome"
@@ -137,7 +136,6 @@
         "customer",
         "load",
         "liability",
-        "gl_je",
         "connectivity",
         "reverse_link"
       ]
@@ -150,7 +148,6 @@
       "required": [
         "customer",
         "load",
-        "gl_je",
         "liability",
         "connectivity",
         "reverse_link"
@@ -163,7 +160,6 @@
       "route_hint": "/factoring/chargebacks-fees",
       "required": [
         "customer",
-        "gl_je",
         "connectivity",
         "reverse_link"
       ]
@@ -176,7 +172,6 @@
       "required": [
         "vendor",
         "customer",
-        "gl_je",
         "picker_law",
         "qbo_chrome",
         "connectivity",
@@ -190,7 +185,6 @@
       "route_hint": "/factoring/faro-imports",
       "required": [
         "customer",
-        "gl_je",
         "connectivity",
         "reverse_link",
         "qbo_chrome"
@@ -204,7 +198,6 @@
       "required": [
         "vendor",
         "unit",
-        "gl_je",
         "connectivity",
         "reverse_link"
       ]
@@ -230,7 +223,6 @@
       "required": [
         "customer",
         "load",
-        "gl_je",
         "liability",
         "picker_law",
         "qbo_chrome",
@@ -247,7 +239,6 @@
       "required": [
         "customer",
         "load",
-        "gl_je",
         "liability",
         "picker_law",
         "qbo_chrome",
@@ -263,7 +254,6 @@
       "required": [
         "customer",
         "load",
-        "gl_je",
         "liability",
         "connectivity",
         "reverse_link"
@@ -291,7 +281,6 @@
       "required": [
         "customer",
         "liability",
-        "gl_je",
         "connectivity",
         "reverse_link"
       ]
@@ -303,7 +292,6 @@
       "route_hint": "/factoring/faro-import",
       "required": [
         "customer",
-        "gl_je",
         "connectivity",
         "reverse_link"
       ]
@@ -316,7 +304,6 @@
       "required": [
         "customer",
         "load",
-        "gl_je",
         "liability",
         "connectivity",
         "reverse_link",
@@ -332,7 +319,6 @@
       "required": [
         "customer",
         "load",
-        "gl_je",
         "liability",
         "picker_law",
         "qbo_chrome",
@@ -363,7 +349,6 @@
       "required": [
         "customer",
         "vendor",
-        "gl_je",
         "liability",
         "connectivity",
         "reverse_link",
@@ -454,7 +439,6 @@
         "reverse_link",
         "picker_law",
         "qbo_chrome",
-        "gl_je",
         "customer",
         "invoice",
         "liability"

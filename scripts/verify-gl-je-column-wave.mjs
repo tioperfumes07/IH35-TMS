@@ -2,7 +2,8 @@
 /**
  * gl_je COLUMN-WAVE — VERTICAL-WIRING-LAW-2026-08-12.
  *
- * @matrix-built {"modules":["factoring"],"cols":["gl_je"],"leafRe":".*","task":"WAVE-C-gl_je","vertical":"column-wave"}
+ * @matrix-built {"modules":["factoring"],"cols":["gl_je"],"leafRe":"^accounting\\.detail$","task":"WAVE-C-gl_je-factoring-detail","vertical":"column-wave"}
+ * HONESTY 2026-08-13c: factoring home/batches/wizard chrome Required gl_je dropped; only accounting.detail Built (FactoringDetailPage EntityLink).
  * @matrix-built {"modules":["accounting"],"cols":["gl_je"],"leafRe":"^(bills\\.|bill_payments\\.)","task":"WAVE-C-gl_je-accounting-bills","vertical":"column-wave"}
  * @matrix-built {"modules":["safety"],"cols":["gl_je"],"leafRe":"^(safety\\.drawer\\.fine_detail|safety\\.parity\\.fine_detail)$","task":"WAVE-C-gl_je-safety-fine-detail","vertical":"column-wave"}
  *
