@@ -240,7 +240,6 @@
       "route_hint": "/inventory",
       "required": [
         "expense",
-        "gl_je",
         "inventory",
         "qbo_chrome",
         "connectivity",

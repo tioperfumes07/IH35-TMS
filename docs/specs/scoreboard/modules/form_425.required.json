@@ -132,7 +132,6 @@
       "sub": "Company profiles tab",
       "route_hint": "/425c",
       "required": [
-        "gl_je",
         "liability",
         "connectivity",
         "reverse_link",
@@ -145,7 +144,6 @@
       "sub": "QuickBooks import tab",
       "route_hint": "/425c?tab=qb",
       "required": [
-        "gl_je",
         "liability",
         "connectivity",
         "reverse_link",
@@ -171,7 +169,6 @@
       "sub": "Merge export tab",
       "route_hint": "/425c?tab=merge",
       "required": [
-        "gl_je",
         "liability",
         "connectivity",
         "reverse_link",
@@ -197,7 +194,6 @@
       "sub": "Exhibits viewer",
       "route_hint": "/425c/exhibits",
       "required": [
-        "gl_je",
         "liability",
         "connectivity",
         "reverse_link",

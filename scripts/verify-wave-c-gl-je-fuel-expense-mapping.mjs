@@ -13,7 +13,7 @@
  *
  * No code change in this pass — pure verification + tagging.
  *
- * @matrix-built {"modules":["fuel"],"cols":["gl_je"],"leafRe":"^expense_mapping$","task":"WAVE-C-gl_je-fuel-expense-mapping","vertical":"column-wave"}
+ * @matrix-built {"modules":["fuel"],"cols":["gl_je"],"leafRe":"^(expense_mapping|fuel\\.modal\\.create_fuel_transaction)$","task":"WAVE-C-gl_je-fuel-expense-mapping","vertical":"column-wave"}
  *
  * Self-test: node scripts/verify-wave-c-gl-je-fuel-expense-mapping.mjs --selftest
  */
@@ -40,6 +40,16 @@ const CHECKS = [
     file: "apps/frontend/src/pages/fuel/components/FuelGlMappingCoverage.tsx",
     pattern: /fuel-posting\/poster\.service\.ts/,
   },
+  {
+    name: "CreateFuelTransactionModal.tsx posts via createFuelTransaction",
+    file: "apps/frontend/src/pages/fuel/components/CreateFuelTransactionModal.tsx",
+    pattern: /await createFuelTransaction\(/,
+  },
+  {
+    name: "fuel-transactions.routes.ts flushes GL posts after commit",
+    file: "apps/backend/src/fuel/fuel-transactions.routes.ts",
+    pattern: /flushFuelGlPostsAfterCommit/,
+  },
 ];
 
 export function checkAll(readFile) {
@@ -63,6 +73,10 @@ if (process.argv.includes("--selftest")) {
       'tab === "expense_mapping" ? (\n  <FuelGlMappingCoverage companyId={companyId} />\n) : null',
     "apps/frontend/src/pages/fuel/components/FuelGlMappingCoverage.tsx":
       'listExpenseCategoryMappings(companyId, { category_kind: "fuel" }) ... fuel-posting/poster.service.ts',
+    "apps/frontend/src/pages/fuel/components/CreateFuelTransactionModal.tsx":
+      "await createFuelTransaction(operatingCompanyId, {",
+    "apps/backend/src/fuel/fuel-transactions.routes.ts":
+      "await flushFuelGlPostsAfterCommit(",
   };
   const goodFailures = checkAll((f) => GOOD_FIXTURES[f] ?? null);
   if (goodFailures.length) {
