@@ -1,13 +1,14 @@
 #!/usr/bin/env node
 /**
- * GUARD: accident CREATE INSERT must bind unit/vendor/load to distinct params (not $3 thrice).
+ * GUARD: accident CREATE INSERT must bind driver/unit/trailer/vendor/load to distinct params.
  *
  * DEFECT (live code on main 2026-08-12): VALUES used `$1,$2,$3, $3, $4, $5, COALESCE($7…)` while
  * the param array was [company, type, driver, unit, vendor, load, accident_at, …]. That wrote
  * driver_id into unit_id, unit into vendor_id, vendor into load_id — scrambling trip linkage for
  * every new accident (Safety → Insurance → Load P&L chain).
  *
- * Also ratchets RecordExpenseForm to call suggestExpenseLoad (same going-forward path as WO) so
+ * Trailer linkage adds a seventh leading bind, so accident_at is $8. Also ratchets
+ * RecordExpenseForm to call suggestExpenseLoad (same going-forward path as WO) so
  * expense creates stamp the active trip when driver/unit + date are set.
  *
  * Rule 17: wired via verify-steps/3128-… only — never package.json / ci.yml.
@@ -50,14 +51,14 @@ export function assertAccidentCreateParamOrder(sources) {
         `${ROUTE}: accident INSERT VALUES reuses $3 for unit_id (driver_id) — unit/vendor/load FKs scramble.`,
       );
     }
-    // Required: six distinct leading binds then accident_at at $7.
-    if (!/VALUES\s*\(\s*\$1\s*,\s*\$2\s*,\s*\$3\s*,\s*\$4\s*,\s*\$5\s*,\s*\$6\s*,/s.test(valuesBlock)) {
+    // Required: seven distinct leading binds then accident_at at $8.
+    if (!/VALUES\s*\(\s*\$1\s*,\s*\$2\s*,\s*\$3\s*,\s*\$4\s*,\s*\$5\s*,\s*\$6\s*,\s*\$7\s*,/s.test(valuesBlock)) {
       problems.push(
-        `${ROUTE}: expected VALUES ($1,$2,$3,$4,$5,$6, …) for company/type/driver/unit/vendor/load.`,
+        `${ROUTE}: expected VALUES ($1…$7, …) for company/type/driver/unit/trailer/vendor/load.`,
       );
     }
-    if (!/COALESCE\s*\(\s*\$7\s*::\s*timestamptz/i.test(valuesBlock)) {
-      problems.push(`${ROUTE}: accident_at must remain COALESCE($7::timestamptz, …) after $1…$6.`);
+    if (!/COALESCE\s*\(\s*\$8\s*::\s*timestamptz/i.test(valuesBlock)) {
+      problems.push(`${ROUTE}: accident_at must remain COALESCE($8::timestamptz, …) after $1…$7.`);
     }
   }
 
@@ -75,7 +76,7 @@ export function assertAccidentCreateParamOrder(sources) {
 
 function mutateBroken(routeSrc) {
   return routeSrc.replace(
-    /VALUES\s*\(\s*\$1\s*,\s*\$2\s*,\s*\$3\s*,\s*\$4\s*,\s*\$5\s*,\s*\$6\s*,/s,
+    /VALUES\s*\(\s*\$1\s*,\s*\$2\s*,\s*\$3\s*,\s*\$4\s*,\s*\$5\s*,\s*\$6\s*,\s*\$7\s*,/s,
     "VALUES (\n            $1,$2,$3,\n            $3,\n            $4,\n            $5,\n            ",
   );
 }
