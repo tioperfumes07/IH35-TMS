@@ -681,6 +681,11 @@ jobs:
       - name: verify:incidents-cluster-create-suggest-load
         run: node scripts/verify-incidents-cluster-create-suggest-load.mjs
 
+      - name: verify:abandonment-driver-picker --selftest
+        run: node scripts/verify-abandonment-driver-picker.mjs --selftest
+      - name: verify:abandonment-driver-picker
+        run: node scripts/verify-abandonment-driver-picker.mjs
+
       - name: verify:no-dead-clicks --selftest
         run: node scripts/verify-no-dead-clicks.mjs --selftest
       - name: verify:no-dead-clicks
