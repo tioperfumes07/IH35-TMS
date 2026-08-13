@@ -25,7 +25,7 @@ export function SettlementDisputeList() {
   const [statusFilter, setStatusFilter] = useState<SettlementDisputeStatus | "all">("all");
   const staged = useStagedListFilters({ applied: { statusFilter }, empty: { statusFilter: "all" as const }, onApply: (next) => setStatusFilter(next.statusFilter) });
   const [createOpen, setCreateOpen] = useState(false);
-  const { disputes, isLoading, reviewDispute } = useSettlementDisputes({
+  const { disputes, isLoading, isError, isSuccess, refetch, reviewDispute } = useSettlementDisputes({
     status: statusFilter === "all" ? undefined : statusFilter,
   });
 
@@ -64,7 +64,13 @@ export function SettlementDisputeList() {
         </Button>
       </div>
 
-      <DataTable
+      {isError ? (
+        <div className="rounded-sm border border-red-200 bg-red-50 p-2 text-sm text-red-700">
+          Could not load settlement disputes. <button type="button" className="font-semibold underline" onClick={() => void refetch()}>Retry</button>
+        </div>
+      ) : null}
+      {isSuccess && rows.length === 0 ? <p className="text-sm text-gray-500">No settlement disputes found.</p> : null}
+      {!isError ? <DataTable
         rows={rows}
         loading={isLoading}
         rowKey={(row) => row.id}
@@ -115,7 +121,7 @@ export function SettlementDisputeList() {
               ) : null,
           },
         ]}
-      />
+      /> : null}
 
       <SettlementDisputeModal open={createOpen} onClose={() => setCreateOpen(false)} />
     </div>

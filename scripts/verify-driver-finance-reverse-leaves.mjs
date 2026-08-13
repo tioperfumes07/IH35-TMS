@@ -1,0 +1,63 @@
+#!/usr/bin/env node
+/** @matrix-built {"modules":["drivers"],"cols":["reverse_link"],"leafRe":"^(cash_advances|deductions|disputes)$","task":"DRIVER-FINANCE-REVERSE-LEAVES","vertical":"column-wave"} */
+/** @matrix-built {"modules":["banking"],"cols":["reverse_link"],"leafRe":"^driver_escrow$","task":"DRIVER-FINANCE-REVERSE-LEAVES","vertical":"column-wave"} */
+/** @matrix-built {"modules":["safety"],"cols":["reverse_link"],"leafRe":"^escrow_record\\.list$","task":"DRIVER-FINANCE-REVERSE-LEAVES","vertical":"column-wave"} */
+import fs from "node:fs";
+
+const LABEL = "verify-driver-finance-reverse-leaves";
+const files = {
+  drivers: "apps/frontend/src/pages/Drivers.tsx",
+  deductions: "apps/frontend/src/pages/drivers/PendingSettlementDeductionsPanel.tsx",
+  disputes: "apps/frontend/src/pages/drivers/SettlementDisputeList.tsx",
+  disputeHook: "apps/frontend/src/hooks/useSettlementDisputes.ts",
+  banking: "apps/frontend/src/pages/banking/components/DriverEscrowTabContent.tsx",
+  safety: "apps/frontend/src/pages/safety/tabs/EscrowRecordTab.tsx",
+};
+const source = Object.fromEntries(Object.entries(files).map(([key, file]) => [key, fs.readFileSync(file, "utf8")]));
+
+function audit(s) {
+  const failures = [];
+  if (!/subnavTab === "cash_advances"[\s\S]{0,550}<EntityLink kind="driver"/.test(s.drivers) || !/list\(selectedCompanyId!\)/.test(s.drivers)) failures.push("cash-advance driver reverse/scope missing");
+  if (!/listSettlementDeductions\(selectedCompanyId!/.test(s.deductions) || !/<EntityLink kind="driver" id=\{row\.driver_id\}/.test(s.deductions)) failures.push("deduction driver reverse/scope missing");
+  if (!/query\.isError/.test(s.deductions) || !/No pending settlement deductions\./.test(s.deductions)) failures.push("deduction honest states missing");
+  if (!/operating_company_id: companyId/.test(s.disputeHook) || !/isError: listQuery\.isError/.test(s.disputeHook) || !/isSuccess: listQuery\.isSuccess/.test(s.disputeHook)) failures.push("dispute scope/status contract missing");
+  if (!/<EntityLink[\s\S]{0,100}kind="driver"[\s\S]{0,100}id=\{row\.driver_id\}/.test(s.disputes) || !/<EntityLink[\s\S]{0,100}kind="settlement"/.test(s.disputes)) failures.push("dispute canonical drills missing");
+  if (!/Could not load settlement disputes\./.test(s.disputes) || !/No settlement disputes found\./.test(s.disputes)) failures.push("dispute honest states missing");
+  if (!/getEscrowDriverBalances\(operatingCompanyId\)/.test(s.banking) || !/navigate\([^\n]*rowDriverId/.test(s.banking)) failures.push("bank escrow driver reverse/scope missing");
+  if (!/listState\.isError/.test(s.banking) || !/No escrow ledger rows found for this filter\./.test(s.banking)) failures.push("bank escrow honest states missing");
+  if (!/listEscrowRecords\(operatingCompanyId\)/.test(s.safety) || !/<EntityLink[\s\S]{0,100}kind="driver"[\s\S]{0,100}id=\{row\.id \|\| null\}/.test(s.safety)) failures.push("safety escrow driver reverse/scope missing");
+  if (!/escrowQuery\.isError/.test(s.safety) || !/No escrow records available for the selected company\./.test(s.safety)) failures.push("safety escrow honest states missing");
+  return failures;
+}
+
+if (process.argv.includes("--selftest")) {
+  const mutations = [
+    ["advance-drill", "drivers", /kind="driver"/g, 'kind="vendor"'],
+    ["advance-scope", "drivers", /list\(selectedCompanyId!\)/g, "list('')"],
+    ["deduction-drill", "deductions", /kind="driver"/g, 'kind="vendor"'],
+    ["deduction-state", "deductions", /No pending settlement deductions\./g, "Loading"],
+    ["dispute-scope", "disputeHook", /operating_company_id: companyId/g, "operating_company_id: ''"],
+    ["dispute-state", "disputes", /Could not load settlement disputes\./g, "Loading"],
+    ["dispute-drill", "disputes", /kind="settlement"/g, 'kind="driver"'],
+    ["bank-route", "banking", /navigate\([^\n]*rowDriverId[^\n]*\)/g, "navigate('/drivers')"],
+    ["bank-state", "banking", /No escrow ledger rows found for this filter\./g, "Loading"],
+    ["safety-drill", "safety", /id=\{row\.id \|\| null\}/g, "id={null}"],
+    ["safety-scope", "safety", /listEscrowRecords\(operatingCompanyId\)/g, "listEscrowRecords('')"],
+  ];
+  for (const [name, key, pattern, replacement] of mutations) {
+    const candidate = { ...source, [key]: source[key].replace(pattern, replacement) };
+    if (candidate[key] === source[key] || audit(candidate).length === 0) {
+      console.error(LABEL + " SELFTEST FAIL — " + name);
+      process.exit(1);
+    }
+  }
+  console.log(LABEL + " SELFTEST PASS — " + mutations.length + " mutations detected");
+  process.exit(0);
+}
+
+const failures = audit(source);
+if (failures.length) {
+  console.error(LABEL + " FAIL\n- " + failures.join("\n- "));
+  process.exit(1);
+}
+console.log(LABEL + " PASS — driver finance reverse leaves are company-scoped, canonical, and honest");
