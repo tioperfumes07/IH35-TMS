@@ -921,8 +921,8 @@ export function createVendorBill(
 }
 
 export type WorkOrderLinkedFinancials = {
-  bills: Array<{ id: string; bill_number: string | null; bill_date: string | null; amount_cents: number; status: string | null; memo: string | null }>;
-  expenses: Array<{ id: string; transaction_date: string | null; total_amount_cents: number; status: string | null; memo: string | null }>;
+  bills: Array<{ id: string; bill_number: string | null; bill_date: string | null; amount_cents: number; status: string | null; memo: string | null; journal_entry_id?: string | null; journal_entry_memo?: string | null }>;
+  expenses: Array<{ id: string; transaction_date: string | null; total_amount_cents: number; status: string | null; memo: string | null; journal_entry_id?: string | null; journal_entry_memo?: string | null }>;
 };
 
 // Reverse drill-through for the WO↔bill/expense HARD link: bills + expenses that FK-reference this WO.

@@ -77,7 +77,10 @@ export function UnitFinanceLinkageTab({ unitId, companyId }: UnitFinanceLinkageT
             {linkedBills.map((b) => (
               <li key={b.id} className="flex flex-wrap items-center justify-between gap-2 py-1.5 text-sm">
                 <EntityLink kind="bill" id={b.id} label={entityLabel(b.bill_number, b.id, "Record")} />
-                <span className="text-xs tabular-nums text-gray-600">{fmtCents(b.amount_cents)}</span>
+                <span className="flex items-center gap-2 text-xs tabular-nums text-gray-600">
+                  {b.journal_entry_id ? <EntityLink kind="journal_entry" id={b.journal_entry_id} label={entityLabel(b.journal_entry_memo, b.journal_entry_id, "Journal entry")} /> : null}
+                  {fmtCents(b.amount_cents)}
+                </span>
               </li>
             ))}
           </ul>
@@ -96,7 +99,10 @@ export function UnitFinanceLinkageTab({ unitId, companyId }: UnitFinanceLinkageT
                     "Expense",
                   )}
                 />
-                <span className="text-xs tabular-nums text-gray-600">{fmtCents(e.total_amount_cents)}</span>
+                <span className="flex items-center gap-2 text-xs tabular-nums text-gray-600">
+                  {e.journal_entry_id ? <EntityLink kind="journal_entry" id={e.journal_entry_id} label={entityLabel(e.journal_entry_memo, e.journal_entry_id, "Journal entry")} /> : null}
+                  {fmtCents(e.total_amount_cents)}
+                </span>
               </li>
             ))}
           </ul>
