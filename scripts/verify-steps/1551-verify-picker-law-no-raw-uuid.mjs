@@ -41,6 +41,8 @@ export default {
     await ctx.run("node", ["scripts/verify-picker-law-no-raw-uuid.mjs", "--selftest"]);
     await ctx.run("node", ["scripts/verify-picker-law-no-raw-uuid.mjs"]);
     await ctx.run("node", ["scripts/verify-entity-picker-company-switch-scope.mjs", "--selftest"]);
-    return ctx.run("node", ["scripts/verify-entity-picker-company-switch-scope.mjs"]);
+    await ctx.run("node", ["scripts/verify-entity-picker-company-switch-scope.mjs"]);
+    await ctx.run("node", ["scripts/verify-shared-picker-created-option-dedupe.mjs", "--selftest"]);
+    return ctx.run("node", ["scripts/verify-shared-picker-created-option-dedupe.mjs"]);
   },
 };

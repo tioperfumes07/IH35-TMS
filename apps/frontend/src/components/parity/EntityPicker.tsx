@@ -38,6 +38,7 @@ import { Combobox } from "../Combobox";
 import { CreateDriverModal } from "../drivers/CreateDriverModal";
 import { CreateTrailerModal } from "../fleet/CreateTrailerModal";
 import { InlineCreateDrawer } from "./InlineCreateDrawer";
+import { mergePickerOptionsByValue } from "./mergePickerOptionsByValue";
 import { CreateUnitModal } from "../fleet/CreateUnitModal";
 import { PolicyCreateModal } from "../insurance/PolicyCreateModal";
 import {
@@ -159,7 +160,7 @@ export function EntityPicker({
   });
 
   const options = useMemo(() => {
-    const rows = [...(rosterQuery.data ?? []), ...created];
+    const rows = mergePickerOptionsByValue(rosterQuery.data ?? [], created);
     // A value that is not in the roster (an archived driver still referenced by an old record, a
     // load outside the 200-row page) must stay VISIBLE and selected rather than silently blanking
     // the field — a picker that drops the value it was handed is worse than the text box it replaced.
@@ -171,7 +172,7 @@ export function EntityPicker({
 
   // A kind may refuse inline create for a stated reason (transactions and money documents do).
   const createOffered = allowCreate && config.inlineCreate.available;
-  const rosterShown = (rosterQuery.data ?? []).length + created.length;
+  const rosterShown = options.length;
   const rosterLimit = entityPickerListLimit(kind, {
     search: rosterSearch,
     driverRoster: kind === "driver" ? driverRoster : undefined,
