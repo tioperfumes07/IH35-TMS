@@ -15,6 +15,7 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { useState } from "react";
 import { EntityPicker } from "../EntityPicker";
 
 const listDrivers = vi.fn();
@@ -41,8 +42,12 @@ vi.mock("../../drivers/CreateDriverModal", () => ({
 vi.mock("../../fleet/CreateUnitModal", () => ({ CreateUnitModal: () => null }));
 vi.mock("../../insurance/PolicyCreateModal", () => ({ PolicyCreateModal: () => null }));
 vi.mock("../InlineCreateDrawer", () => ({
-  InlineCreateDrawer: ({ open, kind }: { open: boolean; kind: string }) =>
-    open ? <div data-testid={`inline-create-${kind}`} /> : null,
+  InlineCreateDrawer: ({ open, kind, onCreated }: { open: boolean; kind: string; onCreated: (record: { id: string; label: string }) => void }) =>
+    open ? (
+      <div data-testid={`inline-create-${kind}`}>
+        <button type="button" onClick={() => onCreated({ id: "vendor-created", label: "Created Vendor" })}>Complete vendor create</button>
+      </div>
+    ) : null,
 }));
 
 const COMPANY = "11111111-1111-4111-8111-111111111111";
@@ -50,6 +55,20 @@ const COMPANY = "11111111-1111-4111-8111-111111111111";
 function wrap(node: React.ReactNode) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(<QueryClientProvider client={qc}>{node}</QueryClientProvider>);
+}
+
+function CompanySwitchHarness({ companyId }: { companyId: string }) {
+  const [value, setValue] = useState<string | null>(null);
+  return (
+    <EntityPicker
+      kind="vendor"
+      operatingCompanyId={companyId}
+      value={value}
+      onChange={setValue}
+      allowCreate
+      dataTestId="company-switch-vendor-picker"
+    />
+  );
 }
 
 describe("EntityPicker (C1 picker law)", () => {
@@ -137,6 +156,29 @@ describe("EntityPicker (C1 picker law)", () => {
 
     await user.click(createRow);
     expect(await screen.findByTestId("inline-create-vendor")).toBeTruthy();
+  });
+
+  it("clears a locally created selection when the operating-company roster changes", async () => {
+    const user = userEvent.setup();
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const view = render(
+      <QueryClientProvider client={qc}>
+        <CompanySwitchHarness companyId={COMPANY} />
+      </QueryClientProvider>
+    );
+
+    await user.click(await screen.findByPlaceholderText("Select vendor"));
+    await user.click(await screen.findByText("+ Create vendor"));
+    await user.click(await screen.findByText("Complete vendor create"));
+    await waitFor(() => expect((screen.getByTestId("company-switch-vendor-picker") as HTMLInputElement).value).toBe("Created Vendor"));
+
+    view.rerender(
+      <QueryClientProvider client={qc}>
+        <CompanySwitchHarness companyId="22222222-2222-4222-8222-222222222222" />
+      </QueryClientProvider>
+    );
+    await waitFor(() => expect((screen.getByTestId("company-switch-vendor-picker") as HTMLInputElement).value).toBe(""));
+    expect(screen.queryByText("Created Vendor")).toBeNull();
   });
 
   it("stacks as a ParityDrawer when nested inside an open money drawer (CHROME-11)", async () => {

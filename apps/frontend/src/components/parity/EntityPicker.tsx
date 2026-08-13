@@ -31,7 +31,7 @@
  *
  * Guard: scripts/verify-picker-law-no-raw-uuid.mjs (verify-step 1551).
  */
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { CappedListNotice } from "../CappedListNotice";
 import { Combobox } from "../Combobox";
@@ -112,6 +112,21 @@ export function EntityPicker({
   // SAF-B29: without server search, EntityPicker fetched a 200-row page once and Combobox only filtered
   // that page — drivers/units/loads past page 1 were unselectable on every Safety call site.
   const [rosterSearch, setRosterSearch] = useState("");
+  const rosterScope = useRef({ kind, operatingCompanyId });
+
+  // Owner sessions can switch companies without remounting the surrounding form. Locally-created
+  // options are not React Query data and therefore are not evicted by the company-scoped query key.
+  // Clear every committed/local picker state when its canonical roster scope changes so an id from
+  // company A can never remain selected or selectable while the UI is operating as company B.
+  useEffect(() => {
+    const previous = rosterScope.current;
+    if (previous.kind === kind && previous.operatingCompanyId === operatingCompanyId) return;
+    rosterScope.current = { kind, operatingCompanyId };
+    setCreated([]);
+    setRosterSearch("");
+    setCreateOpen(false);
+    if (value) onChange(null);
+  }, [kind, onChange, operatingCompanyId, value]);
 
   const queryEnabled = enabled && Boolean(operatingCompanyId);
   const driverRosterKey = kind === "driver" ? driverRoster : "n/a";
