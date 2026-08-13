@@ -11,3 +11,7 @@
 ## FORBIDDEN
 
 Wave D · GL math (CC-1) · “P10 = complete” · module-deep · invent FKs · essay OUTBOX
+
+## ☐ RANKED — from CC-2 live chrome sample (2026-08-12)
+
+1. `LV-COLLAPSEDLISTFILTERS-SILENT-APPLY` — **P2, your lane (chrome law #5 Apply)**. `apps/frontend/src/pages/accounting/BillsPage.tsx:483-552`: Category chips + Status/Vendor/Date all write straight into `useQuery` `queryKey` state on click/change, no Apply/Cancel/Reset gate — live-proven on prod (`?category=maintenance` applies + refetches on click alone). `CollapsedListFilters.tsx` shell itself is fine (dismiss/outside-click already correct). 51 other pages reuse the shell — unverified whether they share the defect, sweep needed. Full root cause + fix plan: board row same id in `docs/audit/GUARD-WORKORDERS.md`.
