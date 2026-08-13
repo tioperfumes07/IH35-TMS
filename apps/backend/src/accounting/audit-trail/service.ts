@@ -34,7 +34,8 @@ export type AccountingSourceLineageRow = {
   // the JE's human identity (#5731/ACCT-F322 established this for 3 other payloads). Named "memo",
   // not "journal_entry_memo", to match the sibling call site's field shape exactly
   // (InvoiceDetailPage.tsx:461 already does entityLabel(je.memo, je.journal_entry_id, "Journal entry")
-  // against listAccountingAuditTrail's payload) — so the lineage-chips consumer at :387 can switch
+  // against listAccountingAuditTrail's payload) — so AccountRegisterPage audit history (ACCT-F5066)
+  // and the lineage-chips consumer at :387 can switch
   // entityLabel(null, jeId, ...) to entityLabel(row.memo, jeId, ...) with no naming translation needed.
   memo: string | null;
   posting_batch_id: string | null;
