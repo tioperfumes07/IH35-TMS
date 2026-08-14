@@ -1,5 +1,11 @@
 #!/usr/bin/env node
-/** @matrix-built modules=driver-hub,maintenance,dispatch cols=load,driver,connectivity,reverse_link */
+/** @matrix-built modules=driver-hub,maintenance,dispatch cols=load,driver,connectivity,reverse_link leafRe=^(driver-hub\.modal\.report_issue|driver_reports\.queue|dispatch\.drawer\.load_detail)$ task=DRIVER-REPORT-LOAD-REVERSE */
+// LINK-THEATER-01 narrowing (2026-08-14): sibling of LINK-F5145 (verify-driver-report-driver-reverse.mjs)
+// — same driver-report feature, load-side FK instead of driver-side. This guard's 8 assertions read
+// exactly 7 files proving the report creator (driver-hub.modal.report_issue), the maintenance queue
+// (driver_reports.queue), and the reverse mount on LoadDetailDrawer.tsx (dispatch.drawer.load_detail
+// — the dedicated surface leaf id for that exact component, confirmed in dispatch.required.json).
+// The prior leafRe default (".*") claimed Built for every leaf in driver-hub + maintenance + dispatch.
 import fs from "node:fs";
 const L="verify-driver-report-load-reverse",c=fs.readFileSync("apps/frontend/src/pages/driver/ReportIssueModal.tsx","utf8"),w=fs.readFileSync("apps/backend/src/driver/reports.routes.ts","utf8"),r=fs.readFileSync("apps/backend/src/maintenance/driver-reports.routes.ts","utf8"),a=fs.readFileSync("apps/frontend/src/api/maintenance.ts","utf8"),v=fs.readFileSync("apps/frontend/src/components/maintenance/LoadDriverReportsReverseSection.tsx","utf8"),d=fs.readFileSync("apps/frontend/src/components/dispatch/LoadDetailDrawer.tsx","utf8"),q=fs.readFileSync("apps/frontend/src/pages/maintenance/DriverReportsQueuePage.tsx","utf8");
 function audit(b,x,y,z,s,t,e){const f=[];if(!/load_id: loadId \?\? null/.test(b))f.push("active load payload");if(!/load_id: z\.string\(\)\.uuid\(\)\.optional\(\)\.nullable/.test(x)||!/load_not_owned/.test(x)||!/parsed\.data\.load_id \?\? null/.test(x))f.push("validated load writer");if(!/load_id: z\.string\(\)\.uuid\(\)\.optional/.test(y)||!/r\.load_id = \$\$\{values\.length\}::uuid/.test(y))f.push("exact scoped reverse");if(!/load_id\?: string/.test(z)||!/params\.load_id/.test(z))f.push("typed API filter");if(!/listDriverReports\(\{ operating_company_id: operatingCompanyId, load_id: loadId \}\)/.test(s))f.push("load reverse");if(!/LoadDriverReportsReverseSection/.test(t))f.push("load drawer mount");if(!/driver_report_id=/.test(s)||!/highlightedReportId/.test(e)||!/rowClassName/.test(e))f.push("canonical drill");if(!/query\.isError/.test(s)||!/No driver reports linked to this load/.test(s))f.push("honest states");return f}
