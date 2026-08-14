@@ -306,7 +306,6 @@
       "route_hint": "/inventory/assignments",
       "required": [
         "vendor",
-        "ap_bill",
         "connectivity",
         "invoice",
         "reverse_link"
@@ -795,6 +794,18 @@
           "id": "purchases.crosslink_assignments",
           "removed": [
             "scenario.maintenance"
+          ]
+        }
+      ]
+    },
+    "money_cells_2026_08_14_ap_bill_overclaim": {
+      "finding": "OWNER-EXECUTION-PLAN-SS2-ACCT-F5160",
+      "note": "ap_bill required on assignments.vendor_link, verified live it does not own it. InventoryAssignmentsPage.tsx genuinely owns 'vendor' (real EntityLink kind=\"vendor\" per row, matching the leaf's own name) but vendor_invoice_number/vendor_invoice_amount are plain captured fields on the parts-assignment row, not a real accounting.bills FK \u2014 zero bill_id or EntityLink kind=\"bill\" anywhere on the page.",
+      "drops": [
+        {
+          "id": "assignments.vendor_link",
+          "removed": [
+            "ap_bill"
           ]
         }
       ]
