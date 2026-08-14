@@ -657,6 +657,11 @@
     "claimed_by": "codex",
     "purpose": "verify-primary-roster-record-reverse-links"
   },
+  "3244": {
+    "claimed_at": "2026-08-14",
+    "claimed_by": "codex",
+    "purpose": "verify-document-identity-deep-links"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
@@ -2501,5 +2506,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1125
+  "total_claimed": 1126
 }
