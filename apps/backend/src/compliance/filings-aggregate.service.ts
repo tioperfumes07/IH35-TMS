@@ -124,7 +124,7 @@ async function loadForm2290Item(client: DbClient, operatingCompanyId: string, en
     detail: "Annual Heavy Vehicle Use Tax filing",
     due_date: deadline,
     status: statusFor(deadline),
-    drill_through: "/safety/permits",
+    drill_through: "/compliance/form-2290",
     source: "real",
   };
 }
