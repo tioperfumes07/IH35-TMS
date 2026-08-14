@@ -617,6 +617,11 @@
     "claimed_by": "codex",
     "purpose": "verify-finance-aging-drill-reverse-links"
   },
+  "3228": {
+    "claimed_at": "2026-08-13",
+    "claimed_by": "codex",
+    "purpose": "verify-driver-secondary-surface-reverse-links"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
