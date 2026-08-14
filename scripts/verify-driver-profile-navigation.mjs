@@ -53,8 +53,11 @@ if (!/breadcrumb\b/.test(header) || !/onBack\b/.test(header)) {
 if (/>\s*\{row\.name\}\s*<\/td>/.test(table)) {
   failures.push(`${tablePath}: driver name must be clickable (opens the profile), not a plain <td> [D1].`);
 }
-if (!/onOpenProfile\(row\.driverId\)/.test(table) || !/\/drivers\/\$\{row\.driverId\}\/profile/.test(table)) {
-  failures.push(`${tablePath}: driver name must wire to onOpenProfile(row.driverId) and to /drivers/:id/profile [D1].`);
+const d1Routed =
+  /\/drivers\/\$\{row\.driverId\}\/profile/.test(table) ||
+  /kind="driver"[\s\S]{0,80}id=\{row\.driverId\}/.test(table);
+if (!/onOpenProfile\(row\.driverId\)/.test(table) || !d1Routed) {
+  failures.push(`${tablePath}: driver name must wire to onOpenProfile(row.driverId) and EntityLink kind=driver (or /drivers/:id/profile) [D1].`);
 }
 
 if (failures.length > 0) {
