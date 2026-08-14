@@ -53,6 +53,8 @@ the leaf stays OPEN.
 | `factoring:submit.queue` | CC-1 | #6836 | `verify-factoring-submit-queue-reverse-section.mjs` |
 | `factoring:home.equipment_loans` (vendor side — unit side already built) | CC-1 | #6876 | `verify-vendor-equipment-loans-reverse-section.mjs` |
 | `factoring:home.vendor_merges` (driver + vendor side) | CC-1 | #6895 | `verify-vendor-merges-reverse-section.mjs` |
+| `factoring:accounting.list` (load side) | CC-1 | #6906 | `verify-load-factoring-advance-banking-reverse-section.mjs` |
+| `factoring:banking.entry` (load side) | CC-1 | #6906 | `verify-load-factoring-advance-banking-reverse-section.mjs` |
 | `settlements:panel.open_driver_bills` | Cursor | #6726 | `verify-load-driver-pay-bill-entitylink.mjs` |
 | `dispatch:load.drawer.driver_pay` | Cursor | #6726 | `verify-load-driver-pay-bill-entitylink.mjs` |
 | `dispatch:load.drawer.factoring` | Cursor | #6733 | `verify-load-factoring-invoice-entitylink.mjs` |
@@ -128,8 +130,6 @@ All prior Uncertain rows moved to Done after independent guard PASS on tip `orig
 | `settlements:drawer.advance_detail` | CC-1 (same) |
 | `settlements:drawer.liability_detail` | CC-1 (same) |
 | `settlements:panel.pay_run_close` | CC-1 (same) |
-| `factoring:accounting.list` | CC-1 |
-| `factoring:banking.entry` | CC-1 |
 | `accounting:reverse.open_entitylink` | CC-1 / Rule 23 — EntityLink-only Open on Invoices/Bills/Expenses reverse is money theater without write path; skip Cursor |
 
 ## Reclassified — not a fix, Required-flag correction
