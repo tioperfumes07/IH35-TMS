@@ -1,3 +1,4 @@
+2026-08-14T23:40Z Cursor | SHIPPED #6822 CLAIM 3300-3306 | shipping CI-VERIFY-STEP-DUPLICATE renumber | Live=BLOCKED
 2026-08-14T23:20Z Cursor | SHIPPED #6818 task+load_map | shipping LINK-F5171 vendor_credit+driver_team+audit_event EntityLink | Live=BLOCKED
 2026-08-14T23:10Z Cursor | shipping LINK-F5171 task + load_map EntityLink + canonical-load-nav surface-focus budget | Live=BLOCKED | tip=#6816
 2026-08-14T22:55Z Cursor | SHIPPED #6786 embedded multiline | shipping roster+profile multiline EntityLink guards | Live=BLOCKED
