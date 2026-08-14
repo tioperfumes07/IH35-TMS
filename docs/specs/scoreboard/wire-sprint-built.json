@@ -280,46 +280,6 @@
       "leafRe": ".*"
     },
     {
-      "task": "WAVE-B-connectivity-all-modules",
-      "pr": "this PR",
-      "guard": "scripts/verify-wave-b-connectivity-all-modules.mjs",
-      "modules": [
-        "accounting",
-        "banking",
-        "cash-flow",
-        "compliance",
-        "customers",
-        "dispatch",
-        "docs",
-        "driver-hub",
-        "drivers",
-        "factoring",
-        "finance",
-        "fleet",
-        "form_425",
-        "fuel",
-        "help",
-        "home",
-        "insurance",
-        "inventory",
-        "legal",
-        "lists",
-        "maintenance",
-        "program",
-        "reports",
-        "safety",
-        "settlements",
-        "system",
-        "tasks",
-        "users",
-        "vendors"
-      ],
-      "cols": [
-        "connectivity"
-      ],
-      "leafRe": ".*"
-    },
-    {
       "task": "WAVE-B-vendor-reverse-link",
       "pr": "this PR",
       "guard": "scripts/verify-accounting-vendor-reverse-link-wired.mjs",
