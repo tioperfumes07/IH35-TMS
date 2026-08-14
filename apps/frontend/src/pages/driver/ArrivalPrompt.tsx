@@ -2,7 +2,7 @@ import { entityLabel } from "../../lib/entity-label";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { confirmDriverArrivalPrompt, dismissDriverArrivalPrompt, listDriverArrivalPrompts } from "../../api/driver";
-import { Link } from "react-router-dom";
+import { EntityLink } from "../../components/shared/EntityLink";
 
 const REPROMPT_AFTER_MS = 5 * 60 * 1000;
 
@@ -43,9 +43,12 @@ export function ArrivalPrompt() {
         </p>
         <p className="mt-1 text-xs text-slate-500">
           Distance: {activePrompt.distance_at_trigger_ft} ft · Load{" "}
-          <Link to={`/driver/loads/${activePrompt.load_id}`} className="font-semibold text-slate-700 hover:underline">
-            {entityLabel(activePrompt.load_number, activePrompt.load_id, "Load")}
-          </Link>
+          <EntityLink
+            kind="driver_app_load"
+            id={activePrompt.load_id}
+            label={entityLabel(activePrompt.load_number, activePrompt.load_id, "Load")}
+            className="font-semibold text-slate-700 hover:underline"
+          />
         </p>
         <div className="mt-3 flex items-center justify-end gap-2">
           <button

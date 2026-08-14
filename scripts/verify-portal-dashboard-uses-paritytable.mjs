@@ -54,8 +54,8 @@ function assertMigrated(src) {
   if (!src.includes("No loads to display yet.")) {
     errors.push(`${PAGE}: must keep emptyText for empty portal loads list`);
   }
-  if (!src.includes("/portal/loads/")) {
-    errors.push(`${PAGE}: must keep load detail links under /portal/loads/`);
+  if (!/kind\s*=\s*["']portal_load["']/.test(src)) {
+    errors.push(`${PAGE}: must keep load detail links via EntityLink kind=portal_load → /portal/loads/`);
   }
   if (!src.includes("StatusBadge")) {
     errors.push(`${PAGE}: must keep StatusBadge for progress column`);
@@ -82,7 +82,7 @@ function selftest() {
     ];
     <h1>Your loads</h1>
     <ListErrorState title="Couldn't load shipments" status={0} onRetry={() => {}} />
-    <Link to={\`/portal/loads/\${load.id}\`} />
+    <EntityLink kind="portal_load" id={load.id} label={load.load_number} />
     <StatusBadge variant="neutral" />
     refetchInterval: 30_000,
     <ParityTable

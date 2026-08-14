@@ -1,9 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
 import { apiRequest } from "../api/client";
 import { ListErrorState } from "../components/ListErrorState";
 import { StatusBadge } from "../components/layout/StatusBadge";
 import { ParityTable, type ParityColumn } from "../components/parity/ParityTable";
+import { EntityLink } from "../components/shared/EntityLink";
 
 type PortalLoadRow = {
   id: string;
@@ -28,9 +28,12 @@ const COLUMNS: Array<ParityColumn<PortalLoadRow>> = [
     label: "Load #",
     sortable: true,
     render: (load) => (
-      <Link to={`/portal/loads/${load.id}`} className="font-medium text-slate-700 hover:underline">
-        {load.load_number}
-      </Link>
+      <EntityLink
+        kind="portal_load"
+        id={load.id}
+        label={load.load_number}
+        className="font-medium text-slate-700 hover:underline"
+      />
     ),
   },
   {

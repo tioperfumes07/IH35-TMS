@@ -1,5 +1,4 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { listDriverLoads, type DriverLoad } from "../../api/driver";
 import { entityLabel } from "../../lib/entity-label";
@@ -20,10 +19,19 @@ export function DriverLoadsPage() {
       <ul className="space-y-2">
         {loads.map((load: DriverLoad) => (
           <li key={load.id} className="rounded-sm border border-slate-200 bg-white p-3">
-            <Link className="font-medium text-slate-900" to={`/driver/loads/${load.id}`}>
-              {entityLabel(load.display_id, load.id, "Load")}
-            </Link>
-            <p className="text-xs text-slate-600"><EntityLink kind="customer" id={load.customer_id} label={entityLabel(load.customer_name, load.customer_id, "Customer")} /></p>
+            <EntityLink
+              kind="driver_app_load"
+              id={load.id}
+              label={entityLabel(load.display_id, load.id, "Load")}
+              className="font-medium text-slate-900"
+            />
+            <p className="text-xs text-slate-600">
+              <EntityLink
+                kind="customer"
+                id={load.customer_id}
+                label={entityLabel(load.customer_name, load.customer_id, "Customer")}
+              />
+            </p>
             <p className="text-[11px] text-slate-500">
               {t("driver.pickup")}: {load.pickup_location} → {t("driver.dropoff")}: {load.delivery_location}
             </p>
