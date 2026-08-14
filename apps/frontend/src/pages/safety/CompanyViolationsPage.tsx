@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { formatDateUS } from "../../lib/formatDate";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getCompanyViolations } from "../../api/safety";
@@ -15,14 +16,26 @@ type CompanyViolationRow = Record<string, unknown>;
 
 export function CompanyViolationsPage({ operatingCompanyId }: Props) {
   const queryClient = useQueryClient();
+  const [searchParams] = useSearchParams();
   const [createOpen, setCreateOpen] = useState(false);
   const [selected, setSelected] = useState<Record<string, unknown> | null>(null);
+  const driverIdFilter = searchParams.get("driver_id") ?? undefined;
+  const unitIdFilter = searchParams.get("unit_id") ?? undefined;
 
   const query = useQuery({
-    queryKey: ["safety", "company-violations", operatingCompanyId],
-    queryFn: () => getCompanyViolations(operatingCompanyId),
+    queryKey: ["safety", "company-violations", operatingCompanyId, driverIdFilter, unitIdFilter],
+    queryFn: () => driverIdFilter || unitIdFilter
+      ? getCompanyViolations(operatingCompanyId, { driver_id: driverIdFilter, unit_id: unitIdFilter })
+      : getCompanyViolations(operatingCompanyId),
     enabled: Boolean(operatingCompanyId),
   });
+  const rows = query.data?.company_violations ?? [];
+  const violationId = searchParams.get("violation_id");
+  useEffect(() => {
+    if (!violationId) return;
+    const match = rows.find((row) => String(row.id) === violationId);
+    if (match) setSelected(match);
+  }, [rows, violationId]);
 
   // Migrated to the shared QBO-parity grid — columns, order, and the per-row "Open" detail action
   // are preserved verbatim (§7 additive-only).
@@ -65,7 +78,7 @@ export function CompanyViolationsPage({ operatingCompanyId }: Props) {
       ) : (
         <ParityTable<CompanyViolationRow>
           columns={columns}
-          rows={query.data?.company_violations ?? []}
+          rows={rows}
           rowKey={(row) => String(row.id)}
           loading={query.isLoading}
           emptyText="No company violations found."

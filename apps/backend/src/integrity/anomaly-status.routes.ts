@@ -19,6 +19,7 @@ const listQuerySchema = z.object({
   status: z.enum(ANOMALY_STATUSES).optional(),
   severity: z.enum(ANOMALY_SEVERITIES).optional(),
   subject: z.enum(ANOMALY_SUBJECT_TYPES).optional(),
+  subject_id: z.string().uuid().optional(),
 });
 
 const idParamsSchema = z.object({
@@ -110,6 +111,10 @@ export async function registerAnomalyStatusRoutes(app: FastifyInstance) {
       if (parsed.data.subject) {
         values.push(parsed.data.subject);
         filters.push(`subject_type = $${values.length}::text`);
+      }
+      if (parsed.data.subject_id) {
+        values.push(parsed.data.subject_id);
+        filters.push(`subject_id = $${values.length}::uuid`);
       }
 
       const result = await client.query(

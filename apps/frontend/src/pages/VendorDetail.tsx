@@ -52,6 +52,7 @@ import { VendorApAgingSection } from "./vendors/VendorApAgingSection";
 import { RoadServiceReverseSection } from "../components/maintenance/RoadServiceReverseSection";
 import { VendorBorderCrossingsReverseSection } from "../components/dispatch/VendorBorderCrossingsReverseSection";
 import { WarrantyClaimsReverseSection } from "../components/maintenance/WarrantyClaimsReverseSection";
+import { SafetyAlertsReverseSection } from "../components/safety/SafetyAlertsReverseSection";
 import { VendorInsurancePoliciesReverseSection } from "../components/insurance/VendorInsurancePoliciesReverseSection";
 import { VendorLegalContractsReverseSection } from "../components/legal/VendorLegalContractsReverseSection";
 import { LinkedBankTransactionsPanel } from "../components/banking/LinkedBankTransactionsPanel";
@@ -898,6 +899,7 @@ export function VendorDetailPage() {
         <VendorPreferredPartsReverseSection operatingCompanyId={companyId} vendorId={vendor.id} />
         <VendorPartsInventoryReverseSection operatingCompanyId={companyId} vendorId={vendor.id} />
         <VendorMaintenanceCatalogReverseSection operatingCompanyId={companyId} vendorId={vendor.id} />
+        <SafetyAlertsReverseSection operatingCompanyId={companyId} subjectKind="vendor" subjectId={vendor.id} />
         <VendorApAgingSection operatingCompanyId={companyId} vendorId={vendor.id} />
         <LinkedBankTransactionsPanel companyId={companyId} linkage={{ kind: "vendor_id", id: vendor.id }} entityLabel={vendor.name} />
         </div>

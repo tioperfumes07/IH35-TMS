@@ -22,6 +22,9 @@ const listQuerySchema = companyQuerySchema.extend({
   severity: z.string().optional(),
   resolution_status: z.string().optional(),
   subject_type: z.string().optional(),
+  subject_driver_id: z.string().uuid().optional(),
+  subject_unit_id: z.string().uuid().optional(),
+  subject_vendor_id: z.string().uuid().optional(),
 });
 
 const acknowledgeBodySchema = z.object({
@@ -113,6 +116,11 @@ async function listIntegrityAlertsHandler(
     if (query.subject_type) {
       values.push(query.subject_type);
       filters.push(`subject_type = $${values.length}`);
+    }
+    for (const column of ["subject_driver_id", "subject_unit_id", "subject_vendor_id"] as const) {
+      if (!query[column]) continue;
+      values.push(query[column]);
+      filters.push(`${column} = $${values.length}::uuid`);
     }
     const res = await client.query(
       `

@@ -777,8 +777,11 @@ export function convertFineToLiability(fineId: string, companyId: string) {
   );
 }
 
-export function getCompanyViolations(companyId: string) {
-  return apiRequest<{ company_violations: Array<Record<string, unknown>> }>(`/api/v1/safety/company-violations?${q(companyId)}`);
+export function getCompanyViolations(companyId: string, params: { driver_id?: string; unit_id?: string } = {}) {
+  const qs = new URLSearchParams({ operating_company_id: companyId });
+  if (params.driver_id) qs.set("driver_id", params.driver_id);
+  if (params.unit_id) qs.set("unit_id", params.unit_id);
+  return apiRequest<{ company_violations: Array<Record<string, unknown>> }>(`/api/v1/safety/company-violations?${qs.toString()}`);
 }
 
 export function createCompanyViolation(companyId: string, body: Record<string, unknown>) {
@@ -941,12 +944,15 @@ export function createComplaint(companyId: string, body: Record<string, unknown>
 
 export function getIntegrityAlerts(
   companyId: string,
-  params: { alert_category?: string; severity?: string; resolution_status?: string } = {}
+  params: { alert_category?: string; severity?: string; resolution_status?: string; subject_driver_id?: string; subject_unit_id?: string; subject_vendor_id?: string } = {}
 ) {
   const qs = new URLSearchParams({ operating_company_id: companyId });
   if (params.alert_category) qs.set("alert_category", params.alert_category);
   if (params.severity) qs.set("severity", params.severity);
   if (params.resolution_status) qs.set("resolution_status", params.resolution_status);
+  if (params.subject_driver_id) qs.set("subject_driver_id", params.subject_driver_id);
+  if (params.subject_unit_id) qs.set("subject_unit_id", params.subject_unit_id);
+  if (params.subject_vendor_id) qs.set("subject_vendor_id", params.subject_vendor_id);
   return apiRequest<{ integrity_alerts: Array<Record<string, unknown>> }>(`/api/v1/safety/integrity-alerts?${qs.toString()}`);
 }
 
@@ -1020,12 +1026,13 @@ export type SafetyAnomaly = {
 
 export function listAnomalies(
   companyId: string,
-  params: { status?: SafetyAnomalyStatus; severity?: SafetyAnomalySeverity; subject?: SafetyAnomalySubjectType } = {}
+  params: { status?: SafetyAnomalyStatus; severity?: SafetyAnomalySeverity; subject?: SafetyAnomalySubjectType; subject_id?: string } = {}
 ) {
   const qs = new URLSearchParams({ operating_company_id: companyId });
   if (params.status) qs.set("status", params.status);
   if (params.severity) qs.set("severity", params.severity);
   if (params.subject) qs.set("subject", params.subject);
+  if (params.subject_id) qs.set("subject_id", params.subject_id);
   return apiRequest<{ anomalies: SafetyAnomaly[] }>(`/api/v1/integrity/anomalies?${qs.toString()}`);
 }
 
