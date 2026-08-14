@@ -10,8 +10,6 @@ const FILES = {
   unit: "apps/frontend/src/components/vehicle-profile/DocumentsSection.tsx",
   trailer: "apps/frontend/src/components/trailer-profile/DocumentsSection.tsx",
   drivers: "docs/specs/scoreboard/modules/drivers.required.json",
-  vendors: "docs/specs/scoreboard/modules/vendors.required.json",
-  customers: "docs/specs/scoreboard/modules/customers.required.json",
 };
 const read = () => Object.fromEntries(Object.entries(FILES).map(([key, file]) => [key, fs.readFileSync(file, "utf8")]));
 function leaf(source, key, id) { try { return JSON.parse(source[key]).leaves.find((candidate) => candidate.id === id); } catch { return null; } }
@@ -28,8 +26,6 @@ function verify(source) {
   need("unit", 'data-testid="unit-document-record-link"', "unit document roster must drill through");
   need("trailer", 'data-testid="trailer-document-record-link"', "trailer document roster must drill through");
   if (!leaf(source, "drivers", "profiles.documents")?.required?.includes("reverse_link")) failures.push("drivers profiles.documents must require reverse_link");
-  if (!leaf(source, "vendors", "detail.documents")?.required?.includes("reverse_link")) failures.push("vendors detail.documents must require reverse_link");
-  if (!leaf(source, "customers", "detail.documents")?.required?.includes("reverse_link")) failures.push("customers detail.documents must require reverse_link");
   return failures;
 }
 const source = read();

@@ -15,7 +15,7 @@ function audit(s) {
   if (!/assigned_primary_driver_id/.test(s.service) || !/const driverId = body\.driver_id \?\? load\.assigned_primary_driver_id/.test(s.service)) failures.push("writer must derive driver FK from selected load assignment");
   if (!/if \(!driverId \|\| !unitId\) return \{ ok: false as const, error: "load_missing_assignment" \}/.test(s.service)) failures.push("writer must reject missing derived assignment");
   if (!/issue_driver_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)/.test(s.route) || !/driver_id:\s*query\.data\.issue_driver_id/.test(s.route)) failures.push("exact driver filter route contract missing");
-  if (!/filters:\s*\{ status\?: string; load_id\?: string; driver_id\?: string \}/.test(s.service) || !/i\.driver_id = \$\$\{values\.length\}::uuid/.test(s.service)) failures.push("exact server-side driver filter missing");
+  if (!/filters:\s*\{ status\?: string; load_id\?: string; driver_id\?: string; unit_id\?: string \}/.test(s.service) || !/i\.driver_id = \$\$\{values\.length\}::uuid/.test(s.service)) failures.push("exact server-side driver filter missing");
   if (!/filters\.driver_id[\s\S]{0,120}q\.set\("issue_driver_id", filters\.driver_id\)/.test(s.api)) failures.push("frontend exact driver query parameter missing");
   if (!/listDispatchIntransitIssues\(operatingCompanyId, \{ driver_id: driverId \}\)/.test(s.reverse) || !/query\.isError/.test(s.reverse) || !/No in-transit issues linked to this driver/.test(s.reverse)) failures.push("honest driver reverse section missing");
   if (!/kind="load"/.test(s.reverse) || !/kind="unit"/.test(s.reverse)) failures.push("reverse rows must drill to load and unit");
