@@ -280,36 +280,6 @@
       "leafRe": ".*"
     },
     {
-      "task": "WAVE-A-load-all-modules",
-      "pr": "this PR",
-      "guard": "scripts/verify-wave-a-load-all-modules.mjs",
-      "modules": [
-        "accounting",
-        "compliance",
-        "customers",
-        "dispatch",
-        "docs",
-        "driver-hub",
-        "drivers",
-        "factoring",
-        "fleet",
-        "fuel",
-        "home",
-        "insurance",
-        "legal",
-        "lists",
-        "maintenance",
-        "reports",
-        "safety",
-        "settlements",
-        "tasks"
-      ],
-      "cols": [
-        "load"
-      ],
-      "leafRe": ".*"
-    },
-    {
       "task": "WAVE-B-connectivity-all-modules",
       "pr": "this PR",
       "guard": "scripts/verify-wave-b-connectivity-all-modules.mjs",

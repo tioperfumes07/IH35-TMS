@@ -7,6 +7,7 @@ const exactFile = "scripts/verify-wave-a-load-column.mjs";
 const entityLinkFile = "apps/frontend/src/components/shared/EntityLink.tsx";
 const queuePageFile = "apps/frontend/src/pages/dispatch/FactoringQueuePage.tsx";
 const exactLeafRe = '"leafRe":"^(expenses\\\\.create|load\\\\.drawer\\\\.pre_settlement|dispatch\\\\.wizard\\\\.border_crossing_wizard_page|cargo_claims\\\\.create|report\\\\.dispatch_margin)$"';
+const feedFile = "docs/specs/scoreboard/wire-sprint-built.json";
 
 export function audit(sources) {
   const failures = [];
@@ -17,10 +18,12 @@ export function audit(sources) {
   if (!(sources[exactFile] ?? "").includes(exactLeafRe)) failures.push(`${exactFile}: exact load Built claim is missing`);
   if (!/case "factoring_queue_load":[\s\S]{0,100}\?queue_record_id=\$\{id\}/.test(sources[entityLinkFile] ?? "")) failures.push(`${entityLinkFile}: factoring queue record must use its workflow-specific query key`);
   if (!/searchParams\.get\("queue_record_id"\) \?\? searchParams\.get\("load_id"\)/.test(sources[queuePageFile] ?? "")) failures.push(`${queuePageFile}: must read canonical queue record key and legacy load_id bookmarks`);
+  const feed = JSON.parse(sources[feedFile] ?? '{"entries":[]}');
+  if ((feed.entries ?? []).some((entry) => entry.task === "WAVE-A-load-all-modules")) failures.push(`${feedFile}: disproven all-module load Built feed entry must stay removed`);
   return failures;
 }
 
-const files = [aggregateFile, exactFile, entityLinkFile, queuePageFile];
+const files = [aggregateFile, exactFile, entityLinkFile, queuePageFile, feedFile];
 const sources = Object.fromEntries(files.map((file) => [file, fs.readFileSync(file, "utf8")]));
 if (process.argv.includes("--selftest")) {
   const blanket = structuredClone(sources);
@@ -32,7 +35,12 @@ if (process.argv.includes("--selftest")) {
   const queueKey = structuredClone(sources);
   queueKey[entityLinkFile] = queueKey[entityLinkFile].replace("?queue_record_id=${id}", "?load_id=${id}");
   if (!audit(queueKey).some((failure) => failure.includes("workflow-specific query key"))) { console.error("verify-wave-a-load-built-claims-leaf-specific SELFTEST FAIL — queue-key mutation escaped"); process.exit(1); }
-  console.log("verify-wave-a-load-built-claims-leaf-specific SELFTEST PASS — blanket, aggregate-credit, and queue-key mutations detected"); process.exit(0);
+  const feed = structuredClone(sources);
+  const parsedFeed = JSON.parse(feed[feedFile]);
+  parsedFeed.entries.push({ task: "WAVE-A-load-all-modules", cols: ["load"], leafRe: ".*" });
+  feed[feedFile] = JSON.stringify(parsedFeed);
+  if (!audit(feed).some((failure) => failure.includes("feed entry"))) { console.error("verify-wave-a-load-built-claims-leaf-specific SELFTEST FAIL — feed-entry mutation escaped"); process.exit(1); }
+  console.log("verify-wave-a-load-built-claims-leaf-specific SELFTEST PASS — blanket, aggregate-credit, queue-key, and feed-entry mutations detected"); process.exit(0);
 }
 const failures = audit(sources);
 if (failures.length) { console.error(`verify-wave-a-load-built-claims-leaf-specific FAIL:\n${failures.map((failure) => ` - ${failure}`).join("\n")}`); process.exit(1); }
