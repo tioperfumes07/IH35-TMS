@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { EntityLink } from "../shared/EntityLink";
 import { getMaintenanceTireLayout } from "../../api/maintenance";
 
 export function UnitTireProgramReverseSection({ operatingCompanyId, unitId }: { operatingCompanyId: string; unitId: string }) {
@@ -13,7 +13,7 @@ export function UnitTireProgramReverseSection({ operatingCompanyId, unitId }: { 
     <section className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid="unit-tire-program-reverse">
       <div className="flex items-center justify-between gap-2">
         <h3 className="text-sm font-semibold text-slate-900">Mounted Tires{mounted.length ? ` (${mounted.length})` : ""}</h3>
-        <Link className="text-xs font-semibold text-slate-700 underline" to={`/maintenance/tires?unit_id=${encodeURIComponent(unitId)}`}>Open Tire Program</Link>
+        <EntityLink kind="tire_program_unit" id={unitId} label="Open Tire Program" className="text-xs font-semibold text-slate-700 underline" />
       </div>
       {query.isLoading ? <p className="text-sm text-gray-500">Loading mounted tires…</p> : null}
       {query.isError ? <p className="text-sm text-red-600">Could not load mounted tires for this unit.</p> : null}
