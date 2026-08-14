@@ -128,6 +128,9 @@ export type EntityKind =
   | "fuel_history_trailer"
   | "driver_deductions_filter"
   | "management_report_package"
+  | "program_matrix_module"
+  | "compliance_unit_overview"
+  | "compliance_hos_driver"
   | "inventory_part"
   | "parts_inventory"
   | "maintenance_vendor"
@@ -396,6 +399,12 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
       return `/drivers/deductions?driver_id=${id}`;
     case "management_report_package":
       return `/reports/management?type=${id}`;
+    case "program_matrix_module":
+      return `/program/matrix?module=${id}`;
+    case "compliance_unit_overview":
+      return `/compliance?tab=overview&unit_id=${id}`;
+    case "compliance_hos_driver":
+      return `/compliance?tab=hos_tracker&driver_id=${id}`;
     case "safety_event":
       return `/safety/safety-events?event_id=${id}`;
     // SAF-F33 safety drill-through — each target list page reads the param and opens/highlights the row.

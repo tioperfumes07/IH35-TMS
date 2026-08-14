@@ -4,7 +4,7 @@
  * Each cell = MatrixCell4 from column Abl rollup (tooltip keeps Audited%·Built%·Live% detail).
  */
 import { Fragment, useMemo } from "react";
-import { Link } from "react-router-dom";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { useQuery } from "@tanstack/react-query";
 import { resolveApiUrl } from "../../api/client";
 import {
@@ -218,9 +218,7 @@ export function ModuleMatrixSystemView() {
           {row.available ? (
             <>
               {queue}{" "}
-              <Link to={`/program/matrix?module=${row.module}`} className="board-link">
-                Board →
-              </Link>
+              <EntityLink kind="program_matrix_module" id={row.module} label="Board →" className="board-link" />
             </>
           ) : (
             "—"
