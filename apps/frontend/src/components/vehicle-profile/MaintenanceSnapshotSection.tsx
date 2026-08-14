@@ -57,9 +57,7 @@ export function MaintenanceSnapshotSection({
             ? ` — ${pendingFaultDraftCount} auto-WO draft${pendingFaultDraftCount === 1 ? "" : "s"} pending review`
             : ""}
           {" · "}
-          <Link to={`/maintenance/fault-drafts?unit_id=${unitId}`} className="underline">
-            View fault history
-          </Link>
+          <EntityLink kind="fault_drafts_unit" id={unitId} label="View fault history" className="underline" />
         </p>
       ) : null}
       <Link to="/maintenance" className="text-xs text-slate-700 underline">

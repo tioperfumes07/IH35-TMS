@@ -1,3 +1,4 @@
+2026-08-15T00:00Z Cursor | SHIPPED #6827 property_tax_unit | shipping LINK-F5171 fault_drafts_unit EntityLink | Live=BLOCKED
 2026-08-14T23:55Z Cursor | SHIPPED #6826 coverage-gaps | shipping LINK-F5171 property_tax_unit EntityLink | Live=BLOCKED
 2026-08-14T23:50Z Cursor | SHIPPED #6824 verify-step renumber | shipping LINK-F5171 insurance_coverage_gaps EntityLink | Live=BLOCKED
 2026-08-14T23:40Z Cursor | SHIPPED #6822 CLAIM 3300-3306 | shipping CI-VERIFY-STEP-DUPLICATE renumber | Live=BLOCKED

@@ -109,6 +109,7 @@ export type EntityKind =
   | "audit_event"
   | "insurance_coverage_gaps"
   | "property_tax_unit"
+  | "fault_drafts_unit"
   | "inventory_part"
   | "parts_inventory"
   | "maintenance_vendor"
@@ -338,6 +339,8 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
       return `/safety/insurance/coverage-gaps?unit_id=${id}`;
     case "property_tax_unit":
       return `/compliance/property-tax?unit_id=${id}`;
+    case "fault_drafts_unit":
+      return `/maintenance/fault-drafts?unit_id=${id}`;
     case "safety_event":
       return `/safety/safety-events?event_id=${id}`;
     // SAF-F33 safety drill-through — each target list page reads the param and opens/highlights the row.
