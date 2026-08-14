@@ -12,7 +12,7 @@ export function CurrentLoadSection({
     return (
       <section className="rounded-sm border border-dashed border-gray-200 bg-gray-50 p-4 text-sm text-gray-600">
         <h3 className="font-semibold text-gray-800">Current load</h3>
-        <p className="mt-1">Available — no active load assigned to unit {entityLabel(null, unitId, "Unit")}.</p>
+        <p className="mt-1">Available — no active load assigned to unit <EntityLink kind="unit" id={unitId} label={entityLabel(null, unitId, "Unit")} data-testid="available-unit-record-link" />.</p>
       </section>
     );
   }
