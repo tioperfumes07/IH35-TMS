@@ -26,6 +26,9 @@ const listQuerySchema = companyQuerySchema.extend({
   date_from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   date_to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   search: z.string().trim().optional(),
+  // LINK-F5171/LINK-F5184: factoring:accounting.list reverse — a load can find its own advance
+  // batch(es) via the invoice it was submitted through (accounting.invoices.factoring_advance_id).
+  load_id: z.string().uuid().optional(),
   limit: z.coerce.number().int().min(1).max(500).default(100),
 });
 
@@ -205,6 +208,17 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
         values.push(`%${q.search}%`);
         const idx = values.length;
         where.push(`(fa.display_id ILIKE $${idx} OR COALESCE(fa.submission_batch_ref, '') ILIKE $${idx})`);
+      }
+      if (q.load_id) {
+        values.push(q.load_id);
+        where.push(
+          `EXISTS (
+             SELECT 1 FROM accounting.invoices i
+             WHERE i.factoring_advance_id = fa.id
+               AND i.operating_company_id = fa.operating_company_id
+               AND i.source_load_id = $${values.length}::uuid
+           )`
+        );
       }
       values.push(q.limit);
       const limitIdx = values.length;

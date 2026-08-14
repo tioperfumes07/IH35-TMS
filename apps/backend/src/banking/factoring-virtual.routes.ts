@@ -8,6 +8,12 @@ const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
 });
 
+// LINK-F5171/LINK-F5184: factoring:banking.entry reverse — a load can find its own advance in this
+// Banking (Faro) tab's timeline via the invoice it was submitted through.
+const timelineQuerySchema = companyQuerySchema.extend({
+  load_id: z.string().uuid().optional(),
+});
+
 function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
   if (!requireAuth(req, reply)) return null;
   return req.user;
@@ -77,11 +83,24 @@ export async function registerBankingFactoringVirtualRoutes(app: FastifyInstance
   app.get("/api/v1/banking/factoring-virtual/timeline", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
-    const query = companyQuerySchema.safeParse(req.query ?? {});
+    const query = timelineQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return sendValidationError(reply, query.error);
     const companyId = query.data.operating_company_id;
+    const loadId = query.data.load_id;
 
     const timeline = await withCompanyScope(user.uuid, companyId, async (client) => {
+      const values: unknown[] = [companyId];
+      let loadFilter = "";
+      if (loadId) {
+        values.push(loadId);
+        loadFilter = `
+          AND EXISTS (
+            SELECT 1 FROM accounting.invoices i
+            WHERE i.factoring_advance_id = fa.id
+              AND i.operating_company_id = fa.operating_company_id
+              AND i.source_load_id = $${values.length}::uuid
+          )`;
+      }
       const res = await client
         .query(
           `
@@ -95,10 +114,11 @@ export async function registerBankingFactoringVirtualRoutes(app: FastifyInstance
             FROM accounting.factoring_advances fa
             WHERE fa.operating_company_id = $1::uuid
               AND fa.status IS DISTINCT FROM 'voided'
+              ${loadFilter}
             ORDER BY COALESCE(fa.advanced_at, fa.created_at) DESC NULLS LAST
             LIMIT 25
           `,
-          [companyId]
+          values
         )
         .catch(() => ({ rows: [] as Record<string, unknown>[] }));
       return res.rows;
