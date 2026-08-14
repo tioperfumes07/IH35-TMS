@@ -2717,6 +2717,14 @@
       "modules": ["drivers"],
       "cols": ["reverse_link"],
       "leafRe": "^drivers\\.panel\\.team_split_config$"
+    },
+    {
+      "task": "VERTICAL-REVERSE-LINK-CASH-FORECAST-PROFILES",
+      "pr": "this PR",
+      "guard": "scripts/verify-cash-forecast-profile-reverse.mjs",
+      "modules": ["cash-flow"],
+      "cols": ["reverse_link"],
+      "leafRe": "^cash-flow\\.panel\\.projection$"
     }
   ]
 }
