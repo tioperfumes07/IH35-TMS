@@ -18,7 +18,7 @@ export type ForecastEntry = {
   ref_kind: ForecastRefKind | null;
   ref_label: string | null;
   ref_external_id: string | null;
-  party_ref_kind: "driver" | "vendor" | null;
+  party_ref_kind: "customer" | "driver" | "vendor" | null;
   party_ref_id: string | null;
   party_ref_label: string | null;
 };
@@ -35,7 +35,7 @@ export type ForecastEntryInput = {
   ref_kind?: ForecastRefKind | null;
   ref_label?: string | null;
   ref_external_id?: string | null;
-  party_ref_kind?: "driver" | "vendor" | null;
+  party_ref_kind?: "customer" | "driver" | "vendor" | null;
   party_ref_id?: string | null;
   party_ref_label?: string | null;
 };
