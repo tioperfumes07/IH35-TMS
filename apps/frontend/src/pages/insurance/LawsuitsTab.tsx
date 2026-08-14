@@ -86,13 +86,12 @@ export function LawsuitsTab({ operatingCompanyId, claimId }: Props) {
         label: "Case #",
         sortable: true,
         render: (lawsuit) => (
-          <button
-            type="button"
+          <EntityLink
+            kind="lawsuit"
+            id={lawsuit.id}
+            label={entityLabel(lawsuit.case_number, lawsuit.id, "Case")}
             className="font-medium text-slate-700 underline"
-            onClick={() => setSelectedLawsuitId(lawsuit.id)}
-          >
-            {entityLabel(lawsuit.case_number, lawsuit.id, "Case")}
-          </button>
+          />
         ),
       },
       {

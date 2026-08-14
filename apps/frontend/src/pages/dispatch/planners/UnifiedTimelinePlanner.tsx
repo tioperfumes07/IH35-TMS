@@ -1,6 +1,5 @@
 import { useMemo, useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
 import { getDispatchPlannerWeek, type PlannerDriverRow, type PlannerLoadEvent } from "../../../api/dispatch";
 import { driverSchedulerOfficeApi } from "../../../api/driver-scheduler";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
@@ -85,7 +84,6 @@ function StatusPill({ status }: { status: "Available" | "On-load" | "On-leave" }
 }
 
 export function UnifiedTimelinePlanner() {
-  const navigate = useNavigate();
   const { selectedCompanyId } = useCompanyContext();
   const operatingCompanyId = selectedCompanyId ?? "";
   const { range, days } = usePlannerRange();
@@ -123,7 +121,6 @@ export function UnifiedTimelinePlanner() {
   }, [timelineQuery.data]);
   const leaveByCell = useMemo(() => parseLeaveCells(leaveQuery.data?.leave_day_cells), [leaveQuery.data]);
 
-  const openLoad = (loadId: string) => navigate(`/dispatch/loads/${encodeURIComponent(loadId)}`);
   const openBookForUnit = (unitId: string | null | undefined) => {
     setBookUnitId(unitId ?? null);
     setBookOpen(true);
@@ -204,15 +201,13 @@ export function UnifiedTimelinePlanner() {
                     const span = loadSpan(load, days, dayIdx);
                     cells.push(
                       <td key={`${driver.id}-${day}`} colSpan={span} className="border-l border-gray-50 bg-slate-100 px-1 py-0.5 text-center">
-                        <button
-                          type="button"
+                        <EntityLink
+                          kind="load"
+                          id={load.id}
+                          label={entityLabel(load.load_number, load.id, "Load")}
                           className="w-full truncate text-[9px] font-medium text-slate-700 hover:underline"
                           data-testid={`timeline-load-${load.id}`}
-                          onClick={() => openLoad(load.id)}
-                          title={`${entityLabel(load.load_number, load.id, "Load")} · ${entityLabel(load.customer_name, null, "Customer")} · ${load.status}`}
-                        >
-                          {entityLabel(load.load_number, load.id, "Load")}
-                        </button>
+                        />
                         <span className="block text-[9px]"><EntityLink kind="customer" id={load.customer_id} label={entityLabel(load.customer_name, load.customer_id, "Customer")} /></span>
                       </td>
                     );
