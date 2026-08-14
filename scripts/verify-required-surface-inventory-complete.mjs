@@ -12,6 +12,8 @@
  * Usage:
  *   node scripts/verify-required-surface-inventory-complete.mjs
  *   node scripts/verify-required-surface-inventory-complete.mjs --selftest
+ *
+ * @matrix-built {"modules":["accounting","cash-flow","dispatch","settlements","drivers","lists","program","tasks"],"cols":["connectivity"],"leafRe":"^(accounting\\.(panel\\.(reallocate|trk_bulk_register|detail|period_status|class_cost_center_variance|schedule|receipt_detail|leakage)|modal\\.(decide|create))|cash-flow\\.panel\\.projection|dispatch\\.modal\\.save_load_template|settlements\\.panel\\.open_driver_bills|drivers\\.panel\\.(auto_deduction_policies|team_split_config)|lists\\.modal\\.(detail_type|void_cancel_reason|load_cancellation_reason|termination_reason|oem_parts_create)|program\\.panel\\.thread|tasks\\.drawer\\.task)$","task":"REQUIRED-MAP-INLINE-SURFACES"}
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -130,6 +132,7 @@ function loadRequiredBlob() {
 
 function inventorySurfaces() {
   const files = walkTsx(FE);
+  const allFrontendSource = files.map((abs) => fs.readFileSync(abs, "utf8")).join("\n");
   const rows = [];
   const seen = new Set();
   for (const abs of files) {
@@ -147,13 +150,40 @@ function inventorySurfaces() {
         break;
       }
     }
-    if (!kind) continue;
     const mod = guessModule(rel);
     if (!mod) continue;
-    const id = leafId(mod, kind, stem);
-    if (seen.has(id)) continue;
-    seen.add(id);
-    rows.push({ id, mod, kind, stem, rel });
+    if (kind) {
+      const id = leafId(mod, kind, stem);
+      if (!seen.has(id)) {
+        seen.add(id);
+        rows.push({ id, mod, kind, stem, rel });
+      }
+    }
+
+    // A file can host additional named surfaces (for example DecideModal inside
+    // DisputeQueuePage.tsx). Filename-only discovery silently omitted these and
+    // surface_path matching let one generic leaf cover every control in a file.
+    // Inventory named declarations separately and require their exact leaf id.
+    const source = fs.readFileSync(abs, "utf8");
+    const declarationRe = /(?:export\s+)?(?:default\s+)?(?:function|const)\s+([A-Z][A-Za-z0-9]*(Modal|Drawer|Panel|Wizard|Sheet|Dialog|Flyout|Popover))\b/g;
+    for (const match of source.matchAll(declarationRe)) {
+      const symbol = match[1];
+      if (EXEMPT_STEMS.has(symbol) || symbol === stem) continue;
+      const uses = allFrontendSource.match(new RegExp(`\\b${symbol}\\b`, "g"))?.length ?? 0;
+      if (uses < 2) continue; // exported/declared dead code is not a mounted product surface
+      const declaredKind = match[2].toLowerCase();
+      const declaredId = leafId(mod, declaredKind, symbol);
+      if (seen.has(declaredId)) continue;
+      seen.add(declaredId);
+      rows.push({
+        id: declaredId,
+        mod,
+        kind: declaredKind,
+        stem: symbol,
+        rel,
+        exactIdRequired: true,
+      });
+    }
   }
   return rows;
 }
@@ -166,9 +196,12 @@ function assertSharedColumns() {
 }
 
 function isCovered(row, blob, byMod) {
-  if (blob.includes(row.id.toLowerCase())) return true;
   const doc = byMod.get(row.mod);
   if (!doc) return false;
+  if (row.exactIdRequired) {
+    return (doc.leaves || []).some((leaf) => leaf.id === row.id);
+  }
+  if (blob.includes(row.id.toLowerCase())) return true;
   const slug = row.id.split(".").pop();
   for (const leaf of doc.leaves || []) {
     if (leaf.id === row.id) return true;
@@ -275,6 +308,22 @@ function spawnSyncCheck() {
 import { spawnSync } from "node:child_process";
 
 function selftestChild() {
+  const inlineFixture = path.join(FE, "pages/tasks/InlineSurfaceGuardSelftest.tsx");
+  fs.writeFileSync(
+    inlineFixture,
+    'function HiddenRegressionModal() { return null; }\nexport function Host() { return <HiddenRegressionModal />; }\n',
+  );
+  const inlineRed = spawnSync(process.execPath, [fileURLToPath(import.meta.url)], {
+    cwd: ROOT,
+    encoding: "utf8",
+  });
+  fs.rmSync(inlineFixture);
+  if (inlineRed.status === 0 || !`${inlineRed.stdout}\n${inlineRed.stderr}`.includes("tasks.modal.hidden_regression")) {
+    console.error("selftest FAIL — inline named modal was not inventoried as an exact Required leaf");
+    process.exit(1);
+  }
+  console.log("selftest OK — mutation red (unmapped inline named modal)");
+
   const sharedPath = SHARED;
   const bak = fs.readFileSync(sharedPath, "utf8");
   const doc = JSON.parse(bak);

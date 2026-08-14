@@ -55,3 +55,5 @@ Draw the next unused number from your OWN block, record a `CLAIM-<n>` row below,
 ---
 
 ## LEDGER ROWS (append below this line, oldest first — do not reorder, do not edit existing rows)
+| 2026-08-14T12:01:49-05:00 | Codex | REQUIRED-MAP-INLINE-SURFACES | scripts/verify-required-surface-inventory-complete.mjs, docs/specs/scoreboard/modules/*.required.json, docs/specs/scoreboard/wire-sprint-built.json | RESERVED | codex/vertical-abc-017 |
+| 2026-08-14T12:13:00-05:00 | Codex | REQUIRED-MAP-INLINE-SURFACES | scripts/verify-required-surface-inventory-complete.mjs, docs/specs/scoreboard/modules/*.required.json, docs/specs/scoreboard/wire-sprint-built.json | RELEASED-ON-MERGE | codex/vertical-inline-surfaces-018 |

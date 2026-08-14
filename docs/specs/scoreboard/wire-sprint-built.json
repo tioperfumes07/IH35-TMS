@@ -2,6 +2,14 @@
   "_README": "Shipped Wave-A writers that green Matrix Box 3 Built. Updated when a Pxx task merges with guard+smoke. Live (Box 4) still requires PROD-VERIFIED ledger. leafRe must match docs/specs/scoreboard/modules/*.required.json leaf ids; cols must match column ids (picker_law not picker).",
   "entries": [
     {
+      "task": "REQUIRED-MAP-INLINE-SURFACES",
+      "pr": "this PR",
+      "guard": "scripts/verify-required-surface-inventory-complete.mjs",
+      "modules": ["accounting", "cash-flow", "dispatch", "settlements", "drivers", "lists", "program", "tasks"],
+      "cols": ["connectivity"],
+      "leafRe": "^(accounting\\.(panel\\.(reallocate|trk_bulk_register|detail|period_status|class_cost_center_variance|schedule|receipt_detail|leakage)|modal\\.(decide|create))|cash-flow\\.panel\\.projection|dispatch\\.modal\\.save_load_template|settlements\\.panel\\.open_driver_bills|drivers\\.panel\\.(auto_deduction_policies|team_split_config)|lists\\.modal\\.(detail_type|void_cancel_reason|load_cancellation_reason|termination_reason|oem_parts_create)|program\\.panel\\.thread|tasks\\.drawer\\.task)$"
+    },
+    {
       "task": "LINK-F5131-EXCEPTION-TABLE-IDENTITY-REVERSE-LINKS",
       "pr": "this PR",
       "guard": "scripts/verify-exception-table-identity-reverse-links.mjs",

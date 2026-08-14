@@ -518,6 +518,24 @@
         "qbo_chrome",
         "connectivity"
       ]
+    },
+    {
+      "id": "drivers.panel.auto_deduction_policies",
+      "tab": "Driver deductions",
+      "sub": "Auto deduction policies panel",
+      "route_hint": "/drivers/auto-deduction-policies",
+      "surface_kind": "panel",
+      "surface_path": "pages/drivers/AutoDeductionPolicies.tsx",
+      "required": ["driver", "settlement", "liability", "connectivity", "reverse_link", "picker_law", "qbo_chrome"]
+    },
+    {
+      "id": "drivers.panel.team_split_config",
+      "tab": "Driver teams",
+      "sub": "Team split config panel",
+      "route_hint": "/drivers/team-splits",
+      "surface_kind": "panel",
+      "surface_path": "pages/drivers/TeamSplitConfig.tsx",
+      "required": ["driver", "connectivity", "reverse_link", "picker_law", "qbo_chrome"]
     }
   ],
   "honesty_audit": {

@@ -1082,6 +1082,96 @@
         "qbo_chrome",
         "connectivity"
       ]
+    },
+    {
+      "id": "accounting.panel.reallocate",
+      "tab": "Allocations",
+      "sub": "Reallocate panel",
+      "route_hint": "/accounting/allocations",
+      "surface_kind": "panel",
+      "surface_path": "pages/accounting/AllocationsPage.tsx",
+      "required": ["vendor", "unit", "load", "ap_bill", "connectivity", "reverse_link", "qbo_chrome"]
+    },
+    {
+      "id": "accounting.modal.decide",
+      "tab": "Disputes",
+      "sub": "Settlement dispute decision modal",
+      "route_hint": "/accounting/dispute-queue",
+      "surface_kind": "modal",
+      "surface_path": "pages/accounting/DisputeQueuePage.tsx",
+      "required": ["driver", "settlement", "liability", "connectivity", "reverse_link", "qbo_chrome"]
+    },
+    {
+      "id": "accounting.panel.trk_bulk_register",
+      "tab": "Fixed assets",
+      "sub": "TRK bulk register panel",
+      "route_hint": "/accounting/fixed-assets",
+      "surface_kind": "panel",
+      "surface_path": "pages/accounting/FixedAssetsPage.tsx",
+      "required": ["unit", "expense", "gl_je", "connectivity", "reverse_link", "qbo_chrome"]
+    },
+    {
+      "id": "accounting.panel.detail",
+      "tab": "Fixed assets",
+      "sub": "Fixed asset detail panel",
+      "route_hint": "/accounting/fixed-assets",
+      "surface_kind": "panel",
+      "surface_path": "pages/accounting/FixedAssetsPage.tsx",
+      "required": ["unit", "expense", "gl_je", "connectivity", "reverse_link", "qbo_chrome"]
+    },
+    {
+      "id": "accounting.panel.period_status",
+      "tab": "My accountant",
+      "sub": "Accounting period status panel",
+      "route_hint": "/accounting/my-accountant",
+      "surface_kind": "panel",
+      "surface_path": "pages/accounting/MyAccountantPage.tsx",
+      "required": ["gl_je", "connectivity", "reverse_link", "qbo_chrome"]
+    },
+    {
+      "id": "accounting.panel.class_cost_center_variance",
+      "tab": "Period comparison",
+      "sub": "Class cost-center variance panel",
+      "route_hint": "/accounting/period-comparison",
+      "surface_kind": "panel",
+      "surface_path": "pages/accounting/PeriodComparisonPage.tsx",
+      "required": ["expense", "gl_je", "connectivity", "reverse_link", "qbo_chrome"]
+    },
+    {
+      "id": "accounting.panel.schedule",
+      "tab": "Prepaid expenses",
+      "sub": "Prepaid amortization schedule panel",
+      "route_hint": "/accounting/prepaid-expenses",
+      "surface_kind": "panel",
+      "surface_path": "pages/accounting/PrepaidExpensesPage.tsx",
+      "required": ["expense", "gl_je", "connectivity", "reverse_link", "qbo_chrome"]
+    },
+    {
+      "id": "accounting.modal.create",
+      "tab": "Prepaid expenses",
+      "sub": "Create prepaid expense modal",
+      "route_hint": "/accounting/prepaid-expenses",
+      "surface_kind": "modal",
+      "surface_path": "pages/accounting/PrepaidExpensesPage.tsx",
+      "required": ["vendor", "expense", "gl_je", "connectivity", "reverse_link", "picker_law", "qbo_chrome"]
+    },
+    {
+      "id": "accounting.panel.receipt_detail",
+      "tab": "Receipts",
+      "sub": "Receipt detail panel",
+      "route_hint": "/accounting/receipts",
+      "surface_kind": "panel",
+      "surface_path": "pages/accounting/ReceiptsPage.tsx",
+      "required": ["customer", "bank", "connectivity", "reverse_link", "qbo_chrome"]
+    },
+    {
+      "id": "accounting.panel.leakage",
+      "tab": "Revenue recognition",
+      "sub": "Revenue leakage panel",
+      "route_hint": "/accounting/revenue-recognition",
+      "surface_kind": "panel",
+      "surface_path": "pages/accounting/RevenueRecognitionPage.tsx",
+      "required": ["customer", "load", "invoice", "gl_je", "connectivity", "reverse_link", "qbo_chrome"]
     }
   ],
   "honesty_note": {
