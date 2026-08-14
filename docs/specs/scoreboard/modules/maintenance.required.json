@@ -131,6 +131,19 @@
   ],
   "leaves": [
     {
+      "id": "wo.console.list",
+      "tab": "Work Orders",
+      "sub": "Operational console roster",
+      "route_hint": "/maintenance/work-orders",
+      "required": [
+        "vendor",
+        "unit",
+        "work_order",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
       "id": "wo.create",
       "tab": "Work Orders",
       "sub": "+ Create Work Order",

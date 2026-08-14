@@ -10,6 +10,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatQueryErrorDetail } from "../../lib/tableError";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { EntityLink } from "../../components/shared/EntityLink";
 
 type SegmentId = "all" | "open" | "in_progress" | "completed" | "cancelled";
 type WoSort = "created_desc" | "cost_desc" | "wo_number_asc" | "labor_cost_desc";
@@ -95,7 +96,7 @@ export function WorkOrdersConsoleListPage() {
         key: "display_id",
         label: "WO #",
         render: (row) => (
-          <span className="font-mono text-xs">{entityLabel(row.display_id, row.id, "Work order")}</span>
+          <EntityLink kind="work_order" id={row.id} label={entityLabel(row.display_id, row.id, "Work order")} className="font-mono text-xs" data-testid="work-order-console-record-link" />
         ),
       },
       {

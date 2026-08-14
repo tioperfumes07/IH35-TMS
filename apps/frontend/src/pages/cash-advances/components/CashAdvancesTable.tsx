@@ -47,7 +47,14 @@ export function CashAdvancesTable({ rows, onOpenDetail, onMarkDisbursed, isLoadi
               const status = String(row.disbursement_status ?? "pending_approval");
               return (
                 <tr key={String(row.id)} className="border-t border-gray-100">
-                  <td className="px-2 py-1 font-medium">{entityLabel(row.display_id != null ? String(row.display_id) : null, String(row.id), "Advance")}</td>
+                  <td className="px-2 py-1 font-medium">
+                    <EntityLink
+                      kind="cash_advance"
+                      id={String(row.id)}
+                      label={entityLabel(row.display_id != null ? String(row.display_id) : null, String(row.id), "Advance")}
+                      data-testid="cash-advance-roster-record-link"
+                    />
+                  </td>
                   <td className="px-2 py-1">
                     <EntityLink
                       kind="driver"

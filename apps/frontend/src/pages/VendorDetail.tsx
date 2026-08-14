@@ -1002,7 +1002,7 @@ export function VendorDetailPage() {
                             onChange={(e) => setBillPayInclude((p) => ({ ...p, [b.id]: e.target.checked }))}
                           />
                         ) : null}
-                        <span className="font-medium text-gray-800">{entityLabel(b.bill_number, b.id, "Record")}</span>
+                        <EntityLink kind="bill" id={b.id} label={entityLabel(b.bill_number, b.id, "Record")} className="font-medium text-gray-800" data-testid="vendor-payment-bill-link" />
                         <span className="text-gray-600">Open {money.format(billOpenBalanceCents(b) / 100)}</span>
                         {!billPayAuto ? (
                           <MoneyInput
