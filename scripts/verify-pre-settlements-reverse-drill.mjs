@@ -1,6 +1,26 @@
 #!/usr/bin/env node
 /**
- * @matrix-built {"modules":["settlements","accounting","dispatch","drivers"],"cols":["settlement","driver","load","connectivity","reverse_link","liability"],"leafRe":"^(settlements\\.(list|detail|disputes)|settlement_close|pre_settlements|settlements\\.panel\\.(pre_settlements|pay_run_close)|settlements\\.drawer\\.(advance_detail|liability_detail)|settlements\\.modal\\.(hold_deduction|liability_breakdown)|escrow|owner_approval|secondary\\.pre_settlements|dispatch\\.panel\\.pre_settlement|load\\.drawer\\.(settlement|pre_settlement))$","task":"WAVE-A-settlement-column","vertical":"column-wave"}
+ * LINK-F5174 (2026-08-14): "reverse_link" removed from this tag's cols under
+ * HONEST-BUILT-LAUNCH-LAW-2026-08-14's "wrong-direction assert" rule. This guard's own assertions
+ * (assertPreSettlementsReverse / assertEscrowCloseApprovalReverse below) all check that a CHILD
+ * component (a modal/drawer/panel opened FROM a settlement) renders an EntityLink UP to its parent
+ * settlement/driver/load -- that is real, correct proof for the settlement/driver/load/liability
+ * FORWARD-linkage columns still claimed below, but it is the WRONG direction for reverse_link
+ * (the RELATED record must list these and drill back IN, not the reverse). Confirmed live on prod
+ * (app.ih35dispatch.com/program/matrix?module=settlements): settlements.modal.hold_deduction and
+ * .liability_breakdown rendered reverse_link Built=green off this exact tag while LINK-F5171's
+ * independent sweep found no reverse section exists anywhere for either -- see
+ * SCOREBOARD-BUILT-SELF-DECLARED-NOT-VERIFIED in docs/audit/GUARD-WORKORDERS.md. Two leaves this
+ * tag covers (settlements.list/detail/settlement_close/pre_settlements/panel.pre_settlements,
+ * settlements.disputes) remain genuinely reverse_link-Built via SEPARATE, correctly-direction-
+ * checked guards (verify-driver-profile-settlement-reverse-link.mjs,
+ * verify-driver-settlement-finance-reverse-section.mjs) -- removing the claim here does not
+ * un-prove them. The 5 leaves with no other reverse_link guard
+ * (settlements.modal.hold_deduction/.liability_breakdown, settlements.drawer.advance_detail/
+ * .liability_detail, settlements.panel.pay_run_close) now honestly show NOT built for reverse_link
+ * until a real reverse section is built -- filed, not silently dropped, in
+ * LINK-F5171-REVERSE-LINK-COLUMN-GAPS.
+ * @matrix-built {"modules":["settlements","accounting","dispatch","drivers"],"cols":["settlement","driver","load","connectivity","liability"],"leafRe":"^(settlements\\.(list|detail|disputes)|settlement_close|pre_settlements|settlements\\.panel\\.(pre_settlements|pay_run_close)|settlements\\.drawer\\.(advance_detail|liability_detail)|settlements\\.modal\\.(hold_deduction|liability_breakdown)|escrow|owner_approval|secondary\\.pre_settlements|dispatch\\.panel\\.pre_settlement|load\\.drawer\\.(settlement|pre_settlement))$","task":"WAVE-A-settlement-column","vertical":"column-wave"}
  * Rule-17: pre-settlements reverse drill-through (Law §9).
  * Accounting + Settlements + Dispatch + Drivers surfaces must EntityLink canonical settlement rows (Wave A `settlement`).
  */
