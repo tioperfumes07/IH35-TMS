@@ -119,7 +119,7 @@ function selftest() {
         '<Link to="/drivers/disputes">Open Disputes</Link>'
       ),
     },
-    { ...good, [ENTITY_LINK]: good[ENTITY_LINK].replace("settlement_disputes_driver", "x") },
+    { ...good, [ENTITY_LINK]: good[ENTITY_LINK].replaceAll("settlement_disputes_driver", "x") },
     { ...good, [DISPUTES_TAB]: good[DISPUTES_TAB].replace('searchParams.get("driver_id")', 'searchParams.get("x")') },
     { ...good, [DRIVER_PROFILE]: good[DRIVER_PROFILE].replace("import { DriverSettlementFinanceReverseSection }", "// removed import") },
     { ...good, [DRIVER_PROFILE]: good[DRIVER_PROFILE].replace("<DriverSettlementFinanceReverseSection operatingCompanyId={companyId} driverId={id} />", "") },
