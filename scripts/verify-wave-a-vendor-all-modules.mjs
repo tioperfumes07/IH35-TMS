@@ -1,6 +1,5 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["accounting","banking","customers","dispatch","docs","factoring","finance","fleet","fuel","insurance","inventory","legal","lists","maintenance","reports","safety","system","vendors"],"cols":["vendor"],"leafRe":".*","task":"WAVE-A-vendor-all-modules","vertical":"column-wave"} */
-/** Full-product vendor FK contract across every module that genuinely owns it; QBO sync is excluded.
+/** Full-product vendor FK census across every module that genuinely owns it; QBO sync is excluded.
  *
  * LINK-F5166 (2026-08-14): same self-regression pattern already documented and fixed for ap_bill
  * (ACCT-F5162), trailer (LINK-F5163), and customer (LINK-F5165) — the fixed floors below
@@ -12,8 +11,8 @@
  * EntityKind, found during this pass); the honest count dropped from 290+ to 115 across 18 modules.
  * Floors removed, replaced with the same per-leaf auditConnectivity + unchanged file-pattern/
  * composed-guard checks pattern used in the ap_bill/trailer/customer fixes. Module list corrected
- * (cash-flow/compliance/home dropped, system added) in both the guard's own @matrix-built tag and
- * wire-sprint-built.json's WAVE-A-vendor-all-modules entry. */
+ * (cash-flow/compliance/home dropped, system added). This aggregate census deliberately awards no
+ * Built credit; representative contracts cannot prove every vendor leaf. */
 import fs from "node:fs";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
