@@ -56,8 +56,8 @@ function assertMigrated(src) {
   if (!src.includes("SecondaryNavTabs")) {
     errors.push(`${PAGE}: must keep SecondaryNavTabs segment filter`);
   }
-  if (!src.includes('to={`/work-orders/${id}`}')) {
-    errors.push(`${PAGE}: must keep View link to /work-orders/:id`);
+  if (!/kind\s*=\s*["']work_orders_console["']/.test(src) || !/case\s+["']work_orders_console["']/.test(fs.readFileSync(path.join(ROOT, "apps/frontend/src/components/shared/EntityLink.tsx"), "utf8"))) {
+    errors.push(`${PAGE}: must View via EntityLink kind=work_orders_console → /work-orders/:id`);
   }
   return errors;
 }
@@ -68,6 +68,7 @@ function selftest() {
     import { ListErrorState } from "../../components/ListErrorState";
     import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
     import { SecondaryNavTabs } from "../../components/shared/SecondaryNavTabs";
+    import { EntityLink } from "../../components/shared/EntityLink";
     const columns = [
       { key: "display_id", label: "WO #" },
       { key: "wo_billing_type", label: "Billing" },
@@ -90,7 +91,7 @@ function selftest() {
             emptyText="No work orders match the current filters."
             loading={false}
           />
-          <Link to={\`/work-orders/\${id}\`}>View</Link>
+          <EntityLink kind="work_orders_console" id={id} label="View" />
         </>
       );
     }

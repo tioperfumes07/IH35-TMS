@@ -51,8 +51,9 @@ export function verify(source) {
   for (const route of ["/help", "/help/overview", "/help/runbooks"]) need("sidebar", `to: "${route}"`, `help flyout must expose ${route}`);
   need("helpCenter", 'id="help-search"', "help center must retain searchable article navigation");
   for (const category of ["Getting Started", "Dispatching Loads", "Driver Settlements", "Banking & Reconciliation", "Reports"]) need("helpCenter", `"${category}"`, `help category ${category} must remain visible`);
-  need("helpCenter", "to={`/help/${a.slug}`}", "help articles must retain detail links");
+  need("helpCenter", 'kind="help_article"', "help articles must drill via EntityLink kind=help_article");
   need("helpOverview", 'to: "/help/runbooks"', "help overview must retain its runbooks door");
+
 
   for (const route of ["/maintenance", "/fuel", "/safety", "/drivers", "/dispatch", "/lists"]) need("homeJumps", `to: "${route}"`, `home quick jump ${route} must remain canonical`);
   need("ownerHome", "HOME_QUICK_JUMPS.map", "owner home must render every canonical quick jump");
@@ -66,7 +67,7 @@ export function verify(source) {
   need("reportsHome", "<ReportsSubNav />", "reports home must retain shared subnavigation");
   need("reportsHome", "setShowCustomBuilder", "reports home must retain its custom-builder door");
   need("reportsHub", "<ReportsSubNav />", "reports hub must retain shared subnavigation");
-  need("reportsHub", "to={`/reports/categories/${category.id}`}", "reports hub must link every returned category landing");
+  need("reportsHub", 'kind="report_category"', "reports hub must link every returned category landing via EntityLink");
   for (const slug of ["ops-dispatch", "driver-perf", "equipment", "safety", "customers", "vendors", "accounting", "tax-reg", "multi-company"]) need("routes", `path="/reports/categories/${slug}"`, `report category ${slug} must remain mounted`);
   for (const route of ["/reports", "/reports/hub", "/reports/cancellations", "/reports/scheduled-custom", "/reports/audit/activity-by-user"]) need("routes", `path="${route}"`, `reports route ${route} must remain mounted`);
 
@@ -95,12 +96,12 @@ if (process.argv.includes("--self-test")) {
     ["statements", 'id: "pl"', 'id: "broken-pl"'], ["fuelConfig", 'id: "home"', 'id: "broken-home"'],
     ["fuel", "onChange={(next) => goToTab(next as FuelTabId)}", "onChange={() => undefined}"],
     ["sidebar", 'to: "/help/overview"', 'to: "/broken-help"'], ["helpCenter", 'id="help-search"', 'id="broken-help-search"'],
-    ["helpCenter", '"Getting Started"', '"Broken category"'], ["helpCenter", "to={`/help/${a.slug}`}", "to={`/broken/${a.slug}`}"],
+    ["helpCenter", '"Getting Started"', '"Broken category"'], ["helpCenter", 'kind="help_article"', 'kind="broken_help"'],
     ["helpOverview", 'to: "/help/runbooks"', 'to: "/help"'], ["homeJumps", 'to: "/maintenance"', 'to: "/broken-maintenance"'],
     ["ownerHome", "HOME_QUICK_JUMPS.map", "[].map"], ["ownerHome", 'to="/program"', 'to="/broken-program"'],
     ["reportsSubnav", '{ label: "Reports", href: "/reports"', '{ label: "Reports", href: "/broken"'],
     ["reportsHome", "<ReportsSubNav />", "<div />"], ["reportsHome", "setShowCustomBuilder", "brokenCustomBuilder"],
-    ["reportsHub", "to={`/reports/categories/${category.id}`}", "to={`/broken/${category.id}`}"],
+    ["reportsHub", 'kind="report_category"', 'kind="broken_category"'],
     ["routes", 'path="/finance/statements"', 'path="/broken-finance"'], ["routes", 'path="/fuel/planner"', 'path="/broken-fuel"'],
     ["routes", 'path="/help/runbooks"', 'path="/broken-help"'], ["routes", 'path="/driver-hub/reporting"', 'path="/broken-driver-hub"'],
     ["routes", 'path="/reports/categories/ops-dispatch"', 'path="/broken-reports"'],
