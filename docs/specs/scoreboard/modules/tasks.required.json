@@ -162,7 +162,6 @@
       "sub": "Tasks report",
       "route_hint": "/tasks/report",
       "required": [
-        "load",
         "connectivity"
       ]
     },
@@ -218,7 +217,6 @@
       "sub": "Daily tasks page",
       "route_hint": "/daily-tasks",
       "required": [
-        "load",
         "connectivity"
       ]
     },
@@ -247,7 +245,7 @@
     {
       "id": "chrome.toolbar_search",
       "tab": "Chrome controls",
-      "sub": "List toolbar \u2014 Search (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar — Search (CLS-LIST-TOOLBAR)",
       "route_hint": "/tasks",
       "surface_kind": "toolbar",
       "required": [
@@ -257,7 +255,7 @@
     {
       "id": "chrome.toolbar_range",
       "tab": "Chrome controls",
-      "sub": "List toolbar \u2014 date/amount range (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar — date/amount range (CLS-LIST-TOOLBAR)",
       "route_hint": "/tasks",
       "surface_kind": "toolbar",
       "required": [
@@ -267,7 +265,7 @@
     {
       "id": "chrome.toolbar_gear",
       "tab": "Chrome controls",
-      "sub": "List toolbar \u2014 column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
+      "sub": "List toolbar — column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
       "route_hint": "/tasks",
       "surface_kind": "toolbar",
       "required": [
@@ -277,7 +275,7 @@
     {
       "id": "chrome.toolbar_filter",
       "tab": "Chrome controls",
-      "sub": "List toolbar \u2014 Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
+      "sub": "List toolbar — Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
       "route_hint": "/tasks",
       "surface_kind": "toolbar",
       "required": [
@@ -298,11 +296,11 @@
         "invoice",
         "bank"
       ],
-      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; \u00a7B9 link columns added."
+      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; §B9 link columns added."
     },
     "reverse_link_2026_08_13_secondary": {
       "finding": "VERTICAL-REVERSE-LINK-SECONDARY-HONESTY",
-      "note": "Secondary module reverse_link Required on hub/chrome/nav leaves without reverse EntityLink drill \u2014 honesty drop. Built stays on money/ops modules already drained.",
+      "note": "Secondary module reverse_link Required on hub/chrome/nav leaves without reverse EntityLink drill — honesty drop. Built stays on money/ops modules already drained.",
       "drops": [
         {
           "id": "nav.board",
@@ -470,7 +468,7 @@
     },
     "unit_column_2026_08_14_overclaim": {
       "finding": "LINK-F5167-UNIT-COLUMN-VERTICAL-SWEEP",
-      "note": "3 of 8 tasks leaves are false: nav.calendar/nav.report/hop.daily_tasks have zero unit references. The other 5 leaves KEEP the Required marking \u2014 a real TASK_TARGET_TYPES \"unit\" entry + EntityPicker on create, and TaskSubjectLink's real subject_type=\"unit\" \u2192 EntityLink mapping on the board/mine views.",
+      "note": "3 of 8 tasks leaves are false: nav.calendar/nav.report/hop.daily_tasks have zero unit references. The other 5 leaves KEEP the Required marking — a real TASK_TARGET_TYPES \"unit\" entry + EntityPicker on create, and TaskSubjectLink's real subject_type=\"unit\" → EntityLink mapping on the board/mine views.",
       "drops": [
         {
           "id": "nav.calendar",
@@ -494,7 +492,7 @@
     },
     "driver_column_2026_08_14_overclaim": {
       "finding": "LINK-F5168-DRIVER-COLUMN-VERTICAL-SWEEP",
-      "note": "driver blanket-required on 3 tasks leaves. Verified live \u2014 TasksCalendarPage.tsx and TasksReportPage.tsx have zero driver/TaskSubjectLink/EntityLink references; DailyTasksPage.tsx (hop.daily_tasks) only has EntityLink kind=\"user\" for assignee/actor \u2014 \"Call 40 drivers today\" is placeholder text, no real driver_id/EntityLink kind=\"driver\" anywhere.",
+      "note": "driver blanket-required on 3 tasks leaves. Verified live — TasksCalendarPage.tsx and TasksReportPage.tsx have zero driver/TaskSubjectLink/EntityLink references; DailyTasksPage.tsx (hop.daily_tasks) only has EntityLink kind=\"user\" for assignee/actor — \"Call 40 drivers today\" is placeholder text, no real driver_id/EntityLink kind=\"driver\" anywhere.",
       "drops": [
         {
           "id": "nav.calendar",
@@ -512,6 +510,24 @@
           "id": "hop.daily_tasks",
           "removed": [
             "driver"
+          ]
+        }
+      ]
+    },
+    "load_2026_08_14_all_28": {
+      "finding": "LINK-F5169-LOAD-COLUMN-VERTICAL-SWEEP",
+      "note": "Removed load only where the leaf is navigation chrome or an aggregate without a row-level load identity/FK. Applicability was checked against the mounted component and API shape; no load FK is invented. Genuine HOS violation, Documents, Tasks, Fuel, Home active-load, lane/trip/dispatch-margin leaves remain Required and are guarded.",
+      "drops": [
+        {
+          "id": "nav.report",
+          "removed": [
+            "load"
+          ]
+        },
+        {
+          "id": "hop.daily_tasks",
+          "removed": [
+            "load"
           ]
         }
       ]

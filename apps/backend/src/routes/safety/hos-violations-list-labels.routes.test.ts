@@ -3,10 +3,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { registerSafetyHosViolationsRoutes } from "./hos-violations.js";
 
 /**
- * CLS-UUID-LABEL: GET /api/v1/safety/hos-violations `SELECT *` had no driver join —
- * HOSViolationsTab's EntityLink reads row.driver_name (always undefined), so it rendered the raw
- * driver_id uuid. Mirrors the driver-join pattern already used on
- * accidents/dot_inspections/internal_fines/training_records.
+ * CLS-UUID-LABEL / LINK-F5169: the HOS list must resolve both canonical FK identities. Without the
+ * scoped driver/load joins, EntityLink would either render a UUID fallback or have no load label.
  */
 
 const COMPANY = "11111111-1111-4111-8111-111111111111";
@@ -37,6 +35,8 @@ describe("GET /api/v1/safety/hos-violations joins the driver name", () => {
               id: "violation-1",
               driver_id: "driver-1",
               driver_name: "Tomas Reyes",
+              related_load_id: "load-1",
+              related_load_number: "L-1001",
               violation_type: "11_hour_driving",
             },
           ],
@@ -58,7 +58,7 @@ describe("GET /api/v1/safety/hos-violations joins the driver name", () => {
     await app.close();
   });
 
-  it("returns driver_name and the SQL LEFT JOINs mdata.drivers", async () => {
+  it("returns driver/load labels and company-scopes both joins", async () => {
     const response = await app.inject({
       method: "GET",
       url: `/api/v1/safety/hos-violations?operating_company_id=${COMPANY}`,
@@ -66,11 +66,13 @@ describe("GET /api/v1/safety/hos-violations joins the driver name", () => {
 
     expect(response.statusCode).toBe(200);
     expect(response.json()).toMatchObject({
-      hos_violations: [{ id: "violation-1", driver_name: "Tomas Reyes" }],
+      hos_violations: [{ id: "violation-1", driver_name: "Tomas Reyes", related_load_number: "L-1001" }],
     });
 
     const sqlText = mockQuery.mock.calls.map((call) => String(call[0])).join("\n");
     expect(sqlText).toMatch(/LEFT JOIN mdata\.drivers d/);
+    expect(sqlText).toMatch(/LEFT JOIN mdata\.loads l/);
+    expect(sqlText).toMatch(/l\.operating_company_id = hv\.operating_company_id/);
   });
 
   it("still scopes by operating_company_id and voided_at when a driver_id filter is applied", async () => {

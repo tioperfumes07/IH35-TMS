@@ -677,5 +677,12 @@
     "source_file": "docs/specs/scoreboard/modules/safety.required.json",
     "guard": "scripts/verify-safety-driver-wiring.mjs",
     "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-14-LINK-F5169-LOAD-COLUMN-VERTICAL-SWEEP",
+    "title": "load-column vertical sweep across all 28 modules: canonical load identity is required only on row/create surfaces with a real persisted load relationship; HOS violations, standalone Documents, and Tasks now carry load through company-scoped picker, submit, ownership validation, persistence, joined human label, reload, and EntityLink drill-through. Existing Fuel, Home active-load, lane-profitability, trip-profitability, and dispatch-margin paths are ratcheted. Navigation-only and aggregate leaves are honesty-audited N/A rather than receiving invented FKs.",
+    "source_file": "apps/backend/src/routes/safety/hos-violations.ts",
+    "guard": "scripts/verify-load-column-all-modules.mjs",
+    "type": "enforced"
   }
 ]

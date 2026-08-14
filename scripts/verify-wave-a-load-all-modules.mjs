@@ -32,7 +32,9 @@ export function auditLoadColumn(sources, leaves) {
   const failures = [];
   const p10 = leaves.filter((leaf) => P10.has(leaf.module));
   if (p10.length < 178) failures.push(`priority-10 load inventory unexpectedly shrank to ${p10.length}`);
-  if (leaves.length < 261) failures.push(`all-module load inventory unexpectedly shrank to ${leaves.length}`);
+  // LINK-F5169 classified the final blanket Required tail leaf-by-leaf. Navigation-only hops and
+  // aggregate reports do not own a row-level load identity, leaving 236 genuine load leaves.
+  if (leaves.length < 236) failures.push(`all-module load inventory unexpectedly shrank to ${leaves.length}`);
   if (new Set(leaves.map((leaf) => leaf.module)).size < 19) failures.push("load module inventory unexpectedly shrank");
   failures.push(...auditConnectivity(sources.routes, leaves, 0));
   for (const [file, pattern] of contracts) if (!pattern.test(sources.files[file] || "")) failures.push(`${file}: canonical load FK/link contract missing`);

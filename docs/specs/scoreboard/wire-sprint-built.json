@@ -2342,6 +2342,54 @@
       "modules": ["system"],
       "cols": ["driver"],
       "leafRe": "^system\\.samsara_hos_driver_map$"
+    },
+    {
+      "task": "LINK-F5169-COMPLIANCE-LOAD",
+      "pr": "this PR",
+      "guard": "scripts/verify-load-column-all-modules.mjs",
+      "modules": ["compliance"],
+      "cols": ["load"],
+      "leafRe": "^tab\\.violations$"
+    },
+    {
+      "task": "LINK-F5169-DOCS-LOAD",
+      "pr": "this PR",
+      "guard": "scripts/verify-load-column-all-modules.mjs",
+      "modules": ["docs"],
+      "cols": ["load"],
+      "leafRe": "^(home|tab\\.all|upload|table\\.entity_link|docs\\.modal\\.upload)$"
+    },
+    {
+      "task": "LINK-F5169-FUEL-LOAD",
+      "pr": "this PR",
+      "guard": "scripts/verify-load-column-all-modules.mjs",
+      "modules": ["fuel"],
+      "cols": ["load"],
+      "leafRe": "^(home|planner)$"
+    },
+    {
+      "task": "LINK-F5169-HOME-LOAD",
+      "pr": "this PR",
+      "guard": "scripts/verify-load-column-all-modules.mjs",
+      "modules": ["home"],
+      "cols": ["load"],
+      "leafRe": "^role\\.(owner|dispatcher)$"
+    },
+    {
+      "task": "LINK-F5169-REPORTS-LOAD",
+      "pr": "this PR",
+      "guard": "scripts/verify-load-column-all-modules.mjs",
+      "modules": ["reports"],
+      "cols": ["load"],
+      "leafRe": "^report\\.(lane_profitability|trip_profitability|dispatch_margin)$"
+    },
+    {
+      "task": "LINK-F5169-TASKS-LOAD",
+      "pr": "this PR",
+      "guard": "scripts/verify-load-column-all-modules.mjs",
+      "modules": ["tasks"],
+      "cols": ["load"],
+      "leafRe": "^(nav\\.(board|mine|calendar)|board\\.(planner_grid|create)|mine\\.list)$"
     }
   ]
 }

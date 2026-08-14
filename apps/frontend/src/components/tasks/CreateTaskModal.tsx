@@ -53,6 +53,7 @@ const ENTITY_KINDS: { value: TaskTargetType; label: string }[] = [
   { value: "customer", label: "Customer" },
   { value: "driver", label: "Driver" },
   { value: "unit", label: "Unit" },
+  { value: "load", label: "Load" },
 ];
 
 function userLabel(u: IdentityUser): string {
@@ -391,7 +392,7 @@ export function CreateTaskModal({ open, operatingCompanyId, defaultDate, presetL
                   />
                 ) : (
                   <EntityPicker
-                    kind={entityKind as "vendor" | "driver" | "unit"}
+                    kind={entityKind as "vendor" | "driver" | "unit" | "load"}
                     operatingCompanyId={operatingCompanyId}
                     value={entityId || null}
                     onChange={(next) => setEntityId(next ?? "")}

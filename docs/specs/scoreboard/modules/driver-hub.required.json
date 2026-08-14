@@ -119,7 +119,6 @@
       "route_hint": "/driver-hub",
       "required": [
         "driver",
-        "load",
         "connectivity"
       ]
     },
@@ -130,7 +129,6 @@
       "route_hint": "/driver-hub",
       "required": [
         "driver",
-        "load",
         "connectivity"
       ]
     },
@@ -142,7 +140,6 @@
       "required": [
         "driver",
         "unit",
-        "load",
         "connectivity"
       ]
     },
@@ -153,7 +150,6 @@
       "route_hint": "/driver-hub?tab=leave_requests",
       "required": [
         "driver",
-        "load",
         "connectivity"
       ]
     },
@@ -164,7 +160,6 @@
       "route_hint": "/driver-hub/reporting",
       "required": [
         "driver",
-        "load",
         "connectivity"
       ]
     },
@@ -175,7 +170,6 @@
       "route_hint": "/driver-hub",
       "required": [
         "driver",
-        "load",
         "connectivity"
       ]
     },
@@ -185,7 +179,6 @@
       "sub": "Drivers module",
       "route_hint": "/drivers",
       "required": [
-        "load",
         "connectivity"
       ]
     },
@@ -196,7 +189,6 @@
       "route_hint": "/safety",
       "required": [
         "unit",
-        "load",
         "connectivity"
       ]
     },
@@ -215,7 +207,7 @@
     {
       "id": "chrome.toolbar_search",
       "tab": "Chrome controls",
-      "sub": "List toolbar \u2014 Search (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar — Search (CLS-LIST-TOOLBAR)",
       "route_hint": "/driver-hub",
       "surface_kind": "toolbar",
       "required": [
@@ -225,7 +217,7 @@
     {
       "id": "chrome.toolbar_range",
       "tab": "Chrome controls",
-      "sub": "List toolbar \u2014 date/amount range (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar — date/amount range (CLS-LIST-TOOLBAR)",
       "route_hint": "/driver-hub",
       "surface_kind": "toolbar",
       "required": [
@@ -235,7 +227,7 @@
     {
       "id": "chrome.toolbar_gear",
       "tab": "Chrome controls",
-      "sub": "List toolbar \u2014 column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
+      "sub": "List toolbar — column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
       "route_hint": "/driver-hub",
       "surface_kind": "toolbar",
       "required": [
@@ -245,7 +237,7 @@
     {
       "id": "chrome.toolbar_filter",
       "tab": "Chrome controls",
-      "sub": "List toolbar \u2014 Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
+      "sub": "List toolbar — Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
       "route_hint": "/driver-hub",
       "surface_kind": "toolbar",
       "required": [
@@ -266,11 +258,11 @@
         "invoice",
         "bank"
       ],
-      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; \u00a7B9 link columns added."
+      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; §B9 link columns added."
     },
     "reverse_link_2026_08_13_secondary": {
       "finding": "VERTICAL-REVERSE-LINK-SECONDARY-HONESTY",
-      "note": "Secondary module reverse_link Required on hub/chrome/nav leaves without reverse EntityLink drill \u2014 honesty drop. Built stays on money/ops modules already drained.",
+      "note": "Secondary module reverse_link Required on hub/chrome/nav leaves without reverse EntityLink drill — honesty drop. Built stays on money/ops modules already drained.",
       "drops": [
         {
           "id": "home",
@@ -408,7 +400,7 @@
     },
     "unit_column_2026_08_14_overclaim": {
       "finding": "LINK-F5167-UNIT-COLUMN-VERTICAL-SWEEP",
-      "note": "6 of 8 driver-hub leaves are false: home/tab.overview/inbox (all DriverInbox.tsx) and tab.leave_requests/reporting/hop.drivers have zero unit_id \u2014 driver-only surfaces. The other 2 leaves KEEP the Required marking \u2014 tab.scheduler (DriverSchedulerGridPage.tsx, real unit_id + a temp-cover unit picker) and hop.safety_scheduler (SafetyHomeTab.tsx, real subject_unit_id EntityLink).",
+      "note": "6 of 8 driver-hub leaves are false: home/tab.overview/inbox (all DriverInbox.tsx) and tab.leave_requests/reporting/hop.drivers have zero unit_id — driver-only surfaces. The other 2 leaves KEEP the Required marking — tab.scheduler (DriverSchedulerGridPage.tsx, real unit_id + a temp-cover unit picker) and hop.safety_scheduler (SafetyHomeTab.tsx, real subject_unit_id EntityLink).",
       "drops": [
         {
           "id": "home",
@@ -450,7 +442,7 @@
     },
     "driver_column_2026_08_14_overclaim": {
       "finding": "LINK-F5168-DRIVER-COLUMN-VERTICAL-SWEEP",
-      "note": "driver blanket-required on 2 driver-hub leaves. Verified live \u2014 both are RelatedModuleLinks.tsx static {label,to} nav-card entries ({label:\"Drivers\",to:\"/drivers\"} and {label:\"Safety Scheduler\",to:\"/safety/driver-scheduler\"}) with no entity id bound on the hop itself; the destination pages are real, but the hop leaf is a plain nav link, not a driver-scoped surface.",
+      "note": "driver blanket-required on 2 driver-hub leaves. Verified live — both are RelatedModuleLinks.tsx static {label,to} nav-card entries ({label:\"Drivers\",to:\"/drivers\"} and {label:\"Safety Scheduler\",to:\"/safety/driver-scheduler\"}) with no entity id bound on the hop itself; the destination pages are real, but the hop leaf is a plain nav link, not a driver-scoped surface.",
       "drops": [
         {
           "id": "hop.drivers",
@@ -462,6 +454,60 @@
           "id": "hop.safety_scheduler",
           "removed": [
             "driver"
+          ]
+        }
+      ]
+    },
+    "load_2026_08_14_all_28": {
+      "finding": "LINK-F5169-LOAD-COLUMN-VERTICAL-SWEEP",
+      "note": "Removed load only where the leaf is navigation chrome or an aggregate without a row-level load identity/FK. Applicability was checked against the mounted component and API shape; no load FK is invented. Genuine HOS violation, Documents, Tasks, Fuel, Home active-load, lane/trip/dispatch-margin leaves remain Required and are guarded.",
+      "drops": [
+        {
+          "id": "home",
+          "removed": [
+            "load"
+          ]
+        },
+        {
+          "id": "tab.overview",
+          "removed": [
+            "load"
+          ]
+        },
+        {
+          "id": "tab.scheduler",
+          "removed": [
+            "load"
+          ]
+        },
+        {
+          "id": "tab.leave_requests",
+          "removed": [
+            "load"
+          ]
+        },
+        {
+          "id": "reporting",
+          "removed": [
+            "load"
+          ]
+        },
+        {
+          "id": "inbox",
+          "removed": [
+            "load"
+          ]
+        },
+        {
+          "id": "hop.drivers",
+          "removed": [
+            "load"
+          ]
+        },
+        {
+          "id": "hop.safety_scheduler",
+          "removed": [
+            "load"
           ]
         }
       ]
