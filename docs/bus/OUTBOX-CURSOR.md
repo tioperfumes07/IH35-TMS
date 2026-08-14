@@ -1,3 +1,4 @@
+2026-08-15T00:45Z Cursor | SHIPPED #6840 program/compliance | closing stale Class-UUID board OPEN (already #4530) | Live=BLOCKED
 2026-08-15T00:40Z Cursor | SHIPPED #6838 guard window | shipping LINK-F5171 program+compliance EntityLink | Live=BLOCKED
 2026-08-15T00:35Z Cursor | SHIPPED #6837 deductions/mgmt | FIXING sibling guard window RED on main | Live=BLOCKED
 2026-08-15T00:30Z Cursor | SHIPPED #6835 fuel_history | shipping LINK-F5171 deductions + management_report_package | Live=BLOCKED
