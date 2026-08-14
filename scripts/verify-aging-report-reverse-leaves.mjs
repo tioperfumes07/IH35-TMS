@@ -2,6 +2,15 @@
 /** @matrix-built {"modules":["reports"],"cols":["reverse_link"],"leafRe":"^report\\.(ar_aging|ap_aging)$","task":"AGING-REPORT-REVERSE-LEAVES","vertical":"column-wave"} */
 /** @matrix-built {"modules":["customers"],"cols":["reverse_link"],"leafRe":"^detail\\.billing$","task":"AGING-REPORT-REVERSE-LEAVES","vertical":"column-wave"} */
 /** @matrix-built {"modules":["vendors"],"cols":["reverse_link"],"leafRe":"^detail\\.ap$","task":"AGING-REPORT-REVERSE-LEAVES","vertical":"column-wave"} */
+/**
+ * OWNER-EXECUTION-PLAN §2 money-cells sweep (2026-08-14) — split, leaf-specific money-column tags.
+ * The checks above already prove AP-aging's vendor + filtered-open-bills drill (apAgingBillsListHref)
+ * and AR-aging's customer + filtered-open-invoices drill (arAgingInvoiceListHref); only the metadata
+ * was missing. Two separate leaves get two separate, correctly-scoped claims — never both cols on
+ * both leaves (ar_aging doesn't own "ap_bill"; ap_aging doesn't own "invoice").
+ */
+/** @matrix-built {"modules":["reports"],"cols":["ap_bill","vendor"],"leafRe":"^report\\.ap_aging$","task":"ACCT-F5157-AP-AGING-MONEY-COLS"} */
+/** @matrix-built {"modules":["reports"],"cols":["invoice","customer"],"leafRe":"^report\\.ar_aging$","task":"ACCT-F5157-AR-AGING-MONEY-COLS"} */
 
 import fs from "node:fs";
 const sources = {
