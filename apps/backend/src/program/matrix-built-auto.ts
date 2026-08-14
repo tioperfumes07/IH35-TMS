@@ -169,6 +169,26 @@ function scanGuardTags(root: string): WireSprintBuiltEntry[] {
   return out;
 }
 
+/**
+ * LINK-THEATER-01 root cause: a Built entry whose leafRe trivially matches every leaf id
+ * (".*", "^.*$", ".+", "^.+$", or "" — which `new RegExp("")` also matches everywhere) let one
+ * PR credit Box 3 Built for an entire column across every leaf in every listed module without
+ * proving a single leaf. Measured live 2026-08-13: 8 wire-sprint-built.json entries + 18
+ * `@matrix-built` script tags (ap_bill/load/trailer/unit/vendor/customer/driver/connectivity)
+ * did exactly this — same shape verify-reverse-link-built-tags-strict already forbade for
+ * reverse_link alone. Fixed at the single shared choke point both the live API (discoverMatrixBuiltEntries)
+ * and scripts/verify-matrix-built-leaf-specific.mjs read, so the fix lands on every column and every
+ * future @matrix-built tag, not just the ones caught this pass.
+ * MUST stay in sync with the copy in scripts/verify-matrix-built-leaf-specific.mjs (plain guard
+ * scripts run standalone via `node`, not through the TS build, so the check is duplicated there —
+ * same pattern as classifyCell()/classCellFor() elsewhere in this file's neighbours).
+ */
+export function isLeafSpecific(leafRe: string): boolean {
+  const trimmed = (leafRe ?? "").trim();
+  if (!trimmed) return false;
+  return !/^\^?\.[*+]\$?$/.test(trimmed);
+}
+
 let cached: { root: string; atMs: number; entries: WireSprintBuiltEntry[] } | null = null;
 const CACHE_MS = 3_000;
 
@@ -181,6 +201,7 @@ export function discoverMatrixBuiltEntries(root: string): WireSprintBuiltEntry[]
   const byKey = new Map<string, WireSprintBuiltEntry>();
   for (const e of [...loadManualFeed(root), ...scanGuardTags(root)]) {
     if (!guardFileOk(root, e.guard)) continue;
+    if (!isLeafSpecific(e.leafRe)) continue;
     byKey.set(entryKey(e), e);
   }
   cached = { root, atMs: now, entries: [...byKey.values()] };
