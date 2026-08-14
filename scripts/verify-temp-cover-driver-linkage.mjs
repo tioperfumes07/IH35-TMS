@@ -18,9 +18,11 @@ function audit(s) {
   if (!/input\.primary_driver_id === input\.cover_driver_id/.test(s.service) || !/const drivers = await client\.query[\s\S]{0,260}FROM mdata\.drivers[\s\S]{0,160}operating_company_id = \$1::uuid[\s\S]{0,100}deactivated_at IS NULL/.test(s.service) || !/temp_cover_driver_not_found/.test(s.service)) failures.push("active tenant driver validation missing");
   if (!/\(\$2::uuid IS NULL OR t\.primary_driver_id = \$2::uuid OR t\.cover_driver_id = \$2::uuid\)/.test(s.service)) failures.push("exact either-role driver reverse filter missing");
   if (!/driver_id: z\.string\(\)\.uuid\(\)\.optional\(\)/.test(s.routes) || !/driverId: parsed\.data\.driver_id/.test(s.routes)) failures.push("route driver filter contract missing");
-  if (!/listTempAssignments\(operatingCompanyId: string, filters: \{ driver_id\?: string \}/.test(s.api) || !/driver_id: driverId/.test(s.creator)) failures.push("frontend filtered list contract missing");
+  if (!/listTempAssignments\(operatingCompanyId: string, filters: \{ driver_id\?: string(?:; unit_id\?: string)? \}/.test(s.api) || !/driver_id: driverId/.test(s.creator)) failures.push("frontend filtered list contract missing");
   if (!/listTempAssignments\(operatingCompanyId, \{ driver_id: driverId \}\)/.test(s.reverse) || !/query\.isError/.test(s.reverse) || !/No active temporary assignments are linked to this driver/.test(s.reverse)) failures.push("honest driver reverse missing");
-  if (!/safety\/driver-scheduler\?driver_id=/.test(s.reverse)) failures.push("canonical filtered scheduler drill missing");
+  if (!(/kind="driver_scheduler_driver"/.test(s.reverse) || /safety\/driver-scheduler\?driver_id=/.test(s.reverse))) {
+    failures.push("canonical filtered scheduler drill missing");
+  }
   if (!/DriverTempCoverReverseSection[\s\S]{0,140}driverId=\{id\}/.test(s.profile) || !/DriverTempCoverReverseSection[\s\S]{0,180}driverId=\{id\}/.test(s.detail)) failures.push("both driver profile mounts missing");
   return failures;
 }

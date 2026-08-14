@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { EntityLink } from "../shared/EntityLink";
 import { getCustomerNotifyLog, getCustomerNotifyPreferences } from "../../api/dispatch";
 
 export function CustomerNotifyReverseSection({ operatingCompanyId, customerId }: { operatingCompanyId: string; customerId: string }) {
@@ -15,11 +15,10 @@ export function CustomerNotifyReverseSection({ operatingCompanyId, customerId }:
   });
   const prefs = preferences.data?.preferences;
   const entries = log.data?.entries ?? [];
-  const drill = `/dispatch/notify-preferences?customer_id=${encodeURIComponent(customerId)}`;
   return <section className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid="customer-notify-reverse">
     <div className="flex items-center justify-between gap-2">
       <h3 className="text-sm font-semibold text-slate-900">ETA Notifications</h3>
-      <Link className="text-xs font-semibold text-slate-700 underline" to={drill}>Manage Notifications</Link>
+      <EntityLink kind="customer_notify_preferences" id={customerId} label="Manage Notifications" className="text-xs font-semibold text-slate-700 underline" />
     </div>
     {preferences.isLoading || log.isLoading ? <p className="text-sm text-gray-500">Loading notification settings…</p> : null}
     {preferences.isError || log.isError ? <p className="text-sm text-red-600">Could not load notification settings for this customer.</p> : null}

@@ -17,7 +17,9 @@ function audit(s) {
   if ((s.service.match(/E_CUSTOMER_NOT_FOUND/g) ?? []).length < 2 || !/customer_not_found/.test(s.routes)) failures.push("read/write missing-customer contract missing");
   if (!/getCustomerNotifyPreferences\(customerId, operatingCompanyId\)/.test(s.reverse) || !/getCustomerNotifyLog\(operatingCompanyId, customerId\)/.test(s.reverse)) failures.push("exact customer reverse reads missing");
   if (!/preferences\.isError \|\| log\.isError/.test(s.reverse) || !/No delivery confirmations logged yet/.test(s.reverse)) failures.push("honest reverse states missing");
-  if (!/dispatch\/notify-preferences\?customer_id=/.test(s.reverse) || !/useSearchParams\(\)\[0\]\.get\("customer_id"\)/.test(s.page)) failures.push("filtered canonical drill missing");
+  if (!(/kind="customer_notify_preferences"/.test(s.reverse) || /dispatch\/notify-preferences\?customer_id=/.test(s.reverse)) || !/useSearchParams\(\)\[0\]\.get\("customer_id"\)/.test(s.page)) {
+    failures.push("filtered canonical drill missing");
+  }
   if (!/CustomerNotifyReverseSection[\s\S]{0,140}customerId=\{id\}/.test(s.customer)) failures.push("customer profile reverse mount missing");
   return failures;
 }
@@ -31,7 +33,7 @@ if (process.argv.includes("--selftest")) {
     ["prefs", "reverse", /getCustomerNotifyPreferences\(customerId, operatingCompanyId\)/, "getCustomerNotifyPreferences(operatingCompanyId, customerId)"],
     ["log", "reverse", /getCustomerNotifyLog\(operatingCompanyId, customerId\)/, "getCustomerNotifyLog(operatingCompanyId)"],
     ["error", "reverse", /preferences\.isError \|\| log\.isError/, "false"],
-    ["drill", "reverse", /dispatch\/notify-preferences\?customer_id=/, "dispatch/notify-preferences?wrong_id="],
+    ["drill", "reverse", /kind="customer_notify_preferences"/, 'kind="broken_notify"'],
     ["mount", "customer", /CustomerNotifyReverseSection/g, "MissingNotifyReverse"],
   ];
   for (const [name, key, pattern, replacement] of mutations) {
