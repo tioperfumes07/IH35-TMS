@@ -449,6 +449,30 @@
       ]
     },
     {
+      "id": "home.rm_status_board",
+      "tab": "R&M Status Board",
+      "sub": "Work-order kanban cards",
+      "route_hint": "/maintenance?tab=rm_status_board",
+      "required": [
+        "work_order",
+        "unit",
+        "driver",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
+      "id": "home.recent_activity",
+      "tab": "Maintenance",
+      "sub": "Recent and completed work orders",
+      "route_hint": "/maintenance",
+      "required": [
+        "work_order",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
       "id": "inspections.create",
       "tab": "Inspections",
       "sub": "+ Create Inspection",

@@ -1,6 +1,5 @@
 import { useMemo, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
 import { getDispatchPlannerWeek, type PlannerLoadEvent } from "../../../api/dispatch";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
@@ -55,7 +54,6 @@ async function fetchLoadsForRange(operatingCompanyId: string, rangeStart: string
 }
 
 export function LoadsPlanner() {
-  const navigate = useNavigate();
   const { selectedCompanyId } = useCompanyContext();
   const operatingCompanyId = selectedCompanyId ?? "";
   const { range, days } = usePlannerRange();
@@ -67,10 +65,6 @@ export function LoadsPlanner() {
   });
 
   const rows = useMemo(() => loadsQuery.data ?? [], [loadsQuery.data]);
-
-  const openLoad = (loadId: string) => {
-    navigate(`/dispatch/loads/${encodeURIComponent(loadId)}`);
-  };
 
   if (!operatingCompanyId) {
     return (
@@ -134,15 +128,13 @@ export function LoadsPlanner() {
                           colSpan={span.span}
                           className="border-l border-gray-50 bg-slate-100 px-1 py-0.5 text-center"
                         >
-                          <button
-                            type="button"
+                          <EntityLink
+                            kind="load"
+                            id={load.id}
+                            label={entityLabel(load.load_number, load.id, "Load")}
                             className="w-full truncate text-[9px] font-medium text-slate-700 hover:underline"
                             data-testid={`loads-planner-bar-${load.load_number}`}
-                            onClick={() => openLoad(load.id)}
-                            title={`${entityLabel(load.load_number, load.id, "Load")} · ${entityLabel(load.customer_name, null, "Customer")} · ${load.status}`}
-                          >
-                            {entityLabel(load.load_number, load.id, "Load")}
-                          </button>
+                          />
                         </td>
                       );
                       dayIdx += span.span;

@@ -106,13 +106,12 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
         label: "Claim #",
         sortable: true,
         render: (claim) => (
-          <button
-            type="button"
+          <EntityLink
+            kind="claim"
+            id={claim.id}
+            label={entityLabel(claim.claim_number, claim.id, "Claim")}
             className="font-medium text-slate-700 underline"
-            onClick={() => setHighlightedClaimId(claim.id)}
-          >
-            {entityLabel(claim.claim_number, claim.id, "Claim")}
-          </button>
+          />
         ),
       },
       {

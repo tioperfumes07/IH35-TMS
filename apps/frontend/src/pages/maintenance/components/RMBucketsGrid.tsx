@@ -1,5 +1,6 @@
 import { entityLabel } from "../../../lib/entity-label";
 import type { WorkOrder } from "../../../api/maintenance";
+import { EntityLink } from "../../../components/shared/EntityLink";
 
 type Props = {
   inHouse: WorkOrder[];
@@ -55,14 +56,14 @@ function KanbanCard({
   const meta = [entityLabel(row.unit_number, row.unit_id, "Unit"), row.driver_id ? "driver" : null, row.description ?? row.wo_type].filter(Boolean).join(" · ");
   return (
     <div className="rounded-sm border border-gray-200 bg-white" style={{ borderLeft: `3px solid ${accent}` }}>
-      <button type="button" onClick={() => onOpen(row.id)} className="block w-full px-2 py-1.5 text-left hover:bg-gray-50">
+      <div className="block w-full px-2 py-1.5 text-left hover:bg-gray-50">
         <div className="flex items-center justify-between gap-1">
-          <span className="text-[11px] font-semibold text-gray-800">{entityLabel(row.display_id, row.id, "Record")}</span>
+          <EntityLink kind="work_order" id={row.id} label={entityLabel(row.display_id, row.id, "Work order")} className="text-[11px] font-semibold text-gray-800" onClick={(event) => { event.preventDefault(); onOpen(row.id); }} />
           {row.source_type ? <span className="rounded-sm bg-gray-100 px-1 text-[9px] font-bold tracking-wide text-gray-600">{row.source_type}</span> : null}
         </div>
         <div className="truncate text-[10px] text-gray-500">{meta}</div>
         {age ? <div className="text-[9px] text-gray-400">{age}</div> : null}
-      </button>
+      </div>
       {onAdvanceStatus && row.status !== "complete" ? (
         <div className="flex gap-1 border-t border-gray-100 px-2 py-1">
           <button type="button" className="rounded-sm border border-gray-300 px-1 text-[9px] font-semibold text-gray-700" onClick={() => onAdvanceStatus(row.id, "in_progress")}>In-Progress</button>
