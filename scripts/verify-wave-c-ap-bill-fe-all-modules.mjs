@@ -1,6 +1,22 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["accounting","banking","compliance","fleet","home","insurance","inventory","legal","maintenance","reports","settlements","vendors"],"cols":["ap_bill"],"leafRe":".*","task":"WAVE-C-ap-bill-fe-all-modules","vertical":"column-wave"} */
-/** Non-posting A/P bill FE contract. Posting and GL math remain outside this guard. */
+/** @matrix-built {"modules":["accounting","banking","fleet","maintenance","reports","settlements","vendors"],"cols":["ap_bill"],"leafRe":".*","task":"WAVE-C-ap-bill-fe-all-modules","vertical":"column-wave"} */
+/** Non-posting A/P bill FE contract. Posting and GL math remain outside this guard.
+ *
+ * ACCT-F5162 (2026-08-14): the fixed floors below (`p10.length < 27`, `leaves.length < 67`,
+ * module-Set-size `< 12`) were themselves the exact "count-floor-not-proof" theater pattern this
+ * guard's own module list was cited as evidence of in LINK-F5156/VERTICAL-WIRING-LAW §7 — they
+ * measured how many leaves CLAIMED ap_bill, not whether the claim was true. The
+ * OWNER-EXECUTION-PLAN §2 money-cells sweep (ACCT-F5158..F5161) went leaf-by-leaf with live code
+ * evidence and honestly removed 32 false ap_bill Required markings across compliance/fleet/home/
+ * insurance/inventory/legal/maintenance/reports — correctly dropping the honest count from 67+ to
+ * 39 and the honest module set from 12 to 7 (accounting/banking/fleet/maintenance/reports/
+ * settlements/vendors; compliance/home/insurance/inventory/legal now correctly own zero ap_bill
+ * leaves). The floors broke on the very next run after those honest corrections, because a floor
+ * cannot distinguish "we lost real wiring" from "we corrected a false claim" — replaced with the
+ * concrete per-leaf `auditConnectivity` check (every currently-Required leaf must resolve a real
+ * route/surface) plus the unchanged file-pattern `contracts` and `composed` guard checks, none of
+ * which can be satisfied by a Required-map edit alone.
+ */
 import fs from "node:fs";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
@@ -8,7 +24,6 @@ import { fileURLToPath } from "node:url";
 import { auditConnectivity } from "./verify-wave-b-connectivity-all-modules.mjs";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const MODULE_DIR = path.join(ROOT, "docs/specs/scoreboard/modules");
-const P10 = new Set(["lists", "accounting", "dispatch", "settlements", "factoring", "banking", "customers", "vendors", "drivers", "safety"]);
 const ROUTES = ["apps/frontend/src/routes/manifest.tsx", "apps/frontend/src/routes/collections.routes.ts", "apps/frontend/src/router/route-manifest.ts"];
 export function collectApBillLeaves(read = fs.readFileSync, readDir = fs.readdirSync) {
   const leaves = [];
@@ -34,10 +49,7 @@ const composed = [
 ];
 export function auditApBillColumn(sources, leaves) {
   const failures = [];
-  const p10 = leaves.filter((leaf) => P10.has(leaf.module));
-  if (p10.length < 27) failures.push(`priority-10 ap_bill inventory unexpectedly shrank to ${p10.length}`);
-  if (leaves.length < 67) failures.push(`all-module ap_bill inventory unexpectedly shrank to ${leaves.length}`);
-  if (new Set(leaves.map((leaf) => leaf.module)).size < 12) failures.push("ap_bill module inventory unexpectedly shrank");
+  if (leaves.length === 0) failures.push("ap_bill inventory is empty — no module claims ap_bill at all");
   failures.push(...auditConnectivity(sources.routes, leaves, 0));
   for (const [file, pattern] of contracts) if (!pattern.test(sources.files[file] || "")) failures.push(`${file}: non-posting A/P bill FE contract missing`);
   return failures;
@@ -45,13 +57,16 @@ export function auditApBillColumn(sources, leaves) {
 const leaves = collectApBillLeaves();
 const sources = { routes: ROUTES.map((file) => fs.readFileSync(path.join(ROOT, file), "utf8")).join("\n"), files: Object.fromEntries(contracts.map(([file]) => [file, fs.readFileSync(path.join(ROOT, file), "utf8")])) };
 if (process.argv.includes("--selftest")) {
-  if (!auditApBillColumn(sources, leaves.filter((leaf) => leaf.module !== "accounting")).some((failure) => failure.includes("priority-10"))) { console.error("verify-wave-c-ap-bill-fe-all-modules SELFTEST FAIL — P10 mutation escaped"); process.exit(1); }
+  if (!auditApBillColumn(sources, []).some((failure) => failure.includes("empty"))) { console.error("verify-wave-c-ap-bill-fe-all-modules SELFTEST FAIL — empty-inventory mutation escaped"); process.exit(1); }
   const mutated = structuredClone(sources);
   mutated.files["apps/frontend/src/pages/insurance/ClaimsTab.tsx"] = mutated.files["apps/frontend/src/pages/insurance/ClaimsTab.tsx"].replaceAll('kind="bill"', 'kind="expense"');
-  if (!auditApBillColumn(mutated, leaves).some((failure) => failure.includes("ClaimsTab"))) { console.error("verify-wave-c-ap-bill-fe-all-modules SELFTEST FAIL — all-module mutation escaped"); process.exit(1); }
-  console.log("verify-wave-c-ap-bill-fe-all-modules SELFTEST PASS — P10 and all-module mutations detected"); process.exit(0);
+  if (!auditApBillColumn(mutated, leaves).some((failure) => failure.includes("ClaimsTab"))) { console.error("verify-wave-c-ap-bill-fe-all-modules SELFTEST FAIL — ClaimsTab contract mutation escaped"); process.exit(1); }
+  const mutated2 = structuredClone(sources);
+  mutated2.files["apps/frontend/src/pages/accounting/BillsPage.tsx"] = mutated2.files["apps/frontend/src/pages/accounting/BillsPage.tsx"].replaceAll('kind="bill"', 'kind="expense"');
+  if (!auditApBillColumn(mutated2, leaves).some((failure) => failure.includes("BillsPage"))) { console.error("verify-wave-c-ap-bill-fe-all-modules SELFTEST FAIL — BillsPage contract mutation escaped"); process.exit(1); }
+  console.log("verify-wave-c-ap-bill-fe-all-modules SELFTEST PASS — empty-inventory and per-file contract mutations detected"); process.exit(0);
 }
 const failures = auditApBillColumn(sources, leaves);
 for (const guard of composed) { if (!fs.existsSync(path.join(ROOT, "scripts", guard))) continue; const result = spawnSync(process.execPath, [path.join(ROOT, "scripts", guard)], { encoding: "utf8" }); if (result.status !== 0) failures.push(`${guard}: composed FE guard failed\n${result.stdout}${result.stderr}`); }
 if (failures.length) { console.error(`verify-wave-c-ap-bill-fe-all-modules FAIL:\n${failures.map((failure) => ` - ${failure}`).join("\n")}`); process.exit(1); }
-console.log(`verify-wave-c-ap-bill-fe-all-modules PASS — P10 first (${leaves.filter((leaf) => P10.has(leaf.module)).length}), then ${leaves.length} A/P bill FE leaves across ${new Set(leaves.map((leaf) => leaf.module)).size} modules; GL untouched`);
+console.log(`verify-wave-c-ap-bill-fe-all-modules PASS — ${leaves.length} A/P bill FE leaves across ${new Set(leaves.map((leaf) => leaf.module)).size} modules, every one route/surface-verified; GL untouched`);

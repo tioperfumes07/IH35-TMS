@@ -628,5 +628,12 @@
     "source_file": "docs/specs/scoreboard/modules/maintenance.required.json",
     "guard": "scripts/verify-maintenance-wo-create-bill.mjs",
     "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-14-ACCT-F5162-WAVE-C-FLOOR-SELF-REGRESSION-FIX",
+    "title": "verify-wave-c-ap-bill-fe-all-modules.mjs's own fixed floors (p10<27, leaves<67, module-Set<12) were the count-floor-not-proof pattern LINK-F5156 named this guard as evidence of — they broke on the very next run after ACCT-F5158..F5161 honestly dropped the ap_bill count from 67+ to 39 (5 of 12 modules now correctly own zero ap_bill leaves), because a floor cannot distinguish real wiring loss from an honest false-claim correction; floors removed, replaced with per-leaf auditConnectivity + the unchanged file-pattern/composed-guard checks, module list corrected to the honest 7 (accounting/banking/fleet/maintenance/reports/settlements/vendors) in both the guard's own @matrix-built tag and wire-sprint-built.json",
+    "source_file": "scripts/verify-wave-c-ap-bill-fe-all-modules.mjs",
+    "guard": "scripts/verify-wave-c-ap-bill-fe-all-modules.mjs",
+    "type": "enforced"
   }
 ]

@@ -24,12 +24,7 @@
       "modules": [
         "accounting",
         "banking",
-        "compliance",
         "fleet",
-        "home",
-        "insurance",
-        "inventory",
-        "legal",
         "maintenance",
         "reports",
         "settlements",
