@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { EntityLink } from "../shared/EntityLink";
 import { listMaintenanceTireRecords } from "../../api/maintenance";
 import { DataPanel } from "../layout/DataPanel";
 import { ListErrorBanner } from "../shared/ListErrorBanner";
@@ -18,9 +18,7 @@ export function TrailerTiresReverseSection({ operatingCompanyId, equipmentId }: 
   return (
     <DataPanel title="Tires">
       <div className="mb-2 flex justify-end">
-        <Link className="text-xs font-semibold text-slate-700 underline" to={`/maintenance/tires?equipment_id=${encodeURIComponent(equipmentId)}`}>
-          Open tire program
-        </Link>
+        <EntityLink kind="tire_program_equipment" id={equipmentId} label="Open tire program" className="text-xs font-semibold text-slate-700 underline" />
       </div>
       {query.isError ? (
         <ListErrorBanner message={userFacingApiError(query.error, "Couldn't load trailer tires")} onRetry={() => void query.refetch()} />
@@ -31,10 +29,18 @@ export function TrailerTiresReverseSection({ operatingCompanyId, equipmentId }: 
       ) : (
         <div className="space-y-1" data-testid="trailer-tires-reverse">
           {rows.map((row) => (
-            <Link key={row.id} to={`/maintenance/tires?equipment_id=${encodeURIComponent(equipmentId)}`} className="flex justify-between rounded-sm border border-gray-200 px-2 py-1.5 text-xs hover:bg-gray-50">
-              <span className="font-semibold text-slate-700">{row.position_label || row.position_code}</span>
-              <span className="text-gray-600">{row.brand_name || "Unknown brand"} · {row.tread_depth_32nds}/32</span>
-            </Link>
+            <EntityLink
+              key={row.id}
+              kind="tire_program_equipment"
+              id={equipmentId}
+              className="flex justify-between rounded-sm border border-gray-200 px-2 py-1.5 text-xs hover:bg-gray-50"
+              label={
+                <>
+                  <span className="font-semibold text-slate-700">{row.position_label || row.position_code}</span>
+                  <span className="text-gray-600">{row.brand_name || "Unknown brand"} · {row.tread_depth_32nds}/32</span>
+                </>
+              }
+            />
           ))}
         </div>
       )}

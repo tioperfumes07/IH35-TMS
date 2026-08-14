@@ -1,5 +1,4 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
 import { EntityLink } from "../shared/EntityLink";
 import { listTeamSplitConfigs } from "../../hooks/useTeamSplits";
 
@@ -21,9 +20,7 @@ export function DriverTeamSplitConfigReverseSection({
     <section className="rounded-sm border border-gray-200 bg-white p-3" data-testid="driver-team-split-config-reverse">
       <div className="flex items-center justify-between gap-2">
         <h2 className="text-sm font-semibold text-slate-900">Team split configurations</h2>
-        <Link className="text-xs font-semibold text-slate-700 hover:underline" to={`/drivers/team-splits?driver_id=${encodeURIComponent(driverId)}`}>
-          Open team splits
-        </Link>
+        <EntityLink kind="driver_team_splits_filter" id={driverId} label="Open team splits" className="text-xs font-semibold text-slate-700 hover:underline" />
       </div>
       {query.isError ? <p className="mt-2 text-xs text-red-700">Team split configurations unavailable.</p> : null}
       {query.isLoading ? <p className="mt-2 text-xs text-gray-500">Loading…</p> : null}

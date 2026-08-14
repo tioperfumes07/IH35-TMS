@@ -20,7 +20,7 @@ function audit(s) {
   if (!/INSERT INTO maintenance\.tire_records[\s\S]{0,140}equipment_id/.test(s.route)) failures.push("writer must persist equipment_id");
   if (!/listMaintenanceTireRecords\(operatingCompanyId, \{ equipment_id: equipmentId \}\)/.test(s.reverse)) failures.push("trailer profile reverse must request exact equipment_id set");
   if (!/ListErrorBanner/.test(s.reverse) || !/No active tires are linked/.test(s.reverse)) failures.push("reverse surface must preserve honest states");
-  if (!/maintenance\/tires\?equipment_id=\$\{encodeURIComponent\(equipmentId\)\}/.test(s.reverse)) failures.push("reverse row must drill to exact canonical tire page");
+  if (!/kind="tire_program_equipment"/.test(s.reverse) || !/id=\{equipmentId\}/.test(s.reverse)) failures.push("reverse row must drill via EntityLink tire_program_equipment");
   if (!/TrailerTiresReverseSection/.test(s.profile)) failures.push("trailer profile must mount tire reverse section");
   if (!/params: \{ unit_id\?: string; equipment_id\?: string; include_archived\?: boolean \}/.test(s.api)) failures.push("client must expose exact equipment filter");
   return failures;
@@ -34,7 +34,7 @@ if (process.argv.includes("--selftest")) {
     ["position", "route", /position_asset_mismatch/, "invalid_position"],
     ["reverse", "reverse", /listMaintenanceTireRecords\(operatingCompanyId, \{ equipment_id: equipmentId \}\)/, "listMaintenanceTireRecords(operatingCompanyId)"],
     ["error", "reverse", /ListErrorBanner/g, "MissingError"],
-    ["drill", "reverse", /maintenance\/tires\?equipment_id=/g, "maintenance/tires?unit_id="],
+    ["drill", "reverse", /kind="tire_program_equipment"/g, 'kind="unit"'],
     ["mount", "profile", /TrailerTiresReverseSection/g, "MissingTrailerTires"],
   ];
   for (const [name, key, pattern, replacement] of mutations) {
