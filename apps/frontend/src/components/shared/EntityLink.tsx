@@ -139,6 +139,12 @@ export type EntityKind =
   | "maintenance_vendor"
   | "pm_schedule"
   | "safety_event"
+  // LINK-F5171: reverse "Open Safety Events" / "Open Fines" → filtered list (not a single row).
+  | "safety_events_driver"
+  | "safety_events_unit"
+  | "safety_fines_driver"
+  | "safety_fines_load"
+  | "safety_fines_unit"
   // SAF-F33: safety records were undrillable — no module could link INTO an accident, fine,
   // complaint, DOT inspection, escrow record, or permit. These resolve to the record's list surface
   // with a query param the page honors (same drill pattern as claim/lawsuit/settlement).
@@ -414,6 +420,16 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
       return `/compliance?tab=hos_tracker&driver_id=${id}`;
     case "safety_event":
       return `/safety/safety-events?event_id=${id}`;
+    case "safety_events_driver":
+      return `/safety/safety-events?subject_driver_id=${id}`;
+    case "safety_events_unit":
+      return `/safety/safety-events?subject_unit_id=${id}`;
+    case "safety_fines_driver":
+      return `/safety/external-fines?subject_driver_id=${id}`;
+    case "safety_fines_load":
+      return `/safety/external-fines?related_load_id=${id}`;
+    case "safety_fines_unit":
+      return `/safety/external-fines?related_unit_id=${id}`;
     // SAF-F33 safety drill-through — each target list page reads the param and opens/highlights the row.
     case "accident":
       return `/safety/accidents?accident_id=${id}`;

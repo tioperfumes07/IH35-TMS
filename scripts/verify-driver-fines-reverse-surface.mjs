@@ -71,6 +71,10 @@ function links(s) {
       why: `${SECTION}: internal fines lost their drill-through to the fine record`,
     },
     {
+      ok: /kind="safety_fines_driver"/.test(s[SECTION]) && !/to="\/safety\/fines"/.test(s[SECTION]),
+      why: `${SECTION}: Open Safety must EntityLink the filtered external-fines queue (not dead /safety/fines)`,
+    },
+    {
       ok: /DriverFinesReverseSection/.test(s[PAGE]),
       why: `${PAGE}: the fines reverse section is not rendered on the driver profile`,
     },

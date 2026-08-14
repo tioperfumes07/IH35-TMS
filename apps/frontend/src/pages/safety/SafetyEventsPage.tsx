@@ -103,6 +103,8 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
   // Detail panel loads via getSafetyEventDetail — no need for the id to be in the current list page.
   const [searchParams, setSearchParams] = useSearchParams();
   const eventIdParam = searchParams.get("event_id");
+  const subjectDriverFromUrl = searchParams.get("subject_driver_id")?.trim() ?? "";
+  const subjectUnitFromUrl = searchParams.get("subject_unit_id")?.trim() ?? "";
   useEffect(() => {
     if (!eventIdParam) return;
     setSelectedEventId(eventIdParam);
@@ -110,6 +112,12 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
     next.delete("event_id");
     setSearchParams(next, { replace: true });
   }, [eventIdParam, searchParams, setSearchParams]);
+  useEffect(() => {
+    if (subjectDriverFromUrl) setDriverFilter(subjectDriverFromUrl);
+  }, [subjectDriverFromUrl]);
+  useEffect(() => {
+    if (subjectUnitFromUrl) setUnitFilter(subjectUnitFromUrl);
+  }, [subjectUnitFromUrl]);
   const [logModalOpen, setLogModalOpen] = useState(false);
   const [draft, setDraft] = useState<EventDraft>(initialEventDraft);
   const [logDraftBaseline, setLogDraftBaseline] = useState<EventDraft | null>(null);
@@ -153,12 +161,14 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
   }, [draft.related_load_id, suggestionPinned, suggestionQuery.data]);
 
   const eventsQuery = useQuery({
-    queryKey: ["safety", "events-v2", operatingCompanyId, statusFilter, severityFilter, search],
+    queryKey: ["safety", "events-v2", operatingCompanyId, statusFilter, severityFilter, search, driverFilter, unitFilter],
     queryFn: () =>
       listSafetyEventLog(operatingCompanyId, {
         status: statusFilter || undefined,
         severity: severityFilter || undefined,
         search: search.trim() || undefined,
+        subject_driver_id: driverFilter || undefined,
+        subject_unit_id: unitFilter || undefined,
       }).then((result) => result.events),
     enabled: Boolean(operatingCompanyId),
   });
