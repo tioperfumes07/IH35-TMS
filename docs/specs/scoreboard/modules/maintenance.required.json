@@ -337,7 +337,8 @@
       "id": "damage_reports.intake",
       "tab": "Damage Reports",
       "sub": "Damage intake / spawn WO",
-      "route_hint": "/maintenance/damage-reports",
+      "route_hint": "surface://pages/maintenance/components/TriageModal.tsx",
+      "surface_path": "pages/maintenance/components/TriageModal.tsx",
       "required": [
         "unit",
         "qbo_chrome",
