@@ -212,7 +212,8 @@
       "sub": "List toolbar — Search (CLS-LIST-TOOLBAR)",
       "route_hint": "/cash-flow",
       "surface_kind": "toolbar",
-      "required": []
+      "required": [],
+      "surface_path": "components/table/UniversalListToolbar.tsx"
     },
     {
       "id": "chrome.toolbar_range",
@@ -222,7 +223,8 @@
       "surface_kind": "toolbar",
       "required": [
         "connectivity"
-      ]
+      ],
+      "surface_path": "components/table/UniversalListToolbar.tsx"
     },
     {
       "id": "chrome.toolbar_gear",
@@ -230,7 +232,8 @@
       "sub": "List toolbar — column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
       "route_hint": "/cash-flow",
       "surface_kind": "toolbar",
-      "required": []
+      "required": [],
+      "surface_path": "components/table/UniversalListToolbar.tsx"
     },
     {
       "id": "chrome.toolbar_filter",
@@ -240,7 +243,8 @@
       "surface_kind": "toolbar",
       "required": [
         "connectivity"
-      ]
+      ],
+      "surface_path": "components/table/UniversalListToolbar.tsx"
     },
     {
       "id": "cash-flow.panel.projection",

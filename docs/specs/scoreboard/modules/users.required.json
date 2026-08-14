@@ -199,7 +199,8 @@
       "sub": "List toolbar — Search (CLS-LIST-TOOLBAR)",
       "route_hint": "/users",
       "surface_kind": "toolbar",
-      "required": []
+      "required": [],
+      "surface_path": "components/table/UniversalListToolbar.tsx"
     },
     {
       "id": "chrome.toolbar_range",
@@ -207,7 +208,8 @@
       "sub": "List toolbar — date/amount range (CLS-LIST-TOOLBAR)",
       "route_hint": "/users",
       "surface_kind": "toolbar",
-      "required": []
+      "required": [],
+      "surface_path": "components/table/UniversalListToolbar.tsx"
     },
     {
       "id": "chrome.toolbar_gear",
@@ -215,7 +217,8 @@
       "sub": "List toolbar — column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
       "route_hint": "/users",
       "surface_kind": "toolbar",
-      "required": []
+      "required": [],
+      "surface_path": "components/table/UniversalListToolbar.tsx"
     },
     {
       "id": "chrome.toolbar_filter",
@@ -223,7 +226,8 @@
       "sub": "List toolbar — Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
       "route_hint": "/users",
       "surface_kind": "toolbar",
-      "required": []
+      "required": [],
+      "surface_path": "components/table/UniversalListToolbar.tsx"
     }
   ],
   "honesty_audit": {

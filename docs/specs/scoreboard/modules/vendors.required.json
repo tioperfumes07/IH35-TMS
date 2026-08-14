@@ -2,10 +2,10 @@
   "module": "vendors",
   "entity_default": "USMCA",
   "source": {
-    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md \u2014 Module 10 VENDORS (KPI/filters; live UI uses list segments)",
-    "list": "apps/frontend/src/pages/Vendors.tsx \u2014 VENDOR_LIST_TAB_IDS + VENDOR_TABS + VendorCreateModal",
+    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md — Module 10 VENDORS (KPI/filters; live UI uses list segments)",
+    "list": "apps/frontend/src/pages/Vendors.tsx — VENDOR_LIST_TAB_IDS + VENDOR_TABS + VendorCreateModal",
     "list_view": "apps/frontend/src/pages/vendors/VendorsListView.tsx",
-    "detail": "apps/frontend/src/pages/VendorDetail.tsx tabs Profile \u00b7 A/P \u00b7 Documents \u00b7 Audit History \u00b7 Tasks \u00b7 W-9/1099",
+    "detail": "apps/frontend/src/pages/VendorDetail.tsx tabs Profile · A/P · Documents · Audit History · Tasks · W-9/1099",
     "routes": "apps/frontend/src/routes/manifest.tsx /vendors, /vendors/:id"
   },
   "columns": [
@@ -159,7 +159,7 @@
     {
       "id": "list.segment.all",
       "tab": "All Vendors",
-      "sub": "Segment \u00b7 All",
+      "sub": "Segment · All",
       "route_hint": "/vendors?listTab=all",
       "required": [
         "vendor",
@@ -169,7 +169,7 @@
     {
       "id": "list.segment.active",
       "tab": "All Vendors",
-      "sub": "Segment \u00b7 Active (default)",
+      "sub": "Segment · Active (default)",
       "route_hint": "/vendors",
       "required": [
         "vendor",
@@ -179,7 +179,7 @@
     {
       "id": "list.segment.inactive",
       "tab": "All Vendors",
-      "sub": "Segment \u00b7 Inactive",
+      "sub": "Segment · Inactive",
       "route_hint": "/vendors?listTab=inactive",
       "required": [
         "vendor",
@@ -189,7 +189,7 @@
     {
       "id": "list.segment.by_category",
       "tab": "By Category",
-      "sub": "Segment \u00b7 vendor_type filter",
+      "sub": "Segment · vendor_type filter",
       "route_hint": "/vendors?listTab=by-category",
       "required": [
         "vendor",
@@ -200,7 +200,7 @@
     {
       "id": "list.filters",
       "tab": "All Vendors",
-      "sub": "Roster collapsed filters (status \u00b7 category)",
+      "sub": "Roster collapsed filters (status · category)",
       "route_hint": "/vendors",
       "required": [
         "vendor",
@@ -211,7 +211,7 @@
     {
       "id": "list.filter_chips",
       "tab": "All Vendors",
-      "sub": "List view filter chips (Active \u00b7 1099 \u00b7 With open)",
+      "sub": "List view filter chips (Active · 1099 · With open)",
       "route_hint": "/vendors",
       "required": [
         "vendor",
@@ -300,7 +300,7 @@
     {
       "id": "md.header.edit",
       "tab": "Vendor Detail",
-      "sub": "Edit \u2192 /vendors/:id full profile",
+      "sub": "Edit → /vendors/:id full profile",
       "route_hint": "/vendors/:id",
       "required": [
         "vendor",
@@ -324,7 +324,7 @@
     {
       "id": "md.txn.filters",
       "tab": "Vendor Detail",
-      "sub": "Transaction list filters (status \u00b7 date \u00b7 category)",
+      "sub": "Transaction list filters (status · date · category)",
       "route_hint": "/vendors?tab=transaction_list",
       "required": [
         "vendor",
@@ -606,46 +606,50 @@
     {
       "id": "chrome.toolbar_search",
       "tab": "Chrome controls",
-      "sub": "List toolbar \u2014 Search (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar — Search (CLS-LIST-TOOLBAR)",
       "route_hint": "/vendors",
       "surface_kind": "toolbar",
       "required": [
         "qbo_chrome",
         "connectivity"
-      ]
+      ],
+      "surface_path": "components/table/UniversalListToolbar.tsx"
     },
     {
       "id": "chrome.toolbar_range",
       "tab": "Chrome controls",
-      "sub": "List toolbar \u2014 date/amount range (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar — date/amount range (CLS-LIST-TOOLBAR)",
       "route_hint": "/vendors",
       "surface_kind": "toolbar",
       "required": [
         "qbo_chrome",
         "connectivity"
-      ]
+      ],
+      "surface_path": "components/table/UniversalListToolbar.tsx"
     },
     {
       "id": "chrome.toolbar_gear",
       "tab": "Chrome controls",
-      "sub": "List toolbar \u2014 column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
+      "sub": "List toolbar — column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
       "route_hint": "/vendors",
       "surface_kind": "toolbar",
       "required": [
         "qbo_chrome",
         "connectivity"
-      ]
+      ],
+      "surface_path": "components/table/UniversalListToolbar.tsx"
     },
     {
       "id": "chrome.toolbar_filter",
       "tab": "Chrome controls",
-      "sub": "List toolbar \u2014 Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
+      "sub": "List toolbar — Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
       "route_hint": "/vendors",
       "surface_kind": "toolbar",
       "required": [
         "qbo_chrome",
         "connectivity"
-      ]
+      ],
+      "surface_path": "components/table/UniversalListToolbar.tsx"
     }
   ],
   "honesty_audit": {
@@ -706,11 +710,11 @@
         "invoice",
         "bank"
       ],
-      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; \u00a7B9 link columns added."
+      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; §B9 link columns added."
     },
     "reverse_link_2026_08_13_chrome": {
       "finding": "VERTICAL-REVERSE-LINK-VENDORS-REMAINDER",
-      "note": "List segments/create/sync/bulk + profile edit pickers + inactivate/reactivate/safer + sync panel are chrome/actions \u2014 reverse_link Required was inflation. Detail AP/documents/tasks/w9 keep reverse_link for Built via VendorDetail reverse sections.",
+      "note": "List segments/create/sync/bulk + profile edit pickers + inactivate/reactivate/safer + sync panel are chrome/actions — reverse_link Required was inflation. Detail AP/documents/tasks/w9 keep reverse_link for Built via VendorDetail reverse sections.",
       "drops": [
         {
           "id": "list.segment.active",
@@ -848,7 +852,7 @@
     },
     "reverse_link_2026_08_13_credits": {
       "finding": "VERTICAL-REVERSE-LINK-VENDORS-REMAINDER",
-      "note": "Vendor credits list uses module Link to /accounting/vendor-credits \u2014 no EntityLink kind vendor_credit yet. reverse_link Required was inflation until a canonical kind ships.",
+      "note": "Vendor credits list uses module Link to /accounting/vendor-credits — no EntityLink kind vendor_credit yet. reverse_link Required was inflation until a canonical kind ships.",
       "drops": [
         {
           "id": "detail.ap.vendor_credits",
@@ -860,7 +864,7 @@
     },
     "unit_column_2026_08_14_overclaim": {
       "finding": "LINK-F5167-UNIT-COLUMN-VERTICAL-SWEEP",
-      "note": "detail.profile is false \u2014 VendorDetail.tsx's Profile tab has no unit_id field or EntityLink; the only reverse-entity link present is a driver EntityLink when the vendor is also tracked as a driver.",
+      "note": "detail.profile is false — VendorDetail.tsx's Profile tab has no unit_id field or EntityLink; the only reverse-entity link present is a driver EntityLink when the vendor is also tracked as a driver.",
       "drops": [
         {
           "id": "detail.profile",
@@ -872,7 +876,7 @@
     },
     "driver_column_2026_08_14_overclaim": {
       "finding": "LINK-F5168-DRIVER-COLUMN-VERTICAL-SWEEP",
-      "note": "driver blanket-required on 2 vendors leaves. Verified live \u2014 VendorCreateModal.tsx (412 lines) has zero driver references, no driver field at vendor creation; Vendors.tsx's \"vendor_details\" tab (L545-548) renders only placeholder text \"Vendor details are shown in the header section for this layout.\" \u2014 no driver linkage.",
+      "note": "driver blanket-required on 2 vendors leaves. Verified live — VendorCreateModal.tsx (412 lines) has zero driver references, no driver field at vendor creation; Vendors.tsx's \"vendor_details\" tab (L545-548) renders only placeholder text \"Vendor details are shown in the header section for this layout.\" — no driver linkage.",
       "drops": [
         {
           "id": "list.create",

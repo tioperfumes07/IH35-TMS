@@ -244,21 +244,21 @@
     {
       "id": "jump.maintenance",
       "tab": "Quick jumps",
-      "sub": "\u2192 Maintenance",
+      "sub": "→ Maintenance",
       "route_hint": "/maintenance",
       "required": []
     },
     {
       "id": "jump.accounting",
       "tab": "Quick jumps",
-      "sub": "\u2192 Accounting",
+      "sub": "→ Accounting",
       "route_hint": "/accounting/invoices",
       "required": []
     },
     {
       "id": "jump.banking",
       "tab": "Quick jumps",
-      "sub": "\u2192 Banking",
+      "sub": "→ Banking",
       "route_hint": "/banking",
       "required": [
         "bank"
@@ -267,35 +267,35 @@
     {
       "id": "jump.fuel",
       "tab": "Quick jumps",
-      "sub": "\u2192 Fuel",
+      "sub": "→ Fuel",
       "route_hint": "/fuel",
       "required": []
     },
     {
       "id": "jump.safety",
       "tab": "Quick jumps",
-      "sub": "\u2192 Safety",
+      "sub": "→ Safety",
       "route_hint": "/safety",
       "required": []
     },
     {
       "id": "jump.drivers",
       "tab": "Quick jumps",
-      "sub": "\u2192 Drivers",
+      "sub": "→ Drivers",
       "route_hint": "/drivers",
       "required": []
     },
     {
       "id": "jump.dispatch",
       "tab": "Quick jumps",
-      "sub": "\u2192 Dispatch",
+      "sub": "→ Dispatch",
       "route_hint": "/dispatch",
       "required": []
     },
     {
       "id": "jump.lists",
       "tab": "Quick jumps",
-      "sub": "\u2192 Lists",
+      "sub": "→ Lists",
       "route_hint": "/lists",
       "required": []
     },
@@ -322,7 +322,7 @@
     {
       "id": "hop.program",
       "tab": "Program hop",
-      "sub": "Scenario tracker \u2192 Program",
+      "sub": "Scenario tracker → Program",
       "route_hint": "/program",
       "required": []
     },
@@ -395,34 +395,38 @@
     {
       "id": "chrome.toolbar_search",
       "tab": "Chrome controls",
-      "sub": "List toolbar \u2014 Search (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar — Search (CLS-LIST-TOOLBAR)",
       "route_hint": "/home",
       "surface_kind": "toolbar",
-      "required": []
+      "required": [],
+      "surface_path": "components/table/UniversalListToolbar.tsx"
     },
     {
       "id": "chrome.toolbar_range",
       "tab": "Chrome controls",
-      "sub": "List toolbar \u2014 date/amount range (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar — date/amount range (CLS-LIST-TOOLBAR)",
       "route_hint": "/home",
       "surface_kind": "toolbar",
-      "required": []
+      "required": [],
+      "surface_path": "components/table/UniversalListToolbar.tsx"
     },
     {
       "id": "chrome.toolbar_gear",
       "tab": "Chrome controls",
-      "sub": "List toolbar \u2014 column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
+      "sub": "List toolbar — column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
       "route_hint": "/home",
       "surface_kind": "toolbar",
-      "required": []
+      "required": [],
+      "surface_path": "components/table/UniversalListToolbar.tsx"
     },
     {
       "id": "chrome.toolbar_filter",
       "tab": "Chrome controls",
-      "sub": "List toolbar \u2014 Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
+      "sub": "List toolbar — Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
       "route_hint": "/home",
       "surface_kind": "toolbar",
-      "required": []
+      "required": [],
+      "surface_path": "components/table/UniversalListToolbar.tsx"
     }
   ],
   "honesty_audit": {
@@ -438,11 +442,11 @@
         "invoice",
         "bank"
       ],
-      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; \u00a7B9 link columns added."
+      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; §B9 link columns added."
     },
     "reverse_link_2026_08_13_secondary": {
       "finding": "VERTICAL-REVERSE-LINK-SECONDARY-HONESTY",
-      "note": "Secondary module reverse_link Required on hub/chrome/nav leaves without reverse EntityLink drill \u2014 honesty drop. Built stays on money/ops modules already drained. Built restored for EntityLink surfaces: hub.driver_reporting.",
+      "note": "Secondary module reverse_link Required on hub/chrome/nav leaves without reverse EntityLink drill — honesty drop. Built stays on money/ops modules already drained. Built restored for EntityLink surfaces: hub.driver_reporting.",
       "drops": [
         {
           "id": "route.root",
@@ -748,7 +752,7 @@
     },
     "money_cells_2026_08_14_ap_bill_overclaim": {
       "finding": "OWNER-EXECUTION-PLAN-SS2-ACCT-F5160",
-      "note": "ap_bill blanket-required on both home leaves; verified live, neither owns it. role.accountant (AccountingHome.tsx) renders only aggregate KPI/aging-bucket totals (AccountingKpiBar, AgingBucketCard AP/AR total_outstanding_cents, AccountingPendingApprovalsPanel, ComplianceFilingsDueWidget) \u2014 zero bill_id or EntityLink kind=\"bill\" across all 4 sub-widgets, confirmed by direct grep. jump.accounting (homeQuickJumps.ts) is a static nav card (title/subtitle text + a route to /accounting/invoices) \u2014 no bill data rendered on the card itself at all.",
+      "note": "ap_bill blanket-required on both home leaves; verified live, neither owns it. role.accountant (AccountingHome.tsx) renders only aggregate KPI/aging-bucket totals (AccountingKpiBar, AgingBucketCard AP/AR total_outstanding_cents, AccountingPendingApprovalsPanel, ComplianceFilingsDueWidget) — zero bill_id or EntityLink kind=\"bill\" across all 4 sub-widgets, confirmed by direct grep. jump.accounting (homeQuickJumps.ts) is a static nav card (title/subtitle text + a route to /accounting/invoices) — no bill data rendered on the card itself at all.",
       "drops": [
         {
           "id": "role.accountant",
@@ -814,7 +818,7 @@
     },
     "unit_column_2026_08_14_overclaim": {
       "finding": "LINK-F5167-UNIT-COLUMN-VERTICAL-SWEEP",
-      "note": "7 of 8 home leaves are false: role.safety/surface.attention_list/surface.fleet_restore (an aggregate count only, despite the unit-suggestive name) and all 4 jump.* static nav cards have zero unit_id on the leaf itself. role.dispatcher KEEPS the Required marking \u2014 DispatcherHome.tsx mounts DispatcherActiveLoadsPanel.tsx, which renders a real EntityLink kind=\"unit\" per active-load row (same discovery pattern already confirmed for the customer column).",
+      "note": "7 of 8 home leaves are false: role.safety/surface.attention_list/surface.fleet_restore (an aggregate count only, despite the unit-suggestive name) and all 4 jump.* static nav cards have zero unit_id on the leaf itself. role.dispatcher KEEPS the Required marking — DispatcherHome.tsx mounts DispatcherActiveLoadsPanel.tsx, which renders a real EntityLink kind=\"unit\" per active-load row (same discovery pattern already confirmed for the customer column).",
       "drops": [
         {
           "id": "role.safety",
@@ -862,7 +866,7 @@
     },
     "driver_column_2026_08_14_overclaim": {
       "finding": "LINK-F5168-DRIVER-COLUMN-VERTICAL-SWEEP",
-      "note": "driver blanket-required on 7 home leaves. Verified live \u2014 DispatcherHome.tsx and SafetyHome.tsx have zero driver references; DriverManagerHome.tsx only passes a coolingDriverCount NUMBER to DriverManagerAttentionPanel.tsx (no driver_id/EntityLink); AttentionList.tsx has zero driver references; the 3 jump.* leaves are all the same static HOME_QUICK_JUMPS {title,subtitle,count,to} nav-card list with no entity binding at all.",
+      "note": "driver blanket-required on 7 home leaves. Verified live — DispatcherHome.tsx and SafetyHome.tsx have zero driver references; DriverManagerHome.tsx only passes a coolingDriverCount NUMBER to DriverManagerAttentionPanel.tsx (no driver_id/EntityLink); AttentionList.tsx has zero driver references; the 3 jump.* leaves are all the same static HOME_QUICK_JUMPS {title,subtitle,count,to} nav-card list with no entity binding at all.",
       "drops": [
         {
           "id": "role.dispatcher",

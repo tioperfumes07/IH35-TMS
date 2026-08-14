@@ -3,7 +3,7 @@
   "entity_default": "USMCA",
   "source": {
     "pages": "apps/frontend/src/pages/form425c/*",
-    "sidebar": "form_425 \u2192 /425c"
+    "sidebar": "form_425 → /425c"
   },
   "columns": [
     {
@@ -181,7 +181,7 @@
     {
       "id": "redirect.form425c",
       "tab": "Routes",
-      "sub": "/form-425c \u2192 /425c",
+      "sub": "/form-425c → /425c",
       "route_hint": "/form-425c",
       "required": []
     },
@@ -220,34 +220,38 @@
     {
       "id": "chrome.toolbar_search",
       "tab": "Chrome controls",
-      "sub": "List toolbar \u2014 Search (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar — Search (CLS-LIST-TOOLBAR)",
       "route_hint": "/425c",
       "surface_kind": "toolbar",
-      "required": []
+      "required": [],
+      "surface_path": "components/table/UniversalListToolbar.tsx"
     },
     {
       "id": "chrome.toolbar_range",
       "tab": "Chrome controls",
-      "sub": "List toolbar \u2014 date/amount range (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar — date/amount range (CLS-LIST-TOOLBAR)",
       "route_hint": "/425c",
       "surface_kind": "toolbar",
-      "required": []
+      "required": [],
+      "surface_path": "components/table/UniversalListToolbar.tsx"
     },
     {
       "id": "chrome.toolbar_gear",
       "tab": "Chrome controls",
-      "sub": "List toolbar \u2014 column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
+      "sub": "List toolbar — column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
       "route_hint": "/425c",
       "surface_kind": "toolbar",
-      "required": []
+      "required": [],
+      "surface_path": "components/table/UniversalListToolbar.tsx"
     },
     {
       "id": "chrome.toolbar_filter",
       "tab": "Chrome controls",
-      "sub": "List toolbar \u2014 Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
+      "sub": "List toolbar — Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
       "route_hint": "/425c",
       "surface_kind": "toolbar",
-      "required": []
+      "required": [],
+      "surface_path": "components/table/UniversalListToolbar.tsx"
     }
   ],
   "honesty_audit": {
@@ -263,11 +267,11 @@
         "invoice",
         "bank"
       ],
-      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; \u00a7B9 link columns added."
+      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; §B9 link columns added."
     },
     "reverse_link_2026_08_13_secondary": {
       "finding": "VERTICAL-REVERSE-LINK-SECONDARY-HONESTY",
-      "note": "Secondary module reverse_link Required on hub/chrome/nav leaves without reverse EntityLink drill \u2014 honesty drop. Built stays on money/ops modules already drained.",
+      "note": "Secondary module reverse_link Required on hub/chrome/nav leaves without reverse EntityLink drill — honesty drop. Built stays on money/ops modules already drained.",
       "drops": [
         {
           "id": "home",
@@ -513,7 +517,7 @@
     },
     "driver_column_2026_08_14_overclaim": {
       "finding": "LINK-F5168-DRIVER-COLUMN-VERTICAL-SWEEP",
-      "note": "driver blanket-required on 1 form_425 leaf. Verified live \u2014 Form425CHome.tsx (L351-357) uses RelatedModuleLinks with a static {label:\"Compliance\",to:\"/compliance\"} entry \u2014 no entity binding at all.",
+      "note": "driver blanket-required on 1 form_425 leaf. Verified live — Form425CHome.tsx (L351-357) uses RelatedModuleLinks with a static {label:\"Compliance\",to:\"/compliance\"} entry — no entity binding at all.",
       "drops": [
         {
           "id": "hop.compliance",

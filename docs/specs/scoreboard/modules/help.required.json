@@ -185,38 +185,42 @@
     {
       "id": "chrome.toolbar_search",
       "tab": "Chrome controls",
-      "sub": "List toolbar \u2014 Search (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar — Search (CLS-LIST-TOOLBAR)",
       "route_hint": "/help",
       "surface_kind": "toolbar",
       "required": [],
-      "note": "N/A: Help is article/card navigation, not a data pipeline list; search remains the canonical search leaf."
+      "note": "N/A: Help is article/card navigation, not a data pipeline list; search remains the canonical search leaf.",
+      "surface_path": "components/table/UniversalListToolbar.tsx"
     },
     {
       "id": "chrome.toolbar_range",
       "tab": "Chrome controls",
-      "sub": "List toolbar \u2014 date/amount range (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar — date/amount range (CLS-LIST-TOOLBAR)",
       "route_hint": "/help",
       "surface_kind": "toolbar",
       "required": [],
-      "note": "N/A: Help has no date/amount-bearing data pipeline list."
+      "note": "N/A: Help has no date/amount-bearing data pipeline list.",
+      "surface_path": "components/table/UniversalListToolbar.tsx"
     },
     {
       "id": "chrome.toolbar_gear",
       "tab": "Chrome controls",
-      "sub": "List toolbar \u2014 column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
+      "sub": "List toolbar — column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
       "route_hint": "/help",
       "surface_kind": "toolbar",
       "required": [],
-      "note": "N/A: Help has no configurable data-table columns."
+      "note": "N/A: Help has no configurable data-table columns.",
+      "surface_path": "components/table/UniversalListToolbar.tsx"
     },
     {
       "id": "chrome.toolbar_filter",
       "tab": "Chrome controls",
-      "sub": "List toolbar \u2014 Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
+      "sub": "List toolbar — Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
       "route_hint": "/help",
       "surface_kind": "toolbar",
       "required": [],
-      "note": "N/A: Help has no applied-state data-list filter panel."
+      "note": "N/A: Help has no applied-state data-list filter panel.",
+      "surface_path": "components/table/UniversalListToolbar.tsx"
     }
   ],
   "honesty_audit": {
@@ -232,7 +236,7 @@
         "invoice",
         "bank"
       ],
-      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; \u00a7B9 link columns added."
+      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; §B9 link columns added."
     },
     "qbo_chrome_2026_08_13_secondary": {
       "finding": "VERTICAL-QBO-CHROME-SECONDARY-HONESTY",
