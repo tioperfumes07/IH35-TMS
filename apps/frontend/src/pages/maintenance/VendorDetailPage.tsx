@@ -76,9 +76,13 @@ export function VendorDetailPage() {
                 <dt className="inline font-medium">AP Vendor:</dt>{" "}
                 <dd className="inline">
                   {vendor.mdata_vendor_id ? (
-                    <Link className="text-slate-600 underline" to={`/vendors/${vendor.mdata_vendor_id}`}>
-                      {entityLabel(vendor.mdata_vendor_name, vendor.mdata_vendor_id, "Vendor")}
-                    </Link>
+                    <EntityLink
+                      kind="vendor"
+                      id={vendor.mdata_vendor_id}
+                      label={entityLabel(vendor.mdata_vendor_name, vendor.mdata_vendor_id, "Vendor")}
+                      className="text-slate-600 underline"
+                      data-testid="maintenance-vendor-detail-ap-vendor-link"
+                    />
                   ) : (
                     "—"
                   )}
