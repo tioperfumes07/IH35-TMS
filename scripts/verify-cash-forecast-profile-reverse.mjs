@@ -14,7 +14,7 @@ const files = {
 };
 function failures(s = files) { return [
   ["company-scoped entity filters", s.routes.includes("party_ref_id: z.string().uuid().optional()") && s.routes.includes("party_ref_id = $${values.length}::uuid") && s.routes.includes("ref_external_id = $${values.length}") && s.api.includes("for (const [key, value] of Object.entries(filters))")],
-  ["exact entry filter and target", s.routes.includes("entry_id: z.string().uuid().optional()") && s.routes.includes("id = $${values.length}::uuid") && s.reverse.includes("entry_id=${encodeURIComponent(entry.id)}") && s.panel.includes('searchParams.get("entry_id")') && s.panel.includes("entry_id: entryId")],
+  ["exact entry filter and target", s.routes.includes("entry_id: z.string().uuid().optional()") && s.routes.includes("id = $${values.length}::uuid") && s.reverse.includes('kind="cash_forecast_entry"') && s.reverse.includes("id={entry.id}") && s.panel.includes('searchParams.get("entry_id")') && s.panel.includes("entry_id: entryId")],
   ["shared filtered reverse reader", s.reverse.includes("listForecastEntries(operatingCompanyId, undefined, undefined, filter)") && s.reverse.includes('queryKey: ["cash-forecast-reverse", operatingCompanyId, filter]')],
   ["driver and customer mounts", s.driver.includes('party_ref_kind: "driver", party_ref_id: id') && s.customer.includes('party_ref_kind: "customer", party_ref_id: id')],
   ["vendor and unit mounts", s.vendor.includes('party_ref_kind: "vendor", party_ref_id: vendor.id') && s.unit.includes('ref_kind: "unit", ref_external_id: id')],

@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { EntityLink } from "../shared/EntityLink";
 import { listForecastEntries } from "../../api/forecast";
 
 type Filter =
@@ -22,9 +22,12 @@ export function CashForecastReverseSection({ operatingCompanyId, filter }: { ope
       <ul className="mt-2 space-y-1">
         {entries.slice(0, 5).map((entry) => (
           <li key={entry.id}>
-            <Link className="text-xs font-semibold text-slate-700 hover:underline" to={`/cash-flow?tab=manual_daily_projections&entry_id=${encodeURIComponent(entry.id)}`}>
-              {entry.entry_date} · {(entry.amount_cents / 100).toLocaleString("en-US", { style: "currency", currency: "USD" })} · {entry.direction}
-            </Link>
+            <EntityLink
+              kind="cash_forecast_entry"
+              id={entry.id}
+              label={`${entry.entry_date} · ${(entry.amount_cents / 100).toLocaleString("en-US", { style: "currency", currency: "USD" })} · ${entry.direction}`}
+              className="text-xs font-semibold text-slate-700 hover:underline"
+            />
           </li>
         ))}
       </ul>

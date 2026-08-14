@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
+import { EntityLink } from "../shared/EntityLink";
 import { apiRequest } from "../../api/client";
 import type { FactoringQueueRow } from "../../pages/dispatch/FactoringQueuePage";
 import { formatUsdCents } from "../../lib/money";
@@ -32,9 +33,12 @@ export function CustomerFactoringQueueReverseSection({ operatingCompanyId, custo
         <ul className="mt-2 space-y-1">
           {rows.slice(0, 5).map((row) => (
             <li key={row.load_id}>
-              <Link className="text-xs font-semibold text-slate-700 hover:underline" to={`/dispatch/factoring-queue?load_id=${encodeURIComponent(row.load_id)}`}>
-                {row.load_number} · {row.packet_stage} · {formatUsdCents(row.rate_total_cents)}
-              </Link>
+              <EntityLink
+                kind="factoring_queue_load"
+                id={row.load_id}
+                label={`${row.load_number} · ${row.packet_stage} · ${formatUsdCents(row.rate_total_cents)}`}
+                className="text-xs font-semibold text-slate-700 hover:underline"
+              />
             </li>
           ))}
         </ul>

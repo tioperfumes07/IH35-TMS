@@ -14,7 +14,7 @@ function failures(s = files) { return [
   ["company-scoped customer/template filters", s.routes.includes("customer_id: z.string().uuid().optional()") && s.routes.includes("template_id: z.string().uuid().optional()") && s.service.includes("template_json->>'customer_id' = $${values.length}") && s.service.includes("id = $${values.length}::uuid")],
   ["filtered customer profile read", s.reverse.includes("listLoadTemplates(operatingCompanyId, { customer_id: customerId })") && s.api.includes('params.set("customer_id", filters.customer_id)')],
   ["customer profile mount", s.customer.includes("<CustomerLoadTemplatesReverseSection operatingCompanyId={operatingCompanyId} customerId={id} />")],
-  ["exact template drill", s.reverse.includes("panel=templates&template_id=${encodeURIComponent(template.id)}") && s.library.includes('searchParams.get("template_id")') && s.library.includes("template_id: templateId")],
+  ["exact template drill", s.reverse.includes('kind="load_template"') && s.reverse.includes("id={template.id}") && s.library.includes('searchParams.get("template_id")') && s.library.includes("template_id: templateId")],
   ["honest reverse states", s.reverse.includes("Load templates unavailable.") && s.reverse.includes("!query.isLoading && !query.isError")],
 ].filter(([, ok]) => !ok).map(([name]) => name); }
 if (process.argv.includes("--selftest")) {
