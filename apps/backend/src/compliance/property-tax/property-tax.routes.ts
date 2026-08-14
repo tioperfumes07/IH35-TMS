@@ -20,6 +20,7 @@ function authUser(req: FastifyRequest, reply: FastifyReply) {
 }
 
 const companyQuery = z.object({ operating_company_id: z.string().uuid() });
+const renditionListQuery = companyQuery.extend({ unit_id: z.string().uuid().optional() });
 
 const createRenditionBody = z.object({
   operating_company_id: z.string().uuid(),
@@ -110,12 +111,12 @@ export async function registerPropertyTaxRoutes(app: FastifyInstance) {
   app.get("/api/v1/compliance/property-tax/renditions", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
-    const q = companyQuery.safeParse(req.query ?? {});
+    const q = renditionListQuery.safeParse(req.query ?? {});
     if (!q.success) return reply.code(400).send({ error: "validation_error", details: q.error.flatten() });
     await assertCompanyMembership(user.uuid, q.data.operating_company_id);
     const renditions = await withCurrentUser(user.uuid, async (client) => {
       await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [q.data.operating_company_id]);
-      return listRenditions(client, q.data.operating_company_id);
+      return listRenditions(client, q.data.operating_company_id, q.data.unit_id);
     });
     return reply.send({ renditions });
   });

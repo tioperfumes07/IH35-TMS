@@ -70,8 +70,9 @@ export function fetchCandidateAssets(cid: string) {
   return apiRequest<{ assets: CandidateAsset[] }>(`/api/v1/compliance/property-tax/candidate-assets?${q(cid)}`);
 }
 
-export function fetchRenditions(cid: string) {
-  return apiRequest<{ renditions: Rendition[] }>(`/api/v1/compliance/property-tax/renditions?${q(cid)}`);
+export function fetchRenditions(cid: string, unitId?: string) {
+  const unit = unitId ? `&unit_id=${encodeURIComponent(unitId)}` : "";
+  return apiRequest<{ renditions: Rendition[] }>(`/api/v1/compliance/property-tax/renditions?${q(cid)}${unit}`);
 }
 
 export function fetchRendition(cid: string, id: string) {

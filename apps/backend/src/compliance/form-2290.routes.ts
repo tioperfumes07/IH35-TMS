@@ -13,6 +13,7 @@ import {
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 
 const companyQuery = z.object({ operating_company_id: z.string().uuid() });
+const filingListQuery = companyQuery.extend({ unit_id: z.string().uuid().optional() });
 const idParams = z.object({ id: z.string().uuid() });
 const generateSchema = companyQuery.extend({
   tax_period_start: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
@@ -160,7 +161,7 @@ export async function registerForm2290Routes(app: FastifyInstance) {
   app.get("/api/v1/compliance/form-2290", async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
-    const company = companyQuery.safeParse(req.query ?? {});
+    const company = filingListQuery.safeParse(req.query ?? {});
     if (!company.success) return reply.code(400).send({ error: "validation_error" });
 
     const filings = await withCompanyScope(user.uuid, company.data.operating_company_id, async (client) => {
@@ -169,10 +170,17 @@ export async function registerForm2290Routes(app: FastifyInstance) {
           SELECT *
           FROM compliance.form_2290_filings
           WHERE operating_company_id = $1::uuid
+            AND ($2::uuid IS NULL OR EXISTS (
+              SELECT 1
+              FROM compliance.form_2290_filing_vehicles v
+              WHERE v.filing_id = compliance.form_2290_filings.id
+                AND v.operating_company_id = compliance.form_2290_filings.operating_company_id
+                AND v.vehicle_id = $2::uuid
+            ))
           ORDER BY tax_period_start DESC, created_at DESC
           LIMIT 100
         `,
-        [company.data.operating_company_id]
+        [company.data.operating_company_id, company.data.unit_id ?? null]
       );
       return res.rows;
     });
