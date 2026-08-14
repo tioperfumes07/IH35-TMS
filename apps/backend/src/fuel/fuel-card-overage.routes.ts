@@ -19,6 +19,9 @@ const listQuerySchema = z.object({
   status: z
     .enum(["pending_review", "approved", "posted", "company_variance", "all"])
     .default("pending_review"),
+  driver_id: z.string().uuid().optional(),
+  unit_id: z.string().uuid().optional(),
+  event_id: z.string().uuid().optional(),
   limit: z.coerce.number().int().min(1).max(200).default(50),
   offset: z.coerce.number().int().min(0).default(0),
 });
@@ -77,6 +80,18 @@ export async function registerFuelCardOverageRoutes(app: FastifyInstance) {
         if (q.status !== "all") {
           values.push(q.status);
           filters.push(`e.status = $${values.length}`);
+        }
+        if (q.driver_id) {
+          values.push(q.driver_id);
+          filters.push(`e.driver_id = $${values.length}::uuid`);
+        }
+        if (q.unit_id) {
+          values.push(q.unit_id);
+          filters.push(`e.unit_id = $${values.length}::uuid`);
+        }
+        if (q.event_id) {
+          values.push(q.event_id);
+          filters.push(`e.id = $${values.length}::uuid`);
         }
         const whereClause = `WHERE ${filters.join(" AND ")}`;
 

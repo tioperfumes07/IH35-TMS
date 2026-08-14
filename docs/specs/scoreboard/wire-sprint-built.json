@@ -2701,6 +2701,14 @@
       "modules": ["insurance"],
       "cols": ["reverse_link"],
       "leafRe": "^(coverage_gaps|lawsuits\\.list)$"
+    },
+    {
+      "task": "VERTICAL-REVERSE-LINK-FUEL-CARD-OVERAGE",
+      "pr": "this PR",
+      "guard": "scripts/verify-fuel-card-overage-profile-reverse.mjs",
+      "modules": ["fuel"],
+      "cols": ["reverse_link"],
+      "leafRe": "^card_overage$"
     }
   ]
 }

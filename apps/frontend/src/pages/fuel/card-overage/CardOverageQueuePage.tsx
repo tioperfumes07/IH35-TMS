@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { apiRequest } from "../../../api/client";
 import { PageHeader } from "../../../components/layout/PageHeader";
 import { ActionButton } from "../../../components/shared/ActionButton";
@@ -18,7 +18,7 @@ import { EntityLink } from "../../../components/shared/EntityLink";
  * Does NOT flip BANK-F10 PASS — flags default OFF; Neon events=0 until engine enabled.
  */
 
-type OverageEventRow = {
+export type OverageEventRow = {
   id: string;
   fuel_transaction_id: string;
   driver_id: string | null;
@@ -47,11 +47,16 @@ function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(cents / 100);
 }
 
-async function listOverageEvents(companyId: string, status: string) {
+export async function listOverageEvents(
+  companyId: string,
+  status: string,
+  filters: { driver_id?: string; unit_id?: string; event_id?: string } = {}
+) {
   const params = new URLSearchParams({
     operating_company_id: companyId,
     status,
     limit: "100",
+    ...filters,
   });
   return apiRequest<ListResponse>(`/api/v1/fuel/card-overage-events?${params.toString()}`);
 }
@@ -62,10 +67,19 @@ export function CardOverageQueuePage() {
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
   const [statusFilter, setStatusFilter] = useState("pending_review");
+  const [searchParams] = useSearchParams();
+  const eventId = searchParams.get("event_id") ?? undefined;
+  const driverId = searchParams.get("driver_id") ?? undefined;
+  const unitId = searchParams.get("unit_id") ?? undefined;
+  const hasEntityTarget = Boolean(eventId || driverId || unitId);
 
   const eventsQuery = useQuery({
-    queryKey: ["fuel", "card-overage-events", companyId, statusFilter],
-    queryFn: () => listOverageEvents(companyId, statusFilter),
+    queryKey: ["fuel", "card-overage-events", companyId, statusFilter, eventId ?? null, driverId ?? null, unitId ?? null],
+    queryFn: () => listOverageEvents(companyId, hasEntityTarget ? "all" : statusFilter, {
+      event_id: eventId,
+      driver_id: driverId,
+      unit_id: unitId,
+    }),
     enabled: Boolean(companyId),
   });
 
@@ -206,6 +220,11 @@ export function CardOverageQueuePage() {
       </p>
 
       <div className="flex flex-wrap items-center gap-2">
+        {hasEntityTarget ? (
+          <Link to="/fuel/card-overage" className="text-xs font-semibold text-slate-700 underline">
+            Clear profile/event target
+          </Link>
+        ) : null}
         {["pending_review", "approved", "posted", "company_variance", "all"].map((status) => (
           <button
             key={status}
