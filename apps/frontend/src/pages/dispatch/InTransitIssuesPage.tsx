@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import {
   createDispatchIntransitIssue,
   listDispatchIntransitIssues,
@@ -23,6 +23,10 @@ export function InTransitIssuesPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const queryClient = useQueryClient();
+  const [searchParams] = useSearchParams();
+  const reverseLoadId = searchParams.get("load_id")?.trim() || "";
+  const reverseDriverId = searchParams.get("driver_id")?.trim() || "";
+  const reverseUnitId = searchParams.get("unit_id")?.trim() || "";
   const [createOpen, setCreateOpen] = useState(false);
   const [loadId, setLoadId] = useState("");
   const [category, setCategory] = useState("mechanical");
@@ -31,8 +35,13 @@ export function InTransitIssuesPage() {
   const [error, setError] = useState("");
 
   const issuesQ = useQuery({
-    queryKey: ["dispatch", "intransit-issues", companyId],
-    queryFn: () => listDispatchIntransitIssues(companyId),
+    queryKey: ["dispatch", "intransit-issues", companyId, reverseLoadId, reverseDriverId, reverseUnitId],
+    queryFn: () =>
+      listDispatchIntransitIssues(companyId, {
+        load_id: reverseLoadId || undefined,
+        driver_id: reverseDriverId || undefined,
+        unit_id: reverseUnitId || undefined,
+      }),
     enabled: Boolean(companyId),
   });
 

@@ -156,6 +156,9 @@ export type EntityKind =
   | "insurance_claims_trailer"
   | "active_wos_driver"
   | "active_wos_load"
+  | "intransit_issues_load"
+  | "intransit_issues_driver"
+  | "intransit_issues_unit"
   // SAF-F33: safety records were undrillable — no module could link INTO an accident, fine,
   // complaint, DOT inspection, escrow record, or permit. These resolve to the record's list surface
   // with a query param the page honors (same drill pattern as claim/lawsuit/settlement).
@@ -463,6 +466,12 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
       return `/maintenance/active-wos?driver_id=${id}`;
     case "active_wos_load":
       return `/maintenance/active-wos?load_id=${id}`;
+    case "intransit_issues_load":
+      return `/dispatch/in-transit-issues?load_id=${id}`;
+    case "intransit_issues_driver":
+      return `/dispatch/in-transit-issues?driver_id=${id}`;
+    case "intransit_issues_unit":
+      return `/dispatch/in-transit-issues?unit_id=${id}`;
     // SAF-F33 safety drill-through — each target list page reads the param and opens/highlights the row.
     case "accident":
       return `/safety/accidents?accident_id=${id}`;
