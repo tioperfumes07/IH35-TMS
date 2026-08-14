@@ -61,11 +61,17 @@ function buildQuery(reportId: string, values: Record<string, unknown>) {
     if (values.to) q.set("to", String(values.to));
     return q;
   }
+  if (reportId === "hos-violations") {
+    if (values.from) q.set("from", String(values.from));
+    if (values.to) q.set("to", `${String(values.to)}T23:59:59.999Z`);
+    return q;
+  }
   return q;
 }
 
 function responseRows(reportId: string, payload: any): Record<string, unknown>[] {
   if (reportId === "driver-pay-history") return (payload.settlements ?? []) as Record<string, unknown>[];
+  if (reportId === "hos-violations") return (payload.hos_violations ?? []) as Record<string, unknown>[];
   if (reportId === "csa-fleet") return [payload as Record<string, unknown>];
   if (reportId === "fleet-utilization") return [payload as Record<string, unknown>];
   return (payload.rows ?? []) as Record<string, unknown>[];

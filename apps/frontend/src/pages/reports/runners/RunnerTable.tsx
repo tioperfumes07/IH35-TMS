@@ -1,6 +1,8 @@
 import { useMemo, useState } from "react";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import type { RunnerColumn } from "./runner-config";
+import { EntityLink } from "../../../components/shared/EntityLink";
+import { entityLabel } from "../../../lib/entity-label";
 
 type Props = {
   columns: RunnerColumn[];
@@ -72,7 +74,9 @@ export function RunnerTable({ columns, rows, onSort, tableId = "reports-runner" 
           className: alignment,
           cellClass: alignment,
           sortValue: (row) => sortValue(row.record[column.key], column.format),
-          render: (row) => formatCell(row.record[column.key], column.format),
+          render: (row) => column.entityKind && column.entityIdKey
+            ? <EntityLink kind={column.entityKind} id={row.record[column.entityIdKey] as string | null | undefined} label={entityLabel(row.record[column.key], row.record[column.entityIdKey], column.label)} />
+            : formatCell(row.record[column.key], column.format),
         };
       }),
     [columns],

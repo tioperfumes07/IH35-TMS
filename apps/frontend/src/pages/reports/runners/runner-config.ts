@@ -1,9 +1,13 @@
+import type { EntityKind } from "../../../components/shared/EntityLink";
+
 export type RunnerColumn = {
   key: string;
   label: string;
   align: "left" | "right" | "center";
   format?: "currency" | "percent" | "number" | "date" | "text";
   sortable?: boolean;
+  entityKind?: EntityKind;
+  entityIdKey?: string;
 };
 
 export type RunnerFilter = {
@@ -147,6 +151,22 @@ export const RUNNER_CONFIGS: Record<string, ReportRunnerConfig> = {
       { key: "total_variance_dollars", label: "Total variance", align: "right", format: "number", sortable: true },
     ],
     csvFilename: (filters) => `fuel-price-variance-${String(filters.from ?? "from")}-to-${String(filters.to ?? "to")}.csv`,
+  },
+  "hos-violations": {
+    id: "hos-violations",
+    name: "HOS violations trend",
+    apiPath: "/api/v1/safety/hos-violations",
+    filters: [{ type: "date_range", key: "date_range", label: "Date range", required: true }],
+    columns: [
+      { key: "driver_name", label: "Driver", align: "left", sortable: true, entityKind: "driver", entityIdKey: "driver_id" },
+      { key: "related_load_number", label: "Load", align: "left", sortable: true, entityKind: "load", entityIdKey: "related_load_id" },
+      { key: "violation_type", label: "Violation", align: "left", sortable: true },
+      { key: "occurred_at", label: "Occurred", align: "left", format: "date", sortable: true },
+      { key: "duration_minutes", label: "Duration (min)", align: "right", format: "number", sortable: true },
+      { key: "csa_points", label: "Points", align: "right", format: "number", sortable: true },
+      { key: "source", label: "Source", align: "left", sortable: true },
+    ],
+    csvFilename: (filters) => `hos-violations-${String(filters.from ?? "from")}-to-${String(filters.to ?? "to")}.csv`,
   },
   "csa-fleet": {
     id: "csa-fleet",
