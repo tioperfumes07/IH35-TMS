@@ -89,7 +89,7 @@ the leaf stays OPEN.
 | `safety:asset.incident_open_queues` | Cursor (EntityLink janitor) | #6875 | `verify-asset-safety-reverse-section.mjs` |
 | `safety:driver.dot_training_complaints.open` | Cursor (EntityLink janitor) | #6880 | `verify-driver-safety-reverse-section.mjs` |
 | `safety:asset.dot_dvir.open` | Cursor (EntityLink janitor) | #6880 | `verify-asset-safety-reverse-section.mjs` |
-| `settlements:disputes.open_queue` | Cursor (EntityLink janitor) | PENDING | `verify-driver-settlement-finance-reverse-section.mjs` |
+| `settlements:disputes.open_queue` | Cursor (EntityLink janitor) | #6885 | `verify-driver-settlement-finance-reverse-section.mjs` |
 
 ## Uncertain — Cursor attributed these to Codex; Codex's itemized report does not confirm them
 Needs Codex to confirm with PR#/guard or explicitly release as OPEN.
