@@ -145,6 +145,9 @@ export type EntityKind =
   | "safety_events_load"
   | "insurance_policies_vendor"
   | "severe_repairs_unit"
+  | "driver_scheduler_driver"
+  | "driver_scheduler_unit"
+  | "customer_notify_preferences"
   | "safety_fines_driver"
   | "safety_fines_load"
   | "safety_fines_unit"
@@ -447,6 +450,12 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
       return `/safety/insurance/policies?vendor_id=${id}`;
     case "severe_repairs_unit":
       return `/maintenance/severe-repairs?unit_id=${id}`;
+    case "driver_scheduler_driver":
+      return `/safety/driver-scheduler?driver_id=${id}`;
+    case "driver_scheduler_unit":
+      return `/safety/driver-scheduler?unit_id=${id}`;
+    case "customer_notify_preferences":
+      return `/dispatch/notify-preferences?customer_id=${id}`;
     case "safety_fines_driver":
       return `/safety/external-fines?subject_driver_id=${id}`;
     case "safety_fines_load":

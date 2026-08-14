@@ -20,7 +20,9 @@ function audit(s) {
   if (!/unit_id: z\.string\(\)\.uuid\(\)\.optional\(\)/.test(s.routes) || !/unitId: parsed\.data\.unit_id/.test(s.routes)) failures.push("route unit filter contract missing");
   if (!/listTempAssignments\(operatingCompanyId: string, filters: \{ driver_id\?: string; unit_id\?: string \}/.test(s.api) || !/unit_id: unitId/.test(s.creator)) failures.push("frontend filtered list contract missing");
   if (!/listTempAssignments\(operatingCompanyId, \{ unit_id: unitId \}\)/.test(s.reverse) || !/query\.isError/.test(s.reverse) || !/No active temporary driver coverage is linked to this unit/.test(s.reverse)) failures.push("honest unit reverse missing");
-  if (!/safety\/driver-scheduler\?unit_id=/.test(s.reverse)) failures.push("canonical filtered scheduler drill missing");
+  if (!(/kind="driver_scheduler_unit"/.test(s.reverse) || /safety\/driver-scheduler\?unit_id=/.test(s.reverse))) {
+    failures.push("canonical filtered scheduler drill missing");
+  }
   if (!/UnitTempCoverReverseSection[\s\S]{0,140}unitId=\{id\}/.test(s.profile) || !/UnitTempCoverReverseSection[\s\S]{0,140}unitId=\{id\}/.test(s.detail)) failures.push("both unit profile mounts missing");
   return failures;
 }
