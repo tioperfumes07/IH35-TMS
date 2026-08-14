@@ -8,7 +8,7 @@
 ## ☐ NOW (Cursor lane — permanent sequence)
 
 1. **Theater purge:** `qbo_chrome` + `picker_law` — no `leafRe:.*` / `|.*` / word-blanket Built  
-2. **Surface-bar leaf-existence audit** (Fully-Wired item 7): real modal/drawer/wizard/nested-create in code missing from `required.json` → add leaf or N/A  
+2. **Surface-bar leaf-existence audit** (Fully-Wired item 7): real modal/drawer/wizard/nested-create in code missing from `required.json` → add leaf or N/A — **create-drawer ratchet live:** `scripts/verify-surface-bar-create-drawer-inventory.mjs` (extend to wizards/toolbars next)  
 3. FE reverse/connectivity leftovers (EntityLink / drawer / chrome — non-GL)  
 4. Bus truth + rewake idle seats — never idle waiting for Jorge  
 5. Live Chrome **only after** honest Built for the agreed gate  

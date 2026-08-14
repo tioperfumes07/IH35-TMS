@@ -2,10 +2,10 @@
   "module": "fleet",
   "entity_default": "USMCA",
   "source": {
-    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md \u2014 Vehicle Profile \u00b7 Trailer Profile (Fleet module)",
+    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md — Vehicle Profile · Trailer Profile (Fleet module)",
     "nav": "apps/frontend/src/pages/fleet/FleetHomePage.tsx + FleetTablePage kind/status sub-tabs",
-    "profiles": "VehicleProfilePage \u00b7 TrailerProfilePage \u00b7 UnitDetail (permits/toll-tags/tasks/brakes/tires/finance)",
-    "modals": "CreateUnitModal \u00b7 CreateTrailerModal \u00b7 EditVehicleModal (8 tabs) \u00b7 EditTrailerModal \u00b7 QuickAssignModal \u00b7 StatusChangeModal",
+    "profiles": "VehicleProfilePage · TrailerProfilePage · UnitDetail (permits/toll-tags/tasks/brakes/tires/finance)",
+    "modals": "CreateUnitModal · CreateTrailerModal · EditVehicleModal (8 tabs) · EditTrailerModal · QuickAssignModal · StatusChangeModal",
     "routes": "apps/frontend/src/routes/manifest.tsx /fleet/*"
   },
   "columns": [
@@ -168,7 +168,7 @@
     {
       "id": "roster.kind.all",
       "tab": "Roster",
-      "sub": "Kind filter \u00b7 All",
+      "sub": "Kind filter · All",
       "route_hint": "/fleet?kind=",
       "required": [
         "unit",
@@ -180,7 +180,7 @@
     {
       "id": "roster.kind.trucks",
       "tab": "Roster",
-      "sub": "Kind filter \u00b7 Trucks",
+      "sub": "Kind filter · Trucks",
       "route_hint": "/fleet?kind=truck",
       "required": [
         "unit",
@@ -190,7 +190,7 @@
     {
       "id": "roster.kind.trailers",
       "tab": "Roster",
-      "sub": "Kind filter \u00b7 Trailers",
+      "sub": "Kind filter · Trailers",
       "route_hint": "/fleet?kind=trailer",
       "required": [
         "trailer",
@@ -200,14 +200,14 @@
     {
       "id": "roster.kind.company",
       "tab": "Roster",
-      "sub": "Kind filter \u00b7 Company Vehicles",
+      "sub": "Kind filter · Company Vehicles",
       "route_hint": "/fleet?kind=company",
       "required": []
     },
     {
       "id": "roster.filter.type",
       "tab": "Roster",
-      "sub": "Type filter (Truck \u00b7 Tractor \u00b7 Reefer \u00b7 \u2026)",
+      "sub": "Type filter (Truck · Tractor · Reefer · …)",
       "route_hint": "/fleet?type=",
       "required": [
         "unit",
@@ -219,7 +219,7 @@
     {
       "id": "roster.filter.status_active",
       "tab": "Roster",
-      "sub": "KPI filter \u00b7 Active (InService)",
+      "sub": "KPI filter · Active (InService)",
       "route_hint": "/fleet?status=InService",
       "required": [
         "unit",
@@ -230,7 +230,7 @@
     {
       "id": "roster.filter.status_inshop",
       "tab": "Roster",
-      "sub": "KPI filter \u00b7 In-Shop",
+      "sub": "KPI filter · In-Shop",
       "route_hint": "/fleet?status=InMaintenance",
       "required": [
         "unit",
@@ -240,7 +240,7 @@
     {
       "id": "roster.filter.status_oos",
       "tab": "Roster",
-      "sub": "KPI filter \u00b7 Out-of-Service",
+      "sub": "KPI filter · Out-of-Service",
       "route_hint": "/fleet?status=OutOfService",
       "required": [
         "unit",
@@ -250,7 +250,7 @@
     {
       "id": "roster.bulk.status",
       "tab": "Roster",
-      "sub": "Bulk \u00b7 Change Status",
+      "sub": "Bulk · Change Status",
       "route_hint": "/fleet",
       "required": [
         "unit",
@@ -262,7 +262,7 @@
     {
       "id": "roster.bulk.type",
       "tab": "Roster",
-      "sub": "Bulk \u00b7 Change Type",
+      "sub": "Bulk · Change Type",
       "route_hint": "/fleet",
       "required": [
         "unit",
@@ -274,7 +274,7 @@
     {
       "id": "roster.bulk.inactivate",
       "tab": "Roster",
-      "sub": "Bulk \u00b7 Inactivate / Reactivate",
+      "sub": "Bulk · Inactivate / Reactivate",
       "route_hint": "/fleet",
       "required": [
         "unit",
@@ -286,7 +286,7 @@
     {
       "id": "roster.row.edit_unit",
       "tab": "Roster",
-      "sub": "Row Edit \u00b7 truck/tractor",
+      "sub": "Row Edit · truck/tractor",
       "route_hint": "/fleet",
       "required": [
         "driver",
@@ -301,7 +301,7 @@
     {
       "id": "roster.row.edit_trailer",
       "tab": "Roster",
-      "sub": "Row Edit \u00b7 trailer",
+      "sub": "Row Edit · trailer",
       "route_hint": "/fleet",
       "required": [
         "qbo_chrome",
@@ -313,7 +313,7 @@
     {
       "id": "unit.profile.identity",
       "tab": "Vehicle Profile",
-      "sub": "Identity \u00b7 status \u00b7 plates \u00b7 quick availability",
+      "sub": "Identity · status · plates · quick availability",
       "route_hint": "/fleet/units/:id",
       "required": [
         "unit",
@@ -405,7 +405,7 @@
     {
       "id": "unit.profile.expenses_reverse",
       "tab": "Vehicle Profile",
-      "sub": "Expenses reverse \u00b7 unit_id filter",
+      "sub": "Expenses reverse · unit_id filter",
       "route_hint": "/fleet/units/:id",
       "required": [
         "unit",
@@ -441,7 +441,7 @@
     {
       "id": "unit.profile.financial_pl",
       "tab": "Vehicle Profile",
-      "sub": "Financial P&L \u00b7 ownership cost \u00b7 comparables",
+      "sub": "Financial P&L · ownership cost · comparables",
       "route_hint": "/fleet/units/:id",
       "required": [
         "unit",
@@ -488,7 +488,7 @@
     {
       "id": "unit.profile.safety_reverse",
       "tab": "Vehicle Profile",
-      "sub": "Safety records reverse (DOT \u00b7 DVIR \u00b7 accidents)",
+      "sub": "Safety records reverse (DOT · DVIR · accidents)",
       "route_hint": "/fleet/units/:id",
       "required": [
         "unit",
@@ -534,7 +534,7 @@
     {
       "id": "unit.profile.action_bar",
       "tab": "Vehicle Profile",
-      "sub": "Action bar (Edit \u00b7 Archive \u00b7 PDF export)",
+      "sub": "Action bar (Edit · Archive · PDF export)",
       "route_hint": "/fleet/units/:id",
       "required": [
         "unit",
@@ -545,7 +545,7 @@
     {
       "id": "unit.edit.identity",
       "tab": "Edit Vehicle",
-      "sub": "Modal tab \u00b7 Identity",
+      "sub": "Modal tab · Identity",
       "route_hint": "/fleet/units/:id",
       "required": [
         "unit",
@@ -557,7 +557,7 @@
     {
       "id": "unit.edit.insurance",
       "tab": "Edit Vehicle",
-      "sub": "Modal tab \u00b7 Insurance",
+      "sub": "Modal tab · Insurance",
       "route_hint": "/fleet/units/:id",
       "required": [
         "unit",
@@ -568,17 +568,19 @@
     {
       "id": "unit.edit.irp_plates",
       "tab": "Edit Vehicle",
-      "sub": "Modal tab \u00b7 IRP / Plates",
+      "sub": "Modal tab · IRP / Plates",
       "route_hint": "/fleet/units/:id",
       "required": [
         "unit",
         "connectivity"
-      ]
+      ],
+      "surface_path": "components/vehicle-profile/PlatesTable.tsx",
+      "surface_kind": "drawer"
     },
     {
       "id": "unit.edit.reefer",
       "tab": "Edit Vehicle",
-      "sub": "Modal tab \u00b7 Reefer (conditional)",
+      "sub": "Modal tab · Reefer (conditional)",
       "route_hint": "/fleet/units/:id",
       "required": [
         "unit",
@@ -589,7 +591,7 @@
     {
       "id": "unit.edit.financial",
       "tab": "Edit Vehicle",
-      "sub": "Modal tab \u00b7 Financial",
+      "sub": "Modal tab · Financial",
       "route_hint": "/fleet/units/:id",
       "required": [
         "unit",
@@ -599,7 +601,7 @@
     {
       "id": "unit.edit.lifecycle",
       "tab": "Edit Vehicle",
-      "sub": "Modal tab \u00b7 Lifecycle (Sold \u00b7 Transferred \u00b7 Damaged \u00b7 OOS)",
+      "sub": "Modal tab · Lifecycle (Sold · Transferred · Damaged · OOS)",
       "route_hint": "/fleet/units/:id",
       "required": [
         "unit",
@@ -609,7 +611,7 @@
     {
       "id": "unit.edit.quick_availability",
       "tab": "Edit Vehicle",
-      "sub": "Modal tab \u00b7 Quick-availability + default driver",
+      "sub": "Modal tab · Quick-availability + default driver",
       "route_hint": "/fleet/units/:id",
       "required": [
         "driver",
@@ -623,7 +625,7 @@
     {
       "id": "unit.edit.documents",
       "tab": "Edit Vehicle",
-      "sub": "Modal tab \u00b7 Documents",
+      "sub": "Modal tab · Documents",
       "route_hint": "/fleet/units/:id",
       "required": [
         "unit",
@@ -698,7 +700,7 @@
     {
       "id": "trailer.profile.identity",
       "tab": "Trailer Profile",
-      "sub": "Identity \u00b7 status badge \u00b7 status change entry",
+      "sub": "Identity · status badge · status change entry",
       "route_hint": "/fleet/trailers/:id",
       "required": [
         "trailer",
@@ -774,7 +776,7 @@
     {
       "id": "trailer.profile.safety_reverse",
       "tab": "Trailer Profile",
-      "sub": "Safety records reverse (DOT \u00b7 interchange)",
+      "sub": "Safety records reverse (DOT · interchange)",
       "route_hint": "/fleet/trailers/:id",
       "required": [
         "trailer",
@@ -820,7 +822,7 @@
     {
       "id": "trailer.profile.expenses_reverse",
       "tab": "Trailer Profile",
-      "sub": "Expenses reverse \u00b7 trailer_id filter",
+      "sub": "Expenses reverse · trailer_id filter",
       "route_hint": "/fleet/trailers/:id",
       "required": [
         "trailer",
@@ -842,7 +844,7 @@
     {
       "id": "trailer.profile.action_bar",
       "tab": "Trailer Profile",
-      "sub": "Action bar (Edit \u00b7 Status \u00b7 Archive \u00b7 PDF)",
+      "sub": "Action bar (Edit · Status · Archive · PDF)",
       "route_hint": "/fleet/trailers/:id",
       "required": [
         "trailer",
@@ -886,7 +888,7 @@
     {
       "id": "map.redirect",
       "tab": "Map",
-      "sub": "Fleet map \u2192 Dispatch map (driver/unit hop)",
+      "sub": "Fleet map → Dispatch map (driver/unit hop)",
       "route_hint": "/fleet/map",
       "required": [
         "driver",
@@ -975,7 +977,7 @@
     {
       "id": "chrome.toolbar_search",
       "tab": "Chrome controls",
-      "sub": "List toolbar \u2014 Search (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar — Search (CLS-LIST-TOOLBAR)",
       "route_hint": "/fleet",
       "surface_kind": "toolbar",
       "required": [
@@ -985,7 +987,7 @@
     {
       "id": "chrome.toolbar_range",
       "tab": "Chrome controls",
-      "sub": "List toolbar \u2014 date/amount range (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar — date/amount range (CLS-LIST-TOOLBAR)",
       "route_hint": "/fleet",
       "surface_kind": "toolbar",
       "required": [
@@ -995,7 +997,7 @@
     {
       "id": "chrome.toolbar_gear",
       "tab": "Chrome controls",
-      "sub": "List toolbar \u2014 column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
+      "sub": "List toolbar — column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
       "route_hint": "/fleet",
       "surface_kind": "toolbar",
       "required": [
@@ -1005,7 +1007,7 @@
     {
       "id": "chrome.toolbar_filter",
       "tab": "Chrome controls",
-      "sub": "List toolbar \u2014 Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
+      "sub": "List toolbar — Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
       "route_hint": "/fleet",
       "surface_kind": "toolbar",
       "required": [
@@ -1027,7 +1029,7 @@
         "invoice",
         "bank"
       ],
-      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; \u00a7B9 link columns added."
+      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; §B9 link columns added."
     },
     "picker_law_2026_08_13_fleet": {
       "finding": "VERTICAL-PICKER-LAW-FLEET-EDIT",
@@ -1295,7 +1297,7 @@
     },
     "trailer_column_2026_08_14_overclaim": {
       "finding": "LINK-F5163-TRAILER-COLUMN-VERTICAL-SWEEP",
-      "note": "8 of 38 fleet leaves are false: home.create_unit/fleet.modal.create_unit only create a truck unit, no trailer field; unit.profile.identity/unit.edit.identity are truck-only identity fields; unit.profile.current_load renders EntityLink kind=\"unit\"/kind=\"load\" but never trailer despite loads carrying a trailer assignment; unit.edit.reefer is a static read-only string pointing at a trailer id, not a real EntityLink/picker/editable field. roster.row.edit_trailer and transfers.in_progress were found broken (see the separate trailer_column_2026_08_14_bugfix honesty_audit entry) and fixed in this PR; both now correctly keep the trailer Required marking. The other 28 leaves KEEP the Required marking \u2014 TrailerProfilePage.tsx's 13 self-referential trailer.profile.* sections, trailer.status_change/trailer.edit, the roster kind/filter/bulk actions (real kind-branching on trailer rows), home.roster, home.create_trailer, fleet.modal.create_trailer/edit_trailer/quick_assign, and unit.profile.reefer (real attached-trailer reefer telemetry) all confirmed genuine.",
+      "note": "8 of 38 fleet leaves are false: home.create_unit/fleet.modal.create_unit only create a truck unit, no trailer field; unit.profile.identity/unit.edit.identity are truck-only identity fields; unit.profile.current_load renders EntityLink kind=\"unit\"/kind=\"load\" but never trailer despite loads carrying a trailer assignment; unit.edit.reefer is a static read-only string pointing at a trailer id, not a real EntityLink/picker/editable field. roster.row.edit_trailer and transfers.in_progress were found broken (see the separate trailer_column_2026_08_14_bugfix honesty_audit entry) and fixed in this PR; both now correctly keep the trailer Required marking. The other 28 leaves KEEP the Required marking — TrailerProfilePage.tsx's 13 self-referential trailer.profile.* sections, trailer.status_change/trailer.edit, the roster kind/filter/bulk actions (real kind-branching on trailer rows), home.roster, home.create_trailer, fleet.modal.create_trailer/edit_trailer/quick_assign, and unit.profile.reefer (real attached-trailer reefer telemetry) all confirmed genuine.",
       "drops": [
         {
           "id": "home.create_unit",
@@ -1361,7 +1363,7 @@
     },
     "customer_column_2026_08_14_overclaim": {
       "finding": "LINK-F5165-CUSTOMER-COLUMN-VERTICAL-SWEEP",
-      "note": "unit.profile.current_load renders \"Customer: {name}\" as plain inert text with no customer_id field or EntityLink kind=\"customer\" \u2014 cosmetic, not real linkage.",
+      "note": "unit.profile.current_load renders \"Customer: {name}\" as plain inert text with no customer_id field or EntityLink kind=\"customer\" — cosmetic, not real linkage.",
       "drops": [
         {
           "id": "unit.profile.current_load",
@@ -1373,7 +1375,7 @@
     },
     "vendor_column_2026_08_14_overclaim": {
       "finding": "LINK-F5166-VENDOR-COLUMN-VERTICAL-SWEEP",
-      "note": "10 of 13 fleet leaves are false: the roster/create-unit/create-trailer/edit surfaces and unit/trailer identity tabs have zero vendor references; unit.edit.financial's qbo_vendor_id field degrades to a raw text input (no picker) in EditVehicleModal.tsx, distinct from the genuine picker on the profile page itself; trailer.profile.maintenance and trailer.edit have zero vendor wiring anywhere. unit.profile.maintenance (KEPT \u2014 real vendor via a backend LEFT JOIN mdata.vendors, shown as plain text but genuinely vendor-backed), unit.profile.qbo_mapping (KEPT \u2014 real QboCombobox entityType=\"vendor\"), and unit.detail.finance_linkage (KEPT \u2014 real vendor_name alongside a real EntityLink kind=\"bill\") all keep the Required marking.",
+      "note": "10 of 13 fleet leaves are false: the roster/create-unit/create-trailer/edit surfaces and unit/trailer identity tabs have zero vendor references; unit.edit.financial's qbo_vendor_id field degrades to a raw text input (no picker) in EditVehicleModal.tsx, distinct from the genuine picker on the profile page itself; trailer.profile.maintenance and trailer.edit have zero vendor wiring anywhere. unit.profile.maintenance (KEPT — real vendor via a backend LEFT JOIN mdata.vendors, shown as plain text but genuinely vendor-backed), unit.profile.qbo_mapping (KEPT — real QboCombobox entityType=\"vendor\"), and unit.detail.finance_linkage (KEPT — real vendor_name alongside a real EntityLink kind=\"bill\") all keep the Required marking.",
       "drops": [
         {
           "id": "home.roster",
@@ -1439,7 +1441,7 @@
     },
     "unit_column_2026_08_14_overclaim": {
       "finding": "LINK-F5167-UNIT-COLUMN-VERTICAL-SWEEP",
-      "note": "12 of 62 fleet leaves are false: home.create_trailer/roster.kind.trailers/trailer.profile.*(4)/trailer.status_change/trailer.edit/fleet.modal.create_trailer/fleet.modal.edit_trailer are all trailer-only surfaces with zero unit_id (trailer.profile.identity/reefer/maintenance/safety_reverse are trailer-scoped self-reference, not unit); roster.kind.company never matches any row (UnifiedUnitRow.kind is typed truck|trailer only, permanently empty); map.redirect (MapView.tsx) only reads load_id/driver_id, no unit param. The other 50 leaves KEEP the Required marking \u2014 VehicleProfilePage.tsx's 26 self-referential unit.profile.* sections, all 8 unit.edit.* tabs, all 6 unit.detail.* tabs, real roster kind-branching for truck rows, trailer.profile.assignment (shows the real attached unit), and the unit-scoped modals.",
+      "note": "12 of 62 fleet leaves are false: home.create_trailer/roster.kind.trailers/trailer.profile.*(4)/trailer.status_change/trailer.edit/fleet.modal.create_trailer/fleet.modal.edit_trailer are all trailer-only surfaces with zero unit_id (trailer.profile.identity/reefer/maintenance/safety_reverse are trailer-scoped self-reference, not unit); roster.kind.company never matches any row (UnifiedUnitRow.kind is typed truck|trailer only, permanently empty); map.redirect (MapView.tsx) only reads load_id/driver_id, no unit param. The other 50 leaves KEEP the Required marking — VehicleProfilePage.tsx's 26 self-referential unit.profile.* sections, all 8 unit.edit.* tabs, all 6 unit.detail.* tabs, real roster kind-branching for truck rows, trailer.profile.assignment (shows the real attached unit), and the unit-scoped modals.",
       "drops": [
         {
           "id": "home.create_trailer",
@@ -1517,7 +1519,7 @@
     },
     "driver_column_2026_08_14_overclaim": {
       "finding": "LINK-F5168-DRIVER-COLUMN-VERTICAL-SWEEP",
-      "note": "driver blanket-required on 13 fleet leaves. Verified live \u2014 FleetTable.tsx's roster grid (home.roster/roster.kind.trucks) has zero driver_id field/EntityLink/EntityPicker on-screen (\"assigned driver\" appears only in an Excel-export tooltip); CreateUnitModal.tsx/CreateTrailerModal.tsx/EditTrailerModal.tsx have no driver field at all; IdentityStatusHeader.tsx (unit.profile.identity) and CurrentLoadSection.tsx (unit.profile.current_load) only link kind=\"unit\"/kind=\"load\"; AssetSafetyReverseSection.tsx (unit.profile.safety_reverse) shows driver_name as PLAIN TEXT only, no driver_id/EntityLink; EditVehicleModal.tsx's \"Identity\" tab (unit.edit.identity) has no driver field \u2014 assigned_driver_id lives only on the separate Quick-availability tab; TasksTab.tsx (unit.detail.tasks) is scoped only to targetType=\"unit\"; CurrentAssignmentSection.tsx (trailer.profile.assignment) shows only the attached truck and current load, no driver.",
+      "note": "driver blanket-required on 13 fleet leaves. Verified live — FleetTable.tsx's roster grid (home.roster/roster.kind.trucks) has zero driver_id field/EntityLink/EntityPicker on-screen (\"assigned driver\" appears only in an Excel-export tooltip); CreateUnitModal.tsx/CreateTrailerModal.tsx/EditTrailerModal.tsx have no driver field at all; IdentityStatusHeader.tsx (unit.profile.identity) and CurrentLoadSection.tsx (unit.profile.current_load) only link kind=\"unit\"/kind=\"load\"; AssetSafetyReverseSection.tsx (unit.profile.safety_reverse) shows driver_name as PLAIN TEXT only, no driver_id/EntityLink; EditVehicleModal.tsx's \"Identity\" tab (unit.edit.identity) has no driver field — assigned_driver_id lives only on the separate Quick-availability tab; TasksTab.tsx (unit.detail.tasks) is scoped only to targetType=\"unit\"; CurrentAssignmentSection.tsx (trailer.profile.assignment) shows only the attached truck and current load, no driver.",
       "drops": [
         {
           "id": "home.roster",
