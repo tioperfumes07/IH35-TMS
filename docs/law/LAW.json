@@ -586,5 +586,12 @@
     "source_file": "apps/frontend/src/pages/dispatch/LoadCreateModal.tsx",
     "guard": "scripts/verify-load-create-modal-asset-unit-link.mjs",
     "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-14-ACCT-F5152-AP-BILL-SURFACE-WIRING",
+    "title": "accounting ap_bill money-cell gap closed to 0 — PayBillModal, CCPaymentModal, BillDetailPanel, VendorBillForm (VendorBillCreatePage), and BillPaymentModal each carry a verified vendor + CoA/bank-account + bill-reference contract, proven (not assumed) via the real submit payloads and EntityLinks in each file",
+    "source_file": "apps/frontend/src/pages/accounting/PayBillModal.tsx",
+    "guard": "scripts/verify-acct-ap-bill-surface-wiring.mjs",
+    "type": "enforced"
   }
 ]
