@@ -22,7 +22,7 @@ const CHECKS = [
   ["apps/frontend/src/components/tasks/TaskSubjectLink.tsx", /unit: "unit",/],
   ["apps/frontend/src/pages/tasks/TaskPlannerGrid.tsx", /<TaskSubjectLink subjectType=\{task\.subject_type\} subjectId=\{task\.subject_id\} \/>/],
   ["apps/frontend/src/pages/tasks/TasksMinePage.tsx", /<TaskSubjectLink subjectType=\{row\.subject_type\} subjectId=\{row\.subject_id\} \/>/],
-  ["apps/frontend/src/components/tasks/CreateTaskModal.tsx", /kind=\{entityKind as "vendor" \| "driver" \| "unit"\}/],
+  ["apps/frontend/src/components/tasks/CreateTaskModal.tsx", /kind=\{entityKind as "vendor" \| "driver" \| "unit" \| "load"\}/],
 ];
 
 export function audit(files) {
