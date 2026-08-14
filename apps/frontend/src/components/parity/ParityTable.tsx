@@ -330,6 +330,8 @@ export function ParityTable<T>({
       ),
   );
   const [gearOpen, setGearOpen] = useState(false);
+  const [draftHidden, setDraftHidden] = useState<Set<string>>(() => new Set(hidden));
+  const [draftDensity, setDraftDensity] = useState<ParityDensity>(density);
   // Controlled selection (Phase A5) mirrors A1 expansion: presence of onSelectionChange
   // switches the source of truth from internal state to the caller-owned selectedKeys prop.
   const isSelectionControlled = onSelectionChange != null;
@@ -359,15 +361,44 @@ export function ParityTable<T>({
   const gearRef = useRef<HTMLDivElement>(null);
   const resizing = useRef<{ key: string; startX: number; startW: number } | null>(null);
 
-  // Close gear popover on outside click.
+  const cancelGear = () => {
+    setDraftHidden(new Set(hidden));
+    setDraftDensity(density);
+    setGearOpen(false);
+  };
+
+  const openGear = () => {
+    setDraftHidden(new Set(hidden));
+    setDraftDensity(density);
+    setGearOpen(true);
+  };
+
+  const applyGear = () => {
+    setHidden(new Set(draftHidden));
+    setDensity(draftDensity);
+    savePersisted(storageKey, { hidden: [...draftHidden], density: draftDensity, pageSize, colWidths });
+    setGearOpen(false);
+  };
+
+  const resetGear = () => {
+    setDraftHidden(new Set(columns.filter((column) => column.defaultHidden).map((column) => String(column.key))));
+    setDraftDensity(densityProp);
+  };
+
+  // Outside click / Escape cancels uncommitted gear edits.
   useEffect(() => {
     if (!gearOpen) return;
     const onDoc = (e: MouseEvent) => {
-      if (gearRef.current && !gearRef.current.contains(e.target as Node)) setGearOpen(false);
+      if (gearRef.current && !gearRef.current.contains(e.target as Node)) cancelGear();
     };
+    const onKey = (event: KeyboardEvent) => { if (event.key === "Escape") cancelGear(); };
     document.addEventListener("mousedown", onDoc);
-    return () => document.removeEventListener("mousedown", onDoc);
-  }, [gearOpen]);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDoc);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [density, gearOpen, hidden]);
 
   const visibleColumns = columns.filter((c) => c.alwaysVisible || !hidden.has(String(c.key)));
 
@@ -428,16 +459,6 @@ export function ParityTable<T>({
     [rows, selected, rowKey],
   );
   const pageAllSelected = pageRows.length > 0 && pageRows.every((r) => selected.has(rowKey(r)));
-
-  function persist(next: Partial<Persisted>) {
-    savePersisted(storageKey, {
-      hidden: [...hidden],
-      density,
-      pageSize,
-      colWidths,
-      ...next,
-    });
-  }
 
   // Drag-to-resize: capture the column + start geometry on mousedown, update width on mousemove,
   // persist on mouseup. Widths drive the table-fixed column widths and survive reloads (storageKey).
@@ -530,9 +551,9 @@ export function ParityTable<T>({
     URL.revokeObjectURL(url);
   }
 
-  function toggleColumn(key: string) {
-    setHidden((prev) => {
-      const next = new Set(prev);
+  function toggleDraftColumn(key: string) {
+    setDraftHidden((previous) => {
+      const next = new Set(previous);
       if (next.has(key)) next.delete(key);
       else next.add(key);
       return next;
@@ -782,7 +803,7 @@ export function ParityTable<T>({
               type="button"
               aria-label="Table settings"
               className="min-h-11 rounded-sm border border-gray-300 px-2 py-1 text-[12px] text-gray-700 hover:bg-gray-50 sm:min-h-0"
-              onClick={() => setGearOpen((o) => !o)}
+              onClick={() => { if (gearOpen) cancelGear(); else openGear(); }}
             >
               ⚙
             </button>
@@ -797,8 +818,8 @@ export function ParityTable<T>({
                       <input
                         type="radio"
                         name="parity-density"
-                        checked={density === opt}
-                        onChange={() => setDensity(opt)}
+                        checked={draftDensity === opt}
+                        onChange={() => setDraftDensity(opt)}
                       />
                       {DENSITY_LABEL[opt]}
                     </label>
@@ -819,24 +840,19 @@ export function ParityTable<T>({
                         >
                           <input
                             type="checkbox"
-                            checked={!hidden.has(key)}
-                            onChange={() => toggleColumn(key)}
+                            checked={!draftHidden.has(key)}
+                            onChange={() => toggleDraftColumn(key)}
                           />
                           {c.label}
                         </label>
                       );
                     })}
                 </div>
-                <button
-                  type="button"
-                  className="mt-2 w-full rounded-sm border border-gray-300 px-2 py-1 text-[12px] text-gray-700 hover:bg-gray-50"
-                  onClick={() => {
-                    persist({});
-                    setGearOpen(false);
-                  }}
-                >
-                  Save as default
-                </button>
+                <div className="mt-2 flex items-center justify-end gap-2 border-t border-gray-200 pt-2">
+                  <button type="button" className="rounded-sm px-2 py-1 text-[12px] font-semibold text-gray-600 hover:bg-gray-100" onClick={resetGear}>Reset</button>
+                  <button type="button" className="rounded-sm border border-gray-300 bg-white px-2 py-1 text-[12px] font-semibold text-gray-700 hover:bg-gray-50" onClick={cancelGear}>Cancel</button>
+                  <button type="button" className="rounded-sm bg-[#1F2A44] px-2 py-1 text-[12px] font-semibold text-white hover:bg-[#172036]" onClick={applyGear}>Apply</button>
+                </div>
               </div>
             ) : null}
           </div>

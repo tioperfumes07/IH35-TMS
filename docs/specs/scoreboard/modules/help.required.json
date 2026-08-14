@@ -208,9 +208,8 @@
       "sub": "List toolbar \u2014 Search (CLS-LIST-TOOLBAR)",
       "route_hint": "/help",
       "surface_kind": "toolbar",
-      "required": [
-        "connectivity"
-      ]
+      "required": [],
+      "note": "N/A: Help is article/card navigation, not a data pipeline list; search remains the canonical search leaf."
     },
     {
       "id": "chrome.toolbar_range",
@@ -218,9 +217,8 @@
       "sub": "List toolbar \u2014 date/amount range (CLS-LIST-TOOLBAR)",
       "route_hint": "/help",
       "surface_kind": "toolbar",
-      "required": [
-        "connectivity"
-      ]
+      "required": [],
+      "note": "N/A: Help has no date/amount-bearing data pipeline list."
     },
     {
       "id": "chrome.toolbar_gear",
@@ -228,9 +226,8 @@
       "sub": "List toolbar \u2014 column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
       "route_hint": "/help",
       "surface_kind": "toolbar",
-      "required": [
-        "connectivity"
-      ]
+      "required": [],
+      "note": "N/A: Help has no configurable data-table columns."
     },
     {
       "id": "chrome.toolbar_filter",
@@ -238,9 +235,8 @@
       "sub": "List toolbar \u2014 Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
       "route_hint": "/help",
       "surface_kind": "toolbar",
-      "required": [
-        "connectivity"
-      ]
+      "required": [],
+      "note": "N/A: Help has no applied-state data-list filter panel."
     }
   ],
   "honesty_audit": {
