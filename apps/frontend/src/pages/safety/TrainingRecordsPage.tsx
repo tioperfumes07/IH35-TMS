@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { formatDateUS } from "../../lib/formatDate";
 import { DatePicker } from "../../components/forms/DatePicker";
@@ -30,6 +30,7 @@ function expiryLabel(expiryDate: string | null | undefined) {
 export function TrainingRecordsPage({ operatingCompanyId }: Props) {
   const [searchParams] = useSearchParams();
   const deepLinkTrainingId = searchParams.get("training_id")?.trim() || "";
+  const driverIdFromUrl = searchParams.get("driver_id")?.trim() || "";
   const queryClient = useQueryClient();
   const [createOpen, setCreateOpen] = useState(false);
   const [driverId, setDriverId] = useState("");
@@ -38,9 +39,16 @@ export function TrainingRecordsPage({ operatingCompanyId }: Props) {
   const [expiryDate, setExpiryDate] = useState("");
   const [notes, setNotes] = useState("");
 
+  useEffect(() => {
+    if (driverIdFromUrl) setDriverId(driverIdFromUrl);
+  }, [driverIdFromUrl]);
+
   const recordsQuery = useQuery({
-    queryKey: ["safety", "training-records", operatingCompanyId],
-    queryFn: () => getTrainingCompletions(operatingCompanyId),
+    queryKey: ["safety", "training-records", operatingCompanyId, driverIdFromUrl],
+    queryFn: () =>
+      getTrainingCompletions(operatingCompanyId, {
+        driver_id: driverIdFromUrl || undefined,
+      }),
     enabled: Boolean(operatingCompanyId),
   });
 

@@ -62,7 +62,11 @@ function SectionShell({
     | "accidents_driver"
     | "hos_violations_driver"
     | "internal_fines_driver"
-    | "safety_fines_driver";
+    | "safety_fines_driver"
+    | "dot_inspections_driver"
+    | "training_records_driver"
+    | "complaints_driver"
+    | "drug_alcohol_driver";
   openId?: string;
   linkLabel: string;
   testId: string;
@@ -208,7 +212,8 @@ export function DriverSafetyReverseSection({
 
       <SectionShell
         title="Training Records"
-        to="/safety/training-records"
+        openKind="training_records_driver"
+        openId={driverId}
         linkLabel="Open Training Records"
         testId="driver-safety-reverse-training-records"
         isLoading={trainingQuery.isLoading}
@@ -281,7 +286,8 @@ export function DriverSafetyReverseSection({
 
       <SectionShell
         title="DOT Inspections"
-        to="/safety/dot-inspections"
+        openKind="dot_inspections_driver"
+        openId={driverId}
         linkLabel="Open DOT Inspections"
         testId="driver-safety-reverse-dot-inspections"
         isLoading={dotInspectionsQuery.isLoading}
@@ -379,7 +385,8 @@ export function DriverSafetyReverseSection({
       {canViewComplaints ? (
         <SectionShell
           title="Complaints"
-          to="/safety/complaints"
+          openKind="complaints_driver"
+          openId={driverId}
           linkLabel="Open Complaints"
           testId="driver-safety-reverse-complaints"
           isLoading={complaintsQuery.isLoading}
@@ -411,7 +418,8 @@ export function DriverSafetyReverseSection({
 
       <SectionShell
         title="Drug & Alcohol Tests"
-        to="/safety/drug-alcohol"
+        openKind="drug_alcohol_driver"
+        openId={driverId}
         linkLabel="Open Drug & Alcohol"
         testId="driver-safety-reverse-drug-alcohol"
         isLoading={testsQuery.isLoading}

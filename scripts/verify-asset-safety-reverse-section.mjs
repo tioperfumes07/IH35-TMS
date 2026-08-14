@@ -106,6 +106,12 @@ export function assertAssetSafetyReverse(sources) {
   if (!/unitOpenKind: "damage_reports_unit"/.test(src[SECTION]) || !/openKind=\{assetKind === "unit" \? kind\.unitOpenKind : kind\.trailerOpenKind\}/.test(src[SECTION])) {
     problems.push(`${SECTION}: Open Damage/Interchange/Cargo must EntityLink asset-filtered incident queues.`);
   }
+  if (!/openKind=\{isUnit \? "dot_inspections_unit" : "dot_inspections_trailer"\}/.test(src[SECTION])) {
+    problems.push(`${SECTION}: Open DOT Inspections must EntityLink asset-filtered queues.`);
+  }
+  if (!/openKind=\{isUnit \? "dvir_unit" : "dvir_trailer"\}/.test(src[SECTION])) {
+    problems.push(`${SECTION}: Open DVIRs must EntityLink asset-filtered queues.`);
+  }
   if (!/ar\.trailer_id = \$/.test(src[ACCIDENTS_ROUTE])) {
     problems.push(`${ACCIDENTS_ROUTE}: GET accidents does not filter by trailer in SQL.`);
   }
@@ -211,6 +217,28 @@ if (SELFTEST) {
     "Open Damage/Interchange/Cargo must EntityLink"
   );
   expectCaught(
+    "open-dot-queue",
+    {
+      ...live,
+      [SECTION]: live[SECTION].replace(
+        /openKind=\{isUnit \? "dot_inspections_unit" : "dot_inspections_trailer"\}/g,
+        'to="/safety/dot-inspections"'
+      ),
+    },
+    "Open DOT Inspections must EntityLink"
+  );
+  expectCaught(
+    "open-dvir-queue",
+    {
+      ...live,
+      [SECTION]: live[SECTION].replace(
+        /openKind=\{isUnit \? "dvir_unit" : "dvir_trailer"\}/g,
+        'to="/safety/idvr"'
+      ),
+    },
+    "Open DVIRs must EntityLink"
+  );
+  expectCaught(
     "accidents-trailer-server-filter-removed",
     { ...live, [ACCIDENTS_ROUTE]: live[ACCIDENTS_ROUTE].replace(/AND ar\.trailer_id = \$\$\{values\.length\}/g, "") },
     "does not filter by trailer"
@@ -230,7 +258,7 @@ if (SELFTEST) {
     for (const f of failures) console.error(`  ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — 14 planted defects caught, live sources clean`);
+  console.log(`${LABEL} SELFTEST PASS — 16 planted defects caught, live sources clean`);
   process.exit(0);
 }
 
