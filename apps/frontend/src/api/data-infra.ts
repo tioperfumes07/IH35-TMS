@@ -97,8 +97,10 @@ export function upsertFaroDailyImport(payload: {
   });
 }
 
-export function listEquipmentLoans(companyId: string) {
-  return apiRequest<{ rows: EquipmentLoanRow[] }>(`/api/v1/banking/equipment-loans?${q(companyId)}`);
+export function listEquipmentLoans(companyId: string, vendorId?: string) {
+  const params = new URLSearchParams({ operating_company_id: companyId });
+  if (vendorId) params.set("vendor_id", vendorId);
+  return apiRequest<{ rows: EquipmentLoanRow[] }>(`/api/v1/banking/equipment-loans?${params.toString()}`);
 }
 
 export function createEquipmentLoan(payload: {

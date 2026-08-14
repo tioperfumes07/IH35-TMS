@@ -260,9 +260,13 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
     queryFn: () => listFaroDailyImports(companyId),
     enabled: Boolean(companyId),
   });
+  // LINK-F5171/LINK-F5182 — reverse_link: factoring:home.equipment_loans (vendor side). The unit
+  // side already reverse-links via UnitFinanceLinkageTab; VendorDetail links here as
+  // ?vendor_id=<id>, now honored server-side.
+  const deepLinkVendorId = searchParams.get("vendor_id");
   const equipmentLoansQuery = useQuery({
-    queryKey: ["data-infra", "equipment-loans", companyId],
-    queryFn: () => listEquipmentLoans(companyId),
+    queryKey: ["data-infra", "equipment-loans", companyId, deepLinkVendorId],
+    queryFn: () => listEquipmentLoans(companyId, deepLinkVendorId ?? undefined),
     enabled: Boolean(companyId),
   });
   const vendorMergesQuery = useQuery({
