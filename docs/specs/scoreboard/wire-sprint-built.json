@@ -2,6 +2,14 @@
   "_README": "Shipped Wave-A writers that green Matrix Box 3 Built. Updated when a Pxx task merges with guard+smoke. Live (Box 4) still requires PROD-VERIFIED ledger. leafRe must match docs/specs/scoreboard/modules/*.required.json leaf ids; cols must match column ids (picker_law not picker).",
   "entries": [
     {
+      "task": "WAVE-A-DRIVER-INLINE-SURFACES",
+      "pr": "this PR",
+      "guard": "scripts/verify-cash-forecast-driver-linkage.mjs",
+      "modules": ["accounting", "cash-flow"],
+      "cols": ["driver"],
+      "leafRe": "^(accounting\\.modal\\.decide|cash-flow\\.panel\\.projection)$"
+    },
+    {
       "task": "REQUIRED-MAP-INLINE-SURFACES",
       "pr": "this PR",
       "guard": "scripts/verify-required-surface-inventory-complete.mjs",

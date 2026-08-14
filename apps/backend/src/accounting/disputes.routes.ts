@@ -83,6 +83,7 @@ export async function registerAccountingSettlementDisputesP6Routes(app: FastifyI
     if (!user) return;
     const query = queueQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return sendValidationError(reply, query.error);
+    await assertCompanyMembership(user.uuid, query.data.operating_company_id);
     if (!OFFICE_READ_ROLES.has(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
 
     try {

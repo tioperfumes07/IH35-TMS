@@ -15,6 +15,10 @@ import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { sumCents, toCents, computeProjectionTotals } from "./manualProjectionMath";
 import { formatUsdCents } from "../../../lib/money";
+import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
+import { EntityLink } from "../../../components/shared/EntityLink";
+import { entityLabel } from "../../../lib/entity-label";
+import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 
 function fmtCents(c: number) {
   return formatUsdCents(c);
@@ -34,6 +38,9 @@ type RowForm = {
   memo: string;
   ref_kind: "" | ForecastRefKind;
   ref_label: string;
+  party_ref_kind: "" | "driver";
+  party_ref_id: string;
+  party_ref_label: string;
 };
 
 const emptyRow = (): RowForm => ({
@@ -46,6 +53,9 @@ const emptyRow = (): RowForm => ({
   memo: "",
   ref_kind: "",
   ref_label: "",
+  party_ref_kind: "",
+  party_ref_id: "",
+  party_ref_label: "",
 });
 
 // MDP-FIX-2 (Phase 7) — each projection line is ONE horizontal row with per-direction columns
@@ -114,6 +124,9 @@ function ProjectionPanel({
         memo: form.memo || null,
         ref_kind: refKind || null,
         ref_label: form.ref_label || null,
+        party_ref_kind: form.party_ref_kind || null,
+        party_ref_id: form.party_ref_id || null,
+        party_ref_label: form.party_ref_label || null,
       };
       if (form.id) await updateForecastEntry(form.id, payload);
       else await createForecastEntry(payload);
@@ -143,6 +156,9 @@ function ProjectionPanel({
       memo: e.memo ?? "",
       ref_kind: e.ref_kind ?? "",
       ref_label: e.ref_label ?? "",
+      party_ref_kind: e.party_ref_kind === "driver" ? "driver" : "",
+      party_ref_id: e.party_ref_id ?? "",
+      party_ref_label: e.party_ref_label ?? "",
     });
     // Reveal "+ more" only for the legacy fields that aren't already primary columns.
     setShowMore(Boolean(e.memo || (direction === "income" ? e.category : e.ref_label)));
@@ -174,7 +190,9 @@ function ProjectionPanel({
             <div key={e.id} className="flex items-center gap-2 px-3 py-1.5 text-xs" data-mdp-row={direction}>
               {columns.map((c) => (
                 <span key={c.key} className={`${c.w} shrink-0 truncate ${c.key === columns[0].key ? "font-medium text-gray-700" : ""}`} title={String(cellValue(e, c.key))}>
-                  {cellValue(e, c.key)}
+                  {c.key === "party_name" && e.party_ref_kind === "driver" && e.party_ref_id ? (
+                    <EntityLink kind="driver" id={e.party_ref_id} label={entityLabel(e.party_ref_label ?? e.party_name, e.party_ref_id, "Driver")} />
+                  ) : cellValue(e, c.key)}
                 </span>
               ))}
               <span className={`w-24 shrink-0 text-right font-semibold ${accent}`}>{fmtCents(toCents(e.amount_cents))}</span>
@@ -201,15 +219,32 @@ function ProjectionPanel({
           </div>
         ) : null}
         <div className="flex items-center gap-1.5">
-          {columns.map((c) => (
-            <input
-              key={c.key}
-              placeholder={c.label}
-              aria-label={c.label}
-              className={`h-7 ${c.w} shrink-0 rounded-sm border border-gray-300 px-2`}
-              value={form[c.key]}
-              onChange={(ev) => setForm((f) => ({ ...f, [c.key]: ev.target.value }))}
-            />
+          {columns.map((c) => c.key === "party_name" && direction === "expense" ? (
+            <div key={c.key} className={`${c.w} flex shrink-0 gap-1`}>
+              <SelectCombobox
+                aria-label="Vendor or driver type"
+                className="h-7 w-20 rounded-sm border border-gray-300 px-1"
+                value={form.party_ref_kind}
+                onChange={(ev) => setForm((f) => ({ ...f, party_ref_kind: ev.target.value as RowForm["party_ref_kind"], party_ref_id: "", party_ref_label: "", party_name: "" }))}
+              >
+                <option value="">Name</option>
+                <option value="driver">Driver</option>
+              </SelectCombobox>
+              {form.party_ref_kind === "driver" ? (
+                <DriverPickerWithCreate
+                  operatingCompanyId={operatingCompanyId}
+                  value={form.party_ref_id || null}
+                  onChange={(id) => setForm((f) => ({ ...f, party_ref_id: id ?? "" }))}
+                  placeholder="Select driver"
+                  className="min-w-0 flex-1"
+                  driverRoster="active_or_probation"
+                />
+              ) : (
+                <input aria-label={c.label} placeholder={c.label} className="h-7 min-w-0 flex-1 rounded-sm border border-gray-300 px-2" value={form.party_name} onChange={(ev) => setForm((f) => ({ ...f, party_name: ev.target.value }))} />
+              )}
+            </div>
+          ) : (
+            <input key={c.key} placeholder={c.label} aria-label={c.label} className={`h-7 ${c.w} shrink-0 rounded-sm border border-gray-300 px-2`} value={form[c.key]} onChange={(ev) => setForm((f) => ({ ...f, [c.key]: ev.target.value }))} />
           ))}
           <MoneyInput valueCents={form.amount_cents} onChangeCents={(c) => setForm((f) => ({ ...f, amount_cents: c }))} placeholder="Total" ariaLabel="Total" className="w-24 shrink-0" />
         </div>

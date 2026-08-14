@@ -40,7 +40,7 @@ const entryBody = z.object({
   unit_ref_label: z.string().trim().max(200).nullish(),
   customer_ref_label: z.string().trim().max(200).nullish(),
   party_ref_kind: z.enum(["driver", "vendor"]).nullish(),
-  party_ref_id: z.string().trim().max(120).nullish(),
+  party_ref_id: z.string().uuid().nullish(),
   party_ref_label: z.string().trim().max(200).nullish(),
 });
 const entryPatch = entryBody.partial().extend({ operating_company_id: z.string().uuid() });
@@ -97,6 +97,21 @@ export async function registerCashForecastManualRoutes(app: FastifyInstance) {
     if (!b.success) return sendZodValidation(reply, b.error);
     await assertCompanyMembership(user.uuid, b.data.operating_company_id);
     const row = await withOperatingCompanyScope(user.uuid, b.data.operating_company_id, async (client) => {
+      let partyName = b.data.party_name ?? null;
+      let partyRefLabel = b.data.party_ref_label ?? null;
+      if (b.data.party_ref_kind === "driver") {
+        if (!b.data.party_ref_id) throw Object.assign(new Error("Select a driver."), { statusCode: 400 });
+        const driver = await client.query<{ label: string }>(
+          `SELECT trim(concat_ws(' ', first_name, last_name)) AS label
+             FROM mdata.drivers
+            WHERE id = $1::uuid AND operating_company_id = $2::uuid
+            LIMIT 1`,
+          [b.data.party_ref_id, b.data.operating_company_id],
+        );
+        if (!driver.rows[0]) throw Object.assign(new Error("Driver does not belong to this operating company."), { statusCode: 400 });
+        partyName = driver.rows[0].label;
+        partyRefLabel = driver.rows[0].label;
+      }
       const res = await client.query(
         `INSERT INTO forecast.cash_entries
            (operating_company_id, entry_date, direction, amount_cents, party_name, invoice_no,
@@ -107,11 +122,11 @@ export async function registerCashForecastManualRoutes(app: FastifyInstance) {
          VALUES ($1::uuid,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19::uuid,$19::uuid)
          RETURNING *`,
         [b.data.operating_company_id, b.data.entry_date, b.data.direction, b.data.amount_cents,
-         b.data.party_name ?? null, b.data.invoice_no ?? null, b.data.category ?? null, b.data.memo ?? null,
+         partyName, b.data.invoice_no ?? null, b.data.category ?? null, b.data.memo ?? null,
          b.data.ref_kind ?? null, b.data.ref_label ?? null, b.data.ref_external_id ?? null,
          b.data.load_ref_id ?? null, b.data.load_ref_label ?? null, b.data.unit_ref_label ?? null,
          b.data.customer_ref_label ?? null, b.data.party_ref_kind ?? null, b.data.party_ref_id ?? null,
-         b.data.party_ref_label ?? null, user.uuid]
+         partyRefLabel, user.uuid]
       );
       const created = res.rows[0];
       await appendCrudAudit(client, user.uuid, "forecast.cash_entry.created", {
@@ -147,10 +162,28 @@ export async function registerCashForecastManualRoutes(app: FastifyInstance) {
       if (v !== undefined) { values.push(v); sets.push(`${k} = $${values.length}`); }
     }
     if (sets.length === 0) return reply.code(400).send({ error: "no_fields" });
-    values.push(user.uuid); sets.push(`updated_by_user_id = $${values.length}`);
-    sets.push("updated_at = now()");
-    values.push(p.data.id);
     const updated = await withOperatingCompanyScope(user.uuid, b.data.operating_company_id, async (client) => {
+      if (b.data.party_ref_kind === "driver") {
+        if (!b.data.party_ref_id) throw Object.assign(new Error("Select a driver."), { statusCode: 400 });
+        const driver = await client.query<{ label: string }>(
+          `SELECT trim(concat_ws(' ', first_name, last_name)) AS label
+             FROM mdata.drivers
+            WHERE id = $1::uuid AND operating_company_id = $2::uuid
+            LIMIT 1`,
+          [b.data.party_ref_id, b.data.operating_company_id],
+        );
+        if (!driver.rows[0]) throw Object.assign(new Error("Driver does not belong to this operating company."), { statusCode: 400 });
+        const label = driver.rows[0].label;
+        const refLabelIndex = sets.findIndex((set) => set.startsWith("party_ref_label ="));
+        if (refLabelIndex >= 0) values[refLabelIndex] = label;
+        else { values.push(label); sets.push(`party_ref_label = $${values.length}`); }
+        const partyNameIndex = sets.findIndex((set) => set.startsWith("party_name ="));
+        if (partyNameIndex >= 0) values[partyNameIndex] = label;
+        else { values.push(label); sets.push(`party_name = $${values.length}`); }
+      }
+      values.push(user.uuid); sets.push(`updated_by_user_id = $${values.length}`);
+      sets.push("updated_at = now()");
+      values.push(p.data.id);
       const res = await client.query(
         `UPDATE forecast.cash_entries SET ${sets.join(", ")}
           WHERE id = $${values.length} AND deactivated_at IS NULL RETURNING *`,
