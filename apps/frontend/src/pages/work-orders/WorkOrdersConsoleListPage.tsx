@@ -1,7 +1,7 @@
 import { entityLabel } from "../../lib/entity-label";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { listWorkOrdersConsole, type WoConsoleRow } from "../../api/workOrdersConsole";
 import { ListErrorState } from "../../components/ListErrorState";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -154,9 +154,12 @@ export function WorkOrdersConsoleListPage() {
         render: (row) => {
           const id = String(row.id ?? "");
           return (
-            <Link className="text-[#1f2a44] hover:underline" to={`/work-orders/${id}`}>
-              View
-            </Link>
+            <EntityLink
+              kind="work_orders_console"
+              id={id}
+              label="View"
+              className="text-[#1f2a44] hover:underline"
+            />
           );
         },
       },

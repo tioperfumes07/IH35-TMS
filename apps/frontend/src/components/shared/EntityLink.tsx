@@ -72,6 +72,10 @@ export type EntityKind =
   // LINK-F5171: Driver profile "View history" used a bare Link to the per-driver layover
   // surface (/dispatch/layovers/driver/:driverId) — distinct from kind=driver.
   | "driver_layover_history"
+  // LINK-F5171: Help center article slugs drill to /help/:slug (static content, not a DB row).
+  | "help_article"
+  // LINK-F5171: Ops work-orders console is /work-orders/:id — distinct from maintenance work_order.
+  | "work_orders_console"
   | "inventory_part"
   | "parts_inventory"
   | "maintenance_vendor"
@@ -246,6 +250,10 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
       return `/reports/categories/${id}`;
     case "driver_layover_history":
       return `/dispatch/layovers/driver/${id}`;
+    case "help_article":
+      return `/help/${id}`;
+    case "work_orders_console":
+      return `/work-orders/${id}`;
     case "safety_event":
       return `/safety/safety-events?event_id=${id}`;
     // SAF-F33 safety drill-through — each target list page reads the param and opens/highlights the row.

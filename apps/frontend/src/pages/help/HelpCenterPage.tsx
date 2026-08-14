@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { getAllHelpArticles, helpArticlesByCategory, searchHelpArticles, type HelpCategory } from "../../help/helpCenterContent";
 
 const CATEGORY_ORDER: HelpCategory[] = [
@@ -46,12 +46,12 @@ export function HelpCenterPage() {
           <ul className="mt-2 space-y-2">
             {results.map((a) => (
               <li key={a.slug}>
-                <Link
-                  to={`/help/${a.slug}`}
+                <EntityLink
+                  kind="help_article"
+                  id={a.slug}
+                  label={a.title}
                   className="text-sm font-medium text-slate-700 hover:underline focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400"
-                >
-                  {a.title}
-                </Link>
+                />
                 <span className="ml-2 text-xs text-gray-500">{a.category}</span>
               </li>
             ))}
@@ -65,12 +65,12 @@ export function HelpCenterPage() {
               <ul className="mt-2 space-y-1">
                 {(byCat[cat] ?? []).map((a) => (
                   <li key={a.slug}>
-                    <Link
-                      to={`/help/${a.slug}`}
+                    <EntityLink
+                      kind="help_article"
+                      id={a.slug}
+                      label={a.title}
                       className="text-sm text-slate-700 hover:underline focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400"
-                    >
-                      {a.title}
-                    </Link>
+                    />
                   </li>
                 ))}
               </ul>
