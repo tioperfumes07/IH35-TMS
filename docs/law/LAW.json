@@ -572,5 +572,19 @@
     "source_file": "apps/backend/src/program/matrix-built-auto.ts",
     "guard": "scripts/verify-matrix-built-leaf-specific.mjs",
     "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-14-LINK-FACTOR-ENTITYLINK-DRILL",
+    "title": "factors gain a real EntityLink kind — EntityLink.tsx kind=factor resolves to /factoring/factors?factor_id=, FactorAdmin.tsx reads that param and resolves the full Factor object from factorsQuery to highlight the row, ReserveDashboard.tsx + ReserveTracker.tsx's per-balance factor labels drill through instead of rendering dead text",
+    "source_file": "apps/frontend/src/components/shared/EntityLink.tsx",
+    "guard": "scripts/verify-factor-entitylink-drill.mjs",
+    "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-14-LINK-LOADCREATE-ASSET-UNIT",
+    "title": "LoadCreateModal's repair-block banner renders the blocking asset as a real EntityLink kind=unit instead of dead text — confirmed against the backend's own dispatcher-facing label (load-assign.routes.ts) that asset_id is always a unit here, not a guess",
+    "source_file": "apps/frontend/src/pages/dispatch/LoadCreateModal.tsx",
+    "guard": "scripts/verify-load-create-modal-asset-unit-link.mjs",
+    "type": "enforced"
   }
 ]

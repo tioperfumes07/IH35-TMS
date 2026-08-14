@@ -57,7 +57,15 @@ export function LoadCreateModal({
           id={availabilityQuery.data?.work_order_id}
           label={entityLabel(availabilityQuery.data?.work_order_display_id, availabilityQuery.data?.work_order_id, "Work order")}
         />{" "}
-        · Asset: {entityLabel(availabilityQuery.data?.asset_label, availabilityQuery.data?.asset_id, "Asset")}
+        {/* LINK reverse_link: asset_id is always a unit here — backend's own dispatcher-facing string
+            confirms it (load-assign.routes.ts: `Unit ${availability.asset_label}`), so kind="unit"
+            is not a guess. */}
+        · Asset:{" "}
+        {availabilityQuery.data?.asset_id ? (
+          <EntityLink kind="unit" id={availabilityQuery.data.asset_id} label={entityLabel(availabilityQuery.data.asset_label, availabilityQuery.data.asset_id, "Asset")} />
+        ) : (
+          entityLabel(availabilityQuery.data?.asset_label, availabilityQuery.data?.asset_id, "Asset")
+        )}
       </div>
       <label className="mt-2 flex items-center gap-2">
         <input
