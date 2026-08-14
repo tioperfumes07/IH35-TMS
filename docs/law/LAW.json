@@ -558,5 +558,12 @@
     "source_file": "docs/lockdown/FULLY-WIRED-COMPLETE-BAR-2026-08-13.md",
     "guard": "scripts/verify-fully-wired-complete-bar-present.mjs",
     "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-14-LINK-GEOFENCE-ENTITYLINK-DRILL",
+    "title": "geofences gain a real EntityLink kind — EntityLink.tsx kind=geofence resolves to /dispatch/geofencing?geofence_id=, GeofencesPage.tsx reads that param and highlights the row (was previously write-only, no consumer), GeofenceBreachesTab.tsx's geofence label drills through instead of rendering dead text",
+    "source_file": "apps/frontend/src/components/shared/EntityLink.tsx",
+    "guard": "scripts/verify-geofence-entitylink-drill.mjs",
+    "type": "enforced"
   }
 ]

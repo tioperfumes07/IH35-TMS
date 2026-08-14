@@ -74,7 +74,13 @@ export type EntityKind =
   // by / voided by / approved by" field across the app rendered as plain text — no drill-through
   // to the acting user's own profile at all. Route verified present in routes/manifest.tsx:
   // <Route path="/users/:id">.
-  | "user";
+  | "user"
+  // LINK reverse_link: GeofenceBreachesTab (safety) displayed a geofence's label as dead text with
+  // no way to reach the geofence record itself. GeofencesPage (operations, route verified present
+  // in routes/manifest.tsx: <Route path="/dispatch/geofencing">) is the only geofence detail
+  // surface; it has no per-id sub-route, so this resolves with a query param the page now honors —
+  // same drill pattern as claim/lawsuit/settlement.
+  | "geofence";
 
 export interface EntityLinkProps {
   kind: EntityKind;
@@ -215,6 +221,8 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
       return `/safety/cargo-claims?incident_id=${id}`;
     case "user":
       return `/users/${id}`;
+    case "geofence":
+      return `/dispatch/geofencing?geofence_id=${id}`;
     default:
       return null;
   }
