@@ -1,5 +1,16 @@
 #!/usr/bin/env node
-/** @matrix-built modules=driver-hub,maintenance,drivers cols=driver,connectivity,reverse_link */
+/** @matrix-built modules=driver-hub,maintenance,drivers cols=driver,connectivity,reverse_link leafRe=^(driver-hub\.modal\.report_issue|driver_reports\.queue|profiles\.detail)$ task=DRIVER-REPORT-DRIVER-REVERSE */
+// LINK-THEATER-01 narrowing (2026-08-14): this guard's 10 assertions read exactly 9 files that
+// together prove ONE feature — driver-submitted maintenance reports, from create
+// (driver-hub.modal.report_issue, ReportIssueModal.tsx) through the maintenance queue
+// (driver_reports.queue, DriverReportsQueuePage.tsx) to the reverse mount on the driver's own
+// profile (profiles.detail, DriverProfilePage.tsx — confirmed leaf id in drivers.required.json).
+// The prior leafRe default (unset -> ".*" per the shorthand parser) claimed Built for every leaf in
+// driver-hub + maintenance + drivers, off assertions that touch three specific surfaces. Narrowed to
+// what is actually proven. NOTE: DriverDetail.tsx (/drivers/:id, also DriverReportsReverseSection-
+// mounted per this guard's own "detail" mutation arm) has no tracked leaf id in
+// drivers.required.json at all — a separate, real inventory gap this narrowing does not fix and does
+// not silently claim either.
 import fs from "node:fs";
 const L="verify-driver-report-driver-reverse",c=fs.readFileSync("apps/frontend/src/pages/driver/ReportIssueModal.tsx","utf8"),w=fs.readFileSync("apps/backend/src/driver/reports.routes.ts","utf8"),r=fs.readFileSync("apps/backend/src/maintenance/driver-reports.routes.ts","utf8"),a=fs.readFileSync("apps/frontend/src/api/maintenance.ts","utf8"),v=fs.readFileSync("apps/frontend/src/components/maintenance/DriverReportsReverseSection.tsx","utf8"),d=fs.readFileSync("apps/frontend/src/pages/DriverDetail.tsx","utf8"),p=fs.readFileSync("apps/frontend/src/pages/drivers/DriverProfilePage.tsx","utf8"),q=fs.readFileSync("apps/frontend/src/pages/maintenance/DriverReportsQueuePage.tsx","utf8"),h=fs.readFileSync("apps/frontend/src/pages/maintenance/MaintenanceHome.tsx","utf8");
 function audit(b,x,y,z,s,t,u,e,i){const f=[];if(!/submitDriverReport/.test(b)||!/load_id: loadId \?\? null/.test(b))f.push("driver creator payload");if(!/driver\.id/.test(x)||!/INSERT INTO maintenance\.driver_reports/.test(x)||!/driver_id, load_id/.test(x))f.push("session-derived driver writer");if(!/driver_id: z\.string\(\)\.uuid\(\)\.optional/.test(y)||!/r\.driver_id = \$\$\{values\.length\}::uuid/.test(y))f.push("exact scoped reverse");if(!/driver_id\?: string/.test(z)||!/params\.driver_id/.test(z))f.push("typed API filter");if(!/listDriverReports\(\{ operating_company_id: operatingCompanyId, driver_id: driverId \}\)/.test(s))f.push("driver reverse");if(!/DriverReportsReverseSection/.test(t)||!/DriverReportsReverseSection/.test(u))f.push("both profile mounts");if(!/driver_report_id=/.test(s)||!/highlightedReportId/.test(e)||!/rowClassName/.test(e)||!/driverReportId/.test(i))f.push("canonical drill");if(!/query\.isError/.test(s)||!/No reports submitted by this driver/.test(s))f.push("honest states");return f}

@@ -36,7 +36,7 @@ const FEED_FILE = "docs/specs/scoreboard/wire-sprint-built.json";
  * by leaf, NOT a debt this guard is allowed to quietly grow. Lower this number only by narrowing a real
  * claim to a leaf-specific leafRe or removing a disproven one — never by widening the match-all pattern
  * this guard rejects. */
-const LEGACY_BROAD_BASELINE = 62;
+const LEGACY_BROAD_BASELINE = 61;
 
 const MATRIX_BUILT_JSON_RE = /@matrix-built\s+(\{[\s\S]*?\})/g;
 const MATRIX_BUILT_SHORTHAND_RE =
