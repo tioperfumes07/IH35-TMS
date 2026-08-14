@@ -6,6 +6,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { DrillKpiCard } from "../../components/layout/DrillKpiCard";
 import { entityLabel } from "../../lib/entity-label";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
 function ConfidencePill({ confidence }: { confidence: DriverMapRow["confidence"] }) {
   const cls =
@@ -21,6 +22,36 @@ function BasisPill({ basis }: { basis: DriverMapRow["match_basis"] }) {
   if (!basis) return <span className="text-[11px] text-gray-400">—</span>;
   return <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-600">{basis}</span>;
 }
+
+const DRIVER_MAP_COLUMNS: Array<ParityColumn<DriverMapRow>> = [
+  {
+    key: "driver_name",
+    label: "Driver",
+    sortable: true,
+    render: (row) => (
+      <EntityLink
+        kind="driver"
+        id={row.local_driver_id}
+        label={entityLabel(row.driver_name, row.local_driver_id, "Driver")}
+      />
+    ),
+  },
+  { key: "cdl_number", label: "CDL", sortable: true, render: (row) => <span className="font-mono text-gray-600">{row.cdl_number ?? "—"}</span> },
+  { key: "confidence", label: "Confidence", sortable: true, render: (row) => <ConfidencePill confidence={row.confidence} /> },
+  { key: "match_basis", label: "Basis", sortable: true, render: (row) => <BasisPill basis={row.match_basis} /> },
+  { key: "proposed_samsara_driver_id", label: "Proposed Samsara ID", render: (row) => <span className="font-mono text-[11px] text-gray-700">{row.proposed_samsara_driver_id ?? "—"}</span> },
+  { key: "samsara_name", label: "Samsara name", sortable: true, render: (row) => row.samsara_name ?? "—" },
+  {
+    key: "current_samsara_driver_id",
+    label: "Current stored ID",
+    render: (row) => (
+      <span className={`font-mono text-[11px] ${row.current_samsara_driver_id === row.proposed_samsara_driver_id ? "text-emerald-700" : "text-amber-600"}`}>
+        {row.current_samsara_driver_id ?? "—"}
+      </span>
+    ),
+  },
+  { key: "ambiguous", label: "Ambiguous", sortable: true, render: (row) => row.ambiguous ? <span className="font-semibold text-red-500">!</span> : <span className="text-gray-300">·</span> },
+];
 
 /**
  * C8: a drill target is REQUIRED. The confidence counts filter the driver-map table below (that IS
@@ -137,55 +168,19 @@ export function HosDriverMapPreviewPage() {
               <span><span className="font-semibold text-slate-500">{d.id_reconcile.both_null}</span> both null</span>
             </div>
             <p className="mt-2 text-[11px] text-amber-700">
-              Write step requires Jorge approval. Review the table below, confirm the proposed IDs are correct, then request the approved-write migration.
+              This screen is a read-only reconciliation. Review ambiguous rows before using the separately guarded mapping workflow.
             </p>
           </div>
 
           {/* Driver map table */}
-          <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
-            <table className="w-full text-[12px]">
-              <thead>
-                <tr className="border-b border-gray-100 bg-gray-50 text-[10px] uppercase tracking-wide text-gray-500">
-                  <th className="px-3 py-2 text-left">Driver</th>
-                  <th className="px-3 py-2 text-left">CDL</th>
-                  <th className="px-3 py-2 text-left">Confidence</th>
-                  <th className="px-3 py-2 text-left">Basis</th>
-                  <th className="px-3 py-2 text-left">Proposed Samsara ID</th>
-                  <th className="px-3 py-2 text-left">Samsara Name</th>
-                  <th className="px-3 py-2 text-left">Current stored ID</th>
-                  <th className="px-3 py-2 text-center">Ambiguous</th>
-                </tr>
-              </thead>
-              <tbody>
-                {visibleRows.map((row) => (
-                  <tr key={row.local_driver_id} className="border-b border-gray-100 last:border-0 hover:bg-gray-50">
-                    <td className="px-3 py-2 font-medium text-gray-900">
-                      <EntityLink kind="driver" id={row.local_driver_id} label={entityLabel(row.driver_name, row.local_driver_id, "Driver")} />
-                    </td>
-                    <td className="px-3 py-2 font-mono text-gray-600">{row.cdl_number ?? "—"}</td>
-                    <td className="px-3 py-2"><ConfidencePill confidence={row.confidence} /></td>
-                    <td className="px-3 py-2"><BasisPill basis={row.match_basis} /></td>
-                    <td className="px-3 py-2 font-mono text-[11px] text-gray-700">
-                      {row.proposed_samsara_driver_id ?? <span className="text-gray-400">—</span>}
-                    </td>
-                    <td className="px-3 py-2 text-gray-700">{row.samsara_name ?? <span className="text-gray-400">—</span>}</td>
-                    <td className="px-3 py-2 font-mono text-[11px] text-gray-500">
-                      {row.current_samsara_driver_id ? (
-                        <span className={row.current_samsara_driver_id === row.proposed_samsara_driver_id ? "text-emerald-700" : "text-amber-600"}>
-                          {row.current_samsara_driver_id}
-                        </span>
-                      ) : (
-                        <span className="text-gray-400">—</span>
-                      )}
-                    </td>
-                    <td className="px-3 py-2 text-center">
-                      {row.ambiguous ? <span className="font-semibold text-red-500">!</span> : <span className="text-gray-300">·</span>}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <ParityTable
+            columns={DRIVER_MAP_COLUMNS}
+            rows={visibleRows}
+            rowKey={(row) => row.local_driver_id}
+            storageKey="system:samsara-hos-driver-map"
+            emptyText="No driver mapping rows found."
+            initialPageSize={50}
+          />
 
           <p className="text-[11px] text-gray-400">
             Generated {d.generated_at.replace("T", " ").slice(0, 16)} UTC · Read-only. Ambiguous (!) rows have multiple Samsara candidates and must be resolved manually.
