@@ -89,6 +89,21 @@ export function collectProblems(root = ROOT) {
     problems.push("api.ts: must call GET /api/v1/home/scenario-tracker (CC-1 path lock)");
   }
 
+  // LV-115 — entity CODE (?entity=USMCA) must resolve to opco UUID; never silent ALL.
+  const routes = readRel("apps/backend/src/home/home.routes.ts");
+  if (!routes) {
+    problems.push("missing apps/backend/src/home/home.routes.ts");
+  } else {
+    if (!/LV-115/.test(routes)) problems.push("home.routes.ts: missing LV-115 entity-code contract comment");
+    if (!/unknown_entity/.test(routes)) problems.push("home.routes.ts: must 400 unknown_entity for unresolvable entity codes");
+    if (!/upper\(code\) = upper\(\$1\)/.test(routes)) {
+      problems.push("home.routes.ts: must resolve org.companies.code under caller scope");
+    }
+    if (!/let entity:\s*string\s*\|\s*null\s*=\s*isUuid\s*\?\s*rawEntity\s*:\s*null/.test(routes)) {
+      problems.push("home.routes.ts: code-shaped entity must start null (never silent ALL) before resolve");
+    }
+  }
+
   return problems;
 }
 
@@ -111,6 +126,10 @@ if (SELFTEST) {
     );
     mk(MANIFEST, 'ScenarioTrackerHome; path="/home/scenario-tracker"; path="/home/ops"\n');
     mk("apps/frontend/src/pages/program/scenario-tracker/api.ts", 'return "/api/v1/home/scenario-tracker";\n');
+    mk(
+      "apps/backend/src/home/home.routes.ts",
+      "/* LV-115 */ let entity: string | null = isUuid ? rawEntity : null; unknown_entity; WHERE upper(code) = upper($1)\n",
+    );
     const good = collectProblems(tmp);
     mk(HOME, "const POLL_MS = 60_000; refetchIntervalInBackground: true; no banner\n");
     const bad = collectProblems(tmp);
