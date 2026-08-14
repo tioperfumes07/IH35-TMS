@@ -137,9 +137,8 @@
       "tab": "QB Import",
       "sub": "QuickBooks import tab",
       "route_hint": "/425c?tab=qb",
-      "required": [
-        "connectivity"
-      ]
+      "required": [],
+      "note": "N/A: QBO import and sync surfaces are excluded from the USMCA TMS-native sprint by owner ruling."
     },
     {
       "id": "tab.form",
@@ -225,9 +224,9 @@
       "route_hint": "/425c",
       "required": [
         "gl_je",
-        "connectivity",
         "bank"
-      ]
+      ],
+      "note": "Connectivity N/A: this law describes excluded QBO/virtual-bank behavior; GL and bank applicability remain independently required."
     },
     {
       "id": "chrome.toolbar_search",

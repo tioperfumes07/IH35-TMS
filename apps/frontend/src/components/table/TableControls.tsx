@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
-import { TableSearch } from "./TableSearch";
 import { ColumnChooser, type TableColumn } from "./ColumnChooser";
+import { UniversalListToolbar, type UniversalRange } from "./UniversalListToolbar";
 
 // GLOBAL-TABLE-CONTROLS — shared data-grid toolbar: search · list-filter slot · row count · gear.
 // Reused by Fleet, Customers, Vendors, Drivers, and every list table (one definition, no re-forking).
@@ -16,6 +16,8 @@ type Props = {
   pageSize: number;
   onPageSizeChange: (n: number) => void;
   pageSizeOptions?: number[];
+  range: UniversalRange | null;
+  onRangeApply: (range: UniversalRange | null) => void;
   /** List-filter dropdowns (Status, Type, Active/Inactive/All, …) — separate from bulk-edit. */
   children?: ReactNode;
 };
@@ -32,15 +34,23 @@ export function TableControls({
   pageSize,
   onPageSizeChange,
   pageSizeOptions,
+  range,
+  onRangeApply,
   children,
 }: Props) {
   return (
     <div className="flex flex-wrap items-center gap-2" data-table-controls>
-      <TableSearch value={search} onChange={onSearchChange} placeholder={searchPlaceholder} className="w-56" />
+      <UniversalListToolbar
+        search={search}
+        onSearchChange={onSearchChange}
+        searchPlaceholder={searchPlaceholder}
+        columns={columns.map((column) => ({ key: column.key, label: column.label }))}
+        range={range}
+        onRangeApply={onRangeApply}
+        resultCount={filteredCount}
+        totalCount={totalCount}
+      />
       {children}
-      <span className="text-[11px] text-gray-500">
-        {filteredCount === totalCount ? `${totalCount}` : `${filteredCount} of ${totalCount}`} rows
-      </span>
       <div className="ml-auto">
         <ColumnChooser
           columns={columns}

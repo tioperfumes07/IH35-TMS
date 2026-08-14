@@ -26,6 +26,7 @@ import {
   type TouchEvent as ReactTouchEvent,
 } from "react";
 import { colors, typography } from "../../design/tokens";
+import { UniversalListToolbar, applyUniversalListFilters, type UniversalRange } from "../table/UniversalListToolbar";
 
 export type ParityDensity = "regular" | "compact" | "ultra";
 
@@ -257,7 +258,7 @@ function savePersisted(storageKey: string | undefined, value: Persisted) {
 
 export function ParityTable<T>({
   columns,
-  rows,
+  rows: sourceRows,
   rowKey,
   loading = false,
   onRowClick,
@@ -332,6 +333,8 @@ export function ParityTable<T>({
   const [gearOpen, setGearOpen] = useState(false);
   const [draftHidden, setDraftHidden] = useState<Set<string>>(() => new Set(hidden));
   const [draftDensity, setDraftDensity] = useState<ParityDensity>(density);
+  const [toolbarSearch, setToolbarSearch] = useState("");
+  const [toolbarRange, setToolbarRange] = useState<UniversalRange | null>(null);
   // Controlled selection (Phase A5) mirrors A1 expansion: presence of onSelectionChange
   // switches the source of truth from internal state to the caller-owned selectedKeys prop.
   const isSelectionControlled = onSelectionChange != null;
@@ -401,6 +404,13 @@ export function ParityTable<T>({
   }, [density, gearOpen, hidden]);
 
   const visibleColumns = columns.filter((c) => c.alwaysVisible || !hidden.has(String(c.key)));
+  const toolbarFilteredRows = useMemo(
+    () => applyUniversalListFilters(sourceRows, toolbarSearch, toolbarRange),
+    [sourceRows, toolbarRange, toolbarSearch],
+  );
+  // Keep the external-sort identity contract: toolbar filtering preserves caller order, then the
+  // sort pipeline receives that filtered array as its canonical `rows` input.
+  const rows = toolbarFilteredRows;
 
   const sortedRows = useMemo(() => {
     // Phase A4 external passthrough: identity — the caller owns row order (server-side sort or a
@@ -767,8 +777,17 @@ export function ParityTable<T>({
 
   return (
     <div className={shellClass} data-testid={tableTestId}>
-      {/* Toolbar: optional slot + gear */}
-      <div className="flex items-center justify-between gap-2 border-b border-gray-200 px-2 py-1.5">
+      {/* Canonical list toolbar: search + applied range filter + optional slot + gear. */}
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-200 px-2 py-1.5">
+        <UniversalListToolbar
+          search={toolbarSearch}
+          onSearchChange={(value) => { setToolbarSearch(value); changePage(1); }}
+          columns={columns.map((column) => ({ key: String(column.key), label: column.label }))}
+          range={toolbarRange}
+          onRangeApply={(value) => { setToolbarRange(value); changePage(1); }}
+          resultCount={rows.length}
+          totalCount={sourceRows.length}
+        />
         <div className="flex items-center gap-2 text-[11px] text-gray-600">
           {selectable && selected.size > 0 ? (
             <div className="flex items-center gap-2">

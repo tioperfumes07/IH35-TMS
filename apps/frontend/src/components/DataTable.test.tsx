@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { DataTable } from "./DataTable";
 
@@ -34,5 +35,20 @@ describe("DataTable", () => {
     const td = container.querySelector("tbody td.code-cell");
     expect(td).toBeTruthy();
     expect(td?.textContent).toContain("L-13518");
+  });
+
+  it("inherits the canonical toolbar search and filters rendered rows", async () => {
+    const user = userEvent.setup();
+    render(
+      <DataTable<Row>
+        columns={[{ key: "code", label: "Code" }]}
+        rows={[{ id: "1", code: "ALPHA" }, { id: "2", code: "BRAVO" }]}
+        rowKey={(r) => r.id}
+      />,
+    );
+    await user.type(screen.getByRole("textbox", { name: "Search rows…" }), "bravo");
+    expect(screen.queryByText("ALPHA")).not.toBeInTheDocument();
+    expect(screen.getByText("BRAVO")).toBeInTheDocument();
+    expect(screen.getByText("1 of 2 rows")).toBeInTheDocument();
   });
 });
