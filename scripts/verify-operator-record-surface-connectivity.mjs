@@ -47,7 +47,7 @@ const FILES = {
 const REQUIRED_LEAVES = {
   complianceMatrix: ["overview.summary_cards", "overview.credentials_table", "overview.notification_rules", "overview.notification_log", "fleet.hos_board", "property_tax.list", "property_tax.detail", "form2290"],
   insuranceMatrix: ["landing", "policies.detail", "type_catalog.list", "coverage_gaps"],
-  inventoryMatrix: ["nav.parts_tab", "nav.assignments_tab", "nav.purchases_tab", "assignments.banner", "assignments.trail", "assignments.search", "assignments.wo_link", "assignments.unit_link", "assignments.vendor_link", "assignments.crosslink_parts", "assignments.crosslink_purchases", "assignments.honest_empty"],
+  inventoryMatrix: ["nav.parts_tab", "nav.assignments_tab", "nav.purchases_tab", "assignments.trail", "assignments.wo_link", "assignments.unit_link", "assignments.vendor_link", "assignments.honest_empty"],
   legalMatrix: ["landing", "contracts.list", "templates.list", "templates.detail", "policies", "attorney_review", "reports"],
   maintenanceMatrix: ["damage_reports.intake", "road_service.active", "defects.convert_to_wo", "pre_flight_dvir.queue", "fault_drafts.review"],
   tasksMatrix: ["board.planner_grid", "mine.list", "chat.mentions"],

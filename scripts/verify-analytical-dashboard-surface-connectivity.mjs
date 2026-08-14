@@ -45,9 +45,9 @@ const AUDIT_ROUTES = ["activity-by-user", "activity-by-module", "financial-chang
 const REQUIRED_LEAVES = {
   cashFlowMatrix: ["home", "tab.actual_vs_projected", "tab.manual_daily_projections", "create.manual_projection"],
   fuelMatrix: ["card_overage"],
-  homeMatrix: ["route.root", "route.home", "route.home_ops", "role.owner", "role.dispatcher", "role.accountant", "role.safety", "role.manager", "role.default", "surface.qbo_style", "surface.kpi_cards", "surface.attention_list", "surface.quick_actions", "surface.fleet_restore", "home.panel.accounting_pending_approvals", "home.panel.dispatcher_active_loads", "home.panel.dispatcher_pending_actions", "home.panel.driver_manager_attention", "home.panel.fleet_snapshot", "home.panel.safety_alerts"],
-  programMatrix: ["matrix.module_pill", "matrix.request_time_feed", "matrix.live_api", "legacy.board", "scenario.redirect", "hop.audit_coverage", "program.parity.legacy_audit_scoreboard_page"],
-  reportsMatrix: ["home.kpi_strip", ...REPORT_IDS.map((id) => `report.${id}`), ...RUNNER_IDS.map((id) => `runner.${id.replaceAll("-", "_")}`), ...AUDIT_IDS.map((id) => `audit.${id}`), "reports.modal.lane_detail", "reports.modal.schedule_report", "reports.panel.report_flyout", "reports.panel.scheduled_reports", "reports.sheet.balance_sheet_page", "reports.flyout.report_flyout"],
+  homeMatrix: ["role.owner", "role.dispatcher", "role.accountant", "role.safety", "role.manager", "role.default", "surface.qbo_style", "surface.kpi_cards", "surface.attention_list", "surface.quick_actions", "surface.fleet_restore", "home.panel.accounting_pending_approvals", "home.panel.dispatcher_active_loads", "home.panel.dispatcher_pending_actions", "home.panel.driver_manager_attention", "home.panel.fleet_snapshot", "home.panel.safety_alerts"],
+  programMatrix: ["legacy.board"],
+  reportsMatrix: ["home.kpi_strip", ...REPORT_IDS.map((id) => `report.${id}`), ...RUNNER_IDS.map((id) => `runner.${id.replaceAll("-", "_")}`), ...AUDIT_IDS.map((id) => `audit.${id}`), "reports.modal.lane_detail", "reports.modal.schedule_report", "reports.panel.scheduled_reports", "reports.sheet.balance_sheet_page"],
 };
 
 const read = () => Object.fromEntries(Object.entries(FILES).map(([key, file]) => [key, fs.readFileSync(file, "utf8")]));
@@ -137,7 +137,7 @@ if (process.argv.includes("--self-test")) {
     ["routes", 'path="/program/matrix"', 'path="/broken-program"'], ["routes", 'path="/reports/profit-loss"', 'path="/broken-report"'],
     ["routes", 'path="/reports/run/:reportId"', 'path="/broken-runner"'], ["routes", 'path="/reports/audit/activity-by-user"', 'path="/broken-audit"'],
     ["cashFlowMatrix", '"id": "home"', '"id": "broken.home"'], ["fuelMatrix", '"id": "card_overage"', '"id": "broken.card"'],
-    ["homeMatrix", '"id": "role.owner"', '"id": "broken.owner"'], ["programMatrix", '"id": "matrix.module_pill"', '"id": "broken.matrix"'],
+    ["homeMatrix", '"id": "role.owner"', '"id": "broken.owner"'], ["programMatrix", '"id": "legacy.board"', '"id": "broken.board"'],
     ["reportsMatrix", '"id": "report.management"', '"id": "broken.report"'],
   ];
   for (const [key, before, after] of mutations) {

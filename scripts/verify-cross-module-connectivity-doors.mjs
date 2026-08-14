@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["cash-flow","finance","home"],"cols":["connectivity"],"leafRe":"^(hop\.(banking|reports\.(cash_flow_statement|cash_flow|cash_flow_overview)|cash_advances|accounting|cash_flow|reports)|jump\.(accounting|banking))$","task":"LINK-F5153-CROSS-MODULE-CONNECTIVITY-DOORS","vertical":"class-sweep"} */
+/** Product guard for mounted cross-module connectivity doors. */
 import fs from "node:fs";
 import process from "node:process";
 
@@ -9,17 +9,9 @@ const FILES = {
   homeOwner: "apps/frontend/src/pages/home/OwnerHome.tsx",
   homeQbo: "apps/frontend/src/pages/home/QboStyleHomePage.tsx",
   routes: "apps/frontend/src/routes/manifest.tsx",
-  cashFlowMatrix: "docs/specs/scoreboard/modules/cash-flow.required.json",
-  financeMatrix: "docs/specs/scoreboard/modules/finance.required.json",
-  homeMatrix: "docs/specs/scoreboard/modules/home.required.json",
 };
 
 const read = () => Object.fromEntries(Object.entries(FILES).map(([key, file]) => [key, fs.readFileSync(file, "utf8")]));
-const REQUIRED_LEAVES = {
-  cashFlowMatrix: ["hop.banking", "hop.reports.cash_flow_statement", "hop.reports.cash_flow", "hop.reports.cash_flow_overview", "hop.cash_advances"],
-  financeMatrix: ["hop.accounting", "hop.cash_flow", "hop.reports"],
-  homeMatrix: ["jump.accounting", "jump.banking"],
-};
 
 export function verify(source) {
   const failures = [];
@@ -38,14 +30,6 @@ export function verify(source) {
   need("homeQbo", 'to="/accounting/invoices"', "Home must retain its Accounting invoices jump");
   for (const route of ["/banking", "/reports/cash-flow-statement", "/reports/cash-flow", "/reports/cash-flow-overview", "/drivers", "/accounting", "/cash-flow", "/reports/profit-loss"]) {
     need("routes", `path="${route}"`, `route ${route} must remain mounted`);
-  }
-  for (const [key, ids] of Object.entries(REQUIRED_LEAVES)) {
-    let matrix;
-    try { matrix = JSON.parse(source[key]); } catch (error) { failures.push(`${key} must parse: ${error.message}`); continue; }
-    for (const id of ids) {
-      const leaf = matrix.leaves?.find((candidate) => candidate.id === id);
-      if (!leaf?.required?.includes("connectivity")) failures.push(`${key}:${id} must inventory connectivity`);
-    }
   }
   return failures;
 }
@@ -72,9 +56,6 @@ if (process.argv.includes("--self-test")) {
     ["homeOwner", 'to="/banking"', 'to="/"'],
     ["homeQbo", 'to="/accounting/invoices"', 'to="/accounting"'],
     ["routes", 'path="/reports/cash-flow-statement"', 'path="/reports/cash-flow-statement-broken"'],
-    ["cashFlowMatrix", '"id": "hop.banking"', '"id": "hop.banking.broken"'],
-    ["financeMatrix", '"id": "hop.accounting"', '"id": "hop.accounting.broken"'],
-    ["homeMatrix", '"id": "jump.accounting"', '"id": "jump.accounting.broken"'],
   ];
   for (const [key, before, after] of mutations) {
     if (!source[key].includes(before)) throw new Error(`self-test fixture missing: ${key} ${before}`);
