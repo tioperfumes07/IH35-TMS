@@ -2454,6 +2454,14 @@
       "modules": ["accounting"],
       "cols": ["settlement"],
       "leafRe": "^accounting\\.modal\\.decide$"
+    },
+    {
+      "task": "VERTICAL-AP-BILL-INLINE-SURFACES",
+      "pr": "this PR",
+      "guard": "scripts/verify-ap-bill-inline-surface-linkage.mjs",
+      "modules": ["accounting", "settlements"],
+      "cols": ["ap_bill"],
+      "leafRe": "^(accounting\\.panel\\.reallocate|settlements\\.panel\\.open_driver_bills)$"
     }
   ]
 }
