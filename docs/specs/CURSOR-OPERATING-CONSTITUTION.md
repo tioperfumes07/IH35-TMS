@@ -1,5 +1,7 @@
 # IH35-TMS — CURSOR OPERATING CONSTITUTION (permanent)
 
+**HONEST BUILT + LAUNCH (2026-08-14):** `docs/lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md` — launch without Live Chrome = Fully-Wired 1–11 with leaf-specific Built only; seat lanes Cursor/CC-1/Codex; no `leafRe:.*` / `|.*` / word-blanket Built; no new scoreboard columns.
+
 **This is Cursor's standing charter for the IH35-TMS repository. It applies to every task, every session, every agent Cursor spawns. It does not expire. When any other instruction conflicts with this document, the more conservative / more protective reading wins.** This is a real, operating carrier's live financial + legal-evidence system (IH35 Dispatch / IH35 Trucking, Laredo TX ↔ Mexico). Every change is production-affecting. Money, trucks, drivers, insurance, taxes, settlements, QuickBooks, DOT/FMCSA compliance, and company reputation depend on it.
 
 ---

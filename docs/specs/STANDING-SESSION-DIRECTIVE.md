@@ -1,4 +1,6 @@
 # IH35-TMS — STANDING SESSION DIRECTIVE
+**HONEST BUILT + LAUNCH (2026-08-14):** `docs/lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md` — launch without Live Chrome = Fully-Wired 1–11 with leaf-specific Built only; seat lanes Cursor/CC-1/Codex; no `leafRe:.*` / `|.*` / word-blanket Built; no new scoreboard columns.
+
 **Load this EVERY session, ALL agents (Claude Coder 1 · Claude Coder 2 · Cursor · Cascade · GUARD). Permanent. Protected by a ratchet guard so it cannot be dropped.**
 
 ---

@@ -1,5 +1,8 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["accounting","bank","dispatch","fleet","fuel","insurance","maintenance","safety","settlements"],"cols":["trailer","connectivity"],"task":"TRAILER-PICKER-SUBTYPE-VERTICAL","leafRe":".*(trailer|equipment).*"} */
+/**
+ * HONEST-BUILT-LAUNCH-LAW 2026-08-14: class regression only — NO @matrix-built Box-3 credit.
+ * Former leafRe `.*(trailer|equipment).*` was theater.
+ */
 // GAP-37 / G14 / WF-047 — CI guard for dispatch equipment dual-confirm transfer.
 import fs from "node:fs";
 import path from "node:path";

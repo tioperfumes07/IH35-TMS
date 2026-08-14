@@ -5,6 +5,8 @@ description: >-
   "done". Load at session start and before any merge/ship claim. Companion to ih35-guard-verification.
   Cursor rule: .cursor/rules/16-fix-not-patch-evidence-law.mdc
 ---
+**HONEST BUILT + LAUNCH (2026-08-14):** `docs/lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md` — launch without Live Chrome = Fully-Wired 1–11 with leaf-specific Built only; seat lanes Cursor/CC-1/Codex; no `leafRe:.*` / `|.*` / word-blanket Built; no new scoreboard columns.
+
 
 # IH35 — Evidence Before Done (fix, don't patch)
 

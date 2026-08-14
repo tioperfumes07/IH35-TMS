@@ -1,5 +1,7 @@
 # IH35-TMS QUALITY STANDARD — LOCKED (Rule #0, supersedes on conflict)
 
+**HONEST BUILT + LAUNCH (2026-08-14):** `docs/lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md` — launch without Live Chrome = Fully-Wired 1–11 with leaf-specific Built only; seat lanes Cursor/CC-1/Codex; no `leafRe:.*` / `|.*` / word-blanket Built; no new scoreboard columns.
+
 Owner: Jorge Pablo Munoz. This is the first standing law of IH35-TMS. Every agent, every session, every block, every recommendation is bound by it. On any conflict with another doc, THIS wins on the hardline. Cursor's permanent operating charter is `docs/specs/CURSOR-OPERATING-CONSTITUTION.md` (auto-loaded via `.cursor/rules/00`–`07` + `10`–`16`); when instructions conflict, the **more conservative / more protective** reading wins. **Rule 16** (`.cursor/rules/16-fix-not-patch-evidence-law.mdc`): fix root cause, never patch, never defer without written tracker entry, evidence before done.
 
 **FULLY WIRED (owner 2026-08-13):** `docs/lockdown/FULLY-WIRED-COMPLETE-BAR-2026-08-13.md` — the mandatory 12-item meaning of wired/done (surface bar + **Live Chrome last**). Soft “yes” without that list is a defect.

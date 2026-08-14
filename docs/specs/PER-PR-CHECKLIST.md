@@ -1,5 +1,7 @@
 # IH35-TMS — PER-PR CHECKLIST (canonical, auto-loaded every session)
 
+**HONEST BUILT + LAUNCH (2026-08-14):** `docs/lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md` — launch without Live Chrome = Fully-Wired 1–11 with leaf-specific Built only; seat lanes Cursor/CC-1/Codex; no `leafRe:.*` / `|.*` / word-blanket Built; no new scoreboard columns.
+
 **Status: BINDING.** This is the single consolidated list of what must be audited and fixed in
 **every** PR. It consolidates `docs/specs/DEFINITION-OF-DONE.md`,
 `docs/trackers/FULL-AUDIT-LAW-AGREED-2026-07-22.md`, the Full Linkage Audit, Rule 16

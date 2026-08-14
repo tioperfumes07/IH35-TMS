@@ -2012,7 +2012,7 @@
         "connectivity",
         "reverse_link"
       ],
-      "leafRe": "^(unit\\.profile\\.bank_txns|trailer\\.profile\\.bank_txns|.*bank.*|.*linked.*transaction.*)$"
+      "leafRe": "^(unit\\.profile\\.bank_txns|trailer\\.profile\\.bank_txns)$"
     },
     {
       "task": "LINK-F5132-EMBEDDED-ASSIGNMENT-REVERSE-LINKS",

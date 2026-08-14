@@ -43,10 +43,25 @@ const MATRIX_BUILT_SHORTHAND_RE =
   /@matrix-built\s+modules=([^\s]+)(?:\s+cols=([^\s]+))?(?:\s+leafRe=([^\s]+))?/g;
 const MATRIX_BUILT_CSV_RE = /@matrix-built\s+(?!modules=|\{)([a-z][a-z0-9_-]*(?:,[a-z][a-z0-9_-]*)+)(?=\s|\*|\/|$)/gi;
 
+/**
+ * HONEST-BUILT-LAUNCH-LAW 2026-08-14 — leaf-specific means the regex cannot silently
+ * paint arbitrary leaves Built. Match-all, OR-any (`|.*`), and word-blanket
+ * `.*(create|modal|…).*` shapes are theater even when they are not pure `.*`.
+ * Keep in lockstep with apps/backend/src/program/matrix-built-auto.ts.
+ */
 export function isLeafSpecific(leafRe) {
   const trimmed = String(leafRe ?? "").trim();
   if (!trimmed) return false;
-  return !/^\^?\.[*+]\$?$/.test(trimmed);
+  // Pure match-all
+  if (/^\^?\.[*+]\$?$/.test(trimmed)) return false;
+  // OR-any / trailing match-all (qbo_chrome typo class: `^foo$|.*`)
+  if (/\|\.\*/.test(trimmed) || /\.\*\|/.test(trimmed)) return false;
+  // Word-blanket claiming hundreds of create/modal/drawer/picker leaves in one shot
+  if (/\.\*\([^)]*(?:create|modal|drawer|wizard|picker)[^)]*\)/i.test(trimmed)) return false;
+  // Same class without a trailing `.*` after the group, or `.*bank.*`-style double wildcards
+  // that are not an anchored leaf-family prefix.
+  if (/^\.\*.*\.\*$/.test(trimmed) && !/^\^\(/.test(trimmed)) return false;
+  return true;
 }
 
 export function scanEntries(readFileText = (p) => fs.readFileSync(p, "utf8"), listScripts = () =>
@@ -124,6 +139,18 @@ if (process.argv.includes("--selftest")) {
   const anchored = audit([{ file: "fixture", cols: ["connectivity"], leafRe: "^(bills\\.|ap\\.)" }]);
   if (anchored.length) {
     console.error(`${LABEL} SELFTEST FAIL — real narrowing prefix regex rejected`);
+    process.exit(1);
+  }
+  const orAny = audit([{ file: "fixture", cols: ["qbo_chrome"], leafRe: "^chrome\\.toolbar_(search|range|gear)$|.*" }]);
+  if (orAny.length !== 1) {
+    console.error(`${LABEL} SELFTEST FAIL — OR-any leafRe (|.*) escaped`);
+    process.exit(1);
+  }
+  const wordBlanket = audit([
+    { file: "fixture", cols: ["picker_law"], leafRe: ".*(create|modal|drawer|wizard).*" },
+  ]);
+  if (wordBlanket.length !== 1) {
+    console.error(`${LABEL} SELFTEST FAIL — word-blanket leafRe escaped`);
     process.exit(1);
   }
 

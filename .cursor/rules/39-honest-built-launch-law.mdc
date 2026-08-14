@@ -1,0 +1,18 @@
+---
+description: HONEST BUILT + LAUNCH LAW — leaf-specific Built; seat lanes; no theater
+alwaysApply: true
+---
+
+# RULE — HONEST BUILT + LAUNCH (owner 2026-08-14 · PERMANENT)
+
+**Canonical:** `docs/lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md`  
+**Companion:** `docs/lockdown/FULLY-WIRED-COMPLETE-BAR-2026-08-13.md`
+
+1. Launch-ready **without** Live Chrome = Fully-Wired items **1–11** with **honest** Box 3 Built.
+2. **Illegal Built:** `leafRe:".*"`, `|.*`, word blankets `.*(create|modal|drawer|wizard).*`.
+3. **Do not add scoreboard columns.** Fix lying Built. No permanent 5th “Verified” Box.
+4. **Seat lanes:** CC-1 = money theater + money reverse/gaps; Cursor = qbo_chrome/picker + surface-bar inventory; Codex = mechanical connectivity/reverse + entity `.*` floors.
+5. Soft “Done / fully wired / launch-ready” while theater or filed gaps remain = **process defect**.
+6. Say `Live=BLOCKED` until item 12 after honest Built.
+
+Presence: `scripts/verify-honest-built-launch-law-present.mjs`.

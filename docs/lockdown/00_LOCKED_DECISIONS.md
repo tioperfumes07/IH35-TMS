@@ -1,4 +1,6 @@
 # IH35-TMS — LOCKED DECISIONS (single source of truth)
+**HONEST BUILT + LAUNCH (2026-08-14):** `docs/lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md` — launch without Live Chrome = Fully-Wired 1–11 with leaf-specific Built only; seat lanes Cursor/CC-1/Codex; no `leafRe:.*` / `|.*` / word-blanket Built; no new scoreboard columns.
+
 Last locked: 2026-06-08 by Jorge. Repo doc WINS over any handoff/STATUS/memory. Do not re-ask Jorge any item below.
 
 > **OWNER LAW (2026-08-03, FINAL) governs merge/Neon-apply mechanics referenced anywhere below: NO HOLDS, NO

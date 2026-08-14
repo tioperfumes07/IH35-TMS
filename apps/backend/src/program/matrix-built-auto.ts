@@ -183,10 +183,15 @@ function scanGuardTags(root: string): WireSprintBuiltEntry[] {
  * scripts run standalone via `node`, not through the TS build, so the check is duplicated there —
  * same pattern as classifyCell()/classCellFor() elsewhere in this file's neighbours).
  */
+/** HONEST-BUILT-LAUNCH-LAW 2026-08-14 — lockstep with scripts/verify-matrix-built-leaf-specific.mjs */
 export function isLeafSpecific(leafRe: string): boolean {
   const trimmed = (leafRe ?? "").trim();
   if (!trimmed) return false;
-  return !/^\^?\.[*+]\$?$/.test(trimmed);
+  if (/^\^?\.[*+]\$?$/.test(trimmed)) return false;
+  if (/\|\.\*/.test(trimmed) || /\.\*\|/.test(trimmed)) return false;
+  if (/\.\*\([^)]*(?:create|modal|drawer|wizard|picker)[^)]*\)/i.test(trimmed)) return false;
+  if (/^\.\*.*\.\*$/.test(trimmed) && !/^\^\(/.test(trimmed)) return false;
+  return true;
 }
 
 let cached: { root: string; atMs: number; entries: WireSprintBuiltEntry[] } | null = null;
