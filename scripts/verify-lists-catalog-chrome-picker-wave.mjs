@@ -15,6 +15,8 @@
  * @matrix-built {"modules":["lists"],"cols":["picker_law"],"leafRe":"^catalog\\.maintenance\\.(failure_codes|labor_codes|parts|parts_catalog|oem_parts_reference|priority_levels|service_tasks|services_catalog|shop_locations|vendors|work_order_statuses)\\.","task":"CURSOR-VERTICAL-LISTS-PICKER-maintenance-b","vertical":"column-wave"}
  * @matrix-built {"modules":["lists"],"cols":["picker_law"],"leafRe":"^catalog\\.accounting\\.(account_types_lookup|detail_types_lookup|audit_event_types|chart_of_accounts|account_types|detail_types|classes|payment_terms|posting_templates|journal_entry_types)\\.","task":"CURSOR-VERTICAL-LISTS-PICKER-accounting-a","vertical":"column-wave"}
  * @matrix-built {"modules":["lists"],"cols":["picker_law"],"leafRe":"^catalog\\.accounting\\.(qbo_bulk_link|qbo_categories|items|account_role_bindings|chart_of_accounts_seeds|expense_categories|payment_methods|tax_codes|currency_codes|void_cancel_reasons|abandonment_defaults)\\.","task":"CURSOR-VERTICAL-LISTS-PICKER-accounting-b","vertical":"column-wave"}
+ * @matrix-built {"modules":["lists"],"cols":["picker_law"],"leafRe":"^(lists\\.(modal|drawer)\\.|catalogs\\.(equipment_types|driver_load_statuses)\\.create$)","task":"CURSOR-VERTICAL-LISTS-PICKER-modals","vertical":"column-wave"}
+ * @matrix-built {"modules":["lists"],"cols":["qbo_chrome"],"leafRe":"^(lists\\.(modal|drawer|panel|dialog|popover)\\.|hub\\.home$|catalogs\\.(equipment_types|driver_load_statuses)\\.create$)","task":"CURSOR-VERTICAL-LISTS-QBO-modals","vertical":"column-wave"}
  *
  * Run: node scripts/verify-lists-catalog-chrome-picker-wave.mjs [--selftest]
  */
@@ -144,7 +146,46 @@ export function audit(opts = {}) {
   }
   if (catalogLeaves < 100) failures.push(`catalog chrome/picker leaf count shrank to ${catalogLeaves}`);
 
-  return { failures, pages: pages.length, catalogLeaves };
+  // Modal / drawer / dialog surfaces for remaining Lists chrome leaves
+  let surfaceLeaves = 0;
+  for (const leaf of required.leaves || []) {
+    const owes =
+      Array.isArray(leaf.required) &&
+      (leaf.required.includes("qbo_chrome") || leaf.required.includes("picker_law"));
+    if (!owes) continue;
+    const hint = String(leaf.route_hint || "");
+    if (!hint.startsWith("surface://")) continue;
+    surfaceLeaves += 1;
+    const rel = hint.replace(/^surface:\/\//, "");
+    const abs = path.join(ROOT, rel.startsWith("apps/") ? rel : path.join("apps/frontend/src", rel));
+    // route_hint forms: surface://pages/... or surface://components/... or surface://apps/frontend/...
+    const candidates = [
+      abs,
+      path.join(ROOT, "apps/frontend/src", rel),
+      path.join(ROOT, rel),
+    ];
+    const hit = candidates.find((p) => fs.existsSync(p));
+    if (!hit) {
+      failures.push(`${leaf.id}: missing surface file for ${hint}`);
+      continue;
+    }
+    const src = fs.readFileSync(hit, "utf8");
+    const looksChrome =
+      /\bopen\b/.test(src) ||
+      /\bonClose\b/.test(src) ||
+      /\bonOpenChange\b/.test(src) ||
+      src.includes("+ Create") ||
+      src.includes("ParityDrawer") ||
+      src.includes("Dialog") ||
+      src.includes("Modal") ||
+      src.includes("Drawer") ||
+      src.includes("Popover") ||
+      (/Panel/.test(path.basename(hit)) && /export function|export const/.test(src) && /type Props/.test(src));
+    if (!looksChrome) failures.push(`${leaf.id}: surface ${path.relative(ROOT, hit)} lacks modal/drawer chrome markers`);
+  }
+  if (surfaceLeaves < 15) failures.push(`lists surface:// chrome leaf count shrank to ${surfaceLeaves}`);
+
+  return { failures, pages: pages.length, catalogLeaves, surfaceLeaves };
 }
 
 if (process.argv.includes("--selftest")) {
@@ -180,5 +221,5 @@ if (result.failures.length) {
   process.exit(1);
 }
 console.log(
-  `${LABEL} PASS — shells chrome-ok · ListPages=${result.pages} · catalogLeaves=${result.catalogLeaves}`,
+  `${LABEL} PASS — shells chrome-ok · ListPages=${result.pages} · catalogLeaves=${result.catalogLeaves} · surfaceLeaves=${result.surfaceLeaves}`,
 );
