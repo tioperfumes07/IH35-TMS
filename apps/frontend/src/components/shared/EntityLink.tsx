@@ -88,6 +88,9 @@ export type EntityKind =
   | "fuel_card_overage_event"
   | "driver_team_split"
   | "driver_report"
+  // LINK-F5171: reverse "Open report queue" → filtered driver-reports list (not a single report row).
+  | "driver_reports_driver"
+  | "driver_reports_load"
   | "training_record"
   | "legal_contract"
   | "company_violation"
@@ -325,6 +328,10 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
       return `/drivers/team-splits?team_id=${id}`;
     case "driver_report":
       return `/maintenance/driver-reports?driver_report_id=${id}`;
+    case "driver_reports_driver":
+      return `/maintenance/driver-reports?driver_id=${id}`;
+    case "driver_reports_load":
+      return `/maintenance/driver-reports?load_id=${id}`;
     case "training_record":
       return `/safety/training-records?training_id=${id}`;
     case "legal_contract":

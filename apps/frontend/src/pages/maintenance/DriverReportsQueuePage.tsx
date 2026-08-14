@@ -13,7 +13,15 @@ import { entityLabel } from "../../lib/entity-label";
 
 const LINK = "text-slate-700 hover:underline";
 
-export function DriverReportsQueuePage({ highlightedReportId = "" }: { highlightedReportId?: string } = {}) {
+export function DriverReportsQueuePage({
+  highlightedReportId = "",
+  filterDriverId = "",
+  filterLoadId = "",
+}: {
+  highlightedReportId?: string;
+  filterDriverId?: string;
+  filterLoadId?: string;
+} = {}) {
   const { selectedCompanyId, companies } = useCompanyContext();
   const operatingCompanyId = selectedCompanyId ?? companies[0]?.id ?? "";
   const { pushToast } = useToast();
@@ -24,11 +32,13 @@ export function DriverReportsQueuePage({ highlightedReportId = "" }: { highlight
   const [resolutionDraft, setResolutionDraft] = useState<Record<string, string>>({});
 
   const q = useQuery({
-    queryKey: ["maintenance", "driver-reports", operatingCompanyId, statusFilter],
+    queryKey: ["maintenance", "driver-reports", operatingCompanyId, statusFilter, filterDriverId, filterLoadId],
     queryFn: () =>
       listDriverReports({
         operating_company_id: operatingCompanyId,
         status: statusFilter || undefined,
+        driver_id: filterDriverId || undefined,
+        load_id: filterLoadId || undefined,
       }),
     enabled: Boolean(operatingCompanyId),
   });

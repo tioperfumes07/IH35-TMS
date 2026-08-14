@@ -1,3 +1,4 @@
+2026-08-15T03:25Z Cursor | tip=#6846 | shipping LINK-F5171 driver_reports_{driver,load} queue EntityLink + filter honor | Live=BLOCKED
 2026-08-15T00:55Z Cursor | SHIPPED #6843 LV-115 ratchet | closing stale home-widgets auth OPEN (vitest PASS) | Live=BLOCKED
 2026-08-15T00:50Z Cursor | SHIPPED #6841 Class-UUID stale | shipping LV-115 scenario entity-code ratchet + board FIXED | Live=BLOCKED
 2026-08-15T00:45Z Cursor | SHIPPED #6840 program/compliance | closing stale Class-UUID board OPEN (already #4530) | Live=BLOCKED
