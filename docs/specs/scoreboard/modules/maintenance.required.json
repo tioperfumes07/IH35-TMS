@@ -155,7 +155,6 @@
         "unit",
         "trailer",
         "load",
-        "ap_bill",
         "expense",
         "gl_je",
         "picker_law",
@@ -172,7 +171,6 @@
         "driver",
         "vendor",
         "unit",
-        "ap_bill",
         "expense",
         "gl_je",
         "picker_law",
@@ -189,7 +187,6 @@
         "driver",
         "vendor",
         "unit",
-        "ap_bill",
         "expense",
         "gl_je",
         "picker_law",
@@ -208,7 +205,6 @@
         "unit",
         "trailer",
         "load",
-        "ap_bill",
         "expense",
         "gl_je",
         "picker_law",
@@ -225,7 +221,6 @@
         "driver",
         "vendor",
         "unit",
-        "ap_bill",
         "expense",
         "gl_je",
         "picker_law",
@@ -243,7 +238,6 @@
         "vendor",
         "unit",
         "load",
-        "ap_bill",
         "expense",
         "gl_je",
         "picker_law",
@@ -260,7 +254,6 @@
         "driver",
         "vendor",
         "unit",
-        "ap_bill",
         "expense",
         "gl_je",
         "picker_law",
@@ -278,7 +271,6 @@
         "vendor",
         "unit",
         "load",
-        "ap_bill",
         "expense",
         "gl_je",
         "picker_law",
@@ -390,7 +382,6 @@
         "driver",
         "vendor",
         "unit",
-        "ap_bill",
         "qbo_chrome",
         "connectivity",
         "reverse_link"
@@ -430,7 +421,6 @@
       "route_hint": "/maintenance/parts-inventory",
       "required": [
         "vendor",
-        "ap_bill",
         "gl_je",
         "picker_law",
         "qbo_chrome",
@@ -588,7 +578,6 @@
       "required": [
         "vendor",
         "unit",
-        "ap_bill",
         "picker_law",
         "qbo_chrome",
         "connectivity",
@@ -742,8 +731,7 @@
       "required": [
         "connectivity",
         "unit",
-        "vendor",
-        "ap_bill"
+        "vendor"
       ]
     },
     {
@@ -773,7 +761,6 @@
         "picker_law",
         "unit",
         "vendor",
-        "ap_bill",
         "expense"
       ]
     },
@@ -1481,6 +1468,90 @@
           "id": "damage_reports.intake",
           "removed": [
             "scenario.insurance"
+          ]
+        }
+      ]
+    },
+    "money_cells_2026_08_14_ap_bill_overclaim": {
+      "finding": "OWNER-EXECUTION-PLAN-SS2-ACCT-F5161",
+      "note": "ap_bill blanket-required on all 15 maintenance leaves; verified live per leaf. Only 2 own it for real (KEPT, real Built added): wo.create_bill and maintenance.modal.create_bill are the SAME CreateBillModal.tsx (mounted from MaintenanceHome.tsx and WorkOrderDetailPage.tsx) \u2014 a genuine createVendorBill call that persists a hard accounting.bills.work_order_id FK and reuses the canonical VendorBillForm. The other 13 own no accounting.bills data anywhere: wo.create (CreateWorkOrderModal.tsx / WorkOrderCreateModal.tsx / CreateWOSection*.tsx) never calls createVendorBill \u2014 WO creation and bill creation are separate actions. wo.source.is/es/ac/et/rt/it/rs are WO-list source-type filter tabs (WorkOrdersTable.tsx) showing resolved_vendor_name but zero bill_id/EntityLink kind=\"bill\" per row. road_service.active (RoadServiceActivePanel.tsx) has zero bill references. parts_inventory.record_purchase (PartsInventoryTable.tsx 'Record Purchase' modal) captures a real vendor_id but last_purchase_invoice_number is a plain string, not a bill FK. warranty.create_claim (WarrantyClaimsPage.tsx), maintenance.modal.fault_rule (FaultRuleModal.tsx, a rule-config modal for auto-WO generation), and maintenance.modal.create_expense (CreateExpenseModal.tsx, a separate money instrument from bills) all have zero bill references.",
+      "drops": [
+        {
+          "id": "wo.create",
+          "removed": [
+            "ap_bill"
+          ]
+        },
+        {
+          "id": "wo.source.is",
+          "removed": [
+            "ap_bill"
+          ]
+        },
+        {
+          "id": "wo.source.es",
+          "removed": [
+            "ap_bill"
+          ]
+        },
+        {
+          "id": "wo.source.ac",
+          "removed": [
+            "ap_bill"
+          ]
+        },
+        {
+          "id": "wo.source.et",
+          "removed": [
+            "ap_bill"
+          ]
+        },
+        {
+          "id": "wo.source.rt",
+          "removed": [
+            "ap_bill"
+          ]
+        },
+        {
+          "id": "wo.source.it",
+          "removed": [
+            "ap_bill"
+          ]
+        },
+        {
+          "id": "wo.source.rs",
+          "removed": [
+            "ap_bill"
+          ]
+        },
+        {
+          "id": "road_service.active",
+          "removed": [
+            "ap_bill"
+          ]
+        },
+        {
+          "id": "parts_inventory.record_purchase",
+          "removed": [
+            "ap_bill"
+          ]
+        },
+        {
+          "id": "warranty.create_claim",
+          "removed": [
+            "ap_bill"
+          ]
+        },
+        {
+          "id": "maintenance.modal.fault_rule",
+          "removed": [
+            "ap_bill"
+          ]
+        },
+        {
+          "id": "maintenance.modal.create_expense",
+          "removed": [
+            "ap_bill"
           ]
         }
       ]

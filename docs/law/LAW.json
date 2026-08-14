@@ -621,5 +621,12 @@
     "source_file": "docs/specs/scoreboard/modules/home.required.json",
     "guard": null,
     "type": "judgment"
+  },
+  {
+    "id": "LAW-2026-08-14-ACCT-F5161-MAINTENANCE-AP-BILL-HONEST-MAP",
+    "title": "maintenance money-cell gap closed — 13 of 15 flagged leaves' false ap_bill Required markings removed (wo.create/wo.source.is|es|ac|et|rt|it|rs are WO-list/create surfaces with zero bill_id anywhere; road_service.active, parts_inventory.record_purchase (real vendor_id, but last_purchase_invoice_number is a plain string not a bill FK), warranty.create_claim, maintenance.modal.fault_rule, and maintenance.modal.create_expense all own zero bill data), while the 2 genuinely-wired leaves (wo.create_bill + maintenance.modal.create_bill — the SAME CreateBillModal.tsx, a real createVendorBill call persisting a hard accounting.bills.work_order_id FK, reusing the canonical VendorBillForm) get a real leaf-specific Built guard instead of riding the removed broad claim — closes the OWNER-EXECUTION-PLAN §2 all-8-module ap_bill money-cell sweep (compliance/fleet/home/insurance/inventory/legal/maintenance/reports)",
+    "source_file": "docs/specs/scoreboard/modules/maintenance.required.json",
+    "guard": "scripts/verify-maintenance-wo-create-bill.mjs",
+    "type": "enforced"
   }
 ]
