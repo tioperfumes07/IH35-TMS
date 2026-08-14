@@ -230,7 +230,6 @@
       "route_hint": "/vendors",
       "required": [
         "vendor",
-        "driver",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -287,7 +286,6 @@
       "route_hint": "/vendors?tab=vendor_details",
       "required": [
         "vendor",
-        "driver",
         "connectivity",
         "reverse_link",
         "qbo_chrome"
@@ -875,6 +873,24 @@
           "id": "detail.profile",
           "removed": [
             "unit"
+          ]
+        }
+      ]
+    },
+    "driver_column_2026_08_14_overclaim": {
+      "finding": "LINK-F5168-DRIVER-COLUMN-VERTICAL-SWEEP",
+      "note": "driver blanket-required on 2 vendors leaves. Verified live \u2014 VendorCreateModal.tsx (412 lines) has zero driver references, no driver field at vendor creation; Vendors.tsx's \"vendor_details\" tab (L545-548) renders only placeholder text \"Vendor details are shown in the header section for this layout.\" \u2014 no driver linkage.",
+      "drops": [
+        {
+          "id": "list.create",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "md.vendor_details",
+          "removed": [
+            "driver"
           ]
         }
       ]

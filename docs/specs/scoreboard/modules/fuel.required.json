@@ -137,7 +137,6 @@
       "sub": "Fuel home",
       "route_hint": "/fuel",
       "required": [
-        "driver",
         "load",
         "connectivity"
       ]
@@ -148,7 +147,6 @@
       "sub": "Fuel planner",
       "route_hint": "/fuel/planner",
       "required": [
-        "driver",
         "load",
         "connectivity"
       ]
@@ -159,7 +157,6 @@
       "sub": "Relay card inbox",
       "route_hint": "/fuel/inbox",
       "required": [
-        "driver",
         "connectivity"
       ]
     },
@@ -211,7 +208,6 @@
       "sub": "Fuel compliance",
       "route_hint": "/fuel/compliance",
       "required": [
-        "driver",
         "connectivity"
       ]
     },
@@ -224,8 +220,7 @@
       "surface_path": "pages/fuel/components/ImportFuelTransactionsModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
-        "driver"
+        "reverse_link"
       ]
     },
     {
@@ -257,8 +252,7 @@
       "required": [
         "connectivity",
         "reverse_link",
-        "load",
-        "driver"
+        "load"
       ]
     },
     {
@@ -270,8 +264,7 @@
       "surface_path": "pages/fuel/components/SavingsPanel.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
-        "driver"
+        "reverse_link"
       ]
     },
     {
@@ -470,6 +463,54 @@
           "id": "fuel.panel.savings",
           "removed": [
             "unit"
+          ]
+        }
+      ]
+    },
+    "driver_column_2026_08_14_overclaim": {
+      "finding": "LINK-F5168-DRIVER-COLUMN-VERTICAL-SWEEP",
+      "note": "driver blanket-required on 7 fuel leaves. Verified live \u2014 FuelHome.tsx (home) renders only KPI/fraud/card-overage cards + RelayHistoryImport, zero driver_id; the planner tab (ActiveTripStrip/HosRulesBox/RouteDiagramSvg/StopReasoningTable/TripPlanSummaryBanner) has no driver_id, \"Send to driver app\" acts on the route id only; RelayDepositReview.tsx (relay_inbox) has no driver references; CompliancePanel.tsx (compliance) only receives an aggregate driverPct percentage number; ImportFuelTransactionsModal.tsx and UploadLovesPricesModal.tsx have zero driver references; SavingsPanel.tsx only receives aggregate driverSavings/topDriverName/topDriverAmount \u2014 no driver_id/EntityLink/EntityPicker anywhere in any of the 7.",
+      "drops": [
+        {
+          "id": "home",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "planner",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "relay_inbox",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "compliance",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "fuel.modal.import_fuel_transactions",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "fuel.modal.upload_loves_prices",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "fuel.panel.savings",
+          "removed": [
+            "driver"
           ]
         }
       ]

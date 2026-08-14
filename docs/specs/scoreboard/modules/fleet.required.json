@@ -132,7 +132,6 @@
       "sub": "Fleet roster (units + trailers)",
       "route_hint": "/fleet",
       "required": [
-        "driver",
         "unit",
         "trailer",
         "connectivity",
@@ -146,7 +145,6 @@
       "sub": "+ Create Unit",
       "route_hint": "/fleet",
       "required": [
-        "driver",
         "unit",
         "picker_law",
         "qbo_chrome",
@@ -160,7 +158,6 @@
       "sub": "+ Create Trailer",
       "route_hint": "/fleet",
       "required": [
-        "driver",
         "trailer",
         "picker_law",
         "qbo_chrome",
@@ -186,7 +183,6 @@
       "sub": "Kind filter \u00b7 Trucks",
       "route_hint": "/fleet?kind=truck",
       "required": [
-        "driver",
         "unit",
         "connectivity",
         "reverse_link"
@@ -328,7 +324,6 @@
       "sub": "Identity \u00b7 status \u00b7 plates \u00b7 quick availability",
       "route_hint": "/fleet/units/:id",
       "required": [
-        "driver",
         "unit",
         "connectivity",
         "reverse_link",
@@ -377,7 +372,6 @@
       "sub": "Current load + backhaul suggestions",
       "route_hint": "/fleet/units/:id",
       "required": [
-        "driver",
         "unit",
         "load",
         "connectivity",
@@ -509,7 +503,6 @@
       "route_hint": "/fleet/units/:id",
       "required": [
         "unit",
-        "driver",
         "connectivity",
         "reverse_link"
       ]
@@ -568,7 +561,6 @@
       "sub": "Modal tab \u00b7 Identity",
       "route_hint": "/fleet/units/:id",
       "required": [
-        "driver",
         "unit",
         "picker_law",
         "qbo_chrome",
@@ -687,7 +679,6 @@
       "route_hint": "/fleet/units/:id/detail?tab=tasks",
       "required": [
         "unit",
-        "driver",
         "connectivity",
         "reverse_link"
       ]
@@ -759,7 +750,6 @@
       "required": [
         "trailer",
         "unit",
-        "driver",
         "connectivity",
         "reverse_link"
       ]
@@ -958,8 +948,7 @@
       "required": [
         "connectivity",
         "picker_law",
-        "trailer",
-        "driver"
+        "trailer"
       ]
     },
     {
@@ -972,8 +961,7 @@
       "required": [
         "connectivity",
         "picker_law",
-        "unit",
-        "driver"
+        "unit"
       ]
     },
     {
@@ -986,8 +974,7 @@
       "required": [
         "connectivity",
         "picker_law",
-        "trailer",
-        "driver"
+        "trailer"
       ]
     },
     {
@@ -1559,6 +1546,90 @@
           "id": "fleet.modal.edit_trailer",
           "removed": [
             "unit"
+          ]
+        }
+      ]
+    },
+    "driver_column_2026_08_14_overclaim": {
+      "finding": "LINK-F5168-DRIVER-COLUMN-VERTICAL-SWEEP",
+      "note": "driver blanket-required on 13 fleet leaves. Verified live \u2014 FleetTable.tsx's roster grid (home.roster/roster.kind.trucks) has zero driver_id field/EntityLink/EntityPicker on-screen (\"assigned driver\" appears only in an Excel-export tooltip); CreateUnitModal.tsx/CreateTrailerModal.tsx/EditTrailerModal.tsx have no driver field at all; IdentityStatusHeader.tsx (unit.profile.identity) and CurrentLoadSection.tsx (unit.profile.current_load) only link kind=\"unit\"/kind=\"load\"; AssetSafetyReverseSection.tsx (unit.profile.safety_reverse) shows driver_name as PLAIN TEXT only, no driver_id/EntityLink; EditVehicleModal.tsx's \"Identity\" tab (unit.edit.identity) has no driver field \u2014 assigned_driver_id lives only on the separate Quick-availability tab; TasksTab.tsx (unit.detail.tasks) is scoped only to targetType=\"unit\"; CurrentAssignmentSection.tsx (trailer.profile.assignment) shows only the attached truck and current load, no driver.",
+      "drops": [
+        {
+          "id": "home.roster",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "home.create_unit",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "home.create_trailer",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "roster.kind.trucks",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "unit.profile.identity",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "unit.profile.current_load",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "unit.profile.safety_reverse",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "unit.edit.identity",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "unit.detail.tasks",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "trailer.profile.assignment",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "fleet.modal.create_trailer",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "fleet.modal.create_unit",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "fleet.modal.edit_trailer",
+          "removed": [
+            "driver"
           ]
         }
       ]

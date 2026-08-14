@@ -120,7 +120,6 @@
       "sub": "Filings rollup tab",
       "route_hint": "/compliance",
       "required": [
-        "driver",
         "connectivity"
       ]
     },
@@ -187,7 +186,6 @@
       "sub": "Required Documents tab",
       "route_hint": "/compliance?tab=required_docs",
       "required": [
-        "driver",
         "connectivity"
       ]
     },
@@ -197,7 +195,6 @@
       "sub": "Summary cards",
       "route_hint": "/compliance?tab=overview",
       "required": [
-        "driver",
         "connectivity"
       ]
     },
@@ -744,6 +741,30 @@
           "id": "hop.reports_ifta",
           "removed": [
             "unit"
+          ]
+        }
+      ]
+    },
+    "driver_column_2026_08_14_overclaim": {
+      "finding": "LINK-F5168-DRIVER-COLUMN-VERTICAL-SWEEP",
+      "note": "driver blanket-required on 3 compliance leaves. Verified live \u2014 FilingsComplianceDueSection.tsx's cross-module aggregator renders row.entity_code as plain text + a generic drill-through Link, no driver_id/EntityLink kind=\"driver\"; RequiredDocumentsSection.tsx's \"driver\" is only a document-type-catalog tab label/filter for configuring required doc TYPES, not a link to any real driver record; SummaryCards.tsx is a pure aggregate severity counter (red/yellow/green), no per-record data at all.",
+      "drops": [
+        {
+          "id": "tab.filings",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "tab.required_docs",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "overview.summary_cards",
+          "removed": [
+            "driver"
           ]
         }
       ]

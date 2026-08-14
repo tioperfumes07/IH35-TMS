@@ -286,7 +286,6 @@
       "sub": "Expiry dashboard",
       "route_hint": "/safety/cert-expiry",
       "required": [
-        "driver",
         "connectivity"
       ]
     },
@@ -498,7 +497,6 @@
       "sub": "Alerts",
       "route_hint": "/safety/geofence-alerts",
       "required": [
-        "driver",
         "unit",
         "connectivity"
       ]
@@ -509,7 +507,6 @@
       "sub": "Safety insurance leaf",
       "route_hint": "/safety/insurance",
       "required": [
-        "driver",
         "scenario.insurance",
         "connectivity",
         "reverse_link"
@@ -543,7 +540,6 @@
       "route_hint": "/safety/position-history",
       "required": [
         "unit",
-        "driver",
         "connectivity"
       ]
     },
@@ -614,8 +610,7 @@
       "surface_kind": "modal",
       "surface_path": "pages/lists/safety/CompanyViolationTypeModal.tsx",
       "required": [
-        "connectivity",
-        "driver"
+        "connectivity"
       ]
     },
     {
@@ -627,8 +622,7 @@
       "surface_path": "pages/safety/components/CompanyViolationCreateModal.tsx",
       "required": [
         "connectivity",
-        "picker_law",
-        "driver"
+        "picker_law"
       ]
     },
     {
@@ -640,8 +634,7 @@
       "surface_path": "pages/safety/components/EscrowForfeitModal.tsx",
       "required": [
         "connectivity",
-        "liability",
-        "driver"
+        "liability"
       ]
     },
     {
@@ -653,8 +646,7 @@
       "surface_path": "pages/safety/components/FineConvertConfirmModal.tsx",
       "required": [
         "connectivity",
-        "liability",
-        "driver"
+        "liability"
       ]
     },
     {
@@ -758,8 +750,7 @@
       "surface_kind": "panel",
       "surface_path": "components/safety/driver-safety/DriverSafetyProfilePanel.tsx",
       "required": [
-        "connectivity",
-        "driver"
+        "connectivity"
       ]
     },
     {
@@ -809,8 +800,7 @@
       "surface_path": "pages/safety/components/EscrowForfeitModal.tsx",
       "required": [
         "connectivity",
-        "liability",
-        "driver"
+        "liability"
       ]
     },
     {
@@ -1400,6 +1390,72 @@
           "id": "insurance_tab.list",
           "removed": [
             "unit"
+          ]
+        }
+      ]
+    },
+    "driver_column_2026_08_14_overclaim": {
+      "finding": "LINK-F5168-DRIVER-COLUMN-VERTICAL-SWEEP",
+      "note": "driver blanket-required on 10 safety leaves. Verified live \u2014 ExpiryDashboard.tsx (cert_expiry.list) renders driver_uuid/driver_name only as plain entityLabel() text, no EntityLink import at all; GeofenceBreachesTab.tsx (geofence_alerts.list) has zero \"driver\", only kind=\"unit\"/\"geofence\"/\"customer\"; InsuranceLanding.tsx (insurance_tab.list) is a zero-driver aggregate KPI landing dashboard; PositionHistoryPage.tsx (position_history.list) has zero \"driver\", only kind=\"unit\"/\"user\"; CompanyViolationTypeModal.tsx (safety.modal.company_violation_type) is a pure catalog-CRUD modal (classic catalog false-positive); CompanyViolationCreateModal.tsx (safety.modal.company_violation_create) is a company-level DOT/FMCSA violation record with zero driver field; EscrowForfeitModal.tsx (safety.modal.escrow_forfeit/safety.parity.escrow_forfeit) uses row.id functionally for a lookup call but shows only plain entityLabel() text in the modal title, never a rendered EntityLink/EntityPicker; FineConvertConfirmModal.tsx (safety.modal.fine_convert_confirm) takes only a pre-resolved driverLabel string prop, no driver_id/uuid field; DriverSafetyProfilePanel.tsx (safety.panel.driver_safety_profile) is placeholder chrome with plain-text driverName/driverDisplayId props, no real driver FK \u2014 matches this same file's own reverse_link drop note.",
+      "drops": [
+        {
+          "id": "cert_expiry.list",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "geofence_alerts.list",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "insurance_tab.list",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "position_history.list",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "safety.modal.company_violation_type",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "safety.modal.company_violation_create",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "safety.modal.escrow_forfeit",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "safety.modal.fine_convert_confirm",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "safety.panel.driver_safety_profile",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "safety.parity.escrow_forfeit",
+          "removed": [
+            "driver"
           ]
         }
       ]

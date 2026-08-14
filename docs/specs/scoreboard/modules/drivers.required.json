@@ -227,7 +227,6 @@
       "sub": "Pay rate templates",
       "route_hint": "/drivers/pay-rate-templates",
       "required": [
-        "driver",
         "connectivity",
         "qbo_chrome"
       ]
@@ -272,7 +271,6 @@
       "sub": "Leave",
       "route_hint": "/drivers/leave",
       "required": [
-        "driver",
         "connectivity"
       ]
     },
@@ -635,6 +633,24 @@
           "id": "profiles.create",
           "removed": [
             "unit"
+          ]
+        }
+      ]
+    },
+    "driver_column_2026_08_14_overclaim": {
+      "finding": "LINK-F5168-DRIVER-COLUMN-VERTICAL-SWEEP",
+      "note": "driver blanket-required on 2 drivers leaves. Verified live \u2014 PayRateTemplatesListPage.tsx (via DriverCatalogListPage.tsx) is a reusable rate-template catalog with zero driver_id field or EntityLink/EntityPicker, templates are not tied to a specific driver record; Drivers.tsx's \"leave\" subnav tab renders only aggregate counts (On leave / Available drivers), no driver_id field or EntityLink anywhere.",
+      "drops": [
+        {
+          "id": "pay_rate_templates",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "leave",
+          "removed": [
+            "driver"
           ]
         }
       ]

@@ -158,7 +158,6 @@
       "sub": "Dispatcher home",
       "route_hint": "/home",
       "required": [
-        "driver",
         "unit",
         "load",
         "connectivity",
@@ -181,7 +180,6 @@
       "sub": "Safety home",
       "route_hint": "/home",
       "required": [
-        "driver",
         "connectivity"
       ]
     },
@@ -191,7 +189,6 @@
       "sub": "Driver manager home",
       "route_hint": "/home",
       "required": [
-        "driver",
         "connectivity"
       ]
     },
@@ -228,7 +225,6 @@
       "sub": "Attention list",
       "route_hint": "/home",
       "required": [
-        "driver",
         "load",
         "connectivity"
       ]
@@ -296,7 +292,6 @@
       "sub": "\u2192 Safety",
       "route_hint": "/safety",
       "required": [
-        "driver",
         "connectivity"
       ]
     },
@@ -306,7 +301,6 @@
       "sub": "\u2192 Drivers",
       "route_hint": "/drivers",
       "required": [
-        "driver",
         "connectivity"
       ]
     },
@@ -316,7 +310,6 @@
       "sub": "\u2192 Dispatch",
       "route_hint": "/dispatch",
       "required": [
-        "driver",
         "load",
         "connectivity"
       ]
@@ -898,6 +891,54 @@
           "id": "jump.dispatch",
           "removed": [
             "unit"
+          ]
+        }
+      ]
+    },
+    "driver_column_2026_08_14_overclaim": {
+      "finding": "LINK-F5168-DRIVER-COLUMN-VERTICAL-SWEEP",
+      "note": "driver blanket-required on 7 home leaves. Verified live \u2014 DispatcherHome.tsx and SafetyHome.tsx have zero driver references; DriverManagerHome.tsx only passes a coolingDriverCount NUMBER to DriverManagerAttentionPanel.tsx (no driver_id/EntityLink); AttentionList.tsx has zero driver references; the 3 jump.* leaves are all the same static HOME_QUICK_JUMPS {title,subtitle,count,to} nav-card list with no entity binding at all.",
+      "drops": [
+        {
+          "id": "role.dispatcher",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "role.safety",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "role.manager",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "surface.attention_list",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "jump.safety",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "jump.drivers",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "jump.dispatch",
+          "removed": [
+            "driver"
           ]
         }
       ]

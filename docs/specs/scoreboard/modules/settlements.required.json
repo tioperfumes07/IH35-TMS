@@ -239,7 +239,6 @@
       "required": [
         "connectivity",
         "reverse_link",
-        "driver",
         "load"
       ]
     },
@@ -253,7 +252,6 @@
       "required": [
         "connectivity",
         "reverse_link",
-        "driver",
         "liability",
         "load",
         "settlement"
@@ -269,7 +267,6 @@
       "required": [
         "connectivity",
         "reverse_link",
-        "driver",
         "liability",
         "load",
         "settlement"
@@ -285,7 +282,6 @@
       "required": [
         "connectivity",
         "reverse_link",
-        "driver",
         "load"
       ]
     },
@@ -331,7 +327,6 @@
       "required": [
         "connectivity",
         "reverse_link",
-        "driver",
         "load",
         "settlement",
         "liability"
@@ -570,6 +565,42 @@
           "id": "settlements.detail",
           "removed": [
             "unit"
+          ]
+        }
+      ]
+    },
+    "driver_column_2026_08_14_overclaim": {
+      "finding": "LINK-F5168-DRIVER-COLUMN-VERTICAL-SWEEP",
+      "note": "driver blanket-required on 5 settlements leaves. Verified live \u2014 MarkDisbursedModal.tsx (only advanceId+method+reference, no driver_id), HoldDeductionModal.tsx (only EntityLink kind=\"settlement\"), LiabilityBreakdownModal.tsx (only liability EntityLink), SendAckRequestModal.tsx (only liabilityId+channel+message), PayRunClosePanel.tsx (only settlement/journal_entry/account links) \u2014 zero driver_id/EntityLink kind=\"driver\" in any of the 5 files.",
+      "drops": [
+        {
+          "id": "settlements.modal.mark_disbursed",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "settlements.modal.hold_deduction",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "settlements.modal.liability_breakdown",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "settlements.modal.send_ack_request",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "settlements.panel.pay_run_close",
+          "removed": [
+            "driver"
           ]
         }
       ]
