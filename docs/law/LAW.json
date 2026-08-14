@@ -565,5 +565,12 @@
     "source_file": "apps/frontend/src/components/shared/EntityLink.tsx",
     "guard": "scripts/verify-geofence-entitylink-drill.mjs",
     "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-13-MATRIX-BUILT-LEAF-SPECIFIC",
+    "title": "Box 3 Built claims (@matrix-built tags + wire-sprint-built.json) must be leaf-specific — a match-all leafRe (\".*\", \"^.*$\", \".+\", \"^.+$\", or empty) can never credit a column as Built for every leaf in every listed module; violates FULLY-WIRED item 6. New/changed claims hard-fail; the 63-entry legacy corpus is tracked backlog for the vertical-column sweep, not silently-green Built",
+    "source_file": "apps/backend/src/program/matrix-built-auto.ts",
+    "guard": "scripts/verify-matrix-built-leaf-specific.mjs",
+    "type": "enforced"
   }
 ]
