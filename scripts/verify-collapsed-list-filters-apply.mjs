@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 /** @matrix-built {"modules":["accounting","banking","customers","dispatch","docs","drivers","finance","fleet","insurance","legal","lists","maintenance","reports","safety","settlements","vendors"],"cols":["qbo_chrome"],"leafRe":"^chrome\\.toolbar_(search|range|gear)$","task":"CLS-FILTER-GEAR-APPLY","vertical":"class-sweep"} */
+/** @matrix-built {"modules":["lists"],"cols":["connectivity","qbo_chrome"],"leafRe":"^chrome\\.toolbar_filter$","task":"LINK-F5170-LISTS-TOOLBAR-FILTER-APPLY","vertical":"column-wave"} */
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -102,6 +103,31 @@ const sources = Object.fromEntries(
   walk(SRC).map((abs) => [path.relative(SRC, abs).split(path.sep).join("/"), fs.readFileSync(abs, "utf8")]),
 );
 
+const FILTER_POPOVER = "components/lists/ListView/components/FilterPopover.tsx";
+
+/** LINK-F5170 lists:chrome.toolbar_filter — FilterPopover must draft then Apply (no silent onChange from checkbox). */
+export function auditFilterPopover(source) {
+  const failures = [];
+  if (!source) {
+    failures.push(`${FILTER_POPOVER}: file missing`);
+    return failures;
+  }
+  if (!/\bconst \[draft, setDraft\]/.test(source)) failures.push(`${FILTER_POPOVER}: must stage draft filter values`);
+  if (!/\bonClick=\{apply\}/.test(source) || !/>\s*Apply\s*</.test(source)) failures.push(`${FILTER_POPOVER}: must expose Apply`);
+  if (!/\bonClick=\{cancel\}/.test(source) || !/>\s*Cancel\s*</.test(source)) failures.push(`${FILTER_POPOVER}: must expose Cancel`);
+  if (!/\bonClick=\{reset\}/.test(source) || !/>\s*Reset\s*</.test(source)) failures.push(`${FILTER_POPOVER}: must expose Reset`);
+  if (!/const apply = \(\) => \{[\s\S]*?onChange\(draft\)/.test(source)) {
+    failures.push(`${FILTER_POPOVER}: Apply must commit draft via onChange(draft)`);
+  }
+  if (/onChange=\{\(\) => onChange\(/.test(source)) {
+    failures.push(`${FILTER_POPOVER}: checkbox must not call applied onChange directly (silent apply)`);
+  }
+  if (!/onChange=\{\(\) => toggleValue\(/.test(source) && !/onChange=\{\(\) => setDraft\(/.test(source)) {
+    failures.push(`${FILTER_POPOVER}: checkbox must mutate draft only (toggleValue/setDraft)`);
+  }
+  return failures;
+}
+
 if (process.argv.includes("--selftest")) {
   const fixture = {
     "pages/dispatch/Test.tsx": `<CollapsedListFilters activeFilterCount={1}>x</CollapsedListFilters>`,
@@ -122,13 +148,30 @@ if (process.argv.includes("--selftest")) {
     console.error("verify-collapsed-list-filters-apply SELFTEST FAIL — silent applied-state mutation escaped");
     process.exit(1);
   }
-  console.log("verify-collapsed-list-filters-apply SELFTEST PASS — missing actions and exemption abuse detected");
+  const silentPopover = auditFilterPopover(`
+    export function FilterPopover({ onChange, activeValues }) {
+      const toggleValue = (value) => onChange([...activeValues, value]);
+      return <input type="checkbox" onChange={() => onChange([])} />;
+    }
+  `);
+  if (!silentPopover.some((f) => /draft|Apply|silent apply|draft only/i.test(f))) {
+    console.error("verify-collapsed-list-filters-apply SELFTEST FAIL — FilterPopover silent apply escaped");
+    process.exit(1);
+  }
+  const goodPopover = auditFilterPopover(fs.readFileSync(path.join(ROOT, "apps/frontend/src", FILTER_POPOVER), "utf8"));
+  if (goodPopover.length) {
+    console.error(`verify-collapsed-list-filters-apply SELFTEST FAIL — live FilterPopover not Apply-gated:\n${goodPopover.join("\n")}`);
+    process.exit(1);
+  }
+  console.log("verify-collapsed-list-filters-apply SELFTEST PASS — missing actions, exemption abuse, FilterPopover silent-apply detected");
   process.exit(0);
 }
 
 const result = audit(sources);
-if (result.failures.length) {
-  console.error(`verify-collapsed-list-filters-apply FAIL:\n${result.failures.map((failure) => ` - ${failure}`).join("\n")}`);
+const popoverFailures = auditFilterPopover(sources[FILTER_POPOVER] ?? "");
+const failures = [...result.failures, ...popoverFailures];
+if (failures.length) {
+  console.error(`verify-collapsed-list-filters-apply FAIL:\n${failures.map((failure) => ` - ${failure}`).join("\n")}`);
   process.exit(1);
 }
-console.log(`verify-collapsed-list-filters-apply PASS — ${result.consumers} consumers require Apply/Cancel/Reset; ${result.exempt} owner-ruled QBO-sync exemption`);
+console.log(`verify-collapsed-list-filters-apply PASS — ${result.consumers} consumers require Apply/Cancel/Reset; ${result.exempt} owner-ruled QBO-sync exemption; FilterPopover draft→Apply gated`);
