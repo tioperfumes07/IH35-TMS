@@ -82,3 +82,5 @@ Draw the next unused number from your OWN block, record a `CLAIM-<n>` row below,
 | 2026-08-14T13:00:00-05:00 | Codex | VERTICAL-INVENTORY-INLINE-APPLICABILITY | OEM reference versus stock applicability + guard | RESERVED | codex/vertical-inventory-inline-029 |
 | 2026-08-14T12:55:58-05:00 | Codex | VERTICAL-INVENTORY-INLINE-APPLICABILITY | OEM reference versus stock applicability + guard | RELEASED-ON-MERGE | codex/vertical-inventory-inline-029 |
 | 2026-08-14T13:03:00-05:00 | Codex | VERTICAL-UNIT-OEM-REFERENCE | OEM global-reference unit applicability + guard | RESERVED | codex/vertical-unit-oem-030 |
+| 2026-08-14T12:57:10-05:00 | Codex | VERTICAL-UNIT-OEM-REFERENCE | OEM global-reference unit applicability + guard | RELEASED-ON-MERGE | codex/vertical-unit-oem-030 |
+| 2026-08-14T13:06:00-05:00 | Codex | VERTICAL-TRAILER-OEM-REFERENCE | OEM global-reference trailer applicability + guard | RESERVED | codex/vertical-trailer-oem-031 |
