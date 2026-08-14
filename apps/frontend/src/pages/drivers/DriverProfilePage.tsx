@@ -18,6 +18,7 @@ import { PerformanceScorecardSection } from "../../components/driver-profile/Per
 import { SettlementsSection } from "../../components/driver-profile/SettlementsSection";
 import { LoadsSection } from "../../components/driver-profile/LoadsSection";
 import { DriverTeamsReverseSection } from "../../components/driver-profile/DriverTeamsReverseSection";
+import { DriverSettlementFinanceReverseSection } from "../../components/driver-profile/DriverSettlementFinanceReverseSection";
 import { DriverPaymentMethodsCard } from "../../components/driver-profile/DriverPaymentMethodsCard";
 import { LinkedBankTransactionsPanel } from "../../components/banking/LinkedBankTransactionsPanel";
 import { TrainingRecordsSection } from "../../components/driver-profile/TrainingRecordsSection";
@@ -573,6 +574,17 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
           operatingCompanyId={companyId}
           driverId={id}
           data-testid="driver-profile-fines-reverse"
+        />
+      </div>
+      {/* LINK-F5171 (settlements:disputes, settlements:liabilities.list) — driver_finance.*
+          disputes/liabilities already had real driver_id FKs and driver-scoped backend functions
+          but no reverse surface anywhere on the driver's own profile. Same root cause as
+          DriverFinesReverseSection above. */}
+      <div data-testid="dp-section-settlement-finance-reverse">
+        <DriverSettlementFinanceReverseSection
+          operatingCompanyId={companyId}
+          driverId={id}
+          data-testid="driver-profile-settlement-finance-reverse"
         />
       </div>
       <div data-testid="dp-section-safety-reverse">
