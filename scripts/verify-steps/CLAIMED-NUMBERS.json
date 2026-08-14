@@ -787,6 +787,11 @@
     "claimed_by": "cc-1",
     "purpose": "verify-factoring-submit-queue-reverse-section"
   },
+  "3309": {
+    "claimed_at": "2026-08-14",
+    "claimed_by": "cc-1",
+    "purpose": "verify-vendor-equipment-loans-reverse-section"
+  },
   "3302": {
     "claimed_at": "2026-08-14",
     "claimed_by": "cursor",
