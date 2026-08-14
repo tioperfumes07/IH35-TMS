@@ -96,7 +96,7 @@ export function WorkOrdersConsoleListPage() {
         key: "display_id",
         label: "WO #",
         render: (row) => (
-          <EntityLink kind="work_order" id={row.id} label={entityLabel(row.display_id, row.id, "Work order")} className="font-mono text-xs" data-testid="work-order-console-record-link" />
+          <EntityLink kind="work_order" id={String(row.id)} label={entityLabel(row.display_id, row.id, "Work order")} className="font-mono text-xs" data-testid="work-order-console-record-link" />
         ),
       },
       {

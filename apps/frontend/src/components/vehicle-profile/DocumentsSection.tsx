@@ -2,6 +2,7 @@ import { useState, type ReactNode } from "react";
 import { UploadModal } from "../documents/UploadModal";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 import { formatDateUS } from "../../lib/formatDate";
+import { EntityLink } from "../shared/EntityLink";
 
 type DocRow = {
   file_id: string;
@@ -54,7 +55,7 @@ export function DocumentsSection({
       key: "name",
       label: "Name",
       sortable: true,
-      render: (row) => row.name,
+      render: (row) => <EntityLink kind="document" id={row.file_id} label={row.name} data-testid="unit-document-record-link" />,
     },
     {
       key: "expiration_date",

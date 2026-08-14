@@ -169,6 +169,17 @@
       ]
     },
     {
+      "id": "profiles.documents",
+      "tab": "Driver Profile",
+      "sub": "Documents roster and preview",
+      "route_hint": "/drivers/:id",
+      "required": [
+        "driver",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
       "id": "settlements",
       "tab": "Settlements",
       "sub": "Drivers settlements hop",

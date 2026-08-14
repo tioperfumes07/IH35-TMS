@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery } from "@tanstack/react-query";
@@ -43,21 +43,20 @@ const ENTITY_TABS: Array<{ id: DocsEntityTabId; label: string }> = [
 ];
 const DOCS_ENTITY_TAB_IDS = new Set<string>(ENTITY_TABS.map((tab) => tab.id));
 
-function docsColumns(onPreview: (id: string) => void): Array<ParityColumn<DocsFoundationRow>> {
+function docsColumns(): Array<ParityColumn<DocsFoundationRow>> {
   return [
   {
     key: "original_filename",
     label: "File",
     sortable: true,
     render: (row) => (
-      <button
-        type="button"
+      <EntityLink
+        kind="document"
+        id={row.id}
+        label={row.original_filename}
         className="max-w-full truncate text-left font-medium text-slate-700 underline"
-        onClick={() => onPreview(row.id)}
         data-testid="docs-file-preview-link"
-      >
-        {row.original_filename}
-      </button>
+      />
     ),
   },
   {
@@ -177,7 +176,16 @@ export function DocsHomePage() {
   });
   const [page, setPage] = useState(1);
   const [uploadOpen, setUploadOpen] = useState(false);
-  const [previewFileId, setPreviewFileId] = useState<string | null>(null);
+  const [previewFileId, setPreviewFileId] = useState<string | null>(() => searchParams.get("file_id"));
+  useEffect(() => {
+    setPreviewFileId(searchParams.get("file_id"));
+  }, [searchParams]);
+  const closePreview = () => {
+    const params = new URLSearchParams(searchParams);
+    params.delete("file_id");
+    setSearchParams(params, { replace: true });
+    setPreviewFileId(null);
+  };
   const limit = 25;
 
   const clearListFilters = () => {
@@ -216,7 +224,7 @@ export function DocsHomePage() {
     queryFn: () => getDocsFoundationDetail(previewFileId!, companyId),
     enabled: Boolean(companyId && previewFileId),
   });
-  const columns = docsColumns(setPreviewFileId);
+  const columns = docsColumns();
   const total = listQuery.data?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / limit));
   const canPrev = page > 1;
@@ -402,8 +410,8 @@ export function DocsHomePage() {
         <PreviewModal
           file={previewQuery.data}
           canEditMetadata={false}
-          onClose={() => setPreviewFileId(null)}
-          onRequestEditMetadata={() => setPreviewFileId(null)}
+          onClose={closePreview}
+          onRequestEditMetadata={closePreview}
         />
       ) : null}
 

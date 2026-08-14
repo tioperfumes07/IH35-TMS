@@ -540,7 +540,8 @@
       "route_hint": "/vendors/:id",
       "required": [
         "vendor",
-        "connectivity"
+        "connectivity",
+        "reverse_link"
       ]
     },
     {

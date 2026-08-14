@@ -18,6 +18,7 @@ function verify(source) {
   need("advances", 'data-testid="cash-advance-roster-record-link"', "cash advance roster link must stay mounted");
   need("vendors", 'data-testid="vendor-payment-bill-link"', "vendor payment application bill identity must drill through");
   need("workOrders", 'data-testid="work-order-console-record-link"', "work-order console primary identity must drill through");
+  need("workOrders", 'id={String(row.id)}', "work-order console must normalize its canonical row id");
   let matrix;
   try { matrix = JSON.parse(source.maintenanceMatrix); } catch (error) { failures.push(`maintenance matrix must parse: ${error.message}`); }
   const leaf = matrix?.leaves?.find((candidate) => candidate.id === "wo.console.list");
@@ -35,6 +36,7 @@ if (process.argv.includes("--self-test")) {
     ["advances", 'id={String(row.id)}', 'id={undefined}'],
     ["vendors", 'data-testid="vendor-payment-bill-link"', 'data-testid="broken-vendor-bill-link"'],
     ["workOrders", 'data-testid="work-order-console-record-link"', 'data-testid="broken-work-order-link"'],
+    ["workOrders", 'id={String(row.id)}', 'id={row.id}'],
     ["maintenanceMatrix", '"id": "wo.console.list"', '"id": "wo.console.list.broken"'],
     ["maintenanceMatrix", '"route_hint": "/maintenance/work-orders"', '"route_hint": "/maintenance"'],
     ["maintenanceMatrix", '"work_order",\n        "connectivity",\n        "reverse_link"', '"work_order_broken",\n        "connectivity",\n        "reverse_link_broken"'],
