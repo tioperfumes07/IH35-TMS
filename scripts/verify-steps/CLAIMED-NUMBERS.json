@@ -812,6 +812,11 @@
     "claimed_by": "codex",
     "purpose": "verify-task-drawer-reverse-links"
   },
+  "3312": {
+    "claimed_at": "2026-08-14",
+    "claimed_by": "codex",
+    "purpose": "verify-compliance-hos-profile-reverse"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
@@ -2656,5 +2661,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1139
+  "total_claimed": 1140
 }
