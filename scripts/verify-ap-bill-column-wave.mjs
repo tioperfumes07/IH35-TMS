@@ -2,7 +2,10 @@
 /**
  * ap_bill COLUMN-WAVE — VERTICAL-WIRING-LAW-2026-08-12.
  *
- * @matrix-built {"modules":["banking","drivers"],"cols":["ap_bill"],"task":"WAVE-C-ap_bill","vertical":"column-wave","leafRe":".*"}
+ * LINK-F5172 (2026-08-14): leafRe:".*" was an illegal broad Built claim under HONEST-BUILT-LAUNCH-LAW-2026-08-14.
+ * "drivers" module was dropped from the claim -- drivers.required.json owns zero ap_bill leaves (verified live);
+ * the claim was already vacuous there. Narrowed to banking's exact 2 real ap_bill leaf ids.
+ * @matrix-built {"modules":["banking"],"cols":["ap_bill"],"task":"WAVE-C-ap_bill","vertical":"column-wave","leafRe":"^(transactions\\.list|transactions\\.categorize)$"}
  *
  * Audited ap_bill (accounts-payable bill linkage) across all 10 priority modules. lists, accounting
  * (sink), factoring, customers, safety: N/A, no bill-causing leaf. vendors already WIRED. Three real

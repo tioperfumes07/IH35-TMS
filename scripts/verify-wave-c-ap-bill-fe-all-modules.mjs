@@ -1,5 +1,10 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["accounting","banking","fleet","maintenance","reports","settlements","vendors"],"cols":["ap_bill"],"leafRe":".*","task":"WAVE-C-ap-bill-fe-all-modules","vertical":"column-wave"} */
+/** LINK-F5172 (2026-08-14): leafRe:".*" was an illegal broad Built claim under HONEST-BUILT-LAUNCH-LAW-2026-08-14
+ * (isLeafSpecific() in matrix-built-auto.ts rejects it outright — this entry was already being silently dropped
+ * from Built credit). Narrowed to the exact 41 leaf ids this guard's auditConnectivity() call currently reads
+ * from required.json for these 7 modules — an exact enumeration, not a wildcard. Update this list only by
+ * re-running the collectApBillLeaves() enumeration below and re-pasting; never widen it back to a pattern. */
+/** @matrix-built {"modules":["accounting","banking","fleet","maintenance","reports","settlements","vendors"],"cols":["ap_bill"],"leafRe":"^(bills\\.list|bills\\.create\\.vendor|bills\\.create\\.maintenance|bills\\.create\\.fuel|bills\\.create\\.driver|bills\\.multiple|bills\\.recurring|bills\\.detail|bill_payments\\.list|bill_payments\\.create|ap\\.aging|accounting\\.modal\\.pay_bill|accounting\\.modal\\.ccpayment|accounting\\.panel\\.bill_detail|accounting\\.parity\\.pay_bill|accounting\\.parity\\.vendor_bill_create_page|accounting\\.parity\\.ccpayment|accounting\\.modal\\.bill_payment|accounting\\.panel\\.reallocate|transactions\\.list|transactions\\.categorize|unit\\.detail\\.finance_linkage|wo\\.create_bill|maintenance\\.modal\\.create_bill|report\\.management|report\\.ap_aging|settlements\\.detail|settlements\\.panel\\.open_driver_bills|home\\.roster|list\\.filter_chips|list\\.export_csv|md\\.transaction_list|md\\.header\\.new_transaction|md\\.txn\\.filters|detail\\.profile\\.payment_terms|detail\\.ap|detail\\.ap\\.record_bill_payment|detail\\.ap\\.bills|detail\\.ap\\.vendor_credits|detail\\.ap\\.bill_payments|detail\\.w9_1099)$","task":"WAVE-C-ap-bill-fe-all-modules","vertical":"column-wave"} */
 /** Non-posting A/P bill FE contract. Posting and GL math remain outside this guard.
  *
  * ACCT-F5162 (2026-08-14): the fixed floors below (`p10.length < 27`, `leaves.length < 67`,
