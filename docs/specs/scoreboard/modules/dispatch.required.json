@@ -1061,7 +1061,7 @@
       "route_hint": "/dispatch/load-templates",
       "surface_kind": "modal",
       "surface_path": "pages/dispatch/LoadTemplateLibrary.tsx",
-      "required": ["customer", "load", "connectivity", "reverse_link", "picker_law", "qbo_chrome"]
+      "required": ["customer", "connectivity", "reverse_link", "picker_law", "qbo_chrome"]
     }
   ],
   "honesty_audit": {

@@ -3098,7 +3098,7 @@
       "route_hint": "/lists/dispatch/load-cancellation-reasons",
       "surface_kind": "modal",
       "surface_path": "pages/lists/dispatch/LoadCancellationReasonsListPage.tsx",
-      "required": ["load", "connectivity", "reverse_link", "picker_law", "qbo_chrome"]
+      "required": ["connectivity", "reverse_link", "picker_law", "qbo_chrome"]
     },
     {
       "id": "lists.modal.termination_reason",
