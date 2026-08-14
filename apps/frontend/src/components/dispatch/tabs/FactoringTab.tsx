@@ -9,7 +9,7 @@
  * PACKET_READY is derived: load.status in delivered+ AND notes carry IH35_FACTORING_PACKAGE_V1::{"generated_at":"…"}
  * Submission reuses existing accounting factoring-advances batch API (Block-24/25 poster untouched).
  */
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLoad } from "../../../api/loads";
 import { listInvoices, listFactoringCandidateInvoices } from "../../../api/accounting";
@@ -21,6 +21,7 @@ import { Combobox } from "../../Combobox";
 import { useToast } from "../../Toast";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { entityLabel } from "../../../lib/entity-label";
+import { EntityLink } from "../../shared/EntityLink";
 
 // ─── constants ───────────────────────────────────────────────────────────────
 
@@ -121,7 +122,7 @@ const STAGE_COLORS: Record<FactoringStage, string> = {
 
 // ─── checklist item ───────────────────────────────────────────────────────────
 
-function CheckItem({ label, ok, note }: { label: string; ok: boolean; note?: string }) {
+function CheckItem({ label, ok, note }: { label: string; ok: boolean; note?: ReactNode }) {
   return (
     <div className="flex items-start gap-2 text-sm">
       <span className={`mt-0.5 text-base leading-none ${ok ? "text-slate-700" : "text-gray-300"}`}>
@@ -401,7 +402,19 @@ export function FactoringTab({ loadId, operatingCompanyId, canEdit, onPacketUpda
           <CheckItem
             label="Invoice"
             ok={hasInvoice}
-            note={hasInvoice ? entityLabel(linkedInvoice?.display_id, linkedInvoice?.id, "Invoice") : "Create invoice from Overview tab"}
+            note={
+              hasInvoice && linkedInvoice?.id ? (
+                <EntityLink
+                  kind="invoice"
+                  id={linkedInvoice.id}
+                  label={entityLabel(linkedInvoice.display_id, linkedInvoice.id, "Invoice")}
+                  className="text-slate-700 hover:underline"
+                  data-testid="load-factoring-invoice-link"
+                />
+              ) : (
+                "Create invoice from Overview tab"
+              )
+            }
           />
           {hasInvoice ? (
             <CheckItem
