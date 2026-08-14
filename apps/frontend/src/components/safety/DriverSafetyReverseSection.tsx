@@ -45,6 +45,8 @@ const s = (value: unknown): string => (value == null ? "" : String(value));
 function SectionShell({
   title,
   to,
+  openKind,
+  openId,
   linkLabel,
   testId,
   isLoading,
@@ -55,7 +57,13 @@ function SectionShell({
   children,
 }: {
   title: string;
-  to: string;
+  to?: string;
+  openKind?:
+    | "accidents_driver"
+    | "hos_violations_driver"
+    | "internal_fines_driver"
+    | "safety_fines_driver";
+  openId?: string;
   linkLabel: string;
   testId: string;
   isLoading: boolean;
@@ -72,9 +80,18 @@ function SectionShell({
           {title}
           {count > 0 ? <span className="ml-2 text-xs font-normal text-gray-600">({count})</span> : null}
         </h3>
-        <Link className="text-xs font-semibold text-slate-700 underline" to={to}>
-          {linkLabel}
-        </Link>
+        {openKind && openId ? (
+          <EntityLink
+            kind={openKind}
+            id={openId}
+            label={linkLabel}
+            className="text-xs font-semibold text-slate-700 underline"
+          />
+        ) : (
+          <Link className="text-xs font-semibold text-slate-700 underline" to={to ?? "#"}>
+            {linkLabel}
+          </Link>
+        )}
       </div>
       {isLoading ? <p className="text-sm text-gray-500">Loading…</p> : null}
       {isError ? <p className="text-sm text-red-600">{errorText}</p> : null}
@@ -215,7 +232,8 @@ export function DriverSafetyReverseSection({
 
       <SectionShell
         title="Accidents"
-        to="/safety/accidents"
+        openKind="accidents_driver"
+        openId={driverId}
         linkLabel="Open Accidents"
         testId="driver-safety-reverse-accidents"
         isLoading={accidentsQuery.isLoading}
@@ -234,7 +252,8 @@ export function DriverSafetyReverseSection({
 
       <SectionShell
         title="HOS Violations"
-        to="/safety/hos-violations"
+        openKind="hos_violations_driver"
+        openId={driverId}
         linkLabel="Open HOS Violations"
         testId="driver-safety-reverse-hos-violations"
         isLoading={hosViolationsQuery.isLoading}
@@ -290,7 +309,8 @@ export function DriverSafetyReverseSection({
 
       <SectionShell
         title="External Fines"
-        to="/safety/external-fines"
+        openKind="safety_fines_driver"
+        openId={driverId}
         linkLabel="Open External Fines"
         testId="driver-safety-reverse-civil-fines"
         isLoading={civilFinesQuery.isLoading}
@@ -318,7 +338,8 @@ export function DriverSafetyReverseSection({
 
       <SectionShell
         title="Internal Fines"
-        to="/safety/internal-fines"
+        openKind="internal_fines_driver"
+        openId={driverId}
         linkLabel="Open Internal Fines"
         testId="driver-safety-reverse-internal-fines"
         isLoading={internalFinesQuery.isLoading}
@@ -329,10 +350,12 @@ export function DriverSafetyReverseSection({
       >
         {internalFines.map((fine) => (
           <li key={s(fine.id)} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-sm">
-            {/* No EntityLink kind: Internal Fines has no per-record detail surface to drill into
-                (unlike External Fines, which opens FineDetailDrawer via ?fine_id=). Linking to a
-                route that cannot open the record would be a fabricated drill-through. */}
-            <span className="font-semibold text-slate-700">{s(fine.reason_name) || s(fine.reason_code) || "Internal fine"}</span>
+            <EntityLink
+              kind="internal_fine"
+              id={s(fine.id) || null}
+              label={entityLabel(s(fine.reason_name) || s(fine.reason_code), fine.id, "Internal fine")}
+              className="font-semibold text-slate-700"
+            />
             <span className="ml-2 text-gray-600">{s(fine.status) || "pending"}</span>
             <div className="mt-1 text-xs text-gray-600">
               {formatDateUS(s(fine.imposed_date))} · {formatUsd(fine.amount as number)}

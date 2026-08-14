@@ -151,6 +151,15 @@ export type EntityKind =
   | "safety_fines_driver"
   | "safety_fines_load"
   | "safety_fines_unit"
+  // LINK-F5171: reverse "Open Accidents" / "Open HOS" / "Open Internal Fines" → filtered list queues.
+  | "accidents_load"
+  | "accidents_driver"
+  | "accidents_unit"
+  | "accidents_trailer"
+  | "hos_violations_load"
+  | "hos_violations_driver"
+  | "internal_fines_load"
+  | "internal_fines_driver"
   | "legal_matters_driver"
   | "legal_matters_unit"
   | "legal_matters_equipment"
@@ -462,6 +471,22 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
       return `/safety/external-fines?related_load_id=${id}`;
     case "safety_fines_unit":
       return `/safety/external-fines?related_unit_id=${id}`;
+    case "accidents_load":
+      return `/safety/accidents?load_id=${id}`;
+    case "accidents_driver":
+      return `/safety/accidents?driver_id=${id}`;
+    case "accidents_unit":
+      return `/safety/accidents?unit_id=${id}`;
+    case "accidents_trailer":
+      return `/safety/accidents?trailer_id=${id}`;
+    case "hos_violations_load":
+      return `/safety/hos-violations?load_id=${id}`;
+    case "hos_violations_driver":
+      return `/safety/hos-violations?driver_id=${id}`;
+    case "internal_fines_load":
+      return `/safety/internal-fines?load_id=${id}`;
+    case "internal_fines_driver":
+      return `/safety/internal-fines?driver_id=${id}`;
     case "legal_matters_driver":
       return `/legal/matters?related_driver_id=${id}`;
     case "legal_matters_unit":

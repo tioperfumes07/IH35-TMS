@@ -31,6 +31,8 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
   const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const linkedFineId = searchParams.get("fine_id");
+  const loadIdFromUrl = searchParams.get("load_id")?.trim() ?? "";
+  const driverIdFromUrl = searchParams.get("driver_id")?.trim() ?? "";
   // SAF-F12: which fine a lifecycle action is open for, and which action.
   const [lifecycleTarget, setLifecycleTarget] = useState<{ row: InternalFineRow; action: "dispute" | "void" } | null>(null);
   const [form, setForm] = useState({
@@ -69,8 +71,12 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
   }, [form.related_load_uuid, suggestionPinned, suggestionQuery.data]);
 
   const query = useQuery({
-    queryKey: ["safety", "internal-fines", operatingCompanyId],
-    queryFn: () => getInternalFines(operatingCompanyId),
+    queryKey: ["safety", "internal-fines", operatingCompanyId, loadIdFromUrl, driverIdFromUrl],
+    queryFn: () =>
+      getInternalFines(operatingCompanyId, {
+        load_id: loadIdFromUrl || undefined,
+        driver_id: driverIdFromUrl || undefined,
+      }),
     enabled: Boolean(operatingCompanyId),
   });
 
