@@ -495,13 +495,13 @@ export function EarningsTab({ driverId, operatingCompanyId, onOpenOperationsView
       <div className="rounded-sm border border-gray-200 bg-white p-3">
         <div className="mb-2 flex items-center justify-between gap-2">
           <h3 className="text-sm font-semibold text-gray-900">Active deductions</h3>
-          <Link
-            to={`/drivers/deductions?driver_id=${encodeURIComponent(driverId)}`}
+          <EntityLink
+            kind="driver_deductions_filter"
+            id={driverId}
+            label="Manage auto-deduction policies →"
             className="text-xs text-slate-700 underline"
             data-testid="driver-earnings-auto-deductions-link"
-          >
-            Manage auto-deduction policies →
-          </Link>
+          />
         </div>
         {autoDeductionPoliciesQuery.isPending ? (
           <p className="text-xs text-gray-500">Loading…</p>

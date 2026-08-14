@@ -118,8 +118,8 @@ requireMatch(
 );
 requireMatch(
   "apps/frontend/src/components/drivers/EarningsTab.tsx",
-  /driver-earnings-auto-deductions-link/,
-  "EarningsTab must link to /drivers/deductions?driver_id= (Manage auto-deduction policies)"
+  /kind="driver_deductions_filter"[\s\S]{0,120}data-testid="driver-earnings-auto-deductions-link"/,
+  "EarningsTab must EntityLink kind=driver_deductions_filter (Manage auto-deduction policies)"
 );
 
 // 7. Auto-deduction policies: driver_id scoping wired FE hook -> component -> panel (BE already supported it).

@@ -451,13 +451,13 @@ export function ManagementReportPackagePage() {
 
       <div className="no-print flex gap-3 text-xs text-slate-500 pt-2">
         {Object.entries(PACKAGES).map(([type, meta]) => (
-          <Link
+          <EntityLink
             key={type}
-            to={`/reports/management?type=${type}`}
+            kind="management_report_package"
+            id={type}
+            label={meta.label}
             className={`underline-offset-2 hover:underline ${type === pkgType ? "font-semibold text-slate-800" : ""}`}
-          >
-            {meta.label}
-          </Link>
+          />
         ))}
       </div>
     </div>
