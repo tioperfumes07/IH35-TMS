@@ -2709,6 +2709,14 @@
       "modules": ["fuel"],
       "cols": ["reverse_link"],
       "leafRe": "^card_overage$"
+    },
+    {
+      "task": "VERTICAL-REVERSE-LINK-DRIVER-TEAM-SPLIT-CONFIG",
+      "pr": "this PR",
+      "guard": "scripts/verify-driver-team-split-config-reverse.mjs",
+      "modules": ["drivers"],
+      "cols": ["reverse_link"],
+      "leafRe": "^drivers\\.panel\\.team_split_config$"
     }
   ]
 }

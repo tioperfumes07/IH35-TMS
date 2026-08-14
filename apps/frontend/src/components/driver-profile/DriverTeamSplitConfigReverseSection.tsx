@@ -1,0 +1,41 @@
+import { useQuery } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
+import { listTeamSplitConfigs } from "../../hooks/useTeamSplits";
+
+export function DriverTeamSplitConfigReverseSection({
+  driverId,
+  operatingCompanyId,
+}: {
+  driverId: string;
+  operatingCompanyId: string;
+}) {
+  const query = useQuery({
+    queryKey: ["team-split-configs", "driver-profile", operatingCompanyId, driverId],
+    queryFn: () => listTeamSplitConfigs(operatingCompanyId, { driver_id: driverId }),
+    enabled: Boolean(driverId && operatingCompanyId),
+  });
+  const configs = query.data?.configs ?? [];
+
+  return (
+    <section className="rounded-sm border border-gray-200 bg-white p-3" data-testid="driver-team-split-config-reverse">
+      <div className="flex items-center justify-between gap-2">
+        <h2 className="text-sm font-semibold text-slate-900">Team split configurations</h2>
+        <Link className="text-xs font-semibold text-slate-700 hover:underline" to={`/drivers/team-splits?driver_id=${encodeURIComponent(driverId)}`}>
+          Open team splits
+        </Link>
+      </div>
+      {query.isError ? <p className="mt-2 text-xs text-red-700">Team split configurations unavailable.</p> : null}
+      {query.isLoading ? <p className="mt-2 text-xs text-gray-500">Loading…</p> : null}
+      {!query.isLoading && !query.isError && configs.length === 0 ? <p className="mt-2 text-xs text-gray-500">No team split configuration includes this driver.</p> : null}
+      <ul className="mt-2 space-y-1">
+        {configs.slice(0, 5).map((config) => (
+          <li key={config.id}>
+            <Link className="text-xs font-semibold text-slate-700 hover:underline" to={`/drivers/team-splits?team_id=${encodeURIComponent(config.id)}`}>
+              {Math.round(Number(config.primary_ratio) * 100)}% / {Math.round(Number(config.secondary_ratio) * 100)}% · {config.status}
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
