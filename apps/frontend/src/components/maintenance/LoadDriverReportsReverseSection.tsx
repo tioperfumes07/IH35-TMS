@@ -1,5 +1,4 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
 import { listDriverReports } from "../../api/maintenance";
 import { formatDateTimeUS } from "../../lib/formatDate";
 import { EntityLink } from "../shared/EntityLink";
@@ -16,7 +15,7 @@ export function LoadDriverReportsReverseSection({ operatingCompanyId, loadId }: 
     <section className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid="load-driver-reports-reverse">
       <div className="flex items-center justify-between gap-2">
         <h3 className="text-sm font-semibold text-slate-900">Driver Reports{rows.length ? ` (${rows.length})` : ""}</h3>
-        <Link className="text-xs font-semibold text-slate-700 underline" to="/maintenance/driver-reports">Open report queue</Link>
+        <EntityLink kind="driver_reports_load" id={loadId} label="Open report queue" className="text-xs font-semibold text-slate-700 underline" />
       </div>
       {query.isLoading ? <p className="text-sm text-gray-500">Loading driver reports…</p> : null}
       {query.isError ? <p className="text-sm text-red-600">Could not load driver reports for this load.</p> : null}
