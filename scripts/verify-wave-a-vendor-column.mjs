@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["lists","dispatch","factoring","customers","vendors","safety","accounting","banking","settlements","maintenance","insurance","legal","fleet","fuel","driver-hub","cash-flow","reports","finance"],"cols":["vendor"],"leafRe":".*","task":"WAVE-A-vendor","vertical":"column-wave"} */
+/** @matrix-built {"modules":["factoring","finance","reports","accounting","maintenance"],"cols":["vendor"],"leafRe":"^(home\\.vendor_merges|nav\\.ar_ap_aging|report\\.ap_aging|bills\\.create\\.vendor|maintenance\\.modal\\.create_work_order)$","task":"WAVE-A-vendor-exact-surfaces","vertical":"column-wave"} */
 import fs from "node:fs";
 
 const checks = [
