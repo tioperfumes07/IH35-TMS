@@ -832,6 +832,11 @@
     "claimed_by": "codex",
     "purpose": "verify-training-record-driver-reverse"
   },
+  "3316": {
+    "claimed_at": "2026-08-14",
+    "claimed_by": "codex",
+    "purpose": "verify-driver-column-all-module-remainder"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
