@@ -1,5 +1,12 @@
 #!/usr/bin/env node
-/** @matrix-built modules=dispatch,drivers,compliance cols=driver,connectivity,reverse_link,picker_law */
+/** @matrix-built modules=dispatch,drivers cols=driver,connectivity,reverse_link,picker_law leafRe=^(dispatch\.wizard\.border_crossing_wizard_page|queues\.border_history|profiles\.detail)$ task=BORDER-CROSSING-DRIVER-LINKAGE */
+// LINK-THEATER-01 narrowing (2026-08-14): the prior tag claimed "compliance" as a module and
+// leafRe=".*" across dispatch+drivers+compliance — Built for every leaf in three modules. This
+// guard's 8 assertions read exactly 7 files, none under compliance: BorderCrossingWizardPage.tsx
+// (dispatch.wizard.border_crossing_wizard_page, the create wizard), BorderCrossingHistoryPage.tsx
+// (queues.border_history, /dispatch/border-crossing/history), and DriverBorderCrossingsReverseSection
+// mounted on DriverProfilePage.tsx (profiles.detail). "compliance" was never justified — zero
+// compliance file is read anywhere in this guard.
 import fs from "node:fs";
 const LABEL = "verify-border-crossing-driver-linkage";
 const files = {
