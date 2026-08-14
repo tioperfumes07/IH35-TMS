@@ -2,7 +2,6 @@ import { formatDateUS } from "../../lib/formatDate";
 import { formatUsdCents } from "../../lib/money";
 import { EntityLink } from "../shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
-import { Link } from "react-router-dom";
 
 export type InsurancePolicySummary = {
   number?: string;
@@ -92,9 +91,12 @@ export function InsuranceSummarySection({ insuranceSummary, unitId }: { insuranc
     <section className="rounded-sm border border-gray-200 bg-white p-4" data-testid="vp-insurance-summary">
       <h3 className="text-sm font-semibold text-gray-800">Insurance summary</h3>
       {unitId ? (
-        <Link className="mt-1 inline-block text-xs text-slate-700 hover:underline" to={`/safety/insurance/coverage-gaps?unit_id=${encodeURIComponent(unitId)}`}>
-          Check this unit’s coverage requirements →
-        </Link>
+        <EntityLink
+          kind="insurance_coverage_gaps"
+          id={unitId}
+          label="Check this unit’s coverage requirements →"
+          className="mt-1 inline-block text-xs text-slate-700 hover:underline"
+        />
       ) : null}
       {!us && !mx && linked.length === 0 ? (
         <p className="mt-2 text-xs text-gray-500">No US or MX policy on file for this unit.</p>

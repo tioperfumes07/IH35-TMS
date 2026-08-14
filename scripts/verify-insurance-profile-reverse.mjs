@@ -15,7 +15,7 @@ const files = {
 };
 function failures(s = files) { return [
   ["coverage gap company/unit API filter", s.summaryRoutes.includes("coverageGapQuerySchema.safeParse") && s.summaryRoutes.includes("parsed.data.unit_id ?? null") && s.coverageSql.includes("$3::uuid IS NULL OR u.id = $3::uuid")],
-  ["unit profile exact coverage target", s.insuranceSummary.includes("/safety/insurance/coverage-gaps?unit_id=${encodeURIComponent(unitId)}") && s.coveragePage.includes('searchParams.get("unit_id")')],
+  ["unit profile exact coverage target", s.insuranceSummary.includes('kind="insurance_coverage_gaps"') && s.insuranceSummary.includes("id={unitId}") && s.coveragePage.includes('searchParams.get("unit_id")')],
   ["lawsuit driver/unit backend filters", s.lawsuitSchema.includes("driver_id: z.string().uuid().optional()") && s.lawsuitSchema.includes("unit_id: z.string().uuid().optional()") && s.lawsuitRoutes.includes("claim.driver_id = $${values.length}::uuid") && s.lawsuitRoutes.includes("asset.unit_id = $${values.length}::uuid")],
   ["driver and unit reverse consumers", s.driverProfile.includes('filter={{ driver_id: id }} contextLabel="this driver"') && s.unitProfile.includes('filter={{ unit_id: id }} contextLabel="this unit"')],
   ["exact lawsuit drill", s.lawsuitReverse.includes('<EntityLink kind="lawsuit" id={row.id}') && s.lawsuitReverse.includes("listInsuranceLawsuits({ operating_company_id: operatingCompanyId, ...filter })")],
@@ -23,7 +23,7 @@ function failures(s = files) { return [
 if (process.argv.includes("--selftest")) {
   const checks = [
     failures({...files, coverageSql: files.coverageSql.replace("$3::uuid IS NULL OR u.id = $3::uuid", "TRUE")}).includes("coverage gap company/unit API filter"),
-    failures({...files, insuranceSummary: files.insuranceSummary.replace("?unit_id=${encodeURIComponent(unitId)}", "")}).includes("unit profile exact coverage target"),
+    failures({...files, insuranceSummary: files.insuranceSummary.replace('kind="insurance_coverage_gaps"', 'kind="unit"')}).includes("unit profile exact coverage target"),
     failures({...files, lawsuitRoutes: files.lawsuitRoutes.replace("claim.driver_id = $${values.length}::uuid", "TRUE")}).includes("lawsuit driver/unit backend filters"),
     failures({...files, driverProfile: ""}).includes("driver and unit reverse consumers"),
     failures({...files, lawsuitReverse: files.lawsuitReverse.replace('kind="lawsuit" id={row.id}', 'kind="claim" id={row.id}')}).includes("exact lawsuit drill"),
