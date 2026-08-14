@@ -1,4 +1,5 @@
 {
+  "VERTICAL-CONNECTIVITY-INVENTORY-PURCHASE-HOLD": "inventory.nav.purchases_tab+purchases.honest_empty: mounted door and guarded honest HOLD state",
   "VERTICAL-CONNECTIVITY-MAINTENANCE-DAMAGE-INTAKE": "maintenance.damage_reports.intake: mounted triage→WO or safety.incidents create→invalidate",
   "VERTICAL-CONNECTIVITY-SYSTEM-PROGRAM-CONFIG": "system.tab.program+tab.claude_coder+hop.program_matrix: mounted authenticated versioned-config sources",
   "VERTICAL-CONNECTIVITY-DRIVER-PAY-RATE-TEMPLATES": "drivers.pay_rate_templates: mounted canonical company-scoped catalog list/create/reload",
