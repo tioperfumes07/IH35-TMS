@@ -3116,7 +3116,7 @@
       "route_hint": "/lists/maintenance/oem-parts",
       "surface_kind": "modal",
       "surface_path": "pages/lists/maintenance/OemPartsCatalog.tsx",
-      "required": ["unit", "trailer", "inventory", "connectivity", "picker_law", "qbo_chrome"]
+      "required": ["unit", "trailer", "connectivity", "picker_law", "qbo_chrome"]
     }
   ],
   "honesty_note": {
