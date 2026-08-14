@@ -2446,6 +2446,14 @@
       "modules": ["accounting", "cash-flow", "tasks"],
       "cols": ["reverse_link"],
       "leafRe": "^(accounting\\.panel\\.(reallocate|detail|class_cost_center_variance|schedule|receipt_detail|leakage)|accounting\\.modal\\.decide|cash-flow\\.panel\\.projection|tasks\\.drawer\\.task)$"
+    },
+    {
+      "task": "VERTICAL-SETTLEMENT-INLINE-SURFACES",
+      "pr": "this PR",
+      "guard": "scripts/verify-settlement-inline-surface-linkage.mjs",
+      "modules": ["accounting"],
+      "cols": ["settlement"],
+      "leafRe": "^accounting\\.modal\\.decide$"
     }
   ]
 }
