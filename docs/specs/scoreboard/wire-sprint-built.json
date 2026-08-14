@@ -2645,6 +2645,14 @@
       "modules": ["accounting"],
       "cols": ["reverse_link"],
       "leafRe": "^(payments\\.receive|accounting\\.parity\\.vendor_credits_page|accounting\\.panel\\.(trk_bulk_register|detail))$"
+    },
+    {
+      "task": "VERTICAL-REVERSE-LINK-DRIVER-TEAMS",
+      "pr": "this PR",
+      "guard": "scripts/verify-driver-team-profile-reverse.mjs",
+      "modules": ["lists"],
+      "cols": ["reverse_link"],
+      "leafRe": "^catalog\\.drivers\\.teams\\.list$"
     }
   ]
 }

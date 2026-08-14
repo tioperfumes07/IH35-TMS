@@ -10,7 +10,8 @@
  * ListErrorBanner, ParityTable (loading/empty states), shared Modal for create/edit.
  * Entity scope: operating_company_id from CompanyContext, exactly as sibling Lists pages do it.
  */
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { driverTeamMemberName, listMdataDriverTeams, type MdataDriverTeam } from "../../../api/driver-teams";
 import { Button } from "../../../components/Button";
@@ -89,6 +90,7 @@ const TEAM_COLUMNS: Array<ParityColumn<MdataDriverTeam>> = [
 ];
 
 export function DriverTeamsPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [search, setSearch] = useState("");
@@ -108,6 +110,16 @@ export function DriverTeamsPage() {
   });
 
   const teams = query.data?.teams ?? [];
+
+  useEffect(() => {
+    const teamId = searchParams.get("team_id");
+    if (!teamId || modalOpen || teams.length === 0) return;
+    const team = teams.find((candidate) => candidate.id === teamId);
+    if (!team) return;
+    setModalMode("edit");
+    setSelectedTeam(team);
+    setModalOpen(true);
+  }, [modalOpen, searchParams, teams]);
 
   // Client-side filter only — the mdata roster endpoint exposes no `search` param and this page
   // must not invent one.
@@ -189,7 +201,14 @@ export function DriverTeamsPage() {
         operatingCompanyId={companyId}
         mode={modalMode}
         team={selectedTeam}
-        onClose={() => setModalOpen(false)}
+        onClose={() => {
+          setModalOpen(false);
+          if (searchParams.has("team_id")) {
+            const next = new URLSearchParams(searchParams);
+            next.delete("team_id");
+            setSearchParams(next, { replace: true });
+          }
+        }}
         onSaved={() => {
           void query.refetch();
         }}
