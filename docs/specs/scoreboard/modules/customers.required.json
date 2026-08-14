@@ -132,7 +132,6 @@
       "route_hint": "/customers",
       "required": [
         "customer",
-        "load",
         "connectivity",
         "reverse_link",
         "picker_law"
@@ -306,7 +305,6 @@
       "route_hint": "/accounting/invoices?customer_id=",
       "required": [
         "customer",
-        "load",
         "connectivity",
         "reverse_link",
         "qbo_chrome",
@@ -339,9 +337,7 @@
       "tab": "Customer Detail",
       "sub": "Projects tab",
       "route_hint": "/customers?tab=projects",
-      "required": [
-        "load"
-      ]
+      "required": []
     },
     {
       "id": "md.late_fees",
@@ -1026,6 +1022,34 @@
             "reverse_link"
           ],
           "reason": "single aggregate summary row, no per-load records or links"
+        }
+      ]
+    },
+    "load_column_2026_08_14": {
+      "finding": "VERTICAL-LOAD-ALL-MODULES-REMAINDER",
+      "note": "Load applicability is leaf-specific: the transaction list renders invoice source_load_id and keeps load. The roster has no load field, New Transaction is only a route hop to accounting, and Projects is a static placeholder; those three cannot honestly require a load FK.",
+      "leaves_touched": 3,
+      "drops": [
+        {
+          "id": "home.roster",
+          "removed": [
+            "load"
+          ],
+          "reason": "customer roster rows do not own or render a load FK"
+        },
+        {
+          "id": "md.new_transaction",
+          "removed": [
+            "load"
+          ],
+          "reason": "navigation hop to invoice creation, not a persisted load-bearing record"
+        },
+        {
+          "id": "md.projects",
+          "removed": [
+            "load"
+          ],
+          "reason": "static placeholder with no data source or load-bearing record"
         }
       ]
     }

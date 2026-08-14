@@ -217,7 +217,6 @@
       "required": [
         "driver",
         "unit",
-        "load",
         "liability",
         "picker_law",
         "qbo_chrome",
@@ -830,6 +829,20 @@
             "reverse_link"
           ],
           "reason": "same file as modal.unified_contract_creator"
+        }
+      ]
+    },
+    "load_column_2026_08_14": {
+      "finding": "VERTICAL-LOAD-ALL-MODULES-REMAINDER",
+      "note": "Legal matter create persists claim/lawsuit/driver/unit/equipment linkage only. Its form state, create payload, Zod schema, ownership assertions, and legal.matters INSERT have no load_id; load Required would invent a schema/domain relationship.",
+      "leaves_touched": 1,
+      "drops": [
+        {
+          "id": "matters.create",
+          "removed": [
+            "load"
+          ],
+          "reason": "legal matter schema and create path have no load_id relationship"
         }
       ]
     }
