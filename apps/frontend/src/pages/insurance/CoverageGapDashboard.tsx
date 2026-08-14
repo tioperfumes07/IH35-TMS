@@ -12,6 +12,7 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ApiError } from "../../api/client";
+import { Link, useSearchParams } from "react-router-dom";
 
 function toDate(value: string) {
   return new Date(`${value}T00:00:00.000Z`);
@@ -30,6 +31,8 @@ function unitLabel(unit: InsuranceCoverageGapUnit) {
 export function CoverageGapDashboard() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
+  const [searchParams] = useSearchParams();
+  const unitId = searchParams.get("unit_id") ?? undefined;
 
   // INSURANCE-1: the uncovered/mismatched lists come from the SAME backend endpoint that feeds the
   // Landing "Coverage Gap Count" KPI (/api/v1/insurance/coverage-gaps), so the rows shown here always
@@ -37,9 +40,9 @@ export function CoverageGapDashboard() {
   // client fan-out, which 404'd for every fleet unit lacking an mdata.assets mirror row and silently
   // collapsed the whole list to 0 even though units had 0 policies.
   const coverageGapsQuery = useQuery({
-    queryKey: ["insurance", "coverage-gap", "gaps", companyId],
+    queryKey: ["insurance", "coverage-gap", "gaps", companyId, unitId ?? null],
     enabled: Boolean(companyId),
-    queryFn: () => getInsuranceCoverageGaps(companyId),
+    queryFn: () => getInsuranceCoverageGaps(companyId, unitId),
   });
 
   const policiesQuery = useQuery({
@@ -108,6 +111,7 @@ export function CoverageGapDashboard() {
       <header className="rounded-sm border border-gray-200 bg-white p-4">
         <h2 className="text-sm font-semibold text-slate-900">Coverage Gap Dashboard</h2>
         <p className="mt-1 text-xs text-slate-600">Identify units without coverage, policies approaching expiration, and requirement mismatches.</p>
+        {unitId ? <Link className="mt-2 inline-block text-xs text-slate-700 underline" to="/safety/insurance/coverage-gaps">Clear unit filter</Link> : null}
       </header>
 
       {coverageGapsQuery.isLoading || policiesQuery.isLoading ? (

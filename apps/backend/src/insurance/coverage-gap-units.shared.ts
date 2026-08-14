@@ -32,7 +32,7 @@ export const REQUIRED_COVERAGE_TYPES: InsuranceCoverageType[] = DISPATCH_REQUIRE
  * chain, unit linked to asset by unit_code = unit_number — see migration 0262). A unit with no asset
  * mirror row or no active policy yields an empty covered set and therefore surfaces as a gap.
  *
- * $1 = operating_company_id (uuid), $2 = required coverage types (text[]).
+ * $1 = operating_company_id (uuid), $2 = required coverage types (text[]), $3 = optional unit id.
  *
  * Unit<->company scoping is written as the explicit `leased = $1 OR (leased IS NULL AND owner = $1)`
  * form (equivalent to COALESCE(leased, owner) = $1) so the verify-mdata-entity-scope static guard
@@ -64,6 +64,7 @@ export const COVERAGE_GAP_UNITS_SQL = `
           OR (u.currently_leased_to_company_id IS NULL AND u.owner_company_id = $1::uuid)
         )
     AND u.deactivated_at IS NULL
+    AND ($3::uuid IS NULL OR u.id = $3::uuid)
   ORDER BY u.unit_number ASC
 `;
 

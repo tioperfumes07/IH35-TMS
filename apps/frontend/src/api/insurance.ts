@@ -538,6 +538,8 @@ export const insuranceLawsuitsApi = {
     status?: InsuranceLawsuitStatus;
     claim_id?: string;
     policy_id?: string;
+    driver_id?: string;
+    unit_id?: string;
   }) {
     return apiRequest<{ lawsuits: InsuranceLawsuit[] }>(`/api/v1/insurance/lawsuits?${toInsuranceQuery(params)}`);
   },
@@ -637,9 +639,10 @@ export type InsuranceCoverageGaps = {
   coverage_gap_count: number;
 };
 
-export function getInsuranceCoverageGaps(operatingCompanyId: string) {
+export function getInsuranceCoverageGaps(operatingCompanyId: string, unitId?: string) {
+  const unit = unitId ? `&unit_id=${encodeURIComponent(unitId)}` : "";
   return apiRequest<InsuranceCoverageGaps>(
-    `/api/v1/insurance/coverage-gaps?${toInsuranceQuery({ operating_company_id: operatingCompanyId })}`
+    `/api/v1/insurance/coverage-gaps?${toInsuranceQuery({ operating_company_id: operatingCompanyId })}${unit}`
   );
 }
 
@@ -708,6 +711,8 @@ export function listInsuranceLawsuits(params: {
   status?: InsuranceLawsuitStatus;
   claim_id?: string;
   policy_id?: string;
+  driver_id?: string;
+  unit_id?: string;
 }) {
   return insuranceLawsuitsApi.list(params);
 }
