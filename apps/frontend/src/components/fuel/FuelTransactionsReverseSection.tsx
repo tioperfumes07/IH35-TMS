@@ -1,5 +1,4 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
 import { getFuelTransactions } from "../../api/fuelPlanner";
 import { formatDateUS } from "../../lib/formatDate";
 import { formatMoneyCents } from "../dispatch/constants";
@@ -24,6 +23,13 @@ type Filter =
   | { unit_id: string; driver_id?: never; load_id?: never; trailer_id?: never }
   | { load_id: string; driver_id?: never; unit_id?: never; trailer_id?: never }
   | { trailer_id: string; driver_id?: never; unit_id?: never; load_id?: never };
+
+const FUEL_HISTORY_KIND = {
+  driver_id: "fuel_history_driver",
+  unit_id: "fuel_history_unit",
+  load_id: "fuel_history_load",
+  trailer_id: "fuel_history_trailer",
+} as const;
 
 type Props = {
   operatingCompanyId: string;
@@ -55,12 +61,12 @@ export function FuelTransactionsReverseSection({
           Fuel transactions
           {rows.length > 0 ? <span className="ml-2 text-xs font-normal text-gray-600">({rows.length})</span> : null}
         </h3>
-        <Link
+        <EntityLink
+          kind={FUEL_HISTORY_KIND[filterKey]}
+          id={filterValue}
+          label="Open Fuel History"
           className="text-xs font-semibold text-slate-700 underline"
-          to={`/fuel/history?${filterKey}=${encodeURIComponent(filterValue)}`}
-        >
-          Open Fuel History
-        </Link>
+        />
       </div>
       {fuelQ.isLoading ? <p className="text-sm text-gray-500">Loading…</p> : null}
       {fuelQ.isError ? <p className="text-sm text-red-600">Could not load fuel transactions for {contextLabel}.</p> : null}
