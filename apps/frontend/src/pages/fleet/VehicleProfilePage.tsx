@@ -341,6 +341,14 @@ export function VehicleProfilePage() {
               data-testid="vehicle-profile-safety-records"
             />
           </div>
+          <div data-testid="vp-section-compliance-hos-reverse" className="rounded-sm border border-gray-200 bg-white p-3">
+            <Link
+              to={`/compliance?tab=overview&unit_id=${encodeURIComponent(id)}`}
+              className="text-xs font-semibold text-slate-700 hover:underline"
+            >
+              Open this unit in Fleet HOS →
+            </Link>
+          </div>
           {/* RANK6-FUEL-LOAD-REVERSE-FORWARD follow-up — units had zero fuel reverse linkage despite
               fuel.fuel_transactions.unit_id existing and GET /fuel/transactions?unit_id=... working
               since FUEL-4; drivers already had this via FuelHistoryView, loads got it this same class

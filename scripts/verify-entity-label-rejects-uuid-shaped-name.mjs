@@ -1682,8 +1682,8 @@ const SIBLINGS = [
   },
   {
     rel: "apps/frontend/src/components/dispatch/tabs/FactoringTab.tsx",
-    bad: /linkedInvoice\?\.display_id \?\? undefined/,
-    good: /entityLabel\(\s*linkedInvoice\?\.display_id\s*,\s*linkedInvoice\?\.id\s*,\s*"Invoice"\s*\)/,
+    bad: /linkedInvoice\.display_id\s*\?\?\s*linkedInvoice\.id/,
+    good: /entityLabel\(\s*linkedInvoice\.display_id\s*,\s*linkedInvoice\.id\s*,\s*"Invoice"\s*\)/,
   },
   {
     rel: "apps/frontend/src/pages/driver-finance/OwnerApprovalPortalPage.tsx",

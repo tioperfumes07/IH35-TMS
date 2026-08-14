@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { getHosDailyRoster, DUTY_LABEL, DUTY_COLOR, type HosRosterDriver } from "../../api/hosTracker";
 import { ListErrorState } from "../../components/ListErrorState";
@@ -51,6 +52,8 @@ function driverVerdict(d: HosRosterDriver): { label: string; cls: string } {
 }
 
 export function HosTrackerSection({ operatingCompanyId }: { operatingCompanyId: string }) {
+  const [searchParams] = useSearchParams();
+  const requestedDriverId = searchParams.get("driver_id");
   const today = laredoToday();
   const strip = useMemo(() => buildDayStrip(today), [today]);
   const [selectedDate, setSelectedDate] = useState(today);
@@ -66,6 +69,11 @@ export function HosTrackerSection({ operatingCompanyId }: { operatingCompanyId: 
     staleTime: 60_000,
   });
   const roster = rosterQ.data;
+  useEffect(() => {
+    if (!requestedDriverId || selectedDriver?.driver_id === requestedDriverId) return;
+    const requested = roster?.drivers.find((driver) => driver.driver_id === requestedDriverId);
+    if (requested) setSelectedDriver(requested);
+  }, [requestedDriverId, roster?.drivers, selectedDriver?.driver_id]);
   const c = roster?.counts ?? { active: 0, on_duty: 0, driving: 0, low: 0, violation: 0, unavailable: 0 };
   const asOf = roster?.generated_at ? new Date(roster.generated_at).toLocaleTimeString("en-US", { timeZone: "America/Chicago", hour: "2-digit", minute: "2-digit", hour12: false }) : null;
 

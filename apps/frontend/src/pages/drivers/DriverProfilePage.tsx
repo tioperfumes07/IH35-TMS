@@ -320,6 +320,12 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
       </div>
       <div data-testid="dp-section-5-hos">
         <HOSStatusSection hos={hos} />
+        <Link
+          to={`/compliance?tab=hos_tracker&driver_id=${encodeURIComponent(id)}`}
+          className="mt-2 inline-block text-xs font-semibold text-slate-700 hover:underline"
+        >
+          Open this driver in HOS Tracker →
+        </Link>
       </div>
       <div data-testid="dp-section-6-assignment">
         <CurrentAssignmentSection

@@ -2669,6 +2669,14 @@
       "modules": ["fleet"],
       "cols": ["reverse_link"],
       "leafRe": "^(unit\\.profile\\.documents|unit\\.edit\\.quick_availability|trailer\\.profile\\.(assignment|maintenance|insurance_claims_reverse|documents))$"
+    },
+    {
+      "task": "VERTICAL-REVERSE-LINK-COMPLIANCE-HOS",
+      "pr": "this PR",
+      "guard": "scripts/verify-compliance-hos-profile-reverse.mjs",
+      "modules": ["compliance"],
+      "cols": ["reverse_link"],
+      "leafRe": "^(tab\\.hos_tracker|fleet\\.hos_board)$"
     }
   ]
 }

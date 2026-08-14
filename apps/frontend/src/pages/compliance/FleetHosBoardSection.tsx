@@ -1,6 +1,6 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "../../components/Button";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
   getFleetLocationHos,
@@ -246,6 +246,8 @@ const OFFLINE_FLEET_HOS_COLUMNS: ParityColumn<FleetLocationHosRow>[] = [
 export function FleetHosBoardSection({ operatingCompanyId }: { operatingCompanyId: string }) {
   const companyId = operatingCompanyId;
   const navigate = useNavigate(); // AUTO-07: row click → unit detail (clickable sweep)
+  const [searchParams] = useSearchParams();
+  const requestedUnitId = searchParams.get("unit_id");
 
   const query = useQuery({
     queryKey: ["compliance", "fleet-location-hos", companyId],
@@ -261,7 +263,17 @@ export function FleetHosBoardSection({ operatingCompanyId }: { operatingCompanyI
   const allRows = query.data?.rows ?? [];
   // COMPLIANCE-1: default view = only units reporting within the freshness threshold; years/weeks-
   // stale (or never-reported) units are segregated into the collapsible group below.
-  const { live: liveRows, offline: offlineRows } = useMemo(() => partitionFleetByFreshness(allRows), [allRows]);
+  const { live: liveRows, offline: offlineRows } = useMemo(() => {
+    const partitioned = partitionFleetByFreshness(allRows);
+    if (!requestedUnitId) return partitioned;
+    return {
+      live: partitioned.live.filter((row) => row.unit_id === requestedUnitId),
+      offline: partitioned.offline.filter((row) => row.unit_id === requestedUnitId),
+    };
+  }, [allRows, requestedUnitId]);
+  useEffect(() => {
+    if (requestedUnitId && offlineRows.length > 0) setShowOffline(true);
+  }, [offlineRows.length, requestedUnitId]);
   const filteredLiveRows = useMemo(() => {
     const needle = search.trim().toLowerCase();
     return needle
