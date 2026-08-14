@@ -72,3 +72,5 @@ Draw the next unused number from your OWN block, record a `CLAIM-<n>` row below,
 | 2026-08-14T12:45:03-05:00 | Codex | VERTICAL-REVERSE-LINK-INLINE-SURFACES | allocation source drill + exact required maps + reverse-link guard | RESERVED | codex/vertical-reverse-inline-024 |
 | 2026-08-14T12:46:20-05:00 | Codex | VERTICAL-REVERSE-LINK-INLINE-SURFACES | allocation source drill + exact required maps + reverse-link guard | RELEASED-ON-MERGE | codex/vertical-reverse-inline-024 |
 | 2026-08-14T12:49:00-05:00 | Codex | VERTICAL-SETTLEMENT-INLINE-SURFACES | settlement exact three-leaf applicability + guard | RESERVED | codex/vertical-next-inline-025 |
+| 2026-08-14T12:49:29-05:00 | Codex | VERTICAL-SETTLEMENT-INLINE-SURFACES | settlement exact three-leaf applicability + guard | RELEASED-ON-MERGE | codex/vertical-next-inline-025 |
+| 2026-08-14T12:51:00-05:00 | Codex | VERTICAL-AP-BILL-INLINE-SURFACES | AP bill exact two-leaf drill evidence + guard | RESERVED | codex/vertical-ap-bill-inline-026 |
