@@ -139,6 +139,15 @@ Each of these on the surface must map to a matrix leaf / chrome law (not “list
 3. Then remaining modules.  
 4. **Live Chrome (item 12)** only after Built gate.
 
+**§3 "remaining modules" is not optional and is not later.** Priority set finishing first does not mean
+the other modules are out of scope — it means they're next, same session, same sweep. Full scope is
+**all 30 sidebar modules** (`SIDEBAR_ITEM_IDS` in `apps/frontend/src/components/layout/sidebar-config.ts`
+— `eld` stub-exempted, 29 real modules in scope). Owner re-stated this three times on 2026-08-14 after a
+"Step 2 all-modules" guard (`verify-wave-c-ap-bill-fe-all-modules.mjs`) turned out to only prove 7
+representative files while 32 real gaps sat untouched across 8 modules its own contract list never read
+— see `VERTICAL-WIRING-LAW-2026-08-12.md` §7 for the full account. Subscription-launch quality
+(McLeod / QuickBooks-grade) means every leaf, every module, proven — not counted.
+
 Canonical sequence pointers: `OWNER-EXECUTION-PLAN-2026-07-22.md` · `VERTICAL-WIRING-LAW-2026-08-12.md`.
 
 ---

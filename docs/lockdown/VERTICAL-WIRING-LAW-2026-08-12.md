@@ -73,3 +73,30 @@
 ## 6. OUTBOX / INBOX hygiene
 
 OUTBOX = **one live line**. Multi-line essays / “holding” / “owner-gated” = **purge and replace**. Worktree INBOX from `docs/bus/INBOX-*.md` wins.
+
+---
+
+## 7. ★★★ RE-LOCKED 2026-08-14 (owner said this three times — read before touching any column-wave guard)
+
+**The bar is subscription-launch quality — McLeod / QuickBooks-grade — across every one of the 30 sidebar
+modules (`apps/frontend/src/components/layout/sidebar-config.ts` `SIDEBAR_ITEM_IDS` is the count source of
+truth; `eld` is the one standing exception — a stub page with no backend, nothing to wire). Twenty-nine real
+modules. Not the priority-10. Not the priority-14. All of them, every time, no exceptions, no "later."**
+
+**Caught live 2026-08-14 — read this before assuming a Step-2 "all-modules" guard is trustworthy:**
+`scripts/verify-wave-c-ap-bill-fe-all-modules.mjs` declares `"modules":[...12 names...]` and
+`"leafRe":".*"` — reading as if it proves the `ap_bill` column across all owed modules. Its actual PASS
+bar is a **count floor** (`leaves.length < 67`, `module set size < 12`) plus **7 representative-contract
+files** — accounting, banking, insurance, maintenance, driver-finance. Independently recomputed live
+the same day: **32 real `ap_bill` money-cell gaps existed simultaneously**, spread across
+**compliance, fleet, home, insurance, inventory, legal, maintenance, and reports** — modules this
+guard's own contract list never touches. A guard that *counts* leaves instead of *proving* every leaf is
+exactly the "P10 subset called all-modules" pattern §1 and §3 already forbid — it had simply moved from
+prose into code, where it's harder to catch. Before trusting any `"leafRe":".*"` or count-based
+"all-modules" guard again: open it, list which files it actually reads, and check that list against
+the FULL leaf inventory the column owes (`docs/specs/scoreboard/modules/*.required.json`) — not against
+a headcount.
+
+**Standing instruction, permanent:** every column-wave / class-sweep PR states, in its own FIX section,
+which modules it verified against real per-leaf assertions — not which modules it merely counted.
+"All modules" in a task name or tag is not evidence; the per-leaf assertion list is the evidence.
