@@ -160,6 +160,19 @@ export type EntityKind =
   | "hos_violations_driver"
   | "internal_fines_load"
   | "internal_fines_driver"
+  // LINK-F5171: reverse "Open Damage/Interchange/Cargo" → filtered incident list queues.
+  | "damage_reports_load"
+  | "damage_reports_driver"
+  | "damage_reports_unit"
+  | "damage_reports_trailer"
+  | "trailer_interchanges_load"
+  | "trailer_interchanges_driver"
+  | "trailer_interchanges_unit"
+  | "trailer_interchanges_trailer"
+  | "cargo_claims_load"
+  | "cargo_claims_driver"
+  | "cargo_claims_unit"
+  | "cargo_claims_trailer"
   | "legal_matters_driver"
   | "legal_matters_unit"
   | "legal_matters_equipment"
@@ -487,6 +500,30 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
       return `/safety/internal-fines?load_id=${id}`;
     case "internal_fines_driver":
       return `/safety/internal-fines?driver_id=${id}`;
+    case "damage_reports_load":
+      return `/safety/damage-reports?load_id=${id}`;
+    case "damage_reports_driver":
+      return `/safety/damage-reports?driver_id=${id}`;
+    case "damage_reports_unit":
+      return `/safety/damage-reports?unit_id=${id}`;
+    case "damage_reports_trailer":
+      return `/safety/damage-reports?trailer_id=${id}`;
+    case "trailer_interchanges_load":
+      return `/safety/trailer-interchanges?load_id=${id}`;
+    case "trailer_interchanges_driver":
+      return `/safety/trailer-interchanges?driver_id=${id}`;
+    case "trailer_interchanges_unit":
+      return `/safety/trailer-interchanges?unit_id=${id}`;
+    case "trailer_interchanges_trailer":
+      return `/safety/trailer-interchanges?trailer_id=${id}`;
+    case "cargo_claims_load":
+      return `/safety/cargo-claims?load_id=${id}`;
+    case "cargo_claims_driver":
+      return `/safety/cargo-claims?driver_id=${id}`;
+    case "cargo_claims_unit":
+      return `/safety/cargo-claims?unit_id=${id}`;
+    case "cargo_claims_trailer":
+      return `/safety/cargo-claims?trailer_id=${id}`;
     case "legal_matters_driver":
       return `/legal/matters?related_driver_id=${id}`;
     case "legal_matters_unit":

@@ -83,8 +83,10 @@ the leaf stays OPEN.
 | `lists:chrome.toolbar_filter` | Cursor | #6858 | `verify-collapsed-list-filters-apply.mjs` (FilterPopover draft→Apply) |
 | `dispatch:settings.notify` (customer reverse Open) | Cursor | #6863 | `verify-customer-notify-linkage.mjs` |
 | `safety:driver_scheduler` temp-cover Open (driver/unit) | Cursor (EntityLink janitor) | #6863 | `verify-temp-cover-driver-linkage.mjs` · `verify-temp-cover-unit-linkage.mjs` |
-| `dispatch:load.safety.open_queues` | Cursor | PENDING | `verify-safety-load-reverse-accidents.mjs` · `verify-hos-violation-linkage.mjs` · `verify-internal-fine-load-reverse.mjs` |
-| `safety:driver_unit.accidents_hos_fines.open` | Cursor (EntityLink janitor) | PENDING | `verify-hos-violation-linkage.mjs` · `verify-asset-safety-reverse-section.mjs` |
+| `dispatch:load.safety.open_queues` | Cursor | #6872 | `verify-safety-load-reverse-accidents.mjs` · `verify-hos-violation-linkage.mjs` · `verify-internal-fine-load-reverse.mjs` |
+| `safety:driver_unit.accidents_hos_fines.open` | Cursor (EntityLink janitor) | #6872 | `verify-hos-violation-linkage.mjs` · `verify-asset-safety-reverse-section.mjs` |
+| `dispatch:load.safety.incident_open_queues` | Cursor | PENDING | `verify-safety-load-reverse-accidents.mjs` · `verify-safety-incident-list-filters.mjs` |
+| `safety:asset.incident_open_queues` | Cursor (EntityLink janitor) | PENDING | `verify-asset-safety-reverse-section.mjs` |
 
 ## Uncertain — Cursor attributed these to Codex; Codex's itemized report does not confirm them
 Needs Codex to confirm with PR#/guard or explicitly release as OPEN.

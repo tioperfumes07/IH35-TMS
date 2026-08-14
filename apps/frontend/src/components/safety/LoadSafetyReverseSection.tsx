@@ -1,5 +1,4 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
 import {
   getSafetyAccidents,
   getInternalFines,
@@ -26,19 +25,19 @@ const s = (value: unknown): string => (value == null ? "" : String(value));
 const INCIDENT_KINDS: {
   type: SafetyIncidentType;
   title: string;
-  route: string;
+  openKind: "damage_reports_load" | "trailer_interchanges_load" | "cargo_claims_load";
 }[] = [
   {
     type: "damage_report",
     title: "Damage Reports",
-    route: "/safety/damage-reports",
+    openKind: "damage_reports_load",
   },
   {
     type: "trailer_interchange",
     title: "Trailer Interchanges",
-    route: "/safety/trailer-interchanges",
+    openKind: "trailer_interchanges_load",
   },
-  { type: "cargo_claim", title: "Cargo Claims", route: "/safety/cargo-claims" },
+  { type: "cargo_claim", title: "Cargo Claims", openKind: "cargo_claims_load" },
 ];
 
 type Props = {
@@ -467,12 +466,12 @@ function LoadIncidentBlock({
             </span>
           ) : null}
         </h3>
-        <Link
+        <EntityLink
+          kind={kind.openKind}
+          id={loadId}
+          label={`Open ${kind.title}`}
           className="text-xs font-semibold text-slate-700 underline"
-          to={kind.route}
-        >
-          Open {kind.title}
-        </Link>
+        />
       </div>
       {query.isLoading ? (
         <p className="text-sm text-gray-500">Loading…</p>

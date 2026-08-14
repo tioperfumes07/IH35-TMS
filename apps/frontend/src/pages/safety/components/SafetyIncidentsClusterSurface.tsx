@@ -132,6 +132,18 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
   const [unitFilter, setUnitFilter] = useState("");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const loadIdFromUrl = searchParams.get("load_id")?.trim() ?? "";
+  const trailerIdFromUrl = searchParams.get("trailer_id")?.trim() ?? "";
+  const driverIdFromUrl = searchParams.get("driver_id")?.trim() ?? "";
+  const unitIdFromUrl = searchParams.get("unit_id")?.trim() ?? "";
+
+  useEffect(() => {
+    if (driverIdFromUrl) setDriverFilter(driverIdFromUrl);
+  }, [driverIdFromUrl]);
+  useEffect(() => {
+    if (unitIdFromUrl) setUnitFilter(unitIdFromUrl);
+  }, [unitIdFromUrl]);
 
   const typedFields = config.typedFields;
   const has = (key: IncidentFieldKey) => COMMON_FIELDS.includes(key) || typedFields.includes(key);
@@ -140,10 +152,12 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
     () => ({
       driver_id: driverFilter.trim() || undefined,
       unit_id: unitFilter.trim() || undefined,
+      load_id: loadIdFromUrl || undefined,
+      trailer_id: trailerIdFromUrl || undefined,
       date_from: fromDate || undefined,
       date_to: toDate || undefined,
     }),
-    [driverFilter, unitFilter, fromDate, toDate]
+    [driverFilter, unitFilter, loadIdFromUrl, trailerIdFromUrl, fromDate, toDate]
   );
 
   const listQuery = useQuery({
@@ -227,7 +241,6 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
   // so damage reports, trailer interchanges and cargo claims were undrillable — the link navigated to
   // the right list and then stopped. Same shape AccidentsPage uses for ?accident_id=: open the record
   // once the list has loaded, then strip the param so a refresh does not re-open it.
-  const [searchParams, setSearchParams] = useSearchParams();
   const incidentIdParam = searchParams.get("incident_id");
   useEffect(() => {
     if (!incidentIdParam || rows.length === 0) return;

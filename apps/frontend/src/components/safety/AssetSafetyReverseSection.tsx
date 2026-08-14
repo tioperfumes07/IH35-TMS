@@ -43,15 +43,37 @@ type Row = Record<string, unknown>;
 
 const s = (value: unknown): string => (value == null ? "" : String(value));
 
-const INCIDENT_KINDS: { type: SafetyIncidentType; title: string; route: string; linkLabel: string }[] = [
-  { type: "damage_report", title: "Damage Reports", route: "/safety/damage-reports", linkLabel: "Open Damage Reports" },
+const INCIDENT_KINDS: {
+  type: SafetyIncidentType;
+  title: string;
+  linkLabel: string;
+  unitOpenKind: "damage_reports_unit" | "trailer_interchanges_unit" | "cargo_claims_unit";
+  trailerOpenKind:
+    | "damage_reports_trailer"
+    | "trailer_interchanges_trailer"
+    | "cargo_claims_trailer";
+}[] = [
+  {
+    type: "damage_report",
+    title: "Damage Reports",
+    linkLabel: "Open Damage Reports",
+    unitOpenKind: "damage_reports_unit",
+    trailerOpenKind: "damage_reports_trailer",
+  },
   {
     type: "trailer_interchange",
     title: "Trailer Interchanges",
-    route: "/safety/trailer-interchanges",
     linkLabel: "Open Trailer Interchanges",
+    unitOpenKind: "trailer_interchanges_unit",
+    trailerOpenKind: "trailer_interchanges_trailer",
   },
-  { type: "cargo_claim", title: "Cargo Claims", route: "/safety/cargo-claims", linkLabel: "Open Cargo Claims" },
+  {
+    type: "cargo_claim",
+    title: "Cargo Claims",
+    linkLabel: "Open Cargo Claims",
+    unitOpenKind: "cargo_claims_unit",
+    trailerOpenKind: "cargo_claims_trailer",
+  },
 ];
 
 function SectionShell({
@@ -70,7 +92,15 @@ function SectionShell({
 }: {
   title: string;
   to?: string;
-  openKind?: "accidents_unit" | "accidents_trailer";
+  openKind?:
+    | "accidents_unit"
+    | "accidents_trailer"
+    | "damage_reports_unit"
+    | "damage_reports_trailer"
+    | "trailer_interchanges_unit"
+    | "trailer_interchanges_trailer"
+    | "cargo_claims_unit"
+    | "cargo_claims_trailer";
   openId?: string;
   linkLabel: string;
   testId: string;
@@ -131,7 +161,8 @@ function IncidentsBlock({
   return (
     <SectionShell
       title={kind.title}
-      to={kind.route}
+      openKind={assetKind === "unit" ? kind.unitOpenKind : kind.trailerOpenKind}
+      openId={assetId}
       linkLabel={kind.linkLabel}
       testId={`asset-safety-reverse-${kind.type.replace(/_/g, "-")}`}
       isLoading={query.isLoading}
