@@ -10,7 +10,6 @@
  * Submission reuses existing accounting factoring-advances batch API (Block-24/25 poster untouched).
  */
 import { useMemo, useState, type ReactNode } from "react";
-import { Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLoad } from "../../../api/loads";
 import { listInvoices, listFactoringCandidateInvoices } from "../../../api/accounting";
@@ -382,13 +381,13 @@ export function FactoringTab({ loadId, operatingCompanyId, canEdit, onPacketUpda
         {/* LINK-F5171/LINK-F5179 — reverse_link: this tab's own packet-stage lifecycle is derived
         locally from load.notes; the canonical dispatch factoring queue (with its own doc-presence
         checks across every load) never linked back from here. */}
-        <Link
-          to={`/dispatch/factoring-queue?load_id=${loadId}`}
+        <EntityLink
+          kind="factoring_queue_load"
+          id={loadId}
+          label="View in Dispatch Factoring Queue →"
           data-testid="factoring-tab-view-in-dispatch-queue"
           className="mt-2 inline-block text-xs font-medium text-slate-700 hover:underline"
-        >
-          View in Dispatch Factoring Queue →
-        </Link>
+        />
       </div>
 
       {/* Document checklist */}
