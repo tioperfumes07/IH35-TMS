@@ -3082,6 +3082,51 @@
         "qbo_chrome",
         "connectivity"
       ]
+    },
+    {
+      "id": "lists.modal.detail_type",
+      "tab": "Accounting catalogs",
+      "sub": "Detail type modal",
+      "route_hint": "/lists/accounting/detail-types",
+      "surface_kind": "modal",
+      "surface_path": "pages/lists/accounting/DetailTypesListPage.tsx",
+      "required": ["connectivity", "reverse_link", "picker_law", "qbo_chrome"]
+    },
+    {
+      "id": "lists.modal.void_cancel_reason",
+      "tab": "Accounting catalogs",
+      "sub": "Void / cancel reason modal",
+      "route_hint": "/lists/accounting/void-cancel-reasons",
+      "surface_kind": "modal",
+      "surface_path": "pages/lists/accounting/VoidCancelReasonsListPage.tsx",
+      "required": ["connectivity", "reverse_link", "picker_law", "qbo_chrome"]
+    },
+    {
+      "id": "lists.modal.load_cancellation_reason",
+      "tab": "Dispatch catalogs",
+      "sub": "Load cancellation reason modal",
+      "route_hint": "/lists/dispatch/load-cancellation-reasons",
+      "surface_kind": "modal",
+      "surface_path": "pages/lists/dispatch/LoadCancellationReasonsListPage.tsx",
+      "required": ["load", "connectivity", "reverse_link", "picker_law", "qbo_chrome"]
+    },
+    {
+      "id": "lists.modal.termination_reason",
+      "tab": "Driver catalogs",
+      "sub": "Termination reason modal",
+      "route_hint": "/lists/drivers/termination-reasons",
+      "surface_kind": "modal",
+      "surface_path": "pages/lists/drivers/TerminationReasonsListPage.tsx",
+      "required": ["driver", "connectivity", "reverse_link", "picker_law", "qbo_chrome"]
+    },
+    {
+      "id": "lists.modal.oem_parts_create",
+      "tab": "Maintenance catalogs",
+      "sub": "OEM parts create modal",
+      "route_hint": "/lists/maintenance/oem-parts",
+      "surface_kind": "modal",
+      "surface_path": "pages/lists/maintenance/OemPartsCatalog.tsx",
+      "required": ["unit", "trailer", "inventory", "connectivity", "reverse_link", "picker_law", "qbo_chrome"]
     }
   ],
   "honesty_note": {
