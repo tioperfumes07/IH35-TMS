@@ -5,6 +5,7 @@ import { apiRequest } from "./client";
 export type IncomeLineItem = {
   load_id: string;
   load_number: string;
+  customer_id: string | null;
   customer_name: string;
   delivery_time: string | null;
   amount_cents: number;

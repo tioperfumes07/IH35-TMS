@@ -132,7 +132,10 @@
       "required": [
         "gl_je",
         "liability",
-        "connectivity"
+        "connectivity",
+        "customer",
+        "load",
+        "reverse_link"
       ]
     },
     {
@@ -206,7 +209,7 @@
     {
       "id": "chrome.toolbar_search",
       "tab": "Chrome controls",
-      "sub": "List toolbar \u2014 Search (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar — Search (CLS-LIST-TOOLBAR)",
       "route_hint": "/cash-flow",
       "surface_kind": "toolbar",
       "required": []
@@ -214,7 +217,7 @@
     {
       "id": "chrome.toolbar_range",
       "tab": "Chrome controls",
-      "sub": "List toolbar \u2014 date/amount range (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar — date/amount range (CLS-LIST-TOOLBAR)",
       "route_hint": "/cash-flow",
       "surface_kind": "toolbar",
       "required": [
@@ -224,7 +227,7 @@
     {
       "id": "chrome.toolbar_gear",
       "tab": "Chrome controls",
-      "sub": "List toolbar \u2014 column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
+      "sub": "List toolbar — column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
       "route_hint": "/cash-flow",
       "surface_kind": "toolbar",
       "required": []
@@ -232,7 +235,7 @@
     {
       "id": "chrome.toolbar_filter",
       "tab": "Chrome controls",
-      "sub": "List toolbar \u2014 Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
+      "sub": "List toolbar — Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
       "route_hint": "/cash-flow",
       "surface_kind": "toolbar",
       "required": [
@@ -246,7 +249,17 @@
       "route_hint": "/cash-flow",
       "surface_kind": "panel",
       "surface_path": "pages/cash-flow/tabs/ManualDailyProjectionsTab.tsx",
-      "required": ["driver", "customer", "vendor", "unit", "expense", "connectivity", "reverse_link", "picker_law", "qbo_chrome"]
+      "required": [
+        "driver",
+        "customer",
+        "vendor",
+        "unit",
+        "expense",
+        "connectivity",
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome"
+      ]
     }
   ],
   "honesty_audit": {
@@ -262,11 +275,11 @@
         "invoice",
         "bank"
       ],
-      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; \u00a7B9 link columns added."
+      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; §B9 link columns added."
     },
     "reverse_link_2026_08_13_secondary": {
       "finding": "VERTICAL-REVERSE-LINK-SECONDARY-HONESTY",
-      "note": "Secondary module reverse_link Required on hub/chrome/nav leaves without reverse EntityLink drill \u2014 honesty drop. Built stays on money/ops modules already drained.",
+      "note": "Secondary module reverse_link Required on hub/chrome/nav leaves without reverse EntityLink drill — honesty drop. Built stays on money/ops modules already drained.",
       "drops": [
         {
           "id": "home",
@@ -404,7 +417,7 @@
     },
     "customer_column_2026_08_14_overclaim": {
       "finding": "LINK-F5165-CUSTOMER-COLUMN-VERTICAL-SWEEP",
-      "note": "all 7 cash-flow leaves are false: the module's own pages never render a real customer_id/EntityLink \u2014 daily_prediction and manual_daily_projections explicitly capture only a free-text party/customer_name string (per the file's own DEFECT comments), and the hop.reports.* leaves only link out to the separate reports module pages (already independently audited there).",
+      "note": "all 7 cash-flow leaves are false: the module's own pages never render a real customer_id/EntityLink — daily_prediction and manual_daily_projections explicitly capture only a free-text party/customer_name string (per the file's own DEFECT comments), and the hop.reports.* leaves only link out to the separate reports module pages (already independently audited there).",
       "drops": [
         {
           "id": "home",
@@ -452,7 +465,7 @@
     },
     "vendor_column_2026_08_14_overclaim": {
       "finding": "LINK-F5166-VENDOR-COLUMN-VERTICAL-SWEEP",
-      "note": "all 7 cash-flow leaves are false: the module's own pages never render a real vendor_id/EntityLink \u2014 daily_prediction has zero vendor references, manual_daily_projections captures only a free-text party/vendor_name string (per the file's own comments, same pattern already confirmed for the customer column), and the hop.reports.* leaves only link out to the separate reports module pages (already independently audited there).",
+      "note": "all 7 cash-flow leaves are false: the module's own pages never render a real vendor_id/EntityLink — daily_prediction has zero vendor references, manual_daily_projections captures only a free-text party/vendor_name string (per the file's own comments, same pattern already confirmed for the customer column), and the hop.reports.* leaves only link out to the separate reports module pages (already independently audited there).",
       "drops": [
         {
           "id": "home",
@@ -500,7 +513,7 @@
     },
     "driver_column_2026_08_14_overclaim": {
       "finding": "LINK-F5168-DRIVER-COLUMN-VERTICAL-SWEEP",
-      "note": "driver blanket-required on 1 cash-flow leaf. Verified live \u2014 CashFlowPage.tsx's \"Related\" section (L70-79) is a static <Link to=\"/drivers?subtab=cash_advances\">Cash advances</Link> nav item \u2014 no driver_id/EntityLink/EntityPicker on the hop leaf itself.",
+      "note": "driver blanket-required on 1 cash-flow leaf. Verified live — CashFlowPage.tsx's \"Related\" section (L70-79) is a static <Link to=\"/drivers?subtab=cash_advances\">Cash advances</Link> nav item — no driver_id/EntityLink/EntityPicker on the hop leaf itself.",
       "drops": [
         {
           "id": "hop.cash_advances",
@@ -563,6 +576,20 @@
             "connectivity"
           ],
           "reason": "no column-gear component present"
+        }
+      ]
+    },
+    "customer_column_2026_08_14_cashflow_restore": {
+      "finding": "LINK-F5171-CASHFLOW-CUSTOMER-ENTITYLINK",
+      "note": "Prior honesty drop claimed daily_prediction never exposed customer_id. Root cause was API omitting l.customer_id while already JOINing customers. Restored customer+load+reverse_link Required after wiring customer_id + EntityLink.",
+      "restore": [
+        {
+          "id": "tab.daily_prediction",
+          "added": [
+            "customer",
+            "load",
+            "reverse_link"
+          ]
         }
       ]
     }

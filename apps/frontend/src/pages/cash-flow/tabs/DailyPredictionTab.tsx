@@ -235,7 +235,18 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
                 >
                   <div className="min-w-0 flex-1">
                     <EntityLink kind="load" id={item.load_id} label={entityLabel(item.load_number, item.load_id, "Load")} className="font-medium text-gray-900" data-testid="cash-flow-predicted-load-link" onClick={(event) => event.stopPropagation()} />
-                    <span className="ml-2 text-gray-600">{entityLabel(item.customer_name, null, "Customer")}</span>
+                    {item.customer_id ? (
+                      <EntityLink
+                        kind="customer"
+                        id={item.customer_id}
+                        label={entityLabel(item.customer_name, item.customer_id, "Customer")}
+                        className="ml-2 text-gray-600 hover:underline"
+                        data-testid="cash-flow-predicted-customer-link"
+                        onClick={(event) => event.stopPropagation()}
+                      />
+                    ) : (
+                      <span className="ml-2 text-gray-600">{entityLabel(item.customer_name, null, "Customer")}</span>
+                    )}
                     {item.delivery_time && (
                       <span className="ml-2 text-xs text-gray-400">
                         {new Date(item.delivery_time).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
@@ -297,7 +308,17 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
                         }`}>
                           {item.kind === "driver_pay" ? "Driver Pay" : item.kind === "bill_due" ? "Bill Due" : "Manual"}
                         </span>
-                        <span className="text-gray-700">{item.label}</span>
+                        {item.load_id ? (
+                          <EntityLink
+                            kind="load"
+                            id={item.load_id}
+                            label={item.label}
+                            className="text-gray-700 hover:underline"
+                            data-testid="cash-flow-predicted-expense-load-link"
+                          />
+                        ) : (
+                          <span className="text-gray-700">{item.label}</span>
+                        )}
                       </div>
                       <span className="ml-4 shrink-0 font-semibold text-gray-900">
                         {formatCents(item.amount_cents)}

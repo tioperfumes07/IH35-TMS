@@ -31,6 +31,7 @@ type Queryable = pg.PoolClient;
 export type IncomeLineItem = {
   load_id: string;
   load_number: string;
+  customer_id: string | null;
   customer_name: string;
   delivery_time: string | null;
   amount_cents: number;
@@ -135,6 +136,7 @@ export async function getDailyPrediction(
       WITH load_proj AS (
         SELECT
           l.id, l.load_number,
+          l.customer_id,
           COALESCE(c.customer_name, 'Unknown') AS customer_name,
           fd.scheduled_arrival_at AS delivery_time,
           COALESCE(l.rate_total_cents, 0)::int AS rate_total_cents,
@@ -155,7 +157,7 @@ export async function getDailyPrediction(
         WHERE l.operating_company_id = $1::uuid
           AND ${ACTIVE_LOAD_FILTER}
       )
-      SELECT id::text, load_number, customer_name, delivery_time::text AS delivery_time, rate_total_cents, status
+      SELECT id::text, load_number, customer_id::text AS customer_id, customer_name, delivery_time::text AS delivery_time, rate_total_cents, status
       FROM load_proj
       WHERE projected_cash_date = $2::date
       ORDER BY delivery_time ASC NULLS LAST, load_number ASC
@@ -164,6 +166,7 @@ export async function getDailyPrediction(
     SELECT
       l.id::text,
       l.load_number,
+      l.customer_id::text AS customer_id,
       COALESCE(c.customer_name, 'Unknown') AS customer_name,
       ls.scheduled_arrival_at::text AS delivery_time,
       COALESCE(l.rate_total_cents, 0)::int AS rate_total_cents,
@@ -182,6 +185,7 @@ export async function getDailyPrediction(
   const incomeRows = await client.query<{
     id: string;
     load_number: string;
+    customer_id: string | null;
     customer_name: string;
     delivery_time: string | null;
     rate_total_cents: number;
@@ -191,6 +195,7 @@ export async function getDailyPrediction(
   const incomeItems: IncomeLineItem[] = incomeRows.rows.map((row) => ({
     load_id: row.id,
     load_number: row.load_number,
+    customer_id: row.customer_id,
     customer_name: row.customer_name,
     delivery_time: row.delivery_time,
     amount_cents: row.rate_total_cents ?? 0,
