@@ -1,9 +1,9 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["accounting","banking","compliance","customers","dispatch","docs","driver-hub","drivers","factoring","fleet","fuel","home","insurance","legal","lists","maintenance","reports","safety","settlements","system","tasks","vendors"],"cols":["driver"],"leafRe":".*","task":"WAVE-A-driver-all-modules","vertical":"column-wave"} */
 /**
- * Full-product driver FK contract. Sequence is deliberate: prove the priority-10 inventory first,
+ * Full-product driver FK census. Sequence is deliberate: prove the priority-10 inventory first,
  * then prove every remaining module in the same run. Required.json is the inventory, so a newly
  * added driver leaf/module joins this ratchet automatically rather than falling outside a hand list.
+ * This aggregate guard awards no Built credit; representative contracts cannot prove every leaf.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -32,7 +32,7 @@ const representativeContracts = [
   ["apps/frontend/src/pages/docs/DocsHomePage.tsx", /EntityLink/],
   ["apps/frontend/src/pages/home/DriverHubReportingPage.tsx", /<EntityLink kind="driver" id=\{r\.driver_id\}/],
   ["apps/frontend/src/pages/reports/runners/RunnerFilters.tsx", /kind="driver"/],
-  ["apps/frontend/src/components/tasks/CreateTaskModal.tsx", /kind=\{entityKind as "vendor" \| "driver" \| "unit"\}/],
+  ["apps/frontend/src/components/tasks/CreateTaskModal.tsx", /kind=\{entityKind as "vendor" \| "driver" \| "unit" \| "load"\}/],
   ["apps/frontend/src/components/fleet/EditVehicleModal.tsx", /kind="driver"/],
   ["apps/frontend/src/components/insurance/ClaimCreateModal.tsx", /driver_id:\s*form\.driver_id \|\| null/],
   ["apps/frontend/src/components/legal/LegalMattersReverseSection.tsx", /related_driver_id/],

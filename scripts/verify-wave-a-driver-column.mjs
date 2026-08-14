@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["accounting","dispatch","settlements","factoring","banking","customers","vendors","drivers","safety","maintenance","insurance","legal","fuel","fleet","driver-hub","cash-flow"],"cols":["driver"],"leafRe":".*","task":"WAVE-A-driver","vertical":"column-wave"} */
+/** @matrix-built {"modules":["dispatch","safety"],"cols":["driver"],"leafRe":"^(queues\\.trip_pairing|escrow_record\\.list|driver_scheduler\\.list)$","task":"WAVE-A-driver-exact-surfaces","vertical":"column-wave"} */
 import fs from "node:fs";
 import path from "node:path";
 
