@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { legalContractsApi, type LegalContractStatus, type LegalContractSummary } from "../../../api/legal-contracts";
 import { Button } from "../../../components/Button";
 import { PageHeader } from "../../../components/layout/PageHeader";
@@ -377,7 +377,7 @@ export function LegalContractInstancesPage() {
                 <div><span className="font-semibold">Signer:</span>{" "}{signerKind(detailQuery.data.signer_type) ? (
                   <EntityLink kind={signerKind(detailQuery.data.signer_type)!} id={detailQuery.data.signer_entity_id} label={detailQuery.data.signer_name} />
                 ) : detailQuery.data.signer_name}</div>
-                <div><span className="font-semibold">Template:</span>{" "}<Link className="text-slate-700 underline" to={`/legal/templates/${detailQuery.data.template_id}`}>{detailQuery.data.template_code} v{detailQuery.data.template_version}</Link></div>
+                <div><span className="font-semibold">Template:</span>{" "}<EntityLink className="text-slate-700 underline" kind="legal_template" id={detailQuery.data.template_id} label={`${detailQuery.data.template_code} v${detailQuery.data.template_version}`} /></div>
                 <div><span className="font-semibold">Status:</span> {detailQuery.data.status}</div>
                 <div><span className="font-semibold">Language:</span> {detailQuery.data.language}</div>
               </div>
