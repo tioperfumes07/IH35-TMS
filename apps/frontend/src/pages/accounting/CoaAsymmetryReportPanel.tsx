@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { getCoaAsymmetryReport } from "../../api/coaAsymmetryReport";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 
 type Props = {
@@ -90,8 +91,15 @@ export function CoaAsymmetryReportPanel({ enabled }: Props) {
               </h3>
               <ul className="space-y-1 text-xs">
                 {data.sample_trk_only_postable.map((row) => (
-                  <li key={`${row.account_number}-${row.account_type}-${row.entity_code}`}>
-                    <span className="font-mono">{row.account_number}</span> · {entityLabel(row.account_name, null, "Account")} · {row.account_type}
+                  <li key={row.account_id}>
+                    <span className="font-mono">{row.account_number}</span> ·{" "}
+                    <EntityLink
+                      kind="account"
+                      id={row.account_id}
+                      label={entityLabel(row.account_name, row.account_id, "Account")}
+                      data-testid="coa-asymmetry-account-link"
+                    />{" "}
+                    · {row.account_type}
                   </li>
                 ))}
               </ul>
