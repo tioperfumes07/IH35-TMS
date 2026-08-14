@@ -1271,6 +1271,14 @@
       "modules": ["compliance", "driver-hub", "form_425", "tasks"],
       "cols": ["connectivity"],
       "leafRe": "^(hop\\.(safety_hos|safety_dot|form425c|maint_compliance|fuel_compliance|reports_ifta|drivers|safety_scheduler|safety_audit|compliance|daily_tasks|lists\\.service_tasks))$"
+    },
+    {
+      "task": "LINK-F5155-PRIMARY-MODULE-NAVIGATION-CONNECTIVITY",
+      "pr": "this PR",
+      "guard": "scripts/verify-primary-module-navigation-connectivity.mjs",
+      "modules": ["compliance", "docs", "driver-hub", "form_425", "tasks", "program", "system"],
+      "cols": ["connectivity"],
+      "leafRe": "^(home|tab\\.(filings|overview|hos_tracker|hos_viewer|violations|hos_history|required_docs|all|driver|customer|vendor|unit|equipment|scheduler|leave_requests|profile|form|merge|history|program|software|claude_coder)|nav\\.(board|mine|calendar|chat|report|scenario|matrix|legacy|tracker|modules|final))$"
     }
   ]
 }
