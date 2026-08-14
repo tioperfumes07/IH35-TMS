@@ -1,4 +1,4 @@
-import { useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useFeatureFlag } from "../../hooks/useFeatureFlag";
 import { FINANCE_HUB_LOAN_WIZARD_FLAG } from "../../api/financeLoanWizard";
@@ -40,7 +40,7 @@ export function FinanceModuleTabs() {
   ];
 
   return (
-    <div className="border-b border-gray-200">
+    <div className="space-y-2 border-b border-gray-200">
       <nav className="-mb-px flex space-x-6" aria-label="Finance">
         {tabs.map((tab) => {
           const isActive =
@@ -61,6 +61,22 @@ export function FinanceModuleTabs() {
             </button>
           );
         })}
+      </nav>
+      <nav
+        aria-label="Finance related modules"
+        className="flex flex-wrap items-center gap-3 pb-2 text-xs"
+        data-testid="finance-cross-module-links"
+      >
+        <span className="font-semibold text-slate-500">Related:</span>
+        <Link className="font-medium text-slate-700 underline-offset-2 hover:underline" to="/accounting">
+          Accounting
+        </Link>
+        <Link className="font-medium text-slate-700 underline-offset-2 hover:underline" to="/cash-flow">
+          Cash Flow
+        </Link>
+        <Link className="font-medium text-slate-700 underline-offset-2 hover:underline" to="/reports/profit-loss">
+          Profit &amp; Loss
+        </Link>
       </nav>
     </div>
   );

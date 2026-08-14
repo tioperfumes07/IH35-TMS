@@ -1255,6 +1255,14 @@
       "modules": ["dispatch", "inventory", "vendors"],
       "cols": ["reverse_link"],
       "leafRe": "^(secondary\\.pre_settlements|docs\\.(ocr|equipment_transfers)|misc\\.layover|assignments\\.(wo_link|unit_link|vendor_link)|md\\.(transaction_list|vendor_details|header\\.(edit|new_transaction)))$"
+    },
+    {
+      "task": "LINK-F5153-CROSS-MODULE-CONNECTIVITY-DOORS",
+      "pr": "this PR",
+      "guard": "scripts/verify-cross-module-connectivity-doors.mjs",
+      "modules": ["cash-flow", "finance", "home"],
+      "cols": ["connectivity"],
+      "leafRe": "^(hop\\.(banking|reports\\.(cash_flow_statement|cash_flow|cash_flow_overview)|cash_advances|accounting|cash_flow|reports)|jump\\.(accounting|banking))$"
     }
   ]
 }

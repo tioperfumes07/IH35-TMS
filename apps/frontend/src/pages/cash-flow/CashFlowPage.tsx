@@ -1,4 +1,4 @@
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { TrendingUp } from "lucide-react";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { SecondaryNavTabs } from "../../components/shared/SecondaryNavTabs";
@@ -62,6 +62,28 @@ export function CashFlowPage() {
         activeId={activeTab}
         onChange={(id) => setActiveTab(id as CashFlowTabId)}
       />
+      <nav
+        aria-label="Cash flow related modules"
+        className="flex flex-wrap items-center gap-2 rounded-sm border border-slate-200 bg-white px-3 py-2 text-xs"
+        data-testid="cash-flow-cross-module-links"
+      >
+        <span className="font-semibold text-slate-500">Related:</span>
+        <Link className="font-medium text-slate-700 underline-offset-2 hover:underline" to="/banking">
+          Banking
+        </Link>
+        <Link className="font-medium text-slate-700 underline-offset-2 hover:underline" to="/reports/cash-flow-statement">
+          Cash flow statement
+        </Link>
+        <Link className="font-medium text-slate-700 underline-offset-2 hover:underline" to="/reports/cash-flow">
+          Cash flow report
+        </Link>
+        <Link className="font-medium text-slate-700 underline-offset-2 hover:underline" to="/reports/cash-flow-overview">
+          Cash flow overview
+        </Link>
+        <Link className="font-medium text-slate-700 underline-offset-2 hover:underline" to="/drivers?subtab=cash_advances">
+          Cash advances
+        </Link>
+      </nav>
       {activeTab === "daily_prediction" && (
         <DailyPredictionTab operatingCompanyId={selectedCompanyId} />
       )}
