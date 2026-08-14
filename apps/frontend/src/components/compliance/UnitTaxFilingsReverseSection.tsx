@@ -1,5 +1,4 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
 import { apiRequest } from "../../api/client";
 import { fetchRenditions } from "../../api/property-tax";
 import { formatDateUS } from "../../lib/formatDate";
@@ -34,9 +33,12 @@ export function UnitTaxFilingsReverseSection({ operatingCompanyId, unitId }: { o
     <section className="rounded-sm border border-gray-200 bg-white p-3" data-testid="unit-tax-filings-reverse">
       <div className="flex items-center justify-between gap-2">
         <h3 className="text-sm font-semibold text-slate-900">Tax filings</h3>
-        <Link className="text-xs text-slate-700 hover:underline" to={`/compliance/property-tax?unit_id=${encodeURIComponent(unitId)}`}>
-          All property-tax renditions
-        </Link>
+        <EntityLink
+          kind="property_tax_unit"
+          id={unitId}
+          label="All property-tax renditions"
+          className="text-xs text-slate-700 hover:underline"
+        />
       </div>
       {propertyTaxQ.isError || form2290Q.isError ? <p className="mt-2 text-xs text-red-700">Tax filing history could not be loaded.</p> : null}
       {!propertyTaxQ.isLoading && !form2290Q.isLoading && renditions.length === 0 && filings.length === 0 ? (

@@ -17,7 +17,7 @@ function failures(source = files) {
     ["property-tax company/unit filter", source.propertyRoutes.includes("renditionListQuery.safeParse") && source.propertyService.includes("l.operating_company_id = r.operating_company_id") && source.propertyService.includes("l.unit_id = $2::uuid")],
     ["Form 2290 company/unit filter", source.formRoutes.includes("filingListQuery.safeParse") && source.formRoutes.includes("v.operating_company_id = compliance.form_2290_filings.operating_company_id") && source.formRoutes.includes("v.vehicle_id = $2::uuid")],
     ["unit profile reverse section", source.profile.includes("<UnitTaxFilingsReverseSection operatingCompanyId={companyId} unitId={id} />")],
-    ["property-tax list and detail drills", source.section.includes("/compliance/property-tax?unit_id=${encodeURIComponent(unitId)}") && source.section.includes('kind="property_tax_rendition"') && source.section.includes("id={rendition.id}") && source.propertyPage.includes('searchParams.get("unit_id")') && source.propertyPage.includes('kind="property_tax_rendition"')],
+    ["property-tax list and detail drills", source.section.includes('kind="property_tax_unit"') && source.section.includes("id={unitId}") && source.section.includes('kind="property_tax_rendition"') && source.section.includes("id={rendition.id}") && source.propertyPage.includes('searchParams.get("unit_id")') && source.propertyPage.includes('kind="property_tax_rendition"')],
     ["Form 2290 exact filing drill", source.section.includes('kind="form_2290_filing"') && source.section.includes("id={filing.id}") && source.formPage.includes('searchParams.get("filing_id")') && source.formPage.includes("String(filing.id) === filingId")],
   ].filter(([, ok]) => !ok).map(([name]) => name);
 }
