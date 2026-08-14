@@ -76,6 +76,14 @@ export function assertVendorEquipmentLoansReverse(sources) {
   if (!/<VendorEquipmentLoansReverseSection[\s\S]*?vendorId=\{vendor\.id\}/.test(vendorDetail)) {
     problems.push(`${VENDOR_DETAIL}: must mount <VendorEquipmentLoansReverseSection vendorId={vendor.id} .../>`);
   }
+
+  if (!/equipment_loans_vendor/.test(section)) {
+    problems.push(`${SECTION}: must use EntityLink kind equipment_loans_vendor`);
+  }
+  if (/from "react-router-dom"/.test(section)) {
+    problems.push(`${SECTION}: must not import react-router Link`);
+  }
+
   return problems;
 }
 
@@ -106,7 +114,8 @@ function selftest() {
         queryFn: () => listEquipmentLoans(companyId, deepLinkVendorId ?? undefined),
       });
     `,
-    [SECTION]: `listEquipmentLoans(operatingCompanyId, vendorId).then((r) => r.rows)`,
+    [SECTION]: `listEquipmentLoans(operatingCompanyId, vendorId).then((r) => r.rows)
+      equipment_loans_vendor`,
     [VENDOR_DETAIL]: `
       import { VendorEquipmentLoansReverseSection } from "../components/vendors/VendorEquipmentLoansReverseSection";
       <VendorEquipmentLoansReverseSection operatingCompanyId={companyId} vendorId={vendor.id} />

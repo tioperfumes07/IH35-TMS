@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
 import { getCustomerFactor } from "../../api/factoring";
 import { formatUsdCents } from "../../lib/money";
+import { EntityLink } from "../shared/EntityLink";
 
 // LINK-F5171/LINK-F5178 — factoring:factors.admin + factoring:batches.detail (customer side) reverse
 // gaps. getCustomerFactor(customerId, companyId) already returns { factor, assignments, batches }
@@ -18,7 +18,6 @@ export function CustomerFactoringReverseSection({ operatingCompanyId, customerId
   });
   const factor = query.data?.factor ?? null;
   const batches = query.data?.batches ?? [];
-  const target = `/factoring/factors?customer_id=${encodeURIComponent(customerId)}`;
 
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-3" data-testid="customer-factoring-reverse">
@@ -38,17 +37,23 @@ export function CustomerFactoringReverseSection({ operatingCompanyId, customerId
         <ul className="mt-2 space-y-1">
           {batches.slice(0, 5).map((batch) => (
             <li key={batch.id}>
-              <Link className="text-xs font-semibold text-slate-700 hover:underline" to={target}>
-                {batch.batch_number} · {batch.status} · {formatUsdCents(batch.total_face_cents)}
-              </Link>
+              <EntityLink
+                kind="factoring_batch"
+                id={batch.id}
+                label={`${batch.batch_number} · ${batch.status} · ${formatUsdCents(batch.total_face_cents)}`}
+                className="text-xs font-semibold text-slate-700 hover:underline"
+              />
             </li>
           ))}
         </ul>
       ) : null}
       {factor || batches.length > 0 ? (
-        <Link className="mt-2 inline-block text-xs font-medium text-slate-700 hover:underline" to={target}>
-          View full factoring detail →
-        </Link>
+        <EntityLink
+          kind="factoring_factors_customer"
+          id={customerId}
+          label="View full factoring detail →"
+          className="mt-2 inline-block text-xs font-medium text-slate-700 hover:underline"
+        />
       ) : null}
     </section>
   );

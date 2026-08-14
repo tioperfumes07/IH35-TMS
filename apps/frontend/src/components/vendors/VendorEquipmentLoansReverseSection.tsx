@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
 import { listEquipmentLoans } from "../../api/data-infra";
 import { formatUsdCents } from "../../lib/money";
+import { EntityLink } from "../shared/EntityLink";
 
 // LINK-F5171/LINK-F5182 — factoring:home.equipment_loans reverse gap, vendor side. The unit side
 // already reverse-links via UnitFinanceLinkageTab.tsx; l.lender_vendor_id is the same real FK on
@@ -14,11 +14,18 @@ export function VendorEquipmentLoansReverseSection({ operatingCompanyId, vendorI
     enabled: Boolean(operatingCompanyId && vendorId),
   });
   const loans = query.data ?? [];
-  const target = `/factoring/equipment-loans?vendor_id=${encodeURIComponent(vendorId)}`;
 
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-3" data-testid="vendor-equipment-loans-reverse">
-      <h2 className="text-sm font-semibold text-slate-900">Equipment loans (CCG)</h2>
+      <div className="flex items-center justify-between gap-2">
+        <h2 className="text-sm font-semibold text-slate-900">Equipment loans (CCG)</h2>
+        <EntityLink
+          kind="equipment_loans_vendor"
+          id={vendorId}
+          label="Open Equipment Loans"
+          className="text-xs font-semibold text-slate-700 underline"
+        />
+      </div>
       {query.isError ? <p className="mt-2 text-xs text-red-700">Equipment loans unavailable.</p> : null}
       {query.isLoading ? <p className="mt-2 text-xs text-gray-500">Loading…</p> : null}
       {!query.isLoading && !query.isError && loans.length === 0 ? (
@@ -28,9 +35,12 @@ export function VendorEquipmentLoansReverseSection({ operatingCompanyId, vendorI
         <ul className="mt-2 space-y-1">
           {loans.slice(0, 5).map((loan) => (
             <li key={loan.id}>
-              <Link className="text-xs font-semibold text-slate-700 hover:underline" to={target}>
-                {loan.equipment_number ?? loan.equipment_id} · {formatUsdCents(loan.outstanding_balance_cents ?? loan.principal_cents)} · {loan.status}
-              </Link>
+              <EntityLink
+                kind="equipment_loans_vendor"
+                id={vendorId}
+                label={`${loan.equipment_number ?? loan.equipment_id} · ${formatUsdCents(loan.outstanding_balance_cents ?? loan.principal_cents)} · ${loan.status}`}
+                className="text-xs font-semibold text-slate-700 hover:underline"
+              />
             </li>
           ))}
         </ul>

@@ -99,6 +99,13 @@ export type EntityKind =
   | "factoring_queue_load"
   | "factoring_recourse_load"
   | "factoring_submit_queue_load"
+  // LINK-F5171: customer/vendor reverse Open → filtered factoring queues.
+  | "factoring_factors_customer"
+  | "factoring_queue_customer"
+  | "factoring_recourse_customer"
+  | "factoring_chargebacks_customer"
+  | "factoring_submit_queue_customer"
+  | "equipment_loans_vendor"
   | "load_template"
   | "cash_forecast_entry"
   // LINK-F5171: TasksTab drills chat by taskId (not a generic office entity).
@@ -413,6 +420,18 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
     case "factoring_submit_queue_load":
       // LINK-F5181: submission-queue.routes.ts accepts a load_id filter directly.
       return `/factoring/submit?load_id=${id}`;
+    case "factoring_factors_customer":
+      return `/factoring/factors?customer_id=${id}`;
+    case "factoring_queue_customer":
+      return `/dispatch/factoring-queue?customer_id=${id}`;
+    case "factoring_recourse_customer":
+      return `/factoring/recourse-pipeline?customer_id=${id}`;
+    case "factoring_chargebacks_customer":
+      return `/factoring/chargebacks-fees?customer_id=${id}`;
+    case "factoring_submit_queue_customer":
+      return `/factoring/submit?customer_id=${id}`;
+    case "equipment_loans_vendor":
+      return `/factoring/equipment-loans?vendor_id=${id}`;
     case "load_template":
       return `/dispatch/planning/calendar?panel=templates&template_id=${id}`;
     case "cash_forecast_entry":

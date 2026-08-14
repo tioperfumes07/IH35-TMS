@@ -79,6 +79,14 @@ export function assertFactoringSubmitQueueReverse(sources) {
   if (!/<CustomerFactoringSubmitQueueReverseSection[\s\S]*?customerId=\{id\}/.test(customerDetail)) {
     problems.push(`${CUSTOMER_DETAIL}: must mount <CustomerFactoringSubmitQueueReverseSection customerId={id} .../>`);
   }
+
+  if (!/factoring_submit_queue_customer/.test(section)) {
+    problems.push(`${SECTION}: must use EntityLink kind factoring_submit_queue_customer`);
+  }
+  if (/from "react-router-dom"/.test(section)) {
+    problems.push(`${SECTION}: must not import react-router Link`);
+  }
+
   return problems;
 }
 
@@ -110,7 +118,8 @@ function selftest() {
       case "factoring_submit_queue_load":
         return \`/factoring/submit?load_id=\${id}\`;
     `,
-    [SECTION]: `listSubmissionQueue(operatingCompanyId, { customer_id: customerId }).then((r) => r.items)`,
+    [SECTION]: `listSubmissionQueue(operatingCompanyId, { customer_id: customerId }).then((r) => r.items)
+      factoring_submit_queue_customer`,
     [CUSTOMER_DETAIL]: `
       import { CustomerFactoringSubmitQueueReverseSection } from "../components/customers/CustomerFactoringSubmitQueueReverseSection";
       <CustomerFactoringSubmitQueueReverseSection operatingCompanyId={operatingCompanyId} customerId={id} />
