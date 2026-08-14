@@ -1,6 +1,5 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["dispatch","fleet","fuel","insurance","maintenance","safety"],"cols":["trailer"],"leafRe":".*","task":"WAVE-A-trailer-all-modules","vertical":"column-wave"} */
-/** Full-product trailer contract. Canonical dispatch persistence is assignment history, never loads.trailer_id.
+/** Full-product trailer census. Canonical dispatch persistence is assignment history, never loads.trailer_id.
  *
  * LINK-F5163 (2026-08-14): same self-regression pattern already documented and fixed for the ap_bill
  * column (ACCT-F5162) — the fixed floors below (`p10.length < 49`, `leaves.length < 93`, module-Set
@@ -13,7 +12,8 @@
  * per-leaf auditConnectivity + unchanged file-pattern/composed-guard checks pattern used in the
  * ap_bill fix. Module list corrected to the honest 6 that still own trailer leaves (dispatch/fleet/
  * fuel/insurance/maintenance/safety; `lists` dropped, `fuel` added — fuel.modal.create_fuel_transaction
- * genuinely captures trailer_id via a real EntityPicker).
+ * genuinely captures trailer_id via a real EntityPicker). This aggregate guard awards no Built
+ * credit because representative contracts do not prove every trailer leaf.
  */
 import fs from "node:fs";
 import path from "node:path";
