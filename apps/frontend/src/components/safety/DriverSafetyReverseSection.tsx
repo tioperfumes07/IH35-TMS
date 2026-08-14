@@ -172,13 +172,13 @@ export function DriverSafetyReverseSection({
         {/* SAF-F22: /safety/driver-profiles/:driverId was MOUNTED with zero inbound links — reachable
             only by typing the URL. It is per-driver and parameterized, so it cannot be a nav entry
             like the other five orphans; the driver's own page is its natural entry point. */}
-        <Link
+        <EntityLink
           className="text-xs font-semibold text-slate-700 underline"
-          to={`/safety/driver-profiles/${driverId}`}
+          kind="driver_safety_profile"
+          id={driverId}
+          label="Open Safety Profile"
           data-testid="driver-safety-profile-link"
-        >
-          Open Safety Profile
-        </Link>
+        />
       </div>
       <DispatcherSafetyEventsReverseBlock
         operatingCompanyId={operatingCompanyId}
