@@ -1,5 +1,4 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
 import {
   getDotInspections,
   getSafetyAccidents,
@@ -78,7 +77,6 @@ const INCIDENT_KINDS: {
 
 function SectionShell({
   title,
-  to,
   openKind,
   openId,
   linkLabel,
@@ -91,8 +89,8 @@ function SectionShell({
   children,
 }: {
   title: string;
-  to?: string;
-  openKind?:
+  // LINK-F5171: Open is always EntityLink — bare Link fallback removed (no unfiltered / dead #).
+  openKind:
     | "accidents_unit"
     | "accidents_trailer"
     | "damage_reports_unit"
@@ -105,7 +103,7 @@ function SectionShell({
     | "dot_inspections_trailer"
     | "dvir_unit"
     | "dvir_trailer";
-  openId?: string;
+  openId: string;
   linkLabel: string;
   testId: string;
   isLoading: boolean;
@@ -122,18 +120,12 @@ function SectionShell({
           {title}
           {count > 0 ? <span className="ml-2 text-xs font-normal text-gray-600">({count})</span> : null}
         </h3>
-        {openKind && openId ? (
-          <EntityLink
-            kind={openKind}
-            id={openId}
-            label={linkLabel}
-            className="text-xs font-semibold text-slate-700 underline"
-          />
-        ) : (
-          <Link className="text-xs font-semibold text-slate-700 underline" to={to ?? "#"}>
-            {linkLabel}
-          </Link>
-        )}
+        <EntityLink
+          kind={openKind}
+          id={openId}
+          label={linkLabel}
+          className="text-xs font-semibold text-slate-700 underline"
+        />
       </div>
       {isLoading ? <p className="text-sm text-gray-500">Loading…</p> : null}
       {isError ? <p className="text-sm text-red-600">{errorText}</p> : null}
