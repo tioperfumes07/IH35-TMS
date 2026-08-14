@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useTablePref } from "./useTablePref";
 import type { TableColumn } from "./ColumnChooser";
+import { applyUniversalListFilters, type UniversalRange } from "./UniversalListToolbar";
 
 // GLOBAL-TABLE-CONTROLS — the shared controller every list table drives off of.
 // Owns: free-text search, click-header sort, pagination, and persisted column visibility + page size +
@@ -63,6 +64,7 @@ export function useTableController<T>({
     hidden: defaultHidden,
   });
   const [search, setSearch] = useState("");
+  const [range, setRange] = useState<UniversalRange | null>(null);
   const [page, setPage] = useState(1);
   const [sortKey, setSortKey] = useState<string | null>(initialSortKey);
   const [sortDir, setSortDir] = useState<SortDir>(initialSortDir);
@@ -89,9 +91,9 @@ export function useTableController<T>({
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return rows;
-    return rows.filter((r) => searchText(r).toLowerCase().includes(q));
-  }, [rows, search, searchText]);
+    const searched = q ? rows.filter((r) => searchText(r).toLowerCase().includes(q)) : rows;
+    return applyUniversalListFilters(searched, "", range);
+  }, [rows, search, searchText, range]);
 
   const sorted = useMemo(() => {
     if (!sortKey || !sortValue) return filtered;
@@ -104,7 +106,7 @@ export function useTableController<T>({
   // Reset to page 1 whenever the result set, sort, or page size changes.
   useEffect(() => {
     setPage(1);
-  }, [search, pageSize, rows.length, sortKey, sortDir]);
+  }, [search, range, pageSize, rows.length, sortKey, sortDir]);
   // Keep the current page in range if the result set shrinks.
   useEffect(() => {
     setPage((p) => Math.min(Math.max(1, p), pageCount));
@@ -128,6 +130,8 @@ export function useTableController<T>({
   return {
     search,
     setSearch,
+    range,
+    setRange,
     page,
     setPage,
     pageSize,

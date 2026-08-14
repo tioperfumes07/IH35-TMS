@@ -4,6 +4,7 @@ import { colors, spacing, typography } from "../design/tokens";
 import type { DataTableErrorState } from "../lib/tableError";
 import { ListErrorState } from "./ListErrorState";
 import { ColumnChooser } from "./table/ColumnChooser";
+import { UniversalListToolbar, applyUniversalListFilters, type UniversalRange } from "./table/UniversalListToolbar";
 import { useTablePref } from "./table/useTablePref";
 
 export type { DataTableErrorState };
@@ -73,6 +74,8 @@ export function DataTable<T>({
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [page, setPage] = useState(1);
   const [hiddenColumns, setHiddenColumns] = useState<Set<string>>(new Set());
+  const [toolbarSearch, setToolbarSearch] = useState("");
+  const [toolbarRange, setToolbarRange] = useState<UniversalRange | null>(null);
   // Rows-per-page: persisted per-surface when a tableKey is given; otherwise ephemeral local state.
   const pref = useTablePref(tableKey ?? "datatable:adhoc", { pageSize });
   const [localPageSize, setLocalPageSize] = useState(pageSize);
@@ -83,9 +86,14 @@ export function DataTable<T>({
     else setLocalPageSize(n);
   };
 
+  const toolbarFilteredRows = useMemo(
+    () => applyUniversalListFilters(rows, toolbarSearch, toolbarRange),
+    [rows, toolbarRange, toolbarSearch],
+  );
+
   const sortedRows = useMemo(() => {
-    if (!sortKey) return rows;
-    const copy = [...rows];
+    if (!sortKey) return toolbarFilteredRows;
+    const copy = [...toolbarFilteredRows];
     copy.sort((a, b) => {
       const aValue = String((a as Record<string, unknown>)[sortKey] ?? "");
       const bValue = String((b as Record<string, unknown>)[sortKey] ?? "");
@@ -93,7 +101,7 @@ export function DataTable<T>({
       return sortDirection === "asc" ? comparison : -comparison;
     });
     return copy;
-  }, [rows, sortKey, sortDirection]);
+  }, [sortKey, sortDirection, toolbarFilteredRows]);
 
   // "All" (-1) shows every row; otherwise the chosen page size.
   const effectivePageSize = selectedPageSize === ALL_SENTINEL ? Math.max(1, sortedRows.length) : selectedPageSize;
@@ -107,7 +115,16 @@ export function DataTable<T>({
 
   return (
     <div className="overflow-x-auto rounded-md border border-gray-200 bg-white">
-      <div className="flex items-center justify-end border-b border-gray-200 px-2 py-1.5">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-200 px-2 py-1.5">
+        <UniversalListToolbar
+          search={toolbarSearch}
+          onSearchChange={(value) => { setToolbarSearch(value); setPage(1); }}
+          columns={columns.map((column) => ({ key: String(column.key), label: column.label }))}
+          range={toolbarRange}
+          onRangeApply={(value) => { setToolbarRange(value); setPage(1); }}
+          resultCount={toolbarFilteredRows.length}
+          totalCount={rows.length}
+        />
         <ColumnChooser
           columns={columns.map((column) => ({
             key: String(column.key),

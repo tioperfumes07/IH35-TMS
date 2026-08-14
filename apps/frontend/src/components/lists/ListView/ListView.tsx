@@ -13,6 +13,11 @@ import { ListViewFooter } from "./components/ListViewFooter";
 import { ListViewGear } from "./components/ListViewGear";
 import { ListViewFilterBar } from "./components/ListViewFilterBar";
 import { BatchActionsBar } from "./components/BatchActionsBar";
+import {
+  UniversalListToolbar,
+  applyUniversalListFilters,
+  type UniversalRange,
+} from "../../table/UniversalListToolbar";
 
 export function ListView<T>({
   columns,
@@ -35,6 +40,8 @@ export function ListView<T>({
   const [gear, setGear] = useState<GearState>(() =>
     buildDefaultGearState(columns, densityProp, pagination.pageSize)
   );
+  const [toolbarSearch, setToolbarSearch] = useState("");
+  const [toolbarRange, setToolbarRange] = useState<UniversalRange | null>(null);
 
   const { savedView, persistView, loading: _svLoading } = useListView(savedViewsKey, columns as ListViewColumn<unknown>[]);
 
@@ -107,9 +114,10 @@ export function ListView<T>({
 
   const processedRows = useMemo(() => {
     let result = filterRows(rows);
+    result = applyUniversalListFilters(result, toolbarSearch, toolbarRange);
     result = sortRows(result, columns);
     return result;
-  }, [rows, filterRows, sortRows, columns]);
+  }, [rows, filterRows, toolbarSearch, toolbarRange, sortRows, columns]);
 
   const pageRowKeys = useMemo(() => processedRows.map((r) => rowKey(r)), [processedRows, rowKey]);
 
@@ -154,6 +162,15 @@ export function ListView<T>({
     <div className="flex flex-col h-full">
       {/* Toolbar */}
       <div className="flex items-center justify-between gap-3 px-3 py-2 border-b border-gray-200 bg-white flex-wrap">
+        <UniversalListToolbar
+          search={toolbarSearch}
+          onSearchChange={toolbarSearchChange => setToolbarSearch(toolbarSearchChange)}
+          columns={columns.map((column) => ({ key: column.id, label: column.label }))}
+          range={toolbarRange}
+          onRangeApply={setToolbarRange}
+          resultCount={processedRows.length}
+          totalCount={rows.length}
+        />
         <ListViewFilterBar
           filters={filters}
           activeFilters={activeFilters}

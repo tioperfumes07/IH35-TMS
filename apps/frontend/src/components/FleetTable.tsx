@@ -413,6 +413,8 @@ export function FleetTable({
         onToggleColumn={table.toggleColumn}
         pageSize={table.pageSize}
         onPageSizeChange={table.setPageSize}
+        range={table.range}
+        onRangeApply={table.setRange}
       >
         <CollapsedListFilters
           activeFilterCount={(softDeleteFilter !== "active" ? 1 : 0) + (statusFilter ? 1 : 0) + (typeListFilter ? 1 : 0)}

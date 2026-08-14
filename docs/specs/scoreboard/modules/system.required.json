@@ -145,9 +145,9 @@
       "route_hint": "/system?tab=qbo-recon",
       "required": [
         "gl_je",
-        "connectivity",
         "qbo_chrome"
-      ]
+      ],
+      "note": "Connectivity N/A: QBO reconciliation is excluded from the USMCA TMS-native sprint; its independent GL/chrome requirements remain."
     },
     {
       "id": "tab.qbo_sync",
@@ -156,9 +156,9 @@
       "route_hint": "/system?tab=qbo-sync",
       "required": [
         "gl_je",
-        "connectivity",
         "qbo_chrome"
-      ]
+      ],
+      "note": "Connectivity N/A: QBO sync is excluded from the USMCA TMS-native sprint; its independent GL/chrome requirements remain."
     },
     {
       "id": "tab.program",
@@ -227,9 +227,9 @@
       "sub": "No TMS\u2192QBO write-back",
       "route_hint": "/system?tab=qbo-sync",
       "required": [
-        "gl_je",
-        "connectivity"
-      ]
+        "gl_je"
+      ],
+      "note": "Connectivity N/A: no TMS-to-QBO write-back is an exclusion law, not a USMCA TMS-native navigation surface."
     },
     {
       "id": "system.wizard.edi_setup",

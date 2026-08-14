@@ -15,6 +15,14 @@ const rows: Row[] = [
 ];
 
 describe("ParityTable (A1 grammar)", () => {
+  it("inherits canonical cross-row search before pagination", () => {
+    render(<ParityTable<Row> columns={columns} rows={rows} rowKey={(r) => r.id} />);
+    fireEvent.change(screen.getByRole("textbox", { name: "Search rows…" }), { target: { value: "bravo" } });
+    expect(screen.queryByText("Alpha")).not.toBeInTheDocument();
+    expect(screen.getByText("Bravo")).toBeInTheDocument();
+    expect(screen.getByText("1 of 2 rows")).toBeInTheDocument();
+  });
+
   it("renders rows and the 'N–M of TOTAL' pager", () => {
     render(<ParityTable<Row> columns={columns} rows={rows} rowKey={(r) => r.id} />);
     expect(screen.getByText("Alpha")).toBeInTheDocument();
