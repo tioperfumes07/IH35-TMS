@@ -1,6 +1,7 @@
 import { entityLabel } from "../../../lib/entity-label";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useSearchParams } from "react-router-dom";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { formatDateUS } from "../../../lib/formatDate";
 import { titleize } from "../../../lib/titleize";
@@ -33,9 +34,16 @@ function statusBadgeClass(status: SettlementDisputeStatus) {
 }
 
 export function SettlementDisputesTab({ companyId }: { companyId: string }) {
+  const [searchParams] = useSearchParams();
+  const driverIdFromUrl = searchParams.get("driver_id")?.trim() ?? "";
   const [status, setStatus] = useState<"open" | "all">("open");
-  const [driverId, setDriverId] = useState("");
+  const [driverId, setDriverId] = useState(driverIdFromUrl);
   const [selected, setSelected] = useState<SettlementDisputeRow | null>(null);
+
+  // LINK-F5171: driver profile "Open Disputes" → /settlements?tab=disputes&driver_id=…
+  useEffect(() => {
+    if (driverIdFromUrl) setDriverId(driverIdFromUrl);
+  }, [driverIdFromUrl]);
   const [resolution, setResolution] = useState<"in_favor" | "rejected" | "partial">("in_favor");
   const [resolutionNotes, setResolutionNotes] = useState("");
   const [resolutionAmount, setResolutionAmount] = useState("");

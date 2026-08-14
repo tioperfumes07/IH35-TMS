@@ -182,6 +182,8 @@ export type EntityKind =
   | "drug_alcohol_driver"
   | "dvir_unit"
   | "dvir_trailer"
+  // LINK-F5171: driver profile "Open Disputes" → settlements disputes tab filtered by driver.
+  | "settlement_disputes_driver"
   | "legal_matters_driver"
   | "legal_matters_unit"
   | "legal_matters_equipment"
@@ -314,6 +316,8 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
       return `/maintenance/pm-schedule?schedule_id=${id}`;
     case "settlement":
       return `/driver-finance/settlements?settlement_id=${id}`;
+    case "settlement_disputes_driver":
+      return `/driver-finance/settlements?tab=disputes&driver_id=${id}`;
     case "liability":
       return `/liabilities?liability_id=${id}`;
     case "cash_advance":

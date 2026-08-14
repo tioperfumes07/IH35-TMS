@@ -1,6 +1,5 @@
 import { entityLabel } from "../../lib/entity-label";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
 import { listSettlementDisputes } from "../../api/driverFinance";
 import { getLiabilitiesByDriver } from "../../api/liabilities";
 import { EntityLink } from "../shared/EntityLink";
@@ -55,9 +54,12 @@ export function DriverSettlementFinanceReverseSection({
     <div className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid={testId}>
       <div className="flex items-center justify-between gap-2">
         <h3 className="text-sm font-semibold text-slate-900">Settlement disputes &amp; liabilities</h3>
-        <Link className="text-xs font-semibold text-slate-700 underline" to="/drivers/disputes">
-          Open Disputes
-        </Link>
+        <EntityLink
+          kind="settlement_disputes_driver"
+          id={driverId}
+          label="Open Disputes"
+          className="text-xs font-semibold text-slate-700 underline"
+        />
       </div>
       <p className="text-sm text-gray-600">
         Open disputes and outstanding liabilities charged to this driver.
