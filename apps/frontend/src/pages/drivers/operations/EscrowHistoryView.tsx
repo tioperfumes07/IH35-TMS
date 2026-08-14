@@ -1,10 +1,24 @@
+import { Link } from "react-router-dom";
 import { OperationsHistoryTable } from "../../../components/drivers/OperationsHistoryTable";
 
 type Props = { driverId: string; operatingCompanyId: string };
 
 export function EscrowHistoryView({ driverId, operatingCompanyId }: Props) {
   return (
-    <OperationsHistoryTable
+    <div className="space-y-2">
+      {/* LINK-F5171/LINK-F5177 — reverse_link forward hop: this driver's own escrow entries below
+      already drill OUT to settlement/journal_entry/bank_transaction, but there was no way back INTO
+      the company-wide banking:driver_escrow surface pre-scoped to this driver (the visualizer's
+      driver combobox required a manual re-select). driver_id round-trips as a real query param the
+      escrow visualizer now reads on load (LINK-F5177). */}
+      <Link
+        to={`/banking/driver-escrow?driver_id=${driverId}`}
+        data-testid="driver-escrow-history-view-in-banking"
+        className="inline-block text-xs font-medium text-slate-700 hover:underline"
+      >
+        View in Banking → Driver Escrow
+      </Link>
+      <OperationsHistoryTable
       driverId={driverId}
       operatingCompanyId={operatingCompanyId}
       subView="escrow-history"
@@ -31,6 +45,7 @@ export function EscrowHistoryView({ driverId, operatingCompanyId }: Props) {
         // when the settlement is paid. A direct escrow->bank FK would have been a modelling error.
         { key: "bank_transaction_id", label: "Bank Txn", entityKind: "bank_transaction", idKey: "bank_transaction_id" },
       ]}
-    />
+      />
+    </div>
   );
 }

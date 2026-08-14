@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
   getBankingRegister,
   getEscrowDriverBalances,
@@ -69,7 +69,23 @@ function registerToEscrowRow(row: Record<string, unknown>): Record<string, unkno
 
 export function DriverEscrowTabContent({ operatingCompanyId, driverEscrowBalance }: Props) {
   const navigate = useNavigate();
-  const [selectedDriverId, setSelectedDriverId] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
+  // LINK-F5171/LINK-F5177 — reverse_link deep-link: the driver's own profile (EscrowHistoryView) can
+  // jump straight to this driver's escrow ledger via /banking/driver-escrow?driver_id=<id> instead of
+  // landing on the account-wide ledger and forcing a manual re-select in the combobox below.
+  const [selectedDriverId, setSelectedDriverIdState] = useState(() => searchParams.get("driver_id") ?? "");
+  const setSelectedDriverId = (driverId: string) => {
+    setSelectedDriverIdState(driverId);
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        if (driverId) next.set("driver_id", driverId);
+        else next.delete("driver_id");
+        return next;
+      },
+      { replace: true }
+    );
+  };
 
   const driverBalancesQuery = useQuery({
     queryKey: ["banking", "escrow", "drivers", operatingCompanyId],
