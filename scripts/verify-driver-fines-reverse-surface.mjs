@@ -112,7 +112,10 @@ function selftest() {
     [SECTION, (x) => x.replace('kind="safety_fine"', 'kind="driver"')],
     [SECTION, (x) => x.replace('kind="internal_fine"', 'kind="driver"')],
     [PAGE, (x) => x.split("DriverFinesReverseSection").join("SomeOtherSection")],
-    [API, (x) => x.replace('qs.set("subject_driver_id"', 'qs.set("ignored"')],
+    [API, (x) => {
+      const i = x.indexOf("export function getSafetyFines(");
+      return x.slice(0, i) + x.slice(i).replace('qs.set("subject_driver_id"', 'qs.set("ignored"');
+    }],
     [API, (x) => {
       const i = x.indexOf("export function getInternalFines(");
       return x.slice(0, i) + x.slice(i).replace('qs.set("driver_id"', 'qs.set("ignored"');
