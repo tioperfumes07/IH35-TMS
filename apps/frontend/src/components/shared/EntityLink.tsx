@@ -107,6 +107,7 @@ export type EntityKind =
   | "driver_team"
   // LINK-F5171: EntityAuditHistoryTab action → exact audit trail event.
   | "audit_event"
+  | "insurance_coverage_gaps"
   | "inventory_part"
   | "parts_inventory"
   | "maintenance_vendor"
@@ -332,6 +333,8 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
       return `/lists/driver/teams?team_id=${id}`;
     case "audit_event":
       return `/audit/trail?audit_event_id=${id}`;
+    case "insurance_coverage_gaps":
+      return `/safety/insurance/coverage-gaps?unit_id=${id}`;
     case "safety_event":
       return `/safety/safety-events?event_id=${id}`;
     // SAF-F33 safety drill-through — each target list page reads the param and opens/highlights the row.
