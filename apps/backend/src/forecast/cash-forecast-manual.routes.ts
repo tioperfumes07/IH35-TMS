@@ -97,6 +97,16 @@ export async function registerCashForecastManualRoutes(app: FastifyInstance) {
     if (!b.success) return sendZodValidation(reply, b.error);
     await assertCompanyMembership(user.uuid, b.data.operating_company_id);
     const row = await withOperatingCompanyScope(user.uuid, b.data.operating_company_id, async (client) => {
+      let refLabel = b.data.ref_label ?? null;
+      if (b.data.ref_kind === "unit") {
+        if (!b.data.ref_external_id) throw Object.assign(new Error("Select a unit."), { statusCode: 400 });
+        const unit = await client.query<{ label: string }>(
+          `SELECT unit_number AS label FROM mdata.units WHERE id = $1::uuid AND COALESCE(currently_leased_to_company_id, owner_company_id) = $2::uuid LIMIT 1`,
+          [b.data.ref_external_id, b.data.operating_company_id],
+        );
+        if (!unit.rows[0]) throw Object.assign(new Error("Unit does not belong to this operating company."), { statusCode: 400 });
+        refLabel = unit.rows[0].label;
+      }
       let partyName = b.data.party_name ?? null;
       let partyRefLabel = b.data.party_ref_label ?? null;
       if (b.data.party_ref_kind === "driver") {
@@ -141,7 +151,7 @@ export async function registerCashForecastManualRoutes(app: FastifyInstance) {
          RETURNING *`,
         [b.data.operating_company_id, b.data.entry_date, b.data.direction, b.data.amount_cents,
          partyName, b.data.invoice_no ?? null, b.data.category ?? null, b.data.memo ?? null,
-         b.data.ref_kind ?? null, b.data.ref_label ?? null, b.data.ref_external_id ?? null,
+         b.data.ref_kind ?? null, refLabel, b.data.ref_external_id ?? null,
          b.data.load_ref_id ?? null, b.data.load_ref_label ?? null, b.data.unit_ref_label ?? null,
          b.data.customer_ref_label ?? null, b.data.party_ref_kind ?? null, b.data.party_ref_id ?? null,
          partyRefLabel, user.uuid]
@@ -181,6 +191,17 @@ export async function registerCashForecastManualRoutes(app: FastifyInstance) {
     }
     if (sets.length === 0) return reply.code(400).send({ error: "no_fields" });
     const updated = await withOperatingCompanyScope(user.uuid, b.data.operating_company_id, async (client) => {
+      if (b.data.ref_kind === "unit") {
+        if (!b.data.ref_external_id) throw Object.assign(new Error("Select a unit."), { statusCode: 400 });
+        const unit = await client.query<{ label: string }>(
+          `SELECT unit_number AS label FROM mdata.units WHERE id = $1::uuid AND COALESCE(currently_leased_to_company_id, owner_company_id) = $2::uuid LIMIT 1`,
+          [b.data.ref_external_id, b.data.operating_company_id],
+        );
+        if (!unit.rows[0]) throw Object.assign(new Error("Unit does not belong to this operating company."), { statusCode: 400 });
+        const labelIndex = sets.findIndex((set) => set.startsWith("ref_label ="));
+        if (labelIndex >= 0) values[labelIndex] = unit.rows[0].label;
+        else { values.push(unit.rows[0].label); sets.push(`ref_label = $${values.length}`); }
+      }
       if (b.data.party_ref_kind === "driver") {
         if (!b.data.party_ref_id) throw Object.assign(new Error("Select a driver."), { statusCode: 400 });
         const driver = await client.query<{ label: string }>(
