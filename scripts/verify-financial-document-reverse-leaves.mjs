@@ -20,7 +20,10 @@ function audit(s) {
   }
   if (!/navigate\(\/accounting\/bill-payments/.test(s.payments.replace(/\x60/g, "")) && !/onRowClick=\{\(row\) => navigate\(/.test(s.payments)) failures.push("bill-payment detail row route missing");
   if (!/paymentsQuery\.isError/.test(s.payments) || !/No bill payments found\./.test(s.payments)) failures.push("bill-payment honest states missing");
-  if (!/listSubmissionQueue\(companyId\)/.test(s.factoring)) failures.push("factoring queue company scope missing");
+  // LINK-F5181 (2026-08-14): the call gained typed customer_id/load_id reverse filters
+  // (listSubmissionQueue(companyId, { customer_id, load_id })), so this no longer anchors on a bare
+  // closing paren -- company scope is still required as the first argument, unweakened.
+  if (!/listSubmissionQueue\(companyId/.test(s.factoring)) failures.push("factoring queue company scope missing");
   if (!/<EntityLink[\s\S]{0,100}kind="invoice"[\s\S]{0,100}id=\{item\.invoice_id\}/.test(s.factoring)) failures.push("factoring invoice drill missing");
   if (!/<EntityLink[\s\S]{0,100}kind="customer"[\s\S]{0,100}id=\{item\.customer_id\}/.test(s.factoring)) failures.push("factoring customer drill missing");
   if (!/queueQuery\.isError/.test(s.factoring) || !/No invoices in submission queue\./.test(s.factoring)) failures.push("factoring honest states missing");
@@ -38,7 +41,7 @@ if (process.argv.includes("--selftest")) {
     ["je-drill", "payments", /kind="journal_entry"/g, 'kind="invoice"'],
     ["bank-drill", "payments", /kind="bank_transaction"/g, 'kind="invoice"'],
     ["payments-empty", "payments", /No bill payments found\./g, "Loading"],
-    ["factor-scope", "factoring", /listSubmissionQueue\(companyId\)/g, "listSubmissionQueue('')"],
+    ["factor-scope", "factoring", /listSubmissionQueue\(companyId/g, "listSubmissionQueue(''"],
     ["factor-invoice", "factoring", /id=\{item\.invoice_id\}/g, "id={undefined}"],
     ["factor-empty", "factoring", /No invoices in submission queue\./g, "Loading"],
     ["policy-scope", "policies", /operating_company_id: companyId/g, "operating_company_id: ''"],
