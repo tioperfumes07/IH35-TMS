@@ -117,90 +117,70 @@
       "tab": "Help center",
       "sub": "Help center home",
       "route_hint": "/help",
-      "required": [
-        "connectivity"
-      ]
+      "required": []
     },
     {
       "id": "overview",
       "tab": "Help",
       "sub": "Help overview",
       "route_hint": "/help/overview",
-      "required": [
-        "connectivity"
-      ]
+      "required": []
     },
     {
       "id": "runbooks",
       "tab": "Runbooks",
       "sub": "Runbooks index",
       "route_hint": "/help/runbooks",
-      "required": [
-        "connectivity"
-      ]
+      "required": []
     },
     {
       "id": "article",
       "tab": "Articles",
       "sub": "Help article by slug",
       "route_hint": "/help/:slug",
-      "required": [
-        "connectivity"
-      ]
+      "required": []
     },
     {
       "id": "search",
       "tab": "Help center",
       "sub": "Search articles",
       "route_hint": "/help",
-      "required": [
-        "connectivity"
-      ]
+      "required": []
     },
     {
       "id": "cat.getting_started",
       "tab": "Categories",
       "sub": "Getting Started",
       "route_hint": "/help",
-      "required": [
-        "connectivity"
-      ]
+      "required": []
     },
     {
       "id": "cat.dispatch",
       "tab": "Categories",
       "sub": "Dispatching Loads",
       "route_hint": "/help",
-      "required": [
-        "connectivity"
-      ]
+      "required": []
     },
     {
       "id": "cat.settlements",
       "tab": "Categories",
       "sub": "Driver Settlements",
       "route_hint": "/help",
-      "required": [
-        "connectivity"
-      ]
+      "required": []
     },
     {
       "id": "cat.banking",
       "tab": "Categories",
       "sub": "Banking & Reconciliation",
       "route_hint": "/help",
-      "required": [
-        "connectivity"
-      ]
+      "required": []
     },
     {
       "id": "cat.reports",
       "tab": "Categories",
       "sub": "Reports",
       "route_hint": "/help",
-      "required": [
-        "connectivity"
-      ]
+      "required": []
     },
     {
       "id": "chrome.toolbar_search",
@@ -281,6 +261,83 @@
           "removed": [
             "qbo_chrome"
           ]
+        }
+      ]
+    },
+    "connectivity_column_2026_08_14": {
+      "finding": "VERTICAL-CONNECTIVITY-COLUMN-FALSE-BLANKET",
+      "note": "Vertical wiring sweep (connectivity column, after trailer/customer/vendor/unit/driver/load) read-only investigated every leaf blanket-marked Required for connectivity (nav->route->API->canonical). These leaves have no such chain: static/placeholder surfaces, pure client-side nav Links/redirects, or list-toolbar chrome (search/range/gear) whose shared component (ParityTable/UniversalListToolbar) filters an already-fetched client-side array with no independent backend round-trip. route-mount itself remains proven per-leaf by scripts/verify-wave-b-connectivity-all-modules.mjs; this correction is scoped to leaves where the deeper nav->route->API->canonical claim doesn't apply at all.",
+      "leaves_touched": 10,
+      "drops": [
+        {
+          "id": "center",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "bundled markdown, zero fetch"
+        },
+        {
+          "id": "overview",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "zero fetch"
+        },
+        {
+          "id": "runbooks",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "hardcoded RUNBOOKS array"
+        },
+        {
+          "id": "article",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "zero fetch, bundled markdown"
+        },
+        {
+          "id": "search",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "client-side Fuse.js over bundled content"
+        },
+        {
+          "id": "cat.getting_started",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "static CATEGORY_ORDER map"
+        },
+        {
+          "id": "cat.dispatch",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "static CATEGORY_ORDER map"
+        },
+        {
+          "id": "cat.settlements",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "static CATEGORY_ORDER map"
+        },
+        {
+          "id": "cat.banking",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "static CATEGORY_ORDER map"
+        },
+        {
+          "id": "cat.reports",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "static CATEGORY_ORDER map"
         }
       ]
     }

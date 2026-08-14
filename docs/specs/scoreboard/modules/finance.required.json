@@ -141,7 +141,6 @@
       "sub": "Finance overview",
       "route_hint": "/finance/overview",
       "required": [
-        "connectivity",
         "qbo_chrome"
       ]
     },
@@ -214,7 +213,6 @@
       "sub": "Finance projections",
       "route_hint": "/finance/projections",
       "required": [
-        "connectivity",
         "qbo_chrome"
       ]
     },
@@ -224,7 +222,6 @@
       "sub": "Finance scenarios",
       "route_hint": "/finance/scenarios",
       "required": [
-        "connectivity",
         "qbo_chrome"
       ]
     },
@@ -275,7 +272,6 @@
       "sub": "Accounting module",
       "route_hint": "/accounting",
       "required": [
-        "connectivity",
         "qbo_chrome"
       ]
     },
@@ -285,7 +281,6 @@
       "sub": "Cash flow module",
       "route_hint": "/cash-flow",
       "required": [
-        "connectivity",
         "qbo_chrome"
       ]
     },
@@ -295,7 +290,6 @@
       "sub": "Reports P&L",
       "route_hint": "/reports/profit-loss",
       "required": [
-        "connectivity",
         "qbo_chrome"
       ]
     },
@@ -318,8 +312,7 @@
       "route_hint": "/finance",
       "surface_kind": "toolbar",
       "required": [
-        "qbo_chrome",
-        "connectivity"
+        "qbo_chrome"
       ]
     },
     {
@@ -329,8 +322,7 @@
       "route_hint": "/finance",
       "surface_kind": "toolbar",
       "required": [
-        "qbo_chrome",
-        "connectivity"
+        "qbo_chrome"
       ]
     },
     {
@@ -340,8 +332,7 @@
       "route_hint": "/finance",
       "surface_kind": "toolbar",
       "required": [
-        "qbo_chrome",
-        "connectivity"
+        "qbo_chrome"
       ]
     },
     {
@@ -351,8 +342,7 @@
       "route_hint": "/finance",
       "surface_kind": "toolbar",
       "required": [
-        "qbo_chrome",
-        "connectivity"
+        "qbo_chrome"
       ]
     }
   ],
@@ -680,6 +670,83 @@
           "removed": [
             "vendor"
           ]
+        }
+      ]
+    },
+    "connectivity_column_2026_08_14": {
+      "finding": "VERTICAL-CONNECTIVITY-COLUMN-FALSE-BLANKET",
+      "note": "Vertical wiring sweep (connectivity column, after trailer/customer/vendor/unit/driver/load) read-only investigated every leaf blanket-marked Required for connectivity (nav->route->API->canonical). These leaves have no such chain: static/placeholder surfaces, pure client-side nav Links/redirects, or list-toolbar chrome (search/range/gear) whose shared component (ParityTable/UniversalListToolbar) filters an already-fetched client-side array with no independent backend round-trip. route-mount itself remains proven per-leaf by scripts/verify-wave-b-connectivity-all-modules.mjs; this correction is scoped to leaves where the deeper nav->route->API->canonical claim doesn't apply at all.",
+      "leaves_touched": 10,
+      "drops": [
+        {
+          "id": "nav.overview",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "FinanceOverviewPage.tsx static placeholder"
+        },
+        {
+          "id": "nav.projections",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "FinanceProjectionsPage.tsx static placeholder"
+        },
+        {
+          "id": "nav.scenarios",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "FinanceScenariosPage.tsx explicit no-backend comment"
+        },
+        {
+          "id": "hop.accounting",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "FinanceModuleTabs.tsx plain Link"
+        },
+        {
+          "id": "hop.cash_flow",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "FinanceModuleTabs.tsx plain Link"
+        },
+        {
+          "id": "hop.reports",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "FinanceModuleTabs.tsx plain Link"
+        },
+        {
+          "id": "chrome.toolbar_search",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "ParityTable client-side"
+        },
+        {
+          "id": "chrome.toolbar_range",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "ParityTable client-side"
+        },
+        {
+          "id": "chrome.toolbar_gear",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "ParityTable client-side"
+        },
+        {
+          "id": "chrome.toolbar_filter",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "ParityTable client-side"
         }
       ]
     }

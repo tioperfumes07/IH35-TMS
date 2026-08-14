@@ -178,9 +178,7 @@
       "tab": "Drivers hop",
       "sub": "Drivers module",
       "route_hint": "/drivers",
-      "required": [
-        "connectivity"
-      ]
+      "required": []
     },
     {
       "id": "hop.safety_scheduler",
@@ -188,8 +186,7 @@
       "sub": "Safety driver scheduler",
       "route_hint": "/safety",
       "required": [
-        "unit",
-        "connectivity"
+        "unit"
       ]
     },
     {
@@ -207,42 +204,34 @@
     {
       "id": "chrome.toolbar_search",
       "tab": "Chrome controls",
-      "sub": "List toolbar — Search (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar \u2014 Search (CLS-LIST-TOOLBAR)",
       "route_hint": "/driver-hub",
       "surface_kind": "toolbar",
-      "required": [
-        "connectivity"
-      ]
+      "required": []
     },
     {
       "id": "chrome.toolbar_range",
       "tab": "Chrome controls",
-      "sub": "List toolbar — date/amount range (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar \u2014 date/amount range (CLS-LIST-TOOLBAR)",
       "route_hint": "/driver-hub",
       "surface_kind": "toolbar",
-      "required": [
-        "connectivity"
-      ]
+      "required": []
     },
     {
       "id": "chrome.toolbar_gear",
       "tab": "Chrome controls",
-      "sub": "List toolbar — column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
+      "sub": "List toolbar \u2014 column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
       "route_hint": "/driver-hub",
       "surface_kind": "toolbar",
-      "required": [
-        "connectivity"
-      ]
+      "required": []
     },
     {
       "id": "chrome.toolbar_filter",
       "tab": "Chrome controls",
-      "sub": "List toolbar — Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
+      "sub": "List toolbar \u2014 Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
       "route_hint": "/driver-hub",
       "surface_kind": "toolbar",
-      "required": [
-        "connectivity"
-      ]
+      "required": []
     }
   ],
   "honesty_audit": {
@@ -258,11 +247,11 @@
         "invoice",
         "bank"
       ],
-      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; §B9 link columns added."
+      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; \u00a7B9 link columns added."
     },
     "reverse_link_2026_08_13_secondary": {
       "finding": "VERTICAL-REVERSE-LINK-SECONDARY-HONESTY",
-      "note": "Secondary module reverse_link Required on hub/chrome/nav leaves without reverse EntityLink drill — honesty drop. Built stays on money/ops modules already drained.",
+      "note": "Secondary module reverse_link Required on hub/chrome/nav leaves without reverse EntityLink drill \u2014 honesty drop. Built stays on money/ops modules already drained.",
       "drops": [
         {
           "id": "home",
@@ -400,7 +389,7 @@
     },
     "unit_column_2026_08_14_overclaim": {
       "finding": "LINK-F5167-UNIT-COLUMN-VERTICAL-SWEEP",
-      "note": "6 of 8 driver-hub leaves are false: home/tab.overview/inbox (all DriverInbox.tsx) and tab.leave_requests/reporting/hop.drivers have zero unit_id — driver-only surfaces. The other 2 leaves KEEP the Required marking — tab.scheduler (DriverSchedulerGridPage.tsx, real unit_id + a temp-cover unit picker) and hop.safety_scheduler (SafetyHomeTab.tsx, real subject_unit_id EntityLink).",
+      "note": "6 of 8 driver-hub leaves are false: home/tab.overview/inbox (all DriverInbox.tsx) and tab.leave_requests/reporting/hop.drivers have zero unit_id \u2014 driver-only surfaces. The other 2 leaves KEEP the Required marking \u2014 tab.scheduler (DriverSchedulerGridPage.tsx, real unit_id + a temp-cover unit picker) and hop.safety_scheduler (SafetyHomeTab.tsx, real subject_unit_id EntityLink).",
       "drops": [
         {
           "id": "home",
@@ -442,7 +431,7 @@
     },
     "driver_column_2026_08_14_overclaim": {
       "finding": "LINK-F5168-DRIVER-COLUMN-VERTICAL-SWEEP",
-      "note": "driver blanket-required on 2 driver-hub leaves. Verified live — both are RelatedModuleLinks.tsx static {label,to} nav-card entries ({label:\"Drivers\",to:\"/drivers\"} and {label:\"Safety Scheduler\",to:\"/safety/driver-scheduler\"}) with no entity id bound on the hop itself; the destination pages are real, but the hop leaf is a plain nav link, not a driver-scoped surface.",
+      "note": "driver blanket-required on 2 driver-hub leaves. Verified live \u2014 both are RelatedModuleLinks.tsx static {label,to} nav-card entries ({label:\"Drivers\",to:\"/drivers\"} and {label:\"Safety Scheduler\",to:\"/safety/driver-scheduler\"}) with no entity id bound on the hop itself; the destination pages are real, but the hop leaf is a plain nav link, not a driver-scoped surface.",
       "drops": [
         {
           "id": "hop.drivers",
@@ -509,6 +498,55 @@
           "removed": [
             "load"
           ]
+        }
+      ]
+    },
+    "connectivity_column_2026_08_14": {
+      "finding": "VERTICAL-CONNECTIVITY-COLUMN-FALSE-BLANKET",
+      "note": "Vertical wiring sweep (connectivity column, after trailer/customer/vendor/unit/driver/load) read-only investigated every leaf blanket-marked Required for connectivity (nav->route->API->canonical). These leaves have no such chain: static/placeholder surfaces, pure client-side nav Links/redirects, or list-toolbar chrome (search/range/gear) whose shared component (ParityTable/UniversalListToolbar) filters an already-fetched client-side array with no independent backend round-trip. route-mount itself remains proven per-leaf by scripts/verify-wave-b-connectivity-all-modules.mjs; this correction is scoped to leaves where the deeper nav->route->API->canonical claim doesn't apply at all.",
+      "leaves_touched": 6,
+      "drops": [
+        {
+          "id": "hop.drivers",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "RelatedModuleLinks.tsx pure Link"
+        },
+        {
+          "id": "hop.safety_scheduler",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "RelatedModuleLinks.tsx pure Link"
+        },
+        {
+          "id": "chrome.toolbar_search",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "no own fetch"
+        },
+        {
+          "id": "chrome.toolbar_range",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "no own fetch"
+        },
+        {
+          "id": "chrome.toolbar_gear",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "no own fetch"
+        },
+        {
+          "id": "chrome.toolbar_filter",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "no distinct Filters-panel surface"
         }
       ]
     }

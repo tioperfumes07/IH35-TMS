@@ -150,9 +150,7 @@
       "tab": "Catalog factory",
       "sub": "Generic catalog index",
       "route_hint": "/lists/catalogs",
-      "required": [
-        "connectivity"
-      ]
+      "required": []
     },
     {
       "id": "hub.domain.safety",
@@ -2139,8 +2137,7 @@
       "route_hint": "/lists/accounting/audit-event-types",
       "required": [
         "picker_law",
-        "qbo_chrome",
-        "connectivity"
+        "qbo_chrome"
       ]
     },
     {
@@ -2183,8 +2180,7 @@
       "route_hint": "/lists/accounting/account-types",
       "required": [
         "picker_law",
-        "qbo_chrome",
-        "connectivity"
+        "qbo_chrome"
       ]
     },
     {
@@ -2986,7 +2982,6 @@
       "surface_kind": "dialog",
       "surface_path": "components/dialogs/ConfirmDiscardDialog.tsx",
       "required": [
-        "connectivity",
         "qbo_chrome"
       ]
     },
@@ -2998,7 +2993,6 @@
       "surface_kind": "dialog",
       "surface_path": "components/forms/PartLocationMapDialog.tsx",
       "required": [
-        "connectivity",
         "qbo_chrome"
       ]
     },
@@ -3023,7 +3017,6 @@
       "surface_kind": "popover",
       "surface_path": "components/lists/ListView/components/FilterPopover.tsx",
       "required": [
-        "connectivity",
         "qbo_chrome"
       ]
     },
@@ -3046,8 +3039,7 @@
       "route_hint": "/lists",
       "surface_kind": "toolbar",
       "required": [
-        "qbo_chrome",
-        "connectivity"
+        "qbo_chrome"
       ]
     },
     {
@@ -3057,8 +3049,7 @@
       "route_hint": "/lists",
       "surface_kind": "toolbar",
       "required": [
-        "qbo_chrome",
-        "connectivity"
+        "qbo_chrome"
       ]
     },
     {
@@ -3068,8 +3059,7 @@
       "route_hint": "/lists",
       "surface_kind": "toolbar",
       "required": [
-        "qbo_chrome",
-        "connectivity"
+        "qbo_chrome"
       ]
     },
     {
@@ -7726,6 +7716,76 @@
           "removed": [
             "driver"
           ]
+        }
+      ]
+    },
+    "connectivity_column_2026_08_14": {
+      "finding": "VERTICAL-CONNECTIVITY-COLUMN-FALSE-BLANKET",
+      "note": "Vertical wiring sweep (connectivity column, after trailer/customer/vendor/unit/driver/load) read-only investigated every leaf blanket-marked Required for connectivity (nav->route->API->canonical). These leaves have no such chain: static/placeholder surfaces, pure client-side nav Links/redirects, or list-toolbar chrome (search/range/gear) whose shared component (ParityTable/UniversalListToolbar) filters an already-fetched client-side array with no independent backend round-trip. route-mount itself remains proven per-leaf by scripts/verify-wave-b-connectivity-all-modules.mjs; this correction is scoped to leaves where the deeper nav->route->API->canonical claim doesn't apply at all.",
+      "leaves_touched": 9,
+      "drops": [
+        {
+          "id": "hub.catalog_index",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "CatalogIndex.tsx pure client nav index"
+        },
+        {
+          "id": "catalog.accounting.account_types.create",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "AccountTypeCatalogPage.tsx read-only, Create is a Link"
+        },
+        {
+          "id": "catalog.accounting.audit_event_types.create",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "readOnly:true, Create button hidden"
+        },
+        {
+          "id": "lists.dialog.confirm_discard",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "ConfirmDiscardDialog.tsx generic callback only"
+        },
+        {
+          "id": "lists.dialog.part_location_map",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "PartLocationMapDialog.tsx pure client-side picker"
+        },
+        {
+          "id": "lists.popover.filter",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "FilterPopover.tsx filters already-fetched rows"
+        },
+        {
+          "id": "chrome.toolbar_search",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "ListsHubPage.tsx has zero toolbar markup (direct verify, overrides cluster-A implicit BUILT)"
+        },
+        {
+          "id": "chrome.toolbar_range",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "ListsHubPage.tsx has zero toolbar markup (direct verify)"
+        },
+        {
+          "id": "chrome.toolbar_gear",
+          "removed": [
+            "connectivity"
+          ],
+          "reason": "ListsHubPage.tsx has zero toolbar markup (direct verify)"
         }
       ]
     }
