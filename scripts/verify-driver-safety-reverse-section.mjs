@@ -93,6 +93,10 @@ export function assertDriverSafetyReverse(sources) {
   if (!/openKind="complaints_driver"/.test(src[SECTION]) || !/openKind="drug_alcohol_driver"/.test(src[SECTION])) {
     problems.push(`${SECTION}: Open Complaints/Drug & Alcohol must EntityLink filtered driver queues.`);
   }
+  // LINK-F5171: SectionShell must not keep a bare Link fallback (to={to ?? "#"}).
+  if (/from "react-router-dom"/.test(src[SECTION]) || /to=\{to \?\? "#"\}/.test(src[SECTION]) || /<Link className="text-xs font-semibold text-slate-700 underline"/.test(src[SECTION])) {
+    problems.push(`${SECTION}: SectionShell Open must be EntityLink-only — bare Link / to={to ?? "#"} fallback is forbidden.`);
+  }
   if (!/di\.driver_id = \$/.test(src[DOT_ROUTE])) {
     problems.push(`${DOT_ROUTE}: GET dot-inspections does not filter by driver in SQL — the reverse hub can under-report past LIMIT 500.`);
   }
@@ -203,6 +207,18 @@ if (SELFTEST) {
     { ...live, [SECTION]: live[SECTION].replace(/formatUsd\(fine\.amount /g, "formatUsdCents(fine.amount ") },
     "safety.internal_fines.amount is numeric DOLLARS"
   );
+  // 8. bare Link fallback reintroduced into SectionShell.
+  expectCaught(
+    "bare-link-fallback",
+    {
+      ...live,
+      [SECTION]: live[SECTION].replace(
+        /<EntityLink\n          kind=\{openKind\}\n          id=\{openId\}\n          label=\{linkLabel\}\n          className="text-xs font-semibold text-slate-700 underline"\n        \/>/,
+        '<Link className="text-xs font-semibold text-slate-700 underline" to={to ?? "#"}>{linkLabel}</Link>'
+      ),
+    },
+    "EntityLink-only"
+  );
 
   // The corrected shape must NOT be flagged — false positives burn trust as fast as misses.
   const liveProblems = assertDriverSafetyReverse(live);
@@ -213,7 +229,7 @@ if (SELFTEST) {
     for (const f of failures) console.error(`  ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — 12 planted defects caught, live sources clean`);
+  console.log(`${LABEL} SELFTEST PASS — 13 planted defects caught, live sources clean`);
   process.exit(0);
 }
 
