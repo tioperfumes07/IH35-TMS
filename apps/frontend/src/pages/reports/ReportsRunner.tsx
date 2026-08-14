@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate, useParams } from "react-router-dom";
+import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { apiRequest } from "../../api/client";
@@ -69,6 +69,17 @@ const STUB_PHASE: Record<string, string> = {
   "detention-claims": "Phase 4 detention billing",
 };
 
+// Historical report-runner URLs are still present in saved links and the
+// inventory. Keep those doors useful, but send them to the canonical surface
+// that owns the underlying data instead of painting a fake runner-unavailable
+// page. These are aliases only where the product meaning is exact.
+const CANONICAL_REPORT_ALIASES: Record<string, string> = {
+  "profit-truck-mtd": "/reports/profit-per-truck",
+  "dispatch-board": "/dispatch",
+  "cash-position": "/reports/cash-flow-overview",
+  "ifta-quarterly": "/reports/ifta",
+};
+
 export function ReportsRunnerPage() {
   const { reportId = "" } = useParams<{ reportId: string }>();
   const navigate = useNavigate();
@@ -88,6 +99,9 @@ export function ReportsRunnerPage() {
   const reportMeta = libraryQuery.data?.find((item) => item.id === reportId) ?? null;
 
   const resultRows = useMemo(() => runState?.rows ?? [], [runState]);
+
+  const canonicalAlias = CANONICAL_REPORT_ALIASES[reportId];
+  if (canonicalAlias) return <Navigate replace to={canonicalAlias} />;
 
   async function logRun(durationMs: number, rowCount: number) {
     try {
