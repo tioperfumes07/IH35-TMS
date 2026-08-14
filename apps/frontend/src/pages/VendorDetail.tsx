@@ -57,6 +57,7 @@ import { VendorInsurancePoliciesReverseSection } from "../components/insurance/V
 import { VendorLegalContractsReverseSection } from "../components/legal/VendorLegalContractsReverseSection";
 import { CashForecastReverseSection } from "../components/cash-flow/CashForecastReverseSection";
 import { VendorEquipmentLoansReverseSection } from "../components/vendors/VendorEquipmentLoansReverseSection";
+import { VendorMergesReverseSection } from "../components/vendors/VendorMergesReverseSection";
 import { LinkedBankTransactionsPanel } from "../components/banking/LinkedBankTransactionsPanel";
 
 type SaferEntityStatus = {
@@ -904,6 +905,7 @@ export function VendorDetailPage() {
         <SafetyAlertsReverseSection operatingCompanyId={companyId} subjectKind="vendor" subjectId={vendor.id} />
         <CashForecastReverseSection operatingCompanyId={companyId} filter={{ party_ref_kind: "vendor", party_ref_id: vendor.id }} />
         <VendorEquipmentLoansReverseSection operatingCompanyId={companyId} vendorId={vendor.id} />
+        <VendorMergesReverseSection operatingCompanyId={companyId} vendorId={vendor.id} />
         <VendorApAgingSection operatingCompanyId={companyId} vendorId={vendor.id} />
         <LinkedBankTransactionsPanel companyId={companyId} linkage={{ kind: "vendor_id", id: vendor.id }} entityLabel={vendor.name} />
         </div>

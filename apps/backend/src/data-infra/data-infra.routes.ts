@@ -18,6 +18,13 @@ const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
 });
 
+// LINK-F5171/LINK-F5183: reverse_link -- factoring:home.vendor_merges. driver_id is a real FK;
+// vendor_id resolves through mdata.vendors.qbo_vendor_id (the merge rows store QBO ids, not FKs).
+const driverVendorMergesQuerySchema = companyQuerySchema.extend({
+  driver_id: z.string().uuid().optional(),
+  vendor_id: z.string().uuid().optional(),
+});
+
 const mergeBodySchema = z.object({
   operating_company_id: z.string().uuid(),
   driver_id: z.string().uuid(),
@@ -109,12 +116,15 @@ function isOfficeRole(role?: string) {
 }
 
 export async function registerDataInfrastructureRoutes(app: FastifyInstance) {
-  app.get("/api/v1/integrations/qbo/driver-vendor-merges", async (req, reply) => {
+  app.get("/api/v1/integrations/qbo/driver-vendor-merges", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
-    const query = companyQuerySchema.safeParse(req.query ?? {});
+    const query = driverVendorMergesQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return sendValidationError(reply, query.error);
-    const rows = await listDriverVendorMerges(user.uuid, query.data.operating_company_id);
+    const rows = await listDriverVendorMerges(user.uuid, query.data.operating_company_id, 200, {
+      driverId: query.data.driver_id,
+      vendorId: query.data.vendor_id,
+    });
     return { rows };
   });
 

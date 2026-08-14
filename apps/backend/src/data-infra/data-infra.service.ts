@@ -121,18 +121,51 @@ export async function createDriverVendorMerge(
   });
 }
 
-export async function listDriverVendorMerges(userId: string, operatingCompanyId: string, limit = 200) {
+export async function listDriverVendorMerges(
+  userId: string,
+  operatingCompanyId: string,
+  limit = 200,
+  // LINK-F5171/LINK-F5183: reverse_link -- driver_id is a real FK on this table (with a pre-built
+  // idx_driver_vendor_merges_driver_recent index, never used as a filter). from_qbo_vendor_id/
+  // to_qbo_vendor_id are text QBO ids, not FKs; resolve them to real internal vendor_id via
+  // mdata.vendors.qbo_vendor_id so the vendor's own profile can query its own merge rows too.
+  filters: { driverId?: string; vendorId?: string } = {}
+) {
   return withCurrentUser(userId, async (client) => {
     await setCompanyScope(client, operatingCompanyId);
+    const values: unknown[] = [operatingCompanyId, limit];
+    let driverFilter = "";
+    if (filters.driverId) {
+      values.push(filters.driverId);
+      driverFilter = `AND m.driver_id = $${values.length}::uuid`;
+    }
+    // Server-side scoping (not client-side), same reasoning as every other reverse fix this
+    // session: this list is capped at LIMIT 200/limit.
+    let vendorFilter = "";
+    if (filters.vendorId) {
+      values.push(filters.vendorId);
+      vendorFilter = `AND (fromv.id = $${values.length}::uuid OR tov.id = $${values.length}::uuid)`;
+    }
     const res = await client.query(
       `
-        SELECT *
-        FROM mdata.driver_vendor_merges
-        WHERE operating_company_id = $1::uuid
-        ORDER BY merged_at DESC
+        SELECT
+          m.*,
+          fromv.id AS from_vendor_id,
+          fromv.vendor_name AS from_vendor_name,
+          tov.id AS to_vendor_id,
+          tov.vendor_name AS to_vendor_name
+        FROM mdata.driver_vendor_merges m
+        LEFT JOIN mdata.vendors fromv ON fromv.qbo_vendor_id = m.from_qbo_vendor_id
+                                      AND fromv.operating_company_id = m.operating_company_id
+        LEFT JOIN mdata.vendors tov ON tov.qbo_vendor_id = m.to_qbo_vendor_id
+                                    AND tov.operating_company_id = m.operating_company_id
+        WHERE m.operating_company_id = $1::uuid
+          ${driverFilter}
+          ${vendorFilter}
+        ORDER BY m.merged_at DESC
         LIMIT $2
       `,
-      [operatingCompanyId, limit]
+      values
     );
     return res.rows;
   });

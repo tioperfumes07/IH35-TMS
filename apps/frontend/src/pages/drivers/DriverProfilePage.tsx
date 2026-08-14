@@ -21,6 +21,7 @@ import { LoadsSection } from "../../components/driver-profile/LoadsSection";
 import { DriverTeamsReverseSection } from "../../components/driver-profile/DriverTeamsReverseSection";
 import { DriverTeamSplitConfigReverseSection } from "../../components/driver-profile/DriverTeamSplitConfigReverseSection";
 import { DriverSettlementFinanceReverseSection } from "../../components/driver-profile/DriverSettlementFinanceReverseSection";
+import { DriverVendorMergesReverseSection } from "../../components/driver-profile/DriverVendorMergesReverseSection";
 import { DriverPaymentMethodsCard } from "../../components/driver-profile/DriverPaymentMethodsCard";
 import { LinkedBankTransactionsPanel } from "../../components/banking/LinkedBankTransactionsPanel";
 import { TrainingRecordsSection } from "../../components/driver-profile/TrainingRecordsSection";
@@ -596,6 +597,13 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
           operatingCompanyId={companyId}
           driverId={id}
           data-testid="driver-profile-settlement-finance-reverse"
+        />
+      </div>
+      <div data-testid="dp-section-vendor-merges-reverse">
+        <DriverVendorMergesReverseSection
+          operatingCompanyId={companyId}
+          driverId={id}
+          data-testid="driver-profile-vendor-merges-reverse"
         />
       </div>
       <div data-testid="dp-section-safety-reverse">

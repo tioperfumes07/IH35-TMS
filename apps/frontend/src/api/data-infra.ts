@@ -12,6 +12,12 @@ export type DriverVendorMergeRow = {
   merge_reason: string;
   merged_by_user_id: string;
   merged_at: string;
+  // LINK-F5171/LINK-F5183: resolved from from_qbo_vendor_id/to_qbo_vendor_id via
+  // mdata.vendors.qbo_vendor_id -- null when no internal vendor matches that QBO id.
+  from_vendor_id?: string | null;
+  from_vendor_name?: string | null;
+  to_vendor_id?: string | null;
+  to_vendor_name?: string | null;
 };
 
 export type FaroDailyImportRow = {
@@ -50,8 +56,11 @@ export type EquipmentLoanLedger = {
   payments: Array<Record<string, unknown>>;
 };
 
-export function listDriverVendorMerges(companyId: string) {
-  return apiRequest<{ rows: DriverVendorMergeRow[] }>(`/api/v1/integrations/qbo/driver-vendor-merges?${q(companyId)}`);
+export function listDriverVendorMerges(companyId: string, filters: { driver_id?: string; vendor_id?: string } = {}) {
+  const params = new URLSearchParams({ operating_company_id: companyId });
+  if (filters.driver_id) params.set("driver_id", filters.driver_id);
+  if (filters.vendor_id) params.set("vendor_id", filters.vendor_id);
+  return apiRequest<{ rows: DriverVendorMergeRow[] }>(`/api/v1/integrations/qbo/driver-vendor-merges?${params.toString()}`);
 }
 
 export function createDriverVendorMerge(payload: {
