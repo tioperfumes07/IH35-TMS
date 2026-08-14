@@ -80,7 +80,7 @@ export function NamesMasterHub() {
         render: (row) => {
           const kind = LINKABLE_NAME_KINDS[row.entity_type];
           return kind ? (
-            <EntityLink kind={kind} id={row.entity_id} label={row.display_name} className="font-medium" />
+            <EntityLink data-testid="names-master-record-link" kind={kind} id={row.entity_id} label={row.display_name} className="font-medium" />
           ) : (
             <span className="font-medium">{row.display_name}</span>
           );

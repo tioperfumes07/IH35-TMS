@@ -22,6 +22,7 @@ import { KpiStrip } from "../components/layout/KpiStrip";
 import { PageHeader } from "../components/layout/PageHeader";
 import { Modal } from "../components/Modal";
 import { ActionButton } from "../components/shared/ActionButton";
+import { EntityLink } from "../components/shared/EntityLink";
 import { SecondaryNavTabs } from "../components/shared/SecondaryNavTabs";
 import { StatusBadge } from "../components/StatusBadge";
 import { useToast } from "../components/Toast";
@@ -282,7 +283,20 @@ export function UsersPage() {
 
   const userColumns = useMemo<Array<ParityColumn<IdentityUser>>>(
     () => [
-      { key: "name", label: "Name", sortable: true, render: (row) => row.name ?? "—" },
+      {
+        key: "name",
+        label: "Name",
+        sortable: true,
+        render: (row) => (
+          <EntityLink
+            data-testid="user-roster-record-link"
+            kind="user"
+            id={row.id}
+            label={entityLabel(row.name, row.id, "User")}
+            onClick={(event) => event.stopPropagation()}
+          />
+        ),
+      },
       { key: "email", label: "Email", sortable: true, render: (row) => row.email ?? "—" },
       {
         key: "role",

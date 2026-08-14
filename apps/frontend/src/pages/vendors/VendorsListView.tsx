@@ -250,7 +250,7 @@ export function VendorsListView({ companyId, vendors, status, openByVendorId, on
             sortable: true,
             cellClass: "font-medium",
             render: (row) => (
-              <Link to={`/vendors/${row.id}`} className="text-slate-700 hover:underline" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
+              <Link data-testid="vendor-roster-record-link" to={`/vendors/${row.id}`} className="text-slate-700 hover:underline" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
                 {row.name}
               </Link>
             ),

@@ -313,7 +313,7 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
             cellClass: "font-medium",
             render: (row) => (
               <span className="inline-flex items-center gap-1.5">
-                <Link to={`/customers/${row.id}`} className="text-slate-700 hover:underline" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
+                <Link data-testid="customer-roster-record-link" to={`/customers/${row.id}`} className="text-slate-700 hover:underline" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
                   {row.name}
                 </Link>
                 <button
