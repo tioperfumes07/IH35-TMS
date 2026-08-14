@@ -1085,6 +1085,7 @@ export function listFactoringAdvances(
     date_from?: string;
     date_to?: string;
     search?: string;
+    load_id?: string;
     limit?: number;
   } = {}
 ) {
@@ -1094,6 +1095,7 @@ export function listFactoringAdvances(
   if (filters.date_from) query.set("date_from", filters.date_from);
   if (filters.date_to) query.set("date_to", filters.date_to);
   if (filters.search) query.set("search", filters.search);
+  if (filters.load_id) query.set("load_id", filters.load_id);
   if (filters.limit !== undefined) query.set("limit", String(filters.limit));
   const qs = query.toString();
   return apiRequest<{ rows: FactoringAdvance[] }>(withCompany(`/api/v1/accounting/factoring-advances${qs ? `?${qs}` : ""}`, operatingCompanyId));

@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { formatDateUS } from "../../lib/formatDate";
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { listFactoringAdvances, type FactoringAdvance } from "../../api/accounting";
 import { Button } from "../../components/Button";
 import { ListErrorState } from "../../components/ListErrorState";
@@ -44,6 +44,10 @@ function statusPill(status: FactoringAdvance["status"]) {
 export function FactoringListPage() {
   const navigate = useNavigate();
   const { selectedCompanyId } = useCompanyContext();
+  // LINK-F5171/LINK-F5184: factoring:accounting.list reverse — a load can drill into its own
+  // advance batch(es) via ?load_id=, filtered server-side through the invoice FK.
+  const [searchParams] = useSearchParams();
+  const deepLinkLoadId = searchParams.get("load_id");
   // BANK-SORT-ROLLOUT-ACCT: ?sort=&dir= URL persistence (same as Bills/Expenses).
   const { sortKey, sortDirection, onSortChange } = useUrlSort();
   const [status, setStatus] = useState<"all" | FactoringAdvance["status"]>("all");
@@ -54,13 +58,14 @@ export function FactoringListPage() {
   const [submitOpen, setSubmitOpen] = useState(false);
 
   const query = useQuery({
-    queryKey: ["accounting", "factoring-advances", selectedCompanyId, status, search, fromDate, toDate],
+    queryKey: ["accounting", "factoring-advances", selectedCompanyId, status, search, fromDate, toDate, deepLinkLoadId],
     queryFn: () =>
       listFactoringAdvances(selectedCompanyId!, {
         status,
         search: search || undefined,
         date_from: fromDate || undefined,
         date_to: toDate || undefined,
+        load_id: deepLinkLoadId ?? undefined,
       }).then((res) => res.rows),
     enabled: Boolean(selectedCompanyId),
   });

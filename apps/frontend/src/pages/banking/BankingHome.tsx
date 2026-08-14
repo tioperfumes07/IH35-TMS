@@ -59,6 +59,9 @@ export function BankingHomePage({ initialTab }: Props = {}) {
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const deepLinkTxnId = searchParams.get("txn_id");
+  // LINK-F5171/LINK-F5184: factoring:banking.entry reverse — a load can filter this tab's "Recent
+  // Faro advances" timeline down to its own advance(s) via ?load_id=.
+  const deepLinkLoadId = searchParams.get("load_id");
   const { selectedCompanyId, selectedCompany } = useCompanyContext();
   const { user } = useAuth();
   const canSeeEmailQueue = user?.role === "Owner" || user?.role === "Administrator";
@@ -146,8 +149,8 @@ export function BankingHomePage({ initialTab }: Props = {}) {
     enabled: Boolean(companyId),
   });
   const factoringTimelineQuery = useQuery({
-    queryKey: ["banking", "factoring-virtual-timeline", companyId],
-    queryFn: () => getFactoringVirtualTimeline(companyId),
+    queryKey: ["banking", "factoring-virtual-timeline", companyId, deepLinkLoadId],
+    queryFn: () => getFactoringVirtualTimeline(companyId, deepLinkLoadId ?? undefined),
     enabled: Boolean(companyId) && activeTab === "factoring",
   });
 
@@ -836,7 +839,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
             data-testid="banking-factoring-faro-advances-panel"
           >
             <div className="flex items-center justify-between border-b border-slate-200 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-700">
-              <span>Recent Faro advances</span>
+              <span>{deepLinkLoadId ? "Faro advances for this load" : "Recent Faro advances"}</span>
               <Link to="/accounting/factoring" className="text-[10px] font-semibold normal-case text-slate-800 hover:underline">
                 All advances →
               </Link>
@@ -845,8 +848,8 @@ export function BankingHomePage({ initialTab }: Props = {}) {
               <div className="max-h-[220px] overflow-y-auto">
                 {(factoringTimelineQuery.data?.timeline ?? []).length === 0 ? (
                   <p className="px-3 py-2 text-xs text-gray-500">
-                    No non-voided advances in <code className="text-[11px]">accounting.factoring_advances</code> for this
-                    company yet.
+                    No non-voided advances in <code className="text-[11px]">accounting.factoring_advances</code> for this{" "}
+                    {deepLinkLoadId ? "load" : "company"} yet.
                   </p>
                 ) : (
                   (factoringTimelineQuery.data?.timeline ?? []).map((row) => {

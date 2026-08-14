@@ -371,9 +371,10 @@ export type FactoringVirtualAdvanceRow = {
 };
 
 /** Recent Faro advances for Banking Factoring tab (Law §9 forward drill). */
-export function getFactoringVirtualTimeline(companyId: string) {
+export function getFactoringVirtualTimeline(companyId: string, loadId?: string) {
+  const qs = loadId ? `${q(companyId)}&load_id=${encodeURIComponent(loadId)}` : q(companyId);
   return apiRequest<{ timeline: FactoringVirtualAdvanceRow[] }>(
-    `/api/v1/banking/factoring-virtual/timeline?${q(companyId)}`
+    `/api/v1/banking/factoring-virtual/timeline?${qs}`
   );
 }
 

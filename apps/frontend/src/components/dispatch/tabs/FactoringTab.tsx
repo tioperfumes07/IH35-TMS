@@ -10,6 +10,7 @@
  * Submission reuses existing accounting factoring-advances batch API (Block-24/25 poster untouched).
  */
 import { useMemo, useState, type ReactNode } from "react";
+import { Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLoad } from "../../../api/loads";
 import { listInvoices, listFactoringCandidateInvoices } from "../../../api/accounting";
@@ -404,6 +405,28 @@ export function FactoringTab({ loadId, operatingCompanyId, canEdit, onPacketUpda
           data-testid="factoring-tab-view-in-submission-queue"
           className="mt-2 ml-3 inline-block text-xs font-medium text-slate-700 hover:underline"
         />
+        {linkedInvoice?.factoring_advance_id ? (
+          <>
+            {/* LINK-F5171/LINK-F5184 — reverse_link: factoring:accounting.list — this load's own
+            advance batch, direct detail drill. */}
+            <EntityLink
+              kind="factoring_advance"
+              id={linkedInvoice.factoring_advance_id}
+              label="View Advance Batch →"
+              data-testid="factoring-tab-view-advance-batch"
+              className="mt-2 ml-3 inline-block text-xs font-medium text-slate-700 hover:underline"
+            />
+            {/* LINK-F5171/LINK-F5184 — reverse_link: factoring:banking.entry — Banking (Faro) tab
+            filtered to this load's advance(s). */}
+            <Link
+              to={`/banking/factoring?load_id=${encodeURIComponent(loadId)}`}
+              data-testid="factoring-tab-view-banking-entry"
+              className="mt-2 ml-3 inline-block text-xs font-medium text-slate-700 hover:underline"
+            >
+              View in Banking (Faro) →
+            </Link>
+          </>
+        ) : null}
       </div>
 
       {/* Document checklist */}
