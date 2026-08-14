@@ -106,6 +106,9 @@ export type EntityKind =
   | "factoring_chargebacks_customer"
   | "factoring_submit_queue_customer"
   | "equipment_loans_vendor"
+  // LINK-F5183: vendor-merges reverse Open → filtered Factoring Home tab.
+  | "factoring_vendor_merges_driver"
+  | "factoring_vendor_merges_vendor"
   | "load_template"
   | "cash_forecast_entry"
   // LINK-F5171: TasksTab drills chat by taskId (not a generic office entity).
@@ -432,6 +435,10 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
       return `/factoring/submit?customer_id=${id}`;
     case "equipment_loans_vendor":
       return `/factoring/equipment-loans?vendor_id=${id}`;
+    case "factoring_vendor_merges_driver":
+      return `/factoring/vendor-merges?driver_id=${id}`;
+    case "factoring_vendor_merges_vendor":
+      return `/factoring/vendor-merges?vendor_id=${id}`;
     case "load_template":
       return `/dispatch/planning/calendar?panel=templates&template_id=${id}`;
     case "cash_forecast_entry":
