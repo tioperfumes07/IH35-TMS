@@ -39,7 +39,7 @@ const entryBody = z.object({
   load_ref_label: z.string().trim().max(200).nullish(),
   unit_ref_label: z.string().trim().max(200).nullish(),
   customer_ref_label: z.string().trim().max(200).nullish(),
-  party_ref_kind: z.enum(["driver", "vendor"]).nullish(),
+  party_ref_kind: z.enum(["customer", "driver", "vendor"]).nullish(),
   party_ref_id: z.string().uuid().nullish(),
   party_ref_label: z.string().trim().max(200).nullish(),
 });
@@ -111,6 +111,15 @@ export async function registerCashForecastManualRoutes(app: FastifyInstance) {
         if (!driver.rows[0]) throw Object.assign(new Error("Driver does not belong to this operating company."), { statusCode: 400 });
         partyName = driver.rows[0].label;
         partyRefLabel = driver.rows[0].label;
+      } else if (b.data.party_ref_kind === "customer") {
+        if (!b.data.party_ref_id) throw Object.assign(new Error("Select a customer."), { statusCode: 400 });
+        const customer = await client.query<{ label: string }>(
+          `SELECT customer_name AS label FROM mdata.customers WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
+          [b.data.party_ref_id, b.data.operating_company_id],
+        );
+        if (!customer.rows[0]) throw Object.assign(new Error("Customer does not belong to this operating company."), { statusCode: 400 });
+        partyName = customer.rows[0].label;
+        partyRefLabel = customer.rows[0].label;
       }
       const res = await client.query(
         `INSERT INTO forecast.cash_entries
@@ -174,6 +183,20 @@ export async function registerCashForecastManualRoutes(app: FastifyInstance) {
         );
         if (!driver.rows[0]) throw Object.assign(new Error("Driver does not belong to this operating company."), { statusCode: 400 });
         const label = driver.rows[0].label;
+        const refLabelIndex = sets.findIndex((set) => set.startsWith("party_ref_label ="));
+        if (refLabelIndex >= 0) values[refLabelIndex] = label;
+        else { values.push(label); sets.push(`party_ref_label = $${values.length}`); }
+        const partyNameIndex = sets.findIndex((set) => set.startsWith("party_name ="));
+        if (partyNameIndex >= 0) values[partyNameIndex] = label;
+        else { values.push(label); sets.push(`party_name = $${values.length}`); }
+      } else if (b.data.party_ref_kind === "customer") {
+        if (!b.data.party_ref_id) throw Object.assign(new Error("Select a customer."), { statusCode: 400 });
+        const customer = await client.query<{ label: string }>(
+          `SELECT customer_name AS label FROM mdata.customers WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
+          [b.data.party_ref_id, b.data.operating_company_id],
+        );
+        if (!customer.rows[0]) throw Object.assign(new Error("Customer does not belong to this operating company."), { statusCode: 400 });
+        const label = customer.rows[0].label;
         const refLabelIndex = sets.findIndex((set) => set.startsWith("party_ref_label ="));
         if (refLabelIndex >= 0) values[refLabelIndex] = label;
         else { values.push(label); sets.push(`party_ref_label = $${values.length}`); }

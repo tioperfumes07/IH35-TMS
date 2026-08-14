@@ -576,6 +576,14 @@ export async function createLoadTemplate(
 ) {
   return withCurrentUser(userId, async (client) => {
     await setScopedCompanyContext(client, userId, input.operating_company_id);
+    const customerId = input.template_json.customer_id;
+    if (typeof customerId === "string" && customerId) {
+      const customer = await client.query(
+        `SELECT 1 FROM mdata.customers WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
+        [customerId, input.operating_company_id],
+      );
+      if (!customer.rows[0]) throw Object.assign(new Error("Customer does not belong to this operating company."), { statusCode: 400 });
+    }
     const res = await client.query(
       `
         INSERT INTO dispatch.load_templates (operating_company_id, name, template_json, created_by_user_id)
