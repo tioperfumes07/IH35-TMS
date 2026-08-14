@@ -1,4 +1,3 @@
-import { Link } from "react-router-dom";
 import { EntityLink } from "../shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 
@@ -16,19 +15,26 @@ export function CurrentAssignmentSection({
 }) {
   void _companyId;
   const def = assignment.default_truck as Record<string, unknown> | null;
-  const cur = assignment.currently_driving_truck as Record<string, unknown> | null;
+  const cur = assignment.currently_driving_truck as Record<
+    string,
+    unknown
+  > | null;
   const load = assignment.current_load as Record<string, unknown> | null;
 
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-4">
-      <h2 className="mb-2 text-sm font-semibold text-slate-900">Current assignment</h2>
+      <h2 className="mb-2 text-sm font-semibold text-slate-900">
+        Current assignment
+      </h2>
       <div className="grid gap-3 text-xs text-slate-700 md:grid-cols-3">
         <div>
           <div className="font-semibold text-slate-800">Default truck</div>
           {def ? (
-            <Link to={`/fleet/units/${def.unit_id}`} className="text-slate-700 hover:underline">
-              {entityLabel(def.unit_number, def.unit_id, "Unit")}
-            </Link>
+            <EntityLink
+              kind="unit"
+              id={String(def.unit_id)}
+              label={entityLabel(def.unit_number, def.unit_id, "Unit")}
+            />
           ) : (
             <span>—</span>
           )}
@@ -37,11 +43,15 @@ export function CurrentAssignmentSection({
           <div className="font-semibold text-slate-800">Currently driving</div>
           {cur ? (
             <>
-              <Link to={`/fleet/units/${cur.unit_id}`} className="text-slate-700 hover:underline">
-                {entityLabel(cur.unit_number, cur.unit_id, "Unit")}
-              </Link>
+              <EntityLink
+                kind="unit"
+                id={String(cur.unit_id)}
+                label={entityLabel(cur.unit_number, cur.unit_id, "Unit")}
+              />
               {cur.samsara_logged_in_at ? (
-                <div className="text-slate-500">Samsara {String(cur.samsara_logged_in_at)}</div>
+                <div className="text-slate-500">
+                  Samsara {String(cur.samsara_logged_in_at)}
+                </div>
               ) : null}
             </>
           ) : (
@@ -63,8 +73,13 @@ export function CurrentAssignmentSection({
       </div>
       {onSetDefault ? (
         <p className="mt-2 text-xs text-slate-500">
-          Set default truck from fleet unit profile or POST default-truck for driver{" "}
-          <EntityLink kind="driver" id={driverId} label={entityLabel(null, driverId, "Driver")} />
+          Set default truck from fleet unit profile or POST default-truck for
+          driver{" "}
+          <EntityLink
+            kind="driver"
+            id={driverId}
+            label={entityLabel(null, driverId, "Driver")}
+          />
         </p>
       ) : null}
     </section>

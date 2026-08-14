@@ -23,9 +23,21 @@ import { listHosViolations } from "../../api/safetyV64";
 type Row = Record<string, unknown>;
 const s = (value: unknown): string => (value == null ? "" : String(value));
 
-const INCIDENT_KINDS: { type: SafetyIncidentType; title: string; route: string }[] = [
-  { type: "damage_report", title: "Damage Reports", route: "/safety/damage-reports" },
-  { type: "trailer_interchange", title: "Trailer Interchanges", route: "/safety/trailer-interchanges" },
+const INCIDENT_KINDS: {
+  type: SafetyIncidentType;
+  title: string;
+  route: string;
+}[] = [
+  {
+    type: "damage_report",
+    title: "Damage Reports",
+    route: "/safety/damage-reports",
+  },
+  {
+    type: "trailer_interchange",
+    title: "Trailer Interchanges",
+    route: "/safety/trailer-interchanges",
+  },
   { type: "cargo_claim", title: "Cargo Claims", route: "/safety/cargo-claims" },
 ];
 
@@ -41,19 +53,40 @@ export function LoadSafetyReverseSection({
   "data-testid": testId = "load-detail-safety-records",
 }: Props) {
   const accidentsQ = useQuery({
-    queryKey: ["safety", "reverse", "accidents", "load", operatingCompanyId, loadId],
+    queryKey: [
+      "safety",
+      "reverse",
+      "accidents",
+      "load",
+      operatingCompanyId,
+      loadId,
+    ],
     queryFn: () => getSafetyAccidents(operatingCompanyId, { load_id: loadId }),
     enabled: Boolean(operatingCompanyId) && Boolean(loadId),
   });
   const accidents: Row[] = accidentsQ.data?.accidents ?? [];
   const hosViolationsQ = useQuery({
-    queryKey: ["safety", "reverse", "hos-violations", "load", operatingCompanyId, loadId],
+    queryKey: [
+      "safety",
+      "reverse",
+      "hos-violations",
+      "load",
+      operatingCompanyId,
+      loadId,
+    ],
     queryFn: () => listHosViolations(operatingCompanyId, { load_id: loadId }),
     enabled: Boolean(operatingCompanyId) && Boolean(loadId),
   });
   const hosViolations: Row[] = hosViolationsQ.data?.hos_violations ?? [];
   const internalFinesQ = useQuery({
-    queryKey: ["safety", "reverse", "internal-fines", "load", operatingCompanyId, loadId],
+    queryKey: [
+      "safety",
+      "reverse",
+      "internal-fines",
+      "load",
+      operatingCompanyId,
+      loadId,
+    ],
     queryFn: () => getInternalFines(operatingCompanyId, { load_id: loadId }),
     enabled: Boolean(operatingCompanyId) && Boolean(loadId),
   });
@@ -61,26 +94,44 @@ export function LoadSafetyReverseSection({
 
   return (
     <div className="space-y-3" data-testid={testId}>
-      <div className="text-xs font-semibold text-gray-600">Safety records on this load</div>
+      <div className="text-xs font-semibold text-gray-600">
+        Safety records on this load
+      </div>
 
-      <div className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid="load-safety-reverse-accidents">
+      <div
+        className="space-y-2 rounded-sm border border-gray-200 bg-white p-3"
+        data-testid="load-safety-reverse-accidents"
+      >
         <div className="flex items-center justify-between gap-2">
           <h3 className="text-sm font-semibold text-slate-900">
             Accidents
             {accidents.length > 0 ? (
-              <span className="ml-2 text-xs font-normal text-gray-600">({accidents.length})</span>
+              <span className="ml-2 text-xs font-normal text-gray-600">
+                ({accidents.length})
+              </span>
             ) : null}
           </h3>
-          <Link className="text-xs font-semibold text-slate-700 underline" to="/safety/accidents">
+          <Link
+            className="text-xs font-semibold text-slate-700 underline"
+            to="/safety/accidents"
+          >
             Open Accidents
           </Link>
         </div>
-        {accidentsQ.isLoading ? <p className="text-sm text-gray-500">Loading…</p> : null}
-        {accidentsQ.isError ? (
-          <p className="text-sm text-red-600">Could not load accidents for this load.</p>
+        {accidentsQ.isLoading ? (
+          <p className="text-sm text-gray-500">Loading…</p>
         ) : null}
-        {!accidentsQ.isLoading && !accidentsQ.isError && accidents.length === 0 ? (
-          <p className="text-sm text-gray-500">No accident reports linked to this load.</p>
+        {accidentsQ.isError ? (
+          <p className="text-sm text-red-600">
+            Could not load accidents for this load.
+          </p>
+        ) : null}
+        {!accidentsQ.isLoading &&
+        !accidentsQ.isError &&
+        accidents.length === 0 ? (
+          <p className="text-sm text-gray-500">
+            No accident reports linked to this load.
+          </p>
         ) : null}
         {accidents.length > 0 ? (
           <ul className="space-y-2">
@@ -88,12 +139,50 @@ export function LoadSafetyReverseSection({
               const id = s(row.id);
               const when = row.accident_at ?? row.report_date;
               return (
-                <li key={id} className="text-sm text-slate-700" data-testid={`load-safety-accident-${id}`}>
-                  <EntityLink kind="accident" id={id} label={entityLabel(s(row.description) || null, id, "Accident")} />
-                  <span className="ml-2 text-xs text-gray-500">
+                <li
+                  key={id}
+                  className="text-sm text-slate-700"
+                  data-testid={`load-safety-accident-${id}`}
+                >
+                  <EntityLink
+                    kind="accident"
+                    id={id}
+                    label={entityLabel(
+                      s(row.description) || null,
+                      id,
+                      "Accident",
+                    )}
+                  />
+                  <span className="ml-2 inline-flex flex-wrap items-center gap-1 text-xs text-gray-500">
                     {when ? formatDateUS(String(when).slice(0, 10)) : "—"}
-                    {row.driver_name ? ` · ${entityLabel(s(row.driver_name), s(row.driver_id), "Driver")}` : ""}
-                    {row.unit_number ? ` · ${entityLabel(s(row.unit_number), s(row.unit_id), "Unit")}` : ""}
+                    {row.driver_id ? (
+                      <>
+                        <span>·</span>
+                        <EntityLink
+                          kind="driver"
+                          id={s(row.driver_id)}
+                          label={entityLabel(
+                            row.driver_name,
+                            row.driver_id,
+                            "Driver",
+                          )}
+                        />
+                      </>
+                    ) : null}
+                    {row.unit_id ? (
+                      <>
+                        <span>·</span>
+                        <EntityLink
+                          kind="unit"
+                          id={s(row.unit_id)}
+                          label={entityLabel(
+                            row.unit_number,
+                            row.unit_id,
+                            "Unit",
+                          )}
+                        />
+                      </>
+                    ) : null}
                   </span>
                 </li>
               );
@@ -103,28 +192,113 @@ export function LoadSafetyReverseSection({
       </div>
 
       <LoadSafetyEventsBlock companyId={operatingCompanyId} loadId={loadId} />
-      <div className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid="load-safety-reverse-hos-violations">
+      <div
+        className="space-y-2 rounded-sm border border-gray-200 bg-white p-3"
+        data-testid="load-safety-reverse-hos-violations"
+      >
         <div className="flex items-center justify-between gap-2">
-          <h3 className="text-sm font-semibold text-slate-900">HOS Violations{hosViolations.length ? ` (${hosViolations.length})` : ""}</h3>
-          <Link className="text-xs font-semibold text-slate-700 underline" to="/safety/hos-violations">Open HOS Violations</Link>
+          <h3 className="text-sm font-semibold text-slate-900">
+            HOS Violations
+            {hosViolations.length ? ` (${hosViolations.length})` : ""}
+          </h3>
+          <Link
+            className="text-xs font-semibold text-slate-700 underline"
+            to="/safety/hos-violations"
+          >
+            Open HOS Violations
+          </Link>
         </div>
-        {hosViolationsQ.isLoading ? <p className="text-sm text-gray-500">Loading…</p> : null}
-        {hosViolationsQ.isError ? <p className="text-sm text-red-600">Could not load HOS violations for this load.</p> : null}
-        {!hosViolationsQ.isLoading && !hosViolationsQ.isError && hosViolations.length === 0 ? <p className="text-sm text-gray-500">No HOS violations linked to this load.</p> : null}
+        {hosViolationsQ.isLoading ? (
+          <p className="text-sm text-gray-500">Loading…</p>
+        ) : null}
+        {hosViolationsQ.isError ? (
+          <p className="text-sm text-red-600">
+            Could not load HOS violations for this load.
+          </p>
+        ) : null}
+        {!hosViolationsQ.isLoading &&
+        !hosViolationsQ.isError &&
+        hosViolations.length === 0 ? (
+          <p className="text-sm text-gray-500">
+            No HOS violations linked to this load.
+          </p>
+        ) : null}
         {hosViolations.map((row) => (
           <div key={s(row.id)} className="text-sm text-slate-700">
-            <EntityLink kind="hos_violation" id={s(row.id)} label={s(row.violation_type) || "HOS violation"} />
-            <span className="ml-2 text-xs text-gray-500">{row.occurred_at ? formatDateUS(String(row.occurred_at).slice(0, 10)) : "—"}</span>
+            <EntityLink
+              kind="hos_violation"
+              id={s(row.id)}
+              label={s(row.violation_type) || "HOS violation"}
+            />
+            <span className="ml-2 text-xs text-gray-500">
+              {row.occurred_at
+                ? formatDateUS(String(row.occurred_at).slice(0, 10))
+                : "—"}
+            </span>
           </div>
         ))}
       </div>
-      <CivilFinesReverseBlock companyId={operatingCompanyId} related="load" entityId={loadId} />
-      <div className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid="load-safety-reverse-internal-fines">
-        <div className="flex items-center justify-between gap-2"><h3 className="text-sm font-semibold text-slate-900">Internal Fines{internalFines.length ? ` (${internalFines.length})` : ""}</h3><Link className="text-xs font-semibold text-slate-700 underline" to="/safety/internal-fines">Open Internal Fines</Link></div>
-        {internalFinesQ.isLoading ? <p className="text-sm text-gray-500">Loading internal fines…</p> : null}
-        {internalFinesQ.isError ? <p className="text-sm text-red-600">Could not load internal fines for this load.</p> : null}
-        {!internalFinesQ.isLoading && !internalFinesQ.isError && internalFines.length === 0 ? <p className="text-sm text-gray-500">No internal fines linked to this load.</p> : null}
-        {internalFines.map((row) => <div key={s(row.id)} className="text-sm text-slate-700"><EntityLink kind="internal_fine" id={s(row.id)} label={entityLabel(s(row.reason_name) || s(row.reason_code), row.id, "Internal fine")} /><span className="ml-2 text-xs text-gray-500">{row.imposed_date ? formatDateUS(String(row.imposed_date)) : "—"}</span>{row.driver_id ? <span className="ml-2"><EntityLink kind="driver" id={s(row.driver_id)} label={entityLabel(row.driver_name, row.driver_id, "Driver")} /></span> : null}</div>)}
+      <CivilFinesReverseBlock
+        companyId={operatingCompanyId}
+        related="load"
+        entityId={loadId}
+      />
+      <div
+        className="space-y-2 rounded-sm border border-gray-200 bg-white p-3"
+        data-testid="load-safety-reverse-internal-fines"
+      >
+        <div className="flex items-center justify-between gap-2">
+          <h3 className="text-sm font-semibold text-slate-900">
+            Internal Fines
+            {internalFines.length ? ` (${internalFines.length})` : ""}
+          </h3>
+          <Link
+            className="text-xs font-semibold text-slate-700 underline"
+            to="/safety/internal-fines"
+          >
+            Open Internal Fines
+          </Link>
+        </div>
+        {internalFinesQ.isLoading ? (
+          <p className="text-sm text-gray-500">Loading internal fines…</p>
+        ) : null}
+        {internalFinesQ.isError ? (
+          <p className="text-sm text-red-600">
+            Could not load internal fines for this load.
+          </p>
+        ) : null}
+        {!internalFinesQ.isLoading &&
+        !internalFinesQ.isError &&
+        internalFines.length === 0 ? (
+          <p className="text-sm text-gray-500">
+            No internal fines linked to this load.
+          </p>
+        ) : null}
+        {internalFines.map((row) => (
+          <div key={s(row.id)} className="text-sm text-slate-700">
+            <EntityLink
+              kind="internal_fine"
+              id={s(row.id)}
+              label={entityLabel(
+                s(row.reason_name) || s(row.reason_code),
+                row.id,
+                "Internal fine",
+              )}
+            />
+            <span className="ml-2 text-xs text-gray-500">
+              {row.imposed_date ? formatDateUS(String(row.imposed_date)) : "—"}
+            </span>
+            {row.driver_id ? (
+              <span className="ml-2">
+                <EntityLink
+                  kind="driver"
+                  id={s(row.driver_id)}
+                  label={entityLabel(row.driver_name, row.driver_id, "Driver")}
+                />
+              </span>
+            ) : null}
+          </div>
+        ))}
       </div>
       <DispatcherSafetyEventsReverseBlock
         operatingCompanyId={operatingCompanyId}
@@ -152,7 +326,13 @@ export function LoadSafetyReverseSection({
  * safety events, so the link existed in the database and appeared on no screen: open the load and it
  * still looked clean. §10a is explicit that a link is only done when it drills BOTH ways.
  */
-function LoadSafetyEventsBlock({ companyId, loadId }: { companyId: string; loadId: string }) {
+function LoadSafetyEventsBlock({
+  companyId,
+  loadId,
+}: {
+  companyId: string;
+  loadId: string;
+}) {
   const query = useQuery({
     queryKey: ["safety", "reverse", "events-log", "load", companyId, loadId],
     queryFn: () => listSafetyEventLog(companyId, { related_load_id: loadId }),
@@ -161,31 +341,84 @@ function LoadSafetyEventsBlock({ companyId, loadId }: { companyId: string; loadI
   const rows = query.data?.events ?? [];
 
   return (
-    <div className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid="load-safety-reverse-safety-events">
+    <div
+      className="space-y-2 rounded-sm border border-gray-200 bg-white p-3"
+      data-testid="load-safety-reverse-safety-events"
+    >
       <div className="flex items-center justify-between gap-2">
         <h3 className="text-sm font-semibold text-slate-900">
           Safety Events
-          {rows.length > 0 ? <span className="ml-2 text-xs font-normal text-gray-600">({rows.length})</span> : null}
+          {rows.length > 0 ? (
+            <span className="ml-2 text-xs font-normal text-gray-600">
+              ({rows.length})
+            </span>
+          ) : null}
         </h3>
-        <Link className="text-xs font-semibold text-slate-700 underline" to="/safety/safety-events">
+        <Link
+          className="text-xs font-semibold text-slate-700 underline"
+          to="/safety/safety-events"
+        >
           Open Safety Events
         </Link>
       </div>
-      {query.isLoading ? <p className="text-sm text-gray-500">Loading…</p> : null}
-      {query.isError ? <p className="text-sm text-red-600">Could not load safety events for this load.</p> : null}
+      {query.isLoading ? (
+        <p className="text-sm text-gray-500">Loading…</p>
+      ) : null}
+      {query.isError ? (
+        <p className="text-sm text-red-600">
+          Could not load safety events for this load.
+        </p>
+      ) : null}
       {!query.isLoading && !query.isError && rows.length === 0 ? (
         <p className="text-sm text-gray-500">None linked to this load.</p>
       ) : null}
       {rows.length > 0 ? (
         <ul className="space-y-2">
           {rows.map((row) => (
-            <li key={row.id} className="text-sm text-slate-700" data-testid={`load-safety-event-${row.id}`}>
-              <EntityLink kind="safety_event" id={row.id} label={entityLabel(row.title || null, row.id, "Safety event")} className="font-medium text-slate-900" />
-              <span className="ml-2 text-xs text-gray-500">
-                {row.occurred_at ? formatDateUS(String(row.occurred_at).slice(0, 10)) : "—"}
+            <li
+              key={row.id}
+              className="text-sm text-slate-700"
+              data-testid={`load-safety-event-${row.id}`}
+            >
+              <EntityLink
+                kind="safety_event"
+                id={row.id}
+                label={entityLabel(row.title || null, row.id, "Safety event")}
+                className="font-medium text-slate-900"
+              />
+              <span className="ml-2 inline-flex flex-wrap items-center gap-1 text-xs text-gray-500">
+                {row.occurred_at
+                  ? formatDateUS(String(row.occurred_at).slice(0, 10))
+                  : "—"}
                 {` · ${row.severity} · ${row.status}`}
-                {row.subject_driver_name ? ` · ${row.subject_driver_name}` : ""}
-                {row.subject_unit_number ? ` · ${row.subject_unit_number}` : ""}
+                {row.subject_driver_id ? (
+                  <>
+                    <span>·</span>
+                    <EntityLink
+                      kind="driver"
+                      id={s(row.subject_driver_id)}
+                      label={entityLabel(
+                        row.subject_driver_name,
+                        row.subject_driver_id,
+                        "Driver",
+                      )}
+                    />
+                  </>
+                ) : null}
+                {row.subject_unit_id ? (
+                  <>
+                    <span>·</span>
+                    <EntityLink
+                      kind="unit"
+                      id={s(row.subject_unit_id)}
+                      label={entityLabel(
+                        row.subject_unit_number,
+                        row.subject_unit_id,
+                        "Unit",
+                      )}
+                    />
+                  </>
+                ) : null}
               </span>
             </li>
           ))}
@@ -205,8 +438,17 @@ function LoadIncidentBlock({
   kind: (typeof INCIDENT_KINDS)[number];
 }) {
   const query = useQuery({
-    queryKey: ["safety", "reverse", "incidents", kind.type, "load", companyId, loadId],
-    queryFn: () => listSafetyIncidents(companyId, kind.type, { load_id: loadId }),
+    queryKey: [
+      "safety",
+      "reverse",
+      "incidents",
+      kind.type,
+      "load",
+      companyId,
+      loadId,
+    ],
+    queryFn: () =>
+      listSafetyIncidents(companyId, kind.type, { load_id: loadId }),
     enabled: Boolean(companyId) && Boolean(loadId),
   });
   const rows: Row[] = query.data?.incidents ?? [];
@@ -219,14 +461,27 @@ function LoadIncidentBlock({
       <div className="flex items-center justify-between gap-2">
         <h3 className="text-sm font-semibold text-slate-900">
           {kind.title}
-          {rows.length > 0 ? <span className="ml-2 text-xs font-normal text-gray-600">({rows.length})</span> : null}
+          {rows.length > 0 ? (
+            <span className="ml-2 text-xs font-normal text-gray-600">
+              ({rows.length})
+            </span>
+          ) : null}
         </h3>
-        <Link className="text-xs font-semibold text-slate-700 underline" to={kind.route}>
+        <Link
+          className="text-xs font-semibold text-slate-700 underline"
+          to={kind.route}
+        >
           Open {kind.title}
         </Link>
       </div>
-      {query.isLoading ? <p className="text-sm text-gray-500">Loading…</p> : null}
-      {query.isError ? <p className="text-sm text-red-600">Could not load {kind.title.toLowerCase()}.</p> : null}
+      {query.isLoading ? (
+        <p className="text-sm text-gray-500">Loading…</p>
+      ) : null}
+      {query.isError ? (
+        <p className="text-sm text-red-600">
+          Could not load {kind.title.toLowerCase()}.
+        </p>
+      ) : null}
       {!query.isLoading && !query.isError && rows.length === 0 ? (
         <p className="text-sm text-gray-500">None linked to this load.</p>
       ) : null}
@@ -239,10 +494,16 @@ function LoadIncidentBlock({
                 <EntityLink
                   kind={kind.type}
                   id={id}
-                  label={entityLabel(s(row.description) || s(row.location) || null, id, "Event")}
+                  label={entityLabel(
+                    s(row.description) || s(row.location) || null,
+                    id,
+                    "Event",
+                  )}
                 />
                 <span className="ml-2 text-xs text-gray-500">
-                  {row.incident_at ? formatDateUS(String(row.incident_at).slice(0, 10)) : "—"}
+                  {row.incident_at
+                    ? formatDateUS(String(row.incident_at).slice(0, 10))
+                    : "—"}
                 </span>
               </li>
             );

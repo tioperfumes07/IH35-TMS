@@ -21,7 +21,20 @@
       "task": "WAVE-C-ap-bill-fe-all-modules",
       "pr": "this PR",
       "guard": "scripts/verify-wave-c-ap-bill-fe-all-modules.mjs",
-      "modules": ["accounting", "banking", "compliance", "fleet", "home", "insurance", "inventory", "legal", "maintenance", "reports", "settlements", "vendors"],
+      "modules": [
+        "accounting",
+        "banking",
+        "compliance",
+        "fleet",
+        "home",
+        "insurance",
+        "inventory",
+        "legal",
+        "maintenance",
+        "reports",
+        "settlements",
+        "vendors"
+      ],
       "cols": ["ap_bill"],
       "leafRe": ".*"
     },
@@ -29,7 +42,27 @@
       "task": "WAVE-A-load-all-modules",
       "pr": "this PR",
       "guard": "scripts/verify-wave-a-load-all-modules.mjs",
-      "modules": ["accounting", "compliance", "customers", "dispatch", "docs", "driver-hub", "drivers", "factoring", "fleet", "fuel", "home", "insurance", "legal", "lists", "maintenance", "reports", "safety", "settlements", "tasks"],
+      "modules": [
+        "accounting",
+        "compliance",
+        "customers",
+        "dispatch",
+        "docs",
+        "driver-hub",
+        "drivers",
+        "factoring",
+        "fleet",
+        "fuel",
+        "home",
+        "insurance",
+        "legal",
+        "lists",
+        "maintenance",
+        "reports",
+        "safety",
+        "settlements",
+        "tasks"
+      ],
       "cols": ["load"],
       "leafRe": ".*"
     },
@@ -37,7 +70,14 @@
       "task": "WAVE-A-trailer-all-modules",
       "pr": "this PR",
       "guard": "scripts/verify-wave-a-trailer-all-modules.mjs",
-      "modules": ["dispatch", "fleet", "insurance", "lists", "maintenance", "safety"],
+      "modules": [
+        "dispatch",
+        "fleet",
+        "insurance",
+        "lists",
+        "maintenance",
+        "safety"
+      ],
       "cols": ["trailer"],
       "leafRe": ".*"
     },
@@ -45,7 +85,31 @@
       "task": "WAVE-A-unit-all-modules",
       "pr": "this PR",
       "guard": "scripts/verify-wave-a-unit-all-modules.mjs",
-      "modules": ["accounting", "banking", "compliance", "customers", "dispatch", "docs", "driver-hub", "drivers", "factoring", "fleet", "form_425", "fuel", "home", "insurance", "inventory", "legal", "lists", "maintenance", "reports", "safety", "settlements", "tasks", "vendors"],
+      "modules": [
+        "accounting",
+        "banking",
+        "compliance",
+        "customers",
+        "dispatch",
+        "docs",
+        "driver-hub",
+        "drivers",
+        "factoring",
+        "fleet",
+        "form_425",
+        "fuel",
+        "home",
+        "insurance",
+        "inventory",
+        "legal",
+        "lists",
+        "maintenance",
+        "reports",
+        "safety",
+        "settlements",
+        "tasks",
+        "vendors"
+      ],
       "cols": ["unit"],
       "leafRe": ".*"
     },
@@ -53,7 +117,28 @@
       "task": "WAVE-A-vendor-all-modules",
       "pr": "this PR",
       "guard": "scripts/verify-wave-a-vendor-all-modules.mjs",
-      "modules": ["accounting", "banking", "cash-flow", "compliance", "customers", "dispatch", "docs", "factoring", "finance", "fleet", "fuel", "home", "insurance", "inventory", "legal", "lists", "maintenance", "reports", "safety", "vendors"],
+      "modules": [
+        "accounting",
+        "banking",
+        "cash-flow",
+        "compliance",
+        "customers",
+        "dispatch",
+        "docs",
+        "factoring",
+        "finance",
+        "fleet",
+        "fuel",
+        "home",
+        "insurance",
+        "inventory",
+        "legal",
+        "lists",
+        "maintenance",
+        "reports",
+        "safety",
+        "vendors"
+      ],
       "cols": ["vendor"],
       "leafRe": ".*"
     },
@@ -61,7 +146,24 @@
       "task": "WAVE-A-customer-all-modules",
       "pr": "this PR",
       "guard": "scripts/verify-wave-a-customer-all-modules.mjs",
-      "modules": ["accounting", "banking", "cash-flow", "customers", "dispatch", "docs", "factoring", "finance", "fleet", "home", "insurance", "legal", "lists", "maintenance", "reports", "safety"],
+      "modules": [
+        "accounting",
+        "banking",
+        "cash-flow",
+        "customers",
+        "dispatch",
+        "docs",
+        "factoring",
+        "finance",
+        "fleet",
+        "home",
+        "insurance",
+        "legal",
+        "lists",
+        "maintenance",
+        "reports",
+        "safety"
+      ],
       "cols": ["customer"],
       "leafRe": ".*"
     },
@@ -69,7 +171,31 @@
       "task": "WAVE-A-driver-all-modules",
       "pr": "this PR",
       "guard": "scripts/verify-wave-a-driver-all-modules.mjs",
-      "modules": ["accounting", "banking", "cash-flow", "compliance", "customers", "dispatch", "docs", "driver-hub", "drivers", "factoring", "fleet", "form_425", "fuel", "home", "insurance", "legal", "lists", "maintenance", "reports", "safety", "settlements", "tasks", "vendors"],
+      "modules": [
+        "accounting",
+        "banking",
+        "cash-flow",
+        "compliance",
+        "customers",
+        "dispatch",
+        "docs",
+        "driver-hub",
+        "drivers",
+        "factoring",
+        "fleet",
+        "form_425",
+        "fuel",
+        "home",
+        "insurance",
+        "legal",
+        "lists",
+        "maintenance",
+        "reports",
+        "safety",
+        "settlements",
+        "tasks",
+        "vendors"
+      ],
       "cols": ["driver"],
       "leafRe": ".*"
     },
@@ -77,7 +203,37 @@
       "task": "WAVE-B-connectivity-all-modules",
       "pr": "this PR",
       "guard": "scripts/verify-wave-b-connectivity-all-modules.mjs",
-      "modules": ["accounting", "banking", "cash-flow", "compliance", "customers", "dispatch", "docs", "driver-hub", "drivers", "factoring", "finance", "fleet", "form_425", "fuel", "help", "home", "insurance", "inventory", "legal", "lists", "maintenance", "program", "reports", "safety", "settlements", "system", "tasks", "users", "vendors"],
+      "modules": [
+        "accounting",
+        "banking",
+        "cash-flow",
+        "compliance",
+        "customers",
+        "dispatch",
+        "docs",
+        "driver-hub",
+        "drivers",
+        "factoring",
+        "finance",
+        "fleet",
+        "form_425",
+        "fuel",
+        "help",
+        "home",
+        "insurance",
+        "inventory",
+        "legal",
+        "lists",
+        "maintenance",
+        "program",
+        "reports",
+        "safety",
+        "settlements",
+        "system",
+        "tasks",
+        "users",
+        "vendors"
+      ],
       "cols": ["connectivity"],
       "leafRe": ".*"
     },
@@ -166,7 +322,15 @@
       "pr": "#5958",
       "guard": "scripts/verify-steps/3114-verify-book-load-stamps-linkage-fks.mjs",
       "modules": ["dispatch"],
-      "cols": ["customer", "driver", "unit", "trailer", "load", "connectivity", "reverse_link"],
+      "cols": [
+        "customer",
+        "driver",
+        "unit",
+        "trailer",
+        "load",
+        "connectivity",
+        "reverse_link"
+      ],
       "leafRe": "^(secondary\\.book_load|planning\\.reserve|home\\.|load_board|load\\.)"
     },
     {
@@ -430,7 +594,14 @@
       "pr": "this PR",
       "guard": "scripts/verify-steps/1033-verify-at-risk-queue-error-entitylink.mjs",
       "modules": ["dispatch"],
-      "cols": ["customer", "driver", "unit", "load", "connectivity", "reverse_link"],
+      "cols": [
+        "customer",
+        "driver",
+        "unit",
+        "load",
+        "connectivity",
+        "reverse_link"
+      ],
       "leafRe": "^queues\\.at_risk$"
     },
     {
@@ -438,7 +609,14 @@
       "pr": "this PR",
       "guard": "scripts/verify-steps/1024-verify-late-arrivals-error-entitylink.mjs",
       "modules": ["dispatch"],
-      "cols": ["customer", "driver", "unit", "load", "connectivity", "reverse_link"],
+      "cols": [
+        "customer",
+        "driver",
+        "unit",
+        "load",
+        "connectivity",
+        "reverse_link"
+      ],
       "leafRe": "^queues\\.late$"
     },
     {
@@ -446,7 +624,14 @@
       "pr": "this PR",
       "guard": "scripts/verify-steps/2978-verify-entity-label-rejects-uuid-shaped-name.mjs",
       "modules": ["dispatch"],
-      "cols": ["customer", "driver", "unit", "load", "connectivity", "reverse_link"],
+      "cols": [
+        "customer",
+        "driver",
+        "unit",
+        "load",
+        "connectivity",
+        "reverse_link"
+      ],
       "leafRe": "^queues\\.detention$"
     },
     {
@@ -494,7 +679,14 @@
       "pr": "this PR",
       "guard": "scripts/verify-steps/2978-verify-entity-label-rejects-uuid-shaped-name.mjs",
       "modules": ["dispatch"],
-      "cols": ["customer", "driver", "unit", "load", "connectivity", "reverse_link"],
+      "cols": [
+        "customer",
+        "driver",
+        "unit",
+        "load",
+        "connectivity",
+        "reverse_link"
+      ],
       "leafRe": "^home\\.overview$"
     },
     {
@@ -502,7 +694,14 @@
       "pr": "this PR",
       "guard": "scripts/verify-dispatch-planner-calendar.mjs",
       "modules": ["dispatch"],
-      "cols": ["customer", "driver", "unit", "load", "connectivity", "reverse_link"],
+      "cols": [
+        "customer",
+        "driver",
+        "unit",
+        "load",
+        "connectivity",
+        "reverse_link"
+      ],
       "leafRe": "^planning\\.(calendar|loads|timeline)$"
     },
     {
@@ -798,7 +997,13 @@
       "pr": "this PR",
       "guard": "scripts/verify-equipment-transfer-trailer-linkage.mjs",
       "modules": ["dispatch", "fleet", "drivers"],
-      "cols": ["trailer", "driver", "connectivity", "reverse_link", "picker_law"],
+      "cols": [
+        "trailer",
+        "driver",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ],
       "leafRe": "^(equipment|transfer|trailer|driver|profile|dispatch|create)"
     },
     {
@@ -822,7 +1027,13 @@
       "pr": "this PR",
       "guard": "scripts/verify-cargo-claim-customer-reverse.mjs",
       "modules": ["safety", "customers", "dispatch"],
-      "cols": ["customer", "load", "connectivity", "reverse_link", "picker_law"],
+      "cols": [
+        "customer",
+        "load",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ],
       "leafRe": "^(cargo|claim|customer|load|profile|detail|create)"
     },
     {
@@ -910,16 +1121,57 @@
       "pr": "this PR",
       "guard": "scripts/verify-unit-finance-gl-je-reverse.mjs",
       "modules": ["fleet", "accounting"],
-      "cols": ["unit", "ap_bill", "expense", "gl_je", "connectivity", "reverse_link"],
+      "cols": [
+        "unit",
+        "ap_bill",
+        "expense",
+        "gl_je",
+        "connectivity",
+        "reverse_link"
+      ],
       "leafRe": "^unit\\.detail\\.finance_linkage$"
     },
     {
       "task": "BANK-LINKAGE-GL-JE-REVERSE",
       "pr": "this PR",
       "guard": "scripts/verify-bank-linkage-gl-je-reverse.mjs",
-      "modules": ["banking", "accounting", "drivers", "dispatch", "fleet", "vendors", "customers"],
-      "cols": ["bank", "gl_je", "driver", "unit", "trailer", "load", "vendor", "customer", "connectivity", "reverse_link"],
+      "modules": [
+        "banking",
+        "accounting",
+        "drivers",
+        "dispatch",
+        "fleet",
+        "vendors",
+        "customers"
+      ],
+      "cols": [
+        "bank",
+        "gl_je",
+        "driver",
+        "unit",
+        "trailer",
+        "load",
+        "vendor",
+        "customer",
+        "connectivity",
+        "reverse_link"
+      ],
       "leafRe": "^(unit\\.profile\\.bank_txns|trailer\\.profile\\.bank_txns|.*bank.*|.*linked.*transaction.*)$"
+    },
+    {
+      "task": "LINK-F5132-EMBEDDED-ASSIGNMENT-REVERSE-LINKS",
+      "pr": "this PR",
+      "guard": "scripts/verify-embedded-assignment-reverse-links.mjs",
+      "modules": ["drivers", "fleet", "safety", "dispatch", "maintenance"],
+      "cols": [
+        "unit",
+        "load",
+        "driver",
+        "work_order",
+        "connectivity",
+        "reverse_link"
+      ],
+      "leafRe": "^(profiles\\.detail|trailer\\.profile\\.assignment|accidents\\.list|safety_events\\.list|load\\.drawer\\.overview|maintenance\\.modal\\.work_order_detail)$"
     }
   ]
 }
