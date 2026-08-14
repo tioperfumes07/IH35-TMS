@@ -1,6 +1,7 @@
 {
   "_README": "Shipped Wave-A writers that green Matrix Box 3 Built. Updated when a Pxx task merges with guard+smoke. Live (Box 4) still requires PROD-VERIFIED ledger. leafRe must match docs/specs/scoreboard/modules/*.required.json leaf ids; cols must match column ids (picker_law not picker).",
   "entries": [
+    {"task":"VERTICAL-CONNECTIVITY-MAINTENANCE-WO-CREATE-MODAL","modules":["maintenance"],"cols":["connectivity"],"leafRe":"^maintenance\\.modal\\.work_order_create$","guard":"scripts/verify-maintenance-work-order-create-modal-connectivity.mjs","live":"BLOCKED"},
     {"task":"VERTICAL-CONNECTIVITY-MAINTENANCE-TIRE-CREATORS","modules":["maintenance"],"cols":["connectivity"],"leafRe":"^tires\\.(create_record|create_brand)$","guard":"scripts/verify-maintenance-tire-creators-connectivity.mjs","live":"BLOCKED"},
     {"task":"VERTICAL-CONNECTIVITY-MAINTENANCE-SEVERE-REPAIRS","modules":["maintenance"],"cols":["connectivity"],"leafRe":"^severe_repairs\\.convert_to_wo$","guard":"scripts/verify-maintenance-severe-repair-connectivity.mjs","live":"BLOCKED"},
     {"task":"VERTICAL-CONNECTIVITY-SAFETY-ELD-AUDIT","modules":["safety"],"cols":["connectivity"],"leafRe":"^eld_audit\\.list$","guard":"scripts/verify-safety-eld-audit-connectivity.mjs","live":"BLOCKED"},
