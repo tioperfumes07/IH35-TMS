@@ -1236,6 +1236,14 @@
       "modules": ["customers", "vendors", "lists", "users"],
       "cols": ["reverse_link"],
       "leafRe": "^(home\\.roster|list\\.(view_list|view_master_detail|segment\\.(preferred|watch|factored))|hub\\.names_search|detail)$"
+    },
+    {
+      "task": "LINK-F5150-OPERATIONAL-QUEUE-WORKFLOW-LINKS",
+      "pr": "this PR",
+      "guard": "scripts/verify-operational-queue-workflow-links.mjs",
+      "modules": ["banking", "factoring", "reports"],
+      "cols": ["reverse_link"],
+      "leafRe": "^(reconciliation|factoring|driver_escrow|submit\\.queue|batches\\.create|factors\\.admin|faro\\.import|accounting\\.(list|detail|factor_recon)|banking\\.entry|factoring\\.wizard\\.batch|report\\.(management|per_truck_cpm|fuel_reconciliation|dispatch_margin|geofence_dwell))$"
     }
   ]
 }
