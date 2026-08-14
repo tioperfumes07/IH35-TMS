@@ -665,12 +665,19 @@ export class SamsaraClient {
     return this.countEntity("vehicles");
   }
 
-  async getHosLogs(_driverId: string, _range: { start: string; end: string }): Promise<HosLog[]> {
-    void _driverId;
-    void _range;
+  async getHosLogs(driverId: string, range: { start: string; end: string }): Promise<HosLog[]> {
     const token = this._token();
     if (!token) return [];
-    return [];
+    const url = new URL(`${SAMSARA_API_BASE}/v1/fleet/drivers/${encodeURIComponent(driverId)}/log_edits`);
+    url.searchParams.set("startMs", String(new Date(range.start).getTime()));
+    url.searchParams.set("endMs", String(new Date(range.end).getTime()));
+    const res = await withCircuitBreaker("samsara", () => samsaraFetch(url, { headers: bearerHeaders(token) }));
+    const json = await readJsonResponse(res);
+    if (!res.ok) {
+      throw new SamsaraApiError(`samsara_hos_log_edits_http_${res.status}`, res.status, json, res.status === 429 || res.status >= 500);
+    }
+    const rows = Array.isArray(json.logEdits) ? json.logEdits : Array.isArray(json.data) ? json.data : [];
+    return rows.filter((row): row is HosLog => Boolean(asObject(row)));
   }
 
   async getDashcamClipUrl(clipId: string): Promise<string | null> {

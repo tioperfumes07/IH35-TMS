@@ -1,4 +1,6 @@
 import { companyBusinessDate } from "../../lib/company-business-date.js";
+import { decryptSamsaraSecret } from "../../lib/samsara-crypto.js";
+import { SamsaraClient, type HosLog } from "../../integrations/samsara/samsara-client.js";
 
 export type EldLogEditRow = {
   id: string;
@@ -47,27 +49,82 @@ type Queryable = {
 
 const READ_ONLY = true as const;
 
-// ELD-1: the ELD edit-history feature mirrors Samsara HOS log edits from `samsara.hos_log_edits`.
-// That table's real source + migration are a Jorge-gated follow-up, so on environments where it is
-// not yet provisioned the two SELECTs below would raise 42P01 (`relation "samsara.hos_log_edits"
-// does not exist`) and 500 EVERY request — the whole ELD nav module hard-crashes. Guard the reads
-// with `to_regclass` so, until the table exists, the endpoint returns an honest EMPTY history
-// (source-not-connected) instead of crashing. The feature is preserved, not removed: the instant the
-// gated table lands, these queries run unchanged and real data flows through. Fail-honest, not silent
-// — the empty result is a truthful "no ELD edit source connected yet", not a masked error.
-async function eldEditSourceExists(client: Queryable): Promise<boolean> {
-  const res = await client.query<{ reg: string | null }>(
-    `SELECT to_regclass('samsara.hos_log_edits')::text AS reg`
-  );
-  return Boolean(res.rows[0]?.reg);
+type DriverSourceRow = {
+  samsara_driver_id: string;
+  driver_name: string | null;
+  encrypted_api_token: Buffer | null;
+  api_token_encrypted: Buffer | null;
+  samsara_org_id: string | null;
+  is_enabled: boolean;
+};
+
+type FetchLogEdits = (driverId: string, range: { start: string; end: string }) => Promise<HosLog[]>;
+
+function textValue(row: HosLog, ...keys: string[]): string | null {
+  for (const key of keys) {
+    const value = row[key];
+    if (typeof value === "string" && value.trim()) return value.trim();
+    if (typeof value === "number" && Number.isFinite(value)) return String(value);
+  }
+  return null;
 }
 
-function emptyHistory(
-  driverUuid: string,
-  from: string,
-  to: string
-): EldEditHistoryResult {
-  return { driver_uuid: driverUuid, driver_name: null, from, to, edits: [], read_only: READ_ONLY };
+function stateValue(value: unknown): string | null {
+  if (value === null || value === undefined) return null;
+  if (typeof value === "string") return value;
+  return JSON.stringify(value);
+}
+
+function editTimestamp(row: HosLog): string {
+  const iso = textValue(row, "editedAt", "editTime", "timestamp", "createdAt");
+  if (iso) return new Date(iso).toISOString();
+  const ms = Number(textValue(row, "editTimeMs", "editedAtMs", "timestampMs", "createdAtMs"));
+  if (Number.isFinite(ms) && ms > 0) return new Date(ms).toISOString();
+  throw new Error("samsara_hos_log_edit_missing_timestamp");
+}
+
+function mapApiEdit(row: HosLog, index: number): EldEditHistoryEntry {
+  return {
+    id: textValue(row, "id", "logEditId", "editId") ?? `samsara-edit-${index}`,
+    edited_at: editTimestamp(row),
+    edited_by: textValue(row, "editedBy", "editorName", "userName", "actorName") ?? "Unknown editor",
+    reason: textValue(row, "reason", "remark", "annotation") ?? "No reason recorded",
+    field_name: textValue(row, "fieldName", "editType", "type") ?? "duty_status",
+    before_state: stateValue(row.beforeState ?? row.oldValue ?? row.before),
+    after_state: stateValue(row.afterState ?? row.newValue ?? row.after),
+  };
+}
+
+async function resolveDriverSource(client: Queryable, operatingCompanyId: string, driverUuid: string): Promise<DriverSourceRow> {
+  const res = await client.query<DriverSourceRow>(
+    `SELECT sd.samsara_driver_id,
+            NULLIF(BTRIM(CONCAT_WS(' ', d.first_name, d.last_name)), '') AS driver_name,
+            sc.encrypted_api_token, sc.api_token_encrypted, sc.samsara_org_id, sc.is_enabled
+       FROM mdata.drivers d
+       JOIN integrations.samsara_drivers sd
+         ON sd.operating_company_id = d.operating_company_id
+        AND sd.local_driver_id = d.id
+       JOIN integrations.samsara_config sc
+         ON sc.operating_company_id = d.operating_company_id
+      WHERE d.operating_company_id = $1::uuid
+        AND d.id = $2::uuid
+        AND d.deactivated_at IS NULL
+      LIMIT 1`,
+    [operatingCompanyId, driverUuid]
+  );
+  const row = res.rows[0];
+  if (!row || !row.is_enabled) throw new Error("eld_audit_source_not_configured");
+  return row;
+}
+
+function sourceFetcher(row: DriverSourceRow): FetchLogEdits {
+  const encrypted = Buffer.isBuffer(row.encrypted_api_token) && row.encrypted_api_token.length > 0
+    ? row.encrypted_api_token
+    : row.api_token_encrypted;
+  const token = decryptSamsaraSecret(encrypted);
+  if (!token) throw new Error("eld_audit_source_not_configured");
+  const api = new SamsaraClient({ apiToken: token, samsaraOrgId: row.samsara_org_id });
+  return (driverId, range) => api.getHosLogs(driverId, range);
 }
 
 function mapRow(row: EldLogEditRow): EldEditHistoryEntry {
@@ -100,45 +157,21 @@ export async function getEditHistory(
   operatingCompanyId: string,
   driverUuid: string,
   from: string,
-  to: string
+  to: string,
+  fetchLogEdits?: FetchLogEdits
 ): Promise<EldEditHistoryResult> {
-  // ELD-1: return an honest empty history when the Samsara mirror table is not yet provisioned,
-  // rather than 500-ing the whole ELD module (see eldEditSourceExists).
-  if (!(await eldEditSourceExists(client))) {
-    return emptyHistory(driverUuid, from, to);
-  }
-  const res = await client.query<EldLogEditRow>(
-    `
-      SELECT
-        e.id::text AS id,
-        e.driver_uuid::text AS driver_uuid,
-        NULLIF(BTRIM(CONCAT_WS(' ', d.first_name, d.last_name)), '') AS driver_name,
-        e.edited_at,
-        e.edited_by,
-        e.reason,
-        e.field_name,
-        e.before_state,
-        e.after_state
-      FROM samsara.hos_log_edits e
-      LEFT JOIN mdata.drivers d
-        ON d.id = e.driver_uuid
-       AND d.operating_company_id = e.operating_company_id
-      WHERE e.operating_company_id = $1::uuid
-        AND e.driver_uuid = $2::uuid
-        AND e.edited_at >= $3::timestamptz
-        AND e.edited_at < ($4::date + INTERVAL '1 day')
-      ORDER BY e.edited_at ASC, e.field_name ASC
-    `,
-    [operatingCompanyId, driverUuid, from, to]
-  );
-
-  const driverName = res.rows[0]?.driver_name ?? null;
+  const source = await resolveDriverSource(client, operatingCompanyId, driverUuid);
+  const rows = await (fetchLogEdits ?? sourceFetcher(source))(source.samsara_driver_id, {
+    start: `${from}T00:00:00-05:00`,
+    end: `${to}T23:59:59.999-05:00`,
+  });
+  const edits = rows.map(mapApiEdit).sort((a, b) => a.edited_at.localeCompare(b.edited_at));
   return {
     driver_uuid: driverUuid,
-    driver_name: driverName,
+    driver_name: source.driver_name,
     from,
     to,
-    edits: res.rows.map(mapRow),
+    edits,
     read_only: READ_ONLY,
   };
 }
@@ -147,7 +180,8 @@ export async function getRecentEditHistory(
   client: Queryable,
   operatingCompanyId: string,
   driverUuid: string,
-  limit = 25
+  limit = 25,
+  fetchLogEdits?: FetchLogEdits
 ): Promise<EldEditHistoryResult> {
   // Company wall-clock day (America/Chicago), not the UTC calendar day — `.toISOString().slice(0,10)`
   // rolls to tomorrow after ~19:00 Central, silently shifting the "last 30 days" window (same root
@@ -156,41 +190,12 @@ export async function getRecentEditHistory(
   const to = companyBusinessDate(now);
   const from = companyBusinessDate(new Date(now.getTime() - 30 * 86_400_000));
 
-  // ELD-1: honest empty history when the Samsara mirror table is not yet provisioned (no 500).
-  if (!(await eldEditSourceExists(client))) {
-    return emptyHistory(driverUuid, from, to);
-  }
-
-  const res = await client.query<EldLogEditRow>(
-    `
-      SELECT
-        e.id::text AS id,
-        e.driver_uuid::text AS driver_uuid,
-        NULLIF(BTRIM(CONCAT_WS(' ', d.first_name, d.last_name)), '') AS driver_name,
-        e.edited_at,
-        e.edited_by,
-        e.reason,
-        e.field_name,
-        e.before_state,
-        e.after_state
-      FROM samsara.hos_log_edits e
-      LEFT JOIN mdata.drivers d
-        ON d.id = e.driver_uuid
-       AND d.operating_company_id = e.operating_company_id
-      WHERE e.operating_company_id = $1::uuid
-        AND e.driver_uuid = $2::uuid
-      ORDER BY e.edited_at DESC, e.field_name ASC
-      LIMIT $3::int
-    `,
-    [operatingCompanyId, driverUuid, limit]
-  );
-
-  const edits = res.rows.map(mapRow).reverse();
-  const driverName = res.rows[0]?.driver_name ?? null;
+  const result = await getEditHistory(client, operatingCompanyId, driverUuid, from, to, fetchLogEdits);
+  const edits = result.edits.slice(-limit);
 
   return {
     driver_uuid: driverUuid,
-    driver_name: driverName,
+    driver_name: result.driver_name,
     from,
     to,
     edits,
