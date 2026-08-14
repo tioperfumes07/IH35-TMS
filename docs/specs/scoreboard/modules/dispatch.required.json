@@ -715,7 +715,6 @@
         "driver",
         "unit",
         "load",
-        "vendor",
         "connectivity",
         "reverse_link",
         "picker_law"
@@ -1837,6 +1836,18 @@
           "id": "dispatch.parity.book_load_equipment_section",
           "removed": [
             "customer"
+          ]
+        }
+      ]
+    },
+    "vendor_column_2026_08_14_overclaim": {
+      "finding": "LINK-F5166-VENDOR-COLUMN-VERTICAL-SWEEP",
+      "note": "load.drawer.customs is false \u2014 CustomsTab.tsx only shows port/direction/date/eManifest and a link to border-crossing history, no vendor/broker field rendered on this specific tab. queues.border and queues.border_history (not touched here \u2014 already correctly not flagged) both genuinely resolve a real customs_broker_id (a vendor-category record) via a real picker and EntityLink kind=\"vendor\".",
+      "drops": [
+        {
+          "id": "load.drawer.customs",
+          "removed": [
+            "vendor"
           ]
         }
       ]

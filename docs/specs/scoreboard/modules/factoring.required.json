@@ -167,7 +167,6 @@
       "sub": "Factor profile + statement history",
       "route_hint": "/factoring/statements-settings",
       "required": [
-        "vendor",
         "qbo_chrome",
         "connectivity",
         "reverse_link"
@@ -258,7 +257,6 @@
       "sub": "Factors + customer assignment + LOR",
       "route_hint": "/factoring/factors",
       "required": [
-        "vendor",
         "customer",
         "picker_law",
         "qbo_chrome",
@@ -335,7 +333,6 @@
       "sub": "Factor recon workspace",
       "route_hint": "/accounting/factor-reconciliation",
       "required": [
-        "vendor",
         "liability",
         "connectivity",
         "reverse_link",
@@ -715,6 +712,30 @@
           "id": "factoring.parity.driver_autocomplete",
           "removed": [
             "customer"
+          ]
+        }
+      ]
+    },
+    "vendor_column_2026_08_14_overclaim": {
+      "finding": "LINK-F5166-VENDOR-COLUMN-VERTICAL-SWEEP",
+      "note": "3 of 5 factoring leaves flagged here are false: home.statements_settings shows invariant/statement-history data with zero vendor references; factors.admin and accounting.factor_recon track factors as their own entity type, never as vendor records. home.equipment_loans and home.vendor_merges (not touched here \u2014 already correctly not flagged) both genuinely operate on real vendor records (a real lender_vendor_id ReferenceSelect, and real vendor-merge create/history against mdata.vendors).",
+      "drops": [
+        {
+          "id": "home.statements_settings",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "factors.admin",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "accounting.factor_recon",
+          "removed": [
+            "vendor"
           ]
         }
       ]

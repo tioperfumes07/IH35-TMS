@@ -464,7 +464,6 @@
       "sub": "Dedicated AR aging page",
       "route_hint": "/reports/ar-aging",
       "required": [
-        "vendor",
         "gl_je",
         "connectivity",
         "reverse_link",
@@ -494,7 +493,6 @@
       "sub": "GL trial balance",
       "route_hint": "/reports/trial-balance",
       "required": [
-        "vendor",
         "gl_je",
         "connectivity",
         "qbo_chrome"
@@ -506,7 +504,6 @@
       "sub": "Income statement",
       "route_hint": "/reports/profit-loss",
       "required": [
-        "vendor",
         "gl_je",
         "connectivity",
         "qbo_chrome"
@@ -518,7 +515,6 @@
       "sub": "Assets / liabilities / equity",
       "route_hint": "/reports/balance-sheet",
       "required": [
-        "vendor",
         "gl_je",
         "connectivity",
         "qbo_chrome"
@@ -530,7 +526,6 @@
       "sub": "Operating / investing / financing",
       "route_hint": "/reports/cash-flow-statement",
       "required": [
-        "vendor",
         "gl_je",
         "connectivity",
         "qbo_chrome"
@@ -542,7 +537,6 @@
       "sub": "Cash flow report (legacy route)",
       "route_hint": "/reports/cash-flow",
       "required": [
-        "vendor",
         "gl_je",
         "connectivity",
         "qbo_chrome"
@@ -569,7 +563,6 @@
       "sub": "Liquidity + projection",
       "route_hint": "/reports/cash-flow-overview",
       "required": [
-        "vendor",
         "gl_je",
         "connectivity",
         "qbo_chrome"
@@ -581,7 +574,6 @@
       "sub": "Driver pay breakdown",
       "route_hint": "/reports/settlement-summary",
       "required": [
-        "vendor",
         "connectivity",
         "qbo_chrome",
         "driver",
@@ -596,7 +588,6 @@
       "route_hint": "/reports/customer-profitability",
       "required": [
         "customer",
-        "vendor",
         "connectivity",
         "reverse_link",
         "qbo_chrome",
@@ -690,8 +681,7 @@
         "connectivity",
         "reverse_link",
         "qbo_chrome",
-        "load",
-        "vendor"
+        "load"
       ]
     },
     {
@@ -705,8 +695,7 @@
         "unit",
         "connectivity",
         "qbo_chrome",
-        "unit",
-        "vendor"
+        "unit"
       ]
     },
     {
@@ -850,7 +839,6 @@
       "sub": "Daily liquidity",
       "route_hint": "/reports/run/cash-position",
       "required": [
-        "vendor",
         "connectivity",
         "qbo_chrome"
       ]
@@ -2113,6 +2101,84 @@
           "id": "runner.maint_cost_unit",
           "removed": [
             "customer"
+          ]
+        }
+      ]
+    },
+    "vendor_column_2026_08_14_overclaim": {
+      "finding": "LINK-F5166-VENDOR-COLUMN-VERTICAL-SWEEP",
+      "note": "12 of 14 reports leaves carried no vendor data: report.ar_aging is correctly customer-scoped only; GL-rollup reports (trial_balance/profit_loss/balance_sheet/cash_flow*/settlement_summary) and customer/unit-scoped reports (customer_profitability/fuel_reconciliation/maintenance_cost_per_unit) render zero vendor_id; runner.cash_position has no backing runner config at all (falls back to an unavailable-report stub). Only report.management (embedded open-vendor-balances table) and report.ap_aging genuinely render EntityLink kind=\"vendor\".",
+      "drops": [
+        {
+          "id": "report.ar_aging",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "report.trial_balance",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "report.profit_loss",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "report.balance_sheet",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "report.cash_flow_statement",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "report.cash_flow",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "report.cash_flow_overview",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "report.settlement_summary",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "report.customer_profitability",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "report.fuel_reconciliation",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "report.maintenance_cost_per_unit",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "runner.cash_position",
+          "removed": [
+            "vendor"
           ]
         }
       ]

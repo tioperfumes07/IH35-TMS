@@ -171,7 +171,6 @@
       "sub": "Accounting home",
       "route_hint": "/home",
       "required": [
-        "vendor",
         "expense",
         "connectivity"
       ]
@@ -263,7 +262,6 @@
       "route_hint": "/maintenance",
       "required": [
         "unit",
-        "vendor",
         "connectivity"
       ]
     },
@@ -841,6 +839,24 @@
           "id": "jump.dispatch",
           "removed": [
             "customer"
+          ]
+        }
+      ]
+    },
+    "vendor_column_2026_08_14_overclaim": {
+      "finding": "LINK-F5166-VENDOR-COLUMN-VERTICAL-SWEEP",
+      "note": "both home leaves flagged here are false: role.accountant (AccountingHome.tsx) has zero vendor references across its 4 KPI/aging widgets, and jump.maintenance is a pure static nav card with no entity data.",
+      "drops": [
+        {
+          "id": "role.accountant",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "jump.maintenance",
+          "removed": [
+            "vendor"
           ]
         }
       ]

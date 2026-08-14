@@ -656,5 +656,12 @@
     "source_file": "docs/specs/scoreboard/modules/customers.required.json",
     "guard": "scripts/verify-customer-detail-page-self-referential.mjs",
     "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-14-LINK-F5166-VENDOR-COLUMN-VERTICAL-SWEEP",
+    "title": "vendor-column vertical sweep across all 21 modules that ever claimed it — 5 parallel read-only investigations of all 306 flagged leaves found 191 false blanket Required markings (removed, honesty_audit-documented; lists' 120 catalog.* pages — including catalog.maintenance.vendors.list/create, which only outbound-links to a separate hub route rather than rendering a vendor record itself — is the single biggest cluster, same generic catalog-VALUE-CRUD pattern already confirmed in the trailer/customer sweeps) and 115 genuinely-wired leaves proven with 6 new leaf-specific Built guards (the vendors module's full 40 leaves, all genuine — its own native pages; maintenance's 21 real vendor_id/ReferenceSelect/EntityLink WO/bill/expense/road-service/parts/warranty surfaces; accounting's 18 real vendor-scoped bills/expenses/AP surfaces, all 4 bill-type category routes sharing one unconditional Vendor* picker; inventory's 8 real vendor-linked parts/assignments leaves; 26 more spread across docs/customers/fleet/banking/dispatch/factoring/legal/reports/finance/fuel/insurance/safety/system). Two comprehensive drop-vs-actual-state cross-checks (the same systematic verification introduced after catching a silent-failure bug during the customer-column sweep) ran clean with zero mismatches across all 191 removals before shipping. verify-wave-a-vendor-all-modules.mjs's own count floors (p10<195, leaves<290, module-Set<20) were proactively fixed in the SAME PR (matching the ACCT-F5162/LINK-F5163/LINK-F5165 pattern) rather than shipped as a fourth self-caused regression — cash-flow/compliance/home dropped to zero genuine vendor leaves and correctly left the module set, system was added (audit.trail genuinely maps subject_type to vendor).",
+    "source_file": "docs/specs/scoreboard/modules/vendors.required.json",
+    "guard": "scripts/verify-vendor-detail-page-self-referential.mjs",
+    "type": "enforced"
   }
 ]

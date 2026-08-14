@@ -207,7 +207,6 @@
       "route_hint": "/legal/matters",
       "required": [
         "driver",
-        "vendor",
         "unit",
         "connectivity",
         "reverse_link"
@@ -220,7 +219,6 @@
       "route_hint": "/legal/matters/new",
       "required": [
         "driver",
-        "vendor",
         "unit",
         "load",
         "liability",
@@ -237,7 +235,6 @@
       "route_hint": "/legal/matters/:id",
       "required": [
         "driver",
-        "vendor",
         "unit",
         "liability",
         "connectivity",
@@ -692,6 +689,30 @@
           "id": "matters.detail",
           "removed": [
             "customer"
+          ]
+        }
+      ]
+    },
+    "vendor_column_2026_08_14_overclaim": {
+      "finding": "LINK-F5166-VENDOR-COLUMN-VERTICAL-SWEEP",
+      "note": "3 of 5 legal leaves flagged here are false: all 3 matters.* leaves (list/create/detail) have zero vendor fields \u2014 legal matters use free-text \"opposing party\" and link only driver/claim/lawsuit/unit/trailer. contracts.list/create (not touched here \u2014 already correctly not flagged) both genuinely resolve a real vendor party via a real vendor ReferenceSelect and EntityLink kind=\"vendor\" signer resolution.",
+      "drops": [
+        {
+          "id": "matters.list",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "matters.create",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "matters.detail",
+          "removed": [
+            "vendor"
           ]
         }
       ]

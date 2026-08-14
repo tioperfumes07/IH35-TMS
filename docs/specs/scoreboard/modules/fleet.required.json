@@ -135,7 +135,6 @@
         "driver",
         "unit",
         "trailer",
-        "vendor",
         "connectivity",
         "reverse_link",
         "qbo_chrome"
@@ -149,7 +148,6 @@
       "required": [
         "driver",
         "unit",
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity",
@@ -165,7 +163,6 @@
         "driver",
         "unit",
         "trailer",
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity",
@@ -310,7 +307,6 @@
         "driver",
         "unit",
         "trailer",
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity",
@@ -323,7 +319,6 @@
       "sub": "Row Edit \u00b7 trailer",
       "route_hint": "/fleet",
       "required": [
-        "vendor",
         "qbo_chrome",
         "connectivity",
         "reverse_link",
@@ -338,7 +333,6 @@
       "required": [
         "driver",
         "unit",
-        "vendor",
         "connectivity",
         "reverse_link",
         "qbo_chrome"
@@ -579,7 +573,6 @@
       "required": [
         "driver",
         "unit",
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity",
@@ -627,7 +620,6 @@
       "route_hint": "/fleet/units/:id",
       "required": [
         "unit",
-        "vendor",
         "connectivity",
         "reverse_link"
       ]
@@ -796,7 +788,6 @@
       "required": [
         "trailer",
         "unit",
-        "vendor",
         "connectivity",
         "reverse_link"
       ]
@@ -926,7 +917,6 @@
       "required": [
         "trailer",
         "unit",
-        "vendor",
         "qbo_chrome",
         "connectivity",
         "reverse_link"
@@ -1437,6 +1427,72 @@
           "id": "unit.profile.current_load",
           "removed": [
             "customer"
+          ]
+        }
+      ]
+    },
+    "vendor_column_2026_08_14_overclaim": {
+      "finding": "LINK-F5166-VENDOR-COLUMN-VERTICAL-SWEEP",
+      "note": "10 of 13 fleet leaves are false: the roster/create-unit/create-trailer/edit surfaces and unit/trailer identity tabs have zero vendor references; unit.edit.financial's qbo_vendor_id field degrades to a raw text input (no picker) in EditVehicleModal.tsx, distinct from the genuine picker on the profile page itself; trailer.profile.maintenance and trailer.edit have zero vendor wiring anywhere. unit.profile.maintenance (KEPT \u2014 real vendor via a backend LEFT JOIN mdata.vendors, shown as plain text but genuinely vendor-backed), unit.profile.qbo_mapping (KEPT \u2014 real QboCombobox entityType=\"vendor\"), and unit.detail.finance_linkage (KEPT \u2014 real vendor_name alongside a real EntityLink kind=\"bill\") all keep the Required marking.",
+      "drops": [
+        {
+          "id": "home.roster",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "home.create_unit",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "home.create_trailer",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "roster.row.edit_unit",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "roster.row.edit_trailer",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "unit.profile.identity",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "unit.edit.identity",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "unit.edit.financial",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "trailer.profile.maintenance",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "trailer.edit",
+          "removed": [
+            "vendor"
           ]
         }
       ]

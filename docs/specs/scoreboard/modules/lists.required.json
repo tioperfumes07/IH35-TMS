@@ -1094,7 +1094,6 @@
       "route_hint": "/lists/maintenance/labor-rates",
       "required": [
         "unit",
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1107,7 +1106,6 @@
       "route_hint": "/lists/maintenance/labor-rates",
       "required": [
         "unit",
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1120,7 +1118,6 @@
       "route_hint": "/lists/maintenance/part-locations",
       "required": [
         "unit",
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1133,7 +1130,6 @@
       "route_hint": "/lists/maintenance/part-locations",
       "required": [
         "unit",
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1146,7 +1142,6 @@
       "route_hint": "/lists/maintenance/air-bag-catalog",
       "required": [
         "unit",
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1159,7 +1154,6 @@
       "route_hint": "/lists/maintenance/air-bag-catalog",
       "required": [
         "unit",
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1172,7 +1166,6 @@
       "route_hint": "/lists/maintenance/battery-catalog",
       "required": [
         "unit",
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1185,7 +1178,6 @@
       "route_hint": "/lists/maintenance/battery-catalog",
       "required": [
         "unit",
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1198,7 +1190,6 @@
       "route_hint": "/lists/maintenance/pm-intervals",
       "required": [
         "unit",
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1211,7 +1202,6 @@
       "route_hint": "/lists/maintenance/pm-intervals",
       "required": [
         "unit",
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1224,7 +1214,6 @@
       "route_hint": "/lists/maintenance/repair-locations",
       "required": [
         "unit",
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1237,7 +1226,6 @@
       "route_hint": "/lists/maintenance/repair-locations",
       "required": [
         "unit",
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1250,7 +1238,6 @@
       "route_hint": "/lists/maintenance/tire-catalog",
       "required": [
         "unit",
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1263,7 +1250,6 @@
       "route_hint": "/lists/maintenance/tire-catalog",
       "required": [
         "unit",
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1276,7 +1262,6 @@
       "route_hint": "/lists/maintenance/trailer-parts",
       "required": [
         "unit",
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1289,7 +1274,6 @@
       "route_hint": "/lists/maintenance/trailer-parts",
       "required": [
         "unit",
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1302,7 +1286,6 @@
       "route_hint": "/lists/maintenance/truck-parts",
       "required": [
         "unit",
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1315,7 +1298,6 @@
       "route_hint": "/lists/maintenance/truck-parts",
       "required": [
         "unit",
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1328,7 +1310,6 @@
       "route_hint": "/lists/maintenance/work-order-templates",
       "required": [
         "unit",
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1341,7 +1322,6 @@
       "route_hint": "/lists/maintenance/work-order-templates",
       "required": [
         "unit",
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1354,7 +1334,6 @@
       "route_hint": "/lists/maintenance/failure-codes",
       "required": [
         "unit",
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1367,7 +1346,6 @@
       "route_hint": "/lists/maintenance/failure-codes",
       "required": [
         "unit",
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1380,7 +1358,6 @@
       "route_hint": "/lists/maintenance/labor-codes",
       "required": [
         "unit",
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1393,7 +1370,6 @@
       "route_hint": "/lists/maintenance/labor-codes",
       "required": [
         "unit",
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1406,7 +1382,6 @@
       "route_hint": "/lists/maintenance/parts",
       "required": [
         "unit",
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1419,7 +1394,6 @@
       "route_hint": "/lists/maintenance/parts",
       "required": [
         "unit",
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1432,7 +1406,6 @@
       "route_hint": "/lists/maintenance/parts-catalog",
       "required": [
         "unit",
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1445,7 +1418,6 @@
       "route_hint": "/lists/maintenance/parts-catalog",
       "required": [
         "unit",
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1458,7 +1430,6 @@
       "route_hint": "/lists/maintenance/oem-parts-reference",
       "required": [
         "unit",
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1471,7 +1442,6 @@
       "route_hint": "/lists/maintenance/oem-parts-reference",
       "required": [
         "unit",
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1484,7 +1454,6 @@
       "route_hint": "/lists/maintenance/priority-levels",
       "required": [
         "unit",
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1497,7 +1466,6 @@
       "route_hint": "/lists/maintenance/priority-levels",
       "required": [
         "unit",
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1510,7 +1478,6 @@
       "route_hint": "/lists/maintenance/service-tasks",
       "required": [
         "unit",
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1523,7 +1490,6 @@
       "route_hint": "/lists/maintenance/service-tasks",
       "required": [
         "unit",
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1536,7 +1502,6 @@
       "route_hint": "/lists/maintenance/services-catalog",
       "required": [
         "unit",
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1549,7 +1514,6 @@
       "route_hint": "/lists/maintenance/services-catalog",
       "required": [
         "unit",
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1562,7 +1526,6 @@
       "route_hint": "/lists/maintenance/shop-locations",
       "required": [
         "unit",
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1575,7 +1538,6 @@
       "route_hint": "/lists/maintenance/shop-locations",
       "required": [
         "unit",
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1588,7 +1550,6 @@
       "route_hint": "/lists/maintenance/vendors",
       "required": [
         "unit",
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1601,7 +1562,6 @@
       "route_hint": "/lists/maintenance/vendors",
       "required": [
         "unit",
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1614,7 +1574,6 @@
       "route_hint": "/lists/maintenance/work-order-statuses",
       "required": [
         "unit",
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1627,7 +1586,6 @@
       "route_hint": "/lists/maintenance/work-order-statuses",
       "required": [
         "unit",
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1642,7 +1600,6 @@
         "driver",
         "unit",
         "load",
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1657,7 +1614,6 @@
         "driver",
         "unit",
         "load",
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1672,7 +1628,6 @@
         "driver",
         "unit",
         "load",
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1687,7 +1642,6 @@
         "driver",
         "unit",
         "load",
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1702,7 +1656,6 @@
         "driver",
         "unit",
         "load",
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1717,7 +1670,6 @@
         "driver",
         "unit",
         "load",
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1732,7 +1684,6 @@
         "driver",
         "unit",
         "load",
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1747,7 +1698,6 @@
         "driver",
         "unit",
         "load",
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1762,7 +1712,6 @@
         "driver",
         "unit",
         "load",
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1777,7 +1726,6 @@
         "driver",
         "unit",
         "load",
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1792,7 +1740,6 @@
         "driver",
         "unit",
         "load",
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1807,7 +1754,6 @@
         "driver",
         "unit",
         "load",
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1822,7 +1768,6 @@
         "driver",
         "unit",
         "load",
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1837,7 +1782,6 @@
         "driver",
         "unit",
         "load",
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1852,7 +1796,6 @@
         "driver",
         "unit",
         "load",
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1867,7 +1810,6 @@
         "driver",
         "unit",
         "load",
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1882,7 +1824,6 @@
         "driver",
         "unit",
         "load",
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1897,7 +1838,6 @@
         "driver",
         "unit",
         "load",
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1912,7 +1852,6 @@
         "driver",
         "unit",
         "load",
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1927,7 +1866,6 @@
         "driver",
         "unit",
         "load",
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1942,7 +1880,6 @@
         "driver",
         "unit",
         "load",
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1957,7 +1894,6 @@
         "driver",
         "unit",
         "load",
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1972,7 +1908,6 @@
         "driver",
         "unit",
         "load",
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1987,7 +1922,6 @@
         "driver",
         "unit",
         "load",
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2002,7 +1936,6 @@
         "driver",
         "unit",
         "load",
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2017,7 +1950,6 @@
         "driver",
         "unit",
         "load",
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2032,7 +1964,6 @@
         "driver",
         "unit",
         "load",
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2047,7 +1978,6 @@
         "driver",
         "unit",
         "load",
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2062,7 +1992,6 @@
         "driver",
         "unit",
         "load",
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2077,7 +2006,6 @@
         "driver",
         "unit",
         "load",
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2092,7 +2020,6 @@
         "driver",
         "unit",
         "load",
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2107,7 +2034,6 @@
         "driver",
         "unit",
         "load",
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2359,7 +2285,6 @@
       "sub": "Account Types",
       "route_hint": "/lists/accounting/account-types-lookup",
       "required": [
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2371,7 +2296,6 @@
       "sub": "+ Create \u2014 Account Types",
       "route_hint": "/lists/accounting/account-types-lookup",
       "required": [
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2383,7 +2307,6 @@
       "sub": "Account Types",
       "route_hint": "/lists/accounting/detail-types-lookup",
       "required": [
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2395,7 +2318,6 @@
       "sub": "+ Create \u2014 Account Types",
       "route_hint": "/lists/accounting/detail-types-lookup",
       "required": [
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2407,7 +2329,6 @@
       "sub": "Account Types",
       "route_hint": "/lists/accounting/audit-event-types",
       "required": [
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2419,7 +2340,6 @@
       "sub": "+ Create \u2014 Account Types",
       "route_hint": "/lists/accounting/audit-event-types",
       "required": [
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2431,7 +2351,6 @@
       "sub": "Account Types",
       "route_hint": "/lists/accounting/chart-of-accounts",
       "required": [
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2443,7 +2362,6 @@
       "sub": "+ Create \u2014 Account Types",
       "route_hint": "/lists/accounting/chart-of-accounts",
       "required": [
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2455,7 +2373,6 @@
       "sub": "Detail Types",
       "route_hint": "/lists/accounting/account-types",
       "required": [
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2467,7 +2384,6 @@
       "sub": "+ Create \u2014 Detail Types",
       "route_hint": "/lists/accounting/account-types",
       "required": [
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2479,7 +2395,6 @@
       "sub": "Audit Event Types",
       "route_hint": "/lists/accounting/detail-types",
       "required": [
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2491,7 +2406,6 @@
       "sub": "+ Create \u2014 Audit Event Types",
       "route_hint": "/lists/accounting/detail-types",
       "required": [
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2503,7 +2417,6 @@
       "sub": "Chart of Accounts",
       "route_hint": "/lists/accounting/classes",
       "required": [
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2515,7 +2428,6 @@
       "sub": "+ Create \u2014 Chart of Accounts",
       "route_hint": "/lists/accounting/classes",
       "required": [
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2527,7 +2439,6 @@
       "sub": "Account Type",
       "route_hint": "/lists/accounting/payment-terms",
       "required": [
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2539,7 +2450,6 @@
       "sub": "+ Create \u2014 Account Type",
       "route_hint": "/lists/accounting/payment-terms",
       "required": [
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2551,7 +2461,6 @@
       "sub": "Detail Type",
       "route_hint": "/lists/accounting/posting-templates",
       "required": [
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2563,7 +2472,6 @@
       "sub": "+ Create \u2014 Detail Type",
       "route_hint": "/lists/accounting/posting-templates",
       "required": [
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2575,7 +2483,6 @@
       "sub": "Classes",
       "route_hint": "/lists/accounting/journal-entry-types",
       "required": [
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2587,7 +2494,6 @@
       "sub": "+ Create \u2014 Classes",
       "route_hint": "/lists/accounting/journal-entry-types",
       "required": [
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2599,7 +2505,6 @@
       "sub": "Payment Terms",
       "route_hint": "/lists/accounting/qbo-bulk-link",
       "required": [
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2611,7 +2516,6 @@
       "sub": "+ Create \u2014 Payment Terms",
       "route_hint": "/lists/accounting/qbo-bulk-link",
       "required": [
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2623,7 +2527,6 @@
       "sub": "Posting Templates",
       "route_hint": "/lists/accounting/qbo-categories",
       "required": [
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2635,7 +2538,6 @@
       "sub": "+ Create \u2014 Posting Templates",
       "route_hint": "/lists/accounting/qbo-categories",
       "required": [
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2647,7 +2549,6 @@
       "sub": "Journal Entry Types",
       "route_hint": "/lists/accounting/items",
       "required": [
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2659,7 +2560,6 @@
       "sub": "+ Create \u2014 Journal Entry Types",
       "route_hint": "/lists/accounting/items",
       "required": [
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2671,7 +2571,6 @@
       "sub": "QBO bulk-link",
       "route_hint": "/lists/accounting/account-role-bindings",
       "required": [
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2683,7 +2582,6 @@
       "sub": "+ Create \u2014 QBO bulk-link",
       "route_hint": "/lists/accounting/account-role-bindings",
       "required": [
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2695,7 +2593,6 @@
       "sub": "Product & Service Categories",
       "route_hint": "/lists/accounting/chart-of-accounts-seeds",
       "required": [
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2707,7 +2604,6 @@
       "sub": "+ Create \u2014 Product & Service Categories",
       "route_hint": "/lists/accounting/chart-of-accounts-seeds",
       "required": [
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2719,7 +2615,6 @@
       "sub": "Items",
       "route_hint": "/lists/accounting/expense-categories",
       "required": [
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2731,7 +2626,6 @@
       "sub": "+ Create \u2014 Items",
       "route_hint": "/lists/accounting/expense-categories",
       "required": [
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2743,7 +2637,6 @@
       "sub": "Account Role Bindings",
       "route_hint": "/lists/accounting/payment-methods",
       "required": [
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2755,7 +2648,6 @@
       "sub": "+ Create \u2014 Account Role Bindings",
       "route_hint": "/lists/accounting/payment-methods",
       "required": [
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2767,7 +2659,6 @@
       "sub": "Chart of Accounts Seeds",
       "route_hint": "/lists/accounting/tax-codes",
       "required": [
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2779,7 +2670,6 @@
       "sub": "+ Create \u2014 Chart of Accounts Seeds",
       "route_hint": "/lists/accounting/tax-codes",
       "required": [
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2791,7 +2681,6 @@
       "sub": "Expense Categories",
       "route_hint": "/lists/accounting/currency-codes",
       "required": [
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2803,7 +2692,6 @@
       "sub": "+ Create \u2014 Expense Categories",
       "route_hint": "/lists/accounting/currency-codes",
       "required": [
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2815,7 +2703,6 @@
       "sub": "Payment Methods",
       "route_hint": "/lists/accounting/void-cancel-reasons",
       "required": [
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2827,7 +2714,6 @@
       "sub": "+ Create \u2014 Payment Methods",
       "route_hint": "/lists/accounting/void-cancel-reasons",
       "required": [
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2839,7 +2725,6 @@
       "sub": "Currency Codes",
       "route_hint": "/lists/accounting/abandonment-defaults",
       "required": [
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2851,7 +2736,6 @@
       "sub": "+ Create \u2014 Currency Codes",
       "route_hint": "/lists/accounting/abandonment-defaults",
       "required": [
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2911,7 +2795,6 @@
       "sub": "Vendor Types",
       "route_hint": "/lists/vendors/vendor-types",
       "required": [
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2923,7 +2806,6 @@
       "sub": "+ Create \u2014 Vendor Types",
       "route_hint": "/lists/vendors/vendor-types",
       "required": [
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2935,7 +2817,6 @@
       "sub": "Shippers",
       "route_hint": "/lists/names/brokers",
       "required": [
-        "vendor",
         "driver",
         "connectivity",
         "reverse_link"
@@ -2947,7 +2828,6 @@
       "sub": "+ Create \u2014 Shippers",
       "route_hint": "/lists/names/brokers",
       "required": [
-        "vendor",
         "driver",
         "connectivity"
       ]
@@ -6032,6 +5912,732 @@
           "id": "catalog.names_master.brokers.create",
           "removed": [
             "customer"
+          ]
+        }
+      ]
+    },
+    "vendor_column_2026_08_14_overclaim": {
+      "finding": "LINK-F5166-VENDOR-COLUMN-VERTICAL-SWEEP",
+      "note": "vendor blanket-required on all 122 lists leaves that ever flagged it. Verified live: all 120 catalog.* list/create pairs (maintenance/fuel/accounting/vendors-domain/names_master catalog families, including catalog.maintenance.vendors.list/create and catalog.vendors.vendor_types.*, whose names reference \"vendor\" but which are pure catalog-VALUE CRUD driven by the same generic MaintenanceCatalogListPage/useCatalogQuery pattern already confirmed false for fleet/customer catalogs in prior column sweeps) own zero vendor_id/EntityLink kind=\"vendor\" \u2014 catalog.maintenance.vendors.list specifically only outbound-links (a plain <Link>, not EntityLink) to the separate /maintenance/vendors hub route; it never renders a vendor record itself. hub.names_search and lists.drawer.new_vendor_drawer_form (KEPT, real Built added): NamesMasterHub.tsx renders real EntityLink kind={kind} (dynamically \"vendor\" for vendor rows) in cross-module search results; NewVendorDrawerForm.tsx calls the canonical createVendor().",
+      "drops": [
+        {
+          "id": "catalog.maintenance.labor_rates.list",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.labor_rates.create",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.part_locations.list",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.part_locations.create",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.air_bag_catalog.list",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.air_bag_catalog.create",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.battery_catalog.list",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.battery_catalog.create",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.pm_intervals.list",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.pm_intervals.create",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.repair_locations.list",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.repair_locations.create",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.tire_catalog.list",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.tire_catalog.create",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.trailer_parts.list",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.trailer_parts.create",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.truck_parts.list",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.truck_parts.create",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.work_order_templates.list",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.work_order_templates.create",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.failure_codes.list",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.failure_codes.create",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.labor_codes.list",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.labor_codes.create",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.parts.list",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.parts.create",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.parts_catalog.list",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.parts_catalog.create",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.oem_parts_reference.list",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.oem_parts_reference.create",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.priority_levels.list",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.priority_levels.create",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.service_tasks.list",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.service_tasks.create",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.services_catalog.list",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.services_catalog.create",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.shop_locations.list",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.shop_locations.create",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.vendors.list",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.vendors.create",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.work_order_statuses.list",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.maintenance.work_order_statuses.create",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.fuel.def_stations.list",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.fuel.def_stations.create",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.fuel.fuel_stations.list",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.fuel.fuel_stations.create",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.fuel.relay_accounts.list",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.fuel.relay_accounts.create",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.fuel.toll_providers.list",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.fuel.toll_providers.create",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.fuel.card_types.list",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.fuel.card_types.create",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.fuel.exception_types.list",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.fuel.exception_types.create",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.fuel.station_brands.list",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.fuel.station_brands.create",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.fuel.stop_reason_codes.list",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.fuel.stop_reason_codes.create",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.fuel.mpg_bands.list",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.fuel.mpg_bands.create",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.fuel.expensive_states.list",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.fuel.expensive_states.create",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.fuel.tax_jurisdictions.list",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.fuel.tax_jurisdictions.create",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.fuel.brands.list",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.fuel.brands.create",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.fuel.station_states.list",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.fuel.station_states.create",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.fuel.pump_types.list",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.fuel.pump_types.create",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.fuel.grades.list",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.fuel.grades.create",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.fuel.dispatch_routes.list",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.fuel.dispatch_routes.create",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.accounting.account_types_lookup.list",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.accounting.account_types_lookup.create",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.accounting.detail_types_lookup.list",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.accounting.detail_types_lookup.create",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.accounting.audit_event_types.list",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.accounting.audit_event_types.create",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.accounting.chart_of_accounts.list",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.accounting.chart_of_accounts.create",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.accounting.account_types.list",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.accounting.account_types.create",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.accounting.detail_types.list",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.accounting.detail_types.create",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.accounting.classes.list",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.accounting.classes.create",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.accounting.payment_terms.list",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.accounting.payment_terms.create",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.accounting.posting_templates.list",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.accounting.posting_templates.create",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.accounting.journal_entry_types.list",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.accounting.journal_entry_types.create",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.accounting.qbo_bulk_link.list",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.accounting.qbo_bulk_link.create",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.accounting.qbo_categories.list",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.accounting.qbo_categories.create",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.accounting.items.list",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.accounting.items.create",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.accounting.account_role_bindings.list",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.accounting.account_role_bindings.create",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.accounting.chart_of_accounts_seeds.list",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.accounting.chart_of_accounts_seeds.create",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.accounting.expense_categories.list",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.accounting.expense_categories.create",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.accounting.payment_methods.list",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.accounting.payment_methods.create",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.accounting.tax_codes.list",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.accounting.tax_codes.create",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.accounting.currency_codes.list",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.accounting.currency_codes.create",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.accounting.void_cancel_reasons.list",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.accounting.void_cancel_reasons.create",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.accounting.abandonment_defaults.list",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.accounting.abandonment_defaults.create",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.vendors.vendor_types.list",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.vendors.vendor_types.create",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.names_master.brokers.list",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "catalog.names_master.brokers.create",
+          "removed": [
+            "vendor"
           ]
         }
       ]

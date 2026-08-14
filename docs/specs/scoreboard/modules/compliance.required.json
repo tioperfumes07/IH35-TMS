@@ -122,7 +122,6 @@
       "required": [
         "driver",
         "unit",
-        "vendor",
         "connectivity"
       ]
     },
@@ -257,7 +256,6 @@
       "route_hint": "/compliance/property-tax",
       "required": [
         "unit",
-        "vendor",
         "connectivity",
         "reverse_link"
       ]
@@ -269,7 +267,6 @@
       "route_hint": "/compliance/property-tax/:id",
       "required": [
         "unit",
-        "vendor",
         "connectivity",
         "reverse_link"
       ]
@@ -657,6 +654,30 @@
           "id": "form2290",
           "removed": [
             "ap_bill"
+          ]
+        }
+      ]
+    },
+    "vendor_column_2026_08_14_overclaim": {
+      "finding": "LINK-F5166-VENDOR-COLUMN-VERTICAL-SWEEP",
+      "note": "all 3 compliance leaves are false: tab.filings (FilingsComplianceDueSection) and both property_tax leaves have zero vendor references anywhere in their components \u2014 property tax posts a direct GL JE with no vendor concept, matching the pattern already confirmed for the ap_bill column sweep.",
+      "drops": [
+        {
+          "id": "tab.filings",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "property_tax.list",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "property_tax.detail",
+          "removed": [
+            "vendor"
           ]
         }
       ]

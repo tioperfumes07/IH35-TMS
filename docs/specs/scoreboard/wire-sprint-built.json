@@ -115,8 +115,6 @@
       "modules": [
         "accounting",
         "banking",
-        "cash-flow",
-        "compliance",
         "customers",
         "dispatch",
         "docs",
@@ -124,7 +122,6 @@
         "finance",
         "fleet",
         "fuel",
-        "home",
         "insurance",
         "inventory",
         "legal",
@@ -132,6 +129,7 @@
         "maintenance",
         "reports",
         "safety",
+        "system",
         "vendors"
       ],
       "cols": ["vendor"],
