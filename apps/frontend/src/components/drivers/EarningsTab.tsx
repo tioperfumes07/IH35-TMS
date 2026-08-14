@@ -351,13 +351,13 @@ export function EarningsTab({ driverId, operatingCompanyId, onOpenOperationsView
         <div className="mb-1 flex items-center justify-between gap-2">
           <h3 className="text-sm font-semibold text-gray-900">A/P vendor (driver payee)</h3>
           {apVendorId ? (
-            <Link
-              to={`/vendors/${encodeURIComponent(apVendorId)}`}
+            <EntityLink
+              kind="vendor"
+              id={apVendorId}
+              label="Open vendor →"
               className="text-xs text-slate-700 underline"
               data-testid="driver-earnings-ap-vendor-open"
-            >
-              Open vendor →
-            </Link>
+            />
           ) : null}
         </div>
         {apVendorQuery.isPending ? (
