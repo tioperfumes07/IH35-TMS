@@ -41,8 +41,15 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-no-money-theater";
 const SELFTEST = process.argv.includes("--selftest");
 
+// ACCT-F5153 (2026-08-14): banking's real backend transaction endpoint lives under
+// apps/backend/src/integrations/plaid/ (Plaid IS the banking bank-feed/transactions backend — see
+// link.routes.ts's /api/v1/banking/plaid/company-transactions), not under a literal "banking"
+// directory. Without this, a genuine backend banking money-path fix (e.g. joining accounting.bills
+// to label a matched_bill_id) could never satisfy hasBackendDataPath below, forcing every real
+// banking-transactions backend change to be misclassified as frontend-only theater. Narrow addition,
+// backend-only, one directory — does not touch frontend detection or any other money path.
 const MONEY_PATH_RE =
-  /^(apps\/(backend|frontend)\/src\/.*(accounting|banking|qbo-sync|\/qbo\/)|apps\/frontend\/src\/pages\/(accounting|banking)\/)/i;
+  /^(apps\/(backend|frontend)\/src\/.*(accounting|banking|qbo-sync|\/qbo\/)|apps\/frontend\/src\/pages\/(accounting|banking)\/|apps\/backend\/src\/integrations\/plaid\/)/i;
 
 const WRITE_PATH_RE =
   /(puller|projector|posting-engine|bank-feed|gl-post|migration|sync-scheduler|bill-payment|expense\.routes|payments\.routes|categorize)/i;
@@ -275,6 +282,11 @@ if (!isDirectRun) {
       items: [],
     }
   );
+  const bank = scoreManifest(
+    loadManifests().find((m) => m.data.module === "banking")?.data || {
+      items: [],
+    }
+  );
   const fullBody = `
 FINDING: ACCT-F01
 LANE: FINANCIAL-HOLD
@@ -378,6 +390,43 @@ REMAINING: ACCT-F01
       },
     ],
     false
+  );
+
+  // ACCT-F5153 — banking's real backend transaction endpoint lives under integrations/plaid/, not a
+  // literal "banking" directory. A genuine plaid backend change must clear the theater test the same
+  // way an accounting backend change does.
+  const bankBody = fullBody
+    .replace("LANE: FINANCIAL-HOLD", "LANE: FINANCIAL")
+    .replace(`MODULE_PROGRESS: accounting ${acct.progress}`, `MODULE_PROGRESS: banking ${bank.progress}`);
+  expect(
+    "entitylink-with-plaid-backend-readpath",
+    [
+      {
+        sha: "fff555666",
+        subject: "fix(banking): matched bill drill-through had no label",
+        body: `${bankBody}\nEntityLink drill-through now resolves the joined bill_number.`,
+        files: [
+          "apps/backend/src/integrations/plaid/link.routes.ts",
+          "apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx",
+        ],
+      },
+    ],
+    false
+  );
+
+  // Same subject/body shape, but WITHOUT the backend plaid file — must still be caught as theater,
+  // proving the narrowing didn't accidentally credit banking frontend-only commits generally.
+  expect(
+    "theater-banking-frontend-only-not-plaid",
+    [
+      {
+        sha: "fff777888",
+        subject: "fix(banking): EntityLink drill-through",
+        body: bankBody,
+        files: ["apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx"],
+      },
+    ],
+    true
   );
 
   expect(
