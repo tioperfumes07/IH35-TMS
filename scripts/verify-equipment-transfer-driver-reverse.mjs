@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** @matrix-built modules=drivers,dispatch,fleet cols=driver,trailer,connectivity,reverse_link */
+/** @matrix-built {"modules":["drivers","dispatch"],"cols":["driver","trailer","connectivity","reverse_link"],"leafRe":"^docs\\.equipment_transfers$|^dispatch\\.modal\\.equipment_transfer$|^profiles\\.detail$","task":"THEATER-EQUIPMENT-TRANSFER-DRIVER-LEAFRE","vertical":"column-wave"} */
 import fs from "node:fs";
 const LABEL="verify-equipment-transfer-driver-reverse";
 const files={service:"apps/backend/src/dispatch/equipment-transfer/request.service.ts",routes:"apps/backend/src/dispatch/equipment-transfer/routes.ts",reverse:"apps/frontend/src/components/dispatch/DriverEquipmentTransfersReverseSection.tsx",detail:"apps/frontend/src/pages/DriverDetail.tsx",profile:"apps/frontend/src/pages/drivers/DriverProfilePage.tsx"};

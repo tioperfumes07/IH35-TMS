@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** @matrix-built modules=dispatch,drivers,maintenance cols=driver,connectivity,reverse_link */
+/** @matrix-built {"modules":["dispatch","drivers"],"cols":["driver","connectivity","reverse_link"],"leafRe":"^queues\\.in_transit$|^profiles\\.detail$","task":"THEATER-INTRANSIT-DRIVER-LEAFRE","vertical":"column-wave"} */
 import fs from "node:fs";
 const LABEL = "verify-intransit-issue-driver-linkage";
 const files = {

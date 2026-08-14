@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** @matrix-built modules=safety,drivers,compliance cols=driver,connectivity,reverse_link,picker_law */
+/** @matrix-built {"modules":["safety","drivers"],"cols":["driver","connectivity","reverse_link","picker_law"],"leafRe":"^safety\\.panel\\.test_scheduling$|^drug_alcohol\\.list$|^profiles\\.detail$","task":"THEATER-DA-TEST-DRIVER-LEAFRE","vertical":"column-wave"} */
 import fs from "node:fs";
 const LABEL = "verify-da-test-driver-linkage";
 const files = {
