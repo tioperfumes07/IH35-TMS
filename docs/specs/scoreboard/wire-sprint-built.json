@@ -1263,6 +1263,14 @@
       "modules": ["cash-flow", "finance", "home"],
       "cols": ["connectivity"],
       "leafRe": "^(hop\\.(banking|reports\\.(cash_flow_statement|cash_flow|cash_flow_overview)|cash_advances|accounting|cash_flow|reports)|jump\\.(accounting|banking))$"
+    },
+    {
+      "task": "LINK-F5154-OPERATIONAL-COMPLIANCE-MODULE-DOORS",
+      "pr": "this PR",
+      "guard": "scripts/verify-operational-compliance-module-doors.mjs",
+      "modules": ["compliance", "driver-hub", "form_425", "tasks"],
+      "cols": ["connectivity"],
+      "leafRe": "^(hop\\.(safety_hos|safety_dot|form425c|maint_compliance|fuel_compliance|reports_ifta|drivers|safety_scheduler|safety_audit|compliance|daily_tasks|lists\\.service_tasks))$"
     }
   ]
 }

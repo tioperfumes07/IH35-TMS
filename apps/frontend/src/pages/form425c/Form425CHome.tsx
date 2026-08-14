@@ -18,6 +18,7 @@ import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { SecondaryNavTabs } from "../../components/shared/SecondaryNavTabs";
+import { RelatedModuleLinks } from "../../components/shared/RelatedModuleLinks";
 import { buildPrintHTML, suggestedFilename } from "./lib/buildPrintHTML";
 import { DEFAULT_PROFILES } from "./lib/constants";
 import { casePetitionDateFromReports, resolveCreatePetitionDate } from "./lib/petitionDate";
@@ -347,6 +348,16 @@ export function Form425CHome() {
         onChange={(next) => setTab(next as TabId)}
       />
 
+      <RelatedModuleLinks
+        className="mx-4 mt-3"
+        testId="form-425c-related-module-links"
+        links={[
+          { label: "Safety Audit", to: "/safety/audit-425c" },
+          { label: "Maintenance Compliance", to: "/maintenance/compliance" },
+          { label: "Compliance", to: "/compliance" },
+        ]}
+      />
+
       {tab === "profile" ? (
         <ProfilesTab
           profiles={profiles}
@@ -427,4 +438,3 @@ export function Form425CHome() {
     </div>
   );
 }
-

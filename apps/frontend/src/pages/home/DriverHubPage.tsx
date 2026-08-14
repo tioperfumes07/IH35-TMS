@@ -6,6 +6,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { DriverInbox } from "../../components/driver-inbox/DriverInbox";
 import { DriverSchedulerGridPage } from "../safety/driver-scheduler/DriverSchedulerGridPage";
 import { DriverSchedulerRequestInboxPage } from "../safety/driver-scheduler/DriverSchedulerRequestInboxPage";
+import { RelatedModuleLinks } from "../../components/shared/RelatedModuleLinks";
 
 // Office roles that may review/approve driver requests (matches the backend
 // canReviewCashAdvanceRequest gate: Owner/Administrator/Manager/Accountant/Dispatcher).
@@ -56,6 +57,13 @@ export function DriverHubPage() {
         }
       />
       <SecondaryNavTabs tabs={TABS} activeId={tab} onChange={(id) => setTab(id as HubTab)} />
+      <RelatedModuleLinks
+        testId="driver-hub-related-module-links"
+        links={[
+          { label: "Drivers", to: "/drivers" },
+          { label: "Safety Scheduler", to: "/safety/driver-scheduler" },
+        ]}
+      />
       {/* Reuse the existing Safety Driver Scheduler + Leave Requests components (no rebuild). */}
       {tab === "overview" && <DriverInbox companyId={companyId} canReview={canReview} />}
       {tab === "scheduler" && <DriverSchedulerGridPage />}
