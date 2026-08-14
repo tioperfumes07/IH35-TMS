@@ -1,3 +1,4 @@
+2026-08-14T22:15Z Cursor | SHIPPED #6776 Earnings Open vendor | shipping LINK-F5171 maint-vendor detail EntityLink + red AP-reverse guard | Live=BLOCKED
 2026-08-14T22:05Z Cursor | SHIPPED #6775 severe/policy EntityLink + red guards | shipping LINK-F5171 EarningsTab Open vendor EntityLink | Live=BLOCKED
 2026-08-14T21:55Z Cursor | shipping LINK-F5171 severe-repair reverse WO + vendor insurance_policy EntityLink + red connectivity/insurance guards | Live=BLOCKED | tip=#6773
 2026-08-14T21:15Z Cursor | shipping LINK-F5171 WO/matter/retention EntityLink + compliance guard red fix | Live=BLOCKED | tip=#6771
