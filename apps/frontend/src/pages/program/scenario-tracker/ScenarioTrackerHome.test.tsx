@@ -67,7 +67,11 @@ describe("ScenarioTrackerHome — P0 payload resilience", () => {
     renderTracker();
 
     // Degraded to empty, never crashed — the page frame must still be present.
-    await waitFor(() => expect(screen.getByText(/Scenario Tracker/i)).toBeTruthy());
+    await waitFor(() =>
+      expect(
+        screen.getByRole("heading", { name: /End-to-End Scenario Tracker/i }),
+      ).toBeTruthy(),
+    );
   });
 
   it("renders without throwing when the fetch itself rejects", async () => {
@@ -76,6 +80,10 @@ describe("ScenarioTrackerHome — P0 payload resilience", () => {
 
     renderTracker();
 
-    await waitFor(() => expect(screen.getByText(/Scenario Tracker/i)).toBeTruthy());
+    await waitFor(() =>
+      expect(
+        screen.getByRole("heading", { name: /End-to-End Scenario Tracker/i }),
+      ).toBeTruthy(),
+    );
   });
 });

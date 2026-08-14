@@ -1295,6 +1295,14 @@
       "modules": ["compliance", "insurance", "inventory", "legal", "maintenance", "tasks", "users", "driver-hub"],
       "cols": ["connectivity"],
       "leafRe": "^(overview\\.(summary_cards|credentials_table|notification_rules|notification_log)|fleet\\.hos_board|property_tax\\.(list|detail)|form2290|landing|policies\\.detail|type_catalog\\.list|coverage_gaps|nav\\.(parts_tab|assignments_tab|purchases_tab)|assignments\\.(banner|trail|search|wo_link|unit_link|vendor_link|crosslink_parts|crosslink_purchases|honest_empty)|contracts\\.list|templates\\.(list|detail)|policies|attorney_review|reports|damage_reports\\.intake|road_service\\.active|defects\\.convert_to_wo|pre_flight_dvir\\.queue|fault_drafts\\.review|board\\.planner_grid|mine\\.list|chat\\.mentions|list|detail|create|role_change|deactivate|tab\\.all|kpi|inbox)$"
+    },
+    {
+      "task": "LINK-F5158-ANALYTICAL-DASHBOARD-SURFACE-CONNECTIVITY",
+      "pr": "this PR",
+      "guard": "scripts/verify-analytical-dashboard-surface-connectivity.mjs",
+      "modules": ["cash-flow", "fuel", "home", "program", "reports"],
+      "cols": ["connectivity"],
+      "leafRe": "^(home|tab\\.(actual_vs_projected|manual_daily_projections)|create\\.manual_projection|card_overage|route\\.(root|home|home_ops)|role\\.(owner|dispatcher|accountant|safety|manager|default)|surface\\.(qbo_style|kpi_cards|attention_list|quick_actions|fleet_restore)|home\\.panel\\.(accounting_pending_approvals|dispatcher_active_loads|dispatcher_pending_actions|driver_manager_attention|fleet_snapshot|safety_alerts)|matrix\\.(module_pill|request_time_feed|live_api)|legacy\\.board|scenario\\.redirect|hop\\.audit_coverage|program\\.parity\\.legacy_audit_scoreboard_page|home\\.kpi_strip|report\\.(management|ifta|ifta_preparer|ar_aging|ap_aging|trial_balance|profit_loss|balance_sheet|cash_flow_statement|cash_flow|per_truck_cpm|cash_flow_overview|settlement_summary|profit_per_truck|cancellations|late_arrival|fuel_reconciliation|maintenance_cost_per_unit|dispatch_margin|geofence_dwell|booking_gap|deadhead|scheduled|scheduled_custom)|runner\\.(profit_truck_mtd|dispatch_board|detention_claims|cash_position|driver_pay_history|driver_settlement|fleet_utilization|fuel_savings|fuel_price_variance|csa_fleet|hos_violations|ifta_quarterly|dot_audit_pack|saved_owner_pack|saved_quarter_close|maint_cost_unit)|audit\\.(activity_by_user|activity_by_module|financial_change_log|maintenance_decision_log|deduction_trail|void_reversal|period_close_history)|reports\\.(modal\\.(lane_detail|schedule_report)|panel\\.(report_flyout|scheduled_reports)|sheet\\.balance_sheet_page|flyout\\.report_flyout))$"
     }
   ]
 }
