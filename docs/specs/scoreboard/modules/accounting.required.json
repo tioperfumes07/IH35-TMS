@@ -1086,7 +1086,7 @@
       "route_hint": "/accounting/allocations",
       "surface_kind": "panel",
       "surface_path": "pages/accounting/AllocationsPage.tsx",
-      "required": ["load", "ap_bill", "connectivity", "reverse_link", "qbo_chrome"]
+      "required": ["ap_bill", "connectivity", "reverse_link", "qbo_chrome"]
     },
     {
       "id": "accounting.modal.decide",

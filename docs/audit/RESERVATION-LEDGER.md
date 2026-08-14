@@ -55,6 +55,8 @@ Draw the next unused number from your OWN block, record a `CLAIM-<n>` row below,
 ---
 
 ## LEDGER ROWS (append below this line, oldest first — do not reorder, do not edit existing rows)
+| 2026-08-14T13:13:00-05:00 | Codex | WAVE-A-LOAD-INLINE-SURFACES | required maps + load inline guard | RESERVED | codex/vertical-load-inline-023 |
+| 2026-08-14T13:16:00-05:00 | Codex | WAVE-A-LOAD-INLINE-SURFACES | revenue leakage + task drawer load drills | RELEASED-ON-MERGE | codex/vertical-load-inline-023 |
 | 2026-08-14T13:03:00-05:00 | Codex | WAVE-A-UNIT-INLINE-SURFACES | cash-flow forecast UI/API/route, fixed asset detail, unit guard | RESERVED | codex/vertical-unit-inline-022 |
 | 2026-08-14T13:07:00-05:00 | Codex | WAVE-A-UNIT-INLINE-SURFACES | cash-flow forecast + fixed asset unit paths | RELEASED-ON-MERGE | codex/vertical-unit-inline-022 |
 | 2026-08-14T12:48:00-05:00 | Codex | WAVE-A-VENDOR-INLINE-SURFACE | cash-flow forecast UI/API/route + vendor guard | RESERVED | codex/vertical-vendor-inline-021 |
