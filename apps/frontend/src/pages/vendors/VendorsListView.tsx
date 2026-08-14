@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
+import { EntityLink } from "../../components/shared/EntityLink";
 import type { VendorOption } from "../../api/mdata";
 import { vendorQualityKind, vendorQualityClass } from "../../lib/quality-badge";
 import { bulkUpdate } from "../../api/bulk";
@@ -250,9 +251,13 @@ export function VendorsListView({ companyId, vendors, status, openByVendorId, on
             sortable: true,
             cellClass: "font-medium",
             render: (row) => (
-              <Link data-testid="vendor-roster-record-link" to={`/vendors/${row.id}`} className="text-slate-700 hover:underline" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
-                {row.name}
-              </Link>
+              <EntityLink
+                data-testid="vendor-roster-record-link"
+                kind="vendor"
+                id={row.id}
+                label={row.name}
+                className="text-slate-700 hover:underline"
+              />
             ),
           },
           { key: "email", label: "Email", sortable: true, render: (row) => row.email ?? "—" },
