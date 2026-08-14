@@ -103,12 +103,13 @@ export function FactoringQueuePage() {
   const [search, setSearch] = useState("");
 
   // LINK-F5171/LINK-F5179 — reverse_link: CustomerDetail/FactoringTab now link here as
-  // ?customer_id=/?load_id=; this page previously never read either param, so a reverse link
+  // ?customer_id=/?queue_record_id=; legacy ?load_id= bookmarks remain readable. This page
+  // previously never read either param, so a reverse link
   // landed on the unfiltered company-wide queue. Server-side scoping (factoring-queue.routes.ts
   // now accepts both) rather than a client-side filter, since the queue is capped at limit=200.
   const [searchParams] = useSearchParams();
   const deepLinkCustomerId = searchParams.get("customer_id");
-  const deepLinkLoadId = searchParams.get("load_id");
+  const deepLinkLoadId = searchParams.get("queue_record_id") ?? searchParams.get("load_id");
 
   // queue data
   const queueQ = useQuery({
