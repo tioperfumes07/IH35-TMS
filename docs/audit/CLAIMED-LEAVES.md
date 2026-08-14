@@ -36,7 +36,6 @@ the leaf stays OPEN.
 
 | Leaf | Claimed by | Date | Status |
 |---|---|---|---|
-| `factoring:home.equipment_loans` (vendor side) | CC-1 | 2026-08-14 | in progress |
 | `factoring:home.vendor_merges` | CC-1 | 2026-08-14 | in progress |
 
 ## Done (cite closing PR, itemized format above lives in the PR body / GUARD-WORKORDERS.md)
@@ -53,6 +52,7 @@ the leaf stays OPEN.
 | `factoring:home.recourse_pipeline` | CC-1 | #6821 | `verify-factoring-recourse-chargebacks-reverse-section.mjs` |
 | `factoring:home.chargebacks_fees` | CC-1 | #6821 | `verify-factoring-recourse-chargebacks-reverse-section.mjs` |
 | `factoring:submit.queue` | CC-1 | #6836 | `verify-factoring-submit-queue-reverse-section.mjs` |
+| `factoring:home.equipment_loans` (vendor side — unit side already built) | CC-1 | #6876 | `verify-vendor-equipment-loans-reverse-section.mjs` |
 | `settlements:panel.open_driver_bills` | Cursor | #6726 | `verify-load-driver-pay-bill-entitylink.mjs` |
 | `dispatch:load.drawer.driver_pay` | Cursor | #6726 | `verify-load-driver-pay-bill-entitylink.mjs` |
 | `dispatch:load.drawer.factoring` | Cursor | #6733 | `verify-load-factoring-invoice-entitylink.mjs` |
@@ -120,7 +120,6 @@ Needs Codex to confirm with PR#/guard or explicitly release as OPEN.
 | `settlements:drawer.advance_detail` | CC-1 (same) |
 | `settlements:drawer.liability_detail` | CC-1 (same) |
 | `settlements:panel.pay_run_close` | CC-1 (same) |
-| `factoring:home.equipment_loans` (vendor side — unit side already built) | CC-1 |
 | `factoring:home.vendor_merges` | CC-1 |
 | `factoring:accounting.list` | CC-1 |
 | `factoring:banking.entry` | CC-1 |
