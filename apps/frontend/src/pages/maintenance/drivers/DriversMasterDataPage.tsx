@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { EntityLink } from "../../../components/shared/EntityLink";
+import { entityLabel } from "../../../lib/entity-label";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createMaintenanceDriver,
@@ -127,9 +128,13 @@ export function DriversMasterDataPage() {
       label: "Driver",
       sortable: true,
       render: (row) => (
-        <Link to={`/drivers/${row.id}`} className={`${LINK} font-semibold`}>
-          {row.first_name} {row.last_name}
-        </Link>
+        <EntityLink
+          kind="driver"
+          id={row.id}
+          label={entityLabel(`${row.first_name} ${row.last_name}`.trim(), row.id, "Driver")}
+          className={`${LINK} font-semibold`}
+          data-testid="maintenance-drivers-master-driver-link"
+        />
       ),
     },
     {
