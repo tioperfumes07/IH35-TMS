@@ -9,6 +9,7 @@ const exactClaims = {
   "scripts/verify-wave-a-lists-driver-column.mjs":
     '"leafRe":"^catalog\\\\.drivers\\\\.teams\\\\.(list|create)$"',
 };
+const feedFile = "docs/specs/scoreboard/wire-sprint-built.json";
 
 export function audit(sources) {
   const failures = [];
@@ -23,10 +24,12 @@ export function audit(sources) {
   for (const [file, exactLeafRe] of Object.entries(exactClaims)) {
     if (!(sources[file] ?? "").includes(exactLeafRe)) failures.push(`${file}: exact driver Built claim is missing`);
   }
+  const feed = JSON.parse(sources[feedFile] ?? '{"entries":[]}');
+  if ((feed.entries ?? []).some((entry) => entry.task === "WAVE-A-driver-all-modules")) failures.push(`${feedFile}: disproven all-module driver Built feed entry must stay removed`);
   return failures;
 }
 
-const files = [aggregateFile, ...Object.keys(exactClaims)];
+const files = [aggregateFile, ...Object.keys(exactClaims), feedFile];
 const sources = Object.fromEntries(files.map((file) => [file, fs.readFileSync(file, "utf8")]));
 if (process.argv.includes("--selftest")) {
   const blanket = structuredClone(sources);
@@ -42,7 +45,12 @@ if (process.argv.includes("--selftest")) {
     console.error("verify-wave-a-driver-built-claims-leaf-specific SELFTEST FAIL — aggregate-credit mutation escaped");
     process.exit(1);
   }
-  console.log("verify-wave-a-driver-built-claims-leaf-specific SELFTEST PASS — blanket and aggregate-credit mutations detected");
+  const feed = structuredClone(sources);
+  const parsedFeed = JSON.parse(feed[feedFile]);
+  parsedFeed.entries.push({ task: "WAVE-A-driver-all-modules", cols: ["driver"], leafRe: ".*" });
+  feed[feedFile] = JSON.stringify(parsedFeed);
+  if (!audit(feed).some((failure) => failure.includes("feed entry"))) { console.error("verify-wave-a-driver-built-claims-leaf-specific SELFTEST FAIL — feed-entry mutation escaped"); process.exit(1); }
+  console.log("verify-wave-a-driver-built-claims-leaf-specific SELFTEST PASS — blanket, aggregate-credit, and feed-entry mutations detected");
   process.exit(0);
 }
 
