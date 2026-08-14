@@ -410,7 +410,7 @@
       "route_hint": "/settlements",
       "surface_kind": "panel",
       "surface_path": "pages/driver-finance/SettlementsPage.tsx",
-      "required": ["driver", "load", "settlement", "ap_bill", "connectivity", "reverse_link", "qbo_chrome"]
+      "required": ["driver", "load", "ap_bill", "connectivity", "reverse_link", "qbo_chrome"]
     }
   ],
   "honesty_audit": {
