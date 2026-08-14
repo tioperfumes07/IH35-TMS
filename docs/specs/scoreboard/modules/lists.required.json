@@ -2138,7 +2138,6 @@
       "route_hint": "/lists/fleet/tractor-statuses",
       "required": [
         "unit",
-        "trailer",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2151,7 +2150,6 @@
       "route_hint": "/lists/fleet/tractor-statuses",
       "required": [
         "unit",
-        "trailer",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2164,7 +2162,6 @@
       "route_hint": "/lists/fleet/trailer-statuses",
       "required": [
         "unit",
-        "trailer",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2177,7 +2174,6 @@
       "route_hint": "/lists/fleet/trailer-statuses",
       "required": [
         "unit",
-        "trailer",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2190,7 +2186,6 @@
       "route_hint": "/lists/fleet/condition-codes",
       "required": [
         "unit",
-        "trailer",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2203,7 +2198,6 @@
       "route_hint": "/lists/fleet/condition-codes",
       "required": [
         "unit",
-        "trailer",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2216,7 +2210,6 @@
       "route_hint": "/lists/fleet/equipment-types",
       "required": [
         "unit",
-        "trailer",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2229,7 +2222,6 @@
       "route_hint": "/lists/fleet/equipment-types",
       "required": [
         "unit",
-        "trailer",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2242,7 +2234,6 @@
       "route_hint": "/lists/fleet/tire-positions",
       "required": [
         "unit",
-        "trailer",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2255,7 +2246,6 @@
       "route_hint": "/lists/fleet/tire-positions",
       "required": [
         "unit",
-        "trailer",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2268,7 +2258,6 @@
       "route_hint": "/lists/fleet/ownership-types",
       "required": [
         "unit",
-        "trailer",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2281,7 +2270,6 @@
       "route_hint": "/lists/fleet/ownership-types",
       "required": [
         "unit",
-        "trailer",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2294,7 +2282,6 @@
       "route_hint": "/lists/fleet/trailer-types",
       "required": [
         "unit",
-        "trailer",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2307,7 +2294,6 @@
       "route_hint": "/lists/fleet/trailer-types",
       "required": [
         "unit",
-        "trailer",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2320,7 +2306,6 @@
       "route_hint": "/lists/fleet/lease-terms",
       "required": [
         "unit",
-        "trailer",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2333,7 +2318,6 @@
       "route_hint": "/lists/fleet/lease-terms",
       "required": [
         "unit",
-        "trailer",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2346,7 +2330,6 @@
       "route_hint": "/lists/fleet/asset-statuses",
       "required": [
         "unit",
-        "trailer",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2359,7 +2342,6 @@
       "route_hint": "/lists/fleet/asset-statuses",
       "required": [
         "unit",
-        "trailer",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2372,7 +2354,6 @@
       "route_hint": "/lists/fleet/asset-locations",
       "required": [
         "unit",
-        "trailer",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2385,7 +2366,6 @@
       "route_hint": "/lists/fleet/asset-locations",
       "required": [
         "unit",
-        "trailer",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -5590,6 +5570,132 @@
           "id": "catalog.safety.cargo_claim_reasons.create",
           "removed": [
             "policy"
+          ]
+        }
+      ]
+    },
+    "trailer_column_2026_08_14_overclaim": {
+      "finding": "LINK-F5163-TRAILER-COLUMN-VERTICAL-SWEEP",
+      "note": "All 20 fleet-catalog list/create leaf pairs share one generic component pair (FleetCatalogListPage.tsx / FleetCatalogModal.tsx) whose row shape is {id, code, display_name, description, metadata, sort_order, is_active} \u2014 pure catalog-VALUE CRUD (dropdown option management: statuses, condition codes, equipment/trailer TYPE labels, tire positions, ownership types, lease terms, asset locations). None of these reference an individual trailer RECORD, so none can genuinely render EntityLink kind=\"trailer\" \u2014 confirmed zero trailer_id/EntityLink/EntityPicker across all 20 in both shared components. catalog.fleet.trailer_statuses.* and catalog.fleet.trailer_types.* have \"trailer\" in the name but define status/type VALUES, not trailer records.",
+      "drops": [
+        {
+          "id": "catalog.fleet.tractor_statuses.list",
+          "removed": [
+            "trailer"
+          ]
+        },
+        {
+          "id": "catalog.fleet.tractor_statuses.create",
+          "removed": [
+            "trailer"
+          ]
+        },
+        {
+          "id": "catalog.fleet.trailer_statuses.list",
+          "removed": [
+            "trailer"
+          ]
+        },
+        {
+          "id": "catalog.fleet.trailer_statuses.create",
+          "removed": [
+            "trailer"
+          ]
+        },
+        {
+          "id": "catalog.fleet.condition_codes.list",
+          "removed": [
+            "trailer"
+          ]
+        },
+        {
+          "id": "catalog.fleet.condition_codes.create",
+          "removed": [
+            "trailer"
+          ]
+        },
+        {
+          "id": "catalog.fleet.equipment_types.list",
+          "removed": [
+            "trailer"
+          ]
+        },
+        {
+          "id": "catalog.fleet.equipment_types.create",
+          "removed": [
+            "trailer"
+          ]
+        },
+        {
+          "id": "catalog.fleet.tire_positions.list",
+          "removed": [
+            "trailer"
+          ]
+        },
+        {
+          "id": "catalog.fleet.tire_positions.create",
+          "removed": [
+            "trailer"
+          ]
+        },
+        {
+          "id": "catalog.fleet.ownership_types.list",
+          "removed": [
+            "trailer"
+          ]
+        },
+        {
+          "id": "catalog.fleet.ownership_types.create",
+          "removed": [
+            "trailer"
+          ]
+        },
+        {
+          "id": "catalog.fleet.trailer_types.list",
+          "removed": [
+            "trailer"
+          ]
+        },
+        {
+          "id": "catalog.fleet.trailer_types.create",
+          "removed": [
+            "trailer"
+          ]
+        },
+        {
+          "id": "catalog.fleet.lease_terms.list",
+          "removed": [
+            "trailer"
+          ]
+        },
+        {
+          "id": "catalog.fleet.lease_terms.create",
+          "removed": [
+            "trailer"
+          ]
+        },
+        {
+          "id": "catalog.fleet.asset_statuses.list",
+          "removed": [
+            "trailer"
+          ]
+        },
+        {
+          "id": "catalog.fleet.asset_statuses.create",
+          "removed": [
+            "trailer"
+          ]
+        },
+        {
+          "id": "catalog.fleet.asset_locations.list",
+          "removed": [
+            "trailer"
+          ]
+        },
+        {
+          "id": "catalog.fleet.asset_locations.create",
+          "removed": [
+            "trailer"
           ]
         }
       ]

@@ -9,6 +9,7 @@ import { BulkActionBar, TableSelection, TableSelectionHeader, useBulkSelection }
 import { useToast } from "./Toast";
 import { FleetBulkControls, type BulkApplyPayload } from "./fleet/BulkActionBar";
 import { EditVehicleModal } from "./fleet/EditVehicleModal";
+import { EditTrailerModal } from "./fleet/EditTrailerModal";
 import { TableControls, Paginator, TableHeaderCell, useTableController, CollapsedListFilters, useStagedListFilters, type TableColumn } from "./table";
 import { patchUnit } from "../api/mdata";
 import { patchTrailer } from "../api/fleet-trailers";
@@ -597,7 +598,11 @@ export function FleetTable({
                       <button
                         type="button"
                         className="rounded-sm border border-gray-300 bg-white px-1.5 py-0.5 text-[10px] font-semibold text-gray-700 hover:bg-gray-50"
-                        aria-label={`Edit unit ${entityLabel(row.unit_number, row.id, "Unit")}`}
+                        aria-label={
+                          row.kind === "trailer"
+                            ? `Edit trailer ${entityLabel(row.unit_number, row.id, "Trailer")}`
+                            : `Edit unit ${entityLabel(row.unit_number, row.id, "Unit")}`
+                        }
                         onClick={() => {
                           setEditingUnitId(row.id);
                           setEditingRow(row);
@@ -617,7 +622,7 @@ export function FleetTable({
       <Paginator page={table.page} pageCount={table.pageCount} onPageChange={table.setPage} />
 
       <EditVehicleModal
-        open={editingUnitId !== null}
+        open={editingUnitId !== null && editingRow?.kind !== "trailer"}
         unitId={editingUnitId}
         operatingCompanyId={operatingCompanyId}
         rowPreview={editingRow}
@@ -626,6 +631,16 @@ export function FleetTable({
           setEditingRow(null);
         }}
         onSaved={() => pushToast("Unit updated", "success")}
+      />
+      <EditTrailerModal
+        open={editingUnitId !== null && editingRow?.kind === "trailer"}
+        trailerId={editingUnitId ?? ""}
+        operatingCompanyId={operatingCompanyId}
+        onClose={() => {
+          setEditingUnitId(null);
+          setEditingRow(null);
+        }}
+        onSaved={() => pushToast("Trailer updated", "success")}
       />
     </div>
   );

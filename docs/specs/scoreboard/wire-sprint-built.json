@@ -68,8 +68,8 @@
       "modules": [
         "dispatch",
         "fleet",
+        "fuel",
         "insurance",
-        "lists",
         "maintenance",
         "safety"
       ],

@@ -136,7 +136,6 @@
         "driver",
         "customer",
         "unit",
-        "trailer",
         "load",
         "connectivity",
         "reverse_link",
@@ -152,7 +151,6 @@
         "driver",
         "customer",
         "unit",
-        "trailer",
         "load",
         "connectivity",
         "reverse_link",
@@ -183,7 +181,6 @@
       "required": [
         "driver",
         "unit",
-        "trailer",
         "load",
         "connectivity",
         "reverse_link",
@@ -215,7 +212,6 @@
       "required": [
         "driver",
         "unit",
-        "trailer",
         "load",
         "connectivity",
         "reverse_link",
@@ -280,7 +276,6 @@
         "driver",
         "customer",
         "unit",
-        "trailer",
         "load",
         "vendor",
         "connectivity",
@@ -296,7 +291,6 @@
         "driver",
         "customer",
         "unit",
-        "trailer",
         "load",
         "vendor",
         "connectivity",
@@ -339,7 +333,6 @@
       "required": [
         "driver",
         "unit",
-        "trailer",
         "connectivity"
       ]
     },
@@ -363,7 +356,6 @@
       "required": [
         "driver",
         "unit",
-        "trailer",
         "load",
         "customer",
         "connectivity",
@@ -415,7 +407,6 @@
       "required": [
         "driver",
         "unit",
-        "trailer",
         "load",
         "customer",
         "connectivity",
@@ -430,7 +421,6 @@
       "required": [
         "driver",
         "unit",
-        "trailer",
         "customer",
         "connectivity",
         "reverse_link"
@@ -444,7 +434,6 @@
       "required": [
         "driver",
         "unit",
-        "trailer",
         "customer",
         "connectivity",
         "reverse_link"
@@ -458,7 +447,6 @@
       "required": [
         "driver",
         "unit",
-        "trailer",
         "load",
         "customer",
         "connectivity",
@@ -473,7 +461,6 @@
       "required": [
         "driver",
         "unit",
-        "trailer",
         "load",
         "customer",
         "connectivity",
@@ -498,7 +485,6 @@
       "route_hint": "/dispatch?view=overview&panel=unassigned",
       "required": [
         "unit",
-        "trailer",
         "driver",
         "connectivity"
       ]
@@ -544,7 +530,6 @@
         "driver",
         "customer",
         "unit",
-        "trailer",
         "load",
         "qbo_chrome",
         "connectivity",
@@ -744,7 +729,6 @@
         "driver",
         "customer",
         "unit",
-        "trailer",
         "load",
         "vendor",
         "connectivity",
@@ -839,7 +823,6 @@
         "load",
         "driver",
         "unit",
-        "trailer",
         "customer"
       ]
     },
@@ -856,7 +839,6 @@
         "load",
         "driver",
         "unit",
-        "trailer",
         "customer"
       ]
     },
@@ -873,7 +855,6 @@
         "load",
         "driver",
         "unit",
-        "trailer",
         "customer"
       ]
     },
@@ -954,7 +935,6 @@
         "driver",
         "load",
         "unit",
-        "trailer",
         "customer"
       ]
     },
@@ -970,7 +950,6 @@
         "load",
         "driver",
         "unit",
-        "trailer",
         "customer"
       ]
     },
@@ -986,7 +965,6 @@
         "driver",
         "load",
         "unit",
-        "trailer",
         "customer"
       ]
     },
@@ -1016,7 +994,6 @@
         "connectivity",
         "driver",
         "unit",
-        "trailer",
         "customer"
       ]
     },
@@ -1033,7 +1010,6 @@
         "driver",
         "load",
         "unit",
-        "trailer",
         "customer"
       ]
     },
@@ -1049,7 +1025,6 @@
         "driver",
         "load",
         "unit",
-        "trailer",
         "customer"
       ]
     },
@@ -1565,6 +1540,162 @@
           "id": "dispatch.panel.rate_con_upload",
           "removed": [
             "picker_law"
+          ]
+        }
+      ]
+    },
+    "trailer_column_2026_08_14_overclaim": {
+      "finding": "LINK-F5163-TRAILER-COLUMN-VERTICAL-SWEEP",
+      "note": "25 of 38 dispatch leaves carried no trailer identity data at all (verified live via direct component read): home.overview/home.kanban/home.round_trips render only trailer_type as a text badge, never trailer_id/EntityLink; secondary.assignments, queues.border/border_history/live_map/trip_pairing, all 5 planning.* planners, docs.ocr, load.drawer.customs, dispatch.modal.cancel_load/load_create/load_reassign, dispatch.panel.deadhead_optimizer/load_bol/optimal_drivers/rate_con_upload, dispatch.wizard.border_crossing_wizard_page, and dispatch.parity.assign_driver_dropdown have zero trailer references in their components. The 13 genuine leaves (home.list, secondary.book_load, planning.reserve, docs.equipment_transfers, load.detail, load.drawer.overview, dispatch.modal.book_load_modal_v4, dispatch.modal.quick_assign, dispatch.drawer.load_detail, dispatch.panel.auth_gate, dispatch.panel.pre_dispatch_validation, dispatch.parity.book_load_equipment_section, dispatch.modal.equipment_transfer) KEEP the Required marking \u2014 real trailer_id/EntityLink kind=\"trailer\"/EntityPicker kind=\"trailer\" confirmed in each.",
+      "drops": [
+        {
+          "id": "home.overview",
+          "removed": [
+            "trailer"
+          ]
+        },
+        {
+          "id": "home.kanban",
+          "removed": [
+            "trailer"
+          ]
+        },
+        {
+          "id": "home.round_trips",
+          "removed": [
+            "trailer"
+          ]
+        },
+        {
+          "id": "secondary.assignments",
+          "removed": [
+            "trailer"
+          ]
+        },
+        {
+          "id": "queues.border",
+          "removed": [
+            "trailer"
+          ]
+        },
+        {
+          "id": "queues.border_history",
+          "removed": [
+            "trailer"
+          ]
+        },
+        {
+          "id": "queues.live_map",
+          "removed": [
+            "trailer"
+          ]
+        },
+        {
+          "id": "queues.trip_pairing",
+          "removed": [
+            "trailer"
+          ]
+        },
+        {
+          "id": "planning.timeline",
+          "removed": [
+            "trailer"
+          ]
+        },
+        {
+          "id": "planning.driver",
+          "removed": [
+            "trailer"
+          ]
+        },
+        {
+          "id": "planning.truck",
+          "removed": [
+            "trailer"
+          ]
+        },
+        {
+          "id": "planning.loads",
+          "removed": [
+            "trailer"
+          ]
+        },
+        {
+          "id": "planning.calendar",
+          "removed": [
+            "trailer"
+          ]
+        },
+        {
+          "id": "planning.unassigned",
+          "removed": [
+            "trailer"
+          ]
+        },
+        {
+          "id": "docs.ocr",
+          "removed": [
+            "trailer"
+          ]
+        },
+        {
+          "id": "load.drawer.customs",
+          "removed": [
+            "trailer"
+          ]
+        },
+        {
+          "id": "dispatch.modal.cancel_load",
+          "removed": [
+            "trailer"
+          ]
+        },
+        {
+          "id": "dispatch.modal.load_create",
+          "removed": [
+            "trailer"
+          ]
+        },
+        {
+          "id": "dispatch.modal.load_reassign",
+          "removed": [
+            "trailer"
+          ]
+        },
+        {
+          "id": "dispatch.panel.deadhead_optimizer",
+          "removed": [
+            "trailer"
+          ]
+        },
+        {
+          "id": "dispatch.panel.load_bol",
+          "removed": [
+            "trailer"
+          ]
+        },
+        {
+          "id": "dispatch.panel.optimal_drivers",
+          "removed": [
+            "trailer"
+          ]
+        },
+        {
+          "id": "dispatch.panel.rate_con_upload",
+          "removed": [
+            "trailer"
+          ]
+        },
+        {
+          "id": "dispatch.wizard.border_crossing_wizard_page",
+          "removed": [
+            "trailer"
+          ]
+        },
+        {
+          "id": "dispatch.parity.assign_driver_dropdown",
+          "removed": [
+            "trailer"
           ]
         }
       ]

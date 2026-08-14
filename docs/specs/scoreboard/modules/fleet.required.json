@@ -149,7 +149,6 @@
       "required": [
         "driver",
         "unit",
-        "trailer",
         "vendor",
         "picker_law",
         "qbo_chrome",
@@ -324,12 +323,11 @@
       "sub": "Row Edit \u00b7 trailer",
       "route_hint": "/fleet",
       "required": [
-        "trailer",
-        "unit",
         "vendor",
         "qbo_chrome",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "trailer"
       ]
     },
     {
@@ -340,7 +338,6 @@
       "required": [
         "driver",
         "unit",
-        "trailer",
         "vendor",
         "connectivity",
         "reverse_link",
@@ -392,7 +389,6 @@
         "driver",
         "customer",
         "unit",
-        "trailer",
         "load",
         "connectivity",
         "reverse_link"
@@ -584,7 +580,6 @@
       "required": [
         "driver",
         "unit",
-        "trailer",
         "vendor",
         "picker_law",
         "qbo_chrome",
@@ -622,7 +617,6 @@
       "route_hint": "/fleet/units/:id",
       "required": [
         "unit",
-        "trailer",
         "connectivity",
         "reverse_link"
       ]
@@ -946,10 +940,9 @@
       "route_hint": "/fleet/transfers-in-progress",
       "required": [
         "driver",
-        "unit",
-        "trailer",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "trailer"
       ]
     },
     {
@@ -1002,7 +995,6 @@
         "connectivity",
         "picker_law",
         "unit",
-        "trailer",
         "driver"
       ]
     },
@@ -1368,6 +1360,72 @@
           "id": "trailer.profile.maintenance",
           "removed": [
             "ap_bill"
+          ]
+        }
+      ]
+    },
+    "trailer_column_2026_08_14_overclaim": {
+      "finding": "LINK-F5163-TRAILER-COLUMN-VERTICAL-SWEEP",
+      "note": "8 of 38 fleet leaves are false: home.create_unit/fleet.modal.create_unit only create a truck unit, no trailer field; unit.profile.identity/unit.edit.identity are truck-only identity fields; unit.profile.current_load renders EntityLink kind=\"unit\"/kind=\"load\" but never trailer despite loads carrying a trailer assignment; unit.edit.reefer is a static read-only string pointing at a trailer id, not a real EntityLink/picker/editable field. roster.row.edit_trailer and transfers.in_progress were found broken (see the separate trailer_column_2026_08_14_bugfix honesty_audit entry) and fixed in this PR; both now correctly keep the trailer Required marking. The other 28 leaves KEEP the Required marking \u2014 TrailerProfilePage.tsx's 13 self-referential trailer.profile.* sections, trailer.status_change/trailer.edit, the roster kind/filter/bulk actions (real kind-branching on trailer rows), home.roster, home.create_trailer, fleet.modal.create_trailer/edit_trailer/quick_assign, and unit.profile.reefer (real attached-trailer reefer telemetry) all confirmed genuine.",
+      "drops": [
+        {
+          "id": "home.create_unit",
+          "removed": [
+            "trailer"
+          ]
+        },
+        {
+          "id": "unit.profile.identity",
+          "removed": [
+            "trailer"
+          ]
+        },
+        {
+          "id": "unit.profile.current_load",
+          "removed": [
+            "trailer"
+          ]
+        },
+        {
+          "id": "unit.edit.identity",
+          "removed": [
+            "trailer"
+          ]
+        },
+        {
+          "id": "unit.edit.reefer",
+          "removed": [
+            "trailer"
+          ]
+        },
+        {
+          "id": "fleet.modal.create_unit",
+          "removed": [
+            "trailer"
+          ]
+        }
+      ]
+    },
+    "trailer_column_2026_08_14_bugfix": {
+      "finding": "LINK-F5163-FLEET-TRAILER-EDIT-TRANSFER-BUGFIX",
+      "note": "roster.row.edit_trailer and transfers.in_progress both carried a WRONG 'unit' Required marking that exactly matched a real product bug, not a metadata drift: FleetTable.tsx's roster row Edit button always opened the unit-only EditVehicleModal regardless of row.kind (never branched to EditTrailerModal for trailer rows), and TransfersInProgressPage.tsx labeled every row 'Unit:' with EntityLink kind=\"unit\" even though row.equipment_id is always sourced from mdata.equipment (trailer/chassis), never mdata.units. Both fixed in this PR's code changes (FleetTable.tsx now branches on row.kind to open EditTrailerModal for trailer rows; TransfersInProgressPage.tsx now renders 'Trailer:' / EntityLink kind=\"trailer\"), and the Required marking corrected from the wrong 'unit' to the now-genuinely-true 'trailer', proven by scripts/verify-fleet-roster-trailer-edit-and-transfer-link.mjs.",
+      "changes": [
+        {
+          "id": "roster.row.edit_trailer",
+          "removed": [
+            "unit"
+          ],
+          "added": [
+            "trailer"
+          ]
+        },
+        {
+          "id": "transfers.in_progress",
+          "removed": [
+            "unit"
+          ],
+          "added": [
+            "trailer"
           ]
         }
       ]

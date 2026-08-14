@@ -316,7 +316,6 @@
       "required": [
         "driver",
         "unit",
-        "trailer",
         "load",
         "connectivity",
         "reverse_link",
@@ -421,7 +420,6 @@
       "route_hint": "/safety/photo-comparison",
       "required": [
         "unit",
-        "trailer",
         "connectivity"
       ]
     },
@@ -536,7 +534,6 @@
       "route_hint": "/safety/permits",
       "required": [
         "unit",
-        "trailer",
         "vendor",
         "connectivity",
         "picker_law",
@@ -1296,6 +1293,30 @@
           "id": "insurance_tab.list",
           "removed": [
             "policy"
+          ]
+        }
+      ]
+    },
+    "trailer_column_2026_08_14_overclaim": {
+      "finding": "LINK-F5163-TRAILER-COLUMN-VERTICAL-SWEEP",
+      "note": "3 of 7 safety leaves are false: accidents.list's column set (Driver/Unit/Load/Vendor/Claim) has no trailer column even though the underlying accident record and its create drawer genuinely capture trailer_id; photo_comparison.list and permits.list have zero trailer/equipment_id concept anywhere in their frontend or backend models. accidents.create, damage_reports.list/create, and trailer_interchanges.list KEEP the Required marking \u2014 all render/capture real trailer_id via EntityPicker kind=\"trailer\" or EntityLink kind=\"trailer\" in AccidentReportDrawer.tsx / SafetyIncidentsClusterSurface.tsx (the shared component behind damage reports and trailer interchanges, which requires trailer_id on interchange records by contract).",
+      "drops": [
+        {
+          "id": "accidents.list",
+          "removed": [
+            "trailer"
+          ]
+        },
+        {
+          "id": "photo_comparison.list",
+          "removed": [
+            "trailer"
+          ]
+        },
+        {
+          "id": "permits.list",
+          "removed": [
+            "trailer"
           ]
         }
       ]

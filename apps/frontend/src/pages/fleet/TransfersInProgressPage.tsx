@@ -57,8 +57,8 @@ export function TransfersInProgressPage() {
           <div key={row.id} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-sm space-y-1">
             <div className="flex flex-wrap gap-x-3 gap-y-1">
               <span>
-                Unit:{" "}
-                <EntityLink kind="unit" id={row.equipment_id} label={entityLabel(null, row.equipment_id, "Unit")} />
+                Trailer:{" "}
+                <EntityLink kind="trailer" id={row.equipment_id} label={entityLabel(null, row.equipment_id, "Trailer")} />
               </span>
               <span>
                 From:{" "}
