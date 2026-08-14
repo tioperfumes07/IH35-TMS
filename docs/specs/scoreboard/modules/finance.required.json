@@ -119,7 +119,6 @@
       "sub": "Finance hub landing",
       "route_hint": "/finance",
       "required": [
-        "vendor",
         "gl_je",
         "connectivity",
         "qbo_chrome"
@@ -131,7 +130,6 @@
       "sub": "/finance-hub alias",
       "route_hint": "/finance-hub",
       "required": [
-        "vendor",
         "gl_je",
         "connectivity",
         "qbo_chrome"
@@ -143,7 +141,6 @@
       "sub": "Finance overview",
       "route_hint": "/finance/overview",
       "required": [
-        "vendor",
         "connectivity",
         "qbo_chrome"
       ]
@@ -154,7 +151,6 @@
       "sub": "Financial statements (P&L/BS/TB)",
       "route_hint": "/finance/statements",
       "required": [
-        "vendor",
         "gl_je",
         "liability",
         "connectivity",
@@ -167,7 +163,6 @@
       "sub": "P&L sub-tab",
       "route_hint": "/finance/statements",
       "required": [
-        "vendor",
         "gl_je",
         "liability",
         "connectivity",
@@ -180,7 +175,6 @@
       "sub": "Balance sheet sub-tab",
       "route_hint": "/finance/statements?tab=bs",
       "required": [
-        "vendor",
         "gl_je",
         "liability",
         "connectivity",
@@ -193,7 +187,6 @@
       "sub": "Trial balance sub-tab",
       "route_hint": "/finance/statements?tab=tb",
       "required": [
-        "vendor",
         "gl_je",
         "liability",
         "connectivity",
@@ -221,7 +214,6 @@
       "sub": "Finance projections",
       "route_hint": "/finance/projections",
       "required": [
-        "vendor",
         "connectivity",
         "qbo_chrome"
       ]
@@ -232,7 +224,6 @@
       "sub": "Finance scenarios",
       "route_hint": "/finance/scenarios",
       "required": [
-        "vendor",
         "connectivity",
         "qbo_chrome"
       ]
@@ -243,7 +234,6 @@
       "sub": "Break-even analysis",
       "route_hint": "/finance/break-even",
       "required": [
-        "vendor",
         "gl_je",
         "connectivity",
         "qbo_chrome"
@@ -274,7 +264,6 @@
       "sub": "Loan wizard",
       "route_hint": "/finance/loan-wizard",
       "required": [
-        "vendor",
         "gl_je",
         "picker_law",
         "connectivity"
@@ -618,6 +607,78 @@
           "id": "nav.break_even",
           "removed": [
             "customer"
+          ]
+        }
+      ]
+    },
+    "vendor_column_2026_08_14_overclaim": {
+      "finding": "LINK-F5166-VENDOR-COLUMN-VERTICAL-SWEEP",
+      "note": "10 of 11 finance leaves (hub, hub alias, overview, all 3 statement tabs, projections, scenarios, break-even) have zero vendor references \u2014 pure GL-account outputs; nav.loan_wizard's \"Lender\" field is free text, never a real vendor_id. Only nav.ar_ap_aging genuinely renders EntityLink kind=\"vendor\" in its AP-by-vendor table and bills drill-down.",
+      "drops": [
+        {
+          "id": "hub",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "hub.alias",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "nav.overview",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "nav.statements",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "statements.pl",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "statements.bs",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "statements.tb",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "nav.projections",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "nav.scenarios",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "nav.break_even",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "nav.loan_wizard",
+          "removed": [
+            "vendor"
           ]
         }
       ]

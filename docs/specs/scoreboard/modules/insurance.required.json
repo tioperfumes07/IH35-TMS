@@ -139,7 +139,6 @@
       "sub": "Policies list",
       "route_hint": "/safety/insurance/policies",
       "required": [
-        "vendor",
         "unit",
         "driver",
         "connectivity",
@@ -169,7 +168,6 @@
       "sub": "Policy detail",
       "route_hint": "/safety/insurance/policies/:id",
       "required": [
-        "vendor",
         "unit",
         "driver",
         "connectivity",
@@ -233,7 +231,6 @@
         "unit",
         "trailer",
         "load",
-        "vendor",
         "liability",
         "expense",
         "gl_je",
@@ -250,7 +247,6 @@
       "route_hint": "/safety/insurance/lawsuits",
       "required": [
         "driver",
-        "vendor",
         "connectivity",
         "reverse_link"
       ]
@@ -262,7 +258,6 @@
       "route_hint": "/safety/insurance/lawsuits",
       "required": [
         "driver",
-        "vendor",
         "liability",
         "picker_law",
         "qbo_chrome",
@@ -798,6 +793,42 @@
           "id": "lawsuits.create",
           "removed": [
             "customer"
+          ]
+        }
+      ]
+    },
+    "vendor_column_2026_08_14_overclaim": {
+      "finding": "LINK-F5166-VENDOR-COLUMN-VERTICAL-SWEEP",
+      "note": "5 of 6 insurance leaves are false: policies.list/detail render the insurer_name as plain text (no EntityLink), never linking to the real vendor record even though the create flow captures one; claims.create and both lawsuits leaves have zero vendor references. policies.create KEEPS the Required marking \u2014 PolicyCreateWizard.tsx/PolicyCreateModal.tsx both have a real ReferenceSelect(createKind=\"vendor\") for insurer_vendor_id.",
+      "drops": [
+        {
+          "id": "policies.list",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "policies.detail",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "claims.create",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "lawsuits.list",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "lawsuits.create",
+          "removed": [
+            "vendor"
           ]
         }
       ]

@@ -234,7 +234,6 @@
       "route_hint": "/customers",
       "required": [
         "customer",
-        "vendor",
         "picker_law",
         "qbo_chrome",
         "connectivity",
@@ -282,7 +281,6 @@
       "route_hint": "/customers?tab=customer_details",
       "required": [
         "customer",
-        "vendor",
         "connectivity",
         "reverse_link",
         "qbo_chrome"
@@ -902,6 +900,24 @@
           "id": "md.conversations",
           "removed": [
             "customer"
+          ]
+        }
+      ]
+    },
+    "vendor_column_2026_08_14_overclaim": {
+      "finding": "LINK-F5166-VENDOR-COLUMN-VERTICAL-SWEEP",
+      "note": "2 of 5 customers leaves flagged here are false: list.create (CustomerProfileForm.tsx) is customer creation only, zero vendor fields; md.customer_details shows only a boolean factoring-eligibility flag, no vendor_id/EntityLink/picker. list.segment.factored, detail.profile, and detail.edit (not touched here \u2014 already correctly not flagged) all genuinely reference the real factoring_company_vendor_id field sourced from listVendors().",
+      "drops": [
+        {
+          "id": "list.create",
+          "removed": [
+            "vendor"
+          ]
+        },
+        {
+          "id": "md.customer_details",
+          "removed": [
+            "vendor"
           ]
         }
       ]

@@ -124,7 +124,12 @@
       "tab": "Card overage",
       "sub": "Fuel-card overage recovery queue",
       "route_hint": "/fuel/card-overage",
-      "required": ["driver", "unit", "connectivity", "reverse_link"]
+      "required": [
+        "driver",
+        "unit",
+        "connectivity",
+        "reverse_link"
+      ]
     },
     {
       "id": "home",
@@ -178,7 +183,6 @@
       "required": [
         "expense",
         "gl_je",
-        "vendor",
         "connectivity"
       ]
     },
@@ -413,6 +417,18 @@
           "id": "chrome.toolbar_filter",
           "removed": [
             "qbo_chrome"
+          ]
+        }
+      ]
+    },
+    "vendor_column_2026_08_14_overclaim": {
+      "finding": "LINK-F5166-VENDOR-COLUMN-VERTICAL-SWEEP",
+      "note": "expense_mapping (FuelGlMappingCoverage) is false \u2014 maps fuel categories to GL accounts only, no vendor field. fuel.modal.create_fuel_transaction (not touched here \u2014 already correctly not flagged) genuinely has a real EntityPicker kind=\"vendor\" bound to vendor_id.",
+      "drops": [
+        {
+          "id": "expense_mapping",
+          "removed": [
+            "vendor"
           ]
         }
       ]
