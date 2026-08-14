@@ -21,9 +21,10 @@ const GROUP_NAV = "apps/frontend/src/components/safety/SafetyGroupNav.tsx";
 const LAYOUT = "apps/frontend/src/pages/safety/SafetyLayout.tsx";
 const HOME_TAB = "apps/frontend/src/pages/safety/tabs/SafetyHomeTab.tsx";
 const DRIVER_SECTION = "apps/frontend/src/components/safety/DriverSafetyReverseSection.tsx";
+const ENTITY_LINK = "apps/frontend/src/components/shared/EntityLink.tsx";
 const MANIFEST = "apps/frontend/src/routes/manifest.tsx";
 
-const FILES = [TABS_CONFIG, GROUP_NAV, LAYOUT, HOME_TAB, DRIVER_SECTION, MANIFEST];
+const FILES = [TABS_CONFIG, GROUP_NAV, LAYOUT, HOME_TAB, DRIVER_SECTION, ENTITY_LINK, MANIFEST];
 const LABEL = "verify-safety-f22-orphan-nav-reachability";
 const SELFTEST = process.argv.includes("--selftest");
 
@@ -37,7 +38,10 @@ const STATIC_ORPHAN_ROUTES = [
   { id: "photo-comparison", route: "/safety/photo-comparison", groupId: "incidents-claims" },
 ];
 
-const DRIVER_PROFILE_ROUTE_PATTERN = /\/safety\/driver-profiles\/\$\{driverId\}/;
+const DRIVER_PROFILE_ENTITYLINK =
+  /kind="driver_safety_profile"[\s\S]{0,160}id=\{driverId\}/;
+const DRIVER_PROFILE_RESOLVER =
+  /case "driver_safety_profile":[\s\S]{0,120}\/safety\/driver-profiles\/\$\{id\}/;
 
 const read = (rel) => fs.readFileSync(path.join(ROOT, rel), "utf8");
 const stripComments = (s) => s.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^[ \t]*\/\/.*$/gm, "");
@@ -89,8 +93,8 @@ export function assertSafetyF22OrphanNavReachability(sources) {
     problems.push(`${HOME_TAB}: does not render SAFETY_ALIAS_TABS quick-jumps — Home has no path to orphan surfaces.`);
   }
 
-  // 6. Parameterized driver Safety Profile linked from driver reverse section.
-  if (!DRIVER_PROFILE_ROUTE_PATTERN.test(src[DRIVER_SECTION])) {
+  // 6. Parameterized driver Safety Profile linked from driver reverse section via EntityLink.
+  if (!DRIVER_PROFILE_ENTITYLINK.test(src[DRIVER_SECTION]) || !DRIVER_PROFILE_RESOLVER.test(src[ENTITY_LINK])) {
     problems.push(`${DRIVER_SECTION}: no link to /safety/driver-profiles/:driverId — per-driver route has no inbound entry.`);
   }
 
@@ -159,7 +163,7 @@ if (SELFTEST) {
   );
   expectCaught(
     "driver-profile-link-removed",
-    { ...live, [DRIVER_SECTION]: live[DRIVER_SECTION].replace(DRIVER_PROFILE_ROUTE_PATTERN, "/safety/home") },
+    { ...live, [DRIVER_SECTION]: live[DRIVER_SECTION].replace(/kind="driver_safety_profile"/g, 'kind="driver"') },
     "no link to /safety/driver-profiles/:driverId"
   );
 

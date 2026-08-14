@@ -30,9 +30,10 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const TABS_CONFIG = "apps/frontend/src/components/safety/SAFETY_TABS_CONFIG.ts";
 const NAV = "apps/frontend/src/components/safety/SafetyGroupNav.tsx";
 const DRIVER_SECTION = "apps/frontend/src/components/safety/DriverSafetyReverseSection.tsx";
+const ENTITY_LINK = "apps/frontend/src/components/shared/EntityLink.tsx";
 const ACCIDENT_DRAWER = "apps/frontend/src/components/safety/AccidentReportDrawer.tsx";
 const ESCROW_TAB = "apps/frontend/src/pages/safety/tabs/EscrowRecordTab.tsx";
-const FILES = [TABS_CONFIG, NAV, DRIVER_SECTION, ACCIDENT_DRAWER, ESCROW_TAB];
+const FILES = [TABS_CONFIG, NAV, DRIVER_SECTION, ENTITY_LINK, ACCIDENT_DRAWER, ESCROW_TAB];
 const LABEL = "verify-safety-orphan-routes-and-drillthrough";
 const SELFTEST = process.argv.includes("--selftest");
 
@@ -67,8 +68,11 @@ export function assertSafetyOrphansAndDrillthrough(sources) {
     problems.push(`${NAV}: does not merge SAFETY_ALIAS_TABS into the rendered groups — alias tabs would be registered but never shown.`);
   }
 
-  // 3. The parameterized per-driver Safety Profile is linked from the driver's own page.
-  if (!/\/safety\/driver-profiles\/\$\{driverId\}/.test(src[DRIVER_SECTION])) {
+  // 3. The parameterized per-driver Safety Profile is linked from the driver's own page via EntityLink.
+  if (
+    !/kind="driver_safety_profile"[\s\S]{0,160}id=\{driverId\}/.test(src[DRIVER_SECTION]) ||
+    !/case "driver_safety_profile":[\s\S]{0,120}\/safety\/driver-profiles\/\$\{id\}/.test(src[ENTITY_LINK])
+  ) {
     problems.push(`${DRIVER_SECTION}: no link to /safety/driver-profiles/:driverId — that route is per-driver, cannot be a static nav entry, and the driver page is its only natural entry point.`);
   }
 
@@ -120,7 +124,7 @@ if (SELFTEST) {
   );
   expectCaught(
     "driver-safety-profile-link-removed",
-    { ...live, [DRIVER_SECTION]: live[DRIVER_SECTION].replace(/\/safety\/driver-profiles\/\$\{driverId\}/g, "/safety/home") },
+    { ...live, [DRIVER_SECTION]: live[DRIVER_SECTION].replace(/kind="driver_safety_profile"/g, 'kind="driver"') },
     "no link to /safety/driver-profiles/:driverId"
   );
   expectCaught(

@@ -64,6 +64,9 @@ export type EntityKind =
   | "scheduler_request"
   // LINK-F5171: contract detail Template used a bare Link; kind resolves to /legal/templates/:id.
   | "legal_template"
+  // LINK-F5171 / SAF-F22: "Open Safety Profile" is a distinct surface from kind=driver
+  // (/drivers/:id). Resolves to /safety/driver-profiles/:driverId.
+  | "driver_safety_profile"
   | "inventory_part"
   | "parts_inventory"
   | "maintenance_vendor"
@@ -232,6 +235,8 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
       return `/safety/scheduler/requests/${id}`;
     case "legal_template":
       return `/legal/templates/${id}`;
+    case "driver_safety_profile":
+      return `/safety/driver-profiles/${id}`;
     case "safety_event":
       return `/safety/safety-events?event_id=${id}`;
     // SAF-F33 safety drill-through — each target list page reads the param and opens/highlights the row.
