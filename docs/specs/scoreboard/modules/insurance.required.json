@@ -158,7 +158,6 @@
         "unit",
         "trailer",
         "driver",
-        "ap_bill",
         "liability",
         "picker_law",
         "qbo_chrome",
@@ -176,7 +175,6 @@
         "unit",
         "trailer",
         "driver",
-        "ap_bill",
         "connectivity",
         "reverse_link"
       ]
@@ -246,7 +244,6 @@
         "liability",
         "expense",
         "gl_je",
-        "ap_bill",
         "picker_law",
         "qbo_chrome",
         "connectivity",
@@ -276,7 +273,6 @@
         "customer",
         "vendor",
         "liability",
-        "ap_bill",
         "picker_law",
         "qbo_chrome",
         "connectivity",
@@ -715,6 +711,36 @@
           "id": "lawsuits.create",
           "removed": [
             "scenario.insurance"
+          ]
+        }
+      ]
+    },
+    "money_cells_2026_08_14_ap_bill_overclaim": {
+      "finding": "OWNER-EXECUTION-PLAN-SS2-ACCT-F5160",
+      "note": "ap_bill blanket-required on 4 insurance leaves; verified live, none own it. Policy create/detail (PolicyCreateModal.tsx, PolicyCreateWizard.tsx, PolicyDetail.tsx) carry a genuine insurer vendor_id (separate column, unaffected) but zero accounting.bills/bill_id anywhere; premiums route through insurance.payment_schedules (PaymentScheduleTab.tsx, listInsurancePaymentSchedule/markInsurancePaymentSchedulePaid) \u2014 a standalone mark-paid tracker with no bill FK at all, same direct-posting pattern as property tax. ClaimCreateModal.tsx and LawsuitCreateModal.tsx have zero bill_id/vendor_id references.",
+      "drops": [
+        {
+          "id": "policies.create",
+          "removed": [
+            "ap_bill"
+          ]
+        },
+        {
+          "id": "policies.detail",
+          "removed": [
+            "ap_bill"
+          ]
+        },
+        {
+          "id": "claims.create",
+          "removed": [
+            "ap_bill"
+          ]
+        },
+        {
+          "id": "lawsuits.create",
+          "removed": [
+            "ap_bill"
           ]
         }
       ]

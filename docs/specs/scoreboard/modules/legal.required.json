@@ -226,7 +226,6 @@
         "unit",
         "load",
         "liability",
-        "ap_bill",
         "picker_law",
         "qbo_chrome",
         "connectivity",
@@ -660,6 +659,18 @@
           "id": "matters.detail",
           "removed": [
             "scenario.insurance"
+          ]
+        }
+      ]
+    },
+    "money_cells_2026_08_14_ap_bill_overclaim": {
+      "finding": "OWNER-EXECUTION-PLAN-SS2-ACCT-F5160",
+      "note": "ap_bill required on matters.create, verified live it does not own it. LegalMatterNewPage.tsx / LegalMatterFormFields.tsx is a create-only form with zero bill_id/vendor_id references \u2014 linked legal costs (accounting.ts LegalMatterLinkedCosts, a real bills array) render on the separate matters.detail leaf post-creation, which this sweep did not find flagged/gapped.",
+      "drops": [
+        {
+          "id": "matters.create",
+          "removed": [
+            "ap_bill"
           ]
         }
       ]

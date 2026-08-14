@@ -173,7 +173,6 @@
       "required": [
         "customer",
         "vendor",
-        "ap_bill",
         "expense",
         "connectivity"
       ]
@@ -277,7 +276,6 @@
       "route_hint": "/accounting/invoices",
       "required": [
         "customer",
-        "ap_bill",
         "connectivity"
       ]
     },
@@ -799,6 +797,24 @@
           "id": "jump.maintenance",
           "removed": [
             "work_order"
+          ]
+        }
+      ]
+    },
+    "money_cells_2026_08_14_ap_bill_overclaim": {
+      "finding": "OWNER-EXECUTION-PLAN-SS2-ACCT-F5160",
+      "note": "ap_bill blanket-required on both home leaves; verified live, neither owns it. role.accountant (AccountingHome.tsx) renders only aggregate KPI/aging-bucket totals (AccountingKpiBar, AgingBucketCard AP/AR total_outstanding_cents, AccountingPendingApprovalsPanel, ComplianceFilingsDueWidget) \u2014 zero bill_id or EntityLink kind=\"bill\" across all 4 sub-widgets, confirmed by direct grep. jump.accounting (homeQuickJumps.ts) is a static nav card (title/subtitle text + a route to /accounting/invoices) \u2014 no bill data rendered on the card itself at all.",
+      "drops": [
+        {
+          "id": "role.accountant",
+          "removed": [
+            "ap_bill"
+          ]
+        },
+        {
+          "id": "jump.accounting",
+          "removed": [
+            "ap_bill"
           ]
         }
       ]

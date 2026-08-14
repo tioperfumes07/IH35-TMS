@@ -614,5 +614,12 @@
     "source_file": "docs/specs/scoreboard/modules/fleet.required.json",
     "guard": "scripts/verify-unit-finance-linkage-ap-bill.mjs",
     "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-14-ACCT-F5160-HOME-INSURANCE-INVENTORY-LEGAL-AP-BILL-HONEST-MAP",
+    "title": "home + insurance + inventory + legal money-cell gaps closed to 0 — 9 leaves' false ap_bill Required markings removed with live per-leaf evidence: home's role.accountant (aggregate KPI/aging-bucket totals only, zero bill_id across 4 sub-widgets) and jump.accounting (a static nav card, no bill data rendered); insurance's policies.create/detail/claims.create/lawsuits.create (insurer vendor_id is real, but premiums route through the standalone insurance.payment_schedules mark-paid tracker with no bill FK, same direct-posting pattern as property tax); inventory's assignments.vendor_link (real vendor EntityLink, but vendor_invoice_number/amount are plain captured fields, not a bill FK); legal's matters.create (create-only form, zero bill/vendor fields — the real linked-costs bills array lives on the separate matters.detail leaf, not flagged as gapped)",
+    "source_file": "docs/specs/scoreboard/modules/home.required.json",
+    "guard": null,
+    "type": "judgment"
   }
 ]
