@@ -7,6 +7,7 @@ import { StatusBadge } from "../../components/StatusBadge";
 import { useTeamSplits } from "../../hooks/useTeamSplits";
 import { entityLabel } from "../../lib/entity-label";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { Link, useSearchParams } from "react-router-dom";
 
 type Props = {
   operatingCompanyId: string;
@@ -27,7 +28,10 @@ export function TeamSplitConfigPanel() {
 }
 
 export function TeamSplitConfig({ operatingCompanyId }: Props) {
-  const { data, isLoading, create, endConfig } = useTeamSplits(operatingCompanyId);
+  const { data, isLoading, isError, refetch, create, endConfig } = useTeamSplits(operatingCompanyId);
+  const [searchParams] = useSearchParams();
+  const teamId = searchParams.get("team_id");
+  const driverId = searchParams.get("driver_id");
 
   const [createOpen, setCreateOpen] = useState(false);
   const [primaryDriverId, setPrimaryDriverId] = useState("");
@@ -38,7 +42,12 @@ export function TeamSplitConfig({ operatingCompanyId }: Props) {
   const [error, setError] = useState<string | null>(null);
 
   const configs = data?.configs ?? [];
-  const active = useMemo(() => configs.filter((row) => row.status === "active"), [configs]);
+  const active = useMemo(
+    () => configs.filter((row) => row.status === "active")
+      .filter((row) => !teamId || row.id === teamId)
+      .filter((row) => !driverId || row.primary_driver_id === driverId || row.secondary_driver_id === driverId),
+    [configs, driverId, teamId]
+  );
 
   async function handleCreate() {
     setError(null);
@@ -69,13 +78,24 @@ export function TeamSplitConfig({ operatingCompanyId }: Props) {
           Create config
         </Button>
       </div>
+      {teamId || driverId ? (
+        <Link className="text-xs font-semibold text-slate-700 underline" to="/drivers/team-splits">
+          Clear driver/config target
+        </Link>
+      ) : null}
 
       {isLoading ? <p className="text-xs text-gray-500">Loading team split configs…</p> : null}
-      {active.length === 0 && !isLoading ? <p className="text-xs text-gray-500">No active team split configs.</p> : null}
+      {isError ? (
+        <p className="text-xs text-red-700">
+          Team split configurations unavailable.{" "}
+          <button type="button" className="font-semibold underline" onClick={() => void refetch()}>Retry</button>
+        </p>
+      ) : null}
+      {active.length === 0 && !isLoading && !isError ? <p className="text-xs text-gray-500">No active team split configs.</p> : null}
 
       <div className="space-y-2">
         {active.map((row) => (
-          <div key={row.id} className="rounded-sm border border-gray-200 bg-white p-3">
+          <div key={row.id} className="rounded-sm border border-gray-200 bg-white p-3" data-team-split-config-id={row.id}>
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
                 <div className="text-sm font-semibold text-gray-900">
