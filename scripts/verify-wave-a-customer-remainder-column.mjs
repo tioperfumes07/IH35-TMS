@@ -4,7 +4,7 @@ import fs from "node:fs";
 
 const checks = [
   ["apps/frontend/src/pages/lists/names/NamesMasterHub.tsx", /customer:\s*"customer"/],
-  ["apps/frontend/src/pages/lists/names/NamesMasterHub.tsx", /<EntityLink kind=\{kind\} id=\{row\.entity_id\}/],
+  ["apps/frontend/src/pages/lists/names/NamesMasterHub.tsx", /<EntityLink[\s\S]{0,60}kind=\{kind\} id=\{row\.entity_id\}/],
   ["apps/frontend/src/pages/lists/names/BrokersListPage.tsx", /<EntityLink kind="customer" id=\{row\.id\}/],
   ["apps/frontend/src/pages/safety/tabs/ComplaintsTab.tsx", /<EntityLink[\s\S]*kind="customer"[\s\S]*id=\{String\(row\.complainant_customer_id\)\}/],
   ["apps/frontend/src/pages/safety/tabs/ComplaintsTab.tsx", /body\[complainantIdentityKey\]\s*=\s*complainantIdentityValue/],

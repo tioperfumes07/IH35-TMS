@@ -119,7 +119,6 @@
       "sub": "Finance hub landing",
       "route_hint": "/finance",
       "required": [
-        "customer",
         "vendor",
         "gl_je",
         "connectivity",
@@ -132,7 +131,6 @@
       "sub": "/finance-hub alias",
       "route_hint": "/finance-hub",
       "required": [
-        "customer",
         "vendor",
         "gl_je",
         "connectivity",
@@ -145,7 +143,6 @@
       "sub": "Finance overview",
       "route_hint": "/finance/overview",
       "required": [
-        "customer",
         "vendor",
         "connectivity",
         "qbo_chrome"
@@ -157,7 +154,6 @@
       "sub": "Financial statements (P&L/BS/TB)",
       "route_hint": "/finance/statements",
       "required": [
-        "customer",
         "vendor",
         "gl_je",
         "liability",
@@ -171,7 +167,6 @@
       "sub": "P&L sub-tab",
       "route_hint": "/finance/statements",
       "required": [
-        "customer",
         "vendor",
         "gl_je",
         "liability",
@@ -185,7 +180,6 @@
       "sub": "Balance sheet sub-tab",
       "route_hint": "/finance/statements?tab=bs",
       "required": [
-        "customer",
         "vendor",
         "gl_je",
         "liability",
@@ -199,7 +193,6 @@
       "sub": "Trial balance sub-tab",
       "route_hint": "/finance/statements?tab=tb",
       "required": [
-        "customer",
         "vendor",
         "gl_je",
         "liability",
@@ -228,7 +221,6 @@
       "sub": "Finance projections",
       "route_hint": "/finance/projections",
       "required": [
-        "customer",
         "vendor",
         "connectivity",
         "qbo_chrome"
@@ -240,7 +232,6 @@
       "sub": "Finance scenarios",
       "route_hint": "/finance/scenarios",
       "required": [
-        "customer",
         "vendor",
         "connectivity",
         "qbo_chrome"
@@ -252,7 +243,6 @@
       "sub": "Break-even analysis",
       "route_hint": "/finance/break-even",
       "required": [
-        "customer",
         "vendor",
         "gl_je",
         "connectivity",
@@ -562,6 +552,72 @@
           "id": "nav.loan_wizard",
           "removed": [
             "liability"
+          ]
+        }
+      ]
+    },
+    "customer_column_2026_08_14_overclaim": {
+      "finding": "LINK-F5165-CUSTOMER-COLUMN-VERTICAL-SWEEP",
+      "note": "10 of 11 finance leaves (hub, hub alias, overview, and all 3 financial statement tabs, projections, scenarios, break-even) have zero customer references \u2014 pure GL-account outputs. Only nav.ar_ap_aging genuinely renders EntityLink kind=\"customer\" in its AR-by-customer table and drill-down.",
+      "drops": [
+        {
+          "id": "hub",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "hub.alias",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "nav.overview",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "nav.statements",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "statements.pl",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "statements.bs",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "statements.tb",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "nav.projections",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "nav.scenarios",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "nav.break_even",
+          "removed": [
+            "customer"
           ]
         }
       ]

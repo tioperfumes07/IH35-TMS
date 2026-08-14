@@ -2,7 +2,7 @@
   "module": "banking",
   "entity_default": "USMCA",
   "source": {
-    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md — Banking",
+    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md \u2014 Banking",
     "nav": "apps/frontend/src/pages/banking/BANKING_NAV_CONFIG.ts",
     "routes": "/banking/*"
   },
@@ -184,7 +184,6 @@
       "sub": "Banking factoring entry",
       "route_hint": "/banking/factoring",
       "required": [
-        "customer",
         "liability",
         "connectivity",
         "reverse_link",
@@ -491,7 +490,7 @@
     {
       "id": "chrome.toolbar_search",
       "tab": "Chrome controls",
-      "sub": "List toolbar — Search (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar \u2014 Search (CLS-LIST-TOOLBAR)",
       "route_hint": "/banking",
       "surface_kind": "toolbar",
       "required": [
@@ -502,7 +501,7 @@
     {
       "id": "chrome.toolbar_range",
       "tab": "Chrome controls",
-      "sub": "List toolbar — date/amount range (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar \u2014 date/amount range (CLS-LIST-TOOLBAR)",
       "route_hint": "/banking",
       "surface_kind": "toolbar",
       "required": [
@@ -513,7 +512,7 @@
     {
       "id": "chrome.toolbar_gear",
       "tab": "Chrome controls",
-      "sub": "List toolbar — column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
+      "sub": "List toolbar \u2014 column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
       "route_hint": "/banking",
       "surface_kind": "toolbar",
       "required": [
@@ -524,7 +523,7 @@
     {
       "id": "chrome.toolbar_filter",
       "tab": "Chrome controls",
-      "sub": "List toolbar — Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
+      "sub": "List toolbar \u2014 Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
       "route_hint": "/banking",
       "surface_kind": "toolbar",
       "required": [
@@ -570,7 +569,19 @@
         "invoice",
         "bank"
       ],
-      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; §B9 link columns added."
+      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; \u00a7B9 link columns added."
+    },
+    "customer_column_2026_08_14_overclaim": {
+      "finding": "LINK-F5165-CUSTOMER-COLUMN-VERTICAL-SWEEP",
+      "note": "the banking.factoring leaf (the /banking/factoring summary tile) is a thin reserve/chargeback total with zero customer reference \u2014 distinct from banking.transactions.list/categorize (not touched here \u2014 already correctly not flagged), which genuinely capture a real customer_id via a picker.",
+      "drops": [
+        {
+          "id": "factoring",
+          "removed": [
+            "customer"
+          ]
+        }
+      ]
     }
   }
 }

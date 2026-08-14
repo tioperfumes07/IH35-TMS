@@ -133,7 +133,6 @@
       "sub": "Reserve balance movements",
       "route_hint": "/factoring/reserve-tracker",
       "required": [
-        "customer",
         "load",
         "liability",
         "connectivity",
@@ -158,7 +157,6 @@
       "sub": "Monthly chargebacks and factor fees",
       "route_hint": "/factoring/chargebacks-fees",
       "required": [
-        "customer",
         "connectivity",
         "reverse_link"
       ]
@@ -170,7 +168,6 @@
       "route_hint": "/factoring/statements-settings",
       "required": [
         "vendor",
-        "customer",
         "qbo_chrome",
         "connectivity",
         "reverse_link"
@@ -182,7 +179,6 @@
       "sub": "Faro CSV daily import grid",
       "route_hint": "/factoring/faro-imports",
       "required": [
-        "customer",
         "connectivity",
         "reverse_link",
         "qbo_chrome"
@@ -276,7 +272,6 @@
       "sub": "Reserve dashboard summary",
       "route_hint": "/factoring/reserves",
       "required": [
-        "customer",
         "liability",
         "connectivity"
       ]
@@ -298,7 +293,6 @@
       "sub": "Factoring advances list",
       "route_hint": "/accounting/factoring",
       "required": [
-        "customer",
         "load",
         "liability",
         "connectivity",
@@ -341,7 +335,6 @@
       "sub": "Factor recon workspace",
       "route_hint": "/accounting/factor-reconciliation",
       "required": [
-        "customer",
         "vendor",
         "liability",
         "connectivity",
@@ -356,7 +349,6 @@
       "sub": "Banking virtual factoring entry",
       "route_hint": "/banking/factoring",
       "required": [
-        "customer",
         "load",
         "connectivity",
         "reverse_link"
@@ -383,8 +375,7 @@
       "surface_path": "components/factoring/DeactivateFactorConfirmModal.tsx",
       "required": [
         "connectivity",
-        "qbo_chrome",
-        "customer"
+        "qbo_chrome"
       ]
     },
     {
@@ -396,8 +387,7 @@
       "surface_path": "pages/factoring/ReserveDashboardAddFactorModal.tsx",
       "required": [
         "connectivity",
-        "qbo_chrome",
-        "customer"
+        "qbo_chrome"
       ]
     },
     {
@@ -408,8 +398,7 @@
       "surface_kind": "panel",
       "surface_path": "pages/factoring/FactoringProfilePanel.tsx",
       "required": [
-        "connectivity",
-        "customer"
+        "connectivity"
       ]
     },
     {
@@ -437,8 +426,7 @@
       "surface_path": "components/factoring/DriverAutocomplete.tsx",
       "required": [
         "connectivity",
-        "driver",
-        "customer"
+        "driver"
       ]
     },
     {
@@ -649,6 +637,84 @@
           "id": "banking.entry",
           "removed": [
             "liability"
+          ]
+        }
+      ]
+    },
+    "customer_column_2026_08_14_overclaim": {
+      "finding": "LINK-F5165-CUSTOMER-COLUMN-VERTICAL-SWEEP",
+      "note": "12 of 23 factoring leaves are factor/reserve/admin-config surfaces (reserve tracker, chargebacks, statements settings, faro-imports list, reserves dashboard, factor reconciliation, banking factoring tile, and 4 factor-scoped modals/panels/driver-autocomplete) with zero customer_id anywhere. The 11 genuine leaves are customer-invoice-scoped submission/batch/recourse surfaces with real EntityLink kind=\"customer\".",
+      "drops": [
+        {
+          "id": "home.reserve_tracker",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "home.chargebacks_fees",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "home.statements_settings",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "home.faro_imports",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "reserves.dashboard",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "accounting.list",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "accounting.factor_recon",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "banking.entry",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "factoring.modal.deactivate_factor_confirm",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "factoring.modal.reserve_dashboard_add_factor",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "factoring.panel.factoring_profile",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "factoring.parity.driver_autocomplete",
+          "removed": [
+            "customer"
           ]
         }
       ]

@@ -495,7 +495,6 @@
       "route_hint": "/lists/dispatch/dispatch-flag-colors",
       "required": [
         "load",
-        "customer",
         "driver",
         "picker_law",
         "qbo_chrome",
@@ -509,7 +508,6 @@
       "route_hint": "/lists/dispatch/dispatch-flag-colors",
       "required": [
         "load",
-        "customer",
         "driver",
         "picker_law",
         "qbo_chrome",
@@ -523,7 +521,6 @@
       "route_hint": "/lists/dispatch/load-trailer-equipment",
       "required": [
         "load",
-        "customer",
         "driver",
         "picker_law",
         "qbo_chrome",
@@ -537,7 +534,6 @@
       "route_hint": "/lists/dispatch/load-trailer-equipment",
       "required": [
         "load",
-        "customer",
         "driver",
         "picker_law",
         "qbo_chrome",
@@ -551,7 +547,6 @@
       "route_hint": "/lists/dispatch/load-types",
       "required": [
         "load",
-        "customer",
         "driver",
         "picker_law",
         "qbo_chrome",
@@ -565,7 +560,6 @@
       "route_hint": "/lists/dispatch/load-types",
       "required": [
         "load",
-        "customer",
         "driver",
         "picker_law",
         "qbo_chrome",
@@ -579,7 +573,6 @@
       "route_hint": "/lists/dispatch/detention-reasons",
       "required": [
         "load",
-        "customer",
         "driver",
         "picker_law",
         "qbo_chrome",
@@ -593,7 +586,6 @@
       "route_hint": "/lists/dispatch/detention-reasons",
       "required": [
         "load",
-        "customer",
         "driver",
         "picker_law",
         "qbo_chrome",
@@ -607,7 +599,6 @@
       "route_hint": "/lists/dispatch/pickup-time-types",
       "required": [
         "load",
-        "customer",
         "driver",
         "picker_law",
         "qbo_chrome",
@@ -621,7 +612,6 @@
       "route_hint": "/lists/dispatch/pickup-time-types",
       "required": [
         "load",
-        "customer",
         "driver",
         "picker_law",
         "qbo_chrome",
@@ -635,7 +625,6 @@
       "route_hint": "/lists/dispatch/additional-charges",
       "required": [
         "load",
-        "customer",
         "driver",
         "picker_law",
         "qbo_chrome",
@@ -649,7 +638,6 @@
       "route_hint": "/lists/dispatch/additional-charges",
       "required": [
         "load",
-        "customer",
         "driver",
         "picker_law",
         "qbo_chrome",
@@ -663,7 +651,6 @@
       "route_hint": "/lists/dispatch/load-cancellation-reasons",
       "required": [
         "load",
-        "customer",
         "driver",
         "picker_law",
         "qbo_chrome",
@@ -677,7 +664,6 @@
       "route_hint": "/lists/dispatch/load-cancellation-reasons",
       "required": [
         "load",
-        "customer",
         "driver",
         "picker_law",
         "qbo_chrome",
@@ -691,7 +677,6 @@
       "route_hint": "/lists/dispatch/dispatcher-error-reasons",
       "required": [
         "load",
-        "customer",
         "driver",
         "picker_law",
         "qbo_chrome",
@@ -705,7 +690,6 @@
       "route_hint": "/lists/dispatch/dispatcher-error-reasons",
       "required": [
         "load",
-        "customer",
         "driver",
         "picker_law",
         "qbo_chrome",
@@ -719,7 +703,6 @@
       "route_hint": "/lists/dispatch/lumper-providers",
       "required": [
         "load",
-        "customer",
         "driver",
         "picker_law",
         "qbo_chrome",
@@ -733,7 +716,6 @@
       "route_hint": "/lists/dispatch/lumper-providers",
       "required": [
         "load",
-        "customer",
         "driver",
         "picker_law",
         "qbo_chrome",
@@ -2377,7 +2359,6 @@
       "sub": "Account Types",
       "route_hint": "/lists/accounting/account-types-lookup",
       "required": [
-        "customer",
         "vendor",
         "picker_law",
         "qbo_chrome",
@@ -2390,7 +2371,6 @@
       "sub": "+ Create \u2014 Account Types",
       "route_hint": "/lists/accounting/account-types-lookup",
       "required": [
-        "customer",
         "vendor",
         "picker_law",
         "qbo_chrome",
@@ -2403,7 +2383,6 @@
       "sub": "Account Types",
       "route_hint": "/lists/accounting/detail-types-lookup",
       "required": [
-        "customer",
         "vendor",
         "picker_law",
         "qbo_chrome",
@@ -2416,7 +2395,6 @@
       "sub": "+ Create \u2014 Account Types",
       "route_hint": "/lists/accounting/detail-types-lookup",
       "required": [
-        "customer",
         "vendor",
         "picker_law",
         "qbo_chrome",
@@ -2429,7 +2407,6 @@
       "sub": "Account Types",
       "route_hint": "/lists/accounting/audit-event-types",
       "required": [
-        "customer",
         "vendor",
         "picker_law",
         "qbo_chrome",
@@ -2442,7 +2419,6 @@
       "sub": "+ Create \u2014 Account Types",
       "route_hint": "/lists/accounting/audit-event-types",
       "required": [
-        "customer",
         "vendor",
         "picker_law",
         "qbo_chrome",
@@ -2455,7 +2431,6 @@
       "sub": "Account Types",
       "route_hint": "/lists/accounting/chart-of-accounts",
       "required": [
-        "customer",
         "vendor",
         "picker_law",
         "qbo_chrome",
@@ -2468,7 +2443,6 @@
       "sub": "+ Create \u2014 Account Types",
       "route_hint": "/lists/accounting/chart-of-accounts",
       "required": [
-        "customer",
         "vendor",
         "picker_law",
         "qbo_chrome",
@@ -2481,7 +2455,6 @@
       "sub": "Detail Types",
       "route_hint": "/lists/accounting/account-types",
       "required": [
-        "customer",
         "vendor",
         "picker_law",
         "qbo_chrome",
@@ -2494,7 +2467,6 @@
       "sub": "+ Create \u2014 Detail Types",
       "route_hint": "/lists/accounting/account-types",
       "required": [
-        "customer",
         "vendor",
         "picker_law",
         "qbo_chrome",
@@ -2507,7 +2479,6 @@
       "sub": "Audit Event Types",
       "route_hint": "/lists/accounting/detail-types",
       "required": [
-        "customer",
         "vendor",
         "picker_law",
         "qbo_chrome",
@@ -2520,7 +2491,6 @@
       "sub": "+ Create \u2014 Audit Event Types",
       "route_hint": "/lists/accounting/detail-types",
       "required": [
-        "customer",
         "vendor",
         "picker_law",
         "qbo_chrome",
@@ -2533,7 +2503,6 @@
       "sub": "Chart of Accounts",
       "route_hint": "/lists/accounting/classes",
       "required": [
-        "customer",
         "vendor",
         "picker_law",
         "qbo_chrome",
@@ -2546,7 +2515,6 @@
       "sub": "+ Create \u2014 Chart of Accounts",
       "route_hint": "/lists/accounting/classes",
       "required": [
-        "customer",
         "vendor",
         "picker_law",
         "qbo_chrome",
@@ -2559,7 +2527,6 @@
       "sub": "Account Type",
       "route_hint": "/lists/accounting/payment-terms",
       "required": [
-        "customer",
         "vendor",
         "picker_law",
         "qbo_chrome",
@@ -2572,7 +2539,6 @@
       "sub": "+ Create \u2014 Account Type",
       "route_hint": "/lists/accounting/payment-terms",
       "required": [
-        "customer",
         "vendor",
         "picker_law",
         "qbo_chrome",
@@ -2585,7 +2551,6 @@
       "sub": "Detail Type",
       "route_hint": "/lists/accounting/posting-templates",
       "required": [
-        "customer",
         "vendor",
         "picker_law",
         "qbo_chrome",
@@ -2598,7 +2563,6 @@
       "sub": "+ Create \u2014 Detail Type",
       "route_hint": "/lists/accounting/posting-templates",
       "required": [
-        "customer",
         "vendor",
         "picker_law",
         "qbo_chrome",
@@ -2611,7 +2575,6 @@
       "sub": "Classes",
       "route_hint": "/lists/accounting/journal-entry-types",
       "required": [
-        "customer",
         "vendor",
         "picker_law",
         "qbo_chrome",
@@ -2624,7 +2587,6 @@
       "sub": "+ Create \u2014 Classes",
       "route_hint": "/lists/accounting/journal-entry-types",
       "required": [
-        "customer",
         "vendor",
         "picker_law",
         "qbo_chrome",
@@ -2637,7 +2599,6 @@
       "sub": "Payment Terms",
       "route_hint": "/lists/accounting/qbo-bulk-link",
       "required": [
-        "customer",
         "vendor",
         "picker_law",
         "qbo_chrome",
@@ -2650,7 +2611,6 @@
       "sub": "+ Create \u2014 Payment Terms",
       "route_hint": "/lists/accounting/qbo-bulk-link",
       "required": [
-        "customer",
         "vendor",
         "picker_law",
         "qbo_chrome",
@@ -2663,7 +2623,6 @@
       "sub": "Posting Templates",
       "route_hint": "/lists/accounting/qbo-categories",
       "required": [
-        "customer",
         "vendor",
         "picker_law",
         "qbo_chrome",
@@ -2676,7 +2635,6 @@
       "sub": "+ Create \u2014 Posting Templates",
       "route_hint": "/lists/accounting/qbo-categories",
       "required": [
-        "customer",
         "vendor",
         "picker_law",
         "qbo_chrome",
@@ -2689,7 +2647,6 @@
       "sub": "Journal Entry Types",
       "route_hint": "/lists/accounting/items",
       "required": [
-        "customer",
         "vendor",
         "picker_law",
         "qbo_chrome",
@@ -2702,7 +2659,6 @@
       "sub": "+ Create \u2014 Journal Entry Types",
       "route_hint": "/lists/accounting/items",
       "required": [
-        "customer",
         "vendor",
         "picker_law",
         "qbo_chrome",
@@ -2715,7 +2671,6 @@
       "sub": "QBO bulk-link",
       "route_hint": "/lists/accounting/account-role-bindings",
       "required": [
-        "customer",
         "vendor",
         "picker_law",
         "qbo_chrome",
@@ -2728,7 +2683,6 @@
       "sub": "+ Create \u2014 QBO bulk-link",
       "route_hint": "/lists/accounting/account-role-bindings",
       "required": [
-        "customer",
         "vendor",
         "picker_law",
         "qbo_chrome",
@@ -2741,7 +2695,6 @@
       "sub": "Product & Service Categories",
       "route_hint": "/lists/accounting/chart-of-accounts-seeds",
       "required": [
-        "customer",
         "vendor",
         "picker_law",
         "qbo_chrome",
@@ -2754,7 +2707,6 @@
       "sub": "+ Create \u2014 Product & Service Categories",
       "route_hint": "/lists/accounting/chart-of-accounts-seeds",
       "required": [
-        "customer",
         "vendor",
         "picker_law",
         "qbo_chrome",
@@ -2767,7 +2719,6 @@
       "sub": "Items",
       "route_hint": "/lists/accounting/expense-categories",
       "required": [
-        "customer",
         "vendor",
         "picker_law",
         "qbo_chrome",
@@ -2780,7 +2731,6 @@
       "sub": "+ Create \u2014 Items",
       "route_hint": "/lists/accounting/expense-categories",
       "required": [
-        "customer",
         "vendor",
         "picker_law",
         "qbo_chrome",
@@ -2793,7 +2743,6 @@
       "sub": "Account Role Bindings",
       "route_hint": "/lists/accounting/payment-methods",
       "required": [
-        "customer",
         "vendor",
         "picker_law",
         "qbo_chrome",
@@ -2806,7 +2755,6 @@
       "sub": "+ Create \u2014 Account Role Bindings",
       "route_hint": "/lists/accounting/payment-methods",
       "required": [
-        "customer",
         "vendor",
         "picker_law",
         "qbo_chrome",
@@ -2819,7 +2767,6 @@
       "sub": "Chart of Accounts Seeds",
       "route_hint": "/lists/accounting/tax-codes",
       "required": [
-        "customer",
         "vendor",
         "picker_law",
         "qbo_chrome",
@@ -2832,7 +2779,6 @@
       "sub": "+ Create \u2014 Chart of Accounts Seeds",
       "route_hint": "/lists/accounting/tax-codes",
       "required": [
-        "customer",
         "vendor",
         "picker_law",
         "qbo_chrome",
@@ -2845,7 +2791,6 @@
       "sub": "Expense Categories",
       "route_hint": "/lists/accounting/currency-codes",
       "required": [
-        "customer",
         "vendor",
         "picker_law",
         "qbo_chrome",
@@ -2858,7 +2803,6 @@
       "sub": "+ Create \u2014 Expense Categories",
       "route_hint": "/lists/accounting/currency-codes",
       "required": [
-        "customer",
         "vendor",
         "picker_law",
         "qbo_chrome",
@@ -2871,7 +2815,6 @@
       "sub": "Payment Methods",
       "route_hint": "/lists/accounting/void-cancel-reasons",
       "required": [
-        "customer",
         "vendor",
         "picker_law",
         "qbo_chrome",
@@ -2884,7 +2827,6 @@
       "sub": "+ Create \u2014 Payment Methods",
       "route_hint": "/lists/accounting/void-cancel-reasons",
       "required": [
-        "customer",
         "vendor",
         "picker_law",
         "qbo_chrome",
@@ -2897,7 +2839,6 @@
       "sub": "Currency Codes",
       "route_hint": "/lists/accounting/abandonment-defaults",
       "required": [
-        "customer",
         "vendor",
         "picker_law",
         "qbo_chrome",
@@ -2910,7 +2851,6 @@
       "sub": "+ Create \u2014 Currency Codes",
       "route_hint": "/lists/accounting/abandonment-defaults",
       "required": [
-        "customer",
         "vendor",
         "picker_law",
         "qbo_chrome",
@@ -2923,7 +2863,6 @@
       "sub": "Customer Types",
       "route_hint": "/lists/customers/customer-types",
       "required": [
-        "customer",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -2936,7 +2875,6 @@
       "sub": "+ Create \u2014 Customer Types",
       "route_hint": "/lists/customers/customer-types",
       "required": [
-        "customer",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -2949,7 +2887,6 @@
       "sub": "Customer Types",
       "route_hint": "/lists/customers/customer-quality-event-reasons",
       "required": [
-        "customer",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -2962,7 +2899,6 @@
       "sub": "+ Create \u2014 Customer Types",
       "route_hint": "/lists/customers/customer-quality-event-reasons",
       "required": [
-        "customer",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -2999,7 +2935,6 @@
       "sub": "Shippers",
       "route_hint": "/lists/names/brokers",
       "required": [
-        "customer",
         "vendor",
         "driver",
         "connectivity",
@@ -3012,7 +2947,6 @@
       "sub": "+ Create \u2014 Shippers",
       "route_hint": "/lists/names/brokers",
       "required": [
-        "customer",
         "vendor",
         "driver",
         "connectivity"
@@ -5696,6 +5630,408 @@
           "id": "catalog.fleet.asset_locations.create",
           "removed": [
             "trailer"
+          ]
+        }
+      ]
+    },
+    "customer_column_2026_08_14_overclaim": {
+      "finding": "LINK-F5165-CUSTOMER-COLUMN-VERTICAL-SWEEP",
+      "note": "customer blanket-required on all 62 catalog.* list/create leaf pairs (dispatch/accounting/customers/names_master domains) plus hub.names_search and lists.drawer.new_customer_drawer_form. Verified live: all catalog.* pages (DispatchFlagColorsCatalog.tsx, ChartOfAccountsListPage.tsx, and the customer-types/customer-quality-event-reasons catalogs, all driven by the same generic useCatalogQuery.ts hook + catalogKey pattern already confirmed for fleet's catalogs in the trailer-column sweep) manage catalog VALUES (dropdown option rows: code/display_name/description/sort_order/is_active), never individual customer RECORDS \u2014 zero customer_id/EntityLink anywhere, even for catalog.customers.customer_types.* and catalog.customers.customer_quality_event_reasons.* whose names reference \"customer\" but which define classification VALUES, not customer entities. hub.names_search and lists.drawer.new_customer_drawer_form (KEPT, real Built added): NamesMasterHub.tsx renders real EntityLink kind={kind} (dynamically \"customer\" for customer rows) in cross-module search results; NewCustomerDrawerForm.tsx calls the canonical createCustomer().",
+      "drops": [
+        {
+          "id": "catalog.dispatch.dispatch_flag_colors.list",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "catalog.dispatch.dispatch_flag_colors.create",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "catalog.dispatch.load_trailer_equipment.list",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "catalog.dispatch.load_trailer_equipment.create",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "catalog.dispatch.load_types.list",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "catalog.dispatch.load_types.create",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "catalog.dispatch.detention_reasons.list",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "catalog.dispatch.detention_reasons.create",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "catalog.dispatch.pickup_time_types.list",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "catalog.dispatch.pickup_time_types.create",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "catalog.dispatch.additional_charges.list",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "catalog.dispatch.additional_charges.create",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "catalog.dispatch.load_cancellation_reasons.list",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "catalog.dispatch.load_cancellation_reasons.create",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "catalog.dispatch.dispatcher_error_reasons.list",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "catalog.dispatch.dispatcher_error_reasons.create",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "catalog.dispatch.lumper_providers.list",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "catalog.dispatch.lumper_providers.create",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "catalog.accounting.account_types_lookup.list",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "catalog.accounting.account_types_lookup.create",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "catalog.accounting.detail_types_lookup.list",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "catalog.accounting.detail_types_lookup.create",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "catalog.accounting.audit_event_types.list",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "catalog.accounting.audit_event_types.create",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "catalog.accounting.chart_of_accounts.list",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "catalog.accounting.chart_of_accounts.create",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "catalog.accounting.account_types.list",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "catalog.accounting.account_types.create",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "catalog.accounting.detail_types.list",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "catalog.accounting.detail_types.create",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "catalog.accounting.classes.list",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "catalog.accounting.classes.create",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "catalog.accounting.payment_terms.list",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "catalog.accounting.payment_terms.create",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "catalog.accounting.posting_templates.list",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "catalog.accounting.posting_templates.create",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "catalog.accounting.journal_entry_types.list",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "catalog.accounting.journal_entry_types.create",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "catalog.accounting.qbo_bulk_link.list",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "catalog.accounting.qbo_bulk_link.create",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "catalog.accounting.qbo_categories.list",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "catalog.accounting.qbo_categories.create",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "catalog.accounting.items.list",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "catalog.accounting.items.create",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "catalog.accounting.account_role_bindings.list",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "catalog.accounting.account_role_bindings.create",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "catalog.accounting.chart_of_accounts_seeds.list",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "catalog.accounting.chart_of_accounts_seeds.create",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "catalog.accounting.expense_categories.list",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "catalog.accounting.expense_categories.create",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "catalog.accounting.payment_methods.list",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "catalog.accounting.payment_methods.create",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "catalog.accounting.tax_codes.list",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "catalog.accounting.tax_codes.create",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "catalog.accounting.currency_codes.list",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "catalog.accounting.currency_codes.create",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "catalog.accounting.void_cancel_reasons.list",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "catalog.accounting.void_cancel_reasons.create",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "catalog.accounting.abandonment_defaults.list",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "catalog.accounting.abandonment_defaults.create",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "catalog.customers.customer_types.list",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "catalog.customers.customer_types.create",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "catalog.customers.customer_quality_event_reasons.list",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "catalog.customers.customer_quality_event_reasons.create",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "catalog.names_master.brokers.list",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "catalog.names_master.brokers.create",
+          "removed": [
+            "customer"
           ]
         }
       ]

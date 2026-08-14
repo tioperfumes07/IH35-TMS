@@ -218,7 +218,6 @@
         "driver",
         "unit",
         "load",
-        "customer",
         "connectivity",
         "reverse_link",
         "picker_law"
@@ -234,7 +233,6 @@
         "unit",
         "trailer",
         "load",
-        "customer",
         "vendor",
         "liability",
         "expense",
@@ -252,7 +250,6 @@
       "route_hint": "/safety/insurance/lawsuits",
       "required": [
         "driver",
-        "customer",
         "vendor",
         "connectivity",
         "reverse_link"
@@ -265,7 +262,6 @@
       "route_hint": "/safety/insurance/lawsuits",
       "required": [
         "driver",
-        "customer",
         "vendor",
         "liability",
         "picker_law",
@@ -772,6 +768,36 @@
           "id": "claims.list",
           "removed": [
             "trailer"
+          ]
+        }
+      ]
+    },
+    "customer_column_2026_08_14_overclaim": {
+      "finding": "LINK-F5165-CUSTOMER-COLUMN-VERTICAL-SWEEP",
+      "note": "all 4 insurance leaves are false: neither claims nor lawsuits ever reference a customer entity (unit/driver/vendor/matter linkage only).",
+      "drops": [
+        {
+          "id": "claims.list",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "claims.create",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "lawsuits.list",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "lawsuits.create",
+          "removed": [
+            "customer"
           ]
         }
       ]

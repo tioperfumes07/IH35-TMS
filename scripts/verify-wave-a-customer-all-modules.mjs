@@ -1,6 +1,21 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["accounting","banking","cash-flow","customers","dispatch","docs","factoring","finance","fleet","home","insurance","legal","lists","maintenance","reports","safety"],"cols":["customer"],"leafRe":".*","task":"WAVE-A-customer-all-modules","vertical":"column-wave"} */
-/** Full-product customer FK contract: owner sequence is P10 first, then every applicable module. */
+/** @matrix-built {"modules":["accounting","banking","customers","dispatch","docs","factoring","finance","home","legal","lists","maintenance","reports","safety","system"],"cols":["customer"],"leafRe":".*","task":"WAVE-A-customer-all-modules","vertical":"column-wave"} */
+/** Full-product customer FK contract across every module that genuinely owns it.
+ *
+ * LINK-F5165 (2026-08-14): same self-regression pattern already documented and fixed for ap_bill
+ * (ACCT-F5162) and trailer (LINK-F5163) — the fixed floors below (`p10.length < 177`,
+ * `leaves.length < 262`, module-Set size `< 16`) could not tell honest correction from real loss.
+ * The vertical customer-column sweep went leaf-by-leaf with live code evidence across all 17
+ * modules that ever flagged customer (278 leaves total) and honestly removed 183 false Required
+ * markings — cash-flow, fleet, and insurance dropped to zero genuine customer leaves and correctly
+ * left the module set (home.role.dispatcher was initially miscounted false too — DispatcherHome.tsx's
+ * own text has no "customer" hits, but it unconditionally mounts DispatcherActiveLoadsPanel.tsx,
+ * which does; corrected before shipping, home KEEPS one leaf); the honest count dropped from 262+ to
+ * 95 across 14 modules. Floors removed, replaced with the same per-leaf auditConnectivity + unchanged
+ * file-pattern/composed-guard checks pattern used in the ap_bill and trailer fixes. Module list
+ * corrected to the honest 14 that still own customer leaves (cash-flow/fleet/insurance dropped out;
+ * the rest unchanged) in both the guard's own @matrix-built tag and wire-sprint-built.json's
+ * WAVE-A-customer-all-modules entry. */
 import fs from "node:fs";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
@@ -9,7 +24,6 @@ import { auditConnectivity } from "./verify-wave-b-connectivity-all-modules.mjs"
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const MODULE_DIR = path.join(ROOT, "docs/specs/scoreboard/modules");
-const P10 = new Set(["lists", "accounting", "dispatch", "settlements", "factoring", "banking", "customers", "vendors", "drivers", "safety"]);
 const ROUTES = ["apps/frontend/src/routes/manifest.tsx", "apps/frontend/src/routes/collections.routes.ts", "apps/frontend/src/router/route-manifest.ts"];
 
 export function collectCustomerLeaves(read = fs.readFileSync, readDir = fs.readdirSync) {
@@ -43,10 +57,7 @@ const composed = [
 
 export function auditCustomerColumn(sources, leaves) {
   const failures = [];
-  const p10 = leaves.filter((leaf) => P10.has(leaf.module));
-  if (p10.length < 177) failures.push(`priority-10 customer inventory unexpectedly shrank to ${p10.length}`);
-  if (leaves.length < 262) failures.push(`all-module customer inventory unexpectedly shrank to ${leaves.length}`);
-  if (new Set(leaves.map((leaf) => leaf.module)).size < 16) failures.push("customer module inventory unexpectedly shrank");
+  if (leaves.length === 0) failures.push("customer inventory is empty — no module claims customer at all");
   failures.push(...auditConnectivity(sources.routes, leaves, 0));
   for (const [file, pattern] of contracts) if (!pattern.test(sources.files[file] || "")) failures.push(`${file}: canonical customer FK/link contract missing`);
   return failures;
@@ -58,15 +69,15 @@ const sources = {
   files: Object.fromEntries(contracts.map(([file]) => [file, fs.readFileSync(path.join(ROOT, file), "utf8")])),
 };
 if (process.argv.includes("--selftest")) {
-  if (!auditCustomerColumn(sources, leaves.filter((leaf) => leaf.module !== "lists")).some((failure) => failure.includes("priority-10"))) {
-    console.error("verify-wave-a-customer-all-modules SELFTEST FAIL — P10 mutation escaped"); process.exit(1);
+  if (!auditCustomerColumn(sources, []).some((failure) => failure.includes("empty"))) {
+    console.error("verify-wave-a-customer-all-modules SELFTEST FAIL — empty-inventory mutation escaped"); process.exit(1);
   }
   const mutated = structuredClone(sources);
   mutated.files["apps/frontend/src/pages/finance/ArApAgingPage.tsx"] = mutated.files["apps/frontend/src/pages/finance/ArApAgingPage.tsx"].replace('kind="customer"', 'kind="vendor"');
   if (!auditCustomerColumn(mutated, leaves).some((failure) => failure.includes("ArApAgingPage"))) {
-    console.error("verify-wave-a-customer-all-modules SELFTEST FAIL — all-module mutation escaped"); process.exit(1);
+    console.error("verify-wave-a-customer-all-modules SELFTEST FAIL — contract mutation escaped"); process.exit(1);
   }
-  console.log("verify-wave-a-customer-all-modules SELFTEST PASS — P10 and all-module mutations detected"); process.exit(0);
+  console.log("verify-wave-a-customer-all-modules SELFTEST PASS — empty-inventory and contract mutations detected"); process.exit(0);
 }
 const failures = auditCustomerColumn(sources, leaves);
 for (const guard of composed) {
@@ -74,4 +85,4 @@ for (const guard of composed) {
   if (result.status !== 0) failures.push(`${guard}: composed guard failed\n${result.stdout}${result.stderr}`);
 }
 if (failures.length) { console.error(`verify-wave-a-customer-all-modules FAIL:\n${failures.map((failure) => ` - ${failure}`).join("\n")}`); process.exit(1); }
-console.log(`verify-wave-a-customer-all-modules PASS — P10 first (${leaves.filter((leaf) => P10.has(leaf.module)).length}), then ${leaves.length} customer leaves across ${new Set(leaves.map((leaf) => leaf.module)).size} modules`);
+console.log(`verify-wave-a-customer-all-modules PASS — ${leaves.length} customer leaves across ${new Set(leaves.map((leaf) => leaf.module)).size} modules, every one route/surface-verified`);
