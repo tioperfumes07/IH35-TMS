@@ -19,7 +19,7 @@ function audit(s) {
   if (!/WHERE e\.operating_company_id = \$1::uuid[\s\S]{0,180}\(\$2::uuid IS NULL OR e\.unit_id = \$2::uuid\)/.test(s.service)) failures.push("entity-scoped exact unit filter missing");
   if (!/listSevereRepairEstimates\(companyId: string, filters: \{ unit_id\?: string \}/.test(s.api) || !/params\.set\("unit_id", filters\.unit_id\)/.test(s.api)) failures.push("frontend API unit filter missing");
   if (!/listSevereRepairEstimates\(operatingCompanyId, \{ unit_id: unitId \}\)/.test(s.reverse) || !/query\.isError \? <p[^>]*>Could not load severe repairs for this unit\.<\/p> : null/.test(s.reverse) || !/No open severe repairs are linked to this unit/.test(s.reverse)) failures.push("honest exact reverse section missing");
-  if (!/maintenance\/severe-repairs\?unit_id=/.test(s.reverse) || !/maintenance\/work-orders\//.test(s.reverse)) failures.push("canonical filtered/list detail drills missing");
+  if (!/maintenance\/severe-repairs\?unit_id=/.test(s.reverse) || !(/kind="work_order"/.test(s.reverse) || /maintenance\/work-orders\//.test(s.reverse))) failures.push("canonical filtered/list detail drills missing");
   if (!/UnitSevereRepairsReverseSection[\s\S]{0,140}unitId=\{id\}/.test(s.profile)) failures.push("vehicle profile mount missing");
   if (!/UnitSevereRepairsReverseSection[\s\S]{0,140}unitId=\{id\}/.test(s.detail)) failures.push("secondary unit detail mount missing");
   if (!/listSevereRepairEstimates\(operatingCompanyId, \{ unit_id: unitId \}\)/.test(s.creator)) failures.push("filtered canonical page missing");
@@ -35,6 +35,8 @@ if (process.argv.includes("--selftest")) {
     ["api", "api", /params\.set\("unit_id", filters\.unit_id\)/, "void filters.unit_id"],
     ["reverse", "reverse", /unit_id: unitId/, "unit_id: operatingCompanyId"],
     ["error", "reverse", /query\.isError \? <p className="text-sm text-red-600">Could not load severe repairs for this unit\.<\/p> : null/, "null"],
+    ["drill_kind", "reverse", /kind="work_order"/, 'kind="unit"'],
+    ["drill_filter", "reverse", /maintenance\/severe-repairs\?unit_id=/, "maintenance/severe-repairs?wrong_id="],
     ["profile", "profile", /UnitSevereRepairsReverseSection/g, "MissingSevereReverse"],
     ["detail", "detail", /UnitSevereRepairsReverseSection/g, "MissingSevereReverse"],
   ];
