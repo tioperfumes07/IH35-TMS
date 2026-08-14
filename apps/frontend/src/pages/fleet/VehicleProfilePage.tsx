@@ -1,7 +1,7 @@
 import { entityLabel } from "../../lib/entity-label";
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useParams, useSearchParams, Link } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { apiRequest } from "../../api/client";
 import { patchUnit, quicksaveEquipmentAssignment } from "../../api/mdata";
