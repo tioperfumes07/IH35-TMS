@@ -1104,7 +1104,7 @@
       "route_hint": "/accounting/fixed-assets",
       "surface_kind": "panel",
       "surface_path": "pages/accounting/FixedAssetsPage.tsx",
-      "required": ["expense", "gl_je", "connectivity", "reverse_link", "qbo_chrome"]
+      "required": ["expense", "gl_je", "connectivity", "qbo_chrome"]
     },
     {
       "id": "accounting.panel.detail",
@@ -1122,7 +1122,7 @@
       "route_hint": "/accounting/my-accountant",
       "surface_kind": "panel",
       "surface_path": "pages/accounting/MyAccountantPage.tsx",
-      "required": ["gl_je", "connectivity", "reverse_link", "qbo_chrome"]
+      "required": ["gl_je", "connectivity", "qbo_chrome"]
     },
     {
       "id": "accounting.panel.class_cost_center_variance",
@@ -1149,7 +1149,7 @@
       "route_hint": "/accounting/prepaid-expenses",
       "surface_kind": "modal",
       "surface_path": "pages/accounting/PrepaidExpensesPage.tsx",
-      "required": ["vendor", "expense", "gl_je", "connectivity", "reverse_link", "picker_law", "qbo_chrome"]
+      "required": ["vendor", "expense", "gl_je", "connectivity", "picker_law", "qbo_chrome"]
     },
     {
       "id": "accounting.panel.receipt_detail",
