@@ -55,6 +55,7 @@ import { UnitTempCoverReverseSection } from "../../components/safety/UnitTempCov
 import { LinkedBankTransactionsPanel } from "../../components/banking/LinkedBankTransactionsPanel";
 import { UnitTaxFilingsReverseSection } from "../../components/compliance/UnitTaxFilingsReverseSection";
 import { SafetyAlertsReverseSection } from "../../components/safety/SafetyAlertsReverseSection";
+import { InsuranceLawsuitsReverseSection } from "../../components/insurance/InsuranceLawsuitsReverseSection";
 
 export type UnitProfileAggregate = {
   unit: Record<string, unknown>;
@@ -273,7 +274,7 @@ export function VehicleProfilePage() {
             <ComplianceSection compliance={profile.compliance} />
           </div>
           <div data-testid="vp-section-6b-insurance-summary">
-            <InsuranceSummarySection insuranceSummary={profile.insurance_summary} />
+            <InsuranceSummarySection insuranceSummary={profile.insurance_summary} unitId={id} />
           </div>
           <div data-testid="vp-section-7-reefer">
             {profile.reefer ? (
@@ -356,6 +357,9 @@ export function VehicleProfilePage() {
           </div>
           <div data-testid="vp-section-safety-alerts-reverse">
             <SafetyAlertsReverseSection operatingCompanyId={companyId} subjectKind="unit" subjectId={id} />
+          </div>
+          <div data-testid="vp-section-insurance-lawsuits-reverse">
+            <InsuranceLawsuitsReverseSection operatingCompanyId={companyId} filter={{ unit_id: id }} contextLabel="this unit" />
           </div>
           {/* RANK6-FUEL-LOAD-REVERSE-FORWARD follow-up — units had zero fuel reverse linkage despite
               fuel.fuel_transactions.unit_id existing and GET /fuel/transactions?unit_id=... working

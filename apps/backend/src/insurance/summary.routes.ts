@@ -20,6 +20,7 @@ type Queryable = {
 };
 
 const querySchema = z.object({ operating_company_id: z.string().uuid() });
+const coverageGapQuerySchema = querySchema.extend({ unit_id: z.string().uuid().optional() });
 
 function authUser(req: FastifyRequest, reply: FastifyReply) {
   if (!requireAuth(req, reply)) return null;
@@ -77,6 +78,7 @@ export async function registerInsuranceSummaryRoutes(app: FastifyInstance) {
       const coverageGapRows = await client.query<CoverageGapUnitRow>(COVERAGE_GAP_UNITS_SQL, [
         tenantId,
         REQUIRED_COVERAGE_TYPES,
+        null,
       ]);
       const coverage_gap_count = classifyCoverageGapUnits(coverageGapRows.rows).coverage_gap_count;
 
@@ -100,12 +102,12 @@ export async function registerInsuranceSummaryRoutes(app: FastifyInstance) {
   app.get("/api/v1/insurance/coverage-gaps", async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
-    const parsed = querySchema.safeParse(req.query ?? {});
+    const parsed = coverageGapQuerySchema.safeParse(req.query ?? {});
     if (!parsed.success) return reply.code(400).send({ error: "validation_error", details: parsed.error.flatten() });
     const tenantId = parsed.data.operating_company_id;
 
     const result = await withCompanyScope(user.uuid, tenantId, async (client) => {
-      const rows = await client.query<CoverageGapUnitRow>(COVERAGE_GAP_UNITS_SQL, [tenantId, REQUIRED_COVERAGE_TYPES]);
+      const rows = await client.query<CoverageGapUnitRow>(COVERAGE_GAP_UNITS_SQL, [tenantId, REQUIRED_COVERAGE_TYPES, parsed.data.unit_id ?? null]);
       return classifyCoverageGapUnits(rows.rows);
     });
 
