@@ -255,7 +255,6 @@
       "sub": "Accident Types",
       "route_hint": "/lists/safety/accident-types",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -267,7 +266,6 @@
       "sub": "+ Create — Accident Types",
       "route_hint": "/lists/safety/accident-types",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -279,7 +277,6 @@
       "sub": "Accident Types",
       "route_hint": "/lists/safety/workplace-incident-types",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -291,7 +288,6 @@
       "sub": "+ Create — Accident Types",
       "route_hint": "/lists/safety/workplace-incident-types",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -303,7 +299,6 @@
       "sub": "Accident Types",
       "route_hint": "/lists/safety/internal-fine-reasons",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -315,7 +310,6 @@
       "sub": "+ Create — Accident Types",
       "route_hint": "/lists/safety/internal-fine-reasons",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -327,7 +321,6 @@
       "sub": "Accident Types",
       "route_hint": "/lists/safety/civil-fine-types",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -339,7 +332,6 @@
       "sub": "+ Create — Accident Types",
       "route_hint": "/lists/safety/civil-fine-types",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -351,7 +343,6 @@
       "sub": "Workplace Incident Types",
       "route_hint": "/lists/safety/company-violation-types",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -363,7 +354,6 @@
       "sub": "+ Create — Workplace Incident Types",
       "route_hint": "/lists/safety/company-violation-types",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -375,7 +365,6 @@
       "sub": "Internal Fine Reasons",
       "route_hint": "/lists/safety/complaint-types",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -387,7 +376,6 @@
       "sub": "+ Create — Internal Fine Reasons",
       "route_hint": "/lists/safety/complaint-types",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -399,7 +387,6 @@
       "sub": "Civil Fine Types",
       "route_hint": "/lists/safety/dot-violation-types",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -411,7 +398,6 @@
       "sub": "+ Create — Civil Fine Types",
       "route_hint": "/lists/safety/dot-violation-types",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -423,7 +409,6 @@
       "sub": "Company Violation Types",
       "route_hint": "/lists/safety/cargo-claim-reasons",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -435,7 +420,6 @@
       "sub": "+ Create — Company Violation Types",
       "route_hint": "/lists/safety/cargo-claim-reasons",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -447,7 +431,6 @@
       "sub": "Dispatch Flag Colors",
       "route_hint": "/lists/dispatch/dispatch-flag-colors",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -459,7 +442,6 @@
       "sub": "+ Create — Dispatch Flag Colors",
       "route_hint": "/lists/dispatch/dispatch-flag-colors",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -471,7 +453,6 @@
       "sub": "Dispatch Flag Colors",
       "route_hint": "/lists/dispatch/load-trailer-equipment",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -483,7 +464,6 @@
       "sub": "+ Create — Dispatch Flag Colors",
       "route_hint": "/lists/dispatch/load-trailer-equipment",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -495,7 +475,6 @@
       "sub": "Dispatch Flag Colors",
       "route_hint": "/lists/dispatch/load-types",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -507,7 +486,6 @@
       "sub": "+ Create — Dispatch Flag Colors",
       "route_hint": "/lists/dispatch/load-types",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -519,7 +497,6 @@
       "sub": "Dispatch Flag Colors",
       "route_hint": "/lists/dispatch/detention-reasons",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -531,7 +508,6 @@
       "sub": "+ Create — Dispatch Flag Colors",
       "route_hint": "/lists/dispatch/detention-reasons",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -543,7 +519,6 @@
       "sub": "Load Trailer Equipment",
       "route_hint": "/lists/dispatch/pickup-time-types",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -555,7 +530,6 @@
       "sub": "+ Create — Load Trailer Equipment",
       "route_hint": "/lists/dispatch/pickup-time-types",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -567,7 +541,6 @@
       "sub": "Load Types",
       "route_hint": "/lists/dispatch/additional-charges",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -579,7 +552,6 @@
       "sub": "+ Create — Load Types",
       "route_hint": "/lists/dispatch/additional-charges",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -591,7 +563,6 @@
       "sub": "Detention Reasons",
       "route_hint": "/lists/dispatch/load-cancellation-reasons",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -603,7 +574,6 @@
       "sub": "+ Create — Detention Reasons",
       "route_hint": "/lists/dispatch/load-cancellation-reasons",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -615,7 +585,6 @@
       "sub": "Load Cancellation Reasons",
       "route_hint": "/lists/dispatch/dispatcher-error-reasons",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -627,7 +596,6 @@
       "sub": "+ Create — Load Cancellation Reasons",
       "route_hint": "/lists/dispatch/dispatcher-error-reasons",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -639,7 +607,6 @@
       "sub": "Dispatcher Error Reasons",
       "route_hint": "/lists/dispatch/lumper-providers",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -651,7 +618,6 @@
       "sub": "+ Create — Dispatcher Error Reasons",
       "route_hint": "/lists/dispatch/lumper-providers",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -663,7 +629,6 @@
       "sub": "Termination Reasons",
       "route_hint": "/lists/drivers/termination-reasons",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -675,7 +640,6 @@
       "sub": "+ Create — Termination Reasons",
       "route_hint": "/lists/drivers/termination-reasons",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -687,7 +651,6 @@
       "sub": "Termination Reasons",
       "route_hint": "/lists/driver/cash-advance-types",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -699,7 +662,6 @@
       "sub": "+ Create — Termination Reasons",
       "route_hint": "/lists/driver/cash-advance-types",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -711,7 +673,6 @@
       "sub": "Termination Reasons",
       "route_hint": "/lists/drivers/endorsements",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -723,7 +684,6 @@
       "sub": "+ Create — Termination Reasons",
       "route_hint": "/lists/drivers/endorsements",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -735,7 +695,6 @@
       "sub": "Termination Reasons",
       "route_hint": "/lists/drivers/restrictions",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -747,7 +706,6 @@
       "sub": "+ Create — Termination Reasons",
       "route_hint": "/lists/drivers/restrictions",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -759,7 +717,6 @@
       "sub": "Cash Advance Types",
       "route_hint": "/lists/drivers/employment-status",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -771,7 +728,6 @@
       "sub": "+ Create — Cash Advance Types",
       "route_hint": "/lists/drivers/employment-status",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -783,7 +739,6 @@
       "sub": "CDL Endorsements",
       "route_hint": "/lists/driver/leave-types",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -795,7 +750,6 @@
       "sub": "+ Create — CDL Endorsements",
       "route_hint": "/lists/driver/leave-types",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -807,7 +761,6 @@
       "sub": "CDL Restrictions",
       "route_hint": "/lists/drivers/medical-card-status",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -819,7 +772,6 @@
       "sub": "+ Create — CDL Restrictions",
       "route_hint": "/lists/drivers/medical-card-status",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -831,7 +783,6 @@
       "sub": "Employment Statuses",
       "route_hint": "/lists/driver/pay-rate-templates",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -843,7 +794,6 @@
       "sub": "+ Create — Employment Statuses",
       "route_hint": "/lists/driver/pay-rate-templates",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -855,7 +805,6 @@
       "sub": "Leave Types",
       "route_hint": "/lists/driver/deduction-types",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -867,7 +816,6 @@
       "sub": "+ Create — Leave Types",
       "route_hint": "/lists/driver/deduction-types",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -879,7 +827,6 @@
       "sub": "Medical Card Statuses",
       "route_hint": "/lists/driver/pay-types",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -891,7 +838,6 @@
       "sub": "+ Create — Medical Card Statuses",
       "route_hint": "/lists/driver/pay-types",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -903,7 +849,6 @@
       "sub": "Pay Rate Templates",
       "route_hint": "/lists/driver/escrow-types",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -915,7 +860,6 @@
       "sub": "+ Create — Pay Rate Templates",
       "route_hint": "/lists/driver/escrow-types",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -927,7 +871,6 @@
       "sub": "Driver Deduction Types",
       "route_hint": "/lists/drivers/license-classes",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -939,7 +882,6 @@
       "sub": "+ Create — Driver Deduction Types",
       "route_hint": "/lists/drivers/license-classes",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -951,7 +893,6 @@
       "sub": "Medical Card Status",
       "route_hint": "/lists/drivers/driver-load-statuses",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -963,7 +904,6 @@
       "sub": "+ Create — Medical Card Status",
       "route_hint": "/lists/drivers/driver-load-statuses",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -976,7 +916,6 @@
       "route_hint": "/lists/driver/teams",
       "required": [
         "driver",
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity",
@@ -990,7 +929,6 @@
       "route_hint": "/lists/driver/teams",
       "required": [
         "driver",
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1464,7 +1402,6 @@
       "sub": "DEF Stations",
       "route_hint": "/lists/fuel/def-stations",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1476,7 +1413,6 @@
       "sub": "+ Create — DEF Stations",
       "route_hint": "/lists/fuel/def-stations",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1488,7 +1424,6 @@
       "sub": "DEF Stations",
       "route_hint": "/lists/fuel/fuel-stations",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1500,7 +1435,6 @@
       "sub": "+ Create — DEF Stations",
       "route_hint": "/lists/fuel/fuel-stations",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1512,7 +1446,6 @@
       "sub": "DEF Stations",
       "route_hint": "/lists/fuel/relay-accounts",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1524,7 +1457,6 @@
       "sub": "+ Create — DEF Stations",
       "route_hint": "/lists/fuel/relay-accounts",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1536,7 +1468,6 @@
       "sub": "DEF Stations",
       "route_hint": "/lists/fuel/toll-providers",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1548,7 +1479,6 @@
       "sub": "+ Create — DEF Stations",
       "route_hint": "/lists/fuel/toll-providers",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1560,7 +1490,6 @@
       "sub": "Fuel Stations",
       "route_hint": "/lists/fuel/card-types",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1572,7 +1501,6 @@
       "sub": "+ Create — Fuel Stations",
       "route_hint": "/lists/fuel/card-types",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1584,7 +1512,6 @@
       "sub": "Relay Accounts",
       "route_hint": "/lists/fuel/exception-types",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1596,7 +1523,6 @@
       "sub": "+ Create — Relay Accounts",
       "route_hint": "/lists/fuel/exception-types",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1608,7 +1534,6 @@
       "sub": "Toll Providers",
       "route_hint": "/lists/fuel/station-brands",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1620,7 +1545,6 @@
       "sub": "+ Create — Toll Providers",
       "route_hint": "/lists/fuel/station-brands",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1632,7 +1556,6 @@
       "sub": "Fuel Card Types",
       "route_hint": "/lists/fuel/stop-reason-codes",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1644,7 +1567,6 @@
       "sub": "+ Create — Fuel Card Types",
       "route_hint": "/lists/fuel/stop-reason-codes",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1656,7 +1578,6 @@
       "sub": "Fuel Exception Types",
       "route_hint": "/lists/fuel/mpg-bands",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1668,7 +1589,6 @@
       "sub": "+ Create — Fuel Exception Types",
       "route_hint": "/lists/fuel/mpg-bands",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1680,7 +1600,6 @@
       "sub": "Fuel Station Brands",
       "route_hint": "/lists/fuel/expensive-states",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1692,7 +1611,6 @@
       "sub": "+ Create — Fuel Station Brands",
       "route_hint": "/lists/fuel/expensive-states",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1704,7 +1622,6 @@
       "sub": "Fuel Stop Reason Codes",
       "route_hint": "/lists/fuel/tax-jurisdictions",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1716,7 +1633,6 @@
       "sub": "+ Create — Fuel Stop Reason Codes",
       "route_hint": "/lists/fuel/tax-jurisdictions",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1728,7 +1644,6 @@
       "sub": "MPG Bands",
       "route_hint": "/lists/fuel/brands",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1740,7 +1655,6 @@
       "sub": "+ Create — MPG Bands",
       "route_hint": "/lists/fuel/brands",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1752,7 +1666,6 @@
       "sub": "Expensive States",
       "route_hint": "/lists/fuel/station-states",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1764,7 +1677,6 @@
       "sub": "+ Create — Expensive States",
       "route_hint": "/lists/fuel/station-states",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1776,7 +1688,6 @@
       "sub": "Fuel Tax Jurisdictions",
       "route_hint": "/lists/fuel/pump-types",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1788,7 +1699,6 @@
       "sub": "+ Create — Fuel Tax Jurisdictions",
       "route_hint": "/lists/fuel/pump-types",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1800,7 +1710,6 @@
       "sub": "Fuel Brands",
       "route_hint": "/lists/fuel/grades",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1812,7 +1721,6 @@
       "sub": "+ Create — Fuel Brands",
       "route_hint": "/lists/fuel/grades",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1824,7 +1732,6 @@
       "sub": "Fuel Station States",
       "route_hint": "/lists/fuel/dispatch-routes",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -1836,7 +1743,6 @@
       "sub": "+ Create — Fuel Station States",
       "route_hint": "/lists/fuel/dispatch-routes",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2528,7 +2434,6 @@
       "sub": "Customer Types",
       "route_hint": "/lists/customers/customer-types",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2540,7 +2445,6 @@
       "sub": "+ Create — Customer Types",
       "route_hint": "/lists/customers/customer-types",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2552,7 +2456,6 @@
       "sub": "Customer Types",
       "route_hint": "/lists/customers/customer-quality-event-reasons",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -2564,7 +2467,6 @@
       "sub": "+ Create — Customer Types",
       "route_hint": "/lists/customers/customer-quality-event-reasons",
       "required": [
-        "load",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -7939,6 +7841,7 @@
     "surface_bar_2026_08_14": {
       "finding": "SURFACE-BAR-CREATE-DRAWER-INVENTORY",
       "note": "Real create drawers for equipment types / driver load statuses live at /catalogs/* (EquipmentTypesPage / DriverLoadStatusesPage). Lists route_hint leaves remain for Lists module chrome; inventory completeness uses catalogs.*.create surface_path leaves."
-    }
+    },
+    "load_column_2026_08_14": {"finding":"VERTICAL-LOAD-ALL-MODULES-REMAINDER","note":"Reusable generic catalog list/create records are company-scoped configuration values. Their frontend/backend CRUD schemas persist catalog fields only and never own load_id; requiring load would invent a domain FK.","leaves_touched":98,"drops":[{"id":"catalog.safety.accident_types.list","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.safety.accident_types.create","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.safety.workplace_incident_types.list","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.safety.workplace_incident_types.create","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.safety.internal_fine_reasons.list","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.safety.internal_fine_reasons.create","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.safety.civil_fine_types.list","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.safety.civil_fine_types.create","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.safety.company_violation_types.list","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.safety.company_violation_types.create","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.safety.complaint_types.list","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.safety.complaint_types.create","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.safety.dot_violation_types.list","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.safety.dot_violation_types.create","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.safety.cargo_claim_reasons.list","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.safety.cargo_claim_reasons.create","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.dispatch.dispatch_flag_colors.list","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.dispatch.dispatch_flag_colors.create","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.dispatch.load_trailer_equipment.list","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.dispatch.load_trailer_equipment.create","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.dispatch.load_types.list","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.dispatch.load_types.create","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.dispatch.detention_reasons.list","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.dispatch.detention_reasons.create","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.dispatch.pickup_time_types.list","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.dispatch.pickup_time_types.create","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.dispatch.additional_charges.list","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.dispatch.additional_charges.create","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.dispatch.load_cancellation_reasons.list","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.dispatch.load_cancellation_reasons.create","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.dispatch.dispatcher_error_reasons.list","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.dispatch.dispatcher_error_reasons.create","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.dispatch.lumper_providers.list","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.dispatch.lumper_providers.create","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.drivers.termination_reasons.list","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.drivers.termination_reasons.create","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.drivers.cash_advance_types.list","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.drivers.cash_advance_types.create","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.drivers.endorsements.list","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.drivers.endorsements.create","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.drivers.restrictions.list","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.drivers.restrictions.create","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.drivers.employment_status.list","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.drivers.employment_status.create","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.drivers.leave_types.list","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.drivers.leave_types.create","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.drivers.medical_card_status.list","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.drivers.medical_card_status.create","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.drivers.pay_rate_templates.list","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.drivers.pay_rate_templates.create","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.drivers.deduction_types.list","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.drivers.deduction_types.create","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.drivers.pay_types.list","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.drivers.pay_types.create","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.drivers.escrow_types.list","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.drivers.escrow_types.create","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.drivers.license_classes.list","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.drivers.license_classes.create","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.drivers.driver_load_statuses.list","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.drivers.driver_load_statuses.create","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.drivers.teams.list","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.drivers.teams.create","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.fuel.def_stations.list","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.fuel.def_stations.create","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.fuel.fuel_stations.list","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.fuel.fuel_stations.create","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.fuel.relay_accounts.list","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.fuel.relay_accounts.create","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.fuel.toll_providers.list","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.fuel.toll_providers.create","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.fuel.card_types.list","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.fuel.card_types.create","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.fuel.exception_types.list","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.fuel.exception_types.create","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.fuel.station_brands.list","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.fuel.station_brands.create","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.fuel.stop_reason_codes.list","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.fuel.stop_reason_codes.create","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.fuel.mpg_bands.list","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.fuel.mpg_bands.create","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.fuel.expensive_states.list","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.fuel.expensive_states.create","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.fuel.tax_jurisdictions.list","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.fuel.tax_jurisdictions.create","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.fuel.brands.list","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.fuel.brands.create","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.fuel.station_states.list","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.fuel.station_states.create","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.fuel.pump_types.list","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.fuel.pump_types.create","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.fuel.grades.list","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.fuel.grades.create","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.fuel.dispatch_routes.list","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.fuel.dispatch_routes.create","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.customers.customer_types.list","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.customers.customer_types.create","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.customers.customer_quality_event_reasons.list","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"},{"id":"catalog.customers.customer_quality_event_reasons.create","removed":["load"],"reason":"generic catalog value/list/create record has no persisted load_id relationship"}]}
   }
 }
