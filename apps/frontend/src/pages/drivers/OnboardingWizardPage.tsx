@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import { EntityLink } from "../../components/shared/EntityLink";
 import {
   adminOverrideOnboardingSession,
   completeOnboardingSession,
@@ -189,9 +190,13 @@ export function OnboardingWizardPage() {
         subtitle={`${statusLabel} · ${stepLabel} · ${driverBit} · save + resume · docs module uploads`}
         actions={
           driverId ? (
-            <Link to={`/drivers/${driverId}`} className="rounded-sm border px-3 py-1.5 text-sm">
-              Driver profile
-            </Link>
+            <EntityLink
+              kind="driver"
+              id={driverId}
+              label="Driver profile"
+              className="rounded-sm border px-3 py-1.5 text-sm"
+              data-testid="onboarding-wizard-driver-profile-link"
+            />
           ) : null
         }
       />

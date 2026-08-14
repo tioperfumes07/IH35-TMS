@@ -47,9 +47,13 @@ export function DriverHosDetailPage() {
         subtitle={driverQuery.data ? `${driverQuery.data.first_name} ${driverQuery.data.last_name}` : "Driver timeline and FMCSA clocks"}
         actions={
           id ? (
-            <Link to={`/drivers/${id}`} className="rounded-sm border border-gray-300 px-3 py-2 text-xs font-semibold text-gray-700">
-              Back to driver
-            </Link>
+            <EntityLink
+              kind="driver"
+              id={id}
+              label="Back to driver"
+              className="rounded-sm border border-gray-300 px-3 py-2 text-xs font-semibold text-gray-700"
+              data-testid="driver-hos-detail-back-driver-link"
+            />
           ) : null
         }
       />
