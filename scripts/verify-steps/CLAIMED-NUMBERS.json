@@ -757,6 +757,11 @@
     "claimed_by": "cc-1",
     "purpose": "verify-bank-account-reconciliation-reverse-section"
   },
+  "3289": {
+    "claimed_at": "2026-08-14",
+    "claimed_by": "cc-1",
+    "purpose": "verify-banking-driver-escrow-reverse-link"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
