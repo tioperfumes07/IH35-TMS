@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** @matrix-built modules=dispatch,customers,notifications cols=customer,connectivity,reverse_link,picker_law */
+/** @matrix-built {"modules":["dispatch","customers"],"cols":["customer","connectivity","reverse_link","picker_law"],"leafRe":"^settings\\.notify$|^detail\\.profile$","task":"THEATER-CUSTOMER-NOTIFY-LEAFRE","vertical":"column-wave"} */
 import fs from "node:fs";
 const LABEL = "verify-customer-notify-linkage";
 const files = {
