@@ -5,20 +5,21 @@ import fs from "node:fs";
 const customer = fs.readFileSync("apps/frontend/src/pages/CustomerDetail.tsx", "utf8");
 const vendor = fs.readFileSync("apps/frontend/src/pages/VendorDetail.tsx", "utf8");
 const unit = fs.readFileSync("apps/frontend/src/pages/units/UnitFinanceLinkageTab.tsx", "utf8");
+const entityLink = fs.readFileSync("apps/frontend/src/components/shared/EntityLink.tsx", "utf8");
 
-function failures(customerSource = customer, vendorSource = vendor, unitSource = unit) {
+function failures(customerSource = customer, vendorSource = vendor, unitSource = unit, entityLinkSource = entityLink) {
   return [
     ["customer payment detail drill", customerSource.includes('kind="payment" id={p.id}')],
-    ["vendor credit exact drill", vendorSource.includes('/accounting/vendor-credits?credit_id=${encodeURIComponent(c.id)}')],
-    ["fixed asset exact drill", unitSource.includes('/accounting/fixed-assets?asset_id=${encodeURIComponent(row.id)}')],
+    ["vendor credit exact drill", vendorSource.includes('kind="vendor_credit"') && vendorSource.includes("id={c.id}") && /case "vendor_credit":[\s\S]{0,120}vendor-credits\?credit_id=/.test(entityLinkSource)],
+    ["fixed asset exact drill", unitSource.includes('kind="fixed_asset"') && unitSource.includes("id={row.id}") && /case "fixed_asset":[\s\S]{0,120}fixed-assets\?asset_id=/.test(entityLinkSource)],
   ].filter(([, ok]) => !ok).map(([name]) => name);
 }
 
 if (process.argv.includes("--selftest")) {
   const mutations = [
     failures(customer.replace('kind="payment" id={p.id}', 'kind="customer" id={p.id}'), vendor, unit).includes("customer payment detail drill"),
-    failures(customer, vendor.replace("credit_id=${encodeURIComponent(c.id)}", "vendor_id=${encodeURIComponent(id)}"), unit).includes("vendor credit exact drill"),
-    failures(customer, vendor, unit.replace("asset_id=${encodeURIComponent(row.id)}", "unit_id=${encodeURIComponent(unitId)}")).includes("fixed asset exact drill"),
+    failures(customer, vendor.replace('kind="vendor_credit"', 'kind="vendor"'), unit).includes("vendor credit exact drill"),
+    failures(customer, vendor, unit.replace('kind="fixed_asset"', 'kind="unit"')).includes("fixed asset exact drill"),
   ];
   if (mutations.some((ok) => !ok)) process.exit(1);
   console.log("verify-accounting-existing-query-reverse-drills selftest PASS — 3/3 target mutations red");

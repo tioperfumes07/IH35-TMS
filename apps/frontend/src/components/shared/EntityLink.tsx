@@ -100,6 +100,12 @@ export type EntityKind =
   | "task"
   // LINK-F5171: Live GPS "View map" → /dispatch/map?load_id= (viewport, not kind=load).
   | "load_map"
+  // LINK-F5171: VendorDetail credit # → exact vendor credit (not vendor filter).
+  | "vendor_credit"
+  // LINK-F5171: DriverTeamsReverseSection → lists driver team deep-link.
+  | "driver_team"
+  // LINK-F5171: EntityAuditHistoryTab action → exact audit trail event.
+  | "audit_event"
   | "inventory_part"
   | "parts_inventory"
   | "maintenance_vendor"
@@ -314,6 +320,12 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
       return `/tasks/chat?taskId=${id}`;
     case "load_map":
       return `/dispatch/map?load_id=${id}`;
+    case "vendor_credit":
+      return `/accounting/vendor-credits?credit_id=${id}`;
+    case "driver_team":
+      return `/lists/driver/teams?team_id=${id}`;
+    case "audit_event":
+      return `/audit/trail?audit_event_id=${id}`;
     case "safety_event":
       return `/safety/safety-events?event_id=${id}`;
     // SAF-F33 safety drill-through — each target list page reads the param and opens/highlights the row.

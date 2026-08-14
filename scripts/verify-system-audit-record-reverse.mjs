@@ -17,7 +17,7 @@ const files = {
 };
 function failures(s = files) { return [
   ["company-scoped exact audit filter", s.routes.includes("audit_event_id: z.string().uuid().optional()") && s.routes.includes("e.uuid = $${values.length}::uuid") && s.api.includes('search.set("audit_event_id", params.auditEventId)')],
-  ["profile row exact drill", s.history.includes('/audit/trail?audit_event_id=${encodeURIComponent(row.id)}')],
+  ["profile row exact drill", s.history.includes('kind="audit_event"') && s.history.includes("id={row.id}")],
   ["system page honors exact record", s.page.includes('searchParams.get("audit_event_id")') && s.page.includes("listAuditEvents({ operatingCompanyId: companyId, auditEventId, limit: 1 })") && s.page.includes('data-testid="audit-trail-exact-event"')],
   ["honest selected-record states", s.page.includes("Selected audit event unavailable.") && s.page.includes("Audit event not found for this operating company.")],
   ["selected actor canonical drill", s.page.includes('<EntityLink kind="user" id={exactAuditEvent.actor_user_id}')],
@@ -26,7 +26,7 @@ function failures(s = files) { return [
 if (process.argv.includes("--selftest")) {
   const checks = [
     failures({ ...files, routes: files.routes.replace("e.uuid = $${values.length}::uuid", "TRUE") }).includes("company-scoped exact audit filter"),
-    failures({ ...files, history: files.history.replace("audit_event_id=${encodeURIComponent(row.id)}", "") }).includes("profile row exact drill"),
+    failures({ ...files, history: files.history.replace('kind="audit_event"', 'kind="user"') }).includes("profile row exact drill"),
     failures({ ...files, page: files.page.replace("auditEventId, limit: 1", "limit: 1") }).includes("system page honors exact record"),
     failures({ ...files, page: files.page.replace("Audit event not found for this operating company.", "No events") }).includes("honest selected-record states"),
     failures({ ...files, page: files.page.replace('<EntityLink kind="user" id={exactAuditEvent.actor_user_id}', '<span data-user={exactAuditEvent.actor_user_id}') }).includes("selected actor canonical drill"),

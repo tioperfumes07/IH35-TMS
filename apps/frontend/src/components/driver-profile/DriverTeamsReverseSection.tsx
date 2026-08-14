@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
 import { driverTeamMemberName, listMdataDriverTeams } from "../../api/driver-teams";
+import { EntityLink } from "../shared/EntityLink";
 
 export function DriverTeamsReverseSection({ driverId, operatingCompanyId }: { driverId: string; operatingCompanyId: string }) {
   const query = useQuery({
@@ -27,12 +27,12 @@ export function DriverTeamsReverseSection({ driverId, operatingCompanyId }: { dr
             : driverTeamMemberName(team, "primary");
           return (
             <li key={team.id} className="flex items-center justify-between gap-3 py-2 text-xs">
-              <Link
-                to={`/lists/driver/teams?team_id=${encodeURIComponent(team.id)}`}
+              <EntityLink
+                kind="driver_team"
+                id={team.id}
+                label={team.team_name}
                 className="font-semibold text-slate-700 hover:underline"
-              >
-                {team.team_name}
-              </Link>
+              />
               <span className="text-gray-500">Teammate: {teammate}</span>
             </li>
           );
