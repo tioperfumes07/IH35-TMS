@@ -2653,6 +2653,14 @@
       "modules": ["lists"],
       "cols": ["reverse_link"],
       "leafRe": "^catalog\\.drivers\\.teams\\.list$"
+    },
+    {
+      "task": "VERTICAL-REVERSE-LINK-UNIT-TASKS",
+      "pr": "this PR",
+      "guard": "scripts/verify-unit-task-reverse-drill.mjs",
+      "modules": ["fleet"],
+      "cols": ["reverse_link"],
+      "leafRe": "^unit\\.detail\\.tasks$"
     }
   ]
 }

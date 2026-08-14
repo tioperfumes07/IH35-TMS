@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { fetchTasksByTarget, type TaskStatus, type TaskTargetType } from "../../api/tasks";
 import { CreateTaskModal } from "./CreateTaskModal";
 import { formatDateUS } from "../../lib/formatDate";
+import { Link } from "react-router-dom";
 
 type Props = {
   operatingCompanyId: string;
@@ -80,7 +81,9 @@ export function TasksTab({ operatingCompanyId, targetType, targetId, targetLabel
             {tasks.map((t) => (
               <tr key={t.task_id} className="border-b border-gray-100">
                 <td className="py-1.5 pr-3 text-gray-800">
-                  {t.title}
+                  <Link to={`/tasks/chat?taskId=${encodeURIComponent(t.task_id)}`} className="font-semibold text-slate-700 hover:underline">
+                    {t.title}
+                  </Link>
                   {t.anticipated_category ? <span className="ml-1 text-[11px] text-slate-500">({t.anticipated_category})</span> : null}
                 </td>
                 <td className="py-1.5 pr-3"><StatusPill status={t.status} /></td>
