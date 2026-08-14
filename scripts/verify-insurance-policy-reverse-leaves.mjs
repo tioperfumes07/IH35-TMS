@@ -15,11 +15,11 @@ const assertions = [
   [policy, /getInsurancePolicy\(policyId!, companyId\)/, "policy detail read stays company-scoped"],
   [policy, /kind="unit"/, "policy detail drills to assigned units"],
   [policy, /Couldn't load policy details[\s\S]*policyQuery\.refetch\(\)/, "policy detail exposes retryable read failures"],
-  [gaps, /getInsuranceCoverageGaps\(companyId\)/, "coverage gaps read stays company-scoped"],
+  [gaps, /getInsuranceCoverageGaps\(companyId(?:,\s*unitId)?\)/, "coverage gaps read stays company-scoped"],
   [gaps, /kind="unit"/, "coverage gaps drill to affected units"],
   [gaps, /if \(failedQuery\)[\s\S]*coverageGapsQuery\.refetch\(\)[\s\S]*policiesQuery\.refetch\(\)/, "coverage gaps stop false-zero rendering and retry both reads"],
   [vendor, /vendor_id: vendorId/, "vendor reverse read uses the vendor FK"],
-  [vendor, /policies\/\$\{policy\.id\}/, "vendor rows drill to policy detail"],
+  [vendor, /kind="insurance_policy"[\s\S]*id=\{policy\.id\}|policies\/\$\{policy\.id\}/, "vendor rows drill to policy detail"],
   [vendor, /Couldn't load this vendor's insurance policies[\s\S]*query\.refetch\(\)/, "vendor reverse exposes retryable read failures"],
   [unit, /kind="insurance_policy"[\s\S]*id=\{policy\.policy_id\}/, "unit profile drills through the policy FK"],
 ];

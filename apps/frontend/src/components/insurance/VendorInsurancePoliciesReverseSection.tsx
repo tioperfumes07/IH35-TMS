@@ -4,6 +4,7 @@ import { listInsurancePolicies } from "../../api/insurance";
 import { formatDateUS } from "../../lib/formatDate";
 import { ListErrorState } from "../ListErrorState";
 import { ApiError } from "../../api/client";
+import { EntityLink } from "../shared/EntityLink";
 
 export function VendorInsurancePoliciesReverseSection({ operatingCompanyId, vendorId }: { operatingCompanyId: string; vendorId: string }) {
   const query = useQuery({
@@ -29,7 +30,7 @@ export function VendorInsurancePoliciesReverseSection({ operatingCompanyId, vend
     ) : null}
     {!query.isLoading && !query.isError && rows.length === 0 ? <p className="text-sm text-gray-500">No active insurance policies are linked to this vendor.</p> : null}
     {rows.length ? <ul className="space-y-2">{rows.map((policy) => <li key={policy.id} className="rounded-sm border border-gray-200 p-2 text-xs">
-      <Link className="font-semibold text-slate-700 underline" to={`/safety/insurance/policies/${policy.id}`}>{policy.policy_number}</Link>
+      <EntityLink kind="insurance_policy" id={policy.id} label={policy.policy_number} className="font-semibold text-slate-700 underline" />
       <div className="text-gray-500">{policy.coverage_type} · expires {formatDateUS(policy.expiry_date)}</div>
     </li>)}</ul> : null}
   </section>;
