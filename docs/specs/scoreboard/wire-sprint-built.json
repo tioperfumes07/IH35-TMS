@@ -2539,6 +2539,14 @@
       "modules": ["maintenance"],
       "cols": ["reverse_link"],
       "leafRe": "^arriving_soon\\.convert_to_wo$"
+    },
+    {
+      "task": "VERTICAL-REVERSE-LINK-ACCOUNTING-EXISTING-QUERIES",
+      "pr": "this PR",
+      "guard": "scripts/verify-accounting-existing-query-reverse-drills.mjs",
+      "modules": ["accounting"],
+      "cols": ["reverse_link"],
+      "leafRe": "^(payments\\.receive|accounting\\.parity\\.vendor_credits_page|accounting\\.panel\\.(trk_bulk_register|detail))$"
     }
   ]
 }

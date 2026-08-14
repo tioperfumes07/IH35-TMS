@@ -2210,6 +2210,12 @@ export function CustomerDetailPage() {
                   ) : null
                 }
                 columns={[
+                  {
+                    key: "id",
+                    label: "Payment",
+                    sortable: true,
+                    render: (p) => <EntityLink kind="payment" id={p.id} label={entityLabel(null, p.id, "Payment")} />,
+                  },
                   { key: "date", label: "Date", sortable: true, render: (p) => formatDateUS(p.date) },
                   { key: "amount_cents", label: "Amount", sortable: true, cellClass: "text-right tabular-nums", render: (p) => formatCurrencyCents(p.amount_cents) },
                   { key: "source_kind", label: "Method", sortable: true, render: (p) => p.source_kind ?? "—" },
