@@ -348,7 +348,7 @@ export async function getFaroDailyImportDetail(userId: string, operatingCompanyI
   });
 }
 
-export async function listEquipmentLoans(userId: string, operatingCompanyId: string, status?: string) {
+export async function listEquipmentLoans(userId: string, operatingCompanyId: string, status?: string, vendorId?: string) {
   return withCurrentUser(userId, async (client) => {
     await setCompanyScope(client, operatingCompanyId);
     const values: unknown[] = [operatingCompanyId];
@@ -356,6 +356,13 @@ export async function listEquipmentLoans(userId: string, operatingCompanyId: str
     if (status) {
       values.push(status);
       whereSql += ` AND l.status = $${values.length}`;
+    }
+    // LINK-F5171/LINK-F5182: reverse_link -- vendor's own profile queries its own equipment loans.
+    // Server-side scoping (not client-side), same reasoning as every other reverse fix this
+    // session: this list is capped at LIMIT 300.
+    if (vendorId) {
+      values.push(vendorId);
+      whereSql += ` AND l.lender_vendor_id = $${values.length}::uuid`;
     }
     const res = await client.query(
       `

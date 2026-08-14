@@ -89,6 +89,10 @@ const paymentBodySchema = z.object({
 const loanListQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
   status: z.enum(["active", "paid_off", "defaulted", "voided"]).optional(),
+  // LINK-F5171/LINK-F5182: reverse_link -- factoring:home.equipment_loans, vendor side. The unit
+  // side already filters by unit_id (unit-finance-linkage.service.ts); l.lender_vendor_id is the
+  // same real FK on the vendor side, just never exposed as a query filter.
+  vendor_id: z.string().uuid().optional(),
 });
 
 function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
@@ -162,7 +166,7 @@ export async function registerDataInfrastructureRoutes(app: FastifyInstance) {
     }
   });
 
-  app.post("/api/v1/factoring/faro-imports", async (req, reply) => {
+  app.post("/api/v1/factoring/faro-imports", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!isOfficeRole(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -179,12 +183,12 @@ export async function registerDataInfrastructureRoutes(app: FastifyInstance) {
     return { ok: true, id: result.id };
   });
 
-  app.get("/api/v1/banking/equipment-loans", async (req, reply) => {
+  app.get("/api/v1/banking/equipment-loans", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = loanListQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return sendValidationError(reply, query.error);
-    const rows = await listEquipmentLoans(user.uuid, query.data.operating_company_id, query.data.status);
+    const rows = await listEquipmentLoans(user.uuid, query.data.operating_company_id, query.data.status, query.data.vendor_id);
     return { rows };
   });
 
