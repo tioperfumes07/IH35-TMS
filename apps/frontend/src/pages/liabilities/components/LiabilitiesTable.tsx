@@ -38,7 +38,7 @@ export function LiabilitiesTable({ rows, onOpenDetail, onSendAck }: Props) {
     {
       key: "id",
       label: "Display ID",
-      render: (row) => <>{entityLabel(null, row.id, "Liability")}</>,
+      render: (row) => <EntityLink kind="liability" id={String(row.id)} label={entityLabel(null, row.id, "Liability")} data-testid="liability-roster-record-link" />,
     },
     {
       key: "driver_full_name",

@@ -12,6 +12,7 @@ import {
 import { addDaysIso, companyToday, localDateFromIso } from "../../../lib/businessDate";
 import { formatUsdCents } from "../../../lib/money";
 import { entityLabel } from "../../../lib/entity-label";
+import { EntityLink } from "../../../components/shared/EntityLink";
 
 function fmtDate(iso: string): string {
   return localDateFromIso(iso).toLocaleDateString("en-US", {
@@ -233,7 +234,7 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
                   className="flex cursor-pointer items-start justify-between px-4 py-2.5 text-sm hover:bg-gray-50"
                 >
                   <div className="min-w-0 flex-1">
-                    <span className="font-medium text-gray-900 hover:underline">{entityLabel(item.load_number, item.load_id, "Load")}</span>
+                    <EntityLink kind="load" id={item.load_id} label={entityLabel(item.load_number, item.load_id, "Load")} className="font-medium text-gray-900" data-testid="cash-flow-predicted-load-link" onClick={(event) => event.stopPropagation()} />
                     <span className="ml-2 text-gray-600">{entityLabel(item.customer_name, null, "Customer")}</span>
                     {item.delivery_time && (
                       <span className="ml-2 text-xs text-gray-400">

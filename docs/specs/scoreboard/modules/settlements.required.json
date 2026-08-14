@@ -191,6 +191,18 @@
       ]
     },
     {
+      "id": "liabilities.list",
+      "tab": "Liabilities",
+      "sub": "Driver liabilities roster",
+      "route_hint": "/liabilities",
+      "required": [
+        "driver",
+        "liability",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
       "id": "pre_settlements",
       "tab": "Pre-Settlements",
       "sub": "Pre-settlements",
