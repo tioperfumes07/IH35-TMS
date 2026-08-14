@@ -126,6 +126,21 @@ export type ArrivingSoonCard = {
   suggested_wo_source_type: "IS" | "ES" | "AC" | "ET" | "RT" | "IT" | "RS";
 };
 
+export type ArrivingSoonConversion = {
+  issue_id: string;
+  issue_type: string | null;
+  issue_category: string | null;
+  issue_description: string;
+  severity: string;
+  converted_at: string;
+  work_order_id: string;
+  work_order_display_id: string | null;
+  load_id: string | null;
+  load_display_id: string | null;
+  unit_id: string | null;
+  unit_number: string | null;
+};
+
 export type InTransitIssue = {
   id: string;
   reported_at: string;
@@ -684,7 +699,9 @@ export function getArrivingSoon(params: {
   if (params.include_already_arrived != null) qs.set("include_already_arrived", String(params.include_already_arrived));
   if (params.include_non_yard_destination != null) qs.set("include_non_yard_destination", String(params.include_non_yard_destination));
   if (params.severity_min) qs.set("severity_min", params.severity_min);
-  return apiRequest<{ cards: ArrivingSoonCard[]; counts: Record<string, number> }>(`/api/v1/maintenance/arriving-soon?${qs.toString()}`);
+  return apiRequest<{ cards: ArrivingSoonCard[]; counts: Record<string, number>; recent_conversions: ArrivingSoonConversion[] }>(
+    `/api/v1/maintenance/arriving-soon?${qs.toString()}`
+  );
 }
 
 export function convertIssueToWo(
