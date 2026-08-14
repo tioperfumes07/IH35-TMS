@@ -90,3 +90,4 @@ Draw the next unused number from your OWN block, record a `CLAIM-<n>` row below,
 | 2026-08-14T13:14:00-05:00 | Codex | VERTICAL-CONNECTIVITY-QBO-CATEGORIES-TMS-CATALOG | product/service category list/create entity membership + guard | RESERVED | codex/vertical-next-033 |
 | 2026-08-14T13:03:47-05:00 | Codex | VERTICAL-CONNECTIVITY-QBO-CATEGORIES-TMS-CATALOG | product/service category list/create entity membership + guard | RELEASED-ON-MERGE | codex/vertical-next-033 |
 | 2026-08-14T13:20:00-05:00 | Codex | VERTICAL-CONNECTIVITY-REPORTS-HUB | reports registry hub + category/run subnav exact guard | RESERVED | codex/vertical-connectivity-reports-034 |
+| 2026-08-14 | Codex | VERTICAL-CONNECTIVITY-REPORTS-RUNNER-ALIASES | reports runner alias connectivity | apps/frontend/src/pages/reports/ReportsRunner.tsx; scripts/verify-reports-runner-canonical-aliases.mjs | ACTIVE |
