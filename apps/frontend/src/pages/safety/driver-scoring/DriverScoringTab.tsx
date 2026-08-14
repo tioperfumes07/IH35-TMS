@@ -5,6 +5,8 @@ import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { DriverScoreDetail } from "./DriverScoreDetail";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+import { EntityLink } from "../../../components/shared/EntityLink";
+import { entityLabel } from "../../../lib/entity-label";
 
 type PeriodPreset = "week" | "month" | "quarter";
 
@@ -42,7 +44,18 @@ export function DriverScoringTab() {
   const columns = useMemo<ParityColumn<DriverSafetyScoreRow>[]>(
     () => [
       { key: "rank_in_fleet", label: "Rank", sortable: true, render: (row) => row.rank_in_fleet ?? "—" },
-      { key: "driver_name", label: "Driver", sortable: true },
+      {
+        key: "driver_name",
+        label: "Driver",
+        sortable: true,
+        render: (row) => (
+          <EntityLink
+            kind="driver"
+            id={row.driver_uuid}
+            label={entityLabel(row.driver_name, row.driver_uuid, "Driver")}
+          />
+        ),
+      },
       {
         key: "composite_score",
         label: "Score",
