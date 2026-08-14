@@ -41,10 +41,11 @@ const CHECKS = [
   ["apps/frontend/src/pages/safety/driver-scheduler/DriverSchedulerRequestInboxPage.tsx", /kind="driver" id=\{String\(r\.driver_id \?\? ""\)\}/],
   // tasks: nav.board, nav.mine, board.planner_grid, board.create, mine.list
   ["apps/frontend/src/components/tasks/TaskSubjectLink.tsx", /driver: "driver",/],
-  ["apps/frontend/src/components/tasks/CreateTaskModal.tsx", /kind=\{entityKind as "vendor" \| "driver" \| "unit"\}/],
+  // EntityPicker kinds include load (tasks + docs upload) — still require driver in the union.
+  ["apps/frontend/src/components/tasks/CreateTaskModal.tsx", /kind=\{entityKind as "vendor" \| "driver" \| "unit" \| "load"\}/],
   // docs: home, tab.all, tab.driver, upload, table.entity_link
   ["apps/frontend/src/pages/docs/DocsHomePage.tsx", /case "driver":/],
-  ["apps/frontend/src/components/documents/UploadModal.tsx", /if \(type === "driver" \|\| type === "unit" \|\| type === "vendor"\) return type;/],
+  ["apps/frontend/src/components/documents/UploadModal.tsx", /if \(type === "driver" \|\| type === "unit" \|\| type === "vendor" \|\| type === "load"\) return type;/],
   // legal: contracts.list, contracts.create, matters.create, matters.detail
   ["apps/frontend/src/pages/legal/contracts/LegalContractInstancesPage.tsx", /if \(type === "driver" \|\| type === "customer" \|\| type === "vendor"\) return type;/],
   ["apps/frontend/src/pages/legal/contracts/UnifiedContractCreatorModal.tsx", /<DriverPickerWithCreate/],
