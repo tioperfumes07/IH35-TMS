@@ -1,5 +1,9 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["lists","accounting"],"cols":["connectivity","picker_law"],"leafRe":"^(hub\\.|catalog\\.|bills\\.|expenses\\.)","task":"P45","pr":"#4876"} */
+/**
+ * HONEST-BUILT-LAUNCH-LAW 2026-08-14: class regression only — NO @matrix-built Box-3 credit.
+ * Former leafRe `^(hub.|catalog.|bills.|expenses.)` painted picker_law across ~233 leaves for an
+ * accounting factory INSERT de-dupe check — not picker_law proof. Guard still enforces the builder.
+ */
 /**
  * GUARD: a catalog that maps two logical fields onto ONE physical column must still INSERT.
  *
