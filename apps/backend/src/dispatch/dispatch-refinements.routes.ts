@@ -317,9 +317,9 @@ export async function registerDispatchRefinementsRoutes(app: FastifyInstance) {
   app.get("/api/v1/load-templates", async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
-    const q = companyQ.safeParse(req.query ?? {});
+    const q = companyQ.extend({ customer_id: z.string().uuid().optional(), template_id: z.string().uuid().optional() }).safeParse(req.query ?? {});
     if (!q.success) return sendZodValidation(reply, q.error);
-    return listLoadTemplates(user.uuid, q.data.operating_company_id);
+    return listLoadTemplates(user.uuid, q.data.operating_company_id, { customer_id: q.data.customer_id, template_id: q.data.template_id });
   });
 
   app.post("/api/v1/load-templates", async (req, reply) => {

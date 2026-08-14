@@ -553,18 +553,22 @@ export async function getDispatchLoadEta(userId: string, operatingCompanyId: str
   });
 }
 
-export async function listLoadTemplates(userId: string, operatingCompanyId: string) {
+export async function listLoadTemplates(userId: string, operatingCompanyId: string, filters: { customer_id?: string; template_id?: string } = {}) {
   return withCurrentUser(userId, async (client) => {
     await setScopedCompanyContext(client, userId, operatingCompanyId);
+    const values: unknown[] = [operatingCompanyId];
+    const predicates = ["operating_company_id = $1::uuid"];
+    if (filters.customer_id) { values.push(filters.customer_id); predicates.push(`template_json->>'customer_id' = $${values.length}`); }
+    if (filters.template_id) { values.push(filters.template_id); predicates.push(`id = $${values.length}::uuid`); }
     const res = await client.query(
       `
         SELECT id, name, template_json, created_at, updated_at
         FROM dispatch.load_templates
-        WHERE operating_company_id = $1::uuid
+        WHERE ${predicates.join(" AND ")}
         ORDER BY name ASC
         LIMIT 500
       `,
-      [operatingCompanyId]
+      values
     );
     return { templates: res.rows };
   });
