@@ -22,6 +22,11 @@ const querySchema = z.object({
   stage: z
     .enum(["NOT_FACTORED", "PACKET_READY", "SUBMITTED", "ADVANCE_RECEIVED", "RESERVE_RELEASED", "CHARGED_BACK"])
     .optional(),
+  // LINK-F5171/LINK-F5179: reverse_link — customer/load's own page needs to query its own queue
+  // rows server-side; l.customer_id and l.id are real, already-selected FKs (l.customer_id -> c.id,
+  // l.id -> load_id in the SELECT below), so this is a plain WHERE addition, no join change.
+  customer_id: z.string().uuid().optional(),
+  load_id: z.string().uuid().optional(),
   limit: z.coerce.number().int().min(1).max(500).default(200),
   offset: z.coerce.number().int().min(0).default(0),
 });
@@ -86,12 +91,27 @@ export async function registerFactoringQueueRoutes(app: FastifyInstance) {
       return reply.code(400).send({ error: "validation_error", details: parsed.error.flatten() });
     }
 
-    const { operating_company_id: companyId, stage: stageFilter, limit, offset } = parsed.data;
+    const { operating_company_id: companyId, stage: stageFilter, customer_id: customerId, load_id: loadId, limit, offset } = parsed.data;
 
     await assertCompanyMembership(user.uuid, companyId);
 
     return withCurrentUser(user.uuid, async (client) => {
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [companyId]);
+
+      // LINK-F5179: server-side customer_id/load_id scoping, not a client-side filter of this
+      // already-capped result set (default limit 200) — a client filter would silently drop a
+      // customer/load's own rows once the queue crosses that cap.
+      const filterParams: Array<string | number> = [companyId, limit + 1, offset];
+      let customerFilter = "";
+      if (customerId) {
+        filterParams.push(customerId);
+        customerFilter = `AND c.id = $${filterParams.length}::uuid`;
+      }
+      let loadFilter = "";
+      if (loadId) {
+        filterParams.push(loadId);
+        loadFilter = `AND l.id = $${filterParams.length}::uuid`;
+      }
 
       // ── fetch delivered+ loads with linked invoice info + doc presence ─────
       const res = await client.query<{
@@ -176,10 +196,12 @@ export async function registerFactoringQueueRoutes(app: FastifyInstance) {
         WHERE l.operating_company_id = $1::uuid
           AND l.soft_deleted_at IS NULL
           AND l.status IN ('delivered', 'invoiced', 'paid', 'closed')
+          ${customerFilter}
+          ${loadFilter}
         ORDER BY l.updated_at DESC
         LIMIT $2 OFFSET $3
         `,
-        [companyId, limit + 1, offset],
+        filterParams,
       );
 
       const rawRows = res.rows;

@@ -7,7 +7,7 @@
  * FARO Reserve summary strip reuses existing factoring summary API.
  */
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getFactoringSummary } from "../../api/factoring";
@@ -102,13 +102,23 @@ export function FactoringQueuePage() {
   const [stageFilter, setStageFilter] = useState<StageFilter>("ALL");
   const [search, setSearch] = useState("");
 
+  // LINK-F5171/LINK-F5179 — reverse_link: CustomerDetail/FactoringTab now link here as
+  // ?customer_id=/?load_id=; this page previously never read either param, so a reverse link
+  // landed on the unfiltered company-wide queue. Server-side scoping (factoring-queue.routes.ts
+  // now accepts both) rather than a client-side filter, since the queue is capped at limit=200.
+  const [searchParams] = useSearchParams();
+  const deepLinkCustomerId = searchParams.get("customer_id");
+  const deepLinkLoadId = searchParams.get("load_id");
+
   // queue data
   const queueQ = useQuery({
-    queryKey: ["dispatch", "factoring-queue", companyId],
-    queryFn: () =>
-      apiRequest<QueueResponse>(
-        `/api/v1/dispatch/factoring-queue?operating_company_id=${encodeURIComponent(companyId)}`,
-      ),
+    queryKey: ["dispatch", "factoring-queue", companyId, deepLinkCustomerId, deepLinkLoadId],
+    queryFn: () => {
+      const params = new URLSearchParams({ operating_company_id: companyId });
+      if (deepLinkCustomerId) params.set("customer_id", deepLinkCustomerId);
+      if (deepLinkLoadId) params.set("load_id", deepLinkLoadId);
+      return apiRequest<QueueResponse>(`/api/v1/dispatch/factoring-queue?${params.toString()}`);
+    },
     enabled: Boolean(companyId),
     staleTime: 30_000,
   });

@@ -67,6 +67,7 @@ import { SafetyAlertsReverseSection } from "../components/safety/SafetyAlertsRev
 import { CashForecastReverseSection } from "../components/cash-flow/CashForecastReverseSection";
 import { CustomerLoadTemplatesReverseSection } from "../components/dispatch/CustomerLoadTemplatesReverseSection";
 import { CustomerFactoringReverseSection } from "../components/customers/CustomerFactoringReverseSection";
+import { CustomerFactoringQueueReverseSection } from "../components/customers/CustomerFactoringQueueReverseSection";
 import { DocumentsTab } from "../components/documents/DocumentsTab";
 import { TasksTab } from "../components/tasks/TasksTab";
 import { EntityAuditHistoryTab } from "../components/audit/EntityAuditHistoryTab";
@@ -1160,6 +1161,7 @@ export function CustomerDetailPage() {
           <CashForecastReverseSection operatingCompanyId={operatingCompanyId} filter={{ party_ref_kind: "customer", party_ref_id: id }} />
           <CustomerLoadTemplatesReverseSection operatingCompanyId={operatingCompanyId} customerId={id} />
           <CustomerFactoringReverseSection operatingCompanyId={operatingCompanyId} customerId={id} />
+          <CustomerFactoringQueueReverseSection operatingCompanyId={operatingCompanyId} customerId={id} />
         </>
       ) : null}
 
@@ -1222,12 +1224,13 @@ export function CustomerDetailPage() {
                   }}
                 />
               ) : customer.parent_customer_id ? (
-                <EntityLink
-                  kind="customer"
-                  id={customer.parent_customer_id}
-                  label={customer.parent_customer_name ?? "View parent"}
+                <button
+                  type="button"
+                  onClick={() => navigate(`/customers/${customer.parent_customer_id}`)}
                   className="self-start text-sm font-medium text-slate-700 underline underline-offset-2 hover:opacity-80"
-                />
+                >
+                  {customer.parent_customer_name ?? "View parent"}
+                </button>
               ) : (
                 <span className="text-sm text-gray-500">Top-level customer (no parent)</span>
               )}
@@ -1240,12 +1243,13 @@ export function CustomerDetailPage() {
                 <ul className="flex flex-col gap-1">
                   {customer.sub_customers.map((sub) => (
                     <li key={sub.id}>
-                      <EntityLink
-                        kind="customer"
-                        id={sub.id}
-                        label={sub.customer_code ? `${sub.name} (${sub.customer_code})` : sub.name}
+                      <button
+                        type="button"
+                        onClick={() => navigate(`/customers/${sub.id}`)}
                         className="text-left text-sm font-medium text-slate-700 underline underline-offset-2 hover:opacity-80"
-                      />
+                      >
+                        {sub.customer_code ? `${sub.name} (${sub.customer_code})` : sub.name}
+                      </button>
                     </li>
                   ))}
                 </ul>
