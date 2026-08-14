@@ -1,3 +1,4 @@
+import { EntityLink } from "../shared/EntityLink";
 type Props = {
   driverUuid: string;
   driverName: string;
@@ -18,7 +19,9 @@ export function AtRiskDriverCard({ driverUuid, driverName, operatingCompanyId, r
   return (
     <article className="rounded-sm border border-gray-200 bg-white p-3" data-testid={`at-risk-driver-card-${driverUuid}`}>
       <div className="flex items-center justify-between gap-2">
-        <h3 className="text-sm font-semibold text-gray-900">{driverName}</h3>
+        <h3 className="text-sm font-semibold text-gray-900">
+          <EntityLink kind="driver" id={driverUuid} label={driverName} data-testid={`at-risk-driver-link-${driverUuid}`} />
+        </h3>
         <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase ${tierClass(tier)}`}>{tier}</span>
       </div>
       <p className="mt-1 text-xs text-gray-600">Risk score: {riskScore.toFixed(1)}</p>

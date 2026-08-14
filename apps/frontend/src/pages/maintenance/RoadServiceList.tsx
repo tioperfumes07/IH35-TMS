@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { Button } from "../../components/Button";
 import { StatusBadge } from "../../components/StatusBadge";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
@@ -65,9 +65,13 @@ export function RoadServiceList({ operatingCompanyId }: Props) {
       sortable: true,
       render: (row) =>
         row.wo_id ? (
-          <Link to={`/maintenance/work-orders/${row.wo_id}`} className={LINK}>
-            {row.ticket_number}
-          </Link>
+          <EntityLink
+            kind="work_order"
+            id={row.wo_id}
+            label={row.ticket_number}
+            className={LINK}
+            data-testid="road-service-wo-link"
+          />
         ) : (
           <span className="font-medium">{row.ticket_number}</span>
         ),

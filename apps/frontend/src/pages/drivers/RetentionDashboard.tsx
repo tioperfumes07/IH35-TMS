@@ -1,5 +1,4 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
 import { apiRequest } from "../../api/client";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AtRiskDriverCard } from "../../components/drivers/AtRiskDriverCard";
@@ -49,16 +48,15 @@ export function RetentionDashboard() {
             .filter(([, v]) => v != null)
             .map(([k, v]) => `${k.replace(/_/g, " ")}: ${v}`);
           return (
-            <Link key={row.driver_uuid} to={`/drivers/${row.driver_uuid}`}>
-              <AtRiskDriverCard
-                driverUuid={row.driver_uuid}
-                driverName={entityLabel(row.driver_name, row.driver_uuid, "Driver")}
-                operatingCompanyId={companyId}
-                riskScore={row.retention_risk_score}
-                tier={row.retention_tier}
-                topFactors={factors}
-              />
-            </Link>
+            <AtRiskDriverCard
+              key={row.driver_uuid}
+              driverUuid={row.driver_uuid}
+              driverName={entityLabel(row.driver_name, row.driver_uuid, "Driver")}
+              operatingCompanyId={companyId}
+              riskScore={row.retention_risk_score}
+              tier={row.retention_tier}
+              topFactors={factors}
+            />
           );
         })}
       </div>
