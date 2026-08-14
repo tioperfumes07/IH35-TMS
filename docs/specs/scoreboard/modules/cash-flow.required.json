@@ -246,7 +246,7 @@
       "route_hint": "/cash-flow",
       "surface_kind": "panel",
       "surface_path": "pages/cash-flow/tabs/ManualDailyProjectionsTab.tsx",
-      "required": ["driver", "customer", "vendor", "unit", "expense", "invoice", "connectivity", "reverse_link", "picker_law", "qbo_chrome"]
+      "required": ["driver", "customer", "vendor", "unit", "expense", "connectivity", "reverse_link", "picker_law", "qbo_chrome"]
     }
   ],
   "honesty_audit": {
