@@ -145,13 +145,25 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
     enabled: Boolean(companyId),
   });
   const workOrdersQuery = useQuery({
-    queryKey: ["maintenance", "work-orders", companyId, sourceTypeFilter, externalVendorFilter, locationFilter, bucketFilter],
+    queryKey: [
+      "maintenance",
+      "work-orders",
+      companyId,
+      sourceTypeFilter,
+      externalVendorFilter,
+      locationFilter,
+      bucketFilter,
+      driverReportsDriverId,
+      driverReportsLoadId,
+    ],
     queryFn: () =>
       listWorkOrdersFiltered(companyId, {
         source_type: sourceTypeFilter || undefined,
         external_vendor_id: externalVendorFilter || undefined,
         location: locationFilter || undefined,
         bucket: bucketFilter || undefined,
+        driver_id: driverReportsDriverId || undefined,
+        load_id: driverReportsLoadId || undefined,
       }),
     enabled: Boolean(companyId),
   });

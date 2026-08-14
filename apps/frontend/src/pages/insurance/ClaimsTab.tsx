@@ -69,6 +69,10 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
   const companyId = operatingCompanyId ?? selectedCompanyId ?? "";
   const [searchParams] = useSearchParams();
   const deepLinkClaimId = searchParams.get("claim_id");
+  const reverseDriverId = searchParams.get("driver_id")?.trim() || "";
+  const reverseUnitId = searchParams.get("unit_id")?.trim() || "";
+  const reverseLoadId = searchParams.get("load_id")?.trim() || "";
+  const reverseTrailerId = searchParams.get("trailer_id")?.trim() || "";
   const [createOpen, setCreateOpen] = useState(false);
   const [highlightedClaimId, setHighlightedClaimId] = useState<string | null>(deepLinkClaimId);
 
@@ -77,12 +81,25 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
   }, [deepLinkClaimId]);
 
   const query = useQuery({
-    queryKey: ["insurance-claims", companyId || "none", policyId ?? "all", assetId ?? "all"],
+    queryKey: [
+      "insurance-claims",
+      companyId || "none",
+      policyId ?? "all",
+      assetId ?? "all",
+      reverseDriverId,
+      reverseUnitId,
+      reverseLoadId,
+      reverseTrailerId,
+    ],
     queryFn: () =>
       listInsuranceClaims({
         operating_company_id: companyId,
         policy_id: policyId,
         asset_id: assetId,
+        driver_id: reverseDriverId || undefined,
+        unit_id: reverseUnitId || undefined,
+        load_id: reverseLoadId || undefined,
+        trailer_id: reverseTrailerId || undefined,
       }).then((result) => result.claims),
     enabled: Boolean(companyId),
   });

@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { legalMattersApi, type LegalMatterListRow } from "../../../api/legal-matters";
 import { Button } from "../../../components/Button";
 import { PageHeader } from "../../../components/layout/PageHeader";
@@ -32,11 +32,17 @@ function daysUntil(dateStr: unknown) {
 
 export function LegalMattersListPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [status, setStatus] = useState("");
   const [severity, setSeverity] = useState("");
   const [type, setType] = useState("");
+  const relatedDriverId = searchParams.get("related_driver_id")?.trim() || "";
+  const unitId = searchParams.get("unit_id")?.trim() || "";
+  const equipmentId = searchParams.get("equipment_id")?.trim() || "";
+  const insuranceClaimId = searchParams.get("insurance_claim_id")?.trim() || "";
+  const insuranceLawsuitId = searchParams.get("insurance_lawsuit_id")?.trim() || "";
   const staged = useStagedListFilters({
     applied: { status, severity, type }, empty: { status: "", severity: "", type: "" },
     onApply: (next) => { setStatus(next.status); setSeverity(next.severity); setType(next.type); resetPage(); },
@@ -48,12 +54,30 @@ export function LegalMattersListPage() {
   const [page, setPage] = useState(0);
 
   const listQuery = useQuery({
-    queryKey: ["legal", "matters", companyId, status, severity, type, page],
+    queryKey: [
+      "legal",
+      "matters",
+      companyId,
+      status,
+      severity,
+      type,
+      page,
+      relatedDriverId,
+      unitId,
+      equipmentId,
+      insuranceClaimId,
+      insuranceLawsuitId,
+    ],
     queryFn: () =>
       legalMattersApi.list(companyId, {
         status: status || undefined,
         severity: severity || undefined,
         type: type || undefined,
+        related_driver_id: relatedDriverId || undefined,
+        unit_id: unitId || undefined,
+        equipment_id: equipmentId || undefined,
+        insurance_claim_id: insuranceClaimId || undefined,
+        insurance_lawsuit_id: insuranceLawsuitId || undefined,
         limit: PAGE_SIZE,
         offset: page * PAGE_SIZE,
       }),

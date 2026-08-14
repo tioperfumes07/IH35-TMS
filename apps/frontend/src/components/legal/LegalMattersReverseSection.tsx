@@ -1,6 +1,5 @@
 import { entityLabel } from "../../lib/entity-label";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
 import { legalMattersApi } from "../../api/legal-matters";
 import { useAuth } from "../../auth/useAuth";
 import { EntityLink } from "../shared/EntityLink";
@@ -45,6 +44,17 @@ export function LegalMattersReverseSection({
   if (!canView) return null;
 
   const matters = query.data?.matters ?? [];
+  const openKind =
+    "unit_id" in filter
+      ? ("legal_matters_unit" as const)
+      : "insurance_claim_id" in filter
+        ? ("legal_matters_claim" as const)
+        : "insurance_lawsuit_id" in filter
+          ? ("legal_matters_lawsuit" as const)
+          : "related_driver_id" in filter
+            ? ("legal_matters_driver" as const)
+            : ("legal_matters_equipment" as const);
+  const openId = String(Object.values(filter)[0] ?? "");
 
   return (
     <div
@@ -53,9 +63,7 @@ export function LegalMattersReverseSection({
     >
       <div className="flex items-center justify-between gap-2">
         <h3 className="text-sm font-semibold text-slate-900">Legal Matters</h3>
-        <Link className="text-xs font-semibold text-slate-700 underline" to="/legal/matters">
-          Open Legal
-        </Link>
+        <EntityLink kind={openKind} id={openId} label="Open Legal" className="text-xs font-semibold text-slate-700 underline" />
       </div>
       <p className="text-sm text-gray-600">
         Legal matters linked to {contextLabel} (Owner/Admin).

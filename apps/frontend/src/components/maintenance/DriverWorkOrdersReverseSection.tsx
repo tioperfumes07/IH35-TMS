@@ -1,5 +1,4 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
 import { listWorkOrdersFiltered } from "../../api/maintenance";
 import { EntityLink } from "../shared/EntityLink";
 import { ListErrorState } from "../ListErrorState";
@@ -33,9 +32,12 @@ export function DriverWorkOrdersReverseSection({
     <div className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid={testId}>
       <div className="flex items-center justify-between gap-2">
         <h3 className="text-sm font-semibold text-slate-900">Work orders</h3>
-        <Link className="text-xs font-semibold text-slate-700 underline" to="/maintenance/active-wos">
-          Open Maintenance
-        </Link>
+        <EntityLink
+          kind="active_wos_driver"
+          id={driverId}
+          label="Open Maintenance"
+          className="text-xs font-semibold text-slate-700 underline"
+        />
       </div>
       <p className="text-sm text-gray-600">Repair / tire / accident work orders linked to this driver.</p>
 
