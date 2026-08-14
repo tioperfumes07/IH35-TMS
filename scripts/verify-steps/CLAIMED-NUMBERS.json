@@ -767,6 +767,11 @@
     "claimed_by": "cc-1",
     "purpose": "verify-customer-factoring-reverse-section"
   },
+  "3297": {
+    "claimed_at": "2026-08-14",
+    "claimed_by": "cc-1",
+    "purpose": "verify-factoring-dispatch-queue-reverse-section"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
