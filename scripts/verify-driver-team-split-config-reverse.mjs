@@ -14,7 +14,7 @@ function failures(s = files) { return [
   ["profile filtered canonical read", s.reverse.includes("listTeamSplitConfigs(operatingCompanyId, { driver_id: driverId })") && s.reverse.includes('queryKey: ["team-split-configs", "driver-profile", operatingCompanyId, driverId]')],
   ["profile reverse mount", s.profile.includes("<DriverTeamSplitConfigReverseSection driverId={id} operatingCompanyId={companyId} />")],
   ["exact config drill", s.reverse.includes('kind="driver_team_split"') && s.reverse.includes('id={config.id}') && s.panel.includes('searchParams.get("team_id")') && s.panel.includes("row.id === teamId")],
-  ["driver target preserved", s.reverse.includes('/drivers/team-splits?driver_id=${encodeURIComponent(driverId)}') && s.panel.includes('searchParams.get("driver_id")') && s.panel.includes("row.primary_driver_id === driverId || row.secondary_driver_id === driverId")],
+  ["driver target preserved", s.reverse.includes('kind="driver_team_splits_filter"') && s.reverse.includes('id={driverId}') && s.panel.includes('searchParams.get("driver_id")') && s.panel.includes("row.primary_driver_id === driverId || row.secondary_driver_id === driverId")],
   ["honest panel failure state", s.panel.includes("Team split configurations unavailable.") && s.panel.includes("!isLoading && !isError") && s.panel.includes("void refetch()")],
 ].filter(([, ok]) => !ok).map(([name]) => name); }
 if (process.argv.includes("--selftest")) {
@@ -23,7 +23,7 @@ if (process.argv.includes("--selftest")) {
     failures({ ...files, reverse: files.reverse.replace("listTeamSplitConfigs(operatingCompanyId, { driver_id: driverId })", "listTeamSplitConfigs(operatingCompanyId)") }).includes("profile filtered canonical read"),
     failures({ ...files, profile: "" }).includes("profile reverse mount"),
     failures({ ...files, panel: files.panel.replace("row.id === teamId", "true") }).includes("exact config drill"),
-    failures({ ...files, panel: files.panel.replace("row.primary_driver_id === driverId", "false") }).includes("driver target preserved"),
+    failures({ ...files, reverse: files.reverse.replace('kind="driver_team_splits_filter"', 'kind="driver"') }).includes("driver target preserved"),
     failures({ ...files, panel: files.panel.replace("!isLoading && !isError", "!isLoading") }).includes("honest panel failure state"),
   ];
   if (checks.some((ok) => !ok)) { console.error(`verify-driver-team-split-config-reverse selftest FAIL — mutations ${checks.map((ok, i) => ok ? null : i + 1).filter(Boolean).join(", ")} stayed green`); process.exit(1); }
