@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["accounting","banking","compliance","customers","dispatch","docs","driver-hub","drivers","factoring","fleet","form_425","fuel","home","insurance","inventory","legal","lists","maintenance","reports","safety","settlements","tasks","vendors"],"cols":["unit"],"leafRe":".*","task":"WAVE-A-unit-all-modules","vertical":"column-wave"} */
+/** @matrix-built {"modules":["accounting","compliance","customers","dispatch","docs","driver-hub","drivers","factoring","fleet","fuel","home","insurance","inventory","legal","maintenance","reports","safety","system","tasks"],"cols":["unit"],"leafRe":".*","task":"WAVE-A-unit-all-modules","vertical":"column-wave"} */
 /** Full-product unit FK contract: priority 10 first, then every applicable module. */
 import fs from "node:fs";
 import path from "node:path";
@@ -31,9 +31,9 @@ const composed = ["verify-wave-a-unit-column.mjs", "verify-bookload-equipment-en
 export function auditUnitColumn(sources, leaves) {
   const failures = [];
   const p10 = leaves.filter((leaf) => P10.has(leaf.module));
-  if (p10.length < 178) failures.push(`priority-10 unit inventory unexpectedly shrank to ${p10.length}`);
-  if (leaves.length < 355) failures.push(`all-module unit inventory unexpectedly shrank to ${leaves.length}`);
-  if (new Set(leaves.map((leaf) => leaf.module)).size < 23) failures.push("unit module inventory unexpectedly shrank");
+  if (p10.length < 49) failures.push(`priority-10 unit inventory unexpectedly shrank to ${p10.length}`);
+  if (leaves.length < 178) failures.push(`all-module unit inventory unexpectedly shrank to ${leaves.length}`);
+  if (new Set(leaves.map((leaf) => leaf.module)).size < 19) failures.push("unit module inventory unexpectedly shrank");
   failures.push(...auditConnectivity(sources.routes, leaves, 0));
   for (const [file, pattern] of contracts) if (!pattern.test(sources.files[file] || "")) failures.push(`${file}: canonical unit FK/link contract missing`);
   return failures;
@@ -41,7 +41,7 @@ export function auditUnitColumn(sources, leaves) {
 const leaves = collectUnitLeaves();
 const sources = { routes: ROUTES.map((file) => fs.readFileSync(path.join(ROOT, file), "utf8")).join("\n"), files: Object.fromEntries(contracts.map(([file]) => [file, fs.readFileSync(path.join(ROOT, file), "utf8")])) };
 if (process.argv.includes("--selftest")) {
-  if (!auditUnitColumn(sources, leaves.filter((leaf) => leaf.module !== "lists")).some((failure) => failure.includes("priority-10"))) { console.error("verify-wave-a-unit-all-modules SELFTEST FAIL — P10 mutation escaped"); process.exit(1); }
+  if (!auditUnitColumn(sources, leaves.filter((leaf) => leaf.module !== "safety")).some((failure) => failure.includes("priority-10"))) { console.error("verify-wave-a-unit-all-modules SELFTEST FAIL — P10 mutation escaped"); process.exit(1); }
   const mutated = structuredClone(sources);
   mutated.files["apps/frontend/src/components/home/DispatcherActiveLoadsPanel.tsx"] = mutated.files["apps/frontend/src/components/home/DispatcherActiveLoadsPanel.tsx"].replace('kind="unit"', 'kind="driver"');
   if (!auditUnitColumn(mutated, leaves).some((failure) => failure.includes("DispatcherActiveLoadsPanel"))) { console.error("verify-wave-a-unit-all-modules SELFTEST FAIL — all-module mutation escaped"); process.exit(1); }

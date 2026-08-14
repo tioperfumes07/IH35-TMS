@@ -352,7 +352,6 @@
       "route_hint": "/maintenance/driver-reports",
       "required": [
         "driver",
-        "unit",
         "qbo_chrome",
         "connectivity",
         "reverse_link"
@@ -573,7 +572,6 @@
       "route_hint": "/maintenance/warranty-claims",
       "required": [
         "vendor",
-        "unit",
         "picker_law",
         "qbo_chrome",
         "connectivity",
@@ -589,7 +587,6 @@
       "surface_path": "components/maintenance/AddPartsLinkModal.tsx",
       "required": [
         "connectivity",
-        "unit",
         "vendor"
       ]
     },
@@ -601,8 +598,7 @@
       "surface_kind": "modal",
       "surface_path": "components/maintenance/LocationMapModal.tsx",
       "required": [
-        "connectivity",
-        "unit"
+        "connectivity"
       ]
     },
     {
@@ -642,8 +638,7 @@
       "surface_path": "pages/maintenance/WorkOrderCreateModal.tsx",
       "required": [
         "connectivity",
-        "picker_law",
-        "unit"
+        "picker_law"
       ]
     },
     {
@@ -720,8 +715,7 @@
       "surface_kind": "modal",
       "surface_path": "components/maintenance/FaultRuleModal.tsx",
       "required": [
-        "connectivity",
-        "unit"
+        "connectivity"
       ]
     },
     {
@@ -1614,6 +1608,48 @@
           "id": "maintenance.modal.fault_rule",
           "removed": [
             "vendor"
+          ]
+        }
+      ]
+    },
+    "unit_column_2026_08_14_overclaim": {
+      "finding": "LINK-F5167-UNIT-COLUMN-VERTICAL-SWEEP",
+      "note": "6 of 40 maintenance leaves are false: driver_reports.queue's own code comment states \"driver is the linkable record (no unit_id ... on this entity)\"; warranty.create_claim only references vendor_id/work_order_id; maintenance.modal.add_parts_link/location_map/fault_rule have zero unit concept (parts-link modal is vendor-only, location map is a pure axle-position picker, fault rule is DTC config); maintenance.modal.work_order_create is the same orphan component confirmed unused in the vendor sweep. The other 34 leaves KEEP the Required marking \u2014 real EntityLink kind=\"unit\"/EntityPicker kind=\"unit\" confirmed across WorkOrdersTable.tsx and nearly every WO/inspection/PM/road-service/fault surface.",
+      "drops": [
+        {
+          "id": "driver_reports.queue",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "warranty.create_claim",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "maintenance.modal.add_parts_link",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "maintenance.modal.location_map",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "maintenance.modal.work_order_create",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "maintenance.modal.fault_rule",
+          "removed": [
+            "unit"
           ]
         }
       ]

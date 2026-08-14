@@ -161,7 +161,6 @@
       "route_hint": "/fleet",
       "required": [
         "driver",
-        "unit",
         "trailer",
         "picker_law",
         "qbo_chrome",
@@ -200,7 +199,6 @@
       "route_hint": "/fleet?kind=trailer",
       "required": [
         "trailer",
-        "unit",
         "connectivity",
         "reverse_link"
       ]
@@ -211,7 +209,6 @@
       "sub": "Kind filter \u00b7 Company Vehicles",
       "route_hint": "/fleet?kind=company",
       "required": [
-        "unit",
         "connectivity",
         "reverse_link"
       ]
@@ -738,7 +735,6 @@
       "route_hint": "/fleet/trailers/:id",
       "required": [
         "trailer",
-        "unit",
         "connectivity",
         "reverse_link",
         "qbo_chrome"
@@ -775,7 +771,6 @@
       "route_hint": "/fleet/trailers/:id",
       "required": [
         "trailer",
-        "unit",
         "connectivity",
         "reverse_link"
       ]
@@ -787,7 +782,6 @@
       "route_hint": "/fleet/trailers/:id",
       "required": [
         "trailer",
-        "unit",
         "connectivity",
         "reverse_link"
       ]
@@ -822,7 +816,6 @@
       "route_hint": "/fleet/trailers/:id",
       "required": [
         "trailer",
-        "unit",
         "connectivity",
         "reverse_link"
       ]
@@ -904,7 +897,6 @@
       "route_hint": "/fleet/trailers/:id",
       "required": [
         "trailer",
-        "unit",
         "connectivity",
         "reverse_link"
       ]
@@ -916,7 +908,6 @@
       "route_hint": "/fleet/trailers/:id",
       "required": [
         "trailer",
-        "unit",
         "qbo_chrome",
         "connectivity",
         "reverse_link"
@@ -941,7 +932,6 @@
       "route_hint": "/fleet/map",
       "required": [
         "driver",
-        "unit",
         "load",
         "connectivity"
       ]
@@ -968,7 +958,6 @@
       "required": [
         "connectivity",
         "picker_law",
-        "unit",
         "trailer",
         "driver"
       ]
@@ -997,7 +986,6 @@
       "required": [
         "connectivity",
         "picker_law",
-        "unit",
         "trailer",
         "driver"
       ]
@@ -1493,6 +1481,84 @@
           "id": "trailer.edit",
           "removed": [
             "vendor"
+          ]
+        }
+      ]
+    },
+    "unit_column_2026_08_14_overclaim": {
+      "finding": "LINK-F5167-UNIT-COLUMN-VERTICAL-SWEEP",
+      "note": "12 of 62 fleet leaves are false: home.create_trailer/roster.kind.trailers/trailer.profile.*(4)/trailer.status_change/trailer.edit/fleet.modal.create_trailer/fleet.modal.edit_trailer are all trailer-only surfaces with zero unit_id (trailer.profile.identity/reefer/maintenance/safety_reverse are trailer-scoped self-reference, not unit); roster.kind.company never matches any row (UnifiedUnitRow.kind is typed truck|trailer only, permanently empty); map.redirect (MapView.tsx) only reads load_id/driver_id, no unit param. The other 50 leaves KEEP the Required marking \u2014 VehicleProfilePage.tsx's 26 self-referential unit.profile.* sections, all 8 unit.edit.* tabs, all 6 unit.detail.* tabs, real roster kind-branching for truck rows, trailer.profile.assignment (shows the real attached unit), and the unit-scoped modals.",
+      "drops": [
+        {
+          "id": "home.create_trailer",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "roster.kind.trailers",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "roster.kind.company",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "trailer.profile.identity",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "trailer.profile.reefer",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "trailer.profile.maintenance",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "trailer.profile.safety_reverse",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "trailer.status_change",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "trailer.edit",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "map.redirect",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "fleet.modal.create_trailer",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "fleet.modal.edit_trailer",
+          "removed": [
+            "unit"
           ]
         }
       ]

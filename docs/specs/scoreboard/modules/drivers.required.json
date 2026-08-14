@@ -136,7 +136,6 @@
       "route_hint": "/drivers/profiles",
       "required": [
         "driver",
-        "unit",
         "connectivity",
         "reverse_link"
       ]
@@ -148,7 +147,6 @@
       "route_hint": "/drivers/profiles",
       "required": [
         "driver",
-        "unit",
         "picker_law",
         "qbo_chrome",
         "connectivity",
@@ -619,6 +617,24 @@
           "id": "drivers.panel.pending_settlement_deductions",
           "removed": [
             "liability"
+          ]
+        }
+      ]
+    },
+    "unit_column_2026_08_14_overclaim": {
+      "finding": "LINK-F5167-UNIT-COLUMN-VERTICAL-SWEEP",
+      "note": "both flagged drivers leaves are false: profiles.list/profiles.create have zero unit_id/EntityPicker/EntityLink \u2014 driver roster and creation are unit-agnostic. profiles.detail (not touched here \u2014 already correctly not flagged) genuinely wires a real AssignTruckModal with EntityPicker kind=\"unit\".",
+      "drops": [
+        {
+          "id": "profiles.list",
+          "removed": [
+            "unit"
+          ]
+        },
+        {
+          "id": "profiles.create",
+          "removed": [
+            "unit"
           ]
         }
       ]

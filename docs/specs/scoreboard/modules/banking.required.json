@@ -211,7 +211,6 @@
       "route_hint": "/banking/relay",
       "required": [
         "driver",
-        "unit",
         "connectivity"
       ]
     },
@@ -579,6 +578,18 @@
           "id": "factoring",
           "removed": [
             "customer"
+          ]
+        }
+      ]
+    },
+    "unit_column_2026_08_14_overclaim": {
+      "finding": "LINK-F5167-UNIT-COLUMN-VERTICAL-SWEEP",
+      "note": "relay_card is false \u2014 the BankingHome.tsx relay_card tab has no unit_id/EntityLink; per its own copy, the fuel-line breakdown stays on the separate Transactions register, not wired here.",
+      "drops": [
+        {
+          "id": "relay_card",
+          "removed": [
+            "unit"
           ]
         }
       ]
