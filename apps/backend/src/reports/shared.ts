@@ -97,6 +97,13 @@ export const REPORT_LIBRARY: ReportLibraryRow[] = [
     status: "real",
   },
   {
+    id: "fleet-utilization",
+    name: "Fleet utilization",
+    category: "fleet",
+    description: "Company fleet units currently assigned to active loads versus available units.",
+    status: "real",
+  },
+  {
     id: "dispatch-margin",
     name: "Dispatch margin",
     category: "operations",

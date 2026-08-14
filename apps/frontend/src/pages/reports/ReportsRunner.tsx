@@ -62,6 +62,7 @@ function buildQuery(reportId: string, values: Record<string, unknown>) {
 function responseRows(reportId: string, payload: any): Record<string, unknown>[] {
   if (reportId === "driver-pay-history") return (payload.settlements ?? []) as Record<string, unknown>[];
   if (reportId === "csa-fleet") return [payload as Record<string, unknown>];
+  if (reportId === "fleet-utilization") return [payload as Record<string, unknown>];
   return (payload.rows ?? []) as Record<string, unknown>[];
 }
 

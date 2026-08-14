@@ -145,6 +145,18 @@ export const RUNNER_CONFIGS: Record<string, ReportRunnerConfig> = {
     ],
     csvFilename: () => `csa-fleet-score-${new Date().toISOString().slice(0, 10)}.csv`,
   },
+  "fleet-utilization": {
+    id: "fleet-utilization",
+    name: "Fleet utilization",
+    apiPath: "/api/v1/home/fleet-utilization",
+    filters: [],
+    columns: [
+      { key: "active_units", label: "Units on active loads", align: "right", format: "number" },
+      { key: "total_units", label: "Available units", align: "right", format: "number" },
+      { key: "percentage", label: "Utilization", align: "right", format: "percent" },
+    ],
+    csvFilename: () => `fleet-utilization-${new Date().toISOString().slice(0, 10)}.csv`,
+  },
 };
 
 export function toMonth(dateInput: unknown): string {

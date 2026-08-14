@@ -408,8 +408,9 @@ export async function registerHomeWidgetRoutes(app: FastifyInstance) {
         const utilizationPct = totalUnits > 0 ? Math.round((activeUnits / totalUnits) * 1000) / 10 : 0;
         // snake_case to match the frontend gauge (api/home.ts fetchHomeFleetUtilization).
         return { active_units: activeUnits, total_units: totalUnits, percentage: utilizationPct };
-      } catch {
-        return { active_units: 0, total_units: 0, percentage: 0 };
+      } catch (error) {
+        req.log.error({ err: error, operating_company_id: parsed.data.operating_company_id }, "fleet utilization query failed");
+        throw error;
       }
     });
   });
