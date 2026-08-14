@@ -48,7 +48,7 @@ if (process.argv.includes("--selftest")) {
     failures({ unitDocs: unitDocs.replace('kind="document" id={row.file_id}', 'kind="unit" id={row.file_id}') }).includes("unit document exact drill"),
     failures({ driverAssignment: driverAssignment.replace('id={String(def.unit_id)}', 'id={driverId}') }).includes("default-driver reverse unit drill"),
     failures({ trailerAssignment: trailerAssignment.replace('id={String(unit.unit_id)}', 'id={String(load.load_id)}') }).includes("trailer assignment unit drill"),
-    failures({ maintenance: maintenance.replace('/maintenance/work-orders/${String(wo.wo_id)}', '/maintenance') }).includes("trailer maintenance WO drill"),
+    failures({ maintenance: maintenance.replaceAll('kind="work_order"', 'kind="unit"') }).includes("trailer maintenance WO drill"),
     failures({ trailerProfile: trailerProfile.replace('filter={{ trailer_id: id }}', 'filter={{ unit_id: id }}') }).includes("trailer insurance reverse filter"),
     failures({ trailerDocs: trailerDocs.replace('kind="document" id={String(d.file_id)}', 'kind="trailer" id={String(d.file_id)}') }).includes("trailer document exact drill"),
     failures({ fleetMap: JSON.stringify(parsed) }).includes("QBO mapping reverse N/A"),

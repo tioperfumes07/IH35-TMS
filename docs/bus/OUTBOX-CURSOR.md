@@ -1,3 +1,4 @@
+2026-08-14T22:35Z Cursor | SHIPPED #6781 fleet/parts sibling guards | shipping remainder --selftest plant for work_order EntityLink | Live=BLOCKED
 2026-08-14T22:30Z Cursor | SHIPPED #6780 sibling reverse EntityLink guards | shipping fleet/parts sibling EntityLink guards | Live=BLOCKED
 2026-08-14T22:25Z Cursor | SHIPPED #6779 record-cells guard | shipping sibling reverse guards accept EntityLink (#next) | Live=BLOCKED
 2026-08-14T22:20Z Cursor | SHIPPED #6778 maint-vendor detail EntityLink | shipping record-cells guard accept maintenance_vendor | Live=BLOCKED
