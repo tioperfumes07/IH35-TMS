@@ -1,3 +1,4 @@
+2026-08-15T00:40Z Cursor | SHIPPED #6838 guard window | shipping LINK-F5171 program+compliance EntityLink | Live=BLOCKED
 2026-08-15T00:35Z Cursor | SHIPPED #6837 deductions/mgmt | FIXING sibling guard window RED on main | Live=BLOCKED
 2026-08-15T00:30Z Cursor | SHIPPED #6835 fuel_history | shipping LINK-F5171 deductions + management_report_package | Live=BLOCKED
 2026-08-15T00:25Z Cursor | SHIPPED #6834 loads/unit-detail/overage | shipping LINK-F5171 fuel_history_* EntityLink | Live=BLOCKED

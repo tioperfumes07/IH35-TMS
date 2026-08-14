@@ -348,12 +348,12 @@ export function VehicleProfilePage() {
             />
           </div>
           <div data-testid="vp-section-compliance-hos-reverse" className="rounded-sm border border-gray-200 bg-white p-3">
-            <Link
-              to={`/compliance?tab=overview&unit_id=${encodeURIComponent(id)}`}
+            <EntityLink
+              kind="compliance_unit_overview"
+              id={id}
+              label="Open this unit in Fleet HOS →"
               className="text-xs font-semibold text-slate-700 hover:underline"
-            >
-              Open this unit in Fleet HOS →
-            </Link>
+            />
           </div>
           <div data-testid="vp-section-compliance-tax-filings-reverse">
             <UnitTaxFilingsReverseSection operatingCompanyId={companyId} unitId={id} />
