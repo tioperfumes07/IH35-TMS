@@ -130,10 +130,6 @@ All prior Uncertain rows moved to Done after independent guard PASS on tip `orig
 | `settlements:panel.pay_run_close` | CC-1 (same) |
 | `factoring:accounting.list` | CC-1 |
 | `factoring:banking.entry` | CC-1 |
-| `drivers:disputes` | Codex |
-| `maintenance:defects.convert_to_wo` | Codex |
-| `maintenance:pre_flight_dvir.queue` | Codex |
-| `maintenance:panel.pm_alerts` | Codex |
 | `accounting:reverse.open_entitylink` | CC-1 / Rule 23 — EntityLink-only Open on Invoices/Bills/Expenses reverse is money theater without write path; skip Cursor |
 
 ## Reclassified — not a fix, Required-flag correction
