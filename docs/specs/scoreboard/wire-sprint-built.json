@@ -1252,6 +1252,14 @@
       "modules": ["compliance", "maintenance", "safety"],
       "cols": ["reverse_link"],
       "leafRe": "^(tab\\.hos_tracker|fleet\\.hos_board|property_tax\\.(list|detail)|form2290|defects\\.convert_to_wo|pre_flight_dvir\\.queue|fault_drafts\\.review|idvr\\.list|escrow_record\\.list)$"
+    },
+    {
+      "task": "LINK-F5152-DISPATCH-INVENTORY-VENDOR-WORKFLOW-LINKS",
+      "pr": "this PR",
+      "guard": "scripts/verify-dispatch-inventory-vendor-workflow-links.mjs",
+      "modules": ["dispatch", "inventory", "vendors"],
+      "cols": ["reverse_link"],
+      "leafRe": "^(secondary\\.pre_settlements|docs\\.(ocr|equipment_transfers)|misc\\.layover|assignments\\.(wo_link|unit_link|vendor_link)|md\\.(transaction_list|vendor_details|header\\.(edit|new_transaction)))$"
     }
   ]
 }

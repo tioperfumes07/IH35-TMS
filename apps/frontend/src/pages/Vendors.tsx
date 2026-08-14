@@ -24,6 +24,7 @@ import { VendorCreateModal } from "../components/vendors/VendorCreateModal";
 import { useViewModePref } from "../hooks/useViewModePref";
 import { useUrlSort } from "../hooks/useUrlSort";
 import { formatDateUS } from "../lib/formatDate";
+import { EntityLink } from "../components/shared/EntityLink";
 
 type VendorTabId = "transaction_list" | "vendor_details" | "notes";
 const VENDOR_LIST_TAB_IDS = ["all", "active", "inactive", "by-category"] as const;
@@ -265,7 +266,13 @@ export function VendorsPage() {
     () => [
       { key: "date", label: "Date", sortable: true, render: (r) => formatDateUS(r.bill_date) },
       { key: "type", label: "Type", sortable: true, render: () => "bill" },
-      { key: "doc_no", label: "Doc #", render: (r) => entityLabel(r.bill_number, r.id, "Record") },
+      {
+        key: "doc_no",
+        label: "Doc #",
+        render: (r) => (
+          <EntityLink kind="bill" id={r.id} label={entityLabel(r.bill_number, r.id, "Bill")} />
+        ),
+      },
       { key: "status", label: "Status", sortable: true, render: (r) => r.status },
       { key: "amount", label: "Amount", render: (r) => fmtMoney(r.amount_cents) },
       {
@@ -441,7 +448,14 @@ export function VendorsPage() {
                 <section className="rounded-sm border border-gray-200 bg-white p-3">
                   <div className="mb-2 flex items-center justify-between">
                     <div>
-                      <h2 className="text-lg font-semibold text-gray-900">{selectedVendor.name}</h2>
+                      <h2 className="text-lg font-semibold text-gray-900">
+                        <EntityLink
+                          kind="vendor"
+                          id={selectedVendor.id}
+                          label={selectedVendor.name}
+                          data-testid="vendor-master-detail-record-link"
+                        />
+                      </h2>
                       <p className="text-sm text-gray-500">{selectedVendor.vendor_code || "Vendor"} — {selectedVendor.vendor_type ?? "Type not set"}</p>
                       <p className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${vendorQualityLabel(selectedVendor.notes).className}`}>
                         Vendor quality: {vendorQualityLabel(selectedVendor.notes).label}
