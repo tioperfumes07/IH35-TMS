@@ -22,7 +22,7 @@ const CHECKS = [
   ["apps/frontend/src/pages/maintenance/components/CreateWOSectionIdentification.tsx", /<DriverPickerWithCreate/],
   ["apps/frontend/src/pages/maintenance/RoadServiceTicketModal.tsx", /<EntityPicker\s*\n\s*kind="driver"/],
   ["apps/frontend/src/pages/maintenance/components/InTransitIssuesTable.tsx", /kind="driver" id=\{issue\.driver_id \|\| undefined\}/],
-  ["apps/frontend/src/pages/maintenance/DriverReportsQueuePage.tsx", /to=\{`\/drivers\/\$\{row\.driver_id\}`\}/],
+  ["apps/frontend/src/pages/maintenance/DriverReportsQueuePage.tsx", /kind="driver"[\s\S]{0,120}id=\{row\.driver_id\}/],
   ["apps/frontend/src/pages/maintenance/RoadServiceList.tsx", /kind="driver" id=\{row\.driver_id\}/],
   ["apps/frontend/src/pages/maintenance/DefectsInboxPage.tsx", /kind="driver" id=\{row\.driver_id \?\? undefined\}/],
   ["apps/frontend/src/pages/maintenance/pre-flight/PreFlightDvirQueue.tsx", /kind="driver" id=\{row\.driver_id \?\? undefined\}/],
