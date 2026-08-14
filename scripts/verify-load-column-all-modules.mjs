@@ -47,7 +47,7 @@ const CHECKS = [
   ["apps/frontend/src/pages/tasks/TasksCalendarPage.tsx", /<TaskSubjectLink subjectType=\{t\.subject_type\} subjectId=\{t\.subject_id\}/, "Task calendar load drill"],
 
   // Existing genuine load-bearing operator/report surfaces are ratcheted rather than reimplemented.
-  ["apps/frontend/src/pages/fuel/components/ActiveTripStrip.tsx", /kind="load" id=\{route\?\.load_id/, "Fuel home active-trip load drill"],
+  ["apps/frontend/src/pages/fuel/components/ActiveTripStrip.tsx", /kind="load"[\s\S]{0,80}id=\{route\?\.load_id/, "Fuel home active-trip load drill"],
   ["apps/frontend/src/pages/fuel/FuelPlannerHome.tsx", /searchParams\.get\("load_id"\)/, "Fuel planner reverse load route"],
   ["apps/frontend/src/components/home/DispatcherActiveLoadsPanel.tsx", /kind="load" id=\{row\.id\} label=\{entityLabel\(row\.load_number, row\.id, "Load"\)\}/, "Home active-load drill"],
   ["apps/frontend/src/pages/reports/DispatchMarginPage.tsx", /kind="load" id=\{row\.load_id\}/, "Dispatch-margin load drill"],
