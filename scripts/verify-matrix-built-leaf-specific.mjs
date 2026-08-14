@@ -126,29 +126,112 @@ if (process.argv.includes("--selftest")) {
     console.error(`${LABEL} SELFTEST FAIL — real narrowing prefix regex rejected`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — broad rejected on every column, leaf-specific accepted`);
+
+  // ACCT-F5163 fix: editing an EXISTING broad entry's non-leafRe metadata (e.g. its modules list, in
+  // a shared feed file also holding sibling entries) must NOT re-trigger a hard-fail — this is the
+  // exact false positive that motivated splitNewVsLegacy().
+  const sameFeedFile = "docs/specs/scoreboard/wire-sprint-built.json";
+  const mainSiblingEntries = [
+    { file: sameFeedFile, cols: ["ap_bill"], leafRe: ".*", task: "WAVE-C-ap-bill-fe-all-modules" },
+    { file: sameFeedFile, cols: ["trailer"], leafRe: ".*", task: "WAVE-A-trailer-all-modules" },
+  ];
+  const currentSiblingEntries = [
+    { file: sameFeedFile, cols: ["ap_bill"], leafRe: ".*", task: "WAVE-C-ap-bill-fe-all-modules" },
+    // trailer entry's module list changed (honest correction) — same (file, task) identity, still broad.
+    { file: sameFeedFile, cols: ["trailer"], leafRe: ".*", task: "WAVE-A-trailer-all-modules" },
+  ];
+  const editedSibling = splitNewVsLegacy(currentSiblingEntries, mainSiblingEntries);
+  if (editedSibling.newFailures.length !== 0 || editedSibling.legacyFailures.length !== 2) {
+    console.error(
+      `${LABEL} SELFTEST FAIL — editing one shared-file entry's metadata false-flagged a sibling entry as new ` +
+        `(got ${editedSibling.newFailures.length} new / ${editedSibling.legacyFailures.length} legacy, want 0 new / 2 legacy)`,
+    );
+    process.exit(1);
+  }
+
+  // A genuinely NEW broad claim (task never existed at origin/main) must still hard-fail.
+  const withNewTask = [...currentSiblingEntries, { file: "scripts/verify-brand-new.mjs", cols: ["driver"], leafRe: ".*", task: "BRAND-NEW-TASK" }];
+  const withNewTaskResult = splitNewVsLegacy(withNewTask, mainSiblingEntries);
+  if (withNewTaskResult.newFailures.length !== 1) {
+    console.error(`${LABEL} SELFTEST FAIL — a genuinely new broad-claim task escaped detection`);
+    process.exit(1);
+  }
+
+  // An entry that flips from leaf-specific (at origin/main) back to broad must still hard-fail as new.
+  const mainWasNarrow = [{ file: "scripts/verify-x.mjs", cols: ["driver"], leafRe: "^detail\\.loads$", task: "X" }];
+  const nowWidened = [{ file: "scripts/verify-x.mjs", cols: ["driver"], leafRe: ".*", task: "X" }];
+  const widenedResult = splitNewVsLegacy(nowWidened, mainWasNarrow);
+  if (widenedResult.newFailures.length !== 1) {
+    console.error(`${LABEL} SELFTEST FAIL — a narrow-to-broad regression on an existing task escaped detection`);
+    process.exit(1);
+  }
+
+  // origin/main unreachable must fail open (treat everything as new), never silently pass.
+  const failOpen = splitNewVsLegacy(currentSiblingEntries, null);
+  if (failOpen.newFailures.length !== 2) {
+    console.error(`${LABEL} SELFTEST FAIL — unreachable origin/main must fail open to "everything new", not silently legacy`);
+    process.exit(1);
+  }
+
+  console.log(`${LABEL} SELFTEST PASS — broad rejected on every column, leaf-specific accepted, identity-based new-vs-legacy split verified`);
   process.exit(0);
 }
 
-/** Files this branch added/changed vs origin/main — mirrors verify-matrix-built-tag-present.mjs exactly
- * so both guards agree on what "new" means. Hard-fail scope is these files only; the pre-existing
- * corpus is real backlog for the vertical sweep, tracked (not hidden) via LEGACY_BROAD_BASELINE. */
-function branchTouchedFiles() {
+/** ACCT-F5163 (2026-08-14): `branchTouchedFiles()` used to gate "new" purely by FILE path — but
+ * docs/specs/scoreboard/wire-sprint-built.json is a single shared feed holding 8+ INDEPENDENT broad-
+ * claim entries (ap_bill, load, trailer, unit, vendor, customer, driver, connectivity). Editing ONE
+ * entry's `modules` array (an honest correction, same pattern as ACCT-F5162) touched the file, which
+ * then flagged ALL 8 entries as "new/changed" — a false positive that would have hard-blocked the
+ * exact kind of legitimate metadata fix this guard is supposed to allow for already-legacy entries.
+ * Same problem applies to any `scripts/verify-*.mjs` file whose @matrix-built tag's `modules` list is
+ * corrected without narrowing `leafRe` (e.g. a WAVE-*-all-modules guard's own floor-regression fix).
+ *
+ * FIX: identity-based diffing instead of file-based. An entry is only "new" if no broad-claim entry
+ * with the SAME (file, task) identity existed in origin/main's committed state — i.e. the ratchet's
+ * real job is "did the SET of broad claims grow", not "did any byte in a shared file change". Editing
+ * an EXISTING broad claim's module list, or fixing unrelated code in the same script file, no longer
+ * re-triggers a hard-fail; it stays counted in the legacy baseline where it already was. A genuinely
+ * new task, or an entry that flips from leaf-specific back to broad, still hard-fails as new. */
+function originMainEntries() {
   try {
-    const out = execSync(
-      "git diff --name-only --diff-filter=ACMR origin/main...HEAD -- 'scripts/verify-*.mjs' '" + FEED_FILE + "'",
-      { cwd: ROOT, encoding: "utf8" },
+    const feedText = execSync(`git show origin/main:${FEED_FILE}`, { cwd: ROOT, encoding: "utf8" });
+    const listOut = execSync("git ls-tree -r --name-only origin/main -- scripts", { cwd: ROOT, encoding: "utf8" });
+    const scriptNames = listOut
+      .split("\n")
+      .map((s) => s.trim())
+      .filter((s) => s.startsWith("scripts/verify-") && s.endsWith(".mjs"))
+      .map((s) => s.slice("scripts/".length));
+    return scanEntries(
+      (p) => {
+        const rel = path.relative(ROOT, p).split(path.sep).join("/");
+        if (rel === FEED_FILE) return feedText;
+        return execSync(`git show origin/main:${rel}`, { cwd: ROOT, encoding: "utf8" });
+      },
+      () => scriptNames,
     );
-    return new Set(out.split("\n").map((s) => s.trim()).filter(Boolean));
   } catch {
-    return new Set();
+    // origin/main unreachable (shallow clone, detached fixture, etc.) — fail open to "everything new"
+    // so a broken git ref can't silently widen the ratchet; scanEntries() below still runs normally.
+    return null;
   }
 }
 
-const allFailures = audit(scanEntries());
-const touched = branchTouchedFiles();
-const newFailures = allFailures.filter((line) => [...touched].some((f) => line.startsWith(`${f}:`)));
-const legacyFailures = allFailures.filter((line) => !newFailures.includes(line));
+/** Pure, git-free: splits `currentEntries`' broad claims into new-vs-legacy by (file, task) identity
+ * against `mainEntries`' broad claims. `mainEntries === null` fails open to "everything new" (broken
+ * git ref must never silently widen the ratchet). Exported so --selftest can exercise it without git. */
+export function splitNewVsLegacy(currentEntries, mainEntries) {
+  const broadOf = (entries) => entries.filter((e) => (e.cols || []).length && !isLeafSpecific(e.leafRe));
+  const identity = (e) => `${e.file}::${e.task ?? ""}`;
+  const currentBroad = broadOf(currentEntries);
+  const mainBroadIdentities = mainEntries === null ? null : new Set(broadOf(mainEntries).map(identity));
+  const lines = audit(currentBroad);
+  const isNew = currentBroad.map((e) => mainBroadIdentities === null || !mainBroadIdentities.has(identity(e)));
+  const newFailures = lines.filter((_, i) => isNew[i]);
+  const legacyFailures = lines.filter((_, i) => !isNew[i]);
+  return { newFailures, legacyFailures };
+}
+
+const { newFailures, legacyFailures } = splitNewVsLegacy(scanEntries(), originMainEntries());
 
 if (newFailures.length) {
   console.error(
