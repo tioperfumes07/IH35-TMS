@@ -55,6 +55,22 @@ describe("SamsaraClient count methods", () => {
       expect(error).toMatchObject({ statusCode: 429 });
     }
   });
+
+  it("reads driver-scoped HOS log edits from the documented legacy endpoint", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ logEdits: [{ id: "edit-1", editTimeMs: 1777629600000 }] }), { status: 200 })
+    );
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    const client = new SamsaraClient({ apiToken: "token", samsaraOrgId: "org-1" });
+    const rows = await client.getHosLogs("driver/77", { start: "2026-05-01T00:00:00Z", end: "2026-05-31T23:59:59Z" });
+
+    expect(rows).toEqual([{ id: "edit-1", editTimeMs: 1777629600000 }]);
+    const url = new URL(String(fetchMock.mock.calls[0]?.[0]));
+    expect(url.pathname).toBe("/v1/fleet/drivers/driver%2F77/log_edits");
+    expect(url.searchParams.get("startMs")).toBe(String(new Date("2026-05-01T00:00:00Z").getTime()));
+    expect(url.searchParams.get("endMs")).toBe(String(new Date("2026-05-31T23:59:59Z").getTime()));
+  });
 });
 
 describe("parseVehicleStatRow odometer (FINISH-OPS #7)", () => {

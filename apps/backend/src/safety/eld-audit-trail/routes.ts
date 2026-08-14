@@ -34,6 +34,13 @@ function authUser(req: FastifyRequest, reply: FastifyReply) {
   return req.user;
 }
 
+function isSourceUnavailable(error: unknown): boolean {
+  return error instanceof Error && (
+    error.message === "eld_audit_source_not_configured" ||
+    error.message.startsWith("samsara_hos_log_edits_http_")
+  );
+}
+
 async function withCompanyScope<T>(
   userId: string,
   operatingCompanyId: string,
@@ -54,9 +61,15 @@ export async function registerEldAuditTrailRoutes(app: FastifyInstance) {
     const parsed = auditTrailQuerySchema.safeParse(req.query ?? {});
     if (!parsed.success) return reply.code(400).send({ error: "validation_error", details: parsed.error.flatten() });
 
-    const history = await withCompanyScope(user.uuid, parsed.data.operating_company_id, (client) =>
-      getEditHistory(client, parsed.data.operating_company_id, parsed.data.driver, parsed.data.from, parsed.data.to)
-    );
+    let history;
+    try {
+      history = await withCompanyScope(user.uuid, parsed.data.operating_company_id, (client) =>
+        getEditHistory(client, parsed.data.operating_company_id, parsed.data.driver, parsed.data.from, parsed.data.to)
+      );
+    } catch (error) {
+      if (isSourceUnavailable(error)) return reply.code(503).send({ error: "eld_audit_source_unavailable" });
+      throw error;
+    }
 
     return reply.send({
       ...history,
@@ -77,9 +90,15 @@ export async function registerEldAuditTrailRoutes(app: FastifyInstance) {
         return reply.code(400).send({ error: "validation_error", details: parsed.error.flatten() });
       }
 
-      const history = await withCompanyScope(user.uuid, parsed.data.operating_company_id, (client) =>
-        getEditHistory(client, parsed.data.operating_company_id, parsed.data.driver, parsed.data.from, parsed.data.to)
-      );
+      let history;
+      try {
+        history = await withCompanyScope(user.uuid, parsed.data.operating_company_id, (client) =>
+          getEditHistory(client, parsed.data.operating_company_id, parsed.data.driver, parsed.data.from, parsed.data.to)
+        );
+      } catch (error) {
+        if (isSourceUnavailable(error)) return reply.code(503).send({ error: "eld_audit_source_unavailable" });
+        throw error;
+      }
       if (history.edits.length === 0) {
         return reply.code(404).send({ error: "eld_audit_trail_empty", message: "No ELD edits in the selected period" });
       }
@@ -105,9 +124,15 @@ export async function registerEldAuditTrailRoutes(app: FastifyInstance) {
       return reply.code(400).send({ error: "validation_error", details: parsedParams.error.flatten() });
     }
 
-    const history = await withCompanyScope(user.uuid, parsedQuery.data.operating_company_id, (client) =>
-      getRecentEditHistory(client, parsedQuery.data.operating_company_id, parsedParams.data.uuid)
-    );
+    let history;
+    try {
+      history = await withCompanyScope(user.uuid, parsedQuery.data.operating_company_id, (client) =>
+        getRecentEditHistory(client, parsedQuery.data.operating_company_id, parsedParams.data.uuid)
+      );
+    } catch (error) {
+      if (isSourceUnavailable(error)) return reply.code(503).send({ error: "eld_audit_source_unavailable" });
+      throw error;
+    }
 
     return reply.send(history);
   });
