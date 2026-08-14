@@ -49,7 +49,7 @@ const LEDGER_MD = path.join(REPO_ROOT, "docs/audit/AUDIT-COVERAGE-LIVE.md");
 const GUARD_MD = path.join(REPO_ROOT, "docs/audit/GUARD-WORKORDERS.md");
 const WAVE_QUEUE_JSON = path.join(REPO_ROOT, "docs/audit/wave-queue.json");
 const RECON_JSON = path.join(REPO_ROOT, "docs/trackers/block-reconciliation-data.json");
-const MATRIX_CACHE_MS = 60_000;
+const MATRIX_CACHE_MS = 3_000;
 
 export type MatrixCellState = "live" | "built" | "audited" | "unaudited" | "na" | "done";
 

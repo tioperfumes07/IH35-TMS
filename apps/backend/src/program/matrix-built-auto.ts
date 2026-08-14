@@ -170,7 +170,7 @@ function scanGuardTags(root: string): WireSprintBuiltEntry[] {
 }
 
 let cached: { root: string; atMs: number; entries: WireSprintBuiltEntry[] } | null = null;
-const CACHE_MS = 30_000;
+const CACHE_MS = 3_000;
 
 /** All Built entries for the deployed tree — refreshes on cache TTL (API poll). */
 export function discoverMatrixBuiltEntries(root: string): WireSprintBuiltEntry[] {
