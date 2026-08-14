@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
 import { listMaintenancePmSchedules } from "../../api/maintenance";
+import { EntityLink } from "../shared/EntityLink";
 import { ListErrorBanner } from "../shared/ListErrorBanner";
 
 export function UnitPmSchedulesReverseSection({
@@ -24,10 +24,15 @@ export function UnitPmSchedulesReverseSection({
       {!query.isLoading && !query.isError && rows.length === 0 ? <p className="text-sm text-gray-500">No PM schedules linked to this unit.</p> : null}
       {rows.map((row) => (
         <div key={row.id} className="rounded-sm border border-gray-100 px-2 py-1.5 text-sm">
-          <Link className="font-semibold text-slate-700 underline" to={`/maintenance/pm-schedule?schedule_id=${encodeURIComponent(row.id)}`}>
-            {row.pm_type}
-          </Link>
-          <span className="ml-2 text-xs text-gray-600">{row.interval_value} {row.interval_kind} · {row.status}</span>
+          <EntityLink
+            kind="pm_schedule"
+            id={row.id}
+            label={row.pm_type}
+            className="font-semibold text-slate-700 underline"
+          />
+          <span className="ml-2 text-xs text-gray-600">
+            {row.interval_value} {row.interval_kind} · {row.status}
+          </span>
         </div>
       ))}
     </section>
