@@ -76,9 +76,17 @@ the leaf stays OPEN.
 | `accounting:accounting.panel.trk_bulk_register` | Codex (unconfirmed guard) | #6724 | TBD — Codex to confirm |
 | `accounting:accounting.panel.detail` | Codex (unconfirmed guard) | #6724 | TBD — Codex to confirm |
 | `lists:catalog.drivers.teams.list` | Codex (unconfirmed guard) | #6728 | TBD — Codex to confirm |
+| `dispatch:queues.detention` | Codex (author) · Cursor (confirm 2026-08-14) | #6853 | `verify-dispatch-detention-reverse-links.mjs` (+ `verify-dispatch-detention-board.mjs`) |
+| `dispatch:docs.pod` | Cursor (confirm 2026-08-14) | pre-existing + guards green | `verify-disp-wire-03-pod-capture.mjs` · `verify-dispatch-pod-bol-workflow.mjs` · `verify-pod-bol-evidence-linkage.mjs` |
+| `dispatch:docs.ocr` | Cursor (confirm 2026-08-14) | pre-existing + guards green | `verify-dispatch-ocr-queue.mjs` |
+| `tasks:tasks.drawer.task` | Codex (author) · Cursor (confirm 2026-08-14) | #6864 siblings / step 3310 | `verify-task-drawer-reverse-links.mjs` |
+| `lists:chrome.toolbar_filter` | Cursor | #6858 | `verify-collapsed-list-filters-apply.mjs` (FilterPopover draft→Apply) |
+| `dispatch:settings.notify` (customer reverse Open) | Cursor | #6863 | `verify-customer-notify-linkage.mjs` |
+| `safety:driver_scheduler` temp-cover Open (driver/unit) | Cursor (EntityLink janitor) | #6863 | `verify-temp-cover-driver-linkage.mjs` · `verify-temp-cover-unit-linkage.mjs` |
 
 ## Uncertain — Cursor attributed these to Codex; Codex's itemized report does not confirm them
 Needs Codex to confirm with PR#/guard or explicitly release as OPEN.
+(Cursor 2026-08-14: removed `dispatch:docs.pod` / `dispatch:docs.ocr` / `dispatch:queues.detention` / `tasks:tasks.drawer.task` after independent guard confirmation — see Done table.)
 
 | Leaf | Cursor's claimed attribution |
 |---|---|
@@ -95,10 +103,6 @@ Needs Codex to confirm with PR#/guard or explicitly release as OPEN.
 | `fleet:trailer.profile.insurance_claims_reverse` | Codex #6731 |
 | `fleet:trailer.profile.documents` | Codex #6731 |
 | `vendors:md.vendor_details` | Codex #6718 |
-| `tasks:tasks.drawer.task` | Codex, no PR cited ("already exact") |
-| `dispatch:docs.pod` | Codex, no PR cited ("already exact") |
-| `dispatch:docs.ocr` | Codex, no PR cited ("already exact") |
-| `dispatch:queues.detention` | Codex, no PR cited ("already exact") |
 | `inventory:assignments.wo_link` | Codex, no PR cited ("verified") |
 
 ## Open — genuinely unclaimed by anyone (as of 2026-08-14 evening)
