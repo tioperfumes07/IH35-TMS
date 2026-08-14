@@ -37,7 +37,7 @@
  * CLS-SILENT-CAP: roster page sizes below are surfaced by CappedListNotice in EntityPicker.tsx via
  * entityPickerListLimit() — never a silent truncate on server-searched kinds.
  */
-import { listDrivers, listEquipment, listUnits, listVendors } from "../../api/mdata";
+import { listCustomers, listDrivers, listEquipment, listUnits, listVendors } from "../../api/mdata";
 import { listLoads } from "../../api/loads";
 import { listWorkOrders } from "../../api/maintenance";
 import { listInsuranceClaims, listInsuranceLawsuits, listInsurancePolicies } from "../../api/insurance";
@@ -46,6 +46,7 @@ import { legalMattersApi } from "../../api/legal-matters";
 
 export type EntityPickerKind =
   | "driver"
+  | "customer"
   | "unit"
   | "trailer"
   | "load"
@@ -111,6 +112,31 @@ function nonEmpty(...parts: Array<string | null | undefined>): string {
 }
 
 const ENTITY_PICKERS: Record<EntityPickerKind, EntityPickerConfig> = {
+  customer: {
+    kind: "customer",
+    label: "customer",
+    readTable: "mdata.customers",
+    writeTable: "mdata.customers",
+    readEndpoint: "GET /api/v1/mdata/customers",
+    writeEndpoint: "POST /api/v1/mdata/customers",
+    entityScoped: true,
+    evidence: "apps/backend/src/mdata/customers.routes.ts (company-scoped SELECT and INSERT)",
+    inlineCreate: { available: true },
+    serverSearch: true,
+    async list(operatingCompanyId, opts) {
+      const res = await listCustomers({
+        operating_company_id: operatingCompanyId,
+        search: opts?.search || undefined,
+        status: "active",
+        limit: 200,
+      });
+      return res.customers.map((customer) => ({
+        value: customer.id,
+        label: customer.name,
+        sublabel: customer.customer_code || undefined,
+      }));
+    },
+  },
   driver: {
     kind: "driver",
     label: "driver",
@@ -447,6 +473,8 @@ export function entityPickerListLimit(
   switch (kind) {
     case "driver":
       return opts?.driverRoster === "active_or_probation" ? 400 : 200;
+    case "customer":
+      return 200;
     case "unit":
       return 500;
     case "vendor":

@@ -269,6 +269,16 @@ export function EntityPicker({
           onCreated={(record) => handleCreated(record.id, record.label)}
         />
       ) : null}
+
+      {createOffered && kind === "customer" ? (
+        <InlineCreateDrawer
+          open={createOpen}
+          kind="customer"
+          operatingCompanyId={operatingCompanyId}
+          onClose={() => setCreateOpen(false)}
+          onCreated={(record) => handleCreated(record.id, record.label)}
+        />
+      ) : null}
     </>
   );
 }
