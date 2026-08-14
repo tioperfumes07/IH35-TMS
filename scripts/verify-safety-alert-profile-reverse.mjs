@@ -7,6 +7,7 @@ const files = {
   integrityRoutes: read("apps/backend/src/safety/integrity-alerts.routes.ts"),
   anomalyRoutes: read("apps/backend/src/integrity/anomaly-status.routes.ts"),
   section: read("apps/frontend/src/components/safety/SafetyAlertsReverseSection.tsx"),
+  entityLink: read("apps/frontend/src/components/shared/EntityLink.tsx"),
   companyPage: read("apps/frontend/src/pages/safety/CompanyViolationsPage.tsx"),
   integrityPage: read("apps/frontend/src/pages/safety/IntegrityAlertsPage.tsx"),
   anomalyPage: read("apps/frontend/src/pages/safety/tabs/AnomaliesTab.tsx"),
@@ -25,7 +26,7 @@ function failures(s = files) { return [
   ["integrity alert subject FK filters", s.integrityRoutes.includes('for (const column of ["subject_driver_id", "subject_unit_id", "subject_vendor_id"]') && s.integrityRoutes.includes("filters.push(`${column} = $${values.length}::uuid`)")],
   ["anomaly subject id filter", s.anomalyRoutes.includes("subject_id: z.string().uuid().optional()") && s.anomalyRoutes.includes("subject_id = $${values.length}::uuid")],
   ["all applicable profile consumers", ["driver", "unit", "vendor", "customer", "invoice"].every((kind) => s.profiles.includes(`subjectKind=\"${kind}\"`))],
-  ["exact three record targets", s.section.includes("record_type=company-violation&violation_id=") && s.section.includes("/safety/integrity-alerts?alert_id=") && s.section.includes("/safety/integrity-reports?anomaly_id=")],
+  ["exact three record targets", s.section.includes('kind="company_violation"') && s.section.includes('kind="integrity_alert"') && s.section.includes('kind="integrity_anomaly"') && s.entityLink.includes('case "company_violation":') && s.entityLink.includes("/safety/external-fines?record_type=company-violation&violation_id=") && s.entityLink.includes("/safety/integrity-alerts?alert_id=") && s.entityLink.includes("/safety/integrity-reports?anomaly_id=")],
   ["target drawers honor ids", s.companyPage.includes('searchParams.get("violation_id")') && s.integrityPage.includes('searchParams.get("alert_id")') && s.anomalyPage.includes('searchParams.get("anomaly_id")') && s.integrityReports.includes('searchParams.get("anomaly_id")')],
   ["company violation unit forward links", s.companyDrawer.includes("violation.related_unit_ids") && s.companyDrawer.includes('kind="unit" id={unitId}')],
 ].filter(([, ok]) => !ok).map(([name]) => name); }
@@ -35,7 +36,7 @@ if (process.argv.includes("--selftest")) {
     failures({...files, integrityRoutes: files.integrityRoutes.replace('"subject_driver_id", "subject_unit_id", "subject_vendor_id"', '"subject_type"')}).includes("integrity alert subject FK filters"),
     failures({...files, anomalyRoutes: files.anomalyRoutes.replace("subject_id = $${values.length}::uuid", "TRUE")}).includes("anomaly subject id filter"),
     failures({...files, profiles: files.profiles.replace('subjectKind="invoice"', 'subjectKind="record"')}).includes("all applicable profile consumers"),
-    failures({...files, section: files.section.replace("/safety/integrity-alerts?alert_id=", "/safety/integrity-alerts")}).includes("exact three record targets"),
+    failures({...files, section: files.section.replace('kind="integrity_alert"', 'kind="unit"')}).includes("exact three record targets"),
     failures({...files, companyPage: files.companyPage.replace('searchParams.get("violation_id")', 'null')}).includes("target drawers honor ids"),
     failures({...files, companyDrawer: files.companyDrawer.replace('kind="unit" id={unitId}', 'kind="driver" id={unitId}')}).includes("company violation unit forward links"),
   ];
