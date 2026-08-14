@@ -1196,6 +1196,14 @@
       "modules": ["dispatch", "insurance", "maintenance"],
       "cols": ["driver", "unit", "load", "policy", "connectivity", "reverse_link"],
       "leafRe": "^(home\\.kanban|policies\\.list|pm\\.auto_engine\\.run|pm\\.schedule\\.list)$"
+    },
+    {
+      "task": "LINK-F5138-CONTEXT-IDENTITY-REVERSE-LINKS",
+      "pr": "this PR",
+      "guard": "scripts/verify-context-identity-reverse-links.mjs",
+      "modules": ["fleet", "system", "reports"],
+      "cols": ["customer", "driver", "vendor", "unit", "load", "connectivity", "reverse_link"],
+      "leafRe": "^(unit\\.profile\\.identity|audit\\.trail|report\\.geofence_reconciliation)$"
     }
   ]
 }

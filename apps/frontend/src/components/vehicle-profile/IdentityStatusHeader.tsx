@@ -4,6 +4,7 @@ import { entityLabel } from "../../lib/entity-label";
 import { QuickAvailabilityToggle } from "./QuickAvailabilityToggle";
 import { StatusChangeModal } from "./StatusChangeModal";
 import { PlatesTable } from "./PlatesTable";
+import { EntityLink } from "../shared/EntityLink";
 
 const STATUSES = ["InService", "OutOfService", "InMaintenance", "Sold", "Damaged", "Transferred"] as const;
 
@@ -38,7 +39,7 @@ export function IdentityStatusHeader({
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="text-lg font-semibold text-gray-900">
-            {entityLabel(String(unit.unit_number ?? ""), unitId, "Unit")} · {[unit.year, unit.make, unit.model].filter(Boolean).join(" ")}
+            <EntityLink kind="unit" id={unitId} label={entityLabel(String(unit.unit_number ?? ""), unitId, "Unit")} /> · {[unit.year, unit.make, unit.model].filter(Boolean).join(" ")}
           </h2>
           <p className="text-xs text-gray-600">VIN {String(unit.vin ?? "—")}</p>
           <p className="text-xs text-gray-600">
