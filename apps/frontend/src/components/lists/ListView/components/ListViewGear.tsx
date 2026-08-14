@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Density, GearState, ListViewColumn } from "../types";
 
 const PAGE_SIZE_OPTIONS = [50, 75, 100, 200, 300];
@@ -15,10 +15,31 @@ interface Props<T> {
 
 export function ListViewGear<T>({ columns, gear, onGearChange }: Props<T>) {
   const [open, setOpen] = useState(false);
+  const [draft, setDraft] = useState<GearState>(gear);
   const btnRef = useRef<HTMLButtonElement>(null);
 
-  const set = (patch: Partial<GearState>) =>
-    onGearChange({ ...gear, ...patch });
+  const set = (patch: Partial<GearState>) => setDraft((current) => ({ ...current, ...patch }));
+  const cancel = () => { setDraft(gear); setOpen(false); };
+  const apply = () => { onGearChange(draft); setOpen(false); };
+  const reset = () => setDraft({
+    visibleColumns: Object.fromEntries(columns.map((column) => [column.id, column.visible !== false])),
+    includeInactive: true,
+    statusFilter: "all",
+    showBadges: true,
+    pageSize: PAGE_SIZE_OPTIONS[0],
+    density: "cozy",
+  });
+
+  useEffect(() => {
+    if (open) setDraft(gear);
+  }, [gear, open]);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (event: KeyboardEvent) => { if (event.key === "Escape") cancel(); };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [gear, open]);
 
   return (
     <div className="relative inline-block">
@@ -36,7 +57,7 @@ export function ListViewGear<T>({ columns, gear, onGearChange }: Props<T>) {
         <>
           <div
             className="fixed inset-0 z-20"
-            onClick={() => setOpen(false)}
+            onClick={cancel}
           />
           <div className="absolute right-0 top-8 z-30 w-64 bg-white border border-gray-200 rounded-lg shadow-xl p-4 space-y-4">
             {/* Columns show/hide */}
@@ -47,11 +68,11 @@ export function ListViewGear<T>({ columns, gear, onGearChange }: Props<T>) {
                   <label key={col.id} className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer">
                     <input
                       type="checkbox"
-                      checked={gear.visibleColumns[col.id] !== false}
+                      checked={draft.visibleColumns[col.id] !== false}
                       onChange={(e) =>
                         set({
                           visibleColumns: {
-                            ...gear.visibleColumns,
+                            ...draft.visibleColumns,
                             [col.id]: e.target.checked,
                           },
                         })
@@ -75,7 +96,7 @@ export function ListViewGear<T>({ columns, gear, onGearChange }: Props<T>) {
                     key={s}
                     type="button"
                     onClick={() => set({ pageSize: s })}
-                    className={`px-2 py-1 text-xs rounded-sm border ${gear.pageSize === s ? "bg-slate-1000 text-white border-slate-300" : "border-gray-300 hover:bg-gray-50"}`}
+                    className={`px-2 py-1 text-xs rounded-sm border ${draft.pageSize === s ? "bg-slate-1000 text-white border-slate-300" : "border-gray-300 hover:bg-gray-50"}`}
                   >
                     {s}
                   </button>
@@ -94,7 +115,7 @@ export function ListViewGear<T>({ columns, gear, onGearChange }: Props<T>) {
                     key={value}
                     type="button"
                     onClick={() => set({ density: value })}
-                    className={`flex-1 py-1 ${gear.density === value ? "bg-slate-1000 text-white" : "bg-white text-gray-700 hover:bg-gray-50"}`}
+                    className={`flex-1 py-1 ${draft.density === value ? "bg-slate-1000 text-white" : "bg-white text-gray-700 hover:bg-gray-50"}`}
                   >
                     {label}
                   </button>
@@ -110,7 +131,7 @@ export function ListViewGear<T>({ columns, gear, onGearChange }: Props<T>) {
               <label className="flex items-center gap-2 text-xs text-gray-700 mb-2 cursor-pointer">
                 <input
                   type="checkbox"
-                  checked={gear.includeInactive}
+                  checked={draft.includeInactive}
                   onChange={(e) => set({ includeInactive: e.target.checked })}
                   className="rounded-sm border-gray-300"
                 />
@@ -122,7 +143,7 @@ export function ListViewGear<T>({ columns, gear, onGearChange }: Props<T>) {
                     key={v}
                     type="button"
                     onClick={() => set({ statusFilter: v })}
-                    className={`flex-1 py-1 capitalize ${gear.statusFilter === v ? "bg-slate-1000 text-white" : "bg-white text-gray-700 hover:bg-gray-50"}`}
+                    className={`flex-1 py-1 capitalize ${draft.statusFilter === v ? "bg-slate-1000 text-white" : "bg-white text-gray-700 hover:bg-gray-50"}`}
                   >
                     {v === "all" ? "All" : v === "active" ? "Active" : "Inactive"}
                   </button>
@@ -131,13 +152,18 @@ export function ListViewGear<T>({ columns, gear, onGearChange }: Props<T>) {
               <label className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer">
                 <input
                   type="checkbox"
-                  checked={gear.showBadges}
+                  checked={draft.showBadges}
                   onChange={(e) => set({ showBadges: e.target.checked })}
                   className="rounded-sm border-gray-300"
                 />
                 Show badges
               </label>
             </section>
+            <div className="flex items-center justify-end gap-2 border-t border-gray-200 pt-3">
+              <button type="button" className="rounded-sm px-2 py-1 text-xs font-semibold text-gray-600 hover:bg-gray-100" onClick={reset}>Reset</button>
+              <button type="button" className="rounded-sm border border-gray-300 bg-white px-2 py-1 text-xs font-semibold text-gray-700 hover:bg-gray-50" onClick={cancel}>Cancel</button>
+              <button type="button" className="rounded-sm bg-[#1F2A44] px-2 py-1 text-xs font-semibold text-white hover:bg-[#172036]" onClick={apply}>Apply</button>
+            </div>
           </div>
         </>
       )}

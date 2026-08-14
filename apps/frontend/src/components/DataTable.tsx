@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { colors, spacing, typography } from "../design/tokens";
 import type { DataTableErrorState } from "../lib/tableError";
 import { ListErrorState } from "./ListErrorState";
+import { ColumnChooser } from "./table/ColumnChooser";
 import { useTablePref } from "./table/useTablePref";
 
 export type { DataTableErrorState };
@@ -71,6 +72,7 @@ export function DataTable<T>({
   const [sortKey, setSortKey] = useState<string>("");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [page, setPage] = useState(1);
+  const [hiddenColumns, setHiddenColumns] = useState<Set<string>>(new Set());
   // Rows-per-page: persisted per-surface when a tableKey is given; otherwise ephemeral local state.
   const pref = useTablePref(tableKey ?? "datatable:adhoc", { pageSize });
   const [localPageSize, setLocalPageSize] = useState(pageSize);
@@ -101,13 +103,34 @@ export function DataTable<T>({
   const pageRows = sortedRows.slice(offset, offset + effectivePageSize);
   const inError = Boolean(errorState);
   const footerRowsLength = inError ? 0 : sortedRows.length;
+  const visibleColumns = columns.filter((column) => !hiddenColumns.has(String(column.key)));
 
   return (
     <div className="overflow-x-auto rounded-md border border-gray-200 bg-white">
+      <div className="flex items-center justify-end border-b border-gray-200 px-2 py-1.5">
+        <ColumnChooser
+          columns={columns.map((column) => ({
+            key: String(column.key),
+            label: column.label,
+            align: column.align,
+            numeric: column.numeric,
+          }))}
+          hidden={hiddenColumns}
+          onToggleColumn={(key) => setHiddenColumns((current) => {
+            const next = new Set(current);
+            if (next.has(key)) next.delete(key);
+            else next.add(key);
+            return next;
+          })}
+          pageSize={selectedPageSize}
+          onPageSizeChange={setSelectedPageSize}
+          pageSizeOptions={[10, 25, 50, 100]}
+        />
+      </div>
       <table className="w-full table-fixed text-left" style={{ fontSize: typography.tableRow }}>
         <thead className="bg-gray-50">
           <tr style={{ height: spacing.tableHeaderHeight }}>
-            {columns.map((column) => {
+            {visibleColumns.map((column) => {
               const a = resolveAlign(column);
               return (
               <th
@@ -148,7 +171,7 @@ export function DataTable<T>({
         <tbody>
           {inError && errorState ? (
             <tr>
-              <td colSpan={columns.length} className="p-0">
+              <td colSpan={visibleColumns.length} className="p-0">
                 <ListErrorState
                   title="Couldn't load list"
                   status={errorState.status}
@@ -159,13 +182,13 @@ export function DataTable<T>({
             </tr>
           ) : loading ? (
             <tr>
-                  <td colSpan={columns.length} className="px-2 py-3 text-center text-[11px] text-gray-500">
+                  <td colSpan={visibleColumns.length} className="px-2 py-3 text-center text-[11px] text-gray-500">
                 Loading...
               </td>
             </tr>
           ) : pageRows.length === 0 ? (
             <tr>
-                  <td colSpan={columns.length} className="px-2 py-3 text-center text-[11px] text-gray-500">
+                  <td colSpan={visibleColumns.length} className="px-2 py-3 text-center text-[11px] text-gray-500">
                 {emptyText}
               </td>
             </tr>
@@ -177,7 +200,7 @@ export function DataTable<T>({
                 style={{ height: spacing.tableRowHeight }}
                 onClick={onRowClick ? () => onRowClick(row) : undefined}
               >
-                {columns.map((column) => {
+                {visibleColumns.map((column) => {
                   const a = resolveAlign(column);
                   return (
                   <td

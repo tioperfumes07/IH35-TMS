@@ -31,16 +31,49 @@ export function ColumnChooser({
   pageSizeOptions = [25, 50, 100, 200],
 }: Props) {
   const [open, setOpen] = useState(false);
+  const [draftHidden, setDraftHidden] = useState<Set<string>>(() => new Set(hidden));
+  const [draftPageSize, setDraftPageSize] = useState(pageSize);
   const ref = useRef<HTMLDivElement>(null);
+
+  const cancel = () => {
+    setDraftHidden(new Set(hidden));
+    setDraftPageSize(pageSize);
+    setOpen(false);
+  };
+
+  const apply = () => {
+    for (const column of columns) {
+      if (column.alwaysVisible) continue;
+      if (hidden.has(column.key) !== draftHidden.has(column.key)) onToggleColumn(column.key);
+    }
+    if (draftPageSize !== pageSize) onPageSizeChange(draftPageSize);
+    setOpen(false);
+  };
+
+  const reset = () => {
+    setDraftHidden(new Set());
+    setDraftPageSize(pageSizeOptions[0] ?? pageSize);
+  };
+
+  useEffect(() => {
+    if (!open) return;
+    setDraftHidden(new Set(hidden));
+    setDraftPageSize(pageSize);
+  }, [hidden, open, pageSize]);
 
   useEffect(() => {
     if (!open) return;
     const onDoc = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+      if (ref.current && !ref.current.contains(e.target as Node)) cancel();
     };
+    const onKey = (event: KeyboardEvent) => { if (event.key === "Escape") cancel(); };
     document.addEventListener("mousedown", onDoc);
-    return () => document.removeEventListener("mousedown", onDoc);
-  }, [open]);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDoc);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [hidden, open, pageSize]);
 
   return (
     <div className="relative" ref={ref}>
@@ -56,11 +89,12 @@ export function ColumnChooser({
       {open ? (
         <div className="absolute right-0 z-20 mt-1 w-56 rounded-sm border border-gray-200 bg-white p-2 shadow-lg" role="menu">
           <div className="mb-2">
-            <label className="mb-1 block text-[11px] font-semibold text-gray-600">Rows per page</label>
+            <label htmlFor="column-chooser-page-size" className="mb-1 block text-[11px] font-semibold text-gray-600">Rows per page</label>
             <select
+              id="column-chooser-page-size"
               className="h-7 w-full rounded-sm border border-gray-300 px-1 text-[12px]"
-              value={pageSize}
-              onChange={(e) => onPageSizeChange(Number(e.target.value))}
+              value={draftPageSize}
+              onChange={(e) => setDraftPageSize(Number(e.target.value))}
             >
               {pageSizeOptions.map((n) => (
                 <option key={n} value={n}>{n}</option>
@@ -77,12 +111,22 @@ export function ColumnChooser({
                 <input
                   type="checkbox"
                   disabled={c.alwaysVisible}
-                  checked={c.alwaysVisible || !hidden.has(c.key)}
-                  onChange={() => onToggleColumn(c.key)}
+                  checked={c.alwaysVisible || !draftHidden.has(c.key)}
+                  onChange={() => setDraftHidden((current) => {
+                    const next = new Set(current);
+                    if (next.has(c.key)) next.delete(c.key);
+                    else next.add(c.key);
+                    return next;
+                  })}
                 />
                 {c.label}
               </label>
             ))}
+          </div>
+          <div className="mt-2 flex items-center justify-end gap-2 border-t border-gray-200 pt-2">
+            <button type="button" className="rounded-sm px-2 py-1 text-[12px] font-semibold text-gray-600 hover:bg-gray-100" onClick={reset}>Reset</button>
+            <button type="button" className="rounded-sm border border-gray-300 bg-white px-2 py-1 text-[12px] font-semibold text-gray-700 hover:bg-gray-50" onClick={cancel}>Cancel</button>
+            <button type="button" className="rounded-sm bg-[#1F2A44] px-2 py-1 text-[12px] font-semibold text-white hover:bg-[#172036]" onClick={apply}>Apply</button>
           </div>
         </div>
       ) : null}

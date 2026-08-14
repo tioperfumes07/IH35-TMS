@@ -27,7 +27,7 @@ describe("ParityTable (A1 grammar)", () => {
     expect(screen.getByText("No records found.")).toBeInTheDocument();
   });
 
-  it("gear popover exposes density options and column toggles; hiding a column removes it", () => {
+  it("gear popover drafts changes and applies them only after Apply", () => {
     render(<ParityTable<Row> columns={columns} rows={rows} rowKey={(r) => r.id} />);
     fireEvent.click(screen.getByLabelText("Table settings"));
     expect(screen.getByText("Regular")).toBeInTheDocument();
@@ -44,9 +44,23 @@ describe("ParityTable (A1 grammar)", () => {
     expect(amountCheckbox).toBeTruthy();
     fireEvent.click(amountCheckbox as HTMLElement);
 
+    // Draft state must not silently alter the table.
+    expect(screen.getAllByRole("columnheader").map((th) => th.textContent).join(" ")).toContain("Amount");
+    fireEvent.click(screen.getByRole("button", { name: "Apply" }));
     expect(
       screen.getAllByRole("columnheader").map((th) => th.textContent).join(" "),
     ).not.toContain("Amount");
+  });
+
+  it("gear Cancel discards drafted column changes", () => {
+    render(<ParityTable<Row> columns={columns} rows={rows} rowKey={(r) => r.id} />);
+    fireEvent.click(screen.getByLabelText("Table settings"));
+    const amountCheckbox = screen
+      .getAllByRole("checkbox")
+      .find((cb) => cb.closest("label")?.textContent?.includes("Amount"));
+    fireEvent.click(amountCheckbox as HTMLElement);
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(screen.getAllByRole("columnheader").map((th) => th.textContent).join(" ")).toContain("Amount");
   });
 
   it("supports selection → batch bar", () => {
