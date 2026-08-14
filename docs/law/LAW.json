@@ -565,5 +565,12 @@
     "source_file": "apps/frontend/src/pages/insurance/ClaimsTab.tsx",
     "guard": "scripts/verify-insurance-claims-tab-claim-entitylink.mjs",
     "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-14-LINK-F5137-LAWSUITSTAB-ENTITYLINK",
+    "title": "insurance LawsuitsTab case_number column renders a canonical EntityLink(kind=lawsuit) to its own route (?lawsuit_id=) instead of a local-state-only button — same class as LINK-F5136, closes the self-referential half of the reverse-link loop LegalMatterDetailPage's insurance_lawsuit_id link already assumes exists",
+    "source_file": "apps/frontend/src/pages/insurance/LawsuitsTab.tsx",
+    "guard": "scripts/verify-insurance-lawsuits-tab-lawsuit-entitylink.mjs",
+    "type": "enforced"
   }
 ]

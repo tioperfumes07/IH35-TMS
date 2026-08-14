@@ -86,13 +86,18 @@ export function LawsuitsTab({ operatingCompanyId, claimId }: Props) {
         label: "Case #",
         sortable: true,
         render: (lawsuit) => (
-          <button
-            type="button"
+          // LINK-F5136-class reverse_link: same defect as ClaimsTab's claim_number column — this row's
+          // own selection stayed local-state-only while EntityLink kind="lawsuit" (used by
+          // LegalMatterDetailPage's insurance_lawsuit_id reverse link, per the comment above at
+          // deepLinkLawsuitId) already resolves to this exact route with ?lawsuit_id=. Real EntityLink
+          // closes the self-referential half of that loop.
+          <EntityLink
+            kind="lawsuit"
+            id={lawsuit.id}
+            label={entityLabel(lawsuit.case_number, lawsuit.id, "Case")}
             className="font-medium text-slate-700 underline"
             onClick={() => setSelectedLawsuitId(lawsuit.id)}
-          >
-            {entityLabel(lawsuit.case_number, lawsuit.id, "Case")}
-          </button>
+          />
         ),
       },
       {
