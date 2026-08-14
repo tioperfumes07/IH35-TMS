@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { userFacingApiError } from "../../lib/api-error-message";
-import { Link, NavLink, useLocation } from "react-router-dom";
+import { Link, NavLink, useLocation, useSearchParams } from "react-router-dom";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -228,14 +228,26 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
     queryFn: () => listFactors(companyId).then((res) => res.factors),
     enabled: Boolean(companyId),
   });
+  // LINK-F5171/LINK-F5180 — reverse_link: CustomerDetail (and, for recourse, the load's own
+  // FactoringTab) link here as ?customer_id=/?load_id=; neither param was ever read, so a reverse
+  // link landed on the unfiltered company-wide table. Server-side scoping (both routes now accept
+  // these) rather than client-side, since recourse defaults limit=200 and chargebacks history is
+  // capped at LIMIT 500.
+  const [searchParams] = useSearchParams();
+  const deepLinkCustomerId = searchParams.get("customer_id");
+  const deepLinkLoadId = searchParams.get("load_id");
   const recourseQuery = useQuery({
-    queryKey: ["factoring", "recourse", companyId],
-    queryFn: () => getFactoringRecoursePipeline(companyId),
+    queryKey: ["factoring", "recourse", companyId, deepLinkCustomerId, deepLinkLoadId],
+    queryFn: () =>
+      getFactoringRecoursePipeline(companyId, 200, {
+        customer_id: deepLinkCustomerId ?? undefined,
+        load_id: deepLinkLoadId ?? undefined,
+      }),
     enabled: Boolean(companyId),
   });
   const feesQuery = useQuery({
-    queryKey: ["factoring", "chargebacks-fees", companyId],
-    queryFn: () => getFactoringChargebacksFees(companyId),
+    queryKey: ["factoring", "chargebacks-fees", companyId, deepLinkCustomerId],
+    queryFn: () => getFactoringChargebacksFees(companyId, deepLinkCustomerId ?? undefined),
     enabled: Boolean(companyId),
   });
   const settingsQuery = useQuery({

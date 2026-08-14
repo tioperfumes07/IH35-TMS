@@ -43,6 +43,8 @@ export type FactoringRecourseInvoice = {
   factored_at: string;
   recourse_expiry_date: string;
   days_until_recourse_expiry: number;
+  /** LINK-F5180: real FK, resolved via the same accounting.invoices join that resolves customer_id. */
+  load_id: string | null;
 };
 
 export type FactoringChargebackFeeRow = {
@@ -53,6 +55,8 @@ export type FactoringChargebackFeeRow = {
   chargeback_amount: number;
   factor_fee_amount: number;
   statement_reference: string | null;
+  /** LINK-F5180: resolved via the same accounting.invoices join used by recourse-pipeline. */
+  customer_id: string | null;
 };
 
 export type FactoringMonthlyFeeSummary = {
@@ -119,13 +123,22 @@ export function getFactoringSummary(companyId: string) {
   return apiRequest<FactoringSummary>(`/api/v1/factoring/summary?${q(companyId)}`);
 }
 
-export function getFactoringRecoursePipeline(companyId: string, limit = 200) {
-  return apiRequest<{ invoices: FactoringRecourseInvoice[] }>(`/api/v1/factoring/recourse-pipeline?${q(companyId)}&limit=${limit}`);
+export function getFactoringRecoursePipeline(
+  companyId: string,
+  limit = 200,
+  filters: { customer_id?: string; load_id?: string } = {}
+) {
+  const params = new URLSearchParams({ operating_company_id: companyId, limit: String(limit) });
+  if (filters.customer_id) params.set("customer_id", filters.customer_id);
+  if (filters.load_id) params.set("load_id", filters.load_id);
+  return apiRequest<{ invoices: FactoringRecourseInvoice[] }>(`/api/v1/factoring/recourse-pipeline?${params.toString()}`);
 }
 
-export function getFactoringChargebacksFees(companyId: string) {
+export function getFactoringChargebacksFees(companyId: string, customerId?: string) {
+  const params = new URLSearchParams({ operating_company_id: companyId });
+  if (customerId) params.set("customer_id", customerId);
   return apiRequest<{ history: FactoringChargebackFeeRow[]; monthly_summary: FactoringMonthlyFeeSummary[] }>(
-    `/api/v1/factoring/chargebacks-fees?${q(companyId)}`
+    `/api/v1/factoring/chargebacks-fees?${params.toString()}`
   );
 }
 

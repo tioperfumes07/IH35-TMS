@@ -13,6 +13,19 @@ const companyQuerySchema = z.object({
 
 const recourseQuerySchema = companyQuerySchema.extend({
   limit: z.coerce.number().int().min(1).max(500).default(200),
+  // LINK-F5171/LINK-F5180: reverse_link — customer_id/load_id are real FKs already resolvable via
+  // the accounting.invoices LATERAL join below (i.customer_id, i.source_load_id); this just exposes
+  // them as query filters so the customer/load's own page can query its own rows server-side.
+  customer_id: z.string().uuid().optional(),
+  load_id: z.string().uuid().optional(),
+});
+
+// LINK-F5171/LINK-F5180: reverse_link — views.factoring_chargebacks_fees carries no customer_id/
+// vendor_id/load_id at all; resolve customer_id via the same accounting.invoices LATERAL join
+// pattern used for recourse-pipeline above, and vendor_id via
+// accounting.factoring_advances.factoring_company_vendor_id (the factor entity).
+const chargebacksFeesQuerySchema = companyQuerySchema.extend({
+  customer_id: z.string().uuid().optional(),
 });
 
 function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
@@ -120,18 +133,34 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
     if (!user) return;
     const query = recourseQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return sendValidationError(reply, query.error);
-    const { operating_company_id: companyId, limit } = query.data;
+    const { operating_company_id: companyId, limit, customer_id: customerId, load_id: loadId } = query.data;
 
     const invoices = await withCompanyScope(user.uuid, companyId, async (client) => {
+      // LINK-F5180: server-side customer_id/load_id scoping (not a client-side filter of this
+      // already-capped result set, limit defaults 200) — reused as an INNER filter on the LATERAL
+      // join's own columns so a customer/load's own page gets exactly its own rows.
+      const params: Array<string | number> = [companyId];
+      let customerFilter = "";
+      if (customerId) {
+        params.push(customerId);
+        customerFilter = `AND inv.customer_id = $${params.length}::uuid`;
+      }
+      let loadFilter = "";
+      if (loadId) {
+        params.push(loadId);
+        loadFilter = `AND inv.load_id = $${params.length}::uuid`;
+      }
+      params.push(limit);
       const res = await client
         .query(
           `
             SELECT
               rr.*,
-              inv.customer_id
+              inv.customer_id,
+              inv.load_id
             FROM views.factoring_recourse_at_risk rr
             LEFT JOIN LATERAL (
-              SELECT i.customer_id
+              SELECT i.customer_id, i.source_load_id AS load_id
               FROM accounting.invoices i
               WHERE i.factoring_advance_id = rr.factoring_advance_id
                 AND i.operating_company_id = rr.operating_company_id
@@ -140,10 +169,12 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
               LIMIT 1
             ) inv ON true
             WHERE rr.operating_company_id = $1::uuid
+              ${customerFilter}
+              ${loadFilter}
             ORDER BY rr.days_until_recourse_expiry ASC, rr.factored_at DESC
-            LIMIT $2
+            LIMIT $${params.length}
           `,
-          [companyId, limit]
+          params
         )
         .catch(() => ({ rows: [] as Record<string, unknown>[] }));
       return res.rows;
@@ -156,21 +187,43 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
   app.get("/api/v1/factoring/chargebacks-fees", async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
-    const query = companyQuerySchema.safeParse(req.query ?? {});
+    const query = chargebacksFeesQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return sendValidationError(reply, query.error);
-    const companyId = query.data.operating_company_id;
+    const { operating_company_id: companyId, customer_id: customerId } = query.data;
 
     const payload = await withCompanyScope(user.uuid, companyId, async (client) => {
+      // LINK-F5180: views.factoring_chargebacks_fees carries no customer_id -- resolve it via the
+      // same accounting.invoices LATERAL join pattern the recourse-pipeline route above already
+      // uses, keyed on the real factoring_advance_id FK both tables share. Server-side customer_id
+      // filter (not client-side), since history is capped at LIMIT 500.
+      const historyParams: Array<string> = [companyId];
+      let customerFilter = "";
+      if (customerId) {
+        historyParams.push(customerId);
+        customerFilter = `AND inv.customer_id = $${historyParams.length}::uuid`;
+      }
       const historyRes = await client
         .query(
           `
-            SELECT *
-            FROM views.factoring_chargebacks_fees
-            WHERE operating_company_id = $1::uuid
-            ORDER BY created_at DESC
+            SELECT
+              cf.*,
+              inv.customer_id
+            FROM views.factoring_chargebacks_fees cf
+            LEFT JOIN LATERAL (
+              SELECT i.customer_id
+              FROM accounting.invoices i
+              WHERE i.factoring_advance_id = cf.factoring_advance_id
+                AND i.operating_company_id = cf.operating_company_id
+                AND i.status <> 'void'
+              ORDER BY i.created_at DESC
+              LIMIT 1
+            ) inv ON true
+            WHERE cf.operating_company_id = $1::uuid
+              ${customerFilter}
+            ORDER BY cf.created_at DESC
             LIMIT 500
           `,
-          [companyId]
+          historyParams
         )
         .catch(() => ({ rows: [] as Record<string, unknown>[] }));
 
