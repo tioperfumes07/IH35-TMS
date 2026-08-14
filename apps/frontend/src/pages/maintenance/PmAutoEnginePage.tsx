@@ -116,7 +116,12 @@ export function PmAutoEnginePage() {
         <ul className="space-y-1 text-xs">
           {(dashboardQ.data?.recent_log ?? []).map((entry) => (
             <li key={entry.id} className="border-t border-gray-100 pt-1 first:border-0 first:pt-0">
-              <span className="font-medium">{entry.action}</span> — {entityLabel(entry.schedule_label, entry.pm_schedule_id, "Schedule")}{" "}
+              <span className="font-medium">{entry.action}</span> —{" "}
+              <EntityLink
+                kind="pm_schedule"
+                id={entry.pm_schedule_id}
+                label={entityLabel(entry.schedule_label, entry.pm_schedule_id, "Schedule")}
+              />{" "}
               {entry.unit_number ? <>(<EntityLink kind="unit" id={entry.unit_id} label={entityLabel(entry.unit_number, entry.unit_id, "Unit")} />)</> : ""}
               {entry.work_order_id ? (
                 <>

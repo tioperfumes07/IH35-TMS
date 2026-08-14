@@ -360,7 +360,14 @@ function KanbanDispatchCard({
       <div className="absolute inset-y-0 right-0 w-1 rounded-r bg-gray-400" />
       {/* DISPATCH-UI-REFINE-2 ITEM 2 — unit primary, load # secondary (when a unit is assigned). */}
       <div className="flex items-center justify-between gap-2">
-        <div className="font-semibold text-gray-900" data-kanban-card-primary="unit">{cardPrimaryLabel(load)}</div>
+        <EntityLink
+          kind={load.assigned_unit_id ? "unit" : "load"}
+          id={load.assigned_unit_id ?? load.id}
+          label={cardPrimaryLabel(load)}
+          className="font-semibold text-gray-900"
+          data-testid="kanban-card-primary-entity-link"
+          onClick={(event) => event.stopPropagation()}
+        />
         {hasVisibleFlag(load.flag_code) ? (
           <span
             className="inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full text-[8px] font-bold text-white"
@@ -378,7 +385,13 @@ function KanbanDispatchCard({
       ) : null}
 
       <div className="mt-1 text-xs text-gray-600">{lane}</div>
-      <div className="mt-1 text-xs font-medium text-gray-800">{driverNameLabel(load)}</div>
+      <div className="mt-1 text-xs font-medium text-gray-800">
+        {load.assigned_primary_driver_id ? (
+          <EntityLink kind="driver" id={load.assigned_primary_driver_id} label={driverNameLabel(load)} onClick={(event) => event.stopPropagation()} />
+        ) : (
+          driverNameLabel(load)
+        )}
+      </div>
 
       <div className="mt-1 flex flex-wrap items-center gap-1 text-[11px] text-gray-600">
         <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 font-semibold text-slate-700">{mode}</span>
@@ -512,9 +525,14 @@ function KanbanStandardCard({
       {/* line 1 — primary: unit-first */}
       <div className="flex items-center gap-2">
         <span className={`h-2 w-2 shrink-0 rounded-full ${onTimeChipClass(load).split(" ")[0]}`} aria-hidden />
-        <span className="min-w-0 flex-1 truncate font-semibold text-gray-900" data-kanban-card-primary="unit">
-          {cardPrimaryLabel(load)}
-        </span>
+        <EntityLink
+          kind={load.assigned_unit_id ? "unit" : "load"}
+          id={load.assigned_unit_id ?? load.id}
+          label={cardPrimaryLabel(load)}
+          className="min-w-0 flex-1 truncate font-semibold text-gray-900"
+          data-testid="kanban-standard-primary-entity-link"
+          onClick={(event) => event.stopPropagation()}
+        />
         {hasActiveGeofenceBreach ? <span className="shrink-0 text-red-600" title="Geofence breach">◆</span> : null}
         {isBreakdown(load) ? <span className="shrink-0 text-red-600" title="Breakdown">▲</span> : null}
         {hasVisibleFlag(load.flag_code) ? (
@@ -538,9 +556,18 @@ function KanbanStandardCard({
             the identifying field, so it now takes the free space (flex-1) and the lane — the least
             identifying part — yields first and only appears on wide boards. Field ORDER is unchanged
             (§7 additive-only): only widths and the lane's responsive visibility move. */}
-        <span className="min-w-0 flex-1 truncate" data-kanban-card-secondary="driver">
-          {driverNameLabel(load)}
-        </span>
+        {load.assigned_primary_driver_id ? (
+          <EntityLink
+            kind="driver"
+            id={load.assigned_primary_driver_id}
+            label={driverNameLabel(load)}
+            className="min-w-0 flex-1 truncate"
+            data-testid="kanban-standard-driver-link"
+            onClick={(event) => event.stopPropagation()}
+          />
+        ) : (
+          <span className="min-w-0 flex-1 truncate" data-kanban-card-secondary="driver">{driverNameLabel(load)}</span>
+        )}
         <span className="hidden min-w-0 max-w-[90px] shrink truncate xl:inline">· {lane}</span>
       </div>
     </div>
