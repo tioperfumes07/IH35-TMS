@@ -72,8 +72,8 @@ function checkDeepLinkFilters(plannerSrc, reverseSrc, tableSrc) {
   if (!/trailer_id:\s*deepLinkTrailerId/.test(plannerSrc) && !/trailer_id:\s*deepLinkTrailerId\s*\|\|/.test(plannerSrc)) {
     failures.push("FuelPlannerHome.tsx must pass trailer_id into getFuelTransactions()");
   }
-  if (!/to=\{`\/fuel\/history\?\$\{filterKey\}=/.test(reverseSrc ?? "")) {
-    failures.push("FuelTransactionsReverseSection Open Fuel History must keep ?filterKey=query");
+  if (!/FUEL_HISTORY_KIND/.test(reverseSrc ?? "") || !/kind=\{FUEL_HISTORY_KIND\[filterKey\]\}/.test(reverseSrc ?? "") || !/fuel_history_driver/.test(reverseSrc ?? "") || !/fuel_history_trailer/.test(reverseSrc ?? "")) {
+    failures.push("FuelTransactionsReverseSection Open Fuel History must use EntityLink FUEL_HISTORY_KIND filter map");
   }
   if (!/kind="trailer"[\s\S]{0,120}?row\.trailer_id/.test(tableSrc ?? "")) {
     failures.push("FuelTransactionsTable must render Trailer EntityLink column");
@@ -180,7 +180,7 @@ function selftest() {
     </ActionButton>
     <FuelTransactionsTable rows={[]} />
   `;
-  const goodReverse = 'to={`/fuel/history?${filterKey}=${encodeURIComponent(filterValue)}`}';
+  const goodReverse = `const FUEL_HISTORY_KIND = { driver_id: "fuel_history_driver", trailer_id: "fuel_history_trailer" }; kind={FUEL_HISTORY_KIND[filterKey]}`;
   const goodTable = 'kind="trailer" id={row.trailer_id} label={entityLabel(row.trailer_number';
   const badReverse = 'to="/fuel/history"';
   const badTable = 'kind="load" id={row.load_id}';

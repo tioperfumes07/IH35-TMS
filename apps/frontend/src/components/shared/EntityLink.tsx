@@ -121,6 +121,10 @@ export type EntityKind =
   | "unit_detail_finance"
   | "fuel_card_overage_driver"
   | "fuel_card_overage_unit"
+  | "fuel_history_driver"
+  | "fuel_history_unit"
+  | "fuel_history_load"
+  | "fuel_history_trailer"
   | "inventory_part"
   | "parts_inventory"
   | "maintenance_vendor"
@@ -374,6 +378,14 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
       return `/fuel/card-overage?driver_id=${id}`;
     case "fuel_card_overage_unit":
       return `/fuel/card-overage?unit_id=${id}`;
+    case "fuel_history_driver":
+      return `/fuel/history?driver_id=${id}`;
+    case "fuel_history_unit":
+      return `/fuel/history?unit_id=${id}`;
+    case "fuel_history_load":
+      return `/fuel/history?load_id=${id}`;
+    case "fuel_history_trailer":
+      return `/fuel/history?trailer_id=${id}`;
     case "safety_event":
       return `/safety/safety-events?event_id=${id}`;
     // SAF-F33 safety drill-through — each target list page reads the param and opens/highlights the row.

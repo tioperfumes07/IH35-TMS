@@ -1,3 +1,4 @@
+2026-08-15T00:25Z Cursor | SHIPPED #6834 loads/unit-detail/overage | shipping LINK-F5171 fuel_history_* EntityLink | Live=BLOCKED
 2026-08-15T00:20Z Cursor | SHIPPED #6832 unit tires/brakes tab | shipping LINK-F5171 loads+unit-detail+overage EntityLink | Live=BLOCKED
 2026-08-15T00:15Z Cursor | SHIPPED #6831 unit tire+legal filters | shipping LINK-F5171 unit_tires_tab + unit_brakes_tab | Live=BLOCKED
 2026-08-15T00:10Z Cursor | SHIPPED #6830 tire+team-split filters | shipping LINK-F5171 unit tire + legal Open Contracts EntityLink | Live=BLOCKED
