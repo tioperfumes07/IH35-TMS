@@ -107,6 +107,10 @@ the leaf stays OPEN.
 | `vendors:md.vendor_details` | Codex · Cursor confirm 2026-08-14 | #6718 | `verify-vendor-master-detail-reverse-link.mjs` · `verify-master-detail-reverse-leaves.mjs` PASS |
 | `inventory:assignments.wo_link` | Codex · Cursor confirm 2026-08-14 | pre-existing | `verify-dispatch-inventory-vendor-workflow-links.mjs` PASS |
 | `maintenance:arriving_soon.convert_to_wo` | Codex · Cursor confirm 2026-08-14 | board FIXED | `verify-arriving-soon-work-order-reverse.mjs` PASS |
+| `drivers:disputes` | Codex · Cursor confirm 2026-08-14 | tip guards | `verify-drivers-subnav-routes-registered.mjs` · `verify-driver-settlement-finance-reverse-section.mjs` PASS |
+| `maintenance:defects.convert_to_wo` | Codex · Cursor confirm 2026-08-14 | tip guards | `verify-maintenance-reverse-link-remainder.mjs` · `verify-maintenance-picker-law-queues.mjs` PASS |
+| `maintenance:pre_flight_dvir.queue` | Codex · Cursor confirm 2026-08-14 | tip guards | `verify-preflight-dvir-tabs-url-sync.mjs` · `verify-maintenance-hidden-surface-reverse-links.mjs` PASS |
+| `maintenance:panel.pm_alerts` | Codex · Cursor confirm 2026-08-14 | tip guards | `verify-pm-alert-work-order-picker.mjs` PASS |
 
 ## Uncertain — empty (Cursor confirm 2026-08-14 night)
 
@@ -126,10 +130,6 @@ All prior Uncertain rows moved to Done after independent guard PASS on tip `orig
 | `factoring:home.vendor_merges` | CC-1 |
 | `factoring:accounting.list` | CC-1 |
 | `factoring:banking.entry` | CC-1 |
-| `drivers:disputes` | Codex |
-| `maintenance:defects.convert_to_wo` | Codex |
-| `maintenance:pre_flight_dvir.queue` | Codex |
-| `maintenance:panel.pm_alerts` | Codex |
 | `accounting:reverse.open_entitylink` | CC-1 / Rule 23 — EntityLink-only Open on Invoices/Bills/Expenses reverse is money theater without write path; skip Cursor |
 
 ## Reclassified — not a fix, Required-flag correction
