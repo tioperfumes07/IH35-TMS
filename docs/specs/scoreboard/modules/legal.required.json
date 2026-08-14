@@ -206,7 +206,6 @@
       "sub": "Matters list",
       "route_hint": "/legal/matters",
       "required": [
-        "driver",
         "connectivity",
         "reverse_link"
       ]
@@ -734,6 +733,18 @@
           "id": "legal.parity.truck_lease_creator",
           "removed": [
             "unit"
+          ]
+        }
+      ]
+    },
+    "driver_column_2026_08_14_overclaim": {
+      "finding": "LINK-F5168-DRIVER-COLUMN-VERTICAL-SWEEP",
+      "note": "driver blanket-required on 1 legal leaf. Verified live \u2014 LegalMattersListPage.tsx (221 lines) has zero driver references \u2014 only matter_number/type/status/severity/SOL columns, no related_driver column, despite matters.detail genuinely carrying related_driver_id.",
+      "drops": [
+        {
+          "id": "matters.list",
+          "removed": [
+            "driver"
           ]
         }
       ]

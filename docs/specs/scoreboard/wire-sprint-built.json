@@ -183,7 +183,6 @@
       "modules": [
         "accounting",
         "banking",
-        "cash-flow",
         "compliance",
         "customers",
         "dispatch",
@@ -192,7 +191,6 @@
         "drivers",
         "factoring",
         "fleet",
-        "form_425",
         "fuel",
         "home",
         "insurance",
@@ -202,6 +200,7 @@
         "reports",
         "safety",
         "settlements",
+        "system",
         "tasks",
         "vendors"
       ],
@@ -2282,16 +2281,58 @@
       "task": "CLS-LIST-TOOLBAR-SEARCH-RANGE-FILTER",
       "pr": "this PR",
       "guard": "scripts/verify-all-module-list-toolbar-search-range-filter.mjs",
-      "modules": ["accounting", "banking", "cash-flow", "compliance", "customers", "dispatch", "docs", "driver-hub", "drivers", "factoring", "finance", "fleet", "form_425", "fuel", "home", "insurance", "inventory", "legal", "lists", "maintenance", "program", "reports", "safety", "settlements", "system", "tasks", "users", "vendors"],
-      "cols": ["connectivity"],
+      "modules": [
+        "accounting",
+        "banking",
+        "cash-flow",
+        "compliance",
+        "customers",
+        "dispatch",
+        "docs",
+        "driver-hub",
+        "drivers",
+        "factoring",
+        "finance",
+        "fleet",
+        "form_425",
+        "fuel",
+        "home",
+        "insurance",
+        "inventory",
+        "legal",
+        "lists",
+        "maintenance",
+        "program",
+        "reports",
+        "safety",
+        "settlements",
+        "system",
+        "tasks",
+        "users",
+        "vendors"
+      ],
+      "cols": [
+        "connectivity"
+      ],
       "leafRe": "^chrome\\.toolbar_(search|range)$"
     },
     {
       "task": "CLS-LIST-TOOLBAR-SEARCH-RANGE-FILTER",
       "pr": "this PR",
       "guard": "scripts/verify-all-module-list-toolbar-search-range-filter.mjs",
-      "modules": ["banking", "cash-flow", "driver-hub", "finance", "home", "program", "system", "users"],
-      "cols": ["connectivity"],
+      "modules": [
+        "banking",
+        "cash-flow",
+        "driver-hub",
+        "finance",
+        "home",
+        "program",
+        "system",
+        "users"
+      ],
+      "cols": [
+        "connectivity"
+      ],
       "leafRe": "^chrome\\.toolbar_filter$"
     },
     {

@@ -270,7 +270,6 @@
       "sub": "Accident Types",
       "route_hint": "/lists/safety/accident-types",
       "required": [
-        "driver",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -283,7 +282,6 @@
       "sub": "+ Create \u2014 Accident Types",
       "route_hint": "/lists/safety/accident-types",
       "required": [
-        "driver",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -296,7 +294,6 @@
       "sub": "Accident Types",
       "route_hint": "/lists/safety/workplace-incident-types",
       "required": [
-        "driver",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -309,7 +306,6 @@
       "sub": "+ Create \u2014 Accident Types",
       "route_hint": "/lists/safety/workplace-incident-types",
       "required": [
-        "driver",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -322,7 +318,6 @@
       "sub": "Accident Types",
       "route_hint": "/lists/safety/internal-fine-reasons",
       "required": [
-        "driver",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -335,7 +330,6 @@
       "sub": "+ Create \u2014 Accident Types",
       "route_hint": "/lists/safety/internal-fine-reasons",
       "required": [
-        "driver",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -348,7 +342,6 @@
       "sub": "Accident Types",
       "route_hint": "/lists/safety/civil-fine-types",
       "required": [
-        "driver",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -361,7 +354,6 @@
       "sub": "+ Create \u2014 Accident Types",
       "route_hint": "/lists/safety/civil-fine-types",
       "required": [
-        "driver",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -374,7 +366,6 @@
       "sub": "Workplace Incident Types",
       "route_hint": "/lists/safety/company-violation-types",
       "required": [
-        "driver",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -387,7 +378,6 @@
       "sub": "+ Create \u2014 Workplace Incident Types",
       "route_hint": "/lists/safety/company-violation-types",
       "required": [
-        "driver",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -400,7 +390,6 @@
       "sub": "Internal Fine Reasons",
       "route_hint": "/lists/safety/complaint-types",
       "required": [
-        "driver",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -413,7 +402,6 @@
       "sub": "+ Create \u2014 Internal Fine Reasons",
       "route_hint": "/lists/safety/complaint-types",
       "required": [
-        "driver",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -426,7 +414,6 @@
       "sub": "Civil Fine Types",
       "route_hint": "/lists/safety/dot-violation-types",
       "required": [
-        "driver",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -439,7 +426,6 @@
       "sub": "+ Create \u2014 Civil Fine Types",
       "route_hint": "/lists/safety/dot-violation-types",
       "required": [
-        "driver",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -452,7 +438,6 @@
       "sub": "Company Violation Types",
       "route_hint": "/lists/safety/cargo-claim-reasons",
       "required": [
-        "driver",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -465,7 +450,6 @@
       "sub": "+ Create \u2014 Company Violation Types",
       "route_hint": "/lists/safety/cargo-claim-reasons",
       "required": [
-        "driver",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -479,7 +463,6 @@
       "route_hint": "/lists/dispatch/dispatch-flag-colors",
       "required": [
         "load",
-        "driver",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -492,7 +475,6 @@
       "route_hint": "/lists/dispatch/dispatch-flag-colors",
       "required": [
         "load",
-        "driver",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -505,7 +487,6 @@
       "route_hint": "/lists/dispatch/load-trailer-equipment",
       "required": [
         "load",
-        "driver",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -518,7 +499,6 @@
       "route_hint": "/lists/dispatch/load-trailer-equipment",
       "required": [
         "load",
-        "driver",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -531,7 +511,6 @@
       "route_hint": "/lists/dispatch/load-types",
       "required": [
         "load",
-        "driver",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -544,7 +523,6 @@
       "route_hint": "/lists/dispatch/load-types",
       "required": [
         "load",
-        "driver",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -557,7 +535,6 @@
       "route_hint": "/lists/dispatch/detention-reasons",
       "required": [
         "load",
-        "driver",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -570,7 +547,6 @@
       "route_hint": "/lists/dispatch/detention-reasons",
       "required": [
         "load",
-        "driver",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -583,7 +559,6 @@
       "route_hint": "/lists/dispatch/pickup-time-types",
       "required": [
         "load",
-        "driver",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -596,7 +571,6 @@
       "route_hint": "/lists/dispatch/pickup-time-types",
       "required": [
         "load",
-        "driver",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -609,7 +583,6 @@
       "route_hint": "/lists/dispatch/additional-charges",
       "required": [
         "load",
-        "driver",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -622,7 +595,6 @@
       "route_hint": "/lists/dispatch/additional-charges",
       "required": [
         "load",
-        "driver",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -635,7 +607,6 @@
       "route_hint": "/lists/dispatch/load-cancellation-reasons",
       "required": [
         "load",
-        "driver",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -648,7 +619,6 @@
       "route_hint": "/lists/dispatch/load-cancellation-reasons",
       "required": [
         "load",
-        "driver",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -661,7 +631,6 @@
       "route_hint": "/lists/dispatch/dispatcher-error-reasons",
       "required": [
         "load",
-        "driver",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -674,7 +643,6 @@
       "route_hint": "/lists/dispatch/dispatcher-error-reasons",
       "required": [
         "load",
-        "driver",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -687,7 +655,6 @@
       "route_hint": "/lists/dispatch/lumper-providers",
       "required": [
         "load",
-        "driver",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -700,7 +667,6 @@
       "route_hint": "/lists/dispatch/lumper-providers",
       "required": [
         "load",
-        "driver",
         "picker_law",
         "qbo_chrome",
         "connectivity"
@@ -712,7 +678,6 @@
       "sub": "Termination Reasons",
       "route_hint": "/lists/drivers/termination-reasons",
       "required": [
-        "driver",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -725,7 +690,6 @@
       "sub": "+ Create \u2014 Termination Reasons",
       "route_hint": "/lists/drivers/termination-reasons",
       "required": [
-        "driver",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -738,7 +702,6 @@
       "sub": "Termination Reasons",
       "route_hint": "/lists/driver/cash-advance-types",
       "required": [
-        "driver",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -751,7 +714,6 @@
       "sub": "+ Create \u2014 Termination Reasons",
       "route_hint": "/lists/driver/cash-advance-types",
       "required": [
-        "driver",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -764,7 +726,6 @@
       "sub": "Termination Reasons",
       "route_hint": "/lists/drivers/endorsements",
       "required": [
-        "driver",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -777,7 +738,6 @@
       "sub": "+ Create \u2014 Termination Reasons",
       "route_hint": "/lists/drivers/endorsements",
       "required": [
-        "driver",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -790,7 +750,6 @@
       "sub": "Termination Reasons",
       "route_hint": "/lists/drivers/restrictions",
       "required": [
-        "driver",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -803,7 +762,6 @@
       "sub": "+ Create \u2014 Termination Reasons",
       "route_hint": "/lists/drivers/restrictions",
       "required": [
-        "driver",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -816,7 +774,6 @@
       "sub": "Cash Advance Types",
       "route_hint": "/lists/drivers/employment-status",
       "required": [
-        "driver",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -829,7 +786,6 @@
       "sub": "+ Create \u2014 Cash Advance Types",
       "route_hint": "/lists/drivers/employment-status",
       "required": [
-        "driver",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -842,7 +798,6 @@
       "sub": "CDL Endorsements",
       "route_hint": "/lists/driver/leave-types",
       "required": [
-        "driver",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -855,7 +810,6 @@
       "sub": "+ Create \u2014 CDL Endorsements",
       "route_hint": "/lists/driver/leave-types",
       "required": [
-        "driver",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -868,7 +822,6 @@
       "sub": "CDL Restrictions",
       "route_hint": "/lists/drivers/medical-card-status",
       "required": [
-        "driver",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -881,7 +834,6 @@
       "sub": "+ Create \u2014 CDL Restrictions",
       "route_hint": "/lists/drivers/medical-card-status",
       "required": [
-        "driver",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -894,7 +846,6 @@
       "sub": "Employment Statuses",
       "route_hint": "/lists/driver/pay-rate-templates",
       "required": [
-        "driver",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -907,7 +858,6 @@
       "sub": "+ Create \u2014 Employment Statuses",
       "route_hint": "/lists/driver/pay-rate-templates",
       "required": [
-        "driver",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -920,7 +870,6 @@
       "sub": "Leave Types",
       "route_hint": "/lists/driver/deduction-types",
       "required": [
-        "driver",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -933,7 +882,6 @@
       "sub": "+ Create \u2014 Leave Types",
       "route_hint": "/lists/driver/deduction-types",
       "required": [
-        "driver",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -946,7 +894,6 @@
       "sub": "Medical Card Statuses",
       "route_hint": "/lists/driver/pay-types",
       "required": [
-        "driver",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -959,7 +906,6 @@
       "sub": "+ Create \u2014 Medical Card Statuses",
       "route_hint": "/lists/driver/pay-types",
       "required": [
-        "driver",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -972,7 +918,6 @@
       "sub": "Pay Rate Templates",
       "route_hint": "/lists/driver/escrow-types",
       "required": [
-        "driver",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -985,7 +930,6 @@
       "sub": "+ Create \u2014 Pay Rate Templates",
       "route_hint": "/lists/driver/escrow-types",
       "required": [
-        "driver",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -998,7 +942,6 @@
       "sub": "Driver Deduction Types",
       "route_hint": "/lists/drivers/license-classes",
       "required": [
-        "driver",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -1011,7 +954,6 @@
       "sub": "+ Create \u2014 Driver Deduction Types",
       "route_hint": "/lists/drivers/license-classes",
       "required": [
-        "driver",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -1024,7 +966,6 @@
       "sub": "Medical Card Status",
       "route_hint": "/lists/drivers/driver-load-statuses",
       "required": [
-        "driver",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -1037,7 +978,6 @@
       "sub": "+ Create \u2014 Medical Card Status",
       "route_hint": "/lists/drivers/driver-load-statuses",
       "required": [
-        "driver",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -1539,7 +1479,6 @@
       "sub": "DEF Stations",
       "route_hint": "/lists/fuel/def-stations",
       "required": [
-        "driver",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -1552,7 +1491,6 @@
       "sub": "+ Create \u2014 DEF Stations",
       "route_hint": "/lists/fuel/def-stations",
       "required": [
-        "driver",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -1565,7 +1503,6 @@
       "sub": "DEF Stations",
       "route_hint": "/lists/fuel/fuel-stations",
       "required": [
-        "driver",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -1578,7 +1515,6 @@
       "sub": "+ Create \u2014 DEF Stations",
       "route_hint": "/lists/fuel/fuel-stations",
       "required": [
-        "driver",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -1591,7 +1527,6 @@
       "sub": "DEF Stations",
       "route_hint": "/lists/fuel/relay-accounts",
       "required": [
-        "driver",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -1604,7 +1539,6 @@
       "sub": "+ Create \u2014 DEF Stations",
       "route_hint": "/lists/fuel/relay-accounts",
       "required": [
-        "driver",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -1617,7 +1551,6 @@
       "sub": "DEF Stations",
       "route_hint": "/lists/fuel/toll-providers",
       "required": [
-        "driver",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -1630,7 +1563,6 @@
       "sub": "+ Create \u2014 DEF Stations",
       "route_hint": "/lists/fuel/toll-providers",
       "required": [
-        "driver",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -1643,7 +1575,6 @@
       "sub": "Fuel Stations",
       "route_hint": "/lists/fuel/card-types",
       "required": [
-        "driver",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -1656,7 +1587,6 @@
       "sub": "+ Create \u2014 Fuel Stations",
       "route_hint": "/lists/fuel/card-types",
       "required": [
-        "driver",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -1669,7 +1599,6 @@
       "sub": "Relay Accounts",
       "route_hint": "/lists/fuel/exception-types",
       "required": [
-        "driver",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -1682,7 +1611,6 @@
       "sub": "+ Create \u2014 Relay Accounts",
       "route_hint": "/lists/fuel/exception-types",
       "required": [
-        "driver",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -1695,7 +1623,6 @@
       "sub": "Toll Providers",
       "route_hint": "/lists/fuel/station-brands",
       "required": [
-        "driver",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -1708,7 +1635,6 @@
       "sub": "+ Create \u2014 Toll Providers",
       "route_hint": "/lists/fuel/station-brands",
       "required": [
-        "driver",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -1721,7 +1647,6 @@
       "sub": "Fuel Card Types",
       "route_hint": "/lists/fuel/stop-reason-codes",
       "required": [
-        "driver",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -1734,7 +1659,6 @@
       "sub": "+ Create \u2014 Fuel Card Types",
       "route_hint": "/lists/fuel/stop-reason-codes",
       "required": [
-        "driver",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -1747,7 +1671,6 @@
       "sub": "Fuel Exception Types",
       "route_hint": "/lists/fuel/mpg-bands",
       "required": [
-        "driver",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -1760,7 +1683,6 @@
       "sub": "+ Create \u2014 Fuel Exception Types",
       "route_hint": "/lists/fuel/mpg-bands",
       "required": [
-        "driver",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -1773,7 +1695,6 @@
       "sub": "Fuel Station Brands",
       "route_hint": "/lists/fuel/expensive-states",
       "required": [
-        "driver",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -1786,7 +1707,6 @@
       "sub": "+ Create \u2014 Fuel Station Brands",
       "route_hint": "/lists/fuel/expensive-states",
       "required": [
-        "driver",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -1799,7 +1719,6 @@
       "sub": "Fuel Stop Reason Codes",
       "route_hint": "/lists/fuel/tax-jurisdictions",
       "required": [
-        "driver",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -1812,7 +1731,6 @@
       "sub": "+ Create \u2014 Fuel Stop Reason Codes",
       "route_hint": "/lists/fuel/tax-jurisdictions",
       "required": [
-        "driver",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -1825,7 +1743,6 @@
       "sub": "MPG Bands",
       "route_hint": "/lists/fuel/brands",
       "required": [
-        "driver",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -1838,7 +1755,6 @@
       "sub": "+ Create \u2014 MPG Bands",
       "route_hint": "/lists/fuel/brands",
       "required": [
-        "driver",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -1851,7 +1767,6 @@
       "sub": "Expensive States",
       "route_hint": "/lists/fuel/station-states",
       "required": [
-        "driver",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -1864,7 +1779,6 @@
       "sub": "+ Create \u2014 Expensive States",
       "route_hint": "/lists/fuel/station-states",
       "required": [
-        "driver",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -1877,7 +1791,6 @@
       "sub": "Fuel Tax Jurisdictions",
       "route_hint": "/lists/fuel/pump-types",
       "required": [
-        "driver",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -1890,7 +1803,6 @@
       "sub": "+ Create \u2014 Fuel Tax Jurisdictions",
       "route_hint": "/lists/fuel/pump-types",
       "required": [
-        "driver",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -1903,7 +1815,6 @@
       "sub": "Fuel Brands",
       "route_hint": "/lists/fuel/grades",
       "required": [
-        "driver",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -1916,7 +1827,6 @@
       "sub": "+ Create \u2014 Fuel Brands",
       "route_hint": "/lists/fuel/grades",
       "required": [
-        "driver",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -1929,7 +1839,6 @@
       "sub": "Fuel Station States",
       "route_hint": "/lists/fuel/dispatch-routes",
       "required": [
-        "driver",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -1942,7 +1851,6 @@
       "sub": "+ Create \u2014 Fuel Station States",
       "route_hint": "/lists/fuel/dispatch-routes",
       "required": [
-        "driver",
         "load",
         "picker_law",
         "qbo_chrome",
@@ -2707,7 +2615,6 @@
       "sub": "Shippers",
       "route_hint": "/lists/names/brokers",
       "required": [
-        "driver",
         "connectivity",
         "reverse_link"
       ]
@@ -2718,7 +2625,6 @@
       "sub": "+ Create \u2014 Shippers",
       "route_hint": "/lists/names/brokers",
       "required": [
-        "driver",
         "connectivity"
       ]
     },
@@ -2793,8 +2699,7 @@
       "surface_kind": "modal",
       "surface_path": "pages/lists/driver/DriverCatalogModal.tsx",
       "required": [
-        "connectivity",
-        "driver"
+        "connectivity"
       ]
     },
     {
@@ -2817,8 +2722,7 @@
       "surface_kind": "modal",
       "surface_path": "pages/lists/drivers/DriversReferenceCatalogModal.tsx",
       "required": [
-        "connectivity",
-        "driver"
+        "connectivity"
       ]
     },
     {
@@ -7194,6 +7098,588 @@
           "id": "catalog.fleet.asset_locations.create",
           "removed": [
             "unit"
+          ]
+        }
+      ]
+    },
+    "driver_column_2026_08_14_overclaim": {
+      "finding": "LINK-F5168-DRIVER-COLUMN-VERTICAL-SWEEP",
+      "note": "driver blanket-required on 97 lists leaves (safety/dispatch/drivers/fuel catalog-VALUE domains + brokers names-master + 2 generic catalog modals). Verified live via Explore agent \u2014 pure catalog-VALUE CRUD (dropdown option/reference-catalog management), zero driver_id/EntityLink kind=\"driver\" anywhere, same generic GenericCatalogPage.tsx/useCatalogQuery.ts + dedicated *CatalogListPage.tsx/Modal.tsx pattern already confirmed false for the identical catalog set in trailer/customer/vendor/unit sweeps. catalog.drivers.teams.* and lists.modal.driver_team are the sole genuine exceptions (real primary_driver_id/secondary_driver_id + DriverPickerWithCreate -> EntityPicker kind=\"driver\").",
+      "drops": [
+        {
+          "id": "catalog.safety.accident_types.list",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.safety.accident_types.create",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.safety.workplace_incident_types.list",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.safety.workplace_incident_types.create",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.safety.internal_fine_reasons.list",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.safety.internal_fine_reasons.create",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.safety.civil_fine_types.list",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.safety.civil_fine_types.create",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.safety.company_violation_types.list",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.safety.company_violation_types.create",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.safety.complaint_types.list",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.safety.complaint_types.create",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.safety.dot_violation_types.list",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.safety.dot_violation_types.create",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.safety.cargo_claim_reasons.list",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.safety.cargo_claim_reasons.create",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.dispatch.dispatch_flag_colors.list",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.dispatch.dispatch_flag_colors.create",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.dispatch.load_trailer_equipment.list",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.dispatch.load_trailer_equipment.create",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.dispatch.load_types.list",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.dispatch.load_types.create",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.dispatch.detention_reasons.list",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.dispatch.detention_reasons.create",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.dispatch.pickup_time_types.list",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.dispatch.pickup_time_types.create",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.dispatch.additional_charges.list",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.dispatch.additional_charges.create",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.dispatch.load_cancellation_reasons.list",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.dispatch.load_cancellation_reasons.create",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.dispatch.dispatcher_error_reasons.list",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.dispatch.dispatcher_error_reasons.create",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.dispatch.lumper_providers.list",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.dispatch.lumper_providers.create",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.drivers.termination_reasons.list",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.drivers.termination_reasons.create",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.drivers.cash_advance_types.list",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.drivers.cash_advance_types.create",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.drivers.leave_types.list",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.drivers.leave_types.create",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.drivers.endorsements.list",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.drivers.endorsements.create",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.drivers.restrictions.list",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.drivers.restrictions.create",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.drivers.employment_status.list",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.drivers.employment_status.create",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.drivers.medical_card_status.list",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.drivers.medical_card_status.create",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.drivers.license_classes.list",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.drivers.license_classes.create",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.drivers.pay_rate_templates.list",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.drivers.pay_rate_templates.create",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.drivers.deduction_types.list",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.drivers.deduction_types.create",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.drivers.pay_types.list",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.drivers.pay_types.create",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.drivers.escrow_types.list",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.drivers.escrow_types.create",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.drivers.driver_load_statuses.list",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.drivers.driver_load_statuses.create",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.fuel.def_stations.list",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.fuel.def_stations.create",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.fuel.fuel_stations.list",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.fuel.fuel_stations.create",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.fuel.relay_accounts.list",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.fuel.relay_accounts.create",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.fuel.toll_providers.list",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.fuel.toll_providers.create",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.fuel.card_types.list",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.fuel.card_types.create",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.fuel.exception_types.list",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.fuel.exception_types.create",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.fuel.station_brands.list",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.fuel.station_brands.create",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.fuel.stop_reason_codes.list",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.fuel.stop_reason_codes.create",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.fuel.mpg_bands.list",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.fuel.mpg_bands.create",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.fuel.expensive_states.list",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.fuel.expensive_states.create",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.fuel.tax_jurisdictions.list",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.fuel.tax_jurisdictions.create",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.fuel.brands.list",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.fuel.brands.create",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.fuel.station_states.list",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.fuel.station_states.create",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.fuel.pump_types.list",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.fuel.pump_types.create",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.fuel.grades.list",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.fuel.grades.create",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.fuel.dispatch_routes.list",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.fuel.dispatch_routes.create",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.names_master.brokers.list",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "catalog.names_master.brokers.create",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "lists.modal.driver_catalog",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "lists.modal.drivers_reference_catalog",
+          "removed": [
+            "driver"
           ]
         }
       ]

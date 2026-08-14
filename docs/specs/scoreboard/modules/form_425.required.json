@@ -211,7 +211,6 @@
       "sub": "Compliance module",
       "route_hint": "/compliance",
       "required": [
-        "driver",
         "connectivity"
       ]
     },
@@ -524,6 +523,18 @@
           "id": "hop.compliance",
           "removed": [
             "unit"
+          ]
+        }
+      ]
+    },
+    "driver_column_2026_08_14_overclaim": {
+      "finding": "LINK-F5168-DRIVER-COLUMN-VERTICAL-SWEEP",
+      "note": "driver blanket-required on 1 form_425 leaf. Verified live \u2014 Form425CHome.tsx (L351-357) uses RelatedModuleLinks with a static {label:\"Compliance\",to:\"/compliance\"} entry \u2014 no entity binding at all.",
+      "drops": [
+        {
+          "id": "hop.compliance",
+          "removed": [
+            "driver"
           ]
         }
       ]

@@ -159,8 +159,7 @@
       "required": [
         "connectivity",
         "qbo_chrome",
-        "load",
-        "driver"
+        "load"
       ]
     },
     {
@@ -200,7 +199,6 @@
       "route_hint": "/reports/cancellations",
       "required": [
         "load",
-        "driver",
         "connectivity",
         "qbo_chrome",
         "load"
@@ -438,7 +436,6 @@
       "route_hint": "/reports/ifta",
       "required": [
         "load",
-        "driver",
         "connectivity",
         "qbo_chrome"
       ]
@@ -450,7 +447,6 @@
       "route_hint": "/reports/ifta-preparer",
       "required": [
         "load",
-        "driver",
         "connectivity",
         "qbo_chrome"
       ]
@@ -546,7 +542,6 @@
       "route_hint": "/reports/per-truck-cpm",
       "required": [
         "load",
-        "driver",
         "unit",
         "connectivity",
         "reverse_link",
@@ -614,7 +609,6 @@
       "route_hint": "/reports/lane-profitability",
       "required": [
         "load",
-        "driver",
         "connectivity",
         "reverse_link",
         "qbo_chrome",
@@ -628,7 +622,6 @@
       "route_hint": "/reports/cancellations",
       "required": [
         "load",
-        "driver",
         "connectivity",
         "qbo_chrome",
         "load"
@@ -641,11 +634,9 @@
       "route_hint": "/reports/late-arrival",
       "required": [
         "load",
-        "driver",
         "connectivity",
         "qbo_chrome",
-        "load",
-        "driver"
+        "load"
       ]
     },
     {
@@ -669,7 +660,6 @@
       "route_hint": "/reports/fuel-reconciliation",
       "required": [
         "load",
-        "driver",
         "unit",
         "connectivity",
         "reverse_link",
@@ -684,7 +674,6 @@
       "route_hint": "/reports/maintenance-cost-per-unit",
       "required": [
         "load",
-        "driver",
         "unit",
         "connectivity",
         "qbo_chrome",
@@ -698,7 +687,6 @@
       "route_hint": "/reports/dispatch-margin",
       "required": [
         "load",
-        "driver",
         "customer",
         "connectivity",
         "reverse_link",
@@ -728,7 +716,6 @@
       "route_hint": "/reports/geofence-reconciliation",
       "required": [
         "load",
-        "driver",
         "unit",
         "connectivity",
         "reverse_link",
@@ -742,7 +729,6 @@
       "route_hint": "/reports/booking-gap",
       "required": [
         "load",
-        "driver",
         "connectivity",
         "qbo_chrome",
         "load"
@@ -755,7 +741,6 @@
       "route_hint": "/reports/deadhead",
       "required": [
         "load",
-        "driver",
         "unit",
         "connectivity",
         "qbo_chrome",
@@ -790,7 +775,6 @@
       "route_hint": "/reports/run/profit-truck-mtd",
       "required": [
         "load",
-        "driver",
         "connectivity",
         "qbo_chrome"
       ]
@@ -802,7 +786,6 @@
       "route_hint": "/reports/run/dispatch-board",
       "required": [
         "load",
-        "driver",
         "connectivity",
         "qbo_chrome",
         "load"
@@ -815,7 +798,6 @@
       "route_hint": "/reports/run/detention-claims",
       "required": [
         "load",
-        "driver",
         "connectivity",
         "qbo_chrome",
         "load"
@@ -852,10 +834,8 @@
       "route_hint": "/reports/run/driver-settlement",
       "required": [
         "load",
-        "driver",
         "connectivity",
         "qbo_chrome",
-        "driver",
         "settlement"
       ]
     },
@@ -866,7 +846,6 @@
       "route_hint": "/reports/run/fleet-utilization",
       "required": [
         "load",
-        "driver",
         "connectivity",
         "qbo_chrome"
       ]
@@ -878,7 +857,6 @@
       "route_hint": "/reports/run/fuel-savings",
       "required": [
         "load",
-        "driver",
         "connectivity",
         "qbo_chrome"
       ]
@@ -890,7 +868,6 @@
       "route_hint": "/reports/run/fuel-price-variance",
       "required": [
         "load",
-        "driver",
         "connectivity",
         "qbo_chrome"
       ]
@@ -902,7 +879,6 @@
       "route_hint": "/reports/run/csa-fleet",
       "required": [
         "load",
-        "driver",
         "connectivity",
         "qbo_chrome"
       ]
@@ -914,10 +890,8 @@
       "route_hint": "/reports/run/hos-violations",
       "required": [
         "load",
-        "driver",
         "connectivity",
-        "qbo_chrome",
-        "driver"
+        "qbo_chrome"
       ]
     },
     {
@@ -927,7 +901,6 @@
       "route_hint": "/reports/run/ifta-quarterly",
       "required": [
         "load",
-        "driver",
         "connectivity",
         "qbo_chrome"
       ]
@@ -939,7 +912,6 @@
       "route_hint": "/reports/run/dot-audit-pack",
       "required": [
         "load",
-        "driver",
         "connectivity",
         "qbo_chrome"
       ]
@@ -971,7 +943,6 @@
       "route_hint": "/reports/run/maint-cost-unit",
       "required": [
         "load",
-        "driver",
         "connectivity",
         "qbo_chrome"
       ]
@@ -2293,6 +2264,168 @@
           "id": "runner.maint_cost_unit",
           "removed": [
             "unit"
+          ]
+        }
+      ]
+    },
+    "driver_column_2026_08_14_overclaim": {
+      "finding": "LINK-F5168-DRIVER-COLUMN-VERTICAL-SWEEP",
+      "note": "driver blanket-required on 26 reports leaves. Verified live \u2014 ReportsHome.tsx's KPI strip and several report pages (IFTA, per-truck-cpm, cancellations, fuel-reconciliation, maintenance-cost-per-unit, dispatch-margin, geofence-reconciliation, deadhead) are unit/lane/jurisdiction-scoped with zero driver_id/EntityLink kind=\"driver\"; LaneProfitabilityPage.tsx and BookingGapReport.tsx only reference driver pay/count in aggregate/descriptive text, no per-record linkage; LateArrivalReport.tsx's \"By driver\" group-by renders row.entity_label as plain text, no EntityLink; 8 runner.* leaves (profit-truck-mtd, dispatch-board, detention-claims, fleet-utilization, fuel-price-variance, hos-violations, ifta-quarterly, dot-audit-pack) have no entry in RUNNER_CONFIGS at all (unwired stub); runner.driver_settlement and runner.fuel_savings render driver_name as plain text via RunnerTable.tsx, which has no EntityLink capability; runner.csa_fleet and runner.maint_cost_unit have no driver dimension in their columns at all.",
+      "drops": [
+        {
+          "id": "home.kpi_strip",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "subnav.cancellations",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "report.ifta",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "report.ifta_preparer",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "report.per_truck_cpm",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "report.lane_profitability",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "report.cancellations",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "report.late_arrival",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "report.fuel_reconciliation",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "report.maintenance_cost_per_unit",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "report.dispatch_margin",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "report.geofence_reconciliation",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "report.booking_gap",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "report.deadhead",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "runner.profit_truck_mtd",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "runner.dispatch_board",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "runner.detention_claims",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "runner.driver_settlement",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "runner.fleet_utilization",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "runner.fuel_savings",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "runner.fuel_price_variance",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "runner.csa_fleet",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "runner.hos_violations",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "runner.ifta_quarterly",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "runner.dot_audit_pack",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "runner.maint_cost_unit",
+          "removed": [
+            "driver"
           ]
         }
       ]

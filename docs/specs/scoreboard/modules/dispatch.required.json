@@ -313,7 +313,6 @@
       "sub": "Dispatch alerts",
       "route_hint": "/dispatch/alerts",
       "required": [
-        "driver",
         "load",
         "connectivity",
         "reverse_link"
@@ -325,7 +324,6 @@
       "sub": "Live Map / Geofencing",
       "route_hint": "/dispatch/geofencing",
       "required": [
-        "driver",
         "connectivity"
       ]
     },
@@ -335,7 +333,6 @@
       "sub": "Map view",
       "route_hint": "/dispatch/map",
       "required": [
-        "driver",
         "load",
         "connectivity"
       ]
@@ -433,7 +430,6 @@
       "sub": "Loads Planner",
       "route_hint": "/dispatch/planners/loads",
       "required": [
-        "driver",
         "load",
         "customer",
         "connectivity",
@@ -511,7 +507,6 @@
       "sub": "OCR Queue \u2192 Book Load",
       "route_hint": "/dispatch/ocr-queue",
       "required": [
-        "driver",
         "customer",
         "load",
         "qbo_chrome",
@@ -572,7 +567,6 @@
       "sub": "Border geofence history",
       "route_hint": "/dispatch/borders/geofence-history",
       "required": [
-        "driver",
         "connectivity"
       ]
     },
@@ -582,7 +576,6 @@
       "sub": "Dispatch chat",
       "route_hint": "/dispatch/chat",
       "required": [
-        "driver",
         "connectivity"
       ]
     },
@@ -651,7 +644,6 @@
       "route_hint": "/dispatch/loads/:id?tab=Stops",
       "required": [
         "load",
-        "driver",
         "connectivity",
         "reverse_link",
         "picker_law"
@@ -663,7 +655,6 @@
       "sub": "Drawer \u00b7 Driver Pay",
       "route_hint": "/dispatch/loads/:id?tab=Driver%20Pay",
       "required": [
-        "driver",
         "load",
         "connectivity",
         "reverse_link"
@@ -675,7 +666,6 @@
       "sub": "Drawer \u00b7 Documents",
       "route_hint": "/dispatch/loads/:id?tab=Documents",
       "required": [
-        "driver",
         "load",
         "connectivity",
         "reverse_link",
@@ -701,7 +691,6 @@
       "sub": "Drawer \u00b7 Customs",
       "route_hint": "/dispatch/loads/:id?tab=Customs",
       "required": [
-        "driver",
         "load",
         "connectivity",
         "reverse_link",
@@ -739,7 +728,6 @@
       "route_hint": "/dispatch/loads/:id?tab=Geofence%20Timeline",
       "required": [
         "load",
-        "driver",
         "connectivity",
         "reverse_link"
       ]
@@ -750,7 +738,6 @@
       "sub": "Drawer \u00b7 Assignment History",
       "route_hint": "/dispatch/loads/:id?tab=Assignment%20History",
       "required": [
-        "driver",
         "load",
         "connectivity",
         "reverse_link"
@@ -773,7 +760,6 @@
       "sub": "Drawer \u00b7 Pre-Settlement",
       "route_hint": "/dispatch/loads/:id?tab=Pre-Settlement",
       "required": [
-        "driver",
         "load",
         "connectivity",
         "reverse_link",
@@ -789,8 +775,7 @@
       "surface_path": "components/dispatch/CancelLoadModal.tsx",
       "required": [
         "connectivity",
-        "load",
-        "driver"
+        "load"
       ]
     },
     {
@@ -804,7 +789,6 @@
         "connectivity",
         "picker_law",
         "load",
-        "driver",
         "unit"
       ]
     },
@@ -879,7 +863,6 @@
       "surface_path": "components/dispatch/AuthGatePanel.tsx",
       "required": [
         "connectivity",
-        "driver",
         "load",
         "unit",
         "trailer"
@@ -894,7 +877,6 @@
       "surface_path": "components/dispatch/DeadheadOptimizerPanel.tsx",
       "required": [
         "connectivity",
-        "driver",
         "load",
         "unit"
       ]
@@ -908,8 +890,7 @@
       "surface_path": "components/dispatch/LoadBolPanel.tsx",
       "required": [
         "connectivity",
-        "load",
-        "driver"
+        "load"
       ]
     },
     {
@@ -934,7 +915,6 @@
       "surface_path": "components/dispatch/PreDispatchValidationPanel.tsx",
       "required": [
         "connectivity",
-        "driver",
         "unit",
         "trailer",
         "customer"
@@ -948,8 +928,7 @@
       "surface_kind": "panel",
       "surface_path": "pages/dispatch/components/book-load-v4/RateConUploadPanel.tsx",
       "required": [
-        "connectivity",
-        "driver"
+        "connectivity"
       ]
     },
     {
@@ -1019,7 +998,6 @@
       "required": [
         "connectivity",
         "reverse_link",
-        "driver",
         "load",
         "settlement"
       ]
@@ -1964,6 +1942,144 @@
           "id": "dispatch.modal.equipment_transfer",
           "removed": [
             "unit"
+          ]
+        }
+      ]
+    },
+    "driver_column_2026_08_14_overclaim": {
+      "finding": "LINK-F5168-DRIVER-COLUMN-VERTICAL-SWEEP",
+      "note": "driver blanket-required on 22 dispatch leaves. Verified live \u2014 DispatchAlertsPage.tsx (queues.alerts) is a card-count aggregate dashboard, zero driver_id; GeofencesPage.tsx (queues.live_map) has zero driver reference; MapView.tsx (queues.map) has a real driver_uuid field + ?driver= URL-filter but never renders an EntityLink/EntityPicker, only filters GPS pins; LoadsPlanner.tsx (planning.loads) renders only load+customer EntityLinks despite the false driver claim; OcrQueuePage.tsx (docs.ocr) has zero \"driver\" occurrences; BorderCrossingHistory.tsx (misc.geofence_history) has zero \"driver\"; DispatchChatPage.tsx (misc.chat) uses \"driver_direct\" only as a thread-type label string; LoadDetailDrawer.tsx's Stops/Documents/Assignment-History tabs (load.drawer.stops/documents/assignment_history) render no driver field, only a driver_instructions_file_id file pointer, or plain-text previous/new driver labels (CLS-UUID-LABEL, never EntityLink); LoadDetailDriverPayTab.tsx (load.drawer.driver_pay) has driver_id only in an unused type, never rendered; CustomsTab.tsx (load.drawer.customs) has zero \"driver\"; LoadDetailGeofenceTimelineTab.tsx (load.drawer.geofence) treats \"driver_pwa\" as a stop-source enum, not an identity field; PreSettlementPanel.tsx (load.drawer.pre_settlement/dispatch.panel.pre_settlement) takes a driverId prop used only to fetch data, renders EntityLink kind=\"settlement\"/\"load\" but never kind=\"driver\"; CancelLoadModal.tsx (dispatch.modal.cancel_load) has zero \"driver\"; LoadCreateModal.tsx (dispatch.modal.load_create) uses selectedDriverId only for a repair-availability warning banner, no EntityLink/EntityPicker; AuthGatePanel.tsx/PreDispatchValidationPanel.tsx (dispatch.panel.auth_gate/pre_dispatch_validation) use driverUuid only as an authorization/validation query param, no rendered identity; DeadheadOptimizerPanel.tsx (dispatch.panel.deadhead_optimizer) has zero driver field; LoadBolPanel.tsx (dispatch.panel.load_bol) mentions \"driver\" only in a code comment; RateConUploadPanel.tsx (dispatch.panel.rate_con_upload) has zero \"driver\" occurrences.",
+      "drops": [
+        {
+          "id": "queues.alerts",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "queues.live_map",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "queues.map",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "planning.loads",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "docs.ocr",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "misc.geofence_history",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "misc.chat",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "load.drawer.stops",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "load.drawer.driver_pay",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "load.drawer.documents",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "load.drawer.customs",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "load.drawer.geofence",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "load.drawer.assignment_history",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "load.drawer.pre_settlement",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "dispatch.modal.cancel_load",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "dispatch.modal.load_create",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "dispatch.panel.auth_gate",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "dispatch.panel.deadhead_optimizer",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "dispatch.panel.load_bol",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "dispatch.panel.pre_dispatch_validation",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "dispatch.panel.rate_con_upload",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "dispatch.panel.pre_settlement",
+          "removed": [
+            "driver"
           ]
         }
       ]

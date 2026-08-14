@@ -143,7 +143,6 @@
       "sub": "Tasks calendar",
       "route_hint": "/tasks/calendar",
       "required": [
-        "driver",
         "load",
         "connectivity"
       ]
@@ -163,7 +162,6 @@
       "sub": "Tasks report",
       "route_hint": "/tasks/report",
       "required": [
-        "driver",
         "load",
         "connectivity"
       ]
@@ -220,7 +218,6 @@
       "sub": "Daily tasks page",
       "route_hint": "/daily-tasks",
       "required": [
-        "driver",
         "load",
         "connectivity"
       ]
@@ -491,6 +488,30 @@
           "id": "hop.daily_tasks",
           "removed": [
             "unit"
+          ]
+        }
+      ]
+    },
+    "driver_column_2026_08_14_overclaim": {
+      "finding": "LINK-F5168-DRIVER-COLUMN-VERTICAL-SWEEP",
+      "note": "driver blanket-required on 3 tasks leaves. Verified live \u2014 TasksCalendarPage.tsx and TasksReportPage.tsx have zero driver/TaskSubjectLink/EntityLink references; DailyTasksPage.tsx (hop.daily_tasks) only has EntityLink kind=\"user\" for assignee/actor \u2014 \"Call 40 drivers today\" is placeholder text, no real driver_id/EntityLink kind=\"driver\" anywhere.",
+      "drops": [
+        {
+          "id": "nav.calendar",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "nav.report",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "hop.daily_tasks",
+          "removed": [
+            "driver"
           ]
         }
       ]

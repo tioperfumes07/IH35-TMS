@@ -139,7 +139,6 @@
       "sub": "Policies list",
       "route_hint": "/safety/insurance/policies",
       "required": [
-        "driver",
         "connectivity",
         "reverse_link",
         "picker_law"
@@ -162,7 +161,6 @@
       "required": [
         "vendor",
         "unit",
-        "driver",
         "liability",
         "picker_law",
         "qbo_chrome",
@@ -177,7 +175,6 @@
       "route_hint": "/safety/insurance/policies/:id",
       "required": [
         "unit",
-        "driver",
         "connectivity",
         "reverse_link"
       ]
@@ -210,7 +207,6 @@
       "route_hint": "/safety/insurance/coverage-gaps",
       "required": [
         "unit",
-        "driver",
         "connectivity",
         "reverse_link"
       ]
@@ -265,7 +261,6 @@
       "sub": "+ Create Lawsuit",
       "route_hint": "/safety/insurance/lawsuits",
       "required": [
-        "driver",
         "liability",
         "picker_law",
         "qbo_chrome",
@@ -297,8 +292,7 @@
       "required": [
         "connectivity",
         "reverse_link",
-        "picker_law",
-        "driver"
+        "picker_law"
       ]
     },
     {
@@ -312,7 +306,6 @@
         "connectivity",
         "reverse_link",
         "picker_law",
-        "driver",
         "unit"
       ]
     },
@@ -326,7 +319,6 @@
       "required": [
         "connectivity",
         "picker_law",
-        "driver",
         "unit"
       ]
     },
@@ -353,8 +345,7 @@
       "surface_path": "components/insurance/LawsuitCreateModal.tsx",
       "required": [
         "connectivity",
-        "picker_law",
-        "driver"
+        "picker_law"
       ]
     },
     {
@@ -367,7 +358,6 @@
       "required": [
         "connectivity",
         "picker_law",
-        "driver",
         "unit"
       ]
     },
@@ -853,6 +843,72 @@
           "id": "insurance.parity.lawsuit_create",
           "removed": [
             "unit"
+          ]
+        }
+      ]
+    },
+    "driver_column_2026_08_14_overclaim": {
+      "finding": "LINK-F5168-DRIVER-COLUMN-VERTICAL-SWEEP",
+      "note": "driver blanket-required on 10 insurance leaves. Verified live \u2014 PoliciesList.tsx/PolicyCreateModal.tsx/PolicyDetail.tsx/CoverageGapDashboard.tsx/PolicyCreateWizard.tsx have zero \"driver\" occurrences (policy/coverage-gap surfaces are unit-scoped, not driver-scoped); LawsuitCreateModal.tsx only has EntityPicker kind=\"insurance_claim\" to link a claim \u2014 driver is inherited server-side from the linked claim, never set on the lawsuit-create surface itself.",
+      "drops": [
+        {
+          "id": "policies.list",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "policies.create",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "policies.detail",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "coverage_gaps",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "lawsuits.create",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "insurance.modal.lawsuit_create",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "insurance.modal.policy_create",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "insurance.wizard.policy_create",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "insurance.parity.lawsuit_create",
+          "removed": [
+            "driver"
+          ]
+        },
+        {
+          "id": "insurance.parity.policy_create",
+          "removed": [
+            "driver"
           ]
         }
       ]
