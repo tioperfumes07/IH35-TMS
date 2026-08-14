@@ -13,6 +13,9 @@
  *   1. DriverSettlementFinanceReverseSection.tsx exists and calls BOTH driver-scoped reads.
  *   2. DriverProfilePage.tsx imports AND mounts it with the driver's id -- unmounted = fake fix.
  *   3. Each dispute/liability row renders a real EntityLink, not plain text.
+ *   4. "Open Disputes" is EntityLink kind="settlement_disputes_driver" (not bare /drivers/disputes).
+ *   5. EntityLink resolves that kind to /driver-finance/settlements?tab=disputes&driver_id=.
+ *   6. SettlementDisputesTab seeds its driver filter from ?driver_id= URL.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -21,7 +24,9 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const SECTION = "apps/frontend/src/components/driver-profile/DriverSettlementFinanceReverseSection.tsx";
 const DRIVER_PROFILE = "apps/frontend/src/pages/drivers/DriverProfilePage.tsx";
-const FILES = [SECTION, DRIVER_PROFILE];
+const ENTITY_LINK = "apps/frontend/src/components/shared/EntityLink.tsx";
+const DISPUTES_TAB = "apps/frontend/src/pages/driver-finance/components/SettlementDisputesTab.tsx";
+const FILES = [SECTION, DRIVER_PROFILE, ENTITY_LINK, DISPUTES_TAB];
 const LABEL = "verify-driver-settlement-finance-reverse-section";
 const SELFTEST = process.argv.includes("--selftest");
 
@@ -33,6 +38,8 @@ export function assertDriverSettlementFinanceReverse(sources) {
   const problems = [];
   const section = src[SECTION];
   const profile = src[DRIVER_PROFILE];
+  const entityLink = src[ENTITY_LINK];
+  const disputesTab = src[DISPUTES_TAB];
 
   if (!/listSettlementDisputes\(\s*operatingCompanyId\s*,\s*\{[^}]*driver_id:\s*driverId/.test(section)) {
     problems.push(`${SECTION}: must call listSettlementDisputes scoped to driver_id: driverId`);
@@ -45,6 +52,21 @@ export function assertDriverSettlementFinanceReverse(sources) {
   }
   if (!/EntityLink[\s\S]*kind="liability"/.test(section)) {
     problems.push(`${SECTION}: liability rows must render EntityLink kind="liability"`);
+  }
+  if (!/kind="settlement_disputes_driver"/.test(section)) {
+    problems.push(`${SECTION}: Open Disputes must use EntityLink kind="settlement_disputes_driver"`);
+  }
+  if (/to="\/drivers\/disputes"/.test(section)) {
+    problems.push(`${SECTION}: must not use bare Link to="/drivers/disputes" (drops driver filter)`);
+  }
+  if (!/settlement_disputes_driver/.test(entityLink)) {
+    problems.push(`${ENTITY_LINK}: must declare settlement_disputes_driver kind`);
+  }
+  if (!/case "settlement_disputes_driver":[\s\S]*?driver_id=/.test(entityLink)) {
+    problems.push(`${ENTITY_LINK}: settlement_disputes_driver must resolve with driver_id query`);
+  }
+  if (!/searchParams\.get\("driver_id"\)/.test(disputesTab)) {
+    problems.push(`${DISPUTES_TAB}: must seed driver filter from ?driver_id=`);
   }
   if (!/import\s*\{\s*DriverSettlementFinanceReverseSection\s*\}/.test(profile)) {
     problems.push(`${DRIVER_PROFILE}: must import DriverSettlementFinanceReverseSection`);
@@ -62,10 +84,20 @@ function selftest() {
       getLiabilitiesByDriver(driverId, operatingCompanyId)
       <EntityLink kind="settlement" id={d.settlement_id} />
       <EntityLink kind="liability" id={id} />
+      <EntityLink kind="settlement_disputes_driver" id={driverId} label="Open Disputes" />
     `,
     [DRIVER_PROFILE]: `
       import { DriverSettlementFinanceReverseSection } from "../../components/driver-profile/DriverSettlementFinanceReverseSection";
       <DriverSettlementFinanceReverseSection operatingCompanyId={companyId} driverId={id} />
+    `,
+    [ENTITY_LINK]: `
+      | "settlement_disputes_driver"
+      case "settlement_disputes_driver":
+        return \`/driver-finance/settlements?tab=disputes&driver_id=\${id}\`;
+    `,
+    [DISPUTES_TAB]: `
+      const driverIdFromUrl = searchParams.get("driver_id")?.trim() ?? "";
+      useEffect(() => { if (driverIdFromUrl) setDriverId(driverIdFromUrl); }, [driverIdFromUrl]);
     `,
   };
   const goodProblems = assertDriverSettlementFinanceReverse(good);
@@ -79,6 +111,16 @@ function selftest() {
     { ...good, [SECTION]: good[SECTION].replace("getLiabilitiesByDriver(driverId, operatingCompanyId)", "") },
     { ...good, [SECTION]: good[SECTION].replace('kind="settlement"', 'kind="dispute"') },
     { ...good, [SECTION]: good[SECTION].replace('kind="liability"', "") },
+    { ...good, [SECTION]: good[SECTION].replace('kind="settlement_disputes_driver"', 'kind="settlement"') },
+    {
+      ...good,
+      [SECTION]: good[SECTION].replace(
+        '<EntityLink kind="settlement_disputes_driver" id={driverId} label="Open Disputes" />',
+        '<Link to="/drivers/disputes">Open Disputes</Link>'
+      ),
+    },
+    { ...good, [ENTITY_LINK]: good[ENTITY_LINK].replace("settlement_disputes_driver", "x") },
+    { ...good, [DISPUTES_TAB]: good[DISPUTES_TAB].replace('searchParams.get("driver_id")', 'searchParams.get("x")') },
     { ...good, [DRIVER_PROFILE]: good[DRIVER_PROFILE].replace("import { DriverSettlementFinanceReverseSection }", "// removed import") },
     { ...good, [DRIVER_PROFILE]: good[DRIVER_PROFILE].replace("<DriverSettlementFinanceReverseSection operatingCompanyId={companyId} driverId={id} />", "") },
   ];
