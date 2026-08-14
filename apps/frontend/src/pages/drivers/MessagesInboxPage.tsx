@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { EntityLink } from "../../components/shared/EntityLink";
 import {
   getDriverMessageThread,
   getDriverMessagesInbox,
@@ -88,9 +89,13 @@ function ThreadPane({
       <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3">
         <div>
           <h2 className="text-lg font-semibold text-gray-900">{driverName}</h2>
-          <Link to={`/drivers/${driverId}/profile`} className="text-xs text-slate-700 hover:underline">
-            Open profile
-          </Link>
+          <EntityLink
+            kind="driver"
+            id={driverId}
+            label="Open profile"
+            className="text-xs text-slate-700 hover:underline"
+            data-testid="messages-inbox-driver-profile-link"
+          />
         </div>
         <Button type="button" data-testid="inbox-send-message" onClick={() => setSendOpen(true)}>
           Send Message
