@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -37,7 +37,7 @@ const STATUS_LABEL: Record<RenditionStatus, string> = {
 };
 
 // ── LIST VIEW ─────────────────────────────────────────────────────────────────────────────────────
-function RenditionListView({ companyId }: { companyId: string }) {
+function RenditionListView({ companyId, unitId }: { companyId: string; unitId?: string }) {
   const queryClient = useQueryClient();
   const now = new Date();
   const [taxYear, setTaxYear] = useState<number>(now.getUTCMonth() < 3 ? now.getUTCFullYear() : now.getUTCFullYear());
@@ -47,8 +47,8 @@ function RenditionListView({ companyId }: { companyId: string }) {
   const [showAddDistrict, setShowAddDistrict] = useState(false);
 
   const renditionsQ = useQuery({
-    queryKey: ["property-tax-renditions", companyId],
-    queryFn: () => fetchRenditions(companyId),
+    queryKey: ["property-tax-renditions", companyId, unitId ?? null],
+    queryFn: () => fetchRenditions(companyId, unitId),
     enabled: Boolean(companyId),
   });
   const districtsQ = useQuery({
@@ -136,8 +136,14 @@ function RenditionListView({ companyId }: { companyId: string }) {
         backHref="/compliance"
         breadcrumb={BREADCRUMB}
         title="Business Property Tax"
-        subtitle="Texas business personal-property tax renditions (Form 50-144) per entity + appraisal district"
+        subtitle={unitId ? "Renditions containing this unit" : "Texas business personal-property tax renditions (Form 50-144) per entity + appraisal district"}
       />
+
+      {unitId ? (
+        <Link className="text-xs text-slate-700 underline" to="/compliance/property-tax">
+          Clear unit filter
+        </Link>
+      ) : null}
 
       {/* + Create rendition */}
       <section className="rounded-sm border border-slate-200 bg-white p-3">
@@ -454,15 +460,17 @@ export function PropertyTaxRenditionPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const { id } = useParams<{ id?: string }>();
+  const [searchParams] = useSearchParams();
+  const unitId = searchParams.get("unit_id") ?? undefined;
 
   const content = useMemo(() => {
     if (!companyId) return <div className="rounded-sm border bg-white p-4 text-sm">Select an operating company.</div>;
     return id ? (
       <RenditionDetailView companyId={companyId} renditionId={id} />
     ) : (
-      <RenditionListView companyId={companyId} />
+      <RenditionListView companyId={companyId} unitId={unitId} />
     );
-  }, [companyId, id]);
+  }, [companyId, id, unitId]);
 
   return <div className="space-y-4 p-4">{content}</div>;
 }

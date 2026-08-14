@@ -7,6 +7,7 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { resolveApiUrl } from "../../api/client";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { Fragment } from "react";
+import { useSearchParams } from "react-router-dom";
 
 type Filing = Record<string, unknown>;
 
@@ -36,6 +37,8 @@ export function Form2290Filings() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const queryClient = useQueryClient();
+  const [searchParams] = useSearchParams();
+  const filingId = searchParams.get("filing_id");
 
   const filingsQ = useQuery({
     queryKey: ["compliance", "form-2290", companyId],
@@ -99,7 +102,9 @@ export function Form2290Filings() {
     return <div className="rounded-sm border border-gray-200 bg-white p-4 text-xs text-slate-600">Select an operating company.</div>;
   }
 
-  const filings = (filingsQ.data?.filings ?? []) as Filing[];
+  const filings = ((filingsQ.data?.filings ?? []) as Filing[]).filter(
+    (filing) => !filingId || String(filing.id) === filingId
+  );
   const deadline = deadlineQ.data as
     | {
         deadline?: string;

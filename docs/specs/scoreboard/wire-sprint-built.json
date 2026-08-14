@@ -2677,6 +2677,14 @@
       "modules": ["compliance"],
       "cols": ["reverse_link"],
       "leafRe": "^(tab\\.hos_tracker|fleet\\.hos_board)$"
+    },
+    {
+      "task": "VERTICAL-REVERSE-LINK-COMPLIANCE-TAX-FILINGS",
+      "pr": "this PR",
+      "guard": "scripts/verify-compliance-tax-filings-unit-reverse.mjs",
+      "modules": ["compliance"],
+      "cols": ["reverse_link"],
+      "leafRe": "^(property_tax\\.(list|detail)|form2290)$"
     }
   ]
 }

@@ -124,12 +124,18 @@ const RENDITION_SELECT = `
   JOIN compliance.appraisal_districts d ON d.id = r.appraisal_district_id
 `;
 
-export async function listRenditions(client: DbClient, operatingCompanyId: string): Promise<Rendition[]> {
+export async function listRenditions(client: DbClient, operatingCompanyId: string, unitId?: string): Promise<Rendition[]> {
   const res = await client.query<Rendition>(
     `${RENDITION_SELECT}
      WHERE r.operating_company_id = $1::uuid AND r.is_active
+       AND ($2::uuid IS NULL OR EXISTS (
+         SELECT 1
+         FROM compliance.property_tax_rendition_lines l
+         WHERE l.rendition_id = r.id AND l.operating_company_id = r.operating_company_id
+           AND l.unit_id = $2::uuid AND l.is_active
+       ))
      ORDER BY r.tax_year DESC, d.county`,
-    [operatingCompanyId]
+    [operatingCompanyId, unitId ?? null]
   );
   return res.rows.map(normalizeRendition);
 }
