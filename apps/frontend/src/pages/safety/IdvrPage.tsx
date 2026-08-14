@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery } from "@tanstack/react-query";
 import { getSafetyDvirSubmissions } from "../../api/safety";
@@ -18,19 +18,31 @@ type DvirRow = Record<string, unknown>;
 
 export function IdvrPage({ operatingCompanyId }: Props) {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const unitIdFromUrl = searchParams.get("unit_id")?.trim() ?? "";
+  const trailerIdFromUrl = searchParams.get("trailer_id")?.trim() ?? "";
+  const driverIdFromUrl = searchParams.get("driver_id")?.trim() ?? "";
   const [driverFilter, setDriverFilter] = useState("");
   const [unitFilter, setUnitFilter] = useState("");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
 
+  useEffect(() => {
+    if (driverIdFromUrl) setDriverFilter(driverIdFromUrl);
+  }, [driverIdFromUrl]);
+  useEffect(() => {
+    if (unitIdFromUrl) setUnitFilter(unitIdFromUrl);
+  }, [unitIdFromUrl]);
+
   const queryParams = useMemo(
     () => ({
       driver_id: driverFilter.trim() || undefined,
       unit_id: unitFilter.trim() || undefined,
+      trailer_id: trailerIdFromUrl || undefined,
       from: fromDate ? new Date(`${fromDate}T00:00:00`).toISOString() : undefined,
       to: toDate ? new Date(`${toDate}T23:59:59`).toISOString() : undefined,
     }),
-    [driverFilter, unitFilter, fromDate, toDate]
+    [driverFilter, unitFilter, trailerIdFromUrl, fromDate, toDate]
   );
 
   const listQuery = useQuery({

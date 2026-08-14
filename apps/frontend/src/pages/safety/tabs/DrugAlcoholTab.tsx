@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
@@ -81,6 +82,8 @@ export function DrugAlcoholTab() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const queryClient = useQueryClient();
+  const [searchParams] = useSearchParams();
+  const driverIdFromUrl = searchParams.get("driver_id")?.trim() ?? "";
   const [driverId, setDriverId] = useState("");
   const [testType, setTestType] = useState<(typeof TEST_TYPES)[number]>("random");
   const [testResult, setTestResult] = useState<(typeof TEST_RESULTS)[number]>("negative");
@@ -91,6 +94,10 @@ export function DrugAlcoholTab() {
   const [filterResult, setFilterResult] = useState("");
   const [filterFrom, setFilterFrom] = useState("");
   const [filterTo, setFilterTo] = useState("");
+
+  useEffect(() => {
+    if (driverIdFromUrl) setDriverId(driverIdFromUrl);
+  }, [driverIdFromUrl]);
 
   const activeDriverTotalQ = useQuery({
     queryKey: ["drivers", "drug-ui-active-total", companyId],

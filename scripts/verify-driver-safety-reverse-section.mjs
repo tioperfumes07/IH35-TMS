@@ -87,6 +87,12 @@ export function assertDriverSafetyReverse(sources) {
   if (!src[API].includes(`qs.set("driver_id", params.driver_id)`)) {
     problems.push(`${API}: driver_id is not sent to the internal-fines/complaints routes — the server filter is unreachable.`);
   }
+  if (!/openKind="training_records_driver"/.test(src[SECTION]) || !/openKind="dot_inspections_driver"/.test(src[SECTION])) {
+    problems.push(`${SECTION}: Open Training/DOT must EntityLink filtered driver queues.`);
+  }
+  if (!/openKind="complaints_driver"/.test(src[SECTION]) || !/openKind="drug_alcohol_driver"/.test(src[SECTION])) {
+    problems.push(`${SECTION}: Open Complaints/Drug & Alcohol must EntityLink filtered driver queues.`);
+  }
   if (!/di\.driver_id = \$/.test(src[DOT_ROUTE])) {
     problems.push(`${DOT_ROUTE}: GET dot-inspections does not filter by driver in SQL — the reverse hub can under-report past LIMIT 500.`);
   }

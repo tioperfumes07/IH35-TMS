@@ -100,7 +100,11 @@ function SectionShell({
     | "trailer_interchanges_unit"
     | "trailer_interchanges_trailer"
     | "cargo_claims_unit"
-    | "cargo_claims_trailer";
+    | "cargo_claims_trailer"
+    | "dot_inspections_unit"
+    | "dot_inspections_trailer"
+    | "dvir_unit"
+    | "dvir_trailer";
   openId?: string;
   linkLabel: string;
   testId: string;
@@ -278,7 +282,8 @@ export function AssetSafetyReverseSection({
 
       <SectionShell
         title="DOT Inspections"
-        to="/safety/dot-inspections"
+        openKind={isUnit ? "dot_inspections_unit" : "dot_inspections_trailer"}
+        openId={assetId}
         linkLabel="Open DOT Inspections"
         testId="asset-safety-reverse-dot-inspections"
         isLoading={inspectionsQuery.isLoading}
@@ -306,7 +311,8 @@ export function AssetSafetyReverseSection({
 
       <SectionShell
         title="DVIRs"
-        to="/safety/idvr"
+        openKind={isUnit ? "dvir_unit" : "dvir_trailer"}
+        openId={assetId}
         linkLabel="Open DVIRs"
         testId="asset-safety-reverse-dvir"
         isLoading={dvirQuery.isLoading}

@@ -32,6 +32,7 @@ type RespondentType = "driver" | "employee";
 export function ComplaintsTab() {
   const [searchParams] = useSearchParams();
   const highlightedComplaintId = searchParams.get("complaint_id")?.trim() ?? "";
+  const driverIdFromUrl = searchParams.get("driver_id")?.trim() ?? "";
   const { selectedCompanyId } = useCompanyContext();
   const auth = useAuth();
   const companyId = selectedCompanyId ?? "";
@@ -53,8 +54,11 @@ export function ComplaintsTab() {
   });
 
   const complaintsQuery = useQuery({
-    queryKey: ["safety-v64", "complaints", companyId],
-    queryFn: () => listComplaints(companyId),
+    queryKey: ["safety-v64", "complaints", companyId, driverIdFromUrl],
+    queryFn: () =>
+      listComplaints(companyId, {
+        driver_id: driverIdFromUrl || undefined,
+      }),
     enabled: Boolean(companyId),
     retry: false,
   });

@@ -173,6 +173,15 @@ export type EntityKind =
   | "cargo_claims_driver"
   | "cargo_claims_unit"
   | "cargo_claims_trailer"
+  // LINK-F5171: reverse Open DOT / training / complaints / DVIR queues.
+  | "dot_inspections_driver"
+  | "dot_inspections_unit"
+  | "dot_inspections_trailer"
+  | "training_records_driver"
+  | "complaints_driver"
+  | "drug_alcohol_driver"
+  | "dvir_unit"
+  | "dvir_trailer"
   | "legal_matters_driver"
   | "legal_matters_unit"
   | "legal_matters_equipment"
@@ -524,6 +533,22 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
       return `/safety/cargo-claims?unit_id=${id}`;
     case "cargo_claims_trailer":
       return `/safety/cargo-claims?trailer_id=${id}`;
+    case "dot_inspections_driver":
+      return `/safety/dot-inspections?driver_id=${id}`;
+    case "dot_inspections_unit":
+      return `/safety/dot-inspections?unit_id=${id}`;
+    case "dot_inspections_trailer":
+      return `/safety/dot-inspections?trailer_id=${id}`;
+    case "training_records_driver":
+      return `/safety/training-records?driver_id=${id}`;
+    case "complaints_driver":
+      return `/safety/complaints?driver_id=${id}`;
+    case "drug_alcohol_driver":
+      return `/safety/drug-alcohol?driver_id=${id}`;
+    case "dvir_unit":
+      return `/safety/idvr?unit_id=${id}`;
+    case "dvir_trailer":
+      return `/safety/idvr?trailer_id=${id}`;
     case "legal_matters_driver":
       return `/legal/matters?related_driver_id=${id}`;
     case "legal_matters_unit":

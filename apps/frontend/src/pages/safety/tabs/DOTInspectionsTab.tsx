@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { formatDateUS } from "../../../lib/formatDate";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -21,6 +22,10 @@ export function DOTInspectionsTab() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const queryClient = useQueryClient();
+  const [searchParams] = useSearchParams();
+  const driverIdFromUrl = searchParams.get("driver_id")?.trim() ?? "";
+  const unitIdFromUrl = searchParams.get("unit_id")?.trim() ?? "";
+  const trailerIdFromUrl = searchParams.get("trailer_id")?.trim() ?? "";
   const [form, setForm] = useState({
     inspection_date: companyToday(),
     driver_id: "",
@@ -34,8 +39,20 @@ export function DOTInspectionsTab() {
   });
 
   const query = useQuery({
-    queryKey: ["safety-v64", "dot-inspections", companyId],
-    queryFn: () => listDotInspections(companyId),
+    queryKey: [
+      "safety-v64",
+      "dot-inspections",
+      companyId,
+      driverIdFromUrl,
+      unitIdFromUrl,
+      trailerIdFromUrl,
+    ],
+    queryFn: () =>
+      listDotInspections(companyId, {
+        driver_id: driverIdFromUrl || undefined,
+        unit_id: unitIdFromUrl || undefined,
+        trailer_id: trailerIdFromUrl || undefined,
+      }),
     enabled: Boolean(companyId),
   });
 
