@@ -2661,6 +2661,14 @@
       "modules": ["fleet"],
       "cols": ["reverse_link"],
       "leafRe": "^unit\\.detail\\.tasks$"
+    },
+    {
+      "task": "VERTICAL-REVERSE-LINK-FLEET-REMAINDER",
+      "pr": "this PR",
+      "guard": "scripts/verify-fleet-reverse-link-remainder.mjs",
+      "modules": ["fleet"],
+      "cols": ["reverse_link"],
+      "leafRe": "^(unit\\.profile\\.documents|unit\\.edit\\.quick_availability|trailer\\.profile\\.(assignment|maintenance|insurance_claims_reverse|documents))$"
     }
   ]
 }
