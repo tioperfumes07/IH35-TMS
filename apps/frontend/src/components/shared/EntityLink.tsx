@@ -305,7 +305,7 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
     case "integrity_anomaly":
       return `/safety/integrity-reports?anomaly_id=${id}`;
     case "factoring_queue_load":
-      return `/dispatch/factoring-queue?load_id=${id}`;
+      return `/dispatch/factoring-queue?queue_record_id=${id}`;
     case "load_template":
       return `/dispatch/planning/calendar?panel=templates&template_id=${id}`;
     case "cash_forecast_entry":
