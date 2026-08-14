@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
 import { getFactoringRecoursePipeline, getFactoringChargebacksFees } from "../../api/factoring";
+import { EntityLink } from "../shared/EntityLink";
 
 // LINK-F5171/LINK-F5180 — factoring:home.recourse_pipeline + factoring:home.chargebacks_fees
 // reverse gaps. Both endpoints now accept an optional customer_id filter (LINK-F5180), resolved
@@ -39,19 +39,27 @@ export function CustomerFactoringRecourseReverseSection({ operatingCompanyId, cu
 
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-3" data-testid="customer-factoring-recourse-reverse">
-      <h2 className="text-sm font-semibold text-slate-900">Recourse & chargebacks</h2>
+      <div className="flex items-center justify-between gap-2">
+        <h2 className="text-sm font-semibold text-slate-900">Recourse & chargebacks</h2>
+        <EntityLink
+          kind="factoring_recourse_customer"
+          id={customerId}
+          label="Open Recourse"
+          className="text-xs font-semibold text-slate-700 underline"
+        />
+      </div>
       {recourseInvoices.length > 0 ? (
         <div className="mt-2">
           <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Recourse at risk</p>
           <ul className="mt-1 space-y-1">
             {recourseInvoices.slice(0, 5).map((row) => (
               <li key={row.factoring_advance_id}>
-                <Link
+                <EntityLink
+                  kind="factoring_recourse_customer"
+                  id={customerId}
+                  label={`${row.invoice_reference} · ${fmtDollars(row.advance_amount)} · ${row.days_until_recourse_expiry}d to expiry`}
                   className="text-xs font-semibold text-slate-700 hover:underline"
-                  to={`/factoring/recourse-pipeline?customer_id=${encodeURIComponent(customerId)}`}
-                >
-                  {row.invoice_reference} · {fmtDollars(row.advance_amount)} · {row.days_until_recourse_expiry}d to expiry
-                </Link>
+                />
               </li>
             ))}
           </ul>
@@ -59,16 +67,24 @@ export function CustomerFactoringRecourseReverseSection({ operatingCompanyId, cu
       ) : null}
       {chargebacks.length > 0 ? (
         <div className="mt-3">
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Chargebacks</p>
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Chargebacks</p>
+            <EntityLink
+              kind="factoring_chargebacks_customer"
+              id={customerId}
+              label="Open Chargebacks"
+              className="text-xs font-semibold text-slate-700 underline"
+            />
+          </div>
           <ul className="mt-1 space-y-1">
             {chargebacks.slice(0, 5).map((row) => (
               <li key={`${row.factoring_advance_id}-${row.created_at}`}>
-                <Link
+                <EntityLink
+                  kind="factoring_chargebacks_customer"
+                  id={customerId}
+                  label={`${row.statement_month ?? "—"} · ${fmtDollars(row.chargeback_amount)}`}
                   className="text-xs font-semibold text-slate-700 hover:underline"
-                  to={`/factoring/chargebacks-fees?customer_id=${encodeURIComponent(customerId)}`}
-                >
-                  {row.statement_month ?? "—"} · {fmtDollars(row.chargeback_amount)}
-                </Link>
+                />
               </li>
             ))}
           </ul>

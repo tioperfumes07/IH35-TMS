@@ -83,6 +83,14 @@ export function assertFactoringRecourseChargebacksReverse(sources) {
   if (!/<CustomerFactoringRecourseReverseSection[\s\S]*?customerId=\{id\}/.test(customerDetail)) {
     problems.push(`${CUSTOMER_DETAIL}: must mount <CustomerFactoringRecourseReverseSection customerId={id} .../>`);
   }
+
+  if (!/factoring_recourse_customer/.test(section) || !/factoring_chargebacks_customer/.test(section)) {
+    problems.push(`${SECTION}: must use EntityLink kinds factoring_recourse_customer + factoring_chargebacks_customer`);
+  }
+  if (/from "react-router-dom"/.test(section)) {
+    problems.push(`${SECTION}: must not import react-router Link`);
+  }
+
   return problems;
 }
 
@@ -114,7 +122,8 @@ function selftest() {
     [SECTION]: `
       getFactoringRecoursePipeline(operatingCompanyId, 200, { customer_id: customerId });
       getFactoringChargebacksFees(operatingCompanyId, customerId);
-    `,
+    
+      factoring_recourse_customer factoring_chargebacks_customer`,
     [CUSTOMER_DETAIL]: `
       import { CustomerFactoringRecourseReverseSection } from "../components/customers/CustomerFactoringRecourseReverseSection";
       <CustomerFactoringRecourseReverseSection operatingCompanyId={operatingCompanyId} customerId={id} />

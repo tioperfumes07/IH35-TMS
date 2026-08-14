@@ -47,7 +47,9 @@ export function assertCustomerFactoringReverse(sources) {
   const entityLink = src[ENTITY_LINK];
 
   if (!/getCustomerFactor\(\s*customerId\s*,\s*operatingCompanyId\s*\)/.test(section)) {
-    problems.push(`${SECTION}: must call getCustomerFactor(customerId, operatingCompanyId)`);
+    problems.push(`${SECTION}: must call getCustomerFactor(customerId, operatingCompanyId)
+      <EntityLink kind="factoring_factors_customer" id={customerId} />
+      factoring_factors_customer`);
   }
   if (!/import\s*\{\s*CustomerFactoringReverseSection\s*\}/.test(customerDetail)) {
     problems.push(`${CUSTOMER_DETAIL}: must import CustomerFactoringReverseSection`);
@@ -70,12 +72,24 @@ export function assertCustomerFactoringReverse(sources) {
   if (!/case "factoring_batch":/.test(entityLink) || !/\/factoring\/batches\/\$\{id\}/.test(entityLink)) {
     problems.push(`${ENTITY_LINK}: must define factoring_batch -> /factoring/batches/<id>`);
   }
+
+  if (!/factoring_factors_customer/.test(section)) {
+    problems.push(`${SECTION}: must use EntityLink kind factoring_factors_customer for Open/View full`);
+  }
+  if (/to=\{\`?\/factoring\/factors/.test(section) || /to="\/factoring\/factors/.test(section)) {
+    problems.push(`${SECTION}: must not bare-link /factoring/factors (use EntityLink)`);
+  }
+  if (!/factoring_factors_customer/.test(entityLink)) {
+    problems.push(`${ENTITY_LINK}: must define factoring_factors_customer`);
+  }
+
   return problems;
 }
 
 function selftest() {
   const good = {
-    [SECTION]: `getCustomerFactor(customerId, operatingCompanyId)`,
+    [SECTION]: `getCustomerFactor(customerId, operatingCompanyId)
+      <EntityLink kind="factoring_factors_customer" id={customerId} />`,
     [CUSTOMER_DETAIL]: `
       import { CustomerFactoringReverseSection } from "../components/customers/CustomerFactoringReverseSection";
       <CustomerFactoringReverseSection operatingCompanyId={operatingCompanyId} customerId={id} />
@@ -88,6 +102,8 @@ function selftest() {
     [ENTITY_LINK]: `
       case "factoring_batch":
         return \`/factoring/batches/\${id}\`;
+      case "factoring_factors_customer":
+        return \`/factoring/factors?customer_id=\${id}\`;
     `,
   };
   const goodProblems = assertCustomerFactoringReverse(good);

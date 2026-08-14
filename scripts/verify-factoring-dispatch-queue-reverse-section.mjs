@@ -75,6 +75,11 @@ export function assertFactoringDispatchQueueReverse(sources) {
   if (!/<CustomerFactoringQueueReverseSection[\s\S]*?customerId=\{id\}/.test(customerDetail)) {
     problems.push(`${CUSTOMER_DETAIL}: must mount <CustomerFactoringQueueReverseSection customerId={id} .../>`);
   }
+
+  if (!/factoring_queue_customer/.test(section)) {
+    problems.push(`${SECTION}: View full queue must use EntityLink kind factoring_queue_customer`);
+  }
+
   return problems;
 }
 
@@ -98,7 +103,7 @@ function selftest() {
       if (deepLinkLoadId) params.set("load_id", deepLinkLoadId);
     `,
     [FACTORING_TAB]: `<EntityLink kind="factoring_queue_load" id={loadId} label="View" />`,
-    [SECTION]: `\`/api/v1/dispatch/factoring-queue?operating_company_id=\${x}&customer_id=\${encodeURIComponent(customerId)}\``,
+    [SECTION]: `\`/api/v1/dispatch/factoring-queue?operating_company_id=\${x}&customer_id=\${encodeURIComponent(customerId)}\` factoring_queue_customer`,
     [CUSTOMER_DETAIL]: `
       import { CustomerFactoringQueueReverseSection } from "../components/customers/CustomerFactoringQueueReverseSection";
       <CustomerFactoringQueueReverseSection operatingCompanyId={operatingCompanyId} customerId={id} />

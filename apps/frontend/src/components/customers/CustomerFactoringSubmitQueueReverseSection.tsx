@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
 import { listSubmissionQueue } from "../../api/factoring";
 import { formatUsdCents } from "../../lib/money";
+import { EntityLink } from "../shared/EntityLink";
 
 // LINK-F5171/LINK-F5181 — factoring:submit.queue reverse gap. listSubmissionQueue already selects
 // real customer_id/load_id FKs off accounting.invoices; LINK-F5181 added a customer_id filter,
@@ -13,11 +13,18 @@ export function CustomerFactoringSubmitQueueReverseSection({ operatingCompanyId,
     enabled: Boolean(operatingCompanyId && customerId),
   });
   const items = query.data ?? [];
-  const target = `/factoring/submit?customer_id=${encodeURIComponent(customerId)}`;
 
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-3" data-testid="customer-factoring-submit-queue-reverse">
-      <h2 className="text-sm font-semibold text-slate-900">Factoring submission queue</h2>
+      <div className="flex items-center justify-between gap-2">
+        <h2 className="text-sm font-semibold text-slate-900">Factoring submission queue</h2>
+        <EntityLink
+          kind="factoring_submit_queue_customer"
+          id={customerId}
+          label="Open Submit Queue"
+          className="text-xs font-semibold text-slate-700 underline"
+        />
+      </div>
       {query.isError ? <p className="mt-2 text-xs text-red-700">Submission queue unavailable.</p> : null}
       {query.isLoading ? <p className="mt-2 text-xs text-gray-500">Loading…</p> : null}
       {!query.isLoading && !query.isError && items.length === 0 ? (
@@ -27,9 +34,12 @@ export function CustomerFactoringSubmitQueueReverseSection({ operatingCompanyId,
         <ul className="mt-2 space-y-1">
           {items.slice(0, 5).map((item) => (
             <li key={item.invoice_id}>
-              <Link className="text-xs font-semibold text-slate-700 hover:underline" to={target}>
-                {item.display_id ?? item.invoice_id} · {formatUsdCents(item.total_cents)} · {item.is_submittable ? "Docs OK" : "Missing docs"}
-              </Link>
+              <EntityLink
+                kind="factoring_submit_queue_customer"
+                id={customerId}
+                label={`${item.display_id ?? item.invoice_id} · ${formatUsdCents(item.total_cents)} · ${item.is_submittable ? "Docs OK" : "Missing docs"}`}
+                className="text-xs font-semibold text-slate-700 hover:underline"
+              />
             </li>
           ))}
         </ul>

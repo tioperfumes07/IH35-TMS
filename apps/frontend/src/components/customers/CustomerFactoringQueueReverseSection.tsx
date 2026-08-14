@@ -1,5 +1,4 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
 import { EntityLink } from "../shared/EntityLink";
 import { apiRequest } from "../../api/client";
 import type { FactoringQueueRow } from "../../pages/dispatch/FactoringQueuePage";
@@ -19,7 +18,6 @@ export function CustomerFactoringQueueReverseSection({ operatingCompanyId, custo
     enabled: Boolean(operatingCompanyId && customerId),
   });
   const rows = query.data?.rows ?? [];
-  const target = `/dispatch/factoring-queue?customer_id=${encodeURIComponent(customerId)}`;
 
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-3" data-testid="customer-factoring-queue-reverse">
@@ -44,9 +42,12 @@ export function CustomerFactoringQueueReverseSection({ operatingCompanyId, custo
         </ul>
       ) : null}
       {rows.length > 0 ? (
-        <Link className="mt-2 inline-block text-xs font-medium text-slate-700 hover:underline" to={target}>
-          View full queue →
-        </Link>
+        <EntityLink
+          kind="factoring_queue_customer"
+          id={customerId}
+          label="View full queue →"
+          className="mt-2 inline-block text-xs font-medium text-slate-700 hover:underline"
+        />
       ) : null}
     </section>
   );
