@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { getCustomerBillingSummary, listAtRiskCustomerRelationshipScores, type Customer } from "../../api/mdata";
 import { customerQualityKind, customerQualityClass } from "../../lib/quality-badge";
 import { bulkUpdate } from "../../api/bulk";
@@ -313,9 +314,13 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
             cellClass: "font-medium",
             render: (row) => (
               <span className="inline-flex items-center gap-1.5">
-                <Link data-testid="customer-roster-record-link" to={`/customers/${row.id}`} className="text-slate-700 hover:underline" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
-                  {row.name}
-                </Link>
+                <EntityLink
+                  data-testid="customer-roster-record-link"
+                  kind="customer"
+                  id={row.id}
+                  label={row.name}
+                  className="text-slate-700 hover:underline"
+                />
                 <button
                   type="button"
                   className="text-[10px] font-medium text-slate-500 underline hover:text-slate-700"

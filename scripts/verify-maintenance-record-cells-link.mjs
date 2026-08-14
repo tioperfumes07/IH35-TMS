@@ -99,7 +99,7 @@ for (const [file, prefixes] of Object.entries(REQUIRED)) {
   try { src = readFileSync(file, "utf8"); } catch { failures.push(`${file} (missing)`); continue; }
 
   // Check file has at least one navigating element — either a react-router Link or an EntityLink.
-  if (!/<Link\s+to=/.test(src) && !/<EntityLink\s+kind=/.test(src)) {
+  if (!/<Link\b[^>]*\sto=/.test(src) && !/<EntityLink\b[^>]*\skind=/.test(src)) {
     failures.push(`${file}: no <Link to=…> or <EntityLink kind=…> record cells at all`);
   }
 
