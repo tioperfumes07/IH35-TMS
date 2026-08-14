@@ -114,6 +114,13 @@
   ],
   "leaves": [
     {
+      "id": "system.samsara_hos_driver_map",
+      "tab": "Samsara",
+      "sub": "HOS driver mapping reconciliation",
+      "route_hint": "/samsara/hos-driver-map",
+      "required": ["driver", "connectivity", "reverse_link"]
+    },
+    {
       "id": "home",
       "tab": "Home",
       "sub": "System module home",

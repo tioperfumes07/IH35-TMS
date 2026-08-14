@@ -10,6 +10,7 @@ import { userFacingApiError } from "../../../lib/api-error-message";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { entityLabel } from "../../../lib/entity-label";
+import { EntityLink } from "../../../components/shared/EntityLink";
 
 /**
  * BANK-F10 / FUEL-03 — operator queue for fuel-card overage approve-then-recover.
@@ -107,13 +108,13 @@ export function CardOverageQueuePage() {
         key: "driver_name",
         label: "Driver",
         sortable: true,
-        render: (row) => entityLabel(row.driver_name, row.driver_id, "Driver"),
+        render: (row) => <EntityLink kind="driver" id={row.driver_id ?? undefined} label={entityLabel(row.driver_name, row.driver_id, "Driver")} />,
       },
       {
         key: "unit_number",
         label: "Unit",
         sortable: true,
-        render: (row) => entityLabel(row.unit_number, row.unit_id, "Unit"),
+        render: (row) => <EntityLink kind="unit" id={row.unit_id ?? undefined} label={entityLabel(row.unit_number, row.unit_id, "Unit")} />,
       },
       {
         key: "overage_rule",

@@ -120,6 +120,13 @@
   ],
   "leaves": [
     {
+      "id": "card_overage",
+      "tab": "Card overage",
+      "sub": "Fuel-card overage recovery queue",
+      "route_hint": "/fuel/card-overage",
+      "required": ["driver", "unit", "connectivity", "reverse_link"]
+    },
+    {
       "id": "home",
       "tab": "Home",
       "sub": "Fuel home",
