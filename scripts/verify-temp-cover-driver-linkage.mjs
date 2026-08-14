@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** @matrix-built modules=safety,drivers,dispatch cols=driver,connectivity,reverse_link,picker_law */
+/** @matrix-built {"modules":["safety","drivers","dispatch"],"cols":["driver","connectivity","reverse_link","picker_law"],"leafRe":"^driver_scheduler\\.list$|^profiles\\.detail$","task":"THEATER-TEMP-COVER-DRIVER-LEAFRE","vertical":"column-wave"} */
 import fs from "node:fs";
 const LABEL = "verify-temp-cover-driver-linkage";
 const files = {

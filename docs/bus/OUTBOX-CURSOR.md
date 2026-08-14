@@ -1,3 +1,4 @@
+2026-08-14T20:35Z Cursor | SHIPPING THEATER-LEGAL-MAINT-LEAFRE-15 + vehicle-profile/scheduler EntityLink (#next) | Live=BLOCKED | tip=#6755 | theater_broad~39→~24
 2026-08-14T20:14Z Cursor | shipping LINK-F5171 CoA asymmetry account EntityLink | Live=BLOCKED
 2026-08-14T20:12Z Cursor | shipping SURFACE-BAR-WIZARD-INVENTORY | Live=BLOCKED | NEXT=more LINK-F5171 FE
 2026-08-14T20:10Z Cursor | shipping SURFACE-BAR-TOOLBAR-LEAF-INVENTORY — 116 chrome.toolbar_* surface_path | Live=BLOCKED

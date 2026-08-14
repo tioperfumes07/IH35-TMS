@@ -5,7 +5,7 @@
  * OWNER-EXECUTION-PLAN vertical driver-column sweep (2026-08-14): 7 genuine fleet leaves.
  * roster.row.edit_unit/unit.edit.quick_availability share EditVehicleModal.tsx's real
  * assigned_driver_id field (type "driver") + EntityPicker kind="driver". unit.profile.driver_assign
- * (DriverAssignmentSection.tsx) links the real default/current driver via <Link to={/drivers/:id}>.
+ * (DriverAssignmentSection.tsx) links the real default/current driver via EntityLink kind="driver".
  * unit.profile.quick_assign/fleet.modal.quick_assign share QuickAssignModal.tsx's real
  * DriverPickerWithCreate. transfers.in_progress has real from_driver_id/to_driver_id EntityLinks.
  * map.redirect's MapView.tsx has a real driver_uuid URL filter.
@@ -22,7 +22,7 @@ const LABEL = "verify-fleet-driver-wiring";
 const CHECKS = [
   ["apps/frontend/src/components/fleet/EditVehicleModal.tsx", /\{ key: "assigned_driver_id", label: "Default Driver", type: "driver", tab: "Quick-availability" \}/],
   ["apps/frontend/src/components/fleet/EditVehicleModal.tsx", /kind="driver"/],
-  ["apps/frontend/src/components/vehicle-profile/DriverAssignmentSection.tsx", /to=\{`\/drivers\/\$\{String\(defaultDriver\.id\)\}`\}/],
+  ["apps/frontend/src/components/vehicle-profile/DriverAssignmentSection.tsx", /kind="driver"[\s\S]{0,120}id=\{String\(defaultDriver\.id\)\}/],
   ["apps/frontend/src/components/fleet/QuickAssignModal.tsx", /<DriverPickerWithCreate/],
   ["apps/frontend/src/pages/fleet/TransfersInProgressPage.tsx", /kind="driver" id=\{row\.from_driver_id\}/],
   ["apps/frontend/src/pages/dispatch/MapView.tsx", /const focusDriverId = searchParams\.get\("driver"\);/],

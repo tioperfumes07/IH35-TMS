@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** @matrix-built modules=maintenance,fleet cols=unit,connectivity,reverse_link,picker_law */
+/** @matrix-built {"modules":["maintenance","fleet"],"cols":["unit","connectivity","reverse_link","picker_law"],"leafRe":"^pm\\.schedule\\.(list|create)$|^unit\\.profile\\.maintenance$","task":"THEATER-PM-SCHEDULE-UNIT-LEAFRE","vertical":"column-wave"} */
 import fs from "node:fs";
 const LABEL = "verify-pm-schedule-unit-linkage";
 const files = {
