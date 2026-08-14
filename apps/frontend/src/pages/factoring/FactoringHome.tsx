@@ -269,9 +269,16 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
     queryFn: () => listEquipmentLoans(companyId, deepLinkVendorId ?? undefined),
     enabled: Boolean(companyId),
   });
+  // LINK-F5171/LINK-F5183 — reverse_link: factoring:home.vendor_merges. DriverProfilePage links
+  // here as ?driver_id=<id>, VendorDetail as ?vendor_id=<id>, both now honored server-side.
+  const deepLinkDriverId = searchParams.get("driver_id");
   const vendorMergesQuery = useQuery({
-    queryKey: ["data-infra", "vendor-merges", companyId],
-    queryFn: () => listDriverVendorMerges(companyId),
+    queryKey: ["data-infra", "vendor-merges", companyId, deepLinkDriverId, deepLinkVendorId],
+    queryFn: () =>
+      listDriverVendorMerges(companyId, {
+        driver_id: deepLinkDriverId ?? undefined,
+        vendor_id: deepLinkVendorId ?? undefined,
+      }),
     enabled: Boolean(companyId),
   });
   const selectedLoanLedgerQuery = useQuery({
