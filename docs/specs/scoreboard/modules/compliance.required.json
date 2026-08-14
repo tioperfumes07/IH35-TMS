@@ -228,7 +228,7 @@
       "id": "fleet.hos_board",
       "tab": "HOS Tracker",
       "sub": "Fleet HOS board section",
-      "route_hint": "/compliance?tab=hos_tracker",
+      "route_hint": "/compliance?tab=overview",
       "required": [
         "driver",
         "unit",
