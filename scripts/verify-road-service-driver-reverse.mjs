@@ -30,7 +30,7 @@ function audit(s) {
   if (!/filters\.push\(`t\.wo_id = \$\$\{values\.length\}::uuid`\)/.test(s.route)) failures.push("list SQL must filter wo_id");
   if (!/filters\?\.wo_id\) params\.set\("wo_id", filters\.wo_id\)/.test(s.hook)) failures.push("hook must forward wo_id");
   if (!/useRoadServiceTickets\(filter\)/.test(s.section)) failures.push("shared reverse section must query its canonical filter");
-  if (!/ticket_id=\$\{ticket\.id\}/.test(s.section)) failures.push("reverse row must drill to ticket list target");
+  if (!/kind=["']road_service_ticket["']/.test(s.section) || !/id=\{ticket\.id\}/.test(s.section)) failures.push("reverse row must drill to ticket list target");
   if (!/isError:\s*listQuery\.isError/.test(s.hook) || !/ListErrorBanner/.test(s.section)) failures.push("reverse section must expose query errors");
   if (!/highlightedTicketId === row\.id/.test(s.list)) failures.push("ticket list must honor deep-link highlight");
   for (const kind of ["unit", "driver", "vendor"]) {

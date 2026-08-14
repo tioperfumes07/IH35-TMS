@@ -1,6 +1,6 @@
-import { Link } from "react-router-dom";
 import { useRoadServiceTickets } from "../../hooks/useRoadServiceTickets";
 import { entityLabel } from "../../lib/entity-label";
+import { EntityLink } from "../shared/EntityLink";
 import { ListErrorBanner } from "../shared/ListErrorBanner";
 
 type Filter =
@@ -34,10 +34,15 @@ export function RoadServiceReverseSection({
       ) : null}
       {tickets.map((ticket) => (
         <div key={ticket.id} className="flex items-center justify-between gap-3 rounded-sm border border-gray-100 px-2 py-1.5 text-xs">
-          <Link className="font-medium text-slate-700 hover:underline" to={`/maintenance/road-service?ticket_id=${ticket.id}`}>
-            {entityLabel(ticket.ticket_number, ticket.id, "Road-service ticket")}
-          </Link>
-          <span className="text-gray-500">{ticket.service_type} · {ticket.status}</span>
+          <EntityLink
+            kind="road_service_ticket"
+            id={ticket.id}
+            label={entityLabel(ticket.ticket_number, ticket.id, "Road-service ticket")}
+            className="font-medium text-slate-700 hover:underline"
+          />
+          <span className="text-gray-500">
+            {ticket.service_type} · {ticket.status}
+          </span>
         </div>
       ))}
     </section>

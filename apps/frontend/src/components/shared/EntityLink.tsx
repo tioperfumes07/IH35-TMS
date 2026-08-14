@@ -80,6 +80,10 @@ export type EntityKind =
   | "driver_app_load"
   // LINK-F5171: Customer portal load detail (/portal/loads/:id) ≠ office kind=load.
   | "portal_load"
+  // LINK-F5171: Road-service ticket reverse → /maintenance/road-service?ticket_id=
+  | "road_service_ticket"
+  // LINK-F5171: Form 2290 filing reverse → /compliance/form-2290?filing_id=
+  | "form_2290_filing"
   | "inventory_part"
   | "parts_inventory"
   | "maintenance_vendor"
@@ -262,6 +266,10 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
       return `/driver/loads/${id}`;
     case "portal_load":
       return `/portal/loads/${id}`;
+    case "road_service_ticket":
+      return `/maintenance/road-service?ticket_id=${id}`;
+    case "form_2290_filing":
+      return `/compliance/form-2290?filing_id=${id}`;
     case "safety_event":
       return `/safety/safety-events?event_id=${id}`;
     // SAF-F33 safety drill-through — each target list page reads the param and opens/highlights the row.

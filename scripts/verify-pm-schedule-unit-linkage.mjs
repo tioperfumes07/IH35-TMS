@@ -19,7 +19,7 @@ function audit(s) {
   if (!/filters\.push\(`s\.unit_id = \$\$\{values\.length\}`\)/.test(s.route)) failures.push("backend exact unit filter missing");
   if (!/params\.unit_id\) query\.set\("unit_id", params\.unit_id\)/.test(s.api)) failures.push("frontend exact unit filter missing");
   if (!/listMaintenancePmSchedules\(operatingCompanyId, \{ unit_id: unitId \}\)/.test(s.reverse) || !/ListErrorBanner/.test(s.reverse)) failures.push("reverse section must use exact filter and honest error state");
-  if (!/pm-schedule\?schedule_id=/.test(s.reverse) || !/row\.id === highlightedScheduleId/.test(s.page)) failures.push("reverse rows must drill to highlighted canonical schedule");
+  if (!/kind=["']pm_schedule["']/.test(s.reverse) || !/id=\{row\.id\}/.test(s.reverse) || !/row\.id === highlightedScheduleId/.test(s.page)) failures.push("reverse rows must drill to highlighted canonical schedule");
   if (!/UnitPmSchedulesReverseSection[\s\S]{0,160}unitId=\{id\}/.test(s.profile)) failures.push("unit profile reverse mount missing");
   return failures;
 }
@@ -32,7 +32,7 @@ if (process.argv.includes("--selftest")) {
     ["filter", "route", /filters\.push\(`s\.unit_id = \$\$\{values\.length\}`\)/, "filters.push(`TRUE`)"],
     ["api", "api", /query\.set\("unit_id", params\.unit_id\)/, 'query.set("status", params.unit_id)'],
     ["reverse", "reverse", /listMaintenancePmSchedules\(operatingCompanyId, \{ unit_id: unitId \}\)/, "listMaintenancePmSchedules(operatingCompanyId)"],
-    ["drill", "reverse", /pm-schedule\?schedule_id=/, "pm-schedule?unit_id="],
+    ["drill", "reverse", /kind=["']pm_schedule["']/, 'kind="unit"'],
     ["mount", "profile", /UnitPmSchedulesReverseSection/g, "MissingPmReverse"],
   ];
   for (const [name, key, pattern, replacement] of mutations) {

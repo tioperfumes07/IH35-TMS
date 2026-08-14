@@ -56,9 +56,12 @@ export function UnitTaxFilingsReverseSection({ operatingCompanyId, unitId }: { o
         ))}
         {filings.map((filing) => (
           <div key={`2290-${filing.id}`}>
-            <Link className="font-medium text-slate-700 hover:underline" to={`/compliance/form-2290?filing_id=${encodeURIComponent(filing.id)}`}>
-              Form 2290 {formatDateUS(filing.tax_period_start)}–{formatDateUS(filing.tax_period_end)}
-            </Link>{" "}
+            <EntityLink
+              className="font-medium text-slate-700 hover:underline"
+              kind="form_2290_filing"
+              id={filing.id}
+              label={`Form 2290 ${formatDateUS(filing.tax_period_start)}–${formatDateUS(filing.tax_period_end)}`}
+            />{" "}
             <span className="text-slate-500">({filing.filing_status})</span>
           </div>
         ))}
