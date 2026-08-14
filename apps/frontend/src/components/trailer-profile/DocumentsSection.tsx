@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { entityLabel } from "../../lib/entity-label";
 import { UploadModal } from "../documents/UploadModal";
+import { EntityLink } from "../shared/EntityLink";
 
 export function DocumentsSection({
   equipmentId,
@@ -59,7 +60,7 @@ export function DocumentsSection({
         ) : (
           documents.map((d) => (
             <li key={String(d.file_id)}>
-              {entityLabel(d.name, d.file_id, "Document")}
+              <EntityLink kind="document" id={String(d.file_id)} label={entityLabel(d.name, d.file_id, "Document")} data-testid="trailer-document-record-link" />
               {d.category ? ` · ${String(d.category)}` : ""}
               {d.expiration_date ? ` · exp ${String(d.expiration_date)}` : ""}
             </li>

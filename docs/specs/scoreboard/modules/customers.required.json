@@ -528,7 +528,8 @@
       "route_hint": "/customers/:id?tab=documents",
       "required": [
         "customer",
-        "connectivity"
+        "connectivity",
+        "reverse_link"
       ]
     },
     {
