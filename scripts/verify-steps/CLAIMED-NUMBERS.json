@@ -842,6 +842,11 @@
     "claimed_by": "codex",
     "purpose": "verify-unit-column-all-module-remainder"
   },
+  "3320": {
+    "claimed_at": "2026-08-14",
+    "claimed_by": "codex",
+    "purpose": "verify-load-column-all-module-remainder"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
