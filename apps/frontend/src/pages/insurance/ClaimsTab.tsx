@@ -106,13 +106,20 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
         label: "Claim #",
         sortable: true,
         render: (claim) => (
-          <button
-            type="button"
+          // LINK-F reverse_link: this row's own selection previously stayed in local state only —
+          // the URL never reflected the selected claim, even though EntityLink kind="claim" (used by
+          // every reverse section that points HERE — bills/expenses/legal-matters ExpensesReverseSection
+          // etc.) already resolves to this exact route with ?claim_id=. A real EntityLink closes the
+          // loop: clicking updates the URL (bookmarkable/shareable), which the existing
+          // deepLinkClaimId effect (line ~76) already picks up — same highlight behavior, now backed
+          // by real navigation instead of only setState.
+          <EntityLink
+            kind="claim"
+            id={claim.id}
+            label={entityLabel(claim.claim_number, claim.id, "Claim")}
             className="font-medium text-slate-700 underline"
             onClick={() => setHighlightedClaimId(claim.id)}
-          >
-            {entityLabel(claim.claim_number, claim.id, "Claim")}
-          </button>
+          />
         ),
       },
       {

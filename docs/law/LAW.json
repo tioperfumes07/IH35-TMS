@@ -558,5 +558,12 @@
     "source_file": "docs/lockdown/FULLY-WIRED-COMPLETE-BAR-2026-08-13.md",
     "guard": "scripts/verify-fully-wired-complete-bar-present.mjs",
     "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-14-LINK-F5136-CLAIMSTAB-ENTITYLINK",
+    "title": "insurance ClaimsTab claim_number column renders a canonical EntityLink(kind=claim) to its own route (?claim_id=) instead of a local-state-only button — closes the self-referential half of the reverse-link loop every other module's claim EntityLink already assumes exists",
+    "source_file": "apps/frontend/src/pages/insurance/ClaimsTab.tsx",
+    "guard": "scripts/verify-insurance-claims-tab-claim-entitylink.mjs",
+    "type": "enforced"
   }
 ]
