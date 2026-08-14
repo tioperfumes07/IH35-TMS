@@ -63,8 +63,8 @@ export function assertFactoringDispatchQueueReverse(sources) {
   if (!/params\.set\("customer_id"/.test(queuePage) || !/params\.set\("load_id"/.test(queuePage)) {
     problems.push(`${QUEUE_PAGE}: must forward customer_id/load_id to the API call`);
   }
-  if (!/\/dispatch\/factoring-queue\?load_id=\$\{loadId\}/.test(factoringTab)) {
-    problems.push(`${FACTORING_TAB}: must link to /dispatch/factoring-queue?load_id=\${loadId}`);
+  if (!/kind=["']factoring_queue_load["']/.test(factoringTab) || !/id=\{loadId\}/.test(factoringTab)) {
+    problems.push(`${FACTORING_TAB}: must drill via EntityLink kind=factoring_queue_load id={loadId}`);
   }
   if (!/customer_id=\$\{encodeURIComponent\(customerId\)\}/.test(section)) {
     problems.push(`${SECTION}: must query the queue scoped to customer_id`);
@@ -97,7 +97,7 @@ function selftest() {
       if (deepLinkCustomerId) params.set("customer_id", deepLinkCustomerId);
       if (deepLinkLoadId) params.set("load_id", deepLinkLoadId);
     `,
-    [FACTORING_TAB]: `<Link to={\`/dispatch/factoring-queue?load_id=\${loadId}\`}>View</Link>`,
+    [FACTORING_TAB]: `<EntityLink kind="factoring_queue_load" id={loadId} label="View" />`,
     [SECTION]: `\`/api/v1/dispatch/factoring-queue?operating_company_id=\${x}&customer_id=\${encodeURIComponent(customerId)}\``,
     [CUSTOMER_DETAIL]: `
       import { CustomerFactoringQueueReverseSection } from "../components/customers/CustomerFactoringQueueReverseSection";
@@ -117,7 +117,7 @@ function selftest() {
     { ...good, [ROUTES]: good[ROUTES].replace('loadFilter = `AND l.id = $${filterParams.length}::uuid`;', "") },
     { ...good, [QUEUE_PAGE]: good[QUEUE_PAGE].replace('searchParams.get("customer_id")', '""') },
     { ...good, [QUEUE_PAGE]: good[QUEUE_PAGE].replace('params.set("customer_id", deepLinkCustomerId);', "") },
-    { ...good, [FACTORING_TAB]: good[FACTORING_TAB].replace("/dispatch/factoring-queue?load_id=${loadId}", "/dispatch/factoring-queue") },
+    { ...good, [FACTORING_TAB]: good[FACTORING_TAB].replace('kind="factoring_queue_load"', 'kind="load"') },
     { ...good, [SECTION]: good[SECTION].replace("customer_id=${encodeURIComponent(customerId)}", "") },
     { ...good, [CUSTOMER_DETAIL]: good[CUSTOMER_DETAIL].replace("import { CustomerFactoringQueueReverseSection }", "// removed") },
     { ...good, [CUSTOMER_DETAIL]: good[CUSTOMER_DETAIL].replace("customerId={id}", "") },

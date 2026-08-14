@@ -124,3 +124,5 @@
 - 2026-08-14 shipped #6812 reverse batch; next safety alerts reverse EntityLink (this PR)
 
 - 2026-08-14 shipped #6813; next factoring/template/cash EntityLink (this PR)
+
+- 2026-08-14 shipped #6815; next FactoringTab EntityLink (this PR)
