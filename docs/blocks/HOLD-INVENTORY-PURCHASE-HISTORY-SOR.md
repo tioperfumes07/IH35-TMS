@@ -6,15 +6,21 @@
 **Surface:** `/inventory/purchases` · label **Purchase History**  
 **Money:** no — design for read/UI + additive append-only purchase events only; **no GL posting invented here.**
 
+## 2026-08-14 append-only correction
+
+- The historical statement below that Purchase History “still renders the stock list” is superseded, not erased: `InventoryPurchasesPage` now renders an honest, reachable empty state and `verify-inventory-purchases-honesty.mjs` prevents a stock twin from returning.
+- The requested production search for an alternate source of record was completed on 2026-08-07. No append-only TMS purchase-order ledger exists. `accounting.parts_purchase_postings` is a posting latch and `mdata.qbo_purchases` is an inbound QBO expense/check/card-charge mirror, not Purchase History and not a permitted USMCA sprint target.
+- The HOLD therefore remains open only for the owner-gated additive SoR and stock upsert decisions below. The two current connectivity leaves are satisfied by the mounted door and honest state; they do not authorize schema, GL, or QBO work.
+
 ---
 
 ## Verdict (repo-verified)
 
-**There is no purchase-history source of record.** Purchase History still renders the stock list.
+**There is no purchase-history source of record.** ~~Purchase History still renders the stock list.~~ Superseded 2026-08-14: it now renders the guarded honest-empty state described above.
 
 | Claim | Evidence |
 |-------|----------|
-| Purchases page uses stock API | `apps/frontend/src/pages/inventory/InventoryPurchasesPage.tsx` → `listPartsInventory` + `PartsInventoryTable` |
+| ~~Purchases page uses stock API~~ | Superseded 2026-08-14: `InventoryPurchasesPage.tsx` uses neither stock API nor stock table; `verify-inventory-purchases-honesty.mjs` guards the honest empty state. |
 | Assignments already honest | `InventoryAssignmentsPage.tsx` → `listPartsAssignments` / `GET …/parts-invoice-links` (WO consumption trail) — **leave unchanged** |
 | Write path exists, read ledger does not | `POST /api/v1/maintenance/parts-inventory/purchases` only — **no GET purchases** |
 | POST writes stock, not events | `parts-inventory.routes.ts` `INSERT INTO maintenance.parts_inventory (… last_purchase_*, on_hand_qty …)` |
@@ -102,6 +108,6 @@ REMAINING: none for UI/read; GL/bill posting remains out of scope unless owner o
 
 ## Gated for Jorge
 
-1. Approve table name + column set (or alternate SoR if one already exists on Neon that repo missed — **prod verify first**).
+1. Approve table name + column set. Production verification is complete: no alternate append-only purchase SoR exists; QBO purchases and the parts-posting latch are explicitly not substitutes.
 2. Approve whether POST continues to INSERT a new stock row vs upsert by SKU.
 3. Authorize implement PR (schema + GET + UI + guards). **This HOLD PR ships docs only.**
