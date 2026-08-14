@@ -628,9 +628,9 @@
       "id": "maintenance.modal.work_order_create",
       "tab": "Modals",
       "sub": "Modal: Work Order Create",
-      "route_hint": "surface://pages/maintenance/WorkOrderCreateModal.tsx",
+      "route_hint": "surface://pages/maintenance/components/CreateWorkOrderModal.tsx",
       "surface_kind": "modal",
-      "surface_path": "pages/maintenance/WorkOrderCreateModal.tsx",
+      "surface_path": "pages/maintenance/components/CreateWorkOrderModal.tsx",
       "required": [
         "connectivity",
         "picker_law"

@@ -853,14 +853,14 @@
       "route_hint": "surface://pages/maintenance/RoadServiceTicketModal.tsx"
     },
     {
-      "path": "pages/maintenance/WorkOrderCreateModal.tsx",
+      "path": "pages/maintenance/components/CreateWorkOrderModal.tsx",
       "kind": "modal",
-      "stem": "WorkOrderCreateModal",
+      "stem": "CreateWorkOrderModal",
       "module": "maintenance",
       "id": "maintenance.modal.work_order_create",
       "tab": "Modals",
       "sub": "Modal: Work Order Create",
-      "route_hint": "surface://pages/maintenance/WorkOrderCreateModal.tsx"
+      "route_hint": "surface://pages/maintenance/components/CreateWorkOrderModal.tsx"
     },
     {
       "path": "pages/maintenance/components/ConvertIssueToWOModal.tsx",
