@@ -5,6 +5,7 @@ import { BackArrowHeader } from "../../components/layout/BackArrowHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { DrillKpiCard } from "../../components/layout/DrillKpiCard";
 import { entityLabel } from "../../lib/entity-label";
+import { EntityLink } from "../../components/shared/EntityLink";
 
 function ConfidencePill({ confidence }: { confidence: DriverMapRow["confidence"] }) {
   const cls =
@@ -158,7 +159,9 @@ export function HosDriverMapPreviewPage() {
               <tbody>
                 {visibleRows.map((row) => (
                   <tr key={row.local_driver_id} className="border-b border-gray-100 last:border-0 hover:bg-gray-50">
-                    <td className="px-3 py-2 font-medium text-gray-900">{entityLabel(row.driver_name, row.local_driver_id, "Driver")}</td>
+                    <td className="px-3 py-2 font-medium text-gray-900">
+                      <EntityLink kind="driver" id={row.local_driver_id} label={entityLabel(row.driver_name, row.local_driver_id, "Driver")} />
+                    </td>
                     <td className="px-3 py-2 font-mono text-gray-600">{row.cdl_number ?? "—"}</td>
                     <td className="px-3 py-2"><ConfidencePill confidence={row.confidence} /></td>
                     <td className="px-3 py-2"><BasisPill basis={row.match_basis} /></td>

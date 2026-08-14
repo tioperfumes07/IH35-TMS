@@ -2,6 +2,14 @@
   "_README": "Shipped Wave-A writers that green Matrix Box 3 Built. Updated when a Pxx task merges with guard+smoke. Live (Box 4) still requires PROD-VERIFIED ledger. leafRe must match docs/specs/scoreboard/modules/*.required.json leaf ids; cols must match column ids (picker_law not picker).",
   "entries": [
     {
+      "task": "LINK-F5131-EXCEPTION-TABLE-IDENTITY-REVERSE-LINKS",
+      "pr": "this PR",
+      "guard": "scripts/verify-exception-table-identity-reverse-links.mjs",
+      "modules": ["system", "fuel"],
+      "cols": ["reverse_link"],
+      "leafRe": "^(system\\.samsara_hos_driver_map|card_overage)$"
+    },
+    {
       "task": "LINK-F5130-DRIVER-SECONDARY-SURFACE-REVERSE-LINKS",
       "pr": "this PR",
       "guard": "scripts/verify-driver-secondary-surface-reverse-links.mjs",
