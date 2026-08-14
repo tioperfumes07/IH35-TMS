@@ -1,5 +1,4 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
 import { EntityLink } from "../shared/EntityLink";
 import { legalContractsApi } from "../../api/legal-contracts";
 import { ListErrorState } from "../ListErrorState";
@@ -16,7 +15,7 @@ export function VendorLegalContractsReverseSection({ operatingCompanyId, vendorI
     <section className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid="vendor-legal-contracts-reverse">
       <div className="flex items-center justify-between gap-2">
         <h3 className="text-sm font-semibold text-slate-900">Legal Contracts{rows.length ? ` (${rows.length})` : ""}</h3>
-        <Link className="text-xs font-semibold text-slate-700 underline" to={`/legal/contracts?signer_type=vendor&signer_entity_id=${encodeURIComponent(vendorId)}`}>Open Contracts</Link>
+        <EntityLink kind="legal_contracts_vendor" id={vendorId} label="Open Contracts" className="text-xs font-semibold text-slate-700 underline" />
       </div>
       {query.isLoading ? <p className="text-sm text-gray-500">Loading legal contracts…</p> : null}
       {query.isError ? <ListErrorState title="Couldn't load this vendor's legal contracts" status={0} message={(query.error as Error)?.message} onRetry={() => void query.refetch()} /> : null}

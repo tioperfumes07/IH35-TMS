@@ -17,7 +17,7 @@ function audit(s) {
   if (!/assetBelongsToCompany\(client, body\.operating_company_id, body\.unit_id, body\.equipment_id\)/.test(s.route)) failures.push("writer asset scope validation missing");
   if (!/\/api\/v1\/maintenance\/tires\/layout[\s\S]{0,750}tr\.operating_company_id = \$1::uuid[\s\S]{0,300}tr\.unit_id = \$\$\{values\.length\}/.test(s.route) || !/\/api\/v1\/maintenance\/tires\/layout[\s\S]{0,750}tr\.status = 'active'/.test(s.route)) failures.push("exact active unit layout reverse filter missing");
   if (!/getMaintenanceTireLayout\(operatingCompanyId, \{ unit_id: unitId \}\)/.test(s.reverse) || !/query\.isError/.test(s.reverse) || !/No tire records mounted to this unit/.test(s.reverse)) failures.push("honest unit tire reverse missing");
-  if (!/maintenance\/tires\?unit_id=/.test(s.reverse)) failures.push("reverse must drill to filtered Tire Program");
+  if (!/kind="tire_program_unit"/.test(s.reverse) || !/id=\{unitId\}/.test(s.reverse)) failures.push("reverse must drill via EntityLink tire_program_unit");
   if (!/UnitTireProgramReverseSection[\s\S]{0,140}unitId=\{id\}/.test(s.profile)) failures.push("vehicle profile mount missing");
   if (!/UnitTireProgramReverseSection[\s\S]{0,140}unitId=\{id\}/.test(s.detail)) failures.push("secondary unit detail mount missing");
   if (!/export function getMaintenanceTireLayout/.test(s.api) || !/\/api\/v1\/maintenance\/tires\/layout\?/.test(s.api)) failures.push("canonical layout API missing");
@@ -32,7 +32,7 @@ if (process.argv.includes("--selftest")) {
     ["filter", "route", /(\/api\/v1\/maintenance\/tires\/layout[\s\S]{0,950})tr\.unit_id = \$\$\{values\.length\}/, "$1TRUE"],
     ["active", "route", /(\/api\/v1\/maintenance\/tires\/layout[\s\S]{0,750})tr\.status = 'active'/, "$1TRUE"],
     ["reverse", "reverse", /unit_id: unitId/, "unit_id: operatingCompanyId"],
-    ["drill", "reverse", /maintenance\/tires\?unit_id=/, "maintenance/tires?wrong_id="],
+    ["drill", "reverse", /kind="tire_program_unit"/, 'kind="unit"'],
     ["profile", "profile", /UnitTireProgramReverseSection/g, "MissingTireReverse"],
     ["detail", "detail", /UnitTireProgramReverseSection/g, "MissingTireReverse"],
   ];

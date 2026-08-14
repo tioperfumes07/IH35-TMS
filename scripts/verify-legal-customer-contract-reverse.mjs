@@ -20,7 +20,7 @@ const checks = [
   ["lease", /onSaved\(created\.id\)/, "lease returns persisted id"],
   ["writer", /FROM mdata\.customers[\s\S]*id = \$1::uuid[\s\S]*operating_company_id = \$2::uuid[\s\S]*deactivated_at IS NULL/, "writer validates active customer ownership"],
   ["customer", /signer_type: "customer", signer_entity_id: customerId/, "customer reverse read filters canonical FK"],
-  ["customer", /legal\/contracts\?contract_id=\$\{contract\.id\}/, "customer reverse row drills to selected contract"],
+  ["customer", /kind="legal_contract"[\s\S]{0,80}id=\{contract\.id\}/, "customer reverse row drills to selected contract"],
   ["customer", /Couldn't load this customer's legal contracts[\s\S]*legalContractsQuery\.refetch\(\)/, "customer reverse failure is retryable"],
   ["page", /onSaved=\{async \(contractId\)[\s\S]*setSearchParams\(\{ contract_id: contractId \}\)/, "lease R=W selects persisted detail"],
 ];

@@ -15,7 +15,6 @@ import { useToast } from "../Toast";
 import { UploadModal } from "../documents/UploadModal";
 import { DataTable } from "../DataTable";
 import { legalContractsApi } from "../../api/legal-contracts";
-import { Link } from "react-router-dom";
 import { EntityLink } from "../shared/EntityLink";
 import { ListErrorState } from "../ListErrorState";
 
@@ -213,7 +212,7 @@ export function CustomerContractsTab({ customerId, customerName, operatingCompan
       <section className="space-y-2 border-t border-gray-200 pt-3" data-testid="customer-legal-contracts-reverse">
         <div className="flex items-center justify-between gap-2">
           <h3 className="text-sm font-semibold text-slate-900">E-signature contracts</h3>
-          <Link className="text-xs font-semibold text-slate-700 underline" to={`/legal/contracts?signer_type=customer&signer_entity_id=${encodeURIComponent(customerId)}`}>Open Legal Contracts</Link>
+          <EntityLink kind="legal_contracts_customer" id={customerId} label="Open Legal Contracts" className="text-xs font-semibold text-slate-700 underline" />
         </div>
         {legalContractsQuery.isError ? <ListErrorState title="Couldn't load this customer's legal contracts" status={0} message={(legalContractsQuery.error as Error)?.message} onRetry={() => void legalContractsQuery.refetch()} /> : null}
         {legalContractsQuery.isLoading ? <p className="text-xs text-gray-500">Loading e-signature contracts…</p> : null}
