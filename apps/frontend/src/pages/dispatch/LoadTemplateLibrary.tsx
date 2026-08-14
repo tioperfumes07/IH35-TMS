@@ -5,6 +5,7 @@ import { listLoadTemplates, createLoadTemplate, type LoadTemplateRow } from "../
 import { Button } from "../../components/Button";
 import { Modal } from "../../components/Modal";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { useSearchParams } from "react-router-dom";
 
 type BookStop = {
   stop_type: "pickup" | "delivery";
@@ -231,9 +232,11 @@ type LibraryProps = {
 
 /** Simple library modal: list names + hint to use Book Load picker */
 export function LoadTemplateLibrary({ open, onClose, operatingCompanyId }: LibraryProps) {
+  const [searchParams] = useSearchParams();
+  const templateId = searchParams.get("template_id") ?? undefined;
   const q = useQuery({
-    queryKey: ["load-templates", operatingCompanyId],
-    queryFn: () => listLoadTemplates(operatingCompanyId),
+    queryKey: ["load-templates", operatingCompanyId, templateId ?? null],
+    queryFn: () => listLoadTemplates(operatingCompanyId, { template_id: templateId }),
     enabled: Boolean(operatingCompanyId) && open,
   });
   const rows: LoadTemplateRow[] = useMemo(() => q.data?.templates ?? [], [q.data?.templates]);
@@ -244,7 +247,7 @@ export function LoadTemplateLibrary({ open, onClose, operatingCompanyId }: Libra
         {q.isLoading ? <div className="text-gray-500">Loading…</div> : null}
         {!q.isLoading && rows.length === 0 ? <div className="text-gray-500">No saved templates. Use “Save as template” on a load.</div> : null}
         {rows.map((t) => (
-          <div key={t.id} className="rounded-sm border border-gray-200 p-2">
+          <div key={t.id} className="rounded-sm border border-gray-200 p-2" data-load-template-id={t.id}>
             <div className="font-semibold text-gray-800">{t.name}</div>
             <div className="text-[11px] text-gray-500">Updated {t.updated_at ? new Date(t.updated_at).toLocaleString() : "—"}</div>
           </div>

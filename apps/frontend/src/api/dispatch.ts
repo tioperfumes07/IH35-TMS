@@ -774,9 +774,12 @@ export type LoadTemplateRow = {
   updated_at?: string;
 };
 
-export function listLoadTemplates(operatingCompanyId: string) {
+export function listLoadTemplates(operatingCompanyId: string, filters: { customer_id?: string; template_id?: string } = {}) {
+  const params = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  if (filters.customer_id) params.set("customer_id", filters.customer_id);
+  if (filters.template_id) params.set("template_id", filters.template_id);
   return apiRequest<{ templates: LoadTemplateRow[] }>(
-    `/api/v1/load-templates?operating_company_id=${encodeURIComponent(operatingCompanyId)}`
+    `/api/v1/load-templates?${params.toString()}`
   );
 }
 
