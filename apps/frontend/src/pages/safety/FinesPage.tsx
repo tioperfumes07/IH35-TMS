@@ -34,13 +34,28 @@ export function FinesPage({ operatingCompanyId }: Props) {
   const [subjectTypeFilter, setSubjectTypeFilter] = useState<string>("");
   const [createOpen, setCreateOpen] = useState(false);
   const [selectedFine, setSelectedFine] = useState<Record<string, unknown> | null>(null);
+  const relatedLoadFromUrl = searchParams.get("related_load_id")?.trim() ?? "";
+  const relatedUnitFromUrl = searchParams.get("related_unit_id")?.trim() ?? "";
+  const subjectDriverFromUrl = searchParams.get("subject_driver_id")?.trim() ?? "";
 
   const finesQuery = useQuery({
-    queryKey: ["safety", "fines", operatingCompanyId, statusFilter, subjectTypeFilter],
+    queryKey: [
+      "safety",
+      "fines",
+      operatingCompanyId,
+      statusFilter,
+      subjectTypeFilter,
+      relatedLoadFromUrl,
+      relatedUnitFromUrl,
+      subjectDriverFromUrl,
+    ],
     queryFn: () =>
       getSafetyFines(operatingCompanyId, {
         status: statusFilter || undefined,
         subject_type: subjectTypeFilter ? (subjectTypeFilter as "driver" | "company") : undefined,
+        related_load_id: relatedLoadFromUrl || undefined,
+        related_unit_id: relatedUnitFromUrl || undefined,
+        subject_driver_id: subjectDriverFromUrl || undefined,
       }),
     enabled: Boolean(operatingCompanyId),
   });
@@ -50,7 +65,7 @@ export function FinesPage({ operatingCompanyId }: Props) {
     onSuccess: (payload) => {
       const fineId = String(payload.fine?.id ?? "");
       queryClient.setQueryData(
-        ["safety", "fines", operatingCompanyId, statusFilter, subjectTypeFilter],
+        ["safety", "fines", operatingCompanyId, statusFilter, subjectTypeFilter, relatedLoadFromUrl, relatedUnitFromUrl, subjectDriverFromUrl],
         (old: { fines?: Array<Record<string, unknown>> } | undefined) => {
           if (!old?.fines) return old;
           return {

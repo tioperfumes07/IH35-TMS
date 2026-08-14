@@ -62,10 +62,11 @@ export function checkVertical(route, api, reverse, driver, asset, entityLink) {
     if (!new RegExp(`${field}\\?:\\s*string`).test(api) || !new RegExp(`qs\\.set\\("${field}"`).test(api)) failures.push(`events client must forward ${field}`);
   }
   if (!/related_entity_not_in_operating_company/.test(route) || !/FROM mdata\.drivers/.test(route) || !/FROM mdata\.units/.test(route) || !/FROM mdata\.loads/.test(route)) failures.push("event writer must company-validate driver, unit, and load FKs");
-  if (!/subject === "driver" \? \{ subject_driver_id: entityId \} : \{ subject_unit_id: entityId \}/.test(reverse) || !/kind="safety_event"/.test(reverse)) failures.push("shared event reverse block must use exact filters and canonical drill");
+  if (!/subject === "driver" \? \{ subject_driver_id: entityId \} : \{ subject_unit_id: entityId \}/.test(reverse) || !/kind="safety_event"/.test(reverse) || !/kind=\{subject === "driver" \? "safety_events_driver" : "safety_events_unit"\}/.test(reverse)) failures.push("shared event reverse block must use exact filters and canonical drill");
   if (!/<SafetyEventsReverseBlock[^>]*subject="driver"/.test(driver)) failures.push("driver safety profile must mount event reverse history");
   if (!/isUnit \? <SafetyEventsReverseBlock[^>]*subject="unit"/.test(asset)) failures.push("unit profile must mount event reverse history without inventing trailer linkage");
   if (!/case "safety_event":\s*return `\/safety\/safety-events\?event_id=\$\{id\}`/.test(entityLink)) failures.push("EntityLink must resolve exact safety-event drill-through");
+  if (!/case "safety_events_driver":\s*return `\/safety\/safety-events\?subject_driver_id=\$\{id\}`/.test(entityLink) || !/case "safety_events_unit":\s*return `\/safety\/safety-events\?subject_unit_id=\$\{id\}`/.test(entityLink)) failures.push("EntityLink must resolve filtered safety-events queue drill-through");
   return failures;
 }
 

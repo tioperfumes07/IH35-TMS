@@ -1,6 +1,5 @@
 import { entityLabel } from "../../lib/entity-label";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
 import { getSafetyFines, getInternalFines } from "../../api/safety";
 import { EntityLink } from "../shared/EntityLink";
 
@@ -55,9 +54,7 @@ export function DriverFinesReverseSection({
     <div className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid={testId}>
       <div className="flex items-center justify-between gap-2">
         <h3 className="text-sm font-semibold text-slate-900">Fines</h3>
-        <Link className="text-xs font-semibold text-slate-700 underline" to="/safety/fines">
-          Open Safety
-        </Link>
+        <EntityLink kind="safety_fines_driver" id={driverId} label="Open Safety" className="text-xs font-semibold text-slate-700 underline" />
       </div>
       <p className="text-sm text-gray-600">
         Civil citations and internal fines linked to this driver.
