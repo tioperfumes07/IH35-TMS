@@ -649,5 +649,12 @@
     "source_file": "docs/specs/scoreboard/modules/fleet.required.json",
     "guard": "scripts/verify-trailer-profile-page-self-referential.mjs",
     "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-14-LINK-F5165-CUSTOMER-COLUMN-VERTICAL-SWEEP",
+    "title": "customer-column vertical sweep across all 17 modules that ever claimed it — 5 parallel read-only investigations of all 278 flagged leaves found 184 false blanket Required markings (removed, honesty_audit-documented; lists' 66 catalog.* pages and reports' 38 GL-rollup/unit-scoped reports are the two biggest clusters — same generic catalog-VALUE-CRUD and account-rollup patterns already confirmed in prior column sweeps) and 95 genuinely-wired leaves proven with 8 new leaf-specific Built guards (customers module's 37 self-referential list+detail leaves; dispatch's 19 real customer_id/EntityLink queues, planners, and Book-Load/load-drawer surfaces; factoring's 11 customer-invoice-scoped submission/batch/recourse leaves; the remaining 28 spread across accounting/docs/reports/safety/banking/legal/finance/maintenance/system/home). One investigation gap was caught and corrected before shipping: home.role.dispatcher was initially marked false because DispatcherHome.tsx's own text has zero \"customer\" hits, but it unconditionally mounts a child component (DispatcherActiveLoadsPanel.tsx) that does — a reminder that a leaf's own file text is not sufficient evidence when it delegates rendering to an imported component. verify-wave-a-customer-all-modules.mjs's own count floors (p10<177, leaves<262, module-Set<16) were proactively fixed in the SAME PR (matching the ACCT-F5162/LINK-F5163 pattern) rather than shipped as a third self-caused regression, and a genuinely pre-existing, unrelated stale-regex bug in its composed verify-wave-a-customer-remainder-column.mjs guard (an EntityLink prop-order mismatch against NamesMasterHub.tsx, broken on main before this PR) was found and repaired in the same pass.",
+    "source_file": "docs/specs/scoreboard/modules/customers.required.json",
+    "guard": "scripts/verify-customer-detail-page-self-referential.mjs",
+    "type": "enforced"
   }
 ]

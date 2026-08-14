@@ -144,20 +144,18 @@
       "modules": [
         "accounting",
         "banking",
-        "cash-flow",
         "customers",
         "dispatch",
         "docs",
         "factoring",
         "finance",
-        "fleet",
         "home",
-        "insurance",
         "legal",
         "lists",
         "maintenance",
         "reports",
-        "safety"
+        "safety",
+        "system"
       ],
       "cols": ["customer"],
       "leafRe": ".*"

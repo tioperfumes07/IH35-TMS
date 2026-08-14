@@ -158,11 +158,11 @@
       "sub": "Dispatcher home",
       "route_hint": "/home",
       "required": [
-        "customer",
         "driver",
         "unit",
         "load",
-        "connectivity"
+        "connectivity",
+        "customer"
       ]
     },
     {
@@ -171,7 +171,6 @@
       "sub": "Accounting home",
       "route_hint": "/home",
       "required": [
-        "customer",
         "vendor",
         "expense",
         "connectivity"
@@ -231,7 +230,6 @@
       "sub": "Attention list",
       "route_hint": "/home",
       "required": [
-        "customer",
         "driver",
         "unit",
         "load",
@@ -275,7 +273,6 @@
       "sub": "\u2192 Accounting",
       "route_hint": "/accounting/invoices",
       "required": [
-        "customer",
         "connectivity"
       ]
     },
@@ -327,7 +324,6 @@
       "sub": "\u2192 Dispatch",
       "route_hint": "/dispatch",
       "required": [
-        "customer",
         "driver",
         "unit",
         "load",
@@ -815,6 +811,36 @@
           "id": "jump.accounting",
           "removed": [
             "ap_bill"
+          ]
+        }
+      ]
+    },
+    "customer_column_2026_08_14_overclaim": {
+      "finding": "LINK-F5165-CUSTOMER-COLUMN-VERTICAL-SWEEP",
+      "note": "4 of 5 home leaves are false: role.accountant/surface.attention_list render zero customer data, and jump.accounting/jump.dispatch are pure static nav cards with no customer content on the card itself. role.dispatcher KEEPS the Required marking, corrected after an initial investigation miss (DispatcherHome.tsx's own text has no \"customer\" hits, but it unconditionally mounts DispatcherActiveLoadsPanel.tsx, which renders a real EntityLink kind=\"customer\" id={row.customer_id} per active-load row).",
+      "drops": [
+        {
+          "id": "role.accountant",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "surface.attention_list",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "jump.accounting",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "jump.dispatch",
+          "removed": [
+            "customer"
           ]
         }
       ]

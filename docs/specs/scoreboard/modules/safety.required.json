@@ -332,7 +332,6 @@
         "unit",
         "trailer",
         "load",
-        "customer",
         "vendor",
         "liability",
         "scenario.insurance",
@@ -378,7 +377,6 @@
       "route_hint": "/safety/trailer-interchanges",
       "required": [
         "trailer",
-        "customer",
         "driver",
         "connectivity",
         "reverse_link"
@@ -1317,6 +1315,24 @@
           "id": "permits.list",
           "removed": [
             "trailer"
+          ]
+        }
+      ]
+    },
+    "customer_column_2026_08_14_overclaim": {
+      "finding": "LINK-F5165-CUSTOMER-COLUMN-VERTICAL-SWEEP",
+      "note": "2 of 5 safety leaves flagged here are false: accidents.create links driver/unit/load/vendor but never customer; trailer_interchanges.list captures only a free-text interchange_party string. cargo_claims.list/create and complaints.list (not touched \u2014 already correctly not flagged here) are the genuine ones.",
+      "drops": [
+        {
+          "id": "accidents.create",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "trailer_interchanges.list",
+          "removed": [
+            "customer"
           ]
         }
       ]

@@ -149,7 +149,6 @@
       "route_hint": "/dispatch?view=kanban",
       "required": [
         "driver",
-        "customer",
         "unit",
         "load",
         "connectivity",
@@ -274,7 +273,6 @@
       "route_hint": "/dispatch/border-crossing",
       "required": [
         "driver",
-        "customer",
         "unit",
         "load",
         "vendor",
@@ -289,7 +287,6 @@
       "route_hint": "/dispatch/border-crossing/history",
       "required": [
         "driver",
-        "customer",
         "unit",
         "load",
         "vendor",
@@ -318,7 +315,6 @@
       "route_hint": "/dispatch/alerts",
       "required": [
         "driver",
-        "customer",
         "unit",
         "load",
         "connectivity",
@@ -357,7 +353,6 @@
         "driver",
         "unit",
         "load",
-        "customer",
         "connectivity",
         "reverse_link"
       ]
@@ -382,7 +377,6 @@
       "sub": "Factoring (accounting hop)",
       "route_hint": "/accounting/factoring",
       "required": [
-        "customer",
         "connectivity",
         "reverse_link"
       ]
@@ -421,7 +415,6 @@
       "required": [
         "driver",
         "unit",
-        "customer",
         "connectivity",
         "reverse_link"
       ]
@@ -434,7 +427,6 @@
       "required": [
         "driver",
         "unit",
-        "customer",
         "connectivity",
         "reverse_link"
       ]
@@ -473,7 +465,6 @@
       "sub": "Load Templates",
       "route_hint": "/dispatch/planner?panel=templates",
       "required": [
-        "customer",
         "qbo_chrome",
         "connectivity"
       ]
@@ -512,7 +503,6 @@
       "route_hint": "/dispatch/pod-review",
       "required": [
         "driver",
-        "customer",
         "load",
         "unit",
         "connectivity",
@@ -579,7 +569,6 @@
       "route_hint": "/dispatch/trip-profitability",
       "required": [
         "load",
-        "customer",
         "driver",
         "connectivity",
         "reverse_link"
@@ -642,7 +631,6 @@
       "route_hint": "/dispatch/loads/:id/banking",
       "required": [
         "load",
-        "customer",
         "connectivity",
         "reverse_link",
         "bank"
@@ -672,7 +660,6 @@
       "route_hint": "/dispatch/loads/:id?tab=Stops",
       "required": [
         "load",
-        "customer",
         "driver",
         "unit",
         "connectivity",
@@ -699,7 +686,6 @@
       "route_hint": "/dispatch/loads/:id?tab=Documents",
       "required": [
         "driver",
-        "customer",
         "load",
         "unit",
         "connectivity",
@@ -727,7 +713,6 @@
       "route_hint": "/dispatch/loads/:id?tab=Customs",
       "required": [
         "driver",
-        "customer",
         "unit",
         "load",
         "vendor",
@@ -822,8 +807,7 @@
         "connectivity",
         "load",
         "driver",
-        "unit",
-        "customer"
+        "unit"
       ]
     },
     {
@@ -838,8 +822,7 @@
         "picker_law",
         "load",
         "driver",
-        "unit",
-        "customer"
+        "unit"
       ]
     },
     {
@@ -854,8 +837,7 @@
         "picker_law",
         "load",
         "driver",
-        "unit",
-        "customer"
+        "unit"
       ]
     },
     {
@@ -887,8 +869,7 @@
         "driver",
         "load",
         "unit",
-        "trailer",
-        "customer"
+        "trailer"
       ]
     },
     {
@@ -919,8 +900,7 @@
         "driver",
         "load",
         "unit",
-        "trailer",
-        "customer"
+        "trailer"
       ]
     },
     {
@@ -934,8 +914,7 @@
         "connectivity",
         "driver",
         "load",
-        "unit",
-        "customer"
+        "unit"
       ]
     },
     {
@@ -949,8 +928,7 @@
         "connectivity",
         "load",
         "driver",
-        "unit",
-        "customer"
+        "unit"
       ]
     },
     {
@@ -964,8 +942,7 @@
         "connectivity",
         "driver",
         "load",
-        "unit",
-        "customer"
+        "unit"
       ]
     },
     {
@@ -993,8 +970,7 @@
       "required": [
         "connectivity",
         "driver",
-        "unit",
-        "customer"
+        "unit"
       ]
     },
     {
@@ -1009,8 +985,7 @@
         "picker_law",
         "driver",
         "load",
-        "unit",
-        "customer"
+        "unit"
       ]
     },
     {
@@ -1024,8 +999,7 @@
         "connectivity",
         "driver",
         "load",
-        "unit",
-        "customer"
+        "unit"
       ]
     },
     {
@@ -1041,8 +1015,7 @@
         "load",
         "driver",
         "unit",
-        "trailer",
-        "customer"
+        "trailer"
       ]
     },
     {
@@ -1696,6 +1669,174 @@
           "id": "dispatch.parity.assign_driver_dropdown",
           "removed": [
             "trailer"
+          ]
+        }
+      ]
+    },
+    "customer_column_2026_08_14_overclaim": {
+      "finding": "LINK-F5165-CUSTOMER-COLUMN-VERTICAL-SWEEP",
+      "note": "27 of 46 dispatch leaves carried no customer identity data (verified live per leaf): Kanban board, border-crossing surfaces, trip-pairing, most planners, POD review, load-detail Stops/Documents/Customs tabs, and most action modals/panels render zero customer_id/EntityLink kind=\"customer\". The 19 genuine leaves (home.overview, home.list, secondary.book_load, queues.at_risk/detention/late/factoring_queue, planning.timeline/loads/calendar/reserve, docs.ocr, settings.notify, load.detail, load.drawer.overview/factoring, dispatch.modal.book_load_modal_v4, dispatch.drawer.load_detail, dispatch.panel.pre_dispatch_validation) KEEP the Required marking with real EntityLink/customer_id/customer picker evidence.",
+      "drops": [
+        {
+          "id": "home.kanban",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "queues.border",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "queues.border_history",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "queues.alerts",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "queues.trip_pairing",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "queues.factoring",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "planning.driver",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "planning.truck",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "planning.templates",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "docs.pod",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "misc.trip_profit",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "load.banking",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "load.drawer.stops",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "load.drawer.documents",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "load.drawer.customs",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "dispatch.modal.cancel_load",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "dispatch.modal.load_create",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "dispatch.modal.load_reassign",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "dispatch.modal.quick_assign",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "dispatch.panel.auth_gate",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "dispatch.panel.deadhead_optimizer",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "dispatch.panel.load_bol",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "dispatch.panel.optimal_drivers",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "dispatch.panel.rate_con_upload",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "dispatch.wizard.border_crossing_wizard_page",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "dispatch.parity.assign_driver_dropdown",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "dispatch.parity.book_load_equipment_section",
+          "removed": [
+            "customer"
           ]
         }
       ]

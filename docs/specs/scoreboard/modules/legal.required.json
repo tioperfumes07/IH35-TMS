@@ -207,7 +207,6 @@
       "route_hint": "/legal/matters",
       "required": [
         "driver",
-        "customer",
         "vendor",
         "unit",
         "connectivity",
@@ -221,7 +220,6 @@
       "route_hint": "/legal/matters/new",
       "required": [
         "driver",
-        "customer",
         "vendor",
         "unit",
         "load",
@@ -239,7 +237,6 @@
       "route_hint": "/legal/matters/:id",
       "required": [
         "driver",
-        "customer",
         "vendor",
         "unit",
         "liability",
@@ -671,6 +668,30 @@
           "id": "matters.create",
           "removed": [
             "ap_bill"
+          ]
+        }
+      ]
+    },
+    "customer_column_2026_08_14_overclaim": {
+      "finding": "LINK-F5165-CUSTOMER-COLUMN-VERTICAL-SWEEP",
+      "note": "2 of 5 legal leaves are genuine: contracts.list/create resolve a real customer signer/party via EntityLink kind=\"customer\" and a real customer picker. matters.list/create/detail never reference a customer \u2014 legal matters use free-text \"opposing party\" and link only driver/claim/lawsuit/unit/trailer.",
+      "drops": [
+        {
+          "id": "matters.list",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "matters.create",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "matters.detail",
+          "removed": [
+            "customer"
           ]
         }
       ]

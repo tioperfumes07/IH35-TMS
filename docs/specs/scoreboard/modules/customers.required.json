@@ -319,7 +319,6 @@
       "sub": "Activity Feed tab",
       "route_hint": "/customers?tab=activity_feed",
       "required": [
-        "customer",
         "connectivity"
       ]
     },
@@ -329,7 +328,6 @@
       "sub": "Statements tab",
       "route_hint": "/customers?tab=statements",
       "required": [
-        "customer",
         "connectivity"
       ]
     },
@@ -339,7 +337,6 @@
       "sub": "Recurring Transactions tab",
       "route_hint": "/customers?tab=recurring_transactions",
       "required": [
-        "customer",
         "connectivity"
       ]
     },
@@ -349,7 +346,6 @@
       "sub": "Projects tab",
       "route_hint": "/customers?tab=projects",
       "required": [
-        "customer",
         "load",
         "connectivity"
       ]
@@ -360,7 +356,6 @@
       "sub": "Late Fees tab",
       "route_hint": "/customers?tab=late_fees",
       "required": [
-        "customer",
         "connectivity"
       ]
     },
@@ -370,7 +365,6 @@
       "sub": "Notes tab",
       "route_hint": "/customers?tab=notes",
       "required": [
-        "customer",
         "connectivity"
       ]
     },
@@ -391,7 +385,6 @@
       "sub": "Opportunities tab",
       "route_hint": "/customers?tab=opportunities",
       "required": [
-        "customer",
         "connectivity"
       ]
     },
@@ -401,7 +394,6 @@
       "sub": "Conversations tab",
       "route_hint": "/customers?tab=conversations",
       "required": [
-        "customer",
         "connectivity"
       ]
     },
@@ -856,6 +848,60 @@
           "id": "detail.coi",
           "removed": [
             "policy"
+          ]
+        }
+      ]
+    },
+    "customer_column_2026_08_14_overclaim": {
+      "finding": "LINK-F5165-CUSTOMER-COLUMN-VERTICAL-SWEEP",
+      "note": "8 of 45 leaves in the customers module itself are FALSE \u2014 the 8 md.* master-detail sub-tabs (activity_feed/statements/recurring_transactions/projects/late_fees/notes/opportunities/conversations) render only a static CustomerTabComingState placeholder, zero data query wired to any customer_id. All other 37 leaves are genuinely customer-scoped (list rows are customer records, or the detail page is keyed on the route's own :id, which IS the customer).",
+      "drops": [
+        {
+          "id": "md.activity_feed",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "md.statements",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "md.recurring_transactions",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "md.projects",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "md.late_fees",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "md.notes",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "md.opportunities",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "md.conversations",
+          "removed": [
+            "customer"
           ]
         }
       ]

@@ -160,7 +160,6 @@
         "connectivity",
         "qbo_chrome",
         "load",
-        "customer",
         "driver"
       ]
     },
@@ -203,7 +202,6 @@
         "load",
         "driver",
         "unit",
-        "customer",
         "connectivity",
         "qbo_chrome",
         "load"
@@ -443,7 +441,6 @@
         "load",
         "driver",
         "unit",
-        "customer",
         "connectivity",
         "qbo_chrome"
       ]
@@ -457,7 +454,6 @@
         "load",
         "driver",
         "unit",
-        "customer",
         "connectivity",
         "qbo_chrome"
       ]
@@ -468,7 +464,6 @@
       "sub": "Dedicated AR aging page",
       "route_hint": "/reports/ar-aging",
       "required": [
-        "customer",
         "vendor",
         "gl_je",
         "connectivity",
@@ -484,7 +479,6 @@
       "sub": "Dedicated AP aging page",
       "route_hint": "/reports/ap-aging",
       "required": [
-        "customer",
         "vendor",
         "gl_je",
         "ap_bill",
@@ -500,7 +494,6 @@
       "sub": "GL trial balance",
       "route_hint": "/reports/trial-balance",
       "required": [
-        "customer",
         "vendor",
         "gl_je",
         "connectivity",
@@ -513,7 +506,6 @@
       "sub": "Income statement",
       "route_hint": "/reports/profit-loss",
       "required": [
-        "customer",
         "vendor",
         "gl_je",
         "connectivity",
@@ -526,7 +518,6 @@
       "sub": "Assets / liabilities / equity",
       "route_hint": "/reports/balance-sheet",
       "required": [
-        "customer",
         "vendor",
         "gl_je",
         "connectivity",
@@ -539,7 +530,6 @@
       "sub": "Operating / investing / financing",
       "route_hint": "/reports/cash-flow-statement",
       "required": [
-        "customer",
         "vendor",
         "gl_je",
         "connectivity",
@@ -552,7 +542,6 @@
       "sub": "Cash flow report (legacy route)",
       "route_hint": "/reports/cash-flow",
       "required": [
-        "customer",
         "vendor",
         "gl_je",
         "connectivity",
@@ -568,7 +557,6 @@
         "load",
         "driver",
         "unit",
-        "customer",
         "connectivity",
         "reverse_link",
         "qbo_chrome",
@@ -581,7 +569,6 @@
       "sub": "Liquidity + projection",
       "route_hint": "/reports/cash-flow-overview",
       "required": [
-        "customer",
         "vendor",
         "gl_je",
         "connectivity",
@@ -594,7 +581,6 @@
       "sub": "Driver pay breakdown",
       "route_hint": "/reports/settlement-summary",
       "required": [
-        "customer",
         "vendor",
         "connectivity",
         "qbo_chrome",
@@ -627,7 +613,6 @@
         "load",
         "driver",
         "unit",
-        "customer",
         "connectivity",
         "reverse_link",
         "qbo_chrome",
@@ -643,12 +628,10 @@
         "load",
         "driver",
         "unit",
-        "customer",
         "connectivity",
         "reverse_link",
         "qbo_chrome",
-        "load",
-        "customer"
+        "load"
       ]
     },
     {
@@ -660,7 +643,6 @@
         "load",
         "driver",
         "unit",
-        "customer",
         "connectivity",
         "qbo_chrome",
         "load"
@@ -675,7 +657,6 @@
         "load",
         "driver",
         "unit",
-        "customer",
         "connectivity",
         "qbo_chrome",
         "load",
@@ -691,7 +672,6 @@
         "load",
         "driver",
         "unit",
-        "customer",
         "connectivity",
         "reverse_link",
         "qbo_chrome",
@@ -707,7 +687,6 @@
         "load",
         "driver",
         "unit",
-        "customer",
         "connectivity",
         "reverse_link",
         "qbo_chrome",
@@ -724,7 +703,6 @@
         "load",
         "driver",
         "unit",
-        "customer",
         "connectivity",
         "qbo_chrome",
         "unit",
@@ -757,7 +735,6 @@
         "load",
         "driver",
         "unit",
-        "customer",
         "connectivity",
         "reverse_link",
         "qbo_chrome"
@@ -772,7 +749,6 @@
         "load",
         "driver",
         "unit",
-        "customer",
         "connectivity",
         "reverse_link",
         "qbo_chrome"
@@ -787,7 +763,6 @@
         "load",
         "driver",
         "unit",
-        "customer",
         "connectivity",
         "qbo_chrome",
         "load"
@@ -802,7 +777,6 @@
         "load",
         "driver",
         "unit",
-        "customer",
         "connectivity",
         "qbo_chrome",
         "load",
@@ -838,7 +812,6 @@
         "load",
         "driver",
         "unit",
-        "customer",
         "connectivity",
         "qbo_chrome"
       ]
@@ -852,7 +825,6 @@
         "load",
         "driver",
         "unit",
-        "customer",
         "connectivity",
         "qbo_chrome",
         "load"
@@ -867,7 +839,6 @@
         "load",
         "driver",
         "unit",
-        "customer",
         "connectivity",
         "qbo_chrome",
         "load"
@@ -879,7 +850,6 @@
       "sub": "Daily liquidity",
       "route_hint": "/reports/run/cash-position",
       "required": [
-        "customer",
         "vendor",
         "connectivity",
         "qbo_chrome"
@@ -894,7 +864,6 @@
         "load",
         "driver",
         "unit",
-        "customer",
         "connectivity",
         "qbo_chrome",
         "driver",
@@ -910,7 +879,6 @@
         "load",
         "driver",
         "unit",
-        "customer",
         "connectivity",
         "qbo_chrome",
         "driver",
@@ -926,7 +894,6 @@
         "load",
         "driver",
         "unit",
-        "customer",
         "connectivity",
         "qbo_chrome",
         "unit"
@@ -941,7 +908,6 @@
         "load",
         "driver",
         "unit",
-        "customer",
         "connectivity",
         "qbo_chrome"
       ]
@@ -955,7 +921,6 @@
         "load",
         "driver",
         "unit",
-        "customer",
         "connectivity",
         "qbo_chrome"
       ]
@@ -969,7 +934,6 @@
         "load",
         "driver",
         "unit",
-        "customer",
         "connectivity",
         "qbo_chrome"
       ]
@@ -983,7 +947,6 @@
         "load",
         "driver",
         "unit",
-        "customer",
         "connectivity",
         "qbo_chrome",
         "driver"
@@ -998,7 +961,6 @@
         "load",
         "driver",
         "unit",
-        "customer",
         "connectivity",
         "qbo_chrome"
       ]
@@ -1012,7 +974,6 @@
         "load",
         "driver",
         "unit",
-        "customer",
         "connectivity",
         "qbo_chrome"
       ]
@@ -1046,7 +1007,6 @@
         "load",
         "driver",
         "unit",
-        "customer",
         "connectivity",
         "qbo_chrome",
         "unit"
@@ -1919,6 +1879,240 @@
           "id": "report.ar_aging",
           "removed": [
             "ap_bill"
+          ]
+        }
+      ]
+    },
+    "customer_column_2026_08_14_overclaim": {
+      "finding": "LINK-F5165-CUSTOMER-COLUMN-VERTICAL-SWEEP",
+      "note": "38 of 42 reports leaves carried no customer data: GL-rollup reports (trial_balance/profit_loss/balance_sheet/cash_flow*/settlement_summary) and unit/driver/fuel/geofence-scoped reports render zero customer_id. Only report.management (embedded AR-aging section), report.ar_aging, report.customer_profitability, and report.dispatch_margin genuinely render EntityLink kind=\"customer\".",
+      "drops": [
+        {
+          "id": "home.kpi_strip",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "subnav.cancellations",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "report.ifta",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "report.ifta_preparer",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "report.ap_aging",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "report.trial_balance",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "report.profit_loss",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "report.balance_sheet",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "report.cash_flow_statement",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "report.cash_flow",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "report.per_truck_cpm",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "report.cash_flow_overview",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "report.settlement_summary",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "report.profit_per_truck",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "report.lane_profitability",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "report.cancellations",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "report.late_arrival",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "report.trip_profitability",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "report.fuel_reconciliation",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "report.maintenance_cost_per_unit",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "report.geofence_dwell",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "report.geofence_reconciliation",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "report.booking_gap",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "report.deadhead",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "runner.profit_truck_mtd",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "runner.dispatch_board",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "runner.detention_claims",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "runner.cash_position",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "runner.driver_pay_history",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "runner.driver_settlement",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "runner.fleet_utilization",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "runner.fuel_savings",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "runner.fuel_price_variance",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "runner.csa_fleet",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "runner.hos_violations",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "runner.ifta_quarterly",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "runner.dot_audit_pack",
+          "removed": [
+            "customer"
+          ]
+        },
+        {
+          "id": "runner.maint_cost_unit",
+          "removed": [
+            "customer"
           ]
         }
       ]

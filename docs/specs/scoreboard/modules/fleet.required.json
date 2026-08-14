@@ -387,7 +387,6 @@
       "route_hint": "/fleet/units/:id",
       "required": [
         "driver",
-        "customer",
         "unit",
         "load",
         "connectivity",
@@ -1426,6 +1425,18 @@
           ],
           "added": [
             "trailer"
+          ]
+        }
+      ]
+    },
+    "customer_column_2026_08_14_overclaim": {
+      "finding": "LINK-F5165-CUSTOMER-COLUMN-VERTICAL-SWEEP",
+      "note": "unit.profile.current_load renders \"Customer: {name}\" as plain inert text with no customer_id field or EntityLink kind=\"customer\" \u2014 cosmetic, not real linkage.",
+      "drops": [
+        {
+          "id": "unit.profile.current_load",
+          "removed": [
+            "customer"
           ]
         }
       ]
