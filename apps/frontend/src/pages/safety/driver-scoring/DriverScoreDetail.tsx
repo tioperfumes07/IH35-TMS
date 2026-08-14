@@ -135,7 +135,13 @@ export function DriverScoreDetail({ companyId, driverUuid, driverName, onClose }
       >
         <div className="flex items-start justify-between gap-2 border-b border-slate-200 px-3 py-2">
           <div>
-            <h4 className="text-sm font-semibold text-slate-900">{driverName}</h4>
+            <h4 className="text-sm font-semibold text-slate-900">
+              <EntityLink
+                kind="driver"
+                id={driverUuid}
+                label={entityLabel(driverName, driverUuid, "Driver")}
+              />
+            </h4>
             <p className="text-xs text-slate-500">12-period composite safety trend</p>
           </div>
           <button type="button" className="text-xs text-slate-600 underline" onClick={onClose}>
