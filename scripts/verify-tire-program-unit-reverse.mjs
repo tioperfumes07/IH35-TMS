@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** @matrix-built modules=maintenance,fleet,inventory cols=unit,connectivity,reverse_link,picker_law */
+/** @matrix-built {"modules":["maintenance","fleet","inventory"],"cols":["unit","connectivity","reverse_link","picker_law"],"leafRe":"^tires\\.(create|create_record)$|^unit\\.detail\\.tires$|^unit\\.profile\\.maintenance$","task":"THEATER-TIRE-PROGRAM-UNIT-LEAFRE","vertical":"column-wave"} */
 import fs from "node:fs";
 const LABEL = "verify-tire-program-unit-reverse";
 const files = {

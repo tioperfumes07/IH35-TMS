@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** @matrix-built modules=maintenance,fleet,safety cols=unit,connectivity,reverse_link,picker_law */
+/** @matrix-built {"modules":["maintenance","fleet","safety"],"cols":["unit","connectivity","reverse_link","picker_law"],"leafRe":"^severe_repairs\\.convert_to_wo$|^unit\\.profile\\.maintenance$","task":"THEATER-SEVERE-REPAIR-UNIT-LEAFRE","vertical":"column-wave"} */
 import fs from "node:fs";
 const LABEL = "verify-severe-repair-unit-reverse";
 const files = {

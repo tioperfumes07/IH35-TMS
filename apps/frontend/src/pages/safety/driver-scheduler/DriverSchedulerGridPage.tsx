@@ -193,13 +193,20 @@ export function DriverSchedulerGridPage() {
               {(query.data.drivers ?? []).map((dr) => {
                 const driverId = String(dr.driver_id);
                 const name = entityLabel(dr.driver_name, driverId, "Driver");
-                const unit = entityLabel(dr.unit_number, (dr as { unit_id?: string | null }).unit_id, "Unit") ?? "—";
+                const unitId = (dr as { unit_id?: string | null }).unit_id;
+                const unitLabel = entityLabel(dr.unit_number, unitId, "Unit") ?? "—";
                 return (
                   <tr key={driverId} className="border-t border-gray-100">
                     <td className="sticky left-0 z-10 border-r bg-white px-2 py-0.5 text-xs font-medium text-gray-900">
                       <EntityLink kind="driver" id={driverId} label={name} />
                     </td>
-                    <td className="border-r px-1 py-0.5 text-gray-600">{unit}</td>
+                    <td className="border-r px-1 py-0.5 text-gray-600">
+                      {unitId ? (
+                        <EntityLink kind="unit" id={String(unitId)} label={unitLabel} data-testid="driver-scheduler-grid-unit-link" />
+                      ) : (
+                        unitLabel
+                      )}
+                    </td>
                     {days.map((d) => {
                       const lt = cellByDriverDay.get(`${driverId}|${d}`);
                       const bg =

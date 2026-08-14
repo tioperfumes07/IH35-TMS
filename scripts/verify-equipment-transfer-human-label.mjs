@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** @matrix-built modules=drivers,dispatch,fleet cols=trailer,connectivity,reverse_link */
+/** @matrix-built {"modules":["dispatch","drivers","fleet"],"cols":["trailer","connectivity","reverse_link"],"leafRe":"^dispatch\\.modal\\.equipment_transfer$|^docs\\.equipment_transfers$|^profiles\\.detail$","task":"THEATER-EQUIPMENT-TRANSFER-HUMAN-LABEL-LEAFRE","vertical":"column-wave"} */
 import fs from "node:fs";
 const LABEL = "verify-equipment-transfer-human-label";
 const service = fs.readFileSync("apps/backend/src/dispatch/equipment-transfer/request.service.ts", "utf8");

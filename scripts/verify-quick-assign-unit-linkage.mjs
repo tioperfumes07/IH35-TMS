@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** @matrix-built modules=dispatch,fleet,drivers cols=unit,connectivity,reverse_link,picker_law */
+/** @matrix-built {"modules":["dispatch","fleet","drivers"],"cols":["unit","connectivity","reverse_link","picker_law"],"leafRe":"^dispatch\\.modal\\.quick_assign$|^fleet\\.modal\\.quick_assign$|^unit\\.profile\\.(quick_assign|current_load)$","task":"THEATER-QUICK-ASSIGN-UNIT-LEAFRE","vertical":"column-wave"} */
 import fs from "node:fs";
 
 const LABEL = "verify-quick-assign-unit-linkage";

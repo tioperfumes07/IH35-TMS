@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** @matrix-built modules=dispatch,fleet,drivers cols=trailer,connectivity,reverse_link,picker_law */
+/** @matrix-built {"modules":["dispatch","fleet","drivers"],"cols":["trailer","connectivity","reverse_link","picker_law"],"leafRe":"^dispatch\\.modal\\.quick_assign$|^fleet\\.modal\\.quick_assign$|^trailer\\.profile\\.assignment$","task":"THEATER-QUICK-ASSIGN-TRAILER-LEAFRE","vertical":"column-wave"} */
 import fs from "node:fs";
 
 const LABEL = "verify-quick-assign-trailer-linkage";
