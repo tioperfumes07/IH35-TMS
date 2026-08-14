@@ -676,7 +676,8 @@
       "required": [
         "qbo_chrome",
         "connectivity"
-      ]
+      ],
+      "surface_path": "components/table/UniversalListToolbar.tsx"
     },
     {
       "id": "chrome.toolbar_range",
@@ -687,7 +688,8 @@
       "required": [
         "qbo_chrome",
         "connectivity"
-      ]
+      ],
+      "surface_path": "components/table/UniversalListToolbar.tsx"
     },
     {
       "id": "chrome.toolbar_gear",
@@ -698,7 +700,8 @@
       "required": [
         "qbo_chrome",
         "connectivity"
-      ]
+      ],
+      "surface_path": "components/table/UniversalListToolbar.tsx"
     },
     {
       "id": "chrome.toolbar_filter",
@@ -709,7 +712,8 @@
       "required": [
         "qbo_chrome",
         "connectivity"
-      ]
+      ],
+      "surface_path": "components/table/UniversalListToolbar.tsx"
     }
   ],
   "honesty_audit": {

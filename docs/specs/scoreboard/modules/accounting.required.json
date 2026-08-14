@@ -1060,7 +1060,8 @@
       "surface_kind": "toolbar",
       "required": [
         "qbo_chrome"
-      ]
+      ],
+      "surface_path": "components/table/UniversalListToolbar.tsx"
     },
     {
       "id": "chrome.toolbar_range",
@@ -1070,7 +1071,8 @@
       "surface_kind": "toolbar",
       "required": [
         "qbo_chrome"
-      ]
+      ],
+      "surface_path": "components/table/UniversalListToolbar.tsx"
     },
     {
       "id": "chrome.toolbar_gear",
@@ -1080,7 +1082,8 @@
       "surface_kind": "toolbar",
       "required": [
         "qbo_chrome"
-      ]
+      ],
+      "surface_path": "components/table/UniversalListToolbar.tsx"
     },
     {
       "id": "chrome.toolbar_filter",
@@ -1090,7 +1093,8 @@
       "surface_kind": "toolbar",
       "required": [
         "qbo_chrome"
-      ]
+      ],
+      "surface_path": "components/table/UniversalListToolbar.tsx"
     },
     {
       "id": "accounting.panel.reallocate",

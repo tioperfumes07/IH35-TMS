@@ -2,13 +2,13 @@
   "module": "inventory",
   "entity_default": "USMCA",
   "source": {
-    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md \u2014 INVENTORY sidebar (Parts & Stock \u00b7 Assignments \u00b7 Purchase History)",
+    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md — INVENTORY sidebar (Parts & Stock · Assignments · Purchase History)",
     "nav": "apps/frontend/src/pages/inventory/InventoryModuleTabs.tsx",
     "parts": "apps/frontend/src/pages/inventory/InventoryPartsStockPage.tsx + PartCreateDrawer + PartEditDrawer",
     "assignments": "apps/frontend/src/pages/inventory/InventoryAssignmentsPage.tsx",
     "purchases": "apps/frontend/src/pages/inventory/InventoryPurchasesPage.tsx",
     "routes": "apps/frontend/src/routes/manifest.tsx /inventory, /inventory/assignments, /inventory/purchases",
-    "canonical": "maintenance.parts_inventory (stock) \u00b7 maintenance.parts_invoice_links (assignments)"
+    "canonical": "maintenance.parts_inventory (stock) · maintenance.parts_invoice_links (assignments)"
   },
   "columns": [
     {
@@ -143,7 +143,7 @@
     {
       "id": "parts.roster",
       "tab": "Parts & Stock",
-      "sub": "Roster \u00b7 ParityTable from maintenance.parts_inventory",
+      "sub": "Roster · ParityTable from maintenance.parts_inventory",
       "route_hint": "/inventory",
       "required": [
         "vendor",
@@ -165,7 +165,7 @@
     {
       "id": "parts.column.category",
       "tab": "Parts & Stock",
-      "sub": "Category column \u00b7 N/A honest for legacy blank",
+      "sub": "Category column · N/A honest for legacy blank",
       "route_hint": "/inventory",
       "required": [
         "connectivity"
@@ -196,7 +196,7 @@
     {
       "id": "parts.create.category",
       "tab": "Parts & Stock",
-      "sub": "Create \u00b7 category SelectCombobox (PART_INVENTORY_CATEGORIES)",
+      "sub": "Create · category SelectCombobox (PART_INVENTORY_CATEGORIES)",
       "route_hint": "/inventory",
       "required": [
         "picker_law",
@@ -206,7 +206,7 @@
     {
       "id": "parts.create.vendor_picker",
       "tab": "Parts & Stock",
-      "sub": "Create \u00b7 preferred vendor ReferenceSelect (+Add new)",
+      "sub": "Create · preferred vendor ReferenceSelect (+Add new)",
       "route_hint": "/inventory",
       "required": [
         "vendor",
@@ -218,7 +218,7 @@
     {
       "id": "parts.create.money",
       "tab": "Parts & Stock",
-      "sub": "Create \u00b7 unit cost MoneyInput",
+      "sub": "Create · unit cost MoneyInput",
       "route_hint": "/inventory",
       "required": [
         "qbo_chrome",
@@ -228,7 +228,7 @@
     {
       "id": "parts.edit",
       "tab": "Parts & Stock",
-      "sub": "Row Edit \u00b7 PartEditDrawer",
+      "sub": "Row Edit · PartEditDrawer",
       "route_hint": "/inventory",
       "required": [
         "vendor",
@@ -239,7 +239,7 @@
     {
       "id": "parts.edit.vendor_picker",
       "tab": "Parts & Stock",
-      "sub": "Edit \u00b7 preferred vendor ReferenceSelect",
+      "sub": "Edit · preferred vendor ReferenceSelect",
       "route_hint": "/inventory",
       "required": [
         "vendor",
@@ -312,14 +312,14 @@
     {
       "id": "assignments.crosslink_parts",
       "tab": "Assignments",
-      "sub": "Cross-link \u2192 Parts & Stock",
+      "sub": "Cross-link → Parts & Stock",
       "route_hint": "/inventory/assignments",
       "required": []
     },
     {
       "id": "assignments.crosslink_purchases",
       "tab": "Assignments",
-      "sub": "Cross-link \u2192 Purchase History",
+      "sub": "Cross-link → Purchase History",
       "route_hint": "/inventory/assignments",
       "required": []
     },
@@ -335,7 +335,7 @@
     {
       "id": "purchases.honest_empty",
       "tab": "Purchase History",
-      "sub": "Honest empty \u00b7 purchase SoR not built (HOLD)",
+      "sub": "Honest empty · purchase SoR not built (HOLD)",
       "route_hint": "/inventory/purchases",
       "required": [
         "connectivity"
@@ -344,14 +344,14 @@
     {
       "id": "purchases.crosslink_parts",
       "tab": "Purchase History",
-      "sub": "Cross-link \u2192 Parts & Stock",
+      "sub": "Cross-link → Parts & Stock",
       "route_hint": "/inventory/purchases",
       "required": []
     },
     {
       "id": "purchases.crosslink_assignments",
       "tab": "Purchase History",
-      "sub": "Cross-link \u2192 Assignments",
+      "sub": "Cross-link → Assignments",
       "route_hint": "/inventory/purchases",
       "required": []
     },
@@ -370,34 +370,38 @@
     {
       "id": "chrome.toolbar_search",
       "tab": "Chrome controls",
-      "sub": "List toolbar \u2014 Search (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar — Search (CLS-LIST-TOOLBAR)",
       "route_hint": "/inventory",
       "surface_kind": "toolbar",
-      "required": []
+      "required": [],
+      "surface_path": "components/table/UniversalListToolbar.tsx"
     },
     {
       "id": "chrome.toolbar_range",
       "tab": "Chrome controls",
-      "sub": "List toolbar \u2014 date/amount range (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar — date/amount range (CLS-LIST-TOOLBAR)",
       "route_hint": "/inventory",
       "surface_kind": "toolbar",
-      "required": []
+      "required": [],
+      "surface_path": "components/table/UniversalListToolbar.tsx"
     },
     {
       "id": "chrome.toolbar_gear",
       "tab": "Chrome controls",
-      "sub": "List toolbar \u2014 column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
+      "sub": "List toolbar — column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
       "route_hint": "/inventory",
       "surface_kind": "toolbar",
-      "required": []
+      "required": [],
+      "surface_path": "components/table/UniversalListToolbar.tsx"
     },
     {
       "id": "chrome.toolbar_filter",
       "tab": "Chrome controls",
-      "sub": "List toolbar \u2014 Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
+      "sub": "List toolbar — Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
       "route_hint": "/inventory",
       "surface_kind": "toolbar",
-      "required": []
+      "required": [],
+      "surface_path": "components/table/UniversalListToolbar.tsx"
     }
   ],
   "honesty_audit": {
@@ -413,11 +417,11 @@
         "invoice",
         "bank"
       ],
-      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; \u00a7B9 link columns added."
+      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; §B9 link columns added."
     },
     "reverse_link_2026_08_13_secondary": {
       "finding": "VERTICAL-REVERSE-LINK-SECONDARY-HONESTY",
-      "note": "Secondary module reverse_link Required on hub/chrome/nav leaves without reverse EntityLink drill \u2014 honesty drop. Built stays on money/ops modules already drained. Built restored for EntityLink surfaces: assignments.unit_link, assignments.vendor_link, assignments.wo_link, parts.roster.",
+      "note": "Secondary module reverse_link Required on hub/chrome/nav leaves without reverse EntityLink drill — honesty drop. Built stays on money/ops modules already drained. Built restored for EntityLink surfaces: assignments.unit_link, assignments.vendor_link, assignments.wo_link, parts.roster.",
       "drops": [
         {
           "id": "nav.parts_tab",
@@ -782,7 +786,7 @@
     },
     "money_cells_2026_08_14_ap_bill_overclaim": {
       "finding": "OWNER-EXECUTION-PLAN-SS2-ACCT-F5160",
-      "note": "ap_bill required on assignments.vendor_link, verified live it does not own it. InventoryAssignmentsPage.tsx genuinely owns 'vendor' (real EntityLink kind=\"vendor\" per row, matching the leaf's own name) but vendor_invoice_number/vendor_invoice_amount are plain captured fields on the parts-assignment row, not a real accounting.bills FK \u2014 zero bill_id or EntityLink kind=\"bill\" anywhere on the page.",
+      "note": "ap_bill required on assignments.vendor_link, verified live it does not own it. InventoryAssignmentsPage.tsx genuinely owns 'vendor' (real EntityLink kind=\"vendor\" per row, matching the leaf's own name) but vendor_invoice_number/vendor_invoice_amount are plain captured fields on the parts-assignment row, not a real accounting.bills FK — zero bill_id or EntityLink kind=\"bill\" anywhere on the page.",
       "drops": [
         {
           "id": "assignments.vendor_link",

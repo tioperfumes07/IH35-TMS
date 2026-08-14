@@ -192,7 +192,7 @@
     {
       "id": "scenario.redirect",
       "tab": "Scenario tracker",
-      "sub": "/home/scenario-tracker \u2192 /program",
+      "sub": "/home/scenario-tracker → /program",
       "route_hint": "/home/scenario-tracker",
       "required": []
     },
@@ -215,34 +215,38 @@
     {
       "id": "chrome.toolbar_search",
       "tab": "Chrome controls",
-      "sub": "List toolbar \u2014 Search (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar — Search (CLS-LIST-TOOLBAR)",
       "route_hint": "/program",
       "surface_kind": "toolbar",
-      "required": []
+      "required": [],
+      "surface_path": "components/table/UniversalListToolbar.tsx"
     },
     {
       "id": "chrome.toolbar_range",
       "tab": "Chrome controls",
-      "sub": "List toolbar \u2014 date/amount range (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar — date/amount range (CLS-LIST-TOOLBAR)",
       "route_hint": "/program",
       "surface_kind": "toolbar",
-      "required": []
+      "required": [],
+      "surface_path": "components/table/UniversalListToolbar.tsx"
     },
     {
       "id": "chrome.toolbar_gear",
       "tab": "Chrome controls",
-      "sub": "List toolbar \u2014 column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
+      "sub": "List toolbar — column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
       "route_hint": "/program",
       "surface_kind": "toolbar",
-      "required": []
+      "required": [],
+      "surface_path": "components/table/UniversalListToolbar.tsx"
     },
     {
       "id": "chrome.toolbar_filter",
       "tab": "Chrome controls",
-      "sub": "List toolbar \u2014 Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
+      "sub": "List toolbar — Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
       "route_hint": "/program",
       "surface_kind": "toolbar",
-      "required": []
+      "required": [],
+      "surface_path": "components/table/UniversalListToolbar.tsx"
     },
     {
       "id": "program.panel.thread",
@@ -270,11 +274,11 @@
         "invoice",
         "bank"
       ],
-      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; \u00a7B9 link columns added."
+      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; §B9 link columns added."
     },
     "reverse_link_2026_08_13_secondary": {
       "finding": "VERTICAL-REVERSE-LINK-SECONDARY-HONESTY",
-      "note": "Secondary module reverse_link Required on hub/chrome/nav leaves without reverse EntityLink drill \u2014 honesty drop. Built stays on money/ops modules already drained. Built restored for EntityLink surfaces: legacy.board, program.parity.legacy_audit_scoreboard_page.",
+      "note": "Secondary module reverse_link Required on hub/chrome/nav leaves without reverse EntityLink drill — honesty drop. Built stays on money/ops modules already drained. Built restored for EntityLink surfaces: legacy.board, program.parity.legacy_audit_scoreboard_page.",
       "drops": [
         {
           "id": "nav.scenario",

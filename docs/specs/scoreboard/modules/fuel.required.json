@@ -2,7 +2,7 @@
   "module": "fuel",
   "entity_default": "USMCA",
   "source": {
-    "arch_design": "IH35_ARCHITECTURAL_DESIGN \u2014 Fuel",
+    "arch_design": "IH35_ARCHITECTURAL_DESIGN — Fuel",
     "nav": "apps/frontend/src/pages/fuel/FUEL_TABS_CONFIG.ts",
     "routes": "/fuel/*"
   },
@@ -174,7 +174,7 @@
     {
       "id": "expense_mapping",
       "tab": "Expense mapping",
-      "sub": "Fuel\u2192expense map",
+      "sub": "Fuel→expense map",
       "route_hint": "/fuel/expense-mapping",
       "required": [
         "expense",
@@ -269,34 +269,38 @@
     {
       "id": "chrome.toolbar_search",
       "tab": "Chrome controls",
-      "sub": "List toolbar \u2014 Search (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar — Search (CLS-LIST-TOOLBAR)",
       "route_hint": "/fuel",
       "surface_kind": "toolbar",
-      "required": []
+      "required": [],
+      "surface_path": "components/table/UniversalListToolbar.tsx"
     },
     {
       "id": "chrome.toolbar_range",
       "tab": "Chrome controls",
-      "sub": "List toolbar \u2014 date/amount range (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar — date/amount range (CLS-LIST-TOOLBAR)",
       "route_hint": "/fuel",
       "surface_kind": "toolbar",
-      "required": []
+      "required": [],
+      "surface_path": "components/table/UniversalListToolbar.tsx"
     },
     {
       "id": "chrome.toolbar_gear",
       "tab": "Chrome controls",
-      "sub": "List toolbar \u2014 column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
+      "sub": "List toolbar — column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
       "route_hint": "/fuel",
       "surface_kind": "toolbar",
-      "required": []
+      "required": [],
+      "surface_path": "components/table/UniversalListToolbar.tsx"
     },
     {
       "id": "chrome.toolbar_filter",
       "tab": "Chrome controls",
-      "sub": "List toolbar \u2014 Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
+      "sub": "List toolbar — Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
       "route_hint": "/fuel",
       "surface_kind": "toolbar",
-      "required": []
+      "required": [],
+      "surface_path": "components/table/UniversalListToolbar.tsx"
     }
   ],
   "honesty_audit": {
@@ -312,11 +316,11 @@
         "invoice",
         "bank"
       ],
-      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; \u00a7B9 link columns added."
+      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; §B9 link columns added."
     },
     "reverse_link_2026_08_13_relay": {
       "finding": "VERTICAL-REVERSE-LINK-LEGAL-FUEL-REMAINDER",
-      "note": "RelayDepositReview has no EntityLink reverse drill \u2014 reverse_link Required was inflation.",
+      "note": "RelayDepositReview has no EntityLink reverse drill — reverse_link Required was inflation.",
       "drops": [
         {
           "id": "relay_inbox",
@@ -352,7 +356,7 @@
     },
     "qbo_chrome_2026_08_13_fuel_chrome": {
       "finding": "VERTICAL-QBO-CHROME-FUEL-HONESTY",
-      "note": "Relay/settings/expense_mapping + chrome.toolbar_* lack ListToolbar/QBO triad on those tabs \u2014 Required was inflation (transactions list already Built elsewhere).",
+      "note": "Relay/settings/expense_mapping + chrome.toolbar_* lack ListToolbar/QBO triad on those tabs — Required was inflation (transactions list already Built elsewhere).",
       "drops": [
         {
           "id": "relay_inbox",
@@ -400,7 +404,7 @@
     },
     "vendor_column_2026_08_14_overclaim": {
       "finding": "LINK-F5166-VENDOR-COLUMN-VERTICAL-SWEEP",
-      "note": "expense_mapping (FuelGlMappingCoverage) is false \u2014 maps fuel categories to GL accounts only, no vendor field. fuel.modal.create_fuel_transaction (not touched here \u2014 already correctly not flagged) genuinely has a real EntityPicker kind=\"vendor\" bound to vendor_id.",
+      "note": "expense_mapping (FuelGlMappingCoverage) is false — maps fuel categories to GL accounts only, no vendor field. fuel.modal.create_fuel_transaction (not touched here — already correctly not flagged) genuinely has a real EntityPicker kind=\"vendor\" bound to vendor_id.",
       "drops": [
         {
           "id": "expense_mapping",

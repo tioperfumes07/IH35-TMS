@@ -2,7 +2,7 @@
   "module": "banking",
   "entity_default": "USMCA",
   "source": {
-    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md \u2014 Banking",
+    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md — Banking",
     "nav": "apps/frontend/src/pages/banking/BANKING_NAV_CONFIG.ts",
     "routes": "/banking/*"
   },
@@ -478,42 +478,46 @@
     {
       "id": "chrome.toolbar_search",
       "tab": "Chrome controls",
-      "sub": "List toolbar \u2014 Search (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar — Search (CLS-LIST-TOOLBAR)",
       "route_hint": "/banking",
       "surface_kind": "toolbar",
       "required": [
         "qbo_chrome"
-      ]
+      ],
+      "surface_path": "components/table/UniversalListToolbar.tsx"
     },
     {
       "id": "chrome.toolbar_range",
       "tab": "Chrome controls",
-      "sub": "List toolbar \u2014 date/amount range (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar — date/amount range (CLS-LIST-TOOLBAR)",
       "route_hint": "/banking",
       "surface_kind": "toolbar",
       "required": [
         "qbo_chrome"
-      ]
+      ],
+      "surface_path": "components/table/UniversalListToolbar.tsx"
     },
     {
       "id": "chrome.toolbar_gear",
       "tab": "Chrome controls",
-      "sub": "List toolbar \u2014 column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
+      "sub": "List toolbar — column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
       "route_hint": "/banking",
       "surface_kind": "toolbar",
       "required": [
         "qbo_chrome"
-      ]
+      ],
+      "surface_path": "components/table/UniversalListToolbar.tsx"
     },
     {
       "id": "chrome.toolbar_filter",
       "tab": "Chrome controls",
-      "sub": "List toolbar \u2014 Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
+      "sub": "List toolbar — Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
       "route_hint": "/banking",
       "surface_kind": "toolbar",
       "required": [
         "qbo_chrome"
-      ]
+      ],
+      "surface_path": "components/table/UniversalListToolbar.tsx"
     }
   ],
   "honesty_audit": {
@@ -553,11 +557,11 @@
         "invoice",
         "bank"
       ],
-      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; \u00a7B9 link columns added."
+      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; §B9 link columns added."
     },
     "customer_column_2026_08_14_overclaim": {
       "finding": "LINK-F5165-CUSTOMER-COLUMN-VERTICAL-SWEEP",
-      "note": "the banking.factoring leaf (the /banking/factoring summary tile) is a thin reserve/chargeback total with zero customer reference \u2014 distinct from banking.transactions.list/categorize (not touched here \u2014 already correctly not flagged), which genuinely capture a real customer_id via a picker.",
+      "note": "the banking.factoring leaf (the /banking/factoring summary tile) is a thin reserve/chargeback total with zero customer reference — distinct from banking.transactions.list/categorize (not touched here — already correctly not flagged), which genuinely capture a real customer_id via a picker.",
       "drops": [
         {
           "id": "factoring",
@@ -569,7 +573,7 @@
     },
     "unit_column_2026_08_14_overclaim": {
       "finding": "LINK-F5167-UNIT-COLUMN-VERTICAL-SWEEP",
-      "note": "relay_card is false \u2014 the BankingHome.tsx relay_card tab has no unit_id/EntityLink; per its own copy, the fuel-line breakdown stays on the separate Transactions register, not wired here.",
+      "note": "relay_card is false — the BankingHome.tsx relay_card tab has no unit_id/EntityLink; per its own copy, the fuel-line breakdown stays on the separate Transactions register, not wired here.",
       "drops": [
         {
           "id": "relay_card",
@@ -581,7 +585,7 @@
     },
     "driver_column_2026_08_14_overclaim": {
       "finding": "LINK-F5168-DRIVER-COLUMN-VERTICAL-SWEEP",
-      "note": "driver blanket-required on 1 banking leaf. Verified live \u2014 BankingHome.tsx's \"relay_card\" tab (L893-942) renders only bank-account/wallet tiles (AccountTilesRow) keyed by system_purpose='relay_fuel_wallet' \u2014 wallet-level, not driver-level; no driver_id field at all.",
+      "note": "driver blanket-required on 1 banking leaf. Verified live — BankingHome.tsx's \"relay_card\" tab (L893-942) renders only bank-account/wallet tiles (AccountTilesRow) keyed by system_purpose='relay_fuel_wallet' — wallet-level, not driver-level; no driver_id field at all.",
       "drops": [
         {
           "id": "relay_card",
