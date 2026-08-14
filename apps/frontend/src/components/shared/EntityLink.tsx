@@ -49,6 +49,9 @@ export type EntityKind =
   | "dvir"
   | "maintenance_inspection"
   | "warranty_claim"
+  // LINK-F5171: DVIR defect inbox "Detail" used a bare Link; kind resolves to the mounted
+  // /maintenance/defects/:defectId surface (routes/manifest.tsx).
+  | "maintenance_defect"
   | "inventory_part"
   | "parts_inventory"
   | "maintenance_vendor"
@@ -205,6 +208,8 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
       return `/maintenance/inspections?inspection_id=${id}`;
     case "warranty_claim":
       return `/maintenance/warranty-claims?claim_id=${id}`;
+    case "maintenance_defect":
+      return `/maintenance/defects/${id}`;
     case "safety_event":
       return `/safety/safety-events?event_id=${id}`;
     // SAF-F33 safety drill-through — each target list page reads the param and opens/highlights the row.
