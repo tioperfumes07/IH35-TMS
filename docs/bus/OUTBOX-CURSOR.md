@@ -1,3 +1,4 @@
+2026-08-14T19:25Z Cursor | SHIPPED HONEST-BUILT-LAUNCH-LAW (#6720) — Built harden + seat lanes permanent | Live=BLOCKED | NEXT=surface-bar inventory · CC-1 ap_bill theater · Codex WAVE-A floors
 2026-08-14T19:20Z Cursor | locking HONEST-BUILT-LAUNCH-LAW everywhere + harden isLeafSpecific (|.* / word blankets) | Live=BLOCKED | NEXT=CC-1 ap_bill theater · Codex WAVE-A floors · Cursor surface-bar inventory
 2026-08-13T23:05Z Cursor | shipping NAV-BACK-NESTED-CREATE — Modal drawer ← always | Live=BLOCKED | NEXT=Cursor FE OPEN / Live Chrome gate
 2026-08-13 | shipped LST-F5009 vendor_type R=W (PR #6398) · Neon CHECK applied · NEXT=board next OPEN (Cursor=ex-CC1/CC2)
