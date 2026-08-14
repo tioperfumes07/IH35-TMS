@@ -1,4 +1,4 @@
-import { Link, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -101,9 +101,7 @@ export function PreFlightDvirQueue() {
         label: "Work Order",
         render: (row) =>
           row.auto_wo_id ? (
-            <Link to={`/maintenance/work-orders/${row.auto_wo_id}`} className="text-slate-700 underline" data-testid={`dvir-wo-link-${row.id}`}>
-              View WO
-            </Link>
+            <EntityLink kind="work_order" id={row.work_order_id ?? row.auto_wo_id} label={entityLabel(row.work_order_display_id, row.work_order_id ?? row.auto_wo_id, "Work order")} data-testid={`dvir-wo-link-${row.id}`} />
           ) : (
             "—"
           ),

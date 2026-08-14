@@ -75,10 +75,13 @@ export async function registerMaintenancePmAlertsRoutes(app: FastifyInstance) {
             a.trigger_odometer,
             a.triggered_at::text,
             a.state::text,
-            a.scheduled_work_order_id::text
+            a.scheduled_work_order_id::text,
+            wo.display_id AS scheduled_work_order_display_id
           FROM maintenance.pm_alerts a
           LEFT JOIN mdata.units u ON u.id = a.unit_id AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = a.operating_company_id
           LEFT JOIN maintenance.pm_schedules s ON s.id = a.pm_schedule_id
+          LEFT JOIN maintenance.work_orders wo ON wo.id = a.scheduled_work_order_id
+                                               AND wo.operating_company_id = a.operating_company_id
           WHERE ${filters.join(" AND ")}
           ORDER BY a.triggered_at DESC
           LIMIT 100

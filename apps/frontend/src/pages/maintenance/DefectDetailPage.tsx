@@ -85,7 +85,9 @@ export function DefectDetailPage() {
             <p className="mt-2 whitespace-pre-wrap text-sm text-gray-800">{defect.notes || "No driver notes."}</p>
             <p className="mt-2 text-xs text-gray-500">
               Photos: {defect.photo_keys?.length ?? 0} · Status: {defect.triage_status}
-              {defect.follow_up_wo_id ? ` · WO ${defect.follow_up_wo_id}` : ""}
+              {defect.follow_up_wo_id ? (
+                <> · WO <EntityLink kind="work_order" id={defect.follow_up_wo_id} label={entityLabel(defect.follow_up_wo_display_id, defect.follow_up_wo_id, "Work order")} /></>
+              ) : null}
             </p>
           </header>
 

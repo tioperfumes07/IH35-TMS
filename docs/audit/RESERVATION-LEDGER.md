@@ -110,3 +110,4 @@ Draw the next unused number from your OWN block, record a `CLAIM-<n>` row below,
 | 2026-08-14 | Codex | VERTICAL-CONNECTIVITY-INVENTORY-PURCHASE-HOLD | purchase door + honest-empty HOLD disposition | Inventory page/HOLD doc; focused guard | ACTIVE |
 | 2026-08-14 | Codex | VERTICAL-REVERSE-LINK-VENDOR-MASTER-DETAIL | vendor selected-row tab to canonical profile | Vendors page; focused guard | ACTIVE |
 | 2026-08-14 | Codex | VERTICAL-REVERSE-LINK-EXISTING-FK-DRILLS | inventory WO + task activity exact drills | InventoryAssignmentsPage; TaskPlannerGrid; focused guard | ACTIVE |
+| 2026-08-14 | Codex | VERTICAL-REVERSE-LINK-MAINTENANCE-SOURCE-WO | DVIR defect/pre-flight/PM alert persisted WO drills | maintenance routes and surfaces; focused guard | ACTIVE |

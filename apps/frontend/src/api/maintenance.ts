@@ -42,6 +42,7 @@ export type MaintenancePmAlert = {
   triggered_at: string;
   state: "open" | "acknowledged" | "scheduled" | "dismissed";
   scheduled_work_order_id: string | null;
+  scheduled_work_order_display_id: string | null;
 };
 
 export type WorkOrder = {
@@ -424,8 +425,10 @@ export function getMaintenanceKpiPmCompliance(companyId: string, periodStart: st
   }>(`/api/v1/maintenance/kpi/pm-compliance?${maintKpiQuery(companyId, periodStart, periodEnd, unitId)}`);
 }
 
-export function listMaintenancePmAlerts(companyId: string) {
-  return apiRequest<{ alerts: MaintenancePmAlert[] }>(`/api/v1/maintenance/pm-alerts?${query(companyId)}`);
+export function listMaintenancePmAlerts(companyId: string, state?: MaintenancePmAlert["state"]) {
+  const params = new URLSearchParams({ operating_company_id: companyId });
+  if (state) params.set("state", state);
+  return apiRequest<{ alerts: MaintenancePmAlert[] }>(`/api/v1/maintenance/pm-alerts?${params.toString()}`);
 }
 
 export function acknowledgeMaintenancePmAlert(alertId: string, companyId: string) {
@@ -1858,6 +1861,7 @@ export type DvirDefectInboxRow = {
   notes: string;
   photo_keys?: string[];
   follow_up_wo_id?: string | null;
+  follow_up_wo_display_id?: string | null;
   created_at: string;
   dvir_type?: string;
   submitted_at?: string;
