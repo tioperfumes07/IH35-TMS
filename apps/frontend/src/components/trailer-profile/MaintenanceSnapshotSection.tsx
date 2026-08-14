@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { EntityLink } from "../shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 
 export function MaintenanceSnapshotSection({ maintenance }: { maintenance: Record<string, unknown> }) {
@@ -13,9 +13,13 @@ export function MaintenanceSnapshotSection({ maintenance }: { maintenance: Recor
         <ul className="mt-1 space-y-0.5">
           {workOrders.map((wo) => (
             <li key={String(wo.wo_id)} className="text-xs">
-              <Link to={`/maintenance/work-orders/${String(wo.wo_id)}`} className="text-slate-700 hover:underline">
-                {entityLabel(wo.display_id, wo.wo_id, "Work order")}
-              </Link>
+              <EntityLink
+                kind="work_order"
+                id={String(wo.wo_id)}
+                label={entityLabel(wo.display_id, wo.wo_id, "Work order")}
+                className="text-slate-700 hover:underline"
+                data-testid="trailer-maint-snapshot-wo-link"
+              />
               <span className="text-gray-500"> · {String(wo.status ?? "open")}</span>
             </li>
           ))}
