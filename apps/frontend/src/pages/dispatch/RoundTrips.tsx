@@ -272,10 +272,27 @@ export function RoundTrips({ loads, operatingCompanyId, loading, listError, onLo
             >
               <div className="flex min-w-0 flex-col gap-1">
                 <div className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">
-                  {pair.unitNumber}
-                  {pair.driverId || pair.driverName
-                    ? ` · ${entityLabel(pair.driverName, pair.driverId, "Driver")}`
-                    : ""}
+                  <EntityLink
+                    kind="unit"
+                    id={pair.unitId}
+                    label={entityLabel(pair.unitNumber, pair.unitId, "Unit")}
+                    className="text-gray-500 hover:underline"
+                    data-testid="round-trip-unit-link"
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                  {pair.driverId || pair.driverName ? (
+                    <>
+                      {" · "}
+                      <EntityLink
+                        kind="driver"
+                        id={pair.driverId ?? undefined}
+                        label={entityLabel(pair.driverName, pair.driverId, "Driver")}
+                        className="text-gray-500 hover:underline"
+                        data-testid="round-trip-driver-link"
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                    </>
+                  ) : null}
                 </div>
                 {pair.outbound ? (
                   <TripCard load={pair.outbound} onClick={onLoadClick} />

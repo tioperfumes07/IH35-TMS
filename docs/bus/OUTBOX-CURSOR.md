@@ -1,3 +1,4 @@
+2026-08-14T20:50Z Cursor | shipping LINK-F5171 round-trips unit/driver + customer quality related load EntityLinks | Live=BLOCKED | NEXT=more LINK-F5171 FE · toolbar inventory
 2026-08-14T20:35Z Cursor | SHIPPED LINK-F5171 load.drawer.factoring invoice EntityLink (#6733) | Live=BLOCKED | NEXT=wizard/toolbar inventory · more LINK-F5171 FE
 2026-08-14T20:20Z Cursor | SHIPPED SURFACE-BAR-CREATE-DRAWER-INVENTORY (#6732) — 52 create drawers exact surface_path | Live=BLOCKED | theater_broad_remaining:54 | NEXT=LINK-F5171 FE leftovers
 2026-08-14T19:50Z Cursor | SHIPPED LINK-F5171 load.drawer.driver_pay bill EntityLink (#6726) + baseline regen | Live=BLOCKED | NEXT=surface-bar inventory
