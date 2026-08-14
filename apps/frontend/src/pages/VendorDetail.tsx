@@ -1177,7 +1177,7 @@ export function VendorDetailPage() {
                     label: "Credit #",
                     sortable: true,
                     render: (c) => (
-                      <Link to={`/accounting/vendor-credits?vendor_id=${encodeURIComponent(id)}`} className="text-slate-700 hover:underline">
+                      <Link to={`/accounting/vendor-credits?credit_id=${encodeURIComponent(c.id)}`} className="text-slate-700 hover:underline">
                         {entityLabel(c.display_id, c.id, "Vendor credit")}
                       </Link>
                     ),
