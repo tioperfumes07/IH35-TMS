@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["lists"],"cols":["driver"],"leafRe":".*","task":"WAVE-A-lists-driver","vertical":"column-wave"} */
+/** @matrix-built {"modules":["lists"],"cols":["driver"],"leafRe":"^catalog\\.drivers\\.teams\\.(list|create)$","task":"WAVE-A-lists-driver-exact-surfaces","vertical":"column-wave"} */
 import fs from "node:fs";
 
 const checks = [
