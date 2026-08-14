@@ -93,6 +93,9 @@ export type EntityKind =
   | "company_violation"
   | "integrity_alert"
   | "integrity_anomaly"
+  | "factoring_queue_load"
+  | "load_template"
+  | "cash_forecast_entry"
   | "inventory_part"
   | "parts_inventory"
   | "maintenance_vendor"
@@ -297,6 +300,12 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
       return `/safety/integrity-alerts?alert_id=${id}`;
     case "integrity_anomaly":
       return `/safety/integrity-reports?anomaly_id=${id}`;
+    case "factoring_queue_load":
+      return `/dispatch/factoring-queue?load_id=${id}`;
+    case "load_template":
+      return `/dispatch/planning/calendar?panel=templates&template_id=${id}`;
+    case "cash_forecast_entry":
+      return `/cash-flow?tab=manual_daily_projections&entry_id=${id}`;
     case "safety_event":
       return `/safety/safety-events?event_id=${id}`;
     // SAF-F33 safety drill-through — each target list page reads the param and opens/highlights the row.

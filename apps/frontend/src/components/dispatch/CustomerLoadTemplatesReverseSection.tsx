@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { EntityLink } from "../shared/EntityLink";
 import { listLoadTemplates } from "../../api/dispatch";
 
 export function CustomerLoadTemplatesReverseSection({ operatingCompanyId, customerId }: { operatingCompanyId: string; customerId: string }) {
@@ -18,9 +18,12 @@ export function CustomerLoadTemplatesReverseSection({ operatingCompanyId, custom
       <ul className="mt-2 space-y-1">
         {templates.slice(0, 5).map((template) => (
           <li key={template.id}>
-            <Link className="text-xs font-semibold text-slate-700 hover:underline" to={`/dispatch/planning/calendar?panel=templates&template_id=${encodeURIComponent(template.id)}`}>
-              {template.name}
-            </Link>
+            <EntityLink
+              kind="load_template"
+              id={template.id}
+              label={template.name}
+              className="text-xs font-semibold text-slate-700 hover:underline"
+            />
           </li>
         ))}
       </ul>
