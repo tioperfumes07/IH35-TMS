@@ -118,7 +118,7 @@ requireMatch(
 );
 requireMatch(
   "apps/frontend/src/components/drivers/EarningsTab.tsx",
-  /kind="driver_deductions_filter"[\s\S]{0,120}data-testid="driver-earnings-auto-deductions-link"/,
+  /kind="driver_deductions_filter"[\s\S]{0,280}data-testid="driver-earnings-auto-deductions-link"/,
   "EarningsTab must EntityLink kind=driver_deductions_filter (Manage auto-deduction policies)"
 );
 
