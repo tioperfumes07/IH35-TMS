@@ -807,6 +807,11 @@
     "claimed_by": "codex",
     "purpose": "verify-dispatch-detention-reverse-links"
   },
+  "3310": {
+    "claimed_at": "2026-08-14",
+    "claimed_by": "codex",
+    "purpose": "verify-task-drawer-reverse-links"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
@@ -2651,5 +2656,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1138
+  "total_claimed": 1139
 }
