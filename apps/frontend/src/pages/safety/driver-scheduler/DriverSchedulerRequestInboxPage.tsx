@@ -44,11 +44,15 @@ export function DriverSchedulerRequestInboxPage() {
         key: "review",
         label: "",
         render: (r) => (
-          <Link to={`/safety/scheduler/requests/${String(r.id)}`}>
-            <Button size="sm" variant="secondary">
-              Review
-            </Button>
-          </Link>
+          <EntityLink
+            kind="scheduler_request"
+            id={String(r.id)}
+            label={
+              <Button size="sm" variant="secondary">
+                Review
+              </Button>
+            }
+          />
         ),
       },
     ],
