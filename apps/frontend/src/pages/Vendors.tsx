@@ -543,8 +543,20 @@ export function VendorsPage() {
                   }
                 />
               ) : activeTab === "vendor_details" ? (
-                <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm text-gray-700">
-                  Vendor details are shown in the header section for this layout.
+                <div className="space-y-3 rounded-sm border border-gray-200 bg-white p-3 text-sm text-gray-700" data-testid="vendor-master-detail-profile">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                      <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">Canonical vendor profile</div>
+                      <EntityLink kind="vendor" id={selectedVendor.id} label={selectedVendor.name} />
+                    </div>
+                    <Button type="button" onClick={() => navigate(`/vendors/${selectedVendor.id}`)}>Open full vendor profile</Button>
+                  </div>
+                  <dl className="grid gap-2 border-t border-gray-100 pt-3 md:grid-cols-2">
+                    <div><dt className="text-xs font-semibold text-gray-500">Vendor code</dt><dd>{selectedVendor.vendor_code || "—"}</dd></div>
+                    <div><dt className="text-xs font-semibold text-gray-500">Vendor type</dt><dd>{selectedVendor.vendor_type || "—"}</dd></div>
+                    <div><dt className="text-xs font-semibold text-gray-500">Email</dt><dd>{selectedVendor.email || "—"}</dd></div>
+                    <div><dt className="text-xs font-semibold text-gray-500">Phone</dt><dd>{selectedVendor.phone || "—"}</dd></div>
+                  </dl>
                 </div>
               ) : (
                 <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm text-gray-500">{selectedVendorPublicNotes || "No notes."}</div>

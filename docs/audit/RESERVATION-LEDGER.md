@@ -108,3 +108,4 @@ Draw the next unused number from your OWN block, record a `CLAIM-<n>` row below,
 | 2026-08-14 | Codex | VERTICAL-CONNECTIVITY-SYSTEM-PROGRAM-CONFIG | code/R2/git-backed System connectivity applicability | System module; program tracker/matrix routes; focused guard | ACTIVE |
 | 2026-08-14 | Codex | VERTICAL-CONNECTIVITY-MAINTENANCE-DAMAGE-INTAKE | triage damage/WO dual-create connectivity | TriageModal; maintenance routes/API; focused guard | ACTIVE |
 | 2026-08-14 | Codex | VERTICAL-CONNECTIVITY-INVENTORY-PURCHASE-HOLD | purchase door + honest-empty HOLD disposition | Inventory page/HOLD doc; focused guard | ACTIVE |
+| 2026-08-14 | Codex | VERTICAL-REVERSE-LINK-VENDOR-MASTER-DETAIL | vendor selected-row tab to canonical profile | Vendors page; focused guard | ACTIVE |
