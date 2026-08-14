@@ -40,6 +40,7 @@ export type HosDaily = {
 
 export type HosRosterDriver = HosDaily & {
   driver_name: string | null;
+  unit_id: string | null;
   unit_number: string | null;
   current_duty_status: HosDutyStatus | null;
 };

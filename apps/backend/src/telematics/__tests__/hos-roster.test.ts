@@ -10,7 +10,7 @@ function client() {
     query: async (sql: string) => {
       if (sql.includes("set_config")) return { rows: [] };
       if (sql.includes("FROM telematics.vehicle_driver_assignments"))
-        return { rows: [{ driver_id: D1, driver_name: "Real Driver", unit_number: "T162" }] };
+        return { rows: [{ driver_id: D1, driver_name: "Real Driver", unit_id: "00000000-0000-4000-8000-000000000162", unit_number: "T162" }] };
       if (sql.includes("FROM hos.duty_status_events"))
         return {
           rows: [
@@ -30,6 +30,7 @@ describe("getHosDailyRoster (canonical source for timeline + table)", () => {
     const d = roster.drivers[0];
     expect(d.driver_name).toBe("Real Driver");
     expect(d.unit_number).toBe("T162");
+    expect(d.unit_id).toBe("00000000-0000-4000-8000-000000000162");
     expect(d.available).toBe(true);
     expect(d.current_duty_status).toBe("driving"); // last segment of the day
     expect(d.clocks).not.toBeNull();

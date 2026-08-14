@@ -170,6 +170,7 @@ export async function getHosDaily(
 // (GUARD: board cyc=128 vs /hos/daily cyc=472 for the same driver). Per active board driver -> getHosDaily + name/unit.
 export type HosRosterDriver = HosDaily & {
   driver_name: string | null;
+  unit_id: string | null;
   unit_number: string | null;
   current_duty_status: HosDutyStatus | null; // the duty status covering "now" (last segment of the day)
 };
@@ -188,10 +189,11 @@ export async function getHosDailyRoster(
 ): Promise<HosRoster> {
   await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
   // Active board drivers = drivers with an OPEN vehicle assignment (the same set the fleet board + HOS pull use).
-  const active = await client.query<{ driver_id: string; driver_name: string | null; unit_number: string | null }>(
+  const active = await client.query<{ driver_id: string; driver_name: string | null; unit_id: string | null; unit_number: string | null }>(
     `SELECT DISTINCT ON (a.driver_id)
        a.driver_id::text AS driver_id,
        trim(coalesce(d.first_name,'') || ' ' || coalesce(d.last_name,'')) AS driver_name,
+       u.id::text AS unit_id,
        u.unit_number
      FROM telematics.vehicle_driver_assignments a
      JOIN mdata.drivers d ON d.id = a.driver_id
@@ -207,7 +209,7 @@ export async function getHosDailyRoster(
   for (const r of active.rows) {
     const daily = await getHosDaily(client, operatingCompanyId, r.driver_id, dateStr, now);
     const current = daily.segments.length > 0 ? daily.segments[daily.segments.length - 1].duty_status : null;
-    drivers.push({ ...daily, driver_name: r.driver_name?.trim() || null, unit_number: r.unit_number, current_duty_status: current });
+    drivers.push({ ...daily, driver_name: r.driver_name?.trim() || null, unit_id: r.unit_id, unit_number: r.unit_number, current_duty_status: current });
   }
 
   const counts = { active: drivers.length, on_duty: 0, driving: 0, low: 0, violation: 0, unavailable: 0 };

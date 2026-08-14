@@ -94,7 +94,9 @@ export function HosTrackerSection({ operatingCompanyId }: { operatingCompanyId: 
         label: "Unit",
         sortable: true,
         cellClass: "font-mono",
-        render: (driver) => entityLabel(driver.unit_number, null, "Unit"),
+        render: (driver) => (
+          <EntityLink kind="unit" id={driver.unit_id} label={entityLabel(driver.unit_number, driver.unit_id, "Unit")} />
+        ),
       },
       {
         key: "current_duty_status",
