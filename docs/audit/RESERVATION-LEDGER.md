@@ -88,3 +88,5 @@ Draw the next unused number from your OWN block, record a `CLAIM-<n>` row below,
 | 2026-08-14T13:09:00-05:00 | Codex | VERTICAL-CONNECTIVITY-INLINE-ROUTES | two inline surface route hints + mount guard | RESERVED | codex/vertical-connectivity-inline-032 |
 | 2026-08-14T13:00:06-05:00 | Codex | VERTICAL-CONNECTIVITY-INLINE-ROUTES | two inline surface route hints + mount guard | RELEASED-ON-MERGE | codex/vertical-connectivity-inline-032 |
 | 2026-08-14T13:14:00-05:00 | Codex | VERTICAL-CONNECTIVITY-QBO-CATEGORIES-TMS-CATALOG | product/service category list/create entity membership + guard | RESERVED | codex/vertical-next-033 |
+| 2026-08-14T13:03:47-05:00 | Codex | VERTICAL-CONNECTIVITY-QBO-CATEGORIES-TMS-CATALOG | product/service category list/create entity membership + guard | RELEASED-ON-MERGE | codex/vertical-next-033 |
+| 2026-08-14T13:20:00-05:00 | Codex | VERTICAL-CONNECTIVITY-REPORTS-HUB | reports registry hub + category/run subnav exact guard | RESERVED | codex/vertical-connectivity-reports-034 |
