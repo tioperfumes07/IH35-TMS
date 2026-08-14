@@ -61,6 +61,9 @@ function main() {
   if (!applicationPage.includes("fcra_notice")) failures.push("ApplicationPage must show FCRA compliance notice");
   if (!pipelinePage.includes("ApplicantsPipelinePage")) failures.push("ApplicantsPipelinePage required");
   if (!pipelinePage.includes("Convert to driver")) failures.push("Pipeline must expose convert action");
+  if (!pipelinePage.includes('kind="onboarding_session"') || !pipelinePage.includes("id={row.onboarding_session_id}")) {
+    failures.push("Pipeline onboarding drill must use EntityLink kind=onboarding_session");
+  }
   if (!applicantsApi.includes("submitDriverApplication")) failures.push("Applicants API client required");
   if (!manifest.includes("/apply/:token")) failures.push("Frontend route /apply/:token required");
   if (!manifest.includes("/drivers/applicants")) failures.push("Frontend route /drivers/applicants required");
