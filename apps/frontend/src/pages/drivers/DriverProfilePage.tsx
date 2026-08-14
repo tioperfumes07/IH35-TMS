@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useParams, useSearchParams } from "react-router-dom";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { apiRequest } from "../../api/client";
 import { updateDriver, deactivateDriver, reactivateDriver } from "../../api/mdata";
 import { listDriverQualificationItems } from "../../api/safety";
@@ -288,9 +289,13 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
                 {visibilitySaving ? "Saving…" : driver.status === "Inactive" ? "Show in lists" : "Hide from lists"}
               </button>
             ) : null}
-            <Link to={`/drivers/${driver.id}`} className="text-xs font-semibold text-slate-700 hover:underline">
-              Open full driver record
-            </Link>
+            <EntityLink
+              kind="driver"
+              id={driver.id}
+              label="Open full driver record"
+              className="text-xs font-semibold text-slate-700 hover:underline"
+              data-testid="driver-profile-open-full-record-link"
+            />
             {onBack ? (
               <button type="button" onClick={onBack} className="text-xs font-semibold text-slate-600 hover:underline">
                 Back to list
