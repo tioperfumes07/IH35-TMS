@@ -1,5 +1,4 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
 import { listInsurancePolicies } from "../../api/insurance";
 import { formatDateUS } from "../../lib/formatDate";
 import { ListErrorState } from "../ListErrorState";
@@ -13,11 +12,10 @@ export function VendorInsurancePoliciesReverseSection({ operatingCompanyId, vend
     enabled: Boolean(operatingCompanyId && vendorId),
   });
   const rows = query.data?.policies ?? [];
-  const drill = `/safety/insurance/policies?vendor_id=${encodeURIComponent(vendorId)}`;
   return <section className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid="vendor-insurance-policies-reverse">
     <div className="flex items-center justify-between gap-2">
       <h3 className="text-sm font-semibold text-slate-900">Insurance Policies{rows.length ? ` (${rows.length})` : ""}</h3>
-      <Link className="text-xs font-semibold text-slate-700 underline" to={drill}>Open Policies</Link>
+      <EntityLink kind="insurance_policies_vendor" id={vendorId} label="Open Policies" className="text-xs font-semibold text-slate-700 underline" />
     </div>
     {query.isLoading ? <p className="text-sm text-gray-500">Loading insurance policies…</p> : null}
     {query.isError ? (

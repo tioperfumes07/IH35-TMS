@@ -142,6 +142,9 @@ export type EntityKind =
   // LINK-F5171: reverse "Open Safety Events" / "Open Fines" → filtered list (not a single row).
   | "safety_events_driver"
   | "safety_events_unit"
+  | "safety_events_load"
+  | "insurance_policies_vendor"
+  | "severe_repairs_unit"
   | "safety_fines_driver"
   | "safety_fines_load"
   | "safety_fines_unit"
@@ -438,6 +441,12 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
       return `/safety/safety-events?subject_driver_id=${id}`;
     case "safety_events_unit":
       return `/safety/safety-events?subject_unit_id=${id}`;
+    case "safety_events_load":
+      return `/safety/safety-events?related_load_id=${id}`;
+    case "insurance_policies_vendor":
+      return `/safety/insurance/policies?vendor_id=${id}`;
+    case "severe_repairs_unit":
+      return `/maintenance/severe-repairs?unit_id=${id}`;
     case "safety_fines_driver":
       return `/safety/external-fines?subject_driver_id=${id}`;
     case "safety_fines_load":

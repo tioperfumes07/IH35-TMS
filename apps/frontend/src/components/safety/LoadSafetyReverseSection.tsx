@@ -354,12 +354,12 @@ function LoadSafetyEventsBlock({
             </span>
           ) : null}
         </h3>
-        <Link
+        <EntityLink
+          kind="safety_events_load"
+          id={loadId}
+          label="Open Safety Events"
           className="text-xs font-semibold text-slate-700 underline"
-          to="/safety/safety-events"
-        >
-          Open Safety Events
-        </Link>
+        />
       </div>
       {query.isLoading ? (
         <p className="text-sm text-gray-500">Loading…</p>
