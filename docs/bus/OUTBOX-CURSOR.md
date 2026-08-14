@@ -114,3 +114,5 @@
 2026-08-13T22:45Z Cursor | SCOREBOARD COL Gaps→0 (reverse/picker/qbo/money) via #6573–#6584 weekend fast-push | Live=BLOCKED — FULLY-WIRED item 12 NOT done | NEXT=recensus other Required cols / Live Chrome gate
 2026-08-13T22:50Z Cursor | shipping VERTICAL-OPS-COLS-REMAINDER-HONESTY | work_order/claim/accident/… Gap→0 | Live=BLOCKED
 2026-08-13T22:57Z Cursor | 5m loop aborted by user — re-arming | Live=BLOCKED | main tip synced
+
+- 2026-08-14 shipped #6806 layover + #6808 help/WO + next driver/portal load EntityLink (this PR)

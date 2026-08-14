@@ -341,6 +341,7 @@ export function scanLoadColumns(files) {
       if (/(?:^|[{,\s])value:\s*["'`]/.test(obj.text)) continue;
       const drills =
         /kind=\{?["'`]load["'`]/.test(obj.text) ||
+        /kind=\{?["'`]portal_load["'`]/.test(obj.text) ||
         /entityKind:\s*["'`]load["'`]/.test(obj.text) ||
         obj.text.includes(CANONICAL_PATH) ||
         // Only a portal file may satisfy the contract with the portal route. An office surface
@@ -504,7 +505,7 @@ function goodFixture() {
         const cols = [{ key: "load_id", label: "Load", entityKind: "load" }];`,
       [`${SRC}/portal/PortalDashboardPage.tsx`]: `
         const cols = [{ key: "load_number", label: "Load #",
-          render: (l) => <Link to={\`/portal/loads/\${l.id}\`}>{l.load_number}</Link> }];`,
+          render: (l) => <EntityLink kind="portal_load" id={l.id} label={l.load_number} /> }];`,
       [`${SRC}/pages/OtherModule.tsx`]: `
         <Link to={\`/banking/transactions?txn_id=\${id}\`}>txn</Link>
         <Link to={\`/dispatch?view=loads&status=in_transit\`}>board</Link>`,

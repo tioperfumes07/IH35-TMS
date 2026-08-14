@@ -76,6 +76,10 @@ export type EntityKind =
   | "help_article"
   // LINK-F5171: Ops work-orders console is /work-orders/:id — distinct from maintenance work_order.
   | "work_orders_console"
+  // LINK-F5171: Driver-app load detail (/driver/loads/:id) ≠ office kind=load (/dispatch/loads/:id).
+  | "driver_app_load"
+  // LINK-F5171: Customer portal load detail (/portal/loads/:id) ≠ office kind=load.
+  | "portal_load"
   | "inventory_part"
   | "parts_inventory"
   | "maintenance_vendor"
@@ -254,6 +258,10 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
       return `/help/${id}`;
     case "work_orders_console":
       return `/work-orders/${id}`;
+    case "driver_app_load":
+      return `/driver/loads/${id}`;
+    case "portal_load":
+      return `/portal/loads/${id}`;
     case "safety_event":
       return `/safety/safety-events?event_id=${id}`;
     // SAF-F33 safety drill-through — each target list page reads the param and opens/highlights the row.

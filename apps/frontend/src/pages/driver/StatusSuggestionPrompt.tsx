@@ -2,7 +2,7 @@ import { entityLabel } from "../../lib/entity-label";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { listDriverStatusSuggestions, respondDriverStatusSuggestion } from "../../api/driver";
-import { Link } from "react-router-dom";
+import { EntityLink } from "../../components/shared/EntityLink";
 
 const SNOOZE_MS = 5 * 60 * 1000;
 
@@ -35,8 +35,14 @@ export function StatusSuggestionPrompt() {
       <div className="w-full max-w-md rounded-lg border border-slate-200 bg-white p-4 shadow-xl">
         <p className="text-sm font-semibold text-slate-900">Status suggestion</p>
         <p className="mt-1 text-sm text-slate-700">
-          Looks like you’re underway on load <Link to={`/driver/loads/${active.load_id}`} className="font-semibold text-slate-700 hover:underline">{entityLabel(active.load_number, active.load_id, "Load")}</Link>. Mark as{" "}
-          <span className="font-semibold">{active.suggested_to.replace("_", " ")}</span>?
+          Looks like you’re underway on load{" "}
+          <EntityLink
+            kind="driver_app_load"
+            id={active.load_id}
+            label={entityLabel(active.load_number, active.load_id, "Load")}
+            className="font-semibold text-slate-700 hover:underline"
+          />
+          . Mark as <span className="font-semibold">{active.suggested_to.replace("_", " ")}</span>?
         </p>
         <p className="mt-1 text-xs text-slate-500">{active.reason}</p>
         <div className="mt-3 flex items-center justify-end gap-2">

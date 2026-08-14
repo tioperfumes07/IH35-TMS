@@ -13,12 +13,13 @@ const sources = {
 };
 
 const checks = [
-  ["arrival", /to=\{`\/driver\/loads\/\$\{activePrompt\.load_id\}`\}/, "arrival prompt drills to driver load detail"],
-  ["status", /to=\{`\/driver\/loads\/\$\{active\.load_id\}`\}/, "status prompt drills to driver load detail"],
+  ["arrival", /kind=["']driver_app_load["'][\s\S]{0,120}id=\{activePrompt\.load_id\}/, "arrival prompt drills to driver load detail"],
+  ["status", /kind=["']driver_app_load["'][\s\S]{0,120}id=\{active\.load_id\}/, "status prompt drills to driver load detail"],
   ["settlement", /kind="load" id=\{leg\.load_id\}/, "settlement-chain leg drills to office load detail"],
   ["edi", /kind="load" id=\{selected\.related_load_uuid\}/, "EDI transaction drills to office load detail"],
   ["routes", /<Route path="\/driver" element=\{<DriverShell \/>\}>[\s\S]*?<Route path="loads\/:id" element=\{<DriverLoadDetailPage \/>\}/, "driver load detail route is mounted"],
   ["entityLink", /case "load":[\s\S]*?return `\/dispatch\/loads\/\$\{id\}`/, "office load resolver targets mounted dispatch detail"],
+  ["entityLink", /case "driver_app_load":[\s\S]*?return `\/driver\/loads\/\$\{id\}`/, "driver-app load resolver targets /driver/loads/:id"],
 ];
 
 const failures = (candidate) => checks.filter(([key, pattern]) => !pattern.test(candidate[key])).map(([, , label]) => label);
