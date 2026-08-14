@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["accounting","banking","cash-flow","compliance","customers","dispatch","docs","driver-hub","drivers","factoring","finance","fleet","form_425","fuel","help","home","insurance","inventory","legal","lists","maintenance","program","reports","safety","settlements","system","tasks","users","vendors"],"cols":["connectivity"],"leafRe":".*","task":"WAVE-B-connectivity-all-modules","vertical":"column-wave"} */
 /**
- * Full-product connectivity contract.
+ * Full-product route/surface existence census. This deliberately awards no connectivity Built
+ * credit: a mounted route proves reachability only, not API-to-canonical depth or working controls.
  * Every leaf that requires connectivity declares route_hint in its required.json. This guard proves
  * that a URL hint resolves to a mounted route (absolute, nested, parameterized, or explicit redirect),
  * or that an embedded `surface://` hint resolves to a real frontend component.
