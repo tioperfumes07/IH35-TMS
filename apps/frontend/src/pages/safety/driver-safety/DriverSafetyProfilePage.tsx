@@ -1,30 +1,40 @@
-import { useMemo, useState } from "react";
-import { DriverDocumentUploadField } from "../../../components/FileUpload/DriverDocumentUploadField";
+import { useQuery } from "@tanstack/react-query";
+import { useParams } from "react-router-dom";
 import { DriverSafetyProfilePanel } from "../../../components/safety/driver-safety/DriverSafetyProfilePanel";
+import { useCompanyContext } from "../../../contexts/CompanyContext";
+import { getDriverSafetyAggregate } from "../../../api/mdata";
+import { ListErrorState } from "../../../components/ListErrorState";
 
 export default function DriverSafetyProfilePage() {
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const { driverId = "" } = useParams<{ driverId: string }>();
+  const { selectedCompanyId } = useCompanyContext();
+  const companyId = selectedCompanyId ?? "";
+  const query = useQuery({
+    queryKey: ["driver-safety-profile", companyId, driverId],
+    queryFn: () => getDriverSafetyAggregate(driverId, companyId),
+    enabled: Boolean(companyId && driverId),
+  });
 
-  const selectedLabel = useMemo(() => {
-    if (!selectedFile) return "No file selected";
-    return selectedFile.name;
-  }, [selectedFile]);
+  if (!companyId) return <p className="text-sm text-slate-600">Select an operating company to load this driver safety profile.</p>;
+  if (query.isLoading) return <p className="text-sm text-slate-600">Loading driver safety profile…</p>;
+  if (query.isError) return <ListErrorState title="Couldn't load driver safety profile" message={(query.error as Error).message} onRetry={() => void query.refetch()} />;
+  if (!query.data) return <p className="text-sm text-slate-600">Driver safety profile not found.</p>;
+
+  const { driver, medical_card: medical, training_records: training } = query.data;
+  const dqMissingCount = [driver.cdl_number, driver.cdl_expires_at, medical.expiration].filter((value) => !value).length;
+  const trainingDueCount = training.filter((record) => record.status === "yellow" || record.status === "red").length;
+  const medicalExpiryPill = medical.color_status === "gray" ? "unknown" : medical.color_status;
 
   return (
     <main className="space-y-4">
       <DriverSafetyProfilePanel
-        driverName="Driver"
-        driverDisplayId="DRV-0000"
-        medicalExpiryPill="amber"
-        dqMissingCount={0}
-        trainingDueCount={0}
+        driverId={driver.id}
+        driverName={`${driver.first_name} ${driver.last_name}`.trim()}
+        driverDisplayId={driver.cdl_number ?? driver.id.slice(0, 8)}
+        medicalExpiryPill={medicalExpiryPill === "yellow" ? "amber" : medicalExpiryPill}
+        dqMissingCount={dqMissingCount}
+        trainingDueCount={trainingDueCount}
       />
-
-      <section className="rounded-lg border border-gray-200 bg-white p-4">
-        <h3 className="mb-2 text-base font-semibold text-gray-900">Upload Driver Document</h3>
-        <DriverDocumentUploadField label="Document" onFileSelected={setSelectedFile} />
-        <p className="mt-2 text-xs text-gray-500">{selectedLabel}</p>
-      </section>
     </main>
   );
 }

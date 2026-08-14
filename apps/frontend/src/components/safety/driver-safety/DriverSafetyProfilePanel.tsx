@@ -3,6 +3,7 @@ type ExpiryPill = "green" | "amber" | "red" | "unknown";
 type DriverSafetyProfilePanelProps = {
   driverName: string;
   driverDisplayId: string;
+  driverId: string;
   medicalExpiryPill: ExpiryPill;
   dqMissingCount: number;
   trainingDueCount: number;
@@ -11,6 +12,7 @@ type DriverSafetyProfilePanelProps = {
 export function DriverSafetyProfilePanel({
   driverName,
   driverDisplayId,
+  driverId,
   medicalExpiryPill,
   dqMissingCount,
   trainingDueCount,
@@ -20,7 +22,7 @@ export function DriverSafetyProfilePanel({
       <header className="mb-3">
         <h2 className="text-lg font-semibold text-gray-900">Driver Safety Profile</h2>
         <p className="text-sm text-gray-500">
-          {driverName} ({driverDisplayId})
+          <EntityLink kind="driver" id={driverId} label={driverName} /> ({driverDisplayId})
         </p>
       </header>
       <div className="grid gap-3 text-sm sm:grid-cols-3">
@@ -29,7 +31,7 @@ export function DriverSafetyProfilePanel({
           <p className="text-gray-900">{medicalExpiryPill.toUpperCase()}</p>
         </article>
         <article className="rounded-md bg-gray-50 p-3">
-          <p className="font-medium text-gray-700">DQ Missing</p>
+          <p className="font-medium text-gray-700">DQ Core Gaps</p>
           <p className="text-gray-900">{dqMissingCount}</p>
         </article>
         <article className="rounded-md bg-gray-50 p-3">
@@ -40,3 +42,4 @@ export function DriverSafetyProfilePanel({
     </section>
   );
 }
+import { EntityLink } from "../../shared/EntityLink";
