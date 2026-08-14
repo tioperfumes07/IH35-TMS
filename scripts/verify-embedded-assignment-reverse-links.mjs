@@ -25,25 +25,25 @@ const read = (file) => fs.readFileSync(file, "utf8");
 function check(sources) {
   const failures = [];
   const expects = [
-    ["driver", /kind="unit" id=\{String\(def\.unit_id\)\}/, "default unit"],
-    ["driver", /kind="unit" id=\{String\(cur\.unit_id\)\}/, "current unit"],
-    ["trailer", /kind="unit" id=\{String\(unit\.unit_id\)\}/, "attached unit"],
+    ["driver", /kind="unit"[\s\S]{0,120}id=\{String\(def\.unit_id\)\}/, "default unit"],
+    ["driver", /kind="unit"[\s\S]{0,120}id=\{String\(cur\.unit_id\)\}/, "current unit"],
+    ["trailer", /kind="unit"[\s\S]{0,120}id=\{String\(unit\.unit_id\)\}/, "attached unit"],
     [
       "trailer",
       /kind="load"[\s\S]{0,120}id=\{String\(load\.load_id\)\}/,
       "current load",
     ],
-    ["safety", /kind="driver" id=\{s\(row\.driver_id\)\}/, "accident driver"],
-    ["safety", /kind="unit" id=\{s\(row\.unit_id\)\}/, "accident unit"],
+    ["safety", /kind="driver"[\s\S]{0,120}id=\{s\(row\.driver_id\)\}/, "accident driver"],
+    ["safety", /kind="unit"[\s\S]{0,120}id=\{s\(row\.unit_id\)\}/, "accident unit"],
     [
       "safety",
-      /kind="driver" id=\{s\(row\.subject_driver_id\)\}/,
+      /kind="driver"[\s\S]{0,120}id=\{s\(row\.subject_driver_id\)\}/,
       "event driver",
     ],
-    ["safety", /kind="unit" id=\{s\(row\.subject_unit_id\)\}/, "event unit"],
+    ["safety", /kind="unit"[\s\S]{0,120}id=\{s\(row\.subject_unit_id\)\}/, "event unit"],
     [
       "workOrders",
-      /kind="unit" id=\{String\(row\.unit_id\)\}/,
+      /kind="unit"[\s\S]{0,120}id=\{String\(row\.unit_id\)\}/,
       "work-order unit",
     ],
     ["resolver", /case "unit":[\s\S]{0,100}\/fleet\/units\//, "unit resolver"],
