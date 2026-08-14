@@ -17,13 +17,13 @@ const sources = {
 };
 
 const checks = [
-  ["assignment", /kind="driver" id=\{driverId\}/, "driver assignment helper drills to the driver profile"],
-  ["deadhead", /kind="unit" id=\{row\.unit_id\}/, "deadhead table drills to unit profiles"],
-  ["deadhead", /kind="unit" id=\{best\.unit_id\}/, "best-performer tile drills to its unit"],
-  ["deadhead", /kind="unit" id=\{worst\.unit_id\}/, "attention tile drills to its unit"],
-  ["loadSafety", /kind="safety_event" id=\{row\.id\}/, "load reverse section drills to safety events"],
+  ["assignment", /kind="driver"[\s\S]{0,120}id=\{driverId\}/, "driver assignment helper drills to the driver profile"],
+  ["deadhead", /kind="unit"[\s\S]{0,120}id=\{row\.unit_id\}/, "deadhead table drills to unit profiles"],
+  ["deadhead", /kind="unit"[\s\S]{0,120}id=\{best\.unit_id\}/, "best-performer tile drills to its unit"],
+  ["deadhead", /kind="unit"[\s\S]{0,120}id=\{worst\.unit_id\}/, "attention tile drills to its unit"],
+  ["loadSafety", /kind="safety_event"[\s\S]{0,120}id=\{row\.id\}/, "load reverse section drills to safety events"],
   ["events", /searchParams\.get\("event_id"\)/, "safety-events destination consumes event_id"],
-  ["driverFines", /kind="internal_fine" id=\{id\}/, "driver reverse section drills to internal fines"],
+  ["driverFines", /kind="internal_fine"[\s\S]{0,120}id=\{id\}/, "driver reverse section drills to internal fines"],
   ["fines", /searchParams\.get\("fine_id"\)/, "internal-fines destination consumes fine_id"],
   ["fines", /String\(row\.id \?\? ""\) === linkedFineId \? "bg-slate-100/, "linked internal fine is visibly highlighted"],
   ["entityLink", /case "safety_event":[\s\S]*?safety-events\?event_id=\$\{id\}/, "safety-event resolver carries event_id"],
