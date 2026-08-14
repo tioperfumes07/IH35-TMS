@@ -1,6 +1,7 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["accounting","compliance","customers","dispatch","docs","driver-hub","drivers","factoring","fleet","fuel","home","insurance","inventory","legal","maintenance","reports","safety","system","tasks"],"cols":["unit"],"leafRe":".*","task":"WAVE-A-unit-all-modules","vertical":"column-wave"} */
-/** Full-product unit FK contract: priority 10 first, then every applicable module. */
+/** Full-product unit FK census: priority 10 first, then every applicable module.
+ * This aggregate route/representative-contract guard deliberately awards no Built credit.
+ * Exact child guards own leaf-specific matrix evidence. */
 import fs from "node:fs";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
