@@ -9,6 +9,7 @@ import { registerDriverPayHistoryRoutes } from "./driver-pay-history.routes.js";
 import { registerMaintenanceCostPerUnitRoutes } from "./maintenance-cost-per-unit.routes.js";
 import { registerFuelReconciliationRoutes } from "./fuel-reconciliation.routes.js";
 import { registerFuelSavingsRoutes } from "./fuel-savings.routes.js";
+import { registerFuelPriceVarianceRoutes } from "./fuel-price-variance.routes.js";
 import { registerCsaFleetScoreRoutes } from "./csa-fleet-score.routes.js";
 import { registerDetentionClaimsRoutes } from "./detention-claims.routes.js";
 import { registerReportsArAgingRoutes } from "./ar-aging.routes.js";
@@ -42,6 +43,7 @@ export async function registerReportsRoutes(app: FastifyInstance) {
   await registerDispatchMarginRoutes(app);
   await registerFuelReconciliationRoutes(app);
   await registerFuelSavingsRoutes(app);
+  await registerFuelPriceVarianceRoutes(app);
   await registerCsaFleetScoreRoutes(app);
   await registerDetentionClaimsRoutes(app);
   await registerIftaStatusRoutes(app);

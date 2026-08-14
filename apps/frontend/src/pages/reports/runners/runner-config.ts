@@ -131,6 +131,23 @@ export const RUNNER_CONFIGS: Record<string, ReportRunnerConfig> = {
     ],
     csvFilename: (filters) => `fuel-savings-${String(filters.from ?? "from")}-to-${String(filters.to ?? "to")}.csv`,
   },
+  "fuel-price-variance": {
+    id: "fuel-price-variance",
+    name: "Fuel price variance",
+    apiPath: "/api/v1/reports/fuel-price-variance",
+    filters: [{ type: "date_range", key: "date_range", label: "Date range", required: true }],
+    columns: [
+      { key: "transaction_date", label: "Date", align: "left", format: "date", sortable: true },
+      { key: "station", label: "Station", align: "left", sortable: true },
+      { key: "unit_number", label: "Unit", align: "left", sortable: true },
+      { key: "gallons", label: "Gallons", align: "right", format: "number", sortable: true },
+      { key: "actual_price_per_gallon", label: "Actual $/gal", align: "right", format: "number", sortable: true },
+      { key: "benchmark_price_per_gallon", label: "Benchmark $/gal", align: "right", format: "number", sortable: true },
+      { key: "variance_per_gallon", label: "Variance $/gal", align: "right", format: "number", sortable: true },
+      { key: "total_variance_dollars", label: "Total variance", align: "right", format: "number", sortable: true },
+    ],
+    csvFilename: (filters) => `fuel-price-variance-${String(filters.from ?? "from")}-to-${String(filters.to ?? "to")}.csv`,
+  },
   "csa-fleet": {
     id: "csa-fleet",
     name: "Internal inspection-point rollup",

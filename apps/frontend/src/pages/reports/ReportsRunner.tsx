@@ -56,6 +56,11 @@ function buildQuery(reportId: string, values: Record<string, unknown>) {
     q.set("period", toMonth(values.from));
     return q;
   }
+  if (reportId === "fuel-price-variance") {
+    if (values.from) q.set("from", String(values.from));
+    if (values.to) q.set("to", String(values.to));
+    return q;
+  }
   return q;
 }
 
