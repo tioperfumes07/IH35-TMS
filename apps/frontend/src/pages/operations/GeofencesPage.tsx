@@ -1,5 +1,6 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useSearchParams } from "react-router-dom";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
 import { ListErrorState } from "../../components/ListErrorState";
@@ -50,6 +51,15 @@ export function GeofencesPage() {
   const { selectedCompanyId, companies } = useCompanyContext();
   const operatingCompanyId = selectedCompanyId ?? companies[0]?.id ?? "";
   const queryClient = useQueryClient();
+  // LINK reverse_link: EntityLink kind="geofence" (GeofenceBreachesTab and any future reverse
+  // surface) resolves here with ?geofence_id= — this page previously never read that param, so the
+  // link landed on the list with nothing highlighted. Same deep-link pattern as claim/lawsuit.
+  const [searchParams] = useSearchParams();
+  const deepLinkGeofenceId = searchParams.get("geofence_id");
+  const [highlightedGeofenceId, setHighlightedGeofenceId] = useState<string | null>(deepLinkGeofenceId);
+  useEffect(() => {
+    if (deepLinkGeofenceId) setHighlightedGeofenceId(deepLinkGeofenceId);
+  }, [deepLinkGeofenceId]);
   const [label, setLabel] = useState("");
   const [locationKind, setLocationKind] = useState<GeofenceLocationKind>("custom");
   const [locationRefId, setLocationRefId] = useState("");
@@ -156,7 +166,19 @@ export function GeofencesPage() {
 
   const geofenceColumns = useMemo<Array<ParityColumn<Geofence>>>(
     () => [
-      { key: "label", label: "Label", sortable: true, render: (item) => item.label },
+      {
+        key: "label",
+        label: "Label",
+        sortable: true,
+        render: (item) => (
+          <EntityLink
+            kind="geofence"
+            id={item.id}
+            label={item.label}
+            onClick={() => setHighlightedGeofenceId(item.id)}
+          />
+        ),
+      },
       { key: "location_kind", label: "Kind", sortable: true, render: (item) => item.location_kind },
       {
         key: "location_ref_id",
@@ -339,6 +361,7 @@ export function GeofencesPage() {
               emptyText="No geofences configured yet. Use the form above to create one."
               storageKey="operations-geofences"
               exportFilename="geofences"
+              rowClassName={(item) => (highlightedGeofenceId === item.id ? "bg-slate-100" : "")}
             />
           </div>
         )}

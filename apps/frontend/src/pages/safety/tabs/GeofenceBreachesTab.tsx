@@ -67,7 +67,16 @@ export function GeofenceBreachesTab() {
               <span className="text-xs text-slate-500">{formatDateTimeUS(event.event_at)} CT</span>
             </div>
             <div className="mt-1 text-xs text-slate-600">
-              Geofence: {entityLabel(event.geofence_label, event.geofence_id, "Geofence")} · Customer:{" "}
+              {/* LINK reverse_link: geofence_label was dead text with no drill-through — EntityLink
+                  kind="geofence" now resolves to /dispatch/geofencing?geofence_id= (GeofencesPage,
+                  which honors that param and highlights the row). */}
+              Geofence:{" "}
+              {event.geofence_id ? (
+                <EntityLink kind="geofence" id={event.geofence_id} label={entityLabel(event.geofence_label, event.geofence_id, "Geofence")} />
+              ) : (
+                entityLabel(event.geofence_label, event.geofence_id, "Geofence")
+              )}{" "}
+              · Customer:{" "}
               {event.customer_id ? (
                 <EntityLink kind="customer" id={event.customer_id} label={entityLabel(event.customer_name, event.customer_id, "Customer")} />
               ) : (
