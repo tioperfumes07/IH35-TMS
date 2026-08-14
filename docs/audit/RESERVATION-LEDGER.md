@@ -78,3 +78,5 @@ Draw the next unused number from your OWN block, record a `CLAIM-<n>` row below,
 | 2026-08-14T12:54:00-05:00 | Codex | VERTICAL-INVOICE-INLINE-APPLICABILITY | invoice exact two-leaf domain applicability + guard | RESERVED | codex/vertical-invoice-inline-027 |
 | 2026-08-14T12:52:58-05:00 | Codex | VERTICAL-INVOICE-INLINE-APPLICABILITY | invoice exact two-leaf domain applicability + guard | RELEASED-ON-MERGE | codex/vertical-invoice-inline-027 |
 | 2026-08-14T12:57:00-05:00 | Codex | VERTICAL-BANK-INLINE-APPLICABILITY | bank exact one-leaf direct-source applicability + guard | RESERVED | codex/vertical-bank-inline-028 |
+| 2026-08-14T12:54:12-05:00 | Codex | VERTICAL-BANK-INLINE-APPLICABILITY | bank exact one-leaf direct-source applicability + guard | RELEASED-ON-MERGE | codex/vertical-bank-inline-028 |
+| 2026-08-14T13:00:00-05:00 | Codex | VERTICAL-INVENTORY-INLINE-APPLICABILITY | OEM reference versus stock applicability + guard | RESERVED | codex/vertical-inventory-inline-029 |
