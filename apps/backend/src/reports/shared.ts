@@ -81,6 +81,13 @@ export const REPORT_LIBRARY: ReportLibraryRow[] = [
     status: "real",
   },
   {
+    id: "fuel-price-variance",
+    name: "Fuel price variance",
+    category: "fuel",
+    description: "Actual transaction price versus the company Loves daily state benchmark.",
+    status: "real",
+  },
+  {
     id: "fuel-reconciliation",
     name: "Fuel reconciliation · cards vs work orders",
     category: "fuel",

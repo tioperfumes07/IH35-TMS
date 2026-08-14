@@ -92,3 +92,4 @@ Draw the next unused number from your OWN block, record a `CLAIM-<n>` row below,
 | 2026-08-14T13:20:00-05:00 | Codex | VERTICAL-CONNECTIVITY-REPORTS-HUB | reports registry hub + category/run subnav exact guard | RESERVED | codex/vertical-connectivity-reports-034 |
 | 2026-08-14 | Codex | VERTICAL-CONNECTIVITY-REPORTS-RUNNER-ALIASES | reports runner alias connectivity | apps/frontend/src/pages/reports/ReportsRunner.tsx; scripts/verify-reports-runner-canonical-aliases.mjs | ACTIVE |
 | 2026-08-14 | Codex | VERTICAL-CONNECTIVITY-REPORTS-FLEET-UTILIZATION | reports runner fleet utilization | Reports runner config/library; home fleet-utilization route; focused guard | ACTIVE |
+| 2026-08-14 | Codex | VERTICAL-CONNECTIVITY-REPORTS-FUEL-PRICE-VARIANCE | reports runner fuel price variance | Reports runner; reports fuel-price-variance route; fuel transaction label join; focused guard | ACTIVE |

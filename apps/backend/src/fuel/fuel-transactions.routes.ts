@@ -194,7 +194,7 @@ export async function registerFuelTransactionsRoutes(app: FastifyInstance) {
           LEFT JOIN mdata.equipment tr ON tr.id = ft.trailer_id
             AND (tr.owner_company_id = ft.operating_company_id OR tr.currently_leased_to_company_id = ft.operating_company_id)
           LEFT JOIN mdata.vendors v ON v.id = ft.vendor_id
-                                    AND v.operating_company_id = l.operating_company_id
+                                    AND v.operating_company_id = ft.operating_company_id
           ${whereClause}
           ORDER BY ft.transaction_at DESC
           LIMIT $${limitIdx}
