@@ -2,7 +2,7 @@
   "module": "maintenance",
   "entity_default": "USMCA",
   "source": {
-    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md \u00a7Module 2 \u2014 MAINTENANCE",
+    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md §Module 2 — MAINTENANCE",
     "nav": "apps/frontend/src/components/maintenance/MAINTENANCE_NAV_CONFIG.ts",
     "home_tabs": "apps/frontend/src/pages/maintenance/MaintenanceHome.tsx SUBNAV",
     "routes": "apps/frontend/src/routes/manifest.tsx /maintenance/*"
@@ -165,7 +165,7 @@
     {
       "id": "wo.source.is",
       "tab": "Work Orders",
-      "sub": "IS \u2014 Internal shop",
+      "sub": "IS — Internal shop",
       "route_hint": "/maintenance",
       "required": [
         "driver",
@@ -181,7 +181,7 @@
     {
       "id": "wo.source.es",
       "tab": "Work Orders",
-      "sub": "ES \u2014 External shop",
+      "sub": "ES — External shop",
       "route_hint": "/maintenance",
       "required": [
         "driver",
@@ -197,7 +197,7 @@
     {
       "id": "wo.source.ac",
       "tab": "Work Orders",
-      "sub": "AC \u2014 Accident repair",
+      "sub": "AC — Accident repair",
       "route_hint": "/maintenance",
       "required": [
         "driver",
@@ -214,7 +214,7 @@
     {
       "id": "wo.source.et",
       "tab": "Work Orders",
-      "sub": "ET \u2014 External tires",
+      "sub": "ET — External tires",
       "route_hint": "/maintenance",
       "required": [
         "driver",
@@ -230,7 +230,7 @@
     {
       "id": "wo.source.rt",
       "tab": "Work Orders",
-      "sub": "RT \u2014 Roadside tires",
+      "sub": "RT — Roadside tires",
       "route_hint": "/maintenance",
       "required": [
         "driver",
@@ -247,7 +247,7 @@
     {
       "id": "wo.source.it",
       "tab": "Work Orders",
-      "sub": "IT \u2014 Internal tires",
+      "sub": "IT — Internal tires",
       "route_hint": "/maintenance",
       "required": [
         "driver",
@@ -263,7 +263,7 @@
     {
       "id": "wo.source.rs",
       "tab": "Work Orders",
-      "sub": "RS \u2014 Roadside service",
+      "sub": "RS — Roadside service",
       "route_hint": "/maintenance/road-service",
       "required": [
         "driver",
@@ -433,7 +433,9 @@
         "picker_law",
         "qbo_chrome",
         "connectivity"
-      ]
+      ],
+      "surface_path": "pages/maintenance/pm-schedule/PmSchedulePage.tsx",
+      "surface_kind": "drawer"
     },
     {
       "id": "pm.schedule.list",
@@ -501,7 +503,9 @@
         "picker_law",
         "qbo_chrome",
         "connectivity"
-      ]
+      ],
+      "surface_path": "pages/maintenance/parts/PartsMasterDataPage.tsx",
+      "surface_kind": "drawer"
     },
     {
       "id": "vendors.create",
@@ -513,7 +517,9 @@
         "picker_law",
         "qbo_chrome",
         "connectivity"
-      ]
+      ],
+      "surface_path": "pages/maintenance/vendors/VendorsPage.tsx",
+      "surface_kind": "drawer"
     },
     {
       "id": "fault_rules.create",
@@ -573,7 +579,9 @@
         "qbo_chrome",
         "connectivity",
         "reverse_link"
-      ]
+      ],
+      "surface_path": "pages/maintenance/WarrantyClaimsPage.tsx",
+      "surface_kind": "drawer"
     },
     {
       "id": "maintenance.modal.add_parts_link",
@@ -756,9 +764,51 @@
       ]
     },
     {
+      "id": "master.drivers.create",
+      "tab": "Drivers master data",
+      "sub": "+ Create Driver",
+      "route_hint": "/maintenance/drivers",
+      "surface_kind": "drawer",
+      "surface_path": "pages/maintenance/drivers/DriversMasterDataPage.tsx",
+      "required": [
+        "driver",
+        "connectivity",
+        "qbo_chrome",
+        "picker_law"
+      ]
+    },
+    {
+      "id": "master.vehicles.create",
+      "tab": "Vehicles master data",
+      "sub": "+ Create Vehicle",
+      "route_hint": "/maintenance/vehicles",
+      "surface_kind": "drawer",
+      "surface_path": "pages/maintenance/vehicles/VehiclesMasterDataPage.tsx",
+      "required": [
+        "unit",
+        "connectivity",
+        "qbo_chrome",
+        "picker_law"
+      ]
+    },
+    {
+      "id": "tires.create",
+      "tab": "Tire program",
+      "sub": "+ Create Tire Record / Brand",
+      "route_hint": "/maintenance/tires",
+      "surface_kind": "drawer",
+      "surface_path": "pages/maintenance/TireProgramPage.tsx",
+      "required": [
+        "unit",
+        "connectivity",
+        "qbo_chrome",
+        "picker_law"
+      ]
+    },
+    {
       "id": "chrome.toolbar_search",
       "tab": "Chrome controls",
-      "sub": "List toolbar \u2014 Search (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar — Search (CLS-LIST-TOOLBAR)",
       "route_hint": "/maintenance",
       "surface_kind": "toolbar",
       "required": [
@@ -768,7 +818,7 @@
     {
       "id": "chrome.toolbar_range",
       "tab": "Chrome controls",
-      "sub": "List toolbar \u2014 date/amount range (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar — date/amount range (CLS-LIST-TOOLBAR)",
       "route_hint": "/maintenance",
       "surface_kind": "toolbar",
       "required": [
@@ -778,7 +828,7 @@
     {
       "id": "chrome.toolbar_gear",
       "tab": "Chrome controls",
-      "sub": "List toolbar \u2014 column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
+      "sub": "List toolbar — column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
       "route_hint": "/maintenance",
       "surface_kind": "toolbar",
       "required": [
@@ -788,7 +838,7 @@
     {
       "id": "chrome.toolbar_filter",
       "tab": "Chrome controls",
-      "sub": "List toolbar \u2014 Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
+      "sub": "List toolbar — Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
       "route_hint": "/maintenance",
       "surface_kind": "toolbar",
       "required": [
@@ -810,11 +860,11 @@
         "invoice",
         "bank"
       ],
-      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; \u00a7B9 link columns added."
+      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; §B9 link columns added."
     },
     "load_column_2026_08_13": {
       "finding": "VERTICAL-LOAD-REMAINDER-WIRE-GAPS",
-      "note": "road_service.active tickets have no load_id on maintenance.road_service_tickets \u2014 Required load was inflation. in_transit.promote_to_wo keeps load (EntityLink on InTransitIssuesTable).",
+      "note": "road_service.active tickets have no load_id on maintenance.road_service_tickets — Required load was inflation. in_transit.promote_to_wo keeps load (EntityLink on InTransitIssuesTable).",
       "drops": [
         {
           "id": "road_service.active",
@@ -826,7 +876,7 @@
     },
     "reverse_link_2026_08_13_remainder": {
       "finding": "VERTICAL-REVERSE-LINK-MAINTENANCE-REMAINDER",
-      "note": "WO create/source/bill/expense + intake/create/modals (except work_order_detail) are create chrome \u2014 reverse_link inflation. Built: in_transit/arriving_soon/driver_reports/severe/defects/dvir/pm_auto/fault_drafts/warranty/road_service_active/work_order_detail.",
+      "note": "WO create/source/bill/expense + intake/create/modals (except work_order_detail) are create chrome — reverse_link inflation. Built: in_transit/arriving_soon/driver_reports/severe/defects/dvir/pm_auto/fault_drafts/warranty/road_service_active/work_order_detail.",
       "drops": [
         {
           "id": "wo.create",
@@ -1450,7 +1500,7 @@
     },
     "money_cells_2026_08_14_ap_bill_overclaim": {
       "finding": "OWNER-EXECUTION-PLAN-SS2-ACCT-F5161",
-      "note": "ap_bill blanket-required on all 15 maintenance leaves; verified live per leaf. Only 2 own it for real (KEPT, real Built added): wo.create_bill and maintenance.modal.create_bill are the SAME CreateBillModal.tsx (mounted from MaintenanceHome.tsx and WorkOrderDetailPage.tsx) \u2014 a genuine createVendorBill call that persists a hard accounting.bills.work_order_id FK and reuses the canonical VendorBillForm. The other 13 own no accounting.bills data anywhere: wo.create (CreateWorkOrderModal.tsx / WorkOrderCreateModal.tsx / CreateWOSection*.tsx) never calls createVendorBill \u2014 WO creation and bill creation are separate actions. wo.source.is/es/ac/et/rt/it/rs are WO-list source-type filter tabs (WorkOrdersTable.tsx) showing resolved_vendor_name but zero bill_id/EntityLink kind=\"bill\" per row. road_service.active (RoadServiceActivePanel.tsx) has zero bill references. parts_inventory.record_purchase (PartsInventoryTable.tsx 'Record Purchase' modal) captures a real vendor_id but last_purchase_invoice_number is a plain string, not a bill FK. warranty.create_claim (WarrantyClaimsPage.tsx), maintenance.modal.fault_rule (FaultRuleModal.tsx, a rule-config modal for auto-WO generation), and maintenance.modal.create_expense (CreateExpenseModal.tsx, a separate money instrument from bills) all have zero bill references.",
+      "note": "ap_bill blanket-required on all 15 maintenance leaves; verified live per leaf. Only 2 own it for real (KEPT, real Built added): wo.create_bill and maintenance.modal.create_bill are the SAME CreateBillModal.tsx (mounted from MaintenanceHome.tsx and WorkOrderDetailPage.tsx) — a genuine createVendorBill call that persists a hard accounting.bills.work_order_id FK and reuses the canonical VendorBillForm. The other 13 own no accounting.bills data anywhere: wo.create (CreateWorkOrderModal.tsx / WorkOrderCreateModal.tsx / CreateWOSection*.tsx) never calls createVendorBill — WO creation and bill creation are separate actions. wo.source.is/es/ac/et/rt/it/rs are WO-list source-type filter tabs (WorkOrdersTable.tsx) showing resolved_vendor_name but zero bill_id/EntityLink kind=\"bill\" per row. road_service.active (RoadServiceActivePanel.tsx) has zero bill references. parts_inventory.record_purchase (PartsInventoryTable.tsx 'Record Purchase' modal) captures a real vendor_id but last_purchase_invoice_number is a plain string, not a bill FK. warranty.create_claim (WarrantyClaimsPage.tsx), maintenance.modal.fault_rule (FaultRuleModal.tsx, a rule-config modal for auto-WO generation), and maintenance.modal.create_expense (CreateExpenseModal.tsx, a separate money instrument from bills) all have zero bill references.",
       "drops": [
         {
           "id": "wo.create",
@@ -1534,7 +1584,7 @@
     },
     "trailer_column_2026_08_14_overclaim": {
       "finding": "LINK-F5163-TRAILER-COLUMN-VERTICAL-SWEEP",
-      "note": "3 of 5 maintenance leaves are false: wo.source.ac (the WO-list Accident-repair source filter tab) shows only a Unit column, no trailer_id/EntityLink despite WOs genuinely supporting trailer-scoped equipment_id; damage_reports.intake and defects.convert_to_wo's underlying pages/models only carry unit_id, never trailer_id/equipment_id. wo.create and tires.create_record KEEP the Required marking \u2014 both have real EntityPicker kind=\"trailer\" (or an equivalent unit/trailer asset-kind toggle) bound to a genuine equipment_id/trailer field submitted on create.",
+      "note": "3 of 5 maintenance leaves are false: wo.source.ac (the WO-list Accident-repair source filter tab) shows only a Unit column, no trailer_id/EntityLink despite WOs genuinely supporting trailer-scoped equipment_id; damage_reports.intake and defects.convert_to_wo's underlying pages/models only carry unit_id, never trailer_id/equipment_id. wo.create and tires.create_record KEEP the Required marking — both have real EntityPicker kind=\"trailer\" (or an equivalent unit/trailer asset-kind toggle) bound to a genuine equipment_id/trailer field submitted on create.",
       "drops": [
         {
           "id": "wo.source.ac",
@@ -1558,7 +1608,7 @@
     },
     "vendor_column_2026_08_14_overclaim": {
       "finding": "LINK-F5166-VENDOR-COLUMN-VERTICAL-SWEEP",
-      "note": "7 of 28 maintenance leaves are false: parts.create (PartsMasterDataPage.tsx) captures vendor_default as a plain free-text string, never a real vendor_id FK \u2014 the page's own comment states \"Parts are NOT a linkable entity\". maintenance.modal.location_map (tire/axle position picker) and maintenance.modal.fault_rule (DTC fault-rule config) have no vendor concept at all \u2014 domain mismatch. maintenance.modal.work_order_create is an orphan component never imported anywhere. maintenance.modal.convert_issue_to_wo and maintenance.modal.triage are pre-WO stages where no vendor exists yet (vendor assignment happens later in CreateWorkOrderModal, which genuinely owns it). maintenance.panel.road_service_active shows the provider name as plain text, no vendor_id/EntityLink. The other 21 leaves KEEP the Required marking \u2014 real ReferenceSelect(createKind=\"vendor\")/EntityLink kind=\"vendor\" confirmed in WorkOrdersTable.tsx, CreateWorkOrderModal.tsx, RoadServiceList.tsx, PartsInventoryTable.tsx, VendorsPage.tsx, WarrantyClaimsPage.tsx, AddPartsLinkModal.tsx, WorkOrderDetailModal.tsx, RoadServiceTicketModal.tsx, and the shared VendorBillForm/RecordExpenseForm.",
+      "note": "7 of 28 maintenance leaves are false: parts.create (PartsMasterDataPage.tsx) captures vendor_default as a plain free-text string, never a real vendor_id FK — the page's own comment states \"Parts are NOT a linkable entity\". maintenance.modal.location_map (tire/axle position picker) and maintenance.modal.fault_rule (DTC fault-rule config) have no vendor concept at all — domain mismatch. maintenance.modal.work_order_create is an orphan component never imported anywhere. maintenance.modal.convert_issue_to_wo and maintenance.modal.triage are pre-WO stages where no vendor exists yet (vendor assignment happens later in CreateWorkOrderModal, which genuinely owns it). maintenance.panel.road_service_active shows the provider name as plain text, no vendor_id/EntityLink. The other 21 leaves KEEP the Required marking — real ReferenceSelect(createKind=\"vendor\")/EntityLink kind=\"vendor\" confirmed in WorkOrdersTable.tsx, CreateWorkOrderModal.tsx, RoadServiceList.tsx, PartsInventoryTable.tsx, VendorsPage.tsx, WarrantyClaimsPage.tsx, AddPartsLinkModal.tsx, WorkOrderDetailModal.tsx, RoadServiceTicketModal.tsx, and the shared VendorBillForm/RecordExpenseForm.",
       "drops": [
         {
           "id": "parts.create",
@@ -1606,7 +1656,7 @@
     },
     "unit_column_2026_08_14_overclaim": {
       "finding": "LINK-F5167-UNIT-COLUMN-VERTICAL-SWEEP",
-      "note": "6 of 40 maintenance leaves are false: driver_reports.queue's own code comment states \"driver is the linkable record (no unit_id ... on this entity)\"; warranty.create_claim only references vendor_id/work_order_id; maintenance.modal.add_parts_link/location_map/fault_rule have zero unit concept (parts-link modal is vendor-only, location map is a pure axle-position picker, fault rule is DTC config); maintenance.modal.work_order_create is the same orphan component confirmed unused in the vendor sweep. The other 34 leaves KEEP the Required marking \u2014 real EntityLink kind=\"unit\"/EntityPicker kind=\"unit\" confirmed across WorkOrdersTable.tsx and nearly every WO/inspection/PM/road-service/fault surface.",
+      "note": "6 of 40 maintenance leaves are false: driver_reports.queue's own code comment states \"driver is the linkable record (no unit_id ... on this entity)\"; warranty.create_claim only references vendor_id/work_order_id; maintenance.modal.add_parts_link/location_map/fault_rule have zero unit concept (parts-link modal is vendor-only, location map is a pure axle-position picker, fault rule is DTC config); maintenance.modal.work_order_create is the same orphan component confirmed unused in the vendor sweep. The other 34 leaves KEEP the Required marking — real EntityLink kind=\"unit\"/EntityPicker kind=\"unit\" confirmed across WorkOrdersTable.tsx and nearly every WO/inspection/PM/road-service/fault surface.",
       "drops": [
         {
           "id": "driver_reports.queue",
@@ -1648,7 +1698,7 @@
     },
     "driver_column_2026_08_14_overclaim": {
       "finding": "LINK-F5168-DRIVER-COLUMN-VERTICAL-SWEEP",
-      "note": "driver blanket-required on 3 maintenance leaves. Verified live \u2014 MaintenanceDamageRegisterTab.tsx's DamageIncidentRow explicitly has no driver field (unit/incident data only, sourced from safety.incidents with no driver join); RMBucketsGrid.tsx's `row.driver_id ? \"driver\" : null` renders only the literal word \"driver\" as a metadata flag, no id/EntityLink/navigable link; InspectionsPage.tsx's create-drawer form has only a Unit EntityPicker, zero \"driver\" occurrences anywhere in the file.",
+      "note": "driver blanket-required on 3 maintenance leaves. Verified live — MaintenanceDamageRegisterTab.tsx's DamageIncidentRow explicitly has no driver field (unit/incident data only, sourced from safety.incidents with no driver join); RMBucketsGrid.tsx's `row.driver_id ? \"driver\" : null` renders only the literal word \"driver\" as a metadata flag, no id/EntityLink/navigable link; InspectionsPage.tsx's create-drawer form has only a Unit EntityPicker, zero \"driver\" occurrences anywhere in the file.",
       "drops": [
         {
           "id": "damage_reports.intake",

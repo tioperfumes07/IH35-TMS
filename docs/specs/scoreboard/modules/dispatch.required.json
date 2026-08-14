@@ -2,10 +2,10 @@
   "module": "dispatch",
   "entity_default": "USMCA",
   "source": {
-    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md \u2014 Module 9 DISPATCH + Dispatch (2026-06-08 update)",
+    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md — Module 9 DISPATCH + Dispatch (2026-06-08 update)",
     "nav": "apps/frontend/src/components/dispatch/DispatchSubnav.tsx DISPATCH_NAV_ITEMS",
     "home_views": "apps/frontend/src/pages/Dispatch.tsx view=overview|kanban|list|units (Round Trips)",
-    "secondary": "DISPATCH_SUB_TABS Load board \u00b7 Book load \u00b7 Assignments \u00b7 Settlements \u00b7 Pre-settlements",
+    "secondary": "DISPATCH_SUB_TABS Load board · Book load · Assignments · Settlements · Pre-settlements",
     "drawer": "apps/frontend/src/components/dispatch/LoadDetailDrawer.tsx tabs",
     "routes": "apps/frontend/src/routes/manifest.tsx /dispatch/*"
   },
@@ -145,7 +145,7 @@
     {
       "id": "home.kanban",
       "tab": "Home",
-      "sub": "Load Board \u00b7 Kanban (7-state)",
+      "sub": "Load Board · Kanban (7-state)",
       "route_hint": "/dispatch?view=kanban",
       "required": [
         "driver",
@@ -159,7 +159,7 @@
     {
       "id": "home.list",
       "tab": "Home",
-      "sub": "Load Board \u00b7 List / Table",
+      "sub": "Load Board · List / Table",
       "route_hint": "/dispatch?view=list",
       "required": [
         "driver",
@@ -218,7 +218,7 @@
     {
       "id": "secondary.settlements",
       "tab": "Settlements",
-      "sub": "Hop \u2192 driver-finance settlements",
+      "sub": "Hop → driver-finance settlements",
       "route_hint": "/driver-finance/settlements",
       "required": [
         "connectivity"
@@ -227,7 +227,7 @@
     {
       "id": "secondary.pre_settlements",
       "tab": "Pre-settlements",
-      "sub": "Hop \u2192 accounting pre-settlements",
+      "sub": "Hop → accounting pre-settlements",
       "route_hint": "/accounting/pre-settlements",
       "required": [
         "driver",
@@ -502,7 +502,7 @@
     {
       "id": "docs.ocr",
       "tab": "Documents",
-      "sub": "OCR Queue \u2192 Book Load",
+      "sub": "OCR Queue → Book Load",
       "route_hint": "/dispatch/ocr-queue",
       "required": [
         "customer",
@@ -609,7 +609,7 @@
     {
       "id": "load.banking",
       "tab": "Load detail",
-      "sub": "Load \u2194 Banking linkage",
+      "sub": "Load ↔ Banking linkage",
       "route_hint": "/dispatch/loads/:id/banking",
       "required": [
         "load",
@@ -621,7 +621,7 @@
     {
       "id": "load.drawer.overview",
       "tab": "Load detail",
-      "sub": "Drawer \u00b7 Overview",
+      "sub": "Drawer · Overview",
       "route_hint": "/dispatch/loads/:id?tab=Overview",
       "required": [
         "driver",
@@ -638,7 +638,7 @@
     {
       "id": "load.drawer.stops",
       "tab": "Load detail",
-      "sub": "Drawer \u00b7 Stops",
+      "sub": "Drawer · Stops",
       "route_hint": "/dispatch/loads/:id?tab=Stops",
       "required": [
         "load",
@@ -649,7 +649,7 @@
     {
       "id": "load.drawer.driver_pay",
       "tab": "Load detail",
-      "sub": "Drawer \u00b7 Driver Pay",
+      "sub": "Drawer · Driver Pay",
       "route_hint": "/dispatch/loads/:id?tab=Driver%20Pay",
       "required": [
         "load",
@@ -660,7 +660,7 @@
     {
       "id": "load.drawer.documents",
       "tab": "Load detail",
-      "sub": "Drawer \u00b7 Documents",
+      "sub": "Drawer · Documents",
       "route_hint": "/dispatch/loads/:id?tab=Documents",
       "required": [
         "load",
@@ -672,7 +672,7 @@
     {
       "id": "load.drawer.factoring",
       "tab": "Load detail",
-      "sub": "Drawer \u00b7 Factoring",
+      "sub": "Drawer · Factoring",
       "route_hint": "/dispatch/loads/:id?tab=Factoring",
       "required": [
         "customer",
@@ -684,7 +684,7 @@
     {
       "id": "load.drawer.customs",
       "tab": "Load detail",
-      "sub": "Drawer \u00b7 Customs",
+      "sub": "Drawer · Customs",
       "route_hint": "/dispatch/loads/:id?tab=Customs",
       "required": [
         "load",
@@ -695,7 +695,7 @@
     {
       "id": "load.drawer.cargo",
       "tab": "Load detail",
-      "sub": "Drawer \u00b7 Cargo Sensors",
+      "sub": "Drawer · Cargo Sensors",
       "route_hint": "/dispatch/loads/:id?tab=Cargo%20Sensors",
       "required": [
         "load",
@@ -705,7 +705,7 @@
     {
       "id": "load.drawer.settlement",
       "tab": "Load detail",
-      "sub": "Drawer \u00b7 Settlement profitability",
+      "sub": "Drawer · Settlement profitability",
       "route_hint": "/dispatch/loads/:id?tab=Settlement",
       "required": [
         "driver",
@@ -718,7 +718,7 @@
     {
       "id": "load.drawer.geofence",
       "tab": "Load detail",
-      "sub": "Drawer \u00b7 Geofence Timeline",
+      "sub": "Drawer · Geofence Timeline",
       "route_hint": "/dispatch/loads/:id?tab=Geofence%20Timeline",
       "required": [
         "load",
@@ -728,7 +728,7 @@
     {
       "id": "load.drawer.assignment_history",
       "tab": "Load detail",
-      "sub": "Drawer \u00b7 Assignment History",
+      "sub": "Drawer · Assignment History",
       "route_hint": "/dispatch/loads/:id?tab=Assignment%20History",
       "required": [
         "load",
@@ -739,7 +739,7 @@
     {
       "id": "load.drawer.audit",
       "tab": "Load detail",
-      "sub": "Drawer \u00b7 Audit",
+      "sub": "Drawer · Audit",
       "route_hint": "/dispatch/loads/:id?tab=Audit",
       "required": [
         "load",
@@ -749,7 +749,7 @@
     {
       "id": "load.drawer.pre_settlement",
       "tab": "Load detail",
-      "sub": "Drawer \u00b7 Pre-Settlement",
+      "sub": "Drawer · Pre-Settlement",
       "route_hint": "/dispatch/loads/:id?tab=Pre-Settlement",
       "required": [
         "load",
@@ -1007,9 +1007,22 @@
       ]
     },
     {
+      "id": "queues.in_transit.create",
+      "tab": "In-Transit Issues",
+      "sub": "+ Create issue drawer",
+      "route_hint": "/dispatch/in-transit-issues",
+      "surface_kind": "drawer",
+      "surface_path": "pages/dispatch/InTransitIssuesPage.tsx",
+      "required": [
+        "load",
+        "connectivity",
+        "qbo_chrome"
+      ]
+    },
+    {
       "id": "chrome.toolbar_search",
       "tab": "Chrome controls",
-      "sub": "List toolbar \u2014 Search (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar — Search (CLS-LIST-TOOLBAR)",
       "route_hint": "/dispatch",
       "surface_kind": "toolbar",
       "required": [
@@ -1019,7 +1032,7 @@
     {
       "id": "chrome.toolbar_range",
       "tab": "Chrome controls",
-      "sub": "List toolbar \u2014 date/amount range (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar — date/amount range (CLS-LIST-TOOLBAR)",
       "route_hint": "/dispatch",
       "surface_kind": "toolbar",
       "required": [
@@ -1029,7 +1042,7 @@
     {
       "id": "chrome.toolbar_gear",
       "tab": "Chrome controls",
-      "sub": "List toolbar \u2014 column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
+      "sub": "List toolbar — column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
       "route_hint": "/dispatch",
       "surface_kind": "toolbar",
       "required": [
@@ -1039,7 +1052,7 @@
     {
       "id": "chrome.toolbar_filter",
       "tab": "Chrome controls",
-      "sub": "List toolbar \u2014 Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
+      "sub": "List toolbar — Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
       "route_hint": "/dispatch",
       "surface_kind": "toolbar",
       "required": [
@@ -1185,7 +1198,7 @@
         "planning.reserve",
         "docs.ocr"
       ],
-      "note": "scenario.maintenance=Maint WO; Book Load/OCR/reserve/in-transit \u2260 WO create"
+      "note": "scenario.maintenance=Maint WO; Book Load/OCR/reserve/in-transit ≠ WO create"
     },
     "load_liability_2026_08_12": {
       "finding": "LOAD-LIABILITY-SCENARIO-DISPATCH-HONEST",
@@ -1221,7 +1234,7 @@
         "invoice",
         "bank"
       ],
-      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; \u00a7B9 link columns added."
+      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; §B9 link columns added."
     },
     "reverse_link_2026_08_13_queues": {
       "finding": "VERTICAL-REVERSE-LINK-DISPATCH-QUEUES",
@@ -1477,7 +1490,7 @@
     },
     "trailer_column_2026_08_14_overclaim": {
       "finding": "LINK-F5163-TRAILER-COLUMN-VERTICAL-SWEEP",
-      "note": "25 of 38 dispatch leaves carried no trailer identity data at all (verified live via direct component read): home.overview/home.kanban/home.round_trips render only trailer_type as a text badge, never trailer_id/EntityLink; secondary.assignments, queues.border/border_history/live_map/trip_pairing, all 5 planning.* planners, docs.ocr, load.drawer.customs, dispatch.modal.cancel_load/load_create/load_reassign, dispatch.panel.deadhead_optimizer/load_bol/optimal_drivers/rate_con_upload, dispatch.wizard.border_crossing_wizard_page, and dispatch.parity.assign_driver_dropdown have zero trailer references in their components. The 13 genuine leaves (home.list, secondary.book_load, planning.reserve, docs.equipment_transfers, load.detail, load.drawer.overview, dispatch.modal.book_load_modal_v4, dispatch.modal.quick_assign, dispatch.drawer.load_detail, dispatch.panel.auth_gate, dispatch.panel.pre_dispatch_validation, dispatch.parity.book_load_equipment_section, dispatch.modal.equipment_transfer) KEEP the Required marking \u2014 real trailer_id/EntityLink kind=\"trailer\"/EntityPicker kind=\"trailer\" confirmed in each.",
+      "note": "25 of 38 dispatch leaves carried no trailer identity data at all (verified live via direct component read): home.overview/home.kanban/home.round_trips render only trailer_type as a text badge, never trailer_id/EntityLink; secondary.assignments, queues.border/border_history/live_map/trip_pairing, all 5 planning.* planners, docs.ocr, load.drawer.customs, dispatch.modal.cancel_load/load_create/load_reassign, dispatch.panel.deadhead_optimizer/load_bol/optimal_drivers/rate_con_upload, dispatch.wizard.border_crossing_wizard_page, and dispatch.parity.assign_driver_dropdown have zero trailer references in their components. The 13 genuine leaves (home.list, secondary.book_load, planning.reserve, docs.equipment_transfers, load.detail, load.drawer.overview, dispatch.modal.book_load_modal_v4, dispatch.modal.quick_assign, dispatch.drawer.load_detail, dispatch.panel.auth_gate, dispatch.panel.pre_dispatch_validation, dispatch.parity.book_load_equipment_section, dispatch.modal.equipment_transfer) KEEP the Required marking — real trailer_id/EntityLink kind=\"trailer\"/EntityPicker kind=\"trailer\" confirmed in each.",
       "drops": [
         {
           "id": "home.overview",
@@ -1801,7 +1814,7 @@
     },
     "vendor_column_2026_08_14_overclaim": {
       "finding": "LINK-F5166-VENDOR-COLUMN-VERTICAL-SWEEP",
-      "note": "load.drawer.customs is false \u2014 CustomsTab.tsx only shows port/direction/date/eManifest and a link to border-crossing history, no vendor/broker field rendered on this specific tab. queues.border and queues.border_history (not touched here \u2014 already correctly not flagged) both genuinely resolve a real customs_broker_id (a vendor-category record) via a real picker and EntityLink kind=\"vendor\".",
+      "note": "load.drawer.customs is false — CustomsTab.tsx only shows port/direction/date/eManifest and a link to border-crossing history, no vendor/broker field rendered on this specific tab. queues.border and queues.border_history (not touched here — already correctly not flagged) both genuinely resolve a real customs_broker_id (a vendor-category record) via a real picker and EntityLink kind=\"vendor\".",
       "drops": [
         {
           "id": "load.drawer.customs",
@@ -1813,7 +1826,7 @@
     },
     "unit_column_2026_08_14_overclaim": {
       "finding": "LINK-F5167-UNIT-COLUMN-VERTICAL-SWEEP",
-      "note": "22 of 51 dispatch leaves are false: home.round_trips shows unit number as plain text (no EntityLink/picker); several queues/panels/modals (alerts, live_map, map, load-create panels for BOL/optimal-drivers/rate-con, cancel/reassign modals, equipment-transfer) have zero unit_id; most load-drawer sub-tabs (stops/documents/customs/cargo/geofence/assignment_history) are load-only with no unit field. The other 29 leaves KEEP the Required marking \u2014 real EntityLink kind=\"unit\"/EntityPicker kind=\"unit\" confirmed in DispatchOverview.tsx, DispatchKanban.tsx, DispatchList.tsx (InlineUnitPicker), BookLoadEquipmentSection.tsx, AssignmentHistoryPage.tsx, AtRiskQueuePage.tsx, DetentionBoardPage.tsx, BorderCrossingWizardPage.tsx, LateArrivalsPage.tsx, TripPairingBoardPage.tsx, InTransitIssuesPage.tsx, the planners, LoadDetailDrawer.tsx's Overview tab, LoadCreateModal.tsx, QuickAssignModal.tsx, AuthGatePanel.tsx, DeadheadOptimizerPanel.tsx, and PreDispatchValidationPanel.tsx.",
+      "note": "22 of 51 dispatch leaves are false: home.round_trips shows unit number as plain text (no EntityLink/picker); several queues/panels/modals (alerts, live_map, map, load-create panels for BOL/optimal-drivers/rate-con, cancel/reassign modals, equipment-transfer) have zero unit_id; most load-drawer sub-tabs (stops/documents/customs/cargo/geofence/assignment_history) are load-only with no unit field. The other 29 leaves KEEP the Required marking — real EntityLink kind=\"unit\"/EntityPicker kind=\"unit\" confirmed in DispatchOverview.tsx, DispatchKanban.tsx, DispatchList.tsx (InlineUnitPicker), BookLoadEquipmentSection.tsx, AssignmentHistoryPage.tsx, AtRiskQueuePage.tsx, DetentionBoardPage.tsx, BorderCrossingWizardPage.tsx, LateArrivalsPage.tsx, TripPairingBoardPage.tsx, InTransitIssuesPage.tsx, the planners, LoadDetailDrawer.tsx's Overview tab, LoadCreateModal.tsx, QuickAssignModal.tsx, AuthGatePanel.tsx, DeadheadOptimizerPanel.tsx, and PreDispatchValidationPanel.tsx.",
       "drops": [
         {
           "id": "home.round_trips",
@@ -1951,7 +1964,7 @@
     },
     "driver_column_2026_08_14_overclaim": {
       "finding": "LINK-F5168-DRIVER-COLUMN-VERTICAL-SWEEP",
-      "note": "driver blanket-required on 22 dispatch leaves. Verified live \u2014 DispatchAlertsPage.tsx (queues.alerts) is a card-count aggregate dashboard, zero driver_id; GeofencesPage.tsx (queues.live_map) has zero driver reference; MapView.tsx (queues.map) has a real driver_uuid field + ?driver= URL-filter but never renders an EntityLink/EntityPicker, only filters GPS pins; LoadsPlanner.tsx (planning.loads) renders only load+customer EntityLinks despite the false driver claim; OcrQueuePage.tsx (docs.ocr) has zero \"driver\" occurrences; BorderCrossingHistory.tsx (misc.geofence_history) has zero \"driver\"; DispatchChatPage.tsx (misc.chat) uses \"driver_direct\" only as a thread-type label string; LoadDetailDrawer.tsx's Stops/Documents/Assignment-History tabs (load.drawer.stops/documents/assignment_history) render no driver field, only a driver_instructions_file_id file pointer, or plain-text previous/new driver labels (CLS-UUID-LABEL, never EntityLink); LoadDetailDriverPayTab.tsx (load.drawer.driver_pay) has driver_id only in an unused type, never rendered; CustomsTab.tsx (load.drawer.customs) has zero \"driver\"; LoadDetailGeofenceTimelineTab.tsx (load.drawer.geofence) treats \"driver_pwa\" as a stop-source enum, not an identity field; PreSettlementPanel.tsx (load.drawer.pre_settlement/dispatch.panel.pre_settlement) takes a driverId prop used only to fetch data, renders EntityLink kind=\"settlement\"/\"load\" but never kind=\"driver\"; CancelLoadModal.tsx (dispatch.modal.cancel_load) has zero \"driver\"; LoadCreateModal.tsx (dispatch.modal.load_create) uses selectedDriverId only for a repair-availability warning banner, no EntityLink/EntityPicker; AuthGatePanel.tsx/PreDispatchValidationPanel.tsx (dispatch.panel.auth_gate/pre_dispatch_validation) use driverUuid only as an authorization/validation query param, no rendered identity; DeadheadOptimizerPanel.tsx (dispatch.panel.deadhead_optimizer) has zero driver field; LoadBolPanel.tsx (dispatch.panel.load_bol) mentions \"driver\" only in a code comment; RateConUploadPanel.tsx (dispatch.panel.rate_con_upload) has zero \"driver\" occurrences.",
+      "note": "driver blanket-required on 22 dispatch leaves. Verified live — DispatchAlertsPage.tsx (queues.alerts) is a card-count aggregate dashboard, zero driver_id; GeofencesPage.tsx (queues.live_map) has zero driver reference; MapView.tsx (queues.map) has a real driver_uuid field + ?driver= URL-filter but never renders an EntityLink/EntityPicker, only filters GPS pins; LoadsPlanner.tsx (planning.loads) renders only load+customer EntityLinks despite the false driver claim; OcrQueuePage.tsx (docs.ocr) has zero \"driver\" occurrences; BorderCrossingHistory.tsx (misc.geofence_history) has zero \"driver\"; DispatchChatPage.tsx (misc.chat) uses \"driver_direct\" only as a thread-type label string; LoadDetailDrawer.tsx's Stops/Documents/Assignment-History tabs (load.drawer.stops/documents/assignment_history) render no driver field, only a driver_instructions_file_id file pointer, or plain-text previous/new driver labels (CLS-UUID-LABEL, never EntityLink); LoadDetailDriverPayTab.tsx (load.drawer.driver_pay) has driver_id only in an unused type, never rendered; CustomsTab.tsx (load.drawer.customs) has zero \"driver\"; LoadDetailGeofenceTimelineTab.tsx (load.drawer.geofence) treats \"driver_pwa\" as a stop-source enum, not an identity field; PreSettlementPanel.tsx (load.drawer.pre_settlement/dispatch.panel.pre_settlement) takes a driverId prop used only to fetch data, renders EntityLink kind=\"settlement\"/\"load\" but never kind=\"driver\"; CancelLoadModal.tsx (dispatch.modal.cancel_load) has zero \"driver\"; LoadCreateModal.tsx (dispatch.modal.load_create) uses selectedDriverId only for a repair-availability warning banner, no EntityLink/EntityPicker; AuthGatePanel.tsx/PreDispatchValidationPanel.tsx (dispatch.panel.auth_gate/pre_dispatch_validation) use driverUuid only as an authorization/validation query param, no rendered identity; DeadheadOptimizerPanel.tsx (dispatch.panel.deadhead_optimizer) has zero driver field; LoadBolPanel.tsx (dispatch.panel.load_bol) mentions \"driver\" only in a code comment; RateConUploadPanel.tsx (dispatch.panel.rate_con_upload) has zero \"driver\" occurrences.",
       "drops": [
         {
           "id": "queues.alerts",
