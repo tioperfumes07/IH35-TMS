@@ -600,5 +600,12 @@
     "source_file": "apps/backend/src/integrations/plaid/link.routes.ts",
     "guard": "scripts/verify-banking-matched-bill-drill.mjs",
     "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-14-ACCT-F5158-REPORTS-AP-BILL-HONEST-MAP",
+    "title": "reports money-cell gap closed to 0 — 11 leaves' false ap_bill Required marking removed (GL-rollup reports own no bill-level data: trial_balance/profit_loss/balance_sheet/cash_flow*/settlement_summary/customer_profitability/maintenance_cost_per_unit/runner.cash_position/report.ar_aging; documented in reports.required.json honesty_audit), and report.ap_aging + report.management's genuine vendor-level ap_bill wiring given real leaf-specific proof instead of the removed broad claim",
+    "source_file": "docs/specs/scoreboard/modules/reports.required.json",
+    "guard": "scripts/verify-report-management-ap-aging.mjs",
+    "type": "enforced"
   }
 ]

@@ -471,7 +471,6 @@
         "customer",
         "vendor",
         "gl_je",
-        "ap_bill",
         "connectivity",
         "reverse_link",
         "qbo_chrome",
@@ -504,7 +503,6 @@
         "customer",
         "vendor",
         "gl_je",
-        "ap_bill",
         "connectivity",
         "qbo_chrome"
       ]
@@ -518,7 +516,6 @@
         "customer",
         "vendor",
         "gl_je",
-        "ap_bill",
         "connectivity",
         "qbo_chrome"
       ]
@@ -532,7 +529,6 @@
         "customer",
         "vendor",
         "gl_je",
-        "ap_bill",
         "connectivity",
         "qbo_chrome"
       ]
@@ -546,7 +542,6 @@
         "customer",
         "vendor",
         "gl_je",
-        "ap_bill",
         "connectivity",
         "qbo_chrome"
       ]
@@ -560,7 +555,6 @@
         "customer",
         "vendor",
         "gl_je",
-        "ap_bill",
         "connectivity",
         "qbo_chrome"
       ]
@@ -590,7 +584,6 @@
         "customer",
         "vendor",
         "gl_je",
-        "ap_bill",
         "connectivity",
         "qbo_chrome"
       ]
@@ -603,7 +596,6 @@
       "required": [
         "customer",
         "vendor",
-        "ap_bill",
         "connectivity",
         "qbo_chrome",
         "driver",
@@ -619,7 +611,6 @@
       "required": [
         "customer",
         "vendor",
-        "ap_bill",
         "connectivity",
         "reverse_link",
         "qbo_chrome",
@@ -737,8 +728,7 @@
         "connectivity",
         "qbo_chrome",
         "unit",
-        "vendor",
-        "ap_bill"
+        "vendor"
       ]
     },
     {
@@ -891,7 +881,6 @@
       "required": [
         "customer",
         "vendor",
-        "ap_bill",
         "connectivity",
         "qbo_chrome"
       ]
@@ -1858,6 +1847,78 @@
           "id": "runner.detention_claims",
           "removed": [
             "policy"
+          ]
+        }
+      ]
+    },
+    "money_cells_2026_08_14_ap_bill_overclaim": {
+      "finding": "OWNER-EXECUTION-PLAN-SS2-ACCT-F5158",
+      "note": "ap_bill was blanket-required on every financial report leaf regardless of whether the report actually surfaces bill/vendor line-item data. Verified live per-leaf (grep against each page component, not assumed): trial_balance/profit_loss/balance_sheet/cash_flow* are GL-account rollups only (rows keyed by account_id, drill to the CoA register \u2014 zero vendor_id/bill_id anywhere); settlement_summary/customer_profitability/maintenance_cost_per_unit/runner.cash_position carry zero vendor or bill references at all. None of these ever owed ap_bill. report.ar_aging and report.ap_aging (real vendor+bill drill, verify-aging-report-reverse-leaves.mjs) and report.management (vendor-level AP aging summary table, EntityLink kind=vendor, verify-report-management-ap-aging.mjs) keep it \u2014 they are the only reports leaves that genuinely surface AP-bill-adjacent data. report.ar_aging also never owed ap_bill \u2014 it's a receivables report (customer/invoice), zero bill_id anywhere in ARAgingPage.tsx; corrected in the same pass.",
+      "drops": [
+        {
+          "id": "report.trial_balance",
+          "removed": [
+            "ap_bill"
+          ]
+        },
+        {
+          "id": "report.profit_loss",
+          "removed": [
+            "ap_bill"
+          ]
+        },
+        {
+          "id": "report.balance_sheet",
+          "removed": [
+            "ap_bill"
+          ]
+        },
+        {
+          "id": "report.cash_flow_statement",
+          "removed": [
+            "ap_bill"
+          ]
+        },
+        {
+          "id": "report.cash_flow",
+          "removed": [
+            "ap_bill"
+          ]
+        },
+        {
+          "id": "report.cash_flow_overview",
+          "removed": [
+            "ap_bill"
+          ]
+        },
+        {
+          "id": "report.settlement_summary",
+          "removed": [
+            "ap_bill"
+          ]
+        },
+        {
+          "id": "report.customer_profitability",
+          "removed": [
+            "ap_bill"
+          ]
+        },
+        {
+          "id": "report.maintenance_cost_per_unit",
+          "removed": [
+            "ap_bill"
+          ]
+        },
+        {
+          "id": "runner.cash_position",
+          "removed": [
+            "ap_bill"
+          ]
+        },
+        {
+          "id": "report.ar_aging",
+          "removed": [
+            "ap_bill"
           ]
         }
       ]
