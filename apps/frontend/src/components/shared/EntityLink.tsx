@@ -115,6 +115,8 @@ export type EntityKind =
   | "tire_program_unit"
   | "legal_contracts_vendor"
   | "legal_contracts_customer"
+  | "unit_tires_tab"
+  | "unit_brakes_tab"
   | "inventory_part"
   | "parts_inventory"
   | "maintenance_vendor"
@@ -356,6 +358,10 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
       return `/legal/contracts?signer_type=vendor&signer_entity_id=${id}`;
     case "legal_contracts_customer":
       return `/legal/contracts?signer_type=customer&signer_entity_id=${id}`;
+    case "unit_tires_tab":
+      return `/fleet/units/${id}?tab=tires`;
+    case "unit_brakes_tab":
+      return `/fleet/units/${id}?tab=brakes`;
     case "safety_event":
       return `/safety/safety-events?event_id=${id}`;
     // SAF-F33 safety drill-through — each target list page reads the param and opens/highlights the row.
