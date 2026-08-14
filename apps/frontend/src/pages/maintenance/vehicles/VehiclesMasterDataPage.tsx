@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { EntityLink } from "../../../components/shared/EntityLink";
+import { entityLabel } from "../../../lib/entity-label";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createMaintenanceVehicle,
@@ -135,9 +136,13 @@ export function VehiclesMasterDataPage() {
       label: "Unit",
       sortable: true,
       render: (row) => (
-        <Link to={`/fleet/units/${row.id}`} className={`${LINK} font-semibold`}>
-          {entityLabel(row.unit_display_id, row.id, "Unit")}
-        </Link>
+        <EntityLink
+          kind="unit"
+          id={row.id}
+          label={entityLabel(row.unit_display_id, row.id, "Unit")}
+          className={`${LINK} font-semibold`}
+          data-testid="maintenance-vehicles-master-unit-link"
+        />
       ),
     },
     {
