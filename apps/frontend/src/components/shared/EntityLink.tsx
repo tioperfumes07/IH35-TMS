@@ -80,7 +80,12 @@ export type EntityKind =
   // in routes/manifest.tsx: <Route path="/dispatch/geofencing">) is the only geofence detail
   // surface; it has no per-id sub-route, so this resolves with a query param the page now honors —
   // same drill pattern as claim/lawsuit/settlement.
-  | "geofence";
+  | "geofence"
+  // LINK reverse_link: ReserveDashboard/ReserveTracker rendered a reserve balance's factor as dead
+  // text — no module could link INTO a factor record. FactorAdmin (route verified present in
+  // routes/manifest.tsx: <Route path="/factoring/factors">) is the only factor detail surface; it
+  // has no per-id sub-route, so this resolves with a query param the page now honors.
+  | "factor";
 
 export interface EntityLinkProps {
   kind: EntityKind;
@@ -223,6 +228,8 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
       return `/users/${id}`;
     case "geofence":
       return `/dispatch/geofencing?geofence_id=${id}`;
+    case "factor":
+      return `/factoring/factors?factor_id=${id}`;
     default:
       return null;
   }

@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ApiError } from "../../api/client";
@@ -159,6 +160,18 @@ export function FactorAdmin() {
     queryFn: () => listFactors(companyId).then((res) => res.factors),
     enabled: Boolean(companyId),
   });
+
+  // LINK reverse_link: EntityLink kind="factor" resolves to /factoring/factors?factor_id= — this
+  // page previously never read that param, so a reverse link into a factor landed on the list with
+  // nothing selected. selectedFactor needs the FULL Factor object (used by every mutation below), so
+  // the effect waits for factorsQuery to resolve and looks the id up rather than setting a bare id.
+  const [searchParams] = useSearchParams();
+  const deepLinkFactorId = searchParams.get("factor_id");
+  useEffect(() => {
+    if (!deepLinkFactorId || !factorsQuery.data) return;
+    const match = factorsQuery.data.find((factor) => factor.id === deepLinkFactorId);
+    if (match) setSelectedFactor(match);
+  }, [deepLinkFactorId, factorsQuery.data]);
 
   const customersQuery = useQuery({
     queryKey: ["factoring", "factor-admin", "customers", companyId, customerSearch],

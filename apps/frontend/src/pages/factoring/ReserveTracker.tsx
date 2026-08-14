@@ -426,8 +426,16 @@ export function ReserveTracker() {
               }`}
               onClick={() => setSelectedFactorId(bal.factor_id)}
             >
+              {/* LINK reverse_link: factor_id was dead text — EntityLink kind="factor" resolves to
+                  /factoring/factors?factor_id= (FactorAdmin). stopPropagation so the link doesn't
+                  also fire this card's own onClick (local selectedFactorId toggle). */}
               <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">
-                {entityLabel(factorNameById.get(bal.factor_id), bal.factor_id, "Factor")}
+                <EntityLink
+                  kind="factor"
+                  id={bal.factor_id}
+                  label={entityLabel(factorNameById.get(bal.factor_id), bal.factor_id, "Factor")}
+                  onClick={(e) => e.stopPropagation()}
+                />
               </div>
               <div className="mt-1 text-xl font-bold text-gray-900">{fmtM(bal.balance_cents)}</div>
               <div className="mt-1 text-[11px] text-gray-500">
