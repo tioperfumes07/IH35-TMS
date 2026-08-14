@@ -202,9 +202,12 @@ export function DriverSafetyReverseSection({
       >
         {trainingRecords.map((record) => (
           <li key={s(record.id)} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-sm">
-            <Link className="font-semibold text-slate-700 underline" to={`/safety/training-records?training_id=${encodeURIComponent(s(record.id))}`}>
-              {entityLabel(record.training_name ?? record.training_type, record.id, "Training")}
-            </Link>
+            <EntityLink
+              kind="training_record"
+              id={s(record.id)}
+              label={entityLabel(record.training_name ?? record.training_type, record.id, "Training")}
+              className="font-semibold text-slate-700 underline"
+            />
             <span className="ml-2 text-gray-600">{formatDateUS(record.completed_at)}</span>
           </li>
         ))}

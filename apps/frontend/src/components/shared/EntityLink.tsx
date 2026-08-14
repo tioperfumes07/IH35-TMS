@@ -84,6 +84,12 @@ export type EntityKind =
   | "road_service_ticket"
   // LINK-F5171: Form 2290 filing reverse → /compliance/form-2290?filing_id=
   | "form_2290_filing"
+  | "border_crossing"
+  | "fuel_card_overage_event"
+  | "driver_team_split"
+  | "driver_report"
+  | "training_record"
+  | "legal_contract"
   | "inventory_part"
   | "parts_inventory"
   | "maintenance_vendor"
@@ -270,6 +276,18 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
       return `/maintenance/road-service?ticket_id=${id}`;
     case "form_2290_filing":
       return `/compliance/form-2290?filing_id=${id}`;
+    case "border_crossing":
+      return `/dispatch/border-crossing/history?crossing_id=${id}`;
+    case "fuel_card_overage_event":
+      return `/fuel/card-overage?event_id=${id}`;
+    case "driver_team_split":
+      return `/drivers/team-splits?team_id=${id}`;
+    case "driver_report":
+      return `/maintenance/driver-reports?driver_report_id=${id}`;
+    case "training_record":
+      return `/safety/training-records?training_id=${id}`;
+    case "legal_contract":
+      return `/legal/contracts?contract_id=${id}`;
     case "safety_event":
       return `/safety/safety-events?event_id=${id}`;
     // SAF-F33 safety drill-through — each target list page reads the param and opens/highlights the row.

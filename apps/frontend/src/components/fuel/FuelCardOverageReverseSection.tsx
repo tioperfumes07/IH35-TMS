@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
+import { EntityLink } from "../shared/EntityLink";
 import { listOverageEvents } from "../../pages/fuel/card-overage/CardOverageQueuePage";
 
 type Props = {
@@ -29,9 +30,12 @@ export function FuelCardOverageReverseSection({ operatingCompanyId, filter }: Pr
       <ul className="mt-2 space-y-1">
         {events.slice(0, 5).map((event) => (
           <li key={event.id}>
-            <Link className="text-xs font-semibold text-slate-700 hover:underline" to={`/fuel/card-overage?event_id=${encodeURIComponent(event.id)}`}>
-              {new Date(event.created_at).toLocaleDateString()} · {(event.overage_cents / 100).toLocaleString("en-US", { style: "currency", currency: "USD" })}
-            </Link>
+            <EntityLink
+              kind="fuel_card_overage_event"
+              id={event.id}
+              label={`${new Date(event.created_at).toLocaleDateString()} · ${(event.overage_cents / 100).toLocaleString("en-US", { style: "currency", currency: "USD" })}`}
+              className="text-xs font-semibold text-slate-700 hover:underline"
+            />
           </li>
         ))}
       </ul>

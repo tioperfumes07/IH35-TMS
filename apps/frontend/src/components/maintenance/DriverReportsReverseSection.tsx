@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
+import { EntityLink } from "../shared/EntityLink";
 import { listDriverReports } from "../../api/maintenance";
 import { formatDateTimeUS } from "../../lib/formatDate";
 
@@ -23,9 +24,12 @@ export function DriverReportsReverseSection({ operatingCompanyId, driverId }: { 
         <ul className="space-y-2">
           {rows.map((row) => (
             <li key={row.id} className="rounded-sm border border-gray-200 px-2 py-1.5 text-sm">
-              <Link className="font-semibold text-slate-700 underline" to={`/maintenance/driver-reports?driver_report_id=${encodeURIComponent(row.id)}`}>
-                {row.report_type}
-              </Link>
+              <EntityLink
+                kind="driver_report"
+                id={row.id}
+                label={row.report_type}
+                className="font-semibold text-slate-700 underline"
+              />
               <span className="ml-2 text-gray-500">{row.status} · {formatDateTimeUS(row.reported_at)}</span>
               <p className="text-xs text-gray-600">{row.description}</p>
             </li>

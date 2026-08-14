@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { EntityLink } from "../shared/EntityLink";
 import { apiRequest } from "../../api/client";
 import { formatDateUS } from "../../lib/formatDate";
 import { ListErrorBanner } from "../shared/ListErrorBanner";
@@ -24,9 +24,7 @@ export function UnitBorderCrossingsReverseSection({ operatingCompanyId, unitId }
       {!query.isLoading && !query.isError && rows.length === 0 ? <p className="text-sm text-gray-500">No completed border crossings linked to this unit.</p> : null}
       {rows.map((row) => (
         <div key={row.id} className="rounded-sm border border-gray-100 px-2 py-1.5 text-sm">
-          <Link className="font-semibold text-slate-700 underline" to={`/dispatch/border-crossing/history?crossing_id=${encodeURIComponent(row.id)}`}>
-            {row.port_of_entry}
-          </Link>
+          <EntityLink kind="border_crossing" id={row.id} label={row.port_of_entry} className="font-semibold text-slate-700 underline" />
           <span className="ml-2 text-xs text-gray-600">{row.direction} · {formatDateUS(row.planned_crossing_date ?? row.crossing_date)}</span>
         </div>
       ))}

@@ -28,7 +28,7 @@ function audit(s) {
   if (!/INSERT INTO mdata\.unit_border_crossings[\s\S]{0,180}operating_company_id, unit_id/.test(s.writer)) failures.push("writer unit persistence missing");
   if (!/unit_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)/.test(s.historyRoute) || !/filters\.push\(`ubc\.unit_id = \$\$\{values\.length\}::uuid`\)/.test(s.historyRoute)) failures.push("exact unit history filter missing");
   if (!/unit_id: unitId/.test(s.reverse) || !/ListErrorBanner/.test(s.reverse)) failures.push("profile reverse must request exact unit and show errors");
-  if (!/border-crossing\/history\?crossing_id=/.test(s.reverse) || !/row\.id === deepLinkCrossingId/.test(s.history)) failures.push("reverse drill must select canonical history row");
+  if (!/kind=["']border_crossing["']/.test(s.reverse) || !/row\.id === deepLinkCrossingId/.test(s.history)) failures.push("reverse drill must select canonical history row");
   if (!/UnitBorderCrossingsReverseSection[\s\S]{0,160}unitId=\{id\}/.test(s.profile)) failures.push("unit profile border reverse mount missing");
   return failures;
 }
@@ -41,7 +41,7 @@ if (process.argv.includes("--selftest")) {
     ["filter", "historyRoute", /filters\.push\(`ubc\.unit_id = \$\$\{values\.length\}::uuid`\)/, "filters.push(`TRUE`)"],
     ["reverse", "reverse", /unit_id: unitId/, "unit_id: operatingCompanyId"],
     ["error", "reverse", /ListErrorBanner/g, "MissingErrorBanner"],
-    ["drill", "reverse", /history\?crossing_id=/, "history?unit_id="],
+    ["drill", "reverse", /kind=["']border_crossing["']/, 'kind="unit"'],
     ["mount", "profile", /UnitBorderCrossingsReverseSection/g, "MissingBorderReverse"],
   ];
   for (const [name, key, pattern, replacement] of mutations) {

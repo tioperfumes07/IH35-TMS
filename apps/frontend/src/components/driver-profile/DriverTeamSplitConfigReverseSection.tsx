@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
+import { EntityLink } from "../shared/EntityLink";
 import { listTeamSplitConfigs } from "../../hooks/useTeamSplits";
 
 export function DriverTeamSplitConfigReverseSection({
@@ -30,9 +31,12 @@ export function DriverTeamSplitConfigReverseSection({
       <ul className="mt-2 space-y-1">
         {configs.slice(0, 5).map((config) => (
           <li key={config.id}>
-            <Link className="text-xs font-semibold text-slate-700 hover:underline" to={`/drivers/team-splits?team_id=${encodeURIComponent(config.id)}`}>
-              {Math.round(Number(config.primary_ratio) * 100)}% / {Math.round(Number(config.secondary_ratio) * 100)}% · {config.status}
-            </Link>
+            <EntityLink
+              kind="driver_team_split"
+              id={config.id}
+              label={`${Math.round(Number(config.primary_ratio) * 100)}% / ${Math.round(Number(config.secondary_ratio) * 100)}% · ${config.status}`}
+              className="text-xs font-semibold text-slate-700 hover:underline"
+            />
           </li>
         ))}
       </ul>

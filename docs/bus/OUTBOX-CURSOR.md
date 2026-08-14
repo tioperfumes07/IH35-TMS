@@ -118,3 +118,5 @@
 - 2026-08-14 shipped #6806 layover + #6808 help/WO + next driver/portal load EntityLink (this PR)
 
 - 2026-08-14 shipped #6809 driver/portal loads; next maint/compliance reverse EntityLink (this PR)
+
+- 2026-08-14 shipped #6811; next reverse EntityLink batch (this PR)

@@ -21,7 +21,7 @@ export function LoadDriverReportsReverseSection({ operatingCompanyId, loadId }: 
       {query.isLoading ? <p className="text-sm text-gray-500">Loading driver reports…</p> : null}
       {query.isError ? <p className="text-sm text-red-600">Could not load driver reports for this load.</p> : null}
       {!query.isLoading && !query.isError && rows.length === 0 ? <p className="text-sm text-gray-500">No driver reports linked to this load.</p> : null}
-      {rows.length > 0 ? <ul className="space-y-2">{rows.map((row) => <li key={row.id} className="rounded-sm border border-gray-200 px-2 py-1.5 text-sm"><Link className="font-semibold text-slate-700 underline" to={`/maintenance/driver-reports?driver_report_id=${encodeURIComponent(row.id)}`}>{row.report_type}</Link><span className="ml-2 text-gray-500">{row.status} · {formatDateTimeUS(row.reported_at)}</span><div className="text-xs text-gray-600"><EntityLink kind="driver" id={row.driver_id} label={entityLabel(row.driver_name, row.driver_id, "Driver")} /> · {row.description}</div></li>)}</ul> : null}
+      {rows.length > 0 ? <ul className="space-y-2">{rows.map((row) => <li key={row.id} className="rounded-sm border border-gray-200 px-2 py-1.5 text-sm"><EntityLink kind="driver_report" id={row.id} label={row.report_type} className="font-semibold text-slate-700 underline" /><span className="ml-2 text-gray-500">{row.status} · {formatDateTimeUS(row.reported_at)}</span><div className="text-xs text-gray-600"><EntityLink kind="driver" id={row.driver_id} label={entityLabel(row.driver_name, row.driver_id, "Driver")} /> · {row.description}</div></li>)}</ul> : null}
     </section>
   );
 }
