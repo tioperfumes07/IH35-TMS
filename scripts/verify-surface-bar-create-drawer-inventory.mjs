@@ -40,6 +40,13 @@ const ALLOWED_NESTED = new Set([
 const FILE_OWNED_BY_LEAF = {
   "components/accounting/JournalEntryTypePicker.tsx": "catalog.accounting.journal_entry_types.create",
   "components/driver-finance/PaymentMethodPicker.tsx": "catalog.accounting.payment_methods.create",
+  // Border-crossing wizard steps are not top-level leaves — owned by the page shell leaf.
+  "components/border-crossing/WizardStep1.tsx": "dispatch.wizard.border_crossing_wizard_page",
+  "components/border-crossing/WizardStep2.tsx": "dispatch.wizard.border_crossing_wizard_page",
+  "components/border-crossing/WizardStep3.tsx": "dispatch.wizard.border_crossing_wizard_page",
+  "components/border-crossing/WizardStep4.tsx": "dispatch.wizard.border_crossing_wizard_page",
+  "components/border-crossing/WizardStep5.tsx": "dispatch.wizard.border_crossing_wizard_page",
+  "components/border-crossing/WizardStep6.tsx": "dispatch.wizard.border_crossing_wizard_page",
 };
 
 function walk(dir, out = []) {
