@@ -39,7 +39,7 @@ type RowForm = {
   memo: string;
   ref_kind: "" | ForecastRefKind;
   ref_label: string;
-  party_ref_kind: "" | "customer" | "driver";
+  party_ref_kind: "" | "customer" | "driver" | "vendor";
   party_ref_id: string;
   party_ref_label: string;
 };
@@ -157,7 +157,7 @@ function ProjectionPanel({
       memo: e.memo ?? "",
       ref_kind: e.ref_kind ?? "",
       ref_label: e.ref_label ?? "",
-      party_ref_kind: e.party_ref_kind === "driver" || e.party_ref_kind === "customer" ? e.party_ref_kind : "",
+      party_ref_kind: e.party_ref_kind === "driver" || e.party_ref_kind === "customer" || e.party_ref_kind === "vendor" ? e.party_ref_kind : "",
       party_ref_id: e.party_ref_id ?? "",
       party_ref_label: e.party_ref_label ?? "",
     });
@@ -191,8 +191,8 @@ function ProjectionPanel({
             <div key={e.id} className="flex items-center gap-2 px-3 py-1.5 text-xs" data-mdp-row={direction}>
               {columns.map((c) => (
                 <span key={c.key} className={`${c.w} shrink-0 truncate ${c.key === columns[0].key ? "font-medium text-gray-700" : ""}`} title={String(cellValue(e, c.key))}>
-                  {c.key === "party_name" && (e.party_ref_kind === "driver" || e.party_ref_kind === "customer") && e.party_ref_id ? (
-                    <EntityLink kind={e.party_ref_kind} id={e.party_ref_id} label={entityLabel(e.party_ref_label ?? e.party_name, e.party_ref_id, e.party_ref_kind === "driver" ? "Driver" : "Customer")} />
+                  {c.key === "party_name" && (e.party_ref_kind === "driver" || e.party_ref_kind === "customer" || e.party_ref_kind === "vendor") && e.party_ref_id ? (
+                    <EntityLink kind={e.party_ref_kind} id={e.party_ref_id} label={entityLabel(e.party_ref_label ?? e.party_name, e.party_ref_id, e.party_ref_kind === "driver" ? "Driver" : e.party_ref_kind === "vendor" ? "Vendor" : "Customer")} />
                   ) : cellValue(e, c.key)}
                 </span>
               ))}
@@ -231,6 +231,7 @@ function ProjectionPanel({
                 onChange={(ev) => setForm((f) => ({ ...f, party_ref_kind: ev.target.value as RowForm["party_ref_kind"], party_ref_id: "", party_ref_label: "", party_name: "" }))}
               >
                 <option value="">Name</option>
+                <option value="vendor">Vendor</option>
                 <option value="driver">Driver</option>
               </SelectCombobox>
               {form.party_ref_kind === "driver" ? (
@@ -242,6 +243,8 @@ function ProjectionPanel({
                   className="min-w-0 flex-1"
                   driverRoster="active_or_probation"
                 />
+              ) : form.party_ref_kind === "vendor" ? (
+                <EntityPicker kind="vendor" operatingCompanyId={operatingCompanyId} value={form.party_ref_id || null} onChange={(id) => setForm((f) => ({ ...f, party_ref_id: id ?? "" }))} placeholder="Select vendor" className="min-w-0 flex-1" />
               ) : (
                 <input aria-label={c.label} placeholder={c.label} className="h-7 min-w-0 flex-1 rounded-sm border border-gray-300 px-2" value={form.party_name} onChange={(ev) => setForm((f) => ({ ...f, party_name: ev.target.value }))} />
               )}

@@ -120,6 +120,15 @@ export async function registerCashForecastManualRoutes(app: FastifyInstance) {
         if (!customer.rows[0]) throw Object.assign(new Error("Customer does not belong to this operating company."), { statusCode: 400 });
         partyName = customer.rows[0].label;
         partyRefLabel = customer.rows[0].label;
+      } else if (b.data.party_ref_kind === "vendor") {
+        if (!b.data.party_ref_id) throw Object.assign(new Error("Select a vendor."), { statusCode: 400 });
+        const vendor = await client.query<{ label: string }>(
+          `SELECT vendor_name AS label FROM mdata.vendors WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
+          [b.data.party_ref_id, b.data.operating_company_id],
+        );
+        if (!vendor.rows[0]) throw Object.assign(new Error("Vendor does not belong to this operating company."), { statusCode: 400 });
+        partyName = vendor.rows[0].label;
+        partyRefLabel = vendor.rows[0].label;
       }
       const res = await client.query(
         `INSERT INTO forecast.cash_entries
@@ -197,6 +206,20 @@ export async function registerCashForecastManualRoutes(app: FastifyInstance) {
         );
         if (!customer.rows[0]) throw Object.assign(new Error("Customer does not belong to this operating company."), { statusCode: 400 });
         const label = customer.rows[0].label;
+        const refLabelIndex = sets.findIndex((set) => set.startsWith("party_ref_label ="));
+        if (refLabelIndex >= 0) values[refLabelIndex] = label;
+        else { values.push(label); sets.push(`party_ref_label = $${values.length}`); }
+        const partyNameIndex = sets.findIndex((set) => set.startsWith("party_name ="));
+        if (partyNameIndex >= 0) values[partyNameIndex] = label;
+        else { values.push(label); sets.push(`party_name = $${values.length}`); }
+      } else if (b.data.party_ref_kind === "vendor") {
+        if (!b.data.party_ref_id) throw Object.assign(new Error("Select a vendor."), { statusCode: 400 });
+        const vendor = await client.query<{ label: string }>(
+          `SELECT vendor_name AS label FROM mdata.vendors WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
+          [b.data.party_ref_id, b.data.operating_company_id],
+        );
+        if (!vendor.rows[0]) throw Object.assign(new Error("Vendor does not belong to this operating company."), { statusCode: 400 });
+        const label = vendor.rows[0].label;
         const refLabelIndex = sets.findIndex((set) => set.startsWith("party_ref_label ="));
         if (refLabelIndex >= 0) values[refLabelIndex] = label;
         else { values.push(label); sets.push(`party_ref_label = $${values.length}`); }
