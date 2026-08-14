@@ -494,6 +494,12 @@ export function OwnerHome({ auth }: Props) {
         {HOME_QUICK_JUMPS.map((jump) => (
           <SectionQuickJump key={jump.title} title={jump.title} subtitle={jump.subtitle} count={jump.count} to={jump.to} />
         ))}
+        <SectionQuickJump
+          title="Program"
+          subtitle="Scenario tracker, module matrix, build progress"
+          count={null}
+          to="/program"
+        />
       </div>
 
       <div className="order-7">
