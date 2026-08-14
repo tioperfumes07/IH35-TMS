@@ -647,6 +647,11 @@
     "claimed_by": "codex",
     "purpose": "verify-selected-record-summary-reverse-links"
   },
+  "3240": {
+    "claimed_at": "2026-08-13",
+    "claimed_by": "codex",
+    "purpose": "verify-cross-module-reference-identity-reverse-links"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
@@ -2491,5 +2496,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1123
+  "total_claimed": 1124
 }
