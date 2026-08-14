@@ -168,6 +168,23 @@ export const RUNNER_CONFIGS: Record<string, ReportRunnerConfig> = {
     ],
     csvFilename: (filters) => `hos-violations-${String(filters.from ?? "from")}-to-${String(filters.to ?? "to")}.csv`,
   },
+  "dot-audit-pack": {
+    id: "dot-audit-pack",
+    name: "DOT audit inspection packet",
+    apiPath: "/api/v1/safety/dot-inspections",
+    filters: [{ type: "date_range", key: "date_range", label: "Inspection date range", required: true }],
+    columns: [
+      { key: "inspection_date", label: "Inspection date", align: "left", format: "date", sortable: true },
+      { key: "driver_name", label: "Driver", align: "left", sortable: true, entityKind: "driver", entityIdKey: "driver_id" },
+      { key: "unit_number", label: "Unit", align: "left", sortable: true, entityKind: "unit", entityIdKey: "unit_id" },
+      { key: "inspector_name", label: "Inspector", align: "left", sortable: true },
+      { key: "inspection_level", label: "Level", align: "right", format: "number", sortable: true },
+      { key: "location", label: "Location", align: "left", sortable: true },
+      { key: "outcome", label: "Outcome", align: "left", sortable: true },
+      { key: "work_order_display_id", label: "Work order", align: "left", entityKind: "work_order", entityIdKey: "auto_spawned_wo_id" },
+    ],
+    csvFilename: (filters) => `dot-audit-inspections-${String(filters.from ?? "from")}-to-${String(filters.to ?? "to")}.csv`,
+  },
   "csa-fleet": {
     id: "csa-fleet",
     name: "Internal inspection-point rollup",

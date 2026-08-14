@@ -17,6 +17,8 @@ const dotInspectionsListQuerySchema = companyQuerySchema.extend({
   driver_id: z.string().uuid().optional(),
   unit_id: z.string().uuid().optional(),
   trailer_id: z.string().uuid().optional(),
+  from: z.string().date().optional(),
+  to: z.string().date().optional(),
 });
 
 const cleanRateQuerySchema = z.object({
@@ -137,6 +139,14 @@ export async function registerSafetyDotInspectionsRoutes(app: FastifyInstance) {
         values.push(query.data.trailer_id);
         filters.push(`AND di.trailer_id = $${values.length}`);
       }
+      if (query.data.from) {
+        values.push(query.data.from);
+        filters.push(`AND di.inspection_date >= $${values.length}::date`);
+      }
+      if (query.data.to) {
+        values.push(query.data.to);
+        filters.push(`AND di.inspection_date <= $${values.length}::date`);
+      }
       // CLS-UUID-LABEL: this list never joined the driver/unit/WO names, so the frontend's
       // EntityLink rendered the raw driver_id/unit_id/auto_spawned_wo_id uuids with no label
       // (same class as LST-F105/107/108/109/111/112). Mirrors safety.accident_reports' join.
@@ -157,6 +167,7 @@ export async function registerSafetyDotInspectionsRoutes(app: FastifyInstance) {
           LEFT JOIN maintenance.work_orders wo
             ON wo.id = di.auto_spawned_wo_id
           WHERE di.operating_company_id = $1::uuid
+            AND di.voided_at IS NULL
           ${filters.join("\n          ")}
           ORDER BY di.inspection_date DESC, di.created_at DESC
           LIMIT 500
