@@ -396,6 +396,14 @@ export function FactoringTab({ loadId, operatingCompanyId, canEdit, onPacketUpda
           data-testid="factoring-tab-view-in-recourse-pipeline"
           className="mt-2 ml-3 inline-block text-xs font-medium text-slate-700 hover:underline"
         />
+        {/* LINK-F5171/LINK-F5181 — reverse_link: factoring:submit.queue. */}
+        <EntityLink
+          kind="factoring_submit_queue_load"
+          id={loadId}
+          label="View in Submission Queue →"
+          data-testid="factoring-tab-view-in-submission-queue"
+          className="mt-2 ml-3 inline-block text-xs font-medium text-slate-700 hover:underline"
+        />
       </div>
 
       {/* Document checklist */}

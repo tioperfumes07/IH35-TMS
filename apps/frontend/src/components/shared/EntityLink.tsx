@@ -95,6 +95,7 @@ export type EntityKind =
   | "integrity_anomaly"
   | "factoring_queue_load"
   | "factoring_recourse_load"
+  | "factoring_submit_queue_load"
   | "load_template"
   | "cash_forecast_entry"
   // LINK-F5171: TasksTab drills chat by taskId (not a generic office entity).
@@ -336,6 +337,9 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
       // route from factoring_queue_load's dispatch/factoring-queue, whose own param convention
       // moved to queue_record_id above -- this route's param stays load_id).
       return `/factoring/recourse-pipeline?load_id=${id}`;
+    case "factoring_submit_queue_load":
+      // LINK-F5181: submission-queue.routes.ts accepts a load_id filter directly.
+      return `/factoring/submit?load_id=${id}`;
     case "load_template":
       return `/dispatch/planning/calendar?panel=templates&template_id=${id}`;
     case "cash_forecast_entry":

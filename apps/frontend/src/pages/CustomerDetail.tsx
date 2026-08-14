@@ -69,6 +69,7 @@ import { CustomerLoadTemplatesReverseSection } from "../components/dispatch/Cust
 import { CustomerFactoringReverseSection } from "../components/customers/CustomerFactoringReverseSection";
 import { CustomerFactoringQueueReverseSection } from "../components/customers/CustomerFactoringQueueReverseSection";
 import { CustomerFactoringRecourseReverseSection } from "../components/customers/CustomerFactoringRecourseReverseSection";
+import { CustomerFactoringSubmitQueueReverseSection } from "../components/customers/CustomerFactoringSubmitQueueReverseSection";
 import { DocumentsTab } from "../components/documents/DocumentsTab";
 import { TasksTab } from "../components/tasks/TasksTab";
 import { EntityAuditHistoryTab } from "../components/audit/EntityAuditHistoryTab";
@@ -1164,6 +1165,7 @@ export function CustomerDetailPage() {
           <CustomerFactoringReverseSection operatingCompanyId={operatingCompanyId} customerId={id} />
           <CustomerFactoringQueueReverseSection operatingCompanyId={operatingCompanyId} customerId={id} />
           <CustomerFactoringRecourseReverseSection operatingCompanyId={operatingCompanyId} customerId={id} />
+          <CustomerFactoringSubmitQueueReverseSection operatingCompanyId={operatingCompanyId} customerId={id} />
         </>
       ) : null}
 

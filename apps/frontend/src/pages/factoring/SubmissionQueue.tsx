@@ -1,5 +1,6 @@
 import { entityLabel } from "../../lib/entity-label";
 import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { listSubmissionQueue, submitFactoringQueueBatch, type SubmissionQueueItem } from "../../api/factoring";
 import { EntityLink } from "../../components/shared/EntityLink";
@@ -34,9 +35,18 @@ export function SubmissionQueue() {
 
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
+  // LINK-F5171/LINK-F5181 — reverse_link: CustomerDetail/FactoringTab link here as
+  // ?customer_id=/?load_id=; this page previously never read either param.
+  const [searchParams] = useSearchParams();
+  const deepLinkCustomerId = searchParams.get("customer_id");
+  const deepLinkLoadId = searchParams.get("load_id");
   const queueQuery = useQuery({
-    queryKey: ["factoring", "submission-queue", companyId],
-    queryFn: () => listSubmissionQueue(companyId).then((r) => r.items),
+    queryKey: ["factoring", "submission-queue", companyId, deepLinkCustomerId, deepLinkLoadId],
+    queryFn: () =>
+      listSubmissionQueue(companyId, {
+        customer_id: deepLinkCustomerId ?? undefined,
+        load_id: deepLinkLoadId ?? undefined,
+      }).then((r) => r.items),
     enabled: Boolean(companyId),
   });
 
