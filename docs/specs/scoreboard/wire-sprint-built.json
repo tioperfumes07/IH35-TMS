@@ -327,35 +327,6 @@
       "leafRe": ".*"
     },
     {
-      "task": "WAVE-A-vendor-all-modules",
-      "pr": "this PR",
-      "guard": "scripts/verify-wave-a-vendor-all-modules.mjs",
-      "modules": [
-        "accounting",
-        "banking",
-        "customers",
-        "dispatch",
-        "docs",
-        "factoring",
-        "finance",
-        "fleet",
-        "fuel",
-        "insurance",
-        "inventory",
-        "legal",
-        "lists",
-        "maintenance",
-        "reports",
-        "safety",
-        "system",
-        "vendors"
-      ],
-      "cols": [
-        "vendor"
-      ],
-      "leafRe": ".*"
-    },
-    {
       "task": "WAVE-B-connectivity-all-modules",
       "pr": "this PR",
       "guard": "scripts/verify-wave-b-connectivity-all-modules.mjs",
