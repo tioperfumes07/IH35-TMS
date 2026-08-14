@@ -2710,5 +2710,10 @@
     "claimed_at": "2026-08-14",
     "claimed_by": "cursor",
     "purpose": "verify-lists-catalog-chrome-picker-wave"
+  },
+  "2956": {
+    "claimed_at": "2026-08-14",
+    "claimed_by": "cursor",
+    "purpose": "verify-cursor-vertical-qbo-picker-modules (reports→accounting→… vertical)"
   }
 }
