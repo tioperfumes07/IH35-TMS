@@ -2462,6 +2462,14 @@
       "modules": ["accounting", "settlements"],
       "cols": ["ap_bill"],
       "leafRe": "^(accounting\\.panel\\.reallocate|settlements\\.panel\\.open_driver_bills)$"
+    },
+    {
+      "task": "VERTICAL-CONNECTIVITY-REPORTS-HUB",
+      "pr": "this PR",
+      "guard": "scripts/verify-reports-hub-connectivity.mjs",
+      "modules": ["reports"],
+      "cols": ["connectivity"],
+      "leafRe": "^(home\\.hub|subnav\\.(category_hub|run_report))$"
     }
   ]
 }
