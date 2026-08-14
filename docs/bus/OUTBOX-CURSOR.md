@@ -1,3 +1,6 @@
+2026-08-14T20:08Z Cursor | shipping LINK-F5171 HOS tracker + ELD live-duty unit EntityLink | Live=BLOCKED | NEXT=toolbar inventory
+2026-08-14T20:07Z Cursor | SHIPPED LINK-F5171 fuel planner unit+driver (#6742) | Live=BLOCKED | NEXT=toolbar inventory · more FE
+2026-08-14T20:07Z Cursor | SHIPPED LINK-F5171 planner calendar customer (#6738) | Live=BLOCKED | theater_broad~53
 2026-08-14T20:06Z Cursor | shipping LINK-F5171 fuel planner unit+driver EntityLink | Live=BLOCKED | NEXT=toolbar inventory · more FE
 2026-08-14T21:10Z Cursor | shipping LINK-F5171 planner calendar customer EntityLink + ENV-MATRIX board closeout | Live=BLOCKED | NEXT=more LINK-F5171 FE · toolbar inventory
 2026-08-14T21:05Z Cursor | SHIPPED LINK-F5171 cash-flow customer EntityLink (#6737) | Live=BLOCKED | NEXT=planner calendar / toolbar

@@ -238,7 +238,16 @@ export function HosTrackerSection({ operatingCompanyId }: { operatingCompanyId: 
                 <div className="text-sm font-semibold text-slate-900">
                   <EntityLink kind="driver" id={selectedDriver.driver_id} label={entityLabel(selectedDriver.driver_name, selectedDriver.driver_id, "Driver")} />
                 </div>
-                <div className="text-[11px] text-slate-500">Unit {entityLabel(selectedDriver.unit_number, null, "Unit")} · {selectedDate} · HOS cycle detail</div>
+                <div className="text-[11px] text-slate-500">
+                  Unit{" "}
+                  <EntityLink
+                    kind="unit"
+                    id={selectedDriver.unit_id}
+                    label={entityLabel(selectedDriver.unit_number, selectedDriver.unit_id, "Unit")}
+                    data-testid="hos-tracker-detail-unit-link"
+                  />{" "}
+                  · {selectedDate} · HOS cycle detail
+                </div>
               </div>
               <button type="button" onClick={() => setSelectedDriver(null)} className="rounded-sm px-2 py-1 text-slate-500 hover:bg-slate-100" aria-label="Close">✕</button>
             </div>

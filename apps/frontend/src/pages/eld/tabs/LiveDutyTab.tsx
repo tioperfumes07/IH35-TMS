@@ -41,7 +41,14 @@ export function LiveDutyTab({ operatingCompanyId }: Props) {
         key: "unit_number",
         label: "Unit",
         sortable: true,
-        render: (row) => entityLabel(row.unit_number, null, "Unit") ?? "—",
+        render: (row) => (
+          <EntityLink
+            kind="unit"
+            id={row.unit_id}
+            label={entityLabel(row.unit_number, row.unit_id, "Unit") ?? "—"}
+            data-testid="eld-live-duty-unit-link"
+          />
+        ),
       },
       {
         key: "current_duty_status",
