@@ -174,12 +174,12 @@ export function CardOverageQueuePage() {
                 Approve recovery
               </ActionButton>
             ) : row.journal_entry_id ? (
-              <Link
-                to={`/accounting/journal-entries/${row.journal_entry_id}`}
+              <EntityLink
+                kind="journal_entry"
+                id={row.journal_entry_id}
+                label="JE"
                 className="text-xs font-semibold text-slate-700 hover:underline"
-              >
-                JE
-              </Link>
+              />
             ) : (
               <span className="text-[10px] text-gray-500">—</span>
             )}
