@@ -330,6 +330,11 @@ function QboReconTab({ data }: { data: SystemData }) {
         title="QuickBooks Reconciliation"
         pill={<Pill tone="neutral">TMS ↔ QBO</Pill>}
         sub="Daily tie-out of what the TMS posted against QuickBooks (system-of-record). This is not bank reconciliation — bank statement matching stays in Banking; the two are never combined in one table."
+        footer={
+          <Link to="/banking" className="inline-flex items-center gap-1.5 rounded-lg bg-[#1f2a44] px-3 py-2 text-[12px] font-semibold text-white hover:bg-[#0f1729]">
+            Open bank reconciliation
+          </Link>
+        }
       >
         <Row label="Last tie-out run">{ctDateTime(recon.data?.sync_state.last_successful_tick_at)}</Row>
         <Row label="Last run status">{recon.data?.sync_state.last_run_status ?? "—"}</Row>
@@ -414,8 +419,8 @@ function ProgramTab({ data }: { data: SystemData }) {
         title="Program Tracker"
         sub="Live build status — derived from merges + deploys, not a static field. Full board opens in the Program Tracker module."
         footer={
-          <Link to="/program" className="inline-flex items-center gap-1.5 rounded-lg bg-[#1f2a44] px-3 py-2 text-[12px] font-semibold text-white hover:bg-[#0f1729]">
-            Open full Program Tracker
+          <Link to="/program/matrix" className="inline-flex items-center gap-1.5 rounded-lg bg-[#1f2a44] px-3 py-2 text-[12px] font-semibold text-white hover:bg-[#0f1729]">
+            Open Program Matrix
           </Link>
         }
       >
