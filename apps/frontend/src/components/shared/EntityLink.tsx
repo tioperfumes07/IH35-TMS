@@ -58,6 +58,10 @@ export type EntityKind =
   // LINK-F5171: applicants pipeline "Open onboarding wizard" used a bare Link; kind resolves to
   // /drivers/onboarding/:session_id (routes/manifest.tsx).
   | "onboarding_session"
+  // LINK-F5171: photo-comparison + leave-request inboxes used bare Links; kinds resolve to
+  // /safety/photo-comparison/:sessionUuid and /safety/scheduler/requests/:id.
+  | "photo_comparison_session"
+  | "scheduler_request"
   | "inventory_part"
   | "parts_inventory"
   | "maintenance_vendor"
@@ -220,6 +224,10 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
       return `/compliance/property-tax/${id}`;
     case "onboarding_session":
       return `/drivers/onboarding/${id}`;
+    case "photo_comparison_session":
+      return `/safety/photo-comparison/${id}`;
+    case "scheduler_request":
+      return `/safety/scheduler/requests/${id}`;
     case "safety_event":
       return `/safety/safety-events?event_id=${id}`;
     // SAF-F33 safety drill-through — each target list page reads the param and opens/highlights the row.

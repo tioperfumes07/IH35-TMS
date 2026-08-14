@@ -1,5 +1,4 @@
 import { useMemo } from "react";
-import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "../../../api/client";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
@@ -53,9 +52,12 @@ export function PhotoComparisonPage() {
         key: "actions",
         label: "Actions",
         render: (session) => (
-          <Link to={`/safety/photo-comparison/${session.uuid}`} className="text-slate-700 underline">
-            View
-          </Link>
+          <EntityLink
+            kind="photo_comparison_session"
+            id={session.uuid}
+            label="View"
+            className="text-slate-700 underline"
+          />
         ),
       },
     ],
