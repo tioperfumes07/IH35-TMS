@@ -35,8 +35,8 @@ const GITHUB_PULLS_URL =
   "https://api.github.com/repos/tioperfumes07/IH35-TMS/pulls?state=all&sort=updated&direction=desc&per_page=10";
 const GITHUB_LEDGER_COMMITS_URL =
   "https://api.github.com/repos/tioperfumes07/IH35-TMS/commits?path=docs/audit/AUDIT-COVERAGE-LIVE.md&per_page=1";
-const RECENT_CACHE_MS = 60_000;
-const SCOREBOARD_CACHE_MS = 60_000;
+const RECENT_CACHE_MS = 3_000;
+const SCOREBOARD_CACHE_MS = 3_000;
 const GITHUB_FETCH_TIMEOUT_MS = 8_000;
 
 type ScoreboardPayload = {
