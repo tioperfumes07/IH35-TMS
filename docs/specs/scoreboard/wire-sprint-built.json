@@ -1,4 +1,5 @@
 {
+  "VERTICAL-REVERSE-LINK-EXISTING-FK-DRILLS": "inventory.assignments.wo_link+tasks.tasks.drawer.task: canonical related-record drills",
   "VERTICAL-REVERSE-LINK-VENDOR-MASTER-DETAIL": "vendors.md.vendor_details: selected canonical vendor identity and profile drill-through",
   "VERTICAL-CONNECTIVITY-INVENTORY-PURCHASE-HOLD": "inventory.nav.purchases_tab+purchases.honest_empty: mounted door and guarded honest HOLD state",
   "VERTICAL-CONNECTIVITY-MAINTENANCE-DAMAGE-INTAKE": "maintenance.damage_reports.intake: mounted triage→WO or safety.incidents create→invalidate",
