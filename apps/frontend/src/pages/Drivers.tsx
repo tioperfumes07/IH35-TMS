@@ -47,6 +47,7 @@ import { AutoDeductionPoliciesPanel } from "./drivers/AutoDeductionPolicies";
 import { PendingSettlementDeductionsPanel } from "./drivers/PendingSettlementDeductionsPanel";
 import { SettlementDisputeList } from "./drivers/SettlementDisputeList";
 import { TeamSplitConfigPanel } from "./drivers/TeamSplitConfig";
+import { PayRateTemplatesListPage } from "./lists/driver/PayRateTemplatesListPage";
 import { useSettlementDisputes } from "../hooks/useSettlementDisputes";
 import {
   DRIVERS_LIST_STATUS_TABS,
@@ -820,9 +821,9 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
             </DataPanel>
           ) : null}
           {subnavTab === "pay_rate_templates" ? (
-            <DataPanel title="Pay Rate Templates" accentColor={colors.drivers.strong}>
-              <p className="px-2 py-2 text-xs text-gray-500">Use Lists &gt; Driver &gt; Pay rate templates to manage templates.</p>
-            </DataPanel>
+            <div data-testid="drivers-page-pay-rate-templates">
+              <PayRateTemplatesListPage />
+            </div>
           ) : null}
           {subnavTab === "drivers" ? (
             <div className="grid auto-rows-fr gap-3 md:grid-cols-2">

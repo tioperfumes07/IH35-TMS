@@ -102,3 +102,4 @@ Draw the next unused number from your OWN block, record a `CLAIM-<n>` row below,
 | 2026-08-14 | Codex | VERTICAL-CONNECTIVITY-MAINTENANCE-SEVERE-REPAIRS | severe repair work-order lineage | SevereRepairOosTab; trigger migration; focused guard | ACTIVE |
 | 2026-08-14 | Codex | VERTICAL-CONNECTIVITY-MAINTENANCE-TIRE-CREATORS | tire record + brand creators | TireProgramPage; tire routes/tests; focused guard | ACTIVE |
 | 2026-08-14 | Codex | VERTICAL-CONNECTIVITY-MAINTENANCE-WO-CREATE-MODAL | work-order creator inventory correction | maintenance required/surface inventory; live creator; focused guard | ACTIVE |
+| 2026-08-14 | Codex | VERTICAL-CONNECTIVITY-DRIVER-PAY-RATE-TEMPLATES | mounted driver pay-rate catalog connectivity | Drivers page; canonical catalog list/create API; focused guard | ACTIVE |

@@ -1,4 +1,5 @@
 {
+  "VERTICAL-CONNECTIVITY-DRIVER-PAY-RATE-TEMPLATES": "drivers.pay_rate_templates: mounted canonical company-scoped catalog list/create/reload",
   "_README": "Shipped Wave-A writers that green Matrix Box 3 Built. Updated when a Pxx task merges with guard+smoke. Live (Box 4) still requires PROD-VERIFIED ledger. leafRe must match docs/specs/scoreboard/modules/*.required.json leaf ids; cols must match column ids (picker_law not picker).",
   "entries": [
     {"task":"VERTICAL-CONNECTIVITY-MAINTENANCE-WO-CREATE-MODAL","modules":["maintenance"],"cols":["connectivity"],"leafRe":"^maintenance\\.modal\\.work_order_create$","guard":"scripts/verify-maintenance-work-order-create-modal-connectivity.mjs","live":"BLOCKED"},
