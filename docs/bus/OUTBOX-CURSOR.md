@@ -1,3 +1,5 @@
+2026-08-14T21:10Z Cursor | shipping LINK-F5171 planner calendar customer EntityLink + ENV-MATRIX board closeout | Live=BLOCKED | NEXT=more LINK-F5171 FE · toolbar inventory
+2026-08-14T21:05Z Cursor | SHIPPED LINK-F5171 cash-flow customer EntityLink (#6737) | Live=BLOCKED | NEXT=planner calendar / toolbar
 2026-08-14T21:00Z Cursor | shipping LINK-F5171 cash-flow daily prediction customer_id + EntityLink | Live=BLOCKED | NEXT=more LINK-F5171 FE · toolbar inventory
 2026-08-14T20:55Z Cursor | SHIPPED LINK-F5171 round-trips + quality related load (#6736) | Live=BLOCKED | NEXT=cash-flow customer EntityLink
 2026-08-14T20:50Z Cursor | shipping LINK-F5171 round-trips unit/driver + customer quality related load EntityLinks | Live=BLOCKED | NEXT=more LINK-F5171 FE · toolbar inventory
