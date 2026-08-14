@@ -94,6 +94,13 @@ export function assertVendorMergesReverse(sources) {
   if (!/<VendorMergesReverseSection[\s\S]*?vendorId=\{vendor\.id\}/.test(vendorDetail)) {
     problems.push(`${VENDOR_DETAIL}: must mount <VendorMergesReverseSection vendorId={vendor.id} .../>`);
   }
+  // LINK-F5171: Open queue must be EntityLink filtered kinds (not bare Link to=).
+  if (!/kind="factoring_vendor_merges_driver"/.test(driverSection) || /from "react-router-dom"/.test(driverSection)) {
+    problems.push(`${DRIVER_SECTION}: Open queue must EntityLink kind=factoring_vendor_merges_driver (no bare Link)`);
+  }
+  if (!/kind="factoring_vendor_merges_vendor"/.test(vendorSection) || /from "react-router-dom"/.test(vendorSection)) {
+    problems.push(`${VENDOR_SECTION}: Open queue must EntityLink kind=factoring_vendor_merges_vendor (no bare Link)`);
+  }
   return problems;
 }
 
@@ -130,12 +137,14 @@ function selftest() {
           }),
       });
     `,
-    [DRIVER_SECTION]: `listDriverVendorMerges(operatingCompanyId, { driver_id: driverId }).then((r) => r.rows)`,
+    [DRIVER_SECTION]: `listDriverVendorMerges(operatingCompanyId, { driver_id: driverId }).then((r) => r.rows)
+      kind="factoring_vendor_merges_driver"`,
     [DRIVER_PROFILE]: `
       import { DriverVendorMergesReverseSection } from "../../components/driver-profile/DriverVendorMergesReverseSection";
       <DriverVendorMergesReverseSection operatingCompanyId={companyId} driverId={id} />
     `,
-    [VENDOR_SECTION]: `listDriverVendorMerges(operatingCompanyId, { vendor_id: vendorId }).then((r) => r.rows)`,
+    [VENDOR_SECTION]: `listDriverVendorMerges(operatingCompanyId, { vendor_id: vendorId }).then((r) => r.rows)
+      kind="factoring_vendor_merges_vendor"`,
     [VENDOR_DETAIL]: `
       import { VendorMergesReverseSection } from "../components/vendors/VendorMergesReverseSection";
       <VendorMergesReverseSection operatingCompanyId={companyId} vendorId={vendor.id} />
@@ -161,6 +170,14 @@ function selftest() {
     { ...good, [VENDOR_SECTION]: good[VENDOR_SECTION].replace("{ vendor_id: vendorId }", "{}") },
     { ...good, [VENDOR_DETAIL]: good[VENDOR_DETAIL].replace("import { VendorMergesReverseSection }", "// removed") },
     { ...good, [VENDOR_DETAIL]: good[VENDOR_DETAIL].replace("vendorId={vendor.id}", "") },
+    {
+      ...good,
+      [DRIVER_SECTION]: good[DRIVER_SECTION].replace('kind="factoring_vendor_merges_driver"', 'from "react-router-dom"'),
+    },
+    {
+      ...good,
+      [VENDOR_SECTION]: good[VENDOR_SECTION].replace('kind="factoring_vendor_merges_vendor"', 'from "react-router-dom"'),
+    },
   ];
   for (const [i, mutated] of mutations.entries()) {
     if (assertVendorMergesReverse(mutated).length === 0) {
