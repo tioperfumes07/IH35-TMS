@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
 import { getCompanyViolations, getIntegrityAlerts, listAnomalies, type SafetyAnomalySubjectType } from "../../api/safety";
 import { formatDateUS } from "../../lib/formatDate";
+import { EntityLink } from "../shared/EntityLink";
 
 type SubjectKind = "driver" | "unit" | "vendor" | "customer" | "invoice";
 
@@ -49,25 +49,34 @@ export function SafetyAlertsReverseSection({ operatingCompanyId, subjectKind, su
       <div className="mt-2 space-y-1 text-xs">
         {violations.map((row) => (
           <div key={`violation-${String(row.id)}`}>
-            <Link className="font-medium text-slate-700 hover:underline" to={`/safety/external-fines?record_type=company-violation&violation_id=${encodeURIComponent(String(row.id))}`}>
-              Company violation · {String(row.violation_type ?? "Violation")}
-            </Link>{" "}
+            <EntityLink
+              kind="company_violation"
+              id={String(row.id)}
+              label={`Company violation · ${String(row.violation_type ?? "Violation")}`}
+              className="font-medium text-slate-700 hover:underline"
+            />{" "}
             <span className="text-slate-500">{formatDateUS(row.reported_date)}</span>
           </div>
         ))}
         {alerts.map((row) => (
           <div key={`alert-${String(row.id)}`}>
-            <Link className="font-medium text-slate-700 hover:underline" to={`/safety/integrity-alerts?alert_id=${encodeURIComponent(String(row.id))}`}>
-              Integrity alert · {String(row.alert_category ?? "Alert")}
-            </Link>{" "}
+            <EntityLink
+              kind="integrity_alert"
+              id={String(row.id)}
+              label={`Integrity alert · ${String(row.alert_category ?? "Alert")}`}
+              className="font-medium text-slate-700 hover:underline"
+            />{" "}
             <span className="text-slate-500">{String(row.resolution_status ?? "unresolved")}</span>
           </div>
         ))}
         {anomalies.map((row) => (
           <div key={`anomaly-${row.id}`}>
-            <Link className="font-medium text-slate-700 hover:underline" to={`/safety/integrity-reports?anomaly_id=${encodeURIComponent(row.id)}`}>
-              Anomaly · {row.anomaly_type}
-            </Link>{" "}
+            <EntityLink
+              kind="integrity_anomaly"
+              id={row.id}
+              label={`Anomaly · ${row.anomaly_type}`}
+              className="font-medium text-slate-700 hover:underline"
+            />{" "}
             <span className="text-slate-500">{row.status}</span>
           </div>
         ))}
