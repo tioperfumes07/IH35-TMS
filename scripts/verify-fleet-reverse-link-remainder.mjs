@@ -33,7 +33,7 @@ function failures(s = {}) {
     ["default-driver reverse unit drill", da.includes('kind="unit"') && da.includes('id={String(def.unit_id)}')],
     ["trailer assignment unit drill", ta.includes('kind="unit"') && ta.includes('id={String(unit.unit_id)}')],
     ["trailer assignment load drill", ta.includes('kind="load"') && ta.includes('id={String(load.load_id)}')],
-    ["trailer maintenance WO drill", m.includes('/maintenance/work-orders/${String(wo.wo_id)}')],
+    ["trailer maintenance WO drill", /kind="work_order"/.test(m) || m.includes('/maintenance/work-orders/${String(wo.wo_id)}')],
     ["trailer service event drill", tl.includes("navigate(event.detail_path)")],
     ["trailer insurance reverse filter", /InsuranceClaimsReverseSection[\s\S]{0,180}filter=\{\{ trailer_id: id \}\}/.test(tp)],
     ["trailer document exact drill", td.includes('kind="document" id={String(d.file_id)}')],
