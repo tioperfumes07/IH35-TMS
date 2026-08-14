@@ -388,6 +388,14 @@ export function FactoringTab({ loadId, operatingCompanyId, canEdit, onPacketUpda
           data-testid="factoring-tab-view-in-dispatch-queue"
           className="mt-2 inline-block text-xs font-medium text-slate-700 hover:underline"
         />
+        {/* LINK-F5171/LINK-F5180 — reverse_link: factoring:home.recourse_pipeline. */}
+        <EntityLink
+          kind="factoring_recourse_load"
+          id={loadId}
+          label="View in Recourse Pipeline →"
+          data-testid="factoring-tab-view-in-recourse-pipeline"
+          className="mt-2 ml-3 inline-block text-xs font-medium text-slate-700 hover:underline"
+        />
       </div>
 
       {/* Document checklist */}
