@@ -1,5 +1,14 @@
 #!/usr/bin/env node
-/** @matrix-built modules=safety,drivers,dispatch cols=driver,load,connectivity,reverse_link,picker_law */
+/** @matrix-built modules=safety,drivers cols=driver,load,connectivity,reverse_link,picker_law leafRe=^(accidents\.(list|create)|profiles\.detail)$ task=ACCIDENT-DRIVER-REVERSE */
+// LINK-THEATER-01 narrowing (2026-08-14): the prior tag claimed "dispatch" as a module and leafRe=".*"
+// (shorthand default) across safety+drivers+dispatch — Built for every leaf in three modules. This
+// guard's 4 assertions read exactly 4 files: AccidentsPage.tsx (driver picker + FK writer,
+// /safety/accidents, leaves accidents.list + accidents.create — one component serves both),
+// safety.routes.ts + safety.ts (server filter/API), and DriverSafetyReverseSection.tsx (the reverse
+// mount). "dispatch" was never justified — zero dispatch file is read anywhere in this guard.
+// DriverSafetyReverseSection is mounted on BOTH DriverProfilePage.tsx (profiles.detail, tracked) AND
+// DriverDetail.tsx (/drivers/:id, still untracked in drivers.required.json — same gap noted in
+// LINK-F5145/verify-driver-report-driver-reverse.mjs; not fixed here either, still open).
 import fs from "node:fs";
 const L="verify-accident-driver-reverse", c=fs.readFileSync("apps/frontend/src/pages/safety/AccidentsPage.tsx","utf8"), r=fs.readFileSync("apps/backend/src/safety/safety.routes.ts","utf8"), a=fs.readFileSync("apps/frontend/src/api/safety.ts","utf8"), v=fs.readFileSync("apps/frontend/src/components/safety/DriverSafetyReverseSection.tsx","utf8");
 function audit(w,x,y,z){const f=[];if(!/kind="driver"/.test(w))f.push("driver picker");if(!/driver_id: nullableUuid/.test(x))f.push("driver FK writer");if(!/driver_id: z\.string\(\)\.uuid\(\)\.optional/.test(x)||!/ar\.driver_id = \$\$\{values\.length\}/.test(x))f.push("exact server driver filter");if(!/params: \{ driver_id\?: string; unit_id\?: string/.test(y)||!/params\.driver_id/.test(y))f.push("driver filter API");if(!/getSafetyAccidents\(operatingCompanyId, \{ driver_id: driverId \}\)/.test(z))f.push("exact reverse");if(!/driver-safety-reverse-accidents/.test(z)||!/kind="accident"/.test(z)||!/kind="load"/.test(z))f.push("profile drills");if(!/accidentsQuery\.isError/.test(z)||!/No accident reports for this driver/.test(z))f.push("honest states");return f}
