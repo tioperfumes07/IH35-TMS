@@ -42,7 +42,8 @@ export function verify(source) {
   need("propertyTax", '<EntityLink kind="unit" id={l.unit_id}', "property-tax detail must drill to units");
   need("propertyTax", '<EntityLink kind="trailer" id={l.equipment_id}', "property-tax detail must drill to trailers");
   need("form2290", '<EntityLink kind="unit" id={u.unit_id}', "Form 2290 exceptions must drill to units");
-  need("defects", 'to={`/maintenance/defects/${row.id}`}', "DVIR defect queue must drill to defect detail");
+  need("defects", 'kind="maintenance_defect"', "DVIR defect queue must drill to defect detail via EntityLink");
+  need("defects", "id={row.id}", "DVIR defect queue EntityLink must use the defect row id");
   need("preFlight", 'kind="unit" id={row.unit_id}', "pre-flight queue must drill to units");
   need("preFlight", 'kind="work_order"', "pre-flight queue must drill to routed work orders");
   need("preFlight", "pre-flight-dvir.routes.ts owns queue + severity", "pre-flight queue must not claim its mounted backend is missing");
@@ -79,7 +80,7 @@ if (process.argv.includes("--self-test")) {
     ["propertyTax", 'to={`/compliance/property-tax/${r.id}`}', 'to="/compliance/property-tax"'],
     ["propertyTax", '<EntityLink kind="trailer" id={l.equipment_id}', '<EntityLink kind="unit" id={l.unit_id}'],
     ["form2290", '<EntityLink kind="unit" id={u.unit_id}', '<span data-unit={u.unit_id}'],
-    ["defects", 'to={`/maintenance/defects/${row.id}`}', 'to="/maintenance/defects"'],
+    ["defects", 'kind="maintenance_defect"', 'kind="unit"'],
     ["preFlight", 'kind="unit" id={row.unit_id}', 'kind="driver" id={row.driver_id}'],
     ["preFlight", 'kind="work_order"', 'kind="unit"'],
     ["preFlight", "pre-flight-dvir.routes.ts owns queue + severity", "backend is not built"],

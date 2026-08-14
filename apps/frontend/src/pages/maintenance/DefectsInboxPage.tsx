@@ -1,4 +1,3 @@
-import { Link } from "react-router-dom";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -80,13 +79,13 @@ export function DefectsInboxPage() {
         alwaysVisible: true,
         render: (row) => (
           <div className="flex flex-wrap gap-1">
-            <Link
-              to={`/maintenance/defects/${row.id}`}
+            <EntityLink
+              kind="maintenance_defect"
+              id={row.id}
+              label="Detail"
               className="rounded-sm border border-gray-300 px-2 py-1 text-[11px] hover:bg-gray-50"
               data-testid={`defect-detail-link-${row.id}`}
-            >
-              Detail
-            </Link>
+            />
             <Button size="sm" variant="secondary" onClick={() => triageMut.mutate({ id: row.id, action: "assign" })}>
               Assign
             </Button>
