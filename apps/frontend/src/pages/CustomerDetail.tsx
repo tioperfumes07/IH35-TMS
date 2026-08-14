@@ -1684,6 +1684,30 @@ export function CustomerDetailPage() {
                   </div>
                   <div className={event.voided_at ? "mt-1 text-sm line-through" : "mt-1 text-sm"}>{event.summary}</div>
                   {event.reason_label ? <div className="text-xs text-gray-500">Reason: {event.reason_label}</div> : null}
+                  {event.related_load_id ? (
+                    <div className="mt-1 text-xs text-gray-600">
+                      Load:{" "}
+                      <EntityLink
+                        kind="load"
+                        id={event.related_load_id}
+                        label={entityLabel(null, event.related_load_id, "Load")}
+                        className="text-slate-700 hover:underline"
+                        data-testid="customer-quality-related-load-link"
+                      />
+                    </div>
+                  ) : null}
+                  {event.related_invoice_id ? (
+                    <div className="mt-1 text-xs text-gray-600">
+                      Invoice:{" "}
+                      <EntityLink
+                        kind="invoice"
+                        id={event.related_invoice_id}
+                        label={entityLabel(null, event.related_invoice_id, "Invoice")}
+                        className="text-slate-700 hover:underline"
+                        data-testid="customer-quality-related-invoice-link"
+                      />
+                    </div>
+                  ) : null}
                   {event.details ? <div className="mt-1 text-xs text-gray-600">{event.details}</div> : null}
                   {event.voided_at ? <div className="mt-1 text-xs text-gray-500">Voided: {event.void_reason}</div> : null}
                   {canWriteQuality && !event.voided_at ? (
