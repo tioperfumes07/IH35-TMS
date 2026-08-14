@@ -1279,6 +1279,14 @@
       "modules": ["compliance", "docs", "driver-hub", "form_425", "tasks", "program", "system"],
       "cols": ["connectivity"],
       "leafRe": "^(home|tab\\.(filings|overview|hos_tracker|hos_viewer|violations|hos_history|required_docs|all|driver|customer|vendor|unit|equipment|scheduler|leave_requests|profile|form|merge|history|program|software|claude_coder)|nav\\.(board|mine|calendar|chat|report|scenario|matrix|legacy|tracker|modules|final))$"
+    },
+    {
+      "task": "LINK-F5156-MODULE-HUB-NAVIGATION-CONNECTIVITY",
+      "pr": "this PR",
+      "guard": "scripts/verify-module-hub-navigation-connectivity.mjs",
+      "modules": ["finance", "fuel", "help", "home", "reports"],
+      "cols": ["connectivity"],
+      "leafRe": "^(hub(\\.alias)?|nav\\.(overview|statements|ar_ap_aging|projections|scenarios|break_even|calculator|amortization|loan_wizard)|statements\\.(pl|bs|tb)|home|planner|relay_inbox|settings|expense_mapping|loves_prices|compliance|center|overview|runbooks|article|search|cat\\.(getting_started|dispatch|settlements|banking|reports|ops_dispatch|driver_perf|equipment|safety|customers|vendors|accounting|tax_reg|multi_company)|jump\\.(maintenance|fuel|safety|drivers|dispatch|lists)|hub\\.(driver|driver_reporting)|hop\\.program|home\\.(reports|hub|custom_builder)|subnav\\.(reports|category_hub|run_report|cancellations|scheduled_custom|audit))$"
     }
   ]
 }
