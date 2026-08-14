@@ -28,6 +28,15 @@ const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
 });
 
+// LINK-F5175: optional bank_account_id filter for the sessions list, so a bank-account-scoped
+// reverse surface (BankAccountDetail) can drill in without fetching every account's sessions and
+// filtering client-side (which would silently truncate once a company's session count crosses the
+// completed_sessions LIMIT 5 below — see the fines reverse-section precedent for why server-side
+// scoping is required here, not client-side).
+const sessionsQuerySchema = companyQuerySchema.extend({
+  bank_account_id: z.string().uuid().optional(),
+});
+
 const matchBodySchema = z.object({
   transaction_id: z.string().uuid(),
   matched_event_type: z.enum(["load", "bill", "settlement"]),
@@ -194,9 +203,10 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
     const user = currentAuthUser(req, reply);
     if (!user) return;
 
-    const query = companyQuerySchema.safeParse(req.query ?? {});
+    const query = sessionsQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return sendValidationError(reply, query.error);
     const companyId = query.data.operating_company_id;
+    const bankAccountId = query.data.bank_account_id ?? null;
 
     const payload = await withCompanyScope(user.uuid, companyId, async (client) => {
       // BANK-ACCOUNT-HIDE: reconciliation sessions for an account hidden FOR THIS ENTITY must not
@@ -205,6 +215,11 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
       const hiddenSessionFilter = hideOn
         ? `AND NOT EXISTS (SELECT 1 FROM banking.bank_accounts __bah WHERE __bah.id = bank_account_id AND __bah.hidden_at IS NOT NULL)`
         : "";
+      // LINK-F5175: server-side bank_account_id scoping, not a client-side filter of this already-
+      // capped result set (completed_sessions is LIMIT 5 company-wide — a client filter would drop
+      // an account's own completed sessions once other accounts fill that cap).
+      const acctFilter = bankAccountId ? `AND bank_account_id = $2::uuid` : "";
+      const acctParams = bankAccountId ? [companyId, bankAccountId] : [companyId];
       const openRes = await client.query(
         `
           SELECT id, bank_account_id, period_start, period_end, statement_balance_cents, variance_cents, status, created_at
@@ -212,9 +227,10 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
           WHERE operating_company_id = $1::uuid
             AND status = 'open'
             ${hiddenSessionFilter}
+            ${acctFilter}
           ORDER BY created_at DESC
         `,
-        [companyId]
+        acctParams
       );
       const completedRes = await client.query(
         `
@@ -223,10 +239,11 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
           WHERE operating_company_id = $1::uuid
             AND status = 'reconciled'
             ${hiddenSessionFilter}
+            ${acctFilter}
           ORDER BY reconciled_at DESC NULLS LAST, created_at DESC
           LIMIT 5
         `,
-        [companyId]
+        acctParams
       );
       return { open_sessions: openRes.rows, completed_sessions: completedRes.rows };
     });
