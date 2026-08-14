@@ -1,3 +1,4 @@
+2026-08-14T21:15Z Cursor | shipping LINK-F5171 WO/matter/retention EntityLink + compliance guard red fix | Live=BLOCKED | tip=#6771
 2026-08-14T21:05Z Cursor | SHIPPED #6767 DriversTable EntityLink | Live=BLOCKED | tip=#6767 | NEXT=vehicles master + ELD unidentified unit EntityLink | continuous
 2026-08-14T20:52Z Cursor | SHIPPED #6764 HOS/messages/onboarding EntityLink | Live=BLOCKED | NEXT=maint vendors AP EntityLink · theater | tip=#6764
 2026-08-14T20:50Z Cursor | SHIPPED #6755/#6757/#6759/#6763/#next HOS-MESSAGES | Live=BLOCKED | theater_broad~23 | continuous

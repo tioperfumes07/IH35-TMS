@@ -1,5 +1,4 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
 import { listWorkOrdersFiltered } from "../../api/maintenance";
 import { DataPanel } from "../../components/layout/DataPanel";
 import { EntityLink } from "../../components/shared/EntityLink";
@@ -35,9 +34,13 @@ export function VendorWorkOrdersReverseSection({ operatingCompanyId, vendorId }:
         <div className="space-y-1" data-testid="vendor-work-orders-reverse">
           {query.data?.work_orders.map((workOrder) => (
             <div key={workOrder.id} className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-gray-200 px-2 py-1.5 text-xs">
-              <Link className="font-semibold text-slate-700 hover:underline" to={`/maintenance/work-orders/${workOrder.id}`}>
-                {entityLabel(workOrder.display_id, workOrder.id, "Work order")}
-              </Link>
+              <EntityLink
+                kind="work_order"
+                id={workOrder.id}
+                label={entityLabel(workOrder.display_id, workOrder.id, "Work order")}
+                className="font-semibold text-slate-700 hover:underline"
+                data-testid="vendor-work-order-reverse-link"
+              />
               <span className="flex items-center gap-1 text-gray-600">
                 <EntityLink
                   kind="unit"

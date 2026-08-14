@@ -144,9 +144,13 @@ export function FaultDraftsPage() {
             <h3 className="text-base font-semibold">{selected.wo_title ?? entityLabel(null, selected.display_id, "Work order") ?? "Draft WO"}</h3>
             <p className="mt-2 whitespace-pre-wrap text-sm text-gray-700">{selected.description}</p>
             <div className="mt-4 flex flex-wrap gap-2">
-              <Link to={`/maintenance/work-orders/${selected.id}`}>
-                <Button size="sm">Open WO detail</Button>
-              </Link>
+              <EntityLink
+                kind="work_order"
+                id={selected.id}
+                label="Open WO detail"
+                className="inline-flex items-center rounded-sm border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-slate-800 hover:bg-slate-50"
+                data-testid="fault-draft-open-wo-link"
+              />
               <Button
                 size="sm"
                 variant="secondary"

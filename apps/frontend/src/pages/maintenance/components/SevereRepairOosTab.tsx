@@ -164,9 +164,13 @@ export function SevereRepairOosTab({ operatingCompanyId }: Props) {
       label: "WO #",
       render: (row) =>
         row.trigger_wo_id ? (
-          <Link to={`/maintenance/work-orders/${row.trigger_wo_id}`} className={LINK}>
-            Open →
-          </Link>
+          <EntityLink
+            kind="work_order"
+            id={row.trigger_wo_id}
+            label="Open →"
+            className={LINK}
+            data-testid="severe-repair-wo-link"
+          />
         ) : (
           "—"
         ),

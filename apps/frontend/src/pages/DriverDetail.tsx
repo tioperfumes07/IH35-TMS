@@ -1561,9 +1561,13 @@ export function DriverDetailPage() {
               <ul className="space-y-2">
                 {(legalMattersForDriverQuery.data?.matters ?? []).map((m: Record<string, unknown>) => (
                   <li key={String(m.id ?? "")} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-sm">
-                    <Link className="font-semibold text-slate-700" to={`/legal/matters/${String(m.id ?? "")}`}>
-                      {String(m.matter_number ?? "")}
-                    </Link>
+                    <EntityLink
+                      kind="matter"
+                      id={String(m.id ?? "")}
+                      label={String(m.matter_number ?? "")}
+                      className="font-semibold text-slate-700"
+                      data-testid="driver-detail-legal-matter-link"
+                    />
                     <span className="ml-2 text-gray-600">{String(m.status ?? "")}</span>
                   </li>
                 ))}

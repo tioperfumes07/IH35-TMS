@@ -44,10 +44,10 @@ export function verify(source) {
   need("form2290", '<EntityLink kind="unit" id={u.unit_id}', "Form 2290 exceptions must drill to units");
   need("defects", 'to={`/maintenance/defects/${row.id}`}', "DVIR defect queue must drill to defect detail");
   need("preFlight", 'kind="unit" id={row.unit_id}', "pre-flight queue must drill to units");
-  need("preFlight", 'to={`/maintenance/work-orders/${row.auto_wo_id}`}', "pre-flight queue must drill to routed work orders");
+  need("preFlight", 'kind="work_order"', "pre-flight queue must drill to routed work orders");
   need("preFlight", "pre-flight-dvir.routes.ts owns queue + severity", "pre-flight queue must not claim its mounted backend is missing");
   need("faultDrafts", 'kind="unit" id={row.unit_id}', "fault drafts must drill to units");
-  need("faultDrafts", 'to={`/maintenance/work-orders/${selected.id}`}', "fault draft review must drill to work-order detail");
+  need("faultDrafts", 'kind="work_order"', "fault draft review must drill to work-order detail");
   need("idvr", 'kind="work_order"', "iDVIR list must drill to follow-up work orders");
   need("idvr", 'navigate(`/safety/idvr/${encodeURIComponent(id)}`)', "iDVIR rows must drill to inspection detail");
   need("escrow", 'data-testid={`escrow-driver-link-${row.id}`}', "escrow roster must drill to canonical drivers");
@@ -81,9 +81,9 @@ if (process.argv.includes("--self-test")) {
     ["form2290", '<EntityLink kind="unit" id={u.unit_id}', '<span data-unit={u.unit_id}'],
     ["defects", 'to={`/maintenance/defects/${row.id}`}', 'to="/maintenance/defects"'],
     ["preFlight", 'kind="unit" id={row.unit_id}', 'kind="driver" id={row.driver_id}'],
-    ["preFlight", 'to={`/maintenance/work-orders/${row.auto_wo_id}`}', 'to="/maintenance/work-orders"'],
+    ["preFlight", 'kind="work_order"', 'kind="unit"'],
     ["preFlight", "pre-flight-dvir.routes.ts owns queue + severity", "backend is not built"],
-    ["faultDrafts", 'to={`/maintenance/work-orders/${selected.id}`}', 'to="/maintenance/work-orders"'],
+    ["faultDrafts", 'kind="work_order"', 'kind="unit"'],
     ["idvr", 'kind="work_order"', 'kind="unit"'],
     ["idvr", 'navigate(`/safety/idvr/${encodeURIComponent(id)}`)', 'navigate("/safety/idvr")'],
     ["escrow", 'data-testid={`escrow-driver-link-${row.id}`}', 'data-testid="broken-escrow-link"'],
