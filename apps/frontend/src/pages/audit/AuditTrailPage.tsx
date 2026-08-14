@@ -8,9 +8,20 @@ import { DateTimePicker } from "../../components/forms/DateTimePicker";
 import { isoToDateTimeLocalValue } from "../../lib/formatDate";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
-import { EntityLink } from "../../components/shared/EntityLink";
+import { EntityLink, type EntityKind } from "../../components/shared/EntityLink";
 
 const PAGE_SIZE = 100;
+
+const SUBJECT_ENTITY_KINDS: Readonly<Record<string, EntityKind>> = {
+  load: "load",
+  driver: "driver",
+  unit: "unit",
+  customer: "customer",
+  vendor: "vendor",
+  work_order: "work_order",
+  claim: "claim",
+  safety_event: "safety_event",
+};
 
 const MODULE_OPTIONS = [
   { value: "", label: "All modules" },
@@ -82,12 +93,21 @@ const COLUMNS: Array<ParityColumn<SpineEvent>> = [
     label: "Entity",
     sortable: true,
     sortValue: (row) => `${row.subject_type ?? ""}:${row.subject_id ?? ""}`,
-    render: (row) => (
-      <span className="text-gray-600">
-        {row.subject_type ?? "—"}
-        {row.subject_id ? <span className="ml-1 text-gray-400">{entityLabel(null, row.subject_id, "Subject")}</span> : null}
-      </span>
-    ),
+    render: (row) => {
+      const kind = row.subject_type ? SUBJECT_ENTITY_KINDS[row.subject_type] : undefined;
+      return (
+        <span className="text-gray-600">
+          {row.subject_type ?? "—"}
+          {row.subject_id ? (
+            kind ? (
+              <EntityLink kind={kind} id={row.subject_id} label={entityLabel(null, row.subject_id, "Subject")} className="ml-1 text-gray-500" />
+            ) : (
+              <span className="ml-1 text-gray-400">{entityLabel(null, row.subject_id, "Subject")}</span>
+            )
+          ) : null}
+        </span>
+      );
+    },
   },
   {
     key: "source_table",

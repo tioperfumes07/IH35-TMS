@@ -179,6 +179,21 @@
       ]
     },
     {
+      "id": "audit.trail",
+      "tab": "Audit",
+      "sub": "Typed event subjects and source drill-through",
+      "route_hint": "/audit/trail",
+      "required": [
+        "customer",
+        "driver",
+        "vendor",
+        "unit",
+        "load",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
       "id": "tab.claude_coder",
       "tab": "Claude Coder",
       "sub": "Read-only launcher (no exec)",
