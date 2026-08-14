@@ -3080,7 +3080,7 @@
       "route_hint": "/lists/accounting/detail-types",
       "surface_kind": "modal",
       "surface_path": "pages/lists/accounting/DetailTypesListPage.tsx",
-      "required": ["connectivity", "reverse_link", "picker_law", "qbo_chrome"]
+      "required": ["connectivity", "picker_law", "qbo_chrome"]
     },
     {
       "id": "lists.modal.void_cancel_reason",
@@ -3089,7 +3089,7 @@
       "route_hint": "/lists/accounting/void-cancel-reasons",
       "surface_kind": "modal",
       "surface_path": "pages/lists/accounting/VoidCancelReasonsListPage.tsx",
-      "required": ["connectivity", "reverse_link", "picker_law", "qbo_chrome"]
+      "required": ["connectivity", "picker_law", "qbo_chrome"]
     },
     {
       "id": "lists.modal.load_cancellation_reason",
@@ -3098,7 +3098,7 @@
       "route_hint": "/lists/dispatch/load-cancellation-reasons",
       "surface_kind": "modal",
       "surface_path": "pages/lists/dispatch/LoadCancellationReasonsListPage.tsx",
-      "required": ["connectivity", "reverse_link", "picker_law", "qbo_chrome"]
+      "required": ["connectivity", "picker_law", "qbo_chrome"]
     },
     {
       "id": "lists.modal.termination_reason",
@@ -3107,7 +3107,7 @@
       "route_hint": "/lists/drivers/termination-reasons",
       "surface_kind": "modal",
       "surface_path": "pages/lists/drivers/TerminationReasonsListPage.tsx",
-      "required": ["connectivity", "reverse_link", "picker_law", "qbo_chrome"]
+      "required": ["connectivity", "picker_law", "qbo_chrome"]
     },
     {
       "id": "lists.modal.oem_parts_create",
@@ -3116,7 +3116,7 @@
       "route_hint": "/lists/maintenance/oem-parts",
       "surface_kind": "modal",
       "surface_path": "pages/lists/maintenance/OemPartsCatalog.tsx",
-      "required": ["unit", "trailer", "inventory", "connectivity", "reverse_link", "picker_law", "qbo_chrome"]
+      "required": ["unit", "trailer", "inventory", "connectivity", "picker_law", "qbo_chrome"]
     }
   ],
   "honesty_note": {

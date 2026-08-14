@@ -4,6 +4,7 @@ import { resolveApiUrl } from "../../api/client";
 import { OFFLINE_PREVIEW_BANNER } from "../../lib/prodEmptyStateCopy";
 import { AllocationMethodPicker } from "./AllocationMethodPicker";
 import { AllocationPreviewTable } from "./AllocationPreviewTable";
+import { EntityLink } from "../shared/EntityLink";
 import type {
   AllocateBillRequest,
   AllocateBillResponse,
@@ -181,7 +182,7 @@ export function BillAllocationPanel({ companyId, billId, billLabel, billAmountCe
         <div>
           <h3 className="text-sm font-semibold text-gray-900">Bill unit allocation</h3>
           <p className="text-xs text-gray-600">
-            {billLabel} · total {money(billAmountCents)}
+            <EntityLink kind="bill" id={billId} label={billLabel} /> · total {money(billAmountCents)}
           </p>
         </div>
         <button
