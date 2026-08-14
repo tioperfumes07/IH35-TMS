@@ -5,7 +5,7 @@
 import { entityLabel } from "../../../lib/entity-label";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { EntityLink } from "../../../components/shared/EntityLink";
 import { apiRequest } from "../../../api/client";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { ListErrorState } from "../../../components/ListErrorState";
@@ -62,9 +62,7 @@ export function TireWearDashboard() {
         label: "Unit",
         sortable: true,
         render: (row) => (
-          <Link to={`/fleet/units/${row.unit_uuid}?tab=tires`} className="text-slate-700 hover:underline">
-            {entityLabel(row.unit_number, row.unit_uuid, "Unit")}
-          </Link>
+          <EntityLink kind="unit_tires_tab" id={row.unit_uuid} label={entityLabel(row.unit_number, row.unit_uuid, "Unit")} className="text-slate-700 hover:underline" />
         ),
       },
       { key: "tire_position", label: "Position", sortable: true, render: (row) => row.tire_position },
