@@ -111,7 +111,7 @@ the leaf stays OPEN.
 | `maintenance:defects.convert_to_wo` | Codex · Cursor confirm 2026-08-14 | tip guards | `verify-maintenance-reverse-link-remainder.mjs` · `verify-maintenance-picker-law-queues.mjs` PASS |
 | `maintenance:pre_flight_dvir.queue` | Codex · Cursor confirm 2026-08-14 | tip guards | `verify-preflight-dvir-tabs-url-sync.mjs` · `verify-maintenance-hidden-surface-reverse-links.mjs` PASS |
 | `maintenance:panel.pm_alerts` | Codex · Cursor confirm 2026-08-14 | tip guards | `verify-pm-alert-work-order-picker.mjs` PASS |
-| `factoring:home.vendor_merges` | Cursor (EntityLink janitor) · #6895 surface | PENDING | `verify-vendor-merges-reverse-section.mjs` |
+| `factoring:home.vendor_merges` | Cursor (EntityLink janitor) · #6895 surface | #6899 | `verify-vendor-merges-reverse-section.mjs` |
 
 ## Uncertain — empty (Cursor confirm 2026-08-14 night)
 
