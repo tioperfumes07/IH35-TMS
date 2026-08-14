@@ -1,7 +1,14 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["dispatch"],"cols":["connectivity"],"task":"DISPATCH-LIVE-ETA","leafRe":".*"} */
+/** @matrix-built {"modules":["dispatch"],"cols":["connectivity"],"task":"DISPATCH-LIVE-ETA","leafRe":"^home\\.list$"} */
 /**
  * DISPATCH-LIVE-ETA: CI guard — live ETA columns wired without per-row fetches.
+ *
+ * LINK-THEATER-01 narrowing (2026-08-14): every assertion below reads exactly one leaf —
+ * apps/frontend/src/pages/dispatch/DispatchBoard.tsx, mounted at /dispatch?view=list (dispatch
+ * leaf id home.list, confirmed against Dispatch.tsx's view switch). The tag previously claimed
+ * leafRe=".*" — Built for connectivity across every leaf in the dispatch module — off assertions
+ * that only ever touch this one board view. Narrowed to what the guard actually proves; the rest of
+ * dispatch's connectivity leaves are real, undrained backlog, not silently credited by this guard.
  */
 import fs from "node:fs";
 import path from "node:path";
