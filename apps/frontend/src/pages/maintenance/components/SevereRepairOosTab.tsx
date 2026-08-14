@@ -219,14 +219,6 @@ export function SevereRepairOosTab({ operatingCompanyId }: Props) {
       <Button
         size="sm"
         variant="secondary"
-        disabled
-        onClick={() => pushToast("Convert to WO action is available from work-order detail in this foundation block", "info")}
-      >
-        Convert to WO
-      </Button>
-      <Button
-        size="sm"
-        variant="secondary"
         onClick={() => {
           setSelectedUnitId(row.unit_id);
           setMarkOosOpen(true);
