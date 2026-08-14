@@ -28,6 +28,11 @@ export function MaintenanceAlertsCard({ operatingCompanyId, compact = false }: P
     queryFn: () => listMaintenancePmAlerts(operatingCompanyId),
     enabled: Boolean(operatingCompanyId),
   });
+  const scheduledAlertsQuery = useQuery({
+    queryKey: ["maintenance", "pm-alerts", operatingCompanyId, "scheduled"],
+    queryFn: () => listMaintenancePmAlerts(operatingCompanyId, "scheduled"),
+    enabled: Boolean(operatingCompanyId) && !compact,
+  });
 
   const ackMutation = useMutation({
     mutationFn: (alertId: string) => acknowledgeMaintenancePmAlert(alertId, operatingCompanyId),
@@ -49,6 +54,7 @@ export function MaintenanceAlertsCard({ operatingCompanyId, compact = false }: P
   });
 
   const alerts = alertsQuery.data?.alerts ?? [];
+  const scheduledAlerts = scheduledAlertsQuery.data?.alerts ?? [];
 
   if (compact) {
     return (
@@ -156,6 +162,21 @@ export function MaintenanceAlertsCard({ operatingCompanyId, compact = false }: P
           ))}
         </ul>
       )}
+      {!compact && scheduledAlerts.length > 0 ? (
+        <div className="mt-3 border-t border-gray-200 pt-3" data-testid="pm-alerts-scheduled-reverse">
+          <h4 className="text-xs font-semibold text-gray-700">Recently scheduled</h4>
+          <ul className="mt-2 space-y-1">
+            {scheduledAlerts.map((alert) => (
+              <li key={alert.id} className="text-xs text-gray-600">
+                <EntityLink kind="unit" id={alert.unit_id} label={entityLabel(alert.unit_number, alert.unit_id, "Unit")} /> · {alert.schedule_label}
+                {alert.scheduled_work_order_id ? (
+                  <> · <EntityLink kind="work_order" id={alert.scheduled_work_order_id} label={entityLabel(alert.scheduled_work_order_display_id, alert.scheduled_work_order_id, "Work order")} /></>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
     </section>
   );
 }

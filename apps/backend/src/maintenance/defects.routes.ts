@@ -131,13 +131,16 @@ export async function registerMaintenanceDefectsRoutes(app: FastifyInstance) {
             ds.driver_id,
             ds.load_id,
             TRIM(CONCAT(d.first_name, ' ', d.last_name)) AS driver_name,
-            u.unit_number
+            u.unit_number,
+            wo.display_id AS follow_up_wo_display_id
           FROM safety.dvir_defects dd
           INNER JOIN safety.dvir_submissions ds ON ds.id = dd.dvir_submission_id
           LEFT JOIN mdata.drivers d ON d.id = ds.driver_id
                                    AND d.operating_company_id = ds.operating_company_id
           LEFT JOIN mdata.units u ON u.id = dd.unit_id
                                  AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = dd.operating_company_id
+          LEFT JOIN maintenance.work_orders wo ON wo.id = dd.follow_up_wo_id
+                                               AND wo.operating_company_id = dd.operating_company_id
           WHERE dd.id = $1
             AND dd.operating_company_id = $2::uuid
           LIMIT 1
