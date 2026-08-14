@@ -2531,6 +2531,14 @@
       "modules": ["reports"],
       "cols": ["connectivity"],
       "leafRe": "^(home\\.hub|subnav\\.(category_hub|run_report))$"
+    },
+    {
+      "task": "VERTICAL-REVERSE-LINK-ARRIVING-SOON-WO",
+      "pr": "this PR",
+      "guard": "scripts/verify-arriving-soon-work-order-reverse.mjs",
+      "modules": ["maintenance"],
+      "cols": ["reverse_link"],
+      "leafRe": "^arriving_soon\\.convert_to_wo$"
     }
   ]
 }

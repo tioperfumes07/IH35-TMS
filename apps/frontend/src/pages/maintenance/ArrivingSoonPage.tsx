@@ -99,6 +99,7 @@ export function ArrivingSoonPage({ operatingCompanyId }: Props) {
   }, [operatingCompanyId]);
 
   const cards = query.data?.cards ?? [];
+  const recentConversions = query.data?.recent_conversions ?? [];
   const counts = query.data?.counts ?? { total: 0, severe: 0, warning: 0, info: 0, already_arrived: 0 };
   // MAINT-S03 — settled-only empty (never mid-fetch false-empty; never empty-on-error).
   const listLoading =
@@ -215,6 +216,33 @@ export function ArrivingSoonPage({ operatingCompanyId }: Props) {
           Arriving Soon failed to load for this entity. Retry or check the maintenance arriving-soon API —
           this is not an empty queue.
         </div>
+      ) : null}
+
+      {recentConversions.length > 0 ? (
+        <section className="rounded-sm border border-slate-200 bg-white p-3" data-testid="maint-arriving-soon-recent-conversions">
+          <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">Recently converted to work orders</div>
+          <ul className="divide-y divide-slate-100">
+            {recentConversions.map((conversion) => (
+              <li key={conversion.issue_id} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2 text-xs">
+                <span className="min-w-0 flex-1 truncate text-slate-700">
+                  {conversion.issue_type || conversion.issue_category || conversion.issue_description || "In-transit issue"}
+                </span>
+                {conversion.unit_id ? (
+                  <EntityLink kind="unit" id={conversion.unit_id} label={entityLabel(conversion.unit_number, conversion.unit_id, "Unit")} />
+                ) : null}
+                {conversion.load_id ? (
+                  <EntityLink kind="load" id={conversion.load_id} label={entityLabel(conversion.load_display_id, conversion.load_id, "Load")} />
+                ) : null}
+                <EntityLink
+                  kind="work_order"
+                  id={conversion.work_order_id}
+                  label={entityLabel(conversion.work_order_display_id, conversion.work_order_id, "Work order")}
+                  className="font-semibold"
+                />
+              </li>
+            ))}
+          </ul>
+        </section>
       ) : null}
 
       {/* Desktop/tablet: full parity table. Mobile: stacked cards (same data, no horizontal scroll). */}

@@ -136,7 +136,43 @@ export async function registerMaintenanceArrivingSoonRoutes(app: FastifyInstance
         within_48h: cards.filter((row: any) => typeof row.hours_until_yard_arrival === "number" && Number(row.hours_until_yard_arrival) <= 48).length,
       };
 
-      return { cards, counts };
+      // Converted issues leave v_arriving_soon by design. Keep their persisted
+      // issue -> WO reverse edge visible on this source surface instead of
+      // losing the operator's newly-created record after the queue refresh.
+      const convertedRes = await client.query(
+        `
+          SELECT
+            ii.id AS issue_id,
+            ii.issue_type,
+            ii.issue_category,
+            ii.issue_description,
+            ii.severity,
+            wo.opened_at AS converted_at,
+            wo.id AS work_order_id,
+            wo.display_id AS work_order_display_id,
+            wo.load_id,
+            COALESCE(l.load_number, wo.load_id::text) AS load_display_id,
+            wo.unit_id,
+            COALESCE(u.unit_number, wo.unit_id::text) AS unit_number
+          FROM dispatch.intransit_issues ii
+          JOIN maintenance.work_orders wo
+            ON wo.id = ii.promoted_to_wo_id
+           AND wo.operating_company_id = $1::uuid
+          LEFT JOIN mdata.loads l
+            ON l.id = wo.load_id
+           AND l.operating_company_id = wo.operating_company_id
+          LEFT JOIN mdata.units u
+            ON u.id = wo.unit_id
+           AND u.operating_company_id = wo.operating_company_id
+          WHERE ii.promoted_to_wo_id IS NOT NULL
+            AND wo.opened_at >= now() - interval '7 days'
+          ORDER BY wo.opened_at DESC
+          LIMIT 12
+        `,
+        [q.operating_company_id]
+      );
+
+      return { cards, counts, recent_conversions: convertedRes.rows };
     });
 
     return payload;
