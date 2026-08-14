@@ -46,10 +46,16 @@ export type ForecastOpeningBalance = {
   as_of_date: string | null;
 };
 
-export function listForecastEntries(companyId: string, from?: string, to?: string) {
+export function listForecastEntries(
+  companyId: string,
+  from?: string,
+  to?: string,
+  filters: { entry_id?: string; party_ref_kind?: "customer" | "driver" | "vendor"; party_ref_id?: string; ref_kind?: "unit"; ref_external_id?: string } = {}
+) {
   const params = new URLSearchParams({ operating_company_id: companyId });
   if (from) params.set("from", from);
   if (to) params.set("to", to);
+  for (const [key, value] of Object.entries(filters)) if (value) params.set(key, value);
   return apiRequest<{ entries: ForecastEntry[] }>(`/api/v1/forecast/cash-entries?${params.toString()}`);
 }
 

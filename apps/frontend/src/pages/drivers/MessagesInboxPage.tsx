@@ -1,6 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
 import { EntityLink } from "../../components/shared/EntityLink";
 import {
   getDriverMessageThread,

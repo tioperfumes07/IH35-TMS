@@ -18,6 +18,11 @@ const companyQuery = z.object({ operating_company_id: z.string().uuid() });
 const dateRangeQuery = companyQuery.extend({
   from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  entry_id: z.string().uuid().optional(),
+  party_ref_kind: z.enum(["customer", "driver", "vendor"]).optional(),
+  party_ref_id: z.string().uuid().optional(),
+  ref_kind: z.enum(["unit"]).optional(),
+  ref_external_id: z.string().uuid().optional(),
 });
 const idParams = z.object({ id: z.string().uuid() });
 
@@ -73,6 +78,11 @@ export async function registerCashForecastManualRoutes(app: FastifyInstance) {
       const filters = ["deactivated_at IS NULL"];
       if (q.data.from) { values.push(q.data.from); filters.push(`entry_date >= $${values.length}`); }
       if (q.data.to) { values.push(q.data.to); filters.push(`entry_date <= $${values.length}`); }
+      if (q.data.entry_id) { values.push(q.data.entry_id); filters.push(`id = $${values.length}::uuid`); }
+      if (q.data.party_ref_kind) { values.push(q.data.party_ref_kind); filters.push(`party_ref_kind = $${values.length}`); }
+      if (q.data.party_ref_id) { values.push(q.data.party_ref_id); filters.push(`party_ref_id = $${values.length}::uuid`); }
+      if (q.data.ref_kind) { values.push(q.data.ref_kind); filters.push(`ref_kind = $${values.length}`); }
+      if (q.data.ref_external_id) { values.push(q.data.ref_external_id); filters.push(`ref_external_id = $${values.length}`); }
       const res = await client.query(
         `SELECT id, entry_date, direction, amount_cents, party_name, invoice_no, category, memo,
                 ref_kind, ref_label, ref_external_id,

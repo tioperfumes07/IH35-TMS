@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { getDriverHosDetail } from "../../api/hos";
 import { getDriver } from "../../api/mdata";
 import { PageHeader } from "../../components/layout/PageHeader";

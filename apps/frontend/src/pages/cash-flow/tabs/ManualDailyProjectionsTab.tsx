@@ -20,6 +20,7 @@ import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { EntityPicker } from "../../../components/parity/EntityPicker";
+import { Link, useSearchParams } from "react-router-dom";
 
 function fmtCents(c: number) {
   return formatUsdCents(c);
@@ -306,14 +307,16 @@ function ProjectionPanel({
 
 export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCompanyId: string }) {
   const qc = useQueryClient();
+  const [searchParams] = useSearchParams();
+  const entryId = searchParams.get("entry_id") ?? undefined;
   // MDP-SINGLE-ROW: ONE projection date (daily projections — one day per entry), not a From/To
   // range. It is the default entry_date for new rows on both panels.
   const [projectionDate, setProjectionDate] = useState("");
   const [openingDraft, setOpeningDraft] = useState<number | null>(null);
 
   const entriesQuery = useQuery({
-    queryKey: ["forecast", "entries", operatingCompanyId],
-    queryFn: () => listForecastEntries(operatingCompanyId),
+    queryKey: ["forecast", "entries", operatingCompanyId, entryId ?? null],
+    queryFn: () => listForecastEntries(operatingCompanyId, undefined, undefined, { entry_id: entryId }),
     enabled: Boolean(operatingCompanyId),
   });
   const openingQuery = useQuery({
@@ -343,6 +346,7 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
 
   return (
     <div className="space-y-4">
+      {entryId ? <Link className="text-xs font-semibold text-slate-700 underline" to="/cash-flow?tab=manual_daily_projections">Clear projection target</Link> : null}
       {(entriesQuery.isError || openingQuery.isError) && (
         <ListErrorBanner
           message={`Failed to load projections: ${((entriesQuery.error ?? openingQuery.error) as Error | undefined)?.message ?? "Request failed"}`}
