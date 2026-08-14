@@ -66,6 +66,7 @@ import { CustomerCargoClaimsReverseSection } from "../components/safety/Customer
 import { SafetyAlertsReverseSection } from "../components/safety/SafetyAlertsReverseSection";
 import { CashForecastReverseSection } from "../components/cash-flow/CashForecastReverseSection";
 import { CustomerLoadTemplatesReverseSection } from "../components/dispatch/CustomerLoadTemplatesReverseSection";
+import { CustomerFactoringReverseSection } from "../components/customers/CustomerFactoringReverseSection";
 import { DocumentsTab } from "../components/documents/DocumentsTab";
 import { TasksTab } from "../components/tasks/TasksTab";
 import { EntityAuditHistoryTab } from "../components/audit/EntityAuditHistoryTab";
@@ -1158,6 +1159,7 @@ export function CustomerDetailPage() {
           <SafetyAlertsReverseSection operatingCompanyId={operatingCompanyId} subjectKind="customer" subjectId={id} />
           <CashForecastReverseSection operatingCompanyId={operatingCompanyId} filter={{ party_ref_kind: "customer", party_ref_id: id }} />
           <CustomerLoadTemplatesReverseSection operatingCompanyId={operatingCompanyId} customerId={id} />
+          <CustomerFactoringReverseSection operatingCompanyId={operatingCompanyId} customerId={id} />
         </>
       ) : null}
 

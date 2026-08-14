@@ -99,7 +99,10 @@ const BATCH_COLUMNS: Array<ParityColumn<FactorBatchHistoryRow>> = [
     label: "Batch",
     sortable: true,
     render: (row) => (
-      <EntityLink kind="factoring_advance" id={row.id} label={entityLabel(row.batch_number, row.id, "Batch")} />
+      // LINK-F5178: was kind="factoring_advance" (routed to /accounting/factoring/:id, the wrong
+      // table); row.id is a real factoring.batch.id, which BatchDetail.tsx (/factoring/batches/:id)
+      // expects.
+      <EntityLink kind="factoring_batch" id={row.id} label={entityLabel(row.batch_number, row.id, "Batch")} />
     ),
   },
   { key: "status", label: "Status", sortable: true, render: (row) => <span className="capitalize">{row.status}</span> },
@@ -172,6 +175,17 @@ export function FactorAdmin() {
     const match = factorsQuery.data.find((factor) => factor.id === deepLinkFactorId);
     if (match) setSelectedFactor(match);
   }, [deepLinkFactorId, factorsQuery.data]);
+
+  // LINK-F5171/LINK-F5178 — factoring:factors.admin + batches.detail reverse_link: CustomerDetail's
+  // new CustomerFactoringReverseSection links here as /factoring/factors?customer_id=<id>, but
+  // detailCustomerId (drives customerFactorDetailQuery below, which already returns factor +
+  // assignments + batches for that customer) was combobox-only state — a hand-typed or EntityLink
+  // customer_id param was silently ignored, same defect class as deepLinkFactorId above.
+  const deepLinkCustomerId = searchParams.get("customer_id");
+  useEffect(() => {
+    if (!deepLinkCustomerId) return;
+    setDetailCustomerId(deepLinkCustomerId);
+  }, [deepLinkCustomerId]);
 
   const customersQuery = useQuery({
     queryKey: ["factoring", "factor-admin", "customers", companyId, customerSearch],
