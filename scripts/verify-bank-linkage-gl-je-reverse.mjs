@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** @matrix-built modules=banking,accounting,drivers,dispatch,fleet,vendors,customers cols=bank,gl_je,driver,unit,trailer,load,vendor,customer,connectivity,reverse_link task=BANK-LINKAGE-GL-JE-REVERSE */
+/** @matrix-built {"modules":["banking","accounting","drivers","dispatch","fleet","vendors","customers"],"cols":["bank","gl_je","driver","unit","trailer","load","vendor","customer","connectivity","reverse_link"],"leafRe":"^unit\\.profile\\.bank_txns$|^trailer\\.profile\\.bank_txns$|^profiles\\.detail$|^detail\\.profile$|^customers\\.detail\\.profile$","task":"THEATER-BANK-LINKAGE-GL-JE-LEAFRE","vertical":"column-wave"} */
 import fs from "node:fs";
 const LABEL = "verify-bank-linkage-gl-je-reverse";
 const files = {

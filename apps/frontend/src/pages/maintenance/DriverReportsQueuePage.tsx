@@ -1,6 +1,5 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
 import { listDriverReports, updateDriverReportStatus, type DriverReportRow } from "../../api/maintenance";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { Button } from "../../components/Button";
@@ -74,9 +73,13 @@ export function DriverReportsQueuePage({ highlightedReportId = "" }: { highlight
       sortable: true,
       render: (row) =>
         row.driver_id ? (
-          <Link to={`/drivers/${row.driver_id}`} className={LINK}>
-            {entityLabel(row.driver_name, row.driver_id, "Driver")}
-          </Link>
+          <EntityLink
+            kind="driver"
+            id={row.driver_id}
+            label={entityLabel(row.driver_name, row.driver_id, "Driver")}
+            className={LINK}
+            data-testid="driver-reports-queue-driver-link"
+          />
         ) : (
           "—"
         ),
