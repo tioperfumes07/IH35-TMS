@@ -55,6 +55,9 @@ export type EntityKind =
   // LINK-F5171: property-tax list/unit reverse used bare Links; kind resolves to
   // /compliance/property-tax/:id (routes/manifest.tsx).
   | "property_tax_rendition"
+  // LINK-F5171: applicants pipeline "Open onboarding wizard" used a bare Link; kind resolves to
+  // /drivers/onboarding/:session_id (routes/manifest.tsx).
+  | "onboarding_session"
   | "inventory_part"
   | "parts_inventory"
   | "maintenance_vendor"
@@ -215,6 +218,8 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
       return `/maintenance/defects/${id}`;
     case "property_tax_rendition":
       return `/compliance/property-tax/${id}`;
+    case "onboarding_session":
+      return `/drivers/onboarding/${id}`;
     case "safety_event":
       return `/safety/safety-events?event_id=${id}`;
     // SAF-F33 safety drill-through — each target list page reads the param and opens/highlights the row.

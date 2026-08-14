@@ -1,6 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
 import {
   APPLICANT_PIPELINE_COLUMNS,
   convertApplicantToDriver,
@@ -14,6 +13,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { Button } from "../../components/Button";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ListErrorState } from "../../components/ListErrorState";
+import { EntityLink } from "../../components/shared/EntityLink";
 
 function applicantName(row: DriverApplicant) {
   return `${row.first_name ?? ""} ${row.last_name ?? ""}`.trim() || "Applicant";
@@ -57,12 +57,12 @@ function ApplicantCard({
         </Button>
       ) : null}
       {row.onboarding_session_id ? (
-        <Link
-          to={`/drivers/onboarding/${row.onboarding_session_id}`}
+        <EntityLink
+          kind="onboarding_session"
+          id={row.onboarding_session_id}
+          label="Open onboarding wizard"
           className="block text-xs text-slate-700 hover:underline"
-        >
-          Open onboarding wizard
-        </Link>
+        />
       ) : null}
     </article>
   );
