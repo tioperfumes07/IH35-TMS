@@ -121,7 +121,8 @@ export async function getCoaAsymmetryReport(input: { userId: string }): Promise<
     const sampleRes = await client.query(
       `
         WITH postable AS (
-          SELECT a.account_number,
+          SELECT a.id AS account_id,
+                 a.account_number,
                  a.account_name,
                  a.account_type,
                  c.code AS entity_code
@@ -132,7 +133,8 @@ export async function getCoaAsymmetryReport(input: { userId: string }): Promise<
              AND c.code IN ('TRK', 'TRANSP')
              AND a.account_number IS NOT NULL
         )
-        SELECT p.account_number,
+        SELECT p.account_id,
+               p.account_number,
                p.account_name,
                p.account_type,
                p.entity_code
@@ -169,6 +171,7 @@ export async function getCoaAsymmetryReport(input: { userId: string }): Promise<
         trk_only_postable: num(row.trk_only_postable),
       })),
       sample_trk_only_postable: sampleRes.rows.map((row) => ({
+        account_id: String(row.account_id),
         account_number: String(row.account_number),
         account_name: String(row.account_name),
         account_type: String(row.account_type),

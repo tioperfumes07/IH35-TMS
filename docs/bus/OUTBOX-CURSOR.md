@@ -1,3 +1,4 @@
+2026-08-14T20:14Z Cursor | shipping LINK-F5171 CoA asymmetry account EntityLink | Live=BLOCKED
 2026-08-14T20:12Z Cursor | shipping SURFACE-BAR-WIZARD-INVENTORY | Live=BLOCKED | NEXT=more LINK-F5171 FE
 2026-08-14T20:10Z Cursor | shipping SURFACE-BAR-TOOLBAR-LEAF-INVENTORY — 116 chrome.toolbar_* surface_path | Live=BLOCKED
 2026-08-14T20:08Z Cursor | shipping LINK-F5171 HOS tracker + ELD live-duty unit EntityLink | Live=BLOCKED | NEXT=toolbar inventory
