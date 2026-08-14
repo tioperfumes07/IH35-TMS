@@ -278,7 +278,7 @@
       "id": "tasks.drawer.task",
       "tab": "Task planner",
       "sub": "Task detail drawer",
-      "route_hint": "/tasks/planner",
+      "route_hint": "/tasks",
       "surface_kind": "drawer",
       "surface_path": "pages/tasks/TaskPlannerGrid.tsx",
       "required": ["load", "connectivity", "reverse_link", "qbo_chrome"]
