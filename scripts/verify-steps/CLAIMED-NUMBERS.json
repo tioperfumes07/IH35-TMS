@@ -642,6 +642,11 @@
     "claimed_by": "codex",
     "purpose": "verify-primary-record-selector-reverse-links"
   },
+  "3238": {
+    "claimed_at": "2026-08-13",
+    "claimed_by": "codex",
+    "purpose": "verify-selected-record-summary-reverse-links"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
