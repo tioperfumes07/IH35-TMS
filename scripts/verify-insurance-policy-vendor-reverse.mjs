@@ -21,7 +21,12 @@ function audit(s) {
   if (!/vendor_id::text/.test(s.route) || !/vendor_id: string/.test(s.api)) failures.push("policy response vendor FK missing");
   if (!/export function listInsurancePolicies\([\s\S]{0,180}vendor_id\?: string/.test(s.api) || !/vendor_id: vendorId/.test(s.list)) failures.push("frontend filtered list contract missing");
   if (!/listInsurancePolicies\(\{ operating_company_id: operatingCompanyId, vendor_id: vendorId \}\)/.test(s.reverse) || !/query\.isError/.test(s.reverse) || !/No active insurance policies are linked to this vendor/.test(s.reverse)) failures.push("honest vendor policy reverse missing");
-  if (!/safety\/insurance\/policies\?vendor_id=/.test(s.reverse) || !(/kind="insurance_policy"/.test(s.reverse) || /safety\/insurance\/policies\/\$\{policy\.id\}/.test(s.reverse))) failures.push("filtered list and policy detail drills missing");
+  const openQueue =
+    /kind="insurance_policies_vendor"/.test(s.reverse) ||
+    /safety\/insurance\/policies\?vendor_id=/.test(s.reverse);
+  if (!openQueue || !(/kind="insurance_policy"/.test(s.reverse) || /safety\/insurance\/policies\/\$\{policy\.id\}/.test(s.reverse))) {
+    failures.push("filtered list and policy detail drills missing");
+  }
   if (!/VendorInsurancePoliciesReverseSection[\s\S]{0,140}vendorId=\{vendor\.id\}/.test(s.vendor)) failures.push("vendor profile mount missing");
   return failures;
 }
@@ -36,7 +41,7 @@ if (process.argv.includes("--selftest")) {
     ["list", "list", /vendor_id: vendorId/, "vendor_id: undefined"],
     ["reverse", "reverse", /vendor_id: vendorId/, "vendor_id: operatingCompanyId"],
     ["drill_kind", "reverse", /kind="insurance_policy"/, 'kind="vendor"'],
-    ["drill", "reverse", /safety\/insurance\/policies\?vendor_id=/, "safety/insurance/policies?wrong_id="],
+    ["drill", "reverse", /kind="insurance_policies_vendor"|safety\/insurance\/policies\?vendor_id=/, 'kind="broken_policies_vendor"'],
     ["mount", "vendor", /VendorInsurancePoliciesReverseSection/g, "MissingPolicyReverse"],
   ];
   for (const [name, key, pattern, replacement] of mutations) {

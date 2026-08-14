@@ -105,6 +105,7 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
   const eventIdParam = searchParams.get("event_id");
   const subjectDriverFromUrl = searchParams.get("subject_driver_id")?.trim() ?? "";
   const subjectUnitFromUrl = searchParams.get("subject_unit_id")?.trim() ?? "";
+  const relatedLoadFromUrl = searchParams.get("related_load_id")?.trim() ?? "";
   useEffect(() => {
     if (!eventIdParam) return;
     setSelectedEventId(eventIdParam);
@@ -161,7 +162,7 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
   }, [draft.related_load_id, suggestionPinned, suggestionQuery.data]);
 
   const eventsQuery = useQuery({
-    queryKey: ["safety", "events-v2", operatingCompanyId, statusFilter, severityFilter, search, driverFilter, unitFilter],
+    queryKey: ["safety", "events-v2", operatingCompanyId, statusFilter, severityFilter, search, driverFilter, unitFilter, relatedLoadFromUrl],
     queryFn: () =>
       listSafetyEventLog(operatingCompanyId, {
         status: statusFilter || undefined,
@@ -169,6 +170,7 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
         search: search.trim() || undefined,
         subject_driver_id: driverFilter || undefined,
         subject_unit_id: unitFilter || undefined,
+        related_load_id: relatedLoadFromUrl || undefined,
       }).then((result) => result.events),
     enabled: Boolean(operatingCompanyId),
   });
