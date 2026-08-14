@@ -17,6 +17,7 @@ import { MedicalCardSection } from "../../components/driver-profile/MedicalCardS
 import { PerformanceScorecardSection } from "../../components/driver-profile/PerformanceScorecardSection";
 import { SettlementsSection } from "../../components/driver-profile/SettlementsSection";
 import { LoadsSection } from "../../components/driver-profile/LoadsSection";
+import { DriverTeamsReverseSection } from "../../components/driver-profile/DriverTeamsReverseSection";
 import { DriverPaymentMethodsCard } from "../../components/driver-profile/DriverPaymentMethodsCard";
 import { LinkedBankTransactionsPanel } from "../../components/banking/LinkedBankTransactionsPanel";
 import { TrainingRecordsSection } from "../../components/driver-profile/TrainingRecordsSection";
@@ -333,6 +334,8 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
           <LoadsSection driverId={id} operatingCompanyId={companyId} />
         </div>
       ) : null}
+
+      <DriverTeamsReverseSection driverId={id} operatingCompanyId={companyId} />
 
       <div data-testid="dp-section-7-performance">
         <PerformanceScorecardSection scorecard={aggregate.performance_scorecard ?? null} />
