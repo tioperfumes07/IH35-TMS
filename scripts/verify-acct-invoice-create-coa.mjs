@@ -1,8 +1,20 @@
 #!/usr/bin/env node
 /**
- * @matrix-built {"modules":["accounting"],"cols":["connectivity","picker_law"],"leafRe":"^(invoices\\.create|invoices\\.list)$","task":"ACCT-F5052-INVOICE-CREATE-COA","pr":"#6453"}
+ * @matrix-built {"modules":["accounting"],"cols":["connectivity","picker_law","invoice"],"leafRe":"^(invoices\\.create|invoices\\.list|accounting\\.modal\\.driver_damage_invoice|accounting\\.modal\\.driver_misc_invoice|accounting\\.modal\\.manual_invoice|accounting\\.parity\\.invoice_type_modal_base)$","task":"ACCT-F5052-INVOICE-CREATE-COA","pr":"#6453"}
  * Guard: Invoice create uses income CoA ReferenceSelect + optional load linkage (15/22).
  * Proves PATCH source_load_id uniqueness (load_already_invoiced) mirrors from-load idempotency.
+ *
+ * OWNER-EXECUTION-PLAN §2 money-cells sweep (2026-08-14): added the "invoice" column and widened
+ * leafRe. checkInvoiceCreateCoa()'s assertions on InvoiceTypeModalBase.tsx (income CoA account,
+ * entity-scoped catalogs, line persisted with income account, customer + load linkage) ARE the real
+ * proof of the "invoice" money object for every leaf that renders that shared component — confirmed
+ * live: DriverDamageInvoiceModal.tsx, DriverMiscInvoiceModal.tsx, and ManualInvoiceModal.tsx each
+ * literally `import { InvoiceTypeModalBase }` and render it (grep-verified, not assumed), matching
+ * leaf ids accounting.modal.driver_damage_invoice / driver_misc_invoice / manual_invoice; the base
+ * component itself is accounting.parity.invoice_type_modal_base. NOT included:
+ * accounting.modal.invoice_create / accounting.parity.invoice_create — those route through the
+ * SEPARATE InvoiceCreateModal.tsx + InvoiceCreateBlankPage.tsx (useInvoiceCreateFromLoad), a
+ * different component this guard never reads; that gap is real and stays open for its own guard.
  *
  * Self-test: node scripts/verify-acct-invoice-create-coa.mjs --selftest
  */
