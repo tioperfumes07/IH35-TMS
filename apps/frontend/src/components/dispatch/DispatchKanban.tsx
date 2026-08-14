@@ -15,6 +15,7 @@ import type { UnitsWithoutLoad } from "../../api/dispatch";
 import type { DataTableErrorState } from "../../lib/tableError";
 import { classifyProfit, formatProfitCents, getLoadProfitability, profitBadgeClassName } from "../../lib/loadProfit";
 import { entityLabel } from "../../lib/entity-label";
+import { EntityLink } from "../shared/EntityLink";
 import { ListErrorState } from "../ListErrorState";
 import { useToast } from "../Toast";
 import { canDragLoad, flagDotColor, flagDotLabel, flagDotTag, hasVisibleFlag, toRouteSummary } from "./constants";
@@ -459,7 +460,7 @@ function KanbanCompactCard({
     >
       <span className={`h-2 w-2 shrink-0 rounded-full ${onTimeChipClass(load).split(" ")[0]}`} aria-hidden />
       <span className="min-w-0 flex-1 truncate font-semibold text-gray-900">{driverUnitLabel(load)}</span>
-      <span className="shrink-0 font-mono text-[10px] text-gray-500">{entityLabel(load.load_number, load.id, "Load")}</span>
+      <EntityLink kind="load" id={load.id} label={entityLabel(load.load_number, load.id, "Load")} className="shrink-0 font-mono text-[10px]" onClick={(event) => event.stopPropagation()} />
       {/* KANBAN-COMPACT-TRUNCATE (owner-live): the driver label was truncating because this SECONDARY lane
           text held up to 120px of the same row at every width above `sm`. The driver is the identifying
           field on a compact card, so the lane now yields first — it appears only on wide boards and takes
@@ -529,9 +530,7 @@ function KanbanStandardCard({
       {/* line 2 — secondary: load # · driver · lane */}
       <div className="flex items-center gap-1.5 truncate text-[10px] text-gray-500">
         {secondaryLoad ? (
-          <span className="shrink-0 font-mono" data-kanban-card-secondary="load-number">
-            {secondaryLoad}
-          </span>
+          <EntityLink kind="load" id={load.id} label={secondaryLoad} className="shrink-0 font-mono" onClick={(event) => event.stopPropagation()} data-testid="kanban-card-secondary-load-link" />
         ) : null}
         {/* KANBAN-COMPACT-TRUNCATE — owner saw "Leon… Unkno…" at STANDARD density too, so this is not a
             compact-only bug. The driver was capped at an arbitrary max-w-[110px] and so truncated even when

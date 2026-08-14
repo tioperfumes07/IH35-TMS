@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../../auth/useAuth";
@@ -13,8 +12,6 @@ import { entityLabel } from "../../lib/entity-label";
 type Props = {
   operatingCompanyId: string;
 };
-
-const LINK = "text-slate-700 hover:underline";
 
 // §7 severity styling — single red (severe), single amber (warning), slate (info).
 function severityChip(severity: string) {
@@ -114,9 +111,7 @@ export function ArrivingSoonPage({ operatingCompanyId }: Props) {
       label: "Unit",
       sortable: true,
       render: (card) => (
-        <Link to={`/fleet/units/${card.unit_id}`} className={`${LINK} font-semibold`}>
-          {entityLabel(card.unit_number, card.unit_id, "Unit")}
-        </Link>
+        <EntityLink kind="unit" id={card.unit_id} label={entityLabel(card.unit_number, card.unit_id, "Unit")} className="font-semibold" />
       ),
     },
     {
@@ -124,9 +119,7 @@ export function ArrivingSoonPage({ operatingCompanyId }: Props) {
       label: "Load",
       sortable: true,
       render: (card) => (
-        <Link to={`/dispatch/loads/${card.load_id}`} className={LINK}>
-          {entityLabel(card.load_display_id, card.load_id, "Load")}
-        </Link>
+        <EntityLink kind="load" id={card.load_id} label={entityLabel(card.load_display_id, card.load_id, "Load")} />
       ),
     },
     {

@@ -1,10 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
 import { listMaintenanceParts } from "../../api/maintenance";
 import { DataPanel } from "../../components/layout/DataPanel";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { entityLabel } from "../../lib/entity-label";
+import { EntityLink } from "../../components/shared/EntityLink";
 
 type Props = { operatingCompanyId: string; vendorId: string };
 
@@ -32,9 +32,7 @@ export function VendorPreferredPartsReverseSection({ operatingCompanyId, vendorI
         <div className="space-y-1" data-testid="vendor-preferred-parts-reverse">
           {rows.map((part) => (
             <div key={part.id} className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-gray-200 px-2 py-1.5 text-xs">
-              <Link className="font-semibold text-slate-700 hover:underline" to={`/inventory?part_id=${encodeURIComponent(part.id)}`}>
-                {entityLabel(part.name, part.id, "Part")}
-              </Link>
+              <EntityLink kind="inventory_part" id={part.id} label={entityLabel(part.name, part.id, "Part")} className="font-semibold" />
               <span className="text-gray-600">
                 {part.part_number || "No SKU"} · on hand {part.qty_on_hand}
               </span>
