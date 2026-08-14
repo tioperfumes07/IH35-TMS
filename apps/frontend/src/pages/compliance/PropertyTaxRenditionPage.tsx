@@ -121,9 +121,7 @@ function RenditionListView({ companyId, unitId }: { companyId: string; unitId?: 
         label: "Open",
         alwaysVisible: true,
         render: (r) => (
-          <Link className="text-slate-700 underline" to={`/compliance/property-tax/${r.id}`}>
-            Open
-          </Link>
+          <EntityLink className="text-slate-700 underline" kind="property_tax_rendition" id={r.id} label="Open" />
         ),
       },
     ],

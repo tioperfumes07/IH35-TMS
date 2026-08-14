@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { apiRequest } from "../../api/client";
 import { fetchRenditions } from "../../api/property-tax";
 import { formatDateUS } from "../../lib/formatDate";
+import { EntityLink } from "../shared/EntityLink";
 
 type Form2290Filing = {
   id: string;
@@ -44,9 +45,12 @@ export function UnitTaxFilingsReverseSection({ operatingCompanyId, unitId }: { o
       <div className="mt-2 space-y-1 text-xs">
         {renditions.map((rendition) => (
           <div key={`property-${rendition.id}`}>
-            <Link className="font-medium text-slate-700 hover:underline" to={`/compliance/property-tax/${rendition.id}`}>
-              {rendition.tax_year} property-tax rendition — {rendition.county}
-            </Link>{" "}
+            <EntityLink
+              className="font-medium text-slate-700 hover:underline"
+              kind="property_tax_rendition"
+              id={rendition.id}
+              label={`${rendition.tax_year} property-tax rendition — ${rendition.county}`}
+            />{" "}
             <span className="text-slate-500">({rendition.status})</span>
           </div>
         ))}

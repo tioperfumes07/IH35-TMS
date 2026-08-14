@@ -17,7 +17,7 @@ function failures(source = files) {
     ["property-tax company/unit filter", source.propertyRoutes.includes("renditionListQuery.safeParse") && source.propertyService.includes("l.operating_company_id = r.operating_company_id") && source.propertyService.includes("l.unit_id = $2::uuid")],
     ["Form 2290 company/unit filter", source.formRoutes.includes("filingListQuery.safeParse") && source.formRoutes.includes("v.operating_company_id = compliance.form_2290_filings.operating_company_id") && source.formRoutes.includes("v.vehicle_id = $2::uuid")],
     ["unit profile reverse section", source.profile.includes("<UnitTaxFilingsReverseSection operatingCompanyId={companyId} unitId={id} />")],
-    ["property-tax list and detail drills", source.section.includes("/compliance/property-tax?unit_id=${encodeURIComponent(unitId)}") && source.section.includes("/compliance/property-tax/${rendition.id}") && source.propertyPage.includes('searchParams.get("unit_id")')],
+    ["property-tax list and detail drills", source.section.includes("/compliance/property-tax?unit_id=${encodeURIComponent(unitId)}") && source.section.includes('kind="property_tax_rendition"') && source.section.includes("id={rendition.id}") && source.propertyPage.includes('searchParams.get("unit_id")') && source.propertyPage.includes('kind="property_tax_rendition"')],
     ["Form 2290 exact filing drill", source.section.includes("/compliance/form-2290?filing_id=${encodeURIComponent(filing.id)}") && source.formPage.includes('searchParams.get("filing_id")') && source.formPage.includes("String(filing.id) === filingId")],
   ].filter(([, ok]) => !ok).map(([name]) => name);
 }
@@ -27,7 +27,7 @@ if (process.argv.includes("--selftest")) {
     failures({ ...files, propertyService: files.propertyService.replace("l.unit_id = $2::uuid", "TRUE") }).includes("property-tax company/unit filter"),
     failures({ ...files, formRoutes: files.formRoutes.replace("v.vehicle_id = $2::uuid", "TRUE") }).includes("Form 2290 company/unit filter"),
     failures({ ...files, profile: files.profile.replace("<UnitTaxFilingsReverseSection", "<MissingTaxReverseSection") }).includes("unit profile reverse section"),
-    failures({ ...files, section: files.section.replace("/compliance/property-tax/${rendition.id}", "/compliance/property-tax") }).includes("property-tax list and detail drills"),
+    failures({ ...files, section: files.section.replace('kind="property_tax_rendition"', 'kind="unit"') }).includes("property-tax list and detail drills"),
     failures({ ...files, formPage: files.formPage.replace("String(filing.id) === filingId", "true") }).includes("Form 2290 exact filing drill"),
   ];
   if (checks.some((ok) => !ok)) {

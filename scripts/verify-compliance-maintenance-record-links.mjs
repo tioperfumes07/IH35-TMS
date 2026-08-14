@@ -38,7 +38,8 @@ export function verify(source) {
   need("hosTracker", 'kind="driver" id={driver.driver_id}', "HOS Tracker Driver column must reverse-drill canonically");
   need("fleetHos", '<EntityLink kind="unit" id={row.unit_id}', "Fleet HOS board must drill to units");
   need("fleetHos", 'kind="driver"', "Fleet HOS board must drill to drivers");
-  need("propertyTax", 'to={`/compliance/property-tax/${r.id}`}', "property-tax list must drill to rendition detail");
+  need("propertyTax", 'kind="property_tax_rendition"', "property-tax list must drill to rendition detail via EntityLink");
+  need("propertyTax", "id={r.id}", "property-tax list EntityLink must use the rendition row id");
   need("propertyTax", '<EntityLink kind="unit" id={l.unit_id}', "property-tax detail must drill to units");
   need("propertyTax", '<EntityLink kind="trailer" id={l.equipment_id}', "property-tax detail must drill to trailers");
   need("form2290", '<EntityLink kind="unit" id={u.unit_id}', "Form 2290 exceptions must drill to units");
@@ -77,7 +78,7 @@ if (process.argv.includes("--self-test")) {
     ["hosApi", "unit_id: string | null", "unit_id_broken: string | null"],
     ["hosTracker", '<EntityLink kind="unit" id={driver.unit_id}', '<EntityLink kind="driver" id={driver.driver_id}'],
     ["fleetHos", '<EntityLink kind="unit" id={row.unit_id}', '<span data-unit={row.unit_id}'],
-    ["propertyTax", 'to={`/compliance/property-tax/${r.id}`}', 'to="/compliance/property-tax"'],
+    ["propertyTax", 'kind="property_tax_rendition"', 'kind="unit"'],
     ["propertyTax", '<EntityLink kind="trailer" id={l.equipment_id}', '<EntityLink kind="unit" id={l.unit_id}'],
     ["form2290", '<EntityLink kind="unit" id={u.unit_id}', '<span data-unit={u.unit_id}'],
     ["defects", 'kind="maintenance_defect"', 'kind="unit"'],
