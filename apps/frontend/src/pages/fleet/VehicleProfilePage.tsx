@@ -2,6 +2,7 @@ import { entityLabel } from "../../lib/entity-label";
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams, useSearchParams, Link } from "react-router-dom";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { apiRequest } from "../../api/client";
 import { patchUnit, quicksaveEquipmentAssignment } from "../../api/mdata";
 import { QuickAssignModal } from "../../components/fleet/QuickAssignModal";
@@ -446,9 +447,7 @@ export function VehicleProfilePage() {
               onArchive={handleArchive}
             />
             <div className="mt-3">
-              <Link to={`/fleet/units/${id}/detail?tab=finance`} className="inline-block rounded-sm border px-3 py-1.5 text-sm">
-                View Permits, Toll Tags, Tasks, Brakes, Tires, Finance Linkage
-              </Link>
+              <EntityLink kind="unit_detail_finance" id={id} label="View Permits, Toll Tags, Tasks, Brakes, Tires, Finance Linkage" className="inline-block rounded-sm border px-3 py-1.5 text-sm" />
             </div>
           </div>
           <div data-testid="vp-section-11b-linked-bank-txns">

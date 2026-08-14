@@ -1,5 +1,4 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
 import { EntityLink } from "../shared/EntityLink";
 import { listOverageEvents } from "../../pages/fuel/card-overage/CardOverageQueuePage";
 
@@ -20,9 +19,11 @@ export function FuelCardOverageReverseSection({ operatingCompanyId, filter }: Pr
     <section className="rounded-sm border border-gray-200 bg-white p-3" data-testid="fuel-card-overage-reverse">
       <div className="flex items-center justify-between gap-2">
         <h2 className="text-sm font-semibold text-slate-900">Fuel card overages</h2>
-        <Link className="text-xs font-semibold text-slate-700 hover:underline" to={`/fuel/card-overage?${new URLSearchParams(filter).toString()}`}>
-          Open queue
-        </Link>
+        {"driver_id" in filter ? (
+          <EntityLink kind="fuel_card_overage_driver" id={filter.driver_id} label="Open queue" className="text-xs font-semibold text-slate-700 hover:underline" />
+        ) : (
+          <EntityLink kind="fuel_card_overage_unit" id={filter.unit_id} label="Open queue" className="text-xs font-semibold text-slate-700 hover:underline" />
+        )}
       </div>
       {query.isError ? <p className="mt-2 text-xs text-red-700">Fuel card overages unavailable.</p> : null}
       {query.isLoading ? <p className="mt-2 text-xs text-gray-500">Loading…</p> : null}

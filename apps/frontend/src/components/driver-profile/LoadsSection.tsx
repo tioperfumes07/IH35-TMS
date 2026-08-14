@@ -1,6 +1,5 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
 import { listDispatchLoads, type DispatchLoad } from "../../api/dispatch";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
@@ -89,12 +88,7 @@ export function LoadsSection({ driverId, operatingCompanyId }: Props) {
     <section className="rounded-sm border border-gray-200 bg-white p-4" data-testid="dp-section-loads">
       <div className="flex items-center justify-between gap-2">
         <h2 className="text-sm font-semibold text-gray-800">Loads</h2>
-        <Link
-          to={`/dispatch/loads?driver=${driverId}`}
-          className="text-xs text-slate-700 underline"
-        >
-          Full load history
-        </Link>
+        <EntityLink kind="loads_driver_filter" id={driverId} label="Full load history" className="text-xs text-slate-700 underline" />
       </div>
       {query.isError ? (
         <div className="mt-3">
