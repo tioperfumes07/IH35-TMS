@@ -6,6 +6,7 @@ import { TasksModuleTabs } from "./TasksModuleTabs";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { fetchPlannerTasks, type Task } from "../../api/tasks";
 import { addDaysIso, companyToday, monthBoundsIso } from "../../lib/businessDate";
+import { TaskSubjectLink } from "../../components/tasks/TaskSubjectLink";
 
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const PRIORITY_DOT = ["bg-slate-400", "bg-orange-500", "bg-red-600"];
@@ -118,6 +119,7 @@ export function TasksCalendarPage() {
                       <div key={t.task_id} className="flex items-center gap-1 truncate text-[9px] text-slate-700" title={t.title}>
                         <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${PRIORITY_DOT[Math.min(2, Math.max(0, t.priority))]}`} />
                         <span className={`truncate ${t.status === "completed" ? "text-slate-400 line-through" : ""}`}>{t.title}</span>
+                        {t.subject_id ? <TaskSubjectLink subjectType={t.subject_type} subjectId={t.subject_id} /> : null}
                       </div>
                     ))}
                     {dayTasks.length > 3 ? <div className="text-[9px] text-slate-400">+{dayTasks.length - 3} more</div> : null}

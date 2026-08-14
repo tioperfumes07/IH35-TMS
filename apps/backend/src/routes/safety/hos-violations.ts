@@ -98,11 +98,15 @@ export async function registerSafetyHosViolationsRoutes(app: FastifyInstance) {
       const res = await client.query(
         `
           SELECT hv.*,
-                 NULLIF(TRIM(COALESCE(d.first_name, '') || ' ' || COALESCE(d.last_name, '')), '') AS driver_name
+                 NULLIF(TRIM(COALESCE(d.first_name, '') || ' ' || COALESCE(d.last_name, '')), '') AS driver_name,
+                 l.load_number AS related_load_number
           FROM safety.hos_violations hv
           LEFT JOIN mdata.drivers d
             ON d.id = hv.driver_id
            AND d.operating_company_id = hv.operating_company_id
+          LEFT JOIN mdata.loads l
+            ON l.id = hv.related_load_id
+           AND l.operating_company_id = hv.operating_company_id
           WHERE ${filters.map((f) => `hv.${f}`).join(" AND ")}
           ORDER BY hv.occurred_at DESC, hv.created_at DESC
           LIMIT 500

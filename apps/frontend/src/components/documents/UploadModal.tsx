@@ -19,17 +19,18 @@ import { EntityPicker } from "../parity/EntityPicker";
 import { ReferenceSelect } from "../parity/ReferenceSelect";
 import type { EntityPickerKind } from "../parity/entityPickerRegistry";
 
-type StandaloneLinkType = "driver" | "unit" | "vendor" | "customer";
+type StandaloneLinkType = "driver" | "unit" | "vendor" | "customer" | "load";
 
 const STANDALONE_LINK_TYPES: Array<{ value: StandaloneLinkType; label: string }> = [
   { value: "driver", label: "Driver" },
   { value: "unit", label: "Unit" },
   { value: "vendor", label: "Vendor" },
   { value: "customer", label: "Customer" },
+  { value: "load", label: "Load" },
 ];
 
 function standaloneLinkToPickerKind(type: StandaloneLinkType): EntityPickerKind | null {
-  if (type === "driver" || type === "unit" || type === "vendor") return type;
+  if (type === "driver" || type === "unit" || type === "vendor" || type === "load") return type;
   return null;
 }
 

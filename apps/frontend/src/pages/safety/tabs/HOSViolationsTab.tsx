@@ -11,6 +11,7 @@ import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { useListState } from "../../../components/list-state";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { EntityPicker } from "../../../components/parity/EntityPicker";
 import { entityLabel } from "../../../lib/entity-label";
 import { CappedListNotice } from "../../../components/CappedListNotice";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
@@ -39,6 +40,7 @@ export function HOSViolationsTab() {
   const [voidTarget, setVoidTarget] = useState<HosViolationRow | null>(null);
   const [form, setForm] = useState({
     driver_id: "",
+    related_load_id: "",
     violation_type: "",
     occurred_at: defaultOccurredAtIso(),
     duration_minutes: "",
@@ -96,6 +98,7 @@ export function HOSViolationsTab() {
     mutationFn: () =>
       createHosViolation(companyId, {
         driver_id: form.driver_id.trim(),
+        related_load_id: form.related_load_id || null,
         violation_type: form.violation_type.trim(),
         occurred_at: new Date(form.occurred_at).toISOString(),
         duration_minutes: form.duration_minutes.trim() ? Number(form.duration_minutes) : null,
@@ -109,6 +112,7 @@ export function HOSViolationsTab() {
     onSuccess: async () => {
       setForm({
         driver_id: "",
+        related_load_id: "",
         violation_type: "",
         occurred_at: defaultOccurredAtIso(),
         duration_minutes: "",
@@ -134,6 +138,9 @@ export function HOSViolationsTab() {
     () => [
       { key: "driver_id", label: "Driver", sortable: true, render: (row) => (
         <EntityLink kind="driver" id={row.driver_id as string | undefined} label={entityLabel(row.driver_name, row.driver_id, "Driver")} />
+      ) },
+      { key: "related_load_id", label: "Load", sortable: true, render: (row) => (
+        <EntityLink kind="load" id={row.related_load_id as string | undefined} label={entityLabel(row.related_load_number, row.related_load_id, "Load")} />
       ) },
       {
         key: "violation_type",
@@ -176,7 +183,7 @@ export function HOSViolationsTab() {
 
   return (
     <div className="space-y-3">
-      <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-7">
+      <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-8">
         {/* SAF-F14: raw uuid text box replaced with the canonical driver picker (inline create). */}
         <div data-testid="hos-violation-driver-picker">
           <DriverPickerWithCreate
@@ -214,6 +221,15 @@ export function HOSViolationsTab() {
           limit={200}
           hint="Type to search the full violation-type catalog."
         />
+        <div data-testid="hos-violation-load-picker">
+          <EntityPicker
+            kind="load"
+            operatingCompanyId={companyId}
+            value={form.related_load_id || null}
+            onChange={(next) => setForm((v) => ({ ...v, related_load_id: next ?? "" }))}
+            placeholder="Related load (optional)"
+          />
+        </div>
         <DateTimePicker
           aria-label="Occurred at"
           value={toDatetimeLocalValue(form.occurred_at)}
