@@ -69,6 +69,9 @@ export type EntityKind =
   | "driver_safety_profile"
   // LINK-F5171: Reports Hub category headings used bare Links to /reports/categories/:id.
   | "report_category"
+  // LINK-F5171: Driver profile "View history" used a bare Link to the per-driver layover
+  // surface (/dispatch/layovers/driver/:driverId) — distinct from kind=driver.
+  | "driver_layover_history"
   | "inventory_part"
   | "parts_inventory"
   | "maintenance_vendor"
@@ -241,6 +244,8 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
       return `/safety/driver-profiles/${id}`;
     case "report_category":
       return `/reports/categories/${id}`;
+    case "driver_layover_history":
+      return `/dispatch/layovers/driver/${id}`;
     case "safety_event":
       return `/safety/safety-events?event_id=${id}`;
     // SAF-F33 safety drill-through — each target list page reads the param and opens/highlights the row.

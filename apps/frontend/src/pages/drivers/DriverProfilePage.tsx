@@ -94,12 +94,12 @@ function LayoverSummaryCard({ driverId, companyId }: { driverId: string; company
     <section className="rounded-sm border border-gray-200 bg-white p-3">
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-sm font-semibold text-slate-900">Layovers (last 30 days)</h2>
-        <Link
-          to={`/dispatch/layovers/driver/${driverId}`}
+        <EntityLink
+          kind="driver_layover_history"
+          id={driverId}
+          label="View history"
           className="text-xs font-semibold text-slate-700 hover:underline"
-        >
-          View history
-        </Link>
+        />
       </div>
       {isLoading ? (
         <p className="text-xs text-gray-400">Loading...</p>
