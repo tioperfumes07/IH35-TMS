@@ -22,6 +22,9 @@ export type FuelActiveRoute = {
   operating_company_id: string;
   load_id: string;
   load_display_id: string;
+  /** Canonical FKs from views.fuel_planner_active_routes — required for EntityLink drills. */
+  driver_id: string | null;
+  unit_id: string | null;
   driver_full_name: string;
   driver_display_id: string;
   unit_display_id: string;

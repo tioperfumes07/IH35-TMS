@@ -10,8 +10,35 @@ type Props = {
 export function ActiveTripStrip({ route }: Props) {
   return (
     <div className="grid grid-cols-2 gap-2 rounded-sm border border-gray-200 bg-white p-2 text-xs md:grid-cols-3 xl:grid-cols-6">
-      <Cell label="Load #"><EntityLink kind="load" id={route?.load_id ?? undefined} label={entityLabel(route?.load_display_id, route?.load_id, "Load") ?? "—"} /></Cell>
-      <Cell label="Unit / Driver">{entityLabel(route?.unit_display_id, null, "Unit") ?? "—"}</Cell>
+      <Cell label="Load #">
+        <EntityLink
+          kind="load"
+          id={route?.load_id ?? undefined}
+          label={entityLabel(route?.load_display_id, route?.load_id, "Load") ?? "—"}
+          data-testid="fuel-planner-load-link"
+        />
+      </Cell>
+      <Cell label="Unit / Driver">
+        {route ? (
+          <span className="inline-flex flex-wrap items-center gap-1">
+            <EntityLink
+              kind="unit"
+              id={route.unit_id}
+              label={entityLabel(route.unit_display_id, route.unit_id, "Unit") ?? "—"}
+              data-testid="fuel-planner-unit-link"
+            />
+            <span className="font-normal text-gray-400">/</span>
+            <EntityLink
+              kind="driver"
+              id={route.driver_id}
+              label={entityLabel(route.driver_full_name || route.driver_display_id, route.driver_id, "Driver") ?? "—"}
+              data-testid="fuel-planner-driver-link"
+            />
+          </span>
+        ) : (
+          "—"
+        )}
+      </Cell>
       <Cell label="Route">{route ? `${Number(route.total_distance_miles ?? 0).toFixed(0)} practical mi` : "—"}</Cell>
       <Cell label="Tank now">{route?.current_fuel_gallons != null ? `${Number(route.current_fuel_gallons).toFixed(1)} gal` : "—"}</Cell>
       <Cell label="MPG">{route?.current_mpg != null ? Number(route.current_mpg).toFixed(1) : "—"}</Cell>

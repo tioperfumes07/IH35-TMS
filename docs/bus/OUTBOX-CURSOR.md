@@ -1,3 +1,4 @@
+2026-08-14T20:06Z Cursor | shipping LINK-F5171 fuel planner unit+driver EntityLink | Live=BLOCKED | NEXT=toolbar inventory · more FE
 2026-08-14T21:10Z Cursor | shipping LINK-F5171 planner calendar customer EntityLink + ENV-MATRIX board closeout | Live=BLOCKED | NEXT=more LINK-F5171 FE · toolbar inventory
 2026-08-14T21:05Z Cursor | SHIPPED LINK-F5171 cash-flow customer EntityLink (#6737) | Live=BLOCKED | NEXT=planner calendar / toolbar
 2026-08-14T21:00Z Cursor | shipping LINK-F5171 cash-flow daily prediction customer_id + EntityLink | Live=BLOCKED | NEXT=more LINK-F5171 FE · toolbar inventory

@@ -147,6 +147,8 @@
       "sub": "Fuel planner",
       "route_hint": "/fuel/planner",
       "required": [
+        "driver",
+        "unit",
         "load",
         "connectivity"
       ]
@@ -410,16 +412,10 @@
     },
     "unit_column_2026_08_14_overclaim": {
       "finding": "LINK-F5167-UNIT-COLUMN-VERTICAL-SWEEP",
-      "note": "7 of 10 fuel leaves are false: home/relay_inbox/compliance/import-transactions-modal/upload-loves-prices-modal/savings-panel are all aggregate/fleet-wide surfaces with zero unit_id; planner's unit reference is plain text with a hardcoded-null id, not a real EntityLink. The other 3 leaves KEEP the Required marking \u2014 real EntityLink kind=\"unit\"/EntityPicker kind=\"unit\" confirmed in CardOverageQueuePage.tsx, FuelTransactionsTable.tsx, and CreateFuelTransactionModal.tsx.",
+      "note": "6 of 10 fuel leaves are false: home/relay_inbox/compliance/import-transactions-modal/upload-loves-prices-modal/savings-panel are aggregate/fleet-wide with zero unit_id. planner RESTORED 2026-08-14 (LINK-F5171-FUEL-PLANNER-UNIT-DRIVER-DRILL) — ActiveTripStrip EntityLinks unit_id from views.fuel_planner_active_routes. KEEP unit on CardOverageQueuePage / FuelTransactionsTable / CreateFuelTransactionModal.",
       "drops": [
         {
           "id": "home",
-          "removed": [
-            "unit"
-          ]
-        },
-        {
-          "id": "planner",
           "removed": [
             "unit"
           ]
@@ -458,16 +454,10 @@
     },
     "driver_column_2026_08_14_overclaim": {
       "finding": "LINK-F5168-DRIVER-COLUMN-VERTICAL-SWEEP",
-      "note": "driver blanket-required on 7 fuel leaves. Verified live \u2014 FuelHome.tsx (home) renders only KPI/fraud/card-overage cards + RelayHistoryImport, zero driver_id; the planner tab (ActiveTripStrip/HosRulesBox/RouteDiagramSvg/StopReasoningTable/TripPlanSummaryBanner) has no driver_id, \"Send to driver app\" acts on the route id only; RelayDepositReview.tsx (relay_inbox) has no driver references; CompliancePanel.tsx (compliance) only receives an aggregate driverPct percentage number; ImportFuelTransactionsModal.tsx and UploadLovesPricesModal.tsx have zero driver references; SavingsPanel.tsx only receives aggregate driverSavings/topDriverName/topDriverAmount \u2014 no driver_id/EntityLink/EntityPicker anywhere in any of the 7.",
+      "note": "driver blanket-required was false on 6 aggregate leaves (home/relay_inbox/compliance/import/upload/savings). planner RESTORED 2026-08-14 (LINK-F5171-FUEL-PLANNER-UNIT-DRIVER-DRILL) — ActiveTripStrip EntityLinks driver_id from views.fuel_planner_active_routes (FE type previously omitted the FK despite SELECT *).",
       "drops": [
         {
           "id": "home",
-          "removed": [
-            "driver"
-          ]
-        },
-        {
-          "id": "planner",
           "removed": [
             "driver"
           ]
