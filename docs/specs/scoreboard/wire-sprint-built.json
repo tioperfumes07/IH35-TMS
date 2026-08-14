@@ -1172,6 +1172,14 @@
         "reverse_link"
       ],
       "leafRe": "^(profiles\\.detail|trailer\\.profile\\.assignment|accidents\\.list|safety_events\\.list|load\\.drawer\\.overview|maintenance\\.modal\\.work_order_detail)$"
+    },
+    {
+      "task": "LINK-F5133-CARD-TABLE-CANONICAL-REVERSE-LINKS",
+      "pr": "this PR",
+      "guard": "scripts/verify-card-table-canonical-reverse-links.mjs",
+      "modules": ["dispatch", "maintenance", "vendors", "inventory"],
+      "cols": ["vendor", "unit", "load", "connectivity", "reverse_link"],
+      "leafRe": "^(home\\.(kanban|round_trips)|arriving_soon\\.convert_to_wo|in_transit\\.promote_to_wo|detail\\.profile|parts\\.roster|parts_inventory\\.record_purchase|vendors\\.create)$"
     }
   ]
 }

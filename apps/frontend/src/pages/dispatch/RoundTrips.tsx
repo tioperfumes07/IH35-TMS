@@ -62,7 +62,7 @@ function TripCard({
       data-testid={`round-trip-load-${load.load_number}`}
     >
       <div className="flex items-center justify-between gap-2">
-        <span className="font-semibold text-gray-900">{entityLabel(load.load_number, load.id, "Load")}</span>
+        <EntityLink kind="load" id={load.id} label={entityLabel(load.load_number, load.id, "Load")} className="font-semibold text-gray-900" onClick={(event) => event.stopPropagation()} />
         <div className="flex items-center gap-1">
           {tag ? (
             <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-700">{tag}</span>

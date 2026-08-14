@@ -1,4 +1,3 @@
-import { Link } from "react-router-dom";
 import type { InTransitIssue } from "../../../api/maintenance";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
@@ -10,8 +9,6 @@ type Props = {
   loading?: boolean;
   onTriage: (issue: InTransitIssue) => void;
 };
-
-const LINK = "text-slate-700 hover:underline";
 
 // §7 severity styling — single red (severe), single amber (warning), slate (info).
 function severityChip(severity: string) {
@@ -42,9 +39,7 @@ export function InTransitIssuesTable({ issues, loading = false, onTriage }: Prop
       label: "Unit",
       sortable: true,
       render: (issue) => (
-        <Link to={`/fleet/units/${issue.unit_id}`} className={`${LINK} font-semibold`}>
-          {entityLabel(issue.unit_display_id, issue.unit_id, "Unit")}
-        </Link>
+        <EntityLink kind="unit" id={issue.unit_id} label={entityLabel(issue.unit_display_id, issue.unit_id, "Unit")} className="font-semibold" />
       ),
     },
     {

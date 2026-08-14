@@ -48,6 +48,9 @@ export type EntityKind =
   | "dvir"
   | "maintenance_inspection"
   | "warranty_claim"
+  | "inventory_part"
+  | "parts_inventory"
+  | "maintenance_vendor"
   | "safety_event"
   // SAF-F33: safety records were undrillable — no module could link INTO an accident, fine,
   // complaint, DOT inspection, escrow record, or permit. These resolve to the record's list surface
@@ -138,6 +141,12 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
       return `/banking/transfers?transfer_id=${id}`;
     case "work_order":
       return `/maintenance/work-orders/${id}`;
+    case "inventory_part":
+      return `/inventory?part_id=${id}`;
+    case "parts_inventory":
+      return `/maintenance/parts-inventory?part_inventory_id=${id}`;
+    case "maintenance_vendor":
+      return `/maintenance/vendors?maintenance_vendor_id=${id}`;
     case "settlement":
       return `/driver-finance/settlements?settlement_id=${id}`;
     case "liability":

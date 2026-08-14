@@ -1,10 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
 import { listMaintenanceVendors } from "../../api/maintenance";
 import { DataPanel } from "../../components/layout/DataPanel";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { entityLabel } from "../../lib/entity-label";
+import { EntityLink } from "../../components/shared/EntityLink";
 
 export function VendorMaintenanceCatalogReverseSection({ operatingCompanyId, vendorId }: { operatingCompanyId: string; vendorId: string }) {
   const query = useQuery({
@@ -22,9 +22,7 @@ export function VendorMaintenanceCatalogReverseSection({ operatingCompanyId, ven
         <div className="space-y-1" data-testid="vendor-maintenance-catalog-reverse">
           {rows.map((row) => (
             <div key={row.id} className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-gray-200 px-2 py-1.5 text-xs">
-              <Link className="font-semibold text-slate-700 underline" to={`/maintenance/vendors?maintenance_vendor_id=${encodeURIComponent(row.id)}`}>
-                {entityLabel(row.display_name, row.id, "Maintenance vendor")}
-              </Link>
+              <EntityLink kind="maintenance_vendor" id={row.id} label={entityLabel(row.display_name, row.id, "Maintenance vendor")} className="font-semibold" />
               <span className="text-gray-600">{row.code || "No code"} · {row.is_active ? "Active" : "Archived"}</span>
             </div>
           ))}
