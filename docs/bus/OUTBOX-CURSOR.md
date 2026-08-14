@@ -1,3 +1,4 @@
+2026-08-14T22:55Z Cursor | SHIPPED #6786 embedded multiline | shipping roster+profile multiline EntityLink guards | Live=BLOCKED
 2026-08-14T22:50Z Cursor | SHIPPED #6784 fines selftest | shipping embedded-assignment multiline EntityLink guard | Live=BLOCKED
 2026-08-14T22:45Z Cursor | SHIPPED #6783 driver-fines internal_fine | shipping fines --selftest API subject scope | Live=BLOCKED
 2026-08-14T22:40Z Cursor | SHIPPED #6782 remainder selftest | shipping driver-fines guard accept internal_fine EntityLink | Live=BLOCKED

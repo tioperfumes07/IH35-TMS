@@ -34,7 +34,7 @@ function audit(s) {
   if (!/customersQuery\.isError/.test(s.customers) || !/No customers found\./.test(s.customerSidebar) || !/No customers match this filter\./.test(s.customerList)) failures.push("customer honest states missing");
   if (!/vendorsQuery\.isError/.test(s.vendors) || !/No vendors found\./.test(s.vendorSidebar) || !/No vendors found\./.test(s.vendorList)) failures.push("vendor honest states missing");
   if (!/searchNamesMaster\(\{[\s\S]{0,100}operatingCompanyId: companyId/.test(s.names)) failures.push("names roster company scope missing");
-  if (!/<EntityLink kind=\{kind\} id=\{row\.entity_id\} label=\{row\.display_name\}/.test(s.names) || !/navigate\(row\.link_to_module_page\)/.test(s.names)) failures.push("names canonical entity drills missing");
+  if (!/<EntityLink[\s\S]{0,160}kind=\{kind\}[\s\S]{0,120}id=\{row\.entity_id\}[\s\S]{0,120}label=\{row\.display_name\}/.test(s.names) || !/navigate\(row\.link_to_module_page\)/.test(s.names)) failures.push("names canonical entity drills missing");
   if (!/searchQuery\.isError/.test(s.names) || !/emptyText="No results\. Try a search term\."/.test(s.names)) failures.push("names honest states missing");
   return failures;
 }
