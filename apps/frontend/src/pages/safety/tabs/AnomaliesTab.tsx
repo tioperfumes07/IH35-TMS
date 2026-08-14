@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { listAnomalies, type SafetyAnomaly, type SafetyAnomalySeverity, type SafetyAnomalyStatus } from "../../../api/safety";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
@@ -37,6 +38,7 @@ export function AnomaliesTab() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const queryClient = useQueryClient();
+  const [searchParams] = useSearchParams();
   const [severity, setSeverity] = useState<SafetyAnomalySeverity | "all">("all");
   const [status, setStatus] = useState<SafetyAnomalyStatus | "all">("all");
   const staged = useStagedListFilters({
@@ -55,6 +57,13 @@ export function AnomaliesTab() {
       }),
     enabled: Boolean(companyId),
   });
+  const rows = anomaliesQuery.data?.anomalies ?? [];
+  const anomalyId = searchParams.get("anomaly_id");
+  useEffect(() => {
+    if (!anomalyId) return;
+    const match = rows.find((row) => row.id === anomalyId);
+    if (match) setSelected(match);
+  }, [anomalyId, rows]);
 
   const columns = useMemo<ParityColumn<SafetyAnomaly>[]>(
     () => [
@@ -160,7 +169,7 @@ export function AnomaliesTab() {
       ) : (
       <ParityTable<SafetyAnomaly>
         columns={columns}
-        rows={anomaliesQuery.data?.anomalies ?? []}
+        rows={rows}
         rowKey={(row) => row.id}
         loading={anomaliesQuery.isLoading}
         onRowClick={(row) => setSelected(row)}

@@ -2685,6 +2685,14 @@
       "modules": ["compliance"],
       "cols": ["reverse_link"],
       "leafRe": "^(property_tax\\.(list|detail)|form2290)$"
+    },
+    {
+      "task": "VERTICAL-REVERSE-LINK-SAFETY-ALERTS",
+      "pr": "this PR",
+      "guard": "scripts/verify-safety-alert-profile-reverse.mjs",
+      "modules": ["safety"],
+      "cols": ["reverse_link"],
+      "leafRe": "^safety\\.(drawer|parity)\\.(company_violation_detail|integrity_alert_detail|anomaly_detail)$"
     }
   ]
 }

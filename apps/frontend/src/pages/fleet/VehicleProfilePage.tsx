@@ -54,6 +54,7 @@ import { UnitSevereRepairsReverseSection } from "../../components/maintenance/Un
 import { UnitTempCoverReverseSection } from "../../components/safety/UnitTempCoverReverseSection";
 import { LinkedBankTransactionsPanel } from "../../components/banking/LinkedBankTransactionsPanel";
 import { UnitTaxFilingsReverseSection } from "../../components/compliance/UnitTaxFilingsReverseSection";
+import { SafetyAlertsReverseSection } from "../../components/safety/SafetyAlertsReverseSection";
 
 export type UnitProfileAggregate = {
   unit: Record<string, unknown>;
@@ -352,6 +353,9 @@ export function VehicleProfilePage() {
           </div>
           <div data-testid="vp-section-compliance-tax-filings-reverse">
             <UnitTaxFilingsReverseSection operatingCompanyId={companyId} unitId={id} />
+          </div>
+          <div data-testid="vp-section-safety-alerts-reverse">
+            <SafetyAlertsReverseSection operatingCompanyId={companyId} subjectKind="unit" subjectId={id} />
           </div>
           {/* RANK6-FUEL-LOAD-REVERSE-FORWARD follow-up — units had zero fuel reverse linkage despite
               fuel.fuel_transactions.unit_id existing and GET /fuel/transactions?unit_id=... working

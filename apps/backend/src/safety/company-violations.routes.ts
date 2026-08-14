@@ -9,6 +9,10 @@ import { assertCompanyMembership } from "../_helpers/company-membership-guard.js
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
 });
+const companyViolationListQuerySchema = companyQuerySchema.extend({
+  driver_id: z.string().uuid().optional(),
+  unit_id: z.string().uuid().optional(),
+});
 
 const idParamsSchema = z.object({
   id: z.string().uuid(),
@@ -156,7 +160,7 @@ export async function registerSafetyCompanyViolationsRoutes(
   app.get("/api/v1/safety/company-violations", async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
-    const query = companyQuerySchema.safeParse(req.query ?? {});
+    const query = companyViolationListQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return sendValidationError(reply, query.error);
 
     const rows = await withCompanyScope(
@@ -179,10 +183,18 @@ export async function registerSafetyCompanyViolationsRoutes(
           FROM safety.company_violations cv
           WHERE cv.operating_company_id = $1::uuid
             AND cv.deactivated_at IS NULL
+            AND ($2::uuid IS NULL OR EXISTS (
+              SELECT 1 FROM safety.company_violation_drivers d
+              WHERE d.violation_id = cv.id AND d.driver_id = $2::uuid AND d.is_active
+            ))
+            AND ($3::uuid IS NULL OR EXISTS (
+              SELECT 1 FROM safety.company_violation_units u
+              WHERE u.violation_id = cv.id AND u.unit_id = $3::uuid AND u.is_active
+            ))
           ORDER BY cv.reported_date DESC, cv.created_at DESC
           LIMIT 500
         `,
-          [query.data.operating_company_id],
+          [query.data.operating_company_id, query.data.driver_id ?? null, query.data.unit_id ?? null],
         );
         return res.rows;
       },

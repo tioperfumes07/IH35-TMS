@@ -124,6 +124,21 @@ export function CompanyViolationDetailDrawer({ open, violation, operatingCompany
                 })
               : "—"}
           </div>
+          <div>
+            <strong>Related units:</strong>{" "}
+            {Array.isArray(violation.related_unit_ids) && (violation.related_unit_ids as unknown[]).length > 0
+              ? (violation.related_unit_ids as unknown[]).map((id, idx) => {
+                  const unitId = String(id ?? "");
+                  if (!unitId) return null;
+                  return (
+                    <span key={unitId}>
+                      {idx > 0 ? ", " : ""}
+                      <EntityLink kind="unit" id={unitId} label={entityLabel(undefined, unitId, "Unit")} />
+                    </span>
+                  );
+                })
+              : "—"}
+          </div>
         </div>
 
         <div className="mt-4 flex flex-wrap gap-2">

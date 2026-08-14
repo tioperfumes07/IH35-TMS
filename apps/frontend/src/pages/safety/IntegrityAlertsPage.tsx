@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { formatDateUS } from "../../lib/formatDate";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -102,6 +102,12 @@ export function IntegrityAlertsPage({ operatingCompanyId }: Props) {
 
   const rows = alertsQuery.data?.integrity_alerts ?? [];
   const rules = rulesQuery.data?.integrity_alert_rules ?? [];
+  const alertId = searchParams.get("alert_id");
+  useEffect(() => {
+    if (!alertId) return;
+    const match = rows.find((row) => String(row.id) === alertId);
+    if (match) setSelected(match);
+  }, [alertId, rows]);
 
   // Migrated to the shared QBO-parity grid — columns, order, and the per-row "Open" action are
   // preserved verbatim (§7 additive-only).

@@ -23,6 +23,7 @@ import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useUrlSort } from "../../hooks/useUrlSort";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { SafetyAlertsReverseSection } from "../../components/safety/SafetyAlertsReverseSection";
 
 const INCOME_TYPES = ["Income", "OtherIncome"];
 
@@ -703,6 +704,10 @@ export function InvoiceDetailPage() {
           </div>
         )}
       </DataPanel>
+
+      {selectedCompanyId ? (
+        <SafetyAlertsReverseSection operatingCompanyId={selectedCompanyId} subjectKind="invoice" subjectId={id} />
+      ) : null}
 
       {selectedCompanyId ? (
         <RecordPaymentModal

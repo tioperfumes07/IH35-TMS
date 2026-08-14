@@ -1,5 +1,6 @@
 import { humanizeEnumLabel } from "../../../lib/humanizeEnumLabel";
-import { useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import {
@@ -40,7 +41,12 @@ export function IntegrityReportsTab() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const queryClient = useQueryClient();
+  const [searchParams] = useSearchParams();
   const [subTab, setSubTab] = useState<SubTab>("wo-cost");
+  useEffect(() => {
+    if (searchParams.get("anomaly_id")) setSubTab("anomalies");
+    else if (searchParams.get("alert_id")) setSubTab("active-alerts");
+  }, [searchParams]);
 
   const woQuery = useQuery({
     queryKey: ["safety-v64", "integrity", "wo-cost", companyId],

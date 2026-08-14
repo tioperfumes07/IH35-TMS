@@ -63,6 +63,7 @@ import { CustomerRelationshipScore } from "../components/customers/CustomerRelat
 import { DispatcherSafetyEventsReverseBlock } from "../components/safety/DispatcherSafetyEventsReverseBlock";
 import { ComplaintsReverseSection } from "../components/safety/ComplaintsReverseSection";
 import { CustomerCargoClaimsReverseSection } from "../components/safety/CustomerCargoClaimsReverseSection";
+import { SafetyAlertsReverseSection } from "../components/safety/SafetyAlertsReverseSection";
 import { DocumentsTab } from "../components/documents/DocumentsTab";
 import { TasksTab } from "../components/tasks/TasksTab";
 import { EntityAuditHistoryTab } from "../components/audit/EntityAuditHistoryTab";
@@ -1152,6 +1153,7 @@ export function CustomerDetailPage() {
           />
           <CustomerNotifyReverseSection operatingCompanyId={operatingCompanyId} customerId={id} />
           <CustomerCargoClaimsReverseSection operatingCompanyId={operatingCompanyId} customerId={id} />
+          <SafetyAlertsReverseSection operatingCompanyId={operatingCompanyId} subjectKind="customer" subjectId={id} />
         </>
       ) : null}
 

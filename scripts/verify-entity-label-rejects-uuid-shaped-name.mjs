@@ -923,7 +923,7 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/compliance/HosTrackerSection.tsx",
     bad: /selectedDriver\.unit_number\s*\?\?\s*"—"/,
-    good: /entityLabel\(\s*selectedDriver\.unit_number\s*,\s*null\s*,\s*"Unit"\s*\)/,
+    good: /entityLabel\(\s*selectedDriver\.unit_number\s*,\s*selectedDriver\.unit_id\s*,\s*"Unit"\s*\)/,
   },
   {
     rel: "apps/frontend/src/pages/accounting/BillDetailPanel.tsx",
@@ -1103,7 +1103,7 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/eld/tabs/LiveDutyTab.tsx",
     bad: /render: \(row\) => row\.unit_number/,
-    good: /entityLabel\(\s*row\.unit_number\s*,\s*null\s*,\s*"Unit"\s*\)/,
+    good: /entityLabel\(\s*row\.unit_number\s*,\s*row\.unit_id\s*,\s*"Unit"\s*\)/,
   },
   {
     rel: "apps/frontend/src/pages/maintenance/components/MaintenanceDamageRegisterTab.tsx",
@@ -1273,7 +1273,7 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/fuel/components/ActiveTripStrip.tsx",
     bad: /route\?\.unit_display_id \?\? "—"/,
-    good: /entityLabel\(\s*route\?\.unit_display_id\s*,\s*null\s*,\s*"Unit"\s*\)/,
+    good: /entityLabel\(\s*route\.unit_display_id\s*,\s*route\.unit_id\s*,\s*"Unit"\s*\)/,
   },
   {
     rel: "apps/frontend/src/pages/dispatch/LoadCreateModal.tsx",
@@ -1623,7 +1623,7 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/accounting/CoaAsymmetryReportPanel.tsx",
     bad: / · \{row\.account_name\} · /,
-    good: /entityLabel\(\s*row\.account_name\s*,\s*null\s*,\s*"Account"\s*\)/,
+    good: /entityLabel\(\s*row\.account_name\s*,\s*row\.account_id\s*,\s*"Account"\s*\)/,
   },
   {
     rel: "apps/frontend/src/pages/insurance/ClaimsTab.tsx",
