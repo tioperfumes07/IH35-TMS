@@ -141,7 +141,6 @@
       "required": [
         "vendor",
         "unit",
-        "trailer",
         "driver",
         "connectivity",
         "reverse_link",
@@ -156,7 +155,6 @@
       "required": [
         "vendor",
         "unit",
-        "trailer",
         "driver",
         "liability",
         "picker_law",
@@ -173,7 +171,6 @@
       "required": [
         "vendor",
         "unit",
-        "trailer",
         "driver",
         "connectivity",
         "reverse_link"
@@ -207,7 +204,6 @@
       "route_hint": "/safety/insurance/coverage-gaps",
       "required": [
         "unit",
-        "trailer",
         "driver",
         "connectivity",
         "reverse_link"
@@ -221,7 +217,6 @@
       "required": [
         "driver",
         "unit",
-        "trailer",
         "load",
         "customer",
         "connectivity",
@@ -741,6 +736,42 @@
           "id": "lawsuits.create",
           "removed": [
             "ap_bill"
+          ]
+        }
+      ]
+    },
+    "trailer_column_2026_08_14_overclaim": {
+      "finding": "LINK-F5163-TRAILER-COLUMN-VERTICAL-SWEEP",
+      "note": "5 of 6 insurance leaves are false: policies.create's \"Trailer\" chip filters a listUnits() call that never passes include=\"trailers\", so it structurally can only ever return truck units \u2014 cosmetic, not real trailer scoping; policies.list/detail and coverage_gaps render only EntityLink kind=\"unit\", never trailer, consistent with create never actually attaching a real trailer record; claims.list also renders only kind=\"unit\" despite the create modal capturing a real trailer_id. claims.create KEEPS the Required marking \u2014 ClaimCreateModal.tsx has a real EntityPicker kind=\"trailer\" bound to form.trailer_id and submitted on create.",
+      "drops": [
+        {
+          "id": "policies.list",
+          "removed": [
+            "trailer"
+          ]
+        },
+        {
+          "id": "policies.create",
+          "removed": [
+            "trailer"
+          ]
+        },
+        {
+          "id": "policies.detail",
+          "removed": [
+            "trailer"
+          ]
+        },
+        {
+          "id": "coverage_gaps",
+          "removed": [
+            "trailer"
+          ]
+        },
+        {
+          "id": "claims.list",
+          "removed": [
+            "trailer"
           ]
         }
       ]

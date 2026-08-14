@@ -203,7 +203,6 @@
         "driver",
         "vendor",
         "unit",
-        "trailer",
         "load",
         "expense",
         "gl_je",
@@ -342,7 +341,6 @@
       "required": [
         "driver",
         "unit",
-        "trailer",
         "qbo_chrome",
         "connectivity"
       ]
@@ -395,7 +393,6 @@
       "required": [
         "driver",
         "unit",
-        "trailer",
         "qbo_chrome",
         "connectivity",
         "reverse_link"
@@ -1552,6 +1549,30 @@
           "id": "maintenance.modal.create_expense",
           "removed": [
             "ap_bill"
+          ]
+        }
+      ]
+    },
+    "trailer_column_2026_08_14_overclaim": {
+      "finding": "LINK-F5163-TRAILER-COLUMN-VERTICAL-SWEEP",
+      "note": "3 of 5 maintenance leaves are false: wo.source.ac (the WO-list Accident-repair source filter tab) shows only a Unit column, no trailer_id/EntityLink despite WOs genuinely supporting trailer-scoped equipment_id; damage_reports.intake and defects.convert_to_wo's underlying pages/models only carry unit_id, never trailer_id/equipment_id. wo.create and tires.create_record KEEP the Required marking \u2014 both have real EntityPicker kind=\"trailer\" (or an equivalent unit/trailer asset-kind toggle) bound to a genuine equipment_id/trailer field submitted on create.",
+      "drops": [
+        {
+          "id": "wo.source.ac",
+          "removed": [
+            "trailer"
+          ]
+        },
+        {
+          "id": "damage_reports.intake",
+          "removed": [
+            "trailer"
+          ]
+        },
+        {
+          "id": "defects.convert_to_wo",
+          "removed": [
+            "trailer"
           ]
         }
       ]
