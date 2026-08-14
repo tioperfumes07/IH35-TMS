@@ -11,6 +11,7 @@ const fail = (m) => { console.error(`FAIL verify-maintenance-record-cells-link: 
 // Used as an alternative acceptance criterion when code uses EntityLink instead of <Link to=`.
 const PREFIX_TO_ENTITY_KIND = {
   "/maintenance/work-orders/": "work_order",
+  "/maintenance/vendors/": "maintenance_vendor",
   "/fleet/": "unit",          // legacy wrong prefix — EntityLink kind="unit" → /fleet/units/:id (correct)
   "/fleet/units/": "unit",
   "/drivers/": "driver",
