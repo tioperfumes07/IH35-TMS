@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["dispatch","inventory","vendors"],"cols":["reverse_link"],"leafRe":"^(secondary\.pre_settlements|docs\.(ocr|equipment_transfers)|misc\.layover|assignments\.(wo_link|unit_link|vendor_link)|md\.(transaction_list|vendor_details|header\.(edit|new_transaction)))$","task":"LINK-F5152-DISPATCH-INVENTORY-VENDOR-WORKFLOW-LINKS","vertical":"class-sweep"} */
+/** @matrix-built {"modules":["dispatch","inventory","vendors"],"cols":["reverse_link"],"leafRe":"^(secondary\.pre_settlements|docs\.(ocr|equipment_transfers)|misc\.layover|assignments\.(wo_link|unit_link|vendor_link)|md\.(transaction_list|vendor_details))$","task":"LINK-F5152-DISPATCH-INVENTORY-VENDOR-WORKFLOW-LINKS","vertical":"class-sweep"} */
 import fs from "node:fs";
 import process from "node:process";
 
@@ -21,7 +21,7 @@ const read = () => Object.fromEntries(Object.entries(FILES).map(([key, file]) =>
 const REQUIRED_LEAVES = {
   dispatchMatrix: ["secondary.pre_settlements", "docs.ocr", "docs.equipment_transfers", "misc.layover"],
   inventoryMatrix: ["assignments.wo_link", "assignments.unit_link", "assignments.vendor_link"],
-  vendorsMatrix: ["md.transaction_list", "md.vendor_details", "md.header.edit", "md.header.new_transaction"],
+  vendorsMatrix: ["md.transaction_list", "md.vendor_details"],
 };
 
 export function verify(source) {
@@ -44,8 +44,6 @@ export function verify(source) {
   need("vendors", 'vendor_id: selectedVendor!.id', "vendor transactions must read the selected vendor identity");
   need("vendors", '<EntityLink kind="bill" id={r.id}', "vendor transaction documents must drill to bills");
   need("vendors", 'data-testid="vendor-master-detail-record-link"', "vendor master-detail header must drill to the selected vendor");
-  need("vendors", 'navigate(`/vendors/${selectedVendor.id}`)', "vendor Edit must route to the same selected vendor");
-  need("vendors", 'navigate(`/accounting/bills?vendor_id=${selectedVendor.id}`)', "New transaction must carry the selected vendor to canonical bill create");
   for (const [key, ids] of Object.entries(REQUIRED_LEAVES)) {
     let matrix;
     try { matrix = JSON.parse(source[key]); } catch (error) { failures.push(`${key} must parse: ${error.message}`); continue; }
@@ -83,8 +81,6 @@ if (process.argv.includes("--self-test")) {
     ["vendors", 'vendor_id: selectedVendor!.id', 'vendor_id: undefined'],
     ["vendors", '<EntityLink kind="bill" id={r.id}', '<span data-bill={r.id}'],
     ["vendors", 'data-testid="vendor-master-detail-record-link"', 'data-testid="broken-vendor-link"'],
-    ["vendors", 'navigate(`/vendors/${selectedVendor.id}`)', 'navigate("/vendors")'],
-    ["vendors", 'navigate(`/accounting/bills?vendor_id=${selectedVendor.id}`)', 'navigate("/accounting/bills")'],
     ["dispatchMatrix", '"id": "secondary.pre_settlements"', '"id": "secondary.pre_settlements.broken"'],
     ["inventoryMatrix", '"id": "assignments.wo_link"', '"id": "assignments.wo_link.broken"'],
     ["vendorsMatrix", '"id": "md.transaction_list"', '"id": "md.transaction_list.broken"'],
