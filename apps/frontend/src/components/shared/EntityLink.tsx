@@ -62,6 +62,8 @@ export type EntityKind =
   // /safety/photo-comparison/:sessionUuid and /safety/scheduler/requests/:id.
   | "photo_comparison_session"
   | "scheduler_request"
+  // LINK-F5171: contract detail Template used a bare Link; kind resolves to /legal/templates/:id.
+  | "legal_template"
   | "inventory_part"
   | "parts_inventory"
   | "maintenance_vendor"
@@ -228,6 +230,8 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
       return `/safety/photo-comparison/${id}`;
     case "scheduler_request":
       return `/safety/scheduler/requests/${id}`;
+    case "legal_template":
+      return `/legal/templates/${id}`;
     case "safety_event":
       return `/safety/safety-events?event_id=${id}`;
     // SAF-F33 safety drill-through — each target list page reads the param and opens/highlights the row.
