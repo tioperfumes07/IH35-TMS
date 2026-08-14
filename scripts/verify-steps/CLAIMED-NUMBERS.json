@@ -852,6 +852,11 @@
     "claimed_by": "codex",
     "purpose": "verify-connectivity-nonmoney-create-remainder"
   },
+  "3324": {
+    "claimed_at": "2026-08-14",
+    "claimed_by": "codex",
+    "purpose": "verify-connectivity-user-vendor-remainder"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
