@@ -95,3 +95,4 @@ Draw the next unused number from your OWN block, record a `CLAIM-<n>` row below,
 | 2026-08-14 | Codex | VERTICAL-CONNECTIVITY-REPORTS-FUEL-PRICE-VARIANCE | reports runner fuel price variance | Reports runner; reports fuel-price-variance route; fuel transaction label join; focused guard | ACTIVE |
 | 2026-08-14 | Codex | VERTICAL-CONNECTIVITY-REPORTS-HOS-VIOLATIONS | reports runner HOS violations | Runner config/table/library; canonical safety HOS route; focused guard | ACTIVE |
 | 2026-08-14 | Codex | VERTICAL-CONNECTIVITY-REPORTS-DOT-AUDIT-PACK | reports DOT audit inspection packet | Runner config/library; safety DOT inspection list; focused guard | ACTIVE |
+| 2026-08-14 | Codex | VERTICAL-CONNECTIVITY-REPORTS-SAVED-PRESETS | reports saved owner/quarter preset pair | Reports runner aliases; ScheduledReportsPage; focused guard | ACTIVE |

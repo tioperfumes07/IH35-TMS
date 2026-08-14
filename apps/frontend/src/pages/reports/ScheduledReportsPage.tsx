@@ -17,6 +17,20 @@ import { ScheduledReportsBackendPendingBanner } from "./ScheduledReportsBackendP
 import { ScheduleReportModal } from "./ScheduleReportModal";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { useSearchParams } from "react-router-dom";
+
+const REPORT_PRESETS: Record<string, { title: string; subtitle: string; reportIds: Set<string> }> = {
+  "owner-weekly": {
+    title: "Owner weekly pack",
+    subtitle: "Saved weekly operations and finance schedules",
+    reportIds: new Set(["dispatch-board", "cash-position-ar", "profit-per-truck-week", "settlements-ready", "maintenance-open-wos"]),
+  },
+  "quarter-close": {
+    title: "Quarter close package",
+    subtitle: "Saved close-period finance, settlement, and IFTA schedules",
+    reportIds: new Set(["cash-position-ar", "profit-per-truck-week", "settlements-ready", "ifta-quarterly-state"]),
+  },
+};
 
 function statusPill(status: string) {
   if (status === "active") return "bg-emerald-100 text-emerald-900 border-emerald-200";
@@ -25,6 +39,8 @@ function statusPill(status: string) {
 }
 
 export function ScheduledReportsPage() {
+  const [searchParams] = useSearchParams();
+  const preset = REPORT_PRESETS[searchParams.get("preset") ?? ""] ?? null;
   const { selectedCompanyId } = useCompanyContext();
   const { user } = useAuth();
   const companyId = selectedCompanyId ?? "";
@@ -72,7 +88,8 @@ export function ScheduledReportsPage() {
     onError: () => pushToast("Delete failed", "error"),
   });
 
-  const rows = listQuery.data?.rows ?? [];
+  const allRows = listQuery.data?.rows ?? [];
+  const rows = preset ? allRows.filter((row) => preset.reportIds.has(row.report_id)) : allRows;
 
   const columns = useMemo<ParityColumn<ScheduledReportListRow>[]>(
     () => [
@@ -95,8 +112,8 @@ export function ScheduledReportsPage() {
     <div className="space-y-4 p-2 md:p-4">
       <ReportsSubNav />
       <PageHeader
-        title="Scheduled reports"
-        subtitle="Automated report delivery via email queue"
+        title={preset?.title ?? "Scheduled reports"}
+        subtitle={preset?.subtitle ?? "Automated report delivery via email queue"}
         actions={
           <Button size="sm" onClick={() => setModalOpen(true)} disabled={!companyId}>
             Schedule a new report
@@ -112,7 +129,7 @@ export function ScheduledReportsPage() {
         rowKey={(r) => r.id}
         loading={listQuery.isPending || (listQuery.isFetching && rows.length === 0)}
         storageKey="scheduled-reports"
-        emptyText="No schedules yet. Create one when the backend endpoint is live (P6-T11201)."
+        emptyText={preset ? `No ${preset.title.toLowerCase()} schedules exist for this company.` : "No schedules yet. Create one when the backend endpoint is live (P6-T11201)."}
         rowActions={(r) => (
           <div className="flex flex-wrap justify-end gap-1">
             <Button size="sm" variant="secondary" onClick={() => setModalOpen(true)}>
