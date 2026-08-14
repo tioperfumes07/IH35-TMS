@@ -23,7 +23,7 @@ function failures(source) {
     ["driver picker", source.ui.includes("<DriverPickerWithCreate")],
     ["driver id reaches payload", source.ui.includes("party_ref_id: form.party_ref_id || null")],
     ["reload restores driver id", source.ui.includes("party_ref_id: e.party_ref_id ?? \"\"")],
-    ["forward driver drill", source.ui.includes('<EntityLink kind="driver" id={e.party_ref_id}')],
+    ["forward driver drill", /e\.party_ref_kind === "driver"[\s\S]{0,260}<EntityLink kind=\{e\.party_ref_kind\} id=\{e\.party_ref_id\}/.test(source.ui)],
     ["client contract carries id", source.api.includes("party_ref_id: string | null")],
     ["backend accepts UUID only", source.route.includes("party_ref_id: z.string().uuid().nullish()")],
     ["backend scopes driver owner", /FROM mdata\.drivers[\s\S]*operating_company_id = \$2::uuid/.test(source.route)],
@@ -41,7 +41,12 @@ if (process.argv.includes("--selftest")) {
     console.error("verify-cash-forecast-driver-linkage selftest FAIL — entity-scope mutation stayed green");
     process.exit(1);
   }
-  console.log("verify-cash-forecast-driver-linkage selftest PASS — entity-scope mutation red");
+  const brokenDrill = { ...source, ui: source.ui.replaceAll("kind={e.party_ref_kind}", 'kind="unit"') };
+  if (!failures(brokenDrill).includes("forward driver drill")) {
+    console.error("verify-cash-forecast-driver-linkage selftest FAIL — dynamic EntityLink mutation stayed green");
+    process.exit(1);
+  }
+  console.log("verify-cash-forecast-driver-linkage selftest PASS — entity-scope + dynamic EntityLink mutations red");
 }
 
 const missing = failures(source);
