@@ -53,7 +53,11 @@ for (const guard of COMPOSED) {
   const result = spawnSync(process.execPath, [`scripts/${guard}`], { encoding: "utf8" });
   if (result.status !== 0) failures.push(`${guard} failed:\n${result.stdout}${result.stderr}`);
 }
-if (reverseLeaves.length < 300) failures.push(`reverse-link inventory unexpectedly shrank to ${reverseLeaves.length}`);
+// LINK-F5171 (2026-08-14): honest per-leaf sweep dropped 123 false-blanket reverse_link Required
+// markings (376 -> 252, real gaps stay Required). Floor corrected to match — same class of fix as
+// LINK-F5168's driver-column floor correction. Never raise this back toward 300 to "cover" a future
+// re-inflation; recount honestly instead.
+if (reverseLeaves.length < 240) failures.push(`reverse-link inventory unexpectedly shrank to ${reverseLeaves.length}`);
 if (failures.length) {
   console.error(`verify-wave-b-reverse-link-all-modules FAIL:\n${failures.map((failure) => ` - ${failure}`).join("\n")}`);
   process.exit(1);

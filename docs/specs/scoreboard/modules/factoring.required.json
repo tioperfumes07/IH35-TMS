@@ -123,7 +123,6 @@
         "customer",
         "load",
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -135,8 +134,7 @@
       "required": [
         "load",
         "liability",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -168,8 +166,7 @@
       "route_hint": "/factoring/statements-settings",
       "required": [
         "qbo_chrome",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -179,7 +176,6 @@
       "route_hint": "/factoring/faro-imports",
       "required": [
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -234,8 +230,7 @@
         "liability",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -281,8 +276,7 @@
       "route_hint": "/factoring/faro-import",
       "required": [
         "customer",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -335,7 +329,6 @@
       "required": [
         "liability",
         "connectivity",
-        "reverse_link",
         "qbo_chrome",
         "bank"
       ]
@@ -407,7 +400,6 @@
       "surface_path": "pages/factoring/BatchWizard.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "picker_law",
         "qbo_chrome",
         "customer",
@@ -737,6 +729,69 @@
           "removed": [
             "vendor"
           ]
+        }
+      ]
+    },
+    "reverse_link_column_2026_08_14": {
+      "finding": "VERTICAL-REVERSE-LINK-COLUMN-FALSE-BLANKET",
+      "note": "Vertical wiring sweep (reverse_link column, after trailer/customer/vendor/unit/driver/load/connectivity) read-only investigated every leaf blanket-marked Required for reverse_link (from the related record you can open a filtered list/section and land back on this record). These leaves have no such genuinely-owed reverse target: pure creation forms/modals with no persisted record to reverse-link into, self-referential attribute-edit forms with no external FK, aggregate/KPI dashboards with no per-row FK-bearing record, or catalog-CRUD/lookup surfaces nothing else reverse-queries.",
+      "leaves_touched": 8,
+      "drops": [
+        {
+          "id": "home.summary",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "KPI-strip aggregate dashboard, no per-row FK-bearing owned record"
+        },
+        {
+          "id": "home.reserve_tracker",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "canonical rows carry no load_id column at all"
+        },
+        {
+          "id": "home.statements_settings",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "no owning FK record, generic unfiltered link"
+        },
+        {
+          "id": "home.faro_imports",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "admin import-history log, no FK-bearing owning record"
+        },
+        {
+          "id": "batches.create",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "creation wizard, no persisted record yet"
+        },
+        {
+          "id": "faro.import",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "transient preview/commit workflow, no persisted addressable record"
+        },
+        {
+          "id": "accounting.factor_recon",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "no bank_account_id/liability FK on canonical rows"
+        },
+        {
+          "id": "factoring.wizard.batch",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "identical component to batches.create, creation wizard"
         }
       ]
     }

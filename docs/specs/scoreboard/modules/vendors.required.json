@@ -130,7 +130,6 @@
         "vendor",
         "ap_bill",
         "connectivity",
-        "reverse_link",
         "picker_law"
       ]
     },
@@ -142,7 +141,6 @@
       "required": [
         "vendor",
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -154,7 +152,6 @@
       "required": [
         "vendor",
         "connectivity",
-        "reverse_link",
         "picker_law",
         "qbo_chrome"
       ]
@@ -308,7 +305,6 @@
       "required": [
         "vendor",
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -321,7 +317,6 @@
         "vendor",
         "ap_bill",
         "connectivity",
-        "reverse_link",
         "qbo_chrome",
         "scenario.ap"
       ]
@@ -536,8 +531,7 @@
       "route_hint": "/vendors/:id",
       "required": [
         "vendor",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -905,6 +899,55 @@
             "connectivity"
           ],
           "reason": "static placeholder text Vendors.tsx:545-548"
+        }
+      ]
+    },
+    "reverse_link_column_2026_08_14": {
+      "finding": "VERTICAL-REVERSE-LINK-COLUMN-FALSE-BLANKET",
+      "note": "Vertical wiring sweep (reverse_link column, after trailer/customer/vendor/unit/driver/load/connectivity) read-only investigated every leaf blanket-marked Required for reverse_link (from the related record you can open a filtered list/section and land back on this record). These leaves have no such genuinely-owed reverse target: pure creation forms/modals with no persisted record to reverse-link into, self-referential attribute-edit forms with no external FK, aggregate/KPI dashboards with no per-row FK-bearing record, or catalog-CRUD/lookup surfaces nothing else reverse-queries.",
+      "leaves_touched": 6,
+      "drops": [
+        {
+          "id": "home.roster",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "own landing route, not a reverse-lookup target itself"
+        },
+        {
+          "id": "list.view_list",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "view-mode toggle, not a per-record reverse-lookup"
+        },
+        {
+          "id": "list.view_master_detail",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "view-mode toggle"
+        },
+        {
+          "id": "md.header.edit",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "navigates to own /vendors/:id, not a related-entity lookup"
+        },
+        {
+          "id": "md.header.new_transaction",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "create-chrome with no persisted record of its own"
+        },
+        {
+          "id": "detail.documents",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "vendor's own native document tab; module's own honesty_audit already concluded this, required array was never updated"
         }
       ]
     }

@@ -136,8 +136,7 @@
       "route_hint": "/drivers/profiles",
       "required": [
         "driver",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -149,8 +148,7 @@
         "driver",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -283,7 +281,6 @@
       "surface_path": "components/drivers/AddTrainingModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "driver"
       ]
     },
@@ -296,7 +293,6 @@
       "surface_path": "components/drivers/CreateDriverModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "picker_law",
         "driver"
       ]
@@ -310,7 +306,6 @@
       "surface_path": "components/drivers/SendMessageModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "driver"
       ]
     },
@@ -323,7 +318,6 @@
       "surface_path": "components/drivers/SuspendConfirmModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "driver"
       ]
     },
@@ -336,7 +330,6 @@
       "surface_path": "components/drivers/TerminateConfirmModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "driver"
       ]
     },
@@ -349,7 +342,6 @@
       "surface_path": "components/drivers/W8BenModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "driver"
       ]
     },
@@ -362,7 +354,6 @@
       "surface_path": "pages/drivers/DriverImportModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "driver"
       ]
     },
@@ -375,7 +366,6 @@
       "surface_path": "pages/drivers/SettlementDisputeModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "driver",
         "settlement",
         "picker_law"
@@ -403,7 +393,6 @@
       "surface_path": "pages/drivers/components/DriverDqfPanel.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "driver"
       ]
     },
@@ -416,7 +405,6 @@
       "surface_path": "pages/drivers/OnboardingWizardPage.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "picker_law",
         "driver"
       ]
@@ -430,7 +418,6 @@
       "surface_path": "pages/onboarding/OnboardingWizard.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "picker_law"
       ]
     },
@@ -443,7 +430,6 @@
       "surface_path": "components/drivers/CreateDriverModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "picker_law",
         "driver"
       ]
@@ -457,7 +443,6 @@
       "surface_path": "components/drivers/DriverPickerWithCreate.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "picker_law",
         "driver"
       ]
@@ -523,7 +508,14 @@
       "route_hint": "/drivers/auto-deduction-policies",
       "surface_kind": "panel",
       "surface_path": "pages/drivers/AutoDeductionPolicies.tsx",
-      "required": ["driver", "liability", "connectivity", "reverse_link", "picker_law", "qbo_chrome"]
+      "required": [
+        "driver",
+        "liability",
+        "connectivity",
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome"
+      ]
     },
     {
       "id": "drivers.panel.team_split_config",
@@ -532,7 +524,13 @@
       "route_hint": "/drivers/team-splits",
       "surface_kind": "panel",
       "surface_path": "pages/drivers/TeamSplitConfig.tsx",
-      "required": ["driver", "connectivity", "reverse_link", "picker_law", "qbo_chrome"]
+      "required": [
+        "driver",
+        "connectivity",
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome"
+      ]
     }
   ],
   "honesty_audit": {
@@ -695,6 +693,118 @@
             "connectivity"
           ],
           "reason": "no staged Filters-panel present"
+        }
+      ]
+    },
+    "reverse_link_column_2026_08_14": {
+      "finding": "VERTICAL-REVERSE-LINK-COLUMN-FALSE-BLANKET",
+      "note": "Vertical wiring sweep (reverse_link column, after trailer/customer/vendor/unit/driver/load/connectivity) read-only investigated every leaf blanket-marked Required for reverse_link (from the related record you can open a filtered list/section and land back on this record). These leaves have no such genuinely-owed reverse target: pure creation forms/modals with no persisted record to reverse-link into, self-referential attribute-edit forms with no external FK, aggregate/KPI dashboards with no per-row FK-bearing record, or catalog-CRUD/lookup surfaces nothing else reverse-queries.",
+      "leaves_touched": 15,
+      "drops": [
+        {
+          "id": "profiles.list",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "aggregate roster, no single FK-bearing canonical record"
+        },
+        {
+          "id": "profiles.create",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "pure create-form, no canonical record"
+        },
+        {
+          "id": "drivers.modal.add_training",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "create-form, self-referential to own profile"
+        },
+        {
+          "id": "drivers.modal.create_driver",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "pure create-form, no canonical record"
+        },
+        {
+          "id": "drivers.modal.send_message",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "one-off message, no detail page/record type"
+        },
+        {
+          "id": "drivers.modal.suspend_confirm",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "confirm-action modal, no data record of its own"
+        },
+        {
+          "id": "drivers.modal.terminate_confirm",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "confirm-action modal, no external FK-bearing record"
+        },
+        {
+          "id": "drivers.modal.w8ben",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "capture-form for own fields only, no external entity relation"
+        },
+        {
+          "id": "drivers.modal.driver_import",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "bulk-CSV import wizard, no canonical single record"
+        },
+        {
+          "id": "drivers.modal.settlement_dispute",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "create-form for opening a dispute, not a detail page"
+        },
+        {
+          "id": "drivers.panel.driver_dqf",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "DQF items keyed only by driverId, self-referential"
+        },
+        {
+          "id": "drivers.wizard.onboarding_wizard_page",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "multi-step session, not a canonical FK-bearing detail record"
+        },
+        {
+          "id": "drivers.wizard.onboarding",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "company-setup wizard, not even driver-scoped"
+        },
+        {
+          "id": "drivers.parity.create_driver",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "same component as modal.create_driver, create-form"
+        },
+        {
+          "id": "drivers.parity.driver_picker_with_create",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "picker control, not a record with its own detail page"
         }
       ]
     }

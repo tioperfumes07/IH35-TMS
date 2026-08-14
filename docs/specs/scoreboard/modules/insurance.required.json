@@ -164,8 +164,7 @@
         "liability",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -240,8 +239,7 @@
         "gl_je",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -264,8 +262,7 @@
         "liability",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -291,7 +288,6 @@
       "surface_path": "components/insurance/LawsuitCreateModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "picker_law"
       ]
     },
@@ -304,7 +300,6 @@
       "surface_path": "components/insurance/PolicyCreateModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "picker_law",
         "unit"
       ]
@@ -941,6 +936,48 @@
             "connectivity"
           ],
           "reason": "CollapsedListFilters zero fetch"
+        }
+      ]
+    },
+    "reverse_link_column_2026_08_14": {
+      "finding": "VERTICAL-REVERSE-LINK-COLUMN-FALSE-BLANKET",
+      "note": "Vertical wiring sweep (reverse_link column, after trailer/customer/vendor/unit/driver/load/connectivity) read-only investigated every leaf blanket-marked Required for reverse_link (from the related record you can open a filtered list/section and land back on this record). These leaves have no such genuinely-owed reverse target: pure creation forms/modals with no persisted record to reverse-link into, self-referential attribute-edit forms with no external FK, aggregate/KPI dashboards with no per-row FK-bearing record, or catalog-CRUD/lookup surfaces nothing else reverse-queries.",
+      "leaves_touched": 5,
+      "drops": [
+        {
+          "id": "policies.create",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "pure creation forms, no persisted record until submit"
+        },
+        {
+          "id": "claims.create",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "creation-only, pickers not links, no record until submit"
+        },
+        {
+          "id": "lawsuits.create",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "pure creation form, no existing record"
+        },
+        {
+          "id": "insurance.modal.lawsuit_create",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "same component as lawsuits.create, creation-only"
+        },
+        {
+          "id": "insurance.modal.policy_create",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "confirmed creation-only inputs"
         }
       ]
     }

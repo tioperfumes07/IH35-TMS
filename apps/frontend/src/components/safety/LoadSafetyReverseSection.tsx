@@ -293,7 +293,7 @@ export function LoadSafetyReverseSection({
                 <EntityLink
                   kind="driver"
                   id={s(row.driver_id)}
-                  label={entityLabel(row.driver_name, row.driver_id, "Driver")}
+                  label={entityLabel(s(row.driver_name), s(row.driver_id), "Driver")}
                 />
               </span>
             ) : null}

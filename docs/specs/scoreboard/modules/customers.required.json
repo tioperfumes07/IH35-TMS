@@ -362,8 +362,7 @@
       "route_hint": "/customers?tab=tasks",
       "required": [
         "customer",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -403,7 +402,6 @@
       "required": [
         "customer",
         "connectivity",
-        "reverse_link",
         "picker_law"
       ]
     },
@@ -479,7 +477,6 @@
         "customer",
         "load",
         "connectivity",
-        "reverse_link",
         "picker_law"
       ]
     },
@@ -503,8 +500,7 @@
       "route_hint": "/customers/:id?tab=documents",
       "required": [
         "customer",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -527,7 +523,6 @@
         "customer",
         "load",
         "connectivity",
-        "reverse_link",
         "picker_law"
       ]
     },
@@ -574,8 +569,7 @@
       "required": [
         "customer",
         "load",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -967,6 +961,55 @@
             "connectivity"
           ],
           "reason": "static CustomerTabComingState placeholder"
+        }
+      ]
+    },
+    "reverse_link_column_2026_08_14": {
+      "finding": "VERTICAL-REVERSE-LINK-COLUMN-FALSE-BLANKET",
+      "note": "Vertical wiring sweep (reverse_link column, after trailer/customer/vendor/unit/driver/load/connectivity) read-only investigated every leaf blanket-marked Required for reverse_link (from the related record you can open a filtered list/section and land back on this record). These leaves have no such genuinely-owed reverse target: pure creation forms/modals with no persisted record to reverse-link into, self-referential attribute-edit forms with no external FK, aggregate/KPI dashboards with no per-row FK-bearing record, or catalog-CRUD/lookup surfaces nothing else reverse-queries.",
+      "leaves_touched": 6,
+      "drops": [
+        {
+          "id": "md.tasks",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "task_link only points back at this same customer"
+        },
+        {
+          "id": "detail.contacts",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "customer_contacts FK only customer_uuid back to this customer"
+        },
+        {
+          "id": "detail.lanes",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "customer_lanes FK only customer_id, no other table has a lane FK"
+        },
+        {
+          "id": "detail.documents",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "generic polymorphic docs scoped to this customer only"
+        },
+        {
+          "id": "detail.contracts",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "contract FK only customer_id+file_id, no load relation despite Required"
+        },
+        {
+          "id": "detail.pnl",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "single aggregate summary row, no per-load records or links"
         }
       ]
     }
