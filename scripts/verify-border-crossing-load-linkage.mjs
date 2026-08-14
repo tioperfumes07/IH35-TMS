@@ -1,5 +1,10 @@
 #!/usr/bin/env node
-/** @matrix-built modules=dispatch,compliance cols=load,connectivity,reverse_link,picker_law */
+/** @matrix-built modules=dispatch cols=load,connectivity,reverse_link,picker_law leafRe=^(dispatch\.wizard\.border_crossing_wizard_page|queues\.border_history|dispatch\.drawer\.load_detail)$ task=BORDER-CROSSING-LOAD-LINKAGE */
+// LINK-THEATER-01 narrowing (2026-08-14): sibling of LINK-F5148 — load side instead of driver side.
+// Real leaves: dispatch.wizard.border_crossing_wizard_page, queues.border_history, and
+// LoadDetailDrawer.tsx's CustomsTab -> dispatch.drawer.load_detail (same leaf id as LINK-F5147, that
+// component's dedicated surface id). "compliance" dropped entirely — CustomsTab.tsx lives under
+// apps/frontend/src/components/dispatch/drawer-tabs/, not compliance; zero compliance file is read.
 import fs from "node:fs";
 const LABEL = "verify-border-crossing-load-linkage";
 const files = {
