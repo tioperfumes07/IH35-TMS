@@ -437,6 +437,17 @@
       ]
     },
     {
+      "id": "pm.schedule.list",
+      "tab": "PM Schedule",
+      "sub": "Schedule roster and highlighted schedule",
+      "route_hint": "/maintenance/pm-schedule?schedule_id=",
+      "required": [
+        "unit",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
       "id": "pm.auto_engine.run",
       "tab": "PM Auto Engine",
       "sub": "Auto-WO runs",
