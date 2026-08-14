@@ -727,6 +727,11 @@
     "claimed_by": "codex",
     "purpose": "verify-all-module-list-toolbar-connectivity"
   },
+  "3272": {
+    "claimed_at": "2026-08-14",
+    "claimed_by": "codex",
+    "purpose": "verify-all-module-list-toolbar-search-range-filter"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
