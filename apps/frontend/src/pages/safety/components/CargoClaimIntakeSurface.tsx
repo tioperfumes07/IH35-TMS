@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createSafetyIncident,
@@ -123,6 +124,11 @@ export function CargoClaimIntakeSurface({
 
   const companyEnabled = Boolean(operatingCompanyId);
   const pickersEnabled = companyEnabled && (creating || Boolean(selectedId));
+  const [searchParams] = useSearchParams();
+  const loadIdFromUrl = searchParams.get("load_id")?.trim() ?? "";
+  const driverIdFromUrl = searchParams.get("driver_id")?.trim() ?? "";
+  const unitIdFromUrl = searchParams.get("unit_id")?.trim() ?? "";
+  const trailerIdFromUrl = searchParams.get("trailer_id")?.trim() ?? "";
 
   const suggestionQuery = useQuery({
     queryKey: [
@@ -161,8 +167,23 @@ export function CargoClaimIntakeSurface({
   }, [form.loadId, suggestionPinned, suggestionQuery.data]);
 
   const listQuery = useQuery({
-    queryKey: ["safety", "incidents", "cargo_claim", operatingCompanyId],
-    queryFn: () => listSafetyIncidents(operatingCompanyId, "cargo_claim"),
+    queryKey: [
+      "safety",
+      "incidents",
+      "cargo_claim",
+      operatingCompanyId,
+      loadIdFromUrl,
+      driverIdFromUrl,
+      unitIdFromUrl,
+      trailerIdFromUrl,
+    ],
+    queryFn: () =>
+      listSafetyIncidents(operatingCompanyId, "cargo_claim", {
+        load_id: loadIdFromUrl || undefined,
+        driver_id: driverIdFromUrl || undefined,
+        unit_id: unitIdFromUrl || undefined,
+        trailer_id: trailerIdFromUrl || undefined,
+      }),
     enabled: companyEnabled,
   });
 

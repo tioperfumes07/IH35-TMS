@@ -32,6 +32,8 @@ export function check({ surface, api, routes }) {
       "filter-unit",
       "listFilters",
       "listSafetyIncidents(operatingCompanyId, config.incidentType, listFilters)",
+      "load_id: loadIdFromUrl",
+      'searchParams.get("load_id")',
     ]) {
       if (!surface.includes(marker)) {
         f.push(`${SURFACE}: must include ${marker}`);
@@ -98,7 +100,8 @@ export function run() {
 
 if (process.argv.includes("--selftest")) {
   const goodSurface = `
-    const listFilters = useMemo(() => ({ driver_id, unit_id, date_from, date_to }), []);
+    const loadIdFromUrl = searchParams.get("load_id")?.trim() ?? "";
+    const listFilters = useMemo(() => ({ driver_id, unit_id, load_id: loadIdFromUrl || undefined, date_from, date_to }), []);
     queryFn: () => listSafetyIncidents(operatingCompanyId, config.incidentType, listFilters),
     const listState = useListState(listQuery, rows.length === 0);
     data-testid={\`\${config.pageTestId}-filter-driver\`}

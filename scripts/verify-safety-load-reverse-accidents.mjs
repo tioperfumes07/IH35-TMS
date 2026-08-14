@@ -69,6 +69,9 @@ export function assertLoadSafetyReverse(sources) {
   if (!/kind="accidents_load"/.test(src[SECTION])) {
     problems.push(`${SECTION}: Open Accidents must EntityLink accidents_load (filtered queue), not a bare /safety/accidents Link.`);
   }
+  if (!/openKind: "damage_reports_load"/.test(src[SECTION]) || !/kind=\{kind\.openKind\}/.test(src[SECTION])) {
+    problems.push(`${SECTION}: Open Damage/Interchange/Cargo must EntityLink filtered incident queues.`);
+  }
 
   return problems;
 }
@@ -121,6 +124,11 @@ if (SELFTEST) {
     "open-accidents-queue",
     { ...live, [SECTION]: live[SECTION].replace(/kind="accidents_load"/g, 'kind="accident"') },
     "Open Accidents must EntityLink accidents_load"
+  );
+  expectCaught(
+    "open-incident-queues",
+    { ...live, [SECTION]: live[SECTION].replace(/kind=\{kind\.openKind\}/g, "to={kind.route}") },
+    "Open Damage/Interchange/Cargo must EntityLink"
   );
 
   const liveProblems = assertLoadSafetyReverse(live);

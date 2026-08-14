@@ -103,6 +103,9 @@ export function assertAssetSafetyReverse(sources) {
   if (!/openKind=\{isUnit \? "accidents_unit" : "accidents_trailer"\}/.test(src[SECTION])) {
     problems.push(`${SECTION}: Open Accidents must EntityLink accidents_unit/accidents_trailer filtered queues.`);
   }
+  if (!/unitOpenKind: "damage_reports_unit"/.test(src[SECTION]) || !/openKind=\{assetKind === "unit" \? kind\.unitOpenKind : kind\.trailerOpenKind\}/.test(src[SECTION])) {
+    problems.push(`${SECTION}: Open Damage/Interchange/Cargo must EntityLink asset-filtered incident queues.`);
+  }
   if (!/ar\.trailer_id = \$/.test(src[ACCIDENTS_ROUTE])) {
     problems.push(`${ACCIDENTS_ROUTE}: GET accidents does not filter by trailer in SQL.`);
   }
@@ -197,6 +200,17 @@ if (SELFTEST) {
     "Open Accidents must EntityLink"
   );
   expectCaught(
+    "open-incident-queues",
+    {
+      ...live,
+      [SECTION]: live[SECTION].replace(
+        /openKind=\{assetKind === "unit" \? kind\.unitOpenKind : kind\.trailerOpenKind\}/g,
+        'to={kind.route}'
+      ),
+    },
+    "Open Damage/Interchange/Cargo must EntityLink"
+  );
+  expectCaught(
     "accidents-trailer-server-filter-removed",
     { ...live, [ACCIDENTS_ROUTE]: live[ACCIDENTS_ROUTE].replace(/AND ar\.trailer_id = \$\$\{values\.length\}/g, "") },
     "does not filter by trailer"
@@ -216,7 +230,7 @@ if (SELFTEST) {
     for (const f of failures) console.error(`  ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — 13 planted defects caught, live sources clean`);
+  console.log(`${LABEL} SELFTEST PASS — 14 planted defects caught, live sources clean`);
   process.exit(0);
 }
 
