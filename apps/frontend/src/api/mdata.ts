@@ -254,6 +254,19 @@ export async function getDriver(id: string, operatingCompanyId: string): Promise
   return payload as Driver;
 }
 
+export type DriverSafetyAggregate = {
+  driver: Driver;
+  medical_card: { expiration: string | null; color_status: "green" | "yellow" | "red" | "gray" };
+  training_records: Array<{ expiration_date?: string | null; status?: "green" | "yellow" | "red" | "gray" }>;
+  documents: Array<Record<string, unknown>>;
+};
+
+/** Full company-scoped aggregate for the dedicated Safety profile (do not unwrap to the flat driver). */
+export function getDriverSafetyAggregate(id: string, operatingCompanyId: string) {
+  const qs = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  return apiRequest<DriverSafetyAggregate>(`/api/v1/mdata/drivers/${encodeURIComponent(id)}?${qs.toString()}`);
+}
+
 export function createDriver(body: CreateDriverInput) {
   return apiRequest<DriverOnboardingCreateResponse>("/api/v1/mdata/drivers", { method: "POST", body });
 }

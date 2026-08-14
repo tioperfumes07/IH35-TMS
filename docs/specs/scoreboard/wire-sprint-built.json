@@ -1,6 +1,7 @@
 {
   "_README": "Shipped Wave-A writers that green Matrix Box 3 Built. Updated when a Pxx task merges with guard+smoke. Live (Box 4) still requires PROD-VERIFIED ledger. leafRe must match docs/specs/scoreboard/modules/*.required.json leaf ids; cols must match column ids (picker_law not picker).",
   "entries": [
+    {"task":"VERTICAL-CONNECTIVITY-SAFETY-DRIVER-PROFILE","modules":["safety"],"cols":["connectivity"],"leafRe":"^safety\\.panel\\.driver_safety_profile$","guard":"scripts/verify-safety-driver-profile-connectivity.mjs","live":"BLOCKED"},
     {"task":"VERTICAL-CONNECTIVITY-REPORTS-DETENTION-CLAIMS","modules":["reports"],"cols":["connectivity"],"leafRe":"^runner\\.detention_claims$","guard":"scripts/verify-reports-detention-claims-connectivity.mjs","live":"BLOCKED"},
     {
       "task": "VERTICAL-CONNECTIVITY-REPORTS-SAVED-PRESETS",
