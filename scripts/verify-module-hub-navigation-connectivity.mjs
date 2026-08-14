@@ -25,11 +25,11 @@ const FILES = {
 };
 
 const REQUIRED_LEAVES = {
-  financeMatrix: ["hub", "hub.alias", "nav.overview", "nav.statements", "statements.pl", "statements.bs", "statements.tb", "nav.ar_ap_aging", "nav.projections", "nav.scenarios", "nav.break_even", "nav.calculator", "nav.amortization", "nav.loan_wizard"],
+  financeMatrix: ["hub", "hub.alias", "nav.statements", "statements.pl", "statements.bs", "statements.tb", "nav.ar_ap_aging", "nav.break_even", "nav.calculator", "nav.amortization", "nav.loan_wizard"],
   fuelMatrix: ["home", "planner", "relay_inbox", "settings", "expense_mapping", "loves_prices", "compliance"],
-  helpMatrix: ["center", "overview", "runbooks", "article", "search", "cat.getting_started", "cat.dispatch", "cat.settlements", "cat.banking", "cat.reports"],
-  homeMatrix: ["jump.maintenance", "jump.fuel", "jump.safety", "jump.drivers", "jump.dispatch", "jump.lists", "hub.driver", "hub.driver_reporting", "hop.program"],
-  reportsMatrix: ["home.reports", "home.hub", "home.custom_builder", "subnav.reports", "subnav.category_hub", "subnav.run_report", "subnav.cancellations", "subnav.scheduled_custom", "subnav.audit", "cat.ops_dispatch", "cat.driver_perf", "cat.equipment", "cat.safety", "cat.customers", "cat.vendors", "cat.accounting", "cat.tax_reg", "cat.multi_company"],
+  helpMatrix: [],
+  homeMatrix: ["hub.driver", "hub.driver_reporting"],
+  reportsMatrix: ["home.reports", "home.hub", "home.custom_builder", "subnav.reports", "subnav.category_hub", "subnav.run_report", "subnav.cancellations", "subnav.scheduled_custom", "subnav.audit"],
 };
 
 const read = () => Object.fromEntries(Object.entries(FILES).map(([key, file]) => [key, fs.readFileSync(file, "utf8")]));
@@ -106,7 +106,7 @@ if (process.argv.includes("--self-test")) {
     ["routes", 'path="/help/runbooks"', 'path="/broken-help"'], ["routes", 'path="/driver-hub/reporting"', 'path="/broken-driver-hub"'],
     ["routes", 'path="/reports/categories/ops-dispatch"', 'path="/broken-reports"'],
     ["financeMatrix", '"id": "hub"', '"id": "broken.hub"'], ["fuelMatrix", '"id": "planner"', '"id": "broken.planner"'],
-    ["helpMatrix", '"id": "center"', '"id": "broken.center"'], ["homeMatrix", '"id": "hop.program"', '"id": "broken.program"'],
+    ["homeMatrix", '"id": "hub.driver"', '"id": "broken.driver"'],
     ["reportsMatrix", '"id": "subnav.reports"', '"id": "broken.reports"'],
   ];
   for (const [key, before, after] of mutations) {

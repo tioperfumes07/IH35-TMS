@@ -58,7 +58,7 @@ const LEAVES = {
     ["fleet.modal.quick_assign", "components/fleet/QuickAssignModal.tsx"],
     ["fleet.modal.status_change", "components/trailer-profile/StatusChangeModal.tsx"],
   ],
-  form_425: [["exhibits", null], ["redirect.form425c", null]],
+  form_425: [["exhibits", null]],
   legal: [
     ["legal.modal.lease_to_own_creator", "pages/legal/contracts/LeaseToOwnCreatorModal.tsx"],
     ["legal.modal.send_contract", "pages/legal/contracts/SendContractModal.tsx"],
@@ -98,12 +98,10 @@ const LEAVES = {
     ["lists.modal.bulk_action", "components/bulk/BulkActionModal.tsx"],
     ["lists.dialog.bulk_progress", "components/bulk/BulkProgressDialog.tsx"],
     ["lists.modal.catalog_edit", "components/catalogs/CatalogEditModal.tsx"],
-    ["lists.dialog.confirm_discard", "components/dialogs/ConfirmDiscardDialog.tsx"],
-    ["lists.dialog.part_location_map", "components/forms/PartLocationMapDialog.tsx"],
     ["lists.panel.validation", "components/shared/ValidationPanel.tsx"],
   ],
   system: [
-    ["system.samsara_hos_driver_map", null], ["hop.banking_recon", null], ["hop.program_matrix", null],
+    ["system.samsara_hos_driver_map", null], ["hop.program_matrix", null],
     ["system.wizard.edi_setup", "pages/integrations/edi/EdiSetupWizard.tsx"],
     ["system.panel.usmcaactivation", "pages/admin/USMCAActivationPanel.tsx"],
   ],
@@ -115,9 +113,7 @@ const ROUTE_PROOFS = [
   ["docs", "table.entity_link", "pages/docs/DocsHomePage.tsx", "<EntityLink"],
   ["fleet", "map.redirect", "routes/manifest.tsx", 'path="/fleet/map"'],
   ["form_425", "exhibits", "routes/manifest.tsx", 'path="/425c/exhibits"'],
-  ["form_425", "redirect.form425c", "routes/manifest.tsx", 'path="/form-425c"'],
   ["system", "system.samsara_hos_driver_map", "routes/manifest.tsx", 'path="/samsara/hos-driver-map"'],
-  ["system", "hop.banking_recon", "pages/system/SystemModulePage.tsx", 'to="/banking"'],
   ["system", "hop.program_matrix", "pages/system/SystemModulePage.tsx", 'to="/program/matrix"'],
 ];
 

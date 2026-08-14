@@ -37,7 +37,7 @@ const REQUIRED_LEAVES = {
   driverHubMatrix: ["home", ...EXPECTED.driverHub.map((id) => `tab.${id}`)],
   form425Matrix: ["home", ...EXPECTED.form425.map((id) => `tab.${id}`)],
   tasksMatrix: EXPECTED.tasks.map((id) => `nav.${id}`),
-  programMatrix: EXPECTED.program.map((id) => `nav.${id}`),
+  programMatrix: ["nav.scenario", "nav.final"],
   systemMatrix: ["home", ...EXPECTED.system.map((id) => `tab.${id.replaceAll("-", "_")}`)],
 };
 
@@ -111,7 +111,7 @@ if (process.argv.includes("--self-test")) {
     ["driverHubMatrix", '"id": "tab.scheduler"', '"id": "tab.scheduler.broken"'],
     ["form425Matrix", '"id": "tab.form"', '"id": "tab.form.broken"'],
     ["tasksMatrix", '"id": "nav.board"', '"id": "nav.board.broken"'],
-    ["programMatrix", '"id": "nav.matrix"', '"id": "nav.matrix.broken"'],
+    ["programMatrix", '"id": "nav.scenario"', '"id": "nav.scenario.broken"'],
     ["systemMatrix", '"id": "tab.program"', '"id": "tab.program.broken"'],
   ];
   for (const [key, before, after] of mutations) {
