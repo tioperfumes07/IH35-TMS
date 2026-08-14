@@ -92,27 +92,25 @@ the leaf stays OPEN.
 | `settlements:disputes.open_queue` | Cursor (EntityLink janitor) | #6885 | `verify-driver-settlement-finance-reverse-section.mjs` |
 | `customers:factoring.open_entitylink` | Cursor (EntityLink janitor) | #6888 | sibling factoring reverse guards |
 | `safety:section_shell.open_entitylink_only` | Cursor (EntityLink janitor) | #6893 | `verify-driver-safety-reverse-section` · `verify-asset-safety-reverse-section` |
+| `compliance:tab.hos_tracker` | Codex · Cursor confirm 2026-08-14 | #6739 / #6744 | `verify-compliance-hos-profile-reverse.mjs` PASS |
+| `compliance:fleet.hos_board` | Codex · Cursor confirm 2026-08-14 | #6739 | `verify-compliance-hos-profile-reverse.mjs` PASS |
+| `compliance:property_tax.list` | Codex · Cursor confirm 2026-08-14 | #6743 | `verify-compliance-tax-filings-unit-reverse.mjs` PASS |
+| `compliance:property_tax.detail` | Codex · Cursor confirm 2026-08-14 | #6743 | `verify-compliance-tax-filings-unit-reverse.mjs` PASS |
+| `compliance:form2290` | Codex · Cursor confirm 2026-08-14 | #6743 | `verify-compliance-tax-filings-unit-reverse.mjs` PASS |
+| `fleet:unit.profile.documents` | Codex · Cursor confirm 2026-08-14 | #6731 | `verify-fleet-reverse-link-remainder.mjs` PASS |
+| `fleet:unit.detail.tasks` | Codex · Cursor confirm 2026-08-14 | #6729 | `verify-fleet-unit-profile-edit-detail.mjs` PASS |
+| `fleet:unit.edit.quick_availability` | Codex · Cursor confirm 2026-08-14 | #6731 | `verify-fleet-reverse-link-remainder.mjs` PASS |
+| `fleet:trailer.profile.assignment` | Codex · Cursor confirm 2026-08-14 | #6731 | `verify-fleet-reverse-link-remainder.mjs` · `verify-trailer-profile-sections-complete.mjs` PASS |
+| `fleet:trailer.profile.maintenance` | Codex · Cursor confirm 2026-08-14 | #6731 | `verify-trailer-profile-sections-complete.mjs` PASS |
+| `fleet:trailer.profile.insurance_claims_reverse` | Codex · Cursor confirm 2026-08-14 | #6731 | `verify-trailer-profile-sections-complete.mjs` PASS |
+| `fleet:trailer.profile.documents` | Codex · Cursor confirm 2026-08-14 | #6731 | `verify-fleet-reverse-link-remainder.mjs` PASS |
+| `vendors:md.vendor_details` | Codex · Cursor confirm 2026-08-14 | #6718 | `verify-vendor-master-detail-reverse-link.mjs` · `verify-master-detail-reverse-leaves.mjs` PASS |
+| `inventory:assignments.wo_link` | Codex · Cursor confirm 2026-08-14 | pre-existing | `verify-dispatch-inventory-vendor-workflow-links.mjs` PASS |
+| `maintenance:arriving_soon.convert_to_wo` | Codex · Cursor confirm 2026-08-14 | board FIXED | `verify-arriving-soon-work-order-reverse.mjs` PASS |
 
-## Uncertain — Cursor attributed these to Codex; Codex's itemized report does not confirm them
-Needs Codex to confirm with PR#/guard or explicitly release as OPEN.
-(Cursor 2026-08-14: removed `dispatch:docs.pod` / `dispatch:docs.ocr` / `dispatch:queues.detention` / `tasks:tasks.drawer.task` after independent guard confirmation — see Done table.)
+## Uncertain — empty (Cursor confirm 2026-08-14 night)
 
-| Leaf | Cursor's claimed attribution |
-|---|---|
-| `compliance:tab.hos_tracker` | Codex #6739 (partial — Cursor #6744 added outward unit EntityLink only) |
-| `compliance:fleet.hos_board` | Codex #6739 |
-| `compliance:property_tax.list` | Codex #6743 |
-| `compliance:property_tax.detail` | Codex #6743 |
-| `compliance:form2290` | Codex #6743 |
-| `fleet:unit.profile.documents` | Codex #6731 |
-| `fleet:unit.detail.tasks` | Codex #6729 |
-| `fleet:unit.edit.quick_availability` | Codex #6731 |
-| `fleet:trailer.profile.assignment` | Codex #6731 |
-| `fleet:trailer.profile.maintenance` | Codex #6731 |
-| `fleet:trailer.profile.insurance_claims_reverse` | Codex #6731 |
-| `fleet:trailer.profile.documents` | Codex #6731 |
-| `vendors:md.vendor_details` | Codex #6718 |
-| `inventory:assignments.wo_link` | Codex, no PR cited ("verified") |
+All prior Uncertain rows moved to Done after independent guard PASS on tip `origin/main`.
 
 ## Open — genuinely unclaimed by anyone (as of 2026-08-14 evening)
 
@@ -129,10 +127,10 @@ Needs Codex to confirm with PR#/guard or explicitly release as OPEN.
 | `factoring:accounting.list` | CC-1 |
 | `factoring:banking.entry` | CC-1 |
 | `drivers:disputes` | Codex |
-| `maintenance:arriving_soon.convert_to_wo` | Codex |
 | `maintenance:defects.convert_to_wo` | Codex |
 | `maintenance:pre_flight_dvir.queue` | Codex |
 | `maintenance:panel.pm_alerts` | Codex |
+| `accounting:reverse.open_entitylink` | CC-1 / Rule 23 — EntityLink-only Open on Invoices/Bills/Expenses reverse is money theater without write path; skip Cursor |
 
 ## Reclassified — not a fix, Required-flag correction
 
