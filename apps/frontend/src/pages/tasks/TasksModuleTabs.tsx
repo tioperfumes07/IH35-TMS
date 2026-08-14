@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { CreateTaskModal } from "../../components/tasks/CreateTaskModal";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { RelatedModuleLinks } from "../../components/shared/RelatedModuleLinks";
 
 const tabs = [
   { id: "board", label: "Task Board", to: "/tasks" },
@@ -53,6 +54,14 @@ export function TasksModuleTabs() {
           + Create Task
         </button>
       </div>
+      <RelatedModuleLinks
+        className="mb-2 border-0 px-0 py-1"
+        testId="tasks-related-module-links"
+        links={[
+          { label: "Daily Tasks", to: "/daily-tasks" },
+          { label: "Service Task Catalog", to: "/lists/maintenance/service-tasks" },
+        ]}
+      />
       <CreateTaskModal open={createOpen} operatingCompanyId={companyId} onClose={() => setCreateOpen(false)} />
     </div>
   );

@@ -30,6 +30,7 @@ import { HOSViolationsTab } from "../safety/tabs/HOSViolationsTab";
 import { SectionErrorBoundary } from "../../components/SectionErrorBoundary";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateUS } from "../../lib/formatDate";
+import { RelatedModuleLinks } from "../../components/shared/RelatedModuleLinks";
 
 // ADDITIVE: "filings" is the module's new overview/home landing tab (owner decision 2026-07-05,
 // memory `compliance-taxes-permits-module-org`) — a cross-module "view all pending" rollup. Every
@@ -159,6 +160,18 @@ export function ComplianceDashboardPage() {
           </button>
         ))}
       </div>
+
+      <RelatedModuleLinks
+        testId="compliance-related-module-links"
+        links={[
+          { label: "Safety HOS", to: "/safety/hos" },
+          { label: "DOT Compliance", to: "/safety/dot-compliance" },
+          { label: "Form 425C", to: "/425c" },
+          { label: "Maintenance Compliance", to: "/maintenance/compliance" },
+          { label: "Fuel Compliance", to: "/fuel/compliance" },
+          { label: "IFTA Preparer", to: "/reports/ifta-preparer" },
+        ]}
+      />
 
       {tab === "filings" ? (
         <SectionErrorBoundary name="Filings & Compliance Due">
