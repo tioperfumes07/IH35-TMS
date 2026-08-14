@@ -1,5 +1,4 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
 import { listWorkOrdersFiltered } from "../../api/maintenance";
 import { formatDateUS } from "../../lib/formatDate";
 import { EntityLink } from "../shared/EntityLink";
@@ -66,12 +65,12 @@ export function LoadWorkOrdersReverseSection({
               </span>
             ) : null}
           </h3>
-          <Link
+          <EntityLink
+            kind="active_wos_load"
+            id={loadId}
+            label="Open Work Orders"
             className="text-xs font-semibold text-slate-700 underline"
-            to="/maintenance/active-wos"
-          >
-            Open Work Orders
-          </Link>
+          />
         </div>
         {query.isLoading ? (
           <p className="text-sm text-gray-500">Loading…</p>

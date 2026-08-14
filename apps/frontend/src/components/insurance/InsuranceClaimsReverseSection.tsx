@@ -1,6 +1,5 @@
 import { entityLabel } from "../../lib/entity-label";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
 import { insuranceClaimsApi, type InsuranceClaim } from "../../api/insurance";
 import { useAuth } from "../../auth/useAuth";
 import { formatUsdCents } from "../../lib/money";
@@ -142,6 +141,15 @@ export function InsuranceClaimsReverseSection({
   if (!canView) return null;
 
   const claims: InsuranceClaim[] = query.data?.claims ?? [];
+  const openKind =
+    "driver_id" in filter
+      ? ("insurance_claims_driver" as const)
+      : "unit_id" in filter
+        ? ("insurance_claims_unit" as const)
+        : "load_id" in filter
+          ? ("insurance_claims_load" as const)
+          : ("insurance_claims_trailer" as const);
+  const openId = String(Object.values(filter)[0] ?? "");
 
   return (
     <div
@@ -150,9 +158,7 @@ export function InsuranceClaimsReverseSection({
     >
       <div className="flex items-center justify-between gap-2">
         <h3 className="text-sm font-semibold text-slate-900">Insurance Claims</h3>
-        <Link className="text-xs font-semibold text-slate-700 underline" to="/safety/insurance/claims">
-          Open Claims
-        </Link>
+        <EntityLink kind={openKind} id={openId} label="Open Claims" className="text-xs font-semibold text-slate-700 underline" />
       </div>
       <p className="text-sm text-gray-600">
         Insurance claims linked to {contextLabel} (Owner/Admin).

@@ -145,6 +145,17 @@ export type EntityKind =
   | "safety_fines_driver"
   | "safety_fines_load"
   | "safety_fines_unit"
+  | "legal_matters_driver"
+  | "legal_matters_unit"
+  | "legal_matters_equipment"
+  | "legal_matters_claim"
+  | "legal_matters_lawsuit"
+  | "insurance_claims_driver"
+  | "insurance_claims_unit"
+  | "insurance_claims_load"
+  | "insurance_claims_trailer"
+  | "active_wos_driver"
+  | "active_wos_load"
   // SAF-F33: safety records were undrillable — no module could link INTO an accident, fine,
   // complaint, DOT inspection, escrow record, or permit. These resolve to the record's list surface
   // with a query param the page honors (same drill pattern as claim/lawsuit/settlement).
@@ -430,6 +441,28 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
       return `/safety/external-fines?related_load_id=${id}`;
     case "safety_fines_unit":
       return `/safety/external-fines?related_unit_id=${id}`;
+    case "legal_matters_driver":
+      return `/legal/matters?related_driver_id=${id}`;
+    case "legal_matters_unit":
+      return `/legal/matters?unit_id=${id}`;
+    case "legal_matters_equipment":
+      return `/legal/matters?equipment_id=${id}`;
+    case "legal_matters_claim":
+      return `/legal/matters?insurance_claim_id=${id}`;
+    case "legal_matters_lawsuit":
+      return `/legal/matters?insurance_lawsuit_id=${id}`;
+    case "insurance_claims_driver":
+      return `/safety/insurance/claims?driver_id=${id}`;
+    case "insurance_claims_unit":
+      return `/safety/insurance/claims?unit_id=${id}`;
+    case "insurance_claims_load":
+      return `/safety/insurance/claims?load_id=${id}`;
+    case "insurance_claims_trailer":
+      return `/safety/insurance/claims?trailer_id=${id}`;
+    case "active_wos_driver":
+      return `/maintenance/active-wos?driver_id=${id}`;
+    case "active_wos_load":
+      return `/maintenance/active-wos?load_id=${id}`;
     // SAF-F33 safety drill-through — each target list page reads the param and opens/highlights the row.
     case "accident":
       return `/safety/accidents?accident_id=${id}`;
