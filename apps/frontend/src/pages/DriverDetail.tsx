@@ -897,9 +897,13 @@ export function DriverDetailPage() {
             <div className="md:col-span-2 flex flex-wrap items-center gap-2 rounded-sm border border-slate-200 bg-slate-100 px-3 py-2 text-sm text-slate-800">
               <span className="rounded-sm bg-slate-200 px-2 py-1 text-xs font-semibold">REHIRE (stint #{driver.rehire_count + 1})</span>
               {driver.prior_driver_id ? (
-                <Link to={`/drivers/${driver.prior_driver_id}`} className="text-xs font-semibold text-slate-700 hover:underline">
-                  ← View prior driver record
-                </Link>
+                <EntityLink
+                  kind="driver"
+                  id={driver.prior_driver_id}
+                  label="← View prior driver record"
+                  className="text-xs font-semibold text-slate-700 hover:underline"
+                  data-testid="driver-detail-prior-driver-link"
+                />
               ) : null}
             </div>
           ) : null}
