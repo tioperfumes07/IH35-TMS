@@ -1,3 +1,4 @@
+2026-08-14T23:10Z Cursor | shipping LINK-F5171 task + load_map EntityLink + canonical-load-nav surface-focus budget | Live=BLOCKED | tip=#6816
 2026-08-14T22:55Z Cursor | SHIPPED #6786 embedded multiline | shipping roster+profile multiline EntityLink guards | Live=BLOCKED
 2026-08-14T22:50Z Cursor | SHIPPED #6784 fines selftest | shipping embedded-assignment multiline EntityLink guard | Live=BLOCKED
 2026-08-14T22:45Z Cursor | SHIPPED #6783 driver-fines internal_fine | shipping fines --selftest API subject scope | Live=BLOCKED
