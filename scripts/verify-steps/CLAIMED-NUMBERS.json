@@ -682,6 +682,11 @@
     "claimed_by": "codex",
     "purpose": "verify-compliance-maintenance-record-links"
   },
+  "3254": {
+    "claimed_at": "2026-08-14",
+    "claimed_by": "codex",
+    "purpose": "verify-dispatch-inventory-vendor-workflow-links"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
@@ -2526,5 +2531,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1130
+  "total_claimed": 1131
 }
