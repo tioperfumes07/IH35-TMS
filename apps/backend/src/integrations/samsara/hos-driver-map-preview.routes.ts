@@ -1,6 +1,6 @@
 // HOS-MAP preview endpoint — READ ONLY. Returns the proposed driver -> Samsara-id map for Jorge to eyeball
-// BEFORE any write. Writes nothing. The actual `UPDATE mdata.drivers SET samsara_driver_id` is a separate,
-// Jorge-approved step on the rows he confirms — there is intentionally no write endpoint here.
+// BEFORE any write. Writes nothing. The actual `UPDATE mdata.drivers SET samsara_driver_id` belongs to a
+// separate guarded mapping workflow after ambiguous rows are resolved — there is no write endpoint here.
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { withCurrentUser } from "../../auth/db.js";

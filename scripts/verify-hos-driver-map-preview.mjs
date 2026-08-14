@@ -2,7 +2,7 @@
 /**
  * HOS-MAP guard: the driver↔Samsara-id preview is READ/PREVIEW ONLY.
  * A wrong samsara_driver_id attributes one driver's HOS clocks to another (an FMCSA error), and a mass write
- * to driver records is Jorge-gated — so this block must NEVER write. Fails CI if the preview service/route
+ * to driver records belongs to a separately guarded workflow — so this block must NEVER write. Fails CI if the preview service/route
  * contains any INSERT/UPDATE/DELETE against mdata.drivers (or any mutation at all).
  */
 import fs from "node:fs";
@@ -31,10 +31,10 @@ for (const [file, src] of [[SVC, svc], [ROUTE, route]]) {
   const code = stripComments(src);
   // No data mutation anywhere in this block — preview only.
   if (/\b(INSERT\s+INTO|UPDATE\s+mdata\.drivers|UPDATE\s+"?\w|DELETE\s+FROM)\b/i.test(code)) {
-    failures.push(`${file}: contains a data mutation — HOS-MAP preview must be READ-ONLY (the write is Jorge-gated, separate).`);
+    failures.push(`${file}: contains a data mutation — HOS-MAP preview must be READ-ONLY (the write workflow is separate).`);
   }
   if (/SET\s+samsara_driver_id/i.test(code)) {
-    failures.push(`${file}: stamps samsara_driver_id — that write is a separate Jorge-approved step, not this block.`);
+    failures.push(`${file}: stamps samsara_driver_id — that write belongs to the separate guarded mapping workflow.`);
   }
 }
 

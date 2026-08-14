@@ -7,8 +7,8 @@
 // surfaced, never auto-accepted. A WRONG id would attribute one driver's HOS clocks to another (an FMCSA error),
 // so every ambiguous row is reported, never silently resolved.
 //
-// The actual `UPDATE mdata.drivers SET samsara_driver_id` is a SEPARATE, Jorge-approved step on the rows he
-// confirms — NOT here. This file has no INSERT/UPDATE/DELETE.
+// The actual `UPDATE mdata.drivers SET samsara_driver_id` belongs to a SEPARATE, guarded mapping workflow
+// after ambiguous rows are resolved — NOT this preview. This file has no INSERT/UPDATE/DELETE.
 import { SamsaraClient, type SamsaraDriver } from "./samsara-client.js";
 import { getSamsaraConfigForCompany, type PgClient } from "./samsara.service.js";
 
@@ -82,8 +82,8 @@ function indexRoster(roster: SamsaraDriver[]) {
   return { byLicense, byPhone, byName };
 }
 
-/** Pure, read-only: propose a driver -> Samsara-id map for THIS carrier. No DB writes; the caller hands the
- *  preview to Jorge, who approves the rows before any UPDATE. */
+/** Pure, read-only: propose a driver -> Samsara-id map for THIS carrier. No DB writes; ambiguous candidates
+ *  must be resolved before the separate mapping workflow applies any UPDATE. */
 export async function previewDriverSamsaraMap(client: PgClient, operatingCompanyId: string): Promise<DriverMapPreview> {
   const ours = await client.query(
     `SELECT id::text AS id, trim(coalesce(first_name,'') || ' ' || coalesce(last_name,'')) AS name,

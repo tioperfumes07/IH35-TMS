@@ -1331,6 +1331,14 @@
       "modules": ["banking", "cash-flow", "driver-hub", "finance", "home", "program", "system", "users"],
       "cols": ["connectivity"],
       "leafRe": "^chrome\\.toolbar_filter$"
+    },
+    {
+      "task": "WAVE-A-DRIVER-SAMSARA-REMAINDER",
+      "pr": "this PR",
+      "guard": "scripts/verify-system-samsara-driver-column.mjs",
+      "modules": ["system"],
+      "cols": ["driver"],
+      "leafRe": "^system\\.samsara_hos_driver_map$"
     }
   ]
 }
