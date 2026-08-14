@@ -31,6 +31,7 @@ export type EntityKind =
   | "liability"
   | "bank_account"
   | "factoring_advance"
+  | "factoring_batch"
   | "payment"
   | "bill_payment"
   | "transfer"
@@ -146,6 +147,13 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
       return `/banking/accounts/${id}`;
     case "factoring_advance":
       return `/accounting/factoring/${id}`;
+    case "factoring_batch":
+      // LINK-F5178 (2026-08-14): a real batch id (factoring.batch.id — the row shown by FactorAdmin's
+      // "Batch History" table) drills to /factoring/batches/:id (BatchDetail.tsx's getBatchDetail),
+      // NOT /accounting/factoring/:id (accounting.factoring_advances.id — a different table/entity).
+      // The batch table previously used kind="factoring_advance" for these rows, which pointed every
+      // batch link at the wrong detail page.
+      return `/factoring/batches/${id}`;
     case "payment":
       return `/accounting/payments/${id}`;
     case "bill_payment":
