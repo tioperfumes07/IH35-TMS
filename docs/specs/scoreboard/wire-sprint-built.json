@@ -310,23 +310,6 @@
       "leafRe": ".*"
     },
     {
-      "task": "WAVE-A-trailer-all-modules",
-      "pr": "this PR",
-      "guard": "scripts/verify-wave-a-trailer-all-modules.mjs",
-      "modules": [
-        "dispatch",
-        "fleet",
-        "fuel",
-        "insurance",
-        "maintenance",
-        "safety"
-      ],
-      "cols": [
-        "trailer"
-      ],
-      "leafRe": ".*"
-    },
-    {
       "task": "WAVE-B-connectivity-all-modules",
       "pr": "this PR",
       "guard": "scripts/verify-wave-b-connectivity-all-modules.mjs",
