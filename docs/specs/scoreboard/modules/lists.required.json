@@ -128,7 +128,6 @@
       "route_hint": "/lists",
       "required": [
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -141,8 +140,7 @@
         "customer",
         "vendor",
         "driver",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -158,8 +156,7 @@
       "sub": "Safety domain hub",
       "route_hint": "/lists/hub/safety",
       "required": [
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -168,8 +165,7 @@
       "sub": "Dispatch domain hub",
       "route_hint": "/lists/hub/dispatch",
       "required": [
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -178,8 +174,7 @@
       "sub": "Drivers domain hub",
       "route_hint": "/lists/hub/drivers",
       "required": [
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -188,8 +183,7 @@
       "sub": "Maintenance domain hub",
       "route_hint": "/lists/hub/maintenance",
       "required": [
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -198,8 +192,7 @@
       "sub": "Fuel domain hub",
       "route_hint": "/lists/hub/fuel",
       "required": [
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -208,8 +201,7 @@
       "sub": "Fleet domain hub",
       "route_hint": "/lists/hub/fleet",
       "required": [
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -218,8 +210,7 @@
       "sub": "Accounting domain hub",
       "route_hint": "/lists/hub/accounting",
       "required": [
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -228,8 +219,7 @@
       "sub": "Customers domain hub",
       "route_hint": "/lists/hub/customers",
       "required": [
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -238,8 +228,7 @@
       "sub": "Vendors domain hub",
       "route_hint": "/lists/hub/vendors",
       "required": [
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -248,8 +237,7 @@
       "sub": "Names master domain hub",
       "route_hint": "/lists/hub/names_master",
       "required": [
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -258,8 +246,7 @@
       "sub": "Reference domain hub",
       "route_hint": "/lists/hub/reference",
       "required": [
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -2611,8 +2598,7 @@
       "sub": "Shippers",
       "route_hint": "/lists/names/brokers",
       "required": [
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -2789,7 +2775,6 @@
       "surface_path": "components/parity/drawers/NewCustomerDrawerForm.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "picker_law",
         "qbo_chrome",
         "customer"
@@ -3080,7 +3065,11 @@
       "route_hint": "/lists/accounting/detail-types",
       "surface_kind": "modal",
       "surface_path": "pages/lists/accounting/DetailTypesListPage.tsx",
-      "required": ["connectivity", "picker_law", "qbo_chrome"]
+      "required": [
+        "connectivity",
+        "picker_law",
+        "qbo_chrome"
+      ]
     },
     {
       "id": "lists.modal.void_cancel_reason",
@@ -3089,7 +3078,11 @@
       "route_hint": "/lists/accounting/void-cancel-reasons",
       "surface_kind": "modal",
       "surface_path": "pages/lists/accounting/VoidCancelReasonsListPage.tsx",
-      "required": ["connectivity", "picker_law", "qbo_chrome"]
+      "required": [
+        "connectivity",
+        "picker_law",
+        "qbo_chrome"
+      ]
     },
     {
       "id": "lists.modal.load_cancellation_reason",
@@ -3098,7 +3091,11 @@
       "route_hint": "/lists/dispatch/load-cancellation-reasons",
       "surface_kind": "modal",
       "surface_path": "pages/lists/dispatch/LoadCancellationReasonsListPage.tsx",
-      "required": ["connectivity", "picker_law", "qbo_chrome"]
+      "required": [
+        "connectivity",
+        "picker_law",
+        "qbo_chrome"
+      ]
     },
     {
       "id": "lists.modal.termination_reason",
@@ -3107,7 +3104,11 @@
       "route_hint": "/lists/drivers/termination-reasons",
       "surface_kind": "modal",
       "surface_path": "pages/lists/drivers/TerminationReasonsListPage.tsx",
-      "required": ["connectivity", "picker_law", "qbo_chrome"]
+      "required": [
+        "connectivity",
+        "picker_law",
+        "qbo_chrome"
+      ]
     },
     {
       "id": "lists.modal.oem_parts_create",
@@ -3116,7 +3117,11 @@
       "route_hint": "/lists/maintenance/oem-parts",
       "surface_kind": "modal",
       "surface_path": "pages/lists/maintenance/OemPartsCatalog.tsx",
-      "required": ["connectivity", "picker_law", "qbo_chrome"]
+      "required": [
+        "connectivity",
+        "picker_law",
+        "qbo_chrome"
+      ]
     }
   ],
   "honesty_note": {
@@ -7786,6 +7791,118 @@
             "connectivity"
           ],
           "reason": "ListsHubPage.tsx has zero toolbar markup (direct verify)"
+        }
+      ]
+    },
+    "reverse_link_column_2026_08_14": {
+      "finding": "VERTICAL-REVERSE-LINK-COLUMN-FALSE-BLANKET",
+      "note": "Vertical wiring sweep (reverse_link column, after trailer/customer/vendor/unit/driver/load/connectivity) read-only investigated every leaf blanket-marked Required for reverse_link (from the related record you can open a filtered list/section and land back on this record). These leaves have no such genuinely-owed reverse target: pure creation forms/modals with no persisted record to reverse-link into, self-referential attribute-edit forms with no external FK, aggregate/KPI dashboards with no per-row FK-bearing record, or catalog-CRUD/lookup surfaces nothing else reverse-queries.",
+      "leaves_touched": 15,
+      "drops": [
+        {
+          "id": "hub.home",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "category-tile grid + activity cards, no per-record reverse section"
+        },
+        {
+          "id": "hub.names_search",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "standalone cross-module search, forward EntityLink out only"
+        },
+        {
+          "id": "hub.domain.safety",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "generic catalog-tile chrome, no per-record relation"
+        },
+        {
+          "id": "hub.domain.dispatch",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "generic catalog-tile chrome"
+        },
+        {
+          "id": "hub.domain.drivers",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "generic catalog-tile chrome"
+        },
+        {
+          "id": "hub.domain.maintenance",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "generic catalog-tile chrome"
+        },
+        {
+          "id": "hub.domain.fuel",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "generic catalog-tile chrome"
+        },
+        {
+          "id": "hub.domain.fleet",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "generic catalog-tile chrome"
+        },
+        {
+          "id": "hub.domain.accounting",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "generic catalog-tile chrome"
+        },
+        {
+          "id": "hub.domain.customers",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "generic catalog-tile chrome"
+        },
+        {
+          "id": "hub.domain.vendors",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "generic catalog-tile chrome"
+        },
+        {
+          "id": "hub.domain.names_master",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "generic catalog-tile chrome"
+        },
+        {
+          "id": "hub.domain.reference",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "generic catalog-tile chrome"
+        },
+        {
+          "id": "catalog.names_master.brokers.list",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "brokers are customers filtered by type, no separate entity"
+        },
+        {
+          "id": "lists.drawer.new_customer_drawer_form",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "inline create-only chrome, not a list/detail surface"
         }
       ]
     }

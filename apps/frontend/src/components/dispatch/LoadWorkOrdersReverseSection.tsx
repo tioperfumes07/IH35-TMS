@@ -116,11 +116,7 @@ export function LoadWorkOrdersReverseSection({
                       <EntityLink
                         kind="unit"
                         id={String(row.unit_id)}
-                        label={entityLabel(
-                          row.unit_number,
-                          row.unit_id,
-                          "Unit",
-                        )}
+                        label={entityLabel(String(row.unit_number), String(row.unit_id ?? ""), "Unit")}
                       />
                     </>
                   ) : null}

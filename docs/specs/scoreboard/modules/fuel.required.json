@@ -219,8 +219,7 @@
       "surface_kind": "modal",
       "surface_path": "pages/fuel/components/ImportFuelTransactionsModal.tsx",
       "required": [
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -251,7 +250,6 @@
       "surface_path": "pages/fuel/components/UploadLovesPricesModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "load"
       ]
     },
@@ -263,8 +261,7 @@
       "surface_kind": "panel",
       "surface_path": "pages/fuel/components/SavingsPanel.tsx",
       "required": [
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -539,6 +536,34 @@
             "connectivity"
           ],
           "reason": "no server-wired Filters panel"
+        }
+      ]
+    },
+    "reverse_link_column_2026_08_14": {
+      "finding": "VERTICAL-REVERSE-LINK-COLUMN-FALSE-BLANKET",
+      "note": "Vertical wiring sweep (reverse_link column, after trailer/customer/vendor/unit/driver/load/connectivity) read-only investigated every leaf blanket-marked Required for reverse_link (from the related record you can open a filtered list/section and land back on this record). These leaves have no such genuinely-owed reverse target: pure creation forms/modals with no persisted record to reverse-link into, self-referential attribute-edit forms with no external FK, aggregate/KPI dashboards with no per-row FK-bearing record, or catalog-CRUD/lookup surfaces nothing else reverse-queries.",
+      "leaves_touched": 3,
+      "drops": [
+        {
+          "id": "fuel.modal.import_fuel_transactions",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "bulk-upload tool, no canonical FK-bearing record of its own"
+        },
+        {
+          "id": "fuel.modal.upload_loves_prices",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "uploads a price-feed spreadsheet, no driver/unit/load FK"
+        },
+        {
+          "id": "fuel.panel.savings",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "pre-aggregated numeric KPI props, no id/FK columns"
         }
       ]
     }

@@ -202,9 +202,7 @@
       "tab": "Roster",
       "sub": "Kind filter \u00b7 Company Vehicles",
       "route_hint": "/fleet?kind=company",
-      "required": [
-        "reverse_link"
-      ]
+      "required": []
     },
     {
       "id": "roster.filter.type",
@@ -320,7 +318,6 @@
       "required": [
         "unit",
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -331,8 +328,7 @@
       "route_hint": "/fleet/units/:id",
       "required": [
         "unit",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -403,8 +399,7 @@
       "route_hint": "/fleet/units/:id",
       "required": [
         "unit",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -520,8 +515,7 @@
       "route_hint": "/fleet/units/:id",
       "required": [
         "unit",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -545,7 +539,6 @@
       "required": [
         "unit",
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -558,8 +551,7 @@
         "unit",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -570,8 +562,7 @@
       "required": [
         "unit",
         "liability",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -581,8 +572,7 @@
       "route_hint": "/fleet/units/:id",
       "required": [
         "unit",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -603,8 +593,7 @@
       "route_hint": "/fleet/units/:id",
       "required": [
         "unit",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -614,8 +603,7 @@
       "route_hint": "/fleet/units/:id",
       "required": [
         "unit",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -639,7 +627,6 @@
       "route_hint": "/fleet/units/:id",
       "required": [
         "unit",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -650,8 +637,7 @@
       "route_hint": "/fleet/units/:id/detail?tab=permits",
       "required": [
         "unit",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -661,8 +647,7 @@
       "route_hint": "/fleet/units/:id/detail?tab=toll-tags",
       "required": [
         "unit",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -683,8 +668,7 @@
       "route_hint": "/fleet/units/:id/detail?tab=brakes",
       "required": [
         "unit",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -694,8 +678,7 @@
       "route_hint": "/fleet/units/:id/detail?tab=tires",
       "required": [
         "unit",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -720,7 +703,6 @@
       "required": [
         "trailer",
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -731,8 +713,7 @@
       "route_hint": "/fleet/trailers/:id",
       "required": [
         "trailer",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -754,8 +735,7 @@
       "route_hint": "/fleet/trailers/:id",
       "required": [
         "trailer",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -776,8 +756,7 @@
       "route_hint": "/fleet/trailers/:id",
       "required": [
         "trailer",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -857,8 +836,7 @@
       "route_hint": "/fleet/trailers/:id",
       "required": [
         "trailer",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -869,7 +847,6 @@
       "required": [
         "trailer",
         "connectivity",
-        "reverse_link",
         "qbo_chrome"
       ]
     },
@@ -880,8 +857,7 @@
       "route_hint": "/fleet/trailers/:id",
       "required": [
         "trailer",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -892,8 +868,7 @@
       "required": [
         "trailer",
         "qbo_chrome",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -1698,6 +1673,181 @@
             "connectivity"
           ],
           "reason": "EditVehicleModal.tsx static placeholder"
+        }
+      ]
+    },
+    "reverse_link_column_2026_08_14": {
+      "finding": "VERTICAL-REVERSE-LINK-COLUMN-FALSE-BLANKET",
+      "note": "Vertical wiring sweep (reverse_link column, after trailer/customer/vendor/unit/driver/load/connectivity) read-only investigated every leaf blanket-marked Required for reverse_link (from the related record you can open a filtered list/section and land back on this record). These leaves have no such genuinely-owed reverse target: pure creation forms/modals with no persisted record to reverse-link into, self-referential attribute-edit forms with no external FK, aggregate/KPI dashboards with no per-row FK-bearing record, or catalog-CRUD/lookup surfaces nothing else reverse-queries.",
+      "leaves_touched": 24,
+      "drops": [
+        {
+          "id": "roster.kind.company",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "no company-vehicle table/entity exists at all in mdata"
+        },
+        {
+          "id": "unit.profile.identity",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "IdentityStatusHeader.tsx renders only self attributes, no external FK"
+        },
+        {
+          "id": "unit.profile.telemetry",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "external Samsara feed data, no in-app profile page to reverse-link from"
+        },
+        {
+          "id": "unit.profile.compliance",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "denormalized text/date columns directly on mdata.units, not joined to related entity page"
+        },
+        {
+          "id": "unit.profile.audit_history",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "self-referential change log, no standalone audit-record detail page"
+        },
+        {
+          "id": "unit.profile.action_bar",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "pure unit-scoped action panel, no FK to external entity"
+        },
+        {
+          "id": "unit.edit.identity",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "pure unit-attribute edit form, no cross-entity FK"
+        },
+        {
+          "id": "unit.edit.insurance",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "edits denormalized insurance text columns, no join to insurance.policy"
+        },
+        {
+          "id": "unit.edit.irp_plates",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "pure unit-attribute edit form"
+        },
+        {
+          "id": "unit.edit.financial",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "pure unit financial-attribute edit form"
+        },
+        {
+          "id": "unit.edit.lifecycle",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "pure unit lifecycle-status edit form"
+        },
+        {
+          "id": "unit.edit.documents",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "document upload form itself, gap owned by unit.profile.documents display surface"
+        },
+        {
+          "id": "unit.detail.permits",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "permit sub-records are unit-attribute rows, no external issuing-entity FK"
+        },
+        {
+          "id": "unit.detail.toll_tags",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "toll tag sub-records are unit-attribute rows, no external entity detail page"
+        },
+        {
+          "id": "unit.detail.brakes",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "brake sub-records are unit-attribute rows"
+        },
+        {
+          "id": "unit.detail.tires",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "tire sub-records are unit-attribute rows"
+        },
+        {
+          "id": "trailer.profile.identity",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "IdentityStatusHeader.tsx exposes no FK column"
+        },
+        {
+          "id": "trailer.profile.specs",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "TypeSpecsSection.tsx pure trailer attributes, zero FKs"
+        },
+        {
+          "id": "trailer.profile.reefer",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "ReeferTelemetrySection.tsx own attribute/telemetry fields, no FK"
+        },
+        {
+          "id": "trailer.profile.compliance",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "ComplianceSection.tsx renders expiration dates only, no FK id exposed"
+        },
+        {
+          "id": "trailer.profile.audit_history",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "self-referential change log, no standalone audit-record page"
+        },
+        {
+          "id": "trailer.profile.action_bar",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "ActionBar.tsx renders only action buttons, no FK data"
+        },
+        {
+          "id": "trailer.status_change",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "StatusChangeModal.tsx collects status/reason only, no cross-entity FK created"
+        },
+        {
+          "id": "trailer.edit",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "EditTrailerModal.tsx zero EntityPicker/EntityLink usage"
         }
       ]
     }

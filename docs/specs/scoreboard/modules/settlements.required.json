@@ -223,7 +223,6 @@
       "surface_path": "pages/cash-advances/components/CreateAdvanceModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "picker_law",
         "driver",
         "load"
@@ -281,7 +280,6 @@
       "surface_path": "pages/liabilities/components/SendAckRequestModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "load"
       ]
     },
@@ -341,7 +339,6 @@
       "surface_path": "pages/cash-advances/components/CreateAdvanceModal.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "picker_law",
         "driver",
         "load"
@@ -410,7 +407,14 @@
       "route_hint": "/settlements",
       "surface_kind": "panel",
       "surface_path": "pages/driver-finance/SettlementsPage.tsx",
-      "required": ["driver", "load", "ap_bill", "connectivity", "reverse_link", "qbo_chrome"]
+      "required": [
+        "driver",
+        "load",
+        "ap_bill",
+        "connectivity",
+        "reverse_link",
+        "qbo_chrome"
+      ]
     }
   ],
   "honesty_audit": {
@@ -642,6 +646,34 @@
             "connectivity"
           ],
           "reason": "no server-wired Filters panel"
+        }
+      ]
+    },
+    "reverse_link_column_2026_08_14": {
+      "finding": "VERTICAL-REVERSE-LINK-COLUMN-FALSE-BLANKET",
+      "note": "Vertical wiring sweep (reverse_link column, after trailer/customer/vendor/unit/driver/load/connectivity) read-only investigated every leaf blanket-marked Required for reverse_link (from the related record you can open a filtered list/section and land back on this record). These leaves have no such genuinely-owed reverse target: pure creation forms/modals with no persisted record to reverse-link into, self-referential attribute-edit forms with no external FK, aggregate/KPI dashboards with no per-row FK-bearing record, or catalog-CRUD/lookup surfaces nothing else reverse-queries.",
+      "leaves_touched": 3,
+      "drops": [
+        {
+          "id": "settlements.modal.create_advance",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "pure creation modal, no existing record to reverse-link into"
+        },
+        {
+          "id": "settlements.modal.send_ack_request",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "pure send-message action, no FK/entity data rendered"
+        },
+        {
+          "id": "settlements.parity.create_advance",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "same file as modal.create_advance, creation modal"
         }
       ]
     }

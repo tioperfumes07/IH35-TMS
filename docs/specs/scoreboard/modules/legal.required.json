@@ -177,8 +177,7 @@
       "sub": "Template detail",
       "route_hint": "/legal/templates/:id",
       "required": [
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -267,8 +266,7 @@
       "surface_kind": "modal",
       "surface_path": "pages/legal/contracts/SendContractModal.tsx",
       "required": [
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -279,8 +277,7 @@
       "surface_kind": "modal",
       "surface_path": "pages/legal/contracts/TruckLeaseCreatorModal.tsx",
       "required": [
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -291,8 +288,7 @@
       "surface_kind": "modal",
       "surface_path": "pages/legal/contracts/UnifiedContractCreatorModal.tsx",
       "required": [
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -326,8 +322,7 @@
       "surface_kind": "parity_site",
       "surface_path": "pages/legal/contracts/SendContractModal.tsx",
       "required": [
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -338,8 +333,7 @@
       "surface_kind": "parity_site",
       "surface_path": "pages/legal/contracts/TruckLeaseCreatorModal.tsx",
       "required": [
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -350,8 +344,7 @@
       "surface_kind": "parity_site",
       "surface_path": "pages/legal/contracts/UnifiedContractCreatorModal.tsx",
       "required": [
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -777,6 +770,62 @@
             "connectivity"
           ],
           "reason": "no filterable list on landing page"
+        }
+      ]
+    },
+    "reverse_link_column_2026_08_14": {
+      "finding": "VERTICAL-REVERSE-LINK-COLUMN-FALSE-BLANKET",
+      "note": "Vertical wiring sweep (reverse_link column, after trailer/customer/vendor/unit/driver/load/connectivity) read-only investigated every leaf blanket-marked Required for reverse_link (from the related record you can open a filtered list/section and land back on this record). These leaves have no such genuinely-owed reverse target: pure creation forms/modals with no persisted record to reverse-link into, self-referential attribute-edit forms with no external FK, aggregate/KPI dashboards with no per-row FK-bearing record, or catalog-CRUD/lookup surfaces nothing else reverse-queries.",
+      "leaves_touched": 7,
+      "drops": [
+        {
+          "id": "templates.detail",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "reusable library records, not instance records owned by any FK"
+        },
+        {
+          "id": "legal.modal.send_contract",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "creation/send flow, no persisted record until send"
+        },
+        {
+          "id": "legal.modal.truck_lease_creator",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "creation flow, no existing record"
+        },
+        {
+          "id": "legal.modal.unified_contract_creator",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "creation flow, no existing record pre-save"
+        },
+        {
+          "id": "legal.parity.send_contract",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "same file as modal.send_contract"
+        },
+        {
+          "id": "legal.parity.truck_lease_creator",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "same file as modal.truck_lease_creator"
+        },
+        {
+          "id": "legal.parity.unified_contract_creator",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "same file as modal.unified_contract_creator"
         }
       ]
     }

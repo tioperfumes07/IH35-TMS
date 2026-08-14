@@ -126,7 +126,6 @@
       "route_hint": "/banking",
       "required": [
         "connectivity",
-        "reverse_link",
         "qbo_chrome",
         "bank"
       ]
@@ -186,7 +185,6 @@
       "required": [
         "liability",
         "connectivity",
-        "reverse_link",
         "bank"
       ]
     },
@@ -349,7 +347,6 @@
       "surface_path": "pages/banking/components/MatchDrawer.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "qbo_chrome",
         "bank"
       ]
@@ -363,7 +360,6 @@
       "surface_path": "pages/banking/components/BankingPlaidConnectionsPanel.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "bank",
         "qbo_chrome"
       ]
@@ -451,7 +447,6 @@
       "surface_path": "pages/banking/components/MatchDrawer.tsx",
       "required": [
         "connectivity",
-        "reverse_link",
         "qbo_chrome",
         "bank"
       ]
@@ -649,6 +644,48 @@
             "connectivity"
           ],
           "reason": "ParityTable client-side filter, no refetch"
+        }
+      ]
+    },
+    "reverse_link_column_2026_08_14": {
+      "finding": "VERTICAL-REVERSE-LINK-COLUMN-FALSE-BLANKET",
+      "note": "Vertical wiring sweep (reverse_link column, after trailer/customer/vendor/unit/driver/load/connectivity) read-only investigated every leaf blanket-marked Required for reverse_link (from the related record you can open a filtered list/section and land back on this record). These leaves have no such genuinely-owed reverse target: pure creation forms/modals with no persisted record to reverse-link into, self-referential attribute-edit forms with no external FK, aggregate/KPI dashboards with no per-row FK-bearing record, or catalog-CRUD/lookup surfaces nothing else reverse-queries.",
+      "leaves_touched": 5,
+      "drops": [
+        {
+          "id": "accounts",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "multi-tile dashboard, not a single owned record"
+        },
+        {
+          "id": "factoring",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "thin entry summary deep-linking out, canonical records owned elsewhere"
+        },
+        {
+          "id": "banking.drawer.match",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "matching-workflow drawer, not itself an FK-owned record type"
+        },
+        {
+          "id": "banking.panel.banking_plaid_connections",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "config panel scoped to operating_company_id, no FK ownership pattern"
+        },
+        {
+          "id": "banking.parity.match",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "same file as banking.drawer.match"
         }
       ]
     }

@@ -198,8 +198,7 @@
         "load",
         "picker_law",
         "qbo_chrome",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -314,8 +313,7 @@
       "route_hint": "/dispatch/alerts",
       "required": [
         "load",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -645,7 +643,6 @@
       "required": [
         "load",
         "connectivity",
-        "reverse_link",
         "picker_law"
       ]
     },
@@ -668,7 +665,6 @@
       "required": [
         "load",
         "connectivity",
-        "reverse_link",
         "picker_law",
         "qbo_chrome"
       ]
@@ -693,7 +689,6 @@
       "required": [
         "load",
         "connectivity",
-        "reverse_link",
         "picker_law"
       ]
     },
@@ -704,8 +699,7 @@
       "route_hint": "/dispatch/loads/:id?tab=Cargo%20Sensors",
       "required": [
         "load",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -728,8 +722,7 @@
       "route_hint": "/dispatch/loads/:id?tab=Geofence%20Timeline",
       "required": [
         "load",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -750,8 +743,7 @@
       "route_hint": "/dispatch/loads/:id?tab=Audit",
       "required": [
         "load",
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -1061,7 +1053,13 @@
       "route_hint": "surface://pages/dispatch/LoadTemplateLibrary.tsx",
       "surface_kind": "modal",
       "surface_path": "pages/dispatch/LoadTemplateLibrary.tsx",
-      "required": ["customer", "connectivity", "reverse_link", "picker_law", "qbo_chrome"]
+      "required": [
+        "customer",
+        "connectivity",
+        "reverse_link",
+        "picker_law",
+        "qbo_chrome"
+      ]
     }
   ],
   "honesty_audit": {
@@ -2121,6 +2119,69 @@
             "connectivity"
           ],
           "reason": "FilterBar.tsx staged, no own fetch"
+        }
+      ]
+    },
+    "reverse_link_column_2026_08_14": {
+      "finding": "VERTICAL-REVERSE-LINK-COLUMN-FALSE-BLANKET",
+      "note": "Vertical wiring sweep (reverse_link column, after trailer/customer/vendor/unit/driver/load/connectivity) read-only investigated every leaf blanket-marked Required for reverse_link (from the related record you can open a filtered list/section and land back on this record). These leaves have no such genuinely-owed reverse target: pure creation forms/modals with no persisted record to reverse-link into, self-referential attribute-edit forms with no external FK, aggregate/KPI dashboards with no per-row FK-bearing record, or catalog-CRUD/lookup surfaces nothing else reverse-queries.",
+      "leaves_touched": 8,
+      "drops": [
+        {
+          "id": "secondary.book_load",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "static DataPanel + button, no rows/detail, no canonical record"
+        },
+        {
+          "id": "load.drawer.stops",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "load_id-scoped only, no other entity has FK to a stop record"
+        },
+        {
+          "id": "load.drawer.documents",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "polymorphic attachments scoped to load_id only"
+        },
+        {
+          "id": "load.drawer.customs",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "load_id-scoped stub, no FK any other entity's page would reverse-query"
+        },
+        {
+          "id": "load.drawer.cargo",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "load_id-only query, no unit/trailer FK exposed"
+        },
+        {
+          "id": "load.drawer.geofence",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "load_id-only query, no unit/trailer FK"
+        },
+        {
+          "id": "load.drawer.audit",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "entity-agnostic audit tab, no related entity reverse-queries by relation"
+        },
+        {
+          "id": "queues.alerts",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "4 aggregate count cards, no rows, no FK-bearing record"
         }
       ]
     }

@@ -186,8 +186,7 @@
       "sub": "Legacy board page",
       "route_hint": "/program/legacy-board",
       "required": [
-        "connectivity",
-        "reverse_link"
+        "connectivity"
       ]
     },
     {
@@ -211,9 +210,7 @@
       "route_hint": "surface://pages/program/LegacyAuditScoreboardPage.tsx",
       "surface_kind": "parity_site",
       "surface_path": "pages/program/LegacyAuditScoreboardPage.tsx",
-      "required": [
-        "reverse_link"
-      ]
+      "required": []
     },
     {
       "id": "chrome.toolbar_search",
@@ -254,7 +251,10 @@
       "route_hint": "/program",
       "surface_kind": "panel",
       "surface_path": "pages/program/ProgramBoardPage.tsx",
-      "required": ["connectivity", "qbo_chrome"]
+      "required": [
+        "connectivity",
+        "qbo_chrome"
+      ]
     }
   ],
   "honesty_audit": {
@@ -548,6 +548,27 @@
             "connectivity"
           ],
           "reason": "no such control exists"
+        }
+      ]
+    },
+    "reverse_link_column_2026_08_14": {
+      "finding": "VERTICAL-REVERSE-LINK-COLUMN-FALSE-BLANKET",
+      "note": "Vertical wiring sweep (reverse_link column, after trailer/customer/vendor/unit/driver/load/connectivity) read-only investigated every leaf blanket-marked Required for reverse_link (from the related record you can open a filtered list/section and land back on this record). These leaves have no such genuinely-owed reverse target: pure creation forms/modals with no persisted record to reverse-link into, self-referential attribute-edit forms with no external FK, aggregate/KPI dashboards with no per-row FK-bearing record, or catalog-CRUD/lookup surfaces nothing else reverse-queries.",
+      "leaves_touched": 2,
+      "drops": [
+        {
+          "id": "legacy.board",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "zero business-entity FK references, only block_id"
+        },
+        {
+          "id": "program.parity.legacy_audit_scoreboard_page",
+          "removed": [
+            "reverse_link"
+          ],
+          "reason": "static methodology page, EntityLink hit is prose not a rendered link"
         }
       ]
     }
