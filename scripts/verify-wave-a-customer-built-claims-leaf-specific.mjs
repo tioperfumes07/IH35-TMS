@@ -13,6 +13,7 @@ const targets = {
   "scripts/verify-wave-a-customer-remainder-column.mjs":
     '"leafRe":"^(hub\\\\.names_search|cargo_claims\\\\.(list|create)|complaints\\\\.list)$"',
 };
+const feedFile = "docs/specs/scoreboard/wire-sprint-built.json";
 
 export function audit(sources) {
   const failures = [];
@@ -29,10 +30,15 @@ export function audit(sources) {
       failures.push(`${file}: exact leaf-specific customer Built claim is missing`);
     }
   }
+  const feed = JSON.parse(sources[feedFile] ?? '{"entries":[]}');
+  if ((feed.entries ?? []).some((entry) => entry.task === "WAVE-A-customer-all-modules")) {
+    failures.push(`${feedFile}: disproven all-module customer Built feed entry must stay removed`);
+  }
   return failures;
 }
 
-const sources = Object.fromEntries(Object.keys(targets).map((file) => [file, fs.readFileSync(file, "utf8")]));
+const files = [...Object.keys(targets), feedFile];
+const sources = Object.fromEntries(files.map((file) => [file, fs.readFileSync(file, "utf8")]));
 if (process.argv.includes("--selftest")) {
   const blanket = structuredClone(sources);
   blanket["scripts/verify-wave-a-customer-column.mjs"] = blanket["scripts/verify-wave-a-customer-column.mjs"]
@@ -49,7 +55,15 @@ if (process.argv.includes("--selftest")) {
     console.error("verify-wave-a-customer-built-claims-leaf-specific SELFTEST FAIL — aggregate-credit mutation escaped");
     process.exit(1);
   }
-  console.log("verify-wave-a-customer-built-claims-leaf-specific SELFTEST PASS — blanket and aggregate-credit mutations detected");
+  const feed = structuredClone(sources);
+  const parsedFeed = JSON.parse(feed[feedFile]);
+  parsedFeed.entries.push({ task: "WAVE-A-customer-all-modules", cols: ["customer"], leafRe: ".*" });
+  feed[feedFile] = JSON.stringify(parsedFeed);
+  if (!audit(feed).some((failure) => failure.includes("feed entry"))) {
+    console.error("verify-wave-a-customer-built-claims-leaf-specific SELFTEST FAIL — feed-entry mutation escaped");
+    process.exit(1);
+  }
+  console.log("verify-wave-a-customer-built-claims-leaf-specific SELFTEST PASS — blanket, aggregate-credit, and feed-entry mutations detected");
   process.exit(0);
 }
 

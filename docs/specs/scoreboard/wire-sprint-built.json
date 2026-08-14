@@ -386,31 +386,6 @@
       "leafRe": ".*"
     },
     {
-      "task": "WAVE-A-customer-all-modules",
-      "pr": "this PR",
-      "guard": "scripts/verify-wave-a-customer-all-modules.mjs",
-      "modules": [
-        "accounting",
-        "banking",
-        "customers",
-        "dispatch",
-        "docs",
-        "factoring",
-        "finance",
-        "home",
-        "legal",
-        "lists",
-        "maintenance",
-        "reports",
-        "safety",
-        "system"
-      ],
-      "cols": [
-        "customer"
-      ],
-      "leafRe": ".*"
-    },
-    {
       "task": "WAVE-A-driver-all-modules",
       "pr": "this PR",
       "guard": "scripts/verify-wave-a-driver-all-modules.mjs",
