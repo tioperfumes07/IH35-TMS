@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["accounting","banking","customers","dispatch","docs","factoring","finance","home","legal","lists","maintenance","reports","safety","system"],"cols":["customer"],"leafRe":".*","task":"WAVE-A-customer-all-modules","vertical":"column-wave"} */
 /** Full-product customer FK contract across every module that genuinely owns it.
  *
  * LINK-F5165 (2026-08-14): same self-regression pattern already documented and fixed for ap_bill
@@ -13,9 +12,9 @@
  * which does; corrected before shipping, home KEEPS one leaf); the honest count dropped from 262+ to
  * 95 across 14 modules. Floors removed, replaced with the same per-leaf auditConnectivity + unchanged
  * file-pattern/composed-guard checks pattern used in the ap_bill and trailer fixes. Module list
- * corrected to the honest 14 that still own customer leaves (cash-flow/fleet/insurance dropped out;
- * the rest unchanged) in both the guard's own @matrix-built tag and wire-sprint-built.json's
- * WAVE-A-customer-all-modules entry. */
+ * corrected to the honest 14 that still own customer leaves. This aggregate census deliberately
+ * carries no @matrix-built credit: route presence plus a handful of representative contracts does
+ * not prove every customer leaf. Exact child guards own leaf-specific Built credit. */
 import fs from "node:fs";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
